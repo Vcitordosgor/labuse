@@ -101,7 +101,9 @@ def test_aucun_mot_interdit_et_reference_nettoyee():
 
 def test_verdict_zonage_et_contenu():
     html = _dossier().html
-    assert "Zone U — urbaine, constructible" in html
+    # RECETTE-7 (E3) — le code de zone RÉEL (U1a) s'affiche, avec sa famille, pour coller aux
+    # articles cités (plus de « Zone U » tronqué à côté d'un règlement « U1a »).
+    assert "Zone U1a (famille U) — urbaine, constructible" in html
     assert "Interdites" in html and "CDAC" in html
     assert 'class="cloud"' in html               # nuage des ventes
     assert "maille IRIS" in html                 # §7 mode réel dans le titre

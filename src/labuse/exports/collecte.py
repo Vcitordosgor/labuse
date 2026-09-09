@@ -188,8 +188,10 @@ def _c_capacite(db, idu, f):
 
 @collecteur("marge_surelevation_m")
 def _c_marge_surel(db, idu, f):
+    # RECETTE-7 (E1) — la comparaison se fait au FAÎTAGE (le bâti BD TOPO est un faîtage).
     p = f.get("potentiel_transformation") or {}
-    return p.get("hauteur_marge_m") if p.get("hauteur_base") == "égout" else None
+    base = str(p.get("hauteur_base") or "")
+    return p.get("hauteur_marge_m") if base.startswith("faîtage") else None
 
 
 # ══ Section 4 — Risques ════════════════════════════════════════════════════════════════════

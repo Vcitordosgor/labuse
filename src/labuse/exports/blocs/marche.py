@@ -37,8 +37,10 @@ def _nuage(pa: dict) -> str:
     pos = lambda v: max(0, min(100, round((v - lo) / (hi - lo) * 100, 1)))  # noqa: E731
     dots = "".join(f'<div class="dot" style="left:{pos(v)}%"></div>' for v in pts if lo <= v <= hi)
     medh = f'<div class="med" style="left:{pos(med)}%"></div>' if med else ""
-    lab = (f'<div class="lab"><span>{fmt_eur_m2(lo)}</span>'
-           f'<span>médiane {fmt_eur_m2(med)}</span><span>{fmt_eur_m2(hi)}</span></div>')
+    # RECETTE-7 (E6) — les trois valeurs PORTENT leur libellé (min / médiane / max) : on annonçait
+    # « les ventes retenues » et on n'imprimait que trois nombres nus.
+    lab = (f'<div class="lab"><span>min {fmt_eur_m2(lo)}</span>'
+           f'<span>médiane {fmt_eur_m2(med)}</span><span>max {fmt_eur_m2(hi)}</span></div>')
     n, nex = pa.get("n"), pa.get("n_exclus")
     leg = (f'<p class="legend">{n or "?"} ventes retenues'
            + (f", {nex} écartées" if nex else "") + '. Aucune vente n\'est fabriquée ni lissée.</p>')

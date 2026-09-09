@@ -153,4 +153,43 @@ Deux fiches corrigées dans `registre/donnees.py` :
 
 # LOT E — Les trois documents
 
+Recette Vic sur `97411000EL0157` (Saint-Denis). Fixes vérifiés par régénération réelle (TestClient
+base réelle + WeasyPrint + pdftotext) ; le verrou provenance (Z5) reste vert après chaque change.
+
+- **E1 🔴 (faîtage contre égout) — FAIT.** Le bâti BD TOPO est un FAÎTAGE ; on le comparait à la
+  règle d'ÉGOUT → « surélévation non identifiée » faux. Désormais faîtage↔faîtage (`hf_m` prioritaire,
+  `potentiel.py:surelevation`), l'égout n'est qu'un repli converti (+ toiture type) AVEC incertitude ;
+  on ne conclut « pas de marge » que si la marge est nulle sur la BONNE règle (sinon `possible=None`,
+  « à confirmer »). Rendu, collecte, registre (`marge_surelevation_m` « au faîtage ») et le témoin
+  `test_surelevation` mis à jour. Constaté : « Hauteur max 10 m au faîtage · 7 m à l'égout ».
+- **E2 (contradiction 97/458) — FAIT au Lot 0 (Z6).** Régénéré : nu → assiette = résiduelle (177=177) ;
+  bâti → 458 créée ≠ 97 résiduelle, chacun nommé. Arbitrage détaillé en Z6.
+- **E3 🔴 (Zone U ou Um) — FAIT.** Le verdict affiche le CODE réel (« Zone Um (famille U) », « Zone
+  Ud3 (famille U) ») pour coller aux articles cités — plus de « Zone U » tronqué. Vérifié fiche+docs.
+- **E4 (181 m² d'emprise) — INVESTIGUÉ, rien à corriger + flag.** La requête `le_bien_block`
+  (`bati.py`) est correcte : `ST_Area(ST_Union(ST_Intersection(bâti, parcelle)))`, bornée, sans
+  constante. `EL0157` mesure réellement 181 m² (4 bâtiments intersectants). `BI0585` (Saint-Benoît)
+  est ABSENT de la base locale — la coïncidence des deux « 181 » ne peut pas être reproduite ici. Aucune
+  constante ni mauvais rattachement trouvé. **Flag Vic** : re-mesurer `BI0585` sur la base servie ; si
+  identique au m², fournir les deux IDU pour comparer les géométries (probable coïncidence).
+- **E5 (viabilisation) — FAIT.** Plus de phrase qui se dément : CONSTAT (verdict) · ce qui n'est pas
+  relevé (tracé/capacité exacts) · ACTION (DT-DICT), le tout cohérent selon la bande.
+- **E6 (ventes retenues) — FAIT.** Les trois valeurs portent « min / médiane / max ».
+- **E7 (SaintDenis) — FAIT, PDF-vérifié.** Cause trouvée : le h1 long du Financier (24 pt) COUPAIT
+  « Saint-Denis » à la ligne (« Saint-\\nDenis » → « SaintDenis » à la copie). Le trait insécable U+2011
+  s'exporte en caractère parasite (confirmé : le glyphe casse pdftotext — c'est ce que F2 avait
+  rencontré). Fix : `esc_noms` enrobe les noms composés d'un `white-space:nowrap` (.nb) en gardant le
+  trait ORDINAIRE (extractible). pdftotext du Financier régénéré : « Saint-Denis » d'un seul tenant.
+- **E8 (message répété) — FAIT.** La raison ne répète plus la valeur (le message l'imprime déjà).
+- **E9 (pluriels/formats) — FAIT.** Accord « 1 commerce » / « 3 commerces » (autour) ; taux « 3,0 % »
+  à la française (commune, `fmt_pct`).
+- **E10 (édition non enregistrée) — FAIT.** BD TOPO / RGE ALTI : l'IGN (WFS/Géoplateforme) ne publie
+  pas de millésime versionné → la sentinelle (dernier vu) ou la date d'ingestion le couvre désormais,
+  en disant pourquoi (« millésime amont non versionné par l'IGN ») — plus jamais un libellé mort.
+- **E11 (Financier avec prix juste) — PARTIEL.** Le Financier se génère avec un questionnaire complet
+  (prix 4 500 €/m², régime TVA, 6 logts T3) et le bilan s'établit (PDF régénéré, régime unique). Le
+  reste (poste « Taxe foncière (portage) », robustesse de génération) est traité au **Lot C (C1)** dont
+  E11 dépend.
+
+
 # LOT F — Rendre la 3D plus juste

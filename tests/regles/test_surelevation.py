@@ -1,5 +1,6 @@
-"""Témoin CIRCUIT-4 — surélévation : marge = hé − hauteur bâtie (égout prioritaire), recomparée
-indépendamment ; hauteur du bâti = max des bâtiments intersectants (seedé)."""
+"""Témoin CIRCUIT-4 — surélévation : marge = hf − hauteur bâtie (FAÎTAGE prioritaire, RECETTE-7
+E1 : le bâti BD TOPO est un faîtage), recomparée indépendamment ; hauteur du bâti = max des
+bâtiments intersectants (seedé)."""
 from __future__ import annotations
 
 import pytest
@@ -43,18 +44,24 @@ def test_hauteur_max_batiments(engine):
 
 
 @pytest.mark.db
-def test_marge_egout_prioritaire(engine, monkeypatch):
+def test_marge_faitage_prioritaire(engine, monkeypatch):
+    # RECETTE-7 (E1) — le bâti mesuré (BD TOPO) est un FAÎTAGE : on le compare à la règle de
+    # FAÎTAGE (hf), pas à l'égout. L'égout n'est qu'un repli, converti en faîtage estimé.
     from labuse.faisabilite import potentiel
     from labuse.db import session_scope
     monkeypatch.setattr(potentiel, "_hauteur_bati_m", lambda s, p: 6.0)
     with session_scope() as s:
-        # hé ET hf présents → l'ÉGOUT prime : marge = 12 − 6 = 6 m (recalcul indépendant)
+        # hé ET hf présents → le FAÎTAGE prime : marge = 16 − 6 = 10 m (recalcul indépendant)
         out = potentiel.surelevation(s, 1, rules=_Rules(he=12.0, hf=16.0), ctx=_Ctx())
-        assert out["base"] == "égout" and out["marge_m"] == 12.0 - 6.0
-        assert out["possible"] is (out["marge_m"] >= 2.8)
-        # hé absent → repli faîtage AVEC avertissement
+        assert out["base"] == "faîtage" and out["marge_m"] == 16.0 - 6.0
+        assert out["possible"] is True and not out["avertissement"]
+        # hf présent seul → faîtage direct, sans avertissement
         out2 = potentiel.surelevation(s, 1, rules=_Rules(he=None, hf=9.0), ctx=_Ctx())
-        assert out2["base"].startswith("faîtage") and out2["avertissement"]
+        assert out2["base"] == "faîtage" and not out2["avertissement"]
+        # hf absent, hé seul → repli faîtage ESTIMÉ (égout + toiture type) AVEC avertissement
+        out3 = potentiel.surelevation(s, 1, rules=_Rules(he=12.0, hf=None), ctx=_Ctx())
+        assert out3["base"].startswith("faîtage (estimé") and out3["avertissement"]
+        assert out3["marge_m"] == (12.0 + potentiel.TOITURE_TYPIQUE_M) - 6.0
         # aucune hauteur → possible=None (jamais un faux « non »)
-        out3 = potentiel.surelevation(s, 1, rules=_Rules(), ctx=_Ctx())
-        assert out3["possible"] is None
+        out4 = potentiel.surelevation(s, 1, rules=_Rules(), ctx=_Ctx())
+        assert out4["possible"] is None

@@ -29,6 +29,19 @@ def esc(s) -> str:
     return _html.escape("" if s is None else str(s))
 
 
+import re as _re_nb  # noqa: E402
+
+
+def esc_noms(s) -> str:
+    """RECETTE-7 (E7) — comme `esc`, mais les mots à TRAIT D'UNION (noms composés : « Saint-Denis »)
+    ne se coupent plus à la ligne. Le trait d'union ORDINAIRE (U+002D) est CONSERVÉ — il s'extrait
+    proprement (copier-coller, pdftotext), contrairement au trait insécable U+2011 que WeasyPrint 69
+    n'exporte pas (le glyphe sortait en caractère parasite, cf. F2). L'anti-coupure passe donc par
+    un `white-space: nowrap` (classe .nb de theme.css), pas par le caractère. Le trait « sautait »
+    dans l'en-tête du Financier (h1 long à 24 pt) : « Saint-\\nDenis » → « SaintDenis » à la copie."""
+    return _re_nb.sub(r'(\w+(?:-\w+)+)', r'<span class="nb">\1</span>', esc(s))
+
+
 # ── primitives (classes de theme.css) ────────────────────────────────────────────────────
 
 def chip_span(classe: str, libelle: str) -> str:

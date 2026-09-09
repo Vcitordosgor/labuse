@@ -47,6 +47,7 @@ body {
   font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0, "tnum" 0, "onum" 0, "lnum" 0;
   margin: 0;
 }
+.nb { white-space: nowrap; }   /* RECETTE-7 (E7) — noms composés insécables (Saint-Denis) */
 .doc-title { string-set: doc-title content(); }
 .doc-ref   { string-set: doc-ref content(); }
 .doc-foot  { string-set: doc-foot content(); }

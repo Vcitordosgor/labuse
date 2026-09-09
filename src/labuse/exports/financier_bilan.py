@@ -49,8 +49,10 @@ def _hors_marche(prix_sortie, cout, prix_bailleur) -> dict | None:
         (prix_bailleur, MAX_PRIX_BAILLEUR_M2, "Prix de vente au bailleur social"),
     ):
         if val is not None and float(val) > borne:
+            # RECETTE-7 (E8) — la raison NE RÉPÈTE PLUS la valeur (le message l'imprime déjà via
+            # « … vaut X €/m² : … ») : elle commence directement par le dépassement.
             return {"champ": champ, "valeur": float(val), "borne": borne,
-                    "raison": (f"{float(val):,.0f} €/m² dépasse tout prix de marché (borne {borne:,.0f} €/m²) — "
+                    "raison": (f"cela dépasse tout prix de marché (borne {borne:,.0f} €/m²) — "
                                "un PRIX TOTAL a probablement été saisi à la place d'un prix au m².").replace(",", " ")}
     return None
 

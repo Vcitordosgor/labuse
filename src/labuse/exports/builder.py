@@ -16,7 +16,7 @@ from . import archive, numeros
 from .blocs import (apporteur, autour, bilan, commune, financier, identite, marche, potentiel,
                     reseaux, risques, sources, zonage)
 from .registre_fmt import fmt_m2
-from .rendu import Cartouche, esc, page_html, render_pdf
+from .rendu import Cartouche, esc, esc_noms, page_html, render_pdf
 
 MODELE_VERSION = "2.0"
 
@@ -105,7 +105,7 @@ def _entete_compacte(document: str, idu: str, fiche: dict, numero: str, jour: da
     bits += [esc(numero), f"{jour:%d/%m/%Y}"]
     return (f'<div class="brand"><span class="wordmark">LABUSE</span>'
             f'<span class="kind">{esc(label)}</span></div>'
-            f'<h1>{esc(adresse or label)}</h1>'
+            f'<h1>{esc_noms(adresse or label)}</h1>'   # E7 — noms composés insécables (Saint-Denis)
             f'<p class="idu">{" · ".join(bits)}</p>')
 
 
@@ -126,8 +126,8 @@ def _cover(document: str, idu: str, fiche: dict, numero: str, jour: date,
         f'<span class="kind">{esc(label)}</span></div>'
         f'<h1>{esc(label)}</h1>'
         + (f'<p class="subtitle">{esc(subtitle)}</p>' if subtitle else "")
-        + (f'<p class="address">{esc(adresse)}</p>' if adresse else "")
-        + f'<p class="idu">{esc(idu)}{(" · " + esc(commune)) if commune else ""}</p>'
+        + (f'<p class="address">{esc_noms(adresse)}</p>' if adresse else "")   # E7 (Saint-Denis)
+        + f'<p class="idu">{esc(idu)}{(" · " + esc_noms(commune)) if commune else ""}</p>'
         + '<table class="cartouche">'
         f'<tr><td>N° de rapport</td><td>{esc(numero)}</td></tr>'
         f'<tr><td>Généré le</td><td>{jour:%d/%m/%Y}</td></tr>'

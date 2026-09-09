@@ -36,18 +36,28 @@ def _scenarios(valeurs) -> str:
         if pct:
             detail += f" — {esc(str(pct))} % de la surface autorisée déjà consommés."
         lignes.append(ligne_kv("Au sol, bâti conservé", detail, ""))
-    # en hauteur (à l'égout) — omise si les hauteurs ne sont pas servies (parcelle non bâtie)
-    if isinstance(p, dict) and p.get("hauteur_base") == "égout":
-        marge, regle, base = p.get("hauteur_marge_m"), p.get("hauteur_regle_m"), p.get("hauteur_bati_m")
-        if p.get("surelevation_possible") and marge is not None:
+    # en hauteur — RECETTE-7 (E1) : comparé au FAÎTAGE (le bâti BD TOPO est mesuré au faîtage) ;
+    # omise si les hauteurs ne sont pas servies (parcelle non bâtie).
+    base_h = p.get("hauteur_base") if isinstance(p, dict) else None
+    if base_h and str(base_h).startswith("faîtage"):
+        marge, regle, bati = p.get("hauteur_marge_m"), p.get("hauteur_regle_m"), p.get("hauteur_bati_m")
+        possible = p.get("surelevation_possible")
+        ref = "au faîtage" if base_h == "faîtage" else "au faîtage (règle estimée depuis l'égout)"
+        if possible and marge is not None:
             lignes.append(ligne_kv("En hauteur, bâti conservé",
                           f"<strong>Surélévation possible</strong> — {fmt_m(marge)} disponibles "
-                          "sous l'égout.", ""))
-        elif marge is not None and regle is not None and base is not None:
+                          f"sous la hauteur {ref}.", ""))
+        elif possible is None and regle is not None and bati is not None:
+            # règle de faîtage estimée depuis l'égout : marge incertaine, jamais un « non » ferme.
             lignes.append(ligne_kv("En hauteur, bâti conservé",
-                          f"<strong>Surélévation non identifiée</strong> — {fmt_m(regle)} d'égout "
-                          f"autorisés, {fmt_m(base)} bâtis : {fmt_m(marge)} restants, moins que la "
-                          "hauteur d'un niveau.", ""))
+                          f"<strong>Surélévation à confirmer</strong> — {fmt_m(regle)} {ref} contre "
+                          f"{fmt_m(bati)} bâtis (faîtage BD TOPO) : marge estimée {fmt_m(marge)}, à "
+                          "vérifier au règlement (la zone ne fixe qu'une hauteur d'égout).", ""))
+        elif possible is False and regle is not None and bati is not None:
+            lignes.append(ligne_kv("En hauteur, bâti conservé",
+                          f"<strong>Pas de marge de surélévation</strong> — {fmt_m(regle)} {ref} "
+                          f"autorisés, {fmt_m(bati)} bâtis (faîtage) : {fmt_m(marge)} restants, "
+                          "moins que la hauteur d'un niveau.", ""))
     # reconstruction
     if a(valeurs, "capacite_logements"):
         cap = val(valeurs, "capacite_logements")

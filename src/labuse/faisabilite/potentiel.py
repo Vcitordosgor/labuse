@@ -15,6 +15,9 @@ from sqlalchemy.orm import Session
 
 #: un niveau habitable (même seuil que l'ancien bâtisseur — mandat segments, repris tel quel)
 SURELEVATION_MARGE_MIN_M = 2.8
+#: RECETTE-7 (E1) — toiture type ajoutée à une hauteur d'ÉGOUT pour l'estimer en FAÎTAGE (repli
+#: quand la zone ne fixe pas de règle de faîtage) ; comble courant à La Réunion, à confirmer.
+TOITURE_TYPIQUE_M = 2.5
 
 
 def _hauteur_bati_m(session: Session, parcel_id: int) -> float | None:
@@ -45,12 +48,18 @@ def surelevation(session: Session, parcel_id: int, rules=None,
     he = getattr(rules, "he_m", None) if rules else None
     hf = getattr(rules, "hf_m", None) if rules else None
     avert = None
-    if isinstance(he, (int, float)):
-        h_regle, base = float(he), "égout"
-    elif isinstance(hf, (int, float)):
-        h_regle, base = float(hf), "faîtage (repli)"
-        avert = ("hauteur d'égout non calibrée pour cette zone — marge estimée depuis le "
-                 "faîtage (majorant prudent à confirmer au règlement)")
+    # RECETTE-7 (E1) — LE BÂTI MESURÉ (BD TOPO, `_hauteur_bati_m`) est une hauteur au FAÎTAGE. On
+    # le compare donc à la règle de FAÎTAGE de la zone (`hf_m`), jamais à l'égout : comparer un
+    # faîtage mesuré à une règle d'égout (l'ancien défaut) sous-estimait la marge et concluait à
+    # tort « non identifiée ». L'égout (`he_m`) ne sert que de repli, converti en faîtage estimé
+    # (+ toiture type) AVEC avertissement — la marge est alors incertaine, pas un « non » ferme.
+    if isinstance(hf, (int, float)):
+        h_regle, base = float(hf), "faîtage"
+    elif isinstance(he, (int, float)):
+        h_regle, base = float(he) + TOITURE_TYPIQUE_M, "faîtage (estimé depuis l'égout)"
+        avert = ("la zone ne fixe qu'une hauteur d'ÉGOUT ; la marge est estimée en ajoutant une "
+                 f"toiture type (~{TOITURE_TYPIQUE_M:g} m) pour rester comparable au faîtage mesuré "
+                 "(BD TOPO) — incertaine, à confirmer au règlement")
     else:
         return {"possible": None, "marge_m": None, "base": None,
                 "hauteur_regle_m": None, "hauteur_bati_m": None,
@@ -61,7 +70,17 @@ def surelevation(session: Session, parcel_id: int, rules=None,
                 "hauteur_regle_m": h_regle, "hauteur_bati_m": None,
                 "avertissement": "hauteur du bâti inconnue (BD TOPO) — surélévation non évaluable"}
     marge = round(h_regle - h_bati, 1)
-    return {"possible": marge >= SURELEVATION_MARGE_MIN_M, "marge_m": max(0.0, marge),
+    # RECETTE-7 (E1) — on ne conclut « non identifiée » (possible=False) que si la marge est nulle
+    # sur la BONNE règle (faîtage). Quand la règle de faîtage est ESTIMÉE depuis l'égout (avert)
+    # et que la marge est faible mais positive, le résultat est INCERTAIN (possible=None), jamais
+    # un « non » ferme tiré d'une conversion approximative.
+    if marge >= SURELEVATION_MARGE_MIN_M:
+        possible: bool | None = True
+    elif avert and marge > 0:
+        possible = None
+    else:
+        possible = False
+    return {"possible": possible, "marge_m": max(0.0, marge),
             "base": base, "hauteur_regle_m": h_regle, "hauteur_bati_m": h_bati,
             "avertissement": avert}
 

@@ -1033,8 +1033,9 @@ DONNEES: dict[str, Donnee] = {
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:bloc_potentiel (table_rase.plancher_m2)",
     reservoirs=("bd_topo", "cosia", "gpu_plu_api_carto",), portee="run"),
- "marge_surelevation_m": C("Marge de surélévation (à l'égout)", "m", "parcelle",
-    "hauteur restante sous la règle de hauteur à l'égout de la zone (moteur commun, EXPORTS-1 3.2)",
+ "marge_surelevation_m": C("Marge de surélévation (au faîtage)", "m", "parcelle",
+    "hauteur restante sous la règle de FAÎTAGE de la zone, comparée au faîtage bâti mesuré (BD "
+    "TOPO) — RECETTE-7 E1 : faîtage contre faîtage ; repli égout+toiture type avec incertitude",
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:surelevation",
     reservoirs=("bd_topo", "gpu_plu_api_carto",), portee="run"),

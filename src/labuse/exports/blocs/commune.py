@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from ..lignes import a, pied, val
 from ..nature import chip
-from ..registre_fmt import fmt_eur, groupe
+from ..registre_fmt import fmt_eur, fmt_pct, groupe
 from ..rendu import chip_span, esc, ligne_kv, section, table_kv
 
 IDS = ("perimetres_dispositifs_liste", "parc_social_rpls_logements",
@@ -19,7 +19,8 @@ def _taxe(t: dict) -> str:
     # résiduelle » de la section Potentiel — c'est la contradiction 97 / 458 m² du constat.
     assiette = f"{t.get('assiette_m2', '?')} m² de surface de plancher créée (reconstruction totale)"
     if t.get("total_eur"):
-        taux = f" (taux communal {t.get('taux_communal_pct')} %)" if t.get("taux_communal_pct") else ""
+        # RECETTE-7 (E9) — le taux à la française (« 3,0 % », pas « 3.0 % »).
+        taux = f" (taux communal {fmt_pct(t['taux_communal_pct'])})" if t.get("taux_communal_pct") else ""
         # TAXE-AMÉNAGEMENT-1 lot C — millésime du taux public affiché avec le chiffre.
         mil = t.get("taux_communal_millesime")
         src = f" — {mil}" if (t.get("taux_communal_source") == "public" and mil) else ""

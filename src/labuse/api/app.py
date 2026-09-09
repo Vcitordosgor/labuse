@@ -2831,6 +2831,19 @@ def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dic
             mill = f"amont à jour au {d[8:10]}/{d[5:7]}/{d[0:4]} (sentinelle)"
         if not mill and r["last_sync_at"]:
             mill = f"ingéré le {r['last_sync_at']:%d/%m/%Y} (date d'ingestion, millésime amont non publié)"
+        # RECETTE-7 (E10) — BD TOPO / RGE ALTI : l'IGN (WFS/Géoplateforme) ne publie PAS de
+        # millésime versionné → le catalogue portait « édition non enregistrée », muet et non
+        # couvert. On le remplace par la SENTINELLE (dernier vu) ou la date d'ingestion, en disant
+        # pourquoi (millésime amont non versionné) — jamais un libellé mort.
+        if mill and "édition non enregistrée" in str(mill):
+            base_lbl = str(mill).split(" — ")[0]
+            if r["dernier_vu"] and _re_m.match(r"\d{4}-\d{2}-\d{2}", str(r["dernier_vu"])):
+                d = str(r["dernier_vu"])[:10]
+                mill = f"{base_lbl} — édition courante, vue le {d[8:10]}/{d[5:7]}/{d[0:4]} (sentinelle)"
+            elif r["last_sync_at"]:
+                mill = f"{base_lbl} — édition courante, ingérée le {r['last_sync_at']:%d/%m/%Y} (millésime amont non versionné par l'IGN)"
+            else:
+                mill = f"{base_lbl} — édition courante (millésime amont non versionné par l'IGN)"
         out.append({
             "nom": r["name"], "categorie": r["category"], "fournisseur": r["provider"],
             "millesime": mill, "fiabilite": _FIAB.get(r["reliability_level"], r["reliability_level"]),
