@@ -1,0 +1,22 @@
+RECETTE-8 W19bis — la saisie appartient à la parcelle, jamais à la suivante
+────────────────────────────────────────────────────────────────────────────
+BACKEND : le questionnaire est clé par (compte_id, idu). enregistrer() UPSERT par
+(compte_id, idu) ; charger() lit par (compte_id, idu). Preuve (compte sentinelle) :
+
+  Parcelle A (97411000EL0157) saisie {prix_sortie 4500, prix_demande 999999} :
+    A chargé : {'prix_sortie_saisi_eur_m2': 4500, 'prix_demande_saisi_eur': 999999} | existe=True
+    B chargé (97401000AD0554, jamais saisie) : {} | existe=False
+    fuite de la saisie A (999999) vers B ? False
+
+  → aucune valeur de A ne reste en base pour resservir sur B ; B repart vierge.
+    Seuls les pré-remplissages SOURCÉS réapparaissent sur B (scénario, coût de
+    construction, taxe calculée sur la SDP du projet…), via prefill(fiche) — ils
+    viennent d'une source, pas du porteur. Sur la MÊME parcelle A, rouvrir retrouve
+    bien {4500, 999999}.
+
+FRONTEND (FinancierQuestionnaire.tsx) : le garde `seeded` (booléen posé une fois)
+gardait les réponses de la 1re parcelle quand le composant n'était pas démonté au
+changement de parcelle. Corrigé : re-semis PAR IDU (`seededIdu`), rechargement des
+réponses de la nouvelle parcelle + remise à zéro de l'assistant à chaque changement
+d'IDU. tsc 0, vitest FinancierQuestionnaire 4/4.
+(Capture du questionnaire vierge sur parcelle B : voir captures RECETTE-8.)

@@ -25,19 +25,30 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
   const [fini, setFini] = useState(false)
-  const seeded = useRef(false)
-
-  useEffect(() => {
-    if (data && !seeded.current) { setReponses(data.reponses || {}); seeded.current = true }
-  }, [data])
-
-  const ecrans = data?.ecrans || []
-  const N = ecrans.length || 1
   const [docErr, setDocErr] = useState<{ libelle: string; raison?: string }[] | null>(null)
   // RECETTE-7 (C1) — un ÉCHEC TECHNIQUE et une DONNÉE MANQUANTE sont deux choses différentes :
   // le bandeau « il manque : » ne s'affiche que s'il peut NOMMER les champs (docErr) ; une erreur
   // de génération (500, réseau) est dite comme telle, séparément (docTech).
   const [docTech, setDocTech] = useState<string | null>(null)
+  // RECETTE-8 W19bis — la saisie appartient à LA PARCELLE : on re-sème une seule fois PAR IDU.
+  // Avant, `seeded` restait vrai après la 1re parcelle → en rouvrant le questionnaire sur une AUTRE
+  // parcelle (sans démontage du composant), les réponses de la précédente restaient à l'écran. On
+  // repère l'IDU semé ; à tout changement d'IDU on recharge les réponses de la nouvelle parcelle
+  // (vierge si jamais saisie ; seuls les pré-remplissages SOURCÉS réapparaissent, via `c.prefill`)
+  // et on remet l'assistant à zéro. Sur la MÊME parcelle, la saisie enregistrée est bien retrouvée.
+  const seededIdu = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (data && seededIdu.current !== idu) {
+      setReponses(data.reponses || {})
+      seededIdu.current = idu
+      setEtape(0); setUsage(null); setFini(false)
+      setDocErr(null); setDocTech(null)
+    }
+  }, [data, idu])
+
+  const ecrans = data?.ecrans || []
+  const N = ecrans.length || 1
 
   const set = (id: string, v: unknown) => setReponses((r) => ({ ...r, [id]: v }))
 
