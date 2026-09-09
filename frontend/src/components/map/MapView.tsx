@@ -2,7 +2,7 @@ import { useQuery, useIsFetching } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
-import { getCommunes, getFiche, getFiltreIdus, getMapLayer, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
+import { getBatiments, getCommunes, getFiche, getFiltreIdus, getMapLayer, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
 import { ALL_TIER_META, BPE_DOM, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { MAP_THEME, type MapTokens } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
@@ -977,6 +977,8 @@ export function MapView() {
         tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'] })
 
       m.addSource('parcels', { type: 'geojson', data: EMPTY_FC as never, promoteId: 'idu' })
+      // RECETTE-6 (A3) — source du bâti 3D (empreinte + hauteur), remplie par BBOX quand le 3D est actif.
+      m.addSource('batiments', { type: 'geojson', data: EMPTY_FC as never })
       for (const k of Object.keys(OVERLAYS)) m.addSource(`ov-${k}`, { type: 'geojson', data: EMPTY_FC as never })
       for (const [k, o] of Object.entries(OVERLAYS)) {
         m.addLayer({ id: `ov-${k}`, type: 'fill', source: `ov-${k}`, layout: { visibility: 'none' }, paint: o.paint as never })
@@ -1177,6 +1179,17 @@ export function MapView() {
         paint: { 'line-color': '#8FA69A', 'line-width': 0.3, 'line-opacity': 0.4 } })
       m.addLayer({ id: 'parcels-line', type: 'line', source: 'parcels', filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
       m.addLayer({ id: 'parcels-sel', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
+      // RECETTE-6 (A3) — BÂTI 3D : extrusion de l'empreinte au sol à sa hauteur BD TOPO (la même que
+      // l'Apporteur). Posée sur le relief (setTerrain → l'extrusion part du sol du MNT, jamais d'un
+      // plan). Masquée par défaut ; allumée avec le bouton 3D (effet plus bas). Hauteur absente = pas
+      // d'extrusion (le serveur exclut déjà ces bâtiments).
+      m.addLayer({ id: 'batiments-3d', type: 'fill-extrusion', source: 'batiments', layout: { visibility: 'none' },
+        paint: {
+          'fill-extrusion-color': '#9FB3A8',
+          'fill-extrusion-height': ['coalesce', ['get', 'h'], 0],
+          'fill-extrusion-base': 0,
+          'fill-extrusion-opacity': 0.88,
+        } })
       // M5.1 — badge carte : liseré braise sur les BRÛLANTES v2 (hors étage 0), et pastille
       // « #rang » sur les opportunités v2 au zoom rapproché (mode commune). Le badge « V nn »
       // v1.3 a disparu : un seul monde visible, le v2.
@@ -1754,13 +1767,36 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
+    // RECETTE-6 (A3) — le bouton 3D allume le RELIEF (setTerrain) ET le BÂTI extrudé (batiments-3d),
+    // ensemble : l'extrusion part du sol du MNT (jamais d'un plan). Le bâti se charge par BBOX au zoom
+    // rapproché (≥ 15, où l'extrusion est visible), rafraîchi au déplacement ; borné à la vue courante.
+    const BATI_MINZOOM = 15
+    const chargerBati = () => {
+      if (!terrain3d || m.getZoom() < BATI_MINZOOM) {
+        if (m.getLayer('batiments-3d')) m.setLayoutProperty('batiments-3d', 'visibility', 'none')
+        return
+      }
+      const b = m.getBounds()
+      const bbox: [number, number, number, number] = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]
+      getBatiments(bbox).then((fc) => {
+        const src = m.getSource('batiments') as maplibregl.GeoJSONSource | undefined
+        if (src && terrain3d) {
+          src.setData(fc as never)
+          m.setLayoutProperty('batiments-3d', 'visibility', 'visible')
+        }
+      }).catch(() => { /* le bâti 3D ne casse jamais la carte */ })
+    }
     if (terrain3d) {
       m.setTerrain({ source: 'dem', exaggeration: 1.35 })
       if (m.getPitch() < 20) m.easeTo({ pitch: 55, duration: 800 })
+      chargerBati()
+      m.on('moveend', chargerBati)
     } else {
       m.setTerrain(null)
       m.easeTo({ pitch: 0, duration: 600 })
+      if (m.getLayer('batiments-3d')) m.setLayoutProperty('batiments-3d', 'visibility', 'none')
     }
+    return () => { m.off('moveend', chargerBati) }
   }, [terrain3d])
 
   // ───────────────────────── couches / filtres / mode ─────────────────────────

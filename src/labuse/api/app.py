@@ -5356,6 +5356,33 @@ def map_bati(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     return {"commune": commune, "disponible": True, "ratios": ratios}
 
 
+@app.get("/map/batiments.geojson")
+def map_batiments_geojson(bbox: str = Query(..., description="minLon,minLat,maxLon,maxLat (WGS84)"),
+                          db: Session = Depends(get_db)) -> dict:
+    """RECETTE-6 (A3) — le BÂTI de la BBOX pour l'extrusion 3D : empreinte au sol (BD TOPO) + hauteur
+    (`attrs.hauteur`, la MÊME que sert l'Apporteur « … m au sol · … m de haut »). Sans hauteur → EXCLU
+    (jamais d'extrusion inventée, décision Vic). Borné à la BBOX + plafond 8000, JAMAIS l'île entière."""
+    try:
+        xmin, ymin, xmax, ymax = (float(x) for x in bbox.split(","))
+    except Exception:
+        raise HTTPException(422, "bbox invalide (attendu : minLon,minLat,maxLon,maxLat)")
+    fc = db.execute(text("""
+      SELECT jsonb_build_object('type','FeatureCollection','features',
+        COALESCE(jsonb_agg(jsonb_build_object(
+          'type','Feature',
+          'geometry', ST_AsGeoJSON(b.geom, 6)::jsonb,
+          'properties', jsonb_build_object('h', b.h)
+        )), '[]'::jsonb))
+      FROM (
+        SELECT geom, round((attrs->>'hauteur')::numeric, 1) AS h FROM spatial_layers
+        WHERE kind = 'batiment' AND (attrs->>'hauteur') IS NOT NULL
+          AND geom && ST_MakeEnvelope(:xmin, :ymin, :xmax, :ymax, 4326)
+        LIMIT 8000
+      ) b
+    """), {"xmin": xmin, "ymin": ymin, "xmax": xmax, "ymax": ymax}).scalar()
+    return fc
+
+
 @app.get("/assemblages")
 def assemblages(commune: str | None = None, limit: int = Query(100, ge=1, le=500),
                 db: Session = Depends(get_db)) -> dict:

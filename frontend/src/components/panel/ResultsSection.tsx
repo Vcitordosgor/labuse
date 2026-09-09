@@ -177,8 +177,10 @@ const SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
 // LABUSE) est RETIRÉ de la vue factuelle : une vue qui s'annonce « sans analyse » ne sert pas une
 // opinion de LABUSE. Le potentiel reste dans l'analyse, nulle part ailleurs. Surface reste en second
 // (inversible). [RECETTE-3 (T3) : l'ancien défaut était « Potentiel ».]
+// RECETTE-6 (A1, décision Vic) — le BOUTON « Adresse » est RETIRÉ de la barre : le tri « adressées
+// d'abord » reste le DÉFAUT (en arrière-plan, cf. le `useState`/`useEffect` ci-dessous qui garde
+// 'adresse'), il ne s'affiche simplement plus comme bouton. Seule « Surface » reste cliquable.
 const FACTUAL_SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
-  { key: 'adresse', label: CLIENT.tri.adresse, tip: CLIENT.tri.adresseTip },
   { key: 'surface', label: CLIENT.tri.surface, tip: CLIENT.tri.surfaceTip, dir: '↓' },
 ]
 

@@ -328,6 +328,11 @@ export const getResults = (f?: Filters, limit = 200, sort: SortKey = 'rang', off
 // RETOURS-7 Z11, décision Vic). L'export CSV du projet (`projetCsvUrl`) est distinct et conservé.
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
+// RECETTE-6 (A3) — le bâti de la BBOX pour l'extrusion 3D (empreinte au sol + hauteur BD TOPO). Borné
+// à la vue courante (jamais l'île entière) ; sans hauteur → exclu côté serveur (pas d'extrusion inventée).
+export const getBatiments = (bbox: [number, number, number, number]) =>
+  j<{ type: 'FeatureCollection'; features: { type: 'Feature'; geometry: unknown; properties: { h: number } }[] }>(
+    `/map/batiments.geojson?bbox=${bbox.join(',')}`)
 // OUTILS-2 (O2-4) — géométrie d'UNE parcelle (Feature + centroïde) pour tracer son contour sur l'écran
 // « Remonter le temps » sans charger tout le GeoJSON commune.
 export const getParcelGeojson = (idu: string) =>
