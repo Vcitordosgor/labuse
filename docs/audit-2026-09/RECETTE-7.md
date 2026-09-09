@@ -3,6 +3,23 @@
 Branche `fix/recette-7` (depuis `fix/recette-6`, non mergée). Worktree `~/Desktop/labuse-recette6`.
 **Aucun merge, aucune bascule, aucun rescoring.** Seule exception d'ingestion autorisée : le RGE ALTI (lot D).
 
+## Bilan des 39 travaux
+
+| Lot | Fait / prouvé | Design / partiel | Non fait (diagnostiqué + fix précis) |
+|---|---|---|---|
+| **0** (CIRCUIT, bloquant) | Z1 Z2 Z3 Z4 **Z5** Z6 Z7 (7/7) | — | — |
+| **A** (carte/segments) | A2 A3 A4 A6 | — | A1, A5 (visuels : ports dev occupés) |
+| **B** (fiche) | B3 B4 | — | B1, B2, B5 (visuels/structurels) |
+| **C** (Financier) | C1 C2 | C3 (spec implémentable) | — |
+| **D** (RGE ALTI) | D1 D3 (écrits+mesurés) · D2 borné · D4 moteur prouvé | D4 seuils à caler / D5 | — |
+| **E** (documents) | E1 E2 E3 E5 E6 E7 E8 E9 E10 | E11 (dépend C1) | E4 (investigué, rien à corriger) |
+| **F** (3D) | F3 · F1 F2 chiffrés | — | — |
+
+Le **lot 0 est complet et vérifié** (le verrou Z5 casse la CI sur tout nombre imprimé hors registre,
+prouvé mordant). Tout ce qui est « fait » est vérifié (pytest/tsc/vitest/PDF régénérés/mesures réelles) ;
+tout ce qui est « non fait » porte son diagnostic ET son correctif précis. **Rien n'est mergé.** Les
+seuls écarts CI sont pré-existants (voir ci-dessous). 9 commits sur `fix/recette-7`, main intacte.
+
 ## État des verrous (porte de déploiement)
 
 Les verrous `local` (base réelle partagée) : mes 3 tables Lot D (`rgealti_mnt_5m`, `mnt_tiles`,
