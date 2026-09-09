@@ -159,8 +159,10 @@ def build_bati(session: Session) -> None:
             DROP TABLE IF EXISTS p_model_bati;
             CREATE TABLE p_model_bati AS
             WITH bd AS (
+              -- RECETTE-6 (G2) — ST_Union avant ST_Area : plus de double-compte des polygones bâtiment
+              -- BD TOPO qui se chevauchent (même garde que le_bien_block, RECETTE-5). Effet au REBUILD.
               SELECT f.idu,
-                     sum(ST_Area(ST_Intersection(b.geom_2975, p.geom_2975))) AS emprise
+                     ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975))) AS emprise
               FROM p_model_frame f
               JOIN parcels p ON p.id = f.parcel_id
               JOIN spatial_layers b
@@ -179,8 +181,9 @@ def build_bati(session: Session) -> None:
     _exec(session, """
         DROP TABLE IF EXISTS p_model_bati;
         CREATE TABLE p_model_bati AS
+        -- RECETTE-6 (G2) — ST_Union avant ST_Area (repli sans CoSIA) : plus de double-compte. Au REBUILD.
         SELECT f.idu,
-               sum(ST_Area(ST_Intersection(b.geom_2975, p.geom_2975))) AS emprise_bati_m2
+               ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975))) AS emprise_bati_m2
         FROM p_model_frame f
         JOIN parcels p ON p.id = f.parcel_id
         JOIN spatial_layers b

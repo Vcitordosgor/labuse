@@ -274,6 +274,23 @@ def verifier_chemins_reels(db) -> dict:
                                 "moteur:potentiel", sdp_moteur, "run"))
         except Exception:  # noqa: BLE001
             db.rollback()
+        # RECETTE-6 (G3) — COHÉRENCE DE L'EMPRISE BÂTIE : l'emprise SERVIE par la fiche (le_bien, garde
+        # ST_Union depuis RECETTE-5) doit égaler un recompute CANONIQUE ST_Union. Un écart = un lecteur
+        # est revenu au SUM des intersections (double-compte des polygones bâtiment qui se chevauchent —
+        # la classe exacte du lot G, 20 440 parcelles emprise > contenance). La sonde l'attrape désormais.
+        try:
+            emp_http = (fiche.get("le_bien") or {}).get("emprise_batie_m2")
+            emp_union = db.execute(text(
+                "SELECT round(COALESCE(ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975))), 0)) "
+                "FROM parcels p JOIN spatial_layers b "
+                "ON b.kind = 'batiment' AND ST_Intersects(b.geom_2975, p.geom_2975) "
+                "WHERE p.idu = :i"), {"i": idu}).scalar()
+            if emp_http is not None and emp_union is not None and \
+                    abs(float(emp_http) - float(emp_union)) > 1.0:
+                trouves.append(("emprise_batie_m2", idu, "http:/parcels (le_bien)", emp_http,
+                                "recompute:ST_Union", float(emp_union), "geometrie"))
+        except Exception:  # noqa: BLE001
+            db.rollback()
         # scission du neuf (robinet) : le VEFA à l'acte ne se sert plus sous la fiche (Q3)
         if "Neuf VEFA" in json.dumps(fiche, ensure_ascii=False, default=str):
             trouves.append(("prix_neuf_observe_eur_m2", idu, "http:/parcels",
