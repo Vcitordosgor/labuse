@@ -1176,25 +1176,41 @@ export function M08() {
 // COURRIER-SERVICE (refonte 13 outils) — modèles à VARIABLES ({parcelle} {commune} {surface}
 // remplacées PAR courrier, un courrier par destinataire). Adressage générique conservé (SPF/CERFA
 // côté LABUSE), aucune identité de propriétaire particulier.
+// RECETTE-5 (V22, décision Vic) — LE FOND DU COURRIER RÉÉCRIT. Cette lettre part dans une boîte aux
+// lettres et doit donner envie de répondre. Structure gravée, dans cet ordre :
+//   1. QUI ÉCRIT — LABUSE, l'outil d'intelligence foncière de La Réunion (une phrase, sans jargon, qui
+//      rassure sur le sérieux ; le nom LABUSE est VISIBLE — c'est ce qui donne une raison de répondre) ;
+//   2. POURQUOI CETTE PARCELLE — une raison concrète et vraie, portée par le modèle choisi (potentiel
+//      restant / secteur qui bouge / projet à proximité). L'émetteur choisit le modèle qui correspond au
+//      fait ; jamais une raison inventée ;
+//   3. CE QU'ON PROPOSE — une étude gratuite de sa parcelle, ou simplement un échange. Sans engagement,
+//      y compris s'il ne vend pas ;
+//   4. COMMENT RÉPONDRE — par mail à victor@labuse.immo, expert LABUSE.
+// Ton : posé, respectueux, jamais commercial agressif. La mise en page reste celle de la DA.
+const _QUI = 'LABUSE est l’outil d’intelligence foncière de La Réunion : à partir des seules données '
+  + 'publiques du territoire (cadastre, urbanisme, marché), nous éclairons ce qu’une parcelle permet — '
+  + 'avec sérieux, et sans démarchage.'
+const _PROPOSE = 'Nous vous proposons simplement d’en parler, ou — si vous le souhaitez — une étude '
+  + 'gratuite de votre parcelle. Sans aucun engagement de votre part, y compris si vous n’avez pas '
+  + 'l’intention de vendre.'
+const _REPONDRE = 'Si le sujet vous intéresse, un mot suffit : écrivez à Victor, expert LABUSE, à '
+  + 'victor@labuse.immo.\n\nAvec nos salutations respectueuses,'
+const _entete = 'Objet : votre parcelle {parcelle}, à {commune}\n\nMadame, Monsieur,\n\n'
 const TEMPLATES: { key: string; label: string; corps: string }[] = [
   { key: 'standard', label: 'Approche standard',
-    corps: 'Objet : votre parcelle {parcelle}, à {commune}\n\nMadame, Monsieur,\n\n'
-      + 'Votre parcelle cadastrée {parcelle} ({surface}), située à {commune}, présente à notre analyse '
-      + 'un réel potentiel. Nous accompagnons des porteurs de projets locaux et serions heureux '
-      + "d'échanger avec vous, sans aucun engagement, sur les possibilités qu'offre votre bien — y "
-      + "compris si vous n'envisagez pas de vendre à court terme.\n\nNous restons à votre disposition."
-      + '\n\nCordialement,' },
+    corps: _entete + _QUI + '\n\n'
+      + 'Si nous vous écrivons au sujet de votre parcelle {parcelle} ({surface}), à {commune}, c’est '
+      + 'qu’elle conserve, au regard du règlement d’urbanisme, un potentiel de construction encore '
+      + 'ouvert.\n\n' + _PROPOSE + '\n\n' + _REPONDRE },
   { key: 'dormance', label: 'Dormance / succession',
-    corps: 'Objet : votre parcelle {parcelle}, à {commune}\n\nMadame, Monsieur,\n\n'
-      + "Votre parcelle {parcelle} ({surface}) à {commune} paraît aujourd'hui peu mobilisée. Si elle "
-      + "relève d'une succession ou d'une indivision, sa valorisation peut soulever des questions ; "
-      + 'nous accompagnons ce type de situation, sans engagement de votre part, et serions heureux '
-      + "d'en parler avec vous.\n\nBien cordialement," },
+    corps: _entete + _QUI + '\n\n'
+      + 'Votre parcelle {parcelle} ({surface}), à {commune}, paraît aujourd’hui peu mobilisée dans un '
+      + 'secteur qui, lui, évolue. Si elle relève d’une succession ou d’une indivision, sa valorisation '
+      + 'soulève souvent des questions.\n\n' + _PROPOSE + '\n\n' + _REPONDRE },
   { key: 'voisin', label: 'Voisin direct',
-    corps: 'Objet : votre parcelle {parcelle}, à {commune}\n\nMadame, Monsieur,\n\n'
-      + 'Nous étudions un projet à proximité immédiate de votre parcelle {parcelle} ({surface}) à '
-      + "{commune}. Votre bien s'y intégrerait naturellement ; nous serions heureux d'échanger avec "
-      + 'vous, sans aucun engagement, sur les possibilités.\n\nCordialement,' },
+    corps: _entete + _QUI + '\n\n'
+      + 'Un projet est à l’étude à proximité immédiate de votre parcelle {parcelle} ({surface}), à '
+      + '{commune} ; votre bien s’y intégrerait naturellement.\n\n' + _PROPOSE + '\n\n' + _REPONDRE },
   { key: 'libre', label: 'Libre', corps: '' },
 ]
 type Dest = { idu: string; commune: string; surface: number | null }
