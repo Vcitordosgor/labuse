@@ -55,8 +55,26 @@ def rendre_document(db, idu: str, request: Request, document: str, *,
             "message": "Ce document ne peut pas être établi : il manque des éléments indispensables.",
             "manques": exc.manques,
         })
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        # RECETTE-7 (C1) — un ÉCHEC TECHNIQUE n'est PAS une donnée manquante : on LOGUE la trace
+        # (pour lire la cause) et on rend une erreur DISTINCTE (500, sans « manques ») — l'écran la
+        # dit comme telle, jamais sous le bandeau « il manque : ».
+        log.exception("document %s %s : échec technique de génération", document, idu)
+        raise HTTPException(status_code=500, detail={
+            "erreur": "erreur_technique",
+            "message": "Le document n'a pas pu être généré (erreur technique).",
+        })
     html = _mention_marque(res.html) if marque else res.html
-    pdf = render_pdf(html, forms=forms)
+    try:
+        pdf = render_pdf(html, forms=forms)
+    except Exception as exc:  # noqa: BLE001 — le rendu PDF (WeasyPrint) peut échouer : dit comme technique.
+        log.exception("document %s %s : échec du rendu PDF", document, idu)
+        raise HTTPException(status_code=500, detail={
+            "erreur": "erreur_technique",
+            "message": "Le document n'a pas pu être rendu (erreur technique).",
+        })
     log.info("document %s %s généré (%s)", document, idu, res.numero)
     # RECETTE-5 (V17) — nom de fichier HUMAIN (« Dossier financier — FI-….pdf ») : le titre du document
     # (point unique builder.titre_document) + le numéro. Fallback ASCII (`filename=`) sur le numéro seul,

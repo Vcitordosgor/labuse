@@ -34,6 +34,10 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
   const ecrans = data?.ecrans || []
   const N = ecrans.length || 1
   const [docErr, setDocErr] = useState<{ libelle: string; raison?: string }[] | null>(null)
+  // RECETTE-7 (C1) — un ÉCHEC TECHNIQUE et une DONNÉE MANQUANTE sont deux choses différentes :
+  // le bandeau « il manque : » ne s'affiche que s'il peut NOMMER les champs (docErr) ; une erreur
+  // de génération (500, réseau) est dite comme telle, séparément (docTech).
+  const [docTech, setDocTech] = useState<string | null>(null)
 
   const set = (id: string, v: unknown) => setReponses((r) => ({ ...r, [id]: v }))
 
@@ -73,18 +77,20 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
   // RECETTE-5 (V18b) — ouvrir le document : si le back répond 422 (non établissable), on N'OUVRE PAS de
   // pages vides — on affiche ici la liste des éléments manquants (structure : ex. « programme constructible »).
   const ouvrirDoc = async () => {
-    setDocErr(null)
+    setDocErr(null); setDocTech(null)
     try {
       const r = await fetch(`/financier/${encodeURIComponent(idu)}.pdf`)
+      // 422 = données INDISPENSABLES manquantes : on NOMME les champs (« il manque : … »).
       if (r.status === 422) {
         const d = await r.json().catch(() => null)
         setDocErr(d?.detail?.manques ?? [{ libelle: 'Éléments indispensables manquants' }])
         return
       }
-      if (!r.ok) { setDocErr([{ libelle: 'Le document n\'a pas pu être généré' }]); return }
+      // tout autre échec = TECHNIQUE (500, réseau) : message d'erreur, jamais « il manque : ».
+      if (!r.ok) { setDocTech('Le document n\'a pas pu être généré (erreur technique). Réessayez ; si cela persiste, signalez-le au support.'); return }
       const blob = await r.blob()
       window.open(URL.createObjectURL(blob), '_blank', 'noopener')
-    } catch { setDocErr([{ libelle: 'Le document n\'a pas pu être généré' }]) }
+    } catch { setDocTech('Le document n\'a pas pu être généré — vérifiez votre connexion et réessayez.') }
   }
 
   const backdrop: React.CSSProperties = {
@@ -134,6 +140,12 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
                     <li key={i} style={{ marginBottom: 4 }}><b>{m.libelle}</b>{m.raison ? ` — ${m.raison}` : ''}</li>
                   ))}
                 </ul>
+              </div>
+            )}
+            {/* RECETTE-7 (C1) — l'échec TECHNIQUE, dit comme tel (jamais sous « il manque : »). */}
+            {docTech && (
+              <div data-financier-tech style={{ marginTop: 16, padding: 14, border: '.5px solid #E0776B', borderRadius: 8, background: 'rgba(224,119,107,.06)' }}>
+                <p style={{ fontSize: 13, color: '#E0776B', margin: 0 }}>{docTech}</p>
               </div>
             )}
           </div>
@@ -240,13 +252,19 @@ function ChampRow({ c, valeur, touche, tvaExplication, onChange }: {
     onChange(num ? Number(raw) : raw)
   }
 
+  // RECETTE-7 (C2) — pas de DOUBLON d'aide : là où une explication est déjà imprimée SOUS le champ
+  // (la source d'un pré-remplissage non touché, ou l'explication du régime de TVA), la bulle « i »
+  // au survol répétait mot pour mot. On garde le texte sous le champ et on RETIRE la bulle ; la
+  // bulle reste sur les champs SANS texte dessous (ex. un champ saisi, source masquée).
+  const aideSousChamp = (!!prefill && !touche) || c.id === 'regime_tva_saisi'
+
   return (
     <div style={{ margin: '0 0 16px' }}>
       <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#C7D6CD', margin: '0 0 6px' }}>
         <span>{c.libelle}{c.unite && c.unite !== 'classe' && c.unite !== 'texte' ? ` (${c.unite})` : ''}</span>
-        {/* RECETTE-6 (E1) — le « i » : ce qu'on attend comme valeur, en bulle d'aide FIABLE au survol
-            (le tooltip natif `title` n'affichait rien). Sur les quatre écrans (aide servie par champ). */}
-        {c.aide && (
+        {/* RECETTE-6 (E1) — le « i » : ce qu'on attend comme valeur, en bulle d'aide FIABLE au survol.
+            RECETTE-7 (C2) — masquée quand l'explication est déjà sous le champ (plus de doublon). */}
+        {c.aide && !aideSousChamp && (
           <span style={{ position: 'relative', display: 'inline-flex' }}
             onMouseEnter={() => setAideOpen(true)} onMouseLeave={() => setAideOpen(false)}>
             <span data-champ-aide title={c.aide}

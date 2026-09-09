@@ -149,6 +149,35 @@ Deux fiches corrigées dans `registre/donnees.py` :
 
 # LOT C — Financier
 
+# LOT C — Financier (application)
+
+- **C1 🔴 (le Dossier ne se génère pas toujours) — FAIT (message + robustesse).** Deux corrections :
+  1. **Le message.** Avant : tout échec (technique OU réseau) atterrissait dans le bandeau « il manque : »
+     avec « Le document n'a pas pu être généré » — un échec technique déguisé en donnée manquante.
+     Désormais deux états DISTINCTS (`FinancierQuestionnaire.tsx`) : `docErr` (422 → NOMME les champs, « il
+     manque : … ») et `docTech` (500/réseau → bandeau rouge « erreur technique », jamais sous « il
+     manque : »).
+  2. **La génération.** Côté route (`documents.py`), les exceptions de `construire` et de `render_pdf`
+     sont désormais CAPTURÉES, la trace LOGUÉE (`log.exception` — lisible pour corriger la cause) et
+     rendues en 500 « erreur_technique » distinct des manques. La cause exacte de l'échec de Vic n'était
+     pas dans la trace fournie ; le Financier se génère correctement ici (questionnaire complet, prix
+     4 500 €/m²). La robustesse ci-dessus fait qu'un futur échec technique est tracé et dit honnêtement.
+- **C2 (doublon d'aide) — FAIT.** La bulle « i » ne s'affiche plus quand une explication est déjà
+  imprimée sous le champ (source d'un pré-remplissage non touché, explication du régime de TVA) ; elle
+  reste sur les champs sans texte dessous. tsc vert.
+- **C3 (servir « Revente en l'état ») — DESIGN LIVRÉ, non bâti (arbitrage budget).** Ce n'est pas un
+  correctif mais une FEATURE (nouveau parcours), qui touche ~5 fichiers : (a) `financier_questionnaire.py`
+  — passer `USAGES['revente'].servi=True` + un jeu de champs `REVENTE_ECRANS` (prix d'achat, frais
+  d'acquisition %, travaux éventuels, délai de portage, prix de revente) + `manques_revente` ; (b) stocker
+  l'usage choisi dans le questionnaire (`reponses['_usage']`) ; (c) l'endpoint sert les écrans PAR usage
+  (payload `ecrans_par_usage`, le front choisit) ; (d) `financier_bilan.py` — un calcul SIMPLE
+  `calculer_revente` : `marge = revente − achat − frais_acq − travaux − coût_portage` (portage =
+  achat × taux × durée/12, ou 0), `taux_marge = marge / revente` — pas de bilan à rebours ; (e)
+  `blocs/financier.py` — un rendu revente (marge, taux, les 5 postes) sous garde de vraisemblance
+  (réutilise `_hors_marche`) et couvert par le crible provenance (Z5) via des données `*_saisi_*`. Les
+  trois autres usages restent grisés avec leur raison. **Non bâti ce tour** pour ne pas livrer une
+  feature à moitié câblée ; la spec ci-dessus est directement implémentable.
+
 # LOT D — Le MNT : RGE ALTI
 
 # LOT E — Les trois documents
