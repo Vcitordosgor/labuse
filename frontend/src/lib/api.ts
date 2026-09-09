@@ -2169,11 +2169,15 @@ export interface QEcran { titre: string; champs: QChamp[] }
 // RECETTE-6 (E5) — écran 0 « Que voulez-vous chiffrer ? ». Seul `construction` est servi ; les autres
 // usages sont grisés avec leur `raison` (pas de moteur inventé).
 export interface QUsage { key: string; label: string; servi: boolean; sous?: string; raison?: string }
+// RECETTE-9 T1 — d'où vient la surface vendable du bilan : chiffrée par le potentiel (rien à saisir)
+// ou à décrire par le porteur (logements + typologie deviennent indispensables).
+export interface QProgramme { auto: boolean; source: 'potentiel' | 'saisie'; message: string }
 export interface QuestionnaireFinancier {
   idu: string; reponses: Record<string, unknown>; complet: boolean; existe: boolean
   ecrans: QEcran[]; usages?: QUsage[]; tva_explication: string; champs_obligatoires: string[]
   // RECETTE-8 W13bis (C3) — les écrans PAR usage : le front sert le questionnaire du parcours choisi.
   ecrans_par_usage?: Record<string, QEcran[]>; champs_obligatoires_revente?: string[]
+  programme?: QProgramme   // RECETTE-9 T1 — programme constructible : potentiel vs à saisir
 }
 export const getFinancierQuestionnaire = (idu: string) =>
   j<QuestionnaireFinancier>(`/financier/${encodeURIComponent(idu)}/questionnaire`)

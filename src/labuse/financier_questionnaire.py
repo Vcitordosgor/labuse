@@ -136,6 +136,22 @@ AIDES: dict[str, str] = {
 }
 
 
+def programme_depuis_potentiel(pot: dict | None) -> bool:
+    """RECETTE-9 T1 — le potentiel de la parcelle chiffre-t-il SEUL le programme constructible ?
+    Vrai si `capacite_estimee` signale une capacité (parcelle en sous-densité) : `_financier_contexte`
+    pré-remplit alors le programme et le bilan s'établit SANS que le porteur décrive quoi que ce soit.
+    Faux (parcelle à sa densité, potentiel nul/faible) : la surface vendable n'existe que si le porteur
+    saisit un nombre de logements — qui devient dès lors INDISPENSABLE (défaut n°1/n°2 de la recette :
+    le champ qui débloque « Programme constructible » n'était pas marqué et le blocage tombait « à
+    l'arrivée » du document au lieu d'au moment de la saisie)."""
+    return bool((pot or {}).get("capacite_estimee"))
+
+
+def obligatoires_programme(pot: dict | None) -> set[str]:
+    """Les champs du questionnaire construction que le potentiel absent rend INDISPENSABLES."""
+    return set() if programme_depuis_potentiel(pot) else {"logements_vises_saisi"}
+
+
 def manques(resolved: dict, program: dict) -> list[dict]:
     """RECETTE-5 (V18/V19) — la liste des éléments INDISPENSABLES qui manquent pour ÉTABLIR le bilan
     (charge foncière). Vide ⇒ le document Financier peut se générer. Deux familles :

@@ -6377,16 +6377,42 @@ def financier_questionnaire_get(idu: str, request: Request, db: Session = Depend
         fiche = {}
     prefill = qf.prefill(fiche)
 
+    # RECETTE-9 T1 — le PROGRAMME constructible (surface vendable) vient du POTENTIEL de la parcelle ;
+    # quand la parcelle n'a PAS de potentiel chiffrable (bâtie à sa densité, zone qui l'interdit…), le
+    # bilan reste établissable MAIS il faut que le porteur DÉCRIVE son programme : « nombre de logements
+    # visés » (+ typologie) devient alors INDISPENSABLE — sinon `surface_vendable` reste nul et le
+    # document se bloque « à l'arrivée » sur « Programme constructible » (le constat de la recette). On
+    # marque le champ indispensable AU MOMENT DE LA SAISIE (défaut n°1), plus une bannière explicite.
+    _pot = fiche.get("potentiel_transformation") or {}
+    # RECETTE-9 T1 — le programme est chiffré AUTOMATIQUEMENT quand le potentiel signale une capacité
+    # constructible (`capacite_estimee` VRAI : parcelle en sous-densité) — c'est le cas où
+    # `_financier_contexte` pré-remplit le programme et le bilan s'établit SANS que le porteur décrive
+    # quoi que ce soit (vérifié empiriquement : parcelle « fort » → surface vendable servie, manques=∅).
+    # Quand `capacite_estimee` est FAUX (parcelle nulle/faible, à sa densité), la surface vendable
+    # N'EXISTE QUE si le porteur décrit son programme → le nombre de logements devient indispensable
+    # (parcelle « faible » → manques=['Programme constructible'] tant que logements est vide).
+    programme_auto = qf.programme_depuis_potentiel(_pot)
+    # sans potentiel chiffrable, le nombre de logements est le champ qui DÉBLOQUE le programme.
+    obligatoires_programme = qf.obligatoires_programme(_pot)
+
     def _champ(fid: str) -> dict:
         c = CHIFFRES.get(fid)
         # RECETTE-2 (S3) — libellé CLIENT en français clair ; repli sur le libellé registre.
         libelle = qf.LIBELLES_CLIENT.get(fid) or (c.libelle if c else fid)
+        # RECETTE-9 T1 — l'aide du champ logements se précise quand il devient indispensable.
+        aide = qf.AIDES.get(fid)
+        if fid == "logements_vises_saisi" and not programme_auto:
+            aide = ("INDISPENSABLE sur cette parcelle : LABUSE n'a pas pu chiffrer de programme "
+                    "constructible (pas de potentiel calculé). Renseignez le nombre de logements "
+                    "visés — avec la typologie, il donne la surface vendable du bilan.")
         return {"id": fid, "libelle": libelle, "unite": c.unite if c else "",
                 "type": c.type if c else "texte",
                 "domaine": list(c.domaine) if c and c.domaine else None,
                 # RECETTE-8 W13bis — obligatoire dans SON parcours (construction OU revente).
-                "obligatoire": fid in qf.OBLIGATOIRES or fid in qf.OBLIGATOIRES_REVENTE,
-                "aide": qf.AIDES.get(fid),   # RECETTE-5 (V19) — le « i » : ce qu'on attend comme valeur
+                # RECETTE-9 T1 — + les champs qui DÉBLOQUENT le programme quand le potentiel est absent.
+                "obligatoire": (fid in qf.OBLIGATOIRES or fid in qf.OBLIGATOIRES_REVENTE
+                                or fid in obligatoires_programme),
+                "aide": aide,   # RECETTE-5 (V19) — le « i » : ce qu'on attend comme valeur
                 "prefill": prefill.get(fid)}  # {valeur, source} ou None (jamais une valeur sans source)
 
     ecrans = [{"titre": t, "champs": [_champ(fid) for fid in ids]} for t, ids in qf.ECRANS]
@@ -6397,9 +6423,22 @@ def financier_questionnaire_get(idu: str, request: Request, db: Session = Depend
         "construction": ecrans,
         "revente": [{"titre": t, "champs": [_champ(fid) for fid in ids]} for t, ids in qf.REVENTE_ECRANS],
     }
+    # RECETTE-9 T1 — le programme constructible : d'où vient la surface vendable du bilan. « potentiel »
+    # = LABUSE l'a chiffrée (rien à saisir) ; « saisie » = il faut la décrire (logements + typologie).
+    programme = {
+        "auto": programme_auto,
+        "source": "potentiel" if programme_auto else "saisie",
+        "message": (
+            "LABUSE a chiffré le programme constructible depuis le potentiel de la parcelle."
+            if programme_auto else
+            "LABUSE n'a pas pu chiffrer de programme constructible sur cette parcelle "
+            "(pas de potentiel calculé). Renseignez le nombre de logements visés et la typologie "
+            "moyenne : sans eux, le bilan financier ne peut pas être établi."),
+    }
     return {"idu": idu, "reponses": etat["reponses"], "complet": etat["complet"],
             "existe": etat["existe"], "ecrans": ecrans,
             "ecrans_par_usage": ecrans_par_usage,
+            "programme": programme,   # RECETTE-9 T1 — surface vendable : potentiel vs à saisir
             "usages": qf.USAGES,  # RECETTE-6 (E5) — écran 0 « Que voulez-vous chiffrer ? »
             "tva_explication": qf.TVA_EXPLICATION,
             "champs_obligatoires": sorted(qf.OBLIGATOIRES),

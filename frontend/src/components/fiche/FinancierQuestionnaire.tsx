@@ -207,13 +207,33 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
         {!isLoading && !error && !fini && data && usage !== null && (
           <>
             <div style={{ fontSize: 12, color: '#5F7267', marginBottom: 6 }}>{etape + 1} / {N} · {ecrans[etape]?.titre}</div>
-            <div style={{ display: 'flex', gap: 5, marginBottom: 22 }}>
-              {ecrans.map((_, i) => <i key={i} style={{ flex: 1, height: 2, background: i <= etape ? MINT : '#1E2A23' }} />)}
+            {/* RECETTE-9 T1 (défaut n°3) — NAVIGATION avant/arrière : chaque étape est cliquable pour
+                y revenir (ou y aller) directement ; la saisie est conservée (état `reponses`). Avant,
+                seul un « ← Retour » pas-à-pas existait — on rend le fil des étapes navigable. */}
+            <div data-financier-etapes style={{ display: 'flex', gap: 5, marginBottom: 22 }}>
+              {ecrans.map((e, i) => (
+                <button key={i} type="button" data-etape={i} aria-current={i === etape}
+                  title={`Étape ${i + 1} — ${e.titre}`} onClick={() => { setErreur(null); setEtape(i) }}
+                  style={{ flex: 1, height: 6, padding: 0, border: 0, borderRadius: 3, cursor: 'pointer',
+                    background: i === etape ? MINT : i < etape ? '#2F6B45' : '#1E2A23' }} />
+              ))}
             </div>
             <h2 style={{ fontSize: 22, fontWeight: 500, margin: '0 0 4px' }}>{ecrans[etape]?.titre}</h2>
-            <p style={{ fontSize: 13, color: '#8FA69A', margin: '0 0 20px' }}>
+            <p style={{ fontSize: 13, color: '#8FA69A', margin: '0 0 14px' }}>
               Tout est pré-rempli avec une valeur sourcée ; vous corrigez ce que vous savez. Un champ vidé s'imprime « non chiffré ».
             </p>
+            {/* RECETTE-9 T1 (défauts n°1 et n°2) — quand la parcelle n'a PAS de potentiel chiffrable,
+                le programme constructible DOIT être décrit (logements + typologie) : on le dit AU MOMENT
+                DE LA SAISIE (bannière + champs marqués « indispensable »), plus jamais seulement « à
+                l'arrivée » sous « il manque : Programme constructible ». */}
+            {usage === 'construction' && data.programme && !data.programme.auto && (
+              <div data-financier-programme style={{ margin: '0 0 18px', padding: 12, borderRadius: 8,
+                border: '.5px solid #E0B341', background: 'rgba(224,179,65,.06)' }}>
+                <p style={{ fontSize: 12.5, color: '#E9C868', margin: 0, lineHeight: 1.5 }}>
+                  {data.programme.message}
+                </p>
+              </div>
+            )}
 
             {(ecrans[etape]?.champs || []).map((c) => (
               <ChampRow key={c.id} c={c} valeur={reponses[c.id]} touche={c.id in reponses}
