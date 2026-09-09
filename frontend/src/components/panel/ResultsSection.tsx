@@ -249,8 +249,10 @@ const SEGMENTS: { key: SegKey; label: string; hint: string }[] = [
     hint: 'Un promoteur ou une société a obtenu un permis de construire sur cette parcelle de particulier (moins de 3 ans) — le signal le plus fort du modèle.' },
   { key: 'terrain_nu', label: 'Terrain nu constructible',
     hint: 'Rien de bâti (emprise < 5 %) et de la surface de plancher à bâtir.' },
-  { key: 'bati_densifier', label: 'Bâti à densifier',
-    hint: 'Déjà occupé, mais il reste de la surface de plancher constructible.' },
+  // RECETTE-5 (V16, décision Vic) — « Bâti à densifier » ne disait rien au client → libellé qui dit
+  // CE QUE C'EST : une parcelle déjà construite où le PLU autorise encore du plancher.
+  { key: 'bati_densifier', label: 'Déjà construit, le PLU autorise encore du plancher',
+    hint: 'Parcelle déjà occupée par du bâti, mais dont le PLU permet encore de construire de la surface de plancher (surélévation, extension, seconde construction).' },
   { key: 'reste', label: 'Le reste',
     hint: 'Bâti au maximum ou sans potentiel résiduel identifié.' },
 ]

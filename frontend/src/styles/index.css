@@ -156,6 +156,17 @@
     /* RETOURS-6 U2 — carré d'icône des cartes de la fiche commune : sur l'aplat plein, on l'éclaircit
        (ink translucide) pour que le glyphe (passé en encre sombre par la règle ci-dessus) reste lisible. */
     .hover-fill:hover .lc-ic { background:rgba(7,16,9,.14); border-color:rgba(7,16,9,.22); }
+    /* RECETTE-5 (V10) — LES PASTILLES DU LISTING RESTENT LISIBLES AU SURVOL. Sur la ligne survolée
+       (aplat mint), chaque pastille gardait un fond TRANSLUCIDE (couleur du tier) et voyait son texte
+       forcé en encre sombre par la règle ci-dessus : sur le mint, l'ensemble virait illisible — d'autant
+       plus au scroll, quand la ligne sous le curseur change en continu. On leur rend un fond OPAQUE
+       sombre + un texte clair : chaque pastille redevient un petit jeton net, contrasté quel que soit
+       l'aplat. (Portée : les cartes du listing de résultats seulement.) */
+    [data-results-panel] .hover-fill:hover span[class*="rounded-full"] {
+      background:var(--bg-2) !important;
+      border-color:rgba(255,255,255,.16) !important;
+      color:var(--txt-hi) !important;
+    }
   }
   /* variante IA (mauve profond) — surfaces IA à aplat plein (ex. « Reprendre » du Copilote). */
   .hover-fill-ia { transition:background .15s, color .15s; }
@@ -514,10 +525,15 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 /* Z1·03 — LIGNE DE FAIT : libellé gauche (gris) · valeur mono à droite (chiffres tabulaires, unité en
    petit) · source SOUS la ligne avec son badge · filet entre lignes. Absente = gris atténué ; à
    vérifier = ambre. Remplace les tableaux dans une boîte. Toute la fiche s'aligne sur sa colonne droite. */
-.fiche-v6 .f-row { display:grid; grid-template-columns:1fr auto; gap:3px 14px; align-items:baseline; padding:8px 0; border-bottom:0.5px solid var(--line); }
+/* RECETTE-5 (V9) — une VALEUR longue (DPU « Droit de préemption urbain renforcé », PEB « Plan
+   d'exposition au bruit … Roland Garros ») était en nowrap : elle happait toute la largeur et
+   ÉCRASAIT le libellé (« Nature du toit » réduit à 0 px, coupé). On borne la colonne du libellé
+   (auto, ne descend plus sous son contenu) et on laisse la valeur RETOMBER À LA LIGNE plutôt que
+   déborder du cadre — les nombres, courts, ne cassent jamais. Marges/graisses inchangées (cohérence). */
+.fiche-v6 .f-row { display:grid; grid-template-columns:auto 1fr; gap:3px 14px; align-items:baseline; padding:8px 0; border-bottom:0.5px solid var(--line); }
 .fiche-v6 .f-row:last-child { border-bottom:0; }
-.fiche-v6 .f-row > .l { font-size:13px; color:var(--txt-dim); min-width:0; }
-.fiche-v6 .f-row > .v { font-family:var(--mono); font-size:13px; color:var(--txt-hi); text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.fiche-v6 .f-row > .l { font-size:13px; color:var(--txt-dim); min-width:0; overflow-wrap:anywhere; }
+.fiche-v6 .f-row > .v { font-family:var(--mono); font-size:13px; color:var(--txt-hi); text-align:right; font-variant-numeric:tabular-nums; min-width:0; overflow-wrap:anywhere; }
 .fiche-v6 .f-row > .v small { font-family:var(--mono); font-size:11.5px; color:var(--txt-dim); font-weight:400; }
 .fiche-v6 .f-row > .v.warn { color:var(--amber); }
 .fiche-v6 .f-row > .v.mute { color:var(--txt-faint); }

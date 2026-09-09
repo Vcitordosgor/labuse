@@ -48,10 +48,14 @@ const TIER_V2: maplibregl.ExpressionSpecification = ['coalesce', ['get', 'tier_v
 // — dans le filtre par défaut « tout montrer » (M30) — sont peints en TERRE (TIER_DECLASSE_META
 // #8C7468) au lieu de tomber sur le gris de fond (invisibles alors que la liste les colore).
 // Le patron est celui de ZONE_FAM_COLOR ci-dessous.
-// Seule exception GRAVÉE : le tier v2 'ecartee' suit la DOCTRINE du verdict d'en-tête (écartée =
-// braise #E8695A, cf. verdictMeta) et partage la teinte d'exclusion de l'étage 0 — pas le gris de
-// TIER_V2_META.ecartee. De toute façon quasi éteint (opacité 0.04), color secondaire.
-const ECARTEE_COLOR = '#E8695A'
+// RECETTE-5 (V15, décision Vic) — LA CARTE ROUGE corrigée. L'écartée (et l'étage 0) était peinte en
+// BRAISE #E8695A — la MÊME teinte que le palier « Priorité » (PALIER_META.priorite). Tant que les
+// écartées étaient quasi éteintes (opacité 0,04), le rouge ne se voyait pas ; mais RECETTE-2 a rendu
+// l'opacité UNIFORME (0,72) en mode analyse → toute l'île (majoritairement écartée/étage 0) virait au
+// ROUGE, indiscernable de la Priorité. On revient à la teinte MUETTE du vocabulaire PALIERS-1
+// (TIER_V2_META.ecartee = #4A5A52) : le rouge reste réservé à la Priorité, l'écartée s'efface. La
+// carte et la légende (qui lisait déjà #4A5A52) redisent enfin la même chose.
+const ECARTEE_COLOR = ALL_TIER_META['ecartee'].color   // #4A5A52 (muet) — plus le braise qui rougissait l'île
 const STATUS_COLOR: maplibregl.ExpressionSpecification = [
   'case', ETAGE0, ECARTEE_COLOR,
   ['match', TIER_V2,

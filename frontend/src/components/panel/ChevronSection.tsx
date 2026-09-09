@@ -24,11 +24,11 @@ export function ChevronSection({ open }: { open: boolean }) {
   return (
     <span aria-hidden="true"
       className={`chev-boite ${BOITE} group-hover:bg-surface-3 group-hover:text-txt-hi`}>
-      {/* RECETTE-2 (S17, décision Vic) — FERMÉ → la flèche pointe vers la DROITE (▸) ; OUVERT → vers
-          le BAS (▾). Le SVG est dessiné vers le bas (ouvert = pas de rotation) ; fermé = -90° (le
-          sommet, en bas, part à droite). Plus d'alternance haut/bas (l'ancien 180° pointait en haut). */}
+      {/* RECETTE-5 (V12, décision Vic) — FERMÉ → la flèche pointe vers la GAUCHE (◂) ; OUVERT → vers
+          le BAS (▾). Le SVG est dessiné vers le bas (ouvert = pas de rotation) ; fermé = +90° (le
+          sommet, en bas, part à GAUCHE). Corrige l'ancien -90° (S17) qui pointait à DROITE. */}
       <svg viewBox="0 0 12 12"
-        className={`h-3 w-3 transition-transform duration-soft ease-cockpit ${open ? '' : '-rotate-90'}`}>
+        className={`h-3 w-3 transition-transform duration-soft ease-cockpit ${open ? '' : 'rotate-90'}`}>
         <polyline points="2.75,4.25 6,7.75 9.25,4.25" fill="none" stroke="currentColor"
           strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
