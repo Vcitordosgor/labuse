@@ -752,9 +752,12 @@ export function Fiche({ idu }: { idu: string }) {
       {/* ═══ EN-TÊTE + CARTE VERDICT (DA §4). M56-B3 fix 3 : plus de filet ni de fond distinct
           sous l'en-tête — le panneau est un seul fond continu --bg-1 du haut au pied.
           M56-B3 fix 7 : padding panneau 16→14 (densité). ═══ */}
-      {/* M56-B6 · DA-FICHE-v6 — EN-TÊTE en CARTE .head (identité + 4 chiffres) posée sur le fond
-          de panneau plus sombre. Le CTA, le bandeau et les IA suivent SOUS la carte. */}
-      <div style={{ padding: '14px 14px 0', flexShrink: 0 }}>
+      {/* RECETTE-8 W12 — le conteneur défilant s'ouvre DÈS la carte d'en-tête : la tête ne « colle »
+          plus au défilement (elle était flex-shrink:0, fixe, et recouvrait le contenu qui passait
+          dessous). Elle défile désormais AVEC le reste — un seul corps qui défile du haut au pied.
+          M56-B6 · DA-FICHE-v6 — EN-TÊTE en CARTE .head (identité + chiffres). */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
+      <div style={{ paddingTop: 10 }}>
         <div className="head">
           <div className="head-top">
             {/* RETOURS-11 R3 — la colonne gauche pousse (flex:1) pour donner sa largeur à l'adresse,
@@ -920,8 +923,9 @@ export function Fiche({ idu }: { idu: string }) {
           `overflow-y-auto flex-1`. La fiche défile donc jusqu'au pied EN TOUTE circonstance (bloc
           Analyse absent / déplié / replié, synthèse ouverte, n'importe quel tiroir ouvert). Avant M68,
           le bloc Analyse était dans le wrapper flex-shrink:0 et affamait ce conteneur (cf. RAPPORT_M68).
-          RETOURS-9 (Q8.1) — plus d'onglet : ce conteneur est le SEUL corps défilant de la fiche. */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
+          RETOURS-9 (Q8.1) — plus d'onglet : ce conteneur est le SEUL corps défilant de la fiche.
+          RECETTE-8 W12 — ce conteneur est désormais OUVERT plus haut (juste avant la carte d'en-tête)
+          pour que la tête défile avec le reste ; ici on ne rouvre plus rien. */}
         {/* wrapper NON-flex : conserve l'espacement interne d'origine du bloc Analyse (marges inline). */}
         <div>
 
