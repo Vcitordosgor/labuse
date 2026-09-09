@@ -236,8 +236,10 @@ def _fiscalite_locale(tfpb: dict | None, zonage: dict | None, resolved: dict) ->
                                    f'<span class="num">{_pct(tfpb.get("teom_pct"))}</span>',
                                    chip_span("s", "sourcé")))
     if zonage:
+        # RECETTE-9 T4 — la clé dit déjà « Zone … » : la valeur porte le seul code ABC (« B2 »),
+        # plus de « zone B2 » redondant (même famille que le doublon « Zone Zone Um » de l'Apporteur).
         lignes.append(ligne_kv("Zone d'investissement (A/B/C)",
-                               esc(f"zone {zonage.get('zone')}"), chip_span("s", "sourcé")))
+                               esc(str(zonage.get("zone"))), chip_span("s", "sourcé")))
     corps = "<h2>Fiscalité locale et régime applicable</h2>" + table_kv(lignes)
     # la taxe foncière de portage : dite, jamais chiffrée sans la valeur locative cadastrale.
     r = resolved.get("duree_portage_saisi_mois") or {}

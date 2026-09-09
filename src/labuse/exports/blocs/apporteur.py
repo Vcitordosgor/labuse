@@ -142,9 +142,13 @@ def _coup_d_oeil(valeurs, ctx) -> str:
         # Dossier dit « Zone Um » — une donnée, une réponse dans les deux documents.
         from ..verdicts import zone_libelle
         z = zone_libelle(valeurs) or f"Zone {val(valeurs, 'zone_plu_famille')}"
+        # RECETTE-9 T4 — le libellé partagé commence par « Zone … » (juste pour les phrases du
+        # Dossier : « Zone Um (famille U) — … »). Ici la CLÉ de la ligne est déjà « Zone » → on
+        # retire le préfixe redondant, sinon « Zone : Zone Um (famille U) » (le doublon W15).
+        z_valeur = re.sub(r"^Zone\s+", "", z)
         suite = (" — " + esc(libelle)) if libelle else (
             " — urbaine, constructible" if str(val(valeurs, "zone_plu_famille")).upper() in ("U", "AU") else "")
-        lignes.append(ligne_kv("Zone", esc(z) + suite, ""))
+        lignes.append(ligne_kv("Zone", esc(z_valeur) + suite, ""))
     lignes.append(ligne_kv("Sur place", esc(_sur_place(valeurs)), ""))
     # RECETTE-2 (S7) — SDP résiduelle + capacité : ce que l'apporteur peut annoncer comme potentiel.
     # RECETTE-5 (V20a) — un ZÉRO ne s'imprime pas : « 0 m² de plancher restant » (SDP nulle) n'a aucun
