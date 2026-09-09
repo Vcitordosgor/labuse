@@ -4,7 +4,7 @@ import { getCommunes, getFiltre, getParcelsGeojson, getResults, type SortKey } f
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
-import { ALL_TIER_META, effectiveTier, etatBienMeta, TIER_V2_META, verdictMeta } from '../../lib/status'
+import { ALL_TIER_META, effectiveTier, etatBienMeta, PALIER_META, TIER_V2_META, verdictMeta } from '../../lib/status'
 import { raisonDominante } from '../../lib/raison'
 import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
@@ -238,9 +238,6 @@ export function sortRows<T extends SortableRow>(rows: T[], sort: SortKey, groupe
   })
 }
 
-// M55-H point 10 : couleur de la famille « potentiel épuisé » — la terre éteinte des
-// verdicts declasse_* (source unique ALL_TIER_META, jamais un littéral recopié).
-const EPUISE_COLOR = ALL_TIER_META['declasse_bati_sature'].color
 
 // RECETTE-3 (T4, décision Vic) — les QUATRE SEGMENTS du listing d'analyse, dans CET ordre. Chaque
 // parcelle garde son palier (chips ResultCard) ; la segmentation est une SECONDE lecture, par nature
@@ -285,9 +282,10 @@ export function ResultsSection() {
   const [sort, setSort] = useState<SortKey>(analyse ? 'rang' : 'adresse')
   const sorts = analyse ? SORTS : FACTUAL_SORTS
   useEffect(() => { setSort(analyse ? 'rang' : 'adresse') }, [analyse])
-  // RECETTE-3 (T4) — état repli des 4 segments (analyse) : « le reste » replié par défaut.
+  // RECETTE-6 (B2, décision Vic) — les QUATRE segments sont FERMÉS par défaut (flèche vers la droite).
+  // [RECETTE-3 (T4) ouvrait les trois premiers.]
   const [openSeg, setOpenSeg] = useState<Record<SegKey, boolean>>({
-    permis_pro: true, terrain_nu: true, bati_densifier: true, reste: false })
+    permis_pro: false, terrain_nu: false, bati_densifier: false, reste: false })
   // M69 A — GROUPEMENT PAR TIER : appliqué UNIQUEMENT pour le tri par défaut « Probabilité de
   // vente » (rang) en mode analyse (M55-H p5). Un tri de COLONNE (Surface) doit produire un ordre
   // GLOBAL monotone → on lève le groupement. Ce booléen pilote client ET serveur (un seul point).
@@ -460,14 +458,16 @@ export function ResultsSection() {
               raconte les trois familles. */}
           <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs leading-relaxed text-txt-mut"
             title={uni.data ? `${fmt(uni.data.opportunites)} opportunités (priorité + à suivre) dont ${fmt(uni.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
-            {/* M135 — bande de résumé : MÊMES NOMBRES, échelle d'action (labels de status.ts, jamais en dur) */}
-            <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> {TIER_V2_META.brulante.label.toLowerCase()} ·{' '}
-            <span className="font-medium" style={{ color: TIER_V2_META.chaude.color }}>{fmt(counts.chaude)}</span> {TIER_V2_META.chaude.label.toLowerCase()} ·{' '}
-            <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> {TIER_V2_META.reserve_fonciere.label.toLowerCase()} ·{' '}
-            <span className="font-medium" style={{ color: TIER_V2_META.a_creuser.color }}>{fmt(counts.a_creuser)}</span> {TIER_V2_META.a_creuser.label.toLowerCase()} ·{' '}
-            <span className="font-medium" style={{ color: EPUISE_COLOR }}>{fmt(epuise)}</span> faible
+            {/* RECETTE-6 (B3) — la bande de résumé suivait les 6 tiers BRUTS, dont deux (reserve_fonciere
+                et a_creuser) portent le MÊME palier « Sans signal » → « 0 sans signal · 0 sans signal »,
+                et « potentiel épuisé » s'affichait en dur « faible » (mot hors vocabulaire PALIERS-1).
+                On rend désormais les QUATRE PALIERS servis : Priorité · À suivre · Sans signal (= réserve
+                + à creuser + potentiel épuisé) · Écartées. Labels/couleurs = PALIER_META (jamais en dur). */}
+            <span className="font-medium" style={{ color: PALIER_META.priorite.color }}>{fmt(counts.brulante)}</span> {PALIER_META.priorite.label.toLowerCase()} ·{' '}
+            <span className="font-medium" style={{ color: PALIER_META.a_suivre.color }}>{fmt(counts.chaude)}</span> {PALIER_META.a_suivre.label.toLowerCase()} ·{' '}
+            <span className="font-medium" style={{ color: PALIER_META.sans_signal.color }}>{fmt(counts.reserve_fonciere + counts.a_creuser + epuise)}</span> {PALIER_META.sans_signal.label.toLowerCase()}
             {ecartees != null && (
-              <> · <span className="font-medium text-txt-dim">{fmt(ecartees)}</span> écartées</>
+              <> · <span className="font-medium" style={{ color: PALIER_META.ecartee.color }}>{fmt(ecartees)}</span> {PALIER_META.ecartee.label.toLowerCase()}</>
             )}
             {/* M55-K point 1 : « (filtres actifs) » retiré (la ventilation EST déjà filtrée —
                 mention redondante). « (dans la zone) » conservé : un polygone dessiné n'est
@@ -535,6 +535,16 @@ export function ResultsSection() {
                 </span>
               } />
           </div>
+        )}
+        {/* RECETTE-6 (B1, décision Vic) — case « Voir tout » en DERNIÈRE position À DROITE du groupe :
+            cochée, elle ouvre les quatre segments ; décochée, elle les referme. */}
+        {!loading && !error && analyse && (
+          <label className="flex shrink-0 cursor-pointer items-center justify-end gap-1.5 pr-0.5 text-[11px] text-txt-dim hover:text-txt">
+            <span>Voir tout</span>
+            <input type="checkbox" data-segments-voir-tout className="accent-mint"
+              checked={SEGMENTS.every((s) => openSeg[s.key])}
+              onChange={(e) => setOpenSeg(Object.fromEntries(SEGMENTS.map((s) => [s.key, e.target.checked])) as Record<SegKey, boolean>)} />
+          </label>
         )}
         {/* RECETTE-3 (T4) — mode ANALYSE : la liste est organisée en 4 SEGMENTS repliables (ordre
             fixe), le compte de chacun servi par /filtre (segments, exact hors étage 0). Chaque carte
