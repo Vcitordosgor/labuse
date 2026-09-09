@@ -121,14 +121,31 @@ def probleme_couverture(v: Valeur) -> str | None:
 
 
 def _millesimes(db, reservoir_ids: set[str]) -> dict[str, str | None]:
-    """Millésimes servis des réservoirs demandés, lus de data_sources (une requête)."""
+    """Millésimes servis des réservoirs demandés, lus de data_sources (une requête par réservoir).
+
+    RECETTE-8 W16 — le millésime AFFICHABLE est composé par le PRODUCTEUR UNIQUE
+    (`millesime_source.composer`), exactement comme la section « Sources et millésimes » du Dossier
+    (api.app._data_sources_fiche) : une source ne peut plus avoir deux millésimes différents dans le
+    même document (le pied disait « édition non enregistrée » quand le §10 disait « vue le … »)."""
+    from ..millesime_source import composer
     out: dict[str, str | None] = {}
     motifs = {rid: _RESERVOIR_NAME_ILIKE[rid] for rid in reservoir_ids if rid in _RESERVOIR_NAME_ILIKE}
+    # `source_veille.dernier_vu` alimente la sentinelle du composeur ; table parfois absente (base partielle).
+    has_sv = False
+    try:
+        has_sv = bool(db.execute(text("SELECT to_regclass('source_veille') IS NOT NULL")).scalar())
+    except Exception:  # noqa: BLE001
+        has_sv = False
+    sv_col = "sv.dernier_vu" if has_sv else "NULL AS dernier_vu"
+    sv_join = "LEFT JOIN source_veille sv ON sv.source_id = ds.id" if has_sv else ""
     for rid, motif in motifs.items():
         try:
-            out[rid] = db.execute(text(
-                "SELECT source_millesime FROM data_sources WHERE name ILIKE :m LIMIT 1"),
-                {"m": motif}).scalar()
+            row = db.execute(text(
+                f"SELECT ds.source_millesime, ds.source_horizon_at, {sv_col}, ds.last_sync_at "
+                f"FROM data_sources ds {sv_join} WHERE ds.name ILIKE :m LIMIT 1"),
+                {"m": motif}).mappings().first()
+            out[rid] = composer(row["source_millesime"], source_horizon_at=row["source_horizon_at"],
+                                dernier_vu=row["dernier_vu"], last_sync_at=row["last_sync_at"]) if row else None
         except Exception:  # noqa: BLE001 — base de test partielle : tampon sans millésime, jamais un 500
             out[rid] = None
     return out

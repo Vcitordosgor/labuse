@@ -2823,27 +2823,12 @@ def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dic
     _FIAB = {"verifie": "surveillée", "estime": "estimée", "declaratif": "déclarative",
              "a_confirmer": "à confirmer"}
     out = []
-    import re as _re_m
+    # RECETTE-8 W16 — le millésime affichable vient du PRODUCTEUR UNIQUE (millesime_source.composer),
+    # le même que le pied de section (registre/valeur.py) → une source, une seule vérité par document.
+    from ..millesime_source import composer as _composer_mill
     for r in rows:
-        mill = r["source_millesime"] or (str(r["source_horizon_at"].year) if r["source_horizon_at"] else None)
-        if not mill and r["dernier_vu"] and _re_m.match(r"\d{4}-\d{2}-\d{2}", str(r["dernier_vu"])):
-            d = str(r["dernier_vu"])[:10]
-            mill = f"amont à jour au {d[8:10]}/{d[5:7]}/{d[0:4]} (sentinelle)"
-        if not mill and r["last_sync_at"]:
-            mill = f"ingéré le {r['last_sync_at']:%d/%m/%Y} (date d'ingestion, millésime amont non publié)"
-        # RECETTE-7 (E10) — BD TOPO / RGE ALTI : l'IGN (WFS/Géoplateforme) ne publie PAS de
-        # millésime versionné → le catalogue portait « édition non enregistrée », muet et non
-        # couvert. On le remplace par la SENTINELLE (dernier vu) ou la date d'ingestion, en disant
-        # pourquoi (millésime amont non versionné) — jamais un libellé mort.
-        if mill and "édition non enregistrée" in str(mill):
-            base_lbl = str(mill).split(" — ")[0]
-            if r["dernier_vu"] and _re_m.match(r"\d{4}-\d{2}-\d{2}", str(r["dernier_vu"])):
-                d = str(r["dernier_vu"])[:10]
-                mill = f"{base_lbl} — édition courante, vue le {d[8:10]}/{d[5:7]}/{d[0:4]} (sentinelle)"
-            elif r["last_sync_at"]:
-                mill = f"{base_lbl} — édition courante, ingérée le {r['last_sync_at']:%d/%m/%Y} (millésime amont non versionné par l'IGN)"
-            else:
-                mill = f"{base_lbl} — édition courante (millésime amont non versionné par l'IGN)"
+        mill = _composer_mill(r["source_millesime"], source_horizon_at=r["source_horizon_at"],
+                              dernier_vu=r["dernier_vu"], last_sync_at=r["last_sync_at"])
         out.append({
             "nom": r["name"], "categorie": r["category"], "fournisseur": r["provider"],
             "millesime": mill, "fiabilite": _FIAB.get(r["reliability_level"], r["reliability_level"]),
