@@ -246,22 +246,65 @@ def inventaire(document: str, valeurs: dict[str, Valeur], html: str,
 # majuscule — W18), ou un code de palier / de verdict de cascade qui fuit hors de son vocabulaire
 # contrôlé. Le client doit toujours voir le LIBELLÉ du registre, jamais l'identifiant.
 #
-# On procède par DENYLIST des identifiants techniques des vocabulaires contrôlés (scénarios,
-# paliers, verdicts de cascade). Elle est volontairement restreinte aux formes NON AMBIGÜES —
-# snake_case (avec underscore), CODES EN MAJUSCULES, ou variantes SANS ACCENT d'un mot français
-# accentué — pour ne jamais confondre un identifiant avec un mot de prose (« reconstruction »,
-# « revente », « chaude », « faible » restent des mots français légitimes et NE sont pas listés).
-_CODES_TECHNIQUES: frozenset[str] = frozenset({
-    # scénarios (src/labuse/scenarios.py) — le client voit le libellé, jamais le code
-    "surelevation",
-    # paliers / tiers (scoring/tiers_client.py) — snake_case ou sans accent
-    "priorite", "a_suivre", "sans_signal", "ecartee",
-    "brulante", "a_creuser", "reserve_fonciere", "opportunite", "faux_positif_probable",
-    "declasse_bati_sature", "declasse_non_constructible", "declasse_bati_revele",
-    "declasse_zone_fermee", "declasse_au_statut_inconnu", "declasse_au_fermee",
-    # verdicts de cascade (enums.CascadeVerdict) — codes internes en MAJUSCULES
-    "HARD_EXCLUDE", "SOFT_FLAG", "NON_SOLLICITE",
-})
+# RECETTE-9 T10 — le verrou LIBELLÉS était une LISTE NOIRE figée à la main : il attrapait
+# `surelevation` mais aurait LAISSÉ PASSER tout NOUVEAU code de vocabulaire ajouté sans qu'on pense à
+# l'inscrire. On le RATTACHE désormais AUX VOCABULAIRES eux-mêmes (leur source de vérité) : la liste
+# est DÉRIVÉE des domaines contrôlés (scénarios, paliers/tiers, verdicts de cascade). Un nouveau code
+# snake_case ou EN MAJUSCULES, ou une nouvelle variante SANS ACCENT d'un libellé accenté, est couvert
+# AUTOMATIQUEMENT — plus de maintenance manuelle. On ne retient que les formes NON AMBIGÜES (avec `_`,
+# EN MAJUSCULES, ou forme désaccentuée d'un libellé mono-mot accenté) pour ne jamais confondre un
+# identifiant avec un mot de prose (« reconstruction », « revente », « chaude » restent du français).
+#
+# LIMITE (parité avec le verrou des NOMBRES, non atteinte ici) : ce crible ne voit toujours PAS un
+# libellé FRANÇAIS INVENTÉ qui n'est ni un code de vocabulaire ni un identifiant technique (une zone
+# « Fantaisie », un motif rédigé faux). Le verrou des nombres, lui, ANCRE chaque nombre à une valeur
+# RÉELLEMENT servie par le registre. Faire pareil pour les libellés exige un TAG DE PROVENANCE AU
+# RENDU : chaque libellé imprimé porterait son `chiffre_id`/vocabulaire d'origine (un span
+# `data-provenance`), et la sonde confronterait chaque libellé à la valeur servie — exactement comme
+# les nombres. Coût : toucher les aides de rendu (`ligne_kv`, `chip`, `section`) pour émettre ces
+# spans dans TOUS les blocs, + une passe de sonde qui les parse. Chemin écrit, non implémenté (mandat).
+
+def _sans_accents(s: str) -> str:
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
+
+
+def _codes_techniques_derives() -> frozenset[str]:
+    """La liste noire DÉRIVÉE des vocabulaires contrôlés (rattachement à la source de vérité)."""
+    from ..enums import CascadeVerdict, Severity, SourceResultStatus
+    from ..scenarios import SCENARIOS
+    from ..scoring.tiers_client import CORRESPONDANCE_LEGACY, DOMAINE_PALIERS, PALIERS_CLIENT, TIERS_CLIENT
+    codes: set[str] = set()
+    labels_par_code: dict[str, str] = {}
+    for c, l in SCENARIOS.items():
+        codes.add(c); labels_par_code[c] = l
+    for c, (court_l, _long) in PALIERS_CLIENT.items():
+        codes.add(c); labels_par_code[c] = court_l
+    codes.update(DOMAINE_PALIERS); codes.update(CORRESPONDANCE_LEGACY); codes.update(TIERS_CLIENT)
+    for enum_cls in (CascadeVerdict, Severity, SourceResultStatus):
+        for e in enum_cls:
+            codes.add(str(e.value)); codes.add(str(e.name))     # VALEUR (non_sollicite) ET NOM (NON_SOLLICITE)
+    deny: set[str] = set()
+    for c in codes:
+        if "_" in c or (len(c) >= 2 and c.isupper() and any(ch.isalpha() for ch in c)):
+            deny.add(c)                                   # snake_case / CODE EN MAJUSCULES → technique
+    # variantes SANS ACCENT dérivées des LIBELLÉS mono-mot accentués (« Surélévation »→surelevation,
+    # « Priorité »→priorite, « Écartée »→ecartee) : la forme désaccentuée est un identifiant technique.
+    for c, l in labels_par_code.items():
+        if l and " " not in l and "'" not in l:
+            v = _sans_accents(l).lower()
+            if v != l.lower() and v.isalpha():
+                deny.add(v)
+    return frozenset(deny)
+
+
+#: SUPPLÉMENT documenté : variantes sans-accent mono-mot dont le libellé accenté N'EST PAS exposé par
+#: son vocabulaire (donc non dérivables) — ex. « Brûlante »/« Opportunité » ne sont plus des libellés
+#: servis (fusionnés en Priorité/Sans signal) mais leurs codes désaccentués peuvent encore fuir d'un
+#: run ancien. À retirer le jour où ces vocabulaires exposent leur forme humaine.
+_SUPPLEMENT: frozenset[str] = frozenset({"brulante", "opportunite", "faux_positif_probable"})
+
+_CODES_TECHNIQUES: frozenset[str] = _codes_techniques_derives() | _SUPPLEMENT
 #: motif de recherche : chaque code comme TOKEN entier (bornes de mot), sensible à la casse.
 _MOTIF_CODES = re.compile(r"(?<![\w-])(" + "|".join(
     sorted(map(re.escape, _CODES_TECHNIQUES), key=len, reverse=True)) + r")(?![\w-])")
