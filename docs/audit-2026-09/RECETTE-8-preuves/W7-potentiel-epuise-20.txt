@@ -1,0 +1,122 @@
+      idu       | zone | surf_m2 |      empr_pct      |      empr_max      | sdp_resid |     cause     |        classement        
+----------------+------+---------+--------------------+--------------------+-----------+---------------+--------------------------
+ 97401000AS1144 | Uc1  |     634 |  105.7024197971358 |  670.2693874399168 |         0 |               | REEL (sdp=0, cause NULL)
+ 97403000AP1634 | Ub   |     218 | 107.69346590259366 | 235.21176601129451 |         0 |               | REEL (sdp=0, cause NULL)
+ 97404000AI2092 | UC   |     619 |  41.88650206659777 |  259.2856934734222 |         0 |               | REEL (sdp=0, cause NULL)
+ 97408000AP1022 | UAm  |     728 | 31.479107855464214 | 229.16645331114333 |         0 |               | REEL (sdp=0, cause NULL)
+ 97408000BN0094 | UA   |     368 | 62.624986984140875 | 230.31472011439377 |         0 | terrain_exigu | MANQUE: terrain_exigu
+ 97411000HE0412 | Um   |     564 |  60.74874180270109 | 342.80238023997975 |         0 |               | REEL (sdp=0, cause NULL)
+ 97411000HO0885 | Um   |     145 |  65.71709207659791 |  95.35213833398574 |         0 |               | REEL (sdp=0, cause NULL)
+ 97412000BO0354 | U3   |     470 |  46.65600676933915 | 219.08409203461125 |         0 |               | REEL (sdp=0, cause NULL)
+ 97415000AW0679 | U4b  |     777 |  93.23805455032603 |  724.0093634081659 |         0 |               | REEL (sdp=0, cause NULL)
+ 97415000DI0646 | U2d  |     777 | 25.099941797497582 |  194.9378079707765 |         0 |               | REEL (sdp=0, cause NULL)
+ 97415000DR1199 | U6c  |     320 |  37.09963158310734 | 118.69623483627578 |         0 |               | REEL (sdp=0, cause NULL)
+ 97416000CW1762 | Uf   |     606 | 38.165115442927934 | 231.37096987402612 |         0 |               | REEL (sdp=0, cause NULL)
+ 97416000CW2415 | Uf   |     458 |  90.54959795412283 |  414.4874491842675 |         0 |               | REEL (sdp=0, cause NULL)
+ 97416000DS0258 | Ud   |     127 |  71.76275205855701 |   91.2984152076095 |         0 |               | REEL (sdp=0, cause NULL)
+ 97416000EW1074 | Uf   |     410 | 48.300181610624314 | 197.98537236637605 |         0 |               | REEL (sdp=0, cause NULL)
+ 97416000HY1431 | Ug   |     541 | 29.048963549193715 | 157.26611565636742 |         0 |               | REEL (sdp=0, cause NULL)
+ 97416000ID0187 | Ug   |     630 |  90.88969824719149 |  572.4685609809218 |         0 |               | REEL (sdp=0, cause NULL)
+ 97416000IE0601 | Ug   |     238 |  62.56416473959297 | 148.73447602639195 |         0 |               | REEL (sdp=0, cause NULL)
+ 97420000AW0095 | UC   |     292 | 102.35954523674192 |  298.8200413296055 |         0 |               | REEL (sdp=0, cause NULL)
+ 97422000BV2440 | Uav  |     347 | 131.86690000055364 |  457.9737146152613 |         0 |               | REEL (sdp=0, cause NULL)
+(20 rows)
+
+                 classement                 |   n    
+--------------------------------------------+--------
+ REEL (sdp=0, cause NULL)                   | 106674
+ cause posée: terrain_exigu                 |  10672
+ cause posée: hors_plu                      |   1708
+ cause posée: redhibitoire                  |   1329
+ cause posée: zone_non_constructible:Us     |    519
+ cause posée: zone_non_constructible:N      |    377
+ cause posée: zone_non_constructible:A      |    351
+ cause posée: zone_non_constructible:Nco    |    220
+ cause posée: zone_non_constructible:Ue     |    218
+ cause posée: habitat_interdit:Uazi         |    209
+ cause posée: habitat_interdit:UEm          |    179
+ cause posée: habitat_interdit:Ue           |     78
+ cause posée: habitat_interdit:Uaza         |     73
+ cause posée: habitat_interdit:UR           |     54
+ cause posée: habitat_interdit:UEc          |     37
+ cause posée: habitat_interdit:UEp          |     37
+ cause posée: habitat_interdit:Uazc         |     33
+ cause posée: zone_non_resolue:N            |     27
+ cause posée: zone_non_resolue:A            |     23
+ cause posée: habitat_interdit:Uazp         |     23
+ cause posée: zone_non_constructible:UF     |     21
+ cause posée: habitat_interdit:UEa          |     20
+ cause posée: zone_non_constructible:Nce    |     20
+ cause posée: zone_non_constructible:Ntvb   |     16
+ cause posée: zone_non_constructible:Up     |     16
+ cause posée: habitat_interdit:1AUe         |     14
+ cause posée: zone_non_constructible:APF    |      9
+ cause posée: zone_non_constructible:AU3st  |      9
+ cause posée: zone_non_constructible:Nlit   |      7
+ cause posée: zone_non_constructible:Acu    |      7
+ cause posée: habitat_interdit:UE           |      6
+ cause posée: zone_non_constructible:Nli    |      6
+ cause posée: zone_non_constructible:Nerl   |      5
+ cause posée: zone_non_constructible:Nr     |      5
+ cause posée: zone_non_constructible:2AUe   |      5
+ cause posée: zone_non_constructible:AU1st  |      4
+ cause posée: zone_non_constructible:Anc    |      4
+ cause posée: zone_non_constructible:1AUmut |      4
+ cause posée: habitat_interdit:Uea          |      4
+ cause posée: zone_non_constructible:Uv     |      4
+ cause posée: zone_non_constructible:Uppp   |      4
+ cause posée: zone_non_constructible:2AU5   |      3
+ cause posée: habitat_interdit:UT           |      3
+ cause posée: zone_non_constructible:3AU5ma |      3
+ cause posée: zone_non_constructible:3AU3   |      2
+ cause posée: zone_non_constructible:Ae     |      2
+ cause posée: habitat_interdit:UAa          |      2
+ cause posée: habitat_interdit:Ut           |      2
+ cause posée: habitat_interdit:Uazpc        |      2
+ cause posée: zone_non_resolue:Nrh          |      1
+ cause posée: habitat_interdit:1AUec        |      1
+ cause posée: habitat_interdit:Ud2          |      1
+ cause posée: zone_non_constructible:2AU3a  |      1
+ cause posée: zone_non_constructible:2AUc   |      1
+ cause posée: zone_non_constructible:3AU6ch |      1
+ cause posée: zone_non_constructible:AD     |      1
+ cause posée: zone_non_constructible:AU03   |      1
+ cause posée: zone_non_constructible:AUst   |      1
+ cause posée: zone_non_constructible:Ac     |      1
+ cause posée: zone_non_constructible:Aco    |      1
+ cause posée: zone_non_constructible:Ato    |      1
+ cause posée: zone_non_constructible:Nc     |      1
+ cause posée: zone_non_constructible:Ncu    |      1
+ cause posée: zone_non_constructible:Np     |      1
+ cause posée: zone_non_constructible:Ntn    |      1
+(65 rows)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+CONCLUSION W7 — le libellé « potentiel épuisé » est-il honnête ?
+───────────────────────────────────────────────────────────────────────────────
+Définition (scoring/p_v2/pipeline.py:437-452) : bati_sature = le filtre bâti juge la
+parcelle « saturée » (elle PORTE du bâti) ET il n'existe aucune SDP résiduelle > 0
+calculée (cause NULL). Le tier declasse_bati_sature = ce que le client voit « potentiel
+épuisé ».
+
+Échantillon de 20 (tirage reproductible ORDER BY md5(idu)) : 19/20 REEL (sdp résiduelle
+CALCULÉE = 0, cause NULL — bâti à la densité autorisée), 1/20 terrain_exigu (trop petite
+une fois les reculs appliqués — une CONTRAINTE calculée, pas un manque de donnée).
+
+Population entière (123 066 parcelles du run servi q_v11_m137) :
+  • 106 674 (86,7 %)  REEL — SDP résiduelle calculée = 0, cause NULL → à leur densité.
+  • 10 672   (8,7 %)  terrain_exigu — bâtie ET trop exigüe pour ajouter (potentiel nul,
+                       raison CALCULÉE, pas un trou de donnée).
+  • ~3 500   (2,8 %)  zone_non_constructible:* / habitat_interdit:* / redhibitoire /
+                       hors_plu — bâtie ET la zone interdit d'ajouter (raison réglementaire).
+  • 51       (0,04 %) zone_non_resolue:* — LE SEUL vrai « manque de donnée ».
+
+VERDICT : la part « là par manque de donnée » est 0,04 % — NÉGLIGEABLE. Le libellé
+« potentiel épuisé » n'est donc PAS faux (critère du mandat W7). 86,7 % sont bâties à leur
+densité autorisée ; le reste (~13 %) est bâti AVEC un potentiel nul pour une raison
+CALCULÉE (exigüe, zone interdisant l'habitat) — pas un aveu d'ignorance. Nuance à
+remonter à Vic : pour ces ~13 %, le potentiel n'est pas « épuisé par le bâti » mais
+« nul pour une autre raison » ; un libellé plus fin (« sans potentiel constructible »)
+serait plus juste — mais c'est une décision de vocabulaire de scoring, PAS un manque de
+donnée. Aucun rescoring fait ici (lecture seule).
