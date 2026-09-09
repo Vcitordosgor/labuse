@@ -78,6 +78,9 @@ class ResultatDoc:
     valeurs: dict[str, Valeur]
     numero: str
     cartouche: Cartouche
+    #: RECETTE-7 lot 0 (Z5) — le contexte Financier/Apporteur (bilan dérivé, voisines, adresse)
+    #: est porté ici pour que le crible de provenance rattache aussi SES nombres au registre.
+    contexte: dict | None = None
 
 
 #: documents « au fil » (pas de page de garde pleine) : en-tête compact (Résumé, Financier).
@@ -331,7 +334,8 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     for b in blocs:
         corps += b.rendu(valeurs, ctx) if document in _AVEC_CONTEXTE else b.rendu(valeurs)
     html = page_html(label, cart, corps)
-    return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart)
+    return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart,
+                       contexte={**(ctx or {}), "adresse": adresse})
 
 
 def generer_pdf(db, idu: str, document: str = "dossier", *, fiche: dict | None = None,
