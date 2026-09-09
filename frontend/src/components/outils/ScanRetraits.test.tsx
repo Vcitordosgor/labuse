@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
 import { M02 } from './ModulePanel'
 
-// Mandat SCAN — deux retraits : plus aucun bouton d'envoi de courrier, plus de badge « priorité »
-// (l'outil porte le classement CANONIQUE, identique au reste de l'app). L'outil observe, il ne démarche pas.
+// Mandat SCAN — deux retraits : plus aucun bouton d'envoi de courrier ; l'outil observe, il ne démarche pas.
+// RECETTE-1 R8 — le scoring (pastille de palier) ne s'affiche QUE dans « Demander à LABUSE » et la fiche :
+// le Scan patrimoine n'affiche PLUS aucun classement (ni « Sans signal », ni « Priorité »…).
 const PAT = {
   nom: 'SCI TEST', siren: '123456789', n_parcelles: 3, n_actionnables: 2, sdp_residuelle_m2: 500,
   valorisation_nu_eur: 100000, bodacc: null, inpi_sans_dirigeant: false, assiette_contigue: [],
@@ -35,9 +36,11 @@ describe('SCAN — deux retraits', () => {
     expect(container.textContent).not.toContain('✉')
   })
 
-  it('les lignes portent le classement CANONIQUE (TierBadge), pas de badge « priorité »', async () => {
+  it('RECETTE-1 R8 — aucune pastille de palier (le scoring ne sort pas de « Demander à LABUSE »/fiche)', async () => {
     const { container } = renderM02()
-    await waitFor(() => expect(screen.getByText('Sans signal')).toBeTruthy())   // PALIERS-1 : vocabulaire unique
-    expect(container.textContent?.toLowerCase()).not.toContain('priorité')
+    await screen.findByText('SCI TEST')                 // la liste est rendue…
+    const txt = (container.textContent ?? '').toLowerCase()
+    for (const label of ['priorité', 'à suivre', 'sans signal', 'écartée'])   // …sans aucun label de palier
+      expect(txt).not.toContain(label)
   })
 })

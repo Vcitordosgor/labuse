@@ -51,9 +51,12 @@ describe('DENSIFIER — DensifierTablePanel (grand tableau)', () => {
     expect(document.querySelectorAll('[data-densifier-row]')).toHaveLength(CAP)
     // colonnes du mandat, dont « Bâti existant » (certains libellés existent aussi en chip de tri → getAll).
     // OUTILS-FIX-1 C1 : la colonne « Surélévation » est RETIRÉE (batch débranché, valeur périmée).
-    for (const h of ['Parcelle', 'Classement', 'SDP nette', 'Surface', 'Bâti existant', 'Zone', 'Rang commune'])
+    // RECETTE-1 R8 : la colonne « Classement » (pastille de palier) est RETIRÉE — le scoring ne
+    // s'affiche que dans « Demander à LABUSE » et la fiche. Reste « Score densif. » (métrique propre).
+    for (const h of ['Parcelle', 'Score densif.', 'SDP nette', 'Surface', 'Bâti existant', 'Zone', 'Rang commune'])
       expect(screen.getAllByText(h).length).toBeGreaterThan(0)
     expect(screen.queryByText('Surélévation')).toBeNull()
+    expect(screen.queryByText('Classement')).toBeNull()
   })
 
   it('« Bâti existant » sert le TYPE d\'occupation (jamais un m² inventé)', async () => {

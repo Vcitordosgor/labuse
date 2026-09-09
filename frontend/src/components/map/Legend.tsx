@@ -45,7 +45,7 @@ function Groupe({ titre, note, open, onToggle, children }: {
         className="flex w-full items-center gap-1.5 text-left" title={open ? 'Replier' : 'Déplier'}>
         <span className="label-caps flex-1">{titre}</span>
         {note && (
-          <Tip side="top" tip={note}>
+          <Tip garder side="top" tip={note}>
             <span role="button" tabIndex={0} aria-label="Source"
               className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold text-txt-dim hover:border-mint hover:text-mint">i</span>
           </Tip>

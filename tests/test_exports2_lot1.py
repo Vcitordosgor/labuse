@@ -66,7 +66,10 @@ def test_numero_rapport_forme_courte():
     n = numeros.numero_rapport("dossier", "97415000BO0852", date(2026, 9, 5))
     assert n == "DP-20260905-0852"
     assert numeros.numero_rapport("financier", "97401000AD0554", date(2026, 9, 5)) == "FI-20260905-0554"
-    assert numeros.numero_rapport("resume", "X", date(2026, 9, 5)).startswith("RE-")
+    assert numeros.numero_rapport("apporteur", "X", date(2026, 9, 5)).startswith("AP-")
+    # RECETTE-3 (T2) — le document Résumé (préfixe RE-) est supprimé : plus au catalogue des numéros.
+    with pytest.raises(ValueError):
+        numeros.numero_rapport("resume", "X")
     with pytest.raises(ValueError):
         numeros.numero_rapport("inconnu", "X")
 

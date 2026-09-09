@@ -113,11 +113,12 @@ def ingest_rei(session: Session, *, url: str = URL_ZIP, zip_bytes: bytes | None 
 def rei_commune(session: Session, insee: str) -> dict | None:
     """Les taux fonciers d'une commune, sourcés + datés — None si non ingérés."""
     row = session.execute(text(
-        "SELECT insee, commune, tfpb_commune_pct, tfpb_epci_pct, teom_pct, millesime "
+        "SELECT insee, commune, tfpb_commune_pct, tfpb_epci_pct, teom_pct, millesime, maj_at "
         "FROM commune_rei WHERE insee = :i"), {"i": insee}).mappings().first()
     if row is None:
         return None
     d = dict(row)
     for k in ("tfpb_commune_pct", "tfpb_epci_pct", "teom_pct"):
         d[k] = float(d[k]) if d[k] is not None else None
+    d["maj_at"] = d["maj_at"].isoformat() if d.get("maj_at") else None
     return d

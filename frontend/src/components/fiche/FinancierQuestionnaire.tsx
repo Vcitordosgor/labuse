@@ -69,7 +69,16 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
             <p style={{ fontSize: 14, color: '#8FA69A', margin: '0 0 20px' }}>
               Le document Financier reprend ces hypothèses. Vous pouvez rouvrir ce questionnaire à tout moment pour les modifier.
             </p>
-            <button onClick={onClose} style={btnMint}>Fermer</button>
+            {/* RECETTE-2 S2 — le parcours PRODUIT enfin le document : jusqu'ici il s'arrêtait sur
+                « enregistré » sans jamais ouvrir le PDF (route /financier/{idu}.pdf pourtant servie).
+                Action primaire = ouvrir le document ; « Fermer » devient secondaire. */}
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <a data-financier-doc href={`/financier/${encodeURIComponent(idu)}.pdf`} target="_blank" rel="noreferrer"
+                 style={{ ...btnMint, textDecoration: 'none', display: 'inline-block' }}>
+                Ouvrir le document Financier
+              </a>
+              <button onClick={onClose} style={btnPlain}>Fermer</button>
+            </div>
           </div>
         )}
 

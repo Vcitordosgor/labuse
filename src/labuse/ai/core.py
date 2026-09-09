@@ -78,6 +78,12 @@ def _note_error(exc: Exception, model: str | None = None) -> None:
         # SECTEUR-1 (S6) — modèle retiré / inconnu : on NOMME la piste (jamais un « erreur générique »
         # qui masque un modèle mort, comme le claude-3-5-haiku de la prod).
         _LAST_ERROR = f"modèle inconnu ou retiré ({model or '?'}) — l'API Anthropic ne le sert plus"
+    elif "credit balance" in s.lower() or "plans & billing" in s.lower() or "billing" in s.lower():
+        # RECETTE-2 (S1) — CAUSE PROFONDE du « service d'analyse indisponible » : le compte Anthropic
+        # n'a plus de CRÉDIT (BadRequestError 400 « Your credit balance is too low »). C'est STRUCTUREL,
+        # pas passager : sans recharge du solde, aucun réessai n'aboutira. On le nomme pour que le bandeau
+        # cesse de dire « réessayez dans un instant » (le mot « crédit » est reconnu comme structurel).
+        _LAST_ERROR = "solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)"
     else:
         _LAST_ERROR = f"erreur API Anthropic ({name})"
 

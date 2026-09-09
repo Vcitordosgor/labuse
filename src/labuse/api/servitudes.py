@@ -22,9 +22,12 @@ log = logging.getLogger("labuse.servitudes")
 router = APIRouter(prefix="/servitudes-invisibles", tags=["servitudes-invisibles"])
 
 # Couches « servitude dormante » lues (kind spatial_layers) → libellé.
-# M137-T — `peb` RETIRÉ des couvertes : déclaré autrefois mais 0 ligne en base (couvert-vide =
-# faux RAS sur le bruit aérien). Passé en NON COUVERT ci-dessous. On ne déclare QUE des couches
-# réellement peuplées.
+# RECETTE-3 (T5, décision Vic) — on ne déclare QUE des couches réellement peuplées (règle
+# anti-« couvert-vide »/faux RAS). Vérifié en base au 09/2026 : les six kinds rajoutés ici ont
+# tous des lignes intersectables (dpu 202 · dpf 281 · zone_humide 3122 · ens 84 ·
+# plu_gpu_prescription 10490 dont ER/EBC · peb 4). Le PEB — retiré à M137-T quand la couche
+# était vide — est REMIS : l'ingestion des annexes GPU l'a peuplé depuis (aéroport Roland Garros,
+# zones A/B/C/D). Il quitte donc aussi la liste NON_COUVERT.
 _KINDS = {
     "sup": "Servitude d'Utilité Publique",
     "cinquante_pas": "50 pas géométriques (bande littorale)",
@@ -37,7 +40,21 @@ _KINDS = {
     "zonage_assainissement": "Assainissement non collectif (ANC)",
     # M137-U — ZNIEFF (inventaire du patrimoine naturel) : contrainte dormante, subtype = type I/II.
     "znieff": "ZNIEFF — zone naturelle d'intérêt écologique",
+    # RECETTE-3 (T5) — les six couches rajoutées.
+    "dpu": "Droit de préemption (DPU)",
+    "dpf": "Ravines et reculs (domaine public fluvial)",
+    "zone_humide": "Zone humide",
+    "ens": "Espace naturel protégé",
+    # plu_gpu_prescription porte TOUTES les prescriptions du GPU (20 types) — on ne surface QUE
+    # les deux qui grèvent vraiment un terrain (filtre au rendu) : emplacement réservé (typepsc 05)
+    # et espace boisé classé (typepsc 01). Les autres (patrimoine, OAP, linéaires…) restent muettes.
+    "plu_gpu_prescription": "Emplacement réservé / espace boisé classé",
+    "peb": "Plan d'exposition au bruit (PEB, aérodrome)",
 }
+
+# RECETTE-3 (T5) — plu_gpu_prescription : seuls ces typepsc CNIG sont des servitudes « pièges »
+# (le reste des 20 types de prescription n'est pas une contrainte foncière dormante et n'est pas listé).
+_PRESCRIPTION_PIEGE = {"01", "05"}
 
 # Codes SUP normalisés (Géoportail de l'urbanisme) → effet concret.
 # audit-risques : ac3/el10/pm2 sortaient bruts (« SUP xxx ») → mappés ici. Sens confirmé sur la donnée
@@ -72,7 +89,8 @@ _SOL_POLLUE = {"sis": "Secteur d'Information sur les Sols (SIS) — étude de so
 #  · SUP : chiffre honnête — 417 SUP ingérées, 8 familles réellement présentes (pm1/pm2/pm3/ac1/ac2/
 #    ac3/ac4/el10, toutes décodées). L'ancien « ~17 familles » ne correspondait ni au mapping ni à la base.
 NON_COUVERT = [
-    "Plan d'Exposition au Bruit (PEB, aérodrome) — couche non ingérée : le bruit aérien n'est pas détecté ici",
+    # RECETTE-3 (T5) — le PEB était ici (couche vide à M137-T) ; il est désormais INGÉRÉ et
+    # surfacé comme servitude (kind `peb`), donc retiré des « non couverts ».
     "Procédures PLU en cours (révision/élaboration) — voir l'outil PLU (radar Sudocuh) ; non reprises ici",
     "Canalisations de transport de matières dangereuses (gaz, hydrocarbures) — couche non ingérée",
     "Servitudes d'Utilité Publique hors GPU Réunion — 417 SUP ingérées (8 familles présentes, toutes "
@@ -103,6 +121,34 @@ def _detail(kind: str, subtype: str | None, name: str | None, attrs: dict | None
         t = subtype or "ZNIEFF"
         return (f"{t} — {name} : contrainte environnementale (études d'impact renforcées, risque de "
                 f"recours) ; n'interdit pas de construire" if name else t)
+    # RECETTE-3 (T5) — les six couches rajoutées.
+    if kind == "dpu":
+        renforce = "renforcé" in st or st == "dpu_renforce"
+        return ("Droit de préemption urbain renforcé — la commune peut se substituer à l'acquéreur (bien "
+                "et fonds de commerce)" if renforce else
+                "Droit de préemption urbain — la commune peut se substituer à l'acquéreur à la vente")
+    if kind == "dpf":
+        return (f"Domaine public fluvial — {name} : marge de recul imposée le long du cours d'eau/plan d'eau"
+                if name else "Domaine public fluvial — marge de recul imposée (ravine / cours d'eau)")
+    if kind == "zone_humide":
+        return (f"Zone humide — {name} : remblai, drainage et construction fortement encadrés (loi sur l'eau)"
+                if name else "Zone humide — remblai, drainage et construction fortement encadrés")
+    if kind == "ens":
+        return (f"Espace naturel protégé — {name} : réglementation spécifique (autorisation requise)"
+                if name else "Espace naturel protégé — réglementation spécifique")
+    if kind == "plu_gpu_prescription":
+        lib = (attrs or {}).get("libelle") or name
+        if st == "01":
+            return "Espace boisé classé (EBC) — inconstructible, coupe et abattage soumis à autorisation"
+        if st == "05":
+            return f"Emplacement réservé — {lib}" if lib and lib.lower() != "emplacement réservé" \
+                else "Emplacement réservé — terrain grevé au bénéfice d'un tiers public (préemption/expropriation)"
+        return lib or "Prescription PLU"
+    if kind == "peb":
+        z = ((attrs or {}).get("zone") or subtype or "").upper()
+        return (f"Zone {z} du plan d'exposition au bruit (aéroport) — isolation acoustique obligatoire, "
+                "constructibilité restreinte" if z else
+                "Plan d'exposition au bruit (aéroport) — constructibilité restreinte")
     return name or subtype or "parcelle concernée"
 
 
@@ -131,6 +177,9 @@ def servitudes_invisibles(idu: str, db: Session = Depends(get_db)) -> dict:
         # collectif (raccordé) est le cas FAVORABLE et n'est JAMAIS une servitude (faux positif sur
         # 67 208 parcelles avant ce filtre). L'assainissement complet vit dans le bloc `anc` de la fiche.
         if r["kind"] == "zonage_assainissement" and (r["subtype"] or "").lower() != "anc":
+            continue
+        # RECETTE-3 (T5) — plu_gpu_prescription : seuls ER (05) et EBC (01) sont des pièges fonciers.
+        if r["kind"] == "plu_gpu_prescription" and (r["subtype"] or "") not in _PRESCRIPTION_PIEGE:
             continue
         detail = _detail(r["kind"], r["subtype"], r["name"], r["attrs"])
         key = (r["kind"], detail)

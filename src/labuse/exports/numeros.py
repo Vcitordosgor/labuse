@@ -11,7 +11,7 @@ from datetime import date
 
 #: préfixe par document (mandat lot 1.6 + lot 2 pour le Flash).
 PREFIXE = {
-    "dossier": "DP", "resume": "RE", "financier": "FI", "apporteur": "AP",
+    "dossier": "DP", "financier": "FI", "apporteur": "AP",
     "predossier_pc": "PC", "flash": "FL",
 }
 

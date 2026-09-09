@@ -149,6 +149,8 @@ export interface FiltreReponse {
   compte: number
   total: number
   tiers: { brulante: number; chaude: number; reserve_fonciere: number; a_creuser: number; ecartee: number }
+  // RECETTE-3 (T4) — comptes des 4 segments du listing d'analyse (hors étage 0, ordre fixe).
+  segments?: { permis_pro: number; terrain_nu: number; bati_densifier: number; reste: number }
   opportunites: number
   opportunites_evenement: number
   dossiers_opportunites: number
@@ -187,7 +189,8 @@ export const getZonageZones = (communes: string[]) =>
 
 /** Tris de la liste (M5.1) : rang P par défaut ; ×N, surface, commune en options. */
 // M55-H point 4 : 'surface_asc' = le sens inverse du tri Surface (re-clic sur la pill)
-export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune'
+// RECETTE-3 (T3) : 'potentiel' = tri par défaut du listing FACTUEL (adressées, puis SDP résiduelle).
+export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune' | 'potentiel'
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')
@@ -268,7 +271,8 @@ export interface ContexteCommune {
   zonage_abc: { zone: string; millesime: string; source: string } | null
   // SOURCES-1 lot 5 — taux fonciers (REI) + ACV/PVD/ORT (Denormandie)
   fiscalite: { tfpb_commune_pct: number | null; tfpb_epci_pct: number | null
-    teom_pct: number | null; millesime: string; source: string } | null
+    teom_pct: number | null; millesime: string; source: string
+    maj_at?: string | null; perime?: boolean } | null
   ort: { statut: 'acv' | 'pvd' | 'autre' | 'hors'; commune?: string
     ort_signee: boolean; date_signature?: string | null
     denormandie: string; millesime?: string; source?: string } | null
@@ -1169,13 +1173,14 @@ export const courrierPdf = async (idu: string | null, motif: string, texte: stri
 export interface CourrierDemande {
   id: number; ts: string; n: number; communes: string | null; modele: string | null
   statut: string; updated_at: string
+  rang_compte?: number   // RECETTE-1 R13 — rang PROPRE AU COMPTE (affiché au client, pas le id PK global)
   // CONNEXIONS-2 Lot 4 (KO-6) — rattachement à la piste/projet d'origine
   pipeline_entry_id?: number | null; projet_id?: number | null
 }
 // CONNEXIONS-2 Lot 4 — la demande peut naître d'une piste (pipeline_entry_id) / d'un projet (sans ressaisie).
 export const postCourrierDemande = (parcelles: string[], corps: string, modele: string | null, communes: string | null,
                                     rattach?: { pipeline_entry_id?: number | null; projet_id?: number | null }) =>
-  j<{ ok: boolean; id: number; ts: string; n: number; communes: string | null; statut: string }>('/courrier/demande', {
+  j<{ ok: boolean; id: number; rang_compte?: number; ts: string; n: number; communes: string | null; statut: string }>('/courrier/demande', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ parcelles, corps, modele, communes, ...(rattach ?? {}) }) })
 export const getCourrierDemandes = () => j<{ demandes: CourrierDemande[] }>('/courrier/demandes')

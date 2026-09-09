@@ -476,16 +476,22 @@ export function ContextePanel() {
                 {d.zonage_abc && <Source nom={d.zonage_abc.source} />}
               </LigneCarte>
 
-              {/* SOURCES-1 lot 5 — taux fonciers (REI DGFiP) : passe-plat sourcé + daté. */}
+              {/* SOURCES-1 lot 5 — taux fonciers (REI DGFiP) : passe-plat sourcé + daté.
+                  RECETTE-4 U1 — drapeau de fraîcheur : donnée de plus d'un an = « à rafraîchir ». */}
               {d.fiscalite && (
                 <LigneCarte id="fiscalite" chiffre="tfpb_taux_pct" ic="₣" titre="Taxe foncière (taux)"
-                  sous={d.fiscalite.millesime}
+                  sous={d.fiscalite.perime ? `${d.fiscalite.millesime} · à rafraîchir` : d.fiscalite.millesime}
                   val={d.fiscalite.tfpb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpb_commune_pct)} %` : null}>
                   <div className="flex flex-col gap-0.5 text-[12px]">
                     <RowT lbl="TFPB commune" val={d.fiscalite.tfpb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpb_commune_pct)} %` : '—'} strong />
                     <RowT lbl="TFPB intercommunalité" val={d.fiscalite.tfpb_epci_pct != null ? `${fmtDec(d.fiscalite.tfpb_epci_pct)} %` : '—'} />
                     <RowT lbl="TEOM (taux plein)" val={d.fiscalite.teom_pct != null ? `${fmtDec(d.fiscalite.teom_pct)} %` : '—'} />
                   </div>
+                  {d.fiscalite.perime && (
+                    <p data-fiscalite-perime className="mt-1 text-[11px] text-st-creuser">
+                      Donnée ingérée il y a plus d'un an — à rafraîchir (fichier REI annuel).
+                    </p>
+                  )}
                   <Source nom={d.fiscalite.source} />
                 </LigneCarte>
               )}

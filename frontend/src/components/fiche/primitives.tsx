@@ -114,7 +114,8 @@ function RefDrawer({ id, name, context, value, valueColor, accent, icon, micro, 
               ? value
               : <span className={`t-val${absent ? ' absent' : ''}`} style={!absent && valueColor ? { color: valueColor } : undefined}>{value}</span>)
             : <span className="t-val absent">—</span>}
-          {children && <span className="chev">{open ? '⌃' : '›'}</span>}
+          {/* RECETTE-1 R34 — ouvert → flèche vers le bas (⌄), fermé → chevron latéral (›). */}
+          {children && <span className="chev">{open ? '⌄' : '›'}</span>}
         </div>
       </button>
       {/* L'intérieur reste plat : paires libellé-valeur (children). Le micro riche (jauge/

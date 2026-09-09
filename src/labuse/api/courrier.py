@@ -285,32 +285,75 @@ class PdfIn(BaseModel):
     texte: str = Field(min_length=10, max_length=8000)
 
 
+# RECETTE-1 R41 — palette DA LABUSE portée au PRINT (fonds blancs) : le mint d'écran (#4ADE80) est
+# trop clair sur papier → on prend le vert PROFOND `vizGreenDeep` (#2E6B4F) pour le titre et l'accent
+# (#2FBE66) pour le filet ; encre presque noire pour le corps, gris pour les mentions.
+_DA_VERT = (46, 107, 79)        # #2E6B4F — titre / accents
+_DA_VERT_FILET = (47, 190, 102)  # #2FBE66 — filet sous l'en-tête
+_DA_ENCRE = (28, 36, 31)        # corps du courrier
+_DA_GRIS = (120, 130, 124)      # tagline / pied
+
+
+def _pdf_safe(s: str) -> str:
+    """Ponctuation typographique (’ — … « ») → équivalents latin-1 (polices de base fpdf), jamais un « ? »."""
+    return s.translate(_LATIN1_PUNCT).encode("latin-1", "replace").decode("latin-1")
+
+
 @router.post("/pdf")
 def courrier_pdf(body: PdfIn) -> Response:
     """M82 : rend le courrier généré en PDF TÉLÉCHARGEABLE — le client l'imprime/l'envoie lui-même
-    (utile même sans traitement automatique). Adressage générique, aucune identité de propriétaire."""
+    (utile même sans traitement automatique). Adressage générique, aucune identité de propriétaire.
+    RECETTE-1 R41 : mise en page à la DA LABUSE (en-tête wordmark + filet vert, pied mentionné), plus un
+    texte brut sur page blanche. Le FOND du texte (`body.texte`) est INCHANGÉ — seule la présentation change."""
     from fpdf import FPDF
     from fpdf.enums import XPos, YPos
-    pdf = FPDF(format="A4")
-    pdf.set_auto_page_break(True, margin=20)
-    pdf.set_margins(20, 20, 20)
+
+    class _Courrier(FPDF):
+        def footer(self) -> None:
+            # pied de page à la DA : filet fin + mention légale, sur CHAQUE page.
+            self.set_y(-18)
+            self.set_draw_color(222, 226, 223)
+            self.set_line_width(0.3)
+            self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
+            self.ln(1.5)
+            self.set_text_color(*_DA_GRIS)
+            self.set_font("Helvetica", "", 7.5)
+            self.multi_cell(self.epw, 3.6, _pdf_safe(
+                "Courrier préparé avec LABUSE — à partir de données publiques (cadastre, PLU, DVF…). "
+                "Ni conseil juridique ni offre d'achat."),
+                new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
+
+    pdf = _Courrier(format="A4")
+    pdf.set_auto_page_break(True, margin=24)   # laisse la place au pied
+    pdf.set_margins(22, 20, 22)
     pdf.add_page()
-    pdf.set_font("Helvetica", "B", 15)
-    # F4 (OUTILS-3) — positionnement de ligne EXPLICITE (new_x/new_y) : le défaut de `multi_cell` varie
-    # selon la version de fpdf2 (`new_x=RIGHT, new_y=TOP` sur certaines) → le curseur ne descend pas, les
-    # lignes s'écrasent et le PDF ne montre que l'en-tête + l'objet. En forçant LMARGIN/NEXT, CHAQUE ligne
-    # descend, quelle que soit la version : le corps s'imprime toujours.
-    pdf.cell(0, 9, "LABUSE", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    # ── EN-TÊTE / letterhead DA ──
+    pdf.set_text_color(*_DA_VERT)
+    pdf.set_font("Helvetica", "B", 24)
+    pdf.cell(0, 11, "LABUSE", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.set_text_color(*_DA_GRIS)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 5, _pdf_safe("Intelligence foncière — La Réunion"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.ln(2.5)
+    # filet vert d'accent sous l'en-tête
+    pdf.set_draw_color(*_DA_VERT_FILET)
+    pdf.set_line_width(0.7)
+    y = pdf.get_y()
+    pdf.line(pdf.l_margin, y, pdf.w - pdf.r_margin, y)
+    pdf.ln(8)
+
+    # ── CORPS (texte INCHANGÉ) ──
+    # F4 (OUTILS-3) — positionnement EXPLICITE (new_x/new_y) : sinon selon la version de fpdf2 le
+    # curseur ne descend pas et les lignes s'écrasent. En forçant LMARGIN/NEXT, CHAQUE ligne descend.
+    pdf.set_text_color(*_DA_ENCRE)
     pdf.set_font("Helvetica", "", 11)
-    pdf.ln(4)
     for ligne in body.texte.split("\n"):
-        # Les polices de base fpdf sont latin-1 : la ponctuation typographique (’ — … « ») deviendrait
-        # « ? ». On la ramène à ses équivalents latin-1 AVANT l'encodage → le PDF reste FIDÈLE au
-        # courrier affiché (apostrophes, tirets), jamais un « ? » à la place.
-        safe = ligne.translate(_LATIN1_PUNCT).encode("latin-1", "replace").decode("latin-1")
-        # LARGEUR EXPLICITE (epw) et new_x/new_y explicites : la ligne vide (les \n\n entre paragraphes)
-        # comme la ligne pleine descendent proprement d'une ligne (jamais d'écrasement, jamais un w=0).
-        pdf.multi_cell(pdf.epw, 6, safe, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        safe = _pdf_safe(ligne)
+        if safe.strip() == "":
+            pdf.ln(3)   # respiration entre paragraphes (ligne vide = \n\n)
+        else:
+            pdf.multi_cell(pdf.epw, 6, safe, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     data = bytes(pdf.output())
     nom = (body.idu or "parcelle").replace("/", "-")
     return Response(content=data, media_type="application/pdf",

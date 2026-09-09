@@ -60,7 +60,8 @@ function Banner({ children }: { children: React.ReactNode }) {
 
 // RETOURS-5 T4.5 — `hoverFull` : survol PLEIN (dégradé vert, encre sombre) sur les lignes de parcelles du
 // Scan patrimoine, sans changer le survol léger des autres outils qui réutilisent Row.
-function Row({ idu, right, sub, fiche, hoverFull }: { idu: string; right: React.ReactNode; sub?: string; fiche?: [string, string][]; hoverFull?: boolean }) {
+// RECETTE-1 R8 — `right` (pastille de palier) devient FACULTATIF : les outils ne l'affichent plus.
+function Row({ idu, right, sub, fiche, hoverFull }: { idu: string; right?: React.ReactNode; sub?: string; fiche?: [string, string][]; hoverFull?: boolean }) {
   const { select, moduleFiche, setModuleFiche, module } = useApp()
   return (
     <button
@@ -351,9 +352,9 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
                 <input type="checkbox" data-scan-parc-sel className="h-3 w-3 shrink-0 accent-mint" checked={sel.has(idu)}
                   onChange={() => setSel((s) => { const n = new Set(s); n.has(idu) ? n.delete(idu) : n.add(idu); return n })} />
                 <div className="min-w-0 flex-1">
+                {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée du Scan patrimoine. */}
                 <Row idu={idu} hoverFull
                   sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`}
-                  right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={null} />}
                   fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
                     ['Patrimoine', `${d['n_parcelles']} parcelles · SDP résiduelle ${fmt(d['sdp_residuelle_m2'] as number)} m²`]]} />
                 </div>
@@ -1197,6 +1198,30 @@ const TEMPLATES: { key: string; label: string; corps: string }[] = [
   { key: 'libre', label: 'Libre', corps: '' },
 ]
 type Dest = { idu: string; commune: string; surface: number | null }
+
+// RECETTE-2 (S8) — substitution PURE d'un gabarit de courrier, exportée pour être verrouillée par test.
+// RÈGLE : un champ vide ne s'imprime JAMAIS (ni « — », ni « (—) », ni « à — ») dans une lettre qui part
+// dans une boîte aux lettres. Commune/surface absente → le SEGMENT entier disparaît, la phrase se
+// reformule sans lui. Les gabarits restent lisibles à l'écriture (aucun marqueur).
+export function remplirGabaritCourrier(tpl: string, parcelleCourt: string, commune: string, surfaceTxt: string): string {
+  const rep = (s: string, a: string, b: string) => s.split(a).join(b)
+  let s = rep(tpl, '{parcelle}', parcelleCourt)
+  s = rep(s, ' ({surface})', surfaceTxt ? ` (${surfaceTxt})` : '')
+  s = rep(s, '({surface})', surfaceTxt ? `(${surfaceTxt})` : '')
+  s = rep(s, '{surface}', surfaceTxt)
+  if (commune) {
+    s = rep(s, '{commune}', commune)
+  } else {
+    for (const pat of [', située à {commune}', ', à {commune}', ' située à {commune}', ' à {commune}', '{commune}'])
+      s = rep(s, pat, '')
+  }
+  return s
+    .replace(/\(\s*\)/g, '')
+    .replace(/ {2,}/g, ' ')
+    .replace(/ +([,.])/g, '$1')
+    .replace(/,\s*,/g, ',')
+    .replace(/ +\n/g, '\n')
+}
 // OUTILS-1 A4/B6 — les états internes (Demandé → Imprimé → Posté) ne sont PLUS exposés côté client
 // (décision Vic : le suivi d'exécution reste chez LABUSE). La timeline client a été retirée ; l'admin
 // (Tour de contrôle) garde le cycle complet.
@@ -1220,7 +1245,7 @@ export function M09() {
   const [rattach, setRattach] = useState<{ pipeline_entry_id: number; projet_id: number | null } | null>(null)
   const [modele, setModele] = useState('standard')
   const [corps, setCorps] = useState(TEMPLATES[0].corps)
-  const [demande, setDemande] = useState<{ id: number; statut: string; n: number; communes: string | null } | null>(null)
+  const [demande, setDemande] = useState<{ id: number; rang_compte?: number; statut: string; n: number; communes: string | null } | null>(null)
   const [pdfBusy, setPdfBusy] = useState(false)
   const [pdfErr, setPdfErr] = useState<string | null>(null)
 
@@ -1260,12 +1285,9 @@ export function M09() {
     setModele(k)
     setCorps(TEMPLATES.find((t) => t.key === k)?.corps ?? '')
   }
-  // substitution des variables (split/join = pas de dépendance à String.replaceAll / target ≥ es2021).
-  const rep = (s: string, a: string, b: string) => s.split(a).join(b)
-  const remplir = (tpl: string, d: Dest) => rep(rep(rep(tpl,
-    '{parcelle}', iduCourt(d.idu)),
-    '{commune}', d.commune || '—'),
-    '{surface}', d.surface != null ? `${fmtInt(d.surface)} m²` : '—')
+  // RECETTE-2 (S8) — substitution par la fonction pure (jamais de champ vide imprimé).
+  const remplir = (tpl: string, d: Dest) =>
+    remplirGabaritCourrier(tpl, iduCourt(d.idu), d.commune, d.surface != null ? `${fmtInt(d.surface)} m²` : '')
   const recapCommunes = () => {
     const c: Record<string, number> = {}
     dest.forEach((d) => { const k = d.commune || '—'; c[k] = (c[k] || 0) + 1 })
@@ -1295,13 +1317,15 @@ export function M09() {
       <Banner>Un <b>service d'envoi</b> : vous préparez vos courriers (destinataires + rédaction), LABUSE
         <b> les imprime, les affranchit et les poste</b>. Adressage générique (SPF/CERFA) — aucune identité
         de propriétaire particulier.</Banner>
-      {/* OUTILS-FIX-4 D1/D2 — ÉTAT DU SERVICE + PLAFOND DU JOUR, à l'ouverture, avant toute saisie. */}
-      {statut.data && (
+      {/* OUTILS-FIX-4 D1/D2 — ÉTAT DU SERVICE + PLAFOND DU JOUR, à l'ouverture, avant toute saisie.
+          RECETTE-1 R27 — l'encadré « Envoi automatique indisponible — L'envoi postal n'est pas encore
+          disponible » est RETIRÉ : la carte d'état ne s'affiche QUE quand le service est disponible
+          (elle porte alors le plafond du jour). Rien à l'écran quand l'envoi n'est pas encore ouvert. */}
+      {statut.data?.disponible && (
         <div data-courrier-etat className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px]">
           <span className="flex items-center gap-1.5">
-            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${statut.data.disponible ? 'bg-mint' : 'bg-st-creuser'}`} />
-            <span className={statut.data.disponible ? 'text-mint' : 'text-st-creuser'}>{statut.data.disponible ? 'Service d’envoi disponible' : 'Envoi automatique indisponible'}</span>
-            {!statut.data.disponible && statut.data.raison && <span className="text-txt-dim">— {statut.data.raison}</span>}
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />
+            <span className="text-mint">Service d’envoi disponible</span>
           </span>
           {statut.data.plafond_jour != null && (
             <span data-courrier-plafond className="whitespace-nowrap text-txt-mut">Plafond du jour : <b className="tnum text-txt">{statut.data.reste_jour}</b>/{statut.data.plafond_jour} restant{(statut.data.reste_jour ?? 0) > 1 ? 's' : ''}</span>
@@ -1380,11 +1404,12 @@ export function M09() {
               className="rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
               {envoyer.isPending ? 'Envoi de la demande…' : "Demander l'envoi à LABUSE"}</button>
           ) : (
-            // OUTILS-1 A4/B6 — la confirmation porte le N° DE DEMANDE (= id en base, identique côté admin)
-            // et renvoie vers le suivi. AUCUN état interne (imprimé/posté) côté client : décision Vic —
-            // moins de surface, moins de bugs. Le suivi vit dans « Projets → Mes courriers ».
+            // OUTILS-1 A4/B6 — la confirmation porte le N° DE DEMANDE et renvoie vers le suivi. AUCUN
+            // état interne (imprimé/posté) côté client : décision Vic — moins de surface, moins de bugs.
+            // RECETTE-1 R13 — le numéro montré est le rang PROPRE AU COMPTE (1, 2, 3…), plus le `id`
+            // PK global (qui fuitait le volume plateforme : « n° 44 » au 1ᵉʳ courrier). Repli sur id.
             <div data-courrier-confirm className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[11px] leading-snug text-txt-mut">
-              <b className="text-mint">✓ Demande n° {demande.id} transmise.</b> LABUSE vous rappelle sous 24 h ouvrées avec le tarif —
+              <b className="text-mint">✓ Demande n° {demande.rang_compte ?? demande.id} transmise.</b> LABUSE vous rappelle sous 24 h ouvrées avec le tarif —
               impression, mise sous pli, affranchissement et suivi compris.
               <span className="mt-1.5 block text-[10.5px] text-txt-dim">Retrouvez vos demandes dans <b className="text-txt-mut">Projets → Mes courriers</b>.</span>
             </div>
@@ -1404,7 +1429,7 @@ export function M09() {
               <p className="label-caps text-[9px]">Vos demandes</p>
               {demandes.data!.demandes.slice(0, 5).map((d) => (
                 <div key={d.id} className="flex items-baseline justify-between gap-2 text-[10.5px]">
-                  <span className="min-w-0 truncate text-txt-mut">n° {d.id} · {d.n} courrier{d.n > 1 ? 's' : ''}{d.communes ? ` · ${d.communes}` : ''}</span>
+                  <span className="min-w-0 truncate text-txt-mut">n° {d.rang_compte ?? d.id} · {d.n} courrier{d.n > 1 ? 's' : ''}{d.communes ? ` · ${d.communes}` : ''}</span>
                   <span className="shrink-0 font-mono text-[9.5px] text-txt-dim">{String(d.ts).slice(0, 10)}</span>
                 </div>
               ))}
@@ -1559,8 +1584,8 @@ export function M10() {
               return (
               <div key={k} data-diligence-item className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
                 <div className="flex items-center gap-2">
-                  <Row idu={i['idu'] as string} sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m²`}
-                    right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={i['statut'] as string | null} />} />
+                  {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée de Pièges & risques. */}
+                  <Row idu={i['idu'] as string} sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m²`} />
                 </div>
                 {/* Point 42 : score de risque consolidé (déterministe) */}
                 <div className="mt-1.5 flex items-center gap-2 text-[11px]">

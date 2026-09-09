@@ -72,7 +72,7 @@ export function Successions() {
         Les parcelles à potentiel dont le propriétaire <b className="text-txt">approche une succession</b> —
         dirigeant âgé (≥ 70 ans) ou SCI dormante : un <b className="text-txt">radar à 3-7 ans</b>, pas une
         succession ouverte.
-        <Tip tip="Personnes morales à SIREN confirmé dont le dirigeant le plus âgé a ≥ 70 ans, ou SCI créées il y a ≥ 20 ans sans mise à jour RNE depuis ≥ 5 ans (registre RNE INPI). Aucun acte, aucun décès constaté — un signal d'état, pas un événement.">
+        <Tip garder tip="Personnes morales à SIREN confirmé dont le dirigeant le plus âgé a ≥ 70 ans, ou SCI créées il y a ≥ 20 ans sans mise à jour RNE depuis ≥ 5 ans (registre RNE INPI). Aucun acte, aucun décès constaté — un signal d'état, pas un événement.">
           <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>
       </div>
@@ -120,7 +120,7 @@ export function Successions() {
             {items.map((it) => (
               <div key={it.idu} data-successions-row
                 className="hover-fill cursor-pointer rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5"
-                title="Ouvrir la fiche de la parcelle" onClick={() => select(it.idu)}>
+                onClick={() => select(it.idu)}>{/* RECETTE-1 R28 — infobulle « Ouvrir la fiche » retirée */}
                 <div className="flex items-center gap-2">
                   <input type="checkbox" data-successions-sel className="h-3 w-3 shrink-0 accent-mint"
                     checked={sel.has(it.idu)} onClick={(e) => e.stopPropagation()}

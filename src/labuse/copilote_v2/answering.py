@@ -39,7 +39,8 @@ HORS_SUJET = ("Je suis le copilote foncier de LABUSE — je réponds sur l'immob
 def erreur_infra() -> str:
     raison = core.last_error()
     structurel = bool(raison) and any(k in raison for k in (
-        "clé", "modèle", "permission", "refusée", "retiré", "authentification", "absente"))
+        "clé", "modèle", "permission", "refusée", "retiré", "authentification", "absente",
+        "crédit", "facturation", "suspendu"))
     if structurel:
         return ("Je ne peux pas instruire votre demande : le service d'analyse est indisponible "
                 f"({raison}). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer "

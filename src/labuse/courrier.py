@@ -186,7 +186,7 @@ def creer_demande(db, *, compte_id: int | None, parcelles: list[str],
         ORDER BY ts DESC LIMIT 1"""),
         {"c": compte_id, "corps": corps, "p": p_json, "w": IDEMPOTENCE_FENETRE_S}).mappings().first()
     if dup is not None:
-        return {**dict(dup), "existing": True}
+        return {**dict(dup), "rang_compte": _rang_compte(db, compte_id, dup["id"]), "existing": True}
     r = db.execute(text("""
         INSERT INTO courrier_demandes (compte_id, parcelles, n, communes, modele, corps, statut,
                                        pipeline_entry_id, projet_id)
@@ -195,7 +195,18 @@ def creer_demande(db, *, compte_id: int | None, parcelles: list[str],
         {"c": compte_id, "p": p_json, "n": len(parcelles),
          "com": communes, "m": modele, "corps": corps,
          "pe": pipeline_entry_id, "pj": projet_id}).mappings().one()
-    return {**dict(r), "existing": False}
+    return {**dict(r), "rang_compte": _rang_compte(db, compte_id, r["id"]), "existing": False}
+
+
+def _rang_compte(db, compte_id: int | None, demande_id: int) -> int:
+    """RECETTE-1 R13 — rang de la demande PROPRE AU COMPTE (1, 2, 3… chronologique), à afficher au
+    client à la place du `id` PK (séquence GLOBALE à tous les comptes → « n° 44 » au 1ᵉʳ courrier =
+    fuite du volume plateforme + numéros non contigus). Rang = nombre de demandes du compte dont
+    l'id est ≤ celui-ci (l'id est monotone avec le temps ; même ordre que row_number OVER id)."""
+    return int(db.execute(text(
+        "SELECT count(*) FROM courrier_demandes "
+        "WHERE corps IS NOT NULL AND compte_id IS NOT DISTINCT FROM :c AND id <= :id"),
+        {"c": compte_id, "id": demande_id}).scalar() or 1)
 
 
 def demandes_de(db, compte_id: int | None) -> list[dict]:
@@ -203,7 +214,9 @@ def demandes_de(db, compte_id: int | None) -> list[dict]:
     lignes héritées de l'ancien schéma M82."""
     return [{**dict(r), "statut": normaliser_statut(r["statut"])}
             for r in db.execute(text("""
-        SELECT id, ts, n, communes, modele, statut, updated_at, pipeline_entry_id, projet_id
+        SELECT id, ts, n, communes, modele, statut, updated_at, pipeline_entry_id, projet_id,
+               -- RECETTE-1 R13 : rang PROPRE AU COMPTE (chronologique), pas le id PK global.
+               row_number() OVER (ORDER BY id) AS rang_compte
         FROM courrier_demandes
         WHERE corps IS NOT NULL AND compte_id IS NOT DISTINCT FROM :c
         ORDER BY ts DESC LIMIT 100"""), {"c": compte_id}).mappings()]

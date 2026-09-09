@@ -58,14 +58,17 @@ function BlocDetail({ blocId }: { blocId: number }) {
   if (q.isError || !q.data) return null
   return (
     <div className="mt-1 flex flex-col gap-0.5 border-t border-line-2 pt-1">
+      {/* RECETTE-1 R21 — le bouton « Voir la fiche » disparaît : cliquer la LIGNE ouvre la fiche. */}
       {membres.map((m) => (
-        <div key={m.idu} data-bloc-membre className="flex items-center gap-1.5 rounded px-1 py-0.5 text-[10.5px] hover:bg-surface-2">
+        <div key={m.idu} data-bloc-membre data-bloc-fiche role="button" tabIndex={0}
+          onClick={() => select(m.idu)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(m.idu) } }}
+          title="Ouvrir la fiche de la parcelle"
+          className="flex cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 text-[10.5px] hover-fill">
           <span className="font-mono text-txt-hi">{m.idu}</span>
           <span className="text-txt-dim">{fmtM2(m.surface_m2)}</span>
           {m.zone && <span className="text-txt-dim">· {m.zone}</span>}
           <span className="ml-auto tnum text-txt-mut">{fmtM2(m.sdp_residuelle_m2)}</span>
-          <button data-bloc-fiche className="shrink-0 rounded border border-line-2 px-1 text-[9.5px] text-txt-mut hover:border-mint hover:text-mint"
-            title="Ouvrir la fiche de la parcelle" onClick={() => select(m.idu)}>Voir la fiche →</button>
         </div>
       ))}
       {/* Assembler → : l'outil Assemblage pré-rempli avec les IDU du bloc (fil de retour). */}
@@ -131,6 +134,11 @@ export function Blocs() {
   const [inclurePublics, setInclurePublics] = useState(false)   // publics écartés par défaut
   const [openId, setOpenId] = useState<number | null>(null)
   const [sel, setSel] = useState<Set<number>>(new Set())   // blocs cochés (par bloc_id)
+  // RECETTE-1 R21 — deux temps : (1) on pose ses filtres ; (2) on clique « Voir les parcelles »,
+  // le listing s'ouvre et le bloc de filtres se replie en accordéon. `montre` gouverne les deux.
+  const [montre, setMontre] = useState(false)
+  const [filtresOuverts, setFiltresOuverts] = useState(true)
+  const voir = () => { setMontre(true); setFiltresOuverts(false) }
 
   const reset = () => { setSel(new Set()); setOpenId(null) }
   const q = useInfiniteQuery({
@@ -138,6 +146,7 @@ export function Blocs() {
     queryFn: ({ pageParam }) => getBlocs(commune, surfMin, sdpMin, nMin, inclurePublics, pageParam),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => { const n = pages.reduce((s, p) => s + p.items.length, 0); return n < last.total ? n : undefined },
+    enabled: montre,   // R21 — rien ne charge tant que « Voir les parcelles » n'est pas cliqué
   })
   const items = q.data?.pages.flatMap((p) => p.items) ?? []
   const meta = q.data?.pages[0]
@@ -153,12 +162,20 @@ export function Blocs() {
         Les parcelles <b className="text-txt">contiguës d'un même propriétaire</b> regroupées en une
         assiette — ce qu'un promoteur ne voit pas parcelle par parcelle. <b className="text-txt">Personnes
         morales seulement</b> (SIREN) : les particuliers n'ont pas d'identité stable d'une parcelle à l'autre.
-        <Tip tip="Un bloc = des parcelles cadastrales en contact (≤ 0,5 m) appartenant au même SIREN (fichiers des personnes morales, DGFiP). Les particuliers sont hors périmètre : aucun regroupement par nom approché.">
+        <Tip garder tip="Un bloc = des parcelles cadastrales en contact (≤ 0,5 m) appartenant au même SIREN (fichiers des personnes morales, DGFiP). Les particuliers sont hors périmètre : aucun regroupement par nom approché.">
           <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>
       </div>
 
-      {/* entrée : périmètre explicite + filtres à paliers */}
+      {/* RECETTE-1 R21 — entrée : périmètre + filtres à paliers, DANS un accordéon qui se replie
+          quand on clique « Voir les parcelles » (le listing prend alors la place). */}
+      <details data-blocs-filtres open={filtresOuverts}
+        onToggle={(e) => setFiltresOuverts((e.target as HTMLDetailsElement).open)}
+        className="flex flex-col gap-2">
+      <summary className="cursor-pointer list-none py-0.5 text-[11px] font-medium text-txt-dim marker:hidden hover:text-mint">
+        {filtresOuverts ? 'Filtres ▾' : 'Filtres ▸'}
+      </summary>
+      <div className="mt-1 flex flex-col gap-2">
       <CommuneScope commune={commune} noteFiltre={false} onChange={(c) => { setCommune(c); reset() }} />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-txt-mut">
         <label className="flex items-center gap-1.5">Surface totale
@@ -186,10 +203,20 @@ export function Blocs() {
         <input type="checkbox" data-blocs-inclure-publics className="h-3 w-3 accent-mint"
           checked={inclurePublics} onChange={(e) => { setInclurePublics(e.target.checked); reset() }} />
         Inclure les propriétaires publics
-        <Tip tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
+        <Tip garder tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
           <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>
       </label>
+      </div>
+      </details>
+
+      {/* RECETTE-1 R21 — le geste explicite : ouvrir le listing (et replier les filtres). */}
+      {!montre && (
+        <button data-blocs-voir onClick={voir}
+          className="shrink-0 rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
+          Voir les parcelles
+        </button>
+      )}
 
       {q.isLoading && <Loading label="Blocs…" />}
       {q.isError && <ErrorState message="Signal momentanément indisponible — réessayez." retry={() => q.refetch()} />}

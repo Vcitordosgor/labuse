@@ -858,7 +858,13 @@ export const useApp = create<AppState>((set) => ({
   // les overlays plein écran, il est effacé au changement d'outil (il ne doit pas survivre à la sortie
   // d'Étude de zone : le pointillé restait sur la carte). Les veilles enregistrées vivent au serveur,
   // pas ici — elles ne sont pas touchées.
-  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, zone: null, tool: null, ...CLOSE_OVERLAYS }),
+  // RECETTE-1 R5 : `focusIdu` (zoom+surbrillance posé par un outil via focusParcelle, SANS ouvrir la
+  // fiche — cf. MapView effet `cible = selectedIdu ?? focusIdu`) N'ÉTAIT PAS effacé au changement
+  // d'outil → la carte restait verrouillée/recentrée sur la parcelle saisie dans TOUS les outils
+  // suivants (six outils enchaînés, toujours bloquée). Comme `zone` (emprise éphémère) et les overlays,
+  // le focus est une cible éphémère de l'outil : on le remet à null ici. Les ponts appellent
+  // focusParcelle APRÈS setModule (tool déjà ouvert), donc l'effacement ne touche que l'outil quitté.
+  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, zone: null, tool: null, focusIdu: null, ...CLOSE_OVERLAYS }),
   // OUTILS-FIX-3 Lot D — fil de retour entre outils. `pushOutilRetour` est appelé par un pont APRÈS sa
   // navigation (la nav a déjà vidé la pile via CLOSE_OVERLAYS) → il ne reste que l'entrée de départ.
   outilRetour: [],

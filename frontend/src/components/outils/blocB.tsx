@@ -187,7 +187,7 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
                 className={`text-right text-[10px] font-medium uppercase leading-tight tracking-tight ${
                   tri.k === c.k ? 'text-mint' : 'text-txt-dim hover:text-txt-mut'}`}>
                 {c.head}{arrow(c.k)}</button>
-              <Tip side="top" tip={c.tip ?? c.title}>
+              <Tip garder side="top" tip={c.tip ?? c.title}>
                 <span role="button" tabIndex={0} aria-label={c.title}
                   className="flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
               </Tip>

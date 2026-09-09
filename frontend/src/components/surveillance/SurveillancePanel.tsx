@@ -55,12 +55,14 @@ function DeuxPortes({ onChoisir }: { onChoisir: (p: 'interne' | 'externe') => vo
     <div className="flex flex-col gap-2.5 p-4">
       <p className="text-[12px] leading-snug text-txt-mut">Choisissez ce que vous voulez surveiller.</p>
       <button data-veille-porte="interne" onClick={() => onChoisir('interne')}
-        className="door door-hot w-full text-left transition-colors duration-quick hover:border-line-3">
+        className="door door-hot hover-fill w-full text-left">
+        {/* RECETTE-1 R30 — survol vert opaque, comme les autres portes de l'app */}
         <div className="text-[13px] font-medium text-txt">Le foncier</div>
         <div className="mt-0.5 text-[11px] leading-snug text-txt-dim">Parcelles suivies et critères enregistrés — vente, permis, procédure, zonage, classement.</div>
       </button>
       <button data-veille-porte="externe" onClick={() => onChoisir('externe')}
-        className="door door-hot w-full text-left transition-colors duration-quick hover:border-line-3">
+        className="door door-hot hover-fill w-full text-left">
+        {/* RECETTE-1 R30 — survol vert opaque, comme les autres portes de l'app */}
         <div className="text-[13px] font-medium text-txt">Les annonces</div>
         <div className="mt-0.5 text-[11px] leading-snug text-txt-dim">Vos veilles Radar — soyez alerté sur une nouvelle annonce, une baisse de prix ou un retour, selon vos critères.</div>
       </button>

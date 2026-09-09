@@ -66,6 +66,11 @@ const TIER_OPACITY: Record<string, number> = {
   brulante: 0.95, chaude: 0.9, reserve_fonciere: 0.55, a_creuser: 0.45, ecartee: 0.04,
 }
 const DECLASSE_OPACITY = 0.04
+// RECETTE-2 (S11, R36 tranché par Vic) — en mode ANALYSE (opinion), l'opacité des parcelles est
+// UNIFORME : plus de voile gris (les écartées ne sont plus estompées à 0,04). Le palier reste porté
+// par la COULEUR seule (STATUS_COLOR). Même valeur que le cas filtré (0,72) → cohérent quel que soit
+// le filtre. Hors opinion (tri factuel / verdict éteint), les opacités dédiées sont inchangées.
+const OPINION_OPACITY = 0.72
 const STATUS_OPACITY: maplibregl.ExpressionSpecification = [
   'case', ETAGE0, 0.04,
   ['match', TIER_V2,
@@ -1734,9 +1739,9 @@ export function MapView() {
     // M55-G point 8 : seulement en mode OPINION — le mode factuel garde sa surbrillance neutre
     const photo = basemap === 'plan' || basemap === 'ortho'   // RETOURS-11 R5 — gate fondu photo
     if (m.getLayer('parcels-fill') && !zonageFill && opinion) {
-      // filtre actif → 0,72 constant (fondu R5 au zoom sur photo) ; sinon la table STATUS_OPACITY
-      // (déjà par tier) reste — sur photo elle n'est pas fondue mais les écartées y sont ~0.
-      const op = filters.tiers.length === 0 ? STATUS_OPACITY : photoFade(0.72, photo)
+      // RECETTE-2 (S11) — opacité UNIFORME en mode analyse (plus de voile : STATUS_OPACITY estompait
+      // les écartées à 0,04). Le palier est porté par la couleur. Fondu R5 au zoom sur photo conservé.
+      const op = photoFade(OPINION_OPACITY, photo)
       m.setPaintProperty('parcels-fill', 'fill-opacity', op)
       m.setPaintProperty('ile-fill', 'fill-opacity', op)
     }
@@ -1875,8 +1880,10 @@ export function MapView() {
         m.setPaintProperty(fill, 'fill-color', ZONE_FAM_COLOR)
         m.setPaintProperty(fill, 'fill-opacity', photo ? photoFade(0.62, photo) : ZONE_FAM_OPACITY)
       } else if (opinion) {
+        // RECETTE-2 (S11) — opacité UNIFORME en mode analyse (fini le voile gris des écartées) ;
+        // le palier reste porté par la couleur (STATUS_COLOR). Fondu R5 conservé sur photo.
         m.setPaintProperty(fill, 'fill-color', STATUS_COLOR)
-        m.setPaintProperty(fill, 'fill-opacity', filters.tiers.length === 0 && !resultIdus ? STATUS_OPACITY : photoFade(0.72, photo))
+        m.setPaintProperty(fill, 'fill-opacity', photoFade(OPINION_OPACITY, photo))
       } else if (verdict) {
         // M55-G point 8 : TRI FACTUEL — les parcelles correspondantes en surbrillance NEUTRE
         // (aucune couleur de tier) ; la couche « Verdict » reste activable dans Couches.
@@ -1945,8 +1952,11 @@ export function MapView() {
       aggMarkers.current.forEach((mk) => { mk.getElement().style.display = show ? '' : 'none' })
     }
     // anti-chevauchement (côte Nord dense) : décalages pixels manuels, consignés
+    // RECETTE-1 R39 — « Sainte-Suzanne » chevauchait « Saint-André » : on la REMONTE (y plus négatif,
+    // -6 → -22) et on descend légèrement Saint-André pour dégager les deux étiquettes.
     const OFFSETS: Record<string, [number, number]> = {
-      'Saint-Denis': [-14, -10], 'Sainte-Marie': [16, 8], 'Sainte-Suzanne': [26, -6],
+      'Saint-Denis': [-14, -10], 'Sainte-Marie': [16, 8], 'Sainte-Suzanne': [26, -22],
+      'Saint-André': [0, 12],
       'Le Port': [-18, -4], 'La Possession': [10, 12],
     }
     for (const c of communes.data) {

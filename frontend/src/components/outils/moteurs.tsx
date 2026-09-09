@@ -10,7 +10,6 @@ import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { Tip } from '../Tip'
-import { TierBadge } from './TierBadge'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
 import { trierCommunes } from '../../lib/communes'
 
@@ -397,9 +396,7 @@ export function M16() {
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
                   <span className="text-txt-dim">{fmt(i.surface_m2)} m² · SDP {fmt(i.sdp_m2)}</span>
-                  <span className="ml-auto">
-                    <TierBadge tier={i.tier_v2 as string | null} etage0={i.etage0 as boolean | null} statut={null} />
-                  </span>
+                  {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée de l'Assemblage. */}
                 </div>
                 <div className="mt-0.5 flex items-center gap-2">
                   {/* PRIVACY : PM = dénomination + SIREN (public) ; particulier = jamais nommé */}
@@ -544,9 +541,7 @@ export function M17() {
             className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/50">
             <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
             <span className="text-txt-dim">{fmt(i.surface_m2)} m²</span>
-            <span className="ml-auto">
-              <TierBadge tier={i.tier_v2 as string | null} etage0={i.etage0 as boolean | null} statut={i.statut as string | null} />
-            </span>
+            {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée du simulateur ZAN. */}
           </button>
         ))}
       </div>
@@ -607,7 +602,7 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
         <span className="flex items-center gap-1">Ancien bâti {tendance(d.tendance_ancien_pct)}</span>
         <span className="flex items-center gap-1">Terrain nu {tendance(d.tendance_terrain_pct)}</span>
         <span className="flex items-center gap-1">Permis {tendance(d.tendance_permis_pct)}</span>
-        <Tip tip="Ancien : médiane €/m² bâti, ventes strictes DVF (VEFA exclu). Terrain : médiane €/m² terrain nu (bâti=0). Permis : autorisés/trimestre (Sitadel). Volume (n) entre parenthèses."><span className="cursor-help rounded-full border border-line-2 px-1 text-[8px]">i</span></Tip>
+        <Tip garder tip="Ancien : médiane €/m² bâti, ventes strictes DVF (VEFA exclu). Terrain : médiane €/m² terrain nu (bâti=0). Permis : autorisés/trimestre (Sitadel). Volume (n) entre parenthèses."><span className="cursor-help rounded-full border border-line-2 px-1 text-[8px]">i</span></Tip>
       </div>
       {tris.some((t) => partiel.has(t)) && <p className="mt-0.5 text-[9.5px] text-st-creuser">· dernier trimestre partiel (délai de publication DVF) — grisé, hors tendance.</p>}
     </div>
@@ -638,7 +633,7 @@ export function M18() {
       </div>
       {nr && (
         <p className="text-[10.5px] text-txt-dim">Neuf : <b className="text-txt">~{fmt(nr.prix_m2_neuf)} €/m²</b> (référence actuelle, sur {fmt(nr.n)} ventes)
-          <Tip tip="La VEFA (neuf) est trop rare dans DVF (0-4 ventes/trimestre) pour une série trimestrielle honnête : on sert le prix de sortie neuf ACTUEL (référence île), pas une fausse courbe."><span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span></Tip>
+          <Tip garder tip="La VEFA (neuf) est trop rare dans DVF (0-4 ventes/trimestre) pour une série trimestrielle honnête : on sert le prix de sortie neuf ACTUEL (référence île), pas une fausse courbe."><span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span></Tip>
         </p>
       )}
       {/* RETOURS-12 O10 — les 3 séries (ancien · terrain · permis) fusionnées en UN VRAI TABLEAU,

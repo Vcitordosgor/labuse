@@ -63,23 +63,21 @@ def _pdf_text(content: bytes) -> str:
 
 def _docs(client, idu: str) -> dict[str, str]:
     """Texte des documents du builder unique + la fiche écran. Skip la parcelle si un endpoint clé
-    échoue (env). EXPORTS-2 lot 8 : Dossier · Résumé · Financier · Apporteur (routes directes, pas
-    les anciennes redirections)."""
+    échoue (env). EXPORTS-2 lot 8 : Dossier · Financier · Apporteur (routes directes, pas les
+    anciennes redirections). RECETTE-3 (T2) — le Résumé est supprimé, retiré de la comparaison."""
     fiche = client.get(f"/parcels/{idu}", params={"source": RUN})
     if fiche.status_code != 200:
         pytest.skip(f"{idu} : fiche indisponible ({fiche.status_code})")
     dossier = client.get(f"/dossier/{idu}.pdf")
-    resume = client.get(f"/resume/{idu}.pdf")
     financier = client.get(f"/financier/{idu}.pdf")
     apporteur = client.get(f"/apporteur/{idu}.pdf")
-    for name, r in (("dossier", dossier), ("resume", resume),
+    for name, r in (("dossier", dossier),
                     ("financier", financier), ("apporteur", apporteur)):
         if r.status_code != 200:
             pytest.skip(f"{idu} : {name} indisponible ({r.status_code})")
     return {
         "fiche": _fiche_rendu(fiche.json()),
         "dossier": _pdf_text(dossier.content),
-        "resume": _pdf_text(resume.content),
         "financier": _pdf_text(financier.content),
         "apporteur": _pdf_text(apporteur.content),
     }
@@ -132,8 +130,8 @@ def test_ppr_regime_coherent(client, idu):
     par INTERDITS) et « zone rouge » est cohérent : si un doc l'exclut, aucun autre ne l'ignore."""
     docs = _docs(client, idu)
     rouge = {name: ("zone rouge" in txt.lower()) for name, txt in docs.items() if "zone rouge" in txt.lower()
-             or name in ("fiche", "dossier", "resume")}
-    # les documents qui PARLENT du risque (fiche, Dossier, Résumé) doivent s'accorder sur le régime rouge ;
+             or name in ("fiche", "dossier")}
+    # les documents qui PARLENT du risque (fiche, Dossier) doivent s'accorder sur le régime rouge ;
     # le Financier (bilan) et l'Apporteur (teaser) ne le mentionnent pas → hors périmètre de cohérence PPR.
     vals = set(rouge.values())
     assert len(vals) == 1, f"{idu} : « PPR zone rouge » présent dans certains docs seulement : {rouge}"

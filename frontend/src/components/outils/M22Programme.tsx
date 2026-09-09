@@ -9,7 +9,6 @@ import { CommuneScope } from './ModulePanel'
 import { Tip } from '../Tip'
 import { DestinationBadge, DestinationSelect, useDestinationsRef } from './DestinationSelect'
 import { ParcelPicker } from './ParcelPicker'
-import { TierBadge } from './TierBadge'
 
 /** M22 · FAISABILITÉ — 2 entrées (M15-C) :
  *  · « Par critères » (SENS 2) : on décrit un programme, LABUSE propose les parcelles qui matchent.
@@ -135,7 +134,7 @@ export function M22() {
               le « i » à côté du périmètre, plus en bloc permanent. */}
           <div className="flex items-center gap-1.5">
             <div className="min-w-0 flex-1"><CommuneScope commune={commune} onChange={setCommune} /></div>
-            <Tip side="bottom" tip="Décrivez votre programme — bâtiments, hauteur, logements par bâtiment, surface par logement. LABUSE calcule la surface de plancher nécessaire et trouve les parcelles où le PLU la permet. Le Copilote peut remplir le formulaire pour vous : « 3 immeubles R+3 de 8 logements ».">
+            <Tip garder side="bottom" tip="Décrivez votre programme — bâtiments, hauteur, logements par bâtiment, surface par logement. LABUSE calcule la surface de plancher nécessaire et trouve les parcelles où le PLU la permet. Le Copilote peut remplir le formulaire pour vous : « 3 immeubles R+3 de 8 logements ».">
               <span role="button" tabIndex={0} aria-label="Aide"
                 className="flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[9px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
             </Tip>
@@ -225,11 +224,10 @@ export function M22() {
                         )}
                       </div>
                     </div>
+                    {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée de l'outil
+                        Faisabilité ; seule reste la marge de capacité (métrique de faisabilité). */}
                     <div className="shrink-0 text-right">
                       <div className="num-key text-sm text-mint">×{i.marge_capacite}</div>
-                      <div>
-                        <TierBadge tier={i.tier_v2 as string | null} etage0={i.etage0 as boolean | null} statut={i.statut as string | null} />
-                      </div>
                     </div>
                     </button>
                   </div>

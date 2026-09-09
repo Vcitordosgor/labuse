@@ -62,14 +62,30 @@ RANG_PERIMETRE = f"copropriétés hors univers de classement — {_COPRO_RAISON}
 COPRO_MOTIF = f"Copropriété — hors univers de classement ({_COPRO_RAISON})"
 
 
+#: RECETTE-2 (S6) — mémo du dénominateur par run. CAUSE mesurée de la lenteur des fiches :
+#: ce `count(*)` sur `parcel_p_score_v2` (4,3 M lignes, 428 239 classées pour q_v14) coûtait
+#: ~2,1 s À CHAQUE fiche (dominant les ~2,8 s totales, cf. profil). Or le dénominateur est
+#: IMMUABLE pour un run donné (la table d'un run est figée une fois calculée) : on le mémoïse
+#: par run_id — clé run = jamais de valeur périmée entre runs (même motif que les caches
+#: immuables RETOURS-10 `_DISTRIB_CACHE`/`_ECART_CACHE`). Premier appel du process : 1 count ;
+#: tous les suivants (toutes parcelles, tous comptes) : instantané.
+_RANG_TOTAL_CACHE: dict[str, int] = {}
+
+
 def rang_total(db: Session, run: str | None = None) -> int | None:
     """Dénominateur du rang servi : nombre de parcelles CLASSÉES (hors copropriétés) du run.
-    Un rang ne dit rien sans lui (« rang 57 643 / 428 239 »). Lecture seule, niveau run."""
+    Un rang ne dit rien sans lui (« rang 57 643 / 428 239 »). Lecture seule, niveau run.
+    Mémoïsé par run (immuable) — cf. `_RANG_TOTAL_CACHE`."""
     if run is None:
         run = runs.current()
-    return db.execute(text(
+    if run in _RANG_TOTAL_CACHE:
+        return _RANG_TOTAL_CACHE[run]
+    val = db.execute(text(
         "SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r AND rang IS NOT NULL"),
         {"r": run}).scalar()
+    if val is not None:
+        _RANG_TOTAL_CACHE[run] = val
+    return val
 
 #: hors run servi (parcelle absente de la table) — on le DIT, jamais un repli legacy muet.
 NON_EVALUEE = {

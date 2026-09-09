@@ -196,8 +196,9 @@ export function ZoneSelector() {
                 {zq.data ? `${nf.format(f.n)} parcelles · ${f.zones.length} zones` : '…'}
                 {zonesSelFam > 0 && <span className="text-mint"> · {zonesSelFam} choisie{zonesSelFam > 1 ? 's' : ''}</span>}
               </span>
+              {/* RECETTE-2 (S17) — fermé → droite (▸, -90°) ; ouvert → bas (▾, sans rotation). */}
               <svg viewBox="0 0 12 12" aria-hidden="true"
-                className={`h-3 w-3 shrink-0 text-txt-dim transition-transform duration-quick ${ouverte ? 'rotate-180' : ''}`}>
+                className={`h-3 w-3 shrink-0 text-txt-dim transition-transform duration-quick ${ouverte ? '' : '-rotate-90'}`}>
                 <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
@@ -252,7 +253,7 @@ export function SignalChip({ k }: { k: string }) {
           ? filters.signaux.filter((x) => x !== k) : [...filters.signaux, k]) as never)}>
         {CLIENT.signaux.labels[k]}
       </Chip>
-      <Tip side="top" tip={CLIENT.signaux.infos[k]}>
+      <Tip garder side="top" tip={CLIENT.signaux.infos[k]}>
         <span role="button" tabIndex={0} aria-label={`En savoir plus : ${CLIENT.signaux.labels[k]}`}
           className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
       </Tip>
@@ -265,7 +266,7 @@ export function SignalChip({ k }: { k: string }) {
 export function TitreSection({ titre, info, cls = '' }: { titre: string; info: string; cls?: string }) {
   return (
     <p className={`label-caps flex items-center gap-1.5 text-txt-mut ${cls}`}>{titre}
-      <Tip side="top" tip={info}>
+      <Tip garder side="top" tip={info}>
         <span role="button" tabIndex={0} aria-label={`En savoir plus : ${titre}`}
           className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold normal-case leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
       </Tip>
@@ -710,12 +711,16 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
              franc (fond + bordure visibles) AU-DESSUS, primaire dominant (plus haut, flèche
              dessinée — même patron que « Commencer »). La carte ne bouge QU'AU geste. ── */
           <div data-appel className="flex flex-col gap-2">
+            {/* RECETTE-1 R35 — les boutons ne DÉPENDENT plus de `liveLoading` pour leur couleur/opacité :
+                ils sont actionnables quel que soit le compteur en cours de calcul (le débounce 400 ms +
+                l'aller-retour donnaient l'illusion d'un bouton « éteint » qui s'allume après coup). L'état
+                « en cours » n'est plus signalé que sur le NOMBRE (compteur), pas sur les boutons. */}
             <button data-voir-factuel onClick={voirFactuel}
-              className={`w-full rounded-lg border border-line-2 bg-surface-3/60 py-2.5 text-[12.5px] font-medium text-txt transition-colors duration-quick hover:border-txt-dim/50 hover:bg-surface-3 hover:text-txt-hi ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
+              className="w-full rounded-lg border border-line-2 bg-surface-3/60 py-2.5 text-[12.5px] font-medium text-txt transition-colors duration-quick hover:border-txt-dim/50 hover:bg-surface-3 hover:text-txt-hi">
               {CLIENT.revelation.voirN(live ?? 431_663)}
             </button>
             <button data-analyser-btn onClick={lancer}
-              className={`group flex w-full items-center justify-center gap-2 rounded-lg bg-mint py-3 font-display text-[13.5px] font-bold text-mint-ink transition-[filter,transform,opacity] duration-soft hover:brightness-105 active:translate-y-[1px] active:brightness-95 ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
+              className="group flex w-full items-center justify-center gap-2 rounded-lg bg-mint py-3 font-display text-[13.5px] font-bold text-mint-ink transition-[filter,transform] duration-soft hover:brightness-105 active:translate-y-[1px] active:brightness-95">
               <span>{CLIENT.revelation.boutonFaire.replace(/\s*→\s*$/, '')}</span>
               <svg viewBox="0 0 16 16" aria-hidden="true"
                 className="h-[13px] w-[13px] transition-transform duration-quick group-hover:translate-x-0.5">

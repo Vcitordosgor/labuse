@@ -2,13 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
-import { M09 } from './ModulePanel'
+import { M09, remplirGabaritCourrier } from './ModulePanel'
 
 // Mandat COURRIER — service d'envoi en 3 étapes : destinataires → rédaction → DEMANDER l'envoi à
 // LABUSE. OUTILS-1 A4/B6 : la confirmation porte le N° de demande + renvoi « Mes courriers », SANS
 // état interne d'exécution (le cycle imprimé/posté reste à la Tour de contrôle admin).
 const FICHE = { commune: 'Saint-Denis', surface_m2: 1625 }
-const DEMANDE = { ok: true, id: 42, ts: 't', n: 1, communes: 'Saint-Denis ×1', statut: 'demande' }
+// RECETTE-1 R13 — le back renvoie `rang_compte` (rang PROPRE AU COMPTE) ; l'id 42 est la PK globale
+// qui ne doit PLUS être montrée au client (elle fuitait le volume plateforme).
+const DEMANDE = { ok: true, id: 42, rang_compte: 3, ts: 't', n: 1, communes: 'Saint-Denis ×1', statut: 'demande' }
 
 function mockFetch() {
   global.fetch = vi.fn(async (url: string, init?: RequestInit) => {
@@ -32,6 +34,27 @@ describe('COURRIER — service d\'envoi (3 étapes)', () => {
   })
   afterEach(() => { vi.restoreAllMocks(); useApp.setState({ courrierPrefillIdus: null }) })
 
+  // RECETTE-2 (S8) — un champ vide ne s'imprime jamais dans une lettre postale : ni « — », ni « (—) »,
+  // ni « à — ». Commune/surface absente → le segment disparaît, la phrase se reformule sans lui.
+  it('S8 — un champ vide ne s\'imprime jamais (segment retiré, jamais « - »)', () => {
+    const tpl = 'Objet : votre parcelle {parcelle}, à {commune}\n\n'
+      + 'Votre parcelle cadastrée {parcelle} ({surface}), située à {commune}, présente à notre analyse un réel potentiel.'
+    // tout renseigné
+    const plein = remplirGabaritCourrier(tpl, 'CY 0044', 'Saint-Paul', '748 m²')
+    expect(plein).toContain('votre parcelle CY 0044, à Saint-Paul')
+    expect(plein).toContain('cadastrée CY 0044 (748 m²), située à Saint-Paul, présente')
+    // rien renseigné (fiche non résolue) — AUCUN tiret, phrase reformulée
+    const vide = remplirGabaritCourrier(tpl, 'ZZ 9999', '', '')
+    expect(vide).not.toMatch(/[—-]/)          // ni tiret cadratin ni trait d'union orphelin
+    expect(vide).not.toContain('()')
+    expect(vide).not.toContain('à ,')
+    expect(vide).toContain('Objet : votre parcelle ZZ 9999')
+    expect(vide).toContain('cadastrée ZZ 9999, présente')
+    // surface seule manquante
+    const sansSurf = remplirGabaritCourrier(tpl, 'AB 12', 'Le Port', '')
+    expect(sansSurf).toContain('cadastrée AB 12, située à Le Port, présente')
+  })
+
   it('① le prefill Assemblage amorce un destinataire (chip)', async () => {
     renderTool()
     await waitFor(() => expect(document.querySelectorAll('[data-courrier-dest]').length).toBe(1))
@@ -51,8 +74,9 @@ describe('COURRIER — service d\'envoi (3 étapes)', () => {
     // ③ demander l'envoi
     fireEvent.click(document.querySelector('[data-courrier-demander]')!)
     await waitFor(() => expect(document.querySelector('[data-courrier-confirm]')).toBeTruthy())
-    // OUTILS-1 A4/B6 — la confirmation porte le N° DE DEMANDE (= id en base) et renvoie vers le suivi.
-    expect(screen.getByText(/Demande n° 42 transmise/)).toBeTruthy()
+    // RECETTE-1 R13 — la confirmation porte le rang PROPRE AU COMPTE (n° 3), PAS le id PK global (42).
+    expect(screen.getByText(/Demande n° 3 transmise/)).toBeTruthy()
+    expect(screen.queryByText(/n° 42/)).toBeNull()
     expect(screen.getByText(/Mes courriers/)).toBeTruthy()
     // AUCUN état interne (imprimé/posté) ni timeline côté client.
     expect(screen.queryByText('Imprimé')).toBeNull()

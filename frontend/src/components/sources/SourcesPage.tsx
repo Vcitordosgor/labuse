@@ -60,8 +60,9 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   const prod = [s.provider, lic].filter(Boolean)
 
   return (
+    // RECETTE-1 R31 — survol vert opaque (hover-fill) comme le reste de l'app, au lieu du lavis blanc.
     <div ref={ref} data-source-row
-      className={`grid grid-cols-[14px_1fr_20px] items-center gap-x-3.5 gap-y-1.5 border-b border-line px-4 py-3 last:border-b-0 hover:bg-white/[0.018] md:grid-cols-[14px_1fr_190px_20px] ${focused ? 'bg-mint/[0.06]' : ''}`}>
+      className={`hover-fill grid grid-cols-[14px_1fr_20px] items-center gap-x-3.5 gap-y-1.5 border-b border-line px-4 py-3 last:border-b-0 md:grid-cols-[14px_1fr_190px_20px] ${focused ? 'bg-mint/[0.06]' : ''}`}>
       {/* RETOURS-8 (R2) — pastille JAMAIS rouge : mint (à jour) ou mint atténué (mise à jour en cours).
           Le client ne doit jamais croire que LABUSE est en retard. */}
       <span className="h-[7px] w-[7px] shrink-0 rounded-full"
@@ -93,7 +94,11 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         : <span className="col-[3/4] row-start-1 md:col-[4/5] md:row-auto" />}
 
       {/* producteur · licence (lien vers le texte de licence — audit §1.11) */}
-      <span className="col-[2/-1] min-w-0 truncate text-[12px] text-txt-dim md:col-[3/4]">
+      {/* RECETTE-2 (S26) — sur large, FORCÉ en rangée 1 (`md:row-start-1`) : sans ça, comme il vient
+          APRÈS le lien ↗ (col 4) dans le DOM, l'auto-placement non-dense de la grille le renvoyait en
+          rangée 2 → le nom (gauche) s'affichait en haut et le producteur (droite) en bas de la cellule.
+          Il partage désormais la rangée du nom, les deux alignés (items-center) sur la même ligne. */}
+      <span className="col-[2/-1] min-w-0 truncate text-[12px] text-txt-dim md:col-[3/4] md:row-start-1">
         {s.provider}{s.provider && prod.length > 1 ? ' · ' : ''}
         {s.license_url
           ? <a data-source-licence href={s.license_url} target="_blank" rel="noreferrer" className="hover:text-mint hover:underline" title="Texte de la licence">{lic}</a>
@@ -245,16 +250,20 @@ export function SourcesPage() {
           <input data-sources-search value={q} onChange={(e) => setQ(e.target.value)}
             placeholder="Chercher une source, un producteur…"
             className="min-w-[200px] flex-[1_1_240px] rounded-lg border border-line bg-surface-2 px-3 py-2 text-[13px] text-txt placeholder:text-txt-dim focus:border-line-2 focus:outline-none" />
+          {/* RECETTE-1 R37 — arrondi aligné sur la DA (rounded-lg, comme la barre de recherche et les
+              cartes), au lieu du rounded-full qu'on ne retrouvait nulle part ailleurs. */}
           <button data-sources-chip="toutes" aria-pressed={theme == null} onClick={() => { setTheme(null); setThemeOuvert(false) }}
-            className={`rounded-full border px-3 py-1.5 text-[12.5px] transition-colors duration-quick ${
+            className={`rounded-lg border px-3 py-1.5 text-[12.5px] transition-colors duration-quick ${
               theme == null ? 'border-mint bg-mint text-mint-ink' : 'border-line text-txt-mut hover:border-line-2 hover:text-txt'}`}>
             Toutes <span className="ml-1.5 font-mono text-[11px] opacity-70">{nTotal}</span>
           </button>
           <div className="relative">
+            {/* RECETTE-2 (S25) — liseré VERT autour du bouton (border-mint) + animation VERTE au survol
+                (hover-fill) + flèche vers le BAS quand la liste est ouverte (▾), vers la droite fermée (▸). */}
             <button data-sources-theme-toggle aria-expanded={themeOuvert} onClick={() => setThemeOuvert((o) => !o)}
-              className={`rounded-full border px-3 py-1.5 text-[12.5px] transition-colors duration-quick ${
-                theme != null ? 'border-mint bg-mint text-mint-ink' : 'border-line text-txt-mut hover:border-line-2 hover:text-txt'}`}>
-              {theme != null ? `Thème : ${theme}` : 'Filtrer par thème'} {themeOuvert ? '▴' : '▾'}
+              className={`rounded-lg border px-3 py-1.5 text-[12.5px] ${
+                theme != null ? 'border-mint bg-mint text-mint-ink' : 'border-mint/60 text-txt hover-fill'}`}>
+              {theme != null ? `Thème : ${theme}` : 'Filtrer par thème'} {themeOuvert ? '▾' : '▸'}
             </button>
             {themeOuvert && (
               <div data-sources-themes className="absolute left-0 top-10 z-10 max-h-[60vh] w-64 overflow-y-auto rounded-lg border border-line bg-surface-1 p-1.5 shadow-lg">

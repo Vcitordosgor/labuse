@@ -1185,6 +1185,24 @@ def _ban_ready(db: Session) -> bool:
         " AND to_regclass('adresse_parcelles') IS NOT NULL")).scalar()))
 
 
+def _permits_ready(db: Session) -> bool:
+    """RECETTE-3 (T4) — tables Sitadel présentes ? (pour le signal « un professionnel a déposé un
+    permis » = q_v14 pc_pm_sur_parcelle_pp_36m). Absentes → permis_pro=False partout (jamais une 500)."""
+    return _mem_cached(("permits-ready",), 300.0, lambda: bool(db.execute(text(
+        "SELECT to_regclass('p_model_permits') IS NOT NULL"
+        " AND to_regclass('sitadel_permits') IS NOT NULL")).scalar()))
+
+
+# RECETTE-3 (T4) — le signal « un professionnel a déposé un permis » (segment 1 du listing d'analyse) :
+# EXACTEMENT le feature q_v14 `pc_pm_sur_parcelle_pp_36m` = PC à pétitionnaire SIREN (professionnel)
+# autorisé dans les 36 mois SUR une parcelle de personne physique (owner_type = pp). Sous-requête
+# légère (≈ 2 400 idu), matérialisée une fois ; le filtre owner_type se fait au SELECT (vs.owner_type).
+_PRO_PC_CTE = ("pro_pc AS MATERIALIZED (SELECT DISTINCT pp.idu FROM p_model_permits pp "
+               "JOIN sitadel_permits s ON s.permit_id = pp.permit_id "
+               "WHERE pp.type = 'PC' AND coalesce(s.raw->>'petitioner_siren','') <> '' "
+               "AND pp.date_autorisation >= (CURRENT_DATE - INTERVAL '36 months'))")
+
+
 def _zone_plu_ready(db: Session) -> bool:
     """Table dérivée `parcel_zone_plu` (M6.1 item 1 — zone PLU dominante par parcelle)
     présente ? Mémorisé 60 s (elle apparaît après le build one-shot) ; absente → colonnes
@@ -2064,6 +2082,17 @@ def _rafraichir_partages(db: Session, commune: str, payload: dict) -> dict:
             db_ = d.pop("deficit_brut", None)
             d["deficit"] = round(float(db_), 1) if db_ is not None else None
             payload["sru"] = d
+        # RECETTE-4 U1/U2 — la taxe foncière (TFPB, REI) et le zonage A/B/C (DHUP) sont des
+        # passe-plats bon marché (une ligne). Le CACHE nocturne les figeait à `null` (il précède
+        # SOURCES-1) : un client ne voyait NI le taux foncier NI la zone de tension pourtant en base.
+        # On les resservit LIVE (même doctrine O8 que comparable/SRU) → jamais périmés, toujours servis.
+        from .fiche_commune import fiscalite as _fiscalite, zonage_abc as _zonage_abc
+        fisc = _fiscalite(db, insee)
+        if fisc is not None:
+            payload["fiscalite"] = fisc
+        zab = _zonage_abc(db, insee)
+        if zab is not None:
+            payload["zonage_abc"] = zab
     except Exception:  # noqa: BLE001 — le rafraîchissement ne doit jamais casser la fiche
         _FICHE_LOG.exception("fiche commune · rafraîchissement des indicateurs partagés (O8) impossible")
     return payload
@@ -2453,7 +2482,7 @@ def zonage_zones(communes: str | None = Query(None), db: Session = Depends(get_d
 @app.get("/filtre")
 def filtre(c: FiltreCriteres = Depends(),
            limit: int = Query(20, ge=0, le=200), offset: int = Query(0, ge=0),
-           sort: str | None = Query(None, pattern="^(rang|mult|surface|surface_asc|commune)$"),
+           sort: str | None = Query(None, pattern="^(rang|mult|surface|surface_asc|commune|potentiel)$"),
            idus: int = Query(0, ge=0, le=1),
            groupes: int = Query(0, ge=0, le=1),
            db: Session = Depends(get_db)) -> dict:
@@ -2838,6 +2867,14 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
     zone_cols = (", zp.zone_lib, zp.zone_fam" if zone_ok
                  else ", NULL AS zone_lib, NULL AS zone_fam")
     zone_join = "LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu" if zone_ok else ""
+    # RECETTE-3 (T4) — segment « un pro a déposé un permis » côté CARTE/commune (parité avec le
+    # listing île) : le CTE pro_pc en tête du WITH, la jointure et la colonne dans base. + etat_bien
+    # (nu/bati_encore/bati_max) exposé aux properties pour la segmentation client en mode commune.
+    _permits = _permits_ready(db)
+    geo_pro_cte = f"{_PRO_PC_CTE},\n        " if _permits else ""
+    geo_pro_join = "LEFT JOIN pro_pc gpc ON gpc.idu = p.idu" if _permits else ""
+    geo_pro_col = ("(gpc.idu IS NOT NULL AND coalesce(vs.owner_type,'pp') = 'pp')"
+                   if _permits else "false")
     # M6.2 perf (#1) : la FeatureCollection est assemblée EN SQL (json_build_object + json_agg) et
     # renvoyée en STRING BRUTE — l'ancienne version faisait `json.loads(g)` × 51k puis FastAPI
     # re-sérialisait (~13 s côté Python pour ~1 s de SQL). Le SELECT interne est INCHANGÉ (mêmes
@@ -2855,7 +2892,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
     _own_type = "b.owner_type" if commune else "NULL"
     _geo_sql = text(
         f"""
-        WITH base AS (
+        WITH {geo_pro_cte}base AS (
         SELECT p.idu, p.surface_m2,
                ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
                s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
@@ -2864,7 +2901,8 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
                (vw.parcelle_id IS NOT NULL) AS veille,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                d.status AS status, d.opportunity_score,  -- M129-B : matrice morte → statut cascade
-               d.completeness_score, r.sdp_residuelle_m2, r.sous_densite,
+               d.completeness_score, r.sdp_residuelle_m2, r.sous_densite, r.taux_emprise_pct,
+               {geo_pro_col} AS permis_pro,     -- RECETTE-3 (T4) : « un pro a déposé un permis »
                (ev.parcel_id IS NOT NULL) AS evenement_rouge, fl.flags,
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
                vs.v_score, vs.v_band, vs.owner_type,
@@ -2891,6 +2929,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
                      AND pm2.siren IS NOT NULL
                    GROUP BY pm2.siren HAVING count(*) > 1) cl ON cl.siren = own.siren
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id AND r.cause IS NULL
+        {geo_pro_join}
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                    WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
         -- flags actifs par parcelle (filtres métier) : couches en SOFT_FLAG + ABF non instruit.
@@ -2928,6 +2967,11 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
               -- M129-B : q_score/a_score/a_completude retirés (matrice morte)
               'completeness_score', b.completeness_score,
               'sdp_residuelle_m2', b.sdp_residuelle_m2, 'sous_densite', b.sous_densite,
+              -- RECETTE-3 (T4) : état du bien + signal « pro a déposé un permis » (segmentation client)
+              'etat_bien', CASE WHEN COALESCE(b.taux_emprise_pct, 0) < 5 THEN 'nu'
+                                WHEN COALESCE(b.sdp_residuelle_m2, 0) > 0 THEN 'bati_encore'
+                                ELSE 'bati_max' END,
+              'permis_pro', b.permis_pro,
               'evenement', CASE WHEN b.evenement_rouge THEN 'rouge' ELSE NULL END,
               'evenement_date', CASE WHEN b.event_date IS NULL THEN NULL ELSE b.event_date::text END,
               'flags', to_jsonb(coalesce(b.flags, '{{}}')),
@@ -2966,6 +3010,13 @@ _Q_V2_ORDERS = {
     # même clé, ordre ASC (les slivers < 2 m² restent masqués par MIN_DISPLAY_SURFACE_M2).
     "surface_asc": "p.surface_m2 ASC NULLS LAST, s2.rang ASC NULLS LAST",
     "commune": "p.commune ASC, s2.rang ASC NULLS LAST",
+    # RECETTE-3 (T3, décision Vic) — le tri « Potentiel » du listing FACTUEL : les parcelles
+    # ADRESSÉES d'abord (l'ancien « surface » remontait des emprises géantes sans adresse), puis
+    # celles où il RESTE le plus à bâtir (SDP résiduelle), puis surface. Mesuré (top 30) : 30/30
+    # adressées + 30/30 avec potentiel de construction réel, sur 10 communes — vs surface : 16/30
+    # adressées, 4/30 avec potentiel. `rp`/`pa` = résiduel + adresse joints à la page (chemin non-rang).
+    "potentiel": "(pa.idu IS NOT NULL) DESC, COALESCE(rp.sdp_residuelle_m2, 0) DESC NULLS LAST, "
+                 "p.surface_m2 DESC NULLS LAST",
     "v": "vs.v_score DESC NULLS LAST, (ev.parcel_id IS NOT NULL) DESC, "
          "d.opportunity_score DESC",  # M129-B
 }
@@ -2976,6 +3027,9 @@ _Q_V2_ORDERS_PAGE = {
     "surface": "pg.surface_m2 DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "surface_asc": "pg.surface_m2 ASC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "commune": "pg.commune ASC, pg.rang_v2 ASC NULLS LAST",
+    # RECETTE-3 (T3) — même ordre au niveau page (adresse via parcel_adresse `pa_o`, résiduel via `rb`).
+    "potentiel": "(pa_o.idu IS NOT NULL) DESC, COALESCE(rb.sdp_residuelle_m2, 0) DESC NULLS LAST, "
+                 "pg.surface_m2 DESC NULLS LAST",
     "v": "vs.v_score DESC NULLS LAST, pg.evenement_rouge DESC, "
          "pg.opportunity_score DESC",  # M129-B
 }
@@ -3036,6 +3090,12 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     ban_cols = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
                 else ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune")
     ban_join = _ban_lateral("pg.idu") if ban_ok else ""
+    # RECETTE-3 (T4) — signal « un pro a déposé un permis » (q_v14) : injecté seulement si les tables
+    # Sitadel existent (sinon permis_pro=False partout, jamais une 500 sur base de test nue).
+    _permits = _permits_ready(db)
+    _pro_cte = f", {_PRO_PC_CTE}" if _permits else ""
+    _pro_join = "LEFT JOIN pro_pc prpc ON prpc.idu = pg.idu" if _permits else ""
+    _pro_col = "(prpc.idu IS NOT NULL AND coalesce(vs.owner_type,'pp') = 'pp')" if _permits else "false"
     # perf (M5.1) : tri + filtres d'abord (page de :lim lignes), PUIS les jointures
     # d'affichage (propriétaire, cluster, veille, signaux) sur cette page seulement —
     # 3,6 s → <1 s sur l'île entière (baseline legacy : 4,1 s).
@@ -3088,6 +3148,8 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
             LIMIT :lim OFFSET :off
         )"""
     else:
+        # RECETTE-3 (T3) — `rp` (résiduel) + `pa` (adresse) joints ici pour le tri « potentiel » du
+        # listing factuel (1 ligne/parcelle, jointures indexées ; sans effet sur les autres tris).
         page_sql = f"""
         page AS (
             SELECT {_page_cols}
@@ -3095,6 +3157,8 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
             JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
             LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
             LEFT JOIN parcel_v_score vs ON vs.parcelle_id = p.idu
+            LEFT JOIN parcel_residuel rp ON rp.parcel_id = p.id
+            LEFT JOIN parcel_adresse pa ON pa.idu = p.idu
             LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                        WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
             WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
@@ -3120,11 +3184,12 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
               AND NOT (d2.status IN ('exclue', 'faux_positif_probable'))
               AND pm2.siren IS NOT NULL
             GROUP BY pm2.siren HAVING count(*) > 1
-        )
+        ){_pro_cte}
         SELECT pg.*, (vw.parcelle_id IS NOT NULL) AS veille,
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
                vs.v_score, vs.v_band, vs.owner_type,
                {_ETAT_BIEN_SQL} AS etat_bien,   -- M131 P3 : état du bien (affichage pur)
+               {_pro_col} AS permis_pro,        -- RECETTE-3 (T4) : segment « un pro a déposé un permis »
                -- CRED-4 : fraîcheur du signal V daté le plus récent (BODACC/cessation/DPE)
                (SELECT max(s1->>'date_evenement') FROM jsonb_array_elements(vs.signals) s1
                  WHERE s1->>'date_evenement' IS NOT NULL)    AS v_dernier_signal
@@ -3135,6 +3200,8 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         LEFT JOIN parcelle_personne_morale own ON own.idu = pg.idu
         LEFT JOIN parcel_v_score vs ON vs.parcelle_id = pg.idu
         LEFT JOIN parcel_residuel rb ON rb.parcel_id = pg.id   -- M131 P3 : 1 ligne/parcelle
+        LEFT JOIN parcel_adresse pa_o ON pa_o.idu = pg.idu     -- RECETTE-3 (T3) : tri « potentiel »
+        {_pro_join}
         LEFT JOIN cl ON cl.siren = own.siren
         ORDER BY {(_TIER_GROUPE_PAGE_SQL + ', ') if groupes else ''}{_Q_V2_ORDERS_PAGE[sort_key or "rang"]}
         """), {"c": commune, "run": run_label, "lim": limit, "off": offset,
@@ -3161,6 +3228,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         "copro_v2": bool(r["copro_v2"]), "veille": bool(r["veille"]),
         "etage0": bool(r["etage0"]),
         "etat_bien": r["etat_bien"],   # M131 P3 : nu | bati_encore | bati_max (affichage)
+        "permis_pro": bool(r["permis_pro"]),   # RECETTE-3 (T4) : segment « un pro a déposé un permis »
     } for r in rows]
 
 
@@ -3311,6 +3379,38 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
         "opportunites_avec_dossier": int(dossiers["avec_dossier"] or 0),
         "opportunites_sans_identite": int(dossiers["sans_identite"] or 0),
     }
+    # RECETTE-3 (T4, décision Vic) — les compteurs des 4 SEGMENTS du listing d'analyse (hors étage 0,
+    # ordre fixe) : (1) un pro a déposé un permis [q_v14], (2) terrain nu constructible, (3) bâti à
+    # densifier, (4) le reste. Un pro déposant un permis prime sur l'état du bien.
+    _permits = _permits_ready(db)
+    _seg_pro = "(prpc.idu IS NOT NULL AND coalesce(vs.owner_type,'pp') = 'pp')" if _permits else "false"
+    _seg_cte = f"WITH {_PRO_PC_CTE}" if _permits else ""
+    _seg_join = "LEFT JOIN pro_pc prpc ON prpc.idu = p.idu" if _permits else ""
+    seg = db.execute(text(
+        f"""
+        {_seg_cte}
+        SELECT
+          count(*) FILTER (WHERE permis_pro)                                          AS s_permis_pro,
+          count(*) FILTER (WHERE NOT permis_pro AND etat = 'nu')                       AS s_nu,
+          count(*) FILTER (WHERE NOT permis_pro AND etat = 'bati_encore')              AS s_densif,
+          count(*) FILTER (WHERE NOT permis_pro AND etat NOT IN ('nu', 'bati_encore')) AS s_reste
+        FROM (
+          SELECT {_seg_pro} AS permis_pro,
+                 CASE WHEN COALESCE(rb.taux_emprise_pct, 0) < 5 THEN 'nu'
+                      WHEN COALESCE(rb.sdp_residuelle_m2, 0) > 0 THEN 'bati_encore'
+                      ELSE 'bati_max' END AS etat
+          FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
+          {join_v2}
+          LEFT JOIN parcel_residuel rb ON rb.parcel_id = p.id
+          LEFT JOIN parcel_v_score vs ON vs.parcelle_id = p.idu
+          {_seg_join}
+          WHERE d.run_label = :run AND NOT ({_ETAGE0_SQL})
+            AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+            {extra_where} {sliver}
+        ) q
+        """), params).mappings().one()
+    out["segments"] = {"permis_pro": int(seg["s_permis_pro"] or 0), "terrain_nu": int(seg["s_nu"] or 0),
+                       "bati_densifier": int(seg["s_densif"] or 0), "reste": int(seg["s_reste"] or 0)}
     if legacy:  # M129-B : la matrice est MORTE — la ventilation legacy est retirée, DIT.
         out["legacy"] = {"mort": "matrice retirée (M129) — statut cascade + tier v2 la remplacent"}
     return out
@@ -4141,11 +4241,30 @@ def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
     # RETOURS-11F3 F10 — dispositifs fiscaux valables sur TOUTE La Réunion (constants, hors table),
     # rapatriés de « Constructibilité » (F0) : le zonage d'investissement (B1) et les taux de TVA DOM.
     # Faits territoriaux datés/sourcés, JAMAIS un calcul fiscal par projet (interdit du mandat).
-    dispositifs_dom = [
-        {"libelle": "Zonage d'investissement locatif : B1",
-         "detail": "La Réunion est classée en zone B1 (arrêté zonage A/B/C) — éligibilité PTZ dans le "
-                   "neuf et plafonds des dispositifs outre-mer. S'applique à toute l'île.",
-         "source": "Arrêté de zonage A/B/C (DHUP)"},
+    # RECETTE-4 U2 — le zonage A/B/C conditionne les DISPOSITIFS (PTZ, plafonds outre-mer, prix
+    # bailleur) : c'est une information de PARCELLE, pas seulement de commune. On le fait descendre à
+    # la maille parcelle depuis la zone RÉELLE de sa commune (DHUP), au lieu d'affirmer « B1 » pour
+    # toute l'île — c'était FAUX pour les 4 communes classées zone A (Saint-Paul, Saint-Leu, Les
+    # Avirons, L'Étang-Salé). None si non ingérée → on n'invente aucune zone.
+    from ..ingestion.zonage_abc import zonage_commune as _zonage_commune
+    _zab = _zonage_commune(db, idu[:5])
+    if _zab is not None:
+        _z = _zab["zone"]
+        dispositifs_dom = [
+            {"libelle": f"Zonage d'investissement locatif : {_z}",
+             "detail": (f"La commune est classée en zone {_z} (arrêté zonage A/B/C, DHUP) — la zone "
+                        "commande l'éligibilité PTZ dans le neuf, les plafonds de loyer et de "
+                        "ressources des dispositifs, et le prix de vente au bailleur social."),
+             "source": f"Arrêté de zonage A/B/C (DHUP) — {_zab['millesime']}"},
+        ]
+    else:
+        dispositifs_dom = [
+            {"libelle": "Zonage d'investissement locatif : non déterminé",
+             "detail": "Zone A/B/C de la commune non ingérée — le classement conditionne l'éligibilité "
+                       "PTZ, les plafonds des dispositifs et le prix bailleur.",
+             "source": "Arrêté de zonage A/B/C (DHUP)"},
+        ]
+    dispositifs_dom += [
         {"libelle": "TVA outre-mer : 8,5 % (taux normal DOM) · 2,1 % logement locatif social",
          "detail": "Dans les DOM, le taux normal de TVA est 8,5 % ; la construction/vente de logements "
                    "locatifs sociaux (LLS/LLTS) relève du taux de 2,1 %. Repères territoriaux — le "
@@ -4971,10 +5090,11 @@ def etude_zone_entreprises(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> d
 
 @app.get("/parcels/{idu}/export.pdf")
 def parcel_export_pdf(idu: str, db: Session = Depends(get_db)) -> Response:
-    """EXPORTS-2 lot 8 — l'export PDF de la fiche (ex-fiche premium) est REMPLACÉ par le Résumé
-    (builder exports, sans métadonnées Producer). Redirection vers /resume/{idu}.pdf."""
+    """EXPORTS-2 lot 8 — l'export PDF de la fiche (ex-fiche premium) était REMPLACÉ par le Résumé.
+    RECETTE-3 (T2) — le Résumé est supprimé : la redirection pointe désormais vers le Dossier
+    (successeur naturel de la fiche PDF, builder exports)."""
     from fastapi.responses import RedirectResponse
-    return RedirectResponse(f"/resume/{idu}.pdf", status_code=308)
+    return RedirectResponse(f"/dossier/{idu}.pdf", status_code=308)
 
 
 def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_demande: float | None) -> dict | None:
@@ -5422,7 +5542,13 @@ def renouvellement_liste(commune: str | None = None,
     from ..renouvellement import LIBELLE_SEGMENT, LIBELLES_COMPOSANTES
     cap = _renouv_liste_cap()
     eff = cap if not limit else min(limit, cap)   # plafond EN CONFIG, jamais muet (cf. `cap` servi)
-    orders = {"score": "r.renouv_score DESC, r.idu",
+    # RECETTE-1 R7 : le tri par défaut « score » lisait `renouv_score DESC, r.idu` — SANS index →
+    # Parallel Seq Scan + top-N sort des 67 260 lignes du run À CHAQUE page (coût croissant avec
+    # l'OFFSET). Or `rang_segment` EST bâti comme rank() OVER (ORDER BY score DESC, idu) (cf.
+    # renouvellement.py) : trier par `r.rang_segment` (indexé `ix_renouv_rang`) donne l'ordre
+    # STRICTEMENT IDENTIQUE (idu unique ⇒ bijection) via Index Scan (mesuré 18 ms → 3,4 ms au fond
+    # de liste, sortie vérifiée identique). Aucun changement de schéma, aucune ligne réordonnée.
+    orders = {"score": "r.rang_segment",
               "sdp": "r.sdp_residuelle_m2 DESC NULLS LAST, r.idu",
               "surface": "r.surface_m2 DESC NULLS LAST, r.idu",
               "rang_commune": "r.commune, r.rang_commune"}
@@ -5886,7 +6012,8 @@ def export_fiche(idu: str, format: str = Query("md", pattern="^(md|html)$"),
                  db: Session = Depends(get_db)):
     """Export fiche : Markdown (md) ou HTML détaillé (html). Surface DONNÉES (cloisonnée par
     compte via `_build_fiche`) — distincte des documents PDF (builder exports). EXPORTS-2 lot 8
-    ne touche PAS cet export : seul l'export PDF (`/export.pdf`) est redirigé vers le Résumé."""
+    ne touche PAS cet export : seul l'export PDF (`/export.pdf`) est redirigé (RECETTE-3 T2 : vers
+    le Dossier depuis la suppression du Résumé)."""
     from fastapi.responses import HTMLResponse, PlainTextResponse
 
     from .export import fiche_html, fiche_markdown
@@ -6182,7 +6309,9 @@ def financier_questionnaire_get(idu: str, request: Request, db: Session = Depend
 
     def _champ(fid: str) -> dict:
         c = CHIFFRES.get(fid)
-        return {"id": fid, "libelle": c.libelle if c else fid, "unite": c.unite if c else "",
+        # RECETTE-2 (S3) — libellé CLIENT en français clair ; repli sur le libellé registre.
+        libelle = qf.LIBELLES_CLIENT.get(fid) or (c.libelle if c else fid)
+        return {"id": fid, "libelle": libelle, "unite": c.unite if c else "",
                 "type": c.type if c else "texte",
                 "domaine": list(c.domaine) if c and c.domaine else None,
                 "obligatoire": fid in qf.OBLIGATOIRES,

@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>LABUSE — Brief apporteur, maquette 4 pages</title>
+<style>
+:root{
+  --encre:#1A1D1A; --gris:#6B7268; --gris2:#9AA096; --trait:#DDE2D9;
+  --vert:#2E6B4F; --vert-clair:#EDF5F0; --alerte:#8C2F2F; --alerte-fond:#FBF0F0;
+  --papier:#FFFFFF;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#E8EAE6;color:var(--encre);
+  font:14.5px/1.55 "Iowan Old Style","Palatino Linotype",Georgia,serif}
+.page{background:var(--papier);width:820px;min-height:1120px;margin:26px auto;
+  padding:52px 62px 46px;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.folio{position:absolute;bottom:26px;right:62px;font-size:11.5px;color:var(--gris2);
+  font-family:system-ui,sans-serif}
+.pied{position:absolute;bottom:26px;left:62px;right:120px;font-size:10.5px;color:var(--gris2);
+  font-family:system-ui,sans-serif;border-top:1px solid var(--trait);padding-top:9px}
+
+.marque{font-family:system-ui,sans-serif;font-size:13px;letter-spacing:.04em;
+  color:var(--vert);font-weight:700}
+.marque span{color:var(--gris);font-weight:400;margin-left:9px;letter-spacing:0}
+h1{font-size:34px;line-height:1.15;margin:16px 0 6px;font-weight:600;letter-spacing:-.01em}
+.adresse{font-size:17px;margin:0 0 3px}
+.idu{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12px;color:var(--gris)}
+.emis{font-size:12px;color:var(--gris);font-family:system-ui,sans-serif;margin-top:2px}
+
+.avert{border-left:3px solid var(--alerte);background:var(--alerte-fond);
+  padding:11px 15px;margin:22px 0 26px;font-size:13px;font-family:system-ui,sans-serif;
+  color:var(--alerte);line-height:1.5}
+.avert b{font-weight:600}
+
+h2{font-size:12px;font-family:system-ui,sans-serif;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--vert);margin:30px 0 12px;
+  border-bottom:1px solid var(--trait);padding-bottom:7px}
+
+table{width:100%;border-collapse:collapse}
+td{padding:8px 0;border-bottom:1px solid var(--trait);vertical-align:top}
+td.k{width:33%;color:var(--gris);font-size:13.5px}
+td.v{font-size:14.5px}
+tr.neuf td{background:var(--vert-clair)}
+tr.neuf td.k{padding-left:8px}
+tr.neuf td.v{padding-right:8px}
+
+.plan{margin:20px 0 0;border:1px solid var(--trait);height:250px;
+  display:grid;place-items:center;color:var(--gris2);font-size:12px;
+  font-family:system-ui,sans-serif;background:
+    repeating-linear-gradient(45deg,#FAFBFA,#FAFBFA 9px,#F4F6F3 9px,#F4F6F3 18px)}
+
+.intro{font-size:14px;color:var(--gris);margin:26px 0 0;line-height:1.6}
+
+/* questionnaire */
+h3{font-size:19px;margin:26px 0 4px;font-weight:600}
+h3:first-of-type{margin-top:8px}
+.aide{font-size:13px;color:var(--gris);margin:0 0 14px;line-height:1.5}
+.q{margin:0 0 17px}
+.q .lib{font-size:14.5px;margin-bottom:6px}
+.q .lib em{color:var(--gris);font-style:normal;font-size:13px}
+.cle{display:inline-block;font-family:system-ui,sans-serif;font-size:10px;font-weight:600;
+  letter-spacing:.05em;color:var(--vert);border:1px solid var(--vert);border-radius:3px;
+  padding:1px 5px;margin-right:7px;vertical-align:2px}
+.champ{border:1px solid var(--trait);border-radius:2px;height:34px;background:#FCFDFC}
+.champ.haut{height:62px}
+.champ.bas{height:26px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cases{display:flex;gap:20px;font-size:13.5px;color:var(--encre);
+  font-family:system-ui,sans-serif;padding-top:2px}
+.cases label{display:flex;align-items:center;gap:7px}
+.case{width:13px;height:13px;border:1px solid var(--gris);border-radius:2px;display:inline-block}
+.photos{border:1px dashed var(--trait);padding:16px 18px;margin-top:6px;
+  font-size:13.5px;color:var(--gris);line-height:1.6}
+.photos b{color:var(--encre);font-weight:600}
+</style>
+</head>
+<body>
+
+<!-- ================= PAGE 1 ================= -->
+<div class="page">
+  <div class="marque">LABUSE<span>Brief apporteur</span></div>
+
+  <h1>Un terrain à sonder</h1>
+  <p class="adresse">3 Rue du Cap Homard, 97434 Saint-Paul</p>
+  <div class="idu">97415000CY0044</div>
+  <div class="emis">Émis le 08/09/2026 — valable jusqu'au 07/12/2026</div>
+
+  <div class="avert">
+    <b>Confidentiel, et sans mandat.</b> Ne transmettez ce document ni au propriétaire ni à des tiers.
+    Vous n'êtes pas habilité à négocier, à faire une offre, ni à engager qui que ce soit.
+  </div>
+
+  <h2>La parcelle</h2>
+  <table>
+    <tr><td class="k">Surface</td><td class="v">748 m²</td></tr>
+    <tr><td class="k">Zone</td><td class="v">U — urbaine, constructible</td></tr>
+    <tr><td class="k">Sur place</td><td class="v">1 bâtiment · 142 m² au sol · environ 3,9 m de haut</td></tr>
+    <tr class="neuf"><td class="k">Ce qu'on peut y bâtir</td>
+      <td class="v">1 200 m² de plancher restant — de l'ordre de 14 logements</td></tr>
+    <tr class="neuf"><td class="k">Ce qui gêne</td>
+      <td class="v">Aléa mouvement de terrain · droit de préemption de la commune</td></tr>
+    <tr class="neuf"><td class="k">Prix du secteur</td>
+      <td class="v">terrain nu 320 €/m² · ancien bâti 5 190 €/m²</td></tr>
+    <tr class="neuf"><td class="k">Dernière vente</td>
+      <td class="v">mars 2019 — 186 000 €</td></tr>
+    <tr><td class="k">Propriétaire</td><td class="v">Une société — MOHAI (SIREN 812 449 037)</td></tr>
+    <tr class="neuf"><td class="k">À côté</td>
+      <td class="v">2 parcelles voisines au même propriétaire (CY 0045, CY 0046) — 1 340 m² de plus</td></tr>
+    <tr><td class="k">Accès</td><td class="v">arrêt de bus à 115 m</td></tr>
+  </table>
+
+  <div class="plan">plan de situation — la parcelle et ses voisines, cadastre en fond</div>
+
+  <p class="intro">Voilà ce qui est public. Le reste — qui décide, à quel prix, ce que cachent
+    les papiers — ne s'obtient que sur place. C'est ce que les trois pages suivantes vous demandent.</p>
+
+  <div class="pied">LABUSE · Intelligence foncière — La Réunion · données publiques,
+    ni conseil juridique ni offre d'achat</div>
+  <div class="folio">1 / 4</div>
+</div>
+
+<!-- ================= PAGE 2 ================= -->
+<div class="page">
+  <div class="marque">LABUSE<span>3 Rue du Cap Homard — 97415000CY0044</span></div>
+
+  <h3>Qui décide</h3>
+  <p class="aide">Une parcelle en indivision, ce sont autant de signatures que d'héritiers.
+    C'est la première chose qui fait échouer une vente.</p>
+
+  <div class="q"><div class="lib"><span class="cle">L'ESSENTIEL</span>Nom et coordonnées de la
+    personne à qui vous avez parlé</div>
+    <div class="duo"><div class="champ"></div><div class="champ"></div></div></div>
+
+  <div class="q"><div class="lib">Qui détient réellement la parcelle, et qui décide de vendre ?
+    <em>Indivision, succession en cours, combien de signataires ?</em></div>
+    <div class="champ haut"></div></div>
+
+  <div class="q"><div class="lib">Tous les décideurs sont-ils d'accord pour vendre ?</div>
+    <div class="cases"><label><i class="case"></i>Oui</label><label><i class="case"></i>Non</label>
+      <label><i class="case"></i>Pas tous</label><label><i class="case"></i>Ne sait pas</label></div></div>
+
+  <div class="q"><div class="lib">Un notaire est-il déjà saisi ? Lequel ?</div>
+    <div class="champ"></div></div>
+
+  <h3>La vente</h3>
+  <p class="aide">Le prix déjà refusé vaut plus qu'un prix annoncé : il dit le plancher réel.</p>
+
+  <div class="q"><div class="lib"><span class="cle">L'ESSENTIEL</span>Quel prix attend-il ?
+    Quel prix a-t-il déjà refusé ?</div>
+    <div class="duo"><div class="champ"></div><div class="champ"></div></div></div>
+
+  <div class="q"><div class="lib">Est-il vendeur ? Depuis quand, et pourquoi ?
+    <em>Succession, départ, besoin de liquidités, lassitude…</em></div>
+    <div class="champ haut"></div></div>
+
+  <div class="q"><div class="lib">Qui est déjà passé ? <em>Agence, promoteur, particulier —
+    offres reçues et montants si connus</em></div>
+    <div class="champ haut"></div></div>
+
+  <div class="q"><div class="lib">Un mandat de vente est-il en cours ?</div>
+    <div class="cases"><label><i class="case"></i>Non</label><label><i class="case"></i>Simple</label>
+      <label><i class="case"></i>Exclusif</label></div></div>
+
+  <div class="q"><div class="lib">Par quel canal le joindre à nouveau ?
+    <em>Téléphone, courrier, sur place, via un tiers</em></div>
+    <div class="champ"></div></div>
+
+  <div class="pied">LABUSE · Brief apporteur · confidentiel</div>
+  <div class="folio">2 / 4</div>
+</div>
+
+<!-- ================= PAGE 3 ================= -->
+<div class="page">
+  <div class="marque">LABUSE<span>3 Rue du Cap Homard — 97415000CY0044</span></div>
+
+  <h3>Le bâti et son occupation</h3>
+  <p class="aide">Un bail commercial en cours peut geler l'opération plusieurs années.
+    Notez-le en premier si c'est le cas.</p>
+
+  <div class="q"><div class="lib">Les bâtiments sont-ils occupés ? Par qui ?</div>
+    <div class="cases"><label><i class="case"></i>Vides</label>
+      <label><i class="case"></i>Le propriétaire</label><label><i class="case"></i>Des locataires</label>
+      <label><i class="case"></i>Une activité</label></div></div>
+
+  <div class="q"><div class="lib"><span class="cle">L'ESSENTIEL</span>Sous quel bail ?
+    <em>Fin de bail, loyers perçus</em></div>
+    <div class="champ haut"></div></div>
+
+  <div class="q"><div class="lib">État général du bâti ; diagnostics disponibles
+    <em>(amiante, plomb)</em></div>
+    <div class="champ haut"></div></div>
+
+  <h3>Le sol</h3>
+  <p class="aide">Un ancien garage ou dépôt sur la parcelle peut ajouter des dizaines de milliers
+    d'euros de dépollution. Un établissement classé est signalé à proximité.</p>
+
+  <div class="q"><div class="lib">Quel était l'usage du site avant ?</div>
+    <div class="champ haut"></div></div>
+
+  <h3>Ce que les papiers diraient</h3>
+
+  <div class="q"><div class="lib">Servitudes de passage, litiges de voisinage, bornage récent,
+    empiètements ?</div>
+    <div class="champ haut"></div></div>
+
+  <div class="q"><div class="lib">Hypothèques, procédures en cours ?</div>
+    <div class="champ"></div></div>
+
+  <div class="q"><div class="lib">Titre de propriété disponible ?
+    <em>Origine : achat, donation, succession — et l'année</em></div>
+    <div class="champ"></div></div>
+
+  <div class="pied">LABUSE · Brief apporteur · confidentiel</div>
+  <div class="folio">3 / 4</div>
+</div>
+
+<!-- ================= PAGE 4 ================= -->
+<div class="page">
+  <div class="marque">LABUSE<span>3 Rue du Cap Homard — 97415000CY0044</span></div>
+
+  <h3>Le voisinage et la mairie</h3>
+  <p class="aide">Deux parcelles voisines appartiennent au même propriétaire. Savoir s'il les
+    vendrait ensemble change complètement l'opération.</p>
+
+  <div class="q"><div class="lib"><span class="cle">L'ESSENTIEL</span>Vendrait-il aussi
+    CY 0045 et CY 0046 ? D'autres voisines sont-elles à vendre ?</div>
+    <div class="champ haut"></div></div>
+
+  <div class="q"><div class="lib">Que dit la mairie de ce secteur ? Que disent les voisins ?
+    <em>Projets connus, oppositions, associations</em></div>
+    <div class="champ haut"></div></div>
+
+  <h3>Les photos</h3>
+  <div class="photos">
+    Quatre vues : <b>depuis la voie</b>, puis <b>aux quatre coins</b>, en tenant la parcelle au centre.
+    Envoyez-les par message en citant la référence <b>97415000CY0044</b> — n'imprimez rien.
+  </div>
+
+  <h3>Votre retour</h3>
+  <div class="q"><div class="duo">
+    <div><div class="lib">Date de la visite</div><div class="champ"></div></div>
+    <div><div class="lib">Vos coordonnées</div><div class="champ"></div></div>
+  </div></div>
+
+  <div class="q"><div class="lib">Ce qu'il faut savoir et qu'aucune question ne couvre</div>
+    <div class="champ haut"></div>
+    <div class="champ bas" style="border-top:0"></div>
+    <div class="champ bas" style="border-top:0"></div>
+  </div>
+
+  <div class="pied">LABUSE · Brief apporteur · confidentiel — ne pas transmettre au propriétaire</div>
+  <div class="folio">4 / 4</div>
+</div>
+
+</body>
+</html>

@@ -64,9 +64,13 @@ describe('SOLAIRE — deux modes', () => {
     expect(screen.queryByText(/gelées 11\/07\/2026/)).toBeNull()
   })
 
-  it('mode Piscines : la STAT d\'abord (compteur agrégat île + par commune)', async () => {
+  it('mode Piscines (R22) : rien avant « Voir les parcelles », la STAT naît au clic', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
+    // RECETTE-1 R22 — avant le clic, AUCUN texte/info de résultat n'apparaît.
+    expect(document.querySelector('[data-piscines-total]')).toBeNull()
+    expect(document.querySelector('[data-piscines-row]')).toBeNull()
+    fireEvent.click(document.querySelector('[data-piscines-voir]')!)
     await waitFor(() => expect(document.querySelector('[data-piscines-total]')?.textContent).toContain('480'))
     expect(screen.getByText('Saint-Pierre')).toBeTruthy()       // ligne par commune
   })
@@ -74,6 +78,7 @@ describe('SOLAIRE — deux modes', () => {
   it('mode Piscines (LOT8) : TOUTES les piscines listées (classement ignoré, pas de pied « écartées ») + seuil écrit', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
+    fireEvent.click(document.querySelector('[data-piscines-voir]')!)   // R22 — naît au clic
     // les 2 lignes (dont l'« écartée ») s'affichent : le pisciniste veut toutes les piscines.
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
     expect(document.querySelector('[data-solaire-ecartees]')).toBeNull()          // plus de pied « écartées masquées »
@@ -112,20 +117,19 @@ describe('SOLAIRE — deux modes', () => {
     expect(document.querySelector('[data-solaire-kwc-hyp]')?.textContent).toContain('0,2 kWc/m²')
   })
 
-  it('A2/A5 — liste Piscines : potentiel, type propriétaire, pont Courrier (CSV retiré FIX-3 E)', async () => {
+  it('A2 (R23) — liste Piscines : potentiel + type propriétaire ; plus de sélection ni de ponts Courrier/Comparer', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
+    fireEvent.click(document.querySelector('[data-piscines-voir]')!)   // R22 — naît au clic
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
     const body = document.body.textContent ?? ''
     expect(body).toContain('SCI SOLEIL')                 // A2 — PM nommée
     expect(body).toContain('particulier — non nommé')    // A2 — particulier jamais nommé
     expect(body.replace(/\s/g, '')).toContain('1598')    // A2 — potentiel servi (fmtInt insère une espace)
     expect(document.querySelector('[data-piscines-csv]')).toBeFalsy()        // OUTILS-FIX-3 E — export CSV retiré
-    // A5 — sélectionner une ligne active le pont Courrier
-    const cb = document.querySelector('[data-piscines-sel]') as HTMLInputElement
-    fireEvent.click(cb)
-    const courrier = document.querySelector('[data-piscines-courrier]') as HTMLButtonElement
-    expect(courrier.disabled).toBe(false)
-    expect(courrier.textContent).toContain('(1)')
+    // RECETTE-1 R23 — « Préparer les courriers » et « Comparer » retirés (avec la sélection).
+    expect(document.querySelector('[data-piscines-sel]')).toBeNull()
+    expect(document.querySelector('[data-piscines-courrier]')).toBeNull()
+    expect(document.querySelector('[data-piscines-comparer]')).toBeNull()
   })
 })
