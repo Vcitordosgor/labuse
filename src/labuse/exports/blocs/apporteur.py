@@ -20,7 +20,8 @@ from ..rendu import esc, ligne_kv, note, table_kv
 # RECETTE-2 (S7) — un apporteur doit avoir la parcelle EN MAIN : au-delà de surface/zone/bâti, on
 # ajoute la SDP résiduelle + capacité, les contraintes (aléas, prescriptions ER/EBC/DPU, PEB) et le
 # prix de secteur (terrain nu + ancien). Ces ids existent déjà au catalogue (mêmes que le Résumé).
-IDS = ("surface_parcelle_m2", "zone_plu_famille", "statut_plu", "emprise_batie_m2", "hauteur_bati_m",
+IDS = ("surface_parcelle_m2", "zone_plu_famille", "reglement_plu_bloc", "statut_plu",
+       "emprise_batie_m2", "hauteur_bati_m",
        "n_batiments", "type_proprietaire", "prix_achat_historique_eur", "distance_arret_m",
        "sdp_residuelle_m2", "capacite_logements", "aleas_parcelle_liste",
        "er_emplacement_reserve", "ebc_classe", "dpu_perimetre", "peb_zone",
@@ -136,9 +137,14 @@ def _coup_d_oeil(valeurs, ctx) -> str:
             # celui qui fait foi » : l'apporteur n'a que faire de la traçabilité GPU (on garde « PLU
             # approuvé le … »). Le reste des documents/écrans, eux, gardent leur mention.
             libelle = _RE_GPU_PLOMBERIE.sub("", libelle).rstrip(" —·").strip()
+        # RECETTE-8 W15 — le CODE de zone réel (« Zone Um (famille U) »), le MÊME libellé partagé
+        # que le Dossier (verdicts.zone_libelle) : plus de « Zone U » tronqué ici pendant que le
+        # Dossier dit « Zone Um » — une donnée, une réponse dans les deux documents.
+        from ..verdicts import zone_libelle
+        z = zone_libelle(valeurs) or f"Zone {val(valeurs, 'zone_plu_famille')}"
         suite = (" — " + esc(libelle)) if libelle else (
             " — urbaine, constructible" if str(val(valeurs, "zone_plu_famille")).upper() in ("U", "AU") else "")
-        lignes.append(ligne_kv("Zone", esc(str(val(valeurs, "zone_plu_famille"))) + suite, ""))
+        lignes.append(ligne_kv("Zone", esc(z) + suite, ""))
     lignes.append(ligne_kv("Sur place", esc(_sur_place(valeurs)), ""))
     # RECETTE-2 (S7) — SDP résiduelle + capacité : ce que l'apporteur peut annoncer comme potentiel.
     # RECETTE-5 (V20a) — un ZÉRO ne s'imprime pas : « 0 m² de plancher restant » (SDP nulle) n'a aucun

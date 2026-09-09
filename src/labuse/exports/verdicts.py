@@ -22,6 +22,21 @@ def _val(valeurs: dict[str, Valeur], cid: str):
     return v.valeur if v is not None else None
 
 
+def zone_libelle(valeurs: dict[str, Valeur]) -> str | None:
+    """RECETTE-8 W15 — LE libellé de zone servi à TOUS les documents : « Zone Um (famille U) », le
+    CODE réel (secteur) + sa famille, jamais un « Zone U » tronqué (E3). Point unique : le Dossier
+    (verdict de zonage) ET l'Apporteur lisent ce même libellé — une donnée, une réponse. None si la
+    zone n'est pas déterminée. Le code exact vient de `reglement_plu_bloc.zone`, la famille de
+    `zone_plu_famille` (repli : la famille seule si le code n'est pas lisible)."""
+    fam = _val(valeurs, "zone_plu_famille")
+    if not fam:
+        return None
+    fam = str(fam).upper()
+    reg = _val(valeurs, "reglement_plu_bloc")
+    code = (reg.get("zone") if isinstance(reg, dict) else None) or fam
+    return f"Zone {code}" + (f" (famille {fam})" if str(code).strip().upper() != fam else "")
+
+
 def verdict_zonage(valeurs: dict[str, Valeur]) -> Verdict | None:
     """Section 2 — la famille de la zone DOMINANTE (zone_servie) conclut : constructible ou non,
     cause dite. Rien à dire si la zone n'est pas déterminée (le bloc omet le verdict)."""
@@ -29,13 +44,9 @@ def verdict_zonage(valeurs: dict[str, Valeur]) -> Verdict | None:
     if not fam:
         return None
     fam = str(fam).upper()
-    # RECETTE-7 (E3) — afficher le CODE DE ZONE réel (ex. « Um ») pour qu'il colle aux articles
-    # cités plus bas (« Art. Um.9 ») : la FAMILLE (U/AU/A/N) sert la classification
-    # constructible/non, mais le libellé montre le secteur exact, jamais un « Zone U » tronqué à
-    # côté d'un règlement « Um » — le lecteur ne doit plus se demander s'il lit une autre zone.
-    reg = _val(valeurs, "reglement_plu_bloc")
-    code = (reg.get("zone") if isinstance(reg, dict) else None) or fam
-    lib = f"Zone {code}" + (f" (famille {fam})" if str(code).strip().upper() != fam else "")
+    # RECETTE-7 (E3) / RECETTE-8 (W15) — le CODE DE ZONE réel (ex. « Um ») pour coller aux articles
+    # cités (« Art. Um.9 »), via le libellé PARTAGÉ avec l'Apporteur (une donnée, une réponse).
+    lib = zone_libelle(valeurs) or f"Zone {fam}"
     if fam in _NON_CONSTRUCTIBLE:
         return (f"{lib} — {_NON_CONSTRUCTIBLE[fam]}, <strong>non constructible</strong>. "
                 f"Le potentiel de construction est nul par cette règle de zonage.", "warn", "")
