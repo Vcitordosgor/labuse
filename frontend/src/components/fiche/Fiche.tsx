@@ -819,7 +819,8 @@ export function Fiche({ idu }: { idu: string }) {
             <span style={{ userSelect: 'text', minWidth: 0 }} title={f?.adresse ?? undefined}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</span>
             {f?.adresse && <CopyIdu value={f.adresse} aria="Copier l’adresse" titre="Copier l’adresse" okTitre="Adresse copiée" dataAttr="adresse" />}
             {!f?.adresse && (
-              <Tip side="top" tip={CLIENT.fiche.adresseAbsenteInfo}>
+              // RECETTE-8 W11 — « i » fonctionnel icône-seule → `garder` (sinon bulle muette, S10).
+              <Tip side="top" tip={CLIENT.fiche.adresseAbsenteInfo} garder>
                 <span data-adresse-absente-i role="button" tabIndex={0} aria-label="Pourquoi l’adresse manque"
                   style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14, borderRadius: 999, border: '1px solid var(--line-3)', color: 'var(--txt-ghost)', fontSize: 9, fontWeight: 700, lineHeight: 1, cursor: 'help', verticalAlign: 'middle' }}>i</span>
               </Tip>
@@ -891,7 +892,11 @@ export function Fiche({ idu }: { idu: string }) {
                   <div className="stat-l">
                     {c.l.toUpperCase()}
                     {c.i && (
-                      <Tip tip={c.i}>
+                      // RECETTE-8 W11 — le « i » de la tête de fiche est un déclencheur FONCTIONNEL
+                      // icône-seule (la bulle EST son seul contenu) : il faut `garder` pour que la
+                      // bulle s'affiche (RECETTE-2 S10 a retiré les bulles de survol SAUF ce cas).
+                      // Sans lui, les six « i » de la tête ne faisaient RIEN au survol/tap.
+                      <Tip tip={c.i} garder side="bottom">
                         <span role="button" tabIndex={0} aria-label={`Source : ${c.l}`}
                           className="flex h-[12px] w-[12px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[7px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
                       </Tip>
