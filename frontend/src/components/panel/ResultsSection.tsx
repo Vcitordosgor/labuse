@@ -172,11 +172,13 @@ const SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
   { key: 'rang', label: CLIENT.tri.rang, tip: CLIENT.tri.rangTip },
   { key: 'surface', label: CLIENT.tri.surface, tip: CLIENT.tri.surfaceTip, dir: '↓' },
 ]
-// RECETTE-3 (T3, décision Vic) — le listing FACTUEL : « Potentiel » par défaut (adressées d'abord,
-// puis SDP résiduelle) au lieu de « Surface » (qui remontait des emprises géantes sans adresse) ;
-// Surface reste disponible en second (inversible).
+// RECETTE-5 (V2, décision Vic) — le listing FACTUEL : « Adresse » par défaut (adressées d'abord,
+// puis SURFACE décroissante) — que du fait cadastral. Le tri « Potentiel » (SDP résiduelle = calcul
+// LABUSE) est RETIRÉ de la vue factuelle : une vue qui s'annonce « sans analyse » ne sert pas une
+// opinion de LABUSE. Le potentiel reste dans l'analyse, nulle part ailleurs. Surface reste en second
+// (inversible). [RECETTE-3 (T3) : l'ancien défaut était « Potentiel ».]
 const FACTUAL_SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
-  { key: 'potentiel', label: CLIENT.tri.potentiel, tip: CLIENT.tri.potentielTip },
+  { key: 'adresse', label: CLIENT.tri.adresse, tip: CLIENT.tri.adresseTip },
   { key: 'surface', label: CLIENT.tri.surface, tip: CLIENT.tri.surfaceTip, dir: '↓' },
 ]
 
@@ -207,8 +209,15 @@ export function sortRows<T extends SortableRow>(rows: T[], sort: SortKey, groupe
       const gb = GROUPE_ORDER(b)
       if (ga !== gb) return ga - gb
     }
-    // RECETTE-3 (T3) — « Potentiel » (défaut factuel) : adressées d'abord, puis SDP résiduelle, puis
-    // surface. Même sémantique que le serveur (_Q_V2_ORDERS['potentiel']) — le geojson porte adresse+SDP.
+    // RECETTE-5 (V2) — « Adresse » (défaut factuel) : adressées d'abord, puis SURFACE décroissante.
+    // Que du fait cadastral — aucune SDP résiduelle (calcul LABUSE) ici. Le geojson porte adresse+surface.
+    if (sort === 'adresse') {
+      const aa = a.adresse ? 1 : 0, ba = b.adresse ? 1 : 0
+      if (aa !== ba) return ba - aa
+      return (b.surface_m2 ?? -1) - (a.surface_m2 ?? -1)
+    }
+    // RECETTE-3 (T3) — « Potentiel » (analyse seulement désormais) : adressées d'abord, puis SDP
+    // résiduelle, puis surface. Même sémantique que le serveur (_Q_V2_ORDERS['potentiel']).
     if (sort === 'potentiel') {
       const aa = a.adresse ? 1 : 0, ba = b.adresse ? 1 : 0
       if (aa !== ba) return ba - aa
@@ -265,12 +274,13 @@ export function ResultsSection() {
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
   // Mode FACTUEL (analyse OFF) : liste neutre, tri Surface seul, aucune ventilation d'opinion.
   const analyse = filters.analyseLabuse
-  // Tri par défaut : analyse = RANG P (groupé par tier) ; factuel = POTENTIEL (RECETTE-3 T3,
-  // décision Vic) — adressées d'abord puis SDP résiduelle, au lieu de Surface qui remontait des
-  // emprises géantes sans adresse. Surface reste en second (inversible) dans les deux modes.
-  const [sort, setSort] = useState<SortKey>(analyse ? 'rang' : 'potentiel')
+  // Tri par défaut : analyse = RANG P (groupé par tier) ; factuel = ADRESSE (RECETTE-5 V2, décision
+  // Vic) — adressées d'abord puis SURFACE décroissante, que du fait cadastral (l'ancien défaut
+  // « Potentiel » servait une SDP résiduelle = calcul LABUSE, retirée de la vue factuelle). Surface
+  // reste en second (inversible) dans les deux modes.
+  const [sort, setSort] = useState<SortKey>(analyse ? 'rang' : 'adresse')
   const sorts = analyse ? SORTS : FACTUAL_SORTS
-  useEffect(() => { setSort(analyse ? 'rang' : 'potentiel') }, [analyse])
+  useEffect(() => { setSort(analyse ? 'rang' : 'adresse') }, [analyse])
   // RECETTE-3 (T4) — état repli des 4 segments (analyse) : « le reste » replié par défaut.
   const [openSeg, setOpenSeg] = useState<Record<SegKey, boolean>>({
     permis_pro: true, terrain_nu: true, bati_densifier: true, reste: false })

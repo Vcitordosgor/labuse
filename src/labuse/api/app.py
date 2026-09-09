@@ -2482,7 +2482,7 @@ def zonage_zones(communes: str | None = Query(None), db: Session = Depends(get_d
 @app.get("/filtre")
 def filtre(c: FiltreCriteres = Depends(),
            limit: int = Query(20, ge=0, le=200), offset: int = Query(0, ge=0),
-           sort: str | None = Query(None, pattern="^(rang|mult|surface|surface_asc|commune|potentiel)$"),
+           sort: str | None = Query(None, pattern="^(rang|mult|surface|surface_asc|commune|potentiel|adresse)$"),
            idus: int = Query(0, ge=0, le=1),
            groupes: int = Query(0, ge=0, le=1),
            db: Session = Depends(get_db)) -> dict:
@@ -3017,6 +3017,9 @@ _Q_V2_ORDERS = {
     # adressées, 4/30 avec potentiel. `rp`/`pa` = résiduel + adresse joints à la page (chemin non-rang).
     "potentiel": "(pa.idu IS NOT NULL) DESC, COALESCE(rp.sdp_residuelle_m2, 0) DESC NULLS LAST, "
                  "p.surface_m2 DESC NULLS LAST",
+    # RECETTE-5 (V2, décision Vic) — le tri « Adresse » du listing FACTUEL : ADRESSÉES d'abord, puis
+    # SURFACE décroissante. Que du fait cadastral — aucune SDP résiduelle (calcul LABUSE) dans l'ordre.
+    "adresse": "(pa.idu IS NOT NULL) DESC, p.surface_m2 DESC NULLS LAST",
     "v": "vs.v_score DESC NULLS LAST, (ev.parcel_id IS NOT NULL) DESC, "
          "d.opportunity_score DESC",  # M129-B
 }
@@ -3030,6 +3033,8 @@ _Q_V2_ORDERS_PAGE = {
     # RECETTE-3 (T3) — même ordre au niveau page (adresse via parcel_adresse `pa_o`, résiduel via `rb`).
     "potentiel": "(pa_o.idu IS NOT NULL) DESC, COALESCE(rb.sdp_residuelle_m2, 0) DESC NULLS LAST, "
                  "pg.surface_m2 DESC NULLS LAST",
+    # RECETTE-5 (V2) — même ordre « Adresse » au niveau page (adresse via `pa_o`, surface décroissante).
+    "adresse": "(pa_o.idu IS NOT NULL) DESC, pg.surface_m2 DESC NULLS LAST",
     "v": "vs.v_score DESC NULLS LAST, pg.evenement_rouge DESC, "
          "pg.opportunity_score DESC",  # M129-B
 }

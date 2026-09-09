@@ -64,27 +64,31 @@ describe('SOLAIRE — deux modes', () => {
     expect(screen.queryByText(/gelées 11\/07\/2026/)).toBeNull()
   })
 
-  it('mode Piscines (R22) : rien avant « Voir les parcelles », la STAT naît au clic', async () => {
+  it('mode Piscines (V3) : la SYNTHÈSE naît à l’ouverture, « Voir les parcelles » dessous ouvre le listing (qui replie la fiche)', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
-    // RECETTE-1 R22 — avant le clic, AUCUN texte/info de résultat n'apparaît.
-    expect(document.querySelector('[data-piscines-total]')).toBeNull()
-    expect(document.querySelector('[data-piscines-row]')).toBeNull()
-    fireEvent.click(document.querySelector('[data-piscines-voir]')!)
+    // RECETTE-5 (V3) — la fiche de synthèse (total + par commune) apparaît D'EMBLÉE (plus gardée
+    // derrière le clic) ; le listing, lui, attend « Voir les parcelles ».
     await waitFor(() => expect(document.querySelector('[data-piscines-total]')?.textContent).toContain('480'))
     expect(screen.getByText('Saint-Pierre')).toBeTruthy()       // ligne par commune
+    expect(document.querySelector('[data-piscines-row]')).toBeNull()   // pas encore de listing
+    // clic « Voir les parcelles » → la synthèse SE REPLIE (une ligne, dépliable) et le listing apparaît.
+    fireEvent.click(document.querySelector('[data-piscines-voir]')!)
+    await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBeGreaterThan(0))
+    expect(document.querySelector('[data-piscines-comptage-replie]')).toBeTruthy()   // fiche repliée
+    expect(document.querySelector('[data-piscines-voir]')).toBeNull()                // le bouton a disparu
   })
 
   it('mode Piscines (LOT8) : TOUTES les piscines listées (classement ignoré, pas de pied « écartées ») + seuil écrit', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
-    fireEvent.click(document.querySelector('[data-piscines-voir]')!)   // R22 — naît au clic
+    // RECETTE-5 (V3) — le seuil de rétention est écrit dans la synthèse (visible d'emblée).
+    await waitFor(() => expect(document.querySelector('[data-piscines-source]')?.textContent).toContain('seuil'))
+    fireEvent.click(document.querySelector('[data-piscines-voir]')!)   // ouvre le listing
     // les 2 lignes (dont l'« écartée ») s'affichent : le pisciniste veut toutes les piscines.
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
     expect(document.querySelector('[data-solaire-ecartees]')).toBeNull()          // plus de pied « écartées masquées »
-    // LOT8a — le seuil de rétention est écrit à l'écran ; LOT8c — pas de colonne Classement.
-    expect(document.querySelector('[data-piscines-source]')?.textContent).toContain('seuil')
-    expect(screen.queryByText('Classement')).toBeNull()
+    expect(screen.queryByText('Classement')).toBeNull()                            // LOT8c — pas de colonne Classement
   })
 
   it('mode Ensoleillement : fiche soleil (profil mensuel 12 barres + unité kWh/kWc/an)', async () => {
@@ -120,7 +124,9 @@ describe('SOLAIRE — deux modes', () => {
   it('A2 (R23) — liste Piscines : potentiel + type propriétaire ; plus de sélection ni de ponts Courrier/Comparer', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
-    fireEvent.click(document.querySelector('[data-piscines-voir]')!)   // R22 — naît au clic
+    // RECETTE-5 (V3) — attendre la synthèse (donc le bouton) avant de l'ouvrir.
+    await waitFor(() => expect(document.querySelector('[data-piscines-voir]')).toBeTruthy())
+    fireEvent.click(document.querySelector('[data-piscines-voir]')!)   // ouvre le listing
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
     const body = document.body.textContent ?? ''
     expect(body).toContain('SCI SOLEIL')                 // A2 — PM nommée

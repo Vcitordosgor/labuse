@@ -1884,15 +1884,15 @@ export function MapView() {
         // le palier reste porté par la couleur (STATUS_COLOR). Fondu R5 conservé sur photo.
         m.setPaintProperty(fill, 'fill-color', STATUS_COLOR)
         m.setPaintProperty(fill, 'fill-opacity', photoFade(OPINION_OPACITY, photo))
-      } else if (verdict) {
-        // M55-G point 8 : TRI FACTUEL — les parcelles correspondantes en surbrillance NEUTRE
-        // (aucune couleur de tier) ; la couche « Verdict » reste activable dans Couches.
-        m.setPaintProperty(fill, 'fill-color', '#8FA69A')
-        m.setPaintProperty(fill, 'fill-opacity', photoFade(0.42, photo))
       } else {
-        // R1 : VERDICT ÉTEINT = trame cadastrale NEUTRE (le langage promoteur), aucune couleur.
-        // M65 P8 : en mode CLAIR, cette trame neutre = les PARCELLES en BLANC CASSÉ #F4F2EC (opaques)
-        // qui se détachent sur la terre grise ; en Sombre, la trame neutre d'origine (#22302A/0,28).
+        // RECETTE-5 (V1, décision Vic) — plus de VOILE GRIS sur le chemin factuel. Le tri factuel
+        // (« Voir les parcelles », verdict=true & analyse OFF) partageait la surbrillance grise
+        // #8FA69A/0,42 qui, sans filtre, lavait TOUTE l'île en gris. Il rejoint désormais la trame
+        // cadastrale NEUTRE de « verdict éteint » : les parcelles restent délimitées par leurs
+        // contours (parcels-limites, toujours affichés) et sélectionnables, sans aucun voile.
+        // Le voile avait déjà été retiré du mode ANALYSE (opinion, opacité uniforme) en RECETTE-2 S11.
+        // M65 P8 : en CLAIR, trame neutre = PARCELLES en BLANC CASSÉ #F4F2EC (opaques) sur la terre
+        // grise ; en Sombre, la trame neutre d'origine (#22302A/0,28).
         const clair = basemap === 'clair'
         m.setPaintProperty(fill, 'fill-color', clair ? '#F4F2EC' : '#22302A')
         m.setPaintProperty(fill, 'fill-opacity', clair ? 1 : 0.28)

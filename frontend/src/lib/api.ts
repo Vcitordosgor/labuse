@@ -189,8 +189,10 @@ export const getZonageZones = (communes: string[]) =>
 
 /** Tris de la liste (M5.1) : rang P par défaut ; ×N, surface, commune en options. */
 // M55-H point 4 : 'surface_asc' = le sens inverse du tri Surface (re-clic sur la pill)
-// RECETTE-3 (T3) : 'potentiel' = tri par défaut du listing FACTUEL (adressées, puis SDP résiduelle).
-export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune' | 'potentiel'
+// RECETTE-3 (T3) : 'potentiel' = ancien tri du listing FACTUEL (adressées, puis SDP résiduelle).
+// RECETTE-5 (V2) : le tri factuel devient 'adresse' (adressées d'abord, puis surface décroissante) —
+// que du fait ; 'potentiel' (SDP résiduelle = calcul LABUSE) ne sert plus qu'en analyse, nulle part ailleurs.
+export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune' | 'potentiel' | 'adresse'
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')

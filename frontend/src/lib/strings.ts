@@ -196,6 +196,11 @@ export const CLIENT = {
     // emprises géantes sans adresse ni intérêt pour un promoteur ou un agent).
     potentiel: 'Potentiel',
     potentielTip: 'Les parcelles adressées d’abord, puis celles où il reste le plus de plancher à bâtir — au lieu des plus grandes emprises (souvent sans adresse ni intérêt)',
+    // RECETTE-5 (V2, décision Vic) — tri par défaut du listing FACTUEL : les parcelles adressées
+    // d'abord, puis la surface décroissante. Que du fait cadastral — aucun calcul LABUSE (la SDP
+    // résiduelle du tri « Potentiel » reste dans l'analyse, nulle part ailleurs).
+    adresse: 'Adresse',
+    adresseTip: 'Les parcelles avec une adresse renseignée d’abord, puis les plus grandes surfaces — rien que le fait cadastral, sans calcul LABUSE',
     rangTip: 'Le classement LABUSE — la probabilité de vente sous 1 an, apprise sur dix ans de ventes réelles, les ex æquo départagés par la qualité du terrain ; copropriétés en queue',
     surfaceTip: 'Trie par surface de parcelle',
     // M69 A — le tri « Probabilité de vente » (défaut, analyse) groupe la liste par tier ; les
