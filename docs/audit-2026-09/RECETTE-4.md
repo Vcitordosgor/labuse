@@ -22,8 +22,8 @@ réel (uvicorn `:8022` + front vite `:5177`). Preuves : `RECETTE-4-preuves/`.
 | **U5** | ✅ Fait | Courrier propriétaire sur **3 parcelles** : `97415000DK1044` (**PM** LOTISSEMENT DU GOLF, **adresse nulle**), `97422000AD1237` (PP, Le Tampon), `97411000KA0296` (Saint-Denis). **Aucun champ vide** ne s'imprime ; le corps n'imprime **ni nom ni adresse** de propriétaire (adressage générique). PDF DK1044 rendu et relu. | `ModulePanel.tsx` (`remplirGabaritCourrier`), `api/courrier.py:302` · `recette4-u5-courrier-dk1044-1.png` · `CourrierRecette4.test.tsx` (3) |
 | **U6** | ✅ Fait (liste ci-dessous) | Les points « à recetter à l'œil » de RECETTE-2/3 = **S11** (carte) et **S7/T1** (apporteur). État réel constaté. | § U6 · `recette4-u6-apporteur-p1-1.png`, `recette4-u6-s11-carte-paliers.png` |
 | **U7** | ✅ Fait | Maquette apporteur validée (v3) archivée à côté du rapport. | `RECETTE-4-preuves/maquette-apporteur-v3.html` |
-| **U8** | ⏳ Lot 3 | Note cascade DPU/PEB/DPF/zones humides — écrite au Lot 3 (rien exécuté). | § U8 |
-| **U9** | ⏳ Lot 3 | Ne rien exécuter — respecté. | — |
+| **U8** | ✅ Fait (note) | Les 5 règles (dpu, peb, dpf, ravine, zone_humide) sont **déjà écrites, `@register`ées et `enabled: true`** dans `cascade_rules.yaml` : rien à écrire, elles n'attendent que le prochain run. Seuils + impact mesuré ci-dessous. | § U8 · `cascade/layers/phase1.py`, `config/cascade_rules.yaml` |
+| **U9** | ✅ Respecté | Rien exécuté : ni run, ni cascade, ni rebuild, ni bascule. Mesures d'impact en **lecture seule** (SELECT). | — |
 
 ---
 
@@ -99,8 +99,62 @@ captures) étaient déjà soldés à leur tour, captures à l'appui — rien de 
 
 ---
 
-## U8 / U9 — Lot 3 (note cascade)
-Voir le commit du Lot 3 : la note écrite (DPU / PEB / DPF / zones humides), **rien exécuté**.
+## U8 — la note cascade : DPU, PEB, DPF (ravines), zones humides
+
+### Le constat qui change la note
+
+La donnée de ces quatre motifs est **servie live** (fiche, Pièges & risques — cf. RECETTE-3 T5) mais leur
+**verdict cascade** manque au run servi `q_v11_m137`. RECETTE-3 en déduisait « des règles à écrire ou à
+activer ». **Vérifié dans le code : elles sont déjà écrites.** Les cinq couches (DPU couvre aussi la ravine
+BD TOPO + le DPF officiel, distincts) sont **implémentées** (`cascade/layers/phase1.py`, classes
+`@register`ées) **et déclarées `enabled: true`** dans `config/cascade_rules.yaml`. Le garde-fou `cablage.py`
+vérifie la parité YAML↔registry — donc au **prochain run**, elles s'appliquent. **Il n'y a rien à écrire ni à
+activer** : il ne manque que le run (geste de Vic — U9 : je ne le déclenche pas).
+
+### Les règles, leur seuil, leur sévérité (telles qu'écrites)
+
+| Motif | `kind` | Couche | Seuil | Sévérité | Base réglementaire |
+|---|---|---|---|---|---|
+| **PEB** (bruit aérien) | `peb` | `PebLayer` | zones **A/B** si part ≥ **2 %** (`hard_min_pct`) → **écartement dur** ; liseré < 2 % = information ; zones **C** (moyen) / **D** (faible) = **vigilance** | **dur** (A/B) / vigilance (C/D) | L112-10 CU (habitation interdite en A/B) |
+| **DPF** (domaine public fluvial) | `dpf` | `DpfLayer` | dans le **marchepied de 3,25 m** (`marchepied_m`) → **écartement dur** | **dur** | L2131-2 CGPPP (servitude de marchepied, lit inaliénable) |
+| **Ravines** (thalwegs BD TOPO) | `ravine` | `RavineLayer` | à moins de **10 m** (`buffer_m`) de l'axe/berge → **vigilance** | vigilance (moyen) | R.174-2 code forestier (défrichement, pente > 27°) |
+| **Zones humides** | `zone_humide` | `ZoneHumideLayer` | **intersection** d'un inventaire DEAL → **vigilance forte** | vigilance (fort) | Loi sur l'eau, séquence Éviter-Réduire-Compenser (souvent rédhibitoire à l'instruction) |
+| **DPU** (préemption) | `dpu` | `DpuLayer` | **intersection** d'un périmètre publié → **vigilance** ; renforcé → moyen | vigilance (faible / moyen) | Pèse sur la **transaction** (DIA ~2 mois), jamais sur la constructibilité |
+
+**Doctrine respectée** : seuls le PEB (A/B) et le DPF portent un **écartement dur** — ils touchent la
+*constructibilité*. DPU, ravines et zones humides restent en **vigilance** : elles pèsent sur la transaction
+ou l'instruction, pas sur le droit de bâtir (une exclusion serait excessive vu la couverture partielle des
+inventaires). Anti-double-compte documenté : le rédhibitoire du DPF (3,25 m) et la vigilance ravine (10 m,
+toutes ravines) sont **deux couches distinctes**, jamais cumulées sur la même contrainte.
+
+### Ce que ça changerait — impact **mesuré** (lecture seule, run servi q_v11_m137)
+
+Univers scoré `q_v11_m137` : **431 663** parcelles, dont **145 882 déjà écartées**. Mesures ci-dessous =
+parcelles **actuellement NON écartées** qui recevraient le motif (donc l'effet **net**).
+
+| Motif | Effet | Parcelles concernées (non-écartées) | Lecture |
+|---|---|---|---|
+| **DPF** (marchepied 3,25 m) | **→ écartées** | **1 397** | nouvel écartement dur |
+| **PEB** zones A/B | **→ écartées** | **≤ 222** (222 en intersection ; le seuil 2 % en retire encore — Roland-Garros seul, Pierrefonds non publié) | nouvel écartement dur |
+| **Zones humides** | vigilance forte | **740** | motif ajouté, **pas** d'écartement |
+| **Ravines** (10 m) | vigilance | ~**12 400** en intersection cadastre (sous-ensemble non-écarté à préciser au run) | motif ajouté |
+| **DPU** | vigilance | ~**112 000** en intersection cadastre | motif ajouté, pèse sur la transaction |
+
+**Synthèse chiffrée** : le prochain run **écarterait en dur ≈ 1 600 parcelles de plus** (DPF ~1 400 + PEB
+A/B ≤ 220) — soit **≈ 0,4 %** de l'univers scoré (≈ 0,6 % des ~285 800 non-écartées). Le reste (DPU,
+ravines, zones humides) **n'écarte rien** : il **enrichit le motif** de vigilance (transaction, loi sur l'eau,
+recul de ravine), utile au client sans amputer le stock. Comptes cadastre-larges (référence) : DPU 112 261 ·
+PEB A/B 380 · PEB C/D 3 670 · DPF 10 335 · ravine 12 412 · zone humide 2 972.
+
+### Ce qu'il reste à faire (Vic, quand il le décide)
+Rien à coder. **Rejouer le run** (nouvelle cascade sur `cascade_rules.yaml` courant) puis **basculer** —
+les cinq motifs entrent alors dans le scoring servi. Chiffres à reconfirmer sur le run reconstruit (les
+mesures ci-dessus sont des intersections spatiales, pas la cascade complète : la cascade peut déjà écarter
+certaines de ces parcelles pour un autre motif, ce qui réduirait encore le *net*).
+
+## U9 — ne rien exécuter
+Respecté. Aucun run, aucune cascade, aucun rebuild, aucune bascule. Les mesures d'impact sont des `SELECT`
+en lecture seule. Vic décide quand jouer le run.
 
 ## Tests
 - Front : `tsc -b` **0**. Vitest zones touchées **13/13** (CourrierService, CourrierRecette4, Financier
