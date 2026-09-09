@@ -13,15 +13,19 @@ IDS = ("perimetres_dispositifs_liste", "parc_social_rpls_logements",
 
 
 def _taxe(t: dict) -> str:
+    # RECETTE-7 lot 0 (Z6) — l'assiette est la surface de plancher CRÉÉE par le scénario table rase
+    # (donnée `surface_plancher_m2`), pas la SDP RÉSIDUELLE du potentiel au sol. On la nomme en
+    # clair pour qu'un lecteur ne confonde plus « … m² de plancher » (créé, ici) avec la « SDP
+    # résiduelle » de la section Potentiel — c'est la contradiction 97 / 458 m² du constat.
+    assiette = f"{t.get('assiette_m2', '?')} m² de surface de plancher créée (reconstruction totale)"
     if t.get("total_eur"):
         taux = f" (taux communal {t.get('taux_communal_pct')} %)" if t.get("taux_communal_pct") else ""
         # TAXE-AMÉNAGEMENT-1 lot C — millésime du taux public affiché avec le chiffre.
         mil = t.get("taux_communal_millesime")
         src = f" — {mil}" if (t.get("taux_communal_source") == "public" and mil) else ""
-        return f"De l'ordre de {fmt_eur(t['total_eur'])}{taux} pour {t.get('assiette_m2', '?')} m² de plancher{src}"
+        return f"De l'ordre de {fmt_eur(t['total_eur'])}{taux} pour {assiette}{src}"
     dep = f", part départementale {fmt_eur(t['part_departementale_eur'])}" if t.get("part_departementale_eur") else ""
-    return (f"Taux communal non renseigné pour cette commune — {t.get('assiette_m2', '?')} m² "
-            f"d'assiette{dep}")
+    return f"Taux communal non renseigné pour cette commune — assiette {assiette}{dep}"
 
 
 def rendu(valeurs) -> str:

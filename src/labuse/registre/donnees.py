@@ -118,9 +118,11 @@ DONNEES: dict[str, Donnee] = {
  # FICHE-1 lot 5 — estimation servie DANS la fiche (Constructibilité) pour le scénario table
  # rase du potentiel ; distincte de taxe_amenagement_eur (outil, taux SAISI) : ici taux PUBLIC.
  "taxe_amenagement_estimee_eur": C("Taxe d'aménagement estimée (table rase)", "€", "parcelle",
-    "estimation de la taxe pour le scénario table rase du potentiel (assiette = surface de "
-    "plancher créée) ; taux communal PUBLIC si connu, sinon « non renseigné » (jamais inventé) ; "
-    "taux départemental plafond 2,5 % à confirmer",
+    "estimation de la taxe pour le scénario table rase du potentiel ; l'ASSIETTE est la SURFACE "
+    "DE PLANCHER CRÉÉE — c'est la donnée `surface_plancher_m2` (même producteur, même valeur), "
+    "JAMAIS la `sdp_residuelle_m2` du potentiel au sol (RECETTE-7 lot 0 : la contradiction 97/458 "
+    "venait de ces deux concepts distincts imprimés sous le mot « plancher ») ; taux communal "
+    "PUBLIC si connu, sinon « non renseigné » (jamais inventé) ; taux départemental plafond 2,5 %",
     moteur="taxe_amenagement", calcul="moteur",
     fonction="src/labuse/api/app.py:_taxe_amenagement_block (taxe_amenagement.calculer)",
     reservoirs=(), portee="live"),
@@ -1023,8 +1025,11 @@ DONNEES: dict[str, Donnee] = {
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:bloc_potentiel (table_rase.vendable_m2)",
     reservoirs=("bd_topo", "cosia", "gpu_plu_api_carto",), portee="run"),
- "surface_plancher_m2": C("Surface de plancher (Estimé)", "m²", "parcelle",
-    "surface de plancher du scénario table rase (moteur commun) — distincte de capacite_logements",
+ "surface_plancher_m2": C("Surface de plancher créée (table rase)", "m²", "parcelle",
+    "surface de plancher CRÉÉE par le scénario table rase (moteur commun, emprise constructible × "
+    "occupation × niveaux) — c'est l'ASSIETTE de taxe_amenagement_estimee_eur ; distincte de "
+    "capacite_logements ET de sdp_residuelle_m2 (potentiel au sol après bâti existant) : deux "
+    "concepts, deux données, jamais deux chiffres pour un même nom (RECETTE-7 lot 0)",
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:bloc_potentiel (table_rase.plancher_m2)",
     reservoirs=("bd_topo", "cosia", "gpu_plu_api_carto",), portee="run"),
