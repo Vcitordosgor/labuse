@@ -62,6 +62,13 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   const dragging = useRef(false)
   const commune = useApp((s) => s.commune)
   const labelMarkers = useRef<maplibregl.Marker[]>([])
+  // RECETTE-9 T6 — le contour BLANC (W13) ne s'affichait JAMAIS depuis la fiche : la source `cible`
+  // restait à 0 feature (prouvé : geojson 200, source présente, mais setData jamais appliqué). Cause :
+  // course entre la (re)création des cartes en StrictMode et l'effet qui pose la géométrie — quand la
+  // donnée arrive avant que la source de la NOUVELLE carte soit ajoutée, le `setData` tombe dans le vide
+  // et rien ne le rejoue. On garde la FC voulue dans un ref, réappliquée À LA FOIS quand la donnée
+  // change ET quand une carte (re)charge et (re)crée la source — plus de course possible.
+  const cibleFC = useRef<{ type: 'FeatureCollection'; features: unknown[] }>({ type: 'FeatureCollection', features: [] })
   // mode île : pas de GeoJSON (431k features) — le comparateur reste utilisable sans la
   // surcouche parcelles (l'ortho historique est l'objet de l'outil)
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
@@ -110,6 +117,9 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
         paint: { 'line-color': '#06110B', 'line-width': 5, 'line-opacity': 0.85, 'line-blur': 0.5 } })
       m.addLayer({ id: 'cible', type: 'line', source: 'cible',
         paint: { 'line-color': '#ECF5EF', 'line-width': 2.5 } })
+      // RECETTE-9 T6 — dès que la source existe (y compris après un remount StrictMode), on lui pose la
+      // géométrie DÉJÀ connue (ref) : le contour survit à la course donnée↔carte.
+      ;(m.getSource('cible') as maplibregl.GeoJSONSource | undefined)?.setData(cibleFC.current as never)
     })
     addParcels(past); addParcels(now)
     if (center) { past.jumpTo({ center, zoom: 17 }) }
@@ -146,10 +156,12 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   // proprement quand la parcelle change ou disparaît.
   useEffect(() => {
     const feat = cible.data
-    const fc = { type: 'FeatureCollection', features: feat ? [feat] : [] }
+    const fc = { type: 'FeatureCollection' as const, features: feat ? [feat] : [] }
+    cibleFC.current = fc          // RECETTE-9 T6 — mémorise la FC pour la (re)pose au (re)chargement des cartes
     for (const m of maps.current ?? []) {
-      const set = () => (m.getSource('cible') as maplibregl.GeoJSONSource | undefined)?.setData(fc as never)
-      if (m.isStyleLoaded()) set(); else m.once('load', set)
+      // applique si la source existe DÉJÀ ; sinon la pose se fera à l'ajout de la source (load handler,
+      // qui lit `cibleFC.current`). Plus de `once('load')` qui manque le train quand load a déjà eu lieu.
+      ;(m.getSource('cible') as maplibregl.GeoJSONSource | undefined)?.setData(fc as never)
     }
     // étiquette IDU — un seul Marker (sur le volet gauche, plein écran) : les deux cartes partageant la
     // même caméra, sa position écran vaut pour les deux. Le contour, lui, est tracé sur chaque volet.

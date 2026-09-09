@@ -52,4 +52,34 @@ if (recette === 't1') {
   await shot('T1-questionnaire-retour-etape1-saisie-conservee')
 }
 
+if (recette === 't6') {
+  await openFiche(idu)
+  // ouvre « Remonter le temps » depuis la fiche
+  await page.click('[data-temps-tile]')
+  await page.waitForFunction(() => window.__labuse_tm != null, { timeout: 15000 })
+  // laisse le temps au pin + à la géométrie cible de se charger
+  await page.waitForTimeout(4000)
+  // inspection PROGRAMMATIQUE : la source `cible` porte-t-elle une feature sur les deux volets ?
+  const diag = await page.evaluate(() => {
+    const tm = window.__labuse_tm
+    const cnt = (m) => { try { return (m.getSource('cible')?._data?.features || []).length } catch { return 'n/a' } }
+    const paint = (m) => { try { return m.getPaintProperty('cible', 'line-color') } catch { return 'n/a' } }
+    return { pinIdu: window.__labuse_store?.tempsPinIdu ?? '(?)',
+             pastFeatures: cnt(tm.past), nowFeatures: cnt(tm.now),
+             color: paint(tm.past) }
+  })
+  console.log('T6-DIAG', JSON.stringify(diag))
+  await page.waitForTimeout(1500)
+  await shot('T6-remonter-le-temps-contour')
+  // glisse la poignée pour montrer le contour des DEUX côtés
+  const handle = page.locator('[title="Glisser pour comparer"]')
+  const box = await handle.boundingBox()
+  if (box) {
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    await page.mouse.down(); await page.mouse.move(box.x - 300, box.y + box.height / 2, { steps: 10 }); await page.mouse.up()
+    await page.waitForTimeout(800)
+    await shot('T6-remonter-le-temps-contour-poignee-gauche')
+  }
+}
+
 await browser.close()
