@@ -581,6 +581,17 @@ export function ResultsSection() {
                     {rows.length === 0
                       ? <p className="px-3 py-1.5 text-[10.5px] text-txt-dim">{total > 0 ? 'Chargez plus de résultats pour voir ces parcelles →' : 'Aucune parcelle dans ce segment.'}</p>
                       : rows.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} />)}
+                    {/* RECETTE-8 W20 — jamais un compte qui ne correspond pas à ce qu'on voit :
+                        quand la liste chargée est plus courte que le total du segment, on le DIT
+                        (« 5 sur 27 affichées ») et on offre de charger plus. */}
+                    {rows.length > 0 && rows.length < total && (
+                      <button data-segment-more={seg.key}
+                        onClick={() => serverList.hasNextPage && serverList.fetchNextPage()}
+                        disabled={!serverList.hasNextPage || serverList.isFetchingNextPage}
+                        className="px-3 py-1.5 text-left text-[10.5px] text-txt-dim hover:text-mint disabled:opacity-60">
+                        {fmt(rows.length)} sur {fmt(total)} affichées{serverList.hasNextPage ? ' — charger plus de résultats →' : ''}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
