@@ -82,8 +82,15 @@ def rendre_document(db, idu: str, request: Request, document: str, *,
     from urllib.parse import quote
     nom = f"{builder.titre_document(document)} — {res.numero}.pdf"
     dispo = f'inline; filename="{res.numero}.pdf"; filename*=UTF-8\'\'{quote(nom)}'
+    # RECETTE-8 W19 — 🔴 l'URL du document est STABLE (/financier/{idu}.pdf, sans jeton) : le
+    # navigateur (et tout proxy) mettait la PREMIÈRE réponse en cache et la resservait telle quelle
+    # aux téléchargements suivants → une saisie modifiée ne changeait pas le PDF (le back, lui, relit
+    # le questionnaire et régénère à chaque appel — prouvé, deux prix ⇒ deux HTML). `no-store`
+    # interdit toute mise en cache : chaque téléchargement reflète la dernière saisie.
     return Response(pdf, media_type="application/pdf",
-                    headers={"Content-Disposition": dispo})
+                    headers={"Content-Disposition": dispo,
+                             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                             "Pragma": "no-cache"})
 
 
 @router.get("/financier/{idu}.pdf")
