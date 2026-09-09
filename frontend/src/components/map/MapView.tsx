@@ -1938,8 +1938,16 @@ export function MapView() {
         // M65 P8 : en CLAIR, trame neutre = PARCELLES en BLANC CASSÉ #F4F2EC (opaques) sur la terre
         // grise ; en Sombre, la trame neutre d'origine (#22302A/0,28).
         const clair = basemap === 'clair'
+        // RECETTE-9 T5 — le test décisif (captures A→E) tranche : le GRIS est le FOND DE PLAN Sombre
+        // (analyse ON/OFF donne une image IDENTIQUE → ce n'est pas l'analyse ; passer en Clair/Ortho le
+        // fait disparaître → c'est bien le fond). Le SEUL gris que peignent NOS calques (pas le fond) est
+        // ce remplissage neutre #22302A/0,28 : sur le Sombre il a quasi la couleur du fond → il ne
+        // distingue rien, il WASHE juste les parcelles en gris. On l'éteint sur Sombre/photo (les
+        // parcelles restent délimitées par « Limites parcelles » et sélectionnables via parcelAt),
+        // achevant sur le BON calque la règle W9/S11/V1 « couleur de palier ou RIEN, jamais un gris ».
+        // En CLAIR le remplissage blanc reste utile (parcelles blanches sur terre claire) → conservé.
         m.setPaintProperty(fill, 'fill-color', clair ? '#F4F2EC' : '#22302A')
-        m.setPaintProperty(fill, 'fill-opacity', clair ? 1 : 0.28)
+        m.setPaintProperty(fill, 'fill-opacity', clair ? 1 : 0)
       }
     }
     // lisérés promues/brûlantes : des couleurs d'OPINION — mode analyse ou couche Verdict cochée ;
