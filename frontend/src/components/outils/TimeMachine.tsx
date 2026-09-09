@@ -100,12 +100,16 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
         paint: { 'line-color': '#5CE6A1', 'line-width': 1 } })
       // O2-4 — CONTOUR de la parcelle désignée : source DÉDIÉE `cible` (une seule feature, chargée par
       // IDU), indépendante du GeoJSON commune. Casing sombre (halo léger, lisible sur l'ortho claire de
-      // 1950) + trait mint appuyé — MÊME code couleur (#4ADE80) que la carte principale.
+      // 1950) + trait BLANC appuyé.
+      // RECETTE-8 W13 (B5) — le contour de la parcelle est BLANC (#ECF5EF), pas vert : sur les deux
+      // fonds d'époque (ortho claire ancienne ET récente), un trait blanc à casing sombre reste
+      // lisible des DEUX côtés du curseur, là où le vert se noyait dans la végétation. Il est tracé
+      // une fois sur la carte partagée → présent sur les deux volets du swipe.
       m.addSource('cible', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } as never })
       m.addLayer({ id: 'cible-casing', type: 'line', source: 'cible',
         paint: { 'line-color': '#06110B', 'line-width': 5, 'line-opacity': 0.85, 'line-blur': 0.5 } })
       m.addLayer({ id: 'cible', type: 'line', source: 'cible',
-        paint: { 'line-color': '#4ADE80', 'line-width': 2.5 } })
+        paint: { 'line-color': '#ECF5EF', 'line-width': 2.5 } })
     })
     addParcels(past); addParcels(now)
     if (center) { past.jumpTo({ center, zoom: 17 }) }
