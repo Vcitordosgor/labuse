@@ -193,16 +193,20 @@ def prefill(fiche: dict | None) -> dict[str, dict]:
     out: dict[str, dict] = {fid: {"valeur": v, "source": s} for fid, (v, s) in _PREFILL_CONST.items()}
     pot = f.get("potentiel_transformation") or {}
     if pot:
-        scen = "surelevation" if pot.get("surelevation_possible") else "reconstruction"
-        out["scenario_saisi"] = {"valeur": scen, "source": "scénario dominant du potentiel LABUSE"}
+        # RECETTE-8 W3 — un seul scénario par document : le bilan du Financier chiffre la SDP CRÉÉE
+        # en table rase, c'est donc une RECONSTRUCTION qu'il retient — jamais « surélévation », qui
+        # reste une OPTION présentée au Dossier (une marge en mètres), sans bilan chiffré propre.
+        # Avant, on pré-remplissait « surelevation » quand elle était possible → le Financier citait
+        # surélévation en facturant une reconstruction (les deux lectures contradictoires du constat).
+        out["scenario_saisi"] = {"valeur": "reconstruction",
+                                 "source": "scénario chiffré par le bilan (SDP créée en table rase)"}
         cap = pot.get("capacite_estimee")
         if cap:
             out["logements_vises_saisi"] = {"valeur": cap, "source": "fourchette de logements du potentiel LABUSE"}
-    ta = f.get("taxe_amenagement") or {}
-    if ta.get("total_eur"):
-        out["taxe_amenagement_saisi_eur"] = {
-            "valeur": round(float(ta["total_eur"])),
-            "source": "calcul de la taxe d'aménagement (config datée, service-public.gouv.fr)"}
+    # RECETTE-8 W2 — la taxe d'aménagement n'est plus pré-remplie depuis la fiche (elle n'y porte
+    # plus aucun montant : pas de projet, pas de taxe). Elle est pré-calculée AU FINANCIER, sur la
+    # SDP du projet réellement retenu (`exports.builder._financier_contexte`), où le programme est
+    # connu — jamais sur un scénario de fiche que personne n'a choisi.
     return out
 
 

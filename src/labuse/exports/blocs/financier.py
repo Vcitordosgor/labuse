@@ -40,6 +40,11 @@ _HYP_UNITE = {"prix_demande_saisi_eur": "eur", "cout_construction_saisi_eur_m2":
 
 def _fmt_hyp(fid: str, valeur) -> str:
     """RECETTE-6 (E3) — une hypothèse formatée AVEC son unité (jamais un nombre nu)."""
+    # RECETTE-8 W18 — le scénario est CITÉ par son libellé humain, jamais par l'identifiant
+    # technique (« surelevation » sans accent ni majuscule s'imprimait au client). Point unique.
+    if fid == "scenario_saisi":
+        from ...scenarios import libelle_scenario
+        return esc(libelle_scenario(valeur) or str(valeur))
     u = _HYP_UNITE.get(fid)
     try:
         if u == "eur":
