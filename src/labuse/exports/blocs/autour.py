@@ -12,6 +12,24 @@ from ..rendu import chip_span, esc, ligne_kv, note, section, table_kv, tuiles
 
 IDS = ("iris_quartier", "equipements_proximite_liste")
 
+#: RECETTE-8 W14 — l'accord singulier/pluriel par catégorie d'équipement, EXPLICITE. L'ancienne
+#: règle « retire le s quand n=1 » mangeait le « s » de « bus » (invariable en français : son
+#: singulier finit déjà par s) → « 1 bu ». On nomme le singulier ET le pluriel de chaque catégorie
+#: servie (`api.app._PROX_EQUIP`) : « bus » reste « bus », « commerces » devient « commerce ».
+_EQUIP_ACCORD: dict[str, tuple[str, str]] = {
+    "École": ("école", "écoles"),
+    "Commerces": ("commerce", "commerces"),
+    "Santé": ("service de santé", "services de santé"),
+    "Bus": ("arrêt de bus", "arrêts de bus"),
+}
+
+
+def _accord(cat: str, n: int) -> str:
+    """« n <singulier> » si n ≤ 1, « n <pluriel> » sinon. Repli prudent (mot non listé) : on ne
+    touche PAS le mot (jamais un « 1 bu »), on l'affiche tel quel en minuscules."""
+    sing, plur = _EQUIP_ACCORD.get(cat, (cat.lower(), cat.lower()))
+    return f"{n} {sing if n <= 1 else plur}"
+
 
 def rendu(valeurs) -> str:
     iq = val(valeurs, "iris_quartier")
