@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>LABUSE — en-tête de fiche parcelle v2</title>
+<style>
+:root{
+  --fond:#0A0B0A; --carte:#111311; --carte2:#161816; --trait:#232622; --trait2:#2E322C;
+  --encre:#E8EDE6; --gris:#8B9389; --gris2:#5F665D;
+  --mint:#4ADE80; --mint-sombre:#16281C; --ambre:#F0B429; --mauve:#A78BFA;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fond);color:var(--encre);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"Inter",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:30px 20px 80px}
+.titre{font-size:12px;letter-spacing:.08em;color:var(--gris2);text-transform:uppercase;
+  margin:34px 0 12px;font-weight:500}
+.note{color:var(--gris);font-size:13px;line-height:1.65;margin:12px 2px 0}
+.note b{color:var(--encre);font-weight:600}
+
+.fiche{border:1px solid var(--trait);border-radius:12px;background:var(--carte);overflow:hidden}
+.id{padding:15px 17px 14px}
+.id .haut{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.commune{font-size:11px;letter-spacing:.09em;color:var(--gris2);text-transform:uppercase}
+.actions{margin-left:auto;display:flex;gap:5px}
+.ico{width:29px;height:29px;border-radius:7px;border:1px solid var(--trait);background:var(--carte2);
+  display:grid;place-items:center;font-size:12px;color:var(--gris);cursor:pointer}
+.ico:hover{background:var(--mint);color:#08150C;border-color:var(--mint)}
+.idu{font-size:21px;font-weight:600;letter-spacing:-.01em;font-family:"SF Mono",ui-monospace,Menlo,monospace}
+.adr{color:var(--gris);font-size:13.5px;margin-top:3px}
+
+.grille{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--trait);
+  border-top:1px solid var(--trait)}
+.tuile{background:var(--carte);padding:13px 11px 14px;min-height:74px}
+.tuile .k{font-size:10.5px;letter-spacing:.07em;color:var(--gris2);text-transform:uppercase;
+  display:flex;align-items:center;gap:4px;margin-bottom:5px;line-height:1.3}
+.tuile .v{font-size:18px;font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.tuile .u{font-size:11.5px;color:var(--gris);font-weight:400;margin-left:2px}
+.tuile .s{font-size:10.5px;color:var(--gris2);margin-top:3px}
+.tuile.inconnu .v{color:var(--gris2);font-weight:400;font-size:16px}
+.tuile.neuf .v{color:var(--mint)}
+.i{width:12px;height:12px;border-radius:99px;border:1px solid var(--gris2);color:var(--gris2);
+  font-size:8.5px;display:inline-grid;place-items:center;flex:none;cursor:help}
+
+.badges{display:flex;gap:6px;flex-wrap:wrap;padding:12px 17px 13px;border-top:1px solid var(--trait)}
+.bg{font-size:11.5px;border-radius:6px;padding:3px 9px;border:1px solid var(--trait2);color:var(--gris)}
+.bg.alerte{color:var(--ambre);border-color:rgba(240,180,41,.32);background:rgba(240,180,41,.07)}
+.bg.info{color:var(--mint);border-color:rgba(74,222,128,.3);background:var(--mint-sombre)}
+
+.plus{border-top:1px solid var(--trait);padding:11px 17px 13px;background:var(--carte)}
+.plus summary{list-style:none;cursor:pointer;font-size:12.5px;color:var(--gris);
+  display:flex;align-items:center;gap:7px}
+.plus summary::-webkit-details-marker{display:none}
+.plus summary::after{content:"⌄";margin-left:auto;color:var(--gris2)}
+.plus[open] summary::after{content:"⌃"}
+.sl{display:flex;justify-content:space-between;gap:12px;padding:7px 0;font-size:13.5px;
+  border-bottom:1px solid rgba(35,38,34,.55)}
+.sl:last-child{border-bottom:0}
+.sl .k{color:var(--gris)}
+.sl .v{font-weight:500;text-align:right}
+.sl .v.vide{color:var(--gris2);font-weight:400}
+.corps{padding-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="titre">En-tête de fiche — huit données pour tous les métiers</div>
+
+<div class="fiche">
+  <div class="id">
+    <div class="haut">
+      <span class="commune">Parcelle · Sainte-Marie</span>
+      <span class="actions">
+        <span class="ico">⧉</span><span class="ico">pj</span>
+        <span class="ico">◎</span><span class="ico">◔</span><span class="ico">✕</span>
+      </span>
+    </div>
+    <div class="idu">97418000AD0191</div>
+    <div class="adr">13 Ruelle la Source, 97438 Sainte-Marie</div>
+  </div>
+
+  <div class="grille">
+    <div class="tuile"><div class="k">Surface</div>
+      <div class="v">273<span class="u">m²</span></div></div>
+
+    <div class="tuile"><div class="k">Zone</div>
+      <div class="v">UA</div><div class="s">constructible</div></div>
+
+    <div class="tuile"><div class="k">Pente</div>
+      <div class="v">1,7<span class="u">°</span></div><div class="s">plat</div></div>
+
+    <div class="tuile neuf"><div class="k">Vue mer <i class="i">i</i></div>
+      <div class="v">Oui</div><div class="s">dégagée, 1,2 km</div></div>
+
+    <div class="tuile"><div class="k">Terrain nu <i class="i">i</i></div>
+      <div class="v">221<span class="u">€/m²</span></div><div class="s">3 ventes</div></div>
+
+    <div class="tuile"><div class="k">Bâti ancien <i class="i">i</i></div>
+      <div class="v">1 870<span class="u">€/m²</span></div><div class="s">18 ventes</div></div>
+
+    <div class="tuile"><div class="k">Taxe foncière</div>
+      <div class="v">43,9<span class="u">%</span></div><div class="s">part communale</div></div>
+
+    <div class="tuile"><div class="k">SDP restante <i class="i">i</i></div>
+      <div class="v">406<span class="u">m²</span></div><div class="s">≈ 5 logements</div></div>
+  </div>
+
+  <div class="badges">
+    <span class="bg alerte">Préemption urbaine</span>
+    <span class="bg alerte">Bruit — zone D</span>
+    <span class="bg">Société propriétaire</span>
+    <span class="bg info">3 voisines au même propriétaire</span>
+  </div>
+
+  <details class="plus">
+    <summary>Le reste des faits</summary>
+    <div class="corps">
+      <div class="sl"><span class="k">Dernière vente</span><span class="v">mars 2019 — 186 000 €</span></div>
+      <div class="sl"><span class="k">Valeur au prix du secteur</span><span class="v">60 262 €</span></div>
+      <div class="sl"><span class="k">Bâti au sol</span><span class="v">302 m² · 2 bâtiments</span></div>
+      <div class="sl"><span class="k">Taxe d'aménagement</span><span class="v vide">taux communal à saisir</span></div>
+      <div class="sl"><span class="k">Zonage d'investissement</span><span class="v">B1</span></div>
+      <div class="sl"><span class="k">Ensoleillement</span><span class="v">1 505 kWh/kWc/an</span></div>
+      <div class="sl"><span class="k">Arrêt de bus</span><span class="v">29 m — Source (Citalis)</span></div>
+      <div class="sl"><span class="k">Fibre</span><span class="v">raccordable</span></div>
+    </div>
+  </details>
+</div>
+
+<div class="titre">Le même en-tête, données manquantes</div>
+<div class="fiche">
+  <div class="id">
+    <div class="haut">
+      <span class="commune">Parcelle · Cilaos</span>
+      <span class="actions"><span class="ico">⧉</span><span class="ico">◎</span><span class="ico">✕</span></span>
+    </div>
+    <div class="idu">97414000BX0812</div>
+    <div class="adr" style="color:var(--gris2)">Adresse non disponible</div>
+  </div>
+  <div class="grille">
+    <div class="tuile"><div class="k">Surface</div><div class="v">1 940<span class="u">m²</span></div></div>
+    <div class="tuile"><div class="k">Zone</div><div class="v">N</div><div class="s">naturelle</div></div>
+    <div class="tuile"><div class="k">Pente</div><div class="v">31<span class="u">°</span></div><div class="s">très forte</div></div>
+    <div class="tuile inconnu"><div class="k">Vue mer <i class="i">i</i></div><div class="v">Non</div></div>
+    <div class="tuile inconnu"><div class="k">Terrain nu <i class="i">i</i></div><div class="v">—</div>
+      <div class="s">pas assez de ventes</div></div>
+    <div class="tuile inconnu"><div class="k">Bâti ancien <i class="i">i</i></div><div class="v">—</div>
+      <div class="s">pas assez de ventes</div></div>
+    <div class="tuile"><div class="k">Taxe foncière</div><div class="v">52,1<span class="u">%</span></div>
+      <div class="s">part communale</div></div>
+    <div class="tuile inconnu"><div class="k">SDP restante <i class="i">i</i></div><div class="v">—</div>
+      <div class="s">zone non constructible</div></div>
+  </div>
+  <div class="badges"><span class="bg alerte">Mouvement de terrain — fort</span>
+    <span class="bg">Particulier propriétaire</span></div>
+</div>
+
+<div class="titre">Pourquoi ces huit</div>
+<div class="fiche" style="padding:16px 17px">
+  <p class="note" style="margin:0">
+    Ce sont les huit qu'un agent, un lotisseur, un promoteur, un apporteur ou une mairie
+    regardent tous — pas seulement ceux qui construisent.<br><br>
+    <b>Surface, zone, pente</b> : ce qu'est le terrain. La pente à La Réunion décide du coût de
+    terrassement autant que de la constructibilité.<br><br>
+    <b>Vue mer</b> : le critère de prix le plus fort de l'île, et personne ne le sert.
+    Calculable depuis le RGE ALTI déjà ingéré — une ligne de vue vers l'océan, coupée ou non
+    par le relief. À mesurer avant de le promettre.<br><br>
+    <b>Terrain nu et bâti ancien au m²</b> : les deux prix du secteur, côte à côte. Un agent lit
+    le second, un lotisseur le premier.<br><br>
+    <b>Taxe foncière</b> : la charge annuelle, que le bien soit gardé, loué ou porté.<br><br>
+    <b>SDP restante</b> : ce que le PLU autorise encore. Reste en huitième position — c'est la
+    signature de LABUSE, mais ce n'est pas la première question de tout le monde.<br><br>
+    Les contraintes et les faits de propriété passent en <b>étiquettes sous la grille</b>, plus dans
+    l'en-tête : ils changent l'approche sans être des chiffres à comparer.
+    Une valeur inconnue s'écrit « — » avec sa raison, jamais un zéro.
+  </p>
+</div>
+
+</div>
+</body>
+</html>
