@@ -4083,24 +4083,22 @@ def _radar_annonces_block(db: Session, idu: str) -> dict | None:
 
 
 def _taxe_amenagement_block(db: Session, idu: str, parcel_id: int) -> dict | None:
-    """FICHE-1 lot 5 — estimation de la taxe d'aménagement pour le scénario TABLE RASE du bloc
-    potentiel (assiette = surface de plancher créée). Moteur `taxe_amenagement.calculer` (jamais
-    un calcul dans l'endpoint). Taux communal PUBLIC (`taxe_amenagement_taux`) si connu, sinon
-    total non calculé + « taux communal non renseigné » — jamais un taux inventé (CIRCUIT-3 6.2).
-    None si le scénario table rase n'est pas constructible (pas d'assiette → pas d'estimation)."""
-    try:
-        from ..faisabilite.potentiel import bloc_potentiel
-        pot = bloc_potentiel(db, parcel_id)
-    except Exception:  # noqa: BLE001 — jamais un 500 sur la fiche
-        return None
-    tr = (pot or {}).get("table_rase") or {}
-    plancher = tr.get("plancher_m2")
-    if not tr.get("constructible") or not plancher or float(plancher) <= 0:
+    """RECETTE-8 W2 — la taxe d'aménagement se paie, en droit, sur la surface de plancher CRÉÉE
+    par un PROJET (art. L331 c. urb.). Sur la fiche et le Dossier, aucun projet n'est saisi : LABUSE
+    ne connaît pas cette surface et ne l'invente pas. Ce bloc ne sert donc QUE le taux communal
+    (public, daté) et la part départementale de droit, pour dire sur quoi la taxe se calculera —
+    JAMAIS un montant en euros ni une assiette prise sur un scénario que personne n'a choisi (avant
+    RECETTE-8 il imprimait « 22 469 € pour 458 m² de table rase », W1). Le MONTANT n'est chiffré
+    qu'au Financier, sur la SDP du projet saisi (`exports.builder._financier_contexte`).
+    Taux communal PUBLIC (`taxe_amenagement_taux`) si connu, sinon « non renseigné » (CIRCUIT-3 6.2).
+    None si la commune est inconnue (pas d'IDU)."""
+    if not idu or len(idu) < 5:
         return None
     from .. import taxe_amenagement as _tax
     pub = _tax.taux_communal_public(db, idu[:5])
+    # calculer(surface=0) ne chiffre aucune part surface : on n'en lit QUE les taux + le message.
     res = _tax.calculer(
-        surface_taxable_m2=float(plancher),
+        surface_taxable_m2=0.0,
         taux_communal_public_pct=(pub["part_communale_pct"] if pub else None),
         taux_communal_public_source=(pub["source"] if pub else None),
         taux_communal_public_millesime=(pub["millesime"] if pub else None),
@@ -4108,11 +4106,9 @@ def _taxe_amenagement_block(db: Session, idu: str, parcel_id: int) -> dict | Non
         taux_communal_public_perime=(pub["perime"] if pub else None),
     )
     return {
-        "assiette_m2": round(float(plancher)),
-        "assiette_eur": res["assiette_eur"],
-        "total_eur": res["total_eur"],
-        "part_communale_eur": res["part_communale_eur"],
-        "part_departementale_eur": res["part_departementale_eur"],
+        # projet_saisi=False : ce bloc ne porte JAMAIS de montant sur la fiche/le Dossier.
+        "projet_saisi": False,
+        "total_eur": None,
         "taux_communal_pct": res["taux_communal_pct"],
         "taux_communal_source": res["taux_communal_source"],      # 'public' | None
         # TAXE-AMÉNAGEMENT-1 lot C — millésime + fraîcheur du taux public.
@@ -4123,7 +4119,6 @@ def _taxe_amenagement_block(db: Session, idu: str, parcel_id: int) -> dict | Non
         "taux_communal_manquant": res["taux_communal_manquant"],
         "message_taux_communal": res["message_taux_communal"],
         "annee": res["annee"], "source": res["source"], "url": res["url"],
-        "scenario": "table rase — surface de plancher du potentiel",
     }
 
 

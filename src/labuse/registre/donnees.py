@@ -115,16 +115,19 @@ DONNEES: dict[str, Donnee] = {
     "calcul ligne-à-ligne, taux communal SAISI obligatoire, jamais un défaut",
     moteur="taxe_amenagement", calcul="moteur", fonction="src/labuse/taxe_amenagement.py",
     reservoirs=(), portee="live"),
- # FICHE-1 lot 5 — estimation servie DANS la fiche (Constructibilité) pour le scénario table
- # rase du potentiel ; distincte de taxe_amenagement_eur (outil, taux SAISI) : ici taux PUBLIC.
- "taxe_amenagement_estimee_eur": C("Taxe d'aménagement estimée (table rase)", "€", "parcelle",
-    "estimation de la taxe pour le scénario table rase du potentiel ; l'ASSIETTE est la SURFACE "
-    "DE PLANCHER CRÉÉE — c'est la donnée `surface_plancher_m2` (même producteur, même valeur), "
-    "JAMAIS la `sdp_residuelle_m2` du potentiel au sol (RECETTE-7 lot 0 : la contradiction 97/458 "
-    "venait de ces deux concepts distincts imprimés sous le mot « plancher ») ; taux communal "
-    "PUBLIC si connu, sinon « non renseigné » (jamais inventé) ; taux départemental plafond 2,5 %",
+ # RECETTE-8 W2 — sur la fiche/le Dossier, la taxe d'aménagement ne porte AUCUN montant : elle se
+ # paie sur la surface de plancher créée par un PROJET (art. L331 c. urb.), or aucun projet n'est
+ # saisi ici. On sert donc UNIQUEMENT le taux communal public (daté) et la phrase disant sur quoi
+ # elle se calculera ; le montant en euros n'est chiffré qu'au Financier, sur la SDP du projet.
+ "taxe_amenagement_estimee_eur": C("Taxe d'aménagement — taux communal (référence)", "taux", "parcelle",
+    "référence de taxe d'aménagement servie sur la fiche/le Dossier : le TAUX communal public (daté) "
+    "et la part départementale de droit (plafond 2,5 %) — SANS montant en euros, car la taxe porte "
+    "sur la surface de plancher CRÉÉE par un projet (art. L331 c. urb.) et aucun projet n'est saisi "
+    "à ce stade (RECETTE-8 W1/W2 : avant, elle imprimait « 22 469 € pour 458 m² de table rase », un "
+    "scénario que personne n'avait choisi). Le montant chiffré est au Financier, sur la SDP du projet. "
+    "Taux communal PUBLIC si connu, sinon « non renseigné » (jamais inventé)",
     moteur="taxe_amenagement", calcul="moteur",
-    fonction="src/labuse/api/app.py:_taxe_amenagement_block (taxe_amenagement.calculer)",
+    fonction="src/labuse/api/app.py:_taxe_amenagement_block (taxe_amenagement.calculer, surface=0)",
     reservoirs=(), portee="live"),
  # FICHE-1 lot 6 — les annonces Radar rattachées à la parcelle (validées), servies dans « Marché
  # et secteur » : date, prix demandé, statut, lien fiche annonce, écart demandé/acté par annonce.

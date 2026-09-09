@@ -440,15 +440,15 @@ export interface Fiche {
       ecart_demande_acte_pct: number | null
     }[]
   } | null
-  // FICHE-1 lot 5 — taxe d'aménagement estimée (scénario table rase). null → pas d'estimation.
+  // RECETTE-8 W2 — taxe d'aménagement : le TAUX communal de référence, jamais un montant sans
+  // projet (elle se paie sur la SDP créée par un projet, chiffrée au Financier). null → commune inconnue.
   taxe_amenagement?: {
-    assiette_m2: number; assiette_eur: number; total_eur: number | null
-    part_communale_eur: number | null; part_departementale_eur: number | null
+    projet_saisi: boolean; total_eur: number | null
     taux_communal_pct: number | null; taux_communal_source: string | null
     taux_communal_millesime?: string | null; taux_communal_perime?: boolean | null
     taux_departemental_pct: number | null; taux_departemental_confirme: boolean
     taux_communal_manquant: boolean; message_taux_communal: string | null
-    annee: string | number; source: string; url: string; scenario: string
+    annee: string | number; source: string; url: string
   } | null
   // FICHE-1 lot 3 — aléas en détail (dérivés de la cascade servie, accord avec Pièges et risques).
   aleas?: {

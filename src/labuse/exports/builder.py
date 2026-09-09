@@ -183,6 +183,28 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
         surf = _TYPOLOGIE_SURFACE.get(typo, 60)
         program["surface_vendable"] = program["logements"] * surf
         program["surface_plancher"] = program["surface_vendable"] / 0.8
+    # RECETTE-8 W2 — la taxe d'aménagement du bilan porte sur la SDP du PROJET (`program`), au taux
+    # communal public. On ne la pré-calcule que si le porteur ne l'a NI saisie NI explicitement vidée
+    # (règle 2 : un champ vidé reste vide) et que le projet a une SDP. C'est le SEUL endroit où la
+    # taxe est chiffrée : sur une SDP de projet, jamais sur un scénario de fiche (W1/W2).
+    if ("taxe_amenagement_saisi_eur" not in etat["reponses"]
+            and hyp["taxe"] is None and program.get("surface_plancher")):
+        from .. import taxe_amenagement as _tax
+        _pub = _tax.taux_communal_public(db, (idu or "")[:5])
+        _res = _tax.calculer(
+            surface_taxable_m2=float(program["surface_plancher"]),
+            taux_communal_public_pct=(_pub["part_communale_pct"] if _pub else None),
+            taux_communal_public_source=(_pub["source"] if _pub else None),
+            taux_communal_public_millesime=(_pub["millesime"] if _pub else None),
+            taux_communal_public_delib_date=(_pub["delib_date"] if _pub else None),
+            taux_communal_public_perime=(_pub["perime"] if _pub else None))
+        if _res["total_eur"] is not None:
+            hyp["taxe"] = _res["total_eur"]
+            resolved["taxe_amenagement_saisi_eur"] = {
+                "valeur": round(float(_res["total_eur"])), "origine": "prefill",
+                "source": (f"taxe d'aménagement sur la SDP du projet "
+                           f"({round(float(program['surface_plancher']))} m²) au taux communal — "
+                           "config datée, service-public.gouv.fr")}
     # RECETTE-4 U1/U2 — la fiscalité locale de la commune (taux TFPB, REI DGFiP) et sa zone A/B/C
     # (DHUP) entrent au Financier : la taxe foncière pèse sur les charges de portage et la zone
     # commande le régime applicable (TVA accession, PTZ, prix bailleur). Passe-plats sourcés + datés ;

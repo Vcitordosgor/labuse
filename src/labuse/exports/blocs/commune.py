@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from ..lignes import a, pied, val
 from ..nature import chip
-from ..registre_fmt import fmt_eur, fmt_pct, groupe
+from ..registre_fmt import fmt_pct, groupe
 from ..rendu import chip_span, esc, ligne_kv, section, table_kv
 
 IDS = ("perimetres_dispositifs_liste", "parc_social_rpls_logements",
@@ -13,20 +13,21 @@ IDS = ("perimetres_dispositifs_liste", "parc_social_rpls_logements",
 
 
 def _taxe(t: dict) -> str:
-    # RECETTE-7 lot 0 (Z6) — l'assiette est la surface de plancher CRÉÉE par le scénario table rase
-    # (donnée `surface_plancher_m2`), pas la SDP RÉSIDUELLE du potentiel au sol. On la nomme en
-    # clair pour qu'un lecteur ne confonde plus « … m² de plancher » (créé, ici) avec la « SDP
-    # résiduelle » de la section Potentiel — c'est la contradiction 97 / 458 m² du constat.
-    assiette = f"{t.get('assiette_m2', '?')} m² de surface de plancher créée (reconstruction totale)"
-    if t.get("total_eur"):
-        # RECETTE-7 (E9) — le taux à la française (« 3,0 % », pas « 3.0 % »).
-        taux = f" (taux communal {fmt_pct(t['taux_communal_pct'])})" if t.get("taux_communal_pct") else ""
-        # TAXE-AMÉNAGEMENT-1 lot C — millésime du taux public affiché avec le chiffre.
-        mil = t.get("taux_communal_millesime")
-        src = f" — {mil}" if (t.get("taux_communal_source") == "public" and mil) else ""
-        return f"De l'ordre de {fmt_eur(t['total_eur'])}{taux} pour {assiette}{src}"
-    dep = f", part départementale {fmt_eur(t['part_departementale_eur'])}" if t.get("part_departementale_eur") else ""
-    return f"Taux communal non renseigné pour cette commune — assiette {assiette}{dep}"
+    # RECETTE-8 W2 — la taxe d'aménagement se paie sur la surface de plancher CRÉÉE par un projet
+    # (art. L331 c. urb.). Le Dossier est un document AVANT projet : aucun n'est saisi, LABUSE ne
+    # connaît donc pas cette surface et ne l'invente pas. On ne dit QUE sur quoi elle se calculera
+    # et le taux communal — jamais un montant en euros sur un scénario que personne n'a choisi
+    # (avant : « De l'ordre de 22 469 € … pour 458 m² de table rase »). Le montant chiffré est au
+    # Financier, sur la SDP du projet réellement saisi.
+    base = ("Se calcule sur la surface de plancher créée par le projet "
+            "(taxe due une fois un projet déposé — chiffrée dans le Dossier financier).")
+    if t.get("taux_communal_manquant"):
+        return f"{base} Taux communal non renseigné pour cette commune."
+    # RECETTE-7 (E9) — le taux à la française (« 3,0 % », pas « 3.0 % »).
+    taux = fmt_pct(t["taux_communal_pct"]) if t.get("taux_communal_pct") else None
+    mil = t.get("taux_communal_millesime")
+    src = f" — {mil}" if (t.get("taux_communal_source") == "public" and mil) else ""
+    return f"Taux communal {taux}{src}. {base}" if taux else base
 
 
 def rendu(valeurs) -> str:
