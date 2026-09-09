@@ -103,9 +103,16 @@ def _entete_compacte(document: str, idu: str, fiche: dict, numero: str, jour: da
     if zone is not None:
         bits.append(f"zone {esc(zone.valeur)}")
     bits += [esc(numero), f"{jour:%d/%m/%Y}"]
+    # RECETTE-8 W21 — l'en-tête compact du Financier mettait l'adresse dans un h1 à 24 pt : elle
+    # cassait au milieu, entre le code postal et la commune (« …97417 / Saint-Denis »). On la sert
+    # dans une classe DÉDIÉE plus petite (16 pt) ET on LIE le code postal à la commune par une
+    # espace insécable U+00A0 (qui s'extrait proprement en espace, contrairement à U+2011 — F2) :
+    # « 97417 Saint-Denis » ne se scinde plus (E7 gardant déjà « Saint-Denis » insécable).
+    import re as _re
+    adr = _re.sub(r"(\b\d{5})\s+", lambda m: m.group(1) + " ", esc_noms(adresse or label))
     return (f'<div class="brand"><span class="wordmark">LABUSE</span>'
             f'<span class="kind">{esc(label)}</span></div>'
-            f'<h1>{esc_noms(adresse or label)}</h1>'   # E7 — noms composés insécables (Saint-Denis)
+            f'<h1 class="addr-compacte">{adr}</h1>'
             f'<p class="idu">{" · ".join(bits)}</p>')
 
 

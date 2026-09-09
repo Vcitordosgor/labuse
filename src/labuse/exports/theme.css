@@ -58,6 +58,10 @@ body {
 .brand .wordmark { font-weight: 700; letter-spacing: .02em; font-size: 13pt; color: var(--mint-ink); }
 .brand .kind { color: var(--muted); font-size: 9pt; }
 h1 { font-size: 24pt; line-height: 1.15; font-weight: 700; margin: 0 0 4pt; letter-spacing: -.01em; }
+/* RECETTE-8 W21 — l'adresse de l'en-tête COMPACT (Financier) : plus petite que le h1 de garde
+   (24 pt cassait « …97417 / Saint-Denis » au milieu) ; elle tient sur une ligne pour une adresse
+   réunionnaise courante, le code postal restant lié à la commune (U+00A0, builder). */
+h1.addr-compacte { font-size: 15pt; line-height: 1.2; }
 .subtitle { font-size: 11pt; color: var(--muted); margin: 0 0 18pt; }
 .address { font-size: 14pt; margin: 0 0 2pt; }
 .idu { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-size: 9.5pt; color: var(--muted); margin-bottom: 16pt; }
