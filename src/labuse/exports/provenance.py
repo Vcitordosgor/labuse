@@ -233,3 +233,47 @@ def inventaire(document: str, valeurs: dict[str, Valeur], html: str,
                        "chiffre_id": cid, "structure": structure,
                        "etat": "rattaché" if cid else ("structure" if structure else "FUITE")})
     return lignes
+
+
+# ── RECETTE-8 W5 — LE VERROU ÉTENDU AUX LIBELLÉS ─────────────────────────────────────────────
+# Le crible des NOMBRES (ci-dessus) ne voyait pas qu'un LIBELLÉ servi puisse être faux : un
+# identifiant technique imprimé tel quel au client (« Scénario surelevation » sans accent ni
+# majuscule — W18), ou un code de palier / de verdict de cascade qui fuit hors de son vocabulaire
+# contrôlé. Le client doit toujours voir le LIBELLÉ du registre, jamais l'identifiant.
+#
+# On procède par DENYLIST des identifiants techniques des vocabulaires contrôlés (scénarios,
+# paliers, verdicts de cascade). Elle est volontairement restreinte aux formes NON AMBIGÜES —
+# snake_case (avec underscore), CODES EN MAJUSCULES, ou variantes SANS ACCENT d'un mot français
+# accentué — pour ne jamais confondre un identifiant avec un mot de prose (« reconstruction »,
+# « revente », « chaude », « faible » restent des mots français légitimes et NE sont pas listés).
+_CODES_TECHNIQUES: frozenset[str] = frozenset({
+    # scénarios (src/labuse/scenarios.py) — le client voit le libellé, jamais le code
+    "surelevation",
+    # paliers / tiers (scoring/tiers_client.py) — snake_case ou sans accent
+    "priorite", "a_suivre", "sans_signal", "ecartee",
+    "brulante", "a_creuser", "reserve_fonciere", "opportunite", "faux_positif_probable",
+    "declasse_bati_sature", "declasse_non_constructible", "declasse_bati_revele",
+    "declasse_zone_fermee", "declasse_au_statut_inconnu", "declasse_au_fermee",
+    # verdicts de cascade (enums.CascadeVerdict) — codes internes en MAJUSCULES
+    "HARD_EXCLUDE", "SOFT_FLAG", "NON_SOLLICITE",
+})
+#: motif de recherche : chaque code comme TOKEN entier (bornes de mot), sensible à la casse.
+_MOTIF_CODES = re.compile(r"(?<![\w-])(" + "|".join(
+    sorted(map(re.escape, _CODES_TECHNIQUES), key=len, reverse=True)) + r")(?![\w-])")
+
+
+def libelles_hors_registre(document: str, html: str) -> list[dict]:
+    """Les LIBELLÉS servis au client qui sont en réalité des identifiants techniques hors du
+    vocabulaire du registre (scénario, palier, verdict). Chaque écart : {document, libelle,
+    contexte, raison}. Vide = tous les libellés servis viennent bien du registre.
+
+    C'est le pendant « libellés » de `fuites()` (nombres) : un identifiant technique imprimé
+    échoue la CI comme un nombre non ancré (Z5 étendu)."""
+    texte = _texte_de(html)
+    ecarts: list[dict] = []
+    for m in _MOTIF_CODES.finditer(texte):
+        i = m.start()
+        ctx = re.sub(r"\s+", " ", texte[max(0, i - 30):min(len(texte), m.end() + 20)]).strip()
+        ecarts.append({"document": document, "libelle": m.group(1), "contexte": ctx,
+                       "raison": "identifiant technique servi au client — le registre porte un libellé humain"})
+    return ecarts

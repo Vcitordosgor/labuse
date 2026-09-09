@@ -109,3 +109,31 @@ def test_le_crible_casse_bien_sur_un_nombre_invente():
     fu = provenance.fuites("faux/doc", valeurs, html)
     assert any(f["nombre"] == 123456 for f in fu), fu
     assert all(f["nombre"] != 1018 for f in fu)  # 1 018 est ancré (surface), pas une fuite
+
+
+# ── RECETTE-8 W5 — le verrou étendu aux LIBELLÉS ─────────────────────────────────────────────
+
+@pytest.mark.parametrize("idu", TEMOINS)
+def test_aucun_libelle_technique_dans_les_documents(idu):
+    """dossier · flash · apporteur : aucun identifiant technique (scénario/palier/verdict) ne
+    fuit dans le texte servi au client — le registre porte un libellé humain (W5/W18)."""
+    from labuse.db import session_scope
+    fiche = _fiche(idu)
+    ecarts: list[dict] = []
+    for doc in DOCS_TOUJOURS:
+        with session_scope() as s:
+            res = builder.construire(s, idu, doc, fiche=fiche)
+        ecarts += provenance.libelles_hors_registre(f"{idu}/{doc}", res.html)
+    assert not ecarts, "identifiants techniques servis au client :\n" + "\n".join(
+        f"  {e['document']} : « {e['libelle']} » — {e['contexte']}" for e in ecarts)
+
+
+def test_le_crible_libelle_casse_bien_sur_un_identifiant_technique():
+    """Preuve que le verrou LIBELLÉS mord : « surelevation » (sans accent), un code de palier
+    snake_case et un verdict en majuscules sont attrapés ; les libellés HUMAINS ne le sont pas."""
+    bad = "<p>Scénario surelevation ; palier sans_signal ; verdict HARD_EXCLUDE.</p>"
+    trouves = {e["libelle"] for e in provenance.libelles_hors_registre("faux/doc", bad)}
+    assert {"surelevation", "sans_signal", "HARD_EXCLUDE"} <= trouves, trouves
+    good = ("<p>Scénario Surélévation ; reconstruction envisagée ; palier Sans signal ; "
+            "eau chaude ; marge faible.</p>")   # mots français légitimes → pas d'écart
+    assert not provenance.libelles_hors_registre("faux/doc", good)

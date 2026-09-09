@@ -404,6 +404,12 @@ def verifier_provenance(db) -> dict:
                 trouves.append(("nombre_hors_registre", f"{idu}/{doc}:{f['nombre']:g}",
                                 f"pdf:{doc}", f"{f['nombre']:g} — {f['contexte'][:80]}",
                                 "exports.provenance", "aucune donnée du registre", "autre"))
+            # RECETTE-8 W5 — le pendant LIBELLÉS : un identifiant technique servi au client
+            # (« Scénario surelevation », un code de palier/verdict) est un écart, comme un nombre.
+            for e in provenance.libelles_hors_registre(f"{idu}/{doc}", res.html):
+                trouves.append(("libelle_hors_registre", f"{idu}/{doc}:{e['libelle']}",
+                                f"pdf:{doc}", f"{e['libelle']} — {e['contexte'][:80]}",
+                                "exports.provenance", "identifiant technique hors vocabulaire", "autre"))
     ensure(db)
     for t in trouves:
         _upsert_ecart(db, *t)
