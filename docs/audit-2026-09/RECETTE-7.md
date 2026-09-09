@@ -193,3 +193,41 @@ base réelle + WeasyPrint + pdftotext) ; le verrou provenance (Z5) reste vert ap
 
 
 # LOT F — Rendre la 3D plus juste
+
+Deux axes chiffrés (jamais branchés), + le `i` du bouton 3D.
+
+**F1 — la fraîcheur (BD TOPO Express, hebdomadaire). Chiffrage.** BD TOPO® Express publie un delta
+hebdomadaire du bâti. Pour ne servir que les constructions récentes manquantes : (1) s'abonner au
+delta (petit volume — seulement les objets changés), (2) marquer « sales » les parcelles dont une
+empreinte bâtiment a bougé (jointure spatiale delta ⋈ `parcels`), (3) ne RE-calculer que celles-là
+(emprise `le_bien`, hauteur, bloc potentiel — la chaîne existe déjà, on la scope). **Coût** : un job
+incrémental réutilisant l'ingestion bâti + le recompute potentiel, borné aux parcelles sales (quelques
+centaines/semaine à l'échelle 974) ; **aucune dépendance nouvelle**. **Ce que ça règle** : le bâti
+récent manquant, RIEN d'autre (la hauteur reste approximative, sans forme de toit).
+
+**F2 — la justesse des hauteurs (LiDAR HD). Chiffrage + recommandation FRANCHE : OUI.** La Réunion est
+**intégralement couverte** par le LiDAR HD IGN depuis le 25/06/2025 (MNT/MNS/MNH 50 cm, 2 665 dalles —
+constat déjà VÉRIFIÉ dans ce dépôt, `RAPPORT_WAVE_ANC_VEGETATION.md`), sous **licence ouverte**
+(etalab), **déjà streamé par tuile via WMS-R** et **déjà consommé** par l'app (canopée NDVI×MNH, et la
+forme de toiture simple/double pente — `solaire_toiture.py`, vérifié 05/09/2026). Donc :
+- **Ce qu'un MNS/MNH apporte** : des hauteurs MESURÉES (au lieu de la hauteur approximative BD TOPO),
+  le **faîtage** (max MNS sur l'empreinte) ET l'**égout** (bord de toit) distingués, la **forme de
+  toit** (déjà calculée). C'est **exactement ce qui règle E1 pour de bon** (faîtage vs égout mesurés,
+  fin de la conversion incertaine).
+- **Coût** : une statistique zonale MNS par bâtiment (max/percentiles sur l'empreinte), **réutilisant
+  l'infra de streaming WMS-R existante** (comme le batch végétation MNH déjà passé) — pas de
+  téléchargement massif, pas de licence à acquérir, pas de dépendance nouvelle. Un batch borné
+  (parcelles bâties) + un cache hauteur.
+- **Recommandation** : y aller. Le ROI est bien meilleur que le viewshed RGE ALTI (lot D) : la donnée
+  est déjà là, ouverte, streamée, et elle corrige une ERREUR de fond (les hauteurs) plutôt que d'ajouter
+  un argument commercial fragile. Commencer par le MNS pour la hauteur de faîtage (fixe E1), l'égout
+  ensuite (analyse de bord de toit).
+
+**F3 — le `i` du bouton 3D. FAIT.** `MapToolbar.tsx` : « Relief 3D (MNT) + bâti extrudé à sa hauteur
+BD TOPO — hauteurs APPROXIMATIVES, sans forme de toit ni faîtage/égout distingués, et les constructions
+très récentes peuvent manquer (mesure précise à venir via LiDAR HD) ». Une phrase, honnête.
+
+Sources F2 : [MNH LiDAR HD IGN 2025 (data.gouv.fr)](https://www.data.gouv.fr/datasets/mnh-lidar-hd-ign-2025) ·
+[MNS LiDAR HD IGN 2025](https://www.data.gouv.fr/datasets/mns-lidar-hd-ign-2025) ·
+[Programme LiDAR HD (IGN)](https://www.ign.fr/institut/programme-lidar-hd-vers-une-nouvelle-cartographie-3d-du-territoire).
+

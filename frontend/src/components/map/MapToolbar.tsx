@@ -98,7 +98,8 @@ export function MapToolbar() {
         /* RETOURS-9 (Q9) — contour 3D actif = plein vert, encre sombre (pas un liseré). */
         className={`flex h-9 items-center rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
           terrain3d ? 'border-mint bg-mint text-mint-ink font-medium' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}
-        title="Relief 3D (MNT) — maintenir Ctrl + glisser pour incliner la vue"
+        /* RECETTE-7 (F3) — le « i » du 3D dit ce que la vue vaut et ne vaut pas, en une phrase. */
+        title="Relief 3D (MNT) + bâti extrudé à sa hauteur BD TOPO — hauteurs APPROXIMATIVES, sans forme de toit ni faîtage/égout distingués, et les constructions très récentes peuvent manquer (mesure précise à venir via LiDAR HD). Maintenir Ctrl + glisser pour incliner la vue."
       >
         3D
       </button>
