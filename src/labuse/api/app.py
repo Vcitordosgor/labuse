@@ -3728,6 +3728,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     # (zone_servie), lu par l'écran et tous les documents.
     from ..faisabilite.zone_servie import prescriptions_verifiables as _presc_verif
     _presc_ok, _presc_motif = _presc_verif(head["commune"])
+    from . import fiche_commune as _fiche_commune   # RECETTE-5 (V4) — TFPB part communale sur l'en-tête
     return {
         "idu": head["idu"], "commune": head["commune"],
         "prix_ancien": _prix_ancien, "marche_synthese": _marche_synthese,
@@ -3815,6 +3816,11 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # (moteur taxe_amenagement). None si pas de scénario constructible. Taux communal PUBLIC
         # si connu, sinon « non renseigné » — jamais un taux inventé (CIRCUIT-3 lot 6.2).
         "taxe_amenagement": _taxe_amenagement_block(db, idu, head["id"]),
+        # RECETTE-5 (V4) — TAXE FONCIÈRE (part communale, TFPB) portée sur l'en-tête de fiche : même
+        # source/point de service que la fiche commune (REI DGFiP via fiche_commune.fiscalite), keyée
+        # par l'INSEE de la parcelle (idu[:5]). Passe-plat sourcé + daté (drapeau `perime`) ; None si
+        # non ingéré — la tuile écrit alors « — » avec sa raison, jamais un zéro (V7).
+        "fiscalite": _fiche_commune.fiscalite(db, idu[:5] if idu else None),
         # FICHE-1 lot 6 — les annonces Radar RATTACHÉES à la parcelle (validées), datées, avec prix
         # demandé, statut (en cours / retirée / vendue), lien fiche annonce + écart demandé/acté.
         "radar_annonces": _radar_annonces_block(db, idu),

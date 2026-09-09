@@ -421,12 +421,32 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .addr-link:hover { text-decoration:underline; }
 .fiche-v6 .hbtns { display:flex; gap:4px; flex-shrink:0; }
 .fiche-v6 .hbtn { width:26px; height:26px; border-radius:7px; border:0.5px solid var(--line-btn); display:flex; align-items:center; justify-content:center; color:var(--lab); font-size:12px; background:none; cursor:pointer; flex-shrink:0; }
-.fiche-v6 .stats { display:grid; grid-template-columns:repeat(4,1fr); border-top:0.5px solid var(--line); }
-.fiche-v6 .stat { padding:9px 10px; border-right:0.5px solid var(--line); min-width:0; }
-.fiche-v6 .stat:last-child { border-right:none; }
-.fiche-v6 .stat-l { font-size:9px; color:var(--txt-off); letter-spacing:.06em; }
+/* RECETTE-5 (V4) — EN-TÊTE À 8 TUILES (maquette-entete-fiche-v2). Grille 4×2 : les lignes fines
+   viennent du fond de grille (gap + background:--line), les tuiles portent le fond --bg-2. Chaque
+   tuile a une valeur, un sous-titre (.stat-s = la provenance courte) et un « i » qui dit la source. */
+.fiche-v6 .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:0.5px; background:var(--line); border-top:0.5px solid var(--line); }
+.fiche-v6 .stat { padding:9px 10px 10px; min-width:0; background:var(--bg-2); }
+.fiche-v6 .stat-l { font-size:9px; color:var(--txt-off); letter-spacing:.06em; display:flex; align-items:center; gap:4px; }
 .fiche-v6 .stat-v { font-size:13px; color:var(--txt-hi); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.fiche-v6 .stat-v.vide { color:var(--txt-faint); }
+.fiche-v6 .stat-v.vide { color:var(--txt-faint); font-weight:400; }
+.fiche-v6 .stat-v.neuf { color:var(--mint); }
+.fiche-v6 .stat-s { font-size:9px; color:var(--txt-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* RECETTE-5 (V5) — les ÉTIQUETTES passent SOUS la grille (contraintes / type de propriétaire /
+   voisines du même propriétaire), plus dans le bloc d'identité. */
+.fiche-v6 .head-badges { display:flex; flex-wrap:wrap; gap:6px; padding:11px 14px; border-top:0.5px solid var(--line); }
+.fiche-v6 .pill-neutre { font-size:11.5px; color:var(--txt-dim); background:transparent; border:0.5px solid var(--line-2); padding:3px 8px; border-radius:20px; white-space:nowrap; }
+/* RECETTE-5 (V6) — accordéon « Le reste des faits » dans l'en-tête (details/summary natif). */
+.fiche-v6 .plus { border-top:0.5px solid var(--line); padding:10px 14px 11px; }
+.fiche-v6 .plus > summary { list-style:none; cursor:pointer; font-size:12px; color:var(--txt-dim); display:flex; align-items:center; gap:7px; }
+.fiche-v6 .plus > summary::-webkit-details-marker { display:none; }
+.fiche-v6 .plus > summary::after { content:"⌄"; margin-left:auto; color:var(--txt-off); }
+.fiche-v6 .plus[open] > summary::after { content:"⌃"; }
+.fiche-v6 .plus .corps { padding-top:8px; }
+.fiche-v6 .sl { display:flex; justify-content:space-between; gap:12px; padding:6px 0; font-size:12.5px; border-bottom:0.5px solid var(--line); }
+.fiche-v6 .sl:last-child { border-bottom:0; }
+.fiche-v6 .sl .k { color:var(--txt-dim); }
+.fiche-v6 .sl .v { font-weight:500; text-align:right; color:var(--txt-hi); }
+.fiche-v6 .sl .v.vide { color:var(--txt-faint); font-weight:400; }
 
 /* bouton d'analyse + légende */
 .fiche-v6 .cta { background:var(--mint); border:none; border-radius:10px; min-height:40px; width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; font-size:13.5px; font-weight:500; color:var(--mint-on); cursor:pointer; padding:6px 15px; }

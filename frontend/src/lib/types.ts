@@ -511,6 +511,21 @@ export interface Fiche {
     part_hlm_pct: number | null
     source: string
   } | null
+  // RECETTE-5 (V4) — les champs déjà SERVIS par le payload parcelle, typés pour l'en-tête à 8 tuiles.
+  // `terrain` : pente du terrain (RGE ALTI) — tuile Pente. `prix_ancien` : prix du bâti ancien au m²
+  // (marche_service, même chiffre que la synthèse et les documents) — tuile Bâti ancien.
+  terrain?: { pente_moy_deg: number | null; pente_max_deg: number | null; flag_terrassement_lourd: boolean } | null
+  prix_ancien?: {
+    type_prix: string | null; n: number | null; fiabilite?: string | null; commune_fallback?: boolean
+    distribution?: { apres?: { median: number | null; n: number | null } | null } | null
+  } | null
+  marche_synthese?: string | null
+  // RECETTE-5 (V4) — TFPB part communale (REI DGFiP), ajoutée au payload parcelle (même producteur
+  // que la fiche commune). Tuile « Taxe foncière ». `perime` = fraîcheur > 1 an. null = non ingéré.
+  fiscalite?: {
+    tfpb_commune_pct: number | null; tfpb_epci_pct: number | null; teom_pct: number | null
+    millesime: string; maj_at?: string | null; perime?: boolean; source: string
+  } | null
 }
 
 // FICHE-1 lot 1 — bloc « Le bien » (producteur bati.le_bien_block).
