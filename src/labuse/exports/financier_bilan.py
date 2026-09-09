@@ -145,6 +145,37 @@ def _charge(prog: dict, h: dict, cout: float | None, prix_sortie: float | None) 
     return ca - total - marge
 
 
+def calculer_revente(hyp: dict) -> dict:
+    """RECETTE-8 W13bis (C3) — le calcul SIMPLE de la revente en l'état (pas de bilan à rebours) :
+    marge = prix de revente − prix d'achat − frais d'acquisition − travaux − coût de portage ;
+    taux de marge = marge ÷ prix de revente. Pur, déterministe. `hyp` = hypothèses résolues :
+    prix_achat, prix_revente, frais_acq_pct, travaux, duree_portage (mois), taux_apport (%/an).
+    Le coût de portage = achat × taux × durée/12 (0 si taux ou durée absents — alors la marge est
+    un MAXIMUM, drapeau `maximum`). `etablissable=False` tant que achat OU revente manque."""
+    achat = _f(hyp.get("prix_achat"))
+    revente = _f(hyp.get("prix_revente"))
+    frais_pct = _f(hyp.get("frais_acq_pct"))
+    travaux = _f(hyp.get("travaux"))
+    duree = _f(hyp.get("duree_portage"))
+    taux = _f(hyp.get("taux_apport"))
+    frais_acq = (achat * frais_pct / 100) if (achat is not None and frais_pct is not None) else None
+    portage = (achat * (taux / 100) * (duree / 12)) if (
+        achat is not None and taux is not None and duree is not None) else None
+    postes = {"prix_achat": achat, "frais_acquisition": frais_acq,
+              "travaux": travaux, "portage": portage, "prix_revente": revente}
+    if achat is None or revente is None:
+        return {"etablissable": False, "postes": postes}
+    cout_total = achat + (frais_acq or 0.0) + (travaux or 0.0) + (portage or 0.0)
+    marge = revente - cout_total
+    return {
+        "etablissable": True, "postes": postes,
+        "cout_total": round(cout_total, 2), "marge": round(marge, 2),
+        "taux_marge_pct": (round(marge / revente * 100, 1) if revente else None),
+        # sans coût de portage chiffré, la marge est SURESTIMÉE → dite « maximum » (jamais un faux exact).
+        "maximum": portage is None,
+    }
+
+
 def calculer(prog: dict, hyp: dict) -> dict:
     """Le bilan complet. `prog` = {surface_vendable, surface_plancher, surface_terrain, logements}.
     `hyp` = hypothèses résolues (valeur ou None). Rend postes, CA, charge (3 bornes), sensibilité

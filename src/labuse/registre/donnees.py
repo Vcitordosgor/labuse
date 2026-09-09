@@ -119,7 +119,7 @@ DONNEES: dict[str, Donnee] = {
  # paie sur la surface de plancher créée par un PROJET (art. L331 c. urb.), or aucun projet n'est
  # saisi ici. On sert donc UNIQUEMENT le taux communal public (daté) et la phrase disant sur quoi
  # elle se calculera ; le montant en euros n'est chiffré qu'au Financier, sur la SDP du projet.
- "taxe_amenagement_estimee_eur": C("Taxe d'aménagement — taux communal (référence)", "taux", "parcelle",
+ "taxe_amenagement_estimee_eur": C("Taxe d'aménagement — taux communal (référence)", "%", "parcelle",
     "référence de taxe d'aménagement servie sur la fiche/le Dossier : le TAUX communal public (daté) "
     "et la part départementale de droit (plafond 2,5 %) — SANS montant en euros, car la taxe porte "
     "sur la surface de plancher CRÉÉE par un projet (art. L331 c. urb.) et aucun projet n'est saisi "
@@ -643,6 +643,20 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/api/app.py:parcel_export_pdf (calculette — saisie client)",
     reservoirs=(), portee="projet",
     table="(saisie client — corps de requête de la calculette, aucune table)"),
+ # RECETTE-8 W13bis — parcours « Revente en l'état » (C3) : achat → frais → travaux → portage →
+ # revente ⇒ marge / taux de marge. Saisies client (portée projet), jamais un chiffre LABUSE.
+ "prix_achat_revente_saisi_eur": C("Prix d'achat — revente (saisi)", "€", "parcelle",
+    "prix d'achat du bien SAISI par le client pour le scénario de revente en l'état — écran Revente",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/financier_questionnaire.py (écran Revente)",
+    reservoirs=(), portee="projet", table="(saisie client — questionnaire du Financier)"),
+ "travaux_revente_saisi_eur": C("Travaux éventuels — revente (saisi)", "€", "parcelle",
+    "montant de travaux éventuels SAISI par le client avant revente (0 si aucun) — écran Revente",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/financier_questionnaire.py (écran Revente)",
+    reservoirs=(), portee="projet", table="(saisie client — questionnaire du Financier)"),
+ "prix_revente_saisi_eur": C("Prix de revente (saisi)", "€", "parcelle",
+    "prix de revente visé SAISI par le client (scénario revente en l'état) — écran Revente",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/financier_questionnaire.py (écran Revente)",
+    reservoirs=(), portee="projet", table="(saisie client — questionnaire du Financier)"),
  # ══ EXPORTS-2 lot 4 — LE QUESTIONNAIRE DU FINANCIER (4 écrans, saisies client portée projet) ══
  # Chaque champ = un id projet, jamais un chiffre LABUSE. Le pré-remplissage sourcé est servi À
  # PART (prefill, avec sa source) ; un champ vidé par le client s'imprime « non chiffré », jamais

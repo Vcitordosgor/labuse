@@ -6345,15 +6345,26 @@ def financier_questionnaire_get(idu: str, request: Request, db: Session = Depend
         return {"id": fid, "libelle": libelle, "unite": c.unite if c else "",
                 "type": c.type if c else "texte",
                 "domaine": list(c.domaine) if c and c.domaine else None,
-                "obligatoire": fid in qf.OBLIGATOIRES,
+                # RECETTE-8 W13bis — obligatoire dans SON parcours (construction OU revente).
+                "obligatoire": fid in qf.OBLIGATOIRES or fid in qf.OBLIGATOIRES_REVENTE,
                 "aide": qf.AIDES.get(fid),   # RECETTE-5 (V19) — le « i » : ce qu'on attend comme valeur
                 "prefill": prefill.get(fid)}  # {valeur, source} ou None (jamais une valeur sans source)
 
     ecrans = [{"titre": t, "champs": [_champ(fid) for fid in ids]} for t, ids in qf.ECRANS]
+    # RECETTE-8 W13bis (C3) — les écrans PAR usage : le front sert le questionnaire du parcours choisi
+    # (« construction » = les 4 écrans du bilan à rebours ; « revente » = l'écran de marge). Un usage
+    # non servi n'a pas d'écrans (il reste grisé avec sa raison, USAGES).
+    ecrans_par_usage = {
+        "construction": ecrans,
+        "revente": [{"titre": t, "champs": [_champ(fid) for fid in ids]} for t, ids in qf.REVENTE_ECRANS],
+    }
     return {"idu": idu, "reponses": etat["reponses"], "complet": etat["complet"],
             "existe": etat["existe"], "ecrans": ecrans,
+            "ecrans_par_usage": ecrans_par_usage,
             "usages": qf.USAGES,  # RECETTE-6 (E5) — écran 0 « Que voulez-vous chiffrer ? »
-            "tva_explication": qf.TVA_EXPLICATION, "champs_obligatoires": sorted(qf.OBLIGATOIRES)}
+            "tva_explication": qf.TVA_EXPLICATION,
+            "champs_obligatoires": sorted(qf.OBLIGATOIRES),
+            "champs_obligatoires_revente": sorted(qf.OBLIGATOIRES_REVENTE)}
 
 
 @app.put("/financier/{idu}/questionnaire")

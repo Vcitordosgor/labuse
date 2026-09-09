@@ -2167,6 +2167,8 @@ export interface QUsage { key: string; label: string; servi: boolean; sous?: str
 export interface QuestionnaireFinancier {
   idu: string; reponses: Record<string, unknown>; complet: boolean; existe: boolean
   ecrans: QEcran[]; usages?: QUsage[]; tva_explication: string; champs_obligatoires: string[]
+  // RECETTE-8 W13bis (C3) — les écrans PAR usage : le front sert le questionnaire du parcours choisi.
+  ecrans_par_usage?: Record<string, QEcran[]>; champs_obligatoires_revente?: string[]
 }
 export const getFinancierQuestionnaire = (idu: string) =>
   j<QuestionnaireFinancier>(`/financier/${encodeURIComponent(idu)}/questionnaire`)

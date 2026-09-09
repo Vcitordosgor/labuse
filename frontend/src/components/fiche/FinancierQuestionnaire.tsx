@@ -40,14 +40,21 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
 
   useEffect(() => {
     if (data && seededIdu.current !== idu) {
-      setReponses(data.reponses || {})
+      const rep = data.reponses || {}
+      setReponses(rep)
       seededIdu.current = idu
-      setEtape(0); setUsage(null); setFini(false)
+      // RECETTE-8 W13bis — restaure le parcours choisi (_usage) s'il a déjà été saisi sur CETTE
+      // parcelle ; sinon écran 0 « Que voulez-vous chiffrer ? ».
+      const u = rep['_usage']
+      setUsage(u === 'construction' || u === 'revente' ? u : null)
+      setEtape(0); setFini(false)
       setDocErr(null); setDocTech(null)
     }
   }, [data, idu])
 
-  const ecrans = data?.ecrans || []
+  // RECETTE-8 W13bis — les écrans du PARCOURS choisi (construction = bilan à rebours ; revente =
+  // calcul de marge). Repli sur les écrans construction tant qu'aucun usage n'est choisi.
+  const ecrans = (usage && data?.ecrans_par_usage?.[usage]) || data?.ecrans || []
   const N = ecrans.length || 1
 
   const set = (id: string, v: unknown) => setReponses((r) => ({ ...r, [id]: v }))
@@ -174,7 +181,7 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
               {(data.usages || [{ key: 'construction', label: 'Construction neuve', servi: true }]).map((u) => (
                 <button key={u.key} data-usage={u.key} data-usage-servi={u.servi ? '1' : '0'}
                   disabled={!u.servi}
-                  onClick={() => { if (u.servi) { setUsage(u.key); setEtape(0) } }}
+                  onClick={() => { if (u.servi) { setUsage(u.key); set('_usage', u.key); setEtape(0) } }}
                   style={{
                     textAlign: 'left', padding: '14px 16px', borderRadius: 10, cursor: u.servi ? 'pointer' : 'not-allowed',
                     background: u.servi ? 'rgba(74,222,128,.06)' : 'transparent',

@@ -39,12 +39,21 @@ ECRANS: list[tuple[str, tuple[str, ...]]] = [
 # reste le SEUL moteur ; les autres usages n'ouvrent QUE ce qui se calcule déjà proprement. Un parcours
 # qu'on ne sait pas servir honnêtement apparaît GRISÉ avec sa raison — jamais un formulaire qui rend un
 # bilan faux. Le questionnaire des ECRANS ci-dessus EST le parcours « construction ».
+# RECETTE-8 W13bis (C3) — l'écran du parcours « Revente en l'état » : pas de bilan à rebours, un
+# calcul SIMPLE et direct (achat → frais → travaux → portage → revente ⇒ marge, taux de marge).
+REVENTE_ECRANS: list[tuple[str, tuple[str, ...]]] = [
+    ("La revente en l'état", ("prix_achat_revente_saisi_eur", "frais_acquisition_saisi_pct",
+                              "travaux_revente_saisi_eur", "duree_portage_saisi_mois",
+                              "taux_apport_saisi_pct", "prix_revente_saisi_eur")),
+]
+
 USAGES: list[dict] = [
     {"key": "construction", "label": "Construction neuve", "servi": True,
      "sous": "Le bilan à rebours : ce que l'opération peut supporter comme charge foncière."},
-    {"key": "revente", "label": "Revente en l'état", "servi": False,
-     "raison": "Sans travaux ni construction, le bilan à rebours ne s'applique pas — un comparateur "
-               "prix d'achat / prix de revente n'est pas encore servi."},
+    # RECETTE-8 W13bis (C3) — le parcours « Revente en l'état » est désormais SERVI (calcul simple
+    # marge/taux de marge ; pas de bilan à rebours, pas de moteur lourd).
+    {"key": "revente", "label": "Revente en l'état", "servi": True,
+     "sous": "Le calcul de marge : prix d'achat, frais, travaux, portage → prix de revente ⇒ marge."},
     {"key": "division", "label": "Division parcellaire", "servi": False,
      "raison": "Le découpage en lots et la valorisation lot par lot ne sont pas encore servis proprement."},
     {"key": "renovation", "label": "Rénovation-revente", "servi": False,
@@ -78,10 +87,15 @@ LIBELLES_CLIENT: dict[str, str] = {
     "regime_tva_saisi": "Régime de TVA",
     "duree_portage_saisi_mois": "Durée de portage",
     "taux_apport_saisi_pct": "Taux d'emprunt",
+    # RECETTE-8 W13bis (C3) — parcours revente
+    "prix_achat_revente_saisi_eur": "Prix d'achat du bien",
+    "travaux_revente_saisi_eur": "Travaux éventuels avant revente",
+    "prix_revente_saisi_eur": "Prix de revente visé",
 }
 
-#: tous les ids de champ, dans l'ordre des écrans.
-CHAMPS: tuple[str, ...] = tuple(cid for _, ids in ECRANS for cid in ids)
+#: tous les ids de champ, dans l'ordre des écrans (construction + revente, sans doublon).
+CHAMPS: tuple[str, ...] = tuple(dict.fromkeys(
+    cid for _, ids in (ECRANS + REVENTE_ECRANS) for cid in ids))
 
 #: RECETTE-5 (V19, décision Vic) — les champs INDISPENSABLES AU CALCUL de la charge foncière : sans
 #: eux, `charge` est None et le bilan ne peut pas être établi. Ils bloquent la génération tant qu'ils
@@ -115,6 +129,10 @@ AIDES: dict[str, str] = {
     "regime_tva_saisi": "INDISPENSABLE — le régime de TVA (assujetti avec récupération / TVA sur marge / autre). Il décide si le bilan travaille HT ou TTC.",
     "duree_portage_saisi_mois": "Une durée en mois (instruction + chantier). Pré-remplie à 29 mois.",
     "taux_apport_saisi_pct": "Un taux en pourcentage — le taux d'emprunt du portage.",
+    # RECETTE-8 W13bis (C3) — parcours revente
+    "prix_achat_revente_saisi_eur": "INDISPENSABLE — le prix d'achat du bien, en euros. Sans lui, la marge ne peut pas être calculée.",
+    "travaux_revente_saisi_eur": "Un montant en euros — travaux éventuels avant la revente (0 si aucun).",
+    "prix_revente_saisi_eur": "INDISPENSABLE — le prix de revente visé, en euros. Sans lui, la marge ne peut pas être calculée.",
 }
 
 
@@ -133,6 +151,23 @@ def manques(resolved: dict, program: dict) -> list[dict]:
         if (resolved.get(fid) or {}).get("valeur") in (None, ""):
             out.append({"champ": fid, "libelle": LIBELLES_CLIENT.get(fid, fid),
                         "raison": "indispensable au calcul de la charge foncière."})
+    return out
+
+
+#: RECETTE-8 W13bis (C3) — les champs indispensables au calcul de MARGE (revente en l'état).
+OBLIGATOIRES_REVENTE: frozenset[str] = frozenset(
+    {"prix_achat_revente_saisi_eur", "prix_revente_saisi_eur"})
+
+
+def manques_revente(resolved: dict) -> list[dict]:
+    """Les éléments INDISPENSABLES au calcul de la marge de revente (prix d'achat, prix de revente).
+    Vide ⇒ le Financier « revente » peut se générer. Pas de programme constructible ici (revente en
+    l'état : ni construction, ni SDP)."""
+    out: list[dict] = []
+    for fid in OBLIGATOIRES_REVENTE:
+        if (resolved.get(fid) or {}).get("valeur") in (None, ""):
+            out.append({"champ": fid, "libelle": LIBELLES_CLIENT.get(fid, fid),
+                        "raison": "indispensable au calcul de la marge de revente."})
     return out
 
 #: phrase d'explication + renvoi expert-comptable, servie sous le champ régime de TVA (règle 3).
@@ -230,9 +265,17 @@ def resoudre(reponses: dict, prefill_map: dict) -> dict[str, dict]:
     return out
 
 
+def usage_choisi(reponses: dict) -> str:
+    """RECETTE-8 W13bis — le parcours choisi (méta-clé `_usage`), « construction » par défaut."""
+    u = (reponses or {}).get("_usage")
+    return u if u in ("construction", "revente") else "construction"
+
+
 def est_complet(reponses: dict) -> bool:
-    """Règle 3 : complet ssi tous les champs obligatoires sont saisis non vides (régime de TVA)."""
-    return all(reponses.get(fid) not in (None, "") for fid in OBLIGATOIRES)
+    """Règle 3 : complet ssi tous les champs obligatoires du PARCOURS choisi sont saisis non vides.
+    Construction : prix de sortie + régime de TVA. Revente (W13bis) : prix d'achat + prix de revente."""
+    obligs = OBLIGATOIRES_REVENTE if usage_choisi(reponses) == "revente" else OBLIGATOIRES
+    return all(reponses.get(fid) not in (None, "") for fid in obligs)
 
 
 def charger(db, idu: str, compte_id: int | None) -> dict:
@@ -252,7 +295,9 @@ def enregistrer(db, idu: str, compte_id: int | None, reponses: dict, projet_id: 
     """UPSERT du questionnaire. `reponses` = {id_champ: valeur|null} — null = champ vidé (règle 2),
     stocké tel quel ; les champs inconnus du registre sont ignorés (garde). `complet` recalculé."""
     ensure(db)
-    propres = {k: v for k, v in (reponses or {}).items() if k in CHAMPS}
+    # RECETTE-8 W13bis — on garde les CHAMPS + la méta-clé `_usage` (le parcours choisi), jamais
+    # d'autre clé étrangère (garde). Le parcours pilote quels champs sont obligatoires (est_complet).
+    propres = {k: v for k, v in (reponses or {}).items() if k in CHAMPS or k == "_usage"}
     complet = est_complet(propres)
     db.execute(text(
         "INSERT INTO questionnaire_financier (compte_id, idu, projet_id, reponses, complet, updated_at) "

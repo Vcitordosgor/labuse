@@ -167,6 +167,20 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
     prefill = qf.prefill(fiche)
     resolved = qf.resoudre(etat["reponses"], prefill)
     rv = lambda fid: (resolved.get(fid) or {}).get("valeur")  # noqa: E731
+    # RECETTE-8 W13bis (C3) — le parcours « Revente en l'état » : calcul de marge SIMPLE (pas de
+    # bilan à rebours, pas de programme constructible). On dispatche AVANT tout le calcul construction.
+    if qf.usage_choisi(etat["reponses"]) == "revente":
+        hyp_rev = {"prix_achat": rv("prix_achat_revente_saisi_eur"),
+                   "prix_revente": rv("prix_revente_saisi_eur"),
+                   "frais_acq_pct": rv("frais_acquisition_saisi_pct"),
+                   "travaux": rv("travaux_revente_saisi_eur"),
+                   "duree_portage": rv("duree_portage_saisi_mois"),
+                   "taux_apport": rv("taux_apport_saisi_pct")}
+        return {"usage": "revente", "revente": fb.calculer_revente(hyp_rev),
+                "resolved": resolved, "prefill": prefill, "complet": etat["complet"],
+                "existe": etat["existe"], "bilan": None, "program": None,
+                "tfpb": None, "zonage_abc": None,
+                "manques": qf.manques_revente(resolved)}
     hyp = {
         "prix_sortie": rv("prix_sortie_saisi_eur_m2"), "prix_bailleur": rv("prix_vente_bailleur_saisi_eur_m2"),
         "cout": rv("cout_construction_saisi_eur_m2"), "honoraires_pct": rv("honoraires_techniques_saisi_pct"),

@@ -136,6 +136,11 @@ def nombres_ancres(valeurs: dict[str, Valeur], ctx: dict | None = None) -> dict[
             _poser_argent(x, "charge_fonciere_eur")
         for x in _scalaires(ctx.get("program")):
             _poser_argent(x, "capacite_logements")
+        # RECETTE-8 W13bis — le calcul de revente (marge, taux, postes) est DÉRIVÉ des saisies
+        # achat/revente/frais/travaux/portage (données `*_saisi_*` du registre) : chaque nombre est
+        # rattaché à `prix_revente_saisi_eur` (la donnée-tête du calcul), en €/k€ + le taux en %.
+        for x in _scalaires(ctx.get("revente")):
+            _poser_argent(x, "prix_revente_saisi_eur")
         # chaque hypothèse résolue EST une donnée *_saisi_*/prefill du registre : sa valeur ET la
         # source (qui justifie un pré-remplissage, ex. « ~9 mois + 20 mois de chantier ») sont
         # rattachées à son id.

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from ..lignes import val
 from ..nature import CLASSE, LIBELLE
-from ..registre_fmt import fmt_eur, fmt_eur_m2, groupe
+from ..registre_fmt import fmt_eur, fmt_eur_m2, fmt_pct, groupe
 from ..rendu import aside, chip_span, esc, ligne_kv, note, section, table_kv, tuiles, verdict
 
 # ids fiche lus (programme + marché) — pour la collecte, le pied et l'archive.
@@ -275,8 +275,50 @@ def _calendrier(resolved: dict) -> str:
                    f"mois) → livraison. Durée de portage retenue : {duree} mois."))
 
 
+#: RECETTE-8 W13bis (C3) — les postes du calcul de revente, dans l'ordre du raisonnement.
+_REVENTE_POSTES = (("prix_achat", "Prix d'achat"), ("frais_acquisition", "Frais d'acquisition"),
+                   ("travaux", "Travaux éventuels"), ("portage", "Coût de portage"))
+
+
+def _revente(rev: dict, resolved: dict) -> str:
+    """RECETTE-8 W13bis (C3) — le rendu du parcours « Revente en l'état » : marge et taux de marge
+    en tête, puis les postes du calcul (achat → frais → travaux → portage → revente). Aucun bilan à
+    rebours. Sous garde de vraisemblance simple : marge NÉGATIVE → verdict prudent (« perte »)."""
+    postes = rev.get("postes") or {}
+    marge, taux = rev.get("marge"), rev.get("taux_marge_pct")
+    maxi = rev.get("maximum")
+    signe = "" if (marge is None or marge < 0) else "+"
+    tete = (f"Marge estimée <strong>{signe}{fmt_eur(marge)}</strong>"
+            + (f" — taux de marge {fmt_pct(taux)}" if taux is not None else "")
+            + (". Coût de portage non chiffré : marge <strong>maximum</strong>." if maxi else "."))
+    ton = "warn" if (marge is not None and marge < 0) else ""
+    corps = verdict(tete, ton, "")
+    lignes = []
+    for k, lib in _REVENTE_POSTES:
+        v = postes.get(k)
+        lignes.append(ligne_kv(lib, fmt_eur(v) if v is not None else '<span class="none">non chiffré</span>',
+                               chip_span("p", "projet")))
+    lignes.append(ligne_kv("Coût total de revient", fmt_eur(rev.get("cout_total")), chip_span("d", "dérivé")))
+    lignes.append(ligne_kv("Prix de revente visé", fmt_eur(postes.get("prix_revente")), chip_span("p", "projet")))
+    corps += table_kv(lignes)
+    corps += note("Calcul simple de marge (revente en l'état) : marge = prix de revente − prix "
+                  "d'achat − frais d'acquisition − travaux − coût de portage. Aucun bilan à rebours, "
+                  "aucune construction. Les montants en bleu sont vos saisies (projet).")
+    return corps
+
+
 def rendu(valeurs, ctx=None) -> str:
     ctx = ctx or {}
+    # RECETTE-8 W13bis (C3) — parcours « Revente en l'état » : rendu dédié, jamais le bilan à rebours.
+    if ctx.get("usage") == "revente":
+        rev = ctx.get("revente") or {}
+        from ..lignes import pied
+        if not rev.get("etablissable"):
+            corps = verdict("La marge de revente n'est pas établie : renseignez le prix d'achat et le "
+                            "prix de revente visé.", "warn", "")
+            return section("Bilan de l'opération — revente en l'état", corps) + pied(valeurs, IDS)
+        return section("Bilan de l'opération — revente en l'état",
+                       _revente(rev, ctx.get("resolved") or {})) + pied(valeurs, IDS)
     bilan, resolved, prog = ctx.get("bilan") or {}, ctx.get("resolved") or {}, ctx.get("program") or {}
     if not ctx.get("existe"):
         # aucun questionnaire → l'encart de renvoi (le document sort quand même, en « maximum »)
