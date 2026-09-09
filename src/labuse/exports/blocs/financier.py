@@ -103,7 +103,10 @@ def _bilan_rebours(bilan: dict) -> str:
     if bilan["marge"] is not None:
         lignes.append(ligne_kv("Marge visée", f'<span class="num">{_keur(-bilan["marge"])}</span>', _chip_nat("projet")))
     charge = bilan["charge"]["centrale"]
-    lignes.append(ligne_kv("<strong>Charge foncière supportable</strong>",
+    # RECETTE-5 (V18a) — la clé est ÉCHAPPÉE par ligne_kv (esc) : y mettre « <strong>…</strong> »
+    # imprimait les balises en toutes lettres. La ligne est déjà mise en avant par le montant en gras
+    # (valeur, HTML non échappé) ; la clé redevient du texte simple.
+    lignes.append(ligne_kv("Charge foncière supportable",
                   f'<span class="num"><strong>{_keur(charge)}</strong></span>', _chip_nat("derive")))
     return "<h2>Le bilan à rebours (HT)</h2>" + table_kv(lignes)
 

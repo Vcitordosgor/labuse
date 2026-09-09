@@ -55,6 +55,7 @@ describe('FinancierQuestionnaire (les 3 règles)', () => {
     fireEvent.click(screen.getByText('Continuer →'))
     await waitFor(() => screen.getByText('Régime de TVA'))
     expect(screen.getByText(/expert-comptable/)).toBeTruthy()
-    expect(screen.getByText(/obligatoire/)).toBeTruthy()
+    // RECETTE-5 (V19) — le marqueur « obligatoire » devient « indispensable » (les autres « facultatif »).
+    expect(screen.getByText(/indispensable/)).toBeTruthy()
   })
 })

@@ -6326,6 +6326,7 @@ def financier_questionnaire_get(idu: str, request: Request, db: Session = Depend
                 "type": c.type if c else "texte",
                 "domaine": list(c.domaine) if c and c.domaine else None,
                 "obligatoire": fid in qf.OBLIGATOIRES,
+                "aide": qf.AIDES.get(fid),   # RECETTE-5 (V19) — le « i » : ce qu'on attend comme valeur
                 "prefill": prefill.get(fid)}  # {valeur, source} ou None (jamais une valeur sans source)
 
     ecrans = [{"titre": t, "champs": [_champ(fid) for fid in ids]} for t, ids in qf.ECRANS]

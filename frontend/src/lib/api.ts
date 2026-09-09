@@ -2153,6 +2153,7 @@ export interface QChampPrefill { valeur: unknown; source: string }
 export interface QChamp {
   id: string; libelle: string; unite: string; type: string
   domaine: string[] | null; obligatoire: boolean; prefill: QChampPrefill | null
+  aide?: string | null   // RECETTE-5 (V19) — le « i » : ce qu'on attend comme valeur
 }
 export interface QEcran { titre: string; champs: QChamp[] }
 export interface QuestionnaireFinancier {

@@ -131,7 +131,10 @@ table.kv td.num { text-align: right; font-variant-numeric: tabular-nums; }
 /* Brief apporteur (RECETTE-3 T1) — date d'émission, plan de situation, questionnaire */
 .emis { font-size: 8.5pt; color: var(--muted); margin: -10pt 0 14pt; }
 .plan { margin: 10pt 0 4pt; border: 1px solid var(--line); border-radius: 3pt; overflow: hidden; page-break-inside: avoid; }
-.plan img { display: block; width: 100%; height: auto; }
+/* RECETTE-5 (V20c) — le plan reste EN PAGE 1 avec le coup d'œil : sans plafond de hauteur, une ortho
+   large poussait le plan (page-break-inside: avoid) en page 2 → un brief de 5 pages au lieu de 4.
+   On borne la hauteur du plan (recadrage cover) : la page 1 tient, le document fait bien 4 pages. */
+.plan img { display: block; width: 100%; height: auto; max-height: 58mm; object-fit: cover; }
 .plan .ph { height: 56mm; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); font-size: 8.5pt; background: repeating-linear-gradient(45deg,#fafbfa,#fafbfa 9px,#f2f5f2 9px,#f2f5f2 18px); }
 .plan .cap { font-size: 7.5pt; color: var(--muted); padding: 3pt 8pt; border-top: 1px solid var(--line); }
 .cle { display: inline-block; font-size: 6.8pt; font-weight: 700; letter-spacing: .04em; color: var(--mint-ink); border: 1px solid var(--mint-ink); border-radius: 2pt; padding: 0 3pt; margin-right: 5pt; vertical-align: 1.5pt; }

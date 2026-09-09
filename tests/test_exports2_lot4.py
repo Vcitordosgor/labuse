@@ -43,7 +43,11 @@ def test_quatre_ecrans_vingtaine_de_champs():
     assert len(qf.ECRANS) == 4
     assert [t for t, _ in qf.ECRANS] == ["Votre projet", "Le foncier", "Vos coûts", "Vos conditions"]
     assert 18 <= len(qf.CHAMPS) <= 26
-    assert qf.OBLIGATOIRES == {"regime_tva_saisi"}
+    # RECETTE-5 (V19) — deux champs INDISPENSABLES au calcul de la charge foncière : le prix de sortie
+    # (chiffre d'affaires du bilan à rebours, sans pré-remplissage) et le régime de TVA (HT/TTC).
+    assert qf.OBLIGATOIRES == {"prix_sortie_saisi_eur_m2", "regime_tva_saisi"}
+    # chaque champ porte une aide (le « i ») — ce qu'on attend comme valeur.
+    assert all(fid in qf.AIDES for fid in qf.CHAMPS)
 
 
 # ── règle 1 : pré-remplissage toujours sourcé ────────────────────────────────────────────────
@@ -82,11 +86,24 @@ def test_vide_reste_vide():
 
 # ── règle 3 : régime de TVA obligatoire ──────────────────────────────────────────────────────
 
-def test_complet_exige_le_regime_tva():
-    assert qf.est_complet({"regime_tva_saisi": "tva_marge"}) is True
-    assert qf.est_complet({"regime_tva_saisi": None}) is False
+def test_complet_exige_prix_sortie_et_regime_tva():
+    # RECETTE-5 (V19) — complet ssi les DEUX indispensables sont saisis (prix de sortie + régime TVA).
+    assert qf.est_complet({"prix_sortie_saisi_eur_m2": 4200, "regime_tva_saisi": "tva_marge"}) is True
+    assert qf.est_complet({"regime_tva_saisi": "tva_marge"}) is False           # prix de sortie manquant
+    assert qf.est_complet({"prix_sortie_saisi_eur_m2": 4200}) is False          # régime TVA manquant
+    assert qf.est_complet({"regime_tva_saisi": None, "prix_sortie_saisi_eur_m2": 4200}) is False
     assert qf.est_complet({"prix_demande_saisi_eur": 650000}) is False
     assert "expert-comptable" in qf.TVA_EXPLICATION and "8,5" in qf.TVA_EXPLICATION
+
+
+def test_manques_dit_les_indispensables():
+    # RECETTE-5 (V18b) — `manques` liste les éléments qui empêchent d'établir le bilan.
+    plein = {"prix_sortie_saisi_eur_m2": {"valeur": 4200}, "regime_tva_saisi": {"valeur": "tva_marge"}}
+    assert qf.manques(plein, {"surface_vendable": 480}) == []
+    m_prog = qf.manques(plein, {"surface_vendable": None})
+    assert [x["libelle"] for x in m_prog] == ["Programme constructible"]
+    m_vide = qf.manques({}, {"surface_vendable": 480})
+    assert {x["champ"] for x in m_vide} == {"prix_sortie_saisi_eur_m2", "regime_tva_saisi"}
 
 
 # ── persistance (cloison compte) ─────────────────────────────────────────────────────────────
@@ -97,10 +114,13 @@ def test_persistance_roundtrip_et_cloison(db_session):
     idu = "TESTIDU0001"
     qf.ensure(db_session)
     db_session.execute(text("DELETE FROM questionnaire_financier WHERE idu = :i"), {"i": idu})
-    qf.enregistrer(db_session, idu, 1, {"regime_tva_saisi": "autre", "vrd_saisi_eur_m2": 95, "inconnu": 1})
+    # RECETTE-5 (V19) — complet exige les DEUX indispensables (prix de sortie + régime TVA).
+    qf.enregistrer(db_session, idu, 1, {"regime_tva_saisi": "autre", "prix_sortie_saisi_eur_m2": 4200,
+                                        "vrd_saisi_eur_m2": 95, "inconnu": 1})
     etat = qf.charger(db_session, idu, 1)
     assert etat["existe"] and etat["complet"] is True
-    assert etat["reponses"] == {"regime_tva_saisi": "autre", "vrd_saisi_eur_m2": 95}  # « inconnu » filtré
+    assert etat["reponses"] == {"regime_tva_saisi": "autre", "prix_sortie_saisi_eur_m2": 4200,
+                                "vrd_saisi_eur_m2": 95}  # « inconnu » filtré
     # cloison : un autre compte ne voit rien
     assert qf.charger(db_session, idu, 2)["existe"] is False
     db_session.execute(text("DELETE FROM questionnaire_financier WHERE idu = :i"), {"i": idu})

@@ -45,12 +45,27 @@ def rendre_document(db, idu: str, request: Request, document: str, *,
         fiche = parcel_fiche(idu, db=db, request=request)
     except ValueError as exc:
         raise HTTPException(404, str(exc))
-    res = builder.construire(db, idu, document, fiche=fiche, compte_id=current_compte(request))
+    try:
+        res = builder.construire(db, idu, document, fiche=fiche, compte_id=current_compte(request))
+    except builder.DocumentNonEtablissable as exc:
+        # RECETTE-5 (V18b) — le document ne se génère pas ; on rend 422 + la liste des manques,
+        # que l'écran affiche (« il manque : … ») au lieu de télécharger des pages vides.
+        raise HTTPException(status_code=422, detail={
+            "erreur": "document_non_etablissable",
+            "message": "Ce document ne peut pas être établi : il manque des éléments indispensables.",
+            "manques": exc.manques,
+        })
     html = _mention_marque(res.html) if marque else res.html
     pdf = render_pdf(html, forms=forms)
     log.info("document %s %s généré (%s)", document, idu, res.numero)
+    # RECETTE-5 (V17) — nom de fichier HUMAIN (« Dossier financier — FI-….pdf ») : le titre du document
+    # (point unique builder.titre_document) + le numéro. Fallback ASCII (`filename=`) sur le numéro seul,
+    # nom accentué en `filename*` (RFC 5987) pour les navigateurs.
+    from urllib.parse import quote
+    nom = f"{builder.titre_document(document)} — {res.numero}.pdf"
+    dispo = f'inline; filename="{res.numero}.pdf"; filename*=UTF-8\'\'{quote(nom)}'
     return Response(pdf, media_type="application/pdf",
-                    headers={"Content-Disposition": f'inline; filename="{res.numero}.pdf"'})
+                    headers={"Content-Disposition": dispo})
 
 
 @router.get("/financier/{idu}.pdf")

@@ -11,6 +11,8 @@ chaque section qui dit pourquoi on la pose. Questionnaire adaptatif (bâti / per
 industriel proche). Émetteur = compte de l'utilisateur, non modifiable."""
 from __future__ import annotations
 
+import re
+
 from ..lignes import a, val
 from ..registre_fmt import fmt_eur, fmt_eur_m2, fmt_m, fmt_m2
 from ..rendu import esc, ligne_kv, note, table_kv
@@ -34,6 +36,9 @@ _AREA = ('<textarea name="q" style="appearance:auto;width:100%;box-sizing:border
 
 _MOIS = ["", "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août",
          "septembre", "octobre", "novembre", "décembre"]
+
+# RECETTE-5 (V20d) — le langage de plomberie GPU à retirer de la ligne « Zone » de l'apporteur.
+_RE_GPU_PLOMBERIE = re.compile(r"\s*—?\s*Document à jour du GPU.*$", re.IGNORECASE)
 
 
 def _mois_an(iso) -> str:
@@ -125,12 +130,20 @@ def _coup_d_oeil(valeurs, ctx) -> str:
         lignes.append(ligne_kv("Surface", fmt_m2(val(valeurs, "surface_parcelle_m2")), ""))
     if a(valeurs, "zone_plu_famille"):
         plu = val(valeurs, "statut_plu")
-        suite = (" — " + esc(plu["libelle"])) if isinstance(plu, dict) and plu.get("libelle") else (
+        libelle = plu.get("libelle") if isinstance(plu, dict) else None
+        if libelle:
+            # RECETTE-5 (V20d) — on RETIRE le langage de plomberie « Document à jour du GPU — c'est
+            # celui qui fait foi » : l'apporteur n'a que faire de la traçabilité GPU (on garde « PLU
+            # approuvé le … »). Le reste des documents/écrans, eux, gardent leur mention.
+            libelle = _RE_GPU_PLOMBERIE.sub("", libelle).rstrip(" —·").strip()
+        suite = (" — " + esc(libelle)) if libelle else (
             " — urbaine, constructible" if str(val(valeurs, "zone_plu_famille")).upper() in ("U", "AU") else "")
         lignes.append(ligne_kv("Zone", esc(str(val(valeurs, "zone_plu_famille"))) + suite, ""))
     lignes.append(ligne_kv("Sur place", esc(_sur_place(valeurs)), ""))
     # RECETTE-2 (S7) — SDP résiduelle + capacité : ce que l'apporteur peut annoncer comme potentiel.
-    if a(valeurs, "sdp_residuelle_m2"):
+    # RECETTE-5 (V20a) — un ZÉRO ne s'imprime pas : « 0 m² de plancher restant » (SDP nulle) n'a aucun
+    # sens pour l'apporteur. La ligne se REFORMULE sur la capacité si elle existe, sinon DISPARAÎT.
+    if a(valeurs, "sdp_residuelle_m2") and (val(valeurs, "sdp_residuelle_m2") or 0) > 0:
         cap = f" · ~{esc(str(val(valeurs, 'capacite_logements')))} logements" if a(valeurs, "capacite_logements") else ""
         lignes.append(ligne_kv("Ce qu'on peut y bâtir", f"{fmt_m2(val(valeurs, 'sdp_residuelle_m2'))} de plancher restant{cap}", ""))
     elif a(valeurs, "capacite_logements"):

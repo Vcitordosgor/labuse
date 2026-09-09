@@ -171,8 +171,15 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
     # imperméables non bâties) : on ne l'utilise PAS comme emprise, on le SERT à part comme
     # « détecté, non cartographié » quand BD TOPO ne voit rien mais que CoSIA en signale (le
     # front le dit honnêtement, jamais mélangé à l'emprise).
+    # RECETTE-5 (V21) — GARDE contre l'emprise impossible (ex. 302 m² sur une parcelle de 273 m²).
+    # La cause n'était PAS un débord sur la voisine : c'était le SUM des intersections qui DOUBLE-COMPTE
+    # la zone où deux polygones bâtiment de la BD TOPO se CHEVAUCHENT (mur mitoyen, bâtiment scindé en
+    # plusieurs faces qui se recouvrent). Mesuré sur 97418000AD0191 : SUM = 301,7 m² alors que l'UNION
+    # réelle des empreintes = 150,8 m² (chevauchement de 150,8 m²), bien dans les 272,7 m² de la parcelle.
+    # ST_Union fusionne les empreintes AVANT de mesurer l'aire : plus de double-compte, et le résultat est
+    # naturellement borné par la géométrie de la parcelle (une intersection ne sort jamais de la parcelle).
     emprise_bdtopo = session.execute(text(
-        "SELECT COALESCE(SUM(ST_Area(ST_Intersection(b.geom_2975, p.geom_2975))), 0) "
+        "SELECT COALESCE(ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975))), 0) "
         "FROM spatial_layers b JOIN parcels p ON p.id = :pid "
         "WHERE b.kind = 'batiment' AND ST_Intersects(b.geom_2975, p.geom_2975)"),
         {"pid": pid}).scalar()

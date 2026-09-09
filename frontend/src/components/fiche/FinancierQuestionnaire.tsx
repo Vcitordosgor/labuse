@@ -31,16 +31,58 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
 
   const ecrans = data?.ecrans || []
   const N = ecrans.length || 1
-  const tvaOk = reponses['regime_tva_saisi'] != null && reponses['regime_tva_saisi'] !== ''
+  const [docErr, setDocErr] = useState<{ libelle: string; raison?: string }[] | null>(null)
 
   const set = (id: string, v: unknown) => setReponses((r) => ({ ...r, [id]: v }))
 
+  // RECETTE-5 (V19) — un champ INDISPENSABLE est « rempli » s'il porte une saisie non vide (ou, à défaut
+  // de saisie, un pré-remplissage — mais les deux champs obligatoires n'en ont pas : ils DOIVENT être
+  // saisis). Les champs obligatoires bloquent : « Continuer » sur leur écran, et « Enregistrer » au bout.
+  const rempli = (c: QChamp): boolean => {
+    const v = reponses[c.id]
+    if (v != null && v !== '') return true
+    return !(c.id in reponses) && c.prefill != null
+  }
+  const manquantsEcran = (i: number) => (ecrans[i]?.champs || []).filter((c) => c.obligatoire && !rempli(c))
+  const tousManquants = () => {
+    const out: { c: QChamp; i: number }[] = []
+    ecrans.forEach((e, i) => e.champs.forEach((c) => { if (c.obligatoire && !rempli(c)) out.push({ c, i }) }))
+    return out
+  }
+
+  const continuer = () => {
+    const m = manquantsEcran(etape)
+    if (m.length) { setErreur(`À renseigner avant de continuer : ${m.map((c) => c.libelle).join(', ')}.`); return }
+    setErreur(null); setEtape(etape + 1)
+  }
+
   const enregistrer = async () => {
-    if (!tvaOk) { setErreur('Le régime de TVA est obligatoire — il décide si le bilan est vrai.'); setEtape(N - 1); return }
+    const m = tousManquants()
+    if (m.length) {
+      setErreur(`Indispensable(s) au calcul, encore vide(s) : ${m.map((x) => x.c.libelle).join(', ')}.`)
+      setEtape(m[0].i); return
+    }
     setEnvoi(true); setErreur(null)
     try { await putFinancierQuestionnaire(idu, reponses); setFini(true) }
     catch { setErreur('L\'enregistrement a échoué — réessayez.') }
     finally { setEnvoi(false) }
+  }
+
+  // RECETTE-5 (V18b) — ouvrir le document : si le back répond 422 (non établissable), on N'OUVRE PAS de
+  // pages vides — on affiche ici la liste des éléments manquants (structure : ex. « programme constructible »).
+  const ouvrirDoc = async () => {
+    setDocErr(null)
+    try {
+      const r = await fetch(`/financier/${encodeURIComponent(idu)}.pdf`)
+      if (r.status === 422) {
+        const d = await r.json().catch(() => null)
+        setDocErr(d?.detail?.manques ?? [{ libelle: 'Éléments indispensables manquants' }])
+        return
+      }
+      if (!r.ok) { setDocErr([{ libelle: 'Le document n\'a pas pu être généré' }]); return }
+      const blob = await r.blob()
+      window.open(URL.createObjectURL(blob), '_blank', 'noopener')
+    } catch { setDocErr([{ libelle: 'Le document n\'a pas pu être généré' }]) }
   }
 
   const backdrop: React.CSSProperties = {
@@ -73,12 +115,25 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
                 « enregistré » sans jamais ouvrir le PDF (route /financier/{idu}.pdf pourtant servie).
                 Action primaire = ouvrir le document ; « Fermer » devient secondaire. */}
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <a data-financier-doc href={`/financier/${encodeURIComponent(idu)}.pdf`} target="_blank" rel="noreferrer"
-                 style={{ ...btnMint, textDecoration: 'none', display: 'inline-block' }}>
-                Ouvrir le document Financier
-              </a>
+              <button data-financier-doc onClick={() => void ouvrirDoc()}
+                 style={{ ...btnMint, display: 'inline-block' }}>
+                Ouvrir le Dossier financier
+              </button>
               <button onClick={onClose} style={btnPlain}>Fermer</button>
             </div>
+            {/* RECETTE-5 (V18b) — le document ne s'est pas généré : on dit lesquels des éléments manquent. */}
+            {docErr && (
+              <div data-financier-manques style={{ marginTop: 16, padding: 14, border: '.5px solid #E0B341', borderRadius: 8, background: 'rgba(224,179,65,.06)' }}>
+                <p style={{ fontSize: 13, color: '#E0B341', margin: '0 0 8px', fontWeight: 500 }}>
+                  Le Dossier financier ne peut pas être établi — il manque :
+                </p>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: '#C7D6CD' }}>
+                  {docErr.map((m, i) => (
+                    <li key={i} style={{ marginBottom: 4 }}><b>{m.libelle}</b>{m.raison ? ` — ${m.raison}` : ''}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
@@ -105,7 +160,7 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
                 {etape > 0 ? '← Retour' : 'Annuler'}
               </button>
               {etape < N - 1
-                ? <button onClick={() => setEtape(etape + 1)} style={btnMint}>Continuer →</button>
+                ? <button onClick={continuer} style={btnMint}>Continuer →</button>
                 : <button disabled={envoi} onClick={() => void enregistrer()} style={{ ...btnMint, opacity: envoi ? 0.4 : 1 }}>
                     {envoi ? 'Enregistrement…' : 'Enregistrer'}
                   </button>}
@@ -147,9 +202,17 @@ function ChampRow({ c, valeur, touche, tvaExplication, onChange }: {
 
   return (
     <div style={{ margin: '0 0 16px' }}>
-      <label style={{ display: 'block', fontSize: 13, color: '#C7D6CD', margin: '0 0 6px' }}>
-        {c.libelle}{c.unite && c.unite !== 'classe' && c.unite !== 'texte' ? ` (${c.unite})` : ''}
-        {c.obligatoire && <span style={{ color: '#E0B341' }}> · obligatoire</span>}
+      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#C7D6CD', margin: '0 0 6px' }}>
+        <span>{c.libelle}{c.unite && c.unite !== 'classe' && c.unite !== 'texte' ? ` (${c.unite})` : ''}</span>
+        {/* RECETTE-5 (V19) — le « i » : ce qu'on attend comme valeur (tooltip natif). */}
+        {c.aide && (
+          <span data-champ-aide title={c.aide}
+            style={{ display: 'inline-flex', width: 14, height: 14, borderRadius: 999, border: '1px solid #4A5A52',
+              color: '#8FA69A', fontSize: 9, fontWeight: 700, alignItems: 'center', justifyContent: 'center', cursor: 'help', flex: 'none' }}>i</span>
+        )}
+        {c.obligatoire
+          ? <span style={{ color: '#E0B341' }}>· indispensable</span>
+          : <span style={{ color: '#5F7267' }}>· facultatif</span>}
       </label>
       {c.type === 'classe' && c.domaine
         ? <select value={shown} onChange={(e) => onInput(e.target.value)} style={champStyle}>

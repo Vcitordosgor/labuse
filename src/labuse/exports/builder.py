@@ -20,13 +20,29 @@ from .rendu import Cartouche, esc, page_html, render_pdf
 
 MODELE_VERSION = "2.0"
 
+
+class DocumentNonEtablissable(Exception):
+    """RECETTE-5 (V18b) — levée quand un document ne peut PAS être établi faute d'éléments
+    indispensables (ex. le Financier sans prix de sortie / régime de TVA / programme constructible).
+    Le document ne se génère PAS ; la route la traduit en 422 + la liste des manques, et l'écran dit
+    lesquels manquent — plutôt que d'imprimer trois pages de tableau « non chiffré »."""
+    def __init__(self, manques: list[dict]):
+        self.manques = manques
+        super().__init__("document non établissable : " + ", ".join(m["libelle"] for m in manques))
+
 #: libellé et sous-titre de chaque document (page de garde).
 _LABEL = {
     "dossier": ("Dossier parcelle", "Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet."),
     "flash": ("Rapport Flash", "Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet."),
-    "financier": ("Bilan de l'opération", ""),
+    "financier": ("Dossier financier", ""),   # RECETTE-5 (V17) — ex « Bilan de l'opération »
     "apporteur": ("Brief apporteur", ""),
 }
+
+
+def titre_document(document: str) -> str:
+    """RECETTE-5 (V17) — le titre humain d'un document (page de garde) — point unique, réutilisé
+    pour le nom de fichier téléchargé (« Dossier financier — FI-….pdf »)."""
+    return _LABEL.get(document, (document, ""))[0]
 
 _FOOT_DOSSIER = ("Document d'information établi à partir de données publiques. Ne remplace ni un "
                  "certificat d'urbanisme, ni une étude de faisabilité réglementaire, ni un conseil "
@@ -182,7 +198,9 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
         db.rollback()
     return {"bilan": fb.calculer(program, hyp), "resolved": resolved, "prefill": prefill,
             "complet": etat["complet"], "existe": etat["existe"], "program": program,
-            "tfpb": tfpb, "zonage_abc": zonage}
+            "tfpb": tfpb, "zonage_abc": zonage,
+            # RECETTE-5 (V18b) — les éléments indispensables manquants pour établir le bilan (vide ⇒ OK).
+            "manques": qf.manques(resolved, program)}
 
 
 def _emetteur(db, compte_id: int | None) -> dict | None:
@@ -294,6 +312,11 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     ctx = None
     if document == "financier":
         ctx = _financier_contexte(db, idu, f, compte_id)
+        # RECETTE-5 (V18b) — tant qu'un élément indispensable manque, le Financier NE SE GÉNÈRE PAS
+        # (l'écran dira lesquels). Fini les trois pages de tableau « non chiffré » sous un document qui
+        # annonce lui-même qu'il ne peut pas être établi.
+        if ctx.get("manques"):
+            raise DocumentNonEtablissable(ctx["manques"])
     elif document == "apporteur":
         ctx = _apporteur_contexte(db, idu, f, j, compte_id)
     label, _ = _LABEL.get(document, (document, ""))
