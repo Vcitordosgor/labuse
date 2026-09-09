@@ -481,7 +481,7 @@ function AccEntry({ ton, icone, titre, sous, onClick }: {
 }
 
 function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
-  const { setView, setAccueilVu, toggleOutils, setModule } = useApp()
+  const { setView, setAccueilVu, toggleOutils } = useApp()
   // CONNEXIONS-2 Lot 6.1 (KO-11) — la ligne de fraîcheur n'est plus un texte FIGÉ : elle est CALCULÉE
   // depuis l'état RÉEL des sources (/accueil/fraicheur, même champ que la page Sources et le dashboard).
   const { data: fraicheur } = useQuery({ queryKey: ['accueil-fraicheur'], queryFn: getAccueilFraicheur,
@@ -509,10 +509,8 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
         {/* GB-001 : compte des outils VISIBLES (comme le tiroir Rail), dynamique — S7 : 15 après la fusion Veille→Scan. */}
         <AccEntry ton="mint" icone="outil" titre="Ouvrir un outil" sous={`${MODULES.filter((m) => !m.hidden).length} outils fonciers`}
           onClick={() => { setAccueilVu(); toggleOutils() }} />
-        {/* RECETTE-5 (V13, décision Vic) — 5e porte « Remonter le temps » (photos aériennes IGN,
-            module 'temps'), sous les quatre entrées existantes, à la place du vide. */}
-        <AccEntry ton="mint" icone="temps" titre="Remonter le temps" sous="les photos aériennes, 1950 → aujourd’hui"
-          onClick={() => { setAccueilVu(); setModule('temps') }} />
+        {/* RECETTE-6 (D2, décision Vic) — « Remonter le temps » RETIRÉ de l'accueil : il vit désormais
+            comme 6e bouton de la rangée d'outils de la fiche parcelle (pré-rempli sur la parcelle). */}
       </div>
 
       {/* M87 P1 — bloc « Cette semaine » RETIRÉ (M83). */}

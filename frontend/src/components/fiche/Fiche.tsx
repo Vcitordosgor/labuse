@@ -568,6 +568,8 @@ export function Fiche({ idu }: { idu: string }) {
   const setModule = useApp((s) => s.setModule)
   const setM02Prefill = useApp((s) => s.setM02Prefill)     // M60 P1c — porte Scan patrimoine (SIREN)
   const setCourrierPrefill = useApp((s) => s.setCourrierPrefill)  // CONNEXIONS-2 Lot 3 (KO-5) — Courrier pré-rempli sur la parcelle
+  const setParcelPrefill = useApp((s) => s.setParcelPrefill)  // RECETTE-6 (D2) — porte « Remonter le temps »
+  const setFlyToF = useApp((s) => s.setFlyTo)
   const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
   const setPluVueF = useApp((s) => s.setPluVue)            // M137-P — porte directe vers une vue de l'outil PLU
   const modBlock = moduleFiche[idu]
@@ -1654,12 +1656,10 @@ export function Fiche({ idu }: { idu: string }) {
               {/* PROJETS-V5 (E9) — les EXPORTS passent sur le composant PARTAGÉ GrilleOutils (même rendu +
                   survol que la grille d'outils de la fiche commune). Les icônes SVG et la logique des tuiles
                   (PDF, Dossier, Financier, Pré-dossier…) sont conservées. */}
-              <div className="sec"><span>EXPORTS</span><i /></div>
-              {/* RETOURS-9 (Q8.3) — deux lignes de trois : PDF · Dossier · Finance / Argumentaire · Courrier · Pré-dossier PC. */}
-              {/* EXPORTS-2 lot 8 — les documents servis par le builder unique, dans l'ordre :
-                  Dossier · Financier · Apporteur · Pré-dossier PC. Plus aucun bouton PDF /
-                  Banquier / Argumentaire / Projet / Lettre de zonage. (Courrier reste, hors documents.)
-                  RECETTE-3 (T2, décision Vic) — le bouton « Résumé » est SUPPRIMÉ (document retiré). */}
+              {/* RECETTE-6 (D1, décision Vic) — le titre « EXPORTS » est RETIRÉ : ce ne sont pas que des
+                  exports (Courrier, Remonter le temps sont des OUTILS). La grille reste, sans en-tête. */}
+              {/* EXPORTS-2 lot 8 — documents (builder unique) : Dossier · Financier · Apporteur ·
+                  Pré-dossier PC · Courrier · Remonter le temps (RECETTE-6 D2). */}
               <GrilleOutils cols={3}>
                 <DossierTile idu={idu} />
                 {/* RECETTE-1 R28 — infobulles au survol retirées des tuiles d'export (le nom suffit). */}
@@ -1669,6 +1669,13 @@ export function Fiche({ idu }: { idu: string }) {
                 <PreDossierTile idu={idu} />
                 <OutilCase nom={CLIENT.fiche.export.courrier} data-courrier-tile onClick={() => { setCourrierPrefill(idu); setModule('courriers') }}
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>} />
+                {/* RECETTE-6 (D2, décision Vic) — 6e bouton « Remonter le temps » : ouvre l'outil PRÉ-REMPLI
+                    sur la parcelle (setParcelPrefill + recentrage) ; le fil de retour vers la fiche est
+                    inhérent (setModule préserve selectedIdu → fermer l'outil ramène la fiche). Retiré de
+                    l'accueil (cf. AccueilPreuves). */}
+                <OutilCase nom="Remonter le temps" data-temps-tile
+                  onClick={() => { setParcelPrefill(idu); if (f?.coords) setFlyToF({ center: f.coords, zoom: 18 }); setModule('temps') }}
+                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.3V12l3.1 1.9" /></svg>} />
               </GrilleOutils>
               {/* M70 déc. 12 — la grille terminale « OUTILS SUR CETTE PARCELLE » est SUPPRIMÉE
                   (elle recréait une page Outils bis). Chaque outil est désormais une PORTE
