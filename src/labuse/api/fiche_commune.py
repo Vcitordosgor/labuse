@@ -228,7 +228,9 @@ def loyer(db: Session, commune: str) -> dict | None:
 
 def fiscalite(db: Session, insee: str | None) -> dict | None:
     """SOURCES-1 lot 5 — taux fonciers de la commune (REI DGFiP) : TFPB commune + EPCI, TEOM.
-    Passe-plat sourcé + daté ; None si non ingéré (jamais un taux inventé)."""
+    Passe-plat sourcé + daté ; None si non ingéré (jamais un taux inventé).
+    RECETTE-4 U1 — porte un drapeau de FRAÎCHEUR (`perime`) : la donnée dont l'ingestion date de
+    plus d'un an est signalée « à rafraîchir » (mêmes gestes que la taxe d'aménagement)."""
     if not insee:
         return None
     from ..ingestion.rei import rei_commune
@@ -237,7 +239,23 @@ def fiscalite(db: Session, insee: str | None) -> dict | None:
         return None
     return {"tfpb_commune_pct": r["tfpb_commune_pct"], "tfpb_epci_pct": r["tfpb_epci_pct"],
             "teom_pct": r["teom_pct"], "millesime": r["millesime"],
+            "maj_at": r.get("maj_at"), "perime": _perime(r.get("maj_at")),
             "source": "DGFiP — fichier REI (impositions primitives)"}
+
+
+def _perime(maj_at_iso: str | None, jours: int = 365) -> bool:
+    """RECETTE-4 U1 — True si la donnée date de plus de `jours` (fraîcheur > 1 an). Best-effort :
+    une date illisible n'est jamais signalée périmée (on ne crie pas au loup sur un doute)."""
+    if not maj_at_iso:
+        return False
+    try:
+        from datetime import datetime, timezone
+        d = datetime.fromisoformat(maj_at_iso)
+        if d.tzinfo is None:
+            d = d.replace(tzinfo=timezone.utc)
+        return (datetime.now(timezone.utc) - d).days > jours
+    except Exception:  # noqa: BLE001 — date illisible : pas de fausse alerte
+        return False
 
 
 def ort(db: Session, insee: str | None) -> dict | None:

@@ -164,8 +164,25 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
         surf = _TYPOLOGIE_SURFACE.get(typo, 60)
         program["surface_vendable"] = program["logements"] * surf
         program["surface_plancher"] = program["surface_vendable"] / 0.8
+    # RECETTE-4 U1/U2 — la fiscalité locale de la commune (taux TFPB, REI DGFiP) et sa zone A/B/C
+    # (DHUP) entrent au Financier : la taxe foncière pèse sur les charges de portage et la zone
+    # commande le régime applicable (TVA accession, PTZ, prix bailleur). Passe-plats sourcés + datés ;
+    # None si non ingérés (jamais devinés). L'insee vient de l'IDU.
+    insee = (idu or "")[:5]
+    tfpb = zonage = None
+    try:
+        from ..ingestion.rei import rei_commune
+        tfpb = rei_commune(db, insee)
+    except Exception:  # noqa: BLE001 — table absente = source non ingérée, jamais un 500
+        db.rollback()
+    try:
+        from ..ingestion.zonage_abc import zonage_commune
+        zonage = zonage_commune(db, insee)
+    except Exception:  # noqa: BLE001
+        db.rollback()
     return {"bilan": fb.calculer(program, hyp), "resolved": resolved, "prefill": prefill,
-            "complet": etat["complet"], "existe": etat["existe"], "program": program}
+            "complet": etat["complet"], "existe": etat["existe"], "program": program,
+            "tfpb": tfpb, "zonage_abc": zonage}
 
 
 def _emetteur(db, compte_id: int | None) -> dict | None:

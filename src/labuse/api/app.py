@@ -2082,6 +2082,17 @@ def _rafraichir_partages(db: Session, commune: str, payload: dict) -> dict:
             db_ = d.pop("deficit_brut", None)
             d["deficit"] = round(float(db_), 1) if db_ is not None else None
             payload["sru"] = d
+        # RECETTE-4 U1/U2 — la taxe foncière (TFPB, REI) et le zonage A/B/C (DHUP) sont des
+        # passe-plats bon marché (une ligne). Le CACHE nocturne les figeait à `null` (il précède
+        # SOURCES-1) : un client ne voyait NI le taux foncier NI la zone de tension pourtant en base.
+        # On les resservit LIVE (même doctrine O8 que comparable/SRU) → jamais périmés, toujours servis.
+        from .fiche_commune import fiscalite as _fiscalite, zonage_abc as _zonage_abc
+        fisc = _fiscalite(db, insee)
+        if fisc is not None:
+            payload["fiscalite"] = fisc
+        zab = _zonage_abc(db, insee)
+        if zab is not None:
+            payload["zonage_abc"] = zab
     except Exception:  # noqa: BLE001 — le rafraîchissement ne doit jamais casser la fiche
         _FICHE_LOG.exception("fiche commune · rafraîchissement des indicateurs partagés (O8) impossible")
     return payload
@@ -4221,11 +4232,30 @@ def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
     # RETOURS-11F3 F10 — dispositifs fiscaux valables sur TOUTE La Réunion (constants, hors table),
     # rapatriés de « Constructibilité » (F0) : le zonage d'investissement (B1) et les taux de TVA DOM.
     # Faits territoriaux datés/sourcés, JAMAIS un calcul fiscal par projet (interdit du mandat).
-    dispositifs_dom = [
-        {"libelle": "Zonage d'investissement locatif : B1",
-         "detail": "La Réunion est classée en zone B1 (arrêté zonage A/B/C) — éligibilité PTZ dans le "
-                   "neuf et plafonds des dispositifs outre-mer. S'applique à toute l'île.",
-         "source": "Arrêté de zonage A/B/C (DHUP)"},
+    # RECETTE-4 U2 — le zonage A/B/C conditionne les DISPOSITIFS (PTZ, plafonds outre-mer, prix
+    # bailleur) : c'est une information de PARCELLE, pas seulement de commune. On le fait descendre à
+    # la maille parcelle depuis la zone RÉELLE de sa commune (DHUP), au lieu d'affirmer « B1 » pour
+    # toute l'île — c'était FAUX pour les 4 communes classées zone A (Saint-Paul, Saint-Leu, Les
+    # Avirons, L'Étang-Salé). None si non ingérée → on n'invente aucune zone.
+    from ..ingestion.zonage_abc import zonage_commune as _zonage_commune
+    _zab = _zonage_commune(db, idu[:5])
+    if _zab is not None:
+        _z = _zab["zone"]
+        dispositifs_dom = [
+            {"libelle": f"Zonage d'investissement locatif : {_z}",
+             "detail": (f"La commune est classée en zone {_z} (arrêté zonage A/B/C, DHUP) — la zone "
+                        "commande l'éligibilité PTZ dans le neuf, les plafonds de loyer et de "
+                        "ressources des dispositifs, et le prix de vente au bailleur social."),
+             "source": f"Arrêté de zonage A/B/C (DHUP) — {_zab['millesime']}"},
+        ]
+    else:
+        dispositifs_dom = [
+            {"libelle": "Zonage d'investissement locatif : non déterminé",
+             "detail": "Zone A/B/C de la commune non ingérée — le classement conditionne l'éligibilité "
+                       "PTZ, les plafonds des dispositifs et le prix bailleur.",
+             "source": "Arrêté de zonage A/B/C (DHUP)"},
+        ]
+    dispositifs_dom += [
         {"libelle": "TVA outre-mer : 8,5 % (taux normal DOM) · 2,1 % logement locatif social",
          "detail": "Dans les DOM, le taux normal de TVA est 8,5 % ; la construction/vente de logements "
                    "locatifs sociaux (LLS/LLTS) relève du taux de 2,1 %. Repères territoriaux — le "

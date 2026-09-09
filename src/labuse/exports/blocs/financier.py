@@ -144,6 +144,60 @@ def _face_prix(bilan: dict, prix_demande, valeurs) -> str:
     return ("<h2>Face au prix demandé</h2>" + table_kv(lignes)) if lignes else ""
 
 
+def _pct(v) -> str:
+    return _NON_CHIFFRE if v is None else f"{groupe(v, 2)} %"
+
+
+def _fiscalite_locale(tfpb: dict | None, zonage: dict | None, resolved: dict) -> str:
+    """RECETTE-4 U1/U2 — la fiscalité locale de la commune au Financier : le taux de taxe foncière
+    (REI DGFiP, sourcé + daté) qui pèse sur le portage, et la zone A/B/C (DHUP) qui commande le
+    régime applicable. Aucun euro n'est chiffré ici sans base : la taxe foncière de portage se
+    calcule sur la valeur locative cadastrale du bien — on DIT le taux et ce qu'il manque, on
+    n'invente jamais une valeur locative (doctrine « dite et sourcée, jamais devinée en silence »)."""
+    if not tfpb and not zonage:
+        return ""
+    lignes = []
+    if tfpb:
+        lignes.append(ligne_kv("Taxe foncière (TFPB) — part communale",
+                               f'<span class="num">{_pct(tfpb.get("tfpb_commune_pct"))}</span>',
+                               chip_span("s", "sourcé")))
+        if tfpb.get("tfpb_epci_pct") is not None:
+            lignes.append(ligne_kv("Part intercommunale (EPCI)",
+                                   f'<span class="num">{_pct(tfpb.get("tfpb_epci_pct"))}</span>',
+                                   chip_span("s", "sourcé")))
+        if tfpb.get("teom_pct") is not None:
+            lignes.append(ligne_kv("Ordures ménagères (TEOM, taux plein)",
+                                   f'<span class="num">{_pct(tfpb.get("teom_pct"))}</span>',
+                                   chip_span("s", "sourcé")))
+    if zonage:
+        lignes.append(ligne_kv("Zone d'investissement (A/B/C)",
+                               esc(f"zone {zonage.get('zone')}"), chip_span("s", "sourcé")))
+    corps = "<h2>Fiscalité locale et régime applicable</h2>" + table_kv(lignes)
+    # la taxe foncière de portage : dite, jamais chiffrée sans la valeur locative cadastrale.
+    r = resolved.get("duree_portage_saisi_mois") or {}
+    duree = r.get("valeur")
+    if tfpb and tfpb.get("tfpb_commune_pct") is not None:
+        combien = f"les {int(duree)} mois de portage" if duree not in (None, "") else "la durée de portage"
+        corps += note(
+            f"Pendant {combien}, le porteur acquitte la taxe foncière sur le bien. Elle se calcule "
+            f"sur la valeur locative cadastrale du bien × le taux communal "
+            f"({_pct(tfpb['tfpb_commune_pct'])}, part départementale et TEOM en sus). LABUSE n'invente "
+            "pas de valeur locative : reportez-la de l'avis de taxe foncière du bien pour la chiffrer.")
+    if zonage:
+        corps += note(
+            f"Zone {zonage.get('zone')} (DHUP) : elle fixe l'éligibilité au PTZ dans le neuf, les "
+            "plafonds de loyer et de ressources des dispositifs, et le prix de vente au bailleur "
+            "social. À La Réunion, la TVA du logement neuf est de 8,5 % (2,1 % en locatif social).")
+    src = []
+    if tfpb:
+        src.append(f"DGFiP — fichier REI ({esc(str(tfpb.get('millesime') or 'impositions primitives'))})")
+    if zonage:
+        src.append(f"DHUP — zonage A/B/C ({esc(str(zonage.get('millesime') or ''))})")
+    if src:
+        corps += note("Sources : " + " · ".join(src) + ".")
+    return corps
+
+
 def _calendrier(resolved: dict) -> str:
     r = resolved.get("duree_portage_saisi_mois") or {}
     if r.get("valeur") in (None, ""):
@@ -179,6 +233,7 @@ def rendu(valeurs, ctx=None) -> str:
     corps += _bilan_rebours(bilan)
     corps += _sensibilite(bilan)
     corps += _face_prix(bilan, pd, valeurs)
+    corps += _fiscalite_locale(ctx.get("tfpb"), ctx.get("zonage_abc"), resolved)
     corps += _calendrier(resolved)
     corps += ("<h3>Ce que ce document n'établit pas</h3>"
               + table_kv([ligne_kv("Plan de financement, apport, taux", "Établissement prêteur", ""),
