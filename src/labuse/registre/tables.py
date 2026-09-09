@@ -197,7 +197,8 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     # ── géographie physique / imagerie ─────────────────────────────────────────────
     "bd_topo": Rt(("spatial_layers",), couches=("batiment", "voirie", "water", "ravine"),
                   millesime="BD TOPO® V3 (IGN)"),
-    "rge_alti": Rt(("rgealti_pente_5m", "spatial_layers"), couches=("pente",), millesime="RGE ALTI® (IGN)"),
+    "rge_alti": Rt(("rgealti_pente_5m", "rgealti_mnt_5m", "spatial_layers"),
+                   couches=("pente", "altitude"), millesime="RGE ALTI® (IGN)"),   # RECETTE-7 D — MNT altitude ajouté
     "rge_alti_5m": Rt(("rgealti_pente_5m",), note="DOUBLON (même réservoir que rge_alti)"),
     "bd_carto_ocs": Rt(("spatial_layers",), couches=("ocs_ge",),
                        millesime="BD CARTO® V5 — occupation du sol (IGN, proxy)"),
@@ -309,6 +310,7 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "parcel_au_statut": "statut AU (builder)",
     "parcel_zone_plu": "zonage parcelle (builder GPU)",
     "parcel_terrain": "terrain (pente/ortho builders)",
+    "parcel_vue_mer": "vue mer (viewshed RGE ALTI — RECETTE-7 lot D)",
     "parcel_geometrie": "géométrie parcelle (builder)",
     "parcel_bati_revele": "bâti révélé (builder)",
     "parcel_constructibilite": "constructibilité (builder)",
@@ -349,6 +351,7 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "data_sources": "catalogue des sources",
     "communes_referentiel": "référentiel des 24 communes (cible des clés étrangères, CIRCUIT-5 lot 4)",
     "ingestion_runs": "journal d'ingestion",
+    "mnt_tiles": "tuilage + point de reprise de l'ingestion RGE ALTI MNT (RECETTE-7 lot D)",
     "source_veille": "sentinelle des sources",
     "source_checks": "contrôles de sources",
     "source_radar": "radar de sources",

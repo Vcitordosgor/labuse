@@ -3,6 +3,16 @@
 Branche `fix/recette-7` (depuis `fix/recette-6`, non mergée). Worktree `~/Desktop/labuse-recette6`.
 **Aucun merge, aucune bascule, aucun rescoring.** Seule exception d'ingestion autorisée : le RGE ALTI (lot D).
 
+## État des verrous (porte de déploiement)
+
+Les verrous `local` (base réelle partagée) : mes 3 tables Lot D (`rgealti_mnt_5m`, `mnt_tiles`,
+`parcel_vue_mer`) sont RÉGISTRÉES à la carte (`registre/tables.py`) → plus orphelines. Restent ROUGES
+et **PRÉ-EXISTANTS** (jamais créés par les commits RECETTE-7, vérifié `git log -p`) : V1c 3 orphelines
+`mail_queue`/`prefs_carte`/`questionnaire_financier` (tables d'exploitation non cartographiées avant
+ce mandat) et V3a « tuiles q_v14 vs manifeste q_v11_m137 » (état de tuiles d'un AUTRE worktree sur la
+base partagée). Hors des 39 travaux (« ne pas élargir ») — signalés, non touchés. Tests hors-verrous :
+provenance Z5 vert, 229 passés, seuls 2 échecs pré-existants prouvés (test_m136, exports2_lot6).
+
 ## Étape 0 — gardes
 
 - `pwd` = `/Users/openclaw/Desktop/labuse-recette6` ✓
