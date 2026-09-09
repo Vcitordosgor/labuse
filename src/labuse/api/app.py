@@ -4920,6 +4920,26 @@ def parcel_exposition(idu: str, db: Session = Depends(get_db)) -> dict:
     return {"idu": idu, **(res or {"orientation": None})}
 
 
+@app.get("/parcels/{idu}/hauteur-lidar")
+def parcel_hauteur_lidar(idu: str, db: Session = Depends(get_db)) -> dict:
+    """RECETTE-8 W23 — les hauteurs MESURÉES au LiDAR HD (faîtage + égout distingués) du bâtiment
+    principal, à la place/complément de la hauteur BD TOPO (estimée, une seule valeur). Répare la
+    cause de fond de E1. Lazy (fetch WMS MNS+MNT + calcul ~1 s). Écart au faîtage BD TOPO donné."""
+    idu = _check_idu(idu)
+    pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    if pid is None:
+        raise HTTPException(404, "parcelle inconnue")
+    try:
+        from ..faisabilite.hauteur_lidar import hauteur_parcelle_lidar
+        res = hauteur_parcelle_lidar(db, pid)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("hauteur-lidar %s : %s", idu, exc)
+        return {"idu": idu, "faitage_m": None, "erreur": "LiDAR indisponible"}
+    if res is None:
+        return {"idu": idu, "faitage_m": None, "erreur": "aucun bâti sur la parcelle"}
+    return {"idu": idu, **res}
+
+
 @app.get("/parcels/{idu}/zone")
 def parcel_zone(idu: str, mode: str = "pied", minutes: int = Query(15, ge=1, le=60),
                 db: Session = Depends(get_db)) -> dict:
