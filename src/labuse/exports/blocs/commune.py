@@ -19,8 +19,14 @@ def _taxe(t: dict) -> str:
     # et le taux communal — jamais un montant en euros sur un scénario que personne n'a choisi
     # (avant : « De l'ordre de 22 469 € … pour 458 m² de table rase »). Le montant chiffré est au
     # Financier, sur la SDP du projet réellement saisi.
-    base = ("Se calcule sur la surface de plancher créée par le projet "
-            "(taxe due une fois un projet déposé — chiffrée dans le Dossier financier).")
+    # RECETTE-9 T2 — le Dossier DIT EN UNE LIGNE comment obtenir le montant (jamais un trou) : il
+    # renvoie au Financier ET nomme les entrées à décrire, y compris sur une parcelle SANS potentiel
+    # constructible calculé (où le Financier ne s'établissait pas — cul-de-sac de T2, désormais ouvert
+    # par T1 : le nombre de logements visés + la typologie y suffisent). Aucun chiffre inventé.
+    base = ("Se calcule sur la surface de plancher créée par le projet (taxe due une fois un projet "
+            "déposé). Pour en obtenir le montant : ouvrez le Dossier financier et décrivez le "
+            "programme — le nombre de logements visés et la typologie suffisent lorsque la parcelle "
+            "n'a pas de potentiel constructible calculé.")
     if t.get("taux_communal_manquant"):
         return f"{base} Taux communal non renseigné pour cette commune."
     # RECETTE-7 (E9) — le taux à la française (« 3,0 % », pas « 3.0 % »).
