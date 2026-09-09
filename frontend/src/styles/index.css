@@ -435,8 +435,11 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 /* RECETTE-5 (V4) — EN-TÊTE À 8 TUILES (maquette-entete-fiche-v2). Grille 4×2 : les lignes fines
    viennent du fond de grille (gap + background:--line), les tuiles portent le fond --bg-2. Chaque
    tuile a une valeur, un sous-titre (.stat-s = la provenance courte) et un « i » qui dit la source. */
-.fiche-v6 .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:0.5px; background:var(--line); border-top:0.5px solid var(--line); }
-.fiche-v6 .stat { padding:9px 10px 10px; min-width:0; background:var(--bg-2); }
+/* RECETTE-6 (C5) — SIX tuiles, deux rangs de TROIS. Hauteur FIXE : chaque tuile a la même hauteur
+   (`min-height` + `grid-auto-rows:1fr`) quel que soit le nombre de lignes du libellé ou la présence de
+   la ligne secondaire — les deux rangs s'alignent. */
+.fiche-v6 .stats { display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:1fr; gap:0.5px; background:var(--line); border-top:0.5px solid var(--line); }
+.fiche-v6 .stat { padding:9px 10px 10px; min-width:0; min-height:58px; background:var(--bg-2); }
 .fiche-v6 .stat-l { font-size:9px; color:var(--txt-off); letter-spacing:.06em; display:flex; align-items:center; gap:4px; }
 .fiche-v6 .stat-v { font-size:13px; color:var(--txt-hi); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .fiche-v6 .stat-v.vide { color:var(--txt-faint); font-weight:400; }

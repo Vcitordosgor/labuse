@@ -656,9 +656,9 @@ export function Fiche({ idu }: { idu: string }) {
   ] : []
   const ongletLines = (o: Onglet) => f?.lines.filter((l) => l.onglet === o) ?? []
   // RETOURS-11F4 (F6/F7) : les lignes Risques ET Marché (marcheLines, prix de sortie, socio-éco)
-  // vivent désormais dans `RisquesSection` / `MarcheSection`. `dvfSecteur` (prix terrain nu) reste
-  // dérivé ici car l'ANALYSE d'en-tête l'affiche aussi (M137-G — nu SEUL, jamais moyenné au bâti).
-  const dvfSecteur = f?.dvf_parcelle?.secteur?.find((s) => s.type_bien === 'terrain')
+  // vivent dans `RisquesSection` / `MarcheSection`. RECETTE-6 (C5) : les tuiles « Terrain nu » et
+  // « Bâti ancien » ayant quitté l'en-tête, `dvfSecteur` n'est plus dérivé ici (le prix du terrain nu
+  // vit dans MarcheSection — dont la « Valeur au prix du secteur » rapatriée, cf. C2).
   // Proprio : le signal dominant s'il existe (gérant âgé, procédure…), sinon le type de
   // propriétaire. Jamais d'identité de personne physique (boussole).
   // RETOURS-11F F11 — 🔴 double en-tête : quand un propriétaire moral est connu (ex. « PACIFIC »),
@@ -841,117 +841,50 @@ export function Fiche({ idu }: { idu: string }) {
           const pente = f.terrain?.pente_moy_deg
           const penteSous = pente == null ? undefined
             : pente < 5 ? 'plat' : pente < 15 ? 'modérée' : pente < 30 ? 'forte' : 'très forte'
-          // bâti ancien au m² : MÊME chiffre que la synthèse marché et les documents (marche_service).
-          const ba = f.prix_ancien?.distribution?.apres
           // taxe foncière part communale (TFPB, REI DGFiP) — servie sur le payload parcelle (V4).
           const tfpb = f.fiscalite?.tfpb_commune_pct
-          // vue mer — V8 : la tuile n'est câblée que si un verdict favorable (dégagée/partielle) est
-          // servi. Ce verdict n'est PAS calculé à ce jour (V23 est une instruction en lecture seule) :
-          // la tuile est donc OMISE — pas de tuile vide. `vueMer` reste null tant que rien n'est servi ;
-          // le jour où le champ arrive, il suffira de le construire ici et il s'insérera en 4e position.
-          const vueMer: { l: string; v: string; s?: string; neuf?: boolean; i?: string } | null = null
           type Tuile = { l: string; v: string; s?: string; i?: string; vide?: boolean; neuf?: boolean }
-          const tuiles: (Tuile | null)[] = [
+          // RECETTE-6 (C5, décision Vic) — EXACTEMENT SIX TUILES, deux rangs de trois :
+          //   Surface · Zone · Pente / Vue mer · Taxe foncière · SDP restante.
+          // « Terrain nu » et « Bâti ancien » RETIRÉES de l'en-tête (les prix vivent dans « Marché et
+          // secteur »). « Vue mer » (C5) RÉTABLIE et TOUJOURS affichée : « — » tant que la donnée
+          // n'existe pas — le verdict de vue mer n'est pas encore calculé (cf. lot H, lecture seule).
+          // C1 : plus de pastilles sous les tuiles. C2 : plus d'accordéon « Le reste des faits ».
+          const tuiles: Tuile[] = [
             { l: 'Surface', v: f.surface_m2 != null ? fmtM2(f.surface_m2) : '—', vide: f.surface_m2 == null,
               i: 'Contenance cadastrale de la parcelle (DGFiP).' },
             { l: 'Zone', v: reglesZone ?? 'Non publié au GPU', s: zoneSous, vide: reglesZone == null,
               i: 'Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n’a pas déposé de document opposable.' },
             { l: 'Pente', v: pente != null ? `${nf(pente)} °` : '—', s: penteSous, vide: pente == null,
               i: 'Pente moyenne du terrain, calculée sur le modèle de relief RGE ALTI (IGN). À La Réunion elle commande le coût de terrassement autant que la constructibilité. « — » : relief non disponible sur la parcelle.' },
-            // V8 — vue mer omise tant qu'aucun verdict favorable n'est servi (pas de tuile vide).
-            vueMer,
-            { l: 'Terrain nu', v: dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0 ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—',
-              s: dvfSecteur?.n_ventes != null && dvfSecteur.mediane_prix_m2 ? `${nf(dvfSecteur.n_ventes)} ventes` : undefined,
-              vide: !(dvfSecteur?.mediane_prix_m2 && dvfSecteur.mediane_prix_m2 > 0),
-              i: 'Médiane du prix du terrain nu au m² — ventes 2021-2025 (géo-DVF), commune + section cadastrale de la parcelle. Le bâti n’y entre jamais. « — » : pas assez de ventes de terrain nu.' },
-            { l: 'Bâti ancien', v: ba?.median != null && ba.median > 0 ? `${fmtInt(ba.median)} €/m²` : '—',
-              s: ba?.n != null && ba.median ? `${nf(ba.n)} ventes` : undefined,
-              vide: !(ba?.median && ba.median > 0),
-              i: 'Prix médian du bâti ancien au m² — ventes DVF dans un rayon autour de la parcelle (même chiffre que la synthèse Marché et les documents). « — » : pas assez de ventes.' },
+            { l: 'Vue mer', v: '—', s: 'à venir', vide: true,
+              i: 'Vue sur l’océan, à calculer sur le relief (RGE ALTI) et la hauteur du bâti (BD TOPO) — sans la végétation ni les constructions à venir, à confirmer sur place. Non disponible pour l’instant : le modèle d’altitude n’est pas encore en base (cf. instruction lot H).' },
             { l: 'Taxe foncière', v: tfpb != null ? `${nf(tfpb)} %` : '—', s: tfpb != null ? 'part communale' : 'taux non ingéré',
               vide: tfpb == null,
               i: 'Taux de taxe foncière (TFPB) voté par la commune — fichier REI (DGFiP). C’est la charge annuelle, que le bien soit gardé, loué ou porté. « — » : taux non ingéré pour cette commune.' },
             { l: 'SDP restante', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
               s: reglesSdp != null && reglesSdp > 0 ? undefined : (reglesZone && /^(A|N)/i.test(reglesZone) ? 'zone non constructible' : 'pas de potentiel résiduel'),
               vide: !(reglesSdp != null && reglesSdp > 0),
-              i: 'Surface de plancher que le PLU autorise ENCORE sur la parcelle (potentiel résiduel). La signature de LABUSE — mais pas la première question de tous les métiers, d’où sa place en fin de grille. « — » : zone non constructible ou plus de potentiel.' },
-          ]
-          // V5 — étiquettes SOUS la grille : contraintes (préemption / bruit / aléa rédhibitoire),
-          // type de propriétaire, voisines du même propriétaire (si servi).
-          const disp = f.dispositifs
-          const badges: { txt: string; ton: 'alerte' | 'info' | 'neutre' }[] = []
-          if (disp?.dpu && disp.dpu.etat === 'servi') badges.push({ txt: 'Préemption urbaine', ton: 'alerte' })
-          if (disp?.peb?.zone) badges.push({ txt: `Bruit — zone ${disp.peb.zone}`, ton: 'alerte' })
-          for (const a of (f.aleas?.liste ?? [])) if (a.redhibitoire) badges.push({ txt: `${a.nature} — ${a.niveau ?? 'fort'}`, ton: 'alerte' })
-          badges.push({ txt: f.proprietaire_moral ? 'Société propriétaire' : 'Particulier propriétaire', ton: 'neutre' })
-          // V6 — « Le reste des faits » : dernière vente · valeur au prix du secteur · bâti au sol ·
-          // taxe d'aménagement · zonage d'investissement · transport · fibre (chaque absence est dite).
-          const dm = f.dvf_parcelle?.derniere_mutation as { date?: string | null; valeur?: number | null } | null | undefined
-          const valSecteur = (f.surface_m2 && dvfSecteur?.mediane_prix_m2) ? Math.round(f.surface_m2 * dvfSecteur.mediane_prix_m2) : null
-          const bs = f.le_bien
-          const zi = f.territoire_fiscal?.dispositifs_dom?.find((d) => /zonage d’investissement|zonage d'investissement|B1|B2|A bis/i.test(d.libelle))
-          const arret = f.proximites?.arret
-          const reste: { k: string; v: string; vide?: boolean }[] = [
-            { k: 'Dernière vente', v: dm?.date ? `${dm.date}${dm.valeur ? ` — ${fmtInt(dm.valeur)} €` : ''}` : 'aucune vente enregistrée', vide: !dm?.date },
-            { k: 'Valeur au prix du secteur', v: valSecteur ? `≈ ${fmtInt(valSecteur)} €` : '—', vide: !valSecteur },
-            ...(bs?.emprise_batie_m2 ? [{ k: 'Bâti au sol', v: `${fmtInt(bs.emprise_batie_m2)} m²${bs.nb_batiments ? ` · ${bs.nb_batiments} bâtiment${bs.nb_batiments > 1 ? 's' : ''}` : ''}` }] : []),
-            { k: 'Taxe d’aménagement', v: f.taxe_amenagement?.taux_communal_pct != null ? `${nf(f.taxe_amenagement.taux_communal_pct)} %` : 'taux communal à saisir', vide: f.taxe_amenagement?.taux_communal_pct == null },
-            ...(zi ? [{ k: 'Zonage d’investissement', v: zi.libelle.replace(/^.*:\s*/, '') }] : []),
-            ...(arret ? [{ k: 'Transport', v: `${fmtInt(arret.distance_m)} m — ${arret.nom}${arret.reseau ? ` (${arret.reseau})` : ''}` }] : []),
-            ...(f.fibre?.etat === 'servi' ? [{ k: 'Fibre', v: f.fibre.ftth ? 'raccordable' : 'à l’étude' }] : []),
+              i: 'Surface de plancher que le PLU autorise ENCORE sur la parcelle (potentiel résiduel). « — » : zone non constructible ou plus de potentiel.' },
           ]
           return (
-            <>
-              {/* V8 — quand la tuile « vue mer » est omise (7 tuiles), on COMPLÈTE la grille 4× par
-                  des cellules de remplissage au MÊME fond que les tuiles : pas de rectangle plus clair
-                  dans le coin, et surtout pas de « tuile vide » (ni libellé ni « — »). */}
-              <div className="stats" data-bandeau-chiffres>
-                {(() => {
-                  const vis = tuiles.filter((t): t is Tuile => !!t)
-                  const fill = (4 - (vis.length % 4)) % 4
-                  return (<>
-                {vis.map((c) => (
-                  <div className="stat" key={c.l}>
-                    <div className="stat-l">
-                      {c.l.toUpperCase()}
-                      {c.i && (
-                        <Tip tip={c.i}>
-                          <span role="button" tabIndex={0} aria-label={`Source : ${c.l}`}
-                            className="flex h-[12px] w-[12px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[7px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
-                        </Tip>
-                      )}
-                    </div>
-                    <div className={`stat-v${c.vide ? ' vide' : ''}${c.neuf ? ' neuf' : ''}`}>{c.v}</div>
-                    {c.s && <div className="stat-s">{c.s}</div>}
+            <div className="stats" data-bandeau-chiffres>
+              {tuiles.map((c) => (
+                <div className="stat" key={c.l}>
+                  <div className="stat-l">
+                    {c.l.toUpperCase()}
+                    {c.i && (
+                      <Tip tip={c.i}>
+                        <span role="button" tabIndex={0} aria-label={`Source : ${c.l}`}
+                          className="flex h-[12px] w-[12px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[7px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+                      </Tip>
+                    )}
                   </div>
-                ))}
-                {Array.from({ length: fill }).map((_, i) => (
-                  <div className="stat" key={`fill-${i}`} aria-hidden="true" />
-                ))}
-                  </>)
-                })()}
-              </div>
-              {badges.length > 0 && (
-                <div className="head-badges" data-head-badges>
-                  {badges.map((b, i) => (
-                    <span key={i} className={b.ton === 'alerte' ? 'pill-amber' : b.ton === 'info' ? 'pill-mint' : 'pill-neutre'}>{b.txt}</span>
-                  ))}
+                  <div className={`stat-v${c.vide ? ' vide' : ''}${c.neuf ? ' neuf' : ''}`}>{c.v}</div>
+                  {c.s && <div className="stat-s">{c.s}</div>}
                 </div>
-              )}
-              {reste.length > 0 && (
-                <details className="plus" data-reste-des-faits>
-                  <summary>Le reste des faits</summary>
-                  <div className="corps">
-                    {reste.map((r) => (
-                      <div className="sl" key={r.k}>
-                        <span className="k">{r.k}</span>
-                        <span className={`v${r.vide ? ' vide' : ''}`}>{r.v}</span>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              )}
-            </>
+              ))}
+            </div>
           )
         })()}
         </div>{/* /.head — la carte d'en-tête (identité + 8 tuiles + étiquettes + reste des faits). */}
