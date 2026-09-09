@@ -676,6 +676,13 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
                  Neutre / Faible »). Puis écartées (étage 0). retenues + écartées = analysé. */
               <p className="mt-1 text-[13px] leading-relaxed text-txt">
                 <b className="text-[16px] text-mint tabular-nums">{phraseRetenues == null ? '…' : nf.format(phraseRetenues)}</b> retenues
+                {/* RECETTE-8 W10 (A5) — le « i » qui explique les comptes par commune : pourquoi
+                    l'immense majorité d'une commune n'a aucun signal. Déclencheur fonctionnel
+                    icône-seule → garder (S10). */}
+                <Tip garder side="top" tip="Sur une commune, l'immense majorité des parcelles est « sans signal » ou « écartée » — c'est normal : elles sont déjà bâties à leur densité autorisée, en zone non constructible (agricole/naturelle), ou sans signal de vente à court terme. Le foncier réellement mutable est rare ; les paliers « Priorité » et « À suivre » isolent justement ces quelques parcelles-là.">
+                  <span role="button" tabIndex={0} aria-label="Pourquoi si peu de signaux par commune"
+                    className="ml-1 inline-flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 align-middle text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+                </Tip>
                 {t && phraseRetenues != null && (
                   <> — dont{' '}
                     {/* le tooltip s'ouvre sur le chip visible (defTip, codes canoniques). */}
