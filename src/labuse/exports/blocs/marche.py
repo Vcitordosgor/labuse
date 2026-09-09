@@ -89,7 +89,10 @@ def rendu(valeurs) -> str:
     if isinstance(pa, dict):
         nu = _nuage(pa)
         if nu:
-            data += "<h3>Les ventes retenues, une à une</h3>" + nu
+            # RECETTE-8 W17 — titre HONNÊTE : on n'imprime pas la liste ligne à ligne des ventes,
+            # on montre leur DISTRIBUTION (un point par vente, min/médiane/max repérés). « une à une »
+            # annonçait une liste qui n'existe pas.
+            data += "<h3>Les ventes retenues — distribution des prix au m² (un point par vente)</h3>" + nu
     data += _secteur(valeurs)
     if not data.strip():
         return ""      # aucun prix/vente servi → section omise
