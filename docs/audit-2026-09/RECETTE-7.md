@@ -238,6 +238,51 @@ captures au cadrage de Vic restent à faire sur un poste où les ports sont libr
 
 # LOT D — Le MNT : RGE ALTI
 
+Vic a tranché : le RGE ALTI ouvre la vue mer. **Exception d'ingestion autorisée — la seule.** Le
+raster de PENTE (`rgealti_pente_5m`, 2 793 tuiles, SRID 2975) était déjà en base ; il manquait le MNT
+d'ALTITUDE (le viewshed a besoin de l'altitude, pas de la pente). Environnement : `rasterio`,
+`gdal_viewshed`, `postgis_raster` tous PRÉSENTS ; IGN Géoplateforme joignable (http 200).
+
+- **D1 (migration + ingestion) — ÉCRIT + PROUVÉ.** `ingestion/rgealti_mnt.py` : table raster
+  `rgealti_mnt_5m` (SRID 2975) + tuilage `mnt_tiles` (point de reprise `statut`, REJOUABLE), fetch
+  WMS `ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES` (GeoTIFF Float32, altitude m, NoData −99999). **Deux
+  pièges rencontrés et corrigés** : (a) `xmin`/`xmax` sont des colonnes SYSTÈME Postgres → renommées
+  `x0/y0/x1/y1` ; (b) PostGIS restreint les drivers GDAL (`postgis.gdal_enabled_drivers`='DISABLE_ALL')
+  → `SET LOCAL … = 'GTiff'` avant `ST_FromGDALRaster` (sinon « Could not open bytea with GDAL »). Le
+  piège SRID du mandat (raster 2975 vs `parcels.geom` 4326) est tenu : tout se fait en 2975
+  (`geom_2975`).
+- **D2 (lancer l'ingestion) — PROUVÉ BORNÉ (2 tuiles), île STAGÉE.** Ingestion end-to-end vérifiée :
+  planifié 66 tuiles Saint-Pierre, ingéré **2 tuiles** → 2 rasters Float32 (32BF) en base. L'ÎLE
+  entière (≈ 2 793 tuiles, comme la pente) n'est PAS lancée : le mandat l'interdit avant validation
+  des 10 témoins. Elle se lance par `rgealti_mnt.planifier()` + `ingerer()` (rejouable), bornée d'abord
+  au littoral.
+- **D3 (moteur de viewshed) — `gdal_viewshed`, CHOISI + JUSTIFIÉ + MESURÉ.** (1) lit le raster hors
+  base, en C, algorithme de visée standard ; (2) DÉJÀ présent (aucune dépendance nouvelle vs
+  WhiteboxTools/GRASS) ; (3) **mesuré : 0,46 s** pour une fenêtre 400×400 (2 km, rayon 5 km) sur la côte
+  de Saint-Pierre → ~2 parcelles/s. Conséquence : une commune littorale ≈ 1–4 h ; l'île bornée aux
+  ~100 k parcelles littorales ≈ 13 h → **on borne au littoral**, jamais l'île en aveugle (le SQL était
+  à ~89 pts/s, inutilisable — confirmé).
+- **D4 (10 témoins) — MOTEUR PROUVÉ sur 5 parcelles, seuils à caler avec Vic.**
+  `faisabilite/vue_mer.py` : par parcelle, fenêtre MNT (fetch WMS) → `gdal_viewshed` (observateur =
+  centroïde + hauteur d'œil, toit si bâti) → part de cellules VISIBLES qui sont de la MER (altitude ≤
+  2 m / NoData) → `degagee`/`partielle`/`aucune`. Prouvé sur 5 parcelles côtières de Saint-Pierre
+  (part_mer 2,5–3,5 %, classées `aucune`/`partielle` — ça DISCRIMINE). Les SEUILS
+  (`SEUIL_DEGAGEE`/`SEUIL_PARTIELLE`) sont un premier jet à CALER sur les 10 témoins que Vic vérifie à
+  l'œil sur l'ortho — c'est exactement le geste D4 (« ne pas lancer l'île avant validation »). Le rendu
+  des 10 sur ortho + l'état 4 « menacée » (permis SITADEL coupant la visée — 2e passage) sont câblés
+  après validation.
+- **D5 (tuile Vue mer + `i` + exposition) — STAGÉ.** La tuile « Vue mer » sert « — · à venir »
+  aujourd'hui (fiche) ; elle servira la vraie valeur sur la commune calibrée, « — · à venir » ailleurs.
+  Le `i` dira ce que le calcul ne voit pas (végétation, hauteurs approximatives BD TOPO, permis non
+  déposés). L'EXPOSITION entre en fiche À LA PLACE de « SDP restante » (décision B3) une fois le batch
+  complet passé — pas avant. À câbler après D4 validé.
+
+**Recommandation franche (rappel du lot F2).** Le viewshed RGE ALTI fonctionne, mais le **LiDAR HD
+MNS** (couche `ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES.MNS`, même WMS) couvre l'île, est ouvert, déjà
+streamé, et donnerait des hauteurs MESURÉES (faîtage/égout) qui règlent E1 pour de bon — un meilleur
+ROI que la vue mer. À arbitrer par Vic : vue mer (argument commercial, fragile sur la végétation) vs
+justesse des hauteurs (corrige une erreur de fond). Le moteur ci-dessus sert les deux (même MNT/MNS).
+
 # LOT E — Les trois documents
 
 Recette Vic sur `97411000EL0157` (Saint-Denis). Fixes vérifiés par régénération réelle (TestClient
