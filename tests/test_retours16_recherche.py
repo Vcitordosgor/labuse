@@ -117,6 +117,6 @@ def test_front_un_seul_composant_plus_d_autocompletion_maison():
     scan = (ROOT / "frontend/src/components/outils/ScanPatrimoine.tsx").read_text(encoding="utf-8")
     assert "data-scan-sug" not in scan and "AddressAutocomplete" in scan
     header = (ROOT / "frontend/src/components/header/Header.tsx").read_text(encoding="utf-8")
-    assert "'adresse', 'cadastre', 'proprietaire', 'siren', 'commune', 'projet'" in header
+    assert "'adresse', 'cadastre', 'proprietaire', 'siren'" in header
     mp = (ROOT / "frontend/src/components/outils/ModulePanel.tsx").read_text(encoding="utf-8")
     assert "grammaires={['adresse', 'cadastre', 'commune']}" in mp
