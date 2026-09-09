@@ -2161,9 +2161,12 @@ export interface QChamp {
   aide?: string | null   // RECETTE-5 (V19) — le « i » : ce qu'on attend comme valeur
 }
 export interface QEcran { titre: string; champs: QChamp[] }
+// RECETTE-6 (E5) — écran 0 « Que voulez-vous chiffrer ? ». Seul `construction` est servi ; les autres
+// usages sont grisés avec leur `raison` (pas de moteur inventé).
+export interface QUsage { key: string; label: string; servi: boolean; sous?: string; raison?: string }
 export interface QuestionnaireFinancier {
   idu: string; reponses: Record<string, unknown>; complet: boolean; existe: boolean
-  ecrans: QEcran[]; tva_explication: string; champs_obligatoires: string[]
+  ecrans: QEcran[]; usages?: QUsage[]; tva_explication: string; champs_obligatoires: string[]
 }
 export const getFinancierQuestionnaire = (idu: string) =>
   j<QuestionnaireFinancier>(`/financier/${encodeURIComponent(idu)}/questionnaire`)

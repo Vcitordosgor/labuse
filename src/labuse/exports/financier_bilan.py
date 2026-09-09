@@ -30,6 +30,30 @@ RAP_EUR_M2 = 0.68                           # redevance d'archéologie préventi
 PORTAGE_FORFAIT_PCT = 3.0                   # forfait si le client n'a pas saisi de taux
 PRIX_SORTIE_VAR = 0.05                      # ±5 % pour la sensibilité au prix de sortie
 
+# RECETTE-6 (E2, BLOQUANT) — GARDE DE VRAISEMBLANCE sur les champs À L'UNITÉ (€/m²). Un bilan absurde
+# venait d'un PRIX TOTAL saisi dans un champ « €/m² » (ex. 700 000 dans « Prix de vente prévu (€/m²) »
+# → CA multiplié par la surface vendable → charge foncière 97 M€, ×160). Au-delà de ces bornes, la
+# valeur n'est PAS un prix au m² : le document ne publie AUCUN verdict, il dit que l'hypothèse est hors
+# marché et NOMME le champ. Bornes larges (on ne recale pas le marché, on attrape l'ordre de grandeur).
+MAX_PRIX_SORTIE_M2 = 20_000.0               # €/m² habitable — aucun prix de sortie ne dépasse cet ordre
+MAX_COUT_CONSTRUCTION_M2 = 8_000.0          # €/m² plancher — aucun coût de construction ne le dépasse
+MAX_PRIX_BAILLEUR_M2 = 12_000.0             # €/m² — prix de vente au bailleur social
+
+
+def _hors_marche(prix_sortie, cout, prix_bailleur) -> dict | None:
+    """RECETTE-6 (E2) — le premier champ à l'unité hors bornes de vraisemblance (probable prix TOTAL
+    saisi à la place d'un €/m²), ou None si tout est plausible. Point de vérité unique du garde."""
+    for val, borne, champ in (
+        (prix_sortie, MAX_PRIX_SORTIE_M2, "Prix de vente prévu des logements"),
+        (cout, MAX_COUT_CONSTRUCTION_M2, "Coût de construction"),
+        (prix_bailleur, MAX_PRIX_BAILLEUR_M2, "Prix de vente au bailleur social"),
+    ):
+        if val is not None and float(val) > borne:
+            return {"champ": champ, "valeur": float(val), "borne": borne,
+                    "raison": (f"{float(val):,.0f} €/m² dépasse tout prix de marché (borne {borne:,.0f} €/m²) — "
+                               "un PRIX TOTAL a probablement été saisi à la place d'un prix au m².").replace(",", " ")}
+    return None
+
 
 def _cout_fourchette() -> tuple[float, float]:
     """Fourchette de coût de construction (bas, haut) DÉRIVÉE de la source unique
@@ -127,6 +151,10 @@ def calculer(prog: dict, hyp: dict) -> dict:
     h.setdefault("taux", TAUX_TVA_DEFAUT)
     cout = _f(h.get("cout"))
     prix_sortie = _f(h.get("prix_sortie"))
+    # RECETTE-6 (E2) — garde de vraisemblance AVANT tout calcul : un champ à l'unité hors bornes rend le
+    # bilan HORS MARCHÉ (le bloc n'imprime alors aucun verdict, il nomme le champ). On calcule quand même
+    # les postes (pour la traçabilité) mais le résultat porte `hors_marche`.
+    hors_marche = _hors_marche(prix_sortie, cout, _f(h.get("prix_bailleur")))
     ca, _ = _ca_ht(prog, prix_sortie, _f(h.get("prix_bailleur")), h.get("part_sociale_pct") or 0.0, h["taux"])
     postes = _postes(prog, h, cout, ca)
     total_postes, manque_poste = _somme(postes)
@@ -165,4 +193,5 @@ def calculer(prog: dict, hyp: dict) -> dict:
         "sensibilite": sensibilite, "ecart_prix_demande": ecart,
         "marge_residuelle_pct": marge_residuelle_pct,
         "maximum": manque_poste,          # un poste non chiffré → la charge est un maximum
+        "hors_marche": hors_marche,       # RECETTE-6 (E2) — hypothèse hors bornes → pas de verdict
     }

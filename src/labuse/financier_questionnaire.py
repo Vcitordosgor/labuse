@@ -35,6 +35,24 @@ ECRANS: list[tuple[str, tuple[str, ...]]] = [
                         "taux_apport_saisi_pct")),
 ]
 
+# RECETTE-6 (E5) — ÉCRAN 0 « Que voulez-vous chiffrer ? ». Le bilan à rebours (construction neuve)
+# reste le SEUL moteur ; les autres usages n'ouvrent QUE ce qui se calcule déjà proprement. Un parcours
+# qu'on ne sait pas servir honnêtement apparaît GRISÉ avec sa raison — jamais un formulaire qui rend un
+# bilan faux. Le questionnaire des ECRANS ci-dessus EST le parcours « construction ».
+USAGES: list[dict] = [
+    {"key": "construction", "label": "Construction neuve", "servi": True,
+     "sous": "Le bilan à rebours : ce que l'opération peut supporter comme charge foncière."},
+    {"key": "revente", "label": "Revente en l'état", "servi": False,
+     "raison": "Sans travaux ni construction, le bilan à rebours ne s'applique pas — un comparateur "
+               "prix d'achat / prix de revente n'est pas encore servi."},
+    {"key": "division", "label": "Division parcellaire", "servi": False,
+     "raison": "Le découpage en lots et la valorisation lot par lot ne sont pas encore servis proprement."},
+    {"key": "renovation", "label": "Rénovation-revente", "servi": False,
+     "raison": "Le chiffrage travaux + revente demande un poste travaux dédié, pas encore servi."},
+    {"key": "portage", "label": "Portage locatif", "servi": False,
+     "raison": "Le rendement locatif (loyers, charges, fiscalité de détention) n'est pas encore servi."},
+]
+
 # RECETTE-2 (S3) — LIBELLÉS CLIENT du questionnaire, en français clair (les libellés du registre
 # portent des suffixes de traçabilité « (saisi) / (bilan) / (saisi, %) » — jargon interne à ne
 # jamais montrer au porteur). L'unité est ajoutée par le front (« (€/m²) »…) : le libellé ne la

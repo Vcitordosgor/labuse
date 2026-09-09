@@ -19,6 +19,8 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
     queryFn: () => getFinancierQuestionnaire(idu),
   })
   const [etape, setEtape] = useState(0)
+  // RECETTE-6 (E5) — écran 0 : on ne montre les 4 écrans QUE lorsqu'un usage servi est choisi.
+  const [usage, setUsage] = useState<string | null>(null)
   const [reponses, setReponses] = useState<Record<string, unknown>>({})
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
@@ -137,7 +139,42 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
           </div>
         )}
 
-        {!isLoading && !error && !fini && data && (
+        {/* RECETTE-6 (E5) — ÉCRAN 0 « Que voulez-vous chiffrer ? ». Un seul moteur (le bilan à rebours,
+            construction neuve) : les autres usages sont GRISÉS avec leur raison, jamais un formulaire faux. */}
+        {!isLoading && !error && !fini && data && usage === null && (
+          <>
+            <h2 style={{ fontSize: 22, fontWeight: 500, margin: '8px 0 4px' }}>Que voulez-vous chiffrer ?</h2>
+            <p style={{ fontSize: 13, color: '#8FA69A', margin: '0 0 20px' }}>
+              Le chiffrage part de votre intention. Un seul parcours est servi aujourd'hui — les autres arrivent.
+            </p>
+            <div data-financier-usages style={{ display: 'grid', gap: 10 }}>
+              {(data.usages || [{ key: 'construction', label: 'Construction neuve', servi: true }]).map((u) => (
+                <button key={u.key} data-usage={u.key} data-usage-servi={u.servi ? '1' : '0'}
+                  disabled={!u.servi}
+                  onClick={() => { if (u.servi) { setUsage(u.key); setEtape(0) } }}
+                  style={{
+                    textAlign: 'left', padding: '14px 16px', borderRadius: 10, cursor: u.servi ? 'pointer' : 'not-allowed',
+                    background: u.servi ? 'rgba(74,222,128,.06)' : 'transparent',
+                    border: `.5px solid ${u.servi ? MINT : '#26332C'}`, color: u.servi ? '#ECF5EF' : '#5F7267',
+                    opacity: u.servi ? 1 : 0.7,
+                  }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 15, fontWeight: 500 }}>{u.label}</span>
+                    <span style={{ fontSize: 11, color: u.servi ? MINT : '#5F7267' }}>{u.servi ? 'Disponible' : 'Bientôt'}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: u.servi ? '#8FA69A' : '#586A5F', marginTop: 4, lineHeight: 1.4 }}>
+                    {u.servi ? (u.sous || '') : (u.raison || 'Pas encore servi.')}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div style={{ paddingTop: 18, marginTop: 18, borderTop: '.5px solid #1E2A23' }}>
+              <button onClick={onClose} style={btnPlain}>Annuler</button>
+            </div>
+          </>
+        )}
+
+        {!isLoading && !error && !fini && data && usage !== null && (
           <>
             <div style={{ fontSize: 12, color: '#5F7267', marginBottom: 6 }}>{etape + 1} / {N} · {ecrans[etape]?.titre}</div>
             <div style={{ display: 'flex', gap: 5, marginBottom: 22 }}>
@@ -156,8 +193,8 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
             {erreur && <p style={{ fontSize: 12, color: '#E0B341', margin: '14px 0 0' }}>{erreur}</p>}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 18, marginTop: 18, borderTop: '.5px solid #1E2A23' }}>
-              <button onClick={() => (etape > 0 ? setEtape(etape - 1) : onClose())} style={btnPlain}>
-                {etape > 0 ? '← Retour' : 'Annuler'}
+              <button onClick={() => (etape > 0 ? setEtape(etape - 1) : setUsage(null))} style={btnPlain}>
+                ← Retour
               </button>
               {etape < N - 1
                 ? <button onClick={continuer} style={btnMint}>Continuer →</button>
@@ -183,6 +220,9 @@ const btnPlain: React.CSSProperties = {
 function ChampRow({ c, valeur, touche, tvaExplication, onChange }: {
   c: QChamp; valeur: unknown; touche: boolean; tvaExplication: string; onChange: (v: unknown) => void
 }) {
+  // RECETTE-6 (E1) — le « i » du questionnaire n'affichait rien (tooltip natif `title`, invisible/flaky).
+  // On rend une VRAIE bulle d'aide au survol (popover positionné), fiable sur les QUATRE écrans.
+  const [aideOpen, setAideOpen] = useState(false)
   const prefill = c.prefill
   // valeur affichée : la saisie si le champ a été touché, sinon le pré-remplissage.
   const brute = touche ? valeur : (prefill ? prefill.valeur : undefined)
@@ -204,11 +244,23 @@ function ChampRow({ c, valeur, touche, tvaExplication, onChange }: {
     <div style={{ margin: '0 0 16px' }}>
       <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#C7D6CD', margin: '0 0 6px' }}>
         <span>{c.libelle}{c.unite && c.unite !== 'classe' && c.unite !== 'texte' ? ` (${c.unite})` : ''}</span>
-        {/* RECETTE-5 (V19) — le « i » : ce qu'on attend comme valeur (tooltip natif). */}
+        {/* RECETTE-6 (E1) — le « i » : ce qu'on attend comme valeur, en bulle d'aide FIABLE au survol
+            (le tooltip natif `title` n'affichait rien). Sur les quatre écrans (aide servie par champ). */}
         {c.aide && (
-          <span data-champ-aide title={c.aide}
-            style={{ display: 'inline-flex', width: 14, height: 14, borderRadius: 999, border: '1px solid #4A5A52',
-              color: '#8FA69A', fontSize: 9, fontWeight: 700, alignItems: 'center', justifyContent: 'center', cursor: 'help', flex: 'none' }}>i</span>
+          <span style={{ position: 'relative', display: 'inline-flex' }}
+            onMouseEnter={() => setAideOpen(true)} onMouseLeave={() => setAideOpen(false)}>
+            <span data-champ-aide title={c.aide}
+              style={{ display: 'inline-flex', width: 14, height: 14, borderRadius: 999, border: '1px solid #4A5A52',
+                color: '#8FA69A', fontSize: 9, fontWeight: 700, alignItems: 'center', justifyContent: 'center', cursor: 'help', flex: 'none' }}>i</span>
+            {aideOpen && (
+              <span data-champ-aide-pop role="tooltip"
+                style={{ position: 'absolute', bottom: '150%', left: 0, zIndex: 50, width: 250, whiteSpace: 'normal',
+                  background: '#0A0F0C', border: '.5px solid #2A3A31', borderRadius: 6, padding: '8px 10px',
+                  fontSize: 11, fontWeight: 400, lineHeight: 1.45, color: '#C7D6CD', boxShadow: '0 6px 20px rgba(0,0,0,.45)' }}>
+                {c.aide}
+              </span>
+            )}
+          </span>
         )}
         {c.obligatoire
           ? <span style={{ color: '#E0B341' }}>· indispensable</span>

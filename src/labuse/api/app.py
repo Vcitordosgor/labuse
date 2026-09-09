@@ -6359,6 +6359,7 @@ def financier_questionnaire_get(idu: str, request: Request, db: Session = Depend
     ecrans = [{"titre": t, "champs": [_champ(fid) for fid in ids]} for t, ids in qf.ECRANS]
     return {"idu": idu, "reponses": etat["reponses"], "complet": etat["complet"],
             "existe": etat["existe"], "ecrans": ecrans,
+            "usages": qf.USAGES,  # RECETTE-6 (E5) — écran 0 « Que voulez-vous chiffrer ? »
             "tva_explication": qf.TVA_EXPLICATION, "champs_obligatoires": sorted(qf.OBLIGATOIRES)}
 
 
