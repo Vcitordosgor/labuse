@@ -338,6 +338,11 @@ export const getBatiments = (bbox: [number, number, number, number]) =>
 export const getParcelGeojson = (idu: string) =>
   j<{ type: 'Feature'; geometry: unknown; properties: { idu: string }; centroid: [number, number] }>(`/parcels/${encodeURIComponent(idu)}/geojson`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)
+// RECETTE-8 W22 — l'exposition (orientation du versant + pente) calculée sur le MNT RGE ALTI,
+// lazy (fetch WMS + gdaldem ~0,5 s). Remplace la vue mer abandonnée dans la tête de fiche.
+export interface Exposition { idu: string; orientation: string | null; aspect_deg?: number | null; pente_moyenne_deg?: number | null; erreur?: string }
+export const getParcelExposition = (idu: string) =>
+  j<Exposition>(`/parcels/${encodeURIComponent(idu)}/exposition`)
 // ÉTUDE DE ZONE Z3 — le tiroir « Autour de cette parcelle » (isochrone IGN + Filosofi/BPE).
 export const getParcelleZone = (idu: string, mode: 'pied' | 'voiture', minutes: number) =>
   j<ParcelleZone>(`/parcels/${idu}/zone?${q({ mode, minutes })}`)

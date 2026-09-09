@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -617,6 +617,10 @@ export function Fiche({ idu }: { idu: string }) {
   const syntheseM = useMutation({ mutationFn: () => getExplain(idu) })
   useEffect(() => { setIaOuvert('aucun'); syntheseM.reset() }, [idu])  // eslint-disable-line react-hooks/exhaustive-deps
   const { data: f, isLoading, isError, error, refetch } = useQuery({ queryKey: ['fiche', idu], queryFn: () => getFiche(idu) })
+  // RECETTE-8 W22 — l'exposition (orientation + pente) remplace la vue mer dans la tête de fiche.
+  // Calcul lazy (MNT RGE ALTI + gdaldem ~0,5 s) : la tuile affiche « … » puis la valeur.
+  const expo = useQuery({ queryKey: ['exposition', idu], queryFn: () => getParcelExposition(idu),
+    enabled: !!idu, staleTime: 6 * 60 * 60 * 1000, retry: false })
   const fq = ficheQuery.trim().toLowerCase()
   const ficheMatches = fq && f
     ? f.lines.filter((l) => `${l.layer} ${layerLabel(l.layer)} ${l.detail ?? ''} ${l.source ?? ''} ${l.result ?? ''}`.toLowerCase().includes(fq))
@@ -859,8 +863,19 @@ export function Fiche({ idu }: { idu: string }) {
               i: 'Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n’a pas déposé de document opposable.' },
             { l: 'Pente', v: pente != null ? `${nf(pente)} °` : '—', s: penteSous, vide: pente == null,
               i: 'Pente moyenne du terrain, calculée sur le modèle de relief RGE ALTI (IGN). À La Réunion elle commande le coût de terrassement autant que la constructibilité. « — » : relief non disponible sur la parcelle.' },
-            { l: 'Vue mer', v: '—', s: 'à venir', vide: true,
-              i: 'Vue sur l’océan, à calculer sur le relief (RGE ALTI) et la hauteur du bâti (BD TOPO) — sans la végétation ni les constructions à venir, à confirmer sur place. Non disponible pour l’instant : le modèle d’altitude n’est pas encore en base (cf. instruction lot H).' },
+            // RECETTE-8 W22 — la vue mer est ABANDONNÉE (55 h de calcul pour l'affirmation la moins
+            // fiable). L'exposition prend sa place : orientation du versant + pente moyenne, calculées
+            // sur le MNT RGE ALTI, localement, sans ligne de vue.
+            (() => {
+              const e = expo.data
+              const orient = e?.orientation
+              const v = expo.isLoading ? '…' : (orient && orient !== 'plat' ? orient : orient === 'plat' ? 'Plat' : '—')
+              const s = orient && orient !== 'plat' && e?.pente_moyenne_deg != null ? `pente ${nf(e.pente_moyenne_deg)} °`
+                : orient === 'plat' ? 'terrain quasi plat'
+                : expo.isLoading ? 'calcul en cours' : 'relief non disponible'
+              return { l: 'Exposition', v, s, vide: !orient,
+                i: 'Orientation du versant de la parcelle (Nord, Sud-Est…) et sa pente moyenne, calculées sur le modèle d’altitude RGE ALTI (IGN), localement — sans ligne de vue. Remplace la « vue mer » (abandonnée : 55 h de calcul pour une donnée peu fiable, cf. rapport). « — » : relief non disponible sur la parcelle.' } as Tuile
+            })(),
             { l: 'Taxe foncière', v: tfpb != null ? `${nf(tfpb)} %` : '—', s: tfpb != null ? 'part communale' : 'taux non ingéré',
               vide: tfpb == null,
               i: 'Taux de taxe foncière (TFPB) voté par la commune — fichier REI (DGFiP). C’est la charge annuelle, que le bien soit gardé, loué ou porté. « — » : taux non ingéré pour cette commune.' },

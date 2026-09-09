@@ -4901,6 +4901,25 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
     return payload
 
 
+@app.get("/parcels/{idu}/exposition")
+def parcel_exposition(idu: str, db: Session = Depends(get_db)) -> dict:
+    """RECETTE-8 W22 — l'exposition de la parcelle (orientation du versant + pente moyenne), calculée
+    LOCALEMENT sur le MNT RGE ALTI, SANS ligne de vue (à la place de la vue mer abandonnée). Appel
+    lazy (fetch WMS + gdaldem ~0,5 s) : la tuile de la fiche affiche « … » puis la valeur. Échec de
+    relief → orientation None, dit honnêtement (jamais un faux « plat »)."""
+    idu = _check_idu(idu)
+    pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    if pid is None:
+        raise HTTPException(404, "parcelle inconnue")
+    try:
+        from ..faisabilite.exposition import exposition_parcelle
+        res = exposition_parcelle(db, pid)
+    except Exception as exc:  # noqa: BLE001 — jamais un 500 sur la fiche
+        log.warning("exposition %s : %s", idu, exc)
+        return {"idu": idu, "orientation": None, "erreur": "relief indisponible"}
+    return {"idu": idu, **(res or {"orientation": None})}
+
+
 @app.get("/parcels/{idu}/zone")
 def parcel_zone(idu: str, mode: str = "pied", minutes: int = Query(15, ge=1, le=60),
                 db: Session = Depends(get_db)) -> dict:
