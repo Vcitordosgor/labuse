@@ -1671,8 +1671,11 @@ export function Fiche({ idu }: { idu: string }) {
                 <ProjetButton idu={idu} />
               </div>
               {/* RECETTE-7 (B4) — une respiration entre la rangée + CRM / + Projet et la grille
-                  des 6 boutons (elles se touchaient). */}
-              <div aria-hidden style={{ height: 10 }} />
+                  des 6 boutons (elles se touchaient).
+                  RECETTE-9 T7 — 10 px restait trop faible (les deux rangées paraissaient collées) :
+                  on double franchement la respiration + un filet de séparation discret pour marquer
+                  que « + CRM / + Projet » (suivi) et les 6 documents/outils sont deux familles. */}
+              <div aria-hidden style={{ height: 24, marginTop: 8, borderTop: '.5px solid #1E2A23' }} />
               {/* M55-L point 8 — BARRE D'ACTIONS sur une GRILLE 4×2 (décision Vic).
                   Ligne 1 : PDF · Dossier · Finance · Cadastre. Ligne 2 : 1950 · Maps · Courrier ·
                   Pré-dossier PC. M137-F : Pré-dossier PC RENTRE dans la grille (4e case de la 2e

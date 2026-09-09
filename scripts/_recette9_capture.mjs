@@ -52,6 +52,21 @@ if (recette === 't1') {
   await shot('T1-questionnaire-retour-etape1-saisie-conservee')
 }
 
+if (recette === 't7') {
+  await openFiche(idu)
+  // cadre les actions + la grille des 6 boutons (bas du tiroir)
+  const actions = page.locator('.actions').first()
+  await actions.scrollIntoViewIfNeeded()
+  await page.waitForTimeout(500)
+  // capture rognée autour de la zone boutons
+  const box = await actions.boundingBox()
+  if (box) {
+    await page.screenshot({ path: `${OUT}${process.env.SHOT || 'T7-boutons'}.png`,
+      clip: { x: box.x - 8, y: box.y - 8, width: box.width + 16, height: 210 } })
+    console.log('CAPTURE', `${OUT}${process.env.SHOT || 'T7-boutons'}.png`)
+  }
+}
+
 if (recette === 't6') {
   await openFiche(idu)
   // ouvre « Remonter le temps » depuis la fiche
