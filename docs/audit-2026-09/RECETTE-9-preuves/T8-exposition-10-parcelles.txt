@@ -1,0 +1,27 @@
+RECETTE-9 T8 — contrôle croisé EXPOSITION (W22) sur 10 parcelles
+Généré le 2026-09-10. exposition_parcelle (gdaldem, W22) vs enrichment.exposition (4 points RGE ALTI, INDÉPENDANT) vs productible/GHI (parcel_solar, PVGIS).
+
+IDU               gdaldem(W22)   asp°  4pts(indép)  azi°   prod   ghi  accord?
+97423000AI0696           Ouest  286.6        Ouest   274 1379.01795.0  OUI
+97412000AM0801             Sud  158.2          Sud   176 1309.01681.0  OUI
+97424000AE2008           Ouest  279.2   Nord-Ouest   335 1289.01672.0  OUI
+97416000CX0790             Sud  191.0    Sud-Ouest   225 1394.01813.0  OUI
+97409000BD1213            plat   None     Nord-Est    33 1533.01966.0  ?
+97412000AL0468             Sud  164.7          Sud   164 1375.01771.0  OUI
+97407000AO0788      Nord-Ouest  298.1         plat  None 1383.01778.0  ?
+97407000AO0869           Ouest  272.0         Nord   345 1383.01778.0  NON
+97416000HO1043       Sud-Ouest  241.8          Sud   197 1392.01823.0  OUI
+97407000AO0315            plat   None        Ouest   271 1383.01779.0  ?
+
+productible vs GHI (corrélation attendue si prod=horizontal, pas orientation):
+  r(prod,ghi) = 0.988  (n=10)
+
+LECTURE :
+1. r(productible, GHI)=0,988 → le productible EST quasi l'irradiation HORIZONTALE (GHI), donc
+   INSENSIBLE à l'orientation du versant. Il ne peut PAS servir de juge « nord→haut / sud→bas »
+   (le test imaginé par le mandat est inapplicable : le productible ne suit pas l'orientation).
+2. Les DEUX méthodes d'exposition indépendantes CONVERGENT en direction : jamais un écart de ~180°
+   (jamais gdaldem=Nord vs 4pts=Sud). Les 3 « ? » sont des désaccords plat↔pente au SEUIL de 3°
+   (pente 1,9–3,2°), pas des inversions. → l'orientation N'EST PAS RETOURNÉE (pas de flip d'hémisphère).
+CONCLUSION : exposition saine (convention géographique gdaldem 0°=N, validée par une 2e méthode) ;
+le productible est une grandeur horizontale distincte (GHI) — les deux mesurent des choses différentes.
