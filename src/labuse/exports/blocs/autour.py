@@ -55,11 +55,10 @@ def rendu(valeurs) -> str:
     items = val(valeurs, "equipements_proximite_liste") or []
     if items:
         cnt = Counter(it.get("cat") for it in items if isinstance(it, dict) and it.get("cat"))
-        # RECETTE-7 (E9) — l'accord singulier/pluriel : « 1 commerce », « 3 commerces » (les
-        # catégories sont stockées au pluriel ; on retire le « s » quand n vaut 1).
-        def _accord(cat: str, n: int) -> str:
-            lib = cat.lower()
-            return f"{n} {lib[:-1] if (n <= 1 and lib.endswith('s')) else lib}"
+        # RECETTE-9 T3 — on appelle le `_accord` de MODULE (table explicite singulier/pluriel), plus
+        # de règle naïve locale. La règle `lib[:-1]` mangeait le « s » de « bus » (invariable) → « 1 bu ».
+        # Le bug W14 : le correctif avait été posé sur la fonction de module, mais `rendu()` gardait sa
+        # propre version imbriquée qui l'ombrait — jamais appelée. Suppression de l'ombre.
         resume = ", ".join(_accord(cat, n) for cat, n in cnt.most_common())
         lignes.append(ligne_kv("Équipements à proximité", esc(resume), chip_span("s", "sourcé")))
     if lignes:

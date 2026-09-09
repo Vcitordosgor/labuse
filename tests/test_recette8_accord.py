@@ -37,6 +37,54 @@ def test_commerces_singularise_bien():
     assert _accord("Commerces", 3) == "3 commerces"
 
 
+# ── RECETTE-9 T3 — l'accord au NIVEAU DU RENDU (le bug W14 vivait dans un `_accord` imbriqué de
+#    `rendu()` qui ombrait la fonction de module ; le test W14 testait la fonction de module, restait
+#    vert, et « 1 bu » sortait quand même au PDF). On teste désormais la chaîne réelle. ─────────────
+
+def _V(valeur):
+    from labuse.registre.valeur import Valeur
+    return Valeur(valeur=valeur, chiffre_id="x", version_def="v1", run=None)
+
+
+def _rendu_equip(counts: dict[str, int]) -> str:
+    """Rend le bloc « 7. Autour » avec `counts` équipements par catégorie et lit le HTML produit."""
+    from labuse.exports.blocs.autour import rendu
+    items = []
+    for cat, n in counts.items():
+        for i in range(n):
+            items.append({"cat": cat, "nom": f"{cat} {i}", "distance_m": 100})
+    valeurs = {
+        "iris_quartier": _V({"nom": "Test", "habitants": 1000, "menages": 400}),
+        "equipements_proximite_liste": _V(items),
+    }
+    return rendu(valeurs)
+
+
+def test_rendu_bus_1_ne_donne_jamais_1_bu():
+    html = _rendu_equip({"Bus": 1})
+    assert "1 arrêt de bus" in html
+    assert "1 bu," not in html and "1 bu<" not in html and "1 bu " not in html
+
+
+def test_rendu_chaque_compteur_a_0_1_2():
+    from labuse.exports.blocs.autour import _EQUIP_ACCORD
+    html_vide = _rendu_equip({})
+    for cat, (sing, plur) in _EQUIP_ACCORD.items():
+        # n=0 : la catégorie n'apparaît pas du tout (jamais « 0 bus »)
+        assert sing not in html_vide and plur not in html_vide
+        # n=1 : singulier ; n=2 : pluriel — dans la chaîne réelle de rendu
+        assert f"1 {sing}" in _rendu_equip({cat: 1}), f"{cat} n=1 doit dire « 1 {sing} »"
+        assert f"2 {plur}" in _rendu_equip({cat: 2}), f"{cat} n=2 doit dire « 2 {plur} »"
+
+
+def test_rendu_ligne_complete_mixte():
+    # « 1 école, 1 commerce, 1 service de santé, 1 arrêt de bus » — le constat exact de la recette
+    html = _rendu_equip({"École": 1, "Commerces": 1, "Santé": 1, "Bus": 1})
+    for attendu in ("1 école", "1 commerce", "1 service de santé", "1 arrêt de bus"):
+        assert attendu in html
+    assert "1 bu," not in html and "1 bu<" not in html
+
+
 # ── RECETTE-8 W13bis (C3) — le calcul de marge « Revente en l'état » ──────────────────────────
 
 def test_calculer_revente_marge_et_taux():
