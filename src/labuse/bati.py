@@ -194,13 +194,24 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
     surface_libre = (max(0, round(surface - emprise)) if surface is not None else None)
     from . import solaire_toiture
     toit = solaire_toiture.toiture_depuis_cache(session, idu)
+    # RECETTE-9 T9 — POINT UNIQUE de la hauteur : quand le LiDAR HD a été mesuré sur cette parcelle,
+    # la hauteur passe d'`estimé` (BD TOPO déclaré) à `sourcé` (faîtage ET égout MESURÉS). Sinon repli
+    # BD TOPO. L'égout (bord de toit) — que BD TOPO ne donne pas — est servi à part (décide la surélévation).
+    from .faisabilite.hauteur_lidar import hauteur_lidar_servie
+    lid = hauteur_lidar_servie(session, idu)
+    hauteur_bati = (lid["faitage_m"] if lid else (round(float(hauteur), 1) if hauteur is not None else None))
     return {
         "disponible": True,
         "code": bloc.get("code"), "occupation_label": bloc.get("label"),
         "emprise_batie_m2": emprise_m2, "emprise_source": "BD TOPO IGN",
         "cosia_detecte_m2": cosia_m2,   # None sauf sur-détection CoSIA hors BD TOPO (dit à part)
         "nb_batiments": nb,
-        "hauteur_bati_m": round(float(hauteur), 1) if hauteur is not None else None,
+        "hauteur_bati_m": hauteur_bati,
+        # RECETTE-9 T9 — faîtage/égout MESURÉS + nature (« sourcé » LiDAR / « estimé » BD TOPO).
+        "hauteur_faitage_m": (lid["faitage_m"] if lid else None),
+        "hauteur_egout_m": (lid["egout_m"] if lid else None),
+        "hauteur_nature": ("sourcé" if lid else ("estimé" if hauteur is not None else None)),
+        "hauteur_source": (lid["source"] if lid else ("BD TOPO® (hauteur déclarée)" if hauteur is not None else None)),
         "surface_libre_m2": surface_libre,
         "surface_parcelle_m2": round(surface) if surface is not None else None,
         "toit": toit,          # None = toit non encore relevé (LiDAR non chauffé), sinon 3 états U5

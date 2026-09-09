@@ -101,3 +101,91 @@ def hauteur_parcelle_lidar(db, parcel_id: int) -> dict | None:
             "hauteur_bdtopo_m": (round(float(hb), 1) if hb is not None else None),
             "ecart_faitage_bdtopo_m": (round(h["faitage_m"] - float(hb), 1) if hb is not None else None),
             **h}
+
+
+# ── RECETTE-9 T9 — ingestion BORNÉE + point unique de branchement des 4 consommateurs ────────────
+#: table de MESURES LiDAR précalculées (ingestion bornée, sous go, jamais l'île en aveugle). Le point
+#: de branchement lit ICI : une parcelle présente ⇒ sa hauteur passe d'`estimé` (BD TOPO déclaré) à
+#: `sourcé` (LiDAR HD mesuré, faîtage ET égout distincts).
+_DDL = """
+CREATE TABLE IF NOT EXISTS batiment_hauteur_lidar (
+  idu varchar(20) PRIMARY KEY,
+  faitage_m real, egout_m real, hauteur_bdtopo_m real,
+  ecart_faitage_bdtopo_m real, n_cellules int,
+  mesure_le timestamptz NOT NULL DEFAULT now()
+);
+"""
+
+
+def ensure_table(db) -> None:
+    from sqlalchemy import text
+    for stmt in _DDL.split(";"):
+        if stmt.strip():
+            db.execute(text(stmt))
+
+
+def ingest_hauteur_lidar(db, idu: str) -> dict | None:
+    """Mesure le LiDAR d'UNE parcelle et l'écrit dans `batiment_hauteur_lidar` (ingestion bornée T9,
+    idempotente par idu). Rend la mesure (ou None si pas de bâti / échec)."""
+    from sqlalchemy import text
+    ensure_table(db)
+    pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    if pid is None:
+        return None
+    m = hauteur_parcelle_lidar(db, int(pid))
+    if not m or m.get("faitage_m") is None:
+        return m
+    db.execute(text(
+        "INSERT INTO batiment_hauteur_lidar (idu, faitage_m, egout_m, hauteur_bdtopo_m, "
+        "ecart_faitage_bdtopo_m, n_cellules, mesure_le) VALUES (:i, :f, :e, :b, :ec, :n, now()) "
+        "ON CONFLICT (idu) DO UPDATE SET faitage_m=EXCLUDED.faitage_m, egout_m=EXCLUDED.egout_m, "
+        "hauteur_bdtopo_m=EXCLUDED.hauteur_bdtopo_m, ecart_faitage_bdtopo_m=EXCLUDED.ecart_faitage_bdtopo_m, "
+        "n_cellules=EXCLUDED.n_cellules, mesure_le=now()"),
+        {"i": idu, "f": m.get("faitage_m"), "e": m.get("egout_m"), "b": m.get("hauteur_bdtopo_m"),
+         "ec": m.get("ecart_faitage_bdtopo_m"), "n": m.get("n_cellules")})
+    return m
+
+
+def hauteur_lidar_servie(db, idu: str) -> dict | None:
+    """La mesure LiDAR PRÉCALCULÉE de la parcelle (table `batiment_hauteur_lidar`), ou None. Lecture
+    seule et SANS réseau — c'est ce que lisent les consommateurs (fiche, Apporteur, Dossier, 3D)."""
+    from sqlalchemy import text
+    try:
+        row = db.execute(text(
+            "SELECT faitage_m, egout_m, hauteur_bdtopo_m, ecart_faitage_bdtopo_m, n_cellules "
+            "FROM batiment_hauteur_lidar WHERE idu = :i"), {"i": idu}).mappings().first()
+    except Exception:  # noqa: BLE001 — table absente (pas encore d'ingestion) → repli BD TOPO
+        try:
+            db.rollback()
+        except Exception:  # noqa: BLE001 — session mock / déjà close : le repli reste None
+            pass
+        return None
+    if not row or row["faitage_m"] is None:
+        return None
+    return {"faitage_m": round(float(row["faitage_m"]), 1),
+            "egout_m": round(float(row["egout_m"]), 1) if row["egout_m"] is not None else None,
+            "hauteur_bdtopo_m": (round(float(row["hauteur_bdtopo_m"]), 1)
+                                 if row["hauteur_bdtopo_m"] is not None else None),
+            "ecart_faitage_bdtopo_m": row["ecart_faitage_bdtopo_m"],
+            "n_cellules": row["n_cellules"], "source": "LiDAR HD MNS (IGN), mesuré"}
+
+
+def hauteur_batie(db, idu: str) -> dict | None:
+    """POINT UNIQUE (T9) de la hauteur du bâti servie aux 4 consommateurs. Préfère la mesure LiDAR
+    (faîtage + égout distincts, nature « sourcé ») ; à défaut la hauteur BD TOPO déclarée (« estimé »).
+    None si aucune. L'ÉGOUT — que BD TOPO ne donne jamais — est la hauteur qui décide de la
+    surélévation (règle à l'égout, cause de fond de E1)."""
+    from sqlalchemy import text
+    lid = hauteur_lidar_servie(db, idu)
+    if lid:
+        return {"hauteur_m": lid["faitage_m"], "faitage_m": lid["faitage_m"], "egout_m": lid["egout_m"],
+                "nature": "sourcé", "source": lid["source"]}
+    hb = db.execute(text(
+        """SELECT NULLIF(b.attrs->>'hauteur','')::float h
+           FROM spatial_layers b JOIN parcels p ON p.idu = :i
+           WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975)
+           ORDER BY ST_Area(b.geom_2975) DESC LIMIT 1"""), {"i": idu}).scalar()
+    if hb is None:
+        return None
+    return {"hauteur_m": round(float(hb), 1), "faitage_m": None, "egout_m": None,
+            "nature": "estimé", "source": "BD TOPO® (hauteur déclarée)"}

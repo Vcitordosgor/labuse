@@ -4854,6 +4854,25 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
     else:
         niveau, libelle = "nul", "Densité autorisée atteinte ou dépassée"
     sur = sur or {}
+    # RECETTE-9 T9 — le scénario de surélévation branché sur le LiDAR : la surélévation se décide à
+    # l'ÉGOUT (bord de toit) vs la règle d'égout (cause de fond de E1). Le bâti BD TOPO est un faîtage
+    # incertain ; quand le LiDAR HD a MESURÉ l'égout de cette parcelle, on l'utilise → la marge devient
+    # une MESURE (« 3,4 m disponibles » cesse d'être une soustraction sur une estimation), nature « sourcé ».
+    h_bati = sur.get("hauteur_bati_m")
+    h_regle = sur.get("hauteur_regle_m")
+    h_marge = sur.get("marge_m")
+    h_possible = sur.get("possible")
+    h_nature = "estimé"
+    h_lidar_source = None
+    from ..faisabilite.hauteur_lidar import hauteur_lidar_servie
+    _lid = hauteur_lidar_servie(db, idu)
+    if _lid and _lid.get("egout_m") is not None:
+        h_bati = _lid["egout_m"]                              # l'ÉGOUT MESURÉ (E1 : égout vs règle d'égout)
+        h_nature = "sourcé"
+        h_lidar_source = _lid["source"]
+        if h_regle is not None:
+            h_marge = round(h_regle - h_bati, 1)
+            h_possible = h_marge > 0
     return {
         "niveau": niveau, "libelle": libelle,
         "pct_consomme": pct,                                  # SDP consommée / autorisée (%)
@@ -4864,12 +4883,20 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
         "capacite_estimee": row["capacite_estimee"],
         # EXPORTS-1 (3.2) : surélévation au MOTEUR COMMUN — hauteur à l'ÉGOUT, base dite
         # (repli faîtage seulement si l'égout n'est pas calibré, avec avertissement).
-        "surelevation_possible": sur.get("possible"),
-        "hauteur_bati_m": sur.get("hauteur_bati_m"), "hauteur_regle_m": sur.get("hauteur_regle_m"),
-        "hauteur_base": sur.get("base"), "hauteur_marge_m": sur.get("marge_m"),
+        "surelevation_possible": h_possible,
+        "hauteur_bati_m": h_bati, "hauteur_regle_m": h_regle,
+        "hauteur_base": ("égout mesuré (LiDAR HD)" if _lid and _lid.get("egout_m") is not None else sur.get("base")),
+        "hauteur_marge_m": h_marge,
+        # RECETTE-9 T9 — nature de la hauteur du bâti servie au scénario (« sourcé » LiDAR / « estimé » BD TOPO).
+        "hauteur_nature": h_nature,
+        "hauteur_faitage_lidar_m": (_lid["faitage_m"] if _lid else None),
+        "hauteur_egout_lidar_m": (_lid["egout_m"] if _lid else None),
+        "hauteur_source_lidar": h_lidar_source,
         "avertissement_surelevation": sur.get("avertissement"),
         "source": "Ratio SDP consommée/autorisée (bloc D du modèle P) + surélévation au moteur "
-                  "commun (règles PLU calibrées × bâti BD TOPO, hauteur à l'égout)",
+                  "commun (règles PLU calibrées × bâti "
+                  + ("LiDAR HD, hauteur à l'égout MESURÉE)" if h_nature == "sourcé"
+                     else "BD TOPO, hauteur à l'égout)"),
         "note": "Remplace l'ancien mode carte « Mutabilité » : même donnée résiduelle, "
                 "à la parcelle, complétée du signal surélévation.",
     }
@@ -5398,17 +5425,28 @@ def map_batiments_geojson(bbox: str = Query(..., description="minLon,minLat,maxL
         xmin, ymin, xmax, ymax = (float(x) for x in bbox.split(","))
     except Exception:
         raise HTTPException(422, "bbox invalide (attendu : minLon,minLat,maxLon,maxLat)")
-    fc = db.execute(text("""
+    # RECETTE-9 T9 — l'extrusion préfère le FAÎTAGE LiDAR MESURÉ (sourcé) quand la parcelle du bâtiment
+    # a été ingérée (table `batiment_hauteur_lidar`), sinon la hauteur BD TOPO déclarée (estimé). Le flag
+    # `lidar` par bâtiment permet au front de distinguer mesuré/estimé. Join borné (table bornée).
+    _lid_ok = bool(db.execute(text("SELECT to_regclass('batiment_hauteur_lidar')")).scalar())
+    _h_expr = ("round(COALESCE(hl.faitage_m::numeric, (attrs->>'hauteur')::numeric), 1)"
+               if _lid_ok else "round((attrs->>'hauteur')::numeric, 1)")
+    _lid_col = "(hl.faitage_m IS NOT NULL)" if _lid_ok else "false"
+    _lid_join = ("""LEFT JOIN LATERAL (
+            SELECT bhl.faitage_m FROM parcels p JOIN batiment_hauteur_lidar bhl ON bhl.idu = p.idu
+            WHERE ST_Intersects(p.geom_2975, sl.geom_2975) LIMIT 1) hl ON true""" if _lid_ok else "")
+    fc = db.execute(text(f"""
       SELECT jsonb_build_object('type','FeatureCollection','features',
         COALESCE(jsonb_agg(jsonb_build_object(
           'type','Feature',
           'geometry', ST_AsGeoJSON(b.geom, 6)::jsonb,
-          'properties', jsonb_build_object('h', b.h)
+          'properties', jsonb_build_object('h', b.h, 'lidar', b.lidar)
         )), '[]'::jsonb))
       FROM (
-        SELECT geom, round((attrs->>'hauteur')::numeric, 1) AS h FROM spatial_layers
-        WHERE kind = 'batiment' AND (attrs->>'hauteur') IS NOT NULL
-          AND geom && ST_MakeEnvelope(:xmin, :ymin, :xmax, :ymax, 4326)
+        SELECT sl.geom, {_h_expr} AS h, {_lid_col} AS lidar FROM spatial_layers sl
+        {_lid_join}
+        WHERE sl.kind = 'batiment' AND (sl.attrs->>'hauteur') IS NOT NULL
+          AND sl.geom && ST_MakeEnvelope(:xmin, :ymin, :xmax, :ymax, 4326)
         LIMIT 8000
       ) b
     """), {"xmin": xmin, "ymin": ymin, "xmax": xmax, "ymax": ymax}).scalar()

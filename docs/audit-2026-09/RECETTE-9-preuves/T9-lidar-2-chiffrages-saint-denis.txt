@@ -1,0 +1,19 @@
+
+=== Saint-Denis — 39 bâtiments mesurés (LiDAR HD MNS−MNT vs BD TOPO) ===
+
+CHIFFRAGE A — la PRÉCISION du faîtage (LiDAR vs la hauteur BD TOPO déclarée) :
+  écart médian faîtage−BD TOPO      : +0.67 m
+  écart ABSOLU médian |faîtage−BDT| : 1.10 m
+  part |écart| ≤ 1 m                : 41 %
+  → si petit : la BD TOPO donne DÉJÀ un faîtage proche ; le LiDAR ajoute peu de précision.
+
+CHIFFRAGE B — la DISTINCTION faîtage/égout (ce que BD TOPO ne donne PAS) :
+  amplitude médiane faîtage−égout   : 2.08 m   (BD TOPO l'écrase en UN nombre)
+  amplitude moyenne                 : 2.60 m  (min 0.5, max 8.0)
+  BD TOPO plus proche du FAÎTAGE    : 23/39 (59 %) — donc pas toujours un faîtage
+  écart médian BD TOPO−égout        : +1.43 m  (hauteur constructible réelle = égout, pas faîtage)
+  → l'égout (bord de toit) est LA hauteur qui décide de la surélévation (règle à l'égout,
+    cause de fond de E1). BD TOPO ne le donne jamais ; le LiDAR, oui. C'est LÀ sa valeur.
+
+VERDICT (chiffré) : A = 1.10 m d'écart absolu médian sur le faîtage (précision modeste) ;
+                    B = 2.08 m d'amplitude faîtage/égout que BD TOPO masque + égout jamais fourni par BD TOPO.

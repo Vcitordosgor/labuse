@@ -52,6 +52,23 @@ if (recette === 't1') {
   await shot('T1-questionnaire-retour-etape1-saisie-conservee')
 }
 
+if (recette === 't9') {
+  await openFiche(idu)
+  // ouvre le tiroir « Le bien » (LiDAR HD mesuré)
+  const tiroir = page.locator('text=/Le bien/i').first()
+  await tiroir.click().catch(() => {})
+  await page.waitForSelector('[data-le-bien]', { timeout: 8000 }).catch(() => {})
+  await page.waitForTimeout(800)
+  const el = page.locator('[data-le-bien]').first()
+  try {
+    const box = await el.boundingBox()
+    if (box) await page.screenshot({ path: `${OUT}T9-fiche-le-bien-lidar.png`,
+      clip: { x: Math.max(0, box.x - 8), y: Math.max(0, box.y - 40), width: box.width + 16, height: box.height + 60 } })
+    else await shot('T9-fiche-le-bien-lidar')
+  } catch { await shot('T9-fiche-le-bien-lidar') }
+  console.log('CAPTURE T9 fiche le bien')
+}
+
 if (recette === 't7') {
   await openFiche(idu)
   // cadre les actions + la grille des 6 boutons (bas du tiroir)

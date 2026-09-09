@@ -538,6 +538,11 @@ export interface LeBien {
   cosia_detecte_m2?: number | null   // CoSIA « détecté non cartographié » (dit à part), sinon null
   nb_batiments: number | null
   hauteur_bati_m: number | null
+  // RECETTE-9 T9 — faîtage/égout MESURÉS au LiDAR HD (sourcé) quand la parcelle a été ingérée.
+  hauteur_faitage_m?: number | null
+  hauteur_egout_m?: number | null
+  hauteur_nature?: 'sourcé' | 'estimé' | null
+  hauteur_source?: string | null
   surface_libre_m2: number | null
   surface_parcelle_m2: number | null
   source_bati: string
