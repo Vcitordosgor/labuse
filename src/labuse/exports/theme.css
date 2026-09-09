@@ -35,7 +35,16 @@ body {
   font-family: "Inter", "Inter", "DejaVu Sans", sans-serif;
   color: var(--ink);
   line-height: 1.45;
-  font-variant-numeric: tabular-nums;
+  /* RECETTE-6 (F2, 🔴) — le texte du PDF n'était PAS extractible (copier-coller / pdftotext /
+     lecteur d'écran) : WeasyPrint 69 ne construit pas de table ToUnicode correcte pour les glyphes
+     atteints par une SUBSTITUTION OpenType (ligatures « fi/tt », et surtout les chiffres TABULAIRES
+     `tnum`) → dates et prix ressortaient en caractères parasites (« 09/09/2026 » illisible), les
+     ligatures cassaient les mots (« Conﬁdentiel »). L'IDU en mono s'extrayait bien, lui, faute de
+     variante tabulaire. On DÉSACTIVE ligatures et chiffres tabulaires : les glyphes de la cmap de
+     base portent, eux, un ToUnicode juste. Correctif à la feuille partagée → vaut pour les 5 docs. */
+  font-variant-ligatures: none;
+  font-variant-numeric: normal;
+  font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0, "tnum" 0, "onum" 0, "lnum" 0;
   margin: 0;
 }
 .doc-title { string-set: doc-title content(); }
@@ -91,7 +100,7 @@ table.kv th { text-align: left; font-weight: 600; font-size: 8.5pt; color: var(-
 table.kv td.k { width: 36%; color: var(--muted); }
 table.kv td.n { width: 60pt; text-align: right; padding-right: 0; }
 table.kv tr { page-break-inside: avoid; }
-table.kv td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.kv td.num { text-align: right; }  /* RECETTE-6 (F2) — chiffres tabulaires retirés (ToUnicode) */
 
 /* nature de la donnée */
 .chip { display: inline-block; font-size: 7.5pt; line-height: 1; padding: 3pt 5pt; border-radius: 2pt; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }

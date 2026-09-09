@@ -212,9 +212,13 @@ def rendu(valeurs, ctx=None) -> str:
         emis = (f'<p class="emis">Émis le {esc(ctx["emission"])}'
                 + (f" — valable 90 jours (jusqu'au {esc(ctx['validite'])})" if ctx.get("validite") else "")
                 + '</p>')
+    # RECETTE-6 (F1) — le titre SUIT le contenu : un terrain nu se « sonde », un bien déjà bâti aussi
+    # mais on ne l'appelle pas « terrain ». Le brief adaptait déjà ses questions (bâti / PM / industriel)
+    # mais gardait un titre « terrain » démenti par la ligne « 2 bâtiments · 151 m² au sol ».
+    titre = "Un bien bâti à sonder" if is_bati else "Un terrain à sonder"
     h = ('<div class="brand"><span class="wordmark">LABUSE</span>'
          '<span class="kind">Brief apporteur</span></div>'
-         '<h1>Un terrain à sonder</h1>'
+         + f'<h1>{esc(titre)}</h1>'
          + (f'<p class="address">{esc(adresse)}</p>' if adresse else "")
          + f'<p class="idu">{esc(idu)}</p>'
          + emis)

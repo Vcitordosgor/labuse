@@ -40,6 +40,23 @@ def test_e5_un_seul_usage_servi_les_autres_grises_avec_raison():
             assert u.get("raison"), f"usage grisé sans raison : {u['key']}"
 
 
+# ── F1 : le titre de l'apporteur suit le contenu (bâti / nu) ────────────────────────────────────
+def test_f1_titre_apporteur_suit_le_contenu():
+    from labuse.exports.blocs import apporteur
+    nu = apporteur.rendu({}, {"idu": "X", "is_bati": False})
+    bati = apporteur.rendu({}, {"idu": "X", "is_bati": True})
+    assert "<h1>Un terrain à sonder</h1>" in nu
+    assert "<h1>Un bien bâti à sonder</h1>" in bati
+
+
+# ── F2 (🔴) : la feuille des documents ne réactive plus les substitutions qui cassent le ToUnicode ──
+def test_f2_pas_de_ligatures_ni_chiffres_tabulaires():
+    css = (RACINE / "exports" / "theme.css").read_text(encoding="utf-8")
+    assert "font-variant-ligatures: none" in css
+    # plus AUCUN `tabular-nums` (c'est lui qui rendait dates et prix inextractibles).
+    assert "tabular-nums" not in css
+
+
 # ── G2 : ST_Union partout (plus de double-compte de l'emprise bâtie) ────────────────────────────
 def test_g2_lecteurs_emprise_posent_st_union():
     fichiers = [
