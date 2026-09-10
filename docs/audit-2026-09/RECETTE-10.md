@@ -398,6 +398,24 @@ prioriser, et que le reste est consultable. **Preuve — artefact final** : SQL 
 
 ---
 
+## T10 — Rendre le LiDAR visible — FAIT
+
+Une page dédiée : **`docs/audit-2026-09/OU-VOIR-LE-LIDAR.md`** — **où** la donnée apparaît (fiche
+parcelle « Le bien », fiche Constructibilité, Dossier §3, Apporteur, extrusion 3D), **ce qu'elle dit de
+plus** (faîtage ET égout distingués, mesurés au lieu d'estimés) et **ce qu'elle change** (le scénario
+de surélévation T1, l'étiquette de nature « sourcé »). Une capture par endroit :
+
+- `captures-recette-10/T10-fiche-le-bien-lidar.png` — fiche « Le bien » : « **6,9 m au faîtage · 3,0 m
+  à l'égout — LiDAR HD (mesuré)** » (pastille sourcé).
+- `captures-recette-10/T1-dossier-EL0157.pdf` (§3) — le Dossier : « Surélévation possible — **3,1 m
+  disponibles, limité par le faîtage** (mesuré LiDAR HD) », les deux contraintes montrées.
+- `captures-recette-10/T1-fiche-surelevation.png` — la fiche (même parcelle, LiDAR en tête).
+
+Point unique : `hauteur_lidar.hauteur_batie` / `hauteur_lidar_servie` (les 4 consommateurs) ; garde
+d'étiquette airtight (T9).
+
+---
+
 ## Suite de tests
 
 - Python ciblé : `test_recette10_financier` (8), `test_recette10_backtest` (2), `regles/test_surelevation`
