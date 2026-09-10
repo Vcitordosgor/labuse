@@ -104,10 +104,27 @@ const statusLineExpr = (clair: boolean): maplibregl.ExpressionSpecification => !
 ] as unknown as maplibregl.ExpressionSpecification
 // liseré des promues : pipeline v2 (brûlante/chaude, hors étage 0). M48 (F4) : la branche de repli
 // `status` (matrice morte) est retirée — le liseré suit le tier v2 servi.
+// PALIERS-1 — les DEUX vocabulaires : servi (brulante/chaude) + q_v14 (priorite/a_suivre)
+const PROMUES_TIERS = ['brulante', 'chaude', 'priorite', 'a_suivre']
 const PROMUES_FILTER: maplibregl.FilterSpecification = [
-  // PALIERS-1 — les DEUX vocabulaires : servi (brulante/chaude) + q_v14 (priorite/a_suivre)
-  'all', ['in', TIER_V2, ['literal', ['brulante', 'chaude', 'priorite', 'a_suivre']]], ['!', ETAGE0],
+  'all', ['in', TIER_V2, ['literal', PROMUES_TIERS]], ['!', ETAGE0],
 ] as unknown as maplibregl.FilterSpecification
+// RECETTE-12 B1 — les NON-promues (« Sans signal » + « Écartée » + étage 0 + déclassements) :
+// étage 0, ou un tier hors des quatre promus. Elles ne sont plus PEINTES en mode analyse (voir
+// `opinionOpacityExpr`) — un aplat gris pour 50 000 parcelles noyait les 212 qui comptent — mais
+// gardent un CONTOUR discret qui n'apparaît qu'au zoom (couches `parcels-muet`/`ile-muet`, minzoom).
+const NON_PROMUES_FILTER: maplibregl.FilterSpecification = [
+  'any', ETAGE0, ['!', ['in', TIER_V2, ['literal', PROMUES_TIERS]]],
+] as unknown as maplibregl.FilterSpecification
+// RECETTE-12 B1 (révise l'arbitrage RECETTE-2 S11 « opacité uniforme ») — en mode ANALYSE, SEULES
+// Priorité et À suivre sont peintes ; tout le reste a une opacité NULLE (aucun remplissage). Le fondu
+// R5 au zoom sur photo est conservé pour les promues. Rendu du même patron `case` que STATUS_OPACITY.
+const opinionOpacityExpr = (photo: boolean): maplibregl.ExpressionSpecification => ([
+  'case',
+  ['all', ['!', ETAGE0], ['in', TIER_V2, ['literal', PROMUES_TIERS]]],
+  photoFade(OPINION_OPACITY, photo),
+  0,
+] as unknown as maplibregl.ExpressionSpecification)
 
 // M6.1 item 1 — couche « Zonage PLU (parcelles) » : le REMPLISSAGE passe en couleur par
 // famille (palette ZONE_FAM_META, distincte du verdict v2). Hors zonage GPU (zone_fam
@@ -1178,6 +1195,11 @@ export function MapView() {
       m.addLayer({ id: 'parcels-limites', type: 'line', source: 'parcels', layout: { visibility: 'none' },
         paint: { 'line-color': '#8FA69A', 'line-width': 0.3, 'line-opacity': 0.4 } })
       m.addLayer({ id: 'parcels-line', type: 'line', source: 'parcels', filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
+      // RECETTE-12 B1 — contour DISCRET des non-promues (Sans signal/Écartée), en mode analyse
+      // SEULEMENT et au ZOOM SEULEMENT (minzoom) : elles ne sont plus peintes (aucun aplat gris), mais
+      // le lecteur qui zoome voit qu'elles existent et les sélectionne. Masqué par défaut (effet mode).
+      m.addLayer({ id: 'parcels-muet', type: 'line', source: 'parcels', minzoom: 15, filter: NON_PROMUES_FILTER,
+        layout: { visibility: 'none' }, paint: { 'line-color': '#5F7267', 'line-width': 0.3, 'line-opacity': 0.5 } })
       m.addLayer({ id: 'parcels-sel', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
       // RECETTE-6 (A3) — BÂTI 3D : extrusion de l'empreinte au sol à sa hauteur BD TOPO (la même que
       // l'Apporteur). Posée sur le relief (setTerrain → l'extrusion part du sol du MNT, jamais d'un
@@ -1250,6 +1272,9 @@ export function MapView() {
         paint: { 'line-color': '#8FA69A', 'line-width': 0.3, 'line-opacity': 0.4 } })
       m.addLayer({ id: 'ile-line', type: 'line', ...SL, layout: { visibility: 'none' },
         filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
+      // RECETTE-12 B1 — jumeau île du contour discret des non-promues (minzoom, mode analyse seul)
+      m.addLayer({ id: 'ile-muet', type: 'line', ...SL, minzoom: 15, filter: NON_PROMUES_FILTER,
+        layout: { visibility: 'none' }, paint: { 'line-color': '#5F7267', 'line-width': 0.3, 'line-opacity': 0.5 } })
       m.addLayer({ id: 'ile-sel', type: 'line', ...SL, layout: { visibility: 'none' },
         filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
       // M15 A1 : couche de PICKING de l'outil Assemblage — contours de TOUTES les parcelles,
@@ -1756,9 +1781,9 @@ export function MapView() {
     // M55-G point 8 : seulement en mode OPINION — le mode factuel garde sa surbrillance neutre
     const photo = basemap === 'plan' || basemap === 'ortho'   // RETOURS-11 R5 — gate fondu photo
     if (m.getLayer('parcels-fill') && !zonageFill && opinion) {
-      // RECETTE-2 (S11) — opacité UNIFORME en mode analyse (plus de voile : STATUS_OPACITY estompait
-      // les écartées à 0,04). Le palier est porté par la couleur. Fondu R5 au zoom sur photo conservé.
-      const op = photoFade(OPINION_OPACITY, photo)
+      // RECETTE-12 B1 (révise RECETTE-2 S11) — SEULES Priorité et À suivre sont peintes ; les non-
+      // promues (Sans signal/Écartée) ont une opacité NULLE (aucun aplat gris). Fondu R5 conservé.
+      const op = opinionOpacityExpr(photo)
       m.setPaintProperty('parcels-fill', 'fill-opacity', op)
       m.setPaintProperty('ile-fill', 'fill-opacity', op)
     }
@@ -1924,10 +1949,11 @@ export function MapView() {
         m.setPaintProperty(fill, 'fill-color', ZONE_FAM_COLOR)
         m.setPaintProperty(fill, 'fill-opacity', photo ? photoFade(0.62, photo) : ZONE_FAM_OPACITY)
       } else if (opinion) {
-        // RECETTE-2 (S11) — opacité UNIFORME en mode analyse (fini le voile gris des écartées) ;
-        // le palier reste porté par la couleur (STATUS_COLOR). Fondu R5 conservé sur photo.
+        // RECETTE-12 B1 (révise RECETTE-2 S11) — SEULES Priorité et À suivre sont peintes ; les non-
+        // promues ont une opacité NULLE (plus d'aplat gris pour 50 000 parcelles). Le palier reste
+        // porté par la couleur (STATUS_COLOR). Fondu R5 conservé sur photo pour les promues.
         m.setPaintProperty(fill, 'fill-color', STATUS_COLOR)
-        m.setPaintProperty(fill, 'fill-opacity', photoFade(OPINION_OPACITY, photo))
+        m.setPaintProperty(fill, 'fill-opacity', opinionOpacityExpr(photo))
       } else {
         // RECETTE-5 (V1, décision Vic) — plus de VOILE GRIS sur le chemin factuel. Le tri factuel
         // (« Voir les parcelles », verdict=true & analyse OFF) partageait la surbrillance grise
@@ -1956,6 +1982,10 @@ export function MapView() {
     m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile && opinion))
     m.setFilter('parcels-line', ['all', PROMUES_FILTER, exprPalette] as maplibregl.FilterSpecification)
     m.setFilter('ile-line', ['all', PROMUES_FILTER, exprPalette] as maplibregl.FilterSpecification)
+    // RECETTE-12 B1 — contour discret des non-promues : en mode analyse, au zoom (minzoom porté par
+    // la couche). Non restreint par la palette — c'est justement « le reste » (Sans signal/Écartée).
+    if (m.getLayer('parcels-muet')) m.setLayoutProperty('parcels-muet', 'visibility', vis(layers.parcelles && !ile && opinion))
+    if (m.getLayer('ile-muet')) m.setLayoutProperty('ile-muet', 'visibility', vis(layers.parcelles && ile && opinion))
     // M5.1 : liseré brûlantes v2 — opinion allumée, mode commune (M55-F : pastille #rang retirée)
     if (m.getLayer('parcels-brulantes')) {
       m.setLayoutProperty('parcels-brulantes', 'visibility', vis(!ile && opinion))
