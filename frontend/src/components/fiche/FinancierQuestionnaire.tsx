@@ -14,6 +14,35 @@ const CARD = '#0C1410'
 const champInput = (unite: string): 'number' | 'text' => (
   ['€', '€/m²', 'm²', '%', 'logements', 'mois', 'nombre'].includes(unite) ? 'number' : 'text')
 
+// RECETTE-12 A1 — LE GARDE DU HORS-MARCHÉ, CÔTÉ CLIENT (proactif, sans dépendre du réseau).
+// RECETTE-11 posait le garde SEULEMENT côté serveur (POST …/valider) ET l'avalait sur panne
+// (`gardeBloque` : catch → false = laisse passer) → une 401/coupure ouvrait la porte à l'écran final
+// et au bouton « Ouvrir le Dossier financier ». Ici on REPRODUIT les mêmes bornes que le moteur
+// (financier_bilan._hors_marche) pour DÉSACTIVER « Continuer »/« Enregistrer », surligner le champ et
+// écrire le message SOUS le champ — immédiatement, quoi qu'il arrive au réseau. Le serveur reste la
+// défense du PDF (422). Une valeur incohérente EST INCOHÉRENTE — jamais « elle manque ».
+const MAX_PRIX_SORTIE_M2 = 20000, MAX_COUT_M2 = 8000, MAX_BAILLEUR_M2 = 12000
+const fmtEurM2 = (n: number) => `${Math.round(n).toLocaleString('fr-FR')} €/m²`
+interface HMClient { champ_id: string; ecran: number; affiner: boolean; message: string }
+function horsMarcheClient(
+  prix_sortie: number | null, cout: number | null, bailleur: number | null,
+  ecranDe: (id: string) => number, affinerDe: (id: string) => boolean,
+): HMClient | null {
+  const mk = (id: string, message: string): HMClient => (
+    { champ_id: id, ecran: ecranDe(id), affiner: affinerDe(id), message })
+  // 1) bornes absolues (probable PRIX TOTAL saisi dans un champ €/m²), MÊME ORDRE que le serveur
+  if (prix_sortie != null && prix_sortie > MAX_PRIX_SORTIE_M2)
+    return mk('prix_sortie_saisi_eur_m2', `Cette valeur (${fmtEurM2(prix_sortie)}) est incohérente : elle dépasse tout prix de marché — un prix TOTAL a probablement été saisi à la place d'un prix au m².`)
+  if (cout != null && cout > MAX_COUT_M2)
+    return mk('cout_construction_saisi_eur_m2', `Cette valeur (${fmtEurM2(cout)}) est incohérente : elle dépasse tout coût de construction au m².`)
+  if (bailleur != null && bailleur > MAX_BAILLEUR_M2)
+    return mk('prix_vente_bailleur_saisi_eur_m2', `Cette valeur (${fmtEurM2(bailleur)}) est incohérente : un prix TOTAL a probablement été saisi à la place d'un prix au m².`)
+  // 2) garde relationnelle : bailleur (vente en bloc) toujours < prix de vente libre
+  if (prix_sortie != null && bailleur != null && bailleur > prix_sortie)
+    return mk('prix_vente_bailleur_saisi_eur_m2', `Prix au bailleur (${fmtEurM2(bailleur)}) incohérent : il dépasse le prix de vente libre (${fmtEurM2(prix_sortie)}). Une vente EN BLOC à un bailleur social est toujours inférieure au prix du marché libre.`)
+  return null
+}
+
 export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose: () => void }) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['financier-questionnaire', idu],
@@ -105,6 +134,32 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
     ecrans.forEach((e, i) => e.champs.forEach((c) => { if (c.obligatoire && !rempli(c)) out.push({ c, i }) }))
     return out
   }
+
+  // RECETTE-12 A1 — état hors-marché CLIENT (proactif). Résout chaque champ (saisie sinon
+  // pré-remplissage), trouve son écran et son tri, et applique les bornes du moteur. Recalculé à
+  // chaque rendu (quelques champs — négligeable), donc réactif à la moindre correction.
+  const valNum = (id: string): number | null => {
+    const v = reponses[id]
+    if (v != null && v !== '') { const n = Number(v); return Number.isFinite(n) ? n : null }
+    for (const e of ecrans) for (const c of e.champs) if (c.id === id && c.prefill?.valeur != null) {
+      const n = Number(c.prefill.valeur); return Number.isFinite(n) ? n : null
+    }
+    return null
+  }
+  const ecranDe = (id: string): number => {
+    const i = ecrans.findIndex((e) => e.champs.some((c) => c.id === id)); return i < 0 ? 0 : i
+  }
+  const affinerDe = (id: string): boolean => {
+    for (const e of ecrans) for (const c of e.champs) if (c.id === id) return c.tri === 'affiner' && !c.obligatoire
+    return false
+  }
+  const hm = horsMarcheClient(valNum('prix_sortie_saisi_eur_m2'), valNum('cout_construction_saisi_eur_m2'),
+                              valNum('prix_vente_bailleur_saisi_eur_m2'), ecranDe, affinerDe)
+  // le champ incohérent est en « Affiner » (bailleur, part sociale…) → on OUVRE l'accordéon de son
+  // écran pour que le surlignage et le message soient visibles sans chercher.
+  useEffect(() => {
+    if (hm?.affiner) setAffinerOuvert((s) => (s[hm.ecran] ? s : { ...s, [hm.ecran]: true }))
+  }, [hm?.champ_id, hm?.ecran, hm?.affiner])
 
   const continuer = async () => {
     const m = manquantsEcran(etape)
@@ -285,8 +340,9 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
                 <ChampRow key={c.id} c={c} valeur={reponses[c.id]} touche={c.id in reponses}
                           tvaExplication={data.tva_explication} onChange={(v) => set(c.id, v)}
                           onReset={() => resetChamp(c.id)}
-                          surligne={garde?.champ_id === c.id}
-                          messageGarde={garde?.champ_id === c.id ? garde.message : null} />
+                          surligne={hm?.champ_id === c.id || garde?.champ_id === c.id}
+                          messageGarde={hm?.champ_id === c.id ? hm.message
+                            : garde?.champ_id === c.id ? garde.message : null} />
               )
               // RECETTE-11 B3 — combien de valeurs « Affiner » sont modifiées (touchées) sur cet écran.
               const modifies = affiner.filter((c) => c.id in reponses).length
@@ -315,13 +371,35 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
 
             {erreur && <p style={{ fontSize: 12, color: '#E0B341', margin: '14px 0 0' }}>{erreur}</p>}
 
+            {/* RECETTE-12 A1 — hors marché sur un AUTRE écran : on le NOMME et on offre d'y aller,
+                pour que « Enregistrer » désactivé soit compréhensible (jamais un blocage muet). */}
+            {hm && hm.ecran !== etape && (
+              <p data-financier-garde-ailleurs style={{ fontSize: 12, color: '#E0776B', margin: '14px 0 0' }}>
+                Une valeur est incohérente sur l'écran «&nbsp;{ecrans[hm.ecran]?.titre}&nbsp;».{' '}
+                <button type="button" onClick={() => setEtape(hm.ecran)}
+                  style={{ background: 'none', border: 0, color: '#E0776B', textDecoration: 'underline', cursor: 'pointer', font: 'inherit', padding: 0 }}>
+                  Corriger
+                </button>{' '}pour pouvoir enregistrer.
+              </p>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 18, marginTop: 18, borderTop: '.5px solid #1E2A23' }}>
               <button onClick={() => (etape > 0 ? setEtape(etape - 1) : setUsage(null))} style={btnPlain}>
                 ← Retour
               </button>
+              {/* RECETTE-12 A1 — « Continuer » désactivé quand l'écran courant porte une valeur hors
+                  marché ; « Enregistrer » désactivé dès qu'UNE valeur (n'importe quel écran) est hors
+                  marché — on ne peut ni atteindre l'écran final ni ouvrir le Financier. */}
               {etape < N - 1
-                ? <button onClick={() => void continuer()} style={btnMint}>Continuer →</button>
-                : <button disabled={envoi} onClick={() => void enregistrer()} style={{ ...btnMint, opacity: envoi ? 0.4 : 1 }}>
+                ? <button disabled={!!hm && hm.ecran === etape}
+                    onClick={() => void continuer()}
+                    style={{ ...btnMint, opacity: (!!hm && hm.ecran === etape) ? 0.4 : 1,
+                             cursor: (!!hm && hm.ecran === etape) ? 'not-allowed' : 'pointer' }}>
+                    Continuer →
+                  </button>
+                : <button disabled={envoi || !!hm} onClick={() => void enregistrer()}
+                    style={{ ...btnMint, opacity: (envoi || !!hm) ? 0.4 : 1,
+                             cursor: (envoi || !!hm) ? 'not-allowed' : 'pointer' }}>
                     {envoi ? 'Enregistrement…' : 'Enregistrer'}
                   </button>}
             </div>
