@@ -57,6 +57,43 @@ _FRR_LIBELLE = {
     "hors": "Commune hors zone (non classée).",
 }
 
+#: RECETTE-11 D3 — quand la commune est classée EN PARTIE (les Hauts, infra-communale), LABUSE
+#: connaît la position de la parcelle (couche `spatial_layers` kind='frr') → on TRANCHE dedans/hors,
+#: jamais « dépend de la localisation exacte ». « non déterminé » seulement si le périmètre manque.
+_FRR_LIBELLE_PARTIE = {
+    "dans": "Parcelle DANS la zone spéciale d'action rurale (les Hauts) — commune classée FRR en "
+            "partie (art. 44 quindecies A CGI, en vigueur 01/07/2024). L'éligibilité effective reste "
+            "à confirmer par un fiscaliste.",
+    "hors": "Parcelle HORS de la zone spéciale d'action rurale (les Hauts) — la commune n'est classée "
+            "FRR qu'en partie, et cette parcelle n'est pas dans le périmètre classé.",
+    "non_determine": "Commune classée FRR en partie seulement (les Hauts, délimitation infra-communale) "
+                     "— position de la parcelle non déterminée (périmètre non disponible).",
+}
+
+
+def frr_position(db: Session, idu: str) -> str | None:
+    """RECETTE-11 D3 — position de la parcelle vs la zone spéciale d'action rurale (les Hauts) :
+    'dans' | 'hors', ou None si le périmètre (couche frr) n'est pas disponible."""
+    try:
+        n = db.execute(text(
+            "SELECT count(*) FROM spatial_layers WHERE kind='frr' AND geom_2975 IS NOT NULL")).scalar()
+        if not n:
+            return None
+        dedans = db.execute(text(
+            "SELECT EXISTS(SELECT 1 FROM spatial_layers f JOIN parcels p ON p.idu = :i "
+            "WHERE f.kind='frr' AND f.geom_2975 IS NOT NULL AND ST_Intersects(f.geom_2975, p.geom_2975))"),
+            {"i": idu}).scalar()
+        return "dans" if dedans else "hors"
+    except Exception:  # noqa: BLE001 — couche absente → non déterminé, jamais un 500
+        db.rollback()
+        return None
+
+
+def frr_libelle_partie(position: str | None) -> str:
+    """Le libellé FRR d'une commune classée EN PARTIE, tranché à la parcelle (D3)."""
+    return _FRR_LIBELLE_PARTIE.get(position or "non_determine", _FRR_LIBELLE_PARTIE["non_determine"])
+
+
 SEED = "territoire_fiscal.csv"
 DDL = """
 CREATE TABLE IF NOT EXISTS territoire_fiscal_commune (

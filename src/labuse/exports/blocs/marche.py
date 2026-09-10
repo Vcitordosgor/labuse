@@ -86,8 +86,11 @@ def rendu(valeurs) -> str:
     if a(valeurs, "n_permis_proximite"):
         nc = valeurs["n_permis_proximite"].valeur
         n = nc.get("n") if isinstance(nc, dict) else nc
-        lignes.append(ligne_kv("Activité de dépôt (permis, secteur)",
-                               esc(f"{n} permis autorisés sur la section cadastrale"),
+        # RECETTE-11 D1 — la MAILLE et la FENÊTRE du compte sont ÉCRITES (jamais un « N permis » nu).
+        maille = (nc.get("maille") if isinstance(nc, dict) else None) or "section cadastrale"
+        fen = nc.get("fenetre_mois") if isinstance(nc, dict) else None
+        detail = f"{n} permis autorisés sur la {esc(maille)}" + (f", sur les {int(fen)} derniers mois" if fen else "")
+        lignes.append(ligne_kv("Activité de dépôt (permis, secteur)", detail,
                                chip(valeurs["n_permis_proximite"])))
     if lignes:
         data += table_kv(lignes)
@@ -101,6 +104,15 @@ def rendu(valeurs) -> str:
     data += _secteur(valeurs)
     if not data.strip():
         return ""      # aucun prix/vente servi → section omise
-    corps = data + note("Ventes publiées (DVF), anonymisées ; les ventes récentes mettent un à "
-                        "trois ans à apparaître.") + pied(valeurs, IDS)
+    note_txt = ("Ventes publiées (DVF), anonymisées ; les ventes récentes mettent un à "
+                "trois ans à apparaître.")
+    # RECETTE-11 D2 — dire POURQUOI le prix « ancien {type} » : c'est le comparable de revente
+    # DOMINANT du secteur pour ce type (segment retenu par le rayon adaptatif), servi comme prix de
+    # sortie du programme reconstruit — jamais une estimation du bâti actuellement sur la parcelle
+    # (un terrain de trois maisons se reconstruit en collectif → l'appartement est le comparable).
+    if isinstance(pa, dict) and pa.get("type_prix"):
+        note_txt += (f" Le prix « ancien {esc(pa['type_prix'])} » est la référence de revente du "
+                     "secteur pour ce type de bien (segment le plus représenté à proximité), utilisée "
+                     "comme prix de sortie du programme reconstruit — pas une estimation du bâti existant.")
+    corps = data + note(note_txt) + pied(valeurs, IDS)
     return section("5. Marché et prix", corps)

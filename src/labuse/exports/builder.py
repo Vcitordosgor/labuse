@@ -339,7 +339,13 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
     from datetime import timedelta
     lb = fiche.get("le_bien") or {}
     pm = fiche.get("proprietaire_moral")
-    industriel = "ICPE" in json.dumps(fiche.get("lines") or [], ensure_ascii=False)
+    # RECETTE-11 D7 — l'ICPE proche vient du MÊME MOTEUR que le Dossier (la cascade `lines`), pas d'un
+    # « ICPE » trouvé dans le JSON (qui fuyait le seul NOM de la source du catalogue : faux positif).
+    # Signalée seulement si la cascade la RELÈVE (result ≠ PASS), avec sa description/distance.
+    _icpe = next((l for l in (fiche.get("lines") or [])
+                  if isinstance(l, dict) and l.get("layer") == "icpe"), None)
+    industriel = bool(_icpe and _icpe.get("result") not in (None, "PASS"))
+    icpe_detail = _icpe.get("detail") if industriel else None
     voisines = _apporteur_voisines(db, idu)
     return {
         "idu": idu, "adresse": fiche.get("adresse") or "", "emetteur": _emetteur(db, compte_id),
@@ -347,6 +353,7 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
         "is_bati": bool(lb.get("nb_batiments") or lb.get("emprise_batie_m2")),
         "is_pm": isinstance(pm, dict) and bool(pm),
         "industriel_proche": industriel,
+        "icpe_detail": icpe_detail,   # RECETTE-11 D7 — description/distance de l'ICPE relevée
         "voisines": voisines,
         "plan": _apporteur_plan(db, idu, voisines),
     }

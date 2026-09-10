@@ -106,9 +106,12 @@ def _contraintes(valeurs) -> str:
     """Une ligne « Ce qui gêne » : aléas + prescriptions (ER/EBC/DPU) + zone de bruit (PEB). Vide → ''."""
     bits: list[str] = []
     liste = val(valeurs, "aleas_parcelle_liste") or []
-    natures = [x.get("nature") or x.get("libelle") for x in liste
-               if isinstance(x, dict) and (x.get("nature") or x.get("libelle"))]
-    bits += list(dict.fromkeys(natures))
+    # RECETTE-11 D7 — « Ce qui gêne » reprend la liste du Dossier §4 : on prend la description de
+    # l'aléa (libellé court avant « — »), pas seulement sa `nature`. Sinon un PPR « inondation ET
+    # mouvement de terrain » se réduisait à « Inondation » — le mouvement de terrain manquait.
+    natures = [((x.get("libelle") or "").split(" — ")[0].strip() or x.get("nature"))
+               for x in liste if isinstance(x, dict) and (x.get("nature") or x.get("libelle"))]
+    bits += list(dict.fromkeys(n for n in natures if n))
     if a(valeurs, "dpu_perimetre"):
         bits.append("préemption (DPU)")
     if a(valeurs, "er_emplacement_reserve"):
@@ -182,7 +185,10 @@ def _coup_d_oeil(valeurs, ctx) -> str:
         prix_bits.append(f"terrain nu {fmt_eur_m2(tn['prix_m2'])}")
     anc = val(valeurs, "prix_sortie_bati_eur_m2")
     if isinstance(anc, dict) and anc.get("median"):
-        prix_bits.append(f"ancien {fmt_eur_m2(anc['median'])}")
+        # RECETTE-11 D2 — le TYPE de bien s'imprime AVEC le prix (jamais un « ancien 2 903 €/m² » nu) :
+        # c'est le comparable de revente du secteur (segment retenu), pas une valeur du bâti existant.
+        typ = anc.get("type_prix") or "bâti"
+        prix_bits.append(f"ancien {typ} {fmt_eur_m2(anc['median'])}")
     if prix_bits:
         lignes.append(ligne_kv("Prix du secteur", esc(" · ".join(prix_bits)), ""))
     # RECETTE-3 (T1) — DERNIÈRE VENTE datée + chiffrée (DVF). Règle S8 : si inconnue, la ligne
@@ -296,8 +302,13 @@ def rendu(valeurs, ctx=None) -> str:
     hint_sol = "Cuves enterrées, remblais, pollution connue ?"
     aide_sol = "Un ancien garage, dépôt ou station-service peut ajouter des dizaines de milliers d'euros de dépollution."
     if industriel:
-        aide_sol = ("Un établissement classé est signalé à proximité ; un ancien garage, dépôt ou "
-                    "station-service sur la parcelle changerait le coût.")
+        # RECETTE-11 D7 — l'ICPE n'est signalée que si la CASCADE la relève (même moteur que le
+        # Dossier), plus jamais sur un simple « ICPE » du catalogue de sources (faux positif). Sa
+        # distance exacte vit dans l'analyse de risques du Dossier (le nombre imprimé au brief resterait
+        # hors registre — verrou de provenance) : le brief signale la présence, l'apporteur la vérifie.
+        aide_sol = ("Un établissement classé (ICPE) est signalé à proximité par l'analyse de risques "
+                    "(distance et régime au Dossier) ; un ancien garage, dépôt ou station-service sur "
+                    "la parcelle changerait le coût.")
     q += _aide(aide_sol)
     q += _q("Quel était l'usage du site avant ?", hint_sol, zone=True)
 
@@ -323,7 +334,7 @@ def rendu(valeurs, ctx=None) -> str:
 
     # RECETTE-3 (T1) — les PHOTOS ne sont plus collées : envoyées par message en citant la référence.
     q += '<h3>Les photos</h3>'
-    q += (f'<p class="aide">Quatre vues : depuis la voie, puis aux quatre coins, en tenant la parcelle '
+    q += (f'<p class="aide">Cinq vues : depuis la voie, puis aux quatre coins, en tenant la parcelle '
           f'au centre. Envoyez-les par message en citant la référence <b>{esc(idu)}</b> — n\'imprimez rien.</p>')
 
     q += "<h3>Votre retour</h3>"

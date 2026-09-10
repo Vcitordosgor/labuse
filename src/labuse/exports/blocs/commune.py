@@ -56,7 +56,12 @@ def rendu(valeurs) -> str:
                       chip(valeurs["parc_social_rpls_logements"])))
     taxe = val(valeurs, "taxe_amenagement_estimee_eur")
     if isinstance(taxe, dict):
-        lignes.append(ligne_kv("Taxe d'aménagement", esc(_taxe(taxe)), chip_span("e", "estimé")))
+        # RECETTE-11 D4 — le TAUX communal vient d'une source PUBLIQUE (config datée, service-public /
+        # délibération) → « sourcé », jamais « estimé ». Le MONTANT, lui, se chiffre au Financier sur
+        # la SDP du projet — il n'y a ici aucun montant estimé, seulement le taux et sa base de calcul.
+        taxe_sourcee = taxe.get("taux_communal_pct") and taxe.get("taux_communal_source") == "public"
+        lignes.append(ligne_kv("Taxe d'aménagement", esc(_taxe(taxe)),
+                               chip_span("s", "sourcé") if taxe_sourcee else chip_span("e", "estimé")))
     plu = val(valeurs, "statut_plu")
     if isinstance(plu, dict) and plu.get("libelle"):
         lignes.append(ligne_kv("PLU", esc(plu["libelle"]), chip_span("s", "sourcé")))

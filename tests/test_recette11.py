@@ -132,3 +132,35 @@ def test_b4_prefill_toujours_source():
     # ni le prix libre ni le prix bailleur ne sont pré-remplis (un défaut bailleur ne peut être
     # cohérent avec un prix libre inconnu → laissé au porteur, borné par le garde).
     assert "prix_sortie_saisi_eur_m2" not in pf and "prix_vente_bailleur_saisi_eur_m2" not in pf
+
+
+# ── Lot D — Dossier & Apporteur ────────────────────────────────────────────────────────────────
+
+def test_d3_frr_libelle_tranche_a_la_parcelle():
+    """D3 — commune FRR « en partie » : on tranche dedans/hors à la parcelle, « non déterminé » si
+    le périmètre manque — jamais « dépend de la localisation exacte »."""
+    from labuse.territoire_fiscal import frr_libelle_partie
+    assert "DANS la zone" in frr_libelle_partie("dans")
+    assert "HORS de la zone" in frr_libelle_partie("hors")
+    assert "non déterminée" in frr_libelle_partie(None)
+    for lib in (frr_libelle_partie("dans"), frr_libelle_partie("hors"), frr_libelle_partie(None)):
+        assert "dépend de la localisation exacte" not in lib
+
+
+def test_d4_non_reglemente_avec_article_est_source():
+    """D4 — « non réglementé » AVEC un article cité (etat 'absent' + référence) est SOURCÉ, pas estimé."""
+    from labuse.exports.blocs.zonage import _chip_regle
+    assert "sourcé" in _chip_regle("absent", has_ref=True)
+    assert "estimé" in _chip_regle("absent", has_ref=False)
+    assert "sourcé" in _chip_regle("chiffre")
+
+
+def test_d7_ce_qui_gene_reprend_mouvement_de_terrain():
+    """D7 — « Ce qui gêne » reprend la description du Dossier §4 : un PPR « inondation ET mouvement de
+    terrain » n'est plus réduit à « Inondation »."""
+    from labuse.exports.blocs.apporteur import _contraintes
+    valeurs = {"aleas_parcelle_liste": _V("aleas_parcelle_liste", [
+        {"nature": "Inondation", "libelle": "Zone bleue PPR inondation et mouvement de terrain — "
+         "constructible SOUS PRESCRIPTIONS (règlement DEAL)."}])}
+    out = _contraintes(valeurs)
+    assert "mouvement de terrain" in out.lower() and "inondation" in out.lower()

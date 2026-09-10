@@ -240,9 +240,13 @@ def _c_dvf_secteur(db, idu, f):
 
 @collecteur("n_permis_proximite")
 def _c_permis(db, idu, f):
-    dep = (f.get("depots") or {}).get("secteur") or {}
+    depots = f.get("depots") or {}
+    dep = depots.get("secteur") or {}
     n = dep.get("count")
-    return {"n": n, "non_couvert": False} if n is not None else None
+    # RECETTE-11 D1 — le §5 doit ÉCRIRE la maille et la fenêtre du compte (jamais un « N permis »
+    # sans dire sur quoi ni sur quelle période). On sert les deux depuis le bloc dépôts.
+    return ({"n": n, "non_couvert": False, "maille": dep.get("maille"),
+             "fenetre_mois": depots.get("fenetre_mois")} if n is not None else None)
 
 
 # ══ Section 6 — Réseaux ════════════════════════════════════════════════════════════════════

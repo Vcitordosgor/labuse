@@ -20,8 +20,13 @@ def _ref_courte(ref: str) -> str:
     return r
 
 
-def _chip_regle(etat: str) -> str:
-    return chip_span("s", "sourcé") if etat in ("chiffre", "texte") else chip_span("e", "estimé")
+def _chip_regle(etat: str, has_ref: bool = False) -> str:
+    # RECETTE-11 D4 — « non réglementé » (etat 'absent') AVEC un article cité (« pleine terre — non
+    # réglementé, Art. Um.13 ») est un fait SOURCÉ du PLU (« il n'est pas fixé de règle », art. X),
+    # jamais une estimation. Sans référence, l'absence reste « estimé » (lecture incertaine).
+    if etat in ("chiffre", "texte") or (etat == "absent" and has_ref):
+        return chip_span("s", "sourcé")
+    return chip_span("e", "estimé")
 
 
 def _regles(z: dict) -> str:
@@ -32,7 +37,8 @@ def _regles(z: dict) -> str:
             continue
         ref = _ref_courte(r.get("reference"))
         v = esc(valeur) + (f' <span class="note" style="display:inline">{esc(ref)}</span>' if ref else "")
-        lignes.append(ligne_kv(r.get("libelle") or r.get("cle") or "Règle", v, _chip_regle(r.get("etat") or "")))
+        lignes.append(ligne_kv(r.get("libelle") or r.get("cle") or "Règle", v,
+                               _chip_regle(r.get("etat") or "", bool(ref))))
     if not lignes:
         return ""
     entete = '<tr><th>Règle</th><th>Valeur retenue</th><th></th></tr>'

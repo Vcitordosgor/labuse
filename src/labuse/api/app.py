@@ -4204,8 +4204,14 @@ def _dpe_connu_block(db: Session, idu: str) -> dict | None:
 
 
 def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
-    from ..territoire_fiscal import attributs_commune
+    from ..territoire_fiscal import attributs_commune, frr_position, frr_libelle_partie
     base = attributs_commune(db, idu[:5])
+    # RECETTE-11 D3 — commune FRR « en partie » : on TRANCHE la position de LA parcelle (les Hauts,
+    # couche frr), jamais « dépend de la localisation exacte » ; « non déterminé » si périmètre absent.
+    if base and (base.get("frr") or {}).get("classement") == "partie":
+        pos = frr_position(db, idu)
+        base["frr"]["position"] = pos or "non_determine"
+        base["frr"]["libelle"] = frr_libelle_partie(pos)
     # M134 — les PÉRIMÈTRES FINS qui touchent LA parcelle (ZFANG/FRR sont à la commune) : QPV
     # (dedans) ou, à défaut, la bande des 500 m (dérivée). En français, sourcés, jamais un sigle nu.
     qpv = db.execute(text(
