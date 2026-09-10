@@ -188,10 +188,14 @@ def _c_capacite(db, idu, f):
 
 @collecteur("marge_surelevation_m")
 def _c_marge_surel(db, idu, f):
-    # RECETTE-7 (E1) — la comparaison se fait au FAÎTAGE (le bâti BD TOPO est un faîtage).
+    # RECETTE-7 (E1) — sans LiDAR, la comparaison se fait au FAÎTAGE (le bâti BD TOPO est un faîtage).
+    # RECETTE-10 (T1) — avec LiDAR (base « … mesuré (LiDAR HD) »), la marge EST déjà la contrainte la
+    # plus serrée (égout OU faîtage, appariés à leur règle) : on la sert telle quelle.
     p = f.get("potentiel_transformation") or {}
     base = str(p.get("hauteur_base") or "")
-    return p.get("hauteur_marge_m") if base.startswith("faîtage") else None
+    if base.startswith("faîtage") or "mesuré (LiDAR HD)" in base:
+        return p.get("hauteur_marge_m")
+    return None
 
 
 # ══ Section 4 — Risques ════════════════════════════════════════════════════════════════════

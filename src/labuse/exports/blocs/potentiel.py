@@ -52,22 +52,29 @@ def _scenarios(valeurs) -> str:
     # compare enfin un ÉGOUT MESURÉ à la règle d'égout — la marge devient une MESURE, pas une
     # soustraction sur un faîtage BD TOPO incertain (la vraie réparation de E1).
     base_h = p.get("hauteur_base") if isinstance(p, dict) else None
-    if base_h and str(base_h).startswith("égout mesuré"):
-        marge, regle = p.get("hauteur_marge_m"), p.get("hauteur_regle_m")
-        egout, fait = p.get("hauteur_egout_lidar_m"), p.get("hauteur_faitage_lidar_m")
+    if base_h and "mesuré (LiDAR HD)" in str(base_h):
+        # RECETTE-10 T1 — le LiDAR mesure égout ET faîtage ; on garde la contrainte la plus serrée et
+        # on DIT laquelle mord, en montrant les deux calculs (une règle d'égout comparée à l'égout, une
+        # règle de faîtage comparée au faîtage — jamais l'une contre l'autre). Répare l'inversion T9→T1.
+        marge = p.get("hauteur_marge_m")
+        contrainte = p.get("hauteur_contrainte")                # « égout » | « faîtage »
         possible = p.get("surelevation_possible")
+        contraintes = p.get("hauteur_contraintes") or []
+        limite = ("le faîtage" if contrainte == "faîtage"
+                  else "l'égout" if contrainte == "égout" else esc(str(contrainte)))
+        detail_c = " · ".join(
+            f"{c['base']} {fmt_m(c['mesure_m'])} mesuré contre {fmt_m(c['regle_m'])} réglementaires "
+            f"(marge {fmt_m(c['marge_m'])})" for c in contraintes)
         if possible and marge is not None:
             lignes.append(ligne_kv("En hauteur, bâti conservé",
                           f"<strong>Surélévation possible</strong> — {fmt_m(marge)} disponibles, "
-                          f"hauteur à l'égout <strong>mesurée au LiDAR HD</strong> ({fmt_m(egout)}) "
-                          f"contre {fmt_m(regle)} à l'égout réglementaires"
-                          + (f" (faîtage actuel {fmt_m(fait)})." if fait is not None else "."),
-                          chip_span("s", "sourcé")))
+                          f"limité par {limite} (<strong>mesuré au LiDAR HD</strong>). "
+                          + esc(detail_c) + ".", chip_span("s", "sourcé")))
         elif possible is False and marge is not None:
             lignes.append(ligne_kv("En hauteur, bâti conservé",
-                          f"<strong>Pas de marge de surélévation</strong> — égout mesuré {fmt_m(egout)} "
-                          f"contre {fmt_m(regle)} réglementaires : {fmt_m(marge)} restants.",
-                          chip_span("s", "sourcé")))
+                          f"<strong>Pas de marge de surélévation</strong> — {fmt_m(marge)} au mieux, "
+                          f"limité par {limite} (<strong>mesuré au LiDAR HD</strong>). "
+                          + esc(detail_c) + ".", chip_span("s", "sourcé")))
     elif base_h and str(base_h).startswith("faîtage"):
         marge, regle, bati = p.get("hauteur_marge_m"), p.get("hauteur_regle_m"), p.get("hauteur_bati_m")
         possible = p.get("surelevation_possible")

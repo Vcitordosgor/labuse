@@ -33,7 +33,7 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
       <p className="mt-1 text-[11px] leading-snug text-txt-mut">{pt.libelle}</p>
       {pt.pct_consomme != null && <FactRow label="SDP consommée / autorisée" value={<>{pt.pct_consomme} <small>%</small></>} />}
       {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <FactRow label={`SDP résiduelle estimée · ${PERIM_RESIDUEL_COURT}`} value={<>~{fmtInt(pt.sdp_residuelle_m2)} <small>m²</small></>} />}
-      {pt.surelevation_possible != null && <FactRow label="Surélévation" value={pt.surelevation_possible ? <>possible{pt.hauteur_marge_m != null ? <> <small>(marge ~{pt.hauteur_marge_m} m)</small></> : ''}</> : 'non'} tone={pt.surelevation_possible ? undefined : 'mute'} />}
+      {pt.surelevation_possible != null && <FactRow label="Surélévation" value={pt.surelevation_possible ? <>possible{pt.hauteur_marge_m != null ? <> <small>(marge ~{pt.hauteur_marge_m} m{pt.hauteur_contrainte ? `, limité par ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}` : ''})</small></> : ''}</> : 'non'} tone={pt.surelevation_possible ? undefined : 'mute'} />}
       <FactNote>{pt.source}</FactNote>
     </div>
   )

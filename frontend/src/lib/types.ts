@@ -769,6 +769,8 @@ export interface PotentielTransformation extends Indisponible {
   hauteur_bati_m: number | null
   hauteur_max_m: number | null
   hauteur_marge_m: number | null
+  // RECETTE-10 T1 — la hauteur qui mord (« égout »/« faîtage ») quand le LiDAR a mesuré les deux.
+  hauteur_contrainte?: string | null
   confiance: string | null
   source: string
   note: string

@@ -47,6 +47,8 @@ def surelevation(session: Session, parcel_id: int, rules=None,
         rules = rules or resolve_zone(ctx.zone, ctx.commune)
     he = getattr(rules, "he_m", None) if rules else None
     hf = getattr(rules, "hf_m", None) if rules else None
+    he_num = float(he) if isinstance(he, (int, float)) else None
+    hf_num = float(hf) if isinstance(hf, (int, float)) else None
     avert = None
     # RECETTE-7 (E1) — LE BÂTI MESURÉ (BD TOPO, `_hauteur_bati_m`) est une hauteur au FAÎTAGE. On
     # le compare donc à la règle de FAÎTAGE de la zone (`hf_m`), jamais à l'égout : comparer un
@@ -68,6 +70,7 @@ def surelevation(session: Session, parcel_id: int, rules=None,
     if h_bati is None:
         return {"possible": None, "marge_m": None, "base": base,
                 "hauteur_regle_m": h_regle, "hauteur_bati_m": None,
+                "he_regle_m": he_num, "hf_regle_m": hf_num,
                 "avertissement": "hauteur du bâti inconnue (BD TOPO) — surélévation non évaluable"}
     marge = round(h_regle - h_bati, 1)
     # RECETTE-7 (E1) — on ne conclut « non identifiée » (possible=False) que si la marge est nulle
@@ -82,7 +85,40 @@ def surelevation(session: Session, parcel_id: int, rules=None,
         possible = False
     return {"possible": possible, "marge_m": max(0.0, marge),
             "base": base, "hauteur_regle_m": h_regle, "hauteur_bati_m": h_bati,
+            "he_regle_m": he_num, "hf_regle_m": hf_num,
             "avertissement": avert}
+
+
+def surelevation_mesuree(he_regle, hf_regle, egout_mesure, faitage_mesure) -> dict | None:
+    """RECETTE-10 T1 — surélévation quand le LiDAR HD a MESURÉ l'égout ET/OU le faîtage : on retient
+    les DEUX contraintes de hauteur et on garde la PLUS SERRÉE (celle qui mord).
+
+    L'invariant qui répare E1 (et son inverse, T1) : une règle d'ÉGOUT ne se compare QU'À une hauteur
+    d'égout, une règle de FAÎTAGE QU'À une hauteur de faîtage. Comparer un égout mesuré à une règle de
+    faîtage (le défaut T9→T1) gonflait la marge de plus du double ; l'inverse (E1) la sous-estimait.
+
+    Exemple EL0157 : égout 7,0 (règle) − 3,0 (mesuré) = 4,0 m ; faîtage 10,0 (règle) − 6,9 (mesuré) =
+    3,1 m → disponible réel 3,1 m, limité par le faîtage.
+
+    Renvoie {marge_m, possible, contrainte, regle_m, mesure_m, contraintes[]} — `contrainte` nomme la
+    hauteur qui mord (« égout »/« faîtage ») ; `contraintes` liste les deux calculs. None si aucune
+    contrainte n'est calculable (aucune règle en regard d'une mesure)."""
+    contraintes: list[dict] = []
+    if isinstance(he_regle, (int, float)) and egout_mesure is not None:
+        contraintes.append({"base": "égout", "regle_m": round(float(he_regle), 1),
+                            "mesure_m": round(float(egout_mesure), 1),
+                            "marge_m": round(float(he_regle) - float(egout_mesure), 1)})
+    if isinstance(hf_regle, (int, float)) and faitage_mesure is not None:
+        contraintes.append({"base": "faîtage", "regle_m": round(float(hf_regle), 1),
+                            "mesure_m": round(float(faitage_mesure), 1),
+                            "marge_m": round(float(hf_regle) - float(faitage_mesure), 1)})
+    if not contraintes:
+        return None
+    mordante = min(contraintes, key=lambda c: c["marge_m"])   # la plus serrée décide
+    return {"marge_m": mordante["marge_m"],
+            "possible": mordante["marge_m"] >= SURELEVATION_MARGE_MIN_M,
+            "contrainte": mordante["base"], "regle_m": mordante["regle_m"],
+            "mesure_m": mordante["mesure_m"], "contraintes": contraintes}
 
 
 def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:

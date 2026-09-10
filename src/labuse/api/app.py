@@ -4864,15 +4864,29 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
     h_possible = sur.get("possible")
     h_nature = "estimé"
     h_lidar_source = None
+    h_contrainte = None                                      # RECETTE-10 T1 — la hauteur qui mord
+    h_contraintes = None                                     # les deux calculs (égout ET faîtage)
+    h_base = sur.get("base")
     from ..faisabilite.hauteur_lidar import hauteur_lidar_servie
     _lid = hauteur_lidar_servie(db, idu)
-    if _lid and _lid.get("egout_m") is not None:
-        h_bati = _lid["egout_m"]                              # l'ÉGOUT MESURÉ (E1 : égout vs règle d'égout)
-        h_nature = "sourcé"
-        h_lidar_source = _lid["source"]
-        if h_regle is not None:
-            h_marge = round(h_regle - h_bati, 1)
-            h_possible = h_marge > 0
+    if _lid and (_lid.get("egout_m") is not None or _lid.get("faitage_m") is not None):
+        # RECETTE-10 T1 — le LiDAR HD a MESURÉ égout ET faîtage : on retient les DEUX contraintes de
+        # zone (règle d'égout vs égout mesuré, règle de faîtage vs faîtage mesuré) et on garde la plus
+        # serrée. L'ancien code (T9) comparait l'égout MESURÉ à la règle de FAÎTAGE → marge gonflée du
+        # double (7,0 au lieu de 3,1). Une règle d'égout ne se compare qu'à un égout, jamais au faîtage.
+        from ..faisabilite.potentiel import surelevation_mesuree
+        _sm = surelevation_mesuree(sur.get("he_regle_m"), sur.get("hf_regle_m"),
+                                   _lid.get("egout_m"), _lid.get("faitage_m"))
+        if _sm:
+            h_nature = "sourcé"
+            h_lidar_source = _lid["source"]
+            h_marge = _sm["marge_m"]
+            h_possible = _sm["possible"]
+            h_contrainte = _sm["contrainte"]                 # « égout » | « faîtage »
+            h_contraintes = _sm["contraintes"]
+            h_regle = _sm["regle_m"]                          # la règle qui mord
+            h_bati = _sm["mesure_m"]                          # la mesure qui mord
+            h_base = f"{_sm['contrainte']} mesuré (LiDAR HD)"
     return {
         "niveau": niveau, "libelle": libelle,
         "pct_consomme": pct,                                  # SDP consommée / autorisée (%)
@@ -4885,10 +4899,15 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
         # (repli faîtage seulement si l'égout n'est pas calibré, avec avertissement).
         "surelevation_possible": h_possible,
         "hauteur_bati_m": h_bati, "hauteur_regle_m": h_regle,
-        "hauteur_base": ("égout mesuré (LiDAR HD)" if _lid and _lid.get("egout_m") is not None else sur.get("base")),
+        "hauteur_base": h_base,
         "hauteur_marge_m": h_marge,
         # RECETTE-9 T9 — nature de la hauteur du bâti servie au scénario (« sourcé » LiDAR / « estimé » BD TOPO).
         "hauteur_nature": h_nature,
+        # RECETTE-10 T1 — la contrainte qui mord (« égout »/« faîtage ») + les deux calculs, pour que
+        # le rendu dise LAQUELLE des deux hauteurs limite la surélévation (jamais une règle sans son
+        # unité en regard).
+        "hauteur_contrainte": h_contrainte,
+        "hauteur_contraintes": h_contraintes,
         "hauteur_faitage_lidar_m": (_lid["faitage_m"] if _lid else None),
         "hauteur_egout_lidar_m": (_lid["egout_m"] if _lid else None),
         "hauteur_source_lidar": h_lidar_source,
