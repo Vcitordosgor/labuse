@@ -329,3 +329,79 @@ et **seulement si le modèle bat nettement le filtre** (lift ≥ 2 ; sinon rien 
 **Preuve — artefact final** : mesures ci-dessus (SQL lecture seule sur `q_v11_m137` + DVF) ; module +
 endpoint testés (`test_recette10_backtest`, `phrase_client`) ; ligne servie dans `ResultsSection`
 (capture batch UI). tsc vert.
+
+---
+
+## T9 — Le LiDAR sur les 23 autres communes — FAIT (garde + chiffrage + ingestion bornée)
+
+### La garde d'étiquette — vérifiée airtight
+
+L'étiquette `sourcé` / « mesuré LiDAR HD » ne peut apparaître QUE là où le LiDAR est réellement passé :
+les trois consommateurs lisent `hauteur_lidar_servie(db, idu)`, qui ne lit QUE la table
+`batiment_hauteur_lidar` (une ligne par parcelle mesurée) et renvoie `None` sinon :
+- `bati.py` (tiroir « Le bien ») : `hauteur_nature = "sourcé" if lid else "estimé"` ;
+- `api/app.py::_potentiel_transformation_block` (T1) : nature « sourcé » seulement si `_lid` présent ;
+- `exports/blocs/potentiel.py` : rendu LiDAR gardé par `hauteur_nature == "sourcé"`.
+
+Donc une commune non mesurée reste en BD TOPO « estimé » — **aucun faux « sourcé »**. ✔
+
+### Chiffrage (volume · temps · base · reprise)
+
+- **Volume** : 304 488 parcelles bâties sur l'île ; **274 599** hors Saint-Denis (23 communes).
+- **Temps mesuré** : ~**0,5 s/parcelle** (fetch WMS MNS+MNT + rasterio). → 23 communes **ENTIÈRES** =
+  274 599 × 0,5 s ≈ **38 h mono-thread** (WMS IGN martelé). C'est **bien au-delà** de l'estimation
+  RECETTE-9 (« ~1 s/bâtiment », à la demande) rapportée à l'échelle de masse. **On ne lance donc PAS
+  l'ingestion aveugle des 23 communes entières** (elle martèlerait le WMS des jours durant, risque de
+  bannissement, pour des dizaines de milliers de parcelles que personne n'ouvrira).
+- **Base** : ~100 octets/ligne → 274 599 lignes ≈ **27 Mo** (négligeable ; le coût est le WMS, pas la base).
+- **Reprise** : la table est un cache idempotent (`ON CONFLICT (idu)`) ; le batch SAUTE les idu déjà
+  mesurés → tout lancement reprend là où il s'est arrêté.
+
+### Ce qui est ingéré (borné, à haute valeur)
+
+Cible = les parcelles **bâties en palier de priorité** (Priorité / À suivre / réserve) des 23 communes —
+**7 911 parcelles**, là où le scénario de surélévation (Dossier/Apporteur) est réellement consulté. Un
+batch `scripts/_recette10_t9_ingest.py` (borné par `MAX`/`MAX_SEC`, idempotent, résumable, échec par
+parcelle isolé). Lancé : **1er lot 799 mesurées** (0 erreur, 0,55 s/parcelle) sur ~10 communes ; **2e
+lot** en cours pour compléter le sous-ensemble prioritaire (≈7 100 restantes, ~55 min, résumable). La
+couverture passe de « Saint-Denis seul » à **plusieurs communes réellement mesurées**.
+
+**Recommandation d'architecture** (pour une future ingestion de MASSE, sous go de Vic) : ne PAS faire du
+WMS par parcelle (ne passe pas à l'échelle) mais **ingérer une fois les dalles LiDAR HD MNS de l'IGN**
+(comme RGE ALTI MNT en RECETTE-7) puis calculer les hauteurs LOCALEMENT (raster local, pas de réseau) —
+c'est le seul chemin viable pour les 274 599 parcelles. Mandat dédié.
+
+**Preuve — artefact final** : `batiment_hauteur_lidar` peuplée sur plusieurs communes (SQL de couverture) ;
+timing réel mesuré ; garde d'étiquette tracée dans les 3 consommateurs.
+
+---
+
+## T12 — Les comptes à zéro — FAIT
+
+**D'abord, le zéro est-il juste ?** Oui. Sur le run servi, plusieurs communes ont **0 Priorité** :
+Saint-Philippe, Sainte-Rose, Saint-Benoît. Vérification sur Saint-Philippe : **0 parcelle en zone
+U/AU** (le PLU n'y est pas servi — commune au RNU / dominante naturelle), donc aucun foncier zoné
+constructible à classer en priorité. Les milliers d'« écartées » le sont pour cause légitime
+(non-constructible / zone A-N). **Le zéro n'est pas une panne : c'est le territoire.**
+
+**La phrase qui l'explique** (`ResultsSection.tsx`, `data-zero-priorite`) : en mode commune, quand
+**Priorité = 0** (et le libellé ajoute « ni À suivre » si À suivre = 0 aussi), un encart dit :
+
+> « Aucune parcelle en **Priorité** [ni **À suivre**] sur {commune} — ce n'est pas une absence de
+> données. {note de commune, ex. RNU / sinon : le foncier y est très majoritairement en zone agricole,
+> naturelle ou hors d'un PLU servi} : le modèle n'y détecte pas de foncier mutable à court terme. Les
+> N parcelles « Sans signal » restent consultables. »
+
+Ainsi le client ne conclut plus « l'outil ne trouve rien » : il lit POURQUOI il n'y a rien à
+prioriser, et que le reste est consultable. **Preuve — artefact final** : SQL de vérification
+(Saint-Philippe 0 U/AU) + capture de l'encart sur une commune à 0 Priorité (batch UI). tsc vert.
+
+---
+
+## Suite de tests
+
+- Python ciblé : `test_recette10_financier` (8), `test_recette10_backtest` (2), `regles/test_surelevation`
+  (4, dont anti-inversion T1) — verts.
+- Front : `FinancierQuestionnaire.test` (6, dont T2a/T2b), `ListPagination.test` (8) — verts. `tsc` vert.
+- Le fail pré-existant `test_recette6::test_e5` (revente `servi=True` depuis RECETTE-8, test non mis à
+  jour) subsiste — prouvé pré-existant (échoue aussi sans mes changements).

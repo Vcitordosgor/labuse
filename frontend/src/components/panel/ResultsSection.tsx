@@ -502,6 +502,18 @@ export function ResultsSection() {
               {backtestQ.data.phrase_client}
             </p>
           )}
+          {/* RECETTE-10 T12 — une commune sans aucune parcelle prioritaire (Priorité à zéro) mérite une
+              phrase qui l'explique — sinon le client conclut que l'outil ne trouve rien. Vérifié :
+              ces communes sont majoritairement en zone A/N ou hors PLU servi (RNU, ex. Saint-Philippe
+              n'a AUCUNE parcelle en zone U/AU) ; le zéro est JUSTE, ce n'est pas une panne. On le dit,
+              avec la note de commune si elle existe. Le libellé s'adapte quand « À suivre » est aussi nul. */}
+          {!ile && commune && counts.brulante === 0 && (uni.data?.compte ?? 0) > 0 && (
+            <p data-zero-priorite className="mt-1.5 shrink-0 rounded-lg border border-st-creuser/40 bg-[#211a10] px-2.5 py-1.5 text-[11px] leading-snug text-st-creuser">
+              Aucune parcelle en <b>Priorité</b>{counts.chaude === 0 ? <> ni <b>À suivre</b></> : ''} sur {commune} — ce n'est pas une
+              absence de données.{communeNote ? ` ${communeNote}` : ' Le foncier de cette commune est très majoritairement en zone agricole, naturelle ou hors d’un PLU servi'} :
+              le modèle n'y détecte pas de foncier mutable à court terme. Les {fmt(counts.reserve_fonciere + counts.a_creuser + epuise)} parcelles « Sans signal » restent consultables.
+            </p>
+          )}
           {/* M55-G point 5 (décision Vic) : la ligne « soit N parcelles avec dossier propriétaire ·
               N personnes physiques » a QUITTÉ la zone résultats — l'info vit en fiche (tiroir
               Propriétaire), rien n'est perdu. Champs API (opportunites_avec_dossier…) inchangés. */}
