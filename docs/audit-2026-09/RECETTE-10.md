@@ -220,3 +220,46 @@ commune `usePagination` 200), `Communes`/`M22Programme` (Densifier)/`Renouvellem
 `RadarView`/`EtudeZone`/`ProspectionSolaire`/`ModulePanel` (patrimoine/permis) — toutes via le socle
 partagé (200 + « Voir N de plus », compteur exact toujours visible). Test du socle intact
 (`ListPagination.test.ts`, 8 tests : `PAGE_SIZE===200`, 3→tout, 137→« voir 137 »).
+
+---
+
+## T7 🔴 — Un segment dit une chose, le palier en dit une autre — FAIT
+
+**D'où vient la contradiction.** Le segment « Un professionnel a déposé un permis » est une **seconde
+lecture** de la liste, PAR NATURE du bien, calculée **EN DIRECT sur Sitadel** (CTE `pro_pc` : PC à
+pétitionnaire SIREN, `date_autorisation >= CURRENT_DATE − 36 mois`, sur parcelle de particulier) —
+**hors du run de score**. Le palier (Priorité / À suivre / Sans signal) vient du **run** et prédit la
+**probabilité de VENTE sous 12 mois**. Deux choses différentes :
+
+1. **Cible différente.** Le modèle prédit une **vente** (mutation). Un pro qui a **obtenu** un permis
+   est en train d'**aménager** — le terrain se construit, il ne revient pas au marché. Le signal permis
+   est souvent **inverse** d'une vente proche. « Sans signal de vente » est donc *juste*.
+2. **Fenêtre différente.** Le segment est recalculé à `CURRENT_DATE` ; le run est un instantané. Un
+   permis obtenu après le run est dans le segment mais pas dans le score → « deux définitions du
+   récent ».
+
+**Mesure sur le run servi** (`q_v11_m137`, parcelles du segment permis-pro, propriétaire particulier) :
+
+| palier | n |
+|---|---|
+| **a_creuser (Sans signal)** | **249** |
+| declassé (bâti saturé / non constructible / …) | 168 |
+| écartée | 95 |
+| chaude (À suivre) | 72 |
+| réserve foncière | 26 |
+| **brûlante (Priorité)** | **3** |
+
+La MAJORITÉ des parcelles « permis pro » sont « Sans signal » — c'est le comportement normal du modèle,
+pas un bug. Le libellé mentait en promettant « le signal le plus fort du modèle ».
+
+**Le correctif** (`ResultsSection.tsx`) — on lève la contradiction par le **libellé qui dit exactement
+ce que le segment regroupe** (option 2 du mandat) :
+- « Un professionnel a **déposé** un permis » → « Un professionnel a **obtenu** un permis ici »
+  (la requête filtre `date_autorisation` = permis **accordé**, pas seulement déposé).
+- L'info-bulle ne prétend plus « le signal le plus fort du modèle » ; elle dit : signal d'**aménagement
+  en cours** (Sitadel, en direct), orthogonal au palier qui mesure la **vente** ; une parcelle qui se
+  construit peut donc être « Sans signal » de vente **sans contradiction**.
+
+**Preuve — artefact final** : distribution mesurée ci-dessus (SQL sur le run servi, CTE identique à
+l'endpoint) ; capture du segment (batch UI). Le libellé et l'info-bulle corrigés sont dans le vrai
+chemin (`SEGMENTS` de `ResultsSection`, rendu du volet Résultats).

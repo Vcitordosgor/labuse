@@ -241,11 +241,18 @@ export function sortRows<T extends SortableRow>(rows: T[], sort: SortKey, groupe
 
 // RECETTE-3 (T4, décision Vic) — les QUATRE SEGMENTS du listing d'analyse, dans CET ordre. Chaque
 // parcelle garde son palier (chips ResultCard) ; la segmentation est une SECONDE lecture, par nature
-// du bien. Un pro qui a déposé un permis PRIME sur l'état du bien (segment 1).
+// du bien. Un pro qui a obtenu un permis PRIME sur l'état du bien (segment 1).
+// RECETTE-10 T7 — le segment est une SECONDE LECTURE (nature du bien), calculée EN DIRECT sur Sitadel
+// (permis OBTENU dans les 36 mois, hors du run de score) ; le palier vient du run et prédit la VENTE.
+// Les deux sont ORTHOGONAUX : un permis pro signale un AMÉNAGEMENT en cours, pas une vente imminente —
+// c'est même souvent l'inverse (le terrain se construit, il ne revient pas au marché). Empiriquement,
+// la majorité des parcelles « permis pro » sont « Sans signal » de vente : ce n'est PAS une
+// contradiction. Le libellé et l'info-bulle disent donc EXACTEMENT ce que le segment regroupe, et ne
+// prétendent plus qu'il s'agit du « signal le plus fort du modèle » (le modèle prédit la vente).
 type SegKey = 'permis_pro' | 'terrain_nu' | 'bati_densifier' | 'reste'
 const SEGMENTS: { key: SegKey; label: string; hint: string }[] = [
-  { key: 'permis_pro', label: 'Un professionnel a déposé un permis',
-    hint: 'Un promoteur ou une société a obtenu un permis de construire sur cette parcelle de particulier (moins de 3 ans) — le signal le plus fort du modèle.' },
+  { key: 'permis_pro', label: 'Un professionnel a obtenu un permis ici',
+    hint: 'Parcelle de particulier où un promoteur ou une société a OBTENU un permis de construire dans les 36 mois (Sitadel, en direct). C’est un signal d’AMÉNAGEMENT en cours — pas une prédiction de vente : le palier (Priorité / À suivre / Sans signal) mesure la probabilité de VENTE sous 12 mois. Une parcelle qui se construit peut donc être « Sans signal » de vente sans contradiction.' },
   { key: 'terrain_nu', label: 'Terrain nu constructible',
     hint: 'Rien de bâti (emprise < 5 %) et de la surface de plancher à bâtir.' },
   // RECETTE-5 (V16, décision Vic) — « Bâti à densifier » ne disait rien au client → libellé qui dit
