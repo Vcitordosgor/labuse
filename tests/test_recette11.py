@@ -86,3 +86,49 @@ def test_a5_sentinelle_lidar_974():
     assert base.statut == "ok" and base.vu == "2025-03-13Z"
     change = sentinelle.sonder_ligne({**row, "dernier_entete": "2024-01-01"}, None, http=http_faux)
     assert change.statut == "nouvelle_version"
+
+
+# ── Lot B — le Financier : la garde vit dans le questionnaire ──────────────────────────────────
+
+def test_b2_garde_bailleur_dans_le_questionnaire():
+    """B2 — bailleur social > prix libre : le garde du questionnaire mord, nomme l'écran (Vos
+    conditions) et le champ replié sous « Affiner » ; coherent → rien."""
+    from labuse import financier_questionnaire as qf
+    hm = qf.valider_hors_marche(
+        {"_usage": "construction", "prix_sortie_saisi_eur_m2": 4500,
+         "prix_vente_bailleur_saisi_eur_m2": 5500}, {})
+    assert hm and hm["champ_id"] == "prix_vente_bailleur_saisi_eur_m2"
+    assert hm["ecran"] == 3 and hm["affiner"] is True
+    assert "prix de vente libre" in hm["message"]
+    # coherent : bailleur sous le libre → le bilan peut s'établir
+    assert qf.valider_hors_marche(
+        {"prix_sortie_saisi_eur_m2": 4500, "prix_vente_bailleur_saisi_eur_m2": 3800}, {}) is None
+
+
+def test_b2_prix_total_saisi():
+    """B2 — un prix TOTAL saisi à la place d'un €/m² (borne absolue) est refusé, écran nommé."""
+    from labuse import financier_questionnaire as qf
+    hm = qf.valider_hors_marche({"prix_sortie_saisi_eur_m2": 250000}, {})
+    assert hm and hm["champ_id"] == "prix_sortie_saisi_eur_m2" and hm["ecran"] == 3
+
+
+def test_b3_hypotheses_listent_tous_les_champs():
+    """B3 — l'encart « Hypothèses du porteur » liste TOUS les champs du bilan, y compris ceux
+    d'« Affiner » (bailleur, aléas, VRD, honoraires, frais, dépollution, portage…)."""
+    from labuse.exports.blocs.financier import _HYP_CLES
+    ids = {fid for fid, _ in _HYP_CLES}
+    for attendu in ("prix_vente_bailleur_saisi_eur_m2", "aleas_saisi_pct", "vrd_saisi_eur_m2",
+                    "honoraires_techniques_saisi_pct", "frais_acquisition_saisi_pct",
+                    "bilan_depollution_eur", "duree_portage_saisi_mois", "taxe_amenagement_saisi_eur"):
+        assert attendu in ids, attendu
+
+
+def test_b4_prefill_toujours_source():
+    """B4 — pré-remplissage honnête : toute valeur pré-remplie porte une source ; aucune valeur sans
+    source n'est pré-remplie (le garde B2 assure la cohérence bailleur<libre, pas un défaut fixe)."""
+    from labuse import financier_questionnaire as qf
+    pf = qf.prefill({})
+    assert pf and all(v.get("source") for v in pf.values())
+    # ni le prix libre ni le prix bailleur ne sont pré-remplis (un défaut bailleur ne peut être
+    # cohérent avec un prix libre inconnu → laissé au porteur, borné par le garde).
+    assert "prix_sortie_saisi_eur_m2" not in pf and "prix_vente_bailleur_saisi_eur_m2" not in pf

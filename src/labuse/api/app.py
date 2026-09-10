@@ -6555,6 +6555,21 @@ def financier_questionnaire_put(idu: str, body: QuestionnaireFinancierIn, reques
     return {"idu": idu, **res}
 
 
+@app.post("/financier/{idu}/questionnaire/valider")
+def financier_questionnaire_valider(idu: str, body: QuestionnaireFinancierIn, request: Request,
+                                    db: Session = Depends(get_db)) -> dict:
+    """RECETTE-11 B2 — le garde du QUESTIONNAIRE : rend la saisie hors marché (prix > borne, ou bailleur
+    > prix libre) AVANT tout document, avec l'écran/le champ/l'accordéon à ouvrir. `hors_marche` null =
+    tout est plausible. Aucune écriture (validation seule)."""
+    from .. import financier_questionnaire as qf
+    try:
+        fiche = parcel_fiche(idu, db=db, request=request)
+    except Exception:  # noqa: BLE001 — pas de fiche → seuls les pré-remplissages constants
+        fiche = {}
+    hm = qf.valider_hors_marche(body.reponses, qf.prefill(fiche))
+    return {"idu": idu, "hors_marche": hm}
+
+
 @app.get("/compare")
 def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des virgules"),
             db: Session = Depends(get_db)) -> dict:

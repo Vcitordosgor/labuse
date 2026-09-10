@@ -315,6 +315,48 @@ def usage_choisi(reponses: dict) -> str:
     return u if u in ("construction", "revente") else "construction"
 
 
+#: RECETTE-11 B2 — retrouve l'id de champ depuis le libellé que le garde du bilan (_hors_marche) nomme.
+_ID_PAR_LIBELLE: dict[str, str] = {lib: fid for fid, lib in LIBELLES_CLIENT.items()}
+
+
+def ecran_de(fid: str, usage: str = "construction") -> int:
+    """Index (0-based) de l'écran qui porte le champ `fid`, dans le parcours `usage`. 0 par défaut."""
+    ecrans = REVENTE_ECRANS if usage == "revente" else ECRANS
+    for i, (_, ids) in enumerate(ecrans):
+        if fid in ids:
+            return i
+    return 0
+
+
+def valider_hors_marche(reponses: dict, prefill_map: dict) -> dict | None:
+    """RECETTE-11 B2 — LE garde du QUESTIONNAIRE : une saisie hors marché (prix au-delà d'une borne de
+    vraisemblance, ou prix bailleur social > prix de vente libre) est refusée AVANT tout document. Même
+    point de vérité que le garde du bilan (`financier_bilan._hors_marche`) : jamais deux règles. Rend
+    {champ_id, champ_libelle, ecran, affiner, valeur, borne, message} pour que l'écran ouvre le bon
+    accordéon, saute au bon écran et surligne le bon champ — ou None si tout est plausible."""
+    from .exports.financier_bilan import _hors_marche
+    res = resoudre(reponses or {}, prefill_map or {})
+
+    def v(fid: str):
+        x = (res.get(fid) or {}).get("valeur")
+        try:
+            return float(x) if x not in (None, "") else None
+        except (TypeError, ValueError):
+            return None
+
+    hm = _hors_marche(v("prix_sortie_saisi_eur_m2"), v("cout_construction_saisi_eur_m2"),
+                      v("prix_vente_bailleur_saisi_eur_m2"))
+    if not hm:
+        return None
+    fid = _ID_PAR_LIBELLE.get(hm["champ"])
+    usage = usage_choisi(reponses)
+    return {"champ_id": fid, "champ_libelle": hm["champ"],
+            "ecran": ecran_de(fid, usage) if fid else 0,
+            "affiner": TRI.get(fid) == "affiner",
+            "valeur": hm["valeur"], "borne": hm["borne"],
+            "message": f"{hm['raison']} Corrigez ce champ pour continuer."}
+
+
 def est_complet(reponses: dict) -> bool:
     """Règle 3 : complet ssi tous les champs obligatoires du PARCOURS choisi sont saisis non vides.
     Construction : prix de sortie + régime de TVA. Revente (W13bis) : prix d'achat + prix de revente."""

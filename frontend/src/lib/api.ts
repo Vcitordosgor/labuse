@@ -2193,3 +2193,15 @@ export const putFinancierQuestionnaire = (
     `/financier/${encodeURIComponent(idu)}/questionnaire`,
     { method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reponses, ...(projet_id != null ? { projet_id } : {}) }) })
+
+// RECETTE-11 B2 — le garde du questionnaire : une saisie hors marché (prix > borne, ou bailleur >
+// prix libre) est refusée AVANT tout document, avec l'écran/le champ/l'accordéon à ouvrir.
+export interface QHorsMarche {
+  champ_id: string | null; champ_libelle: string; ecran: number; affiner: boolean
+  valeur: number; borne: number; message: string
+}
+export const validerFinancierQuestionnaire = (idu: string, reponses: Record<string, unknown>) =>
+  j<{ idu: string; hors_marche: QHorsMarche | null }>(
+    `/financier/${encodeURIComponent(idu)}/questionnaire/valider`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reponses }) })

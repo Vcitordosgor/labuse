@@ -242,11 +242,21 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
         zonage = zonage_commune(db, insee)
     except Exception:  # noqa: BLE001
         db.rollback()
-    return {"bilan": fb.calculer(program, hyp), "resolved": resolved, "prefill": prefill,
+    bilan = fb.calculer(program, hyp)
+    manques = qf.manques(resolved, program)
+    # RECETTE-11 B2 — DÉFENSE : une hypothèse hors marché ne produit PLUS un PDF « bilan non établi ».
+    # Le questionnaire la bloque en amont (valider_hors_marche) ; si malgré tout la génération est
+    # atteinte (saisie ancienne, URL directe), le document est REFUSÉ (422) — jamais imprimé sur le ton
+    # d'un bilan. Le garde reste le point de vérité unique (`_hors_marche`).
+    hm = bilan.get("hors_marche") if isinstance(bilan, dict) else None
+    if hm:
+        manques = [{"libelle": f"Hypothèse hors marché : {hm['champ']}",
+                    "raison": hm.get("raison", "valeur hors bornes de vraisemblance")}] + manques
+    return {"bilan": bilan, "resolved": resolved, "prefill": prefill,
             "complet": etat["complet"], "existe": etat["existe"], "program": program,
             "tfpb": tfpb, "zonage_abc": zonage,
             # RECETTE-5 (V18b) — les éléments indispensables manquants pour établir le bilan (vide ⇒ OK).
-            "manques": qf.manques(resolved, program)}
+            "manques": manques}
 
 
 def _emetteur(db, compte_id: int | None) -> dict | None:

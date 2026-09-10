@@ -5,7 +5,8 @@
 //  3. le régime de TVA est OBLIGATOIRE (le champ qui décide si le bilan est vrai).
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getFinancierQuestionnaire, putFinancierQuestionnaire, type QChamp } from '../../lib/api'
+import { getFinancierQuestionnaire, putFinancierQuestionnaire, validerFinancierQuestionnaire,
+         type QChamp, type QHorsMarche } from '../../lib/api'
 
 const MINT = '#4ADE80'
 const CARD = '#0C1410'
@@ -26,6 +27,9 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
   const [reponses, setReponses] = useState<Record<string, unknown>>({})
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
+  // RECETTE-11 B2 — le garde du questionnaire : une saisie hors marché bloque « Continuer »/« Enregistrer »,
+  // ouvre l'accordéon et surligne le champ concerné. JAMAIS un PDF « bilan non établi ».
+  const [garde, setGarde] = useState<QHorsMarche | null>(null)
   const [fini, setFini] = useState(false)
   const [docErr, setDocErr] = useState<{ libelle: string; raison?: string }[] | null>(null)
   // RECETTE-7 (C1) — un ÉCHEC TECHNIQUE et une DONNÉE MANQUANTE sont deux choses différentes :
@@ -59,7 +63,33 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
   const ecrans = (usage && data?.ecrans_par_usage?.[usage]) || data?.ecrans || []
   const N = ecrans.length || 1
 
-  const set = (id: string, v: unknown) => setReponses((r) => ({ ...r, [id]: v }))
+  const set = (id: string, v: unknown) => {
+    setReponses((r) => ({ ...r, [id]: v }))
+    if (garde && id === garde.champ_id) setGarde(null)   // corrigé → le surlignage disparaît
+  }
+  // RECETTE-11 B3 — « revenir à la valeur sourcée » : on RETIRE la saisie (la clé) → le champ reprend
+  // son pré-remplissage sourcé (touche=false) et réaffiche sa source.
+  const resetChamp = (id: string) => {
+    setReponses((r) => { const n = { ...r }; delete n[id]; return n })
+    if (garde && id === garde.champ_id) setGarde(null)
+  }
+
+  // RECETTE-11 B2 — interroge le garde serveur (point de vérité unique). Si hors marché : saute à
+  // l'écran, ouvre son accordéon si le champ y est replié, surligne. Rend true si BLOQUÉ.
+  const gardeBloque = async (): Promise<boolean> => {
+    try {
+      const r = await validerFinancierQuestionnaire(idu, reponses)
+      if (r.hors_marche) {
+        setGarde(r.hors_marche)
+        setErreur(null)
+        setEtape(r.hors_marche.ecran)
+        if (r.hors_marche.affiner) setAffinerOuvert((s) => ({ ...s, [r.hors_marche!.ecran]: true }))
+        return true
+      }
+      setGarde(null)
+      return false
+    } catch { return false }   // le garde ne doit jamais bloquer sur une panne réseau (défense au PDF)
+  }
 
   // RECETTE-5 (V19) — un champ INDISPENSABLE est « rempli » s'il porte une saisie non vide (ou, à défaut
   // de saisie, un pré-remplissage — mais les deux champs obligatoires n'en ont pas : ils DOIVENT être
@@ -76,9 +106,10 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
     return out
   }
 
-  const continuer = () => {
+  const continuer = async () => {
     const m = manquantsEcran(etape)
     if (m.length) { setErreur(`À renseigner avant de continuer : ${m.map((c) => c.libelle).join(', ')}.`); return }
+    if (await gardeBloque()) return          // RECETTE-11 B2 — hors marché : on ne continue pas
     setErreur(null); setEtape(etape + 1)
   }
 
@@ -88,6 +119,7 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
       setErreur(`Indispensable(s) au calcul, encore vide(s) : ${m.map((x) => x.c.libelle).join(', ')}.`)
       setEtape(m[0].i); return
     }
+    if (await gardeBloque()) return          // RECETTE-11 B2 — hors marché : jamais un PDF « non établi »
     setEnvoi(true); setErreur(null)
     try { await putFinancierQuestionnaire(idu, reponses); setFini(true) }
     catch { setErreur('L\'enregistrement a échoué — réessayez.') }
@@ -251,8 +283,13 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
               const ouvert = !!affinerOuvert[etape]
               const row = (c: typeof champs[number]) => (
                 <ChampRow key={c.id} c={c} valeur={reponses[c.id]} touche={c.id in reponses}
-                          tvaExplication={data.tva_explication} onChange={(v) => set(c.id, v)} />
+                          tvaExplication={data.tva_explication} onChange={(v) => set(c.id, v)}
+                          onReset={() => resetChamp(c.id)}
+                          surligne={garde?.champ_id === c.id}
+                          messageGarde={garde?.champ_id === c.id ? garde.message : null} />
               )
+              // RECETTE-11 B3 — combien de valeurs « Affiner » sont modifiées (touchées) sur cet écran.
+              const modifies = affiner.filter((c) => c.id in reponses).length
               return (
                 <>
                   {garder.map(row)}
@@ -264,7 +301,10 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
                           fontSize: 12.5, padding: '6px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span>{ouvert ? '▾' : '▸'}</span>
                         <span>Affiner les hypothèses ({affiner.length})</span>
-                        <span style={{ color: '#5F7267' }}>— valeurs d'usage sourcées, à ajuster si besoin</span>
+                        {/* RECETTE-11 B3 — l'en-tête dit combien de valeurs sont MODIFIÉES. */}
+                        {modifies > 0
+                          ? <span style={{ color: '#E9C868' }} data-financier-affiner-modifies>· {modifies} modifiée{modifies > 1 ? 's' : ''}</span>
+                          : <span style={{ color: '#5F7267' }}>— valeurs d'usage sourcées, à ajuster si besoin</span>}
                       </button>
                       {ouvert && <div style={{ marginTop: 8 }}>{affiner.map(row)}</div>}
                     </div>
@@ -280,7 +320,7 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
                 ← Retour
               </button>
               {etape < N - 1
-                ? <button onClick={continuer} style={btnMint}>Continuer →</button>
+                ? <button onClick={() => void continuer()} style={btnMint}>Continuer →</button>
                 : <button disabled={envoi} onClick={() => void enregistrer()} style={{ ...btnMint, opacity: envoi ? 0.4 : 1 }}>
                     {envoi ? 'Enregistrement…' : 'Enregistrer'}
                   </button>}
@@ -300,8 +340,10 @@ const btnPlain: React.CSSProperties = {
   fontSize: 13, color: '#6F8578', background: 'none', border: 0, cursor: 'pointer',
 }
 
-function ChampRow({ c, valeur, touche, tvaExplication, onChange }: {
+function ChampRow({ c, valeur, touche, tvaExplication, onChange, onReset, surligne, messageGarde }: {
   c: QChamp; valeur: unknown; touche: boolean; tvaExplication: string; onChange: (v: unknown) => void
+  onReset?: () => void                               // RECETTE-11 B3 — revenir à la valeur sourcée
+  surligne?: boolean; messageGarde?: string | null   // RECETTE-11 B2 — champ hors marché à corriger
 }) {
   // RECETTE-6 (E1) — le « i » du questionnaire n'affichait rien (tooltip natif `title`, invisible/flaky).
   // On rend une VRAIE bulle d'aide au survol (popover positionné), fiable sur les QUATRE écrans.
@@ -314,7 +356,9 @@ function ChampRow({ c, valeur, touche, tvaExplication, onChange }: {
   const num = champInput(c.unite) === 'number'
 
   const champStyle: React.CSSProperties = {
-    width: '100%', height: 42, background: '#060A08', border: '.5px solid #2A3A31',
+    width: '100%', height: 42, background: '#060A08',
+    // RECETTE-11 B2 — champ hors marché : bord rouge, il faut le corriger pour continuer.
+    border: surligne ? '1.5px solid #E0776B' : '.5px solid #2A3A31',
     borderRadius: 8, padding: '0 14px', fontSize: 15, color: '#ECF5EF', outline: 'none',
     boxSizing: 'border-box',
   }
@@ -366,9 +410,21 @@ function ChampRow({ c, valeur, touche, tvaExplication, onChange }: {
       {prefill && !touche && (
         <p style={{ fontSize: 11, color: '#6F8578', margin: '5px 0 0' }}>Source : {prefill.source}</p>
       )}
+      {/* RECETTE-11 B3 — champ MODIFIÉ qui a une valeur sourcée : proposer d'y revenir. */}
+      {prefill && touche && onReset && (
+        <button type="button" data-financier-reset onClick={onReset}
+          style={{ background: 'none', border: 0, padding: '5px 0 0', margin: 0, cursor: 'pointer',
+            fontSize: 11, color: '#4ADE80', textAlign: 'left' }}>
+          ↺ Revenir à la valeur sourcée{prefill.valeur != null ? ` (${String(prefill.valeur)})` : ''}
+        </button>
+      )}
       {/* règle 2 — un champ vidé s'imprimera « non chiffré » */}
       {vide && (
         <p style={{ fontSize: 11, color: '#E0B341', margin: '5px 0 0' }}>Laissé vide → « non chiffré » dans le document.</p>
+      )}
+      {/* RECETTE-11 B2 — le message du garde, sous le champ hors marché (jamais un PDF « non établi ») */}
+      {surligne && messageGarde && (
+        <p data-financier-garde style={{ fontSize: 11.5, color: '#E0776B', margin: '5px 0 0', lineHeight: 1.45 }}>{messageGarde}</p>
       )}
       {/* règle 3 — l'explication du régime de TVA + renvoi expert-comptable */}
       {c.id === 'regime_tva_saisi' && (

@@ -29,15 +29,37 @@ _REGIME_LABEL = {"assujetti_recuperation": "assujetti avec récupération de la 
 #: hypothèses clés montrées dans l'encart « hypothèses du porteur » (id questionnaire → libellé).
 #: RECETTE-10 T2b (recette) — « Scénario » RETIRÉ : le bilan chiffre toujours une reconstruction (W3),
 #: la ligne n'apportait rien et perpétuait un champ retiré de la saisie. Plus imprimée au document.
-_HYP_CLES = (("prix_demande_saisi_eur", "Prix demandé"),
+#: RECETTE-11 B3 — l'encart liste TOUS les champs qui entrent dans le bilan, y compris ceux repliés
+#: sous « Affiner » (rien de caché : ce que le porteur a pu toucher est imprimé, sourcé ou projet).
+_HYP_CLES = (("prix_sortie_saisi_eur_m2", "Prix de vente prévu"),
+             ("prix_vente_bailleur_saisi_eur_m2", "Prix de vente au bailleur social"),
+             ("part_sociale_saisi_pct", "Part de logement social"),
+             ("regime_tva_saisi", "Régime de TVA"),
+             ("logements_vises_saisi", "Nombre de logements visés"),
+             ("typologie_moyenne_saisi", "Typologie moyenne"),
              ("cout_construction_saisi_eur_m2", "Coût de construction"),
-             ("marge_visee_saisi_pct", "Marge visée"), ("prix_sortie_saisi_eur_m2", "Prix de sortie"),
-             ("bilan_demolition_eur", "Démolition"))
+             ("honoraires_techniques_saisi_pct", "Honoraires techniques"),
+             ("vrd_saisi_eur_m2", "VRD et raccordements"),
+             ("cout_place_stationnement_saisi_eur", "Coût par place de stationnement"),
+             ("aleas_saisi_pct", "Provision pour aléas"),
+             ("taxe_amenagement_saisi_eur", "Taxe d'aménagement"),
+             ("marge_visee_saisi_pct", "Marge visée"),
+             ("frais_acquisition_saisi_pct", "Frais d'acquisition"),
+             ("prix_demande_saisi_eur", "Prix demandé pour le terrain"),
+             ("bilan_demolition_eur", "Coût de démolition"),
+             ("bilan_depollution_eur", "Dépollution / étude de sol"),
+             ("duree_portage_saisi_mois", "Durée de portage"),
+             ("taux_apport_saisi_pct", "Taux d'emprunt"))
 #: RECETTE-6 (E3) — l'UNITÉ de chaque hypothèse : « 700000 »/« 9 » sans unité était illisible. On formate
-#: en € / €/m² / % (mêmes formateurs que le reste du document — un seul format monétaire, cf. E3).
+#: en € / €/m² / % / mois (mêmes formateurs que le reste du document — un seul format monétaire, cf. E3).
 _HYP_UNITE = {"prix_demande_saisi_eur": "eur", "cout_construction_saisi_eur_m2": "eur_m2",
               "marge_visee_saisi_pct": "pct", "prix_sortie_saisi_eur_m2": "eur_m2",
-              "bilan_demolition_eur": "eur"}
+              "bilan_demolition_eur": "eur", "prix_vente_bailleur_saisi_eur_m2": "eur_m2",
+              "part_sociale_saisi_pct": "pct", "honoraires_techniques_saisi_pct": "pct",
+              "vrd_saisi_eur_m2": "eur_m2", "cout_place_stationnement_saisi_eur": "eur",
+              "aleas_saisi_pct": "pct", "taxe_amenagement_saisi_eur": "eur",
+              "frais_acquisition_saisi_pct": "pct", "bilan_depollution_eur": "eur",
+              "duree_portage_saisi_mois": "mois", "taux_apport_saisi_pct": "pct"}
 
 
 def _fmt_hyp(fid: str, valeur) -> str:
@@ -47,6 +69,8 @@ def _fmt_hyp(fid: str, valeur) -> str:
     if fid == "scenario_saisi":
         from ...scenarios import libelle_scenario
         return esc(libelle_scenario(valeur) or str(valeur))
+    if fid == "regime_tva_saisi":   # RECETTE-11 B3 — libellé humain, jamais la clé technique
+        return esc(_REGIME_LABEL.get(valeur, str(valeur)))
     u = _HYP_UNITE.get(fid)
     try:
         if u == "eur":
@@ -56,6 +80,8 @@ def _fmt_hyp(fid: str, valeur) -> str:
         if u == "pct":
             fv = float(valeur)
             return f"{groupe(round(fv)) if fv == int(fv) else groupe(fv)} %"
+        if u == "mois":
+            return f"{groupe(round(float(valeur)))} mois"
     except (TypeError, ValueError):
         pass
     return esc(str(valeur))
