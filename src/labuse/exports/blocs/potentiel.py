@@ -24,8 +24,13 @@ def _sur_place(valeurs) -> str:
         # RECETTE-11 A3 — la mesure LiDAR HD porte SA date de survol (lue dans les métadonnées IGN).
         survol = p.get("hauteur_survol")
         mention = "mesuré au LiDAR HD" + (f", survol de {esc(str(survol))}" if survol else "")
+        # RECETTE-11 A4 — un permis autorisé après le survol : la mesure peut être dépassée.
+        permis = p.get("hauteur_permis_posterieur")
+        caveat = (f" — mesure antérieure au permis du {esc(str(permis))}, possiblement dépassée"
+                  if permis else "")
         val_h = f"{fmt_m(fait)} au faîtage" + (f" · {fmt_m(egout)} à l'égout" if egout is not None else "")
-        hauteur_ligne = ligne_kv("Hauteur du bâti", f"{val_h} <em>({mention})</em>", chip_span("s", "sourcé"))
+        hauteur_ligne = ligne_kv("Hauteur du bâti", f"{val_h} <em>({mention}{caveat})</em>",
+                                 chip_span("s", "sourcé"))
     lignes = [
         ligne(valeurs, "Emprise bâtie", "emprise_batie_m2", fmt_m2),
         hauteur_ligne,

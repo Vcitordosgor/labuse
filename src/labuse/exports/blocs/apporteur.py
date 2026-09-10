@@ -93,6 +93,9 @@ def _sur_place(valeurs) -> str:
         if mesure:
             survol = p.get("hauteur_survol")
             mention = "mesuré au LiDAR HD" + (f", survol de {survol}" if survol else "")
+            permis = p.get("hauteur_permis_posterieur")  # A4 — mesure peut-être dépassée
+            if permis:
+                mention += f" ; antérieur au permis du {permis}, possiblement dépassé"
             bits.append(f"{fmt_m(p['hauteur_faitage_lidar_m'])} au faîtage ({mention})")
         else:
             bits.append(f"environ {fmt_m(val(valeurs, 'hauteur_bati_m'))} de haut")

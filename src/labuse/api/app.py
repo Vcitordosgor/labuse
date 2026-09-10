@@ -4891,6 +4891,19 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
             h_regle = _sm["regle_m"]                          # la règle qui mord
             h_bati = _sm["mesure_m"]                          # la mesure qui mord
             h_base = f"{_sm['contrainte']} mesuré (LiDAR HD)"
+    # RECETTE-11 A4 — un permis AUTORISÉ sur la parcelle APRÈS le survol peut avoir changé le bâti :
+    # la mesure le dit (on compare à la date de survol, jamais à « permis récent »).
+    h_permis_posterieur = None
+    if _lid and _lid.get("date_fin_survol"):
+        try:
+            _pp = db.execute(text(
+                "SELECT max(date_autorisation) FROM p_model_permits "
+                "WHERE idu = :i AND date_autorisation > :d"),
+                {"i": idu, "d": _lid["date_fin_survol"]}).scalar()
+            if _pp:
+                h_permis_posterieur = _pp.strftime("%d/%m/%Y")
+        except Exception:  # noqa: BLE001 — table permis absente (dev/test) → pas de caveat, jamais un faux
+            db.rollback()
     return {
         "niveau": niveau, "libelle": libelle,
         "pct_consomme": pct,                                  # SDP consommée / autorisée (%)
@@ -4917,6 +4930,8 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
         "hauteur_source_lidar": h_lidar_source,
         # RECETTE-11 A3 — la date de survol LiDAR HD, servie AVEC la mesure (jamais une mesure sans date).
         "hauteur_survol": (_lid.get("survol") if _lid else None),
+        # RECETTE-11 A4 — date d'un permis autorisé APRÈS le survol (mesure possiblement dépassée).
+        "hauteur_permis_posterieur": h_permis_posterieur,
         "avertissement_surelevation": sur.get("avertissement"),
         "source": "Ratio SDP consommée/autorisée (bloc D du modèle P) + surélévation au moteur "
                   "commun (règles PLU calibrées × bâti "

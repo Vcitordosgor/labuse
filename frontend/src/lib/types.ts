@@ -775,6 +775,8 @@ export interface PotentielTransformation extends Indisponible {
   // RECETTE-11 A3 — date de survol LiDAR HD, servie avec la mesure.
   hauteur_survol?: string | null
   hauteur_nature?: string | null
+  // RECETTE-11 A4 — permis autorisé après le survol : mesure possiblement dépassée.
+  hauteur_permis_posterieur?: string | null
   confiance: string | null
   source: string
   note: string
