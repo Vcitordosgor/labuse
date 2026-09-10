@@ -47,7 +47,8 @@ export function LeBienSection({ f }: { f: Fiche; idu: string }) {
               ? <>{b.hauteur_faitage_m} <small>m au faîtage</small>{b.hauteur_egout_m != null ? <> · {b.hauteur_egout_m} <small>m à l'égout</small></> : null}</>
               : b.hauteur_bati_m != null ? <>{b.hauteur_bati_m} <small>m</small></> : 'non déterminée'}
             tone={b.hauteur_bati_m != null || b.hauteur_faitage_m != null ? undefined : 'mute'}
-            src={b.hauteur_nature === 'sourcé' ? 'LiDAR HD (mesuré)'
+            src={b.hauteur_nature === 'sourcé'
+              ? `LiDAR HD (mesuré${b.hauteur_survol ? `, survol de ${b.hauteur_survol}` : ''})`
               : b.hauteur_bati_m != null ? 'BD TOPO' : undefined} />
           <FactRow label="Surface au sol libre"
             value={b.surface_libre_m2 != null ? <>{fmtInt(b.surface_libre_m2)} <small>m²</small></> : 'non déterminée'}

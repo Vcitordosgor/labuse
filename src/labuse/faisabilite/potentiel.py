@@ -167,11 +167,11 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
                         else f"au sol : ~{round(sdp_servie)} m² de SDP résiduelle")
         if garde_cause:
             morceaux[-1] += f" ({garde_cause})"
-    if en_hauteur.get("possible"):
-        morceaux.append(f"surélévation possible (~{en_hauteur['marge_m']:g} m sous "
-                        f"la hauteur {en_hauteur['base']})")
-    elif en_hauteur.get("possible") is False:
-        morceaux.append("pas de marge de surélévation")
+    # RECETTE-11 A6 — plus de verdict de faisabilité (« possible »/« pas de marge ») : on énonce la
+    # marge mesurée sous la règle de hauteur et la contrainte, le lecteur conclut.
+    if en_hauteur.get("marge_m") is not None and en_hauteur.get("base"):
+        morceaux.append(f"marge en hauteur ~{en_hauteur['marge_m']:g} m sous "
+                        f"la hauteur {en_hauteur['base']}")
     if table_rase["constructible"] and table_rase["vendable_m2"]:
         lo, hi = (table_rase.get("logements") or (None, None))
         logts = f", {lo}–{hi} logements" if lo is not None else ""

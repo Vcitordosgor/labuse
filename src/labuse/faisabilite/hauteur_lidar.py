@@ -146,15 +146,32 @@ def ingest_hauteur_lidar(db, idu: str) -> dict | None:
     return m
 
 
+_MOIS_FR = ("", "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août",
+            "septembre", "octobre", "novembre", "décembre")
+
+
+def survol_libelle(date_fin) -> str | None:
+    """RECETTE-11 A2/A3 — la date de survol LUE dans les métadonnées IGN, formatée « mois année »
+    (jamais supposée). None si la source ne l'a pas publiée."""
+    if date_fin is None:
+        return None
+    try:
+        return f"{_MOIS_FR[date_fin.month]} {date_fin.year}"
+    except (AttributeError, IndexError):
+        return None
+
+
 def hauteur_lidar_servie(db, idu: str) -> dict | None:
     """La mesure LiDAR PRÉCALCULÉE de la parcelle (table `batiment_hauteur_lidar`), ou None. Lecture
-    seule et SANS réseau — c'est ce que lisent les consommateurs (fiche, Apporteur, Dossier, 3D)."""
+    seule et SANS réseau — c'est ce que lisent les consommateurs (fiche, Apporteur, Dossier, 3D).
+    Porte la DATE DE SURVOL de la dalle (RECETTE-11 A3) : aucune mesure ne s'affiche sans sa date."""
     from sqlalchemy import text
     try:
         row = db.execute(text(
-            "SELECT faitage_m, egout_m, hauteur_bdtopo_m, ecart_faitage_bdtopo_m, n_cellules "
+            "SELECT faitage_m, egout_m, hauteur_bdtopo_m, ecart_faitage_bdtopo_m, n_cellules, "
+            "date_fin_survol, code_mission "
             "FROM batiment_hauteur_lidar WHERE idu = :i"), {"i": idu}).mappings().first()
-    except Exception:  # noqa: BLE001 — table absente (pas encore d'ingestion) → repli BD TOPO
+    except Exception:  # noqa: BLE001 — table/colonnes absentes (pas encore d'ingestion) → repli BD TOPO
         try:
             db.rollback()
         except Exception:  # noqa: BLE001 — session mock / déjà close : le repli reste None
@@ -162,12 +179,17 @@ def hauteur_lidar_servie(db, idu: str) -> dict | None:
         return None
     if not row or row["faitage_m"] is None:
         return None
+    survol = survol_libelle(row.get("date_fin_survol"))
     return {"faitage_m": round(float(row["faitage_m"]), 1),
             "egout_m": round(float(row["egout_m"]), 1) if row["egout_m"] is not None else None,
             "hauteur_bdtopo_m": (round(float(row["hauteur_bdtopo_m"]), 1)
                                  if row["hauteur_bdtopo_m"] is not None else None),
             "ecart_faitage_bdtopo_m": row["ecart_faitage_bdtopo_m"],
-            "n_cellules": row["n_cellules"], "source": "LiDAR HD MNS (IGN), mesuré"}
+            "n_cellules": row["n_cellules"],
+            "survol": survol, "date_fin_survol": row.get("date_fin_survol"),
+            "code_mission": row.get("code_mission"),
+            "source": ("LiDAR HD MNS (IGN), mesuré, survol de " + survol) if survol
+                      else "LiDAR HD MNS (IGN), mesuré"}
 
 
 def hauteur_batie(db, idu: str) -> dict | None:
@@ -179,7 +201,7 @@ def hauteur_batie(db, idu: str) -> dict | None:
     lid = hauteur_lidar_servie(db, idu)
     if lid:
         return {"hauteur_m": lid["faitage_m"], "faitage_m": lid["faitage_m"], "egout_m": lid["egout_m"],
-                "nature": "sourcé", "source": lid["source"]}
+                "nature": "sourcé", "survol": lid.get("survol"), "source": lid["source"]}
     hb = db.execute(text(
         """SELECT NULLIF(b.attrs->>'hauteur','')::float h
            FROM spatial_layers b JOIN parcels p ON p.idu = :i

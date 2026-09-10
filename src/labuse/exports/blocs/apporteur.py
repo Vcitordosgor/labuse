@@ -23,7 +23,7 @@ from ..rendu import esc, ligne_kv, note, table_kv
 IDS = ("surface_parcelle_m2", "zone_plu_famille", "reglement_plu_bloc", "statut_plu",
        "emprise_batie_m2", "hauteur_bati_m",
        "n_batiments", "type_proprietaire", "prix_achat_historique_eur", "distance_arret_m",
-       "sdp_residuelle_m2", "capacite_logements", "aleas_parcelle_liste",
+       "sdp_residuelle_m2", "capacite_logements", "aleas_parcelle_liste", "potentiel_verdict",
        "er_emplacement_reserve", "ebc_classe", "dpu_perimetre", "peb_zone",
        "prix_terrain_secteur_eur_m2", "prix_sortie_bati_eur_m2")
 
@@ -85,7 +85,17 @@ def _sur_place(valeurs) -> str:
     if a(valeurs, "emprise_batie_m2"):
         bits.append(f"{fmt_m2(val(valeurs, 'emprise_batie_m2'))} au sol")
     if a(valeurs, "hauteur_bati_m"):
-        bits.append(f"environ {fmt_m(val(valeurs, 'hauteur_bati_m'))} de haut")
+        # RECETTE-11 A3 — devant une valeur MESURÉE (LiDAR HD), plus d'« environ » : on donne le
+        # faîtage mesuré et sa date de survol. « environ » ne reste que sur une estimation BD TOPO.
+        p = val(valeurs, "potentiel_verdict") or {}
+        mesure = isinstance(p, dict) and p.get("hauteur_nature") == "sourcé" \
+            and p.get("hauteur_faitage_lidar_m") is not None
+        if mesure:
+            survol = p.get("hauteur_survol")
+            mention = "mesuré au LiDAR HD" + (f", survol de {survol}" if survol else "")
+            bits.append(f"{fmt_m(p['hauteur_faitage_lidar_m'])} au faîtage ({mention})")
+        else:
+            bits.append(f"environ {fmt_m(val(valeurs, 'hauteur_bati_m'))} de haut")
     return " · ".join(bits) or "terrain a priori nu"
 
 

@@ -21,8 +21,11 @@ def _sur_place(valeurs) -> str:
     hauteur_ligne = ligne(valeurs, "Hauteur du bâti", "hauteur_bati_m", fmt_m)
     if lidar_h:
         fait, egout = p.get("hauteur_faitage_lidar_m"), p.get("hauteur_egout_lidar_m")
+        # RECETTE-11 A3 — la mesure LiDAR HD porte SA date de survol (lue dans les métadonnées IGN).
+        survol = p.get("hauteur_survol")
+        mention = "mesuré au LiDAR HD" + (f", survol de {esc(str(survol))}" if survol else "")
         val_h = f"{fmt_m(fait)} au faîtage" + (f" · {fmt_m(egout)} à l'égout" if egout is not None else "")
-        hauteur_ligne = ligne_kv("Hauteur du bâti", f"{val_h} <em>(mesuré LiDAR HD)</em>", chip_span("s", "sourcé"))
+        hauteur_ligne = ligne_kv("Hauteur du bâti", f"{val_h} <em>({mention})</em>", chip_span("s", "sourcé"))
     lignes = [
         ligne(valeurs, "Emprise bâtie", "emprise_batie_m2", fmt_m2),
         hauteur_ligne,
@@ -53,47 +56,39 @@ def _scenarios(valeurs) -> str:
     # soustraction sur un faîtage BD TOPO incertain (la vraie réparation de E1).
     base_h = p.get("hauteur_base") if isinstance(p, dict) else None
     if base_h and "mesuré (LiDAR HD)" in str(base_h):
-        # RECETTE-10 T1 — le LiDAR mesure égout ET faîtage ; on garde la contrainte la plus serrée et
-        # on DIT laquelle mord, en montrant les deux calculs (une règle d'égout comparée à l'égout, une
-        # règle de faîtage comparée au faîtage — jamais l'une contre l'autre). Répare l'inversion T9→T1.
+        # RECETTE-11 A6 — on ne rend PLUS de verdict de faisabilité (« possible »/« non identifiée ») :
+        # la phrase s'arrête aux hauteurs mesurées, à la règle, à la marge et à la contrainte qui mord
+        # (le lecteur conclut). RECETTE-10 T1 : les deux contraintes, la plus serrée nommée, les deux
+        # calculs montrés (règle d'égout vs égout, règle de faîtage vs faîtage — jamais l'une vs l'autre).
         marge = p.get("hauteur_marge_m")
         contrainte = p.get("hauteur_contrainte")                # « égout » | « faîtage »
-        possible = p.get("surelevation_possible")
         contraintes = p.get("hauteur_contraintes") or []
+        survol = p.get("hauteur_survol")
+        mention = "mesuré au LiDAR HD" + (f", survol de {esc(str(survol))}" if survol else "")
         limite = ("le faîtage" if contrainte == "faîtage"
                   else "l'égout" if contrainte == "égout" else esc(str(contrainte)))
         detail_c = " · ".join(
             f"{c['base']} {fmt_m(c['mesure_m'])} mesuré contre {fmt_m(c['regle_m'])} réglementaires "
             f"(marge {fmt_m(c['marge_m'])})" for c in contraintes)
-        if possible and marge is not None:
+        if marge is not None:
             lignes.append(ligne_kv("En hauteur, bâti conservé",
-                          f"<strong>Surélévation possible</strong> — {fmt_m(marge)} disponibles, "
-                          f"limité par {limite} (<strong>mesuré au LiDAR HD</strong>). "
-                          + esc(detail_c) + ".", chip_span("s", "sourcé")))
-        elif possible is False and marge is not None:
-            lignes.append(ligne_kv("En hauteur, bâti conservé",
-                          f"<strong>Pas de marge de surélévation</strong> — {fmt_m(marge)} au mieux, "
-                          f"limité par {limite} (<strong>mesuré au LiDAR HD</strong>). "
+                          f"<strong>{fmt_m(marge)}</strong> sous la hauteur réglementaire, "
+                          f"contrainte qui mord : {limite} (<strong>{mention}</strong>). "
                           + esc(detail_c) + ".", chip_span("s", "sourcé")))
     elif base_h and str(base_h).startswith("faîtage"):
+        # RECETTE-11 A6 — hauteur BD TOPO (pas de LiDAR) : on rend la marge et la règle, sans verdict.
         marge, regle, bati = p.get("hauteur_marge_m"), p.get("hauteur_regle_m"), p.get("hauteur_bati_m")
-        possible = p.get("surelevation_possible")
         ref = "au faîtage" if base_h == "faîtage" else "au faîtage (règle estimée depuis l'égout)"
-        if possible and marge is not None:
+        if marge is not None and regle is not None and bati is not None:
+            estimee = base_h != "faîtage"
+            phrase = (f"<strong>{fmt_m(marge)}</strong> {'estimés ' if estimee else ''}sous la hauteur "
+                      f"{ref} — {fmt_m(regle)} réglementaires contre {fmt_m(bati)} bâtis (faîtage BD TOPO)")
+            if estimee:
+                phrase += " ; à vérifier au règlement (la zone ne fixe qu'une hauteur d'égout)"
+            lignes.append(ligne_kv("En hauteur, bâti conservé", phrase + ".", ""))
+        elif marge is not None:
             lignes.append(ligne_kv("En hauteur, bâti conservé",
-                          f"<strong>Surélévation possible</strong> — {fmt_m(marge)} disponibles "
-                          f"sous la hauteur {ref}.", ""))
-        elif possible is None and regle is not None and bati is not None:
-            # règle de faîtage estimée depuis l'égout : marge incertaine, jamais un « non » ferme.
-            lignes.append(ligne_kv("En hauteur, bâti conservé",
-                          f"<strong>Surélévation à confirmer</strong> — {fmt_m(regle)} {ref} contre "
-                          f"{fmt_m(bati)} bâtis (faîtage BD TOPO) : marge estimée {fmt_m(marge)}, à "
-                          "vérifier au règlement (la zone ne fixe qu'une hauteur d'égout).", ""))
-        elif possible is False and regle is not None and bati is not None:
-            lignes.append(ligne_kv("En hauteur, bâti conservé",
-                          f"<strong>Pas de marge de surélévation</strong> — {fmt_m(regle)} {ref} "
-                          f"autorisés, {fmt_m(bati)} bâtis (faîtage) : {fmt_m(marge)} restants, "
-                          "moins que la hauteur d'un niveau.", ""))
+                          f"<strong>{fmt_m(marge)}</strong> sous la hauteur {ref}.", ""))
     # reconstruction
     if a(valeurs, "capacite_logements"):
         cap = val(valeurs, "capacite_logements")
@@ -109,7 +104,14 @@ def rendu(valeurs) -> str:
     corps = rendu_verdict(verdict_potentiel(valeurs)) + _sur_place(valeurs) + _scenarios(valeurs)
     if not corps.strip():
         return ""      # rien d'évaluable → section omise (aucun bloc creux)
-    corps += note("Pré-faisabilité sur règlement public. Une étude réglementaire par un "
-                  "professionnel peut modifier ces valeurs.")
+    note_txt = ("Pré-faisabilité sur règlement public. Une étude réglementaire par un "
+                "professionnel peut modifier ces valeurs.")
+    # RECETTE-11 A3 — quand la hauteur est mesurée, la source LiDAR HD est citée dans le §3.
+    p = val(valeurs, "potentiel_verdict") or {}
+    if isinstance(p, dict) and p.get("hauteur_nature") == "sourcé":
+        survol = p.get("hauteur_survol")
+        note_txt += (" Hauteurs (faîtage, égout) mesurées au LiDAR HD — IGN / Géoplateforme"
+                     + (f", survol de {esc(str(survol))}" if survol else "") + ".")
+    corps += note(note_txt)
     corps += pied(valeurs, IDS)
     return section("3. Potentiel constructible", corps)

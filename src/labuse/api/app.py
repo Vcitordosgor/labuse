@@ -2825,13 +2825,17 @@ def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dic
     out = []
     # RECETTE-8 W16 — le millésime affichable vient du PRODUCTEUR UNIQUE (millesime_source.composer),
     # le même que le pied de section (registre/valeur.py) → une source, une seule vérité par document.
-    from ..millesime_source import composer as _composer_mill
+    from ..millesime_source import composer as _composer_mill, nettoyer_notes_internes
     for r in rows:
+        # composer nettoie déjà le millésime (D6) ; on nettoie aussi le fournisseur (« propre non
+        # public ») — le catalogue data_sources partagé n'est PAS modifié (nettoyage au bord).
         mill = _composer_mill(r["source_millesime"], source_horizon_at=r["source_horizon_at"],
                               dernier_vu=r["dernier_vu"], last_sync_at=r["last_sync_at"])
         out.append({
-            "nom": r["name"], "categorie": r["category"], "fournisseur": r["provider"],
-            "millesime": mill, "fiabilite": _FIAB.get(r["reliability_level"], r["reliability_level"]),
+            "nom": r["name"], "categorie": r["category"],
+            "fournisseur": nettoyer_notes_internes(r["provider"]),
+            "millesime": mill,
+            "fiabilite": _FIAB.get(r["reliability_level"], r["reliability_level"]),
         })
     return out
 
@@ -4911,6 +4915,8 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
         "hauteur_faitage_lidar_m": (_lid["faitage_m"] if _lid else None),
         "hauteur_egout_lidar_m": (_lid["egout_m"] if _lid else None),
         "hauteur_source_lidar": h_lidar_source,
+        # RECETTE-11 A3 — la date de survol LiDAR HD, servie AVEC la mesure (jamais une mesure sans date).
+        "hauteur_survol": (_lid.get("survol") if _lid else None),
         "avertissement_surelevation": sur.get("avertissement"),
         "source": "Ratio SDP consommée/autorisée (bloc D du modèle P) + surélévation au moteur "
                   "commun (règles PLU calibrées × bâti "

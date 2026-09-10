@@ -542,6 +542,7 @@ export interface LeBien {
   hauteur_faitage_m?: number | null
   hauteur_egout_m?: number | null
   hauteur_nature?: 'sourcé' | 'estimé' | null
+  hauteur_survol?: string | null   // RECETTE-11 A3 — date de survol LiDAR HD
   hauteur_source?: string | null
   surface_libre_m2: number | null
   surface_parcelle_m2: number | null
@@ -771,6 +772,9 @@ export interface PotentielTransformation extends Indisponible {
   hauteur_marge_m: number | null
   // RECETTE-10 T1 — la hauteur qui mord (« égout »/« faîtage ») quand le LiDAR a mesuré les deux.
   hauteur_contrainte?: string | null
+  // RECETTE-11 A3 — date de survol LiDAR HD, servie avec la mesure.
+  hauteur_survol?: string | null
+  hauteur_nature?: string | null
   confiance: string | null
   source: string
   note: string

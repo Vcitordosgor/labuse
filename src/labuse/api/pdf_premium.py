@@ -484,13 +484,12 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         _titre_section(pdf, "Droits à bâtir (SDP)")
         pdf.set_font("inter", size=7.8)
         pdf.set_text_color(*TXT1)
+        # RECETTE-11 A6 — plus de verdict (« surélévation possible ») : on énonce la marge en hauteur.
+        marge_txt = f" Marge en hauteur : ~{marge_h} m sous la règle." if (marge_h and marge_h > 0) else ""
         if sdp_res and sdp_res > 0:
-            msg = f"SDP résiduelle estimée : ~{sdp_res:,} m² au sol.".replace(",", " ")
-            if surel:
-                msg += " Surélévation également possible" + (f" (marge ~{marge_h} m)." if marge_h else ".")
-        elif surel:
-            msg = ("Aucun droit à bâtir résiduel au sol (densité autorisée atteinte). "
-                   "Seule marge : surélévation" + (f" (marge ~{marge_h} m)." if marge_h else " possible."))
+            msg = f"SDP résiduelle estimée : ~{sdp_res:,} m² au sol.".replace(",", " ") + marge_txt
+        elif surel or marge_txt:
+            msg = ("Aucun droit à bâtir résiduel au sol (densité autorisée atteinte)." + marge_txt)
         else:
             msg = "Aucun droit à bâtir résiduel au sol (densité autorisée atteinte)."
         pdf.multi_cell(pdf.w - 28, 3.8, msg, new_x="LMARGIN", new_y="NEXT")

@@ -33,7 +33,9 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
       <p className="mt-1 text-[11px] leading-snug text-txt-mut">{pt.libelle}</p>
       {pt.pct_consomme != null && <FactRow label="SDP consommée / autorisée" value={<>{pt.pct_consomme} <small>%</small></>} />}
       {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <FactRow label={`SDP résiduelle estimée · ${PERIM_RESIDUEL_COURT}`} value={<>~{fmtInt(pt.sdp_residuelle_m2)} <small>m²</small></>} />}
-      {pt.surelevation_possible != null && <FactRow label="Surélévation" value={pt.surelevation_possible ? <>possible{pt.hauteur_marge_m != null ? <> <small>(marge ~{pt.hauteur_marge_m} m{pt.hauteur_contrainte ? `, limité par ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}` : ''})</small></> : ''}</> : 'non'} tone={pt.surelevation_possible ? undefined : 'mute'} />}
+      {/* RECETTE-11 A6 — plus de verdict (« possible »/« non ») : la marge mesurée sous la règle et
+          la contrainte qui mord ; A3 : la date de survol quand c'est une mesure LiDAR HD. */}
+      {pt.hauteur_marge_m != null && <FactRow label="Marge en hauteur" value={<>~{pt.hauteur_marge_m} <small>m sous la règle{pt.hauteur_contrainte ? `, contrainte : ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}` : ''}{pt.hauteur_survol ? ` — mesuré au LiDAR HD, survol de ${pt.hauteur_survol}` : ''}</small></>} />}
       <FactNote>{pt.source}</FactNote>
     </div>
   )

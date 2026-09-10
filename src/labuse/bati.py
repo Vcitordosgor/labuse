@@ -211,6 +211,8 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
         "hauteur_faitage_m": (lid["faitage_m"] if lid else None),
         "hauteur_egout_m": (lid["egout_m"] if lid else None),
         "hauteur_nature": ("sourcé" if lid else ("estimé" if hauteur is not None else None)),
+        # RECETTE-11 A3 — la date de survol servie avec la mesure (jamais une mesure sans date).
+        "hauteur_survol": (lid.get("survol") if lid else None),
         "hauteur_source": (lid["source"] if lid else ("BD TOPO® (hauteur déclarée)" if hauteur is not None else None)),
         "surface_libre_m2": surface_libre,
         "surface_parcelle_m2": round(surface) if surface is not None else None,
