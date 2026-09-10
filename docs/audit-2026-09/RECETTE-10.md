@@ -263,3 +263,21 @@ ce que le segment regroupe** (option 2 du mandat) :
 **Preuve — artefact final** : distribution mesurée ci-dessus (SQL sur le run servi, CTE identique à
 l'endpoint) ; capture du segment (batch UI). Le libellé et l'info-bulle corrigés sont dans le vrai
 chemin (`SEGMENTS` de `ResultsSection`, rendu du volet Résultats).
+
+---
+
+## T8 — Fiche commune : les outils et les vues restent accessibles — FAIT
+
+**Le défaut.** La barre de contrôles de vue (`MapToolbar` : fond de plan, 3D, mesures, zone — coin
+haut-droit `right: 16`) se décalait déjà de 416 px vers la gauche quand la **fiche parcelle** s'ouvre
+(aside 400 px), mais son test ne regardait QUE `selectedIdu`. La **fiche commune** (`ContextePanel`,
+aside 420 px à droite) la recouvrait donc entièrement → contrôles de vue inaccessibles.
+
+**Le correctif** (`MapToolbar.tsx`) — même comportement, même animation (`right 180ms cubic-bezier`) :
+le décalage se déclenche aussi sur `contexteCommune`, à la largeur de la fiche commune (420 + 16 = 436).
+`right = fiche parcelle ? 416 : fiche commune ? 436 : 16`.
+
+**Le menu Outils** : le tiroir Outils est le rail de gauche (`Rail`, `border-r`, `w-[70px]` + tiroir
+`w-[320px]` à gauche) — jamais recouvert par une fiche de droite, donc resté accessible ; le seul
+cluster réellement masqué était la barre de vue, désormais dégagée. **Preuve** : capture du décalage
+sous fiche commune (batch UI). tsc vert.

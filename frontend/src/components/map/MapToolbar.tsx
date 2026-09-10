@@ -31,16 +31,21 @@ const TOOLS: { key: MapTool; label: string; icon: JSX.Element; hint: string }[] 
 ]
 
 export function MapToolbar() {
-  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone, selectedIdu, view } = useApp()
+  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone, selectedIdu, view, contexteCommune } = useApp()
   // M58-P1 (point carte) : quand la fiche (aside 400px, à droite) est ouverte, elle recouvrait ces
   // contrôles. On les décale vers la gauche de la largeur de la fiche (+16px de marge), transition
   // 180ms, retour à la fermeture. Aucun contrôle inaccessible.
-  const ficheOuverte = selectedIdu != null && view !== 'sources'
+  // RECETTE-10 T8 — la fiche COMMUNE (aside 420px, `ContextePanel`) recouvrait AUSSI ces contrôles
+  // (le décalage ne regardait que la fiche parcelle) : même comportement, même animation, décalage à
+  // la largeur de la fiche ouverte (420 + 16). Fini les contrôles de vue inaccessibles sous la fiche.
+  const ficheParcelle = selectedIdu != null && view !== 'sources'
+  const ficheCommune = contexteCommune != null
+  const decalage = ficheParcelle ? 416 : ficheCommune ? 436 : 16
   const [bmOpen, setBmOpen] = useState(false)
 
   return (
     <div className="absolute top-4 flex flex-col items-end gap-2"
-      style={{ right: ficheOuverte ? 416 : 16, transition: 'right 180ms cubic-bezier(.2,0,0,1)' }}>
+      style={{ right: decalage, transition: 'right 180ms cubic-bezier(.2,0,0,1)' }}>
       {/* DA §11 — « Sombre » (fond de plan) et « 3D » ALIGNÉS sur une même ligne. */}
       <div className="flex items-center gap-2">
       {/* fond de plan */}
