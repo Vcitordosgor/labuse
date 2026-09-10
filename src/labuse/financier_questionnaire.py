@@ -23,7 +23,11 @@ from sqlalchemy import text
 # (purement informatif), la « commission d'apporteur » (aucun poste du bilan ne la porte), et
 # l'« apport » (le document renvoie explicitement le plan de financement à l'établissement prêteur).
 ECRANS: list[tuple[str, tuple[str, ...]]] = [
-    ("Votre projet", ("scenario_saisi", "logements_vises_saisi", "typologie_moyenne_saisi",
+    # RECETTE-10 T2b (recette) — `scenario_saisi` RETIRÉ de la saisie ET du document : le bilan chiffre
+    # TOUJOURS une reconstruction (W3), le champ ne changeait rien et n'était jamais rempli. Plus une
+    # question, plus une ligne imprimée (avant : masqué au front mais toujours servi à l'étape 1 et
+    # imprimé au PDF — un demi-retrait, corrigé ici en retrait franc).
+    ("Votre projet", ("logements_vises_saisi", "typologie_moyenne_saisi",
                       "part_sociale_saisi_pct")),
     ("Le foncier", ("prix_demande_saisi_eur", "frais_acquisition_saisi_pct",
                     "bilan_demolition_eur", "bilan_depollution_eur")),
@@ -97,17 +101,14 @@ LIBELLES_CLIENT: dict[str, str] = {
 CHAMPS: tuple[str, ...] = tuple(dict.fromkeys(
     cid for _, ids in (ECRANS + REVENTE_ECRANS) for cid in ids))
 
-# RECETTE-10 T2b — LE TRI DES QUESTIONS (décision de recette). Trois verdicts :
+# RECETTE-10 T2b — LE TRI DES QUESTIONS (décision de recette). Deux verdicts actifs :
 #   • garder    — le porteur DOIT (obligatoire) ou VEUT la toucher : elle pilote le résultat.
 #   • affiner   — pré-remplie d'une valeur sourcée d'usage ; ne bouge le bilan qu'à la marge →
 #                 repliée derrière « Affiner les hypothèses » (fermé par défaut), plus les 4 écrans.
-#   • supprimer — n'imprime rien qui change le document : RETIRÉE des écrans (jamais montrée au
-#                 porteur). Son id RESTE dans CHAMPS pour que `resoudre` la serve encore au document
-#                 (contexte), mais aucune question n'est posée. `scenario_saisi` : W3 chiffre TOUJOURS
-#                 la reconstruction, le champ ne change pas le bilan (les deux lectures contradictoires
-#                 de RECETTE-8 venaient de là) → supprimé de la saisie, « reconstruction » reste au doc.
+#   (« supprimer » n'est plus un état de champ servi : le seul candidat, `scenario_saisi`, a été
+#    RETIRÉ franchement des écrans ET du document — voir ECRANS et exports/blocs/financier._HYP_CLES.
+#    Le front ignore par prudence tout `tri === 'supprimer'` résiduel.)
 TRI: dict[str, str] = {
-    "scenario_saisi": "supprimer",
     "logements_vises_saisi": "garder", "typologie_moyenne_saisi": "garder",
     "prix_demande_saisi_eur": "garder", "cout_construction_saisi_eur_m2": "garder",
     "prix_sortie_saisi_eur_m2": "garder", "prix_vente_bailleur_saisi_eur_m2": "affiner",
@@ -275,13 +276,9 @@ def prefill(fiche: dict | None) -> dict[str, dict]:
     out: dict[str, dict] = {fid: {"valeur": v, "source": s} for fid, (v, s) in _PREFILL_CONST.items()}
     pot = f.get("potentiel_transformation") or {}
     if pot:
-        # RECETTE-8 W3 — un seul scénario par document : le bilan du Financier chiffre la SDP CRÉÉE
-        # en table rase, c'est donc une RECONSTRUCTION qu'il retient — jamais « surélévation », qui
-        # reste une OPTION présentée au Dossier (une marge en mètres), sans bilan chiffré propre.
-        # Avant, on pré-remplissait « surelevation » quand elle était possible → le Financier citait
-        # surélévation en facturant une reconstruction (les deux lectures contradictoires du constat).
-        out["scenario_saisi"] = {"valeur": "reconstruction",
-                                 "source": "scénario chiffré par le bilan (SDP créée en table rase)"}
+        # RECETTE-8 W3 — le bilan du Financier chiffre TOUJOURS une reconstruction (SDP créée en table
+        # rase). RECETTE-10 T2b — le champ « scénario » n'est donc plus ni saisi ni pré-rempli ni
+        # imprimé (il ne changeait rien) ; seul le nombre de logements est pré-rempli depuis le potentiel.
         cap = pot.get("capacite_estimee")
         if cap:
             out["logements_vises_saisi"] = {"valeur": cap, "source": "fourchette de logements du potentiel LABUSE"}

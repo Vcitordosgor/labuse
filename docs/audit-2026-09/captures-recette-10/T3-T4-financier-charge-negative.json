@@ -87,7 +87,7 @@
     "reservoirs": {
      "dvf": "géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020"
     },
-    "calcule_le": "2026-09-10T10:50:03.218445+00:00"
+    "calcule_le": "2026-09-10T12:11:44.481324+00:00"
    }
   },
   "surface_parcelle_m2": {
@@ -99,7 +99,7 @@
     "reservoirs": {
      "cadastre_api_carto": "PCI Parcellaire Express (DGFiP) — « latest » ingérée"
     },
-    "calcule_le": "2026-09-10T10:50:03.218445+00:00"
+    "calcule_le": "2026-09-10T12:11:44.481324+00:00"
    }
   }
  }

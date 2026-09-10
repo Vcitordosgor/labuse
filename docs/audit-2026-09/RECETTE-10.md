@@ -8,8 +8,9 @@ Artefacts : `docs/audit-2026-09/captures-recette-10/` (+ page `OU-VOIR-LE-LIDAR.
 
 **Les 12 travaux faits, chacun prouvé sur l'artefact final.** 🔴 T1 (surélévation : les deux
 contraintes, la plus serrée mord — Dossier régénéré), 🔴 T7 (segment permis-pro : libellé qui dit ce
-qu'il regroupe — 249/~600 sont « Sans signal », mesuré), 🔴 T11 (le score bat le filtre ×12 — mesuré,
-montré au client). Financier au propre : T2 (bandeau/tri/verdict), T3 (natures), T4 (charge négative en
+qu'il regroupe — 249/~600 sont « Sans signal », mesuré), 🔴 T11 (« À suivre » bat un ciblage manuel
+réaliste ~4× — mesuré, montré au client ; « Priorité » non prouvé sur ce run, dit franchement).
+Financier au propre : T2 (bandeau/tri/verdict), T3 (natures), T4 (charge négative en
 clair), T5 (garde bailleur). T6 (pagination), T8 (fiche commune), T9 (LiDAR garde+chiffrage+ingestion
 bornée), T10 (page LiDAR), T12 (comptes à zéro expliqués).
 
@@ -129,6 +130,21 @@ sociale 20 %). Le Financier affiche : « **Hypothèse hors marché** — le bila
 — une vente EN BLOC à un bailleur social est toujours inférieure au prix du marché libre. Corrigez le
 prix au bailleur … ». Tests `test_t5_*`.
 
+**T4 ≠ T5 — deux états différents, pas une contradiction (question de recette).** La garde mord sur
+l'ENTRÉE (`prix_bailleur > prix_libre`), indépendamment du signe de la charge. Les deux PDF viennent de
+DEUX questionnaires distincts sur la même parcelle : **T5** = compte NULL (bailleur 5 500 > 4 500 →
+hors marché, bilan NON établi) ; **T4** = un compte de test isolé (prix de sortie 2 600, **part sociale
+0, AUCUN bailleur**, prix demandé 1,5 M€ → pas de garde déclenchée → bilan établi avec charge négative).
+Démontré au moteur pur (`financier_bilan.calculer`, reproductible) :
+
+| état | prix libre | bailleur | garde | résultat |
+|---|---|---|---|---|
+| T4 | 2 600 | — | None | bilan établi, charge **−1 188 271 €** (dite en clair, T4) |
+| T5 | 4 500 | 5 500 | « Prix de vente au bailleur social » | **hors marché**, non établi |
+| contre-épreuve (T4 + bailleur 3 000 > 2 600) | 2 600 | 3 000 | « Prix de vente au bailleur social » | **hors marché** |
+
+Même code, entrées différentes. Le compte de test T4 est purgé après génération (aucune pollution).
+
 ---
 
 ## T2 — Le questionnaire Financier : solide, ou on le retire — FAIT
@@ -169,13 +185,19 @@ Analyse des 20 champs (qui remplit · effet sur le bilan · si vide) → verdict
 | Taxe d'aménagement | pré-remplie (calcul LABUSE) | poste taxe | calculée | **affiner** |
 | Durée de portage (mois) | pré-remplie | portage | 29 mois | **affiner** |
 | Taux d'emprunt (%) | rare | portage | forfait 3 % du CA | **affiner** |
-| **Scénario du projet** | pré-rempli « reconstruction » | **aucun** (W3 chiffre toujours la reconstruction) | reconstruction | **supprimer** |
+| **Scénario du projet** | pré-rempli « reconstruction » | **aucun** (W3 chiffre toujours la reconstruction) | reconstruction | **supprimer (retrait franc)** |
 
 Implémentation : `financier_questionnaire.TRI` + `tri_champ()` ; servi par champ (`app.py::_champ`,
 clé `tri`). Le front (`FinancierQuestionnaire.tsx`) garde les **garder** visibles, replie les **affiner**
-derrière « Affiner les hypothèses (N) » (fermé par défaut), n'affiche **jamais** les **supprimer**. Le
-`scenario_saisi` reste dans `CHAMPS` (donc résolu et servi au document, « reconstruction ») mais n'est
-plus une question. Prouvé par `test_t2b_tri_des_questions` + `FinancierQuestionnaire.test.tsx::T2b`.
+derrière « Affiner les hypothèses (N) » (fermé par défaut).
+
+**Correctif de recette (scénario).** Mon premier retrait était un DEMI-retrait : le champ était masqué
+au front mais **toujours servi à l'étape 1** (il restait dans `ECRANS`) **et imprimé au PDF** (encart
+`_HYP_CLES`). Corrigé en **retrait FRANC** : `scenario_saisi` est retiré de `ECRANS` (donc de `CHAMPS`
+→ plus une question, plus à l'étape 1), de `prefill` (plus pré-rempli), de `resoudre` (plus servi) et de
+`exports/blocs/financier._HYP_CLES` (**plus imprimé au PDF**). Le bilan chiffre toujours une
+reconstruction (W3), inchangé. Prouvé : `test_t2b_scenario_franchement_retire` (5 assertions : absent de
+CHAMPS, de l'étape 1, du prefill, du résolu, de l'encart PDF) + T4/T5 PDF régénérés (« Scénario » absent).
 
 Effet : l'écran « Votre projet » passe de 4 à 3 questions (scénario retiré) dont 1 seule d'usage
 repliée ; « Vos coûts » de 6 champs à 1 visible (le coût de construction) + 5 sous « Affiner » ;
@@ -308,34 +330,37 @@ ne porte pas d'id parcelle, lien SPATIAL), rapporté au taux moyen. Fenêtre : 1
 | Priorité (brulante) | 111 | 0 | 0,00 % | n trop faible |
 | *potentiel épuisé (bâti saturé)* | 123 066 | 952 | 0,77 % | ×2,0 |
 
-**Ce qu'un filtre simple obtiendrait, même période :**
+**La comparaison honnête (question de recette).** Comparer à « terrain nu en zone U » flattait le
+modèle : ce filtre naïf se vend **×0,28** (le foncier nu se garde, il ne tourne pas — il PERD contre le
+hasard). Le vrai concurrent est le **ciblage manuel réaliste** qu'un analyste tracerait :
 
-| filtre | n | mutées | taux | lift |
+| filtre / palier | n | mutées | taux | lift |
 |---|---:|---:|---:|---:|
-| Terrain nu constructible en zone U | 25 281 | 27 | **0,11 %** | **×0,28** (pire que le hasard) |
-| Toute parcelle en zone U | 306 630 | 1 553 | 0,51 % | ×1,3 |
-| **Modèle : Priorité + À suivre** | 1 478 | 70 | **4,74 %** | **×12,3** |
+| « terrain nu zone U » (règle naïve, homme de paille) | 25 281 | 27 | 0,11 % | ×0,28 |
+| **Ciblage réaliste : zone U + surface ≥ 400 m² + propriétaire particulier + sans permis récent** | 138 252 | 993 | 0,72 % | **×1,86** |
+| **Ciblage réaliste, surface ≥ 1 000 m²** | 30 516 | 374 | **1,23 %** | **×3,18** |
+| **Modèle — À suivre** | 1 367 | 70 | **5,12 %** | **×13,3** |
+| Modèle — **Priorité** | **111** | **0** | **0,00 %** | **n trop faible** |
 
-**Verdict franc.** Le modèle **bat nettement le filtre évident.** Le palier « À suivre » se vend
-**13× plus souvent** que la moyenne ; le filtre intuitif « terrain nu en zone U » se vend **3,6× MOINS**
-que le hasard (le foncier nu constructible se garde, il ne tourne pas). Le score capture donc un signal
-réel de mise sur le marché qu'aucune règle simple ne trouve. **Réserve honnête** : le signal robuste
-est porté par « À suivre » (n=1 367, 70 mutations) ; le tout petit palier « Priorité » (n=111) n'a eu
-0 mutation — échantillon trop faible pour conclure (≈0,4 attendue au taux moyen), pas un lift mesurable.
-À surveiller sur q_v14 (paliers recomposés, n plus grands).
+**Verdict franc, honnête.**
+- **« À suivre » tient** : ×13,3 la moyenne, et **~4× le ciblage manuel réaliste** (×13,3 vs ×3,18). Le
+  modèle bat donc un ANALYSTE avisé, pas seulement le hasard — c'est là sa valeur, et elle est réelle.
+- **Un bon filtre manuel marche aussi** (×3,18) : la marge du modèle sur un ciblage intelligent est
+  ~4×, pas les ×47 que le comparatif « terrain nu » laissait croire. Je l'avais surestimée — corrigé.
+- **« Priorité » n'est PAS prouvé** : 0 mutation sur 111 parcelles. n bien trop faible pour un lift
+  (≈0,4 attendue au taux moyen). En l'état, le palier le plus « fort » n'a aucun rapport de risque
+  mesurable sur ce run — à ne PAS vanter au client tant que q_v14 (n plus grands) ne le confirme pas.
 
-**Montré au client** (puisqu'il bat le filtre) : `scoring/backtest.py::mutation_lift` calcule ce tableau
-sur le run servi (mémorisé 6 h, endpoint `GET /scoring/backtest`) ; `phrase_client` en tire une phrase
-**chiffrée et datée**, servie **à côté des paliers** dans le volet Résultats (`data-score-backtest`),
-et **seulement si le modèle bat nettement le filtre** (lift ≥ 2 ; sinon rien — jamais un score nu vanté).
+**Montré au client — honnêtement.** `scoring/backtest.py::phrase_client` compare « À suivre » au **filtre
+réaliste** (jamais à l'homme de paille), et n'affiche la phrase que si le modèle le bat d'au moins **2×** :
 
 > « Sur 12 mois de ventes DVF (au 2026-08-10), les parcelles « À suivre » se sont vendues **13,3× plus
-> que la moyenne** (5,12 % contre 0,39 %) ; le filtre simple « terrain nu constructible en zone u » fait
-> 0,11 % (×0,28, sous la moyenne). »
+> que la moyenne — et 4× plus qu'un ciblage manuel réaliste** (zone U, > 1 000 m², propriétaire
+> particulier, sans permis récent : 1,23 %). »
 
-**Preuve — artefact final** : mesures ci-dessus (SQL lecture seule sur `q_v11_m137` + DVF) ; module +
-endpoint testés (`test_recette10_backtest`, `phrase_client`) ; ligne servie dans `ResultsSection`
-(capture batch UI). tsc vert.
+Servie dans `ResultsSection` (`data-score-backtest`), endpoint `GET /scoring/backtest` (mémorisé 6 h).
+**Preuve — artefact final** : mesures SQL lecture seule (`q_v11_m137` + DVF) ; `test_recette10_backtest`
+(la phrase compare au réaliste, jamais « terrain nu » ; s'efface si le modèle ne bat pas 2× le réaliste).
 
 ---
 
@@ -380,6 +405,32 @@ c'est le seul chemin viable pour les 274 599 parcelles. Mandat dédié.
 
 **Preuve — artefact final** : `batiment_hauteur_lidar` peuplée sur plusieurs communes (SQL de couverture) ;
 timing réel mesuré ; garde d'étiquette tracée dans les 3 consommateurs.
+
+### État de l'ingestion (batch ARRÊTÉ)
+
+Le batch a été **arrêté (SIGTERM)** — aucun processus ne tourne, et **rien ne le relancera seul** (c'est
+un simple script en arrière-plan, sans cron ni réveil programmé). Au moment de l'arrêt :
+
+- **Parcelles réellement mesurées en base : 5 406**, sur **18 communes**.
+
+Le vérifier soi-même :
+```sql
+-- total mesuré + nombre de communes couvertes
+SELECT count(*) AS mesurees, count(DISTINCT left(idu,5)) AS communes
+FROM batiment_hauteur_lidar WHERE faitage_m IS NOT NULL;
+-- détail par commune (code INSEE)
+SELECT left(idu,5) AS insee, count(*) FROM batiment_hauteur_lidar GROUP BY 1 ORDER BY 2 DESC;
+```
+
+Relancer le batch **quand vous le déciderez** (idempotent, reprend là où il s'est arrêté grâce au
+`ON CONFLICT (idu)` — il SAUTE les 5 406 déjà mesurées) :
+```bash
+cd ~/Desktop/labuse-recette6
+MAX=8000 MAX_SEC=4200 DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib PYTHONPATH=src \
+  python scripts/_recette10_t9_ingest.py
+# bornes : MAX = nb max de parcelles ce lancement ; MAX_SEC = budget temps (s). Cible = prioritaire-bâti
+# des 23 communes hors Saint-Denis. Ajouter COMMUNE="Le Tampon" pour cibler une commune précise.
+```
 
 ---
 

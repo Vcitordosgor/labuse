@@ -59,7 +59,7 @@ def test_prefill_toujours_source():
     for fid, v in pf.items():
         assert v.get("source"), f"{fid} : pré-remplissage sans source (règle 1)"
     assert pf["cout_construction_saisi_eur_m2"]["valeur"] == 2550 and "EPTB" in pf["cout_construction_saisi_eur_m2"]["source"]
-    assert pf["scenario_saisi"]["valeur"] == "reconstruction"
+    assert "scenario_saisi" not in pf   # RECETTE-10 T2b (recette) — champ retiré, plus pré-rempli
     assert pf["logements_vises_saisi"]["valeur"] == 8
     # pas de source pour ces champs → jamais pré-remplis
     for fid in ("prix_demande_saisi_eur", "regime_tva_saisi", "bilan_demolition_eur", "cout_place_stationnement_saisi_eur"):

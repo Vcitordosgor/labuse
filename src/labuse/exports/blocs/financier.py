@@ -27,7 +27,9 @@ _POSTE_ORDRE = ("construction", "honoraires_techniques", "vrd", "stationnement",
 _REGIME_LABEL = {"assujetti_recuperation": "assujetti avec récupération de la TVA",
                  "tva_marge": "TVA sur marge", "autre": "autre régime"}
 #: hypothèses clés montrées dans l'encart « hypothèses du porteur » (id questionnaire → libellé).
-_HYP_CLES = (("scenario_saisi", "Scénario"), ("prix_demande_saisi_eur", "Prix demandé"),
+#: RECETTE-10 T2b (recette) — « Scénario » RETIRÉ : le bilan chiffre toujours une reconstruction (W3),
+#: la ligne n'apportait rien et perpétuait un champ retiré de la saisie. Plus imprimée au document.
+_HYP_CLES = (("prix_demande_saisi_eur", "Prix demandé"),
              ("cout_construction_saisi_eur_m2", "Coût de construction"),
              ("marge_visee_saisi_pct", "Marge visée"), ("prix_sortie_saisi_eur_m2", "Prix de sortie"),
              ("bilan_demolition_eur", "Démolition"))

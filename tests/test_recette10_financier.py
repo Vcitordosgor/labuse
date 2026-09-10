@@ -88,11 +88,19 @@ def test_t2b_tri_des_questions():
     assert qf.tri_champ("prix_sortie_saisi_eur_m2") == "garder"
     assert qf.tri_champ("regime_tva_saisi") == "garder"
     assert qf.tri_champ("aleas_saisi_pct") == "affiner"
-    assert qf.tri_champ("scenario_saisi") == "supprimer"
-    # « supprimer » RESTE dans CHAMPS → le document sert encore la valeur (contexte), aucune question posée
-    assert "scenario_saisi" in qf.CHAMPS
+
+
+def test_t2b_scenario_franchement_retire():
+    """RECETTE-10 T2b (recette) — `scenario_saisi` RETIRÉ franchement : plus dans les champs (donc plus
+    à l'étape 1 du questionnaire), plus pré-rempli, plus servi au document, plus dans l'encart imprimé."""
+    from labuse import financier_questionnaire as qf
+    from labuse.exports.blocs import financier as fbloc
+    assert "scenario_saisi" not in qf.CHAMPS                          # plus une question (aucune étape)
+    assert "scenario_saisi" not in dict(qf.ECRANS)["Votre projet"]    # plus à l'étape 1
+    assert "scenario_saisi" not in qf.prefill({"potentiel_transformation": {"capacite_estimee": 8}})
     resolved = qf.resoudre({}, qf.prefill({"potentiel_transformation": {"capacite_estimee": 8}}))
-    assert (resolved.get("scenario_saisi") or {}).get("valeur") == "reconstruction"
+    assert "scenario_saisi" not in resolved                            # plus résolu → plus servi
+    assert all(cid != "scenario_saisi" for cid, _ in fbloc._HYP_CLES)  # plus imprimé au PDF
 
 
 def test_t5_bilan_bloque_avec_le_bon_conseil():
