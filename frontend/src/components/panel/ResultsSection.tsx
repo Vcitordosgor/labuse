@@ -10,7 +10,7 @@ import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
 import { EmptyState } from '../States'
 import { useApp } from '../../store/useApp'
-import { usePagination } from '../ListPagination'
+import { usePagination, ListPaginationFooter } from '../ListPagination'
 
 
 // M5.1 : le badge « V nn » a disparu de la liste (le dossier propriétaire reste dans la
@@ -267,6 +267,56 @@ export function segmentOf(p: Pick<ParcelProps, 'permis_pro' | 'etat_bien'>): Seg
   if (p.etat_bien === 'nu') return 'terrain_nu'
   if (p.etat_bien === 'bati_encore') return 'bati_densifier'
   return 'reste'
+}
+
+// RECETTE-11 C1 — LA liste d'UN segment de l'Analyse, paginée par la règle PARTAGÉE (200) sur SES
+// PROPRES lignes (jamais la fenêtre globale). Sous 200 : tout s'affiche, AUCUN « charger plus » ;
+// au-delà : 200 puis « Voir 200 de plus » (pied partagé). En mode île, si le serveur a encore des
+// pages non chargées (segRows < total serveur ET fenêtre client épuisée), on offre de charger plus.
+// RECETTE-11 C1 — LA règle : un segment n'offre « charger plus » (serveur) QUE si sa fenêtre client
+// est épuisée ET que le serveur a d'autres lignes du segment non chargées. Corollaire testé : un
+// segment de MOINS de 200 lignes entièrement chargé (segLen === serverTotal) n'offre JAMAIS de
+// « charger plus » — et sous 200, la fenêtre client (usePagination) montre tout sans « Voir de plus ».
+export function segmentOffreChargerPlus(
+  shownClient: number, segLen: number, serverTotal: number, serverHasMore: boolean): boolean {
+  return shownClient >= segLen && segLen < serverTotal && serverHasMore
+}
+
+export function SegmentList({ segKey, rows, serverTotal, commune, serverHasMore, serverLoading, onServerMore }: {
+  segKey: SegKey; rows: (ParcelProps & { commune?: string })[]; serverTotal: number; commune: string
+  serverHasMore: boolean; serverLoading: boolean; onServerMore: () => void
+}) {
+  const pg = usePagination(rows.length)
+  const shown = rows.slice(0, pg.shown)
+  if (rows.length === 0) {
+    return (
+      <div className="mt-2 flex flex-col gap-2">
+        <p className="px-3 py-1.5 text-[10.5px] text-txt-dim">
+          {serverTotal > 0 ? 'Chargez plus de résultats pour voir ces parcelles →' : 'Aucune parcelle dans ce segment.'}
+        </p>
+        {serverTotal > 0 && serverHasMore && (
+          <button data-segment-more={segKey} onClick={onServerMore} disabled={serverLoading}
+            className="px-3 py-1.5 text-left text-[10.5px] text-txt-dim hover:text-mint disabled:opacity-60">
+            0 sur {fmt(serverTotal)} affichées — charger plus de résultats →
+          </button>
+        )}
+      </div>
+    )
+  }
+  return (
+    <div className="mt-2 flex flex-col gap-2">
+      {shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune} />)}
+      {/* règle 200 partagée sur les lignes DU segment (jamais de « charger plus » sous 200) */}
+      {pg.hasMore && <ListPaginationFooter shown={pg.shown} total={rows.length} onMore={pg.more} />}
+      {/* mode île : la fenêtre client est épuisée mais le serveur a d'autres pages du segment */}
+      {segmentOffreChargerPlus(pg.shown, rows.length, serverTotal, serverHasMore) && (
+        <button data-segment-more={segKey} onClick={onServerMore} disabled={serverLoading}
+          className="px-3 py-1.5 text-left text-[10.5px] text-txt-dim hover:text-mint disabled:opacity-60">
+          {fmt(rows.length)} sur {fmt(serverTotal)} affichées — charger plus de résultats →
+        </button>
+      )}
+    </div>
+  )
 }
 
 // Compteurs par tier — clés = codes du run servi (anciens codes aujourd'hui ; les 4 paliers
@@ -592,7 +642,10 @@ export function ResultsSection() {
         {!loading && !error && (analyse ? (
           <>
           {SEGMENTS.map((seg) => {
-            const rows = shown.filter((p) => segmentOf(p) === seg.key)
+            // RECETTE-11 C1 — le segment filtre la liste COMPLÈTE (jamais la fenêtre globale `shown`,
+            // qui tronquait un petit segment à « 2 sur 5 ») ; sa propre pagination (règle 200 partagée)
+            // décide de ce qui s'affiche. Sous 200 : tout ; au-delà : 200 puis « Voir 200 de plus ».
+            const rows = list.filter((p) => segmentOf(p) === seg.key)
             const total = uni.data?.segments?.[seg.key] ?? rows.length
             const open = openSeg[seg.key]
             return (
@@ -607,22 +660,9 @@ export function ResultsSection() {
                   <span className="shrink-0 tnum text-[11px] text-txt-dim">{fmt(total)}</span>
                 </button>
                 {open && (
-                  <div className="mt-2 flex flex-col gap-2">
-                    {rows.length === 0
-                      ? <p className="px-3 py-1.5 text-[10.5px] text-txt-dim">{total > 0 ? 'Chargez plus de résultats pour voir ces parcelles →' : 'Aucune parcelle dans ce segment.'}</p>
-                      : rows.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} />)}
-                    {/* RECETTE-8 W20 — jamais un compte qui ne correspond pas à ce qu'on voit :
-                        quand la liste chargée est plus courte que le total du segment, on le DIT
-                        (« 5 sur 27 affichées ») et on offre de charger plus. */}
-                    {rows.length > 0 && rows.length < total && (
-                      <button data-segment-more={seg.key}
-                        onClick={() => serverList.hasNextPage && serverList.fetchNextPage()}
-                        disabled={!serverList.hasNextPage || serverList.isFetchingNextPage}
-                        className="px-3 py-1.5 text-left text-[10.5px] text-txt-dim hover:text-mint disabled:opacity-60">
-                        {fmt(rows.length)} sur {fmt(total)} affichées{serverList.hasNextPage ? ' — charger plus de résultats →' : ''}
-                      </button>
-                    )}
-                  </div>
+                  <SegmentList segKey={seg.key} rows={rows} serverTotal={total} commune={commune ?? ''}
+                    serverHasMore={ile && serverList.hasNextPage} serverLoading={serverList.isFetchingNextPage}
+                    onServerMore={() => serverList.hasNextPage && serverList.fetchNextPage()} />
                 )}
               </div>
             )
