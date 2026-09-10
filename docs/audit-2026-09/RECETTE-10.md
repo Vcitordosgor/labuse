@@ -55,3 +55,69 @@ faîtage (RECETTE-7, inchangé).
 Bloc 3 imprime : « Surélévation possible — **3,1 m disponibles, limité par le faîtage** (mesuré au
 LiDAR HD). égout 3,0 m mesuré contre 7,0 m réglementaires (marge 4,0 m) · faîtage 6,9 m mesuré contre
 10,0 m réglementaires (marge 3,1 m). » Chemin réel : `_q_v2_fiche` → `construire(..., 'dossier')`.
+
+---
+
+## T3 — Natures fausses dans le bilan (sourcé → ƒ dérivé) — FAIT
+
+**Le défaut.** `Coût de construction -717 k€` portait la pastille **sourcé**. C'est un PRODUIT
+(plancher × €/m²) : le taux au m² est sourcé, le **montant ne l'est pas**. Idem `Taxe d'aménagement`.
+Cause : `exports/blocs/financier.py` tamponnait le MONTANT selon l'origine de son ENTRÉE (pré-remplie
+sourcée → « sourcé »).
+
+**Le correctif — toutes les lignes des deux tableaux reprises depuis la nature réelle du montant :**
+- `financier_bilan.py::_postes` : tout montant PRODUIT d'une formule affichée par le bloc
+  (construction, honoraires, VRD, stationnement, aléas, redevance, portage, frais d'acquisition,
+  taxe d'aménagement) est **ƒ dérivé**. Seuls la **démolition** et la **dépollution**, montants
+  forfaitaires saisis tels quels, restent **projet**.
+- `financier.py::_bilan_rebours` : suppression de l'override qui rendait le montant « sourcé ». Le
+  taux sourcé reste montré dans l'encart « Hypothèses du porteur » (là est sa place). Seule exception :
+  la taxe SAISIE au forfait par le porteur → `projet`.
+- `_bilan_rebours` « Marge visée » (marge % × CA) et `_face_prix` « Ce que l'opération supporte »
+  (CA − Σ − marge) → **ƒ dérivé** (n'étaient pas des estimés/projets).
+
+**Preuve — artefact final** `captures-recette-10/T3-T4-financier-charge-negative.pdf` (Financier réel,
+compte de test isolé puis purgé) : Coût de construction **-1 658 k€ · ƒ dérivé** ; Honoraires · VRD ·
+Taxe d'aménagement · Marge visée · Charge foncière **tous ƒ dérivé** ; le €/m² sourcé reste dans
+l'encart « Hypothèses du porteur ». Test `test_recette10_financier::test_t3_*`.
+
+---
+
+## T4 — Une charge foncière négative ne se dit pas en euros négatifs — FAIT
+
+**Le défaut.** « elle supporte au mieux **-141 788 €** de charge foncière » — un euro négatif ne veut
+rien dire pour un lecteur.
+
+**Le correctif** (`financier.py`) — trois endroits où le signe négatif passait tel quel :
+- **Verdict** (`_verdict`) : « Dans ces hypothèses, l'opération ne peut supporter **aucun achat de
+  terrain** : il lui manque {|charge|} pour seulement atteindre l'équilibre à un prix de terrain nul. »
+- **Tuile hero** : « aucune » + « charge foncière — manque {…} à terrain nul » (plus de « -142 k€ »).
+- **Face au prix** (`_face_prix`) : « Ce que l'opération supporte » → « aucune — manque … » ; « Seuil de
+  rentabilité » négatif → « aucun prix d'achat viable — il manque … même à un terrain nul » ; « Marge
+  résiduelle » négative → « négative (X %) — au prix demandé, l'opération perd de l'argent ».
+
+**Preuve — artefact final** (même PDF) : verdict « l'opération ne peut supporter **aucun achat de
+terrain** : il lui manque **1 055 098 €** pour seulement atteindre l'équilibre à un prix de terrain
+nul » ; « Ce que l'opération supporte : **aucune — manque 1 055 098 €** » ; « Marge résiduelle :
+**négative (-196,1 %) — l'opération perd de l'argent** ». Test `test_t4_*`.
+
+---
+
+## T5 — Garde : prix au bailleur social au-dessus du prix libre — FAIT
+
+**Le défaut.** Le questionnaire a accepté **5 500 €/m² au bailleur social** contre **4 500 €/m² en
+libre**. Une vente EN BLOC à un bailleur est TOUJOURS inférieure au prix libre (décote de
+commercialisation en bloc).
+
+**Le correctif** — sur le modèle exact de la garde de vraisemblance du prix de sortie (`_hors_marche`,
+RECETTE-6 E2) : `financier_bilan.py::_hors_marche` ajoute une garde **relationnelle** — `prix_bailleur >
+prix_libre` ⇒ hypothèse hors marché, le bilan n'est PAS publié, le champ est nommé, avec un conseil de
+correction dédié (« il doit rester sous le prix de vente libre »). La borne absolue (12 000 €/m²) reste
+active en plus.
+
+**Preuve — artefact final** `captures-recette-10/T5-financier-bailleur-hors-marche.pdf` : généré sur
+l'**état réel du questionnaire de la recette** (compte NULL, bailleur 5 500 / libre 4 500 / part
+sociale 20 %). Le Financier affiche : « **Hypothèse hors marché** — le bilan n'est pas établi. Le champ
+« Prix de vente au bailleur social » vaut **5 500 €/m²** : il dépasse le prix de vente libre (4 500 €/m²)
+— une vente EN BLOC à un bailleur social est toujours inférieure au prix du marché libre. Corrigez le
+prix au bailleur … ». Tests `test_t5_*`.

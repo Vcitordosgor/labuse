@@ -53,7 +53,19 @@ def _hors_marche(prix_sortie, cout, prix_bailleur) -> dict | None:
             # « … vaut X €/m² : … ») : elle commence directement par le dépassement.
             return {"champ": champ, "valeur": float(val), "borne": borne,
                     "raison": (f"cela dépasse tout prix de marché (borne {borne:,.0f} €/m²) — "
-                               "un PRIX TOTAL a probablement été saisi à la place d'un prix au m².").replace(",", " ")}
+                               "un PRIX TOTAL a probablement été saisi à la place d'un prix au m².").replace(",", " "),
+                    "correction": "Corrigez ce champ (un prix AU M², pas un prix total), puis régénérez le document."}
+    # RECETTE-10 T5 — garde RELATIONNELLE de vraisemblance (sur le modèle du prix de sortie) : une
+    # vente EN BLOC à un bailleur social est TOUJOURS inférieure au prix de vente libre (décote de
+    # commercialisation en bloc). Un prix bailleur > prix libre est invraisemblable → hors marché.
+    if prix_sortie is not None and prix_bailleur is not None and float(prix_bailleur) > float(prix_sortie):
+        return {"champ": "Prix de vente au bailleur social", "valeur": float(prix_bailleur),
+                "borne": float(prix_sortie),
+                "raison": (f"il dépasse le prix de vente libre ({float(prix_sortie):,.0f} €/m²) — une "
+                           "vente EN BLOC à un bailleur social est toujours inférieure au prix du "
+                           "marché libre.").replace(",", " "),
+                "correction": "Corrigez le prix au bailleur (il doit rester sous le prix de vente "
+                              "libre), puis régénérez le document."}
     return None
 
 
@@ -118,18 +130,25 @@ def _postes(prog: dict, h: dict, cout: float | None, ca: float | None) -> dict:
         elif ca is not None:
             portage = ca * PORTAGE_FORFAIT_PCT / 100
     frais_acq = (h["prix_demande"] * h["frais_acq_pct"] / 100) if (h.get("prix_demande") is not None and h.get("frais_acq_pct") is not None) else None
+    # RECETTE-10 T3 — la NATURE d'un poste suit ce qu'EST le montant imprimé, pas l'origine de son
+    # entrée. Un montant PRODUIT d'une formule affichée par le bloc (coût = plancher × €/m², honoraires
+    # = % × coût, VRD = €/m² × terrain, portage, frais d'acquisition…) est un ƒ DÉRIVÉ — même si le
+    # taux qui l'alimente est sourcé (le taux est sourcé, le montant ne l'est pas). Seuls la démolition
+    # et la dépollution sont des montants forfaitaires SAISIS tels quels par le porteur → `projet`.
+    # La taxe d'aménagement est un produit (taux × surface taxable) : `derive` par défaut ; le bloc la
+    # requalifie `projet` si le porteur a saisi le montant lui-même (origine=saisi).
     return {
-        "construction": {"montant": construction, "nature": "estime", "ht_ttc": "HT"},
-        "honoraires_techniques": {"montant": hono, "nature": "projet", "ht_ttc": "HT"},
-        "vrd": {"montant": vrd, "nature": "projet", "ht_ttc": "HT"},
-        "stationnement": {"montant": stat, "nature": "projet", "ht_ttc": "HT"},
+        "construction": {"montant": construction, "nature": "derive", "ht_ttc": "HT"},
+        "honoraires_techniques": {"montant": hono, "nature": "derive", "ht_ttc": "HT"},
+        "vrd": {"montant": vrd, "nature": "derive", "ht_ttc": "HT"},
+        "stationnement": {"montant": stat, "nature": "derive", "ht_ttc": "HT"},
         "demolition": {"montant": _f(h.get("demolition")), "nature": "projet", "ht_ttc": "HT"},
         "depollution": {"montant": _f(h.get("depollution")), "nature": "projet", "ht_ttc": "HT"},
-        "aleas": {"montant": aleas, "nature": "projet", "ht_ttc": "HT"},
-        "taxe_amenagement": {"montant": _f(h.get("taxe")), "nature": "estime", "ht_ttc": "HT"},
+        "aleas": {"montant": aleas, "nature": "derive", "ht_ttc": "HT"},
+        "taxe_amenagement": {"montant": _f(h.get("taxe")), "nature": "derive", "ht_ttc": "HT"},
         "redevance_archeologie": {"montant": rap, "nature": "derive", "ht_ttc": "HT"},
-        "portage": {"montant": portage, "nature": "projet", "ht_ttc": "HT"},
-        "frais_acquisition": {"montant": frais_acq, "nature": "projet", "ht_ttc": "HT"},
+        "portage": {"montant": portage, "nature": "derive", "ht_ttc": "HT"},
+        "frais_acquisition": {"montant": frais_acq, "nature": "derive", "ht_ttc": "HT"},
     }
 
 

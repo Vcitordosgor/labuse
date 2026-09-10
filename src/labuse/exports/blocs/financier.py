@@ -96,6 +96,17 @@ def _verdict(bilan: dict, prix_demande, regime_label: str) -> str:
     if charge is None:
         return verdict("Le bilan ne peut pas être établi ici : le programme (surface vendable) ou "
                        "le prix de sortie manquent. Renseignez le questionnaire.", "neutral", petit)
+    # RECETTE-10 T4 — une charge foncière NÉGATIVE ne se dit pas en euros négatifs (« supporte au mieux
+    # -141 788 € » ne veut rien dire). On dit ce qu'elle signifie : l'opération ne peut porter AUCUN
+    # achat de terrain, et il lui manque {|charge|} pour seulement atteindre l'équilibre à terrain nul.
+    if charge < 0:
+        manque = -charge
+        tete = ("Dans ces hypothèses, l'opération ne peut supporter <strong>aucun achat de terrain</strong> : "
+                f"il lui manque {fmt_eur(manque)} pour seulement atteindre l'équilibre à un prix de "
+                "terrain nul.")
+        if prix_demande is not None:
+            tete = f"Au prix demandé de {fmt_eur(prix_demande)}, l'opération ne tient pas. " + tete
+        return verdict(tete, "warn", petit)
     if prix_demande is not None:
         if charge >= prix_demande:
             return verdict(f"Au prix demandé de {fmt_eur(prix_demande)}, l'opération tient : elle "
@@ -145,26 +156,31 @@ def _bilan_rebours(bilan: dict, resolved: dict | None = None) -> str:
     # RECETTE-6 (E4) — le CA HT DÉRIVE d'une saisie du porteur (prix de sortie × surface) : « dérivé »,
     # pas « estimé » (qui laisserait croire à un calcul LABUSE autonome).
     lignes.append(ligne_kv("Chiffre d'affaires HT", f'<span class="num">{_keur(ca)}</span>', _chip_nat("derive")))
-    # RECETTE-6 (E4) — la nature d'un poste À SAISIE (construction, taxe d'aménagement) suit l'ORIGINE
-    # résolue : pré-rempli SOURCÉ → « sourcé », saisi → « projet », défaut moteur sinon.
-    _ORIGINE_POSTE = {"construction": "cout_construction_saisi_eur_m2", "taxe_amenagement": "taxe_amenagement_saisi_eur"}
+    # RECETTE-10 T3 — la nature imprimée EST celle du MONTANT (ce que la ligne affiche), pas celle de
+    # son entrée. Le coût de construction est un produit (plancher × €/m²) → toujours ƒ DÉRIVÉ, même
+    # quand le €/m² est un pré-remplissage sourcé (le taux est sourcé, le montant ne l'est pas ; le
+    # taux sourcé apparaît dans l'encart « Hypothèses du porteur »). L'ancien code (E4) rendait le
+    # MONTANT « sourcé » dès que le taux l'était → le -717 k€ / -14 k€ portait une pastille sourcé
+    # mensongère. Seule exception : la taxe d'aménagement SAISIE au forfait par le porteur → `projet`.
+    _POSTE_PROJET_SI_SAISI = {"taxe_amenagement": "taxe_amenagement_saisi_eur"}
     for k in _POSTE_ORDRE:
         p = bilan["postes"][k]
         # RECETTE-6 (E3) — un poste NUL non nul (ex. Redevance d'archéologie) s'écrit « < 1 k€ » via _keur,
         # jamais « 0 k€ » ; un poste None reste « non chiffré ».
         montant = None if p["montant"] is None else -p["montant"]
         nat = p["nature"]
-        fid = _ORIGINE_POSTE.get(k)
-        if fid:
-            o = (resolved.get(fid) or {}).get("origine")
-            nat = "source" if o == "prefill" else "projet" if o == "saisi" else nat
+        fid = _POSTE_PROJET_SI_SAISI.get(k)
+        if fid and (resolved.get(fid) or {}).get("origine") == "saisi":
+            nat = "projet"      # le porteur a saisi ce montant forfaitaire lui-même
         v = f'<span class="num">{_keur(montant)}</span>' + (f' <span class="note" style="display:inline">{p["ht_ttc"]}</span>')
         lignes.append(ligne_kv(_POSTE_LABEL[k], v, _chip_nat(nat)))
     # RECETTE-6 (E3) — la TAXE FONCIÈRE DE PORTAGE, expliquée en fin de document, entre au bilan comme
     # poste « non chiffré » (comme le stationnement) : LABUSE n'invente pas la valeur locative cadastrale.
     lignes.append(ligne_kv("Taxe foncière (portage)", f'<span class="num">{_NON_CHIFFRE}</span>', _chip_nat("derive")))
     if bilan["marge"] is not None:
-        lignes.append(ligne_kv("Marge visée", f'<span class="num">{_keur(-bilan["marge"])}</span>', _chip_nat("projet")))
+        # RECETTE-10 T3 — le MONTANT de marge est un produit (marge % × CA HT) → ƒ dérivé. Le TAUX
+        # visé (projet) est montré dans l'encart « Hypothèses du porteur », pas ici sur le montant.
+        lignes.append(ligne_kv("Marge visée", f'<span class="num">{_keur(-bilan["marge"])}</span>', _chip_nat("derive")))
     charge = bilan["charge"]["centrale"]
     # RECETTE-5 (V18a) — la clé est ÉCHAPPÉE par ligne_kv (esc) : y mettre « <strong>…</strong> »
     # imprimait les balises en toutes lettres. La ligne est déjà mise en avant par le montant en gras
@@ -195,13 +211,33 @@ def _face_prix(bilan: dict, prix_demande, valeurs) -> str:
         lignes.append(ligne_kv("Prix demandé", f'<span class="num">{fmt_eur(prix_demande)}</span>', chip_span("p", "projet")))
     charge = bilan["charge"]["centrale"]
     if charge is not None:
-        lignes.append(ligne_kv("Ce que l'opération supporte", f'<span class="num">{fmt_eur(charge)}</span>', _chip_nat("estime")))
+        # RECETTE-10 T3 — la charge foncière supportable est déduite (CA − Σ postes − marge) → ƒ dérivé,
+        # jamais « estimé » (elle n'est pas un moteur de calcul LABUSE mais une soustraction affichée).
+        # T4 — négative : dite en clair, jamais un euro négatif.
+        if charge < 0:
+            v_ch = esc(f"aucune — manque {fmt_eur(-charge)} pour l'équilibre à terrain nul")
+        else:
+            v_ch = f'<span class="num">{fmt_eur(charge)}</span>'
+        lignes.append(ligne_kv("Ce que l'opération supporte", v_ch, _chip_nat("derive")))
     if bilan["ecart_prix_demande"] is not None:
         lignes.append(ligne_kv("Écart", f'<span class="num"><strong>{fmt_eur(bilan["ecart_prix_demande"])}</strong></span>', _chip_nat("derive")))
     if bilan["marge_residuelle_pct"] is not None:
-        lignes.append(ligne_kv("Marge résiduelle au prix demandé", esc(f"{groupe(bilan['marge_residuelle_pct'], 1)} % du chiffre d'affaires"), _chip_nat("derive")))
+        # RECETTE-10 T4 — une marge résiduelle négative se dit en clair (perte), pas en « -X % » sec.
+        mr = bilan["marge_residuelle_pct"]
+        if mr < 0:
+            v_mr = esc(f"négative ({groupe(mr, 1)} %) — au prix demandé, l'opération perd de l'argent")
+        else:
+            v_mr = esc(f"{groupe(mr, 1)} % du chiffre d'affaires")
+        lignes.append(ligne_kv("Marge résiduelle au prix demandé", v_mr, _chip_nat("derive")))
     if bilan["seuil_rentabilite"] is not None:
-        lignes.append(ligne_kv("Seuil de rentabilité (prix d'achat)", f'<span class="num">{fmt_eur(bilan["seuil_rentabilite"])}</span>', _chip_nat("derive")))
+        # RECETTE-10 T4 — un seuil de rentabilité négatif = aucun prix d'achat ne dégage la marge visée
+        # (il faudrait un terrain « payé » à l'opération). On le dit, on ne montre pas un euro négatif.
+        sr = bilan["seuil_rentabilite"]
+        if sr < 0:
+            v_sr = esc(f"aucun prix d'achat viable — il manque {fmt_eur(-sr)} même à un terrain nul")
+        else:
+            v_sr = f'<span class="num">{fmt_eur(sr)}</span>'
+        lignes.append(ligne_kv("Seuil de rentabilité (prix d'achat)", v_sr, _chip_nat("derive")))
     if bilan["prix_revient"] is not None:
         lignes.append(ligne_kv("Prix de revient", esc(f"{groupe(round(bilan['prix_revient']))} €/m² vendable"), _chip_nat("derive")))
     tn = val(valeurs, "prix_terrain_secteur_eur_m2")
@@ -333,17 +369,25 @@ def rendu(valeurs, ctx=None) -> str:
     # renvoie à la correction. Jamais un bilan absurde imprimé sur le ton de l'évidence (« l'opération tient »).
     hm = bilan.get("hors_marche") if isinstance(bilan, dict) else None
     if hm:
+        # RECETTE-10 T5 — le conseil de correction dépend du garde qui a mordu (prix total vs prix
+        # bailleur > libre) : chaque garde porte sa propre phrase `correction`.
+        correction = hm.get("correction", "Corrigez ce champ (un prix AU M², pas un prix total), "
+                                          "puis régénérez le document.")
         corps = verdict(
             f"Hypothèse hors marché — le bilan n'est pas établi. Le champ « {esc(hm['champ'])} » vaut "
-            f"{fmt_eur_m2(hm['valeur'])} : {esc(hm['raison'])} Corrigez ce champ (un prix AU M², pas un "
-            "prix total), puis régénérez le document.", "warn", "")
+            f"{fmt_eur_m2(hm['valeur'])} : {esc(hm['raison'])} {esc(correction)}", "warn", "")
         corps += _hypotheses(resolved)
         corps += _ce_qui_nest_pas_etabli()
         from ..lignes import pied
         return section("Bilan de l'opération", corps) + pied(valeurs, IDS)
     corps = _verdict(bilan, pd, regime_label)
-    if bilan.get("charge", {}).get("centrale") is not None:
-        corps += tuiles([(_keur(bilan["charge"]["centrale"]), "charge foncière supportable"),
+    cc = bilan.get("charge", {}).get("centrale")
+    if cc is not None:
+        # RECETTE-10 T4 — charge centrale négative : la tuile hero ne montre pas « -142 k€ » (illisible)
+        # mais « aucune » + le déficit à terrain nul.
+        tuile_charge = ((f"aucune", f"charge foncière — manque {_keur(-cc)} à terrain nul") if cc < 0
+                        else (_keur(cc), "charge foncière supportable"))
+        corps += tuiles([tuile_charge,
                          (f'{_keur(bilan["charge"]["basse"])} → {_keur(bilan["charge"]["haute"])}',
                           "plancher et plafond (coût × prix de sortie)"),
                          (_keur(bilan["ecart_prix_demande"]) if bilan.get("ecart_prix_demande") is not None else "—",
