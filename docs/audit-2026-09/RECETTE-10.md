@@ -281,3 +281,51 @@ le décalage se déclenche aussi sur `contexteCommune`, à la largeur de la fich
 `w-[320px]` à gauche) — jamais recouvert par une fiche de droite, donc resté accessible ; le seul
 cluster réellement masqué était la barre de vue, désormais dégagée. **Preuve** : capture du décalage
 sous fiche commune (batch UI). tsc vert.
+
+---
+
+## T11 🔴 — Ce que le score apporte vraiment — MESURÉ, et montré au client — FAIT
+
+**Mesuré sur le run servi** (`q_v11_m137`), sans aucun rescoring : pour chaque palier, combien de
+parcelles ont muté sur les 12 derniers mois de DVF (une vente DVF tombe dans leur géométrie — DVF 974
+ne porte pas d'id parcelle, lien SPATIAL), rapporté au taux moyen. Fenêtre : 12 mois au **10/08/2026**.
+
+**Taux de mutation moyen (toutes parcelles scorées) : 0,386 %.**
+
+| palier | n | mutées 12 m | taux | **lift** vs moyenne |
+|---|---:|---:|---:|---:|
+| **À suivre** (chaude) | 1 367 | 70 | **5,12 %** | **×13,3** |
+| Sans signal (a_creuser) | 136 841 | 500 | 0,37 % | ×0,95 |
+| Réserve foncière | 8 789 | 8 | 0,09 % | ×0,24 |
+| Écartée | 145 882 | 108 | 0,07 % | ×0,19 |
+| Priorité (brulante) | 111 | 0 | 0,00 % | n trop faible |
+| *potentiel épuisé (bâti saturé)* | 123 066 | 952 | 0,77 % | ×2,0 |
+
+**Ce qu'un filtre simple obtiendrait, même période :**
+
+| filtre | n | mutées | taux | lift |
+|---|---:|---:|---:|---:|
+| Terrain nu constructible en zone U | 25 281 | 27 | **0,11 %** | **×0,28** (pire que le hasard) |
+| Toute parcelle en zone U | 306 630 | 1 553 | 0,51 % | ×1,3 |
+| **Modèle : Priorité + À suivre** | 1 478 | 70 | **4,74 %** | **×12,3** |
+
+**Verdict franc.** Le modèle **bat nettement le filtre évident.** Le palier « À suivre » se vend
+**13× plus souvent** que la moyenne ; le filtre intuitif « terrain nu en zone U » se vend **3,6× MOINS**
+que le hasard (le foncier nu constructible se garde, il ne tourne pas). Le score capture donc un signal
+réel de mise sur le marché qu'aucune règle simple ne trouve. **Réserve honnête** : le signal robuste
+est porté par « À suivre » (n=1 367, 70 mutations) ; le tout petit palier « Priorité » (n=111) n'a eu
+0 mutation — échantillon trop faible pour conclure (≈0,4 attendue au taux moyen), pas un lift mesurable.
+À surveiller sur q_v14 (paliers recomposés, n plus grands).
+
+**Montré au client** (puisqu'il bat le filtre) : `scoring/backtest.py::mutation_lift` calcule ce tableau
+sur le run servi (mémorisé 6 h, endpoint `GET /scoring/backtest`) ; `phrase_client` en tire une phrase
+**chiffrée et datée**, servie **à côté des paliers** dans le volet Résultats (`data-score-backtest`),
+et **seulement si le modèle bat nettement le filtre** (lift ≥ 2 ; sinon rien — jamais un score nu vanté).
+
+> « Sur 12 mois de ventes DVF (au 2026-08-10), les parcelles « À suivre » se sont vendues **13,3× plus
+> que la moyenne** (5,12 % contre 0,39 %) ; le filtre simple « terrain nu constructible en zone u » fait
+> 0,11 % (×0,28, sous la moyenne). »
+
+**Preuve — artefact final** : mesures ci-dessus (SQL lecture seule sur `q_v11_m137` + DVF) ; module +
+endpoint testés (`test_recette10_backtest`, `phrase_client`) ; ligne servie dans `ResultsSection`
+(capture batch UI). tsc vert.

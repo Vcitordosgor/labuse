@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { getCommunes, getFiltre, getParcelsGeojson, getResults, type SortKey } from '../../lib/api'
+import { getCommunes, getFiltre, getParcelsGeojson, getResults, getScoringBacktest, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
@@ -390,6 +390,10 @@ export function ResultsSection() {
 
   // bandeau honnête par commune (ex. Saint-Philippe = RNU) — porté par /communes
   const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
+  // RECETTE-10 T11 — ce que le score APPORTE, mesuré et daté (taux de mutation 12 mois du palier « À
+  // suivre » vs la moyenne et vs un filtre simple). Une phrase chiffrée à côté des paliers, jamais un
+  // score nu. Servi seulement quand le modèle bat nettement le hasard (phrase_client sinon null).
+  const backtestQ = useQuery({ queryKey: ['scoring-backtest'], queryFn: getScoringBacktest, staleTime: 3_600_000, enabled: analyse })
   const communeNote = commune ? communesQ.data?.find((c) => c.commune === commune)?.note : null
   // M55-K point 1 : `nFilters` et la var locale `opportunites` sont retirés avec la ligne de
   // synthèse (0-caller). Le tooltip de la ventilation lit toujours `uni.data.opportunites`.
@@ -491,6 +495,13 @@ export function ResultsSection() {
                 className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
             </Tip>
           </p>
+          {/* RECETTE-10 T11 — ce que le palier VAUT, mesuré et daté : preuve chiffrée à côté des
+              paliers (pas un score nu). Affichée seulement si le modèle bat nettement le filtre. */}
+          {backtestQ.data?.phrase_client && (
+            <p data-score-backtest className="mt-1.5 shrink-0 rounded-lg border border-mint/30 bg-mint/5 px-2.5 py-1.5 text-[11px] leading-snug text-txt-mut">
+              {backtestQ.data.phrase_client}
+            </p>
+          )}
           {/* M55-G point 5 (décision Vic) : la ligne « soit N parcelles avec dossier propriétaire ·
               N personnes physiques » a QUITTÉ la zone résultats — l'info vit en fiche (tiroir
               Propriétaire), rien n'est perdu. Champs API (opportunites_avec_dossier…) inchangés. */}

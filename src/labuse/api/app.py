@@ -4947,6 +4947,22 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
     return payload
 
 
+@app.get("/scoring/backtest")
+def scoring_backtest(db: Session = Depends(get_db)) -> dict:
+    """RECETTE-10 T11 — ce que le score APPORTE, mesuré sur le run servi : taux de mutation à 12 mois
+    par palier (rapport de risque réel) vs un filtre simple, + une phrase chiffrée/datée pour le client.
+    Coûteux (jointure spatiale DVF) → mémorisé 6 h ; lecture seule, aucun rescoring."""
+    from ..scoring.backtest import mutation_lift, phrase_client
+    def _compute():
+        bt = mutation_lift(db)
+        return {**bt, "phrase_client": phrase_client(bt)}
+    try:
+        return _mem_cached(("scoring-backtest",), 21600.0, _compute)
+    except Exception:  # noqa: BLE001 — base sans DVF/score → pas de backtest, jamais un 500
+        db.rollback()
+        return {"paliers": [], "filtres": {}, "phrase_client": None}
+
+
 @app.get("/parcels/{idu}/exposition")
 def parcel_exposition(idu: str, db: Session = Depends(get_db)) -> dict:
     """RECETTE-8 W22 — l'exposition de la parcelle (orientation du versant + pente moyenne), calculée

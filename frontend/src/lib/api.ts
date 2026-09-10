@@ -196,6 +196,10 @@ export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune' | 
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')
+// RECETTE-10 T11 — ce que le score apporte, mesuré (taux de mutation 12 mois par palier vs filtre
+// simple) + une phrase chiffrée/datée pour le client. Mémorisé 6h côté serveur.
+export interface ScoringBacktest { phrase_client: string | null; fenetre_fin?: string; base_pct?: number }
+export const getScoringBacktest = () => j<ScoringBacktest>('/scoring/backtest')
 // RETOURS-1 R3 — acquisitions PM d'une commune : constat DGFiP (changement de propriétaire moral
 // d'un millésime au suivant), hors scoring. Servi par le bloc contexte ET le listing dédié.
 export interface AcquisitionsPm {
