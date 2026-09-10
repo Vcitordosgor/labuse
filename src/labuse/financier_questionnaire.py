@@ -97,6 +97,37 @@ LIBELLES_CLIENT: dict[str, str] = {
 CHAMPS: tuple[str, ...] = tuple(dict.fromkeys(
     cid for _, ids in (ECRANS + REVENTE_ECRANS) for cid in ids))
 
+# RECETTE-10 T2b — LE TRI DES QUESTIONS (décision de recette). Trois verdicts :
+#   • garder    — le porteur DOIT (obligatoire) ou VEUT la toucher : elle pilote le résultat.
+#   • affiner   — pré-remplie d'une valeur sourcée d'usage ; ne bouge le bilan qu'à la marge →
+#                 repliée derrière « Affiner les hypothèses » (fermé par défaut), plus les 4 écrans.
+#   • supprimer — n'imprime rien qui change le document : RETIRÉE des écrans (jamais montrée au
+#                 porteur). Son id RESTE dans CHAMPS pour que `resoudre` la serve encore au document
+#                 (contexte), mais aucune question n'est posée. `scenario_saisi` : W3 chiffre TOUJOURS
+#                 la reconstruction, le champ ne change pas le bilan (les deux lectures contradictoires
+#                 de RECETTE-8 venaient de là) → supprimé de la saisie, « reconstruction » reste au doc.
+TRI: dict[str, str] = {
+    "scenario_saisi": "supprimer",
+    "logements_vises_saisi": "garder", "typologie_moyenne_saisi": "garder",
+    "prix_demande_saisi_eur": "garder", "cout_construction_saisi_eur_m2": "garder",
+    "prix_sortie_saisi_eur_m2": "garder", "prix_vente_bailleur_saisi_eur_m2": "affiner",
+    "marge_visee_saisi_pct": "garder", "regime_tva_saisi": "garder",
+    "part_sociale_saisi_pct": "affiner", "frais_acquisition_saisi_pct": "affiner",
+    "bilan_demolition_eur": "affiner", "bilan_depollution_eur": "affiner",
+    "honoraires_techniques_saisi_pct": "affiner", "vrd_saisi_eur_m2": "affiner",
+    "cout_place_stationnement_saisi_eur": "affiner", "aleas_saisi_pct": "affiner",
+    "taxe_amenagement_saisi_eur": "affiner", "duree_portage_saisi_mois": "affiner",
+    "taux_apport_saisi_pct": "affiner",
+    # revente
+    "prix_achat_revente_saisi_eur": "garder", "prix_revente_saisi_eur": "garder",
+    "travaux_revente_saisi_eur": "affiner",
+}
+
+
+def tri_champ(fid: str) -> str:
+    """Verdict de tri d'un champ (« garder »/« affiner »/« supprimer »). Défaut prudent : « affiner »."""
+    return TRI.get(fid, "affiner")
+
 #: RECETTE-5 (V19, décision Vic) — les champs INDISPENSABLES AU CALCUL de la charge foncière : sans
 #: eux, `charge` est None et le bilan ne peut pas être établi. Ils bloquent la génération tant qu'ils
 #: sont vides (les autres champs ont un pré-remplissage sourcé ou sont facultatifs). Deux champs :

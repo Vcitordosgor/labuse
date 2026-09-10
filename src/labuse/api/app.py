@@ -6465,6 +6465,9 @@ def financier_questionnaire_get(idu: str, request: Request, db: Session = Depend
         return {"id": fid, "libelle": libelle, "unite": c.unite if c else "",
                 "type": c.type if c else "texte",
                 "domaine": list(c.domaine) if c and c.domaine else None,
+                # RECETTE-10 T2b — tri de la question (garder/affiner/supprimer) : le front garde les
+                # « garder » visibles, replie les « affiner », n'affiche jamais les « supprimer ».
+                "tri": qf.tri_champ(fid),
                 # RECETTE-8 W13bis — obligatoire dans SON parcours (construction OU revente).
                 # RECETTE-9 T1 — + les champs qui DÉBLOQUENT le programme quand le potentiel est absent.
                 "obligatoire": (fid in qf.OBLIGATOIRES or fid in qf.OBLIGATOIRES_REVENTE

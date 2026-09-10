@@ -19,6 +19,8 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
     queryFn: () => getFinancierQuestionnaire(idu),
   })
   const [etape, setEtape] = useState(0)
+  // RECETTE-10 T2b — la section « Affiner » (champs d'usage repliés) est fermée par défaut, par étape.
+  const [affinerOuvert, setAffinerOuvert] = useState<Record<number, boolean>>({})
   // RECETTE-6 (E5) — écran 0 : on ne montre les 4 écrans QUE lorsqu'un usage servi est choisi.
   const [usage, setUsage] = useState<string | null>(null)
   const [reponses, setReponses] = useState<Record<string, unknown>>({})
@@ -223,10 +225,13 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
               Tout est pré-rempli avec une valeur sourcée ; vous corrigez ce que vous savez. Un champ vidé s'imprime « non chiffré ».
             </p>
             {/* RECETTE-9 T1 (défauts n°1 et n°2) — quand la parcelle n'a PAS de potentiel chiffrable,
-                le programme constructible DOIT être décrit (logements + typologie) : on le dit AU MOMENT
-                DE LA SAISIE (bannière + champs marqués « indispensable »), plus jamais seulement « à
-                l'arrivée » sous « il manque : Programme constructible ». */}
-            {usage === 'construction' && data.programme && !data.programme.auto && (
+                le programme constructible DOIT être décrit (logements + typologie).
+                RECETTE-10 T2a — l'avertissement s'affiche UNE FOIS, à l'endroit du champ concerné
+                (l'écran qui porte « logements visés »), et DISPARAÎT dès qu'il est renseigné. Avant, il
+                se répétait sur les quatre écrans et restait même après réponse → du décor. */}
+            {usage === 'construction' && data.programme && !data.programme.auto
+              && ecrans[etape]?.champs.some((c) => c.id === 'logements_vises_saisi')
+              && (reponses['logements_vises_saisi'] == null || reponses['logements_vises_saisi'] === '') && (
               <div data-financier-programme style={{ margin: '0 0 18px', padding: 12, borderRadius: 8,
                 border: '.5px solid #E0B341', background: 'rgba(224,179,65,.06)' }}>
                 <p style={{ fontSize: 12.5, color: '#E9C868', margin: 0, lineHeight: 1.5 }}>
@@ -235,10 +240,38 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
               </div>
             )}
 
-            {(ecrans[etape]?.champs || []).map((c) => (
-              <ChampRow key={c.id} c={c} valeur={reponses[c.id]} touche={c.id in reponses}
-                        tvaExplication={data.tva_explication} onChange={(v) => set(c.id, v)} />
-            ))}
+            {/* RECETTE-10 T2b — le tri des questions : « garder » toujours visibles, « affiner »
+                repliées derrière une section (fermée par défaut), « supprimer » jamais montrées.
+                Un champ obligatoire reste toujours visible quel que soit son tri. */}
+            {(() => {
+              const champs = (ecrans[etape]?.champs || []).filter((c) => c.tri !== 'supprimer')
+              const estAffiner = (c: typeof champs[number]) => c.tri === 'affiner' && !c.obligatoire
+              const garder = champs.filter((c) => !estAffiner(c))
+              const affiner = champs.filter(estAffiner)
+              const ouvert = !!affinerOuvert[etape]
+              const row = (c: typeof champs[number]) => (
+                <ChampRow key={c.id} c={c} valeur={reponses[c.id]} touche={c.id in reponses}
+                          tvaExplication={data.tva_explication} onChange={(v) => set(c.id, v)} />
+              )
+              return (
+                <>
+                  {garder.map(row)}
+                  {affiner.length > 0 && (
+                    <div data-financier-affiner style={{ margin: '4px 0 8px' }}>
+                      <button type="button" data-financier-affiner-toggle aria-expanded={ouvert}
+                        onClick={() => setAffinerOuvert((s) => ({ ...s, [etape]: !ouvert }))}
+                        style={{ background: 'none', border: 0, color: MINT, cursor: 'pointer',
+                          fontSize: 12.5, padding: '6px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span>{ouvert ? '▾' : '▸'}</span>
+                        <span>Affiner les hypothèses ({affiner.length})</span>
+                        <span style={{ color: '#5F7267' }}>— valeurs d'usage sourcées, à ajuster si besoin</span>
+                      </button>
+                      {ouvert && <div style={{ marginTop: 8 }}>{affiner.map(row)}</div>}
+                    </div>
+                  )}
+                </>
+              )
+            })()}
 
             {erreur && <p style={{ fontSize: 12, color: '#E0B341', margin: '14px 0 0' }}>{erreur}</p>}
 

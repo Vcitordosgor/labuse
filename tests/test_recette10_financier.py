@@ -82,6 +82,19 @@ def test_t5_prix_bailleur_plausible_passe():
     assert fb._hors_marche(prix_sortie=4500, cout=2550, prix_bailleur=550000) is not None
 
 
+# ── T2b — le tri des questions (garder/affiner/supprimer) ─────────────────────────────────────
+def test_t2b_tri_des_questions():
+    from labuse import financier_questionnaire as qf
+    assert qf.tri_champ("prix_sortie_saisi_eur_m2") == "garder"
+    assert qf.tri_champ("regime_tva_saisi") == "garder"
+    assert qf.tri_champ("aleas_saisi_pct") == "affiner"
+    assert qf.tri_champ("scenario_saisi") == "supprimer"
+    # « supprimer » RESTE dans CHAMPS → le document sert encore la valeur (contexte), aucune question posée
+    assert "scenario_saisi" in qf.CHAMPS
+    resolved = qf.resoudre({}, qf.prefill({"potentiel_transformation": {"capacite_estimee": 8}}))
+    assert (resolved.get("scenario_saisi") or {}).get("valeur") == "reconstruction"
+
+
 def test_t5_bilan_bloque_avec_le_bon_conseil():
     b = fb.calculer(PROG, dict(HYP, prix_sortie=4500, prix_bailleur=5500, part_sociale_pct=30))
     assert b["hors_marche"] is not None

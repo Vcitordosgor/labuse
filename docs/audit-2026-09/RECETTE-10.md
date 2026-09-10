@@ -121,3 +121,81 @@ sociale 20 %). Le Financier affiche : « **Hypothèse hors marché** — le bila
 « Prix de vente au bailleur social » vaut **5 500 €/m²** : il dépasse le prix de vente libre (4 500 €/m²)
 — une vente EN BLOC à un bailleur social est toujours inférieure au prix du marché libre. Corrigez le
 prix au bailleur … ». Tests `test_t5_*`.
+
+---
+
+## T2 — Le questionnaire Financier : solide, ou on le retire — FAIT
+
+### T2a — le bandeau qui ne disparaissait pas
+
+**Le défaut.** La bannière « LABUSE n'a pas pu chiffrer de programme… renseignez le nombre de
+logements » (`data-financier-programme`) s'affichait sur **les quatre étapes** et **restait après**
+que le porteur ait répondu (elle lisait `data.programme.auto`, statique côté serveur, jamais l'état de
+saisie). Un avertissement qui ne disparaît pas devient du décor.
+
+**Le correctif** (`FinancierQuestionnaire.tsx`) : la bannière ne s'affiche **qu'à l'écran qui porte le
+champ `logements_vises_saisi`** ET tant que ce champ est **vide** ; dès qu'il est renseigné, elle
+disparaît. Prouvé par `FinancierQuestionnaire.test.tsx::T2a`.
+
+### T2b — le tri des questions
+
+Analyse des 20 champs (qui remplit · effet sur le bilan · si vide) → verdict :
+
+| champ | qui le remplit | effet sur le bilan | si vide | verdict |
+|---|---|---|---|---|
+| Prix de vente prévu (€/m²) | le porteur (obligatoire) | c'est le chiffre d'affaires | bilan non établi | **garder** |
+| Régime de TVA | le porteur (obligatoire) | HT vs TTC | bilan non établi | **garder** |
+| Coût de construction (€/m²) | pré-rempli, souvent ajusté | 1er poste du bilan | médiane régionale | **garder** |
+| Prix demandé pour le terrain | le porteur | la confrontation charge/prix | pas de face-à-face | **garder** |
+| Marge visée (%) | pré-rempli, ajusté | déduit du CA | 9 % d'usage | **garder** |
+| Nb de logements visés | le porteur si pas de potentiel | débloque la surface vendable | programme non chiffré | **garder** (conditionnel) |
+| Typologie moyenne | le porteur si pas de potentiel | surface vendable | T3 par défaut | **garder** (conditionnel) |
+| Part de logement social (%) | rare | pondère le CA si bailleur | 0 % | **affiner** |
+| Prix de vente au bailleur (€/m²) | rare | CA de la part sociale | ignoré | **affiner** |
+| Frais d'acquisition (%) | pré-rempli | frais d'acq. | 7 % | **affiner** |
+| Coût de démolition | si bâti existant | poste démolition | non chiffré | **affiner** |
+| Dépollution / étude de sol | rare | poste dépollution | non chiffré | **affiner** |
+| Honoraires techniques (%) | pré-rempli | % du coût | 12 % | **affiner** |
+| VRD (€/m²) | pré-rempli | × terrain | 90 €/m² | **affiner** |
+| Coût par place de stationnement | rare | × logements | non chiffré | **affiner** |
+| Provision pour aléas (%) | pré-rempli | % du coût | 4 % | **affiner** |
+| Taxe d'aménagement | pré-remplie (calcul LABUSE) | poste taxe | calculée | **affiner** |
+| Durée de portage (mois) | pré-remplie | portage | 29 mois | **affiner** |
+| Taux d'emprunt (%) | rare | portage | forfait 3 % du CA | **affiner** |
+| **Scénario du projet** | pré-rempli « reconstruction » | **aucun** (W3 chiffre toujours la reconstruction) | reconstruction | **supprimer** |
+
+Implémentation : `financier_questionnaire.TRI` + `tri_champ()` ; servi par champ (`app.py::_champ`,
+clé `tri`). Le front (`FinancierQuestionnaire.tsx`) garde les **garder** visibles, replie les **affiner**
+derrière « Affiner les hypothèses (N) » (fermé par défaut), n'affiche **jamais** les **supprimer**. Le
+`scenario_saisi` reste dans `CHAMPS` (donc résolu et servi au document, « reconstruction ») mais n'est
+plus une question. Prouvé par `test_t2b_tri_des_questions` + `FinancierQuestionnaire.test.tsx::T2b`.
+
+Effet : l'écran « Votre projet » passe de 4 à 3 questions (scénario retiré) dont 1 seule d'usage
+repliée ; « Vos coûts » de 6 champs à 1 visible (le coût de construction) + 5 sous « Affiner » ;
+« Vos conditions » de 6 à 3 visibles + 3 sous « Affiner ». Le porteur voit d'abord ce qui pilote.
+
+### T2c — verdict franc
+
+**Le Financier, tel qu'il est maintenant, est une esquisse crédible — PAS un document bancable en
+l'état.** Ce qu'il fait bien : un bilan à rebours déterministe, reproductible au centime, chaque poste
+tracé (sourcé/dérivé/projet), les gardes de vraisemblance (prix de sortie, coût, bailleur < libre),
+HT explicite avec le régime, sensibilité double, charge foncière à 3 bornes, et il refuse de se
+générer quand l'indispensable manque. Un banquier y lit une intention chiffrée honnête.
+
+**Ce qui manque pour le rendre bancable**, et l'ordre de grandeur du travail :
+1. **Le plan de financement** (apport, dette, DSCR, échéancier de décaissement) — aujourd'hui
+   explicitement renvoyé à l'établissement prêteur. C'est LE bloc qu'un banquier attend. ~1 module
+   dédié (écran + moteur) : estimation **moyenne** (2–3 j).
+2. **La valeur locative cadastrale** pour chiffrer la taxe foncière de portage (aujourd'hui « dite,
+   jamais chiffrée ») — dépend d'une donnée non ingérée par parcelle : **faible** si on accepte une
+   saisie porteur, **élevé** si ingestion (source MAJIC restreinte).
+3. **Les coûts réels** (démolition, dépollution, VRD) restent des hypothèses — un vrai document
+   bancable cite des **devis**. Hors périmètre LABUSE (le document le dit déjà dans « ce qu'il
+   n'établit pas ») : **nul** côté code, c'est une limite assumée.
+4. **La TVA réelle** (marge vs récupération vs taux réduit accession) — aujourd'hui un choix de régime
+   + renvoi expert-comptable. Passer à un calcul par montage : **moyen** (règles fiscales DOM).
+
+Recommandation : **assumer l'esquisse** — le document s'annonce déjà comme indicatif (« ne remplace ni
+un bilan promoteur professionnel, ni une expertise »). Le seul ajout qui changerait sa nature vers le
+bancable est le **plan de financement** (point 1). Tant qu'il n'est pas là, garder le bandeau
+« Bilan indicatif » en tête, ce qui est le cas.

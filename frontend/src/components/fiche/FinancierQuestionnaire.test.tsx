@@ -82,3 +82,55 @@ describe('FinancierQuestionnaire (les 3 règles)', () => {
     expect(screen.getByText(/indispensable/)).toBeTruthy()
   })
 })
+
+// RECETTE-10 T2a/T2b — questionnaire au propre : le bandeau programme et le tri des questions.
+const Q2 = {
+  ...Q,
+  programme: { auto: false, source: 'saisie', message: 'Renseignez le nombre de logements visés et la typologie.' },
+  ecrans: [
+    { titre: 'Votre projet', champs: [
+      { id: 'logements_vises_saisi', libelle: 'Logements visés', unite: 'logements', type: 'nombre',
+        domaine: null, obligatoire: true, prefill: null, tri: 'garder' },
+      { id: 'part_sociale_saisi_pct', libelle: 'Part sociale', unite: '%', type: 'nombre',
+        domaine: null, obligatoire: false, prefill: null, tri: 'affiner' },
+      { id: 'scenario_saisi', libelle: 'Scénario', unite: 'texte', type: 'texte',
+        domaine: null, obligatoire: false, prefill: { valeur: 'reconstruction', source: 'x' }, tri: 'supprimer' },
+    ] },
+  ],
+}
+
+describe('FinancierQuestionnaire — RECETTE-10 T2 (bandeau + tri)', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    const api = await import('../../lib/api')
+    ;(api.getFinancierQuestionnaire as ReturnType<typeof vi.fn>).mockResolvedValue(Q2)
+  })
+
+  const entrer = async () => {
+    await waitFor(() => screen.getByText('Que voulez-vous chiffrer ?'))
+    fireEvent.click(screen.getByText('Construction neuve'))
+    await waitFor(() => screen.getByText('Logements visés (logements)'))
+  }
+
+  it('T2a — le bandeau programme s\'affiche à l\'écran du champ, puis disparaît une fois rempli', async () => {
+    const { container } = rend()
+    await entrer()
+    expect(container.querySelector('[data-financier-programme]')).toBeTruthy()   // affiché : champ vide
+    const input = container.querySelector('input[type="number"]') as HTMLInputElement
+    fireEvent.change(input, { target: { value: '8' } })                          // on répond
+    expect(container.querySelector('[data-financier-programme]')).toBeNull()     // disparaît
+  })
+
+  it('T2b — « garder » visible, « affiner » replié, « supprimer » jamais rendu', async () => {
+    const { container } = rend()
+    await entrer()
+    expect(screen.getByText('Logements visés (logements)')).toBeTruthy()          // garder : direct
+    expect(screen.queryByText('Part sociale (%)')).toBeNull()                     // affiner : replié
+    expect(screen.queryByText('Scénario')).toBeNull()                            // supprimer : absent
+    const toggle = container.querySelector('[data-financier-affiner-toggle]') as HTMLButtonElement
+    expect(toggle).toBeTruthy()
+    fireEvent.click(toggle)                                                       // on déplie
+    expect(screen.getByText('Part sociale (%)')).toBeTruthy()
+    expect(screen.queryByText('Scénario')).toBeNull()                            // toujours absent
+  })
+})

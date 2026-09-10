@@ -2164,6 +2164,7 @@ export interface QChamp {
   id: string; libelle: string; unite: string; type: string
   domaine: string[] | null; obligatoire: boolean; prefill: QChampPrefill | null
   aide?: string | null   // RECETTE-5 (V19) — le « i » : ce qu'on attend comme valeur
+  tri?: 'garder' | 'affiner' | 'supprimer'   // RECETTE-10 T2b — tri des questions
 }
 export interface QEcran { titre: string; champs: QChamp[] }
 // RECETTE-6 (E5) — écran 0 « Que voulez-vous chiffrer ? ». Seul `construction` est servi ; les autres
