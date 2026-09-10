@@ -182,8 +182,11 @@ def test_sonde_connait_les_temoins_exports():
 def test_mots_interdits_liste_versionnee():
     import yaml
     doc = yaml.safe_load((RACINE / "config/mots_interdits.yaml").read_text())
-    assert doc["version"] and len(doc["mots"]) == 16
+    # RECETTE-11 : +2 (A6 : « surélévation possible », « non identifiée ») +6 (D6 : marqueurs de source).
+    assert doc["version"] and len(doc["mots"]) == 24
     assert "MOBPRO" in doc["mots"] and "n 11" in doc["mots"]
+    assert "surélévation possible" in doc["mots"] and "non identifiée" in doc["mots"]
+    assert "rpls_sdes" in doc["mots"] and "RPG.LATEST" in doc["mots"]
 
 
 def test_controle_exporte_seulement_la_nuit(db_session, monkeypatch):

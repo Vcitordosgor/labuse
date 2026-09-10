@@ -19,6 +19,29 @@ from datetime import date, datetime
 
 _ISO = re.compile(r"\d{4}-\d{2}-\d{2}")
 
+#: RECETTE-11 D6 — notes d'ingénierie internes qui fuyaient dans les millésimes/sources affichés
+#: au client (§10 « Sources et millésimes » ET pieds de section, tous deux via `composer`).
+_NOTES_INTERNES = (
+    (" — RPG.LATEST, année non pinnée", ", édition courante"),
+    ("RPG.LATEST, année non pinnée", "édition courante"),
+    ("RPG.LATEST", "RPG"),
+    ("année non pinnée", "édition courante"),
+    (" (propre non public)", ""),
+    ("propre non public", ""),
+    (" — « latest » ingérée", ", édition courante"),
+    ("« latest » ingérée", "édition courante"),
+    ("« latest »", "édition courante"),
+)
+
+
+def nettoyer_notes_internes(s):
+    """Retire les notes techniques internes d'une chaîne affichée au client (D6). None → None."""
+    if not s:
+        return s
+    for avant, apres in _NOTES_INTERNES:
+        s = s.replace(avant, apres)
+    return s.replace(" ·  ", " · ").strip(" ·—")
+
 
 def _fr(d) -> str | None:
     """JJ/MM/AAAA depuis une date/datetime/ISO ; None si absent/illisible."""
@@ -53,4 +76,4 @@ def composer(source_millesime, *, source_horizon_at=None, dernier_vu=None,
         if sync:
             return f"{base} — édition courante, ingérée le {sync} (millésime amont non versionné par l'IGN)"
         return f"{base} — édition courante (millésime amont non versionné par l'IGN)"
-    return mill
+    return nettoyer_notes_internes(mill)

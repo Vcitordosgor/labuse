@@ -74,9 +74,14 @@ def rendu(valeurs) -> str:
                                    f"{tn.get('surface_m2', '?')} m²)"), chip_span("d", "dérivé")))
     if isinstance(pa, dict) and pa.get("tendance_pct") is not None:
         sens = pa.get("tendance") or ""
+        # RECETTE-11 D6 — la période était rendue en repr de liste Python (« [2022, 2025] ») ; on
+        # l'écrit « 2022–2025 » (jamais un [ ] au client).
+        per = pa.get("periode", "")
+        if isinstance(per, (list, tuple)) and len(per) == 2:
+            per = f"{per[0]}–{per[1]}"
         lignes.append(ligne_kv("Tendance du secteur",
                                esc(f"{'+' if sens == 'hausse' else ''}{pa['tendance_pct']} % "
-                                   f"({sens}) sur la période {pa.get('periode', '')}"),
+                                   f"({sens}) sur la période {per}"),
                                chip_span("s", "sourcé")))
     if a(valeurs, "n_permis_proximite"):
         nc = valeurs["n_permis_proximite"].valeur

@@ -35,8 +35,9 @@ Rt = ReservoirTables
 #: manuelle) le déclarent avec une note — jamais un oubli silencieux.
 RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     # ── cadastre / foncier ──────────────────────────────────────────────────────────
-    "cadastre_api_carto": Rt(("parcels",), millesime="PCI Parcellaire Express (DGFiP) — « latest » ingérée"),
-    "cadastre_etalab_bulk": Rt(("parcels",), millesime="Etalab cadastre — « latest » (DGFiP)",
+    # RECETTE-11 D6 — millésime affiché au client : plus de note d'ingénierie « « latest » ingérée ».
+    "cadastre_api_carto": Rt(("parcels",), millesime="PCI Parcellaire Express (DGFiP), édition courante"),
+    "cadastre_etalab_bulk": Rt(("parcels",), millesime="Etalab cadastre (DGFiP), édition courante",
                                note="DOUBLON (canal bulk du même réservoir que cadastre_api_carto)"),
     "cadastre_epoque": Rt(("cadastre_historique",),
                           millesime="PCI vecteur Etalab — millésimes 2019→2025 (cadastre d'époque)"),
@@ -213,7 +214,7 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "potentiel_foncier_region": Rt(("spatial_layers",), couches=("potentiel_foncier", "sar")),
     "potentiel_foncier_ods": Rt(("spatial_layers",), couches=("potentiel_foncier",)),
     "rpg_proxy_ign": Rt(("spatial_layers",), couches=("safer",),
-                        millesime="proxy RPG (IGN) — RPG.LATEST, année non pinnée",
+                        millesime="RPG (IGN), édition courante",  # RECETTE-11 D6 — note interne retirée
                         note="SOURCES-1 lot 2 : code_cultu servi (CSA canne 12 464/38 460) — "
                              "couche carte « Cultures déclarées » + cascade zone A/canne"),
     # ── adresses / réseaux / transport ─────────────────────────────────────────────

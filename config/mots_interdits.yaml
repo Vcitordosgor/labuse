@@ -2,7 +2,7 @@
 # Au terme d'EXPORTS-1 : 56 occurrences → 0 sur les 24 PDF des 4 témoins. Cette liste est LA
 # référence : scripts/recette_exports1.py la lit, la sonde coherence-robinets la rejoue comme
 # contrôle DISTINCT (verdict séparé des divergences de grandeurs). Toute évolution = commit ici.
-version: "2026-09-05"
+version: "2026-09-10"
 mots:
   - "run m1"
   - "EPSG"
@@ -20,3 +20,14 @@ mots:
   - "parcours Flash"
   - "MOBPRO"
   - "n 11"
+  # RECETTE-11 A6 — plus AUCUN verdict de surélévation dans les documents (on énonce la marge, la
+  # règle et la contrainte qui mord ; le lecteur conclut). Rejoué en garde de régression.
+  - "surélévation possible"
+  - "non identifiée"
+  # RECETTE-11 D6 — marqueurs techniques de source qui ne doivent jamais fuir au client.
+  - "rpls_sdes"
+  - "« latest » ingérée"
+  - "année non pinnée"
+  - "propre non public"
+  - "RPG.LATEST"
+  - "[2022, 2025]"
