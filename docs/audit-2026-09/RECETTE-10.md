@@ -199,3 +199,24 @@ Recommandation : **assumer l'esquisse** — le document s'annonce déjà comme i
 un bilan promoteur professionnel, ni une expertise »). Le seul ajout qui changerait sa nature vers le
 bancable est le **plan de financement** (point 1). Tant qu'il n'est pas là, garder le bandeau
 « Bilan indicatif » en tête, ce qui est le cas.
+
+---
+
+## T6 — Pagination : la règle de Vic (sous 200 tout, sinon 200 + « voir 200 de plus ») — FAIT
+
+**La règle** est déjà encodée dans le composant PARTAGÉ `ListPagination` (`PAGE_SIZE = 200`,
+`usePagination` : fenêtre initiale `min(200, total)`, bouton « Voir N de plus » seulement si reste > 0,
+libellé honnête sur la dernière page). **Audit de toutes les listes paginées** — celles qui violaient
+la règle (fenêtre compacte « quelques-uns au repos, révèle par petits paquets ») corrigées :
+
+| liste | avant | après |
+|---|---|---|
+| `ProjetsPanel` (mes projets) | 4 au repos, révèle +200 | **200** puis +200 (sous 200 = tout) |
+| `AdminView` (événements système) | 8 au repos, révèle **+12** | **200** puis +200 |
+| `ProjetKanban` (proposées, page X/Y) | **50** / page | **200** / page |
+
+Déjà conformes (vérifié, aucun changement) : `ResultsSection` (résultats carte, île serveur 200 /
+commune `usePagination` 200), `Communes`/`M22Programme` (Densifier)/`Renouvellement`/`moteurs`/
+`RadarView`/`EtudeZone`/`ProspectionSolaire`/`ModulePanel` (patrimoine/permis) — toutes via le socle
+partagé (200 + « Voir N de plus », compteur exact toujours visible). Test du socle intact
+(`ListPagination.test.ts`, 8 tests : `PAGE_SIZE===200`, 3→tout, 137→« voir 137 »).
