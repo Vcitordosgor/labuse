@@ -4,7 +4,14 @@ Branche `fix/recette-10` depuis `fix/recette-9` · worktree `~/Desktop/labuse-re
 **Règle de preuve** : un travail n'est fait que prouvé sur l'artefact final (PDF régénéré ou capture
 depuis le vrai chemin). Aucun merge, aucune bascule, `:8020`/`q_v14` intacts.
 
-Artefacts : `docs/audit-2026-09/captures-recette-10/`.
+Artefacts : `docs/audit-2026-09/captures-recette-10/` (+ page `OU-VOIR-LE-LIDAR.md`).
+
+**Les 12 travaux faits, chacun prouvé sur l'artefact final.** 🔴 T1 (surélévation : les deux
+contraintes, la plus serrée mord — Dossier régénéré), 🔴 T7 (segment permis-pro : libellé qui dit ce
+qu'il regroupe — 249/~600 sont « Sans signal », mesuré), 🔴 T11 (le score bat le filtre ×12 — mesuré,
+montré au client). Financier au propre : T2 (bandeau/tri/verdict), T3 (natures), T4 (charge négative en
+clair), T5 (garde bailleur). T6 (pagination), T8 (fiche commune), T9 (LiDAR garde+chiffrage+ingestion
+bornée), T10 (page LiDAR), T12 (comptes à zéro expliqués).
 
 ---
 
@@ -418,8 +425,14 @@ d'étiquette airtight (T9).
 
 ## Suite de tests
 
-- Python ciblé : `test_recette10_financier` (8), `test_recette10_backtest` (2), `regles/test_surelevation`
-  (4, dont anti-inversion T1) — verts.
-- Front : `FinancierQuestionnaire.test` (6, dont T2a/T2b), `ListPagination.test` (8) — verts. `tsc` vert.
-- Le fail pré-existant `test_recette6::test_e5` (revente `servi=True` depuis RECETTE-8, test non mis à
-  jour) subsiste — prouvé pré-existant (échoue aussi sans mes changements).
+- **Front : vitest 204/204** (47 fichiers), dont `test_recette10_*`, `FinancierQuestionnaire` (6, T2a/T2b),
+  `ListPagination` (8). **tsc 0.**
+- **Python ciblé** : financier/backtest/surélévation/exports/regles — **144 passed** (71 + 73) sur les
+  zones touchées ; nouveaux : `test_recette10_financier` (8), `test_recette10_backtest` (2),
+  `regles/test_surelevation` (+2 anti-inversion T1).
+- **1 fail PRÉ-EXISTANT** : `test_recette6::test_e5` (revente `servi=True` depuis RECETTE-8, test jamais
+  mis à jour) — prouvé pré-existant (échoue aussi sur l'arbre stashé, sans mes changements). 0 régression.
+
+## Garde-fous tenus
+Aucun merge, aucune bascule, `:8020`/`q_v14` intacts. Ingestion LiDAR (seule autorisée) bornée et
+résumable. `fix/recette-10` poussée, un commit par travail. « Ne merge pas. »
