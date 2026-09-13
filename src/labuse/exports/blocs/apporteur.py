@@ -14,18 +14,17 @@ from __future__ import annotations
 import re
 
 from ..lignes import a, val
-from ..registre_fmt import fmt_eur, fmt_eur_m2, fmt_m, fmt_m2
+from ..registre_fmt import fmt_eur, fmt_m2
 from ..rendu import esc, ligne_kv, note, table_kv
 
-# RECETTE-2 (S7) — un apporteur doit avoir la parcelle EN MAIN : au-delà de surface/zone/bâti, on
-# ajoute la SDP résiduelle + capacité, les contraintes (aléas, prescriptions ER/EBC/DPU, PEB) et le
-# prix de secteur (terrain nu + ancien). Ces ids existent déjà au catalogue (mêmes que le Résumé).
+# RECETTE-12 E1 — la spec FERMÉE (docs/audit-2026-09/EXPORTS/APPORTEUR-SPEC.md) : la page 1 ne porte
+# QUE surface, zone, « sur place » (bâtiments + emprise), « ce qui gêne », accès, dernière vente,
+# voisines, plan. RETIRÉS de RECETTE-2/11 (répétés au propriétaire ou devenus l'ancre du vendeur) :
+# la CAPACITÉ CONSTRUCTIBLE (sdp/capacité), le PRIX DE SECTEUR, la HAUTEUR LiDAR (inutile à sa mission).
 IDS = ("surface_parcelle_m2", "zone_plu_famille", "reglement_plu_bloc", "statut_plu",
-       "emprise_batie_m2", "hauteur_bati_m",
-       "n_batiments", "type_proprietaire", "prix_achat_historique_eur", "distance_arret_m",
-       "sdp_residuelle_m2", "capacite_logements", "aleas_parcelle_liste", "potentiel_verdict",
-       "er_emplacement_reserve", "ebc_classe", "dpu_perimetre", "peb_zone",
-       "prix_terrain_secteur_eur_m2", "prix_sortie_bati_eur_m2")
+       "emprise_batie_m2", "n_batiments", "type_proprietaire", "prix_achat_historique_eur",
+       "distance_arret_m", "aleas_parcelle_liste",
+       "er_emplacement_reserve", "ebc_classe", "dpu_perimetre", "peb_zone")
 
 # `appearance:auto` : les <input>/<textarea> deviennent des CHAMPS REMPLISSABLES avec
 # render_pdf(forms=True) sur les builds WeasyPrint qui émettent les widgets AcroForm ; sinon ils
@@ -79,26 +78,13 @@ def _aide(texte: str) -> str:
 
 
 def _sur_place(valeurs) -> str:
+    # RECETTE-12 E1 — « sur place » = nombre de bâtiments + emprise au sol SEULEMENT. La HAUTEUR
+    # LiDAR (ajoutée à tort en RECETTE-11) est retirée : inutile à la mission de l'apporteur.
     bits = []
     if a(valeurs, "n_batiments"):
         bits.append(f"{int(val(valeurs, 'n_batiments'))} bâtiments")
     if a(valeurs, "emprise_batie_m2"):
         bits.append(f"{fmt_m2(val(valeurs, 'emprise_batie_m2'))} au sol")
-    if a(valeurs, "hauteur_bati_m"):
-        # RECETTE-11 A3 — devant une valeur MESURÉE (LiDAR HD), plus d'« environ » : on donne le
-        # faîtage mesuré et sa date de survol. « environ » ne reste que sur une estimation BD TOPO.
-        p = val(valeurs, "potentiel_verdict") or {}
-        mesure = isinstance(p, dict) and p.get("hauteur_nature") == "sourcé" \
-            and p.get("hauteur_faitage_lidar_m") is not None
-        if mesure:
-            survol = p.get("hauteur_survol")
-            mention = "mesuré au LiDAR HD" + (f", survol de {survol}" if survol else "")
-            permis = p.get("hauteur_permis_posterieur")  # A4 — mesure peut-être dépassée
-            if permis:
-                mention += f" ; antérieur au permis du {permis}, possiblement dépassé"
-            bits.append(f"{fmt_m(p['hauteur_faitage_lidar_m'])} au faîtage ({mention})")
-        else:
-            bits.append(f"environ {fmt_m(val(valeurs, 'hauteur_bati_m'))} de haut")
     return " · ".join(bits) or "terrain a priori nu"
 
 
@@ -166,31 +152,13 @@ def _coup_d_oeil(valeurs, ctx) -> str:
             " — urbaine, constructible" if str(val(valeurs, "zone_plu_famille")).upper() in ("U", "AU") else "")
         lignes.append(ligne_kv("Zone", esc(z_valeur) + suite, ""))
     lignes.append(ligne_kv("Sur place", esc(_sur_place(valeurs)), ""))
-    # RECETTE-2 (S7) — SDP résiduelle + capacité : ce que l'apporteur peut annoncer comme potentiel.
-    # RECETTE-5 (V20a) — un ZÉRO ne s'imprime pas : « 0 m² de plancher restant » (SDP nulle) n'a aucun
-    # sens pour l'apporteur. La ligne se REFORMULE sur la capacité si elle existe, sinon DISPARAÎT.
-    if a(valeurs, "sdp_residuelle_m2") and (val(valeurs, "sdp_residuelle_m2") or 0) > 0:
-        cap = f" · ~{esc(str(val(valeurs, 'capacite_logements')))} logements" if a(valeurs, "capacite_logements") else ""
-        lignes.append(ligne_kv("Ce qu'on peut y bâtir", f"{fmt_m2(val(valeurs, 'sdp_residuelle_m2'))} de plancher restant{cap}", ""))
-    elif a(valeurs, "capacite_logements"):
-        lignes.append(ligne_kv("Ce qu'on peut y bâtir", esc(f"~{val(valeurs, 'capacite_logements')} logements"), ""))
+    # RECETTE-12 E1 — RETIRÉ « Ce qu'on peut y bâtir » (capacité constructible) : la spec du 05/09
+    # l'exclut, l'apporteur la répéterait au propriétaire. RETIRÉ « Prix du secteur » : un prix dans
+    # la main d'un apporteur devient l'ancre du vendeur (absent de la spec).
     # RECETTE-2 (S7) — contraintes en une ligne (jamais un vide : ligne omise si rien).
     contr = _contraintes(valeurs)
     if contr:
         lignes.append(ligne_kv("Ce qui gêne", contr, ""))
-    # RECETTE-2 (S7) — prix de secteur : terrain nu et/ou ancien bâti (repères de négociation).
-    prix_bits = []
-    tn = val(valeurs, "prix_terrain_secteur_eur_m2")
-    if isinstance(tn, dict) and tn.get("prix_m2"):
-        prix_bits.append(f"terrain nu {fmt_eur_m2(tn['prix_m2'])}")
-    anc = val(valeurs, "prix_sortie_bati_eur_m2")
-    if isinstance(anc, dict) and anc.get("median"):
-        # RECETTE-11 D2 — le TYPE de bien s'imprime AVEC le prix (jamais un « ancien 2 903 €/m² » nu) :
-        # c'est le comparable de revente du secteur (segment retenu), pas une valeur du bâti existant.
-        typ = anc.get("type_prix") or "bâti"
-        prix_bits.append(f"ancien {typ} {fmt_eur_m2(anc['median'])}")
-    if prix_bits:
-        lignes.append(ligne_kv("Prix du secteur", esc(" · ".join(prix_bits)), ""))
     # RECETTE-3 (T1) — DERNIÈRE VENTE datée + chiffrée (DVF). Règle S8 : si inconnue, la ligne
     # ne s'imprime PAS (jamais un « — » ni un vide).
     if a(valeurs, "prix_achat_historique_eur"):
@@ -255,6 +223,14 @@ def rendu(valeurs, ctx=None) -> str:
     h += ('<div class="confidential">Confidentiel, et sans mandat. Ne transmettez ce document ni au '
           'propriétaire ni à des tiers. Vous n\'êtes pas habilité à négocier, à faire une offre, ni à '
           'engager qui que ce soit.</div>')
+    # RECETTE-12 E1 — L'ÉMETTEUR nommé (nom + téléphone) : c'est à lui que l'apporteur renvoie ses
+    # réponses et ses photos (Vic a refusé l'anonymat de l'émetteur le 05/09). Retiré à tort en RECETTE-2.
+    em = ctx.get("emetteur") or {}
+    if em.get("nom") or em.get("coordonnees") or em.get("email"):
+        contact = " · ".join(x for x in (em.get("coordonnees"), em.get("email")) if x)
+        h += ('<div class="emetteur">Émetteur : <b>' + esc(em.get("nom") or "") + '</b>'
+              + (" — " + esc(contact) if contact else "")
+              + '<br><small>C\'est à cet émetteur que vous renvoyez vos réponses et vos photos.</small></div>')
     h += "<h3>La parcelle</h3>" + _coup_d_oeil(valeurs, ctx)
     # RECETTE-3 (T1) — le plan de situation (parcelle + voisines, ortho IGN).
     h += _plan_situation(ctx)
@@ -266,8 +242,9 @@ def rendu(valeurs, ctx=None) -> str:
     q = '<div class="pb"></div><h3>Qui décide</h3>'
     q += _aide("Une parcelle en indivision, ce sont autant de signatures que d'héritiers — c'est la "
                "première chose qui fait échouer une vente.")
-    # RECETTE-3 (T1) — le CONTACT en PREMIÈRE question, marqué « l'essentiel ».
-    q += _duo("Nom et coordonnées de la personne à qui vous avez parlé", cle="L'ESSENTIEL")
+    # RECETTE-12 E1 — le CONTACT reste le PREMIER champ obligatoire, mais SANS l'étiquette
+    # « L'ESSENTIEL » (trois essentiels seulement : prix, bail, voisines).
+    q += _duo("Nom et coordonnées de la personne à qui vous avez parlé (obligatoire)")
     if is_pm:
         q += _q("La parcelle est détenue par une société — qui la contrôle, et qui décide de vendre ?",
                 "Gérant, associés, nombre de signataires ?", zone=True)
@@ -294,8 +271,8 @@ def rendu(valeurs, ctx=None) -> str:
         q += _aide("Un bail commercial en cours peut geler l'opération plusieurs années — notez-le en "
                    "premier si c'est le cas.")
         q += _boxes("Les bâtiments sont-ils occupés ? Par qui ?", ["Vides", "Le propriétaire", "Des locataires", "Une activité"])
-        # RECETTE-3 (T1) — le BAIL, troisième « l'essentiel ».
-        q += _q("Sous quel bail ?", "Fin de bail, loyers perçus.", zone=True, cle="L'ESSENTIEL")
+        # RECETTE-12 E1 — le BAIL, « l'essentiel ». « Si loué : sous quel bail ? » (conditionnel).
+        q += _q("Si loué : sous quel bail ?", "Fin de bail, loyers perçus.", zone=True, cle="L'ESSENTIEL")
         q += _q("État général du bâti ; diagnostics disponibles (amiante, plomb) ?", zone=True)
 
     q += "<h3>Le sol</h3>"
@@ -332,12 +309,15 @@ def rendu(valeurs, ctx=None) -> str:
         q += _q("Les parcelles voisines sont-elles à vendre ? Du même propriétaire ?", zone=True, cle="L'ESSENTIEL")
     q += _q("Que dit la mairie de ce secteur ? Que disent les voisins ?", "Projets connus, oppositions, associations.", zone=True)
 
-    # RECETTE-3 (T1) — les PHOTOS ne sont plus collées : envoyées par message en citant la référence.
+    # RECETTE-12 E1 — les PHOTOS s'envoient à l'ÉMETTEUR nommé en page 1 (plus de « n'imprimez rien »).
+    dest = esc(em.get("nom")) if em.get("nom") else "l'émetteur (page 1)"
     q += '<h3>Les photos</h3>'
     q += (f'<p class="aide">Cinq vues : depuis la voie, puis aux quatre coins, en tenant la parcelle '
-          f'au centre. Envoyez-les par message en citant la référence <b>{esc(idu)}</b> — n\'imprimez rien.</p>')
+          f'au centre. Envoyez-les à {dest} en citant la référence <b>{esc(idu)}</b>.</p>')
 
+    # RECETTE-12 E1 — « Votre retour » renvoie au MÊME émetteur (nommé en page 1).
     q += "<h3>Votre retour</h3>"
+    q += _aide(f"À renvoyer à {dest} (coordonnées en page 1).")
     q += _duo("Date de la visite · vos coordonnées")
     q += _q("Ce qu'il faut savoir et qu'aucune question ne couvre", zone=True)
     return h + q

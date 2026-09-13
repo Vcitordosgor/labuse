@@ -11,9 +11,10 @@ from labuse.api.app import parcel_fiche
 
 def main() -> None:
     document, idu, chemin = sys.argv[1], sys.argv[2], sys.argv[3]
+    compte_id = int(sys.argv[4]) if len(sys.argv) > 4 else None
     with session_scope() as db:
         fiche = parcel_fiche(idu, db=db)          # la fiche PREMIUM complète (comme l'endpoint)
-        pdf, res = builder.generer_pdf(db, idu, document, fiche=fiche, chemin_pdf=None)
+        pdf, res = builder.generer_pdf(db, idu, document, fiche=fiche, chemin_pdf=None, compte_id=compte_id)
     with open(chemin, "wb") as f:
         f.write(pdf)
     print(f"OK {document} {idu} → {chemin} ({len(pdf)} octets) · numéro {res.numero}")

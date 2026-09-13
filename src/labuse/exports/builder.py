@@ -260,19 +260,38 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
 
 
 def _emetteur(db, compte_id: int | None) -> dict | None:
-    """L'émetteur du brief = le compte de l'utilisateur (non modifiable). Best-effort : si la
-    colonne n'existe pas sur cette base, on rend None (l'Apporteur imprime « (votre compte) »)."""
+    """RECETTE-12 E1 — l'émetteur du brief = le compte de l'utilisateur (NON anonyme : refus Vic
+    05/09). Nom (marque.raison_sociale sinon comptes.nom) + coordonnées (marque.coordonnees, qui porte
+    le téléphone) + e-mail (utilisateurs). Best-effort : rien de servable → None."""
     if not compte_id:
         return None
+    import json
+
     from sqlalchemy import text
     try:
-        row = db.execute(text("SELECT raison_sociale, email FROM comptes WHERE id = :i"),
+        row = db.execute(text("SELECT nom, marque FROM comptes WHERE id = :i"),
                          {"i": compte_id}).mappings().first()
-        if row:
-            return {"raison": row.get("raison_sociale"), "contact": row.get("email")}
+    except Exception:  # noqa: BLE001 — colonne/table absente (base de test) : émetteur non servi
+        return None
+    if not row:
+        return None
+    marque = row.get("marque") or {}
+    if isinstance(marque, str):
+        try:
+            marque = json.loads(marque)
+        except Exception:  # noqa: BLE001
+            marque = {}
+    nom = (marque.get("raison_sociale") or row.get("nom") or "").strip() or None
+    coord = (marque.get("coordonnees") or "").strip() or None
+    email = None
+    try:
+        email = db.execute(text("SELECT email FROM utilisateurs WHERE compte_id = :i ORDER BY id LIMIT 1"),
+                           {"i": compte_id}).scalar()
     except Exception:  # noqa: BLE001
-        pass
-    return None
+        email = None
+    if not (nom or coord or email):
+        return None
+    return {"nom": nom, "coordonnees": coord, "email": email}
 
 
 def _ref_courte(idu: str) -> str:
