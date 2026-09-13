@@ -114,7 +114,10 @@ DONNEES: dict[str, Donnee] = {
  "taxe_amenagement_eur": C("Taxe d'aménagement", "€", "parcelle",
     "calcul ligne-à-ligne, taux communal SAISI obligatoire, jamais un défaut",
     moteur="taxe_amenagement", calcul="moteur", fonction="src/labuse/taxe_amenagement.py",
-    reservoirs=(), portee="live"),
+    # CIRCUIT-6 lot 0 — l'arête MANQUAIT : les taux communaux/départementaux servis par l'outil
+    # viennent de la source « Taxe d'aménagement — taux communaux » (taxe_amenagement_taux) ;
+    # reservoirs=() faisait vivre l'outil Taxe hors graphe (SOURCES-AUDIT : SERVIE HORS REGISTRE).
+    reservoirs=("taxe_amenagement",), portee="live"),
  # FICHE-1 lot 5 — estimation servie DANS la fiche (Constructibilité) pour le scénario table
  # rase du potentiel ; distincte de taxe_amenagement_eur (outil, taux SAISI) : ici taux PUBLIC.
  "taxe_amenagement_estimee_eur": C("Taxe d'aménagement estimée (table rase)", "€", "parcelle",
@@ -123,7 +126,17 @@ DONNEES: dict[str, Donnee] = {
     "taux départemental plafond 2,5 % à confirmer",
     moteur="taxe_amenagement", calcul="moteur",
     fonction="src/labuse/api/app.py:_taxe_amenagement_block (taxe_amenagement.calculer)",
-    reservoirs=(), portee="live"),
+    # CIRCUIT-6 lot 0 — même arête que taxe_amenagement_eur (taux PUBLIC lu de la même source).
+    reservoirs=("taxe_amenagement",), portee="live"),
+ # CIRCUIT-6 lot 0 — le rappel RTAA DOM (exigences de conception, vérifié Légifrance) était servi
+ # dans la Faisabilité SANS chiffre au registre : la source rtaa_dom (43) n'alimentait rien.
+ "rtaa_exigences": C("Rappel RTAA DOM (exigences de conception)", "liste", "parcelle",
+    "exigences réglementaires de conception DOM (aération, protection solaire, eau chaude solaire) "
+    "servies en rappel dans la Faisabilité — règles portées par config/rtaa_dom.yaml, vérifiées "
+    "sur Légifrance, hors scoring",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/modules.py:faisabilite_sens1 (load_yaml_config rtaa_dom)",
+    reservoirs=("rtaa_dom",), portee="live", type="liste"),
  # FICHE-1 lot 6 — les annonces Radar rattachées à la parcelle (validées), servies dans « Marché
  # et secteur » : date, prix demandé, statut, lien fiche annonce, écart demandé/acté par annonce.
  "radar_annonces_liste": C("Annonces Radar de la parcelle", "liste", "parcelle",
@@ -444,7 +457,9 @@ DONNEES: dict[str, Donnee] = {
  "catnat_n": C("Arrêtés CatNat", "nombre", "commune",
     "count catnat_arretes",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py",
-    reservoirs=(), portee="live", table="catnat_arretes (count par insee)"),
+    # CIRCUIT-6 lot 0 — l'arête MANQUAIT : catnat_arretes est le réservoir catnat_gaspar
+    # (426 arrêtés servis fiche commune/Pièges sans provenance tracée — SOURCES-AUDIT).
+    reservoirs=("catnat_gaspar",), portee="live", table="catnat_arretes (count par insee)"),
  "habitants_n": C("Habitants", "nombre", "commune",
     "population INSEE/Filosofi commune",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py:123 (population)",

@@ -152,7 +152,8 @@ ROBINETS: dict[str, Robinet] = {
  "outil_etudier_bien": _r("outil", "Étudier un bien", None,
     "/modules/scoreur-adresse", "json_puis_js", chiffres=("tier_opportunite", "surface_parcelle_m2",)),
  "outil_faisabilite": _r("outil", "Faisabilité", None,
-    "/modules/faisabilite/{idu}", "json_puis_js", chiffres=("capacite_logements", "sdp_residuelle_m2", "charge_fonciere_eur", "cout_construction_saisi_eur_m2", "marge_frais_saisie_pct", "prix_demande_saisi_eur", "ecart_prix_demande_pct",)),
+    # CIRCUIT-6 lot 0 — + rtaa_exigences : le rappel RTAA DOM servi par cet écran entre au graphe.
+    "/modules/faisabilite/{idu}", "json_puis_js", chiffres=("capacite_logements", "sdp_residuelle_m2", "charge_fonciere_eur", "cout_construction_saisi_eur_m2", "marge_frais_saisie_pct", "prix_demande_saisi_eur", "ecart_prix_demande_pct", "rtaa_exigences",)),
  "outil_taxe_amenagement": _r("outil", "Taxe d'aménagement", None,
     "/modules/taxe-amenagement", "json_puis_js", chiffres=("taxe_amenagement_eur",)),
  "outil_pieges": _r("outil", "Pièges et risques", None,
