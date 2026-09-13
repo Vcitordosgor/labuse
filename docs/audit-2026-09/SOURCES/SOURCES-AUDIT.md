@@ -159,8 +159,8 @@
 | 🟢 | **INSEE RP Logement 2023** (`41`) | PLEINE | 4/4 témoins | non | — | 3 | fiche |
 | 🟡 | **PLH des 5 EPCI (extraction documentaire)** (`42`) | PARTIELLE — champs manquants | n.a. (API/règles) | non | — | 1 | fiche |
 | 🟣 | **Radar (pige d'annonces)** (`84`) | MANUELLE | VIDE sur 4/4 | oui | — | 9 | fiche, outil |
-| 🟢 | **RNIC — registre national des copropriétés (Anah)** (`100`) | PLEINE | VIDE sur 4/4 | non | — | 1 | fiche |
-| 🟢 | **RPLS — répertoire des logements locatifs sociaux (SDES)** (`101`) | PLEINE | 4/4 témoins | non | — | 1 | fiche |
+| 🟢 | **RNIC — registre national des copropriétés (Anah)** (`100`) | PLEINE | VIDE sur 4/4 | oui | — | 1 | fiche |
+| 🟢 | **RPLS — répertoire des logements locatifs sociaux (SDES)** (`101`) | PLEINE | 4/4 témoins | oui | — | 1 | fiche |
 | 🟢 | **Zonage ABC des communes (DHUP)** (`109`) | PLEINE | 4/4 témoins | oui | OK | 1 | fiche |
 | 🔗 | **DVF Réunion (Région, data.regionreunion.com)** (`119`) | ALIAS (doublon) | n.a. (API/règles) | non | KO | 0 | — |
 | 🟢 | **Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)** (`129`) | PLEINE | 4/4 témoins | oui | OK | 1 | fiche |
