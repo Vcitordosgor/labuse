@@ -311,9 +311,10 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
             <span className="flex h-[38px] w-[38px] items-center justify-center rounded-lg bg-mint/15 text-[18px] text-mint" aria-hidden>✦</span>
             {/* la LIGNE repliée : le résumé (formulation gravée, chiffres du cadrage) */}
             <p className="text-[13px] leading-snug text-txt-2">
+              {/* REPARATIONS-1 lot 2b — « Priorité » retiré : la tête classée fusionnée sous « À suivre ». */}
               LABUSE a analysé <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> :
               {' '}<b className="text-mint">{analyse.signalees.toLocaleString('fr-FR')}</b> ressortent
-              {' '}— {analyse.priorite.toLocaleString('fr-FR')} Priorité, {analyse.a_suivre.toLocaleString('fr-FR')} À suivre.
+              {' '}— {(analyse.priorite + analyse.a_suivre).toLocaleString('fr-FR')} À suivre.
             </p>
             <button data-kanban-pourquoi aria-expanded={analyseOuvert} onClick={() => setAnalyseOuvert((o) => !o)}
               className="shrink-0 rounded-md border border-mint/40 px-3 py-1.5 text-[12px] text-mint transition-colors duration-quick hover:bg-mint/15">
@@ -325,7 +326,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               <p className="text-[13.5px] leading-relaxed text-txt-2">
                 LABUSE a analysé les <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> de votre cadrage :
                 {' '}<b className="text-mint">{analyse.signalees.toLocaleString('fr-FR')}</b> ont plus de chances que les autres d'être vendues
-                {' '}— {analyse.priorite.toLocaleString('fr-FR')} en Priorité, {analyse.a_suivre.toLocaleString('fr-FR')} À suivre.
+                {' '}— {(analyse.priorite + analyse.a_suivre).toLocaleString('fr-FR')} À suivre.
                 {' '}Elles arrivent en tête de votre tri ; les {(analyse.total - analyse.signalees).toLocaleString('fr-FR')} autres suivent, sans jugement.
               </p>
               <p data-kanban-analyse-sub className="mt-1 text-[11px] text-txt-dim">
@@ -386,12 +387,14 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                   <>
                     {/* barre : chips classement · recherche · Filtrer */}
                     <div className="flex shrink-0 items-center gap-1.5 border-b border-line-2 px-3.5 py-2">
-                      {([['', 'Tous', null], ['brulante', 'Priorité', TOKENS.stEcartee], ['chaude', 'À suivre', TOKENS.stCreuser]] as const).map(([v, l, dot]) => {
+                      {/* REPARATIONS-1 lot 2b — « Priorité » n'est plus servi : le chip « À suivre »
+                          couvre la tête classée entière (le back étend le filtre aux codes stockés). */}
+                      {([['', 'Tous', null], ['chaude', 'À suivre', TOKENS.stCreuser]] as const).map(([v, l, dot]) => {
                         const on = (navTier ?? '') === v
                         // RETOURS-3 R8 — les chips comptent ce qui reste À TRIER (retenues/écartées en sortent),
-                        // cohérent avec le compteur « à trier » du haut. Tous = total à trier ; Priorité/À suivre
-                        // = restant par tier (servi `restant`). Le bandeau, lui, garde le total du cadrage.
-                        const n = v === 'brulante' ? restant?.priorite : v === 'chaude' ? restant?.a_suivre : totalProp
+                        // cohérent avec le compteur « à trier » du haut. Tous = total à trier ; À suivre
+                        // = restant tête classée (priorite + a_suivre servis). Le bandeau garde le total du cadrage.
+                        const n = v === 'chaude' ? (restant ? restant.priorite + restant.a_suivre : undefined) : totalProp
                         return (
                           <button key={v || 'tous'} data-kanban-nav-tier={v || 'tous'} onClick={() => setNavTier(v || null)}
                             className={`flex items-center gap-1.5 rounded-ctl border px-2.5 py-0.5 text-[11px] transition-colors duration-quick ${on ? 'border-mint/45 bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>

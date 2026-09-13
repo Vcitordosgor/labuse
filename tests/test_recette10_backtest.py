@@ -18,9 +18,14 @@ def _bt(lift_a_suivre, base=0.4, filtre_realiste_lift=3.17):
 
 
 def test_phrase_compare_au_filtre_realiste_pas_au_strawman():
+    # REPARATIONS-1 lot 2b — le chiffre AFFICHÉ est le RR en MARCHE AVANT (~6,7, fold 2025
+    # out-of-sample), jamais le lift 12 mois contaminé (13,3 : 2025 = cible de recalage ET
+    # fenêtre de mesure). Le backtest reste le garde-fou (≥ 2× le filtre réaliste, sinon rien).
     p = phrase_client(_bt(13.26))
     assert p is not None
-    assert "12 mois" in p and "2026-08-10" in p        # chiffrée ET datée
+    assert "marche avant" in p and "2025" in p         # la mesure honnête, nommée et datée
+    assert "6,7" in p                                  # le ×6,7 marche avant (config qualite_commune)
+    assert "13,3" not in p and "13.3" not in p         # JAMAIS le lift contaminé
     assert "À suivre" in p
     assert "ciblage manuel réaliste" in p              # comparé au filtre RÉALISTE
     assert "terrain nu" not in p                       # jamais l'homme de paille dans la phrase client

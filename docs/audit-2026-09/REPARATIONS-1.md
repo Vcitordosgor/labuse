@@ -88,3 +88,31 @@ Le rail admin affichait « Run servi q_v14 » : `admin_pilotage` lisait `mvt_met
 ### Tests et verrous
 
 `tests/test_reparations1_lot1.py` (4 tests : non-déclaré rouge, déclaré vert et nommé, déclaration par run, journalisé + réversible) ; `tests/verrous` 99 passed. **Verrous après lot 1 : 23/23 « tout va bien » — V3a compris.**
+
+---
+
+## LOT 2 — La dette G6 et le palier
+
+### 2a — Les 213 arêtes source → lecteur, déclarées finement
+
+La dette CIRCUIT-6 (« 203 » au mandat, **213** mesurées à l'ouverture) : des fichiers qui lisent une table de réservoir sans que le registre dise quel champ ni quel robinet. Chaque arête a été **instruite en lisant le code du fichier** (6 volées d'agents, chiffres et robinets contraints aux candidats du registre — jamais inventés), et vit désormais dans **`src/labuse/registre/lectures.py`** : **224 lectures fines sur 213 arêtes** (certaines arêtes servent 2 chiffres) = **96 chiffre + robinet** (la donnée lue, le robinet qui la sert) **+ 128 machineries motivées** (jointure technique, batch producteur, état interne — raison écrite, jamais un robinet de complaisance).
+
+**Le graphe est exact dans les deux sens**, et G6 le tient : toute arête du scan absente des déclarations = dette (0 aujourd'hui) ; toute déclaration dont le fichier ne lit plus la table = **déclaration périmée qui CASSE le verrou** en nommant la ligne (`lectures_perimees()`, 0 aujourd'hui). Preuve G6 : « dette fine : 0 ; lectures fines déclarées : 96 chiffre+robinet + 128 machineries motivées ; déclarations périmées : 0 ».
+
+Les notes des lectures consignent aussi les **cas limites** (écran réel sans robinet au registre — Étude de zone marché, PDF Flash ZAN/SRU, Mon secteur, veille promoteurs, notifications ventes/permis, extrusion 3D du faîtage LiDAR à la carte) : matière écrite pour les prochains mandats, plus du silence.
+
+### 2b — Le palier « Priorité » cesse d'être servi (décision Vic, réversible)
+
+Un seul drapeau des deux côtés du miroir : **`tiers_client.PRIORITE_SERVIE = False`** (back) / **`status.ts PRIORITE_SERVIE = false`** (front), avec la raison écrite (×0,52 mesuré en marche avant, 1 vente sur 111, définition mécanique sur une seule variable). `code_palier()`/`codePalier()` — le point unique de résolution — projettent `priorite` (et donc `brulante`) sur `a_suivre` : **« À suivre » porte toute la tête classée**. Repasser le drapeau à True restitue le palier tel quel (testé) — **aucun rescoring, les tiers stockés ne bougent pas, le run servi non plus**.
+
+Ce qui suit (tout par le point unique ou corrigé à la surface) :
+- **Libellé** : chips, fiche, PDF, notifications, Copilote — tout ce qui passe par `tiers_client`/`status.ts` dit « À suivre ». Fiche d'une parcelle stockée `brulante` : chip **« À suivre »**, rang et fraction conservés, zéro « Priorité » (capture `lot2-01-fiche-ex-brulante.png`).
+- **Compteur et barre** (zone résultats) : tête fusionnée (`brulante + chaude`) sous À suivre ; la note « zéro Priorité » d'une commune devient « zéro À suivre » sur la tête entière.
+- **Légende et carte** : `LEGEND_V2_ORDER` = 3 paliers ; la tête peint la teinte À suivre (sombre via `TIER_V2_META`, clair via `contourBrulante` conditionnel).
+- **Info classement / Info scoring** : la modale des paliers liste 3 paliers ; `defTiers.a_suivre` couvre l'éventail (« jusqu'à une chance sur cinq — la fraction précise est sur chaque parcelle »).
+- **Phrase du modèle** : **« Mesuré en marche avant sur l'année 2025, tenue à l'écart de l'apprentissage : la tête du classement (« À suivre ») se vend ~6,7× plus que la moyenne de l'île… »** — le ×6,7 vient de `config/qualite_commune.yaml` (fold 2025 out-of-sample, gelé à l'audit RR) ; le lift 12 mois (~13,3×, contaminé : 2025 est à la fois cible de recalage et fenêtre de mesure) **ne sort plus jamais** — il reste le garde-fou interne (≥ 2× le filtre réaliste, sinon aucune phrase).
+- **Filtres/chips** (Projets, fiche Marché, outils) : le chip « À suivre » filtre les 4 codes stockés de la tête (`codes_stockes()`, étendu côté serveur).
+
+### Tests et verrous du lot 2
+
+`tests/test_reparations1_lot2.py` (intégrité des 224 lectures contre le registre, graphe exact deux sens, palier non servi + réversibilité, phrase ×6,7 jamais ×13,3) ; 2 tests existants mis à jour au nouveau contrat (`test_recette10_backtest`, `test_m137_vocabulaire`) ; vitest **207/207**, tsc 0 ; pytest ciblé 112+50 passed (1 fail pré-existant documenté `test_r5`, fichier non touché — CIRCUIT-3). **Verrous : 23/23 « tout va bien », G6 avec dette 0.**

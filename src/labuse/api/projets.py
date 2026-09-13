@@ -1109,7 +1109,11 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db),
     else:
         cadrage = dict(p.filtres or {})
     if tier:
-        cadrage["tiers"] = [tier]
+        # REPARATIONS-1 lot 2b — le chip « À suivre » couvre la TÊTE CLASSÉE ENTIÈRE : le
+        # palier servi s'étend à tous ses codes stockés (brulante + chaude + priorite + a_suivre).
+        from ..scoring.tiers_client import code_palier as _cp, codes_stockes as _cs
+        palier = _cp(tier)
+        cadrage["tiers"] = list(_cs(palier)) if palier else [tier]
     # 1) DÉCIDÉES stockées (statut != proposee) — petites, servies en entier (ordre de proposition).
     decided = db.execute(text(
         "SELECT pp.statut, pp.rang, pp.hors_criteres, par.idu FROM projet_parcelles pp "

@@ -179,12 +179,12 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
             st.setView('cartes'); select(null)
           }}
           className="porte-outil"
-          title={`Voir les ${f.secteur_opportunites.n} parcelles Priorité ou À suivre de la section ${f.secteur_opportunites.section} sur la carte`}>
+          title={`Voir les ${f.secteur_opportunites.n} parcelles À suivre de la section ${f.secteur_opportunites.section} sur la carte`}>
           <span className="po-ico">◈</span>
           <span style={{ minWidth: 0 }}>
             <span className="po-t block">
               <b className="tnum text-mint">{f.secteur_opportunites.n}</b> parcelle{f.secteur_opportunites.n > 1 ? 's' : ''}{' '}
-              <b>Priorité</b> ou <b>À suivre</b> dans cette section
+              <b>À suivre</b> dans cette section
               <span className="text-txt-dim"> (n° {f.secteur_opportunites.section.slice(8)})</span></span>
           </span>
           <span className="po-arrow">→</span>

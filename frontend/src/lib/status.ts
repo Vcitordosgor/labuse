@@ -25,6 +25,12 @@ export const LEGEND_ORDER: Statut[] = ['chaude', 'a_surveiller', 'a_creuser', 'e
 // Le domaine de tier_opportunite est Priorité / À suivre / Sans signal / Écartée. Plus de
 // brûlante / chaude / réserve / à creuser / déclassé, ni « Long terme / Neutre / Faible ».
 // MÊME mapping que le backend src/labuse/scoring/tiers_client.py (test anti-dérive).
+// REPARATIONS-1 lot 2b — DÉCISION DE VIC, RÉVERSIBLE : « Priorité » cesse d'être SERVI comme
+// palier tant qu'aucune validation propre n'existe (×0,52 mesuré en marche avant, 1 vente sur
+// 111, définition mécanique sur une seule variable). « À suivre » porte toute la tête classée.
+// Affichage seul : les tiers stockés restent en base — repasser ce drapeau à true restitue le
+// palier tel quel (même drapeau côté back : tiers_client.PRIORITE_SERVIE).
+export const PRIORITE_SERVIE = false
 export type Palier = 'priorite' | 'a_suivre' | 'sans_signal' | 'ecartee'
 // `label` = chip COURT (écran), `long` = libellé long (« i », fiche).
 export const PALIER_META: Record<Palier, { label: string; long: string; color: string }> = {
@@ -43,10 +49,13 @@ export const CORRESPONDANCE_LEGACY: Record<string, Palier> = {
   exclue: 'ecartee',
 }
 // le CODE canonique d'un tier (nouveau ou ancien) — le seul point qui connaît les anciens codes.
+// REPARATIONS-1 lot 2b — Priorité non servie : « priorite » (et donc « brulante ») se sert
+// « a_suivre » — la tête classée entière porte À suivre.
 export function codePalier(raw: string | null | undefined): Palier | null {
   if (!raw) return null
-  if (raw in PALIER_META) return raw as Palier
-  return CORRESPONDANCE_LEGACY[raw] ?? null
+  const code = raw in PALIER_META ? (raw as Palier) : (CORRESPONDANCE_LEGACY[raw] ?? null)
+  if (code === 'priorite' && !PRIORITE_SERVIE) return 'a_suivre'
+  return code
 }
 
 // PALIERS-1 — les codes STOCKÉS possibles : les 4 paliers (runs v2) OU les codes par rang des
@@ -56,13 +65,18 @@ export type LegacyTier = 'brulante' | 'chaude' | 'a_creuser' | 'reserve_fonciere
 export type TierV2 = Palier | LegacyTier | TierDeclasse
 // TIER_V2_META résout TOUT code (nouveau ou ancien) vers son palier canonique, pour que les
 // consommateurs (Legend, TierBadge, fiche…) lisent le même vocabulaire quel que soit le run servi.
+// REPARATIONS-1 lot 2b — dérivé VIA codePalier : tout code (dont « priorite »/« brulante »)
+// résout vers le palier SERVI (À suivre tant que PRIORITE_SERVIE est false).
 export const TIER_V2_META: Record<string, { label: string; long: string; color: string }> = {
-  ...PALIER_META,
   ...Object.fromEntries(
-    Object.entries(CORRESPONDANCE_LEGACY).map(([code, canon]) => [code, PALIER_META[canon]]),
+    [...Object.keys(PALIER_META), ...Object.keys(CORRESPONDANCE_LEGACY)]
+      .map((code) => [code, PALIER_META[codePalier(code) ?? (code as Palier)]]),
   ),
 }
-export const LEGEND_V2_ORDER: Palier[] = ['priorite', 'a_suivre', 'sans_signal', 'ecartee']
+// la légende ne liste que les paliers SERVIS (Priorité en est retirée tant que non validée).
+export const LEGEND_V2_ORDER: Palier[] = PRIORITE_SERVIE
+  ? ['priorite', 'a_suivre', 'sans_signal', 'ecartee']
+  : ['a_suivre', 'sans_signal', 'ecartee']
 
 // PALIERS-1 — les ex-tiers de DÉCLASSEMENT (bâti saturé, zone fermée, AU…) ne sont plus des
 // paliers : ce sont des MOTIFS (affichés en fiche, filtrables), la parcelle GARDE son palier de

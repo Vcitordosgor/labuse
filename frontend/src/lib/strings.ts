@@ -119,10 +119,11 @@ export const CLIENT = {
     // cartes, fiche, PDF), PUIS son explication. `defTiers[key]` = l'explication (« libellé long :
     // sens ») ; le CHIP est préfixé au rendu (tierChipLabel, source unique status.ts) → le client
     // relie le « Priorité » qu'il voit sur les cartes à sa définition. Nombres/couleurs inchangés.
-    // PALIERS-1 — les quatre paliers, en probabilité de vente sous 12 mois (hors copropriété).
+    // PALIERS-1 — les paliers, en probabilité de vente sous 12 mois (hors copropriété).
+    // REPARATIONS-1 lot 2b — « Priorité » n'est plus servi comme palier (décision Vic,
+    // réversible) : « À suivre » porte toute la tête classée ; sa définition couvre l'éventail.
     defTiers: {
-      priorite: 'à contacter en priorité : au moins une chance sur cinq de vente sous 12 mois.',
-      a_suivre: 'à suivre de près : environ une chance sur dix de vente sous 12 mois.',
+      a_suivre: 'à suivre de près : la tête du classement — jusqu’à une chance sur cinq de vente sous 12 mois (la fraction précise est sur chaque parcelle).',
       sans_signal: 'sans signal de vente à court terme : moins d’une chance sur dix.',
       ecartee: 'écartée : exclusion légale ou physique — motif consultable en fiche.',
     } as Record<string, string>,
@@ -156,7 +157,8 @@ export const CLIENT = {
 
   // ── M55-H point 10 · le « i » de la ventilation — les TROIS familles, une phrase chacune ──
   ventilation: {
-    familles: 'Les paliers d’opportunité (chances de vente sous 12 mois) : Priorité, À suivre, Sans signal. '
+    // REPARATIONS-1 lot 2b — « Priorité » retiré des paliers servis.
+    familles: 'Les paliers d’opportunité (chances de vente sous 12 mois) : À suivre, Sans signal. '
       + 'Les motifs (bâti saturé, zone fermée…) et la réserve foncière sont des marqueurs de fiche, pas des paliers. '
       + 'Écartées — exclusions légales et physiques, motifs consultables.',
   },

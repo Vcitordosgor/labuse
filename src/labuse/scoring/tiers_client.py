@@ -17,7 +17,16 @@ Canonique CÔTÉ SERVEUR (PDF, notifications, projets, scoreur, Copilote l'impor
 """
 from __future__ import annotations
 
-#: le code de palier canonique → (chip court, libellé long). LE domaine, quatre valeurs.
+#: REPARATIONS-1 lot 2b — DÉCISION DE VIC, RÉVERSIBLE : le palier « Priorité » CESSE D'ÊTRE
+#: SERVI tant qu'aucune validation propre n'existe (×0,52 mesuré en marche avant, 1 vente sur
+#: 111, définition mécanique sur une seule variable). « À suivre » porte toute la tête classée.
+#: AFFICHAGE SEUL : les runs ne sont pas réécrits, les tiers stockés (brulante / priorite)
+#: restent en base — repasser ce drapeau à True restitue le palier tel quel, sans rescoring.
+PRIORITE_SERVIE = False
+
+#: le code de palier canonique → (chip court, libellé long). LE domaine, quatre valeurs
+#: écrites (l'entrée « priorite » reste pour la réversibilité — non servie tant que
+#: PRIORITE_SERVIE est False : code_palier la projette sur « a_suivre »).
 PALIERS_CLIENT: dict[str, tuple[str, str]] = {
     "priorite":    ("Priorité",    "À contacter en priorité"),
     "a_suivre":    ("À suivre",    "À suivre de près"),
@@ -54,9 +63,11 @@ def code_palier(tier: str | None) -> str | None:
     None si tier inconnu/nul. C'est le seul point qui connaît les anciens codes."""
     if not tier:
         return None
-    if tier in PALIERS_CLIENT:
-        return tier
-    return CORRESPONDANCE_LEGACY.get(tier)
+    code = tier if tier in PALIERS_CLIENT else CORRESPONDANCE_LEGACY.get(tier)
+    # REPARATIONS-1 lot 2b — Priorité non servie : la tête classée entière porte À suivre.
+    if code == "priorite" and not PRIORITE_SERVIE:
+        return "a_suivre"
+    return code
 
 
 def court(tier: str | None) -> str | None:
@@ -71,6 +82,15 @@ def long(tier: str | None) -> str | None:
     return PALIERS_CLIENT[code][1] if code else None
 
 
+def codes_stockes(palier: str) -> tuple[str, ...]:
+    """REPARATIONS-1 lot 2b — les codes STOCKÉS (runs jamais réécrits) qui se servent sous ce
+    palier. Sert au filtrage : « À suivre » (tête classée entière) = brulante + chaude +
+    priorite + a_suivre tant que PRIORITE_SERVIE est False."""
+    return tuple(sorted(
+        code for code in (*PALIERS_CLIENT, *CORRESPONDANCE_LEGACY)
+        if code_palier(code) == palier))
+
+
 def montre_multiple(tier: str | None) -> bool:
     """Le ×N s'affiche-t-il à côté de ce palier ? (Priorité et À suivre seulement.)"""
     return code_palier(tier) in PALIERS_AVEC_MULTIPLE
@@ -78,7 +98,8 @@ def montre_multiple(tier: str | None) -> bool:
 
 #: rétro-compatibilité : d'anciens importeurs lisent `TIERS_CLIENT`. On la garde comme
 #: vue dérivée (code → (chip, long)) couvrant nouveaux ET anciens codes, même vocabulaire.
+#: dérivée VIA code_palier pour que « Priorité non servie » (lot 2b) s'applique partout.
 TIERS_CLIENT: dict[str, tuple[str, str]] = {
-    **PALIERS_CLIENT,
-    **{legacy: PALIERS_CLIENT[canon] for legacy, canon in CORRESPONDANCE_LEGACY.items()},
+    code: PALIERS_CLIENT[code_palier(code)]
+    for code in (*PALIERS_CLIENT, *CORRESPONDANCE_LEGACY)
 }

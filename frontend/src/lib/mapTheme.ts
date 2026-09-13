@@ -14,7 +14,7 @@
 //
 // Ratios mesurés (WCAG, composite alpha exact sur la terre #F4F2EC) en colonne clair.
 
-import { CINQUANTE_PAS_COLOR, TIER_V2_META } from './status'
+import { CINQUANTE_PAS_COLOR, PRIORITE_SERVIE, TIER_V2_META } from './status'
 
 export type MapThemeName = 'sombre' | 'clair'
 
@@ -241,7 +241,8 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     cinquantePas: '#1777A3',   // cyan profond — aplat @0,20 → 1,30 ✓ ; tireté 4,46 ✓
     cinquantePasFillOpacity: 0.20,
     cote: '#14713E',           // vert de la famille mint — 3,49 ✓ sur la masse #C9C4B8 (son fond principal)
-    contourBrulante: '#C23A28', // 4,77 ✓ (braise assombrie)
+    // REPARATIONS-1 lot 2b — Priorité non servie : la tête classée suit la teinte À suivre.
+    contourBrulante: PRIORITE_SERVIE ? '#C23A28' : '#A8720F', // braise assombrie ↔ ambre assombri
     contourChaude: '#A8720F',   // 3,69 ✓ (ambre assombri)
     lisereBrulantes: '#C1440E', // 4,57 ✓ (orange assombri)
     aleaInondation: '#0F6B7A',  // pétrole profond — contour 5,51 ✓ (identité/contour/trame)

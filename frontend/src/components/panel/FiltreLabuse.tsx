@@ -446,7 +446,7 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
   const src = phase === 'revealed' && fresh ? fresh : on.data
   const phraseRetenues = src?.compte
   const t = src?.tiers
-  const pl = (n: number, s: string) => `${nf.format(n)} ${s}${n > 1 ? 's' : ''}`
+  // (l'helper de pluriel `pl` est parti avec le chip « Priorité » — REPARATIONS-1 lot 2b)
   // M55-J point 1 — l'arithmétique de la carte vient d'UN SEUL run (le snapshot) :
   //  · analysé (trame)     = freshTrame.compte  (snapshot, PAS trameQ live)
   //  · retenues            = fresh.compte  (snapshot ; = ventilation 4 tiers + potentiel épuisé)
@@ -679,17 +679,16 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
                 {/* RECETTE-8 W10 (A5) — le « i » qui explique les comptes par commune : pourquoi
                     l'immense majorité d'une commune n'a aucun signal. Déclencheur fonctionnel
                     icône-seule → garder (S10). */}
-                <Tip garder side="top" tip="Sur une commune, l'immense majorité des parcelles est « sans signal » ou « écartée » — c'est normal : elles sont déjà bâties à leur densité autorisée, en zone non constructible (agricole/naturelle), ou sans signal de vente à court terme. Le foncier réellement mutable est rare ; les paliers « Priorité » et « À suivre » isolent justement ces quelques parcelles-là.">
+                <Tip garder side="top" tip="Sur une commune, l'immense majorité des parcelles est « sans signal » ou « écartée » — c'est normal : elles sont déjà bâties à leur densité autorisée, en zone non constructible (agricole/naturelle), ou sans signal de vente à court terme. Le foncier réellement mutable est rare ; le palier « À suivre » isole justement ces quelques parcelles-là.">
                   <span role="button" tabIndex={0} aria-label="Pourquoi si peu de signaux par commune"
                     className="ml-1 inline-flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 align-middle text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
                 </Tip>
                 {t && phraseRetenues != null && (
                   <> — dont{' '}
-                    {/* le tooltip s'ouvre sur le chip visible (defTip, codes canoniques). */}
-                    <Tip side="top" tip={defTip('priorite')}>
-                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{pl(t.brulante, 'priorité')}</b></Tip>,{' '}
+                    {/* le tooltip s'ouvre sur le chip visible (defTip, codes canoniques).
+                        REPARATIONS-1 lot 2b — la tête classée fusionnée sous « À suivre ». */}
                     <Tip side="top" tip={defTip('a_suivre')}>
-                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.chaude)} à suivre</b></Tip>,{' '}
+                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.brulante + t.chaude)} à suivre</b></Tip>,{' '}
                     <Tip side="top" tip={defTip('sans_signal')}>
                       <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.reserve_fonciere + t.a_creuser + Math.max(0, declassees))} sans signal</b></Tip>
                   </>
