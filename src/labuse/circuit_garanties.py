@@ -38,6 +38,9 @@ PASSERELLES_MUTUALISEES = (
     "data.geopf.fr/wfs", "data.geopf.fr/wms", "overpass-api.de",
     "ws.carmen.developpement-durable.gouv.fr", "apicarto.ign.fr/api/gpu",
     "georisques.gouv.fr/api",
+    # SOURCES-2 lot 1 — le Lizmap DEAL remplace Carmen : même hub, N couches par
+    # repository/project/typename (DPF, zones humides, ENS, 50 pas, aléas, état PPR).
+    "deal974.lizmap.com/cartes/index.php/lizmap/service",
 )
 
 

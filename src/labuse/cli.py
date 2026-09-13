@@ -1187,6 +1187,13 @@ def ingest_catnat_cmd(
     typer.echo(f"✓ CatNat : {res['arretes']} arrêté(s) sur {res['communes_ok']} commune(s).")
     for insee, err in (res["erreurs"] or {}).items():
         typer.echo(f"  ⚠ {insee} : {err}")
+    # SOURCES-2 lot 1 — recoupement avec l'export CSV national GASPAR (l'API renvoie parfois
+    # moins d'arrêtés que le site : codes de risque non mappés — un écart devient VISIBLE).
+    with session_scope() as s:
+        rec = catnat_mod.recouper_csv_national(s)
+    signe = "✓" if rec["ecart"] <= 0 else "⚠"
+    typer.echo(f"  {signe} recoupement CSV national ({rec['fichier']}) : "
+               f"CSV {rec['csv_national']} vs base {rec['base_api']} (écart {rec['ecart']}).")
     # rejoue le filtre de la source (complétude par commune) sur la nouvelle version.
     from . import circuit_journal, filtres
     f = filtres.get_filtre("catnat")
@@ -1407,20 +1414,24 @@ def ingest_cout_construction_cmd() -> None:
 
 @app.command("ingest-deal-carmen")
 def ingest_deal_carmen_cmd() -> None:
-    """SOURCES-1 lot 2 — couches DEAL Carmen (WFS DEAL_REUNION_2020) : ravines DPF (kind dpf),
-    zones humides (kind zone_humide), Ramsar + sites classés/inscrits (kind ens, subtypes du
-    module). GML → ogr2ogr → spatial_layers, purge ciblée, filtres rejoués."""
+    """SOURCES-2 lot 1 — couches DEAL par le WFS LIZMAP (deal974.lizmap.com, GeoJSON natif,
+    ex-Carmen) : ravines DPF (kind dpf), zones humides (kind zone_humide), Ramsar + sites
+    classés/inscrits + réserves + ENS Département (kind ens, subtypes du module), et l'état
+    des PPR/PAC par commune (kind ppr_etat → millésime producteur de la source PPR).
+    Purge ciblée, filtres rejoués."""
     from . import models
     from .ingestion import deal_carmen
     with session_scope() as s:
         sids = {n: s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
                              {"n": n}).scalar()
                 for n in (deal_carmen.SOURCE_DPF, deal_carmen.SOURCE_ZH,
-                          deal_carmen.SOURCE_ENP_C)}
+                          deal_carmen.SOURCE_ENP_C, deal_carmen.SOURCE_PPR)}
         res = deal_carmen.ingest_deal_carmen(s, source_ids=sids)
+        res_etat = deal_carmen.ingest_ppr_etat(s, source_ids=sids)
         s.commit()
     models.ensure_geom_2975(engine())
-    typer.echo(f"✓ DEAL Carmen : {sum(res.values())} entité(s) — {res}")
+    typer.echo(f"✓ DEAL Lizmap : {sum(res.values())} entité(s) — {res}")
+    typer.echo(f"✓ état PPR/PAC : {res_etat}")
     from . import circuit_journal, filtres
     for label in ("deal_dpf", "zones_humides", "enp_complements"):
         f = filtres.get_filtre(label)

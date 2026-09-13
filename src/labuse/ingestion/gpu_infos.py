@@ -3,10 +3,15 @@
 Deux sources du mandat SOURCES-1, un seul canal amont (vérifié live 06/09/2026) :
 
 · **DPU** (`dpu_perimetres`) — typeinf CNIG « 04 » = « Droit de préemption urbain » (+ variante
-  renforcée). Publié dans les annexes du PLU de CHAQUE commune (partition DU_<insee>) : on filtre
-  par partition pour attribuer le périmètre à SA commune — une commune sans typeinf 04 n'a PAS
-  publié son DPU au GPU (état « non publié », listé au rapport d'ingestion, jamais un zéro).
-  Stockage : spatial_layers kind='dpu', subtype='dpu'|'dpu_renforce'.
+  renforcée, portée par le LIBELLE). Publié dans les annexes du PLU de CHAQUE commune (partition
+  DU_<insee>) : on filtre par partition pour attribuer le périmètre à SA commune — une commune
+  sans typeinf 04 n'a PAS publié son DPU au GPU (état « non publié », listé au rapport
+  d'ingestion, jamais un zéro). Stockage : spatial_layers kind='dpu', subtype='dpu'|'dpu_renforce'.
+  ⚠ SOURCES-2 lot 1 — le rapport producteurs proposait d'ajouter « TYPEINF=03 (anciens
+  dépôts) » : VÉRIFIÉ CONTRAIRE chez le producteur le 13/09/2026 — l'unique typeinf 03 du 974
+  (Saint-Benoît, DU_97404) est libellé « Espace Naturel Sensible » = zone de préemption ENS du
+  DÉPARTEMENT, pas un DPU communal. L'ingérer en kind='dpu' ferait mentir la cascade ; écarté,
+  arbitrage au rapport SOURCES-2.
 
 · **PEB** (`peb_dgac`) — typeinf CNIG « 27 » = « Plan d'exposition au bruit ». Zones A/B/C/D dans
   `txt`. Le PEB de Roland-Garros est republié par les annexes des PLU des communes concernées ;

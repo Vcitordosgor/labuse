@@ -594,9 +594,9 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     # SOURCES-1 lot 2 — WFS Carmen (nœud 29) : ni ETag ni Last-Modified sur GetCapabilities
     # (vérifié 07/09/2026), capabilities XML (le témoin sentinelle exige du JSON) — réingestion
     # à la demande (`labuse ingest-deal-carmen`), fraîcheur lue sur la page Circuit.
-    "Ravines — domaine public fluvial (DEAL Carmen)": "WFS Carmen sans en-tête de version (ni ETag ni Last-Modified, vérifié 07/09/2026) ; le DPF est un arrêté de 2006, stable — réingéré à la demande, fraîcheur au Circuit.",
-    "Zones humides — inventaires DEAL (Carmen)": "WFS Carmen sans en-tête de version (vérifié 07/09/2026) ; inventaires 2003→2019 par secteurs — réingérés à la demande, fraîcheur au Circuit.",
-    "Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)": "WFS Carmen sans en-tête de version (vérifié 07/09/2026) — réingéré à la demande avec les zones humides.",
+    "Ravines — domaine public fluvial (DEAL Carmen)": "WFS Lizmap DEAL (deal974.lizmap.com, migré SOURCES-2 lot 1) sans notion de version exposée (GetCapabilities non daté, vérifié 13/09/2026) ; le DPF est un arrêté de 2006, stable — réingéré à la demande, fraîcheur au Circuit.",
+    "Zones humides — inventaires DEAL (Carmen)": "WFS Lizmap DEAL (migré SOURCES-2 lot 1) sans notion de version exposée (vérifié 13/09/2026) ; inventaires 2003→2019 par secteurs — réingérés à la demande, fraîcheur au Circuit.",
+    "Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)": "WFS Lizmap DEAL (migré SOURCES-2 lot 1, + ENS Département 178) sans notion de version exposée (vérifié 13/09/2026) — réingéré à la demande avec les zones humides.",
     # SOURCES-1 lot 3 — sols et bruit :
     "Géorisques — secteurs d'information sur les sols (SIS)": "Réservoir logique sur le canal SSP (kind sol_pollue, subtype sis) — même amont que « Géorisques — sites et sols pollués », déjà sondé en témoin bi-commune (97411+97410) ; pas de seconde sonde sur le même flux.",
     "Géorisques — CASIAS (anciens sites industriels)": "Réservoir logique sur le canal SSP (subtypes casias/instruction) — même amont que « Géorisques — sites et sols pollués », témoin bi-commune existant.",

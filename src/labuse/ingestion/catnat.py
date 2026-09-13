@@ -100,3 +100,48 @@ def ingest_catnat(session, *, connector=None, insee_list: list[str] | None = Non
     session.flush()
     return {"communes_ok": communes_ok, "arretes": total, "erreurs": erreurs,
             "par_commune": par_commune}
+
+
+# ───────────── SOURCES-2 lot 1 — recoupement API GASPAR ↔ export CSV national ─────────────
+
+GASPAR_ZIP = "https://files.georisques.fr/GASPAR/gaspar.zip"
+
+
+def recouper_csv_national(session, *, client=None) -> dict:
+    """Le rapport producteurs signale que l'API CatNat renvoie PARFOIS moins d'arrêtés que le
+    site (codes de risque non mappés) : on recoupe la base (ingérée par l'API paginée) avec
+    l'export CSV national GASPAR (`catnat_gaspar_*.csv` du zip officiel), à la maille
+    (commune, ligne d'arrêté) sur le 974. Rend les deux comptes et l'écart — un écart > 0 dit
+    que l'API a perdu des arrêtés (à réingérer/documenter), jamais l'inverse silencieux.
+    Mesuré 13/09/2026 : CSV 426 = base 426, écart 0."""
+    import csv
+    import io
+    import zipfile
+
+    import httpx
+
+    from .. import constants
+    from ..config import get_settings
+
+    own = client is None
+    c = client or httpx.Client(timeout=max(get_settings().http_timeout_s, 180.0),
+                               headers={"User-Agent": constants.USER_AGENT},
+                               follow_redirects=True)
+    try:
+        r = c.get(GASPAR_ZIP)
+        r.raise_for_status()
+    finally:
+        if own:
+            c.close()
+    zf = zipfile.ZipFile(io.BytesIO(r.content))
+    nom = next((n for n in zf.namelist() if n.startswith("catnat_gaspar")), None)
+    if nom is None:
+        raise RuntimeError(f"catnat_gaspar_*.csv absent du zip GASPAR ({zf.namelist()})")
+    n_csv = 0
+    with zf.open(nom) as f:
+        for row in csv.DictReader(io.TextIOWrapper(f, encoding="utf-8"), delimiter=";"):
+            if (row.get("code_commune") or "").startswith("974"):
+                n_csv += 1
+    n_base = int(session.execute(text("SELECT count(*) FROM catnat_arretes")).scalar() or 0)
+    return {"csv_national": n_csv, "base_api": n_base, "ecart": n_csv - n_base,
+            "fichier": nom}

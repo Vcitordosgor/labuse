@@ -82,3 +82,43 @@ même train mensuel (09/09 tous les trois) → le jeu principal suffit comme sig
 
 Preuves : `labuse ingest-dpe` (sortie ci-dessus rejouable), `tests/test_dpe.py` 13/13 dont
 `test_ingest_jeu_homonymie_et_miroir`, verrous 23/23 verts après lot.
+
+---
+
+## LOT 1 — Les endpoints qu'on aurait dû utiliser depuis le début
+
+Une ligne par source : ancien chemin · nouveau · ce qui a changé · preuve. Constat d'ensemble :
+une partie du lot était DÉJÀ au bon endpoint (SOURCES-1/REPARATIONS-1) — vérifié plutôt que
+refait ; la migration réelle du lot est la bascule **Carmen → Lizmap** et les gardes de
+recoupement.
+
+| Source | Ancien | Nouveau | Ce qui a changé | Preuve |
+|---|---|---|---|---|
+| Ravines DPF | WFS Carmen 29 (GML → ogr2ogr) | **WFS Lizmap** `00cartogenerale/deal_reunion`, GeoJSON natif | mêmes comptes (275 cours + 6 plans) ; plus de dépendance GDAL | ingestion rejouée 13/09, comptes identiques |
+| Zones humides DEAL | WFS Carmen 29 | **WFS Lizmap** | mêmes comptes (1 507+187+30+49+1 349) ; QGIS Server sert des anneaux dégénérés → nettoyage géométrique ajouté | ingestion rejouée, 1 349 = Carmen |
+| Espaces protégés compl. | WFS Carmen 29 | **WFS Lizmap** | Lizmap sépare RNN Étang (2) et **RNMR marine (150 zones réglementées** vs 1 agrégat Carmen) ; + **`Espace_Naturel_Sensible` du Département (178, gestionnaire/propriété/dateMAJ)** — la couche « ms:ENS » du rapport, jamais servie avant | `ens/ens_departement` 178 en base |
+| DEAL PPR / aléas | Lizmap `01risque` (déjà migré, SOURCES-1) | inchangé + **couche « état des PAC, PPR, PPRL et date d'approbation »** (`02etat_ppr_pac`, 24 communes) | kind `ppr_etat` (statuts Approuve/En revision + 6 dates par commune) ; `source_millesime` = plus récente approbation lue chez le producteur : **PPR approuvé le 16/04/2026** | 24/24 communes ingérées |
+| 50 pas géométriques | — | **déjà sur Lizmap** (`LIMITE_HA`, 163 tronçons) depuis SOURCES-1 | rien à migrer | vérifié code + base |
+| Cartes de bruit CBS | WFS Carmen `Cartes_bruit_strategiques` | **pas de migration** : le projet Lizmap `cartesbruitstrategiques` ne publie AUCUNE couche en WFS (GetCapabilities vide, WMS image seule — vérifié 13/09) | Carmen reste le seul canal vectoriel | probe WFS/WMS 13/09 |
+| Classement sonore ITT | ArcGIS Cerema (catégories 1-5, 1 004 tronçons) | **déjà le producteur méthodo** (Cerema) ; Lizmap ne le sert pas en WFS | rien | sentinelle `count` déjà en place |
+| CatNat | API GASPAR paginée (déjà, CIRCUIT-3) | + **recoupement export CSV national** (`gaspar.zip` officiel) à chaque ingestion | garde « l'API a perdu des arrêtés » VISIBLE ; mesuré : CSV 426 = base 426, **écart 0** | `labuse ingest-catnat` sortie |
+| AZI / TRI | GASPAR par commune (déjà) | inchangé (scénarios TRI = lot 4) | — | — |
+| GTFS transport | PAN, 7 slugs (déjà) | **vérifiés UN PAR UN le 13/09** : Car Jaune (maj 12/09/2026, RT), Citalis (16/07), Papang (29/12/2025, validité→2028), Kar'Ouest (17/08), Alternéo (25/08, RT×3), Carsud (20/08, RT), Estival (27/01) — tous valides ≥ 31/12/2026 | GTFS-RT : disponible sur 3 réseaux, **documenté non ingéré** (positions temps réel = donnée d'exploitation éphémère, sans valeur foncière — arbitrage) | table au registre |
+| DVF | — | **déjà l'amont Etalab/DGFiP** (`files.data.gouv.fr/geo-dvf`, 974 couvert) ; base au **31/12/2025** = la MàJ du 07/04/2026 est intégrée ; DVF Région déjà rétrogradée en échantillon producteur (0 donnée servie, SOURCES-1 lot 4) | rien à faire, vérifié | `max(date_mutation)=2025-12-31` |
+| LiDAR HD | millésime « dalles publiées 25/06/2025 » | **WFS du tableau d'assemblage** (`IGNF_LIDAR-HD_METADONNEE:metadata`) : balayage des 2 665 dalles 974 → **survol du 11/08/2023 au 11/10/2023** (mission unique 23LHDREUNION, capteur RIEGL VQ780 II-S), édition MNx 13/03/2025 — la date de survol est désormais AFFICHÉE (source_millesime) ; le TA donne MNT/MNS/MNH + COPC.LAZ par dalle | sentinelle témoin TA déjà en place (RECETTE-11 A5), doublon évité | balayage 13/09 |
+| BD TOPO | Géoplateforme WFS (déjà) | sentinelle `api` sur le jeu (archivage trimestriel) déjà en place | rien | vérifié |
+
+**Arbitrages écrits :**
+- **TYPEINF 03 ≠ anciens DPU.** Le rapport producteurs recommandait d'ajouter `TYPEINF=03` aux
+  périmètres DPU. Vérifié CONTRAIRE chez le producteur : l'unique typeinf 03 du 974
+  (Saint-Benoît) est libellé « Espace Naturel Sensible » = zone de préemption **ENS du
+  Département**, pas un DPU communal. L'ingérer en `kind='dpu'` aurait fait mentir la cascade.
+  Écarté, gravé dans `gpu_infos.py`.
+- **Noms de registre conservés.** Les 3 sources « (DEAL Carmen) » gardent leur nom — c'est la
+  clé stable de `data_sources` (jointures circuit/sonde) ; l'endpoint, le provider et les notes
+  disent la vérité Lizmap. `deal974.lizmap.com` ajouté aux passerelles mutualisées (G1).
+- **Découverte au passage (pour le lot 2)** : le zonage d'assainissement (`typeinf 19`) EXISTE
+  au GPU pour Saint-Benoît (42 entités) et Saint-Paul (27) — le rapport producteurs le croyait
+  absent partout.
+
+Verrous 23/23 verts après lot (G1 re-passé après déclaration de la passerelle Lizmap).
