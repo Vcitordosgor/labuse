@@ -2,7 +2,7 @@
 les tiers compétents) + les sources et millésimes RÉELLEMENT servis (data_sources de la fiche)."""
 from __future__ import annotations
 
-from ..lignes import pied, val
+from ..lignes import val
 from ..rendu import esc, ligne_kv, note, section, table_kv
 
 IDS = ("run_label_servi", "potentiel_verdict")
@@ -43,5 +43,7 @@ def rendu(valeurs) -> str:
                   "ni un document d'urbanisme opposable, ni une étude de faisabilité réglementaire, "
                   "ni un conseil juridique, et ne remplace pas un certificat d'urbanisme. "
                   "Fonds cartographiques : © IGN, © contributeurs OpenStreetMap (ODbL).")
-    corps += pied(valeurs, IDS)
+    # RECETTE-12 D4 — la ligne « Sources : BD TOPO… CoSIA… » (pied) imprimée APRÈS les mentions
+    # légales, à la fin du §10, est RETIRÉE : le §10 porte déjà sa propre liste « Sources et
+    # millésimes » ci-dessus ; ce pied faisait doublon (et fuyait les libellés techniques, D5).
     return section("10. Sources, limites et mentions", corps)

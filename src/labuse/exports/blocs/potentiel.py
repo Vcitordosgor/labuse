@@ -21,9 +21,10 @@ def _sur_place(valeurs) -> str:
     hauteur_ligne = ligne(valeurs, "Hauteur du bâti", "hauteur_bati_m", fmt_m)
     if lidar_h:
         fait, egout = p.get("hauteur_faitage_lidar_m"), p.get("hauteur_egout_lidar_m")
-        # RECETTE-11 A3 — la mesure LiDAR HD porte SA date de survol (lue dans les métadonnées IGN).
-        survol = p.get("hauteur_survol")
-        mention = "mesuré au LiDAR HD" + (f", survol de {esc(str(survol))}" if survol else "")
+        # RECETTE-12 D3 — la DATE de survol n'apparaît QU'UNE FOIS dans le §3 (sur la ligne de
+        # hauteur/scénario, plus une fois dans les sources §10). Ici, la mesure brute cite juste
+        # « mesuré au LiDAR HD » SANS la date (elle était répétée quatre fois).
+        mention = "mesuré au LiDAR HD"
         # RECETTE-11 A4 — un permis autorisé après le survol : la mesure peut être dépassée.
         permis = p.get("hauteur_permis_posterieur")
         caveat = (f" — mesure antérieure au permis du {esc(str(permis))}, possiblement dépassée"
@@ -69,17 +70,20 @@ def _scenarios(valeurs) -> str:
         contrainte = p.get("hauteur_contrainte")                # « égout » | « faîtage »
         contraintes = p.get("hauteur_contraintes") or []
         survol = p.get("hauteur_survol")
+        # RECETTE-12 D3 — la phrase de hauteur SUR UNE LIGNE, au format arbitré (Q7) : « Égout X mesuré
+        # (règle Y, marge Z) · faîtage … — contrainte qui mord : … ». La date de survol UNE SEULE FOIS,
+        # ici (l'autre occurrence est dans les sources §10). Plus de « X sous la hauteur réglementaire ».
         mention = "mesuré au LiDAR HD" + (f", survol de {esc(str(survol))}" if survol else "")
         limite = ("le faîtage" if contrainte == "faîtage"
                   else "l'égout" if contrainte == "égout" else esc(str(contrainte)))
+        _cap = lambda s: (s[:1].upper() + s[1:]) if s else s   # « égout » → « Égout »
         detail_c = " · ".join(
-            f"{c['base']} {fmt_m(c['mesure_m'])} mesuré contre {fmt_m(c['regle_m'])} réglementaires "
-            f"(marge {fmt_m(c['marge_m'])})" for c in contraintes)
+            f"{_cap(str(c['base']))} {fmt_m(c['mesure_m'])} mesuré "
+            f"(règle {fmt_m(c['regle_m'])}, marge {fmt_m(c['marge_m'])})" for c in contraintes)
         if marge is not None:
             lignes.append(ligne_kv("En hauteur, bâti conservé",
-                          f"<strong>{fmt_m(marge)}</strong> sous la hauteur réglementaire, "
-                          f"contrainte qui mord : {limite} (<strong>{mention}</strong>). "
-                          + esc(detail_c) + ".", chip_span("s", "sourcé")))
+                          f"{esc(detail_c)} — contrainte qui mord : {limite} "
+                          f"<em>({mention})</em>.", chip_span("s", "sourcé")))
     elif base_h and str(base_h).startswith("faîtage"):
         # RECETTE-11 A6 — hauteur BD TOPO (pas de LiDAR) : on rend la marge et la règle, sans verdict.
         marge, regle, bati = p.get("hauteur_marge_m"), p.get("hauteur_regle_m"), p.get("hauteur_bati_m")
@@ -111,12 +115,8 @@ def rendu(valeurs) -> str:
         return ""      # rien d'évaluable → section omise (aucun bloc creux)
     note_txt = ("Pré-faisabilité sur règlement public. Une étude réglementaire par un "
                 "professionnel peut modifier ces valeurs.")
-    # RECETTE-11 A3 — quand la hauteur est mesurée, la source LiDAR HD est citée dans le §3.
-    p = val(valeurs, "potentiel_verdict") or {}
-    if isinstance(p, dict) and p.get("hauteur_nature") == "sourcé":
-        survol = p.get("hauteur_survol")
-        note_txt += (" Hauteurs (faîtage, égout) mesurées au LiDAR HD — IGN / Géoplateforme"
-                     + (f", survol de {esc(str(survol))}" if survol else "") + ".")
+    # RECETTE-12 D3 — la source LiDAR HD (avec sa date de survol) est citée dans les SOURCES (§10) et
+    # la date figure déjà sur la ligne de hauteur : plus de répétition ici (elle apparaissait 4 fois).
     corps += note(note_txt)
     corps += pied(valeurs, IDS)
     return section("3. Potentiel constructible", corps)

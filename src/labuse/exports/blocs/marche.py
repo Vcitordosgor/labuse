@@ -86,10 +86,14 @@ def rendu(valeurs) -> str:
     if a(valeurs, "n_permis_proximite"):
         nc = valeurs["n_permis_proximite"].valeur
         n = nc.get("n") if isinstance(nc, dict) else nc
-        # RECETTE-11 D1 — la MAILLE et la FENÊTRE du compte sont ÉCRITES (jamais un « N permis » nu).
+        # RECETTE-12 D1 — la définition arbitrée (Q7, 05/09) : RAYON 500 m · fenêtre 24 mois, RAYON et
+        # FENÊTRE écrits (avant : « section cadastrale, 36 mois »). Repli « section cadastrale » si un
+        # ancien profil sans rayon est servi.
+        rayon = nc.get("rayon_m") if isinstance(nc, dict) else None
         maille = (nc.get("maille") if isinstance(nc, dict) else None) or "section cadastrale"
         fen = nc.get("fenetre_mois") if isinstance(nc, dict) else None
-        detail = f"{n} permis autorisés sur la {esc(maille)}" + (f", sur les {int(fen)} derniers mois" if fen else "")
+        ou = f"dans un rayon de {int(rayon)} m" if rayon else f"sur la {esc(maille)}"
+        detail = f"{n} permis autorisés {ou}" + (f", sur les {int(fen)} derniers mois" if fen else "")
         lignes.append(ligne_kv("Activité de dépôt (permis, secteur)", detail,
                                chip(valeurs["n_permis_proximite"])))
     if lignes:

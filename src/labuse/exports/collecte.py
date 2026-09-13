@@ -240,13 +240,17 @@ def _c_dvf_secteur(db, idu, f):
 
 @collecteur("n_permis_proximite")
 def _c_permis(db, idu, f):
-    depots = f.get("depots") or {}
-    dep = depots.get("secteur") or {}
-    n = dep.get("count")
-    # RECETTE-11 D1 — le §5 doit ÉCRIRE la maille et la fenêtre du compte (jamais un « N permis »
-    # sans dire sur quoi ni sur quelle période). On sert les deux depuis le bloc dépôts.
-    return ({"n": n, "non_couvert": False, "maille": dep.get("maille"),
-             "fenetre_mois": depots.get("fenetre_mois")} if n is not None else None)
+    # RECETTE-12 D1 — définition arbitrée (Q7, 05/09) : permis autorisés dans un RAYON de 500 m sur
+    # les 24 derniers mois (rayon + fenêtre servis au rendu, qui les ÉCRIT). Compte géolocalisé
+    # (sitadel_permits.geom, ST_DWithin), couverture ~98 % sur l'île. Avant : section cadastrale/36 mois.
+    from sqlalchemy import text
+    from ..ingestion.permits import nearby_permits
+    pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    if pid is None:
+        return None
+    dyn = (nearby_permits(db, pid, radius_m=500, fenetre_mois=24) or {}).get("dynamique") or {}
+    n = dyn.get("permis_recents")
+    return ({"n": n, "non_couvert": False, "rayon_m": 500, "fenetre_mois": 24} if n else None)
 
 
 # ══ Section 6 — Réseaux ════════════════════════════════════════════════════════════════════

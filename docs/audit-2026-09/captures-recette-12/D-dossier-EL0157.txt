@@ -1,0 +1,566 @@
+LABUSE
+
+Dossier parcelle
+
+Dossier parcelle
+Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet.
+
+8 Chemin Charles Ollivier Manès, 97417 Saint-Denis
+97411000EL0157 · Saint-Denis
+N° de rapport
+
+DP-20260913-0157
+
+Généré le
+
+13/09/2026
+
+Contenance cadastrale
+
+1 018 m²
+
+Modèle de document
+
+2.0
+
+Chaque donnée porte sa nature : sourcé vient d'une source publique · estimé est un calcul LABUSE · ƒ dérivé est
+déduit d'une autre donnée · projet a été saisi par vous. Une donnée absente est dite absente : ce document n'imprime
+jamais un zéro pour une valeur qu'il ne connaît pas.
+
+1/8
+
+1. Identité et situation
+Contenance cadastrale
+
+1 018 m²
+
+sourcé
+
+Adresse
+
+8 Chemin Charles Ollivier Manès, 97417 Saint-Denis
+
+sourcé
+
+Pente
+
+20,5° (pente moyenne)
+
+sourcé
+
+Sources : Cadastre (API Carto PCI) (PCI Parcellaire Express (DGFiP), édition courante) · Base Adresse Nationale (2026) · RGE ALTI
+(altimétrie) (RGE ALTI® (IGN) — édition courante)
+
+2. Zonage et règles d'urbanisme
+Zone Um (famille U) — urbaine, constructible. Le document opposable du
+Géoportail de l'urbanisme fait foi ; les valeurs de règle ci-dessous sont une aide à
+la lecture.
+Ce que le règlement fixe ici
+Règle
+
+Valeur retenue
+
+Hauteur max
+
+10 m au faîtage · 7 m à l'égout Art. Um.10, p.68
+
+sourcé
+
+Emprise au sol max
+
+50 % Art. Um.9, p.68
+
+sourcé
+
+Recul sur voie
+
+4 m Art. Um.6, p.67
+
+sourcé
+
+Recul limites séparatives
+
+4 m Art. Um.7, p.67
+
+sourcé
+
+Pleine terre min
+
+non réglementé Art. Um.13, p.70
+
+sourcé
+
+Stationnement
+
+1 à 1,5 place / logement Disp. générales §XVII, p.19
+
+sourcé
+
+Autorisées
+
+Hébergement · Restauration · Cinéma · Hôtels · Autres
+hébergements touristiques · Locaux et bureaux
+accueillant du public des administrations publiques et
+assimilés · Locaux techniques et industriels des
+administrations publiques et assimilés · Établissements
+d'enseignement, de santé et d'action sociale · Salles
+d'art et de spectacles · Équipements sportifs · Lieux de
+culte · Autres équipements recevant du public · Centre
+de congrès et d'exposition · Cuisine dédiée à la vente
+en ligne
+
+sourcé
+
+Sous conditions
+
+Logement · Artisanat et commerce de détail · Commerce
+de gros · Activités de services où s'effectue l'accueil
+d'une clientèle · Industrie · Entrepôt · Bureau
+
+sourcé
+
+Ce que le règlement autorise ici
+
+2/8
+
+Interdites
+
+Exploitation agricole · Exploitation forestière
+
+sourcé
+
+La parcelle est dans un périmètre de préemption —
+Droit de préemption urbain
+
+sourcé
+
+Prescriptions et servitudes
+Droit de préemption urbain
+
+Règlement complet : 97411_PLU_20260423 sur le Géoportail de l'urbanisme. Les valeurs ci-dessus sont une aide à la lecture ;
+le règlement fait foi.
+Sources : Urbanisme PLU/GPU (API Carto) (GPU/PLU par commune (révisions — détail en fiche)) · Sudocuh (procédures
+d'urbanisme) (Sudocuh — état au 31/12/2024 (Licence Ouverte 2.0)) · GPU — droit de préemption urbain (info-surf) (GPU)
+
+3. Potentiel constructible
+Potentiel de construction : Potentiel faible — parcelle proche de sa densité
+autorisée.
+Ce qu'il y a dessus
+Emprise bâtie
+
+181 m²
+
+sourcé
+
+Hauteur du bâti
+
+7,0 m au faîtage · 3,0 m à l'égout (mesuré au LiDAR HD)
+
+sourcé
+
+Nombre de bâtiments
+
+3
+
+sourcé
+
+Surface au sol libre
+
+837 m²
+
+sourcé
+
+Façons de construire ici
+Scénario
+
+Résultat
+
+Au sol, bâti conservé
+
+97 m² de surface de plancher résiduelle — 79 % de la
+surface autorisée déjà consommés.
+
+En hauteur, bâti conservé
+
+Égout 3,0 m mesuré (règle 7,0 m, marge 4,0 m) · Faîtage
+7,0 m mesuré (règle 10,0 m, marge 3,0 m) — contrainte
+qui mord : le faîtage (mesuré au LiDAR HD, survol de
+septembre 2023).
+
+sourcé
+
+Pré-faisabilité sur règlement public. Une étude réglementaire par un professionnel peut modifier ces valeurs.
+Sources : BD TOPO IGN (BD TOPO® V3 (IGN) — édition courante) · CoSIA (couverture du sol IA, IGN) (CoSIA 2025 (PVA juil.-août
+2025, 20 cm)) · Urbanisme PLU/GPU (API Carto) (GPU/PLU par commune (révisions — détail en fiche)) · Cadastre (API Carto PCI)
+(PCI Parcellaire Express (DGFiP), édition courante)
+
+4. Risques, servitudes, patrimoine
+Zone bleue PPR inondation et mouvement de terrain — constructible SOUS PRESCRIPTIONS (règlement DEAL).
+Aléas et servitudes vérifiés via la DEAL et Géorisques ; seuls les signaux relevés sur la parcelle sont listés.
+
+3/8
+
+Sources : DEAL Réunion — PPR / aléas (PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)) · Géorisques
+
+5. Marché et prix
+
+2 903 €/m²
+ancien, appartement — 16 ventes à moins de 500 m
+
+Tendance du secteur
+
++8 % (hausse) sur la période 2022–2025
+
+sourcé
+
+Activité de dépôt (permis, secteur)
+
+22 permis autorisés dans un rayon de 500 m, sur les 24
+derniers mois
+
+sourcé
+
+Les ventes retenues — distribution des prix au m² (un point par vente)
+
+min 2 581 €/m²
+
+médiane 2 903 €/m²
+
+max 3 429 €/m²
+
+16 ventes retenues. Aucune vente n'est fabriquée ni lissée.
+
+Médianes du secteur cadastral (indicateur secondaire)
+Appartement
+
+2 813 €/m² — 62 ventes, 2021-2025 (millésimes géo-DVF
+disponibles)
+
+sourcé
+
+Maison
+
+3 443 €/m² — 38 ventes, 2021-2025 (millésimes géo-DVF
+disponibles)
+
+sourcé
+
+Terrain
+
+306 €/m² — 26 ventes, 2021-2025 (millésimes géo-DVF
+disponibles)
+
+sourcé
+
+Ventes publiées (DVF), anonymisées ; les ventes récentes mettent un à trois ans à apparaître. Le prix « ancien appartement »
+est la référence de revente du secteur pour ce type de bien (segment le plus représenté à proximité), utilisée comme prix de
+sortie du programme reconstruit — pas une estimation du bâti existant.
+Sources : DVF / valeurs foncières (géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020) · SITADEL (autorisations
+d'urbanisme) (2026-07)
+
+6. Réseaux, desserte, terrain
+Viabilisation confirmée par les faits — le tracé et la capacité exacts des réseaux
+ne sont pas relevés à cette échelle : à confirmer auprès des gestionnaires par une
+DT-DICT.
+Les indices concordants
+
+Permis accordés à proximité · Façade sur voie publique
+urbanisée · Zone urbaine (U) · Adjacence au bâti existant
+
+sourcé
+
+Transports
+
+Arrêt Ruisseau Blanc Centre (Citalis) à 183 m · Gare du
+Ruisseau Blanc à 309 m
+
+sourcé
+
+4/8
+
+Assainissement
+
+Assainissement non collectif
+
+sourcé
+
+Ensoleillement
+
+Productible solaire ~1 549 kWh par kWc et par an
+
+estimé
+
+Fibre
+
+servi
+
+sourcé
+
+Sources : BD TOPO IGN (BD TOPO® V3 (IGN) — édition courante) · RGE ALTI (altimétrie) (RGE ALTI® (IGN) — édition courante) ·
+Parkings OSM (loi APER) · Transport public — GTFS (PAN, 7 réseaux) (7 jeux PAN, màj 2025-12-29 → 2026-08-17) · OSM —
+transport (pôles d'échange & téléphérique) (extraction Overpass (base OSM vivante, ODbL)) · INSEE RP2022 — fichier détail
+Logements (EGOUL) (RP2022 — fichier détail Logements, publié le 16/10/2025 (INSEE)) · Office de l'eau Réunion — Chroniques
+de l'eau (Chronique n°149 — données 2023) · Fibre Arcep — Ma connexion internet (immeuble) (2026_T1 — 330 051 immeubles
+974 (découpage départemental))
+
+7. Autour de la parcelle — quartier 12e Km-Le Ruisseau Blanc (maille
+IRIS INSEE)
+
+2 368
+
+19,3 %
+
+46,6 %
+
+habitants, 916 ménages
+
+de 60 ans et plus
+
+de locataires
+
+Parc de logements du quartier
+
+1 003 logements, 5,8 % de vacance
+
+sourcé
+
+Équipements à proximité
+
+1 école, 1 commerce, 1 service de santé, 1 arrêt de bus
+
+sourcé
+
+Faits sourcés et datés à la maille du quartier IRIS — aucune prévision de chiffre d'affaires, aucune note d'attractivité.
+Sources : INSEE RP2022 — bases IRIS (logement, population) (RP2022 — parution 16/10/2025 (géographie 01/01/2024)) ·
+Contours IRIS (IGN/INSEE) (Contours IRIS — géographie 2024 (IGN/INSEE)) · BPE INSEE (millésime 2025 (géographie au
+01/01/2025)) · OpenStreetMap / Overpass
+
+8. Contexte communal — Saint-Denis
+Zonage du logement
+
+Zonage d'investissement locatif : B1
+
+sourcé
+
+ZFANG
+
+Régime standard — dispositif de plein droit dans les
+DOM (art. 44 quaterdecies CGI) : abattement d'environ
+50 % sur les bénéfices.
+
+sourcé
+
+FRR (ex-ZRR)
+
+Parcelle DANS la zone spéciale d'action rurale (les
+Hauts) — commune classée FRR en partie (art. 44
+quindecies A CGI, en vigueur 01/07/2024). L'éligibilité
+effective reste à confirmer par un fiscaliste.
+
+sourcé
+
+Parc social (commune)
+
+25 185 logements sociaux (RPLS)
+
+sourcé
+
+5/8
+
+Taxe d'aménagement
+
+Taux communal 3,0 % — Taux communal en vigueur
+depuis le 01/01/2022 — source DGFiP/DELTA, relevé le
+08/09/2026. Se calcule sur la surface de plancher créée
+par le projet (taxe due une fois un projet déposé). Pour
+en obtenir le montant : ouvrez le Dossier financier et
+décrivez le programme — le nombre de logements visés
+et la typologie suffisent lorsque la parcelle n'a pas de
+potentiel constructible calculé.
+
+sourcé
+
+PLU
+
+PLU approuvé le 2026-04-23 — Document à jour du GPU
+— c'est celui qui fait foi.
+
+sourcé
+
+Sources : QPV 2024 (ANCT) (génération 2024) · NPNRU (DEAL Réunion / ANCT) · ZFANG — zone franche d'activité nouvelle
+génération (Légifrance) (Décret n° 2026-421 du 29 mai 2026 (LF 2026, art. 18)) · FRR ex-ZRR — zone spéciale d'action rurale
+(Légifrance) (ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017 (Région)) · RPLS — logements locatifs sociaux (SDES) · Urbanisme PLU/
+GPU (API Carto) (GPU/PLU par commune (révisions — détail en fiche)) · Sudocuh (procédures d'urbanisme) (Sudocuh — état au
+31/12/2024 (Licence Ouverte 2.0))
+
+9. Bilan de l'opération
+Renseignez votre opération pour obtenir le bilan
+
+Le bilan dépend de chiffres que vous seul connaissez : prix demandé par le vendeur, coût de
+construction, marge visée. LABUSE ne les suppose pas à votre place.
+Une fois renseignés dans votre projet, cette section imprime le chiffre d'affaires, la charge foncière
+supportable, l'écart au prix demandé et la sensibilité au coût de construction. Le document
+« Financier » reprend cette section seule.
+
+10. Sources, limites et mentions
+Ce que ce document ne peut pas dire
+Constructibilité définitive
+
+Certificat d'urbanisme — mairie, service instructeur
+
+Valeur vénale
+
+Avis de valeur — notaire, expert
+
+État du bâti, servitudes privées
+
+Visite et acte notarié
+
+Coût de démolition, de dépollution
+
+Devis d'entreprise
+
+Réseaux et raccordements chiffrés
+
+Gestionnaires, DT-DICT
+
+Position du propriétaire, prix demandé Contact direct ou apporteur d'affaires
+
+Sources et millésimes
+RPG — déclarations agricoles (IGN/
+ASP)
+
+DAAF RPG/IGN (RPG (IGN), édition courante)
+
+SITADEL (autorisations d'urbanisme)
+
+SDES (Dido) (2026-07)
+
+BODACC (procédures collectives)
+
+DILA (Opendatasoft) (2026)
+
+6/8
+
+INPI RNE (dirigeants)
+
+INPI (Registre National des Entreprises)
+
+Forêts publiques (ONF)
+
+ONF / IGN (BD TOPO) (BD TOPO® V3 — forêt publique
+(IGN))
+
+INPN / patrinat — espaces protégés
+
+INPN/MNHN (espaces protégés) (INPN/patrinat espaces
+protégés)
+
+Parc National de La Réunion (INPN)
+
+INPN/MNHN · API Carto · Région ODS (millésime 2021)
+
+Cartofriches (Cerema)
+
+Cerema / DGALN
+
+DVF / valeurs foncières
+
+DGFiP / Etalab — géo-DVF (géo-DVF Etalab 2021–2025 +
+archives DGFiP 2014–2020)
+
+IGN BD CARTO V5 — occupation du sol
+
+IGN / Géoplateforme (BD CARTO® V5 — occupation du sol
+(IGN))
+
+ABF / Monuments historiques
+
+Base Mérimée (Ministère Culture)
+
+data.regionreunion.com — Potentiel
+foncier
+
+Région Réunion (Opendatasoft)
+
+DGFiP — parcelles des personnes
+morales
+
+DGFiP (Panel millésimes 2019→2025 (situation 1ᵉʳ
+janvier))
+
+50 pas géométriques — limite haute
+(DEAL)
+
+DEAL Réunion (Lizmap) (cadastre 1877 (géoréf.
+2012/1950))
+
+Classement sonore ITT (Cerema)
+
+Cerema (Cartagène) (arrêtés déc. 2023)
+
+SUP — assiettes GPU (API Carto)
+
+IGN (Géoportail de l'urbanisme)
+
+Cerema / GéoLittoral — indicateur
+d'érosion côtière
+
+Cerema / GéoLittoral (millésime 2018)
+
+DEAL Réunion — PPR / aléas
+
+DEAL Réunion (Lizmap) (PPR/PPRL approuvés 2011–2026
+(arrêtés, DEAL Lizmap))
+
+Géorisques — ICPE
+
+BRGM / Géorisques
+
+Géorisques — cavités souterraines
+
+BRGM / Géorisques
+
+Géorisques — mouvements de terrain
+
+BRGM / Géorisques
+
+Géorisques — sites et sols pollués
+
+BRGM / Géorisques
+
+OpenStreetMap / Overpass
+
+OSM
+
+BD TOPO IGN
+
+IGN / Géoplateforme (BD TOPO® V3 (IGN) — édition
+courante)
+
+RGE ALTI (altimétrie)
+
+IGN / Géoplateforme (RGE ALTI® (IGN) — édition
+courante)
+
+Potentiel foncier Région (Région ODS) Région Réunion / AGORAH (îlots non urbanisés —
+estimation Région (ODS, non versionné))
+
+7/8
+
+Urbanisme PLU/GPU (API Carto)
+
+IGN / API Carto GPU (GPU/PLU par commune (révisions —
+détail en fiche))
+
+LiDAR HD (MNS) — hauteurs mesurées
+
+IGN / Géoplateforme (survol de septembre 2023)
+
+Document d'information établi à partir de données publiques. Il ne constitue ni un document d'urbanisme opposable, ni une
+étude de faisabilité réglementaire, ni un conseil juridique, et ne remplace pas un certificat d'urbanisme. Fonds
+cartographiques : © IGN, © contributeurs OpenStreetMap (ODbL).
+
+8/8
+
+

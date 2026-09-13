@@ -31,16 +31,42 @@ _NOTES_INTERNES = (
     (" — « latest » ingérée", ", édition courante"),
     ("« latest » ingérée", "édition courante"),
     ("« latest »", "édition courante"),
+    ("(IGN, proxy)", "(IGN)"),        # RECETTE-12 D5 — « proxy » entre parenthèses avec l'éditeur
+)
+
+#: RECETTE-12 D5 — la liste de mots interdits a échoué DEUX fois (RECETTE-8 W5, RECETTE-11 D6) parce
+#: qu'elle remplaçait des chaînes EXACTES. Ici, des MOTIFS (regex) retirent toute note technique
+#: quelle que soit sa date : sentinelle, date d'ingestion, « passe », « typeinf », « proxy »,
+#: « ENS dép. non public ». Objectif : chaque source imprimée = « Nom — éditeur — millésime », rien d'autre.
+_NOTES_REGEX = (
+    re.compile(r"\s*—?\s*amont à jour au \d{2}/\d{2}/\d{4}\s*\(sentinelle\)"),
+    re.compile(r"\s*—?\s*vue le \d{2}/\d{2}/\d{4}\s*\(sentinelle\)"),
+    re.compile(r"\s*—?\s*ingérée? le \d{2}/\d{2}/\d{4}\s*\([^)]*\)"),
+    re.compile(r"\s*\(date d'ingestion[^)]*\)"),
+    re.compile(r"\s*\(millésime amont non versionné[^)]*\)"),
+    re.compile(r"\s*\(sentinelle\)"),
+    re.compile(r"\s*—?\s*passe \d{2}/\d{2}/\d{4}"),
+    re.compile(r"\s*·?\s*ENS dép\.?\s*non public"),
+    re.compile(r"\s*typeinf\s*\d*\s*—?\s*partiel,?\s*"),
+    re.compile(r",?\s*non-publiées listées"),
+    re.compile(r"[,·]?\s*\bproxy\b"),
 )
 
 
 def nettoyer_notes_internes(s):
-    """Retire les notes techniques internes d'une chaîne affichée au client (D6). None → None."""
+    """Retire les notes techniques internes d'une chaîne affichée au client (D5/D6). None → None.
+    D'abord les remplacements exacts (héritage), puis les MOTIFS robustes (dates variables)."""
     if not s:
         return s
     for avant, apres in _NOTES_INTERNES:
         s = s.replace(avant, apres)
-    return s.replace(" ·  ", " · ").strip(" ·—")
+    for rx in _NOTES_REGEX:
+        s = rx.sub("", s)
+    # RECETTE-12 D5 — restes de ponctuation orpheline après retrait (« RPG (IGN),  » → « RPG (IGN) »)
+    s = re.sub(r"\(\s*\)", "", s)           # parenthèses vides
+    s = re.sub(r"\s{2,}", " ", s)
+    s = re.sub(r"[ ,·—]+$", "", s)          # ponctuation de fin orpheline
+    return s.replace(" ·  ", " · ").strip(" ·—,")
 
 
 def _fr(d) -> str | None:
@@ -62,18 +88,14 @@ def composer(source_millesime, *, source_horizon_at=None, dernier_vu=None,
     if not mill and source_horizon_at is not None:
         an = getattr(source_horizon_at, "year", None)
         mill = str(an) if an else None
-    vu = _fr(dernier_vu)
-    if not mill and vu:
-        return f"amont à jour au {vu} (sentinelle)"
-    sync = _fr(last_sync_at)
-    if not mill and sync:
-        return f"ingéré le {sync} (date d'ingestion, millésime amont non publié)"
-    # cas IGN « édition non enregistrée » — réécrit, jamais un libellé mort (E10).
-    if mill and "édition non enregistrée" in str(mill):
+    # RECETTE-12 D5 — quand aucun millésime amont n'est publié, le client ne voit PLUS une note
+    # technique (« amont à jour au … (sentinelle) », « date d'ingestion… ») : la cellule millésime
+    # reste vide (la source s'imprime « Nom — éditeur », sans texte libre). La sentinelle reste un
+    # signal INTERNE (etats_sources), jamais un millésime client.
+    if not mill:
+        return None
+    # cas IGN « édition non enregistrée » — réécrit « édition courante », SANS date ni sentinelle.
+    if "édition non enregistrée" in str(mill):
         base = str(mill).split(" — ")[0]
-        if vu:
-            return f"{base} — édition courante, vue le {vu} (sentinelle)"
-        if sync:
-            return f"{base} — édition courante, ingérée le {sync} (millésime amont non versionné par l'IGN)"
-        return f"{base} — édition courante (millésime amont non versionné par l'IGN)"
+        return f"{base} — édition courante"
     return nettoyer_notes_internes(mill)
