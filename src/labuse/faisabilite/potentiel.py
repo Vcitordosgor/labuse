@@ -20,6 +20,9 @@ SURELEVATION_MARGE_MIN_M = 2.8
 TOITURE_TYPIQUE_M = 2.5
 
 
+# CIRCUIT-6 merge main — l'override « égout LiDAR d'abord » du lot 7 est RETIRÉ : main
+# (RECETTE-10 T1) compare déjà égout mesuré↔règle d'égout et faîtage↔règle de faîtage via
+# surelevation_mesuree (app.py) ; injecter l'égout ICI remettait l'égout face au faîtage.
 def _hauteur_bati_m(session: Session, parcel_id: int) -> float | None:
     """Hauteur du bâti existant (BD TOPO, max des bâtiments intersectants) — même source que
     `residuel._niveaux_existants`."""

@@ -230,6 +230,11 @@ def etat_reservoir(r: dict) -> tuple[str, str]:
     filtre = r.get("filtre") or {}
     veille = r.get("veille")
     mode = r.get("mode") or "one_shot"
+    # CIRCUIT-6 lot 2 (G2) — branchée mais VIDE (mesurée sur les 12 témoins : type parcelle,
+    # 0 rempli, table quasi vide — signature DPE). AVANT tout autre état : « à jour » ne peut
+    # plus être vrai sur une source vide.
+    if r.get("invisible"):
+        return ("rouge", "INVISIBLE — branchée mais vide")
     if filtre.get("verdict") == "quarantaine":
         return ("rouge", "en quarantaine")
     if r.get("horloge_ment"):                       # détecteur non branché live (accroche)
@@ -243,12 +248,22 @@ def etat_reservoir(r: dict) -> tuple[str, str]:
     if filtre.get("verdict") == "avertissements":
         return ("ambre", "filtre avec des KO")
     if not veille:
-        return ("ambre", "jamais vérifié")
+        # CIRCUIT-6 lot 5 (G5) — jamais vérifié s'affiche en ROUGE, pas en gris/ambre :
+        # une source jamais confrontée à son producteur est un trou de garantie, pas un détail.
+        return ("rouge", "jamais vérifié")
+    if (not veille.get("statut") and not veille.get("passage")
+            and not r.get("dernier_controle")):
+        # G5 — sonde câblée mais JAMAIS passée (ni statut, ni passage), et aucune ingestion
+        # datée : rien n'a jamais été contrôlé — le dire, en rouge (« à jour » mentait).
+        return ("rouge", "jamais vérifié")
     if r.get("a_verifier"):                          # divergence assumée : cadence dépassée
         return ("ambre", "à vérifier")
     if veille.get("statut") == "injoignable":
         return ("ambre", "producteur injoignable")
     if mode == "depot_manuel":
+        # G5 — un dépôt jamais alimenté le DIT (aucune date de contrôle → pas un blanc).
+        if not r.get("dernier_controle"):
+            return ("gris", "dépôt manuel — jamais alimenté")
         return ("gris", "dépôt manuel")
     return ("mint", "à jour")
 

@@ -242,7 +242,16 @@ def verifier_chemins_reels(db) -> dict:
     except Exception as exc:  # noqa: BLE001 — app inimportable : la sonde le DIT, jamais muette
         return {"ecarts_trouves": 0, "mesures": 0, "familles": familles,
                 "erreur": f"TestClient indisponible : {exc}"}
-    for idu in TEMOINS_PARCELLES:
+    # CIRCUIT-6 lot 7 (G7) — la sonde compare les MÊMES chemins sur les témoins TOURNANTS du
+    # jour (4 urbains + 4 ruraux + 4 tirés, moteur de remplissage G2) EN PLUS des témoins
+    # EXPORTS-1 : la même donnée, partout, chaque nuit, sur des parcelles qui changent.
+    temoins = list(TEMOINS_PARCELLES)
+    try:
+        from .registre.remplissage import temoins_du_jour
+        temoins += [t[0] for t in temoins_du_jour(db) if t[0] not in TEMOINS_PARCELLES]
+    except Exception:  # noqa: BLE001 — jamais bloquer la sonde sur le tirage
+        pass
+    for idu in temoins:
         pid = _parcel_id(db, idu)
         if pid is None:
             continue

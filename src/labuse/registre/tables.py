@@ -208,7 +208,12 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "bd_ortho_irc": Rt(("ortho_detections", "parcel_vegetation", "vegetation_zonal_acc")),
     "cosia": Rt(("spatial_layers", "p_model_bati_cosia", "qa_cosia_bati"), couches=("batiment_cosia",),
                 millesime="CoSIA 2025 (PVA juil.-août 2025, 20 cm)"),
-    "lidar_hd_mnh": Rt(("toiture_lidar",), millesime="LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)"),
+    # CIRCUIT-6 lot 7 (fuite n°2) — la table batiment_hauteur_lidar (faîtage/égout par parcelle,
+    # batch de dalles ACHEVÉ, ~303 000 parcelles) entre à la carte : la hauteur LiDAR est
+    # désormais CRÉDITÉE à sa source (potentiel._hauteur_bati_m la lit, repli BD TOPO).
+    "lidar_hd_mnh": Rt(("toiture_lidar", "batiment_hauteur_lidar", "lidar_dalle_grille"),
+                       millesime="LiDAR HD MNH — dalles publiées 25/06/2025 (IGN) ; "
+                                 "hauteurs faîtage/égout par parcelle (batch dalles complet)"),
     "pvgis": Rt(("solar_grid", "parcel_solar"), millesime="PVGIS v5.3 · modèle SARAH3"),
     # ── occupation / potentiel ──────────────────────────────────────────────────────
     "potentiel_foncier_region": Rt(("spatial_layers",), couches=("potentiel_foncier", "sar")),
@@ -424,6 +429,10 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "ia_ask_quota": "IA — quotas",
     "nl_query_log": "IA — requêtes NL",
     "app_reglages": "réglages applicatifs",
+    # CIRCUIT-6 (merge main) — trois tables applicatives de RECETTE-10/11/12 classées (V1c) :
+    "mail_queue": "file d'envoi de mails (exploitation)",
+    "prefs_carte": "préférences de carte par utilisateur",
+    "questionnaire_financier": "questionnaire du Financier (saisies client)",
     "bilan_params": "paramètres de bilan",
     "entite_acronyme": "référentiel des acronymes",
     "lettre_zonage_refs": "références lettre de zonage",

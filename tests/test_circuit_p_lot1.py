@@ -21,10 +21,14 @@ from labuse import circuit_resume as R
     ({"veille": {"statut": "ok"}, "agent_en_cours": True}, ("mauve", "agent en route")),
     ({"veille": {"statut": "ok"}, "filtre": {"verdict": "avertissements"}},
      ("ambre", "filtre avec des KO")),
-    ({}, ("ambre", "jamais vérifié")),
+    # CIRCUIT-6 lot 5 (G5) : jamais vérifié = ROUGE (plus jamais ambre).
+    ({}, ("rouge", "jamais vérifié")),
     ({"veille": {"statut": "ok"}, "a_verifier": True}, ("ambre", "à vérifier")),
     ({"veille": {"statut": "injoignable"}}, ("ambre", "producteur injoignable")),
-    ({"veille": {"statut": "ok"}, "mode": "depot_manuel"}, ("gris", "dépôt manuel")),
+    # CIRCUIT-6 lot 5 (G5) : un dépôt jamais alimenté (aucune date) le DIT.
+    ({"veille": {"statut": "ok"}, "mode": "depot_manuel"}, ("gris", "dépôt manuel — jamais alimenté")),
+    ({"veille": {"statut": "ok"}, "mode": "depot_manuel", "dernier_controle": "2026-09-01"},
+     ("gris", "dépôt manuel")),
     ({"veille": {"statut": "ok"}}, ("mint", "à jour")),
 ])
 def test_etat_reservoir(r, attendu):

@@ -2009,6 +2009,34 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
                         "rappel_jours": r["rappel_jours"]} if r["methode"] else None),
             "filtre": _filtre_du(r["name"]),
         })
+    # ── CIRCUIT-6 lot 2 (G2) — le REMPLISSAGE mesuré sur les 12 témoins du jour : chaque
+    # réservoir porte sa mesure, et une source branchée mais VIDE (signature DPE) porte le
+    # drapeau `invisible` → etat_reservoir la sort ROUGE « INVISIBLE — branchée mais vide ».
+    try:
+        from ..registre import remplissage as _rempl
+        _mesures = _rempl.mesurer_vitrine(c, rapide=True)
+        # CIRCUIT-6 lot 3 (G3) — chaque réservoir dit ce qu'il nourrit au score/cascade.
+        from ..circuit_garanties import sources_du_score as _sds
+        _score = _sds()
+        from ..circuit_etats import NOM_VERS_SLUG as _nvs
+        for rv in reservoirs:
+            _slug = _nvs.get(rv["nom"], "")
+            m = _mesures.get(_slug)
+            if m:
+                rv["remplissage"] = {k: m[k] for k in ("type", "remplis", "n_temoins", "quasi_vide")}
+                if m["quasi_vide"]:
+                    rv["invisible"] = True
+            if _slug in _score:
+                rv["score"] = _score[_slug]
+        # CIRCUIT-6 lot 6 (G6) — le sens source → app : les fichiers lecteurs, calculés.
+        from ..circuit_garanties import lecteurs_par_slug as _lps
+        _lect = _lps()
+        for rv in reservoirs:
+            fs = _lect.get(_nvs.get(rv["nom"], ""))
+            if fs:
+                rv["lecteurs"] = fs
+    except Exception:  # noqa: BLE001 — la page ne casse jamais sur la mesure
+        pass
     return reservoirs
 
 
@@ -2072,8 +2100,13 @@ def admin_circuit(request: Request) -> dict:
                       "domaine": list(ch.domaine) if ch.domaine else None,
                       "reservoirs": list(ch.reservoirs), "en_attente": ch.en_attente}
                 for cid, ch in CHIFFRES.items()}
+    # CIRCUIT-6 lot 6 (G6) — les DEUX SENS calculés : chaque robinet porte ses SOURCES
+    # (union des réservoirs de ses chiffres), chaque réservoir portera ses LECTEURS (plus bas).
+    from ..registre import CHIFFRES as _CH_G6
     robinets = [{"id": rid, "categorie": r.categorie, "nom": r.nom, "parent": r.parent,
-                 "route": r.route, "chiffres": list(r.chiffres), "hors_registre": r.hors_registre}
+                 "route": r.route, "chiffres": list(r.chiffres), "hors_registre": r.hors_registre,
+                 "sources": sorted({s for cid in r.chiffres
+                                    for s in getattr(_CH_G6.get(cid), "reservoirs", ())})}
                 for rid, r in ROBINETS.items()]
 
     # ── CIRCUIT-P (lot 1) — familles/catégories d'affichage, état unique (couleur+libellé),
@@ -2171,9 +2204,21 @@ def admin_circuit(request: Request) -> dict:
                               regles_ecart=sorted(_verdicts_rob["ecart"]),
                               regles_choix=sorted(_verdicts_rob["choix"]),
                               verrous=_verrous)
+    # ── CIRCUIT-6 — les sept garanties, jouées côté serveur (le front les REND, lot 8) +
+    # le catalogue calculé (G1 : 116 en base / 95 en vitrine, jamais gravé) + les doublons.
+    from dataclasses import asdict as _asdict
+    from .. import circuit_garanties as _garanties_mod
+    try:
+        with engine().begin() as _c3:
+            _garanties = [_asdict(g) for g in _garanties_mod.jouer_garanties(_c3)]
+            _catalogue = _garanties_mod.catalogue_compteurs(_c3)
+            _doublons = _garanties_mod.detecter_doublons(_c3)
+    except Exception:  # noqa: BLE001 — page jamais bloquée par les garanties
+        _garanties, _catalogue, _doublons = None, None, None
     return {
         "run_servi": runs.current(), "candidat": _candidat, "manifeste": m,
         "verrous": _verrous,
+        "garanties": _garanties, "catalogue": _catalogue, "doublons": _doublons,
         "reservoirs": reservoirs, "robinets": robinets, "chiffres": chiffres,
         "familles": familles, "categories": categories, "resume": resume,
         "aretes": aretes, "fuites": fuites, "eau_ancienne": eau,

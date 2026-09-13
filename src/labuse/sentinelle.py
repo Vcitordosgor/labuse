@@ -633,6 +633,14 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "RNIC — registre national des copropriétés (Anah)": "Extraction annuelle data.gouv du registre Anah — pas de témoin amont à empreinte stable pour le 974 identifié ; la fraîcheur (millésime annuel) se lit sur la page Circuit.",
     "RPLS — répertoire des logements locatifs sociaux (SDES)": "Publication annuelle SDES (millésime au 1ᵉʳ janvier) — pas de flux à empreinte stable à sonder ; la fraîcheur (millésime annuel) se lit sur la page Circuit.",
     "Consommation d'espaces NAF (Cerema — portail de l'artificialisation)": "Portail national de l'artificialisation (Cerema) — millésime annuel, pas de témoin amont à empreinte stable identifié ; la fraîcheur se lit sur la page Circuit.",
+    # CIRCUIT-6 lot 4 (G4) — plus AUCUNE source connectée sans sonde NI raison (les 6 nues
+    # relevées par le verrou G4 le 13/09/2026, chacune sa raison honnête) :
+    "INSEE RP Logement 2023": "Millésime ANNUEL du recensement (publication INSEE sans endpoint de version stable pour les tableaux communaux) — rappel par cadence, le millésime suivant s'ingère à la main (RP 2024 attendu fin 2026).",
+    "Inventaire SRU (DHUP)": "CSV national republié par la DHUP SANS URL de version stable (inventaire triennal, dernier v2 du 18/12/2025) — rappel par cadence, réingestion au fichier suivant.",
+    "NPNRU (DEAL Réunion / ANCT)": "Liste ANCT FIGÉE (génération 2024) — pas de flux de version ; les quartiers NPNRU ne changent qu'à une nouvelle génération (geste manuel).",
+    "PLH des 5 EPCI (extraction documentaire)": "Extraction DOCUMENTAIRE manuelle (dépôt) — la version vit dans les documents des EPCI, pas dans un flux ; rappel par cadence.",
+    "RTAA DOM (textes réglementaires)": "Règles portées par le code (config/rtaa_dom.yaml), vérifiées sur Légifrance À LA MAIN aux versions consolidées « en vigueur » — pas d'API de version Légifrance exploitable pour ces articles.",
+    "Sudocuh (procédures d'urbanisme)": "Dépôt manuel ANNUEL (état au 31/12) — la publication Sudocuh n'expose pas d'URL de version stable ; rappel par cadence.",
 }
 
 #: SENTINELLE-3 (Y4) — les sources MANUELLES (alimentées par Vic, aucun amont public) reçoivent un RAPPEL

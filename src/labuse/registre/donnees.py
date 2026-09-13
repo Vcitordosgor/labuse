@@ -114,7 +114,10 @@ DONNEES: dict[str, Donnee] = {
  "taxe_amenagement_eur": C("Taxe d'aménagement", "€", "parcelle",
     "calcul ligne-à-ligne, taux communal SAISI obligatoire, jamais un défaut",
     moteur="taxe_amenagement", calcul="moteur", fonction="src/labuse/taxe_amenagement.py",
-    reservoirs=(), portee="live"),
+    # CIRCUIT-6 lot 0 — l'arête MANQUAIT : les taux communaux/départementaux servis par l'outil
+    # viennent de la source « Taxe d'aménagement — taux communaux » (taxe_amenagement_taux) ;
+    # reservoirs=() faisait vivre l'outil Taxe hors graphe (SOURCES-AUDIT : SERVIE HORS REGISTRE).
+    reservoirs=("taxe_amenagement",), portee="live"),
  # RECETTE-8 W2 — sur la fiche/le Dossier, la taxe d'aménagement ne porte AUCUN montant : elle se
  # paie sur la surface de plancher créée par un PROJET (art. L331 c. urb.), or aucun projet n'est
  # saisi ici. On sert donc UNIQUEMENT le taux communal public (daté) et la phrase disant sur quoi
@@ -128,7 +131,19 @@ DONNEES: dict[str, Donnee] = {
     "Taux communal PUBLIC si connu, sinon « non renseigné » (jamais inventé)",
     moteur="taxe_amenagement", calcul="moteur",
     fonction="src/labuse/api/app.py:_taxe_amenagement_block (taxe_amenagement.calculer, surface=0)",
-    reservoirs=(), portee="live"),
+    # CIRCUIT-6 lot 0 — même arête que taxe_amenagement_eur : le TAUX servi vient de la source
+    # « Taxe d'aménagement — taux communaux » (fusion RECETTE-8 W2 × CIRCUIT-6 : la définition
+    # de main, l'arête du graphe en plus — reservoirs=() la laissait hors registre).
+    reservoirs=("taxe_amenagement",), portee="live"),
+ # CIRCUIT-6 lot 0 — le rappel RTAA DOM (exigences de conception, vérifié Légifrance) était servi
+ # dans la Faisabilité SANS chiffre au registre : la source rtaa_dom (43) n'alimentait rien.
+ "rtaa_exigences": C("Rappel RTAA DOM (exigences de conception)", "liste", "parcelle",
+    "exigences réglementaires de conception DOM (aération, protection solaire, eau chaude solaire) "
+    "servies en rappel dans la Faisabilité — règles portées par config/rtaa_dom.yaml, vérifiées "
+    "sur Légifrance, hors scoring",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/modules.py:faisabilite_sens1 (load_yaml_config rtaa_dom)",
+    reservoirs=("rtaa_dom",), portee="live", type="liste"),
  # FICHE-1 lot 6 — les annonces Radar rattachées à la parcelle (validées), servies dans « Marché
  # et secteur » : date, prix demandé, statut, lien fiche annonce, écart demandé/acté par annonce.
  "radar_annonces_liste": C("Annonces Radar de la parcelle", "liste", "parcelle",
@@ -449,7 +464,9 @@ DONNEES: dict[str, Donnee] = {
  "catnat_n": C("Arrêtés CatNat", "nombre", "commune",
     "count catnat_arretes",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py",
-    reservoirs=(), portee="live", table="catnat_arretes (count par insee)"),
+    # CIRCUIT-6 lot 0 — l'arête MANQUAIT : catnat_arretes est le réservoir catnat_gaspar
+    # (426 arrêtés servis fiche commune/Pièges sans provenance tracée — SOURCES-AUDIT).
+    reservoirs=("catnat_gaspar",), portee="live", table="catnat_arretes (count par insee)"),
  "habitants_n": C("Habitants", "nombre", "commune",
     "population INSEE/Filosofi commune",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py:123 (population)",
@@ -1055,7 +1072,10 @@ DONNEES: dict[str, Donnee] = {
     "TOPO) — RECETTE-7 E1 : faîtage contre faîtage ; repli égout+toiture type avec incertitude",
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:surelevation",
-    reservoirs=("bd_topo", "gpu_plu_api_carto",), portee="run"),
+    # CIRCUIT-6 lot 7 (fuite n°2, fusion RECETTE-10 T1) — quand le LiDAR HD a mesuré égout ET
+    # faîtage, la marge SERVIE vient de surelevation_mesuree (les DEUX contraintes, la plus
+    # serrée mord — batiment_hauteur_lidar) : l'arête lidar_hd_mnh reste posée.
+    reservoirs=("lidar_hd_mnh", "bd_topo", "gpu_plu_api_carto",), portee="run"),
  "part_logements_egout_pct": C("Logements raccordés à l'égout", "%", "parcelle",
     "part des logements raccordés au tout-à-l'égout (INSEE RP2022 EGOUL, maille IRIS, repli "
     "commune) — le TAUX, jamais un verdict",
@@ -1063,7 +1083,10 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/anc_service.py:statut_anc (producteur nommé, délégation)",
     # CIRCUIT-5b lot 2 — le moteur ANC lit AUSSI la chronique de l'Office de l'eau
     # (anc_office_eau_commune, communes 100 % ANC servies depuis M95) : office_eau_chroniques rattaché.
-    reservoirs=("insee_rp2022_egoul", "office_eau_chroniques",), portee="live"),
+    # CIRCUIT-6 lot 6 (G6) — et le zonage SIG d'assainissement (parcel_anc, 4/24 communes GPU) :
+    # gpu_zonage_assainissement était un réservoir MUET lu par anc_service (attrapé par G6).
+    reservoirs=("insee_rp2022_egoul", "office_eau_chroniques", "gpu_zonage_assainissement",),
+    portee="live"),
  "ventes_retenues_n": C("Ventes retenues (nuage)", "nombre", "parcelle",
     "ventes DVF retenues par le filtre de comparables (couverture VISIBLE — EXPORTS-1 lot 2)",
     moteur="marche_service", calcul="moteur",

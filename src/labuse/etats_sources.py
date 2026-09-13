@@ -29,7 +29,8 @@ from .sources_catalog import WHERE_AFFICHEES, masquees_param
 #: RETOURS-9 (Q2) — `jamais_verifiee` ajouté : une source SURVEILLÉE dont l'agent n'est pas encore
 #: passé (aucun `dernier_statut`). Elle n'est pas « à jour » (rien n'a été constaté) ni « non surveillée »
 #: (une sonde est bien câblée) : elle attend sa première vérification. Fréquent en local (pas de cron).
-ETATS = ("nouvelle_version", "a_rafraichir", "jamais_verifiee", "a_jour", "non_surveillee")
+ETATS = ("nouvelle_version", "a_rafraichir", "jamais_verifiee", "a_jour", "non_surveillee",
+         "vide")  # CIRCUIT-6 lot 4 (G4) — branchée mais vide (mesure témoins)
 
 #: méthodes de veille qui sont une VRAIE sonde amont (un rappel manuel n'en est pas une).
 _SONDES = ("api", "page", "entete", "temoin")
@@ -158,6 +159,21 @@ def lister_etats(conn, *, now: datetime | None = None) -> list[dict]:
         d = dict(r)
         d.update(etat_source(r, now=now))
         out.append(d)
+    # CIRCUIT-6 lot 4 (G4) — « à jour » ne peut plus être vrai sur une source VIDE : l'état
+    # combine la VERSION (sentinelle) ET le REMPLISSAGE (mesure G2 sur les témoins). Le DPE
+    # disait « à jour » avec 17 lignes — plus jamais.
+    try:
+        from .circuit_garanties import noms_vides_caches
+        vides = noms_vides_caches(conn)
+        for d in out:
+            if d["name"] in vides:
+                d["etat"] = "vide"
+                d["etat_client"] = "pas_a_jour"
+                d["phrase_client"] = "Branchée mais vide — donnée indisponible."
+                d["phrase_admin"] = ("VIDE mesurée (0 témoin rempli, table quasi vide) — "
+                                    "l'état de version ne suffit pas, la donnée manque.")
+    except Exception:  # noqa: BLE001 — la mesure ne casse jamais la liste
+        pass
     return out
 
 
@@ -168,9 +184,10 @@ def compteurs(etats: list[dict]) -> dict:
     for x in etats:
         c[x["etat"]] = c.get(x["etat"], 0) + 1
     c["total"] = len(etats)
-    # projection client (R2) : « pas à jour » = les nouvelles versions ; tout le reste « à jour ».
-    c["pas_a_jour"] = c["nouvelle_version"]
-    c["client_a_jour"] = c["total"] - c["nouvelle_version"]
+    # projection client (R2 + CIRCUIT-6 G4) : « pas à jour » = nouvelles versions ET vides
+    # (une source vide ne peut pas être « à jour », quel que soit son état de version).
+    c["pas_a_jour"] = c["nouvelle_version"] + c.get("vide", 0)
+    c["client_a_jour"] = c["total"] - c["pas_a_jour"]
     return c
 
 

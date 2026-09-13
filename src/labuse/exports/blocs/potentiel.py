@@ -7,6 +7,8 @@ from ..lignes import a, ligne, pied, val
 from ..registre_fmt import fmt_m, fmt_m2, groupe
 from ..rendu import chip_span, esc, ligne_kv, note, section, table_kv
 from ..verdicts import rendu_verdict, verdict_potentiel
+# CIRCUIT-6 lot 0 — libellés de scénarios rattachés (vocabulaires.py), plus aucun littéral ici.
+from ...vocabulaires import SCENARIO_AU_SOL, SCENARIO_EN_HAUTEUR, SCENARIO_RECONSTRUCTION
 
 IDS = ("potentiel_verdict", "emprise_batie_m2", "hauteur_bati_m", "n_batiments",
        "surface_libre_sol_m2", "sdp_residuelle_m2", "capacite_logements", "marge_surelevation_m")
@@ -54,7 +56,7 @@ def _scenarios(valeurs) -> str:
         detail = f"<strong>{fmt_m2(sdp)} de surface de plancher résiduelle</strong>"
         if pct:
             detail += f" — {esc(str(pct))} % de la surface autorisée déjà consommés."
-        lignes.append(ligne_kv("Au sol, bâti conservé", detail, ""))
+        lignes.append(ligne_kv(SCENARIO_AU_SOL, detail, ""))
     # en hauteur — RECETTE-7 (E1) : comparé au FAÎTAGE (le bâti BD TOPO est mesuré au faîtage) ;
     # omise si les hauteurs ne sont pas servies (parcelle non bâtie).
     # RECETTE-9 (T9) : quand le LiDAR HD a MESURÉ l'égout (base « égout mesuré (LiDAR HD) »), on
@@ -81,7 +83,7 @@ def _scenarios(valeurs) -> str:
             f"{_cap(str(c['base']))} {fmt_m(c['mesure_m'])} mesuré "
             f"(règle {fmt_m(c['regle_m'])}, marge {fmt_m(c['marge_m'])})" for c in contraintes)
         if marge is not None:
-            lignes.append(ligne_kv("En hauteur, bâti conservé",
+            lignes.append(ligne_kv(SCENARIO_EN_HAUTEUR,
                           f"{esc(detail_c)} — contrainte qui mord : {limite} "
                           f"<em>({mention})</em>.", chip_span("s", "sourcé")))
     elif base_h and str(base_h).startswith("faîtage"):
@@ -94,14 +96,14 @@ def _scenarios(valeurs) -> str:
                       f"{ref} — {fmt_m(regle)} réglementaires contre {fmt_m(bati)} bâtis (faîtage BD TOPO)")
             if estimee:
                 phrase += " ; à vérifier au règlement (la zone ne fixe qu'une hauteur d'égout)"
-            lignes.append(ligne_kv("En hauteur, bâti conservé", phrase + ".", ""))
+            lignes.append(ligne_kv(SCENARIO_EN_HAUTEUR, phrase + ".", ""))
         elif marge is not None:
-            lignes.append(ligne_kv("En hauteur, bâti conservé",
+            lignes.append(ligne_kv(SCENARIO_EN_HAUTEUR,
                           f"<strong>{fmt_m(marge)}</strong> sous la hauteur {ref}.", ""))
     # reconstruction
     if a(valeurs, "capacite_logements"):
         cap = val(valeurs, "capacite_logements")
-        lignes.append(ligne_kv("Reconstruction après démolition",
+        lignes.append(ligne_kv(SCENARIO_RECONSTRUCTION,
                                f"<strong>{esc(str(cap))}</strong> — démolition à chiffrer.", ""))
     if not lignes:
         return ""

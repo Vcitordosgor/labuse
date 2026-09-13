@@ -504,6 +504,24 @@ def coherence_robinets(ctx: JobContext) -> None:
     # a déjà son passage frais dans la même session.
     from . import circuit_journal, circuit_verrous
     resultats = circuit_verrous.jouer_tous(ctx.db)
+    # CIRCUIT-6 lot 8 — la nuit joue AUSSI les sept garanties (même vérité que la CLI et la
+    # porte de deploy.sh) ; lot 2 : le remplissage COMPLET (couches carte incluses, ~1 min)
+    # est mesuré ici, sur les 12 témoins du jour, et journalisé.
+    from . import circuit_garanties
+    resultats += circuit_garanties.jouer_garanties(ctx.db)
+    try:
+        from .registre import remplissage as _rempl
+        _mes = _rempl.mesurer_vitrine(ctx.db)          # complet (carte incluse)
+        _vides = sorted(s for s, m in _mes.items() if m.get("quasi_vide"))
+        circuit_journal.journaliser(
+            ctx.db, "controle", "garanties-remplissage", "cron",
+            "echec" if _vides else "ok",
+            {"mesures": len(_mes), "vides": _vides,
+             "types": {t: sum(1 for m in _mes.values() if m["type"] == t)
+                       for t in ("parcelle", "commune", "carte", "n.a.")}})
+        ctx.compte(remplissage_mesures=len(_mes), remplissage_vides=len(_vides))
+    except Exception:  # noqa: BLE001 — la mesure ne casse pas la sonde
+        pass
     casses = [r.id for r in resultats if r.verdict == "casse"]
     circuit_journal.journaliser(
         ctx.db, "controle", "verrous", "cron", "echec" if casses else "ok",
