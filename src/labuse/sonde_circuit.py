@@ -638,8 +638,14 @@ def verifier_categorielle(db) -> dict:
     · 4.6 COUCHES : tuiles MVT fabriquées pour un AUTRE run que le servi ⇒ eau ancienne
       (mécanisme build-mvt).
     Les PDF de zonage (pré-dossier, lettre) sont confrontés par le cas recette_exports1
-    (nocturne) — jamais « non couverts »."""
+    (nocturne) — jamais « non couverts ».
+
+    REPARATIONS-1 lot 0 — comme la 4.4 des robinets, la catégorielle SOLDE : tout écart
+    re-mesuré SAIN à ce passage passe `statut='solde'` (avant, un écart guéri — la fuite
+    aléa réparée par RETOURS-21 A — restait « ouvert » à vie, ligne rouge fantôme sur la
+    page Circuit et fuite comptée par G7)."""
     trouves: list[tuple] = []
+    verifies: set[tuple[str, str, str, str]] = set()   # (chiffre_id, cle, robinet_a, robinet_b) mesurés
     mesures = 0
     # ── 4.1 zonage sur les témoins : les FIXES (golden) + le TOURNANT du jour (lot 5.3 :
     #    50 parcelles consultées la veille, tirage déterministe) ──
@@ -658,10 +664,13 @@ def verifier_categorielle(db) -> dict:
         mesures += 1
         if zs.source == "parcel_zone_plu" and zs.parts and len(zs.parts) > 1:
             fam_calc = zs.parts[0].get("fam")
-            if fam_calc and zs.zone_fam and fam_calc != zs.zone_fam:
-                trouves.append(("zone_plu_famille", idu, "couche:parcel_zone_plu", zs.zone_fam,
-                                "moteur:zone_servie (dominante calculée)", fam_calc,
-                                "table", "classe"))
+            if fam_calc and zs.zone_fam:
+                verifies.add(("zone_plu_famille", idu, "couche:parcel_zone_plu",
+                              "moteur:zone_servie (dominante calculée)"))
+                if fam_calc != zs.zone_fam:
+                    trouves.append(("zone_plu_famille", idu, "couche:parcel_zone_plu", zs.zone_fam,
+                                    "moteur:zone_servie (dominante calculée)", fam_calc,
+                                    "table", "classe"))
     # ── 4.2 aléas : distribution du domaine ──
     try:
         n_mal = db.execute(text(
@@ -669,6 +678,8 @@ def verifier_categorielle(db) -> dict:
             "AND upper(COALESCE(attrs->>'degre','')) LIKE '%ELEVE%' "
             "AND COALESCE(attrs->>'niveau','') <> 'fort'")).scalar() or 0
         mesures += 1
+        verifies.add(("alea_inondation_couche", "distribution",
+                      "attrs.degre (DEAL brut)", "attrs.niveau (servi)"))
         if n_mal:
             trouves.append(("alea_inondation_couche", "distribution",
                             "attrs.degre (DEAL brut)", f"{n_mal} zones ELEVE/TRES_ELEVE",
@@ -687,6 +698,8 @@ def verifier_categorielle(db) -> dict:
                 n_pts = db.execute(text(
                     "SELECT count(*) FROM sitadel_permits "
                     "WHERE geom_approx IS TRUE AND geom IS NOT NULL")).scalar() or 0
+                verifies.add(("historique_permis_liste", "geom_approx",
+                              "sitadel_permits (points servis)", "règle RETOURS-14"))
                 if n_pts:
                     trouves.append(("historique_permis_liste", "geom_approx",
                                     "sitadel_permits (points servis)", f"{n_pts} permis approximatifs à géométrie",
@@ -754,6 +767,8 @@ def verifier_categorielle(db) -> dict:
             n_hors = db.execute(text(
                 "SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r "
                 "AND NOT (tier = ANY(:dom))"), {"r": run_id, "dom": list(PALIERS)}).scalar() or 0
+            verifies.add(("tier_opportunite", run_id, "parcel_p_score_v2.tier (palier stocké)",
+                          "statuts.assign_paliers (seuils config)"))
             if n_bad or n_hors:
                 trouves.append((
                     "tier_opportunite", run_id, "parcel_p_score_v2.tier (palier stocké)",
@@ -765,8 +780,17 @@ def verifier_categorielle(db) -> dict:
     ensure(db)   # un rollback interne peut avoir annulé le DDL posé dans la même transaction
     for t in trouves:
         _upsert_ecart(db, *t[:7], type_donnee=t[7])
-    return {"ecarts_trouves": len(trouves), "mesures": mesures, "temoins": len(temoins),
-            "temoins_tournants": len(tournants),
+    # REPARATIONS-1 lot 0 — solder (miroir de la 4.4) : re-mesuré ce passage, absent des trouvés
+    cles_trouves = {(t[0], t[1], t[2], t[4]) for t in trouves}
+    solde = 0
+    for v in verifies - cles_trouves:
+        solde += db.execute(text(
+            "UPDATE circuit_ecarts SET statut = 'solde', solde_le = now() "
+            "WHERE chiffre_id = :c AND cle = :k AND robinet_a = :ra AND robinet_b = :rb "
+            "AND statut = 'ouvert'"),
+            {"c": v[0], "k": v[1], "ra": v[2], "rb": v[3]}).rowcount
+    return {"ecarts_trouves": len(trouves), "mesures": mesures, "soldes": solde,
+            "temoins": len(temoins), "temoins_tournants": len(tournants),
             "pdf_zonage": "cas recette_exports1 (nocturne)"}
 
 
