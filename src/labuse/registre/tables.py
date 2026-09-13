@@ -202,7 +202,11 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                     millesime="millésime 2025 (géographie au 01/01/2025)"),
     "contours_iris": Rt(("spatial_layers",), couches=("iris_insee",),
                         millesime="Contours IRIS — géographie 2024 (IGN/INSEE)"),
-    "office_eau_chroniques": Rt(("anc_office_eau_commune",), millesime="Chronique n°149 — données 2023"),
+    "office_eau_chroniques": Rt(("anc_office_eau_commune",), millesime="Chronique n°149 — données 2023",
+                                note="RETIRÉ le 2026-09-13 (SOURCES-3 lot 0.2) — l'ANC à l'échelle "
+                                     "commune est porté par l'INSEE RP2022 EGOUL (anc_maille_taux) ; la "
+                                     "table anc_office_eau_commune est CONSERVÉE (données non effacées), "
+                                     "plus aucun lecteur du code."),
     "spanc_epci": Rt((), note="manuel — collectif/non collectif saisi, aucune table dédiée"),
     "annuaire_service_public": Rt(("mairies",),
                                   millesime="annuaire service-public.fr — 24 mairies (OUTILS K2)"),

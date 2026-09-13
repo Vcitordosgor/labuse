@@ -1081,11 +1081,11 @@ DONNEES: dict[str, Donnee] = {
     "commune) — le TAUX, jamais un verdict",
     moteur="anc", calcul="moteur",
     fonction="src/labuse/anc_service.py:statut_anc (producteur nommé, délégation)",
-    # CIRCUIT-5b lot 2 — le moteur ANC lit AUSSI la chronique de l'Office de l'eau
-    # (anc_office_eau_commune, communes 100 % ANC servies depuis M95) : office_eau_chroniques rattaché.
-    # CIRCUIT-6 lot 6 (G6) — et le zonage SIG d'assainissement (parcel_anc, 4/24 communes GPU) :
-    # gpu_zonage_assainissement était un réservoir MUET lu par anc_service (attrapé par G6).
-    reservoirs=("insee_rp2022_egoul", "office_eau_chroniques", "gpu_zonage_assainissement",),
+    # SOURCES-3 lot 0.2 — l'Office de l'eau (office_eau_chroniques, communes 100 % ANC servies
+    # depuis M95) est RETIRÉ : la branche source_commune a disparu, l'échelle commune est portée
+    # par l'INSEE RP2022 EGOUL (anc_maille_taux). Réservoirs restants : le taux INSEE + le zonage
+    # SIG d'assainissement (parcel_anc, 4/24 communes GPU).
+    reservoirs=("insee_rp2022_egoul", "gpu_zonage_assainissement",),
     portee="live"),
  "ventes_retenues_n": C("Ventes retenues (nuage)", "nombre", "parcelle",
     "ventes DVF retenues par le filtre de comparables (couverture VISIBLE — EXPORTS-1 lot 2)",

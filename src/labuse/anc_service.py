@@ -47,38 +47,12 @@ def statut_anc(db: Session, idu: str) -> dict:
             "commune": commune,
         }
 
-    # ── M95 — SOURCÉ ÉCHELLE COMMUNE : communes classées INTÉGRALEMENT en ANC (Office de l'eau). Plus
-    # fort que le taux de secteur (réglementaire commune vs enquête d'usage), corroboré par le taux INSEE.
-    # La phrase DIT l'échelle (commune entière — pas un secteur, pas la parcelle). Garde défensive : table
-    # absente → on retombe sur secteur puis Absent, jamais un crash. La liste vient d'anc_office_eau_commune
-    # (seed Office de l'eau), jamais en dur ici — un seul endroit.
-    insee = idu[:5]
-    commune_anc = None
-    if db.execute(text("SELECT to_regclass('anc_office_eau_commune')")).scalar() is not None:
-        commune_anc = db.execute(text(
-            "SELECT millesime, source_ref FROM anc_office_eau_commune WHERE insee = :i AND pct_anc >= 100 "
-            "LIMIT 1"), {"i": insee}).mappings().first()
-    if commune_anc:
-        corr = None
-        if db.execute(text("SELECT to_regclass('anc_maille_taux')")).scalar() is not None:
-            corr = db.execute(text(
-                "SELECT round(taux_non_racc)::int AS taux, millesime FROM anc_maille_taux "
-                "WHERE maille = 'commune' AND insee = :i LIMIT 1"), {"i": insee}).mappings().first()
-        corr_txt = (f" Corroboré : INSEE {corr['millesime']}, {corr['taux']} % des logements non "
-                    f"raccordés au réseau collectif." if corr and corr.get("taux") is not None else "")
-        return {
-            "statut": "source_commune",
-            "libelle": "Assainissement non collectif — commune classée intégralement en ANC",
-            "anc": True,
-            "maille_type": "commune",
-            "millesime": commune_anc["millesime"],
-            "phrase": (f"{commune} est classée INTÉGRALEMENT en assainissement non collectif "
-                       f"(commune entière — pas un secteur ni un zonage à la parcelle) — "
-                       f"{commune_anc['source_ref']}." + corr_txt
-                       + " Étude de sol et surface d'épandage requises."),
-            "source": commune_anc["source_ref"],
-            "commune": commune,
-        }
+    # ── SOURCES-3 lot 0.2 — l'échelle COMMUNE ne passe plus par l'Office de l'eau (Chroniques,
+    # RETIRÉE : PDF texte p.13, non sondable, INSEE la corroborait déjà). L'assainissement non
+    # collectif à l'échelle du secteur/commune est désormais porté par l'INSEE RP2022 EGOUL
+    # (variable mode d'assainissement, taux BRUT non-raccordé, anc_maille_taux) — même producteur
+    # que le corroborant d'hier, un seul chiffre servi. Cilaos/Salazie/Entre-Deux : le taux INSEE
+    # (95–98 %) dit la même réalité, sourcé et daté, sans seuil ni verdict fabriqué.
 
     # ── SOURCÉ (SECTEUR) : taux BRUT RP2022, IRIS d'abord (maille fine), repli commune. Rattachement
     # spatial par centroïde (spatial_layers kind='iris_insee'), jamais proba_anc. Un seul endroit. ──

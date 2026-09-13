@@ -337,7 +337,7 @@ SOURCES: list[dict] = [
          documentation_url="https://recherche-entreprises.api.gouv.fr/docs/",
          endpoint_url="https://recherche-entreprises.api.gouv.fr/search",
          legal_notes="Licence Ouverte (open data DINUM, agrégat INSEE/RNE) — attribution : « Source : Insee (Sirene) / INPI (RNE), via recherche-entreprises.api.gouv.fr ». RGPD : personnes morales ; signal INTERNE de priorisation (Score V), jamais un export nominatif de masse (règle d'archi #2).",
-         technical_notes="✓ live 10/07/2026 (schéma vérifié, SHLMR 310895172). Sans clé. Score V : enrichissement propriétaire PAR SIREN (état administratif A/C, siège, NAF, catégorie juridique, dirigeants naissance AAAA-MM) → cache owner_enrichment ; fallback matching PAR DÉNOMINATION (§4.2) → owner_denom_lookup. Complète le RNE (état administratif absent de la vague A3)."),
+         technical_notes="RETRAIT DIFFÉRÉ — sort avec q_v15 (prochain entraînement du modèle). SOURCES-3 lot 0.1 (arbitrage Vic) : DINUM n'alimente PLUS que le Score V (score_v). Débranchée de l'affichage, de la facette et du scan : SIRENE fait foi pour tout affichage (APE via sirene_etablissements.naf ; état « cessée » retiré — SIRENE n'ingère que les actifs). ✓ live 10/07/2026 (schéma vérifié, SHLMR 310895172). Sans clé. Score V : enrichissement propriétaire PAR SIREN (état A/C, siège, NAF, catégorie juridique, dirigeants naissance AAAA-MM) → cache owner_enrichment ; fallback dénomination (§4.2) → owner_denom_lookup."),
     dict(name="QPV 2024 (ANCT)", category="fiscal", provider="ANCT (Agence nationale cohésion des territoires)",
          source_millesime="génération 2024",   # M86 — millésime centralisé
          access_type="téléchargement/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
@@ -1356,6 +1356,11 @@ ALIAS_CANONIQUES: dict[str, str] = {
     "Cadastre Etalab (bulk DGFiP/Etalab)": "Cadastre (API Carto PCI)",
     "RGE ALTI 5 m (IGN)": "RGE ALTI (altimétrie)",
     "GPU — zonages d'assainissement (info-surf typeinf 19)": "GPU — zonages d'assainissement",
+    # SOURCES-3 lot 0.4 — DVF Réunion (Région) devient alias de DVF Etalab (qui fait foi) ;
+    # le témoin de filtre DVF (echantillons/dvf.json) pointe désormais sur Etalab.
+    "DVF Réunion (Région, data.regionreunion.com)": "DVF / valeurs foncières",
+    # SOURCES-3 lot 0.5 — un seul potentiel foncier servi : id 15 fait foi, l'ODS (id 9) est son alias.
+    "Potentiel foncier Région (Région ODS)": "data.regionreunion.com — Potentiel foncier",
 }
 
 RETRAITS: dict[str, str] = {
@@ -1378,6 +1383,12 @@ RETRAITS: dict[str, str] = {
         "ne couvre pas le 974 au millésime courant (2026-02-a métropole seule — 0 ligne 974 sur "
         "22,3 M vérifiées, SCORING-3 L3) ; veille sentinelle + CRON re-sonde CONSERVÉS pour le "
         "prochain millésime",
+    # SOURCES-3 lot 0.2 — anc_service rebranché sur INSEE RP2022 EGOUL, branche Office de l'eau retirée.
+    "Office de l'eau Réunion — Chroniques de l'eau":
+        "SOURCES-3 lot 0.2 (arbitrage Vic) : anc_service rebranché sur INSEE RP2022 EGOUL "
+        "(anc_maille_taux) ; branche source_commune supprimée. Prouvé sur 12 témoins (Salazie "
+        "« intégralement ANC » → « 100 % non raccordés (INSEE RP2022, IRIS) », 11 autres inchangés). "
+        "Table anc_office_eau_commune conservée, plus aucun lecteur.",
 }
 
 HUBS: tuple[str, ...] = (
@@ -1391,9 +1402,9 @@ HUBS: tuple[str, ...] = (
 #: d'arbitrage manque). Un doublon signalé par G1 = une ligne ici, jamais un silence.
 ARBITRAGES_DOUBLONS: dict[str, str] = {
     "Potentiel foncier Région (Région ODS)":
-        "DOUBLON assumé avec « data.regionreunion.com — Potentiel foncier » (même couche kind "
-        "potentiel_foncier) : l'arbitrage REPARATIONS.md B1 (retrait de cette ligne, 0 chiffre) "
-        "reste le geste de Vic — en attendant, la ligne 15 est la référence.",
+        "SOURCES-3 lot 0.5 (arbitrage Vic) : ALIAS de « data.regionreunion.com — Potentiel foncier » "
+        "(id 15, qui fait foi) — même couche kind potentiel_foncier. Un seul chiffre servi, un seul "
+        "producteur.",
     "SIRENE":
         "ARBITRAGE des canaux SIRENE (REPARATIONS.md B3) : trois canaux assumés — socle SIRENE, "
         "Recherche d'entreprises DINUM (enrichissement à la volée), établissements géolocalisés "

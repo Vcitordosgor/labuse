@@ -118,20 +118,18 @@ CURATION: dict[int, dict] = {
         "verdict": "PLEINE",
         "verdict_raison": "Cœur de Scan patrimoine / propriétaire. 7 millésimes empilés, sert le moteur propriétaire_historique.",
     },
-    15: {  # Potentiel foncier Région (potentiel)
-        "verdict": "PARTIELLE — couverture incomplète",
+    15: {  # data.regionreunion — Potentiel foncier : FAIT FOI (SOURCES-3 lot 0.5)
+        "verdict": "PLEINE",
         "granularite": "îlot/zone (PAS parcelle)",
-        "granularite_respectee": "à vérifier — le potentiel foncier Région est un dérivé d'îlots ; ne doit pas être servi comme une vérité parcellaire",
-        "verdict_raison": "DOUBLON à trancher avec id 9 (même producteur Région ODS, familles `potentiel` vs `urbanisme`). Licence « à confirmer ». 4 906 objets en couche potentiel_foncier+sar. Voir S3.",
+        "granularite_respectee": "oui — couche d'orientation, jamais servie comme une vérité parcellaire",
+        "verdict_raison": "SOURCES-3 lot 0.5 (arbitrage Vic) : le producteur UNIQUE du potentiel foncier Région. Un seul chiffre servi, un seul producteur : id 9 (« Potentiel foncier Région (ODS) », famille urbanisme) devient son ALIAS. 4 906 objets en couche potentiel_foncier+sar.",
         "potentiel": "couche d'orientation ; peu de valeur ajoutée vs le potentiel calculé maison",
-        "manque_plein": "clarifier la licence Région et fusionner avec id 9",
         "principes_ko": [P_PROV + " (licence à confirmer)"],
     },
-    9: {  # Potentiel foncier Région (urbanisme) — doublon de 15
-        "verdict": "SERVIE HORS REGISTRE",
-        "verdict_raison": "DOUBLON de id 15 (même jeu Région ODS « potentiel foncier »), rangé en famille `urbanisme`. Aucun slug réservoir distinct servi. À fusionner avec 15 — voir S3.",
-        "potentiel": "aucun propre — redondant avec 15",
-        "manque_plein": "décision de fusion (garder 15 « potentiel », retirer 9)",
+    9: {  # Potentiel foncier Région (ODS) — ALIAS de 15 (SOURCES-3 lot 0.5)
+        "verdict": "ALIAS (doublon)",
+        "verdict_raison": "SOURCES-3 lot 0.5 (arbitrage Vic) : même jeu Région ODS « potentiel foncier » que id 15, qui fait foi. Devient son ALIAS (alias_de=15). Un seul chiffre servi, un seul producteur.",
+        "potentiel": "aucun propre — redondant avec 15 (fait foi)",
     },
 
     # ══════════════ URBANISME ET RÈGLES ══════════════
@@ -265,11 +263,10 @@ CURATION: dict[int, dict] = {
         "verdict_raison": "DVF canonique (Etalab + archives DGFiP), cœur du marché. Contrainte L.112 A LPF (pas de réidentification) respectée. Face à id 119 (DVF Région), c'est la source de référence. Voir S3.",
         "principes_ok": [P_PROV, P_974, P_ANTI],
     },
-    119: {  # DVF Région — doublon
-        "verdict": "SERVIE HORS REGISTRE",
-        "verdict_raison": "DOUBLON de DVF Etalab (id 5). Jeu Région figé 2014→mi-2021 (54 449 mutations), utilisé UNIQUEMENT comme échantillon du filtre DVF (contrôle producteur), non servi au client. `region_dvf` = réservoir sans table. Voir S3 : garder comme témoin de filtre ou retirer.",
-        "potentiel": "témoin de contrôle qualité DVF, rien de plus",
-        "manque_plein": "décider : témoin de filtre (garder discret) ou retrait",
+    119: {  # DVF Région — ALIAS de DVF Etalab (SOURCES-3 lot 0.4)
+        "verdict": "ALIAS (doublon)",
+        "verdict_raison": "SOURCES-3 lot 0.4 (arbitrage Vic) : DVF / valeurs foncières (Etalab, id 5) fait foi. DVF Réunion (Région) devient son ALIAS (alias_de=5). Le témoin de filtre qui lisait le jeu Région (figé 2014→mi-2021) pointe désormais sur Etalab. `region_dvf` = réservoir sans table.",
+        "potentiel": "aucun propre — Etalab fait foi",
     },
     16: {  # Sitadel
         "emprise": "île entière", "communes_couvertes": "24/24",
@@ -311,13 +308,12 @@ CURATION: dict[int, dict] = {
     93: {"verdict": "PLEINE", "verdict_raison": "Lignes HTA EDF (19 480 objets, publié 16/10/2025). Couche réseau. Géométrie ~02/2020 (ancienne, mais publiée telle quelle par EDF)."},
     126: {"verdict": "PLEINE", "verdict_raison": "Fibre Arcep 330 051 immeubles (2026_T1). Sert l'éligibilité fibre à l'immeuble."},
     66: {"verdict": "PLEINE", "verdict_raison": "RP2022 fichier Logements (EGOUL) → maille ANC. Sert le taux d'assainissement collectif/non collectif."},
-    68: {  # Office de l'eau — RETRAIT EN ATTENTE
-        "verdict": "PARTIELLE — couverture incomplète",
-        "emprise": "6 communes 100 % ANC (sur 24)", "communes_couvertes": "6/24",
+    68: {  # Office de l'eau — RETIRÉE (SOURCES-3 lot 0.2)
+        "verdict": "RETIRÉE",
+        "emprise": "était 6 communes 100 % ANC (sur 24)", "communes_couvertes": "0/24 (retirée)",
         "granularite": "commune", "granularite_respectee": "oui",
-        "verdict_raison": "⚠ RETRAIT EN ATTENTE (lot 0 S2). Vic avait décidé le retrait, mais `anc_service.py:57` lit encore `anc_office_eau_commune` EN DIRECT pour servir le statut ANC des 6 communes 100 % ANC (chiffre `part_logements_egout_pct`, moteur `anc`, fiche Réseaux). Retrait refusé tant que ce lecteur vit. Licence « à confirmer ».",
+        "verdict_raison": "SOURCES-3 lot 0.2 (arbitrage Vic) : RETIRÉE le 2026-09-13. `anc_service.py` a été rebranché sur l'INSEE RP2022 EGOUL (variable mode d'assainissement, taux non-raccordé, anc_maille_taux) : la branche source_commune (Office de l'eau) est supprimée. Prouvé sur les 12 témoins — l'assainissement non collectif s'affiche identique ou mieux (Salazie : « intégralement ANC » → « 100 % non raccordés (INSEE RP2022, IRIS) », sourcé et daté ; les 11 autres inchangés). La table anc_office_eau_commune est conservée (données non effacées), plus aucun lecteur.",
         "champs_non_pris": "les chroniques quantitatives (qualité/volume d'eau) — non exploitées, hors périmètre foncier.",
-        "manque_plein": "d'abord débrancher anc_service du réservoir (mandat dédié), ensuite retirer.",
     },
     134: {"verdict": "À DEMANDER / À BRANCHER", "verdict_raison": "Zonages d'assainissement SIG complets — 4/24 via GPU aujourd'hui ; les 20 autres à demander aux 5 EPCI/régies (DEMANDE-REGION-EPCI). Voir Lot 2."},
 
@@ -329,11 +325,10 @@ CURATION: dict[int, dict] = {
         "verdict_raison": "Servie via l'API recherche-entreprises EN DIRECT (Scan patrimoine, Copilote entreprise) — d'où 0 chiffre de registre attaché à `sirene_recherche_entreprises` (API à la requête, sans table). Ce n'est PAS invisible : le pro l'atteint par le Scan/Copilote. Le canal géolocalisé (id 86) est la variante à réservoir. Voir S3.",
         "champs_non_pris": "diffusion 'P' (non-diffusibles) masquée à dessein.",
     },
-    45: {  # DINUM — RETRAIT EN ATTENTE
-        "verdict": "PARTIELLE — couverture incomplète",
-        "emprise": "cache d'enrichissement (9 730 enrich., 2 650 dénominations)",
-        "verdict_raison": "⚠ RETRAIT EN ATTENTE (lot 0 S2). Vic avait décidé le retrait, mais `owner_enrichment`/`owner_denom_lookup` sont lus EN DIRECT par le Score V (`score_v.py:90,98`), les facettes propriétaire (`proprietaire_facettes.py:70`) et le Scan (`app.py:4695`) — chiffre `evenements_proprietaire_liste`, fiche Propriétaire. Retrait refusé tant que ces lecteurs vivent.",
-        "manque_plein": "d'abord débrancher score_v/facettes/scan, ensuite retirer.",
+    45: {  # DINUM — RETRAIT DIFFÉRÉ (sort avec q_v15) — SOURCES-3 lot 0.1
+        "verdict": "PLEINE",
+        "emprise": "cache d'enrichissement (9 730 enrich., 2 650 dénominations) — Score V seul",
+        "verdict_raison": "SOURCES-3 lot 0.1 (arbitrage Vic) : RETRAIT DIFFÉRÉ — reste servie jusqu'au prochain entraînement du modèle (sort avec q_v15). DINUM n'alimente PLUS que le Score V (owner_enrichment/owner_denom_lookup, `score_v.py:90,98`). Débranchée de l'affichage, de la facette et du scan : SIRENE fait foi pour tout affichage — l'APE des filtres/facette propriétaire vient de `sirene_etablissements.naf` (format pointé), l'état « cessée » est retiré (SIRENE n'ingère que les actifs, l'état administratif d'une unité légale n'y est pas lisible ; radiée/procédure BODACC restent). Verdict PLEINE, plus PARTIELLE.",
     },
     86: {  # SIRENE établissements géoloc — doublon canal de 21
         "verdict": "PLEINE",
@@ -388,13 +383,12 @@ CURATION: dict[int, dict] = {
     6: {"verdict": "PLEINE", "verdict_raison": "RGE ALTI — pente 5 m (147 398 objets). Socle topographique (pente, viabilisation)."},
     65: {"verdict": "ALIAS (doublon)", "verdict_raison": "RGE ALTI 5 m = même réservoir que id 6 (alias_de=6). Alias correct."},
     61: {"verdict": "PLEINE", "verdict_raison": "BD ORTHO 20 cm 2025. Détection piscines (90,7 %), fond ortho. À plein usage."},
-    69: {  # BD ORTHO IRC — RETRAIT EN ATTENTE
-        "verdict": "PARTIELLE — couverture incomplète",
+    69: {  # BD ORTHO IRC — CONSERVÉE (SOURCES-3 lot 0.3)
+        "verdict": "PLEINE",
         "emprise": "île entière (dérivé végétation)",
         "part_parcelles": "parcel_vegetation : 431 663 (île entière)",
         "granularite": "parcelle (ombrage/canopée NDVI)", "granularite_respectee": "oui",
-        "verdict_raison": "⚠ RETRAIT EN ATTENTE (lot 0 S2). Vic avait décidé le retrait, mais l'infrarouge IRC est la source du NDVI/canopée : `parcel_vegetation` (431 663 lignes) est lu EN DIRECT par le solaire (`solaire.py:311` ombrage), le Flash (`flash/data.py:650`) et le scoring P (`p_model/sql.py:287`). Chiffre `prod_spec_kwh_kwc`, fiche Solaire. Retrait refusé tant que ces lecteurs vivent.",
-        "manque_plein": "d'abord débrancher l'ombrage végétal du solaire/scoring, ensuite retirer.",
+        "verdict_raison": "SOURCES-3 lot 0.3 (arbitrage Vic) : CONSERVÉE — la décision de retrait est ANNULÉE. L'infrarouge IRC alimente l'ombrage végétal du solaire et du scoring : `parcel_vegetation` (431 663 lignes) est lu par le solaire (`solaire.py:311` ombrage), le Flash (`flash/data.py:650`) et le scoring P (`p_model/sql.py:287`). Chiffre `prod_spec_kwh_kwc`, fiche Solaire. Verdict PLEINE, note de couverture retirée.",
     },
     22: {"verdict": "PARTIELLE — champs manquants", "verdict_raison": "BD CARTO V5 occupation du sol (proxy OCS, 1 643 objets). Proxy grossier — l'OCS GE officielle est une candidate (lot 5)."},
     96: {"verdict": "PLEINE", "verdict_raison": "Cadastre d'époque (archives PCI 2017→2026). Sert le rattachement des permis anciens (RETOURS-14)."},
