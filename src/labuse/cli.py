@@ -4446,21 +4446,21 @@ app.add_typer(circuit_app, name="circuit")
 @circuit_app.command("verrous")
 def circuit_verrous_cmd(
     par: str = typer.Option("cli", help="Qui joue (email admin, 'cron') — entre au journal."),
-    complet: bool = typer.Option(False, "--complet", help="Jouer TOUS les verrous même après un cassé."),
+    complet: bool = typer.Option(True, "--complet/--arret-premier", hidden=True,
+                                 help="(déprécié — tout se joue toujours ; --arret-premier pour l'ancien mode)"),
     sans_journal: bool = typer.Option(False, "--sans-journal", help="Ne pas écrire au journal du circuit."),
 ) -> None:
-    """CIRCUIT-5 lot 6.1 + CIRCUIT-6 lot 8 — joue les SEIZE verrous (lots 1 à 5) PUIS les
-    SEPT garanties (G1…G7), une ligne chacun (phrase, verdict, preuve), sort en erreur au
-    premier cassé. Jouée par pytest (marque `verrous`), par la sonde de nuit, et par
-    deploy.sh qui refuse de déployer si un verrou OU une garantie casse."""
+    """CIRCUIT-5 lot 6.1 + CIRCUIT-6 lot 8 — LA commande unique : joue les SEIZE verrous
+    (V1a…V5c) PUIS les SEPT garanties (G1…G7) — 23, TOUJOURS TOUS (plus d'arrêt au premier
+    cassé : un cassé ne doit jamais en cacher un autre). Une ligne chacun (phrase, verdict,
+    preuve) ; fin : « tout va bien » ou la liste de ce qui casse ; code retour 1 si ≥ 1 cassé.
+    Jouée par pytest (marque `verrous`), par la sonde de nuit, et par deploy.sh (même commande,
+    même verdict : il refuse de déployer si un verrou OU une garantie casse)."""
     from . import circuit_garanties, circuit_journal, circuit_verrous
 
     with session_scope() as s:
         resultats = circuit_verrous.jouer_tous(s, arret_premier=not complet)
-        # CIRCUIT-6 lot 8 — les SEPT GARANTIES se jouent avec les seize verrous : même
-        # commande, même journal, même porte deploy.sh (qui appelle cette commande).
-        if complet or not any(r.verdict == "casse" for r in resultats):
-            resultats += circuit_garanties.jouer_garanties(s)
+        resultats += circuit_garanties.jouer_garanties(s)
         casses = [r for r in resultats if r.verdict == "casse"]
         a_decider = [r for r in resultats if r.verdict == "a_decider"]
         for r in resultats:
@@ -4478,10 +4478,13 @@ def circuit_verrous_cmd(
                  "a_decider": [r.id for r in a_decider],
                  "preuves": {r.id: r.preuve for r in resultats}})
             s.commit()
-    typer.echo(f"— {len(resultats)} verrou(s) joué(s) · {len(casses)} cassé(s) · "
-               f"{len(a_decider)} à décider")
     if casses:
+        typer.echo(f"— {len(resultats)} joués (16 verrous + 7 garanties) : "
+                   f"{len(casses)} CASSÉ(S) — {', '.join(r.id for r in casses)}"
+                   + (f" · {len(a_decider)} à décider" if a_decider else ""))
         raise typer.Exit(1)
+    typer.echo(f"— {len(resultats)} joués (16 verrous + 7 garanties) : tout va bien"
+               + (f" · {len(a_decider)} à décider" if a_decider else ""))
 
 
 tables_app = typer.Typer(add_completion=False,

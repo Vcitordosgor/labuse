@@ -11,6 +11,9 @@ from labuse import circuit_garanties as CG
 
 pytestmark = pytest.mark.verrous
 
+from pathlib import Path
+ROOT_C6 = Path(__file__).resolve().parents[2]
+
 
 def _src(i, name, *, endpoint=None, notes=None, alias_de=None, status="connecte"):
     return {"id": i, "name": name, "status": status, "endpoint_url": endpoint,
@@ -294,3 +297,31 @@ def test_fuite2_lidar_plus_quasi_vide():
     with sessionmaker(bind=create_engine(url))() as s:
         m = R.remplissage_source(s, "lidar_hd_mnh", R.temoins_du_jour(s))
         assert m["quasi_vide"] is False and m["remplis"] >= 6
+
+
+# ── la commande unique : 23, toujours tous ─────────────────────────────────────────────
+@pytest.mark.local
+def test_les_23_se_jouent_toujours_tous():
+    """La composition de « labuse circuit verrous » : 16 verrous + 7 garanties = 23, TOUJOURS
+    tous — même quand un verrou casse en route (le vécu : l'arrêt-au-premier sur V3a masquait
+    les 16 suivants, la commande n'en montrait que 7)."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from labuse import circuit_verrous
+    url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
+    with sessionmaker(bind=create_engine(url))() as s:
+        resultats = circuit_verrous.jouer_tous(s, arret_premier=False) + CG.jouer_garanties(s)
+    ids = [r.id for r in resultats]
+    assert ids == ["V1a", "V1b", "V1c", "V1d", "V2a", "V2b", "V3a", "V3b", "V3c",
+                   "V4a", "V4b", "V4c", "V4d", "V5a", "V5b", "V5c",
+                   "G1", "G2", "G3", "G4", "G5", "G6", "G7"], ids
+
+
+def test_la_cli_ne_conditionne_plus_les_garanties():
+    """Le défaut vécu : `if complet or not any(casse)` sautait les garanties dès qu'un verrou
+    cassait, et l'arrêt-au-premier tronquait la liste. La CLI joue tout, sans condition."""
+    src = (ROOT_C6 / "src/labuse/cli.py").read_text(encoding="utf-8")
+    bloc = src.split('@circuit_app.command("verrous")')[1].split("@")[0]
+    assert "jouer_garanties(s)" in bloc
+    assert "if complet or not any" not in bloc, "les garanties re-conditionnées à un cassé"
+    assert 'complet: bool = typer.Option(True' in bloc, "l'arrêt-au-premier redevenu le défaut"
