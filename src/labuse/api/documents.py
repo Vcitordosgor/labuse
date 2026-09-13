@@ -45,12 +45,52 @@ def rendre_document(db, idu: str, request: Request, document: str, *,
         fiche = parcel_fiche(idu, db=db, request=request)
     except ValueError as exc:
         raise HTTPException(404, str(exc))
-    res = builder.construire(db, idu, document, fiche=fiche, compte_id=current_compte(request))
+    try:
+        res = builder.construire(db, idu, document, fiche=fiche, compte_id=current_compte(request))
+    except builder.DocumentNonEtablissable as exc:
+        # RECETTE-5 (V18b) — le document ne se génère pas ; on rend 422 + la liste des manques,
+        # que l'écran affiche (« il manque : … ») au lieu de télécharger des pages vides.
+        raise HTTPException(status_code=422, detail={
+            "erreur": "document_non_etablissable",
+            "message": "Ce document ne peut pas être établi : il manque des éléments indispensables.",
+            "manques": exc.manques,
+        })
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        # RECETTE-7 (C1) — un ÉCHEC TECHNIQUE n'est PAS une donnée manquante : on LOGUE la trace
+        # (pour lire la cause) et on rend une erreur DISTINCTE (500, sans « manques ») — l'écran la
+        # dit comme telle, jamais sous le bandeau « il manque : ».
+        log.exception("document %s %s : échec technique de génération", document, idu)
+        raise HTTPException(status_code=500, detail={
+            "erreur": "erreur_technique",
+            "message": "Le document n'a pas pu être généré (erreur technique).",
+        })
     html = _mention_marque(res.html) if marque else res.html
-    pdf = render_pdf(html, forms=forms)
+    try:
+        pdf = render_pdf(html, forms=forms)
+    except Exception as exc:  # noqa: BLE001 — le rendu PDF (WeasyPrint) peut échouer : dit comme technique.
+        log.exception("document %s %s : échec du rendu PDF", document, idu)
+        raise HTTPException(status_code=500, detail={
+            "erreur": "erreur_technique",
+            "message": "Le document n'a pas pu être rendu (erreur technique).",
+        })
     log.info("document %s %s généré (%s)", document, idu, res.numero)
+    # RECETTE-5 (V17) — nom de fichier HUMAIN (« Dossier financier — FI-….pdf ») : le titre du document
+    # (point unique builder.titre_document) + le numéro. Fallback ASCII (`filename=`) sur le numéro seul,
+    # nom accentué en `filename*` (RFC 5987) pour les navigateurs.
+    from urllib.parse import quote
+    nom = f"{builder.titre_document(document)} — {res.numero}.pdf"
+    dispo = f'inline; filename="{res.numero}.pdf"; filename*=UTF-8\'\'{quote(nom)}'
+    # RECETTE-8 W19 — 🔴 l'URL du document est STABLE (/financier/{idu}.pdf, sans jeton) : le
+    # navigateur (et tout proxy) mettait la PREMIÈRE réponse en cache et la resservait telle quelle
+    # aux téléchargements suivants → une saisie modifiée ne changeait pas le PDF (le back, lui, relit
+    # le questionnaire et régénère à chaque appel — prouvé, deux prix ⇒ deux HTML). `no-store`
+    # interdit toute mise en cache : chaque téléchargement reflète la dernière saisie.
     return Response(pdf, media_type="application/pdf",
-                    headers={"Content-Disposition": f'inline; filename="{res.numero}.pdf"'})
+                    headers={"Content-Disposition": dispo,
+                             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                             "Pragma": "no-cache"})
 
 
 @router.get("/financier/{idu}.pdf")

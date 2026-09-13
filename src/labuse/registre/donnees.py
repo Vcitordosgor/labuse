@@ -115,14 +115,19 @@ DONNEES: dict[str, Donnee] = {
     "calcul ligne-à-ligne, taux communal SAISI obligatoire, jamais un défaut",
     moteur="taxe_amenagement", calcul="moteur", fonction="src/labuse/taxe_amenagement.py",
     reservoirs=(), portee="live"),
- # FICHE-1 lot 5 — estimation servie DANS la fiche (Constructibilité) pour le scénario table
- # rase du potentiel ; distincte de taxe_amenagement_eur (outil, taux SAISI) : ici taux PUBLIC.
- "taxe_amenagement_estimee_eur": C("Taxe d'aménagement estimée (table rase)", "€", "parcelle",
-    "estimation de la taxe pour le scénario table rase du potentiel (assiette = surface de "
-    "plancher créée) ; taux communal PUBLIC si connu, sinon « non renseigné » (jamais inventé) ; "
-    "taux départemental plafond 2,5 % à confirmer",
+ # RECETTE-8 W2 — sur la fiche/le Dossier, la taxe d'aménagement ne porte AUCUN montant : elle se
+ # paie sur la surface de plancher créée par un PROJET (art. L331 c. urb.), or aucun projet n'est
+ # saisi ici. On sert donc UNIQUEMENT le taux communal public (daté) et la phrase disant sur quoi
+ # elle se calculera ; le montant en euros n'est chiffré qu'au Financier, sur la SDP du projet.
+ "taxe_amenagement_estimee_eur": C("Taxe d'aménagement — taux communal (référence)", "%", "parcelle",
+    "référence de taxe d'aménagement servie sur la fiche/le Dossier : le TAUX communal public (daté) "
+    "et la part départementale de droit (plafond 2,5 %) — SANS montant en euros, car la taxe porte "
+    "sur la surface de plancher CRÉÉE par un projet (art. L331 c. urb.) et aucun projet n'est saisi "
+    "à ce stade (RECETTE-8 W1/W2 : avant, elle imprimait « 22 469 € pour 458 m² de table rase », un "
+    "scénario que personne n'avait choisi). Le montant chiffré est au Financier, sur la SDP du projet. "
+    "Taux communal PUBLIC si connu, sinon « non renseigné » (jamais inventé)",
     moteur="taxe_amenagement", calcul="moteur",
-    fonction="src/labuse/api/app.py:_taxe_amenagement_block (taxe_amenagement.calculer)",
+    fonction="src/labuse/api/app.py:_taxe_amenagement_block (taxe_amenagement.calculer, surface=0)",
     reservoirs=(), portee="live"),
  # FICHE-1 lot 6 — les annonces Radar rattachées à la parcelle (validées), servies dans « Marché
  # et secteur » : date, prix demandé, statut, lien fiche annonce, écart demandé/acté par annonce.
@@ -638,6 +643,20 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/api/app.py:parcel_export_pdf (calculette — saisie client)",
     reservoirs=(), portee="projet",
     table="(saisie client — corps de requête de la calculette, aucune table)"),
+ # RECETTE-8 W13bis — parcours « Revente en l'état » (C3) : achat → frais → travaux → portage →
+ # revente ⇒ marge / taux de marge. Saisies client (portée projet), jamais un chiffre LABUSE.
+ "prix_achat_revente_saisi_eur": C("Prix d'achat — revente (saisi)", "€", "parcelle",
+    "prix d'achat du bien SAISI par le client pour le scénario de revente en l'état — écran Revente",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/financier_questionnaire.py (écran Revente)",
+    reservoirs=(), portee="projet", table="(saisie client — questionnaire du Financier)"),
+ "travaux_revente_saisi_eur": C("Travaux éventuels — revente (saisi)", "€", "parcelle",
+    "montant de travaux éventuels SAISI par le client avant revente (0 si aucun) — écran Revente",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/financier_questionnaire.py (écran Revente)",
+    reservoirs=(), portee="projet", table="(saisie client — questionnaire du Financier)"),
+ "prix_revente_saisi_eur": C("Prix de revente (saisi)", "€", "parcelle",
+    "prix de revente visé SAISI par le client (scénario revente en l'état) — écran Revente",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/financier_questionnaire.py (écran Revente)",
+    reservoirs=(), portee="projet", table="(saisie client — questionnaire du Financier)"),
  # ══ EXPORTS-2 lot 4 — LE QUESTIONNAIRE DU FINANCIER (4 écrans, saisies client portée projet) ══
  # Chaque champ = un id projet, jamais un chiffre LABUSE. Le pré-remplissage sourcé est servi À
  # PART (prefill, avec sa source) ; un champ vidé par le client s'imprime « non chiffré », jamais
@@ -1023,13 +1042,17 @@ DONNEES: dict[str, Donnee] = {
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:bloc_potentiel (table_rase.vendable_m2)",
     reservoirs=("bd_topo", "cosia", "gpu_plu_api_carto",), portee="run"),
- "surface_plancher_m2": C("Surface de plancher (Estimé)", "m²", "parcelle",
-    "surface de plancher du scénario table rase (moteur commun) — distincte de capacite_logements",
+ "surface_plancher_m2": C("Surface de plancher créée (table rase)", "m²", "parcelle",
+    "surface de plancher CRÉÉE par le scénario table rase (moteur commun, emprise constructible × "
+    "occupation × niveaux) — c'est l'ASSIETTE de taxe_amenagement_estimee_eur ; distincte de "
+    "capacite_logements ET de sdp_residuelle_m2 (potentiel au sol après bâti existant) : deux "
+    "concepts, deux données, jamais deux chiffres pour un même nom (RECETTE-7 lot 0)",
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:bloc_potentiel (table_rase.plancher_m2)",
     reservoirs=("bd_topo", "cosia", "gpu_plu_api_carto",), portee="run"),
- "marge_surelevation_m": C("Marge de surélévation (à l'égout)", "m", "parcelle",
-    "hauteur restante sous la règle de hauteur à l'égout de la zone (moteur commun, EXPORTS-1 3.2)",
+ "marge_surelevation_m": C("Marge de surélévation (au faîtage)", "m", "parcelle",
+    "hauteur restante sous la règle de FAÎTAGE de la zone, comparée au faîtage bâti mesuré (BD "
+    "TOPO) — RECETTE-7 E1 : faîtage contre faîtage ; repli égout+toiture type avec incertitude",
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:surelevation",
     reservoirs=("bd_topo", "gpu_plu_api_carto",), portee="run"),

@@ -62,6 +62,13 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   const dragging = useRef(false)
   const commune = useApp((s) => s.commune)
   const labelMarkers = useRef<maplibregl.Marker[]>([])
+  // RECETTE-9 T6 — le contour BLANC (W13) ne s'affichait JAMAIS depuis la fiche : la source `cible`
+  // restait à 0 feature (prouvé : geojson 200, source présente, mais setData jamais appliqué). Cause :
+  // course entre la (re)création des cartes en StrictMode et l'effet qui pose la géométrie — quand la
+  // donnée arrive avant que la source de la NOUVELLE carte soit ajoutée, le `setData` tombe dans le vide
+  // et rien ne le rejoue. On garde la FC voulue dans un ref, réappliquée À LA FOIS quand la donnée
+  // change ET quand une carte (re)charge et (re)crée la source — plus de course possible.
+  const cibleFC = useRef<{ type: 'FeatureCollection'; features: unknown[] }>({ type: 'FeatureCollection', features: [] })
   // mode île : pas de GeoJSON (431k features) — le comparateur reste utilisable sans la
   // surcouche parcelles (l'ortho historique est l'objet de l'outil)
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
@@ -100,12 +107,19 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
         paint: { 'line-color': '#5CE6A1', 'line-width': 1 } })
       // O2-4 — CONTOUR de la parcelle désignée : source DÉDIÉE `cible` (une seule feature, chargée par
       // IDU), indépendante du GeoJSON commune. Casing sombre (halo léger, lisible sur l'ortho claire de
-      // 1950) + trait mint appuyé — MÊME code couleur (#4ADE80) que la carte principale.
+      // 1950) + trait BLANC appuyé.
+      // RECETTE-8 W13 (B5) — le contour de la parcelle est BLANC (#ECF5EF), pas vert : sur les deux
+      // fonds d'époque (ortho claire ancienne ET récente), un trait blanc à casing sombre reste
+      // lisible des DEUX côtés du curseur, là où le vert se noyait dans la végétation. Il est tracé
+      // une fois sur la carte partagée → présent sur les deux volets du swipe.
       m.addSource('cible', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } as never })
       m.addLayer({ id: 'cible-casing', type: 'line', source: 'cible',
         paint: { 'line-color': '#06110B', 'line-width': 5, 'line-opacity': 0.85, 'line-blur': 0.5 } })
       m.addLayer({ id: 'cible', type: 'line', source: 'cible',
-        paint: { 'line-color': '#4ADE80', 'line-width': 2.5 } })
+        paint: { 'line-color': '#ECF5EF', 'line-width': 2.5 } })
+      // RECETTE-9 T6 — dès que la source existe (y compris après un remount StrictMode), on lui pose la
+      // géométrie DÉJÀ connue (ref) : le contour survit à la course donnée↔carte.
+      ;(m.getSource('cible') as maplibregl.GeoJSONSource | undefined)?.setData(cibleFC.current as never)
     })
     addParcels(past); addParcels(now)
     if (center) { past.jumpTo({ center, zoom: 17 }) }
@@ -142,10 +156,12 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   // proprement quand la parcelle change ou disparaît.
   useEffect(() => {
     const feat = cible.data
-    const fc = { type: 'FeatureCollection', features: feat ? [feat] : [] }
+    const fc = { type: 'FeatureCollection' as const, features: feat ? [feat] : [] }
+    cibleFC.current = fc          // RECETTE-9 T6 — mémorise la FC pour la (re)pose au (re)chargement des cartes
     for (const m of maps.current ?? []) {
-      const set = () => (m.getSource('cible') as maplibregl.GeoJSONSource | undefined)?.setData(fc as never)
-      if (m.isStyleLoaded()) set(); else m.once('load', set)
+      // applique si la source existe DÉJÀ ; sinon la pose se fera à l'ajout de la source (load handler,
+      // qui lit `cibleFC.current`). Plus de `once('load')` qui manque le train quand load a déjà eu lieu.
+      ;(m.getSource('cible') as maplibregl.GeoJSONSource | undefined)?.setData(fc as never)
     }
     // étiquette IDU — un seul Marker (sur le volet gauche, plein écran) : les deux cartes partageant la
     // même caméra, sa position écran vaut pour les deux. Le contour, lui, est tracé sur chaque volet.

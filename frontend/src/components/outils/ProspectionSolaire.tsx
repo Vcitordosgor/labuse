@@ -115,7 +115,10 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   // A2 — tri de la liste : commune (défaut) puis potentiel, en-têtes cliquables (tri SERVEUR).
   const [sortPisc, setSortPisc] = useState<'commune' | 'potentiel'>('commune')
 
-  const agg = useQuery({ queryKey: ['piscines-agg', commune, inclureIncertaines], queryFn: () => getPiscinesAgregat(commune, 0, inclureIncertaines), staleTime: 60_000, enabled: montre })
+  // RECETTE-5 (V3, décision Vic) — la fiche de SYNTHÈSE (total + par commune) revient D'EMBLÉE :
+  // le comptage se charge dès l'ouverture (plus gardé derrière « Voir les parcelles »). Seul le
+  // LISTING (`list`, plus bas) attend le clic. `montre` ne gouverne donc plus que le listing.
+  const agg = useQuery({ queryKey: ['piscines-agg', commune, inclureIncertaines], queryFn: () => getPiscinesAgregat(commune, 0, inclureIncertaines), staleTime: 60_000 })
   // O12a (RETOURS-11) — la surface piscine (mesure vue du ciel) est FAUSSE : ni filtre ni colonne
   // surface (décision maintenue en OUTILS-FIX-1). A2 : la liste porte parcelle · commune · potentiel
   // solaire · type de propriétaire (PM nommée / particulier non nommé).
@@ -166,15 +169,8 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
         </div>
       )}
 
-      {/* RECETTE-1 R22 — le geste explicite : rien ne naît avant ce clic. */}
-      {!montre && (
-        <button data-piscines-voir onClick={() => setMontre(true)}
-          className="shrink-0 rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
-          Voir les parcelles
-        </button>
-      )}
-
-      {/* LA STAT D'ABORD */}
+      {/* RECETTE-5 (V3) — LA FICHE DE SYNTHÈSE D'ABORD (total + par commune), affichée d'emblée ;
+          le bouton « Voir les parcelles » vient DESSOUS (cf. plus bas). */}
       {agg.isLoading && <Loading label="Comptage des piscines…" />}
       {agg.isError && <ErrorState message="Détection piscines momentanément indisponible." />}
       {/* R11 — quand la carte est affichée, le comptage se replie en UNE ligne (déplier) pour dévoiler le listing. */}
@@ -189,7 +185,8 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
       )}
       {agg.data && !comptageReplie && (
         <div className="rounded-lg border px-3 py-2.5" style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
-          {carteAffichee && (
+          {/* RECETTE-5 (V3) — dès que le listing est ouvert (`montre`), on peut re-replier la synthèse. */}
+          {montre && (
             <div className="mb-1 text-right">
               <button data-piscines-comptage-replier onClick={() => setComptageReplie(true)} className="text-[10px] text-txt-dim hover:text-mint">replier ▴</button>
             </div>
@@ -228,8 +225,17 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
         </div>
       )}
 
+      {/* RECETTE-5 (V3) — le bouton « Voir les parcelles » SOUS la fiche de synthèse. Au clic, la
+          synthèse SE REPLIE (une ligne, dépliable) et le listing prend la place. */}
+      {agg.data && !montre && (
+        <button data-piscines-voir onClick={() => { setMontre(true); setComptageReplie(true) }}
+          className="shrink-0 rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
+          Voir les parcelles
+        </button>
+      )}
+
       {/* R22 — la carte n'apparaît qu'avec les résultats (après « Voir les parcelles »). */}
-      {agg.data && (
+      {agg.data && montre && (
         <button data-solaire-carte data-carte-affichee={carteAffichee ? '1' : '0'} onClick={voirCarte} disabled={carteBusy}
           className="rounded-lg border py-1.5 text-center text-[11px] font-medium transition-colors duration-quick hover:brightness-110 disabled:opacity-50"
           style={carteAffichee

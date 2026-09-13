@@ -17,7 +17,7 @@ const API = process.env.LABUSE_API_DEV ?? 'http://127.0.0.1:8000'
 // la légende retombait sur le repli « matrice » alors que le run servi existe. Le dev raconte
 // désormais la même chose que la prod (FastAPI même origine). '/mutation' retiré (M35 Lot E).
 const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre', '/discover',
-  '/health', '/coverage', '/assemblage', '/compare', '/communes', '/v2',
+  '/health', '/coverage', '/assemblage', '/compare', '/communes', '/v2', '/scoring',
   '/projets', '/ia', '/crm', '/pipeline', '/modules', '/watch', '/share', '/dossier',
   '/faisabilite', '/charge', '/bilan', '/signalement', '/guide',
   // M70 décision 11 (bug 11) : '/pre-dossier' MANQUAIT au proxy dev → le lien /pre-dossier/{idu}.zip

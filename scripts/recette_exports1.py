@@ -37,7 +37,10 @@ def _mots_interdits() -> list[str]:
             pass
     return ["run m1", "EPSG", "ST_Buffer", "à_vérifier", "deja_bati", "reglt",
             " pt)", "scoring", "fiabilité suivie", "doctrine", "page corrigée",
-            "L'IA", "fiche commune", "parcours Flash", "MOBPRO", "n 11"]
+            "L'IA", "fiche commune", "parcours Flash", "MOBPRO", "n 11",
+            "surélévation possible", "non identifiée", "rpls_sdes",
+            "« latest » ingérée", "année non pinnée", "propre non public",
+            "RPG.LATEST", "[2022, 2025]"]
 
 
 MOTS_INTERDITS = _mots_interdits()
@@ -119,8 +122,9 @@ def verifier_temoin(idu: str, d: Path, fiche: dict) -> None:
 
     # ── pt 3 : mots interdits (liste versionnée — contrôle DISTINCT pour la sonde, 0-bis) ──
     for mot in MOTS_INTERDITS:
-        for doc, t in txts.items():
-            if mot in t:
+        ml = mot.lower()                      # RECETTE-11 — garde insensible à la casse (attrape aussi
+        for doc, t in txts.items():           # un « Surélévation possible » capitalisé réintroduit)
+            if ml in t.lower():
                 MOTS_TROUVES.append(f"{idu}/{doc} : « {mot} »")
                 ko(f"{idu}/{doc} : mot interdit « {mot} »")
     # EXPORTS-2 — aucun ◌ dans un document rendu (bloc non branché = absent, jamais un exemple)

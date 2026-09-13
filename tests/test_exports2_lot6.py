@@ -35,7 +35,9 @@ def _valeurs(bati=True):
 
 def _ctx(**kw):
     base = {"idu": "97415000BO0852", "adresse": "103 Chaussée Royale, Saint-Paul",
-            "emetteur": {"raison": "Groupe Océan Promotion", "contact": "s.d@ocean.re"},
+            # RECETTE-12 E1 — émetteur nommé (nom + téléphone), format servi par builder._emetteur.
+            "emetteur": {"nom": "Groupe Océan Promotion",
+                         "coordonnees": "12 rue du Port, 97420 · 0262 00 00 00", "email": "s.d@ocean.re"},
             "emission": "05/09/2026", "validite": "04/12/2026",
             "is_bati": True, "is_pm": True, "industriel_proche": False,
             "voisines": {"n": 0, "membres": [], "surface_totale_m2": None}, "plan": None}
@@ -45,22 +47,21 @@ def _ctx(**kw):
 
 def test_confidentiel_non_mandat_et_emission():
     html = apporteur.rendu(_valeurs(), _ctx())
-    assert "Confidentiel" in html and "Un terrain à sonder" in html
+    # RECETTE-6 (F1) — is_bati=True → titre « bien bâti » (jamais « terrain »).
+    assert "Confidentiel" in html and "Un bien bâti à sonder" in html
     # RECETTE-3 (T1) — UN SEUL bandeau : confidentiel + non-mandat fusionnés.
     assert "sans mandat" in html and "habilité" in html
     assert html.count('class="confidential"') == 1           # un seul bandeau, pas deux
     assert "ne vaut pas mandat" not in html                  # l'ancien second bloc a disparu
-    # RECETTE-2 (S7) — la section « Qui vous envoie ce brief » est RETIRÉE (décision Vic) : ni
-    # titre, ni raison sociale de l'émetteur, ni ligne « Contact ». La date d'émission + validité
-    # 90 jours SURVIT, déplacée en tête (métadonnée du brief, pas identité de l'émetteur).
-    assert "Qui vous envoie" not in html
-    assert "Groupe Océan Promotion" not in html
+    # RECETTE-12 E1 — l'ÉMETTEUR est NOMMÉ (nom + téléphone) : Vic a refusé l'anonymat le 05/09.
+    assert "Émetteur : " in html and "Groupe Océan Promotion" in html and "0262 00 00 00" in html
+    assert "renvoyez vos réponses et vos photos" in html
     assert "Émis le" in html and "90 jours" in html and "04/12/2026" in html
 
 
-def test_parcelle_enrichie_s7():
-    # RECETTE-2 (S7) — l'apporteur a la parcelle EN MAIN : contraintes + prix de secteur en plus.
-    # RECETTE-3 (T1) — libellés maquette v3 : « Ce qui gêne », « Prix du secteur », « Ce qu'on peut y bâtir ».
+def test_parcelle_enrichie_spec_e1():
+    # RECETTE-12 E1 — « Ce qui gêne » RESTE ; « Prix du secteur » et « Ce qu'on peut y bâtir » RETIRÉS
+    # (prix = ancre du vendeur ; capacité = répétée au propriétaire). Spec fermée APPORTEUR-SPEC.md.
     v = _valeurs()
     v["aleas_parcelle_liste"] = _V("aleas_parcelle_liste", [{"nature": "Mouvement de terrain"}])
     v["dpu_perimetre"] = _V("dpu_perimetre", True)
@@ -69,14 +70,13 @@ def test_parcelle_enrichie_s7():
     v["capacite_logements"] = _V("capacite_logements", 14)
     html = apporteur.rendu(v, _ctx())
     assert "Ce qui gêne" in html and "Mouvement de terrain" in html and "préemption (DPU)" in html
-    assert "Prix du secteur" in html and "terrain nu" in html
-    # (esc échappe l'apostrophe de « qu'on » — on teste la queue du libellé, sans apostrophe)
-    assert "peut y bâtir" in html and "plancher restant" in html
+    assert "Prix du secteur" not in html and "€/m²" not in html
+    assert "peut y bâtir" not in html and "plancher restant" not in html
 
 
-def test_recette3_t1_contact_essentiel_voisines_photos():
-    # RECETTE-3 (T1) — le CONTACT en première question, marqué « l'essentiel » ; les photos par
-    # message en citant la référence (jamais collées) ; la ligne « À côté » quand il y a des voisines.
+def test_recette12_e1_contact_essentiel_voisines_photos():
+    # RECETTE-12 E1 — contact = 1er champ OBLIGATOIRE SANS étiquette ; TROIS « l'essentiel » (prix,
+    # bail, voisines) ; photos + retour à l'ÉMETTEUR nommé (jamais « n'imprimez rien »).
     v = _valeurs()
     v["prix_achat_historique_eur"] = _V("prix_achat_historique_eur",
                                         {"valeur": 186000, "date_mutation": "2019-03-15"})
@@ -84,17 +84,18 @@ def test_recette3_t1_contact_essentiel_voisines_photos():
                                              {"idu": "97415000CY0046", "ref": "CY 0046", "surface_m2": 670}],
                          "surface_totale_m2": 1340})
     html = apporteur.rendu(v, ctx)
-    # contact = 1re question, badge « l'essentiel » (esc échappe l'apostrophe → on teste « ESSENTIEL »)
-    assert "Nom et coordonnées" in html and "ESSENTIEL" in html
+    # contact = 1re question, SANS badge « l'essentiel », marqué « (obligatoire) »
+    assert "Nom et coordonnées" in html and "(obligatoire)" in html
     assert html.index("Nom et coordonnées") < html.index("Tous les décideurs")
-    # trois questions « l'essentiel » : contact + prix + bail (bâti) ; voisines aussi ici → ≥ 3
-    assert html.count("ESSENTIEL") >= 3
+    # EXACTEMENT trois « l'essentiel » : prix + bail (bâti) + voisines
+    assert html.count("ESSENTIEL") == 3
     # dernière vente datée + chiffrée (S8 : présente ici)
     assert "Dernière vente" in html and "mars 2019" in html and "186" in html
     # à côté (Blocs fonciers) + question voisinage citant les références
     assert "À côté" in html and "CY 0045" in html and "340" in html
-    # photos par message, jamais collées
-    assert "Envoyez-les par message" in html and "97415000BO0852" in html
+    # photos à l'émetteur nommé, jamais « n'imprimez rien »
+    assert "Envoyez-les à Groupe Océan Promotion" in html and "97415000BO0852" in html
+    assert "n'imprimez rien" not in html and "Si loué : sous quel bail" in html
 
 
 def test_champs_remplissables():
@@ -120,12 +121,12 @@ def test_industriel_proche_adapte_la_question_du_sol():
     assert "établissement classé" in avec
 
 
-def test_section_emetteur_retiree_s7():
-    # RECETTE-2 (S7) — même sans émetteur au contexte, aucune section « qui vous envoie » ni
-    # placeholder « (votre compte) » : la section entière a disparu.
+def test_emetteur_absent_du_contexte_pas_de_bloc():
+    # RECETTE-12 E1 — l'émetteur est RENDU quand il est connu (cf. test_confidentiel…), mais SANS
+    # compte au contexte on n'imprime NI bloc émetteur NI placeholder « (votre compte) ».
     html = apporteur.rendu(_valeurs(), _ctx(emetteur=None))
     assert "(votre compte)" not in html
-    assert "Qui vous envoie" not in html
+    assert "Émetteur : " not in html
 
 
 def test_da_present_si_mutation():

@@ -23,7 +23,11 @@ from sqlalchemy import text
 # (purement informatif), la « commission d'apporteur » (aucun poste du bilan ne la porte), et
 # l'« apport » (le document renvoie explicitement le plan de financement à l'établissement prêteur).
 ECRANS: list[tuple[str, tuple[str, ...]]] = [
-    ("Votre projet", ("scenario_saisi", "logements_vises_saisi", "typologie_moyenne_saisi",
+    # RECETTE-10 T2b (recette) — `scenario_saisi` RETIRÉ de la saisie ET du document : le bilan chiffre
+    # TOUJOURS une reconstruction (W3), le champ ne changeait rien et n'était jamais rempli. Plus une
+    # question, plus une ligne imprimée (avant : masqué au front mais toujours servi à l'étape 1 et
+    # imprimé au PDF — un demi-retrait, corrigé ici en retrait franc).
+    ("Votre projet", ("logements_vises_saisi", "typologie_moyenne_saisi",
                       "part_sociale_saisi_pct")),
     ("Le foncier", ("prix_demande_saisi_eur", "frais_acquisition_saisi_pct",
                     "bilan_demolition_eur", "bilan_depollution_eur")),
@@ -33,6 +37,33 @@ ECRANS: list[tuple[str, tuple[str, ...]]] = [
     ("Vos conditions", ("prix_sortie_saisi_eur_m2", "prix_vente_bailleur_saisi_eur_m2",
                         "marge_visee_saisi_pct", "regime_tva_saisi", "duree_portage_saisi_mois",
                         "taux_apport_saisi_pct")),
+]
+
+# RECETTE-6 (E5) — ÉCRAN 0 « Que voulez-vous chiffrer ? ». Le bilan à rebours (construction neuve)
+# reste le SEUL moteur ; les autres usages n'ouvrent QUE ce qui se calcule déjà proprement. Un parcours
+# qu'on ne sait pas servir honnêtement apparaît GRISÉ avec sa raison — jamais un formulaire qui rend un
+# bilan faux. Le questionnaire des ECRANS ci-dessus EST le parcours « construction ».
+# RECETTE-8 W13bis (C3) — l'écran du parcours « Revente en l'état » : pas de bilan à rebours, un
+# calcul SIMPLE et direct (achat → frais → travaux → portage → revente ⇒ marge, taux de marge).
+REVENTE_ECRANS: list[tuple[str, tuple[str, ...]]] = [
+    ("La revente en l'état", ("prix_achat_revente_saisi_eur", "frais_acquisition_saisi_pct",
+                              "travaux_revente_saisi_eur", "duree_portage_saisi_mois",
+                              "taux_apport_saisi_pct", "prix_revente_saisi_eur")),
+]
+
+USAGES: list[dict] = [
+    {"key": "construction", "label": "Construction neuve", "servi": True,
+     "sous": "Le bilan à rebours : ce que l'opération peut supporter comme charge foncière."},
+    # RECETTE-8 W13bis (C3) — le parcours « Revente en l'état » est désormais SERVI (calcul simple
+    # marge/taux de marge ; pas de bilan à rebours, pas de moteur lourd).
+    {"key": "revente", "label": "Revente en l'état", "servi": True,
+     "sous": "Le calcul de marge : prix d'achat, frais, travaux, portage → prix de revente ⇒ marge."},
+    {"key": "division", "label": "Division parcellaire", "servi": False,
+     "raison": "Le découpage en lots et la valorisation lot par lot ne sont pas encore servis proprement."},
+    {"key": "renovation", "label": "Rénovation-revente", "servi": False,
+     "raison": "Le chiffrage travaux + revente demande un poste travaux dédié, pas encore servi."},
+    {"key": "portage", "label": "Portage locatif", "servi": False,
+     "raison": "Le rendement locatif (loyers, charges, fiscalité de détention) n'est pas encore servi."},
 ]
 
 # RECETTE-2 (S3) — LIBELLÉS CLIENT du questionnaire, en français clair (les libellés du registre
@@ -60,13 +91,132 @@ LIBELLES_CLIENT: dict[str, str] = {
     "regime_tva_saisi": "Régime de TVA",
     "duree_portage_saisi_mois": "Durée de portage",
     "taux_apport_saisi_pct": "Taux d'emprunt",
+    # RECETTE-8 W13bis (C3) — parcours revente
+    "prix_achat_revente_saisi_eur": "Prix d'achat du bien",
+    "travaux_revente_saisi_eur": "Travaux éventuels avant revente",
+    "prix_revente_saisi_eur": "Prix de revente visé",
 }
 
-#: tous les ids de champ, dans l'ordre des écrans.
-CHAMPS: tuple[str, ...] = tuple(cid for _, ids in ECRANS for cid in ids)
+#: tous les ids de champ, dans l'ordre des écrans (construction + revente, sans doublon).
+CHAMPS: tuple[str, ...] = tuple(dict.fromkeys(
+    cid for _, ids in (ECRANS + REVENTE_ECRANS) for cid in ids))
 
-#: champ(s) obligatoire(s) — le régime de TVA décide de la vérité du bilan (règle 3).
-OBLIGATOIRES: frozenset[str] = frozenset({"regime_tva_saisi"})
+# RECETTE-10 T2b — LE TRI DES QUESTIONS (décision de recette). Deux verdicts actifs :
+#   • garder    — le porteur DOIT (obligatoire) ou VEUT la toucher : elle pilote le résultat.
+#   • affiner   — pré-remplie d'une valeur sourcée d'usage ; ne bouge le bilan qu'à la marge →
+#                 repliée derrière « Affiner les hypothèses » (fermé par défaut), plus les 4 écrans.
+#   (« supprimer » n'est plus un état de champ servi : le seul candidat, `scenario_saisi`, a été
+#    RETIRÉ franchement des écrans ET du document — voir ECRANS et exports/blocs/financier._HYP_CLES.
+#    Le front ignore par prudence tout `tri === 'supprimer'` résiduel.)
+TRI: dict[str, str] = {
+    "logements_vises_saisi": "garder", "typologie_moyenne_saisi": "garder",
+    "prix_demande_saisi_eur": "garder", "cout_construction_saisi_eur_m2": "garder",
+    "prix_sortie_saisi_eur_m2": "garder", "prix_vente_bailleur_saisi_eur_m2": "affiner",
+    "marge_visee_saisi_pct": "garder", "regime_tva_saisi": "garder",
+    "part_sociale_saisi_pct": "affiner", "frais_acquisition_saisi_pct": "affiner",
+    "bilan_demolition_eur": "affiner", "bilan_depollution_eur": "affiner",
+    "honoraires_techniques_saisi_pct": "affiner", "vrd_saisi_eur_m2": "affiner",
+    "cout_place_stationnement_saisi_eur": "affiner", "aleas_saisi_pct": "affiner",
+    "taxe_amenagement_saisi_eur": "affiner", "duree_portage_saisi_mois": "affiner",
+    "taux_apport_saisi_pct": "affiner",
+    # revente
+    "prix_achat_revente_saisi_eur": "garder", "prix_revente_saisi_eur": "garder",
+    "travaux_revente_saisi_eur": "affiner",
+}
+
+
+def tri_champ(fid: str) -> str:
+    """Verdict de tri d'un champ (« garder »/« affiner »/« supprimer »). Défaut prudent : « affiner »."""
+    return TRI.get(fid, "affiner")
+
+#: RECETTE-5 (V19, décision Vic) — les champs INDISPENSABLES AU CALCUL de la charge foncière : sans
+#: eux, `charge` est None et le bilan ne peut pas être établi. Ils bloquent la génération tant qu'ils
+#: sont vides (les autres champs ont un pré-remplissage sourcé ou sont facultatifs). Deux champs :
+#:   • prix_sortie_saisi_eur_m2 — le prix de vente prévu (pas de pré-remplissage : personne ne peut
+#:     le deviner à la place du porteur) ; c'est le chiffre d'affaires du bilan à rebours ;
+#:   • regime_tva_saisi — décide si le bilan est HT ou TTC (règle 3).
+#: (Le PROGRAMME constructible — surface vendable — est aussi indispensable mais vient du POTENTIEL de
+#: la parcelle, pas du questionnaire ; son absence est signalée à part par `manques`.)
+OBLIGATOIRES: frozenset[str] = frozenset({"prix_sortie_saisi_eur_m2", "regime_tva_saisi"})
+
+#: RECETTE-5 (V19) — l'AIDE de chaque champ (le « i ») : ce qu'on attend comme valeur. Servie au front.
+AIDES: dict[str, str] = {
+    "scenario_saisi": "Reconstruction ou surélévation — le scénario dominant du potentiel LABUSE est pré-rempli.",
+    "logements_vises_saisi": "Un nombre entier de logements que vous visez (ex. 8).",
+    "typologie_moyenne_saisi": "La typologie moyenne du programme : T2, T3, T4… (sert à estimer la surface vendable si le potentiel ne la donne pas).",
+    "part_sociale_saisi_pct": "Un pourcentage (0 à 100) — la part de logement social ou intermédiaire du programme.",
+    "prix_demande_saisi_eur": "Un montant en euros — le prix demandé pour le terrain (sert à confronter la charge foncière supportable ; laissez vide si vous ne l'avez pas).",
+    "frais_acquisition_saisi_pct": "Un pourcentage — notaire et droits de mutation (usage 7 à 8 %). Pré-rempli à 7 %.",
+    "bilan_demolition_eur": "Un montant en euros — coût de démolition de l'existant (0 sur un terrain nu).",
+    "bilan_depollution_eur": "Un montant en euros — dépollution et étude de sol si le terrain le requiert.",
+    "cout_construction_saisi_eur_m2": "Un coût en €/m² de plancher (usage 2 300 à 2 800 à La Réunion). Pré-rempli à la médiane régionale.",
+    "honoraires_techniques_saisi_pct": "Un pourcentage du coût travaux (architecte, BET, contrôle — usage ~12 %). Pré-rempli.",
+    "vrd_saisi_eur_m2": "Un coût en €/m² — voirie et réseaux divers. Pré-rempli.",
+    "cout_place_stationnement_saisi_eur": "Un montant en euros par place de stationnement.",
+    "aleas_saisi_pct": "Un pourcentage — provision pour aléas de chantier (usage 3 à 5 %). Pré-rempli à 4 %.",
+    "taxe_amenagement_saisi_eur": "Un montant en euros — la taxe d'aménagement. Pré-remplie depuis le calcul LABUSE si disponible.",
+    "prix_sortie_saisi_eur_m2": "INDISPENSABLE — le prix de vente prévu des logements, en €/m² habitable. Sans lui, la charge foncière ne peut pas être calculée.",
+    "prix_vente_bailleur_saisi_eur_m2": "Un prix en €/m² — la vente au bailleur social (utile si le programme porte une part sociale).",
+    "marge_visee_saisi_pct": "Un pourcentage du chiffre d'affaires (marge cible promoteur, usage ~9 %). Pré-rempli.",
+    "regime_tva_saisi": "INDISPENSABLE — le régime de TVA (assujetti avec récupération / TVA sur marge / autre). Il décide si le bilan travaille HT ou TTC.",
+    "duree_portage_saisi_mois": "Une durée en mois (instruction + chantier). Pré-remplie à 29 mois.",
+    "taux_apport_saisi_pct": "Un taux en pourcentage — le taux d'emprunt du portage.",
+    # RECETTE-8 W13bis (C3) — parcours revente
+    "prix_achat_revente_saisi_eur": "INDISPENSABLE — le prix d'achat du bien, en euros. Sans lui, la marge ne peut pas être calculée.",
+    "travaux_revente_saisi_eur": "Un montant en euros — travaux éventuels avant la revente (0 si aucun).",
+    "prix_revente_saisi_eur": "INDISPENSABLE — le prix de revente visé, en euros. Sans lui, la marge ne peut pas être calculée.",
+}
+
+
+def programme_depuis_potentiel(pot: dict | None) -> bool:
+    """RECETTE-9 T1 — le potentiel de la parcelle chiffre-t-il SEUL le programme constructible ?
+    Vrai si `capacite_estimee` signale une capacité (parcelle en sous-densité) : `_financier_contexte`
+    pré-remplit alors le programme et le bilan s'établit SANS que le porteur décrive quoi que ce soit.
+    Faux (parcelle à sa densité, potentiel nul/faible) : la surface vendable n'existe que si le porteur
+    saisit un nombre de logements — qui devient dès lors INDISPENSABLE (défaut n°1/n°2 de la recette :
+    le champ qui débloque « Programme constructible » n'était pas marqué et le blocage tombait « à
+    l'arrivée » du document au lieu d'au moment de la saisie)."""
+    return bool((pot or {}).get("capacite_estimee"))
+
+
+def obligatoires_programme(pot: dict | None) -> set[str]:
+    """Les champs du questionnaire construction que le potentiel absent rend INDISPENSABLES."""
+    return set() if programme_depuis_potentiel(pot) else {"logements_vises_saisi"}
+
+
+def manques(resolved: dict, program: dict) -> list[dict]:
+    """RECETTE-5 (V18/V19) — la liste des éléments INDISPENSABLES qui manquent pour ÉTABLIR le bilan
+    (charge foncière). Vide ⇒ le document Financier peut se générer. Deux familles :
+      • le PROGRAMME constructible (surface vendable) — vient du potentiel de la parcelle ou, à défaut,
+        de « logements visés × typologie » ; s'il reste nul, aucun bilan n'est chiffrable ;
+      • les CHAMPS OBLIGATOIRES du questionnaire (prix de sortie, régime de TVA).
+    `program` est le programme FINAL (après le repli logements × typologie du builder)."""
+    out: list[dict] = []
+    if not program.get("surface_vendable"):
+        out.append({"champ": None, "libelle": "Programme constructible",
+                    "raison": "cette parcelle n'a pas de surface vendable chiffrable — renseignez un nombre de logements visés et une typologie, ou vérifiez le potentiel de la parcelle."})
+    for fid in ("prix_sortie_saisi_eur_m2", "regime_tva_saisi"):
+        if (resolved.get(fid) or {}).get("valeur") in (None, ""):
+            out.append({"champ": fid, "libelle": LIBELLES_CLIENT.get(fid, fid),
+                        "raison": "indispensable au calcul de la charge foncière."})
+    return out
+
+
+#: RECETTE-8 W13bis (C3) — les champs indispensables au calcul de MARGE (revente en l'état).
+OBLIGATOIRES_REVENTE: frozenset[str] = frozenset(
+    {"prix_achat_revente_saisi_eur", "prix_revente_saisi_eur"})
+
+
+def manques_revente(resolved: dict) -> list[dict]:
+    """Les éléments INDISPENSABLES au calcul de la marge de revente (prix d'achat, prix de revente).
+    Vide ⇒ le Financier « revente » peut se générer. Pas de programme constructible ici (revente en
+    l'état : ni construction, ni SDP)."""
+    out: list[dict] = []
+    for fid in OBLIGATOIRES_REVENTE:
+        if (resolved.get(fid) or {}).get("valeur") in (None, ""):
+            out.append({"champ": fid, "libelle": LIBELLES_CLIENT.get(fid, fid),
+                        "raison": "indispensable au calcul de la marge de revente."})
+    return out
 
 #: phrase d'explication + renvoi expert-comptable, servie sous le champ régime de TVA (règle 3).
 TVA_EXPLICATION = (
@@ -126,16 +276,16 @@ def prefill(fiche: dict | None) -> dict[str, dict]:
     out: dict[str, dict] = {fid: {"valeur": v, "source": s} for fid, (v, s) in _PREFILL_CONST.items()}
     pot = f.get("potentiel_transformation") or {}
     if pot:
-        scen = "surelevation" if pot.get("surelevation_possible") else "reconstruction"
-        out["scenario_saisi"] = {"valeur": scen, "source": "scénario dominant du potentiel LABUSE"}
+        # RECETTE-8 W3 — le bilan du Financier chiffre TOUJOURS une reconstruction (SDP créée en table
+        # rase). RECETTE-10 T2b — le champ « scénario » n'est donc plus ni saisi ni pré-rempli ni
+        # imprimé (il ne changeait rien) ; seul le nombre de logements est pré-rempli depuis le potentiel.
         cap = pot.get("capacite_estimee")
         if cap:
             out["logements_vises_saisi"] = {"valeur": cap, "source": "fourchette de logements du potentiel LABUSE"}
-    ta = f.get("taxe_amenagement") or {}
-    if ta.get("total_eur"):
-        out["taxe_amenagement_saisi_eur"] = {
-            "valeur": round(float(ta["total_eur"])),
-            "source": "calcul de la taxe d'aménagement (config datée, service-public.gouv.fr)"}
+    # RECETTE-8 W2 — la taxe d'aménagement n'est plus pré-remplie depuis la fiche (elle n'y porte
+    # plus aucun montant : pas de projet, pas de taxe). Elle est pré-calculée AU FINANCIER, sur la
+    # SDP du projet réellement retenu (`exports.builder._financier_contexte`), où le programme est
+    # connu — jamais sur un scénario de fiche que personne n'a choisi.
     return out
 
 
@@ -159,9 +309,59 @@ def resoudre(reponses: dict, prefill_map: dict) -> dict[str, dict]:
     return out
 
 
+def usage_choisi(reponses: dict) -> str:
+    """RECETTE-8 W13bis — le parcours choisi (méta-clé `_usage`), « construction » par défaut."""
+    u = (reponses or {}).get("_usage")
+    return u if u in ("construction", "revente") else "construction"
+
+
+#: RECETTE-11 B2 — retrouve l'id de champ depuis le libellé que le garde du bilan (_hors_marche) nomme.
+_ID_PAR_LIBELLE: dict[str, str] = {lib: fid for fid, lib in LIBELLES_CLIENT.items()}
+
+
+def ecran_de(fid: str, usage: str = "construction") -> int:
+    """Index (0-based) de l'écran qui porte le champ `fid`, dans le parcours `usage`. 0 par défaut."""
+    ecrans = REVENTE_ECRANS if usage == "revente" else ECRANS
+    for i, (_, ids) in enumerate(ecrans):
+        if fid in ids:
+            return i
+    return 0
+
+
+def valider_hors_marche(reponses: dict, prefill_map: dict) -> dict | None:
+    """RECETTE-11 B2 — LE garde du QUESTIONNAIRE : une saisie hors marché (prix au-delà d'une borne de
+    vraisemblance, ou prix bailleur social > prix de vente libre) est refusée AVANT tout document. Même
+    point de vérité que le garde du bilan (`financier_bilan._hors_marche`) : jamais deux règles. Rend
+    {champ_id, champ_libelle, ecran, affiner, valeur, borne, message} pour que l'écran ouvre le bon
+    accordéon, saute au bon écran et surligne le bon champ — ou None si tout est plausible."""
+    from .exports.financier_bilan import _hors_marche
+    res = resoudre(reponses or {}, prefill_map or {})
+
+    def v(fid: str):
+        x = (res.get(fid) or {}).get("valeur")
+        try:
+            return float(x) if x not in (None, "") else None
+        except (TypeError, ValueError):
+            return None
+
+    hm = _hors_marche(v("prix_sortie_saisi_eur_m2"), v("cout_construction_saisi_eur_m2"),
+                      v("prix_vente_bailleur_saisi_eur_m2"))
+    if not hm:
+        return None
+    fid = _ID_PAR_LIBELLE.get(hm["champ"])
+    usage = usage_choisi(reponses)
+    return {"champ_id": fid, "champ_libelle": hm["champ"],
+            "ecran": ecran_de(fid, usage) if fid else 0,
+            "affiner": TRI.get(fid) == "affiner",
+            "valeur": hm["valeur"], "borne": hm["borne"],
+            "message": f"{hm['raison']} Corrigez ce champ pour continuer."}
+
+
 def est_complet(reponses: dict) -> bool:
-    """Règle 3 : complet ssi tous les champs obligatoires sont saisis non vides (régime de TVA)."""
-    return all(reponses.get(fid) not in (None, "") for fid in OBLIGATOIRES)
+    """Règle 3 : complet ssi tous les champs obligatoires du PARCOURS choisi sont saisis non vides.
+    Construction : prix de sortie + régime de TVA. Revente (W13bis) : prix d'achat + prix de revente."""
+    obligs = OBLIGATOIRES_REVENTE if usage_choisi(reponses) == "revente" else OBLIGATOIRES
+    return all(reponses.get(fid) not in (None, "") for fid in obligs)
 
 
 def charger(db, idu: str, compte_id: int | None) -> dict:
@@ -181,7 +381,9 @@ def enregistrer(db, idu: str, compte_id: int | None, reponses: dict, projet_id: 
     """UPSERT du questionnaire. `reponses` = {id_champ: valeur|null} — null = champ vidé (règle 2),
     stocké tel quel ; les champs inconnus du registre sont ignorés (garde). `complet` recalculé."""
     ensure(db)
-    propres = {k: v for k, v in (reponses or {}).items() if k in CHAMPS}
+    # RECETTE-8 W13bis — on garde les CHAMPS + la méta-clé `_usage` (le parcours choisi), jamais
+    # d'autre clé étrangère (garde). Le parcours pilote quels champs sont obligatoires (est_complet).
+    propres = {k: v for k, v in (reponses or {}).items() if k in CHAMPS or k == "_usage"}
     complet = est_complet(propres)
     db.execute(text(
         "INSERT INTO questionnaire_financier (compte_id, idu, projet_id, reponses, complet, updated_at) "

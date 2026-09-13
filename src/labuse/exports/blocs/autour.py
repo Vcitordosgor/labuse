@@ -12,6 +12,24 @@ from ..rendu import chip_span, esc, ligne_kv, note, section, table_kv, tuiles
 
 IDS = ("iris_quartier", "equipements_proximite_liste")
 
+#: RECETTE-8 W14 — l'accord singulier/pluriel par catégorie d'équipement, EXPLICITE. L'ancienne
+#: règle « retire le s quand n=1 » mangeait le « s » de « bus » (invariable en français : son
+#: singulier finit déjà par s) → « 1 bu ». On nomme le singulier ET le pluriel de chaque catégorie
+#: servie (`api.app._PROX_EQUIP`) : « bus » reste « bus », « commerces » devient « commerce ».
+_EQUIP_ACCORD: dict[str, tuple[str, str]] = {
+    "École": ("école", "écoles"),
+    "Commerces": ("commerce", "commerces"),
+    "Santé": ("service de santé", "services de santé"),
+    "Bus": ("arrêt de bus", "arrêts de bus"),
+}
+
+
+def _accord(cat: str, n: int) -> str:
+    """« n <singulier> » si n ≤ 1, « n <pluriel> » sinon. Repli prudent (mot non listé) : on ne
+    touche PAS le mot (jamais un « 1 bu »), on l'affiche tel quel en minuscules."""
+    sing, plur = _EQUIP_ACCORD.get(cat, (cat.lower(), cat.lower()))
+    return f"{n} {sing if n <= 1 else plur}"
+
 
 def rendu(valeurs) -> str:
     iq = val(valeurs, "iris_quartier")
@@ -37,7 +55,11 @@ def rendu(valeurs) -> str:
     items = val(valeurs, "equipements_proximite_liste") or []
     if items:
         cnt = Counter(it.get("cat") for it in items if isinstance(it, dict) and it.get("cat"))
-        resume = ", ".join(f"{n} {cat.lower()}" for cat, n in cnt.most_common())
+        # RECETTE-9 T3 — on appelle le `_accord` de MODULE (table explicite singulier/pluriel), plus
+        # de règle naïve locale. La règle `lib[:-1]` mangeait le « s » de « bus » (invariable) → « 1 bu ».
+        # Le bug W14 : le correctif avait été posé sur la fonction de module, mais `rendu()` gardait sa
+        # propre version imbriquée qui l'ombrait — jamais appelée. Suppression de l'ombre.
+        resume = ", ".join(_accord(cat, n) for cat, n in cnt.most_common())
         lignes.append(ligne_kv("Équipements à proximité", esc(resume), chip_span("s", "sourcé")))
     if lignes:
         corps += table_kv(lignes)

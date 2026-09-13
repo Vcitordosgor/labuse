@@ -39,6 +39,31 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
       {marcheLines.length
         ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
         : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
+      {/* RECETTE-6 (C2/C3/C4) — DERNIÈRE VENTE rapatriée ici (elle vivait dans « Le reste des faits »,
+          supprimé) : un fait, une section. C4 — SEUIL DE VRAISEMBLANCE : une mutation MULTI-PARCELLES
+          porte le prix GLOBAL de la vente (plusieurs parcelles vendues ensemble), PAS celui de cette
+          parcelle seule (mesuré : 41 % des dernières ventes ; ex. 81 219 € affichés à l'identique sur
+          deux parcelles d'une même mutation). On ne présente donc jamais ce montant comme « le prix du
+          bien » : on l'annonce comme une vente groupée. Le montant est sinon la mutation DVF de la parcelle. */}
+      {(() => {
+        const dm = f.dvf_parcelle?.derniere_mutation as { date_mutation?: string | null; nature?: string | null; valeur?: number | null; multi_parcelles?: boolean } | null | undefined
+        if (!dm?.date_mutation) return null
+        const d = new Date(dm.date_mutation)
+        const dateFmt = isNaN(d.getTime()) ? String(dm.date_mutation) : d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+        return (
+          <div data-derniere-vente>
+            {dm.multi_parcelles
+              ? (<>
+                  <FactRow label="Dernière vente" tone="mute" value={dateFmt} />
+                  <FactNote>Vente groupée (plusieurs parcelles) — le prix global de la mutation{dm.valeur ? ` (${fmtInt(dm.valeur)} €)` : ''} n'est pas attribuable à cette seule parcelle.</FactNote>
+                </>)
+              : (<>
+                  <FactRow label="Dernière vente" value={<>{dateFmt}{dm.valeur ? <> — {fmtInt(dm.valeur)} <small>€</small></> : null}</>} />
+                  <FactNote>Mutation DVF de la parcelle{dm.nature ? ` — ${dm.nature.toLowerCase()}` : ''}.</FactNote>
+                </>)}
+          </div>
+        )
+      })()}
       {/* RETOURS-11F4 F7/F0 — PRIX DE SORTIE bâti secteur : le fait vit ICI (la Constructibilité y renvoie).
           Même moteur que le bilan (`marche.median`). Sous le seuil : dit tel quel, jamais un chiffre inventé.
           RETOURS-20 Z1·03 — plus de boîte : FactRow (valeur mono à droite), méthode en FactNote. */}
@@ -46,6 +71,15 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
         <div data-prix-sortie>
           <FactRow label="Prix de sortie — bâti secteur" value={<>{fmtInt(Number(mb.median))} <small>€/m²</small></>} />
           <FactNote>{mb.type_prix}, {mb.n} ventes ≤ {Math.round(mb.radius_m)} m (rayon adaptatif) · fiabilité {mb.fiabilite}{mb.tendance ? ` · tendance ${mb.tendance}` : ''}{horizon ? ` · DVF — ${horizon}` : ''}</FactNote>
+        </div>
+      )}
+      {/* RECETTE-6 (C2) — « Valeur au prix du secteur » RAPATRIÉE ici depuis « Le reste des faits »
+          (supprimé) : c'est le SEUL fait de cet accordéon sans autre foyer dans la fiche. Contenance ×
+          prix médian du terrain nu au m² du secteur — ESTIMÉ, jamais une valeur vénale. */}
+      {f.surface_m2 != null && dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0 && (
+        <div data-valeur-secteur>
+          <FactRow label="Valeur au prix du secteur" value={<>≈ {fmtInt(Math.round(f.surface_m2 * dvfSecteur.mediane_prix_m2))} <small>€</small></>} />
+          <FactNote>contenance × prix médian du terrain nu au m² du secteur — estimé, pas une valeur vénale.</FactNote>
         </div>
       )}
       {/* NEUF (VEFA) commune — grandeur nommée, effectif, fenêtre ; sous le seuil : « échantillon insuffisant ». */}

@@ -279,17 +279,21 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
             if cdac.get("seuil_m2"):
                 extra += f" CDAC au-delà de {cdac['seuil_m2']} m² de surface de vente."
             extra += "</p>"
+        # RECETTE-8 W2 — le pré-dossier est PRÉPARATOIRE : aucun projet chiffré n'est saisi, la taxe
+        # d'aménagement et la redevance d'archéologie (toutes deux assises sur la surface CRÉÉE)
+        # ne sont donc PAS chiffrées ici. On donne le taux communal et sur quoi elles se calculeront ;
+        # le montant est établi au Dossier financier, sur la SDP du projet.
         ta = f.get("taxe_amenagement") or {}
-        if ta.get("assiette_m2"):
-            rap = round(0.68 * float(ta["assiette_m2"]))
-            ta_txt = (f"~{int(ta['total_eur'])} € (assiette {ta['assiette_m2']} m²)" if ta.get("total_eur")
-                      else f"taux communal non renseigné — assiette {ta['assiette_m2']} m², part "
-                      f"départementale ~{int(ta.get('part_departementale_eur') or 0)} €")
+        if ta.get("taux_communal_pct") is not None or ta.get("taux_communal_manquant"):
+            if ta.get("taux_communal_manquant"):
+                ta_txt = "taux communal non renseigné pour cette commune"
+            else:
+                ta_txt = f"taux communal {ta['taux_communal_pct']:g} %"
             extra += (f"<h2>Fiscalité de l'opération</h2><table>"
-                      f"<tr><td>Taxe d'aménagement</td><td>{ta_txt}</td></tr>"
-                      f"<tr><td>Redevance d'archéologie préventive</td><td>~{rap} € "
-                      f"(0,68 €/m² × {ta['assiette_m2']} m² de surface créée, art. L524-7 du Code du "
-                      f"patrimoine)</td></tr></table>")
+                      f"<tr><td>Taxe d'aménagement</td><td>{ta_txt} — se calcule sur la surface de "
+                      f"plancher créée par le projet (chiffrée au Dossier financier)</td></tr>"
+                      f"<tr><td>Redevance d'archéologie préventive</td><td>0,68 €/m² de surface "
+                      f"créée (art. L524-7 du Code du patrimoine) — chiffrée sur la SDP du projet</td></tr></table>")
     except Exception:  # noqa: BLE001 — enrichissement optionnel, ne casse pas la fiche
         pass
     pieces = "".join(f"<tr><td>{c}</td><td>{lib}</td><td>{etat}</td></tr>"

@@ -458,6 +458,8 @@ const ACC_ICONS: Record<string, JSX.Element> = {
   radar: <><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none" /></>,
   copilote: <path d="M12 2.5 14 9l6.5 2L14 13l-2 6.5L10 13l-6.5-2L10 9l2-6.5Z" strokeLinejoin="round" />,
   outil: <><circle cx="12" cy="12" r="3" /><path d="M19.4 13a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V20a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 18.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" /></>,
+  // RECETTE-5 (V13) — horloge « Remonter le temps » (5e porte de l'accueil).
+  temps: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.3V12l3.1 1.9" /></>,
 }
 function AccEntry({ ton, icone, titre, sous, onClick }: {
   ton: 'mint' | 'mauve'; icone: keyof typeof ACC_ICONS; titre: string; sous: string; onClick: () => void
@@ -507,6 +509,8 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
         {/* GB-001 : compte des outils VISIBLES (comme le tiroir Rail), dynamique — S7 : 15 après la fusion Veille→Scan. */}
         <AccEntry ton="mint" icone="outil" titre="Ouvrir un outil" sous={`${MODULES.filter((m) => !m.hidden).length} outils fonciers`}
           onClick={() => { setAccueilVu(); toggleOutils() }} />
+        {/* RECETTE-6 (D2, décision Vic) — « Remonter le temps » RETIRÉ de l'accueil : il vit désormais
+            comme 6e bouton de la rangée d'outils de la fiche parcelle (pré-rempli sur la parcelle). */}
       </div>
 
       {/* M87 P1 — bloc « Cette semaine » RETIRÉ (M83). */}
@@ -550,7 +554,12 @@ export function LeftPanel() {
   // signal déjà existant) qui prime tant qu'il est affiché. Le quitter (Commencer/openFiltres, ou
   // rouvrir une section à la main → setAccueilVu) lève l'override → la section reprend (défaut Couches).
   const enAccueil = !accueilVu && !verdict
-  const couchesOpen = !enAccueil && panneauSection === 'couches'
+  // RECETTE-5 (V11, décision Vic) — plus de GRAND VIDE NOIR quand aucun accordéon n'est ouvert. L'état
+  // 'listing' (les deux sections rétractées) n'est LÉGITIME que lorsqu'un vrai listing l'occupe, càd
+  // sous `verdict`. Hors accueil ET sans verdict, on retombe sur Couches OUVERTE par défaut : une
+  // section est toujours ouverte au démarrage (et après avoir retiré l'analyse), jamais le vide.
+  const listingVide = panneauSection === 'listing' && !verdict
+  const couchesOpen = !enAccueil && (panneauSection === 'couches' || listingVide)
   const filtresOpen = !enAccueil && panneauSection === 'filtres'
   // GB-031 — Échap ferme le panneau Filtres (retour à Couches, section par défaut), comme le patron
   // overlay (Modale, ModulePanel). Gardes : on ne ferme pas si l'utilisateur tape dans un champ, ni

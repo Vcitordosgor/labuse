@@ -274,6 +274,23 @@ def verifier_chemins_reels(db) -> dict:
                                 "moteur:potentiel", sdp_moteur, "run"))
         except Exception:  # noqa: BLE001
             db.rollback()
+        # RECETTE-6 (G3) — COHÉRENCE DE L'EMPRISE BÂTIE : l'emprise SERVIE par la fiche (le_bien, garde
+        # ST_Union depuis RECETTE-5) doit égaler un recompute CANONIQUE ST_Union. Un écart = un lecteur
+        # est revenu au SUM des intersections (double-compte des polygones bâtiment qui se chevauchent —
+        # la classe exacte du lot G, 20 440 parcelles emprise > contenance). La sonde l'attrape désormais.
+        try:
+            emp_http = (fiche.get("le_bien") or {}).get("emprise_batie_m2")
+            emp_union = db.execute(text(
+                "SELECT round(COALESCE(ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975))), 0)) "
+                "FROM parcels p JOIN spatial_layers b "
+                "ON b.kind = 'batiment' AND ST_Intersects(b.geom_2975, p.geom_2975) "
+                "WHERE p.idu = :i"), {"i": idu}).scalar()
+            if emp_http is not None and emp_union is not None and \
+                    abs(float(emp_http) - float(emp_union)) > 1.0:
+                trouves.append(("emprise_batie_m2", idu, "http:/parcels (le_bien)", emp_http,
+                                "recompute:ST_Union", float(emp_union), "geometrie"))
+        except Exception:  # noqa: BLE001
+            db.rollback()
         # scission du neuf (robinet) : le VEFA à l'acte ne se sert plus sous la fiche (Q3)
         if "Neuf VEFA" in json.dumps(fiche, ensure_ascii=False, default=str):
             trouves.append(("prix_neuf_observe_eur_m2", idu, "http:/parcels",
@@ -343,6 +360,82 @@ def verifier_scission_neuf(db) -> dict:
     for t in trouves:
         _upsert_ecart(db, *t)
     return {"ecarts_trouves": len(trouves), "mesures": mesures}
+
+
+def verifier_provenance(db) -> dict:
+    """RECETTE-7 lot 0 (Z4) — LA SONDE APPREND À VOIR LES PRODUCTEURS. Jusqu'ici elle comparait
+    des LECTEURS déclarés (robinets) ; un producteur non déclaré — un calcul qui fabrique son
+    chiffre dans son coin et l'imprime — lui était invisible. Ici elle génère les documents des
+    témoins et passe chaque NOMBRE imprimé au crible de `exports.provenance` : tout nombre non
+    rattaché à une donnée du registre est un écart (type 'nombre', cause 'autre'). C'est la face
+    DOCUMENTS du trou de conception fermé par le verrou Z5 (tests/test_circuit_provenance.py) —
+    ici au fil du contrôle, sans WeasyPrint (on lit le HTML, pas le PDF).
+
+    Ce qu'elle sait détecter : un nombre imprimé qu'aucune donnée servie ne porte (le producteur
+    hors registre). Ce qu'elle ne saura TOUJOURS PAS : qu'un nombre RATTACHÉ est FAUX (elle vérifie
+    la provenance, pas la justesse — c'est le rôle des règles CIRCUIT-4 et de la recette) ; ni un
+    nombre qui coïncide par hasard avec une valeur servie (rattachement par valeur, pas par tag)."""
+    from .exports import builder, provenance
+    trouves: list[tuple] = []
+    mesures = 0
+    try:
+        from fastapi.testclient import TestClient
+
+        from .api.app import app
+        client = TestClient(app)
+    except Exception as exc:  # noqa: BLE001
+        return {"ecarts_trouves": 0, "mesures": 0, "erreur": f"TestClient indisponible : {exc}"}
+    for idu in TEMOINS_PARCELLES:
+        if _parcel_id(db, idu) is None:
+            continue
+        try:
+            fiche = client.get(f"/parcels/{idu}").json()
+        except Exception:  # noqa: BLE001
+            db.rollback()
+            continue
+        for doc in ("dossier", "flash", "apporteur"):
+            try:
+                res = builder.construire(db, idu, doc, fiche=fiche)
+            except Exception:  # noqa: BLE001 — un document injouable ne masque pas les autres
+                db.rollback()
+                continue
+            mesures += 1
+            for f in provenance.fuites(f"{idu}/{doc}", res.valeurs, res.html, res.contexte):
+                trouves.append(("nombre_hors_registre", f"{idu}/{doc}:{f['nombre']:g}",
+                                f"pdf:{doc}", f"{f['nombre']:g} — {f['contexte'][:80]}",
+                                "exports.provenance", "aucune donnée du registre", "autre"))
+            # RECETTE-8 W5 — le pendant LIBELLÉS : un identifiant technique servi au client
+            # (« Scénario surelevation », un code de palier/verdict) est un écart, comme un nombre.
+            for e in provenance.libelles_hors_registre(f"{idu}/{doc}", res.html):
+                trouves.append(("libelle_hors_registre", f"{idu}/{doc}:{e['libelle']}",
+                                f"pdf:{doc}", f"{e['libelle']} — {e['contexte'][:80]}",
+                                "exports.provenance", "identifiant technique hors vocabulaire", "autre"))
+    ensure(db)
+    for t in trouves:
+        _upsert_ecart(db, *t)
+    return {"ecarts_trouves": len(trouves), "mesures": mesures}
+
+
+def verifier_synonymes(db=None) -> dict:
+    """RECETTE-7 lot 0 (Z4) — DEUX IDENTIFIANTS, UN MÊME CONCEPT. La sonde échoue quand deux
+    données du registre portent le MÊME libellé (même concept sous deux noms) — le piège d'où
+    sortait la contradiction 97/458 m² avant qu'on nomme distinctement la SDP créée et la SDP
+    résiduelle. Contrôle PUR (registre, sans base). Ce qu'elle ne saura pas : deux concepts
+    réellement identiques sous des libellés DIFFÉRENTS (il faudrait un dictionnaire de synonymes) —
+    limite écrite au rapport."""
+    from collections import defaultdict
+
+    from .registre import CHIFFRES
+    par_libelle: dict[str, list[str]] = defaultdict(list)
+    for cid, c in CHIFFRES.items():
+        par_libelle[" ".join(c.libelle.lower().split())].append(cid)
+    collisions = {lib: ids for lib, ids in par_libelle.items() if len(ids) > 1}
+    if db is not None and collisions:
+        ensure(db)
+        for lib, ids in collisions.items():
+            _upsert_ecart(db, "libelle_partage", lib, ids[0], "concept partagé",
+                          ids[1], "même libellé", "autre")
+    return {"collisions": len(collisions), "detail": collisions}
 
 
 def verifier_exports(db) -> dict:
@@ -751,7 +844,7 @@ def controle(db, *, declencheur: str = "bouton", exports: bool | None = None,
     ensure(db)
     jouer_exports = (declencheur == "cron") if exports is None else exports
     phases = ["Robinets (témoins)", "Chemins réels sur parcelles", "Scission du neuf",
-              "Cohérence catégorielle", "Eau ancienne"]
+              "Cohérence catégorielle", "Provenance des nombres imprimés", "Eau ancienne"]
     if jouer_exports:
         phases.append("Exports (24 PDF)")
     total = len(phases)
@@ -767,9 +860,11 @@ def controle(db, *, declencheur: str = "bouton", exports: bool | None = None,
     _p(1); chemins = verifier_chemins_reels(db)
     _p(2); neuf = verifier_scission_neuf(db)
     _p(3); cat = verifier_categorielle(db)
-    _p(4); eau = verifier_eau_ancienne(db)
+    # RECETTE-7 lot 0 (Z4) — provenance des nombres imprimés + synonymes de libellé.
+    _p(4); prov = verifier_provenance(db); syn = verifier_synonymes(db)
+    _p(5); eau = verifier_eau_ancienne(db)
     if jouer_exports:
-        _p(5)
+        _p(6)
     exp = verifier_exports(db) if jouer_exports else {"saute": "hors passage nocturne"}
     fuites_ouvertes = db.execute(text(
         "SELECT count(*) FROM circuit_ecarts WHERE statut = 'ouvert'")).scalar() or 0
@@ -779,6 +874,7 @@ def controle(db, *, declencheur: str = "bouton", exports: bool | None = None,
     duree = round(time.monotonic() - t0, 2)
     details = {"declencheur": declencheur, "robinets": rob, "eau": eau,
                "chemins_reels": chemins, "scission_neuf": neuf, "categorielle": cat,
+               "provenance": prov, "synonymes": syn,
                "ecarts_par_type": par_type, "exports": exp}
     db.execute(text(
         "INSERT INTO circuit_controles (fuites_ouvertes, eau_ancienne, robinets_couverts,"

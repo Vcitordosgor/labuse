@@ -151,9 +151,9 @@ export function ProjetsPanel() {
   const [showArchived, setShowArchived] = useState(false)
   const [showCourriers, setShowCourriers] = useState(false)   // OUTILS-1 A4 — onglet « Mes courriers »
   const [formOuvert, setFormOuvert] = useState(false)
-  // RETOURS-10 (T3) — la liste reste compacte (4 au repos, choix Projets), mais « voir plus » révèle par
-  // paquets de 200 (jamais tout d'un coup) : une liste très longue ne fige plus l'app.
-  const [montre, setMontre] = useState(4)
+  // RECETTE-10 T6 (règle de Vic) — sous 200 éléments, TOUT s'affiche d'un coup ; au-delà, 200 puis
+  // « voir 200 de plus ». Fini le « 4 au repos » (RETOURS-10 T3) qui rendait absurde une liste de 10.
+  const [montre, setMontre] = useState(200)
   const qc = useQueryClient()
   const projetsQ = useQuery({ queryKey: ['projets'], queryFn: getProjets })
   // OUTILS-1 A4/B6 — le client retrouve ici ses demandes de courrier (n°, date, communes, volume),

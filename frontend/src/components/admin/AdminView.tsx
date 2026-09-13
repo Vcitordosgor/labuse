@@ -151,7 +151,7 @@ function Journal({ items, degel, degeler, go }: {
   items: JournalItem[]; degel: string | null; degeler: (s: string) => void; go: (s: AdminSection) => void
 }) {
   const [famille, setFamille] = useState<string>('Tout')
-  const [limite, setLimite] = useState(8)
+  const [limite, setLimite] = useState(200)   // RECETTE-10 T6 — sous 200, tout d'un coup
   const familles = ['Tout', ...Array.from(new Set(items.map((i) => i.famille)))]
   const filtres = famille === 'Tout' ? items : items.filter((i) => i.famille === famille)
   const visibles = filtres.slice(0, limite)
@@ -162,7 +162,7 @@ function Journal({ items, degel, degeler, go }: {
     <>
       <div className="mb-2.5 flex flex-wrap items-center gap-1.5">
         {familles.map((f) => (
-          <Chip key={f} tone={famille === f ? 'ok' : 'off'} onClick={() => { setFamille(f); setLimite(8) }}>{f}</Chip>
+          <Chip key={f} tone={famille === f ? 'ok' : 'off'} onClick={() => { setFamille(f); setLimite(200) }}>{f}</Chip>
         ))}
       </div>
       <Panel>
@@ -195,8 +195,8 @@ function Journal({ items, degel, degeler, go }: {
           {!filtres.length && <li className="px-4 py-6 text-center text-xs text-txt-mut">Aucun événement système récent.</li>}
         </ul>
         {limite < filtres.length && (
-          <button onClick={() => setLimite((n) => n + 12)} className="w-full border-t border-line px-4 py-2.5 text-xs text-txt-mut hover:text-txt">
-            Voir plus — {visibles.length} / {filtres.length} chargés
+          <button onClick={() => setLimite((n) => n + 200)} className="w-full border-t border-line px-4 py-2.5 text-xs text-txt-mut hover:text-txt">
+            Voir {Math.min(200, filtres.length - visibles.length)} de plus — {visibles.length} / {filtres.length}
           </button>
         )}
       </Panel>

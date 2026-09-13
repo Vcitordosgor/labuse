@@ -146,7 +146,9 @@ def voisins_assemblables(session, idu: str, zone_lib: str, seuil_m2: float) -> d
     rows = session.execute(text("""
         WITH cible AS (SELECT geom_2975 g, ST_Area(geom_2975) surf FROM parcels WHERE idu=:idu)
         SELECT ST_Area(v.geom_2975) AS vsurf,
-               COALESCE((SELECT SUM(ST_Area(ST_Intersection(b.geom_2975, v.geom_2975)))
+               -- RECETTE-6 (G2) — ST_Union avant ST_Area : le ratio bâti/surface du voisin ne peut plus
+               -- être gonflé par le double-compte des polygones bâtiment qui se chevauchent (LIVE).
+               COALESCE((SELECT ST_Area(ST_Union(ST_Intersection(b.geom_2975, v.geom_2975)))
                          FROM spatial_layers b WHERE b.kind='batiment'
                            AND ST_Intersects(b.geom_2975, v.geom_2975)), 0) AS bati
         FROM cible c

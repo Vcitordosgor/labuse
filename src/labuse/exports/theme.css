@@ -35,9 +35,19 @@ body {
   font-family: "Inter", "Inter", "DejaVu Sans", sans-serif;
   color: var(--ink);
   line-height: 1.45;
-  font-variant-numeric: tabular-nums;
+  /* RECETTE-6 (F2, 🔴) — le texte du PDF n'était PAS extractible (copier-coller / pdftotext /
+     lecteur d'écran) : WeasyPrint 69 ne construit pas de table ToUnicode correcte pour les glyphes
+     atteints par une SUBSTITUTION OpenType (ligatures « fi/tt », et surtout les chiffres TABULAIRES
+     `tnum`) → dates et prix ressortaient en caractères parasites (« 09/09/2026 » illisible), les
+     ligatures cassaient les mots (« Conﬁdentiel »). L'IDU en mono s'extrayait bien, lui, faute de
+     variante tabulaire. On DÉSACTIVE ligatures et chiffres tabulaires : les glyphes de la cmap de
+     base portent, eux, un ToUnicode juste. Correctif à la feuille partagée → vaut pour les 5 docs. */
+  font-variant-ligatures: none;
+  font-variant-numeric: normal;
+  font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0, "tnum" 0, "onum" 0, "lnum" 0;
   margin: 0;
 }
+.nb { white-space: nowrap; }   /* RECETTE-7 (E7) — noms composés insécables (Saint-Denis) */
 .doc-title { string-set: doc-title content(); }
 .doc-ref   { string-set: doc-ref content(); }
 .doc-foot  { string-set: doc-foot content(); }
@@ -48,6 +58,10 @@ body {
 .brand .wordmark { font-weight: 700; letter-spacing: .02em; font-size: 13pt; color: var(--mint-ink); }
 .brand .kind { color: var(--muted); font-size: 9pt; }
 h1 { font-size: 24pt; line-height: 1.15; font-weight: 700; margin: 0 0 4pt; letter-spacing: -.01em; }
+/* RECETTE-8 W21 — l'adresse de l'en-tête COMPACT (Financier) : plus petite que le h1 de garde
+   (24 pt cassait « …97417 / Saint-Denis » au milieu) ; elle tient sur une ligne pour une adresse
+   réunionnaise courante, le code postal restant lié à la commune (U+00A0, builder). */
+h1.addr-compacte { font-size: 15pt; line-height: 1.2; }
 .subtitle { font-size: 11pt; color: var(--muted); margin: 0 0 18pt; }
 .address { font-size: 14pt; margin: 0 0 2pt; }
 .idu { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-size: 9.5pt; color: var(--muted); margin-bottom: 16pt; }
@@ -91,7 +105,7 @@ table.kv th { text-align: left; font-weight: 600; font-size: 8.5pt; color: var(-
 table.kv td.k { width: 36%; color: var(--muted); }
 table.kv td.n { width: 60pt; text-align: right; padding-right: 0; }
 table.kv tr { page-break-inside: avoid; }
-table.kv td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.kv td.num { text-align: right; }  /* RECETTE-6 (F2) — chiffres tabulaires retirés (ToUnicode) */
 
 /* nature de la donnée */
 .chip { display: inline-block; font-size: 7.5pt; line-height: 1; padding: 3pt 5pt; border-radius: 2pt; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
@@ -131,7 +145,10 @@ table.kv td.num { text-align: right; font-variant-numeric: tabular-nums; }
 /* Brief apporteur (RECETTE-3 T1) — date d'émission, plan de situation, questionnaire */
 .emis { font-size: 8.5pt; color: var(--muted); margin: -10pt 0 14pt; }
 .plan { margin: 10pt 0 4pt; border: 1px solid var(--line); border-radius: 3pt; overflow: hidden; page-break-inside: avoid; }
-.plan img { display: block; width: 100%; height: auto; }
+/* RECETTE-5 (V20c) — le plan reste EN PAGE 1 avec le coup d'œil : sans plafond de hauteur, une ortho
+   large poussait le plan (page-break-inside: avoid) en page 2 → un brief de 5 pages au lieu de 4.
+   On borne la hauteur du plan (recadrage cover) : la page 1 tient, le document fait bien 4 pages. */
+.plan img { display: block; width: 100%; height: auto; max-height: 58mm; object-fit: cover; }
 .plan .ph { height: 56mm; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); font-size: 8.5pt; background: repeating-linear-gradient(45deg,#fafbfa,#fafbfa 9px,#f2f5f2 9px,#f2f5f2 18px); }
 .plan .cap { font-size: 7.5pt; color: var(--muted); padding: 3pt 8pt; border-top: 1px solid var(--line); }
 .cle { display: inline-block; font-size: 6.8pt; font-weight: 700; letter-spacing: .04em; color: var(--mint-ink); border: 1px solid var(--mint-ink); border-radius: 2pt; padding: 0 3pt; margin-right: 5pt; vertical-align: 1.5pt; }

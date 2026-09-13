@@ -53,7 +53,9 @@ def build_parcel_bati_revele(session) -> dict:
         FROM p_model_bati_cosia c
         JOIN parcels p ON p.idu = c.idu
         LEFT JOIN LATERAL (
-          SELECT sum(ST_Area(ST_Intersection(b.geom_2975, p.geom_2975))) AS emprise
+          -- RECETTE-6 (G2) — ST_Union avant ST_Area : plus de double-compte des bâtiments qui se
+          -- chevauchent (garde le_bien_block, RECETTE-5). Effet à la ré-ingestion parcel_bati_revele.
+          SELECT ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975))) AS emprise
           FROM spatial_layers b
           WHERE b.kind = 'batiment' AND b.geom_2975 && p.geom_2975
             AND ST_Intersects(b.geom_2975, p.geom_2975)) bd ON true

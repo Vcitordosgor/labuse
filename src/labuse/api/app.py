@@ -2482,9 +2482,10 @@ def zonage_zones(communes: str | None = Query(None), db: Session = Depends(get_d
 @app.get("/filtre")
 def filtre(c: FiltreCriteres = Depends(),
            limit: int = Query(20, ge=0, le=200), offset: int = Query(0, ge=0),
-           sort: str | None = Query(None, pattern="^(rang|mult|surface|surface_asc|commune|potentiel)$"),
+           sort: str | None = Query(None, pattern="^(rang|mult|surface|surface_asc|commune|potentiel|adresse)$"),
            idus: int = Query(0, ge=0, le=1),
            groupes: int = Query(0, ge=0, le=1),
+           segment: str | None = Query(None, pattern="^(permis_pro|terrain_nu|bati_densifier|reste)$"),
            db: Session = Depends(get_db)) -> dict:
     """Filtrage UNIFIÉ (M45 P1) — le « théâtre » : compteur EXACT + ventilation par tier + page
     d'aperçu en UN appel (une requête par ajustement de filtre). Critères composables via
@@ -2508,7 +2509,7 @@ def filtre(c: FiltreCriteres = Depends(),
         exclure_slivers=True))   # FIX-FILTRES F2 : compteur = liste (slivers < 2 m² masqués des deux)
     page = _q_v2_list(db, c.commune, limit, offset, run_label=c.source,
                       extra_where=extra, extra_params=extra_params, sort=sort,
-                      groupes=bool(groupes)) if limit else []
+                      groupes=bool(groupes), segment=segment) if limit else []
     out = {
         **stats,                                     # total, tiers, opportunites, opportunites_evenement,
                                                      # dossiers_* — la LISTE et les cartouches lisent LE MÊME
@@ -2823,17 +2824,19 @@ def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dic
     _FIAB = {"verifie": "surveillée", "estime": "estimée", "declaratif": "déclarative",
              "a_confirmer": "à confirmer"}
     out = []
-    import re as _re_m
+    # RECETTE-8 W16 — le millésime affichable vient du PRODUCTEUR UNIQUE (millesime_source.composer),
+    # le même que le pied de section (registre/valeur.py) → une source, une seule vérité par document.
+    from ..millesime_source import composer as _composer_mill, nettoyer_notes_internes
     for r in rows:
-        mill = r["source_millesime"] or (str(r["source_horizon_at"].year) if r["source_horizon_at"] else None)
-        if not mill and r["dernier_vu"] and _re_m.match(r"\d{4}-\d{2}-\d{2}", str(r["dernier_vu"])):
-            d = str(r["dernier_vu"])[:10]
-            mill = f"amont à jour au {d[8:10]}/{d[5:7]}/{d[0:4]} (sentinelle)"
-        if not mill and r["last_sync_at"]:
-            mill = f"ingéré le {r['last_sync_at']:%d/%m/%Y} (date d'ingestion, millésime amont non publié)"
+        # composer nettoie déjà le millésime (D6) ; on nettoie aussi le fournisseur (« propre non
+        # public ») — le catalogue data_sources partagé n'est PAS modifié (nettoyage au bord).
+        mill = _composer_mill(r["source_millesime"], source_horizon_at=r["source_horizon_at"],
+                              dernier_vu=r["dernier_vu"], last_sync_at=r["last_sync_at"])
         out.append({
-            "nom": r["name"], "categorie": r["category"], "fournisseur": r["provider"],
-            "millesime": mill, "fiabilite": _FIAB.get(r["reliability_level"], r["reliability_level"]),
+            "nom": r["name"], "categorie": r["category"],
+            "fournisseur": nettoyer_notes_internes(r["provider"]),
+            "millesime": mill,
+            "fiabilite": _FIAB.get(r["reliability_level"], r["reliability_level"]),
         })
     return out
 
@@ -3017,6 +3020,9 @@ _Q_V2_ORDERS = {
     # adressées, 4/30 avec potentiel. `rp`/`pa` = résiduel + adresse joints à la page (chemin non-rang).
     "potentiel": "(pa.idu IS NOT NULL) DESC, COALESCE(rp.sdp_residuelle_m2, 0) DESC NULLS LAST, "
                  "p.surface_m2 DESC NULLS LAST",
+    # RECETTE-5 (V2, décision Vic) — le tri « Adresse » du listing FACTUEL : ADRESSÉES d'abord, puis
+    # SURFACE décroissante. Que du fait cadastral — aucune SDP résiduelle (calcul LABUSE) dans l'ordre.
+    "adresse": "(pa.idu IS NOT NULL) DESC, p.surface_m2 DESC NULLS LAST",
     "v": "vs.v_score DESC NULLS LAST, (ev.parcel_id IS NOT NULL) DESC, "
          "d.opportunity_score DESC",  # M129-B
 }
@@ -3030,6 +3036,8 @@ _Q_V2_ORDERS_PAGE = {
     # RECETTE-3 (T3) — même ordre au niveau page (adresse via parcel_adresse `pa_o`, résiduel via `rb`).
     "potentiel": "(pa_o.idu IS NOT NULL) DESC, COALESCE(rb.sdp_residuelle_m2, 0) DESC NULLS LAST, "
                  "pg.surface_m2 DESC NULLS LAST",
+    # RECETTE-5 (V2) — même ordre « Adresse » au niveau page (adresse via `pa_o`, surface décroissante).
+    "adresse": "(pa_o.idu IS NOT NULL) DESC, pg.surface_m2 DESC NULLS LAST",
     "v": "vs.v_score DESC NULLS LAST, pg.evenement_rouge DESC, "
          "pg.opportunity_score DESC",  # M129-B
 }
@@ -3061,7 +3069,7 @@ _ETAT_BIEN_SQL = (
 
 def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_label: str | None = None,
                extra_where: str = "", extra_params: dict | None = None,
-               sort: str | None = None, groupes: bool = False) -> list[dict]:
+               sort: str | None = None, groupes: bool = False, segment: str | None = None) -> list[dict]:
     """Liste pilotée par le scoring v2 (M5.1) : tri par défaut = RANG P (croissant, copros
     en queue), périmètre par défaut = univers v2 HORS étage 0 du run servi — une brûlante
     v2 « écartée matrice » APPARAÎT. Un filtre `tiers` explicite (extra_where) remplace ce
@@ -3093,9 +3101,38 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     # RECETTE-3 (T4) — signal « un pro a déposé un permis » (q_v14) : injecté seulement si les tables
     # Sitadel existent (sinon permis_pro=False partout, jamais une 500 sur base de test nue).
     _permits = _permits_ready(db)
-    _pro_cte = f", {_PRO_PC_CTE}" if _permits else ""
+    # RECETTE-12 B2 — pro_pc placé EN TÊTE du WITH (matérialisé une fois) : réutilisé par la page
+    # (filtre segment) ET par le SELECT extérieur (colonne permis_pro). Avant, il était en queue et
+    # la page ne pouvait pas le voir → sous-requête inline non matérialisée, lente à froid.
+    _pro_cte_prefix = f"{_PRO_PC_CTE},\n        " if _permits else ""
     _pro_join = "LEFT JOIN pro_pc prpc ON prpc.idu = pg.idu" if _permits else ""
     _pro_col = "(prpc.idu IS NOT NULL AND coalesce(vs.owner_type,'pp') = 'pp')" if _permits else "false"
+    # RECETTE-12 B2 — filtrage PAR SEGMENT côté serveur : chaque segment (permis pro / terrain nu /
+    # bâti à densifier / reste) est paginé à 200 SUR SES PROPRES lignes, dès le 1er appel (avant, le
+    # front tranchait la fenêtre globale de 200 triée par rang → un petit segment tombait à « 9 sur 72 »).
+    # Le prédicat reprend EXACTEMENT la définition des compteurs (_q_v2_stats) : jamais deux règles.
+    # Le chemin GÉNÉRAL (ci-dessous) joint déjà `vs` (owner_type) et `rp` (résiduel) ; il ne manque que
+    # pro_pc — injecté ici en sous-requête (pas en CTE, pour ne pas dupliquer le nom pro_pc du WITH).
+    seg_join = seg_where = ""
+    if segment in ("permis_pro", "terrain_nu", "bati_densifier", "reste"):
+        # pro_pc est MATÉRIALISÉ en tête du WITH (voir _pro_cte_prefix) → on le RÉUTILISE ici plutôt
+        # qu'une sous-requête inline (qui, non matérialisée, faisait 4,5 s à froid sur l'île entière).
+        _pro = "(prpc2.idu IS NOT NULL AND coalesce(vs.owner_type,'pp') = 'pp')" if _permits else "false"
+        _nu = "COALESCE(rp.taux_emprise_pct, 0) < 5"                  # etat = 'nu'
+        _sdp = "COALESCE(rp.sdp_residuelle_m2, 0) > 0"               # etat = 'bati_encore'
+        if segment == "permis_pro":
+            # permis_pro est RARE (~518/430 000) : un ORDER BY rang qui scanne l'index profondément
+            # coûtait 5 s à froid. On PART de pro_pc (INNER JOIN, ~518 lignes) → le tri porte sur un
+            # tout petit ensemble. Sans tables Sitadel : aucun permis_pro (prédicat impossible).
+            seg_join = "JOIN pro_pc prpc2 ON prpc2.idu = p.idu" if _permits else ""
+            seg_where = "AND (coalesce(vs.owner_type,'pp') = 'pp')" if _permits else "AND (false)"
+        else:
+            seg_join = "LEFT JOIN pro_pc prpc2 ON prpc2.idu = p.idu" if _permits else ""
+            seg_where = {
+                "terrain_nu":     f"AND NOT ({_pro}) AND ({_nu})",
+                "bati_densifier": f"AND NOT ({_pro}) AND NOT ({_nu}) AND ({_sdp})",
+                "reste":          f"AND NOT ({_pro}) AND NOT ({_nu}) AND NOT ({_sdp})",
+            }[segment]
     # perf (M5.1) : tri + filtres d'abord (page de :lim lignes), PUIS les jointures
     # d'affichage (propriétaire, cluster, veille, signaux) sur cette page seulement —
     # 3,6 s → <1 s sur l'île entière (baseline legacy : 4,1 s).
@@ -3121,7 +3158,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     # chemin rapide seulement si un run v2 existe : sans lui, le LEFT JOIN historique
     # sert le repli legacy (colonnes v2 NULL) — le chemin s2-driven renverrait vide.
     # (groupes : le chemin rapide « index rang » ne sait pas préfixer par tier → requête générale)
-    if sort_key == "rang" and v2run is not None and not groupes:
+    if sort_key == "rang" and v2run is not None and not groupes and not seg_where:
         _fast_from = f"""
             FROM parcel_p_score_v2 s2
             JOIN parcels p ON p.idu = s2.parcelle_id
@@ -3159,18 +3196,20 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
             LEFT JOIN parcel_v_score vs ON vs.parcelle_id = p.idu
             LEFT JOIN parcel_residuel rp ON rp.parcel_id = p.id
             LEFT JOIN parcel_adresse pa ON pa.idu = p.idu
+            {seg_join}
             LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                        WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
             WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
               {_sliver}
               {base}
               {extra_where}
+              {seg_where}
             ORDER BY {order}
             LIMIT :lim OFFSET :off
         )"""
     rows = db.execute(text(
         f"""
-        WITH {page_sql},
+        WITH {_pro_cte_prefix}{page_sql},
         /* B1.2 : le cluster même-proprio est MATÉRIALISÉ (une exécution, ~11 ms) — en
            sous-requête jointe, le planner le ré-exécutait PAR LIGNE dès que la page
            devenait bon marché (4,8 ms × lignes servies, constaté au plan). */
@@ -3184,7 +3223,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
               AND NOT (d2.status IN ('exclue', 'faux_positif_probable'))
               AND pm2.siren IS NOT NULL
             GROUP BY pm2.siren HAVING count(*) > 1
-        ){_pro_cte}
+        )
         SELECT pg.*, (vw.parcelle_id IS NOT NULL) AS veille,
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
                vs.v_score, vs.v_band, vs.owner_type,
@@ -3723,6 +3762,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     # (zone_servie), lu par l'écran et tous les documents.
     from ..faisabilite.zone_servie import prescriptions_verifiables as _presc_verif
     _presc_ok, _presc_motif = _presc_verif(head["commune"])
+    from . import fiche_commune as _fiche_commune   # RECETTE-5 (V4) — TFPB part communale sur l'en-tête
     return {
         "idu": head["idu"], "commune": head["commune"],
         "prix_ancien": _prix_ancien, "marche_synthese": _marche_synthese,
@@ -3810,6 +3850,11 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # (moteur taxe_amenagement). None si pas de scénario constructible. Taux communal PUBLIC
         # si connu, sinon « non renseigné » — jamais un taux inventé (CIRCUIT-3 lot 6.2).
         "taxe_amenagement": _taxe_amenagement_block(db, idu, head["id"]),
+        # RECETTE-5 (V4) — TAXE FONCIÈRE (part communale, TFPB) portée sur l'en-tête de fiche : même
+        # source/point de service que la fiche commune (REI DGFiP via fiche_commune.fiscalite), keyée
+        # par l'INSEE de la parcelle (idu[:5]). Passe-plat sourcé + daté (drapeau `perime`) ; None si
+        # non ingéré — la tuile écrit alors « — » avec sa raison, jamais un zéro (V7).
+        "fiscalite": _fiche_commune.fiscalite(db, idu[:5] if idu else None),
         # FICHE-1 lot 6 — les annonces Radar RATTACHÉES à la parcelle (validées), datées, avec prix
         # demandé, statut (en cours / retirée / vendue), lien fiche annonce + écart demandé/acté.
         "radar_annonces": _radar_annonces_block(db, idu),
@@ -4059,24 +4104,22 @@ def _radar_annonces_block(db: Session, idu: str) -> dict | None:
 
 
 def _taxe_amenagement_block(db: Session, idu: str, parcel_id: int) -> dict | None:
-    """FICHE-1 lot 5 — estimation de la taxe d'aménagement pour le scénario TABLE RASE du bloc
-    potentiel (assiette = surface de plancher créée). Moteur `taxe_amenagement.calculer` (jamais
-    un calcul dans l'endpoint). Taux communal PUBLIC (`taxe_amenagement_taux`) si connu, sinon
-    total non calculé + « taux communal non renseigné » — jamais un taux inventé (CIRCUIT-3 6.2).
-    None si le scénario table rase n'est pas constructible (pas d'assiette → pas d'estimation)."""
-    try:
-        from ..faisabilite.potentiel import bloc_potentiel
-        pot = bloc_potentiel(db, parcel_id)
-    except Exception:  # noqa: BLE001 — jamais un 500 sur la fiche
-        return None
-    tr = (pot or {}).get("table_rase") or {}
-    plancher = tr.get("plancher_m2")
-    if not tr.get("constructible") or not plancher or float(plancher) <= 0:
+    """RECETTE-8 W2 — la taxe d'aménagement se paie, en droit, sur la surface de plancher CRÉÉE
+    par un PROJET (art. L331 c. urb.). Sur la fiche et le Dossier, aucun projet n'est saisi : LABUSE
+    ne connaît pas cette surface et ne l'invente pas. Ce bloc ne sert donc QUE le taux communal
+    (public, daté) et la part départementale de droit, pour dire sur quoi la taxe se calculera —
+    JAMAIS un montant en euros ni une assiette prise sur un scénario que personne n'a choisi (avant
+    RECETTE-8 il imprimait « 22 469 € pour 458 m² de table rase », W1). Le MONTANT n'est chiffré
+    qu'au Financier, sur la SDP du projet saisi (`exports.builder._financier_contexte`).
+    Taux communal PUBLIC (`taxe_amenagement_taux`) si connu, sinon « non renseigné » (CIRCUIT-3 6.2).
+    None si la commune est inconnue (pas d'IDU)."""
+    if not idu or len(idu) < 5:
         return None
     from .. import taxe_amenagement as _tax
     pub = _tax.taux_communal_public(db, idu[:5])
+    # calculer(surface=0) ne chiffre aucune part surface : on n'en lit QUE les taux + le message.
     res = _tax.calculer(
-        surface_taxable_m2=float(plancher),
+        surface_taxable_m2=0.0,
         taux_communal_public_pct=(pub["part_communale_pct"] if pub else None),
         taux_communal_public_source=(pub["source"] if pub else None),
         taux_communal_public_millesime=(pub["millesime"] if pub else None),
@@ -4084,11 +4127,9 @@ def _taxe_amenagement_block(db: Session, idu: str, parcel_id: int) -> dict | Non
         taux_communal_public_perime=(pub["perime"] if pub else None),
     )
     return {
-        "assiette_m2": round(float(plancher)),
-        "assiette_eur": res["assiette_eur"],
-        "total_eur": res["total_eur"],
-        "part_communale_eur": res["part_communale_eur"],
-        "part_departementale_eur": res["part_departementale_eur"],
+        # projet_saisi=False : ce bloc ne porte JAMAIS de montant sur la fiche/le Dossier.
+        "projet_saisi": False,
+        "total_eur": None,
         "taux_communal_pct": res["taux_communal_pct"],
         "taux_communal_source": res["taux_communal_source"],      # 'public' | None
         # TAXE-AMÉNAGEMENT-1 lot C — millésime + fraîcheur du taux public.
@@ -4099,7 +4140,6 @@ def _taxe_amenagement_block(db: Session, idu: str, parcel_id: int) -> dict | Non
         "taux_communal_manquant": res["taux_communal_manquant"],
         "message_taux_communal": res["message_taux_communal"],
         "annee": res["annee"], "source": res["source"], "url": res["url"],
-        "scenario": "table rase — surface de plancher du potentiel",
     }
 
 
@@ -4196,8 +4236,14 @@ def _dpe_connu_block(db: Session, idu: str) -> dict | None:
 
 
 def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
-    from ..territoire_fiscal import attributs_commune
+    from ..territoire_fiscal import attributs_commune, frr_position, frr_libelle_partie
     base = attributs_commune(db, idu[:5])
+    # RECETTE-11 D3 — commune FRR « en partie » : on TRANCHE la position de LA parcelle (les Hauts,
+    # couche frr), jamais « dépend de la localisation exacte » ; « non déterminé » si périmètre absent.
+    if base and (base.get("frr") or {}).get("classement") == "partie":
+        pos = frr_position(db, idu)
+        base["frr"]["position"] = pos or "non_determine"
+        base["frr"]["libelle"] = frr_libelle_partie(pos)
     # M134 — les PÉRIMÈTRES FINS qui touchent LA parcelle (ZFANG/FRR sont à la commune) : QPV
     # (dedans) ou, à défaut, la bande des 500 m (dérivée). En français, sourcés, jamais un sigle nu.
     qpv = db.execute(text(
@@ -4850,6 +4896,52 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
     else:
         niveau, libelle = "nul", "Densité autorisée atteinte ou dépassée"
     sur = sur or {}
+    # RECETTE-9 T9 — le scénario de surélévation branché sur le LiDAR : la surélévation se décide à
+    # l'ÉGOUT (bord de toit) vs la règle d'égout (cause de fond de E1). Le bâti BD TOPO est un faîtage
+    # incertain ; quand le LiDAR HD a MESURÉ l'égout de cette parcelle, on l'utilise → la marge devient
+    # une MESURE (« 3,4 m disponibles » cesse d'être une soustraction sur une estimation), nature « sourcé ».
+    h_bati = sur.get("hauteur_bati_m")
+    h_regle = sur.get("hauteur_regle_m")
+    h_marge = sur.get("marge_m")
+    h_possible = sur.get("possible")
+    h_nature = "estimé"
+    h_lidar_source = None
+    h_contrainte = None                                      # RECETTE-10 T1 — la hauteur qui mord
+    h_contraintes = None                                     # les deux calculs (égout ET faîtage)
+    h_base = sur.get("base")
+    from ..faisabilite.hauteur_lidar import hauteur_lidar_servie
+    _lid = hauteur_lidar_servie(db, idu)
+    if _lid and (_lid.get("egout_m") is not None or _lid.get("faitage_m") is not None):
+        # RECETTE-10 T1 — le LiDAR HD a MESURÉ égout ET faîtage : on retient les DEUX contraintes de
+        # zone (règle d'égout vs égout mesuré, règle de faîtage vs faîtage mesuré) et on garde la plus
+        # serrée. L'ancien code (T9) comparait l'égout MESURÉ à la règle de FAÎTAGE → marge gonflée du
+        # double (7,0 au lieu de 3,1). Une règle d'égout ne se compare qu'à un égout, jamais au faîtage.
+        from ..faisabilite.potentiel import surelevation_mesuree
+        _sm = surelevation_mesuree(sur.get("he_regle_m"), sur.get("hf_regle_m"),
+                                   _lid.get("egout_m"), _lid.get("faitage_m"))
+        if _sm:
+            h_nature = "sourcé"
+            h_lidar_source = _lid["source"]
+            h_marge = _sm["marge_m"]
+            h_possible = _sm["possible"]
+            h_contrainte = _sm["contrainte"]                 # « égout » | « faîtage »
+            h_contraintes = _sm["contraintes"]
+            h_regle = _sm["regle_m"]                          # la règle qui mord
+            h_bati = _sm["mesure_m"]                          # la mesure qui mord
+            h_base = f"{_sm['contrainte']} mesuré (LiDAR HD)"
+    # RECETTE-11 A4 — un permis AUTORISÉ sur la parcelle APRÈS le survol peut avoir changé le bâti :
+    # la mesure le dit (on compare à la date de survol, jamais à « permis récent »).
+    h_permis_posterieur = None
+    if _lid and _lid.get("date_fin_survol"):
+        try:
+            _pp = db.execute(text(
+                "SELECT max(date_autorisation) FROM p_model_permits "
+                "WHERE idu = :i AND date_autorisation > :d"),
+                {"i": idu, "d": _lid["date_fin_survol"]}).scalar()
+            if _pp:
+                h_permis_posterieur = _pp.strftime("%d/%m/%Y")
+        except Exception:  # noqa: BLE001 — table permis absente (dev/test) → pas de caveat, jamais un faux
+            db.rollback()
     return {
         "niveau": niveau, "libelle": libelle,
         "pct_consomme": pct,                                  # SDP consommée / autorisée (%)
@@ -4860,12 +4952,29 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
         "capacite_estimee": row["capacite_estimee"],
         # EXPORTS-1 (3.2) : surélévation au MOTEUR COMMUN — hauteur à l'ÉGOUT, base dite
         # (repli faîtage seulement si l'égout n'est pas calibré, avec avertissement).
-        "surelevation_possible": sur.get("possible"),
-        "hauteur_bati_m": sur.get("hauteur_bati_m"), "hauteur_regle_m": sur.get("hauteur_regle_m"),
-        "hauteur_base": sur.get("base"), "hauteur_marge_m": sur.get("marge_m"),
+        "surelevation_possible": h_possible,
+        "hauteur_bati_m": h_bati, "hauteur_regle_m": h_regle,
+        "hauteur_base": h_base,
+        "hauteur_marge_m": h_marge,
+        # RECETTE-9 T9 — nature de la hauteur du bâti servie au scénario (« sourcé » LiDAR / « estimé » BD TOPO).
+        "hauteur_nature": h_nature,
+        # RECETTE-10 T1 — la contrainte qui mord (« égout »/« faîtage ») + les deux calculs, pour que
+        # le rendu dise LAQUELLE des deux hauteurs limite la surélévation (jamais une règle sans son
+        # unité en regard).
+        "hauteur_contrainte": h_contrainte,
+        "hauteur_contraintes": h_contraintes,
+        "hauteur_faitage_lidar_m": (_lid["faitage_m"] if _lid else None),
+        "hauteur_egout_lidar_m": (_lid["egout_m"] if _lid else None),
+        "hauteur_source_lidar": h_lidar_source,
+        # RECETTE-11 A3 — la date de survol LiDAR HD, servie AVEC la mesure (jamais une mesure sans date).
+        "hauteur_survol": (_lid.get("survol") if _lid else None),
+        # RECETTE-11 A4 — date d'un permis autorisé APRÈS le survol (mesure possiblement dépassée).
+        "hauteur_permis_posterieur": h_permis_posterieur,
         "avertissement_surelevation": sur.get("avertissement"),
         "source": "Ratio SDP consommée/autorisée (bloc D du modèle P) + surélévation au moteur "
-                  "commun (règles PLU calibrées × bâti BD TOPO, hauteur à l'égout)",
+                  "commun (règles PLU calibrées × bâti "
+                  + ("LiDAR HD, hauteur à l'égout MESURÉE)" if h_nature == "sourcé"
+                     else "BD TOPO, hauteur à l'égout)"),
         "note": "Remplace l'ancien mode carte « Mutabilité » : même donnée résiduelle, "
                 "à la parcelle, complétée du signal surélévation.",
     }
@@ -4895,6 +5004,61 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
                        if rid.startswith("fiche_parcelle") for cid in r.chiffres})
         payload["_trace"] = registre.tampons_pour(db, cids)
     return payload
+
+
+@app.get("/scoring/backtest")
+def scoring_backtest(db: Session = Depends(get_db)) -> dict:
+    """RECETTE-10 T11 — ce que le score APPORTE, mesuré sur le run servi : taux de mutation à 12 mois
+    par palier (rapport de risque réel) vs un filtre simple, + une phrase chiffrée/datée pour le client.
+    Coûteux (jointure spatiale DVF) → mémorisé 6 h ; lecture seule, aucun rescoring."""
+    from ..scoring.backtest import mutation_lift, phrase_client
+    def _compute():
+        bt = mutation_lift(db)
+        return {**bt, "phrase_client": phrase_client(bt)}
+    try:
+        return _mem_cached(("scoring-backtest",), 21600.0, _compute)
+    except Exception:  # noqa: BLE001 — base sans DVF/score → pas de backtest, jamais un 500
+        db.rollback()
+        return {"paliers": [], "filtres": {}, "phrase_client": None}
+
+
+@app.get("/parcels/{idu}/exposition")
+def parcel_exposition(idu: str, db: Session = Depends(get_db)) -> dict:
+    """RECETTE-8 W22 — l'exposition de la parcelle (orientation du versant + pente moyenne), calculée
+    LOCALEMENT sur le MNT RGE ALTI, SANS ligne de vue (à la place de la vue mer abandonnée). Appel
+    lazy (fetch WMS + gdaldem ~0,5 s) : la tuile de la fiche affiche « … » puis la valeur. Échec de
+    relief → orientation None, dit honnêtement (jamais un faux « plat »)."""
+    idu = _check_idu(idu)
+    pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    if pid is None:
+        raise HTTPException(404, "parcelle inconnue")
+    try:
+        from ..faisabilite.exposition import exposition_parcelle
+        res = exposition_parcelle(db, pid)
+    except Exception as exc:  # noqa: BLE001 — jamais un 500 sur la fiche
+        log.warning("exposition %s : %s", idu, exc)
+        return {"idu": idu, "orientation": None, "erreur": "relief indisponible"}
+    return {"idu": idu, **(res or {"orientation": None})}
+
+
+@app.get("/parcels/{idu}/hauteur-lidar")
+def parcel_hauteur_lidar(idu: str, db: Session = Depends(get_db)) -> dict:
+    """RECETTE-8 W23 — les hauteurs MESURÉES au LiDAR HD (faîtage + égout distingués) du bâtiment
+    principal, à la place/complément de la hauteur BD TOPO (estimée, une seule valeur). Répare la
+    cause de fond de E1. Lazy (fetch WMS MNS+MNT + calcul ~1 s). Écart au faîtage BD TOPO donné."""
+    idu = _check_idu(idu)
+    pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    if pid is None:
+        raise HTTPException(404, "parcelle inconnue")
+    try:
+        from ..faisabilite.hauteur_lidar import hauteur_parcelle_lidar
+        res = hauteur_parcelle_lidar(db, pid)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("hauteur-lidar %s : %s", idu, exc)
+        return {"idu": idu, "faitage_m": None, "erreur": "LiDAR indisponible"}
+    if res is None:
+        return {"idu": idu, "faitage_m": None, "erreur": "aucun bâti sur la parcelle"}
+    return {"idu": idu, **res}
 
 
 @app.get("/parcels/{idu}/zone")
@@ -5343,6 +5507,44 @@ def map_bati(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     stats = bati_mod.stats_batch(db, list(id2idu.keys()))
     ratios = {id2idu[pid]: round(s.get("bati_ratio", 0.0), 3) for pid, s in stats.items()}
     return {"commune": commune, "disponible": True, "ratios": ratios}
+
+
+@app.get("/map/batiments.geojson")
+def map_batiments_geojson(bbox: str = Query(..., description="minLon,minLat,maxLon,maxLat (WGS84)"),
+                          db: Session = Depends(get_db)) -> dict:
+    """RECETTE-6 (A3) — le BÂTI de la BBOX pour l'extrusion 3D : empreinte au sol (BD TOPO) + hauteur
+    (`attrs.hauteur`, la MÊME que sert l'Apporteur « … m au sol · … m de haut »). Sans hauteur → EXCLU
+    (jamais d'extrusion inventée, décision Vic). Borné à la BBOX + plafond 8000, JAMAIS l'île entière."""
+    try:
+        xmin, ymin, xmax, ymax = (float(x) for x in bbox.split(","))
+    except Exception:
+        raise HTTPException(422, "bbox invalide (attendu : minLon,minLat,maxLon,maxLat)")
+    # RECETTE-9 T9 — l'extrusion préfère le FAÎTAGE LiDAR MESURÉ (sourcé) quand la parcelle du bâtiment
+    # a été ingérée (table `batiment_hauteur_lidar`), sinon la hauteur BD TOPO déclarée (estimé). Le flag
+    # `lidar` par bâtiment permet au front de distinguer mesuré/estimé. Join borné (table bornée).
+    _lid_ok = bool(db.execute(text("SELECT to_regclass('batiment_hauteur_lidar')")).scalar())
+    _h_expr = ("round(COALESCE(hl.faitage_m::numeric, (attrs->>'hauteur')::numeric), 1)"
+               if _lid_ok else "round((attrs->>'hauteur')::numeric, 1)")
+    _lid_col = "(hl.faitage_m IS NOT NULL)" if _lid_ok else "false"
+    _lid_join = ("""LEFT JOIN LATERAL (
+            SELECT bhl.faitage_m FROM parcels p JOIN batiment_hauteur_lidar bhl ON bhl.idu = p.idu
+            WHERE ST_Intersects(p.geom_2975, sl.geom_2975) LIMIT 1) hl ON true""" if _lid_ok else "")
+    fc = db.execute(text(f"""
+      SELECT jsonb_build_object('type','FeatureCollection','features',
+        COALESCE(jsonb_agg(jsonb_build_object(
+          'type','Feature',
+          'geometry', ST_AsGeoJSON(b.geom, 6)::jsonb,
+          'properties', jsonb_build_object('h', b.h, 'lidar', b.lidar)
+        )), '[]'::jsonb))
+      FROM (
+        SELECT sl.geom, {_h_expr} AS h, {_lid_col} AS lidar FROM spatial_layers sl
+        {_lid_join}
+        WHERE sl.kind = 'batiment' AND (sl.attrs->>'hauteur') IS NOT NULL
+          AND sl.geom && ST_MakeEnvelope(:xmin, :ymin, :xmax, :ymax, 4326)
+        LIMIT 8000
+      ) b
+    """), {"xmin": xmin, "ymin": ymin, "xmax": xmax, "ymax": ymax}).scalar()
+    return fc
 
 
 @app.get("/assemblages")
@@ -6307,20 +6509,75 @@ def financier_questionnaire_get(idu: str, request: Request, db: Session = Depend
         fiche = {}
     prefill = qf.prefill(fiche)
 
+    # RECETTE-9 T1 — le PROGRAMME constructible (surface vendable) vient du POTENTIEL de la parcelle ;
+    # quand la parcelle n'a PAS de potentiel chiffrable (bâtie à sa densité, zone qui l'interdit…), le
+    # bilan reste établissable MAIS il faut que le porteur DÉCRIVE son programme : « nombre de logements
+    # visés » (+ typologie) devient alors INDISPENSABLE — sinon `surface_vendable` reste nul et le
+    # document se bloque « à l'arrivée » sur « Programme constructible » (le constat de la recette). On
+    # marque le champ indispensable AU MOMENT DE LA SAISIE (défaut n°1), plus une bannière explicite.
+    _pot = fiche.get("potentiel_transformation") or {}
+    # RECETTE-9 T1 — le programme est chiffré AUTOMATIQUEMENT quand le potentiel signale une capacité
+    # constructible (`capacite_estimee` VRAI : parcelle en sous-densité) — c'est le cas où
+    # `_financier_contexte` pré-remplit le programme et le bilan s'établit SANS que le porteur décrive
+    # quoi que ce soit (vérifié empiriquement : parcelle « fort » → surface vendable servie, manques=∅).
+    # Quand `capacite_estimee` est FAUX (parcelle nulle/faible, à sa densité), la surface vendable
+    # N'EXISTE QUE si le porteur décrit son programme → le nombre de logements devient indispensable
+    # (parcelle « faible » → manques=['Programme constructible'] tant que logements est vide).
+    programme_auto = qf.programme_depuis_potentiel(_pot)
+    # sans potentiel chiffrable, le nombre de logements est le champ qui DÉBLOQUE le programme.
+    obligatoires_programme = qf.obligatoires_programme(_pot)
+
     def _champ(fid: str) -> dict:
         c = CHIFFRES.get(fid)
         # RECETTE-2 (S3) — libellé CLIENT en français clair ; repli sur le libellé registre.
         libelle = qf.LIBELLES_CLIENT.get(fid) or (c.libelle if c else fid)
+        # RECETTE-9 T1 — l'aide du champ logements se précise quand il devient indispensable.
+        aide = qf.AIDES.get(fid)
+        if fid == "logements_vises_saisi" and not programme_auto:
+            aide = ("INDISPENSABLE sur cette parcelle : LABUSE n'a pas pu chiffrer de programme "
+                    "constructible (pas de potentiel calculé). Renseignez le nombre de logements "
+                    "visés — avec la typologie, il donne la surface vendable du bilan.")
         return {"id": fid, "libelle": libelle, "unite": c.unite if c else "",
                 "type": c.type if c else "texte",
                 "domaine": list(c.domaine) if c and c.domaine else None,
-                "obligatoire": fid in qf.OBLIGATOIRES,
+                # RECETTE-10 T2b — tri de la question (garder/affiner/supprimer) : le front garde les
+                # « garder » visibles, replie les « affiner », n'affiche jamais les « supprimer ».
+                "tri": qf.tri_champ(fid),
+                # RECETTE-8 W13bis — obligatoire dans SON parcours (construction OU revente).
+                # RECETTE-9 T1 — + les champs qui DÉBLOQUENT le programme quand le potentiel est absent.
+                "obligatoire": (fid in qf.OBLIGATOIRES or fid in qf.OBLIGATOIRES_REVENTE
+                                or fid in obligatoires_programme),
+                "aide": aide,   # RECETTE-5 (V19) — le « i » : ce qu'on attend comme valeur
                 "prefill": prefill.get(fid)}  # {valeur, source} ou None (jamais une valeur sans source)
 
     ecrans = [{"titre": t, "champs": [_champ(fid) for fid in ids]} for t, ids in qf.ECRANS]
+    # RECETTE-8 W13bis (C3) — les écrans PAR usage : le front sert le questionnaire du parcours choisi
+    # (« construction » = les 4 écrans du bilan à rebours ; « revente » = l'écran de marge). Un usage
+    # non servi n'a pas d'écrans (il reste grisé avec sa raison, USAGES).
+    ecrans_par_usage = {
+        "construction": ecrans,
+        "revente": [{"titre": t, "champs": [_champ(fid) for fid in ids]} for t, ids in qf.REVENTE_ECRANS],
+    }
+    # RECETTE-9 T1 — le programme constructible : d'où vient la surface vendable du bilan. « potentiel »
+    # = LABUSE l'a chiffrée (rien à saisir) ; « saisie » = il faut la décrire (logements + typologie).
+    programme = {
+        "auto": programme_auto,
+        "source": "potentiel" if programme_auto else "saisie",
+        "message": (
+            "LABUSE a chiffré le programme constructible depuis le potentiel de la parcelle."
+            if programme_auto else
+            "LABUSE n'a pas pu chiffrer de programme constructible sur cette parcelle "
+            "(pas de potentiel calculé). Renseignez le nombre de logements visés et la typologie "
+            "moyenne : sans eux, le bilan financier ne peut pas être établi."),
+    }
     return {"idu": idu, "reponses": etat["reponses"], "complet": etat["complet"],
             "existe": etat["existe"], "ecrans": ecrans,
-            "tva_explication": qf.TVA_EXPLICATION, "champs_obligatoires": sorted(qf.OBLIGATOIRES)}
+            "ecrans_par_usage": ecrans_par_usage,
+            "programme": programme,   # RECETTE-9 T1 — surface vendable : potentiel vs à saisir
+            "usages": qf.USAGES,  # RECETTE-6 (E5) — écran 0 « Que voulez-vous chiffrer ? »
+            "tva_explication": qf.TVA_EXPLICATION,
+            "champs_obligatoires": sorted(qf.OBLIGATOIRES),
+            "champs_obligatoires_revente": sorted(qf.OBLIGATOIRES_REVENTE)}
 
 
 @app.put("/financier/{idu}/questionnaire")
@@ -6334,6 +6591,21 @@ def financier_questionnaire_put(idu: str, body: QuestionnaireFinancierIn, reques
     res = qf.enregistrer(db, idu, cid, body.reponses, body.projet_id)
     db.commit()
     return {"idu": idu, **res}
+
+
+@app.post("/financier/{idu}/questionnaire/valider")
+def financier_questionnaire_valider(idu: str, body: QuestionnaireFinancierIn, request: Request,
+                                    db: Session = Depends(get_db)) -> dict:
+    """RECETTE-11 B2 — le garde du QUESTIONNAIRE : rend la saisie hors marché (prix > borne, ou bailleur
+    > prix libre) AVANT tout document, avec l'écran/le champ/l'accordéon à ouvrir. `hors_marche` null =
+    tout est plausible. Aucune écriture (validation seule)."""
+    from .. import financier_questionnaire as qf
+    try:
+        fiche = parcel_fiche(idu, db=db, request=request)
+    except Exception:  # noqa: BLE001 — pas de fiche → seuls les pré-remplissages constants
+        fiche = {}
+    hm = qf.valider_hors_marche(body.reponses, qf.prefill(fiche))
+    return {"idu": idu, "hors_marche": hm}
 
 
 @app.get("/compare")

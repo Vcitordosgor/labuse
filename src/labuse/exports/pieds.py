@@ -29,6 +29,11 @@ def _noms_reservoirs() -> dict[str, str]:
     return out
 
 
+#: RECETTE-11 D6 — réservoirs enregistrés mais absents de reservoirs.csv : sans nom affiché, leur
+#: id technique (« rpls_sdes ») fuyait au client dans le pied « Sources : … ». On donne le nom public.
+_NOMS_REPLI = {"rpls_sdes": "RPLS — logements locatifs sociaux (SDES)"}
+
+
 def sources_lues(valeurs: Iterable[Valeur]) -> list[tuple[str, str | None]]:
     """Les réservoirs (nom affiché, millésime) réunis des Valeur données, dans l'ordre de première
     apparition, sans doublon — vide si aucun id lu ne porte de réservoir."""
@@ -38,7 +43,7 @@ def sources_lues(valeurs: Iterable[Valeur]) -> list[tuple[str, str | None]]:
         for rid, mill in (v.reservoirs or {}).items():
             if rid not in vus:
                 vus[rid] = mill
-    return [(noms.get(rid, rid), mill) for rid, mill in vus.items()]
+    return [(noms.get(rid) or _NOMS_REPLI.get(rid, rid), mill) for rid, mill in vus.items()]
 
 
 def pied_section(valeurs: Iterable[Valeur]) -> str:

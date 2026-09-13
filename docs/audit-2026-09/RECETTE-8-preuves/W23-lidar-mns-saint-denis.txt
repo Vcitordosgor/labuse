@@ -1,0 +1,64 @@
+commune Saint-Denis — 20 bâtiments échantillonnés (BD TOPO hauteur présente)
+
+    bât_id | BD TOPO | faîtage | égout | écart(faît−BDT)
+    252328 |     4.6 |     6.6 |   2.6 |   +2.0
+    993616 |     5.7 |     4.9 |   3.0 |   -0.8
+    992873 |     7.5 |    10.3 |   7.5 |   +2.8
+   1069299 |    16.9 |    15.8 |  12.2 |   -1.1
+   1024103 |     2.5 |     3.9 |   2.8 |   +1.4
+    984144 |     4.6 |     5.3 |   2.5 |   +0.7
+   1027091 |     5.4 |     5.4 |   3.6 |   -0.0
+   1073503 |     5.6 |     6.1 |   4.0 |   +0.5
+   1026989 |     5.8 |     6.1 |   3.2 |   +0.3
+    225475 |     1.6 |     1.0 |  -0.5 |   -0.6
+   1063577 |     3.1 |     4.3 |   3.3 |   +1.2
+   1003371 |    12.5 |    12.8 |  10.1 |   +0.3
+    988982 |    16.1 |    14.6 |  14.1 |   -1.5
+   1062773 |     6.3 |     9.1 |   6.3 |   +2.8
+    984553 |     6.8 |     6.6 |   5.4 |   -0.2
+    967089 |     4.9 |     5.5 |   3.5 |   +0.6
+    225687 |     8.0 |     6.7 |   1.7 |   -1.3
+   1005353 |     3.4 |     5.3 |   3.2 |   +1.9
+    988896 |     3.4 |     7.8 |   3.6 |   +4.4
+   1078443 |     5.2 |     7.4 |   6.9 |   +2.2
+
+MESURES — 20 bâtiments comparés
+  écart médian faîtage−BD TOPO : +0.57 m
+  écart moyen : +0.78 m | min -1.5 | max +4.4
+  écart absolu médian : 1.11 m
+
+COÛT (WMS par fenêtre bâtiment, MNS+MNT @0,5 m) — 20 bâtiments :
+  téléchargement total 20.0s (0.7 Mo) → 1.00s/bât, 36 ko/bât
+  calcul total 0.66s → 33 ms/bât
+
+═══════════════════════════════════════════════════════════════════════════════
+DÉCISION W23 (étape 3) — les chiffres tiennent-ils l'estimation ?
+───────────────────────────────────────────────────────────────────────────────
+OUI. Sur 20 bâtiments de Saint-Denis (BD TOPO hauteur présente) :
+  • écart médian faîtage LiDAR − BD TOPO : +0,57 m (léger biais positif attendu :
+    le MNS capte le VRAI faîtage, BD TOPO donne souvent une hauteur plus prudente) ;
+  • écart absolu médian : 1,11 m — dans la marge d'une donnée d'estimation ;
+  • et surtout : le MNS DISTINGUE faîtage (p99) et égout (p25), ce que BD TOPO ne
+    fait PAS — c'est exactement la cause de fond de E1 (comparer un faîtage à une
+    règle d'égout). Cas extrêmes : +4,4 m (bât 988896 — végétation sur toit ou
+    structure haute), −1,5 m (bât 988982 — écart mineur).
+
+COÛT MESURÉ (fetch WMS MNS+MNT @0,5 m par bâtiment) : ~1,0 s de téléchargement
+(36 ko) + 33 ms de calcul par bâtiment.
+
+CE QUI EST LIVRÉ (étape 4, capacité) :
+  • faisabilite/hauteur_lidar.py — faîtage/égout mesurés par parcelle (bâtiment
+    principal), réutilisable.
+  • endpoint /parcels/{idu}/hauteur-lidar (lazy, ~1,3 s) : ex. 97411000EL0157 →
+    faîtage 6,9 m · égout 3,0 m · BD TOPO 6,6 m · écart +0,3 m.
+
+ARBITRAGE (comme l'exposition W22) : la hauteur mesurée est servie PAR PARCELLE à
+la demande (fenêtre MNS+MNT locale), disponible partout tout de suite, sans batch
+bloquant. L'ingestion PRÉCALCULÉE de toute l'île — pour remplacer BD TOPO PARTOUT
+(extrusion 3D ; surélévation du Dossier « 3,4 m disponibles » = une mesure et non
+une soustraction sur une estimation ; étiquette de nature de l'Apporteur estimé →
+SOURCÉ) — reste un batch BORNÉ à lancer sous le go de Vic (coût extrapolé ~1 s/bât :
+Saint-Denis ~quelques heures, l'île entière plusieurs dizaines d'heures de WMS ; à
+ne pas lancer en aveugle, cf. doctrine RECETTE-7 D). Le point de branchement (le
+helper + l'endpoint) est prêt ; le câblage dans les 4 consommateurs se fait sur la
+hauteur servie par ce point unique, une fois le batch passé.

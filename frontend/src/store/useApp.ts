@@ -585,11 +585,15 @@ export const useApp = create<AppState>((set) => ({
     commune, zone: null,
   })),
   contexteCommune: null,
-  setContexteCommune: (contexteCommune) => set({ contexteCommune }),
+  // RECETTE-5 (V14) — la fiche COMMUNE et la fiche PARCELLE se ferment MUTUELLEMENT : ouvrir l'une
+  // ferme l'autre (dans les deux sens). Sans ça, ouvrir la fiche commune puis cliquer une parcelle
+  // laissait la commune (z-30) PAR-DESSUS la parcelle (z-10), qui restait cachée.
+  setContexteCommune: (contexteCommune) => set((s) => ({ contexteCommune, selectedIdu: contexteCommune ? null : s.selectedIdu })),
   // M55-C point 4 : périmètre + fiche en un geste ; le recadrage carte suit (effet fit sur `commune`).
   // M55-D stage 6 : écrit dans le filtre communes (maître) — un seul état.
   focusCommune: (c) => set((s) => ({
     filters: { ...s.filters, communes: [c] }, commune: c, contexteCommune: c, zone: null,
+    selectedIdu: null,   // RECETTE-5 (V14) — ouvrir la fiche commune ferme la fiche parcelle
   })),
   panneauSection: 'couches',   // Couches ouverte par défaut (comportement historique M14)
   setPanneauSection: (panneauSection) => set({ panneauSection }),
@@ -689,7 +693,11 @@ export const useApp = create<AppState>((set) => ({
   // G1 (M12) : filet de sécurité global — un idu vide ou la chaîne « undefined » (issue d'un
   // `String(undefined)` sur une feature sans propriété idu) n'ouvre JAMAIS la fiche. Elle
   // afficherait un titre « undefined » et un faux « serveur injoignable ». `null` ferme la fiche.
-  select: (idu) => set({ selectedIdu: idu === '' || idu === 'undefined' ? null : idu }),
+  // RECETTE-5 (V14) — sélectionner une PARCELLE ferme la fiche COMMUNE (les deux ne coexistent plus).
+  select: (idu) => set((s) => {
+    const clean = idu === '' || idu === 'undefined' ? null : idu
+    return { selectedIdu: clean, contexteCommune: clean ? null : s.contexteCommune }
+  }),
   // RETOURS-12 O1/O12/J1 — focus SANS ouvrir la fiche (zoom + surbrillance sur la carte). Bascule
   // sur 'cartes' pour que la carte soit visible ; option ortho (J1). `focusIdu` réamorcé même valeur.
   focusIdu: null,
