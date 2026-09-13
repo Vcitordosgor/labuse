@@ -100,17 +100,44 @@ def _bbox_geom(session: Session, commune: str) -> dict | None:
             "coordinates": [[[x1, y1], [x2, y1], [x2, y2], [x1, y2], [x1, y1]]]}
 
 
+#: SOURCES-2 lot 4 — les générateurs de SUP (mêmes 3 géométries que les assiettes).
+GENERATEUR_ENDPOINTS = {"surf": "generateur-sup-s", "lin": "generateur-sup-l",
+                        "pct": "generateur-sup-p"}
+
+
+def _generateurs_par_idgen(client: httpx.Client, geom: dict, commune: str, log) -> dict[str, dict]:
+    """SOURCES-2 lot 4 — index idgen → {nom, type, nomsuplitt} des générateurs de SUP de la
+    commune (API Carto `generateur-sup-*`). Le générateur dit CE QUI crée la servitude
+    (monument, ravine classée, canalisation…) — l'assiette ne dit que l'emprise."""
+    idx: dict[str, dict] = {}
+    for ep in GENERATEUR_ENDPOINTS.values():
+        r = client.get(f"{BASE}/{ep}", params={"geom": json.dumps(geom)})
+        if r.status_code >= 500:
+            log(f"  ⚠ {commune} {ep} : HTTP {r.status_code}, générateurs sautés")
+            continue
+        r.raise_for_status()
+        for f in r.json().get("features") or []:
+            p = f.get("properties") or {}
+            if p.get("idgen"):
+                idx[p["idgen"]] = {"nomgen": p.get("nomgen"), "typegen": p.get("typegen"),
+                                   "nomsuplitt": p.get("nomsuplitt"), "idsup": p.get("idsup")}
+    return idx
+
+
 def ingest_commune(session: Session, commune: str, run_id: int | None = None,
                    source_id: int | None = None, log=print) -> dict:
-    """Ingère les assiettes SUP (3 géométries) d'une commune. Purge avant (idempotent)."""
+    """Ingère les assiettes SUP (3 géométries) d'une commune, enrichies SOURCES-2 lot 4 de
+    l'ACTE (champ `fichier` du GPU — l'arrêté/décret PDF) et du GÉNÉRATEUR (joint par idgen).
+    Purge avant (idempotent)."""
     geom = _bbox_geom(session, commune)
     if geom is None:
         return {"sup": 0}
     session.execute(text(
         "DELETE FROM spatial_layers WHERE kind = 'sup' AND commune = :c"), {"c": commune})
-    n = 0
+    n = n_gen = 0
     with httpx.Client(timeout=max(get_settings().http_timeout_s, 90.0),
                       headers={"User-Agent": constants.USER_AGENT}, follow_redirects=True) as c:
+        generateurs = _generateurs_par_idgen(c, geom, commune, log)
         for geo_kind, ep in ENDPOINTS.items():
             r = c.get(f"{BASE}/{ep}", params={"geom": json.dumps(geom)})
             if r.status_code >= 500:      # une géométrie qui échoue n'arrête pas la commune
@@ -124,13 +151,21 @@ def ingest_commune(session: Session, commune: str, run_id: int | None = None,
                 p = f.get("properties") or {}
                 if not f.get("geometry"):
                     continue
+                gen = generateurs.get(p.get("idgen") or "")
+                if gen:
+                    n_gen += 1
                 _insert_layer(session, "sup", (p.get("suptype") or "").lower() or None,
                               p.get("nomsuplitt") or p.get("nomass"),
                               f["geometry"], source_id, commune, run_id,
                               attrs={"idass": p.get("idass"), "nomass": p.get("nomass"),
                                      "typeass": p.get("typeass"), "partition": p.get("partition"),
                                      "nomsuplitt": p.get("nomsuplitt"), "urlreg": p.get("urlreg"),
-                                     "geo": geo_kind})
+                                     "geo": geo_kind,
+                                     # SOURCES-2 lot 4 — l'acte et le générateur de la servitude
+                                     "acte_fichier": p.get("fichier"),
+                                     "idgen": p.get("idgen"),
+                                     "generateur_nom": (gen or {}).get("nomgen"),
+                                     "generateur_type": (gen or {}).get("typegen")})
                 n += 1
     session.flush()
-    return {"sup": n}
+    return {"sup": n, "avec_generateur": n_gen}

@@ -98,7 +98,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   // COUCHES-1 lot 2 (A1) — `dpf` (ravines et reculs) AJOUTÉ à l'activation : sa ligne de légende
   // vit dans ce groupe mais `dpf` en était absent → allumée seule, la couche « Ravines et reculs »
   // n'avait AUCUNE légende (constat A1).
-  const contraintesActif = layers.er || layers.ebc || layers.dpu || layers.peb || layers.sup || layers.dpf || layers.bruit_route || layers.bruit_carte
+  const contraintesActif = layers.er || layers.ebc || layers.dpu || layers.peb || layers.sup || layers.dpf || layers.endiguement || layers.bruit_route || layers.bruit_carte
 
   // SECTEUR-1 (S4) — les GROUPES actifs, dans l'ordre. Seuls ceux des couches actives apparaissent.
   const groupes: { id: string; titre: ReactNode; note?: string; body: ReactNode }[] = []
@@ -273,6 +273,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       </>}
       {layers.sup && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.sup, opacity: tTheme.supOpacity + 0.35, borderColor: tTheme.sup }} />Servitude d’utilité publique (catégorie au clic)</span>}
       {layers.dpf && <span className="flex items-center gap-2"><span className="h-0.5 w-4 shrink-0" style={{ background: tTheme.dpf }} />Domaine public fluvial (marchepied 3,25 m — L2131-2)</span>}
+      {layers.endiguement && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-[2px]" style={{ background: tTheme.endiguement, opacity: 0.5 }} />Digues et zones protégées (inondation résiduelle au-delà du niveau de protection)</span>}
       {layers.bruit_route && <>
         <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.bruitRamp.cat1, borderColor: tTheme.bruitRamp.cat1, opacity: 0.85 }} />Classement sonore cat. 1-2 (bandes 250-300 m — isolement renforcé R571-32)</span>
         <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.bruitRamp.cat4, borderColor: tTheme.bruitRamp.cat4, opacity: 0.85 }} />Classement sonore cat. 3-5 (bandes 10-100 m)</span>

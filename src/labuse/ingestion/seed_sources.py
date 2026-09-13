@@ -133,7 +133,7 @@ SOURCES: list[dict] = [
          documentation_url="https://deal974.lizmap.com/cartes/index.php/view/map?repository=02sprinr&project=01risque",
          endpoint_url="https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=01risque",
          legal_notes="Données État — Licence Ouverte ; attribution : « Source : DEAL Réunion, PPR / aléas ». Les documents PPR sont des actes réglementaires (libres).",
-         technical_notes="✓ validé spike 2026-06 : PPR_APPROUVE (zonage rouge=INTERDICTION / bleu=PRESCRIPTION, MultiPolygon EPSG:2975, champs CODE_INSEE/RISQUE/DEGRE/CODE_DEGRE) ; ALEA_INONDATION (degre FAIBLE/MOYEN/FORT + RESIDUEL_*) ; ALEA_MOUVEMENT_TERRAIN. Filtre CODE_INSEE."),
+         technical_notes="✓ validé spike 2026-06 : PPR_APPROUVE (zonage rouge=INTERDICTION / bleu=PRESCRIPTION, MultiPolygon EPSG:2975, champs CODE_INSEE/RISQUE/DEGRE/CODE_DEGRE) ; ALEA_INONDATION (degre FAIBLE/MOYEN/FORT + RESIDUEL_*) ; ALEA_MOUVEMENT_TERRAIN. Filtre CODE_INSEE. SOURCES-2 lot 1 : + couche « état des PAC, PPR, PPRL et leur date d'approbation » (projet 02sprinr/02etat_ppr_pac, 24 communes, statuts Approuve/En revision + dates PPR-L/PPR-i-mvt/PAC) → kind='ppr_etat', et source_millesime = plus récente approbation lue chez le producteur (2026-04-16 au 13/09/2026). `labuse ingest-deal-carmen`."),
     dict(name="DVF / valeurs foncières", category="marche", provider="DGFiP / Etalab — géo-DVF",
          access_type="téléchargement/CSV", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://www.data.gouv.fr/fr/datasets/demandes-de-valeurs-foncieres-geolocalisees/",
@@ -350,7 +350,7 @@ SOURCES: list[dict] = [
          documentation_url="https://data.ademe.fr/datasets/dpe03existant",
          endpoint_url="https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines",
          legal_notes="Licence Ouverte — attribution : « Source : ADEME, base DPE ». RGPD : diagnostic du bien, pas nominatif.",
-         technical_notes="✓ live 05/07/2026 : jeu dpe03existant (3CL réformée). 974 = 910 DPE, Saint-Paul 168. ⚠ REPRÉSENTATIVITÉ : DPE obligatoire en DROM seulement depuis le 01/07/2024 → base JEUNE en croissance, couvre les biens diagnostiqués depuis 2021, PAS tout le parc — signal « positif quand présent », jamais exhaustif. ⚠ _geopoint ADEME FAUX au 974 (100% hors Réunion) → re-géocodage BAN (citycode). Table dpe_records, signal passoire_thermique (# TODO étage 2)."),
+         technical_notes="SOURCES-2 lot 0 (13/09/2026) : les TROIS jeux post-2021 ingérés — dpe03existant + dpe02neuf + dpe01tertiaire (colonne `jeu` de dpe_records), moisson directe CP BRUT 974xx (`labuse ingest-dpe`). ⚠ Le « filtre 974 » ADEME (code_insee_ban, seul INSEE du schéma) est du géocodage BAN contaminé à ~98 % par la métropole (914 lignes dont 900 métropolitaines, mesuré 13/09/2026) → on tranche au CP brut, jamais au BAN. Gisement mesuré : 93 lignes au CP brut 974 dont 16 RÉUNIONNAISES corroborées (14 existants + 0 neuf + 2 tertiaires) — le CP brut lui-même ment par homonymie (75 « ST LEU » = Saint-Leu-la-Forêt 95, 2 = Montpellier/Lille), corroboration locale exigée. Les DPE DROM (obligation 01/07/2024) ne remontent presque pas à l'observatoire ADEME : trou producteur. Rattachement parcelle 100 % local + bâtiment rnb_id (clé BAN → rnb_batiments.adresses, sinon géométrie). ⚠ REPRÉSENTATIVITÉ : DPE obligatoire en DROM seulement depuis le 01/07/2024 → base JEUNE, signal « positif quand présent », jamais exhaustif. Table dpe_records, signal passoire_thermique."),
     dict(name="Cartofriches (Cerema)", category="foncier", provider="Cerema / DGALN",
          access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE, rate_limit="non exposé (throttle prudent)",
          documentation_url="https://schema.data.gouv.fr/cnigfr/schema-friches",
@@ -557,16 +557,21 @@ SOURCES: list[dict] = [
                          "couleurs : PIR=canal R, rouge=canal G → pseudo-NDVI. Même grille "
                          "ortho_tiles (512 m), 0,4 m/px suffit (cache data/ortho_irc ≈ 2 Go)."),
     dict(name="LiDAR HD — MNH 50 cm (IGN)", category="terrain", provider="IGN / Géoplateforme",
-         source_millesime="LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)",   # M125-1bis : note seed (2 665 dalles)
+         source_millesime="Survol 11/08–11/10/2023 · MNx édités 13/03/2025",   # SOURCES-2 : WFS TA métadonnées, 2 665 dalles
          access_type="WMS GeoTIFF", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://diffusion-lidarhd.ign.fr/mnx/",
          endpoint_url="https://data.geopf.fr/wms-r "
                       "(IGNF_LIDAR-HD_MNH_ELEVATION.ELEVATIONGRIDCOVERAGE.RGR92UTM40S)",
          legal_notes="Licence Ouverte Etalab — attribution IGN obligatoire (UI).",
          technical_notes="✓ constaté 11/07/2026 : couverture 974 COMPLÈTE (2 665 dalles MNH "
-                         "publiées 25/06/2025 — 1er DROM couvert). Streamé par tuile à 1 m/px "
-                         "en GeoTIFF float32, jamais stocké. MNH inclut le sursol bâti → croisé "
-                         "NDVI. Fallbacks MNS Corrélé/texture du mandat : non nécessaires."),
+                         "— 1er DROM couvert). Streamé par tuile à 1 m/px en GeoTIFF float32, "
+                         "jamais stocké. MNH inclut le sursol bâti → croisé NDVI. SOURCES-2 "
+                         "lot 1 : DATE DE SURVOL lue chez le producteur par le WFS du tableau "
+                         "d'assemblage (IGNF_LIDAR-HD_METADONNEE:metadata, data.geopf.fr) — "
+                         "mission unique 23LHDREUNION, acquisition du 11/08/2023 au 11/10/2023, "
+                         "date_edition 2025-03-13, capteur RIEGL VQ780 II-S (balayage 2 665 "
+                         "dalles 13/09/2026). Le TA donne aussi les URL MNT/MNS/MNH WMS et le "
+                         "nuage COPC.LAZ par dalle (téléchargement officiel)."),
     dict(name="Parkings OSM (loi APER)", category="energie", provider="OpenStreetMap",
          access_type="Overpass/GeoJSON", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://wiki.openstreetmap.org/wiki/Tag:amenity%3Dparking",
@@ -593,7 +598,13 @@ SOURCES: list[dict] = [
          endpoint_url="https://www.data.gouv.fr/api/1/datasets/horaire-du-reseau-citalis/",
          legal_notes="Licence Ouverte v2.0 (les 7 jeux). Attribution : « Source : Point d'Accès "
                      "National transport.data.gouv.fr — AOM de La Réunion ».",
-         technical_notes="Car Jaune, Citalis, Papang, Kar'Ouest, Alternéo, Carsud, Estival — "
+         technical_notes="SOURCES-2 lot 1 — les 7 réseaux VÉRIFIÉS un par un au PAN le "
+                         "13/09/2026 : Car Jaune (GTFS maj 12/09/2026, RT 1), Citalis (16/07/2026), "
+                         "Papang (29/12/2025, validité→2028), Kar'Ouest (17/08/2026), Alternéo "
+                         "(25/08/2026, RT 3), Carsud (20/08/2026, RT 1), Estival (27/01/2026) — "
+                         "tous valides ≥ 31/12/2026. GTFS-RT disponible sur 3 réseaux (positions "
+                         "temps réel, DOCUMENTÉ non ingéré : donnée d'exploitation éphémère sans "
+                         "valeur foncière). Car Jaune, Citalis, Papang, Kar'Ouest, Alternéo, Carsud, Estival — "
                          "300 lignes, ~9 900 quais (recouvrements inter-réseaux non dédoublonnés). "
                          "kinds transport_arret/transport_ligne + pole_echange subtype='gtfs' "
                          "(DÉRIVÉ : ≥ seuil lignes, config/transport.yaml, statut Estimé). "
@@ -860,50 +871,98 @@ SOURCES: list[dict] = [
                          "(régime d'aides, pas de constructibilité)."),
     # ── SOURCES-1 lot 2 — la nature et l'eau ──
     dict(name="Ravines — domaine public fluvial (DEAL Carmen)", category="risques",
-         provider="DEAL Réunion (Carmen, nœud 29 — DEAL_REUNION_2020)",
-         access_type="WFS/GML", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         provider="DEAL Réunion (Lizmap — deal974.lizmap.com)",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
          source_millesime="DPF arrêté 06-3077 du 21/08/2006 — 275 tronçons + 6 plans",
          documentation_url="https://www.reunion.developpement-durable.gouv.fr/domaine-public-fluvial-dpf-et-domaine-prive-de-l-a285.html",
-         endpoint_url="http://ws.carmen.developpement-durable.gouv.fr/WFS/29/DEAL_REUNION_2020",
-         legal_notes="Licence Ouverte — attribution : « Source : DEAL Réunion — domaine public fluvial (arrêté préfectoral n°06-3077/SG/DRCTV du 21/08/2006) ».",
-         technical_notes="SOURCES-1 lot 2 — réservoir deal_dpf_dpe : spatial_layers kind='dpf' "
-                         "(cours_eau 275, plan_eau 6), couches Cours_d_eau_DPF + Plan_d_eau_DPF du "
-                         "WFS Carmen 29 (GML EPSG:2975 → ogr2ogr, vérifié live 07/09/2026 — la "
-                         "fiche Sextant du rapport n'offre AUCUNE distribution, WMS de "
-                         "visualisation seul). `labuse ingest-deal-carmen`. Cascade : marchepied "
+         endpoint_url="https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=00cartogenerale&project=deal_reunion",
+         legal_notes="Licence non écrite sur Lizmap — confirmation demandée à la DEAL (SOURCES-2 lot 5, LICENCES-A-CONFIRMER.md). Attribution : « Source : DEAL Réunion — domaine public fluvial (arrêté préfectoral n°06-3077/SG/DRCTV du 21/08/2006) ».",
+         technical_notes="SOURCES-2 lot 1 — MIGRÉ du WFS Carmen 29 (GML → ogr2ogr) vers le WFS "
+                         "LIZMAP de la DEAL (GeoJSON natif, mêmes comptes : cours_eau 275, "
+                         "plan_eau 6, vérifié 13/09/2026). Réservoir deal_dpf_dpe : "
+                         "spatial_layers kind='dpf', couches Cours_d_eau_DPF + Plan_d_eau_DPF. "
+                         "Le nom du registre garde l'id historique « (DEAL Carmen) » — clé "
+                         "stable de data_sources. `labuse ingest-deal-carmen`. Cascade : marchepied "
                          "3,25 m RÉDHIBITOIRE (L2131-2 CGPPP), bande 10 m = vigilance (portée par "
                          "la couche ravine BD TOPO, anti-double-compte). Le DPE (domaine privé de "
                          "l'État, ~1 700 km) n'est PAS diffusé sur ce WFS — demande DEAL (lot 7)."),
     dict(name="Zones humides — inventaires DEAL (Carmen)", category="environnement",
-         provider="DEAL Réunion (Carmen, nœud 29 — DEAL_REUNION_2020)",
-         access_type="WFS/GML", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         provider="DEAL Réunion (Lizmap — deal974.lizmap.com)",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
          source_millesime="inventaires 2003/2009/2011/2019 par secteurs (partiels)",
          documentation_url="https://www.reunion.developpement-durable.gouv.fr/les-cartographies-d-habitats-a320.html",
-         endpoint_url="http://ws.carmen.developpement-durable.gouv.fr/WFS/29/DEAL_REUNION_2020",
+         endpoint_url="https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=00cartogenerale&project=deal_reunion",
          legal_notes="Licence Ouverte — attribution : « Source : DEAL Réunion — inventaires des zones humides ».",
-         technical_notes="SOURCES-1 lot 2 — réservoir deal_zones_humides : spatial_layers "
-                         "kind='zone_humide' (habitats_2011 1 507 · inventaire_2009 187 · "
+         technical_notes="SOURCES-2 lot 1 — MIGRÉ Carmen → WFS LIZMAP DEAL (GeoJSON natif, "
+                         "mêmes comptes vérifiés 13/09/2026). Réservoir deal_zones_humides : "
+                         "spatial_layers kind='zone_humide' (habitats_2011 1 507 · inventaire_2009 187 · "
                          "espace_fonctionnel_2009 30 · inventaire_2003 49 · basse_altitude_2019 "
-                         "1 349 — vérifié live 07/09/2026). Couverture PAR SECTEURS dite, jamais "
+                         "1 349). Couverture PAR SECTEURS dite, jamais "
                          "une preuve d'absence (habitats ≠ zones humides réglementaires). "
                          "`labuse ingest-deal-carmen`. Cascade : VIGILANCE forte (loi sur l'eau, "
                          "séquence ERC)."),
     dict(name="Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)",
          category="environnement",
-         provider="DEAL Réunion (Carmen, nœud 29 — DEAL_REUNION_2020)",
-         access_type="WFS/GML", status=S.CONNECTE, reliability_level=R.VERIFIE,
-         source_millesime="Ramsar 1 · sites classés/inscrits 7 · RN 3 (07/09/2026)",
+         provider="DEAL Réunion (Lizmap — deal974.lizmap.com)",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="Ramsar 1 · sites 7 · RN 152 · ENS Dépt 178 (13/09/2026)",
          documentation_url="https://www.reunion.developpement-durable.gouv.fr/informations-geographiques-r104.html",
-         endpoint_url="http://ws.carmen.developpement-durable.gouv.fr/WFS/29/DEAL_REUNION_2020",
+         endpoint_url="https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=00cartogenerale&project=deal_reunion",
          legal_notes="Licence Ouverte — attribution : « Source : DEAL Réunion (Carmen) — Ramsar, sites classés et inscrits, réserves naturelles ».",
-         technical_notes="SOURCES-1 lot 2 — complète l'ENP INPN (kind='ens') avec les types "
-                         "absents du jeu INPN local : ramsar (Étang Saint-Paul), site_classe/"
-                         "site_inscrit (7, attribut Type), reserve_naturelle (RNN zonée A/B + "
-                         "RÉSERVE MARINE, absente du jeu INPN local — chevauche l'entité RNN INPN "
-                         "sur l'Étang, dit). Purge par SUBTYPE seulement, les subtypes INPN "
+         technical_notes="SOURCES-2 lot 1 — MIGRÉ Carmen → WFS LIZMAP DEAL. Complète l'ENP "
+                         "INPN (kind='ens') : ramsar (Étang Saint-Paul), site_classe/site_inscrit "
+                         "(7), reserve_naturelle (RNN Étang A/B 2 + RNMR marine 150 zones — "
+                         "Lizmap les sert en couches séparées, plus riche que Carmen), et NOUVEAU "
+                         "ens_departement (178 ENS du Département : gestionnaire, propriété, "
+                         "dateMAJ — la couche « ms:ENS » du rapport producteurs). Purge par "
+                         "SUBTYPE seulement, les subtypes INPN "
                          "restent. Forêts de protection = SUP A7 : NON publiée pour le 974 "
                          "(inventaire GPU sondé, lot 1). Cascade : réserves/APB RÉDHIBITOIRES, "
                          "sites = info ×0 (anti-double-compte SUP AC2), ramsar = vigilance."),
+    # ── SOURCES-2 lot 3 — les trois sources nouvelles ──────────────────────────────
+    dict(name="Systèmes d'endiguement et zones protégées (DEAL Lizmap)", category="risques",
+         provider="DEAL Réunion (Lizmap — deal974.lizmap.com)",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="EDD Hydrétudes déc. 2024 (attrs Source par zone)",
+         documentation_url="https://deal974.lizmap.com/cartes/index.php/view/map?repository=02sprinr&project=03digues",
+         endpoint_url="https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=03digues",
+         legal_notes="Licence non écrite sur Lizmap — confirmation demandée à la DEAL (SOURCES-2 lot 5, LICENCES-A-CONFIRMER.md). Attribution : « Source : DEAL Réunion — systèmes d'endiguement ».",
+         technical_notes="SOURCES-2 lot 3 — le risque inondation RÉSIDUEL derrière les digues : "
+                         "projet Lizmap dédié 02sprinr/03digues (vérifié live 13/09/2026), couches "
+                         "digues_zones_protegees (tronçons de digue) + Zones_protegee_-_Systeme_"
+                         "d_endiguement (classe d'ouvrage A/B/C, niveau de protection N-années, "
+                         "niveaux/débits NGR, POPULATION protégée, gestionnaire, arrêté, source "
+                         "d'étude). spatial_layers kind='endiguement' (digue | zone_protegee), "
+                         "`labuse ingest-endiguement`. La zone protégée porte TOUJOURS le statut "
+                         "« inondation résiduelle au-delà du niveau de protection »."),
+    dict(name="Carte hypsométrique du littoral (DEAL Lizmap)", category="risques",
+         provider="DEAL Réunion (Lizmap — deal974.lizmap.com)",
+         access_type="WMS (image seule)", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         documentation_url="https://deal974.lizmap.com/cartes/index.php/view/map?repository=02sprinr&project=04tsunami",
+         endpoint_url="https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=04tsunami",
+         legal_notes="Licence non écrite sur Lizmap — confirmation demandée à la DEAL (SOURCES-2 lot 5).",
+         technical_notes="CHANTIER SOURCES-2 lot 3 — la « Carte hypsométrique du littoral de La "
+                         "Réunion » (projet 02sprinr/04tsunami) n'est servie par le producteur "
+                         "qu'en WMS IMAGE : la couche Courbes_de_niveau_hypsometrique__en_metres "
+                         "est REFUSÉE en WFS (ServiceException, vérifié 13/09/2026) — aucun "
+                         "vecteur à ingérer sans convention. La donnée RÉGLEMENTAIRE de "
+                         "submersion est servie à la place par les aléas PPRL vecteur du projet "
+                         "01risque (georisque_alea subtypes submersion_marine / "
+                         "submersion_marine_cc, même mandat). Chantier : demander le vecteur "
+                         "hypsométrique à la DEAL (courrier lot 5)."),
+    dict(name="BAN PLUS — lien adresse ↔ bâtiment (IGN)", category="cadastre",
+         provider="IGN (Géoplateforme — BAN PLUS)",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="BAN PLUS (data.gouv maj 27/08/2026), moisson 13/09/2026",
+         documentation_url="https://www.data.gouv.fr/datasets/ban-plus",
+         endpoint_url="https://data.geopf.fr/wfs/ows (BAN-PLUS:lien_adresse_bati)",
+         legal_notes="Licence Ouverte 2.0 (IGN/DINUM) — attribution : « Source : IGN, BAN PLUS ».",
+         technical_notes="SOURCES-2 lot 3 — le lien adresse BAN ↔ bâtiment BD TOPO (cleabs) ↔ "
+                         "parcelle (IDU), 745 874 liens sur l'emprise 974 (WFS Géoplateforme, "
+                         "mesuré 13/09/2026) → table ban_plus_liens, filtrée 974 au plus tôt. "
+                         "La colonne rnb_id est résolue localement par rnb_batiments.ext_bdtopo : "
+                         "l'ID-RNB devient la clé de jointure DPE ↔ RPLS ↔ BAN (mandat). "
+                         "`labuse ingest-ban-plus`."),
     dict(name="AZI / TRI — inondation (Géorisques GASPAR)", category="risques",
          provider="BRGM / Géorisques (GASPAR)",
          access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE,
@@ -1080,7 +1139,9 @@ SOURCES: list[dict] = [
                          "(data/carte_loyers_reunion_2025.json embarqué, loyers.py) sans ligne "
                          "au catalogue — mise d'équerre. Loyers d'ANNONCE par commune : REPLI "
                          "de l'OLL (communes multi-zones, 8/24). Aucun job (extrait versionné, "
-                         "mis à jour au commit)."),
+                         "mis à jour au commit). SOURCES-2 lot 6 — couverture 974 CONFIRMÉE "
+                         "chez le producteur : le CSV national 2025 (publié 11/12/2025) porte "
+                         "les 24 communes 974 (loypredm2 par commune, vérifié 13/09/2026)."),
     dict(name="Coût de construction (EPTB SDES + choix LABUSE)", category="fiscalite",
          provider="SDES (EPTB) · choix LABUSE (promotion)", access_type="import",
          status=S.CONNECTE, reliability_level=R.VERIFIE,
@@ -1413,6 +1474,10 @@ def seed(session: Session) -> int:
 # l'absent. La liste des propositions est livrée dans docs/CIRCUIT/CADENCES-PROPOSEES.md — Vic les
 # corrige depuis la page Circuit, pas dans ce fichier.
 MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
+    # SOURCES-2 lot 3 — les trois sources nouvelles.
+    "Systèmes d'endiguement et zones protégées (DEAL Lizmap)": ("one_shot", 365, "proposee"),
+    "Carte hypsométrique du littoral (DEAL Lizmap)": ("one_shot", None, "sans_objet"),
+    "BAN PLUS — lien adresse ↔ bâtiment (IGN)": ("cron_mensuel", 30, "proposee"),
     "RNB — Référentiel National des Bâtiments": ("cron_mensuel", 30, "proposee"),
     "OCS GE (IGN) — occupation du sol et artificialisation": ("one_shot", 365, "proposee"),
     "Cadastre (API Carto PCI)": ("one_shot", 365, "proposee"),

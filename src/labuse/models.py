@@ -684,17 +684,23 @@ class PmDirigeantGigogne(Base):
 
 
 class DpeRecord(Base):
-    """Diagnostic de Performance Énergétique (Vague C2 — ADEME `dpe03existant`, logements existants).
+    """Diagnostic de Performance Énergétique (Vague C2, élargi SOURCES-2 lot 0 — ADEME, les
+    TROIS jeux post-2021 : `dpe03existant`, `dpe02neuf`, `dpe01tertiaire`, colonne `jeu`).
 
     Un DPE par logement (dédup `numero_dpe`). Signal `passoire_thermique` (F/G) = pression
     réglementaire datée sur le propriétaire (cf. vue v_passoire_thermique). Rattachement parcelle
     100 % LOCAL (le `_geopoint` ADEME est FAUX au 974) : `identifiant_ban` → table `adresses`
     ('ban_locale'), sinon point BAN natif EPSG:2975 → ST_Contains ('point_ban'), sinon adresse
-    brute normalisée → `adresses` ('adresse_locale'), sinon 'aucun'.
+    brute normalisée → `adresses` ('adresse_locale'), sinon 'aucun'. Rattachement bâtiment
+    `rnb_id` (clé BAN dans rnb_batiments.adresses, sinon contenance géométrique) — l'ID-RNB est
+    la clé de jointure DPE ↔ RPLS ↔ BAN.
 
-    Représentativité : gisement ADEME complet = ~912 DPE pour toute l'île (11/07/2026), flux
-    ~10/mois depuis 07/2021 — signal « positif quand présent », JAMAIS exhaustif. Alimente le
-    Score V (famille E)."""
+    Représentativité : mesuré 13/09/2026 = 93 lignes au CP brut 974 sur les 3 jeux, dont 16
+    RÉUNIONNAISES corroborées (14 existants + 0 neuf + 2 tertiaires) — le reste est
+    métropolitain (géocodage BAN rabattu OU homonymie de commune type Saint-Leu-la-Forêt),
+    rejeté à l'ingestion. Les DPE DROM (obligation 01/07/2024) ne remontent presque pas à
+    l'observatoire ADEME : trou producteur. Signal « positif quand présent », JAMAIS
+    exhaustif. Alimente le Score V (famille E)."""
 
     __tablename__ = "dpe_records"
     __table_args__ = (
@@ -705,6 +711,7 @@ class DpeRecord(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     numero_dpe: Mapped[str] = mapped_column(String(40))               # identifiant ADEME (dédup)
+    jeu: Mapped[str] = mapped_column(String(12), server_default="existant")  # existant|neuf|tertiaire
     etiquette_dpe: Mapped[str | None] = mapped_column(String(1))      # A…G (énergie)
     etiquette_ges: Mapped[str | None] = mapped_column(String(1))      # A…G (climat)
     type_batiment: Mapped[str | None] = mapped_column(String(20))     # maison / appartement / immeuble
@@ -719,6 +726,7 @@ class DpeRecord(Base):
     geocode_score: Mapped[float | None] = mapped_column(Float)        # score_ban ADEME
     parcelle_idu: Mapped[str | None] = mapped_column(String(14))      # rattachement local, nullable
     rattachement: Mapped[str | None] = mapped_column(String(16))      # 'ban_locale'|'point_ban'|'adresse_locale'|'aucun'
+    rnb_id: Mapped[str | None] = mapped_column(String(16))            # SOURCES-2 : bâtiment RNB, nullable
     raw: Mapped[dict | None] = mapped_column(JSONB)
     ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

@@ -99,7 +99,10 @@ def test_georisque_alea_insert(monkeypatch):
     assert inserted[0]["attrs"]["degre"] == "FAIBLE"
     assert inserted[0]["attrs"]["code_degre"] == "1"
     assert inserted[0]["attrs"]["code_insee"] == "97411"
-    assert [c["typename"] for c in calls] == ["ALEA_INONDATION", "ALEA_MOUVEMENT_TERRAIN"]
+    # SOURCES-2 lot 3 — + les deux couches submersion marine (PPRL vecteur, même WFS Lizmap).
+    assert [c["typename"] for c in calls] == [
+        "ALEA_INONDATION", "ALEA_MOUVEMENT_TERRAIN",
+        "Alea_submersion_marine", "Alea_submersion_marine__changement_climatique"]
     assert all(c["exp_filter"] == "code_insee = '97411'" for c in calls)
 
 

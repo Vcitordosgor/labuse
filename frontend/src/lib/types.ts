@@ -479,6 +479,9 @@ export interface Fiche {
     ebc: { libelle: string; part_pct: number }[] | null
     dpu: { etat: 'servi'; statut: 'simple' | 'renforce'; libelle?: string | null }
        | { etat: 'hors' } | { etat: 'non_determinee'; detail: string }
+    // SOURCES-2 lot 2 — procédure d'évolution du PLU en cours (Saint-Leu : révision,
+    // enquête publique 01/09–09/10/2026), servie sur toutes les parcelles de la commune.
+    plu_procedure?: { etat: string; detail: string; lien: string } | null
     peb: { zone: string; part_pct?: number; libelle?: string | null; detail?: string }
     sup: { categorie: string; libelle: string | null; part_pct: number }[] | null
   } | null

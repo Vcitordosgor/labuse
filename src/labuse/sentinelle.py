@@ -469,8 +469,30 @@ SEED: list[dict] = [
     {"name": "Cerema / GéoLittoral — indicateur d'érosion côtière", "methode": "entete",
      "url": "https://geolittoral.din.developpement-durable.gouv.fr/telechargement/couches_sig/N_evolution_trait_cote_S_reunion_epsg2975_062018_shape.zip",
      "selecteur": None},
+    # SOURCES-2 lot 2 — GPU : témoin sur l'APPARITION du document de Saint-Leu (le PLU révisé,
+    # enquête publique 01/09–09/10/2026, doit être publié au GPU à l'approbation ; aujourd'hui
+    # 0 document à la partition DU_97413, vérifié 13/09/2026). `/document?partition=` est LÉGER
+    # (métadonnées seules) et remplace l'ancienne raison « pas de millésime global » : le module
+    # procedure n'existe pas à l'API Carto (404 vérifié), l'apparition du document EST le signal.
+    {"name": "Urbanisme PLU/GPU (API Carto)", "methode": "temoin",
+     "url": "https://apicarto.ign.fr/api/gpu/document?partition=DU_97413",
+     "selecteur": "totalFeatures"},
+    # SOURCES-2 lot 2 — SIS : les DÉFINITIFS passent par le canal SSP (témoin bi-commune déjà
+    # en place sur « sites et sols pollués ») ; on surveille EN PLUS le dossier des PROJETS
+    # Nord-Est/Sud à la préfecture (ZIP officiel, détection d'octets) — une republication du
+    # dossier (nouvel arrêté, création des SIS) change l'empreinte.
+    {"name": "Géorisques — secteurs d'information sur les sols (SIS)", "methode": "entete",
+     "url": ("https://www.reunion.gouv.fr/contenu/telechargement/51477/389074/file/"
+             "dossier%20SIS%20actualis%C3%A9.zip"),
+     "selecteur": None},
+    # SOURCES-2 lot 3 — BAN PLUS : métadonnée `last_update` du jeu data.gouv (IGN).
+    {"name": "BAN PLUS — lien adresse ↔ bâtiment (IGN)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/ban-plus/", "selecteur": "last_update"},
     # ── Cas isolés vérifiés ──
     # DPE ADEME — data-fair `dataUpdatedAt` (métadonnée documentée stable du dataset).
+    # SOURCES-2 lot 0 : l'ingestion couvre les TROIS jeux (dpe03existant + dpe02neuf +
+    # dpe01tertiaire) ; mesuré 13/09/2026, les trois publient dans le MÊME train mensuel
+    # (dataUpdatedAt 09/09 tous les trois) → le jeu principal suffit comme signal de version.
     {"name": "DPE ADEME (logements existants)", "methode": "api",
      "url": "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant", "selecteur": "dataUpdatedAt"},
     # SITADEL — Dido (SDES) : métadonnée `last_update` du dataset national.
@@ -579,7 +601,6 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "CatNat (arrêtés GASPAR / Géorisques)": "GASPAR interrogé EN DIRECT par commune (pas de millésime global) ; réingéré à la demande (`labuse ingest-catnat`, refresh mensuel) et contrôlé par son filtre (CIRCUIT-3 lot 6.1). La fraîcheur se lit sur la page Circuit, pas par une sonde amont.",
     "Taxe d'aménagement — taux communaux (délibérations)": "Taux communaux ingérés du jeu ouvert DGFiP « delta_deliberation_tam_17_01_23 » (application DELTA, data.economie.gouv.fr) — réingéré à la demande (`labuse ingest-taxe-amenagement`, DELTA publié 2×/an) ; sa couverture (24/24) est suivie par le filtre `taxe_amenagement`. La fraîcheur se lit sur la page Circuit, pas par une sonde amont (TAXE-AMÉNAGEMENT-1 lot A).",
     # API Carto GPU (Géoportail de l'urbanisme) — interrogée PAR GÉOMÉTRIE à l'usage, aucun millésime global.
-    "Urbanisme PLU/GPU (API Carto)": "API Carto GPU interrogée par géométrie à l'usage. Y3 : le point d'entrée `/municipality` ne porte aucun millésime (gid/insee/is_rnu seulement), `/document` exige une géométrie, aucun jeu data.gouv « documents GPU » à `last_update` ; un témoin par parcelle détecterait un changement de PLU commune par commune, mais LABUSE interroge le GPU EN DIRECT (aucun snapshot ingéré à réinjecter).",
     "GPU — zonages d'assainissement": "API Carto GPU par géométrie (mêmes limites que « Urbanisme PLU/GPU » : pas de millésime global, interrogé en direct sans snapshot ingéré).",
     "GPU — zonages d'assainissement (info-surf typeinf 19)": "Doublon du GPU assainissement (canal info-surf) — même amont, non re-surveillé.",
     # SOURCES-1 lot 1 — les SUP ont désormais leur sonde catégorielle (SEED, temoin sur l'API
@@ -591,11 +612,11 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     # SOURCES-1 lot 2 — WFS Carmen (nœud 29) : ni ETag ni Last-Modified sur GetCapabilities
     # (vérifié 07/09/2026), capabilities XML (le témoin sentinelle exige du JSON) — réingestion
     # à la demande (`labuse ingest-deal-carmen`), fraîcheur lue sur la page Circuit.
-    "Ravines — domaine public fluvial (DEAL Carmen)": "WFS Carmen sans en-tête de version (ni ETag ni Last-Modified, vérifié 07/09/2026) ; le DPF est un arrêté de 2006, stable — réingéré à la demande, fraîcheur au Circuit.",
-    "Zones humides — inventaires DEAL (Carmen)": "WFS Carmen sans en-tête de version (vérifié 07/09/2026) ; inventaires 2003→2019 par secteurs — réingérés à la demande, fraîcheur au Circuit.",
-    "Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)": "WFS Carmen sans en-tête de version (vérifié 07/09/2026) — réingéré à la demande avec les zones humides.",
+    "Ravines — domaine public fluvial (DEAL Carmen)": "WFS Lizmap DEAL (deal974.lizmap.com, migré SOURCES-2 lot 1) sans notion de version exposée (GetCapabilities non daté, vérifié 13/09/2026) ; le DPF est un arrêté de 2006, stable — réingéré à la demande, fraîcheur au Circuit.",
+    "Systèmes d'endiguement et zones protégées (DEAL Lizmap)": "WFS Lizmap DEAL sans notion de version exposée (vérifié 13/09/2026) ; millésime = source d'étude portée par CHAQUE zone (EDD Hydrétudes déc. 2024) — réingéré à la demande (`labuse ingest-endiguement`), fraîcheur au Circuit.",
+    "Zones humides — inventaires DEAL (Carmen)": "WFS Lizmap DEAL (migré SOURCES-2 lot 1) sans notion de version exposée (vérifié 13/09/2026) ; inventaires 2003→2019 par secteurs — réingérés à la demande, fraîcheur au Circuit.",
+    "Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)": "WFS Lizmap DEAL (migré SOURCES-2 lot 1, + ENS Département 178) sans notion de version exposée (vérifié 13/09/2026) — réingéré à la demande avec les zones humides.",
     # SOURCES-1 lot 3 — sols et bruit :
-    "Géorisques — secteurs d'information sur les sols (SIS)": "Réservoir logique sur le canal SSP (kind sol_pollue, subtype sis) — même amont que « Géorisques — sites et sols pollués », déjà sondé en témoin bi-commune (97411+97410) ; pas de seconde sonde sur le même flux.",
     "Géorisques — CASIAS (anciens sites industriels)": "Réservoir logique sur le canal SSP (subtypes casias/instruction) — même amont que « Géorisques — sites et sols pollués », témoin bi-commune existant.",
     "DEAL — cartes de bruit stratégiques (CBS)": "WFS Carmen sans en-tête de version (même service que les couches DEAL lot 2, vérifié 07/09/2026) ; CBS = échéance quinquennale (directive 2002/49/CE) — réingéré à la demande (`labuse ingest-bruit-cartes`), fraîcheur au Circuit.",
     "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)": "Atlas des patrimoines INJOIGNABLE au test du 06/09/2026 (timeout) et aucun jeu national/974 sur data.gouv ; page DAC de La Réunion sans millésime exploitable — rappel périodique posé (RAPPELS_MANUELS) pour re-tester l'Atlas.",

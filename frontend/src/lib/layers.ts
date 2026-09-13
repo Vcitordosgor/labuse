@@ -20,6 +20,7 @@ export const LAYER_LABEL: Record<string, string> = {
   sup: 'Servitudes (SUP)',
   // SOURCES-1 lot 2 — nature et eau
   dpf: 'Ravines et reculs (DPF)',
+  endiguement: 'Digues et zones protégées',
   zone_humide: 'Zones humides',
   enp: 'Espaces naturels protégés',
   rpg: 'Cultures déclarées (RPG)',
@@ -147,6 +148,8 @@ export const LAYER_INFO: Record<string, string> = {
   // SOURCES-1 lot 2 — la nature et l'eau.
   dpf:
     'Le domaine public fluvial de La Réunion : 275 tronçons de cours d’eau et 6 plans d’eau domaniaux (arrêté préfectoral n°06-3077/SG/DRCTV du 21 août 2006). Le lit est inaliénable et les propriétés riveraines sont grevées d’une servitude de marchepied de 3,25 m (article L2131-2 CGPPP) — OPPOSABLE, rédhibitoire dans l’analyse LABUSE ; la bande de 10 m du code forestier (R.174-2) reste portée par la couche des ravines. Source : DEAL Réunion, WFS Carmen (DEAL_REUNION_2020). Le domaine privé de l’État (~1 700 km d’affluents) n’est pas diffusé — demandé à la DEAL.',
+  endiguement:
+    'Les systèmes d’endiguement de La Réunion et leurs zones protégées (DEAL, étude de dangers Hydrétudes déc. 2024) : les tronçons de digue (traits) et les zones qu’ils protègent (aplats), avec la classe de l’ouvrage (A/B/C), le niveau de protection (période de retour de la crue de projet), les niveaux et débits de danger/protection/sûreté et la population protégée. À LIRE À L’ENVERS : derrière une digue, l’aléa affiché peut être faible PARCE QUE l’ouvrage protège — au-delà du niveau de protection, l’inondation est RÉSIDUELLE et le terrain reste exposé. Licence DEAL en cours de confirmation écrite.',
   zone_humide:
     'Les zones humides inventoriées par la DEAL : cartographie d’habitats 2011, inventaires 2009 (et espaces fonctionnels), 2003, zones humides de basse altitude 2019. INVENTAIRES PAR SECTEURS : l’absence d’inventaire n’est pas une preuve d’absence, et un habitat de zone humide n’est pas la délimitation réglementaire — indication FORTE (loi sur l’eau, éviter-réduire-compenser : souvent rédhibitoire à l’instruction). Source : DEAL Réunion, WFS Carmen. Dans l’analyse LABUSE : vigilance forte.',
   enp:

@@ -7,7 +7,9 @@ Source (VÉRIFIÉE live 10/07/2026) : « Données détaillées au logement du RP
 → 87 553 logements sociaux au 01/01/2025 (une ligne par logement).
 
 Agrégation COMMUNE → table `rpls_commune` (nb logements, année de construction médiane,
-% en QPV, surface habitable moyenne). Contexte marché fiche/module bailleur — pas de scoring.
+% en QPV, surface habitable moyenne — et SOURCES-2 lot 4 : la CLASSE DPE des logements
+sociaux, colonnes DPEENERGIE/DPESERRE du fichier logement : distribution par classe A→G,
+part de passoires F/G, part renseignée). Contexte marché fiche/module bailleur — pas de scoring.
 
 Usage : LABUSE_DATABASE_URL=… python scripts/ingest_rpls.py [chemin_csv_deja_telecharge]
 """
@@ -41,7 +43,10 @@ CREATE TABLE IF NOT EXISTS rpls_commune (
   pct_qpv          numeric(4,1),
   surfhab_moy      numeric(5,1),
   computed_at      timestamptz NOT NULL DEFAULT now()
-)"""
+);
+ALTER TABLE rpls_commune ADD COLUMN IF NOT EXISTS dpe_classes jsonb;
+ALTER TABLE rpls_commune ADD COLUMN IF NOT EXISTS pct_passoires numeric(4,1);
+ALTER TABLE rpls_commune ADD COLUMN IF NOT EXISTS pct_dpe_renseigne numeric(4,1)"""
 
 
 def main() -> None:
@@ -54,7 +59,8 @@ def main() -> None:
             r = c.get(URL)
             r.raise_for_status()
             Path(path).write_text(r.text)
-    agg = collections.defaultdict(lambda: {"n": 0, "constr": [], "qpv": 0, "surf": [], "lib": ""})
+    agg = collections.defaultdict(lambda: {"n": 0, "constr": [], "qpv": 0, "surf": [], "lib": "",
+                                           "dpe": collections.Counter()})
     with open(path, newline="", encoding="utf-8") as f:
         for r in csv.DictReader(f, delimiter=";"):
             insee = (r.get("DEPCOM") or "").strip('"')
@@ -71,18 +77,27 @@ def main() -> None:
                 d["surf"].append(float((r.get("SURFHAB") or "").replace(",", ".")))
             except ValueError:
                 pass
+            # SOURCES-2 lot 4 — classe DPE énergie du logement social (A…G, vide = non renseigné)
+            cl = (r.get("DPEENERGIE") or "").strip('"').strip().upper()
+            if cl in {"A", "B", "C", "D", "E", "F", "G"}:
+                d["dpe"][cl] += 1
     with session_scope() as s:
         s.execute(text(DDL))
         s.execute(text("TRUNCATE rpls_commune"))
         for insee, d in sorted(agg.items()):
+            n_dpe = sum(d["dpe"].values())
             s.execute(text(
                 "INSERT INTO rpls_commune (insee, commune, millesime, nb_logements, "
-                "construct_median, pct_qpv, surfhab_moy) "
-                "VALUES (:i, :c, '2025-01', :n, :cm, :q, :sm)"), {
+                "construct_median, pct_qpv, surfhab_moy, dpe_classes, pct_passoires, "
+                "pct_dpe_renseigne) "
+                "VALUES (:i, :c, '2025-01', :n, :cm, :q, :sm, CAST(:dc AS jsonb), :pp, :pr)"), {
                 "i": insee, "c": d["lib"], "n": d["n"],
                 "cm": int(statistics.median(d["constr"])) if d["constr"] else None,
                 "q": round(100 * d["qpv"] / d["n"], 1),
-                "sm": round(sum(d["surf"]) / len(d["surf"]), 1) if d["surf"] else None})
+                "sm": round(sum(d["surf"]) / len(d["surf"]), 1) if d["surf"] else None,
+                "dc": __import__("json").dumps(dict(d["dpe"])) if n_dpe else None,
+                "pp": round(100 * (d["dpe"]["F"] + d["dpe"]["G"]) / n_dpe, 1) if n_dpe else None,
+                "pr": round(100 * n_dpe / d["n"], 1)})
         s.commit()
     print(f"✓ rpls_commune : {len(agg)} communes, {sum(d['n'] for d in agg.values())} logements")
 

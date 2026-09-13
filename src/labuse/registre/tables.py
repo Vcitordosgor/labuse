@@ -38,6 +38,12 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     # des bâtiments BD TOPO servis ; batiment_hauteur_lidar.rnb_id porte le principal par parcelle).
     "rnb": Rt(("rnb_batiments", "rnb_rattachement_bdtopo"),
               millesime="RNB — flux continu (rnb.beta.gouv.fr), ingéré par commune 13/09/2026"),
+    # SOURCES-2 lot 3 — systèmes d'endiguement (DEAL Lizmap) : digues + zones protégées.
+    "endiguement": Rt(("spatial_layers",), couches=("endiguement",),
+                      millesime="EDD Hydrétudes déc. 2024 (attrs Source par zone) — Lizmap 03digues"),
+    # SOURCES-2 lot 3 — BAN PLUS : lien adresse ↔ bâtiment ↔ parcelle (+ rnb_id résolu local).
+    "ban_plus": Rt(("ban_plus_liens",),
+                   millesime="BAN PLUS IGN (data.gouv maj 27/08/2026), moisson WFS 13/09/2026"),
     # REPARATIONS-1 lot 5 — OCS GE native 974 (2 millésimes + diff artificialisation officiel).
     "ocsge": Rt(("ocsge_sol", "ocsge_evolution", "parcel_ocsge"), couches=("artificialisation",),
                 millesime="OCS GE 2.0 D974 — 2017 + 2022 (IGN, livraisons 2025-04) ; diff "
@@ -115,8 +121,9 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                     millesime="situation 19/06/2026 — 409 623 liens 974 (1989→2025)"),
     "insee_rp_iris": Rt(("iris_rp",),
                         millesime="RP2022 — parution 16/10/2025 (géographie 01/01/2024)"),
-    "georisques_azi_tri": Rt(("azi_communes",),
-                             millesime="GASPAR azi+tri par commune (07/09/2026)"),
+    "georisques_azi_tri": Rt(("azi_communes", "spatial_layers"), couches=("tri_zone",),
+                             millesime="GASPAR azi+tri par commune (07/09/2026) ; scénarios "
+                                       "DI v2 fréquent/moyen/extrême (Lizmap 01risque, 13/09/2026)"),
     # ── SOURCES-1 lot 3 — les sols et le bruit ──────────────────────────────────────
     "georisques_sis": Rt(("spatial_layers",), couches=("sol_pollue",),
                          millesime="4 SIS 974 (MultiPolygon) — canal SSP, vu 07/09/2026",

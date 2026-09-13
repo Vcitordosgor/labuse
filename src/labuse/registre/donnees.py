@@ -1269,6 +1269,12 @@ DONNEES: dict[str, Donnee] = {
     moteur="commune_compteurs", calcul="moteur",
     fonction="src/labuse/registre/moteurs/commune.py:zan_ocsge_commune (ocsge_evolution)",
     reservoirs=("ocsge",), portee="live"),
+ "ban_plus_adresses_bati": C("Adresses liées au bâti (BAN PLUS)", "nombre", "parcelle",
+    "nombre de liens officiels adresse ↔ bâtiment de la parcelle (BAN PLUS, IGN) — la clé qui "
+    "relie l'adresse BAN au bâtiment BD TOPO et, par le RNB local, à l'ID-RNB",
+    moteur="bati_revele", calcul="moteur",
+    fonction="src/labuse/bati.py:le_bien_block (liens adresse↔bâtiment — ban_plus_liens)",
+    reservoirs=("ban_plus",), portee="live"),
  "rnb_batiments_liste": C("Identifiants RNB des bâtiments", "liste", "parcelle",
     "identifiant national (RNB) de chaque bâtiment ACTIF dont l'emprise recoupe la parcelle, "
     "du plus grand recouvrement au plus petit, avec le lien officiel rnb.beta.gouv.fr",

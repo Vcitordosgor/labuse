@@ -1187,6 +1187,13 @@ def ingest_catnat_cmd(
     typer.echo(f"✓ CatNat : {res['arretes']} arrêté(s) sur {res['communes_ok']} commune(s).")
     for insee, err in (res["erreurs"] or {}).items():
         typer.echo(f"  ⚠ {insee} : {err}")
+    # SOURCES-2 lot 1 — recoupement avec l'export CSV national GASPAR (l'API renvoie parfois
+    # moins d'arrêtés que le site : codes de risque non mappés — un écart devient VISIBLE).
+    with session_scope() as s:
+        rec = catnat_mod.recouper_csv_national(s)
+    signe = "✓" if rec["ecart"] <= 0 else "⚠"
+    typer.echo(f"  {signe} recoupement CSV national ({rec['fichier']}) : "
+               f"CSV {rec['csv_national']} vs base {rec['base_api']} (écart {rec['ecart']}).")
     # rejoue le filtre de la source (complétude par commune) sur la nouvelle version.
     from . import circuit_journal, filtres
     f = filtres.get_filtre("catnat")
@@ -1213,10 +1220,14 @@ def ingest_gpu_infos_cmd() -> None:
         sid_peb = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
                             {"n": gpu_infos.SOURCE_PEB}).scalar()
         res = gpu_infos.ingest_gpu_infos(s, source_id_dpu=sid_dpu, source_id_peb=sid_peb)
+        # SOURCES-2 lot 2 — le PEB de Pierrefonds (FMEP), absent du GPU : vecteur DGAC/STAC
+        # par la Géoplateforme (dgac_peb_plan_wmsv), zones A/B/C/D exigées, sinon échec franc.
+        res_fmep = gpu_infos.ingest_peb_pierrefonds(s, source_id_peb=sid_peb)
         s.commit()
     models.ensure_geom_2975(engine())
     typer.echo(f"✓ DPU : {res['dpu']} périmètre(s) sur {len(res['dpu_communes'])} commune(s) ; "
                f"PEB : {res['peb']} zone(s) {res['peb_zones']}.")
+    typer.echo(f"✓ PEB Pierrefonds (DGAC/STAC) : zones {res_fmep['zones']}, arrêté {res_fmep['arrete']}.")
     if res["dpu_non_publie"]:
         typer.echo(f"  DPU non publié au GPU ({len(res['dpu_non_publie'])} communes) : "
                    + ", ".join(res["dpu_non_publie"]))
@@ -1407,20 +1418,24 @@ def ingest_cout_construction_cmd() -> None:
 
 @app.command("ingest-deal-carmen")
 def ingest_deal_carmen_cmd() -> None:
-    """SOURCES-1 lot 2 — couches DEAL Carmen (WFS DEAL_REUNION_2020) : ravines DPF (kind dpf),
-    zones humides (kind zone_humide), Ramsar + sites classés/inscrits (kind ens, subtypes du
-    module). GML → ogr2ogr → spatial_layers, purge ciblée, filtres rejoués."""
+    """SOURCES-2 lot 1 — couches DEAL par le WFS LIZMAP (deal974.lizmap.com, GeoJSON natif,
+    ex-Carmen) : ravines DPF (kind dpf), zones humides (kind zone_humide), Ramsar + sites
+    classés/inscrits + réserves + ENS Département (kind ens, subtypes du module), et l'état
+    des PPR/PAC par commune (kind ppr_etat → millésime producteur de la source PPR).
+    Purge ciblée, filtres rejoués."""
     from . import models
     from .ingestion import deal_carmen
     with session_scope() as s:
         sids = {n: s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
                              {"n": n}).scalar()
                 for n in (deal_carmen.SOURCE_DPF, deal_carmen.SOURCE_ZH,
-                          deal_carmen.SOURCE_ENP_C)}
+                          deal_carmen.SOURCE_ENP_C, deal_carmen.SOURCE_PPR)}
         res = deal_carmen.ingest_deal_carmen(s, source_ids=sids)
+        res_etat = deal_carmen.ingest_ppr_etat(s, source_ids=sids)
         s.commit()
     models.ensure_geom_2975(engine())
-    typer.echo(f"✓ DEAL Carmen : {sum(res.values())} entité(s) — {res}")
+    typer.echo(f"✓ DEAL Lizmap : {sum(res.values())} entité(s) — {res}")
+    typer.echo(f"✓ état PPR/PAC : {res_etat}")
     from . import circuit_journal, filtres
     for label in ("deal_dpf", "zones_humides", "enp_complements"):
         f = filtres.get_filtre(label)
@@ -1470,6 +1485,13 @@ def ingest_azi_tri_cmd() -> None:
         s.commit()
     typer.echo(f"✓ AZI/TRI : {res['azi']} AZI ({res['communes_azi']} communes), "
                f"{res['tri']} TRI ({res['communes_tri']} communes).")
+    # SOURCES-2 lot 4 — les scénarios d'inondation des TRI (fréquent/moyen/extrême, DI v2).
+    with session_scope() as s:
+        sid = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                        {"n": azi_mod.SOURCE_TRI}).scalar()
+        res_sc = azi_mod.ingest_tri_scenarios(s, source_id=sid)
+        s.commit()
+    typer.echo(f"✓ scénarios TRI : {res_sc}")
     if res["communes_sans_document"]:
         typer.echo("  sans AZI ni TRI : " + ", ".join(res["communes_sans_document"]))
     from . import circuit_journal, filtres
@@ -1482,6 +1504,73 @@ def ingest_azi_tri_cmd() -> None:
                                         {"verdict": v.verdict})
             s.commit()
         typer.echo(f"  filtre azi_tri : {v.verdict}")
+
+
+@app.command("ingest-endiguement")
+def ingest_endiguement_cmd() -> None:
+    """SOURCES-2 lot 3 — systèmes d'endiguement et zones protégées (DEAL Lizmap 03digues) :
+    digues + zones protégées (classe, niveau de protection, population) → kind endiguement.
+    La zone protégée dit TOUJOURS « inondation résiduelle au-delà du niveau de protection »."""
+    from . import models
+    from .ingestion import endiguement
+    with session_scope() as s:
+        sid = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                        {"n": endiguement.SOURCE_ENDIGUEMENT}).scalar()
+        res = endiguement.ingest_endiguement(s, source_id=sid)
+        s.commit()
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ Endiguement : {res}")
+    from . import circuit_journal, filtres
+    f = filtres.get_filtre("endiguement")
+    if f is not None:
+        with session_scope() as s:
+            v = filtres.jouer(s, f)
+            circuit_journal.journaliser(s, "filtre", "endiguement", "ingest-endiguement",
+                                        "refuse" if v.verdict == "quarantaine" else "ok",
+                                        {"verdict": v.verdict})
+            s.commit()
+        typer.echo(f"  filtre endiguement : {v.verdict}")
+
+
+@app.command("ingest-ban-plus")
+def ingest_ban_plus_cmd() -> None:
+    """SOURCES-2 lot 3 — BAN PLUS (IGN, Géoplateforme) : lien adresse ↔ bâtiment BD TOPO ↔
+    parcelle sur l'emprise 974 (~746 k liens) → table ban_plus_liens, rnb_id résolu localement
+    (rnb_batiments.ext_bdtopo) — l'ID-RNB, clé de jointure DPE ↔ RPLS ↔ BAN."""
+    from .ingestion import ban_plus
+    ban_plus.ensure_tables(engine())
+    with session_scope() as s:
+        res = ban_plus.ingest_ban_plus(s)
+        s.commit()
+    typer.echo(f"✓ BAN PLUS : {res['liens']} lien(s), {res['avec_rnb']} avec ID-RNB, "
+               f"{res['hors_974']} hors 974 écartés.")
+    from . import circuit_journal, filtres
+    f = filtres.get_filtre("ban_plus")
+    if f is not None:
+        with session_scope() as s:
+            v = filtres.jouer(s, f)
+            circuit_journal.journaliser(s, "filtre", "ban_plus", "ingest-ban-plus",
+                                        "refuse" if v.verdict == "quarantaine" else "ok",
+                                        {"verdict": v.verdict})
+            s.commit()
+        typer.echo(f"  filtre ban_plus : {v.verdict}")
+
+
+@app.command("ingest-sis-projets")
+def ingest_sis_projets_cmd() -> None:
+    """SOURCES-2 lot 2 — les 7 PROJETS de SIS Nord-Est/Sud (préfecture, arrêtés du 19/02/2026,
+    consultation close le 07/05/2026) → kind sol_pollue subtype sis_projet, statut « non
+    opposable » toujours dit — DISTINCTS des SIS définitifs Géorisques."""
+    from . import models
+    from .ingestion import sis_projets
+    with session_scope() as s:
+        sid = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                        {"n": sis_projets.SOURCE_SIS}).scalar()
+        res = sis_projets.ingest_sis_projets(s, source_id=sid)
+        s.commit()
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ Projets de SIS : {res['projets']} posé(s) / {res['total_fiches']} fiches "
+               f"({res['sans_point']} sans point, CRS non identifié — dit au rapport).")
 
 
 @app.command("ingest-georisques")
@@ -1646,61 +1735,36 @@ def ingest_bdnb_cmd(
 
 @app.command("ingest-dpe")
 def ingest_dpe_cmd(
-    commune: str = typer.Option(None, help="INSEE d'une commune (défaut = les 24 communes)."),
+    jeu: str = typer.Option(None, help="Un seul jeu : existant | neuf | tertiaire (défaut = les 3)."),
     throttle: float = typer.Option(0.1, help="Pause (s) entre appels."),
-    force: bool = typer.Option(False, help="Ré-ingérer même les communes déjà faites."),
 ) -> None:
-    """DPE ADEME (logements existants) → table dpe_records. Rattachement parcelle 100 % LOCAL
-    (id_ban → adresses, point BAN EPSG:2975, adresse brute — le _geopoint ADEME est faux au 974).
-    Une commune = une unité committée → résumable. Termine par la passe « orphelins » (CP brut
-    974xx sans code_insee_ban). Ne touche PAS au score (recalcul Score V séparé)."""
+    """DPE ADEME → table dpe_records — SOURCES-2 lot 0 : les TROIS jeux post-2021 (dpe03existant,
+    dpe02neuf, dpe01tertiaire), moisson directe des lignes au CP BRUT réunionnais (le filtre INSEE
+    de l'ADEME n'est que du géocodage BAN, contaminé à ~98 % par la métropole — mesuré 13/09/2026).
+    Rattachement parcelle 100 % LOCAL (id_ban → adresses, point BAN EPSG:2975, adresse brute) +
+    rattachement bâtiment rnb_id. Idempotent. Ne touche PAS au score (recalcul Score V séparé)."""
     import time
 
-    from .connectors.dpe import DpeConnector
+    from .connectors.dpe import DATASETS, DpeConnector
     from .ingestion import dpe, fraicheur
-    from .ingestion.run_all import REUNION_COMMUNES
 
-    conn = DpeConnector(throttle_s=throttle)
-    targets = [(i, n) for i, n in REUNION_COMMUNES if not (commune and commune.isdigit()) or i == commune]
+    jeux = [jeu] if jeu else list(DATASETS)
+    if any(j not in DATASETS for j in jeux):
+        raise typer.BadParameter(f"jeu inconnu : {jeu!r} (attendu : {sorted(DATASETS)})")
     t0 = time.time()
-    tot = {"dpe": 0, "geocodes": 0, "rattaches_parcelle": 0, "hors_reunion": 0}
-    # M84 — trace ingestion_runs (running → ok | error) : un échec DPE devient VISIBLE (avant : aucune
-    # trace → décrochage possible en silence). Session de trace dédiée ; les communes gardent la leur.
-    # CIRCUIT-1 lot 0.3 — le saut des communes peuplées est un CHOIX EXPLICITE (rafraîchir = --force,
-    # à la cadence du cron DPE) et le tampon ne ment plus : si AUCUNE commune n'a été interrogée
-    # (tout sauté), `last_sync_at` reste INCHANGÉ (handle["tampon"]=False) — /healthz/crons ne peut
-    # plus afficher « ok » sur un passage à vide.
-    n_traitees = 0
+    tot = {"dpe": 0, "rattaches_parcelle": 0, "rattaches_rnb": 0}
+    # M84 — trace ingestion_runs (running → ok | error) : un échec DPE devient VISIBLE.
     with session_scope() as _trace, fraicheur.trace_ingestion(
             _trace, "974 (DPE ADEME)", fraicheur.DS_NAMES["dpe"]) as _h:
-        for insee, nom in targets:
+        for j in jeux:
             with session_scope() as s:
-                has = s.execute(text("SELECT count(*) FROM dpe_records WHERE code_insee=:c"), {"c": insee}).scalar()
-                if has and not force:
-                    typer.echo(f"  ⏭ {nom} : DPE déjà là ({has}), sauté (ré-ingérer : --force).")
-                    continue
-                res = dpe.ingest_commune(s, insee, nom, connector=conn)
+                res = dpe.ingest_jeu(s, j, connector=DpeConnector(throttle_s=throttle, jeu=j))
                 s.commit()
-                n_traitees += 1
                 for k in tot:
                     tot[k] += res.get(k, 0)
-                typer.echo(f"  ✓ {nom} : {res}")
-        if not commune:
-            with session_scope() as s:
-                res = dpe.ingest_orphelins(s, connector=conn)
-                s.commit()
-                n_traitees += 1     # la passe orphelins interroge l'ADEME et upserte : traitement réel
-                tot["dpe"] += res["dpe"]
-                tot["rattaches_parcelle"] += res["rattaches_parcelle"]
-                tot["hors_reunion"] += res.get("hors_reunion", 0)
-                typer.echo(f"  ✓ orphelins (CP brut 974xx sans code_insee_ban) : {res}")
-        _h["tampon"] = n_traitees > 0
-        if not n_traitees:
-            typer.echo("  ⓘ aucune commune interrogée (toutes déjà peuplées) — last_sync_at INCHANGÉ.")
-    typer.echo(f"✓ DPE île : {tot} ({time.time() - t0:.0f}s)")
-    if tot["hors_reunion"]:
-        typer.echo(f"  ⓘ {tot['hors_reunion']} lignes métropolitaines écartées (géocodage BAN "
-                   f"ADEME rabattu sur INSEE 974 — jugées sur le CP brut, cf. is_reunion_authentic).")
+                typer.echo(f"  ✓ jeu {j} ({DATASETS[j]}) : {res}")
+        _h["tampon"] = True
+    typer.echo(f"✓ DPE île (3 jeux, CP brut 974xx) : {tot} ({time.time() - t0:.0f}s)")
 
 
 @app.command("ingest-mvt")

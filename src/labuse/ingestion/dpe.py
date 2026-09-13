@@ -1,22 +1,28 @@
-"""Ingestion DPE ADEME (Vague C2, complétée Wave copro-data) → table `dpe_records`  [data pure].
+"""Ingestion DPE ADEME (Vague C2, réparée SOURCES-2 lot 0) → table `dpe_records`  [data pure].
 
-Un DPE par logement (dédup `numero_dpe`). Rattachement parcelle 100 % LOCAL (mandat 11/07 :
+Un DPE par logement (dédup `numero_dpe`), sur les TROIS jeux post-2021 : `dpe03existant`,
+`dpe02neuf`, `dpe01tertiaire` (colonne `jeu`). Rattachement parcelle 100 % LOCAL (mandat 11/07 :
 « géocodage = table adresses locale », plus aucun appel api-adresse), en cascade :
   1. `identifiant_ban` ADEME → `adresses.id_ban` (IDU déjà rattaché par ban_adresses)  → 'ban_locale'
   2. point BAN natif EPSG:2975 (`coordonnee_cartographique_x/y_ban`) → ST_Contains     → 'point_ban'
   3. `adresse_brut` normalisée (numéro + voie) → `adresses` de la commune              → 'adresse_locale'
   4. sinon 'aucun' (un « aucun » honnête vaut mieux qu'un rattachement faux).
+Puis rattachement BÂTIMENT (SOURCES-2) : `rnb_id` par la clé BAN dans `rnb_batiments.adresses`,
+sinon par contenance géométrique du point local dans `shape_2975` — l'ID-RNB devient la clé de
+jointure DPE ↔ RPLS ↔ BAN.
 
-⚠ CONTAMINATION MÉTROPOLE (mesuré live 09/08/2026, mandat M-V). Le filtre amont
-`code_insee_ban:974*` rend ~913 lignes pour l'île — mais **897 d'entre elles portent un CP
-BRUT métropolitain** (ex. 62200 Boulogne-sur-Mer, 34200 Sète, 67300 Schiltigheim) : le
-géocodeur BAN de l'ADEME rabat massivement des logements de métropole sur des codes INSEE 974,
+⚠ CONTAMINATION MÉTROPOLE (mesuré live 09/08/2026, re-mesuré 13/09/2026, SOURCES-2 lot 0).
+Le filtre amont `code_insee_ban:974*` rend ~914 lignes pour l'île — mais **900 d'entre elles
+portent un CP BRUT métropolitain** (ex. 62200 Boulogne-sur-Mer, 34200 Sète, 67300 Schiltigheim) :
+le géocodeur BAN de l'ADEME rabat massivement des logements de métropole sur des codes INSEE 974,
 avec un `identifiant_ban` d'allure réunionnaise (`97415_1330_00038`). Ce faux id_ban matche la
 table `adresses` locale en passe 1 → le logement métropolitain se voit ÉPINGLÉ sur une vraie
-parcelle réunionnaise (coordonnées valides mais FAUSSES). Le gisement RÉUNIONNAIS AUTHENTIQUE
-est de ~17 DPE seulement (15 CP brut 974xx cohérents + 2 orphelins) — le DPE réglementaire est
-neuf en DROM (obligation 01/07/2024). On tranche sur le CP BRUT (saisi par le diagnostiqueur
-d'après le bien, fiable), JAMAIS sur le géocodage BAN : cf. `is_reunion_authentic`.
+parcelle réunionnaise (coordonnées valides mais FAUSSES). Il n'existe AUCUN champ « INSEE brut »
+au schéma ADEME : filtrer par INSEE ne répare rien. On tranche sur le CP BRUT (saisi par le
+diagnostiqueur d'après le bien, fiable), JAMAIS sur le géocodage BAN : cf. `is_reunion_authentic`
+— PUIS on exige la corroboration locale contre l'homonymie (cf. `ingest_jeu`). Gisement mesuré
+13/09/2026 : 93 lignes au CP brut 974 (16 existants + 75 neufs + 2 tertiaires), dont 16
+RÉUNIONNAISES corroborées (14 + 0 + 2) — les 77 autres sont métropolitaines (homonymie/typo CP).
 
 Signal « positif quand présent », JAMAIS exhaustif. La donnée d'abord, le scoring ensuite : ce
 module PEUPLE `dpe_records` ; le signal est branché par le Score V (famille E) et v_passoire_thermique.
@@ -77,7 +83,7 @@ def is_reunion_authentic(rec: dict) -> bool:
     return _cp_reunion(cp)
 
 
-def parse_record(rec: dict) -> dict | None:
+def parse_record(rec: dict, jeu: str = "existant") -> dict | None:
     """Enregistrement /lines → dict DPE normalisé. None si pas de `numero_dpe` (dédup impossible).
 
     M71 B1 — TROU DU FILTRE corrigé (audit M66-B : 2 lignes code_insee 34172/59350 en base).
@@ -86,6 +92,9 @@ def parse_record(rec: dict) -> dict | None:
     identité BAN (code_insee_ban, code_postal_ban, identifiant_ban, x/y, score) est un mensonge :
     on la PURGE au parse — sinon dpe_records stocke un code_insee hors département et les passes
     1-2 du rattachement peuvent épingler une fausse parcelle via le faux id_ban.
+
+    SOURCES-2 : `jeu` ∈ existant|neuf|tertiaire. Le tertiaire n'a NI type_batiment NI surface
+    habitable (sa `surface_utile` reste dans raw, jamais maquillée en habitable) : type='tertiaire'.
     """
     numero = rec.get("numero_dpe")
     if not numero:
@@ -98,10 +107,12 @@ def parse_record(rec: dict) -> dict | None:
 
     return {
         "numero_dpe": str(numero),
+        "jeu": jeu,
         "etiquette_dpe": rec.get("etiquette_dpe"),
         "etiquette_ges": rec.get("etiquette_ges"),
-        "type_batiment": rec.get("type_batiment"),
-        "surface_habitable": _to_float(rec.get("surface_habitable_logement")),
+        "type_batiment": "tertiaire" if jeu == "tertiaire" else rec.get("type_batiment"),
+        "surface_habitable": (None if jeu == "tertiaire"
+                              else _to_float(rec.get("surface_habitable_logement"))),
         "annee_construction": _to_int(rec.get("annee_construction")),
         "adresse": (rec.get("adresse_brut") if ban_ment else
                     rec.get("adresse_ban") or rec.get("adresse_brut")),
@@ -119,18 +130,29 @@ def parse_record(rec: dict) -> dict | None:
 
 _UPSERT = text(
     "INSERT INTO dpe_records "
-    " (numero_dpe, etiquette_dpe, etiquette_ges, type_batiment, surface_habitable, "
+    " (numero_dpe, jeu, etiquette_dpe, etiquette_ges, type_batiment, surface_habitable, "
     "  annee_construction, adresse, code_insee, code_postal, date_etablissement, "
-    "  lon, lat, geocode_score, parcelle_idu, rattachement, raw) "
-    "VALUES (:num,:ed,:eg,:tb,:surf,:ac,:adr,:ci,:cp,:de,:lon,:lat,:sc,:idu,:rat, CAST(:raw AS jsonb)) "
+    "  lon, lat, geocode_score, parcelle_idu, rattachement, rnb_id, raw) "
+    "VALUES (:num,:jeu,:ed,:eg,:tb,:surf,:ac,:adr,:ci,:cp,:de,:lon,:lat,:sc,:idu,:rat,:rnb, "
+    "        CAST(:raw AS jsonb)) "
     "ON CONFLICT (numero_dpe) DO UPDATE SET "
-    "  etiquette_dpe=EXCLUDED.etiquette_dpe, etiquette_ges=EXCLUDED.etiquette_ges, "
+    "  jeu=EXCLUDED.jeu, etiquette_dpe=EXCLUDED.etiquette_dpe, etiquette_ges=EXCLUDED.etiquette_ges, "
     "  type_batiment=EXCLUDED.type_batiment, surface_habitable=EXCLUDED.surface_habitable, "
     "  annee_construction=EXCLUDED.annee_construction, adresse=EXCLUDED.adresse, "
     "  code_insee=EXCLUDED.code_insee, code_postal=EXCLUDED.code_postal, "
     "  date_etablissement=EXCLUDED.date_etablissement, lon=EXCLUDED.lon, lat=EXCLUDED.lat, "
     "  geocode_score=EXCLUDED.geocode_score, parcelle_idu=EXCLUDED.parcelle_idu, "
-    "  rattachement=EXCLUDED.rattachement, raw=EXCLUDED.raw, ingested_at=now()")
+    "  rattachement=EXCLUDED.rattachement, rnb_id=EXCLUDED.rnb_id, raw=EXCLUDED.raw, "
+    "  ingested_at=now()")
+
+
+def migrate_dpe_records(session: Session) -> None:
+    """SOURCES-2 lot 0 — colonnes additives (idempotent) : `jeu` (les 3 jeux ADEME) et `rnb_id`
+    (clé de jointure bâtiment). Les 17 lignes pré-existantes venaient toutes de dpe03existant."""
+    session.execute(text(
+        "ALTER TABLE dpe_records ADD COLUMN IF NOT EXISTS jeu varchar(12) NOT NULL DEFAULT 'existant'"))
+    session.execute(text(
+        "ALTER TABLE dpe_records ADD COLUMN IF NOT EXISTS rnb_id varchar(16)"))
 
 
 # ───────────────────────── géocodage local (table `adresses`) ─────────────────────────
@@ -203,15 +225,98 @@ def _rattacher(session: Session, p: dict, idx_adresses: dict) -> dict:
     return out
 
 
+def _rattacher_rnb(session: Session, p: dict, geo: dict) -> str | None:
+    """SOURCES-2 — rnb_id du logement : clé BAN dans `rnb_batiments.adresses` (jsonb `id`),
+    sinon contenance du point local dans `shape_2975`. None honnête si aucun bâtiment RNB
+    (ou si le réservoir RNB n'existe pas — bases de test)."""
+    if session.execute(text("SELECT to_regclass('rnb_batiments')")).scalar() is None:
+        return None
+    if p.get("id_ban"):
+        row = session.execute(text(
+            "SELECT rnb_id FROM rnb_batiments "
+            "WHERE adresses @> CAST(:j AS jsonb) LIMIT 1"),
+            {"j": json.dumps([{"id": p["id_ban"]}])}).first()
+        if row:
+            return row[0]
+    if geo.get("lon") is not None and geo.get("lat") is not None:
+        row = session.execute(text(
+            "SELECT rnb_id FROM rnb_batiments "
+            "WHERE ST_Contains(shape_2975, ST_Transform(ST_SetSRID(ST_Point(:x,:y),4326),2975)) "
+            "LIMIT 1"), {"x": geo["lon"], "y": geo["lat"]}).first()
+        if row:
+            return row[0]
+    return None
+
+
 # ───────────────────────── ingestion ─────────────────────────
 
-def _upsert(session: Session, rec: dict, p: dict, geo: dict) -> None:
+def _upsert(session: Session, rec: dict, p: dict, geo: dict, rnb_id: str | None = None) -> None:
     session.execute(_UPSERT, {
-        "num": p["numero_dpe"], "ed": p["etiquette_dpe"], "eg": p["etiquette_ges"],
+        "num": p["numero_dpe"], "jeu": p.get("jeu", "existant"),
+        "ed": p["etiquette_dpe"], "eg": p["etiquette_ges"],
         "tb": p["type_batiment"], "surf": p["surface_habitable"], "ac": p["annee_construction"],
         "adr": p["adresse"], "ci": p["code_insee"], "cp": p["code_postal"],
         "de": p["date_etablissement"], "lon": geo["lon"], "lat": geo["lat"], "sc": geo["sc"],
-        "idu": geo["idu"], "rat": geo["rat"], "raw": json.dumps(rec, ensure_ascii=False)})
+        "idu": geo["idu"], "rat": geo["rat"], "rnb": rnb_id,
+        "raw": json.dumps(rec, ensure_ascii=False)})
+
+
+def ingest_jeu(session: Session, jeu: str, connector: DpeConnector | None = None) -> dict:
+    """SOURCES-2 lot 0 — LA moisson d'un jeu ADEME (existant|neuf|tertiaire) : toutes les lignes
+    au CP BRUT réunionnais, quel que soit le géocodage BAN (orphelins compris — 0 ligne 974 sans
+    CP brut, mesuré 13/09/2026 sur les 3 jeux).
+
+    ⚠ HOMONYMIE (SOURCES-2, mesuré 13/09/2026) : le CP brut lui-même peut mentir — 75 DPE neufs
+    « ST LEU, CP 97436 » sont en réalité UN programme de Saint-Leu-la-FORÊT (Val-d'Oise, BAN
+    95563 score 0,97 ; « rue de Paris »/« rue du Rû » absentes des adresses du Saint-Leu
+    réunionnais), et 2 existants « 97490/97434 » sont à Montpellier et Lille. Règle : une ligne
+    dont le géocodage BAN est réunionnais (cohérent avec le CP brut) est gardée ; une ligne dont
+    le BAN CONTREDIT le CP brut (ou manque) n'est gardée QUE si son adresse brute se corrobore
+    dans la table `adresses` locale (passe 3) — sinon rejetée : mieux vaut une absence honnête
+    qu'un logement de métropole épinglé sur l'île.
+
+    MIROIR : les lignes du jeu disparues chez l'ADEME (DPE remplacé/retiré) ou plus corroborées
+    sont SUPPRIMÉES en fin de moisson — la table reflète le producteur, pas son histoire.
+
+    Idempotent (upsert `numero_dpe`). ⚠ ÉCRIT + APPELS RÉSEAU (data-fair uniquement).
+    Rattachement parcelle en cascade locale + bâtiment `rnb_id` (BAN puis géométrie)."""
+    connector = connector or DpeConnector(jeu=jeu)
+    migrate_dpe_records(session)
+    idx_par_commune: dict[str, dict] = {}
+    gardes: list[str] = []
+    n_rat = n_rnb = n_rejetes = 0
+    for rec in connector.fetch_reunion_authentiques():
+        p = parse_record(rec, jeu=jeu)
+        if p is None or not is_reunion_authentic(rec):
+            continue
+        coherent = bool(p["code_insee"])   # BAN réunionnais, cohérent avec le CP brut
+        geo = {"lon": None, "lat": None, "sc": p["score_ban"], "idu": None, "rat": "aucun"}
+        insees = ([p["code_insee"]] if coherent else [r[0] for r in session.execute(
+            text("SELECT DISTINCT insee FROM adresses WHERE code_postal = :cp"),
+            {"cp": p["code_postal"]}).all()] if p["code_postal"] else [])
+        for insee in insees:
+            if insee not in idx_par_commune:
+                idx_par_commune[insee] = _index_adresses(session, insee)
+            geo = _rattacher(session, p, idx_par_commune[insee])
+            if geo["idu"]:
+                p["code_insee"] = insee
+                break
+        if not coherent and not geo["idu"]:
+            # BAN contradictoire ou absent, ET aucune corroboration locale → homonymie probable.
+            n_rejetes += 1
+            continue
+        rnb_id = _rattacher_rnb(session, p, geo)
+        n_rat += 1 if geo["idu"] else 0
+        n_rnb += 1 if rnb_id else 0
+        _upsert(session, rec, p, geo, rnb_id)
+        gardes.append(p["numero_dpe"])
+    session.execute(text(
+        "DELETE FROM dpe_records WHERE jeu = :jeu AND numero_dpe <> ALL(:gardes)"),
+        {"jeu": jeu, "gardes": gardes})
+    _touch_source(session)
+    session.flush()
+    return {"jeu": jeu, "dpe": len(gardes), "rattaches_parcelle": n_rat,
+            "rattaches_rnb": n_rnb, "rejetes_homonymie": n_rejetes}
 
 
 def ingest_commune(session: Session, insee: str, commune: str,
@@ -222,6 +327,7 @@ def ingest_commune(session: Session, insee: str, commune: str,
     Retourne des compteurs. Ne touche PAS au score (recalcul Score V séparé).
     """
     connector = connector or DpeConnector()
+    migrate_dpe_records(session)
     idx_adresses: dict | None = None
     n = n_geo = n_rat = n_hors = 0
     for rec in connector.fetch_commune(insee):
@@ -238,7 +344,7 @@ def ingest_commune(session: Session, insee: str, commune: str,
         geo = _rattacher(session, p, idx_adresses)
         n_geo += 1 if geo["lon"] is not None else 0
         n_rat += 1 if geo["idu"] else 0
-        _upsert(session, rec, p, geo)
+        _upsert(session, rec, p, geo, _rattacher_rnb(session, p, geo))
         n += 1
     _touch_source(session)
     session.flush()
@@ -252,6 +358,7 @@ def ingest_orphelins(session: Session, connector: DpeConnector | None = None) ->
     (adresse brute). code_insee reste NULL si le CP couvre plusieurs communes sans match adresse.
     """
     connector = connector or DpeConnector()
+    migrate_dpe_records(session)
     n = n_rat = n_hors = 0
     for rec in connector.fetch_orphelins_974():
         p = parse_record(rec)
@@ -272,7 +379,7 @@ def ingest_orphelins(session: Session, connector: DpeConnector | None = None) ->
         if p["code_insee"] is None and len(insees) == 1:
             p["code_insee"] = insees[0]
         n_rat += 1 if geo["idu"] else 0
-        _upsert(session, rec, p, geo)
+        _upsert(session, rec, p, geo, _rattacher_rnb(session, p, geo))
         n += 1
     session.flush()
     return {"dpe": n, "rattaches_parcelle": n_rat, "hors_reunion": n_hors}

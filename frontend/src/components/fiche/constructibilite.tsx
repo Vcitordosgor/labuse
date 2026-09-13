@@ -745,6 +745,17 @@ function DispositifsDrawer({ d }: { d: NonNullable<Fiche['dispositifs']> }) {
             <FactNote>Construction interdite sur l’emprise boisée (art. L113-1 CU) — part soustraite de l’assiette du potentiel. Source : prescriptions des PLU (GPU).</FactNote>
           </div>
         )}
+        {d.plu_procedure && (
+          <div data-dispositifs-plu-procedure>
+            <GroupLabel>Document d'urbanisme</GroupLabel>
+            <FactNote>
+              {d.plu_procedure.detail}.{' '}
+              <a href={d.plu_procedure.lien} target="_blank" rel="noreferrer" className="underline">
+                Dossier d'enquête publique
+              </a>
+            </FactNote>
+          </div>
+        )}
         <div data-dispositifs-dpu>
           <GroupLabel>Droit de préemption urbain</GroupLabel>
           {d.dpu.etat === 'servi' && (

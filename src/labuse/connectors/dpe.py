@@ -1,16 +1,21 @@
-"""Connecteur DPE ADEME — jeu `dpe03existant` (logements existants, 3CL réformée) [✓ live 11/07].
+"""Connecteur DPE ADEME — les TROIS jeux post-2021 : existants, neufs, tertiaire [✓ live 13/09/2026].
 
-API data-fair : GET https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines
+API data-fair : GET https://data.ademe.fr/data-fair/api/v1/datasets/{jeu}/lines
     filtre `qs=` (Lucene), pagination par curseur `after` (URL `next`), `size`, `select`.
-Sans clé (quota anonyme réduit ; ~1200 req/min authentifié). Base nationale 15,3 M.
+Sans clé (quota anonyme réduit ; ~1200 req/min authentifié). Base nationale 15,5 M (existants).
 
-⚠ `code_insee_ban:974*` rend ~913 lignes (revérifié 09/08/2026) mais c'est un LEURRE : ~897
-portent un CP BRUT métropolitain (Boulogne-sur-Mer, Sète, Schiltigheim…). Le géocodeur BAN de
-l'ADEME rabat en masse des logements de métropole sur des codes INSEE 974. Le gisement
-RÉUNIONNAIS AUTHENTIQUE = ~17 DPE (15 CP brut 974xx cohérents + 2 orphelins) — le DPE
-réglementaire est neuf en DROM (obligation 01/07/2024). L'ingesteur tranche sur le CP BRUT,
-jamais sur BAN : cf. `ingestion.dpe.is_reunion_authentic`. +2 enregistrements 974 hors filtre
-BAN (CP brut 974xx sans `code_insee_ban`) → `fetch_orphelins_974()`.
+⚠ SOURCES-2 lot 0, mesuré live 13/09/2026 : il n'existe AUCUN champ « code INSEE commune brut »
+au schéma ADEME — le seul INSEE est `code_insee_ban` (géocodé), et `code_insee_ban:974*` =
+`code_departement_ban:974` = 914 lignes sur les existants, dont 900 avec CP BRUT métropolitain
+(Boulogne-sur-Mer, Sète, Schiltigheim… : logements de métropole rabattus sur l'île par le
+géocodeur BAN de l'ADEME). Filtrer « par code INSEE » ne débloque RIEN : le filtre honnête est
+le CP BRUT — et lui-même peut mentir par HOMONYMIE (75 « neufs ST LEU 97436 » = un programme de
+Saint-Leu-la-Forêt, Val-d'Oise ; 2 « existants » = Montpellier et Lille) : l'ingesteur exige une
+corroboration locale, cf. `ingestion.dpe.ingest_jeu`. Gisement mesuré 13/09/2026 : 93 lignes au
+CP brut 974 sur les 3 jeux, dont 16 RÉUNIONNAISES corroborées (14 existants + 2 tertiaires + 0
+neuf). Les DPE DROM (obligation 01/07/2024) ne remontent presque pas à l'observatoire ADEME —
+trou producteur, pas trou de filtre. Aucune ligne `code_insee_ban:974*` sans CP brut (mesuré 0
+sur les 3 jeux) → la moisson par `fetch_reunion_authentiques()` attrape TOUT, orphelins compris.
 
 ⚠ Le champ `_geopoint` de l'ADEME est FAUX au 974 (100 % hors Réunion). En revanche
 `coordonnee_cartographique_x/y_ban` sont les coordonnées BAN natives en EPSG:2975 (RGR92 /
@@ -25,17 +30,29 @@ from urllib.parse import parse_qs, urlparse
 
 from .base import Connector
 
-DATASET = "dpe03existant"
+# Les trois jeux post-juillet-2021 (slugs data-fair vérifiés live 13/09/2026).
+DATASETS = {"existant": "dpe03existant", "neuf": "dpe02neuf", "tertiaire": "dpe01tertiaire"}
+DATASET = DATASETS["existant"]  # compat : jeu historique
 LINES = f"https://data.ademe.fr/data-fair/api/v1/datasets/{DATASET}/lines"
 
 # Champs récupérés (noms RÉELS du schéma, vérifiés — pas devinés).
-SELECT = ",".join([
-    "numero_dpe", "etiquette_dpe", "etiquette_ges", "type_batiment",
-    "surface_habitable_logement", "annee_construction", "adresse_ban", "adresse_brut",
+_SELECT_COMMUN = [
+    "numero_dpe", "etiquette_dpe", "etiquette_ges", "adresse_ban", "adresse_brut",
     "code_insee_ban", "code_postal_ban", "code_postal_brut", "date_etablissement_dpe",
     "identifiant_ban", "statut_geocodage", "score_ban",
     "coordonnee_cartographique_x_ban", "coordonnee_cartographique_y_ban",
-])
+]
+# `dpe01tertiaire` n'a NI type_batiment NI surface_habitable_logement (vérifié au schéma) :
+# sa surface est `surface_utile`, gardée dans raw — jamais maquillée en surface habitable.
+_SELECT_PAR_JEU = {
+    "existant": _SELECT_COMMUN + ["type_batiment", "surface_habitable_logement", "annee_construction"],
+    "neuf": _SELECT_COMMUN + ["type_batiment", "surface_habitable_logement", "annee_construction"],
+    "tertiaire": _SELECT_COMMUN + ["surface_utile"],
+}
+SELECT = ",".join(_SELECT_PAR_JEU["existant"])
+
+# Filtre AUTHENTIQUE : CP brut réunionnais, quel que soit le géocodage BAN (cf. tête de module).
+QS_REUNION_AUTHENTIQUES = "code_postal_brut:[97400 TO 97490]"
 
 # DPE 974 invisibles du filtre commune : CP brut réunionnais mais géocodage BAN absent.
 QS_ORPHELINS_974 = "code_postal_brut:[97400 TO 97490] AND NOT code_insee_ban:974*"
@@ -54,9 +71,15 @@ class DpeConnector(Connector):
     test_url = LINES
     test_params = {"qs": "code_insee_ban:97415", "size": 1}
 
-    def __init__(self, timeout: float | None = None, throttle_s: float = 0.1):
+    def __init__(self, timeout: float | None = None, throttle_s: float = 0.1,
+                 jeu: str = "existant"):
         super().__init__(timeout)
         self.throttle_s = throttle_s
+        if jeu not in DATASETS:
+            raise ValueError(f"jeu DPE inconnu : {jeu!r} (attendu : {sorted(DATASETS)})")
+        self.jeu = jeu
+        self.lines_url = f"https://data.ademe.fr/data-fair/api/v1/datasets/{DATASETS[jeu]}/lines"
+        self.select = ",".join(_SELECT_PAR_JEU[jeu])
 
     def _get(self, url: str, params: dict | None, max_retries: int = 4) -> dict:
         last: Exception | None = None
@@ -78,8 +101,8 @@ class DpeConnector(Connector):
 
     def _fetch_qs(self, qs: str, size: int = 100) -> Iterator[dict]:
         """Itère toutes les lignes d'un filtre Lucene, pagination par curseur `after`."""
-        url: str | None = LINES
-        params: dict | None = {"qs": qs, "size": size, "select": SELECT}
+        url: str | None = self.lines_url
+        params: dict | None = {"qs": qs, "size": size, "select": self.select}
         while url:
             data = self._get(url, params)
             for rec in data.get("results") or []:
@@ -92,9 +115,14 @@ class DpeConnector(Connector):
                 return
             # on garde nos qs/size/select et on ajoute le curseur (l'URL next les porte déjà, mais
             # on reste explicite pour ne pas dépendre d'un host interne renvoyé dans `next`).
-            params = {"qs": qs, "size": size, "select": SELECT, "after": after}
+            params = {"qs": qs, "size": size, "select": self.select, "after": after}
             if self.throttle_s:
                 time.sleep(self.throttle_s)
+
+    def fetch_reunion_authentiques(self, size: int = 100) -> Iterator[dict]:
+        """TOUS les DPE au CP BRUT réunionnais du jeu — la moisson SOURCES-2, orphelins compris
+        (0 ligne `code_insee_ban:974*` sans CP brut, mesuré sur les 3 jeux le 13/09/2026)."""
+        yield from self._fetch_qs(QS_REUNION_AUTHENTIQUES, size=size)
 
     def fetch_commune(self, code_insee: str, size: int = 100) -> Iterator[dict]:
         """Itère TOUS les DPE d'une commune (filtre `code_insee_ban`)."""
