@@ -12,7 +12,7 @@ import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Loading } from '../Loading'
 
-const PAGE = 50   // PROJETS-V5 (E4) — pagination « 50 par page · page X/Y »
+const PAGE = 200   // RECETTE-10 T6 (règle de Vic) — 200 par page (était 50) · page X/Y
 
 /** PROJETS-FIX F2 — le PÉRIMÈTRE, en étiquette de titre (une seule fois). */
 function perimetreLabel(c: Cadrage): string {

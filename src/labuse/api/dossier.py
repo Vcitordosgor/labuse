@@ -109,4 +109,8 @@ def dossier_pdf(idu: str, request: Request, carte: bool = True,
     log.info("dossier parcelle %s généré (%s)", idu, res.numero)
     return Response(content=pdf, media_type="application/pdf",
                     headers={"Content-Disposition":
-                             f'inline; filename="dossier_labuse_{idu}.pdf"'})
+                             f'inline; filename="dossier_labuse_{idu}.pdf"',
+                             # RECETTE-8 W19 — URL stable + PDF regénéré à la requête : jamais de
+                             # cache navigateur/proxy qui resservirait une version périmée.
+                             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                             "Pragma": "no-cache"})

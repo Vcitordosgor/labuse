@@ -352,7 +352,9 @@ ROBINETS: dict[str, Robinet] = {
         "commission_apporteur_saisi_eur", "honoraires_techniques_saisi_pct", "vrd_saisi_eur_m2",
         "cout_place_stationnement_saisi_eur", "aleas_saisi_pct", "taxe_amenagement_saisi_eur",
         "prix_sortie_saisi_eur_m2", "prix_vente_bailleur_saisi_eur_m2", "marge_visee_saisi_pct",
-        "regime_tva_saisi", "duree_portage_saisi_mois", "apport_saisi_eur", "taux_apport_saisi_pct",)),
+        "regime_tva_saisi", "duree_portage_saisi_mois", "apport_saisi_eur", "taux_apport_saisi_pct",
+        # RECETTE-8 W13bis (C3) — les saisies du parcours « Revente en l'état »
+        "prix_achat_revente_saisi_eur", "travaux_revente_saisi_eur", "prix_revente_saisi_eur",)),
  "page_accueil_chiffres": _r("page_client", "Accueil — bloc chiffres", None,
     "/accueil/chiffres (cache 1 h)", "json_puis_js", chiffres=("n_parcelles_ile", "n_sources", "run_label_servi",)),
  "page_accueil_semaine": _r("page_client", "Accueil — cette semaine", None,

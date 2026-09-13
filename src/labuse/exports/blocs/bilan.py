@@ -12,8 +12,9 @@ def rendu(valeurs) -> str:
     encart = (
         '<div class="projet keep">'
         '<div class="t">Renseignez votre opération pour obtenir le bilan</div>'
+        # RECETTE-12 D6 — « scénario » RETIRÉ de la liste : le scénario a été supprimé en RECETTE-10.
         '<p style="margin:0 0 4pt">Le bilan dépend de chiffres que vous seul connaissez : prix '
-        'demandé par le vendeur, coût de construction, marge visée, scénario. LABUSE ne les '
+        'demandé par le vendeur, coût de construction, marge visée. LABUSE ne les '
         'suppose pas à votre place.</p>'
         '<p style="margin:0">Une fois renseignés dans votre projet, cette section imprime le '
         "chiffre d'affaires, la charge foncière supportable, l'écart au prix demandé et la "

@@ -1,0 +1,156 @@
+==============================================================================
+PARCELLE nue — 97401000AD0554
+  surface parcelle = 634.0 m² · bâtiments intersectants = 0
+  zone = Ud3 (famille U) · commune Les Avirons
+  constructible=True · cause=None
+  --- CHAÎNE (moteur estimate_capacity, faisabilite/engine.py) ---
+    1. Emprise au sol — reculs (géométrie réelle)
+       formule : contour cadastral réel inseté du recul limites séparatives (1.9 m)
+       valeur  : ~197 m²   [source: Art. U 7.2, p.11 (séparatif) ; recul voirie en sus]
+    2. Emprise au sol — % réglementé
+       formule : min(reculs, 634×40%)
+       valeur  : ~197 m²   [source: Art. U 9.2, p.12]
+    3. Contrainte pleine terre
+       formule : emprise ≤ 634×(1−40%) = 381 m²
+       valeur  : ~197 m² retenu   [source: Art. U 13.1, p.18 : 40 % perméable, SANS sous-minimum de pleine terre]
+    4. Niveaux constructibles
+       formule : hauteur d'égout retenue 6 m ÷ 3 m/niveau = 2 niveaux
+       valeur  : R+1   [source: Art. U 10.2, p.12]
+    5. Emprise bâtie (occupation du gabarit)
+       formule : 197 m² × 45% (espaces entre bâtiments, accès…)
+       valeur  : ~89 m²   [source: hypothèse occupation]
+    6. Surface de plancher brute
+       formule : 89 m² × 2 niveaux
+       valeur  : ~177 m²   [source: dérivé occupation×hauteur]
+    7. Surface habitable (rendement)
+       formule : 177 m² × 80% (murs, communs, circulations, locaux techniques déduits)
+       valeur  : ~142 m²   [source: hypothèse rendement]
+    8. Logements — après plafond de densité (≤ 4 logts)
+       formule : 0.06 ha × 60 logts/ha (30/niveau × 2)
+       valeur  : ~2 à 2   [source: hypothèse densité (ex-COS)]
+    9. Stationnement — scénario au sol
+       formule : sol restant = terrain 634 − emprise bâtie 89 − pleine terre 254 = 292 m² ; 1.5 pl./logt × 25 m² → ≤ 8 logts
+       valeur  : plafond au sol   [source: Art. 12]
+   10. Stationnement — scénario sous-sol/silo
+       formule : parking enterré/silo : le sol n'est plus consommé → borné par le plancher
+       valeur  : ~2–2 logts   [source: Art. 12]
+   11. Logements retenus au sol
+       formule : plafond de densité ∩ stationnement au sol
+       valeur  : ~1 à 3   [source: dérivé]
+  --- SORTIES fourchette ---
+       emprise_batie_max_m2 = 89
+       surface_plancher_m2 = 177
+       shab_vendable_m2 = 142
+       niveaux = R+1
+       niveaux_max = 2
+       hauteur_m = 6.0
+       logements_au_sol = (1, 3)
+  --- bloc_potentiel (potentiel.py) ---
+       au_sol.sdp_residuelle_m2  = 177.0  (résiduel, ce qu'on ajoute sans démolir)
+       table_rase.plancher_m2    = 177  (SDP créée, assiette taxe)
+  --- bloc taxe (_taxe_amenagement_block) ---
+       assiette_m2 = 177  → total_eur = 11841.3  (taux communal 5.0)
+       scenario = 'table rase — surface de plancher du potentiel'
+
+==============================================================================
+PARCELLE bâtie (EL0157) — 97411000EL0157
+  surface parcelle = 1019.0 m² · bâtiments intersectants = 4
+  zone = Um (famille U) · commune Saint-Denis
+  constructible=True · cause=None
+  --- CHAÎNE (moteur estimate_capacity, faisabilite/engine.py) ---
+    1. Emprise au sol — reculs (géométrie réelle)
+       formule : contour cadastral réel inseté du recul limites séparatives (4 m)
+       valeur  : ~545 m²   [source: Art. Um.7, p.67 (séparatif) ; recul voirie en sus]
+    2. Emprise au sol — % réglementé
+       formule : min(reculs, 1018×50%)
+       valeur  : ~509 m²   [source: Art. Um.9, p.68]
+    3. Niveaux constructibles
+       formule : hauteur d'égout retenue 7 m ÷ 3 m/niveau = 2 niveaux
+       valeur  : R+1   [source: Art. Um.10, p.68]
+    4. Emprise bâtie (occupation du gabarit)
+       formule : 509 m² × 45% (espaces entre bâtiments, accès…)
+       valeur  : ~229 m²   [source: hypothèse occupation]
+    5. Surface de plancher brute
+       formule : 229 m² × 2 niveaux
+       valeur  : ~458 m²   [source: dérivé occupation×hauteur]
+    6. Surface habitable (rendement)
+       formule : 458 m² × 80% (murs, communs, circulations, locaux techniques déduits)
+       valeur  : ~367 m²   [source: hypothèse rendement]
+    7. Logements — après plafond de densité (≤ 6 logts)
+       formule : 0.10 ha × 60 logts/ha (30/niveau × 2)
+       valeur  : ~5 à 6   [source: hypothèse densité (ex-COS)]
+    8. Stationnement — scénario au sol
+       formule : sol restant = terrain 1018 − emprise bâtie 229 − pleine terre 0 = 789 m² ; 1.5 pl./logt × 25 m² → ≤ 21 logts
+       valeur  : plafond au sol   [source: Art. 12]
+    9. Stationnement — scénario sous-sol/silo
+       formule : parking enterré/silo : le sol n'est plus consommé → borné par le plancher
+       valeur  : ~5–6 logts   [source: Art. 12]
+   10. Logements retenus au sol
+       formule : plafond de densité ∩ stationnement au sol (après modulation réunionnaise)
+       valeur  : ~3 à 4   [source: dérivé]
+  --- SORTIES fourchette ---
+       emprise_batie_max_m2 = 229
+       surface_plancher_m2 = 458
+       shab_vendable_m2 = 257
+       niveaux = R+1
+       niveaux_max = 2
+       hauteur_m = 6.0
+       logements_au_sol = (3, 4)
+  --- bloc_potentiel (potentiel.py) ---
+       au_sol.sdp_residuelle_m2  = 97.0  (résiduel, ce qu'on ajoute sans démolir)
+       table_rase.plancher_m2    = 458  (SDP créée, assiette taxe)
+  --- bloc taxe (_taxe_amenagement_block) ---
+       assiette_m2 = 458  → total_eur = 22469.48  (taux communal 3.0)
+       scenario = 'table rase — surface de plancher du potentiel'
+
+==============================================================================
+PARCELLE bâtie dense — 97411000BD0527
+  surface parcelle = 5507.0 m² · bâtiments intersectants = 130
+  zone = Ud (famille U) · commune Saint-Denis
+  constructible=True · cause=None
+  --- CHAÎNE (moteur estimate_capacity, faisabilite/engine.py) ---
+    1. Emprise au sol — reculs (géométrie réelle)
+       formule : contour cadastral réel inseté du recul limites séparatives (4 m)
+       valeur  : ~3545 m²   [source: Art. Ud.7, p.42 (séparatif) ; recul voirie en sus]
+    2. Emprise au sol — % réglementé
+       formule : min(reculs, 5506×80%)
+       valeur  : ~3545 m²   [source: Art. Ud.9, p.43]
+    3. Niveaux constructibles
+       formule : hauteur d'égout non précisée → (hauteur faîtage 10−3) ÷ 3 = 2
+       valeur  : R+1   [source: Art. Ud.10, p.44]
+    4. Emprise bâtie (occupation du gabarit)
+       formule : 3545 m² × 45% (espaces entre bâtiments, accès…)
+       valeur  : ~1595 m²   [source: hypothèse occupation]
+    5. Surface de plancher brute
+       formule : 1595 m² × 2 niveaux
+       valeur  : ~3190 m²   [source: dérivé occupation×hauteur]
+    6. Surface habitable (rendement)
+       formule : 3190 m² × 80% (murs, communs, circulations, locaux techniques déduits)
+       valeur  : ~2552 m²   [source: hypothèse rendement]
+    7. Logements — après plafond de densité (≤ 33 logts)
+       formule : 0.55 ha × 60 logts/ha (30/niveau × 2)
+       valeur  : ~32 à 33   [source: hypothèse densité (ex-COS)]
+    8. Stationnement — scénario au sol
+       formule : sol restant = terrain 5506 − emprise bâtie 1595 − pleine terre 0 = 3910 m² ; 1.5 pl./logt × 25 m² → ≤ 104 logts
+       valeur  : plafond au sol   [source: Art. 12]
+    9. Stationnement — scénario sous-sol/silo
+       formule : parking enterré/silo : le sol n'est plus consommé → borné par le plancher
+       valeur  : ~32–33 logts   [source: Art. 12]
+   10. Logements retenus au sol
+       formule : plafond de densité ∩ stationnement au sol
+       valeur  : ~31 à 34   [source: dérivé]
+  --- SORTIES fourchette ---
+       emprise_batie_max_m2 = 1595
+       surface_plancher_m2 = 3190
+       shab_vendable_m2 = 2395
+       niveaux = R+1
+       niveaux_max = 2
+       hauteur_m = 6.0
+       logements_au_sol = (31, 34)
+  --- bloc_potentiel (potentiel.py) ---
+       au_sol.sdp_residuelle_m2  = 0.0  (résiduel, ce qu'on ajoute sans démolir)
+       table_rase.plancher_m2    = 3190  (SDP créée, assiette taxe)
+  --- bloc taxe (_taxe_amenagement_block) ---
+       assiette_m2 = 3190  → total_eur = 156501.4  (taux communal 3.0)
+       scenario = 'table rase — surface de plancher du potentiel'
+

@@ -35,8 +35,9 @@ Rt = ReservoirTables
 #: manuelle) le déclarent avec une note — jamais un oubli silencieux.
 RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     # ── cadastre / foncier ──────────────────────────────────────────────────────────
-    "cadastre_api_carto": Rt(("parcels",), millesime="PCI Parcellaire Express (DGFiP) — « latest » ingérée"),
-    "cadastre_etalab_bulk": Rt(("parcels",), millesime="Etalab cadastre — « latest » (DGFiP)",
+    # RECETTE-11 D6 — millésime affiché au client : plus de note d'ingénierie « « latest » ingérée ».
+    "cadastre_api_carto": Rt(("parcels",), millesime="PCI Parcellaire Express (DGFiP), édition courante"),
+    "cadastre_etalab_bulk": Rt(("parcels",), millesime="Etalab cadastre (DGFiP), édition courante",
                                note="DOUBLON (canal bulk du même réservoir que cadastre_api_carto)"),
     "cadastre_epoque": Rt(("cadastre_historique",),
                           millesime="PCI vecteur Etalab — millésimes 2019→2025 (cadastre d'époque)"),
@@ -197,7 +198,8 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     # ── géographie physique / imagerie ─────────────────────────────────────────────
     "bd_topo": Rt(("spatial_layers",), couches=("batiment", "voirie", "water", "ravine"),
                   millesime="BD TOPO® V3 (IGN)"),
-    "rge_alti": Rt(("rgealti_pente_5m", "spatial_layers"), couches=("pente",), millesime="RGE ALTI® (IGN)"),
+    "rge_alti": Rt(("rgealti_pente_5m", "rgealti_mnt_5m", "spatial_layers"),
+                   couches=("pente", "altitude"), millesime="RGE ALTI® (IGN)"),   # RECETTE-7 D — MNT altitude ajouté
     "rge_alti_5m": Rt(("rgealti_pente_5m",), note="DOUBLON (même réservoir que rge_alti)"),
     "bd_carto_ocs": Rt(("spatial_layers",), couches=("ocs_ge",),
                        millesime="BD CARTO® V5 — occupation du sol (IGN, proxy)"),
@@ -209,7 +211,7 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     # CIRCUIT-6 lot 7 (fuite n°2) — la table batiment_hauteur_lidar (faîtage/égout par parcelle,
     # batch de dalles ACHEVÉ, ~303 000 parcelles) entre à la carte : la hauteur LiDAR est
     # désormais CRÉDITÉE à sa source (potentiel._hauteur_bati_m la lit, repli BD TOPO).
-    "lidar_hd_mnh": Rt(("toiture_lidar", "batiment_hauteur_lidar"),
+    "lidar_hd_mnh": Rt(("toiture_lidar", "batiment_hauteur_lidar", "lidar_dalle_grille"),
                        millesime="LiDAR HD MNH — dalles publiées 25/06/2025 (IGN) ; "
                                  "hauteurs faîtage/égout par parcelle (batch dalles complet)"),
     "pvgis": Rt(("solar_grid", "parcel_solar"), millesime="PVGIS v5.3 · modèle SARAH3"),
@@ -217,7 +219,7 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "potentiel_foncier_region": Rt(("spatial_layers",), couches=("potentiel_foncier", "sar")),
     "potentiel_foncier_ods": Rt(("spatial_layers",), couches=("potentiel_foncier",)),
     "rpg_proxy_ign": Rt(("spatial_layers",), couches=("safer",),
-                        millesime="proxy RPG (IGN) — RPG.LATEST, année non pinnée",
+                        millesime="RPG (IGN), édition courante",  # RECETTE-11 D6 — note interne retirée
                         note="SOURCES-1 lot 2 : code_cultu servi (CSA canne 12 464/38 460) — "
                              "couche carte « Cultures déclarées » + cascade zone A/canne"),
     # ── adresses / réseaux / transport ─────────────────────────────────────────────
@@ -314,6 +316,7 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "parcel_au_statut": "statut AU (builder)",
     "parcel_zone_plu": "zonage parcelle (builder GPU)",
     "parcel_terrain": "terrain (pente/ortho builders)",
+    "parcel_vue_mer": "vue mer (viewshed RGE ALTI — RECETTE-7 lot D)",
     "parcel_geometrie": "géométrie parcelle (builder)",
     "parcel_bati_revele": "bâti révélé (builder)",
     "parcel_constructibilite": "constructibilité (builder)",
@@ -354,6 +357,7 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "data_sources": "catalogue des sources",
     "communes_referentiel": "référentiel des 24 communes (cible des clés étrangères, CIRCUIT-5 lot 4)",
     "ingestion_runs": "journal d'ingestion",
+    "mnt_tiles": "tuilage + point de reprise de l'ingestion RGE ALTI MNT (RECETTE-7 lot D)",
     "source_veille": "sentinelle des sources",
     "source_checks": "contrôles de sources",
     "source_radar": "radar de sources",
@@ -425,6 +429,10 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "ia_ask_quota": "IA — quotas",
     "nl_query_log": "IA — requêtes NL",
     "app_reglages": "réglages applicatifs",
+    # CIRCUIT-6 (merge main) — trois tables applicatives de RECETTE-10/11/12 classées (V1c) :
+    "mail_queue": "file d'envoi de mails (exploitation)",
+    "prefs_carte": "préférences de carte par utilisateur",
+    "questionnaire_financier": "questionnaire du Financier (saisies client)",
     "bilan_params": "paramètres de bilan",
     "entite_acronyme": "référentiel des acronymes",
     "lettre_zonage_refs": "références lettre de zonage",

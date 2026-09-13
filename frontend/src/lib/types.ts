@@ -440,15 +440,15 @@ export interface Fiche {
       ecart_demande_acte_pct: number | null
     }[]
   } | null
-  // FICHE-1 lot 5 — taxe d'aménagement estimée (scénario table rase). null → pas d'estimation.
+  // RECETTE-8 W2 — taxe d'aménagement : le TAUX communal de référence, jamais un montant sans
+  // projet (elle se paie sur la SDP créée par un projet, chiffrée au Financier). null → commune inconnue.
   taxe_amenagement?: {
-    assiette_m2: number; assiette_eur: number; total_eur: number | null
-    part_communale_eur: number | null; part_departementale_eur: number | null
+    projet_saisi: boolean; total_eur: number | null
     taux_communal_pct: number | null; taux_communal_source: string | null
     taux_communal_millesime?: string | null; taux_communal_perime?: boolean | null
     taux_departemental_pct: number | null; taux_departemental_confirme: boolean
     taux_communal_manquant: boolean; message_taux_communal: string | null
-    annee: string | number; source: string; url: string; scenario: string
+    annee: string | number; source: string; url: string
   } | null
   // FICHE-1 lot 3 — aléas en détail (dérivés de la cascade servie, accord avec Pièges et risques).
   aleas?: {
@@ -511,6 +511,21 @@ export interface Fiche {
     part_hlm_pct: number | null
     source: string
   } | null
+  // RECETTE-5 (V4) — les champs déjà SERVIS par le payload parcelle, typés pour l'en-tête à 8 tuiles.
+  // `terrain` : pente du terrain (RGE ALTI) — tuile Pente. `prix_ancien` : prix du bâti ancien au m²
+  // (marche_service, même chiffre que la synthèse et les documents) — tuile Bâti ancien.
+  terrain?: { pente_moy_deg: number | null; pente_max_deg: number | null; flag_terrassement_lourd: boolean } | null
+  prix_ancien?: {
+    type_prix: string | null; n: number | null; fiabilite?: string | null; commune_fallback?: boolean
+    distribution?: { apres?: { median: number | null; n: number | null } | null } | null
+  } | null
+  marche_synthese?: string | null
+  // RECETTE-5 (V4) — TFPB part communale (REI DGFiP), ajoutée au payload parcelle (même producteur
+  // que la fiche commune). Tuile « Taxe foncière ». `perime` = fraîcheur > 1 an. null = non ingéré.
+  fiscalite?: {
+    tfpb_commune_pct: number | null; tfpb_epci_pct: number | null; teom_pct: number | null
+    millesime: string; maj_at?: string | null; perime?: boolean; source: string
+  } | null
 }
 
 // FICHE-1 lot 1 — bloc « Le bien » (producteur bati.le_bien_block).
@@ -523,6 +538,12 @@ export interface LeBien {
   cosia_detecte_m2?: number | null   // CoSIA « détecté non cartographié » (dit à part), sinon null
   nb_batiments: number | null
   hauteur_bati_m: number | null
+  // RECETTE-9 T9 — faîtage/égout MESURÉS au LiDAR HD (sourcé) quand la parcelle a été ingérée.
+  hauteur_faitage_m?: number | null
+  hauteur_egout_m?: number | null
+  hauteur_nature?: 'sourcé' | 'estimé' | null
+  hauteur_survol?: string | null   // RECETTE-11 A3 — date de survol LiDAR HD
+  hauteur_source?: string | null
   surface_libre_m2: number | null
   surface_parcelle_m2: number | null
   source_bati: string
@@ -749,6 +770,13 @@ export interface PotentielTransformation extends Indisponible {
   hauteur_bati_m: number | null
   hauteur_max_m: number | null
   hauteur_marge_m: number | null
+  // RECETTE-10 T1 — la hauteur qui mord (« égout »/« faîtage ») quand le LiDAR a mesuré les deux.
+  hauteur_contrainte?: string | null
+  // RECETTE-11 A3 — date de survol LiDAR HD, servie avec la mesure.
+  hauteur_survol?: string | null
+  hauteur_nature?: string | null
+  // RECETTE-11 A4 — permis autorisé après le survol : mesure possiblement dépassée.
+  hauteur_permis_posterieur?: string | null
   confiance: string | null
   source: string
   note: string

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -568,6 +568,8 @@ export function Fiche({ idu }: { idu: string }) {
   const setModule = useApp((s) => s.setModule)
   const setM02Prefill = useApp((s) => s.setM02Prefill)     // M60 P1c — porte Scan patrimoine (SIREN)
   const setCourrierPrefill = useApp((s) => s.setCourrierPrefill)  // CONNEXIONS-2 Lot 3 (KO-5) — Courrier pré-rempli sur la parcelle
+  const setParcelPrefill = useApp((s) => s.setParcelPrefill)  // RECETTE-6 (D2) — porte « Remonter le temps »
+  const setFlyToF = useApp((s) => s.setFlyTo)
   const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
   const setPluVueF = useApp((s) => s.setPluVue)            // M137-P — porte directe vers une vue de l'outil PLU
   const modBlock = moduleFiche[idu]
@@ -615,6 +617,10 @@ export function Fiche({ idu }: { idu: string }) {
   const syntheseM = useMutation({ mutationFn: () => getExplain(idu) })
   useEffect(() => { setIaOuvert('aucun'); syntheseM.reset() }, [idu])  // eslint-disable-line react-hooks/exhaustive-deps
   const { data: f, isLoading, isError, error, refetch } = useQuery({ queryKey: ['fiche', idu], queryFn: () => getFiche(idu) })
+  // RECETTE-8 W22 — l'exposition (orientation + pente) remplace la vue mer dans la tête de fiche.
+  // Calcul lazy (MNT RGE ALTI + gdaldem ~0,5 s) : la tuile affiche « … » puis la valeur.
+  const expo = useQuery({ queryKey: ['exposition', idu], queryFn: () => getParcelExposition(idu),
+    enabled: !!idu, staleTime: 6 * 60 * 60 * 1000, retry: false })
   const fq = ficheQuery.trim().toLowerCase()
   const ficheMatches = fq && f
     ? f.lines.filter((l) => `${l.layer} ${layerLabel(l.layer)} ${l.detail ?? ''} ${l.source ?? ''} ${l.result ?? ''}`.toLowerCase().includes(fq))
@@ -656,9 +662,9 @@ export function Fiche({ idu }: { idu: string }) {
   ] : []
   const ongletLines = (o: Onglet) => f?.lines.filter((l) => l.onglet === o) ?? []
   // RETOURS-11F4 (F6/F7) : les lignes Risques ET Marché (marcheLines, prix de sortie, socio-éco)
-  // vivent désormais dans `RisquesSection` / `MarcheSection`. `dvfSecteur` (prix terrain nu) reste
-  // dérivé ici car l'ANALYSE d'en-tête l'affiche aussi (M137-G — nu SEUL, jamais moyenné au bâti).
-  const dvfSecteur = f?.dvf_parcelle?.secteur?.find((s) => s.type_bien === 'terrain')
+  // vivent dans `RisquesSection` / `MarcheSection`. RECETTE-6 (C5) : les tuiles « Terrain nu » et
+  // « Bâti ancien » ayant quitté l'en-tête, `dvfSecteur` n'est plus dérivé ici (le prix du terrain nu
+  // vit dans MarcheSection — dont la « Valeur au prix du secteur » rapatriée, cf. C2).
   // Proprio : le signal dominant s'il existe (gérant âgé, procédure…), sinon le type de
   // propriétaire. Jamais d'identité de personne physique (boussole).
   // RETOURS-11F F11 — 🔴 double en-tête : quand un propriétaire moral est connu (ex. « PACIFIC »),
@@ -746,9 +752,12 @@ export function Fiche({ idu }: { idu: string }) {
       {/* ═══ EN-TÊTE + CARTE VERDICT (DA §4). M56-B3 fix 3 : plus de filet ni de fond distinct
           sous l'en-tête — le panneau est un seul fond continu --bg-1 du haut au pied.
           M56-B3 fix 7 : padding panneau 16→14 (densité). ═══ */}
-      {/* M56-B6 · DA-FICHE-v6 — EN-TÊTE en CARTE .head (identité + 4 chiffres) posée sur le fond
-          de panneau plus sombre. Le CTA, le bandeau et les IA suivent SOUS la carte. */}
-      <div style={{ padding: '14px 14px 0', flexShrink: 0 }}>
+      {/* RECETTE-8 W12 — le conteneur défilant s'ouvre DÈS la carte d'en-tête : la tête ne « colle »
+          plus au défilement (elle était flex-shrink:0, fixe, et recouvrait le contenu qui passait
+          dessous). Elle défile désormais AVEC le reste — un seul corps qui défile du haut au pied.
+          M56-B6 · DA-FICHE-v6 — EN-TÊTE en CARTE .head (identité + chiffres). */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
+      <div style={{ paddingTop: 10 }}>
         <div className="head">
           <div className="head-top">
             {/* RETOURS-11 R3 — la colonne gauche pousse (flex:1) pour donner sa largeur à l'adresse,
@@ -813,7 +822,8 @@ export function Fiche({ idu }: { idu: string }) {
             <span style={{ userSelect: 'text', minWidth: 0 }} title={f?.adresse ?? undefined}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</span>
             {f?.adresse && <CopyIdu value={f.adresse} aria="Copier l’adresse" titre="Copier l’adresse" okTitre="Adresse copiée" dataAttr="adresse" />}
             {!f?.adresse && (
-              <Tip side="top" tip={CLIENT.fiche.adresseAbsenteInfo}>
+              // RECETTE-8 W11 — « i » fonctionnel icône-seule → `garder` (sinon bulle muette, S10).
+              <Tip side="top" tip={CLIENT.fiche.adresseAbsenteInfo} garder>
                 <span data-adresse-absente-i role="button" tabIndex={0} aria-label="Pourquoi l’adresse manque"
                   style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14, borderRadius: 999, border: '1px solid var(--line-3)', color: 'var(--txt-ghost)', fontSize: 9, fontWeight: 700, lineHeight: 1, cursor: 'help', verticalAlign: 'middle' }}>i</span>
               </Tip>
@@ -824,46 +834,85 @@ export function Fiche({ idu }: { idu: string }) {
             l'en-tête à côté de la cloche, en boutons-logos (voir .hbtns ci-dessus). Les anciennes
             pastilles pleines sur deux lignes sont retirées. */}
 
-        {/* M55-O phase 2.1 — BANDEAU DE 4 CHIFFRES (toujours visible, factuel, aucun avis) :
-            Surface · Zone · SDP disponible · Prix secteur €/m². Valeurs SERVIES (jamais en dur) ;
-            une valeur absente → « — » (jamais un zéro trompeur ni un blanc muet). Habillage affiné
-            en phase 3. */}
+        {/* RECETTE-5 (V4→V8) — EN-TÊTE À HUIT TUILES (maquette-entete-fiche-v2) : surface · zone ·
+            pente · vue mer · terrain nu · bâti ancien · taxe foncière · SDP restante. Chaque valeur
+            est SERVIE (jamais en dur), avec un « i » qui dit sa source. V7 : une valeur inconnue
+            s'écrit « — » avec sa raison, jamais un zéro. V8 : la tuile « vue mer » n'apparaît que si
+            un verdict favorable est servi (non calculé à ce jour → omise, pas de tuile vide). V5 :
+            les étiquettes passent SOUS la grille. V6 : le reste des faits va dans l'accordéon. */}
         {f && (() => {
-          const cells: { l: string; v: string; i?: string }[] = [
-            { l: 'Surface', v: fmtM2(f.surface_m2) },
-            // M71 BLOC C — l'aveuglement se dit : zone absente = « Non publié au GPU » (jamais
-            // un « — » muet). Saint-Philippe (RNU, bandeau f.rnu déjà affiché) + 91 rés. Saint-Leu.
-            { l: 'Zone', v: reglesZone ?? 'Non publié au GPU' },
-            // M56-B4 point 3 — un zéro n'est pas une absence : SDP nulle (non constructible) ou prix
-            // nul = donnée sans objet → « — », jamais « 0 m² » / « 0 €/m² » présentés comme un résultat.
-            { l: 'SDP dispo.', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—' },
-            // M137-G — « NU » : prix du TERRAIN NU seul (jamais du bâti). Libellé court (tenait sur
-            // deux lignes en « Secteur · nu ») ; le « i » dit la méthode ET le cas vide (« — » =
-            // aucune vente de terrain nu dans la section sur la période).
-            { l: 'Nu',
-              v: dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0 ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—',
-              i: 'Médiane du prix du terrain nu au m² — ventes 2021-2025 (géo-DVF), sur la commune + la section cadastrale de la parcelle. Le bâti n’y entre jamais. « — » : aucune vente de terrain nu dans cette section sur la période.' },
+          const nf = (n: number) => n.toLocaleString('fr-FR')
+          // sous-titre de zone (constructible / à urbaniser / agricole / naturelle) depuis la lettre.
+          const z = (reglesZone ?? '').toUpperCase()
+          const zoneSous = !z ? undefined
+            : z.startsWith('AU') ? 'à urbaniser' : z.startsWith('U') ? 'constructible'
+            : z.startsWith('A') ? 'agricole' : z.startsWith('N') ? 'naturelle' : undefined
+          // pente du terrain (RGE ALTI) — sous-titre lisible par degrés (plat → très forte).
+          const pente = f.terrain?.pente_moy_deg
+          const penteSous = pente == null ? undefined
+            : pente < 5 ? 'plat' : pente < 15 ? 'modérée' : pente < 30 ? 'forte' : 'très forte'
+          // taxe foncière part communale (TFPB, REI DGFiP) — servie sur le payload parcelle (V4).
+          const tfpb = f.fiscalite?.tfpb_commune_pct
+          type Tuile = { l: string; v: string; s?: string; i?: string; vide?: boolean; neuf?: boolean }
+          // RECETTE-6 (C5, décision Vic) — EXACTEMENT SIX TUILES, deux rangs de trois :
+          //   Surface · Zone · Pente / Vue mer · Taxe foncière · SDP restante.
+          // « Terrain nu » et « Bâti ancien » RETIRÉES de l'en-tête (les prix vivent dans « Marché et
+          // secteur »). « Vue mer » (C5) RÉTABLIE et TOUJOURS affichée : « — » tant que la donnée
+          // n'existe pas — le verdict de vue mer n'est pas encore calculé (cf. lot H, lecture seule).
+          // C1 : plus de pastilles sous les tuiles. C2 : plus d'accordéon « Le reste des faits ».
+          const tuiles: Tuile[] = [
+            { l: 'Surface', v: f.surface_m2 != null ? fmtM2(f.surface_m2) : '—', vide: f.surface_m2 == null,
+              i: 'Contenance cadastrale de la parcelle (DGFiP).' },
+            { l: 'Zone', v: reglesZone ?? 'Non publié au GPU', s: zoneSous, vide: reglesZone == null,
+              i: 'Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n’a pas déposé de document opposable.' },
+            { l: 'Pente', v: pente != null ? `${nf(pente)} °` : '—', s: penteSous, vide: pente == null,
+              i: 'Pente moyenne du terrain, calculée sur le modèle de relief RGE ALTI (IGN). À La Réunion elle commande le coût de terrassement autant que la constructibilité. « — » : relief non disponible sur la parcelle.' },
+            // RECETTE-8 W22 — la vue mer est ABANDONNÉE (55 h de calcul pour l'affirmation la moins
+            // fiable). L'exposition prend sa place : orientation du versant + pente moyenne, calculées
+            // sur le MNT RGE ALTI, localement, sans ligne de vue.
+            (() => {
+              const e = expo.data
+              const orient = e?.orientation
+              const v = expo.isLoading ? '…' : (orient && orient !== 'plat' ? orient : orient === 'plat' ? 'Plat' : '—')
+              const s = orient && orient !== 'plat' && e?.pente_moyenne_deg != null ? `pente ${nf(e.pente_moyenne_deg)} °`
+                : orient === 'plat' ? 'terrain quasi plat'
+                : expo.isLoading ? 'calcul en cours' : 'relief non disponible'
+              return { l: 'Exposition', v, s, vide: !orient,
+                i: 'Orientation du versant de la parcelle (Nord, Sud-Est…) et sa pente moyenne, calculées sur le modèle d’altitude RGE ALTI (IGN), localement — sans ligne de vue. Remplace la « vue mer » (abandonnée : 55 h de calcul pour une donnée peu fiable, cf. rapport). « — » : relief non disponible sur la parcelle.' } as Tuile
+            })(),
+            { l: 'Taxe foncière', v: tfpb != null ? `${nf(tfpb)} %` : '—', s: tfpb != null ? 'part communale' : 'taux non ingéré',
+              vide: tfpb == null,
+              i: 'Taux de taxe foncière (TFPB) voté par la commune — fichier REI (DGFiP). C’est la charge annuelle, que le bien soit gardé, loué ou porté. « — » : taux non ingéré pour cette commune.' },
+            { l: 'SDP restante', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
+              s: reglesSdp != null && reglesSdp > 0 ? undefined : (reglesZone && /^(A|N)/i.test(reglesZone) ? 'zone non constructible' : 'pas de potentiel résiduel'),
+              vide: !(reglesSdp != null && reglesSdp > 0),
+              i: 'Surface de plancher que le PLU autorise ENCORE sur la parcelle (potentiel résiduel). « — » : zone non constructible ou plus de potentiel.' },
           ]
           return (
             <div className="stats" data-bandeau-chiffres>
-              {cells.map((c) => (
+              {tuiles.map((c) => (
                 <div className="stat" key={c.l}>
-                  <div className="stat-l flex items-center gap-1">
+                  <div className="stat-l">
                     {c.l.toUpperCase()}
                     {c.i && (
-                      <Tip tip={c.i}>
-                        <span role="button" tabIndex={0} aria-label={`Méthode : ${c.l}`}
+                      // RECETTE-8 W11 — le « i » de la tête de fiche est un déclencheur FONCTIONNEL
+                      // icône-seule (la bulle EST son seul contenu) : il faut `garder` pour que la
+                      // bulle s'affiche (RECETTE-2 S10 a retiré les bulles de survol SAUF ce cas).
+                      // Sans lui, les six « i » de la tête ne faisaient RIEN au survol/tap.
+                      <Tip tip={c.i} garder side="bottom">
+                        <span role="button" tabIndex={0} aria-label={`Source : ${c.l}`}
                           className="flex h-[12px] w-[12px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[7px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
                       </Tip>
                     )}
                   </div>
-                  <div className={`stat-v${c.v === '—' ? ' vide' : ''}`}>{c.v}</div>
+                  <div className={`stat-v${c.vide ? ' vide' : ''}${c.neuf ? ' neuf' : ''}`}>{c.v}</div>
+                  {c.s && <div className="stat-s">{c.s}</div>}
                 </div>
               ))}
             </div>
           )
         })()}
-        </div>{/* /.head — la carte d'en-tête (identité + 4 chiffres) est le SEUL bloc FIXE. */}
+        </div>{/* /.head — la carte d'en-tête (identité + 8 tuiles + étiquettes + reste des faits). */}
         {/* RETOURS-9 (Q8.1) — ONGLETS Analyse · Autour · Actions RETIRÉS : retour à la fiche UNIQUE qui
             défile. « Autour » est un tiroir de la fiche (et existe dans les outils) ; « Actions » (CRM/
             Projet/exports) vit déjà en pied de fiche. Plus rien à choisir : tout défile d'un seul tenant. */}
@@ -874,8 +923,9 @@ export function Fiche({ idu }: { idu: string }) {
           `overflow-y-auto flex-1`. La fiche défile donc jusqu'au pied EN TOUTE circonstance (bloc
           Analyse absent / déplié / replié, synthèse ouverte, n'importe quel tiroir ouvert). Avant M68,
           le bloc Analyse était dans le wrapper flex-shrink:0 et affamait ce conteneur (cf. RAPPORT_M68).
-          RETOURS-9 (Q8.1) — plus d'onglet : ce conteneur est le SEUL corps défilant de la fiche. */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
+          RETOURS-9 (Q8.1) — plus d'onglet : ce conteneur est le SEUL corps défilant de la fiche.
+          RECETTE-8 W12 — ce conteneur est désormais OUVERT plus haut (juste avant la carte d'en-tête)
+          pour que la tête défile avec le reste ; ici on ne rouvre plus rien. */}
         {/* wrapper NON-flex : conserve l'espacement interne d'origine du bloc Analyse (marges inline). */}
         <div>
 
@@ -1620,6 +1670,12 @@ export function Fiche({ idu }: { idu: string }) {
                 <PipelineButton idu={idu} />
                 <ProjetButton idu={idu} />
               </div>
+              {/* RECETTE-7 (B4) — une respiration entre la rangée + CRM / + Projet et la grille
+                  des 6 boutons (elles se touchaient).
+                  RECETTE-9 T7 — 10 px restait trop faible (les deux rangées paraissaient collées) :
+                  on double franchement la respiration + un filet de séparation discret pour marquer
+                  que « + CRM / + Projet » (suivi) et les 6 documents/outils sont deux familles. */}
+              <div aria-hidden style={{ height: 24, marginTop: 8, borderTop: '.5px solid #1E2A23' }} />
               {/* M55-L point 8 — BARRE D'ACTIONS sur une GRILLE 4×2 (décision Vic).
                   Ligne 1 : PDF · Dossier · Finance · Cadastre. Ligne 2 : 1950 · Maps · Courrier ·
                   Pré-dossier PC. M137-F : Pré-dossier PC RENTRE dans la grille (4e case de la 2e
@@ -1630,12 +1686,10 @@ export function Fiche({ idu }: { idu: string }) {
               {/* PROJETS-V5 (E9) — les EXPORTS passent sur le composant PARTAGÉ GrilleOutils (même rendu +
                   survol que la grille d'outils de la fiche commune). Les icônes SVG et la logique des tuiles
                   (PDF, Dossier, Financier, Pré-dossier…) sont conservées. */}
-              <div className="sec"><span>EXPORTS</span><i /></div>
-              {/* RETOURS-9 (Q8.3) — deux lignes de trois : PDF · Dossier · Finance / Argumentaire · Courrier · Pré-dossier PC. */}
-              {/* EXPORTS-2 lot 8 — les documents servis par le builder unique, dans l'ordre :
-                  Dossier · Financier · Apporteur · Pré-dossier PC. Plus aucun bouton PDF /
-                  Banquier / Argumentaire / Projet / Lettre de zonage. (Courrier reste, hors documents.)
-                  RECETTE-3 (T2, décision Vic) — le bouton « Résumé » est SUPPRIMÉ (document retiré). */}
+              {/* RECETTE-6 (D1, décision Vic) — le titre « EXPORTS » est RETIRÉ : ce ne sont pas que des
+                  exports (Courrier, Remonter le temps sont des OUTILS). La grille reste, sans en-tête. */}
+              {/* EXPORTS-2 lot 8 — documents (builder unique) : Dossier · Financier · Apporteur ·
+                  Pré-dossier PC · Courrier · Remonter le temps (RECETTE-6 D2). */}
               <GrilleOutils cols={3}>
                 <DossierTile idu={idu} />
                 {/* RECETTE-1 R28 — infobulles au survol retirées des tuiles d'export (le nom suffit). */}
@@ -1645,6 +1699,13 @@ export function Fiche({ idu }: { idu: string }) {
                 <PreDossierTile idu={idu} />
                 <OutilCase nom={CLIENT.fiche.export.courrier} data-courrier-tile onClick={() => { setCourrierPrefill(idu); setModule('courriers') }}
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>} />
+                {/* RECETTE-6 (D2, décision Vic) — 6e bouton « Remonter le temps » : ouvre l'outil PRÉ-REMPLI
+                    sur la parcelle (setParcelPrefill + recentrage) ; le fil de retour vers la fiche est
+                    inhérent (setModule préserve selectedIdu → fermer l'outil ramène la fiche). Retiré de
+                    l'accueil (cf. AccueilPreuves). */}
+                <OutilCase nom="Remonter le temps" data-temps-tile
+                  onClick={() => { setParcelPrefill(idu); if (f?.coords) setFlyToF({ center: f.coords, zoom: 18 }); setModule('temps') }}
+                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.3V12l3.1 1.9" /></svg>} />
               </GrilleOutils>
               {/* M70 déc. 12 — la grille terminale « OUTILS SUR CETTE PARCELLE » est SUPPRIMÉE
                   (elle recréait une page Outils bis). Chaque outil est désormais une PORTE

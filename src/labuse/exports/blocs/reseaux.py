@@ -35,7 +35,18 @@ def rendu(valeurs) -> str:
                           chip_span("s", "sourcé")))
     anc = val(valeurs, "part_logements_egout_pct")
     if isinstance(anc, dict) and anc.get("libelle"):
-        lignes.append(ligne_kv("Assainissement", esc(anc["libelle"]), chip_span("s", "sourcé")))
+        # RECETTE-12 D2 — quand la donnée vient de l'INSEE à la maille IRIS, c'est un fait de QUARTIER
+        # chiffré, jamais un fait de parcelle : on écrit « Quartier : X % des logements en assainissement
+        # non collectif (INSEE RP2022) ». Le zonage réglementaire GPU, lui, EST un fait de parcelle
+        # (« Assainissement non collectif ») — inchangé.
+        if anc.get("maille_type") == "iris":
+            taux = anc.get("taux_non_racc")
+            mill = anc.get("millesime") or "RP2022"
+            val_anc = (f"{taux} % des logements en assainissement non collectif (INSEE {esc(str(mill))})"
+                       if taux is not None else esc(anc["libelle"]))
+            lignes.append(ligne_kv("Quartier", val_anc, chip_span("s", "sourcé")))
+        else:
+            lignes.append(ligne_kv("Assainissement", esc(anc["libelle"]), chip_span("s", "sourcé")))
     sol = (viab.get("solaire") or {}) if isinstance(viab, dict) else {}
     if sol.get("prod_kwh_kwc"):
         lignes.append(ligne_kv("Ensoleillement",

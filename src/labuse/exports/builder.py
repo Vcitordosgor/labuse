@@ -16,17 +16,33 @@ from . import archive, numeros
 from .blocs import (apporteur, autour, bilan, commune, financier, identite, marche, potentiel,
                     reseaux, risques, sources, zonage)
 from .registre_fmt import fmt_m2
-from .rendu import Cartouche, esc, page_html, render_pdf
+from .rendu import Cartouche, esc, esc_noms, page_html, render_pdf
 
 MODELE_VERSION = "2.0"
+
+
+class DocumentNonEtablissable(Exception):
+    """RECETTE-5 (V18b) — levée quand un document ne peut PAS être établi faute d'éléments
+    indispensables (ex. le Financier sans prix de sortie / régime de TVA / programme constructible).
+    Le document ne se génère PAS ; la route la traduit en 422 + la liste des manques, et l'écran dit
+    lesquels manquent — plutôt que d'imprimer trois pages de tableau « non chiffré »."""
+    def __init__(self, manques: list[dict]):
+        self.manques = manques
+        super().__init__("document non établissable : " + ", ".join(m["libelle"] for m in manques))
 
 #: libellé et sous-titre de chaque document (page de garde).
 _LABEL = {
     "dossier": ("Dossier parcelle", "Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet."),
     "flash": ("Rapport Flash", "Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet."),
-    "financier": ("Bilan de l'opération", ""),
+    "financier": ("Dossier financier", ""),   # RECETTE-5 (V17) — ex « Bilan de l'opération »
     "apporteur": ("Brief apporteur", ""),
 }
+
+
+def titre_document(document: str) -> str:
+    """RECETTE-5 (V17) — le titre humain d'un document (page de garde) — point unique, réutilisé
+    pour le nom de fichier téléchargé (« Dossier financier — FI-….pdf »)."""
+    return _LABEL.get(document, (document, ""))[0]
 
 _FOOT_DOSSIER = ("Document d'information établi à partir de données publiques. Ne remplace ni un "
                  "certificat d'urbanisme, ni une étude de faisabilité réglementaire, ni un conseil "
@@ -62,6 +78,9 @@ class ResultatDoc:
     valeurs: dict[str, Valeur]
     numero: str
     cartouche: Cartouche
+    #: RECETTE-7 lot 0 (Z5) — le contexte Financier/Apporteur (bilan dérivé, voisines, adresse)
+    #: est porté ici pour que le crible de provenance rattache aussi SES nombres au registre.
+    contexte: dict | None = None
 
 
 #: documents « au fil » (pas de page de garde pleine) : en-tête compact (Résumé, Financier).
@@ -84,9 +103,16 @@ def _entete_compacte(document: str, idu: str, fiche: dict, numero: str, jour: da
     if zone is not None:
         bits.append(f"zone {esc(zone.valeur)}")
     bits += [esc(numero), f"{jour:%d/%m/%Y}"]
+    # RECETTE-8 W21 — l'en-tête compact du Financier mettait l'adresse dans un h1 à 24 pt : elle
+    # cassait au milieu, entre le code postal et la commune (« …97417 / Saint-Denis »). On la sert
+    # dans une classe DÉDIÉE plus petite (16 pt) ET on LIE le code postal à la commune par une
+    # espace insécable U+00A0 (qui s'extrait proprement en espace, contrairement à U+2011 — F2) :
+    # « 97417 Saint-Denis » ne se scinde plus (E7 gardant déjà « Saint-Denis » insécable).
+    import re as _re
+    adr = _re.sub(r"(\b\d{5})\s+", lambda m: m.group(1) + " ", esc_noms(adresse or label))
     return (f'<div class="brand"><span class="wordmark">LABUSE</span>'
             f'<span class="kind">{esc(label)}</span></div>'
-            f'<h1>{esc(adresse or label)}</h1>'
+            f'<h1 class="addr-compacte">{adr}</h1>'
             f'<p class="idu">{" · ".join(bits)}</p>')
 
 
@@ -107,8 +133,8 @@ def _cover(document: str, idu: str, fiche: dict, numero: str, jour: date,
         f'<span class="kind">{esc(label)}</span></div>'
         f'<h1>{esc(label)}</h1>'
         + (f'<p class="subtitle">{esc(subtitle)}</p>' if subtitle else "")
-        + (f'<p class="address">{esc(adresse)}</p>' if adresse else "")
-        + f'<p class="idu">{esc(idu)}{(" · " + esc(commune)) if commune else ""}</p>'
+        + (f'<p class="address">{esc_noms(adresse)}</p>' if adresse else "")   # E7 (Saint-Denis)
+        + f'<p class="idu">{esc(idu)}{(" · " + esc_noms(commune)) if commune else ""}</p>'
         + '<table class="cartouche">'
         f'<tr><td>N° de rapport</td><td>{esc(numero)}</td></tr>'
         f'<tr><td>Généré le</td><td>{jour:%d/%m/%Y}</td></tr>'
@@ -141,6 +167,20 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
     prefill = qf.prefill(fiche)
     resolved = qf.resoudre(etat["reponses"], prefill)
     rv = lambda fid: (resolved.get(fid) or {}).get("valeur")  # noqa: E731
+    # RECETTE-8 W13bis (C3) — le parcours « Revente en l'état » : calcul de marge SIMPLE (pas de
+    # bilan à rebours, pas de programme constructible). On dispatche AVANT tout le calcul construction.
+    if qf.usage_choisi(etat["reponses"]) == "revente":
+        hyp_rev = {"prix_achat": rv("prix_achat_revente_saisi_eur"),
+                   "prix_revente": rv("prix_revente_saisi_eur"),
+                   "frais_acq_pct": rv("frais_acquisition_saisi_pct"),
+                   "travaux": rv("travaux_revente_saisi_eur"),
+                   "duree_portage": rv("duree_portage_saisi_mois"),
+                   "taux_apport": rv("taux_apport_saisi_pct")}
+        return {"usage": "revente", "revente": fb.calculer_revente(hyp_rev),
+                "resolved": resolved, "prefill": prefill, "complet": etat["complet"],
+                "existe": etat["existe"], "bilan": None, "program": None,
+                "tfpb": None, "zonage_abc": None,
+                "manques": qf.manques_revente(resolved)}
     hyp = {
         "prix_sortie": rv("prix_sortie_saisi_eur_m2"), "prix_bailleur": rv("prix_vente_bailleur_saisi_eur_m2"),
         "cout": rv("cout_construction_saisi_eur_m2"), "honoraires_pct": rv("honoraires_techniques_saisi_pct"),
@@ -164,6 +204,28 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
         surf = _TYPOLOGIE_SURFACE.get(typo, 60)
         program["surface_vendable"] = program["logements"] * surf
         program["surface_plancher"] = program["surface_vendable"] / 0.8
+    # RECETTE-8 W2 — la taxe d'aménagement du bilan porte sur la SDP du PROJET (`program`), au taux
+    # communal public. On ne la pré-calcule que si le porteur ne l'a NI saisie NI explicitement vidée
+    # (règle 2 : un champ vidé reste vide) et que le projet a une SDP. C'est le SEUL endroit où la
+    # taxe est chiffrée : sur une SDP de projet, jamais sur un scénario de fiche (W1/W2).
+    if ("taxe_amenagement_saisi_eur" not in etat["reponses"]
+            and hyp["taxe"] is None and program.get("surface_plancher")):
+        from .. import taxe_amenagement as _tax
+        _pub = _tax.taux_communal_public(db, (idu or "")[:5])
+        _res = _tax.calculer(
+            surface_taxable_m2=float(program["surface_plancher"]),
+            taux_communal_public_pct=(_pub["part_communale_pct"] if _pub else None),
+            taux_communal_public_source=(_pub["source"] if _pub else None),
+            taux_communal_public_millesime=(_pub["millesime"] if _pub else None),
+            taux_communal_public_delib_date=(_pub["delib_date"] if _pub else None),
+            taux_communal_public_perime=(_pub["perime"] if _pub else None))
+        if _res["total_eur"] is not None:
+            hyp["taxe"] = _res["total_eur"]
+            resolved["taxe_amenagement_saisi_eur"] = {
+                "valeur": round(float(_res["total_eur"])), "origine": "prefill",
+                "source": (f"taxe d'aménagement sur la SDP du projet "
+                           f"({round(float(program['surface_plancher']))} m²) au taux communal — "
+                           "config datée, service-public.gouv.fr")}
     # RECETTE-4 U1/U2 — la fiscalité locale de la commune (taux TFPB, REI DGFiP) et sa zone A/B/C
     # (DHUP) entrent au Financier : la taxe foncière pèse sur les charges de portage et la zone
     # commande le régime applicable (TVA accession, PTZ, prix bailleur). Passe-plats sourcés + datés ;
@@ -180,25 +242,56 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
         zonage = zonage_commune(db, insee)
     except Exception:  # noqa: BLE001
         db.rollback()
-    return {"bilan": fb.calculer(program, hyp), "resolved": resolved, "prefill": prefill,
+    bilan = fb.calculer(program, hyp)
+    manques = qf.manques(resolved, program)
+    # RECETTE-11 B2 — DÉFENSE : une hypothèse hors marché ne produit PLUS un PDF « bilan non établi ».
+    # Le questionnaire la bloque en amont (valider_hors_marche) ; si malgré tout la génération est
+    # atteinte (saisie ancienne, URL directe), le document est REFUSÉ (422) — jamais imprimé sur le ton
+    # d'un bilan. Le garde reste le point de vérité unique (`_hors_marche`).
+    hm = bilan.get("hors_marche") if isinstance(bilan, dict) else None
+    if hm:
+        manques = [{"libelle": f"Hypothèse hors marché : {hm['champ']}",
+                    "raison": hm.get("raison", "valeur hors bornes de vraisemblance")}] + manques
+    return {"bilan": bilan, "resolved": resolved, "prefill": prefill,
             "complet": etat["complet"], "existe": etat["existe"], "program": program,
-            "tfpb": tfpb, "zonage_abc": zonage}
+            "tfpb": tfpb, "zonage_abc": zonage,
+            # RECETTE-5 (V18b) — les éléments indispensables manquants pour établir le bilan (vide ⇒ OK).
+            "manques": manques}
 
 
 def _emetteur(db, compte_id: int | None) -> dict | None:
-    """L'émetteur du brief = le compte de l'utilisateur (non modifiable). Best-effort : si la
-    colonne n'existe pas sur cette base, on rend None (l'Apporteur imprime « (votre compte) »)."""
+    """RECETTE-12 E1 — l'émetteur du brief = le compte de l'utilisateur (NON anonyme : refus Vic
+    05/09). Nom (marque.raison_sociale sinon comptes.nom) + coordonnées (marque.coordonnees, qui porte
+    le téléphone) + e-mail (utilisateurs). Best-effort : rien de servable → None."""
     if not compte_id:
         return None
+    import json
+
     from sqlalchemy import text
     try:
-        row = db.execute(text("SELECT raison_sociale, email FROM comptes WHERE id = :i"),
+        row = db.execute(text("SELECT nom, marque FROM comptes WHERE id = :i"),
                          {"i": compte_id}).mappings().first()
-        if row:
-            return {"raison": row.get("raison_sociale"), "contact": row.get("email")}
+    except Exception:  # noqa: BLE001 — colonne/table absente (base de test) : émetteur non servi
+        return None
+    if not row:
+        return None
+    marque = row.get("marque") or {}
+    if isinstance(marque, str):
+        try:
+            marque = json.loads(marque)
+        except Exception:  # noqa: BLE001
+            marque = {}
+    nom = (marque.get("raison_sociale") or row.get("nom") or "").strip() or None
+    coord = (marque.get("coordonnees") or "").strip() or None
+    email = None
+    try:
+        email = db.execute(text("SELECT email FROM utilisateurs WHERE compte_id = :i ORDER BY id LIMIT 1"),
+                           {"i": compte_id}).scalar()
     except Exception:  # noqa: BLE001
-        pass
-    return None
+        email = None
+    if not (nom or coord or email):
+        return None
+    return {"nom": nom, "coordonnees": coord, "email": email}
 
 
 def _ref_courte(idu: str) -> str:
@@ -265,7 +358,13 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
     from datetime import timedelta
     lb = fiche.get("le_bien") or {}
     pm = fiche.get("proprietaire_moral")
-    industriel = "ICPE" in json.dumps(fiche.get("lines") or [], ensure_ascii=False)
+    # RECETTE-11 D7 — l'ICPE proche vient du MÊME MOTEUR que le Dossier (la cascade `lines`), pas d'un
+    # « ICPE » trouvé dans le JSON (qui fuyait le seul NOM de la source du catalogue : faux positif).
+    # Signalée seulement si la cascade la RELÈVE (result ≠ PASS), avec sa description/distance.
+    _icpe = next((l for l in (fiche.get("lines") or [])
+                  if isinstance(l, dict) and l.get("layer") == "icpe"), None)
+    industriel = bool(_icpe and _icpe.get("result") not in (None, "PASS"))
+    icpe_detail = _icpe.get("detail") if industriel else None
     voisines = _apporteur_voisines(db, idu)
     return {
         "idu": idu, "adresse": fiche.get("adresse") or "", "emetteur": _emetteur(db, compte_id),
@@ -273,6 +372,7 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
         "is_bati": bool(lb.get("nb_batiments") or lb.get("emprise_batie_m2")),
         "is_pm": isinstance(pm, dict) and bool(pm),
         "industriel_proche": industriel,
+        "icpe_detail": icpe_detail,   # RECETTE-11 D7 — description/distance de l'ICPE relevée
         "voisines": voisines,
         "plan": _apporteur_plan(db, idu, voisines),
     }
@@ -294,6 +394,11 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     ctx = None
     if document == "financier":
         ctx = _financier_contexte(db, idu, f, compte_id)
+        # RECETTE-5 (V18b) — tant qu'un élément indispensable manque, le Financier NE SE GÉNÈRE PAS
+        # (l'écran dira lesquels). Fini les trois pages de tableau « non chiffré » sous un document qui
+        # annonce lui-même qu'il ne peut pas être établi.
+        if ctx.get("manques"):
+            raise DocumentNonEtablissable(ctx["manques"])
     elif document == "apporteur":
         ctx = _apporteur_contexte(db, idu, f, j, compte_id)
     label, _ = _LABEL.get(document, (document, ""))
@@ -308,7 +413,8 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     for b in blocs:
         corps += b.rendu(valeurs, ctx) if document in _AVEC_CONTEXTE else b.rendu(valeurs)
     html = page_html(label, cart, corps)
-    return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart)
+    return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart,
+                       contexte={**(ctx or {}), "adresse": adresse})
 
 
 def generer_pdf(db, idu: str, document: str = "dossier", *, fiche: dict | None = None,

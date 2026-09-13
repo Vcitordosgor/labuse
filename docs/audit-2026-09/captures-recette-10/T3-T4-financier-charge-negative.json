@@ -1,0 +1,106 @@
+{
+ "document": "financier",
+ "idu": "97411000EL0157",
+ "numero_rapport": "FI-20260910-0157",
+ "genere_le": "2026-09-10",
+ "valeurs": {
+  "prix_sortie_bati_eur_m2": {
+   "valeur": {
+    "type_prix": "appartement",
+    "n": 16,
+    "n_exclus": 0,
+    "n_doublons": 0,
+    "radius_m": 500.0,
+    "commune_fallback": false,
+    "fiabilite": "fiable",
+    "fiabilite_raisons": [],
+    "distribution": {
+     "avant": {
+      "n": 16,
+      "min": 2581,
+      "p25": 2760,
+      "median": 2903,
+      "p75": 3040,
+      "max": 3429
+     },
+     "apres": {
+      "n": 16,
+      "min": 2581,
+      "p25": 2760,
+      "median": 2903,
+      "p75": 3040,
+      "max": 3429
+     },
+     "n_exclus_extremes": 0,
+     "n_min_vise": 8,
+     "periode_segment": "récente"
+    },
+    "fiable": true,
+    "pct_appartement": 100,
+    "periode": [
+     2022,
+     2025
+    ],
+    "q1": 2760,
+    "median": 2903,
+    "q3": 3040,
+    "min": 2581,
+    "max": 3429,
+    "prix_points": [
+     2581,
+     2632,
+     2742,
+     2750,
+     2791,
+     2900,
+     2902,
+     2903,
+     2903,
+     2907,
+     2950,
+     2968,
+     3065,
+     3256,
+     3342,
+     3429
+    ],
+    "prix_points_ecartes": [],
+    "volatilite_pct": 10,
+    "volatilite": "stable",
+    "tendance_pct": 8,
+    "tendance": "hausse",
+    "comparables": {
+     "n_ancien": 16,
+     "mediane_ancien": 2903,
+     "n_vefa": 0,
+     "mediane_vefa": null,
+     "ecart_vefa_ancien_pct": null,
+     "exploitable": false,
+     "note": "aucune vente VEFA dans le comparable retenu (prix = ancien)",
+     "fiabilite_prix": "fiable"
+    }
+   },
+   "tampon": {
+    "chiffre_id": "prix_sortie_bati_eur_m2",
+    "version_def": "2026-09-05",
+    "run": null,
+    "reservoirs": {
+     "dvf": "géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020"
+    },
+    "calcule_le": "2026-09-10T12:11:44.481324+00:00"
+   }
+  },
+  "surface_parcelle_m2": {
+   "valeur": 1018,
+   "tampon": {
+    "chiffre_id": "surface_parcelle_m2",
+    "version_def": "2026-09-05",
+    "run": null,
+    "reservoirs": {
+     "cadastre_api_carto": "PCI Parcellaire Express (DGFiP) — « latest » ingérée"
+    },
+    "calcule_le": "2026-09-10T12:11:44.481324+00:00"
+   }
+  }
+ }
+}

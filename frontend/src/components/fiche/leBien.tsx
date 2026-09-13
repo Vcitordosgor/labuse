@@ -21,9 +21,18 @@ export function LeBienSection({ f }: { f: Fiche; idu: string }) {
   const nb = b.nb_batiments
   const toit = b.toit
   const toitServi = !!toit && TOIT_SERVI.has(toit.verdict)
+  // RECETTE-12 C2 — la hauteur MESURÉE (LiDAR HD) remonte dans le RÉSUMÉ REPLIÉ du tiroir « Le bien »
+  // (là où la fiche parle du bâti existant) : Vic la voit SANS ouvrir. Le détail complet (faîtage +
+  // égout + survol) reste dans le tiroir ouvert, à un accordéon de profondeur.
+  const hauteurMesuree = b.hauteur_nature === 'sourcé' && b.hauteur_faitage_m != null
+    ? `faîtage ${b.hauteur_faitage_m} m mesuré (LiDAR HD${b.hauteur_survol ? `, survol ${b.hauteur_survol}` : ''})`
+    : null
+  const contexteBien = hauteurMesuree
+    ? `${b.occupation_label || 'bâti existant'} · ${hauteurMesuree}`
+    : (b.occupation_label || 'bâti existant')
   return (
     <RefDrawer id="le_bien" icon={IC.faisa} name="Le bien"
-      context={b.occupation_label || 'bâti existant'}
+      context={contexteBien}
       value={nb != null && nb > 0
         ? <span className="pill-mint">{nb} bâtiment{nb > 1 ? 's' : ''}</span>
         : <span className="pill-mint">terrain nu</span>}>
@@ -40,10 +49,16 @@ export function LeBienSection({ f }: { f: Fiche; idu: string }) {
           )}
           <FactRow label="Nombre de bâtiments"
             value={nb != null ? nb : 'non déterminé'} tone={nb != null ? undefined : 'mute'} />
+          {/* RECETTE-9 T9 — quand le LiDAR HD a mesuré la parcelle : faîtage ET égout MESURÉS
+              (sourcé), l'égout étant ce que BD TOPO ne donne pas. Sinon la hauteur BD TOPO (estimé). */}
           <FactRow label="Hauteur du bâti"
-            value={b.hauteur_bati_m != null ? <>{b.hauteur_bati_m} <small>m</small></> : 'non déterminée'}
-            tone={b.hauteur_bati_m != null ? undefined : 'mute'}
-            src={b.hauteur_bati_m != null ? 'BD TOPO' : undefined} />
+            value={b.hauteur_nature === 'sourcé' && b.hauteur_faitage_m != null
+              ? <>{b.hauteur_faitage_m} <small>m au faîtage</small>{b.hauteur_egout_m != null ? <> · {b.hauteur_egout_m} <small>m à l'égout</small></> : null}</>
+              : b.hauteur_bati_m != null ? <>{b.hauteur_bati_m} <small>m</small></> : 'non déterminée'}
+            tone={b.hauteur_bati_m != null || b.hauteur_faitage_m != null ? undefined : 'mute'}
+            src={b.hauteur_nature === 'sourcé'
+              ? `LiDAR HD (mesuré${b.hauteur_survol ? `, survol de ${b.hauteur_survol}` : ''})`
+              : b.hauteur_bati_m != null ? 'BD TOPO' : undefined} />
           <FactRow label="Surface au sol libre"
             value={b.surface_libre_m2 != null ? <>{fmtInt(b.surface_libre_m2)} <small>m²</small></> : 'non déterminée'}
             tone={b.surface_libre_m2 != null ? undefined : 'mute'} />

@@ -26,11 +26,13 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
       value={<span className="pill-mint">isochrone</span>}>
       {/* ÉQUIPEMENTS — UN moteur (BPE+OSM dédoublonnés, distance à pied). Absent = omis (jamais « 0 m »).
           Z1·02 — le label-caps « À proximité » devient un kicker ; les tuiles de distance (maquette) restent. */}
-      {eq?.items && eq.items.length > 0 && (
-        <div data-proximites-equip title={eq.source ?? undefined}>
+      {/* RECETTE-6 (C3) — le TRANSPORT (« Bus ») vit dans « Réseaux » (arrêt nommé + réseau + distance,
+          plus riche). On le RETIRE d'ici pour qu'un fait vive dans une seule section — les autres y renvoient. */}
+      {(() => { const items = (eq?.items ?? []).filter((e) => !/^bus$|transport/i.test(e.cat)); return items.length > 0 && (
+        <div data-proximites-equip title={eq?.source ?? undefined}>
           <GroupLabel>À proximité</GroupLabel>
           <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[11.5px] text-txt-mut">
-            {eq.items.map((e, i) => (
+            {items.map((e, i) => (
               <span key={i}><span className="text-txt">{e.cat}</span>{' '}
                 <span className="tnum">{e.distance_m >= 1000
                   ? `${(e.distance_m / 1000).toFixed(1).replace('.', ',')} km`
@@ -38,7 +40,7 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
             ))}
           </div>
         </div>
-      )}
+      ) })()}
 
       {/* QUI VIT LÀ — socio-éco secteur (Filosofi Sourcé + parc social) rapatrié de Marché, + isochrone. */}
       {f.marche_secteur && <MarcheSecteurBlock ms={f.marche_secteur} />}

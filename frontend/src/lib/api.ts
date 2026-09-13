@@ -160,9 +160,9 @@ export interface FiltreReponse {
   limit: number; offset: number; sort: string
 }
 /** Endpoint UNIFIÉ M45 (« théâtre ») : compte exact + ventilation tier + page en un appel. */
-export const getFiltre = (f: Filters, limit = 20, sort: SortKey = 'rang', offset = 0, groupes = false) => {
+export const getFiltre = (f: Filters, limit = 20, sort: SortKey = 'rang', offset = 0, groupes = false, segment?: string) => {
   const { tiers: _t, ...rest } = filterParams(f)   // le tier passe par l'interrupteur (tiersParam)
-  return j<FiltreReponse>(`/filtre?${qf({ limit, offset, sort, ...(groupes ? { groupes: 1 } : {}), ...rest, ...tiersParam(f) })}`)
+  return j<FiltreReponse>(`/filtre?${qf({ limit, offset, sort, ...(groupes ? { groupes: 1 } : {}), ...(segment ? { segment } : {}), ...rest, ...tiersParam(f) })}`)
 }
 /** M55-D stage 7 — COMPTE SEUL, annulable (AbortController) : le compteur vivant du panneau
  *  Filtres. Même construction que getFiltre (limit 0), jamais une estimation locale. */
@@ -189,11 +189,17 @@ export const getZonageZones = (communes: string[]) =>
 
 /** Tris de la liste (M5.1) : rang P par défaut ; ×N, surface, commune en options. */
 // M55-H point 4 : 'surface_asc' = le sens inverse du tri Surface (re-clic sur la pill)
-// RECETTE-3 (T3) : 'potentiel' = tri par défaut du listing FACTUEL (adressées, puis SDP résiduelle).
-export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune' | 'potentiel'
+// RECETTE-3 (T3) : 'potentiel' = ancien tri du listing FACTUEL (adressées, puis SDP résiduelle).
+// RECETTE-5 (V2) : le tri factuel devient 'adresse' (adressées d'abord, puis surface décroissante) —
+// que du fait ; 'potentiel' (SDP résiduelle = calcul LABUSE) ne sert plus qu'en analyse, nulle part ailleurs.
+export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune' | 'potentiel' | 'adresse'
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')
+// RECETTE-10 T11 — ce que le score apporte, mesuré (taux de mutation 12 mois par palier vs filtre
+// simple) + une phrase chiffrée/datée pour le client. Mémorisé 6h côté serveur.
+export interface ScoringBacktest { phrase_client: string | null; fenetre_fin?: string; base_pct?: number }
+export const getScoringBacktest = () => j<ScoringBacktest>('/scoring/backtest')
 // RETOURS-1 R3 — acquisitions PM d'une commune : constat DGFiP (changement de propriétaire moral
 // d'un millésime au suivant), hors scoring. Servi par le bloc contexte ET le listing dédié.
 export interface AcquisitionsPm {
@@ -320,17 +326,29 @@ export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =
 export const getStats = (f?: Filters) => getFiltre(f ?? EMPTY_FILTERS, 0).then((r) => r as unknown as Stats)
 // E3 (M12) : `offset` exposé — pagination « Charger plus ». La page vient de /filtre (mêmes facettes).
 // M55-H point 5 : `groupes` = liste groupée par tier (mode analyse), tri secondaire dedans
-export const getResults = (f?: Filters, limit = 200, sort: SortKey = 'rang', offset = 0, groupes = false) =>
-  getFiltre(f ?? EMPTY_FILTERS, limit, sort, offset, groupes).then((r) => r.page)
+// RECETTE-12 B2 — `segment` : le back pagine à 200 SUR LES LIGNES DE CE SEGMENT (permis_pro /
+// terrain_nu / bati_densifier / reste), dès le 1er appel. Sans segment : la page globale (inchangé).
+export const getResults = (f?: Filters, limit = 200, sort: SortKey = 'rang', offset = 0, groupes = false, segment?: string) =>
+  getFiltre(f ?? EMPTY_FILTERS, limit, sort, offset, groupes, segment).then((r) => r.page)
 // SUITE-1 S7 — `csvExportUrl` + l'endpoint `/parcels/export.csv` SUPPRIMÉS (sans appelant depuis
 // RETOURS-7 Z11, décision Vic). L'export CSV du projet (`projetCsvUrl`) est distinct et conservé.
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
+// RECETTE-6 (A3) — le bâti de la BBOX pour l'extrusion 3D (empreinte au sol + hauteur BD TOPO). Borné
+// à la vue courante (jamais l'île entière) ; sans hauteur → exclu côté serveur (pas d'extrusion inventée).
+export const getBatiments = (bbox: [number, number, number, number]) =>
+  j<{ type: 'FeatureCollection'; features: { type: 'Feature'; geometry: unknown; properties: { h: number } }[] }>(
+    `/map/batiments.geojson?bbox=${bbox.join(',')}`)
 // OUTILS-2 (O2-4) — géométrie d'UNE parcelle (Feature + centroïde) pour tracer son contour sur l'écran
 // « Remonter le temps » sans charger tout le GeoJSON commune.
 export const getParcelGeojson = (idu: string) =>
   j<{ type: 'Feature'; geometry: unknown; properties: { idu: string }; centroid: [number, number] }>(`/parcels/${encodeURIComponent(idu)}/geojson`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)
+// RECETTE-8 W22 — l'exposition (orientation du versant + pente) calculée sur le MNT RGE ALTI,
+// lazy (fetch WMS + gdaldem ~0,5 s). Remplace la vue mer abandonnée dans la tête de fiche.
+export interface Exposition { idu: string; orientation: string | null; aspect_deg?: number | null; pente_moyenne_deg?: number | null; erreur?: string }
+export const getParcelExposition = (idu: string) =>
+  j<Exposition>(`/parcels/${encodeURIComponent(idu)}/exposition`)
 // ÉTUDE DE ZONE Z3 — le tiroir « Autour de cette parcelle » (isochrone IGN + Filosofi/BPE).
 export const getParcelleZone = (idu: string, mode: 'pied' | 'voiture', minutes: number) =>
   j<ParcelleZone>(`/parcels/${idu}/zone?${q({ mode, minutes })}`)
@@ -2151,11 +2169,22 @@ export interface QChampPrefill { valeur: unknown; source: string }
 export interface QChamp {
   id: string; libelle: string; unite: string; type: string
   domaine: string[] | null; obligatoire: boolean; prefill: QChampPrefill | null
+  aide?: string | null   // RECETTE-5 (V19) — le « i » : ce qu'on attend comme valeur
+  tri?: 'garder' | 'affiner' | 'supprimer'   // RECETTE-10 T2b — tri des questions
 }
 export interface QEcran { titre: string; champs: QChamp[] }
+// RECETTE-6 (E5) — écran 0 « Que voulez-vous chiffrer ? ». Seul `construction` est servi ; les autres
+// usages sont grisés avec leur `raison` (pas de moteur inventé).
+export interface QUsage { key: string; label: string; servi: boolean; sous?: string; raison?: string }
+// RECETTE-9 T1 — d'où vient la surface vendable du bilan : chiffrée par le potentiel (rien à saisir)
+// ou à décrire par le porteur (logements + typologie deviennent indispensables).
+export interface QProgramme { auto: boolean; source: 'potentiel' | 'saisie'; message: string }
 export interface QuestionnaireFinancier {
   idu: string; reponses: Record<string, unknown>; complet: boolean; existe: boolean
-  ecrans: QEcran[]; tva_explication: string; champs_obligatoires: string[]
+  ecrans: QEcran[]; usages?: QUsage[]; tva_explication: string; champs_obligatoires: string[]
+  // RECETTE-8 W13bis (C3) — les écrans PAR usage : le front sert le questionnaire du parcours choisi.
+  ecrans_par_usage?: Record<string, QEcran[]>; champs_obligatoires_revente?: string[]
+  programme?: QProgramme   // RECETTE-9 T1 — programme constructible : potentiel vs à saisir
 }
 export const getFinancierQuestionnaire = (idu: string) =>
   j<QuestionnaireFinancier>(`/financier/${encodeURIComponent(idu)}/questionnaire`)
@@ -2166,3 +2195,15 @@ export const putFinancierQuestionnaire = (
     `/financier/${encodeURIComponent(idu)}/questionnaire`,
     { method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reponses, ...(projet_id != null ? { projet_id } : {}) }) })
+
+// RECETTE-11 B2 — le garde du questionnaire : une saisie hors marché (prix > borne, ou bailleur >
+// prix libre) est refusée AVANT tout document, avec l'écran/le champ/l'accordéon à ouvrir.
+export interface QHorsMarche {
+  champ_id: string | null; champ_libelle: string; ecran: number; affiner: boolean
+  valeur: number; borne: number; message: string
+}
+export const validerFinancierQuestionnaire = (idu: string, reponses: Record<string, unknown>) =>
+  j<{ idu: string; hors_marche: QHorsMarche | null }>(
+    `/financier/${encodeURIComponent(idu)}/questionnaire/valider`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reponses }) })

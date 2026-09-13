@@ -171,8 +171,15 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
     # imperméables non bâties) : on ne l'utilise PAS comme emprise, on le SERT à part comme
     # « détecté, non cartographié » quand BD TOPO ne voit rien mais que CoSIA en signale (le
     # front le dit honnêtement, jamais mélangé à l'emprise).
+    # RECETTE-5 (V21) — GARDE contre l'emprise impossible (ex. 302 m² sur une parcelle de 273 m²).
+    # La cause n'était PAS un débord sur la voisine : c'était le SUM des intersections qui DOUBLE-COMPTE
+    # la zone où deux polygones bâtiment de la BD TOPO se CHEVAUCHENT (mur mitoyen, bâtiment scindé en
+    # plusieurs faces qui se recouvrent). Mesuré sur 97418000AD0191 : SUM = 301,7 m² alors que l'UNION
+    # réelle des empreintes = 150,8 m² (chevauchement de 150,8 m²), bien dans les 272,7 m² de la parcelle.
+    # ST_Union fusionne les empreintes AVANT de mesurer l'aire : plus de double-compte, et le résultat est
+    # naturellement borné par la géométrie de la parcelle (une intersection ne sort jamais de la parcelle).
     emprise_bdtopo = session.execute(text(
-        "SELECT COALESCE(SUM(ST_Area(ST_Intersection(b.geom_2975, p.geom_2975))), 0) "
+        "SELECT COALESCE(ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975))), 0) "
         "FROM spatial_layers b JOIN parcels p ON p.id = :pid "
         "WHERE b.kind = 'batiment' AND ST_Intersects(b.geom_2975, p.geom_2975)"),
         {"pid": pid}).scalar()
@@ -187,13 +194,26 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
     surface_libre = (max(0, round(surface - emprise)) if surface is not None else None)
     from . import solaire_toiture
     toit = solaire_toiture.toiture_depuis_cache(session, idu)
+    # RECETTE-9 T9 — POINT UNIQUE de la hauteur : quand le LiDAR HD a été mesuré sur cette parcelle,
+    # la hauteur passe d'`estimé` (BD TOPO déclaré) à `sourcé` (faîtage ET égout MESURÉS). Sinon repli
+    # BD TOPO. L'égout (bord de toit) — que BD TOPO ne donne pas — est servi à part (décide la surélévation).
+    from .faisabilite.hauteur_lidar import hauteur_lidar_servie
+    lid = hauteur_lidar_servie(session, idu)
+    hauteur_bati = (lid["faitage_m"] if lid else (round(float(hauteur), 1) if hauteur is not None else None))
     return {
         "disponible": True,
         "code": bloc.get("code"), "occupation_label": bloc.get("label"),
         "emprise_batie_m2": emprise_m2, "emprise_source": "BD TOPO IGN",
         "cosia_detecte_m2": cosia_m2,   # None sauf sur-détection CoSIA hors BD TOPO (dit à part)
         "nb_batiments": nb,
-        "hauteur_bati_m": round(float(hauteur), 1) if hauteur is not None else None,
+        "hauteur_bati_m": hauteur_bati,
+        # RECETTE-9 T9 — faîtage/égout MESURÉS + nature (« sourcé » LiDAR / « estimé » BD TOPO).
+        "hauteur_faitage_m": (lid["faitage_m"] if lid else None),
+        "hauteur_egout_m": (lid["egout_m"] if lid else None),
+        "hauteur_nature": ("sourcé" if lid else ("estimé" if hauteur is not None else None)),
+        # RECETTE-11 A3 — la date de survol servie avec la mesure (jamais une mesure sans date).
+        "hauteur_survol": (lid.get("survol") if lid else None),
+        "hauteur_source": (lid["source"] if lid else ("BD TOPO® (hauteur déclarée)" if hauteur is not None else None)),
         "surface_libre_m2": surface_libre,
         "surface_parcelle_m2": round(surface) if surface is not None else None,
         "toit": toit,          # None = toit non encore relevé (LiDAR non chauffé), sinon 3 états U5

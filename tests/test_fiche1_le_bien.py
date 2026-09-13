@@ -40,7 +40,9 @@ def test_emprise_coherente_avec_le_bati(monkeypatch):
             return M()
         if "emprise_cosia_m2" in s:
             return FakeScalarQ(calls["cosia"])
-        if "ST_Intersection" in s and "SUM" in s:
+        # RECETTE-5 (V21) — l'emprise se calcule par ST_Union (empreinte fusionnée, plus de double-compte
+        # des polygones bâtiment qui se chevauchent), plus par SUM des intersections.
+        if "ST_Intersection" in s and "ST_Union" in s:
             return FakeScalarQ(calls["topo"])
         return FakeScalarQ(0)
 

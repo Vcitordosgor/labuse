@@ -22,6 +22,21 @@ def _val(valeurs: dict[str, Valeur], cid: str):
     return v.valeur if v is not None else None
 
 
+def zone_libelle(valeurs: dict[str, Valeur]) -> str | None:
+    """RECETTE-8 W15 — LE libellé de zone servi à TOUS les documents : « Zone Um (famille U) », le
+    CODE réel (secteur) + sa famille, jamais un « Zone U » tronqué (E3). Point unique : le Dossier
+    (verdict de zonage) ET l'Apporteur lisent ce même libellé — une donnée, une réponse. None si la
+    zone n'est pas déterminée. Le code exact vient de `reglement_plu_bloc.zone`, la famille de
+    `zone_plu_famille` (repli : la famille seule si le code n'est pas lisible)."""
+    fam = _val(valeurs, "zone_plu_famille")
+    if not fam:
+        return None
+    fam = str(fam).upper()
+    reg = _val(valeurs, "reglement_plu_bloc")
+    code = (reg.get("zone") if isinstance(reg, dict) else None) or fam
+    return f"Zone {code}" + (f" (famille {fam})" if str(code).strip().upper() != fam else "")
+
+
 def verdict_zonage(valeurs: dict[str, Valeur]) -> Verdict | None:
     """Section 2 — la famille de la zone DOMINANTE (zone_servie) conclut : constructible ou non,
     cause dite. Rien à dire si la zone n'est pas déterminée (le bloc omet le verdict)."""
@@ -29,11 +44,14 @@ def verdict_zonage(valeurs: dict[str, Valeur]) -> Verdict | None:
     if not fam:
         return None
     fam = str(fam).upper()
+    # RECETTE-7 (E3) / RECETTE-8 (W15) — le CODE DE ZONE réel (ex. « Um ») pour coller aux articles
+    # cités (« Art. Um.9 »), via le libellé PARTAGÉ avec l'Apporteur (une donnée, une réponse).
+    lib = zone_libelle(valeurs) or f"Zone {fam}"
     if fam in _NON_CONSTRUCTIBLE:
-        return (f"Zone {fam} — {_NON_CONSTRUCTIBLE[fam]}, <strong>non constructible</strong>. "
+        return (f"{lib} — {_NON_CONSTRUCTIBLE[fam]}, <strong>non constructible</strong>. "
                 f"Le potentiel de construction est nul par cette règle de zonage.", "warn", "")
     if fam in _CONSTRUCTIBLE:
-        return (f"Zone {fam} — {_CONSTRUCTIBLE[fam]}. Le document opposable du Géoportail de "
+        return (f"{lib} — {_CONSTRUCTIBLE[fam]}. Le document opposable du Géoportail de "
                 f"l'urbanisme fait foi ; les valeurs de règle ci-dessous sont une aide à la lecture.",
                 "", "")
     return None
@@ -69,9 +87,16 @@ def verdict_reseaux(valeurs: dict[str, Valeur]) -> Verdict | None:
     v = _val(valeurs, "viabilisation_verdict")
     if not isinstance(v, dict) or not v.get("libelle"):
         return None
-    ton = "" if v.get("band") in ("confirmee", "probable") else "neutral"
-    return (f"{v['libelle']} — aucun tracé de réseau n'est relevé : à confirmer auprès des "
-            f"gestionnaires, via une DT-DICT.", ton, "")
+    # RECETTE-7 (E5) — plus de phrase qui s'affirme et se dément (« viabilisation confirmée —
+    # aucun tracé n'est relevé »). On sépare le CONSTAT (le verdict), ce qui n'est PAS constaté
+    # (le tracé/capacité exacts) et l'ACTION (DT-DICT).
+    confirmee = v.get("band") in ("confirmee", "probable")
+    ton = "" if confirmee else "neutral"
+    suite = ("le tracé et la capacité exacts des réseaux ne sont pas relevés à cette échelle : à "
+             "confirmer auprès des gestionnaires par une DT-DICT" if confirmee else
+             "aucun raccordement n'est établi par les indices : réseaux à vérifier auprès des "
+             "gestionnaires par une DT-DICT")
+    return (f"{v['libelle']} — {suite}.", ton, "")
 
 
 def rendu_verdict(v: Verdict | None) -> str:

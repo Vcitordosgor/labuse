@@ -376,8 +376,17 @@ SEED: list[dict] = [
      "url": "https://www.data.gouv.fr/api/1/datasets/rge-alti-r/", "selecteur": "last_update"},
     {"name": "IGN BD CARTO V5 — occupation du sol", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/bd-carto-r-1/", "selecteur": "last_update"},
-    {"name": "LiDAR HD — MNH 50 cm (IGN)", "methode": "api",
-     "url": "https://www.data.gouv.fr/api/1/datasets/mnh-lidar-hd/", "selecteur": "last_update"},
+    # RECETTE-11 A5 — le data.gouv `mnh-lidar-hd` (last_update) est NATIONAL : il bouge pour n'importe
+    # quelle republication en France, pas pour « le 974 ». On surveille le CANAL RÉELLEMENT INGÉRÉ (la
+    # grille de dalles LiDAR HD, WFS metadata IGN) BORNÉ à l'emprise Réunion : témoin sur la DERNIÈRE
+    # ÉDITION des dalles 974 (COUNT=1, SORTBY date_edition D) — une nouvelle campagne ou re-diffusion sur
+    # l'île bouge cette date → « la donnée amont a changé ». URL réellement appelée (probe 2026-09-10).
+    {"name": "LiDAR HD — MNH 50 cm (IGN)", "methode": "temoin",
+     "url": ("https://data.geopf.fr/wfs/ows?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0"
+             "&TYPENAMES=IGNF_LIDAR-HD_METADONNEE:metadata&SRSNAME=EPSG:4326&COUNT=1"
+             "&OUTPUTFORMAT=application/json&SORTBY=date_edition%20D"
+             "&PROPERTYNAME=date_edition,code_mission&BBOX=-21.40,55.20,-20.80,55.85"),
+     "selecteur": "features.0.properties.date_edition"},
     {"name": "Contours IRIS (IGN/INSEE)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/contours-iris/", "selecteur": "last_update"},
     {"name": "RPG — déclarations agricoles (IGN/ASP)", "methode": "api",

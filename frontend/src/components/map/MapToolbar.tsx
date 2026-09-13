@@ -31,16 +31,21 @@ const TOOLS: { key: MapTool; label: string; icon: JSX.Element; hint: string }[] 
 ]
 
 export function MapToolbar() {
-  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone, selectedIdu, view } = useApp()
+  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone, selectedIdu, view, contexteCommune } = useApp()
   // M58-P1 (point carte) : quand la fiche (aside 400px, à droite) est ouverte, elle recouvrait ces
   // contrôles. On les décale vers la gauche de la largeur de la fiche (+16px de marge), transition
   // 180ms, retour à la fermeture. Aucun contrôle inaccessible.
-  const ficheOuverte = selectedIdu != null && view !== 'sources'
+  // RECETTE-10 T8 — la fiche COMMUNE (aside 420px, `ContextePanel`) recouvrait AUSSI ces contrôles
+  // (le décalage ne regardait que la fiche parcelle) : même comportement, même animation, décalage à
+  // la largeur de la fiche ouverte (420 + 16). Fini les contrôles de vue inaccessibles sous la fiche.
+  const ficheParcelle = selectedIdu != null && view !== 'sources'
+  const ficheCommune = contexteCommune != null
+  const decalage = ficheParcelle ? 416 : ficheCommune ? 436 : 16
   const [bmOpen, setBmOpen] = useState(false)
 
   return (
     <div className="absolute top-4 flex flex-col items-end gap-2"
-      style={{ right: ficheOuverte ? 416 : 16, transition: 'right 180ms cubic-bezier(.2,0,0,1)' }}>
+      style={{ right: decalage, transition: 'right 180ms cubic-bezier(.2,0,0,1)' }}>
       {/* DA §11 — « Sombre » (fond de plan) et « 3D » ALIGNÉS sur une même ligne. */}
       <div className="flex items-center gap-2">
       {/* fond de plan */}
@@ -98,7 +103,8 @@ export function MapToolbar() {
         /* RETOURS-9 (Q9) — contour 3D actif = plein vert, encre sombre (pas un liseré). */
         className={`flex h-9 items-center rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
           terrain3d ? 'border-mint bg-mint text-mint-ink font-medium' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}
-        title="Relief 3D (MNT) — maintenir Ctrl + glisser pour incliner la vue"
+        /* RECETTE-7 (F3) — le « i » du 3D dit ce que la vue vaut et ne vaut pas, en une phrase. */
+        title="Relief 3D (MNT) + bâti extrudé à sa hauteur BD TOPO — hauteurs APPROXIMATIVES, sans forme de toit ni faîtage/égout distingués, et les constructions très récentes peuvent manquer (mesure précise à venir via LiDAR HD). Maintenir Ctrl + glisser pour incliner la vue."
       >
         3D
       </button>

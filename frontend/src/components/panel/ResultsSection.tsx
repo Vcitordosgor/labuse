@@ -1,16 +1,16 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { getCommunes, getFiltre, getParcelsGeojson, getResults, type SortKey } from '../../lib/api'
+import { getCommunes, getFiltre, getParcelsGeojson, getResults, getScoringBacktest, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
-import { ALL_TIER_META, effectiveTier, etatBienMeta, TIER_V2_META, verdictMeta } from '../../lib/status'
+import { ALL_TIER_META, effectiveTier, etatBienMeta, PALIER_META, verdictMeta } from '../../lib/status'
 import { raisonDominante } from '../../lib/raison'
 import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
 import { EmptyState } from '../States'
-import { useApp } from '../../store/useApp'
-import { usePagination } from '../ListPagination'
+import { useApp, type Filters } from '../../store/useApp'
+import { usePagination, ListPaginationFooter } from '../ListPagination'
 
 
 // M5.1 : le badge « V nn » a disparu de la liste (le dossier propriétaire reste dans la
@@ -172,11 +172,15 @@ const SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
   { key: 'rang', label: CLIENT.tri.rang, tip: CLIENT.tri.rangTip },
   { key: 'surface', label: CLIENT.tri.surface, tip: CLIENT.tri.surfaceTip, dir: '↓' },
 ]
-// RECETTE-3 (T3, décision Vic) — le listing FACTUEL : « Potentiel » par défaut (adressées d'abord,
-// puis SDP résiduelle) au lieu de « Surface » (qui remontait des emprises géantes sans adresse) ;
-// Surface reste disponible en second (inversible).
+// RECETTE-5 (V2, décision Vic) — le listing FACTUEL : « Adresse » par défaut (adressées d'abord,
+// puis SURFACE décroissante) — que du fait cadastral. Le tri « Potentiel » (SDP résiduelle = calcul
+// LABUSE) est RETIRÉ de la vue factuelle : une vue qui s'annonce « sans analyse » ne sert pas une
+// opinion de LABUSE. Le potentiel reste dans l'analyse, nulle part ailleurs. Surface reste en second
+// (inversible). [RECETTE-3 (T3) : l'ancien défaut était « Potentiel ».]
+// RECETTE-6 (A1, décision Vic) — le BOUTON « Adresse » est RETIRÉ de la barre : le tri « adressées
+// d'abord » reste le DÉFAUT (en arrière-plan, cf. le `useState`/`useEffect` ci-dessous qui garde
+// 'adresse'), il ne s'affiche simplement plus comme bouton. Seule « Surface » reste cliquable.
 const FACTUAL_SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
-  { key: 'potentiel', label: CLIENT.tri.potentiel, tip: CLIENT.tri.potentielTip },
   { key: 'surface', label: CLIENT.tri.surface, tip: CLIENT.tri.surfaceTip, dir: '↓' },
 ]
 
@@ -207,8 +211,15 @@ export function sortRows<T extends SortableRow>(rows: T[], sort: SortKey, groupe
       const gb = GROUPE_ORDER(b)
       if (ga !== gb) return ga - gb
     }
-    // RECETTE-3 (T3) — « Potentiel » (défaut factuel) : adressées d'abord, puis SDP résiduelle, puis
-    // surface. Même sémantique que le serveur (_Q_V2_ORDERS['potentiel']) — le geojson porte adresse+SDP.
+    // RECETTE-5 (V2) — « Adresse » (défaut factuel) : adressées d'abord, puis SURFACE décroissante.
+    // Que du fait cadastral — aucune SDP résiduelle (calcul LABUSE) ici. Le geojson porte adresse+surface.
+    if (sort === 'adresse') {
+      const aa = a.adresse ? 1 : 0, ba = b.adresse ? 1 : 0
+      if (aa !== ba) return ba - aa
+      return (b.surface_m2 ?? -1) - (a.surface_m2 ?? -1)
+    }
+    // RECETTE-3 (T3) — « Potentiel » (analyse seulement désormais) : adressées d'abord, puis SDP
+    // résiduelle, puis surface. Même sémantique que le serveur (_Q_V2_ORDERS['potentiel']).
     if (sort === 'potentiel') {
       const aa = a.adresse ? 1 : 0, ba = b.adresse ? 1 : 0
       if (aa !== ba) return ba - aa
@@ -227,21 +238,27 @@ export function sortRows<T extends SortableRow>(rows: T[], sort: SortKey, groupe
   })
 }
 
-// M55-H point 10 : couleur de la famille « potentiel épuisé » — la terre éteinte des
-// verdicts declasse_* (source unique ALL_TIER_META, jamais un littéral recopié).
-const EPUISE_COLOR = ALL_TIER_META['declasse_bati_sature'].color
 
 // RECETTE-3 (T4, décision Vic) — les QUATRE SEGMENTS du listing d'analyse, dans CET ordre. Chaque
 // parcelle garde son palier (chips ResultCard) ; la segmentation est une SECONDE lecture, par nature
-// du bien. Un pro qui a déposé un permis PRIME sur l'état du bien (segment 1).
+// du bien. Un pro qui a obtenu un permis PRIME sur l'état du bien (segment 1).
+// RECETTE-10 T7 — le segment est une SECONDE LECTURE (nature du bien), calculée EN DIRECT sur Sitadel
+// (permis OBTENU dans les 36 mois, hors du run de score) ; le palier vient du run et prédit la VENTE.
+// Les deux sont ORTHOGONAUX : un permis pro signale un AMÉNAGEMENT en cours, pas une vente imminente —
+// c'est même souvent l'inverse (le terrain se construit, il ne revient pas au marché). Empiriquement,
+// la majorité des parcelles « permis pro » sont « Sans signal » de vente : ce n'est PAS une
+// contradiction. Le libellé et l'info-bulle disent donc EXACTEMENT ce que le segment regroupe, et ne
+// prétendent plus qu'il s'agit du « signal le plus fort du modèle » (le modèle prédit la vente).
 type SegKey = 'permis_pro' | 'terrain_nu' | 'bati_densifier' | 'reste'
 const SEGMENTS: { key: SegKey; label: string; hint: string }[] = [
-  { key: 'permis_pro', label: 'Un professionnel a déposé un permis',
-    hint: 'Un promoteur ou une société a obtenu un permis de construire sur cette parcelle de particulier (moins de 3 ans) — le signal le plus fort du modèle.' },
+  { key: 'permis_pro', label: 'Un professionnel a obtenu un permis ici',
+    hint: 'Parcelle de particulier où un promoteur ou une société a OBTENU un permis de construire dans les 36 mois (Sitadel, en direct). C’est un signal d’AMÉNAGEMENT en cours — pas une prédiction de vente : le palier (Priorité / À suivre / Sans signal) mesure la probabilité de VENTE sous 12 mois. Une parcelle qui se construit peut donc être « Sans signal » de vente sans contradiction.' },
   { key: 'terrain_nu', label: 'Terrain nu constructible',
     hint: 'Rien de bâti (emprise < 5 %) et de la surface de plancher à bâtir.' },
-  { key: 'bati_densifier', label: 'Bâti à densifier',
-    hint: 'Déjà occupé, mais il reste de la surface de plancher constructible.' },
+  // RECETTE-5 (V16, décision Vic) — « Bâti à densifier » ne disait rien au client → libellé qui dit
+  // CE QUE C'EST : une parcelle déjà construite où le PLU autorise encore du plancher.
+  { key: 'bati_densifier', label: 'Déjà construit, le PLU autorise encore du plancher',
+    hint: 'Parcelle déjà occupée par du bâti, mais dont le PLU permet encore de construire de la surface de plancher (surélévation, extension, seconde construction).' },
   { key: 'reste', label: 'Le reste',
     hint: 'Bâti au maximum ou sans potentiel résiduel identifié.' },
 ]
@@ -250,6 +267,119 @@ export function segmentOf(p: Pick<ParcelProps, 'permis_pro' | 'etat_bien'>): Seg
   if (p.etat_bien === 'nu') return 'terrain_nu'
   if (p.etat_bien === 'bati_encore') return 'bati_densifier'
   return 'reste'
+}
+
+// RECETTE-11 C1 — LA liste d'UN segment de l'Analyse, paginée par la règle PARTAGÉE (200) sur SES
+// PROPRES lignes (jamais la fenêtre globale). Sous 200 : tout s'affiche, AUCUN « charger plus » ;
+// au-delà : 200 puis « Voir 200 de plus » (pied partagé). En mode île, si le serveur a encore des
+// pages non chargées (segRows < total serveur ET fenêtre client épuisée), on offre de charger plus.
+// RECETTE-11 C1 — LA règle : un segment n'offre « charger plus » (serveur) QUE si sa fenêtre client
+// est épuisée ET que le serveur a d'autres lignes du segment non chargées. Corollaire testé : un
+// segment de MOINS de 200 lignes entièrement chargé (segLen === serverTotal) n'offre JAMAIS de
+// « charger plus » — et sous 200, la fenêtre client (usePagination) montre tout sans « Voir de plus ».
+export function segmentOffreChargerPlus(
+  shownClient: number, segLen: number, serverTotal: number, serverHasMore: boolean): boolean {
+  return shownClient >= segLen && segLen < serverTotal && serverHasMore
+}
+
+export function SegmentList({ segKey, rows, serverTotal, commune, serverHasMore, serverLoading, onServerMore, serverPaged = false }: {
+  segKey: SegKey; rows: (ParcelProps & { commune?: string })[]; serverTotal: number; commune: string
+  serverHasMore: boolean; serverLoading: boolean; onServerMore: () => void
+  // RECETTE-12 B2 — `serverPaged` : les lignes sont DÉJÀ paginées par le serveur (param `segment`,
+  // 200/page) → on affiche TOUT ce qui est chargé (pas de re-fenêtrage client qui retomberait à 200)
+  // et un seul pied « N sur total · Voir 200 de plus ». Sans ce flag (mode commune : liste complète
+  // en mémoire), on garde le fenêtrage client 200 d'origine (aucune régression des tests C1).
+  serverPaged?: boolean
+}) {
+  const pg = usePagination(rows.length)
+  if (rows.length === 0) {
+    return (
+      <div className="mt-2 flex flex-col gap-2">
+        <p className="px-3 py-1.5 text-[10.5px] text-txt-dim">
+          {serverTotal > 0 ? 'Chargez plus de résultats pour voir ces parcelles →' : 'Aucune parcelle dans ce segment.'}
+        </p>
+        {serverTotal > 0 && serverHasMore && (
+          <button data-segment-more={segKey} onClick={onServerMore} disabled={serverLoading}
+            className="px-3 py-1.5 text-left text-[10.5px] text-txt-dim hover:text-mint disabled:opacity-60">
+            0 sur {fmt(serverTotal)} affichées — charger plus de résultats →
+          </button>
+        )}
+      </div>
+    )
+  }
+  if (serverPaged) {
+    // pagination SERVEUR pure : tout le chargé s'affiche ; compteur exact « N sur total » toujours
+    // visible ; « Voir 200 de plus » seulement si le serveur a d'autres lignes de CE segment.
+    return (
+      <div className="mt-2 flex flex-col gap-2">
+        {rows.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune} />)}
+        <div data-pagination className="flex flex-wrap items-center gap-3 border-t border-line pt-2 text-[11px] text-txt-mut">
+          <span data-pagination-count><b className="text-txt">{fmt(rows.length)} sur {fmt(serverTotal)}</b> affichées</span>
+          {serverHasMore && (
+            <button data-segment-more={segKey} onClick={onServerMore} disabled={serverLoading}
+              className="text-mint hover:underline disabled:opacity-60">
+              {serverLoading ? 'Chargement…' : `Voir ${fmt(Math.min(RESULTS_PAGE, serverTotal - rows.length))} de plus`}
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+  const shown = rows.slice(0, pg.shown)
+  return (
+    <div className="mt-2 flex flex-col gap-2">
+      {shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune} />)}
+      {/* règle 200 partagée sur les lignes DU segment (jamais de « charger plus » sous 200) */}
+      {pg.hasMore && <ListPaginationFooter shown={pg.shown} total={rows.length} onMore={pg.more} />}
+      {/* mode île : la fenêtre client est épuisée mais le serveur a d'autres pages du segment */}
+      {segmentOffreChargerPlus(pg.shown, rows.length, serverTotal, serverHasMore) && (
+        <button data-segment-more={segKey} onClick={onServerMore} disabled={serverLoading}
+          className="px-3 py-1.5 text-left text-[10.5px] text-txt-dim hover:text-mint disabled:opacity-60">
+          {fmt(rows.length)} sur {fmt(serverTotal)} affichées — charger plus de résultats →
+        </button>
+      )}
+    </div>
+  )
+}
+
+// RECETTE-12 B2 — UN segment de l'Analyse : en mode ÎLE il charge SES PROPRES lignes (200/page,
+// param serveur `segment`) dès l'ouverture — fin du « 9 sur 72 » (la fenêtre globale triée par rang
+// ne laissait que quelques lignes d'un petit segment). En mode COMMUNE, le GeoJSON complet est en
+// mémoire → on filtre côté client (liste entière, aucune troncature).
+function AnalyseSegment({ seg, open, onToggle, filters, sort, ile, commune, serverTotal, communeRows }: {
+  seg: { key: SegKey; label: string; hint: string }
+  open: boolean; onToggle: () => void
+  filters: Filters; sort: SortKey; ile: boolean; commune: string; serverTotal: number
+  communeRows: (ParcelProps & { commune?: string })[]
+}) {
+  const q = useInfiniteQuery({
+    queryKey: ['segment', seg.key, commune, filters, sort],
+    queryFn: ({ pageParam }) => getResults(filters, RESULTS_PAGE, sort, pageParam as number, false, seg.key),
+    initialPageParam: 0,
+    getNextPageParam: (last: unknown[], pages) => (last.length === RESULTS_PAGE ? pages.length * RESULTS_PAGE : undefined),
+    enabled: ile && open,
+  })
+  const serverRows = useMemo(
+    () => (q.data?.pages ?? []).flat() as unknown as (ParcelProps & { commune?: string })[], [q.data])
+  const rows = ile ? serverRows : communeRows
+  return (
+    <div className="shrink-0">
+      <button data-segment={seg.key} onClick={onToggle}
+        className="flex w-full items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left hover:border-mint/50">
+        <span className="flex min-w-0 items-center gap-2">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"
+            className={`shrink-0 text-txt-dim transition-transform ${open ? 'rotate-90' : ''}`}><path d="m9 18 6-6-6-6" /></svg>
+          <Tip tip={seg.hint} className="min-w-0"><span className="truncate text-[12px] font-medium text-txt">{seg.label}</span></Tip>
+        </span>
+        <span className="shrink-0 tnum text-[11px] text-txt-dim">{fmt(serverTotal)}</span>
+      </button>
+      {open && (ile && q.isLoading && serverRows.length === 0
+        ? <p className="mt-2 px-3 py-1.5 text-[10.5px] text-txt-dim">Chargement…</p>
+        : <SegmentList segKey={seg.key} rows={rows} serverTotal={serverTotal} commune={commune}
+            serverPaged={ile} serverHasMore={ile && (q.hasNextPage ?? false)} serverLoading={q.isFetchingNextPage}
+            onServerMore={() => q.hasNextPage && q.fetchNextPage()} />)}
+    </div>
+  )
 }
 
 // Compteurs par tier — clés = codes du run servi (anciens codes aujourd'hui ; les 4 paliers
@@ -265,15 +395,17 @@ export function ResultsSection() {
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
   // Mode FACTUEL (analyse OFF) : liste neutre, tri Surface seul, aucune ventilation d'opinion.
   const analyse = filters.analyseLabuse
-  // Tri par défaut : analyse = RANG P (groupé par tier) ; factuel = POTENTIEL (RECETTE-3 T3,
-  // décision Vic) — adressées d'abord puis SDP résiduelle, au lieu de Surface qui remontait des
-  // emprises géantes sans adresse. Surface reste en second (inversible) dans les deux modes.
-  const [sort, setSort] = useState<SortKey>(analyse ? 'rang' : 'potentiel')
+  // Tri par défaut : analyse = RANG P (groupé par tier) ; factuel = ADRESSE (RECETTE-5 V2, décision
+  // Vic) — adressées d'abord puis SURFACE décroissante, que du fait cadastral (l'ancien défaut
+  // « Potentiel » servait une SDP résiduelle = calcul LABUSE, retirée de la vue factuelle). Surface
+  // reste en second (inversible) dans les deux modes.
+  const [sort, setSort] = useState<SortKey>(analyse ? 'rang' : 'adresse')
   const sorts = analyse ? SORTS : FACTUAL_SORTS
-  useEffect(() => { setSort(analyse ? 'rang' : 'potentiel') }, [analyse])
-  // RECETTE-3 (T4) — état repli des 4 segments (analyse) : « le reste » replié par défaut.
+  useEffect(() => { setSort(analyse ? 'rang' : 'adresse') }, [analyse])
+  // RECETTE-6 (B2, décision Vic) — les QUATRE segments sont FERMÉS par défaut (flèche vers la droite).
+  // [RECETTE-3 (T4) ouvrait les trois premiers.]
   const [openSeg, setOpenSeg] = useState<Record<SegKey, boolean>>({
-    permis_pro: true, terrain_nu: true, bati_densifier: true, reste: false })
+    permis_pro: false, terrain_nu: false, bati_densifier: false, reste: false })
   // M69 A — GROUPEMENT PAR TIER : appliqué UNIQUEMENT pour le tri par défaut « Probabilité de
   // vente » (rang) en mode analyse (M55-H p5). Un tri de COLONNE (Surface) doit produire un ordre
   // GLOBAL monotone → on lève le groupement. Ce booléen pilote client ET serveur (un seul point).
@@ -371,8 +503,11 @@ export function ResultsSection() {
 
   // bandeau honnête par commune (ex. Saint-Philippe = RNU) — porté par /communes
   const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
+  // RECETTE-10 T11 — ce que le score APPORTE, mesuré et daté (taux de mutation 12 mois du palier « À
+  // suivre » vs la moyenne et vs un filtre simple). Une phrase chiffrée à côté des paliers, jamais un
+  // score nu. Servi seulement quand le modèle bat nettement le hasard (phrase_client sinon null).
+  const backtestQ = useQuery({ queryKey: ['scoring-backtest'], queryFn: getScoringBacktest, staleTime: 3_600_000, enabled: analyse })
   const communeNote = commune ? communesQ.data?.find((c) => c.commune === commune)?.note : null
-  const promus = counts.all || 1
   // M55-K point 1 : `nFilters` et la var locale `opportunites` sont retirés avec la ligne de
   // synthèse (0-caller). Le tooltip de la ventilation lit toujours `uni.data.opportunites`.
   // M55-H point 10 — l'arithmétique de la Révélation, ICI AUSSI (source unique getFiltre) :
@@ -446,14 +581,23 @@ export function ResultsSection() {
               raconte les trois familles. */}
           <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs leading-relaxed text-txt-mut"
             title={uni.data ? `${fmt(uni.data.opportunites)} opportunités (priorité + à suivre) dont ${fmt(uni.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
-            {/* M135 — bande de résumé : MÊMES NOMBRES, échelle d'action (labels de status.ts, jamais en dur) */}
-            <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> {TIER_V2_META.brulante.label.toLowerCase()} ·{' '}
-            <span className="font-medium" style={{ color: TIER_V2_META.chaude.color }}>{fmt(counts.chaude)}</span> {TIER_V2_META.chaude.label.toLowerCase()} ·{' '}
-            <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> {TIER_V2_META.reserve_fonciere.label.toLowerCase()} ·{' '}
-            <span className="font-medium" style={{ color: TIER_V2_META.a_creuser.color }}>{fmt(counts.a_creuser)}</span> {TIER_V2_META.a_creuser.label.toLowerCase()} ·{' '}
-            <span className="font-medium" style={{ color: EPUISE_COLOR }}>{fmt(epuise)}</span> faible
+            {/* RECETTE-6 (B3) — la bande de résumé suivait les 6 tiers BRUTS, dont deux (reserve_fonciere
+                et a_creuser) portent le MÊME palier « Sans signal » → « 0 sans signal · 0 sans signal »,
+                et « potentiel épuisé » s'affichait en dur « faible » (mot hors vocabulaire PALIERS-1).
+                On rend désormais les QUATRE PALIERS servis : Priorité · À suivre · Sans signal (= réserve
+                + à creuser + potentiel épuisé) · Écartées. Labels/couleurs = PALIER_META (jamais en dur). */}
+            <span className="font-medium" style={{ color: PALIER_META.priorite.color }}>{fmt(counts.brulante)}</span> {PALIER_META.priorite.label.toLowerCase()} ·{' '}
+            <span className="font-medium" style={{ color: PALIER_META.a_suivre.color }}>{fmt(counts.chaude)}</span> {PALIER_META.a_suivre.label.toLowerCase()} ·{' '}
+            <span className="font-medium" style={{ color: PALIER_META.sans_signal.color }}>{fmt(counts.reserve_fonciere + counts.a_creuser + epuise)}</span> {PALIER_META.sans_signal.label.toLowerCase()}
+            {/* RECETTE-7 (A2) — le « potentiel épuisé » (bâti saturé) n'est PAS « sans signal » : c'est
+                un état CONNU. On le SURFACE distinctement (dérivé, sans créer de palier de scoring → pas
+                de rescoring, cf. rapport). Le mot « faible » de RECETTE-6 était hors registre PALIERS-1 ;
+                « potentiel épuisé » est le vrai concept (declasse_bati_sature). */}
+            {epuise > 0 && (
+              <span className="text-txt-dim"> (dont <span className="font-medium" style={{ color: PALIER_META.sans_signal.color }}>{fmt(epuise)}</span> à potentiel épuisé)</span>
+            )}
             {ecartees != null && (
-              <> · <span className="font-medium text-txt-dim">{fmt(ecartees)}</span> écartées</>
+              <> · <span className="font-medium" style={{ color: PALIER_META.ecartee.color }}>{fmt(ecartees)}</span> {PALIER_META.ecartee.label.toLowerCase()}</>
             )}
             {/* M55-K point 1 : « (filtres actifs) » retiré (la ventilation EST déjà filtrée —
                 mention redondante). « (dans la zone) » conservé : un polygone dessiné n'est
@@ -464,15 +608,45 @@ export function ResultsSection() {
                 className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
             </Tip>
           </p>
+          {/* RECETTE-10 T11 — ce que le palier VAUT, mesuré et daté : preuve chiffrée à côté des
+              paliers (pas un score nu). Affichée seulement si le modèle bat nettement le filtre. */}
+          {backtestQ.data?.phrase_client && (
+            <p data-score-backtest className="mt-1.5 shrink-0 rounded-lg border border-mint/30 bg-mint/5 px-2.5 py-1.5 text-[11px] leading-snug text-txt-mut">
+              {backtestQ.data.phrase_client}
+            </p>
+          )}
+          {/* RECETTE-10 T12 — une commune sans aucune parcelle prioritaire (Priorité à zéro) mérite une
+              phrase qui l'explique — sinon le client conclut que l'outil ne trouve rien. Vérifié :
+              ces communes sont majoritairement en zone A/N ou hors PLU servi (RNU, ex. Saint-Philippe
+              n'a AUCUNE parcelle en zone U/AU) ; le zéro est JUSTE, ce n'est pas une panne. On le dit,
+              avec la note de commune si elle existe. Le libellé s'adapte quand « À suivre » est aussi nul. */}
+          {!ile && commune && counts.brulante === 0 && (uni.data?.compte ?? 0) > 0 && (
+            <p data-zero-priorite className="mt-1.5 shrink-0 rounded-lg border border-st-creuser/40 bg-[#211a10] px-2.5 py-1.5 text-[11px] leading-snug text-st-creuser">
+              Aucune parcelle en <b>Priorité</b>{counts.chaude === 0 ? <> ni <b>À suivre</b></> : ''} sur {commune} — ce n'est pas une
+              absence de données.{communeNote ? ` ${communeNote}` : ' Le foncier de cette commune est très majoritairement en zone agricole, naturelle ou hors d’un PLU servi'} :
+              le modèle n'y détecte pas de foncier mutable à court terme. Les {fmt(counts.reserve_fonciere + counts.a_creuser + epuise)} parcelles « Sans signal » restent consultables.
+            </p>
+          )}
           {/* M55-G point 5 (décision Vic) : la ligne « soit N parcelles avec dossier propriétaire ·
               N personnes physiques » a QUITTÉ la zone résultats — l'info vit en fiche (tiroir
               Propriétaire), rien n'est perdu. Champs API (opportunites_avec_dossier…) inchangés. */}
-          <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">
-            <span style={{ background: TIER_V2_META.brulante.color, width: `${(counts.brulante / promus) * 100}%` }} />
-            <span style={{ background: TIER_V2_META.chaude.color, width: `${(counts.chaude / promus) * 100}%` }} />
-            <span style={{ background: TIER_V2_META.reserve_fonciere.color, width: `${(counts.reserve_fonciere / promus) * 100}%` }} />
-            <span style={{ background: TIER_V2_META.a_creuser.color, width: `${(counts.a_creuser / promus) * 100}%` }} />
-          </div>
+          {/* RECETTE-7 (A3) — la barre reprend les COULEURS DES PALIERS (rouge priorité · orange à
+              suivre · pâle sans signal · sombre écartées), proportionnelle au TOTAL analysé — plus
+              une barre uniforme et pâle. Elle suit EXACTEMENT la ventilation ci-dessus (même
+              groupement : sans signal = réserve + à creuser + potentiel épuisé) ; couleurs PALIER_META. */}
+          {(() => {
+            const sansSignal = counts.reserve_fonciere + counts.a_creuser + epuise
+            const tot = Math.max(1, counts.brulante + counts.chaude + sansSignal + (ecartees ?? 0))
+            const seg = (n: number, color: string) => <span style={{ background: color, width: `${(n / tot) * 100}%` }} />
+            return (
+              <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">
+                {seg(counts.brulante, PALIER_META.priorite.color)}
+                {seg(counts.chaude, PALIER_META.a_suivre.color)}
+                {seg(sansSignal, PALIER_META.sans_signal.color)}
+                {seg(ecartees ?? 0, PALIER_META.ecartee.color)}
+              </div>
+            )
+          })()}
         </>
       )}
 
@@ -524,33 +698,45 @@ export function ResultsSection() {
         )}
         {/* RECETTE-3 (T4) — mode ANALYSE : la liste est organisée en 4 SEGMENTS repliables (ordre
             fixe), le compte de chacun servi par /filtre (segments, exact hors étage 0). Chaque carte
-            garde son palier. Mode FACTUEL : liste plate (neutre). */}
+            garde son palier. Mode FACTUEL : liste plate (neutre).
+            RECETTE-7 (A4) — la case « Voir tout » flottante est REMPLACÉE par une carte « Tout » en
+            DERNIÈRE position de la liste des segments (même forme, même traitement, son compte à
+            droite) : la cliquer ouvre/referme les quatre segments. */}
         {!loading && !error && (analyse ? (
-          SEGMENTS.map((seg) => {
-            const rows = shown.filter((p) => segmentOf(p) === seg.key)
-            const total = uni.data?.segments?.[seg.key] ?? rows.length
-            const open = openSeg[seg.key]
+          <>
+          {SEGMENTS.map((seg) => {
+            // RECETTE-12 B2 — le segment charge SES PROPRES lignes (île : 200/page côté serveur via
+            // le param `segment` ; commune : filtre de la liste complète en mémoire). Fin du « 9 sur
+            // 72 » où la fenêtre globale triée par rang ne laissait qu'une poignée d'un petit segment.
+            const communeRows = ile ? [] : list.filter((p) => segmentOf(p) === seg.key)
+            const total = uni.data?.segments?.[seg.key] ?? communeRows.length
             return (
-              <div key={seg.key} className="shrink-0">
-                <button data-segment={seg.key} onClick={() => setOpenSeg((s) => ({ ...s, [seg.key]: !s[seg.key] }))}
-                  className="flex w-full items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left hover:border-mint/50">
-                  <span className="flex min-w-0 items-center gap-2">
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"
-                      className={`shrink-0 text-txt-dim transition-transform ${open ? 'rotate-90' : ''}`}><path d="m9 18 6-6-6-6" /></svg>
-                    <Tip tip={seg.hint} className="min-w-0"><span className="truncate text-[12px] font-medium text-txt">{seg.label}</span></Tip>
-                  </span>
-                  <span className="shrink-0 tnum text-[11px] text-txt-dim">{fmt(total)}</span>
-                </button>
-                {open && (
-                  <div className="mt-2 flex flex-col gap-2">
-                    {rows.length === 0
-                      ? <p className="px-3 py-1.5 text-[10.5px] text-txt-dim">{total > 0 ? 'Chargez plus de résultats pour voir ces parcelles →' : 'Aucune parcelle dans ce segment.'}</p>
-                      : rows.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} />)}
-                  </div>
-                )}
-              </div>
+              <AnalyseSegment key={seg.key} seg={seg} open={!!openSeg[seg.key]}
+                onToggle={() => setOpenSeg((s) => ({ ...s, [seg.key]: !s[seg.key] }))}
+                filters={filters} sort={sort} ile={ile} commune={commune ?? ''}
+                serverTotal={total} communeRows={communeRows} />
             )
-          })
+          })}
+          {/* RECETTE-7 (A4) — la carte « Tout » en dernière position (même forme que les 4 segments,
+              son compte à droite) : la cliquer ouvre/referme les quatre segments. Remplace la case
+              « Voir tout » flottante. */}
+          {(() => {
+            const allOpen = SEGMENTS.every((s) => openSeg[s.key])
+            const toutTotal = SEGMENTS.reduce((a, s) => a + (uni.data?.segments?.[s.key] ?? 0), 0) || shown.length
+            return (
+              <button data-segment="tout"
+                onClick={() => setOpenSeg(Object.fromEntries(SEGMENTS.map((s) => [s.key, !allOpen])) as Record<SegKey, boolean>)}
+                className="flex w-full shrink-0 items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left hover:border-mint/50">
+                <span className="flex min-w-0 items-center gap-2">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"
+                    className={`shrink-0 text-txt-dim transition-transform ${allOpen ? 'rotate-90' : ''}`}><path d="m9 18 6-6-6-6" /></svg>
+                  <span className="truncate text-[12px] font-medium text-txt">Tout</span>
+                </span>
+                <span className="shrink-0 tnum text-[11px] text-txt-dim">{fmt(toutTotal)}</span>
+              </button>
+            )
+          })()}
+          </>
         ) : (
           shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} factual={true} />)
         ))}

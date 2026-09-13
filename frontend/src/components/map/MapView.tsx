@@ -2,7 +2,7 @@ import { useQuery, useIsFetching } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
-import { getCommunes, getFiche, getFiltreIdus, getMapLayer, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
+import { getBatiments, getCommunes, getFiche, getFiltreIdus, getMapLayer, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
 import { ALL_TIER_META, BPE_DOM, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { MAP_THEME, type MapTokens } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
@@ -48,10 +48,14 @@ const TIER_V2: maplibregl.ExpressionSpecification = ['coalesce', ['get', 'tier_v
 // — dans le filtre par défaut « tout montrer » (M30) — sont peints en TERRE (TIER_DECLASSE_META
 // #8C7468) au lieu de tomber sur le gris de fond (invisibles alors que la liste les colore).
 // Le patron est celui de ZONE_FAM_COLOR ci-dessous.
-// Seule exception GRAVÉE : le tier v2 'ecartee' suit la DOCTRINE du verdict d'en-tête (écartée =
-// braise #E8695A, cf. verdictMeta) et partage la teinte d'exclusion de l'étage 0 — pas le gris de
-// TIER_V2_META.ecartee. De toute façon quasi éteint (opacité 0.04), color secondaire.
-const ECARTEE_COLOR = '#E8695A'
+// RECETTE-5 (V15, décision Vic) — LA CARTE ROUGE corrigée. L'écartée (et l'étage 0) était peinte en
+// BRAISE #E8695A — la MÊME teinte que le palier « Priorité » (PALIER_META.priorite). Tant que les
+// écartées étaient quasi éteintes (opacité 0,04), le rouge ne se voyait pas ; mais RECETTE-2 a rendu
+// l'opacité UNIFORME (0,72) en mode analyse → toute l'île (majoritairement écartée/étage 0) virait au
+// ROUGE, indiscernable de la Priorité. On revient à la teinte MUETTE du vocabulaire PALIERS-1
+// (TIER_V2_META.ecartee = #4A5A52) : le rouge reste réservé à la Priorité, l'écartée s'efface. La
+// carte et la légende (qui lisait déjà #4A5A52) redisent enfin la même chose.
+const ECARTEE_COLOR = ALL_TIER_META['ecartee'].color   // #4A5A52 (muet) — plus le braise qui rougissait l'île
 const STATUS_COLOR: maplibregl.ExpressionSpecification = [
   'case', ETAGE0, ECARTEE_COLOR,
   ['match', TIER_V2,
@@ -100,10 +104,27 @@ const statusLineExpr = (clair: boolean): maplibregl.ExpressionSpecification => !
 ] as unknown as maplibregl.ExpressionSpecification
 // liseré des promues : pipeline v2 (brûlante/chaude, hors étage 0). M48 (F4) : la branche de repli
 // `status` (matrice morte) est retirée — le liseré suit le tier v2 servi.
+// PALIERS-1 — les DEUX vocabulaires : servi (brulante/chaude) + q_v14 (priorite/a_suivre)
+const PROMUES_TIERS = ['brulante', 'chaude', 'priorite', 'a_suivre']
 const PROMUES_FILTER: maplibregl.FilterSpecification = [
-  // PALIERS-1 — les DEUX vocabulaires : servi (brulante/chaude) + q_v14 (priorite/a_suivre)
-  'all', ['in', TIER_V2, ['literal', ['brulante', 'chaude', 'priorite', 'a_suivre']]], ['!', ETAGE0],
+  'all', ['in', TIER_V2, ['literal', PROMUES_TIERS]], ['!', ETAGE0],
 ] as unknown as maplibregl.FilterSpecification
+// RECETTE-12 B1 — les NON-promues (« Sans signal » + « Écartée » + étage 0 + déclassements) :
+// étage 0, ou un tier hors des quatre promus. Elles ne sont plus PEINTES en mode analyse (voir
+// `opinionOpacityExpr`) — un aplat gris pour 50 000 parcelles noyait les 212 qui comptent — mais
+// gardent un CONTOUR discret qui n'apparaît qu'au zoom (couches `parcels-muet`/`ile-muet`, minzoom).
+const NON_PROMUES_FILTER: maplibregl.FilterSpecification = [
+  'any', ETAGE0, ['!', ['in', TIER_V2, ['literal', PROMUES_TIERS]]],
+] as unknown as maplibregl.FilterSpecification
+// RECETTE-12 B1 (révise l'arbitrage RECETTE-2 S11 « opacité uniforme ») — en mode ANALYSE, SEULES
+// Priorité et À suivre sont peintes ; tout le reste a une opacité NULLE (aucun remplissage). Le fondu
+// R5 au zoom sur photo est conservé pour les promues. Rendu du même patron `case` que STATUS_OPACITY.
+const opinionOpacityExpr = (photo: boolean): maplibregl.ExpressionSpecification => ([
+  'case',
+  ['all', ['!', ETAGE0], ['in', TIER_V2, ['literal', PROMUES_TIERS]]],
+  photoFade(OPINION_OPACITY, photo),
+  0,
+] as unknown as maplibregl.ExpressionSpecification)
 
 // M6.1 item 1 — couche « Zonage PLU (parcelles) » : le REMPLISSAGE passe en couleur par
 // famille (palette ZONE_FAM_META, distincte du verdict v2). Hors zonage GPU (zone_fam
@@ -973,6 +994,8 @@ export function MapView() {
         tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'] })
 
       m.addSource('parcels', { type: 'geojson', data: EMPTY_FC as never, promoteId: 'idu' })
+      // RECETTE-6 (A3) — source du bâti 3D (empreinte + hauteur), remplie par BBOX quand le 3D est actif.
+      m.addSource('batiments', { type: 'geojson', data: EMPTY_FC as never })
       for (const k of Object.keys(OVERLAYS)) m.addSource(`ov-${k}`, { type: 'geojson', data: EMPTY_FC as never })
       for (const [k, o] of Object.entries(OVERLAYS)) {
         m.addLayer({ id: `ov-${k}`, type: 'fill', source: `ov-${k}`, layout: { visibility: 'none' }, paint: o.paint as never })
@@ -1172,7 +1195,23 @@ export function MapView() {
       m.addLayer({ id: 'parcels-limites', type: 'line', source: 'parcels', layout: { visibility: 'none' },
         paint: { 'line-color': '#8FA69A', 'line-width': 0.3, 'line-opacity': 0.4 } })
       m.addLayer({ id: 'parcels-line', type: 'line', source: 'parcels', filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
+      // RECETTE-12 B1 — contour DISCRET des non-promues (Sans signal/Écartée), en mode analyse
+      // SEULEMENT et au ZOOM SEULEMENT (minzoom) : elles ne sont plus peintes (aucun aplat gris), mais
+      // le lecteur qui zoome voit qu'elles existent et les sélectionne. Masqué par défaut (effet mode).
+      m.addLayer({ id: 'parcels-muet', type: 'line', source: 'parcels', minzoom: 15, filter: NON_PROMUES_FILTER,
+        layout: { visibility: 'none' }, paint: { 'line-color': '#5F7267', 'line-width': 0.3, 'line-opacity': 0.5 } })
       m.addLayer({ id: 'parcels-sel', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
+      // RECETTE-6 (A3) — BÂTI 3D : extrusion de l'empreinte au sol à sa hauteur BD TOPO (la même que
+      // l'Apporteur). Posée sur le relief (setTerrain → l'extrusion part du sol du MNT, jamais d'un
+      // plan). Masquée par défaut ; allumée avec le bouton 3D (effet plus bas). Hauteur absente = pas
+      // d'extrusion (le serveur exclut déjà ces bâtiments).
+      m.addLayer({ id: 'batiments-3d', type: 'fill-extrusion', source: 'batiments', layout: { visibility: 'none' },
+        paint: {
+          'fill-extrusion-color': '#9FB3A8',
+          'fill-extrusion-height': ['coalesce', ['get', 'h'], 0],
+          'fill-extrusion-base': 0,
+          'fill-extrusion-opacity': 0.88,
+        } })
       // M5.1 — badge carte : liseré braise sur les BRÛLANTES v2 (hors étage 0), et pastille
       // « #rang » sur les opportunités v2 au zoom rapproché (mode commune). Le badge « V nn »
       // v1.3 a disparu : un seul monde visible, le v2.
@@ -1233,6 +1272,9 @@ export function MapView() {
         paint: { 'line-color': '#8FA69A', 'line-width': 0.3, 'line-opacity': 0.4 } })
       m.addLayer({ id: 'ile-line', type: 'line', ...SL, layout: { visibility: 'none' },
         filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
+      // RECETTE-12 B1 — jumeau île du contour discret des non-promues (minzoom, mode analyse seul)
+      m.addLayer({ id: 'ile-muet', type: 'line', ...SL, minzoom: 15, filter: NON_PROMUES_FILTER,
+        layout: { visibility: 'none' }, paint: { 'line-color': '#5F7267', 'line-width': 0.3, 'line-opacity': 0.5 } })
       m.addLayer({ id: 'ile-sel', type: 'line', ...SL, layout: { visibility: 'none' },
         filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
       // M15 A1 : couche de PICKING de l'outil Assemblage — contours de TOUTES les parcelles,
@@ -1739,9 +1781,9 @@ export function MapView() {
     // M55-G point 8 : seulement en mode OPINION — le mode factuel garde sa surbrillance neutre
     const photo = basemap === 'plan' || basemap === 'ortho'   // RETOURS-11 R5 — gate fondu photo
     if (m.getLayer('parcels-fill') && !zonageFill && opinion) {
-      // RECETTE-2 (S11) — opacité UNIFORME en mode analyse (plus de voile : STATUS_OPACITY estompait
-      // les écartées à 0,04). Le palier est porté par la couleur. Fondu R5 au zoom sur photo conservé.
-      const op = photoFade(OPINION_OPACITY, photo)
+      // RECETTE-12 B1 (révise RECETTE-2 S11) — SEULES Priorité et À suivre sont peintes ; les non-
+      // promues (Sans signal/Écartée) ont une opacité NULLE (aucun aplat gris). Fondu R5 conservé.
+      const op = opinionOpacityExpr(photo)
       m.setPaintProperty('parcels-fill', 'fill-opacity', op)
       m.setPaintProperty('ile-fill', 'fill-opacity', op)
     }
@@ -1750,13 +1792,36 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
+    // RECETTE-6 (A3) — le bouton 3D allume le RELIEF (setTerrain) ET le BÂTI extrudé (batiments-3d),
+    // ensemble : l'extrusion part du sol du MNT (jamais d'un plan). Le bâti se charge par BBOX au zoom
+    // rapproché (≥ 15, où l'extrusion est visible), rafraîchi au déplacement ; borné à la vue courante.
+    const BATI_MINZOOM = 15
+    const chargerBati = () => {
+      if (!terrain3d || m.getZoom() < BATI_MINZOOM) {
+        if (m.getLayer('batiments-3d')) m.setLayoutProperty('batiments-3d', 'visibility', 'none')
+        return
+      }
+      const b = m.getBounds()
+      const bbox: [number, number, number, number] = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]
+      getBatiments(bbox).then((fc) => {
+        const src = m.getSource('batiments') as maplibregl.GeoJSONSource | undefined
+        if (src && terrain3d) {
+          src.setData(fc as never)
+          m.setLayoutProperty('batiments-3d', 'visibility', 'visible')
+        }
+      }).catch(() => { /* le bâti 3D ne casse jamais la carte */ })
+    }
     if (terrain3d) {
       m.setTerrain({ source: 'dem', exaggeration: 1.35 })
       if (m.getPitch() < 20) m.easeTo({ pitch: 55, duration: 800 })
+      chargerBati()
+      m.on('moveend', chargerBati)
     } else {
       m.setTerrain(null)
       m.easeTo({ pitch: 0, duration: 600 })
+      if (m.getLayer('batiments-3d')) m.setLayoutProperty('batiments-3d', 'visibility', 'none')
     }
+    return () => { m.off('moveend', chargerBati) }
   }, [terrain3d])
 
   // ───────────────────────── couches / filtres / mode ─────────────────────────
@@ -1866,7 +1931,11 @@ export function MapView() {
       : resultIdus
         ? (['all', expr, ['in', ['get', 'idu'], ['literal', resultIdus]]] as unknown as maplibregl.FilterSpecification)
         : expr
-    const baseVisible = !zonageFill && opinion && !!resultIdus && !layers.couleurs_verdict
+    // RECETTE-8 W9 (A1) — plus de GRIS DE FOND sous les parcelles hors sélection en mode Analyse.
+    // La trame neutre (#22302A/0,28) peignait « le reste » d'un gris sale : une parcelle doit
+    // porter la COULEUR DE SON PALIER ou RIEN, jamais un gris. Les parcelles hors sélection restent
+    // délimitées par leurs contours (couche « Limites parcelles ») et sélectionnables — sans voile.
+    const baseVisible = false
     m.setLayoutProperty('parcels-base', 'visibility', vis(baseVisible && layers.parcelles && !ile))
     m.setLayoutProperty('ile-base', 'visibility', vis(baseVisible && layers.parcelles && ile))
     for (const fill of ['parcels-fill', 'ile-fill']) {
@@ -1880,22 +1949,31 @@ export function MapView() {
         m.setPaintProperty(fill, 'fill-color', ZONE_FAM_COLOR)
         m.setPaintProperty(fill, 'fill-opacity', photo ? photoFade(0.62, photo) : ZONE_FAM_OPACITY)
       } else if (opinion) {
-        // RECETTE-2 (S11) — opacité UNIFORME en mode analyse (fini le voile gris des écartées) ;
-        // le palier reste porté par la couleur (STATUS_COLOR). Fondu R5 conservé sur photo.
+        // RECETTE-12 B1 (révise RECETTE-2 S11) — SEULES Priorité et À suivre sont peintes ; les non-
+        // promues ont une opacité NULLE (plus d'aplat gris pour 50 000 parcelles). Le palier reste
+        // porté par la couleur (STATUS_COLOR). Fondu R5 conservé sur photo pour les promues.
         m.setPaintProperty(fill, 'fill-color', STATUS_COLOR)
-        m.setPaintProperty(fill, 'fill-opacity', photoFade(OPINION_OPACITY, photo))
-      } else if (verdict) {
-        // M55-G point 8 : TRI FACTUEL — les parcelles correspondantes en surbrillance NEUTRE
-        // (aucune couleur de tier) ; la couche « Verdict » reste activable dans Couches.
-        m.setPaintProperty(fill, 'fill-color', '#8FA69A')
-        m.setPaintProperty(fill, 'fill-opacity', photoFade(0.42, photo))
+        m.setPaintProperty(fill, 'fill-opacity', opinionOpacityExpr(photo))
       } else {
-        // R1 : VERDICT ÉTEINT = trame cadastrale NEUTRE (le langage promoteur), aucune couleur.
-        // M65 P8 : en mode CLAIR, cette trame neutre = les PARCELLES en BLANC CASSÉ #F4F2EC (opaques)
-        // qui se détachent sur la terre grise ; en Sombre, la trame neutre d'origine (#22302A/0,28).
+        // RECETTE-5 (V1, décision Vic) — plus de VOILE GRIS sur le chemin factuel. Le tri factuel
+        // (« Voir les parcelles », verdict=true & analyse OFF) partageait la surbrillance grise
+        // #8FA69A/0,42 qui, sans filtre, lavait TOUTE l'île en gris. Il rejoint désormais la trame
+        // cadastrale NEUTRE de « verdict éteint » : les parcelles restent délimitées par leurs
+        // contours (parcels-limites, toujours affichés) et sélectionnables, sans aucun voile.
+        // Le voile avait déjà été retiré du mode ANALYSE (opinion, opacité uniforme) en RECETTE-2 S11.
+        // M65 P8 : en CLAIR, trame neutre = PARCELLES en BLANC CASSÉ #F4F2EC (opaques) sur la terre
+        // grise ; en Sombre, la trame neutre d'origine (#22302A/0,28).
         const clair = basemap === 'clair'
+        // RECETTE-9 T5 — le test décisif (captures A→E) tranche : le GRIS est le FOND DE PLAN Sombre
+        // (analyse ON/OFF donne une image IDENTIQUE → ce n'est pas l'analyse ; passer en Clair/Ortho le
+        // fait disparaître → c'est bien le fond). Le SEUL gris que peignent NOS calques (pas le fond) est
+        // ce remplissage neutre #22302A/0,28 : sur le Sombre il a quasi la couleur du fond → il ne
+        // distingue rien, il WASHE juste les parcelles en gris. On l'éteint sur Sombre/photo (les
+        // parcelles restent délimitées par « Limites parcelles » et sélectionnables via parcelAt),
+        // achevant sur le BON calque la règle W9/S11/V1 « couleur de palier ou RIEN, jamais un gris ».
+        // En CLAIR le remplissage blanc reste utile (parcelles blanches sur terre claire) → conservé.
         m.setPaintProperty(fill, 'fill-color', clair ? '#F4F2EC' : '#22302A')
-        m.setPaintProperty(fill, 'fill-opacity', clair ? 1 : 0.28)
+        m.setPaintProperty(fill, 'fill-opacity', clair ? 1 : 0)
       }
     }
     // lisérés promues/brûlantes : des couleurs d'OPINION — mode analyse ou couche Verdict cochée ;
@@ -1904,6 +1982,10 @@ export function MapView() {
     m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile && opinion))
     m.setFilter('parcels-line', ['all', PROMUES_FILTER, exprPalette] as maplibregl.FilterSpecification)
     m.setFilter('ile-line', ['all', PROMUES_FILTER, exprPalette] as maplibregl.FilterSpecification)
+    // RECETTE-12 B1 — contour discret des non-promues : en mode analyse, au zoom (minzoom porté par
+    // la couche). Non restreint par la palette — c'est justement « le reste » (Sans signal/Écartée).
+    if (m.getLayer('parcels-muet')) m.setLayoutProperty('parcels-muet', 'visibility', vis(layers.parcelles && !ile && opinion))
+    if (m.getLayer('ile-muet')) m.setLayoutProperty('ile-muet', 'visibility', vis(layers.parcelles && ile && opinion))
     // M5.1 : liseré brûlantes v2 — opinion allumée, mode commune (M55-F : pastille #rang retirée)
     if (m.getLayer('parcels-brulantes')) {
       m.setLayoutProperty('parcels-brulantes', 'visibility', vis(!ile && opinion))

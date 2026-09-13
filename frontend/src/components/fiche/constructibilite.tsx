@@ -33,22 +33,24 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
       <p className="mt-1 text-[11px] leading-snug text-txt-mut">{pt.libelle}</p>
       {pt.pct_consomme != null && <FactRow label="SDP consommée / autorisée" value={<>{pt.pct_consomme} <small>%</small></>} />}
       {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <FactRow label={`SDP résiduelle estimée · ${PERIM_RESIDUEL_COURT}`} value={<>~{fmtInt(pt.sdp_residuelle_m2)} <small>m²</small></>} />}
-      {pt.surelevation_possible != null && <FactRow label="Surélévation" value={pt.surelevation_possible ? <>possible{pt.hauteur_marge_m != null ? <> <small>(marge ~{pt.hauteur_marge_m} m)</small></> : ''}</> : 'non'} tone={pt.surelevation_possible ? undefined : 'mute'} />}
+      {/* RECETTE-11 A6 — plus de verdict (« possible »/« non ») : la marge mesurée sous la règle et
+          la contrainte qui mord ; A3 : la date de survol quand c'est une mesure LiDAR HD. */}
+      {pt.hauteur_marge_m != null && <FactRow label="Marge en hauteur" value={<>~{pt.hauteur_marge_m} <small>m sous la règle{pt.hauteur_contrainte ? `, contrainte : ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}` : ''}{pt.hauteur_survol ? ` — mesuré au LiDAR HD, survol de ${pt.hauteur_survol}` : ''}{pt.hauteur_permis_posterieur ? ` ; antérieur au permis du ${pt.hauteur_permis_posterieur}, possiblement dépassé` : ''}</small></>} />}
       <FactNote>{pt.source}</FactNote>
     </div>
   )
 }
 
-// ── FICHE-1 lot 5 — Taxe d'aménagement ESTIMÉE (scénario table rase) ──────────────────────────
-// Montant, assiette, taux communal + départemental avec leur source. Si le taux communal n'est
-// pas connu (table publique vide, chantier SOURCES-1) : « taux communal non renseigné », JAMAIS
-// un taux inventé (doctrine CIRCUIT-3 lot 6.2) — le total n'est alors pas affiché.
+// ── RECETTE-8 W2 — Taxe d'aménagement : le TAUX communal, jamais un montant sans projet ─────────
+// La taxe se paie sur la surface de plancher CRÉÉE par un projet (art. L331 c. urb.). Sur la fiche,
+// aucun projet n'est saisi : LABUSE ne l'invente pas (avant, elle affichait « 22 469 € » sur une
+// table rase que personne n'avait choisie). On sert le taux communal (public, daté) + départemental
+// et la phrase disant sur quoi elle se calculera ; le montant est chiffré au Dossier financier, sur
+// la SDP du projet. Taux communal inconnu → « non renseigné », jamais inventé (CIRCUIT-3 lot 6.2).
 function TaxeAmenagementBlock({ t }: { t: NonNullable<Fiche['taxe_amenagement']> }) {
   return (
     <div data-taxe-amenagement>
-      <GroupLabel>Taxe d'aménagement estimée</GroupLabel>
-      <p className="mt-1 text-[11px] leading-snug text-txt-mut">Scénario table rase — {t.scenario}.</p>
-      <FactRow label="Assiette (surface de plancher)" value={<>{fmtInt(t.assiette_m2)} <small>m²</small></>} />
+      <GroupLabel>Taxe d'aménagement</GroupLabel>
       {t.taux_communal_manquant ? (
         <FactRow label="Taux communal" tone="mute" value="non renseigné — à saisir" />
       ) : (
@@ -65,13 +67,7 @@ function TaxeAmenagementBlock({ t }: { t: NonNullable<Fiche['taxe_amenagement']>
       <FactRow label="Taux départemental"
         value={t.taux_departemental_pct != null ? <>{t.taux_departemental_pct} <small>%</small></> : '—'}
         src={t.taux_departemental_confirme ? 'confirmé' : 'plafond légal 2,5 % — à confirmer'} />
-      {t.total_eur != null ? (
-        <FactRow label="Taxe estimée" value={<>{fmtEurCompact(t.total_eur)}</>} />
-      ) : (
-        <FactRow label="Taxe estimée" tone="mute"
-          value={t.message_taux_communal ? 'total non calculable sans le taux communal' : '—'} />
-      )}
-      <FactNote>Barème {t.annee} — {t.source}. Estimation ; changez les hypothèses (résidence principale, logement aidé, piscine…) dans l'outil.</FactNote>
+      <FactNote>Se calcule sur la surface de plancher créée par votre projet — chiffrée dans le Dossier financier une fois le projet saisi. Barème {t.annee} — {t.source}.</FactNote>
     </div>
   )
 }

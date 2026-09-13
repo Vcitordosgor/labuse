@@ -262,12 +262,14 @@ function Toast() {
 }
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen, setContexteCommune, togglePanel } = useApp()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
+  // RECETTE-10 — + setContexteCommune / togglePanel / setFilters exposés pour piloter les captures
+  // (fiche commune, volet Résultats, mode analyse) ; aucun effet produit (mêmes actions que l'UI).
   useEffect(() => {
-    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution }
-  }, [select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution])
+    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution, setContexteCommune, togglePanel, setFilters, getFilters: () => filters }
+  }, [select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution, setContexteCommune, togglePanel, setFilters, filters])
 
   // DASHBOARD-V1 · D1 — capteurs d'usage (Tour de contrôle) : heartbeat de session au boot,
   // ouverture d'outil (module) et changement de vue. Fire-and-forget, dédoublonné dans usage.ts —
