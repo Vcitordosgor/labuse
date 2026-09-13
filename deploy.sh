@@ -20,8 +20,9 @@ set -eu
 REPO="$(cd "$(dirname "$0")" && pwd)"
 
 # ── CIRCUIT-5 (lot 6.1) — LA PORTE : les verrous d'abord, le déploiement ensuite. ──────────
-# `labuse circuit verrous` joue TOUS les verrous (lots 1 à 5) et sort en erreur au premier
-# cassé : un déploiement qui passe cette porte est la preuve que tout tient. Aucun
+# `labuse circuit verrous` joue TOUT — les 16 verrous (CIRCUIT-5) + les 7 garanties
+# (CIRCUIT-6), 23 en tout, jamais d'arrêt au premier cassé — et sort en erreur si ≥ 1
+# casse : un déploiement qui passe cette porte est la preuve que tout tient. Aucun
 # contournement : binaire introuvable = refus (on ne déploie pas sans vérifier).
 LABUSE_BIN="${LABUSE_BIN:-$(command -v labuse || echo /opt/labuse/venv/bin/labuse)}"
 echo "→ Porte des verrous : $LABUSE_BIN circuit verrous…"

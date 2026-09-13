@@ -165,9 +165,10 @@ chemins réels : 25 mesures, 0 nouvel écart.
   laissé à Vic (base partagée avec :8020).
 
 ### La mécanique (lot 8)
-`labuse circuit verrous` joue les **16 + les 7** (23 lignes, sortie 1 au premier cassé ;
-`--complet` pour tout voir) — `deploy.sh` appelle cette commande : il refuse si une garantie
-casse. La sonde de nuit les joue aussi et journalise. Le Résumé du Circuit affiche les sept
+`labuse circuit verrous` joue les **16 + les 7 = 23, toujours tous** (plus d'arrêt au
+premier cassé — un cassé n'en cache jamais un autre) ; fin de sortie : « tout va bien » ou la
+liste de ce qui casse, code retour 1. `deploy.sh` appelle cette même commande : il refuse si
+un verrou OU une garantie casse. La sonde de nuit les joue aussi et journalise. Le Résumé du Circuit affiche les sept
 phrases, vertes ou rouges, calculées. Captures : `G1-resume.png`, `G2-resume.png`,
 `G2-dpe-invisible.png`, `G-sept-lignes.png`.
 
