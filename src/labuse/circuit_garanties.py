@@ -528,11 +528,48 @@ def verrou_g6(db: Session | None = None) -> ResultatVerrou:
     return ResultatVerrou("G6", phrase, "casse" if pbs else "ok", preuve, pbs[:10])
 
 
+# ── G7 — la même donnée partout ────────────────────────────────────────────────────────
+
+#: au-delà de cet âge, la sonde « n'a pas tourné » : la garantie ne peut plus rien promettre.
+G7_AGE_MAX_H = 48
+
+
+def verrou_g7(db: Session) -> ResultatVerrou:
+    phrase = ("Un même identifiant du registre servi par deux chemins donne la même valeur sur "
+              "les témoins de la nuit — la sonde a tourné, et chaque écart ouvert est une ligne "
+              "rouge complète (les deux chemins, les deux valeurs).")
+    from datetime import datetime, timedelta, timezone
+    pbs: list[str] = []
+    dernier = db.execute(text(
+        "SELECT ts, fuites_ouvertes FROM circuit_controles ORDER BY ts DESC LIMIT 1"
+    )).first()
+    if dernier is None:
+        pbs.append("la sonde n'a JAMAIS tourné (circuit_controles vide)")
+    else:
+        age = datetime.now(tz=timezone.utc) - dernier[0]
+        if age > timedelta(hours=G7_AGE_MAX_H):
+            pbs.append(f"la sonde n'a pas tourné depuis {age.days} j "
+                       f"(dernier passage {dernier[0]:%d/%m %H:%M}) — au-delà de {G7_AGE_MAX_H} h")
+    fuites = db.execute(text(
+        "SELECT id, chiffre_id, robinet_a, valeur_a, robinet_b, valeur_b"
+        " FROM circuit_ecarts WHERE statut = 'ouvert'")).mappings().all()
+    for f in fuites:
+        manquants = [c for c in ("chiffre_id", "robinet_a", "valeur_a", "robinet_b", "valeur_b")
+                     if not f[c]]
+        if manquants:
+            pbs.append(f"fuite ouverte #{f['id']} INCOMPLÈTE (sans {', '.join(manquants)}) — "
+                       f"pas affichable en ligne rouge à deux chemins")
+    preuve = (f"dernier passage sonde {dernier[0]:%d/%m %H:%M} ; " if dernier else "") + \
+             (f"{len(fuites)} fuite(s) ouverte(s), toutes affichables (deux chemins, deux valeurs)"
+              if not pbs else f"{len(fuites)} fuite(s) ouverte(s)")
+    return ResultatVerrou("G7", phrase, "casse" if pbs else "ok", preuve, pbs[:10])
+
+
 # ── l'assembleur (rempli garantie par garantie, lots 1→7) ─────────────────────────────
 
 def jouer_garanties(db: Session) -> list[ResultatVerrou]:
     """Joue les garanties implémentées, dans l'ordre. Le Résumé de la page Circuit et la CLI
     `labuse circuit verrous` les affichent avec les 16 verrous de CIRCUIT-5 (lot 8)."""
     jouees = [verrou_g1(db), verrou_g2(db), verrou_g3(db), verrou_g4(db), verrou_g5(db),
-              verrou_g6(db)]
+              verrou_g6(db), verrou_g7(db)]
     return jouees

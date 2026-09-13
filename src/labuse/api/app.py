@@ -2820,6 +2820,29 @@ def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dic
     # CIRCUIT-6 lot 0 — libellés de fiabilité RATTACHÉS (vocabulaires.py, un littéral un endroit).
     # M70 décision 4 : « suivie », jamais « vérifiée » (source_checks vide, rien ne l'adosse).
     from ..vocabulaires import FIABILITE_LIBELLES as _FIAB
+    # CIRCUIT-6 lot 7 (fuite n°1) — le manifeste devient PAR PARCELLE : la participation
+    # cascade (même batterie partout → liste quasi identique) ne suffit plus ; une source de
+    # type parcelle/commune ne reste que si elle a RÉELLEMENT une valeur pour CETTE parcelle
+    # (moteur de remplissage G2, jointures rapides ; les couches carte et les API en direct
+    # restent — la cascade a bien participé).
+    try:
+        from ..circuit_etats import NOM_VERS_SLUG as _nvs_m
+        from ..registre import remplissage as _rempl_m
+        _p = db.execute(text("SELECT idu, commune FROM parcels WHERE id = :pid"),
+                        {"pid": parcel_id}).first()
+        if _p:
+            _temoin = [(_p[0], _p[0][:5], _p[1] or "")]
+            _gardees = []
+            for r in rows:
+                _slug = _nvs_m.get(r["name"])
+                if _slug:
+                    _m = _rempl_m.remplissage_source(db, _slug, _temoin, sans_carte=True)
+                    if _m["type"] in ("parcelle", "commune") and not _m["remplis"]:
+                        continue        # branchée mais RIEN pour cette parcelle : pas au manifeste
+                _gardees.append(r)
+            rows = _gardees
+    except Exception:  # noqa: BLE001 — le manifeste ne casse jamais la fiche
+        pass
     out = []
     import re as _re_m
     for r in rows:

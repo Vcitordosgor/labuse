@@ -237,3 +237,57 @@ def test_g6_les_deux_sens_sont_calcules():
     assert "dvf" in lect and any(f.startswith("api/") or f.endswith(".py") for f in lect["dvf"])
     dette = CG.lecteurs_non_declares()
     assert isinstance(dette, list)  # la dette fine est mesurée, affichée, jamais tue
+
+
+# ── G7 — la même donnée partout (+ les fuites du lot 7) ────────────────────────────────
+def test_g7_prouve_casse_sonde_vieille(monkeypatch):
+    """Sonde plus vieille que 48 h → casse (vécu : dernier passage 09/09, 3 jours)."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
+    if not url:
+        pytest.skip("base réelle requise")
+    monkeypatch.setattr(CG, "G7_AGE_MAX_H", 0)   # tout passage devient « trop vieux »
+    with sessionmaker(bind=create_engine(url))() as s:
+        r = CG.verrou_g7(s)
+        assert r.verdict == "casse" and any("pas tourné" in d for d in r.details)
+
+
+@pytest.mark.local
+def test_g7_vert_apres_sonde():
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
+    with sessionmaker(bind=create_engine(url))() as s:
+        r = CG.verrou_g7(s)
+        assert r.verdict == "ok", (r.preuve, r.details[:3])
+        assert "affichables" in r.preuve
+
+
+@pytest.mark.local
+def test_fuite2_hauteur_lidar_creditee():
+    """La hauteur servie vient de l'ÉGOUT LiDAR mesuré (4,1 m sur le témoin Saint-Denis),
+    plus du faîtage BD TOPO (8,8 m) — et le registre crédite lidar_hd_mnh."""
+    from sqlalchemy import create_engine, text
+    from sqlalchemy.orm import sessionmaker
+    from labuse.faisabilite.potentiel import _hauteur_bati_m
+    from labuse.registre.donnees import CHIFFRES
+    from labuse.registre.tables import RESERVOIR_TABLES
+    assert "lidar_hd_mnh" in CHIFFRES["hauteur_bati_m"].reservoirs
+    assert "batiment_hauteur_lidar" in RESERVOIR_TABLES["lidar_hd_mnh"].tables
+    url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
+    with sessionmaker(bind=create_engine(url))() as s:
+        pid = s.execute(text("SELECT id FROM parcels WHERE idu='97411000CD0083'")).scalar()
+        h = _hauteur_bati_m(s, pid)
+        assert h is not None and h < 8.0, f"attendu l'égout LiDAR (≈4,1), obtenu {h}"
+
+
+@pytest.mark.local
+def test_fuite2_lidar_plus_quasi_vide():
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from labuse.registre import remplissage as R
+    url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
+    with sessionmaker(bind=create_engine(url))() as s:
+        m = R.remplissage_source(s, "lidar_hd_mnh", R.temoins_du_jour(s))
+        assert m["quasi_vide"] is False and m["remplis"] >= 6

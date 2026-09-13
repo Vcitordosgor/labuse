@@ -1047,7 +1047,8 @@ DONNEES: dict[str, Donnee] = {
     "hauteur restante sous la règle de hauteur à l'égout de la zone (moteur commun, EXPORTS-1 3.2)",
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:surelevation",
-    reservoirs=("bd_topo", "gpu_plu_api_carto",), portee="run"),
+    # CIRCUIT-6 lot 7 (fuite n°2) — la base bâtie vient du LiDAR (égout mesuré) quand il couvre.
+    reservoirs=("lidar_hd_mnh", "bd_topo", "gpu_plu_api_carto",), portee="run"),
  "part_logements_egout_pct": C("Logements raccordés à l'égout", "%", "parcelle",
     "part des logements raccordés au tout-à-l'égout (INSEE RP2022 EGOUL, maille IRIS, repli "
     "commune) — le TAUX, jamais un verdict",
@@ -1217,10 +1218,12 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/bati.py:le_bien_block (BD TOPO au sol ; CoSIA parcel_bati_revele en note)",
     reservoirs=("bd_topo", "cosia",), portee="live"),
  "hauteur_bati_m": C("Hauteur du bâti", "m", "parcelle",
-    "hauteur du bâti principal (BD TOPO, max des bâtiments intersectants)",
+    "hauteur du bâti principal — ÉGOUT LiDAR mesuré d'abord (batiment_hauteur_lidar), "
+    "repli BD TOPO (max des bâtiments intersectants)",
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:_hauteur_bati_m",
-    reservoirs=("bd_topo",), portee="live"),
+    # CIRCUIT-6 lot 7 (fuite n°2) — la hauteur LiDAR est créditée à SA source.
+    reservoirs=("lidar_hd_mnh", "bd_topo",), portee="live"),
  "n_batiments": C("Nombre de bâtiments", "nombre", "parcelle",
     "compte des bâtiments de la parcelle (BD TOPO, intersection ≥ 10 m²)",
     moteur="bati_revele", calcul="moteur",

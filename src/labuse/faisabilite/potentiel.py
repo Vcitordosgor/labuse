@@ -18,8 +18,19 @@ SURELEVATION_MARGE_MIN_M = 2.8
 
 
 def _hauteur_bati_m(session: Session, parcel_id: int) -> float | None:
-    """Hauteur du bâti existant (BD TOPO, max des bâtiments intersectants) — même source que
-    `residuel._niveaux_existants`."""
+    """Hauteur du bâti existant. CIRCUIT-6 lot 7 (fuite n°2) — la hauteur LiDAR MESURÉE
+    d'abord (batiment_hauteur_lidar : ÉGOUT par parcelle, batch de dalles achevé, ~70 % des
+    parcelles — créditée à la source LiDAR, plus à BD TOPO) ; repli BD TOPO (attrs->hauteur,
+    max des bâtiments intersectants — même source que `residuel._niveaux_existants`).
+    L'égout mesuré est la bonne base pour la règle de surélévation (à l'égout)."""
+    if session.execute(text(
+            "SELECT to_regclass('batiment_hauteur_lidar')")).scalar() is not None:
+        h = session.execute(text(
+            """SELECT max(b.egout_m) FROM batiment_hauteur_lidar b
+               JOIN parcels p ON p.id = :pid AND left(b.idu, 14) = p.idu
+               WHERE b.egout_m IS NOT NULL"""), {"pid": parcel_id}).scalar()
+        if h is not None:
+            return float(h)
     h = session.execute(text(
         """SELECT max(NULLIF(b.attrs->>'hauteur','')::float)
            FROM spatial_layers b JOIN parcels p ON p.id = :pid

@@ -4449,13 +4449,18 @@ def circuit_verrous_cmd(
     complet: bool = typer.Option(False, "--complet", help="Jouer TOUS les verrous même après un cassé."),
     sans_journal: bool = typer.Option(False, "--sans-journal", help="Ne pas écrire au journal du circuit."),
 ) -> None:
-    """CIRCUIT-5 lot 6.1 — joue TOUS les verrous (lots 1 à 5), une ligne par verrou (phrase,
-    verdict, preuve), sort en erreur au premier cassé. Jouée par pytest (marque `verrous`),
-    par la sonde de nuit, et par deploy.sh qui refuse de déployer si un verrou casse."""
-    from . import circuit_journal, circuit_verrous
+    """CIRCUIT-5 lot 6.1 + CIRCUIT-6 lot 8 — joue les SEIZE verrous (lots 1 à 5) PUIS les
+    SEPT garanties (G1…G7), une ligne chacun (phrase, verdict, preuve), sort en erreur au
+    premier cassé. Jouée par pytest (marque `verrous`), par la sonde de nuit, et par
+    deploy.sh qui refuse de déployer si un verrou OU une garantie casse."""
+    from . import circuit_garanties, circuit_journal, circuit_verrous
 
     with session_scope() as s:
         resultats = circuit_verrous.jouer_tous(s, arret_premier=not complet)
+        # CIRCUIT-6 lot 8 — les SEPT GARANTIES se jouent avec les seize verrous : même
+        # commande, même journal, même porte deploy.sh (qui appelle cette commande).
+        if complet or not any(r.verdict == "casse" for r in resultats):
+            resultats += circuit_garanties.jouer_garanties(s)
         casses = [r for r in resultats if r.verdict == "casse"]
         a_decider = [r for r in resultats if r.verdict == "a_decider"]
         for r in resultats:
