@@ -2028,6 +2028,13 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
                     rv["invisible"] = True
             if _slug in _score:
                 rv["score"] = _score[_slug]
+        # CIRCUIT-6 lot 6 (G6) — le sens source → app : les fichiers lecteurs, calculés.
+        from ..circuit_garanties import lecteurs_par_slug as _lps
+        _lect = _lps()
+        for rv in reservoirs:
+            fs = _lect.get(_nvs.get(rv["nom"], ""))
+            if fs:
+                rv["lecteurs"] = fs
     except Exception:  # noqa: BLE001 — la page ne casse jamais sur la mesure
         pass
     return reservoirs
@@ -2093,8 +2100,13 @@ def admin_circuit(request: Request) -> dict:
                       "domaine": list(ch.domaine) if ch.domaine else None,
                       "reservoirs": list(ch.reservoirs), "en_attente": ch.en_attente}
                 for cid, ch in CHIFFRES.items()}
+    # CIRCUIT-6 lot 6 (G6) — les DEUX SENS calculés : chaque robinet porte ses SOURCES
+    # (union des réservoirs de ses chiffres), chaque réservoir portera ses LECTEURS (plus bas).
+    from ..registre import CHIFFRES as _CH_G6
     robinets = [{"id": rid, "categorie": r.categorie, "nom": r.nom, "parent": r.parent,
-                 "route": r.route, "chiffres": list(r.chiffres), "hors_registre": r.hors_registre}
+                 "route": r.route, "chiffres": list(r.chiffres), "hors_registre": r.hors_registre,
+                 "sources": sorted({s for cid in r.chiffres
+                                    for s in getattr(_CH_G6.get(cid), "reservoirs", ())})}
                 for rid, r in ROBINETS.items()]
 
     # ── CIRCUIT-P (lot 1) — familles/catégories d'affichage, état unique (couleur+libellé),

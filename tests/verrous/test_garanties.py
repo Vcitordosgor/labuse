@@ -214,3 +214,26 @@ def test_g5_vert_sur_la_base_reelle():
         r = CG.verrou_g5(s)
         assert r.verdict == "ok", (r.preuve, r.details[:5])
         assert "jamais vérifié" in r.preuve and "ROUGE" in r.preuve
+
+
+# ── G6 — quelle donnée alimente quoi ───────────────────────────────────────────────────
+def test_g6_prouve_casse_reservoir_muet(monkeypatch):
+    """Un fichier app qui lit la table d'un réservoir MUET (0 chiffre) → casse. On rejoue le
+    trou vécu (mobpro_commune lue par zone.py, parcel_anc à réservoir muet) sur un cas construit."""
+    monkeypatch.setattr(CG, "lecteurs_du_code",
+                        lambda: {"mobpro_commune": {"zone.py"}})
+    pbs = CG.analyse_g6()
+    assert pbs and "MUET" in pbs[0] and "mobpro" in pbs[0]
+
+
+def test_g6_vert_apres_raccords():
+    r = CG.verrou_g6()
+    assert r.verdict == "ok", (r.preuve, r.details[:5])
+    assert "0 lecture(s) de réservoir muet" in r.preuve
+
+
+def test_g6_les_deux_sens_sont_calcules():
+    lect = CG.lecteurs_par_slug()
+    assert "dvf" in lect and any(f.startswith("api/") or f.endswith(".py") for f in lect["dvf"])
+    dette = CG.lecteurs_non_declares()
+    assert isinstance(dette, list)  # la dette fine est mesurée, affichée, jamais tue

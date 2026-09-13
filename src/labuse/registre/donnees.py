@@ -1055,7 +1055,10 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/anc_service.py:statut_anc (producteur nommé, délégation)",
     # CIRCUIT-5b lot 2 — le moteur ANC lit AUSSI la chronique de l'Office de l'eau
     # (anc_office_eau_commune, communes 100 % ANC servies depuis M95) : office_eau_chroniques rattaché.
-    reservoirs=("insee_rp2022_egoul", "office_eau_chroniques",), portee="live"),
+    # CIRCUIT-6 lot 6 (G6) — et le zonage SIG d'assainissement (parcel_anc, 4/24 communes GPU) :
+    # gpu_zonage_assainissement était un réservoir MUET lu par anc_service (attrapé par G6).
+    reservoirs=("insee_rp2022_egoul", "office_eau_chroniques", "gpu_zonage_assainissement",),
+    portee="live"),
  "ventes_retenues_n": C("Ventes retenues (nuage)", "nombre", "parcelle",
     "ventes DVF retenues par le filtre de comparables (couverture VISIBLE — EXPORTS-1 lot 2)",
     moteur="marche_service", calcul="moteur",

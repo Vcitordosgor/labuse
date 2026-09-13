@@ -395,10 +395,144 @@ def verrou_g5(db: Session) -> ResultatVerrou:
     return ResultatVerrou("G5", phrase, "casse" if pbs else "ok", preuve, pbs[:10])
 
 
+# ── G6 — quelle donnée alimente quoi (le graphe, dans les DEUX sens) ───────────────────
+
+#: répertoires de src/labuse dont les fichiers ÉCRIVENT ou outillent les réservoirs — pas des
+#: lecteurs d'affichage (l'ingestion remplit, la machinerie contrôle) : exemptés du sens inverse.
+_REPERTOIRES_EXEMPTS_G6 = ("ingestion/", "connectors/", "registre/", "filtres/", "scoring/",
+                           "migrations/")
+_FICHIERS_EXEMPTS_G6 = ("circuit_verrous.py", "circuit_garanties.py", "circuit_etats.py",
+                        "sonde_circuit.py", "sentinelle.py", "sources_catalog.py",
+                        "etats_sources.py", "flux.py", "cli.py", "jobs_impl.py", "jobs.py",
+                        "models.py", "db.py", "referentiel_communes.py", "bascule_flux.py",
+                        "bascule_gardes.py", "manifeste.py", "runs.py")
+
+#: lecteurs CONNUS et ASSUMÉS hors du champ `fonction` du registre — chaque entrée dit
+#: pourquoi (déclaration lisible, même doctrine que ACTIONS_PROPOSEES pour les orphelines).
+#: Vide au départ : le verrou G6 dit ce qui manque, et chaque ajout ici est un arbitrage écrit.
+LECTEURS_ASSUMES_G6: dict[str, str] = {}
+
+
+from functools import lru_cache
+
+
+@lru_cache(maxsize=1)
+def _lecteurs_du_code_cache() -> dict[str, frozenset[str]]:
+    return {t: frozenset(f) for t, f in _lecteurs_du_code_scan().items()}
+
+
+def lecteurs_du_code() -> dict[str, set[str]]:
+    """table de réservoir → fichiers qui la citent (scan statique, mis en cache : le code ne
+    change pas pendant la vie du processus)."""
+    return {t: set(f) for t, f in _lecteurs_du_code_cache().items()}
+
+
+def lecteurs_par_slug() -> dict[str, list[str]]:
+    """slug de réservoir → fichiers de src/labuse qui lisent une de ses tables (la page de
+    détail d'une source affiche SES lecteurs — le sens source → app, calculé)."""
+    from .registre.tables import reservoirs_de
+    out: dict[str, set[str]] = {}
+    for table, fichiers in lecteurs_du_code().items():
+        for s in reservoirs_de(table):
+            out.setdefault(s, set()).update(fichiers)
+    return {s: sorted(f) for s, f in out.items()}
+
+
+def _lecteurs_du_code_scan() -> dict[str, set[str]]:
+    """table de réservoir → fichiers de src/labuse qui la citent (FROM/JOIN/UPDATE…)."""
+    from pathlib import Path
+
+    from .circuit_verrous import tables_citees
+    from .registre.tables import RESERVOIR_TABLES
+    racine = Path(__file__).parent
+    cibles = {t for rt in RESERVOIR_TABLES.values() for t in rt.tables if t != "spatial_layers"}
+    out: dict[str, set[str]] = {t: set() for t in cibles}
+    for f in racine.rglob("*.py"):
+        rel = f.relative_to(racine).as_posix()
+        for t in tables_citees(f.read_text(encoding="utf-8")) & cibles:
+            out[t].add(rel)
+    return out
+
+
+def _fichiers_declares_par_slug() -> dict[str, set[str]]:
+    """slug → fichiers nommés par le champ `fonction` des chiffres qui le lisent."""
+    import re as _re
+
+    from .registre.donnees import DONNEES
+    out: dict[str, set[str]] = {}
+    for d in DONNEES.values():
+        fichiers = set(_re.findall(r"src/labuse/([\w/]+\.py)", d.fonction or ""))
+        for slug in d.reservoirs:
+            out.setdefault(slug, set()).update(fichiers)
+    return out
+
+
+def lecteurs_non_declares() -> list[str]:
+    """L'INDEX de la dette fine : fichiers qui lisent une table de réservoir sans être le
+    `fonction` d'un chiffre de ce réservoir (ni écrivain/machinerie/assumé). AFFICHÉ sur la
+    page de détail de chaque source (les deux sens, calculés) — le raccord fichier par
+    fichier est un mandat à part (206 lignes mesurées le 13/09/2026), PAS ce verrou."""
+    from .registre.tables import reservoirs_de
+    declares = _fichiers_declares_par_slug()
+    pbs: list[str] = []
+    for table, fichiers in sorted(lecteurs_du_code().items()):
+        slugs = reservoirs_de(table)
+        ok = set().union(*(declares.get(s, set()) for s in slugs)) if slugs else set()
+        for f in sorted(fichiers):
+            if f.startswith(_REPERTOIRES_EXEMPTS_G6) or f in _FICHIERS_EXEMPTS_G6:
+                continue
+            if f in ok or f in LECTEURS_ASSUMES_G6:
+                continue
+            pbs.append(f"{table} ({'/'.join(slugs) or '?'}) lue par {f}")
+    return pbs
+
+
+def analyse_g6() -> list[str]:
+    """Le verrou EXACT : (a) aucune table de réservoir lue par l'app alors que son réservoir
+    est MUET (zéro chiffre → provenance impossible — le trou CatNat/Taxe/RTAA d'avant lot 0) ;
+    (b) aucune table lue d'un réservoir dont la source est hors du pont NOM_VERS_SLUG."""
+    from .circuit_etats import NOM_VERS_SLUG
+    from .registre.donnees import DONNEES
+    from .registre.tables import reservoirs_de
+    slugs_avec_chiffre = {s for d in DONNEES.values() for s in d.reservoirs}
+    slugs_pont = set(NOM_VERS_SLUG.values())
+    pbs: list[str] = []
+    for table, fichiers in sorted(lecteurs_du_code().items()):
+        slugs = reservoirs_de(table)
+        lecteurs_app = [f for f in sorted(fichiers)
+                        if not f.startswith(_REPERTOIRES_EXEMPTS_G6)
+                        and f not in _FICHIERS_EXEMPTS_G6]
+        if not lecteurs_app:
+            continue
+        if not slugs:
+            pbs.append(f"{table} lue par {lecteurs_app[0]} — table de réservoir sans slug")
+            continue
+        if not any(s in slugs_avec_chiffre for s in slugs):
+            pbs.append(f"{table} ({'/'.join(slugs)}) lue par {', '.join(lecteurs_app[:3])} — "
+                       f"réservoir MUET (aucun chiffre au registre : provenance impossible)")
+        for s in slugs:
+            if s not in slugs_pont:
+                pbs.append(f"{table} : slug {s} hors du pont NOM_VERS_SLUG")
+    return pbs
+
+
+def verrou_g6(db: Session | None = None) -> ResultatVerrou:
+    phrase = ("Depuis une source je vois tout ce qu'elle alimente, depuis un endroit de l'app "
+              "toutes les sources qu'il lit — et aucune table de réservoir n'est lue par l'app "
+              "avec un réservoir MUET (zéro chiffre : provenance impossible).")
+    pbs = analyse_g6()
+    n_tables = len(lecteurs_du_code())
+    dette = len(lecteurs_non_declares())
+    preuve = (f"{n_tables} tables de réservoirs au crible ; {len(pbs)} lecture(s) de réservoir "
+              f"muet ; dette fine (lecteurs non déclarés, affichée par source) : {dette}")
+    return ResultatVerrou("G6", phrase, "casse" if pbs else "ok", preuve, pbs[:10])
+
+
 # ── l'assembleur (rempli garantie par garantie, lots 1→7) ─────────────────────────────
 
 def jouer_garanties(db: Session) -> list[ResultatVerrou]:
     """Joue les garanties implémentées, dans l'ordre. Le Résumé de la page Circuit et la CLI
     `labuse circuit verrous` les affichent avec les 16 verrous de CIRCUIT-5 (lot 8)."""
-    jouees = [verrou_g1(db), verrou_g2(db), verrou_g3(db), verrou_g4(db), verrou_g5(db)]
+    jouees = [verrou_g1(db), verrou_g2(db), verrou_g3(db), verrou_g4(db), verrou_g5(db),
+              verrou_g6(db)]
     return jouees

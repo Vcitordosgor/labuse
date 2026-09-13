@@ -219,27 +219,9 @@ def population_zone(session: Session, geom_geojson: dict) -> dict:
     }
 
 
-def emplois_communes(session: Session, geom_geojson: dict) -> list[dict]:
-    """MOBPRO — « N actifs y travaillent », maille COMMUNE (dit comme tel). On identifie les communes
-    dont une parcelle a son centroïde dans la zone, puis on joint l'agrégat d'emplois. Pas de prorata :
-    le chiffre est celui de la commune entière, jamais une fausse précision zonale."""
-    communes = session.execute(text(
-        f"""SELECT DISTINCT p.commune
-            FROM parcels p
-            WHERE ST_Contains({_zone2975()}, ST_Transform(p.centroid, 2975))"""),
-        {"zone": json.dumps(geom_geojson)}).scalars().all()
-    out = []
-    for commune in communes:
-        r = session.execute(text(
-            """SELECT m.emplois_lieu_travail AS e, m.millesime
-               FROM commune_insee_logement c JOIN mobpro_commune m ON m.insee = c.insee
-               WHERE c.commune = :c LIMIT 1"""), {"c": commune}).mappings().first()
-        if r and r["e"]:
-            out.append({"commune": commune, "actifs_lieu_travail": int(r["e"]),
-                        "millesime": r["millesime"] or "MOBPRO (INSEE)"})
-    out.sort(key=lambda x: -x["actifs_lieu_travail"])
-    return out
-
+# CIRCUIT-6 lot 6 (G6) — `emplois_communes` (MOBPRO) SUPPRIMÉE : source retirée le
+# 06/09/2026, lecteur sans appelant (code mort vérifié CIRCUIT-5b) — le verrou G6 a
+# attrapé la lecture résiduelle de mobpro_commune ; on cesse de lire, la table reste.
 
 #: tranches d'effectif SIRENE (code INSEE → bornes de la fourchette de salariés). 53 = « 10 000+ »
 #: (borne haute ouverte). 'NN' / null = non renseigné (compté à part, jamais additionné).
