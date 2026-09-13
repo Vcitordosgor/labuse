@@ -5311,6 +5311,9 @@ def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_d
 #: kinds de couches carte exposées au front (Brique 1) — whitelist stricte.
 #: M6.1 item 2 : + cinquante_pas (réserve des 50 pas géométriques, 163 polygones île).
 _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "cinquante_pas",
+                    # REPARATIONS-1 lot 5 — Artificialisation (OCS GE native 974) : artificialisé
+                    # 2022 dissous (pièces ≥ 2 500 m²) + évolution officielle 2017→2022.
+                    "artificialisation",
                     # M106 P1 : aléas DEAL séparés (inondation / mouvement_terrain en subtype) —
                     # le zonage PPR réglementaire reste agrégé (document multirisque insécable).
                     "georisque_alea",

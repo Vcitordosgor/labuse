@@ -166,6 +166,7 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'casias', label: 'Anciens sites industriels (CASIAS)' },
   { key: 'bruit_route', label: 'Classement sonore (bruit routier)' },
   { key: 'bruit_carte', label: 'Cartes de bruit — dépassements' },
+  { key: 'artificialisation', label: 'Artificialisation (OCS GE)' },
 ]
 
 // M56-C · DA §5 — les couches groupées par FAMILLES silencieuses (une .gcard par famille,
@@ -184,7 +185,7 @@ const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   { famille: 'Repères', keys: ['limites', 'communes'] },
   { famille: 'Urbanisme', keys: ['zonage_parcelle', 'zonage', 'ebc', 'er', 'dpu', 'sup'] },
   { famille: 'Risques et nuisances', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'peb', 'bruit_route', 'bruit_carte', 'sis', 'casias'] },
-  { famille: 'Nature et protections', keys: ['parc', 'znieff', 'enp', 'zone_humide'] },
+  { famille: 'Nature et protections', keys: ['parc', 'znieff', 'enp', 'zone_humide', 'artificialisation'] },
   { famille: 'Domanialité', keys: ['dpf', 'cinquante_pas'] },
   { famille: 'Usage du sol', keys: ['rpg'] },
   { famille: 'Réseaux, mobilité et équipements', keys: ['transport', 'tcsp', 'axes', 'lignes_ht', 'equipements_bpe', 'equipements'] },

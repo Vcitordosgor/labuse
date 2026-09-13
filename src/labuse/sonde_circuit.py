@@ -515,6 +515,11 @@ SONDE_COUVRE: dict[str, tuple[str, ...]] = {
 #: raison (un couple silencieux = verrou V5c cassé, jamais un « non couvert »). Raison par
 #: chiffre (elle vaut pour tous ses couples non couverts).
 NON_SONDES: dict[str, str] = {
+    # REPARATIONS-1 lot 5 — la fiche (Le bien) et la couche carte lisent le MÊME précalcul
+    # parcel_ocsge (une table, un producteur ingestion/ocsge.py) ; la couche peint les polygones
+    # sources — aucun recalcul concurrent, la comparaison robinet à robinet est sans objet.
+    "part_artificialisee_pct": "fiche + couche lisent le MÊME précalcul parcel_ocsge "
+                               "(ingestion/ocsge.py) — un seul chemin machine, aucun recalcul",
     # SOURCES-1 lot 6 — le quartier IRIS est servi fiche + étude de zone par le MÊME module
     # (ingestion/iris_rp.py : stats_iris / overlay zone) — un seul producteur, passe-plat de
     # la table iris_rp ; la comparaison robinet à robinet est sans objet (aucun recalcul).

@@ -145,3 +145,67 @@ Les fiches d'audit disaient toutes « champs non pris : non vérifié » : l'ins
 ### Tests et verrous du lot 3
 
 `tests/test_reparations1_lot3.py` (invisible client, liste fermée, V2b exige le partenaire, colonne servie) ; 3 tests existants mis au nouveau contrat (liste fermée G1, décisions lot 7 remplacées par le mandat). tsc 0, vitest 207/207. **Verrous : 23/23 « tout va bien »** (V2a 92=92=92, G1 116 = 92 + 24).
+
+---
+
+## LOT 4 — RNB, l'identité des bâtiments
+
+### L'ingestion (API officielle, jamais de scraping)
+
+- **Endpoint réel** : `https://rnb-api.beta.gouv.fr/api/alpha/buildings/?insee_code=<insee>&limit=100` (pagination par curseur), une passe par commune — **filtrage 974 au plus tôt, côté API**. Module `src/labuse/ingestion/rnb.py`, CLI `labuse rnb --ingerer/--rattacher`.
+- **Licence (textuelle)** : Licence Ouverte 2.0 (Etalab) — attribution « RNB — Référentiel National des Bâtiments » (beta.gouv / ADEME / IGN / DGALN). Réutilisation libre, y compris commerciale, avec mention.
+- **CRS inspecté, pas supposé** : l'API sert du GeoJSON WGS84 et le flux diff écrit `SRID=4326` explicitement (constaté sur la réponse du 13/09/2026) → stocké en 4326 + `shape_2975` (RGR92/UTM 40S) pour le rattachement métrique.
+- **Volume 974 / temps** : **414 081 bâtiments**, 24/24 communes, **~20 min** (pagination 100/page). Millésime : flux continu (pas de millésime nommé — ingéré par commune le 13/09/2026).
+- **Ce qu'on prend** : `rnb_id`, statut, actif, point + emprise, adresses BAN liées, `ext_ids` BD TOPO (traçabilité). **Rien d'énergétique**, rien que BD TOPO ou le LiDAR servent déjà.
+
+### Le rattachement — taux mesurés, non-rattachés par cause
+
+Rattachement **spatial** (recouvrement d'emprises en 2975 — nos bâtiments BD TOPO locaux ne stockent pas leur cleabs ; l'`ext_id` RNB est gardé pour une passe exacte future) :
+
+| Cible | Total | Rattachés | Taux | Non-rattachés, par cause |
+|---|---|---|---|---|
+| Bâtiments BD TOPO servis (`spatial_layers` kind=batiment) | 817 506 | 607 532 | **74,3 %** | 166 851 recouvrement < 30 % · 43 123 aucun RNB intersectant |
+| Hauteurs LiDAR (`batiment_hauteur_lidar`, par parcelle) | 303 452 | 299 182 | **98,6 %** | 4 270 aucun bâti RNB sur la parcelle |
+
+Le taux BD TOPO reflète l'écart de millésimes (notre BD TOPO WFS vs les emprises RNB) et les doublons frontaliers par commune — chaque non-rattaché porte sa cause en table (`rnb_rattachement_bdtopo`), rien n'est silencieux. **Trois sources parlent désormais du même bâtiment.**
+
+### Où ça se voit, et le registre
+
+- **Fiche parcelle « Ce qu'il y a dessus »** (tiroir Le bien) : bloc « Identifiant national du bâtiment (RNB) » — un identifiant discret par bâtiment, lien officiel `rnb.beta.gouv.fr/batiments/<id>`.
+- **Registre complet** : source au catalogue (118ᵉ, Licence Ouverte, vitrine), réservoir `rnb` (tables déclarées), donnée `rnb_batiments_liste` (robinet `fiche_parcelle_le_bien`), **sentinelle** témoin double (2 bâtiments 974 figés ; le canal incrémental réel est `GET /buildings/diff/?since=` — documenté et outillé `version_diff()`), **filtre** (volume, géométries, 24 communes, inactifs jamais rattachés), G2 (remplissage mesuré par insee).
+- G1 : la phrase du verrou ne grave plus « 116 » — elle porte le total mesuré. **Au passage, durci** : les arbitrages de doublons G1 vivaient en NOTES EN BASE seulement — un re-seed les écrasait (constaté : G1 recassé après seed). Ils sont désormais en CODE (`ARBITRAGES_DOUBLONS`, appliqués par `seed()`) — durable.
+
+`tests/test_reparations1_lot4.py` (registre complet, cause écrite, rattachement spatial ≥ seuil, tiroir jamais cassé).
+
+---
+
+## LOT 5 — OCS GE, l'usage du sol et l'artificialisation
+
+### Le téléchargement (IGN officiel) et les millésimes
+
+- **Endpoint réel** : catalogue `https://data.geopf.fr/telechargement/resource/OCSGE` — produits départementaux D974 : **DEUX MILLÉSIMES** publiés (`OCS-GE_2-0__GPKG_RGR92UTM40S_D974_2017-01-01` et `…2022-01-01`, livraisons 2025-04) + le produit **DIFF artificialisation officiel** (`OCS-GE-ARTIFICIALISATION_2-0_DIFF-2017-2022_…D974_2025-09-16`). Archives 7z (73 + 77 Mo), md5 publiés.
+- **Licence (textuelle)** : Licence Ouverte 2.0 (Etalab) — attribution « © IGN — OCS GE ».
+- **CRS inspecté** : `gpkg_spatial_ref_sys` des trois GPKG déclare **2975 « RGR92 / UTM zone 40S »** (lu dans les fichiers, garde d'ingestion qui REFUSE un autre SRID) — chargé tel quel.
+- **Volumes 974 / temps** : 2017 : **195 068** polygones · 2022 : **196 735** · évolution officielle : **10 633 zones** — ingestion **40 s** (`ingestion/ocsge.py`).
+
+### L'artificialisation : la méthode officielle, dite
+
+Le flag par polygone suit la **méthode du portail de l'artificialisation** (fiche indicateur, décret n° 2023-1096, étape 1 — affectation couverture × usage : anthropisé CS1.1.* sauf minéraux/extraction ; végétation non ligneuse CS2.2.* à usage résidentiel/mixte/secondaire/tertiaire/transport/transition/abandonné). Les étapes 2-3 (regroupement + seuils d'enclaves 2 500 m²) ne sont pas rejouées par parcelle — **dit à l'écran** ; le **changement** servi vient du produit DIFF officiel IGN (qui applique tout). **OCS GE ne nourrit pas le score** (affichage seul, conforme au mandat).
+
+### Par parcelle, précalculé — et où ça se voit
+
+- `parcel_ocsge` : part artificialisée, couverture + usage dominants (par aire), changement 2017→2022 (m² artificialisés / renaturés du produit officiel) — précalcul ensembliste à l'ingestion.
+- **Couche carte « Artificialisation (OCS GE) »** : désactivée par défaut, rampe DISTINCTE (violine/rouge/vert), trois classes en légende — artificialisé 2022 dissous (pièces ≥ 2 500 m², le seuil réglementaire, dit dans le « i »), artificialisé 2017→2022, renaturé 2017→2022.
+- **Fiche parcelle** : une ligne « Sol artificialisé : N % — d'après OCS GE 2022 » (donnée d'îlot, jamais la précision cadastrale).
+- **Fiche commune / Étude de zone (ZAN)** : l'indicateur ZAN porte désormais, à côté du dérivé Cerema (ENAF), le bloc **OCS GE officiel** par commune (`zan_ocsge_commune` : artif 2017→2022 en ha, renaturé, part artificialisée — sur l'assiette cadastrale, dit). **La pression ZAN a sa source officielle.**
+- **Dossier PDF** : la couche est nommée dans les libellés du Dossier.
+- **L'étiquette qui mentait** : la couche « OCS GE (IGN) » servait BD CARTO V5 — son libellé dit désormais partout « Occupation du sol (BD CARTO V5 — grain grossier) », et la **vraie** OCS GE est une source distincte au catalogue (la 118ᵉ). BD CARTO redevient ce qu'elle est.
+- **Registre** : source, réservoir `ocsge`, données (`part_artificialisee_pct`, `usage_sol_dominant`, `zan_evolution_commune`), robinets (le bien, couche, fiche commune ZAN), sentinelle (témoin sur les pages catalogue IGN des deux produits), filtre (deux millésimes pleins, géométries), raison V5c écrite (fiche + couche lisent le même précalcul).
+
+### Les chiffres du précalcul, et les preuves
+
+- `parcel_ocsge` : **431 663 parcelles** calculées en **349 s** (après réécriture : la première version à trois LATERAL tournait encore après 1 h et verrouillait `parcels` — annulée, dit dans le code). **306 145 parcelles majoritairement artificialisées** (≥ 50 %) — cohérent avec la définition du décret (les jardins résidentiels CS2.2.1×US5 sont artificialisés) ; **268 km² artificialisés sur l'assiette cadastrale (~10,7 % de l'île)**.
+- Couche : **1 474 zones artificialisées dissoutes (≥ 2 500 m²) + 10 633 zones d'évolution officielles** ; `geom_simple` matérialisée (leçon RETOURS-14 appliquée : l'endpoint répond en 0,4 s au lieu de bloquer).
+- **Captures** : fiche « Le bien » avec le bloc RNB (identifiant + lien officiel) ET la ligne « Sol artificialisé 100 % — d'après OCS GE 2022 » (`lot45-01-fiche-rnb-ocsge.png`) ; la couche « Artificialisation (OCS GE) » cochée, aplat violine sur la zone urbaine de Saint-Denis (`lot45-02-couche-artificialisation.png`).
+
+`tests/test_reparations1_lot5.py` (matrice du décret, CRS refusé si ≠ 2975, registre complet, fiche jamais cassée). **Verrous après lots 4-5 : 23/23 « tout va bien »** (117 puis 118 sources, G1 à phrase dynamique).
