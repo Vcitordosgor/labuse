@@ -185,6 +185,8 @@ export interface SourceInfo {
   etat_client?: 'a_jour' | 'pas_a_jour'
   publie_le?: string | null
   cadence_mention?: string | null
+  // REPARATIONS-1 lot 3 — la couverture réelle, dite (trou chez nous ou chez le producteur).
+  couverture_note?: string | null
   ingestion_runs: number
   // VUES item 4 : vérification « dernière version publiée » (source_checks) — NULL tant que
   // le mandat d'audit data n'a pas tourné ; la mention ne s'affiche qu'avec cette date

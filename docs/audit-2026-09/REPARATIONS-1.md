@@ -116,3 +116,32 @@ Ce qui suit (tout par le point unique ou corrigé à la surface) :
 ### Tests et verrous du lot 2
 
 `tests/test_reparations1_lot2.py` (intégrité des 224 lectures contre le registre, graphe exact deux sens, palier non servi + réversibilité, phrase ×6,7 jamais ×13,3) ; 2 tests existants mis à jour au nouveau contrat (`test_recette10_backtest`, `test_m137_vocabulaire`) ; vitest **207/207**, tsc 0 ; pytest ciblé 112+50 passed (1 fail pré-existant documenté `test_r5`, fichier non touché — CIRCUIT-3). **Verrous : 23/23 « tout va bien », G6 avec dette 0.**
+
+---
+
+## LOT 3 — Les 24 sources partielles et les 13 en attente de partenariat
+
+### Les 13 « non disponible — partenariat requis »
+
+Nouveau statut de première classe **`partenariat_requis`** (enum + colonne élargie varchar(8)→24, migration idempotente dans `ensure_data_sources_millesime`) :
+
+- **Appliqué aux 13** : les 10 « à demander » (Réunion Express 95, ZPPA 110, SAR 118, assainissement SIG 134, ZAE 135, ZAC 136, OPAH/PIG 137, ORT infra 138, ENS 139, OLL 140) + les 3 sous convention Cerema (Fichiers fonciers 27, LOVAC 141, DV3F 142). Base ET seed (`seed_sources.py`) — un re-seed ne revient pas en arrière.
+- **Invisible client** : hors vitrine par construction (`WHERE_AFFICHEES`) — la page Sources passe de 95 à **92** lignes, LOVAC/DV3F/Fichiers fonciers n'y figurent plus (capture `lot3-01`).
+- **Visible admin** : le détail du compteur liste les 13 avec la raison « **non disponible — partenariat requis** » (capture `lot3-02-admin-partenariat.png`).
+- **Discipliné** : V2b exige le partenaire nommé en note (testé) ; G1 liste fermée étendue ; les notes existantes nomment déjà Région/EPCI/Département/Cerema. **Le courrier et la convention restent le geste de Vic** — rien n'est effacé, tout est conservé en base.
+
+### Les 13 « couverture incomplète » — le trou est chez qui, et l'app le dit
+
+Chaque source instruite (fiche d'audit + base) : verdict **chez nous (5)** — Potentiel foncier Région 15, DINUM 45, Office de l'eau 68, BD ORTHO IRC 69, LiDAR HD 70 — ou **chez le producteur (8)** — SUP 44, assainissement GPU 63 (4 communes sur 24 publient), DPU 107 (4/24 — « l'absence d'un périmètre publié ne veut pas dire pas de DPU »), PEB 108 (Pierrefonds non publié), zones humides 112, SIS 115, CBS 117, ACV/PVD/ORT 128.
+
+**L'app le dit désormais** : nouvelle colonne servie `data_sources.couverture_note`, affichée sur la page Sources client sous chaque ligne (13 notes posées — capture `lot3-01-sources-couverture-dpu.png`). Détail par source : `LOT3-COUVERTURE.md`. Les réingestions « chez nous » NON faites sont écrites avec leur raison : 45/68/69 sont sous **retrait en attente** (mandats C1/C2/C4 — compléter avant l'arbitrage serait contradictoire), 15 attend l'arbitrage du doublon 9↔15 et sa licence, 70 a sa hauteur complète (303 452 parcelles ; le retard réel = verdict de toiture, batch dédié, mandat à part).
+
+### Les 10 « champs manquants » — champ par champ, écrit
+
+Les fiches d'audit disaient toutes « champs non pris : non vérifié » : l'instruction a **sondé les endpoints producteurs en direct** (ODS Région, WFS Géoplateforme, WFS Carmen DEAL) et comparé au schéma en base. **40 champs instruits : 21 utiles (dont 12 faisables en session, 5 mandats, 2 producteur) / 19 inutiles, chacun avec sa raison** — détail par source dans `LOT3-CHAMPS.md`. Trouvaille transverse : le **WFS Carmen DEAL répond** (la sentinelle le disait injoignable) et porte `ms:ENS` — le zonage ENS départemental que la fiche 25 croyait introuvable en open data.
+
+**Non atteint dans ce mandat** (garde son rang dans REPARATIONS.md §E) : les 12 ingestions de champs « session » (chacune = ingérer + déclarer au registre + une place + un `i`) — la priorité du mandat allait aux lots 4 et 5 (« les lots 4 et 5 ingèrent ; ce qui est fait est ce qui compte le plus »). Rien n'est sauté : chaque champ a son verdict écrit.
+
+### Tests et verrous du lot 3
+
+`tests/test_reparations1_lot3.py` (invisible client, liste fermée, V2b exige le partenaire, colonne servie) ; 3 tests existants mis au nouveau contrat (liste fermée G1, décisions lot 7 remplacées par le mandat). tsc 0, vitest 207/207. **Verrous : 23/23 « tout va bien »** (V2a 92=92=92, G1 116 = 92 + 24).

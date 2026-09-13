@@ -65,6 +65,11 @@ class DataSourceStatus(StrEnum):
     # CIRCUIT-5 lot 2 — statuts de PREMIÈRE CLASSE (plus un préfixe de technical_notes) :
     ALIAS = "alias"           # doublon fusionné : `alias_de` pointe la ligne canonique, rien ne se perd
     RETIREE = "retiree"       # morte/essai abandonné : `retiree_le` + `retiree_raison` obligatoires
+    # REPARATIONS-1 lot 3 — « non disponible — partenariat requis » : la donnée existe chez un
+    # producteur qui ne la publie pas en ouvert (Région, EPCI, Département, convention Cerema).
+    # Visible ADMIN (avec le partenaire nommé en note), INVISIBLE client, conservée en base.
+    # Le courrier/la convention reste le geste de Vic.
+    PARTENARIAT = "partenariat_requis"
 
 
 class ReliabilityLevel(StrEnum):

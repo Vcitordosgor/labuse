@@ -62,8 +62,9 @@ def test_g1_statut_hors_liste_fermee_casse(monkeypatch):
     class _Faux:
         def execute(self, *a, **k):
             raise AssertionError("non appelé")
-    # la liste fermée elle-même
-    assert CG.STATUTS_ADMIS == {"connecte", "manuel", "a_faire", "retiree", "alias", "hub"}
+    # la liste fermée elle-même (REPARATIONS-1 lot 3 : + partenariat_requis, hors vitrine client)
+    assert CG.STATUTS_ADMIS == {"connecte", "manuel", "a_faire", "retiree", "alias", "hub",
+                                "partenariat_requis"}
 
 
 @pytest.mark.local

@@ -16,7 +16,8 @@ from .circuit_verrous import ResultatVerrou
 # ── G1 — toutes les sources, une seule fois ────────────────────────────────────────────
 
 #: statuts admis pour une ligne data_sources (liste FERMÉE — un statut inventé casse G1).
-STATUTS_ADMIS = frozenset({"connecte", "manuel", "a_faire", "retiree", "alias", "hub"})
+STATUTS_ADMIS = frozenset({"connecte", "manuel", "a_faire", "retiree", "alias", "hub",
+                           "partenariat_requis"})   # REPARATIONS-1 lot 3
 
 #: paires de sources qui portent le MÊME concept sans partager table/endpoint (détection
 #: par recouvrement impossible) — déclarées ici, l'arbitrage reste exigé comme pour les autres.

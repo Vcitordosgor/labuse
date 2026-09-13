@@ -2756,6 +2756,7 @@ def admin_circuit_compteur(request: Request) -> dict:
                   f"retirée — {row['retiree_raison'] or 'raison en note'}" if statut == "retiree" else
                   "hub (portail, jamais un réservoir)" if statut == "hub" else
                   "chantier nommé (a_faire)" if statut == "a_faire" else
+                  "non disponible — partenariat requis" if statut == "partenariat_requis" else
                   "retirée" if tn.startswith("RETIRÉ") else
                   "doublon" if tn.startswith("DOUBLON") else
                   "dormante (jamais servie)" if tn.startswith("DORMANT") else

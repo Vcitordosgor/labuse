@@ -253,6 +253,11 @@ def analyse_catalogue(rows: list[dict]) -> list[str]:
         elif statut == "a_faire":
             if not (r.get("technical_notes") or "").strip():
                 pbs.append(f"{nom} : a_faire sans chantier nommé (note vide)")
+        elif statut == "partenariat_requis":
+            # REPARATIONS-1 lot 3 — non disponible tant que le partenariat n'est pas signé :
+            # la note DOIT nommer le partenaire (Région, EPCI, Département, Cerema…).
+            if not (r.get("technical_notes") or "").strip():
+                pbs.append(f"{nom} : partenariat_requis sans partenaire nommé (note vide)")
         else:
             pbs.append(f"{nom} : hors vitrine avec un statut de vitrine ({statut or 'vide'}) "
                        "— doublon caché ou note-préfixe sans statut de première classe")

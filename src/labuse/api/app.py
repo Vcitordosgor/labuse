@@ -1010,6 +1010,9 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "rate_limit": s.rate_limit, "last_sync_at": s.last_sync_at,
             "documentation_url": s.documentation_url, "endpoint_url": s.endpoint_url,
             "legal_notes": s.legal_notes, "technical_notes": s.technical_notes,
+            # REPARATIONS-1 lot 3 — la couverture réelle, dite (trou chez nous ou chez le
+            # producteur, communes nommées) : jamais un « connecté » qui laisse croire à l'exhaustif.
+            "couverture_note": s.couverture_note,
             # FIX-SOURCES S6 — la LICENCE (libellé court + lien) est DÉRIVÉE de `legal_notes` (vérité base)
             # côté serveur : plus AUCUNE licence codée en dur au front (l'ancienne carte de 7 noms qui
             # court-circuitait la base a disparu). Le libellé suit les MARQUEURS du texte légal, pas le nom.
