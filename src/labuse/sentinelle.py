@@ -585,8 +585,10 @@ SEED: list[dict] = [
     {"name": "Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/2/datasets/56fd90e8c751df174ac485cb/",
      "selecteur": "last_update"},
+    # SOURCES-3 lot 3 — repointée sur l'édition 2025 (le millésime servi ; sondé 2026-09-14,
+    # last_update 2025-12-11). L'édition 2024 renvoyait explicitement vers la 2025 (ANIL).
     {"name": "Loyers DHUP — carte des loyers (annonces)", "methode": "api",
-     "url": "https://www.data.gouv.fr/api/1/datasets/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024/",
+     "url": "https://www.data.gouv.fr/api/1/datasets/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2025/",
      "selecteur": "last_update"},
     # ── SOURCES-1 lot 6 — le foncier et les gens ──
     {"name": "DFI — documents de filiation informatisés (DGFiP)", "methode": "api",
