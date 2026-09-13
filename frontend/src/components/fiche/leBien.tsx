@@ -21,9 +21,18 @@ export function LeBienSection({ f }: { f: Fiche; idu: string }) {
   const nb = b.nb_batiments
   const toit = b.toit
   const toitServi = !!toit && TOIT_SERVI.has(toit.verdict)
+  // RECETTE-12 C2 — la hauteur MESURÉE (LiDAR HD) remonte dans le RÉSUMÉ REPLIÉ du tiroir « Le bien »
+  // (là où la fiche parle du bâti existant) : Vic la voit SANS ouvrir. Le détail complet (faîtage +
+  // égout + survol) reste dans le tiroir ouvert, à un accordéon de profondeur.
+  const hauteurMesuree = b.hauteur_nature === 'sourcé' && b.hauteur_faitage_m != null
+    ? `faîtage ${b.hauteur_faitage_m} m mesuré (LiDAR HD${b.hauteur_survol ? `, survol ${b.hauteur_survol}` : ''})`
+    : null
+  const contexteBien = hauteurMesuree
+    ? `${b.occupation_label || 'bâti existant'} · ${hauteurMesuree}`
+    : (b.occupation_label || 'bâti existant')
   return (
     <RefDrawer id="le_bien" icon={IC.faisa} name="Le bien"
-      context={b.occupation_label || 'bâti existant'}
+      context={contexteBien}
       value={nb != null && nb > 0
         ? <span className="pill-mint">{nb} bâtiment{nb > 1 ? 's' : ''}</span>
         : <span className="pill-mint">terrain nu</span>}>
