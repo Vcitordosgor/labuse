@@ -53,3 +53,38 @@ Idempotence prouvée : `reclassifier_alea_niveau()` rejoué → **0 zones réali
 ### Noté au passage (traité au lot 1)
 
 La LED du rail admin affiche « Run servi q_v14 » : elle lit `mvt_meta.run_label` (le run des **tuiles**) en l'étiquetant « Run servi » — c'est la même confusion candidat/servi que V3a mesure.
+
+---
+
+## LOT 1 — V3a ne bloque plus un candidat assumé
+
+### Le geste
+
+Nouveau module `src/labuse/circuit_candidat.py` + table `circuit_candidat_assume` (déclarée à la carte des tables, rôle écrit) :
+
+- **`declarer(run_label, par, motif)`** — le marquage explicite. Motif **obligatoire** (on écrit pourquoi). **Journalisé** : geste `candidat` au `circuit_journal` (catégorie « bascule » dans la barre du journal). Idempotent (re-déclarer met à jour le motif).
+- **`retirer(run_label, par)`** — le geste inverse. **Réversible et sans perte** : rien n'est supprimé, la ligne est tamponnée `retire_le`/`retire_par`, l'historique reste, on peut re-déclarer.
+- CLI : `labuse circuit candidat [--assumer X --motif "…" | --retirer X] [--par …]` ; sans option, il montre l'état + l'historique.
+
+### V3a fait la part des choses
+
+`verrou_versions_generations` : quand les tuiles servent un autre run que le manifeste,
+
+- **candidat déclaré et assumé** (la déclaration active porte exactement ce run) → verrou **VERT**, et la preuve **nomme** le candidat : « … ; tuiles du candidat DÉCLARÉ q_v14 (assumé par mandat REPARATIONS-1 le 2026-09-13), manifeste sert q_v11_m137 » ;
+- **génération non déclarée** (le vrai danger) → **rouge**, comme avant, avec le chemin du geste dans le détail (« candidat NON déclaré (labuse circuit candidat --assumer) »). Assumer `q_v14` ne blanchit pas des tuiles `q_v15` : la déclaration est par run (testé).
+
+### deploy.sh accepte ce cas précis — sans chemin de contournement
+
+La porte de `deploy.sh` est inchangée : le code retour de `labuse circuit verrous` (la même commande, le même verdict). Avec la déclaration posée, la porte rend **0** (prouvé : `circuit verrous --par deploy` → « tout va bien », exit 0). Aucun bypass n'a été ajouté à `deploy.sh` : une génération non déclarée continue de refuser le déploiement.
+
+### Exécuté sur la base
+
+`q_v14` déclaré assumé le 13/09 (motif : « Vic refond l'algorithme — le prochain run sera q_v15 ; q_v14 reste en base comme point de comparaison, jamais basculé »). **Le candidat n'est ni purgé ni basculé** — il est en base, nommé, comparable au futur `q_v15`.
+
+### La LED admin cesse de mentir
+
+Le rail admin affichait « Run servi q_v14 » : `admin_pilotage` lisait `mvt_meta.run_label` (le run des **tuiles**) sous l'étiquette « Run servi ». La LED lit désormais `runs.current()` (le manifeste, la vérité de la bascule) — capture : « Run servi q_v11_m137 », « Verrous 16/16 », candidat q_v14 nommé sur le Circuit (`captures/lot1-01-led-et-candidat.png`).
+
+### Tests et verrous
+
+`tests/test_reparations1_lot1.py` (4 tests : non-déclaré rouge, déclaré vert et nommé, déclaration par run, journalisé + réversible) ; `tests/verrous` 99 passed. **Verrous après lot 1 : 23/23 « tout va bien » — V3a compris.**

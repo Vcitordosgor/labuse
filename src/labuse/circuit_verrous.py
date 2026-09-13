@@ -312,7 +312,12 @@ def verrou_versions_generations(db=None, *, schema: set[str] | None = None) -> R
     """V3a — pour chaque table servie d'un réservoir, les seules générations admises dans le
     schéma sont `x`, `x__attente` (échange en cours) et `x__precedente` (retour possible) ;
     et les tuiles servies sont fabriquées pour LE run du manifeste. Un `x__2025`, un
-    `x__essai`, deux millésimes côte à côte = verrou cassé."""
+    `x__essai`, deux millésimes côte à côte = verrou cassé.
+
+    REPARATIONS-1 lot 1 — un run candidat non basculé est un ÉTAT NORMAL, pas une anomalie :
+    si les tuiles servent exactement le run DÉCLARÉ ASSUMÉ (circuit_candidat.declarer — geste
+    journalisé, réversible), le verrou reste vert et NOMME le candidat dans sa preuve. Toute
+    génération NON déclarée (le vrai danger) reste rouge, comme avant."""
     from .registre import tables as T
 
     if schema is None and db is not None:
@@ -320,25 +325,35 @@ def verrou_versions_generations(db=None, *, schema: set[str] | None = None) -> R
     if schema is None:
         return ResultatVerrou("V3a", PHRASES["V3a"], "casse", "injouable sans schéma")
     pbs: list[str] = []
+    mention_candidat = ""
     for base in sorted(T.tables_reservoirs()):
         for rel in schema:
             if rel.startswith(base + "__") and rel not in (base + "__attente", base + "__precedente"):
                 pbs.append(f"{base} : génération inattendue {rel}")
     if db is not None:
         try:
-            from . import runs
+            from . import circuit_candidat, runs
             run_mvt = db.execute(text(
                 "SELECT value FROM mvt_meta WHERE key = 'run_label'")).scalar() \
                 if db.execute(text("SELECT to_regclass('mvt_meta')")).scalar() else None
             run_servi = runs.current()
             if run_mvt and run_servi and run_mvt != run_servi:
-                pbs.append(f"tuiles fabriquées pour {run_mvt}, manifeste sert {run_servi}")
+                assume = circuit_candidat.actif(db)
+                if assume and assume["run_label"] == run_mvt:
+                    mention_candidat = (
+                        f" ; tuiles du candidat DÉCLARÉ {run_mvt} (assumé par "
+                        f"{assume['assume_par']} le {str(assume['assume_le'])[:10]}), "
+                        f"manifeste sert {run_servi}")
+                else:
+                    pbs.append(f"tuiles fabriquées pour {run_mvt}, manifeste sert {run_servi}"
+                               " — candidat NON déclaré (labuse circuit candidat --assumer)")
         except Exception as e:  # noqa: BLE001
             pbs.append(f"pointeurs du manifeste illisibles : {e.__class__.__name__}")
     if pbs:
         return ResultatVerrou("V3a", PHRASES["V3a"], "casse", f"{len(pbs)} génération(s) en trop", pbs)
     return ResultatVerrou("V3a", PHRASES["V3a"], "ok",
-                          f"{len(T.tables_reservoirs())} tables de réservoir, une génération servie chacune")
+                          f"{len(T.tables_reservoirs())} tables de réservoir, une génération servie chacune"
+                          + mention_candidat)
 
 
 def verrou_eau_ancienne(db) -> ResultatVerrou:

@@ -365,6 +365,7 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "registre_robinets": "miroir du registre (robinets)",
     "registre_aretes": "miroir du registre (arêtes)",
     "circuit_journal": "journal du circuit",
+    "circuit_candidat_assume": "candidat assumé (V3a — déclaration journalisée, réversible)",
     "circuit_ecarts": "sonde — fuites",
     "circuit_eau_ancienne": "sonde — eau ancienne",
     "circuit_controles": "sonde — passages",

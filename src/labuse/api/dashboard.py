@@ -370,13 +370,17 @@ def admin_pilotage(request: Request) -> dict:
                 "       count(*) FILTER (WHERE etiquette IS NOT NULL) AS total "
                 "FROM contact_etiquette_log")).mappings().one()
             etiquettes = {"semaine": int(r_et["semaine"]), "total": int(r_et["total"])}
-        # LED rail : run servi + date de la carte (même vérité que /map/tiles/meta)
-        run_label = carte_le = None
+        # LED rail : le run SERVI (le manifeste, la même vérité que la bascule) + date de la
+        # carte. REPARATIONS-1 lot 1 — la LED lisait mvt_meta.run_label (le run des TUILES)
+        # en l'étiquetant « Run servi » : avec des tuiles candidates (q_v14) elle mentait.
+        from .. import runs as _runs
+        run_label, carte_le = _runs.current(), None
         if c.execute(text("SELECT to_regclass('mvt_meta')")).scalar():
             row = c.execute(text(
                 "SELECT value, updated_at FROM mvt_meta WHERE key = 'run_label'")).mappings().first()
             if row:
-                run_label, carte_le = row["value"], row["updated_at"]
+                carte_le = row["updated_at"]
+                run_label = run_label or row["value"]
         # ADMIN-1 (AD5) — deux rangées de tuiles : « À faire » (ambre, un geste attendu) et « Santé »
         # (vert, traction). Tous les chiffres sont LUS d'une table existante (jamais recalculés/inventés).
         # RETOURS-8 (R1) — les deux gestes « sources » dérivent de la LISTE UNIQUE `etats_sources`
