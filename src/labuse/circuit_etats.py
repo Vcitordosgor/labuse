@@ -230,6 +230,11 @@ def etat_reservoir(r: dict) -> tuple[str, str]:
     filtre = r.get("filtre") or {}
     veille = r.get("veille")
     mode = r.get("mode") or "one_shot"
+    # CIRCUIT-6 lot 2 (G2) — branchée mais VIDE (mesurée sur les 12 témoins : type parcelle,
+    # 0 rempli, table quasi vide — signature DPE). AVANT tout autre état : « à jour » ne peut
+    # plus être vrai sur une source vide.
+    if r.get("invisible"):
+        return ("rouge", "INVISIBLE — branchée mais vide")
     if filtre.get("verdict") == "quarantaine":
         return ("rouge", "en quarantaine")
     if r.get("horloge_ment"):                       # détecteur non branché live (accroche)

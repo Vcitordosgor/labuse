@@ -2009,6 +2009,21 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
                         "rappel_jours": r["rappel_jours"]} if r["methode"] else None),
             "filtre": _filtre_du(r["name"]),
         })
+    # ── CIRCUIT-6 lot 2 (G2) — le REMPLISSAGE mesuré sur les 12 témoins du jour : chaque
+    # réservoir porte sa mesure, et une source branchée mais VIDE (signature DPE) porte le
+    # drapeau `invisible` → etat_reservoir la sort ROUGE « INVISIBLE — branchée mais vide ».
+    try:
+        from ..registre import remplissage as _rempl
+        _mesures = _rempl.mesurer_vitrine(c, rapide=True)
+        from ..circuit_etats import NOM_VERS_SLUG as _nvs
+        for rv in reservoirs:
+            m = _mesures.get(_nvs.get(rv["nom"], ""))
+            if m:
+                rv["remplissage"] = {k: m[k] for k in ("type", "remplis", "n_temoins", "quasi_vide")}
+                if m["quasi_vide"]:
+                    rv["invisible"] = True
+    except Exception:  # noqa: BLE001 — la page ne casse jamais sur la mesure
+        pass
     return reservoirs
 
 

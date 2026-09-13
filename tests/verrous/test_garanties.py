@@ -74,3 +74,43 @@ def test_g1_vert_sur_la_base_reelle():
         assert r.verdict == "ok", (r.preuve, r.details[:5])
         cpt = CG.catalogue_compteurs(s)
         assert cpt["total"] == cpt["vitrine"] + cpt["hors_vitrine"]
+
+
+# ── G2 — visible ou pas, je le sais ────────────────────────────────────────────────────
+def test_g2_etat_invisible_sort_rouge():
+    """La branche INVISIBLE de etat_reservoir : avec le drapeau → rouge ; sans → « à jour »
+    (mint) — c'était l'état AVANT le branchement : le mensonge DPE, prouvé ici."""
+    from labuse.circuit_etats import etat_reservoir
+    avec = etat_reservoir({"invisible": True, "mode": "cron_mensuel",
+                           "veille": {"statut": "ok"}, "filtre": {}})
+    sans = etat_reservoir({"mode": "cron_mensuel", "veille": {"statut": "ok"}, "filtre": {}})
+    assert avec == ("rouge", "INVISIBLE — branchée mais vide")
+    assert sans == ("mint", "à jour"), "sans le drapeau, la page disait « à jour » sur une vide"
+
+
+@pytest.mark.local
+def test_g2_signature_dpe_sur_la_base_reelle():
+    """DPE : type parcelle, 0/12, table quasi vide → quasi_vide. RNIC (riche) : 0/12 SANS
+    quasi_vide (les témoins ne sont pas des copros). Cadastre : 12/12."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from labuse.registre import remplissage as R
+    url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
+    assert url
+    with sessionmaker(bind=create_engine(url))() as s:
+        tem = R.temoins_du_jour(s)
+        assert len(tem) == 12
+        assert R.remplissage_source(s, "dpe_ademe", tem)["quasi_vide"] is True
+        assert R.remplissage_source(s, "rnic_anah", tem)["quasi_vide"] is False
+        assert R.remplissage_source(s, "cadastre_api_carto", tem)["remplis"] == 12
+
+
+@pytest.mark.local
+def test_g2_vert_sur_la_base_reelle():
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
+    with sessionmaker(bind=create_engine(url))() as s:
+        r = CG.verrou_g2(s)
+        assert r.verdict == "ok", (r.preuve, r.details[:3])
+        assert "dpe_ademe" in r.preuve  # la vide est NOMMÉE, jamais tue

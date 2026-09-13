@@ -159,10 +159,52 @@ def verrou_g1(db: Session) -> ResultatVerrou:
     return ResultatVerrou("G1", phrase, "casse" if pbs else "ok", preuve, pbs[:10])
 
 
+# ── G2 — visible ou pas, je le sais ────────────────────────────────────────────────────
+
+def mesures_remplissage(db: Session, *, rapide: bool = True) -> dict[str, dict]:
+    """Le remplissage des sources en vitrine sur les 12 témoins du jour (moteur lot 2).
+    rapide=True : types parcelle/commune seulement (les couches carte ne peuvent pas être
+    « invisibles » et leur mesure par kind×commune coûte ~1-2 s pièce — la nuit s'en charge)."""
+    from .registre import remplissage as R
+    temoins = R.temoins_du_jour(db)
+    mesures = R.mesurer_vitrine(db, temoins, rapide=rapide)
+    return mesures
+
+
+def invisibles_mesures(db: Session) -> list[dict]:
+    """Les sources BRANCHÉES MAIS VIDES (signature DPE : type parcelle, 0/12 témoins,
+    table quasi vide) — le verdict INVISIBLE que la page doit afficher."""
+    return sorted(
+        ({"slug": slug, **m} for slug, m in mesures_remplissage(db).items() if m["quasi_vide"]),
+        key=lambda m: m["slug"])
+
+
+def verrou_g2(db: Session) -> ResultatVerrou:
+    phrase = ("Pour chaque source, la page dit sur quelle surface elle arrive et si sa fiche "
+              "est réellement remplie — aucune source connectée de type parcelle vide sur "
+              "l'ensemble des témoins sans un état INVISIBLE affiché.")
+    from .circuit_etats import etat_reservoir
+    vides = invisibles_mesures(db)
+    pbs: list[str] = []
+    for m in vides:
+        # l'état que la PAGE affichera pour ce réservoir (le drapeau `invisible` est posé par
+        # l'assembleur du dashboard depuis la MÊME mesure) — s'il ne sort pas rouge-INVISIBLE,
+        # le circuit dit « à jour » sur une source vide : le mensonge DPE.
+        couleur, libelle = etat_reservoir({"invisible": True, "mode": "cron_mensuel",
+                                           "veille": {"statut": "ok"}, "filtre": {}})
+        if not (couleur == "rouge" and "INVISIBLE" in libelle):
+            pbs.append(f"{m['nom']} : vide mesurée ({m['remplis']}/{m['n_temoins']} témoins, "
+                       f"table quasi vide) mais l'état affiché est « {libelle} » ({couleur})")
+    preuve = (f"{len(vides)} source(s) vide(s) mesurée(s) sur les 12 témoins"
+              + (f" ({', '.join(v['slug'] for v in vides)})" if vides else "")
+              + f" ; {len(pbs)} sans état INVISIBLE")
+    return ResultatVerrou("G2", phrase, "casse" if pbs else "ok", preuve, pbs[:10])
+
+
 # ── l'assembleur (rempli garantie par garantie, lots 1→7) ─────────────────────────────
 
 def jouer_garanties(db: Session) -> list[ResultatVerrou]:
     """Joue les garanties implémentées, dans l'ordre. Le Résumé de la page Circuit et la CLI
     `labuse circuit verrous` les affichent avec les 16 verrous de CIRCUIT-5 (lot 8)."""
-    jouees = [verrou_g1(db)]
+    jouees = [verrou_g1(db), verrou_g2(db)]
     return jouees
