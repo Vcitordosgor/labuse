@@ -1282,6 +1282,69 @@ SOURCES: list[dict] = [
          technical_notes="SOUS CONVENTION (SOURCES-1 lot 7) — DVF enrichi (typologie fine, "
                          "acheteurs/vendeurs). En attendant : DVF ouvert + échantillon producteur "
                          "Région (lot 4)."),
+    # ── TESTS-1 lot 1 — le catalogue code rejoint la base (dérive mesurée : 121 lignes en base,
+    # 112 ici). Ces six sources VIVENT en base depuis juillet-août (fiche, cadence, raison G4)
+    # mais n'ont jamais eu leur entrée dans CETTE liste : les raisons de sentinelle.py les
+    # nommaient donc « hors catalogue » (test_sentinelle). Champs recopiés À L'IDENTIQUE des
+    # lignes servies (base labuse, 14/09/2026) — l'upsert de seed() est un no-op sur elles.
+    # Restent 3 hors liste, signalées au rapport TESTS-1 : EDF SEI Réunion — open data ·
+    # Registre national des installations (ODRÉ) · ZNIEFF (INPN / Région).
+    dict(name="Inventaire SRU (DHUP)", category="logement",
+         provider="Ministère Transition écologique — DHUP", access_type="fichier",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://www.data.gouv.fr/datasets/communes-et-inventaire-sru",
+         endpoint_url="https://static.data.gouv.fr/resources/communes-et-inventaire-sru/20251219-143258/donnees-sru-data-gouv-2025-v2.csv",
+         legal_notes="Licence Ouverte v2.0 (Etalab)",
+         technical_notes="CSV v2 du 18/12/2025 — inventaire LLS au 01/01/2024, périmètre 01/01/2025, "
+                         "prélèvements 2025. 24/24 communes 974 soumises (5 exemptées 2023-2025)."),
+    dict(name="NPNRU (DEAL Réunion / ANCT)", category="logement",
+         provider="DEAL Réunion (WFS Carmen) · ANCT (liste)", access_type="wfs",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://www.data.gouv.fr/datasets/le-nouveau-programe-national-de-renouvellement-urbain",
+         endpoint_url="http://ws.carmen.developpement-durable.gouv.fr/WFS/29/DEAL_REUNION_2020?typename=NPNRU",
+         legal_notes="Données État — Licence Ouverte (liste ANCT LOv2, millésime 2022)",
+         technical_notes="8 quartiers d'intérêt NATIONAL à La Réunion (aucun régional) — périmètres = "
+                         "QPV 2015 (arrêté 29/04/2015) ; la couche QPV de la base est en génération 2024, "
+                         "correspondance portée dans attrs. NOTE : ZUS et ZFU sont des zonages ABROGÉS "
+                         "(réforme 2014) devenus QPV — déjà couverts par la couche QPV, pas de couche "
+                         "morte ingérée. Le volet fiscal ZFU-Territoires Entrepreneurs n'a pas de source "
+                         "propre 974 identifiée (écart consigné)."),
+    dict(name="INSEE RP Logement 2023", category="logement", provider="INSEE",
+         access_type="fichier", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://www.insee.fr/fr/statistiques/8997194?sommaire=9003154",
+         endpoint_url="https://www.insee.fr/fr/statistiques/fichier/8997194/base_cc_logement_2023_xlsx.zip",
+         legal_notes="Licence Ouverte / Etalab 2.0 — mention « Source : Insee, RP 2023, exploitation principale »",
+         technical_notes="Base comparateur de communes, feuille COM_2023, publié 25/06/2026. Valeurs "
+                         "pondérées arrondies à l'affichage. Répartition par nombre de pièces = proxy "
+                         "T1…T5+ (typologie Tn stricte non publiée à la commune)."),
+    dict(name="PLH des 5 EPCI (extraction documentaire)", category="logement",
+         provider="EPCI 974 · DEAL Réunion (CDHH)", access_type="documentaire",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://www.reunion.developpement-durable.gouv.fr/IMG/pdf/20191205_rapport-cdhh-091219.pdf",
+         legal_notes="Documents publics des EPCI et de l'État — chaque chiffre porte sa référence "
+                     "(doc + page) dans plh_epci.refs",
+         technical_notes="Extraction 07/07/2026. État : les 5 PLH de nouvelle génération sont TOUS en "
+                         "bilan/révision (prorogations faites, demandées ou en préparation) — CASUD échu. "
+                         "Périmètre « social » variable selon les documents (LLTS+LLS seul, ou avec PLS) : "
+                         "les % ne sont posés que quand publiés (TCO 47 %, CASUD 40 %)."),
+    dict(name="RTAA DOM (textes réglementaires)", category="reglementaire",
+         provider="Légifrance — CCH R.192-1 à R.192-4 + arrêtés 17/04/2009 modifiés 11/01/2016",
+         access_type="documentaire", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530547",
+         legal_notes="Textes officiels (Légifrance) — versions consolidées « en vigueur » vérifiées le 08/07/2026",
+         technical_notes="Cadre CCH réécrit au 01/01/2025 (décret n°2024-168) : ECS ≥50 % « chaleur "
+                         "renouvelable » (plus « solaire » strict). Seuils altitude Réunion : 400 m et "
+                         "600 m. Réserves consignées dans config/rtaa_dom.yaml (arrêté « indice de "
+                         "confort thermique » introuvable)."),
+    dict(name="Sudocuh (procédures d'urbanisme)", category="urbanisme",
+         provider="Ministère Cohésion des territoires / DGALN", access_type="téléchargement XLSX",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="Sudocuh — état au 31/12/2024 (Licence Ouverte 2.0)",
+         documentation_url="https://www.data.gouv.fr/datasets/planification-nationale-des-documents-durbanisme-plu-plui-cc-rnu-donnees-sudocuh-dernier-etat-des-lieux-annuel-au-31-decembre-2024",
+         endpoint_url="https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400",
+         legal_notes="Licence Ouverte / Open Licence 2.0 — attribution Ministère.",
+         technical_notes="SuDocUH — suivi des procédures PLU/PLUi/CC/RNU. Squelette du radar M41 ; "
+                         "chair = config/veille_plu.yaml."),
 ]
 
 

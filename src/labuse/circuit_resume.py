@@ -55,6 +55,11 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
     def lib(r):
         return (r.get("etat") or ["", ""])[1]
     quar = [r for r in reservoirs if lib(r) == "en quarantaine"]
+    # TESTS-1 lot 1 — l'état INVISIBLE (rouge, CIRCUIT-6/G2 : branchée mais vide sur les témoins)
+    # comptait « à regarder » sans AUCUNE ligne ici : 7 réservoirs rouges muets sur la base de test,
+    # 1 (DPE ADEME) sur la base réelle. Un rouge sans ligne est exactement ce que la partition 2.3
+    # interdit (chaque « à regarder » a sa ligne).
+    invis = [r for r in reservoirs if lib(r) == "INVISIBLE — branchée mais vide"]
     neuf = [r for r in reservoirs if lib(r) == "nouvelle version à injecter"]
     jamais = [r for r in reservoirs if lib(r) == "jamais vérifié"]
     reverif = [r for r in reservoirs if lib(r) == "à vérifier"]
@@ -67,6 +72,10 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
         _ligne(len(quar), "rouge", "version en quarantaine",
                f"{_noms(quar)} — entrée, mesurée, pas servie : le filtre l'a arrêtée.",
                "Décider", "reservoir", [r["id"] for r in quar]),
+        _ligne(len(invis), "rouge", "branchées mais vides (INVISIBLES)",
+               f"{_noms(invis)} — la source est connectée, la fiche existe, mais RIEN n'arrive "
+               "sur les témoins : le client ne la voit nulle part. Remplir ou débrancher.",
+               "Voir", "reservoir", [r["id"] for r in invis]),
         _ligne(len(neuf), "ambre", "réservoir plein, à injecter",
                f"{_noms(neuf)} — le producteur a publié plus récent que ce que sert l'app.",
                "Injecter", "reservoir", [r["id"] for r in neuf]),

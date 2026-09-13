@@ -280,7 +280,12 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     # SOURCES-1 lot 6 — +2 : DFI (SEED api data.gouv) + bases IRIS RP2022 (SEED page insee.fr).
     # SOURCES-1 lot 7 — +9 : 7 chantiers « en attente de demande » + LOVAC + DV3F (RAISONS) ;
     # les Fichiers fonciers existaient déjà (entrée M74 enrichie de la convention, pas doublée).
-    assert len(noms) == 107
+    # SOURCES-2 lot 3 — +5 : endiguement, carte hypsométrique, BAN PLUS, RNB, OCS GE (107 → 112).
+    # TESTS-1 lot 1 (14/09/2026) — +6 : le catalogue CODE rejoint la base (dérive mesurée 121 en
+    # base / 112 ici) : Inventaire SRU, NPNRU, INSEE RP Logement 2023, PLH des 5 EPCI, RTAA DOM,
+    # Sudocuh entrent avec leurs champs recopiés des lignes servies (112 → 118). Restent 3 hors
+    # liste (EDF SEI · ODRÉ · ZNIEFF), signalées au rapport TESTS-1.
+    assert len(noms) == 118
 
 
 def test_raison_non_surveillee_ne_rend_jamais_un_blanc():

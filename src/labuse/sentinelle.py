@@ -678,8 +678,9 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     # SANS témoin amont à empreinte stable (pas de sonde réellement câblée) ; la fraîcheur est suivie par
     # la cadence déclarée (rappel) et la page Circuit, jamais par une fausse veille.
     "Annuaire de l'administration (service-public.fr / DILA)": "Annuaire DILA ingéré à la demande (24 mairies, OUTILS K2) ; le jeu ODS n'expose pas de millésime global à comparer sur l'emprise 974 (agrégat de fiches). Cadence mensuelle suivie par la page Circuit, pas par une sonde amont.",
-    "RNIC — registre national des copropriétés (Anah)": "Extraction annuelle data.gouv du registre Anah — pas de témoin amont à empreinte stable pour le 974 identifié ; la fraîcheur (millésime annuel) se lit sur la page Circuit.",
-    "RPLS — répertoire des logements locatifs sociaux (SDES)": "Publication annuelle SDES (millésime au 1ᵉʳ janvier) — pas de flux à empreinte stable à sonder ; la fraîcheur (millésime annuel) se lit sur la page Circuit.",
+    # TESTS-1 lot 1 — RNIC et RPLS RETIRÉES d'ici : SOURCES-3 lot 2 (14/09) les a mises SOUS SONDE
+    # (SEED, famille data.gouv last_update) sans retirer leur raison — une source ne peut pas être
+    # à la fois surveillée et déclarée non surveillable (test_sentinelle).
     "Consommation d'espaces NAF (Cerema — portail de l'artificialisation)": "Portail national de l'artificialisation (Cerema) — millésime annuel, pas de témoin amont à empreinte stable identifié ; la fraîcheur se lit sur la page Circuit.",
     # CIRCUIT-6 lot 4 (G4) — plus AUCUNE source connectée sans sonde NI raison (les 6 nues
     # relevées par le verrou G4 le 13/09/2026, chacune sa raison honnête) :
@@ -689,6 +690,9 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "PLH des 5 EPCI (extraction documentaire)": "Extraction DOCUMENTAIRE manuelle (dépôt) — la version vit dans les documents des EPCI, pas dans un flux ; rappel par cadence.",
     "RTAA DOM (textes réglementaires)": "Règles portées par le code (config/rtaa_dom.yaml), vérifiées sur Légifrance À LA MAIN aux versions consolidées « en vigueur » — pas d'API de version Légifrance exploitable pour ces articles.",
     "Sudocuh (procédures d'urbanisme)": "Dépôt manuel ANNUEL (état au 31/12) — la publication Sudocuh n'expose pas d'URL de version stable ; rappel par cadence.",
+    # TESTS-1 lot 1 — la carte hypsométrique (SOURCES-2 lot 3) était au catalogue SANS sonde ni
+    # raison (chantier « accès vecteur à demander à la DEAL », courrier lot 5) : la raison honnête.
+    "Carte hypsométrique du littoral (DEAL Lizmap)": "Chantier SOURCES-2 lot 3 — carte Lizmap DEAL sans flux vecteur ni millésime interrogeable (accès producteur demandé, courrier lot 5) ; one_shot sans cadence, rien à sonder tant que la DEAL n'a pas répondu.",
 }
 
 #: SENTINELLE-3 (Y4) — les sources MANUELLES (alimentées par Vic, aucun amont public) reçoivent un RAPPEL
@@ -875,6 +879,13 @@ def _emettre_digest(db, neuf: list[dict], echec: list[dict]) -> bool:
     # clé de dédup = l'ensemble ANNONCÉ (sids neufs + sids en échec) → stable, un même passage ne double pas.
     sig = "n:" + ",".join(str(d["row"]["source_id"]) + ":" + str(d["sonde"].vu) for d in neuf) \
         + "|e:" + ",".join(str(d["row"]["source_id"]) for d in echec)
+    # TESTS-1 lot 1 — BORNER la clé : event_log.dedup est varchar(96) ; avec beaucoup de sondes en
+    # échec persistant (mesuré : 88 → ~350 caractères) l'INSERT plantait en StringDataRightTruncation
+    # et le passage de veille CRASHAIT — précisément la nuit où tout va mal. Au-delà de la place
+    # disponible, la signature est remplacée par son empreinte sha1 (même stabilité, taille fixe).
+    if len("sentinelle-digest:" + sig) > 96:
+        import hashlib
+        sig = "sha1:" + hashlib.sha1(sig.encode()).hexdigest()
     cree = bool(creer_notification(
         db, kind="systeme", compte_id=None, source="Veille sources",
         titre=titre, detail="\n".join(lignes), lien="/sources",

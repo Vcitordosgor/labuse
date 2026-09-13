@@ -32,12 +32,14 @@ PRIX_SORTIE_VAR = 0.05                      # ±5 % pour la sensibilité au prix
 
 # RECETTE-6 (E2, BLOQUANT) — GARDE DE VRAISEMBLANCE sur les champs À L'UNITÉ (€/m²). Un bilan absurde
 # venait d'un PRIX TOTAL saisi dans un champ « €/m² » (ex. 700 000 dans « Prix de vente prévu (€/m²) »
-# → CA multiplié par la surface vendable → charge foncière 97 M€, ×160). Au-delà de ces bornes, la
-# valeur n'est PAS un prix au m² : le document ne publie AUCUN verdict, il dit que l'hypothèse est hors
-# marché et NOMME le champ. Bornes larges (on ne recale pas le marché, on attrape l'ordre de grandeur).
-MAX_PRIX_SORTIE_M2 = 20_000.0               # €/m² habitable — aucun prix de sortie ne dépasse cet ordre
-MAX_COUT_CONSTRUCTION_M2 = 8_000.0          # €/m² plancher — aucun coût de construction ne le dépasse
-MAX_PRIX_BAILLEUR_M2 = 12_000.0             # €/m² — prix de vente au bailleur social
+# → CA multiplié par la surface vendable → charge foncière 97 M€, ×160). TESTS-1 lot 1 : les bornes
+# vivent dans la SOURCE UNIQUE (faisabilite/engine.py) — un littéral de coût ici est interdit par
+# test_hypotheses_source_unique (motif du bug 2100).
+from ..faisabilite.engine import (  # noqa: E402 — après les constantes du module
+    MAX_COUT_CONSTRUCTION_M2,
+    MAX_PRIX_BAILLEUR_M2,
+    MAX_PRIX_SORTIE_M2,
+)
 
 
 def _hors_marche(prix_sortie, cout, prix_bailleur) -> dict | None:

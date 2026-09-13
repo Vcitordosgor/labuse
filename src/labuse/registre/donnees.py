@@ -143,6 +143,9 @@ DONNEES: dict[str, Donnee] = {
     "sur Légifrance, hors scoring",
     moteur=None, calcul="passe_plat",
     fonction="src/labuse/api/modules.py:faisabilite_sens1 (load_yaml_config rtaa_dom)",
+    # TESTS-1 lot 1 — un passe-plat SERVI dit ce qu'il lit : ici pas une table SQL mais le
+    # fichier de règles versionné (le réservoir rtaa_dom est « porté par le code », tables.py:149).
+    table="config/rtaa_dom.yaml",
     reservoirs=("rtaa_dom",), portee="live", type="liste"),
  # FICHE-1 lot 6 — les annonces Radar rattachées à la parcelle (validées), servies dans « Marché
  # et secteur » : date, prix demandé, statut, lien fiche annonce, écart demandé/acté par annonce.

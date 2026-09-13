@@ -25,6 +25,16 @@ SEUIL_EXIGU_M2 = 5.0  # en deçà, le contour inseté est considéré vidé → 
 # YAML Saint-Paul (emprunt à la commune la mieux calibrée = faux « générique »).
 HE_DEFAUT_GENERIQUE_M = 9.0
 
+# RECETTE-6 (E2, BLOQUANT) → TESTS-1 lot 1 : les BORNES DE VRAISEMBLANCE des champs saisis « à
+# l'unité » (€/m²) vivent ICI, dans la source unique auditée des valeurs de coût/marché — pas dans
+# un module d'export (le littéral MAX_COUT_CONSTRUCTION_M2 posé dans financier_bilan.py re-créait
+# le motif du bug 2100 que test_hypotheses_source_unique interdit). Au-delà de ces bornes, la
+# valeur saisie n'est PAS un prix au m² (probable prix TOTAL) : le document ne publie aucun
+# verdict, il nomme le champ. Bornes larges — on attrape l'ordre de grandeur, pas le marché.
+MAX_PRIX_SORTIE_M2 = 20_000.0               # €/m² habitable — aucun prix de sortie ne dépasse cet ordre
+MAX_COUT_CONSTRUCTION_M2 = 8_000.0          # €/m² plancher — aucun coût de construction ne le dépasse
+MAX_PRIX_BAILLEUR_M2 = 12_000.0             # €/m² — prix de vente au bailleur social
+
 # SOURCES-1 lot 5 — cache module de la fourchette de coût SOURCÉE (cout_construction_ref).
 # None = pas encore lu ; (None,) = lu, table absente/vide (repli constantes du dataclass).
 _COUTS_REF_CACHE: tuple | None = None
