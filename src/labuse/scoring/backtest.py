@@ -105,6 +105,17 @@ def phrase_client(bt: dict) -> str | None:
         return None
     fin = bt.get("fenetre_fin")
     fois = a_suivre["lift"] / fl
-    return (f"Sur 12 mois de ventes DVF (au {fin}), les parcelles « {a_suivre['label']} » se sont vendues "
-            f"{a_suivre['lift']:g}× plus que la moyenne — et {fois:.0f}× plus qu'un ciblage manuel réaliste "
-            f"(zone U, > 1 000 m², propriétaire particulier, sans permis récent : {filtre['taux_pct']:g} %).")
+    # RECETTE-12 B3 — format FRANÇAIS : virgule décimale, une décimale (« 13,3× », « 1,2 % »),
+    # date JJ/MM/AAAA (« au 10/08/2026 ») — jamais le point anglais ni l'ISO 2026-08-10.
+    def _fr(x: float, dec: int = 1) -> str:
+        return f"{x:.{dec}f}".replace(".", ",")
+
+    def _fr_date(iso) -> str:
+        try:
+            y, m, d = str(iso).split("-")
+            return f"{d}/{m}/{y}"
+        except (ValueError, AttributeError):
+            return str(iso)
+    return (f"Sur 12 mois de ventes DVF (au {_fr_date(fin)}), les parcelles « {a_suivre['label']} » se sont vendues "
+            f"{_fr(a_suivre['lift'])}× plus que la moyenne — et {fois:.0f}× plus qu'un ciblage manuel réaliste "
+            f"(zone U, > 1 000 m², propriétaire particulier, sans permis récent : {_fr(filtre['taux_pct'])} %).")
