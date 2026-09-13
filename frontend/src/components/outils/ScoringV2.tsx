@@ -24,7 +24,8 @@ type Item = {
 type Liste = { run_id: string; n: number; items: Item[]; note?: string; avertissement: string }
 
 const TABS = [
-  { key: 'brulantes', label: 'Priorité' },
+  // REPARATIONS-1 lot 2b — « Priorité » n'est plus servi : l'onglet tête de classement dit « À suivre ».
+  { key: 'brulantes', label: 'À suivre (tête)' },
   { key: 'reserve', label: 'Réserve foncière' },   // PALIERS-1 : marqueur de capacité, plus « Long terme »
   { key: 'top', label: 'Classement' },   // M15 E1 : « Top P » (jargon) → « Classement »
 ] as const
@@ -56,8 +57,8 @@ export function ScoringV2Module() {
       <div className="rounded-lg border border-mint/30 bg-mint/[0.06] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
         Le <b className="text-txt">classement</b> des parcelles par <b className="text-txt">probabilité
         de vente</b> sous 1 an. La <b className="text-mint">fraction</b> (« 1/5 ») dit la chance qu’une
-        vente intervienne dans l’année ; sous 1/50, un tiret « — » (<b>peu probable</b>). <b>Priorité</b> =
-        à contacter d’abord ; <b>Réserve foncière</b> = forte capacité constructible résiduelle (marqueur, pas un palier) ;
+        vente intervienne dans l’année ; sous 1/50, un tiret « — » (<b>peu probable</b>). <b>À suivre (tête)</b> =
+        la tête du classement, à contacter d’abord ; <b>Réserve foncière</b> = forte capacité constructible résiduelle (marqueur, pas un palier) ;
         <b>Classement</b> = toutes, par ordre de priorité.
       </div>
       <div className="flex items-center gap-1">

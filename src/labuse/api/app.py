@@ -1010,6 +1010,9 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "rate_limit": s.rate_limit, "last_sync_at": s.last_sync_at,
             "documentation_url": s.documentation_url, "endpoint_url": s.endpoint_url,
             "legal_notes": s.legal_notes, "technical_notes": s.technical_notes,
+            # REPARATIONS-1 lot 3 — la couverture réelle, dite (trou chez nous ou chez le
+            # producteur, communes nommées) : jamais un « connecté » qui laisse croire à l'exhaustif.
+            "couverture_note": s.couverture_note,
             # FIX-SOURCES S6 — la LICENCE (libellé court + lien) est DÉRIVÉE de `legal_notes` (vérité base)
             # côté serveur : plus AUCUNE licence codée en dur au front (l'ancienne carte de 7 noms qui
             # court-circuitait la base a disparu). Le libellé suit les MARQUEURS du texte légal, pas le nom.
@@ -5308,6 +5311,9 @@ def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_d
 #: kinds de couches carte exposées au front (Brique 1) — whitelist stricte.
 #: M6.1 item 2 : + cinquante_pas (réserve des 50 pas géométriques, 163 polygones île).
 _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "cinquante_pas",
+                    # REPARATIONS-1 lot 5 — Artificialisation (OCS GE native 974) : artificialisé
+                    # 2022 dissous (pièces ≥ 2 500 m²) + évolution officielle 2017→2022.
+                    "artificialisation",
                     # M106 P1 : aléas DEAL séparés (inondation / mouvement_terrain en subtype) —
                     # le zonage PPR réglementaire reste agrégé (document multirisque insécable).
                     "georisque_alea",

@@ -521,6 +521,16 @@ def _zan_indicateur(db: Session, commune: str | None = None) -> list[dict]:
             "depasse": reste < 0,
             "millesime": r["millesime"], "source": r["source_nom"],
         })
+    # REPARATIONS-1 lot 5 — la pression ZAN a sa SOURCE OFFICIELLE : le diff OCS GE IGN
+    # 2017→2022 (flags artif du portail de l'artificialisation), par commune, à côté du
+    # dérivé Cerema — jamais fusionnés (deux sources, deux lignes).
+    try:
+        from ..registre.moteurs.commune import zan_ocsge_commune
+        ocsge = zan_ocsge_commune(db, commune)
+        for o in out:
+            o["ocsge"] = ocsge.get(o["commune"])
+    except Exception:  # noqa: BLE001 — l'OCS GE absent ne casse jamais l'indicateur ENAF
+        pass
     return out
 
 

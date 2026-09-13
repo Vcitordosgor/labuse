@@ -16,7 +16,8 @@ from .circuit_verrous import ResultatVerrou
 # ── G1 — toutes les sources, une seule fois ────────────────────────────────────────────
 
 #: statuts admis pour une ligne data_sources (liste FERMÉE — un statut inventé casse G1).
-STATUTS_ADMIS = frozenset({"connecte", "manuel", "a_faire", "retiree", "alias", "hub"})
+STATUTS_ADMIS = frozenset({"connecte", "manuel", "a_faire", "retiree", "alias", "hub",
+                           "partenariat_requis"})   # REPARATIONS-1 lot 3
 
 #: paires de sources qui portent le MÊME concept sans partager table/endpoint (détection
 #: par recouvrement impossible) — déclarées ici, l'arbitrage reste exigé comme pour les autres.
@@ -141,10 +142,12 @@ def analyse_doublons(rows: list[dict]) -> list[dict]:
 
 
 def verrou_g1(db: Session) -> ResultatVerrou:
-    phrase = ("La page Circuit montre les 116 sources de la base, chacune avec son état "
-              "(liste fermée), et signale tout doublon — aucun doublon sans arbitrage écrit.")
     pbs: list[str] = []
     cpt = catalogue_compteurs(db)
+    # REPARATIONS-1 lot 4 — le compte n'est plus gravé dans la phrase (116 → 117 avec RNB) :
+    # la phrase porte le total MESURÉ, la garantie reste la même.
+    phrase = (f"La page Circuit montre les {cpt['total']} sources de la base, chacune avec son "
+              "état (liste fermée), et signale tout doublon — aucun doublon sans arbitrage écrit.")
     inconnus = sorted(set(cpt["par_statut"]) - STATUTS_ADMIS)
     for s in inconnus:
         pbs.append(f"statut hors liste fermée : {s} ({cpt['par_statut'][s]} ligne(s))")
@@ -468,12 +471,14 @@ def _fichiers_declares_par_slug() -> dict[str, set[str]]:
 
 
 def lecteurs_non_declares() -> list[str]:
-    """L'INDEX de la dette fine : fichiers qui lisent une table de réservoir sans être le
-    `fonction` d'un chiffre de ce réservoir (ni écrivain/machinerie/assumé). AFFICHÉ sur la
-    page de détail de chaque source (les deux sens, calculés) — le raccord fichier par
-    fichier est un mandat à part (206 lignes mesurées le 13/09/2026), PAS ce verrou."""
+    """L'INDEX de la dette fine : fichiers qui lisent une table de réservoir sans être ni le
+    `fonction` d'un chiffre de ce réservoir, ni une LECTURE FINE déclarée (registre/lectures —
+    REPARATIONS-1 lot 2a : chaque arête instruite porte son chiffre + robinet, ou sa raison de
+    machinerie). AFFICHÉ sur la page de détail de chaque source (les deux sens, calculés)."""
+    from .registre.lectures import declarees
     from .registre.tables import reservoirs_de
     declares = _fichiers_declares_par_slug()
+    fines = declarees()
     pbs: list[str] = []
     for table, fichiers in sorted(lecteurs_du_code().items()):
         slugs = reservoirs_de(table)
@@ -481,10 +486,20 @@ def lecteurs_non_declares() -> list[str]:
         for f in sorted(fichiers):
             if f.startswith(_REPERTOIRES_EXEMPTS_G6) or f in _FICHIERS_EXEMPTS_G6:
                 continue
-            if f in ok or f in LECTEURS_ASSUMES_G6:
+            if f in ok or f in LECTEURS_ASSUMES_G6 or (table, f) in fines:
                 continue
             pbs.append(f"{table} ({'/'.join(slugs) or '?'}) lue par {f}")
     return pbs
+
+
+def lectures_perimees() -> list[str]:
+    """REPARATIONS-1 lot 2a — l'AUTRE sens du graphe : les lectures fines déclarées dont le
+    fichier ne lit PLUS la table (refactor passé par là). Zéro attendu — sinon la ligne à
+    retirer de registre/lectures.py est nommée."""
+    from .registre.lectures import declarees
+    code = lecteurs_du_code()
+    return [f"{t} déclarée lue par {f} — le fichier ne la lit plus"
+            for (t, f) in sorted(declarees()) if f not in code.get(t, set())]
 
 
 def analyse_g6() -> list[str]:
@@ -523,8 +538,18 @@ def verrou_g6(db: Session | None = None) -> ResultatVerrou:
     pbs = analyse_g6()
     n_tables = len(lecteurs_du_code())
     dette = len(lecteurs_non_declares())
-    preuve = (f"{n_tables} tables de réservoirs au crible ; {len(pbs)} lecture(s) de réservoir "
-              f"muet ; dette fine (lecteurs non déclarés, affichée par source) : {dette}")
+    perimees = lectures_perimees()
+    # REPARATIONS-1 lot 2a — le graphe est exact dans les DEUX sens : toute arête du code est
+    # déclarée (dette 0) ET toute déclaration correspond à une lecture du code (périmées 0).
+    # Une déclaration périmée casse le verrou : elle nomme la ligne à retirer de lectures.py.
+    pbs += perimees
+    from .registre.lectures import LECTURES
+    n_fines = sum(1 for x in LECTURES if x.chiffre)
+    n_machinerie = len(LECTURES) - n_fines
+    preuve = (f"{n_tables} tables de réservoirs au crible ; {len(analyse_g6())} lecture(s) de "
+              f"réservoir muet ; dette fine (lecteurs non déclarés) : {dette} ; lectures fines "
+              f"déclarées : {n_fines} chiffre+robinet + {n_machinerie} machineries motivées ; "
+              f"déclarations périmées : {len(perimees)}")
     return ResultatVerrou("G6", phrase, "casse" if pbs else "ok", preuve, pbs[:10])
 
 

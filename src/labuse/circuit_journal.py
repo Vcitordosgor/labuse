@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS circuit_journal (
 """
 
 GESTES = ("injecter", "calculer", "basculer", "revenir", "purger", "agent", "job", "filtre",
-          "controle")
+          "controle", "candidat")   # candidat (REPARATIONS-1 lot 1) : assumer/retirer un run candidat
 
 # ── CIRCUIT-P2 (lot 4.3) — les CATÉGORIES de geste, en français, DANS L'ORDRE FIXE de la barre du
 #    journal (présentes même vides). Un geste stocké → une catégorie ; « tous » est ajouté au front.
@@ -43,6 +43,7 @@ GESTE_CATEGORIE = {
     "revenir": "filtre",          # « revenir à la précédente » = retour d'une version filtrée
     "agent": "agent", "controle": "controle", "filtre": "filtre",
     "sonde": "sonde", "job": "cron", "purger": "cron",
+    "candidat": "bascule",        # REPARATIONS-1 lot 1 : assumer/retirer un candidat = famille bascule
 }
 
 

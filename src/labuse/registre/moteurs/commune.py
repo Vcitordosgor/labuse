@@ -311,3 +311,28 @@ def compte_piscines(db, commune: str | None, bati: str, piscine_surf_min: int,
         FROM parcel_equipements e JOIN parcels p ON p.idu = e.idu {join_bati} {where}
         GROUP BY p.commune ORDER BY n DESC"""), params).mappings().all()
     return {"total": total, "communes": [dict(c) for c in communes]}
+
+
+def zan_ocsge_commune(db, commune: str | None = None) -> dict[str, dict]:
+    """REPARATIONS-1 lot 5 — LA PRESSION ZAN, SOURCE OFFICIELLE : par commune, l'artificialisation
+    2017→2022 du produit DIFFÉRENTIEL OCS GE de l'IGN (flags artif du portail de
+    l'artificialisation) + la part artificialisée 2022, agrégées sur l'ASSIETTE CADASTRALE
+    (parcel_ocsge × parcels.commune — les emprises hors parcelle, voirie notamment, ne sont pas
+    comptées : dit à l'écran). Rend {commune: {artif_ha, renat_ha, part_artif_pct}}."""
+    from sqlalchemy import text as _t
+    if not db.execute(_t("SELECT to_regclass('parcel_ocsge')")).scalar():
+        return {}
+    rows = db.execute(_t(
+        "SELECT p.commune, "
+        "       sum(o.evol_artif_m2) / 10000.0 AS artif_ha, "
+        "       sum(o.evol_renat_m2) / 10000.0 AS renat_ha, "
+        "       100.0 * sum(o.artif_m2) / NULLIF(sum(ST_Area(p.geom_2975)), 0) AS part_pct "
+        "FROM parcel_ocsge o JOIN parcels p ON p.idu = o.idu "
+        "WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) "
+        "GROUP BY p.commune"), {"c": commune}).mappings().all()
+    return {r["commune"]: {
+        "artif_ha": round(float(r["artif_ha"] or 0), 1),
+        "renat_ha": round(float(r["renat_ha"] or 0), 1),
+        "part_artif_pct": round(float(r["part_pct"] or 0), 1),
+        "source": "OCS GE (IGN) — diff artificialisation 2017→2022 (officiel), assiette cadastrale",
+    } for r in rows}

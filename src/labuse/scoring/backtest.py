@@ -90,11 +90,32 @@ def mutation_lift(db: Session) -> dict:
             "paliers": paliers, "filtres": filtres}
 
 
+def rr_marche_avant() -> float | None:
+    """REPARATIONS-1 lot 2b — LE multiplicateur honnête : le RR mesuré EN MARCHE AVANT
+    (fold 2025 walk-forward, out-of-sample, hors copro — config/qualite_commune.yaml, gelé
+    depuis l'audit RR). Le lift du backtest 12 mois est CONTAMINÉ : 2025 sert à la fois de
+    cible de recalage du modèle et de fenêtre de mesure → il gonfle à ~13,3×. On ne le sert
+    jamais au client."""
+    from .. import config
+    try:
+        cfg = config.load_yaml_config("qualite_commune")
+    except FileNotFoundError:
+        return None
+    rr = (cfg.get("ile") or {}).get("rr_1158")
+    return float(rr) if isinstance(rr, (int, float)) else None
+
+
 def phrase_client(bt: dict) -> str | None:
     """Une phrase CHIFFRÉE, DATÉE et HONNÊTE pour le client (à côté du palier). On compare le palier
     « À suivre » (le seul dont l'échantillon est robuste) à un CIBLAGE MANUEL RÉALISTE — jamais à la
     règle naïve « terrain nu » qui perd contre le hasard (ce serait un homme de paille). None si le
-    modèle ne bat pas nettement CE filtre-là (pas de fausse promesse ; jamais un score nu vanté)."""
+    modèle ne bat pas nettement CE filtre-là (pas de fausse promesse ; jamais un score nu vanté).
+
+    REPARATIONS-1 lot 2b — le multiplicateur AFFICHÉ est le ×6,7 EN MARCHE AVANT (fold 2025
+    out-of-sample), jamais le lift 12 mois contaminé (~13,3× : 2025 est à la fois cible de
+    recalage et fenêtre de mesure). Le backtest 12 mois reste le GARDE-FOU (le modèle doit
+    battre le filtre réaliste d'un facteur net ≥ 2×, sinon aucune phrase) — il ne fournit
+    plus le chiffre vanté."""
     a_suivre = next((p for p in bt.get("paliers", []) if p["tier"] in ("chaude", "a_suivre")), None)
     filtre = bt.get("filtres", {}).get("realiste")
     if not a_suivre or not a_suivre.get("lift") or not filtre or not filtre.get("lift"):
@@ -103,19 +124,15 @@ def phrase_client(bt: dict) -> str | None:
     # le modèle doit battre le filtre RÉALISTE d'un facteur net (≥ 2×), sinon on n'affiche rien.
     if fl <= 0 or a_suivre["lift"] / fl < 2:
         return None
-    fin = bt.get("fenetre_fin")
-    fois = a_suivre["lift"] / fl
-    # RECETTE-12 B3 — format FRANÇAIS : virgule décimale, une décimale (« 13,3× », « 1,2 % »),
-    # date JJ/MM/AAAA (« au 10/08/2026 ») — jamais le point anglais ni l'ISO 2026-08-10.
+    rr = rr_marche_avant()
+    if not rr:
+        return None   # pas de mesure marche-avant → pas de phrase (jamais le lift contaminé)
+
+    # RECETTE-12 B3 — format FRANÇAIS : virgule décimale, une décimale (« 6,7× », « 1,2 % »),
+    # jamais le point anglais. M52-B : ordre de grandeur assumé (« ~6,7× »), pas de fausse précision.
     def _fr(x: float, dec: int = 1) -> str:
         return f"{x:.{dec}f}".replace(".", ",")
-
-    def _fr_date(iso) -> str:
-        try:
-            y, m, d = str(iso).split("-")
-            return f"{d}/{m}/{y}"
-        except (ValueError, AttributeError):
-            return str(iso)
-    return (f"Sur 12 mois de ventes DVF (au {_fr_date(fin)}), les parcelles « {a_suivre['label']} » se sont vendues "
-            f"{_fr(a_suivre['lift'])}× plus que la moyenne — et {fois:.0f}× plus qu'un ciblage manuel réaliste "
+    return (f"Mesuré en marche avant sur l'année 2025, tenue à l'écart de l'apprentissage : la tête du "
+            f"classement (« {a_suivre['label']} ») se vend ~{_fr(rr)}× plus que la moyenne de l'île — "
+            f"et nettement plus qu'un ciblage manuel réaliste "
             f"(zone U, > 1 000 m², propriétaire particulier, sans permis récent : {_fr(filtre['taux_pct'])} %).")

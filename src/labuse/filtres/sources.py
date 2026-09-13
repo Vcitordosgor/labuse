@@ -888,6 +888,32 @@ def _dhup_fichier_ok() -> Controle:
                     "24/24 dans l'extrait versionné (repli de l'OLL)", m)
 
 
+# REPARATIONS-1 lot 5 — OCS GE : deux millésimes pleins, géométries valides, évolution officielle.
+_ajout(_f(
+    source="ocsge", libelle="OCS GE (occupation du sol)",
+    table="ocsge_sol", geom_col="geom_2975", geom_srid=2975,
+    source_motif="OCS GE (IGN)%", portee_run=False, live=True,
+    propres=[
+        c.compte_mauvais("d_ocsge_millesimes", "completude", "bloquant",
+                         "Les deux millésimes présents",
+                         "0 millésime manquant (2017 ET 2022 ≥ 150 000 polygones chacun)",
+                         "millesime IN (SELECT m FROM (VALUES ('2017'), ('2022')) v(m) "
+                         "WHERE (SELECT count(*) FROM ocsge_sol o2 WHERE o2.millesime = v.m) < 150000)"),
+    ]))
+
+# REPARATIONS-1 lot 4 — RNB : volume plausible, géométries valides, les 24 communes présentes.
+_ajout(_f(
+    source="rnb", libelle="RNB (identité des bâtiments)",
+    table="rnb_batiments", cle=("rnb_id",), insee_col="insee", geom_col="shape",
+    source_motif="RNB — Référentiel%", portee_run=False, live=True,
+    propres=[
+        c.compte_mauvais("d_rnb_inactifs_ratt", "completude", "avertissant",
+                         "Bâtiments inactifs encore rattachés",
+                         "0 rnb_id inactif référencé par le rattachement BD TOPO",
+                         "NOT is_active AND rnb_id IN (SELECT rnb_id FROM rnb_rattachement_bdtopo "
+                         "WHERE rnb_id IS NOT NULL)"),
+    ]))
+
 _ajout(_f(
     source="arcep_fibre", libelle="Fibre Arcep (immeubles)",
     table="arcep_immeubles", cle=("imb_id",), insee_col="insee", geom_col="geom",

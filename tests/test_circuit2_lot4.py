@@ -37,15 +37,21 @@ def test_distribution_aleas_attrape_retours13(db_session):
         "SELECT valeur_a, type FROM circuit_ecarts WHERE cle = 'distribution' "
         "AND chiffre_id = 'alea_inondation_couche'")).first()
     assert ligne is not None and ligne.type == "classe"
-    # corrigée en 'fort' → l'écart se solde au passage suivant
+    # corrigée en 'fort' → l'écart SE SOLDE au passage suivant (REPARATIONS-1 lot 0 : avant,
+    # un écart guéri restait « ouvert » à vie — ligne rouge fantôme, fuite comptée par G7)
     db_session.execute(text(
         "UPDATE spatial_layers SET attrs = jsonb_set(attrs, '{niveau}', '\"fort\"') "
         "WHERE name = 'sonde-test'"))
     res2 = sc.verifier_categorielle(db_session)
-    assert not any(True for _ in db_session.execute(text(
-        "SELECT 1 FROM circuit_ecarts WHERE cle = 'distribution' AND statut = 'ouvert' "
-        "AND valeur_a LIKE '%ELEVE%' AND robinet_a LIKE '%degre%' AND id > 0")).all()) or \
-        res2["ecarts_trouves"] == 0 or True  # la ligne reste (historique), le passage n'en rouvre pas
+    assert res2["soldes"] >= 1
+    restants = db_session.execute(text(
+        "SELECT count(*) FROM circuit_ecarts WHERE chiffre_id = 'alea_inondation_couche' "
+        "AND cle = 'distribution' AND statut = 'ouvert'")).scalar()
+    assert restants == 0, "l'écart aléa guéri doit être soldé, pas rester ouvert à vie"
+    ligne2 = db_session.execute(text(
+        "SELECT statut, solde_le FROM circuit_ecarts WHERE chiffre_id = 'alea_inondation_couche' "
+        "AND cle = 'distribution'")).first()
+    assert ligne2 is not None and ligne2.statut == "solde" and ligne2.solde_le is not None
 
 
 def test_permis_approximatif_jamais_un_point(db_session):

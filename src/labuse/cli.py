@@ -1545,6 +1545,28 @@ def ingest_georisques_cmd(
     typer.echo(f"✓ Géorisques île : {tot} ({time.time() - t0:.0f}s)")
 
 
+@app.command("rnb")
+def rnb_cmd(
+    ingerer: bool = typer.Option(False, "--ingerer", help="Ingestion API RNB par commune (974, paginée, idempotente)."),
+    rattacher: bool = typer.Option(False, "--rattacher", help="Rattacher bâtiments BD TOPO + hauteurs LiDAR aux RNB ID."),
+    insee: str = typer.Option("", help="Communes INSEE (csv) — vide = les 24."),
+) -> None:
+    """REPARATIONS-1 lot 4 — RNB, l'identité des bâtiments : ingestion API officielle
+    (rnb-api.beta.gouv.fr, filtrage 974 par insee_code, CRS 4326 inspecté), puis rattachement
+    spatial (taux mesurés, non-rattachés par cause). Sans option : mesure seule."""
+    from .ingestion.rnb import ingest_rnb, mesurer, rattacher as _rattacher
+
+    with session_scope() as sdb:
+        if ingerer:
+            r = ingest_rnb(sdb, insee_list=[x.strip() for x in insee.split(",") if x.strip()] or None,
+                           log_fn=typer.echo)
+            typer.echo(f"✓ {r['total']} bâtiments RNB ingérés")
+        if rattacher:
+            _rattacher(sdb, log_fn=typer.echo)
+        if not ingerer and not rattacher:
+            mesurer(sdb, log_fn=typer.echo)
+
+
 @app.command("alea-reclassifier")
 def alea_reclassifier_cmd() -> None:
     """RETOURS-21 A — réaligne le `niveau` servi des aléas `georisque_alea` sur le mapping corrigé
@@ -4485,6 +4507,52 @@ def circuit_verrous_cmd(
         raise typer.Exit(1)
     typer.echo(f"— {len(resultats)} joués (16 verrous + 7 garanties) : tout va bien"
                + (f" · {len(a_decider)} à décider" if a_decider else ""))
+
+
+@circuit_app.command("candidat")
+def circuit_candidat_cmd(
+    assumer: str = typer.Option(None, "--assumer", help="Déclarer ce run candidat ASSUMÉ (ex. q_v14)."),
+    retirer: str = typer.Option(None, "--retirer", help="Retirer la déclaration de ce run (geste inverse)."),
+    motif: str = typer.Option("", help="Pourquoi le candidat est assumé (obligatoire avec --assumer)."),
+    par: str = typer.Option("cli", help="Qui déclare — entre au journal."),
+) -> None:
+    """REPARATIONS-1 lot 1 — LE CANDIDAT ASSUMÉ : un run candidat non basculé est un état
+    normal, pas une anomalie. Déclarer (`--assumer q_v14 --motif "…"`) rend V3a vert en
+    NOMMANT le candidat dans sa preuve ; toute génération NON déclarée reste rouge. Le geste
+    est journalisé (circuit_journal, geste « candidat ») et réversible (`--retirer q_v14`).
+    Le run reste en base — rien n'est purgé, il servira de comparaison au suivant."""
+    from . import circuit_candidat
+
+    with session_scope() as s:
+        if assumer and retirer:
+            typer.echo("✗ --assumer et --retirer sont exclusifs.")
+            raise typer.Exit(2)
+        if assumer:
+            if not motif.strip():
+                typer.echo("✗ --motif obligatoire avec --assumer : on écrit POURQUOI le candidat "
+                           "est assumé (ex. « Vic refond l'algorithme, q_v15 le remplacera ; "
+                           "q_v14 gardé en comparaison »).")
+                raise typer.Exit(2)
+            r = circuit_candidat.declarer(s, assumer, par, motif.strip())
+            s.commit()
+            typer.echo(f"✓ candidat « {assumer} » ASSUMÉ ({'mis à jour' if r['mis_a_jour'] else 'déclaré'}) "
+                       f"par {par} — journalisé, réversible (--retirer {assumer}).")
+        elif retirer:
+            r = circuit_candidat.retirer(s, retirer, par)
+            s.commit()
+            typer.echo(f"{'✓' if r['retirees'] else '✗'} déclaration de « {retirer} » "
+                       f"{'retirée' if r['retirees'] else 'introuvable (aucune déclaration active)'}.")
+        else:
+            a = circuit_candidat.actif(s)
+            if a:
+                typer.echo(f"candidat assumé : {a['run_label']} (par {a['assume_par']} "
+                           f"le {str(a['assume_le'])[:16]}) — {a['motif']}")
+            else:
+                typer.echo("aucun candidat assumé.")
+            for h in circuit_candidat.historique(s, limit=5):
+                etat = f"retiré le {str(h['retire_le'])[:16]} par {h['retire_par']}" \
+                    if h["retire_le"] else "actif"
+                typer.echo(f"  · {h['run_label']} — assumé le {str(h['assume_le'])[:16]} ({etat})")
 
 
 tables_app = typer.Typer(add_completion=False,

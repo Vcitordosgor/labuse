@@ -96,6 +96,29 @@ export function LeBienSection({ f }: { f: Fiche; idu: string }) {
               value="non encore relevée — ouvrez la fiche soleil pour la calculer" />
           )}
         </div>
+        {/* REPARATIONS-1 lot 4 — L'IDENTITÉ des bâtiments : le RNB ID (Référentiel National des
+            Bâtiments, Licence Ouverte) de chaque bâtiment de la parcelle, discret, avec le lien
+            officiel. La pièce qui relie BD TOPO, LiDAR et RNB au même bâtiment. */}
+        {(b.rnb?.length ?? 0) > 0 && (
+          <div data-le-bien-rnb>
+            <div className="mt-2 mb-1 text-[11px] uppercase tracking-wide opacity-60">
+              Identifiant national du bâtiment (RNB)
+            </div>
+            {b.rnb!.map((r) => (
+              <FactRow key={r.rnb_id} label="RNB"
+                value={<a href={r.lien} target="_blank" rel="noreferrer"
+                  className="font-mono text-[12px] hover:underline"
+                  title="Fiche officielle du bâtiment (rnb.beta.gouv.fr)">{r.rnb_id} ↗</a>}
+                src="RNB — Référentiel National des Bâtiments" />
+            ))}
+          </div>
+        )}
+        {/* REPARATIONS-1 lot 5 — l'artificialisation OFFICIELLE (OCS GE, donnée d'îlot) : une
+            ligne sobre, « d'après OCS GE », jamais la précision cadastrale, aucun effet score. */}
+        {b.ocsge?.part_artif_pct != null && (
+          <FactRow label="Sol artificialisé" value={<>{b.ocsge.part_artif_pct.toLocaleString('fr-FR')}<small> % — d'après OCS GE {b.ocsge.millesime}</small></>}
+            src={b.ocsge.source} />
+        )}
         <FactNote>Bâti existant — {b.source_bati}. Information de fiche, jamais un signal de classement.</FactNote>
         {/* SOURCES-1 lot 6 — historique cadastral OFFICIEL (filiation DFI). Absence normale
             (informatisation 1980-90+) : le bloc est simplement omis, jamais un zéro. */}

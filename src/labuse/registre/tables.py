@@ -34,6 +34,14 @@ Rt = ReservoirTables
 #: Les réservoirs SANS table (API interrogée en direct, règles portées par le code, saisie
 #: manuelle) le déclarent avec une note — jamais un oubli silencieux.
 RESERVOIR_TABLES: dict[str, ReservoirTables] = {
+    # REPARATIONS-1 lot 4 — RNB : l'identité des bâtiments (id national + rattachement spatial
+    # des bâtiments BD TOPO servis ; batiment_hauteur_lidar.rnb_id porte le principal par parcelle).
+    "rnb": Rt(("rnb_batiments", "rnb_rattachement_bdtopo"),
+              millesime="RNB — flux continu (rnb.beta.gouv.fr), ingéré par commune 13/09/2026"),
+    # REPARATIONS-1 lot 5 — OCS GE native 974 (2 millésimes + diff artificialisation officiel).
+    "ocsge": Rt(("ocsge_sol", "ocsge_evolution", "parcel_ocsge"), couches=("artificialisation",),
+                millesime="OCS GE 2.0 D974 — 2017 + 2022 (IGN, livraisons 2025-04) ; diff "
+                          "artificialisation 2017→2022 (2025-09-16)"),
     # ── cadastre / foncier ──────────────────────────────────────────────────────────
     # RECETTE-11 D6 — millésime affiché au client : plus de note d'ingénierie « « latest » ingérée ».
     "cadastre_api_carto": Rt(("parcels",), millesime="PCI Parcellaire Express (DGFiP), édition courante"),
@@ -365,6 +373,7 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "registre_robinets": "miroir du registre (robinets)",
     "registre_aretes": "miroir du registre (arêtes)",
     "circuit_journal": "journal du circuit",
+    "circuit_candidat_assume": "candidat assumé (V3a — déclaration journalisée, réversible)",
     "circuit_ecarts": "sonde — fuites",
     "circuit_eau_ancienne": "sonde — eau ancienne",
     "circuit_controles": "sonde — passages",

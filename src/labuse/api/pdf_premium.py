@@ -594,6 +594,8 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         "dvf": "Marché DVF", "sitadel": "Permis SITADEL", "amenites": "Commerces et services à proximité",
         "potentiel_foncier_region": "Potentiel foncier Région",
         "ocs_ge": "Occupation du sol (BD CARTO V5 — grain grossier)",
+        # REPARATIONS-1 lot 5 — l'artificialisation OFFICIELLE (OCS GE native, donnée d'îlot).
+        "artificialisation": "Artificialisation (OCS GE — IGN, 2017/2022)",
         "friche": "Friche", "acces": "Accès voirie", "proprietaire": "Propriétaire",
         "bodacc": "BODACC", "assemblage": "Assemblage", "bati": "Bâti",
         "osm_faux_positif": "Contrôle géométrique OSM",     # M73 D — clé brute rendue avant

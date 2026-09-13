@@ -200,6 +200,43 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
     from .faisabilite.hauteur_lidar import hauteur_lidar_servie
     lid = hauteur_lidar_servie(session, idu)
     hauteur_bati = (lid["faitage_m"] if lid else (round(float(hauteur), 1) if hauteur is not None else None))
+    # REPARATIONS-1 lot 4 — L'IDENTITÉ des bâtiments : le RNB ID de chaque bâtiment de la
+    # parcelle (RNB actifs dont l'emprise recoupe la parcelle, du plus grand recouvrement au
+    # plus petit), avec le lien officiel. Table absente (base sans RNB) → liste vide, jamais
+    # un tiroir cassé. C'est la pièce qui relie BD TOPO, LiDAR et RNB au MÊME bâtiment.
+    rnb: list[dict] = []
+    try:
+        if session.execute(text("SELECT to_regclass('rnb_batiments')")).scalar():
+            rnb = [{"rnb_id": r["rnb_id"], "statut": r["statut"],
+                    "lien": f"https://rnb.beta.gouv.fr/batiments/{r['rnb_id']}"}
+                   for r in session.execute(text(
+                       "SELECT r.rnb_id, r.statut FROM rnb_batiments r "
+                       "JOIN parcels p ON p.id = :pid "
+                       "WHERE r.is_active AND r.shape_2975 && p.geom_2975 "
+                       "  AND ST_Intersects(r.shape_2975, p.geom_2975) "
+                       "ORDER BY ST_Area(ST_Intersection(r.shape_2975, p.geom_2975)) DESC "
+                       "LIMIT 12"), {"pid": pid}).mappings()]
+    except Exception:  # noqa: BLE001 — le RNB ne casse jamais le tiroir « Le bien »
+        session.rollback()
+        rnb = []
+    # REPARATIONS-1 lot 5 — l'usage du sol et l'artificialisation OFFICIELS (OCS GE, précalcul
+    # parcel_ocsge). Donnée d'ÎLOT : la fiche dit « d'après OCS GE », jamais la précision
+    # cadastrale. Aucun effet score. Table absente → None, jamais un tiroir cassé.
+    ocsge = None
+    try:
+        if session.execute(text("SELECT to_regclass('parcel_ocsge')")).scalar():
+            row = session.execute(text(
+                "SELECT part_artif_pct, cs_dominant, us_dominant, millesime "
+                "FROM parcel_ocsge WHERE idu = :i"), {"i": idu}).mappings().first()
+            if row:
+                ocsge = {"part_artif_pct": (round(float(row["part_artif_pct"]), 1)
+                                            if row["part_artif_pct"] is not None else None),
+                         "cs_dominant": row["cs_dominant"], "us_dominant": row["us_dominant"],
+                         "millesime": row["millesime"],
+                         "source": "OCS GE (IGN) — donnée d'îlot, matrice du décret 2023-1096"}
+    except Exception:  # noqa: BLE001
+        session.rollback()
+        ocsge = None
     return {
         "disponible": True,
         "code": bloc.get("code"), "occupation_label": bloc.get("label"),
@@ -217,5 +254,9 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
         "surface_libre_m2": surface_libre,
         "surface_parcelle_m2": round(surface) if surface is not None else None,
         "toit": toit,          # None = toit non encore relevé (LiDAR non chauffé), sinon 3 états U5
+        # REPARATIONS-1 lot 4 — identifiants RNB des bâtiments de la parcelle (lien officiel).
+        "rnb": rnb,
+        # REPARATIONS-1 lot 5 — occupation du sol / artificialisation d'après OCS GE (îlot).
+        "ocsge": ocsge,
         "source_bati": "BD TOPO® V3 (IGN) + CoSIA 2025",
     }

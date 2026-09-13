@@ -119,7 +119,7 @@ const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'm
   // RETOURS-11 O14b (décision Vic) — « Stock foncier » renommé « Parcelles à potentiel »
   // (= Priorité + À suivre), définition au survol.
   { k: 'stock', head: 'Parcelles à potentiel', best: 'max',
-    title: 'Parcelles à potentiel — parcelles promues par LABUSE sur la commune (Priorité + À suivre, run servi)' },
+    title: 'Parcelles à potentiel — parcelles promues par LABUSE sur la commune (palier À suivre, run servi)' },
   { k: 'velocite', head: 'Instruction (mois)', best: 'min',
     title: 'Instruction — délai médian dépôt→autorisation, en mois (plus bas = plus rapide)' },
   { k: 'permis', head: 'Permis (5 ans)',
@@ -226,7 +226,7 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
       {/* LÉGENDE PERMANENTE en pied — plus d'en-tête à deviner. */}
       <div data-o6-legende className="shrink-0 border-t border-line-2 pt-2 text-[10px] leading-relaxed text-txt-dim">
         <b className="text-txt-mut">Légende :</b>{' '}
-        <b>Parcelles à potentiel</b> = parcelles promues par LABUSE (Priorité + À suivre) ·{' '}
+        <b>Parcelles à potentiel</b> = parcelles promues par LABUSE (palier À suivre) ·{' '}
         <b>Instruction</b> = délai médian dépôt→autorisation (mois) ·{' '}
         <b>Permis 5 ans</b> = permis SITADEL cumulés sur 5 ans ·{' '}
         <b>Déficit SRU</b> = objectif légal − taux de logement social (points) ·{' '}
@@ -401,7 +401,7 @@ export function O10Bascules() {
   const items = (q.data?.items ?? []).filter((e) => !kind || e.kind.includes(kind))
   return (
     <>
-      <Banner>Les <b>bascules datées</b> du run — une parcelle qui passe en Priorité, un match de
+      <Banner>Les <b>bascules datées</b> du run — une parcelle qui entre dans la tête du classement, un match de
         profil, un événement BODACC : chaque changement d'état avec sa date. Le « quoi de
         neuf » du lundi matin, en lecture (marquer lu reste dans la cloche).</Banner>
       <div className="flex flex-wrap gap-1.5">

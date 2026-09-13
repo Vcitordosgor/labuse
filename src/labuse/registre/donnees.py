@@ -1249,6 +1249,32 @@ DONNEES: dict[str, Donnee] = {
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:_hauteur_bati_m",
     reservoirs=("bd_topo",), portee="live"),
+ "part_artificialisee_pct": C("Part artificialisée (OCS GE)", "%", "parcelle",
+    "part de la parcelle artificialisée d'après l'OCS GE 2022 (matrice du décret 2023-1096, "
+    "étape 1 — avant lissage des seuils réglementaires) — donnée d'îlot, jamais la précision "
+    "cadastrale ; n'entre pas dans le score",
+    moteur="bati_revele", calcul="moteur",
+    fonction="src/labuse/bati.py:le_bien_block (parcel_ocsge — précalcul ingestion/ocsge.py)",
+    reservoirs=("ocsge",), portee="live"),
+ "usage_sol_dominant": C("Usage du sol dominant (OCS GE)", "classe", "parcelle",
+    "code d'usage OCS GE dominant par aire intersectée (millésime 2022) — donnée d'îlot",
+    moteur="bati_revele", calcul="moteur",
+    fonction="src/labuse/bati.py:le_bien_block (parcel_ocsge — précalcul ingestion/ocsge.py)",
+    reservoirs=("ocsge",), portee="live",
+    domaine=None, domaine_source="nomenclature OCS GE (IGN)"),
+ "zan_evolution_commune": C("Artificialisation 2017→2022 (OCS GE)", "m²", "commune",
+    "surface artificialisée entre les millésimes OCS GE 2017 et 2022, par commune — produit "
+    "différentiel OFFICIEL IGN (flags artif du portail de l'artificialisation) ; la pression "
+    "ZAN a sa source officielle",
+    moteur="commune_compteurs", calcul="moteur",
+    fonction="src/labuse/registre/moteurs/commune.py:zan_ocsge_commune (ocsge_evolution)",
+    reservoirs=("ocsge",), portee="live"),
+ "rnb_batiments_liste": C("Identifiants RNB des bâtiments", "liste", "parcelle",
+    "identifiant national (RNB) de chaque bâtiment ACTIF dont l'emprise recoupe la parcelle, "
+    "du plus grand recouvrement au plus petit, avec le lien officiel rnb.beta.gouv.fr",
+    moteur="bati_revele", calcul="moteur",
+    fonction="src/labuse/bati.py:le_bien_block (RNB actifs ∩ parcelle — rnb_batiments)",
+    reservoirs=("rnb",), portee="live"),
  "n_batiments": C("Nombre de bâtiments", "nombre", "parcelle",
     "compte des bâtiments de la parcelle (BD TOPO, intersection ≥ 10 m²)",
     moteur="bati_revele", calcul="moteur",

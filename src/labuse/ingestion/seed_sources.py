@@ -227,6 +227,43 @@ SOURCES: list[dict] = [
          endpoint_url="https://data.statistiques.developpement-durable.gouv.fr/dido/api/v1/datafiles/{rid}/csv",
          legal_notes="Licence Ouverte — attribution : « Source : SDES, Sitadel ». Pétitionnaires personnes MORALES seulement (physiques anonymisées à la source).",
          technical_notes="✓ live 10/07/2026 (Wave Sitadel3). Flux national Dido (dataset 6513f0189d7d312c80ec5b5b), 4 datafiles (logements/locaux/PA/PD), filtre serveur DEP_CODE=eq:974, delta DATE_REELLE_AUTORISATION=gte:. MAJ mensuelle, historique 2013+. Ingestion : permits_sdes.py (upsert permit_id, refresh cron). ⚠ voie Région ODS morte 2023-09 (permits.py legacy). last_sync_at posé à l'ingestion."),
+    # REPARATIONS-1 lot 5 — OCS GE NATIVE 974 : téléchargement IGN officiel (le WFS renvoyait
+    # 400 — le catalogue data.geopf.fr/telechargement publie D974 en DEUX MILLÉSIMES 2017 et
+    # 2022 + le produit DIFF artificialisation officiel). CRS 2975 INSPECTÉ dans les GPKG.
+    # La couche « Occupation du sol (BD CARTO V5) » (source 22) redevient ce qu'elle est : un
+    # proxy grossier, DISTINCT — l'artificialisation officielle vient d'ICI. Ne nourrit PAS le
+    # score (affichage seul, décision du mandat).
+    dict(name="OCS GE (IGN) — occupation du sol et artificialisation", category="topographie",
+         provider="IGN / Géoplateforme (portail de l'artificialisation)",
+         source_millesime="OCS GE 2.0 D974 — 2017 + 2022 ; diff artif 2025-09-16",
+         access_type="téléchargement/GPKG", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://geoservices.ign.fr/ocsge",
+         endpoint_url="https://data.geopf.fr/telechargement/resource/OCSGE",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — OCS GE ». "
+                     "Réutilisation libre, y compris commerciale, avec mention.",
+         technical_notes="REPARATIONS-1 lot 5 — ocsge_sol (couverture CS + usage US + flag artif "
+                         "décret 2023-1096 étape 1, 2 millésimes), ocsge_evolution (produit DIFF "
+                         "officiel IGN, flags artif_2017/2022), parcel_ocsge (précalcul par "
+                         "parcelle : part artif, CS/US dominants, évolution). Granularité îlot — "
+                         "la fiche dit « d'après OCS GE ». Aucun effet score."),
+    # REPARATIONS-1 lot 4 — RNB : L'IDENTITÉ NATIONALE DES BÂTIMENTS. API officielle (jamais de
+    # scraping), filtrage 974 au plus tôt (insee_code par commune), CRS INSPECTÉ (GeoJSON WGS84,
+    # SRID=4326 explicite dans le flux diff — constaté 13/09/2026). On prend : rnb_id, statut,
+    # géométries, adresses liées, ext_ids BD TOPO (traçabilité). RIEN d'énergétique. Sentinelle :
+    # GET /buildings/diff/?since= (flux de changements officiel — l'incrémental).
+    dict(name="RNB — Référentiel National des Bâtiments", category="topographie",
+         provider="RNB (beta.gouv / ADEME / IGN / DGALN)",
+         source_millesime="RNB — flux continu (ingéré par commune, 13/09/2026)",
+         access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://rnb.beta.gouv.fr/doc",
+         endpoint_url="https://rnb-api.beta.gouv.fr/api/alpha/buildings/",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « RNB — Référentiel National "
+                     "des Bâtiments ». Réutilisation libre, y compris commerciale, avec mention.",
+         technical_notes="REPARATIONS-1 lot 4 — rnb_batiments (id, statut, géométries 4326+2975, "
+                         "adresses, ext_ids bdtopo) + rnb_rattachement_bdtopo (rattachement spatial "
+                         "des bâtiments BD TOPO servis, cause écrite quand non rattaché) ; "
+                         "batiment_hauteur_lidar.rnb_id (le bâtiment principal de la parcelle). "
+                         "Fiche « Le bien » : identifiant discret + lien rnb.beta.gouv.fr."),
     dict(name="BD TOPO IGN", category="topographie", provider="IGN / Géoplateforme",
          source_millesime="BD TOPO® V3 (IGN) — édition non enregistrée",   # M125-1bis : typename BDTOPO_V3 (config wfs_layers)
          access_type="WFS/téléchargement", status=S.CONNECTE, reliability_level=R.VERIFIE,
@@ -431,7 +468,7 @@ SOURCES: list[dict] = [
                          "⚠ 2025 versionné disponible en amont, non ré-ingéré (servi via l'union) ; pic 2019→2020 = "
                          "discontinuité de complétude SIREN, pas des ventes (KF-102). Distincte des Fichiers fonciers Cerema."),
     dict(name="Fichiers fonciers (Cerema)", category="proprietaire", provider="DGFiP / Cerema",
-         access_type="import", status=S.MANUEL, reliability_level=R.SOUS_CONVENTION,
+         access_type="import", status=S.PARTENARIAT, reliability_level=R.SOUS_CONVENTION,
          documentation_url="https://datafoncier.cerema.fr", endpoint_url=None,
          legal_notes="NON INTÉGRÉ — aucune donnée ingérée. Acte d'engagement DGALN/DGFiP/Cerema : usage limité aux finalités déclarées, DÉMARCHAGE COMMERCIAL INTERDIT, rediffusion interdite → incompatible avec la prospection LABUSE (audit M6 §1.11 R1 : à trancher AVANT toute signature de convention). Version anonymisée : physiques masquées (_X_), morales complètes → RGPD-safe.",
          source_millesime="convention non instruite (FF 2024 au portail Cerema)",
@@ -633,7 +670,7 @@ SOURCES: list[dict] = [
     # bougera après le débat (clôture 26/11/2026).
     dict(name="Réunion Express — hypothèses de tracé (débat public CNDP)", category="acces",
          provider="Région Réunion / CNDP", access_type="carte interactive (pas de SIG)",
-         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         status=S.PARTENARIAT, reliability_level=R.A_CONFIRMER,
          documentation_url="https://www.debatpublic.fr/projet-train-reunion-express",
          endpoint_url="https://www.debatpublic.fr/projet-train-reunion-express",
          legal_notes="Hypothèses de tracé et zones de variantes présentées au débat public "
@@ -884,7 +921,7 @@ SOURCES: list[dict] = [
                          "`labuse ingest-azi-tri`."),
     dict(name="ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)",
          category="patrimoine", provider="Ministère de la Culture / DAC de La Réunion",
-         access_type="WFS/shp", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         access_type="WFS/shp", status=S.PARTENARIAT, reliability_level=R.A_CONFIRMER,
          source_millesime="aucune donnée — Atlas injoignable (06/09/2026)",
          documentation_url="https://www.culture.gouv.fr/regions/dac-de-la-reunion/la-direction-des-affaires-culturelles-de-la-reunion/patrimoine-architecture-environnement/archeologie/Zones-de-presomption-de-prescription-archeologique-ZPPA",
          endpoint_url="https://atlas.patrimoines.culture.fr/",
@@ -944,7 +981,7 @@ SOURCES: list[dict] = [
     # ── SOURCES-1 lot 4 — le cadre régional ──
     dict(name="SAR — schéma d'aménagement régional (Région/DEAL)", category="urbanisme",
          provider="Région Réunion (élaboration) / État (décret 22/11/2011)",
-         access_type="WMS (image seule)", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         access_type="WMS (image seule)", status=S.PARTENARIAT, reliability_level=R.A_CONFIRMER,
          source_millesime="couche SIG officielle NON diffusée (recherche 07/09/2026)",
          documentation_url="https://www.reunion.developpement-durable.gouv.fr/schema-d-amenagement-regional-sar-r76.html",
          endpoint_url="https://sextant.ifremer.fr/services/wms/polmar_reunion",
@@ -1097,7 +1134,7 @@ SOURCES: list[dict] = [
     # sources à connecter, la demande est prête dans docs/CIRCUIT/DEMANDE-REGION-EPCI.md).
     dict(name="Zonages d'assainissement SIG complets (EPCI / régies)", category="reseaux",
          provider="CINOR / TCO / CIVIS / CASUD / CIREST (et régies)", access_type="SIG/vecteur",
-         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         status=S.PARTENARIAT, reliability_level=R.A_CONFIRMER,
          source_millesime="en attente de la demande aux EPCI (GPU : 4/24)",
          documentation_url="https://www.civis.re/index.php/telechargements-dac",
          legal_notes="Documents publics (zonages d'assainissement approuvés) — licence à préciser à la remise.",
@@ -1107,7 +1144,7 @@ SOURCES: list[dict] = [
                          "sol filtrant. Format souhaité : vecteur (GPKG/shp) + délibérations."),
     dict(name="Inventaires ZAE (EPCI — loi Climat et résilience)", category="economie",
          provider="CINOR / TCO / CIVIS / CASUD / CIREST", access_type="tableur/SIG",
-         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         status=S.PARTENARIAT, reliability_level=R.A_CONFIRMER,
          source_millesime="en attente de la demande aux EPCI (L.318-8-2 CU)",
          documentation_url="https://www.cerema.fr/fr/actualites/inventaires-zones-activite-economique-zae",
          legal_notes="Inventaires obligatoires (L.318-8-2 CU, révision ≤ 6 ans) — publication due par les EPCI.",
@@ -1116,7 +1153,7 @@ SOURCES: list[dict] = [
                          "pas couvert par LABUSE. ⚠ données propriétaires (RGPD) à cadrer."),
     dict(name="Périmètres de ZAC (EPCI / communes / EPF Réunion)", category="urbanisme",
          provider="EPCI / communes / EPF Réunion", access_type="SIG/vecteur",
-         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         status=S.PARTENARIAT, reliability_level=R.A_CONFIRMER,
          source_millesime="en attente de la demande (pas d'open data 974 fiable)",
          documentation_url="https://peigeo.re/index.php/cartostat/visualiseurs-thematiques/acquisition-retrocession-epfr/",
          legal_notes="Actes de création/réalisation des ZAC — publics ; standard CNIG ZAC quand il existe.",
@@ -1126,7 +1163,7 @@ SOURCES: list[dict] = [
                          "acquisitions EPFR de PEIGEO ne sont PAS un référentiel ZAC."),
     dict(name="OPAH / PIG (Anah / EPCI)", category="logement",
          provider="Anah / EPCI (conventions d'opérations programmées)", access_type="SIG ou conventions",
-         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         status=S.PARTENARIAT, reliability_level=R.A_CONFIRMER,
          source_millesime="en attente de la demande (pas de périmètre polygone ouvert)",
          documentation_url="https://www.anah.gouv.fr/collectivites/support/cartographie",
          legal_notes="Conventions Anah/EPCI publiques — périmètres exacts dans les conventions (PDF).",
@@ -1135,7 +1172,7 @@ SOURCES: list[dict] = [
                          "l'existant (aides Anah). La carto Anah localise à la commune, sans polygone."),
     dict(name="Périmètres ORT infra-communaux (EPCI)", category="logement",
          provider="EPCI (conventions ORT préfectorales)", access_type="SIG ou conventions",
-         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         status=S.PARTENARIAT, reliability_level=R.A_CONFIRMER,
          source_millesime="en attente de la demande (éligibilité communale servie)",
          documentation_url="https://www.data.gouv.fr/datasets/liste-des-communes-couvertes-par-des-operations-de-revitalisation-de-territoire",
          legal_notes="Conventions ORT publiques (préfecture/EPCI) — périmètres infra-communaux en annexe.",
@@ -1145,7 +1182,7 @@ SOURCES: list[dict] = [
                          "depuis anct_ort, lot 5)."),
     dict(name="ENS du Département (Conseil départemental)", category="environnement",
          provider="Conseil départemental de La Réunion", access_type="SIG/vecteur",
-         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         status=S.PARTENARIAT, reliability_level=R.A_CONFIRMER,
          source_millesime="en attente de la demande (non diffusés en open data)",
          documentation_url="https://www.departement974.fr",
          legal_notes="Espaces naturels sensibles (droit de préemption ENS du Département) — communication à demander.",
@@ -1155,7 +1192,7 @@ SOURCES: list[dict] = [
                          "départementaux (fiche 4 du rapport)."),
     dict(name="Micro-données OLL (ADIL / AGORAH)", category="logement",
          provider="ADIL de La Réunion / AGORAH (observatoire local des loyers)", access_type="convention",
-         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         status=S.PARTENARIAT, reliability_level=R.A_CONFIRMER,
          source_millesime="en attente de la demande (agrégats par zone servis)",
          documentation_url="https://www.observatoires-des-loyers.org",
          legal_notes="Micro-données restreintes (réseau OLL) — accès conventionné ; agrégats ouverts déjà servis.",
@@ -1168,7 +1205,7 @@ SOURCES: list[dict] = [
     # automatisation, cf. docstring du module) avec la convention DITE en tête des notes.
     dict(name="LOVAC (logements vacants)", category="logement",
          provider="Cerema / DGFiP (LOVAC)", access_type="convention",
-         status=S.MANUEL, reliability_level=R.SOUS_CONVENTION,
+         status=S.PARTENARIAT, reliability_level=R.SOUS_CONVENTION,
          source_millesime="convention non instruite (millésime 2025 publié)",
          documentation_url="https://datafoncier.cerema.fr/actualites/millesime-2025-lovac-disponible",
          legal_notes="LOVAC détail RÉSERVÉ aux collectivités, services de l'État, Anah et leurs prestataires désignés — un éditeur privé n'y a pas accès en propre.",
@@ -1177,7 +1214,7 @@ SOURCES: list[dict] = [
                          "vacance INSEE RP par IRIS (servie, lot 6)."),
     dict(name="DV3F (Cerema)", category="marche",
          provider="Cerema (DVF enrichi des Fichiers fonciers)", access_type="convention",
-         status=S.MANUEL, reliability_level=R.SOUS_CONVENTION,
+         status=S.PARTENARIAT, reliability_level=R.SOUS_CONVENTION,
          source_millesime="convention non instruite (DV3F 2024-2 disponible)",
          documentation_url="https://datafoncier.cerema.fr",
          legal_notes="CGU restreintes — même convention que les Fichiers fonciers (une demande pour les trois).",
@@ -1287,6 +1324,40 @@ HUBS: tuple[str, ...] = (
 )
 
 
+#: REPARATIONS-1 lot 4 — ARBITRAGES DE DOUBLONS EN CODE (G1). CIRCUIT-6 les avait posés en
+#: NOTES EN BASE seulement : un re-seed les écrasait et G1 recassait (constaté 13/09). Ici la
+#: version durable : appliqué par seed() APRÈS l'upsert, idempotent (append si le jeton
+#: d'arbitrage manque). Un doublon signalé par G1 = une ligne ici, jamais un silence.
+ARBITRAGES_DOUBLONS: dict[str, str] = {
+    "Potentiel foncier Région (Région ODS)":
+        "DOUBLON assumé avec « data.regionreunion.com — Potentiel foncier » (même couche kind "
+        "potentiel_foncier) : l'arbitrage REPARATIONS.md B1 (retrait de cette ligne, 0 chiffre) "
+        "reste le geste de Vic — en attendant, la ligne 15 est la référence.",
+    "SIRENE":
+        "ARBITRAGE des canaux SIRENE (REPARATIONS.md B3) : trois canaux assumés — socle SIRENE, "
+        "Recherche d'entreprises DINUM (enrichissement à la volée), établissements géolocalisés "
+        "(carte) — chacun son rôle, pas de fusion.",
+    "Recherche d'entreprises (DINUM)":
+        "ARBITRAGE canal (B3) : même endpoint que SIRENE (recherche-entreprises.api.gouv.fr) — "
+        "canal d'ENRICHISSEMENT à la volée, rôle distinct du socle et du canal géolocalisé.",
+    "ZFANG — zone franche d'activité nouvelle génération (Légifrance)":
+        "ARBITRAGE : ZFANG et FRR partagent la table territoire_fiscal_commune (deux dispositifs "
+        "fiscaux, une table de zonage) — recouvrement assumé, jamais deux lignes servies.",
+}
+
+
+def appliquer_arbitrages_doublons(session: Session) -> None:
+    """Append (idempotent) la note d'arbitrage aux sources concernées — un re-seed ne peut plus
+    faire perdre un arbitrage de doublon (G1)."""
+    for nom, note in ARBITRAGES_DOUBLONS.items():
+        ds = session.execute(select(DataSource).where(DataSource.name == nom)).scalar_one_or_none()
+        if ds is None:
+            continue
+        tn = ds.technical_notes or ""
+        if note[:24] not in tn:
+            ds.technical_notes = (tn + (" — " if tn else "") + note)
+
+
 def appliquer_statuts_circuit(session: Session) -> None:
     """Pose (idempotent) les colonnes CIRCUIT-5 (`alias_de`, `retiree_le`, `retiree_raison`)
     et les statuts de première classe. `retiree_le` n'est posé qu'une fois (premier passage) —
@@ -1330,6 +1401,7 @@ def seed(session: Session) -> int:
     session.flush()
     appliquer_modes_cadences(session)   # CIRCUIT-1 lot 1.7 — modes + cadences déclarés
     appliquer_statuts_circuit(session)  # CIRCUIT-5 lot 2.1 — alias/retiree/hub de première classe
+    appliquer_arbitrages_doublons(session)  # REPARATIONS-1 lot 4 — arbitrages G1 durables (code)
     return session.query(DataSource).count()
 
 
@@ -1341,6 +1413,8 @@ def seed(session: Session) -> int:
 # l'absent. La liste des propositions est livrée dans docs/CIRCUIT/CADENCES-PROPOSEES.md — Vic les
 # corrige depuis la page Circuit, pas dans ce fichier.
 MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
+    "RNB — Référentiel National des Bâtiments": ("cron_mensuel", 30, "proposee"),
+    "OCS GE (IGN) — occupation du sol et artificialisation": ("one_shot", 365, "proposee"),
     "Cadastre (API Carto PCI)": ("one_shot", 365, "proposee"),
     "Cadastre Etalab (bulk DGFiP/Etalab)": ("one_shot", 365, "proposee"),
     "Urbanisme PLU/GPU (API Carto)": ("en_direct", None, "sans_objet"),

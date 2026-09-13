@@ -279,6 +279,15 @@ const OVERLAYS = {
   sis: { paint: { 'fill-color': T_SOMBRE.sis, 'fill-opacity': T_SOMBRE.sisOpacity, 'fill-outline-color': T_SOMBRE.sis } },
   bruit_route: { paint: { 'fill-color': bruitColorExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.bruitOpacity, 'fill-outline-color': bruitColorExpr(T_SOMBRE) } },
   bruit_carte: { paint: { 'fill-color': T_SOMBRE.bruitCarte, 'fill-opacity': T_SOMBRE.bruitCarteOpacity, 'fill-outline-color': T_SOMBRE.bruitCarte } },
+  // REPARATIONS-1 lot 5 — Artificialisation (OCS GE) : rampe DISTINCTE (violine), trois classes
+  // (artificialisé 2022 dissous · artificialisé 2017→2022 · renaturé 2017→2022).
+  artificialisation: { paint: {
+    'fill-color': ['match', ['get', 'classe'],
+      'artificialise', '#8E6AA8', 'evolution_artificialisation', '#C2452F',
+      'evolution_renaturation', '#3F9B6A', '#8E6AA8'] as unknown as maplibregl.ExpressionSpecification,
+    'fill-opacity': 0.32,
+    'fill-outline-color': '#5E4470',
+  } },
   enp: { paint: { 'fill-color': T_SOMBRE.enp, 'fill-opacity': T_SOMBRE.enpOpacity, 'fill-outline-color': T_SOMBRE.enp } },
   rpg: { paint: { 'fill-color': T_SOMBRE.rpg, 'fill-opacity': T_SOMBRE.rpgOpacity, 'fill-outline-color': T_SOMBRE.rpg } },
   zonage: { paint: { 'fill-color': zonageFillExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.zonageOpacity } },
@@ -835,6 +844,7 @@ export function MapView() {
   const casiasQ = useQuery({ queryKey: ['layer', 'casias'], queryFn: () => getMapLayer('casias', 10_000), enabled: layers.casias })
   const bruitQ = useQuery({ queryKey: ['layer', 'bruit_route', commune], queryFn: () => getMapLayer('bruit_route', 10_000), enabled: layers.bruit_route })
   const bruitCarteQ = useQuery({ queryKey: ['layer', 'bruit_carte'], queryFn: () => getMapLayer('bruit_carte'), enabled: layers.bruit_carte })
+  const artifQ = useQuery({ queryKey: ['layer', 'artificialisation'], queryFn: () => getMapLayer('artificialisation', 40000), enabled: layers.artificialisation })
   // M55-E : la couche équipements COMPLÈTE (limit 20000 = plafond endpoint ; 15 214 en base,
   // 271 Ko gzippé) — le défaut 6000 tronquait 61 % des marqueurs en mode île (centre de
   // Saint-Denis vide, Hauts couverts : l'ordre des lignes décidait des survivants).
@@ -1646,7 +1656,8 @@ export function MapView() {
       ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr], ['vefa_neuf', vefaNeuf],   // M134 dispositifs · M137-U znieff · T4 vefa
       ['er', erQ], ['ebc', ebcQ], ['dpu', dpuQ], ['peb', pebQ], ['sup', supQ],   // SOURCES-1 lot 1 — droit des sols
       ['dpf', dpfQ], ['zone_humide', zhQ], ['enp', enpQ], ['rpg', rpgQ],   // SOURCES-1 lot 2 — nature et eau
-      ['sis', sisQ], ['casias', casiasQ], ['bruit_route', bruitQ], ['bruit_carte', bruitCarteQ]]   // SOURCES-1 lot 3 — sols et bruit
+      ['sis', sisQ], ['casias', casiasQ], ['bruit_route', bruitQ], ['bruit_carte', bruitCarteQ],
+      ['artificialisation', artifQ]]   // SOURCES-1 lot 3 — sols et bruit · REPARATIONS-1 lot 5 — OCS GE
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
     // COUCHES-1 lot 1 (E2) — points SIS (centroïdes) alimentés en plus de l'aplat.
     if (sisQ.data) (m.getSource('ov-sis-pt') as maplibregl.GeoJSONSource | undefined)?.setData(centroidsFC(sisQ.data as never) as never)
@@ -1727,7 +1738,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, lignesMt.data, tcspTroncons.data, tcspStations.data, tcspZone.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, erQ.data, ebcQ.data, dpuQ.data, pebQ.data, supQ.data, dpfQ.data, zhQ.data, enpQ.data, rpgQ.data, sisQ.data, casiasQ.data, bruitQ.data, bruitCarteQ.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, layers.er, layers.ebc, layers.dpu, layers.peb, layers.sup, layers.dpf, layers.zone_humide, layers.enp, layers.rpg, layers.sis, layers.casias, layers.bruit_route, layers.bruit_carte, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, lignesMt.data, tcspTroncons.data, tcspStations.data, tcspZone.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, erQ.data, ebcQ.data, dpuQ.data, pebQ.data, supQ.data, dpfQ.data, zhQ.data, enpQ.data, rpgQ.data, sisQ.data, casiasQ.data, bruitQ.data, bruitCarteQ.data, artifQ.data, layers.artificialisation, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, layers.er, layers.ebc, layers.dpu, layers.peb, layers.sup, layers.dpf, layers.zone_humide, layers.enp, layers.rpg, layers.sis, layers.casias, layers.bruit_route, layers.bruit_carte, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -1886,6 +1897,7 @@ export function MapView() {
     m.setLayoutProperty('ov-casias-fill', 'visibility', vis(layers.casias))
     m.setLayoutProperty('ov-bruit_route', 'visibility', vis(layers.bruit_route))
     m.setLayoutProperty('ov-bruit_carte', 'visibility', vis(layers.bruit_carte))
+    m.setLayoutProperty('ov-artificialisation', 'visibility', vis(layers.artificialisation))
     // M106 P1 : les deux couches d'aléa (aplat + contour suivent leur toggle — R7 : plus de trame)
     for (const [id, on] of [['ov-alea-inond', layers.alea_inondation], ['ov-alea-mvt', layers.alea_mvt]] as const) {
       m.setLayoutProperty(id, 'visibility', vis(on))

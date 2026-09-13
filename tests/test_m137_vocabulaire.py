@@ -45,11 +45,13 @@ def test_verdict_servi_label_est_le_court():
     # PALIERS-1 — un seul vocabulaire : Priorité / À suivre / Sans signal / Écartée. Les anciens
     # codes (runs jamais réécrits) projettent sur ces quatre valeurs via la correspondance lecture.
     from labuse.verdict_servi import TIER_LABELS
-    assert TIER_LABELS["priorite"] == "Priorité"
+    # REPARATIONS-1 lot 2b — « Priorité » n'est plus SERVI comme palier (décision Vic,
+    # réversible : tiers_client.PRIORITE_SERVIE) : la tête classée entière porte « À suivre ».
+    assert TIER_LABELS["priorite"] == "À suivre"
     assert TIER_LABELS["a_suivre"] == "À suivre"
     assert TIER_LABELS["sans_signal"] == "Sans signal"
     assert TIER_LABELS["ecartee"] == "Écartée"
-    assert TIER_LABELS["brulante"] == "Priorité"          # ancien code → correspondance lecture
+    assert TIER_LABELS["brulante"] == "À suivre"          # ancien code tête → À suivre aussi
     assert TIER_LABELS["chaude"] == "À suivre"
     assert TIER_LABELS["reserve_fonciere"] == "Sans signal"
     assert TIER_LABELS["a_creuser"] == "Sans signal"

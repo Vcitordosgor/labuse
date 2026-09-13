@@ -122,6 +122,10 @@ class DataSource(Base, TimestampMixin):
     # `SOURCES_MASQUEES` en dur, désormais vestigial). Désactivée ⇒ retirée de la vitrine ET les
     # consommateurs (couches/outils) servent « source désactivée » à la place d'un chiffre périmé.
     affichage_desactive: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    # REPARATIONS-1 lot 3 — la COUVERTURE RÉELLE, dite au client (page Sources) : où la source
+    # arrive et où elle s'arrête, trou chez nous ou chez le producteur (communes nommées quand
+    # elles le sont). Jamais un statut binaire connecté/absent qui laisse croire à l'exhaustif.
+    couverture_note: Mapped[str | None] = mapped_column(Text)
 
 
 # ───────────────────────────── source_veille ─────────────────────────────
@@ -1374,7 +1378,9 @@ def ensure_geom_2975(engine, commune: str | None = None, backfill: bool = True) 
             # SOURCES-1 : droit des sols (ER/EBC = plu_gpu_prescription, DPU, PEB, SUP), nature et
             # eau (zones humides, ENP = ens, RPG = safer, DPF), sols (SIS/CASIAS = sol_pollue), bruit.
             "'plu_gpu_prescription','dpu','peb','sup','dpf','zone_humide','ens','safer',"
-            "'sol_pollue','bruit_route','bruit_carte')",
+            "'sol_pollue','bruit_route','bruit_carte',"
+            # REPARATIONS-1 lot 5 — Artificialisation (OCS GE) : zones dissoutes lourdes.
+            "'artificialisation')",
         ]
     ddl += [
         "CREATE INDEX IF NOT EXISTS idx_parcels_geom_2975 ON parcels USING gist (geom_2975)",
@@ -1931,6 +1937,10 @@ def ensure_data_sources_millesime(engine) -> None:
         # CONNEXIONS-2 Lot 6.3 (M2) — flag « désactivée au dashboard » (remplace SOURCES_MASQUEES en dur).
         c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS affichage_desactive "
                        "boolean NOT NULL DEFAULT false"))
+        # REPARATIONS-1 lot 3 — le statut « partenariat_requis » (18 car.) dépasse le varchar(8)
+        # historique : on élargit (idempotent — un TYPE déjà large reste large, aucune perte).
+        c.execute(text("ALTER TABLE data_sources ALTER COLUMN status TYPE varchar(24)"))
+        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS couverture_note text"))
 
 
 def ensure_source_veille(engine) -> None:

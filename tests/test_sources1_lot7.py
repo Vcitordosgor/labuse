@@ -30,7 +30,9 @@ def test_chantiers_au_catalogue_avec_organisme():
     par_nom = {r["name"]: r for r in SOURCES}
     for nom in CHANTIERS:
         r = par_nom[nom]
-        assert r["status"].value == "a_faire", nom          # pas d'enum « chantier » — décision lot 7
+        # REPARATIONS-1 lot 3 — les chantiers de demande passent « non disponible — partenariat
+        # requis » : visibles admin, invisibles client, conservés en base (remplace la décision lot 7).
+        assert r["status"].value == "partenariat_requis", nom
         assert "CHANTIER" in r["technical_notes"], nom      # l'organisme à solliciter est en tête
         assert "en attente de la demande" in r["source_millesime"], nom
         assert MODE_ET_CADENCE[nom][0] == "absente", nom
@@ -41,7 +43,9 @@ def test_cerema_sous_convention():
     par_nom = {r["name"]: r for r in SOURCES}
     for nom in CEREMA:
         r = par_nom[nom]
-        assert r["status"].value == "manuel", nom           # pas d'enum « sous_convention » — décision
+        # REPARATIONS-1 lot 3 — les 3 Cerema sous convention : « partenariat requis » aussi
+        # (invisibles client tant que la convention n'est pas signée — le geste reste à Vic).
+        assert r["status"].value == "partenariat_requis", nom
         assert "SOUS CONVENTION" in r["technical_notes"], nom
     assert "réservé" in par_nom["LOVAC (logements vacants)"]["legal_notes"].lower()
 

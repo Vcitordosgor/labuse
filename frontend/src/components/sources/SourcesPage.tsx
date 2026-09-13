@@ -117,6 +117,13 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
           {s.cadence_mention && <>Le producteur publie habituellement {s.cadence_mention}.</>}
         </p>
       )}
+      {/* REPARATIONS-1 lot 3 — la COUVERTURE RÉELLE, dite : où la source arrive et où elle
+          s'arrête (trou chez nous ou chez le producteur, communes nommées quand elles le sont). */}
+      {s.couverture_note && (
+        <p data-source-couverture className="col-[2/-1] text-[12px] leading-snug text-txt-dim">
+          {s.couverture_note}
+        </p>
+      )}
       {/* RETOURS-11 A8 — note interne (« proxy RPG (IGN) — RP… », etc.) retirée côté client (vit dans Données). */}
     </div>
   )

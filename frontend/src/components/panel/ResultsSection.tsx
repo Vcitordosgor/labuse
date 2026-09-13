@@ -580,14 +580,16 @@ export function ResultsSection() {
               épuisé = retenues − 4 tiers ; écartées = trame analysée − retenues). Le « i »
               raconte les trois familles. */}
           <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs leading-relaxed text-txt-mut"
-            title={uni.data ? `${fmt(uni.data.opportunites)} opportunités (priorité + à suivre) dont ${fmt(uni.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
+            title={uni.data ? `${fmt(uni.data.opportunites)} opportunités (À suivre) dont ${fmt(uni.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
             {/* RECETTE-6 (B3) — la bande de résumé suivait les 6 tiers BRUTS, dont deux (reserve_fonciere
                 et a_creuser) portent le MÊME palier « Sans signal » → « 0 sans signal · 0 sans signal »,
                 et « potentiel épuisé » s'affichait en dur « faible » (mot hors vocabulaire PALIERS-1).
                 On rend désormais les QUATRE PALIERS servis : Priorité · À suivre · Sans signal (= réserve
                 + à creuser + potentiel épuisé) · Écartées. Labels/couleurs = PALIER_META (jamais en dur). */}
-            <span className="font-medium" style={{ color: PALIER_META.priorite.color }}>{fmt(counts.brulante)}</span> {PALIER_META.priorite.label.toLowerCase()} ·{' '}
-            <span className="font-medium" style={{ color: PALIER_META.a_suivre.color }}>{fmt(counts.chaude)}</span> {PALIER_META.a_suivre.label.toLowerCase()} ·{' '}
+            {/* REPARATIONS-1 lot 2b — « Priorité » n'est plus servi comme palier (décision Vic,
+                réversible) : la tête classée ENTIÈRE (brulante + chaude) porte « À suivre ».
+                Compteur fusionné, aucun rescoring — les tiers stockés ne bougent pas. */}
+            <span className="font-medium" style={{ color: PALIER_META.a_suivre.color }}>{fmt(counts.brulante + counts.chaude)}</span> {PALIER_META.a_suivre.label.toLowerCase()} ·{' '}
             <span className="font-medium" style={{ color: PALIER_META.sans_signal.color }}>{fmt(counts.reserve_fonciere + counts.a_creuser + epuise)}</span> {PALIER_META.sans_signal.label.toLowerCase()}
             {/* RECETTE-7 (A2) — le « potentiel épuisé » (bâti saturé) n'est PAS « sans signal » : c'est
                 un état CONNU. On le SURFACE distinctement (dérivé, sans créer de palier de scoring → pas
@@ -620,9 +622,11 @@ export function ResultsSection() {
               ces communes sont majoritairement en zone A/N ou hors PLU servi (RNU, ex. Saint-Philippe
               n'a AUCUNE parcelle en zone U/AU) ; le zéro est JUSTE, ce n'est pas une panne. On le dit,
               avec la note de commune si elle existe. Le libellé s'adapte quand « À suivre » est aussi nul. */}
-          {!ile && commune && counts.brulante === 0 && (uni.data?.compte ?? 0) > 0 && (
+          {/* REPARATIONS-1 lot 2b — « Priorité » retiré : la phrase parle de la tête classée
+              entière (À suivre = brulante + chaude fusionnées). */}
+          {!ile && commune && counts.brulante + counts.chaude === 0 && (uni.data?.compte ?? 0) > 0 && (
             <p data-zero-priorite className="mt-1.5 shrink-0 rounded-lg border border-st-creuser/40 bg-[#211a10] px-2.5 py-1.5 text-[11px] leading-snug text-st-creuser">
-              Aucune parcelle en <b>Priorité</b>{counts.chaude === 0 ? <> ni <b>À suivre</b></> : ''} sur {commune} — ce n'est pas une
+              Aucune parcelle en <b>À suivre</b> sur {commune} — ce n'est pas une
               absence de données.{communeNote ? ` ${communeNote}` : ' Le foncier de cette commune est très majoritairement en zone agricole, naturelle ou hors d’un PLU servi'} :
               le modèle n'y détecte pas de foncier mutable à court terme. Les {fmt(counts.reserve_fonciere + counts.a_creuser + epuise)} parcelles « Sans signal » restent consultables.
             </p>
@@ -640,8 +644,8 @@ export function ResultsSection() {
             const seg = (n: number, color: string) => <span style={{ background: color, width: `${(n / tot) * 100}%` }} />
             return (
               <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">
-                {seg(counts.brulante, PALIER_META.priorite.color)}
-                {seg(counts.chaude, PALIER_META.a_suivre.color)}
+                {/* lot 2b — la barre suit la ventilation : tête fusionnée sous À suivre */}
+                {seg(counts.brulante + counts.chaude, PALIER_META.a_suivre.color)}
                 {seg(sansSignal, PALIER_META.sans_signal.color)}
                 {seg(ecartees ?? 0, PALIER_META.ecartee.color)}
               </div>
