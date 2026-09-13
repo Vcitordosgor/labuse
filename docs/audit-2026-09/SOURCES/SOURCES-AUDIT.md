@@ -52,18 +52,18 @@
 | 🔗 | **Potentiel foncier Région (Région ODS)** (`9`) | ALIAS (doublon) | 3/4 témoins | oui | KO | 0 | carte |
 | 🟡 | **DEAL Réunion (WMS/WFS)** (`13`) | PARTIELLE — champs manquants | 2/4 témoins | oui | — | 0 | carte |
 | 🟢 | **QPV 2024 (ANCT)** (`38`) | PLEINE | 3/4 témoins | oui | OK | 3 | fiche, carte |
-| 🟢 | **RTAA DOM (textes réglementaires)** (`43`) | PLEINE | n.a. (API/règles) | non | — | 1 | outil |
+| 🟢 | **RTAA DOM (textes réglementaires)** (`43`) | PLEINE | n.a. (API/règles) | oui | — | 1 | outil |
 | 🟡 | **SUP — assiettes GPU (API Carto)** (`44`) | PARTIELLE — couverture incomplète | 3/4 témoins | oui | OK | 2 | fiche, carte |
 | 🟢 | **Classement sonore ITT (Cerema)** (`46`) | PLEINE | 3/4 témoins | oui | OK | 1 | carte |
-| 🟢 | **50 pas géométriques — limite haute (DEAL)** (`47`) | PLEINE | VIDE sur 4/4 | non | OK | 1 | carte |
-| 🟡 | **Sudocuh (procédures d'urbanisme)** (`62`) | PARTIELLE — champs manquants | 4/4 témoins | non | — | 6 | fiche, outil, copilote |
-| 🟡 | **GPU — zonages d'assainissement** (`63`) | PARTIELLE — couverture incomplète | 4/4 témoins | non | OK | 1 | fiche, carte |
+| 🟢 | **50 pas géométriques — limite haute (DEAL)** (`47`) | PLEINE | VIDE sur 4/4 | oui | OK | 1 | carte |
+| 🟡 | **Sudocuh (procédures d'urbanisme)** (`62`) | PARTIELLE — champs manquants | 4/4 témoins | oui | — | 6 | fiche, outil, copilote |
+| 🟡 | **GPU — zonages d'assainissement** (`63`) | PARTIELLE — couverture incomplète | 4/4 témoins | oui | OK | 1 | fiche, carte |
 | 🟢 | **ZFANG — zone franche d'activité nouvelle génération (Légifrance)** (`72`) | PLEINE | 4/4 témoins | non | OK | 2 | fiche, carte |
 | 🟢 | **FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)** (`73`) | PLEINE | 4/4 témoins | non | OK | 2 | fiche, carte |
 | 🟢 | **Consommation d'espaces NAF (Cerema — portail de l'artificialisation)** (`102`) | PLEINE | 4/4 témoins | non | — | 2 | fiche, outil |
-| 🟢 | **GPU — emplacements réservés (prescriptions CNIG)** (`105`) | PLEINE | 3/4 témoins | non | KO | 3 | fiche, carte |
-| 🟢 | **GPU — espaces boisés classés (prescriptions CNIG)** (`106`) | PLEINE | 3/4 témoins | non | KO | 3 | fiche, carte |
-| 🟡 | **GPU — droit de préemption urbain (info-surf)** (`107`) | PARTIELLE — couverture incomplète | 2/4 témoins | non | KO | 3 | fiche, carte |
+| 🟢 | **GPU — emplacements réservés (prescriptions CNIG)** (`105`) | PLEINE | 3/4 témoins | oui | KO | 3 | fiche, carte |
+| 🟢 | **GPU — espaces boisés classés (prescriptions CNIG)** (`106`) | PLEINE | 3/4 témoins | oui | KO | 3 | fiche, carte |
+| 🟡 | **GPU — droit de préemption urbain (info-surf)** (`107`) | PARTIELLE — couverture incomplète | 2/4 témoins | oui | KO | 3 | fiche, carte |
 | ⬜ | **SAR — schéma d'aménagement régional (Région/DEAL)** (`118`) | À DEMANDER / À BRANCHER | 3/4 témoins | oui | — | 1 | fiche, carte, scoring |
 | ⬜ | **Périmètres de ZAC (EPCI / communes / EPF Réunion)** (`136`) | À DEMANDER / À BRANCHER | n.a. (API/règles) | non | — | 0 | — |
 
@@ -105,18 +105,18 @@
 | 🟢 | **Géorisques — mouvements de terrain** (`36`) | PLEINE | 3/4 témoins | oui | OK | 0 | carte |
 | 🟢 | **ZNIEFF (INPN/MNHN)** (`76`) | PLEINE | VIDE sur 4/4 | oui | OK | 2 | fiche, carte, outil, scoring |
 | ⚫ | **ZNIEFF (INPN / Région)** (`80`) | RETIRÉE (déjà) | n.a. (API/règles) | non | — | 0 | — |
-| 🟢 | **CatNat (arrêtés GASPAR / Géorisques)** (`97`) | PLEINE | 4/4 témoins | non | KO | 1 | fiche |
-| 🟢 | **PEB — plans d'exposition au bruit (DGAC via annexes GPU)** (`108`) | PLEINE | 1/4 témoins | non | OK | 3 | fiche, carte |
+| 🟢 | **CatNat (arrêtés GASPAR / Géorisques)** (`97`) | PLEINE | 4/4 témoins | oui | KO | 1 | fiche |
+| 🟢 | **PEB — plans d'exposition au bruit (DGAC via annexes GPU)** (`108`) | PLEINE | 1/4 témoins | oui | OK | 3 | fiche, carte |
 | ⬜ | **ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)** (`110`) | À DEMANDER / À BRANCHER | n.a. (API/règles) | oui | — | 0 | — |
-| 🟢 | **Ravines — domaine public fluvial (DEAL Carmen)** (`111`) | PLEINE | VIDE sur 4/4 | non | OK | 1 | carte |
-| 🟡 | **Zones humides — inventaires DEAL (Carmen)** (`112`) | PARTIELLE — couverture incomplète | VIDE sur 4/4 | non | OK | 1 | carte |
-| 🟢 | **Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)** (`113`) | PLEINE | 3/4 témoins | non | OK | 1 | carte |
+| 🟢 | **Ravines — domaine public fluvial (DEAL Carmen)** (`111`) | PLEINE | VIDE sur 4/4 | oui | OK | 1 | carte |
+| 🟡 | **Zones humides — inventaires DEAL (Carmen)** (`112`) | PARTIELLE — couverture incomplète | VIDE sur 4/4 | oui | OK | 1 | carte |
+| 🟢 | **Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)** (`113`) | PLEINE | 3/4 témoins | oui | OK | 1 | carte |
 | 🟢 | **AZI / TRI — inondation (Géorisques GASPAR)** (`114`) | PLEINE | 4/4 témoins | oui | KO | 1 | fiche, carte |
 | 🟡 | **Géorisques — secteurs d'information sur les sols (SIS)** (`115`) | PARTIELLE — couverture incomplète | 3/4 témoins | oui | KO | 3 | fiche, carte |
-| 🟢 | **Géorisques — CASIAS (anciens sites industriels)** (`116`) | PLEINE | 3/4 témoins | non | KO | 3 | fiche, carte |
+| 🟢 | **Géorisques — CASIAS (anciens sites industriels)** (`116`) | PLEINE | 3/4 témoins | oui | KO | 3 | fiche, carte |
 | 🟡 | **DEAL — cartes de bruit stratégiques (CBS)** (`117`) | PARTIELLE — couverture incomplète | VIDE sur 4/4 | non | OK | 1 | carte |
 | ⬜ | **ENS du Département (Conseil départemental)** (`139`) | À DEMANDER / À BRANCHER | n.a. (API/règles) | non | — | 0 | — |
-| 🟢 | **Systèmes d'endiguement et zones protégées (DEAL Lizmap)** (`145`) | PLEINE | 3/4 témoins | non | OK | 0 | carte |
+| 🟢 | **Systèmes d'endiguement et zones protégées (DEAL Lizmap)** (`145`) | PLEINE | 3/4 témoins | oui | OK | 0 | carte |
 | ⬜ | **Carte hypsométrique du littoral (DEAL Lizmap)** (`146`) | À DEMANDER / À BRANCHER | n.a. (API/règles) | non | — | 0 | — |
 
 - **Géorisques** — Aléas Géorisques servis (couche + fiche Pièges + cascade). Complété par 8 sources Géorisques sœurs.
@@ -154,10 +154,10 @@
 |---|---|---|---|---|---|---|---|
 | 🟢 | **DVF / valeurs foncières** (`5`) | PLEINE | 3/4 témoins | oui | KO | 23 | fiche, carte, outil, PDF, copilote, scoring |
 | 🟢 | **SITADEL (autorisations d'urbanisme)** (`16`) | PLEINE | 3/4 témoins | oui | KO | 13 | fiche, outil, PDF, copilote, scoring |
-| 🟢 | **Inventaire SRU (DHUP)** (`39`) | PLEINE | 4/4 témoins | non | — | 2 | fiche, outil, copilote |
-| 🟡 | **NPNRU (DEAL Réunion / ANCT)** (`40`) | PARTIELLE — champs manquants | 3/4 témoins | non | — | 2 | fiche, carte |
-| 🟢 | **INSEE RP Logement 2023** (`41`) | PLEINE | 4/4 témoins | non | — | 3 | fiche |
-| 🟡 | **PLH des 5 EPCI (extraction documentaire)** (`42`) | PARTIELLE — champs manquants | n.a. (API/règles) | non | — | 1 | fiche |
+| 🟢 | **Inventaire SRU (DHUP)** (`39`) | PLEINE | 4/4 témoins | oui | — | 2 | fiche, outil, copilote |
+| 🟡 | **NPNRU (DEAL Réunion / ANCT)** (`40`) | PARTIELLE — champs manquants | 3/4 témoins | oui | — | 2 | fiche, carte |
+| 🟢 | **INSEE RP Logement 2023** (`41`) | PLEINE | 4/4 témoins | oui | — | 3 | fiche |
+| 🟡 | **PLH des 5 EPCI (extraction documentaire)** (`42`) | PARTIELLE — champs manquants | n.a. (API/règles) | oui | — | 1 | fiche |
 | 🟣 | **Radar (pige d'annonces)** (`84`) | MANUELLE | VIDE sur 4/4 | oui | — | 9 | fiche, outil |
 | 🟢 | **RNIC — registre national des copropriétés (Anah)** (`100`) | PLEINE | VIDE sur 4/4 | oui | — | 1 | fiche |
 | 🟢 | **RPLS — répertoire des logements locatifs sociaux (SDES)** (`101`) | PLEINE | 4/4 témoins | oui | — | 1 | fiche |
@@ -196,10 +196,10 @@
 |---|---|---|---|---|---|---|---|
 | 🟣 | **VRD / assainissement (SPANC)** (`26`) | MANUELLE | n.a. (API/règles) | oui | — | 0 | — |
 | 🔴 | **DPE ADEME (logements existants)** (`37`) | BRANCHÉE INVISIBLE (vide) | VIDE sur 4/4 | oui | KO | 1 | fiche |
-| 🟢 | **PVGIS (Commission européenne)** (`48`) | PLEINE | 4/4 témoins | non | OK | 1 | fiche, outil, scoring |
+| 🟢 | **PVGIS (Commission européenne)** (`48`) | PLEINE | 4/4 témoins | oui | OK | 1 | fiche, outil, scoring |
 | ⚫ | **EDF SEI Réunion — open data** (`49`) | RETIRÉE (déjà) | n.a. (API/règles) | non | KO | 0 | — |
 | ⚫ | **Registre national des installations (ODRÉ)** (`50`) | RETIRÉE (déjà) | n.a. (API/règles) | non | — | 0 | — |
-| 🟢 | **Parkings OSM (loi APER)** (`51`) | PLEINE | n.a. (API/règles) | non | — | 1 | fiche |
+| 🟢 | **Parkings OSM (loi APER)** (`51`) | PLEINE | n.a. (API/règles) | oui | — | 1 | fiche |
 | 🟢 | **INSEE RP2022 — fichier détail Logements (EGOUL)** (`66`) | PLEINE | 4/4 témoins | oui | OK | 1 | fiche |
 | 🔗 | **GPU — zonages d'assainissement (info-surf typeinf 19)** (`67`) | ALIAS (doublon) | n.a. (API/règles) | non | — | 0 | — |
 | ⚫ | **Office de l'eau Réunion — Chroniques de l'eau** (`68`) | RETIRÉE | 1/4 témoins | oui | — | 1 | fiche |
@@ -227,18 +227,18 @@
 | 🟢 | **SIRENE** (`21`) | PLEINE | n.a. (API/règles) | oui | — | 0 | — |
 | 🟢 | **BODACC (procédures collectives)** (`29`) | PLEINE | n.a. (API/règles) | oui | OK | 1 | fiche, scoring |
 | 🟡 | **INPI RNE (dirigeants)** (`31`) | PARTIELLE — champs manquants | n.a. (API/règles) | non | OK | 1 | outil |
-| 🟢 | **Recherche d'entreprises (DINUM)** (`45`) | PLEINE | n.a. (API/règles) | non | — | 1 | fiche, scoring |
+| 🟢 | **Recherche d'entreprises (DINUM)** (`45`) | PLEINE | n.a. (API/règles) | oui | — | 1 | fiche, scoring |
 | 🟢 | **Filosofi INSEE (carreaux 200 m)** (`52`) | PLEINE | 4/4 témoins | oui | OK | 5 | fiche, outil, PDF, scoring |
 | 🟢 | **Contours IRIS (IGN/INSEE)** (`64`) | PLEINE | 3/4 témoins | oui | — | 1 | fiche, carte, outil |
 | 🟢 | **Transport public — GTFS (PAN, 7 réseaux)** (`74`) | PLEINE | VIDE sur 4/4 | oui | OK | 4 | fiche, carte |
-| 🟢 | **OSM — transport (pôles d'échange & téléphérique)** (`75`) | PLEINE | VIDE sur 4/4 | non | OK | 4 | fiche, carte |
+| 🟢 | **OSM — transport (pôles d'échange & téléphérique)** (`75`) | PLEINE | VIDE sur 4/4 | oui | OK | 4 | fiche, carte |
 | 🟢 | **SIRENE établissements géolocalisés** (`86`) | PLEINE | 4/4 témoins | oui | KO | 3 | fiche, outil, scoring |
 | ⚫ | **MOBPRO (mobilités domicile-travail, INSEE)** (`87`) | RETIRÉE (déjà) | VIDE sur 4/4 | non | — | 0 | — |
 | 🟢 | **Trafic RN (Région Réunion — SIR)** (`88`) | PLEINE | n.a. (API/règles) | oui | KO | 1 | outil |
 | 🟢 | **EDF Réunion — lignes moyenne tension HTA (open data)** (`93`) | PLEINE | VIDE sur 4/4 | oui | KO | 0 | carte |
-| 🟢 | **TCSP — voies bus en site propre (OSM)** (`94`) | PLEINE | VIDE sur 4/4 | non | — | 0 | carte |
+| 🟢 | **TCSP — voies bus en site propre (OSM)** (`94`) | PLEINE | VIDE sur 4/4 | oui | — | 0 | carte |
 | ⬜ | **Réunion Express — hypothèses de tracé (débat public CNDP)** (`95`) | À DEMANDER / À BRANCHER | n.a. (API/règles) | oui | — | 0 | — |
-| 🟢 | **Annuaire de l'administration (service-public.fr / DILA)** (`99`) | PLEINE | 4/4 témoins | non | — | 1 | fiche |
+| 🟢 | **Annuaire de l'administration (service-public.fr / DILA)** (`99`) | PLEINE | 4/4 témoins | oui | — | 1 | fiche |
 | 🟢 | **INSEE RP2022 — bases IRIS (logement, population)** (`133`) | PLEINE | 4/4 témoins | oui | — | 2 | fiche, outil |
 | ⬜ | **Inventaires ZAE (EPCI — loi Climat et résilience)** (`135`) | À DEMANDER / À BRANCHER | n.a. (API/règles) | non | — | 0 | — |
 
@@ -274,7 +274,7 @@
 | 🟢 | **BD ORTHO IRC (IGN)** (`69`) | PLEINE | 4/4 témoins | oui | KO | 1 | fiche, outil, scoring |
 | 🟡 | **LiDAR HD — MNH 50 cm (IGN)** (`70`) | PARTIELLE — couverture incomplète | 4/4 témoins | oui | OK | 4 | fiche, outil, scoring |
 | 🟢 | **CoSIA (couverture du sol IA, IGN)** (`83`) | PLEINE | 4/4 témoins | oui | OK | 13 | fiche, carte, outil, PDF, scoring |
-| 🟢 | **Cadastre d'époque (Etalab / PCI vecteur DGFiP)** (`96`) | PLEINE | VIDE sur 4/4 | non | — | 1 | fiche |
+| 🟢 | **Cadastre d'époque (Etalab / PCI vecteur DGFiP)** (`96`) | PLEINE | VIDE sur 4/4 | oui | — | 1 | fiche |
 | 🟢 | **RNB — Référentiel National des Bâtiments** (`143`) | PLEINE | 4/4 témoins | oui | — | 1 | fiche |
 | 🟢 | **OCS GE (IGN) — occupation du sol et artificialisation** (`144`) | PLEINE | 4/4 témoins | oui | — | 3 | fiche, carte |
 
@@ -306,7 +306,7 @@
 
 | | Source | Verdict | Fiche remplie (4 témoins) | Sentinelle | Filtre | Chiffres | Où (résumé) |
 |---|---|---|---|---|---|---|---|
-| 🟢 | **Taxe d'aménagement — taux communaux (délibérations)** (`98`) | PLEINE | 4/4 témoins | non | OK | 2 | fiche, outil |
+| 🟢 | **Taxe d'aménagement — taux communaux (délibérations)** (`98`) | PLEINE | 4/4 témoins | oui | OK | 2 | fiche, outil |
 | 🟢 | **Taux de taxe foncière — fichier REI (DGFiP)** (`127`) | PLEINE | 4/4 témoins | oui | OK | 1 | fiche |
 | 🟡 | **ACV / PVD / ORT (DGALN — liste des communes)** (`128`) | PARTIELLE — couverture incomplète | 3/4 témoins | oui | KO | 1 | fiche |
 | 🟢 | **Coût de construction (EPTB SDES + choix LABUSE)** (`131`) | PLEINE | n.a. (API/règles) | oui | OK | 1 | outil |

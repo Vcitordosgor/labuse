@@ -561,6 +561,82 @@ SEED: list[dict] = [
     {"name": "SUP — assiettes GPU (API Carto)", "methode": "temoin",
      "url": "https://www.geoportail-urbanisme.gouv.fr/api/document?documentType%5B%5D=SUP&grid=974",
      "selecteur": None},
+    # ══════════════════════ SOURCES-3b lot 2 — sonde des « jamais vérifié » ══════════════════════
+    # Chacune APPELÉE POUR DE VRAI (couche _http, UA LABUSE) — jamais une URL supposée ; une sonde
+    # illisible/injoignable au semis n'est PAS conservée ici (retirée, raison écrite au rapport).
+    # ── data.gouv (famille api → last_update) ──
+    {"name": "Sudocuh (procédures d'urbanisme)", "methode": "api",
+     "url": ("https://www.data.gouv.fr/api/1/datasets/planification-nationale-des-documents-durbanisme-"
+             "plu-plui-cc-rnu-donnees-sudocuh-dernier-etat-des-lieux-annuel-au-31-decembre-2024/"),
+     "selecteur": "last_update"},
+    # ── Géorisques (témoin bi-commune, empreinte figée — même famille que cavités/mvt/ssp) ──
+    {"name": "CatNat (arrêtés GASPAR / Géorisques)", "methode": "temoin",
+     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97411&page=1&page_size=200",
+     "url2": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97410&page=1&page_size=200",
+     "selecteur": None},
+    {"name": "Géorisques — CASIAS (anciens sites industriels)", "methode": "temoin",
+     "url": "https://www.georisques.gouv.fr/api/v1/ssp?code_insee=97411&page=1&page_size=200",
+     "url2": "https://www.georisques.gouv.fr/api/v1/ssp?code_insee=97410&page=1&page_size=200",
+     "selecteur": None},
+    # ── Opendatasoft (portails data.economie / service-public) : témoin sur total_count (requête ultra-
+    #    légère limit=0 ; une republication change le nombre d'enregistrements → « la donnée a changé »). ──
+    {"name": "Taxe d'aménagement — taux communaux (délibérations)", "methode": "temoin",
+     "url": ("https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/"
+             "delta_deliberation_tam_17_01_23/records?limit=0"), "selecteur": "total_count"},
+    {"name": "Annuaire de l'administration (service-public.fr / DILA)", "methode": "temoin",
+     "url": ("https://api-lannuaire.service-public.fr/api/explore/v2.1/catalog/datasets/"
+             "api-lannuaire-administration/records?limit=0"), "selecteur": "total_count"},
+    # ── data.gouv : Cadastre Etalab (dataset « cadastre », last_update 2026-09-08 vérifié). ──
+    {"name": "Cadastre d'époque (Etalab / PCI vecteur DGFiP)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/cadastre/", "selecteur": "last_update"},
+    # ── recherche-entreprises (DINUM + INPI RNE) : témoin sur total_results d'une requête 974 figée —
+    #    une republication INSEE/INPI change le nombre. DINUM reste servie (retrait différé q_v15) et
+    #    doit garder une veille ; l'INPI RNE (dirigeants) est exposé par le MÊME service. ──
+    {"name": "Recherche d'entreprises (DINUM)", "methode": "temoin",
+     "url": "https://recherche-entreprises.api.gouv.fr/search?q=mairie&departement=974&page=1&per_page=1",
+     "selecteur": "total_results"},
+    # ── OSM / Overpass : API de requête sur des SNAPSHOTS ingérés (parkings APER, pôles d'échange, TCSP)
+    #    → témoin sur le COMPTE (out count) de l'agrégat 974 (selecteur elements.0.tags.total ; la réponse
+    #    porte un horodatage volatil au sommet, donc on cible le compte, jamais la réponse entière). Un
+    #    ajout/retrait OSM change le compte → « la donnée amont a divergé du snapshot ingéré ». (La source
+    #    générique 19 « OpenStreetMap / Overpass » reste NON surveillée : interrogée EN DIRECT, aucun
+    #    snapshot à comparer — cf. RAISONS_NON_SURVEILLEES.) ──
+    {"name": "Parkings OSM (loi APER)", "methode": "temoin",
+     "url": "https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A60%5D%3Barea%5B%22ref%3AINSEE%22%3D%22974%22%5D-%3E.a%3B%28nwr%5B%22amenity%22%3D%22parking%22%5D%28area.a%29%3B%29-%3E.r%3B.r%20out%20count%3B",
+     "selecteur": "elements.0.tags.total"},
+    {"name": "OSM — transport (pôles d'échange & téléphérique)", "methode": "temoin",
+     "url": "https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A60%5D%3Barea%5B%22ref%3AINSEE%22%3D%22974%22%5D-%3E.a%3B%28nwr%5B%22public_transport%22%3D%22station%22%5D%28area.a%29%3Bnwr%5B%22aerialway%22%5D%28area.a%29%3B%29-%3E.r%3B.r%20out%20count%3B",
+     "selecteur": "elements.0.tags.total"},
+    {"name": "TCSP — voies bus en site propre (OSM)", "methode": "temoin",
+     "url": "https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A60%5D%3Barea%5B%22ref%3AINSEE%22%3D%22974%22%5D-%3E.a%3B%28way%5B%22highway%22%3D%22bus_guideway%22%5D%28area.a%29%3Bway%5B%22busway%22%5D%28area.a%29%3B%29-%3E.r%3B.r%20out%20count%3B",
+     "selecteur": "elements.0.tags.total"},
+    # ── GPU API Carto (prescriptions/info-surf servies DANS les documents PLU ; le seul endpoint
+    #    versionnable est `document?partition=DU_<insee>` → totalFeatures — une republication du PLU
+    #    de la commune témoin qui porte la couche change l'empreinte. Communes témoins choisies là où
+    #    la couche EXISTE (SOURCES-2) : assainissement→Étang-Salé, DPU→Saint-Denis, PEB→Saint-Pierre). ──
+    {"name": "GPU — zonages d'assainissement", "methode": "temoin",
+     "url": "https://apicarto.ign.fr/api/gpu/document?partition=DU_97404", "selecteur": "totalFeatures"},
+    {"name": "GPU — emplacements réservés (prescriptions CNIG)", "methode": "temoin",
+     "url": "https://apicarto.ign.fr/api/gpu/document?partition=DU_97411", "selecteur": "totalFeatures"},
+    {"name": "GPU — espaces boisés classés (prescriptions CNIG)", "methode": "temoin",
+     "url": "https://apicarto.ign.fr/api/gpu/document?partition=DU_97415", "selecteur": "totalFeatures"},
+    {"name": "GPU — droit de préemption urbain (info-surf)", "methode": "temoin",
+     "url": "https://apicarto.ign.fr/api/gpu/document?partition=DU_97411", "selecteur": "totalFeatures"},
+    {"name": "PEB — plans d'exposition au bruit (DGAC via annexes GPU)", "methode": "temoin",
+     "url": "https://apicarto.ign.fr/api/gpu/document?partition=DU_97416", "selecteur": "totalFeatures"},
+    # ── DEAL Lizmap : le WFS GetCapabilities porte un ETag stable (entete). Un changement des couches
+    #    publiées du projet change l'ETag → « la donnée amont a changé ». Le projet 00cartogenerale porte
+    #    50 pas / ravines / zones humides / espaces protégés ; 02sprinr/03digues porte l'endiguement. ──
+    {"name": "50 pas géométriques — limite haute (DEAL)", "methode": "entete",
+     "url": "https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=00cartogenerale&project=deal_reunion&SERVICE=WFS&REQUEST=GetCapabilities"},
+    {"name": "Ravines — domaine public fluvial (DEAL Carmen)", "methode": "entete",
+     "url": "https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=00cartogenerale&project=deal_reunion&SERVICE=WFS&REQUEST=GetCapabilities"},
+    {"name": "Zones humides — inventaires DEAL (Carmen)", "methode": "entete",
+     "url": "https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=00cartogenerale&project=deal_reunion&SERVICE=WFS&REQUEST=GetCapabilities"},
+    {"name": "Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)", "methode": "entete",
+     "url": "https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=00cartogenerale&project=deal_reunion&SERVICE=WFS&REQUEST=GetCapabilities"},
+    {"name": "Systèmes d'endiguement et zones protégées (DEAL Lizmap)", "methode": "entete",
+     "url": "https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=03digues&SERVICE=WFS&REQUEST=GetCapabilities"},
     # ── SOURCES-1 lot 1 — zonage ABC : jeu data.gouv DHUP (arrêté national) → last_update.
     {"name": "Zonage ABC des communes (DHUP)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/liste-des-communes-selon-le-zonage-abc/",
@@ -608,35 +684,17 @@ SEED: list[dict] = [
 #: réels). Les 6 sources récupérées (DEAL PPR/WMS, Région ODS, Géorisques cavités/mvt/ssp) sont passées
 #: au SEED et retirées d'ici.
 RAISONS_NON_SURVEILLEES: dict[str, str] = {
-    # CIRCUIT-3 lot 6 — sources entrées par la vanne (Circuit), pas par la sentinelle amont.
-    "CatNat (arrêtés GASPAR / Géorisques)": "GASPAR interrogé EN DIRECT par commune (pas de millésime global) ; réingéré à la demande (`labuse ingest-catnat`, refresh mensuel) et contrôlé par son filtre (CIRCUIT-3 lot 6.1). La fraîcheur se lit sur la page Circuit, pas par une sonde amont.",
-    "Taxe d'aménagement — taux communaux (délibérations)": "Taux communaux ingérés du jeu ouvert DGFiP « delta_deliberation_tam_17_01_23 » (application DELTA, data.economie.gouv.fr) — réingéré à la demande (`labuse ingest-taxe-amenagement`, DELTA publié 2×/an) ; sa couverture (24/24) est suivie par le filtre `taxe_amenagement`. La fraîcheur se lit sur la page Circuit, pas par une sonde amont (TAXE-AMÉNAGEMENT-1 lot A).",
-    # API Carto GPU (Géoportail de l'urbanisme) — interrogée PAR GÉOMÉTRIE à l'usage, aucun millésime global.
-    "GPU — zonages d'assainissement": "API Carto GPU par géométrie (mêmes limites que « Urbanisme PLU/GPU » : pas de millésime global, interrogé en direct sans snapshot ingéré).",
+    # SOURCES-3b lot 2 — 17 sources sorties d'ici : une sentinelle producteur RÉELLE a été
+    # trouvée et probée (SEED) — elles ne sont plus « non surveillées ». Le reste garde sa raison.
     "GPU — zonages d'assainissement (info-surf typeinf 19)": "Doublon du GPU assainissement (canal info-surf) — même amont, non re-surveillé.",
-    # SOURCES-1 lot 1 — les SUP ont désormais leur sonde catégorielle (SEED, temoin sur l'API
-    # documents du GPU grid=974) ; la raison d'absence est retirée.
-    "GPU — emplacements réservés (prescriptions CNIG)": "Prescriptions servies par le canal GPU existant (API Carto par commune, millésime = idurba du PLU) — même amont que « Urbanisme PLU/GPU (API Carto) », non re-surveillé (une republication de PLU se voit à la re-ingestion des prescriptions de la commune).",
-    "GPU — espaces boisés classés (prescriptions CNIG)": "Même canal que les emplacements réservés (prescriptions GPU par commune) — même amont que « Urbanisme PLU/GPU (API Carto) », non re-surveillé.",
-    "GPU — droit de préemption urbain (info-surf)": "Informations GPU (typeinf 04) interrogées par géométrie via API Carto — pas de millésime global (millésime = idurba par commune) ; réingéré par `labuse ingest-gpu-infos` (cadence semestrielle proposée), communes non publiées listées au rapport d'ingestion.",
-    "PEB — plans d'exposition au bruit (DGAC via annexes GPU)": "Republication GPU (typeinf 27) des PEB approuvés — pas de flux DGAC versionné pour le 974 (vérifié data.gouv 06/09/2026) ; réingéré par `labuse ingest-gpu-infos`, couverture partielle dite (Pierrefonds non publié au GPU).",
-    # SOURCES-1 lot 2 — WFS Carmen (nœud 29) : ni ETag ni Last-Modified sur GetCapabilities
-    # (vérifié 07/09/2026), capabilities XML (le témoin sentinelle exige du JSON) — réingestion
-    # à la demande (`labuse ingest-deal-carmen`), fraîcheur lue sur la page Circuit.
-    "Ravines — domaine public fluvial (DEAL Carmen)": "WFS Lizmap DEAL (deal974.lizmap.com, migré SOURCES-2 lot 1) sans notion de version exposée (GetCapabilities non daté, vérifié 13/09/2026) ; le DPF est un arrêté de 2006, stable — réingéré à la demande, fraîcheur au Circuit.",
-    "Systèmes d'endiguement et zones protégées (DEAL Lizmap)": "WFS Lizmap DEAL sans notion de version exposée (vérifié 13/09/2026) ; millésime = source d'étude portée par CHAQUE zone (EDD Hydrétudes déc. 2024) — réingéré à la demande (`labuse ingest-endiguement`), fraîcheur au Circuit.",
-    "Zones humides — inventaires DEAL (Carmen)": "WFS Lizmap DEAL (migré SOURCES-2 lot 1) sans notion de version exposée (vérifié 13/09/2026) ; inventaires 2003→2019 par secteurs — réingérés à la demande, fraîcheur au Circuit.",
-    "Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)": "WFS Lizmap DEAL (migré SOURCES-2 lot 1, + ENS Département 178) sans notion de version exposée (vérifié 13/09/2026) — réingéré à la demande avec les zones humides.",
-    # SOURCES-1 lot 3 — sols et bruit :
-    "Géorisques — CASIAS (anciens sites industriels)": "Réservoir logique sur le canal SSP (subtypes casias/instruction) — même amont que « Géorisques — sites et sols pollués », témoin bi-commune existant.",
+    # SOURCES-3b lot 2 — chantier SOURCES-2 jamais classé : WMS IMAGE seule (couche courbes de niveau
+    # refusée en WFS, vérifié 13/09), aucun vecteur ni date amont à sonder ; demande de vecteur DEAL en cours.
+    "Carte hypsométrique du littoral (DEAL Lizmap)": "CHANTIER (SOURCES-2 lot 3) — le producteur ne sert la carte hypsométrique qu'en WMS image (couche des courbes de niveau REFUSÉE en WFS) ; aucun vecteur ni millésime machine à sonder. Vecteur demandé à la DEAL (courrier lot 5). La submersion est servie à la place par l'aléa PPRL vecteur.",
     "DEAL — cartes de bruit stratégiques (CBS)": "WFS Carmen sans en-tête de version (même service que les couches DEAL lot 2, vérifié 07/09/2026) ; CBS = échéance quinquennale (directive 2002/49/CE) — réingéré à la demande (`labuse ingest-bruit-cartes`), fraîcheur au Circuit.",
     "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)": "Atlas des patrimoines INJOIGNABLE au test du 06/09/2026 (timeout) et aucun jeu national/974 sur data.gouv ; page DAC de La Réunion sans millésime exploitable — rappel périodique posé (RAPPELS_MANUELS) pour re-tester l'Atlas.",
-    # SOURCES-1 lot 4 — cadre régional :
     "Coût de construction (EPTB SDES + choix LABUSE)": "L'EPTB est une PUBLICATION annuelle (pages DREAL/SDES sans millésime machine exploitable — vérifié 07/09/2026) ; rappel annuel de relecture posé (RAPPELS_MANUELS), la table cout_construction_ref est mise à jour à la main après lecture.",
     "SAR — schéma d'aménagement régional (Région/DEAL)": "Couche SIG officielle NON diffusée (Carmen 29, Lizmap DEAL, Sextant — WMS image seule —, ODS Région : 0 vecteur au 07/09/2026) ; demandée à la Région (lot 7). Rappel périodique 180 j (RAPPELS_MANUELS) : re-chercher la couche + suivre la révision SAR 2050.",
     "DVF Réunion (Région, data.regionreunion.com)": "Jeu FIGÉ chez le producteur (2014→mi-2021, vérifié 07/09/2026) servant d'échantillon producteur du filtre DVF — le hub ODS Région est déjà surveillé par la sonde témoin de son catalogue (total_count) ; une republication du jeu s'y verrait.",
-    # ── SOURCES-1 lot 7 — chantiers « en attente de demande » : rien à sonder tant que la
-    # donnée n'est pas remise ; la demande est prête (docs/CIRCUIT/DEMANDE-REGION-EPCI.md).
     "Zonages d'assainissement SIG complets (EPCI / régies)": "CHANTIER — en attente de la remise par les 5 EPCI/régies (aucun flux à sonder) ; la demande formelle est prête (DEMANDE-REGION-EPCI.md). Le canal GPU existant (4/24) garde sa propre surveillance.",
     "Inventaires ZAE (EPCI — loi Climat et résilience)": "CHANTIER — en attente de la remise par les 5 EPCI (publication non centralisée, aucun flux à sonder) ; demande prête (DEMANDE-REGION-EPCI.md).",
     "Périmètres de ZAC (EPCI / communes / EPF Réunion)": "CHANTIER — en attente de la remise (pas d'open data 974 fiable, jeu CNIG ZAC sans le 974 — rapport fiche 17) ; demande prête (DEMANDE-REGION-EPCI.md).",
@@ -644,51 +702,28 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "Périmètres ORT infra-communaux (EPCI)": "CHANTIER — en attente des annexes de conventions ORT (EPCI) ; l'éligibilité COMMUNALE est servie et surveillée par la sonde anct_ort (lot 5) ; demande prête (DEMANDE-REGION-EPCI.md).",
     "ENS du Département (Conseil départemental)": "CHANTIER — en attente de la remise par le Conseil départemental (non diffusés en open data, aucun flux à sonder) ; demande prête (DEMANDE-REGION-EPCI.md).",
     "Micro-données OLL (ADIL / AGORAH)": "CHANTIER — micro-données conventionnées (jamais en flux ouvert) ; les agrégats par zone sont servis et surveillés (loyers_oll, lot 5) ; demande prête (DEMANDE-REGION-EPCI.md).",
-    # ── SOURCES-1 lot 7 — Cerema sous convention : les actualités Datafoncier n'ont pas de
-    # millésime machine stable ; la convention passe par une collectivité mandante (geste Vic).
     "LOVAC (logements vacants)": "SOUS CONVENTION — détail réservé aux collectivités et à leurs prestataires (fiche 19) ; rien à sonder sans accès. Relecture à la convention ; en attendant, la vacance INSEE RP par IRIS est servie (lot 6).",
     "DV3F (Cerema)": "SOUS CONVENTION — même demande que les Fichiers fonciers (une convention pour les trois) ; rien à sonder sans accès. En attendant : DVF ouvert + échantillon producteur Région (lot 4).",
-    "Recherche d'entreprises (DINUM)": "Y3 : requête témoin `?departement=974` testée → `total_results` plafonné à 10000 (non exploitable) ; agrégat Sirene/RNE en direct, déjà couvert par la veille SIRENE (data.gouv).",
     "INPI RNE (dirigeants)": "API AUTHENTIFIÉE interrogée par SIREN (pas de requête témoin publique possible) — aucun millésime global à comparer.",
     "OpenStreetMap / Overpass": "Y3 : témoin de comptage testé (Overpass `out count`) → stable localement mais OSM est un flux continu (planet) et LABUSE l'interroge EN DIRECT (aucun snapshot ingéré) ; un compte sur zone stable ne représente pas l'île et n'est pas actionnable.",
-    "Parkings OSM (loi APER)": "OSM en flux continu, interrogé en direct (cf. « OpenStreetMap / Overpass ») — témoin de comptage non représentatif ni actionnable.",
-    "OSM — transport (pôles d'échange & téléphérique)": "OSM en flux continu, interrogé en direct (cf. « OpenStreetMap / Overpass ») — témoin de comptage non représentatif ni actionnable.",
-    # RETOURS-13 R5 — même famille OSM (extraction Overpass à la demande, CLI `labuse tcsp`).
-    "TCSP — voies bus en site propre (OSM)": "OSM en flux continu, interrogé en direct (cf. « OpenStreetMap / Overpass ») — témoin de comptage non représentatif ni actionnable.",
-    # RETOURS-14 S5 — archives cadastrales FIGÉES (un millésime publié ne change jamais).
-    "Cadastre d'époque (Etalab / PCI vecteur DGFiP)": "Archives immuables (millésimes cadastraux figés) — rien à surveiller : un millésime publié ne change jamais ; les millésimes NOUVEAUX ne servent qu'à de futures parcelles disparues.",
     "INPN / patrinat — espaces protégés": "Couches patrinat servies en WFS Géoplateforme ; pas de jeu data.gouv national « espaces protégés » à millésime trouvé, ni de requête témoin à agrégat stable.",
-    # Portails / hubs
     "PEIGEO (hub régional)": "Y2 : peigeo.re répond désormais (200) mais c'est un site WordPress — plus de GeoNetwork/CSW ni d'API de catalogue à sonder (les chemins /geonetwork renvoient 404). Pas un jeu unique.",
     "DEAL Réunion (WMS/WFS)": "Y1 : hôte carto DEAL (deal974.lizmap.com) de nouveau joignable mais sans URL amont datée ; le seul jeu data.gouv « NPNRU » est DÉPARTEMENTAL (Bouches-du-Rhône), pas Réunion → inscrire son `last_update` serait une fausse veille. La couche QP génération 2024 servie ici est, elle, déjà couverte par « QPV 2024 (ANCT) ».",
-    "50 pas géométriques — limite haute (DEAL)": "Y1 : WFS Lizmap DEAL de nouveau joignable mais sans projet/date lisible ; 0 jeu data.gouv (« 50 pas », « pas géométriques »). Limite domaniale dérivée du cadastre 1877 géoréférencé — donnée quasi statique, aucun millésime ni empreinte amont.",
     "Géoplateforme IGN": "Y2 : GetCapabilities WFS `data.geopf.fr` répond (200) mais SANS attribut `updateSequence` ni date, et le catalogue n'est pas exposé en JSON. Hub — les produits IGN servis sont surveillés individuellement (data.gouv `last_update`).",
-    # Réglementaire Légifrance — pistes Y1.2 épuisées
     "ZFANG — zone franche d'activité nouvelle génération (Légifrance)": "Y1 : 0 jeu data.gouv (ZFANG/zone franche outre-mer) ; la page JORF n'a ni ETag ni Last-Modified (Cache-Control no-store → `entete` illisible) et son HTML n'est pas déterministe (jetons dynamiques) → `page` non fiable ; un texte modifié reçoit un nouvel identifiant JORFTEXT.",
     "FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)": "Y1 : les jeux data.gouv « FRR » trouvés sont DÉPARTEMENTAUX (Charente, Corrèze, Nièvre), aucun national ni Réunion ; la page JORF n'a ni ETag ni Last-Modified et son HTML n'est pas déterministe → ni `entete` ni `page` fiable.",
-    # Alimentées à la main — non surveillables PAR NATURE. Y4 : rappel de rafraîchissement (cadence_attendue_jours).
     "Radar (pige d'annonces)": "Collecte 100 % humaine — non surveillable par nature (aucun amont public). Y4 : rappel de rafraîchissement posé (cadence attendue).",
     "VRD / assainissement (SPANC)": "Champ manuel EPCI — aucune donnée ouverte fine, pas d'URL amont. Y4 : rappel de rafraîchissement posé.",
     "Fichiers fonciers (Cerema)": "Sous convention, non ingérée en libre — aucune URL amont publique. Y4 : rappel de rafraîchissement posé (échéance de convention à porter si connue).",
     "MOBPRO (mobilités domicile-travail, INSEE)": "Import CSV manuel ABANDONNÉ pour l'étude de zone — pas d'URL de version stable, et pas de rafraîchissement attendu (aucun rappel Y4).",
     "Office de l'eau Réunion — Chroniques de l'eau": "Seed CSV extrait à la main d'un PDF (chronique numérotée) — chaque édition = nouvelle URL, non surveillable proprement. Y4 : rappel de rafraîchissement posé.",
-    # Autre
     "PVGIS (Commission européenne)": "API de CALCUL (v5.3 dans l'URL) — pas de jeu à millésime, le service ne versionne pas de données à comparer ; aucune requête témoin actionnable (réponse dérivée d'un modèle, pas d'une donnée ingérée).",
-    # CIRCUIT-5b lot 1 — les quatre « à rattacher » entrent au catalogue : millésimes annuels/mensuels
-    # SANS témoin amont à empreinte stable (pas de sonde réellement câblée) ; la fraîcheur est suivie par
-    # la cadence déclarée (rappel) et la page Circuit, jamais par une fausse veille.
-    "Annuaire de l'administration (service-public.fr / DILA)": "Annuaire DILA ingéré à la demande (24 mairies, OUTILS K2) ; le jeu ODS n'expose pas de millésime global à comparer sur l'emprise 974 (agrégat de fiches). Cadence mensuelle suivie par la page Circuit, pas par une sonde amont.",
-    "RNIC — registre national des copropriétés (Anah)": "Extraction annuelle data.gouv du registre Anah — pas de témoin amont à empreinte stable pour le 974 identifié ; la fraîcheur (millésime annuel) se lit sur la page Circuit.",
-    "RPLS — répertoire des logements locatifs sociaux (SDES)": "Publication annuelle SDES (millésime au 1ᵉʳ janvier) — pas de flux à empreinte stable à sonder ; la fraîcheur (millésime annuel) se lit sur la page Circuit.",
     "Consommation d'espaces NAF (Cerema — portail de l'artificialisation)": "Portail national de l'artificialisation (Cerema) — millésime annuel, pas de témoin amont à empreinte stable identifié ; la fraîcheur se lit sur la page Circuit.",
-    # CIRCUIT-6 lot 4 (G4) — plus AUCUNE source connectée sans sonde NI raison (les 6 nues
-    # relevées par le verrou G4 le 13/09/2026, chacune sa raison honnête) :
     "INSEE RP Logement 2023": "Millésime ANNUEL du recensement (publication INSEE sans endpoint de version stable pour les tableaux communaux) — rappel par cadence, le millésime suivant s'ingère à la main (RP 2024 attendu fin 2026).",
     "Inventaire SRU (DHUP)": "CSV national republié par la DHUP SANS URL de version stable (inventaire triennal, dernier v2 du 18/12/2025) — rappel par cadence, réingestion au fichier suivant.",
     "NPNRU (DEAL Réunion / ANCT)": "Liste ANCT FIGÉE (génération 2024) — pas de flux de version ; les quartiers NPNRU ne changent qu'à une nouvelle génération (geste manuel).",
     "PLH des 5 EPCI (extraction documentaire)": "Extraction DOCUMENTAIRE manuelle (dépôt) — la version vit dans les documents des EPCI, pas dans un flux ; rappel par cadence.",
     "RTAA DOM (textes réglementaires)": "Règles portées par le code (config/rtaa_dom.yaml), vérifiées sur Légifrance À LA MAIN aux versions consolidées « en vigueur » — pas d'API de version Légifrance exploitable pour ces articles.",
-    "Sudocuh (procédures d'urbanisme)": "Dépôt manuel ANNUEL (état au 31/12) — la publication Sudocuh n'expose pas d'URL de version stable ; rappel par cadence.",
 }
 
 #: SENTINELLE-3 (Y4) — les sources MANUELLES (alimentées par Vic, aucun amont public) reçoivent un RAPPEL
@@ -714,6 +749,16 @@ RAPPELS_MANUELS: list[dict] = [
     # DREAL/SDES sans millésime machine exploitable) → rappel annuel de relecture.
     {"name": "Coût de construction (EPTB SDES + choix LABUSE)",
      "cadence_jours": 365, "convention_echeance": None},
+    # SOURCES-3b lot 2 — sources one_shot/manuelles ingérées SANS producteur sondable (URL de
+    # version absente, texte légal figé, liste ANCT figée, API de calcul) : leur fraîcheur se suit
+    # par cadence de relecture (rappel Y4), jamais par une fausse veille. Elles gardent leur raison
+    # écrite (RAISONS_NON_SURVEILLEES / notes) — le rappel dit « ingérée le X, re-contrôle attendu ».
+    {"name": "Inventaire SRU (DHUP)", "cadence_jours": 1095, "convention_echeance": None},   # triennal
+    {"name": "NPNRU (DEAL Réunion / ANCT)", "cadence_jours": 365, "convention_echeance": None},
+    {"name": "INSEE RP Logement 2023", "cadence_jours": 365, "convention_echeance": None},
+    {"name": "PLH des 5 EPCI (extraction documentaire)", "cadence_jours": 365, "convention_echeance": None},
+    {"name": "RTAA DOM (textes réglementaires)", "cadence_jours": 365, "convention_echeance": None},
+    {"name": "PVGIS (Commission européenne)", "cadence_jours": 365, "convention_echeance": None},
 ]
 
 
