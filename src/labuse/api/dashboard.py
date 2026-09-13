@@ -2171,9 +2171,21 @@ def admin_circuit(request: Request) -> dict:
                               regles_ecart=sorted(_verdicts_rob["ecart"]),
                               regles_choix=sorted(_verdicts_rob["choix"]),
                               verrous=_verrous)
+    # ── CIRCUIT-6 — les sept garanties, jouées côté serveur (le front les REND, lot 8) +
+    # le catalogue calculé (G1 : 116 en base / 95 en vitrine, jamais gravé) + les doublons.
+    from dataclasses import asdict as _asdict
+    from .. import circuit_garanties as _garanties_mod
+    try:
+        with engine().begin() as _c3:
+            _garanties = [_asdict(g) for g in _garanties_mod.jouer_garanties(_c3)]
+            _catalogue = _garanties_mod.catalogue_compteurs(_c3)
+            _doublons = _garanties_mod.detecter_doublons(_c3)
+    except Exception:  # noqa: BLE001 — page jamais bloquée par les garanties
+        _garanties, _catalogue, _doublons = None, None, None
     return {
         "run_servi": runs.current(), "candidat": _candidat, "manifeste": m,
         "verrous": _verrous,
+        "garanties": _garanties, "catalogue": _catalogue, "doublons": _doublons,
         "reservoirs": reservoirs, "robinets": robinets, "chiffres": chiffres,
         "familles": familles, "categories": categories, "resume": resume,
         "aretes": aretes, "fuites": fuites, "eau_ancienne": eau,

@@ -6,9 +6,29 @@ import type { Cible, CircuitData } from './types'
 export function Resume({ data, onCible }: { data: CircuitData; onCible: (c: Cible) => void }) {
   const r = data.resume
   const [k0, k1, k2, k3] = r.kpis
+  // CIRCUIT-6 lot 8 — les sept garanties : sept phrases, sept états, calculés côté serveur.
+  const garanties = (data as any).garanties as
+    | { id: string; phrase: string; verdict: string; preuve: string; details: string[] }[]
+    | null
   return (
     <div className="res">
       <h1>{r.total > 0 ? <><b>{r.total}</b> chose{r.total > 1 ? 's' : ''} à regarder</> : 'Tout coule.'}</h1>
+
+      {garanties && garanties.length > 0 && (
+        <div style={{ margin: '14px 0 4px' }}>
+          {garanties.map((g) => (
+            <div key={g.id} className={`item ${g.verdict === 'ok' ? 'mint' : 'rouge'}`}
+              style={{ cursor: 'default', display: 'flex', gap: 10, alignItems: 'baseline' }}
+              title={g.details && g.details.length ? g.details.join('\n') : g.preuve}>
+              <span className="num" style={{ minWidth: 28 }}>{g.id}</span>
+              <span style={{ flex: 1 }}>
+                <span className="t">{g.verdict === 'ok' ? '✓' : '✗'} {g.phrase}</span>
+                <span className="d">{g.preuve}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="sub">
         {r.total > 0
           ? "Tout le reste est branché sur le moteur, sert la dernière version et dit la même chose partout."
