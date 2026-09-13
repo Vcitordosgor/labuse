@@ -2485,6 +2485,7 @@ def filtre(c: FiltreCriteres = Depends(),
            sort: str | None = Query(None, pattern="^(rang|mult|surface|surface_asc|commune|potentiel|adresse)$"),
            idus: int = Query(0, ge=0, le=1),
            groupes: int = Query(0, ge=0, le=1),
+           segment: str | None = Query(None, pattern="^(permis_pro|terrain_nu|bati_densifier|reste)$"),
            db: Session = Depends(get_db)) -> dict:
     """Filtrage UNIFIÉ (M45 P1) — le « théâtre » : compteur EXACT + ventilation par tier + page
     d'aperçu en UN appel (une requête par ajustement de filtre). Critères composables via
@@ -2508,7 +2509,7 @@ def filtre(c: FiltreCriteres = Depends(),
         exclure_slivers=True))   # FIX-FILTRES F2 : compteur = liste (slivers < 2 m² masqués des deux)
     page = _q_v2_list(db, c.commune, limit, offset, run_label=c.source,
                       extra_where=extra, extra_params=extra_params, sort=sort,
-                      groupes=bool(groupes)) if limit else []
+                      groupes=bool(groupes), segment=segment) if limit else []
     out = {
         **stats,                                     # total, tiers, opportunites, opportunites_evenement,
                                                      # dossiers_* — la LISTE et les cartouches lisent LE MÊME
@@ -3068,7 +3069,7 @@ _ETAT_BIEN_SQL = (
 
 def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_label: str | None = None,
                extra_where: str = "", extra_params: dict | None = None,
-               sort: str | None = None, groupes: bool = False) -> list[dict]:
+               sort: str | None = None, groupes: bool = False, segment: str | None = None) -> list[dict]:
     """Liste pilotée par le scoring v2 (M5.1) : tri par défaut = RANG P (croissant, copros
     en queue), périmètre par défaut = univers v2 HORS étage 0 du run servi — une brûlante
     v2 « écartée matrice » APPARAÎT. Un filtre `tiers` explicite (extra_where) remplace ce
@@ -3100,9 +3101,38 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     # RECETTE-3 (T4) — signal « un pro a déposé un permis » (q_v14) : injecté seulement si les tables
     # Sitadel existent (sinon permis_pro=False partout, jamais une 500 sur base de test nue).
     _permits = _permits_ready(db)
-    _pro_cte = f", {_PRO_PC_CTE}" if _permits else ""
+    # RECETTE-12 B2 — pro_pc placé EN TÊTE du WITH (matérialisé une fois) : réutilisé par la page
+    # (filtre segment) ET par le SELECT extérieur (colonne permis_pro). Avant, il était en queue et
+    # la page ne pouvait pas le voir → sous-requête inline non matérialisée, lente à froid.
+    _pro_cte_prefix = f"{_PRO_PC_CTE},\n        " if _permits else ""
     _pro_join = "LEFT JOIN pro_pc prpc ON prpc.idu = pg.idu" if _permits else ""
     _pro_col = "(prpc.idu IS NOT NULL AND coalesce(vs.owner_type,'pp') = 'pp')" if _permits else "false"
+    # RECETTE-12 B2 — filtrage PAR SEGMENT côté serveur : chaque segment (permis pro / terrain nu /
+    # bâti à densifier / reste) est paginé à 200 SUR SES PROPRES lignes, dès le 1er appel (avant, le
+    # front tranchait la fenêtre globale de 200 triée par rang → un petit segment tombait à « 9 sur 72 »).
+    # Le prédicat reprend EXACTEMENT la définition des compteurs (_q_v2_stats) : jamais deux règles.
+    # Le chemin GÉNÉRAL (ci-dessous) joint déjà `vs` (owner_type) et `rp` (résiduel) ; il ne manque que
+    # pro_pc — injecté ici en sous-requête (pas en CTE, pour ne pas dupliquer le nom pro_pc du WITH).
+    seg_join = seg_where = ""
+    if segment in ("permis_pro", "terrain_nu", "bati_densifier", "reste"):
+        # pro_pc est MATÉRIALISÉ en tête du WITH (voir _pro_cte_prefix) → on le RÉUTILISE ici plutôt
+        # qu'une sous-requête inline (qui, non matérialisée, faisait 4,5 s à froid sur l'île entière).
+        _pro = "(prpc2.idu IS NOT NULL AND coalesce(vs.owner_type,'pp') = 'pp')" if _permits else "false"
+        _nu = "COALESCE(rp.taux_emprise_pct, 0) < 5"                  # etat = 'nu'
+        _sdp = "COALESCE(rp.sdp_residuelle_m2, 0) > 0"               # etat = 'bati_encore'
+        if segment == "permis_pro":
+            # permis_pro est RARE (~518/430 000) : un ORDER BY rang qui scanne l'index profondément
+            # coûtait 5 s à froid. On PART de pro_pc (INNER JOIN, ~518 lignes) → le tri porte sur un
+            # tout petit ensemble. Sans tables Sitadel : aucun permis_pro (prédicat impossible).
+            seg_join = "JOIN pro_pc prpc2 ON prpc2.idu = p.idu" if _permits else ""
+            seg_where = "AND (coalesce(vs.owner_type,'pp') = 'pp')" if _permits else "AND (false)"
+        else:
+            seg_join = "LEFT JOIN pro_pc prpc2 ON prpc2.idu = p.idu" if _permits else ""
+            seg_where = {
+                "terrain_nu":     f"AND NOT ({_pro}) AND ({_nu})",
+                "bati_densifier": f"AND NOT ({_pro}) AND NOT ({_nu}) AND ({_sdp})",
+                "reste":          f"AND NOT ({_pro}) AND NOT ({_nu}) AND NOT ({_sdp})",
+            }[segment]
     # perf (M5.1) : tri + filtres d'abord (page de :lim lignes), PUIS les jointures
     # d'affichage (propriétaire, cluster, veille, signaux) sur cette page seulement —
     # 3,6 s → <1 s sur l'île entière (baseline legacy : 4,1 s).
@@ -3128,7 +3158,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     # chemin rapide seulement si un run v2 existe : sans lui, le LEFT JOIN historique
     # sert le repli legacy (colonnes v2 NULL) — le chemin s2-driven renverrait vide.
     # (groupes : le chemin rapide « index rang » ne sait pas préfixer par tier → requête générale)
-    if sort_key == "rang" and v2run is not None and not groupes:
+    if sort_key == "rang" and v2run is not None and not groupes and not seg_where:
         _fast_from = f"""
             FROM parcel_p_score_v2 s2
             JOIN parcels p ON p.idu = s2.parcelle_id
@@ -3166,18 +3196,20 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
             LEFT JOIN parcel_v_score vs ON vs.parcelle_id = p.idu
             LEFT JOIN parcel_residuel rp ON rp.parcel_id = p.id
             LEFT JOIN parcel_adresse pa ON pa.idu = p.idu
+            {seg_join}
             LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                        WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
             WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
               {_sliver}
               {base}
               {extra_where}
+              {seg_where}
             ORDER BY {order}
             LIMIT :lim OFFSET :off
         )"""
     rows = db.execute(text(
         f"""
-        WITH {page_sql},
+        WITH {_pro_cte_prefix}{page_sql},
         /* B1.2 : le cluster même-proprio est MATÉRIALISÉ (une exécution, ~11 ms) — en
            sous-requête jointe, le planner le ré-exécutait PAR LIGNE dès que la page
            devenait bon marché (4,8 ms × lignes servies, constaté au plan). */
@@ -3191,7 +3223,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
               AND NOT (d2.status IN ('exclue', 'faux_positif_probable'))
               AND pm2.siren IS NOT NULL
             GROUP BY pm2.siren HAVING count(*) > 1
-        ){_pro_cte}
+        )
         SELECT pg.*, (vw.parcelle_id IS NOT NULL) AS veille,
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
                vs.v_score, vs.v_band, vs.owner_type,

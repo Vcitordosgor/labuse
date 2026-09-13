@@ -9,7 +9,7 @@ import { raisonDominante } from '../../lib/raison'
 import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
 import { EmptyState } from '../States'
-import { useApp } from '../../store/useApp'
+import { useApp, type Filters } from '../../store/useApp'
 import { usePagination, ListPaginationFooter } from '../ListPagination'
 
 
@@ -282,12 +282,16 @@ export function segmentOffreChargerPlus(
   return shownClient >= segLen && segLen < serverTotal && serverHasMore
 }
 
-export function SegmentList({ segKey, rows, serverTotal, commune, serverHasMore, serverLoading, onServerMore }: {
+export function SegmentList({ segKey, rows, serverTotal, commune, serverHasMore, serverLoading, onServerMore, serverPaged = false }: {
   segKey: SegKey; rows: (ParcelProps & { commune?: string })[]; serverTotal: number; commune: string
   serverHasMore: boolean; serverLoading: boolean; onServerMore: () => void
+  // RECETTE-12 B2 — `serverPaged` : les lignes sont DÉJÀ paginées par le serveur (param `segment`,
+  // 200/page) → on affiche TOUT ce qui est chargé (pas de re-fenêtrage client qui retomberait à 200)
+  // et un seul pied « N sur total · Voir 200 de plus ». Sans ce flag (mode commune : liste complète
+  // en mémoire), on garde le fenêtrage client 200 d'origine (aucune régression des tests C1).
+  serverPaged?: boolean
 }) {
   const pg = usePagination(rows.length)
-  const shown = rows.slice(0, pg.shown)
   if (rows.length === 0) {
     return (
       <div className="mt-2 flex flex-col gap-2">
@@ -303,6 +307,25 @@ export function SegmentList({ segKey, rows, serverTotal, commune, serverHasMore,
       </div>
     )
   }
+  if (serverPaged) {
+    // pagination SERVEUR pure : tout le chargé s'affiche ; compteur exact « N sur total » toujours
+    // visible ; « Voir 200 de plus » seulement si le serveur a d'autres lignes de CE segment.
+    return (
+      <div className="mt-2 flex flex-col gap-2">
+        {rows.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune} />)}
+        <div data-pagination className="flex flex-wrap items-center gap-3 border-t border-line pt-2 text-[11px] text-txt-mut">
+          <span data-pagination-count><b className="text-txt">{fmt(rows.length)} sur {fmt(serverTotal)}</b> affichées</span>
+          {serverHasMore && (
+            <button data-segment-more={segKey} onClick={onServerMore} disabled={serverLoading}
+              className="text-mint hover:underline disabled:opacity-60">
+              {serverLoading ? 'Chargement…' : `Voir ${fmt(Math.min(RESULTS_PAGE, serverTotal - rows.length))} de plus`}
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+  const shown = rows.slice(0, pg.shown)
   return (
     <div className="mt-2 flex flex-col gap-2">
       {shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune} />)}
@@ -315,6 +338,46 @@ export function SegmentList({ segKey, rows, serverTotal, commune, serverHasMore,
           {fmt(rows.length)} sur {fmt(serverTotal)} affichées — charger plus de résultats →
         </button>
       )}
+    </div>
+  )
+}
+
+// RECETTE-12 B2 — UN segment de l'Analyse : en mode ÎLE il charge SES PROPRES lignes (200/page,
+// param serveur `segment`) dès l'ouverture — fin du « 9 sur 72 » (la fenêtre globale triée par rang
+// ne laissait que quelques lignes d'un petit segment). En mode COMMUNE, le GeoJSON complet est en
+// mémoire → on filtre côté client (liste entière, aucune troncature).
+function AnalyseSegment({ seg, open, onToggle, filters, sort, ile, commune, serverTotal, communeRows }: {
+  seg: { key: SegKey; label: string; hint: string }
+  open: boolean; onToggle: () => void
+  filters: Filters; sort: SortKey; ile: boolean; commune: string; serverTotal: number
+  communeRows: (ParcelProps & { commune?: string })[]
+}) {
+  const q = useInfiniteQuery({
+    queryKey: ['segment', seg.key, commune, filters, sort],
+    queryFn: ({ pageParam }) => getResults(filters, RESULTS_PAGE, sort, pageParam as number, false, seg.key),
+    initialPageParam: 0,
+    getNextPageParam: (last: unknown[], pages) => (last.length === RESULTS_PAGE ? pages.length * RESULTS_PAGE : undefined),
+    enabled: ile && open,
+  })
+  const serverRows = useMemo(
+    () => (q.data?.pages ?? []).flat() as unknown as (ParcelProps & { commune?: string })[], [q.data])
+  const rows = ile ? serverRows : communeRows
+  return (
+    <div className="shrink-0">
+      <button data-segment={seg.key} onClick={onToggle}
+        className="flex w-full items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left hover:border-mint/50">
+        <span className="flex min-w-0 items-center gap-2">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"
+            className={`shrink-0 text-txt-dim transition-transform ${open ? 'rotate-90' : ''}`}><path d="m9 18 6-6-6-6" /></svg>
+          <Tip tip={seg.hint} className="min-w-0"><span className="truncate text-[12px] font-medium text-txt">{seg.label}</span></Tip>
+        </span>
+        <span className="shrink-0 tnum text-[11px] text-txt-dim">{fmt(serverTotal)}</span>
+      </button>
+      {open && (ile && q.isLoading && serverRows.length === 0
+        ? <p className="mt-2 px-3 py-1.5 text-[10.5px] text-txt-dim">Chargement…</p>
+        : <SegmentList segKey={seg.key} rows={rows} serverTotal={serverTotal} commune={commune}
+            serverPaged={ile} serverHasMore={ile && (q.hasNextPage ?? false)} serverLoading={q.isFetchingNextPage}
+            onServerMore={() => q.hasNextPage && q.fetchNextPage()} />)}
     </div>
   )
 }
@@ -642,29 +705,16 @@ export function ResultsSection() {
         {!loading && !error && (analyse ? (
           <>
           {SEGMENTS.map((seg) => {
-            // RECETTE-11 C1 — le segment filtre la liste COMPLÈTE (jamais la fenêtre globale `shown`,
-            // qui tronquait un petit segment à « 2 sur 5 ») ; sa propre pagination (règle 200 partagée)
-            // décide de ce qui s'affiche. Sous 200 : tout ; au-delà : 200 puis « Voir 200 de plus ».
-            const rows = list.filter((p) => segmentOf(p) === seg.key)
-            const total = uni.data?.segments?.[seg.key] ?? rows.length
-            const open = openSeg[seg.key]
+            // RECETTE-12 B2 — le segment charge SES PROPRES lignes (île : 200/page côté serveur via
+            // le param `segment` ; commune : filtre de la liste complète en mémoire). Fin du « 9 sur
+            // 72 » où la fenêtre globale triée par rang ne laissait qu'une poignée d'un petit segment.
+            const communeRows = ile ? [] : list.filter((p) => segmentOf(p) === seg.key)
+            const total = uni.data?.segments?.[seg.key] ?? communeRows.length
             return (
-              <div key={seg.key} className="shrink-0">
-                <button data-segment={seg.key} onClick={() => setOpenSeg((s) => ({ ...s, [seg.key]: !s[seg.key] }))}
-                  className="flex w-full items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left hover:border-mint/50">
-                  <span className="flex min-w-0 items-center gap-2">
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"
-                      className={`shrink-0 text-txt-dim transition-transform ${open ? 'rotate-90' : ''}`}><path d="m9 18 6-6-6-6" /></svg>
-                    <Tip tip={seg.hint} className="min-w-0"><span className="truncate text-[12px] font-medium text-txt">{seg.label}</span></Tip>
-                  </span>
-                  <span className="shrink-0 tnum text-[11px] text-txt-dim">{fmt(total)}</span>
-                </button>
-                {open && (
-                  <SegmentList segKey={seg.key} rows={rows} serverTotal={total} commune={commune ?? ''}
-                    serverHasMore={ile && serverList.hasNextPage} serverLoading={serverList.isFetchingNextPage}
-                    onServerMore={() => serverList.hasNextPage && serverList.fetchNextPage()} />
-                )}
-              </div>
+              <AnalyseSegment key={seg.key} seg={seg} open={!!openSeg[seg.key]}
+                onToggle={() => setOpenSeg((s) => ({ ...s, [seg.key]: !s[seg.key] }))}
+                filters={filters} sort={sort} ile={ile} commune={commune ?? ''}
+                serverTotal={total} communeRows={communeRows} />
             )
           })}
           {/* RECETTE-7 (A4) — la carte « Tout » en dernière position (même forme que les 4 segments,
