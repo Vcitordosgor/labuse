@@ -320,16 +320,18 @@ CURATION: dict[int, dict] = {
         "verdict_raison": "445 190 bâtis IA (2025), cœur du potentiel/scoring. Bâti à plein usage ; autres classes CoSIA non exploitées (par choix).",
         "potentiel": "classes CoSIA non-bâti (végétation, sols) si besoin",
     },
-    70: {  # LiDAR HD — LOT 4 (le partiel emblématique)
+    70: {  # LiDAR HD — LOT 4 (mesuré sur la base servie, batch achevé)
         "verdict": "PARTIELLE — couverture incomplète",
-        "emprise": "MNH théoriquement île entière (dalles 25/06/2025) ; toiture calculée sur un sous-ensemble",
-        "part_parcelles": "en prod ~5 406 parcelles avec verdict toiture LiDAR sur 431 663 (mandat État) — base locale : seulement 27 lignes toiture_lidar (dev non représentatif)",
-        "granularite": "bâtiment/toiture", "granularite_respectee": "oui",
-        "verdict_raison": "« Connecté » mais la valeur SERVIE (verdict de toiture) ne couvre qu'une fraction des bâtiments : le MNH couvre l'île, mais le calcul toiture/faîtage n'est matérialisé que sur un sous-ensemble. Emblème du Lot 4 : un statut binaire dit « connecté » là où la couverture réelle est partielle. Un état de couverture (%) manque au modèle.",
-        "champs_non_pris": "le MNH pourrait servir la hauteur bâtie sur TOUTE l'île (distinction faîtage/égout), pas seulement les toitures calculées.",
-        "potentiel": "hauteur LiDAR sur 100 % du bâti (surélévation, gabarit)",
-        "manque_plein": "un champ de couverture par parcelle + batch d'extension à toute l'île",
-        "principes_ko": ["couverture réelle non exposée (statut binaire)"],
+        "coverage_tables": ["batiment_hauteur_lidar"],
+        "emprise": "hauteur faîtage/égout sur 303 452 / 431 663 parcelles (~70 %) — batch de dalles ACHEVÉ (2 665/2 665)",
+        "communes_couvertes": "24/24 (couverture parcellaire ~70 %)",
+        "part_parcelles": "303 452 / 431 663 = 70,3 % (batiment_hauteur_lidar, mesuré) ; le verdict de TOITURE (toiture_lidar) ne couvre lui que 27 parcelles",
+        "granularite": "parcelle (faîtage/égout) + bâtiment (toiture)", "granularite_respectee": "oui",
+        "verdict_raison": "Correction (2ᵉ passe) : la hauteur LiDAR (faîtage/égout) couvre 303 452 parcelles (~70 %) dans `batiment_hauteur_lidar` — le batch de dalles a ACHEVÉ (les figures « 5 406 » de État-1 et « 80 905 » de RECETTE-11 sont périmées). Reste partielle car ~30 % des parcelles n'ont pas de bâti mesuré et le VERDICT de toiture (`toiture_lidar`) n'existe que sur 27 parcelles. **Provenance à corriger** : la hauteur LiDAR alimente `marge_surelevation_m`/`hauteur_bati_m` mais le registre crédite `bd_topo`, pas `lidar_hd_mnh` — la source LiDAR n'est pas tracée sur ce qu'elle sert.",
+        "champs_non_pris": "le verdict de toiture (pente/forme) n'est calculé que sur 27 parcelles alors que la hauteur couvre 70 % : le calcul toiture est le vrai retard, pas la hauteur.",
+        "potentiel": "étendre le verdict de toiture à la couverture hauteur (70 %) ; rattacher lidar_hd_mnh aux chiffres surélévation",
+        "manque_plein": "1) rattacher lidar_hd_mnh à marge_surelevation_m/hauteur_bati_m (provenance) ; 2) étendre toiture_lidar",
+        "principes_ko": ["provenance — hauteur LiDAR créditée à bd_topo, pas à lidar_hd_mnh"],
     },
     6: {"verdict": "PLEINE", "verdict_raison": "RGE ALTI — pente 5 m (147 398 objets). Socle topographique (pente, viabilisation)."},
     65: {"verdict": "ALIAS (doublon)", "verdict_raison": "RGE ALTI 5 m = même réservoir que id 6 (alias_de=6). Alias correct."},
@@ -383,7 +385,11 @@ CURATION: dict[int, dict] = {
     24: {"verdict": "PLEINE", "verdict_raison": "ABF/Monuments historiques (Mérimée, 200 périmètres). Couche + contrainte patrimoine."},
 
     # ══════════════ ÉNERGIE / DPE ══════════════
-    37: {"verdict": "PARTIELLE — couverture incomplète", "verdict_raison": "DPE ADEME (cron mensuel). Base locale non représentative (17 lignes ici). En prod, couverture partielle du parc existant (déclaratif). Sert la passoire thermique.", "granularite": "logement (DPE déclaré)", "granularite_respectee": "à vérifier — un DPE est un logement, pas une parcelle : ne pas généraliser à la parcelle."},
+    37: {"verdict": "PARTIELLE — couverture incomplète",
+         "part_parcelles": "17 DPE, 1 passoire thermique — mesuré sur la base servie",
+         "verdict_raison": "⚠ Coverage RÉELLE quasi-nulle sur la base servie : `dpe_records` = 17, `v_passoire_thermique` = 1. « Connecté » mais l'ingestion DPE (cron mensuel) n'a quasi rien chargé — ce n'est PAS un artefact de base de dev (la base porte 431 663 parcelles), c'est un vrai trou d'ingestion à investiguer (le cron tourne-t-il ? l'API ADEME répond-elle ?).",
+         "granularite": "logement (DPE déclaré)", "granularite_respectee": "à vérifier — un DPE est un logement, pas une parcelle : ne pas généraliser à la parcelle.",
+         "manque_plein": "relancer/réparer l'ingestion DPE (17 records ≈ vide)"},
 
     # ══════════════ RETIRÉES (déjà) ══════════════
     49: {"verdict": "RETIRÉE (déjà)", "verdict_raison": "EDF SEI open data — amont 410 Gone (jeu retiré par EDF ~2026). Retirée 06/09/2026. Rien à sonder. Le réseau HTA vit via id 93."},

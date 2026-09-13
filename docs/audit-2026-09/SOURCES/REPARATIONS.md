@@ -149,10 +149,16 @@ Conservatoire (licence), CoSIA hors bâti.
    par parcelle existe (végétation, solaire). Pour les couches (intersection parcelle × couche),
    le calcul est coûteux et non fait. *Lever : un batch d'intersection par source, hors mandat
    lecture seule.*
-4. **Les comptes « base locale »** : cette base de dev sous-peuple certaines tables (DPE 17,
-   toiture_lidar 27) alors que d'autres sont à l'échelle prod. Les comptes du CSV sont donc
-   **indicatifs** ; le millésime/couverture du code (`tables.py`) fait foi. *Lever : rejouer le
-   script sur la base servie.*
+4. **La carte réservoir→table du code (`tables.py`) est parfois fausse ou incomplète** — le
+   cas prouvé : `lidar_hd_mnh → toiture_lidar` (27 lignes, un cache de verdict) alors que la
+   vraie hauteur LiDAR vit dans `batiment_hauteur_lidar` (**303 452**, ~70 % des parcelles,
+   batch de dalles achevé). La 1ʳᵉ passe avait recopié cette carte et sous-compté ; la 2ᵉ passe
+   corrige via `coverage_tables`. **De plus, la hauteur LiDAR est créditée à `bd_topo` dans le
+   registre, pas à `lidar_hd_mnh`** (provenance fausse). *Lever : auditer table par table la
+   carte `RESERVOIR_TABLES` contre les tables réellement peuplées + les lecteurs.*
+   *(Correction d'honnêteté : la 1ʳᵉ passe qualifiait à tort la base de « dev non
+   représentative » ; c'est bien la base servie, 431 663 parcelles — les comptes du CSV sont
+   des faits, pas des indications.)*
 5. **La liste exacte du prompt tiers (15 candidates)** : non retrouvée comme fichier ; les 15
    sont reconstituées depuis le mandat. *Lever : récupérer le prompt d'origine si nécessaire.*
 6. **L'évaluation exhaustive des 5 principes sur 116** : partielle (violations constatées, pas

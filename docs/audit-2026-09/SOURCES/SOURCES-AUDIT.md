@@ -200,7 +200,7 @@
 | ⬜ | **Zonages d'assainissement SIG complets (EPCI / régies)** (`134`) | À DEMANDER / À BRANCHER | en attente de la demande aux EPCI (GPU : 4/24) | non | — | 0 | — |
 
 - **VRD / assainissement (SPANC)** — VRD/SPANC — saisie EPCI manuelle, aucune table dédiée. Collectif/non-collectif saisi. Licence « à confirmer ». Voir Lot 3.
-- **DPE ADEME (logements existants)** — DPE ADEME (cron mensuel). Base locale non représentative (17 lignes ici). En prod, couverture partielle du parc existant (déclaratif). Sert la passoire thermique.
+- **DPE ADEME (logements existants)** — ⚠ Coverage RÉELLE quasi-nulle sur la base servie : `dpe_records` = 17, `v_passoire_thermique` = 1. « Connecté » mais l'ingestion DPE (cron mensuel) n'a quasi rien chargé — ce n'est PAS un artefact de base de dev (la base porte 431 663 parcelles), c'est un vrai trou d'ingestion à investiguer (le cron tourne-t-il ? l'API ADEME répond-elle ?).
 - **PVGIS (Commission européenne)** — API de calcul solaire (CC BY 4.0). Alimente productible. À plein usage ; attention libellé inclinaison (dette VERIF-1).
 - **EDF SEI Réunion — open data** — EDF SEI open data — amont 410 Gone (jeu retiré par EDF ~2026). Retirée 06/09/2026. Rien à sonder. Le réseau HTA vit via id 93.
 - **Registre national des installations (ODRÉ)** — Registre national installations (ODRÉ) — jamais branché, aucun usage. Retirée 06/09/2026.
@@ -275,7 +275,7 @@
 - **BD ORTHO 20 cm (IGN)** — BD ORTHO 20 cm 2025. Détection piscines (90,7 %), fond ortho. À plein usage.
 - **RGE ALTI 5 m (IGN)** — RGE ALTI 5 m = même réservoir que id 6 (alias_de=6). Alias correct.
 - **BD ORTHO IRC (IGN)** — ⚠ RETRAIT EN ATTENTE (lot 0 S2). Vic avait décidé le retrait, mais l'infrarouge IRC est la source du NDVI/canopée : `parcel_vegetation` (431 663 lignes) est lu EN DIRECT par le solaire (`solaire.py:311` ombrage), le Flash (`flash/data.py:650`) et le scoring P (`p_model/sql.py:287`). Chiffre `prod_spec_kwh_kwc`, fiche Solaire. Retrait refusé tant que ces lecteurs vivent.
-- **LiDAR HD — MNH 50 cm (IGN)** — « Connecté » mais la valeur SERVIE (verdict de toiture) ne couvre qu'une fraction des bâtiments : le MNH couvre l'île, mais le calcul toiture/faîtage n'est matérialisé que sur un sous-ensemble. Emblème du Lot 4 : un statut binaire dit « connecté » là où la couverture réelle est partielle. Un état de couverture (%) manque au modèle.
+- **LiDAR HD — MNH 50 cm (IGN)** — Correction (2ᵉ passe) : la hauteur LiDAR (faîtage/égout) couvre 303 452 parcelles (~70 %) dans `batiment_hauteur_lidar` — le batch de dalles a ACHEVÉ (les figures « 5 406 » de État-1 et « 80 905 » de RECETTE-11 sont périmées). Reste partielle car ~30 % des parcelles n'ont pas de bâti mesuré et le VERDICT de toiture (`toiture_lidar`) n'existe que sur 27 parcelles. **Provenance à corriger** : la hauteur LiDAR alimente `marge_surelevation_m`/`hauteur_bati_m` mais le registre crédite `bd_topo`, pas `lidar_hd_mnh` — la source LiDAR n'est pas tracée sur ce qu'elle sert.
 - **CoSIA (couverture du sol IA, IGN)** — 445 190 bâtis IA (2025), cœur du potentiel/scoring. Bâti à plein usage ; autres classes CoSIA non exploitées (par choix).
 - **Cadastre d'époque (Etalab / PCI vecteur DGFiP)** — Cadastre d'époque (archives PCI 2017→2026). Sert le rattachement des permis anciens (RETOURS-14).
 

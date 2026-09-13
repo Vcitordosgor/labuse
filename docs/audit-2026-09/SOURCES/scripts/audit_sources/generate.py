@@ -143,6 +143,17 @@ def construire() -> list[dict]:
 
         cur_o = CURATION.get(sid, {})
 
+        # correction de couverture : quand la carte RESERVOIR_TABLES du code pointe une table
+        # cache (ex. lidar_hd_mnh → toiture_lidar) et rate la vraie table produit, la curation
+        # déclare `coverage_tables` = la ou les tables qui portent réellement la donnée servie.
+        if cur_o.get("coverage_tables"):
+            total = 0
+            for t in cur_o["coverage_tables"]:
+                cc = lib.compter_table(cur, t)
+                if cc is not None:
+                    total += cc
+            n_objets = total
+
         # verdict automatique (curation peut l'écraser)
         verdict = _verdict_auto(src, slug, ch_ids, couches_carte, robs, cur_o)
 
@@ -334,7 +345,7 @@ def _fiche_md(r) -> str:
           ligne("Chiffres alimentés", r["alimente_chiffres"])]
     L += ["\n## Couverture\n",
           ligne("Emprise", r["emprise"]), ligne("Communes couvertes /24", r["communes_couvertes"]),
-          ligne("Objets en base (local)", r["n_objets_base"]),
+          ligne("Objets en base (base servie)", r["n_objets_base"]),
           ligne("Objets producteur 974", r["n_objets_producteur_974"]),
           ligne("Écart", r["ecart"]), ligne("Part des parcelles touchées", r["part_parcelles"]),
           ligne("Tables réservoir", r["tables_reservoir"]),
