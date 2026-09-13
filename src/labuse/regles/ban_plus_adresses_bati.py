@@ -18,6 +18,6 @@ declarer(FicheRegle(
         "sert de CLÉ de rapprochement adresse BAN ↔ bâtiment BD TOPO ↔ ID-RNB, pas d'indicateur "
         "métier. Un zéro est rendu None : « aucun lien publié » et « parcelle sans adresse » ne "
         "sont pas distinguables dans la source."),
-    exemple_temoin=None,
+    exemple_temoin="tests/test_regles_temoins_ocsge_rnb.py::test_ban_plus_comptes_a_la_main",
     verifie_le="2026-09-14",
 ))

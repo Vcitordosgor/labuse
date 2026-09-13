@@ -22,6 +22,6 @@ declarer(FicheRegle(
         "notamment) ne sont pas comptées, et l'écran le dit. Le chiffre d'artificialisation "
         "est le produit différentiel officiel (flags IGN), pas une soustraction de millésimes "
         "faite maison."),
-    exemple_temoin=None,
+    exemple_temoin="tests/test_regles_temoins_ocsge_rnb.py::test_zan_ocsge_commune_a_la_main",
     verifie_le="2026-09-14",
 ))

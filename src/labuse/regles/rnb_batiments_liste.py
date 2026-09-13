@@ -20,6 +20,6 @@ declarer(FicheRegle(
         "du RNB : un bâtiment à cheval apparaît sur chaque parcelle recoupée — c'est voulu "
         "(l'identité du bâtiment se lit depuis chaque parcelle concernée). Plafond 12 ids "
         "(lisibilité fiche) ; seuls les ACTIFS sortent, les démolis/annulés jamais."),
-    exemple_temoin=None,
+    exemple_temoin="tests/test_regles_temoins_ocsge_rnb.py::test_rnb_actifs_ordre_recouvrement_a_la_main",
     verifie_le="2026-09-14",
 ))

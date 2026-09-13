@@ -56,26 +56,33 @@ def test_catalogue_lot4():
     assert "SAR — schéma d'aménagement régional (Région/DEAL)" in noms
     assert "DVF Réunion (Région, data.regionreunion.com)" in noms
     assert verifier_catalogue() == []
-    # le SAR est a_faire (couche officielle non diffusée), jamais « connecté » à tort
+    # TESTS-1 lot 2 (B) — SOURCES-3 lot 0 (3221ba2a, 14/09/2026, arbitrage Vic) : le SAR passe
+    # d'a_faire à partenariat_requis (pas de diffusion vecteur par le producteur — demande faite).
+    # L'invariant reste : jamais « connecté » à tort.
     sar = next(r for r in SOURCES if r["name"].startswith("SAR — schéma"))
-    assert str(sar["status"].value if hasattr(sar["status"], "value") else sar["status"]) == "a_faire"
+    assert str(sar["status"].value if hasattr(sar["status"], "value") else sar["status"]) == "partenariat_requis"
     assert "NON OPPOSABLE" in sar["legal_notes"]
 
 
 def test_echantillon_producteur_dvf_rempli():
-    """Le squelette CIRCUIT-3 est remplacé : 3 fenêtres agrégées, attendus lus chez le
-    producteur régional, tolérance 5 % — et le contrôle sait les jouer (structure)."""
+    """L'échantillon producteur DVF est REMPLI et le contrôle sait le jouer (structure).
+    TESTS-1 lot 2 (B) — contrat RÉÉCRIT à SOURCES-3 lot 0.4 (3221ba2a, 14/09/2026) : le témoin
+    pointe ETALAB (DGFiP/Etalab fait foi, le jeu Région 2019/2020 est devenu ALIAS) et vérifie
+    UNE fenêtre — le millésime max servi atteint la dernière année publiée par le producteur."""
+    from datetime import date
+
     from labuse.filtres import echantillon
     doc = echantillon.charger("dvf")
-    assert doc and doc.get("lu_le") == "2026-09-07"
+    # la date de lecture producteur AVANCE à chaque contrôle : jamais figée, jamais antérieure
+    # au premier remplissage (2026-09-07) — un retour en arrière ou un vidage casse.
+    assert doc and date.fromisoformat(doc["lu_le"]) >= date(2026, 9, 7)
     assert not doc.get("a_valider")
-    cles = {l["cle"] for l in doc["lignes"]}
-    assert cles == {"ile-2019", "ile-2020", "97415-2020"}
-    for l in doc["lignes"]:
-        assert l["origine"]["url"].startswith("https://data.regionreunion.com/")
-        assert l.get("tolerance_pct") == 5.0
-    # fenêtres 2019/2020 seules (jeu Région figé à mi-2021 — jamais 2021+)
-    assert not any("2021" in c or "2022" in c for c in cles)
+    assert {l["cle"] for l in doc["lignes"]} == {"millesime_max"}
+    (ligne,) = doc["lignes"]
+    assert ligne["origine"]["url"].startswith("https://files.data.gouv.fr/geo-dvf")
+    assert isinstance(ligne["attendu"], int) and ligne["attendu"] >= 2025   # n'avance qu'en avant
+    assert ligne.get("tolerance_abs") == 1   # un an de retard = KO avertissant, jamais silencieux
+    assert date.fromisoformat(ligne["origine"]["lu_le"]) >= date(2026, 9, 7)
 
 
 def test_filtre_potentiel_foncier_region():

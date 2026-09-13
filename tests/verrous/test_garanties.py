@@ -169,20 +169,33 @@ def test_g3_vert_sur_la_base_reelle():
 # ── G4 — dernière version ou pas ───────────────────────────────────────────────────────
 def test_g4_prouve_casse_source_nue(monkeypatch):
     """Une source connectée SANS sonde NI raison → casse. On retire une raison du dict
-    (le trou vécu le 13/09 : 6 sources nues avant que les raisons soient écrites)."""
-    from sqlalchemy import create_engine
+    (le trou vécu le 13/09 : 6 sources nues avant que les raisons soient écrites).
+    TESTS-1 lot 2 (B) — le cobaye n'est plus RTAA en dur : SOURCES-3 lot 3 lui a posé une
+    veille « rappel » en base (une source SOUS SONDE ne redevient jamais nue en retirant sa
+    raison). Le test choisit dynamiquement une source de la vitrine SANS veille dont la raison
+    est écrite : retirer SA raison doit faire casser G4 en la nommant."""
+    from sqlalchemy import create_engine, text as _text
     from sqlalchemy.orm import sessionmaker
     from labuse import sentinelle
+    from labuse.sources_catalog import WHERE_AFFICHEES, masquees_param
     url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
     if not url:
         pytest.skip("base réelle requise")
-    prive = dict(sentinelle.RAISONS_NON_SURVEILLEES)
-    prive.pop("RTAA DOM (textes réglementaires)", None)
-    monkeypatch.setattr(sentinelle, "RAISONS_NON_SURVEILLEES", prive)
     with sessionmaker(bind=create_engine(url))() as s:
+        sans_veille = {n for (n, m) in s.execute(_text(
+            "SELECT d.name, v.methode FROM data_sources d"
+            " LEFT JOIN source_veille v ON v.source_id = d.id"
+            f" WHERE {WHERE_AFFICHEES}"), {"masquees": masquees_param()}).all() if not m}
+        candidats = sorted(sans_veille & set(sentinelle.RAISONS_NON_SURVEILLEES))
+        # S'il n'y a AUCUNE source « raison seule », la branche raison de G4 est morte — le dire.
+        assert candidats, "aucune source de la vitrine ne repose sur une raison : brancher un autre cobaye"
+        cobaye = candidats[0]
+        prive = dict(sentinelle.RAISONS_NON_SURVEILLEES)
+        prive.pop(cobaye)
+        monkeypatch.setattr(sentinelle, "RAISONS_NON_SURVEILLEES", prive)
         r = CG.verrou_g4(s)
         assert r.verdict == "casse"
-        assert any("RTAA" in d for d in r.details)
+        assert any(cobaye in d for d in r.details)
 
 
 @pytest.mark.local

@@ -98,10 +98,15 @@ def test_fiche_verdict_traduit_le_tier_servi(client):
         from labuse.api.app import _build_fiche
         with session_scope() as s:
             f = _build_fiche(s, "97415000AB0001")
+        # TESTS-1 lot 2 (B) — REPARATIONS-1 lot 2b (c87e9919, 13/09/2026) : « Priorité » n'est plus
+        # servi tant que PRIORITE_SERVIE est False (décision Vic, réversible) — la tête classée
+        # porte « À suivre ». L'attendu SUIT le drapeau : le test couvre les deux états du contrat.
+        from labuse.scoring.tiers_client import PRIORITE_SERVIE
+        chip_tete = "Priorité" if PRIORITE_SERVIE else "À suivre"
         assert f["verdict"]["status"] == "brulante"
-        assert f["verdict"]["label"] == "Priorité" and f["verdict"]["rang"] == 7   # M137 — chip court servi
+        assert f["verdict"]["label"] == chip_tete and f["verdict"]["rang"] == 7   # M137 — chip court servi
         assert f["resume"]["statut"] == "brulante"
-        assert f["resume"]["synthese"].startswith("Classée Priorité")
+        assert f["resume"]["synthese"].startswith(f"Classée {chip_tete}")
     finally:
         with session_scope() as s:
             s.execute(sqla_text(

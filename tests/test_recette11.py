@@ -34,17 +34,24 @@ def test_a6_aucun_verdict_de_surelevation():
     for interdit in ("surélévation possible", "non identifiée", "pas de marge de surélévation",
                      "surélévation à confirmer"):
         assert interdit not in bas, interdit
-    # ce qui DOIT rester : marge + contrainte + les deux calculs mesurés (égout ET faîtage)
-    assert "sous la hauteur réglementaire" in bas
+    # ce qui DOIT rester : marge + contrainte + les deux calculs mesurés (égout ET faîtage).
+    # TESTS-1 lot 2 (B) — RECETTE-12 D3 (c5dc44e1, 13/09/2026, arbitrage Q7) : la phrase tient sur
+    # UNE ligne « Égout X mesuré (règle Y, marge Z) · Faîtage … — contrainte qui mord : … » ; le
+    # « X sous la hauteur réglementaire » du LiDAR a été RETIRÉ exprès (il ne doit pas revenir).
+    assert "sous la hauteur réglementaire" not in bas
     assert "contrainte qui mord : le faîtage" in bas
-    assert bas.count("mesuré contre") == 2 and "réglementaires (marge" in bas
+    assert bas.count("mesuré (règle") == 2 and bas.count("marge") >= 2
 
 
 def test_a3_date_de_survol_avec_la_mesure():
     """A3 — la mesure LiDAR HD ne s'affiche jamais sans sa date de survol."""
     html = potentiel.rendu(_valeurs())
     assert "mesuré au LiDAR HD, survol de septembre 2023" in html
-    assert "LiDAR HD — IGN / Géoplateforme" in html  # cité dans les sources du §3
+    # TESTS-1 lot 2 (B) — RECETTE-12 D3 (c5dc44e1, 13/09/2026) : la date de survol UNE SEULE fois
+    # (sur la ligne de mesure), et la source LiDAR HD est citée dans les SOURCES (§10, sources.py),
+    # plus dans le §3 (elle y apparaissait 4 fois).
+    assert html.count("septembre 2023") == 1
+    assert "IGN / Géoplateforme" not in html   # le §3 ne re-cite plus la source (§10 le fait)
 
 
 def test_a4_permis_posterieur_signale():

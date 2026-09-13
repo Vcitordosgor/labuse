@@ -22,6 +22,6 @@ declarer(FicheRegle(
         "et la fiche le DIT (« d'après OCS GE, donnée d'îlot »). Le dominant est choisi par aire "
         "intersectée (aucun seuil de majorité) ; la matrice artif est celle du décret (étape 1) "
         "sans le lissage réglementaire des petites surfaces. Aucun effet score."),
-    exemple_temoin=None,
+    exemple_temoin="tests/test_regles_temoins_ocsge_rnb.py::test_artif_decret_matrice_a_la_main",
     verifie_le="2026-09-14",
 ))
