@@ -123,6 +123,14 @@ def construire() -> list[dict]:
             if n_objets is None and rt.couches:
                 n_objets = sum(compte_couche.get(k, 0) for k in rt.couches)
 
+        # « la fiche est-elle réellement remplie » : donnée présente pour les 4 témoins
+        rempli_tables = tuple(rt.tables) if rt else ()
+        rempli_couches = tuple(couches_carte) if couches_carte else (tuple(rt.couches) if rt else ())
+        cov_tables = cur_o_pre = CURATION.get(sid, {}).get("coverage_tables")
+        if cov_tables:
+            rempli_tables = tuple(cov_tables) + rempli_tables
+        n_rempli, rempli_type = lib.remplissage_temoins(cur, rempli_tables, rempli_couches)
+
         # moteurs / scoring
         moteurs = sorted({c["moteur"] for c in ch_servis if c["moteur"]})
         scoring = any(c["moteur"] in ("scoring_p_v2", "v_score", "score_e") or
@@ -154,8 +162,14 @@ def construire() -> list[dict]:
                     total += cc
             n_objets = total
 
+        # « quasi-vide » = le signe DPE : type parcelle, 0/4 témoins ET base quasi nulle (<100).
+        # (0/4 sur une source riche = ces 4 parcelles n'ont pas l'attribut — PAS une invisibilité.
+        #  La couche 0/4-par-commune n'est pas fiable — jamais un déclencheur.)
+        n_obj_int = n_objets if isinstance(n_objets, int) else None
+        quasi_vide = (rempli_type == "parcelle" and n_rempli == 0
+                      and n_obj_int is not None and n_obj_int < 100)
         # verdict automatique (curation peut l'écraser)
-        verdict = _verdict_auto(src, slug, ch_ids, couches_carte, robs, cur_o)
+        verdict = _verdict_auto(src, slug, ch_ids, couches_carte, robs, cur_o, quasi_vide)
 
         records.append({
             "id": sid,
@@ -198,6 +212,11 @@ def construire() -> list[dict]:
             "part_parcelles": cur_o.get("part_parcelles", ""),
             "tables_reservoir": ";".join(rt.tables) if rt else "",
             "reservoir_note": (rt.note if rt else "") or "",
+            # « la fiche est-elle réellement remplie » (4 témoins, mesuré)
+            "temoins_remplis": ("" if n_rempli is None else f"{n_rempli}/4"),
+            "remplissage_type": rempli_type,
+            "fiche_remplie": ("n.a. (API/règles)" if n_rempli is None else
+                              ("VIDE sur 4/4" if n_rempli == 0 else f"{n_rempli}/4 témoins")),
             # complétude
             "champs_publies": cur_o.get("champs_publies", "non vérifié"),
             "champs_ingérés": cur_o.get("champs_ingeres", ""),
@@ -274,7 +293,7 @@ def _raison_auto(verdict, ch_ids, couches, rob_par_cat, moteurs) -> str:
     return base + ". *(raison auto — champs producteur non vérifiés, cf. mandat)*"
 
 
-def _verdict_auto(src, slug, ch_ids, couches, robs, cur_o) -> str:
+def _verdict_auto(src, slug, ch_ids, couches, robs, cur_o, quasi_vide=False) -> str:
     st = src["status"]
     if st == "retiree":
         return "RETIRÉE (déjà)"
@@ -285,9 +304,11 @@ def _verdict_auto(src, slug, ch_ids, couches, robs, cur_o) -> str:
     if st == "a_faire":
         return "À DEMANDER / À BRANCHER"
     served = bool(ch_ids) or bool(couches) or bool(robs)
+    # RÈGLE 2e passe : branchée/à jour mais quasi-vide (signe DPE) → INVISIBLE, quel que soit le statut.
+    if quasi_vide:
+        return "BRANCHÉE INVISIBLE (vide)"
     if st == "manuel":
         return "MANUELLE" + ("" if served else " — invisible")
-    # connecte
     if not served:
         return "BRANCHÉE INVISIBLE"
     if not slug:
@@ -304,7 +325,8 @@ CSV_COLS = [
     "sentinelle_statut", "sous_filtre", "filtre_etat", "sous_verrou", "dans_registre",
     "alimente_chiffres", "emprise", "communes_couvertes", "n_objets_base",
     "n_objets_producteur_974", "ecart", "part_parcelles", "tables_reservoir",
-    "reservoir_note", "champs_publies", "champs_ingérés", "champs_non_pris",
+    "reservoir_note", "temoins_remplis", "remplissage_type", "fiche_remplie",
+    "champs_publies", "champs_ingérés", "champs_non_pris",
     "geom_conservee", "granularite", "granularite_respectee", "viz_fiche", "viz_couche",
     "viz_outil", "viz_pdf", "viz_copilote", "viz_page", "viz_scoring", "moteurs",
     "test_client_clics", "i_source_millesime_limite", "potentiel", "manque_plein",
@@ -349,7 +371,8 @@ def _fiche_md(r) -> str:
           ligne("Objets producteur 974", r["n_objets_producteur_974"]),
           ligne("Écart", r["ecart"]), ligne("Part des parcelles touchées", r["part_parcelles"]),
           ligne("Tables réservoir", r["tables_reservoir"]),
-          ligne("Note réservoir", r["reservoir_note"])]
+          ligne("Note réservoir", r["reservoir_note"]),
+          ligne("Fiche réellement remplie (4 témoins)", f"{r['fiche_remplie']} ({r['remplissage_type']})")]
     L += ["\n## Complétude — ce qu'on a laissé sur la table\n",
           ligne("Champs publiés (producteur)", r["champs_publies"]),
           ligne("Champs ingérés", r["champs_ingérés"]),

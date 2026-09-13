@@ -35,15 +35,18 @@ champs non pris, verdict nuancé) viennent de `curation.py`, adossés au code, m
 
 ## Les verdicts, en un coup d'œil (sur 116)
 
-62 PLEINE · 24 PARTIELLE (14 couverture + 10 champs) · 4 SERVIE HORS REGISTRE ·
-10 À DEMANDER · 5 MANUELLE · 5 RETIRÉE · 3 ALIAS · 3 HUB · **0 à retirer**.
+62 PLEINE · 23 PARTIELLE (13 couverture + 10 champs) · 4 SERVIE HORS REGISTRE ·
+10 À DEMANDER · 5 MANUELLE · 5 RETIRÉE · 3 ALIAS · 3 HUB · **1 BRANCHÉE INVISIBLE (vide)** ·
+**0 à retirer**.
 
-> ⚠ « 0 invisible » (verdict CSV, dérivé du registre) est un **artefact de méthode** : le graphe
-> réservoir→robinet ne peut PAS produire d'invisible. Le **test navigateur** (`CLICKTEST.md`)
-> sépare *transparence* (les 95 sur la page /sources en 2 clics, avec source+licence+fraîcheur)
-> de l'**usage fonctionnel**, et trouve **≥ 5 INVISIBLES fonctionnelles** — donnée n'atteignant
-> aucune surface parcelle/carte/outil : DVF Région (119), LOVAC (141), Fichiers fonciers (27),
-> DV3F (142), et **DPE (37) en pratique** (17 records = fiche vide malgré « à jour »).
+> ⚠ « 0 invisible » (1ʳᵉ passe, dérivé du registre) était un **artefact** : le graphe
+> réservoir→robinet ne peut PAS produire d'invisible. Le **test navigateur sur les 116**
+> (`CLICKTEST.md`) sépare *transparence* (les 95 sur /sources en 2 clics : source+licence+
+> fraîcheur) de l'**usage fonctionnel**, et ajoute une colonne **« fiche réellement remplie »**
+> mesurée sur **4 parcelles témoins**. Résultat : **5 INVISIBLES** — **DPE (37)** « à jour » mais
+> `dpe_records = 17` → **fiche vide sur 4/4** (le cas d'école : branché, à jour, vide) ; **DVF
+> Région (119)** (témoin de filtre) ; **Fichiers fonciers (27) · LOVAC (141) · DV3F (142)**
+> (non ingérées, sous convention). Le CSV porte `temoins_remplis`/`fiche_remplie` pour les 116.
 
 ## Les trois faits saillants
 

@@ -12,9 +12,10 @@ FAMILLES_ORDRE = [
 
 # emoji par grande classe de verdict, pour le repérage
 VERDICT_MARQUE = {
-    "PLEINE": "🟢", "PARTIELLE": "🟡", "BRANCHÉE INVISIBLE": "🔵",
-    "SERVIE HORS REGISTRE": "🟠", "PÉRIMÉE": "⚫", "RETIRÉE": "⚫", "À RETIRER": "🔴",
-    "À DEMANDER": "⬜", "MANUELLE": "🟣", "ALIAS": "🔗", "HUB": "🏛",
+    "BRANCHÉE INVISIBLE (vide)": "🔴", "PLEINE": "🟢", "PARTIELLE": "🟡",
+    "BRANCHÉE INVISIBLE": "🔵", "SERVIE HORS REGISTRE": "🟠", "PÉRIMÉE": "⚫",
+    "RETIRÉE": "⚫", "À RETIRER": "🔴", "À DEMANDER": "⬜", "MANUELLE": "🟣",
+    "ALIAS": "🔗", "HUB": "🏛",
 }
 
 
@@ -43,12 +44,8 @@ def ecrire(records, out: Path):
     for r in records:
         cnt[_classe(r["verdict"])] += 1
     L.append("\n## Compte des verdicts\n\n| Verdict | Nombre |\n|---|---|\n")
-    for k in ["PLEINE", "PARTIELLE — champs manquants", "PARTIELLE — couverture incomplète",
-              "BRANCHÉE INVISIBLE", "SERVIE HORS REGISTRE", "PÉRIMÉE", "À RETIRER",
-              "À DEMANDER / À BRANCHER", "MANUELLE", "RETIRÉE (déjà)", "ALIAS (doublon)",
-              "HUB (catalogue)"]:
-        if cnt.get(k):
-            L.append(f"| {k} | {cnt[k]} |\n")
+    for k, n in cnt.most_common():
+        L.append(f"| {k} | {n} |\n")
     L.append(f"| **Total** | **{len(records)}** |\n")
 
     for fam in FAMILLES_ORDRE:
@@ -56,12 +53,12 @@ def ecrire(records, out: Path):
         if not rs:
             continue
         L.append(f"\n## {fam}\n\n")
-        L.append("| | Source | Verdict | Millésime base | Sentinelle | Filtre | "
+        L.append("| | Source | Verdict | Fiche remplie (4 témoins) | Sentinelle | Filtre | "
                  "Chiffres | Où (résumé) |\n|---|---|---|---|---|---|---|---|\n")
         for r in sorted(rs, key=lambda x: x["id"]):
             ou = _resume_ou(r)
             L.append(f"| {_marque(r['verdict'])} | **{r['nom']}** (`{r['id']}`) | "
-                     f"{r['verdict']} | {r['millesime_base'] or '—'} | "
+                     f"{r['verdict']} | {r['fiche_remplie'] or '—'} | "
                      f"{r['sous_sentinelle']} | {r['filtre_etat']} | "
                      f"{r['alimente_chiffres']} | {ou} |\n")
         # notes verdict par source (raison)

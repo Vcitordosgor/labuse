@@ -143,3 +143,76 @@ def layers_par_source(cur) -> dict[int, dict]:
         "SELECT data_source_id, count(*), array_agg(DISTINCT kind)"
         " FROM spatial_layers WHERE data_source_id IS NOT NULL GROUP BY data_source_id")
     return {r[0]: {"n": r[1], "kinds": r[2]} for r in cur.fetchall()}
+
+
+# ── « la fiche est-elle réellement remplie » : 4 parcelles témoins (SOURCES-AUDIT-1 2e passe) ──
+# Une source peut être branchée, à jour ET vide (cas DPE : 17 records → 0 fiche). On mesure, pour
+# 4 parcelles témoins (N/O/S/E, toutes bâties), si la donnée de la source ATTEINT réellement la
+# parcelle/commune/couche. Vide sur les 4 → INVISIBLE, quel que soit le statut.
+TEMOINS = [
+    ("97411000CD0083", "97411", "Saint-Denis"),
+    ("97415000DI0183", "97415", "Saint-Paul"),
+    ("97416000CO0318", "97416", "Saint-Pierre"),
+    ("97409000AB0394", "97409", "Saint-André"),
+]
+
+
+def _colonnes(cur, table: str) -> set[str]:
+    cur.execute(
+        "SELECT column_name FROM information_schema.columns WHERE table_name=%s", (table,))
+    return {r[0] for r in cur.fetchall()}
+
+
+def remplissage_temoins(cur, tables: tuple[str, ...], couches: tuple[str, ...]) -> tuple:
+    """(n_temoins_remplis 0-4 | None, type) — la donnée atteint-elle les parcelles témoins ?
+
+    type ∈ parcelle / commune / carte / n.a. (API en direct, règles, ou aucune table jointe).
+    Jointures rapides (égalité) : idu/parcelle_idu (parcelle), code_insee/insee/commune (commune),
+    spatial_layers.kind × commune (carte). Jamais d'intersection spatiale par parcelle (trop lente).
+    """
+    idus = [t[0] for t in TEMOINS]
+    insees = [t[1] for t in TEMOINS]
+    communes_up = [t[2].upper() for t in TEMOINS]
+    best, typ = 0, None
+    for t in tables:
+        if t == "spatial_layers" or lib_regclass(cur, t) is None:
+            continue
+        cols = _colonnes(cur, t)
+        try:
+            if "idu" in cols:
+                cur.execute(f"SELECT count(DISTINCT left(idu,14)) FROM {t} WHERE left(idu,14) = ANY(%s)", (idus,))
+                typ = typ or "parcelle"
+            elif "parcelle_idu" in cols:
+                cur.execute(f"SELECT count(DISTINCT parcelle_idu) FROM {t} WHERE parcelle_idu = ANY(%s)", (idus,))
+                typ = typ or "parcelle"
+            elif "code_insee" in cols:
+                cur.execute(f"SELECT count(DISTINCT code_insee) FROM {t} WHERE code_insee = ANY(%s)", (insees,))
+                typ = typ or "commune"
+            elif "insee" in cols:
+                cur.execute(f"SELECT count(DISTINCT insee) FROM {t} WHERE insee = ANY(%s)", (insees,))
+                typ = typ or "commune"
+            elif "commune" in cols:
+                cur.execute(f"SELECT count(DISTINCT upper(commune)) FROM {t} WHERE upper(commune) = ANY(%s)", (communes_up,))
+                typ = typ or "commune"
+            else:
+                continue
+            best = max(best, cur.fetchone()[0] or 0)
+        except Exception:
+            continue
+    if couches:
+        try:
+            cur.execute(
+                "SELECT count(DISTINCT upper(commune)) FROM spatial_layers"
+                " WHERE kind = ANY(%s) AND upper(commune) = ANY(%s)", (list(couches), communes_up))
+            best = max(best, cur.fetchone()[0] or 0)
+            typ = typ or "carte"
+        except Exception:
+            pass
+    if typ is None:
+        return (None, "n.a.")
+    return (best, typ)
+
+
+def lib_regclass(cur, table: str):
+    cur.execute("SELECT to_regclass(%s)", (table,))
+    return cur.fetchone()[0]

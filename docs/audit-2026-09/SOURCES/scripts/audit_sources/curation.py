@@ -385,11 +385,11 @@ CURATION: dict[int, dict] = {
     24: {"verdict": "PLEINE", "verdict_raison": "ABF/Monuments historiques (Mérimée, 200 périmètres). Couche + contrainte patrimoine."},
 
     # ══════════════ ÉNERGIE / DPE ══════════════
-    37: {"verdict": "PARTIELLE — couverture incomplète",
-         "part_parcelles": "17 DPE, 1 passoire thermique — mesuré sur la base servie",
-         "verdict_raison": "⚠ Coverage RÉELLE quasi-nulle sur la base servie : `dpe_records` = 17, `v_passoire_thermique` = 1. « Connecté » mais l'ingestion DPE (cron mensuel) n'a quasi rien chargé — ce n'est PAS un artefact de base de dev (la base porte 431 663 parcelles), c'est un vrai trou d'ingestion à investiguer (le cron tourne-t-il ? l'API ADEME répond-elle ?).",
+    37: {"verdict": "BRANCHÉE INVISIBLE (vide)",
+         "part_parcelles": "17 DPE, 1 passoire thermique — VIDE sur les 4 témoins (0/4)",
+         "verdict_raison": "⚠ Le cas d'école du mandat : « connecté », drapeau « à jour » sur /sources, MAIS `dpe_records` = 17 et `v_passoire_thermique` = 1 → **fiche parcelle VIDE sur les 4 témoins (0/4)**. Branchée, à jour, et vide = INVISIBLE quel que soit le statut. Vrai trou d'ingestion (le cron mensuel tourne-t-il ? l'API ADEME répond-elle ?), pas un artefact de base de dev (431 663 parcelles).",
          "granularite": "logement (DPE déclaré)", "granularite_respectee": "à vérifier — un DPE est un logement, pas une parcelle : ne pas généraliser à la parcelle.",
-         "manque_plein": "relancer/réparer l'ingestion DPE (17 records ≈ vide)"},
+         "manque_plein": "relancer/réparer l'ingestion DPE (17 records ≈ vide) — priorité"},
 
     # ══════════════ RETIRÉES (déjà) ══════════════
     49: {"verdict": "RETIRÉE (déjà)", "verdict_raison": "EDF SEI open data — amont 410 Gone (jeu retiré par EDF ~2026). Retirée 06/09/2026. Rien à sonder. Le réseau HTA vit via id 93."},
