@@ -1378,7 +1378,9 @@ def ensure_geom_2975(engine, commune: str | None = None, backfill: bool = True) 
             # SOURCES-1 : droit des sols (ER/EBC = plu_gpu_prescription, DPU, PEB, SUP), nature et
             # eau (zones humides, ENP = ens, RPG = safer, DPF), sols (SIS/CASIAS = sol_pollue), bruit.
             "'plu_gpu_prescription','dpu','peb','sup','dpf','zone_humide','ens','safer',"
-            "'sol_pollue','bruit_route','bruit_carte')",
+            "'sol_pollue','bruit_route','bruit_carte',
+            # REPARATIONS-1 lot 5 — Artificialisation (OCS GE) : zones dissoutes lourdes.
+            'artificialisation')",
         ]
     ddl += [
         "CREATE INDEX IF NOT EXISTS idx_parcels_geom_2975 ON parcels USING gist (geom_2975)",

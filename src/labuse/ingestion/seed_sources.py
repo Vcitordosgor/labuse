@@ -227,6 +227,43 @@ SOURCES: list[dict] = [
          endpoint_url="https://data.statistiques.developpement-durable.gouv.fr/dido/api/v1/datafiles/{rid}/csv",
          legal_notes="Licence Ouverte — attribution : « Source : SDES, Sitadel ». Pétitionnaires personnes MORALES seulement (physiques anonymisées à la source).",
          technical_notes="✓ live 10/07/2026 (Wave Sitadel3). Flux national Dido (dataset 6513f0189d7d312c80ec5b5b), 4 datafiles (logements/locaux/PA/PD), filtre serveur DEP_CODE=eq:974, delta DATE_REELLE_AUTORISATION=gte:. MAJ mensuelle, historique 2013+. Ingestion : permits_sdes.py (upsert permit_id, refresh cron). ⚠ voie Région ODS morte 2023-09 (permits.py legacy). last_sync_at posé à l'ingestion."),
+    # REPARATIONS-1 lot 5 — OCS GE NATIVE 974 : téléchargement IGN officiel (le WFS renvoyait
+    # 400 — le catalogue data.geopf.fr/telechargement publie D974 en DEUX MILLÉSIMES 2017 et
+    # 2022 + le produit DIFF artificialisation officiel). CRS 2975 INSPECTÉ dans les GPKG.
+    # La couche « Occupation du sol (BD CARTO V5) » (source 22) redevient ce qu'elle est : un
+    # proxy grossier, DISTINCT — l'artificialisation officielle vient d'ICI. Ne nourrit PAS le
+    # score (affichage seul, décision du mandat).
+    dict(name="OCS GE (IGN) — occupation du sol et artificialisation", category="topographie",
+         provider="IGN / Géoplateforme (portail de l'artificialisation)",
+         source_millesime="OCS GE 2.0 D974 — 2017 + 2022 ; diff artif 2025-09-16",
+         access_type="téléchargement/GPKG", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://geoservices.ign.fr/ocsge",
+         endpoint_url="https://data.geopf.fr/telechargement/resource/OCSGE",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — OCS GE ». "
+                     "Réutilisation libre, y compris commerciale, avec mention.",
+         technical_notes="REPARATIONS-1 lot 5 — ocsge_sol (couverture CS + usage US + flag artif "
+                         "décret 2023-1096 étape 1, 2 millésimes), ocsge_evolution (produit DIFF "
+                         "officiel IGN, flags artif_2017/2022), parcel_ocsge (précalcul par "
+                         "parcelle : part artif, CS/US dominants, évolution). Granularité îlot — "
+                         "la fiche dit « d'après OCS GE ». Aucun effet score."),
+    # REPARATIONS-1 lot 4 — RNB : L'IDENTITÉ NATIONALE DES BÂTIMENTS. API officielle (jamais de
+    # scraping), filtrage 974 au plus tôt (insee_code par commune), CRS INSPECTÉ (GeoJSON WGS84,
+    # SRID=4326 explicite dans le flux diff — constaté 13/09/2026). On prend : rnb_id, statut,
+    # géométries, adresses liées, ext_ids BD TOPO (traçabilité). RIEN d'énergétique. Sentinelle :
+    # GET /buildings/diff/?since= (flux de changements officiel — l'incrémental).
+    dict(name="RNB — Référentiel National des Bâtiments", category="topographie",
+         provider="RNB (beta.gouv / ADEME / IGN / DGALN)",
+         source_millesime="RNB — flux continu (ingéré par commune, 13/09/2026)",
+         access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://rnb.beta.gouv.fr/doc",
+         endpoint_url="https://rnb-api.beta.gouv.fr/api/alpha/buildings/",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « RNB — Référentiel National "
+                     "des Bâtiments ». Réutilisation libre, y compris commerciale, avec mention.",
+         technical_notes="REPARATIONS-1 lot 4 — rnb_batiments (id, statut, géométries 4326+2975, "
+                         "adresses, ext_ids bdtopo) + rnb_rattachement_bdtopo (rattachement spatial "
+                         "des bâtiments BD TOPO servis, cause écrite quand non rattaché) ; "
+                         "batiment_hauteur_lidar.rnb_id (le bâtiment principal de la parcelle). "
+                         "Fiche « Le bien » : identifiant discret + lien rnb.beta.gouv.fr."),
     dict(name="BD TOPO IGN", category="topographie", provider="IGN / Géoplateforme",
          source_millesime="BD TOPO® V3 (IGN) — édition non enregistrée",   # M125-1bis : typename BDTOPO_V3 (config wfs_layers)
          access_type="WFS/téléchargement", status=S.CONNECTE, reliability_level=R.VERIFIE,
@@ -1287,6 +1324,40 @@ HUBS: tuple[str, ...] = (
 )
 
 
+#: REPARATIONS-1 lot 4 — ARBITRAGES DE DOUBLONS EN CODE (G1). CIRCUIT-6 les avait posés en
+#: NOTES EN BASE seulement : un re-seed les écrasait et G1 recassait (constaté 13/09). Ici la
+#: version durable : appliqué par seed() APRÈS l'upsert, idempotent (append si le jeton
+#: d'arbitrage manque). Un doublon signalé par G1 = une ligne ici, jamais un silence.
+ARBITRAGES_DOUBLONS: dict[str, str] = {
+    "Potentiel foncier Région (Région ODS)":
+        "DOUBLON assumé avec « data.regionreunion.com — Potentiel foncier » (même couche kind "
+        "potentiel_foncier) : l'arbitrage REPARATIONS.md B1 (retrait de cette ligne, 0 chiffre) "
+        "reste le geste de Vic — en attendant, la ligne 15 est la référence.",
+    "SIRENE":
+        "ARBITRAGE des canaux SIRENE (REPARATIONS.md B3) : trois canaux assumés — socle SIRENE, "
+        "Recherche d'entreprises DINUM (enrichissement à la volée), établissements géolocalisés "
+        "(carte) — chacun son rôle, pas de fusion.",
+    "Recherche d'entreprises (DINUM)":
+        "ARBITRAGE canal (B3) : même endpoint que SIRENE (recherche-entreprises.api.gouv.fr) — "
+        "canal d'ENRICHISSEMENT à la volée, rôle distinct du socle et du canal géolocalisé.",
+    "ZFANG — zone franche d'activité nouvelle génération (Légifrance)":
+        "ARBITRAGE : ZFANG et FRR partagent la table territoire_fiscal_commune (deux dispositifs "
+        "fiscaux, une table de zonage) — recouvrement assumé, jamais deux lignes servies.",
+}
+
+
+def appliquer_arbitrages_doublons(session: Session) -> None:
+    """Append (idempotent) la note d'arbitrage aux sources concernées — un re-seed ne peut plus
+    faire perdre un arbitrage de doublon (G1)."""
+    for nom, note in ARBITRAGES_DOUBLONS.items():
+        ds = session.execute(select(DataSource).where(DataSource.name == nom)).scalar_one_or_none()
+        if ds is None:
+            continue
+        tn = ds.technical_notes or ""
+        if note[:24] not in tn:
+            ds.technical_notes = (tn + (" — " if tn else "") + note)
+
+
 def appliquer_statuts_circuit(session: Session) -> None:
     """Pose (idempotent) les colonnes CIRCUIT-5 (`alias_de`, `retiree_le`, `retiree_raison`)
     et les statuts de première classe. `retiree_le` n'est posé qu'une fois (premier passage) —
@@ -1330,6 +1401,7 @@ def seed(session: Session) -> int:
     session.flush()
     appliquer_modes_cadences(session)   # CIRCUIT-1 lot 1.7 — modes + cadences déclarés
     appliquer_statuts_circuit(session)  # CIRCUIT-5 lot 2.1 — alias/retiree/hub de première classe
+    appliquer_arbitrages_doublons(session)  # REPARATIONS-1 lot 4 — arbitrages G1 durables (code)
     return session.query(DataSource).count()
 
 
@@ -1341,6 +1413,8 @@ def seed(session: Session) -> int:
 # l'absent. La liste des propositions est livrée dans docs/CIRCUIT/CADENCES-PROPOSEES.md — Vic les
 # corrige depuis la page Circuit, pas dans ce fichier.
 MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
+    "RNB — Référentiel National des Bâtiments": ("cron_mensuel", 30, "proposee"),
+    "OCS GE (IGN) — occupation du sol et artificialisation": ("one_shot", 365, "proposee"),
     "Cadastre (API Carto PCI)": ("one_shot", 365, "proposee"),
     "Cadastre Etalab (bulk DGFiP/Etalab)": ("one_shot", 365, "proposee"),
     "Urbanisme PLU/GPU (API Carto)": ("en_direct", None, "sans_objet"),

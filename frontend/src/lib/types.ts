@@ -555,6 +555,11 @@ export interface LeBien {
     pente_mediane_deg: number | null; pans_orientation_deg: number[]
     part_pentue: number | null; confiance: number | null; seuil: number; statut: string; methode: string
   } | null
+  // REPARATIONS-1 lot 4 — identifiants RNB des bâtiments de la parcelle (lien officiel).
+  rnb?: { rnb_id: string; statut: string | null; lien: string }[]
+  // REPARATIONS-1 lot 5 — occupation du sol / artificialisation d'après OCS GE (donnée d'îlot).
+  ocsge?: { part_artif_pct: number | null; cs_dominant: string | null; us_dominant: string | null
+    millesime: string | null; source: string } | null
 }
 
 // M125-2 — copropriété immatriculée (RNIC) rattachée à la parcelle. Information, jamais un verdict.

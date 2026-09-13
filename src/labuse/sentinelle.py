@@ -387,6 +387,22 @@ SEED: list[dict] = [
              "&OUTPUTFORMAT=application/json&SORTBY=date_edition%20D"
              "&PROPERTYNAME=date_edition,code_mission&BBOX=-21.40,55.20,-20.80,55.85"),
      "selecteur": "features.0.properties.date_edition"},
+    # REPARATIONS-1 lot 4 — RNB : flux CONTINU sans millésime nommé. Le canal incrémental réel
+    # est GET /buildings/diff/?since= (CSV national — lu par ingestion.rnb.version_diff) ; la
+    # sonde fige DEUX bâtiments témoins 974 (Saint-Denis + Entre-Deux) : toute modification RNB
+    # sur l'un d'eux change l'empreinte → « la donnée amont a changé » (jamais un faux signal
+    # national). URLs réellement appelées (probe 13/09/2026).
+    # REPARATIONS-1 lot 5 — OCS GE : le catalogue de téléchargement IGN est l'amont réel ; la
+    # page atom du produit D974 2022 porte sa date de publication — une nouvelle livraison
+    # (millésime ou correctif) change l'empreinte. URL réellement appelée (probe 13/09/2026).
+    {"name": "OCS GE (IGN) — occupation du sol et artificialisation", "methode": "temoin",
+     "url": "https://data.geopf.fr/telechargement/resource/OCSGE/OCS-GE_2-0__GPKG_RGR92UTM40S_D974_2022-01-01",
+     "url2": "https://data.geopf.fr/telechargement/resource/OCSGE-ARTIFICIALISATION/OCS-GE-ARTIFICIALISATION_2-0_DIFF-2017-2022_GPKG_RGR92UTM40S_D974_2025-09-16",
+     "selecteur": None},
+    {"name": "RNB — Référentiel National des Bâtiments", "methode": "temoin",
+     "url": "https://rnb-api.beta.gouv.fr/api/alpha/buildings/B74TG4FPXST4/",
+     "url2": "https://rnb-api.beta.gouv.fr/api/alpha/buildings/1126R7BCDWR1/",
+     "selecteur": None},
     {"name": "Contours IRIS (IGN/INSEE)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/contours-iris/", "selecteur": "last_update"},
     {"name": "RPG — déclarations agricoles (IGN/ASP)", "methode": "api",

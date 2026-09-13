@@ -142,10 +142,12 @@ def analyse_doublons(rows: list[dict]) -> list[dict]:
 
 
 def verrou_g1(db: Session) -> ResultatVerrou:
-    phrase = ("La page Circuit montre les 116 sources de la base, chacune avec son état "
-              "(liste fermée), et signale tout doublon — aucun doublon sans arbitrage écrit.")
     pbs: list[str] = []
     cpt = catalogue_compteurs(db)
+    # REPARATIONS-1 lot 4 — le compte n'est plus gravé dans la phrase (116 → 117 avec RNB) :
+    # la phrase porte le total MESURÉ, la garantie reste la même.
+    phrase = (f"La page Circuit montre les {cpt['total']} sources de la base, chacune avec son "
+              "état (liste fermée), et signale tout doublon — aucun doublon sans arbitrage écrit.")
     inconnus = sorted(set(cpt["par_statut"]) - STATUTS_ADMIS)
     for s in inconnus:
         pbs.append(f"statut hors liste fermée : {s} ({cpt['par_statut'][s]} ligne(s))")

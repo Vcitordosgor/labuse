@@ -1545,6 +1545,28 @@ def ingest_georisques_cmd(
     typer.echo(f"✓ Géorisques île : {tot} ({time.time() - t0:.0f}s)")
 
 
+@app.command("rnb")
+def rnb_cmd(
+    ingerer: bool = typer.Option(False, "--ingerer", help="Ingestion API RNB par commune (974, paginée, idempotente)."),
+    rattacher: bool = typer.Option(False, "--rattacher", help="Rattacher bâtiments BD TOPO + hauteurs LiDAR aux RNB ID."),
+    insee: str = typer.Option("", help="Communes INSEE (csv) — vide = les 24."),
+) -> None:
+    """REPARATIONS-1 lot 4 — RNB, l'identité des bâtiments : ingestion API officielle
+    (rnb-api.beta.gouv.fr, filtrage 974 par insee_code, CRS 4326 inspecté), puis rattachement
+    spatial (taux mesurés, non-rattachés par cause). Sans option : mesure seule."""
+    from .ingestion.rnb import ingest_rnb, mesurer, rattacher as _rattacher
+
+    with session_scope() as sdb:
+        if ingerer:
+            r = ingest_rnb(sdb, insee_list=[x.strip() for x in insee.split(",") if x.strip()] or None,
+                           log_fn=typer.echo)
+            typer.echo(f"✓ {r['total']} bâtiments RNB ingérés")
+        if rattacher:
+            _rattacher(sdb, log_fn=typer.echo)
+        if not ingerer and not rattacher:
+            mesurer(sdb, log_fn=typer.echo)
+
+
 @app.command("alea-reclassifier")
 def alea_reclassifier_cmd() -> None:
     """RETOURS-21 A — réaligne le `niveau` servi des aléas `georisque_alea` sur le mapping corrigé

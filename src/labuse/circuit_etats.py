@@ -93,6 +93,8 @@ def categorie_affichage(slug: str | None) -> str:
 #    data_sources (id numérique + nom) au slug du registre, pour allumer réservoir → catégories.
 #    Un réservoir absent de ce pont s'allume seul (comportement d'avant CIRCUIT-P), sans erreur. ──
 NOM_VERS_SLUG = {
+    'RNB — Référentiel National des Bâtiments': 'rnb',
+    'OCS GE (IGN) — occupation du sol et artificialisation': 'ocsge',
     'Cadastre (API Carto PCI)': 'cadastre_api_carto',
     'Cadastre Etalab (bulk DGFiP/Etalab)': 'cadastre_etalab_bulk',
     'Urbanisme PLU/GPU (API Carto)': 'gpu_plu_api_carto',
