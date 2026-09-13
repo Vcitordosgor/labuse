@@ -1220,10 +1220,14 @@ def ingest_gpu_infos_cmd() -> None:
         sid_peb = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
                             {"n": gpu_infos.SOURCE_PEB}).scalar()
         res = gpu_infos.ingest_gpu_infos(s, source_id_dpu=sid_dpu, source_id_peb=sid_peb)
+        # SOURCES-2 lot 2 — le PEB de Pierrefonds (FMEP), absent du GPU : vecteur DGAC/STAC
+        # par la Géoplateforme (dgac_peb_plan_wmsv), zones A/B/C/D exigées, sinon échec franc.
+        res_fmep = gpu_infos.ingest_peb_pierrefonds(s, source_id_peb=sid_peb)
         s.commit()
     models.ensure_geom_2975(engine())
     typer.echo(f"✓ DPU : {res['dpu']} périmètre(s) sur {len(res['dpu_communes'])} commune(s) ; "
                f"PEB : {res['peb']} zone(s) {res['peb_zones']}.")
+    typer.echo(f"✓ PEB Pierrefonds (DGAC/STAC) : zones {res_fmep['zones']}, arrêté {res_fmep['arrete']}.")
     if res["dpu_non_publie"]:
         typer.echo(f"  DPU non publié au GPU ({len(res['dpu_non_publie'])} communes) : "
                    + ", ".join(res["dpu_non_publie"]))
@@ -1493,6 +1497,23 @@ def ingest_azi_tri_cmd() -> None:
                                         {"verdict": v.verdict})
             s.commit()
         typer.echo(f"  filtre azi_tri : {v.verdict}")
+
+
+@app.command("ingest-sis-projets")
+def ingest_sis_projets_cmd() -> None:
+    """SOURCES-2 lot 2 — les 7 PROJETS de SIS Nord-Est/Sud (préfecture, arrêtés du 19/02/2026,
+    consultation close le 07/05/2026) → kind sol_pollue subtype sis_projet, statut « non
+    opposable » toujours dit — DISTINCTS des SIS définitifs Géorisques."""
+    from . import models
+    from .ingestion import sis_projets
+    with session_scope() as s:
+        sid = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                        {"n": sis_projets.SOURCE_SIS}).scalar()
+        res = sis_projets.ingest_sis_projets(s, source_id=sid)
+        s.commit()
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ Projets de SIS : {res['projets']} posé(s) / {res['total_fiches']} fiches "
+               f"({res['sans_point']} sans point, CRS non identifié — dit au rapport).")
 
 
 @app.command("ingest-georisques")

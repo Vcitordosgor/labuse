@@ -3984,6 +3984,42 @@ def _fibre_block(db: Session, idu: str) -> dict | None:
         return None
 
 
+#: SOURCES-2 lot 2 — état DPU des communes SANS périmètre au GPU (mesuré 13/09/2026 : seuls
+#: Saint-Denis 41, Saint-Paul 158, Sainte-Marie 1 et Le Tampon 2 publient — PAS Saint-Pierre ni
+#: Saint-Benoît, contrairement au rapport producteurs). L'absence au GPU n'est JAMAIS une
+#: absence de droit : l'EPF Réunion est délégataire du droit de préemption pour plus de 80 %
+#: des communes (Cour des comptes, rapport EPFR). Institutions DOCUMENTÉES hors GPU :
+_DPU_HORS_GPU: dict[str, str] = {
+    "Saint-Pierre": ("DPU institué, périmètre non publié au GPU — délégataire EPF Réunion "
+                     "(convention n°16 24 01, délib. 35/1689-1690 du CM du 21/10/2024, simple + "
+                     "renforcé) ; périmètre consultable en mairie (saintpierre.re)"),
+    "Saint-Benoît": ("DPU institué, périmètre non publié au GPU — portage EPF Réunion "
+                     "(périmètre ajusté au PLU du 06/02/2020, délib. DEL 079 09 2022) ; "
+                     "périmètre consultable en mairie (saint-benoit.re)"),
+    "Saint-Philippe": ("commune au RNU (aucun document d'urbanisme au GPU, zonage quasi absent "
+                       "— le drapeau GPU is_rnu=False n'est corroboré par aucun document) : "
+                       "pas de DPU possible sans PLU/POS/carte communale"),
+}
+_DPU_NON_PUBLIE_DEFAUT = (
+    "un DPU s'applique très probablement en zones U/AU (l'EPF Réunion est délégataire du droit "
+    "de préemption pour plus de 80 % des communes — Cour des comptes) mais son périmètre n'est "
+    "pas publié au GPU — vérifier en mairie ou auprès de l'EPF Réunion")
+
+#: SOURCES-2 lot 2 — procédures d'évolution des PLU EN COURS, servies sur TOUTES les parcelles
+#: de la commune. Saint-Leu : révision générale, enquête publique du 1er septembre au
+#: 9 octobre 2026 (arrêté municipal n°579/2026/DAD, avis MRAe du 12/03/2026) ; le PLU actuel
+#: (~17 ans) reste opposable jusqu'à l'approbation. Le document de Saint-Leu est ABSENT du GPU
+#: (0 zone-urba DU_97413, vérifié 13/09/2026) : la sentinelle guette son APPARITION au GPU.
+_PLU_PROCEDURES: dict[str, dict] = {
+    "Saint-Leu": {
+        "etat": "revision_en_cours",
+        "detail": "PLU en révision — enquête publique du 1er septembre au 9 octobre 2026 ; "
+                  "le PLU actuel reste opposable jusqu'à l'approbation (visée fin 2026/T1 2027)",
+        "lien": "https://www.registre-numerique.fr/revision-plu-stleu",
+    },
+}
+
+
 _DISPOSITIFS_SQL = text("""
 SELECT sl.kind, sl.subtype, coalesce(sl.attrs->>'libelle', sl.name) AS libelle,
        sl.attrs->>'nomsuplitt' AS nomsuplitt, sl.attrs->>'zone' AS peb_zone,
@@ -4037,16 +4073,20 @@ def _dispositifs_block(db: Session, idu: str) -> dict | None:
             sup.append({"categorie": (r["subtype"] or "?").upper(),
                         "libelle": r["nomsuplitt"] or r["libelle"], "part_pct": part})
     # DPU : distinguer « hors périmètre publié » de « commune non publiée » (règle 3 du mandat).
+    # SOURCES-2 lot 2 — JAMAIS « pas de DPU » : quand rien n'est au GPU, l'état par commune
+    # dit ce qui est PROUVÉ (institution documentée, délégataire, RNU) — cf. _DPU_HORS_GPU.
+    commune = db.execute(text(
+        "SELECT commune FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
     dpu_etat: dict
     if dpu is not None:
         dpu_etat = {"etat": "servi", **dpu}
     else:
         commune_a_publie = bool(db.execute(text(
-            "SELECT 1 FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
-            "WHERE sl.kind = 'dpu' AND sl.commune = p.commune LIMIT 1"), {"idu": idu}).first())
+            "SELECT 1 FROM spatial_layers WHERE kind = 'dpu' AND commune = :c LIMIT 1"),
+            {"c": commune}).first())
         dpu_etat = ({"etat": "hors"} if commune_a_publie else
                     {"etat": "non_determinee",
-                     "detail": "non publié par la commune (GPU) — périmètre DPU non diffusé"})
+                     "detail": _DPU_HORS_GPU.get(commune or "", _DPU_NON_PUBLIE_DEFAUT)})
     er.sort(key=lambda x: -x["part_pct"])
     ebc.sort(key=lambda x: -x["part_pct"])
     sup.sort(key=lambda x: (x["categorie"], -x["part_pct"]))
@@ -4058,10 +4098,12 @@ def _dispositifs_block(db: Session, idu: str) -> dict | None:
         "er": er or None,
         "ebc": ebc or None,
         "dpu": dpu_etat,
+        "plu_procedure": _PLU_PROCEDURES.get(commune or ""),
         "peb": ({"zone": peb["zone"], "part_pct": peb["part_pct"], "libelle": peb["libelle"]}
                 if peb else
                 ({"zone": "hors",
-                  "detail": "Roland-Garros servi (annexes GPU) ; Pierrefonds non publié au GPU"}
+                  "detail": "Roland-Garros (annexes GPU) et Pierrefonds (DGAC/STAC, arrêté du "
+                            "29/03/2017) tous deux servis"}
                  if "peb" in kinds_presents else
                  {"zone": "non_determinee", "detail": "PEB non ingéré"})),
         "sup": sup or None,

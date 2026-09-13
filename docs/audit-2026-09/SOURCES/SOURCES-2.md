@@ -111,14 +111,95 @@ recoupement.
 **Arbitrages écrits :**
 - **TYPEINF 03 ≠ anciens DPU.** Le rapport producteurs recommandait d'ajouter `TYPEINF=03` aux
   périmètres DPU. Vérifié CONTRAIRE chez le producteur : l'unique typeinf 03 du 974
-  (Saint-Benoît) est libellé « Espace Naturel Sensible » = zone de préemption **ENS du
+  (L'Étang-Salé, DU_97404) est libellé « Espace Naturel Sensible » = zone de préemption **ENS du
   Département**, pas un DPU communal. L'ingérer en `kind='dpu'` aurait fait mentir la cascade.
   Écarté, gravé dans `gpu_infos.py`.
 - **Noms de registre conservés.** Les 3 sources « (DEAL Carmen) » gardent leur nom — c'est la
   clé stable de `data_sources` (jointures circuit/sonde) ; l'endpoint, le provider et les notes
   disent la vérité Lizmap. `deal974.lizmap.com` ajouté aux passerelles mutualisées (G1).
 - **Découverte au passage (pour le lot 2)** : le zonage d'assainissement (`typeinf 19`) EXISTE
-  au GPU pour Saint-Benoît (42 entités) et Saint-Paul (27) — le rapport producteurs le croyait
-  absent partout.
+  au GPU pour L'Étang-Salé (42 entités, DU_97404) et Saint-Paul (27) — le rapport producteurs le
+  croyait absent partout.
 
 Verrous 23/23 verts après lot (G1 re-passé après déclaration de la passerelle Lizmap).
+
+---
+
+## LOT 2 — Les trous producteurs, dits honnêtement et pas plus
+
+### DPU — l'état des 24 communes (balayage GPU du 13/09/2026, partition par partition)
+
+Le rapport producteurs disait « confirmés en ligne : Saint-Pierre et Saint-Benoît ». Le
+producteur (GPU) dit AUTRE CHOSE — les communes qui publient un périmètre au GPU sont :
+
+| État | Communes | Détail |
+|---|---|---|
+| **Périmètre publié au GPU** (typeinf 04, servi en carte + fiche) | **Saint-Denis** (41 : simple + renforcé), **Saint-Paul** (158, dont délégations nommées : « Délégation DPU BARRAGE (ZAD TCO) », BELLEMÈNE, CENTRE-VILLE…), **Sainte-Marie** (1, renforcé), **Le Tampon** (2) | 202 périmètres en base |
+| **DPU institué, périmètre non publié au GPU — délégataire documenté** | **Saint-Pierre** (délégation EPF Réunion, convention n°16 24 01, délib. 35/1689-1690 du CM du 21/10/2024, simple + renforcé) ; **Saint-Benoît** (portage EPF, périmètre ajusté au PLU du 06/02/2020, délib. DEL 079 09 2022) | phrase dédiée servie à la fiche |
+| **RNU** | **Saint-Philippe** — aucun document au GPU, zonage quasi absent (9 parcelles N) ; ⚠ le drapeau GPU `is_rnu=False` n'est corroboré par aucun document (dit dans la phrase) | « pas de DPU possible sans PLU/POS/carte communale » |
+| **Non publié — délégataire probable EPF** | les 17 autres | phrase du rapport : « un DPU s'applique très probablement en zones U/AU (l'EPF Réunion est délégataire pour plus de 80 % des communes — Cour des comptes) mais son périmètre n'est pas publié — vérifier en mairie ou auprès de l'EPF Réunion » |
+
+**« Jamais pas de DPU » est gravé dans le code** (`_DPU_HORS_GPU` + `_DPU_NON_PUBLIE_DEFAUT`,
+`api/app.py`) : l'état `non_determinee` de la fiche sert désormais la phrase par commune.
+Recensement EPF : les délibérations récentes du CA (`epf.re`, lues — 04/11/2025, 05/12/2025,
+02/06/2026, 25/06/2026) ne contiennent que des *exercices* de DPU sur des ventes, pas le
+recensement des conventions par commune — l'énumération exhaustive des délégataires exigerait
+le dépouillement des archives CA pluriannuelles : dit ici, pas inventé.
+
+### SIS — les projets Nord-Est/Sud servis « non opposables »
+
+Dossier officiel préfecture téléchargé (`dossier SIS actualisé.zip`, arrêtés n°2026-215/216/
+217/218-SG-SCOPP du 19/02/2026, modifiés 405/406 du 02/04/2026, consultation close le
+07/05/2026) : **7 fiches de sites** extraites (id SSP, commune, centroïde EPSG:2975,
+superficie). Servies en `sol_pollue/sis_projet`, **distinctes des SIS définitifs** Géorisques,
+statut « projet de SIS — non opposable » toujours porté : CORETAB (Saint-Pierre), Décharge
+Petite Plaine (La Plaine-des-Palmistes), Interlinge et Sucrerie Savanna (Saint-Paul), SCPR
+(Saint-Louis), ZAC Triangle de l'Oasis (Le Port) — **6 points posés**. La 7e fiche (« Pipe
+line SRE », Le Port, linéaire) publie des coordonnées dans un CRS non identifié
+(10 162 963/517 213 — ni 2975, ni 3857) : **aucun point inventé**, anomalie dite ici.
+Sentinelles : ZIP préfecture (détection d'octets, semée) + les définitifs restent sur le
+témoin SSP bi-commune existant.
+
+### PEB Pierrefonds — le vecteur TROUVÉ chez le producteur (pas de géoréférencement)
+
+Le chemin du mandat s'arrêtait au géoréférencement du plan PDF. Mesuré dans l'ordre :
+1. **SUP T5 au GPU** : 0 assiette T5 sur la bbox de Saint-Pierre (l'annexe SUP du PLU ne la
+   porte pas) — échec confirmé ;
+2. **Géoportail** : le WFS ne sert que le POINT aérodrome (`dgac_peb_arrete_wfs`) + le PDF de
+   l'arrêté — mais la couche **`dgac_peb_plan_wmsv`** (WMS-vecteur Géoplateforme, données
+   **STAC/DGAC**) rend les zones, et son **GetFeatureInfo JSON renvoie la géométrie COMPLÈTE
+   et les attributs** de chaque zone (service OGC officiel, aucun scraping). Échantillonnage
+   de l'axe de piste (21 points), dédoublonnage par id : **les 4 zones A/B/C/D de FMEP**
+   récupérées avec Lden int/ext, `date_arret=2017-03-29`, `date_maj` STAC 12/04/2022, lien
+   arrêté PDF. Précision ~11 m (4 décimales), dans la tolérance du plan au 1/25 000 — dit.
+3. Géoréférencement PDF : **inutile** (et le PDF de l'arrêté ne contient d'ailleurs PAS la
+   carte, vérifié).
+
+Ingestion `ingest_peb_pierrefonds` (zones A/B/C/D EXIGÉES sinon échec franc, purge ciblée
+FMEP, Roland-Garros intact) → **8 zones PEB en base** (4 FMEP + 4 Roland-Garros). Le détail
+« Pierrefonds non publié au GPU » de la fiche est corrigé.
+
+### Saint-Leu — révision en cours, servie sur toutes les parcelles
+
+`dispositifs.plu_procedure` (nouveau, back + front) : « PLU en révision — enquête publique du
+1er septembre au 9 octobre 2026 ; le PLU actuel reste opposable » + lien
+`registre-numerique.fr/revision-plu-stleu`, sur TOUTE parcelle de Saint-Leu. Sentinelle : le
+« module procedure » du GPU n'existe pas à l'API Carto (404 vérifié) ; le vrai signal est
+l'**apparition du document au GPU** (aujourd'hui 0 à la partition DU_97413, vérifié) — témoin
+semé sur `/document?partition=DU_97413` (léger, métadonnées seules).
+
+### Assainissement, PLH, OLL, Chroniques de l'eau — déjà dits, vérifiés
+
+- **Assainissement** : le rapport producteurs (« aucune publication open data, ni GPU
+  typeinf 19 ») est CONTREDIT par le producteur : 4 communes ont leur zonage SIG au GPU
+  (L'Étang-Salé, Le Port, Saint-Denis, Saint-Paul — déjà ingérées, `zonage_assainissement`),
+  ailleurs l'app sert le taux de non-raccordement du secteur (INSEE RP2022), jamais une proba
+  parcellaire. Rien à changer : l'app fait déjà MIEUX que la phrase du mandat.
+- **PLH des 5 EPCI** : extraction documentaire, rappel `depot_manuel` 365 j — trou vectoriel
+  producteur, déjà déclaré.
+- **Loyers OLL** : agrégats par zone servis ; micro-données = CHANTIER sous convention
+  (demande écrite prête) — déjà déclaré.
+- **Chroniques de l'eau** : servies (classement ANC 3 communes), PDF producteur, licence à
+  confirmer (lot 5) — déjà déclaré.
+
+Verrous 23/23 verts après lot (2 sondes semées : GPU document DU_97413 + ZIP SIS préfecture).

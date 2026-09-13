@@ -9,7 +9,7 @@ Deux sources du mandat SOURCES-1, un seul canal amont (vérifié live 06/09/2026
   d'ingestion, jamais un zéro). Stockage : spatial_layers kind='dpu', subtype='dpu'|'dpu_renforce'.
   ⚠ SOURCES-2 lot 1 — le rapport producteurs proposait d'ajouter « TYPEINF=03 (anciens
   dépôts) » : VÉRIFIÉ CONTRAIRE chez le producteur le 13/09/2026 — l'unique typeinf 03 du 974
-  (Saint-Benoît, DU_97404) est libellé « Espace Naturel Sensible » = zone de préemption ENS du
+  (L'Étang-Salé, DU_97404) est libellé « Espace Naturel Sensible » = zone de préemption ENS du
   DÉPARTEMENT, pas un DPU communal. L'ingérer en kind='dpu' ferait mentir la cascade ; écarté,
   arbitrage au rapport SOURCES-2.
 
@@ -144,3 +144,82 @@ def ingest_gpu_infos(session: Session, run_id: int | None = None,
     return {"dpu": n_dpu, "peb": n_peb, "dpu_communes": sorted(dpu_communes),
             "dpu_non_publie": non_publie, "peb_zones": peb_zones,
             "peb_illisibles": peb_illisibles}
+
+
+# ───────────── SOURCES-2 lot 2 — PEB de Pierrefonds (DGAC/STAC, Géoplateforme) ─────────────
+
+_WMSV = "https://data.geopf.fr/wms-v/ows"
+#: fenêtre de rendu autour de Pierrefonds (FMEP) et axe de piste échantillonné : le WMS-v
+#: `dgac_peb_plan_wmsv` (GeoServer) rend par GetFeatureInfo la GÉOMÉTRIE COMPLÈTE et les
+#: attributs STAC de chaque zone sous le pixel — service OGC officiel, aucun scraping.
+_FMEP_BBOX = (-21.40, 55.35, -21.24, 55.55)   # (lat_min, lon_min, lat_max, lon_max)
+_FMEP_AXE = ((55.400, -21.300), (55.445, -21.337))   # axe NW→SE de la piste (lon, lat)
+_FMEP_W, _FMEP_H = 600, 480
+
+
+def ingest_peb_pierrefonds(session: Session, run_id: int | None = None,
+                           source_id_peb: int | None = None, log=print,
+                           client: httpx.Client | None = None) -> dict:
+    """SOURCES-2 lot 2 — le PEB de l'aérodrome de Saint-Pierre Pierrefonds (FMEP), ABSENT du
+    GPU (0 typeinf 27, re-vérifié 13/09/2026) et absent du WFS Géoplateforme (la couche
+    `dgac_peb_arrete_wfs` n'a que le POINT aérodrome + le lien de l'arrêté).
+
+    Le VECTEUR existe pourtant chez le producteur : la couche `dgac_peb_plan_wmsv`
+    (Géoplateforme WMS-v, données STAC/DGAC) rend les zones A/B/C/D — GetFeatureInfo en
+    JSON renvoie géométrie complète + attributs (zone, Lden int/ext, date_arret 2017-03-29,
+    date_maj STAC, ref_doc = l'arrêté PDF officiel). On échantillonne l'axe de piste,
+    dédoublonne par id de feature, et on exige les 4 zones — sinon échec franc.
+    Le géoréférencement du plan PDF (repli du mandat) est INUTILE. Précision : coordonnées
+    servies à 4 décimales (~11 m), dans la tolérance du plan officiel au 1/25 000.
+
+    Purge les seules entités kind='peb' attrs.aerodrome='FMEP' (Roland-Garros intact)."""
+    own = client is None
+    c = client or httpx.Client(timeout=max(get_settings().http_timeout_s, 60.0),
+                               headers={"User-Agent": constants.USER_AGENT},
+                               follow_redirects=True)
+    lat1, lon1, lat2, lon2 = _FMEP_BBOX
+    (ax1, ay1), (ax2, ay2) = _FMEP_AXE
+    vues: dict[str, dict] = {}
+    try:
+        for t in range(21):
+            lon = ax1 + (ax2 - ax1) * t / 20
+            lat = ay1 + (ay2 - ay1) * t / 20
+            i = int((lon - lon1) / (lon2 - lon1) * _FMEP_W)
+            j = int((lat2 - lat) / (lat2 - lat1) * _FMEP_H)
+            r = c.get(_WMSV, params={
+                "SERVICE": "WMS", "VERSION": "1.3.0", "REQUEST": "GetFeatureInfo",
+                "LAYERS": "dgac_peb_plan_wmsv", "QUERY_LAYERS": "dgac_peb_plan_wmsv",
+                "STYLES": "", "CRS": "EPSG:4326",
+                "BBOX": f"{lat1},{lon1},{lat2},{lon2}",
+                "WIDTH": _FMEP_W, "HEIGHT": _FMEP_H, "I": i, "J": j,
+                "INFO_FORMAT": "application/json", "FEATURE_COUNT": 20})
+            r.raise_for_status()
+            for f in r.json().get("features") or []:
+                if (f.get("properties") or {}).get("code_oaci") == "FMEP" and f.get("id"):
+                    vues[f["id"]] = f
+    finally:
+        if own:
+            c.close()
+    zones = sorted((f["properties"]["zone"] or "").upper() for f in vues.values())
+    if zones != ["A", "B", "C", "D"]:
+        raise RuntimeError(
+            f"PEB Pierrefonds : zones {zones} au lieu de A/B/C/D — le producteur a changé, "
+            "on n'écrit RIEN (échec franc, jamais un zonage partiel silencieux)")
+    session.execute(text(
+        "DELETE FROM spatial_layers WHERE kind = 'peb' AND attrs->>'aerodrome' = 'FMEP'"))
+    for f in vues.values():
+        p = f["properties"]
+        z = p["zone"].upper()
+        _insert_layer(
+            session, "peb", z.lower(),
+            f"PEB Pierrefonds — zone {z}", f["geometry"], source_id_peb,
+            "Saint-Pierre", run_id,
+            attrs={"zone": z, "aerodrome": "FMEP",
+                   "nom_aerodrome": p.get("nom"),
+                   "lden_exterieur": p.get("indldenext"), "lden_interieur": p.get("indldenint"),
+                   "date_arrete": (p.get("date_arret") or "").rstrip("Z"),
+                   "date_maj_stac": (p.get("date_maj") or "").rstrip("Z"),
+                   "arrete_pdf": p.get("ref_doc"), "producteur": p.get("producteur"),
+                   "source": "DGAC/STAC — Géoplateforme dgac_peb_plan_wmsv (GetFeatureInfo)"})
+    session.flush()
+    return {"zones": zones, "arrete": "2017-03-29"}
