@@ -351,6 +351,15 @@ def passer(db, *, source_ids=None, forcer: bool = False, http=None, notifier: bo
 #: Les DOUBLONS amont (Cadastre Etalab bulk ≡ PCI, RGE ALTI 5 m ≡ RGE ALTI) ne sont PAS re-semés : ils
 #: sont couverts par la veille de leur canonique (l'alerte vaut pour les deux). Cf. SENTINELLE-INVENTAIRE.md.
 SEED: list[dict] = [
+    # ── SOURCES-3 lot 2 — sentinelles data.gouv APPELÉES POUR DE VRAI le 2026-09-14 (last_update lu,
+    #    `ok`) : RNIC (Anah, actualisation quotidienne — vu 2026-09-12) et RPLS (SDES, millésime 2023,
+    #    dépôt 2025-08-24). Famille `/api/1/datasets/{slug}/` → `last_update`, endossée par le mandat.
+    {"name": "RNIC — registre national des copropriétés (Anah)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/registre-national-dimmatriculation-des-coproprietes/",
+     "selecteur": "last_update"},
+    {"name": "RPLS — répertoire des logements locatifs sociaux (SDES)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/repertoire-des-logements-locatifs-des-bailleurs-sociaux/",
+     "selecteur": "last_update"},
     # ── RETOURS-13 R4/R5 — réseaux et TCSP. EDF : le portail Koumoul n'expose pas de JSON de
     #    version simple → en-tête du fichier data-fair (change quand EDF republie). Réunion
     #    Express : la carte des hypothèses de tracé (landweb3d) — un changement d'en-tête dit
