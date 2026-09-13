@@ -233,3 +233,42 @@ def test_ingest_idempotent(db_session):
     ingest_commune(db_session, "97415", "Saint-Paul", connector=conn)
     ingest_commune(db_session, "97415", "Saint-Paul", connector=conn)   # re-run
     assert db_session.execute(text("SELECT count(*) FROM dpe_records")).scalar() == 1  # ON CONFLICT numero
+
+
+class _StubJeu:
+    """Connecteur factice SOURCES-2 : rejoue la moisson CP-brut d'un jeu."""
+
+    def __init__(self, records):
+        self._records = records
+
+    def fetch_reunion_authentiques(self):
+        yield from self._records
+
+
+@pytest.mark.db
+def test_ingest_jeu_homonymie_et_miroir(db_session):
+    """SOURCES-2 lot 0 — la ligne au CP brut 974 dont le BAN contredit (homonymie type
+    Saint-Leu-la-Forêt) est REJETÉE sans corroboration locale ; la ligne disparue chez
+    l'ADEME est SUPPRIMÉE (miroir) ; la ligne cohérente reste, avec son jeu."""
+    from labuse.ingestion.dpe import ingest_jeu, migrate_dpe_records
+
+    _ensure_adresses(db_session)
+    _parcel(db_session, "97415000AB0001", "Saint-Paul", PARCEL_WKT)
+    _adresse(db_session, "97415_9999_00012", "12", "Rue des Bougainvilliers", "97415",
+             55.291, -21.009, "97415000AB0001")
+    migrate_dpe_records(db_session)
+    # une ligne d'un passage précédent, disparue chez le producteur → doit tomber (miroir)
+    db_session.execute(text(
+        "INSERT INTO dpe_records (numero_dpe, jeu) VALUES ('2697E0000000A', 'existant') "
+        "ON CONFLICT (numero_dpe) DO NOTHING"))
+    db_session.flush()
+
+    homonyme = {"numero_dpe": "2497N1442695M", "etiquette_dpe": "B", "etiquette_ges": "B",
+                "type_batiment": "appartement", "adresse_brut": "44-46 rue de Paris",
+                "code_insee_ban": "95563", "code_postal_ban": "95320",
+                "code_postal_brut": 97436, "date_etablissement_dpe": "2024-04-22"}
+    res = ingest_jeu(db_session, "existant", connector=_StubJeu([REC, homonyme]))
+    assert res["dpe"] == 1 and res["rejetes_homonymie"] == 1
+    rows = {r[0]: r[1] for r in db_session.execute(text(
+        "SELECT numero_dpe, jeu FROM dpe_records")).all()}
+    assert rows == {"2397E0123456X": "existant"}   # l'homonyme ET la ligne disparue sont absents

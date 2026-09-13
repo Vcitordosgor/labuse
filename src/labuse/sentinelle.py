@@ -471,6 +471,9 @@ SEED: list[dict] = [
      "selecteur": None},
     # ── Cas isolés vérifiés ──
     # DPE ADEME — data-fair `dataUpdatedAt` (métadonnée documentée stable du dataset).
+    # SOURCES-2 lot 0 : l'ingestion couvre les TROIS jeux (dpe03existant + dpe02neuf +
+    # dpe01tertiaire) ; mesuré 13/09/2026, les trois publient dans le MÊME train mensuel
+    # (dataUpdatedAt 09/09 tous les trois) → le jeu principal suffit comme signal de version.
     {"name": "DPE ADEME (logements existants)", "methode": "api",
      "url": "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant", "selecteur": "dataUpdatedAt"},
     # SITADEL — Dido (SDES) : métadonnée `last_update` du dataset national.
