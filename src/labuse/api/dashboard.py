@@ -2015,13 +2015,19 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
     try:
         from ..registre import remplissage as _rempl
         _mesures = _rempl.mesurer_vitrine(c, rapide=True)
+        # CIRCUIT-6 lot 3 (G3) — chaque réservoir dit ce qu'il nourrit au score/cascade.
+        from ..circuit_garanties import sources_du_score as _sds
+        _score = _sds()
         from ..circuit_etats import NOM_VERS_SLUG as _nvs
         for rv in reservoirs:
-            m = _mesures.get(_nvs.get(rv["nom"], ""))
+            _slug = _nvs.get(rv["nom"], "")
+            m = _mesures.get(_slug)
             if m:
                 rv["remplissage"] = {k: m[k] for k in ("type", "remplis", "n_temoins", "quasi_vide")}
                 if m["quasi_vide"]:
                     rv["invisible"] = True
+            if _slug in _score:
+                rv["score"] = _score[_slug]
     except Exception:  # noqa: BLE001 — la page ne casse jamais sur la mesure
         pass
     return reservoirs

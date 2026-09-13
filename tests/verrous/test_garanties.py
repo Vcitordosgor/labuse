@@ -114,3 +114,49 @@ def test_g2_vert_sur_la_base_reelle():
         r = CG.verrou_g2(s)
         assert r.verdict == "ok", (r.preuve, r.details[:3])
         assert "dpe_ademe" in r.preuve  # la vide est NOMMÉE, jamais tue
+
+
+# ── G3 — je sais ce qui nourrit le score ───────────────────────────────────────────────
+def test_g3_prouve_casse_feature_sans_source():
+    """Une variable du modèle absente de la carte FEATURE_RESERVOIRS → casse (liste fermée)."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
+    if not url:
+        pytest.skip("base réelle requise (statuts)")
+    with sessionmaker(bind=create_engine(url))() as s:
+        r = CG.verrou_g3(s, features=["variable_inventee_xyz"])
+        assert r.verdict == "casse"
+        assert any("variable_inventee_xyz" in d for d in r.details)
+
+
+def test_g3_toutes_les_features_du_modele_sont_cartographiees():
+    from labuse.scoring.p_model.features import FEATURES
+    manquantes = [f.name for f in FEATURES if f.name not in CG.FEATURE_RESERVOIRS]
+    assert manquantes == [], f"features sans source déclarée : {manquantes}"
+
+
+def test_g3_prouve_casse_source_retiree(monkeypatch):
+    """Si une feature pointait un réservoir RETIRÉ (mobpro), G3 casse."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
+    if not url:
+        pytest.skip("base réelle requise")
+    monkeypatch.setitem(CG.FEATURE_RESERVOIRS, "feature_test_retiree", ("mobpro",))
+    with sessionmaker(bind=create_engine(url))() as s:
+        r = CG.verrou_g3(s, features=["feature_test_retiree"])
+        assert r.verdict == "casse"
+        assert any("RETIRÉE" in d for d in r.details)
+
+
+@pytest.mark.local
+def test_g3_vert_sur_la_base_reelle():
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
+    with sessionmaker(bind=create_engine(url))() as s:
+        r = CG.verrou_g3(s)
+        assert r.verdict == "ok", (r.preuve, r.details[:5])
+        rep = CG.repere_score(s)
+        assert rep["n_sources"] >= 30 and rep["run_servi"]

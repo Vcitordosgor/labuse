@@ -201,10 +201,124 @@ def verrou_g2(db: Session) -> ResultatVerrou:
     return ResultatVerrou("G2", phrase, "casse" if pbs else "ok", preuve, pbs[:10])
 
 
+# ── G3 — je sais ce qui nourrit le score ───────────────────────────────────────────────
+
+#: variable du modèle P servi → réservoir(s) qui la nourrissent. Liste FERMÉE : une feature
+#: absente de cette carte casse G3 (on ne devine jamais). Curée depuis features.py (champ
+#: source, texte libre) — la vérité lisible par variable.
+FEATURE_RESERVOIRS: dict[str, tuple[str, ...]] = {
+    "rot_nu": ("dvf",), "rot_bati": ("dvf",),
+    "med_pm2_terrain_36m": ("dvf",), "med_pm2_bati_36m": ("dvf",),
+    "tendance_pm2_bati": ("dvf",), "window_coverage": ("dvf",), "tenure_bin": ("dvf",),
+    "permis_24m_norm": ("sitadel",), "permis_bin": ("sitadel",),
+    "dens_bati_secteur": ("bd_topo",), "pct_bati_secteur": ("bd_topo",),
+    "nu_constructible": ("bd_topo", "gpu_plu_api_carto"),
+    "filo_snv_pp": ("filosofi_carreaux",), "filo_pct_pauv": ("filosofi_carreaux",),
+    "filo_pct_prop": ("filosofi_carreaux",), "filo_dens_pop": ("filosofi_carreaux",),
+    "qpv": ("qpv_2024",),
+    "pente_moy_deg": ("rge_alti",),
+    "acces_equipements": ("osm_overpass",),
+    "zone_plu": ("gpu_plu_api_carto",),
+    "surface_m2": ("cadastre_api_carto",),
+    "dormance_droits": ("cosia", "gpu_plu_api_carto"),
+    "sous_densite": ("cosia", "gpu_plu_api_carto"),
+    "sdp_residuelle_m2": ("cosia", "gpu_plu_api_carto"),
+    "canopee_pct": ("bd_ortho_irc",), "ndvi_moyen": ("bd_ortho_irc",),
+    "friche": ("cartofriches",),
+    "piscine": ("bd_ortho",), "pv_candidat": ("bd_ortho",),
+}
+
+#: kinds LOGIQUES de la cascade (config/cascade_rules.yaml) → kind physique / réservoir.
+CASCADE_KIND_ALIASES = {
+    "eau": "water", "risques": "georisque_alea", "zonage_plu_gpu": "plu_gpu_zone",
+    "prescription_plu": "plu_gpu_prescription", "bati": "batiment", "acces": "voirie",
+}
+#: couches cascade SANS réservoir (calcul pur : surface de la parcelle, faux positifs curés).
+CASCADE_SANS_RESERVOIR = frozenset({"surface", "osm_faux_positif"})
+
+
+def sources_du_score() -> dict[str, dict]:
+    """La liste fermée : slug réservoir → {variables score, couches cascade}. Calculée depuis
+    features.py (via FEATURE_RESERVOIRS) et cascade_rules.yaml (kinds → réservoirs par la
+    carte tables.py). C'est ce que la fiche d'une source affiche (« nourrit le score via… »)."""
+    from .config import load_yaml_config
+    from .registre.tables import RESERVOIR_TABLES
+    out: dict[str, dict] = {}
+    for feat, slugs in FEATURE_RESERVOIRS.items():
+        for slug in slugs:
+            out.setdefault(slug, {"variables": [], "cascade": []})["variables"].append(feat)
+    kind_vers_slugs: dict[str, list[str]] = {}
+    for slug, rt in RESERVOIR_TABLES.items():
+        for k in rt.couches:
+            kind_vers_slugs.setdefault(k, []).append(slug)
+    regles = load_yaml_config("cascade_rules")
+    for layer in regles.get("layers", []):
+        kind = layer.get("kind") or layer.get("name") or ""
+        if kind in CASCADE_SANS_RESERVOIR:
+            continue
+        k = CASCADE_KIND_ALIASES.get(kind, kind)
+        for slug in kind_vers_slugs.get(k, []):
+            entry = out.setdefault(slug, {"variables": [], "cascade": []})
+            if kind not in entry["cascade"]:
+                entry["cascade"].append(kind)
+    return out
+
+
+def repere_score(db: Session) -> dict:
+    """Le repère de la page : N sources peuvent déclencher un run · dernière maj de l'une
+    d'elles le … · run servi calculé le … (ce qui dit à Vic s'il doit recalculer)."""
+    from .circuit_etats import NOM_VERS_SLUG
+    slugs = set(sources_du_score())
+    noms = [n for n, s in NOM_VERS_SLUG.items() if s in slugs]
+    row = db.execute(text(
+        "SELECT max(last_sync_at) FROM data_sources WHERE name = ANY(:n)"), {"n": noms}).scalar()
+    from . import runs
+    servi = None
+    try:
+        servi = runs.current()
+    except Exception:  # noqa: BLE001
+        pass
+    return {"n_sources": len(slugs), "derniere_maj": row.isoformat() if row else None,
+            "run_servi": servi}
+
+
+def verrou_g3(db: Session, features=None) -> ResultatVerrou:
+    phrase = ("Chaque source dit si elle nourrit le score ou la cascade, par quelle variable — "
+              "et aucune variable du modèle servi n'est nourrie par une source hors registre, "
+              "retirée, ou vide.")
+    from .circuit_etats import NOM_VERS_SLUG
+    if features is None:
+        from .scoring.p_model.features import FEATURES
+        features = [f.name for f in FEATURES]
+    slugs_registre = set(NOM_VERS_SLUG.values())
+    pbs: list[str] = []
+    for feat in features:
+        if feat not in FEATURE_RESERVOIRS:
+            pbs.append(f"variable {feat} : aucune source déclarée (FEATURE_RESERVOIRS)")
+    statuts = {s: st for s, st in db.execute(text(
+        "SELECT name, status FROM data_sources"))}
+    slug_vers_nom = {v: k for k, v in NOM_VERS_SLUG.items()}
+    vides = {m["slug"] for m in invisibles_mesures(db)}
+    for slug in sorted(sources_du_score()):
+        if slug not in slugs_registre:
+            pbs.append(f"réservoir {slug} : hors registre (pont NOM_VERS_SLUG)")
+            continue
+        st = statuts.get(slug_vers_nom.get(slug, ""))
+        if st == "retiree":
+            pbs.append(f"réservoir {slug} : source RETIRÉE nourrit encore le score")
+        if slug in vides:
+            pbs.append(f"réservoir {slug} : source VIDE (mesure témoins) nourrit le score")
+    rep = repere_score(db)
+    preuve = (f"{rep['n_sources']} sources nourrissent score/cascade · dernière maj "
+              f"{(rep['derniere_maj'] or 'inconnue')[:10]} · run servi {rep['run_servi']}"
+              f" ; {len(pbs)} problème(s)")
+    return ResultatVerrou("G3", phrase, "casse" if pbs else "ok", preuve, pbs[:10])
+
+
 # ── l'assembleur (rempli garantie par garantie, lots 1→7) ─────────────────────────────
 
 def jouer_garanties(db: Session) -> list[ResultatVerrou]:
     """Joue les garanties implémentées, dans l'ordre. Le Résumé de la page Circuit et la CLI
     `labuse circuit verrous` les affichent avec les 16 verrous de CIRCUIT-5 (lot 8)."""
-    jouees = [verrou_g1(db), verrou_g2(db)]
+    jouees = [verrou_g1(db), verrou_g2(db), verrou_g3(db)]
     return jouees
