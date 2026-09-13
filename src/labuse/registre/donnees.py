@@ -1245,10 +1245,15 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/bati.py:le_bien_block (BD TOPO au sol ; CoSIA parcel_bati_revele en note)",
     reservoirs=("bd_topo", "cosia",), portee="live"),
  "hauteur_bati_m": C("Hauteur du bâti", "m", "parcelle",
-    "hauteur du bâti principal (BD TOPO, max des bâtiments intersectants)",
+    "hauteur du bâti principal — max des bâtiments intersectants (BD TOPO) en fiche/potentiel ; "
+    "l'extrusion 3D de la carte PRÉFÈRE le faîtage LiDAR HD mesuré (batiment_hauteur_lidar.faitage_m, "
+    "flag `lidar` par bâtiment), repli BD TOPO",
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:_hauteur_bati_m",
-    reservoirs=("bd_topo",), portee="live"),
+    # SOURCES-3 lot 1 — la hauteur bâtie servie à l'extrusion 3D de la carte (/map/batiments.geojson,
+    # robinet couche_batiments_3d) est MESURÉE par le LiDAR HD quand la parcelle est ingérée : lidar_hd_mnh
+    # est rattaché (clôture de la fuite « 303k à la carte » — la provenance dit désormais le LiDAR).
+    reservoirs=("bd_topo", "lidar_hd_mnh",), portee="live"),
  "part_artificialisee_pct": C("Part artificialisée (OCS GE)", "%", "parcelle",
     "part de la parcelle artificialisée d'après l'OCS GE 2022 (matrice du décret 2023-1096, "
     "étape 1 — avant lissage des seuils réglementaires) — donnée d'îlot, jamais la précision "

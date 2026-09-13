@@ -8,16 +8,16 @@
 
 | Verdict | Nombre |
 |---|---|
-| PLEINE | 67 |
-| PARTIELLE — couverture incomplète | 12 |
+| PLEINE | 72 |
 | À DEMANDER / À BRANCHER | 11 |
 | PARTIELLE — champs manquants | 10 |
+| PARTIELLE — couverture incomplète | 8 |
+| ALIAS (doublon) | 5 |
 | MANUELLE | 5 |
 | RETIRÉE (déjà) | 5 |
-| SERVIE HORS REGISTRE | 4 |
-| ALIAS (doublon) | 3 |
 | HUB (catalogue) | 3 |
 | BRANCHÉE INVISIBLE (vide) | 1 |
+| RETIRÉE | 1 |
 | **Total** | **121** |
 
 ## Parcelles et propriété
@@ -26,7 +26,7 @@
 |---|---|---|---|---|---|---|---|
 | 🟢 | **Cadastre (API Carto PCI)** (`1`) | PLEINE | 4/4 témoins | oui | — | 18 | fiche, outil, PDF, copilote, scoring |
 | 🔗 | **Cadastre Etalab (bulk DGFiP/Etalab)** (`2`) | ALIAS (doublon) | 4/4 témoins | oui | KO | 0 | — |
-| 🟡 | **data.regionreunion.com — Potentiel foncier** (`15`) | PARTIELLE — couverture incomplète | 3/4 témoins | oui | — | 0 | carte |
+| 🟢 | **data.regionreunion.com — Potentiel foncier** (`15`) | PLEINE | 3/4 témoins | oui | — | 0 | carte |
 | 🟣 | **Fichiers fonciers (Cerema)** (`27`) | MANUELLE | n.a. (API/règles) | oui | — | 0 | — |
 | 🟢 | **Cartofriches (Cerema)** (`35`) | PLEINE | 3/4 témoins | oui | OK | 0 | carte |
 | 🟢 | **DGFiP — parcelles des personnes morales** (`71`) | PLEINE | 3/4 témoins | oui | OK | 4 | fiche, outil, copilote |
@@ -36,7 +36,7 @@
 
 - **Cadastre (API Carto PCI)** — Socle parcellaire complet (431 663 parcelles, 24/24), lu par la quasi-totalité des moteurs. À plein potentiel.
 - **Cadastre Etalab (bulk DGFiP/Etalab)** — Canal bulk du MÊME réservoir que Cadastre API Carto (id 1). Alias correctement déclaré (alias_de=1). Rien à faire.
-- **data.regionreunion.com — Potentiel foncier** — DOUBLON à trancher avec id 9 (même producteur Région ODS, familles `potentiel` vs `urbanisme`). Licence « à confirmer ». 4 906 objets en couche potentiel_foncier+sar. Voir S3.
+- **data.regionreunion.com — Potentiel foncier** — SOURCES-3 lot 0.5 (arbitrage Vic) : le producteur UNIQUE du potentiel foncier Région. Un seul chiffre servi, un seul producteur : id 9 (« Potentiel foncier Région (ODS) », famille urbanisme) devient son ALIAS. 4 906 objets en couche potentiel_foncier+sar.
 - **Fichiers fonciers (Cerema)** — Fichiers fonciers Cerema — SOUS CONVENTION, non instruite. Aucune donnée ingérée. En attendant : DVF ouvert. Voir Lot 3 + DEMANDE.
 - **Cartofriches (Cerema)** — Cartofriches Cerema (372 friches). Couche + signal foncier.
 - **DGFiP — parcelles des personnes morales** — Cœur de Scan patrimoine / propriétaire. 7 millésimes empilés, sert le moteur propriétaire_historique.
@@ -49,7 +49,7 @@
 | | Source | Verdict | Fiche remplie (4 témoins) | Sentinelle | Filtre | Chiffres | Où (résumé) |
 |---|---|---|---|---|---|---|---|
 | 🟢 | **Urbanisme PLU/GPU (API Carto)** (`3`) | PLEINE | 3/4 témoins | oui | KO | 24 | fiche, carte, outil, PDF, copilote, scoring |
-| 🟠 | **Potentiel foncier Région (Région ODS)** (`9`) | SERVIE HORS REGISTRE | 3/4 témoins | oui | KO | 0 | carte |
+| 🔗 | **Potentiel foncier Région (Région ODS)** (`9`) | ALIAS (doublon) | 3/4 témoins | oui | KO | 0 | carte |
 | 🟡 | **DEAL Réunion (WMS/WFS)** (`13`) | PARTIELLE — champs manquants | 2/4 témoins | oui | — | 0 | carte |
 | 🟢 | **QPV 2024 (ANCT)** (`38`) | PLEINE | 3/4 témoins | oui | OK | 3 | fiche, carte |
 | 🟢 | **RTAA DOM (textes réglementaires)** (`43`) | PLEINE | n.a. (API/règles) | non | — | 1 | outil |
@@ -68,7 +68,7 @@
 | ⬜ | **Périmètres de ZAC (EPCI / communes / EPF Réunion)** (`136`) | À DEMANDER / À BRANCHER | n.a. (API/règles) | non | — | 0 | — |
 
 - **Urbanisme PLU/GPU (API Carto)** — Zonage + prescriptions servis sur toute l'île, cœur de la faisabilité et du scoring. Interrogé en direct (GPU).
-- **Potentiel foncier Région (Région ODS)** — DOUBLON de id 15 (même jeu Région ODS « potentiel foncier »), rangé en famille `urbanisme`. Aucun slug réservoir distinct servi. À fusionner avec 15 — voir S3.
+- **Potentiel foncier Région (Région ODS)** — SOURCES-3 lot 0.5 (arbitrage Vic) : même jeu Région ODS « potentiel foncier » que id 15, qui fait foi. Devient son ALIAS (alias_de=15). Un seul chiffre servi, un seul producteur.
 - **DEAL Réunion (WMS/WFS)** — DEAL WMS/WFS — canal servi par proxys ; les tables sont portées par qpv/npnru. Peu autonome comme « source ».
 - **QPV 2024 (ANCT)** — QPV 2024 (70 objets couche). Sert défiscalisation/TVA primo. À jour.
 - **RTAA DOM (textes réglementaires)** — RTAA DOM = règles portées PAR LE CODE (aucune table), servies dans la faisabilité (contraintes construction DOM). 0 chiffre attaché car ce sont des règles, pas une donnée mesurée — ce n'est pas « invisible ». Textes Légifrance vérifiés « en vigueur ».
@@ -105,7 +105,7 @@
 | 🟢 | **Géorisques — mouvements de terrain** (`36`) | PLEINE | 3/4 témoins | oui | OK | 0 | carte |
 | 🟢 | **ZNIEFF (INPN/MNHN)** (`76`) | PLEINE | VIDE sur 4/4 | oui | OK | 2 | fiche, carte, outil, scoring |
 | ⚫ | **ZNIEFF (INPN / Région)** (`80`) | RETIRÉE (déjà) | n.a. (API/règles) | non | — | 0 | — |
-| 🟠 | **CatNat (arrêtés GASPAR / Géorisques)** (`97`) | SERVIE HORS REGISTRE | 4/4 témoins | non | KO | 1 | fiche |
+| 🟢 | **CatNat (arrêtés GASPAR / Géorisques)** (`97`) | PLEINE | 4/4 témoins | non | KO | 1 | fiche |
 | 🟢 | **PEB — plans d'exposition au bruit (DGAC via annexes GPU)** (`108`) | PLEINE | 1/4 témoins | non | OK | 3 | fiche, carte |
 | ⬜ | **ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)** (`110`) | À DEMANDER / À BRANCHER | n.a. (API/règles) | oui | — | 0 | — |
 | 🟢 | **Ravines — domaine public fluvial (DEAL Carmen)** (`111`) | PLEINE | VIDE sur 4/4 | non | OK | 1 | carte |
@@ -134,7 +134,7 @@
 - **Géorisques — mouvements de terrain** — Mouvements de terrain (3 085 objets). Couche + Pièges + cascade (RETOURS-13).
 - **ZNIEFF (INPN/MNHN)** — ZNIEFF servies (162 objets, maj 29/08/2025). Canonique face à id 80 (canal Région, retiré). Voir S3.
 - **ZNIEFF (INPN / Région)** — ZNIEFF canal Région — endpoint vivant mais 0 donnée. Retirée 06/09/2026. Canonique : id 76.
-- **CatNat (arrêtés GASPAR / Géorisques)** — 426 arrêtés servis (fiche commune / Pièges) MAIS aucun chiffre du registre ne déclare le réservoir `catnat_gaspar` (le chiffre `catnat_n` a `reservoirs={}`). La donnée coule, la provenance n'est pas tracée — trou de registre à combler. SOURCES-2 lot 1 : + recoupement de l'export CSV national GASPAR à chaque ingestion (CSV 426 = base 426, écart 0 — la garde « l'API a perdu des arrêtés » est en place).
+- **CatNat (arrêtés GASPAR / Géorisques)** — SOURCES-3 lot 1 : RATTACHÉE au registre — le chiffre `catnat_n` (« Arrêtés CatNat », fiche commune / Pièges) déclare `reservoirs=(catnat_gaspar,)`, table `catnat_arretes` : la provenance est tracée (l'arête posée en CIRCUIT-6 lot 0, confirmée ici). SOURCES-2 lot 1 : recoupement de l'export CSV national GASPAR à chaque ingestion (CSV 426 = base 426, écart 0 — garde « l'API a perdu des arrêtés » en place).
 - **PEB — plans d'exposition au bruit (DGAC via annexes GPU)** — SOURCES-2 lot 2 : les DEUX PEB servis — Roland-Garros (annexes GPU) ET Pierrefonds (4 zones A/B/C/D en VECTEUR, DGAC/STAC via GetFeatureInfo dgac_peb_plan_wmsv Géoplateforme ; arrêté 29/03/2017, maj STAC 12/04/2022 ; zonage complet exigé à l'ingestion sinon échec franc). Le trou du sud est comblé — le géoréférencement du plan PDF était inutile.
 - **ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)** — Atlas des patrimoines injoignable au 06/09/2026 — aucune donnée. Sentinelle de rappel 180 j posée. Pas d'accès officiel stable constaté.
 - **Ravines — domaine public fluvial (DEAL Carmen)** — Ravines DPF (arrêté 2006, 275 tronçons + 6 plans). Couche dpf. Le DPE (privé État) non diffusé.
@@ -162,7 +162,7 @@
 | 🟢 | **RNIC — registre national des copropriétés (Anah)** (`100`) | PLEINE | VIDE sur 4/4 | non | — | 1 | fiche |
 | 🟢 | **RPLS — répertoire des logements locatifs sociaux (SDES)** (`101`) | PLEINE | 4/4 témoins | non | — | 1 | fiche |
 | 🟢 | **Zonage ABC des communes (DHUP)** (`109`) | PLEINE | 4/4 témoins | oui | OK | 1 | fiche |
-| 🟠 | **DVF Réunion (Région, data.regionreunion.com)** (`119`) | SERVIE HORS REGISTRE | n.a. (API/règles) | non | KO | 0 | — |
+| 🔗 | **DVF Réunion (Région, data.regionreunion.com)** (`119`) | ALIAS (doublon) | n.a. (API/règles) | non | KO | 0 | — |
 | 🟢 | **Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)** (`129`) | PLEINE | 4/4 témoins | oui | OK | 1 | fiche |
 | 🟡 | **Loyers DHUP — carte des loyers (annonces)** (`130`) | PARTIELLE — champs manquants | n.a. (API/règles) | oui | OK | 1 | fiche |
 | ⬜ | **OPAH / PIG (Anah / EPCI)** (`137`) | À DEMANDER / À BRANCHER | n.a. (API/règles) | non | — | 0 | — |
@@ -181,7 +181,7 @@
 - **RNIC — registre national des copropriétés (Anah)** — RNIC copropriétés (2 220 copros). Sert le signal copropriété. Millésime annuel Anah.
 - **RPLS — répertoire des logements locatifs sociaux (SDES)** — RPLS logements sociaux (01/01/2025). Sert SRU/contexte social par commune.
 - **Zonage ABC des communes (DHUP)** — Zonage ABC 24/24 (arrêté 23/06/2026 : 4 A, 20 B1). Sert défiscalisation/éligibilités.
-- **DVF Réunion (Région, data.regionreunion.com)** — DOUBLON de DVF Etalab (id 5). Jeu Région figé 2014→mi-2021 (54 449 mutations), utilisé UNIQUEMENT comme échantillon du filtre DVF (contrôle producteur), non servi au client. `region_dvf` = réservoir sans table. Voir S3 : garder comme témoin de filtre ou retirer.
+- **DVF Réunion (Région, data.regionreunion.com)** — SOURCES-3 lot 0.4 (arbitrage Vic) : DVF / valeurs foncières (Etalab, id 5) fait foi. DVF Réunion (Région) devient son ALIAS (alias_de=5). Le témoin de filtre qui lisait le jeu Région (figé 2014→mi-2021) pointe désormais sur Etalab. `region_dvf` = réservoir sans table.
 - **Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)** — Loyers OLL 2024 (6 zones + agglo), servis par zone/IRIS. Granularité zone respectée.
 - **Loyers DHUP — carte des loyers (annonces)** — Carte des loyers DHUP 2025, extrait 974 embarqué (offline, dépôt manuel). Repli de l'OLL. Fraîcheur à surveiller. SOURCES-2 lot 6 : couverture 974 CONFIRMÉE chez le producteur — le CSV national 2025 (publié 11/12/2025) porte les 24 communes (loypredm2 vérifié ligne à ligne).
 - **OPAH / PIG (Anah / EPCI)** — OPAH/PIG — pas de périmètre polygone ouvert. À demander (Anah/EPCI).
@@ -202,7 +202,7 @@
 | 🟢 | **Parkings OSM (loi APER)** (`51`) | PLEINE | n.a. (API/règles) | non | — | 1 | fiche |
 | 🟢 | **INSEE RP2022 — fichier détail Logements (EGOUL)** (`66`) | PLEINE | 4/4 témoins | oui | OK | 1 | fiche |
 | 🔗 | **GPU — zonages d'assainissement (info-surf typeinf 19)** (`67`) | ALIAS (doublon) | n.a. (API/règles) | non | — | 0 | — |
-| 🟡 | **Office de l'eau Réunion — Chroniques de l'eau** (`68`) | PARTIELLE — couverture incomplète | 1/4 témoins | oui | — | 1 | fiche |
+| ⚫ | **Office de l'eau Réunion — Chroniques de l'eau** (`68`) | RETIRÉE | 1/4 témoins | oui | — | 1 | fiche |
 | 🟢 | **Fibre Arcep — Ma connexion internet (immeuble)** (`126`) | PLEINE | 4/4 témoins | oui | KO | 1 | fiche |
 | ⬜ | **Zonages d'assainissement SIG complets (EPCI / régies)** (`134`) | À DEMANDER / À BRANCHER | n.a. (API/règles) | non | — | 0 | — |
 
@@ -214,7 +214,7 @@
 - **Parkings OSM (loi APER)** — Alimente 1 chiffre(s) du registre ; visible dans : 1 section(s) de fiche. *(raison auto — champs producteur non vérifiés, cf. mandat)*
 - **INSEE RP2022 — fichier détail Logements (EGOUL)** — RP2022 fichier Logements (EGOUL) → maille ANC. Sert le taux d'assainissement collectif/non collectif.
 - **GPU — zonages d'assainissement (info-surf typeinf 19)** — GPU zonages assainissement (info-surf) = canal info-surf du même réservoir que id 63 (alias_de=63). Alias correct.
-- **Office de l'eau Réunion — Chroniques de l'eau** — ⚠ RETRAIT EN ATTENTE (lot 0 S2). Vic avait décidé le retrait, mais `anc_service.py:57` lit encore `anc_office_eau_commune` EN DIRECT pour servir le statut ANC des 6 communes 100 % ANC (chiffre `part_logements_egout_pct`, moteur `anc`, fiche Réseaux). Retrait refusé tant que ce lecteur vit. Licence « à confirmer ».
+- **Office de l'eau Réunion — Chroniques de l'eau** — SOURCES-3 lot 0.2 (arbitrage Vic) : RETIRÉE le 2026-09-13. `anc_service.py` a été rebranché sur l'INSEE RP2022 EGOUL (variable mode d'assainissement, taux non-raccordé, anc_maille_taux) : la branche source_commune (Office de l'eau) est supprimée. Prouvé sur les 12 témoins — l'assainissement non collectif s'affiche identique ou mieux (Salazie : « intégralement ANC » → « 100 % non raccordés (INSEE RP2022, IRIS) », sourcé et daté ; les 11 autres inchangés). La table anc_office_eau_commune est conservée (données non effacées), plus aucun lecteur.
 - **Fibre Arcep — Ma connexion internet (immeuble)** — Fibre Arcep 330 051 immeubles (2026_T1). Sert l'éligibilité fibre à l'immeuble.
 - **Zonages d'assainissement SIG complets (EPCI / régies)** — Zonages d'assainissement SIG complets — 4/24 via GPU aujourd'hui ; les 20 autres à demander aux 5 EPCI/régies (DEMANDE-REGION-EPCI). Voir Lot 2.
 
@@ -227,7 +227,7 @@
 | 🟢 | **SIRENE** (`21`) | PLEINE | n.a. (API/règles) | oui | — | 0 | — |
 | 🟢 | **BODACC (procédures collectives)** (`29`) | PLEINE | n.a. (API/règles) | oui | OK | 1 | fiche, scoring |
 | 🟡 | **INPI RNE (dirigeants)** (`31`) | PARTIELLE — champs manquants | n.a. (API/règles) | non | OK | 1 | outil |
-| 🟡 | **Recherche d'entreprises (DINUM)** (`45`) | PARTIELLE — couverture incomplète | n.a. (API/règles) | non | — | 1 | fiche, scoring |
+| 🟢 | **Recherche d'entreprises (DINUM)** (`45`) | PLEINE | n.a. (API/règles) | non | — | 1 | fiche, scoring |
 | 🟢 | **Filosofi INSEE (carreaux 200 m)** (`52`) | PLEINE | 4/4 témoins | oui | OK | 5 | fiche, outil, PDF, scoring |
 | 🟢 | **Contours IRIS (IGN/INSEE)** (`64`) | PLEINE | 3/4 témoins | oui | — | 1 | fiche, carte, outil |
 | 🟢 | **Transport public — GTFS (PAN, 7 réseaux)** (`74`) | PLEINE | VIDE sur 4/4 | oui | OK | 4 | fiche, carte |
@@ -247,7 +247,7 @@
 - **SIRENE** — Servie via l'API recherche-entreprises EN DIRECT (Scan patrimoine, Copilote entreprise) — d'où 0 chiffre de registre attaché à `sirene_recherche_entreprises` (API à la requête, sans table). Ce n'est PAS invisible : le pro l'atteint par le Scan/Copilote. Le canal géolocalisé (id 86) est la variante à réservoir. Voir S3.
 - **BODACC (procédures collectives)** — BODACC procédures collectives (job sur clic). Signal entreprise/propriétaire.
 - **INPI RNE (dirigeants)** — INPI RNE dirigeants. Licence SPÉCIFIQUE homologuée (pas Licence Ouverte) — usage encadré, à respecter.
-- **Recherche d'entreprises (DINUM)** — ⚠ RETRAIT EN ATTENTE (lot 0 S2). Vic avait décidé le retrait, mais `owner_enrichment`/`owner_denom_lookup` sont lus EN DIRECT par le Score V (`score_v.py:90,98`), les facettes propriétaire (`proprietaire_facettes.py:70`) et le Scan (`app.py:4695`) — chiffre `evenements_proprietaire_liste`, fiche Propriétaire. Retrait refusé tant que ces lecteurs vivent.
+- **Recherche d'entreprises (DINUM)** — SOURCES-3 lot 0.1 (arbitrage Vic) : RETRAIT DIFFÉRÉ — reste servie jusqu'au prochain entraînement du modèle (sort avec q_v15). DINUM n'alimente PLUS que le Score V (owner_enrichment/owner_denom_lookup, `score_v.py:90,98`). Débranchée de l'affichage, de la facette et du scan : SIRENE fait foi pour tout affichage — l'APE des filtres/facette propriétaire vient de `sirene_etablissements.naf` (format pointé), l'état « cessée » est retiré (SIRENE n'ingère que les actifs, l'état administratif d'une unité légale n'y est pas lisible ; radiée/procédure BODACC restent). Verdict PLEINE, plus PARTIELLE.
 - **Filosofi INSEE (carreaux 200 m)** — Filosofi 2021 (carreaux 200 m). Sert le revenu/population de zone. Millésime 2021 (le plus récent publié).
 - **Contours IRIS (IGN/INSEE)** — Contours IRIS 2024. Socle géographique infra-communal (rattachements).
 - **Transport public — GTFS (PAN, 7 réseaux)** — GTFS 7 réseaux (PAN, maj 2026). Arrêts/lignes de transport en couche. SOURCES-2 lot 1 : les 7 réseaux VÉRIFIÉS un par un au PAN (13/09/2026), tous valides ≥ 31/12/2026 ; GTFS-RT disponible sur 3 réseaux (Car Jaune, Alternéo, Carsud) — documenté NON ingéré (donnée d'exploitation éphémère, arbitrage).
@@ -271,7 +271,7 @@
 | 🟡 | **IGN BD CARTO V5 — occupation du sol** (`22`) | PARTIELLE — champs manquants | 3/4 témoins | oui | — | 0 | carte |
 | 🟢 | **BD ORTHO 20 cm (IGN)** (`61`) | PLEINE | 1/4 témoins | oui | OK | 3 | fiche, outil, copilote |
 | 🔗 | **RGE ALTI 5 m (IGN)** (`65`) | ALIAS (doublon) | n.a. (API/règles) | non | — | 0 | — |
-| 🟡 | **BD ORTHO IRC (IGN)** (`69`) | PARTIELLE — couverture incomplète | 4/4 témoins | oui | KO | 1 | fiche, outil, scoring |
+| 🟢 | **BD ORTHO IRC (IGN)** (`69`) | PLEINE | 4/4 témoins | oui | KO | 1 | fiche, outil, scoring |
 | 🟡 | **LiDAR HD — MNH 50 cm (IGN)** (`70`) | PARTIELLE — couverture incomplète | 4/4 témoins | oui | OK | 4 | fiche, outil, scoring |
 | 🟢 | **CoSIA (couverture du sol IA, IGN)** (`83`) | PLEINE | 4/4 témoins | oui | OK | 13 | fiche, carte, outil, PDF, scoring |
 | 🟢 | **Cadastre d'époque (Etalab / PCI vecteur DGFiP)** (`96`) | PLEINE | VIDE sur 4/4 | non | — | 1 | fiche |
@@ -283,7 +283,7 @@
 - **IGN BD CARTO V5 — occupation du sol** — BD CARTO V5 occupation du sol (proxy OCS, 1 643 objets). Proxy grossier — l'OCS GE officielle est une candidate (lot 5).
 - **BD ORTHO 20 cm (IGN)** — BD ORTHO 20 cm 2025. Détection piscines (90,7 %), fond ortho. À plein usage.
 - **RGE ALTI 5 m (IGN)** — RGE ALTI 5 m = même réservoir que id 6 (alias_de=6). Alias correct.
-- **BD ORTHO IRC (IGN)** — ⚠ RETRAIT EN ATTENTE (lot 0 S2). Vic avait décidé le retrait, mais l'infrarouge IRC est la source du NDVI/canopée : `parcel_vegetation` (431 663 lignes) est lu EN DIRECT par le solaire (`solaire.py:311` ombrage), le Flash (`flash/data.py:650`) et le scoring P (`p_model/sql.py:287`). Chiffre `prod_spec_kwh_kwc`, fiche Solaire. Retrait refusé tant que ces lecteurs vivent.
+- **BD ORTHO IRC (IGN)** — SOURCES-3 lot 0.3 (arbitrage Vic) : CONSERVÉE — la décision de retrait est ANNULÉE. L'infrarouge IRC alimente l'ombrage végétal du solaire et du scoring : `parcel_vegetation` (431 663 lignes) est lu par le solaire (`solaire.py:311` ombrage), le Flash (`flash/data.py:650`) et le scoring P (`p_model/sql.py:287`). Chiffre `prod_spec_kwh_kwc`, fiche Solaire. Verdict PLEINE, note de couverture retirée.
 - **LiDAR HD — MNH 50 cm (IGN)** — Couverture PRODUCTEUR complète (2 665 dalles 974, mission unique 23LHDREUNION — survol 11/08–11/10/2023, édition MNx 13/03/2025, levés SOURCES-2 lot 1, affichés au registre). Le reste-à-faire est LOCAL : la hauteur mesurée couvre ~70 % des parcelles (batch achevé ; solde = parcelles sans bâti rattachable).
 - **CoSIA (couverture du sol IA, IGN)** — 445 190 bâtis IA (2025), cœur du potentiel/scoring. Bâti à plein usage ; autres classes CoSIA non exploitées (par choix).
 - **Cadastre d'époque (Etalab / PCI vecteur DGFiP)** — Cadastre d'époque (archives PCI 2017→2026). Sert le rattachement des permis anciens (RETOURS-14).
@@ -306,12 +306,12 @@
 
 | | Source | Verdict | Fiche remplie (4 témoins) | Sentinelle | Filtre | Chiffres | Où (résumé) |
 |---|---|---|---|---|---|---|---|
-| 🟠 | **Taxe d'aménagement — taux communaux (délibérations)** (`98`) | SERVIE HORS REGISTRE | 4/4 témoins | non | OK | 2 | fiche, outil |
+| 🟢 | **Taxe d'aménagement — taux communaux (délibérations)** (`98`) | PLEINE | 4/4 témoins | non | OK | 2 | fiche, outil |
 | 🟢 | **Taux de taxe foncière — fichier REI (DGFiP)** (`127`) | PLEINE | 4/4 témoins | oui | OK | 1 | fiche |
 | 🟡 | **ACV / PVD / ORT (DGALN — liste des communes)** (`128`) | PARTIELLE — couverture incomplète | 3/4 témoins | oui | KO | 1 | fiche |
 | 🟢 | **Coût de construction (EPTB SDES + choix LABUSE)** (`131`) | PLEINE | n.a. (API/règles) | oui | OK | 1 | outil |
 
-- **Taxe d'aménagement — taux communaux (délibérations)** — Taux 24/24 servis (outil Taxe d'aménagement + Financier) MAIS les chiffres `taxe_amenagement_eur`/`taxe_amenagement_estimee_eur` ont `reservoirs={}` — le taux communal saisi n'est pas rattaché comme réservoir. Provenance non tracée.
+- **Taxe d'aménagement — taux communaux (délibérations)** — SOURCES-3 lot 1 : RATTACHÉE au registre — les chiffres `taxe_amenagement_eur` et `taxe_amenagement_estimee_eur` (outil Taxe + Financier) déclarent `reservoirs=(taxe_amenagement,)`, table `taxe_amenagement_taux` : le taux communal servi porte sa provenance (arête CIRCUIT-6 lot 0, confirmée ici).
 - **Taux de taxe foncière — fichier REI (DGFiP)** — Taux taxe foncière REI 2025, 24/24. Sert l'estimation fiscale (fiche commune fiscalité).
 - **ACV / PVD / ORT (DGALN — liste des communes)** — Table DGALN vivante, 19 communes. C'est l'éligibilité COMMUNALE ; le périmètre ORT infra-communal (Denormandie) est une source à part (id 138, à demander).
 - **Coût de construction (EPTB SDES + choix LABUSE)** — Coût de construction (EPTB 2024 + choix LABUSE 2300-2800 €/m²). Sert le bilan promoteur. Le « choix LABUSE » est délibéré et sourcé.

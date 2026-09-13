@@ -110,6 +110,11 @@ ROBINETS: dict[str, Robinet] = {
     "/map/layers.geojson?kind=bruit_route", "json_puis_js", chiffres=("bruit_couche",)),
  "couche_bruit_carte": _r("couche", "Cartes de bruit — dépassements", None,
     "/map/layers.geojson?kind=bruit_carte", "json_puis_js", chiffres=("bruit_carte_couche",)),
+ # SOURCES-3 lot 1 — l'extrusion 3D du bâti (empreinte BD TOPO + hauteur) : la hauteur préfère le
+ # faîtage LiDAR HD mesuré (flag `lidar` par bâtiment), repli BD TOPO. Rattache la hauteur bâtie
+ # servie à la carte au registre (fuite « 303k à la carte » close).
+ "couche_batiments_3d": _r("couche", "Bâti 3D (extrusion, hauteur)", None,
+    "/map/batiments.geojson", "json_puis_js", chiffres=("hauteur_bati_m",)),
  "fiche_parcelle_sols": _r("fiche", "Sols (SIS / CASIAS)", "fiche_parcelle",
     "/parcels/{idu} (clé sols)", "json_puis_js",
     chiffres=("sols_parcelle", "sis_classe", "casias_statut",)),
