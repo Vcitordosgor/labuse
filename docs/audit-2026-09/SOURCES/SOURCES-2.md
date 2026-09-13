@@ -203,3 +203,135 @@ semé sur `/document?partition=DU_97413` (léger, métadonnées seules).
   confirmer (lot 5) — déjà déclaré.
 
 Verrous 23/23 verts après lot (2 sondes semées : GPU document DU_97413 + ZIP SIS préfecture).
+
+---
+
+## LOT 3 — Trois sources nouvelles
+
+### 1. Systèmes d'endiguement et zones protégées (DEAL Lizmap) — INGÉRÉE
+
+Projet Lizmap dédié `02sprinr/03digues` (vérifié live 13/09/2026). **69 tronçons de digue +
+48 zones protégées** → `spatial_layers kind='endiguement'`. Chaque zone protégée porte la
+classe d'ouvrage (A/B/C), le **niveau de protection** (période de retour), les niveaux/débits
+NGR de danger-protection-sûreté, la **population protégée**, le gestionnaire, l'arrêté et la
+source d'étude (EDD Hydrétudes déc. 2024) — et TOUJOURS le statut « inondation résiduelle
+au-delà du niveau de protection ». Intégration complète : registre (`endiguement`), pont,
+carte table→réservoir, filtre (sous-types + classe ≥ 80 %, joué OK), sentinelle (raison
+écrite, même famille Lizmap), couche carte (aplat zones + trait digues, popup riche
+classe/niveau/population, familles « Risques et nuisances »), `labuse ingest-endiguement`.
+Licence : non écrite sur Lizmap → courrier DEAL (lot 5).
+
+### 2. Carte hypsométrique du littoral (DEAL) — IMAGE SEULE chez le producteur, dit
+
+La carte existe : projet Lizmap `02sprinr/04tsunami` (« Carte hypsométrique du littoral de La
+Réunion », couche `Courbes_de_niveau_hypsometrique__en_metres`). Mais le producteur ne la sert
+qu'en **WMS image** : la couche est **REFUSÉE en WFS** (`ServiceException: TYPENAME not
+available`, vérifié 13/09/2026) — aucun vecteur à ingérer sans convention. Déclarée au
+registre en CHANTIER (`S.A_FAIRE`, hors vitrine, raison écrite V2b) avec la demande de vecteur
+au courrier DEAL (lot 5). **La donnée de submersion marine est servie à la place par le
+vecteur réglementaire du même producteur** : les aléas PPRL `Alea_submersion_marine` (50
+zones) et `Alea_submersion_marine__changement_climatique` (50) du projet `01risque`, ingérés
+dans `georisque_alea` (subtypes `submersion_marine`/`submersion_marine_cc`, degré + dates
+PAC/approbation, auteur BRGM) — total aléas 1 093 zones sur les 24 communes. Ils apparaissent
+d'eux-mêmes dans la fiche Risques (lecture par intersection, tous subtypes) ; le bouton carte
+dédié est laissé à la validation pixels de Vic (doctrine COUCHES-1).
+
+### 3. BAN PLUS — lien adresse ↔ bâtiment ↔ parcelle (IGN) — INGÉRÉE
+
+WFS Géoplateforme `BAN-PLUS:lien_adresse_bati` : id adresse BAN ↔ bâtiment BD TOPO (cleabs) ↔
+**IDU parcelle** — ingéré : **745 874 liens** (0 hors 974), dont **629 825 avec ID-RNB
+(84,4 %)** résolus localement par `rnb_batiments.ext_bdtopo` — l'ID-RNB devient la clé de
+jointure DPE ↔ RPLS ↔ BAN. Table `ban_plus_liens` (moisson paginée 5 000/page, filtrage 974 au
+plus tôt, idempotente). ⚠ leçon gravée : la jointure tableau se fait par `unnest` (hash join) —
+le `= ANY(ext_bdtopo)` naïf est un produit croisé 746 k × 414 k, annulé après 28 min. Registre, pont, carte table→réservoir, filtre (0 lien hors 974 bloquant +
+part RNB ≥ 50 % avertissant), sentinelle api (`last_update` du jeu data.gouv, IGN — maj
+27/08/2026). Licence Ouverte 2.0. `labuse ingest-ban-plus`.
+
+---
+
+## LOT 4 — Les champs laissés sur la table
+
+Champ par champ — **ajouté**, **déjà servi (vérifié)**, ou **absent chez le producteur (dit)** :
+
+| Champ du mandat | État | Détail |
+|---|---|---|
+| Scénarios d'inondation AZI/TRI (fréquent/moyen/extrême) | **AJOUTÉ** | les 12 couches d'iso-hauteurs des 6 TRI (WFS Lizmap `01risque`, standard DI v2) → `tri_zone` : **128 zones** (43 fréquent `01For` / 42 moyen `02Moy`+`03Mcc` / 43 extrême `04Fai` — codes MESURÉS chez le producteur, jamais devinés), hauteurs d'eau min/max, flag changement climatique, TRI, servi en carte (kind whitelisté + popup riche). ⚠ deux couches (PIER/SUZA) servent leurs champs en minuscules — lecteur insensible à la casse |
+| Isophones (cartes de bruit) | **déjà servi** | `bruit_carte` : dépassements Lden/Ln par source (routes dép./nat., voies communales) — WFS Carmen, le seul canal vectoriel (Lizmap = WMS image, lot 1) |
+| Catégories sonores (classement) | **déjà servi** | `bruit_route` : 1 004 tronçons, catégories 1-5 + largeur (ArcGIS Cerema) |
+| Acte des SUP | **AJOUTÉ** | champ `fichier` du GPU = l'arrêté/décret PDF de la servitude → `attrs.acte_fichier` sur chaque assiette |
+| Générateur des SUP | **AJOUTÉ** | endpoints `generateur-sup-s/l/p` interrogés par commune, joints par `idgen` → `attrs.generateur_nom/type` (ex. « LA RAVINE DU BERNICA », type Site) |
+| Bénéficiaire des ER | **absent chez le producteur (dit)** | vérifié sur les dépôts GPU 974 : les prescriptions ER ne portent que `libelle` (« Emplacement réservé ») + `txt` (numéro) — aucun champ bénéficiaire structuré dans les GeoJSON servis. Rien à ingérer sans inventer |
+| Avancement Cartofriches | **déjà servi (vérifié)** | `attrs.site_statut` (« friche avec projet », « friche potentielle ») + `site_reconv_type/annee` présents sur les friches Cerema ET AGORAH en base |
+| Classe DPE des logements RPLS | **AJOUTÉ — vide chez le producteur (dit)** | colonnes `DPEENERGIE/DPESERRE` du fichier logement Dido branchées (`rpls_commune.dpe_classes`, `pct_passoires`, `pct_dpe_renseigne`) — MESURÉ : DPEENERGIE vide sur les 87 553 logements 974 → 0 % renseigné partout, cohérent avec le lot 0 (DPE DROM quasi absents). Le canal servira dès que le producteur remplira |
+| Lien parcelle ↔ SIREN des PM | **déjà servi (vérifié)** | `parcelle_personne_morale.siren` en base (panel millésimes 2019→2025) |
+| Filiation DFI | **déjà servi (vérifié)** | `dfi_filiation` : 409 623 lignes (frise Remonter le temps, OUTILS-MUSCLER-2) |
+| Hauteur BD TOPO | **déjà servi (vérifié)** | `batiment_hauteur_lidar.hauteur_bdtopo_m` (+ faîtage/égout LiDAR et écart mesuré) |
+| TMJA du trafic RN | **déjà servi (vérifié)** | `trafic_rn.tmja` (+ part poids lourds `nb_pl`, géométrie tronçon) |
+| Limites du DPF | **déjà servi** | `dpf` cours_eau 275 + plan_eau 6 (migré Lizmap, lot 1) |
+| Assiette AC1 des MH | **déjà servi (vérifié)** | `sup/ac1` : 6 assiettes en base (3 communes), désormais avec acte + générateur |
+
+Mesure post-ingestion SUP : **417 assiettes, 417 avec acte, 411 avec générateur** (24 communes).
+
+---
+
+## LOT 5 — Les licences : le dossier pour Vic
+
+Livré dans **`LICENCES-A-CONFIRMER.md`** (même dossier) : six courriers d'une page, prêts à
+envoyer — DEAL Réunion (toutes les couches Lizmap, + demande du vecteur hypsométrique),
+Conservatoire du littoral, ONF, EDF Réunion (SEI), Parc national, Région Réunion (trafic RN,
+DVF Région, potentiel foncier, + rappel SAR). Chaque courrier nomme les couches consommées et
+demande une réponse ÉCRITE sur la réutilisation commerciale.
+
+**Audit ODbL** (dans le même fichier) : 7 dérivés OSM inventoriés (amenite, parkings_aper,
+tcsp_*, pole_echange, parcel_amenites…), chacun avec son verdict de redistribuabilité —
+conformes, avec la règle gravée : tout export en masse d'une base dérivée doit porter l'ODbL
+et l'attribution. BANO : non utilisée (BAN IGN Licence Ouverte seule, vérifié).
+
+**DVF, la clause qui peut mordre — vérifiée** : servie agrégée/à la parcelle, jamais
+nominative, jamais jointe à une identité de personne physique (le fichier PM DGFiP EXCLUT les
+personnes physiques) ; pages derrière authentification (403 à deux comptes) ; exports
+cloisonnés par compte. **Aucun chemin de ré-identification ni d'indexation.** Ce lot n'écrit
+pas en base.
+
+---
+
+## LOT 6 — Les « à confirmer », confirmés chez le producteur
+
+| « À confirmer » du rapport producteurs | Réponse, mesurée le 13/09/2026 |
+|---|---|
+| Couverture/millésimes OCS GE 974 | **CONFIRMÉ et déjà servi** : OCS GE native D974, millésimes 2017 + 2022 (livraisons IGN 2025-04) + diff artificialisation officiel 2017→2022 (2025-09-16) — REPARATIONS-1, en base |
+| Couverture/millésime CoSIA 974 | **CONFIRMÉ deux fois** : lot D974 GPKG natif millésime 2025 (PVA juil.-août 2025, 20 cm) DÉJÀ ingéré ; et les 3 périodes WMS/WMTS (2017-2020, 2021-2023, 2024-2026) rendent une classification réelle sur Saint-Denis (GetMap vérifié) |
+| GéoLittoral érosion — couverture 974 | **CONFIRMÉ** : fichier Réunion dédié chez le producteur (`N_evolution_trait_cote_S_reunion_epsg2975_062018`, HTTP 200) — mais millésime 06/2018 (8 ans), dit ; sentinelle octets en veille |
+| Loyers DHUP — couverture 974 | **CONFIRMÉ** : le CSV national 2025 (publié 11/12/2025) porte les 24 communes 974, `loypredm2` par commune (vérifié ligne à ligne) — gravé au registre |
+| Complétude RNB 974 | **MESURÉ** : 414 081 bâtiments · rattachement BD TOPO 74,3 % (43 123 sans RNB intersectant, 166 851 recouvrement insuffisant) · hauteurs LiDAR 98,6 % |
+| Date de survol LiDAR HD | **LEVÉ (lot 1)** : 11/08/2023 → 11/10/2023, mission unique 23LHDREUNION, capteur RIEGL VQ780 II-S, édition MNx 13/03/2025 — affichée au registre |
+| Volume DPE réel après lot 0 | **16** DPE réunionnais corroborés (14 existants + 2 tertiaires) — trou producteur, pas trou de filtre (lot 0) ; corollaire : le champ DPE du RPLS est VIDE chez le producteur pour les 87 553 logements sociaux 974 |
+
+Restent invérifiables (écrits comme tels) : les licences des producteurs du lot 5 (réponses
+écrites attendues — c'est l'objet des courriers), et le vecteur hypsométrique DEAL (WMS image
+seule tant que la DEAL n'ouvre pas la couche).
+
+---
+
+## Clôture
+
+- **Fiches** : `fiches/<id>.md` — 22 fiches écrites/mises à jour, verdicts recalculés d'après
+  les mesures produites par ce mandat (pas d'après le rapport de recherche).
+- **Registre** : 121 sources en base = 96 en vitrine + 25 hors vitrine (3 nouvelles : 2
+  servies + 1 chantier) ; toutes les sondes semées, aucune source NUE (G4).
+- **Le run servi `q_v11_m137` est INTACT** : aucun run, aucune bascule, aucun merge, aucun
+  rescoring. Les couches ajoutées enrichissent la lecture LIVE et les prochains runs, jamais
+  les verdicts gelés.
+- **Verrous** : 23/23 verts à la clôture (rejoués après chaque lot ; le « à décider » V1d
+  ban_plus levé en donnant au réservoir son lecteur réel — donnée `ban_plus_adresses_bati`
+  au bloc « Le bien », robinet `/parcels/{idu}`).
+- **Tests** : back **3 026 passed / 34 failed — les 34 sont TOUS déjà en échec sur main**
+  (différentiel mesuré : main 38 échecs sur la même base, la branche en répare 4 au passage,
+  n'en ajoute 0 ; le seul échec introduit — attente des couches aléas dans
+  `test_deal_risques` — corrigé) ; front tsc 0 erreur, vitest 207/207.
+- **Preuves servies (API du mandat, `:8032`)** : `/map/layers.geojson?kind=endiguement` →
+  117 (69 digues + 48 zones protégées) ; `?kind=tri_zone` → 128 (43/42/43) ; fiche parcelle
+  Saint-Leu `97413000AC0001` → `plu_procedure` (révision + lien), `dpu` (phrase « jamais pas
+  de DPU »), `adresses_bati` BAN PLUS (10 liens, 2 adresses, 5 bâtiments). L'API `:8032`
+  reste lancée pour la relecture de Vic ; `:8020` jamais touchée.
+- **Rien n'est mergé.** Vic relit, envoie les courriers licences, merge.
