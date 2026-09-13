@@ -209,3 +209,13 @@ Le flag par polygone suit la **méthode du portail de l'artificialisation** (fic
 - **Captures** : fiche « Le bien » avec le bloc RNB (identifiant + lien officiel) ET la ligne « Sol artificialisé 100 % — d'après OCS GE 2022 » (`lot45-01-fiche-rnb-ocsge.png`) ; la couche « Artificialisation (OCS GE) » cochée, aplat violine sur la zone urbaine de Saint-Denis (`lot45-02-couche-artificialisation.png`).
 
 `tests/test_reparations1_lot5.py` (matrice du décret, CRS refusé si ≠ 2975, registre complet, fiche jamais cassée). **Verrous après lots 4-5 : 23/23 « tout va bien »** (117 puis 118 sources, G1 à phrase dynamique).
+
+---
+
+## Clôture
+
+- **Verrous à la fermeture : 23/23 « tout va bien » — V3a compris** (candidat `q_v14` déclaré assumé, nommé dans la preuve). Tests : les 5 fichiers `test_reparations1_lot*.py` + `tests/verrous` = 117 passed ; vitest 207/207, tsc 0. Le seul échec pytest connu reste le pré-existant documenté `test_r5` (CIRCUIT-3, fichier non touché).
+- **Rien n'est mergé, rien n'est basculé, aucun rescoring** : le run servi est resté `q_v11_m137` du premier au dernier geste (manifeste vérifié) ; `config/served_run.txt`, `served_manifest.json`, `run_precedent.txt` ne figurent dans **aucun** des commits (vérifié sur l'ensemble de la branche). `:8020` jamais touché ; preuves sur `:8032`/`:5200`, SIGTERM seulement.
+- **Branche `fix/reparations-1`** : 7 commits poussés (lot 0 · lot 1 · lot 2 · lot 3 · lot 4 · lot 5 · correctif de syntaxe models.py attrapé par le rejeu final des verrous).
+- **Non atteint, écrit** : les 12 ingestions de champs « session » du lot 3 (rang gardé dans REPARATIONS.md §E, verdict champ par champ dans LOT3-CHAMPS.md) ; les réingestions de couverture bloquées par les retraits en attente C1/C2/C4 ; le batch verdict de toiture LiDAR (mandat à part).
+- **Écritures en base de ce mandat** (aucune destruction) : reclassification aléa idempotente (0 restant), déclaration candidat, statuts partenariat + notes de couverture, RNB (414 081) + rattachements, OCS GE (2 millésimes + diff + précalcul parcellaire + couche), écart sonde id=2 soldé.
