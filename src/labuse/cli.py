@@ -4565,11 +4565,11 @@ def circuit_verrous_cmd(
                  "preuves": {r.id: r.preuve for r in resultats}})
             s.commit()
     if casses:
-        typer.echo(f"— {len(resultats)} joués (16 verrous + 7 garanties) : "
+        typer.echo(f"— {len(resultats)} joués (17 verrous + 7 garanties) : "
                    f"{len(casses)} CASSÉ(S) — {', '.join(r.id for r in casses)}"
                    + (f" · {len(a_decider)} à décider" if a_decider else ""))
         raise typer.Exit(1)
-    typer.echo(f"— {len(resultats)} joués (16 verrous + 7 garanties) : tout va bien"
+    typer.echo(f"— {len(resultats)} joués (17 verrous + 7 garanties) : tout va bien"
                + (f" · {len(a_decider)} à décider" if a_decider else ""))
 
 
