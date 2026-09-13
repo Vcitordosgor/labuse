@@ -160,3 +160,57 @@ def test_g3_vert_sur_la_base_reelle():
         assert r.verdict == "ok", (r.preuve, r.details[:5])
         rep = CG.repere_score(s)
         assert rep["n_sources"] >= 30 and rep["run_servi"]
+
+
+# ── G4 — dernière version ou pas ───────────────────────────────────────────────────────
+def test_g4_prouve_casse_source_nue(monkeypatch):
+    """Une source connectée SANS sonde NI raison → casse. On retire une raison du dict
+    (le trou vécu le 13/09 : 6 sources nues avant que les raisons soient écrites)."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from labuse import sentinelle
+    url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
+    if not url:
+        pytest.skip("base réelle requise")
+    prive = dict(sentinelle.RAISONS_NON_SURVEILLEES)
+    prive.pop("RTAA DOM (textes réglementaires)", None)
+    monkeypatch.setattr(sentinelle, "RAISONS_NON_SURVEILLEES", prive)
+    with sessionmaker(bind=create_engine(url))() as s:
+        r = CG.verrou_g4(s)
+        assert r.verdict == "casse"
+        assert any("RTAA" in d for d in r.details)
+
+
+@pytest.mark.local
+def test_g4_vert_et_vide_jamais_a_jour():
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from labuse.etats_sources import lister_etats
+    url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
+    with sessionmaker(bind=create_engine(url))() as s:
+        r = CG.verrou_g4(s)
+        assert r.verdict == "ok", (r.preuve, r.details[:5])
+        dpe = next(e for e in lister_etats(s) if "DPE" in e["name"])
+        assert dpe["etat"] == "vide" and dpe["etat_client"] == "pas_a_jour", \
+            "le DPE (vide mesurée) ne peut plus dire « à jour »"
+
+
+# ── G5 — date du dernier contrôle ──────────────────────────────────────────────────────
+def test_g5_jamais_verifie_est_rouge():
+    from labuse.circuit_etats import etat_reservoir
+    assert etat_reservoir({}) == ("rouge", "jamais vérifié")           # sans sonde
+    assert etat_reservoir({"veille": {"statut": None, "passage": None}}) == \
+        ("rouge", "jamais vérifié")                                     # sonde jamais passée
+    depot = etat_reservoir({"veille": {"statut": "ok"}, "mode": "depot_manuel"})
+    assert depot == ("gris", "dépôt manuel — jamais alimenté")          # dépôt sans date : DIT
+
+
+@pytest.mark.local
+def test_g5_vert_sur_la_base_reelle():
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
+    with sessionmaker(bind=create_engine(url))() as s:
+        r = CG.verrou_g5(s)
+        assert r.verdict == "ok", (r.preuve, r.details[:5])
+        assert "jamais vérifié" in r.preuve and "ROUGE" in r.preuve

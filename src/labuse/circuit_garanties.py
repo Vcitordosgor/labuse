@@ -179,6 +179,20 @@ def invisibles_mesures(db: Session) -> list[dict]:
         key=lambda m: m["slug"])
 
 
+_CACHE_VIDES: dict = {"t": 0.0, "v": None}
+
+
+def noms_vides_caches(db: Session, ttl: int = 300) -> set[str]:
+    """Les NOMS de sources vides, avec un cache court (la page /sources et le catalogue les
+    consultent à chaque rendu — la mesure vaut ~2 s, le cache 5 min l'amortit)."""
+    import time
+    now = time.monotonic()
+    if _CACHE_VIDES["v"] is None or now - _CACHE_VIDES["t"] > ttl:
+        _CACHE_VIDES["v"] = {m["nom"] for m in invisibles_mesures(db)}
+        _CACHE_VIDES["t"] = now
+    return _CACHE_VIDES["v"]
+
+
 def verrou_g2(db: Session) -> ResultatVerrou:
     phrase = ("Pour chaque source, la page dit sur quelle surface elle arrive et si sa fiche "
               "est réellement remplie — aucune source connectée de type parcelle vide sur "
@@ -315,10 +329,76 @@ def verrou_g3(db: Session, features=None) -> ResultatVerrou:
     return ResultatVerrou("G3", phrase, "casse" if pbs else "ok", preuve, pbs[:10])
 
 
+# ── G4 — dernière version ou pas ───────────────────────────────────────────────────────
+
+def verrou_g4(db: Session) -> ResultatVerrou:
+    phrase = ("Chaque source connectée porte soit un état de version calculé (sonde), soit une "
+              "raison de non-vérifiabilité écrite — jamais rien ; et « à jour » n'est jamais "
+              "vrai sur une source vide (version ET remplissage).")
+    from .etats_sources import lister_etats
+    from .sentinelle import RAISONS_NON_SURVEILLEES
+    from .sources_catalog import WHERE_AFFICHEES, masquees_param
+    pbs: list[str] = []
+    rows = db.execute(text(
+        "SELECT d.name, v.methode FROM data_sources d"
+        " LEFT JOIN source_veille v ON v.source_id = d.id"
+        f" WHERE {WHERE_AFFICHEES}"), {"masquees": masquees_param()}).all()
+    nus = sorted(n for n, m in rows if not m and n not in RAISONS_NON_SURVEILLEES)
+    for n in nus:
+        pbs.append(f"{n} : ni sonde ni raison de non-vérifiabilité")
+    vides = noms_vides_caches(db)
+    etats = {e["name"]: e for e in lister_etats(db)}
+    for n in sorted(vides):
+        e = etats.get(n)
+        if e and e.get("etat_client") == "a_jour":
+            pbs.append(f"{n} : VIDE mesurée mais l'état client dit « à jour »")
+    n_sondees = sum(1 for _, m in rows if m)
+    preuve = (f"{len(rows)} en vitrine : {n_sondees} sondées + "
+              f"{len(rows) - n_sondees - len(nus)} avec raison écrite + {len(nus)} NUES ; "
+              f"{len(vides)} vide(s) → état « pas à jour »")
+    return ResultatVerrou("G4", phrase, "casse" if pbs else "ok", preuve, pbs[:10])
+
+
+# ── G5 — date du dernier contrôle ──────────────────────────────────────────────────────
+
+def verrou_g5(db: Session) -> ResultatVerrou:
+    phrase = ("Pour chaque source, la date du dernier contrôle est affichée — et une source "
+              "jamais contrôlée le dit, en rouge, jamais en silence.")
+    from .circuit_etats import etat_reservoir
+    from .sources_catalog import WHERE_AFFICHEES, masquees_param
+    rows = db.execute(text(
+        "SELECT d.name, d.last_sync_at, d.mode_remplissage,"
+        "       v.methode, v.dernier_passage_at, v.dernier_statut"
+        " FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id"
+        f" WHERE {WHERE_AFFICHEES}"), {"masquees": masquees_param()}).mappings().all()
+    pbs: list[str] = []
+    jamais = 0
+    for r in rows:
+        derniers = [d for d in (r["dernier_passage_at"], r["last_sync_at"]) if d is not None]
+        dernier_controle = max(derniers) if derniers else None
+        veille = ({"statut": r["dernier_statut"],
+                   "passage": r["dernier_passage_at"]} if r["methode"] else None)
+        couleur, libelle = etat_reservoir({"veille": veille, "dernier_controle": dernier_controle,
+                                           "mode": r["mode_remplissage"] or "one_shot",
+                                           "filtre": {}})
+        if libelle == "jamais vérifié":
+            jamais += 1
+            if couleur != "rouge":
+                pbs.append(f"{r['name']} : jamais vérifié affiché en {couleur}, pas en rouge")
+        elif dernier_controle is None and "jamais" not in libelle and libelle != "vide":
+            # un état PARLANT (« vide », « … jamais alimenté ») couvre l'absence de date ;
+            # tout le reste sans date est un blanc — la garantie casse.
+            pbs.append(f"{r['name']} : aucune date de contrôle ET aucune mention "
+                       f"« jamais » (état « {libelle} »)")
+    preuve = (f"{len(rows)} en vitrine : {len(rows) - jamais} avec date de dernier contrôle "
+              f"ou état parlant, {jamais} « jamais vérifié » (affichés ROUGE)")
+    return ResultatVerrou("G5", phrase, "casse" if pbs else "ok", preuve, pbs[:10])
+
+
 # ── l'assembleur (rempli garantie par garantie, lots 1→7) ─────────────────────────────
 
 def jouer_garanties(db: Session) -> list[ResultatVerrou]:
     """Joue les garanties implémentées, dans l'ordre. Le Résumé de la page Circuit et la CLI
     `labuse circuit verrous` les affichent avec les 16 verrous de CIRCUIT-5 (lot 8)."""
-    jouees = [verrou_g1(db), verrou_g2(db), verrou_g3(db)]
+    jouees = [verrou_g1(db), verrou_g2(db), verrou_g3(db), verrou_g4(db), verrou_g5(db)]
     return jouees
