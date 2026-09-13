@@ -266,20 +266,23 @@ def test_g7_vert_apres_sonde():
 
 @pytest.mark.local
 def test_fuite2_hauteur_lidar_creditee():
-    """La hauteur servie vient de l'ÉGOUT LiDAR mesuré (4,1 m sur le témoin Saint-Denis),
-    plus du faîtage BD TOPO (8,8 m) — et le registre crédite lidar_hd_mnh."""
-    from sqlalchemy import create_engine, text
-    from sqlalchemy.orm import sessionmaker
-    from labuse.faisabilite.potentiel import _hauteur_bati_m
+    """Fusion CIRCUIT-6 × RECETTE-10 T1 : l'égout MESURÉ se compare à la règle d'ÉGOUT, le
+    faîtage à la règle de FAÎTAGE (surelevation_mesuree, jamais l'une contre l'autre) ; la
+    table batiment_hauteur_lidar est à la carte du réservoir lidar, l'arête est posée sur la
+    marge servie. (_hauteur_bati_m RESTE le faîtage BD TOPO — l'override égout du lot 7
+    initial remettait un égout face à une règle de faîtage : retiré au merge.)"""
+    from labuse.faisabilite.potentiel import surelevation_mesuree
     from labuse.registre.donnees import CHIFFRES
     from labuse.registre.tables import RESERVOIR_TABLES
-    assert "lidar_hd_mnh" in CHIFFRES["hauteur_bati_m"].reservoirs
     assert "batiment_hauteur_lidar" in RESERVOIR_TABLES["lidar_hd_mnh"].tables
-    url = os.environ.get("LABUSE_APP_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
-    with sessionmaker(bind=create_engine(url))() as s:
-        pid = s.execute(text("SELECT id FROM parcels WHERE idu='97411000CD0083'")).scalar()
-        h = _hauteur_bati_m(s, pid)
-        assert h is not None and h < 8.0, f"attendu l'égout LiDAR (≈4,1), obtenu {h}"
+    assert "lidar_hd_mnh" in CHIFFRES["marge_surelevation_m"].reservoirs
+    assert CHIFFRES["hauteur_bati_m"].reservoirs == ("bd_topo",)
+    sm = surelevation_mesuree(10.0, 13.0, 4.1, 8.4)   # le témoin Saint-Denis (Dossier régénéré)
+    assert {c["base"]: c["marge_m"] for c in sm["contraintes"]} == {"égout": 5.9, "faîtage": 4.6}
+    assert sm["contrainte"] == "faîtage" and sm["marge_m"] == 4.6   # la plus serrée mord
+    # jamais l'une contre l'autre : une seule règle en regard d'une seule mesure, appariées
+    seul_egout = surelevation_mesuree(10.0, None, 4.1, 8.4)
+    assert [c["base"] for c in seul_egout["contraintes"]] == ["égout"]
 
 
 @pytest.mark.local
