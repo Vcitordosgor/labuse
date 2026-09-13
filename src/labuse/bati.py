@@ -219,6 +219,23 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
     except Exception:  # noqa: BLE001 — le RNB ne casse jamais le tiroir « Le bien »
         session.rollback()
         rnb = []
+    # SOURCES-2 lot 3 — BAN PLUS : le lien adresse ↔ bâtiment ↔ parcelle (IGN). Dit combien
+    # d'adresses officielles desservent le bâti de la parcelle (clé de jointure ID-RNB en base).
+    # Table absente → None, jamais un tiroir cassé.
+    adresses_bati = None
+    try:
+        if session.execute(text("SELECT to_regclass('ban_plus_liens')")).scalar():
+            row = session.execute(text(
+                "SELECT count(*) AS liens, count(DISTINCT id_adr) AS adresses, "
+                "count(DISTINCT id_bat) AS batiments "
+                "FROM ban_plus_liens WHERE idu = :i"), {"i": idu}).mappings().first()
+            if row and row["liens"]:
+                adresses_bati = {"liens": int(row["liens"]), "adresses": int(row["adresses"]),
+                                 "batiments": int(row["batiments"]),
+                                 "source": "BAN PLUS (IGN) — lien adresse ↔ bâtiment"}
+    except Exception:  # noqa: BLE001 — BAN PLUS ne casse jamais le tiroir « Le bien »
+        session.rollback()
+        adresses_bati = None
     # REPARATIONS-1 lot 5 — l'usage du sol et l'artificialisation OFFICIELS (OCS GE, précalcul
     # parcel_ocsge). Donnée d'ÎLOT : la fiche dit « d'après OCS GE », jamais la précision
     # cadastrale. Aucun effet score. Table absente → None, jamais un tiroir cassé.
@@ -248,6 +265,7 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
         "hauteur_faitage_m": (lid["faitage_m"] if lid else None),
         "hauteur_egout_m": (lid["egout_m"] if lid else None),
         "hauteur_nature": ("sourcé" if lid else ("estimé" if hauteur is not None else None)),
+        "adresses_bati": adresses_bati,   # SOURCES-2 lot 3 — BAN PLUS (None si table absente)
         # RECETTE-11 A3 — la date de survol servie avec la mesure (jamais une mesure sans date).
         "hauteur_survol": (lid.get("survol") if lid else None),
         "hauteur_source": (lid["source"] if lid else ("BD TOPO® (hauteur déclarée)" if hauteur is not None else None)),

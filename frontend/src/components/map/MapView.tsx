@@ -449,6 +449,8 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('ov-sup', 'fill-color', t.sup); set('ov-sup', 'fill-opacity', t.supOpacity); set('ov-sup', 'fill-outline-color', t.sup)
   // SOURCES-1 lot 2 — nature et eau : teinte + opacité suivent le thème.
   set('ov-dpf', 'line-color', t.dpf)
+  set('ov-endiguement', 'fill-color', t.endiguement)
+  set('ov-endiguement-digue', 'line-color', t.endiguement)
   set('ov-zone_humide', 'fill-color', t.zoneHumide); set('ov-zone_humide', 'fill-opacity', t.zoneHumideOpacity); set('ov-zone_humide', 'fill-outline-color', t.zoneHumide)
   set('ov-enp', 'fill-color', t.enp); set('ov-enp', 'fill-opacity', t.enpOpacity); set('ov-enp', 'fill-outline-color', t.enp)
   set('ov-rpg', 'fill-color', t.rpg); set('ov-rpg', 'fill-opacity', t.rpgOpacity); set('ov-rpg', 'fill-outline-color', t.rpg)
@@ -589,6 +591,11 @@ const OVERLAY_POPUP: Record<string, { titre: string; fields: PopupField[] }> = {
     { key: 'nature', label: 'Nature' }, { key: 'typename', label: 'Inventaire' } ] },
   'ov-dpf': { titre: 'Ravine / domaine public fluvial', fields: [
     { key: 'toponyme', label: 'Toponyme' }, { key: 'typologie', label: 'Type' }, { key: 'classe', label: 'Classe' } ] },
+  // SOURCES-2 lot 3 — endiguement : la zone protégée dit sa classe, son niveau et sa population.
+  'ov-endiguement': { titre: 'Système d’endiguement', fields: [
+    { key: 'classe', label: 'Classe d’ouvrage' }, { key: 'n_protect', label: 'Niveau de protection (années)' },
+    { key: 'population', label: 'Population protégée' }, { key: 'gestion', label: 'Gestionnaire' },
+    { key: 'statut', label: 'Statut' }, { key: 'source', label: 'Source' } ] },
 }
 // attrs voyage en jsonb : MapLibre peut le sérialiser en chaîne selon la source — on parse au besoin.
 function attrsOf(p: Record<string, unknown>): Record<string, unknown> {
@@ -835,6 +842,7 @@ export function MapView() {
   // SOURCES-1 lot 2 — nature et eau. dpf/zone_humide/enp = couches d'île (commune NULL) ;
   // rpg = kind virtuel (safer, 38 460 déclarations) par commune, plafond relevé.
   const dpfQ = useQuery({ queryKey: ['layer', 'dpf'], queryFn: () => getMapLayer('dpf'), enabled: layers.dpf })
+  const endigQ = useQuery({ queryKey: ['layer', 'endiguement'], queryFn: () => getMapLayer('endiguement'), enabled: layers.endiguement })
   const zhQ = useQuery({ queryKey: ['layer', 'zone_humide'], queryFn: () => getMapLayer('zone_humide', 10_000), enabled: layers.zone_humide })
   const enpQ = useQuery({ queryKey: ['layer', 'enp'], queryFn: () => getMapLayer('enp'), enabled: layers.enp })
   const rpgQ = useQuery({ queryKey: ['layer', 'rpg', commune], queryFn: () => getMapLayer('rpg', 40_000), enabled: layers.rpg })
@@ -1137,6 +1145,14 @@ export function MapView() {
       m.addSource('ov-dpf', { type: 'geojson', data: EMPTY_FC as never })
       m.addLayer({ id: 'ov-dpf', type: 'line', source: 'ov-dpf', layout: { visibility: 'none' },
         paint: { 'line-color': T_SOMBRE.dpf, 'line-width': 2.0, 'line-opacity': 0.9 } })
+      // SOURCES-2 lot 3 — endiguement : zones protégées en aplat léger + digues en trait épais.
+      m.addSource('ov-endiguement', { type: 'geojson', data: EMPTY_FC as never })
+      m.addLayer({ id: 'ov-endiguement', type: 'fill', source: 'ov-endiguement',
+        filter: ['==', ['get', 'subtype'], 'zone_protegee'] as never, layout: { visibility: 'none' },
+        paint: { 'fill-color': T_SOMBRE.endiguement, 'fill-opacity': 0.18 } })
+      m.addLayer({ id: 'ov-endiguement-digue', type: 'line', source: 'ov-endiguement',
+        filter: ['==', ['get', 'subtype'], 'digue'] as never, layout: { visibility: 'none' },
+        paint: { 'line-color': T_SOMBRE.endiguement, 'line-width': 2.6, 'line-opacity': 0.95 } })
       // SOURCES-1 lot 3 — CASIAS : 480 sites en POINT (cercles) + 29 emprises (aplat), même source.
       m.addSource('ov-casias', { type: 'geojson', data: EMPTY_FC as never })
       m.addLayer({ id: 'ov-casias-fill', type: 'fill', source: 'ov-casias', layout: { visibility: 'none' },
@@ -1655,7 +1671,7 @@ export function MapView() {
       ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt], ['mt', lignesMt], ['tcsp', tcspTroncons], ['tcsp-st', tcspStations], ['tcsp-zone', tcspZone],
       ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr], ['vefa_neuf', vefaNeuf],   // M134 dispositifs · M137-U znieff · T4 vefa
       ['er', erQ], ['ebc', ebcQ], ['dpu', dpuQ], ['peb', pebQ], ['sup', supQ],   // SOURCES-1 lot 1 — droit des sols
-      ['dpf', dpfQ], ['zone_humide', zhQ], ['enp', enpQ], ['rpg', rpgQ],   // SOURCES-1 lot 2 — nature et eau
+      ['dpf', dpfQ], ['endiguement', endigQ], ['zone_humide', zhQ], ['enp', enpQ], ['rpg', rpgQ],   // SOURCES-1 lot 2 — nature et eau · SOURCES-2 lot 3 endiguement
       ['sis', sisQ], ['casias', casiasQ], ['bruit_route', bruitQ], ['bruit_carte', bruitCarteQ],
       ['artificialisation', artifQ]]   // SOURCES-1 lot 3 — sols et bruit · REPARATIONS-1 lot 5 — OCS GE
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
@@ -1738,7 +1754,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, lignesMt.data, tcspTroncons.data, tcspStations.data, tcspZone.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, erQ.data, ebcQ.data, dpuQ.data, pebQ.data, supQ.data, dpfQ.data, zhQ.data, enpQ.data, rpgQ.data, sisQ.data, casiasQ.data, bruitQ.data, bruitCarteQ.data, artifQ.data, layers.artificialisation, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, layers.er, layers.ebc, layers.dpu, layers.peb, layers.sup, layers.dpf, layers.zone_humide, layers.enp, layers.rpg, layers.sis, layers.casias, layers.bruit_route, layers.bruit_carte, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, lignesMt.data, tcspTroncons.data, tcspStations.data, tcspZone.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, erQ.data, ebcQ.data, dpuQ.data, pebQ.data, supQ.data, dpfQ.data, endigQ.data, zhQ.data, enpQ.data, rpgQ.data, sisQ.data, casiasQ.data, bruitQ.data, bruitCarteQ.data, artifQ.data, layers.artificialisation, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, layers.er, layers.ebc, layers.dpu, layers.peb, layers.sup, layers.dpf, layers.endiguement, layers.zone_humide, layers.enp, layers.rpg, layers.sis, layers.casias, layers.bruit_route, layers.bruit_carte, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -1887,6 +1903,8 @@ export function MapView() {
     m.setLayoutProperty('ov-sup', 'visibility', vis(layers.sup))
     // SOURCES-1 lot 2 — nature et eau
     m.setLayoutProperty('ov-dpf', 'visibility', vis(layers.dpf))
+    m.setLayoutProperty('ov-endiguement', 'visibility', vis(layers.endiguement))
+    m.setLayoutProperty('ov-endiguement-digue', 'visibility', vis(layers.endiguement))
     m.setLayoutProperty('ov-zone_humide', 'visibility', vis(layers.zone_humide))
     m.setLayoutProperty('ov-enp', 'visibility', vis(layers.enp))
     m.setLayoutProperty('ov-rpg', 'visibility', vis(layers.rpg))

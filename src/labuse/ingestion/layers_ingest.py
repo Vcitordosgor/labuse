@@ -424,7 +424,13 @@ def ingest_ppr_zone(session, bbox, commune, run_id, sids, insee) -> int:
     return n
 
 
-_ALEA_LAYERS = (("ALEA_INONDATION", "inondation"), ("ALEA_MOUVEMENT_TERRAIN", "mouvement_terrain"))
+#: SOURCES-2 lot 3 — + les aléas SUBMERSION MARINE (BRGM via DEAL Lizmap, PPRL : degré, dates
+#: PAC/approbation, référence vs changement climatique) : la donnée VECTEUR de la submersion —
+#: la « carte hypsométrique du littoral » du mandat n'existe qu'en WMS image chez la DEAL
+#: (WFS refusé, vérifié 13/09/2026), l'aléa PPRL est la donnée réglementaire exploitable.
+_ALEA_LAYERS = (("ALEA_INONDATION", "inondation"), ("ALEA_MOUVEMENT_TERRAIN", "mouvement_terrain"),
+                ("Alea_submersion_marine", "submersion_marine"),
+                ("Alea_submersion_marine__changement_climatique", "submersion_marine_cc"))
 
 
 def ingest_georisque_alea(session, bbox, commune, run_id, sids, insee) -> int:

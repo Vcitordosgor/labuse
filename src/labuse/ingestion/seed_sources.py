@@ -919,6 +919,50 @@ SOURCES: list[dict] = [
                          "restent. Forêts de protection = SUP A7 : NON publiée pour le 974 "
                          "(inventaire GPU sondé, lot 1). Cascade : réserves/APB RÉDHIBITOIRES, "
                          "sites = info ×0 (anti-double-compte SUP AC2), ramsar = vigilance."),
+    # ── SOURCES-2 lot 3 — les trois sources nouvelles ──────────────────────────────
+    dict(name="Systèmes d'endiguement et zones protégées (DEAL Lizmap)", category="risques",
+         provider="DEAL Réunion (Lizmap — deal974.lizmap.com)",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="EDD Hydrétudes déc. 2024 (attrs Source par zone)",
+         documentation_url="https://deal974.lizmap.com/cartes/index.php/view/map?repository=02sprinr&project=03digues",
+         endpoint_url="https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=03digues",
+         legal_notes="Licence non écrite sur Lizmap — confirmation demandée à la DEAL (SOURCES-2 lot 5, LICENCES-A-CONFIRMER.md). Attribution : « Source : DEAL Réunion — systèmes d'endiguement ».",
+         technical_notes="SOURCES-2 lot 3 — le risque inondation RÉSIDUEL derrière les digues : "
+                         "projet Lizmap dédié 02sprinr/03digues (vérifié live 13/09/2026), couches "
+                         "digues_zones_protegees (tronçons de digue) + Zones_protegee_-_Systeme_"
+                         "d_endiguement (classe d'ouvrage A/B/C, niveau de protection N-années, "
+                         "niveaux/débits NGR, POPULATION protégée, gestionnaire, arrêté, source "
+                         "d'étude). spatial_layers kind='endiguement' (digue | zone_protegee), "
+                         "`labuse ingest-endiguement`. La zone protégée porte TOUJOURS le statut "
+                         "« inondation résiduelle au-delà du niveau de protection »."),
+    dict(name="Carte hypsométrique du littoral (DEAL Lizmap)", category="risques",
+         provider="DEAL Réunion (Lizmap — deal974.lizmap.com)",
+         access_type="WMS (image seule)", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         documentation_url="https://deal974.lizmap.com/cartes/index.php/view/map?repository=02sprinr&project=04tsunami",
+         endpoint_url="https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=04tsunami",
+         legal_notes="Licence non écrite sur Lizmap — confirmation demandée à la DEAL (SOURCES-2 lot 5).",
+         technical_notes="CHANTIER SOURCES-2 lot 3 — la « Carte hypsométrique du littoral de La "
+                         "Réunion » (projet 02sprinr/04tsunami) n'est servie par le producteur "
+                         "qu'en WMS IMAGE : la couche Courbes_de_niveau_hypsometrique__en_metres "
+                         "est REFUSÉE en WFS (ServiceException, vérifié 13/09/2026) — aucun "
+                         "vecteur à ingérer sans convention. La donnée RÉGLEMENTAIRE de "
+                         "submersion est servie à la place par les aléas PPRL vecteur du projet "
+                         "01risque (georisque_alea subtypes submersion_marine / "
+                         "submersion_marine_cc, même mandat). Chantier : demander le vecteur "
+                         "hypsométrique à la DEAL (courrier lot 5)."),
+    dict(name="BAN PLUS — lien adresse ↔ bâtiment (IGN)", category="cadastre",
+         provider="IGN (Géoplateforme — BAN PLUS)",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="BAN PLUS (data.gouv maj 27/08/2026), moisson 13/09/2026",
+         documentation_url="https://www.data.gouv.fr/datasets/ban-plus",
+         endpoint_url="https://data.geopf.fr/wfs/ows (BAN-PLUS:lien_adresse_bati)",
+         legal_notes="Licence Ouverte 2.0 (IGN/DINUM) — attribution : « Source : IGN, BAN PLUS ».",
+         technical_notes="SOURCES-2 lot 3 — le lien adresse BAN ↔ bâtiment BD TOPO (cleabs) ↔ "
+                         "parcelle (IDU), 745 874 liens sur l'emprise 974 (WFS Géoplateforme, "
+                         "mesuré 13/09/2026) → table ban_plus_liens, filtrée 974 au plus tôt. "
+                         "La colonne rnb_id est résolue localement par rnb_batiments.ext_bdtopo : "
+                         "l'ID-RNB devient la clé de jointure DPE ↔ RPLS ↔ BAN (mandat). "
+                         "`labuse ingest-ban-plus`."),
     dict(name="AZI / TRI — inondation (Géorisques GASPAR)", category="risques",
          provider="BRGM / Géorisques (GASPAR)",
          access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE,
@@ -1095,7 +1139,9 @@ SOURCES: list[dict] = [
                          "(data/carte_loyers_reunion_2025.json embarqué, loyers.py) sans ligne "
                          "au catalogue — mise d'équerre. Loyers d'ANNONCE par commune : REPLI "
                          "de l'OLL (communes multi-zones, 8/24). Aucun job (extrait versionné, "
-                         "mis à jour au commit)."),
+                         "mis à jour au commit). SOURCES-2 lot 6 — couverture 974 CONFIRMÉE "
+                         "chez le producteur : le CSV national 2025 (publié 11/12/2025) porte "
+                         "les 24 communes 974 (loypredm2 par commune, vérifié 13/09/2026)."),
     dict(name="Coût de construction (EPTB SDES + choix LABUSE)", category="fiscalite",
          provider="SDES (EPTB) · choix LABUSE (promotion)", access_type="import",
          status=S.CONNECTE, reliability_level=R.VERIFIE,
@@ -1428,6 +1474,10 @@ def seed(session: Session) -> int:
 # l'absent. La liste des propositions est livrée dans docs/CIRCUIT/CADENCES-PROPOSEES.md — Vic les
 # corrige depuis la page Circuit, pas dans ce fichier.
 MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
+    # SOURCES-2 lot 3 — les trois sources nouvelles.
+    "Systèmes d'endiguement et zones protégées (DEAL Lizmap)": ("one_shot", 365, "proposee"),
+    "Carte hypsométrique du littoral (DEAL Lizmap)": ("one_shot", None, "sans_objet"),
+    "BAN PLUS — lien adresse ↔ bâtiment (IGN)": ("cron_mensuel", 30, "proposee"),
     "RNB — Référentiel National des Bâtiments": ("cron_mensuel", 30, "proposee"),
     "OCS GE (IGN) — occupation du sol et artificialisation": ("one_shot", 365, "proposee"),
     "Cadastre (API Carto PCI)": ("one_shot", 365, "proposee"),

@@ -130,6 +130,8 @@ NOM_VERS_SLUG = {
     'Géorisques — ICPE': 'georisques_icpe',
     'Cartofriches (Cerema)': 'cartofriches',
     'Géorisques — mouvements de terrain': 'georisques_mvt',
+    "Systèmes d'endiguement et zones protégées (DEAL Lizmap)": 'endiguement',
+    'BAN PLUS — lien adresse ↔ bâtiment (IGN)': 'ban_plus',
     'DPE ADEME (logements existants)': 'dpe_ademe',
     'QPV 2024 (ANCT)': 'qpv_2024',
     'Inventaire SRU (DHUP)': 'sru_dhup',

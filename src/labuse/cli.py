@@ -1485,6 +1485,13 @@ def ingest_azi_tri_cmd() -> None:
         s.commit()
     typer.echo(f"✓ AZI/TRI : {res['azi']} AZI ({res['communes_azi']} communes), "
                f"{res['tri']} TRI ({res['communes_tri']} communes).")
+    # SOURCES-2 lot 4 — les scénarios d'inondation des TRI (fréquent/moyen/extrême, DI v2).
+    with session_scope() as s:
+        sid = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                        {"n": azi_mod.SOURCE_TRI}).scalar()
+        res_sc = azi_mod.ingest_tri_scenarios(s, source_id=sid)
+        s.commit()
+    typer.echo(f"✓ scénarios TRI : {res_sc}")
     if res["communes_sans_document"]:
         typer.echo("  sans AZI ni TRI : " + ", ".join(res["communes_sans_document"]))
     from . import circuit_journal, filtres
@@ -1497,6 +1504,56 @@ def ingest_azi_tri_cmd() -> None:
                                         {"verdict": v.verdict})
             s.commit()
         typer.echo(f"  filtre azi_tri : {v.verdict}")
+
+
+@app.command("ingest-endiguement")
+def ingest_endiguement_cmd() -> None:
+    """SOURCES-2 lot 3 — systèmes d'endiguement et zones protégées (DEAL Lizmap 03digues) :
+    digues + zones protégées (classe, niveau de protection, population) → kind endiguement.
+    La zone protégée dit TOUJOURS « inondation résiduelle au-delà du niveau de protection »."""
+    from . import models
+    from .ingestion import endiguement
+    with session_scope() as s:
+        sid = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                        {"n": endiguement.SOURCE_ENDIGUEMENT}).scalar()
+        res = endiguement.ingest_endiguement(s, source_id=sid)
+        s.commit()
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ Endiguement : {res}")
+    from . import circuit_journal, filtres
+    f = filtres.get_filtre("endiguement")
+    if f is not None:
+        with session_scope() as s:
+            v = filtres.jouer(s, f)
+            circuit_journal.journaliser(s, "filtre", "endiguement", "ingest-endiguement",
+                                        "refuse" if v.verdict == "quarantaine" else "ok",
+                                        {"verdict": v.verdict})
+            s.commit()
+        typer.echo(f"  filtre endiguement : {v.verdict}")
+
+
+@app.command("ingest-ban-plus")
+def ingest_ban_plus_cmd() -> None:
+    """SOURCES-2 lot 3 — BAN PLUS (IGN, Géoplateforme) : lien adresse ↔ bâtiment BD TOPO ↔
+    parcelle sur l'emprise 974 (~746 k liens) → table ban_plus_liens, rnb_id résolu localement
+    (rnb_batiments.ext_bdtopo) — l'ID-RNB, clé de jointure DPE ↔ RPLS ↔ BAN."""
+    from .ingestion import ban_plus
+    ban_plus.ensure_tables(engine())
+    with session_scope() as s:
+        res = ban_plus.ingest_ban_plus(s)
+        s.commit()
+    typer.echo(f"✓ BAN PLUS : {res['liens']} lien(s), {res['avec_rnb']} avec ID-RNB, "
+               f"{res['hors_974']} hors 974 écartés.")
+    from . import circuit_journal, filtres
+    f = filtres.get_filtre("ban_plus")
+    if f is not None:
+        with session_scope() as s:
+            v = filtres.jouer(s, f)
+            circuit_journal.journaliser(s, "filtre", "ban_plus", "ingest-ban-plus",
+                                        "refuse" if v.verdict == "quarantaine" else "ok",
+                                        {"verdict": v.verdict})
+            s.commit()
+        typer.echo(f"  filtre ban_plus : {v.verdict}")
 
 
 @app.command("ingest-sis-projets")

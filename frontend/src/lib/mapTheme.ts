@@ -122,6 +122,7 @@ export type MapTokens = {
   /** SOURCES-1 lot 2 — nature et eau : DPF (trait d'eau), zones humides (sarcelle),
    *  ENP (vert profond ≠ parc marron), RPG (paille — sole agricole). */
   dpf: string
+  endiguement: string
   zoneHumide: string
   zoneHumideOpacity: number
   enp: string
@@ -210,6 +211,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     sup: '#C05884', supOpacity: 0.16,                     // COUCHES-1 lot 5 (D4) — 0,24 → 0,16 (SUP magenta écrasait tout)
     // SOURCES-1 lot 2 — nature et eau (fond sombre)
     dpf: '#4FC3E8',                                       // trait d'eau vif — DPF (ligne)
+    endiguement: '#7FD4C1',                               // vert d'eau — digues et zones protégées
     zoneHumide: '#2E9E8F', zoneHumideOpacity: 0.30,       // sarcelle — zones humides
     // COUCHES-1 lot 5 (D1) — ENP était VERT profond, en camaïeu avec parc/EBC/ZNIEFF. Passé en
     // INDIGO-VIOLET profond : une protection réglementaire forte, franchement hors de la famille verte.
@@ -287,6 +289,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
 
     // SOURCES-1 lot 2 — nature et eau (thème clair : mêmes teintes assombries)
     dpf: '#1A7FA8',
+    endiguement: '#1F8A70',
     zoneHumide: '#1F7A6E', zoneHumideOpacity: 0.30,
     enp: '#4A32A0', enpOpacity: 0.28,                     // COUCHES-1 lot 5 (D1) — indigo profond (ex-vert)
     rpg: '#8F7E2E', rpgOpacity: 0.22,

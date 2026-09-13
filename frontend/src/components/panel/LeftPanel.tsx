@@ -158,6 +158,7 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'sup', label: 'Servitudes d’utilité publique (SUP)' },
   // SOURCES-1 lot 2 — la nature et l'eau.
   { key: 'dpf', label: 'Ravines et reculs (DPF)' },
+  { key: 'endiguement', label: 'Digues et zones protégées' },
   { key: 'zone_humide', label: 'Zones humides' },
   { key: 'enp', label: 'Espaces naturels protégés' },
   { key: 'rpg', label: 'Cultures déclarées (RPG)' },
@@ -184,7 +185,7 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
 const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   { famille: 'Repères', keys: ['limites', 'communes'] },
   { famille: 'Urbanisme', keys: ['zonage_parcelle', 'zonage', 'ebc', 'er', 'dpu', 'sup'] },
-  { famille: 'Risques et nuisances', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'peb', 'bruit_route', 'bruit_carte', 'sis', 'casias'] },
+  { famille: 'Risques et nuisances', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'endiguement', 'peb', 'bruit_route', 'bruit_carte', 'sis', 'casias'] },
   { famille: 'Nature et protections', keys: ['parc', 'znieff', 'enp', 'zone_humide', 'artificialisation'] },
   { famille: 'Domanialité', keys: ['dpf', 'cinquante_pas'] },
   { famille: 'Usage du sol', keys: ['rpg'] },

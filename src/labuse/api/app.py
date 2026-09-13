@@ -5392,7 +5392,12 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     # SOURCES-1 lot 3 — classement sonore (bandes sect_bruit réglementaires) et
                     # cartes de bruit stratégiques (dépassements Lden/Ln — ≠ classement). SIS et
                     # CASIAS sont servis par les kinds VIRTUELS 'sis'/'casias' (sol_pollue filtré).
-                    "bruit_route", "bruit_carte"}
+                    "bruit_route", "bruit_carte",
+                    # SOURCES-2 lot 3 — systèmes d'endiguement DEAL (digues + zones protégées :
+                    # l'inondation RÉSIDUELLE derrière l'ouvrage, classe/niveau/population).
+                    "endiguement",
+                    # SOURCES-2 lot 4 — scénarios d'inondation des TRI (fréquent/moyen/extrême).
+                    "tri_zone"}
 
 # SOURCES-1 lot 1 — kinds VIRTUELS de la carte : une clé front → le kind stocké + un filtre
 # subtype. ER = typepsc 05 (les 6 ER de Saint-Louis codés « 02 » sont captés par la cascade via
@@ -5416,6 +5421,10 @@ _VIRTUAL_MAP_KINDS: dict[str, tuple[str, tuple[str, ...] | None]] = {
 _RICH_POPUP_KINDS: frozenset[str] = frozenset({
     "sup", "plu_gpu_prescription", "sol_pollue", "znieff", "ppr", "georisque_alea",
     "dpu", "peb", "ens", "zone_humide", "dpf",
+    # SOURCES-2 lot 3 — endiguement : classe d'ouvrage, niveau, population protégée au clic.
+    "endiguement",
+    # SOURCES-2 lot 4 — scénarios TRI : scénario, hauteurs d'eau, TRI au clic.
+    "tri_zone",
 })
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran

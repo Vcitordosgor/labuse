@@ -888,6 +888,37 @@ def _dhup_fichier_ok() -> Controle:
                     "24/24 dans l'extrait versionné (repli de l'OLL)", m)
 
 
+# SOURCES-2 lot 3 — endiguement : sous-types connus, zones protégées avec classe d'ouvrage.
+_ajout(_f(
+    source="endiguement", libelle="Systèmes d'endiguement et zones protégées (DEAL Lizmap)",
+    table="spatial_layers", where="kind = 'endiguement'",
+    cle=("id",), geom_col="geom",
+    source_motif="Systèmes d'endiguement%", portee_run=False, live=True,
+    propres=[
+        c.domaine("d_endiguement_subtypes", "subtype", ("digue", "zone_protegee"), "bloquant",
+                  "Sous-types endiguement connus", "digue | zone_protegee (fixés à l'ingestion)"),
+        c.couverture("d_endiguement_classe", "completude", "avertissant",
+                     "Part des zones protégées avec classe d'ouvrage",
+                     "≥ 80 % (classe A/B/C portée par l'EDD)",
+                     "subtype <> 'zone_protegee' OR (attrs->>'classe') IS NOT NULL", 80.0),
+    ]))
+
+# SOURCES-2 lot 3 — BAN PLUS : liens massifs, tous 974, part rattachée au RNB dite.
+_ajout(_f(
+    source="ban_plus", libelle="BAN PLUS (lien adresse ↔ bâtiment)",
+    table="ban_plus_liens", cle=("id_adr", "id_bat"),
+    source_motif="BAN PLUS%", portee_run=False, live=True,
+    propres=[
+        c.compte_mauvais("d_ban_plus_hors_974", "referentiel", "bloquant",
+                         "Aucun lien hors département",
+                         "0 idu hors 974 (filtre au plus tôt)",
+                         "idu IS NOT NULL AND left(idu, 3) <> '974'"),
+        c.couverture("d_ban_plus_rnb", "completude", "avertissant",
+                     "Part des liens résolus vers un ID-RNB",
+                     "≥ 50 % (jointure locale rnb_batiments.ext_bdtopo)",
+                     "rnb_id IS NOT NULL", 50.0),
+    ]))
+
 # REPARATIONS-1 lot 5 — OCS GE : deux millésimes pleins, géométries valides, évolution officielle.
 _ajout(_f(
     source="ocsge", libelle="OCS GE (occupation du sol)",

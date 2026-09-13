@@ -485,6 +485,9 @@ SEED: list[dict] = [
      "url": ("https://www.reunion.gouv.fr/contenu/telechargement/51477/389074/file/"
              "dossier%20SIS%20actualis%C3%A9.zip"),
      "selecteur": None},
+    # SOURCES-2 lot 3 — BAN PLUS : métadonnée `last_update` du jeu data.gouv (IGN).
+    {"name": "BAN PLUS — lien adresse ↔ bâtiment (IGN)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/ban-plus/", "selecteur": "last_update"},
     # ── Cas isolés vérifiés ──
     # DPE ADEME — data-fair `dataUpdatedAt` (métadonnée documentée stable du dataset).
     # SOURCES-2 lot 0 : l'ingestion couvre les TROIS jeux (dpe03existant + dpe02neuf +
@@ -610,6 +613,7 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     # (vérifié 07/09/2026), capabilities XML (le témoin sentinelle exige du JSON) — réingestion
     # à la demande (`labuse ingest-deal-carmen`), fraîcheur lue sur la page Circuit.
     "Ravines — domaine public fluvial (DEAL Carmen)": "WFS Lizmap DEAL (deal974.lizmap.com, migré SOURCES-2 lot 1) sans notion de version exposée (GetCapabilities non daté, vérifié 13/09/2026) ; le DPF est un arrêté de 2006, stable — réingéré à la demande, fraîcheur au Circuit.",
+    "Systèmes d'endiguement et zones protégées (DEAL Lizmap)": "WFS Lizmap DEAL sans notion de version exposée (vérifié 13/09/2026) ; millésime = source d'étude portée par CHAQUE zone (EDD Hydrétudes déc. 2024) — réingéré à la demande (`labuse ingest-endiguement`), fraîcheur au Circuit.",
     "Zones humides — inventaires DEAL (Carmen)": "WFS Lizmap DEAL (migré SOURCES-2 lot 1) sans notion de version exposée (vérifié 13/09/2026) ; inventaires 2003→2019 par secteurs — réingérés à la demande, fraîcheur au Circuit.",
     "Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)": "WFS Lizmap DEAL (migré SOURCES-2 lot 1, + ENS Département 178) sans notion de version exposée (vérifié 13/09/2026) — réingéré à la demande avec les zones humides.",
     # SOURCES-1 lot 3 — sols et bruit :
