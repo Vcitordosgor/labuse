@@ -1,0 +1,847 @@
+source,reservoir_slug,table_base,champ_ingere,ingere,verdict,destination,fait_dans_ce_mandat
+ACV / PVD / ORT (DGALN — liste des communes),anct_ort,commune_ort,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+ACV / PVD / ORT (DGALN — liste des communes),anct_ort,commune_ort,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+ACV / PVD / ORT (DGALN — liste des communes),anct_ort,commune_ort,statut,oui,(ingéré — champ producteur correspondant à confirmer),,non
+ACV / PVD / ORT (DGALN — liste des communes),anct_ort,commune_ort,ort_signee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+ACV / PVD / ORT (DGALN — liste des communes),anct_ort,commune_ort,date_signature,oui,(ingéré — champ producteur correspondant à confirmer),,non
+ACV / PVD / ORT (DGALN — liste des communes),anct_ort,commune_ort,duree_annees,oui,(ingéré — champ producteur correspondant à confirmer),,non
+ACV / PVD / ORT (DGALN — liste des communes),anct_ort,commune_ort,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+ACV / PVD / ORT (DGALN — liste des communes),anct_ort,commune_ort,maj_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+AZI / TRI — inondation (Géorisques GASPAR),georisques_azi_tri,azi_communes,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+AZI / TRI — inondation (Géorisques GASPAR),georisques_azi_tri,azi_communes,type_doc,oui,(ingéré — champ producteur correspondant à confirmer),,non
+AZI / TRI — inondation (Géorisques GASPAR),georisques_azi_tri,azi_communes,code_national,oui,(ingéré — champ producteur correspondant à confirmer),,non
+AZI / TRI — inondation (Géorisques GASPAR),georisques_azi_tri,azi_communes,libelle,oui,(ingéré — champ producteur correspondant à confirmer),,non
+AZI / TRI — inondation (Géorisques GASPAR),georisques_azi_tri,azi_communes,risques,oui,(ingéré — champ producteur correspondant à confirmer),,non
+AZI / TRI — inondation (Géorisques GASPAR),georisques_azi_tri,azi_communes,date_diffusion,oui,(ingéré — champ producteur correspondant à confirmer),,non
+AZI / TRI — inondation (Géorisques GASPAR),georisques_azi_tri,azi_communes,maj_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Annuaire de l'administration (service-public.fr / DILA),annuaire_service_public,mairies,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Annuaire de l'administration (service-public.fr / DILA),annuaire_service_public,mairies,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Annuaire de l'administration (service-public.fr / DILA),annuaire_service_public,mairies,nom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Annuaire de l'administration (service-public.fr / DILA),annuaire_service_public,mairies,adresse,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Annuaire de l'administration (service-public.fr / DILA),annuaire_service_public,mairies,code_postal,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Annuaire de l'administration (service-public.fr / DILA),annuaire_service_public,mairies,telephone,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Annuaire de l'administration (service-public.fr / DILA),annuaire_service_public,mairies,email,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Annuaire de l'administration (service-public.fr / DILA),annuaire_service_public,mairies,site_officiel,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Annuaire de l'administration (service-public.fr / DILA),annuaire_service_public,mairies,url_annuaire,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Annuaire de l'administration (service-public.fr / DILA),annuaire_service_public,mairies,source,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Annuaire de l'administration (service-public.fr / DILA),annuaire_service_public,mairies,date_import,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BAN PLUS — lien adresse ↔ bâtiment (IGN),ban_plus,ban_plus_liens,id_adr,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BAN PLUS — lien adresse ↔ bâtiment (IGN),ban_plus,ban_plus_liens,id_bat,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BAN PLUS — lien adresse ↔ bâtiment (IGN),ban_plus,ban_plus_liens,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BAN PLUS — lien adresse ↔ bâtiment (IGN),ban_plus,ban_plus_liens,type_lien,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BAN PLUS — lien adresse ↔ bâtiment (IGN),ban_plus,ban_plus_liens,nb_adr,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BAN PLUS — lien adresse ↔ bâtiment (IGN),ban_plus,ban_plus_liens,nb_bat,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BAN PLUS — lien adresse ↔ bâtiment (IGN),ban_plus,ban_plus_liens,rnb_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BAN PLUS — lien adresse ↔ bâtiment (IGN),ban_plus,ban_plus_liens,ingere_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_tiles,tile_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_tiles,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_tiles,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_tiles,acquise_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_tiles,traite_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_tiles,nb_detections,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_tiles,pv_traite_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_tiles,irc_acquise_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_tiles,veg_traite_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,type,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,geom_2975,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,surface_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,confiance,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,criteres,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,sur_bati,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,validation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,tile_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,detected_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,jeu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,juge_vlm,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,juge_vlm_fort,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,juge_flair,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,probe_score,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,ortho_detections,valide_profil,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,parcel_equipements,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,parcel_equipements,piscine,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,parcel_equipements,piscine_surface_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,parcel_equipements,piscine_confiance,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,parcel_equipements,pv_detecte,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,parcel_equipements,pv_surface_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,parcel_equipements,pv_confiance,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,parcel_equipements,pv_probable_ces,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO 20 cm (IGN),bd_ortho,parcel_equipements,updated_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,type,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,geom_2975,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,surface_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,confiance,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,criteres,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,sur_bati,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,validation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,tile_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,detected_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,jeu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,juge_vlm,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,juge_vlm_fort,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,juge_flair,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,probe_score,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,ortho_detections,valide_profil,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,parcel_vegetation,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,parcel_vegetation,ndvi_moyen,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,parcel_vegetation,canopee_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,parcel_vegetation,canopee_limite_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,parcel_vegetation,canopee_bati_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,parcel_vegetation,methode_hauteur,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,parcel_vegetation,confiance,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,parcel_vegetation,bati_voisin_10m,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,parcel_vegetation,updated_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,parcel_vegetation,motif_absence,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,vegetation_zonal_acc,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,vegetation_zonal_acc,zone,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,vegetation_zonal_acc,px_total,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,vegetation_zonal_acc,px_canopee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BD ORTHO IRC (IGN),bd_ortho_irc,vegetation_zonal_acc,ndvi_sum,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_sondages,siren,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_sondages,sonde_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_sondages,resultat,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_sondages,n_procedures,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_procedures,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_procedures,annonce_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_procedures,siren,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_procedures,type_procedure,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_procedures,famille_jugement,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_procedures,date_annonce,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_procedures,date_jugement_txt,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_procedures,tribunal,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_procedures,numero_annonce,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_procedures,publication,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_procedures,url_source,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_procedures,raw,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_procedures,ingested_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_annonces_owner,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_annonces_owner,siren,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_annonces_owner,famille,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_annonces_owner,nature,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_annonces_owner,date_annonce,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_annonces_owner,payload,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,bodacc_annonces_owner,fetched_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,annonces,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,annonces,type,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,annonces,titre,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,annonces,corps,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,annonces,lien,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,annonces,envoye_par,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,annonces,at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,annonces,n_cible,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,annonces,n_mail_ok,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,annonces,n_mail_echec,oui,(ingéré — champ producteur correspondant à confirmer),,non
+BODACC (procédures collectives),bodacc,annonces,n_cloche,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresses,id_ban,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresses,numero,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresses,rep,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresses,voie,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresses,code_postal,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresses,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresses,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresses,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresses,geom_2975,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresses,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresses,rattachement,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresses,refreshed_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresse_parcelles,id_ban,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresse_parcelles,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Base Adresse Nationale,ban,adresse_parcelles,source,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,section,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,numero,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,surface_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,centroid,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,bbox,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,ingestion_run_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,created_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,updated_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,geom_2975,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,origine,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre d'époque (Etalab / PCI vecteur DGFiP),cadastre_epoque,cadastre_historique,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre d'époque (Etalab / PCI vecteur DGFiP),cadastre_epoque,cadastre_historique,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Cadastre d'époque (Etalab / PCI vecteur DGFiP),cadastre_epoque,cadastre_historique,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,type_peril,oui,(ingéré — champ producteur correspondant à confirmer),,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,date_arrete,oui,(ingéré — champ producteur correspondant à confirmer),,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,date_debut,oui,(ingéré — champ producteur correspondant à confirmer),,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,date_fin,oui,(ingéré — champ producteur correspondant à confirmer),,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,raw,oui,(ingéré — champ producteur correspondant à confirmer),,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,ingested_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"CoSIA (couverture du sol IA, IGN)",cosia,p_model_bati_cosia,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"CoSIA (couverture du sol IA, IGN)",cosia,p_model_bati_cosia,emprise_cosia_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"CoSIA (couverture du sol IA, IGN)",cosia,p_model_bati_cosia,source_millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"CoSIA (couverture du sol IA, IGN)",cosia,p_model_bati_cosia,computed_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"CoSIA (couverture du sol IA, IGN)",cosia,qa_cosia_bati,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"CoSIA (couverture du sol IA, IGN)",cosia,qa_cosia_bati,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Consommation d'espaces NAF (Cerema — portail de l'artificialisation),enaf_cerema,commune_conso_enaf,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Consommation d'espaces NAF (Cerema — portail de l'artificialisation),enaf_cerema,commune_conso_enaf,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Consommation d'espaces NAF (Cerema — portail de l'artificialisation),enaf_cerema,commune_conso_enaf,conso_2011_2021_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Consommation d'espaces NAF (Cerema — portail de l'artificialisation),enaf_cerema,commune_conso_enaf,conso_2021_2024_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Consommation d'espaces NAF (Cerema — portail de l'artificialisation),enaf_cerema,commune_conso_enaf,hab_2011_2021_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Consommation d'espaces NAF (Cerema — portail de l'artificialisation),enaf_cerema,commune_conso_enaf,hab_2021_2024_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Consommation d'espaces NAF (Cerema — portail de l'artificialisation),enaf_cerema,commune_conso_enaf,source_nom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Consommation d'espaces NAF (Cerema — portail de l'artificialisation),enaf_cerema,commune_conso_enaf,source_url,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Consommation d'espaces NAF (Cerema — portail de l'artificialisation),enaf_cerema,commune_conso_enaf,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Consommation d'espaces NAF (Cerema — portail de l'artificialisation),enaf_cerema,commune_conso_enaf,importe_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Coût de construction (EPTB SDES + choix LABUSE),cout_construction_sdes,cout_construction_ref,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Coût de construction (EPTB SDES + choix LABUSE),cout_construction_sdes,cout_construction_ref,segment,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Coût de construction (EPTB SDES + choix LABUSE),cout_construction_sdes,cout_construction_ref,cout_bas_eur_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Coût de construction (EPTB SDES + choix LABUSE),cout_construction_sdes,cout_construction_ref,cout_haut_eur_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Coût de construction (EPTB SDES + choix LABUSE),cout_construction_sdes,cout_construction_ref,unite,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Coût de construction (EPTB SDES + choix LABUSE),cout_construction_sdes,cout_construction_ref,source,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Coût de construction (EPTB SDES + choix LABUSE),cout_construction_sdes,cout_construction_ref,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Coût de construction (EPTB SDES + choix LABUSE),cout_construction_sdes,cout_construction_ref,servi,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Coût de construction (EPTB SDES + choix LABUSE),cout_construction_sdes,cout_construction_ref,note,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Coût de construction (EPTB SDES + choix LABUSE),cout_construction_sdes,cout_construction_ref,maj_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DEAL Réunion (WMS/WFS),deal_wms_wfs,(API directe / carte / aucune table),,-,à voir,comparaison producteur à mener (RECHERCHE-PRODUCTEURS.md),
+DFI — documents de filiation informatisés (DGFiP),dgfip_dfi,dfi_filiation,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DFI — documents de filiation informatisés (DGFiP),dgfip_dfi,dfi_filiation,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DFI — documents de filiation informatisés (DGFiP),dgfip_dfi,dfi_filiation,identifiant_dfi,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DFI — documents de filiation informatisés (DGFiP),dgfip_dfi,dfi_filiation,nature,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DFI — documents de filiation informatisés (DGFiP),dgfip_dfi,dfi_filiation,date_validation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DFI — documents de filiation informatisés (DGFiP),dgfip_dfi,dfi_filiation,idu_mere,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DFI — documents de filiation informatisés (DGFiP),dgfip_dfi,dfi_filiation,idu_fille,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,parcelle_personne_morale,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,parcelle_personne_morale,groupe,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,parcelle_personne_morale,groupe_label,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,parcelle_personne_morale,forme_juridique,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,parcelle_personne_morale,denomination,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,parcelle_personne_morale,siren,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,parcelle_personne_morale,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,parcelle_personne_morale,source,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,parcelle_personne_morale,url_source,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,parcelle_personne_morale,date_import,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,pm_proprietaires_millesimes,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,pm_proprietaires_millesimes,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,pm_proprietaires_millesimes,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,pm_proprietaires_millesimes,groupe,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,pm_proprietaires_millesimes,groupe_label,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,pm_proprietaires_millesimes,forme_juridique,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,pm_proprietaires_millesimes,denomination,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,pm_proprietaires_millesimes,siren,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,pm_proprietaires_millesimes,url_source,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,pm_proprietaires_millesimes,date_import,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,numero_dpe,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,etiquette_dpe,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,etiquette_ges,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,type_batiment,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,surface_habitable,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,annee_construction,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,adresse,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,code_insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,code_postal,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,date_etablissement,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,lon,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,lat,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,geocode_score,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,parcelle_idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,rattachement,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,raw,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,ingested_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,jeu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DPE ADEME (logements existants),dpe_ademe,dpe_records,rnb_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations,mutation_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations,date_mutation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations,valeur_fonciere,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations,type_local,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations,surface_reelle_bati,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations,surface_terrain,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations,nature_mutation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations,raw,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_parcelle,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_parcelle,id_mutation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_parcelle,date_mutation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_parcelle,nature_mutation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_parcelle,valeur_fonciere,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_parcelle,code_commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_parcelle,id_parcelle,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_parcelle,type_local,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_parcelle,surface_reelle_bati,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_parcelle,surface_terrain,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_parcelle,nature_culture,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_parcelle,longitude,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_parcelle,latitude,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_parcelle,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,id_mutation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,date_mutation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,nature_mutation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,valeur_fonciere,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,code_commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,id_parcelle,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,type_local,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,surface_reelle_bati,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,surface_terrain,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,nature_culture,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,longitude,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,latitude,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,source_archive,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations_histo,millesime_source,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_secteur_medianes,secteur,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_secteur_medianes,type_bien,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_secteur_medianes,n_ventes,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_secteur_medianes,mediane_valeur,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_secteur_medianes,mediane_prix_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_secteur_medianes,fenetre,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_secteur_medianes,computed_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_prix_sortie_neuf,cle,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_prix_sortie_neuf,niveau,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_prix_sortie_neuf,prix_m2_neuf,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_prix_sortie_neuf,n,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_prix_sortie_neuf,computed_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+FRR ex-ZRR — zone spéciale d'action rurale (Légifrance),frr_ex_zrr,territoire_fiscal_commune,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+FRR ex-ZRR — zone spéciale d'action rurale (Légifrance),frr_ex_zrr,territoire_fiscal_commune,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+FRR ex-ZRR — zone spéciale d'action rurale (Légifrance),frr_ex_zrr,territoire_fiscal_commune,zfang_regime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+FRR ex-ZRR — zone spéciale d'action rurale (Légifrance),frr_ex_zrr,territoire_fiscal_commune,frr_classement,oui,(ingéré — champ producteur correspondant à confirmer),,non
+FRR ex-ZRR — zone spéciale d'action rurale (Légifrance),frr_ex_zrr,territoire_fiscal_commune,updated_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,arcep_immeubles,imb_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,arcep_immeubles,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,arcep_immeubles,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,arcep_immeubles,adresse,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,arcep_immeubles,nb_logements,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,arcep_immeubles,ftth,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,arcep_immeubles,operateurs_ftth,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,arcep_immeubles,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,arcep_immeubles,geom_2975,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,arcep_immeubles,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,arcep_immeubles,maj_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,fid,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,idcar_200m,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,idcar_1km,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,idcar_nat,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,i_est_200,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,i_est_1km,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,lcog_geo,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,ind,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,men,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,men_pauv,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,men_1ind,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,men_5ind,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,men_prop,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,men_fmp,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,ind_snv,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,men_surf,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,men_coll,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,men_mais,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,log_av45,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,log_45_70,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,log_70_90,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,log_ap90,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,log_inc,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,log_soc,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,ind_0_3,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,ind_4_5,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,ind_6_10,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,ind_11_17,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,ind_18_24,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,ind_25_39,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,ind_40_54,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,ind_55_64,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,ind_65_79,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,ind_80p,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,filosofi_carreaux_200m,ind_inc,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,p_model_filo,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,p_model_filo,snv_pp,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,p_model_filo,pct_pauv,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,p_model_filo,pct_prop,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,p_model_filo,dens_pop,oui,(ingéré — champ producteur correspondant à confirmer),,non
+GPU — zonages d'assainissement,gpu_zonage_assainissement,parcel_anc,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+GPU — zonages d'assainissement,gpu_zonage_assainissement,parcel_anc,zone_anc,oui,(ingéré — champ producteur correspondant à confirmer),,non
+GPU — zonages d'assainissement,gpu_zonage_assainissement,parcel_anc,source,oui,(ingéré — champ producteur correspondant à confirmer),,non
+GPU — zonages d'assainissement,gpu_zonage_assainissement,parcel_anc,proba_anc,oui,(ingéré — champ producteur correspondant à confirmer),,non
+GPU — zonages d'assainissement,gpu_zonage_assainissement,parcel_anc,updated_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeants,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeants,siren,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeants,representant_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeants,type_personne,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeants,nom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeants,prenoms,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeants,date_naissance,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeants,role_entreprise,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeants,date_prise_fonction,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeants,gerant_siren,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeants,actif,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeants,diffusible,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeants,raw,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeants,ingested_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeant_gigogne,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeant_gigogne,siren,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeant_gigogne,gerant_siren,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeant_gigogne,representant_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeant_gigogne,nom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeant_gigogne,prenoms,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeant_gigogne,date_naissance,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeant_gigogne,role_entreprise,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeant_gigogne,diffusible,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeant_gigogne,raw,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INPI RNE (dirigeants),inpi_rne,pm_dirigeant_gigogne,ingested_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,logements,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,res_principales,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,res_secondaires,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,vacants,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,proprietaires_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,locataires_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,maisons_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,apparts_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,typologie,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,source_nom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,source_url,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,importe_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,iris,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,log,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,rp,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,logvac,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,maison,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,appart,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,rp_prop,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,rp_loc,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,rp_lochlmv,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,ach_tot,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,ach_1919,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,ach_1945,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,ach_1970,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,ach_1990,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,ach_2005,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,ach_2019,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,men,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,nper_rp,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,pop,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,pop_0014,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,pop_1529,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,pop_3044,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,pop_4559,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,pop_6074,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,pop_75p,oui,(ingéré — champ producteur correspondant à confirmer),,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,iris_rp,maj_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP2022 — fichier détail Logements (EGOUL),insee_rp2022_egoul,anc_maille_taux,maille,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP2022 — fichier détail Logements (EGOUL),insee_rp2022_egoul,anc_maille_taux,code,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP2022 — fichier détail Logements (EGOUL),insee_rp2022_egoul,anc_maille_taux,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP2022 — fichier détail Logements (EGOUL),insee_rp2022_egoul,anc_maille_taux,taux_non_racc,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP2022 — fichier détail Logements (EGOUL),insee_rp2022_egoul,anc_maille_taux,n_logements,oui,(ingéré — champ producteur correspondant à confirmer),,non
+INSEE RP2022 — fichier détail Logements (EGOUL),insee_rp2022_egoul,anc_maille_taux,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Inventaire SRU (DHUP),sru_dhup,commune_contexte_sru,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Inventaire SRU (DHUP),sru_dhup,commune_contexte_sru,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Inventaire SRU (DHUP),sru_dhup,commune_contexte_sru,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Inventaire SRU (DHUP),sru_dhup,commune_contexte_sru,taux_lls,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Inventaire SRU (DHUP),sru_dhup,commune_contexte_sru,objectif_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Inventaire SRU (DHUP),sru_dhup,commune_contexte_sru,statut,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Inventaire SRU (DHUP),sru_dhup,commune_contexte_sru,prelevement_eur,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Inventaire SRU (DHUP),sru_dhup,commune_contexte_sru,detail,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Inventaire SRU (DHUP),sru_dhup,commune_contexte_sru,source_nom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Inventaire SRU (DHUP),sru_dhup,commune_contexte_sru,source_url,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Inventaire SRU (DHUP),sru_dhup,commune_contexte_sru,importe_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,toiture_lidar,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,toiture_lidar,verdict,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,toiture_lidar,pente_mediane_deg,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,toiture_lidar,pans_orientation_deg,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,toiture_lidar,part_pentue,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,toiture_lidar,computed_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,toiture_lidar,confiance,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,batiment_hauteur_lidar,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,batiment_hauteur_lidar,faitage_m,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,batiment_hauteur_lidar,egout_m,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,batiment_hauteur_lidar,hauteur_bdtopo_m,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,batiment_hauteur_lidar,ecart_faitage_bdtopo_m,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,batiment_hauteur_lidar,n_cellules,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,batiment_hauteur_lidar,mesure_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,batiment_hauteur_lidar,date_debut_survol,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,batiment_hauteur_lidar,date_fin_survol,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,batiment_hauteur_lidar,code_mission,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,batiment_hauteur_lidar,methode,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,batiment_hauteur_lidar,rnb_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,batiment_hauteur_lidar,rnb_cause,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,lidar_dalle_grille,cle,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,lidar_dalle_grille,x0,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,lidar_dalle_grille,y0,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,lidar_dalle_grille,x1,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,lidar_dalle_grille,y1,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,lidar_dalle_grille,code_mission,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,lidar_dalle_grille,date_debut,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,lidar_dalle_grille,date_fin,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,lidar_dalle_grille,url_mnh,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,lidar_dalle_grille,n_parcelles,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,lidar_dalle_grille,n_mesurees,oui,(ingéré — champ producteur correspondant à confirmer),,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,lidar_dalle_grille,fait_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers DHUP — carte des loyers (annonces),loyers_dhup,(API directe / carte / aucune table),,-,à voir,comparaison producteur à mener (RECHERCHE-PRODUCTEURS.md),
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_loyers,annee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_loyers,zone,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_loyers,type_habitat,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_loyers,pieces,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_loyers,loyer_median,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_loyers,loyer_q1,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_loyers,loyer_q3,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_loyers,surface_moyenne,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_loyers,n_obs,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_loyers,methode,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_zonage,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_zonage,iris,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_zonage,zone,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_zonage,epci,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_zonage,annee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+NPNRU (DEAL Réunion / ANCT),npnru,anru_quartiers,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+NPNRU (DEAL Réunion / ANCT),npnru,anru_quartiers,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+NPNRU (DEAL Réunion / ANCT),npnru,anru_quartiers,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+NPNRU (DEAL Réunion / ANCT),npnru,anru_quartiers,nom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+NPNRU (DEAL Réunion / ANCT),npnru,anru_quartiers,interet,oui,(ingéré — champ producteur correspondant à confirmer),,non
+NPNRU (DEAL Réunion / ANCT),npnru,anru_quartiers,code_qpv,oui,(ingéré — champ producteur correspondant à confirmer),,non
+NPNRU (DEAL Réunion / ANCT),npnru,anru_quartiers,source_nom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+NPNRU (DEAL Réunion / ANCT),npnru,anru_quartiers,source_url,oui,(ingéré — champ producteur correspondant à confirmer),,non
+NPNRU (DEAL Réunion / ANCT),npnru,anru_quartiers,importe_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_sol,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_sol,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_sol,code_cs,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_sol,code_us,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_sol,artif,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_sol,geom_2975,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_sol,ingere_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_evolution,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_evolution,artificialisation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_evolution,cs_2017,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_evolution,us_2017,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_evolution,artif_2017,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_evolution,cs_2022,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_evolution,us_2022,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_evolution,artif_2022,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_evolution,surface_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,ocsge_evolution,geom_2975,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,parcel_ocsge,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,parcel_ocsge,part_artif_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,parcel_ocsge,cs_dominant,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,parcel_ocsge,us_dominant,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,parcel_ocsge,artif_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,parcel_ocsge,evol_artif_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,parcel_ocsge,evol_renat_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,parcel_ocsge,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,parcel_ocsge,calcule_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OpenStreetMap / Overpass,osm_overpass,parcel_amenites,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OpenStreetMap / Overpass,osm_overpass,parcel_amenites,parcel_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OpenStreetMap / Overpass,osm_overpass,parcel_amenites,dist_ecole_m,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OpenStreetMap / Overpass,osm_overpass,parcel_amenites,dist_sante_m,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OpenStreetMap / Overpass,osm_overpass,parcel_amenites,dist_commerce_m,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OpenStreetMap / Overpass,osm_overpass,parcel_amenites,dist_tcsp_m,oui,(ingéré — champ producteur correspondant à confirmer),,non
+OpenStreetMap / Overpass,osm_overpass,parcel_amenites,computed_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PLH des 5 EPCI (extraction documentaire),plh_epci,plh_epci,epci,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PLH des 5 EPCI (extraction documentaire),plh_epci,plh_epci,periode,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PLH des 5 EPCI (extraction documentaire),plh_epci,plh_epci,statut,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PLH des 5 EPCI (extraction documentaire),plh_epci,plh_epci,obj_logements_an,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PLH des 5 EPCI (extraction documentaire),plh_epci,plh_epci,part_sociale_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PLH des 5 EPCI (extraction documentaire),plh_epci,plh_epci,detail,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PLH des 5 EPCI (extraction documentaire),plh_epci,plh_epci,refs,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PLH des 5 EPCI (extraction documentaire),plh_epci,plh_epci,importe_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,solar_grid,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,solar_grid,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,solar_grid,prod_spec_kwh_kwc,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,solar_grid,ghi_kwh_m2_an,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,solar_grid,source,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,solar_grid,fetched_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,solar_grid,prod_mensuel,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,parcel_solar,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,parcel_solar,prod_spec_kwh_kwc,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,parcel_solar,score_solaire,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,parcel_solar,azimut_bati_deg,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,parcel_solar,azimut_confiance,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,parcel_solar,flag_abf,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,parcel_solar,flag_topo_ombrage,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,parcel_solar,proba_proprio_occupant,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,parcel_solar,updated_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,parcel_solar,flag_ombrage_vegetal,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,parcel_solar,ghi_kwh_m2_an,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,parcel_solar,prod_mensuel,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,parcel_solar,mois_optimal,oui,(ingéré — champ producteur correspondant à confirmer),,non
+PVGIS (Commission européenne),pvgis,parcel_solar,source_millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Parkings OSM (loi APER),parkings_osm_aper,parkings_aper,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Parkings OSM (loi APER),parkings_osm_aper,parkings_aper,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Parkings OSM (loi APER),parkings_osm_aper,parkings_aper,geom_2975,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Parkings OSM (loi APER),parkings_osm_aper,parkings_aper,surface_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Parkings OSM (loi APER),parkings_osm_aper,parkings_aper,source,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Parkings OSM (loi APER),parkings_osm_aper,parkings_aper,source_ref,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Parkings OSM (loi APER),parkings_osm_aper,parkings_aper,idus,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Parkings OSM (loi APER),parkings_osm_aper,parkings_aper,proprio_pm,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Parkings OSM (loi APER),parkings_osm_aper,parkings_aper,proprio_siren,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Parkings OSM (loi APER),parkings_osm_aper,parkings_aper,tranche,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Parkings OSM (loi APER),parkings_osm_aper,parkings_aper,echeance,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Parkings OSM (loi APER),parkings_osm_aper,parkings_aper,equipe,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Parkings OSM (loi APER),parkings_osm_aper,parkings_aper,exempt_probable,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Parkings OSM (loi APER),parkings_osm_aper,parkings_aper,updated_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RGE ALTI (altimétrie),rge_alti,rgealti_pente_5m,rid,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RGE ALTI (altimétrie),rge_alti,rgealti_pente_5m,rast,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RGE ALTI (altimétrie),rge_alti,rgealti_mnt_5m,rid,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RGE ALTI (altimétrie),rge_alti,rgealti_mnt_5m,rast,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_batiments,rnb_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_batiments,statut,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_batiments,is_active,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_batiments,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_batiments,point,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_batiments,shape,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_batiments,shape_2975,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_batiments,ext_bdtopo,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_batiments,adresses,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_batiments,ingere_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_rattachement_bdtopo,layer_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_rattachement_bdtopo,rnb_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_rattachement_bdtopo,recouvrement_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_rattachement_bdtopo,cause,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNB — Référentiel National des Bâtiments,rnb,rnb_rattachement_bdtopo,calcule_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,numero_immatriculation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,nom_usage,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,adresse,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,nb_lots_total,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,nb_lots_habitation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,periode_construction,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,syndic_type,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,syndic_nom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,syndic_siret,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,mandat_en_cours,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,idu_codes,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,parcelle_idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,rattachement,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,raw,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,ingested_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RPLS — répertoire des logements locatifs sociaux (SDES),rpls_sdes,rpls_commune,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RPLS — répertoire des logements locatifs sociaux (SDES),rpls_sdes,rpls_commune,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RPLS — répertoire des logements locatifs sociaux (SDES),rpls_sdes,rpls_commune,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RPLS — répertoire des logements locatifs sociaux (SDES),rpls_sdes,rpls_commune,nb_logements,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RPLS — répertoire des logements locatifs sociaux (SDES),rpls_sdes,rpls_commune,construct_median,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RPLS — répertoire des logements locatifs sociaux (SDES),rpls_sdes,rpls_commune,pct_qpv,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RPLS — répertoire des logements locatifs sociaux (SDES),rpls_sdes,rpls_commune,surfhab_moy,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RPLS — répertoire des logements locatifs sociaux (SDES),rpls_sdes,rpls_commune,computed_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RPLS — répertoire des logements locatifs sociaux (SDES),rpls_sdes,rpls_commune,dpe_classes,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RPLS — répertoire des logements locatifs sociaux (SDES),rpls_sdes,rpls_commune,pct_passoires,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RPLS — répertoire des logements locatifs sociaux (SDES),rpls_sdes,rpls_commune,pct_dpe_renseigne,oui,(ingéré — champ producteur correspondant à confirmer),,non
+RTAA DOM (textes réglementaires),rtaa_dom,(API directe / carte / aucune table),,-,à voir,comparaison producteur à mener (RECHERCHE-PRODUCTEURS.md),
+Radar (pige d'annonces),radar_pige,pige_annonces,annonce_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_annonces,bien_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_annonces,portail,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_annonces,url_sortante,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_annonces,date_saisie,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_annonces,created_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_annonces,list_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_annonces,first_publication_date,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_annonces,index_date,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_annonces,expiration_date,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_annonces,statut_portail,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,bien_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,type_bien,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,est_copro,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,idu,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,rattachement_niveau,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,rattachement_confiance,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,statut,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,date_publication,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,date_premiere_saisie,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,date_derniere_confirmation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,created_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,retiree_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,vendue_le,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,vendue_valeur,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,vendue_delai_j,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,vendue_ecart_prix,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,source_position,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,lat,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,lng,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,zipcode,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,district,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,rattachement_etat,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,rattachement_pistes,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,a_qualifier,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,a_qualifier_motifs,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,rattachement_criteres,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,rattachement_humain,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,depose_par_agence,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,agence_nom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_biens,adresse_exacte,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,bien_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,prix,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,type_bien,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,pieces,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,surface_hab,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,surface_terrain,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,dpe_classe,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,dpe_conso,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,dpe_ges,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,particulier_pro,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,fraicheur_source,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,etiquettes,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,valide_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,valide_par,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,updated_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,a_verifier,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,annee_construction,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,etat_bien,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,taxe_fonciere,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,prix_m2,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,chauffage,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,owner_siren,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,source_brute,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,ges_classe,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,provenance,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,declaratif,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,photos,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_faits,description,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_depots,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_depots,nom_fichier,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_depots,hash,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_depots,chemin_archive,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_depots,nb_annonces,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_depots,nb_nouvelles,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_depots,nb_maj,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_depots,nb_a_qualifier,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_depots,date_depot,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_captures,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_captures,bien_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_captures,annonce_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_captures,chemin_prive,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_captures,hash,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_captures,date_capture,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_captures,created_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_clics,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_clics,compte_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_clics,bien_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_clics,annonce_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_clics,portail,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_clics,date_clic,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_prix_historique,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_prix_historique,bien_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_prix_historique,date_constat,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_prix_historique,ancien_prix,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_prix_historique,nouveau_prix,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_prix_historique,created_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_interets_agence,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_interets_agence,bien_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_interets_agence,compte_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,pige_interets_agence,created_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,radar_releves,jour,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,radar_releves,annonces,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,radar_releves,rattachees,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,radar_releves,paires,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,radar_releves,communes,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,radar_releves,types,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Radar (pige d'annonces),radar_pige,radar_releves,created_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Recherche d'entreprises (DINUM),recherche_entreprises_dinum,owner_denom_lookup,denomination_norm,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Recherche d'entreprises (DINUM),recherche_entreprises_dinum,owner_denom_lookup,status,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Recherche d'entreprises (DINUM),recherche_entreprises_dinum,owner_denom_lookup,siren,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Recherche d'entreprises (DINUM),recherche_entreprises_dinum,owner_denom_lookup,candidats,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Recherche d'entreprises (DINUM),recherche_entreprises_dinum,owner_denom_lookup,fetched_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Recherche d'entreprises (DINUM),recherche_entreprises_dinum,owner_enrichment,siren,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Recherche d'entreprises (DINUM),recherche_entreprises_dinum,owner_enrichment,denomination,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Recherche d'entreprises (DINUM),recherche_entreprises_dinum,owner_enrichment,source,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Recherche d'entreprises (DINUM),recherche_entreprises_dinum,owner_enrichment,payload,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Recherche d'entreprises (DINUM),recherche_entreprises_dinum,owner_enrichment,fetched_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE,sirene_recherche_entreprises,(API directe / carte / aucune table),,-,à voir,comparaison producteur à mener (RECHERCHE-PRODUCTEURS.md),
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,siret,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,siren,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,naf,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,denomination,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,enseigne,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,adresse,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,actif,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,diffusible,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,data_source_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,ingested_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,tranche_effectif,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,qualite_xy,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,iris,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,qp24,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,date_creation,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SIRENE établissements géolocalisés,sirene_etablissements,sirene_etablissements,date_dernier_traitement,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,sitadel_permits,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,sitadel_permits,permit_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,sitadel_permits,type,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,sitadel_permits,date,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,sitadel_permits,idu_codes,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,sitadel_permits,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,sitadel_permits,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,sitadel_permits,raw,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,sitadel_permits,date_depot,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,sitadel_permits,geom_2975,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,sitadel_permits,geom_approx,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,via_permits_geo,permit_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,via_permits_geo,d,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,via_permits_geo,etat,oui,(ingéré — champ producteur correspondant à confirmer),,non
+SITADEL (autorisations d'urbanisme),sitadel,via_permits_geo,g,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Sudocuh (procédures d'urbanisme),sudocuh,sudocuh_procedures,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Sudocuh (procédures d'urbanisme),sudocuh,sudocuh_procedures,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Sudocuh (procédures d'urbanisme),sudocuh,sudocuh_procedures,du_opposable,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Sudocuh (procédures d'urbanisme),sudocuh,sudocuh_procedures,du_en_cours,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Sudocuh (procédures d'urbanisme),sudocuh,sudocuh_procedures,etat_detaille,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Sudocuh (procédures d'urbanisme),sudocuh,sudocuh_procedures,prescription_proc,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Sudocuh (procédures d'urbanisme),sudocuh,sudocuh_procedures,approbation_opp,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Sudocuh (procédures d'urbanisme),sudocuh,sudocuh_procedures,millesime_date,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Sudocuh (procédures d'urbanisme),sudocuh,sudocuh_procedures,ingested_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Taux de taxe foncière — fichier REI (DGFiP),dgfip_rei,commune_rei,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Taux de taxe foncière — fichier REI (DGFiP),dgfip_rei,commune_rei,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Taux de taxe foncière — fichier REI (DGFiP),dgfip_rei,commune_rei,tfpb_commune_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Taux de taxe foncière — fichier REI (DGFiP),dgfip_rei,commune_rei,tfpb_vote_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Taux de taxe foncière — fichier REI (DGFiP),dgfip_rei,commune_rei,tfpb_epci_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Taux de taxe foncière — fichier REI (DGFiP),dgfip_rei,commune_rei,teom_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Taux de taxe foncière — fichier REI (DGFiP),dgfip_rei,commune_rei,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Taux de taxe foncière — fichier REI (DGFiP),dgfip_rei,commune_rei,maj_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Taxe d'aménagement — taux communaux (délibérations),taxe_amenagement,taxe_amenagement_taux,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Taxe d'aménagement — taux communaux (délibérations),taxe_amenagement,taxe_amenagement_taux,part_communale_pct,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Taxe d'aménagement — taux communaux (délibérations),taxe_amenagement,taxe_amenagement_taux,source,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Taxe d'aménagement — taux communaux (délibérations),taxe_amenagement,taxe_amenagement_taux,delib_date,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Taxe d'aménagement — taux communaux (délibérations),taxe_amenagement,taxe_amenagement_taux,maj_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Trafic RN (Région Réunion — SIR),trafic_rn,trafic_rn,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Trafic RN (Région Réunion — SIR),trafic_rn,trafic_rn,route,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Trafic RN (Région Réunion — SIR),trafic_rn,trafic_rn,annee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Trafic RN (Région Réunion — SIR),trafic_rn,trafic_rn,tmja,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Trafic RN (Région Réunion — SIR),trafic_rn,trafic_rn,nb_pl,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Trafic RN (Région Réunion — SIR),trafic_rn,trafic_rn,geom,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Trafic RN (Région Réunion — SIR),trafic_rn,trafic_rn,data_source_id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,id,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,idurba,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,document,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,zone,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,article_ref,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,page_pdf,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,texte_verbatim,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,doute,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,doute_motif,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,pagination_ambigue,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,source_url,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,fetched_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,plu_reglement_extrait,tsv,oui,(ingéré — champ producteur correspondant à confirmer),,non
+VRD / assainissement (SPANC),spanc_epci,(API directe / carte / aucune table),,-,à voir,comparaison producteur à mener (RECHERCHE-PRODUCTEURS.md),
+ZFANG — zone franche d'activité nouvelle génération (Légifrance),zfang,territoire_fiscal_commune,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+ZFANG — zone franche d'activité nouvelle génération (Légifrance),zfang,territoire_fiscal_commune,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+ZFANG — zone franche d'activité nouvelle génération (Légifrance),zfang,territoire_fiscal_commune,zfang_regime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+ZFANG — zone franche d'activité nouvelle génération (Légifrance),zfang,territoire_fiscal_commune,frr_classement,oui,(ingéré — champ producteur correspondant à confirmer),,non
+ZFANG — zone franche d'activité nouvelle génération (Légifrance),zfang,territoire_fiscal_commune,updated_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Zonage ABC des communes (DHUP),zonage_abc_dhup,commune_zonage_abc,insee,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Zonage ABC des communes (DHUP),zonage_abc_dhup,commune_zonage_abc,commune,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Zonage ABC des communes (DHUP),zonage_abc_dhup,commune_zonage_abc,zone,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Zonage ABC des communes (DHUP),zonage_abc_dhup,commune_zonage_abc,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
+Zonage ABC des communes (DHUP),zonage_abc_dhup,commune_zonage_abc,maj_at,oui,(ingéré — champ producteur correspondant à confirmer),,non

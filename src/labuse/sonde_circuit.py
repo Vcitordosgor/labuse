@@ -515,6 +515,13 @@ SONDE_COUVRE: dict[str, tuple[str, ...]] = {
 #: raison (un couple silencieux = verrou V5c cassé, jamais un « non couvert »). Raison par
 #: chiffre (elle vaut pour tous ses couples non couverts).
 NON_SONDES: dict[str, str] = {
+    # SOURCES-3 lot 1 — deux robinets, deux surfaces, deux définitions ASSUMÉES : la fiche/potentiel
+    # sert la hauteur BD TOPO (max des bâtiments intersectants, _hauteur_bati_m) ; l'extrusion 3D de
+    # la carte (couche_batiments_3d) préfère le faîtage LiDAR HD mesuré (batiment_hauteur_lidar), repli
+    # BD TOPO, par bâtiment. Ce ne sont pas deux chemins vers UNE même valeur (surfaces et sources
+    # distinctes) — la comparaison robinet à robinet est sans objet ; le flag `lidar` dit la provenance.
+    "hauteur_bati_m": "fiche/potentiel = BD TOPO (max intersectant) ; carte 3D = faîtage LiDAR HD "
+                      "mesuré (repli BD TOPO) — deux surfaces, deux définitions, comparaison sans objet",
     # REPARATIONS-1 lot 5 — la fiche (Le bien) et la couche carte lisent le MÊME précalcul
     # parcel_ocsge (une table, un producteur ingestion/ocsge.py) ; la couche peint les polygones
     # sources — aucun recalcul concurrent, la comparaison robinet à robinet est sans objet.

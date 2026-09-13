@@ -1599,9 +1599,11 @@ def _q_v2_where(run_label: str,
         # propriété : état PUBLIC de la société (M43, factuel) — cessée / radiée / procédure collective.
         es = [x.strip() for x in etat_societe.split(",") if x.strip()]
         sub = []
-        if "cessee" in es:
-            sub.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pc JOIN owner_enrichment oe ON oe.siren = pc.siren"
-                       " WHERE pc.idu = p.idu AND oe.payload->>'etat_administratif' = 'C')")
+        # SOURCES-3 lot 0.1 — DINUM débranché de l'affichage/facette/scan (réservé au Score V).
+        # SIRENE (sirene_etablissements) n'ingère QUE les établissements ACTIFS : l'état « cessée »
+        # d'une unité légale n'y est pas représentable (une société cessée est simplement absente,
+        # indistinguable d'une société sans établissement réunionnais). Le filtre « cessée » est donc
+        # retiré ; les états publics DATÉS restent servis par le BODACC (radiée, procédure collective).
         if "radiee" in es:
             sub.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pr JOIN bodacc_annonces_owner br ON br.siren = pr.siren"
                        " WHERE pr.idu = p.idu AND br.famille = 'radiation')")
@@ -1611,8 +1613,8 @@ def _q_v2_where(run_label: str,
         if sub:
             conds.append("(" + " OR ".join(sub) + ")")
     # K1 — filtres propriétaire PERSONNE MORALE (DGFiP 2025 + INPI RNE). Chaque filtre = un EXISTS
-    # sur parcelle_personne_morale (jointure idu), + jointures SIREN pour APE (owner_enrichment) et
-    # dirigeants (v_pm_propension_vendre). Un filtre PM implique la présence d'une PM (pas de faux zéro).
+    # sur parcelle_personne_morale (jointure idu), + jointures SIREN pour APE (SIRENE — SOURCES-3 lot 0.1,
+    # plus DINUM) et dirigeants (v_pm_propension_vendre). Un filtre PM implique la présence d'une PM.
     if pm_denom and pm_denom.strip():
         conds.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pmd WHERE pmd.idu = p.idu"
                      " AND pmd.denomination ILIKE :pm_denom)")
@@ -1633,8 +1635,9 @@ def _q_v2_where(run_label: str,
         apes = [x.strip().upper() for x in pm_ape.split(",") if x.strip()]
         if apes:
             conds.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pma"
-                         " JOIN owner_enrichment oea ON oea.siren = pma.siren"
-                         " WHERE pma.idu = p.idu AND oea.payload->>'activite_principale' = ANY(:pm_ape))")
+                         " JOIN sirene_etablissements sea ON sea.siren = pma.siren"
+                         " WHERE pma.idu = p.idu"
+                         " AND substr(sea.naf,1,2)||'.'||substr(sea.naf,3) = ANY(:pm_ape))")
             params["pm_ape"] = apes
     if pm_dirig_min is not None or pm_dirig_max is not None:
         cond = ("EXISTS (SELECT 1 FROM parcelle_personne_morale pmg"
@@ -1777,7 +1780,7 @@ class FiltreCriteres:
     signaux: str | None = None
     # K1 (rattrapage KelFoncier) — FILTRES PROPRIÉTAIRE PERSONNE MORALE (données DGFiP millésime
     # 2025 + INPI RNE, déjà en base). denomination (autocomplétion), siren (CSV), forme juridique
-    # (CSV de codes réels), APE (CSV de codes NAF réels via owner_enrichment), nb dirigeants (min/max).
+    # (CSV de codes réels), APE (CSV de codes NAF réels via SIRENE — SOURCES-3 lot 0.1), nb dirigeants.
     pm_denom: str | None = None
     pm_siren: str | None = None
     pm_forme: str | None = None
@@ -4802,13 +4805,10 @@ def _pm_etat_societe(db: Session, siren: str | None) -> dict | None:
     try:
         with db.begin_nested():
             etats = []
-            ce = db.execute(text(
-                "SELECT payload->>'etat_administratif' AS etat, payload->>'date_fermeture' AS d "
-                "FROM owner_enrichment WHERE siren = :s LIMIT 1"), {"s": siren}).mappings().first()
-            if ce and ce["etat"] == "C":
-                etats.append({"type": "cessée", "date": (ce["d"] or None),
-                              "libelle": f"cessée{(' le ' + ce['d']) if ce['d'] else ''}",
-                              "source": "Sirene/INSEE (recherche-entreprises)", "etiquette": "Sourcé"})
+            # SOURCES-3 lot 0.1 — l'état « cessée » venait du cache DINUM (owner_enrichment), désormais
+            # réservé au Score V. SIRENE (sirene_etablissements) n'ingère que les établissements ACTIFS :
+            # l'état administratif « C » d'une unité légale n'y est pas lisible. On ne DÉDUIT pas une
+            # cessation d'une absence. Les états publics DATÉS restent servis par le BODACC ci-dessous.
             for b in db.execute(text(
                 "SELECT famille, max(date_annonce)::text AS d FROM bodacc_annonces_owner "
                 "WHERE siren = :s AND famille IN ('radiation','pcl') GROUP BY famille"),

@@ -524,6 +524,46 @@ def verrou_communes_echantillons(db=None) -> ResultatVerrou:
                           f"{len(CARTES)} cartes × 24 communes : un attendu ou un à-valider partout")
 
 
+def verrou_maille_adresse_974(db) -> ResultatVerrou:
+    """V4e (SOURCES-3 lot 4) — aucune ligne SERVIE à maille adresse / parcelle / bâtiment ne porte
+    un code postal hors Réunion (974xx/977xx) ni une commune hors des 24. Scanne les tables servies
+    (carte des réservoirs) qui portent une colonne de code postal ou de commune à cette maille — le
+    garde d'ingestion (ingestion/garde_974.py) empêche l'entrée, ce verrou prouve la sortie propre."""
+    from .ingestion.garde_974 import COMMUNES_24_FOLD, REUNION_CP_PREFIXES, _fold
+
+    schema = relations_schema(db)
+    carte = _carte()
+    # tables servies portant un code postal (maille adresse) — jamais les backups/exploitation.
+    cp_cols = db.execute(text(
+        "SELECT table_name, column_name FROM information_schema.columns "
+        "WHERE column_name IN ('code_postal','cp','code_postal_brut','codepostal') "
+        "ORDER BY table_name, column_name")).all()
+    pbs: list[str] = []
+    scannees = 0
+    pref = tuple(REUNION_CP_PREFIXES)
+    for tbl, col in cp_cols:
+        if tbl.lower() not in carte or tbl.lower() not in schema:
+            continue
+        scannees += 1
+        # CP présent et hors des préfixes réunionnais (974xx/977xx)
+        cond_reunion = " OR ".join(f"btrim({col}::text) LIKE '{p}%'" for p in pref)
+        rows = db.execute(text(
+            f"SELECT {col}::text AS cp, count(*) n FROM {tbl} "
+            f"WHERE {col} IS NOT NULL AND btrim({col}::text) <> '' "
+            f"  AND NOT ({cond_reunion}) "
+            f"GROUP BY 1 ORDER BY 2 DESC LIMIT 5"), {}).all()
+        n_hors = sum(int(r.n) for r in rows)
+        if n_hors:
+            ex = ", ".join(f"{r.cp}×{r.n}" for r in rows[:3])
+            pbs.append(f"{tbl}.{col} : {n_hors} ligne(s) CP hors 974/977 ({ex})")
+    if pbs:
+        return ResultatVerrou("V4e", PHRASES["V4e"], "casse",
+                              f"{len(pbs)} table(s) à maille adresse portent un CP hors Réunion", pbs)
+    return ResultatVerrou("V4e", PHRASES["V4e"], "ok",
+                          f"{scannees} table(s) à maille adresse au crible : aucun CP hors 974/977, "
+                          "commune dans les 24 (garde d'ingestion garde_974)")
+
+
 # ── LOT 5 — le verrou des concepts et des moteurs ───────────────────────────────────────
 
 
@@ -627,6 +667,7 @@ PHRASES: dict[str, str] = {
     "V4b": "Saint-Benoît sert les valeurs de Saint-Benoît, Sainte-Marie celles de Sainte-Marie — celles attendues chez le producteur, pas seulement différentes.",
     "V4c": "Sur les parcelles frontière, la commune de rattachement et la zone PLU au centroïde sont celles de LEUR commune, jamais de la voisine.",
     "V4d": "Chacune des 15 cartes de la fiche commune a, pour chacune des 24 communes, son attendu producteur ou sa ligne à valider — jamais un trou silencieux.",
+    "V4e": "Aucune ligne servie à maille adresse / parcelle / bâtiment ne porte un code postal hors 974/977 ni une commune hors des 24 — le garde d'ingestion croise CP, commune et coordonnées (deux qui se contredisent → rejet).",
     "V5a": "Un concept = un id : deux données au libellé ou à la définition identiques n'existent pas, hors synonymes assumés et motivés.",
     "V5b": "Une donnée = une fonction : chaque id porte un producteur nommé, plus aucun sql_propre ni front, et le registre est intègre.",
     "V5c": "Zéro couple silencieux : chaque couple (donnée, robinet) est sondé, mono-robinet (golden/règles), ou porte sa raison nommée.",
@@ -646,6 +687,7 @@ VERROUS: tuple[Verrou, ...] = (
     Verrou("V4b", 4, PHRASES["V4b"], verrou_communes_permutation),
     Verrou("V4c", 4, PHRASES["V4c"], verrou_communes_frontiere),
     Verrou("V4d", 4, PHRASES["V4d"], verrou_communes_echantillons),
+    Verrou("V4e", 4, PHRASES["V4e"], verrou_maille_adresse_974),
     Verrou("V5a", 5, PHRASES["V5a"], verrou_concepts),
     Verrou("V5b", 5, PHRASES["V5b"], verrou_une_donnee_une_fonction),
     Verrou("V5c", 5, PHRASES["V5c"], verrou_couples_sondes),

@@ -273,14 +273,18 @@ def test_fuite2_hauteur_lidar_creditee():
     """Fusion CIRCUIT-6 × RECETTE-10 T1 : l'égout MESURÉ se compare à la règle d'ÉGOUT, le
     faîtage à la règle de FAÎTAGE (surelevation_mesuree, jamais l'une contre l'autre) ; la
     table batiment_hauteur_lidar est à la carte du réservoir lidar, l'arête est posée sur la
-    marge servie. (_hauteur_bati_m RESTE le faîtage BD TOPO — l'override égout du lot 7
-    initial remettait un égout face à une règle de faîtage : retiré au merge.)"""
+    marge servie. (_hauteur_bati_m RESTE le faîtage BD TOPO pour le potentiel/surélévation —
+    l'override égout du lot 7 initial remettait un égout face à une règle de faîtage : retiré au
+    merge.) SOURCES-3 lot 1 : la fuite « 303k à la carte » est CLOSE — l'extrusion 3D
+    (couche_batiments_3d) préfère le faîtage LiDAR, donc lidar_hd_mnh est désormais crédité au
+    chiffre hauteur_bati_m (à côté de bd_topo)."""
     from labuse.faisabilite.potentiel import surelevation_mesuree
     from labuse.registre.donnees import CHIFFRES
     from labuse.registre.tables import RESERVOIR_TABLES
     assert "batiment_hauteur_lidar" in RESERVOIR_TABLES["lidar_hd_mnh"].tables
     assert "lidar_hd_mnh" in CHIFFRES["marge_surelevation_m"].reservoirs
-    assert CHIFFRES["hauteur_bati_m"].reservoirs == ("bd_topo",)
+    # la hauteur bâtie sert DEUX surfaces : BD TOPO (fiche/potentiel) + faîtage LiDAR (carte 3D).
+    assert CHIFFRES["hauteur_bati_m"].reservoirs == ("bd_topo", "lidar_hd_mnh")
     sm = surelevation_mesuree(10.0, 13.0, 4.1, 8.4)   # le témoin Saint-Denis (Dossier régénéré)
     assert {c["base"]: c["marge_m"] for c in sm["contraintes"]} == {"égout": 5.9, "faîtage": 4.6}
     assert sm["contrainte"] == "faîtage" and sm["marge_m"] == 4.6   # la plus serrée mord
@@ -300,12 +304,12 @@ def test_fuite2_lidar_plus_quasi_vide():
         assert m["quasi_vide"] is False and m["remplis"] >= 6
 
 
-# ── la commande unique : 23, toujours tous ─────────────────────────────────────────────
+# ── la commande unique : 24, toujours tous ─────────────────────────────────────────────
 @pytest.mark.local
-def test_les_23_se_jouent_toujours_tous():
-    """La composition de « labuse circuit verrous » : 16 verrous + 7 garanties = 23, TOUJOURS
+def test_les_24_se_jouent_toujours_tous():
+    """La composition de « labuse circuit verrous » : 17 verrous + 7 garanties = 24, TOUJOURS
     tous — même quand un verrou casse en route (le vécu : l'arrêt-au-premier sur V3a masquait
-    les 16 suivants, la commande n'en montrait que 7)."""
+    les suivants, la commande n'en montrait que 7). SOURCES-3 lot 4 : V4e (garde-fou 974) ajouté."""
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
     from labuse import circuit_verrous
@@ -314,7 +318,7 @@ def test_les_23_se_jouent_toujours_tous():
         resultats = circuit_verrous.jouer_tous(s, arret_premier=False) + CG.jouer_garanties(s)
     ids = [r.id for r in resultats]
     assert ids == ["V1a", "V1b", "V1c", "V1d", "V2a", "V2b", "V3a", "V3b", "V3c",
-                   "V4a", "V4b", "V4c", "V4d", "V5a", "V5b", "V5c",
+                   "V4a", "V4b", "V4c", "V4d", "V4e", "V5a", "V5b", "V5c",
                    "G1", "G2", "G3", "G4", "G5", "G6", "G7"], ids
 
 

@@ -305,6 +305,17 @@ def ingest_jeu(session: Session, jeu: str, connector: DpeConnector | None = None
             # BAN contradictoire ou absent, ET aucune corroboration locale → homonymie probable.
             n_rejetes += 1
             continue
+        # SOURCES-3 lot 4 — GARDE-FOU 974 COMMUN (belt-and-braces après la logique DPE) : croise
+        # CP + commune + coordonnées BAN. Un rejet ici est journalisé avec ses trois valeurs.
+        from .garde_974 import journaliser_rejet, verifier_974
+        from .run_all import REUNION_COMMUNES
+        _commune_nom = next((nom for ins, nom in REUNION_COMMUNES if ins == p.get("code_insee")), None)
+        _v = verifier_974(cp=p.get("code_postal"), commune=_commune_nom,
+                          lon=geo.get("lon"), lat=geo.get("lat"))
+        if not _v.ok:
+            journaliser_rejet(session, "dpe_ademe", _v, cle=p.get("numero_dpe"))
+            n_rejetes += 1
+            continue
         rnb_id = _rattacher_rnb(session, p, geo)
         n_rat += 1 if geo["idu"] else 0
         n_rnb += 1 if rnb_id else 0

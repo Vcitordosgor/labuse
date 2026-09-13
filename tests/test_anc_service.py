@@ -60,23 +60,32 @@ def test_absent_jamais_collectif_ni_raccordement(db_session):
 
 
 @pytest.mark.db
-def test_source_commune_office_eau_dit_echelle_et_millesime(db_session):
-    """M95 — commune classée INTÉGRALEMENT en ANC (Office de l'eau) : 3ᵉ échelle de Sourcé, distincte du
-    parcellaire et du secteur. L'ÉCHELLE (commune entière) et le MILLÉSIME (source amont) sont DITS ; une
-    commune < 100 % NE bascule PAS (jamais un « intégralement » inventé)."""
+def test_office_eau_retiree_echelle_commune_par_insee_egoul(db_session):
+    """SOURCES-3 lot 0.2 — l'Office de l'eau est RETIRÉ : anc_service ne lit plus
+    anc_office_eau_commune et ne renvoie JAMAIS l'ancien statut `source_commune`. L'échelle
+    commune est désormais portée par l'INSEE RP2022 EGOUL (anc_maille_taux, maille commune) :
+    le TAUX est servi, sourcé et daté, sans « intégralement » fabriqué, sans seuil."""
     _ensure(db_session)   # parcel_anc existe mais VIDE pour ces idus → pas de zone parcellaire
+    # Office de l'eau présent en base : DOIT être ignoré (lecteur supprimé).
     db_session.execute(text(
         "CREATE TABLE IF NOT EXISTS anc_office_eau_commune (insee varchar(5) PRIMARY KEY, commune text, "
         "pct_anc int, detail text, millesime text, source_ref text, updated_at timestamptz)"))
-    db_session.execute(text("DELETE FROM anc_office_eau_commune WHERE insee IN ('97421','97499')"))
+    db_session.execute(text("DELETE FROM anc_office_eau_commune WHERE insee = '97421'"))
     db_session.execute(text(
         "INSERT INTO anc_office_eau_commune (insee, commune, pct_anc, millesime, source_ref) VALUES "
-        "('97421','Salazie',100,'Chronique n°149 — données 2023','Office de l''eau Réunion, texte p.13'),"
-        "('97499','Autre',80,'x','y')"))                 # 80 % ≠ intégral → PAS source_commune
+        "('97421','Salazie',100,'Chronique n°149 — données 2023','Office de l''eau Réunion, texte p.13')"))
+    # INSEE RP2022 EGOUL : taux de non-raccordement à la maille commune (repli du secteur).
+    db_session.execute(text(
+        "CREATE TABLE IF NOT EXISTS anc_maille_taux (maille text, code text, insee varchar(5), "
+        "taux_non_racc double precision, millesime text)"))
+    db_session.execute(text("DELETE FROM anc_maille_taux WHERE insee = '97421' AND maille = 'commune'"))
+    db_session.execute(text(
+        "INSERT INTO anc_maille_taux (maille, code, insee, taux_non_racc, millesime) VALUES "
+        "('commune','97421','97421',98,'RP2022')"))
     r = anc_service.statut_anc(db_session, "97421000TESTA1")
-    assert r["statut"] == "source_commune" and r["maille_type"] == "commune" and r["anc"] is True
-    assert "données 2023" in r["millesime"]
+    # l'ancien statut Office de l'eau a disparu ; l'échelle commune vient de l'INSEE.
+    assert r["statut"] == "source_secteur" and r["maille_type"] == "commune"
+    assert r["taux_non_racc"] == 98 and "RP2022" in r["millesime"]
     low = r["phrase"].lower()
-    assert "intégralement" in low and "commune entière" in low   # l'échelle est DITE
-    # une commune sous 100 % ne fabrique JAMAIS un « intégralement »
-    assert anc_service.statut_anc(db_session, "97499000TESTB1")["statut"] != "source_commune"
+    assert "intégralement" not in low            # plus de verdict catégoriel fabriqué
+    assert "insee" in low and "98 %" in low       # le taux sourcé et daté est servi

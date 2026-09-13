@@ -28,7 +28,10 @@ FORME_LABELS: dict[str, str] = {
     "SCM": "Société civile de moyens", "GAEC": "GAEC", "SCCV": "SCCV (construction-vente)",
 }
 
-# Codes NAF/APE réellement présents (via owner_enrichment) → libellé court. Idem : liste = DISTINCT réel.
+# Codes NAF/APE réellement présents (via SIRENE — sirene_etablissements.naf) → libellé court. Idem :
+# liste = DISTINCT réel. SOURCES-3 lot 0.1 : SIRENE fait foi pour tout affichage ; l'APE ne vient plus
+# du cache DINUM (owner_enrichment), réservé désormais au seul Score V. Le NAF SIRENE est stocké sans
+# point (« 6820B ») ; on le rend au format pointé (« 68.20B ») pour l'affichage et le filtre.
 APE_LABELS: dict[str, str] = {
     "68.20B": "Location de terrains et logements", "68.20A": "Location de terrains et logements",
     "41.10D": "Promotion immobilière (logements)", "41.10A": "Promotion immobilière",
@@ -66,10 +69,10 @@ def facettes(db: Session, commune: str | None = None) -> dict:
             f"SELECT pm.forme_juridique, count(*) FROM parcelle_personne_morale pm{join}"
             f" WHERE pm.forme_juridique IS NOT NULL GROUP BY 1 ORDER BY 2 DESC"), prm).all()
     ]
-    ape_sql = ("SELECT oe.payload->>'activite_principale' ape, count(DISTINCT pm.idu)"
-               " FROM parcelle_personne_morale pm JOIN owner_enrichment oe ON oe.siren = pm.siren"
+    ape_sql = ("SELECT substr(se.naf,1,2)||'.'||substr(se.naf,3) ape, count(DISTINCT pm.idu)"
+               " FROM parcelle_personne_morale pm JOIN sirene_etablissements se ON se.siren = pm.siren"
                + (" JOIN parcels p ON p.idu = pm.idu AND p.commune = :com" if commune else "")
-               + " WHERE oe.payload->>'activite_principale' IS NOT NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 40")
+               + " WHERE se.naf IS NOT NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 40")
     apes = [
         {"code": c, "label": APE_LABELS.get(c, c), "n": int(n)}
         for c, n in db.execute(text(ape_sql), prm).all()

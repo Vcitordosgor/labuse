@@ -1081,11 +1081,11 @@ DONNEES: dict[str, Donnee] = {
     "commune) — le TAUX, jamais un verdict",
     moteur="anc", calcul="moteur",
     fonction="src/labuse/anc_service.py:statut_anc (producteur nommé, délégation)",
-    # CIRCUIT-5b lot 2 — le moteur ANC lit AUSSI la chronique de l'Office de l'eau
-    # (anc_office_eau_commune, communes 100 % ANC servies depuis M95) : office_eau_chroniques rattaché.
-    # CIRCUIT-6 lot 6 (G6) — et le zonage SIG d'assainissement (parcel_anc, 4/24 communes GPU) :
-    # gpu_zonage_assainissement était un réservoir MUET lu par anc_service (attrapé par G6).
-    reservoirs=("insee_rp2022_egoul", "office_eau_chroniques", "gpu_zonage_assainissement",),
+    # SOURCES-3 lot 0.2 — l'Office de l'eau (office_eau_chroniques, communes 100 % ANC servies
+    # depuis M95) est RETIRÉ : la branche source_commune a disparu, l'échelle commune est portée
+    # par l'INSEE RP2022 EGOUL (anc_maille_taux). Réservoirs restants : le taux INSEE + le zonage
+    # SIG d'assainissement (parcel_anc, 4/24 communes GPU).
+    reservoirs=("insee_rp2022_egoul", "gpu_zonage_assainissement",),
     portee="live"),
  "ventes_retenues_n": C("Ventes retenues (nuage)", "nombre", "parcelle",
     "ventes DVF retenues par le filtre de comparables (couverture VISIBLE — EXPORTS-1 lot 2)",
@@ -1245,10 +1245,15 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/bati.py:le_bien_block (BD TOPO au sol ; CoSIA parcel_bati_revele en note)",
     reservoirs=("bd_topo", "cosia",), portee="live"),
  "hauteur_bati_m": C("Hauteur du bâti", "m", "parcelle",
-    "hauteur du bâti principal (BD TOPO, max des bâtiments intersectants)",
+    "hauteur du bâti principal — max des bâtiments intersectants (BD TOPO) en fiche/potentiel ; "
+    "l'extrusion 3D de la carte PRÉFÈRE le faîtage LiDAR HD mesuré (batiment_hauteur_lidar.faitage_m, "
+    "flag `lidar` par bâtiment), repli BD TOPO",
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:_hauteur_bati_m",
-    reservoirs=("bd_topo",), portee="live"),
+    # SOURCES-3 lot 1 — la hauteur bâtie servie à l'extrusion 3D de la carte (/map/batiments.geojson,
+    # robinet couche_batiments_3d) est MESURÉE par le LiDAR HD quand la parcelle est ingérée : lidar_hd_mnh
+    # est rattaché (clôture de la fuite « 303k à la carte » — la provenance dit désormais le LiDAR).
+    reservoirs=("bd_topo", "lidar_hd_mnh",), portee="live"),
  "part_artificialisee_pct": C("Part artificialisée (OCS GE)", "%", "parcelle",
     "part de la parcelle artificialisée d'après l'OCS GE 2022 (matrice du décret 2023-1096, "
     "étape 1 — avant lissage des seuils réglementaires) — donnée d'îlot, jamais la précision "

@@ -46,9 +46,11 @@ def seed(engine):
         s.execute(text("INSERT INTO parcelle_personne_morale (idu, groupe, groupe_label, forme_juridique, denomination, siren, millesime, source)"
                        " VALUES (:i, 4, 'Commune', 'COM', 'COMMUNE KF-TEST', '900000002', '2025', 'DGFiP — parcelles des personnes morales')"),
                   {"i": idu_com})
-        s.execute(text("INSERT INTO owner_enrichment (siren, denomination, source, payload)"
-                       " VALUES (:sir, 'SCI KF-TEST OMEGA', 'kf-test', CAST(:p AS jsonb))"),
-                  {"sir": sci_siren, "p": '{"activite_principale": "68.20B"}'})
+        # SOURCES-3 lot 0.1 — l'APE de la facette/filtre vient de SIRENE (sirene_etablissements.naf,
+        # stocké sans point « 6820B », rendu « 68.20B »), plus du cache DINUM owner_enrichment.
+        s.execute(text("INSERT INTO sirene_etablissements (siret, siren, naf, denomination, commune, insee, actif)"
+                       " VALUES (:sit, :sir, '6820B', 'SCI KF-TEST OMEGA', :c, '97411', true)"),
+                  {"sit": sci_siren + "00011", "sir": sci_siren, "c": COMMUNE})
         for i in range(3):
             s.execute(text("INSERT INTO pm_dirigeants (siren, type_personne, nom, date_naissance, role_entreprise, diffusible)"
                            " VALUES (:sir, 'INDIVIDU', :nom, '1970-05', 'gerant', true)"),
@@ -57,7 +59,7 @@ def seed(engine):
     yield {"idu_sci": idu_sci, "idu_com": idu_com, "sci_siren": sci_siren}
     with session_scope() as s:
         s.execute(text("DELETE FROM pm_dirigeants WHERE siren IN ('900000001','900000002')"))
-        s.execute(text("DELETE FROM owner_enrichment WHERE siren IN ('900000001','900000002')"))
+        s.execute(text("DELETE FROM sirene_etablissements WHERE siren IN ('900000001','900000002')"))
         s.execute(text("DELETE FROM parcelle_personne_morale WHERE idu IN (:a,:b)"), {"a": idu_sci, "b": idu_com})
         s.execute(text("DELETE FROM parcels WHERE commune = :c"), {"c": COMMUNE})
         s.commit()
@@ -96,7 +98,7 @@ def test_where_construit_les_filtres_pm():
                        pm_ape="68.20B", pm_denom="OMEGA", pm_dirig_min=2)
     assert "parcelle_personne_morale" in w and "forme_juridique = ANY(:pm_forme)" in w
     assert p["pm_forme"] == ["SCI"] and p["pm_siren"] == ["900000001", "900000002"]
-    assert "owner_enrichment" in w and p["pm_ape"] == ["68.20B"]           # APE via jointure SIREN
+    assert "sirene_etablissements" in w and p["pm_ape"] == ["68.20B"]      # APE via SIRENE (lot 0.1)
     assert "v_pm_propension_vendre" in w and p["pm_dirig_min"] == 2        # dirigeants via la vue
     assert p["pm_denom"] == "%OMEGA%"
 

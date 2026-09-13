@@ -1,42 +1,20 @@
 {
   "source": "dvf",
-  "producteur": "Région Réunion — DVF Réunion (DV3F public, data.regionreunion.com)",
-  "table": "(SELECT 'ile-'||extract(year from date_mutation)::int AS fenetre, count(DISTINCT id_mutation) AS n FROM dvf_mutations_histo GROUP BY extract(year from date_mutation) UNION ALL SELECT code_commune||'-'||extract(year from date_mutation)::int, count(DISTINCT id_mutation) FROM dvf_mutations_histo GROUP BY code_commune, extract(year from date_mutation)) t",
+  "producteur": "DGFiP / Etalab — DVF (files.data.gouv.fr/geo-dvf, app.dvf.etalab.gouv.fr)",
+  "table": "(SELECT 'millesime_max' AS fenetre, extract(year from max(date_mutation))::int AS n FROM dvf_mutations) t",
   "cle_colonne": "fenetre",
-  "lu_le": "2026-09-07",
-  "note": "SOURCES-1 lot 4 — le DVF Région entre comme ÉCHANTILLON PRODUCTEUR (mandat : pas de nouvelle donnée servie). Comptes de mutations DISTINCTES par fenêtre commune×année, comparés au producteur régional (jeu DV3F public FIGÉ 2014→mi-2021 chez la Région — seules les années pleines 2019/2020 sont comparables ; 2021 Région est partielle, jamais comparée). Tolérance 5 % : périmètres DV3F (Région) et géo-DVF/archives DGFiP (LABUSE) diffèrent légèrement par nature (écarts mesurés 1,5–3,1 % au 07/09/2026). Remplace le squelette CIRCUIT-3 lot 3 (a_valider) : l'appariement PAR MUTATION est impossible (ids Région = empreintes md5 idmutinvar/idopendata, sans correspondance avec id_mutation Etalab — vérifié 07/09/2026), l'échantillon est donc agrégé par fenêtre.",
+  "lu_le": "2026-09-13",
+  "note": "SOURCES-3 lot 0.4 — le témoin de filtre DVF pointe désormais sur ETALAB (DGFiP / Etalab, id 5, qui fait foi), plus sur DVF Réunion (Région), devenue ALIAS de id 5. L'ancien échantillon comparait le jeu FIGÉ dvf_mutations_histo (2014→2020) aux comptes par année du producteur Région (jeu DV3F public gelé 2014→mi-2021) : cette comparaison est retirée AVEC la source Région. Etalab ne publie PAS d'API de comptes par fenêtre (dit honnêtement) ; il publie en revanche par année (dossier geo-dvf/latest/csv/ : années 2021→2025, vérifié le 2026-09-13). Le contrôle vérifie donc que le jeu SERVI (dvf_mutations, dérivé Etalab) atteint le dernier millésime publié par Etalab (2025) — un retard de millésime = KO avertissant. La base sert déjà 2026 (avance normale du flux mensuel).",
   "lignes": [
     {
-      "cle": "ile-2019",
+      "cle": "millesime_max",
       "colonne": "n",
-      "attendu": 8224,
-      "tolerance_pct": 5.0,
+      "attendu": 2025,
+      "tolerance_abs": 1,
       "origine": {
-        "url": "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/demande-de-valeurs-foncierespublic/records?select=year(anneemut)%20as%20an,count(*)%20as%20n&group_by=year(anneemut)",
-        "champ": "results[year=2019].n",
-        "lu_le": "2026-09-07"
-      }
-    },
-    {
-      "cle": "ile-2020",
-      "colonne": "n",
-      "attendu": 7886,
-      "tolerance_pct": 5.0,
-      "origine": {
-        "url": "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/demande-de-valeurs-foncierespublic/records?select=year(anneemut)%20as%20an,count(*)%20as%20n&group_by=year(anneemut)",
-        "champ": "results[year=2020].n",
-        "lu_le": "2026-09-07"
-      }
-    },
-    {
-      "cle": "97415-2020",
-      "colonne": "n",
-      "attendu": 1108,
-      "tolerance_pct": 5.0,
-      "origine": {
-        "url": "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/demande-de-valeurs-foncierespublic/records?where=l_codinsee%3D%2297415%22%20and%20year(anneemut)%3D2020&limit=1",
-        "champ": "total_count",
-        "lu_le": "2026-09-07"
+        "url": "https://files.data.gouv.fr/geo-dvf/latest/csv/",
+        "champ": "dernière année publiée dans le dossier geo-dvf/latest/csv/ = 2025",
+        "lu_le": "2026-09-13"
       }
     }
   ]
