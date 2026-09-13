@@ -35,6 +35,9 @@ CURATION: dict[int, dict] = {
         "verdict_raison": "SOURCES-2 lot 0 : les TROIS jeux ADEME moissonnés au CP brut (existants + neufs + tertiaire) = 93 lignes dont 16 RÉUNIONNAISES corroborées (75 « neufs ST LEU » = Saint-Leu-la-Forêt 95 — homonymie ; 2 = Montpellier/Lille). 16/16 rattachées parcelle, 8 avec ID-RNB, miroir producteur. Le vide est un TROU PRODUCTEUR (les DPE DROM ne remontent pas à l'observatoire — corollaire : DPEENERGIE vide sur les 87 553 logements RPLS 974) — pas un trou de filtre : il n'existe AUCUN champ INSEE brut au schéma, le filtre INSEE du rapport producteurs ne répare rien.",
         "millesime_producteur": "train mensuel commun aux 3 jeux (dataUpdatedAt 09/09/2026)",
         "n_objets_producteur": "93 lignes CP brut 974 (dont 16 authentiques corroborées)",
+        "granularite": "logement (DPE déclaré)", "granularite_respectee": "oui (jamais généralisé à la parcelle)",
+        "part_parcelles": "16 DPE corroborés (16/16 rattachés parcelle, 8 avec ID-RNB) — vide sur les 4 témoins",
+        "manque_plein": "rien côté LABUSE — le producteur : les DPE DROM ne remontent pas à l'observatoire ADEME (sentinelle en veille sur le train mensuel)",
     },
     111: {  # Ravines DPF
         "verdict": "PLEINE",
@@ -434,11 +437,8 @@ CURATION: dict[int, dict] = {
     24: {"verdict": "PLEINE", "verdict_raison": "ABF/Monuments historiques (Mérimée, 200 périmètres). Couche + contrainte patrimoine."},
 
     # ══════════════ ÉNERGIE / DPE ══════════════
-    37: {"verdict": "BRANCHÉE INVISIBLE (vide)",
-         "part_parcelles": "17 DPE, 1 passoire thermique — VIDE sur les 4 témoins (0/4)",
-         "verdict_raison": "⚠ Le cas d'école du mandat : « connecté », drapeau « à jour » sur /sources, MAIS `dpe_records` = 17 et `v_passoire_thermique` = 1 → **fiche parcelle VIDE sur les 4 témoins (0/4)**. Branchée, à jour, et vide = INVISIBLE quel que soit le statut. Vrai trou d'ingestion (le cron mensuel tourne-t-il ? l'API ADEME répond-elle ?), pas un artefact de base de dev (431 663 parcelles).",
-         "granularite": "logement (DPE déclaré)", "granularite_respectee": "à vérifier — un DPE est un logement, pas une parcelle : ne pas généraliser à la parcelle.",
-         "manque_plein": "relancer/réparer l'ingestion DPE (17 records ≈ vide) — priorité"},
+    # (l'entrée 37 vit en tête de fichier — bloc SOURCES-2 : le « trou d'ingestion » supposé
+    #  s'est révélé un TROU PRODUCTEUR, ingestion réparée et corroborée, 16 lignes réelles)
 
     # ══════════════ RETIRÉES (déjà) ══════════════
     49: {"verdict": "RETIRÉE (déjà)", "verdict_raison": "EDF SEI open data — amont 410 Gone (jeu retiré par EDF ~2026). Retirée 06/09/2026. Rien à sonder. Le réseau HTA vit via id 93."},
