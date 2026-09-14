@@ -873,7 +873,14 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             lignes.append(fiche["marche_synthese"])
         if dm:
             base_m = f"Dernière mutation : {dm.get('date_mutation') or '?'}"
-            lignes.append(base_m + (f" — {int(dm['valeur']):,} €".replace(",", " ") if dm.get("valeur") else ""))
+            base_m += (f" — {int(dm['valeur']):,} €".replace(",", " ") if dm.get("valeur") else "")
+            # DVF+ (SOURCES-4) : adresse / pièces / Carrez / lots de la mutation (géo-DVF), si détaillés.
+            det = " · ".join(x for x in (
+                dm.get("adresse"),
+                f"{dm['nombre_pieces']} pièces" if dm.get("nombre_pieces") else "",
+                f"{int(dm['surface_carrez_m2'])} m² Carrez" if dm.get("surface_carrez_m2") else "",
+                f"{dm['nombre_lots']} lots" if (dm.get("nombre_lots") or 0) > 1 else "") if x)
+            lignes.append(base_m + (f" · {det}" if det else ""))
         _et = dvfp.get("secteur_etiquette")
         if _et and (dvfp.get("secteur") or []):
             lignes.append(f"({_et})")

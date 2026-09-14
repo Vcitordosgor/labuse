@@ -3675,6 +3675,18 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "SELECT type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre "
         "FROM dvf_secteur_medianes WHERE secteur = substring(:idu FROM 1 FOR 10) "
         "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()]
+    # SOURCES-4 lot 2 (DVF+) — adresse / nombre de pièces / surfaces Carrez / nombre de lots de la
+    # DERNIÈRE mutation de la parcelle, depuis la table latérale dvf_mutation_detail (ne nourrit NI le
+    # scoring NI le marché). Jointe via la dernière mutation (id_mutation) de la parcelle.
+    dvf_detail = None
+    if dvf_last:
+        dvf_detail = db.execute(text(
+            "SELECT d.adresse, d.code_postal, d.nombre_pieces, d.surface_carrez_m2, d.nombre_lots "
+            "FROM dvf_mutation_detail d JOIN ("
+            "  SELECT id_mutation FROM dvf_mutations_parcelle WHERE id_parcelle = :idu "
+            "  ORDER BY date_mutation DESC LIMIT 1) last ON last.id_mutation = d.id_mutation "
+            "WHERE d.id_parcelle = :idu"), {"idu": idu}).mappings().first() \
+            if db.execute(text("SELECT to_regclass('dvf_mutation_detail') IS NOT NULL")).scalar() else None
     dvf_parcelle = None
     if dvf_last or dvf_secteur:
         # EXPORTS-1 (1.4, arbitrage Q3) : UN SEUL « neuf » servi — `resolve_prix_neuf_marche`
@@ -3685,7 +3697,15 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         dvf_parcelle = {
             "derniere_mutation": ({**dict(dvf_last),
                                    "date_mutation": dvf_last["date_mutation"].isoformat()
-                                   if dvf_last["date_mutation"] else None}
+                                   if dvf_last["date_mutation"] else None,
+                                   # DVF+ (SOURCES-4) : adresse/pièces/Carrez/lots, None si non détaillé
+                                   **({"adresse": dvf_detail["adresse"],
+                                       "code_postal": dvf_detail["code_postal"],
+                                       "nombre_pieces": dvf_detail["nombre_pieces"],
+                                       "surface_carrez_m2": (float(dvf_detail["surface_carrez_m2"])
+                                                             if dvf_detail["surface_carrez_m2"] is not None else None),
+                                       "nombre_lots": dvf_detail["nombre_lots"]}
+                                      if dvf_detail else {})}
                                   if dvf_last else None),
             "secteur": dvf_secteur,
             # EXPORTS-1 (1.3) : grain dit — indicateur secondaire, jamais la tête de fiche.

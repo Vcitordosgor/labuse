@@ -237,6 +237,17 @@ On gardait `idurba`/`libelle`. `ingest_gpu_zones` capture désormais l'ensemble 
 **5 841 zones, datvalid sur 5 331** (les zones AGORAH n'en portent pas). Zonage servi INTACT
 (V4c/V4d verts — même donnée GPU, seuls les attrs s'enrichissent).
 
+### DVF+ — adresse / pièces / Carrez / lots → **ingéré (additif, run servi INTACT)**
+Ces champs sont publiés par géo-DVF mais n'étaient ni en colonne ni en `raw`. Comme DVF nourrit le
+scoring et le marché servi, approche **strictement ADDITIVE** : nouvelle table LATÉRALE
+`dvf_mutation_detail` (clé `id_mutation × id_parcelle`), remplie du MÊME géo-DVF (2021-2025, 974),
+**jointe en LEFT JOIN** à la « Dernière vente » de la fiche + Dossier PDF. **PREUVE d'invariance** :
+`dvf_mutations_parcelle` inchangée (**102 551 lignes, signature md5 identique avant/après**),
+`dvf_secteur_medianes` 2 359 inchangée, fichiers du run servi intacts (git), verrou **G3 vert**
+(aucune variable du modèle nourrie hors registre). 55 016 couples (54 858 avec adresse, 3 123 avec
+Carrez — le Carrez n'existe qu'en copropriété). Exemple servi : « 16 RUE JUAN DE NOVA · 4 pièces ·
+78 m² Carrez ». Le marché (prix ancien/neuf, médianes) ne bouge pas — aucune valeur recalculée.
+
 ### Reprise (point de départ pour la prochaine source) — **les LOURDS, un par un**
 Ordre restant : **Loyers DHUP carte** (loypredm2 + intervalles de confiance — source distincte de
 l'OLL déjà ingéré), puis DFI, Sudocuh, RP Logement, RPLS, classement sonore, EDF HTA, OSM, AZI/TRI,

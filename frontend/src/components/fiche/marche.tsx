@@ -46,10 +46,14 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           deux parcelles d'une même mutation). On ne présente donc jamais ce montant comme « le prix du
           bien » : on l'annonce comme une vente groupée. Le montant est sinon la mutation DVF de la parcelle. */}
       {(() => {
-        const dm = f.dvf_parcelle?.derniere_mutation as { date_mutation?: string | null; nature?: string | null; valeur?: number | null; multi_parcelles?: boolean } | null | undefined
+        const dm = f.dvf_parcelle?.derniere_mutation as { date_mutation?: string | null; nature?: string | null; valeur?: number | null; multi_parcelles?: boolean; adresse?: string | null; nombre_pieces?: number | null; surface_carrez_m2?: number | null; nombre_lots?: number | null } | null | undefined
         if (!dm?.date_mutation) return null
         const d = new Date(dm.date_mutation)
         const dateFmt = isNaN(d.getTime()) ? String(dm.date_mutation) : d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+        // DVF+ (SOURCES-4) : adresse + pièces + Carrez + lots de la mutation (géo-DVF), si détaillés.
+        const detail = [dm.adresse, dm.nombre_pieces ? `${dm.nombre_pieces} pièce${dm.nombre_pieces > 1 ? 's' : ''}` : null,
+                        dm.surface_carrez_m2 ? `${fmtInt(dm.surface_carrez_m2)} m² Carrez` : null,
+                        dm.nombre_lots && dm.nombre_lots > 1 ? `${dm.nombre_lots} lots` : null].filter(Boolean).join(' · ')
         return (
           <div data-derniere-vente>
             {dm.multi_parcelles
@@ -59,7 +63,7 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
                 </>)
               : (<>
                   <FactRow label="Dernière vente" value={<>{dateFmt}{dm.valeur ? <> — {fmtInt(dm.valeur)} <small>€</small></> : null}</>} />
-                  <FactNote>Mutation DVF de la parcelle{dm.nature ? ` — ${dm.nature.toLowerCase()}` : ''}.</FactNote>
+                  <FactNote>Mutation DVF de la parcelle{dm.nature ? ` — ${dm.nature.toLowerCase()}` : ''}{detail ? ` · ${detail}` : ''}.</FactNote>
                 </>)}
           </div>
         )

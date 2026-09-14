@@ -176,7 +176,10 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "znieff_region_ods": Rt((), note="canal Région non branché (0 donnée) — canonique : znieff_inpn"),
     # ── marché / valeurs ────────────────────────────────────────────────────────────
     "dvf": Rt(("dvf_mutations", "dvf_mutations_parcelle", "dvf_mutations_histo",
-               "dvf_secteur_medianes", "dvf_prix_sortie_neuf", "spatial_layers"),
+               "dvf_secteur_medianes", "dvf_prix_sortie_neuf", "spatial_layers",
+               # SOURCES-4 lot 2 — DVF+ table latérale (adresse/pièces/Carrez/lots par mutation×parcelle),
+               # jointe à la liste des ventes ; ne nourrit NI le scoring NI le marché servi.
+               "dvf_mutation_detail"),
               couches=("vefa_neuf",),
               millesime="géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020"),
     "dpe_ademe": Rt(("dpe_records",)),
