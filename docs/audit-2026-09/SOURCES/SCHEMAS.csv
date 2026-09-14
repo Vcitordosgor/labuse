@@ -965,7 +965,15 @@ Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,(schéma producteur
 Taux de taxe foncière — fichier REI (DGFiP),dgfip_rei,(schéma producteur),(REI DGFiP),oui,MAXIMUM (SOURCES-4 lot 2) — TFPB + TFPNB + CFE + bases nettes (les taux votés du REI),"commune_rei (tfpnb/cfe/bases) ; TFPB+TFPNB servis bloc fiscalité (tfpb_taux_pct, tfpnb_taux_pct) ; CFE+bases en base",oui
 Parc National de La Réunion (INPN),parc_national_inpn,(schéma producteur),(INPN WFS),oui,MAXIMUM (SOURCES-4 lot 2) — cœur/adhésion + superficie (ha) + décret ; source réelle = Région ODS pnrun_2021 (pas INPN WFS),"spatial_layers/parc_national attrs (surface_ha, decret) — popup carte ; présence servie fiche commune",oui
 Forêts publiques (ONF),forets_onf_bdtopo,(schéma producteur),(BD TOPO forêt),non,"à ingérer — session dédiée (SOURCES-4 lot 4, rang conservé) : volume/licence hors périmètre",forêts publiques INGÉRÉES ; régime/propriétaire à surfacer,non
-ZNIEFF (INPN/MNHN),znieff_inpn,(schéma producteur),(INPN ZNIEFF),non,"à ingérer — session dédiée (SOURCES-4 lot 4, rang conservé) : volume/licence hors périmètre",ZNIEFF type I & II INGÉRÉES ; identifiant national/espèces déterminantes hors périmètre,non
+ZNIEFF (INPN/MNHN),znieff_inpn,spatial_layers(attrs),id_mnhn,oui,MAXIMUM (SOURCES-5) — identifiant national MNHN,,oui
+ZNIEFF (INPN/MNHN),znieff_inpn,spatial_layers(attrs),cd_sig,oui,MAXIMUM (SOURCES-5) — code national SIG,,oui
+ZNIEFF (INPN/MNHN),znieff_inpn,spatial_layers(subtype/attrs),type,oui,MAXIMUM (SOURCES-5) — type I / type II,,oui
+ZNIEFF (INPN/MNHN),znieff_inpn,spatial_layers(attrs),id_local/nom_site/url_fiche,oui,MAXIMUM (SOURCES-5) — identité locale + fiche INPN,,oui
+ZNIEFF (INPN/MNHN),znieff_inpn,spatial_layers(attrs),gest_site/operateur,oui,MAXIMUM (SOURCES-5) — gestionnaire + opérateur,,oui
+ZNIEFF (INPN/MNHN),znieff_inpn,spatial_layers(attrs),date_crea/modif_adm/modif_geo/acte_deb/acte_fin,oui,MAXIMUM (SOURCES-5) — dates de création/modification/actes,,oui
+ZNIEFF (INPN/MNHN),znieff_inpn,spatial_layers(attrs),surf_off/area_sig/precision/src_geom/src_annee,oui,MAXIMUM (SOURCES-5) — surfaces officielle/SIG + précision + source géométrie,,oui
+ZNIEFF (INPN/MNHN),znieff_inpn,spatial_layers(attrs),marin/territoire/p1_nature/p4_geologi,oui,MAXIMUM (SOURCES-5) — drapeaux marin/territoire + nature/géologie,,oui
+ZNIEFF (INPN/MNHN),znieff_inpn,(producteur séparé),espèces déterminantes,non,PARTIEL — producteur : liste d'espèces déterminantes = jeu INPN distinct (pas cette couche WFS géométrique),,oui
 QPV 2024 (ANCT),qpv_2024,(schéma producteur),(ANCT QPV),oui,"MAXIMUM (SOURCES-4 lot 4, vérifié colonnes/attrs vs schéma producteur)",spatial_layers/qpv (code_qp/generation/insee/lib/siren_epci) complet,oui
 SUP — assiettes GPU (API Carto),sup_gpu,(schéma producteur),(GPU assiette-sup),oui,"MAXIMUM (SOURCES-4 lot 4, vérifié colonnes/attrs vs schéma producteur)",spatial_layers/sup (idass/idgen/typeass/generateur/acte/urlreg) complet,oui
 SIRENE,sirene_recherche_entreprises,(schéma producteur),(API INSEE directe),non,n.a.,"API interrogée à la requête, aucune table ingérée — schéma producteur = réponse SIRENE, servie en direct",non

@@ -117,13 +117,33 @@ gestionnaire}`. `SCHEMAS.csv` : 1 ligne à-ingérer → 4 MAXIMUM + 1 PARTIEL-do
 
 ---
 
+### 4. ZNIEFF (INPN/MNHN) → **MAXIMUM** (fait)
+
+**Constat** : chemin déjà officiel (WFS Géoplateforme `patrinat_znieff1/znieff2`, `znieff.build_znieff`,
+134 type I + 28 type II = 162 continentales, marines exclues à raison). L'`id_mnhn` (identifiant
+national) et `type` I/II étaient déjà là — mais seules **5 clés** étaient gardées sur les 22 publiées.
+
+**Correctif** : `attrs` recopie **les 22 champs du WFS** — `cd_sig` (code national SIG),
+`id_local`, `nom_site`, `url_fiche`, `gest_site`/`operateur`, dates (`date_crea`, `modif_adm`,
+`modif_geo`, `acte_deb/fin`), surfaces (`surf_off`, `area_sig`), `precision`, `src_geom`/`src_annee`,
+drapeaux (`marin`, `territoire`, `p1_nature`, `p4_geologi`). `type` et alias `gestionnaire`
+conservés pour les lecteurs existants. Gardes marin/territoire inchangées.
+
+**Arbitrage** : la **liste des espèces déterminantes** n'est PAS dans cette couche WFS géométrique
+(jeu INPN distinct) → PARTIEL-producteur pour ce seul détail ; MAXIMUM sur tout ce que le WFS publie.
+
+**Preuve** : 162 zones inchangées (134/28), geom_2975 OK ; attrs 5 → 23 clés ;
+`id_mnhn=040030088`, `cd_sig=I032G2040030088`, `type=type I` vérifiés. `SCHEMAS.csv` : 1 ligne
+à-ingérer → 8 MAXIMUM + 1 PARTIEL (espèces).
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **4. ZNIEFF** (WFS INPN, identifiant
-national + type I/II).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **5. INPN / patrinat — espaces protégés**
+(WFS Géoplateforme, toutes les couches RNN/APB/sites).
 
-Restantes après #3 : A4 ZNIEFF (WFS INPN) · A5 INPN espaces protégés (WFS Géoplateforme) · A6
-Ramsar/sites classés · A7 DILA · B8 AZI/TRI dates · B9 RNIC 29-1/DPE copro · B10 BODACC dépôts de
-comptes · B11 Coût construction · B12 Forêts ONF régime · B13 Potentiel foncier colonnes restantes
-· C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME
-230 champs.
+Restantes après #4 : A5 INPN espaces protégés (WFS Géoplateforme) · A6 Ramsar/sites classés · A7
+DILA · B8 AZI/TRI dates · B9 RNIC 29-1/DPE copro · B10 BODACC dépôts de comptes · B11 Coût
+construction · B12 Forêts ONF régime · B13 Potentiel foncier colonnes restantes · C14 Sudocuh · C15
+RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.
