@@ -124,6 +124,16 @@ def parse_icpe(item: dict) -> dict | None:
             "code_naf": item.get("codeNaf"),
             "commune": item.get("commune"),
             "code_insee": item.get("codeInsee"),
+            # SOURCES-3b lot 5 (famille risques) — champs UTILES du producteur, jusque-là laissés :
+            # le SIRET relie l'installation à une société (scan propriétaire, jointure SIREN) ; l'état
+            # d'activité distingue un site actif d'un site cessé (enjeu) ; l'adresse localise et croise
+            # le garde 974. codeAIOT = clé nationale stable.
+            "siret": item.get("siret"),
+            "etat_activite": item.get("etatActivite"),
+            "adresse": " ".join(x for x in (item.get("adresse1"), item.get("adresse2"),
+                                            item.get("adresse3")) if x) or None,
+            "code_postal": item.get("codePostal"),
+            "code_aiot": item.get("codeAIOT"),
         },
     }
 

@@ -24,6 +24,18 @@ risques (15) → urbanisme (8) → marché (4) → logement (7) → propriétair
   émerge) ; `ancien_code_commune`/`ancien_id_parcelle` → **inutile** (historique de fusion, sans usage
   foncier). **Aucun champ utile perdu** → DVF candidat **MAXIMUM**. Voir les 8 lignes DVF dans SCHEMAS.csv.
 
+## Famille RISQUES — couverte (15/15)
+Schémas producteur lus (API Géorisques JSON documentée : mvt, cavités, ICPE, ssp, gaspar/catnat,
+gaspar/azi) et confrontés à l'ingéré. **Utile INGÉRÉ ce mandat** : l'**ICPE** (`spatial_layers/icpe`)
+enrichie de **siret** (relie l'installation à une société — scan propriétaire), **etat_activite**
+(actif/cessé), **adresse**, **code_postal**, **code_aiot** — re-ingestion des 24 communes (1 268 ICPE,
+1 113 avec SIRET, 571 avec état). `parse_icpe` durable. Verdicts « à voir » : mvt (date_maj, lieu,
+précision), cavités (reperage_geo), catnat/azi (dates/id présents dans raw). « Inutile » : departement/
+region (974 constant). Candidats **MAXIMUM** dans risques : CatNat (raw préserve tout), endiguement
+(≈25 attrs), PEB (zones+Lden+dates), ICPE (après enrichissement). DEAL Lizmap/Carmen : attrs déjà
+riches, DescribeFeatureType par TYPENAME rangé (400 sur requête WFS globale). Total ~40 champs
+producteur confrontés, 5 ingérés.
+
 ## Reste à faire (rangé, sans sauter de source)
 Les 95 autres sources, famille par famille, dans l'ordre ci-dessus. Chaque schéma producteur est lu au bon
 endpoint (référencé dans RECHERCHE-PRODUCTEURS.md, corrigé par SOURCES-2). Pièges relevés cette session pour

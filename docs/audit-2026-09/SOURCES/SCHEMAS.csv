@@ -853,3 +853,36 @@ DVF / valeurs foncières,dvf,dvf_mutations,longitude+latitude,oui,utile,"géoloc
 DVF / valeurs foncières,dvf,dvf_mutations,surface_reelle_bati,oui,utile,INGÉRÉ (colonne) — prix/m² bâti,non
 DVF / valeurs foncières,dvf,dvf_mutations,surface_terrain,oui,utile,INGÉRÉ (colonne) — prix/m² terrain,non
 DVF / valeurs foncières,dvf,dvf_mutations,ancien_code_commune / ancien_id_parcelle,non,inutile,historique de fusion communale — sans usage foncier (le code courant fait foi),non
+Géorisques — mouvements de terrain,georisques_mvt,spatial_layers/mvt,latitude+longitude,non,à voir,geoloc du mvt — geom déjà servi ; lat/lon redondants sauf export point,non
+Géorisques — mouvements de terrain,georisques_mvt,spatial_layers/mvt,date_maj,non,à voir,fraîcheur BRGM de la fiche mvt — surfaçable pour dater le mvt,non
+Géorisques — mouvements de terrain,georisques_mvt,spatial_layers/mvt,lieu / commentaire_lieu,non,à voir,lieu-dit + commentaire de localisation — précise l'emprise,non
+Géorisques — mouvements de terrain,georisques_mvt,spatial_layers/mvt,commentaire_mvt,non,à voir,description du mouvement (nous n'ingérons qu'un commentaire agrégé),non
+Géorisques — mouvements de terrain,georisques_mvt,spatial_layers/mvt,precision_date / precision_lieu,non,à voir,qualité (imprécision) — pondère l'affichage,non
+Géorisques — mouvements de terrain,georisques_mvt,spatial_layers/mvt,departement / region,non,inutile,974 constant — sans usage,non
+Géorisques — cavités souterraines,georisques_cavites,spatial_layers/cavite,nom,non,utile (déjà servi via la colonne name),nom de la cavité — l'identifie (nous n'avons qu'identifiant+type),oui
+Géorisques — cavités souterraines,georisques_cavites,spatial_layers/cavite,reperage_geo,non,à voir,méthode/précision de repérage,non
+Géorisques — cavités souterraines,georisques_cavites,spatial_layers/cavite,latitude+longitude,non,à voir,geom déjà servi,non
+Géorisques — cavités souterraines,georisques_cavites,spatial_layers/cavite,departement/region,non,inutile,974 constant,non
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,siret,non,utile (INGÉRÉ ce mandat),"SIRET de l'exploitant — RELIE l'ICPE à une société (scan propriétaire, jointure SIREN)",oui
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,raisonSociale,non,utile,nom de l'exploitant — identifie l'installation,non
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,etatActivite,non,utile (INGÉRÉ ce mandat),actif / cessé — enjeu différent,oui
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,adresse1/2/3 + codePostal,non,utile (INGÉRÉ ce mandat),adresse — localise + croise le garde 974,oui
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,rubriques,non,à voir,rubriques ICPE (nature réglementée) — volumineux,non
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,ied / prioriteNationale,non,à voir,niveau d'enjeu (statutSeveso déjà ingéré),non
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,codeAIOT,non,utile (INGÉRÉ ce mandat),identifiant national AIOT — clé stable,oui
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,date_maj,non,à voir,fraîcheur de la fiche ICPE,non
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,inspections,non,à voir,historique d'inspections — hors périmètre foncier direct,non
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,carriere/eolienne/bovins/porcs/volailles/industrie,non,à voir,drapeaux de typologie d'activité,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,code_national_catnat,non,à voir,id national de l'arrêté — présent dans raw,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,date_publication_jo,non,à voir,date JO (distincte de l'arrêté) — présent dans raw,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,(tête),non,utile,insee/commune/type_peril/dates INGÉRÉS + raw préserve tout → quasi-MAXIMUM,non
+AZI / TRI — inondation (Géorisques GASPAR),georisques_azi_tri,azi_communes,date_debut_etude / date_realisation,non,à voir,jalons du programme AZI au-delà de date_diffusion,non
+AZI / TRI — inondation (Géorisques GASPAR),georisques_azi_tri,azi_communes,libelle_bassin_risques,non,à voir,bassin de risques de rattachement,non
+Géorisques — sites et sols pollués,georisques_ssp,spatial_layers/sol_pollue,conclusions_sis/sup/instructions (sous-champs),non,à voir,détail par dossier — nesté ; les champs de tête sont ingérés,non
+DEAL Réunion — PPR / aléas,deal_ppr,spatial_layers/ppr,(schéma WFS Lizmap par couche),non,à voir,"15 attrs déjà ingérés (approbation, degré, risque, statut, réglement urlreg/fichier…) ; DescribeFeatureType Lizmap exige un TYPENAME par couche (400 sur requête globale) — comparaison fine rangée",non
+Ravines — domaine public fluvial (DEAL Carmen),deal_dpf_dpe,spatial_layers/dpf,(schéma WFS),non,à voir,"7 attrs ingérés (classe, code_hydro, toponyme, typologie) ; champs producteur additionnels à confronter par TYPENAME — rangé",non
+Systèmes d'endiguement et zones protégées (DEAL Lizmap),endiguement,spatial_layers/endiguement,(schéma WFS),non,utile,"≈25 attrs déjà ingérés (classe, niveaux NGR danger/protection/sûreté, population protégée, gestionnaire, arrêté) — couverture producteur quasi complète → candidat MAXIMUM",non
+DEAL — cartes de bruit stratégiques (CBS),deal_bruit_cartes,spatial_layers/bruit_carte,(schéma WFS Carmen),non,à voir,"Carmen WFS (XML, sans en-tête de version) ; 4 attrs ingérés (gestionnaire, indicateur) — comparaison par TYPENAME rangée",non
+Cerema / GéoLittoral — indicateur d'érosion côtière,geolittoral_erosion,(shape téléchargé),(colonnes du shapefile),non,à voir,fichier Réunion millésime 06/2018 (8 ans) ; colonnes du shapefile à confronter au dictionnaire GéoLittoral — rangé,non
+PEB — plans d'exposition au bruit (DGAC via annexes GPU),peb_dgac,spatial_layers/peb,(GetFeatureInfo STAC/DGAC),non,utile,zones A/B/C/D + Lden int/ext + dates + arrêté PDF ingérés (SOURCES-2) — couverture producteur complète → candidat MAXIMUM,non
+Géorisques,georisques_api,(hub API),(N endpoints),non,à voir,"source-parapluie de l'API Géorisques ; les couches concrètes (mvt, cavités, ssp, icpe, catnat, azi) sont comparées à leur ligne propre",non
