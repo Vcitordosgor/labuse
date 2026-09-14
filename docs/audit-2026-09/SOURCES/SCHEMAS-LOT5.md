@@ -36,6 +36,22 @@ region (974 constant). Candidats **MAXIMUM** dans risques : CatNat (raw préserv
 riches, DescribeFeatureType par TYPENAME rangé (400 sur requête WFS globale). Total ~40 champs
 producteur confrontés, 5 ingérés.
 
+## Famille URBANISME — couverte (8/8)
+Schémas producteur confrontés (standard CNIG zone-urba/prescription pour le GPU API Carto ; dico
+DGALN pour Sudocuh ; ODS Région pour le potentiel foncier). Le GPU capte l'essentiel du CNIG
+(typezone, libelle, libelong, idurba, insee, datappro, partition) + le règlement (plu_reglement_extrait).
+**Utiles restants « à voir »** : DESTDOMI (destination dominante), DATVALID (fin de validité) sur les
+zones ; les ~90 colonnes du fichier SUDOCUH (dates de procédure fines, SCOT) ; les colonnes ODS du
+potentiel foncier. **Inutile** : NOMFIC (dataset_url suffit). Candidats **MAXIMUM** : zones PLU/GPU,
+prescriptions ER/EBC, DPU, zonages assainissement (couverture producteur complète — les manques
+connus, ex. bénéficiaire ER / DPU délégataire, sont ABSENTS du GeoJSON producteur, pas laissés).
+DEAL WMS/WFS (13) = hub (ses couches concrètes sont leurs propres sources).
+
+## Sources au verdict MAXIMUM (candidates, à ce stade)
+DVF · CatNat · endiguement · PEB · ICPE (enrichie) · GPU zones/prescriptions/DPU/assainissement — soit
+**~12 sources** couvertes au maximum publiable (sous réserve de la validation Vic des « à voir » où le
+`raw`/`name` suffit). Familles faites : **risques (15) + urbanisme (8) + DVF** = 24 sources confrontées.
+
 ## Reste à faire (rangé, sans sauter de source)
 Les 95 autres sources, famille par famille, dans l'ordre ci-dessus. Chaque schéma producteur est lu au bon
 endpoint (référencé dans RECHERCHE-PRODUCTEURS.md, corrigé par SOURCES-2). Pièges relevés cette session pour
