@@ -845,3 +845,11 @@ Zonage ABC des communes (DHUP),zonage_abc_dhup,commune_zonage_abc,commune,oui,(i
 Zonage ABC des communes (DHUP),zonage_abc_dhup,commune_zonage_abc,zone,oui,(ingéré — champ producteur correspondant à confirmer),,non
 Zonage ABC des communes (DHUP),zonage_abc_dhup,commune_zonage_abc,millesime,oui,(ingéré — champ producteur correspondant à confirmer),,non
 Zonage ABC des communes (DHUP),zonage_abc_dhup,commune_zonage_abc,maj_at,oui,(ingéré — champ producteur correspondant à confirmer),,non
+DVF / valeurs foncières,dvf,dvf_mutations,adresse_numero+nom_voie+code_postal,non,à voir,géoloc adresse de la mutation — présent dans raw ; id_parcelle suffit déjà au rattachement,non
+DVF / valeurs foncières,dvf,dvf_mutations,nombre_pieces_principales,non,à voir,"typologie (Tn) des comparables bâtis — présent dans raw, surfaçable si besoin comparables par type",non
+DVF / valeurs foncières,dvf,dvf_mutations,lotN_surface_carrez,non,à voir,"surface Carrez des lots (copropriété) — présent dans raw, utile pour prix/m² Carrez",non
+DVF / valeurs foncières,dvf,dvf_mutations,nombre_lots,non,à voir,nb de lots de la mutation — présent dans raw,non
+DVF / valeurs foncières,dvf,dvf_mutations,longitude+latitude,oui,utile,"géoloc mutation — INGÉRÉE dans dvf_mutations_histo ; sur le servi, geom présent",non
+DVF / valeurs foncières,dvf,dvf_mutations,surface_reelle_bati,oui,utile,INGÉRÉ (colonne) — prix/m² bâti,non
+DVF / valeurs foncières,dvf,dvf_mutations,surface_terrain,oui,utile,INGÉRÉ (colonne) — prix/m² terrain,non
+DVF / valeurs foncières,dvf,dvf_mutations,ancien_code_commune / ancien_id_parcelle,non,inutile,historique de fusion communale — sans usage foncier (le code courant fait foi),non
