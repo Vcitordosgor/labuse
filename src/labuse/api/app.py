@@ -5433,6 +5433,9 @@ _RICH_POPUP_KINDS: frozenset[str] = frozenset({
     "endiguement",
     # SOURCES-2 lot 4 — scénarios TRI : scénario, hauteurs d'eau, TRI au clic.
     "tri_zone",
+    # SOURCES-4 lot 2 — Parc national : superficie (ha) + décret/arrêté qui établit la zone au clic
+    # (3 features seulement — coût nul). Le cœur/adhésion était déjà servi ; on ajoute la référence légale.
+    "parc_national",
 })
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran

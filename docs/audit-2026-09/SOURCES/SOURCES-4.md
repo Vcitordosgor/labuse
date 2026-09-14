@@ -159,9 +159,27 @@ BASOL/BASIAS, potentiels PV/renaturation, `source_url`, dates…) — en plus du
 `unite_fonciere_surface`, propriétaire `proprio_personne`, source). Rien ne manquait : la ligne
 « champs restants » de `SCHEMAS.csv` était périmée → **MAXIMUM**, aucune ingestion nécessaire.
 
-### Reprise (point de départ pour la prochaine source) — **BPE**
-Après CoSIA (seuil) et Cartofriches (déjà MAXIMUM), l'ordre imposé reprend à **BPE** (sous-types,
-année), puis Parc national, REI, BODACC, Fibre Arcep, … **Commande de reprise : « continue SOURCES-4 ».**
+### BPE — équipements INSEE → **MAXIMUM**
+Le fichier BPE25 publie **95 colonnes** ; on n'en gardait que 4 (dom/sdom/typequ + nom). `_bpe_attrs`
+capture désormais : **année `AN`** (par enregistrement, jamais captée), **adresse**, **code postal**,
+**SIRET**, **qualité de géoloc**, et les **caractéristiques sectorielles** non vides (capacité d'accueil
+d'une école, nombre de salles d'un cinéma, bornes de recharge, secteur public/privé, spécialité santé,
+type de restauration…), en écartant la modalité `_Z` (sans objet pour ce type). Pas de varmod dans le
+ZIP → le **libellé de TYPEQU n'est pas dérivable** (le nom de l'établissement `NOMRS` reste le libellé
+humain servi « À proximité »). Re-ingéré depuis le ZIP local (`build_bpe(zip_path=…)`, pas de
+re-download) : **35 544 équipements, 27 s**. Réservoir `bpe_insee` déjà déclaré ; place = `attrs`
+(base) + « À proximité » (nom + domaine + millésime). Test `test_bpe.py`.
+
+### Parc national → **MAXIMUM**
+Source réelle = **Région ODS `pnrun_2021`** (pas INPN WFS comme l'indiquait `SCHEMAS.csv`). Le
+cœur/adhésion était déjà servi ; on ajoute la **superficie (ha)** et le **décret/arrêté** qui établit
+chaque zone (cœur 105 519 ha, décret 2007-296 ; deux aires d'adhésion). Re-ingéré : 3 features. La
+couche passe en **popup riche** (`_RICH_POPUP_KINDS`, 3 features — coût nul) → superficie + référence
+légale au clic. Test `test_parc_national_popup_riche_sources4`.
+
+### Reprise (point de départ pour la prochaine source) — **REI**
+Après BPE et Parc national (MAXIMUM), l'ordre imposé reprend à **REI** (tous les taux : TFPNB, CFE,
+bases), puis BODACC, Fibre Arcep, … **Commande de reprise : « continue SOURCES-4 ».**
 
 ### Le reste du LOT 2 — rang conservé
 `SCHEMAS.csv` liste ~70 champs « à voir »/« à ingérer », ordonnés par utilité (mandat § LOT 2).

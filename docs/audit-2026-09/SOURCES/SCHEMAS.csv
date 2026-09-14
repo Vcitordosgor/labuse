@@ -923,7 +923,7 @@ LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,(schéma producteur),(LiDAR HD MNS/MNT
 "INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,(schéma producteur),(RP IRIS INSEE),non,utile,log/rp/logvac/maison/appart/période construction (ach_*)/population (pop_*) INGÉRÉS → quasi-MAXIMUM,non
 INPI RNE (dirigeants),inpi_rne,(schéma producteur),(RNE INPI),non,utile,nom/prénoms/date_naissance/rôle/gerant_siren/actif + raw INGÉRÉS → quasi-MAXIMUM (raw préserve tout),non
 BD TOPO IGN,bd_topo,(schéma producteur),(BD TOPO thèmes),non,à voir,"bâtiment/voirie/water/ravine INGÉRÉS ; la BD TOPO publie des centaines de classes (végétation, ERP, pylônes…) — hors périmètre foncier, surfaçables au besoin",non
-BPE INSEE,bpe_insee,(schéma producteur),(BPE type+geo),non,à voir,type d'équipement + géoloc INGÉRÉS ; la BPE publie des sous-types fins et l'année — à surfacer,non
+BPE INSEE,bpe_insee,(schéma producteur),(BPE type+geo),oui,MAXIMUM (SOURCES-4 lot 2) — année/adresse/SIRET/qualité/caractéristiques sectorielles ; libellé TYPEQU non fourni (pas de varmod),"spatial_layers/amenite_bpe attrs (an, adresse, siret, caracteristiques : capacité/salles/bornes/secteur) ; nom + domaine servis « À proximité »",oui
 IGN BD CARTO V5 — occupation du sol,bd_carto_ocs,(schéma producteur),(BD CARTO OCS),non,à voir,occupation du sol INGÉRÉE ; autres thèmes BD CARTO hors périmètre,non
 BODACC (procédures collectives),bodacc,(schéma producteur),(BODACC annonces),non,à voir,"procédures + sondages INGÉRÉS ; le BODACC publie aussi ventes/cessions de fonds, dépôts de comptes — surfaçables (déjà partiellement en veille)",non
 DPE ADEME (logements existants),dpe_ademe,(schéma producteur),(schéma ADEME 230 champs),non,à voir,"étiquette/GES/type/surface/année/adresse/rnb INGÉRÉS ; l'ADEME publie ~230 champs (conso 5 usages, isolation, système chauffage) — riches mais base 974 quasi vide (trou producteur)",non
@@ -937,7 +937,7 @@ INSEE RP2022 — fichier détail Logements (EGOUL),insee_rp2022_egoul,(schéma p
 EDF Réunion — lignes moyenne tension HTA (open data),edf_hta,(schéma producteur),(EDF SEI open data),non,à voir,lignes MT/HT INGÉRÉES ; tension/gestionnaire détaillés à surfacer,non
 Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,(schéma producteur),(Arcep immeuble),non,à voir,"imb_id/adresse/nb_logements/FTTH/opérateurs INGÉRÉS ; débits et technologies détaillés (câble, VDSL) à surfacer",non
 Taux de taxe foncière — fichier REI (DGFiP),dgfip_rei,(schéma producteur),(REI DGFiP),non,à voir,"TFPB commune/EPCI + TEOM INGÉRÉS ; le REI publie d'autres taux (TFPNB, CFE, bases) — à surfacer",non
-Parc National de La Réunion (INPN),parc_national_inpn,(schéma producteur),(INPN WFS),non,à voir,périmètre parc INGÉRÉ ; zonage cœur/aire d'adhésion à confirmer,non
+Parc National de La Réunion (INPN),parc_national_inpn,(schéma producteur),(INPN WFS),oui,MAXIMUM (SOURCES-4 lot 2) — cœur/adhésion + superficie (ha) + décret ; source réelle = Région ODS pnrun_2021 (pas INPN WFS),"spatial_layers/parc_national attrs (surface_ha, decret) — popup carte ; présence servie fiche commune",oui
 Forêts publiques (ONF),forets_onf_bdtopo,(schéma producteur),(BD TOPO forêt),non,à voir,forêts publiques INGÉRÉES ; régime/propriétaire à surfacer,non
 ZNIEFF (INPN/MNHN),znieff_inpn,(schéma producteur),(INPN ZNIEFF),non,à voir,ZNIEFF type I & II INGÉRÉES ; identifiant national/espèces déterminantes hors périmètre,non
 QPV 2024 (ANCT),qpv_2024,(schéma producteur),(ANCT QPV),non,utile,périmètre QPV 2024 INGÉRÉ = ce que publie l'ANCT → MAXIMUM,non
