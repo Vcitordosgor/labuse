@@ -95,13 +95,35 @@ chaînes vides→None. Logique buffer/subtype **inchangée**.
 
 ---
 
+### 3. EDF HTA (réseau moyenne tension) → **MAXIMUM** (fait)
+
+**Constat** : chemin déjà officiel (portail open data EDF Réunion Koumoul/data-fair,
+`reseaux_mt.ingest_lignes_mt`, 4211 tronçons aériens + 15 269 souterrains). **Vérification live des
+CSV** : le flux ne publie que **3 colonnes** — `statut`, `geo_shape` (géométrie, = geom de la
+couche), `geo_point_2d` (centroïde). EDF a **retiré** la tension exacte et le nom de départ « afin
+de renforcer la sécurité publique » (mention du portail).
+
+**Arbitrage (mandat A#3 « tension + gestionnaire »)** : ces deux-là ne sont pas des colonnes du
+flux — mais ce sont des **faits de jeu, sourcés et constants** que la fiche du portail donne :
+la **tension** est la classe HTA (moyenne tension 15-20 kV — c'est la définition du jeu), le
+**gestionnaire** est **EDF SEI** (Système Électrique Insulaire, exploitant du réseau réunionnais).
+Surfacés en clairs dans `attrs.tension_classe` / `attrs.gestionnaire`. La tension au volt près
+reste **non publiée = raison producteur** (documenté). `geo_point_2d` = doublon G1 de la géométrie,
+non ingéré (arbitrage écrit).
+
+**Preuve** : 19 480 tronçons (4211 + 15 269) inchangés, geom_2975 backfillée ;
+attrs `{statut, millesime, precision}` → `{statut, millesime, precision, tension_classe,
+gestionnaire}`. `SCHEMAS.csv` : 1 ligne à-ingérer → 4 MAXIMUM + 1 PARTIEL-doublon (geo_point_2d).
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **3. EDF HTA** (réseau au flux open data
-SEI, tension + gestionnaire).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **4. ZNIEFF** (WFS INPN, identifiant
+national + type I/II).
 
-Restantes après #2 : A3 EDF HTA · A4 ZNIEFF (WFS INPN) · A5 INPN espaces protégés (WFS
-Géoplateforme) · A6 Ramsar/sites classés · A7 DILA · B8 AZI/TRI dates · B9 RNIC 29-1/DPE copro ·
-B10 BODACC dépôts de comptes · B11 Coût construction · B12 Forêts ONF régime · B13 Potentiel
-foncier colonnes restantes · C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre d'époque · C17
-BD CARTO V5 · C18 DPE ADEME 230 champs.
+Restantes après #3 : A4 ZNIEFF (WFS INPN) · A5 INPN espaces protégés (WFS Géoplateforme) · A6
+Ramsar/sites classés · A7 DILA · B8 AZI/TRI dates · B9 RNIC 29-1/DPE copro · B10 BODACC dépôts de
+comptes · B11 Coût construction · B12 Forêts ONF régime · B13 Potentiel foncier colonnes restantes
+· C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME
+230 champs.
