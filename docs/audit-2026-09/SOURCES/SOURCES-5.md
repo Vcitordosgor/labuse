@@ -164,12 +164,36 @@ réserve_biologique 37 / rnn 1), LOST=[] GAINED=[] ; attrs 3 → 24 clés ; `id_
 
 ---
 
+### 6. Espaces protégés Ramsar / sites classés → **MAXIMUM** (arbitrage : flux DEAL conservé)
+
+**Comparaison des deux flux officiels** (règle Groupe A : ne basculer que si le Géoplateforme est
+plus complet) :
+
+| couche | DEAL Carmen (servi, source 113) | Géoplateforme patrinat |
+|---|---|---|
+| Ramsar | 1 (Étang Saint-Paul) | 1 |
+| sites classés | 5 | 5 (`patrinat_sc:sc`) |
+| **sites inscrits** | **2** | **0 — aucune couche nationale** |
+| réserves naturelles | 152 | (autre couche) |
+| ENS départemental | 178 | absent (jeu non public) |
+
+**Verdict** : le Géoplateforme **n'est PAS plus complet** — il n'expose **aucune couche de sites
+inscrits** (l'INPN patrinat ne publie que `sc` = classés), alors que la couche DEAL
+`Sites_Classes_-_Inscrits` porte les deux. Basculer PERDRAIT les 2 sites inscrits (Mare à Poule
+d'Eau…). De plus le flux DEAL est **déjà « tout champ publié »** (SOURCES-4 lot 3 : les sites
+portent `identifian` 974-00x, `nature_du_` « arrêté ministériel », date, surface). Seul apport
+Géoplateforme = l'`id_mnhn` national — cross-référence fragile (join inter-source) pour 6 entités,
+G1/doublon → **non substitué**. **Décision : DEAL Carmen reste canonique.** Aucun code/DB touché,
+comparaison tracée. (Pas de ligne « à ingérer » dans `SCHEMAS.csv` : la source était déjà MAXIMUM.)
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **6. Espaces protégés Ramsar / sites
-classés** (WFS Géoplateforme).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **7. Annuaire de l'administration (DILA)**
+(portail ODS, tous les services).
 
-Restantes après #5 : A6 Ramsar/sites classés · A7 DILA · B8 AZI/TRI dates · B9 RNIC 29-1/DPE copro
-· B10 BODACC dépôts de comptes · B11 Coût construction · B12 Forêts ONF régime · B13 Potentiel
-foncier colonnes restantes · C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD
-CARTO V5 · C18 DPE ADEME 230 champs.
+Restantes après #6 : A7 DILA · B8 AZI/TRI dates · B9 RNIC 29-1/DPE copro · B10 BODACC dépôts de
+comptes · B11 Coût construction · B12 Forêts ONF régime · B13 Potentiel foncier colonnes restantes
+· C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME
+230 champs.
