@@ -391,9 +391,43 @@ gitignored). `SCHEMAS.csv` : 2 lignes (RP2023 PARTIEL + EGOUL à-ingérer) → M
 
 ---
 
+### 16. Cadastre d'époque → **MAXIMUM** (fait) — ⚠ outil Remonter le temps vérifié intact
+
+**Constat** : `MILLESIMES_ETALAB` était une liste **sparse de 5** éditions. L'index Etalab
+(cadastre.data.gouv.fr) publie **35 éditions trimestrielles** 2017-07→2026-06.
+
+**Correctif** : `MILLESIMES_ETALAB` densifié aux **35 éditions publiées** (+ BD Parcellaire 2008 +
+PCI EDIGEO 2017-02 déjà là). La table `cadastre_historique` est un outil de **récupération
+d'orphelines** (parcelles disparues → localisation des permis) ; `_pass_etalab` n'écrit QUE dans
+`cadastre_historique` (vérifié : le seul mutateur de `sitadel_permits` est `rattacher_par_geometrie`).
+J'ai relancé **uniquement les passes `_pass_etalab` des nouveaux millésimes, SANS rattachement** —
+donc **`sitadel_permits` INTACT** (le rattachement, qui change la localisation servie des permis,
+reste un geste Vic).
+
+**⚠ Remonter le temps — preuve avant/après** (capture DOM, WebGL non capturable) :
+
+| | avant | après |
+|---|---|---|
+| millésimes existants | 2008/2017-02/2017-07/2019/2021/2023/2025-09 (1262/221/4586/151/195/70/10) | **identiques (octet pour octet)** |
+| nouveau millésime | — | **2026-06 : +31 parcelles** (subdivisions récentes absentes des checkpoints sparse) |
+| `sitadel_permits` géoloc | 49 643 | **49 643 (inchangé)** |
+
+→ l'outil sert les **mêmes millésimes** qu'avant + un checkpoint 2026-06 ; aucune localisation de
+permis touchée. Les 30 millésimes intermédiaires n'ont récupéré aucune orpheline (déjà captées par
+les checkpoints sparse). Passe : 8 min 47 s (sous le seuil 3 h). `SCHEMAS.csv` : 1 à-ingérer →
+1 MAXIMUM.
+
+**⚠ Note pour Vic (fragilité de test, PAS un bug SOURCES-5)** : `tests/test_alertes.py` casse quand
+la suite est jouée **≥ ~15 fois le même jour** — le plafond quotidien de notifications (50/(kind,
+compte,jour), `event_log`) sature à force de runs, et le test compte le total du jour (compte NULL).
+Vérifié : reproduit à HEAD=#15 sans mes changements, redevient vert au changement de jour (0 ligne
+`veille_zone` committée). Test-isolation à durcir (isoler le compteur du jour), hors périmètre SOURCES-5.
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **16. Cadastre d'époque** (millésimes PCI
-vecteur ; ⚠ vérifier l'outil Remonter le temps — capture avant/après).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **17. IGN BD CARTO V5** (occupation du sol,
+tous thèmes hors doublons CoSIA/OCS GE/BD TOPO).
 
-Restantes après #15 : C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.
+Restantes après #16 : C17 BD CARTO V5 · C18 DPE ADEME 230 champs.

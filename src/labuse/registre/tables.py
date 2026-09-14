@@ -54,7 +54,7 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "cadastre_etalab_bulk": Rt(("parcels",), millesime="Etalab cadastre (DGFiP), édition courante",
                                note="DOUBLON (canal bulk du même réservoir que cadastre_api_carto)"),
     "cadastre_epoque": Rt(("cadastre_historique",),
-                          millesime="PCI vecteur Etalab — millésimes 2019→2025 (cadastre d'époque)"),
+                          millesime="PCI vecteur Etalab — corpus complet 2008 + 2017-02 + 35 éditions 2017-07→2026-06 (SOURCES-5)"),
     "dgfip_parcelles_pm": Rt(("parcelle_personne_morale", "pm_proprietaires_millesimes"),
                              millesime="Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)"),
     "fichiers_fonciers_cerema": Rt((), note="SOUS CONVENTION (SOURCES-1 lot 7) — une demande Cerema "
