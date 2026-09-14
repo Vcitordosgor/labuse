@@ -165,7 +165,7 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "cartofriches": Rt(("spatial_layers",), couches=("friche",)),
     "abf_merimee": Rt(("spatial_layers",), couches=("abf",),
                       millesime="Monuments historiques Mérimée (POP) — périmètres ABF"),
-    "erosion_cotiere_geolittoral": Rt(("spatial_layers",), couches=("trait_de_cote",), millesime="millésime 2018"),
+    "erosion_cotiere_geolittoral": Rt(("spatial_layers",), couches=("trait_de_cote",), millesime="SHP officiel Cerema 06/2018 — 13 champs (SOURCES-5)"),
     "bruit_itt_cerema": Rt(("spatial_layers",), couches=("bruit_route",), millesime="arrêtés déc. 2023"),
     "parc_national_inpn": Rt(("spatial_layers",), couches=("parc_national",), millesime="millésime 2021"),
     "forets_onf_bdtopo": Rt(("spatial_layers",), couches=("foret_publique",),

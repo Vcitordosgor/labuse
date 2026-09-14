@@ -1109,11 +1109,20 @@ def ingest_trait_de_cote(session, commune, run_id, sids) -> int:
                 polys.append([coords])
         if not polys:
             continue
+        # SOURCES-5 #1 : tout champ publié du SHP officiel (13 attributs), pas seulement `taux`.
+        # -9999 / -9000 = donnée absente chez le Cerema → None (ne pas afficher un sentinel).
+        attrs = {"src": "GéoLittoral/Cerema — indicateur érosion (SHP officiel, EPSG:2975)"}
+        for k, v in zip(flds, srec.record):
+            if v is None or (isinstance(v, (int, float)) and v <= -9000):
+                attrs[k] = None
+            elif isinstance(v, str):
+                attrs[k] = v.strip() or None
+            else:
+                attrs[k] = v
         _insert_layer(session, "trait_de_cote", _taux_subtype(taux),
                       f"Évolution trait de côte (taux {taux} m/an)",
                       {"type": "MultiPolygon", "coordinates": polys},
-                      sids.get(KIND_SOURCE["trait_de_cote"]), commune, run_id,
-                      {"taux": taux, "src": "GéoLittoral/Cerema — indicateur érosion (SHP, EPSG:2975)"})
+                      sids.get(KIND_SOURCE["trait_de_cote"]), commune, run_id, attrs)
         n += 1
     return n
 
