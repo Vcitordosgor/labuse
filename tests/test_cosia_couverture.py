@@ -27,6 +27,17 @@ def test_ensure_table_idempotent(db_session):
     assert {"idu", "classe", "m2", "source_millesime"} <= cols
 
 
+def test_couche_cimetiere_declaree_et_servie():
+    """SOURCES-4 lot 2 — cimetière (thème BD TOPO non doublon) rattaché au réservoir bd_topo (V1c)
+    et servi en carte à popup riche (toponyme + nature au clic)."""
+    from labuse.registre import tables
+    assert "cimetiere" in tables.RESERVOIR_TABLES["bd_topo"].couches
+    from labuse.api.app import _MAP_LAYER_KINDS, _RICH_POPUP_KINDS
+    assert "cimetiere" in _MAP_LAYER_KINDS and "cimetiere" in _RICH_POPUP_KINDS
+    from labuse.ingestion.layers_ingest import KIND_SOURCE
+    assert KIND_SOURCE["cimetiere"] == "BD TOPO IGN"
+
+
 def test_couche_piscine_declaree_et_servie():
     """SOURCES-4 lot 2 — la couche Piscines (polygones CoSIA) est rattachée au réservoir cosia
     (V1c) ET servie en carte à popup riche (surface + parcelle au clic)."""

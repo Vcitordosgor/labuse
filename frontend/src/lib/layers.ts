@@ -59,6 +59,8 @@ export const LAYER_LABEL: Record<string, string> = {
   osm_faux_positif: 'Faux positif OSM',
   // SOURCES-4 lot 2 — piscines détectées par CoSIA (IA 20 cm), rattachées parcelle
   piscine_cosia: 'Piscines (CoSIA)',
+  // SOURCES-4 lot 2 — cimetières (BD TOPO) : contrainte foncière (emprise + périmètre)
+  cimetiere: 'Cimetières (BD TOPO)',
 }
 
 export const layerLabel = (key: string): string => LAYER_LABEL[key] ?? key

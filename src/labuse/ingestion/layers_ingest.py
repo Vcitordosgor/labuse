@@ -42,6 +42,10 @@ KIND_SOURCE = {
     "voirie": "BD TOPO IGN",
     "batiment": "BD TOPO IGN",
     "ravine": "BD TOPO IGN",
+    # SOURCES-4 lot 2 — thème BD TOPO NON doublon utile au foncier : cimetière (emprise non
+    # constructible + périmètre d'inhumation art. L2223-1 CGCT). Les thèmes doublons sont ÉCARTÉS :
+    # végétation → CoSIA/LiDAR, équipements → BPE, lignes électriques → EDF (arbitrages SOURCES-4).
+    "cimetiere": "BD TOPO IGN",
     "plu_gpu_zone": "Urbanisme PLU/GPU (API Carto)",
     "plu_gpu_prescription": "Urbanisme PLU/GPU (API Carto)",
     "parc_national": "Parc National de La Réunion (INPN)",
@@ -654,8 +658,14 @@ def ingest_bdtopo(session, bbox, commune, run_id, sids, kind: str, typename: str
             # voirie : on garde largeur de chaussée + importance + nb voies (même flux WFS, jusque-là
             # jetés) → alimentent la hauteur PROSPECT (Ud/Uu, A3). water : aucun attribut utile.
             attrs = ({"largeur": p.get("largeur_de_chaussee"), "importance": p.get("importance"),
-                      "nb_voies": p.get("nombre_de_voies")} if kind == "voirie" else None)
-            _insert_layer(session, kind, p.get("nature"), p.get("nature") or typename.split(":")[-1],
+                      "nb_voies": p.get("nombre_de_voies")} if kind == "voirie"
+                     # SOURCES-4 lot 2 — cimetière : toponyme + nature détaillée (au clic).
+                     else {"toponyme": p.get("toponyme"), "nature": p.get("nature"),
+                           "nature_detaillee": p.get("nature_detaillee")} if kind == "cimetiere"
+                     else None)
+            nom = (p.get("toponyme") if kind == "cimetiere" else None) \
+                or p.get("nature") or typename.split(":")[-1]
+            _insert_layer(session, kind, p.get("nature"), nom,
                           f["geometry"], sids.get(KIND_SOURCE[kind]), commune, run_id, attrs)
             n += 1
         pages += 1
@@ -1175,6 +1185,8 @@ def ingest_layers(session: Session, insee: str, commune: str,
         ("water", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "water", "BDTOPO_V3:surface_hydrographique")),
         ("ravine", lambda: ingest_ravines(session, bbox, commune, run_id, sids)),
         ("voirie", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "voirie", "BDTOPO_V3:troncon_de_route")),
+        # SOURCES-4 lot 2 — cimetière (thème BD TOPO non doublon, contrainte foncière).
+        ("cimetiere", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "cimetiere", "BDTOPO_V3:cimetiere")),
         ("batiment", lambda: ingest_batiments(session, bbox, commune, run_id, sids)),
         ("ocs_ge", lambda: ingest_ocsge(session, bbox, commune, run_id, sids)),
         ("foret_publique", lambda: ingest_foret_publique(session, bbox, commune, run_id, sids)),

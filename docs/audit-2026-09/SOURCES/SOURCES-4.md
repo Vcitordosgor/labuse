@@ -264,10 +264,22 @@ servie ne porte aucun champ à voir de plus de 30 jours »).
 
 ---
 
-## Champs écartés comme doublons (règle G1)
-Aucun nouveau doublon arbitré dans ce lot (LOT 1 ne fait que surfacer des champs déjà en base, sans
-nouvelle source). Les arbitrages de doublon (EDF > BD TOPO lignes, CoSIA/LiDAR > végétation, BPE >
-équipements) restent à écrire au fil des ingestions BD TOPO/BD CARTO du LOT 2.
+## Champs écartés comme doublons (règle G1) — BD TOPO
+En ouvrant **BD TOPO thème par thème** (LOT 2 tier 4), les thèmes doublons sont **ÉCARTÉS**, chacun
+avec la source qui fait foi (arbitrages tranchés par Vic, mandat) :
+- **Lignes électriques** (`BDTOPO_V3:ligne_electrique`, pylônes, postes) → **EDF Réunion fait foi**
+  (`ligne_mt`/`ligne_ht` = réseau EDF SEI, l'opérateur connaît son réseau mieux que le relevé photo IGN).
+- **Végétation** (`BDTOPO_V3:zone_de_vegetation`, haies) → **CoSIA + LiDAR font foi** (couverture IA
+  20 cm au m² : `parcel_cosia_couverture` classes Feuillu/Broussaille/Pelouse/Conifère + hauteur LiDAR).
+- **Équipements** (`BDTOPO_V3:zone_d_activite_ou_d_interet`, terrains de sport, constructions
+  ponctuelles d'équipement) → **BPE INSEE fait foi** (`amenite_bpe`, 35 544 équipements géolocalisés
+  typés/datés).
+
+Thème BD TOPO **non doublon** ingéré ce mandat : **cimetière** (`BDTOPO_V3:cimetiere`) — contrainte
+foncière réelle (emprise non constructible + périmètre d'inhumation, art. L2223-1 CGCT). 164 cimetières
+(civil/militaire), servis carte + popup riche (toponyme + nature au clic), réservoir `bd_topo`. Les
+autres thèmes non-doublon (construction surfacique/linéaire, aérodrome, orographie…) restent à ouvrir
+un par un (chacun = un cycle).
 
 ## Sources arrêtées sur seuil (10 Go / 2 h)
 - **CoSIA** : mesuré à 494 Mo / 2,8 Go extraits ; l'estimation initiale « > 2 h » était pessimiste —

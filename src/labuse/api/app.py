@@ -5408,7 +5408,9 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     "tri_zone",
                     # SOURCES-4 lot 2 — piscines détectées par CoSIA (46 599 polygones IA 20 cm 2025),
                     # rattachées parcelle : recensement mappable, croisable propriétaire.
-                    "piscine_cosia"}
+                    "piscine_cosia",
+                    # SOURCES-4 lot 2 — cimetières BD TOPO (contrainte foncière : emprise + périmètre).
+                    "cimetiere"}
 
 # SOURCES-1 lot 1 — kinds VIRTUELS de la carte : une clé front → le kind stocké + un filtre
 # subtype. ER = typepsc 05 (les 6 ER de Saint-Louis codés « 02 » sont captés par la cascade via
@@ -5441,6 +5443,8 @@ _RICH_POPUP_KINDS: frozenset[str] = frozenset({
     "parc_national",
     # SOURCES-4 lot 2 — piscine : surface (m²) + parcelle rattachée au clic.
     "piscine_cosia",
+    # SOURCES-4 lot 2 — cimetière : toponyme + nature (civil/militaire) au clic.
+    "cimetiere",
 })
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran

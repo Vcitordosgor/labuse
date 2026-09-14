@@ -215,7 +215,9 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "enaf_cerema": Rt(("commune_conso_enaf",),
                       millesime="conso ENAF 2021-2024 (portail artificialisation, Cerema)"),
     # ── géographie physique / imagerie ─────────────────────────────────────────────
-    "bd_topo": Rt(("spatial_layers",), couches=("batiment", "voirie", "water", "ravine"),
+    "bd_topo": Rt(("spatial_layers",),
+                  # SOURCES-4 lot 2 — + cimetière (thème non doublon, contrainte foncière).
+                  couches=("batiment", "voirie", "water", "ravine", "cimetiere"),
                   millesime="BD TOPO® V3 (IGN)"),
     "rge_alti": Rt(("rgealti_pente_5m", "rgealti_mnt_5m", "spatial_layers"),
                    couches=("pente", "altitude"), millesime="RGE ALTI® (IGN)"),   # RECETTE-7 D — MNT altitude ajouté
