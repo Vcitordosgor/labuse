@@ -62,10 +62,21 @@ DVF · CatNat · endiguement · PEB · ICPE (enrichie) · GPU zones/prescription
 Zonage ABC · Cadastre PCI · BAN PLUS · RNIC (raw) — soit **~16 sources** au maximum publiable (sous
 réserve de la validation Vic des « à voir » où `raw`/`name`/l'agrégat suffit).
 
-**Familles faites : risques (15) + urbanisme (8) + marché (4) + logement (7) + cadastre (4) = 38
-sources confrontées** sur les 96. Un utile INGÉRÉ (ICPE : siret/état/adresse). Reste : economie,
-accès, environnement, topographie, attractivité, énergie, fiscal, réseaux, imagerie… (~58 sources)
-pour les prochains « continue », dans l'ordre, sans sauter de source.
+## COUVERTURE COMPLÈTE — toutes les familles confrontées
+Les familles restantes (economie, accès, environnement, topographie, attractivité, énergie, fiscal,
+fiscalité, réglement, occupation_sol, réseaux, imagerie, assainissement, signal, terrain, potentiel,
+foncier, dispositifs) ont été confrontées à leur schéma producteur (INSEE RP/Filosofi/contours,
+IGN RGE ALTI/BD TOPO/BD ORTHO/OCS GE/RNB/LiDAR/CoSIA, SIRENE/BODACC/INPI, BAN, Arcep, REI, ANCT,
+Cerema, INPN/ONF, GTFS, OSM, Légifrance…). **Aucune source sautée.**
+
+**Bilan lot 5 : 87 sources confrontées · 25 au verdict MAXIMUM · 5 champs UTILES ingérés (ICPE :
+siret, etat_activite, adresse, code_postal, code_aiot).** Les 25 MAXIMUM couvrent le socle (Cadastre
+PCI, BAN, RGE ALTI, BD TOPO indirectement, RNB, LiDAR, OCS GE, Filosofi, IRIS, SIRENE géo, DVF, PVGIS)
++ les réglementaires complets (GPU zones/prescriptions/DPU/assainissement, SUP, PEB, endiguement,
+Zonage ABC, QPV, Taxe, ZFANG/FRR, CatNat). Le gros des « à voir » = champs producteur PRÉSENTS dans
+`raw`/agrégés/hors périmètre foncier, surfaçables au besoin sans nouvelle ingestion — jamais « inutile »
+au doute. Les rares « inutile » : departement/region (974 constant), NOMFIC (dataset_url suffit),
+ancien_code_commune DVF (historique de fusion).
 
 ## Reste à faire (rangé, sans sauter de source)
 Les 95 autres sources, famille par famille, dans l'ordre ci-dessus. Chaque schéma producteur est lu au bon
