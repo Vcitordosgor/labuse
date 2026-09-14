@@ -220,10 +220,22 @@ FttH restent **déclaratives** (étiquetées, jamais présentées comme fiables 
 IPE). Place = `arcep_immeubles` (base) ; le FttH reste le signal servi à la viabilisation. Test
 `test_arcep_fibre.py`.
 
-### Reprise (point de départ pour la prochaine source) — **Loyers DHUP**
-Après BODACC (largement MAXIMUM) et Fibre Arcep (MAXIMUM), l'ordre imposé reprend à **Loyers DHUP**
-(bornes de confiance, type de bien), puis DFI, Sudocuh, RP Logement, RPLS, … **Commande de reprise :
-« continue SOURCES-4 ».** (CoSIA : intersection île entière lancée en fin de session — voir plus bas.)
+### Géorisques — détail des couches (mouvements de terrain, cavités, sols pollués) → **MAXIMUM**
+Les parsers `georisques_layers.py` gardaient l'essentiel ; on complète avec les champs producteur
+laissés : **mvt** — `date_maj`, `lieu`, `commentaire_lieu`, `precision_date`, `precision_lieu` ;
+**cavités** — `reperage_geo` (localisation textuelle) ; **sols pollués** — `activite_principale`
+(ce que faisait le site = la nature du risque, ex. « Mise en décharge ») + `adresse_lieudit`. Trois
+fonctions de re-ingestion isolées (`ingest_mvt_commune` déjà là, + `ingest_cavites_commune`,
+`ingest_sols_pollues_commune`, ne re-touchant que leur couche). Re-ingéré 24 communes : mvt 3 085,
+cavités 151, sols pollués 531. Test `test_parse_georisques_champs_producteur_sources4`.
+
+### Reprise (point de départ pour la prochaine source) — **Loyers DHUP (carte)**
+Ordre restant : **Loyers DHUP carte** (loypredm2 + intervalles de confiance — source distincte de
+l'OLL déjà ingéré), puis DFI, Sudocuh, RP Logement, RPLS, classement sonore, EDF HTA, OSM, AZI/TRI,
+Mérimée, Conso NAF, personnes morales, SITADEL, Potentiel foncier, GéoLittoral, ONF, INPN, ZNIEFF,
+EGOUL, DILA, puis BD TOPO/BD CARTO/cadastre d'époque ; LOT 3 (5 comparaisons DEAL), LOT 4 (verdict
+93 + G2 30j). Beaucoup de lignes « utile » restantes sont des placeholders à VÉRIFIER (souvent déjà
+MAXIMUM, comme Cartofriches/BODACC). **Commande de reprise : « continue SOURCES-4 ».**
 
 ### Le reste du LOT 2 — rang conservé
 `SCHEMAS.csv` liste ~70 champs « à voir »/« à ingérer », ordonnés par utilité (mandat § LOT 2).

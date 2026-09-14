@@ -102,6 +102,23 @@ def test_kind_source_mapping():
     assert set(KIND_SOURCE) == {"sol_pollue", "cavite", "icpe", "mvt"}
 
 
+def test_parse_georisques_champs_producteur_sources4():
+    """SOURCES-4 lot 2 — cavité (reperage_geo), mvt (date_maj/lieu/commentaire_lieu/precision),
+    sol_pollue (activite_principale/adresse_lieudit) : champs producteur gardés."""
+    cav = parse_cavite({**CAVITE, "reperage_geo": "orifice visible"})
+    assert cav["attrs"]["reperage_geo"] == "orifice visible"
+    mvt = parse_mvt({"identifiant": "X", "type": "Coulée", "longitude": 55.3, "latitude": -21.0,
+                     "date_maj": "2001-10-31", "lieu": "Ravine", "commentaire_lieu": "près du pont",
+                     "precision_date": "Jour", "precision_lieu": "Hectomètre"})
+    a = mvt["attrs"]
+    assert a["date_maj"] == "2001-10-31" and a["lieu"] == "Ravine"
+    assert a["commentaire_lieu"] == "près du pont" and a["precision_lieu"] == "Hectomètre"
+    sp = parse_sol_pollue("casias", {**CASIAS, "activite_principale": "Mise en décharge",
+                                     "adresse_lieudit": "Cambaie"})
+    assert sp["attrs"]["activite_principale"] == "Mise en décharge"
+    assert sp["attrs"]["adresse_lieudit"] == "Cambaie"
+
+
 def test_parse_mvt():
     item = {"identifiant": "12700005", "type": "Coulée", "fiabilite": "Fort",
             "lieu": None, "longitude": 55.300026, "latitude": -21.007004, "code_insee": "97415"}
