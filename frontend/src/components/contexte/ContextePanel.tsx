@@ -575,6 +575,20 @@ export function ContextePanel() {
                   <RowT lbl="PPR (risque naturel)" val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % des parcelles` : '—'} />
                   <RowT lbl="Mouvement de terrain" val={d.risques.mouvement_terrain_pct != null ? `${fmtDec(d.risques.mouvement_terrain_pct)} %` : '—'} />
                   <RowT lbl="Arrêtés CatNat" val={fmt(d.risques.catnat_arretes)} />
+                  {/* SOURCES-4 lot 1 — le DÉTAIL des arrêtés dormait dans catnat_arretes (seul le compte
+                      était servi) : péril, dates début→fin, code national + JO. Les plus récents. */}
+                  {d.risques.catnat_detail?.length ? (
+                    <div className="ml-2 flex flex-col gap-0.5 border-l border-line pl-2">
+                      {d.risques.catnat_detail.slice(0, 6).map((a, i) => (
+                        <RowT key={a.code_national ?? i} lbl={a.type_peril}
+                          val={[a.date_debut && a.date_fin ? `${a.date_debut} → ${a.date_fin}` : (a.date_arrete ?? ''),
+                                a.code_national].filter(Boolean).join(' · ')} />
+                      ))}
+                      {d.risques.catnat_arretes > 6 ? (
+                        <div className="text-[11px] text-txt-dim">et {d.risques.catnat_arretes - 6} autre{d.risques.catnat_arretes - 6 > 1 ? 's' : ''}…</div>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {/* SOURCES-1 lot 2 — le fait AZI/TRI (GASPAR) : quels documents inondation couvrent la commune */}
                   {d.risques.azi_tri && (d.risques.azi_tri.azi?.length || d.risques.azi_tri.tri?.length) ? (
                     <RowT lbl="Inondation (AZI / TRI)"

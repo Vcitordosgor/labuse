@@ -184,6 +184,8 @@
 | | | *part des parcelles de la commune intersectant la couche ppr* | | | | | |
 | `catnat_n` | nombre | Arrêtés CatNat | catnat_gaspar | passe-plat · src/labuse/api/fiche_commune.py — table lue : catnat_arretes (count par insee) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *count catnat_arretes* | | | | | |
+| `catnat_arretes_liste` | liste | Arrêtés CatNat (détail) | catnat_gaspar | passe-plat · src/labuse/api/fiche_commune.py:risques — table lue : catnat_arretes (détail par insee) + raw (code_national_catnat, date_publication_jo) | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *arrêtés CatNat de la commune détaillés : péril, dates de début/fin/arrêté, code national et date de publication au JO — 12 plus récents (le compte total reste catnat_n)* | | | | | |
 
 ## Population & logement
 

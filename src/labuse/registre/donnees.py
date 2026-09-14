@@ -470,6 +470,15 @@ DONNEES: dict[str, Donnee] = {
     # CIRCUIT-6 lot 0 — l'arête MANQUAIT : catnat_arretes est le réservoir catnat_gaspar
     # (426 arrêtés servis fiche commune/Pièges sans provenance tracée — SOURCES-AUDIT).
     reservoirs=("catnat_gaspar",), portee="live", table="catnat_arretes (count par insee)"),
+ # SOURCES-4 lot 1 — le DÉTAIL des arrêtés (péril, dates début/fin/arrêté, code national + date JO)
+ # dormait dans catnat_arretes / raw : seul le COMPTE (catnat_n) était servi. Liste servie sur la
+ # fiche commune (12 plus récents), même réservoir, sans nouvelle source.
+ "catnat_arretes_liste": C("Arrêtés CatNat (détail)", "liste", "commune",
+    "arrêtés CatNat de la commune détaillés : péril, dates de début/fin/arrêté, code national et "
+    "date de publication au JO — 12 plus récents (le compte total reste catnat_n)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py:risques",
+    reservoirs=("catnat_gaspar",), portee="live", type="liste",
+    table="catnat_arretes (détail par insee) + raw (code_national_catnat, date_publication_jo)"),
  "habitants_n": C("Habitants", "nombre", "commune",
     "population INSEE/Filosofi commune",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py:123 (population)",

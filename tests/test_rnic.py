@@ -19,7 +19,11 @@ _COLS = ["numero_d_immatriculation", "code_officiel_departement", "code_officiel
          "type_de_syndic_benevole_professionnel_non_connu",
          "raison_sociale_du_representant_legal", "siret_du_representant_legal",
          "mandat_en_cours_dans_la_copropriete", "reference_cadastrale_1",
-         "reference_cadastrale_2", "reference_cadastrale_3", "long", "lat"]
+         "reference_cadastrale_2", "reference_cadastrale_3", "long", "lat",
+         # SOURCES-4 lot 1 — champs surfacés (jusque-là seulement dans raw)
+         "nombre_de_lots_de_stationnement",
+         "nombre_total_de_lots_a_usage_d_habitation_de_bureaux_ou_de_comm",
+         "residence_service", "syndicat_cooperatif"]
 
 
 def _csv_974(tmp_path, rows):
@@ -124,3 +128,34 @@ def test_rattachement_proche_20m(db_session, tmp_path):
     assert rows["AA0000020"] == ("97415000AB0001", "proche_20m")
     assert rows["AA0000021"] == (None, "aucun")
     assert res["rattachement"].get("proche_20m", 0) >= 1
+
+
+@pytest.mark.db
+def test_surface_champs_raw_stationnement_residence(db_session, tmp_path):
+    """SOURCES-4 lot 1 — les lots de stationnement / commerce-bureaux, la résidence-service et le
+    caractère coopératif dormaient dans `raw` : la fiche ne les servait pas. On garde ici que le
+    contrat de surfacing tient (extraction depuis raw, même SELECT que _q_v2_fiche) : si l'ANAH
+    renomme une clé ou la purge RGPD l'efface, ce test casse."""
+    path = _csv_974(tmp_path, [{
+        "numero_d_immatriculation": "AA0000030", "code_officiel_departement": "974",
+        "code_officiel_commune": "97415", "nom_officiel_commune": "Saint-Paul",
+        "adresse_de_reference": "1 r Test 97460 Saint-Paul", "nombre_total_de_lots": "40",
+        "nombre_de_lots_a_usage_d_habitation": "30",
+        "type_de_syndic_benevole_professionnel_non_connu": "professionnel",
+        "raison_sociale_du_representant_legal": "SYNDIC SARL",
+        "siret_du_representant_legal": "48086797700013",
+        "nombre_de_lots_de_stationnement": "117",
+        "nombre_total_de_lots_a_usage_d_habitation_de_bureaux_ou_de_comm": "40",
+        "residence_service": "non", "syndicat_cooperatif": "oui",
+    }])
+    ingest_rnic(db_session, path, log=lambda *_: None)
+    # exactement l'extraction servie par app.py:_q_v2_fiche
+    r = db_session.execute(text(
+        "SELECT syndic_siret, (raw->>'nombre_de_lots_de_stationnement')::int AS nb_stat, "
+        "       raw->>'nombre_total_de_lots_a_usage_d_habitation_de_bureaux_ou_de_comm' AS hbc, "
+        "       raw->>'residence_service' AS rs, raw->>'syndicat_cooperatif' AS coop "
+        "FROM rnic_coproprietes WHERE numero_immatriculation = 'AA0000030'")).mappings().first()
+    assert r["syndic_siret"] == "48086797700013"   # pro → SIRET surfacé
+    assert r["nb_stat"] == 117
+    assert r["hbc"] == "40"
+    assert r["rs"] == "non" and r["coop"] == "oui"

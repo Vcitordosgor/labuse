@@ -11,11 +11,20 @@ function detail(c: Copropriete): string {
   if (c.nb_lots_total != null) {
     let lots = `${c.nb_lots_total} lot${c.nb_lots_total > 1 ? 's' : ''}`
     if (c.nb_lots_habitation != null) lots += ` (dont ${c.nb_lots_habitation} hab.)`
+    // SOURCES-4 lot 1 — lots de stationnement et de commerce/bureaux (RNIC/ANAH, jusque-là dans raw).
+    if (c.nb_lots_stationnement != null && c.nb_lots_stationnement > 0)
+      lots += `, ${c.nb_lots_stationnement} stationnement`
+    if (c.nb_lots_hab_bur_com) lots += `, ${c.nb_lots_hab_bur_com} hab./bur./com.`
     bouts.push(lots)
   }
   if (c.periode_construction) bouts.push(c.periode_construction)
+  if (c.residence_service === 'oui') bouts.push('résidence-service')
+  if (c.syndicat_cooperatif === 'oui') bouts.push('syndicat coopératif')
   if (c.syndic_nom || c.syndic_type) {
-    bouts.push(`syndic ${[c.syndic_type, c.syndic_nom].filter(Boolean).join(' · ')}`)
+    // SOURCES-4 lot 1 — SIRET du syndic surfacé (colonne en base, jamais servie).
+    const syndic = [c.syndic_type, c.syndic_nom, c.syndic_siret && `SIRET ${c.syndic_siret}`]
+      .filter(Boolean).join(' · ')
+    bouts.push(`syndic ${syndic}`)
   }
   return bouts.join(' · ')
 }

@@ -269,7 +269,7 @@ ROBINETS: dict[str, Robinet] = {
  "fiche_commune_zonage": _r("fiche", "Zonage", "fiche_commune",
     "/communes/{c}/contexte", "json_puis_js", chiffres=("part_zone_U_pct", "part_zone_AU_pct", "part_zone_A_pct", "part_zone_N_pct",)),
  "fiche_commune_risques": _r("fiche", "Risques", "fiche_commune",
-    "/communes/{c}/contexte", "json_puis_js", chiffres=("ppr_pct", "catnat_n",)),
+    "/communes/{c}/contexte", "json_puis_js", chiffres=("ppr_pct", "catnat_n", "catnat_arretes_liste",)),
  "fiche_commune_population": _r("fiche", "Population & logement", "fiche_commune",
     "/communes/{c}/contexte", "json_puis_js",
     chiffres=("habitants_n", "vacance_pct", "autres_loges_pct")),
