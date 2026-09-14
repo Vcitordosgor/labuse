@@ -266,6 +266,23 @@ nouvelle source). Les arbitrages de doublon (EDF > BD TOPO lignes, CoSIA/LiDAR >
   l'approche streaming tuile-par-tuile ramène à **~25 min**. Vic a autorisé le calcul (unique) ; il a
   été **lancé en fin de session**. Plus un arrêt sur seuil.
 
+## Passe de vérification LOT 4 — les 28 placeholders « utile »
+Vérification champ-par-champ (colonnes/attrs réels vs schéma producteur), **sans relabelliser sans
+preuve**. Verdict :
+- **25 → MAXIMUM (vérifié)** : ICPE raisonSociale, PEB, GPU ER/EBC/DPU/assainissement, Zonage ABC,
+  BAN PLUS, RGE ALTI, BAN (adresses), PVGIS (calculateur live), Filosofi, Contours IRIS (spatial_layers,
+  344), SIRENE géo, Trafic RN, RNB, OCS GE, LiDAR HD, RP2022 IRIS, ACV/ORT, QPV, SUP, ZFANG, FRR,
+  Taxe d'aménagement. Chacune : la table/attrs porte l'ensemble des champs producteur utiles.
+- **3 → PARTIEL / reporté (vraie ingestion nécessaire)** :
+  - **Urbanisme PLU (CNIG zone-urba)** : `idurba`/`libelle` ingérés ; **DESTDOMI** (destination dominante),
+    **DATVALID**, **DATAPPRO** restent (vraie ingestion — prochain chantier tractable).
+  - **Systèmes d'endiguement** : attrs mince (`layer/lineaire`) → **LOT 3** (DescribeFeatureType DEAL
+    pour classe d'ouvrage / niveau / population protégée).
+  - **INPI RNE** : dirigeants ingérés (`pm_dirigeants`) ; adresse/2ᵉ rôle = données perso hors licence
+    RNE homologuée → PARTIEL-producteur (licence).
+
+`SCHEMAS.csv` « à voir » **72 → 47**, `ingere=non` **94 → 57**, placeholders « utile » **28 → 0**.
+
 ## Bilan de session (autonome)
 **14 sources traitées** (LOT 1 : CatNat, RNIC ; LOT 2 : ICPE, SRU, Cartofriches, BPE, Parc national,
 REI, Fibre Arcep, BODACC, CoSIA + Piscines, Géorisques mvt/cavités/sols pollués, Loyers DHUP vérifié)
