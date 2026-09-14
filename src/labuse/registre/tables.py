@@ -197,7 +197,8 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                   "bodacc_depots")),
     # ── territoire / statistique ────────────────────────────────────────────────────
     "insee_rp_logement": Rt(("commune_insee_logement",)),
-    "insee_rp2022_egoul": Rt(("anc_maille_taux",), millesime="RP2022 — fichier détail Logements (16/10/2025)"),
+    "insee_rp2022_egoul": Rt(("anc_maille_taux", "rp_logement_commune"),
+                             millesime="RP2022 — fichier détail Logements (16/10/2025) ; SOURCES-5 : toutes variables logement"),
     "filosofi_carreaux": Rt(("filosofi_carreaux_200m", "p_model_filo"), millesime="millésime 2021"),
     "mobpro": Rt(("mobpro_commune",), millesime="MOBPRO INSEE — fichier détail (millésime RP)",
                  note="RETIRÉ 06/09/2026 (CIRCUIT-5b) — abandonné par ZONE-DONNÉES ; lecteur "

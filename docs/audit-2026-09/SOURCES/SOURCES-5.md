@@ -370,10 +370,30 @@ La chair servie reste `veille_plu.yaml`. Legacy script m41 laissé (superseded, 
 
 ---
 
+### 15. INSEE RP détail Logements (EGOUL) → **MAXIMUM** (fait) — nouvelle table
+
+**Constat** : `anc.ingest_insee_egoul` n'exploitait qu'`EGOUL` (raccordement) + `IPONDL` du fichier
+détail national FD_LOGEMT_2022 (**69 variables**, ~26 M lignes). Le mandat veut « chauffage, taille
+fine, toutes les variables ».
+
+**Ingestion** : nouveau module `ingestion/rp_logement.py` + CLI `ingest-rp-logement` → une passe sur
+le **même fichier détail** (déjà téléchargé en cache, 419 Mo, `data/insee_rp/`), filtre **974 par
+COMMUNE**, agrège par commune les **distributions pondérées (IPONDL)** de **24 variables LOGEMENT** :
+chauffage (CHAU/CHFL/CHOS/CMBL), taille (NBPI pièces, SURF surface), type (TYPL/TYPC), période
+(ACHL/BATI), catégorie/statut (CATL/STOCD), équipements (EAU/ELEC/WC/BAIN/GARL/ASCEN/CLIM/CUIS/SANI/
+VOIT/HLML/CATIRIS). Table `rp_logement_commune` (jsonb). **Agrégat commune uniquement (RGPD** : l'INSEE
+ne diffuse pas plus fin que l'IRIS ; aucune ligne individuelle stockée).
+
+**Preuve** : **24 communes, 169 484 logements** agrégés, 24 variables, en 59 s (passe unique). Ex.
+Saint-Denis : NBPI {3P:18 329, 4P:16 423…}, CHAU {central:5 868, individuel:62 326}, SURF, CLIM
+distribués. Table au réservoir `insee_rp2022_egoul`. Le zip 419 Mo reste **hors git** (`data/`
+gitignored). `SCHEMAS.csv` : 2 lignes (RP2023 PARTIEL + EGOUL à-ingérer) → MAXIMUM. Portes vertes.
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **15. INSEE RP détail Logements (EGOUL)**
-(chauffage, taille fine, toutes les variables).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **16. Cadastre d'époque** (millésimes PCI
+vecteur ; ⚠ vérifier l'outil Remonter le temps — capture avant/après).
 
-Restantes après #14 : C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE
-ADEME 230 champs.
+Restantes après #15 : C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.

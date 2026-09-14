@@ -3469,6 +3469,20 @@ def ingest_bodacc_depots_cmd(
                f"{r['sirens_queried']} SIREN propriétaires PM")
 
 
+@app.command("ingest-rp-logement")
+def ingest_rp_logement_cmd() -> None:
+    """SOURCES-5 #15 — INSEE RP2022 fichier détail Logements : toutes les variables logement
+    (chauffage/pièces/surface/type/équipements) agrégées par commune 974 → rp_logement_commune.
+    Réutilise le fichier détail national en cache (cf. ingest-anc)."""
+    from .ingestion import rp_logement
+
+    with session_scope() as s:
+        r = rp_logement.ingest_rp_logement(s, log=typer.echo)
+        s.commit()
+    typer.echo(f"✓ RP logement : {r['communes']} communes 974, {r['logements_974']} logements, "
+               f"{r['variables']} variables.")
+
+
 @app.command("ingest-sudocuh")
 def ingest_sudocuh_cmd() -> None:
     """SOURCES-5 #14 — Sudocuh : classeur XLSX officiel DGALN (23 colonnes) filtré 974 →
