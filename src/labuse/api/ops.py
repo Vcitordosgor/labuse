@@ -196,6 +196,13 @@ def admin_contacts(request: Request):
         contacts_par_insee: dict[str, list] = {}
         for g in _cc.lister_tous(db):
             contacts_par_insee[g["insee"]] = g["contacts"]
+        # SOURCES-5 #7 — l'annuaire DILA COMPLET du 974 (tribunaux, préfecture, gendarmeries, France
+        # Services, impôts…), au-delà des seules mairies. Table annuaire_services (réservoir DILA).
+        try:
+            from ..ingestion.annuaire_services import services_974
+            services = services_974(db)
+        except Exception:  # noqa: BLE001 — table pas encore ingérée : l'écran reste sur les mairies
+            services = []
     for m in mairies:
         m["date_import"] = m["date_import"].isoformat() if m.get("date_import") else None
         m["contacts"] = contacts_par_insee.get(m.get("insee"), [])   # AD10 — contacts nommés de la commune
@@ -213,9 +220,9 @@ def admin_contacts(request: Request):
          "adresse": "12 rue Colbert, 97400 Saint-Denis", "telephone": "02 62 41 14 24",
          "site": "https://www.adil974.re"},
     ]
-    return {"mairies": mairies, "epci": epci, "autres": autres,
+    return {"mairies": mairies, "epci": epci, "autres": autres, "services": services,
             "note": "Même donnée que la fiche commune, réunie et triable. Pas de notes de relation "
-                    "(le CRM reste dans Notion)."}
+                    "(le CRM reste dans Notion). `services` = annuaire DILA complet du 974."}
 
 
 # ═══════════════════════════ ADMIN-1 (AD10) — carnet des contacts nommés de communes ═══════════════════════════

@@ -188,12 +188,46 @@ comparaison tracée. (Pas de ligne « à ingérer » dans `SCHEMAS.csv` : la sou
 
 ---
 
+### 7. Annuaire de l'administration (DILA) → **MAXIMUM** (fait) — nouvelle table
+
+**Constat** : `mairies.py` (K2) ne captait que les **24 mairies**. Le mandat veut **tous les
+services**.
+
+**Ingestion** : nouveau module `ingestion/annuaire_services.py` + CLI `ingest-annuaire-services`
+→ table **`annuaire_services`**. Source ODS `api-lannuaire-administration`. **Garde 974 au plus
+tôt** : filtre API `startswith(code_insee_commune,"974")` (974xx = La Réunion seule) PUIS
+re-vérification par ligne. **Tout champ publié** : les 44-49 champs du record DILA conservés dans
+`raw` (jsonb), les plus utiles promus en colonnes (nom, pivot_type, sigle, categorie,
+type_organisme, insee, commune, cp, adresse, tél, email, site, mission…). Upsert par `id` +
+**purge des services disparus** (idempotent).
+
+**Registre / lecteur / gate** : table déclarée dans le réservoir `annuaire_service_public`
+(carte → V1c verte) ; lecteur ajouté à `/admin/contacts-institutionnels` (clé `services`, via
+`services_974()`) — le réservoir n'est pas muet. La section front « annuaire complet » reste un
+ajout mince à faire (backend prêt ; les 24 mairies restent affichées comme aujourd'hui).
+
+**Preuve** : **436 services** ingérés, **garde 974 = 0 rejet non-974** (INSEE), **136 types** de
+service (france_services 37, point_justice/tribunaux 32, gendarmerie 28, mairie 24, ccas 22,
+police_municipale 22, sip 11, préfecture 10…), **24 communes** couvertes, `raw` = 49 champs complet.
+
+**V4e a mordu (bon signe)** : la 1re passe a fait CASSER V4e — la colonne `code_postal` portait des
+CP DILA erronés (93200 Seine-St-Denis, 97250 Martinique sur des antennes mal saisies) et des CEDEX
+978xx. Ces lignes ont pourtant un **INSEE 974** (ce SONT des services réunionnais) → la ligne n'est
+pas rejetée, mais la colonne servie `code_postal` est validée par le garde (`_cp_prefixe_974`,
+974/977) : sinon NULL (16 lignes), le CP brut reste dans `raw`. **Aucune tolérance ajoutée**, garde
+non relâché. `SCHEMAS.csv` : 1 ligne à-ingérer → 3 MAXIMUM.
+
+**Doublon** : les 24 mairies figurent aussi dans `annuaire_services` (même source DILA) ; la table
+`mairies` reste le contact spécialisé par commune lu par la fiche — granularité distincte, pas un
+doublon inter-source.
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **7. Annuaire de l'administration (DILA)**
-(portail ODS, tous les services).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **8. AZI / TRI** (dates d'étude/réalisation
++ bassin de risques).
 
-Restantes après #6 : A7 DILA · B8 AZI/TRI dates · B9 RNIC 29-1/DPE copro · B10 BODACC dépôts de
-comptes · B11 Coût construction · B12 Forêts ONF régime · B13 Potentiel foncier colonnes restantes
-· C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME
-230 champs.
+Restantes après #7 : B8 AZI/TRI dates · B9 RNIC 29-1/DPE copro · B10 BODACC dépôts de comptes · B11
+Coût construction · B12 Forêts ONF régime · B13 Potentiel foncier colonnes restantes · C14 Sudocuh
+· C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.

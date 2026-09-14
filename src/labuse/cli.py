@@ -3464,6 +3464,20 @@ def ingest_mairies_cmd() -> None:
                + (f" — absentes de l'annuaire : {', '.join(r['absentes'])}" if r["absentes"] else ""))
 
 
+@app.command("ingest-annuaire-services")
+def ingest_annuaire_services_cmd() -> None:
+    """SOURCES-5 #7 — TOUS les services publics du 974 depuis l'Annuaire de l'administration (DILA).
+    Préfecture, tribunaux, gendarmeries, France Services, impôts, CCAS… (≈436). Garde 974 par INSEE,
+    tout champ publié conservé (raw jsonb), upsert idempotent + purge des services disparus."""
+    from .ingestion import annuaire_services
+
+    with session_scope() as s:
+        r = annuaire_services.ingest(s)
+    typer.echo(f"✓ Annuaire services 974 : {r['trouves']} ingérés"
+               + (f" · {r['supprimes']} purgés" if r["supprimes"] else "")
+               + (f" · {r['rejets_974']} rejetés (garde 974)" if r["rejets_974"] else ""))
+
+
 @app.command("radar-depot-html")
 def radar_depot_html_cmd(
     fichier: str = typer.Argument(..., help="page de résultats HTML enregistrée (Cmd+S, « page web complète »)"),

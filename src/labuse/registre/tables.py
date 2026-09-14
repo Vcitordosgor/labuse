@@ -211,8 +211,8 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                                      "table anc_office_eau_commune est CONSERVÉE (données non effacées), "
                                      "plus aucun lecteur du code."),
     "spanc_epci": Rt((), note="manuel — collectif/non collectif saisi, aucune table dédiée"),
-    "annuaire_service_public": Rt(("mairies",),
-                                  millesime="annuaire service-public.fr — 24 mairies (OUTILS K2)"),
+    "annuaire_service_public": Rt(("mairies", "annuaire_services"),
+                                  millesime="annuaire service-public.fr — 24 mairies + ~436 services 974 (SOURCES-5)"),
     "rnic_anah": Rt(("rnic_coproprietes",), millesime="RNIC (ANAH) — registre des copropriétés"),
     "rpls_sdes": Rt(("rpls_commune",), millesime="RPLS — millésime 01/01/2025 (SDES)"),
     "enaf_cerema": Rt(("commune_conso_enaf",),
