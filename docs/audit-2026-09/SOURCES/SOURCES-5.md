@@ -223,11 +223,33 @@ doublon inter-source.
 
 ---
 
+## Groupe B — champs supplémentaires
+
+### 8. AZI / TRI — dates + bassin de risques → **MAXIMUM** (fait)
+
+**Constat** : `azi_communes` ne gardait que `libelle`, `risques`, `date_diffusion`. Le GASPAR
+publie bien plus : **`libelle_bassin_risques`** et, pour l'AZI, `date_debut/fin_etude`,
+`date_realisation`, `date_debut/fin_programmation`, `date_debut/fin_information`,
+`date_publication_web` ; pour le TRI, `date_arrete_pcb/carte/pcb_local/prefet/approbation/national`.
+
+**Correctif** (additif, `ALTER … IF NOT EXISTS`) : colonnes `bassin_risques`, `dates` (jsonb =
+tous les champs `date_*`) et `raw` (jsonb = record GASPAR intégral). Reader `azi_tri_commune`
+surface bassin + dates. Table replacée à l'identique (DELETE + réinsertion), rien de run-scopé.
+
+**Preuve** : **39 lignes / 22 communes inchangées** (30 AZI + 9 TRI), 128 scénarios TRI intacts ;
+`bassin_risques` 30/39, `dates` 39/39, `raw` 39/39. Exemple TRI Saint-Denis :
+`dates={date_arrete_pcb:25/01/2013, date_arrete_carte:26/12/2013}` ; AZI La Montagne :
+`bassin_risques="La Montagne"`. Les `date_*_etude` de l'AZI sont **null au 974 = trou producteur**
+(GASPAR ne les remplit pas ici ; captés quand présents). `SCHEMAS.csv` : 2 lignes à-ingérer → 3
+MAXIMUM.
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **8. AZI / TRI** (dates d'étude/réalisation
-+ bassin de risques).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **9. RNIC** (procédures article 29-1 +
+étiquette DPE de la copropriété, si le jeu open data les porte — sinon arbitrage écrit).
 
-Restantes après #7 : B8 AZI/TRI dates · B9 RNIC 29-1/DPE copro · B10 BODACC dépôts de comptes · B11
-Coût construction · B12 Forêts ONF régime · B13 Potentiel foncier colonnes restantes · C14 Sudocuh
-· C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.
+Restantes après #8 : B9 RNIC 29-1/DPE copro · B10 BODACC dépôts de comptes · B11 Coût construction
+· B12 Forêts ONF régime · B13 Potentiel foncier colonnes restantes · C14 Sudocuh · C15 RP Logements
+EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.

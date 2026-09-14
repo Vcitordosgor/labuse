@@ -38,10 +38,20 @@ CREATE TABLE IF NOT EXISTS azi_communes (
 )
 """
 
+# SOURCES-5 #8 — bassin de risques + jalons du programme (dates d'étude/réalisation pour l'AZI,
+# dates d'arrêté pour le TRI) + record brut. Additif (ALTER IF NOT EXISTS) : run/verdicts inchangés.
+_ALTERS = (
+    "ALTER TABLE azi_communes ADD COLUMN IF NOT EXISTS bassin_risques varchar(200)",
+    "ALTER TABLE azi_communes ADD COLUMN IF NOT EXISTS dates jsonb",
+    "ALTER TABLE azi_communes ADD COLUMN IF NOT EXISTS raw jsonb",
+)
+
 
 def ensure_tables(engine) -> None:
     with engine.begin() as cx:
         cx.execute(text(DDL))
+        for stmt in _ALTERS:
+            cx.execute(text(stmt))
 
 
 def ingest_azi_tri(session: Session, log=print, client: httpx.Client | None = None) -> dict:
@@ -67,14 +77,22 @@ def ingest_azi_tri(session: Session, log=print, client: httpx.Client | None = No
                     risques = " ; ".join(
                         x.get("libelle_risque_long") or "" for x in
                         (d.get("liste_libelle_risque") or []))
+                    # SOURCES-5 #8 : bassin de risques + tous les jalons datés (étude/réalisation
+                    # pour l'AZI, arrêtés pour le TRI) + record brut. `dates` = tous les champs date_*.
+                    dates = {k: v for k, v in d.items() if k.startswith("date_") and v}
                     session.execute(text(
                         "INSERT INTO azi_communes (insee, type_doc, code_national, libelle, "
-                        "risques, date_diffusion, maj_at) VALUES (:i, :t, :c, :l, :r, :d, now()) "
+                        "risques, date_diffusion, bassin_risques, dates, raw, maj_at) "
+                        "VALUES (:i, :t, :c, :l, :r, :d, :b, CAST(:dj AS jsonb), CAST(:rw AS jsonb), now()) "
                         "ON CONFLICT (insee, type_doc, code_national) DO UPDATE SET "
-                        "libelle = :l, risques = :r, date_diffusion = :d, maj_at = now()"),
+                        "libelle = :l, risques = :r, date_diffusion = :d, bassin_risques = :b, "
+                        "dates = CAST(:dj AS jsonb), raw = CAST(:rw AS jsonb), maj_at = now()"),
                         {"i": insee, "t": type_doc, "c": code,
                          "l": d.get(f"libelle_{type_doc}"), "r": risques,
-                         "d": d.get("date_diffusion") or d.get("date_arrete_pcb")})
+                         "d": d.get("date_diffusion") or d.get("date_arrete_pcb"),
+                         "b": (d.get("libelle_bassin_risques") or None),
+                         "dj": json.dumps(dates, ensure_ascii=False),
+                         "rw": json.dumps(d, ensure_ascii=False)})
                     if type_doc == "azi":
                         n_azi += 1
                         communes_azi.add(nom)
@@ -93,7 +111,7 @@ def ingest_azi_tri(session: Session, log=print, client: httpx.Client | None = No
 def azi_tri_commune(session: Session, insee: str) -> dict | None:
     """Le fait AZI/TRI d'une commune, sourcé — None si table non peuplée (jamais deviné)."""
     rows = session.execute(text(
-        "SELECT type_doc, libelle, risques, date_diffusion FROM azi_communes "
+        "SELECT type_doc, libelle, risques, date_diffusion, bassin_risques, dates FROM azi_communes "
         "WHERE insee = :i ORDER BY type_doc, libelle"), {"i": insee}).mappings().all()
     if not rows:
         peuplee = session.execute(text("SELECT 1 FROM azi_communes LIMIT 1")).first()
