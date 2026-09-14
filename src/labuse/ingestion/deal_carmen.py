@@ -148,7 +148,12 @@ def ingest_deal_carmen(session: Session, source_ids: dict[str, int | None] | Non
                 nom = (p.get("TOPONYME") or p.get("Toponyme") or p.get("NOM")
                        or p.get("Nom") or p.get("nom") or p.get("Nom_zone")
                        or p.get("LieuDit") or p.get("Nature") or lay["typename"])
-                attrs = {k.lower(): p.get(k) for k in lay["props"] if p.get(k) is not None}
+                # SOURCES-4 lot 3 (comparaisons DEAL) — DescribeFeatureType a montré des champs
+                # publiés jetés (ex. Zones_humides_2009 : Bassin_ver, Intérêt_, Liste_espe/espèces,
+                # Fiche ; Cours_d_eau_DPF : Commune, Longueur, Toponyme_p). Règle du mandat : « tout
+                # champ publié ingéré ». On garde donc TOUTES les propriétés (lowercase), plus les
+                # curées historiques (mêmes clés → consommateurs inchangés).
+                attrs = {k.lower(): v for k, v in p.items() if v is not None and k != "geometry"}
                 attrs["source"] = "DEAL Réunion — Lizmap (deal974.lizmap.com)"
                 attrs["typename"] = lay["typename"]
                 _insert_layer(session, lay["kind"], sub, str(nom)[:250], g,

@@ -59,8 +59,11 @@ def ingest_endiguement(session: Session, source_id: int | None = None,
                     continue
                 p = f.get("properties") or {}
                 nom = (p.get("Nom") or p.get("nom_zp") or p.get("layer") or typename)
-                attrs = {k.lower().replace(" ", "_").replace("-", "_"): p.get(k)
-                         for k in props if p.get(k) is not None}
+                # SOURCES-4 lot 3 (comparaison DEAL) — règle « tout champ publié » : on garde TOUTES
+                # les propriétés (classe d'ouvrage A/B/C, niveau de protection, NGR/débits, population
+                # protégée), pas seulement le sous-ensemble curé. Clés normalisées (espaces/tirets).
+                attrs = {k.lower().replace(" ", "_").replace("-", "_"): v
+                         for k, v in p.items() if v is not None and k.lower() != "geometry"}
                 attrs["source"] = "DEAL Réunion — Lizmap (02sprinr/03digues)"
                 attrs["typename"] = typename
                 if subtype == "zone_protegee":
