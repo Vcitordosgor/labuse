@@ -63,20 +63,37 @@ def temoins_du_jour(db) -> list[tuple[str, str, str]]:
     return fixes + tires
 
 
-def _colonnes(db, table: str) -> set[str]:
+def schema_public(db) -> dict[str, set[str]]:
+    """PERF (SOURCES-3b) : table → colonnes, en UNE requête au catalogue (les tables absentes n'y
+    sont pas). Remplace N appels `information_schema`/`to_regclass` par source×table (ce qui faisait
+    franchir la seconde à /admin/circuit après le merge). Passé à remplissage_source par mesurer_vitrine."""
+    out: dict[str, set[str]] = {}
+    for t, col in db.execute(text(
+            "SELECT table_name, column_name FROM information_schema.columns "
+            "WHERE table_schema = 'public'")):
+        out.setdefault(t, set()).add(col)
+    return out
+
+
+def _colonnes(db, table: str, schema: dict[str, set[str]] | None = None) -> set[str]:
+    if schema is not None:
+        return schema.get(table, set())
     return {r[0] for r in db.execute(text(
         "SELECT column_name FROM information_schema.columns WHERE table_name = :t"),
         {"t": table})}
 
 
-def _existe(db, table: str) -> bool:
+def _existe(db, table: str, schema: dict[str, set[str]] | None = None) -> bool:
+    if schema is not None:
+        return table in schema
     return db.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar() is not None
 
 
 def remplissage_source(db, slug: str, temoins: list[tuple[str, str, str]],
-                       *, sans_carte: bool = False) -> dict:
+                       *, sans_carte: bool = False, schema: dict[str, set[str]] | None = None) -> dict:
     """Mesure {type, remplis (0..N), n_temoins, quasi_vide} pour UN réservoir sur les témoins.
-    type ∈ parcelle | commune | carte | n.a. — le premier joignable gagne (parcelle d'abord)."""
+    type ∈ parcelle | commune | carte | n.a. — le premier joignable gagne (parcelle d'abord).
+    `schema` (table→colonnes) : cache d'introspection partagé (mesurer_vitrine) — sinon requêté à la volée."""
     from .tables import RESERVOIR_TABLES
     rt = RESERVOIR_TABLES.get(slug)
     n = len(temoins)
@@ -87,9 +104,9 @@ def remplissage_source(db, slug: str, temoins: list[tuple[str, str, str]],
     communes_up = sorted({t[2].upper() for t in temoins if t[2]})
     best, typ, meilleur_compte = 0, None, None
     for t in rt.tables:
-        if t == "spatial_layers" or not _existe(db, t):
+        if t == "spatial_layers" or not _existe(db, t, schema):
             continue
-        cols = _colonnes(db, t)
+        cols = _colonnes(db, t, schema)
         try:
             if "idu" in cols:
                 q = f"SELECT count(DISTINCT left(idu, 14)) FROM {t} WHERE left(idu, 14) = ANY(:v)"
@@ -113,11 +130,16 @@ def remplissage_source(db, slug: str, temoins: list[tuple[str, str, str]],
             if typ == "parcelle":
                 # le compte le MIEUX rempli des tables du réservoir : une source n'est pas
                 # « vide » si l'une de ses tables est pleine (le creux exige TOUT quasi nul).
-                cnt = db.execute(text(f"SELECT count(*) FROM {t}")).scalar() or 0
+                # PERF (SOURCES-3b) : on ne teste ce compte QUE contre SEUIL_QUASI_VIDE (100) —
+                # inutile de compter 431 k lignes (parcel_vegetation) ou 340 k (adresses). Compte
+                # BORNÉ à SEUIL (min(count, SEUIL)) : verdict `quasi_vide` identique, plus de scan
+                # complet — c'est ce qui faisait franchir la seconde à /admin/circuit (P2 lot 5).
+                cnt = db.execute(text(
+                    f"SELECT count(*) FROM (SELECT 1 FROM {t} LIMIT {SEUIL_QUASI_VIDE}) _q")).scalar() or 0
                 meilleur_compte = cnt if meilleur_compte is None else max(meilleur_compte, cnt)
         except Exception:  # noqa: BLE001 — une table illisible ne casse pas la mesure
             continue
-    if typ is None and rt.couches and not sans_carte and _existe(db, "spatial_layers"):
+    if typ is None and rt.couches and not sans_carte and _existe(db, "spatial_layers", schema):
         try:
             best = db.execute(text(
                 "SELECT count(DISTINCT upper(commune)) FROM spatial_layers"
@@ -144,10 +166,11 @@ def mesurer_vitrine(db, temoins=None, *, rapide: bool = False) -> dict[str, dict
     noms = [r[0] for r in db.execute(text(
         f"SELECT name FROM data_sources WHERE {WHERE_AFFICHEES}"),
         {"masquees": masquees_param()})]
+    schema = schema_public(db)   # PERF : une seule introspection, partagée par toutes les sources
     out: dict[str, dict] = {}
     for nom in noms:
         slug = NOM_VERS_SLUG.get(nom)
         if slug:
             out[slug] = {"nom": nom,
-                         **remplissage_source(db, slug, temoins, sans_carte=rapide)}
+                         **remplissage_source(db, slug, temoins, sans_carte=rapide, schema=schema)}
     return out
