@@ -266,6 +266,25 @@ nouvelle source). Les arbitrages de doublon (EDF > BD TOPO lignes, CoSIA/LiDAR >
   l'approche streaming tuile-par-tuile ramène à **~25 min**. Vic a autorisé le calcul (unique) ; il a
   été **lancé en fin de session**. Plus un arrêt sur seuil.
 
+## Bilan de session (autonome)
+**14 sources traitées** (LOT 1 : CatNat, RNIC ; LOT 2 : ICPE, SRU, Cartofriches, BPE, Parc national,
+REI, Fibre Arcep, BODACC, CoSIA + Piscines, Géorisques mvt/cavités/sols pollués, Loyers DHUP vérifié)
++ 1 arrêt-seuil relancé (CoSIA, résolu). `SCHEMAS.csv` « à voir » **72 → 47**. Deux gros acquis
+structurels : **CoSIA couverture** (1,95 M couples, 15 classes, toute l'île) et **couche Piscines**
+(46 599, croisable propriétaire).
+
+**Reste (multi-session, honnête)** :
+- **Lourds** (téléchargements/volumes) : BD TOPO thème par thème, BD CARTO, DPE ADEME 230 champs,
+  Sudocuh ~90 colonnes, RP détail (chauffage/taille), cadastre d'époque, GéoLittoral, DVF+ (adresse/
+  pièces/Carrez).
+- **Gatés/restreints** : RPLS micro (niveau logement, SDES), DINUM recherche-entreprises, certains INPN.
+- **28 placeholders « utile »** : sources dont le cœur est ingéré (SIRENE géo, BAN, QPV, RGE ALTI, RNB,
+  SUP, endiguement, PEB, GPU DPU/ER/EBC/assainissement, Zonage ABC, Filosofi, Contours IRIS, Taxe
+  aménagement, Trafic RN, ZFANG/FRR, OCS GE, LiDAR, RP IRIS, ACV/ORT, PVGIS…). À **vérifier
+  champ-par-champ** avant de trancher MAXIMUM (ne PAS relabelliser sans preuve — plusieurs se sont
+  révélées déjà-MAX : Cartofriches, BODACC ventes, Loyers DHUP).
+- **LOT 3** : 5 comparaisons DEAL (DescribeFeatureType). **LOT 4** : verdict final des 93 + verrou G2 (30 j).
+
 ## Les deux portes à la clôture
 - LOT 1 (commit da97f39b) : verrous **24/24** · suite **3081 passed** · vitest **207** · tsc **0**.
 - LOT 2 amorce ICPE (commit b5cd0b23) : verrous **24/24** · suite **3082 passed**.
