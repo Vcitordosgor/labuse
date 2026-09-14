@@ -3469,6 +3469,18 @@ def ingest_bodacc_depots_cmd(
                f"{r['sirens_queried']} SIREN propriétaires PM")
 
 
+@app.command("ingest-sudocuh")
+def ingest_sudocuh_cmd() -> None:
+    """SOURCES-5 #14 — Sudocuh : classeur XLSX officiel DGALN (23 colonnes) filtré 974 →
+    sudocuh_procedures (provenance ; chair servie = veille_plu.yaml). Tout champ publié + raw."""
+    from .ingestion import sudocuh
+
+    with session_scope() as s:
+        r = sudocuh.ingest_sudocuh(s, log=typer.echo)
+        s.commit()
+    typer.echo(f"✓ Sudocuh : {r['communes']} communes 974, {r['colonnes']} colonnes.")
+
+
 @app.command("ingest-mairies")
 def ingest_mairies_cmd() -> None:
     """K2 — coordonnées des 24 mairies depuis l'Annuaire de l'administration (service-public.fr).

@@ -349,9 +349,31 @@ attrs : **`surf_rp`** (surface m²), **`libelle`** (code SAR, ex. « Um »/« UC
 
 ## Groupe C — les volumineuses
 
+### 14. Sudocuh → **MAXIMUM** (fait) — flux officiel
+
+**Constat** : l'ancien `scripts/m41_ingest_sudocuh.py` chargeait un **CSV local de 6 colonnes**
+(24 communes). Le mandat veut « les ~90 colonnes du fichier ».
+
+**Reprise au flux officiel** : nouveau module `ingestion/sudocuh.py` + CLI `ingest-sudocuh` →
+télécharge le **classeur XLSX national DGALN** « État des documents d'urbanisme par commune »
+(data.gouv, Licence Ouverte 2.0), feuille `ListeCommunes`. **Le fichier a 23 colonnes** (le « ~90 »
+du mandat était une surestimation — vérifié). Filtre **974 par code INSEE** (garde). Tout champ
+publié : colonnes promues (region, dept, collectivité porteuse, SIREN EPCI, code état, id DU
+opp/en cours, code BCSI, état commune, prescription/approbation/exécutoire DU en vigueur, POP
+mun/tot, superficie) + `raw` jsonb complet. `openpyxl` (dép. `ml` déjà déclarée) installé.
+
+**Preuve** : **24 communes / 23 colonnes**, `raw` + `pop_mun` peuplés (24/24). **`approbation_opp`
+(lu par qv14 comme date as-of du DU) IDENTIQUE** à l'extrait curaté (**0 diff**) → **zéro impact
+scoring** (l'officiel confirme le curaté). SIREN EPCI = 0 (compétence PLU communale au 974, normal).
+La chair servie reste `veille_plu.yaml`. Legacy script m41 laissé (superseded, inoffensif).
+`SCHEMAS.csv` : 1 à-ingérer → 1 MAXIMUM. Portes vertes.
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **14. Sudocuh** (~90 colonnes du fichier).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **15. INSEE RP détail Logements (EGOUL)**
+(chauffage, taille fine, toutes les variables).
 
-Restantes après #13 : C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO
-V5 · C18 DPE ADEME 230 champs.
+Restantes après #14 : C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE
+ADEME 230 champs.
