@@ -148,11 +148,14 @@ En route, le registre a aussi gagné `artificialisation_couche` et `batiments_3d
 
 ## Clôture
 
-- Suite complète : **3 077 passés · 55 skippés · 1 seul échec, toléré et daté (MVT, geste
-  Vic) · 2 min 37** (`labuse circuit suite` : « ✓ suite verte »). Contre 36 rouges muets
-  à l'ouverture.
+- Suite complète : **3 078 passés · 55 skippés · 0 échec · 0 tolérance · 2 min 43**
+  (`labuse circuit suite` : « ✓ suite verte »), après merge de main (SOURCES-3b) et le
+  `build-mvt --label q_v11_m137` joué par Vic — `TESTS-TOLERES.md` est VIDE, comme le
+  mandat l'exigeait. Contre 36 rouges muets à l'ouverture.
 - 24 verrous : joués verts à l'étape 0 et rejoués à la clôture.
 - 4 commits, un par lot, branche `fix/tests-1` poussée. **Rien n'est mergé** — Vic relit.
-- Gestes laissés à Vic : (1) `labuse build-mvt --label q_v11_m137` sur la base servie, puis
-  retirer la ligne de TESTS-TOLERES.md ; (2) entrer EDF SEI / ODRÉ / ZNIEFF au catalogue
-  code au prochain mandat SOURCES ; (3) merge.
+- Le `build-mvt` a été joué par Vic (tuiles re-matérialisées sur q_v11_m137, test vert,
+  tolérance levée). SOURCES-3b (mergée dans main le 14/09) avait fait le MÊME rattrapage
+  des 6 sources legacy que le lot 1 — doublons purgés au merge, son bloc fait foi.
+  Restent pour Vic : EDF SEI / ODRÉ / ZNIEFF au catalogue code (prochain mandat SOURCES),
+  et le merge de cette branche.
