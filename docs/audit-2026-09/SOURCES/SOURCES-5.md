@@ -331,10 +331,27 @@ forêt — Mafate, Plaine des Cafres — intersecte plusieurs bbox communales). 
 
 ---
 
+### 13. Potentiel foncier (Région ODS) → **MAXIMUM** (fait)
+
+**Constat** : `ingest_potentiel_foncier` restreignait la requête ODS à `select=section,parcelle,
+espacesar,zpu,geo_shape` — 4 champs sur 11.
+
+**Correctif** : `select` supprimé → **tout champ publié** du jeu `potentiel-foncier` recopié dans
+attrs : **`surf_rp`** (surface m²), **`libelle`** (code SAR, ex. « Um »/« UC »), **`particular`**
+(particularité, ex. « en ZAC — ZAC Plateau Domenjod en projet »), `num_rp`, `quartier`,
+`geo_point_2d`, `insee` — en plus de espacesar/zpu/section/parcelle. Re-ingestion par-INSEE
+(natif au jeu). subtype/`_sar_vocation` inchangés.
+
+**Preuve** : **2 453 îlots / 24 communes inchangés**, geom_2975 OK ; attrs 4 → 9 clés (non-null) ;
+`surf_rp=7318.72`, `libelle="UC"` vérifiés. `SCHEMAS.csv` : 1 à-ingérer → 1 MAXIMUM. Portes vertes.
+
+---
+
+## Groupe C — les volumineuses
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **13. Potentiel foncier (Région ODS)**
-(toutes les colonnes restantes).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **14. Sudocuh** (~90 colonnes du fichier).
 
-Restantes après #12 : B13 Potentiel foncier colonnes restantes · C14 Sudocuh · C15 RP Logements
-EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.
+Restantes après #13 : C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO
+V5 · C18 DPE ADEME 230 champs.

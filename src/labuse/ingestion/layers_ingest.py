@@ -552,18 +552,19 @@ def ingest_parc_national(session, commune, run_id, sids) -> int:
 def ingest_potentiel_foncier(session, insee, commune, run_id, sids) -> int:
     """Potentiel foncier Région (grain parcelle) → kind='potentiel_foncier' (bonus §1)."""
     with _client() as c:
-        recs = _ods_records(c, "potentiel-foncier", where=f'insee="{insee}"',
-                            select="section,parcelle,espacesar,zpu,geo_shape", page=100)
+        # SOURCES-5 #13 : plus de `select` restreint (4 champs) → tout champ publié du jeu ODS
+        # (surf_rp = SURFACE m², libelle = code SAR, particular = particularité « en ZAC en projet »,
+        # num_rp, quartier). geo_shape reste la géométrie.
+        recs = _ods_records(c, "potentiel-foncier", where=f'insee="{insee}"', page=100)
     n = 0
     for rec in recs:
         shape = rec.get("geo_shape") or {}
         geom = shape.get("geometry") if shape.get("type") == "Feature" else shape
         if not geom:
             continue
+        attrs = {k: v for k, v in rec.items() if k not in ("geo_shape",) and v is not None}
         _insert_layer(session, "potentiel_foncier", "ilot", "Îlot potentiel foncier Région", geom,
-                      sids.get(KIND_SOURCE["potentiel_foncier"]), commune, run_id,
-                      {"espacesar": rec.get("espacesar"), "zpu": rec.get("zpu"),
-                       "section": rec.get("section"), "parcelle": rec.get("parcelle")})
+                      sids.get(KIND_SOURCE["potentiel_foncier"]), commune, run_id, attrs)
         n += 1
     return n
 
