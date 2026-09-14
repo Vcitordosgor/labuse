@@ -34,6 +34,7 @@ LICENCE = "Licence Ouverte v2.0 — paternité DILA (BODACC)"
 PAGE_LIMIT = 100         # max page ODS v2.1
 OFFSET_CAP = 10000       # ODS v2.1 : offset + limit <= 10000 (garde-fou pagination)
 FAMILLE_COLLECTIVE = "collective"
+FAMILLE_DPC = "dpc"      # SOURCES-5 #10 — dépôts de comptes annuels (famille dédiée, hors Score V)
 
 
 def _digits(s: str | None) -> str:
@@ -151,6 +152,37 @@ def parse_annonce_score_v(rec: dict) -> dict | None:
     }
 
 
+def parse_depot(rec: dict) -> dict | None:
+    """SOURCES-5 #10 — annonce BODACC famille `dpc` (dépôt des comptes annuels) → dict normalisé
+    pour `bodacc_depots`. `depot` = {dateCloture, typeDepot} (chaîne JSON à décoder). None si pas
+    de SIREN valide (rattachement à un propriétaire PM impossible)."""
+    siren = extract_siren(rec.get("registre"))
+    if not siren:
+        return None
+    depot = rec.get("depot")
+    if isinstance(depot, str):
+        try:
+            depot = json.loads(depot)
+        except (ValueError, TypeError):
+            depot = {}
+    if not isinstance(depot, dict):
+        depot = {}
+    return {
+        "annonce_id": rec.get("id"),
+        "siren": siren,
+        "date_cloture": _parse_date_iso(depot.get("dateCloture")),
+        "type_depot": depot.get("typeDepot"),
+        "date_parution": _parse_date_iso(rec.get("dateparution")),
+        "ville": rec.get("ville"),
+        "cp": rec.get("cp"),
+        "commercant": rec.get("commercant"),
+        "tribunal": rec.get("tribunal"),
+        "url_source": rec.get("url_complete")
+        or (EXPLORE_URL.format(id=rec.get("id")) if rec.get("id") else None),
+        "raw": rec,
+    }
+
+
 class BodaccConnector(Connector):
     """Procédures collectives BODACC par SIREN. `name` matche data_sources.name."""
 
@@ -200,6 +232,33 @@ class BodaccConnector(Connector):
                 data = self._get_page(where, offset)
                 for rec in data.get("results") or []:
                     parsed = parse_annonce_score_v(rec)
+                    if parsed:
+                        yield parsed
+                offset += PAGE_LIMIT
+                total = int(data.get("total_count") or 0)
+                if offset >= total or offset >= OFFSET_CAP:
+                    break
+                time.sleep(throttle_s)
+            time.sleep(throttle_s)
+
+    @staticmethod
+    def _where_depots(sirens: list[str]) -> str:
+        vals = ",".join(f'"{s}"' for s in sirens)
+        # garde 974 côté API : dépôts de comptes du département 974, pour les SIREN propriétaires.
+        return f'familleavis="{FAMILLE_DPC}" AND numerodepartement="974" AND registre IN ({vals})'
+
+    def fetch_depots_by_sirens(
+        self, sirens: Iterable[str], batch_size: int = 40, throttle_s: float = 0.25,
+    ) -> Iterator[dict]:
+        """SOURCES-5 #10 — itère les dépôts de comptes (famille dpc) des SIREN propriétaires PM,
+        bornés au département 974 (garde 974 amont). Même mécanique batchée/paginée/throttlée."""
+        for batch in _chunks(sorted(set(sirens)), batch_size):
+            where = self._where_depots(batch)
+            offset = 0
+            while True:
+                data = self._get_page(where, offset)
+                for rec in data.get("results") or []:
+                    parsed = parse_depot(rec)
                     if parsed:
                         yield parsed
                 offset += PAGE_LIMIT

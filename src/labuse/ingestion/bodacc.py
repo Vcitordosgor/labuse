@@ -18,6 +18,62 @@ from ..connectors.bodacc import BodaccConnector
 
 SOURCE_NAME = "BODACC (procédures collectives)"
 
+# SOURCES-5 #10 — dépôts de comptes annuels (famille dpc), table DÉDIÉE hors Score V. Rattachée
+# aux SIREN propriétaires PM (foncier), bornée au département 974 (garde 974 amont dans le connecteur).
+_DEPOTS_DDL = text("""
+    CREATE TABLE IF NOT EXISTS bodacc_depots (
+        annonce_id   varchar(32) PRIMARY KEY,
+        siren        varchar(9) NOT NULL,
+        date_cloture date,
+        type_depot   text,
+        date_parution date,
+        ville        text,
+        cp_siege     varchar(10),   -- CP du SIÈGE de la société (peut être hors 974 : SCI métropole
+                                     -- propriétaire de foncier 974) — PAS une adresse-maille 974, la
+                                     -- garde 974 porte sur numerodepartement de l'annonce (connecteur).
+        commercant   text,
+        tribunal     text,
+        url_source   text,
+        raw          jsonb NOT NULL,
+        ingested_at  timestamptz NOT NULL DEFAULT now()
+    )""")
+
+
+def ensure_depots_table(session: Session) -> None:
+    session.execute(_DEPOTS_DDL)
+    session.execute(text("CREATE INDEX IF NOT EXISTS ix_bodacc_depots_siren ON bodacc_depots (siren)"))
+
+
+def ingest_bodacc_depots(session: Session, sirens: list[str],
+                         connector: BodaccConnector | None = None, batch_size: int = 40) -> dict:
+    """SOURCES-5 #10 — UPSERT les dépôts de comptes (famille dpc) des SIREN propriétaires PM du 974
+    dans `bodacc_depots`. Idempotent (conflit annonce_id). Faible valeur foncière — table dédiée,
+    JAMAIS branchée au Score V (mandat). ⚠ ÉCRIT en base."""
+    ensure_depots_table(session)
+    connector = connector or BodaccConnector()
+    n = 0
+    sirens_avec = set()
+    for d in connector.fetch_depots_by_sirens(sirens, batch_size=batch_size):
+        session.execute(text(
+            "INSERT INTO bodacc_depots "
+            " (annonce_id, siren, date_cloture, type_depot, date_parution, ville, cp_siege, commercant, "
+            "  tribunal, url_source, raw) "
+            "VALUES (:aid,:s,:dc,:td,:dp,:v,:cp,:com,:tr,:url, CAST(:raw AS jsonb)) "
+            "ON CONFLICT (annonce_id) DO UPDATE SET "
+            "  date_cloture=EXCLUDED.date_cloture, type_depot=EXCLUDED.type_depot, "
+            "  date_parution=EXCLUDED.date_parution, ville=EXCLUDED.ville, cp_siege=EXCLUDED.cp_siege, "
+            "  commercant=EXCLUDED.commercant, tribunal=EXCLUDED.tribunal, "
+            "  url_source=EXCLUDED.url_source, raw=EXCLUDED.raw"),
+            {"aid": d["annonce_id"], "s": d["siren"], "dc": d["date_cloture"],
+             "td": d["type_depot"], "dp": d["date_parution"], "v": d["ville"], "cp": d["cp"],
+             "com": d["commercant"], "tr": d["tribunal"], "url": d["url_source"],
+             "raw": json.dumps(d["raw"], ensure_ascii=False)})
+        n += 1
+        sirens_avec.add(d["siren"])
+    _touch_source(session)
+    session.flush()
+    return {"sirens_queried": len(set(sirens)), "depots": n, "sirens_avec_depot": len(sirens_avec)}
+
 
 def distinct_sirens(session: Session, insee: str | None = None) -> list[str]:
     """SIREN (9 chiffres, dé-doublonnés) des personnes morales foncières.

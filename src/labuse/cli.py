@@ -3451,6 +3451,24 @@ def ingest_bodacc_cmd() -> None:
         typer.echo(f"✓ BODACC : {r['sirens']} SIREN, dernière annonce {r['derniere_annonce']}")
 
 
+@app.command("ingest-bodacc-depots")
+def ingest_bodacc_depots_cmd(
+    limit: int = typer.Option(0, help="Cap du nombre de SIREN interrogés (0 = tous les propriétaires PM)."),
+) -> None:
+    """SOURCES-5 #10 — dépôts de comptes annuels (famille dpc) des SIREN propriétaires PM du 974
+    → table dédiée bodacc_depots (hors Score V). Idempotent (upsert annonce_id)."""
+    from .ingestion import bodacc
+
+    with session_scope() as s:
+        sirens = bodacc.distinct_sirens(s)
+        if limit:
+            sirens = sirens[:limit]
+        r = bodacc.ingest_bodacc_depots(s, sirens)
+        s.commit()
+    typer.echo(f"✓ BODACC dépôts : {r['depots']} dépôts pour {r['sirens_avec_depot']}/"
+               f"{r['sirens_queried']} SIREN propriétaires PM")
+
+
 @app.command("ingest-mairies")
 def ingest_mairies_cmd() -> None:
     """K2 — coordonnées des 24 mairies depuis l'Annuaire de l'administration (service-public.fr).

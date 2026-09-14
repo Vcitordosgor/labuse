@@ -264,11 +264,33 @@ jeu) ; tout ce qu'il publie est déjà en base. 0 code/DB touché. `SCHEMAS.csv`
 
 ---
 
+### 10. BODACC — dépôts de comptes → **MAXIMUM** (fait) — nouvelle table
+
+**Ingestion** : famille BODACC `dpc` (dépôts de comptes annuels) dans une **table dédiée
+`bodacc_depots`**, **hors Score V** (mandat : faible valeur foncière). Connecteur : nouvelle
+méthode `fetch_depots_by_sirens` + `parse_depot` ; where `familleavis="dpc" AND
+numerodepartement="974" AND registre IN (SIREN)` (**garde 974 par département de l'annonce**, filtre
+API amont). Ciblage foncier : les **9 733 SIREN propriétaires PM** du 974 (mêmes que les
+procédures) — pas les 187 983 dpc du département (99 % sans lien foncier). CLI
+`ingest-bodacc-depots`. Table déclarée au réservoir `bodacc`.
+
+**Preuve** : **14 078 dépôts** pour **1 938 SIREN** propriétaires PM, en 3 min 17 s (sous le seuil
+3 h). type_depot = « Comptes annuels et rapports » (14 028) / « consolidés » (50) ;
+`date_cloture` 2000→(un 2117 aberrant du producteur, fidèle en base). Record complet en `raw`.
+
+**V4e a mordu (2e fois)** : la colonne `cp` a fait casser V4e (232 CP non-974 : sièges de SCI
+métropole/Antilles propriétaires de foncier 974). Or ce n'est **pas une adresse-maille 974** — c'est
+le CP du **siège social**, légitimement hors 974 ; la garde 974 porte sur `numerodepartement` de
+l'annonce. Colonne **renommée `cp_siege`** (sémantique juste), hors du périmètre adresse de V4e.
+Aucune garde relâchée, aucune donnée perdue. `SCHEMAS.csv` : 1 à-ingérer → 1 MAXIMUM.
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **10. BODACC** (dépôts de comptes, table
-dédiée `bodacc_depots`).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **11. Coût de construction (EPTB)** (la
+publication annuelle complète, cadence déclarée à la sentinelle).
 
-Restantes après #9 : B10 BODACC dépôts de comptes · B11 Coût construction · B12 Forêts ONF régime ·
-B13 Potentiel foncier colonnes restantes · C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre
-d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.
+Restantes après #10 : B11 Coût construction · B12 Forêts ONF régime · B13 Potentiel foncier colonnes
+restantes · C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE
+ADEME 230 champs.

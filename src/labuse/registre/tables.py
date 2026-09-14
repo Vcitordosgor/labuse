@@ -193,7 +193,8 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "recherche_entreprises_dinum": Rt(("owner_denom_lookup", "owner_enrichment"),
                                       millesime="Sirene INSEE / RNE INPI (api.gouv.fr) — courant"),
     "inpi_rne": Rt(("pm_dirigeants", "pm_dirigeant_gigogne")),
-    "bodacc": Rt(("bodacc_sondages", "bodacc_procedures", "bodacc_annonces_owner", "annonces")),
+    "bodacc": Rt(("bodacc_sondages", "bodacc_procedures", "bodacc_annonces_owner", "annonces",
+                  "bodacc_depots")),
     # ── territoire / statistique ────────────────────────────────────────────────────
     "insee_rp_logement": Rt(("commune_insee_logement",)),
     "insee_rp2022_egoul": Rt(("anc_maille_taux",), millesime="RP2022 — fichier détail Logements (16/10/2025)"),
