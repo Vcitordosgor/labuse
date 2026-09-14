@@ -220,7 +220,7 @@ SOURCES: list[dict] = [
                          "431 663 parcelles (couche cascade 'sar' = proxy indicatif, jamais une interdiction). "
                          "M74 A : requalifiée connecte (mesurée, intégrée) — l'ancienne note « UNKNOWN » était périmée."),
     dict(name="RPG — déclarations agricoles (IGN/ASP)", category="agricole", provider="DAAF (propre non public) · proxy RPG/IGN",
-         source_millesime="proxy RPG (IGN) — RPG.LATEST, année non pinnée",   # M125-1bis : attrs.src=RPG.LATEST (38 460)
+         source_millesime="proxy RPG.LATEST (IGN) — campagne 2024 (data.gouv RPG-R)",   # SOURCES-3b lot 6 (4) : année pinnée (DAAF officiel introuvable → proxy ; RPG.LATEST = pointeur suivi par la sentinelle data.gouv)
          access_type="WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://geoservices.ign.fr/services-geoplateforme-diffusion", endpoint_url="https://data.geopf.fr/wfs/ows",
          legal_notes="Licence à confirmer (proxy RPG servi par la Géoplateforme — non tranché à l'audit M6 §1.11). Parcelle DÉCLARÉE agricole au RPG (déclarations PAC) — usage indicatif, aucune portée réglementaire.",

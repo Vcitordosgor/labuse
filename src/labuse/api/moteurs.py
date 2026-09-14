@@ -509,6 +509,17 @@ def _zan_indicateur(db: Session, commune: str | None = None) -> list[dict]:
         # consommée sur 2021-24, et part restante. HÉRITE du même caveat que le reste (ESTIMÉ, -50 %) ;
         # « % restant » se lit encore plus vite comme un droit ferme → le caveat le suit à l'écran.
         pct_consomme = round(100 * c2124 / budget) if budget > 0 else None
+        # SOURCES-3b lot 6 (1) — LA TRAJECTOIRE ZAN (rythme annualisé) dérivée du CONSOENAF, à côté
+        # du bloc OCS GE : le rythme de référence (2011-2021, 10 ans), le rythme récent (2021-2024,
+        # 3 ans) et le rythme-cible (budget -50 % lissé sur 2021-2031, 10 ans). Le verdict compare le
+        # rythme RÉCENT à la CIBLE — « au rythme actuel, la commune tient (ou dépasse) l'enveloppe
+        # 2031 ». Estimé (même caveat -50 % que le budget), jamais un droit ferme.
+        rythme_ref = c1121 / 10.0
+        rythme_recent = c2124 / 3.0
+        rythme_cible = budget / 10.0                # budget -50 % lissé sur 10 ans (2021-2031)
+        traj = None
+        if rythme_cible > 0:
+            traj = "sous la cible" if rythme_recent <= rythme_cible else "au-dessus de la cible"
         out.append({
             "commune": r["commune"],
             "conso_2011_2021_ha": round(c1121 / 10000, 1),          # Sourcé
@@ -519,6 +530,11 @@ def _zan_indicateur(db: Session, commune: str | None = None) -> list[dict]:
             "pct_consomme": pct_consomme,                            # Estimé (% du budget estimé)
             "pct_restant": (100 - pct_consomme) if pct_consomme is not None else None,  # ± (négatif = dépassé)
             "depasse": reste < 0,
+            # trajectoire annualisée (SOURCES-3b lot 6) : rythmes ha/an + verdict récent vs cible.
+            "rythme_2011_2021_ha_an": round(rythme_ref / 10000, 2),    # Sourcé (rythme de référence)
+            "rythme_2021_2024_ha_an": round(rythme_recent / 10000, 2), # Sourcé (rythme récent)
+            "rythme_cible_ha_an": round(rythme_cible / 10000, 2),      # Estimé (-50 %)
+            "trajectoire": traj,                                        # « sous »/« au-dessus » de la cible
             "millesime": r["millesime"], "source": r["source_nom"],
         })
     # REPARATIONS-1 lot 5 — la pression ZAN a sa SOURCE OFFICIELLE : le diff OCS GE IGN
