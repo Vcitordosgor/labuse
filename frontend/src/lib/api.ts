@@ -277,6 +277,7 @@ export interface ContexteCommune {
   zonage_abc: { zone: string; millesime: string; source: string } | null
   // SOURCES-1 lot 5 — taux fonciers (REI) + ACV/PVD/ORT (Denormandie)
   fiscalite: { tfpb_commune_pct: number | null; tfpb_epci_pct: number | null
+    tfpnb_commune_pct?: number | null; tfpnb_epci_pct?: number | null
     teom_pct: number | null; millesime: string; source: string
     maj_at?: string | null; perime?: boolean } | null
   ort: { statut: 'acv' | 'pvd' | 'autre' | 'hors'; commune?: string

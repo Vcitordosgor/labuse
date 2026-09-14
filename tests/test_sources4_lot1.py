@@ -62,3 +62,14 @@ def test_lls_inventaire_n_declare_au_registre():
     serveurs = [rid for rid, r in robinets.ROBINETS.items()
                 if "lls_inventaire_n" in r.chiffres]
     assert serveurs == ["fiche_commune_sru"]
+
+
+def test_tfpnb_taux_declare_au_registre():
+    """SOURCES-4 lot 2 — la TFPNB (foncier non bâti, REI) est déclarée et servie au bloc fiscalité
+    (jusque-là seule la TFPB l'était ; CFE et bases restent en base, non affichées)."""
+    from labuse.registre import donnees, robinets
+    assert "tfpnb_taux_pct" in donnees.DONNEES
+    assert donnees.DONNEES["tfpnb_taux_pct"].reservoirs == ("dgfip_rei",)
+    serveurs = [rid for rid, r in robinets.ROBINETS.items()
+                if "tfpnb_taux_pct" in r.chiffres]
+    assert serveurs == ["fiche_commune_fiscalite"]

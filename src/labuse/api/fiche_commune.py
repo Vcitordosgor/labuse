@@ -254,6 +254,9 @@ def fiscalite(db: Session, insee: str | None) -> dict | None:
         return None
     return {"tfpb_commune_pct": r["tfpb_commune_pct"], "tfpb_epci_pct": r["tfpb_epci_pct"],
             "teom_pct": r["teom_pct"], "millesime": r["millesime"],
+            # SOURCES-4 lot 2 — la TFPNB (taxe foncière sur le NON BÂTI, la plus pertinente pour un
+            # terrain) était ingérée mais jamais servie ; on l'ajoute au bloc fiscalité (commune + EPCI).
+            "tfpnb_commune_pct": r.get("tfpnb_commune_pct"), "tfpnb_epci_pct": r.get("tfpnb_epci_pct"),
             "maj_at": r.get("maj_at"), "perime": _perime(r.get("maj_at")),
             "source": "DGFiP — fichier REI (impositions primitives)"}
 

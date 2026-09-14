@@ -153,7 +153,7 @@ ROBINETS: dict[str, Robinet] = {
  "fiche_parcelle_fibre": _r("fiche", "Fibre (Réseaux et accès)", "fiche_parcelle",
     "/parcels/{idu} (clé fibre)", "json_puis_js", chiffres=("fibre_parcelle",)),
  "fiche_commune_fiscalite": _r("fiche", "Taxe foncière (REI)", "fiche_commune",
-    "/communes/{commune} (clé fiscalite)", "json_puis_js", chiffres=("tfpb_taux_pct",)),
+    "/communes/{commune} (clé fiscalite)", "json_puis_js", chiffres=("tfpb_taux_pct", "tfpnb_taux_pct",)),
  "fiche_commune_ort": _r("fiche", "ACV / PVD / ORT — Denormandie", "fiche_commune",
     "/communes/{commune} (clé ort)", "json_puis_js", chiffres=("ort_statut",)),
  "bilan_cout_construction_ref": _r("outil", "Coût de construction (bilan)", None,

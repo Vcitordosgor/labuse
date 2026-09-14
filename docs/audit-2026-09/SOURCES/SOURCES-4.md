@@ -177,9 +177,19 @@ chaque zone (cœur 105 519 ha, décret 2007-296 ; deux aires d'adhésion). Re-in
 couche passe en **popup riche** (`_RICH_POPUP_KINDS`, 3 features — coût nul) → superficie + référence
 légale au clic. Test `test_parc_national_popup_riche_sources4`.
 
-### Reprise (point de départ pour la prochaine source) — **REI**
-Après BPE et Parc national (MAXIMUM), l'ordre imposé reprend à **REI** (tous les taux : TFPNB, CFE,
-bases), puis BODACC, Fibre Arcep, … **Commande de reprise : « continue SOURCES-4 ».**
+### REI — tous les taux d'imposition (DGFiP) → **MAXIMUM**
+On ne servait que la TFPB (foncier bâti) + TEOM. Le fichier REI (1 043 colonnes, dictionnaire
+`TRACE_REI_2025.xlsx` parsé) publie tous les taux votés : ajoutés à `commune_rei` et re-ingérés
+(24 communes) — **TFPNB** (foncier NON bâti : B12/B12VOTE/B32), **CFE** (P12/P12VOTE/P32) et les
+**bases nettes communales** (E11 bâti, B11 non bâti, P11 CFE). Exemples : Saint-Louis TFPNB 66,21 %,
+base foncier bâti 42,3 M€ ; CFE communale 0 % (les EPCI 974 sont en FPU → CFE portée par l'interco,
+ex. 29,03 %). **Servi** : la **TFPNB** (la plus pertinente pour un terrain) entre au bloc fiscalité
+(donnée `tfpnb_taux_pct`, robinet `fiche_commune_fiscalite`, commune + EPCI) ; CFE + bases restent en
+base (disponibles, non affichées). Test `test_tfpnb_taux_declare_au_registre`. FICHES-DONNEES régénéré.
+
+### Reprise (point de départ pour la prochaine source) — **BODACC**
+Après REI (MAXIMUM), l'ordre imposé reprend à **BODACC** (ventes et cessions de fonds, dépôts de
+comptes), puis Fibre Arcep, Loyers DHUP, … **Commande de reprise : « continue SOURCES-4 ».**
 
 ### Le reste du LOT 2 — rang conservé
 `SCHEMAS.csv` liste ~70 champs « à voir »/« à ingérer », ordonnés par utilité (mandat § LOT 2).

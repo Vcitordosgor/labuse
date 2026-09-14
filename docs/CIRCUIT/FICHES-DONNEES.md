@@ -39,6 +39,8 @@
 |---|---|---|---|---|---|---|---|
 | `tfpb_taux_pct` | nombre | Taxe foncière (taux TFPB) | dgfip_rei (REI 2025 (impositions primitives) — 24/24 communes) | passe-plat · src/labuse/ingestion/rei.py:rei_commune — table lue : commune_rei | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *taux de TFPB appliqué sur la commune (E12 du REI) + part EPCI (E32) + TEOM (F22) — impositions primitives, passe-plat du fichier DGFiP* | | | | | |
+| `tfpnb_taux_pct` | nombre | Taxe foncière non bâti (taux TFPNB) | dgfip_rei (REI 2025 (impositions primitives) — 24/24 communes) | passe-plat · src/labuse/ingestion/rei.py:rei_commune — table lue : commune_rei (tfpnb_commune_pct, tfpnb_epci_pct) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *taux de TFPNB appliqué sur la commune (B12 du REI) + part EPCI (B32) — impositions primitives, passe-plat du fichier DGFiP (foncier non bâti = terrain)* | | | | | |
 
 ## ACV / PVD / ORT — Denormandie
 

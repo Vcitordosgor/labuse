@@ -485,6 +485,9 @@ export function ContextePanel() {
                   <div className="flex flex-col gap-0.5 text-[12px]">
                     <RowT lbl="TFPB commune" val={d.fiscalite.tfpb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpb_commune_pct)} %` : '—'} strong />
                     <RowT lbl="TFPB intercommunalité" val={d.fiscalite.tfpb_epci_pct != null ? `${fmtDec(d.fiscalite.tfpb_epci_pct)} %` : '—'} />
+                    {/* SOURCES-4 lot 2 — TFPNB (foncier NON bâti = terrain), désormais servie */}
+                    <RowT lbl="TFPNB commune (non bâti)" val={d.fiscalite.tfpnb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpnb_commune_pct)} %` : '—'} />
+                    <RowT lbl="TFPNB intercommunalité" val={d.fiscalite.tfpnb_epci_pct != null ? `${fmtDec(d.fiscalite.tfpnb_epci_pct)} %` : '—'} />
                     <RowT lbl="TEOM (taux plein)" val={d.fiscalite.teom_pct != null ? `${fmtDec(d.fiscalite.teom_pct)} %` : '—'} />
                   </div>
                   {d.fiscalite.perime && (

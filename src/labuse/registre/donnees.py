@@ -1480,6 +1480,15 @@ DONNEES: dict[str, Donnee] = {
     moteur=None, calcul="passe_plat",
     fonction="src/labuse/ingestion/rei.py:rei_commune",
     reservoirs=("dgfip_rei",), portee="live", table="commune_rei"),
+ # SOURCES-4 lot 2 — la TFPNB (foncier NON bâti, la plus pertinente pour un terrain) était
+ # ingérée mais jamais servie ; désormais au bloc fiscalité. CFE et bases nettes restent en base
+ # (commune_rei), disponibles, non affichées (pas de chiffre servi → hors registre servi).
+ "tfpnb_taux_pct": C("Taxe foncière non bâti (taux TFPNB)", "%", "commune",
+    "taux de TFPNB appliqué sur la commune (B12 du REI) + part EPCI (B32) — impositions "
+    "primitives, passe-plat du fichier DGFiP (foncier non bâti = terrain)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/rei.py:rei_commune",
+    reservoirs=("dgfip_rei",), portee="live", table="commune_rei (tfpnb_commune_pct, tfpnb_epci_pct)"),
  "ort_statut": C("ACV / PVD / ORT", "classe", "commune",
     "statut du dispositif de revitalisation de la commune (table DGALN) + convention ORT "
     "signée (date) + condition communale Denormandie DITE (le périmètre conventionné "
