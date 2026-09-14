@@ -245,11 +245,30 @@ MAXIMUM.
 
 ---
 
+### 9. RNIC — art. 29-1 + DPE copro → **PARTIEL — producteur** (arbitrage écrit)
+
+**Vérification live** du header du jeu open data ANAH (data.gouv.fr, fichier national CSV) :
+**72 colonnes**, énumérées une à une. **AUCUNE ne porte de procédure article 29-1** (mandataire ad
+hoc / administrateur provisoire, CCH L.615) **ni d'étiquette DPE de copropriété**. Ces deux
+demandes du mandat exigent l'**export ANAH procédures / DPE copro dédié — non public**. C'est
+exactement le cas « sinon arbitrage écrit » : **PARTIEL — producteur**.
+
+**Tout champ publié déjà ingéré** : l'ingestion RNIC stocke `raw` (jsonb) avec **67 clés** (les 72
+colonnes moins les clés « représentant légal » retirées par la garde RGPD copro). Les signaux
+open-data les plus proches d'une « procédure/difficulté » — `copro_dans_pdp` (plan de sauvegarde /
+plan de prévention), `copro_aidee`, `copro_dans_acv`/`pvd`, QPV — **sont déjà captés en raw**.
+
+**Aucun re-ingest** : le CSV national (~453 Mo) n'apporterait aucun des champs demandés (absents du
+jeu) ; tout ce qu'il publie est déjà en base. 0 code/DB touché. `SCHEMAS.csv` : ligne à-ingérer →
+1 PARTIEL-producteur (tracé) + 1 MAXIMUM (signaux difficulté en raw).
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **9. RNIC** (procédures article 29-1 +
-étiquette DPE de la copropriété, si le jeu open data les porte — sinon arbitrage écrit).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **10. BODACC** (dépôts de comptes, table
+dédiée `bodacc_depots`).
 
-Restantes après #8 : B9 RNIC 29-1/DPE copro · B10 BODACC dépôts de comptes · B11 Coût construction
-· B12 Forêts ONF régime · B13 Potentiel foncier colonnes restantes · C14 Sudocuh · C15 RP Logements
-EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.
+Restantes après #9 : B10 BODACC dépôts de comptes · B11 Coût construction · B12 Forêts ONF régime ·
+B13 Potentiel foncier colonnes restantes · C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre
+d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.
