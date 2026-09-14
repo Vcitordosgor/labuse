@@ -446,9 +446,76 @@ pas de thème occupation ; OCS GE 974 hors WFS) — servi. `SCHEMAS.csv` : 1 à-
 
 ---
 
-## Reprise
+### 18. DPE ADEME → **MAXIMUM** (fait) — schéma complet des 3 jeux
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **18. DPE ADEME** (les 230 champs des trois
-jeux ; base 974 quasi vide, schéma complet pour le jour où l'ADEME répare son flux DROM).
+**Constat** : le connecteur DPE demandait un `select` restreint (**18 champs curés**) à l'API ADEME →
+`dpe_records.raw` ne portait que 18 champs, alors que le schéma ADEME en publie ~150-230.
 
-Restantes après #17 : C18 DPE ADEME 230 champs.
+**Correctif** : `select` **levé** (connecteur `DpeConnector.select = None`) → l'API renvoie **TOUT
+le schéma** des 3 jeux, conservé intégralement dans `raw`. Vérifié : **existant 148 champs**
+(`conso_5_usages_ef/ep`, `besoin_chauffage/ecs`, déperditions Ubât, config chauffage/ECS, isolation,
+émissions GES…), **tertiaire 54**, neuf idem (0 ligne au 974 mais schéma prêt). `parse_record` lit
+les mêmes champs dans le sur-ensemble (colonnes promues inchangées).
+
+**Volume 974 = dérisoire** (16 authentiques : 14 existants + 2 tertiaires ; les 75 « neufs » = homonymie
+Saint-Leu-la-Forêt 95, rejetés) — **trou producteur DROM** (obligation 01/07/2024, l'ADEME ne remonte
+presque rien). Le **schéma est COMPLET**, prêt pour le jour où l'ADEME répare le flux DROM.
+**Sentinelle sur le VOLUME** : `compteur_reveil_dpe` (réveil sur les F/G) + cron mensuel — un saut de
+volume sera vu. `SCHEMAS.csv` : 1 à-ingérer → 1 MAXIMUM. Portes vertes.
+
+---
+
+## Clôture — les 18 faites, `SCHEMAS.csv` sans « à ingérer »
+
+**`SCHEMAS.csv` : 0 ligne « à ingérer »** (vérifié `grep -c` = 0). Les 18 sources déférées sont toutes
+traitées :
+
+| # | source | verdict SOURCES-5 |
+|---|---|---|
+| 1 | GéoLittoral érosion | MAXIMUM — 13 champs du SHP |
+| 2 | Classement sonore ITT | MAXIMUM — 56 champs ArcGIS + référence arrêté |
+| 3 | EDF HTA | MAXIMUM — tension (classe) + gestionnaire (per-feature retiré par EDF = producteur) |
+| 4 | ZNIEFF | MAXIMUM — 22 champs WFS (id_mnhn, cd_sig) |
+| 5 | INPN patrinat | MAXIMUM — 24 champs + **bug rb/aphn corrigé** (37 réserves ré-apparues) |
+| 6 | Ramsar / sites classés | MAXIMUM — Géoplateforme comparé, flux DEAL conservé (plus complet : sites inscrits) |
+| 7 | Annuaire DILA | MAXIMUM — 436 services, table `annuaire_services` |
+| 8 | AZI / TRI | MAXIMUM — bassin de risques + dates du programme |
+| 9 | RNIC art.29-1 / DPE copro | **PARTIEL — producteur** : absents du jeu open data ANAH (72 col. vérifiées) ; le reste RNIC est MAXIMUM |
+| 10 | BODACC dépôts de comptes | MAXIMUM — table dédiée `bodacc_depots` (14 078) |
+| 11 | Coût construction EPTB | MAXIMUM — publication Réunion complète (terrain + total) |
+| 12 | Forêts publiques ONF | MAXIMUM — régime + propriétaire |
+| 13 | Potentiel foncier Région | MAXIMUM — surface + toutes colonnes ODS |
+| 14 | Sudocuh | MAXIMUM — classeur XLSX officiel (23 col.) |
+| 15 | RP détail Logements EGOUL | MAXIMUM — 24 variables logement, table `rp_logement_commune` |
+| 16 | Cadastre d'époque | MAXIMUM — corpus 35 millésimes ; outil Remonter le temps intact |
+| 17 | BD CARTO V5 | MAXIMUM — occupation servie ; 35 thèmes = doublons G1 arbitrés |
+| 18 | DPE ADEME | MAXIMUM — schéma complet des 3 jeux (148/54), sentinelle volume |
+
+**Verdict** : **17 des 18 portées à MAXIMUM** ; **RNIC (#9)** reste **PARTIEL — producteur** pour ses
+deux champs demandés (procédures art. 29-1 + étiquette DPE copro) qui **n'existent pas dans le jeu
+open data ANAH** — exigent l'export procédures/DPE dédié non public (le reste du RNIC est déjà
+MAXIMUM). C'est un manque PRODUCTEUR, pas un report : SOURCES-5 est **TERMINÉ**, il ne reste que les
+manques venus des producteurs (hubs, rasters, accès gatés, flux DROM cassé).
+
+**Nouveautés de structure** : tables `annuaire_services` (DILA), `bodacc_depots`, `rp_logement_commune`
+créées et déclarées au registre (réservoirs `annuaire_service_public`, `bodacc`, `insee_rp2022_egoul`).
+Modules `ingestion/annuaire_services.py`, `ingestion/sudocuh.py`, `ingestion/rp_logement.py` + 5 CLI.
+Dépendance `openpyxl` (extra `ml` déjà déclaré) installée.
+
+**Bugs de fond corrigés en chemin** : INPN patrinat — 2 typenames Géoplateforme dérivés renvoyaient
+un 400 avalé en silence (37 réserves biologiques + 4 communes de couverture perdues), corrigés +
+échec WFS rendu bruyant. V4e a mordu 2× (DILA CEDEX, BODACC siège) → garde 974 appliquée sur les
+colonnes servies sans jamais relâcher le verrou.
+
+**Les deux portes à la clôture** : `verrous` **24/24 (17+7) : tout va bien** · `suite` **3099 passed,
+55 skipped : verte**. Rien de mergé, aucun run, aucune bascule, aucun rescoring, run servi
+`q_v11_m137` INTACT. `sitadel_permits` intact (49 643). Vic relit / merge.
+
+**⚠ Notes pour Vic** :
+- `tests/test_alertes.py` casse quand la suite tourne ≥ ~15×/jour (plafond quotidien de notifications
+  `event_log` saturé, compté par jour, compte NULL) — test-isolation à durcir, **reproduit sans mes
+  changements**, redevient vert au changement de jour. Hors périmètre SOURCES-5.
+- Cadastre d'époque : les 31 parcelles récupérées au millésime 2026-06 ne sont PAS rattachées aux
+  permis (`rattacher_par_geometrie` non joué = mutation de localisation servie, geste Vic).
+- BD CARTO occupation : `cleabs` ajouté au code, appliqué au prochain `ingest-island` (pas de re-ingest
+  manuel — le bbox par-commune dédouble).
