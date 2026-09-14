@@ -229,7 +229,26 @@ fonctions de re-ingestion isolées (`ingest_mvt_commune` déjà là, + `ingest_c
 `ingest_sols_pollues_commune`, ne re-touchant que leur couche). Re-ingéré 24 communes : mvt 3 085,
 cavités 151, sols pollués 531. Test `test_parse_georisques_champs_producteur_sources4`.
 
-### Reprise (point de départ pour la prochaine source) — **Loyers DHUP (carte)**
+### Urbanisme PLU / GPU (CNIG zone-urba, API Carto) → **MAXIMUM**
+On gardait `idurba`/`libelle`. `ingest_gpu_zones` capture désormais l'ensemble CNIG zone-urba :
+**typezone**, **libelong** (description longue), **destdomi** (destination dominante — VIDE au GPU
+974, déclaratif, gardée null sans l'inventer), **datappro** / **datvalid** (dates), **nomfic**
+(référence du règlement, PDF#page). Re-ingéré 24 communes (repli AGORAH St-André/St-Leu inchangé) :
+**5 841 zones, datvalid sur 5 331** (les zones AGORAH n'en portent pas). Zonage servi INTACT
+(V4c/V4d verts — même donnée GPU, seuls les attrs s'enrichissent).
+
+### DVF+ — adresse / pièces / Carrez / lots → **ingéré (additif, run servi INTACT)**
+Ces champs sont publiés par géo-DVF mais n'étaient ni en colonne ni en `raw`. Comme DVF nourrit le
+scoring et le marché servi, approche **strictement ADDITIVE** : nouvelle table LATÉRALE
+`dvf_mutation_detail` (clé `id_mutation × id_parcelle`), remplie du MÊME géo-DVF (2021-2025, 974),
+**jointe en LEFT JOIN** à la « Dernière vente » de la fiche + Dossier PDF. **PREUVE d'invariance** :
+`dvf_mutations_parcelle` inchangée (**102 551 lignes, signature md5 identique avant/après**),
+`dvf_secteur_medianes` 2 359 inchangée, fichiers du run servi intacts (git), verrou **G3 vert**
+(aucune variable du modèle nourrie hors registre). 55 016 couples (54 858 avec adresse, 3 123 avec
+Carrez — le Carrez n'existe qu'en copropriété). Exemple servi : « 16 RUE JUAN DE NOVA · 4 pièces ·
+78 m² Carrez ». Le marché (prix ancien/neuf, médianes) ne bouge pas — aucune valeur recalculée.
+
+### Reprise (point de départ pour la prochaine source) — **les LOURDS, un par un**
 Ordre restant : **Loyers DHUP carte** (loypredm2 + intervalles de confiance — source distincte de
 l'OLL déjà ingéré), puis DFI, Sudocuh, RP Logement, RPLS, classement sonore, EDF HTA, OSM, AZI/TRI,
 Mérimée, Conso NAF, personnes morales, SITADEL, Potentiel foncier, GéoLittoral, ONF, INPN, ZNIEFF,
@@ -256,15 +275,84 @@ servie ne porte aucun champ à voir de plus de 30 jours »).
 
 ---
 
-## Champs écartés comme doublons (règle G1)
-Aucun nouveau doublon arbitré dans ce lot (LOT 1 ne fait que surfacer des champs déjà en base, sans
-nouvelle source). Les arbitrages de doublon (EDF > BD TOPO lignes, CoSIA/LiDAR > végétation, BPE >
-équipements) restent à écrire au fil des ingestions BD TOPO/BD CARTO du LOT 2.
+## Champs écartés comme doublons (règle G1) — BD TOPO
+En ouvrant **BD TOPO thème par thème** (LOT 2 tier 4), les thèmes doublons sont **ÉCARTÉS**, chacun
+avec la source qui fait foi (arbitrages tranchés par Vic, mandat) :
+- **Lignes électriques** (`BDTOPO_V3:ligne_electrique`, pylônes, postes) → **EDF Réunion fait foi**
+  (`ligne_mt`/`ligne_ht` = réseau EDF SEI, l'opérateur connaît son réseau mieux que le relevé photo IGN).
+- **Végétation** (`BDTOPO_V3:zone_de_vegetation`, haies) → **CoSIA + LiDAR font foi** (couverture IA
+  20 cm au m² : `parcel_cosia_couverture` classes Feuillu/Broussaille/Pelouse/Conifère + hauteur LiDAR).
+- **Équipements** (`BDTOPO_V3:zone_d_activite_ou_d_interet`, terrains de sport, constructions
+  ponctuelles d'équipement) → **BPE INSEE fait foi** (`amenite_bpe`, 35 544 équipements géolocalisés
+  typés/datés).
+
+Thèmes BD TOPO **non doublon** ingérés (les 4 couches tranchées par Vic + cimetière) :
+- **cimetière** (`cimetiere`) — 164, contrainte foncière (emprise + périmètre L2223-1 CGCT).
+- **constructions linéaires** (`construction_lineaire`) — 6 719 (mur de soutènement, quai, mur, pont) —
+  **décisif sur parcelle en pente**.
+- **constructions surfaciques** (`construction_surfacique`) — 305 (barrage, dalle, réservoir).
+- **zones d'activité ou d'intérêt** (`zone_activite`) — 9 020 (catégorie + adresse).
+- **bassins versants** (`bassin_versant`, hydrographie) — 150 (bassin hydrographique + code) —
+  **explique le risque d'inondation**, absent jusqu'ici.
+Tous servis carte + popup riche, réservoir `bd_topo`.
+
+**ERP** (`BDTOPO_V3:erp`) : couche publiée mais **VIDE au 974** (0 objet sur toute l'île — l'IGN ne la
+peuple pas en DOM). Non ingérée faute de donnée producteur (exception physique, documentée).
+
+**RNB ↔ lien officiel BD TOPO** : le lien officiel IGN (`rnb_batiments.ext_bdtopo`) couvre **99,9 %
+des RNB (414 075/414 081)** — bien supérieur à notre rattachement géométrique (72,6 %). Il est **déjà
+en base** (colonne `ext_bdtopo`, tableau de cleabs BD TOPO par RNB). Le servir comme rattachement
+`batiment↔RNB` de NOS polygones exige de stocker le cleabs BD TOPO sur les 817 k bâtiments (re-ingestion
+batiment — différée) ; le rattachement RNB servi à la parcelle reste géométrique (RNB ∈ parcelle),
+indépendant. Verdict : **officiel présent et supérieur, substitution polygone = prochaine re-ingestion batiment.**
+
+**Zones réglementées** : arbitrage **GPU fait foi** — les zones réglementaires utiles (PLU zone-urba,
+prescriptions ER/EBC, SUP, DPU, PEB) sont **déjà servies par le Géoportail de l'urbanisme** (opposables,
+plus fines) ; BD TOPO n'expose d'ailleurs pas de couche `zone_reglementee` sur ce WFS (400). Rien à ingérer.
+
+**Thèmes BD TOPO clos avec arbitrage** (mandat Vic) : occupation du sol → CoSIA/LiDAR · transport →
+déjà servi · adresses → BAN · administratif → référentiel des 24 · lignes électriques → EDF ·
+équipements → BPE · zones réglementées → GPU.
 
 ## Sources arrêtées sur seuil (10 Go / 2 h)
 - **CoSIA** : mesuré à 494 Mo / 2,8 Go extraits ; l'estimation initiale « > 2 h » était pessimiste —
   l'approche streaming tuile-par-tuile ramène à **~25 min**. Vic a autorisé le calcul (unique) ; il a
   été **lancé en fin de session**. Plus un arrêt sur seuil.
+
+## Passe de vérification LOT 4 — les 28 placeholders « utile »
+Vérification champ-par-champ (colonnes/attrs réels vs schéma producteur), **sans relabelliser sans
+preuve**. Verdict :
+- **25 → MAXIMUM (vérifié)** : ICPE raisonSociale, PEB, GPU ER/EBC/DPU/assainissement, Zonage ABC,
+  BAN PLUS, RGE ALTI, BAN (adresses), PVGIS (calculateur live), Filosofi, Contours IRIS (spatial_layers,
+  344), SIRENE géo, Trafic RN, RNB, OCS GE, LiDAR HD, RP2022 IRIS, ACV/ORT, QPV, SUP, ZFANG, FRR,
+  Taxe d'aménagement. Chacune : la table/attrs porte l'ensemble des champs producteur utiles.
+- **3 → PARTIEL / reporté (vraie ingestion nécessaire)** :
+  - **Urbanisme PLU (CNIG zone-urba)** : `idurba`/`libelle` ingérés ; **DESTDOMI** (destination dominante),
+    **DATVALID**, **DATAPPRO** restent (vraie ingestion — prochain chantier tractable).
+  - **Systèmes d'endiguement** : attrs mince (`layer/lineaire`) → **LOT 3** (DescribeFeatureType DEAL
+    pour classe d'ouvrage / niveau / population protégée).
+  - **INPI RNE** : dirigeants ingérés (`pm_dirigeants`) ; adresse/2ᵉ rôle = données perso hors licence
+    RNE homologuée → PARTIEL-producteur (licence).
+
+`SCHEMAS.csv` « à voir » **72 → 47**, `ingere=non` **94 → 57**, placeholders « utile » **28 → 0**.
+
+## LOT 4 — verdict final + verrou G2 étendu — LIVRÉ
+`SCHEMAS.csv` : **plus AUCUN champ « à voir » nu** — chaque champ porte un verdict définitif. Le
+verrou **G2 s'étend** (`circuit_garanties.verrou_g2` + `_schemas_a_voir_nus`) : une source servie ne
+porte aucun champ « à voir » de plus de 30 jours — opérationnalisé strictement (plus aucun « à voir »
+nu ; garde mordante testée). **G2 vert : 0 champ « à voir » nu.**
+
+### Tableau des verdicts — par source (87 sources portées à SCHEMAS.csv)
+| verdict | nombre | sens |
+|---|---|---|
+| **MAXIMUM** | 46 | tous les champs producteur ingérés/servis |
+| **PARTIEL — producteur** | 20 | raison physique : raster nu (BD ORTHO), flux/HUB live (OSM, Géorisques, DEAL WMS, SIRENE, GTFS, Radar, DINUM), accès gaté (RPLS micro, DFI, Loyers OLL micro), saisie manuelle (VRD/SPANC), métadonnée mineure (cadastre feuille), texte réglementaire (RTAA) |
+| **À INGÉRER — session dédiée** (rang conservé) | 17 | volume/licence hors périmètre : **DPE 230 champs, BD CARTO V5, Sudocuh, RP détail (EGOUL), cadastre d'époque**, Coût construction, GéoLittoral, Classement sonore, EDF HTA, ZNIEFF, INPN, Potentiel foncier restant, Forêts ONF, AZI/TRI détail, DILA |
+| PARTIEL/dédié (mixte) | 4 | quelques champs restants + physiques |
+
+Les 6 sources restantes des 93 en vitrine sont des **hubs/alias sans ligne attributaire** (déjà
+tranchés à l'audit SOURCES-AUDIT). **Ce qui reste est nommé et rangé — aucune session dédiée dans
+SOURCES-4, comme tranché par Vic.** SOURCES-4 est **terminé.**
 
 ## Bilan de session (autonome)
 **14 sources traitées** (LOT 1 : CatNat, RNIC ; LOT 2 : ICPE, SRU, Cartofriches, BPE, Parc national,

@@ -59,6 +59,13 @@ export const LAYER_LABEL: Record<string, string> = {
   osm_faux_positif: 'Faux positif OSM',
   // SOURCES-4 lot 2 — piscines détectées par CoSIA (IA 20 cm), rattachées parcelle
   piscine_cosia: 'Piscines (CoSIA)',
+  // SOURCES-4 lot 2 — cimetières (BD TOPO) : contrainte foncière (emprise + périmètre)
+  cimetiere: 'Cimetières (BD TOPO)',
+  // SOURCES-4 lot 2 — BD TOPO : constructions (mur de soutènement/barrage), zone d'activité, bassin versant
+  construction_lineaire: 'Murs & constructions linéaires (BD TOPO)',
+  construction_surfacique: 'Barrages & constructions surfaciques (BD TOPO)',
+  zone_activite: 'Zones d’activité (BD TOPO)',
+  bassin_versant: 'Bassins versants (BD TOPO)',
 }
 
 export const layerLabel = (key: string): string => LAYER_LABEL[key] ?? key

@@ -83,9 +83,14 @@ def ingest_bruit_cartes(session: Session, source_id: int | None = None,
                     g = f.get("geometry")
                     if not g:
                         continue
+                    # SOURCES-4 lot 3 (comparaison DEAL) — DescribeFeatureType : le WFS publie ANNEE,
+                    # LEGENDE (seuil dB), TYPETERR, VALIDEDEB, IDCBS… jusque-là jetés. Règle « tout
+                    # champ publié » : on garde toutes les propriétés (lowercase) + les dérivées.
+                    fp = {k.lower(): v for k, v in (f.get("properties") or {}).items()
+                          if v is not None and k.lower() != "geometry"}
                     _insert_layer(session, "bruit_carte", sub, nom, g, source_id, None,
                                   run_id,
-                                  attrs={"typename": typename, "indicateur": indic,
+                                  attrs={**fp, "typename": typename, "indicateur": indic,
                                          "gestionnaire": gest.upper(),
                                          "source": "DEAL Réunion — CBS échéance 4 (2022), "
                                                    "WFS Carmen"})

@@ -199,13 +199,35 @@ def noms_vides_caches(db: Session, ttl: int = 300) -> set[str]:
     return _CACHE_VIDES["v"]
 
 
+def _schemas_a_voir_nus() -> list[str]:
+    """SOURCES-4 lot 4 (G2 étendu) — les champs de SCHEMAS.csv encore au verdict « à voir » NU :
+    une source servie ne doit porter aucun champ « à voir » non tranché de plus de 30 jours (ici
+    opérationnalisé strictement : plus AUCUN « à voir » nu — tout champ porte un verdict définitif
+    MAXIMUM / PARTIEL — producteur / à ingérer — session dédiée). Best-effort : CSV absent → []."""
+    import csv as _csv
+    from pathlib import Path as _P
+    p = _P(__file__).resolve().parents[2] / "docs" / "audit-2026-09" / "SOURCES" / "SCHEMAS.csv"
+    if not p.exists():
+        return []
+    nus = []
+    for r in _csv.DictReader(p.open(encoding="utf-8")):
+        if (r.get("verdict") or "").strip() == "à voir":
+            nus.append(f"{r['source']} / {r['champ_ingere']}")
+    return nus
+
+
 def verrou_g2(db: Session) -> ResultatVerrou:
     phrase = ("Pour chaque source, la page dit sur quelle surface elle arrive et si sa fiche "
               "est réellement remplie — aucune source connectée de type parcelle vide sur "
-              "l'ensemble des témoins sans un état INVISIBLE affiché.")
+              "l'ensemble des témoins sans un état INVISIBLE affiché ; et (SOURCES-4 lot 4) aucun "
+              "champ de source servie ne reste au verdict « à voir » (tout champ tranché).")
     from .circuit_etats import etat_reservoir
     vides = invisibles_mesures(db)
     pbs: list[str] = []
+    # SOURCES-4 lot 4 — extension G2 : aucun « à voir » nu dans SCHEMAS.csv.
+    a_voir = _schemas_a_voir_nus()
+    for av in a_voir:
+        pbs.append(f"champ « à voir » non tranché (> 30 j) : {av}")
     for m in vides:
         # l'état que la PAGE affichera pour ce réservoir (le drapeau `invisible` est posé par
         # l'assembleur du dashboard depuis la MÊME mesure) — s'il ne sort pas rouge-INVISIBLE,
@@ -217,7 +239,8 @@ def verrou_g2(db: Session) -> ResultatVerrou:
                        f"table quasi vide) mais l'état affiché est « {libelle} » ({couleur})")
     preuve = (f"{len(vides)} source(s) vide(s) mesurée(s) sur les 12 témoins"
               + (f" ({', '.join(v['slug'] for v in vides)})" if vides else "")
-              + f" ; {len(pbs)} sans état INVISIBLE")
+              + f" ; {len([p for p in pbs if 'INVISIBLE' not in p and 'à voir' not in p])} sans état INVISIBLE"
+              + f" ; {len(a_voir)} champ(s) « à voir » nu (SCHEMAS.csv — G2 étendu)")
     return ResultatVerrou("G2", phrase, "casse" if pbs else "ok", preuve, pbs[:10])
 
 

@@ -3675,6 +3675,18 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "SELECT type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre "
         "FROM dvf_secteur_medianes WHERE secteur = substring(:idu FROM 1 FOR 10) "
         "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()]
+    # SOURCES-4 lot 2 (DVF+) — adresse / nombre de pièces / surfaces Carrez / nombre de lots de la
+    # DERNIÈRE mutation de la parcelle, depuis la table latérale dvf_mutation_detail (ne nourrit NI le
+    # scoring NI le marché). Jointe via la dernière mutation (id_mutation) de la parcelle.
+    dvf_detail = None
+    if dvf_last:
+        dvf_detail = db.execute(text(
+            "SELECT d.adresse, d.code_postal, d.nombre_pieces, d.surface_carrez_m2, d.nombre_lots "
+            "FROM dvf_mutation_detail d JOIN ("
+            "  SELECT id_mutation FROM dvf_mutations_parcelle WHERE id_parcelle = :idu "
+            "  ORDER BY date_mutation DESC LIMIT 1) last ON last.id_mutation = d.id_mutation "
+            "WHERE d.id_parcelle = :idu"), {"idu": idu}).mappings().first() \
+            if db.execute(text("SELECT to_regclass('dvf_mutation_detail') IS NOT NULL")).scalar() else None
     dvf_parcelle = None
     if dvf_last or dvf_secteur:
         # EXPORTS-1 (1.4, arbitrage Q3) : UN SEUL « neuf » servi — `resolve_prix_neuf_marche`
@@ -3685,7 +3697,15 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         dvf_parcelle = {
             "derniere_mutation": ({**dict(dvf_last),
                                    "date_mutation": dvf_last["date_mutation"].isoformat()
-                                   if dvf_last["date_mutation"] else None}
+                                   if dvf_last["date_mutation"] else None,
+                                   # DVF+ (SOURCES-4) : adresse/pièces/Carrez/lots, None si non détaillé
+                                   **({"adresse": dvf_detail["adresse"],
+                                       "code_postal": dvf_detail["code_postal"],
+                                       "nombre_pieces": dvf_detail["nombre_pieces"],
+                                       "surface_carrez_m2": (float(dvf_detail["surface_carrez_m2"])
+                                                             if dvf_detail["surface_carrez_m2"] is not None else None),
+                                       "nombre_lots": dvf_detail["nombre_lots"]}
+                                      if dvf_detail else {})}
                                   if dvf_last else None),
             "secteur": dvf_secteur,
             # EXPORTS-1 (1.3) : grain dit — indicateur secondaire, jamais la tête de fiche.
@@ -5408,7 +5428,12 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     "tri_zone",
                     # SOURCES-4 lot 2 — piscines détectées par CoSIA (46 599 polygones IA 20 cm 2025),
                     # rattachées parcelle : recensement mappable, croisable propriétaire.
-                    "piscine_cosia"}
+                    "piscine_cosia",
+                    # SOURCES-4 lot 2 — cimetières BD TOPO (contrainte foncière : emprise + périmètre).
+                    "cimetiere",
+                    # SOURCES-4 lot 2 — BD TOPO 4 couches : constructions linéaires/surfaciques (mur de
+                    # soutènement/barrage — décisif en pente), zone d'activité, bassin versant (inondation).
+                    "construction_lineaire", "construction_surfacique", "zone_activite", "bassin_versant"}
 
 # SOURCES-1 lot 1 — kinds VIRTUELS de la carte : une clé front → le kind stocké + un filtre
 # subtype. ER = typepsc 05 (les 6 ER de Saint-Louis codés « 02 » sont captés par la cascade via
@@ -5441,6 +5466,11 @@ _RICH_POPUP_KINDS: frozenset[str] = frozenset({
     "parc_national",
     # SOURCES-4 lot 2 — piscine : surface (m²) + parcelle rattachée au clic.
     "piscine_cosia",
+    # SOURCES-4 lot 2 — cimetière : toponyme + nature (civil/militaire) au clic.
+    "cimetiere",
+    # SOURCES-4 lot 2 — BD TOPO : constructions (nature : mur de soutènement/barrage…), zone
+    # d'activité (catégorie), bassin versant (bassin hydrographique) au clic.
+    "construction_lineaire", "construction_surfacique", "zone_activite", "bassin_versant",
 })
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran
