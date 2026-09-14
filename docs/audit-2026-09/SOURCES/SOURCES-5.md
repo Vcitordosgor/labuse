@@ -64,13 +64,44 @@ Réservoir `erosion_cotiere_geolittoral` millésime re-libellé.
 
 ---
 
+### 2. Classement sonore ITT (Cerema) → **MAXIMUM** (fait)
+
+**Constat** : le chemin était déjà le service ArcGIS officiel du Cerema
+(`Routes_classement_sonore_La_Reunion_V2/FeatureServer/0`, 1004 tronçons, maxRecordCount 2000 →
+pas de troncature). L'ingestion (`bruit_route.ingest_bruit_route`) matérialise correctement la
+BANDE (buffer `sect_bruit` m sur l'axe, EPSG:2975, subtype `cat1..cat5`), mais ne gardait que
+**7 clés** d'`attrs`, jetant ~50 colonnes publiées.
+
+**Largeur d'affectation** = `sect_bruit` (déjà là, pilote le buffer) ; **référence d'arrêté** =
+métadonnée (les AP préfectoraux des 14 & 15/12/2023) — n'existe pas comme champ dans le flux,
+désormais **explicitée** dans `attrs.reference_arrete`.
+
+**Correctif** : `attrs` recopie **tout champ publié** (56 clés) — trafic (`tmjatv_*`, `tmja_vl20a`,
+`tmja_pl20a`, `pl__global`), niveaux acoustiques de référence (`jlaeq_ref`/`nlaeq_ref`),
+débits/vitesses VL/PL par période (`*_0618/1822/2206`), voirie (`larg_chaus`, `nb_voies`, `rampe`,
+`sens_circu`), tissu/zonage, identité du tronçon. Clé accentuée `catégorie`→`categorie` (int),
+chaînes vides→None. Logique buffer/subtype **inchangée**.
+
+**Preuve** :
+
+| | lignes | geom_2975 | subtypes (pilote cascade) | clés attrs |
+|---|---|---|---|---|
+| avant | 1004 | 1004 | cat1:83 / cat2:147 / cat3:494 / cat4:278 / cat5:2 | 7 |
+| après | 1004 | 1004 | **cat1:83 / cat2:147 / cat3:494 / cat4:278 / cat5:2** | **56** |
+
+→ distribution des catégories **identique** = cascade inchangée ; `reference_arrete` présent,
+`jlaeq_ref=69`, `tmjatv_an=2016` vérifiés. `SCHEMAS.csv` : ligne « à ingérer » → 10 lignes MAXIMUM
+(familles de colonnes). Portes après #2 : à jouer ci-dessous.
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **2. Classement sonore ITT** (service
-ArcGIS Cerema, largeur d'affectation + référence d'arrêté).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **3. EDF HTA** (réseau au flux open data
+SEI, tension + gestionnaire).
 
-Restantes après #1 : A2 classement sonore ITT · A3 EDF HTA · A4 ZNIEFF (WFS INPN) · A5 INPN espaces
-protégés (WFS Géoplateforme) · A6 Ramsar/sites classés · A7 DILA · B8 AZI/TRI dates · B9 RNIC
-29-1/DPE copro · B10 BODACC dépôts de comptes · B11 Coût construction · B12 Forêts ONF régime ·
-B13 Potentiel foncier colonnes restantes · C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre
-d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.
+Restantes après #2 : A3 EDF HTA · A4 ZNIEFF (WFS INPN) · A5 INPN espaces protégés (WFS
+Géoplateforme) · A6 Ramsar/sites classés · A7 DILA · B8 AZI/TRI dates · B9 RNIC 29-1/DPE copro ·
+B10 BODACC dépôts de comptes · B11 Coût construction · B12 Forêts ONF régime · B13 Potentiel
+foncier colonnes restantes · C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre d'époque · C17
+BD CARTO V5 · C18 DPE ADEME 230 champs.
