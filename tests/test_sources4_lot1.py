@@ -50,3 +50,15 @@ def test_catnat_detail_liste_declaree_au_registre():
     serveurs = [rid for rid, r in robinets.ROBINETS.items()
                 if "catnat_arretes_liste" in r.chiffres]
     assert serveurs == ["fiche_commune_risques"]
+
+
+def test_lls_inventaire_n_declare_au_registre():
+    """SOURCES-4 lot 2 — l'effectif brut de LLS (inventaire SRU) est déclaré et servi sur la carte
+    SRU de la fiche commune (jusque-là seul le taux l'était ; nb_lls dormait dans detail)."""
+    from labuse.registre import donnees, robinets
+    assert "lls_inventaire_n" in donnees.DONNEES
+    d = donnees.DONNEES["lls_inventaire_n"]
+    assert d.unite == "logements" and d.reservoirs == ("sru_dhup",)
+    serveurs = [rid for rid, r in robinets.ROBINETS.items()
+                if "lls_inventaire_n" in r.chiffres]
+    assert serveurs == ["fiche_commune_sru"]

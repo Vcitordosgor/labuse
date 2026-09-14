@@ -412,6 +412,13 @@ DONNEES: dict[str, Donnee] = {
     "taux LLS de l'inventaire SRU",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py (commune_contexte_sru)",
     reservoirs=("sru_dhup",), portee="live", table="commune_contexte_sru.taux_lls"),
+ # SOURCES-4 lot 2 — l'EFFECTIF BRUT de LLS de l'inventaire SRU dormait dans detail->nb_lls
+ # (seul le taux était servi). Surfacé sur la carte SRU. Le dénominateur (résidences principales)
+ # n'est PAS publié dans le CSV DHUP v2 → non ingéré (arbitrage), le taux reste la grandeur servie.
+ "lls_inventaire_n": C("Logements sociaux (inventaire SRU)", "logements", "commune",
+    "nombre de logements locatifs sociaux de l'inventaire SRU (effectif brut, detail->nb_lls)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py (_rafraichir_partages, commune_contexte_sru)",
+    reservoirs=("sru_dhup",), portee="live", table="commune_contexte_sru.detail->>nb_lls"),
  "plh_objectif_logements_an": C("Objectif logements/an", "logements", "commune",
     "objectif PLH, chaque chiffre porte sa référence doc+page",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py (plh_epci)",

@@ -125,13 +125,27 @@ liste** — aucun appel détail. Ajoutés à `parse_icpe` (`georisques_layers.py
 - **Reste** : la suite du LOT 2 garde son ordre dans `SCHEMAS.csv` (SRU, CoSIA, Cartofriches, BPE,
   Parc national, puis REI, BODACC, …).
 
-### Reprise (point de départ mesuré pour la prochaine source) — **SRU**
-`commune_contexte_sru.detail` (jsonb) porte **déjà** `nb_lls` (le numérateur du taux) — surfacing
-LOT-1 immédiat (comme CatNat/RNIC). Le dénominateur `nb_res_principales` n'est PAS dans `detail`
-(seuls `nb_lls`, `epci`, `population_2025` y sont) : soit dérivé de `taux_lls` (nb_res = nb_lls /
-(taux/100)), soit re-ingéré depuis l'inventaire DHUP. Vérifier la source d'alimentation de
-`commune_contexte_sru` (pas de module d'ingestion dédié repéré — probable seed). **Commande de
-reprise : « continue SOURCES-4 ».**
+### SRU — inventaire des logements sociaux (DHUP) → **effectif brut surfacé**
+Sonde du CSV DHUP réel (v2 18/12/2025, `ingest_sru.py`) : le **dénominateur `nb_res_principales`
+N'EST PAS publié** (22 colonnes ; seul le TAUX l'est) — non ingéré, non inventé (arbitrage écrit,
+ligne PARTIEL ajoutée à `SCHEMAS.csv`). L'**effectif brut `nb_lls`** dormait dans
+`commune_contexte_sru.detail` (seul le taux était servi) : surfacé.
+
+- **Ingestion** : `ingest_sru.py` élargi — en plus de `nb_lls`, on garde désormais les rattachements
+  SRU publiés jusque-là jetés : `epci_sru`, `uu_sru`, `nom_unite_urbaine`,
+  `commune_isolee_l302_5` (art. L.302-5 CCH), `soumise_sru_2025`. Filtre 974 + garde des 24 communes
+  intégrés. Re-ingéré : 24 communes (2 carencées, 9 déficitaires, 8 conformes, 5 exemptées).
+- **Registre** : nouvelle donnée `lls_inventaire_n` (`logements`, commune, réservoir `sru_dhup`),
+  servie par le robinet `fiche_commune_sru`.
+- **Place** : fiche commune › carte SRU. Preuve (`captures-sources4/03-commune-sru-nb-lls.png`,
+  Saint-Denis) : « taux de logement social (SRU) — **24 758 LLS** ». Servi **live**
+  (`_rafraichir_partages`) — aucun cache à recalculer.
+- **Test** : `test_sources4_lot1.py::test_lls_inventaire_n_declare_au_registre`. FICHES-DONNEES.md
+  régénéré.
+
+### Reprise (point de départ pour la prochaine source) — **CoSIA**
+Après SRU, l'ordre imposé continue : **CoSIA** (toutes les classes de couverture du sol par parcelle),
+puis Cartofriches, BPE, Parc national, REI, BODACC, … **Commande de reprise : « continue SOURCES-4 ».**
 
 ### Le reste du LOT 2 — rang conservé
 `SCHEMAS.csv` liste ~70 champs « à voir »/« à ingérer », ordonnés par utilité (mandat § LOT 2).

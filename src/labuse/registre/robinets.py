@@ -251,7 +251,7 @@ ROBINETS: dict[str, Robinet] = {
  "fiche_commune_zan": _r("fiche", "Enveloppe ZAN", "fiche_commune",
     "/communes/{c}/contexte", "json_puis_js", chiffres=("zan_reste_ha", "zan_evolution_commune",)),
  "fiche_commune_sru": _r("fiche", "Logement social — SRU", "fiche_commune",
-    "/communes/{c}/contexte", "json_puis_js", chiffres=("taux_lls_pct", "deficit_sru_pts",)),
+    "/communes/{c}/contexte", "json_puis_js", chiffres=("taux_lls_pct", "deficit_sru_pts", "lls_inventaire_n",)),
  "fiche_commune_permis": _r("fiche", "Permis & délais", "fiche_commune",
     "/communes/{c}/contexte", "json_puis_js", chiffres=("permis_12m_n", "velocite_delai_median_mois", "point_mort_n",)),
  "fiche_commune_plh": _r("fiche", "Programme local — PLH", "fiche_commune",

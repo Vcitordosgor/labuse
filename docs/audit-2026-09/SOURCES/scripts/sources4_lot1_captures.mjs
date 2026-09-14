@@ -24,6 +24,13 @@ try {
   out.commune_risques = await txt(); await shot('01-commune-risques-catnat-detail');
 } catch (e) { console.log('commune KO', e.message); }
 
+// ── SRU (fiche commune → carte Marché/SRU) — SOURCES-4 lot 2 : nb_lls surfacé ──
+try {
+  await p.goto(`${BASE}/socle/`, { waitUntil: 'networkidle' }); await p.waitForTimeout(1500);
+  await p.evaluate(() => window.__labuse.setContexteCommune('Saint-Denis')); await p.waitForTimeout(2500);
+  out.commune_sru = await txt(); await shot('03-commune-sru-nb-lls');
+} catch (e) { console.log('sru KO', e.message); }
+
 // ── Copropriété RNIC (fiche parcelle → bloc copropriété) ──
 try {
   await p.goto(`${BASE}/socle/`, { waitUntil: 'networkidle' }); await p.waitForTimeout(1500);
@@ -38,5 +45,6 @@ try {
 
 writeFileSync(OUT + '/_surfaces.json', JSON.stringify(out, null, 1));
 console.log('CATNAT_DETAIL vu:', /INTE|IOME|Mouvement de Terrain|Coulées de Boue/.test(out.commune_risques || ''));
+console.log('SRU nb_lls vu:', /LLS/.test(out.commune_sru || ''));
 console.log('SIRET syndic vu:', /SIRET/.test(out.fiche || ''), '| stationnement vu:', /stationnement/.test(out.fiche || ''));
 await b.close();

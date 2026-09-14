@@ -65,11 +65,21 @@ def main() -> int:
                 fnum(r.get("Taux_cible_commune_2023_2025", "")),
                 statut,
                 fnum(r.get("Prélèvement_net_2025_dont_majoration", "")),
-                # le nombre de LLS (colonne avec espace parasite dans la source, fidèlement lue)
+                # SOURCES-4 lot 2 — MAXIMUM : on garde tout ce que le fichier DHUP publie et qu'on
+                # laissait tomber. Le nombre de LLS de l'inventaire (colonne au nom porteur d'un
+                # espace parasite, fidèlement lue) EST l'effectif brut demandé. Le DÉNOMINATEUR
+                # `nb_res_principales` N'EST PAS PUBLIÉ dans ce CSV v2 (seul le taux l'est) — on ne
+                # l'invente pas (arbitrage SOURCES-4). Les rattachements SRU (EPCI/unité urbaine/
+                # commune isolée art. L.302-5) expliquent POURQUOI la commune est soumise.
                 json.dumps({
                     "nb_lls": fnum(r.get("Nombre_lls_ Inventaire_au_01_01_2024", "")),
                     "epci": (r.get("Nom_EPCI") or "").strip(),
                     "population_2025": fnum(r.get("Population_municipale_01_01_2025", "")),
+                    "epci_sru": (r.get("EPCI_SRU") or "").strip() or None,
+                    "uu_sru": (r.get("UU_SRU") or "").strip() or None,
+                    "nom_unite_urbaine": (r.get("Nom_unité_urbaine") or "").strip() or None,
+                    "commune_isolee_l302_5": (r.get("Commune_isolée_article_L_302_5_CCH") or "").strip() or None,
+                    "soumise_sru_2025": (r.get("Commune_sru_au_01_01_2025") or "").strip() or None,
                 }),
                 SOURCE_NOM, URL,
             ))

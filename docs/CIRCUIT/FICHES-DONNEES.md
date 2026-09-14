@@ -79,6 +79,8 @@
 | | | *taux LLS de l'inventaire SRU* | | | | | |
 | `deficit_sru_pts` | nombre | Déficit SRU (objectif − taux LLS, points) | sru_dhup | passe-plat · src/labuse/api/comparateur.py:56 — table lue : commune_contexte_sru (objectif_pct, taux_lls) | live | servie · non couverte (n sous seuil, dit) · non calculée | outil « Comparer des parcelles » · outil « Communes » · outil « Comparaison communes » |
 | | | *greatest(objectif_pct − taux_lls, 0) depuis commune_contexte_sru* | | | | | |
+| `lls_inventaire_n` | nombre | Logements sociaux (inventaire SRU) | sru_dhup | passe-plat · src/labuse/api/app.py (_rafraichir_partages, commune_contexte_sru) — table lue : commune_contexte_sru.detail->>nb_lls | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *nombre de logements locatifs sociaux de l'inventaire SRU (effectif brut, detail->nb_lls)* | | | | | |
 
 ## Permis & délais
 
