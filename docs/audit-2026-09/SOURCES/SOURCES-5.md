@@ -425,9 +425,30 @@ Vérifié : reproduit à HEAD=#15 sans mes changements, redevient vert au change
 
 ---
 
+### 17. IGN BD CARTO V5 → **MAXIMUM** (fait) — occupation + arbitrage doublons
+
+**occupation_du_sol** : le thème ne publie que **2 champs** (`nature` — déjà servi — et `cleabs`,
+identifiant IGN). `cleabs` ajouté aux attrs (code). Je n'ai **pas re-ingéré** (le bbox par-commune
+= extent des parcelles déborde sur les communes voisines → duplication 1643→3250 vs le bbox serré
+de `ingest-island` ; `moteurs.py` lit `ocs_ge WHERE commune IS NOT NULL` donc l'île-entière/NULL est
+exclue). Les 1 643 polygones existants sont conservés intacts ; le `cleabs` sera capté au prochain
+`ingest-island` (code prêt, additif).
+
+**Arbitrage « tous les thèmes » (règle G1)** : la Géoplateforme expose **36 thèmes BDCARTO_V5**. **BD
+CARTO V5 est PLUS GROSSIER que BD TOPO** (déjà ingéré) → les 35 autres thèmes sont tous des
+**doublons** d'une source plus fine : hydro → BD TOPO water ; voirie/aérodrome/voie ferrée/câble →
+BD TOPO voirie + transport servi ; bâti (constructions, zone habitation) → BD TOPO constructions +
+CoSIA ; cimetière/bassin versant/zone activité → BD TOPO (SOURCES-4) ; ligne électrique → EDF HTA
+(#3) ; parc/réserve → patrinat (#5)/parc national ; limite terre-mer → trait de côte (#1) ; admin
+(commune/dépt/région/EPCI) → carte des 24. **Seul `occupation_du_sol` est non-doublon** (BD TOPO n'a
+pas de thème occupation ; OCS GE 974 hors WFS) — servi. `SCHEMAS.csv` : 1 à-ingérer → 1 MAXIMUM +
+1 PARTIEL-doublon. Portes vertes.
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **17. IGN BD CARTO V5** (occupation du sol,
-tous thèmes hors doublons CoSIA/OCS GE/BD TOPO).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **18. DPE ADEME** (les 230 champs des trois
+jeux ; base 974 quasi vide, schéma complet pour le jour où l'ADEME répare son flux DROM).
 
-Restantes après #16 : C17 BD CARTO V5 · C18 DPE ADEME 230 champs.
+Restantes après #17 : C18 DPE ADEME 230 champs.

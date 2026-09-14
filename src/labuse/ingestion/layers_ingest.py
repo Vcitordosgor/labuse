@@ -789,8 +789,15 @@ def ingest_ocsge(session, bbox, commune, run_id, sids) -> int:
             sub = "agricole"
         else:
             sub = "artificialise"
+        # SOURCES-5 #17 : tout champ publié de BDCARTO_V5:occupation_du_sol (le thème ne publie que
+        # `nature` + `cleabs` = identifiant IGN). Les 35 AUTRES thèmes BD CARTO V5 sont des DOUBLONS
+        # (G1) du BD TOPO plus fin déjà ingéré (hydro/voirie/bâti/cimetière/bassin/zone activité),
+        # de la carte 24 communes (admin), d'EDF (ligne électrique) ou de patrinat (parc) — arbitrage
+        # écrit au rapport. Seule l'occupation du sol (absente de BD TOPO, OCS GE 974 hors WFS) est servie.
+        p = f.get("properties") or {}
         _insert_layer(session, "ocs_ge", sub, nat or "occupation du sol", f["geometry"],
-                      sids.get(KIND_SOURCE["ocs_ge"]), commune, run_id, {"nature": nat, "src": "BDCARTO_V5"})
+                      sids.get(KIND_SOURCE["ocs_ge"]), commune, run_id,
+                      {"nature": nat, "cleabs": p.get("cleabs"), "src": "BDCARTO_V5:occupation_du_sol"})
         n += 1
     return n
 
