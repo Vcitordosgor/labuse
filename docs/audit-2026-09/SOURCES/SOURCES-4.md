@@ -125,6 +125,14 @@ liste** — aucun appel détail. Ajoutés à `parse_icpe` (`georisques_layers.py
 - **Reste** : la suite du LOT 2 garde son ordre dans `SCHEMAS.csv` (SRU, CoSIA, Cartofriches, BPE,
   Parc national, puis REI, BODACC, …).
 
+### Reprise (point de départ mesuré pour la prochaine source) — **SRU**
+`commune_contexte_sru.detail` (jsonb) porte **déjà** `nb_lls` (le numérateur du taux) — surfacing
+LOT-1 immédiat (comme CatNat/RNIC). Le dénominateur `nb_res_principales` n'est PAS dans `detail`
+(seuls `nb_lls`, `epci`, `population_2025` y sont) : soit dérivé de `taux_lls` (nb_res = nb_lls /
+(taux/100)), soit re-ingéré depuis l'inventaire DHUP. Vérifier la source d'alimentation de
+`commune_contexte_sru` (pas de module d'ingestion dédié repéré — probable seed). **Commande de
+reprise : « continue SOURCES-4 ».**
+
 ### Le reste du LOT 2 — rang conservé
 `SCHEMAS.csv` liste ~70 champs « à voir »/« à ingérer », ordonnés par utilité (mandat § LOT 2).
 Ordre imposé : ICPE → SRU → CoSIA → Cartofriches → BPE → Parc national ; puis REI, BODACC, Fibre
@@ -152,8 +160,12 @@ nouvelle source). Les arbitrages de doublon (EDF > BD TOPO lignes, CoSIA/LiDAR >
 ## Sources arrêtées sur seuil (10 Go / 2 h)
 Aucune — LOT 1 n'ingère rien (surfacing de base existante).
 
-## Les deux portes à la clôture du LOT 1
-- `labuse circuit verrous` → **24/24 verts** (V5a/b/c et G1–G7 compris, +1 donnée `catnat_arretes_liste`).
-- `labuse circuit suite` → à rejouer (voir commit). vitest **207 passed**, tsc **0**.
+## Les deux portes à la clôture
+- LOT 1 (commit da97f39b) : verrous **24/24** · suite **3081 passed** · vitest **207** · tsc **0**.
+- LOT 2 amorce ICPE (commit b5cd0b23) : verrous **24/24** · suite **3082 passed**.
+
+## Commits (branche `feat/sources-4`, poussée, NON mergée)
+- `da97f39b` — LOT 1 : CatNat détail + RNIC enrichi (surfacing raw).
+- `b5cd0b23` — LOT 2 amorce : ICPE (rubriques, IED, inspections, catégorie, service, date_maj).
 
 **Rien n'est mergé.**
