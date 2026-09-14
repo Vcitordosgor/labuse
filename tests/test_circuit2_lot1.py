@@ -56,7 +56,9 @@ def test_couches_et_fonds_tous_declares():
     # + 5 SOURCES-1 lot 1 (er, ebc, dpu, peb, sup — groupe « Contraintes »)
     # + 4 SOURCES-1 lot 2 (dpf, zone_humide, enp, rpg — « Contraintes » / « Nature »)
     # + 4 SOURCES-1 lot 3 (sis, casias, bruit_route, bruit_carte)
-    assert len(couches) == 33 and len(fonds) == 10
+    # + 2 SOURCES-2/3 (TESTS-1 lot 2) : couche_artificialisation (OCS GE) + couche_batiments_3d
+    #   (extrusion LiDAR HD) — 33 → 35.
+    assert len(couches) == 35 and len(fonds) == 10
     # chaque robinet couche sert au moins une donnée de type couche
     for rid in couches:
         types = {DONNEES[cid].type for cid in registre.ROBINETS[rid].chiffres}

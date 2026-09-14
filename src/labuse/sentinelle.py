@@ -723,6 +723,9 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "MOBPRO (mobilités domicile-travail, INSEE)": "Import CSV manuel ABANDONNÉ pour l'étude de zone — pas d'URL de version stable, et pas de rafraîchissement attendu (aucun rappel Y4).",
     "Office de l'eau Réunion — Chroniques de l'eau": "Seed CSV extrait à la main d'un PDF (chronique numérotée) — chaque édition = nouvelle URL, non surveillable proprement. Y4 : rappel de rafraîchissement posé.",
     "PVGIS (Commission européenne)": "API de CALCUL (v5.3 dans l'URL) — pas de jeu à millésime, le service ne versionne pas de données à comparer ; aucune requête témoin actionnable (réponse dérivée d'un modèle, pas d'une donnée ingérée).",
+    # TESTS-1 + SOURCES-3b (14/09, convergents) — Annuaire DILA, Sudocuh, RNIC, RPLS et Consommation
+    # NAF (Cerema) sorties d'ici : sous sonde RÉELLE (SEED SOURCES-3b) désormais ; une source ne peut
+    # pas être à la fois surveillée et déclarée non surveillable (test_sentinelle).
     "INSEE RP Logement 2023": "Millésime ANNUEL du recensement (publication INSEE sans endpoint de version stable pour les tableaux communaux) — rappel par cadence, le millésime suivant s'ingère à la main (RP 2024 attendu fin 2026).",
     "Inventaire SRU (DHUP)": "CSV national republié par la DHUP SANS URL de version stable (inventaire triennal, dernier v2 du 18/12/2025) — rappel par cadence, réingestion au fichier suivant.",
     "NPNRU (DEAL Réunion / ANCT)": "Liste ANCT FIGÉE (génération 2024) — pas de flux de version ; les quartiers NPNRU ne changent qu'à une nouvelle génération (geste manuel).",
@@ -924,6 +927,13 @@ def _emettre_digest(db, neuf: list[dict], echec: list[dict]) -> bool:
     # clé de dédup = l'ensemble ANNONCÉ (sids neufs + sids en échec) → stable, un même passage ne double pas.
     sig = "n:" + ",".join(str(d["row"]["source_id"]) + ":" + str(d["sonde"].vu) for d in neuf) \
         + "|e:" + ",".join(str(d["row"]["source_id"]) for d in echec)
+    # TESTS-1 lot 1 — BORNER la clé : event_log.dedup est varchar(96) ; avec beaucoup de sondes en
+    # échec persistant (mesuré : 88 → ~350 caractères) l'INSERT plantait en StringDataRightTruncation
+    # et le passage de veille CRASHAIT — précisément la nuit où tout va mal. Au-delà de la place
+    # disponible, la signature est remplacée par son empreinte sha1 (même stabilité, taille fixe).
+    if len("sentinelle-digest:" + sig) > 96:
+        import hashlib
+        sig = "sha1:" + hashlib.sha1(sig.encode()).hexdigest()
     cree = bool(creer_notification(
         db, kind="systeme", compte_id=None, source="Veille sources",
         titre=titre, detail="\n".join(lignes), lien="/sources",

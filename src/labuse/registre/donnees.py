@@ -143,6 +143,9 @@ DONNEES: dict[str, Donnee] = {
     "sur Légifrance, hors scoring",
     moteur=None, calcul="passe_plat",
     fonction="src/labuse/api/modules.py:faisabilite_sens1 (load_yaml_config rtaa_dom)",
+    # TESTS-1 lot 1 — un passe-plat SERVI dit ce qu'il lit : ici pas une table SQL mais le
+    # fichier de règles versionné (le réservoir rtaa_dom est « porté par le code », tables.py:149).
+    table="config/rtaa_dom.yaml",
     reservoirs=("rtaa_dom",), portee="live", type="liste"),
  # FICHE-1 lot 6 — les annonces Radar rattachées à la parcelle (validées), servies dans « Marché
  # et secteur » : date, prix demandé, statut, lien fiche annonce, écart demandé/acté par annonce.
@@ -1399,6 +1402,23 @@ DONNEES: dict[str, Donnee] = {
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (zone_humide)",
     reservoirs=("deal_zones_humides",), portee="live",
     type="couche", table="spatial_layers (kind=zone_humide)", fabrication="requete"),
+ # TESTS-1 lot 2 — les DEUX robinets couche de SOURCES-2/3 (artificialisation, bâti 3D) pointaient
+ # des scalaires sans donnée de type « couche » (le patron du registre : chaque robinet couche sert
+ # LA couche elle-même, avec sa table et sa fabrication — test_circuit2_lot1).
+ "artificialisation_couche": C("Artificialisation OCS GE (couche)", "couche", "global",
+    "polygones artificialisés OCS GE (matrice du décret 2023-1096) peints sous le cadastre — "
+    "donnée d'îlot, millésime 2022",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:map_layers_geojson (artificialisation)",
+    reservoirs=("ocsge",), portee="live",
+    type="couche", table="spatial_layers (kind=artificialisation)", fabrication="requete"),
+ "batiments_3d_couche": C("Bâti 3D — extrusion (couche)", "couche", "global",
+    "empreintes bâties de la BBOX avec hauteur pour l'extrusion 3D (BD TOPO ; faîtage LiDAR HD "
+    "mesuré préféré, flag lidar par bâtiment) — sans hauteur, jamais d'extrusion inventée",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:map_batiments_geojson",
+    reservoirs=("bd_topo", "lidar_hd_mnh",), portee="live",
+    type="couche", table="spatial_layers (kind=batiment) + batiment_hauteur_lidar", fabrication="requete"),
  "enp_couche": C("Espaces naturels protégés (couche)", "couche", "global",
     "ENP par type (réserves naturelles dont marine, APB, conservatoire du littoral, réserves "
     "biologiques, Ramsar, sites classés/inscrits) — INPN + compléments DEAL Carmen",

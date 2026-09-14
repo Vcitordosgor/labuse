@@ -113,8 +113,10 @@ ROBINETS: dict[str, Robinet] = {
  # SOURCES-3 lot 1 — l'extrusion 3D du bâti (empreinte BD TOPO + hauteur) : la hauteur préfère le
  # faîtage LiDAR HD mesuré (flag `lidar` par bâtiment), repli BD TOPO. Rattache la hauteur bâtie
  # servie à la carte au registre (fuite « 303k à la carte » close).
+ # TESTS-1 lot 2 — le robinet sert AUSSI la couche elle-même (batiments_3d_couche), pas
+ # seulement la hauteur scalaire (patron : un robinet couche sert une donnée de type couche).
  "couche_batiments_3d": _r("couche", "Bâti 3D (extrusion, hauteur)", None,
-    "/map/batiments.geojson", "json_puis_js", chiffres=("hauteur_bati_m",)),
+    "/map/batiments.geojson", "json_puis_js", chiffres=("batiments_3d_couche", "hauteur_bati_m",)),
  "fiche_parcelle_sols": _r("fiche", "Sols (SIS / CASIAS)", "fiche_parcelle",
     "/parcels/{idu} (clé sols)", "json_puis_js",
     chiffres=("sols_parcelle", "sis_classe", "casias_statut",)),
@@ -129,7 +131,7 @@ ROBINETS: dict[str, Robinet] = {
     "/map/layers.geojson?kind=zone_humide", "json_puis_js", chiffres=("zone_humide_couche",)),
  "couche_artificialisation": _r("couche", "Artificialisation (OCS GE)", None,
     "/map/layers.geojson?kind=artificialisation", "json_puis_js",
-    chiffres=("part_artificialisee_pct",)),
+    chiffres=("artificialisation_couche", "part_artificialisee_pct",)),
  "couche_enp": _r("couche", "Espaces naturels protégés", None,
     "/map/layers.geojson?kind=enp", "json_puis_js", chiffres=("enp_couche",)),
  "couche_rpg": _r("couche", "Cultures déclarées (RPG)", None,

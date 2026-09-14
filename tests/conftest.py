@@ -251,6 +251,41 @@ def engine():
             "CREATE TABLE IF NOT EXISTS parcel_signals ("
             "  id integer, parcel_id integer, signal_type varchar, payload jsonb,"
             "  detected_at timestamptz, notified_at timestamptz)"))
+        # TESTS-1 lot 2 (D) — les DEUX tables d'ingestion qui faisaient crasher 9 tests en
+        # « relation does not exist » (contrat data-gap : table VIDE = donnée absente, propre ;
+        # table ABSENTE = 500). Cassé depuis RECETTE-4 lot 1 (9753b745, la fiche lit le zonage).
+        from labuse.ingestion import rei as _rei
+        from labuse.ingestion import zonage_abc as _zabc
+        _c.execute(text(_zabc.DDL))   # commune_zonage_abc — DDL de l'ingesteur, source unique
+        _c.execute(text(_rei.DDL))    # commune_rei (TFPB) — même branchement RECETTE-4
+        # batiment_hauteur_lidar (colonnes survol comprises) : son ABSENCE fait qu'hauteur_lidar_servie
+        # avale l'erreur par un rollback() de TOUTE la transaction — en test, les seeds du test sautent
+        # en silence. Table vide = repli BD TOPO propre, aucun rollback.
+        from labuse.faisabilite import hauteur_lidar_dalles as _hld
+        _hld.ensure_colonnes_survol(_c)
+        # toiture_lidar : toiture_depuis_cache avale « table absente » SANS rollback → la
+        # transaction du test reste ABORTED et tout lecteur suivant lit du vide en silence.
+        from labuse import solaire_toiture as _st
+        _st.ensure_table(_c)
+        _c.execute(text(          # parcel_bati_revele — lue SANS garde par bati.le_bien_block
+            "CREATE TABLE IF NOT EXISTS parcel_bati_revele ("
+            "  parcel_id integer PRIMARY KEY REFERENCES parcels(id),"
+            "  idu varchar(14) NOT NULL, emprise_bdtopo_m2 double precision NOT NULL,"
+            "  emprise_cosia_m2 double precision NOT NULL, bande varchar(16) NOT NULL,"
+            "  motif text NOT NULL, computed_at timestamptz NOT NULL DEFAULT now())"))
+        # pc_caducs (site_voisinage:44) — pas d'ensure_tables côté module ; colonnes SANS
+        # contrainte : la fixture data-gap donne l'EXISTENCE, pas la rigueur d'ingestion
+        # (test_surface_d seed des lignes partielles). DROP d'abord : une version STRICTE
+        # laissée par une session antérieure ferait échouer ces seeds.
+        _c.execute(text("DROP TABLE IF EXISTS pc_caducs"))
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS pc_caducs ("
+            "  idu varchar(14),"   # pas de PK : test_surface_d seed des doublons d'idu exprès
+            "  pc_annee int, caduc_depuis int, n_pc_octroyes int,"
+            "  statut_autorisation text DEFAULT 'Sourcé',"
+            "  statut_caducite text DEFAULT 'Estimé',"
+            "  libelle_court text, detail text,"
+            "  updated_at timestamptz DEFAULT now())"))
     return eng
 
 

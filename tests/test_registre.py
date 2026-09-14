@@ -119,7 +119,9 @@ def test_modes_cadences_declares(db_session):
     # 99 → 105 : SOURCES-1 lot 5, les six de la valeur (Arcep, REI, ORT, OLL, DHUP, coût).
     # SOURCES-1 lot 6 — +2 : DFI (trimestriel) + bases IRIS RP2022 (annuel).
     # 107 → 116 : SOURCES-1 lot 7 (7 chantiers + FF/LOVAC/DV3F en convention).
-    assert len(MODE_ET_CADENCE) == 116
+    # 116 → 121 : SOURCES-2 lot 3 (endiguement, carte hypsométrique, BAN PLUS, RNB, OCS GE) —
+    # chronique mise à jour par TESTS-1 lot 2 (le compte était resté figé à SOURCES-1).
+    assert len(MODE_ET_CADENCE) == 121
     modes = {m for m, _, _ in MODE_ET_CADENCE.values()}
     assert modes <= {"job_sur_clic", "cron_mensuel", "depot_manuel", "one_shot", "en_direct", "absente"}
     statuts = {s for _, _, s in MODE_ET_CADENCE.values()}
