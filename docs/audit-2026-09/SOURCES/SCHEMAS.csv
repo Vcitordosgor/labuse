@@ -853,3 +853,105 @@ DVF / valeurs foncières,dvf,dvf_mutations,longitude+latitude,oui,utile,"géoloc
 DVF / valeurs foncières,dvf,dvf_mutations,surface_reelle_bati,oui,utile,INGÉRÉ (colonne) — prix/m² bâti,non
 DVF / valeurs foncières,dvf,dvf_mutations,surface_terrain,oui,utile,INGÉRÉ (colonne) — prix/m² terrain,non
 DVF / valeurs foncières,dvf,dvf_mutations,ancien_code_commune / ancien_id_parcelle,non,inutile,historique de fusion communale — sans usage foncier (le code courant fait foi),non
+Géorisques — mouvements de terrain,georisques_mvt,spatial_layers/mvt,latitude+longitude,non,à voir,geoloc du mvt — geom déjà servi ; lat/lon redondants sauf export point,non
+Géorisques — mouvements de terrain,georisques_mvt,spatial_layers/mvt,date_maj,non,à voir,fraîcheur BRGM de la fiche mvt — surfaçable pour dater le mvt,non
+Géorisques — mouvements de terrain,georisques_mvt,spatial_layers/mvt,lieu / commentaire_lieu,non,à voir,lieu-dit + commentaire de localisation — précise l'emprise,non
+Géorisques — mouvements de terrain,georisques_mvt,spatial_layers/mvt,commentaire_mvt,non,à voir,description du mouvement (nous n'ingérons qu'un commentaire agrégé),non
+Géorisques — mouvements de terrain,georisques_mvt,spatial_layers/mvt,precision_date / precision_lieu,non,à voir,qualité (imprécision) — pondère l'affichage,non
+Géorisques — mouvements de terrain,georisques_mvt,spatial_layers/mvt,departement / region,non,inutile,974 constant — sans usage,non
+Géorisques — cavités souterraines,georisques_cavites,spatial_layers/cavite,nom,non,utile (déjà servi via la colonne name),nom de la cavité — l'identifie (nous n'avons qu'identifiant+type),oui
+Géorisques — cavités souterraines,georisques_cavites,spatial_layers/cavite,reperage_geo,non,à voir,méthode/précision de repérage,non
+Géorisques — cavités souterraines,georisques_cavites,spatial_layers/cavite,latitude+longitude,non,à voir,geom déjà servi,non
+Géorisques — cavités souterraines,georisques_cavites,spatial_layers/cavite,departement/region,non,inutile,974 constant,non
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,siret,non,utile (INGÉRÉ ce mandat),"SIRET de l'exploitant — RELIE l'ICPE à une société (scan propriétaire, jointure SIREN)",oui
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,raisonSociale,non,utile,nom de l'exploitant — identifie l'installation,non
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,etatActivite,non,utile (INGÉRÉ ce mandat),actif / cessé — enjeu différent,oui
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,adresse1/2/3 + codePostal,non,utile (INGÉRÉ ce mandat),adresse — localise + croise le garde 974,oui
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,rubriques,non,à voir,rubriques ICPE (nature réglementée) — volumineux,non
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,ied / prioriteNationale,non,à voir,niveau d'enjeu (statutSeveso déjà ingéré),non
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,codeAIOT,non,utile (INGÉRÉ ce mandat),identifiant national AIOT — clé stable,oui
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,date_maj,non,à voir,fraîcheur de la fiche ICPE,non
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,inspections,non,à voir,historique d'inspections — hors périmètre foncier direct,non
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,carriere/eolienne/bovins/porcs/volailles/industrie,non,à voir,drapeaux de typologie d'activité,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,code_national_catnat,non,à voir,id national de l'arrêté — présent dans raw,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,date_publication_jo,non,à voir,date JO (distincte de l'arrêté) — présent dans raw,non
+CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,(tête),non,utile,insee/commune/type_peril/dates INGÉRÉS + raw préserve tout → quasi-MAXIMUM,non
+AZI / TRI — inondation (Géorisques GASPAR),georisques_azi_tri,azi_communes,date_debut_etude / date_realisation,non,à voir,jalons du programme AZI au-delà de date_diffusion,non
+AZI / TRI — inondation (Géorisques GASPAR),georisques_azi_tri,azi_communes,libelle_bassin_risques,non,à voir,bassin de risques de rattachement,non
+Géorisques — sites et sols pollués,georisques_ssp,spatial_layers/sol_pollue,conclusions_sis/sup/instructions (sous-champs),non,à voir,détail par dossier — nesté ; les champs de tête sont ingérés,non
+DEAL Réunion — PPR / aléas,deal_ppr,spatial_layers/ppr,(schéma WFS Lizmap par couche),non,à voir,"15 attrs déjà ingérés (approbation, degré, risque, statut, réglement urlreg/fichier…) ; DescribeFeatureType Lizmap exige un TYPENAME par couche (400 sur requête globale) — comparaison fine rangée",non
+Ravines — domaine public fluvial (DEAL Carmen),deal_dpf_dpe,spatial_layers/dpf,(schéma WFS),non,à voir,"7 attrs ingérés (classe, code_hydro, toponyme, typologie) ; champs producteur additionnels à confronter par TYPENAME — rangé",non
+Systèmes d'endiguement et zones protégées (DEAL Lizmap),endiguement,spatial_layers/endiguement,(schéma WFS),non,utile,"≈25 attrs déjà ingérés (classe, niveaux NGR danger/protection/sûreté, population protégée, gestionnaire, arrêté) — couverture producteur quasi complète → candidat MAXIMUM",non
+DEAL — cartes de bruit stratégiques (CBS),deal_bruit_cartes,spatial_layers/bruit_carte,(schéma WFS Carmen),non,à voir,"Carmen WFS (XML, sans en-tête de version) ; 4 attrs ingérés (gestionnaire, indicateur) — comparaison par TYPENAME rangée",non
+Cerema / GéoLittoral — indicateur d'érosion côtière,geolittoral_erosion,(shape téléchargé),(colonnes du shapefile),non,à voir,fichier Réunion millésime 06/2018 (8 ans) ; colonnes du shapefile à confronter au dictionnaire GéoLittoral — rangé,non
+PEB — plans d'exposition au bruit (DGAC via annexes GPU),peb_dgac,spatial_layers/peb,(GetFeatureInfo STAC/DGAC),non,utile,zones A/B/C/D + Lden int/ext + dates + arrêté PDF ingérés (SOURCES-2) — couverture producteur complète → candidat MAXIMUM,non
+Géorisques,georisques_api,(hub API),(N endpoints),non,à voir,"source-parapluie de l'API Géorisques ; les couches concrètes (mvt, cavités, ssp, icpe, catnat, azi) sont comparées à leur ligne propre",non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,sl/plu_gpu_zone,DESTDOMI (destination dominante),non,à voir,destination dominante CNIG de la zone — affinerait typezone+libelle déjà servis,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,sl/plu_gpu_zone,DATVALID (date de validité),non,à voir,fin de validité du document — utile pour la fraîcheur ; DATAPPRO déjà ingéré,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,sl/plu_gpu_zone,NOMFIC (nom du fichier),non,inutile,nom de fichier — dataset_url (URLFIC) déjà ingéré fait foi,non
+Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,sl/plu_gpu_zone,(reste CNIG zone-urba),non,utile,typezone/libelle/libelong/idurba/insee/datappro/partition INGÉRÉS + règlement (plu_reglement_extrait) → quasi-MAXIMUM,non
+GPU — emplacements réservés (prescriptions CNIG),gpu_prescriptions_er,sl/plu_gpu_prescription,(CNIG prescription-surf),non,utile,libelle/txt/typepsc/stypepsc/idurba/millesime/url_source INGÉRÉS — bénéficiaire ER absent du GeoJSON producteur (SOURCES-2) → couverture producteur complète,non
+GPU — espaces boisés classés (prescriptions CNIG),gpu_prescriptions_ebc,sl/plu_gpu_prescription,(CNIG prescription-surf),non,utile,idem prescription — couverture producteur complète,non
+GPU — droit de préemption urbain (info-surf),dpu_perimetres,sl/dpu,(CNIG info-surf DPU),non,utile,"idurba/libelle/txt/typeinf/partition INGÉRÉS ; le DPU délégataire non publié au GeoJSON (SOURCES-2, phrase servie) → complet côté producteur",non
+GPU — zonages d'assainissement,gpu_zonage_assainissement,sl/zonage_assainissement,(CNIG info-surf typeinf=19),non,utile,libelle/typeinf/partition INGÉRÉS + parcel_anc → complet,non
+Sudocuh (procédures d'urbanisme),sudocuh,sudocuh_procedures,(colonnes XLSX SUDOCUH restantes),non,à voir,"du_opposable/en_cours/etat_detaille/prescription/approbation INGÉRÉS ; le fichier SUDOCUH publie ~90 colonnes (dates de procédure fines, SCOT, intercommunalité) — à confronter au dictionnaire DGALN",non
+data.regionreunion.com — Potentiel foncier,potentiel_foncier_ods,sl/potentiel_foncier,(champs ODS restants),non,à voir,"espacesar/parcelle/section/zpu INGÉRÉS ; le jeu ODS Région publie d'autres colonnes (surface, vocation) — à confronter",non
+Radar (pige d'annonces),radar_pige,pige_annonces/biens,(champs searchData du portail),non,à voir,pige interne (dépôt HTML __NEXT_DATA__) — pas de schéma producteur public ; surface/pièces/prix des annonces à surfacer si besoin (RADAR-*),non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,oll_loyers,(micro-données),non,à voir,"agrégats par zone/type/pièces INGÉRÉS (médian, q1/q3, n_obs) ; les MICRO-données sont sous convention ADIL/AGORAH (chantier, demande prête) — jamais en flux ouvert",non
+Loyers DHUP — carte des loyers (annonces),loyers_dhup,(extrait offline),loypredm2 + intervalles de confiance,non,à voir,loyer prédit /m² par commune servi ; le CSV data.gouv publie aussi les bornes de confiance et le type de bien — à surfacer,non
+Inventaire SRU (DHUP),sru_dhup,commune_contexte_sru,nb_lls_brut / nb_res_principales,non,à voir,"taux_lls/objectif/statut/prélèvement INGÉRÉS ; le CSV publie les effectifs bruts (nb LLS, nb RP) et l'exemption — à surfacer",non
+INSEE RP Logement 2023,insee_rp_logement,commune_insee_logement,période de construction / chauffage / taille fine (1P..5P+),non,à voir,"logements/RP/RS/vacants/proprio/locataire/maison/appart INGÉRÉS ; le RP publie période de construction, chauffage, taille détaillée — à surfacer si besoin",non
+RNIC — registre national des copropriétés (Anah),rnic_anah,rnic_coproprietes,"(lots commerce/stationnement, procédures, étiquette énergie)",non,à voir,"immatriculation/adresse/nb_lots/syndic (siret INGÉRÉ, relie à une société)/période INGÉRÉS + raw préserve tout → quasi-MAXIMUM",non
+RPLS — répertoire des logements locatifs sociaux (SDES),rpls_sdes,rpls_commune,loyer moyen / financement / conventionnement APL (niveau logement),non,à voir,"agrégats commune INGÉRÉS (nb, construction, QPV, surfhab, DPE) ; le fichier logement Dido publie loyer/financement/conventionnement par logement — agrégeable",non
+Zonage ABC des communes (DHUP),zonage_abc_dhup,commune_zonage_abc,(CSV complet),non,utile,commune + zone A/B1/B2/C + millésime INGÉRÉS = tout ce que publie le CSV DHUP → MAXIMUM,non
+Cadastre (API Carto PCI),cadastre_api_carto,parcels,feuille / arpente / échelle,non,à voir,"idu/section/numero/surface_m2/geom/commune INGÉRÉS (le socle des 431 663 parcelles) ; feuille, drapeau arpenté, échelle publiés par le PCI — à surfacer si besoin cadastral fin → sinon MAXIMUM",non
+BAN PLUS — lien adresse ↔ bâtiment (IGN),ban_plus,ban_plus_liens,(WFS BAN-PLUS),non,utile,id_adr/id_bat/idu/type_lien/nb_adr/nb_bat/rnb_id INGÉRÉS = tout le lien publié par le WFS → MAXIMUM,non
+DFI — documents de filiation informatisés (DGFiP),dfi,dfi_filiation,(champs filiation restants),non,à voir,409 623 lignes de filiation servies (frise Remonter le temps) ; le DFI publie les types d'événements de filiation détaillés — à confronter au dico DGFiP,non
+Cartofriches (Cerema),cartofriches,spatial_layers/friche,(champs Cartofriches restants),non,à voir,"site_statut/reconv_type/reconv_annee INGÉRÉS (SOURCES-2) ; Cartofriches publie surface, propriétaire type, sources — à surfacer",non
+RGE ALTI (altimétrie),rge_alti,(schéma producteur),(RGE ALTI 5 m),non,utile,pente + altitude (rasters MNT) INGÉRÉS = l'usage foncier complet → MAXIMUM,non
+Base Adresse Nationale,ban,(schéma producteur),(BAN CSV/API),non,utile,numero/rep/voie/code_postal/commune/insee/geom/idu INGÉRÉS = tout ce que sert la BAN → MAXIMUM,non
+PVGIS (Commission européenne),pvgis,(schéma producteur),(API PVGIS v5.3),non,utile,productible/GHI/profil mensuel INGÉRÉS ; API de calcul sans données à millésime → MAXIMUM,non
+Filosofi INSEE (carreaux 200 m),filosofi_carreaux,(schéma producteur),(carreau 200 m INSEE),non,utile,"le carreau complet INGÉRÉ (ind, men, men_pauv/prop, ind_snv, log par période…) → MAXIMUM",non
+Contours IRIS (IGN/INSEE),contours_iris,(schéma producteur),(contours IRIS),non,utile,géométries IRIS INGÉRÉES (support des agrégats) → MAXIMUM,non
+SIRENE établissements géolocalisés,sirene_etablissements,(schéma producteur),(SIRENE géo INSEE),non,utile,siret/siren/naf/denom/enseigne/adresse/tranche_effectif/iris/qp24/date_creation INGÉRÉS → MAXIMUM,non
+Trafic RN (Région Réunion — SIR),trafic_rn,(schéma producteur),(ODS Région trafic),non,utile,route/année/TMJA/nb_PL/géom INGÉRÉS = tout le tronçon → MAXIMUM,non
+RNB — Référentiel National des Bâtiments,rnb,(schéma producteur),(RNB API),non,utile,rnb_id/statut/insee/adresses/ext_bdtopo INGÉRÉS + rattachement BD TOPO → MAXIMUM,non
+OCS GE (IGN) — occupation du sol et artificialisation,ocsge,(schéma producteur),(OCS GE 2.0),non,utile,sol (code_cs/code_us/artif) + évolution 2017→2022 + parcel_ocsge INGÉRÉS → MAXIMUM,non
+LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,(schéma producteur),(LiDAR HD MNS/MNT),non,utile,faîtage/égout/hauteur_bdtopo/écart + toiture (pente/pans) INGÉRÉS (SOURCES-3 lot 1) → MAXIMUM,non
+"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,(schéma producteur),(RP IRIS INSEE),non,utile,log/rp/logvac/maison/appart/période construction (ach_*)/population (pop_*) INGÉRÉS → quasi-MAXIMUM,non
+INPI RNE (dirigeants),inpi_rne,(schéma producteur),(RNE INPI),non,utile,nom/prénoms/date_naissance/rôle/gerant_siren/actif + raw INGÉRÉS → quasi-MAXIMUM (raw préserve tout),non
+BD TOPO IGN,bd_topo,(schéma producteur),(BD TOPO thèmes),non,à voir,"bâtiment/voirie/water/ravine INGÉRÉS ; la BD TOPO publie des centaines de classes (végétation, ERP, pylônes…) — hors périmètre foncier, surfaçables au besoin",non
+BPE INSEE,bpe_insee,(schéma producteur),(BPE type+geo),non,à voir,type d'équipement + géoloc INGÉRÉS ; la BPE publie des sous-types fins et l'année — à surfacer,non
+IGN BD CARTO V5 — occupation du sol,bd_carto_ocs,(schéma producteur),(BD CARTO OCS),non,à voir,occupation du sol INGÉRÉE ; autres thèmes BD CARTO hors périmètre,non
+BODACC (procédures collectives),bodacc,(schéma producteur),(BODACC annonces),non,à voir,"procédures + sondages INGÉRÉS ; le BODACC publie aussi ventes/cessions de fonds, dépôts de comptes — surfaçables (déjà partiellement en veille)",non
+DPE ADEME (logements existants),dpe_ademe,(schéma producteur),(schéma ADEME 230 champs),non,à voir,"étiquette/GES/type/surface/année/adresse/rnb INGÉRÉS ; l'ADEME publie ~230 champs (conso 5 usages, isolation, système chauffage) — riches mais base 974 quasi vide (trou producteur)",non
+Recherche d'entreprises (DINUM),recherche_entreprises_dinum,(schéma producteur),(recherche-entreprises),non,à voir,"cache enrichissement (état admin, NAF, dirigeants) réservé au Score V (lot 0) — SIRENE fait foi pour l'affichage",non
+Classement sonore ITT (Cerema),bruit_itt_cerema,(schéma producteur),(ArcGIS Cerema),non,à voir,catégories 1-5 + largeur INGÉRÉES ; largeur d'affectation et référence arrêté à surfacer,non
+BD ORTHO 20 cm (IGN),bd_ortho,(schéma producteur),(BD ORTHO raster),non,à voir,tuiles + détections INGÉRÉES ; imagerie brute (raster) — pas de champs producteur au-delà du millésime,non
+BD ORTHO IRC (IGN),bd_ortho_irc,(schéma producteur),(BD ORTHO IRC),non,à voir,NDVI/végétation + détections INGÉRÉS (lot 0.3 conservée) ; raster IRC — pas de champs producteur,non
+INSEE RP2022 — fichier détail Logements (EGOUL),insee_rp2022_egoul,(schéma producteur),(RP détail logements),non,à voir,taux de non-raccordement (EGOUL) + n_logements INGÉRÉS ; le fichier détail publie d'autres variables logement — hors périmètre assainissement,non
+"Transport public — GTFS (PAN, 7 réseaux)",gtfs_pan,(schéma producteur),(GTFS),non,à voir,"arrêts/lignes/pôles/axes INGÉRÉS ; GTFS-RT (positions temps réel) non ingéré (éphémère, sans valeur foncière — arbitrage SOURCES-2)",non
+"CoSIA (couverture du sol IA, IGN)",cosia,(schéma producteur),(CoSIA GPKG),non,à voir,"emprise bâtie CoSIA INGÉRÉE ; les 15+ classes de couverture du sol CoSIA (végétation, eau, route) à surfacer au besoin",non
+EDF Réunion — lignes moyenne tension HTA (open data),edf_hta,(schéma producteur),(EDF SEI open data),non,à voir,lignes MT/HT INGÉRÉES ; tension/gestionnaire détaillés à surfacer,non
+Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,(schéma producteur),(Arcep immeuble),non,à voir,"imb_id/adresse/nb_logements/FTTH/opérateurs INGÉRÉS ; débits et technologies détaillés (câble, VDSL) à surfacer",non
+Taux de taxe foncière — fichier REI (DGFiP),dgfip_rei,(schéma producteur),(REI DGFiP),non,à voir,"TFPB commune/EPCI + TEOM INGÉRÉS ; le REI publie d'autres taux (TFPNB, CFE, bases) — à surfacer",non
+Parc National de La Réunion (INPN),parc_national_inpn,(schéma producteur),(INPN WFS),non,à voir,périmètre parc INGÉRÉ ; zonage cœur/aire d'adhésion à confirmer,non
+Forêts publiques (ONF),forets_onf_bdtopo,(schéma producteur),(BD TOPO forêt),non,à voir,forêts publiques INGÉRÉES ; régime/propriétaire à surfacer,non
+ZNIEFF (INPN/MNHN),znieff_inpn,(schéma producteur),(INPN ZNIEFF),non,à voir,ZNIEFF type I & II INGÉRÉES ; identifiant national/espèces déterminantes hors périmètre,non
+QPV 2024 (ANCT),qpv_2024,(schéma producteur),(ANCT QPV),non,utile,périmètre QPV 2024 INGÉRÉ = ce que publie l'ANCT → MAXIMUM,non
+SUP — assiettes GPU (API Carto),sup_gpu,(schéma producteur),(GPU assiette-sup),non,utile,assiettes SUP + acte + générateur INGÉRÉS (SOURCES-2 : 417 assiettes/417 actes/411 générateurs) → MAXIMUM,non
+SIRENE,sirene_recherche_entreprises,(schéma producteur),(API INSEE directe),non,n.a.,"API interrogée à la requête, aucune table ingérée — schéma producteur = réponse SIRENE, servie en direct",non
+OSM — transport (pôles d'échange & téléphérique),osm_transport,(schéma producteur),(OSM Overpass),non,à voir,"pôles/téléphérique INGÉRÉS (snapshot) ; OSM publie d'autres tags (opérateur, fréquence) — à surfacer",non
+TCSP — voies bus en site propre (OSM),tcsp_osm,(schéma producteur),(OSM Overpass),non,à voir,voies bus site propre INGÉRÉES ; tags de ligne/opérateur à surfacer,non
+OpenStreetMap / Overpass,osm_overpass,(schéma producteur),(OSM live),non,à voir,"aménités de proximité (parcel_amenites) servies en direct ; extraction par thème, pas de schéma producteur figé",non
+Parkings OSM (loi APER),parkings_osm_aper,(schéma producteur),(OSM Overpass),non,à voir,parkings (surface éligible ombrières APER) INGÉRÉS ; capacité/type à surfacer,non
+Annuaire de l'administration (service-public.fr / DILA),annuaire_dila,(schéma producteur),(ODS DILA),non,à voir,"24 mairies (contacts, adresse) INGÉRÉES ; l'annuaire publie d'autres services publics (préfecture, tribunaux) — hors périmètre communal",non
+ACV / PVD / ORT (DGALN — liste des communes),anct_ort,(schéma producteur),(DGALN liste),non,utile,INSEE + commune + dispositif (ACV/PVD/ORT) INGÉRÉS = tout ce que publie la liste → MAXIMUM,non
+ZFANG — zone franche d'activité nouvelle génération (Légifrance),zfang,(schéma producteur),(Légifrance zone),non,utile,"commune classée ZFANG INGÉRÉE (territoire_fiscal_commune) = la donnée servie ; texte JORF = référence, pas des champs",non
+FRR ex-ZRR — zone spéciale d'action rurale (Légifrance),frr_ex_zrr,(schéma producteur),(Légifrance zone),non,utile,commune classée FRR INGÉRÉE = la donnée servie → MAXIMUM,non
+Taxe d'aménagement — taux communaux (délibérations),taxe_amenagement,(schéma producteur),(ODS data.economie),non,utile,taux communal + parts INGÉRÉS (rattachés au registre lot 1) → MAXIMUM,non
+Coût de construction (EPTB SDES + choix LABUSE),eptb_sdes,(schéma producteur),(publication EPTB annuelle),non,à voir,coût de construction par secteur INGÉRÉ + choix LABUSE ; l'EPTB publie des séries détaillées (par type) — à surfacer,non
+50 pas géométriques — limite haute (DEAL),cinquante_pas,(schéma producteur),(DEAL Lizmap),non,à voir,"limite haute 50 pas INGÉRÉE ; géométrie quasi statique (cadastre 1877), pas de champ producteur au-delà",non
+Cadastre d'époque (Etalab / PCI vecteur DGFiP),cadastre_historique,(schéma producteur),(millésimes PCI),non,à voir,millésimes cadastraux (Remonter le temps) ; chaque millésime = même schéma parcelle — surfacer un millésime au besoin,non
+INPN / patrinat — espaces protégés,inpn_patrinat,(schéma producteur),(INPN WFS geopf),non,à voir,"espaces protégés INGÉRÉS ; le WFS patrinat publie de nombreuses couches (RNN, APB, sites) — à confronter au besoin",non
+VRD / assainissement (SPANC),spanc_epci,(schéma producteur),(saisie manuelle EPCI),non,à voir,collectif/non collectif saisi à la main ; aucune donnée ouverte fine côté producteur,non

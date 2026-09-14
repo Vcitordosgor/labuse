@@ -589,6 +589,11 @@ SEED: list[dict] = [
     # ── data.gouv : Cadastre Etalab (dataset « cadastre », last_update 2026-09-08 vérifié). ──
     {"name": "Cadastre d'époque (Etalab / PCI vecteur DGFiP)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/cadastre/", "selecteur": "last_update"},
+    # SOURCES-3b lot 6 — le slug data.gouv du CONSOENAF (Cerema) retrouvé via la table ingérée
+    # (source_url) : last_update 2025-05-12 vérifié. Sort la Conso NAF des « jamais vérifié ».
+    {"name": "Consommation d'espaces NAF (Cerema — portail de l'artificialisation)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/consommation-despaces-naturels-agricoles-et-forestiers-du-1er-janvier-2009-au-1er-janvier-2024/",
+     "selecteur": "last_update"},
     # ── recherche-entreprises (DINUM + INPI RNE) : témoin sur total_results d'une requête 974 figée —
     #    une republication INSEE/INPI change le nombre. DINUM reste servie (retrait différé q_v15) et
     #    doit garder une veille ; l'INPI RNE (dirigeants) est exposé par le MÊME service. ──
@@ -718,10 +723,9 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "MOBPRO (mobilités domicile-travail, INSEE)": "Import CSV manuel ABANDONNÉ pour l'étude de zone — pas d'URL de version stable, et pas de rafraîchissement attendu (aucun rappel Y4).",
     "Office de l'eau Réunion — Chroniques de l'eau": "Seed CSV extrait à la main d'un PDF (chronique numérotée) — chaque édition = nouvelle URL, non surveillable proprement. Y4 : rappel de rafraîchissement posé.",
     "PVGIS (Commission européenne)": "API de CALCUL (v5.3 dans l'URL) — pas de jeu à millésime, le service ne versionne pas de données à comparer ; aucune requête témoin actionnable (réponse dérivée d'un modèle, pas d'une donnée ingérée).",
-    # TESTS-1 + SOURCES-3b (14/09, convergents) — Annuaire DILA, Sudocuh, RNIC, RPLS sorties d'ici :
-    # sous sonde RÉELLE (SEED SOURCES-3b) désormais ; une source ne peut pas être à la fois
-    # surveillée et déclarée non surveillable (test_sentinelle).
-    "Consommation d'espaces NAF (Cerema — portail de l'artificialisation)": "Portail national de l'artificialisation (Cerema) — millésime annuel, pas de témoin amont à empreinte stable identifié ; la fraîcheur se lit sur la page Circuit.",
+    # TESTS-1 + SOURCES-3b (14/09, convergents) — Annuaire DILA, Sudocuh, RNIC, RPLS et Consommation
+    # NAF (Cerema) sorties d'ici : sous sonde RÉELLE (SEED SOURCES-3b) désormais ; une source ne peut
+    # pas être à la fois surveillée et déclarée non surveillable (test_sentinelle).
     "INSEE RP Logement 2023": "Millésime ANNUEL du recensement (publication INSEE sans endpoint de version stable pour les tableaux communaux) — rappel par cadence, le millésime suivant s'ingère à la main (RP 2024 attendu fin 2026).",
     "Inventaire SRU (DHUP)": "CSV national republié par la DHUP SANS URL de version stable (inventaire triennal, dernier v2 du 18/12/2025) — rappel par cadence, réingestion au fichier suivant.",
     "NPNRU (DEAL Réunion / ANCT)": "Liste ANCT FIGÉE (génération 2024) — pas de flux de version ; les quartiers NPNRU ne changent qu'à une nouvelle génération (geste manuel).",

@@ -60,7 +60,7 @@
 | 🟡 | **GPU — zonages d'assainissement** (`63`) | PARTIELLE — couverture incomplète | 4/4 témoins | oui | OK | 1 | fiche, carte |
 | 🟢 | **ZFANG — zone franche d'activité nouvelle génération (Légifrance)** (`72`) | PLEINE | 4/4 témoins | non | OK | 2 | fiche, carte |
 | 🟢 | **FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)** (`73`) | PLEINE | 4/4 témoins | non | OK | 2 | fiche, carte |
-| 🟢 | **Consommation d'espaces NAF (Cerema — portail de l'artificialisation)** (`102`) | PLEINE | 4/4 témoins | non | — | 2 | fiche, outil |
+| 🟢 | **Consommation d'espaces NAF (Cerema — portail de l'artificialisation)** (`102`) | PLEINE | 4/4 témoins | oui | — | 2 | fiche, outil |
 | 🟢 | **GPU — emplacements réservés (prescriptions CNIG)** (`105`) | PLEINE | 3/4 témoins | oui | KO | 3 | fiche, carte |
 | 🟢 | **GPU — espaces boisés classés (prescriptions CNIG)** (`106`) | PLEINE | 3/4 témoins | oui | KO | 3 | fiche, carte |
 | 🟡 | **GPU — droit de préemption urbain (info-surf)** (`107`) | PARTIELLE — couverture incomplète | 2/4 témoins | oui | KO | 3 | fiche, carte |
