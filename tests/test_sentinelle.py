@@ -280,7 +280,10 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     # SOURCES-1 lot 6 — +2 : DFI (SEED api data.gouv) + bases IRIS RP2022 (SEED page insee.fr).
     # SOURCES-1 lot 7 — +9 : 7 chantiers « en attente de demande » + LOVAC + DV3F (RAISONS) ;
     # les Fichiers fonciers existaient déjà (entrée M74 enrichie de la convention, pas doublée).
-    assert len(noms) == 107
+    # SOURCES-2/3 ont enrichi le catalogue (endiguement, BAN PLUS, aléas…) sans mettre ce compte à jour
+    # (107 devenu périmé) ; SOURCES-3b lot 2 rattrape 6 sources legacy en base seule (Sudocuh, SRU, NPNRU,
+    # INSEE RP2023, PLH, RTAA) pour l'invariant SEED/RAISONS ⊆ SOURCES → 118.
+    assert len(noms) == 118
 
 
 def test_raison_non_surveillee_ne_rend_jamais_un_blanc():
