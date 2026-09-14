@@ -32,9 +32,12 @@ def test_e2_prix_plausible_passe():
 
 # ── E5 : l'écran 0 ────────────────────────────────────────────────────────────────────────────
 def test_e5_un_seul_usage_servi_les_autres_grises_avec_raison():
+    # TESTS-1 lot 2 (B) — RECETTE-8 W13bis (8f84a994, 09/09/2026) a bâti et SERVI le parcours
+    # « Revente en l'état » : les usages servis sont désormais DEUX, nommés — l'invariant reste
+    # « rien de servi qui ne soit bâti, rien de grisé sans raison ».
     from labuse.financier_questionnaire import USAGES
     servis = [u for u in USAGES if u["servi"]]
-    assert len(servis) == 1 and servis[0]["key"] == "construction"
+    assert {u["key"] for u in servis} == {"construction", "revente"}
     for u in USAGES:
         if not u["servi"]:
             assert u.get("raison"), f"usage grisé sans raison : {u['key']}"

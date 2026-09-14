@@ -120,7 +120,10 @@ def _seed(session) -> dict[str, int]:
 def test_servable_traduit_le_tier(db_session):
     _seed(db_session)
     v = verdict_servi(db_session, "97499000VS0001")
-    assert v["statut"] == "brulante" and v["label"] == "Priorité"   # M137 — chip court servi
+    # TESTS-1 lot 2 (B) — REPARATIONS-1 lot 2b (c87e9919, 13/09/2026) : l'attendu suit
+    # PRIORITE_SERVIE (Priorité non servie → la tête classée porte « À suivre »).
+    from labuse.scoring.tiers_client import PRIORITE_SERVIE
+    assert v["statut"] == "brulante" and v["label"] == ("Priorité" if PRIORITE_SERVIE else "À suivre")
     assert v["servable"] is True and v["declasse"] is False
     assert v["rang"] == 3 and v["motif"] is None and v["badge_division"] is False
 

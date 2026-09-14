@@ -40,9 +40,13 @@ def test_rail_horloge_et_verrous_presents(client):
     d = client.get("/admin/pilotage").json()
     assert "horloge" in d and "verrous" in d
     h, v = d["horloge"], d["verrous"]
-    # posés ≤ attendus (jamais plus de jobs posés que planifiés) ; 16 verrous au total (ou None si jamais joué).
+    # posés ≤ attendus (jamais plus de jobs posés que planifiés) ; « sur » = le nombre de verrous
+    # du registre (ou None si jamais joué). TESTS-1 lot 2 (B) : le littéral 16 est mort — SOURCES-3
+    # lot 4 (ff82b2a4) a ajouté V4e (16 → 17) et le compte figé a cassé ; on lit le REGISTRE
+    # (circuit_verrous.VERROUS), la même source que l'endpoint doit servir.
+    from labuse.circuit_verrous import VERROUS
     assert h["attendus"] is None or (h["poses"] is not None and 0 <= h["poses"] <= h["attendus"])
-    assert v["sur"] in (None, 16)
+    assert v["sur"] in (None, len(VERROUS))
     if v["ok"] is not None and v["sur"] is not None:
         assert 0 <= v["ok"] <= v["sur"]
 

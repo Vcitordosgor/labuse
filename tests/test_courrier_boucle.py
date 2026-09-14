@@ -31,12 +31,21 @@ def _seed_parcelle(s, idu):
         {"i": idu, "w": _WKT}).scalar()
 
 
+def _seed_compte(s, cid):
+    # TESTS-1 lot 2 (D) — COMPTE-2 (72d5343b) a gravé les FK compte_id : une piste ne peut plus
+    # porter un compte fantôme. Le test crée donc SON compte témoin (convention [CT-TEST]).
+    s.execute(text(
+        "INSERT INTO comptes (id, nom, plan, statut) VALUES (:i, '[CT-TEST] FK courrier', "
+        "'integral', 'actif') ON CONFLICT (id) DO NOTHING"), {"i": cid})
+
+
 @pytest.mark.db
 def test_boucle_piste_courrier_reponse(db_session, engine):
     s = db_session
     courrier.ensure_tables(engine)
     idu = "97415000CB0001"
     pid = _seed_parcelle(s, idu)
+    _seed_compte(s, 4242)
     # 1) une piste CRM (compte 4242)
     pe_id = s.execute(text(
         "INSERT INTO pipeline_entries (parcel_id, compte_id, status, priority) "
@@ -81,6 +90,7 @@ def test_backfill_rattache_par_idu_compte_univoque(db_session, engine):
     courrier.ensure_tables(engine)
     idu = "97415000CB0002"
     pid = _seed_parcelle(s, idu)
+    _seed_compte(s, 4243)
     pe_id = s.execute(text(
         "INSERT INTO pipeline_entries (parcel_id, compte_id, status, priority) "
         "VALUES (:p, 4243, 'a_qualifier', 'moyenne') RETURNING id"), {"p": pid}).scalar()

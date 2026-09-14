@@ -35,7 +35,10 @@ def test_fiscalite_locale_dit_le_taux_et_la_zone_sources():
     zonage = {"zone": "A", "millesime": "arrêté du 23/06/2026"}
     html = _fiscalite_locale(tfpb, zonage, {"duree_portage_saisi_mois": {"valeur": 29}})
     assert "Fiscalité locale et régime applicable" in html
-    assert "41,77 %" in html and "zone A" in html
+    # TESTS-1 lot 2 (B) — RECETTE-9 T4 (61f420aa) : la clé dit « Zone … », la valeur porte le SEUL
+    # code (« A ») — plus de « zone A » redondant. Le contrat reste : taux ET zone servis, sourcés.
+    assert "41,77 %" in html
+    assert "Zone d&#x27;investissement (A/B/C)" in html and "<td>A</td>" in html   # apostrophe échappée
     # la taxe foncière de portage est DITE, jamais devinée : on exige la valeur locative cadastrale.
     assert "valeur locative cadastrale" in html
     assert "invente pas de valeur locative" in html   # l'apostrophe est échappée par note()

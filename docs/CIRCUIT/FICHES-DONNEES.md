@@ -1,6 +1,6 @@
 # FICHES — donnée par donnée (commune · annonce · propriétaire · soleil)
 
-*Généré du registre le 2026-09-07 par `labuse registre fiche autres` (même format que FICHE-PARCELLE-DONNEES.md, plus court).*
+*Généré du registre le 2026-09-14 par `labuse registre fiche autres` (même format que FICHE-PARCELLE-DONNEES.md, plus court).*
 
 # Fiche commune
 
@@ -66,6 +66,8 @@
 |---|---|---|---|---|---|---|---|
 | `zan_reste_ha` | nombre | Enveloppe ZAN (reste) | enaf_cerema | moteur `commune_compteurs` · src/labuse/api/rarete.py:compute_rarete (reste_zan_ha — producteur nommé, délégation) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *enveloppe restante estimée depuis conso ENAF* | | | | | |
+| `zan_evolution_commune` | nombre | Artificialisation 2017→2022 (OCS GE) | ocsge | moteur `commune_compteurs` · src/labuse/registre/moteurs/commune.py:zan_ocsge_commune (ocsge_evolution) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *surface artificialisée entre les millésimes OCS GE 2017 et 2022, par commune — produit différentiel OFFICIEL IGN (flags artif du portail de l'artificialisation) ; la pression ZAN a sa source officielle* | | | | | |
 
 ## Logement social — SRU
 
@@ -150,7 +152,7 @@
 
 | id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
 |---|---|---|---|---|---|---|---|
-| `n_parcelles_commune` | nombre | N parcelles | cadastre_api_carto (PCI Parcellaire Express (DGFiP) — « latest » ingérée) | moteur `commune_compteurs` · src/labuse/registre/moteurs/commune.py:compte_parcelles_commune | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| `n_parcelles_commune` | nombre | N parcelles | cadastre_api_carto (PCI Parcellaire Express (DGFiP), édition courante) | moteur `commune_compteurs` · src/labuse/registre/moteurs/commune.py:compte_parcelles_commune | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *count parcels par commune* | | | | | |
 | `stock_opportunites` | nombre | Stock d'opportunités (brûlantes + chaudes) | cosia (CoSIA 2025 (PVA juil.-août 2025, 20 cm)), dvf (géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020), sitadel (2026-07) | moteur `scoring_p_v2` · src/labuse/api/comparateur.py:47-50 | run | servie · non couverte (n sous seuil, dit) · non calculée | outil « Comparer des parcelles » · outil « Communes » · outil « Comparaison communes » |
 | | | *count tiers brûlante+chaude au run servi, par insee* | | | | | |
@@ -163,13 +165,13 @@
 
 | id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
 |---|---|---|---|---|---|---|---|
-| `part_zone_U_pct` | nombre | Zonage — U | cadastre_api_carto (PCI Parcellaire Express (DGFiP) — « latest » ingérée), gpu_plu_api_carto (GPU/PLU par commune (révisions — détail en fiche)) | moteur `zonage_commune` · src/labuse/registre/moteurs/zonage.py:parts_zonage_surface | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| `part_zone_U_pct` | nombre | Zonage — U | cadastre_api_carto (PCI Parcellaire Express (DGFiP), édition courante), gpu_plu_api_carto (GPU/PLU par commune (révisions — détail en fiche)) | moteur `zonage_commune` · src/labuse/registre/moteurs/zonage.py:parts_zonage_surface | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *surface cadastrée U / surface zonée totale (somme=100 %)* | | | | | |
-| `part_zone_AU_pct` | nombre | Zonage — AU | cadastre_api_carto (PCI Parcellaire Express (DGFiP) — « latest » ingérée), gpu_plu_api_carto (GPU/PLU par commune (révisions — détail en fiche)) | moteur `zonage_commune` · src/labuse/registre/moteurs/zonage.py:parts_zonage_surface | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| `part_zone_AU_pct` | nombre | Zonage — AU | cadastre_api_carto (PCI Parcellaire Express (DGFiP), édition courante), gpu_plu_api_carto (GPU/PLU par commune (révisions — détail en fiche)) | moteur `zonage_commune` · src/labuse/registre/moteurs/zonage.py:parts_zonage_surface | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *surface AU / surface zonée* | | | | | |
-| `part_zone_A_pct` | nombre | Zonage — A | cadastre_api_carto (PCI Parcellaire Express (DGFiP) — « latest » ingérée), gpu_plu_api_carto (GPU/PLU par commune (révisions — détail en fiche)) | moteur `zonage_commune` · src/labuse/registre/moteurs/zonage.py:parts_zonage_surface | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| `part_zone_A_pct` | nombre | Zonage — A | cadastre_api_carto (PCI Parcellaire Express (DGFiP), édition courante), gpu_plu_api_carto (GPU/PLU par commune (révisions — détail en fiche)) | moteur `zonage_commune` · src/labuse/registre/moteurs/zonage.py:parts_zonage_surface | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *surface A / surface zonée (Saint-Paul : 35,8 % — la part en PARCELLES vaut 17,8 %)* | | | | | |
-| `part_zone_N_pct` | nombre | Zonage — N | cadastre_api_carto (PCI Parcellaire Express (DGFiP) — « latest » ingérée), gpu_plu_api_carto (GPU/PLU par commune (révisions — détail en fiche)) | moteur `zonage_commune` · src/labuse/registre/moteurs/zonage.py:parts_zonage_surface | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| `part_zone_N_pct` | nombre | Zonage — N | cadastre_api_carto (PCI Parcellaire Express (DGFiP), édition courante), gpu_plu_api_carto (GPU/PLU par commune (révisions — détail en fiche)) | moteur `zonage_commune` · src/labuse/registre/moteurs/zonage.py:parts_zonage_surface | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *surface N / surface zonée (Saint-Paul : 47,2 % — la part en PARCELLES vaut 6,8 %)* | | | | | |
 
 ## Risques
@@ -180,7 +182,7 @@
 |---|---|---|---|---|---|---|---|
 | `ppr_pct` | nombre | PPR (part des parcelles) | deal_ppr (PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)) | moteur `commune_compteurs` · src/labuse/registre/moteurs/commune.py:pct_parcelles_couche | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *part des parcelles de la commune intersectant la couche ppr* | | | | | |
-| `catnat_n` | nombre | Arrêtés CatNat | interne (aucun réservoir) | passe-plat · src/labuse/api/fiche_commune.py — table lue : catnat_arretes (count par insee) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| `catnat_n` | nombre | Arrêtés CatNat | catnat_gaspar | passe-plat · src/labuse/api/fiche_commune.py — table lue : catnat_arretes (count par insee) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *count catnat_arretes* | | | | | |
 
 ## Population & logement
@@ -246,5 +248,5 @@
 
 | id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
 |---|---|---|---|---|---|---|---|
-| `prod_spec_kwh_kwc` | nombre | Productible | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), pvgis (PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)), lidar_hd_mnh (LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)), bd_ortho_irc | moteur `solaire` · src/labuse/api/modules.py:prospection_solaire | run | servie · non couverte (n sous seuil, dit) · non calculée | outil « Prospection solaire » · outil « Toits bien exposés » · fiche « Solaire (rosace, productible) » |
+| `prod_spec_kwh_kwc` | nombre | Productible | bd_topo (BD TOPO® V3 (IGN) — édition courante), pvgis (PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)), lidar_hd_mnh (Survol 11/08–11/10/2023 · MNx édités 13/03/2025), bd_ortho_irc | moteur `solaire` · src/labuse/api/modules.py:prospection_solaire | run | servie · non couverte (n sous seuil, dit) · non calculée | outil « Prospection solaire » · outil « Toits bien exposés » · fiche « Solaire (rosace, productible) » |
 | | | *productible PVGIS SARAH3 gelé au run du builder (parcel_solar)* | | | | | |

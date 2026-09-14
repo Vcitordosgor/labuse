@@ -36,10 +36,14 @@ def test_resume_brulante():
     ]
     fa = {"bilan": {"fiable": True, "fiabilite": "fiable"}}
     r = build_resume(verdict, cascade, fa, {"has_manual_contact": False})
-    assert r["statut_label"] == "Priorité"   # M137 — chip court servi (le long ne vit qu'au « i »)
+    # TESTS-1 lot 2 (B) — REPARATIONS-1 lot 2b (c87e9919, 13/09/2026) : Priorité non servie tant
+    # que PRIORITE_SERVIE est False — l'attendu SUIT le drapeau (contrat couvert dans les 2 états).
+    from labuse.scoring.tiers_client import PRIORITE_SERVIE
+    chip_tete = "Priorité" if PRIORITE_SERVIE else "À suivre"
+    assert r["statut_label"] == chip_tete   # M137 — chip court servi (le long ne vit qu'au « i »)
     assert 0 < len(r["positifs"]) <= 3
     assert "Propriétaire à identifier" in r["vigilance"]
-    assert r["synthese"].startswith("Classée Priorité") and "rang 163" in r["synthese"]
+    assert r["synthese"].startswith(f"Classée {chip_tete}") and "rang 163" in r["synthese"]
     assert r["prochaine_action"]
     _no_forbidden(r)
 
@@ -49,7 +53,8 @@ def test_resume_brulante_badge_division():
     verdict = _verdict("brulante", rang=163,
                        badge_division_libelle="bâtie — emprise marginale (bâtie à ~29 %)")
     r = build_resume(verdict, [], None, {"has_manual_contact": False})
-    assert r["statut_label"] == "Priorité"   # M137 — chip court servi
+    from labuse.scoring.tiers_client import PRIORITE_SERVIE   # TESTS-1 lot 2 (B) — cf. test_resume_brulante
+    assert r["statut_label"] == ("Priorité" if PRIORITE_SERVIE else "À suivre")   # M137 — chip court servi
     assert "bâtie — emprise marginale" in r["synthese"]
     assert "déclass" not in r["synthese"].lower()   # jamais un déclassement silencieux
     _no_forbidden(r)

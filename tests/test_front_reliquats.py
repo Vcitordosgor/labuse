@@ -201,8 +201,12 @@ def test_r5_etudier_deux_marges_chacune_dit_son_referentiel():
     # [Calibrées LABUSE | Vos hypothèses] (fini les deux bandeaux empilés + anciens attributs
     # data-etudier-charge-calibree/marge-calibree). Les deux référentiels sont TOUJOURS dits — seule
     # la structure a évolué (présentation pure, aucun moteur touché, cf. R3). On vérifie l'état ACTUEL.
+    # TESTS-1 lot 2 (B) — la phrase « la charge calibrée » a disparu du .tsx avec la refonte du
+    # verdict unique (RETOURS-12 O2 9c9c27cb puis RECETTE-1 0848ebf9) : le référentiel est dit
+    # PAR MODE, au-dessus de la charge affichée (« Hypothèses calibrées LABUSE » / « Selon vos
+    # hypothèses », EtudierBien.tsx:238). Même garantie, libellés actuels.
     assert "Calibrées LABUSE" in ETUDIER and "Vos hypothèses" in ETUDIER       # la bascule des 2 référentiels
-    assert "la charge calibrée" in ETUDIER and "vos hypothèses" in ETUDIER     # chacun DIT son référentiel
+    assert "Hypothèses calibrées LABUSE" in ETUDIER and "Selon vos hypothèses" in ETUDIER   # chacun DIT son référentiel
     assert "data-etudier-bascule" in ETUDIER and "charge_calibree" in ETUDIER
     assert "vos hypothèses" in FICHE_TSX                                       # la calculette réglable (Fiche)
 

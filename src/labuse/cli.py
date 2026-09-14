@@ -4573,6 +4573,45 @@ def circuit_verrous_cmd(
                + (f" · {len(a_decider)} à décider" if a_decider else ""))
 
 
+@circuit_app.command("suite")
+def circuit_suite_cmd(
+    racine: str = typer.Option(".", help="Racine du dépôt (tests/ et docs/TESTS-TOLERES.md)."),
+) -> None:
+    """TESTS-1 lot 3 — LA SUITE EST UNE PORTE, comme les verrous : joue la suite pytest
+    complète et confronte ses échecs à docs/TESTS-TOLERES.md. Un échec sans ligne de
+    tolérance (raison + date + échéance), ou dont l'échéance est passée, sort en code 1 —
+    deploy.sh refuse alors, même commande, même verdict. Suite injouable = refus aussi
+    (on ne déploie pas sans jouer)."""
+    from datetime import date as _date
+    from pathlib import Path
+
+    from . import suite_verte
+
+    r = Path(racine).resolve()
+    if not (r / "tests").is_dir():
+        typer.echo(f"✗ REFUS : pas de dossier tests/ sous {r} — la suite doit se jouer "
+                   "depuis la racine du dépôt (--racine).")
+        raise typer.Exit(1)
+    typer.echo(f"→ Suite complète ({r / 'tests'})…")
+    try:
+        echecs, resume = suite_verte.jouer(r)
+        tolerances = suite_verte.charger_tolerances(r / suite_verte.FICHIER_TOLERES)
+    except (RuntimeError, ValueError) as exc:
+        typer.echo(f"✗ REFUS : {exc}")
+        raise typer.Exit(1)
+    v = suite_verte.confronter(echecs, tolerances, aujourd_hui=_date.today())
+    typer.echo(f"  {resume}")
+    for a in v.avertissements:
+        typer.echo(f"  ⚠ {a}")
+    if not v.ok:
+        for x in v.refus:
+            typer.echo(f"  ✗ {x}")
+        typer.echo(f"✗ la suite n'est pas verte ({len(v.refus)} refus) — on ne déploie pas.")
+        raise typer.Exit(1)
+    typer.echo("✓ suite verte" + (f" ({len(v.avertissements)} tolérance(s)/avertissement(s))"
+                                  if v.avertissements else ""))
+
+
 @circuit_app.command("candidat")
 def circuit_candidat_cmd(
     assumer: str = typer.Option(None, "--assumer", help="Déclarer ce run candidat ASSUMÉ (ex. q_v14)."),

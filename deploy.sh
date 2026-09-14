@@ -39,6 +39,23 @@ MSG
 fi
 echo "  ✓ tous les verrous tiennent"
 
+# ── TESTS-1 (lot 3) — LA DEUXIÈME PORTE : la suite de tests, même commande, même verdict. ──
+# `labuse circuit suite` joue la suite pytest COMPLÈTE et confronte ses échecs à
+# docs/TESTS-TOLERES.md : un rouge sans ligne de tolérance (raison + date + échéance), une
+# échéance passée, ou une suite injouable (pytest absent) = REFUS. Les 24 verrous protègent
+# le circuit des données ; la suite protège le reste de l'app — un déploiement ne part
+# jamais avec l'une des deux portes rouge.
+echo "→ Porte de la suite : $LABUSE_BIN circuit suite…"
+if ! "$LABUSE_BIN" circuit suite --racine "$REPO"; then
+  cat >&2 <<MSG
+✗ REFUS : la suite de tests n'est pas verte (détail ci-dessus).
+  Corriger, ou nommer/dater/justifier l'échec dans docs/TESTS-TOLERES.md (échéance courte),
+  rejouer « labuse circuit suite », puis relancer ce déploiement.
+MSG
+  exit 1
+fi
+echo "  ✓ la suite est verte"
+
 echo "→ Garde legacy : /etc/cron.d/labuse-* doit être vide…"
 legacy="$(ls /etc/cron.d/labuse-* 2>/dev/null || true)"
 if [ -n "$legacy" ]; then

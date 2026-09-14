@@ -148,7 +148,10 @@ def test_rules_summary_cinq_blocs_obligatoires():
 
 def test_rules_summary_vraie_opportunite():
     md = rules_summary(_facts("brulante", cf=250000, fiable=True, rang=42))
-    assert "Priorité" in md and "rang 42" in md   # M137 — chip court servi (assistant compris)
+    # TESTS-1 lot 2 (B) — REPARATIONS-1 lot 2b (c87e9919, 13/09/2026) : l'attendu suit
+    # PRIORITE_SERVIE (assistant compris — même vocabulaire que la fiche).
+    from labuse.scoring.tiers_client import PRIORITE_SERVIE
+    assert ("Priorité" if PRIORITE_SERVIE else "À suivre") in md and "rang 42" in md
     assert "INDICATIVE" in md                                  # économie toujours indicative
     assert "capacité ESTIMÉE" in md                            # jamais « constructible » certain
 

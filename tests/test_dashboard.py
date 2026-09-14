@@ -83,6 +83,11 @@ def test_ia_log_attribue_au_compte(client, engine):
     from labuse.db import session_scope
     with engine.begin() as c:
         c.execute(text("DELETE FROM ia_log"))
+        # TESTS-1 lot 2 (D) — la FK fk_ia_log_compte (COMPTE-2, 72d5343b) exige un compte réel :
+        # le test crée son compte témoin 4242 (convention [CT-TEST]), il ne pose plus un id fantôme.
+        c.execute(text(
+            "INSERT INTO comptes (id, nom, plan, statut) VALUES (4242, '[CT-TEST] FK ia_log', "
+            "'integral', 'actif') ON CONFLICT (id) DO NOTHING"))
     core.poser_compte(4242)
     try:
         with session_scope() as s:
