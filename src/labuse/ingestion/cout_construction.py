@@ -22,7 +22,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 SOURCE_NAME = "Coût de construction (EPTB SDES + choix LABUSE)"
-MILLESIME = "EPTB 2024 Réunion (lu 07/09/2026) ; choix promotion 2026"
+MILLESIME = "EPTB 2024 Réunion (SDES, publication annuelle) ; choix promotion 2026"
 
 DDL = """
 CREATE TABLE IF NOT EXISTS cout_construction_ref (
@@ -48,14 +48,24 @@ LIGNES = [
                 "d'offres locaux",
          millesime="choix 2026 — inchangé depuis M-Q",
          note="SERVIE par Hypotheses.charger (bornes basse/haute du bilan promoteur)"),
-    dict(id="eptb_2024_maison", segment="maison individuelle (habitable)",
+    dict(id="eptb_2024_maison", segment="maison individuelle — bâti (habitable)",
          bas=1516, haut=1516, unite="€/m² habitable", servi=False,
          source="EPTB (SDES) — « Les prix du terrain et du bâti pour les maisons "
-                "individuelles de La Réunion en 2024 » : « à La Réunion, son coût moyen est "
-                "de 145 500 € en 2024. Il diminue de 4 % sur un an » ; 96 m² moyens → "
-                "≈ 1 516 €/m² (calcul LABUSE dit)",
-         millesime="EPTB 2024 (publication 2026, lue 07/09/2026)",
-         note="CONTEXTE (segment maison individuelle ≠ promotion) — jamais servie au bilan"),
+                "individuelles de La Réunion en 2024 » : coût moyen du bâti hors terrain "
+                "145 500 € pour 96 m² moyens → ≈ 1 516 €/m² (calcul LABUSE dit)",
+         millesime="EPTB 2024 (publication SDES 2026)",
+         note="CONTEXTE (segment maison individuelle ≠ promotion) — jamais servie au bilan ; "
+              "coût total d'une opération AVEC achat de terrain = 281 700 € "
+              "(117 100 € terrain + 164 600 € bâti) ; 1 430 projets, 32 % avec achat de terrain"),
+    # SOURCES-5 #11 — la publication EPTB Réunion COMPLÈTE : au-delà du seul coût du bâti, le PRIX
+    # DU TERRAIN à bâtir (source dreal.statistiques…/eptb/2024/la_reunion). Contexte (jamais servi).
+    dict(id="eptb_2024_terrain", segment="terrain à bâtir (maison individuelle)",
+         bas=244, haut=244, unite="€/m² terrain", servi=False,
+         source="EPTB (SDES) — publication Réunion 2024 : prix moyen d'achat du terrain "
+                "117 100 € (métropole 94 500 €), soit 244 €/m² de terrain",
+         millesime="EPTB 2024 (publication SDES 2026)",
+         note="CONTEXTE — prix du terrain à bâtir : +2 % sur un an, +22 % depuis 2019 ; "
+              "jamais servi au bilan (référence de marché, distincte du choix promotion)"),
 ]
 
 

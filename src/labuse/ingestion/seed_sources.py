@@ -1198,6 +1198,11 @@ SOURCES: list[dict] = [
                          "choix LABUSE (coûts de revient promoteurs non publiés) — désormais "
                          "en table sourcée, valeurs inchangées (aucun bilan ne bouge). Le "
                          "« jeu CDC » du mandat est INTROUVABLE (dit au compte-rendu). "
+                         "SOURCES-5 #11 — publication EPTB Réunion COMPLÈTE désormais servie en "
+                         "contexte : + prix du terrain 244 €/m² (117 100 € moyen, +2 %/an, +22 % "
+                         "vs 2019) + coût total opération 281 700 € (terrain+bâti). Cadence "
+                         "ANNUELLE déclarée à la sentinelle (365 j). Séries par TYPE de l'EPTB "
+                         "structurée = métropole seule (DOM exclus du jeu open data). "
                          "`labuse ingest-cout-construction`."),
     # ── SOURCES-1 lot 6 — le foncier et les gens ──
     dict(name="DFI — documents de filiation informatisés (DGFiP)", category="cadastre",

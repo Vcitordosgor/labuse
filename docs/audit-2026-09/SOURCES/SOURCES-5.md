@@ -286,11 +286,32 @@ Aucune garde relâchée, aucune donnée perdue. `SCHEMAS.csv` : 1 à-ingérer �
 
 ---
 
+### 11. Coût de construction (EPTB) → **MAXIMUM** (fait)
+
+**Constat** : la table `cout_construction_ref` ne portait que 2 lignes (choix promotion LABUSE servi
++ bâti EPTB 145 500 € ≈ 1 516 €/m²). Le mandat veut « la publication annuelle complète ».
+
+**Publication EPTB 2024 Réunion** (SDES, `dreal.statistiques…/eptb/2024/la_reunion`) sourcée : prix
+du terrain **117 100 €** (244 €/m², +2 %/an, +22 % vs 2019), bâti 145 500 €/96 m², **coût total
+opération 281 700 €** (117 100 terrain + 164 600 bâti), 1 430 projets dont 32 % avec achat de
+terrain. **La série EPTB structurée (par type) exclut les DOM** (jeu open data métropole seul,
+re-vérifié) → pour le 974 la « publication complète » = ces agrégats DREAL.
+
+**Correctif** : ligne `eptb_2024_terrain` (244 €/m²) ajoutée + note `eptb_2024_maison` enrichie
+(coût total, projets). Toutes en **contexte (servi=False)** — la ligne SERVIE au bilan reste le
+choix promotion 2 300-2 800 €/m² SDP, **inchangée** (aucun bilan ne bouge). **Cadence ANNUELLE
+déclarée à la sentinelle** (365 j, `job_sur_clic`).
+
+**Preuve** : 3 lignes de référence (servie = 2300-2800 inchangée). Passage par la **vanne** : la
+nouvelle version part en **quarantaine** (staging pour Vic — comportement voulu ; le servi ne bouge
+pas). `SCHEMAS.csv` : 1 à-ingérer → 1 MAXIMUM. Portes vertes.
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **11. Coût de construction (EPTB)** (la
-publication annuelle complète, cadence déclarée à la sentinelle).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **12. Forêts publiques (ONF)** (régime +
+propriétaire).
 
-Restantes après #10 : B11 Coût construction · B12 Forêts ONF régime · B13 Potentiel foncier colonnes
-restantes · C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE
-ADEME 230 champs.
+Restantes après #11 : B12 Forêts ONF régime · B13 Potentiel foncier colonnes restantes · C14 Sudocuh
+· C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.
