@@ -77,4 +77,82 @@ l'ancien contrat · **C** l'objet du test n'existe plus · **D** l'environnement
 - **15 tests jamais repassés** après des changements de contrat pourtant assumés (6 mandats).
 - **12 échecs d'environnement** ramenés à 2 causes réparables (2 tables data-gap, FK comptes).
 
-*(Lots 1 à 3 : voir plus bas — complétés au fil du mandat.)*
+## Lot 1 — les 9 A : 8 corrigés, 1 laissé à Vic (commit `7409d59a`)
+
+| Sujet | Ce que le test dit / ce que le code faisait | Correctif |
+|---|---|---|
+| **Résumé Circuit muet sur l'état INVISIBLE** (#28, #29) | 7 réservoirs ROUGES « INVISIBLE — branchée mais vide » comptés « à regarder » mais sans AUCUNE ligne au Résumé (base réelle : DPE ADEME, id 37) — un rouge silencieux | ligne « branchées mais vides (INVISIBLES) » ajoutée au groupe À faire de `circuit_resume.composer` ; compteur = lignes, réciprocité rétablie |
+| **`rtaa_exigences` sans table** (#30) | passe-plat servi sans dire ce qu'il lit | `table="config/rtaa_dom.yaml"` (le réservoir est « porté par le code », tables.py:149) |
+| **Docs registre périmés** (#31) | `FICHE-PARCELLE-DONNEES.md` et `FICHES-DONNEES.md` en retard sur SOURCES-2/3 | régénérés par `labuse registre fiche parcelle` / `autres`, committés |
+| **5 données sans fiche de règle** (#32, #33) | ban_plus, part_artificialisee, rnb_liste, usage_sol, zan_evolution servies sans fiche ; fonction `commune.zan_ocsge_commune` non couverte | 4 fiches écrites (`src/labuse/regles/`), chacune avec son **exemple témoin réel** (`tests/test_regles_temoins_ocsge_rnb.py`, 4 tests aux valeurs vérifiées à la main) |
+| **Catalogue code ≠ base** (#34) | 6 sources réelles en base (121) sans entrée dans `SOURCES` (112) ; RNIC/RPLS déclarées à la fois sondées ET non surveillables ; carte hypsométrique sans sonde ni raison | +6 entrées recopiées À L'IDENTIQUE des lignes servies (upsert no-op) ; raisons RNIC/RPLS retirées (sous sonde depuis SOURCES-3 lot 2) ; raison hypsométrique écrite. **Restent 3 hors liste** (EDF SEI · ODRÉ · ZNIEFF) — aucune assertion ne les couvre, à entrer au prochain mandat SOURCES |
+| **Borne de coût hors source unique** (#35) | `MAX_COUT_CONSTRUCTION_M2 = 8000` en littéral dans `financier_bilan.py` — le motif du bug 2100 | les 3 bornes `MAX_*_M2` déplacées dans `faisabilite/engine.py` (la source auditée), importées |
+| **BONUS — digest sentinelle qui crashe** (trouvé en route) | le `dedup` du digest concatène les ids de TOUTES les sondes en échec : à 88 échecs persistants (~350 caractères) l'INSERT déborde `varchar(96)` et **le passage de veille crashe la nuit où tout va mal** | au-delà de 96 caractères, la signature devient son empreinte sha1 (même stabilité, taille fixe) |
+| **Tuiles MVT sur q_v14 ≠ servi q_v11_m137** (#36) | la carte montre un autre run que la fiche depuis le 08/09 | **NON FAIT — refusé par permission** (écriture sur la base servie partagée). Le geste est UNE ligne, à Vic : `labuse build-mvt --label q_v11_m137` (~30 s, matérialisation seule, aucun re-scoring). Toléré, nommé, daté, échéance 21/09 (`docs/TESTS-TOLERES.md`) |
+
+## Lot 2 — 15 B réécrits, 12 D réparés, 0 C (commit `432efe55`)
+
+**D (environnement)** — deux causes, réparées à la racine :
+- `conftest.py`, bloc data-gap : `commune_zonage_abc` + `commune_rei` (DDL des ingesteurs),
+  `pc_caducs` (lâche, sans PK ni NOT NULL — `test_surface_d` seed des doublons exprès),
+  `parcel_bati_revele`, `batiment_hauteur_lidar` (+colonnes survol), `toiture_lidar`.
+  Trouvé en creusant : **deux lecteurs avalent « table absente » dangereusement** —
+  `hauteur_lidar_servie` par un `rollback()` de TOUTE la transaction, `toiture_depuis_cache`
+  sans rollback du tout (transaction ABORTED, tous les lecteurs suivants lisent du vide en
+  silence). En test ces deux-là jetaient les seeds ; les tables data-gap les neutralisent.
+- FK `comptes` (COMPTE-2) : les 3 tests créent leur compte témoin (convention `[CT-TEST]`).
+
+**B (contrats)** — chaque réécriture garde la sévérité d'origine et porte le commit du
+changement de contrat en commentaire ; **les 11 mutations de preuve** (code volontairement
+cassé une fois par groupe) ont toutes fait échouer les tests réécrits :
+
+| Réécrit | Contrat suivi | Preuve de cassabilité |
+|---|---|---|
+| 5 tests paliers | l'attendu suit `PRIORITE_SERVIE` (REPARATIONS-1 lot 2b, réversible) | `brulante→sans_signal` : 5 échecs ✓ |
+| registre 116→121, couches 33→35 | chroniques SOURCES-2/3 complétées | cadence RNB retirée / couche débranchée : échec ✓ |
+| SAR `partenariat_requis` | arbitrage Vic (3221ba2a) | retour `a_faire` : échec ✓ |
+| échantillon DVF | contrat Etalab `millesime_max`, **date jamais figée, jamais antérieure au premier remplissage** | date reculée : échec ✓ |
+| e5 deux usages servis | RECETTE-8 W13bis | revente dé-servie : échec ✓ |
+| a6 + a3 | format Q7 (RECETTE-12 D3), négatifs gravés (« sous la hauteur réglementaire » et la re-citation §3 ne doivent pas revenir) | contrainte muette / survol perdu : 2 échecs ✓ |
+| fiscalité zone | clé dit « Zone… », valeur = le code seul (RECETTE-9 T4) | littéral « zone » réintroduit : échec ✓ |
+| r5 Étudier | libellés bascule actuels (« Hypothèses calibrées LABUSE » / « Selon vos hypothèses ») | libellé retiré : échec ✓ |
+| rail verrous | compte lu du REGISTRE (`len(VERROUS)`), fini le 16 en dur | endpoint regelé à 16 : échec ✓ |
+| preuve G4 | cobaye DYNAMIQUE (RTAA passée sous sonde en base le 14/09) | le test EST une preuve par mutation |
+| compte catalogue 107→118 (sentinelle) | +5 SOURCES-2, +6 TESTS-1 | raison hypsométrique retirée : échec ✓ |
+
+**C** — aucun : rien de ce que testaient les 36 n'a disparu. Aucun test supprimé.
+
+En route, le registre a aussi gagné `artificialisation_couche` et `batiments_3d_couche`
+(patron : un robinet couche sert LA couche, pas seulement un scalaire).
+
+## Lot 3 — le verrou qui empêche le retour
+
+- **`labuse circuit suite`** (nouvelle commande, `src/labuse/suite_verte.py`) : joue la suite
+  pytest COMPLÈTE et confronte ses échecs à `docs/TESTS-TOLERES.md`. Un échec sans ligne
+  (raison + date + échéance), une échéance passée, ou une suite injouable = **exit 1**.
+  Tolérance morte (le test repasse) = avertissement « à purger ». Logique d'arbitrage pure,
+  testée par `tests/test_suite_verte.py` (6 tests, dont le parse du fichier committé).
+- **`deploy.sh` refuse sur rouge** : deuxième porte, posée juste après celle des verrous —
+  même commande, même verdict. Prouvé : porte verte avec la tolérance datée (exit 0),
+  refus sans ligne et refus après échéance.
+- **`docs/TESTS-TOLERES.md`** : UNE ligne à la clôture — les tuiles MVT, seul geste refusé
+  au mandat (permission base servie), avec sa commande de réparation et l'échéance 21/09.
+  Le mandat visait un fichier VIDE : il le sera dès le geste de Vic (30 s).
+
+### La règle, à reprendre dans les mandats suivants
+
+> **Un mandat ne se déclare pas livré avec un test rouge qu'il n'a pas nommé, daté et
+> justifié.** Un rouge sans ligne dans `docs/TESTS-TOLERES.md` fait refuser
+> `labuse circuit suite`, donc `deploy.sh`. Une tolérance porte toujours une échéance
+> courte ; passée l'échéance, elle refuse aussi.
+
+## Clôture
+
+- Suite complète : **3 077 passés · 55 skippés · 1 seul échec, toléré et daté (MVT, geste
+  Vic) · 2 min 37** (`labuse circuit suite` : « ✓ suite verte »). Contre 36 rouges muets
+  à l'ouverture.
+- 24 verrous : joués verts à l'étape 0 et rejoués à la clôture.
+- 4 commits, un par lot, branche `fix/tests-1` poussée. **Rien n'est mergé** — Vic relit.
+- Gestes laissés à Vic : (1) `labuse build-mvt --label q_v11_m137` sur la base servie, puis
+  retirer la ligne de TESTS-TOLERES.md ; (2) entrer EDF SEI / ODRÉ / ZNIEFF au catalogue
+  code au prochain mandat SOURCES ; (3) merge.
