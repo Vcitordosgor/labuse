@@ -92,7 +92,40 @@ La fiche ne servait que 9 colonnes. Surfacé (colonne + `raw`, dans le respect d
 
 ---
 
-## LOT 2 — ingérer tout ce qui manque — NON COMMENCÉ (rang conservé)
+## LOT 2 — ingérer tout ce qui manque — AMORCÉ (source 1/…)
+
+### ICPE — installations classées (Géorisques /installations_classees) → **champs ingérés en base**
+Sonde de l'API réelle (974) : les champs « à voir » de `SCHEMAS.csv` sont **tous dans la réponse
+liste** — aucun appel détail. Ajoutés à `parse_icpe` (`georisques_layers.py`) et ingérés dans
+`spatial_layers` (kind `icpe`, `attrs`) :
+
+| champ | contenu | dans attrs |
+|---|---|---|
+| `rubriques` | nomenclature ICPE : numéro + nature (ce que l'installation FAIT) | liste `{numero, nature}` |
+| `ied`, `priorite_nationale` | niveau d'enjeu (directive IED, priorité nationale) | booléens |
+| `categorie` | dérivée des drapeaux carrière/éolienne/bovins/porcs/volailles/industrie | texte |
+| `service_instructeur` | serviceAIOT (ex. DEAL Réunion) | texte |
+| `date_maj` | dernière mise à jour producteur (tronquée à la date) | texte |
+| `inspections` | dates des inspections | liste de dates |
+
+- **Ingestion** : `ingest_icpe_commune` (nouvelle, rejouable, ICPE-seule — ne re-touche pas
+  sol_pollue/cavités), idempotente (purge kind='icpe' par commune). **Place & temps mesurés** :
+  **1 268 ICPE, 24 communes, 8 s**, 0 KO ; total inchangé (source stable).
+- **Registre** : réservoir `georisques_icpe` (déjà déclaré, `registre/tables.py` →
+  `spatial_layers/icpe`) porte désormais ces attrs. Aucun nouveau chiffre servi live → aucune
+  nouvelle donnée.
+- **Place / serving** : l'ICPE s'affiche via la **cascade Risques** (réservoir `dryrun_cascade_results`,
+  **figé à la bascule**). Le mandat **interdit tout run/bascule/rebuild** — les nouveaux champs sont
+  donc **en base (attrs = le raw-équivalent de spatial_layers)** et seront servis dans le détail de la
+  cascade **au prochain rebuild** (geste de Vic). C'est exactement le repli prévu par le mandat
+  (« s'il n'a aucune place évidente sans rebuild, conservé et disponible »). ICPE n'est ni une couche
+  carte togglable (`_MAP_LAYER_KINDS`) ni un popup riche live — le rendre tel serait un chantier
+  frontend hors périmètre de cette amorce.
+- **Test** : `test_georisques_layers.py::test_parse_icpe_champs_producteur_sources4` (pur, sans réseau).
+- **Reste** : la suite du LOT 2 garde son ordre dans `SCHEMAS.csv` (SRU, CoSIA, Cartofriches, BPE,
+  Parc national, puis REI, BODACC, …).
+
+### Le reste du LOT 2 — rang conservé
 `SCHEMAS.csv` liste ~70 champs « à voir »/« à ingérer », ordonnés par utilité (mandat § LOT 2).
 Ordre imposé : ICPE → SRU → CoSIA → Cartofriches → BPE → Parc national ; puis REI, BODACC, Fibre
 Arcep, Loyers DHUP, DFI, Sudocuh, RP Logement, RPLS ; puis classement sonore, EDF HTA, OSM, AZI/TRI,

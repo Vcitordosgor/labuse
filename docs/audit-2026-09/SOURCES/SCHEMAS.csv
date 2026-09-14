@@ -867,12 +867,12 @@ Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,siret,non,utile (INGÉR
 Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,raisonSociale,non,utile,nom de l'exploitant — identifie l'installation,non
 Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,etatActivite,non,utile (INGÉRÉ ce mandat),actif / cessé — enjeu différent,oui
 Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,adresse1/2/3 + codePostal,non,utile (INGÉRÉ ce mandat),adresse — localise + croise le garde 974,oui
-Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,rubriques,non,à voir,rubriques ICPE (nature réglementée) — volumineux,non
-Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,ied / prioriteNationale,non,à voir,niveau d'enjeu (statutSeveso déjà ingéré),non
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,rubriques,oui,ingéré (SOURCES-4 lot 2) — en base (attrs),attrs spatial_layers/icpe (base) — surfacé à la cascade Risques au prochain rebuild,oui
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,ied / prioriteNationale,oui,ingéré (SOURCES-4 lot 2) — en base (attrs),attrs spatial_layers/icpe (base) — surfacé à la cascade Risques au prochain rebuild,oui
 Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,codeAIOT,non,utile (INGÉRÉ ce mandat),identifiant national AIOT — clé stable,oui
-Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,date_maj,non,à voir,fraîcheur de la fiche ICPE,non
-Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,inspections,non,à voir,historique d'inspections — hors périmètre foncier direct,non
-Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,carriere/eolienne/bovins/porcs/volailles/industrie,non,à voir,drapeaux de typologie d'activité,non
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,date_maj,oui,ingéré (SOURCES-4 lot 2) — en base (attrs),attrs spatial_layers/icpe (base) — surfacé à la cascade Risques au prochain rebuild,oui
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,inspections,oui,ingéré (SOURCES-4 lot 2) — en base (attrs),attrs spatial_layers/icpe (base) — surfacé à la cascade Risques au prochain rebuild,oui
+Géorisques — ICPE,georisques_icpe,spatial_layers/icpe,carriere/eolienne/bovins/porcs/volailles/industrie,oui,ingéré (SOURCES-4 lot 2) — en base (attrs),attrs spatial_layers/icpe (base) — surfacé à la cascade Risques au prochain rebuild,oui
 CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,code_national_catnat,oui,ingéré (SOURCES-4 lot 1) — surfacé depuis raw,"fiche commune › Risques (catnat_arretes_liste : péril, dates, code national, JO)",oui
 CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,date_publication_jo,oui,ingéré (SOURCES-4 lot 1) — surfacé depuis raw,"fiche commune › Risques (catnat_arretes_liste : péril, dates, code national, JO)",oui
 CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,catnat_arretes,(tête),non,MAXIMUM (SOURCES-4 lot 1),détail servi fiche commune › Risques (12 récents + compte total) — plus aucun champ non servi,oui

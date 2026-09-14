@@ -76,6 +76,28 @@ def test_parse_icpe():
     assert parse_icpe({"raisonSociale": "X"}) is None            # pas de coordonnées → None
 
 
+def test_parse_icpe_champs_producteur_sources4():
+    """SOURCES-4 lot 2 — le producteur publie DANS LA MÊME réponse liste ce que l'installation FAIT
+    (rubriques), son enjeu (IED / priorité nationale), sa catégorie, la date de mise à jour, le
+    service instructeur et l'historique d'inspection. parse_icpe les garde tous dans attrs."""
+    item = {**ICPE, "ied": True, "prioriteNationale": False, "industrie": True,
+            "serviceAIOT": "DEAL Réunion", "date_maj": "2026-04-26/10-21-48",
+            "rubriques": [{"numeroRubrique": "2712", "nature": "Stockage de VHU"},
+                          {"numeroRubrique": "2790", "nature": None}],
+            "inspections": [{"dateInspection": "2025-07-24"}, {"dateInspection": "2023-01-10"}]}
+    a = parse_icpe(item)["attrs"]
+    assert a["ied"] is True and a["priorite_nationale"] is False
+    assert a["categorie"] == "industrie"
+    assert a["service_instructeur"] == "DEAL Réunion"
+    assert a["date_maj"] == "2026-04-26"                          # tronqué à la date (sans l'heure)
+    assert a["rubriques"] == [{"numero": "2712", "nature": "Stockage de VHU"},
+                              {"numero": "2790", "nature": None}]
+    assert a["inspections"] == ["2025-07-24", "2023-01-10"]
+    # sans ces champs → None (jamais un tableau vide bruyant)
+    base = parse_icpe(ICPE)["attrs"]
+    assert base["rubriques"] is None and base["inspections"] is None and base["categorie"] is None
+
+
 def test_kind_source_mapping():
     assert set(KIND_SOURCE) == {"sol_pollue", "cavite", "icpe", "mvt"}
 
