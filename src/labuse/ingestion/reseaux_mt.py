@@ -10,9 +10,11 @@ l'ancien portail Opendatasoft répond 404/410) publie TOUJOURS les deux jeux HTA
 
 « HTA » dans le vocabulaire EDF = la MOYENNE TENSION de distribution (15-20 kV) — à ne pas
 confondre avec la HTB (transport 63/90 kV, couche `ligne_ht` BD TOPO). Licence Ouverte v2.0.
-Champs servis : statut (« En exploitation ») + géométrie LineString SEULS — ni tension exacte,
+Champs PUBLIÉS : statut (« En exploitation ») + géométrie LineString seuls — ni tension exacte,
 ni nom de départ : EDF a réduit le contenu « afin de renforcer la sécurité publique »
-(mention portée par les fiches du portail). Les POSTES SOURCES, eux, ont été VIDÉS
+(mention portée par les fiches du portail). SOURCES-5 #3 surface en clairs les deux faits de jeu
+que la mention publique du portail donne : tension_classe (HTA moyenne tension 15-20 kV) et
+gestionnaire (EDF SEI). Les POSTES SOURCES, eux, ont été VIDÉS
 (0 enregistrement au 24/12/2025) : pas de couche postes — l'absence est dite, pas contournée.
 
 kind='ligne_mt', subtype='aerien'|'souterrain', commune=NULL (île entière).
@@ -77,6 +79,13 @@ def ingest_lignes_mt(session: Session, run_id: int | None = None,
             _insert_layer(session, "ligne_mt", subtype,
                           f"Ligne moyenne tension (HTA) — {subtype}", geom, sid, None, run_id,
                           {"statut": row.get("statut"), "millesime": MILLESIME_MT,
+                           # SOURCES-5 #3 : le flux ne publie que `statut` + géométrie (tension exacte
+                           # et nom de départ RETIRÉS par EDF pour raison de sécurité publique). La
+                           # TENSION (classe HTA) et le GESTIONNAIRE sont des faits de jeu, sourcés et
+                           # constants — surfacés en clairs (mandat A#3). `geo_point_2d` = centroïde,
+                           # doublon de la géométrie (G1) → non ingéré.
+                           "tension_classe": "HTA — moyenne tension (15-20 kV)",
+                           "gestionnaire": "EDF SEI (Système Électrique Insulaire) — La Réunion",
                            "precision": ("tracé indicatif publié par EDF — contenu réduit pour "
                                           "raison de sécurité publique ; ne remplace pas une DT-DICT")})
             n += 1

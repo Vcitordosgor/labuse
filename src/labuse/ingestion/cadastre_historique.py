@@ -43,7 +43,19 @@ BASE_ETALAB = "https://cadastre.data.gouv.fr/data/etalab-cadastre"
 BASE_PCI = "https://cadastre.data.gouv.fr/data/dgfip-pci-vecteur"
 #: passes Etalab, du plus ANCIEN au plus récent (une parcelle disparue est cherchée dans le
 #: millésime le plus proche de sa disparition ; l'ancien d'abord couvre les permis 2013-2017).
-MILLESIMES_ETALAB = ["2017-07-06", "2019-07-01", "2021-07-01", "2023-01-01", "2025-09-01"]
+#: SOURCES-5 #16 — corpus COMPLET des millésimes PCI vecteur Etalab publiés (index
+#: cadastre.data.gouv.fr, vérifié 14/09/2026) : la liste sparse (5) devient les 35 éditions
+#: trimestrielles disponibles 2017-07→2026-06. Le tri ancien→récent garde la recette de récupération
+#: (chaque orpheline trouvée sort de `cibles`, jamais re-cherchée). Corpus complet = toute disparition
+#: captée au millésime le plus proche, sans trou de 2 ans.
+MILLESIMES_ETALAB = [
+    "2017-07-06", "2017-10-12", "2018-01-02", "2018-04-03", "2018-06-29", "2018-10-01",
+    "2019-01-01", "2019-04-01", "2019-07-01", "2019-10-01", "2020-01-01", "2020-07-01",
+    "2020-10-01", "2021-02-01", "2021-04-01", "2021-07-01", "2021-10-01", "2022-01-01",
+    "2022-04-01", "2022-07-01", "2022-10-01", "2023-01-01", "2023-04-01", "2023-07-01",
+    "2023-10-01", "2024-01-01", "2024-04-01", "2024-07-01", "2024-10-01", "2025-01-01",
+    "2025-04-01", "2025-09-01", "2025-12-01", "2026-03-01", "2026-06-01",
+]
 MILLESIME_PCI = "2017-02-13"
 
 #: RETOURS-21 B — BD PARCELLAIRE VECTEUR IGN, édition 974 du 27/06/2008 (archive opendatarchives,

@@ -552,18 +552,19 @@ def ingest_parc_national(session, commune, run_id, sids) -> int:
 def ingest_potentiel_foncier(session, insee, commune, run_id, sids) -> int:
     """Potentiel foncier Région (grain parcelle) → kind='potentiel_foncier' (bonus §1)."""
     with _client() as c:
-        recs = _ods_records(c, "potentiel-foncier", where=f'insee="{insee}"',
-                            select="section,parcelle,espacesar,zpu,geo_shape", page=100)
+        # SOURCES-5 #13 : plus de `select` restreint (4 champs) → tout champ publié du jeu ODS
+        # (surf_rp = SURFACE m², libelle = code SAR, particular = particularité « en ZAC en projet »,
+        # num_rp, quartier). geo_shape reste la géométrie.
+        recs = _ods_records(c, "potentiel-foncier", where=f'insee="{insee}"', page=100)
     n = 0
     for rec in recs:
         shape = rec.get("geo_shape") or {}
         geom = shape.get("geometry") if shape.get("type") == "Feature" else shape
         if not geom:
             continue
+        attrs = {k: v for k, v in rec.items() if k not in ("geo_shape",) and v is not None}
         _insert_layer(session, "potentiel_foncier", "ilot", "Îlot potentiel foncier Région", geom,
-                      sids.get(KIND_SOURCE["potentiel_foncier"]), commune, run_id,
-                      {"espacesar": rec.get("espacesar"), "zpu": rec.get("zpu"),
-                       "section": rec.get("section"), "parcelle": rec.get("parcelle")})
+                      sids.get(KIND_SOURCE["potentiel_foncier"]), commune, run_id, attrs)
         n += 1
     return n
 
@@ -788,8 +789,15 @@ def ingest_ocsge(session, bbox, commune, run_id, sids) -> int:
             sub = "agricole"
         else:
             sub = "artificialise"
+        # SOURCES-5 #17 : tout champ publié de BDCARTO_V5:occupation_du_sol (le thème ne publie que
+        # `nature` + `cleabs` = identifiant IGN). Les 35 AUTRES thèmes BD CARTO V5 sont des DOUBLONS
+        # (G1) du BD TOPO plus fin déjà ingéré (hydro/voirie/bâti/cimetière/bassin/zone activité),
+        # de la carte 24 communes (admin), d'EDF (ligne électrique) ou de patrinat (parc) — arbitrage
+        # écrit au rapport. Seule l'occupation du sol (absente de BD TOPO, OCS GE 974 hors WFS) est servie.
+        p = f.get("properties") or {}
         _insert_layer(session, "ocs_ge", sub, nat or "occupation du sol", f["geometry"],
-                      sids.get(KIND_SOURCE["ocs_ge"]), commune, run_id, {"nature": nat, "src": "BDCARTO_V5"})
+                      sids.get(KIND_SOURCE["ocs_ge"]), commune, run_id,
+                      {"nature": nat, "cleabs": p.get("cleabs"), "src": "BDCARTO_V5:occupation_du_sol"})
         n += 1
     return n
 
@@ -1000,9 +1008,26 @@ def ingest_foret_publique(session, bbox, commune, run_id, sids) -> int:
         p = f.get("properties") or {}
         topo = p.get("toponyme") or ""
         subtype = "domaniale" if "domanial" in topo.lower() else "publique"
+        # SOURCES-5 #12 : tout champ publié BDTOPO (nature=RÉGIME, sources=ONF gestionnaire,
+        # identifiants_sources=id ONF, cleabs, dates) + propriétaire dérivé du régime (droit
+        # forestier standard, pas inventé). subtype (domaniale/publique) INCHANGÉ (pilote la cascade).
+        nature = (p.get("nature") or "").strip()
+        nl = nature.lower()
+        if "domanial" in nl and ("départemento" in nl or "departemento" in nl):
+            proprietaire = "Département + État (forêt départemento-domaniale)"
+        elif "domanial" in nl:
+            proprietaire = "État (forêt domaniale)"
+        elif "commun" in nl:
+            proprietaire = "Commune (forêt communale)"
+        else:
+            proprietaire = None
+        attrs = {k: (v.strip() if isinstance(v, str) else v) for k, v in p.items() if v is not None}
+        attrs.update({"src": "BDTOPO_V3:foret_publique",
+                      "regime": nature or None,                # nature BDTOPO = régime forestier
+                      "gestionnaire": p.get("sources"),        # ex. « ONF 2021 »
+                      "proprietaire": proprietaire})
         _insert_layer(session, "foret_publique", subtype, topo or "Forêt publique", f["geometry"],
-                      sids.get("Forêts publiques (ONF)"), commune, run_id,
-                      {"toponyme": topo, "src": "BDTOPO_V3:foret_publique"})
+                      sids.get("Forêts publiques (ONF)"), commune, run_id, attrs)
         n += 1
     return n
 
@@ -1023,14 +1048,18 @@ def ingest_rpg_agricole(session, bbox, commune, run_id, sids) -> int:
     return n
 
 
+# SOURCES-5 #5 : typenames Géoplateforme RE-VÉRIFIÉS sur GetCapabilities (data.geopf.fr, 14/09/2026).
+# Deux avaient dérivé et renvoyaient un 400 avalé en silence : `patrinat_rb:reserve_biologique`
+# → `patrinat_rb:rb` (37 réserves biologiques réapparues) et `patrinat_aphn:...` → `patrinat_aphn:aphn`.
 _PROTECTED = [
     ("patrinat_apb:apb", "APB"),
-    ("patrinat_aphn:aire_protection_habitats_naturels", "APHN"),
+    ("patrinat_aphn:aphn", "APHN"),
     ("patrinat_rnn:rnn", "Réserve naturelle nationale"),
     ("patrinat_rnr:rnr", "Réserve naturelle régionale"),
-    ("patrinat_rb:reserve_biologique", "Réserve biologique"),
+    ("patrinat_rb:rb", "Réserve biologique"),
     ("patrinat_cen:cen", "Conservatoire d'espaces naturels"),
     ("patrinat_cdl:conservatoire_littoral", "Conservatoire du littoral"),
+    ("patrinat_rncfs:rncfs", "Réserve nationale de chasse et faune sauvage"),
 ]
 
 
@@ -1045,7 +1074,11 @@ def ingest_espaces_proteges(session, bbox, commune, run_id, sids) -> int:
     for typename, label in _PROTECTED:
         try:
             fc = wfs.fetch_layer("geoplateforme_wfs", typename, bbox=bbox, max_features=2000)
-        except Exception:
+        except Exception as exc:
+            # SOURCES-5 #5 : un échec WFS n'est plus MUET (un typename qui dérive renvoyait 0 en
+            # silence, cf. reserve_biologique) — on le journalise, tout en laissant les autres couches.
+            logging.getLogger("labuse").warning("espaces_proteges : %s indisponible (%s: %s)",
+                                                 typename, type(exc).__name__, str(exc)[:120])
             continue
         for f in fc.get("features", []) or []:
             if not f.get("geometry"):
@@ -1056,9 +1089,13 @@ def ingest_espaces_proteges(session, bbox, commune, run_id, sids) -> int:
             if str(p.get("marin", "")).strip().upper() in ("T", "OUI", "TRUE", "1"):
                 continue
             nom = p.get("nom_site") or p.get("nom") or p.get("toponyme") or p.get("libelle") or label
+            # SOURCES-5 #5 : tout champ publié du WFS patrinat (id_mnhn, dates, gestionnaire, surface,
+            # url_fiche…) recopié dans attrs — pas seulement type/src/marin. type/src conservés.
+            attrs = {k: (v.strip() if isinstance(v, str) else v) for k, v in p.items()}
+            attrs.update({"type": label, "src": typename})
             _insert_layer(session, "ens", label.lower().replace(" ", "_")[:48], f"{label} — {nom}"[:255],
                           f["geometry"], sids.get("INPN / patrinat — espaces protégés"), commune, run_id,
-                          {"type": label, "src": typename, "marin": p.get("marin")})
+                          attrs)
             n += 1
     return n
 
@@ -1109,11 +1146,20 @@ def ingest_trait_de_cote(session, commune, run_id, sids) -> int:
                 polys.append([coords])
         if not polys:
             continue
+        # SOURCES-5 #1 : tout champ publié du SHP officiel (13 attributs), pas seulement `taux`.
+        # -9999 / -9000 = donnée absente chez le Cerema → None (ne pas afficher un sentinel).
+        attrs = {"src": "GéoLittoral/Cerema — indicateur érosion (SHP officiel, EPSG:2975)"}
+        for k, v in zip(flds, srec.record):
+            if v is None or (isinstance(v, (int, float)) and v <= -9000):
+                attrs[k] = None
+            elif isinstance(v, str):
+                attrs[k] = v.strip() or None
+            else:
+                attrs[k] = v
         _insert_layer(session, "trait_de_cote", _taux_subtype(taux),
                       f"Évolution trait de côte (taux {taux} m/an)",
                       {"type": "MultiPolygon", "coordinates": polys},
-                      sids.get(KIND_SOURCE["trait_de_cote"]), commune, run_id,
-                      {"taux": taux, "src": "GéoLittoral/Cerema — indicateur érosion (SHP, EPSG:2975)"})
+                      sids.get(KIND_SOURCE["trait_de_cote"]), commune, run_id, attrs)
         n += 1
     return n
 

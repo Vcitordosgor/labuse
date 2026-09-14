@@ -3451,6 +3451,50 @@ def ingest_bodacc_cmd() -> None:
         typer.echo(f"✓ BODACC : {r['sirens']} SIREN, dernière annonce {r['derniere_annonce']}")
 
 
+@app.command("ingest-bodacc-depots")
+def ingest_bodacc_depots_cmd(
+    limit: int = typer.Option(0, help="Cap du nombre de SIREN interrogés (0 = tous les propriétaires PM)."),
+) -> None:
+    """SOURCES-5 #10 — dépôts de comptes annuels (famille dpc) des SIREN propriétaires PM du 974
+    → table dédiée bodacc_depots (hors Score V). Idempotent (upsert annonce_id)."""
+    from .ingestion import bodacc
+
+    with session_scope() as s:
+        sirens = bodacc.distinct_sirens(s)
+        if limit:
+            sirens = sirens[:limit]
+        r = bodacc.ingest_bodacc_depots(s, sirens)
+        s.commit()
+    typer.echo(f"✓ BODACC dépôts : {r['depots']} dépôts pour {r['sirens_avec_depot']}/"
+               f"{r['sirens_queried']} SIREN propriétaires PM")
+
+
+@app.command("ingest-rp-logement")
+def ingest_rp_logement_cmd() -> None:
+    """SOURCES-5 #15 — INSEE RP2022 fichier détail Logements : toutes les variables logement
+    (chauffage/pièces/surface/type/équipements) agrégées par commune 974 → rp_logement_commune.
+    Réutilise le fichier détail national en cache (cf. ingest-anc)."""
+    from .ingestion import rp_logement
+
+    with session_scope() as s:
+        r = rp_logement.ingest_rp_logement(s, log=typer.echo)
+        s.commit()
+    typer.echo(f"✓ RP logement : {r['communes']} communes 974, {r['logements_974']} logements, "
+               f"{r['variables']} variables.")
+
+
+@app.command("ingest-sudocuh")
+def ingest_sudocuh_cmd() -> None:
+    """SOURCES-5 #14 — Sudocuh : classeur XLSX officiel DGALN (23 colonnes) filtré 974 →
+    sudocuh_procedures (provenance ; chair servie = veille_plu.yaml). Tout champ publié + raw."""
+    from .ingestion import sudocuh
+
+    with session_scope() as s:
+        r = sudocuh.ingest_sudocuh(s, log=typer.echo)
+        s.commit()
+    typer.echo(f"✓ Sudocuh : {r['communes']} communes 974, {r['colonnes']} colonnes.")
+
+
 @app.command("ingest-mairies")
 def ingest_mairies_cmd() -> None:
     """K2 — coordonnées des 24 mairies depuis l'Annuaire de l'administration (service-public.fr).
@@ -3462,6 +3506,20 @@ def ingest_mairies_cmd() -> None:
         r = mairies.ingest(s)
     typer.echo(f"✓ Mairies : {r['trouvees']}/{r['communes']} ingérées"
                + (f" — absentes de l'annuaire : {', '.join(r['absentes'])}" if r["absentes"] else ""))
+
+
+@app.command("ingest-annuaire-services")
+def ingest_annuaire_services_cmd() -> None:
+    """SOURCES-5 #7 — TOUS les services publics du 974 depuis l'Annuaire de l'administration (DILA).
+    Préfecture, tribunaux, gendarmeries, France Services, impôts, CCAS… (≈436). Garde 974 par INSEE,
+    tout champ publié conservé (raw jsonb), upsert idempotent + purge des services disparus."""
+    from .ingestion import annuaire_services
+
+    with session_scope() as s:
+        r = annuaire_services.ingest(s)
+    typer.echo(f"✓ Annuaire services 974 : {r['trouves']} ingérés"
+               + (f" · {r['supprimes']} purgés" if r["supprimes"] else "")
+               + (f" · {r['rejets_974']} rejetés (garde 974)" if r["rejets_974"] else ""))
 
 
 @app.command("radar-depot-html")

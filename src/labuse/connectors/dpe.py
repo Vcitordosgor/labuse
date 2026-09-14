@@ -79,7 +79,12 @@ class DpeConnector(Connector):
             raise ValueError(f"jeu DPE inconnu : {jeu!r} (attendu : {sorted(DATASETS)})")
         self.jeu = jeu
         self.lines_url = f"https://data.ademe.fr/data-fair/api/v1/datasets/{DATASETS[jeu]}/lines"
-        self.select = ",".join(_SELECT_PAR_JEU[jeu])
+        # SOURCES-5 #18 : plus de `select` restreint (18 champs curés) → l'API renvoie TOUT le schéma
+        # ADEME (~230 champs : conso 5 usages, déperditions Ubât, système chauffage/ECS, isolation…)
+        # que `raw` conserve intégralement. Le 974 est quasi vide (16 authentiques) → payload dérisoire,
+        # mais le schéma est PRÊT pour le jour où l'ADEME réparera son flux DROM. select curé conservé
+        # en documentation (_SELECT_PAR_JEU) ; parse_record lit les mêmes champs dans le sur-ensemble.
+        self.select = None
 
     def _get(self, url: str, params: dict | None, max_retries: int = 4) -> dict:
         last: Exception | None = None
@@ -102,7 +107,9 @@ class DpeConnector(Connector):
     def _fetch_qs(self, qs: str, size: int = 100) -> Iterator[dict]:
         """Itère toutes les lignes d'un filtre Lucene, pagination par curseur `after`."""
         url: str | None = self.lines_url
-        params: dict | None = {"qs": qs, "size": size, "select": self.select}
+        params: dict | None = {"qs": qs, "size": size}
+        if self.select:
+            params["select"] = self.select
         while url:
             data = self._get(url, params)
             for rec in data.get("results") or []:
@@ -115,7 +122,9 @@ class DpeConnector(Connector):
                 return
             # on garde nos qs/size/select et on ajoute le curseur (l'URL next les porte déjà, mais
             # on reste explicite pour ne pas dépendre d'un host interne renvoyé dans `next`).
-            params = {"qs": qs, "size": size, "select": self.select, "after": after}
+            params = {"qs": qs, "size": size, "after": after}
+            if self.select:
+                params["select"] = self.select
             if self.throttle_s:
                 time.sleep(self.throttle_s)
 

@@ -50,6 +50,23 @@ def ingest_bruit_route(session: Session, run_id: int | None = None, log=print) -
         largeur = p.get("sect_bruit")
         if not f.get("geometry") or cat is None or not largeur:
             continue
+        # SOURCES-5 #2 : tout champ publié du flux ArcGIS (trafic TMJA, niveaux acoustiques
+        # jlaeq_ref/nlaeq_ref, écoulement, etc.) recopié dans attrs — pas seulement les 7 curés.
+        # Clé accentuée 'catégorie' → 'categorie' (int) ; chaînes vides/espaces → None.
+        attrs = {}
+        for k, v in p.items():
+            if k in ("catégorie", "SHAPE__Length"):
+                continue
+            kk = k.lower()
+            if isinstance(v, str):
+                v = v.strip() or None
+            attrs[kk] = v
+        attrs.update({
+            "categorie": int(cat),
+            "sect_bruit_m": largeur,                       # largeur d'affectation (art. R.571-32 CE)
+            "reference_arrete": "AP préfectoraux 14 & 15/12/2023 (étude Cerema 2022, remplace 2014)",
+            "millesime": "Cerema 2022 / AP 14-15.12.2023",
+        })
         session.execute(text(
             """INSERT INTO spatial_layers (kind, subtype, name, geom, attrs, data_source_id, commune, ingestion_run_id)
                VALUES ('bruit_route', :sub, :n,
@@ -58,10 +75,7 @@ def ingest_bruit_route(session: Session, run_id: int | None = None, log=print) -
                        CAST(:a AS jsonb), :sid, :c, :run)"""),
             {"sub": f"cat{int(cat)}", "n": f"Classement sonore cat.{cat} — {p.get('nom_comm') or ''}",
              "g": _json.dumps(f["geometry"]), "larg": float(largeur),
-             "a": _json.dumps({"categorie": int(cat), "sect_bruit_m": largeur,
-                               "tissu": p.get("tissu"), "nb_voies": p.get("nb_voies"),
-                               "insee_comm": p.get("insee_comm"), "gestion": p.get("gestion"),
-                               "millesime": "Cerema 2022 / AP 14-15.12.2023"}),
+             "a": _json.dumps(attrs),
              "sid": sid, "c": p.get("nom_comm"), "run": run_id})
         n += 1
     session.flush()

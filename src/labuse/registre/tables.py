@@ -54,7 +54,7 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "cadastre_etalab_bulk": Rt(("parcels",), millesime="Etalab cadastre (DGFiP), édition courante",
                                note="DOUBLON (canal bulk du même réservoir que cadastre_api_carto)"),
     "cadastre_epoque": Rt(("cadastre_historique",),
-                          millesime="PCI vecteur Etalab — millésimes 2019→2025 (cadastre d'époque)"),
+                          millesime="PCI vecteur Etalab — corpus complet 2008 + 2017-02 + 35 éditions 2017-07→2026-06 (SOURCES-5)"),
     "dgfip_parcelles_pm": Rt(("parcelle_personne_morale", "pm_proprietaires_millesimes"),
                              millesime="Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)"),
     "fichiers_fonciers_cerema": Rt((), note="SOUS CONVENTION (SOURCES-1 lot 7) — une demande Cerema "
@@ -165,7 +165,7 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "cartofriches": Rt(("spatial_layers",), couches=("friche",)),
     "abf_merimee": Rt(("spatial_layers",), couches=("abf",),
                       millesime="Monuments historiques Mérimée (POP) — périmètres ABF"),
-    "erosion_cotiere_geolittoral": Rt(("spatial_layers",), couches=("trait_de_cote",), millesime="millésime 2018"),
+    "erosion_cotiere_geolittoral": Rt(("spatial_layers",), couches=("trait_de_cote",), millesime="SHP officiel Cerema 06/2018 — 13 champs (SOURCES-5)"),
     "bruit_itt_cerema": Rt(("spatial_layers",), couches=("bruit_route",), millesime="arrêtés déc. 2023"),
     "parc_national_inpn": Rt(("spatial_layers",), couches=("parc_national",), millesime="millésime 2021"),
     "forets_onf_bdtopo": Rt(("spatial_layers",), couches=("foret_publique",),
@@ -193,10 +193,12 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "recherche_entreprises_dinum": Rt(("owner_denom_lookup", "owner_enrichment"),
                                       millesime="Sirene INSEE / RNE INPI (api.gouv.fr) — courant"),
     "inpi_rne": Rt(("pm_dirigeants", "pm_dirigeant_gigogne")),
-    "bodacc": Rt(("bodacc_sondages", "bodacc_procedures", "bodacc_annonces_owner", "annonces")),
+    "bodacc": Rt(("bodacc_sondages", "bodacc_procedures", "bodacc_annonces_owner", "annonces",
+                  "bodacc_depots")),
     # ── territoire / statistique ────────────────────────────────────────────────────
     "insee_rp_logement": Rt(("commune_insee_logement",)),
-    "insee_rp2022_egoul": Rt(("anc_maille_taux",), millesime="RP2022 — fichier détail Logements (16/10/2025)"),
+    "insee_rp2022_egoul": Rt(("anc_maille_taux", "rp_logement_commune"),
+                             millesime="RP2022 — fichier détail Logements (16/10/2025) ; SOURCES-5 : toutes variables logement"),
     "filosofi_carreaux": Rt(("filosofi_carreaux_200m", "p_model_filo"), millesime="millésime 2021"),
     "mobpro": Rt(("mobpro_commune",), millesime="MOBPRO INSEE — fichier détail (millésime RP)",
                  note="RETIRÉ 06/09/2026 (CIRCUIT-5b) — abandonné par ZONE-DONNÉES ; lecteur "
@@ -211,8 +213,8 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                                      "table anc_office_eau_commune est CONSERVÉE (données non effacées), "
                                      "plus aucun lecteur du code."),
     "spanc_epci": Rt((), note="manuel — collectif/non collectif saisi, aucune table dédiée"),
-    "annuaire_service_public": Rt(("mairies",),
-                                  millesime="annuaire service-public.fr — 24 mairies (OUTILS K2)"),
+    "annuaire_service_public": Rt(("mairies", "annuaire_services"),
+                                  millesime="annuaire service-public.fr — 24 mairies + ~436 services 974 (SOURCES-5)"),
     "rnic_anah": Rt(("rnic_coproprietes",), millesime="RNIC (ANAH) — registre des copropriétés"),
     "rpls_sdes": Rt(("rpls_commune",), millesime="RPLS — millésime 01/01/2025 (SDES)"),
     "enaf_cerema": Rt(("commune_conso_enaf",),

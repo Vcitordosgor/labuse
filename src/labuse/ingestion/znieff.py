@@ -49,16 +49,18 @@ def build_znieff(session: Session, log=lambda *_: None) -> dict:
             if str(p.get("territoire", "REU")).strip().upper() not in ("REU", ""):
                 continue                                             # garde-fou : Réunion seule
             nom = (p.get("nom_site") or p.get("nom") or "ZNIEFF")[:255]
+            # SOURCES-5 #4 : tout champ publié du WFS INPN (22 attributs) — pas seulement les 5 curés.
+            # id_mnhn = identifiant national MNHN, cd_sig = code national SIG ; `type` = I/II (mandat).
+            attrs = {k: (v.strip() if isinstance(v, str) else v) for k, v in p.items()}
+            attrs["type"] = subtype
+            attrs["gestionnaire"] = p.get("gest_site")   # alias conservé (lecteurs existants)
             session.execute(text(
                 """INSERT INTO spatial_layers (kind, subtype, name, geom, attrs, data_source_id, commune)
                    VALUES ('znieff', :s, :n,
                            ST_Force2D(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:g), 4326))),
                            CAST(:a AS jsonb), :sid, NULL)"""),
                 {"s": subtype, "n": nom, "g": json.dumps(f["geometry"]),
-                 "a": json.dumps({"id_mnhn": p.get("id_mnhn"), "url_fiche": p.get("url_fiche"),
-                                  "precision": p.get("precision"), "gestionnaire": p.get("gest_site"),
-                                  "type": subtype}),
-                 "sid": sid})
+                 "a": json.dumps(attrs), "sid": sid})
             n += 1
         counts[subtype] = n
         log(f"  znieff {subtype}: {n}")
