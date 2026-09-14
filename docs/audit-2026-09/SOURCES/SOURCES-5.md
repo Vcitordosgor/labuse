@@ -138,12 +138,38 @@ conservés pour les lecteurs existants. Gardes marin/territoire inchangées.
 
 ---
 
+### 5. INPN / patrinat — espaces protégés → **MAXIMUM** (fait) — + bug de perte silencieuse corrigé
+
+**Constat** : `ingest_espaces_proteges` (kind `ens`, 7 typenames patrinat WFS Géoplateforme) ne
+gardait que **3 clés** (`type/src/marin`). **En re-vérifiant les typenames sur GetCapabilities**
+(data.geopf.fr) j'ai découvert que **2 avaient dérivé et renvoyaient un 400 avalé par un
+`except: continue` MUET** : `patrinat_rb:reserve_biologique` → devenu `patrinat_rb:rb` (les **37
+réserves biologiques** ne rentraient plus, 4 communes de couverture perdues : Bras-Panon, Cilaos,
+Les Avirons, Salazie) et `patrinat_aphn:aire_protection_habitats_naturels` → `patrinat_aphn:aphn`.
+
+**Correctifs** : (1) typenames corrigés + `patrinat_rncfs:rncfs` ajouté (réserve nationale de
+chasse, 0 au 974 mais couche officielle) ; (2) l'échec WFS n'est **plus muet** (log.warning,
+principe « jamais une couche vide en silence ») ; (3) `attrs` recopie **tout champ publié**
+(24 clés : `id_mnhn`, `cd_sig`, `id_local`, `nom_site`, `url_fiche`, `gest_site`/`operateur`,
+dates, `surf_off`/`area_sig`, `precision`, `src_geom`, drapeaux).
+
+**Portée préservée** : re-ingestion **par commune** (le lecteur cascade `kind_present_commune('ens',
+commune)` s'appuie sur la colonne `commune` — une ingestion île entière `commune=NULL` aurait
+basculé ~21 communes en UNKNOWN). Seules les lignes source 25 (patrinat) touchées ; l'ENS
+départemental DEAL Lizmap (source 113) et les sites/ramsar **intacts**.
+
+**Preuve** : 73 lignes, **21 communes** inchangées, subtypes identiques (apb 8 / cdl 27 /
+réserve_biologique 37 / rnn 1), LOST=[] GAINED=[] ; attrs 3 → 24 clés ; `id_mnhn=FR23REU01`,
+`gest_site=ONF` vérifiés. `SCHEMAS.csv` : 1 ligne à-ingérer → 7 MAXIMUM.
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **5. INPN / patrinat — espaces protégés**
-(WFS Géoplateforme, toutes les couches RNN/APB/sites).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **6. Espaces protégés Ramsar / sites
+classés** (WFS Géoplateforme).
 
-Restantes après #4 : A5 INPN espaces protégés (WFS Géoplateforme) · A6 Ramsar/sites classés · A7
-DILA · B8 AZI/TRI dates · B9 RNIC 29-1/DPE copro · B10 BODACC dépôts de comptes · B11 Coût
-construction · B12 Forêts ONF régime · B13 Potentiel foncier colonnes restantes · C14 Sudocuh · C15
-RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.
+Restantes après #5 : A6 Ramsar/sites classés · A7 DILA · B8 AZI/TRI dates · B9 RNIC 29-1/DPE copro
+· B10 BODACC dépôts de comptes · B11 Coût construction · B12 Forêts ONF régime · B13 Potentiel
+foncier colonnes restantes · C14 Sudocuh · C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD
+CARTO V5 · C18 DPE ADEME 230 champs.

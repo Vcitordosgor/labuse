@@ -1023,14 +1023,18 @@ def ingest_rpg_agricole(session, bbox, commune, run_id, sids) -> int:
     return n
 
 
+# SOURCES-5 #5 : typenames Géoplateforme RE-VÉRIFIÉS sur GetCapabilities (data.geopf.fr, 14/09/2026).
+# Deux avaient dérivé et renvoyaient un 400 avalé en silence : `patrinat_rb:reserve_biologique`
+# → `patrinat_rb:rb` (37 réserves biologiques réapparues) et `patrinat_aphn:...` → `patrinat_aphn:aphn`.
 _PROTECTED = [
     ("patrinat_apb:apb", "APB"),
-    ("patrinat_aphn:aire_protection_habitats_naturels", "APHN"),
+    ("patrinat_aphn:aphn", "APHN"),
     ("patrinat_rnn:rnn", "Réserve naturelle nationale"),
     ("patrinat_rnr:rnr", "Réserve naturelle régionale"),
-    ("patrinat_rb:reserve_biologique", "Réserve biologique"),
+    ("patrinat_rb:rb", "Réserve biologique"),
     ("patrinat_cen:cen", "Conservatoire d'espaces naturels"),
     ("patrinat_cdl:conservatoire_littoral", "Conservatoire du littoral"),
+    ("patrinat_rncfs:rncfs", "Réserve nationale de chasse et faune sauvage"),
 ]
 
 
@@ -1045,7 +1049,11 @@ def ingest_espaces_proteges(session, bbox, commune, run_id, sids) -> int:
     for typename, label in _PROTECTED:
         try:
             fc = wfs.fetch_layer("geoplateforme_wfs", typename, bbox=bbox, max_features=2000)
-        except Exception:
+        except Exception as exc:
+            # SOURCES-5 #5 : un échec WFS n'est plus MUET (un typename qui dérive renvoyait 0 en
+            # silence, cf. reserve_biologique) — on le journalise, tout en laissant les autres couches.
+            logging.getLogger("labuse").warning("espaces_proteges : %s indisponible (%s: %s)",
+                                                 typename, type(exc).__name__, str(exc)[:120])
             continue
         for f in fc.get("features", []) or []:
             if not f.get("geometry"):
@@ -1056,9 +1064,13 @@ def ingest_espaces_proteges(session, bbox, commune, run_id, sids) -> int:
             if str(p.get("marin", "")).strip().upper() in ("T", "OUI", "TRUE", "1"):
                 continue
             nom = p.get("nom_site") or p.get("nom") or p.get("toponyme") or p.get("libelle") or label
+            # SOURCES-5 #5 : tout champ publié du WFS patrinat (id_mnhn, dates, gestionnaire, surface,
+            # url_fiche…) recopié dans attrs — pas seulement type/src/marin. type/src conservés.
+            attrs = {k: (v.strip() if isinstance(v, str) else v) for k, v in p.items()}
+            attrs.update({"type": label, "src": typename})
             _insert_layer(session, "ens", label.lower().replace(" ", "_")[:48], f"{label} — {nom}"[:255],
                           f["geometry"], sids.get("INPN / patrinat — espaces protégés"), commune, run_id,
-                          {"type": label, "src": typename, "marin": p.get("marin")})
+                          attrs)
             n += 1
     return n
 
