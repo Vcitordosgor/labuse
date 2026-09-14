@@ -336,6 +336,24 @@ preuve**. Verdict :
 
 `SCHEMAS.csv` « à voir » **72 → 47**, `ingere=non` **94 → 57**, placeholders « utile » **28 → 0**.
 
+## LOT 4 — verdict final + verrou G2 étendu — LIVRÉ
+`SCHEMAS.csv` : **plus AUCUN champ « à voir » nu** — chaque champ porte un verdict définitif. Le
+verrou **G2 s'étend** (`circuit_garanties.verrou_g2` + `_schemas_a_voir_nus`) : une source servie ne
+porte aucun champ « à voir » de plus de 30 jours — opérationnalisé strictement (plus aucun « à voir »
+nu ; garde mordante testée). **G2 vert : 0 champ « à voir » nu.**
+
+### Tableau des verdicts — par source (87 sources portées à SCHEMAS.csv)
+| verdict | nombre | sens |
+|---|---|---|
+| **MAXIMUM** | 46 | tous les champs producteur ingérés/servis |
+| **PARTIEL — producteur** | 20 | raison physique : raster nu (BD ORTHO), flux/HUB live (OSM, Géorisques, DEAL WMS, SIRENE, GTFS, Radar, DINUM), accès gaté (RPLS micro, DFI, Loyers OLL micro), saisie manuelle (VRD/SPANC), métadonnée mineure (cadastre feuille), texte réglementaire (RTAA) |
+| **À INGÉRER — session dédiée** (rang conservé) | 17 | volume/licence hors périmètre : **DPE 230 champs, BD CARTO V5, Sudocuh, RP détail (EGOUL), cadastre d'époque**, Coût construction, GéoLittoral, Classement sonore, EDF HTA, ZNIEFF, INPN, Potentiel foncier restant, Forêts ONF, AZI/TRI détail, DILA |
+| PARTIEL/dédié (mixte) | 4 | quelques champs restants + physiques |
+
+Les 6 sources restantes des 93 en vitrine sont des **hubs/alias sans ligne attributaire** (déjà
+tranchés à l'audit SOURCES-AUDIT). **Ce qui reste est nommé et rangé — aucune session dédiée dans
+SOURCES-4, comme tranché par Vic.** SOURCES-4 est **terminé.**
+
 ## Bilan de session (autonome)
 **14 sources traitées** (LOT 1 : CatNat, RNIC ; LOT 2 : ICPE, SRU, Cartofriches, BPE, Parc national,
 REI, Fibre Arcep, BODACC, CoSIA + Piscines, Géorisques mvt/cavités/sols pollués, Loyers DHUP vérifié)
