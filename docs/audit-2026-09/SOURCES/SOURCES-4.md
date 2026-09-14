@@ -92,7 +92,7 @@ La fiche ne servait que 9 colonnes. Surfacé (colonne + `raw`, dans le respect d
 
 ---
 
-## LOT 2 — ingérer tout ce qui manque — AMORCÉ (source 1/…)
+## LOT 2 — ingérer tout ce qui manque — EN COURS (ICPE, SRU faits ; CoSIA seuil ; Cartofriches déjà MAXIMUM)
 
 ### ICPE — installations classées (Géorisques /installations_classees) → **champs ingérés en base**
 Sonde de l'API réelle (974) : les champs « à voir » de `SCHEMAS.csv` sont **tous dans la réponse
@@ -143,9 +143,25 @@ ligne PARTIEL ajoutée à `SCHEMAS.csv`). L'**effectif brut `nb_lls`** dormait d
 - **Test** : `test_sources4_lot1.py::test_lls_inventaire_n_declare_au_registre`. FICHES-DONNEES.md
   régénéré.
 
-### Reprise (point de départ pour la prochaine source) — **CoSIA**
-Après SRU, l'ordre imposé continue : **CoSIA** (toutes les classes de couverture du sol par parcelle),
-puis Cartofriches, BPE, Parc national, REI, BODACC, … **Commande de reprise : « continue SOURCES-4 ».**
+### CoSIA — toutes les classes par parcelle → **SEUIL (mesuré, décision Vic)**
+Aujourd'hui seule la classe **Bâtiment** est ingérée (`p_model_bati_cosia` par parcelle +
+`spatial_layers/batiment_cosia` géométrie). Ingérer **les 14 autres classes par parcelle** exige le
+lot GPKG D974 (absent du worktree — `data/cosia/extract/` vide). **Poids mesuré : le .7z D974 2025 =
+494 Mo compressés** (HTTP HEAD, sous le seuil 10 Go). Le coût réel n'est pas le download mais
+l'**intersection île entière** : 431 663 parcelles × ~14 classes × des millions de polygones 20 cm →
+calcul **> 2 h** (le second seuil du mandat). **Arrêt sur cette source, chiffre écrit — décision Vic**
+(run dédié, table `parcel_cosia_couverture` à créer). Non fait ce mandat.
+
+### Cartofriches — détail complet → **MAXIMUM (déjà atteint)**
+Vérification : les **372 friches** (`spatial_layers/friche`) portent DÉJÀ, dans `attrs.detail`, le
+**détail 78 champs** du Cerema (état du bâti, taux d'artificialisation, vocation, pollution
+BASOL/BASIAS, potentiels PV/renaturation, `source_url`, dates…) — en plus du résumé (surface
+`unite_fonciere_surface`, propriétaire `proprio_personne`, source). Rien ne manquait : la ligne
+« champs restants » de `SCHEMAS.csv` était périmée → **MAXIMUM**, aucune ingestion nécessaire.
+
+### Reprise (point de départ pour la prochaine source) — **BPE**
+Après CoSIA (seuil) et Cartofriches (déjà MAXIMUM), l'ordre imposé reprend à **BPE** (sous-types,
+année), puis Parc national, REI, BODACC, Fibre Arcep, … **Commande de reprise : « continue SOURCES-4 ».**
 
 ### Le reste du LOT 2 — rang conservé
 `SCHEMAS.csv` liste ~70 champs « à voir »/« à ingérer », ordonnés par utilité (mandat § LOT 2).
@@ -171,8 +187,10 @@ Aucun nouveau doublon arbitré dans ce lot (LOT 1 ne fait que surfacer des champ
 nouvelle source). Les arbitrages de doublon (EDF > BD TOPO lignes, CoSIA/LiDAR > végétation, BPE >
 équipements) restent à écrire au fil des ingestions BD TOPO/BD CARTO du LOT 2.
 
-## Sources arrêtées sur seuil (10 Go / 2 h)
-Aucune — LOT 1 n'ingère rien (surfacing de base existante).
+## Sources arrêtées sur seuil (10 Go / 2 h) — pour décision de Vic
+- **CoSIA (toutes classes par parcelle)** : download **494 Mo** compressés (sous 10 Go), mais
+  l'intersection île entière (431 663 parcelles × ~14 classes, polygones 20 cm) dépasse **2 h**.
+  Bâti déjà servi ; le reste = run dédié `parcel_cosia_couverture`. **Chiffre écrit, Vic tranche.**
 
 ## Les deux portes à la clôture
 - LOT 1 (commit da97f39b) : verrous **24/24** · suite **3081 passed** · vitest **207** · tsc **0**.
