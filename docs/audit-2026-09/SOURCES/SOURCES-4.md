@@ -146,12 +146,27 @@ ligne PARTIEL ajoutée à `SCHEMAS.csv`). L'**effectif brut `nb_lls`** dormait d
 ### CoSIA — toutes les classes par parcelle → **FAIT (décision Vic : lancé en fin de session)**
 Seule la classe **Bâtiment** était ingérée. Vic a tranché : **lancer l'intersection en fin de
 session** (calcul unique, non récurrent). Download `.7z` D974 2025 = **494 Mo** ; extrait = 37 tuiles
-GPKG, **2,8 Go**. Le calcul n'est PAS > 2 h : l'approche **streaming tuile-par-tuile** (module
-`ingestion/cosia_couverture.py` : chaque tuile → staging GIST → intersection parcelles → agrégation
-(idu, classe, m²) cumulée, commit par tuile) mesure **~37 s/tuile** (1 tuile validée : 83 089 polys,
-26 772 couples, **15 classes**) → **~25 min pour les 37 tuiles**. Table `parcel_cosia_couverture`
-(idu, classe, m²) déclarée au registre (réservoir `cosia`). Job lancé en fond ; résultat dans le
-rapport à la clôture.
+GPKG, **2,8 Go**. Le calcul n'est PAS > 2 h : l'approche **streaming tuile-par-tuile** (module `ingestion/cosia_couverture.py` : chaque tuile →
+staging → **`ST_Subdivide`** (128 sommets) → index GIST → intersection parcelles → agrégation
+(idu, classe, m²) cumulée, commit par tuile). Le `ST_Subdivide` est essentiel : sans lui, une tuile
+urbaine dense partait sur **> 20 min** (gros polygones forêt/broussaille non découpés) ; avec, ~15-40
+s/tuile. **RÉSULTAT (37 tuiles, ~20 min) : 5 273 672 polygones, 1 947 019 couples (idu×classe),
+431 657 / 431 663 parcelles (99,999 %), 15 classes.** Cohérence prouvée : la somme des classes d'une
+parcelle = sa surface cadastrale au m² près (169 715 = 169 715). Table `parcel_cosia_couverture`
+(idu, classe, m²) déclarée au registre (réservoir `cosia`).
+
+### Piscines (CoSIA) → **couche dédiée, 46 599 piscines de La Réunion**
+Demande explicite : « toutes les piscines de la Réunion ». `build_cosia_piscines` matérialise CHAQUE
+piscine détectée (classe Piscine) en polygone dans `spatial_layers kind='piscine_cosia'`, avec sa
+**surface (m²)**, sa **commune** (point sur surface dans les frontières IGN) et la **parcelle** qui la
+contient (`attrs.parcelle_idu`). **46 599 piscines, 46 550 taguées commune, 46 219 rattachées parcelle**
+(22 s). Top : Saint-Paul 6 940, Le Tampon 4 957, Saint-Denis 4 915, Saint-Pierre 4 686. Servie en
+**couche carte + popup riche** (`/map/layers.geojson?kind=piscine_cosia` : surface + parcelle au clic ;
+vérifié live). Rattachée à la parcelle → **croisable propriétaire** (piste piscines non déclarées).
+Détection IA 20 cm 2025 — les tout petits polygones (< quelques m²) sont du bruit IA, filtrables. Kind
+déclaré au registre (réservoir `cosia`, couches). Reste frontend (suite) : le toggle dans le panneau
+COUCHES + le style de rendu (chaque couche carte est câblée à la main dans `MapView.tsx`) — l'endpoint
+et la donnée sont, eux, servis et croisables dès maintenant.
 
 ### Cartofriches — détail complet → **MAXIMUM (déjà atteint)**
 Vérification : les **372 friches** (`spatial_layers/friche`) portent DÉJÀ, dans `attrs.detail`, le

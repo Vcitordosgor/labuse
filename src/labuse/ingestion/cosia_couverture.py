@@ -45,13 +45,16 @@ def ensure_table(session: Session) -> None:
 
 
 def _charger_staging(session: Session, gpkg: str, batch: int = 3000) -> int:
-    """Charge TOUTES les classes d'une tuile GPKG dans la table temporaire `_cosia_tile`
-    (classe text, g geometry(Geometry,2975)). Renvoie le nombre de polygones chargés."""
-    session.execute(text("DROP TABLE IF EXISTS _cosia_tile"))
+    """Charge TOUTES les classes d'une tuile GPKG dans `_cosia_tile` (classe, g), en SUBDIVISANT les
+    polygones (`ST_Subdivide`, ≤128 sommets) : les grands objets (forêt, broussaille) sont éclatés
+    en petits morceaux → le filtre GIST `&&` devient TRÈS sélectif et chaque `ST_Intersection` porte
+    sur une pièce minuscule (le tuilage lourd des tuiles urbaines denses tombe de ~heures à minutes).
+    Renvoie le nombre de polygones bruts chargés."""
+    session.execute(text("DROP TABLE IF EXISTS _cosia_raw, _cosia_tile"))
     session.execute(text(
-        "CREATE TEMP TABLE _cosia_tile (classe text, g geometry(Geometry, 2975))"))
-    ins = text("INSERT INTO _cosia_tile (classe, g) VALUES "
-               "(:c, ST_MakeValid(ST_GeomFromWKB(:wkb, 2975)))")
+        "CREATE TEMP TABLE _cosia_raw (classe text, g geometry(Geometry, 2975))"))
+    ins = text("INSERT INTO _cosia_raw (classe, g) VALUES "
+               "(:c, ST_CollectionExtract(ST_MakeValid(ST_GeomFromWKB(:wkb, 2975)), 3))")
     db = sqlite3.connect(gpkg)
     try:
         tbl = db.execute("SELECT table_name FROM gpkg_contents "
@@ -73,6 +76,12 @@ def _charger_staging(session: Session, gpkg: str, batch: int = 3000) -> int:
             n += len(params)
     finally:
         db.close()
+    # subdivision : petits morceaux → index efficace ; on écarte les géométries vides/nulles.
+    session.execute(text(
+        "CREATE TEMP TABLE _cosia_tile AS "
+        "SELECT classe, ST_Subdivide(g, 128) AS g FROM _cosia_raw "
+        "WHERE g IS NOT NULL AND NOT ST_IsEmpty(g)"))
+    session.execute(text("DROP TABLE _cosia_raw"))
     session.execute(text("CREATE INDEX ON _cosia_tile USING gist (g)"))
     session.execute(text("ANALYZE _cosia_tile"))
     return n
@@ -125,3 +134,79 @@ def build_couverture(session: Session, extract_dir: str | Path | None = None,
     classes = session.execute(text(f"SELECT count(DISTINCT classe) FROM {TABLE}")).scalar()
     return {"polys": total_poly, "couples": int(couples or 0), "classes": int(classes or 0),
             "tiles": len(tiles), "secondes": round(time.time() - t0)}
+
+
+# ── Couche Piscines (polygones individuels, mappables + rattachés parcelle/commune) ──────────────
+PISCINE_KIND = "piscine_cosia"
+
+_INS_PISCINE = text(
+    """INSERT INTO spatial_layers (kind, subtype, name, geom, attrs, data_source_id)
+       VALUES (:k, 'Piscine', NULL,
+               ST_Force2D(ST_MakeValid(ST_Transform(ST_GeomFromWKB(:wkb, 2975), 4326))),
+               CAST(:a AS jsonb), :sid)""")
+
+
+def build_cosia_piscines(session: Session, extract_dir: str | Path | None = None,
+                         tiles: list[str] | None = None, log=lambda *_: None) -> dict:
+    """SOURCES-4 lot 2 — matérialise CHAQUE piscine détectée par CoSIA (classe « Piscine ») en
+    polygone dans `spatial_layers kind='piscine_cosia'`, avec sa surface (m²), la commune (point sur
+    surface dans les frontières IGN) et la parcelle qui la contient. Croisable propriétaire (piste
+    piscines non déclarées). Idempotent (purge du kind). Détection IA 20 cm 2025 — pas un cadastre."""
+    import glob as _glob
+    import json as _json
+    from .cosia import _ensure_source, SOURCE_MILLESIME, _repo_root
+    if tiles is None:
+        d = Path(extract_dir) if extract_dir else _default_extract_dir()
+        tiles = sorted(_glob.glob(str(d / "*.gpkg")))
+    if not tiles:
+        raise FileNotFoundError("Aucune tuile .gpkg CoSIA")
+    sid = _ensure_source(session)
+    session.execute(text("DELETE FROM spatial_layers WHERE kind = :k"), {"k": PISCINE_KIND})
+    attrs = _json.dumps({"classe": "Piscine", "source_millesime": SOURCE_MILLESIME})
+    total = 0
+    for i, gpkg in enumerate(tiles, 1):
+        db = sqlite3.connect(gpkg)
+        try:
+            tbl = db.execute("SELECT table_name FROM gpkg_contents "
+                             "WHERE data_type='features'").fetchone()[0]
+            cur = db.execute(f"SELECT geom FROM \"{tbl}\" WHERE classe = 'Piscine'")
+            params, n = [], 0
+            for (blob,) in cur:
+                wkb = _gpkg_to_wkb(blob)
+                if wkb is None:
+                    continue
+                params.append({"k": PISCINE_KIND, "wkb": wkb, "a": attrs, "sid": sid})
+                if len(params) >= 2000:
+                    session.execute(_INS_PISCINE, params); n += len(params); params.clear()
+            if params:
+                session.execute(_INS_PISCINE, params); n += len(params)
+            total += n
+            log(f"piscines [{i}/{len(tiles)}] {Path(gpkg).name} : {n} (cumul {total})")
+        finally:
+            db.close()
+    session.flush()
+    # surface m² (2975) dans les attrs, tag commune (frontières IGN), rattachement parcelle.
+    session.execute(text(
+        "UPDATE spatial_layers SET attrs = attrs || jsonb_build_object('surface_m2', "
+        "round(ST_Area(geom_2975)::numeric, 1)) WHERE kind = :k"), {"k": PISCINE_KIND})
+    geo = _json.loads((_repo_root() / "frontend" / "public" / "communes974.geojson").read_text("utf-8"))
+    session.execute(text("CREATE TEMP TABLE _cb (nom text, g geometry(Geometry,2975)) ON COMMIT DROP"))
+    for feat in geo["features"]:
+        if feat["properties"].get("nom"):
+            session.execute(text(
+                "INSERT INTO _cb (nom, g) VALUES (:nom, "
+                "ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(:g), 4326), 2975))"),
+                {"nom": feat["properties"]["nom"], "g": _json.dumps(feat["geometry"])})
+    session.execute(text("CREATE INDEX ON _cb USING gist (g)"))
+    tag = session.execute(text(
+        "UPDATE spatial_layers b SET commune = cb.nom FROM _cb cb WHERE b.kind = :k "
+        "AND ST_Contains(cb.g, ST_PointOnSurface(b.geom_2975))"), {"k": PISCINE_KIND}).rowcount
+    # rattachement parcelle : la parcelle qui contient le centre de la piscine (idu dans attrs).
+    ratt = session.execute(text(
+        "UPDATE spatial_layers b SET attrs = b.attrs || jsonb_build_object('parcelle_idu', p.idu) "
+        "FROM parcels p WHERE b.kind = :k "
+        "AND p.geom_2975 && b.geom_2975 AND ST_Contains(p.geom_2975, ST_PointOnSurface(b.geom_2975))"),
+        {"k": PISCINE_KIND}).rowcount
+    session.commit()
+    return {"piscines": total, "communes_taguees": tag, "rattachees_parcelle": ratt,
+            "source_millesime": SOURCE_MILLESIME}

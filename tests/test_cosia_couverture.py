@@ -25,3 +25,13 @@ def test_ensure_table_idempotent(db_session):
         "SELECT column_name FROM information_schema.columns WHERE table_name = :t"),
         {"t": TABLE}).all()}
     assert {"idu", "classe", "m2", "source_millesime"} <= cols
+
+
+def test_couche_piscine_declaree_et_servie():
+    """SOURCES-4 lot 2 — la couche Piscines (polygones CoSIA) est rattachée au réservoir cosia
+    (V1c) ET servie en carte à popup riche (surface + parcelle au clic)."""
+    from labuse.registre import tables
+    from labuse.ingestion.cosia_couverture import PISCINE_KIND
+    assert PISCINE_KIND in tables.RESERVOIR_TABLES["cosia"].couches
+    from labuse.api.app import _MAP_LAYER_KINDS, _RICH_POPUP_KINDS
+    assert PISCINE_KIND in _MAP_LAYER_KINDS and PISCINE_KIND in _RICH_POPUP_KINDS
