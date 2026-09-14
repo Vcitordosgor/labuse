@@ -1000,9 +1000,26 @@ def ingest_foret_publique(session, bbox, commune, run_id, sids) -> int:
         p = f.get("properties") or {}
         topo = p.get("toponyme") or ""
         subtype = "domaniale" if "domanial" in topo.lower() else "publique"
+        # SOURCES-5 #12 : tout champ publié BDTOPO (nature=RÉGIME, sources=ONF gestionnaire,
+        # identifiants_sources=id ONF, cleabs, dates) + propriétaire dérivé du régime (droit
+        # forestier standard, pas inventé). subtype (domaniale/publique) INCHANGÉ (pilote la cascade).
+        nature = (p.get("nature") or "").strip()
+        nl = nature.lower()
+        if "domanial" in nl and ("départemento" in nl or "departemento" in nl):
+            proprietaire = "Département + État (forêt départemento-domaniale)"
+        elif "domanial" in nl:
+            proprietaire = "État (forêt domaniale)"
+        elif "commun" in nl:
+            proprietaire = "Commune (forêt communale)"
+        else:
+            proprietaire = None
+        attrs = {k: (v.strip() if isinstance(v, str) else v) for k, v in p.items() if v is not None}
+        attrs.update({"src": "BDTOPO_V3:foret_publique",
+                      "regime": nature or None,                # nature BDTOPO = régime forestier
+                      "gestionnaire": p.get("sources"),        # ex. « ONF 2021 »
+                      "proprietaire": proprietaire})
         _insert_layer(session, "foret_publique", subtype, topo or "Forêt publique", f["geometry"],
-                      sids.get("Forêts publiques (ONF)"), commune, run_id,
-                      {"toponyme": topo, "src": "BDTOPO_V3:foret_publique"})
+                      sids.get("Forêts publiques (ONF)"), commune, run_id, attrs)
         n += 1
     return n
 

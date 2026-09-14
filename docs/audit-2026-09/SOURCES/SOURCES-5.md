@@ -308,10 +308,33 @@ pas). `SCHEMAS.csv` : 1 à-ingérer → 1 MAXIMUM. Portes vertes.
 
 ---
 
+### 12. Forêts publiques (ONF) → **MAXIMUM** (fait)
+
+**Constat** : `ingest_foret_publique` (BDTOPO_V3:foret_publique) ne gardait que `{toponyme, src}`.
+Le mandat veut **régime + propriétaire**.
+
+**Correctif** : `attrs` recopie **les 13 champs BDTOPO** + 3 dérivés : **`regime`** = `nature`
+(« Forêt domaniale » / « départemento-domaniale »), **`proprietaire`** dérivé du régime (droit
+forestier standard : domaniale→État, départemento-domaniale→Département+État, communale→Commune —
+pas d'invention), **`gestionnaire`** = `sources` (« ONF 2021 »). `identifiants_sources` (id ONF),
+`cleabs`, dates, importance, précision conservés. Le **subtype** (domaniale/publique) qui pilote le
+hard_exclude cascade est **INCHANGÉ**.
+
+**Topologie corrigée** : re-ingestion **île entière en une passe** (`commune=NULL`) = **65 forêts
+distinctes** (44 domaniale + 21 publique), au lieu de la duplication par-commune (227 : une grande
+forêt — Mafate, Plaine des Cafres — intersecte plusieurs bbox communales). Le lecteur cascade lit
+`kind_present` global + géométrie → `commune=NULL` sans effet. Subtypes **identiques** à l'existant.
+
+**Preuve** : 65 rows, geom_2975 OK, subtypes 44/21 inchangés ; attrs 2 → 16 clés ;
+`regime="Forêt domaniale"`, `proprietaire="État (forêt domaniale)"`, `gestionnaire="ONF 2021"`.
+`SCHEMAS.csv` : 1 à-ingérer → 2 MAXIMUM. Portes vertes.
+
+---
+
 ## Reprise
 
-Commande : **« continue SOURCES-5 »**. Prochaine source : **12. Forêts publiques (ONF)** (régime +
-propriétaire).
+Commande : **« continue SOURCES-5 »**. Prochaine source : **13. Potentiel foncier (Région ODS)**
+(toutes les colonnes restantes).
 
-Restantes après #11 : B12 Forêts ONF régime · B13 Potentiel foncier colonnes restantes · C14 Sudocuh
-· C15 RP Logements EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.
+Restantes après #12 : B13 Potentiel foncier colonnes restantes · C14 Sudocuh · C15 RP Logements
+EGOUL · C16 Cadastre d'époque · C17 BD CARTO V5 · C18 DPE ADEME 230 champs.
