@@ -224,7 +224,14 @@ def ingest_gpu_zones(session, insee, bbox, commune, run_id, sids) -> int:
                       p.get("libelong") or p.get("libelle"), f["geometry"],
                       sids.get(KIND_SOURCE["plu_gpu_zone"]), commune, run_id,
                       {"source": "API_CARTO_GPU", "libelle": p.get("libelle"),
-                       "partition": p.get("partition"), "idurba": p.get("idurba")})
+                       "partition": p.get("partition"), "idurba": p.get("idurba"),
+                       # SOURCES-4 lot 2 — CNIG zone-urba : on gardait idurba/libelle ; on ajoute le
+                       # TYPE de zone, la destination dominante, les dates d'approbation/validité, le
+                       # libellé long et la référence du règlement (nomfic = PDF#page). destdomi est
+                       # souvent vide au GPU (déclaratif) — gardé tel quel, jamais inventé.
+                       "typezone": p.get("typezone"), "libelong": p.get("libelong"),
+                       "destdomi": p.get("destdomi"), "datappro": p.get("datappro"),
+                       "datvalid": p.get("datvalid"), "nomfic": p.get("nomfic")})
         n += 1
     logging.getLogger("labuse").info(
         "ingest_gpu_zones[%s] : %d zones GPU (%d propres %s, %d hors-document écartées)",

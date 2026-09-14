@@ -229,7 +229,15 @@ fonctions de re-ingestion isolées (`ingest_mvt_commune` déjà là, + `ingest_c
 `ingest_sols_pollues_commune`, ne re-touchant que leur couche). Re-ingéré 24 communes : mvt 3 085,
 cavités 151, sols pollués 531. Test `test_parse_georisques_champs_producteur_sources4`.
 
-### Reprise (point de départ pour la prochaine source) — **Loyers DHUP (carte)**
+### Urbanisme PLU / GPU (CNIG zone-urba, API Carto) → **MAXIMUM**
+On gardait `idurba`/`libelle`. `ingest_gpu_zones` capture désormais l'ensemble CNIG zone-urba :
+**typezone**, **libelong** (description longue), **destdomi** (destination dominante — VIDE au GPU
+974, déclaratif, gardée null sans l'inventer), **datappro** / **datvalid** (dates), **nomfic**
+(référence du règlement, PDF#page). Re-ingéré 24 communes (repli AGORAH St-André/St-Leu inchangé) :
+**5 841 zones, datvalid sur 5 331** (les zones AGORAH n'en portent pas). Zonage servi INTACT
+(V4c/V4d verts — même donnée GPU, seuls les attrs s'enrichissent).
+
+### Reprise (point de départ pour la prochaine source) — **les LOURDS, un par un**
 Ordre restant : **Loyers DHUP carte** (loypredm2 + intervalles de confiance — source distincte de
 l'OLL déjà ingéré), puis DFI, Sudocuh, RP Logement, RPLS, classement sonore, EDF HTA, OSM, AZI/TRI,
 Mérimée, Conso NAF, personnes morales, SITADEL, Potentiel foncier, GéoLittoral, ONF, INPN, ZNIEFF,
