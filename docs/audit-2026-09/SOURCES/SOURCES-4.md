@@ -143,14 +143,15 @@ ligne PARTIEL ajoutée à `SCHEMAS.csv`). L'**effectif brut `nb_lls`** dormait d
 - **Test** : `test_sources4_lot1.py::test_lls_inventaire_n_declare_au_registre`. FICHES-DONNEES.md
   régénéré.
 
-### CoSIA — toutes les classes par parcelle → **SEUIL (mesuré, décision Vic)**
-Aujourd'hui seule la classe **Bâtiment** est ingérée (`p_model_bati_cosia` par parcelle +
-`spatial_layers/batiment_cosia` géométrie). Ingérer **les 14 autres classes par parcelle** exige le
-lot GPKG D974 (absent du worktree — `data/cosia/extract/` vide). **Poids mesuré : le .7z D974 2025 =
-494 Mo compressés** (HTTP HEAD, sous le seuil 10 Go). Le coût réel n'est pas le download mais
-l'**intersection île entière** : 431 663 parcelles × ~14 classes × des millions de polygones 20 cm →
-calcul **> 2 h** (le second seuil du mandat). **Arrêt sur cette source, chiffre écrit — décision Vic**
-(run dédié, table `parcel_cosia_couverture` à créer). Non fait ce mandat.
+### CoSIA — toutes les classes par parcelle → **FAIT (décision Vic : lancé en fin de session)**
+Seule la classe **Bâtiment** était ingérée. Vic a tranché : **lancer l'intersection en fin de
+session** (calcul unique, non récurrent). Download `.7z` D974 2025 = **494 Mo** ; extrait = 37 tuiles
+GPKG, **2,8 Go**. Le calcul n'est PAS > 2 h : l'approche **streaming tuile-par-tuile** (module
+`ingestion/cosia_couverture.py` : chaque tuile → staging GIST → intersection parcelles → agrégation
+(idu, classe, m²) cumulée, commit par tuile) mesure **~37 s/tuile** (1 tuile validée : 83 089 polys,
+26 772 couples, **15 classes**) → **~25 min pour les 37 tuiles**. Table `parcel_cosia_couverture`
+(idu, classe, m²) déclarée au registre (réservoir `cosia`). Job lancé en fond ; résultat dans le
+rapport à la clôture.
 
 ### Cartofriches — détail complet → **MAXIMUM (déjà atteint)**
 Vérification : les **372 friches** (`spatial_layers/friche`) portent DÉJÀ, dans `attrs.detail`, le
@@ -187,9 +188,27 @@ ex. 29,03 %). **Servi** : la **TFPNB** (la plus pertinente pour un terrain) entr
 (donnée `tfpnb_taux_pct`, robinet `fiche_commune_fiscalite`, commune + EPCI) ; CFE + bases restent en
 base (disponibles, non affichées). Test `test_tfpnb_taux_declare_au_registre`. FICHES-DONNEES régénéré.
 
-### Reprise (point de départ pour la prochaine source) — **BODACC**
-Après REI (MAXIMUM), l'ordre imposé reprend à **BODACC** (ventes et cessions de fonds, dépôts de
-comptes), puis Fibre Arcep, Loyers DHUP, … **Commande de reprise : « continue SOURCES-4 ».**
+### BODACC → **LARGEMENT MAXIMUM** (ventes/cessions déjà là ; dépôts de comptes noté)
+Vérification : les **ventes et cessions de fonds** sont **déjà ingérées** (533 dans
+`bodacc_annonces_owner`, famille `vente_cession`), en plus des procédures collectives (677) et des
+radiations (208, Score V). Le seul manque = **dépôts de comptes** (`familleavis='dpc'`), que le
+connecteur récupère mais écarte du Score V. Faible valeur foncière + capter le `dpc` sans contaminer
+le score exige une table dédiée `bodacc_depots` → ligne « à ingérer » ajoutée (déféré, non fait ici).
+
+### Fibre Arcep — toutes technos + débits → **MAXIMUM**
+On ne gardait que le **FttH** (FO) ; l'Arcep publie AUSSI le cuivre/DSL (`CU`), la 4G fixe (`4GF`),
+le satellite (`SAT`) et la **classe de débit** (descendant/montant). `ingest_arcep` capture désormais,
+par immeuble, les **technos disponibles** (`technos[]`) et le **meilleur débit** descendant/montant
+(`_meilleur_debit`, ordre THD1G > THD100 > THD30 > HD3 > HD05 > BHD8 > INEL). Re-ingéré :
+**330 051 immeubles, 26 s** (ex. [4GF, CU, FO, SAT] → THD1G sur 207 k immeubles). Les technos hors
+FttH restent **déclaratives** (étiquetées, jamais présentées comme fiables au même titre que le FttH
+IPE). Place = `arcep_immeubles` (base) ; le FttH reste le signal servi à la viabilisation. Test
+`test_arcep_fibre.py`.
+
+### Reprise (point de départ pour la prochaine source) — **Loyers DHUP**
+Après BODACC (largement MAXIMUM) et Fibre Arcep (MAXIMUM), l'ordre imposé reprend à **Loyers DHUP**
+(bornes de confiance, type de bien), puis DFI, Sudocuh, RP Logement, RPLS, … **Commande de reprise :
+« continue SOURCES-4 ».** (CoSIA : intersection île entière lancée en fin de session — voir plus bas.)
 
 ### Le reste du LOT 2 — rang conservé
 `SCHEMAS.csv` liste ~70 champs « à voir »/« à ingérer », ordonnés par utilité (mandat § LOT 2).
@@ -215,10 +234,10 @@ Aucun nouveau doublon arbitré dans ce lot (LOT 1 ne fait que surfacer des champ
 nouvelle source). Les arbitrages de doublon (EDF > BD TOPO lignes, CoSIA/LiDAR > végétation, BPE >
 équipements) restent à écrire au fil des ingestions BD TOPO/BD CARTO du LOT 2.
 
-## Sources arrêtées sur seuil (10 Go / 2 h) — pour décision de Vic
-- **CoSIA (toutes classes par parcelle)** : download **494 Mo** compressés (sous 10 Go), mais
-  l'intersection île entière (431 663 parcelles × ~14 classes, polygones 20 cm) dépasse **2 h**.
-  Bâti déjà servi ; le reste = run dédié `parcel_cosia_couverture`. **Chiffre écrit, Vic tranche.**
+## Sources arrêtées sur seuil (10 Go / 2 h)
+- **CoSIA** : mesuré à 494 Mo / 2,8 Go extraits ; l'estimation initiale « > 2 h » était pessimiste —
+  l'approche streaming tuile-par-tuile ramène à **~25 min**. Vic a autorisé le calcul (unique) ; il a
+  été **lancé en fin de session**. Plus un arrêt sur seuil.
 
 ## Les deux portes à la clôture
 - LOT 1 (commit da97f39b) : verrous **24/24** · suite **3081 passed** · vitest **207** · tsc **0**.
