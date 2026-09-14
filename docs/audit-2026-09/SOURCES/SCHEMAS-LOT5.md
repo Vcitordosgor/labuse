@@ -47,10 +47,25 @@ prescriptions ER/EBC, DPU, zonages assainissement (couverture producteur complè
 connus, ex. bénéficiaire ER / DPU délégataire, sont ABSENTS du GeoJSON producteur, pas laissés).
 DEAL WMS/WFS (13) = hub (ses couches concrètes sont leurs propres sources).
 
+## Familles MARCHÉ (4/4), LOGEMENT (7/7), CADASTRE (4/4) — couvertes
+- **Marché** : DVF (quasi-MAX, raw) ; Radar (pige interne, pas de schéma public) ; Loyers OLL (agrégats
+  ingérés, micro-données sous convention) ; Loyers DHUP (loypredm2 servi, bornes de confiance à voir).
+- **Logement** : Zonage ABC = **MAXIMUM** (tout le CSV) ; RNIC quasi-MAX (raw + syndic_siret) ; SRU/
+  INSEE RP/RPLS = agrégats ingérés, détails fins (effectifs bruts, période construction, chauffage,
+  loyer/financement par logement) « à voir » ; NPNRU/PLH documentaires.
+- **Cadastre** : Cadastre PCI (socle 431 663 parcelles → MAXIMUM, feuille/arpente à voir) ; BAN PLUS =
+  **MAXIMUM** (tout le lien WFS) ; DFI (409 k filiations, types d'événements à voir) ; Cartofriches
+  (statut/reconv ingérés, surface/propriétaire à voir).
+
 ## Sources au verdict MAXIMUM (candidates, à ce stade)
-DVF · CatNat · endiguement · PEB · ICPE (enrichie) · GPU zones/prescriptions/DPU/assainissement — soit
-**~12 sources** couvertes au maximum publiable (sous réserve de la validation Vic des « à voir » où le
-`raw`/`name` suffit). Familles faites : **risques (15) + urbanisme (8) + DVF** = 24 sources confrontées.
+DVF · CatNat · endiguement · PEB · ICPE (enrichie) · GPU zones/prescriptions/DPU/assainissement ·
+Zonage ABC · Cadastre PCI · BAN PLUS · RNIC (raw) — soit **~16 sources** au maximum publiable (sous
+réserve de la validation Vic des « à voir » où `raw`/`name`/l'agrégat suffit).
+
+**Familles faites : risques (15) + urbanisme (8) + marché (4) + logement (7) + cadastre (4) = 38
+sources confrontées** sur les 96. Un utile INGÉRÉ (ICPE : siret/état/adresse). Reste : economie,
+accès, environnement, topographie, attractivité, énergie, fiscal, réseaux, imagerie… (~58 sources)
+pour les prochains « continue », dans l'ordre, sans sauter de source.
 
 ## Reste à faire (rangé, sans sauter de source)
 Les 95 autres sources, famille par famille, dans l'ordre ci-dessus. Chaque schéma producteur est lu au bon
