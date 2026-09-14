@@ -45,8 +45,26 @@ CREATE TABLE IF NOT EXISTS arcep_immeubles (
     maj_at          timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS ix_arcep_imb_geom2975 ON arcep_immeubles USING gist (geom_2975);
-CREATE INDEX IF NOT EXISTS ix_arcep_imb_insee ON arcep_immeubles (insee)
+CREATE INDEX IF NOT EXISTS ix_arcep_imb_insee ON arcep_immeubles (insee);
+-- SOURCES-4 lot 2 — on ne gardait que le FttH ; l'Arcep publie TOUTES les technologies (fibre,
+-- cuivre/DSL, 4G fixe, satellite) et la CLASSE DE DÉBIT (descendant/montant) par immeuble. On
+-- garde les technos disponibles et le meilleur débit descendant (les autres technos restent
+-- déclaratives — étiquetées, jamais présentées comme fiables au même titre que le FttH IPE).
+ALTER TABLE arcep_immeubles ADD COLUMN IF NOT EXISTS technos text[] NOT NULL DEFAULT '{}';
+ALTER TABLE arcep_immeubles ADD COLUMN IF NOT EXISTS debit_descendant_max varchar(8);
+ALTER TABLE arcep_immeubles ADD COLUMN IF NOT EXISTS debit_montant_max varchar(8)
 """
+
+# SOURCES-4 lot 2 — ordre des classes de débit Arcep (du meilleur au moins bon) pour retenir le
+# MEILLEUR débit disponible par immeuble, toutes technos confondues.
+_DEBIT_ORDRE = ("THD1G", "THD100", "THD30", "HD3", "HD05", "BHD8", "INEL")
+_DEBIT_RANG = {c: i for i, c in enumerate(_DEBIT_ORDRE)}
+
+
+def _meilleur_debit(classes: set[str]) -> str | None:
+    """La meilleure classe de débit d'un ensemble (rang le plus faible = meilleur)."""
+    connues = [c for c in classes if c in _DEBIT_RANG]
+    return min(connues, key=lambda c: _DEBIT_RANG[c]) if connues else None
 
 
 def ensure_tables(engine) -> None:
@@ -77,12 +95,24 @@ def ingest_arcep(session: Session, *, url_imb: str = URL_BASE_IMB, url_elig: str
     finally:
         if own:
             c.close()
-    # 1) éligibilité : opérateurs FO par immeuble (les autres technos sont déclaratives — non servies)
+    # 1) éligibilité : opérateurs FO par immeuble (FttH fiable) + SOURCES-4 : toutes les technos
+    # disponibles et la meilleure classe de débit descendant/montant par immeuble.
     fo: dict[str, set[str]] = {}
+    technos: dict[str, set[str]] = {}
+    debit_d: dict[str, set[str]] = {}
+    debit_m: dict[str, set[str]] = {}
     r = csv.DictReader(io.TextIOWrapper(io.BytesIO(brut_elig), encoding="utf8"), delimiter=";")
     for row in r:
-        if (row.get("code_techno") or "").upper() == "FO":
-            fo.setdefault(row["imb_id"], set()).add((row.get("code_operateur") or "?").strip())
+        imb = row["imb_id"]
+        techno = (row.get("code_techno") or "").upper()
+        if techno:
+            technos.setdefault(imb, set()).add(techno)
+        if techno == "FO":
+            fo.setdefault(imb, set()).add((row.get("code_operateur") or "?").strip())
+        if (dd := (row.get("classe_debit_descendant") or "").strip()):
+            debit_d.setdefault(imb, set()).add(dd)
+        if (dm := (row.get("classe_debit_montant") or "").strip()):
+            debit_m.setdefault(imb, set()).add(dm)
     # 2) immeubles : purge + insertion par lots
     session.execute(text("DELETE FROM arcep_immeubles"))
     n = n_ftth = 0
@@ -93,8 +123,9 @@ def ingest_arcep(session: Session, *, url_imb: str = URL_BASE_IMB, url_elig: str
         if batch:
             session.execute(text(
                 "INSERT INTO arcep_immeubles (imb_id, insee, commune, adresse, nb_logements, "
-                " ftth, operateurs_ftth, geom, geom_2975, millesime) "
-                "VALUES (:id, :insee, :com, :adr, :nb, :ftth, :ops, "
+                " ftth, operateurs_ftth, technos, debit_descendant_max, debit_montant_max, "
+                " geom, geom_2975, millesime) "
+                "VALUES (:id, :insee, :com, :adr, :nb, :ftth, :ops, :technos, :dd, :dm, "
                 " ST_Transform(ST_SetSRID(ST_MakePoint(:x, :y), 3857), 4326), "
                 " ST_Transform(ST_SetSRID(ST_MakePoint(:x, :y), 3857), 2975), :mil) "
                 "ON CONFLICT (imb_id) DO NOTHING"), batch)
@@ -113,7 +144,11 @@ def ingest_arcep(session: Session, *, url_imb: str = URL_BASE_IMB, url_elig: str
         batch.append({"id": imb, "insee": row.get("imb_code_insee") or "?",
                       "com": row.get("addr_nom_commune"), "adr": adr or None,
                       "nb": int(row["imb_nbr_logloc"]) if (row.get("imb_nbr_logloc") or "").isdigit() else None,
-                      "ftth": bool(ops), "ops": ops, "x": x, "y": y, "mil": millesime})
+                      "ftth": bool(ops), "ops": ops,
+                      "technos": sorted(technos.get(imb, ())),
+                      "dd": _meilleur_debit(debit_d.get(imb, set())),
+                      "dm": _meilleur_debit(debit_m.get(imb, set())),
+                      "x": x, "y": y, "mil": millesime})
         n += 1
         if ops:
             n_ftth += 1

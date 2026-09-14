@@ -510,7 +510,11 @@ def ingest_parc_national(session, commune, run_id, sids) -> int:
     # rafraîchir : purge l'ancienne version (tout run confondu), ré-insère île entière
     session.execute(text("DELETE FROM spatial_layers WHERE kind='parc_national'"))
     with _client() as c:
-        recs = _ods_records(c, "pnrun_2021", select="type,code_type,geo_shape", page=50)
+        # SOURCES-4 lot 2 — l'ODS publie AUSSI la superficie (surf_ha) et le décret/arrêté qui
+        # établit chaque zone : on les garde (référence légale + surface au clic), en plus du
+        # cœur/adhésion déjà servi.
+        recs = _ods_records(c, "pnrun_2021",
+                            select="type,code_type,surf_ha,decret,geo_shape", page=50)
     n = 0
     for rec in recs:
         shape = rec.get("geo_shape") or {}
@@ -521,7 +525,8 @@ def ingest_parc_national(session, commune, run_id, sids) -> int:
         subtype = "coeur" if "coeur" in libelle.lower() or "cœur" in libelle.lower() else "adhesion"
         _insert_layer(session, "parc_national", subtype, libelle, geom,
                       sids.get(KIND_SOURCE["parc_national"]), None, run_id,
-                      {"type": libelle, "code_type": rec.get("code_type")})
+                      {"type": libelle, "code_type": rec.get("code_type"),
+                       "surface_ha": rec.get("surf_ha"), "decret": rec.get("decret")})
         n += 1
     return n
 

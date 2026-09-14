@@ -225,7 +225,11 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "bd_ortho": Rt(("ortho_tiles", "ortho_detections", "parcel_equipements"),
                    millesime="BD ORTHO IGN 974 — millésime 2025"),
     "bd_ortho_irc": Rt(("ortho_detections", "parcel_vegetation", "vegetation_zonal_acc")),
-    "cosia": Rt(("spatial_layers", "p_model_bati_cosia", "qa_cosia_bati"), couches=("batiment_cosia",),
+    "cosia": Rt(("spatial_layers", "p_model_bati_cosia", "qa_cosia_bati",
+                 # SOURCES-4 lot 2 — toutes les classes de couverture CoSIA par parcelle (m²).
+                 "parcel_cosia_couverture"),
+                # SOURCES-4 lot 2 — couche « Piscines » (polygones détectés par l'IA, rattachés parcelle).
+                couches=("batiment_cosia", "piscine_cosia"),
                 millesime="CoSIA 2025 (PVA juil.-août 2025, 20 cm)"),
     # CIRCUIT-6 lot 7 (fuite n°2) — la table batiment_hauteur_lidar (faîtage/égout par parcelle,
     # batch de dalles ACHEVÉ, ~303 000 parcelles) entre à la carte : la hauteur LiDAR est

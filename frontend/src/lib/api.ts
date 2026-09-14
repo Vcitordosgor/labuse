@@ -255,7 +255,7 @@ export interface ContexteCommune {
     prix_demande_median_eur_m2: number | null; prix_demande_n: number | null
     ecart_demande_acte_pct: number | null; prix_acte_eur_m2: number | null; source: string
   } | null
-  risques: { ppr_pct: number | null; mouvement_terrain_pct: number | null; catnat_arretes: number; parc_national: boolean; azi_tri?: { azi: { libelle?: string }[]; tri: { libelle?: string }[]; detail?: string } | null; source: string }
+  risques: { ppr_pct: number | null; mouvement_terrain_pct: number | null; catnat_arretes: number; catnat_detail?: { type_peril: string; date_debut: string | null; date_fin: string | null; date_arrete: string | null; code_national: string | null; date_publication_jo: string | null }[]; parc_national: boolean; azi_tri?: { azi: { libelle?: string }[]; tri: { libelle?: string }[]; detail?: string } | null; source: string }
   population: {
     habitants: number | null; menages: number | null; niveau_vie_moyen_eur: number | null
     logements: number | null; vacants: number | null; vacance_pct: number | null; source: string
@@ -277,6 +277,7 @@ export interface ContexteCommune {
   zonage_abc: { zone: string; millesime: string; source: string } | null
   // SOURCES-1 lot 5 — taux fonciers (REI) + ACV/PVD/ORT (Denormandie)
   fiscalite: { tfpb_commune_pct: number | null; tfpb_epci_pct: number | null
+    tfpnb_commune_pct?: number | null; tfpnb_epci_pct?: number | null
     teom_pct: number | null; millesime: string; source: string
     maj_at?: string | null; perime?: boolean } | null
   ort: { statut: 'acv' | 'pvd' | 'autre' | 'hors'; commune?: string

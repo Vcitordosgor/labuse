@@ -3697,9 +3697,17 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "SELECT pente_moy_deg, pente_max_deg, flag_terrassement_lourd "
         "FROM parcel_terrain WHERE idu = :idu"), {"idu": idu}).mappings().first()
     # LOT 10 (data-gap) : copropriété(s) RNIC rattachées à la parcelle (cible MdB, hors scoring).
+    # SOURCES-4 lot 1 — la fiche ne servait que 9 colonnes ; le reste dormait dans `raw`. On surface
+    # le SIRET du syndic (colonne déjà en base, jamais servie), les lots de stationnement et de
+    # commerce/bureaux, la résidence-service et le caractère coopératif du syndicat (raw ANAH). Chaque
+    # champ vient du producteur RNIC/ANAH — information de copropriété, jamais un verdict.
     copros = [dict(r) for r in db.execute(text(
         "SELECT numero_immatriculation, nom_usage, adresse, nb_lots_total, nb_lots_habitation, "
-        "       periode_construction, syndic_type, syndic_nom, rattachement "
+        "       periode_construction, syndic_type, syndic_nom, syndic_siret, rattachement, "
+        "       (raw->>'nombre_de_lots_de_stationnement')::int AS nb_lots_stationnement, "
+        "       raw->>'nombre_total_de_lots_a_usage_d_habitation_de_bureaux_ou_de_comm' AS nb_lots_hab_bur_com, "
+        "       raw->>'residence_service' AS residence_service, "
+        "       raw->>'syndicat_cooperatif' AS syndicat_cooperatif "
         "FROM rnic_coproprietes WHERE parcelle_idu = :idu ORDER BY nb_lots_total DESC NULLS LAST"),
         {"idu": idu}).mappings().all()]
     # RADAR P3 (C3) — un bien du Radar RATTACHÉ à cette parcelle s'y voit : le fait, le statut, le lien.
@@ -5397,7 +5405,10 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     # l'inondation RÉSIDUELLE derrière l'ouvrage, classe/niveau/population).
                     "endiguement",
                     # SOURCES-2 lot 4 — scénarios d'inondation des TRI (fréquent/moyen/extrême).
-                    "tri_zone"}
+                    "tri_zone",
+                    # SOURCES-4 lot 2 — piscines détectées par CoSIA (46 599 polygones IA 20 cm 2025),
+                    # rattachées parcelle : recensement mappable, croisable propriétaire.
+                    "piscine_cosia"}
 
 # SOURCES-1 lot 1 — kinds VIRTUELS de la carte : une clé front → le kind stocké + un filtre
 # subtype. ER = typepsc 05 (les 6 ER de Saint-Louis codés « 02 » sont captés par la cascade via
@@ -5425,6 +5436,11 @@ _RICH_POPUP_KINDS: frozenset[str] = frozenset({
     "endiguement",
     # SOURCES-2 lot 4 — scénarios TRI : scénario, hauteurs d'eau, TRI au clic.
     "tri_zone",
+    # SOURCES-4 lot 2 — Parc national : superficie (ha) + décret/arrêté qui établit la zone au clic
+    # (3 features seulement — coût nul). Le cœur/adhésion était déjà servi ; on ajoute la référence légale.
+    "parc_national",
+    # SOURCES-4 lot 2 — piscine : surface (m²) + parcelle rattachée au clic.
+    "piscine_cosia",
 })
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran

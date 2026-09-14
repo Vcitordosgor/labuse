@@ -68,6 +68,10 @@ def parse_sol_pollue(subtype: str, item: dict) -> dict | None:
             "code_insee": item.get("code_insee"),
             "fiche_risque": item.get("fiche_risque"),
             "date_maj": item.get("date_maj"),
+            # SOURCES-4 lot 2 — l'ACTIVITÉ (ce que faisait le site : la nature du risque de pollution)
+            # et le lieu-dit, publiés par le producteur, jusque-là non gardés.
+            "activite_principale": item.get("activite_principale"),
+            "adresse_lieudit": item.get("adresse_lieudit"),
         },
     }
 
@@ -85,6 +89,8 @@ def parse_cavite(item: dict) -> dict | None:
             "identifiant": item.get("identifiant"),
             "type": item.get("type"),
             "code_insee": item.get("code_insee"),
+            # SOURCES-4 lot 2 — repérage géographique (localisation textuelle du producteur).
+            "reperage_geo": item.get("reperage_geo"),
         },
     }
 
@@ -105,6 +111,13 @@ def parse_mvt(item: dict) -> dict | None:
             "date_debut": item.get("date_debut"),
             "commentaire": item.get("commentaire_mvt"),
             "code_insee": item.get("code_insee"),
+            # SOURCES-4 lot 2 — le producteur publie aussi la date de mise à jour, le lieu et son
+            # commentaire, et la précision de la date/du lieu (qualité de l'information).
+            "date_maj": item.get("date_maj"),
+            "lieu": item.get("lieu"),
+            "commentaire_lieu": item.get("commentaire_lieu"),
+            "precision_date": item.get("precision_date"),
+            "precision_lieu": item.get("precision_lieu"),
         },
     }
 
@@ -134,6 +147,25 @@ def parse_icpe(item: dict) -> dict | None:
                                             item.get("adresse3")) if x) or None,
             "code_postal": item.get("codePostal"),
             "code_aiot": item.get("codeAIOT"),
+            # SOURCES-4 lot 2 — le producteur publie AUSSI, dans la même réponse liste : ce que
+            # l'installation FAIT (rubriques de la nomenclature ICPE), son niveau d'enjeu (IED,
+            # priorité nationale), sa catégorie, la date de dernière mise à jour, le service
+            # instructeur et l'historique d'inspection. On garde tout (nomenclature = raw-équivalent
+            # de spatial_layers), en ne dépliant que ce qui se sert : rubriques (numéro + nature),
+            # dates d'inspection, catégorie dérivée des drapeaux booléens.
+            "rubriques": [{"numero": r.get("numeroRubrique"), "nature": r.get("nature")}
+                          for r in (item.get("rubriques") or []) if r.get("numeroRubrique")] or None,
+            "ied": bool(item.get("ied")),
+            "priorite_nationale": bool(item.get("prioriteNationale")),
+            "categorie": next((c for c, flag in (
+                ("carrière", item.get("carriere")), ("éolienne", item.get("eolienne")),
+                ("bovins", item.get("bovins")), ("porcs", item.get("porcs")),
+                ("volailles", item.get("volailles")), ("industrie", item.get("industrie")))
+                if flag), None),
+            "service_instructeur": item.get("serviceAIOT"),
+            "date_maj": (item.get("date_maj") or "").split("/")[0] or None,
+            "inspections": [i.get("dateInspection") for i in (item.get("inspections") or [])
+                            if i.get("dateInspection")] or None,
         },
     }
 
@@ -180,6 +212,65 @@ def ingest_commune(session: Session, insee: str, commune: str, run_id: int | Non
     _touch_sources(session)
     session.flush()
     return counts
+
+
+def ingest_icpe_commune(session: Session, insee: str, commune: str, run_id: int | None = None,
+                        connector: GeorisquesConnector | None = None) -> int:
+    """SOURCES-4 lot 2 — rejoue la SEULE couche ICPE d'une commune (sans re-toucher sol_pollue /
+    cavités), pour compléter les attrs avec les champs producteur ajoutés à parse_icpe (rubriques,
+    IED, priorité nationale, catégorie, service, date_maj, inspections). ⚠ appels réseau + écrit en
+    base. Idempotent (purge kind='icpe' de la commune avant réinsertion). Ne touche PAS au score."""
+    connector = connector or GeorisquesConnector()
+    sid = _source_ids(session).get("icpe")
+    session.execute(text("DELETE FROM spatial_layers WHERE commune=:c AND kind='icpe'"), {"c": commune})
+    n = 0
+    for item in connector.installations_classees(insee):
+        p = parse_icpe(item)
+        if p:
+            _insert_layer(session, "icpe", p["subtype"], p["name"], p["geometry"],
+                          sid, commune, run_id, p["attrs"])
+            n += 1
+    _touch_sources(session)
+    session.flush()
+    return n
+
+
+def ingest_sols_pollues_commune(session: Session, insee: str, commune: str, run_id: int | None = None,
+                                connector: GeorisquesConnector | None = None) -> int:
+    """SOURCES-4 lot 2 — rejoue la SEULE couche sol_pollue d'une commune (casias+instructions+sis),
+    pour compléter les attrs (activite_principale, adresse_lieudit). Idempotent (purge kind)."""
+    connector = connector or GeorisquesConnector()
+    sid = _source_ids(session).get("sol_pollue")
+    session.execute(text("DELETE FROM spatial_layers WHERE commune=:c AND kind='sol_pollue'"), {"c": commune})
+    n = 0
+    for subtype, item in connector.sites_pollues(insee):
+        p = parse_sol_pollue(subtype, item)
+        if p:
+            _insert_layer(session, "sol_pollue", p["subtype"], p["name"], p["geometry"],
+                          sid, commune, run_id, p["attrs"])
+            n += 1
+    _touch_sources(session)
+    session.flush()
+    return n
+
+
+def ingest_cavites_commune(session: Session, insee: str, commune: str, run_id: int | None = None,
+                           connector: GeorisquesConnector | None = None) -> int:
+    """SOURCES-4 lot 2 — rejoue la SEULE couche cavités d'une commune (sans re-toucher
+    sol_pollue/ICPE), pour compléter les attrs avec `reperage_geo`. Idempotent (purge kind='cavite')."""
+    connector = connector or GeorisquesConnector()
+    sid = _source_ids(session).get("cavite")
+    session.execute(text("DELETE FROM spatial_layers WHERE commune=:c AND kind='cavite'"), {"c": commune})
+    n = 0
+    for item in connector.cavites(insee):
+        p = parse_cavite(item)
+        if p:
+            _insert_layer(session, "cavite", p["subtype"], p["name"], p["geometry"],
+                          sid, commune, run_id, p["attrs"])
+            n += 1
+    _touch_sources(session)
+    session.flush()
+    return n
 
 
 def ingest_mvt_commune(session: Session, insee: str, commune: str, run_id: int | None = None,

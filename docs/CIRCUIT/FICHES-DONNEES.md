@@ -39,6 +39,8 @@
 |---|---|---|---|---|---|---|---|
 | `tfpb_taux_pct` | nombre | Taxe foncière (taux TFPB) | dgfip_rei (REI 2025 (impositions primitives) — 24/24 communes) | passe-plat · src/labuse/ingestion/rei.py:rei_commune — table lue : commune_rei | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *taux de TFPB appliqué sur la commune (E12 du REI) + part EPCI (E32) + TEOM (F22) — impositions primitives, passe-plat du fichier DGFiP* | | | | | |
+| `tfpnb_taux_pct` | nombre | Taxe foncière non bâti (taux TFPNB) | dgfip_rei (REI 2025 (impositions primitives) — 24/24 communes) | passe-plat · src/labuse/ingestion/rei.py:rei_commune — table lue : commune_rei (tfpnb_commune_pct, tfpnb_epci_pct) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *taux de TFPNB appliqué sur la commune (B12 du REI) + part EPCI (B32) — impositions primitives, passe-plat du fichier DGFiP (foncier non bâti = terrain)* | | | | | |
 
 ## ACV / PVD / ORT — Denormandie
 
@@ -79,6 +81,8 @@
 | | | *taux LLS de l'inventaire SRU* | | | | | |
 | `deficit_sru_pts` | nombre | Déficit SRU (objectif − taux LLS, points) | sru_dhup | passe-plat · src/labuse/api/comparateur.py:56 — table lue : commune_contexte_sru (objectif_pct, taux_lls) | live | servie · non couverte (n sous seuil, dit) · non calculée | outil « Comparer des parcelles » · outil « Communes » · outil « Comparaison communes » |
 | | | *greatest(objectif_pct − taux_lls, 0) depuis commune_contexte_sru* | | | | | |
+| `lls_inventaire_n` | nombre | Logements sociaux (inventaire SRU) | sru_dhup | passe-plat · src/labuse/api/app.py (_rafraichir_partages, commune_contexte_sru) — table lue : commune_contexte_sru.detail->>nb_lls | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *nombre de logements locatifs sociaux de l'inventaire SRU (effectif brut, detail->nb_lls)* | | | | | |
 
 ## Permis & délais
 
@@ -184,6 +188,8 @@
 | | | *part des parcelles de la commune intersectant la couche ppr* | | | | | |
 | `catnat_n` | nombre | Arrêtés CatNat | catnat_gaspar | passe-plat · src/labuse/api/fiche_commune.py — table lue : catnat_arretes (count par insee) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *count catnat_arretes* | | | | | |
+| `catnat_arretes_liste` | liste | Arrêtés CatNat (détail) | catnat_gaspar | passe-plat · src/labuse/api/fiche_commune.py:risques — table lue : catnat_arretes (détail par insee) + raw (code_national_catnat, date_publication_jo) | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *arrêtés CatNat de la commune détaillés : péril, dates de début/fin/arrêté, code national et date de publication au JO — 12 plus récents (le compte total reste catnat_n)* | | | | | |
 
 ## Population & logement
 

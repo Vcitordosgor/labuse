@@ -39,7 +39,19 @@ CREATE TABLE IF NOT EXISTS commune_rei (
     teom_pct         numeric(6,2),
     millesime        varchar(64) NOT NULL,
     maj_at           timestamptz NOT NULL DEFAULT now()
-)
+);
+-- SOURCES-4 lot 2 — on ne servait que la TFPB (foncier bâti) + TEOM. Le REI publie TOUS les taux
+-- votés : on ajoute la TFPNB (foncier NON bâti) et la CFE (cotisation foncière des entreprises),
+-- chacune commune/vote/interco, plus les BASES NETTES communales (assiette de chaque taxe).
+ALTER TABLE commune_rei ADD COLUMN IF NOT EXISTS tfpnb_commune_pct numeric(7,2);
+ALTER TABLE commune_rei ADD COLUMN IF NOT EXISTS tfpnb_vote_pct    numeric(7,2);
+ALTER TABLE commune_rei ADD COLUMN IF NOT EXISTS tfpnb_epci_pct    numeric(7,2);
+ALTER TABLE commune_rei ADD COLUMN IF NOT EXISTS cfe_commune_pct   numeric(7,2);
+ALTER TABLE commune_rei ADD COLUMN IF NOT EXISTS cfe_vote_pct      numeric(7,2);
+ALTER TABLE commune_rei ADD COLUMN IF NOT EXISTS cfe_epci_pct      numeric(7,2);
+ALTER TABLE commune_rei ADD COLUMN IF NOT EXISTS base_fb_commune_eur   numeric(16,0);
+ALTER TABLE commune_rei ADD COLUMN IF NOT EXISTS base_fnb_commune_eur  numeric(16,0);
+ALTER TABLE commune_rei ADD COLUMN IF NOT EXISTS base_cfe_commune_eur  numeric(16,0)
 """
 
 
@@ -84,22 +96,37 @@ def ingest_rei(session: Session, *, url: str = URL_ZIP, zip_bytes: bytes | None 
             insee = (row.get("IDCOM") or "").strip()
             if not insee.startswith("974"):
                 continue
-            taux = {k: _num(row.get(k)) for k in ("E12", "E12VOTE", "E32", "F22")}
+            # TFPB (E12/E12VOTE/E32), TEOM (F22) + SOURCES-4 : TFPNB (B12/B12VOTE/B32),
+            # CFE (P12/P12VOTE/P32). Taux nets/votés en % (borne 0-100).
+            taux = {k: _num(row.get(k)) for k in (
+                "E12", "E12VOTE", "E32", "F22",
+                "B12", "B12VOTE", "B32", "P12", "P12VOTE", "P32")}
             # bornes de plausibilité : un taux est un % ∈ [0 ; 100] — hors bornes = écarté + listé
             for k, v in taux.items():
                 if v is not None and not (0.0 <= v <= 100.0):
                     hors_bornes.append(f"{insee}:{k}={v}")
                     taux[k] = None
+            # SOURCES-4 : bases nettes communales (€) — E11 (FB), B11 (FNB), P11 (CFE). Pas un % :
+            # aucune borne 0-100 ; on garde la valeur du producteur.
+            bases = {k: _num(row.get(k)) for k in ("E11", "B11", "P11")}
             session.execute(text(
                 "INSERT INTO commune_rei (insee, commune, tfpb_commune_pct, tfpb_vote_pct, "
-                " tfpb_epci_pct, teom_pct, millesime, maj_at) "
-                "VALUES (:i, :c, :t1, :t2, :t3, :t4, :m, now()) "
+                " tfpb_epci_pct, teom_pct, tfpnb_commune_pct, tfpnb_vote_pct, tfpnb_epci_pct, "
+                " cfe_commune_pct, cfe_vote_pct, cfe_epci_pct, "
+                " base_fb_commune_eur, base_fnb_commune_eur, base_cfe_commune_eur, millesime, maj_at) "
+                "VALUES (:i, :c, :t1, :t2, :t3, :t4, :n1, :n2, :n3, :p1, :p2, :p3, "
+                " :bfb, :bfnb, :bcfe, :m, now()) "
                 "ON CONFLICT (insee) DO UPDATE SET commune = :c, tfpb_commune_pct = :t1, "
-                " tfpb_vote_pct = :t2, tfpb_epci_pct = :t3, teom_pct = :t4, millesime = :m, "
-                " maj_at = now()"),
+                " tfpb_vote_pct = :t2, tfpb_epci_pct = :t3, teom_pct = :t4, "
+                " tfpnb_commune_pct = :n1, tfpnb_vote_pct = :n2, tfpnb_epci_pct = :n3, "
+                " cfe_commune_pct = :p1, cfe_vote_pct = :p2, cfe_epci_pct = :p3, "
+                " base_fb_commune_eur = :bfb, base_fnb_commune_eur = :bfnb, "
+                " base_cfe_commune_eur = :bcfe, millesime = :m, maj_at = now()"),
                 {"i": insee, "c": (row.get("LIBCOM") or "").strip().title(),
-                 "t1": taux["E12"], "t2": taux["E12VOTE"], "t3": taux["E32"],
-                 "t4": taux["F22"], "m": MILLESIME})
+                 "t1": taux["E12"], "t2": taux["E12VOTE"], "t3": taux["E32"], "t4": taux["F22"],
+                 "n1": taux["B12"], "n2": taux["B12VOTE"], "n3": taux["B32"],
+                 "p1": taux["P12"], "p2": taux["P12VOTE"], "p3": taux["P32"],
+                 "bfb": bases["E11"], "bfnb": bases["B11"], "bcfe": bases["P11"], "m": MILLESIME})
             vus.add(insee)
             n += 1
     session.flush()
@@ -111,14 +138,21 @@ def ingest_rei(session: Session, *, url: str = URL_ZIP, zip_bytes: bytes | None 
 
 
 def rei_commune(session: Session, insee: str) -> dict | None:
-    """Les taux fonciers d'une commune, sourcés + datés — None si non ingérés."""
+    """Les taux fonciers d'une commune, sourcés + datés — None si non ingérés.
+    SOURCES-4 lot 2 : porte aussi la TFPNB (foncier non bâti), la CFE et les bases nettes."""
     row = session.execute(text(
-        "SELECT insee, commune, tfpb_commune_pct, tfpb_epci_pct, teom_pct, millesime, maj_at "
+        "SELECT insee, commune, tfpb_commune_pct, tfpb_epci_pct, teom_pct, "
+        "       tfpnb_commune_pct, tfpnb_epci_pct, cfe_commune_pct, cfe_epci_pct, "
+        "       base_fb_commune_eur, base_fnb_commune_eur, base_cfe_commune_eur, "
+        "       millesime, maj_at "
         "FROM commune_rei WHERE insee = :i"), {"i": insee}).mappings().first()
     if row is None:
         return None
     d = dict(row)
-    for k in ("tfpb_commune_pct", "tfpb_epci_pct", "teom_pct"):
+    for k in ("tfpb_commune_pct", "tfpb_epci_pct", "teom_pct",
+              "tfpnb_commune_pct", "tfpnb_epci_pct", "cfe_commune_pct", "cfe_epci_pct"):
         d[k] = float(d[k]) if d[k] is not None else None
+    for k in ("base_fb_commune_eur", "base_fnb_commune_eur", "base_cfe_commune_eur"):
+        d[k] = int(d[k]) if d[k] is not None else None
     d["maj_at"] = d["maj_at"].isoformat() if d.get("maj_at") else None
     return d

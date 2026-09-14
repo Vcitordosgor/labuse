@@ -412,6 +412,13 @@ DONNEES: dict[str, Donnee] = {
     "taux LLS de l'inventaire SRU",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py (commune_contexte_sru)",
     reservoirs=("sru_dhup",), portee="live", table="commune_contexte_sru.taux_lls"),
+ # SOURCES-4 lot 2 — l'EFFECTIF BRUT de LLS de l'inventaire SRU dormait dans detail->nb_lls
+ # (seul le taux était servi). Surfacé sur la carte SRU. Le dénominateur (résidences principales)
+ # n'est PAS publié dans le CSV DHUP v2 → non ingéré (arbitrage), le taux reste la grandeur servie.
+ "lls_inventaire_n": C("Logements sociaux (inventaire SRU)", "logements", "commune",
+    "nombre de logements locatifs sociaux de l'inventaire SRU (effectif brut, detail->nb_lls)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py (_rafraichir_partages, commune_contexte_sru)",
+    reservoirs=("sru_dhup",), portee="live", table="commune_contexte_sru.detail->>nb_lls"),
  "plh_objectif_logements_an": C("Objectif logements/an", "logements", "commune",
     "objectif PLH, chaque chiffre porte sa référence doc+page",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py (plh_epci)",
@@ -470,6 +477,15 @@ DONNEES: dict[str, Donnee] = {
     # CIRCUIT-6 lot 0 — l'arête MANQUAIT : catnat_arretes est le réservoir catnat_gaspar
     # (426 arrêtés servis fiche commune/Pièges sans provenance tracée — SOURCES-AUDIT).
     reservoirs=("catnat_gaspar",), portee="live", table="catnat_arretes (count par insee)"),
+ # SOURCES-4 lot 1 — le DÉTAIL des arrêtés (péril, dates début/fin/arrêté, code national + date JO)
+ # dormait dans catnat_arretes / raw : seul le COMPTE (catnat_n) était servi. Liste servie sur la
+ # fiche commune (12 plus récents), même réservoir, sans nouvelle source.
+ "catnat_arretes_liste": C("Arrêtés CatNat (détail)", "liste", "commune",
+    "arrêtés CatNat de la commune détaillés : péril, dates de début/fin/arrêté, code national et "
+    "date de publication au JO — 12 plus récents (le compte total reste catnat_n)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py:risques",
+    reservoirs=("catnat_gaspar",), portee="live", type="liste",
+    table="catnat_arretes (détail par insee) + raw (code_national_catnat, date_publication_jo)"),
  "habitants_n": C("Habitants", "nombre", "commune",
     "population INSEE/Filosofi commune",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py:123 (population)",
@@ -1464,6 +1480,15 @@ DONNEES: dict[str, Donnee] = {
     moteur=None, calcul="passe_plat",
     fonction="src/labuse/ingestion/rei.py:rei_commune",
     reservoirs=("dgfip_rei",), portee="live", table="commune_rei"),
+ # SOURCES-4 lot 2 — la TFPNB (foncier NON bâti, la plus pertinente pour un terrain) était
+ # ingérée mais jamais servie ; désormais au bloc fiscalité. CFE et bases nettes restent en base
+ # (commune_rei), disponibles, non affichées (pas de chiffre servi → hors registre servi).
+ "tfpnb_taux_pct": C("Taxe foncière non bâti (taux TFPNB)", "%", "commune",
+    "taux de TFPNB appliqué sur la commune (B12 du REI) + part EPCI (B32) — impositions "
+    "primitives, passe-plat du fichier DGFiP (foncier non bâti = terrain)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/rei.py:rei_commune",
+    reservoirs=("dgfip_rei",), portee="live", table="commune_rei (tfpnb_commune_pct, tfpnb_epci_pct)"),
  "ort_statut": C("ACV / PVD / ORT", "classe", "commune",
     "statut du dispositif de revitalisation de la commune (table DGALN) + convention ORT "
     "signée (date) + condition communale Denormandie DITE (le périmètre conventionné "

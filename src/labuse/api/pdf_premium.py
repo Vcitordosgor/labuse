@@ -931,10 +931,17 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             nom = c.get("nom_usage") or c.get("numero_immatriculation") or "copropriété"
             lots = f"{c['nb_lots_total']} lots" if c.get("nb_lots_total") is not None else ""
             hab = f" (dont {c['nb_lots_habitation']} hab.)" if c.get("nb_lots_habitation") is not None else ""
+            # SOURCES-4 lot 1 — stationnement / commerce-bureaux (raw ANAH, jusque-là non servis).
+            stat = (f", {c['nb_lots_stationnement']} stationnement"
+                    if c.get("nb_lots_stationnement") else "")
             per = f" · {c['periode_construction']}" if c.get("periode_construction") else ""
-            syn = (f" · syndic {c.get('syndic_type') or ''} {c.get('syndic_nom') or ''}".rstrip()
+            rs = " · résidence-service" if c.get("residence_service") == "oui" else ""
+            coop = " · syndicat coopératif" if c.get("syndicat_cooperatif") == "oui" else ""
+            # SOURCES-4 lot 1 — SIRET du syndic surfacé.
+            sir = f" (SIRET {c['syndic_siret']})" if c.get("syndic_siret") else ""
+            syn = (f" · syndic {c.get('syndic_type') or ''} {c.get('syndic_nom') or ''}{sir}".rstrip()
                    if c.get("syndic_type") or c.get("syndic_nom") else "")
-            lignes.append(f"{nom} — {lots}{hab}{per}{syn}".strip(" —"))
+            lignes.append(f"{nom} — {lots}{hab}{stat}{per}{rs}{coop}{syn}".strip(" —"))
         _section(pdf, "COPROPRIÉTÉ(S) RATTACHÉE(S)", lignes,
                  source="Source : RNIC (registre national des copropriétés) — information.")
 

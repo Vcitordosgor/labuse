@@ -77,6 +77,20 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
 
     catnat = (db.execute(text("SELECT count(*) FROM catnat_arretes WHERE insee = :i"),
                          {"i": insee}).scalar() or 0) if insee else 0
+    # SOURCES-4 lot 1 — le détail des arrêtés dormait dans `catnat_arretes` (seul le COMPTE était
+    # servi). On surface la liste : le péril, les trois dates (début/fin/arrêté) et le code national
+    # + la date de publication au JO (jusque-là seulement dans `raw`). 12 plus récents — la fiche dit
+    # « et N autres » via le compte total. Chaque champ vient du producteur (GASPAR/Géorisques).
+    catnat_detail = [dict(r) for r in db.execute(text(
+        "SELECT type_peril, "
+        "       to_char(date_debut, 'YYYY-MM-DD') AS date_debut, "
+        "       to_char(date_fin, 'YYYY-MM-DD') AS date_fin, "
+        "       to_char(date_arrete, 'YYYY-MM-DD') AS date_arrete, "
+        "       raw->>'code_national_catnat' AS code_national, "
+        "       raw->>'date_publication_jo' AS date_publication_jo "
+        "FROM catnat_arretes WHERE insee = :i "
+        "ORDER BY date_debut DESC NULLS LAST, date_arrete DESC NULLS LAST LIMIT 12"),
+        {"i": insee}).mappings().all()] if insee else []
     parc = db.execute(text(
         "SELECT EXISTS (SELECT 1 FROM parcels p JOIN spatial_layers sl ON sl.kind = 'parc_national' "
         "AND ST_Intersects(p.geom_2975, sl.geom_2975) WHERE p.commune = :c)"), {"c": commune}).scalar()
@@ -94,6 +108,7 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
         "ppr_pct": _pct_layer("ppr"),
         "mouvement_terrain_pct": _pct_layer("mvt"),
         "catnat_arretes": int(catnat),
+        "catnat_detail": catnat_detail,   # SOURCES-4 lot 1 — arrêtés détaillés (péril, dates, code national)
         "parc_national": bool(parc),
         "azi_tri": azi_tri,
         "source": "Géorisques (PPR, mouvement de terrain) · GASPAR (arrêtés CatNat, AZI/TRI) · BD TOPO (Parc National).",
@@ -239,6 +254,9 @@ def fiscalite(db: Session, insee: str | None) -> dict | None:
         return None
     return {"tfpb_commune_pct": r["tfpb_commune_pct"], "tfpb_epci_pct": r["tfpb_epci_pct"],
             "teom_pct": r["teom_pct"], "millesime": r["millesime"],
+            # SOURCES-4 lot 2 — la TFPNB (taxe foncière sur le NON BÂTI, la plus pertinente pour un
+            # terrain) était ingérée mais jamais servie ; on l'ajoute au bloc fiscalité (commune + EPCI).
+            "tfpnb_commune_pct": r.get("tfpnb_commune_pct"), "tfpnb_epci_pct": r.get("tfpnb_epci_pct"),
             "maj_at": r.get("maj_at"), "perime": _perime(r.get("maj_at")),
             "source": "DGFiP — fichier REI (impositions primitives)"}
 
@@ -336,7 +354,8 @@ _FALLBACK = {
     "comparable": None, "marche_annonces": None, "densifiables": None, "loyer": None,
     "zonage_abc": None, "fiscalite": None, "ort": None, "zfang_frr": None,
     "risques": {"ppr_pct": None, "mouvement_terrain_pct": None, "catnat_arretes": 0,
-                "parc_national": False, "azi_tri": None, "source": "Géorisques · GASPAR · BD TOPO"},
+                "catnat_detail": [], "parc_national": False, "azi_tri": None,
+                "source": "Géorisques · GASPAR · BD TOPO"},
     "population": {"habitants": None, "menages": None, "niveau_vie_moyen_eur": None,
                    "logements": None, "vacants": None, "vacance_pct": None,
                    "source": "INSEE Filosofi · INSEE RP"},

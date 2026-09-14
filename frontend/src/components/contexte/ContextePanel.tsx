@@ -273,7 +273,7 @@ export function ContextePanel() {
                     social, en %) et on montre le DÉFICIT (objectif − taux, en points) — la même grandeur
                     que la colonne « Déficit SRU (pts) » du tableau des 24 communes. Fini les deux chiffres
                     (« 18 % » vs « 6,7 ») qui semblaient se contredire : ce sont deux vues du même fait. */}
-                <div><p className={`font-display text-[17px] font-bold ${d.sru && d.sru.taux_lls != null && d.sru.objectif_pct != null && d.sru.taux_lls < d.sru.objectif_pct ? 'text-st-ecartee' : 'text-txt-hi'}`}>{d.sru?.taux_lls != null ? `${fmtDec(d.sru.taux_lls)} %` : '—'}</p><p className="text-[10.5px] text-txt-dim">taux de logement social (SRU){d.sru?.deficit != null && d.sru.deficit > 0 ? ` — déficit ${fmtDec(d.sru.deficit)} pts` : ''}</p></div>
+                <div><p className={`font-display text-[17px] font-bold ${d.sru && d.sru.taux_lls != null && d.sru.objectif_pct != null && d.sru.taux_lls < d.sru.objectif_pct ? 'text-st-ecartee' : 'text-txt-hi'}`}>{d.sru?.taux_lls != null ? `${fmtDec(d.sru.taux_lls)} %` : '—'}</p><p className="text-[10.5px] text-txt-dim">taux de logement social (SRU){d.sru?.detail?.nb_lls != null ? ` — ${fmt(d.sru.detail.nb_lls)} LLS` : ''}{d.sru?.deficit != null && d.sru.deficit > 0 ? ` — déficit ${fmtDec(d.sru.deficit)} pts` : ''}</p></div>
                 <div><p className={`font-display text-[17px] font-bold ${(r?.['horizon_epuisement_ans'] ?? 99) < 6 ? 'text-st-creuser' : 'text-txt-hi'}`}>{r?.['horizon_epuisement_ans'] == null ? '—' : `${fmtDec(r['horizon_epuisement_ans'])} ans`}</p><p className="text-[10.5px] text-txt-dim">avant épuisement du ZAN</p></div>
               </div>
               {/* FICHE-COMMUNE-2 (C2, maquette V2) — l'action verte pleine largeur, puis DEUX actions
@@ -485,6 +485,9 @@ export function ContextePanel() {
                   <div className="flex flex-col gap-0.5 text-[12px]">
                     <RowT lbl="TFPB commune" val={d.fiscalite.tfpb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpb_commune_pct)} %` : '—'} strong />
                     <RowT lbl="TFPB intercommunalité" val={d.fiscalite.tfpb_epci_pct != null ? `${fmtDec(d.fiscalite.tfpb_epci_pct)} %` : '—'} />
+                    {/* SOURCES-4 lot 2 — TFPNB (foncier NON bâti = terrain), désormais servie */}
+                    <RowT lbl="TFPNB commune (non bâti)" val={d.fiscalite.tfpnb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpnb_commune_pct)} %` : '—'} />
+                    <RowT lbl="TFPNB intercommunalité" val={d.fiscalite.tfpnb_epci_pct != null ? `${fmtDec(d.fiscalite.tfpnb_epci_pct)} %` : '—'} />
                     <RowT lbl="TEOM (taux plein)" val={d.fiscalite.teom_pct != null ? `${fmtDec(d.fiscalite.teom_pct)} %` : '—'} />
                   </div>
                   {d.fiscalite.perime && (
@@ -575,6 +578,20 @@ export function ContextePanel() {
                   <RowT lbl="PPR (risque naturel)" val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % des parcelles` : '—'} />
                   <RowT lbl="Mouvement de terrain" val={d.risques.mouvement_terrain_pct != null ? `${fmtDec(d.risques.mouvement_terrain_pct)} %` : '—'} />
                   <RowT lbl="Arrêtés CatNat" val={fmt(d.risques.catnat_arretes)} />
+                  {/* SOURCES-4 lot 1 — le DÉTAIL des arrêtés dormait dans catnat_arretes (seul le compte
+                      était servi) : péril, dates début→fin, code national + JO. Les plus récents. */}
+                  {d.risques.catnat_detail?.length ? (
+                    <div className="ml-2 flex flex-col gap-0.5 border-l border-line pl-2">
+                      {d.risques.catnat_detail.slice(0, 6).map((a, i) => (
+                        <RowT key={a.code_national ?? i} lbl={a.type_peril}
+                          val={[a.date_debut && a.date_fin ? `${a.date_debut} → ${a.date_fin}` : (a.date_arrete ?? ''),
+                                a.code_national].filter(Boolean).join(' · ')} />
+                      ))}
+                      {d.risques.catnat_arretes > 6 ? (
+                        <div className="text-[11px] text-txt-dim">et {d.risques.catnat_arretes - 6} autre{d.risques.catnat_arretes - 6 > 1 ? 's' : ''}…</div>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {/* SOURCES-1 lot 2 — le fait AZI/TRI (GASPAR) : quels documents inondation couvrent la commune */}
                   {d.risques.azi_tri && (d.risques.azi_tri.azi?.length || d.risques.azi_tri.tri?.length) ? (
                     <RowT lbl="Inondation (AZI / TRI)"

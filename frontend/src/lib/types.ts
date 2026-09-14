@@ -575,7 +575,12 @@ export interface Copropriete {
   periode_construction: string | null
   syndic_type: string | null
   syndic_nom: string | null
+  syndic_siret: string | null           // SOURCES-4 lot 1 — surfacé (colonne en base)
   rattachement: string | null
+  nb_lots_stationnement: number | null  // SOURCES-4 lot 1 — raw ANAH
+  nb_lots_hab_bur_com: string | null    // SOURCES-4 lot 1 — raw ANAH
+  residence_service: string | null      // SOURCES-4 lot 1 — raw ANAH (oui/non)
+  syndicat_cooperatif: string | null    // SOURCES-4 lot 1 — raw ANAH (oui/non)
 }
 
 // M125-2 — contexte socio-économique du secteur. Chaque sous-bloc porte SON millésime (daté).
