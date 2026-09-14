@@ -18,6 +18,7 @@ cloisonnement EXISTANT, réutilisé, jamais un nouveau mécanisme.
 """
 from __future__ import annotations
 
+import functools
 import logging
 from datetime import datetime, timezone
 
@@ -1062,7 +1063,11 @@ def _cadence_normalisee(v: str | None) -> str | None:
     return None
 
 
+@functools.lru_cache(maxsize=1)
 def _commandes_ingestion() -> list[dict]:
+    # PERF (SOURCES-3b) : sources_ingestion.yaml est un config STATIQUE ; il était reparsé à CHAQUE
+    # appel, or _relance_pour() est appelé PAR SOURCE dans _assembler_reservoirs (≈93×) → ~2 s de
+    # parsing YAML redondant, ce qui faisait franchir la seconde à /admin/circuit (P2 lot 5). Caché.
     import yaml
     from pathlib import Path
     p = Path(__file__).resolve().parents[3] / "config" / "sources_ingestion.yaml"
