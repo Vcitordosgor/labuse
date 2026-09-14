@@ -42,10 +42,17 @@ KIND_SOURCE = {
     "voirie": "BD TOPO IGN",
     "batiment": "BD TOPO IGN",
     "ravine": "BD TOPO IGN",
-    # SOURCES-4 lot 2 — thème BD TOPO NON doublon utile au foncier : cimetière (emprise non
-    # constructible + périmètre d'inhumation art. L2223-1 CGCT). Les thèmes doublons sont ÉCARTÉS :
-    # végétation → CoSIA/LiDAR, équipements → BPE, lignes électriques → EDF (arbitrages SOURCES-4).
+    # SOURCES-4 lot 2 — thèmes BD TOPO NON doublon utiles au foncier : cimetière (emprise + périmètre
+    # inhumation L2223-1 CGCT), constructions linéaires/surfaciques (mur de soutènement/quai/barrage/
+    # réservoir — décisif sur parcelle en pente), zone d'activité ou d'intérêt, bassin versant
+    # (hydrographie — explique le risque d'inondation). Doublons ÉCARTÉS : occupation du sol → CoSIA/
+    # LiDAR, transport → déjà servi, adresses → BAN, administratif → référentiel 24, lignes → EDF,
+    # équipements → BPE.
     "cimetiere": "BD TOPO IGN",
+    "construction_lineaire": "BD TOPO IGN",
+    "construction_surfacique": "BD TOPO IGN",
+    "zone_activite": "BD TOPO IGN",
+    "bassin_versant": "BD TOPO IGN",
     "plu_gpu_zone": "Urbanisme PLU/GPU (API Carto)",
     "plu_gpu_prescription": "Urbanisme PLU/GPU (API Carto)",
     "parc_national": "Parc National de La Réunion (INPN)",
@@ -662,8 +669,21 @@ def ingest_bdtopo(session, bbox, commune, run_id, sids, kind: str, typename: str
                      # SOURCES-4 lot 2 — cimetière : toponyme + nature détaillée (au clic).
                      else {"toponyme": p.get("toponyme"), "nature": p.get("nature"),
                            "nature_detaillee": p.get("nature_detaillee")} if kind == "cimetiere"
+                     # SOURCES-4 lot 2 — constructions linéaires/surfaciques : nature (mur de
+                     # soutènement, quai, barrage, réservoir…) = décisif sur une parcelle en pente.
+                     else {"nature": p.get("nature"), "nature_detaillee": p.get("nature_detaillee")}
+                          if kind in ("construction_lineaire", "construction_surfacique")
+                     # zone d'activité ou d'intérêt : catégorie + toponyme + adresse.
+                     else {"categorie": p.get("categorie"), "toponyme": p.get("toponyme"),
+                           "nature": p.get("nature"), "adresse": p.get("adresse_postale")}
+                          if kind == "zone_activite"
+                     # bassin versant (hydrographie) : le bassin qui explique le risque d'inondation.
+                     else {"bassin": p.get("libelle_du_bassin_hydrographique"),
+                           "code_hydro": p.get("code_hydrographique"),
+                           "bassin_fluvial": p.get("bassin_fluvial")} if kind == "bassin_versant"
                      else None)
-            nom = (p.get("toponyme") if kind == "cimetiere" else None) \
+            nom = (p.get("toponyme") if kind in ("cimetiere", "zone_activite") else None) \
+                or (p.get("libelle_du_bassin_hydrographique") if kind == "bassin_versant" else None) \
                 or p.get("nature") or typename.split(":")[-1]
             _insert_layer(session, kind, p.get("nature"), nom,
                           f["geometry"], sids.get(KIND_SOURCE[kind]), commune, run_id, attrs)
@@ -1185,8 +1205,12 @@ def ingest_layers(session: Session, insee: str, commune: str,
         ("water", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "water", "BDTOPO_V3:surface_hydrographique")),
         ("ravine", lambda: ingest_ravines(session, bbox, commune, run_id, sids)),
         ("voirie", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "voirie", "BDTOPO_V3:troncon_de_route")),
-        # SOURCES-4 lot 2 — cimetière (thème BD TOPO non doublon, contrainte foncière).
+        # SOURCES-4 lot 2 — thèmes BD TOPO non doublon (contraintes foncières + hydrographie).
         ("cimetiere", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "cimetiere", "BDTOPO_V3:cimetiere")),
+        ("construction_lineaire", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "construction_lineaire", "BDTOPO_V3:construction_lineaire")),
+        ("construction_surfacique", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "construction_surfacique", "BDTOPO_V3:construction_surfacique")),
+        ("zone_activite", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "zone_activite", "BDTOPO_V3:zone_d_activite_ou_d_interet")),
+        ("bassin_versant", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "bassin_versant", "BDTOPO_V3:bassin_versant_topographique")),
         ("batiment", lambda: ingest_batiments(session, bbox, commune, run_id, sids)),
         ("ocs_ge", lambda: ingest_ocsge(session, bbox, commune, run_id, sids)),
         ("foret_publique", lambda: ingest_foret_publique(session, bbox, commune, run_id, sids)),

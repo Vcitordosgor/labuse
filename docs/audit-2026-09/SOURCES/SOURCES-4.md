@@ -286,11 +286,33 @@ avec la source qui fait foi (arbitrages tranchés par Vic, mandat) :
   ponctuelles d'équipement) → **BPE INSEE fait foi** (`amenite_bpe`, 35 544 équipements géolocalisés
   typés/datés).
 
-Thème BD TOPO **non doublon** ingéré ce mandat : **cimetière** (`BDTOPO_V3:cimetiere`) — contrainte
-foncière réelle (emprise non constructible + périmètre d'inhumation, art. L2223-1 CGCT). 164 cimetières
-(civil/militaire), servis carte + popup riche (toponyme + nature au clic), réservoir `bd_topo`. Les
-autres thèmes non-doublon (construction surfacique/linéaire, aérodrome, orographie…) restent à ouvrir
-un par un (chacun = un cycle).
+Thèmes BD TOPO **non doublon** ingérés (les 4 couches tranchées par Vic + cimetière) :
+- **cimetière** (`cimetiere`) — 164, contrainte foncière (emprise + périmètre L2223-1 CGCT).
+- **constructions linéaires** (`construction_lineaire`) — 6 719 (mur de soutènement, quai, mur, pont) —
+  **décisif sur parcelle en pente**.
+- **constructions surfaciques** (`construction_surfacique`) — 305 (barrage, dalle, réservoir).
+- **zones d'activité ou d'intérêt** (`zone_activite`) — 9 020 (catégorie + adresse).
+- **bassins versants** (`bassin_versant`, hydrographie) — 150 (bassin hydrographique + code) —
+  **explique le risque d'inondation**, absent jusqu'ici.
+Tous servis carte + popup riche, réservoir `bd_topo`.
+
+**ERP** (`BDTOPO_V3:erp`) : couche publiée mais **VIDE au 974** (0 objet sur toute l'île — l'IGN ne la
+peuple pas en DOM). Non ingérée faute de donnée producteur (exception physique, documentée).
+
+**RNB ↔ lien officiel BD TOPO** : le lien officiel IGN (`rnb_batiments.ext_bdtopo`) couvre **99,9 %
+des RNB (414 075/414 081)** — bien supérieur à notre rattachement géométrique (72,6 %). Il est **déjà
+en base** (colonne `ext_bdtopo`, tableau de cleabs BD TOPO par RNB). Le servir comme rattachement
+`batiment↔RNB` de NOS polygones exige de stocker le cleabs BD TOPO sur les 817 k bâtiments (re-ingestion
+batiment — différée) ; le rattachement RNB servi à la parcelle reste géométrique (RNB ∈ parcelle),
+indépendant. Verdict : **officiel présent et supérieur, substitution polygone = prochaine re-ingestion batiment.**
+
+**Zones réglementées** : arbitrage **GPU fait foi** — les zones réglementaires utiles (PLU zone-urba,
+prescriptions ER/EBC, SUP, DPU, PEB) sont **déjà servies par le Géoportail de l'urbanisme** (opposables,
+plus fines) ; BD TOPO n'expose d'ailleurs pas de couche `zone_reglementee` sur ce WFS (400). Rien à ingérer.
+
+**Thèmes BD TOPO clos avec arbitrage** (mandat Vic) : occupation du sol → CoSIA/LiDAR · transport →
+déjà servi · adresses → BAN · administratif → référentiel des 24 · lignes électriques → EDF ·
+équipements → BPE · zones réglementées → GPU.
 
 ## Sources arrêtées sur seuil (10 Go / 2 h)
 - **CoSIA** : mesuré à 494 Mo / 2,8 Go extraits ; l'estimation initiale « > 2 h » était pessimiste —

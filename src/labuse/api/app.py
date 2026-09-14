@@ -5430,7 +5430,10 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     # rattachées parcelle : recensement mappable, croisable propriétaire.
                     "piscine_cosia",
                     # SOURCES-4 lot 2 — cimetières BD TOPO (contrainte foncière : emprise + périmètre).
-                    "cimetiere"}
+                    "cimetiere",
+                    # SOURCES-4 lot 2 — BD TOPO 4 couches : constructions linéaires/surfaciques (mur de
+                    # soutènement/barrage — décisif en pente), zone d'activité, bassin versant (inondation).
+                    "construction_lineaire", "construction_surfacique", "zone_activite", "bassin_versant"}
 
 # SOURCES-1 lot 1 — kinds VIRTUELS de la carte : une clé front → le kind stocké + un filtre
 # subtype. ER = typepsc 05 (les 6 ER de Saint-Louis codés « 02 » sont captés par la cascade via
@@ -5465,6 +5468,9 @@ _RICH_POPUP_KINDS: frozenset[str] = frozenset({
     "piscine_cosia",
     # SOURCES-4 lot 2 — cimetière : toponyme + nature (civil/militaire) au clic.
     "cimetiere",
+    # SOURCES-4 lot 2 — BD TOPO : constructions (nature : mur de soutènement/barrage…), zone
+    # d'activité (catégorie), bassin versant (bassin hydrographique) au clic.
+    "construction_lineaire", "construction_surfacique", "zone_activite", "bassin_versant",
 })
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran
