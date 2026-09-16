@@ -671,7 +671,10 @@ PHRASES: dict[str, str] = {
     "V5a": "Un concept = un id : deux données au libellé ou à la définition identiques n'existent pas, hors synonymes assumés et motivés.",
     "V5b": "Une donnée = une fonction : chaque id porte un producteur nommé, plus aucun sql_propre ni front, et le registre est intègre.",
     "V5c": "Zéro couple silencieux : chaque couple (donnée, robinet) est sondé, mono-robinet (golden/règles), ou porte sa raison nommée.",
+    "V7a": "Chaque tuile servie reproduit la brute : même nombre d'objets, aucune partie perdue (GeometryCollections comprises), contour < 1 px, position exacte — décodage de la tuile RÉELLEMENT servie, aux zooms 10/13/16.",
 }
+
+from .circuit_tuiles import verrou_tuiles  # noqa: E402  (COUCHES-TUYAU-1 lot 3 — V7a)
 
 VERROUS: tuple[Verrou, ...] = (
     Verrou("V1a", 1, PHRASES["V1a"], verrou_tables_statique),
@@ -691,6 +694,7 @@ VERROUS: tuple[Verrou, ...] = (
     Verrou("V5a", 5, PHRASES["V5a"], verrou_concepts),
     Verrou("V5b", 5, PHRASES["V5b"], verrou_une_donnee_une_fonction),
     Verrou("V5c", 5, PHRASES["V5c"], verrou_couples_sondes),
+    Verrou("V7a", 7, PHRASES["V7a"], verrou_tuiles),   # COUCHES-TUYAU-1 lot 3
 )
 
 
