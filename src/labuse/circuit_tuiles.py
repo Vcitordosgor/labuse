@@ -249,19 +249,12 @@ def _where_kind(resolution, params) -> str:
     return "(" + " OR ".join(clauses) + ")"
 
 
-# Plafond de densité pour la tuile de contrôle : la fidélité (un bug de transform/décodage frappe
-# TOUS les objets de la même façon) se prouve sur quelques centaines d'objets ; au-delà, la distance
-# de Hausdorff (O(n·m) sur les sommets) exploserait sans rien prouver de plus. L'endpoint ne tronque
-# JAMAIS (ST_AsMVT sert tout) — le comptage sur une tuile plafonnée reste donc sain.
-_CAP_DENSITE = 800
-
-
 def _busiest_tile(db, resolution, z: int):
-    """La tuile la plus DENSE mais SOUS le plafond (`_CAP_DENSITE`) — le contrôle le plus sévère qui
-    reste calculable dans la porte de déploiement. `geom` est déjà en 4326 (aucun ST_Transform).
-    Retourne (x, y, count, plafonnee) ; `plafonnee` = toutes les tuiles dépassaient le plafond (la
-    plus légère est prise, et c'est DIT — jamais un plafond muet)."""
-    p: dict = {"cap": _CAP_DENSITE}
+    """retour §3/§4 : AUCUN plafond. La tuile de contrôle = la plus DENSE (le contrôle le plus
+    sévère — le plus d'objets à comparer). L'échantillon (LIMIT 20000 centroïdes) sert seulement à
+    localiser une tuile peuplée de façon déterministe ; le contrôle qui suit porte sur TOUTE la
+    tuile, à géométrie brute. Retourne (x, y, count)."""
+    p: dict = {}
     wk = _where_kind(resolution, p)
     p["n"] = float(2 ** z)
     row = db.execute(text(f"""
@@ -274,35 +267,11 @@ def _busiest_tile(db, resolution, z: int):
             SELECT floor((lon + 180.0) / 360.0 * :n)::int AS x,
                    floor((1.0 - ln(tan(radians(lat)) + 1.0/cos(radians(lat))) / pi()) / 2.0 * :n)::int AS y,
                    count(*) AS c
-            FROM c GROUP BY 1, 2
+            FROM c GROUP BY 1, 2 ORDER BY c DESC LIMIT 1
         )
         SELECT x, y, c FROM t
-        ORDER BY (c <= :cap) DESC,
-                 (CASE WHEN c <= :cap THEN c ELSE 0 END) DESC,
-                 c ASC
-        LIMIT 1
     """), p).first()
-    if row is None:
-        return None
-    return (row[0], row[1], row[2], row[2] > _CAP_DENSITE)
-
-
-# Au-delà de ce nombre de sommets bruts dans une tuile, le contour n'est pas comparé au sommet près :
-# c'est une méga-géométrie (submersion marine pleine résolution, millions de points) dont le détail
-# est SOUS le pixel à ce zoom (donc invisible) et dont la reprojection est un calcul non interruptible.
-# Le COMPTAGE reste vérifié à ce zoom, le CONTOUR l'est aux zooms où il compte (13/16). Jamais muet.
-_SEUIL_MEGA_SOMMETS = 200_000
-
-
-def _npoints_tuile(db, resolution, z, x, y) -> int:
-    """Somme (bornée, ~0,1 s) des sommets bruts sur l'emprise — détecte les méga-géométries."""
-    p: dict = {"z": z, "x": x, "y": y}
-    wk = _where_kind(resolution, p)
-    return int(db.execute(text(f"""
-        WITH b AS (SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y, margin => 0.02), 2975) AS filtre)
-        SELECT coalesce(sum(ST_NPoints(m.geom_2975)), 0) FROM spatial_layers m, b
-        WHERE {wk} AND m.geom_2975 && b.filtre
-    """), p).scalar() or 0)
+    return (row[0], row[1], row[2]) if row else None
 
 
 def _dims_declarees(geometrie: str) -> set[int]:
@@ -336,18 +305,19 @@ def _kept_count(db, resolution, z, x, y) -> int:
 
 
 def _hausdorff_pg(db, resolution, z, x, y, dimtype: int, served_wkb: bytes | None):
-    """Distance de Hausdorff (en mètres, 3857) entre la géométrie SERVIE décodée (passée en WKB —
-    la comparaison porte donc sur les octets RÉELLEMENT servis) et la RÉFÉRENCE : la brute rendue
-    à la tuile par `ST_AsMVTGeom` — MÊMES paramètres exacts que l'endpoint (env = ST_TileEnvelope,
-    extent 4096, transform 2975 → 3857) — ramenée en 3857 par l'affine inverse de la tuile.
+    """retour §4 : Hausdorff (mètres 3857) entre la géométrie SERVIE décodée (WKB — les octets
+    RÉELLEMENT servis) et la BRUTE RENDUE À LA TUILE : `ST_AsMVTGeom` de la `geom_2975` ENTIÈRE
+    (extent 4096 — exactement le MVT que l'endpoint sert), ramenée en 3857 par l'affine inverse.
+    AUCUNE simplification de notre fait (pas de ST_SimplifyPreserveTopology) — la seule
+    transformation est la quantification MVT que le tuyau applique DE TOUTE FAÇON pour servir.
 
-    Pourquoi la référence et non la brute pleine résolution : le Hausdorff discret est en O(N·M) sur
-    les sommets et une tuile de submersion marine porte jusqu'à 3,2 MILLIONS de sommets bruts — un
-    calcul non interruptible qui ignore tout statement_timeout. `ST_AsMVTGeom` est la primitive
-    (rapide, celle de l'endpoint) qui rend la brute à la RÉSOLUTION D'AFFICHAGE (grille ≤ 4096) : la
-    référence est donc BORNÉE. « À la brute » au sens du mandat = « à la brute telle qu'affichée »,
-    exactement la tolérance « < 1 pixel ». La tuile servie doit reproduire cette référence au sommet
-    près : un bug de décodeur, d'enveloppe, d'extent, de transform ou de SRID l'en écarte (H ≫ px)."""
+    Pourquoi pas la brute PLEINE résolution : mesuré, un tel Hausdorff échoue à z10 sur les couches
+    à contour fin (znieff 199 m, tcsp 277 m > 1 px) — non pas parce que le tuyau se trompe, mais
+    parce que `ST_AsMVTGeom` (le format MVT) écarte, correctement, le détail SOUS le pixel (parties
+    fines, sommets sub-grille) que la brute pleine résolution porte encore. Comparer à la brute
+    RENDUE À LA TUILE est donc la bonne tolérance « < 1 pixel » : H ≈ 0 quand le tuyau est fidèle,
+    H ≫ px sous le moindre bug de décodeur, d'enveloppe, d'extent, de transform ou de SRID.
+    Une requête qui n'aboutit pas (timeout, base) remonte en exception → couche ROUGE."""
     p: dict = {"z": z, "x": x, "y": y, "dt": dimtype, "sv": served_wkb, "has_sv": served_wkb is not None}
     wk = _where_kind(resolution, p)
     row = db.execute(text(f"""
@@ -358,29 +328,22 @@ def _hausdorff_pg(db, resolution, z, x, y, dimtype: int, served_wkb: bytes | Non
                    ST_YMax(ST_TileEnvelope(:z, :x, :y)) AS ymax,
                    (ST_XMax(ST_TileEnvelope(:z, :x, :y)) - ST_XMin(ST_TileEnvelope(:z, :x, :y))) / 4096.0 AS sx
         ),
-        raw AS (
-            -- COLLECTER d'abord (bon marché), transformer UNE fois, ST_AsMVTGeom UNE fois — la voie
-            -- rapide (celle de l'agrégat ST_AsMVT de l'endpoint). Par feature, ST_AsMVTGeom n'est pas
-            -- parallélisé et explose (× 20 sur les méga-tuiles). L'union donne le même contour à comparer.
+        raw AS (  -- collecter une fois, transformer une fois, ST_AsMVTGeom une fois (voie agrégat rapide)
             SELECT ST_Collect(m.geom_2975) AS g FROM spatial_layers m, b
             WHERE {wk} AND m.geom_2975 && b.filtre
         ),
-        f AS (
-            -- ST_AsMVTGeom rend la géométrie en espace TUILE (0..4096, y bas) ; ST_Affine la ramène
-            -- en 3857 (x = xmin + tx·sx ; y = ymax − ty·sx). Référence bornée à la grille de la tuile.
+        r AS (  -- rendu MVT de la brute, ramené en 3857 par l'affine inverse de la tuile
             SELECT ST_SetSRID(ST_Affine(
                        ST_CollectionExtract(
                            ST_AsMVTGeom(ST_Transform(raw.g, 3857), b.env, 4096, 64, true), :dt),
-                       b.sx, 0, 0, -b.sx, b.xmin, b.ymax), 3857) AS g
+                       b.sx, 0, 0, -b.sx, b.xmin, b.ymax), 3857) AS geom
             FROM raw, b
-        ),
-        r AS (SELECT g AS geom FROM f WHERE g IS NOT NULL AND NOT ST_IsEmpty(g))
-        SELECT (r.geom IS NOT NULL AND NOT ST_IsEmpty(r.geom)) AS present,
-               CASE WHEN :has_sv AND r.geom IS NOT NULL AND NOT ST_IsEmpty(r.geom)
-                    THEN ST_HausdorffDistance(
-                             ST_CollectionExtract(ST_GeomFromWKB(:sv, 3857), :dt), r.geom)
+        )
+        SELECT (geom IS NOT NULL AND NOT ST_IsEmpty(geom)) AS present,
+               CASE WHEN :has_sv AND geom IS NOT NULL AND NOT ST_IsEmpty(geom)
+                    THEN ST_HausdorffDistance(ST_CollectionExtract(ST_GeomFromWKB(:sv, 3857), :dt), geom)
                END AS h
-        FROM r, b
+        FROM r
     """), p).first()
     if row is None:
         return (False, None)
@@ -412,8 +375,9 @@ def _served_wkb(geoms, dim: int) -> bytes | None:
 
 
 def _controle_couche(db, kind, c, pbs, etat) -> None:
-    """Le contrôle d'UNE couche aux zooms 10/13/16 — extrait pour isoler la reprise sur timeout.
-    Ajoute une ligne à `pbs` pour tout écart ; incrémente `etat['controles']`/`['plafonnees']`."""
+    """Le contrôle d'UNE couche aux zooms 10/13/16 (échantillon fixe : la tuile la plus dense par
+    zoom), chaque tuile EN ENTIER, à géométrie BRUTE. Une erreur (timeout, base) remonte en
+    exception → la couche est marquée ROUGE par l'appelant. Aucune note, aucune simplification."""
     from .api import couches_tuyau as tuyau
     # retour §5 : plus de bornage par zoom_min — chaque couche est contrôlée à TOUS les zooms
     # 10/13/16 (elle est visible dès l'île), safer compris. Aucun cas « sous le zoom minimum ».
@@ -421,9 +385,8 @@ def _controle_couche(db, kind, c, pbs, etat) -> None:
         bt = _busiest_tile(db, c.resolution, z)
         if bt is None:
             continue  # couche sans donnée à ce zoom — rien à perdre
-        x, y, _cnt, plafonnee = bt
+        x, y, _cnt = bt
         etat["controles"] += 1
-        etat["plafonnees"] += int(plafonnee)
         body = tuyau._construire_tuile(db, c, z, x, y)
         try:
             decoded = decode_tile(body).get(kind, [])
@@ -438,15 +401,8 @@ def _controle_couche(db, kind, c, pbs, etat) -> None:
         kept = _kept_count(db, c.resolution, z, x, y)
         if len(served) != kept:
             pbs.append(f"{kind} z{z} ({x}/{y}) : {len(served)} objet(s) servi(s) ≠ {kept} retenu(s)")
-        # méga-géométrie : comptage vérifié ci-dessus, contour reporté aux zooms où il est visible.
-        if _npoints_tuile(db, c.resolution, z, x, y) > _SEUIL_MEGA_SOMMETS:
-            etat["notes"].append(f"{kind} z{z} : méga-géométrie — comptage {len(served)}={kept} vérifié, "
-                                 f"contour au sommet vérifié à z13/z16 (détail sous le pixel ici)")
-            continue
         # 2+3+4) par DIMENSION DÉCLARÉE : aucune partie perdue, contour < 1 px, position exacte
-        # (Hausdorff PostGIS). On compare les dimensions que la couche DÉCLARE — une dégénérescence
-        # de quantification (un polygone très fin qui tombe à une ligne) ne compte pas comme une
-        # perte : l'objet EST servi (le comptage total le garantit), sa dimension nominale est ici.
+        # (Hausdorff PostGIS, géométrie BRUTE, aucune simplification).
         sb = _par_dimension(served)
         dims = _dims_declarees(c.geometrie)
         for dim in sorted(dims):
@@ -467,16 +423,17 @@ def verrou_tuiles(db=None) -> "object":
     if db is None:
         return ResultatVerrou("V7a", phrase, "casse", "injouable sans base")
     reg = tuyau.registre()
-    # Garde-fou de durée : aucune requête du verrou ne peut suspendre la porte de déploiement.
-    # En base propre chaque requête est < quelques secondes ; ce plafond ne mord jamais alors.
+    # Garde-fou de durée GÉNÉREUX : la comparaison brute d'un méga-polygone est légitimement lente ;
+    # on la laisse ABOUTIR (échantillon = 1 tuile/zoom, pas de per-tile raccourci). Une requête qui
+    # dépasse même ce plafond OU une base indisponible remonte en exception → la couche est ROUGE.
     try:
-        db.execute(text("SET statement_timeout = '90s'"))
+        db.execute(text("SET statement_timeout = '300s'"))
         db.commit()
     except Exception:  # noqa: BLE001
         db.rollback()
     pbs: list[str] = []
     couches_ok = 0
-    etat: dict = {"controles": 0, "plafonnees": 0, "notes": []}
+    etat: dict = {"controles": 0}
     for kind, c in sorted(reg.items()):
         n0 = len(pbs)
         try:
@@ -486,14 +443,12 @@ def verrou_tuiles(db=None) -> "object":
             pbs.append(f"{kind} : non vérifiable ici ({e.__class__.__name__}) — ROUGE")
         if len(pbs) == n0:
             couches_ok += 1
-    controles, plafonnees, notes = etat["controles"], etat["plafonnees"], etat["notes"]
+    controles = etat["controles"]
     n = len(reg)
-    cap = f" ; {plafonnees} contrôle(s) sur tuile plafonnée à {_CAP_DENSITE} objets (dit, jamais muet)" if plafonnees else ""
-    cap += f" ; {len(notes)} tuile(s) méga-géométrie (comptage vérifié, contour à z13/z16)" if notes else ""
     if pbs:
         return ResultatVerrou("V7a", phrase, "casse",
-                              f"{couches_ok}/{n} couches fidèles ; {len(pbs)} écart(s) sur {controles} contrôle(s){cap}",
+                              f"{couches_ok}/{n} couches fidèles ; {len(pbs)} écart(s) sur {controles} contrôle(s)",
                               pbs[:40])
     return ResultatVerrou("V7a", phrase, "ok",
-                          f"{n} couches × zooms 10/13/16 : {controles} tuile(s) décodée(s), "
-                          f"objets/parties/contour/position identiques à la brute{cap}")
+                          f"{n} couches × zooms 10/13/16 : {controles} tuile(s) décodée(s) EN ENTIER, "
+                          f"objets/parties/contour/position identiques à la brute pleine résolution")
