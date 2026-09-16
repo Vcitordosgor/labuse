@@ -204,10 +204,11 @@ def couche_tuile(kind: str, z: int, x: int, y: int,
     c = reg.get(kind)
     if c is None:
         return Response(status_code=404)  # kind non déclaré : jamais servi en silence
-    # zoom_min de la DÉCLARATION : le tuyau reflète le minzoom du front (au-dessous, rien —
-    # jamais une tuile lourde de points à l'échelle île ; le verrou vérifie ce vide).
-    if z < c.zoom_min or z < 0 or z > 22:
-        return Response(status_code=204)
+    # COUCHES-TUYAU-1 retour §5 : PLUS de bornage par zoom_min — toutes les couches sont visibles
+    # dès la vue île (safer compris). Aucune réponse 204 sous un « zoom minimum » : le tuyau sert
+    # à tous les zooms valides. (Seuls les z hors plage physique sont refusés.)
+    if z < 0 or z > 22:
+        return Response(status_code=404)
     version = _version(db)
     etag = f'"{version}:{kind}:{z}:{x}:{y}"'
     if request.headers.get("if-none-match") == etag:

@@ -415,12 +415,9 @@ def _controle_couche(db, kind, c, pbs, etat) -> None:
     """Le contrôle d'UNE couche aux zooms 10/13/16 — extrait pour isoler la reprise sur timeout.
     Ajoute une ligne à `pbs` pour tout écart ; incrémente `etat['controles']`/`['plafonnees']`."""
     from .api import couches_tuyau as tuyau
+    # retour §5 : plus de bornage par zoom_min — chaque couche est contrôlée à TOUS les zooms
+    # 10/13/16 (elle est visible dès l'île), safer compris. Aucun cas « sous le zoom minimum ».
     for z in _ZOOMS:
-        # sous le zoom_min : le tuyau doit servir DU VIDE (aucune fuite), jamais des objets.
-        if z < c.zoom_min:
-            if tuyau._construire_tuile(db, c, z, 0, 0):
-                pbs.append(f"{kind} z{z} : sert des octets sous zoom_min={c.zoom_min}")
-            continue
         bt = _busiest_tile(db, c.resolution, z)
         if bt is None:
             continue  # couche sans donnée à ce zoom — rien à perdre

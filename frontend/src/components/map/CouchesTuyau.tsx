@@ -151,7 +151,9 @@ export function CouchesTuyauLayers({ map, ready }: {
     for (const c of plan) {
       const src = `tuyau-${c.kind}`
       if (!m.getSource(src)) {
-        m.addSource(src, { type: 'vector', minzoom: c.zoom_min, maxzoom: 16,
+        // retour §5 : minzoom 0 — toutes les couches visibles dès la vue île (safer compris),
+        // aucun bornage par zoom_min. maxzoom 16 = surzoom au-delà (pas de re-requête).
+        m.addSource(src, { type: 'vector', minzoom: 0, maxzoom: 16,
           tiles: [`${window.location.origin}${c.tuiles_url}`] })
       }
       for (const spec of calques(c)) {
