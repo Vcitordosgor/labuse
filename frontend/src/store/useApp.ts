@@ -353,6 +353,13 @@ interface AppState {
   setFicheTiroir: (idu: string, tiroir: string | null) => void
   layers: LayerToggles
   toggleLayer: (k: keyof LayerToggles) => void
+  // COUCHES-TUYAU-1 lot 2 — état des 52 nouvelles couches vectorielles (dynamique, hors LayerToggles
+  // typé) : actives (toutes ON par défaut), et signal d'échec de tuile PAR couche (jamais muet).
+  tuyauActives: Record<string, boolean>
+  toggleTuyau: (k: string) => void
+  setTuyauActives: (m: Record<string, boolean>) => void
+  tuyauErrors: Record<string, boolean>
+  setTuyauError: (k: string, v: boolean) => void
   // COMPTE-2 (Lot 6) — hydrate le fond + les couches depuis les préférences EN BASE du compte (à
   // l'ouverture, y compris sur un autre poste). N'écrit que des valeurs connues (jamais de clé pirate).
   appliquerPrefsCarte: (p: { basemap?: string | null; couches?: Record<string, boolean> | null }) => void
@@ -563,6 +570,11 @@ const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTabl
 const COMPARE_TTL_MS = 15 * 60 * 1000
 
 export const useApp = create<AppState>((set) => ({
+  tuyauActives: {},
+  toggleTuyau: (k) => set((s) => ({ tuyauActives: { ...s.tuyauActives, [k]: !s.tuyauActives[k] } })),
+  setTuyauActives: (m) => set({ tuyauActives: m }),
+  tuyauErrors: {},
+  setTuyauError: (k, v) => set((s) => (Boolean(s.tuyauErrors[k]) === v ? {} : { tuyauErrors: { ...s.tuyauErrors, [k]: v } })),
   tracage: false,
   setTracage: (on) => set({ tracage: on, traceOuvert: null }),
   traceOuvert: null,

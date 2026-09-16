@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useApp, type LayerToggles } from '../../store/useApp'
 import { getAccueilFraicheur } from '../../lib/api'
 import { Legend } from '../map/Legend'
+import { NouvellesCouches } from '../map/CouchesTuyau'  // COUCHES-TUYAU-1 lot 2
 import { LAYER_INFO } from '../../lib/layers'
 import { countActiveFilters } from '../../lib/filters'
 import { MODULES } from '../outils/registry'
@@ -329,6 +330,9 @@ function LayersSection({ open, onToggle, fill, closable }: {
                 </div>
               </div>
             ))}
+            {/* COUCHES-TUYAU-1 lot 2 — section distincte « Nouvelles couches » (52 couches en tuiles
+                vectorielles), rangées par famille. Additive : ne touche à aucune couche existante. */}
+            <NouvellesCouches />
           </div>
         </div>
       )}

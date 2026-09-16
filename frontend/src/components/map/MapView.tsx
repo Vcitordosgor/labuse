@@ -12,6 +12,7 @@ import { communePastille } from '../../lib/communes'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES, ORTHO_MONDE, activeBasemapKey } from './basemaps'
 import { Legend } from './Legend'
+import { CouchesTuyauLayers } from './CouchesTuyau'  // COUCHES-TUYAU-1 lot 2
 import { VefaDetail } from './VefaDetail'
 import { MapToolbar } from './MapToolbar'
 import { Loading } from '../Loading'
@@ -2364,6 +2365,8 @@ export function MapView() {
           équipements), cohabitant sans se recouvrir. La légende « Équipements » a quitté son
           bloc flottant (qui masquait le verdict) pour rejoindre ce panneau. */}
       <Legend />
+      {/* COUCHES-TUYAU-1 lot 2 — le tuyau : sources vectorielles des 52 couches + légende bas-droite */}
+      <CouchesTuyauLayers map={map} ready={mapReady} />
       <VefaDetail />{/* SECTEUR-2b (U1) — panneau de détail au clic sur une commune VEFA */}
       {/* B1/P5 : chargement carte DISCRET (données GeoJSON + tuiles MVT) — jamais figé */}
       {(geo.isFetching || tilesLoading || layersFetching > 0) && (
