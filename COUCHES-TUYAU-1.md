@@ -45,15 +45,46 @@ est donc la brute **rendue à la tuile** (ST_AsMVTGeom de la geom_2975 ENTIÈRE,
 aucun ST_Simplify de notre fait) : H ≈ 0 quand le tuyau est fidèle, H ≫ px au moindre bug de
 décodeur / enveloppe / extent / transform / SRID. C'est le choix retenu, documenté ici.
 
-### §1 & §6 — preuve navigateur et run vert complet : état
+### Retour 2 (base redémarrée) — §2 méga-polygones, V7a VERT, §1/§6 preuve
 
-Ces deux points exigent une base non chargée. La base PARTAGÉE portait encore, en fin de session,
-plusieurs requêtes `ST_HausdorffDistance` / `ST_AsMVTGeom` GEOS des ITÉRATIONS PRÉCOCES du verrou
-(méga-polygones, millions de sommets) que PostgreSQL **n'interrompt pas** (ni `pg_terminate_backend`
-ni `statement_timeout` ne mordent sur la boucle C), occupant plusieurs cœurs ; un redémarrage aurait
-dérangé `:8020` (interdit). Le CODE FINAL ne produit plus jamais de telle requête. Le run vert
-complet des 55 couches et les captures côte à côte se font sur base non chargée ; par couche, la
-fidélité est déjà prouvée (tableau ci-dessous).
+**Le vrai défaut trouvé** : servir un méga-polygone (SUP, submersion, PPR, artificialisation) en
+vue île lançait un `ST_AsMVTGeom` de millions de sommets — **non interruptible** (7–30 s/tuile).
+Correctif §2 (`build_tuyau_subdivise`, incrémental, une couche à la fois) : table dérivée où chaque
+géométrie est découpée par **ST_Subdivide (≤ 256 sommets/morceau, indexée GIST)** ; l'endpoint et le
+verrou la lisent via `registre()` partagé ; le filtre GIST ne touche que les morceaux de la tuile.
+**Aucune simplification** (l'union des morceaux = l'origine). Contour dessiné du bord (fill sans
+contour de morceau, flag `subdivise`).
+
+**Génération de la tuile la plus dense — avant → après** (base propre) :
+
+| Couche | z10 avant | z10 après | z13 | z16 |
+|---|---|---|---|---|
+| artificialisation | 19,6 s | **0,74 s** | 0,13 s | 0,07 s |
+| ppr | 5,2 s | **1,34 s** | 0,18 s | 0,07 s |
+| alea_inondation | 5,3 s | **1,52 s** | 0,15 s | 0,07 s |
+| alea_mvt | 7,7 s | **2,17 s** | 0,40 s | 0,10 s |
+| sup | 12,5 s | **5,65 s** (tuile la + dense, 7 Mo) | 0,47 s | 0,20 s |
+
+→ Plus **aucune requête non interruptible**, orphelines impossibles. 4/5 sous ~2 s ; **sup z10 reste
+à ~5,7 s / 7 Mo** sur SA tuile la plus dense (les SUP couvrent l'île) — densité de données brute,
+signalée, non « corrigée » par de la simplification.
+
+**§6 — V7a VERT sur les 56 couches** (475 s, 168 tuiles décodées EN ENTIER, **0 cassé**, aucune
+requête > 60 s). Le verrou (référence PAR MORCEAU comme l'endpoint ; garde Option 1 sur les sommets
+SERVIS, seuil 40 k) vérifie le **comptage partout** et le **contour** partout où la tuile tient
+(Hausdorff O(N·M) borné) : **36 couches** contour+comptage aux 3 zooms ; **20 couches** denses en
+comptage à z10 (et z13) + contour à z16. Verdict réel par couche, jamais une note muette.
+
+**`dryrun_cascade_results` (15 Go)** : **introuvable sur ce poste** — recherché sous `~`, `/tmp`,
+`/var/tmp` (worktree `labuse-couches-tuyau` + `~/Desktop/labuse`), aucun répertoire de ce nom. Il
+vit donc ailleurs (autre machine / volume non monté) ou a déjà été retiré hors de mon champ. Je ne
+peux pas juger de son utilité actuelle sans y accéder. **Rien supprimé** (rien à supprimer ici).
+
+### §1 & §6 (retour 1) — désormais fait
+
+Ces deux points exigeaient une base non chargée. Après redémarrage (côté utilisateur), le run V7a
+complet (56 couches, VERT) et les captures navigateur côte à côte ont été menés — détails dans la
+section « Retour 2 » en tête et « Captures » ci-dessous.
 
 ## Comportement du chemin (mesuré sur `:8047`)
 
@@ -75,9 +106,14 @@ Pour chaque couche déclarée, aux zooms **10 / 13 / 16** :
    tuile. Ce même Hausdorff attrape tout décalage de position et toute perte de contour ;
 4. **sous zoom_min** : le tuyau ne sert rien (aucune fuite).
 
-Robustesse (porte de déploiement) : plafond de densité ≤ 800 objets (dit, jamais muet),
-simplification à ½ px **par feature** avant Hausdorff (méga-polygones submersion marine =
-jusqu'à 3,2 M de sommets/tuile → coût borné), `statement_timeout` 90 s + reprise par couche.
+Robustesse (porte de déploiement), méthode FINALE (retour §4 — aucune simplification) : la
+référence brute est construite **feature par feature** (`ST_AsMVTGeom` par objet puis affine),
+jamais collectée d'abord — c'est ce qui rend le Hausdorff O(N·M) borné SANS toucher à la
+géométrie. Là où la tuile servie dépasse **40 000 sommets** (méga-polygones : submersion, PPR,
+SUP, artificialisation — jusqu'à des millions de sommets/tuile), le contour de CE zoom est
+**reporté** au zoom où il tient (le comptage, lui, reste vérifié partout) ; le verdict le DIT
+(liste `contour_reporté`, jamais un silence, jamais une simplification). `statement_timeout`
+60 s + reprise par couche.
 
 ## Tableau — couches validées (mesures V7a par couche)
 
@@ -95,28 +131,30 @@ jusqu'à 3,2 M de sommets/tuile → coût borné), `statement_timeout` 90 s + re
 | tcsp | multi (zone+ligne+point) | 13/16 | 35=35 / 10=10 | d0 0,7 · d1 0,8 · d2 ~0 / px | OK |
 | sis | mixte (point+polygone) | 13/16 | 3=3 / 2=2 | < px | OK |
 
-_(tableau complet des 52 couches rempli par le run V7a — §preuve)_
+**Run V7a COMPLET (retour §6) — VERT** : `python scripts/run_verrou_tuiles.py` → **56 couches ×
+zooms 10/13/16 : 168 tuiles décodées EN ENTIER, 0 cassé, 475,4 s, aucune requête > 60 s.**
+**36 couches** : comptage + contour vérifiés aux 3 zooms. **20 couches** denses : comptage à
+z10/z13 + contour à z16 (contour de z10/z13 reporté — liste explicite dans le verdict :
+alea_inondation, alea_mvt, artificialisation, bassin_versant, batiment, dpf, ebc, er, ligne_mt,
+limites_communes, limites_parcelles, plu_gpu_zone, ppr, safer, sup, transport_ligne, tri_zone,
+znieff, zonage_parcelle, zone_humide). Chaque couche a un VERDICT, jamais une note muette.
 
 **Couverture du contour pour les couches à méga-polygones** (submersion marine, PPR, SUP,
-artificialisation — jusqu'à 3,2 M à 12 M de sommets bruts par tuile) : le COMPTAGE est vérifié
-à tous les zooms ; le CONTOUR au sommet est vérifié aux zooms où le détail est visible (z16, et
-z13 quand < 200 000 sommets). À z10, le détail d'un méga-polygone est SOUS le pixel — sa
-comparaison au sommet n'est ni possible (calcul non borné) ni signifiante ; le verrou le DIT
-(note « méga-géométrie », jamais un silence). La parité géométrique reste prouvée par
-construction : les deux chemins (GeoJSON et tuyau) lisent la MÊME `geom_2975`.
+artificialisation) : le COMPTAGE est vérifié à tous les zooms ; le CONTOUR au sommet est vérifié
+aux zooms où le détail tient sous le seuil de 40 000 sommets servis (z16, et z13 quand assez
+léger). À z10, le détail d'un méga-polygone est SOUS le pixel — sa comparaison au sommet n'est
+ni bornée ni signifiante ; le verrou le REPORTE (jamais un silence, jamais une simplification).
+La parité géométrique reste prouvée par construction : les deux chemins (GeoJSON et tuyau) lisent
+la MÊME `geom_2975`.
 
-## Note d'environnement (session)
+## Note d'environnement (session) — résolu
 
-Le run VERT complet des 52 couches et le jeu complet de captures côte à côte n'ont pas pu être
-menés dans CETTE session : mes premières itérations (non optimisées) du verrou avaient lancé des
-`ST_HausdorffDistance` GEOS sur des méga-polygones (millions de sommets) — un calcul que
-PostgreSQL **n'interrompt pas** (ni `pg_terminate_backend`, ni `statement_timeout` ne mordent sur
-la boucle C) — occupant plusieurs cœurs de la base PARTAGÉE. Un redémarrage de PostgreSQL aurait
-dérangé `:8020` (interdit). Le CODE FINAL ne produit plus jamais de telle requête (référence
-bornée `ST_AsMVTGeom`, garde méga-géométrie, plafond, timeout) : sur une base non chargée, V7a
-tourne propre. La correction a été **validée couche par couche** sur toutes les géométries
-(tableau ci-dessus) ; la capture `captures/debug_after_click.png` montre le tuyau rendu (île,
-section « Nouvelles couches », légende bas-droite).
+Les premières itérations (non optimisées) du verrou avaient lancé des `ST_HausdorffDistance` GEOS
+sur des méga-polygones (millions de sommets) — un calcul que PostgreSQL **n'interrompt pas** (ni
+`pg_terminate_backend`, ni `statement_timeout` ne mordent sur la boucle C) — occupant plusieurs
+cœurs. C'est ce défaut qui a motivé le correctif §2 (table dérivée `ST_Subdivide`, ci-dessus) : le
+code FINAL ne produit plus jamais de telle requête. La base a ensuite été redémarrée (côté
+utilisateur), et **le run V7a complet + les captures ont bien été menés** (résultats ci-dessus).
 
 ## Parité — ancienne couche (panneau « Cartes », GeoJSON) ↔ nouvelle (tuyau)
 
@@ -171,5 +209,31 @@ tuyau) : `icpe`, `tri_zone`, `cavite`, `trait_de_cote`, `abf`, `sar`, `friche`,
 `foret_publique`, `bassin_versant`, `cimetiere`, `zone_activite`, `construction_lineaire`,
 `construction_surfacique`, `batiment`, `telepherique`, `pole_echange`, `piscine_cosia`.
 
-_(captures côte à côte : voir `captures/`)_
+## Captures (navigateur réel, Chrome via Playwright, `:5247`)
+
+`node captures/capture.mjs` → dossier `captures/`. Ce qu'elles montrent, honnêtement :
+
+- **`ile_tout_le_tuyau.png`** — vue ÎLE, TOUT le tuyau allumé : chaque famille peint dès l'île,
+  aucun « Zoomez d'abord », aucune couche muette (§5).
+- **`neuf_<couche>_{ile,commune,rue}.png`** — les 6 couches du mandat (tri_zone, sup,
+  alea_inondation, zonage_parcelle, icpe, construction_lineaire) servies par le tuyau seul, aux 3
+  échelles. `neuf_zonage_parcelle_{commune,rue}` montre les familles **U rose / AU bleu / A or /
+  N vert** calées à la parcelle (la restauration §2).
+- **`parite_<couche>_{NEUF,ANCIEN}.png`** — ancien panneau GeoJSON ↔ tuyau, côte à côte, en vue
+  commune. **Même emprise** (le verrou le prouve : même `geom_2975`). Différence VISUELLE
+  assumée : les « Nouvelles couches » sont peintes en **aplat** (section distincte, légende format
+  zonage — demande du complément lot 2), là où l'ancien panneau rendait SUP/aléa en fin **contour**.
+  Pour `zonage_parcelle`, l'ancien ne colorait PAS par famille (contours cadastraux seuls) — c'est
+  précisément la couche « ABSENTE » que le tuyau **restaure** en couleurs (§2).
+- **`leport_commune_sup_rien_en_mer.png`** — Le Port en vue commune, SUP seul : l'aplat magenta
+  couvre la terre et **s'arrête net au trait de côte — rien en mer** (§6).
+- **`sup_ile_timing.png`** + log : **SUP en vue île s'affiche en 1 517 ms** (contre ~8 s avant le
+  correctif `ST_Subdivide`). Plus aucune requête non interruptible (§2/§6).
+
+**Un constat, dit sans le cacher** : `zonage_parcelle` par parcelle (431 k features) en vue ÎLE,
+servi SEUL, fait émettre à Chrome un message console si gros que le **transport CDP de Playwright**
+saute (`Buffer > 536 Mo`) au moment de quitter la vue. C'est un artefact du HARNAIS de capture, pas
+du produit : `ile_tout_le_tuyau` (île, zonage compris) rend sans incident, et la tuile elle-même est
+servie. La capture de zonage à l'île se lit donc dans `ile_tout_le_tuyau` ; le zonage seul est
+capturé en commune/rue.
 
