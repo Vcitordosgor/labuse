@@ -24,6 +24,7 @@ export interface TuyauCouche {
   kind: string; nom: string; famille: string; geometrie: string; zoom_min: number
   rang_carte: number; style: TuyauStyle; niveaux: TuyauNiveau[] | null
   popup: TuyauPopup[] | null; legende: string; statut_juridique: string | null; tuiles_url: string
+  subdivise?: boolean   // retour §2 : servie en morceaux ST_Subdivide → pas de contour de morceau
 }
 
 const FALLBACK = '#8892a0'
@@ -86,8 +87,12 @@ function calques(c: TuyauCouche): maplibregl.AddLayerObject[] {
       out.push({ ...base, id: `${src}-fill`, type: 'fill',
         paint: { 'fill-color': col, 'fill-opacity': s.opacite ?? 0.4 } as never })
     }
-    out.push({ ...base, id: `${src}-outline`, type: 'line',
-      paint: { 'line-color': (s.trait || col) as never, 'line-width': s.epaisseur ?? 1, 'line-opacity': 0.9 } as never })
+    // retour §2 : une couche servie en MORCEAUX (ST_Subdivide) ne dessine PAS de contour de morceau
+    // (les coutures internes apparaîtraient). Le bord visible = l'arête du remplissage = l'origine.
+    if (!c.subdivise) {
+      out.push({ ...base, id: `${src}-outline`, type: 'line',
+        paint: { 'line-color': (s.trait || col) as never, 'line-width': s.epaisseur ?? 1, 'line-opacity': 0.9 } as never })
+    }
   }
   if (dims.has('line')) {
     const paint: Record<string, unknown> = {

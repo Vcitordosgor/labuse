@@ -162,6 +162,17 @@ def registre() -> dict[str, CoucheTuyau]:
                 srid=int(src.get("srid") or 2975),
                 where_sql=src.get("where"),
             )
+        # retour §2 : si la table dérivée existe, servir les couches spatial_layers depuis les MORCEAUX
+        # (ST_Subdivide). Endpoint ET verrou passent par `registre()` → même source, cohérents.
+        from dataclasses import replace as _replace
+        try:
+            from ..db import session_scope
+            with session_scope() as s:
+                if s.execute(text("SELECT to_regclass('tuyau_subdivise')")).scalar():
+                    reg = {k: (_replace(v, table="tuyau_subdivise") if v.table == "spatial_layers" else v)
+                           for k, v in reg.items()}
+        except Exception:  # noqa: BLE001 — pas de base au chargement : défaut spatial_layers
+            pass
         _REGISTRE = reg
     return _REGISTRE
 
@@ -188,6 +199,28 @@ def _version(db: Session) -> str:
         _VER["v"] = f"{run}.{mx}"
         _VER["at"] = now
     return _VER["v"]
+
+
+def build_tuyau_subdivise(db: Session) -> int:
+    """retour §2 — le DÉFAUT de prod : servir un méga-polygone (millions de sommets) en vue île lance
+    un `ST_AsMVTGeom` NON INTERRUPTIBLE (17 s pour SUP). Correctif : table dérivée où CHAQUE géométrie
+    de spatial_layers est découpée par `ST_Subdivide` en morceaux ≤ 256 sommets, indexée (GIST). L'UNION
+    des morceaux = la géométrie d'origine → remplissage IDENTIQUE, AUCUNE simplification. L'endpoint lit
+    cette table à la place des méga-géométries → `ST_AsMVTGeom` par petit morceau, parallélisable → < 2 s.
+    Construite comme les autres tables MVT (une fois, hors requête). Les morceaux gardent kind/subtype/
+    attrs pour la résolution et les popups. Le contour se dessine du bord d'origine (cf. front)."""
+    db.execute(text("DROP TABLE IF EXISTS tuyau_subdivise"))
+    db.execute(text("""
+        CREATE TABLE tuyau_subdivise AS
+        SELECT m.kind, m.subtype, m.name, m.commune, m.attrs, p.geom AS geom_2975
+        FROM spatial_layers m, LATERAL ST_Subdivide(m.geom_2975, 256) AS p(geom)"""))
+    db.execute(text("CREATE INDEX tuyau_subdivise_gix ON tuyau_subdivise USING GIST (geom_2975)"))
+    db.execute(text("CREATE INDEX tuyau_subdivise_kind ON tuyau_subdivise (kind, subtype)"))
+    db.execute(text("ANALYZE tuyau_subdivise"))
+    n = db.execute(text("SELECT count(*) FROM tuyau_subdivise")).scalar() or 0
+    db.commit()
+    _CACHE.clear()
+    return int(n)
 
 
 def build_mvt_communes(db: Session) -> int:
@@ -309,6 +342,9 @@ def tuyau_couches() -> dict:
             "legende": c.get("legende"),
             "statut_juridique": c.get("statut_juridique"),
             "tuiles_url": f"/map/tiles/{k}/{{z}}/{{x}}/{{y}}.pbf",
+            # retour §2 : couche servie en MORCEAUX (ST_Subdivide) → le front dessine le remplissage
+            # sans contour de morceau (pas de couture) ; le bord visible est celui de l'origine.
+            "subdivise": reg[k].table == "tuyau_subdivise",
         })
     # retour §2 : les couches hors registre (Limites parcelles, Zonage par parcelle, Limites communes)
     for c in _charger_hors_registre():
