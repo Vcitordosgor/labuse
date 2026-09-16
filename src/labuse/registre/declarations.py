@@ -100,6 +100,10 @@ def _fichiers(inclure_exemples: bool = False) -> list[pathlib.Path]:
     for p in DECLARATIONS.rglob("*.yaml"):
         if p.name == "generiques.yaml":
             continue
+        # COUCHES-TUYAU-1 §2 — fichier des couches HORS registre (source propre) : lu directement
+        # par le tuyau (liste de couches), pas une Surface du format standard.
+        if p.name == "tuyau_hors_registre.yaml":
+            continue
         if not inclure_exemples and EXEMPLES in p.parents:
             continue
         out.append(p)

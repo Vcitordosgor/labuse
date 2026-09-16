@@ -237,37 +237,46 @@ def _par_dimension(geoms):
 
 
 # ─────────────────────────── le verrou ───────────────────────────
-def _where_kind(resolution, params) -> str:
-    clauses = []
-    for i, (k, subs) in enumerate(resolution):
-        params[f"k{i}"] = k
-        if subs:
-            clauses.append(f"(m.kind = :k{i} AND m.subtype = ANY(:s{i}))")
-            params[f"s{i}"] = list(subs)
-        else:
-            clauses.append(f"(m.kind = :k{i})")
-    return "(" + " OR ".join(clauses) + ")"
+def _where_src(c, params) -> str:
+    """WHERE de la source : résolution par kind (spatial_layers) ou filtre explicite (couche §2)."""
+    if getattr(c, "resolution", None):
+        clauses = []
+        for i, (k, subs) in enumerate(c.resolution):
+            params[f"k{i}"] = k
+            if subs:
+                clauses.append(f"(m.kind = :k{i} AND m.subtype = ANY(:s{i}))")
+                params[f"s{i}"] = list(subs)
+            else:
+                clauses.append(f"(m.kind = :k{i})")
+        return "(" + " OR ".join(clauses) + ")"
+    return getattr(c, "where_sql", None) or "TRUE"
 
 
-def _busiest_tile(db, resolution, z: int):
+def _src_geom(c):
+    """(geom_src, geom_3857) — géométrie source SRID forcé, et sa reprojection 3857."""
+    g_src = f"ST_SetSRID(m.{c.geom}, {c.srid})"
+    g_3857 = g_src if c.srid == 3857 else f"ST_Transform({g_src}, 3857)"
+    return g_src, g_3857
+
+
+def _busiest_tile(db, c, z: int):
     """retour §3/§4 : AUCUN plafond. La tuile de contrôle = la plus DENSE (le contrôle le plus
-    sévère — le plus d'objets à comparer). L'échantillon (LIMIT 20000 centroïdes) sert seulement à
-    localiser une tuile peuplée de façon déterministe ; le contrôle qui suit porte sur TOUTE la
-    tuile, à géométrie brute. Retourne (x, y, count)."""
+    sévère — le plus d'objets à comparer). Source-aware (§2). Retourne (x, y, count)."""
     p: dict = {}
-    wk = _where_kind(resolution, p)
+    wk = _where_src(c, p)
     p["n"] = float(2 ** z)
+    ll = f"ST_Transform(ST_SetSRID(ST_Centroid(m.{c.geom}), {c.srid}), 4326)"
     row = db.execute(text(f"""
         WITH e AS (
-            SELECT ST_Centroid(m.geom) AS g
-            FROM spatial_layers m WHERE {wk} LIMIT 20000
-        ), c AS (
+            SELECT {ll} AS g
+            FROM {c.table} m WHERE {wk} LIMIT 20000
+        ), q AS (
             SELECT ST_X(g) lon, ST_Y(g) lat FROM e WHERE g IS NOT NULL
         ), t AS (
             SELECT floor((lon + 180.0) / 360.0 * :n)::int AS x,
                    floor((1.0 - ln(tan(radians(lat)) + 1.0/cos(radians(lat))) / pi()) / 2.0 * :n)::int AS y,
                    count(*) AS c
-            FROM c GROUP BY 1, 2 ORDER BY c DESC LIMIT 1
+            FROM q GROUP BY 1, 2 ORDER BY c DESC LIMIT 1
         )
         SELECT x, y, c FROM t
     """), p).first()
@@ -287,24 +296,23 @@ def _dims_declarees(geometrie: str) -> set[int]:
     return {0, 1, 2}  # inconnu / multi (tcsp) : toutes dimensions
 
 
-def _kept_count(db, resolution, z, x, y) -> int:
+def _kept_count(db, c, z, x, y) -> int:
     """Le nombre de features que la tuile RETIENT : celles dont `ST_AsMVTGeom` n'est pas nul —
     exactement ce que `ST_AsMVT` a encodé. La disparition, correcte, des objets sous le pixel
-    n'est donc pas comptée comme une perte : on vérifie que la tuile porte tout ce qui est retenu."""
+    n'est donc pas comptée comme une perte. Source-aware (§2)."""
     p: dict = {"z": z, "x": x, "y": y}
-    wk = _where_kind(resolution, p)
+    wk = _where_src(c, p)
+    g_src, g_3857 = _src_geom(c)
+    filtre = "b.env" if c.srid == 3857 else f"ST_Transform(b.env, {c.srid})"
     return int(db.execute(text(f"""
-        WITH b AS (
-            SELECT ST_TileEnvelope(:z, :x, :y) AS env,
-                   ST_Transform(ST_TileEnvelope(:z, :x, :y, margin => 0.02), 2975) AS filtre
-        )
-        SELECT count(*) FROM spatial_layers m, b
-        WHERE {wk} AND m.geom_2975 && b.filtre
-          AND ST_AsMVTGeom(ST_Transform(m.geom_2975, 3857), b.env, 4096, 64, true) IS NOT NULL
+        WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y, margin => 0.02) AS env)
+        SELECT count(*) FROM {c.table} m, b
+        WHERE {wk} AND {g_src} && {filtre}
+          AND ST_AsMVTGeom({g_3857}, ST_TileEnvelope(:z, :x, :y), 4096, 64, true) IS NOT NULL
     """), p).scalar() or 0)
 
 
-def _hausdorff_pg(db, resolution, z, x, y, dimtype: int, served_wkb: bytes | None):
+def _hausdorff_pg(db, c, z, x, y, dimtype: int, served_wkb: bytes | None):
     """retour §4 : Hausdorff (mètres 3857) entre la géométrie SERVIE décodée (WKB — les octets
     RÉELLEMENT servis) et la BRUTE RENDUE À LA TUILE : `ST_AsMVTGeom` de la `geom_2975` ENTIÈRE
     (extent 4096 — exactement le MVT que l'endpoint sert), ramenée en 3857 par l'affine inverse.
@@ -319,23 +327,25 @@ def _hausdorff_pg(db, resolution, z, x, y, dimtype: int, served_wkb: bytes | Non
     H ≫ px sous le moindre bug de décodeur, d'enveloppe, d'extent, de transform ou de SRID.
     Une requête qui n'aboutit pas (timeout, base) remonte en exception → couche ROUGE."""
     p: dict = {"z": z, "x": x, "y": y, "dt": dimtype, "sv": served_wkb, "has_sv": served_wkb is not None}
-    wk = _where_kind(resolution, p)
+    wk = _where_src(c, p)
+    g_src, g_3857 = _src_geom(c)
+    filtre = "b.env_marge" if c.srid == 3857 else f"ST_Transform(b.env_marge, {c.srid})"
     row = db.execute(text(f"""
         WITH b AS (
             SELECT ST_TileEnvelope(:z, :x, :y) AS env,
-                   ST_Transform(ST_TileEnvelope(:z, :x, :y, margin => 0.02), 2975) AS filtre,
+                   ST_TileEnvelope(:z, :x, :y, margin => 0.02) AS env_marge,
                    ST_XMin(ST_TileEnvelope(:z, :x, :y)) AS xmin,
                    ST_YMax(ST_TileEnvelope(:z, :x, :y)) AS ymax,
                    (ST_XMax(ST_TileEnvelope(:z, :x, :y)) - ST_XMin(ST_TileEnvelope(:z, :x, :y))) / 4096.0 AS sx
         ),
         raw AS (  -- collecter une fois, transformer une fois, ST_AsMVTGeom une fois (voie agrégat rapide)
-            SELECT ST_Collect(m.geom_2975) AS g FROM spatial_layers m, b
-            WHERE {wk} AND m.geom_2975 && b.filtre
+            SELECT ST_Collect({g_3857}) AS g FROM {c.table} m, b
+            WHERE {wk} AND {g_src} && {filtre}
         ),
-        r AS (  -- rendu MVT de la brute, ramené en 3857 par l'affine inverse de la tuile
+        r AS (  -- rendu MVT de la brute (déjà 3857), ramené en 3857 par l'affine inverse de la tuile
             SELECT ST_SetSRID(ST_Affine(
                        ST_CollectionExtract(
-                           ST_AsMVTGeom(ST_Transform(raw.g, 3857), b.env, 4096, 64, true), :dt),
+                           ST_AsMVTGeom(raw.g, b.env, 4096, 64, true), :dt),
                        b.sx, 0, 0, -b.sx, b.xmin, b.ymax), 3857) AS geom
             FROM raw, b
         )
@@ -382,7 +392,7 @@ def _controle_couche(db, kind, c, pbs, etat) -> None:
     # retour §5 : plus de bornage par zoom_min — chaque couche est contrôlée à TOUS les zooms
     # 10/13/16 (elle est visible dès l'île), safer compris. Aucun cas « sous le zoom minimum ».
     for z in _ZOOMS:
-        bt = _busiest_tile(db, c.resolution, z)
+        bt = _busiest_tile(db, c, z)
         if bt is None:
             continue  # couche sans donnée à ce zoom — rien à perdre
         x, y, _cnt = bt
@@ -398,7 +408,7 @@ def _controle_couche(db, kind, c, pbs, etat) -> None:
         served = [g for g in served if g is not None and not g.is_empty]
         px = size / 256.0
         # 1) même nombre d'objets : la tuile porte EXACTEMENT les features retenues par le tuyau.
-        kept = _kept_count(db, c.resolution, z, x, y)
+        kept = _kept_count(db, c, z, x, y)
         if len(served) != kept:
             pbs.append(f"{kind} z{z} ({x}/{y}) : {len(served)} objet(s) servi(s) ≠ {kept} retenu(s)")
         # 2+3+4) par DIMENSION DÉCLARÉE : aucune partie perdue, contour < 1 px, position exacte
@@ -407,7 +417,7 @@ def _controle_couche(db, kind, c, pbs, etat) -> None:
         dims = _dims_declarees(c.geometrie)
         for dim in sorted(dims):
             sv = _served_wkb(sb[dim], dim) if sb[dim] else None
-            present, h = _hausdorff_pg(db, c.resolution, z, x, y, dim + 1, sv)
+            present, h = _hausdorff_pg(db, c, z, x, y, dim + 1, sv)
             if (sv is None) != (not present):
                 pbs.append(f"{kind} z{z} dim{dim} : dimension {'servie' if sv else 'retenue'} sans contrepartie")
                 continue

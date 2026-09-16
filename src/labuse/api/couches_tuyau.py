@@ -71,6 +71,12 @@ class CoucheTuyau:
     zoom_min: int
     geometrie: str
     props: tuple[tuple[str, str], ...]                   # (nom_sortie, expression SQL)
+    # retour §2 : la SOURCE physique — défaut spatial_layers/geom_2975/2975 (résolution par kind) ;
+    # une couche hors registre déclare sa propre table/colonne/srid/filtre (mvt_parcels, mvt_communes…).
+    table: str = "spatial_layers"
+    geom: str = "geom_2975"
+    srid: int = 2975
+    where_sql: str | None = None                         # filtre explicite (couches hors spatial_layers)
 
 
 _REGISTRE: dict[str, CoucheTuyau] | None = None
@@ -112,6 +118,18 @@ def _props_referencees(carte: dict) -> list[str]:
     return vus
 
 
+def _charger_hors_registre() -> list[dict]:
+    """retour §2 : les couches déclarées HORS spatial_layers (leur propre source), lues du YAML
+    `declarations/couches/tuyau_hors_registre.yaml`. Une couche n'a pas besoin d'être dans
+    spatial_layers pour être au panneau."""
+    import pathlib
+    import yaml as _yaml
+    p = pathlib.Path(__file__).resolve().parents[3] / "declarations" / "couches" / "tuyau_hors_registre.yaml"
+    if not p.exists():
+        return []
+    return _yaml.safe_load(p.read_text(encoding="utf-8")) or []
+
+
 def registre() -> dict[str, CoucheTuyau]:
     """Construit (une fois) le registre du tuyau depuis la déclaration. Lit UNIQUEMENT le YAML."""
     global _REGISTRE
@@ -127,11 +145,22 @@ def registre() -> dict[str, CoucheTuyau]:
                 if e is not None:
                     props.append((nom, e))
             reg[kind] = CoucheTuyau(
-                kind=kind,
-                resolution=tuple(res),
-                zoom_min=int(c.get("zoom_min") or 0),
-                geometrie=c.get("geometrie") or "polygone",
-                props=tuple(props),
+                kind=kind, resolution=tuple(res), zoom_min=int(c.get("zoom_min") or 0),
+                geometrie=c.get("geometrie") or "polygone", props=tuple(props),
+            )
+        # couches hors spatial_layers : source déclarée, propriétés = colonnes réelles de la table.
+        for c in _charger_hors_registre():
+            src = c.get("source") or {}
+            kind = c["kind"]
+            props = [(nom, f"m.{nom}") for nom in _props_referencees(c)
+                     if _IDENT.match(nom) and nom not in ("subtype", "name")]
+            reg[kind] = CoucheTuyau(
+                kind=kind, resolution=(), zoom_min=int(c.get("zoom_min") or 0),
+                geometrie=c.get("geometrie") or "polygone", props=tuple(props),
+                table=str(src.get("table") or "spatial_layers"),
+                geom=str(src.get("geom") or "geom_2975"),
+                srid=int(src.get("srid") or 2975),
+                where_sql=src.get("where"),
             )
         _REGISTRE = reg
     return _REGISTRE
@@ -161,33 +190,60 @@ def _version(db: Session) -> str:
     return _VER["v"]
 
 
+def build_mvt_communes(db: Session) -> int:
+    """retour §2 — frontière des 24 communes : dissolution de mvt_parcels par commune (ST_Union) puis
+    ST_Boundary. Reconstruite comme les autres tables MVT. geom en SRID 0 (comme mvt_parcels ;
+    l'endpoint force 3857)."""
+    db.execute(text("DROP TABLE IF EXISTS mvt_communes"))
+    db.execute(text("""
+        CREATE TABLE mvt_communes AS
+        SELECT commune, ST_Boundary(ST_UnaryUnion(ST_Collect(geom_3857))) AS geom_3857
+        FROM mvt_parcels WHERE commune IS NOT NULL GROUP BY commune"""))
+    db.execute(text("CREATE INDEX mvt_communes_gix ON mvt_communes USING GIST (geom_3857)"))
+    db.execute(text("ANALYZE mvt_communes"))
+    n = db.execute(text("SELECT count(*) FROM mvt_communes")).scalar() or 0
+    db.commit()
+    _CACHE.clear()
+    return int(n)
+
+
+def _table_manquante(db: Session, table: str) -> bool:
+    return db.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar() is None
+
+
 def _construire_tuile(db: Session, c: CoucheTuyau, z: int, x: int, y: int) -> bytes:
-    """L'UNIQUE requête. Filtre en 2975 (indexé), reprojette en 3857 une fois, MVT extent 4096.
-    Le nom de couche MVT = le kind-front ; les propriétés = celles référencées par la déclaration."""
-    clauses: list[str] = []
-    params: dict = {"z": z, "x": x, "y": y}
-    for i, (k, subs) in enumerate(c.resolution):
-        params[f"k{i}"] = k
-        if subs:
-            clauses.append(f"(m.kind = :k{i} AND m.subtype = ANY(:s{i}))")
-            params[f"s{i}"] = list(subs)
-        else:
-            clauses.append(f"(m.kind = :k{i})")
-    where_kind = "(" + " OR ".join(clauses) + ")"
-    props_sql = "".join(f'{expr} AS "{nom}", ' for nom, expr in c.props)
-    params["layer"] = c.kind
+    """L'UNIQUE requête. Filtre dans le SRID de la source (indexé), reprojette en 3857 une fois, MVT
+    extent 4096. Le nom de couche MVT = le kind-front ; les propriétés = celles déclarées.
+    Source-aware (§2) : spatial_layers/geom_2975/2975 par défaut, ou la table/colonne/srid déclarée."""
+    params: dict = {"z": z, "x": x, "y": y, "layer": c.kind}
+    # WHERE : résolution par kind (spatial_layers) ou filtre explicite (couche hors registre).
+    if c.resolution:
+        clauses: list[str] = []
+        for i, (k, subs) in enumerate(c.resolution):
+            params[f"k{i}"] = k
+            if subs:
+                clauses.append(f"(m.kind = :k{i} AND m.subtype = ANY(:s{i}))")
+                params[f"s{i}"] = list(subs)
+            else:
+                clauses.append(f"(m.kind = :k{i})")
+        where = "(" + " OR ".join(clauses) + ")"
+    else:
+        where = c.where_sql or "TRUE"
+    # géométrie source → 3857 (une fois). Le SRID est FORCÉ (mvt_parcels.geom_3857 est en SRID 0).
+    g_src = f"ST_SetSRID(m.{c.geom}, {c.srid})"
+    g_3857 = g_src if c.srid == 3857 else f"ST_Transform({g_src}, 3857)"
+    filtre = "b.env_marge" if c.srid == 3857 else f"ST_Transform(b.env_marge, {c.srid})"
+    props_sql = "".join(f', {expr} AS "{nom}"' for nom, expr in c.props)
     sql = text(f"""
         WITH b AS (
             SELECT ST_TileEnvelope(:z, :x, :y) AS env,
-                   ST_Transform(ST_TileEnvelope(:z, :x, :y, margin => 0.125), 2975) AS filtre_2975
+                   ST_TileEnvelope(:z, :x, :y, margin => 0.125) AS env_marge
         ),
         mvt AS (
-            SELECT ST_AsMVTGeom(ST_Transform(m.geom_2975, 3857), b.env, 4096, 64, true) AS geom,
-                   {props_sql}
-                   m.id
-            FROM spatial_layers m, b
-            WHERE {where_kind}
-              AND m.geom_2975 && b.filtre_2975
+            SELECT ST_AsMVTGeom({g_3857}, b.env, 4096, 64, true) AS geom{props_sql}
+            FROM {c.table} m, b
+            WHERE {where}
+              AND {g_src} && {filtre}
         )
         SELECT ST_AsMVT(mvt.*, :layer, 4096, 'geom') FROM mvt WHERE geom IS NOT NULL
     """)
@@ -218,6 +274,9 @@ def couche_tuile(kind: str, z: int, x: int, y: int,
         _CACHE.move_to_end(key)
         return Response(content=_CACHE[key], media_type="application/x-protobuf",
                         headers={**_HEADERS, "ETag": etag})
+    if _table_manquante(db, c.table):
+        # source pas encore construite (ex. mvt_communes avant build) — vide gracieux, jamais 500.
+        return Response(status_code=204)
     body = _construire_tuile(db, c, z, x, y)
     _CACHE[key] = body
     if len(_CACHE) > _CACHE_MAX:
@@ -248,6 +307,17 @@ def tuyau_couches() -> dict:
             "niveaux": c.get("niveaux"),
             "popup": c.get("popup"),
             "legende": c.get("legende"),
+            "statut_juridique": c.get("statut_juridique"),
+            "tuiles_url": f"/map/tiles/{k}/{{z}}/{{x}}/{{y}}.pbf",
+        })
+    # retour §2 : les couches hors registre (Limites parcelles, Zonage par parcelle, Limites communes)
+    for c in _charger_hors_registre():
+        k = c["kind"]
+        couches.append({
+            "kind": k, "nom": c.get("nom") or k, "famille": c.get("famille"),
+            "geometrie": c.get("geometrie"), "zoom_min": int(c.get("zoom_min") or 0),
+            "rang_carte": c.get("rang_carte") or 0, "style": c.get("style"),
+            "niveaux": c.get("niveaux"), "popup": c.get("popup"), "legende": c.get("legende"),
             "statut_juridique": c.get("statut_juridique"),
             "tuiles_url": f"/map/tiles/{k}/{{z}}/{{x}}/{{y}}.pbf",
         })

@@ -1,0 +1,43 @@
+# COUCHES-TUYAU-1 retour §2 — les 3 couches « ABSENTE » rétablies dans « Nouvelles couches ».
+# Une couche n'a PAS besoin d'être dans spatial_layers : elle déclare ici sa SOURCE (table, colonne
+# géométrie, srid, filtre). Le tuyau les sert comme les autres ; le front les rend génériquement.
+# Rendu identique à l'ancien (couleurs U/AU/A/N, étiquettes de zone, légende pour le zonage).
+- kind: limites_parcelles
+  nom: "Limites parcelles (contour cadastral)"
+  famille: fond_de_plan
+  geometrie: ligne
+  # mvt_parcels porte TOUTES les parcelles servies (géométrie 3857 déjà projetée, SRID 0 → on force 3857).
+  source: { table: mvt_parcels, geom: geom_3857, srid: 3857 }
+  style: { couleur: "#8FA69A", epaisseur: 0.4, opacite: 0.6 }
+  legende: "Contour cadastral des parcelles"
+
+- kind: zonage_parcelle
+  nom: "Zonage PLU par parcelle (calibré)"
+  famille: urbanisme
+  geometrie: polygone
+  # zone PLU CALIBRÉE par parcelle (mvt_parcels.zone_fam / zone_lib — dérivée du run servi).
+  source: { table: mvt_parcels, geom: geom_3857, srid: 3857, where: "zone_fam IS NOT NULL" }
+  style: { couleur_propriete: zone_fam, opacite: 0.55, trait: "#0b0f14" }
+  # grades = familles de zone, couleurs de l'ancien ZONE_FAM_META (libellés PROPRES, jamais la clé).
+  niveaux:
+    - { id: U,   propriete: zone_fam, valeur: U,     couleur: "#E5417F", legende: "U — urbaine" }
+    - { id: AU,  propriete: zone_fam, valeur: AU,    couleur: "#4C7DF0", legende: "AU — à urbaniser" }
+    - { id: A,   propriete: zone_fam, valeur: A,     couleur: "#E8B23A", legende: "A — agricole" }
+    - { id: N,   propriete: zone_fam, valeur: N,     couleur: "#3FB56A", legende: "N — naturelle" }
+    - { id: aut, propriete: zone_fam, valeur: autre, couleur: "#8A94A6", legende: "Autre zonage" }
+  popup:
+    - { champ: zone_lib, libelle: "Zone" }
+    - { champ: commune,  libelle: "Commune" }
+  legende: "Zonage PLU par parcelle — famille U/AU/A/N (calibré)"
+
+- kind: limites_communes
+  nom: "Limites communes"
+  famille: fond_de_plan
+  geometrie: ligne
+  # frontière des 24 communes = table dérivée mvt_communes (dissolution de mvt_parcels par commune,
+  # ST_Boundary), reconstruite avec les tuiles. Source à part entière, hors spatial_layers.
+  source: { table: mvt_communes, geom: geom_3857, srid: 3857 }
+  style: { couleur: "#B7C0CC", epaisseur: 1.1, opacite: 0.85 }
+  popup:
+    - { champ: commune, libelle: "Commune" }
+  legende: "Limites administratives des 24 communes"
