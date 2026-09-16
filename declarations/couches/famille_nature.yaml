@@ -1,0 +1,72 @@
+# ── PRODUCTION (lot 3, les 37) : FAMILLE NATURE — couches legacy migrées, RENDU REPRODUIT À
+# L'IDENTIQUE (couleurs/opacités exactes de mapTheme.ts T_SOMBRE + MapView STYLE_BY_KIND). Deux
+# couches à sous-types (parc cœur/adhésion, ZNIEFF type I/II) → `niveaux` : un aplat filtré par
+# sous-type, couleur ET opacité propres. enp = kind VIRTUEL vers `ens` (tous types, pas de filtre).
+# RPG N'EST PAS ICI : c'est la MÊME donnée que couche_safer (foncier) — fusionné, une seule couche.
+# Empilement (rang_carte croissant = dessiné dessus) : parc ⊃ ZNIEFF ⊃ ENP ⊃ zones humides.
+
+surface:   couche_zone_humide
+nom:       "Zones humides"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=zone_humide"
+rendu:     carte
+donnees:
+  - quoi:  zone_humide_couche
+    ou:    { rang: 10, etat: replie, section: "Nature et eau" }
+    comment: { libelle: "Zones humides", format: liste, i: "Inventaires DEAL par secteurs (2003, 2009 + espaces fonctionnels, habitats 2011, basse altitude 2019) — couverture PARTIELLE : l'absence d'inventaire n'est pas une preuve d'absence." }
+    carte: { kind: zone_humide, agregat: false, famille: environnement, geometrie: polygone, zoom_min: 0, rang_carte: 16, style: { couleur: "#2E9E8F", opacite: 0.30, trait: "#2E9E8F" }, popup: [ { champ: nature, libelle: "Nature" }, { champ: typename, libelle: "Inventaire" } ], legende: "Zone humide inventoriée (DEAL)" }
+    absence: "Zones humides : aucun secteur inventorié dans l'emprise visible (couverture partielle)."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (#2E9E8F @0,30) ; contrainte environnementale, couverture dite partielle."
+---
+surface:   couche_enp
+nom:       "Espaces naturels protégés"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=enp"
+rendu:     carte
+donnees:
+  - quoi:  enp_couche
+    ou:    { rang: 10, etat: en_tete, section: "Nature et eau" }
+    comment: { libelle: "Espaces naturels protégés", format: liste, i: "ENP par type (réserves naturelles dont marine, APB, conservatoire du littoral, réserves biologiques, Ramsar, sites classés/inscrits) — INPN + compléments DEAL Carmen. Protection réglementaire, souvent rédhibitoire." }
+    carte: { kind: enp, agregat: false, famille: environnement, geometrie: polygone, zoom_min: 0, rang_carte: 14, style: { couleur: "#6A4CC2", opacite: 0.28, trait: "#6A4CC2" }, popup: [ { champ: type, libelle: "Type" }, { champ: surface_ha, libelle: "Surface (ha)" } ], legende: "Espace naturel protégé (réglementaire)" }
+    absence: "ENP : parcelle hors espace naturel protégé sur l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Rendu identique (#6A4CC2 @0,28 indigo, ≠ verts) ; kind virtuel enp→ens (tous types)."
+---
+surface:   couche_znieff
+nom:       "ZNIEFF (type I & II)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=znieff"
+rendu:     carte
+donnees:
+  - quoi:  znieff_couche
+    ou:    { rang: 10, etat: en_tete, section: "Nature et eau" }
+    comment: { libelle: "ZNIEFF (I / II)", format: liste, i: "Inventaire du patrimoine naturel (INPN/MNHN PatriNat, maj 2025). Type I : secteur de fort intérêt biologique, plus restreint et sensible ; type II : grand ensemble naturel peu modifié. PAS une interdiction — un signal fort (étude d'impact renforcée, recours plus probable). ZNIEFF marines non affichées." }
+    # niveaux : type I dense (0,20), type II léger. Le legacy mettait type II à 0,06 → ΔE 1,7 sur
+    # l'Ortho = INVISIBLE (mesuré). Relevé à 0,13 (ΔE ≥ 3,6 sur les 4 fonds) en gardant I > II — seul
+    # écart au rendu legacy, tranché par la mesure (Vic « go »).
+    carte: { kind: znieff, agregat: false, famille: environnement, geometrie: polygone, zoom_min: 0, rang_carte: 12, style: { couleur: "#8F9E4B", trait: "#8F9E4B", epaisseur: 0.8 }, niveaux: [ { id: "type I", propriete: subtype, valeur: "type I", couleur: "#8F9E4B", opacite: 0.20, legende: "Type I — secteur sensible (fort intérêt)" }, { id: "type II", propriete: subtype, valeur: "type II", couleur: "#8F9E4B", opacite: 0.13, legende: "Type II — grand ensemble naturel" } ], popup: [ { champ: id_mnhn, libelle: "Numéro national" }, { champ: type, libelle: "Type" }, { champ: gestionnaire, libelle: "Gestionnaire" }, { champ: url_fiche, libelle: "Fiche INPN", lien: true } ], legende: "ZNIEFF — type I (dense) / type II (léger)" }
+    absence: "ZNIEFF : parcelle hors zone d'inventaire dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (olive #8F9E4B ; type II 0,06 vs type I 0,20) ; signal, pas interdiction."
+---
+surface:   couche_parc
+nom:       "Parc national"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=parc_national"
+rendu:     carte
+donnees:
+  - quoi:  parc_national_couche
+    ou:    { rang: 10, etat: en_tete, section: "Nature et eau" }
+    comment: { libelle: "Parc national", format: liste, i: "Périmètre du Parc national de La Réunion. Deux assiettes : le CŒUR (~40 % de l'île, inconstructible) et l'AIRE D'ADHÉSION (réglementée mais constructible). Urbanisation très restreinte." }
+    # niveaux : cœur marron profond (0,34, inconstructible), adhésion marron clair (0,16) + liseré marron.
+    carte: { kind: parc_national, agregat: false, famille: environnement, geometrie: polygone, zoom_min: 0, rang_carte: 8, style: { trait: "#7A4A1E", epaisseur: 1.2 }, niveaux: [ { id: "coeur", propriete: subtype, valeur: "coeur", couleur: "#6B3E17", opacite: 0.34, legende: "Cœur — inconstructible (~40 % de l'île)" }, { id: "adhesion", propriete: subtype, valeur: "adhesion", couleur: "#C08A54", opacite: 0.16, legende: "Aire d'adhésion — réglementée, constructible" } ], legende: "Parc national — cœur / aire d'adhésion" }
+    absence: "Parc national : parcelle hors périmètre du Parc dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Rendu identique (cœur #6B3E17 @0,34 / adhésion #C08A54 @0,16, liseré #7A4A1E) ; deux assiettes distinctes."

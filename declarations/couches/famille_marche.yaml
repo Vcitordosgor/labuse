@@ -1,0 +1,22 @@
+# ── PRODUCTION (lot 3, les 37) : FAMILLE MARCHÉ — prix du logement neuf VEFA (aplat commune, choroplèthe).
+# Rendu par TRANCHE de prix (VEFA_RAMP jaune→violet). Le cas « données insuffisantes » (moins de 10
+# ventes) était marqué par une TRAME grise — réexaminé (décision Vic) : une donnée insuffisante se DIT
+# en clair (aplat grisé + libellé « moins de 10 ventes »), jamais par une texture qu'il faut deviner.
+# Même règle que les phrases d'absence de la fiche. Niveaux = couleur + opacité par tranche.
+
+surface:   couche_vefa_neuf
+nom:       "Prix du logement neuf (VEFA)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=vefa_neuf"
+rendu:     carte
+donnees:
+  - quoi:  vefa_couche
+    ou:    { rang: 10, etat: replie, section: "Marché" }
+    comment: { libelle: "Prix du logement neuf (VEFA)", format: liste, i: "Prix médian du neuf VEFA par commune (DVF, ventes en l'état futur d'achèvement) — choroplèthe par tranche €/m². Les communes sous 10 ventes sont GRISÉES (prix non fiable), pas peintes en tranche." }
+    # sous_seuil : aplat GRISÉ + libellé « moins de 10 ventes » (plus de trame — la donnée insuffisante
+    # se dit en clair). Les tranches gardent la rampe vive VEFA_RAMP (jaune → violet), opacité 0,55.
+    carte: { kind: vefa_neuf, agregat: false, famille: marche, geometrie: polygone, zoom_min: 0, rang_carte: 40, style: { couleur: "#3B4046", trait: "#0b0f14", epaisseur: 0.8 }, niveaux: [ { id: "moins_4000", propriete: subtype, valeur: moins_4000, couleur: "#FDE047", opacite: 0.55, legende: "Moins de 4 000 €/m²" }, { id: "4000_4500", propriete: subtype, valeur: "4000_4500", couleur: "#FB923C", opacite: 0.55, legende: "4 000 – 4 500 €/m²" }, { id: "4500_5000", propriete: subtype, valeur: "4500_5000", couleur: "#EA6D2A", opacite: 0.55, legende: "4 500 – 5 000 €/m²" }, { id: "5000_5500", propriete: subtype, valeur: "5000_5500", couleur: "#D6337A", opacite: 0.55, legende: "5 000 – 5 500 €/m²" }, { id: "5500_plus", propriete: subtype, valeur: "5500_plus", couleur: "#A21CAF", opacite: 0.55, legende: "5 500 €/m² et plus" }, { id: "moins de 10 ventes", propriete: subtype, valeur: sous_seuil, couleur: "#7E858C", opacite: 0.38, legende: "Moins de 10 ventes — prix non fiable" } ], legende: "Prix neuf VEFA €/m² (grisé = moins de 10 ventes)" }
+    absence: "Prix neuf VEFA : commune sans vente neuve enregistrée dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Trame « sous seuil » réexaminée → aplat grisé + libellé « moins de 10 ventes » (dit en clair)."

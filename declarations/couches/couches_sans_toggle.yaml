@@ -1,0 +1,272 @@
+# ── PRODUCTION (lot 3) : LES COUCHES CLIENT SANS TOGGLE — style + FAMILLE portés par la déclaration ──
+# « Une couche invisible est une donnée perdue » (Vic). Style, légende, rang, zoom ET famille viennent
+# d'ICI (bloc `carte`). Un seul panneau range les couches par famille. Piscines = le cas exigeant :
+# une couche, 3 niveaux. étape 2 : famille posée sur toutes ; safer×rpg fusionnés ; sar nom unifié ;
+# construction_* (latents SOURCES-4) sortis du cul-de-sac.
+
+surface:   couche_piscine
+nom:       "Piscines (3 niveaux de confiance)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=piscine_cosia"
+rendu:     carte
+donnees:
+  - quoi:  piscine_couche
+    ou:    { rang: 10, etat: en_tete, section: "Piscines" }
+    comment: { libelle: "Piscines", format: liste, i: "Trois niveaux de confiance. Aucune n'est fiscale (signal « piscine non déclarée » fermé sans fichiers fonciers DGFiP)." }
+    carte:
+      kind: piscine_cosia
+      famille: foncier
+      panneau_general: false     # recette Vic : hors panneau carte général → outil Prospection solaire
+      geometrie: point
+      zoom_min: 15
+      rang_carte: 80
+      niveaux:
+        - { id: confirmee, propriete: niveau, valeur: confirmee, couleur: "#3BA7FF", rayon: 5, opacite: 0.95, legende: "Confirmée — les deux détections d'accord (BD ORTHO ∩ CoSIA)" }
+        - { id: probable,  propriete: niveau, valeur: probable,  couleur: "#6FA8C7", rayon: 4, opacite: 0.70, legende: "Probable — CoSIA seule (1 sur 4 = faux positif : toit, bâche, route)" }
+        - { id: rare,      propriete: niveau, valeur: rare,      couleur: "#8A968F", rayon: 3, opacite: 0.55, legende: "Rare — détection interne seule" }
+    absence: "Piscines : aucune piscine détectée dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Une seule couche, 3 niveaux de confiance (arbitrage G1) — la fiche parcelle porte le même niveau."
+# POURRAIT offrir : la surface m² par piscine en infobulle.
+---
+surface:   couche_icpe
+nom:       "Installations classées (ICPE)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=icpe"
+rendu:     carte
+donnees:
+  - quoi:  icpe_couche
+    ou:    { rang: 10, etat: en_tete, section: "ICPE" }
+    comment: { libelle: "ICPE", format: liste, i: "Installations classées (Géorisques), par régime." }
+    # recette : zoom_min baissé (visible au zoom commune) + halo (détache sur ortho) + rouge vif.
+    carte: { kind: icpe, agregat: false, famille: risques, geometrie: point, zoom_min: 0, rang_carte: 70, style: { couleur: "#FF4A3D", rayon: 6, opacite: 0.95, halo: 2 }, legende: "Installation classée (autorisation / enregistrement / déclaration)" }
+    absence: "ICPE : aucune installation classée dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: informatif
+    pourquoi: "Voisinage industriel à connaître ; légende par régime."
+# POURRAIT offrir : le régime en filtre ; la distance à la parcelle en fiche.
+---
+surface:   couche_friche
+nom:       "Friches (Cartofriches)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=friche"
+rendu:     carte
+donnees:
+  - quoi:  friche_couche
+    ou:    { rang: 10, etat: en_tete, section: "Friches" }
+    comment: { libelle: "Friches", format: liste, i: "Friches recensées (Cartofriches)." }
+    carte: { kind: friche, agregat: false, centroide: true, famille: foncier, geometrie: polygone, zoom_min: 0, rang_carte: 40, style: { couleur: "#d9a441", opacite: 0.35, trait: "#8a6d3b", rayon: 5 }, legende: "Friche (avec projet / potentielle / sans projet)" }
+    absence: "Friches : aucune friche recensée dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Gisement foncier ; légende par statut de projet."
+# POURRAIT offrir : le statut de projet en couleur ; un lien vers l'outil foncier.
+---
+surface:   couche_cavite
+nom:       "Cavités souterraines"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=cavite"
+rendu:     carte
+donnees:
+  - quoi:  cavite_couche
+    ou:    { rang: 10, etat: en_tete, section: "Cavités" }
+    comment: { libelle: "Cavités", format: liste, i: "Cavités souterraines (Géorisques)." }
+    carte: { kind: cavite, agregat: false, famille: risques, geometrie: point, zoom_min: 0, rang_carte: 72, style: { couleur: "#C77DFF", rayon: 6, opacite: 0.95, halo: 2 }, legende: "Cavité (naturelle / ouvrage civil / indéterminée)" }
+    absence: "Cavités : aucune cavité recensée dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: informatif
+    pourquoi: "Aléa d'effondrement ; légende par nature."
+# POURRAIT offrir : croisement avec l'aléa mouvement de terrain.
+---
+surface:   couche_trait_de_cote
+nom:       "Érosion côtière (trait de côte)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=trait_de_cote"
+rendu:     carte
+donnees:
+  - quoi:  trait_de_cote_couche
+    ou:    { rang: 10, etat: en_tete, section: "Littoral" }
+    comment: { libelle: "Recul du trait de côte", format: liste, i: "Recul du trait de côte (Cerema/GéoLittoral)." }
+    carte: { kind: trait_de_cote, agregat: false, limite: 40000, famille: risques, geometrie: ligne, zoom_min: 0, rang_carte: 60, style: { couleur: "#3BB4A7", epaisseur: 2, opacite: 0.9 }, legende: "Trait de côte (bande courte / longue / stable)" }
+    absence: "Trait de côte : parcelle hors bande littorale suivie."
+    absence_type: absente_ici
+    pourquoi: "Aléa littoral (recul) ; légende par bande d'échéance."
+# POURRAIT offrir : la bande d'aléa en fiche parcelle littorale.
+---
+surface:   couche_tri_zone
+nom:       "TRI — zones inondables"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=tri_zone"
+rendu:     carte
+donnees:
+  - quoi:  tri_zone_couche
+    ou:    { rang: 10, etat: en_tete, section: "Inondation" }
+    comment: { libelle: "TRI (inondation)", format: liste, i: "Territoires à risque important d'inondation (Géorisques)." }
+    # COUCHES-AFFICHAGE-1 lot 1 — GRADES PAR LA COULEUR : les 3 scénarios TRI (nichés) affichés en même
+    # temps, un SOUS-CALQUE par grade, EMBOÎTÉS (extrême = le plus étendu, dessous, teinte claire ;
+    # fréquent = le plus petit, dessus, teinte foncée). Plus de sélecteur.
+    carte: { kind: tri_zone, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 30, style: { opacite: 0.5, trait: "#1c5a8c" }, niveaux: [ { id: extreme, propriete: subtype, valeur: extreme, couleur: "#B8D8F5", legende: "Extrême (rare — le plus étendu)" }, { id: moyen, propriete: subtype, valeur: moyen, couleur: "#5BA3E8", legende: "Moyen" }, { id: frequent, propriete: subtype, valeur: frequent, couleur: "#1C5A8C", legende: "Fréquent" } ], legende: "TRI inondable — 3 scénarios emboîtés (clair = rare)" }
+    absence: "TRI : parcelle hors territoire à risque important d'inondation."
+    absence_type: absente_ici
+    statut_juridique: informatif
+    pourquoi: "Aléa inondation par scénario ; légende par fréquence."
+# POURRAIT offrir : le scénario touchant la parcelle en fiche.
+---
+surface:   couche_abf
+nom:       "Périmètres ABF / monuments"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=abf"
+rendu:     carte
+donnees:
+  - quoi:  abf_couche
+    ou:    { rang: 10, etat: en_tete, section: "Patrimoine" }
+    comment: { libelle: "Périmètres ABF", format: liste, i: "Périmètres ABF / monuments (arrêtés)." }
+    carte: { kind: abf, agregat: false, famille: patrimoine, geometrie: polygone, zoom_min: 0, rang_carte: 50, style: { couleur: "#C9A227", opacite: 0.30, trait: "#8a6d1a" }, legende: "Périmètre ABF — avis conforme requis" }
+    absence: "Périmètres ABF : parcelle hors de tout périmètre de protection."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Avis conforme ABF requis — opposable ; légende unique."
+# POURRAIT offrir : un drapeau « dans un périmètre ABF » en fiche.
+---
+surface:   couche_sar
+nom:       "SAR — vocations / potentiel foncier Région"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=sar"
+rendu:     carte
+donnees:
+  - quoi:  sar_couche
+    ou:    { rang: 10, etat: en_tete, section: "Aménagement régional" }
+    comment: { libelle: "SAR — vocations", format: liste, i: "Schéma d'Aménagement Régional — vocations. C'est aussi le « potentiel foncier Région » indicatif (même géométrie, un seul nom désormais)." }
+    carte: { kind: sar, agregat: false, famille: foncier, geometrie: polygone, zoom_min: 0, rang_carte: 20, style: { couleur: "#6BA368", opacite: 0.25, trait: "#3e6b3c" }, legende: "SAR — vocation (agricole / naturelle / coupure / continuité / mixte)" }
+    absence: "SAR : vocation non renseignée sur l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "SAR opposable aux PLU ; nom unifié avec « potentiel foncier Région » (finding recensement)."
+# POURRAIT offrir : la divergence SAR ↔ zonage PLU (sar_divergence existe déjà).
+# couche_ravine RETIRÉ (recette Vic — doublon mesuré 9 010/12 716 ∩ dpf ; dpf legacy opposable fait foi).
+---
+surface:   couche_foret_publique
+nom:       "Forêts publiques"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=foret_publique"
+rendu:     carte
+donnees:
+  - quoi:  foret_publique_couche
+    ou:    { rang: 10, etat: en_tete, section: "Espaces protégés" }
+    comment: { libelle: "Forêts publiques", format: liste, i: "Forêts domaniales et publiques (ONF/BD TOPO)." }
+    carte: { kind: foret_publique, agregat: false, famille: environnement, geometrie: polygone, zoom_min: 0, rang_carte: 25, style: { couleur: "#3E7A4E", opacite: 0.35, trait: "#255035" }, legende: "Forêt publique (domaniale / publique) — régime forestier" }
+    absence: "Forêts publiques : aucune forêt publique dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Régime forestier inconstructible — opposable ; légende domaniale/publique."
+# POURRAIT offrir : croisement avec ENP/ENS.
+---
+surface:   couche_bassin_versant
+nom:       "Bassins versants (hydrographie)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=bassin_versant"
+rendu:     carte
+donnees:
+  - quoi:  bassin_versant_couche
+    ou:    { rang: 10, etat: replie, section: "Hydrographie" }
+    comment: { libelle: "Bassins versants (hydrographie)", format: liste, i: "Territoire de drainage — bassins versants (BD Carthage / hydrographie). Rien à voir avec les ouvrages (barrages)." }
+    # recette Vic : un bassin couvre toute l'île → LIMITES SEULES (trait), pas de surface pleine.
+    carte: { kind: bassin_versant, agregat: false, famille: environnement, geometrie: polygone, zoom_min: 0, rang_carte: 10, style: { contour_seul: true, couleur: "#5FB0DE", opacite: 0.8, trait: "#5FB0DE", epaisseur: 1.4 }, legende: "Bassin versant — limites (trait)" }
+    absence: "Bassins versants : contour non disponible sur l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Contexte hydrologique ; couche de fond, repliée."
+# POURRAIT offrir : croisement avec TRI/AZI.
+---
+surface:   couche_cimetiere
+nom:       "Cimetières"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=cimetiere"
+rendu:     carte
+donnees:
+  - quoi:  cimetiere_couche
+    ou:    { rang: 10, etat: replie, section: "Servitudes de voisinage" }
+    comment: { libelle: "Cimetières", format: liste, i: "Cimetières (BD TOPO) — servitude de voisinage (100 m)." }
+    carte: { kind: cimetiere, agregat: false, centroide: true, famille: patrimoine, geometrie: polygone, zoom_min: 0, rang_carte: 45, style: { couleur: "#E0E7EC", rayon: 6, opacite: 0.30, halo: 2, trait: "#8FA0AE" }, legende: "Cimetière (servitude de voisinage 100 m)" }
+    absence: "Cimetières : aucun cimetière dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: informatif
+    pourquoi: "Servitude de voisinage (100 m) ; repliée."
+# POURRAIT offrir : le périmètre de 100 m matérialisé.
+---
+surface:   couche_safer
+nom:       "Foncier agricole déclaré — RPG / SAFER"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=safer"
+rendu:     carte
+donnees:
+  - quoi:  safer_couche
+    ou:    { rang: 10, etat: replie, section: "Foncier agricole" }
+    comment: { libelle: "Foncier agricole (RPG / SAFER)", format: liste, i: "Parcelles agricoles déclarées (RPG) — même géométrie que le périmètre de préemption SAFER. UNE SEULE couche (le recensement a montré des lignes identiques : ma séparation de la veille était fausse)." }
+    carte: { kind: safer, limite: 40000, famille: foncier, geometrie: polygone, zoom_min: 11, rang_carte: 22, style: { couleur: "#8A9A5B", opacite: 0.20, trait: "#5a663b" }, legende: "Foncier agricole déclaré (RPG) / préemption SAFER" }
+    absence: "Foncier agricole : parcelle hors déclaration RPG / périmètre SAFER connu."
+    absence_type: absente_ici
+    statut_juridique: informatif
+    pourquoi: "FUSION SAFER×RPG (finding recensement, Vic) : une seule couche, le toggle rpg legacy est retiré au profit de celle-ci (bascule lot 6)."
+# POURRAIT offrir : le code culture RPG en infobulle (déjà servi par la couche legacy).
+---
+surface:   couche_zone_activite
+nom:       "Zones d'activité"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=zone_activite"
+rendu:     carte
+donnees:
+  - quoi:  zone_activite_couche
+    ou:    { rang: 10, etat: replie, section: "Économie" }
+    comment: { libelle: "Zones d'activité", format: liste, i: "Zones d'activité économique (vocation, distinct des équipements BPE)." }
+    carte: { kind: zone_activite, limite: 40000, famille: foncier, geometrie: polygone, zoom_min: 11, rang_carte: 35, style: { couleur: "#D98E4A", opacite: 0.25, trait: "#8a5a2a" }, legende: "Zone d'activité économique" }
+    absence: "Zones d'activité : aucune zone dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Vocation économique du secteur ; repliée. ⚠ ARBITRAGE : à distinguer d'amenite_bpe (voir rapport)."
+# POURRAIT offrir : croisement avec amenite_bpe (équipements dans la zone).
+---
+surface:   couche_construction_lineaire
+nom:       "Murs de soutènement"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=construction_lineaire"
+rendu:     carte
+donnees:
+  - quoi:  construction_lineaire_couche
+    ou:    { rang: 10, etat: replie, section: "Ouvrages" }
+    comment: { libelle: "Murs de soutènement", format: liste, i: "Murs de soutènement et constructions linéaires (BD TOPO) — enjeu de terrassement en pente." }
+    # recette : zoom_min 14→12 (trop haut) + ligne épaissie + orange vif (visible sur ortho).
+    carte: { kind: construction_lineaire, agregat: false, limite: 40000, famille: risques, geometrie: ligne, zoom_min: 0, rang_carte: 55, style: { couleur: "#FFA726", epaisseur: 3, opacite: 0.95 }, legende: "Mur de soutènement (BD TOPO)" }
+    absence: "Murs de soutènement : aucun ouvrage linéaire dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Latent SOURCES-4 sorti du cul-de-sac (Vic) : un promoteur en pente les regarde ; replié."
+# POURRAIT offrir : la hauteur d'ouvrage si BD TOPO la porte.
+---
+surface:   couche_construction_surfacique
+nom:       "Barrages, ponts et dalles"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=construction_surfacique"
+rendu:     carte
+donnees:
+  - quoi:  construction_surfacique_couche
+    ou:    { rang: 10, etat: replie, section: "Ouvrages" }
+    # recette Vic : « Bassins et barrages » collait avec « Bassins versants ». Compté en base : 305
+    # ouvrages, subtypes RÉELS = Barrage / Dalle / Pont (BD TOPO). Le nom dit les 3, pas juste barrage.
+    comment: { libelle: "Barrages, ponts et dalles", format: liste, i: "Ouvrages surfaciques construits (BD TOPO) : barrages, ponts, dalles. 305 objets sur l'île." }
+    carte: { kind: construction_surfacique, agregat: false, centroide: true, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 42, style: { couleur: "#7C9CFF", opacite: 0.45, trait: "#AEC2FF", epaisseur: 1.4, halo: 1.5, rayon: 4 }, legende: "Barrage / pont / dalle (BD TOPO)" }
+    absence: "Barrages, ponts et dalles : aucun ouvrage surfacique dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Latent SOURCES-4 sorti du cul-de-sac (Vic) : ouvrages hydrauliques du secteur ; replié."
+# POURRAIT offrir : croisement avec le bassin versant.

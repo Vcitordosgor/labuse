@@ -1,0 +1,130 @@
+# ── PRODUCTION (lot 3, les 37) : FAMILLE TRANSPORT + RÉSEAUX — couches legacy migrées de MapView
+# (addLayer custom, pas STYLE_BY_KIND). Rendu reproduit à l'identique (mapTheme T_SOMBRE). Couleurs
+# data-driven par RÉSEAU (transportReseaux), rayons/largeurs rampés au zoom, tiretés par forme.
+# Télécabine = UNE couche à géométrie MIXTE (ligne Papang + stations) via `niveaux` par sous-type.
+# NOTE registre : ligne_mt (HTA) et le TCSP unifié (zone+tronçons+stations) suivent — leur donnée
+# registre est STALE (robinet tcsp→BAOBAB retiré, aucune donnée ligne_mt) : rebranchés au prochain pas.
+
+surface:   couche_axe
+nom:       "Axes structurants"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=axe_structurant"
+rendu:     carte
+donnees:
+  - quoi:  axes_couche
+    ou:    { rang: 10, etat: replie, section: "Voirie" }
+    comment: { libelle: "Axes structurants", format: liste, i: "Axes routiers structurants (BD TOPO, importance IGN 1-2) — l'armature viaire." }
+    carte: { kind: axe_structurant, agregat: false, famille: transport, geometrie: ligne, zoom_min: 0, rang_carte: 70, style: { couleur: "#8FA6C4", epaisseur: 2.2, opacite: 0.85 }, legende: "Axe routier structurant (importance 1-2)" }
+    absence: "Axes structurants : aucun axe majeur dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (#8FA6C4 bleu-gris, 2,2 px)."
+---
+surface:   couche_transport_ligne
+nom:       "Transport public — lignes"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=transport_ligne"
+rendu:     carte
+donnees:
+  - quoi:  transport_couche
+    ou:    { rang: 10, etat: en_tete, section: "Transport public" }
+    comment: { libelle: "Lignes de bus (réseaux)", format: liste, i: "Tracés GTFS des 6 réseaux (Car Jaune, Citalis, Kar'Ouest, Alternéo, Carsud, Estival) — couleur par réseau." }
+    carte: { kind: transport_ligne, agregat: false, famille: transport, geometrie: ligne, zoom_min: 0, rang_carte: 76, style: { couleur_propriete: subtype, couleurs: { "Car Jaune": "#E3B93C", "Citalis": "#E87BB0", "Kar'Ouest": "#6FA8E8", "Alternéo": "#45D0B8", "Estival": "#E8935A", "Carsud": "#B8C24A" }, couleur: "#E87BB0", epaisseur: 1.3, opacite: 0.75 }, legende: "Ligne de bus — couleur par réseau" }
+    absence: "Lignes de bus : aucun tracé dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (reseauColorExpr, 1,3 px) ; 6 réseaux GTFS."
+---
+surface:   couche_transport_arret
+nom:       "Transport public — arrêts"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=transport_arret"
+rendu:     carte
+donnees:
+  - quoi:  transport_couche
+    ou:    { rang: 10, etat: en_tete, section: "Transport public" }
+    comment: { libelle: "Arrêts de bus", format: liste, i: "Arrêts GTFS des réseaux — couleur par réseau, rayon croissant au zoom. Visible à partir du zoom quartier (11)." }
+    carte: { kind: transport_arret, agregat: false, limite: 20000, famille: transport, geometrie: point, zoom_min: 11, rang_carte: 84, style: { couleur_propriete: subtype, couleurs: { "Car Jaune": "#E3B93C", "Citalis": "#E87BB0", "Kar'Ouest": "#6FA8E8", "Alternéo": "#45D0B8", "Estival": "#E8935A", "Carsud": "#B8C24A" }, couleur: "#E87BB0", zoom_rayon: [11, 3, 14, 5.5, 16, 8, 18, 10], opacite: 0.9, halo: 1.2 }, popup: [ { champ: lignes_noms, libelle: "Lignes" }, { champ: reseau, libelle: "Réseau" } ], legende: "Arrêt de bus — couleur par réseau" }
+    absence: "Arrêts de bus : aucun arrêt dans l'emprise visible (zoom ≥ 11)."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (rayon rampé 11→18, halo sombre) ; minzoom 11."
+---
+surface:   couche_telepherique
+nom:       "Téléphérique (Papang)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=telepherique"
+rendu:     carte
+donnees:
+  - quoi:  transport_couche
+    ou:    { rang: 10, etat: replie, section: "Transport public" }
+    comment: { libelle: "Téléphérique Papang", format: liste, i: "Le téléphérique urbain Papang (CINOR) : ligne (tireté) + stations. Réseau Citalis." }
+    # géométrie MIXTE via niveaux : la ligne (Papang, tireté) + les stations (disque). Un seul toggle.
+    carte: { kind: telepherique, agregat: false, famille: transport, geometrie: point, zoom_min: 0, rang_carte: 78, style: { couleur: "#E87BB0" }, niveaux: [ { id: "ligne", propriete: subtype, valeur: "ligne", geometrie: ligne, couleur: "#E87BB0", epaisseur: 2.4, tirets: [1.6, 1.2], opacite: 0.95, legende: "Ligne du téléphérique" }, { id: "station", propriete: subtype, valeur: "station", geometrie: point, couleur: "#E87BB0", rayon: 4, epaisseur: 1.2, trait: "#060A08", legende: "Station" } ], legende: "Téléphérique Papang — ligne / stations" }
+    absence: "Téléphérique : hors emprise du Papang."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (Papang = rose Citalis, tireté = téléphérique) ; géométrie mixte en niveaux."
+---
+surface:   couche_pole
+nom:       "Pôles d'échange"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=pole_echange"
+rendu:     carte
+donnees:
+  - quoi:  axes_couche
+    ou:    { rang: 10, etat: replie, section: "Transport public" }
+    comment: { libelle: "Pôles d'échange", format: liste, i: "Pôles d'échange multimodaux (gares routières OSM) — les nœuds du réseau." }
+    # à l'identique : seuls les pôles OSM sont peints (les gtfs étaient à opacité 0 côté legacy).
+    carte: { kind: pole_echange, agregat: false, famille: transport, geometrie: point, zoom_min: 0, rang_carte: 82, filtre: { propriete: subtype, valeur: osm }, style: { couleur: "#FF6DB3", rayon: 5, opacite: 0.95, halo: 2 }, legende: "Pôle d'échange multimodal" }
+    absence: "Pôles d'échange : aucun pôle dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (magenta #FF6DB3) ; filtre subtype=osm (à l'identique legacy)."
+---
+surface:   couche_ligne_ht
+nom:       "Lignes haute tension (HTB)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=ligne_ht"
+rendu:     carte
+donnees:
+  - quoi:  lignes_ht_couche
+    ou:    { rang: 10, etat: replie, section: "Réseaux d'énergie" }
+    comment: { libelle: "Lignes haute tension (HTB)", format: liste, i: "Réseau de transport 63/90 kV (BD TOPO, aérien) — servitude de voisinage, champ électromagnétique." }
+    carte: { kind: ligne_ht, agregat: false, famille: reseaux, geometrie: ligne, zoom_min: 0, rang_carte: 74, style: { couleur: "#B9C4C0", epaisseur: 1.6, tirets: [5, 2.5], opacite: 0.9 }, legende: "Ligne HTB 63/90 kV (aérien)" }
+    absence: "Lignes HTB : aucune ligne haute tension dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (argent #B9C4C0, tireté long 5/2,5)."
+---
+surface:   couche_ligne_mt
+nom:       "Lignes moyenne tension (HTA)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=ligne_mt"
+rendu:     carte
+donnees:
+  - quoi:  ligne_mt_couche
+    ou:    { rang: 10, etat: replie, section: "Réseaux d'énergie" }
+    comment: { libelle: "Lignes moyenne tension (HTA)", format: liste, i: "Réseau HTA 15-20 kV EDF (aérien + souterrain) — tracé indicatif (sécurité publique), ne remplace pas une DT-DICT. Distinct de la HTB." }
+    carte: { kind: ligne_mt, agregat: false, limite: 40000, famille: reseaux, geometrie: ligne, zoom_min: 0, rang_carte: 72, style: { couleur: "#6E86C4", epaisseur: 1.1, tirets: [2, 1.6], opacite: 0.85 }, legende: "Ligne HTA 15-20 kV (aérien / souterrain)" }
+    absence: "Lignes HTA : aucune ligne moyenne tension dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (ardoise-bleu #6E86C4, tireté court 2/1,6 — la forme le sépare de la HTB)."
+---
+surface:   couche_tcsp
+nom:       "TCSP / stationnement allégé"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=tcsp"
+rendu:     carte
+donnees:
+  - quoi:  tcsp_couche
+    ou:    { rang: 10, etat: en_tete, section: "Transport public" }
+    comment: { libelle: "TCSP / stationnement allégé", format: liste, i: "Transport en commun en site propre : voies en site propre (OSM) + stations + zone des 800 m (L151-36, parcelles couvertes teintées où le stationnement peut être allégé). UNE couche, 3 kinds unis." }
+    # kind VIRTUEL tcsp (zone + tronçons + stations unis serveur). Niveaux à géométrie MIXTE : zone
+    # (aplat + rayon ligne) sous les tronçons (site propre, ligne rampée) sous les stations (anneau).
+    carte: { kind: tcsp, agregat: false, famille: transport, geometrie: polygone, zoom_min: 0, rang_carte: 68, style: { couleur: "#3FE0C8" }, niveaux: [ { id: "parcelles", propriete: subtype, valeur: parcelles, geometrie: polygone, couleur: "#3FE0C8", opacite: 0.22, legende: "Zone 800 m — parcelles couvertes" }, { id: "rayon", propriete: subtype, valeur: rayon, geometrie: ligne, couleur: "#3FE0C8", epaisseur: 1.6, tirets: [3, 2], opacite: 0.85, legende: "Rayon 800 m (contour)" }, { id: "site_propre", propriete: subtype, valeur: site_propre, geometrie: ligne, couleur: "#3FE0C8", zoom_largeur: [9, 2.5, 13, 4, 16, 6], opacite: 0.95, legende: "Tronçon en site propre" }, { id: "en_service", propriete: subtype, valeur: en_service, geometrie: point, anneau: true, couleur: "#3FE0C8", zoom_rayon: [10, 5, 14, 8.5, 17, 12], epaisseur: 2.2, opacite: 0.9, legende: "Station" } ], legende: "TCSP — site propre, stations, zone 800 m" }
+    absence: "TCSP : aucun transport en site propre dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (turquoise #3FE0C8) ; kind virtuel multi (zone+tronçons+stations), niveaux mixtes."

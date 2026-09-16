@@ -1,0 +1,57 @@
+# ── PRODUCTION (lot 3, les 37) : FAMILLE ÉQUIPEMENTS — aménités OSM + équipements INSEE BPE.
+# 2 semis de POINTS colorés par catégorie (data-driven subtype), visibles au zoom quartier (12).
+# La SOURCE se lit au CONTOUR : OSM = anneau BLANC, BPE = anneau SOMBRE (même taille/forme).
+# NB masquage serveur (display-only, invariant test_display_seul) : amenite subtype tcsp/sport
+# est filtré côté endpoint (doublon de la couche Transport / bruit) — jamais rendu, jamais supprimé.
+#
+# CAS STRUCTURELS tranchés (Vic) : le BÂTI 3D est déclaré ICI (le format gagne l'EXTRUSION + le
+# chargement BBOX — il deviendra une couche majeure avec les hauteurs LiDAR mesurées). RESTENT hors
+# panneau : `densifier` (overlay dérivé getRenouvGeojson = résultat d'outil, traité au lot des 18 outils) ;
+# `vefa_neuf` est traité en famille MARCHÉ (aplat grisé « moins de 10 ventes », pas de trame).
+
+surface:   couche_amenite
+nom:       "Équipements et services (OSM)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=amenite"
+rendu:     carte
+donnees:
+  - quoi:  equip_osm_couche
+    ou:    { rang: 10, etat: replie, section: "Équipements" }
+    comment: { libelle: "Équipements et services (OSM)", format: liste, i: "Aménités OpenStreetMap : mairie, école, santé, commerce, police, marché, crèche, collège/lycée. Anneau blanc = source OSM." }
+    carte: { kind: amenite, agregat: false, limite: 20000, famille: fond_de_plan, geometrie: point, zoom_min: 12, rang_carte: 90, style: { couleur_propriete: subtype, couleurs: { mairie: "#B497F0", ecole: "#5CE6A1", sante: "#E8695A", commerce: "#F0A868", police: "#8FB4F0", marche: "#E59BC4", creche: "#F2B08A", college_lycee: "#79C9A0" }, couleur: "#9AA0A6", zoom_rayon: [12, 3.2, 16, 5.5, 20, 8.5], opacite: 0.92, halo: 1.4, trait: "#FFFFFF" }, legende: "Équipement OSM — couleur par catégorie (anneau blanc)" }
+    absence: "Équipements OSM : aucun équipement dans l'emprise visible (zoom ≥ 12)."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (EQUIP_META, anneau blanc OSM, rayon rampé 12→20)."
+---
+surface:   couche_amenite_bpe
+nom:       "Équipements INSEE (BPE)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=amenite_bpe"
+rendu:     carte
+donnees:
+  - quoi:  bpe_couche
+    ou:    { rang: 10, etat: replie, section: "Équipements" }
+    comment: { libelle: "Équipements INSEE (BPE)", format: liste, i: "Base Permanente des Équipements (INSEE) par domaine A–G : services aux particuliers, commerces, enseignement, santé, transports, sport/loisirs, tourisme. Anneau sombre = source INSEE." }
+    carte: { kind: amenite_bpe, agregat: false, limite: 40000, famille: fond_de_plan, geometrie: point, zoom_min: 12, rang_carte: 88, style: { couleur_propriete: subtype, couleurs: { A: "#7C8AA0", B: "#E0A23C", C: "#4C8DD6", D: "#D9534F", E: "#3CB6A8", F: "#6FBF52", G: "#B06FD6" }, couleur: "#7C8AA0", zoom_rayon: [12, 3.2, 16, 5.5, 20, 8.5], opacite: 0.9, halo: 1.4, trait: "#0d1420" }, legende: "Équipement INSEE BPE — domaine A–G (anneau sombre)" }
+    absence: "Équipements INSEE : aucun équipement BPE dans l'emprise visible (zoom ≥ 12)."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (BPE_DOM A–G, anneau sombre INSEE)."
+---
+surface:   couche_batiments_3d
+nom:       "Bâti 3D (extrusion)"
+categorie: couche
+parent:    null
+route:     "/map/batiments.geojson"
+rendu:     carte
+donnees:
+  - quoi:  batiments_3d_couche
+    ou:    { rang: 10, etat: replie, section: "Bâti" }
+    comment: { libelle: "Bâti 3D (extrusion)", format: liste, i: "Volumes bâtis extrudés (empreinte BD TOPO + hauteur) — faîtage LiDAR MESURÉ préféré quand la parcelle est ingérée, sinon hauteur BD TOPO estimée. Sans hauteur : jamais d'extrusion inventée. Visible de près (zoom ≥ 15), chargé sur la vue." }
+    # geometrie: extrusion + bbox: true — le format porte désormais l'EXTRUSION 3D et le chargement
+    # borné à la vue (jamais l'île). hauteur_propriete = la propriété qui porte la hauteur (m).
+    carte: { kind: batiment, agregat: false, bbox: true, hauteur_propriete: h, famille: fond_de_plan, geometrie: extrusion, zoom_min: 15, rang_carte: 95, style: { couleur: "#9FB3A8", opacite: 0.88 }, legende: "Bâti 3D — hauteur LiDAR mesurée / BD TOPO estimée" }
+    absence: "Bâti 3D : aucun bâtiment avec hauteur dans la vue (zoom ≥ 15)."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (fill-extrusion #9FB3A8) ; format étendu (extrusion + bbox) pour le LiDAR à venir."

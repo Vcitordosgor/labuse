@@ -1,0 +1,116 @@
+# ── PRODUCTION (lot 3, les 37) : FAMILLE URBANISME — zonage PLU, ER, EBC, SUP, DPU, artificialisation,
+# 50 pas. Rendu reproduit à l'identique (mapTheme T_SOMBRE). ER/EBC = kinds VIRTUELS (plu_gpu_prescription
+# filtré 05/01). ⚠ ZONAGE : teintes CONVENTIONNELLES, JAMAIS changées sans accord Vic (couche la plus
+# regardée). La couche zonage actuelle est BINAIRE (U vs autre), pas une palette par type — dit au rapport.
+
+surface:   couche_zonage
+nom:       "Zonage PLU"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=plu_gpu_zone"
+rendu:     carte
+donnees:
+  - quoi:  zonage_plu_couche
+    ou:    { rang: 10, etat: en_tete, section: "Zonage réglementaire" }
+    comment: { libelle: "Zonage PLU", format: liste, i: "Zonage du PLU (GPU) — familles U (urbaine), AU (à urbaniser), A (agricole), N (naturelle). Rendu actuel : U distinguée (mint), tout le reste en brun (2 teintes, pas une par type)." }
+    # RENDU À L'IDENTIQUE (zonageFillExpr) : subtype commençant par U → mint, sinon brun. Opacité 0,10
+    # (aplat de base très léger, parcellaire lisible dessous). Teintes conventionnelles — inchangées.
+    carte: { kind: plu_gpu_zone, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 1, style: { couleur_propriete: subtype, couleurs: { U: "#5CE6A1" }, couleur: "#8a6b3f", opacite: 0.10, trait: "#8a6b3f" }, legende: "Zonage PLU — U (mint) / A·N·AU (brun)" }
+    absence: "Zonage PLU : parcelle hors zone GPU dans l'emprise visible (Saint-Philippe : PLU non publié au GPU)."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Rendu identique (U vs autre, 0,10) ; teintes conventionnelles verrouillées (accord Vic requis)."
+---
+surface:   couche_cinquante_pas
+nom:       "50 pas géométriques"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=cinquante_pas"
+rendu:     carte
+donnees:
+  - quoi:  cinquante_pas_couche
+    ou:    { rang: 10, etat: replie, section: "Littoral" }
+    comment: { libelle: "50 pas géométriques", format: liste, i: "Réserve des 50 pas géométriques (bande littorale du domaine public, ~81,20 m) — inconstructibilité de principe, gestion État." }
+    carte: { kind: cinquante_pas, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 20, style: { couleur: "#4CC3E8", opacite: 0.16, trait: "#4CC3E8", tirets: [2, 1.4], epaisseur: 1.6 }, legende: "Réserve des 50 pas géométriques (littoral)" }
+    absence: "50 pas : parcelle hors bande littorale des 50 pas dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (#4CC3E8 cyan, contour tireté)."
+---
+surface:   couche_artificialisation
+nom:       "Artificialisation (OCS GE)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=artificialisation"
+rendu:     carte
+donnees:
+  - quoi:  artificialisation_couche
+    ou:    { rang: 10, etat: replie, section: "Consommation d'espace" }
+    comment: { libelle: "Artificialisation (OCS GE)", format: liste, i: "Occupation du sol OCS GE : sols artificialisés 2022 + évolution renaturée 2017→2022 (matrice décret 2023-1096, suivi ZAN)." }
+    carte: { kind: artificialisation, agregat: false, limite: 40000, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 22, style: { couleur_propriete: subtype, couleurs: { artificialise_2022: "#8E6AA8", evolution_renaturation: "#3F9B6A" }, couleur: "#8E6AA8", opacite: 0.32, trait: "#5E4470" }, legende: "Artificialisé 2022 (violine) / renaturé (vert)" }
+    absence: "Artificialisation : aucune emprise OCS GE dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (violine artificialisé / vert renaturé)."
+---
+surface:   couche_dpu
+nom:       "Droit de préemption urbain (DPU)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=dpu"
+rendu:     carte
+donnees:
+  - quoi:  dpu_couche
+    ou:    { rang: 10, etat: replie, section: "Préemption" }
+    comment: { libelle: "Droit de préemption urbain (DPU)", format: liste, i: "Périmètres de DPU (simple / renforcé) — la commune peut se substituer à l'acquéreur lors d'une vente." }
+    carte: { kind: dpu, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 24, style: { couleur: "#6B8FD4", opacite: 0.30, trait: "#6B8FD4" }, popup: [ { champ: libelle, libelle: "Type" }, { champ: txt, libelle: "Précision" } ], legende: "Périmètre DPU (simple / renforcé)" }
+    absence: "DPU : parcelle hors périmètre de préemption dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Rendu identique (#6B8FD4 bleu ; opacité 0,30, relevée COUCHES-1 car DPU invisible)."
+---
+surface:   couche_sup
+nom:       "Servitudes d'utilité publique (SUP)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=sup"
+rendu:     carte
+donnees:
+  - quoi:  sup_couche
+    ou:    { rang: 10, etat: replie, section: "Servitudes" }
+    comment: { libelle: "Servitudes d'utilité publique (SUP)", format: liste, i: "Servitudes d'utilité publique (AC monuments/sites, PM risques, EL littoral…) — 8 catégories, opposables au PLU." }
+    carte: { kind: sup, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 26, style: { couleur: "#C05884", opacite: 0.16, trait: "#C05884" }, popup: [ { champ: nomsuplitt, libelle: "Type" }, { champ: typeass, libelle: "Catégorie d'assiette" }, { champ: nomass, libelle: "Assiette" }, { champ: urlreg, libelle: "Acte / règlement", lien: true } ], legende: "Servitude d'utilité publique (opposable)" }
+    absence: "SUP : parcelle hors servitude d'utilité publique dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Rendu identique (#C05884 magenta ; opacité 0,16, baissée COUCHES-1 car SUP écrasait tout)."
+---
+surface:   couche_er
+nom:       "Emplacements réservés (ER)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=er"
+rendu:     carte
+donnees:
+  - quoi:  er_couche
+    ou:    { rang: 10, etat: replie, section: "Réservations" }
+    comment: { libelle: "Emplacements réservés (ER)", format: liste, i: "Emplacements réservés du PLU (voirie, équipement, espace vert) — l'emprise est grevée au bénéfice d'une collectivité." }
+    carte: { kind: er, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 28, style: { couleur: "#D4A017", opacite: 0.30, trait: "#D4A017" }, popup: [ { champ: txt, libelle: "Destination / bénéficiaire" }, { champ: libelle, libelle: "Libellé" }, { champ: url_source, libelle: "Document", lien: true } ], legende: "Emplacement réservé (emprise grevée)" }
+    absence: "ER : parcelle hors emplacement réservé dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Rendu identique (#D4A017 or) ; kind virtuel er→plu_gpu_prescription/05."
+---
+surface:   couche_ebc
+nom:       "Espaces boisés classés (EBC)"
+categorie: couche
+parent:    null
+route:     "/map/layers.geojson?kind=ebc"
+rendu:     carte
+donnees:
+  - quoi:  ebc_couche
+    ou:    { rang: 10, etat: replie, section: "Réservations" }
+    comment: { libelle: "Espaces boisés classés (EBC)", format: liste, i: "Espaces boisés classés du PLU — protection stricte du boisement, tout défrichement interdit (art. L113-1)." }
+    carte: { kind: ebc, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 29, style: { couleur: "#1B7A4A", opacite: 0.30, trait: "#1B7A4A" }, popup: [ { champ: txt, libelle: "Prescription" }, { champ: libelle, libelle: "Libellé" }, { champ: url_source, libelle: "Règlement", lien: true } ], legende: "Espace boisé classé (défrichement interdit)" }
+    absence: "EBC : parcelle hors espace boisé classé dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Rendu identique (#1B7A4A vert forêt) ; kind virtuel ebc→plu_gpu_prescription/01."

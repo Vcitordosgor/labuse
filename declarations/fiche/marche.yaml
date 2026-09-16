@@ -1,0 +1,63 @@
+# ── PRODUCTION (lot 2) : « Marché et secteur » ──
+# Trois règles de Vic : (1) un prix DIT toujours sur quoi il repose (n ventes · rayon · période) ;
+# (2) on SÉPARE le CONSTATÉ (DVF, passé) de l'AFFICHÉ (VEFA, prix déclaré) et de l'ANNONCÉ (Radar) —
+# trois natures, jamais dans le même bloc sans le dire ; (3) une vente ÉCARTÉE dit POURQUOI.
+surface:   fiche_parcelle_marche
+nom:       "Marché et secteur"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+
+donnees:
+  # ── CONSTATÉ : ventes passées, actées (DVF) ──
+  - quoi:  prix_terrain_secteur_eur_m2
+    ou:    { rang: 10, etat: en_tete, section: "Constaté — ventes actées (DVF)" }
+    comment: { libelle: "Terrain nu — secteur", unite: "€/m²", format: euro_m2, i: "Prix médian du terrain nu (DVF, ventes actées), avec le nombre de ventes, le rayon et la période — un prix sans son assise ne vaut rien." }
+    absence: "Terrain nu — secteur : échantillon DVF insuffisant pour une médiane fiable."
+    absence_type: absente_ici
+    pourquoi: "Le prix du foncier — la première question du promoteur ; en tête, avec son assise."
+
+  - quoi:  prix_sortie_bati_eur_m2
+    ou:    { rang: 20, etat: en_tete, section: "Constaté — ventes actées (DVF)" }
+    comment: { libelle: "Ancien bâti — secteur", unite: "€/m²", format: euro_m2, i: "Prix médian de l'ancien bâti (DVF), rayon adaptatif — sert de prix de sortie au bilan. Porté avec n ventes, rayon, période." }
+    absence: "Ancien bâti — secteur : échantillon DVF insuffisant pour une médiane fiable."
+    absence_type: absente_ici
+    pourquoi: "Le prix de sortie du bilan ; en tête, avec son assise."
+
+  - quoi:  ventes_retenues_n
+    ou:    { rang: 30, etat: en_tete, section: "Constaté — ventes actées (DVF)" }
+    comment: { libelle: "Ventes retenues", format: entier, i: "Nombre de ventes DVF retenues dans le secteur après la garde de vraisemblance — l'assise des médianes ci-dessus." }
+    absence: "Ventes retenues : aucune vente DVF exploitable dans le secteur."
+    absence_type: absente_ici
+    pourquoi: "L'assise chiffrée des prix ; en tête pour que le prix soit un argument."
+
+  - quoi:  ventes_ecartees_n
+    ou:    { rang: 40, etat: replie, section: "Constaté — ventes actées (DVF)" }
+    comment: { libelle: "Ventes écartées", format: entier, i: "Ventes DVF écartées par NOTRE garde de vraisemblance (bornes €/m², seuil de surface par type) — une décision de notre part, dite, jamais une transaction ratée en silence." }
+    absence: "Ventes écartées : aucune vente écartée (toutes vraisemblables)."
+    absence_type: absente_ici
+    pourquoi: "Écarter est notre décision : elle se justifie (Vic) — repliée, avec le motif."
+
+  - quoi:  dvf_parcelle_liste
+    ou:    { rang: 50, etat: replie, section: "Constaté — ventes actées (DVF)" }
+    comment: { libelle: "Ventes de cette parcelle", format: liste, i: "Mutations DVF portant sur la parcelle elle-même (son propre historique de ventes)." }
+    absence: "Ventes de cette parcelle : aucune mutation DVF connue sur la parcelle."
+    absence_type: absente_ici
+    pourquoi: "L'historique propre de la parcelle ; replié, complément du secteur."
+
+  # ── AFFICHÉ : le neuf déclaré à l'acte (VEFA) — un prix déclaré, pas une vente d'ancien ──
+  - quoi:  prix_neuf_vefa_acte_eur_m2
+    ou:    { rang: 60, etat: en_tete, section: "Affiché — neuf déclaré (VEFA)" }
+    comment: { libelle: "Neuf VEFA — commune", unite: "€/m²", format: euro_m2, i: "Prix médian du neuf déclaré à l'acte (VEFA), grain commune — un prix AFFICHÉ à la vente sur plan, de nature différente du DVF ancien. Porté avec n ventes et fenêtre." }
+    absence: "Neuf VEFA — commune : échantillon VEFA insuffisant pour une médiane servie."
+    absence_type: absente_ici
+    pourquoi: "Le neuf est un prix affiché, séparé du constaté ; en tête de son propre bloc."
+
+  # ── ANNONCÉ : le Radar (annonces en cours) — ni constaté ni acté, du déclaratif vivant ──
+  - quoi:  radar_annonces_liste
+    ou:    { rang: 70, etat: replie, section: "Annoncé — en cours (Radar)" }
+    comment: { libelle: "Annonces en cours (Radar)", format: liste, i: "Biens en vente actuellement dans le secteur (Radar) — de l'annonce, pas une transaction actée ; jamais mêlé au DVF." }
+    absence: "Annonces en cours (Radar) : aucune annonce active repérée dans le secteur."
+    absence_type: absente_ici
+    pourquoi: "Le marché vivant, de nature « annonce » ; replié, dans son propre bloc."

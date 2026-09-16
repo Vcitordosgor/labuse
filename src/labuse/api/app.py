@@ -7339,6 +7339,7 @@ from .ortho import router as _ortho_router  # noqa: E402
 from .ortho_proxy import router as _ortho_proxy_router  # noqa: E402  (RETOURS-16 V1 — fonds ortho proxifiés)
 from .recherche import router as _recherche_router  # noqa: E402  (RETOURS-16 V5 — suggest unifié)
 from .tiles import router as _tiles_router  # noqa: E402
+from .couches_tuyau import router as _couches_tuyau_router  # noqa: E402  (COUCHES-TUYAU-1 — MVT 52 couches)
 from .score_v2 import router as _score_v2_router  # noqa: E402  (M5, additif)
 from .fiche_ask import router as _fiche_ask_router  # noqa: E402  (M11 surface A — barre de fiche)
 from .crm_columns import router as _crm_columns_router  # noqa: E402  (M12 LOT H — CRM personnalisable)
@@ -7380,6 +7381,7 @@ app.include_router(_rarete_router)
 app.include_router(_ops_router)
 app.include_router(_protection_router)
 app.include_router(_tiles_router)
+app.include_router(_couches_tuyau_router)  # COUCHES-TUYAU-1 — chemin dédié /map/tiles/{kind}/…
 app.include_router(_ortho_proxy_router)
 app.include_router(_recherche_router)
 app.include_router(_ia_router)

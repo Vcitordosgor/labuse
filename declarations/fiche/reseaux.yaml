@@ -1,0 +1,29 @@
+# ── PRODUCTION (lot 2) : « Réseaux et accès » ── (repli par défaut ; en tête ce qui décide)
+surface:   fiche_parcelle_reseaux
+nom:       "Réseaux et accès"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  viabilisation_verdict
+    ou:    { rang: 10, etat: en_tete, section: "Viabilisation" }
+    comment: { libelle: "Viabilisation", format: verdict, i: "Verdict de viabilisation (raccordement aux réseaux) fondé sur les faits (proximité voirie/réseaux), avec ses contributions." }
+    absence: "Viabilisation : non évaluée sur cette parcelle."
+    absence_type: absente_ici
+    pourquoi: "Le raccordement décide du coût d'aménagement ; en tête."
+  - quoi:  piscine_m2
+    ou:    { rang: 20, etat: replie, section: "Sur la parcelle" }
+    comment: { libelle: "Piscine détectée", unite: "m²", format: entier_m2, i: "Surface de piscine détectée sur la parcelle (BD ORTHO)." }
+    absence: "Piscine détectée : aucune piscine repérée sur la parcelle."
+    absence_type: absente_ici
+    pourquoi: "Équipement détecté ; secondaire, replié."
+  - quoi:  distance_arret_m
+    ou:    { rang: 30, etat: replie, section: "Accès" }
+    comment: { libelle: "Arrêt de transport le plus proche", unite: "m", format: metre, i: "Distance au plus proche arrêt de transport public (m)." }
+    absence: "Arrêt de transport : aucun arrêt à proximité mesurable."
+    absence_type: absente_ici
+    pourquoi: "Desserte transport ; replié."
+  # part_logements_egout_pct RETIRÉ (lot 2) : la source RP EGOUL n'est pas matérialisée en colonne
+  # interrogeable (part des logements sur égout à la maille commune) — on ne montre pas ce qu'on ne
+  # sait pas sourcer proprement. À reprendre si la donnée est ingérée en clair (→ page Données).
