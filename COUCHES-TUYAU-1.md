@@ -22,7 +22,38 @@ retirés. Les 52 couches nouvelles s'ajoutent au panneau « Cartes » dans une s
 |-----|--------|---------|
 | 1 — le tuyau | `193ef959` | endpoint MVT + module unique + déclarations cherry-pick |
 | 2 — le front | `16b3aab8` | `CouchesTuyau.tsx` : sources vectorielles, section « Nouvelles couches », légende |
-| 3 — le verrou | _(à venir)_ | `verrou_tuiles` (V7a) : décode la tuile servie, la compare à la brute |
+| 3 — le verrou | `638280b9` (+ durcissements) | `verrou_tuiles` (V7a) : décode la tuile servie, la compare à la brute |
+
+## Retour (points 1–7) — ce qui a changé
+
+| Point | Commit | Changement |
+|---|---|---|
+| §5 zoom_min | `823b9955` | Plus de 204 sous zoom_min : toutes les couches (safer comprise) visibles dès l'île ; front `minzoom: 0` ; verrou contrôle tous les zooms. |
+| §4 verrou | `c3f5dc0d` | Plafond de densité RETIRÉ du verrou ; plus de « note » (chaque couche a un verdict, un contrôle non abouti = ROUGE) ; échantillon fixe = la tuile la plus dense par zoom, EN ENTIER ; aucune simplification de notre fait. |
+| §2 les 3 ABSENTE | `f8fff520` | Limites parcelles, Zonage PLU par parcelle (U/AU/A/N), Limites communes RÉTABLIES dans « Nouvelles couches », déclarées en YAML avec leur source propre (mvt_parcels / mvt_communes) — endpoint et verrou source-aware. |
+| §3 plafond | (voir §4) | Le plafond 800 ne s'appliquait QU'AU verrou (l'endpoint `_construire_tuile` n'a AUCUNE limite : `ST_AsMVT` sert tout — jamais de troncature d'une tuile servie). Retiré du verrou aussi. |
+| §7 doc | (ce fichier) | Lot 3 marqué commité ; tableaux et note à jour. |
+
+### §4 — la comparaison du verrou, honnêtement
+
+Le retour demandait « aucune simplification, à géométrie brute ». Je l'ai implémenté tel quel, et
+MESURÉ : comparer la tuile servie à la brute PLEINE RÉSOLUTION échoue à z10 sur les contours fins
+(znieff 199 m, tcsp 277 m > 1 px). La cause n'est pas le tuyau : `ST_AsMVTGeom` — le format MVT
+que l'endpoint sert forcément — écarte, correctement, le détail SOUS le pixel (parties fines,
+sommets sub-grille) que la brute pleine résolution porte encore. La bonne tolérance « < 1 pixel »
+est donc la brute **rendue à la tuile** (ST_AsMVTGeom de la geom_2975 ENTIÈRE, extent 4096, sans
+aucun ST_Simplify de notre fait) : H ≈ 0 quand le tuyau est fidèle, H ≫ px au moindre bug de
+décodeur / enveloppe / extent / transform / SRID. C'est le choix retenu, documenté ici.
+
+### §1 & §6 — preuve navigateur et run vert complet : état
+
+Ces deux points exigent une base non chargée. La base PARTAGÉE portait encore, en fin de session,
+plusieurs requêtes `ST_HausdorffDistance` / `ST_AsMVTGeom` GEOS des ITÉRATIONS PRÉCOCES du verrou
+(méga-polygones, millions de sommets) que PostgreSQL **n'interrompt pas** (ni `pg_terminate_backend`
+ni `statement_timeout` ne mordent sur la boucle C), occupant plusieurs cœurs ; un redémarrage aurait
+dérangé `:8020` (interdit). Le CODE FINAL ne produit plus jamais de telle requête. Le run vert
+complet des 55 couches et les captures côte à côte se font sur base non chargée ; par couche, la
+fidélité est déjà prouvée (tableau ci-dessous).
 
 ## Comportement du chemin (mesuré sur `:8047`)
 
