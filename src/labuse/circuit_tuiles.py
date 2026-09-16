@@ -283,24 +283,11 @@ def _busiest_tile(db, c, z: int):
     return (row[0], row[1], row[2]) if row else None
 
 
-# retour §4/Option 1 : au-delà de ce nombre de sommets bruts sur l'emprise, la référence de CONTOUR
-# (ST_AsMVTGeom de millions de sommets) dépasse 60 s et n'est PAS interruptible. À ces tuiles, on
-# vérifie le NOMBRE d'objets (rapide) et le contour est vérifié aux zooms où il tient sous 60 s
-# (typiquement z13/z16). Verdict réel par couche — jamais une requête lancée qui dépasserait 60 s.
-_SEUIL_CONTOUR_SOMMETS = 700_000
-
-
-def _npoints_tuile(db, c, z, x, y) -> int:
-    """Somme (bornée, ~0,1 s) des sommets bruts de la source sur l'emprise (source-aware §2)."""
-    p: dict = {"z": z, "x": x, "y": y}
-    wk = _where_src(c, p)
-    g_src, _ = _src_geom(c)
-    filtre = "b.env" if c.srid == 3857 else f"ST_Transform(b.env, {c.srid})"
-    return int(db.execute(text(f"""
-        WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y, margin => 0.02) AS env)
-        SELECT coalesce(sum(ST_NPoints({g_src})), 0) FROM {c.table} m, b
-        WHERE {wk} AND {g_src} && {filtre}
-    """), p).scalar() or 0)
+# retour §4/Option 1 : le Hausdorff du CONTOUR est O(N·M) sur les sommets SERVIS. Au-delà de ce
+# nombre de sommets dans la tuile servie, il dépasserait 60 s → on ne le lance pas (comptage vérifié
+# à ce zoom, contour aux zooms où il tient — typiquement z16, et z13/z10 quand la tuile est légère).
+# Calibré : 15 k sommets → Hausdorff 3,3 s ; le coût ≈ N² → 40 k → ~25 s, marge sûre sous 60 s.
+_SEUIL_CONTOUR_SOMMETS = 40_000
 
 
 def _dims_declarees(geometrie: str) -> set[int]:
@@ -358,16 +345,17 @@ def _hausdorff_pg(db, c, z, x, y, dimtype: int, served_wkb: bytes | None):
                    ST_YMax(ST_TileEnvelope(:z, :x, :y)) AS ymax,
                    (ST_XMax(ST_TileEnvelope(:z, :x, :y)) - ST_XMin(ST_TileEnvelope(:z, :x, :y))) / 4096.0 AS sx
         ),
-        raw AS (  -- collecter une fois, transformer une fois, ST_AsMVTGeom une fois (voie agrégat rapide)
-            SELECT ST_Collect({g_3857}) AS g FROM {c.table} m, b
-            WHERE {wk} AND {g_src} && {filtre}
-        ),
-        r AS (  -- rendu MVT de la brute (déjà 3857), ramené en 3857 par l'affine inverse de la tuile
+        f AS (  -- ST_AsMVTGeom PAR FEATURE (comme l'endpoint : parallèle, chaque morceau ≤ 256 sommets
+                -- post-subdivide) puis affine inverse → 3857. Jamais un géant réassemblé à rendre.
             SELECT ST_SetSRID(ST_Affine(
                        ST_CollectionExtract(
-                           ST_AsMVTGeom(raw.g, b.env, 4096, 64, true), :dt),
-                       b.sx, 0, 0, -b.sx, b.xmin, b.ymax), 3857) AS geom
-            FROM raw, b
+                           ST_AsMVTGeom({g_3857}, b.env, 4096, 64, true), :dt),
+                       b.sx, 0, 0, -b.sx, b.xmin, b.ymax), 3857) AS g
+            FROM {c.table} m, b
+            WHERE {wk} AND {g_src} && {filtre}
+        ),
+        r AS (  -- collecter les PETITS rendus MVT (bon marché)
+            SELECT ST_Collect(g) AS geom FROM f WHERE g IS NOT NULL AND NOT ST_IsEmpty(g)
         )
         SELECT (geom IS NOT NULL AND NOT ST_IsEmpty(geom)) AS present,
                CASE WHEN :has_sv AND geom IS NOT NULL AND NOT ST_IsEmpty(geom)
@@ -431,11 +419,13 @@ def _controle_couche(db, kind, c, pbs, etat) -> None:
         kept = _kept_count(db, c, z, x, y)
         if len(served) != kept:
             pbs.append(f"{kind} z{z} ({x}/{y}) : {len(served)} objet(s) servi(s) ≠ {kept} retenu(s)")
-        # Option 1 (§4) : au-delà du seuil, la référence de CONTOUR (ST_AsMVTGeom de millions de
-        # sommets) dépasse 60 s et n'est pas interruptible → on NE LANCE PAS cette requête. Le
-        # NOMBRE d'objets est vérifié ci-dessus ; le contour l'est aux zooms où il tient (13/16).
+        # Option 1 (§4) : le Hausdorff du CONTOUR est en O(N·M) sur les sommets SERVIS. Au-delà du
+        # seuil, il dépasserait 60 s → on NE le LANCE PAS. Le NOMBRE d'objets est vérifié ci-dessus ;
+        # le contour l'est aux zooms où il tient (le détail d'un méga-polygone à z10 est sous le pixel).
         # Verdict réel par couche (comptage partout), jamais une requête > 60 s ni une note muette.
-        if _npoints_tuile(db, c, z, x, y) > _SEUIL_CONTOUR_SOMMETS:
+        import shapely as _shp
+        nverts = int(sum(_shp.get_num_coordinates(g) for g in served)) if served else 0
+        if nverts > _SEUIL_CONTOUR_SOMMETS:
             etat.setdefault("contour_reporte", []).append(f"{kind} z{z}")
             continue
         # 2+3+4) par DIMENSION DÉCLARÉE : aucune partie perdue, contour < 1 px, position exacte
@@ -464,7 +454,7 @@ def verrou_tuiles(db=None) -> "object":
     # on la laisse ABOUTIR (échantillon = 1 tuile/zoom, pas de per-tile raccourci). Une requête qui
     # dépasse même ce plafond OU une base indisponible remonte en exception → la couche est ROUGE.
     try:
-        db.execute(text("SET statement_timeout = '300s'"))
+        db.execute(text("SET statement_timeout = '60s'"))
         db.commit()
     except Exception:  # noqa: BLE001
         db.rollback()
