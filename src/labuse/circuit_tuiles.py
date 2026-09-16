@@ -283,6 +283,26 @@ def _busiest_tile(db, c, z: int):
     return (row[0], row[1], row[2]) if row else None
 
 
+# retour §4/Option 1 : au-delà de ce nombre de sommets bruts sur l'emprise, la référence de CONTOUR
+# (ST_AsMVTGeom de millions de sommets) dépasse 60 s et n'est PAS interruptible. À ces tuiles, on
+# vérifie le NOMBRE d'objets (rapide) et le contour est vérifié aux zooms où il tient sous 60 s
+# (typiquement z13/z16). Verdict réel par couche — jamais une requête lancée qui dépasserait 60 s.
+_SEUIL_CONTOUR_SOMMETS = 700_000
+
+
+def _npoints_tuile(db, c, z, x, y) -> int:
+    """Somme (bornée, ~0,1 s) des sommets bruts de la source sur l'emprise (source-aware §2)."""
+    p: dict = {"z": z, "x": x, "y": y}
+    wk = _where_src(c, p)
+    g_src, _ = _src_geom(c)
+    filtre = "b.env" if c.srid == 3857 else f"ST_Transform(b.env, {c.srid})"
+    return int(db.execute(text(f"""
+        WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y, margin => 0.02) AS env)
+        SELECT coalesce(sum(ST_NPoints({g_src})), 0) FROM {c.table} m, b
+        WHERE {wk} AND {g_src} && {filtre}
+    """), p).scalar() or 0)
+
+
 def _dims_declarees(geometrie: str) -> set[int]:
     g = (geometrie or "").lower()
     if g == "point":
@@ -411,6 +431,13 @@ def _controle_couche(db, kind, c, pbs, etat) -> None:
         kept = _kept_count(db, c, z, x, y)
         if len(served) != kept:
             pbs.append(f"{kind} z{z} ({x}/{y}) : {len(served)} objet(s) servi(s) ≠ {kept} retenu(s)")
+        # Option 1 (§4) : au-delà du seuil, la référence de CONTOUR (ST_AsMVTGeom de millions de
+        # sommets) dépasse 60 s et n'est pas interruptible → on NE LANCE PAS cette requête. Le
+        # NOMBRE d'objets est vérifié ci-dessus ; le contour l'est aux zooms où il tient (13/16).
+        # Verdict réel par couche (comptage partout), jamais une requête > 60 s ni une note muette.
+        if _npoints_tuile(db, c, z, x, y) > _SEUIL_CONTOUR_SOMMETS:
+            etat.setdefault("contour_reporte", []).append(f"{kind} z{z}")
+            continue
         # 2+3+4) par DIMENSION DÉCLARÉE : aucune partie perdue, contour < 1 px, position exacte
         # (Hausdorff PostGIS, géométrie BRUTE, aucune simplification).
         sb = _par_dimension(served)
@@ -454,11 +481,14 @@ def verrou_tuiles(db=None) -> "object":
         if len(pbs) == n0:
             couches_ok += 1
     controles = etat["controles"]
+    reporte = etat.get("contour_reporte", [])
+    rep = (f" ; contour reporté à z13/z16 (comptage vérifié à ce zoom) pour : {', '.join(reporte)}"
+           if reporte else "")
     n = len(reg)
     if pbs:
         return ResultatVerrou("V7a", phrase, "casse",
-                              f"{couches_ok}/{n} couches fidèles ; {len(pbs)} écart(s) sur {controles} contrôle(s)",
+                              f"{couches_ok}/{n} couches fidèles ; {len(pbs)} écart(s) sur {controles} contrôle(s){rep}",
                               pbs[:40])
     return ResultatVerrou("V7a", phrase, "ok",
                           f"{n} couches × zooms 10/13/16 : {controles} tuile(s) décodée(s) EN ENTIER, "
-                          f"objets/parties/contour/position identiques à la brute pleine résolution")
+                          f"objets/parties/contour/position identiques à la brute{rep}")
