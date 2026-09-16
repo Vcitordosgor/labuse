@@ -291,7 +291,7 @@ def _busiest_tile(db, resolution, z: int):
 # c'est une méga-géométrie (submersion marine pleine résolution, millions de points) dont le détail
 # est SOUS le pixel à ce zoom (donc invisible) et dont la reprojection est un calcul non interruptible.
 # Le COMPTAGE reste vérifié à ce zoom, le CONTOUR l'est aux zooms où il compte (13/16). Jamais muet.
-_SEUIL_MEGA_SOMMETS = 300_000
+_SEUIL_MEGA_SOMMETS = 200_000
 
 
 def _npoints_tuile(db, resolution, z, x, y) -> int:
@@ -358,17 +358,23 @@ def _hausdorff_pg(db, resolution, z, x, y, dimtype: int, served_wkb: bytes | Non
                    ST_YMax(ST_TileEnvelope(:z, :x, :y)) AS ymax,
                    (ST_XMax(ST_TileEnvelope(:z, :x, :y)) - ST_XMin(ST_TileEnvelope(:z, :x, :y))) / 4096.0 AS sx
         ),
+        raw AS (
+            -- COLLECTER d'abord (bon marché), transformer UNE fois, ST_AsMVTGeom UNE fois — la voie
+            -- rapide (celle de l'agrégat ST_AsMVT de l'endpoint). Par feature, ST_AsMVTGeom n'est pas
+            -- parallélisé et explose (× 20 sur les méga-tuiles). L'union donne le même contour à comparer.
+            SELECT ST_Collect(m.geom_2975) AS g FROM spatial_layers m, b
+            WHERE {wk} AND m.geom_2975 && b.filtre
+        ),
         f AS (
             -- ST_AsMVTGeom rend la géométrie en espace TUILE (0..4096, y bas) ; ST_Affine la ramène
             -- en 3857 (x = xmin + tx·sx ; y = ymax − ty·sx). Référence bornée à la grille de la tuile.
             SELECT ST_SetSRID(ST_Affine(
                        ST_CollectionExtract(
-                           ST_AsMVTGeom(ST_Transform(m.geom_2975, 3857), b.env, 4096, 64, true), :dt),
+                           ST_AsMVTGeom(ST_Transform(raw.g, 3857), b.env, 4096, 64, true), :dt),
                        b.sx, 0, 0, -b.sx, b.xmin, b.ymax), 3857) AS g
-            FROM spatial_layers m, b
-            WHERE {wk} AND m.geom_2975 && b.filtre
+            FROM raw, b
         ),
-        r AS (SELECT ST_Collect(g) AS geom FROM f WHERE g IS NOT NULL AND NOT ST_IsEmpty(g))
+        r AS (SELECT g AS geom FROM f WHERE g IS NOT NULL AND NOT ST_IsEmpty(g))
         SELECT (r.geom IS NOT NULL AND NOT ST_IsEmpty(r.geom)) AS present,
                CASE WHEN :has_sv AND r.geom IS NOT NULL AND NOT ST_IsEmpty(r.geom)
                     THEN ST_HausdorffDistance(
