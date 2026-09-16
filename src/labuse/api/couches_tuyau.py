@@ -162,15 +162,19 @@ def registre() -> dict[str, CoucheTuyau]:
                 srid=int(src.get("srid") or 2975),
                 where_sql=src.get("where"),
             )
-        # retour §2 : si la table dérivée existe, servir les couches spatial_layers depuis les MORCEAUX
-        # (ST_Subdivide). Endpoint ET verrou passent par `registre()` → même source, cohérents.
+        # retour §2 : si la table dérivée existe, servir depuis les MORCEAUX (ST_Subdivide) UNIQUEMENT
+        # les couches dont le kind stocké y figure (les méga-polygones). Endpoint ET verrou passent par
+        # `registre()` → même source, cohérents. Les autres restent sur spatial_layers (déjà rapides).
         from dataclasses import replace as _replace
         try:
             from ..db import session_scope
             with session_scope() as s:
                 if s.execute(text("SELECT to_regclass('tuyau_subdivise')")).scalar():
-                    reg = {k: (_replace(v, table="tuyau_subdivise") if v.table == "spatial_layers" else v)
-                           for k, v in reg.items()}
+                    subd = {r[0] for r in s.execute(text("SELECT DISTINCT kind FROM tuyau_subdivise")).all()}
+                    for k, v in list(reg.items()):
+                        if v.table == "spatial_layers" and v.resolution \
+                                and all(sk in subd for sk, _ in v.resolution):
+                            reg[k] = _replace(v, table="tuyau_subdivise")
         except Exception:  # noqa: BLE001 — pas de base au chargement : défaut spatial_layers
             pass
         _REGISTRE = reg
