@@ -227,7 +227,9 @@ donnees:
   - quoi:  safer_couche
     ou:    { rang: 10, etat: replie, section: "Foncier agricole" }
     comment: { libelle: "Foncier agricole (RPG / SAFER)", format: liste, i: "Parcelles agricoles déclarées (RPG) — même géométrie que le périmètre de préemption SAFER. UNE SEULE couche (le recensement a montré des lignes identiques : ma séparation de la veille était fausse)." }
-    carte: { kind: safer, limite: 40000, famille: foncier, geometrie: polygone, zoom_min: 11, rang_carte: 22, style: { couleur: "#8A9A5B", opacite: 0.20, trait: "#5a663b" }, legende: "Foncier agricole déclaré (RPG) / préemption SAFER" }
+    # COUCHES-RECETTE-2 (retour) : plus de zoom_min — la couche est subdivisée, sa tuile île mesure
+    # 0,18 s (821 Ko) malgré 38 460 parcelles / 1,28 M sommets → visible dès l'île comme les autres.
+    carte: { kind: safer, limite: 40000, famille: foncier, geometrie: polygone, zoom_min: 0, rang_carte: 22, style: { couleur: "#8A9A5B", opacite: 0.20, trait: "#5a663b" }, legende: "Foncier agricole déclaré (RPG) / préemption SAFER" }
     absence: "Foncier agricole : parcelle hors déclaration RPG / périmètre SAFER connu."
     absence_type: absente_ici
     statut_juridique: informatif
@@ -244,7 +246,8 @@ donnees:
   - quoi:  zone_activite_couche
     ou:    { rang: 10, etat: replie, section: "Économie" }
     comment: { libelle: "Zones d'activité", format: liste, i: "Zones d'activité économique (vocation, distinct des équipements BPE)." }
-    carte: { kind: zone_activite, limite: 40000, famille: foncier, geometrie: polygone, zoom_min: 11, rang_carte: 35, style: { couleur: "#D98E4A", opacite: 0.25, trait: "#8a5a2a" }, legende: "Zone d'activité économique" }
+    # COUCHES-RECETTE-2 (retour) : plus de zoom_min — tuile île 0,09 s (134 Ko, 9 020 zones) → île OK.
+    carte: { kind: zone_activite, limite: 40000, famille: foncier, geometrie: polygone, zoom_min: 0, rang_carte: 35, style: { couleur: "#D98E4A", opacite: 0.25, trait: "#8a5a2a" }, legende: "Zone d'activité économique" }
     absence: "Zones d'activité : aucune zone dans l'emprise visible."
     absence_type: absente_ici
     pourquoi: "Vocation économique du secteur ; repliée. ⚠ ARBITRAGE : à distinguer d'amenite_bpe (voir rapport)."
