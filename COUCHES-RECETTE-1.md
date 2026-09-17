@@ -156,7 +156,7 @@ Stack lancé : **API `:8055`** (mon code, `PYTHONPATH` du worktree) + **front vi
 | **Dédoublonnage SUP PM1** | ✅ `build_tuyau_subdivise` dédoublonne par (kind, subtype, idass) — 417 → **123 assiettes** ; table dérivée seule (`:8020` intouché) | `couche_sup_commune.png` |
 | **Dédoublonnage piscines + niveau** | ✅ `tuyau_piscines` : 1 piscine = 1 point (ST_ClusterDBSCAN, **0 doublon résiduel**), niveau en attribut (confirmee 11 877 / probable 34 062 / rare 4 504) | `couche_piscines_niveaux.png` (3 couleurs) |
 | **Vocations SAR** | ✅ légende par vocation (7 vocations, couleurs distinctes) + popup | `couche_sar_commune.png` |
-| **Icônes OSM + nom au clic** | ✅ nom au clic (popup name + catégorie). *NB : l'ancienne couche rendait rond+COULEUR par type (pas d'icône — emoji en text-field volontairement évité, glyphes absents) ; principe repris à l'identique.* | — |
+| **Icônes OSM + nom au clic** | ✅ **icône par type** (🏛️ mairie, 🏫 école, 🏥 santé, 🛒 commerce, 🚓 police, 🧺 marché, 🧸 crèche, 🎓 collège/lycée = EQUIP_META de l'ancienne couche) : calque symbole avec image emoji **générée au canvas** (robuste ≠ text-field du style, sans glyphes) posée sur le rond coloré ; clic → nom | `couche_osm_icone_zoom.png`, `couche_osm_icones.png`, `couche_osm_icones_clic.png` |
 | **A12 légende « pas de donnée »** | ✅ mesuré : seule **Saint-Denis** a 0 donnée aléa mvt ; note en légende | `couche_alea_mvt_ile.png` |
 | **Calage bâti 3D** | ✅ mesuré : extrusion BD TOPO alignée sur l'ortho au zoom rue (St-Denis), **aucun décalage systématique visible (< 2 m)**, pas d'erreur de projection | `bati_3d_calage_ortho.png` |
 
@@ -164,6 +164,24 @@ Stack lancé : **API `:8055`** (mon code, `PYTHONPATH` du worktree) + **front vi
 3 tables dérivées du tuyau — tuyau_subdivise / mvt_communes / tuyau_piscines — enregistrées dans
 `TABLES_FABRIQUEES` ; V1c était CASSÉ depuis COUCHES-TUYAU-1). Reste **G7 seul** (sonde nocturne non
 passée depuis > 48 h — 0 fuite ouverte, purement environnemental).
+
+## Poids réseau réel des tuiles (mesuré au navigateur)
+
+Mesuré via Playwright (contexte à cache ISOLÉ par mesure, position vérifiée) : somme des corps de
+réponse des tuiles `.pbf` de la couche, en **vue commune (zoom 12,4)**, pour aléa mouvement de terrain
+et zonage par parcelle à Saint-Denis / Saint-Paul / Saint-Pierre.
+
+| Couche | Saint-Denis | Saint-Paul | Saint-Pierre |
+|---|---|---|---|
+| **Aléa mouvement de terrain** | 0,24 Mo (2 tuiles) | ~0 Mo* | 0,94 Mo (4 tuiles) |
+| **Zonage PLU par parcelle** | 2,51 Mo (4 tuiles) | 3,34 Mo (6 tuiles) | 4,31 Mo (4 tuiles) |
+
+Tuile individuelle la plus lourde : **1,61 Mo** (zonage, Saint-Pierre). **Aucune vue ne dépasse 20 Mo**
+— la plus lourde est le zonage par parcelle à Saint-Pierre à **4,31 Mo**. (Le gating `zoom_min 11` du
+zonage empêche la tuile île géante ; en vue commune le poids reste modéré.)
+
+*Saint-Paul aléa mvt ≈ 0 : la vue centrée sur le centre-ville (littoral) au zoom 12,4 ne couvre pas les
+zones d'aléa, qui sont dans les Hauts (la commune est très étendue) — pas un problème de poids.
 
 ## Captures (navigateur réel, Chrome via Playwright, `:5255` → API `:8055`)
 
