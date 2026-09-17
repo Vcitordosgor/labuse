@@ -108,10 +108,25 @@ function calques(c: TuyauCouche): maplibregl.AddLayerObject[] {
   const dims = dimensions(c.geometrie)
   const base = { source: src, 'source-layer': sl, layout: { visibility: 'none' as const } }
   const out: maplibregl.AddLayerObject[] = []
+  // COUCHES-RECETTE-2 (retour SUP) : niveaux SURFACIQUES (géométrie polygone ou non précisée) → UN
+  // calque `fill` PAR FAMILLE, filtré par sous-type, dans l'ORDRE de déclaration (grande famille au
+  // fond, petite au-dessus). Chaque famille garde sa TEINTE constante à tous les zooms, aucune n'est
+  // masquée par une autre, et l'ordre de superposition ne dépend plus de l'ordre des features dans la
+  // tuile (qui variait au zoom → « la couleur change »).
+  const nivPolys = (c.niveaux || []).filter((n) => !n.geometrie || n.geometrie === 'polygone')
+  const propN = c.niveaux?.[0]?.propriete || 'subtype'
   if (dims.has('poly')) {
     if (!s.contour_seul) {
-      out.push({ ...base, id: `${src}-fill`, type: 'fill', filter: F_POLY as never,
-        paint: { 'fill-color': col, 'fill-opacity': s.opacite ?? 0.4 } as never })
+      if (nivPolys.length) {
+        for (const n of nivPolys) {
+          out.push({ ...base, id: `${src}-fill-${n.id}`, type: 'fill',
+            filter: ['all', F_POLY, ['==', ['get', propN], n.valeur]] as never,
+            paint: { 'fill-color': n.couleur, 'fill-opacity': n.opacite ?? s.opacite ?? 0.4 } as never })
+        }
+      } else {
+        out.push({ ...base, id: `${src}-fill`, type: 'fill', filter: F_POLY as never,
+          paint: { 'fill-color': col, 'fill-opacity': s.opacite ?? 0.4 } as never })
+      }
     }
     // retour §2 : une couche servie en MORCEAUX (ST_Subdivide) ne dessine PAS de contour de morceau
     // (les coutures internes apparaîtraient). Le bord visible = l'arête du remplissage = l'origine.

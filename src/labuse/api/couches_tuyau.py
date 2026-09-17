@@ -197,6 +197,10 @@ def registre() -> dict[str, CoucheTuyau]:
                 # repointé sur tuyau_telepherique (additif ; spatial_layers.telepherique intacte).
                 if s.execute(text("SELECT to_regclass('tuyau_telepherique')")).scalar() and "telepherique" in reg:
                     reg["telepherique"] = _replace(reg["telepherique"], table="tuyau_telepherique")
+                # COUCHES-RECETTE-2 (retour) : SUP dissoute par famille (opacité uniforme au zoom) →
+                # repointée sur tuyau_sup (override la substitution subdivise ci-dessus).
+                if s.execute(text("SELECT to_regclass('tuyau_sup')")).scalar() and "sup" in reg:
+                    reg["sup"] = _replace(reg["sup"], table="tuyau_sup")
         except Exception:  # noqa: BLE001 — pas de base au chargement : défaut spatial_layers
             pass
         _REGISTRE = reg
@@ -337,6 +341,36 @@ def build_tuyau_piscines(db: Session) -> int:
     db.execute(text("CREATE INDEX tuyau_piscines_kind ON tuyau_piscines (kind, subtype)"))
     db.execute(text("ANALYZE tuyau_piscines"))
     n = db.execute(text("SELECT count(*) FROM tuyau_piscines")).scalar() or 0
+    db.commit()
+    _CACHE.clear()
+    return int(n)
+
+
+def build_tuyau_sup(db: Session) -> int:
+    """COUCHES-RECETTE-2 (retour) — SUP : couleur qui CHANGE avec le zoom. Cause : les assiettes d'une
+    même famille se RECOUVRENT (pm1 : 45 assiettes, 1,7 M points) ; servies telles quelles et découpées,
+    chaque pixel empile N morceaux semi-transparents → à z10 (le pixel couvre plus d'assiettes) la teinte
+    est bien plus foncée qu'à z16. Correctif : DISSOUDRE chaque famille (ST_Union par sous-type) — le
+    footprint couvert est IDENTIQUE (ce n'est pas une simplification de géométrie, c'est l'union exacte),
+    mais sans recouvrement interne → opacité UNIFORME à tous les zooms, teinte constante. Puis subdivisé
+    (≤ 256 sommets) pour la performance des tuiles, comme les autres méga-polygones.
+
+    Additif : spatial_layers intacte (:8020 inchangé). Popup au niveau FAMILLE (code de servitude) — le
+    détail par assiette (acte/règlement) n'est plus servi par CETTE couche après dissolution, assumé."""
+    db.execute(text("DROP TABLE IF EXISTS tuyau_sup"))
+    db.execute(text("""
+        CREATE TEMP TABLE _sup_dissous ON COMMIT DROP AS
+        SELECT subtype, ST_Union(geom_2975) AS geom_2975
+        FROM spatial_layers WHERE kind = 'sup' GROUP BY subtype"""))
+    db.execute(text("""
+        CREATE TABLE tuyau_sup AS
+        SELECT 'sup'::text AS kind, d.subtype, NULL::text AS name, NULL::text AS commune,
+               jsonb_build_object('subtype', d.subtype) AS attrs, p.geom AS geom_2975
+        FROM _sup_dissous d, LATERAL ST_Subdivide(d.geom_2975, 256) AS p(geom)"""))
+    db.execute(text("CREATE INDEX tuyau_sup_gix ON tuyau_sup USING GIST (geom_2975)"))
+    db.execute(text("CREATE INDEX tuyau_sup_kind ON tuyau_sup (kind, subtype)"))
+    db.execute(text("ANALYZE tuyau_sup"))
+    n = db.execute(text("SELECT count(*) FROM tuyau_sup")).scalar() or 0
     db.commit()
     _CACHE.clear()
     return int(n)
