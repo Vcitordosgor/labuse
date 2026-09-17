@@ -20,12 +20,17 @@ export interface TuyauStyle {
   filtre?: { propriete: string; valeur: string }
 }
 export interface TuyauPopup { champ: string; libelle: string; lien?: boolean }
+export interface TuyauEtiquette { propriete: string; zoom_min?: number }
 export interface TuyauCouche {
   kind: string; nom: string; famille: string; geometrie: string; zoom_min: number
   rang_carte: number; style: TuyauStyle; niveaux: TuyauNiveau[] | null
   popup: TuyauPopup[] | null; legende: string; statut_juridique: string | null; tuiles_url: string
   i?: string | null     // COUCHES-RECETTE-1 A8 : texte du « i » (déclaration, jamais un if kind===)
   subdivise?: boolean   // retour §2 : servie en morceaux ST_Subdivide → pas de contour de morceau
+  centroide?: boolean   // A2 : polygone minuscule → un point (symbole) à son centroïde, visible dès l'île
+  groupe?: string | null // fusion de couches en un seul toggle (ex. transport_public)
+  etiquette?: TuyauEtiquette | null // calque symbole d'étiquettes (ex. zonage parcelle : zone_lib)
+  note?: string | null  // A12 : note de couverture en légende (« pas de donnée publiée pour : … »)
 }
 
 // COUCHES-RECETTE-1 A11 : ordre des catégories du panneau (Repères en tête ; « Fond de plan » n'y
@@ -120,7 +125,41 @@ function calques(c: TuyauCouche): maplibregl.AddLayerObject[] {
         'circle-stroke-color': s.trait || '#FFFFFF',
       } as never })
   }
+  // COUCHES-RECETTE-1 A2 : couche `centroide` — un SYMBOLE (pastille) posé au centroïde de chaque
+  // polygone (symbol-placement 'point' → un par polygone), visible DÈS L'ÎLE là où le polygone est
+  // sous le pixel. La géométrie SERVIE reste le polygone (verrou V7a intact) ; c'est un rendu de plus.
+  if (c.centroide && dims.has('poly')) {
+    out.push({ id: `${src}-centro`, source: src, 'source-layer': sl, type: 'symbol',
+      layout: { visibility: 'none', 'icon-image': `tuyau-dot-${c.kind}`, 'icon-allow-overlap': true,
+        'icon-size': ['interpolate', ['linear'], ['zoom'], 8, 0.55, 12, 0.85, 16, 1] as never } as never,
+      paint: {} as never })
+  }
+  // COUCHES-RECETTE-1 : étiquettes (ex. zonage parcelle → zone_lib) — un calque symbole, dès son zoom.
+  if (c.etiquette && c.etiquette.propriete) {
+    const e = c.etiquette
+    out.push({ id: `${src}-label`, source: src, 'source-layer': sl, type: 'symbol',
+      minzoom: e.zoom_min ?? 12,
+      layout: { visibility: 'none', 'text-field': ['coalesce', ['get', e.propriete], ''] as never,
+        'text-font': ['Open Sans Regular'], 'text-size': 11, 'symbol-placement': 'point',
+        'text-allow-overlap': false } as never,
+      paint: { 'text-color': '#EAF2EE', 'text-halo-color': '#0b0f14', 'text-halo-width': 1.4 } as never })
+  }
   return out
+}
+
+// COUCHES-RECETTE-1 A2 : génère une pastille circulaire (couleur de la couche) et l'enregistre comme
+// image de sprite `tuyau-dot-{kind}` — pour le calque `centroide` (symbole au centroïde du polygone).
+function ajouterPastilleIcone(m: maplibregl.Map, kind: string, couleur: string, trait: string) {
+  const id = `tuyau-dot-${kind}`
+  if (m.hasImage(id)) return
+  const D = 22, r = D / 2
+  const cv = document.createElement('canvas'); cv.width = D; cv.height = D
+  const ctx = cv.getContext('2d'); if (!ctx) return
+  ctx.beginPath(); ctx.arc(r, r, r - 3, 0, Math.PI * 2)
+  ctx.fillStyle = couleur; ctx.fill()
+  ctx.lineWidth = 2; ctx.strokeStyle = trait; ctx.stroke()
+  const img = ctx.getImageData(0, 0, D, D)
+  m.addImage(id, { width: D, height: D, data: new Uint8Array(img.data.buffer) }, { pixelRatio: 2 })
 }
 
 function popupHTML(c: TuyauCouche, props: Record<string, unknown>): string {
@@ -168,10 +207,16 @@ export function CouchesTuyauLayers({ map, ready }: {
       if (HORS_PANNEAU(c)) continue   // A11 : le bâti 3D est géré par le bouton 3D, pas monté ici
       const src = `tuyau-${c.kind}`
       if (!m.getSource(src)) {
-        // retour §5 : minzoom 0 — toutes les couches visibles dès la vue île (safer compris),
-        // aucun bornage par zoom_min. maxzoom 16 = surzoom au-delà (pas de re-requête).
-        m.addSource(src, { type: 'vector', minzoom: 0, maxzoom: 16,
+        // COUCHES-RECETTE-1 (A7 / lenteur) : la source n'est demandée qu'à partir de son zoom_min —
+        // une couche par-parcelle (zonage_parcelle, 431 k) ou un semis de points ne charge plus la
+        // tuile ÎLE géante qui n'a aucun sens à cette échelle. Les couches d'aperçu (risques, zonages
+        // GPU) gardent zoom_min 0 → visibles dès l'île. Géométrie inchangée (LOD, pas de dégradation).
+        m.addSource(src, { type: 'vector', minzoom: c.zoom_min ?? 0, maxzoom: 16,
           tiles: [`${window.location.origin}${c.tuiles_url}`] })
+      }
+      if (c.centroide) {
+        const dc = c.style?.couleur || c.niveaux?.[0]?.couleur || FALLBACK
+        ajouterPastilleIcone(m, c.kind, dc, c.style?.trait || '#0b0f14')
       }
       for (const spec of calques(c)) {
         if (!m.getLayer(spec.id)) m.addLayer(spec)
@@ -221,35 +266,44 @@ function TuyauLegend({ plan }: { plan: TuyauCouche[] | undefined }) {
   }, [tuyauActives])
   if (!actives.length) return null
   // par défaut (aucun clic encore), la couche active de plus haut rang (dessus) est dépliée.
-  const deplie = ouvert && actives.some((c) => c.kind === ouvert) ? ouvert : actives[0].kind
+  // COUCHES-RECETTE-1 : les couches FUSIONNÉES (transport public) forment UN accordéon (haut de pile
+  // d'abord). Chaque entrée montre ses grades (niveaux) OU ses teintes data-driven (par réseau /
+  // catégorie via style.couleurs) + une note de couverture (A12).
+  const entrees = grouper(actives).reverse()
+  const estDeplie = (e: Entree) => e.cle === ouvert || e.membres.some((m) => m.kind === ouvert)
+  const deplie = entrees.find(estDeplie)?.cle ?? entrees[0].cle
   return (
     <div data-tuyau-legend
       className="floating absolute bottom-10 right-4 hidden max-h-[52vh] w-[244px] overflow-y-auto rounded-xl bg-surface-2/95 p-3 text-txt shadow-elev-2 sm:block">
       <p className="label-caps mb-2">Légende</p>
       <div className="flex flex-col gap-1">
-        {actives.map((c) => {
-          const isOpen = c.kind === deplie
+        {entrees.map((e) => {
+          const isOpen = e.cle === deplie
+          const sw = pastillesLegende(e)
+          const note = e.membres.map((m) => m.note).find(Boolean)
           return (
-            <div key={c.kind} className="rounded-md border border-line">
-              <button onClick={() => setOuvert(isOpen ? '' : c.kind)} aria-expanded={isOpen}
+            <div key={e.cle} className="rounded-md border border-line">
+              <button onClick={() => setOuvert(isOpen ? '' : e.cle)} aria-expanded={isOpen}
                 className="flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left text-[11.5px] font-medium">
-                <span className="flex min-w-0 items-center gap-2"><Pastille c={c} /><span className="truncate">{c.nom}</span></span>
+                <span className="flex min-w-0 items-center gap-2"><Pastille c={e.membres[0]} /><span className="truncate">{e.nom}</span></span>
                 <span className={`shrink-0 text-txt-dim transition-transform ${isOpen ? '' : '-rotate-90'}`}>▾</span>
               </button>
               {isOpen && (
                 <div className="flex flex-col gap-0.5 px-2 pb-2">
-                  {c.niveaux && c.niveaux.length > 0 ? (
-                    c.niveaux.map((n) => (
-                      <div key={n.id} className="flex items-center gap-2 text-[10.5px] text-txt-mut">
+                  {sw.length > 0 ? (
+                    sw.map((n) => (
+                      <div key={n.k} className="flex items-center gap-2 text-[10.5px] text-txt-mut">
                         <span className="h-2.5 w-3.5 shrink-0 rounded-sm border"
                           style={{ background: n.couleur, opacity: (n.opacite ?? 0.7) + 0.25, borderColor: n.couleur }} />
-                        {/* libellé PROPRE de la déclaration (« Extrême », « Moyen »…) — jamais la clé */}
+                        {/* libellé PROPRE de la déclaration — jamais la clé technique */}
                         {n.legende}
                       </div>
                     ))
                   ) : (
-                    <div className="text-[10.5px] text-txt-mut">{c.legende}</div>
+                    <div className="text-[10.5px] text-txt-mut">{e.membres[0].legende}</div>
                   )}
+                  {/* A12 : couverture partielle dite en clair */}
+                  {note && <div className="mt-1 text-[10px] italic text-txt-dim">{note}</div>}
                 </div>
               )}
             </div>
@@ -272,6 +326,48 @@ const FAMILLE_LABEL: Record<string, string> = {
   environnement: 'Environnement', foncier: 'Foncier', reseaux: 'Réseaux',
   transport: 'Transport', dispositifs: 'Dispositifs', patrimoine: 'Patrimoine',
   equipements: 'Équipements', marche: 'Marché',
+}
+// COUCHES-RECETTE-1 (Lot B) : couches FUSIONNÉES en une seule entrée de panneau (un toggle, plusieurs
+// sous-calques). Le libellé du groupe et son « i ».
+const GROUPE_LABEL: Record<string, string> = { transport_public: 'Transport public' }
+const GROUPE_I: Record<string, string> = {
+  transport_public: 'Réseau de transport en commun (bus + téléphérique) : lignes et arrêts GTFS des 6 réseaux, couleur par réseau. Deux sous-calques (lignes / arrêts) sous un seul interrupteur.',
+}
+// Une entrée du panneau = une couche seule, ou un groupe de couches (membres = plusieurs kinds).
+interface Entree { cle: string; nom: string; i?: string | null; membres: TuyauCouche[]; groupe: boolean }
+function grouper(couches: TuyauCouche[]): Entree[] {
+  const out: Entree[] = []
+  const parGroupe: Record<string, TuyauCouche[]> = {}
+  for (const c of couches) {
+    if (c.groupe) { (parGroupe[c.groupe] ??= []).push(c); continue }
+    out.push({ cle: c.kind, nom: c.nom, i: c.i, membres: [c], groupe: false })
+  }
+  for (const [g, membres] of Object.entries(parGroupe)) {
+    out.push({ cle: `g:${g}`, nom: GROUPE_LABEL[g] || g, i: GROUPE_I[g] || membres[0]?.i,
+      membres, groupe: true })
+  }
+  return out.sort((a, b) => (a.membres[0].rang_carte || 0) - (b.membres[0].rang_carte || 0))
+}
+
+// pastilles de légende d'une entrée : ses grades (niveaux) OU ses teintes data-driven (par réseau /
+// catégorie via style.couleurs). Dédupliqué par libellé (transport : lignes + arrêts = mêmes réseaux).
+interface SwLeg { k: string; couleur: string; opacite?: number; legende: string }
+function pastillesLegende(e: Entree): SwLeg[] {
+  const out: SwLeg[] = []; const vus = new Set<string>()
+  for (const c of e.membres) {
+    if (c.niveaux && c.niveaux.length) {
+      for (const n of c.niveaux) {
+        if (vus.has(n.legende)) continue; vus.add(n.legende)
+        out.push({ k: `${c.kind}:${n.id}`, couleur: n.couleur, opacite: n.opacite, legende: n.legende })
+      }
+    } else if (c.style?.couleur_propriete && c.style?.couleurs) {
+      for (const [key, val] of Object.entries(c.style.couleurs)) {
+        if (vus.has(key)) continue; vus.add(key)
+        out.push({ k: `${c.kind}:${key}`, couleur: val, opacite: c.style.opacite, legende: key })
+      }
+    }
+  }
+  return out
 }
 
 export function NouvellesCouches() {
@@ -308,19 +404,21 @@ export function NouvellesCouches() {
             <div key={fam}>
               <p className="layer-cat mb-1.5 block">{FAMILLE_LABEL[fam] || fam}</p>
               <div className="gcard">
-                {familles[fam].map((c) => {
-                  const on = !!tuyauActives[c.kind]
-                  const err = !!tuyauErrors[c.kind]
+                {grouper(familles[fam]).map((e) => {
+                  // un groupe est allumé si l'un de ses membres l'est ; le toggle bascule TOUS les membres.
+                  const on = e.membres.some((m) => tuyauActives[m.kind])
+                  const err = e.membres.some((m) => tuyauErrors[m.kind])
+                  const bascule = () => { for (const m of e.membres) if (!!tuyauActives[m.kind] === on) toggleTuyau(m.kind) }
                   return (
-                    <label key={c.kind}
+                    <label key={e.cle}
                       className="flex cursor-pointer items-center gap-2 border-b border-line px-1 py-1.5 last:border-b-0">
                       {/* COUCHES-RECETTE-1 A9 : DA des anciennes couches — case à cocher + nom, PAS de
                           carré coloré devant le nom (la couleur se lit dans la légende). */}
-                      <input type="checkbox" checked={on} onChange={() => toggleTuyau(c.kind)} className="accent-mint" />
-                      <span className="min-w-0 flex-1 truncate text-[12px] text-txt">{c.nom}</span>
-                      {/* COUCHES-RECETTE-1 A8 : le « i » par couche (texte de la déclaration). */}
-                      {c.i && (
-                        <span title={c.i}
+                      <input type="checkbox" checked={on} onChange={bascule} className="accent-mint" />
+                      <span className="min-w-0 flex-1 truncate text-[12px] text-txt">{e.nom}</span>
+                      {/* COUCHES-RECETTE-1 A8 : le « i » par couche/groupe (texte de la déclaration). */}
+                      {e.i && (
+                        <span title={e.i}
                           className="grid h-3.5 w-3.5 shrink-0 cursor-help place-items-center rounded-full border border-line-2 text-[9px] font-semibold text-txt-dim">
                           i
                         </span>
