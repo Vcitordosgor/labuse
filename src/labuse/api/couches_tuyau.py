@@ -182,6 +182,11 @@ def registre() -> dict[str, CoucheTuyau]:
                         if v.table == "spatial_layers" and v.resolution and not v.contour_seul \
                                 and all(sk in subd for sk, _ in v.resolution):
                             reg[k] = _replace(v, table="tuyau_subdivise")
+                # COUCHES-RECETTE-1 (Lot B) : piscines dédoublonnées + niveau → repointées sur
+                # tuyau_piscines (l'attribut `niveau` y est en attrs, la résolution kind='piscine_cosia'
+                # tient). Additif : spatial_layers.piscine_cosia reste intacte.
+                if s.execute(text("SELECT to_regclass('tuyau_piscines')")).scalar() and "piscine_cosia" in reg:
+                    reg["piscine_cosia"] = _replace(reg["piscine_cosia"], table="tuyau_piscines")
         except Exception:  # noqa: BLE001 — pas de base au chargement : défaut spatial_layers
             pass
         _REGISTRE = reg
@@ -243,6 +248,64 @@ def build_tuyau_subdivise(db: Session) -> int:
     db.execute(text("CREATE INDEX tuyau_subdivise_kind ON tuyau_subdivise (kind, subtype)"))
     db.execute(text("ANALYZE tuyau_subdivise"))
     n = db.execute(text("SELECT count(*) FROM tuyau_subdivise")).scalar() or 0
+    db.commit()
+    _CACHE.clear()
+    return int(n)
+
+
+def build_tuyau_piscines(db: Session) -> int:
+    """COUCHES-RECETTE-1 (Lot B) — piscines : UNE piscine = UN point, le niveau de confiance en
+    ATTRIBUT (avant : la couche servait CoSIA seule, `subtype='Piscine'` partout → aucun des 3
+    niveaux, et des doublons de détection).
+
+    On construit une table dérivée `tuyau_piscines` (n'affecte NI spatial_layers NI :8020) :
+      1. DÉDOUBLONNAGE : les points CoSIA sont regroupés par ST_ClusterDBSCAN (1,5 m) — un
+         représentant par grappe → une piscine = un point.
+      2. NIVEAU (attribut `niveau`) selon les deux détecteurs :
+         · confirmee — CoSIA ∩ détection ortho interne (les deux d'accord, < 2 m) ;
+         · probable  — CoSIA seule ;
+         · rare      — détection ortho interne seule (aucune CoSIA à < 2 m).
+    La couche `piscine_cosia` est repointée sur cette table (cf. registre())."""
+    db.execute(text("DROP TABLE IF EXISTS tuyau_piscines"))
+    # tables temporaires INDEXÉES (GIST) → les jointures spatiales (EXISTS/NOT EXISTS à 2 m) sont
+    # rapides et bornées (sinon O(n²) contre un CTE non indexé). On ne touche PAS les tables partagées.
+    db.execute(text("""
+        CREATE TEMP TABLE _cosia_dedup ON COMMIT DROP AS
+        WITH cosia AS (
+            SELECT geom_2975, commune, (attrs->>'surface_m2')::float AS surf,
+                   ST_ClusterDBSCAN(geom_2975, eps := 1.5, minpoints := 1) OVER () AS cid
+            FROM spatial_layers WHERE kind = 'piscine_cosia'
+        )
+        SELECT DISTINCT ON (cid) geom_2975, commune, surf
+        FROM cosia ORDER BY cid, surf DESC NULLS LAST"""))
+    db.execute(text("CREATE INDEX ON _cosia_dedup USING GIST (geom_2975)"))
+    db.execute(text("""
+        CREATE TEMP TABLE _ortho_pisc ON COMMIT DROP AS
+        SELECT geom_2975, surface_m2 FROM ortho_detections
+        WHERE type ILIKE 'piscine' AND confiance >= 0.8"""))
+    db.execute(text("CREATE INDEX ON _ortho_pisc USING GIST (geom_2975)"))
+    db.execute(text("ANALYZE _cosia_dedup"))
+    db.execute(text("ANALYZE _ortho_pisc"))
+    db.execute(text("""
+        CREATE TABLE tuyau_piscines AS
+        SELECT 'piscine_cosia'::text AS kind, u.niveau AS subtype, NULL::text AS name, u.commune,
+               jsonb_build_object('niveau', u.niveau, 'surface_m2', u.surf) AS attrs, u.geom_2975
+        FROM (
+            SELECT c.geom_2975, c.commune, c.surf,
+                   CASE WHEN EXISTS (SELECT 1 FROM _ortho_pisc o
+                                     WHERE ST_DWithin(c.geom_2975, o.geom_2975, 2.0))
+                        THEN 'confirmee' ELSE 'probable' END AS niveau
+            FROM _cosia_dedup c
+            UNION ALL
+            SELECT o.geom_2975, NULL::text, o.surface_m2, 'rare'
+            FROM _ortho_pisc o
+            WHERE NOT EXISTS (SELECT 1 FROM _cosia_dedup c
+                              WHERE ST_DWithin(o.geom_2975, c.geom_2975, 2.0))
+        ) u"""))
+    db.execute(text("CREATE INDEX tuyau_piscines_gix ON tuyau_piscines USING GIST (geom_2975)"))
+    db.execute(text("CREATE INDEX tuyau_piscines_kind ON tuyau_piscines (kind, subtype)"))
+    db.execute(text("ANALYZE tuyau_piscines"))
+    n = db.execute(text("SELECT count(*) FROM tuyau_piscines")).scalar() or 0
     db.commit()
     _CACHE.clear()
     return int(n)

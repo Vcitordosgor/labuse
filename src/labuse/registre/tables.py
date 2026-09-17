@@ -320,6 +320,12 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "mvt_parcels": "build-mvt (tuiles parcelles)",
     "mvt_overlays": "build-mvt (tuiles couches)",
     "mvt_meta": "build-mvt (pointeurs)",
+    # COUCHES-TUYAU-1 / COUCHES-RECETTE-1 : tables dérivées du TUYAU vectoriel (fabriquées par les
+    # build_* de api/couches_tuyau.py, reconstruites au run — pas des réservoirs). Enregistrées ici
+    # pour qu'elles appartiennent à la carte (V1c) et ne soient plus des orphelines.
+    "tuyau_subdivise": "tuyau (build_tuyau_subdivise — méga-polygones en morceaux ST_Subdivide, dédup SUP)",
+    "mvt_communes": "tuyau (build_mvt_communes — contours IGN des 24 communes)",
+    "tuyau_piscines": "tuyau (build_tuyau_piscines — piscines dédoublonnées + niveau de confiance)",
     "p_model_bati": "modèle P (features bâti)",
     "p_model_candidates": "modèle P (candidats)",
     "p_model_dataset": "modèle P (dataset v1)",
