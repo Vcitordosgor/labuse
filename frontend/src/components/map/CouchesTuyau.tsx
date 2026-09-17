@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import maplibregl from 'maplibre-gl'
 import { useQuery } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
+import { LayerRowUI } from '../panel/LayerRowUI'   // COUCHES-RECETTE-2 B2 : composant de ligne partagé
 
 // ── types du plan servi par /map/tuyau/couches (dérivé de la déclaration) ──
 export interface TuyauNiveau {
@@ -89,6 +90,15 @@ function dimensions(geo: string): Set<'poly' | 'line' | 'point'> {
   return new Set(['poly', 'line', 'point'])  // inconnu / multi (tcsp)
 }
 
+// COUCHES-RECETTE-2 Lot A — filtres par TYPE de géométrie. Un calque `circle` de MapLibre dessine un
+// cercle à CHAQUE SOMMET de toute géométrie (y compris les anneaux d'un polygone / les nœuds d'une
+// ligne) → « un rond par sommet ». Règle : un polygone = remplissage + contour ; une ligne = trait ;
+// SEULS les vrais points portent un cercle. On restreint donc chaque calque à sa dimension réelle
+// (Point / LineString / Polygon — MultiX renvoie le même type de base côté MapLibre).
+const F_POINT = ['==', ['geometry-type'], 'Point'] as unknown
+const F_LINE = ['==', ['geometry-type'], 'LineString'] as unknown
+const F_POLY = ['==', ['geometry-type'], 'Polygon'] as unknown
+
 // les calques MapLibre d'une couche (fond + contour + points selon la géométrie déclarée)
 function calques(c: TuyauCouche): maplibregl.AddLayerObject[] {
   const src = `tuyau-${c.kind}`
@@ -100,31 +110,66 @@ function calques(c: TuyauCouche): maplibregl.AddLayerObject[] {
   const out: maplibregl.AddLayerObject[] = []
   if (dims.has('poly')) {
     if (!s.contour_seul) {
-      out.push({ ...base, id: `${src}-fill`, type: 'fill',
+      out.push({ ...base, id: `${src}-fill`, type: 'fill', filter: F_POLY as never,
         paint: { 'fill-color': col, 'fill-opacity': s.opacite ?? 0.4 } as never })
     }
     // retour §2 : une couche servie en MORCEAUX (ST_Subdivide) ne dessine PAS de contour de morceau
     // (les coutures internes apparaîtraient). Le bord visible = l'arête du remplissage = l'origine.
+    // Lot A : le contour ne dessine QUE les anneaux de polygone (jamais les sommets comme des ronds).
     if (!c.subdivise) {
-      out.push({ ...base, id: `${src}-outline`, type: 'line',
+      out.push({ ...base, id: `${src}-outline`, type: 'line', filter: F_POLY as never,
         paint: { 'line-color': (s.trait || col) as never, 'line-width': s.epaisseur ?? 1, 'line-opacity': 0.9 } as never })
     }
   }
+  // COUCHES-RECETTE-2 Lot D : quand des NIVEAUX portent une géométrie propre (ligne/point), on rend UN
+  // calque PAR NIVEAU avec SON style (tiret, largeur, rayon, anneau) — sinon un seul style écrasait tout
+  // (ex. Papang plein vs Payanké pointillé ; TCSP rayon tireté / tronçon rampé / station anneau).
+  const nivLignes = (c.niveaux || []).filter((n) => n.geometrie === 'ligne')
+  const nivPoints = (c.niveaux || []).filter((n) => n.geometrie === 'point')
+  const prop = c.niveaux?.[0]?.propriete || 'subtype'
   if (dims.has('line')) {
-    const paint: Record<string, unknown> = {
-      'line-color': col, 'line-width': rampe(s.zoom_largeur, s.epaisseur ?? 1.6), 'line-opacity': s.opacite ?? 0.9 }
-    if (s.tirets) paint['line-dasharray'] = s.tirets
-    out.push({ ...base, id: `${src}-line`, type: 'line', paint: paint as never })
+    if (nivLignes.length) {
+      for (const n of nivLignes) {
+        const paint: Record<string, unknown> = {
+          'line-color': n.couleur, 'line-width': rampe((n as { zoom_largeur?: number[] }).zoom_largeur, n.epaisseur ?? 1.6),
+          'line-opacity': n.opacite ?? 0.9 }
+        if (n.tirets) paint['line-dasharray'] = n.tirets
+        out.push({ ...base, id: `${src}-line-${n.id}`, type: 'line',
+          filter: ['all', F_LINE, ['==', ['get', prop], n.valeur]] as never, paint: paint as never })
+      }
+    } else {
+      const paint: Record<string, unknown> = {
+        'line-color': col, 'line-width': rampe(s.zoom_largeur, s.epaisseur ?? 1.6), 'line-opacity': s.opacite ?? 0.9 }
+      if (s.tirets) paint['line-dasharray'] = s.tirets
+      // Lot A : le trait ne dessine QUE les lignes (pas les anneaux de polygone — c'est le rôle du contour).
+      out.push({ ...base, id: `${src}-line`, type: 'line', filter: F_LINE as never, paint: paint as never })
+    }
   }
   if (dims.has('point')) {
-    out.push({ ...base, id: `${src}-point`, type: 'circle',
-      paint: {
-        'circle-color': col,
-        'circle-radius': rampe(s.zoom_rayon, s.rayon ?? 5),
-        'circle-opacity': s.opacite ?? 0.95,
-        'circle-stroke-width': s.halo ?? 0,
-        'circle-stroke-color': s.trait || '#FFFFFF',
-      } as never })
+    if (nivPoints.length) {
+      for (const n of nivPoints) {
+        const anneau = (n as { anneau?: boolean }).anneau
+        out.push({ ...base, id: `${src}-point-${n.id}`, type: 'circle',
+          filter: ['all', F_POINT, ['==', ['get', prop], n.valeur]] as never,
+          paint: {
+            'circle-color': anneau ? 'rgba(0,0,0,0)' : n.couleur,
+            'circle-radius': rampe((n as { zoom_rayon?: number[] }).zoom_rayon, n.rayon ?? 5),
+            'circle-opacity': n.opacite ?? 0.95,
+            'circle-stroke-width': anneau ? (n.epaisseur ?? 2) : 0,
+            'circle-stroke-color': anneau ? n.couleur : (n.trait || '#FFFFFF'),
+          } as never })
+      }
+    } else {
+      // Lot A : le cercle ne dessine QUE les vrais points (plus de rond par sommet de polygone/ligne).
+      out.push({ ...base, id: `${src}-point`, type: 'circle', filter: F_POINT as never,
+        paint: {
+          'circle-color': col,
+          'circle-radius': rampe(s.zoom_rayon, s.rayon ?? 5),
+          'circle-opacity': s.opacite ?? 0.95,
+          'circle-stroke-width': s.halo ?? 0,
+          'circle-stroke-color': s.trait || '#FFFFFF',
+        } as never })
+    }
   }
   // COUCHES-RECETTE-1 A2 : couche `centroide` — un SYMBOLE (pastille) posé au centroïde de chaque
   // polygone (symbol-placement 'point' → un par polygone), visible DÈS L'ÎLE là où le polygone est
@@ -141,10 +186,11 @@ function calques(c: TuyauCouche): maplibregl.AddLayerObject[] {
     const cas: unknown[] = ['match', ['get', 'subtype']]
     for (const sub of Object.keys(c.icones)) cas.push(sub, `tuyau-ic-${c.kind}-${sub}`)
     cas.push('')  // sous-type sans icône → pas d'image (le rond coloré reste)
+    // COUCHES-RECETTE-2 Lot D : icônes LISIBLES dès le zoom commune (z12), plus seulement au zoom rue.
     out.push({ id: `${src}-icone`, source: src, 'source-layer': sl, type: 'symbol',
       minzoom: c.zoom_min ?? 12,
       layout: { visibility: 'none', 'icon-image': cas as never, 'icon-allow-overlap': true,
-        'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.5, 16, 0.85, 20, 1.1] as never,
+        'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.8, 15, 1.0, 20, 1.3] as never,
         'icon-anchor': 'center' } as never,
       paint: {} as never })
   }
@@ -200,7 +246,11 @@ function popupHTML(c: TuyauCouche, props: Record<string, unknown>): string {
     return `<div><span style="color:#9AA7A0">${p.libelle} :</span> ${val}</div>`
   }).filter(Boolean).join('')
   const titre = `<div style="font-weight:600;margin-bottom:2px">${c.nom}</div>`
-  return `<div style="font-size:12px;line-height:1.5">${titre}${lignes || '<div style="color:#9AA7A0">—</div>'}</div>`
+  // COUCHES-RECETTE-2 Lot D : boîte OPAQUE (comme l'ancienne popup) — le conteneur MapLibre est
+  // transparent (cf. .labuse-popup), donc l'opacité vient d'ici.
+  return `<div style="font-size:12px;line-height:1.5;background:rgba(14,18,16,0.97);color:#E6EDE8;`
+    + `border:1px solid rgba(120,140,128,0.28);border-radius:8px;padding:8px 10px;max-width:280px">`
+    + `${titre}${lignes || '<div style="color:#9AA7A0">—</div>'}</div>`
 }
 
 // ── le composant de RENDU (monté dans MapView) : sources + calques + popups + légende ──
@@ -231,6 +281,13 @@ export function CouchesTuyauLayers({ map, ready }: {
       if (sid && sid.startsWith('tuyau-')) setTuyauError(sid.slice(6), true)
     }
     m.on('error', onErr as never)
+    // COUCHES-RECETTE-2 C1 — VOILE DE MISE EN AVANT : un calque `background` gris posé AVANT les couches
+    // du tuyau (donc au-dessus du fond — parcelles, communes, tous basemaps — et SOUS les couches, qui
+    // sont ajoutées ensuite). Opacité pilotée plus bas (0 tant qu'aucune couche non-Repères n'est active).
+    if (!m.getLayer('couche-veil')) {
+      m.addLayer({ id: 'couche-veil', type: 'background',
+        paint: { 'background-color': '#0B0E0C', 'background-opacity': 0 } })
+    }
     for (const c of plan) {
       if (HORS_PANNEAU(c)) continue   // A11 : le bâti 3D est géré par le bouton 3D, pas monté ici
       const src = `tuyau-${c.kind}`
@@ -249,12 +306,20 @@ export function CouchesTuyauLayers({ map, ready }: {
       if (c.icones) for (const [sub, emoji] of Object.entries(c.icones)) ajouterEmojiIcone(m, `tuyau-ic-${c.kind}-${sub}`, emoji)
       for (const spec of calques(c)) {
         if (!m.getLayer(spec.id)) m.addLayer(spec)
-        if (c.popup && c.popup.length && (spec.id.endsWith('-fill') || spec.id.endsWith('-point') || spec.id.endsWith('-line'))) {
+        // popup sur les calques de DONNÉE (fill / point / line, y compris par-niveau « -point-xxx »),
+        // jamais sur le contour, l'icône, l'étiquette ou le centroïde.
+        const estData = /-(fill|point|line)(-|$)/.test(spec.id) && !spec.id.includes('-outline')
+        if (c.popup && c.popup.length && estData) {
+          const estPoint = spec.id.includes('-point')
           m.on('click', spec.id, (e) => {
             const f = e.features?.[0]
             if (!f) return
-            new maplibregl.Popup({ offset: 10, className: 'labuse-popup', maxWidth: '320px' })
-              .setLngLat(e.lngLat).setHTML(popupHTML(c, f.properties as Record<string, unknown>)).addTo(m)
+            // COUCHES-RECETTE-2 Lot D : sur un point (arrêt, équipement OSM), la popup s'ancre AU-DESSUS
+            // (anchor bottom) pour ne pas recouvrir le point ; sur une surface, ancrage libre.
+            new maplibregl.Popup({ offset: estPoint ? 14 : 10, className: 'labuse-popup', maxWidth: '320px',
+              ...(estPoint ? { anchor: 'bottom' as const } : {}) })
+              .setLngLat(estPoint ? (f.geometry as GeoJSON.Point).coordinates as [number, number] : e.lngLat)
+              .setHTML(popupHTML(c, f.properties as Record<string, unknown>)).addTo(m)
           })
           m.on('mouseenter', spec.id, () => { m.getCanvas().style.cursor = 'pointer' })
           m.on('mouseleave', spec.id, () => { m.getCanvas().style.cursor = '' })
@@ -274,13 +339,46 @@ export function CouchesTuyauLayers({ map, ready }: {
     }
   }, [tuyauActives, ready, plan, map])
 
-  return <TuyauLegend plan={plan} />
+  // COUCHES-RECETTE-2 C1 : le voile de mise en avant s'active dès qu'une couche AUTRE que les deux
+  // Repères est visible ; il disparaît quand plus aucune ne l'est. Vrai sur tous les fonds.
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready || !plan) return
+    const actif = plan.some((c) => tuyauActives[c.kind] && c.famille !== 'reperes')
+    if (m.getLayer('couche-veil')) m.setPaintProperty('couche-veil', 'background-opacity', actif ? 0.34 : 0)
+  }, [tuyauActives, ready, plan, map])
+
+  // COUCHES-RECETTE-2 B5 : suit le zoom courant pour dire « Zoomez pour voir … » quand une couche
+  // active n'apparaît qu'à partir d'un zoom minimum.
+  const [zoom, setZoom] = useState(0)
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready) return
+    const upd = () => setZoom(m.getZoom())
+    upd(); m.on('zoom', upd)
+    return () => { m.off('zoom', upd) }
+  }, [map, ready])
+
+  // couches actives dont le zoom_min n'est pas atteint (jamais un silence : dit en légende ET sur la carte).
+  const gatees = (plan || []).filter((c) => tuyauActives[c.kind] && (c.zoom_min ?? 0) > zoom + 0.001)
+
+  return (
+    <>
+      <TuyauLegend plan={plan} zoom={zoom} />
+      {gatees.length > 0 && (
+        <div data-tuyau-zoom-hint
+          className="pointer-events-none absolute left-1/2 top-16 z-10 -translate-x-1/2 rounded-full border border-mint/40 bg-surface-2/95 px-3.5 py-1.5 text-[11.5px] text-txt shadow-elev-2">
+          Zoomez pour voir : {gatees.map((c) => c.nom).join(', ')}
+        </div>
+      )}
+    </>
+  )
 }
 
 // ── la LÉGENDE bas-droite — COUCHES-RECETTE-1 A10 : titrée « Légende », UN ACCORDÉON PAR COUCHE
 // active (titré du nom). La dernière couche allumée est dépliée, les autres repliées ; clic pour
 // déplier. Décalée vers le haut pour ne pas chevaucher l'attribution « Cadastre © DGFiP ».
-function TuyauLegend({ plan }: { plan: TuyauCouche[] | undefined }) {
+function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: number }) {
   const { tuyauActives } = useApp()
   const actives = useMemo(
     () => (plan || []).filter((c) => tuyauActives[c.kind]).sort((a, b) => (b.rang_carte || 0) - (a.rang_carte || 0)),
@@ -310,26 +408,40 @@ function TuyauLegend({ plan }: { plan: TuyauCouche[] | undefined }) {
           const isOpen = e.cle === deplie
           const sw = pastillesLegende(e)
           const note = e.membres.map((m) => m.note).find(Boolean)
+          // COUCHES-RECETTE-2 B5 : couche à zoom minimum non atteint → « Zoomez pour voir … ».
+          const zmin = Math.max(...e.membres.map((m) => m.zoom_min ?? 0))
+          const gated = zmin > zoom + 0.001
           return (
             <div key={e.cle} className="rounded-md border border-line">
+              {/* COUCHES-RECETTE-2 B4 : PAS de pastille à côté du titre (les pastilles sont DANS
+                  l'accordéon, une par niveau) ; le titre passe sur deux lignes, jamais tronqué. */}
               <button onClick={() => setOuvert(isOpen ? '' : e.cle)} aria-expanded={isOpen}
-                className="flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left text-[11.5px] font-medium">
-                <span className="flex min-w-0 items-center gap-2"><Pastille c={e.membres[0]} /><span className="truncate">{e.nom}</span></span>
-                <span className={`shrink-0 text-txt-dim transition-transform ${isOpen ? '' : '-rotate-90'}`}>▾</span>
+                className="flex w-full items-start justify-between gap-2 px-2 py-1.5 text-left text-[11.5px] font-medium">
+                <span className="min-w-0 flex-1 leading-tight">{e.nom}</span>
+                <span className={`mt-0.5 shrink-0 text-txt-dim transition-transform ${isOpen ? '' : '-rotate-90'}`}>▾</span>
               </button>
               {isOpen && (
                 <div className="flex flex-col gap-0.5 px-2 pb-2">
-                  {sw.length > 0 ? (
+                  {gated ? (
+                    <div className="text-[10.5px] font-medium text-mint">Zoomez pour voir {e.nom.toLowerCase()}</div>
+                  ) : sw.length > 0 ? (
                     sw.map((n) => (
-                      <div key={n.k} className="flex items-center gap-2 text-[10.5px] text-txt-mut">
-                        <span className="h-2.5 w-3.5 shrink-0 rounded-sm border"
+                      <div key={n.k} className="flex items-start gap-2 text-[10.5px] leading-tight text-txt-mut">
+                        <span className="mt-0.5 h-2.5 w-3.5 shrink-0 rounded-sm border"
                           style={{ background: n.couleur, opacity: (n.opacite ?? 0.7) + 0.25, borderColor: n.couleur }} />
-                        {/* libellé PROPRE de la déclaration — jamais la clé technique */}
-                        {n.legende}
+                        {/* libellé PROPRE de la déclaration — jamais la clé technique, jamais tronqué */}
+                        <span className="min-w-0 flex-1">{n.legende}</span>
                       </div>
                     ))
                   ) : (
-                    <div className="text-[10.5px] text-txt-mut">{e.membres[0].legende}</div>
+                    // B4 : une SEULE pastille (couleur de la couche) quand il n'y a qu'un niveau.
+                    <div className="flex items-start gap-2 text-[10.5px] leading-tight text-txt-mut">
+                      <span className="mt-0.5 h-2.5 w-3.5 shrink-0 rounded-sm border"
+                        style={{ background: e.membres[0].style?.couleur || FALLBACK,
+                          opacity: (e.membres[0].style?.opacite ?? 0.6) + 0.3,
+                          borderColor: e.membres[0].style?.trait || e.membres[0].style?.couleur || FALLBACK }} />
+                      <span className="min-w-0 flex-1">{e.membres[0].legende}</span>
+                    </div>
                   )}
                   {/* A12 : couverture partielle dite en clair */}
                   {note && <div className="mt-1 text-[10px] italic text-txt-dim">{note}</div>}
@@ -343,11 +455,6 @@ function TuyauLegend({ plan }: { plan: TuyauCouche[] | undefined }) {
   )
 }
 
-function Pastille({ c }: { c: TuyauCouche }) {
-  const col = c.style?.couleur || c.niveaux?.[0]?.couleur || FALLBACK
-  return <span className="h-2.5 w-3.5 shrink-0 rounded-sm border"
-    style={{ background: col, opacity: (c.style?.opacite ?? 0.6) + 0.3, borderColor: c.style?.trait || col }} />
-}
 
 // ── la SECTION « Nouvelles couches » du panneau « Cartes » (montée dans LeftPanel), par famille ──
 const FAMILLE_LABEL: Record<string, string> = {
@@ -399,11 +506,12 @@ function pastillesLegende(e: Entree): SwLeg[] {
   return out
 }
 
+// COUCHES-RECETTE-2 B1/B2 : plus d'en-tête « Couches » propre (celui de LayersSection suffit — le
+// double en-tête est supprimé) ; les couches du tuyau utilisent LE MÊME composant que l'ancienne
+// liste (LayerRowUI) → DA indiscernable, « i » au survol immédiat (Tip). Familles ordonnées, bâti exclu.
 export function NouvellesCouches() {
   const { data: plan } = useTuyauPlan()
   const { tuyauActives, toggleTuyau, tuyauErrors } = useApp()
-  const [open, setOpen] = useState(true)
-  // COUCHES-RECETTE-1 : familles ORDONNÉES (Repères en tête, A11), le bâti 3D exclu (A11).
   const familles = useMemo(() => {
     const par: Record<string, TuyauCouche[]> = {}
     for (const c of plan || []) { if (HORS_PANNEAU(c)) continue; (par[c.famille] ??= []).push(c) }
@@ -411,59 +519,29 @@ export function NouvellesCouches() {
     return par
   }, [plan])
   if (!plan || !plan.length) return null
-  const visibles = plan.filter((c) => !HORS_PANNEAU(c))
-  const actifs = visibles.filter((c) => tuyauActives[c.kind]).length
   const ordre = [...ORDRE_FAMILLES.filter((f) => familles[f]),
     ...Object.keys(familles).filter((f) => !ORDRE_FAMILLES.includes(f))]
   return (
-    <div data-tuyau-section className="mt-1">
-      <button onClick={() => setOpen((v) => !v)} aria-expanded={open}
-        className="group flex w-full items-center justify-between gap-2 text-left">
-        <span className="label-caps">Couches</span>
-        <span className="flex items-center gap-3">
-          <span className="rounded-full bg-mint/15 px-1.5 py-0.5 text-[9.5px] font-medium text-mint">
-            {actifs}/{visibles.length}
-          </span>
-          <span className={`text-txt-dim transition-transform ${open ? '' : '-rotate-90'}`}>▾</span>
-        </span>
-      </button>
-      {open && (
-        <div className="mt-2 flex flex-col gap-3.5">
-          {ordre.map((fam) => (
-            <div key={fam}>
-              <p className="layer-cat mb-1.5 block">{FAMILLE_LABEL[fam] || fam}</p>
-              <div className="gcard">
-                {grouper(familles[fam]).map((e) => {
-                  // un groupe est allumé si l'un de ses membres l'est ; le toggle bascule TOUS les membres.
-                  const on = e.membres.some((m) => tuyauActives[m.kind])
-                  const err = e.membres.some((m) => tuyauErrors[m.kind])
-                  const bascule = () => { for (const m of e.membres) if (!!tuyauActives[m.kind] === on) toggleTuyau(m.kind) }
-                  return (
-                    <label key={e.cle}
-                      className="flex cursor-pointer items-center gap-2 border-b border-line px-1 py-1.5 last:border-b-0">
-                      {/* COUCHES-RECETTE-1 A9 : DA des anciennes couches — case à cocher + nom, PAS de
-                          carré coloré devant le nom (la couleur se lit dans la légende). */}
-                      <input type="checkbox" checked={on} onChange={bascule} className="accent-mint" />
-                      <span className="min-w-0 flex-1 truncate text-[12px] text-txt">{e.nom}</span>
-                      {/* COUCHES-RECETTE-1 A8 : le « i » par couche/groupe (texte de la déclaration). */}
-                      {e.i && (
-                        <span title={e.i}
-                          className="grid h-3.5 w-3.5 shrink-0 cursor-help place-items-center rounded-full border border-line-2 text-[9px] font-semibold text-txt-dim">
-                          i
-                        </span>
-                      )}
-                      {err && (
-                        <span title="Échec de chargement d'une tuile de cette couche"
-                          className="shrink-0 text-[10px] font-medium text-danger">tuile en échec</span>
-                      )}
-                    </label>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
+    <>
+      {ordre.map((fam) => (
+        <div key={fam}>
+          <p className="layer-cat mb-1.5 block">{FAMILLE_LABEL[fam] || fam}</p>
+          <div className="gcard">
+            {grouper(familles[fam]).map((e) => {
+              // un groupe est allumé si l'un de ses membres l'est ; le toggle bascule TOUS les membres.
+              const on = e.membres.some((m) => tuyauActives[m.kind])
+              const err = e.membres.some((m) => tuyauErrors[m.kind])
+              const bascule = () => { for (const m of e.membres) if (!!tuyauActives[m.kind] === on) toggleTuyau(m.kind) }
+              return (
+                <div key={e.cle} className="border-b border-line last:border-b-0">
+                  <LayerRowUI on={on} label={e.nom} info={e.i ?? undefined} onToggle={bascule}
+                    dataKey={e.membres[0]?.kind} err={err} />
+                </div>
+              )
+            })}
+          </div>
         </div>
-      )}
-    </div>
+      ))}
+    </>
   )
 }

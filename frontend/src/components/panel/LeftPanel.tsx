@@ -7,7 +7,7 @@ import { NouvellesCouches } from '../map/CouchesTuyau'  // COUCHES-TUYAU-1 lot 2
 import { LAYER_INFO } from '../../lib/layers'
 import { countActiveFilters } from '../../lib/filters'
 import { MODULES } from '../outils/registry'
-import { Tip } from '../Tip'
+import { LayerRowUI } from './LayerRowUI'   // COUCHES-RECETTE-2 B2 : composant de ligne partagé
 import { ChevronSection, CroixEntete } from './ChevronSection'
 import { ResultsSection } from './ResultsSection'
 import { FiltreLabuse } from './FiltreLabuse'
@@ -200,23 +200,7 @@ const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
 const LAYER_SUBOPTIONS: Partial<Record<keyof LayerToggles, (keyof LayerToggles)[]>> = {}
 const LAYER_LABEL: Record<string, string> = Object.fromEntries(LAYERS.map((l) => [l.key, l.label]))
 
-// M12 C2 — pastille « i » d'une couche : au survol OU au clic, l'explication CLIENT (LAYER_INFO,
-// centralisée) apparaît. Le clic sur la pastille NE bascule PAS la couche (stopPropagation dans Tip).
-function LayerInfoPill({ info }: { info: string }) {
-  if (!info) return null
-  return (
-    <Tip garder side="top" tip={info} className="shrink-0">
-      <span
-        role="button"
-        tabIndex={0}
-        aria-label="En savoir plus sur cette couche"
-        className="flex h-[15px] w-[15px] items-center justify-center rounded-full border border-line-2 text-[9px] font-bold leading-none text-txt-dim transition-colors duration-quick hover:border-mint hover:text-mint"
-      >
-        i
-      </span>
-    </Tip>
-  )
-}
+// COUCHES-RECETTE-2 B2 — LayerInfoPill vit désormais dans ./LayerRowUI (partagé avec le tuyau).
 
 // COUCHES-1 lot 3 — UNE ligne de couche (parent ou sous-option). `sub` : indentée + trait de
 // rattachement, bascule manuelle indépendante. Le libellé + le « i » (LAYER_INFO + source/fabrication
@@ -228,31 +212,12 @@ function LayerRow({ layers, toggleLayer, couchesInfo, lkey, sub }: {
   lkey: keyof LayerToggles
   sub?: boolean
 }) {
-  const on = layers[lkey]
   const meta = couchesInfo[lkey]
   const info = (LAYER_INFO[lkey] ?? '')
     + (meta ? `\n\nSource : ${meta.source}${meta.fabrication ? ` · ${meta.fabrication}` : ''}` : '')
-  const label = LAYER_LABEL[lkey] ?? lkey
   return (
-    <div className={`flex items-center justify-between gap-2 px-3 py-2.5 ${sub ? 'pl-8' : ''}`}>
-      <button
-        data-layer={lkey}
-        data-layer-sub={sub ? true : undefined}
-        onClick={() => toggleLayer(lkey)}
-        className="flex min-h-[24px] flex-1 items-center gap-3 text-left transition-colors duration-quick"
-      >
-        {sub && <span aria-hidden className="-ml-3 mr-0.5 text-[10px] leading-none text-txt-dim">↳</span>}
-        <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-3'}`}>
-          {on && (
-            <svg viewBox="0 0 10 10" className="h-2.5 w-2.5">
-              <polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="#06301A" strokeWidth="1.8" />
-            </svg>
-          )}
-        </span>
-        <span className={`${sub ? 'text-[11px]' : 'text-xs'} ${on ? 'text-txt-hi' : 'text-[#97A39B]'}`}>{label}</span>
-      </button>
-      <LayerInfoPill info={info} />
-    </div>
+    <LayerRowUI on={layers[lkey]} label={LAYER_LABEL[lkey] ?? lkey} info={info}
+      onToggle={() => toggleLayer(lkey)} sub={sub} dataKey={lkey} />
   )
 }
 

@@ -546,6 +546,20 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
       set(`${c.id}-line`, 'line-width', ALEA_LINE_W); set(`${c.id}-line`, 'line-opacity', ALEA_LINE_OP)
     }
   }
+  // COUCHES-RECETTE-2 C2 — sur CLAIR et IGN (Plan) uniquement : contours de PARCELLES en NOIR et
+  // limites de COMMUNES en GRIS FONCÉ (Sombre et Ortho ne passent pas ici → inchangés). S'exécute
+  // APRÈS les blocs clair/photo, donc écrase leur couleur de contour pour ces deux fonds.
+  if (clair || basemap === 'plan') {
+    for (const id of ['parcels-limites', 'ile-limites']) {
+      set(id, 'line-color', '#000000')
+      if (clair) {
+        set(id, 'line-opacity', ['interpolate', ['linear'], ['zoom'], 13, 0, 14, 0.3, 16, 0.7, 18, 0.9])
+        set(id, 'line-width', ['interpolate', ['linear'], ['zoom'], 13, 0.4, 15, 1.0, 17, 1.6, 19, 2.0])
+      }
+    }
+    set('communes-bounds', 'line-color', '#3A403C')
+    if (clair) { set('communes-bounds', 'line-opacity', 0.8); set('communes-bounds', 'line-width', ['interpolate', ['linear'], ['zoom'], 8, 1.4, 13, 2.4]) }
+  }
 }
 
 //: ÉQUIPEMENTS (contexte promotrice, affichage seul) — 7 catégories, pictogramme + pastille.
@@ -1215,6 +1229,11 @@ export function MapView() {
       m.addLayer({ id: 'communes-bounds', type: 'line', source: 'communes-bounds', layout: { visibility: 'none' },
         paint: { 'line-color': '#5CE6A1', 'line-width': ['interpolate', ['linear'], ['zoom'], 8, 1.1, 13, 1.8],
                  'line-opacity': 0.55 } })
+      // COUCHES-RECETTE-2 C4 — clic commune : la commune choisie garde sa valeur, le RESTE de l'île est
+      // ATTÉNUÉ (voile sombre sur les autres communes). Filtre piloté par l'état `commune` (effet plus bas).
+      m.addLayer({ id: 'commune-attenuation', type: 'fill', source: 'communes-bounds',
+        layout: { visibility: 'none' }, filter: ['==', ['get', 'nom'], '__none__'],
+        paint: { 'fill-color': '#050706', 'fill-opacity': 0.55 } })
       // M55-G suite (point 1) : TRAME NEUTRE sous la palette — quand la palette est restreinte
       // au résultat courant (IDU), le reste des parcelles reste visible en trame cadastrale
       // neutre au lieu de disparaître. Visible seulement dans ce mode (effet plus bas).
@@ -1783,6 +1802,19 @@ export function MapView() {
       useApp.getState().setToast('Saint-Philippe : commune au RNU — pas de zonage PLU.')
     }
   }, [commune, layers.zonage_parcelle, layers.zonage])
+
+  // COUCHES-RECETTE-2 C4 — clic commune : la commune choisie garde sa valeur, les AUTRES sont
+  // atténuées (voile sombre). Sans commune sélectionnée, le masque est éteint (île entière en valeur).
+  useEffect(() => {
+    const m = map.current
+    if (!m || !mapReady || !m.getLayer('commune-attenuation')) return
+    if (commune) {
+      m.setFilter('commune-attenuation', ['!=', ['get', 'nom'], commune])
+      m.setLayoutProperty('commune-attenuation', 'visibility', 'visible')
+    } else {
+      m.setLayoutProperty('commune-attenuation', 'visibility', 'none')
+    }
+  }, [commune, mapReady])
 
   // M55-B point 6 : les équipements ne se peignent qu'à partir du zoom 12 (sinon 15 000 icônes
   // illisibles). Couche active mais vue trop large → le DIRE (« zoomez »), jamais un silence.
