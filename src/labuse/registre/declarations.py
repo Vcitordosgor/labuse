@@ -249,6 +249,10 @@ def couches_carte() -> list[dict]:
                 "etiquette": c.get("etiquette"),
                 # COUCHES-RECETTE-1 (Lot B) : icône par sous-type (aménités OSM) — {subtype: emoji}.
                 "icones": c.get("icones"),
+                # COUCHES-RECETTE-2 (retour) : clic précis sur une couche affichée dissoute (SUP) —
+                # interroge l'endpoint de détail (table d'origine) au point cliqué.
+                "detail_kind": c.get("detail_kind"),
+                "popup_detail": c.get("popup_detail"),
                 # COUCHES-RECETTE-1 A12 : note de couverture affichée en légende (« pas de donnée
                 # publiée pour : … ») — jamais un blanc silencieux.
                 "note": c.get("note"),

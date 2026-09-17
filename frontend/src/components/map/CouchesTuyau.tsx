@@ -34,6 +34,10 @@ export interface TuyauCouche {
   etiquette?: TuyauEtiquette | null // calque symbole d'étiquettes (ex. zonage parcelle : zone_lib)
   note?: string | null  // A12 : note de couverture en légende (« pas de donnée publiée pour : … »)
   icones?: Record<string, string> | null // Lot B : {subtype: emoji} — icône par type (aménités OSM)
+  // COUCHES-RECETTE-2 (retour) : clic précis sur une couche affichée dissoute (SUP) → interroge
+  // /map/couche-detail/{detail_kind} au point cliqué (table d'origine) et affiche popup_detail.
+  detail_kind?: string | null
+  popup_detail?: TuyauPopup[] | null
 }
 
 // COUCHES-RECETTE-1 A11 : ordre des catégories du panneau (Repères en tête ; « Fond de plan » n'y
@@ -270,6 +274,30 @@ function popupHTML(c: TuyauCouche, props: Record<string, unknown>): string {
     + `${titre}${lignes || '<div style="color:#9AA7A0">—</div>'}</div>`
 }
 
+// COUCHES-RECETTE-2 (retour) — popup PRÉCIS d'une couche dissoute (SUP) : chaque servitude concernée
+// (renvoyée par l'endpoint de détail, table d'origine) rend ses champs déclarés (popup_detail).
+function popupDetailHTML(c: TuyauCouche, servitudes: Record<string, unknown>[]): string {
+  const champs = c.popup_detail || []
+  const titre = `<div style="font-weight:600;margin-bottom:3px">${c.nom}</div>`
+  const corps = servitudes.length
+    ? servitudes.map((sv, i) => {
+        const lignes = champs.map((p) => {
+          const v = sv[p.champ]
+          if (v == null || v === '') return ''
+          const val = p.lien
+            ? `<a href="${String(v)}" target="_blank" rel="noopener" style="color:#7CC5FF">ouvrir</a>`
+            : String(v)
+          return `<div><span style="color:#9AA7A0">${p.libelle} :</span> ${val}</div>`
+        }).filter(Boolean).join('')
+        const sep = i > 0 ? 'border-top:1px solid rgba(120,140,128,0.22);margin-top:5px;padding-top:5px;' : ''
+        return `<div style="${sep}">${lignes}</div>`
+      }).join('')
+    : '<div style="color:#9AA7A0">Aucune servitude à ce point.</div>'
+  return `<div style="font-size:12px;line-height:1.5;background:rgba(14,18,16,0.97);color:#E6EDE8;`
+    + `border:1px solid rgba(120,140,128,0.28);border-radius:8px;padding:8px 10px;max-width:300px">`
+    + `${titre}${corps}</div>`
+}
+
 // ── le composant de RENDU (monté dans MapView) : sources + calques + popups + légende ──
 export function CouchesTuyauLayers({ map, ready }: {
   map: React.MutableRefObject<maplibregl.Map | null>; ready: boolean
@@ -326,17 +354,25 @@ export function CouchesTuyauLayers({ map, ready }: {
         // popup sur les calques de DONNÉE (fill / point / line, y compris par-niveau « -point-xxx »),
         // jamais sur le contour, l'icône, l'étiquette ou le centroïde.
         const estData = /-(fill|point|line)(-|$)/.test(spec.id) && !spec.id.includes('-outline')
-        if (c.popup && c.popup.length && estData) {
+        if (((c.popup && c.popup.length) || c.detail_kind) && estData) {
           const estPoint = spec.id.includes('-point')
           m.on('click', spec.id, (e) => {
             const f = e.features?.[0]
             if (!f) return
-            // COUCHES-RECETTE-2 Lot D : sur un point (arrêt, équipement OSM), la popup s'ancre AU-DESSUS
-            // (anchor bottom) pour ne pas recouvrir le point ; sur une surface, ancrage libre.
-            new maplibregl.Popup({ offset: estPoint ? 14 : 10, className: 'labuse-popup', maxWidth: '320px',
+            const pop = new maplibregl.Popup({ offset: estPoint ? 14 : 10, className: 'labuse-popup', maxWidth: '320px',
               ...(estPoint ? { anchor: 'bottom' as const } : {}) })
               .setLngLat(estPoint ? (f.geometry as GeoJSON.Point).coordinates as [number, number] : e.lngLat)
-              .setHTML(popupHTML(c, f.properties as Record<string, unknown>)).addTo(m)
+            // COUCHES-RECETTE-2 (retour) : couche affichée DISSOUTE (SUP) → clic PRÉCIS via l'endpoint
+            // de détail (table d'origine, assiettes non dissoutes) ; sinon popup depuis la tuile.
+            if (c.detail_kind) {
+              pop.setHTML('<div style="font-size:12px;background:rgba(14,18,16,0.97);color:#9AA7A0;border-radius:8px;padding:8px 10px">…</div>').addTo(m)
+              fetch(`/map/couche-detail/${c.detail_kind}?lon=${e.lngLat.lng}&lat=${e.lngLat.lat}`)
+                .then((r) => r.ok ? r.json() : { servitudes: [] })
+                .then((j) => pop.setHTML(popupDetailHTML(c, (j.servitudes || []) as Record<string, unknown>[])))
+                .catch(() => pop.setHTML(popupDetailHTML(c, [])))
+            } else {
+              pop.setHTML(popupHTML(c, f.properties as Record<string, unknown>)).addTo(m)
+            }
           })
           m.on('mouseenter', spec.id, () => { m.getCanvas().style.cursor = 'pointer' })
           m.on('mouseleave', spec.id, () => { m.getCanvas().style.cursor = '' })

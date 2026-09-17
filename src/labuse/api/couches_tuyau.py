@@ -568,6 +568,11 @@ def tuyau_couches() -> dict:
             "etiquette": c.get("etiquette"),
             "icones": c.get("icones"),
             "note": c.get("note"),
+            # COUCHES-RECETTE-2 (retour) : clic PRÉCIS sur une couche affichée dissoute — `detail_kind`
+            # dit au front d'interroger l'endpoint /map/couche-detail/{detail_kind} (table d'origine, non
+            # dissoute) au point cliqué, et `popup_detail` les champs à afficher.
+            "detail_kind": c.get("detail_kind"),
+            "popup_detail": c.get("popup_detail"),
             "statut_juridique": c.get("statut_juridique"),
             "tuiles_url": f"/map/tiles/{k}/{{z}}/{{x}}/{{y}}.pbf",
             # retour §2 : couche servie en MORCEAUX (ST_Subdivide) → le front dessine le remplissage
@@ -590,3 +595,53 @@ def tuyau_couches() -> dict:
         })
     couches.sort(key=lambda d: (d.get("famille") or "", d.get("rang_carte") or 0, d["kind"]))
     return {"couches": couches}
+
+
+# COUCHES-RECETTE-2 (retour) — gestionnaire d'une SUP, DÉRIVÉ de la famille (le jeu source ne porte
+# pas de champ « gestionnaire » ; l'autorité responsable est standardisée par catégorie de servitude).
+# DONNÉE (dict), pas du branchement.
+_SUP_GESTIONNAIRE: dict[str, str] = {
+    "pm1": "État — préfecture / DEAL (plan de prévention des risques naturels)",
+    "pm2": "État — préfecture / DEAL (plan de prévention des risques)",
+    "pm3": "État — préfecture / DREAL (plan de prévention des risques technologiques)",
+    "ac1": "État — ABF / UDAP (abords de monuments historiques)",
+    "ac2": "État — DREAL / préfecture (sites inscrits et classés)",
+    "ac3": "Gestionnaire de la réserve naturelle / DEAL",
+    "ac4": "Commune / ABF (site patrimonial remarquable)",
+    "el10": "État — DDTM (domaine public maritime / littoral)",
+}
+
+
+@router.get("/map/couche-detail/{kind}")
+def couche_detail(kind: str, lon: float, lat: float, db: Session = Depends(get_db)) -> dict:
+    """COUCHES-RECETTE-2 (retour) — clic PRÉCIS sur une couche affichée dissoute : interroge la table
+    D'ORIGINE (assiettes NON dissoutes) au point cliqué et renvoie le détail de la (des) servitude(s)
+    concernée(s). Seuls les kinds explicitement autorisés (avec un `detail_kind` déclaré) sont servis."""
+    from ..registre.declarations import couches_carte
+    autorises = {c.get("detail_kind") for c in couches_carte() if c.get("detail_kind")}
+    if kind not in autorises:
+        return Response(status_code=404)  # type: ignore[return-value]
+    # point cliqué (WGS84) → SRID de spatial_layers (2975). Assiettes contenant le point.
+    sql = text("""
+        SELECT DISTINCT subtype,
+               attrs->>'generateur_type' AS libelle,
+               attrs->>'generateur_nom'  AS acte,
+               attrs->>'nomass'          AS assiette,
+               attrs->>'urlreg'          AS urlreg
+        FROM spatial_layers
+        WHERE kind = :k
+          AND ST_Contains(geom_2975, ST_Transform(ST_SetSRID(ST_MakePoint(:lon, :lat), 4326), 2975))
+        LIMIT 12""")
+    rows = db.execute(sql, {"k": kind, "lon": lon, "lat": lat}).mappings().all()
+    servitudes = []
+    for r in rows:
+        st = (r["subtype"] or "").lower()
+        servitudes.append({
+            "code": (r["subtype"] or "").upper(),
+            "libelle": r["libelle"] or "",
+            "gestionnaire": _SUP_GESTIONNAIRE.get(st, "État"),
+            "acte": r["acte"] or "",
+            "assiette": r["assiette"] or "",
+            "urlreg": r["urlreg"] or "",
+        })
+    return {"servitudes": servitudes}
