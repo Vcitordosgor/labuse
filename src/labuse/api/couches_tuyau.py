@@ -221,10 +221,24 @@ def build_tuyau_subdivise(db: Session) -> int:
     Construite comme les autres tables MVT (une fois, hors requête). Les morceaux gardent kind/subtype/
     attrs pour la résolution et les popups. Le contour se dessine du bord d'origine (cf. front)."""
     db.execute(text("DROP TABLE IF EXISTS tuyau_subdivise"))
+    # COUCHES-RECETTE-1 (Lot B) — DÉDOUBLONNAGE (SUP PM1 dupliqués ~4×) : on retire d'abord les
+    # doublons EXACTS (même kind, même sous-type, même géométrie) — des artefacts d'ingestion, pas de
+    # la géométrie (l'union des doublons = un seul → couverture identique). Fait UNIQUEMENT dans la
+    # table dérivée du tuyau : `spatial_layers` (donc `:8020`) reste INTOUCHÉE. SUP : 417 → 123 assiettes.
+    # Clé de dédoublonnage PEU COÛTEUSE : les doublons SUP partagent leur `idass` (mesuré : 123 idass
+    # = 123 géométries distinctes → chaque idass n'a qu'UNE géométrie, les autres lignes en sont des
+    # copies exactes). On dédoublonne par (kind, subtype, idass) ; les lignes sans idass (les autres
+    # kinds) retombent sur leur `id` (unique) → aucune dédup, aucune perte. Pas de hash de géométrie.
     db.execute(text("""
         CREATE TABLE tuyau_subdivise AS
+        WITH uniques AS (
+            SELECT DISTINCT ON (kind, subtype, COALESCE(attrs->>'idass', id::text))
+                   kind, subtype, name, commune, attrs, geom_2975
+            FROM spatial_layers
+            ORDER BY kind, subtype, COALESCE(attrs->>'idass', id::text)
+        )
         SELECT m.kind, m.subtype, m.name, m.commune, m.attrs, p.geom AS geom_2975
-        FROM spatial_layers m, LATERAL ST_Subdivide(m.geom_2975, 256) AS p(geom)"""))
+        FROM uniques m, LATERAL ST_Subdivide(m.geom_2975, 256) AS p(geom)"""))
     db.execute(text("CREATE INDEX tuyau_subdivise_gix ON tuyau_subdivise USING GIST (geom_2975)"))
     db.execute(text("CREATE INDEX tuyau_subdivise_kind ON tuyau_subdivise (kind, subtype)"))
     db.execute(text("ANALYZE tuyau_subdivise"))
@@ -373,6 +387,12 @@ def tuyau_couches() -> dict:
             # COUCHES-RECETTE-1 A8 : le texte du « i » (explication de l'acronyme, source, enjeu) vient
             # du YAML (comment.i) et est transmis au front pour l'info-bulle par couche.
             "i": c.get("i"),
+            # COUCHES-RECETTE-1 : centroïde (A2 — point d'île pour un polygone minuscule), groupe (fusion
+            # de couches en un toggle), etiquette (calque symbole d'étiquettes) — tous rendus côté front.
+            "centroide": bool(c.get("centroide", False)),
+            "groupe": c.get("groupe"),
+            "etiquette": c.get("etiquette"),
+            "note": c.get("note"),
             "statut_juridique": c.get("statut_juridique"),
             "tuiles_url": f"/map/tiles/{k}/{{z}}/{{x}}/{{y}}.pbf",
             # retour §2 : couche servie en MORCEAUX (ST_Subdivide) → le front dessine le remplissage
@@ -388,6 +408,8 @@ def tuyau_couches() -> dict:
             "rang_carte": c.get("rang_carte") or 0, "style": c.get("style"),
             "niveaux": c.get("niveaux"), "popup": c.get("popup"), "legende": c.get("legende"),
             "i": c.get("i"),
+            "centroide": bool(c.get("centroide", False)),
+            "groupe": c.get("groupe"), "etiquette": c.get("etiquette"),
             "statut_juridique": c.get("statut_juridique"),
             "tuiles_url": f"/map/tiles/{k}/{{z}}/{{x}}/{{y}}.pbf",
         })

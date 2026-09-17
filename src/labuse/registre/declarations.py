@@ -243,6 +243,13 @@ def couches_carte() -> list[dict]:
                 "centroide": bool(c.get("centroide", False)),
                 "libelle": l.comment.get("libelle") or s.nom,
                 "i": l.comment.get("i"),
+                # COUCHES-RECETTE-1 : `groupe` (couches fusionnées en un toggle, ex. transport_public) ;
+                # `etiquette` (propriété + zoom_min pour un calque symbole d'étiquettes, ex. zonage parcelle).
+                "groupe": c.get("groupe"),
+                "etiquette": c.get("etiquette"),
+                # COUCHES-RECETTE-1 A12 : note de couverture affichée en légende (« pas de donnée
+                # publiée pour : … ») — jamais un blanc silencieux.
+                "note": c.get("note"),
             })
     return sorted(out, key=lambda e: e["rang_carte"])
 

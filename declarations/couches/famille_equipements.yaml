@@ -19,7 +19,7 @@ donnees:
   - quoi:  equip_osm_couche
     ou:    { rang: 10, etat: replie, section: "Équipements" }
     comment: { libelle: "Équipements et services (OSM)", format: liste, i: "Aménités OpenStreetMap : mairie, école, santé, commerce, police, marché, crèche, collège/lycée. Anneau blanc = source OSM." }
-    carte: { kind: amenite, agregat: false, limite: 20000, famille: equipements, geometrie: point, zoom_min: 12, rang_carte: 90, style: { couleur_propriete: subtype, couleurs: { mairie: "#B497F0", ecole: "#5CE6A1", sante: "#E8695A", commerce: "#F0A868", police: "#8FB4F0", marche: "#E59BC4", creche: "#F2B08A", college_lycee: "#79C9A0" }, couleur: "#9AA0A6", zoom_rayon: [12, 3.2, 16, 5.5, 20, 8.5], opacite: 0.92, halo: 1.4, trait: "#FFFFFF" }, legende: "Équipement OSM — couleur par catégorie (anneau blanc)" }
+    carte: { kind: amenite, agregat: false, limite: 20000, famille: equipements, geometrie: point, zoom_min: 12, rang_carte: 90, style: { couleur_propriete: subtype, couleurs: { mairie: "#B497F0", ecole: "#5CE6A1", sante: "#E8695A", commerce: "#F0A868", police: "#8FB4F0", marche: "#E59BC4", creche: "#F2B08A", college_lycee: "#79C9A0" }, couleur: "#9AA0A6", zoom_rayon: [12, 3.2, 16, 5.5, 20, 8.5], opacite: 0.92, halo: 1.4, trait: "#FFFFFF" }, popup: [ { champ: name, libelle: "Équipement" }, { champ: subtype, libelle: "Catégorie" } ], legende: "Équipement OSM — couleur par catégorie (anneau blanc)" }
     absence: "Équipements OSM : aucun équipement dans l'emprise visible (zoom ≥ 12)."
     absence_type: absente_ici
     pourquoi: "Rendu identique (EQUIP_META, anneau blanc OSM, rayon rampé 12→20)."
@@ -34,7 +34,7 @@ donnees:
   - quoi:  bpe_couche
     ou:    { rang: 10, etat: replie, section: "Équipements" }
     comment: { libelle: "Équipements INSEE (BPE)", format: liste, i: "Base Permanente des Équipements (INSEE) par domaine A–G : services aux particuliers, commerces, enseignement, santé, transports, sport/loisirs, tourisme. Anneau sombre = source INSEE." }
-    carte: { kind: amenite_bpe, agregat: false, limite: 40000, famille: equipements, geometrie: point, zoom_min: 12, rang_carte: 88, style: { couleur_propriete: subtype, couleurs: { A: "#7C8AA0", B: "#E0A23C", C: "#4C8DD6", D: "#D9534F", E: "#3CB6A8", F: "#6FBF52", G: "#B06FD6" }, couleur: "#7C8AA0", zoom_rayon: [12, 3.2, 16, 5.5, 20, 8.5], opacite: 0.9, halo: 1.4, trait: "#0d1420" }, legende: "Équipement INSEE BPE — domaine A–G (anneau sombre)" }
+    carte: { kind: amenite_bpe, agregat: false, limite: 40000, famille: equipements, geometrie: point, zoom_min: 12, rang_carte: 88, style: { couleur_propriete: subtype, couleurs: { A: "#7C8AA0", B: "#E0A23C", C: "#4C8DD6", D: "#D9534F", E: "#3CB6A8", F: "#6FBF52", G: "#B06FD6" }, couleur: "#7C8AA0", zoom_rayon: [12, 3.2, 16, 5.5, 20, 8.5], opacite: 0.9, halo: 1.4, trait: "#0d1420" }, popup: [ { champ: name, libelle: "Équipement" }, { champ: subtype, libelle: "Domaine INSEE" } ], legende: "Équipement INSEE BPE — domaine A–G (anneau sombre)" }
     absence: "Équipements INSEE : aucun équipement BPE dans l'emprise visible (zoom ≥ 12)."
     absence_type: absente_ici
     pourquoi: "Rendu identique (BPE_DOM A–G, anneau sombre INSEE)."

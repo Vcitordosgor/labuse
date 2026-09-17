@@ -30,7 +30,7 @@ donnees:
   - quoi:  transport_couche
     ou:    { rang: 10, etat: en_tete, section: "Transport public" }
     comment: { libelle: "Lignes de bus (réseaux)", format: liste, i: "Tracés GTFS des 6 réseaux (Car Jaune, Citalis, Kar'Ouest, Alternéo, Carsud, Estival) — couleur par réseau." }
-    carte: { kind: transport_ligne, agregat: false, famille: transport, geometrie: ligne, zoom_min: 0, rang_carte: 76, style: { couleur_propriete: subtype, couleurs: { "Car Jaune": "#E3B93C", "Citalis": "#E87BB0", "Kar'Ouest": "#6FA8E8", "Alternéo": "#45D0B8", "Estival": "#E8935A", "Carsud": "#B8C24A" }, couleur: "#E87BB0", epaisseur: 1.3, opacite: 0.75 }, legende: "Ligne de bus — couleur par réseau" }
+    carte: { kind: transport_ligne, groupe: transport_public, agregat: false, famille: transport, geometrie: ligne, zoom_min: 0, rang_carte: 76, style: { couleur_propriete: subtype, couleurs: { "Car Jaune": "#E3B93C", "Citalis": "#E87BB0", "Kar'Ouest": "#6FA8E8", "Alternéo": "#45D0B8", "Estival": "#E8935A", "Carsud": "#B8C24A" }, couleur: "#E87BB0", epaisseur: 1.3, opacite: 0.75 }, legende: "Ligne de bus — couleur par réseau" }
     absence: "Lignes de bus : aucun tracé dans l'emprise visible."
     absence_type: absente_ici
     pourquoi: "Rendu identique (reseauColorExpr, 1,3 px) ; 6 réseaux GTFS."
@@ -45,7 +45,7 @@ donnees:
   - quoi:  transport_couche
     ou:    { rang: 10, etat: en_tete, section: "Transport public" }
     comment: { libelle: "Arrêts de bus", format: liste, i: "Arrêts GTFS des réseaux — couleur par réseau, rayon croissant au zoom. Visible à partir du zoom quartier (11)." }
-    carte: { kind: transport_arret, agregat: false, limite: 20000, famille: transport, geometrie: point, zoom_min: 11, rang_carte: 84, style: { couleur_propriete: subtype, couleurs: { "Car Jaune": "#E3B93C", "Citalis": "#E87BB0", "Kar'Ouest": "#6FA8E8", "Alternéo": "#45D0B8", "Estival": "#E8935A", "Carsud": "#B8C24A" }, couleur: "#E87BB0", zoom_rayon: [11, 3, 14, 5.5, 16, 8, 18, 10], opacite: 0.9, halo: 1.2 }, popup: [ { champ: lignes_noms, libelle: "Lignes" }, { champ: reseau, libelle: "Réseau" } ], legende: "Arrêt de bus — couleur par réseau" }
+    carte: { kind: transport_arret, groupe: transport_public, agregat: false, limite: 20000, famille: transport, geometrie: point, zoom_min: 11, rang_carte: 84, style: { couleur_propriete: subtype, couleurs: { "Car Jaune": "#E3B93C", "Citalis": "#E87BB0", "Kar'Ouest": "#6FA8E8", "Alternéo": "#45D0B8", "Estival": "#E8935A", "Carsud": "#B8C24A" }, couleur: "#E87BB0", zoom_rayon: [11, 3, 14, 5.5, 16, 8, 18, 10], opacite: 0.9, halo: 1.2 }, popup: [ { champ: lignes_noms, libelle: "Lignes" }, { champ: reseau, libelle: "Réseau" } ], legende: "Arrêt de bus — couleur par réseau" }
     absence: "Arrêts de bus : aucun arrêt dans l'emprise visible (zoom ≥ 11)."
     absence_type: absente_ici
     pourquoi: "Rendu identique (rayon rampé 11→18, halo sombre) ; minzoom 11."

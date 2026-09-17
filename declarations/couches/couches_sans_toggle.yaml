@@ -149,7 +149,9 @@ donnees:
   - quoi:  sar_couche
     ou:    { rang: 10, etat: en_tete, section: "Aménagement régional" }
     comment: { libelle: "SAR — vocations", format: liste, i: "Schéma d'Aménagement Régional — vocations. C'est aussi le « potentiel foncier Région » indicatif (même géométrie, un seul nom désormais)." }
-    carte: { kind: sar, agregat: false, famille: foncier, geometrie: polygone, zoom_min: 0, rang_carte: 20, style: { couleur: "#6BA368", opacite: 0.25, trait: "#3e6b3c" }, legende: "SAR — vocation (agricole / naturelle / coupure / continuité / mixte)" }
+    # COUCHES-RECETTE-1 (Lot B) : la donnée PORTE une vocation (subtype) → légende PAR VOCATION,
+    # couleurs distinctes (avant : une seule teinte verte). 7 vocations servies en base.
+    carte: { kind: sar, agregat: false, famille: foncier, geometrie: polygone, zoom_min: 0, rang_carte: 20, style: { couleur_propriete: subtype, couleur: "#6BA368", opacite: 0.30, trait: "#2f4f2c" }, niveaux: [ { id: urbaine, propriete: subtype, valeur: vocation_urbaine, couleur: "#E5623C", legende: "Urbaine" }, { id: agricole, propriete: subtype, valeur: vocation_agricole, couleur: "#E8B23A", legende: "Agricole" }, { id: naturelle, propriete: subtype, valeur: vocation_naturelle, couleur: "#3FB56A", legende: "Naturelle" }, { id: rurale, propriete: subtype, valeur: vocation_rurale, couleur: "#A8C24A", legende: "Rurale" }, { id: continuite, propriete: subtype, valeur: vocation_continuite, couleur: "#4FA8E0", legende: "Continuité écologique" }, { id: coupure, propriete: subtype, valeur: vocation_coupure, couleur: "#9B6BE0", legende: "Coupure d'urbanisation" }, { id: mixte, propriete: subtype, valeur: vocation_mixte, couleur: "#8A94A6", legende: "Mixte" } ], popup: [ { champ: vocation, libelle: "Vocation SAR" }, { champ: statut, libelle: "Statut" } ], legende: "SAR — par vocation (urbaine / agricole / naturelle / rurale / continuité / coupure / mixte)" }
     absence: "SAR : vocation non renseignée sur l'emprise visible."
     absence_type: absente_ici
     statut_juridique: opposable

@@ -18,6 +18,13 @@
   famille: urbanisme
   geometrie: polygone
   i: "Zone du PLU CALIBRÉE parcelle par parcelle (famille U urbaine / AU à urbaniser / A agricole / N naturelle). L'étiquette de zone (Ncu, U1b…) apparaît dès le zoom commune."
+  # COUCHES-RECETTE-1 (Lot B) — LENTEUR : servie depuis mvt_parcels (431 k parcelles) sans bornage,
+  # la tuile ÎLE portait les 431 k polygones (des Mo par tuile, un aplat par parcelle qui n'a aucun
+  # sens à l'échelle île). CAUSE = pas de LOD sur une couche par-parcelle. CORRECTION SANS DÉGRADER :
+  # zoom_min 11 → la couche n'est servie/demandée qu'à partir du zoom commune (là où elle a un sens),
+  # géométrie INCHANGÉE. Les étiquettes de zone (zone_lib) apparaissent dès z12 (comme l'ancienne).
+  zoom_min: 11
+  etiquette: { propriete: zone_lib, zoom_min: 12 }
   # zone PLU CALIBRÉE par parcelle (mvt_parcels.zone_fam / zone_lib — dérivée du run servi).
   source: { table: mvt_parcels, geom: geom_3857, srid: 3857, where: "zone_fam IS NOT NULL" }
   style: { couleur_propriete: zone_fam, opacite: 0.55, trait: "#0b0f14" }
