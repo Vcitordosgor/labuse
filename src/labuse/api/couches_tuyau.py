@@ -57,6 +57,11 @@ _RESOLUTION_OVERRIDE: dict[str, list[tuple[str, tuple[str, ...] | None]]] = {
     "alea_mvt": [("georisque_alea", ("mouvement_terrain",))],
     # TCSP : une couche-front, trois morceaux stockés (zone + tronçons en site propre + stations).
     "tcsp": [("tcsp_zone", None), ("tcsp_troncon", ("site_propre",)), ("tcsp_station", None)],
+    # COUCHES-RECETTE-2 (retour) : la couche « Équipements OSM » ne montre QUE les aménités typées
+    # (couleur + icône) ; les sous-types tcsp/sport (12 000 points, doublons de Transport/Sport) sont
+    # EXCLUS — sinon la vue rue est un tapis de points gris sans icône. Filtre à la source (le verrou
+    # lit la même résolution → cohérent).
+    "amenite": [("amenite", ("mairie", "ecole", "sante", "commerce", "police", "marche", "creche", "college_lycee"))],
 }
 
 # colonnes réelles de spatial_layers exposables telles quelles ; tout autre nom référencé par la
