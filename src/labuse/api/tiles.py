@@ -12,6 +12,7 @@ fonctionne à l'identique sur chaîne et tableau.
 """
 from __future__ import annotations
 
+import threading
 import time
 from collections import OrderedDict
 
@@ -316,16 +317,28 @@ _TILE_HEADERS = {"Cache-Control": "public, max-age=3600, stale-while-revalidate=
 # les octets périmés ne sont PLUS jamais retrouvés en cache (invalidation qui traverse le process,
 # sans redémarrage). Lecture mémoïsée (TTL court) pour ne pas frapper la DB à chaque tuile.
 _VERSION: dict = {"v": "", "at": -1e9}
-_VERSION_TTL_S = 10.0
+_VERSION_TTL_S = 60.0            # COUCHES-RECETTE-1 : rafraîchie au plus toutes les 60 s
+_VERSION_LOCK = threading.Lock()
 
 
 def _mvt_version(db: Session) -> str:
+    """COUCHES-RECETTE-1 — même garde single-flight que le tuyau (couches_tuyau._version) : un viewport
+    charge des dizaines de tuiles ; sans verrou, à l'expiration du TTL elles frappaient TOUTES `mvt_meta`
+    en même temps (stampede) → pression sur le pool. Un seul thread rafraîchit (TTL 60 s), les autres
+    servent la version en cache."""
     now = time.monotonic()
-    if now - _VERSION["at"] > _VERSION_TTL_S:
-        v = db.execute(text(
-            "SELECT to_char(updated_at, 'YYYYMMDDHH24MISSMS') FROM mvt_meta WHERE key = 'run_label'")).scalar()
-        _VERSION["v"] = v or ""
-        _VERSION["at"] = now
+    if now - _VERSION["at"] <= _VERSION_TTL_S:
+        return _VERSION["v"]
+    if not _VERSION_LOCK.acquire(blocking=_VERSION["at"] < 0):
+        return _VERSION["v"]
+    try:
+        if time.monotonic() - _VERSION["at"] > _VERSION_TTL_S:
+            v = db.execute(text(
+                "SELECT to_char(updated_at, 'YYYYMMDDHH24MISSMS') FROM mvt_meta WHERE key = 'run_label'")).scalar()
+            _VERSION["v"] = v or ""
+            _VERSION["at"] = time.monotonic()
+    finally:
+        _VERSION_LOCK.release()
     return _VERSION["v"]
 
 

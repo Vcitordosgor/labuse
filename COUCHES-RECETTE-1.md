@@ -165,6 +165,37 @@ Stack lancé : **API `:8055`** (mon code, `PYTHONPATH` du worktree) + **front vi
 `TABLES_FABRIQUEES` ; V1c était CASSÉ depuis COUCHES-TUYAU-1). Reste **G7 seul** (sonde nocturne non
 passée depuis > 48 h — 0 fuite ouverte, purement environnemental).
 
+## Correctif SATURATION DU POOL — version des tuiles calculée par tuile (priorité)
+
+**Cause (diagnostiquée sur `pg_stat_activity`)** : le calcul de version des tuiles — `_version`
+(`couches_tuyau.py`) et `_mvt_version` (`tiles.py`) — était refait à CHAQUE tuile. Un viewport
+charge des dizaines de tuiles d'un coup ; à l'expiration du TTL (10 s) elles lançaient TOUTES le
+`SELECT to_char(max(created_at)…) FROM spatial_layers` en même temps (stampede) → `QueuePool limit
+of size 5 overflow 10 reached`. Aggravé par la requête elle-même : **`EXPLAIN ANALYZE` = Parallel Seq
+Scan de 1 929 502 lignes, ~2,8 s à froid** (aucun index sur `created_at`) → 40-55 s sous contention.
+
+**Corrections** (géométrie intouchée) :
+1. **Index** `ix_spatial_layers_created_at` (btree) — posé `CONCURRENTLY` sur la base servie + déclaré
+   dans `models.py` (schéma frais + ensure). `EXPLAIN ANALYZE` après : **Index Only Scan Backward,
+   0,046 ms** (au lieu de 2,8 s).
+2. **Version calculée une fois, gardée en mémoire** (TTL **60 s**), JAMAIS par tuile, avec un **verrou
+   SINGLE-FLIGHT non bloquant** : un seul thread rafraîchit, les autres servent la version en cache
+   (au plus 60 s de retard, cohérente) sans frapper la DB → plus de stampede. Appliqué à `_version`
+   ET `_mvt_version`.
+3. **`_table_manquante` mémoïsé** : le `SELECT to_regclass(:t)` par tuile disparaît une fois la table
+   vue (une table dérivée reconstruite l'est en DROP+CREATE dans une transaction → jamais « absente »
+   à tort pour les autres connexions).
+
+**Preuve navigateur** (Saint-Denis, île → commune → rue, **5 couches**, 173 tuiles) :
+- **temps SERVEUR par tuile (TTFB) : max 1,10 s — 0 tuile > 2 s** ; tuile servie du cache LRU < 0,02 s ;
+  génération à froid de la plus lourde (SUP z10, méga-polygone) mesurée à **0,36 s** (python direct) ;
+- **0 erreur de pool** (aucun `QueuePool … reached`, aucun HTTP 5xx) ;
+- **`pg_stat_activity` : 0 requête de version** (`to_char(max(created_at)…`) active/présente pendant
+  tout le chargement (échantillonné, hors auto-référence) ;
+- les 6 tuiles à *total* > 2 s sont des tuiles île (z10) en **file d'attente NAVIGATEUR** (105 tuiles
+  d'un coup, limite de 6 connexions/hôte de Chrome — champ « file » 1,4-1,6 s), pas le serveur ni le
+  pool. Captures : `perf_stdenis_{ile,commune,rue}.png`.
+
 ## Poids réseau réel des tuiles (mesuré au navigateur)
 
 Mesuré via Playwright (contexte à cache ISOLÉ par mesure, position vérifiée) : somme des corps de

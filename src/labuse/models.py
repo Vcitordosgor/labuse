@@ -532,6 +532,10 @@ class SpatialLayer(Base):
     __table_args__ = (
         Index("ix_spatial_kind", "kind"),
         Index("ix_spatial_kind_subtype", "kind", "subtype"),
+        # COUCHES-RECETTE-1 : la version des tuiles lit `max(created_at)` (couches_tuyau._version) ;
+        # sans index c'était un Parallel Seq Scan de 1,9 M lignes (~2,8 s, jusqu'à 40-55 s sous
+        # contention) → index → Index Only Scan (0,05 ms).
+        Index("ix_spatial_layers_created_at", "created_at"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -1393,6 +1397,10 @@ def ensure_geom_2975(engine, commune: str | None = None, backfill: bool = True) 
     ddl += [
         "CREATE INDEX IF NOT EXISTS idx_parcels_geom_2975 ON parcels USING gist (geom_2975)",
         "CREATE INDEX IF NOT EXISTS idx_spatial_layers_geom_2975 ON spatial_layers USING gist (geom_2975)",
+        # COUCHES-RECETTE-1 : la version des tuiles (couches_tuyau._version) lit max(created_at) —
+        # index btree → Index Only Scan instantané (sinon seq scan de 1,9 M lignes, ~2,8 s, saturant
+        # le pool sous une rafale de tuiles). Posé aussi CONCURRENTLY sur la base servie.
+        "CREATE INDEX IF NOT EXISTS ix_spatial_layers_created_at ON spatial_layers (created_at)",
         # Index GIST PARTIEL voirie : la cascade calcule la distance à la voirie la plus proche
         # (proxy d'accès/enclavement) via un KNN « ORDER BY geom_2975 <-> p.geom_2975 LIMIT 1 »
         # filtré sur kind='voirie'. Sans index dédié, le KNN parcourt l'index complet (dont les

@@ -23,6 +23,7 @@ ni aucune couche existante ; il sert les 52 couches déclarées sur un chemin di
 from __future__ import annotations
 
 import re
+import threading
 import time
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -198,22 +199,39 @@ _CACHE: OrderedDict[tuple, bytes] = OrderedDict()
 _CACHE_MAX = 4096
 _HEADERS = {"Cache-Control": "public, max-age=3600, stale-while-revalidate=86400"}
 _VER: dict = {"v": "", "at": -1e9}
-_VER_TTL_S = 10.0
+_VER_TTL_S = 60.0            # COUCHES-RECETTE-1 : rafraîchie au plus toutes les 60 s
+_VER_LOCK = threading.Lock()
 
 
 def _version(db: Session) -> str:
     """Version des tuiles = run servi + empreinte de fraîcheur de spatial_layers. Entre dans la
-    clé du cache LRU ET l'ETag : un changement de run OU une réingestion invalide sans redémarrage."""
+    clé du cache LRU ET l'ETag : un changement de run OU une réingestion invalide sans redémarrage.
+
+    COUCHES-RECETTE-1 — la version est calculée UNE FOIS et gardée en mémoire (TTL 60 s), JAMAIS par
+    tuile. Un viewport charge des dizaines de tuiles d'un coup : sans garde, à l'expiration du TTL
+    elles lançaient TOUTES le `max(created_at)` en même temps (stampede) → saturation du pool
+    (QueuePool 5+10). Verrou SINGLE-FLIGHT non bloquant : un seul thread rafraîchit, les autres
+    servent la version en cache (au plus 60 s de retard, cohérente) sans frapper la DB. La requête
+    elle-même est désormais instantanée (index `ix_spatial_layers_created_at` → Index Only Scan)."""
     now = time.monotonic()
-    if now - _VER["at"] > _VER_TTL_S:
-        try:
-            run = runs.current()
-        except Exception:  # noqa: BLE001
-            run = ""
-        mx = db.execute(text(
-            "SELECT to_char(max(created_at), 'YYYYMMDDHH24MISS') FROM spatial_layers")).scalar() or ""
-        _VER["v"] = f"{run}.{mx}"
-        _VER["at"] = now
+    if now - _VER["at"] <= _VER_TTL_S:
+        return _VER["v"]
+    # périmée : un seul thread refait la requête. `blocking` uniquement au tout premier calcul
+    # (pas encore de valeur) — ensuite jamais d'attente, on sert la valeur en cache.
+    if not _VER_LOCK.acquire(blocking=_VER["at"] < 0):
+        return _VER["v"]
+    try:
+        if time.monotonic() - _VER["at"] > _VER_TTL_S:
+            try:
+                run = runs.current()
+            except Exception:  # noqa: BLE001
+                run = ""
+            mx = db.execute(text(
+                "SELECT to_char(max(created_at), 'YYYYMMDDHH24MISS') FROM spatial_layers")).scalar() or ""
+            _VER["v"] = f"{run}.{mx}"
+            _VER["at"] = time.monotonic()
+    finally:
+        _VER_LOCK.release()
     return _VER["v"]
 
 
@@ -347,8 +365,19 @@ def build_mvt_communes(db: Session) -> int:
     return int(n)
 
 
+# COUCHES-RECETTE-1 : mémoïse les tables déjà VUES existantes → plus de `to_regclass` par tuile
+# (une table dérivée reconstruite l'est en DROP+CREATE dans UNE transaction : les autres connexions
+# voient toujours l'ancienne jusqu'au commit — « existe » ne devient jamais faux à tort).
+_TABLES_OK: set[str] = set()
+
+
 def _table_manquante(db: Session, table: str) -> bool:
-    return db.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar() is None
+    if table in _TABLES_OK:
+        return False
+    existe = db.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar() is not None
+    if existe:
+        _TABLES_OK.add(table)
+    return not existe
 
 
 def _construire_tuile(db: Session, c: CoucheTuyau, z: int, x: int, y: int) -> bytes:
