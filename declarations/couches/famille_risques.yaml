@@ -152,7 +152,9 @@ donnees:
   - quoi:  sis_couche
     ou:    { rang: 10, etat: en_tete, section: "Sols" }
     comment: { libelle: "Sols pollués (SIS)", format: liste, i: "Secteurs d'Information sur les Sols (Géorisques) — servitude opposable aux autorisations d'urbanisme." }
-    carte: { kind: sis, agregat: false, centroide: true, famille: risques, geometrie: point_et_polygone, zoom_min: 0, rang_carte: 70, style: { couleur: "#A0522D", opacite: 0.34, trait: "#A0522D", rayon: 5, halo: 1.4 }, popup: [ { champ: statut, libelle: "Statut" }, { champ: adresse, libelle: "Adresse" }, { champ: id_sis, libelle: "Identifiant SIS" }, { champ: fiche_risque, libelle: "Fiche", lien: true } ], legende: "SIS — secteur d'information sur les sols (opposable)" }
+    # COUCHES-RECETTE-2 (retour) : points SIS à la MÊME taille que Cavités (rayon 6, halo 2) et opaques
+    # (point_opacite 0.95) — le polygone d'emprise reste translucide (opacite 0.34).
+    carte: { kind: sis, agregat: false, centroide: true, famille: risques, geometrie: point_et_polygone, zoom_min: 0, rang_carte: 70, style: { couleur: "#A0522D", opacite: 0.34, point_opacite: 0.95, trait: "#A0522D", rayon: 6, halo: 2 }, popup: [ { champ: statut, libelle: "Statut" }, { champ: adresse, libelle: "Adresse" }, { champ: id_sis, libelle: "Identifiant SIS" }, { champ: fiche_risque, libelle: "Fiche", lien: true } ], legende: "SIS — secteur d'information sur les sols (opposable)" }
     absence: "SIS : la parcelle n'est dans aucun secteur d'information sur les sols."
     absence_type: absente_ici
     statut_juridique: opposable

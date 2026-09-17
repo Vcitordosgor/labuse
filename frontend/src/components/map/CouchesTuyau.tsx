@@ -19,6 +19,7 @@ export interface TuyauStyle {
   couleurs?: Record<string, string>; couleur_propriete?: string; halo?: number
   tirets?: number[]; contour_seul?: boolean; zoom_rayon?: number[]; zoom_largeur?: number[]
   filtre?: { propriete: string; valeur: string }
+  point_opacite?: number   // opacité PROPRE des points (indépendante du fond translucide d'un polygone)
 }
 export interface TuyauPopup { champ: string; libelle: string; lien?: boolean }
 export interface TuyauEtiquette { propriete: string; zoom_min?: number }
@@ -180,7 +181,8 @@ function calques(c: TuyauCouche): maplibregl.AddLayerObject[] {
         paint: {
           'circle-color': col,
           'circle-radius': rampe(s.zoom_rayon, s.rayon ?? 5),
-          'circle-opacity': s.opacite ?? 0.95,
+          // point_et_polygone : les POINTS gardent leur opacité propre (le polygone reste translucide).
+          'circle-opacity': s.point_opacite ?? s.opacite ?? 0.95,
           'circle-stroke-width': s.halo ?? 0,
           'circle-stroke-color': s.trait || '#FFFFFF',
         } as never })
