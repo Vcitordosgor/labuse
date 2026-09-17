@@ -18,6 +18,7 @@ export interface TuyauStyle {
   couleur?: string; opacite?: number; trait?: string; rayon?: number; epaisseur?: number
   couleurs?: Record<string, string>; couleur_propriete?: string; halo?: number
   tirets?: number[]; contour_seul?: boolean; zoom_rayon?: number[]; zoom_largeur?: number[]
+  zoom_opacite?: number[]   // COUCHES-STYLE-1 : opacité de trait interpolée par zoom (défaut inchangé)
   filtre?: { propriete: string; valeur: string }
   point_opacite?: number   // opacité PROPRE des points (indépendante du fond translucide d'un polygone)
 }
@@ -137,8 +138,13 @@ function calques(c: TuyauCouche): maplibregl.AddLayerObject[] {
     // (les coutures internes apparaîtraient). Le bord visible = l'arête du remplissage = l'origine.
     // Lot A : le contour ne dessine QUE les anneaux de polygone (jamais les sommets comme des ronds).
     if (!c.subdivise) {
+      // COUCHES-STYLE-1 : largeur ET opacité du contour interpolables par zoom (via rampe) — pour que
+      // le maillage parcellaire ne se ferme pas en surface aux petits zooms. Sans zoom_largeur /
+      // zoom_opacite déclarés, `rampe` renvoie le défaut → rendu IDENTIQUE pour les 55 autres couches.
       out.push({ ...base, id: `${src}-outline`, type: 'line', filter: F_POLY as never,
-        paint: { 'line-color': (s.trait || col) as never, 'line-width': s.epaisseur ?? 1, 'line-opacity': 0.9 } as never })
+        paint: { 'line-color': (s.trait || col) as never,
+          'line-width': rampe(s.zoom_largeur, s.epaisseur ?? 1),
+          'line-opacity': rampe(s.zoom_opacite, 0.9) } as never })
     }
   }
   // COUCHES-RECETTE-2 Lot D : quand des NIVEAUX portent une géométrie propre (ligne/point), on rend UN
@@ -487,12 +493,18 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
                       </div>
                     ))
                   ) : (
-                    // B4 : une SEULE pastille (couleur de la couche) quand il n'y a qu'un niveau.
+                    // B4 : une SEULE pastille quand il n'y a qu'un niveau. COUCHES-STYLE-1 : une couche
+                    // `contour_seul` se rend en TRAIT → la pastille est une BARRE (trait), pas un carré plein.
                     <div className="flex items-start gap-2 text-[10.5px] leading-tight text-txt-mut">
-                      <span className="mt-0.5 h-2.5 w-3.5 shrink-0 rounded-sm border"
-                        style={{ background: e.membres[0].style?.couleur || FALLBACK,
-                          opacity: (e.membres[0].style?.opacite ?? 0.6) + 0.3,
-                          borderColor: e.membres[0].style?.trait || e.membres[0].style?.couleur || FALLBACK }} />
+                      {e.membres[0].style?.contour_seul ? (
+                        <span className="mt-1.5 h-0.5 w-3.5 shrink-0 rounded-full"
+                          style={{ background: e.membres[0].style?.trait || e.membres[0].style?.couleur || FALLBACK }} />
+                      ) : (
+                        <span className="mt-0.5 h-2.5 w-3.5 shrink-0 rounded-sm border"
+                          style={{ background: e.membres[0].style?.couleur || FALLBACK,
+                            opacity: (e.membres[0].style?.opacite ?? 0.6) + 0.3,
+                            borderColor: e.membres[0].style?.trait || e.membres[0].style?.couleur || FALLBACK }} />
+                      )}
                       <span className="min-w-0 flex-1">{e.membres[0].legende}</span>
                     </div>
                   )}
