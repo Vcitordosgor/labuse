@@ -19,6 +19,7 @@ export interface TuyauStyle {
   couleurs?: Record<string, string>; couleur_propriete?: string; halo?: number
   tirets?: number[]; contour_seul?: boolean; zoom_rayon?: number[]; zoom_largeur?: number[]
   zoom_opacite?: number[]   // COUCHES-STYLE-1 : opacité de trait interpolée par zoom (défaut inchangé)
+  trait_opacite?: number    // COUCHES-STYLE-2 : opacité CONSTANTE du contour (défaut 0.9 = inchangé pour les autres)
   filtre?: { propriete: string; valeur: string }
   point_opacite?: number   // opacité PROPRE des points (indépendante du fond translucide d'un polygone)
 }
@@ -144,7 +145,9 @@ function calques(c: TuyauCouche): maplibregl.AddLayerObject[] {
       out.push({ ...base, id: `${src}-outline`, type: 'line', filter: F_POLY as never,
         paint: { 'line-color': (s.trait || col) as never,
           'line-width': rampe(s.zoom_largeur, s.epaisseur ?? 1),
-          'line-opacity': rampe(s.zoom_opacite, 0.9) } as never })
+          // COUCHES-STYLE-2 : défaut du contour = `trait_opacite ?? 0.9` (constant). Sans zoom_opacite ni
+          // trait_opacite déclarés → 0.9, exactement l'ancien rendu des 55 autres couches.
+          'line-opacity': rampe(s.zoom_opacite, s.trait_opacite ?? 0.9) } as never })
     }
   }
   // COUCHES-RECETTE-2 Lot D : quand des NIVEAUX portent une géométrie propre (ligne/point), on rend UN

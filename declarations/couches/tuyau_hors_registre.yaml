@@ -14,12 +14,10 @@
   i: "Contour cadastral de chaque parcelle (DGFiP). Repère de base pour se situer."
   # mvt_parcels porte TOUTES les parcelles servies (géométrie 3857 déjà projetée, SRID 0 → on force 3857).
   source: { table: mvt_parcels, geom: geom_3857, srid: 3857 }
-  # COUCHES-STYLE-1 : couche de TRAIT (contour_seul, jamais de fill). Largeur ET opacité INTERPOLÉES
-  # par zoom pour que le maillage reste un maillage et ne se ferme pas en surface à petit zoom
-  # (à z9-z11 les 431 k contours fusionnaient en aplat clair → l'île devenait verte). Calibré sur captures.
-  style: { contour_seul: true, couleur: "#8FA69A", trait: "#8FA69A",
-    zoom_largeur: [9, 0.2, 12, 0.35, 14, 0.6, 17, 1.1],
-    zoom_opacite: [9, 0.04, 11, 0.12, 13, 0.45, 16, 0.8] }
+  # COUCHES-STYLE-2 : rendu ALIGNÉ sur la couche V1 (ancienne couche parcelles, calques ile-limites /
+  # parcels-limites de MapView) — valeurs LUES telles quelles, sans recalibrage : trait #8FA69A,
+  # line-width 0.3, line-opacity 0.4, CONSTANTES (la V1 n'a pas de rampe de zoom dans sa déclaration).
+  style: { contour_seul: true, couleur: "#8FA69A", trait: "#8FA69A", epaisseur: 0.3, trait_opacite: 0.4 }
   legende: "Contour cadastral des parcelles"
 
 - kind: zonage_parcelle
