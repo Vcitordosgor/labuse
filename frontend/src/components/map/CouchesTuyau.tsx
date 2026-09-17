@@ -423,7 +423,7 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
               {isOpen && (
                 <div className="flex flex-col gap-0.5 px-2 pb-2">
                   {gated ? (
-                    <div className="text-[10.5px] font-medium text-mint">Zoomez pour voir {e.nom.toLowerCase()}</div>
+                    <div className="text-[10.5px] font-medium text-mint">Zoomez pour voir {e.nom}</div>
                   ) : sw.length > 0 ? (
                     sw.map((n) => (
                       <div key={n.k} className="flex items-start gap-2 text-[10.5px] leading-tight text-txt-mut">
