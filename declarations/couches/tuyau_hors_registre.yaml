@@ -4,8 +4,10 @@
 # Rendu identique à l'ancien (couleurs U/AU/A/N, étiquettes de zone, légende pour le zonage).
 - kind: limites_parcelles
   nom: "Limites parcelles (contour cadastral)"
-  famille: fond_de_plan
+  # COUCHES-RECETTE-1 A5 : catégorie « Repères » (en tête du panneau, cochée par défaut).
+  famille: reperes
   geometrie: ligne
+  i: "Contour cadastral de chaque parcelle (DGFiP). Repère de base pour se situer."
   # mvt_parcels porte TOUTES les parcelles servies (géométrie 3857 déjà projetée, SRID 0 → on force 3857).
   source: { table: mvt_parcels, geom: geom_3857, srid: 3857 }
   style: { couleur: "#8FA69A", epaisseur: 0.4, opacite: 0.6 }
@@ -15,6 +17,7 @@
   nom: "Zonage PLU par parcelle (calibré)"
   famille: urbanisme
   geometrie: polygone
+  i: "Zone du PLU CALIBRÉE parcelle par parcelle (famille U urbaine / AU à urbaniser / A agricole / N naturelle). L'étiquette de zone (Ncu, U1b…) apparaît dès le zoom commune."
   # zone PLU CALIBRÉE par parcelle (mvt_parcels.zone_fam / zone_lib — dérivée du run servi).
   source: { table: mvt_parcels, geom: geom_3857, srid: 3857, where: "zone_fam IS NOT NULL" }
   style: { couleur_propriete: zone_fam, opacite: 0.55, trait: "#0b0f14" }
@@ -32,12 +35,15 @@
 
 - kind: limites_communes
   nom: "Limites communes"
-  famille: fond_de_plan
+  # COUCHES-RECETTE-1 A5 : catégorie « Repères » (en tête, cochée par défaut).
+  famille: reperes
   geometrie: ligne
-  # frontière des 24 communes = table dérivée mvt_communes (dissolution de mvt_parcels par commune,
-  # ST_Boundary), reconstruite avec les tuiles. Source à part entière, hors spatial_layers.
+  i: "Limites administratives des 24 communes de La Réunion (contours IGN)."
+  # COUCHES-RECETTE-1 (Lot B) — RÉPARÉE : mvt_communes est désormais bâtie du GeoJSON officiel
+  # communes974.geojson (contours IGN), plus de la dissolution des parcelles qui laissait les arêtes
+  # internes (jusqu'à 667 k points/commune → un « réseau », pas les communes). Cf. build_mvt_communes.
   source: { table: mvt_communes, geom: geom_3857, srid: 3857 }
-  style: { couleur: "#B7C0CC", epaisseur: 1.1, opacite: 0.85 }
+  style: { couleur: "#5CE6A1", epaisseur: 1.6, opacite: 0.9 }
   popup:
     - { champ: commune, libelle: "Commune" }
   legende: "Limites administratives des 24 communes"

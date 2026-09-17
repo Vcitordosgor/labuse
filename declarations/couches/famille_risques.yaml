@@ -13,7 +13,9 @@ donnees:
   - quoi:  ppr_couche
     ou:    { rang: 10, etat: en_tete, section: "PPR" }
     comment: { libelle: "PPR multirisque", format: liste, i: "Plan de Prévention des Risques (document multirisque, opposable)." }
-    carte: { kind: ppr, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 65, style: { opacite: 0.42, trait: "#8a2f22" }, niveaux: [ { id: i, propriete: subtype, valeur: i, couleur: "#F5C5BC", legende: "Information" }, { id: prescription, propriete: subtype, valeur: PRESCRIPTION, couleur: "#E07A6A", legende: "Prescription" }, { id: interdiction, propriete: subtype, valeur: INTERDICTION, couleur: "#B02A1A", legende: "Interdiction" } ], popup: [ { champ: risque, libelle: "Risque" }, { champ: document, libelle: "Document" }, { champ: approbation, libelle: "Approuvé le" }, { champ: statut, libelle: "Statut" } ], legende: "PPR multirisque — information → interdiction (emboîté)" }
+    # COUCHES-RECETTE-1 A3 : Information / Prescription / Interdiction en 3 teintes distinctes ordonnées
+    # (jaune → orange → rouge) — plus le camaïeu de rouges qui ne se lisait pas. Emboîtement conservé.
+    carte: { kind: ppr, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 65, style: { opacite: 0.45, trait: "#7a1414" }, niveaux: [ { id: i, propriete: subtype, valeur: i, couleur: "#F2D06B", legende: "Information" }, { id: prescription, propriete: subtype, valeur: PRESCRIPTION, couleur: "#E8843D", legende: "Prescription" }, { id: interdiction, propriete: subtype, valeur: INTERDICTION, couleur: "#C0142A", legende: "Interdiction" } ], popup: [ { champ: risque, libelle: "Risque" }, { champ: document, libelle: "Document" }, { champ: approbation, libelle: "Approuvé le" }, { champ: statut, libelle: "Statut" } ], legende: "PPR multirisque — information (jaune) → prescription (orange) → interdiction (rouge)" }
     absence: "PPR : parcelle hors périmètre PPR sur l'emprise visible."
     absence_type: absente_ici
     statut_juridique: opposable
@@ -45,11 +47,15 @@ donnees:
   - quoi:  endiguement_couche
     ou:    { rang: 10, etat: en_tete, section: "Ouvrages de protection" }
     comment: { libelle: "Systèmes d'endiguement", format: liste, i: "Digues et zones protégées (DEAL). ⚠ Ni classe ni niveau de protection fournis — une digue ne garantit aucun niveau de sécurité." }
-    carte: { kind: endiguement, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 52, style: { couleur: "#7FD4C1", opacite: 0.18, trait: "#7FD4C1", epaisseur: 2.2 }, popup: [ { champ: classe, libelle: "Classe d'ouvrage" }, { champ: n_protect, libelle: "Niveau de protection (années)" }, { champ: population, libelle: "Population protégée" }, { champ: gestion, libelle: "Gestionnaire" }, { champ: statut, libelle: "Statut" }, { champ: source, libelle: "Source" } ], legende: "Zone protégée / digue (niveau inconnu)" }
+    # COUCHES-RECETTE-1 (Lot B « rien de visible ») : la donnée est à géométrie MIXTE — 42 polygones
+    # (zones protégées) MAIS 69 lignes (digues) + 6 collections. Déclarée `polygone`, le front ne
+    # dessinait QUE les polygones (à 0,18, à peine perceptibles) → les digues (le gros) n'apparaissaient
+    # jamais. Corrigé : geometrie `mixte` (fond + contour + ligne), opacité 0,32, trait épais (digue = trait).
+    carte: { kind: endiguement, agregat: false, famille: risques, geometrie: mixte, zoom_min: 0, rang_carte: 52, style: { couleur: "#22C4A0", opacite: 0.32, trait: "#22C4A0", epaisseur: 3 }, popup: [ { champ: classe, libelle: "Classe d'ouvrage" }, { champ: n_protect, libelle: "Niveau de protection (années)" }, { champ: population, libelle: "Population protégée" }, { champ: gestion, libelle: "Gestionnaire" }, { champ: statut, libelle: "Statut" }, { champ: source, libelle: "Source" } ], legende: "Digue (trait) / zone protégée (aplat) — niveau inconnu" }
     absence: "Endiguement : aucune digue ni zone protégée dans l'emprise visible."
     absence_type: absente_ici
     statut_juridique: informatif
-    pourquoi: "Rendu identique (#7FD4C1) ; niveau de protection inconnu, dit en clair."
+    pourquoi: "Lot B : géométrie mixte (69 digues-lignes + 42 zones) désormais rendue ; digues invisibles avant (geometrie=polygone)."
 ---
 surface:   couche_peb
 nom:       "Plan d'exposition au bruit (PEB)"
@@ -79,9 +85,10 @@ donnees:
   - quoi:  bruit_couche
     ou:    { rang: 10, etat: en_tete, section: "Bruit routier" }
     comment: { libelle: "Classement sonore", format: liste, i: "Classement sonore des voies (catégories 1 à 5) — isolement acoustique requis." }
-    # Classement sonore : catégories NICHÉES (cat.1 la plus large/bruyante ... cat.5 la plus étroite) —
-    # cat.5 dessous (clair) → cat.1 dessus (foncé). Un sous-calque par catégorie.
-    carte: { kind: bruit_route, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 48, style: { opacite: 0.42, trait: "#4A2A6B" }, niveaux: [ { id: cat5, propriete: subtype, valeur: cat5, couleur: "#DAD2EE", legende: "Catégorie 5" }, { id: cat4, propriete: subtype, valeur: cat4, couleur: "#C9BCE6", legende: "Catégorie 4" }, { id: cat3, propriete: subtype, valeur: cat3, couleur: "#A98BD9", legende: "Catégorie 3" }, { id: cat2, propriete: subtype, valeur: cat2, couleur: "#9B6BD6", legende: "Catégorie 2" }, { id: cat1, propriete: subtype, valeur: cat1, couleur: "#7A2FC7", legende: "Catégorie 1 (fort)" } ], legende: "Classement sonore — cat. 5 → 1 (emboîté)" }
+    # COUCHES-RECETTE-1 A3 : catégories 1→5 en teintes DISTINCTES ORDONNÉES (jaune → orange → rouge →
+    # violet) — plus le camaïeu de violets (5 nuances d'une même teinte). Emboîtement conservé : cat.5
+    # (la moins bruyante, la plus large) dessous en clair, cat.1 (la plus forte) dessus. Un sous-calque/cat.
+    carte: { kind: bruit_route, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 48, style: { opacite: 0.42, trait: "#3a1150" }, niveaux: [ { id: cat5, propriete: subtype, valeur: cat5, couleur: "#F2E06B", legende: "Catégorie 5 (la moins bruyante)" }, { id: cat4, propriete: subtype, valeur: cat4, couleur: "#F4B740", legende: "Catégorie 4" }, { id: cat3, propriete: subtype, valeur: cat3, couleur: "#EE7B30", legende: "Catégorie 3" }, { id: cat2, propriete: subtype, valeur: cat2, couleur: "#DA3B3B", legende: "Catégorie 2" }, { id: cat1, propriete: subtype, valeur: cat1, couleur: "#8B2FC7", legende: "Catégorie 1 (la plus bruyante)" } ], legende: "Classement sonore — cat. 5 (jaune) → cat. 1 (violet), emboîté" }
     absence: "Classement sonore : parcelle hors secteur affecté par le bruit routier."
     absence_type: absente_ici
     statut_juridique: opposable
@@ -128,7 +135,9 @@ donnees:
   - quoi:  alea_mvt_couche
     ou:    { rang: 10, etat: en_tete, section: "Aléas" }
     comment: { libelle: "Aléa mouvement de terrain", format: liste, i: "Aléa mouvement de terrain (Géorisques), gradué par classe (faible → très élevé)." }
-    carte: { kind: alea_mvt, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 34, style: { opacite: 0.42, trait: "#D9A05B" }, niveaux: [ { id: faible, propriete: classe, valeur: faible, couleur: "#F2D98A", legende: "Faible" }, { id: moyen, propriete: classe, valeur: moyen, couleur: "#E8A33D", legende: "Moyen" }, { id: eleve, propriete: classe, valeur: eleve, couleur: "#E8721F", legende: "Élevé" }, { id: tres_eleve, propriete: classe, valeur: tres_eleve, couleur: "#B83220", legende: "Très élevé" } ], popup: [ { champ: degre, libelle: "Degré" }, { champ: risque, libelle: "Risque" }, { champ: document, libelle: "Document" } ], legende: "Aléa mvt — faible → très élevé (emboîté)" }
+    # COUCHES-RECETTE-1 A3 : 4 grades en teintes distinctes ordonnées (jaune → orange → rouge → violet)
+    # — plus la rampe orange/orange qui confondait moyen/élevé. Emboîtement conservé.
+    carte: { kind: alea_mvt, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 34, style: { opacite: 0.44, trait: "#3a1150" }, niveaux: [ { id: faible, propriete: classe, valeur: faible, couleur: "#F2D98A", legende: "Faible" }, { id: moyen, propriete: classe, valeur: moyen, couleur: "#F0A030", legende: "Moyen" }, { id: eleve, propriete: classe, valeur: eleve, couleur: "#E0491F", legende: "Élevé" }, { id: tres_eleve, propriete: classe, valeur: tres_eleve, couleur: "#8B2FC7", legende: "Très élevé" } ], popup: [ { champ: degre, libelle: "Degré" }, { champ: risque, libelle: "Risque" }, { champ: document, libelle: "Document" } ], legende: "Aléa mvt — faible (jaune) → très élevé (violet), emboîté" }
     absence: "Aléa mouvement de terrain : parcelle hors zone d'aléa cartographié."
     absence_type: absente_ici
     pourquoi: "Couleurs exactes aleaMvtRamp ; filtre subtype (kind virtuel)."

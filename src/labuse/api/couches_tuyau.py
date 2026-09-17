@@ -77,6 +77,10 @@ class CoucheTuyau:
     geom: str = "geom_2975"
     srid: int = 2975
     where_sql: str | None = None                         # filtre explicite (couches hors spatial_layers)
+    # COUCHES-RECETTE-1 (Lot B) : une couche `contour_seul` (bassin versant) ne dessine QUE son bord
+    # (pas de remplissage). Elle ne doit JAMAIS passer par la table ST_Subdivide : le front supprime
+    # le contour des morceaux (coutures) → contour_seul + subdivisé = ni fond ni bord = RIEN.
+    contour_seul: bool = False
 
 
 _REGISTRE: dict[str, CoucheTuyau] | None = None
@@ -147,6 +151,7 @@ def registre() -> dict[str, CoucheTuyau]:
             reg[kind] = CoucheTuyau(
                 kind=kind, resolution=tuple(res), zoom_min=int(c.get("zoom_min") or 0),
                 geometrie=c.get("geometrie") or "polygone", props=tuple(props),
+                contour_seul=bool((c.get("style") or {}).get("contour_seul")),
             )
         # couches hors spatial_layers : source déclarée, propriétés = colonnes réelles de la table.
         for c in _charger_hors_registre():
@@ -172,7 +177,9 @@ def registre() -> dict[str, CoucheTuyau]:
                 if s.execute(text("SELECT to_regclass('tuyau_subdivise')")).scalar():
                     subd = {r[0] for r in s.execute(text("SELECT DISTINCT kind FROM tuyau_subdivise")).all()}
                     for k, v in list(reg.items()):
-                        if v.table == "spatial_layers" and v.resolution \
+                        # COUCHES-RECETTE-1 : jamais de subdivise pour une couche contour_seul (sinon
+                        # ni fond ni bord — cf. bassin versant). Elle reste sur spatial_layers.
+                        if v.table == "spatial_layers" and v.resolution and not v.contour_seul \
                                 and all(sk in subd for sk, _ in v.resolution):
                             reg[k] = _replace(v, table="tuyau_subdivise")
         except Exception:  # noqa: BLE001 — pas de base au chargement : défaut spatial_layers
@@ -228,17 +235,36 @@ def build_tuyau_subdivise(db: Session) -> int:
 
 
 def build_mvt_communes(db: Session) -> int:
-    """retour §2 — frontière des 24 communes : dissolution de mvt_parcels par commune (ST_Union) puis
-    ST_Boundary. Reconstruite comme les autres tables MVT. geom en SRID 0 (comme mvt_parcels ;
-    l'endpoint force 3857)."""
+    """COUCHES-RECETTE-1 (Lot B) — limites communes RÉPARÉES.
+
+    Le build précédent dissolvait mvt_parcels par commune (`ST_Boundary(ST_UnaryUnion(...))`). Les
+    parcelles portant des micro-slivers/écarts topologiques, l'union ne dissolvait PAS les arêtes
+    internes → la « frontière » incluait tout le réseau parcellaire (jusqu'à 667 000 points pour une
+    seule commune) : la couche dessinait un réseau, pas les 24 communes.
+
+    On reprend EXACTEMENT la source de l'ancienne couche `communes-bounds` : le GeoJSON officiel
+    `frontend/public/communes974.geojson` (contours IGN, 24 communes, WGS84). On stocke le contour net
+    (ST_Boundary) en 3857. `commune` et `code` pour le popup. Additif, reconstruit hors requête."""
+    import json
+    import pathlib
+    p = pathlib.Path(__file__).resolve().parents[3] / "frontend" / "public" / "communes974.geojson"
+    fc = json.loads(p.read_text(encoding="utf-8"))
     db.execute(text("DROP TABLE IF EXISTS mvt_communes"))
-    db.execute(text("""
-        CREATE TABLE mvt_communes AS
-        SELECT commune, ST_Boundary(ST_UnaryUnion(ST_Collect(geom_3857))) AS geom_3857
-        FROM mvt_parcels WHERE commune IS NOT NULL GROUP BY commune"""))
+    db.execute(text(
+        "CREATE TABLE mvt_communes (commune text, code text, "
+        "geom_3857 geometry(MultiLineString, 3857))"))
+    ins = text("""
+        INSERT INTO mvt_communes (commune, code, geom_3857)
+        VALUES (:commune, :code,
+            ST_Multi(ST_Boundary(ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(:geo), 4326), 3857))))""")
+    n = 0
+    for feat in fc.get("features", []):
+        props = feat.get("properties") or {}
+        db.execute(ins, {"commune": props.get("nom"), "code": props.get("code"),
+                         "geo": json.dumps(feat["geometry"])})
+        n += 1
     db.execute(text("CREATE INDEX mvt_communes_gix ON mvt_communes USING GIST (geom_3857)"))
     db.execute(text("ANALYZE mvt_communes"))
-    n = db.execute(text("SELECT count(*) FROM mvt_communes")).scalar() or 0
     db.commit()
     _CACHE.clear()
     return int(n)
@@ -344,6 +370,9 @@ def tuyau_couches() -> dict:
             "niveaux": c.get("niveaux"),
             "popup": c.get("popup"),
             "legende": c.get("legende"),
+            # COUCHES-RECETTE-1 A8 : le texte du « i » (explication de l'acronyme, source, enjeu) vient
+            # du YAML (comment.i) et est transmis au front pour l'info-bulle par couche.
+            "i": c.get("i"),
             "statut_juridique": c.get("statut_juridique"),
             "tuiles_url": f"/map/tiles/{k}/{{z}}/{{x}}/{{y}}.pbf",
             # retour §2 : couche servie en MORCEAUX (ST_Subdivide) → le front dessine le remplissage
@@ -358,6 +387,7 @@ def tuyau_couches() -> dict:
             "geometrie": c.get("geometrie"), "zoom_min": int(c.get("zoom_min") or 0),
             "rang_carte": c.get("rang_carte") or 0, "style": c.get("style"),
             "niveaux": c.get("niveaux"), "popup": c.get("popup"), "legende": c.get("legende"),
+            "i": c.get("i"),
             "statut_juridique": c.get("statut_juridique"),
             "tuiles_url": f"/map/tiles/{k}/{{z}}/{{x}}/{{y}}.pbf",
         })

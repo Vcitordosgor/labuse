@@ -46,13 +46,13 @@ donnees:
   - quoi:  znieff_couche
     ou:    { rang: 10, etat: en_tete, section: "Nature et eau" }
     comment: { libelle: "ZNIEFF (I / II)", format: liste, i: "Inventaire du patrimoine naturel (INPN/MNHN PatriNat, maj 2025). Type I : secteur de fort intérêt biologique, plus restreint et sensible ; type II : grand ensemble naturel peu modifié. PAS une interdiction — un signal fort (étude d'impact renforcée, recours plus probable). ZNIEFF marines non affichées." }
-    # niveaux : type I dense (0,20), type II léger. Le legacy mettait type II à 0,06 → ΔE 1,7 sur
-    # l'Ortho = INVISIBLE (mesuré). Relevé à 0,13 (ΔE ≥ 3,6 sur les 4 fonds) en gardant I > II — seul
-    # écart au rendu legacy, tranché par la mesure (Vic « go »).
-    carte: { kind: znieff, agregat: false, famille: environnement, geometrie: polygone, zoom_min: 0, rang_carte: 12, style: { couleur: "#8F9E4B", trait: "#8F9E4B", epaisseur: 0.8 }, niveaux: [ { id: "type I", propriete: subtype, valeur: "type I", couleur: "#8F9E4B", opacite: 0.20, legende: "Type I — secteur sensible (fort intérêt)" }, { id: "type II", propriete: subtype, valeur: "type II", couleur: "#8F9E4B", opacite: 0.13, legende: "Type II — grand ensemble naturel" } ], popup: [ { champ: id_mnhn, libelle: "Numéro national" }, { champ: type, libelle: "Type" }, { champ: gestionnaire, libelle: "Gestionnaire" }, { champ: url_fiche, libelle: "Fiche INPN", lien: true } ], legende: "ZNIEFF — type I (dense) / type II (léger)" }
+    # COUCHES-RECETTE-1 A3 : deux teintes FRANCHEMENT différentes (le camaïeu olive/olive ne
+    # distinguait I et II que par l'opacité, contraire à A3). Type I = olive dense (secteur sensible),
+    # type II = sarcelle (grand ensemble). Emboîtement conservé (type I plus dense, dessus).
+    carte: { kind: znieff, agregat: false, famille: environnement, geometrie: polygone, zoom_min: 0, rang_carte: 12, style: { couleur: "#8F9E4B", trait: "#5f6b32", epaisseur: 0.8 }, niveaux: [ { id: "type I", propriete: subtype, valeur: "type I", couleur: "#8F9E4B", opacite: 0.34, legende: "Type I — secteur sensible (fort intérêt)" }, { id: "type II", propriete: subtype, valeur: "type II", couleur: "#3FA6A0", opacite: 0.24, legende: "Type II — grand ensemble naturel" } ], popup: [ { champ: id_mnhn, libelle: "Numéro national" }, { champ: type, libelle: "Type" }, { champ: gestionnaire, libelle: "Gestionnaire" }, { champ: url_fiche, libelle: "Fiche INPN", lien: true } ], legende: "ZNIEFF — type I (olive) / type II (sarcelle)" }
     absence: "ZNIEFF : parcelle hors zone d'inventaire dans l'emprise visible."
     absence_type: absente_ici
-    pourquoi: "Rendu identique (olive #8F9E4B ; type II 0,06 vs type I 0,20) ; signal, pas interdiction."
+    pourquoi: "A3 : type I olive / type II sarcelle (teintes distinctes, plus un camaïeu d'opacité) ; signal, pas interdiction."
 ---
 surface:   couche_parc
 nom:       "Parc national"
@@ -64,9 +64,11 @@ donnees:
   - quoi:  parc_national_couche
     ou:    { rang: 10, etat: en_tete, section: "Nature et eau" }
     comment: { libelle: "Parc national", format: liste, i: "Périmètre du Parc national de La Réunion. Deux assiettes : le CŒUR (~40 % de l'île, inconstructible) et l'AIRE D'ADHÉSION (réglementée mais constructible). Urbanisation très restreinte." }
-    # niveaux : cœur marron profond (0,34, inconstructible), adhésion marron clair (0,16) + liseré marron.
-    carte: { kind: parc_national, agregat: false, famille: environnement, geometrie: polygone, zoom_min: 0, rang_carte: 8, style: { trait: "#7A4A1E", epaisseur: 1.2 }, niveaux: [ { id: "coeur", propriete: subtype, valeur: "coeur", couleur: "#6B3E17", opacite: 0.34, legende: "Cœur — inconstructible (~40 % de l'île)" }, { id: "adhesion", propriete: subtype, valeur: "adhesion", couleur: "#C08A54", opacite: 0.16, legende: "Aire d'adhésion — réglementée, constructible" } ], legende: "Parc national — cœur / aire d'adhésion" }
+    # COUCHES-RECETTE-1 A3 : cœur et aire d'adhésion en deux couleurs FRANCHEMENT différentes (elles
+    # étaient deux marrons ne différant que par la valeur/opacité). Cœur = vert forêt profond
+    # (inconstructible), adhésion = ambre chaud (constructible réglementé) — sens porté par la teinte.
+    carte: { kind: parc_national, agregat: false, famille: environnement, geometrie: polygone, zoom_min: 0, rang_carte: 8, style: { trait: "#14532d", epaisseur: 1.2 }, niveaux: [ { id: "coeur", propriete: subtype, valeur: "coeur", couleur: "#1E7A45", opacite: 0.36, legende: "Cœur — inconstructible (~40 % de l'île)" }, { id: "adhesion", propriete: subtype, valeur: "adhesion", couleur: "#D9973B", opacite: 0.20, legende: "Aire d'adhésion — réglementée, constructible" } ], legende: "Parc national — cœur (vert) / aire d'adhésion (ambre)" }
     absence: "Parc national : parcelle hors périmètre du Parc dans l'emprise visible."
     absence_type: absente_ici
     statut_juridique: opposable
-    pourquoi: "Rendu identique (cœur #6B3E17 @0,34 / adhésion #C08A54 @0,16, liseré #7A4A1E) ; deux assiettes distinctes."
+    pourquoi: "A3 : cœur vert forêt #1E7A45 / adhésion ambre #D9973B (teintes franchement distinctes) ; deux assiettes."

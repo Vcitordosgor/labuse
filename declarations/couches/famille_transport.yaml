@@ -51,7 +51,7 @@ donnees:
     pourquoi: "Rendu identique (rayon rampé 11→18, halo sombre) ; minzoom 11."
 ---
 surface:   couche_telepherique
-nom:       "Téléphérique (Papang)"
+nom:       "Téléphérique"
 categorie: couche
 parent:    null
 route:     "/map/layers.geojson?kind=telepherique"
@@ -59,12 +59,16 @@ rendu:     carte
 donnees:
   - quoi:  transport_couche
     ou:    { rang: 10, etat: replie, section: "Transport public" }
-    comment: { libelle: "Téléphérique Papang", format: liste, i: "Le téléphérique urbain Papang (CINOR) : ligne (tireté) + stations. Réseau Citalis." }
-    # géométrie MIXTE via niveaux : la ligne (Papang, tireté) + les stations (disque). Un seul toggle.
-    carte: { kind: telepherique, agregat: false, famille: transport, geometrie: point, zoom_min: 0, rang_carte: 78, style: { couleur: "#E87BB0" }, niveaux: [ { id: "ligne", propriete: subtype, valeur: "ligne", geometrie: ligne, couleur: "#E87BB0", epaisseur: 2.4, tirets: [1.6, 1.2], opacite: 0.95, legende: "Ligne du téléphérique" }, { id: "station", propriete: subtype, valeur: "station", geometrie: point, couleur: "#E87BB0", rayon: 4, epaisseur: 1.2, trait: "#060A08", legende: "Station" } ], legende: "Téléphérique Papang — ligne / stations" }
-    absence: "Téléphérique : hors emprise du Papang."
+    # COUCHES-RECETTE-1 (Lot B) : renommée « Téléphérique ». La LIGNE (2 objets subtype=ligne en base)
+    # est désormais dessinée (le front ignorait le niveau `ligne` d'une couche geometrie=point — corrigé
+    # lot front, géométrie mixte). 2e téléphérique en projet « Payanké » (CINOR, Bellepierre ↔ La Montagne,
+    # mise en service annoncée ~2029) : NOM CONFIRMÉ mais AUCUN tracé GIS officiel publié → non dessiné
+    # (rien inventé, cf. rapport). geometrie: mixte pour que ligne + stations coexistent.
+    comment: { libelle: "Téléphérique", format: liste, i: "Téléphérique urbain de Saint-Denis. En service : le Papang (CINOR, réseau Citalis) — ligne (tireté) + stations. En projet : le Payanké (Bellepierre ↔ La Montagne, ~2029) — tracé officiel non publié, non représenté." }
+    carte: { kind: telepherique, agregat: false, famille: transport, geometrie: mixte, zoom_min: 0, rang_carte: 78, style: { couleur: "#E87BB0" }, niveaux: [ { id: "ligne", propriete: subtype, valeur: "ligne", geometrie: ligne, couleur: "#E87BB0", epaisseur: 2.6, tirets: [1.6, 1.2], opacite: 0.95, legende: "Ligne en service (Papang)" }, { id: "station", propriete: subtype, valeur: "station", geometrie: point, couleur: "#E87BB0", rayon: 5, epaisseur: 1.4, trait: "#060A08", legende: "Station" } ], legende: "Téléphérique — ligne en service (Papang) / stations" }
+    absence: "Téléphérique : hors emprise du réseau câblé."
     absence_type: absente_ici
-    pourquoi: "Rendu identique (Papang = rose Citalis, tireté = téléphérique) ; géométrie mixte en niveaux."
+    pourquoi: "Lot B : renommée « Téléphérique », ligne Papang rendue (géométrie mixte), Payanké projet documenté (tracé non publié)."
 ---
 surface:   couche_pole
 nom:       "Pôles d'échange"
@@ -124,7 +128,11 @@ donnees:
     comment: { libelle: "TCSP / stationnement allégé", format: liste, i: "Transport en commun en site propre : voies en site propre (OSM) + stations + zone des 800 m (L151-36, parcelles couvertes teintées où le stationnement peut être allégé). UNE couche, 3 kinds unis." }
     # kind VIRTUEL tcsp (zone + tronçons + stations unis serveur). Niveaux à géométrie MIXTE : zone
     # (aplat + rayon ligne) sous les tronçons (site propre, ligne rampée) sous les stations (anneau).
-    carte: { kind: tcsp, agregat: false, famille: transport, geometrie: polygone, zoom_min: 0, rang_carte: 68, style: { couleur: "#3FE0C8" }, niveaux: [ { id: "parcelles", propriete: subtype, valeur: parcelles, geometrie: polygone, couleur: "#3FE0C8", opacite: 0.22, legende: "Zone 800 m — parcelles couvertes" }, { id: "rayon", propriete: subtype, valeur: rayon, geometrie: ligne, couleur: "#3FE0C8", epaisseur: 1.6, tirets: [3, 2], opacite: 0.85, legende: "Rayon 800 m (contour)" }, { id: "site_propre", propriete: subtype, valeur: site_propre, geometrie: ligne, couleur: "#3FE0C8", zoom_largeur: [9, 2.5, 13, 4, 16, 6], opacite: 0.95, legende: "Tronçon en site propre" }, { id: "en_service", propriete: subtype, valeur: en_service, geometrie: point, anneau: true, couleur: "#3FE0C8", zoom_rayon: [10, 5, 14, 8.5, 17, 12], epaisseur: 2.2, opacite: 0.9, legende: "Station" } ], legende: "TCSP — site propre, stations, zone 800 m" }
+    # COUCHES-RECETTE-1 A3 : les 4 éléments en teintes FRANCHEMENT distinctes (tout était turquoise).
+    # Zone 800 m = turquoise aplat ; rayon (contour) = bleu tireté ; tronçon en site propre (le TCSP
+    # lui-même) = vert vif ; station = ambre (anneau). geometrie: mixte → le front dessine les 4 (avant :
+    # geometrie=polygone ne rendait QUE la zone, tronçon/rayon/station invisibles).
+    carte: { kind: tcsp, agregat: false, famille: transport, geometrie: mixte, zoom_min: 0, rang_carte: 68, style: { couleur: "#33C6B0" }, niveaux: [ { id: "parcelles", propriete: subtype, valeur: parcelles, geometrie: polygone, couleur: "#33C6B0", opacite: 0.22, legende: "Zone 800 m — parcelles couvertes" }, { id: "rayon", propriete: subtype, valeur: rayon, geometrie: ligne, couleur: "#4FA8E0", epaisseur: 1.6, tirets: [3, 2], opacite: 0.9, legende: "Rayon 800 m (contour)" }, { id: "site_propre", propriete: subtype, valeur: site_propre, geometrie: ligne, couleur: "#33C95E", zoom_largeur: [9, 2.5, 13, 4, 16, 6], opacite: 0.95, legende: "Tronçon en site propre" }, { id: "en_service", propriete: subtype, valeur: en_service, geometrie: point, anneau: true, couleur: "#F2A83A", zoom_rayon: [10, 5, 14, 8.5, 17, 12], epaisseur: 2.2, opacite: 0.95, legende: "Station" } ], legende: "TCSP — zone (turquoise) / rayon (bleu) / tronçon (vert) / station (ambre)" }
     absence: "TCSP : aucun transport en site propre dans l'emprise visible."
     absence_type: absente_ici
-    pourquoi: "Rendu identique (turquoise #3FE0C8) ; kind virtuel multi (zone+tronçons+stations), niveaux mixtes."
+    pourquoi: "A3 : 4 éléments en teintes distinctes ; geometrie mixte pour rendre tronçon/rayon/station (avant : zone seule)."

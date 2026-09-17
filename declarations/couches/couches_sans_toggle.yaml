@@ -21,10 +21,12 @@ donnees:
       geometrie: point
       zoom_min: 15
       rang_carte: 80
+      # COUCHES-RECETTE-1 A3 : 3 niveaux en teintes distinctes (plus le camaïeu bleu→gris). Confiance
+      # décroissante portée par la TEINTE (bleu vif → turquoise → ocre) autant que par le rayon/opacité.
       niveaux:
-        - { id: confirmee, propriete: niveau, valeur: confirmee, couleur: "#3BA7FF", rayon: 5, opacite: 0.95, legende: "Confirmée — les deux détections d'accord (BD ORTHO ∩ CoSIA)" }
-        - { id: probable,  propriete: niveau, valeur: probable,  couleur: "#6FA8C7", rayon: 4, opacite: 0.70, legende: "Probable — CoSIA seule (1 sur 4 = faux positif : toit, bâche, route)" }
-        - { id: rare,      propriete: niveau, valeur: rare,      couleur: "#8A968F", rayon: 3, opacite: 0.55, legende: "Rare — détection interne seule" }
+        - { id: confirmee, propriete: niveau, valeur: confirmee, couleur: "#2E90FF", rayon: 5, opacite: 0.95, legende: "Confirmée — les deux détections d'accord (BD ORTHO ∩ CoSIA)" }
+        - { id: probable,  propriete: niveau, valeur: probable,  couleur: "#2FC6B0", rayon: 4, opacite: 0.80, legende: "Probable — CoSIA seule (1 sur 4 = faux positif : toit, bâche, route)" }
+        - { id: rare,      propriete: niveau, valeur: rare,      couleur: "#D99A2B", rayon: 3, opacite: 0.70, legende: "Rare — détection interne seule" }
     absence: "Piscines : aucune piscine détectée dans l'emprise visible."
     absence_type: absente_ici
     pourquoi: "Une seule couche, 3 niveaux de confiance (arbitrage G1) — la fiche parcelle porte le même niveau."
@@ -110,7 +112,10 @@ donnees:
     # COUCHES-AFFICHAGE-1 lot 1 — GRADES PAR LA COULEUR : les 3 scénarios TRI (nichés) affichés en même
     # temps, un SOUS-CALQUE par grade, EMBOÎTÉS (extrême = le plus étendu, dessous, teinte claire ;
     # fréquent = le plus petit, dessus, teinte foncée). Plus de sélecteur.
-    carte: { kind: tri_zone, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 30, style: { opacite: 0.5, trait: "#1c5a8c" }, niveaux: [ { id: extreme, propriete: subtype, valeur: extreme, couleur: "#B8D8F5", legende: "Extrême (rare — le plus étendu)" }, { id: moyen, propriete: subtype, valeur: moyen, couleur: "#5BA3E8", legende: "Moyen" }, { id: frequent, propriete: subtype, valeur: frequent, couleur: "#1C5A8C", legende: "Fréquent" } ], legende: "TRI inondable — 3 scénarios emboîtés (clair = rare)" }
+    # COUCHES-RECETTE-1 A3 : 3 scénarios en teintes DISTINCTES (plus le camaïeu de bleus). Emboîtement
+    # gardé : extrême (le plus rare/étendu) dessous, fréquent (le plus probable) dessus. Fréquent =
+    # rouge (le scénario qui revient le plus = celui qui compte), moyen = orange, extrême = jaune.
+    carte: { kind: tri_zone, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 30, style: { opacite: 0.5, trait: "#6b1414" }, niveaux: [ { id: extreme, propriete: subtype, valeur: extreme, couleur: "#F2E06B", legende: "Extrême (rare — le plus étendu)" }, { id: moyen, propriete: subtype, valeur: moyen, couleur: "#F0913D", legende: "Moyen" }, { id: frequent, propriete: subtype, valeur: frequent, couleur: "#C82333", legende: "Fréquent (le plus probable)" } ], legende: "TRI inondable — extrême (jaune) / moyen (orange) / fréquent (rouge), emboîté" }
     absence: "TRI : parcelle hors territoire à risque important d'inondation."
     absence_type: absente_ici
     statut_juridique: informatif
@@ -196,7 +201,9 @@ donnees:
   - quoi:  cimetiere_couche
     ou:    { rang: 10, etat: replie, section: "Servitudes de voisinage" }
     comment: { libelle: "Cimetières", format: liste, i: "Cimetières (BD TOPO) — servitude de voisinage (100 m)." }
-    carte: { kind: cimetiere, agregat: false, centroide: true, famille: patrimoine, geometrie: polygone, zoom_min: 0, rang_carte: 45, style: { couleur: "#E0E7EC", rayon: 6, opacite: 0.30, halo: 2, trait: "#8FA0AE" }, legende: "Cimetière (servitude de voisinage 100 m)" }
+    # COUCHES-RECETTE-1 A2 : le gris clair #E0E7EC sur fond sombre était invisible. Teinte vive
+    # (violet-ardoise) + opacité relevée. Point d'île (centroïde) rendu par le front (cf. lot front).
+    carte: { kind: cimetiere, agregat: false, centroide: true, famille: patrimoine, geometrie: polygone, zoom_min: 0, rang_carte: 45, style: { couleur: "#B48CE6", rayon: 6, opacite: 0.5, halo: 2, trait: "#6E51A8" }, legende: "Cimetière (servitude de voisinage 100 m)" }
     absence: "Cimetières : aucun cimetière dans l'emprise visible."
     absence_type: absente_ici
     statut_juridique: informatif

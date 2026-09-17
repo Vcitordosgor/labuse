@@ -41,8 +41,11 @@ ABSENCE_TYPES = ("absente_ici", "non_publiee", "non_ingeree")
 STATUTS_JURIDIQUES = ("opposable", "en_projet", "informatif")
 #: RACCORDEMENT-1 lot 3 — la FAMILLE d'une couche (Vic) : le panneau range les 51 couches par
 #: catégorie, DEPUIS la déclaration (pas un groupe codé dans Legend.tsx). Un seul panneau à l'écran.
-FAMILLES = ("fond_de_plan", "urbanisme", "risques", "environnement", "foncier",
-            "reseaux", "transport", "dispositifs", "patrimoine", "marche")
+# COUCHES-RECETTE-1 A11 : « reperes » (limites communes/parcelles, en tête, cochées par défaut) et
+# « equipements » (BPE + OSM, sortis de « fond_de_plan »). « fond_de_plan » reste déclarée (le bâti 3D
+# la garde en YAML) mais disparaît du panneau — il part dans le bouton 3D (exclu côté front).
+FAMILLES = ("reperes", "fond_de_plan", "urbanisme", "risques", "environnement", "foncier",
+            "reseaux", "transport", "dispositifs", "patrimoine", "marche", "equipements")
 #:   · absente_ici  — la source publie, mais la parcelle/le bien n'a pas la donnée (pas de bâti…) ;
 #:   · non_publiee  — le producteur ne publie pas (commune/périmètre/échelle non couverts) ;
 #:   · non_ingeree  — la source publie, LABUSE ne l'a pas encore ingérée ici (dette interne ;
