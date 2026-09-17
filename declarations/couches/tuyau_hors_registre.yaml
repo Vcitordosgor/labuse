@@ -6,11 +6,15 @@
   nom: "Limites parcelles (contour cadastral)"
   # COUCHES-RECETTE-1 A5 : catégorie « Repères » (en tête du panneau, cochée par défaut).
   famille: reperes
-  geometrie: ligne
+  # COUCHES-RECETTE-2 (retour, RÉGRESSION) : la donnée mvt_parcels est du POLYGONE (431 640), pas de la
+  # ligne. Déclarée « ligne », le filtre geometry-type du Lot A (line → LineString) excluait TOUS les
+  # polygones → la couche ne s'affichait plus. Correct : « polygone » + contour_seul → seul le CONTOUR
+  # (anneaux, filtre Polygon) est dessiné, sans remplissage = le contour cadastral attendu.
+  geometrie: polygone
   i: "Contour cadastral de chaque parcelle (DGFiP). Repère de base pour se situer."
   # mvt_parcels porte TOUTES les parcelles servies (géométrie 3857 déjà projetée, SRID 0 → on force 3857).
   source: { table: mvt_parcels, geom: geom_3857, srid: 3857 }
-  style: { couleur: "#8FA69A", epaisseur: 0.4, opacite: 0.6 }
+  style: { contour_seul: true, couleur: "#8FA69A", trait: "#8FA69A", epaisseur: 0.5, opacite: 0.7 }
   legende: "Contour cadastral des parcelles"
 
 - kind: zonage_parcelle
