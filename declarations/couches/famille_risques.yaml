@@ -51,7 +51,7 @@ donnees:
     # (zones protégées) MAIS 69 lignes (digues) + 6 collections. Déclarée `polygone`, le front ne
     # dessinait QUE les polygones (à 0,18, à peine perceptibles) → les digues (le gros) n'apparaissaient
     # jamais. Corrigé : geometrie `mixte` (fond + contour + ligne), opacité 0,32, trait épais (digue = trait).
-    carte: { kind: endiguement, agregat: false, famille: risques, geometrie: mixte, zoom_min: 0, rang_carte: 52, style: { couleur: "#22C4A0", opacite: 0.32, trait: "#22C4A0", epaisseur: 3 }, popup: [ { champ: classe, libelle: "Classe d'ouvrage" }, { champ: n_protect, libelle: "Niveau de protection (années)" }, { champ: population, libelle: "Population protégée" }, { champ: gestion, libelle: "Gestionnaire" }, { champ: statut, libelle: "Statut" }, { champ: source, libelle: "Source" } ], legende: "Digue (trait) / zone protégée (aplat) — niveau inconnu" }
+    carte: { kind: endiguement, agregat: false, famille: risques, geometrie: mixte, zoom_min: 0, rang_carte: 52, style: { couleur: "#F0509E", opacite: 0.40, trait: "#F0509E", epaisseur: 3.4 }, popup: [ { champ: classe, libelle: "Classe d'ouvrage" }, { champ: n_protect, libelle: "Niveau de protection (années)" }, { champ: population, libelle: "Population protégée" }, { champ: gestion, libelle: "Gestionnaire" }, { champ: statut, libelle: "Statut" }, { champ: source, libelle: "Source" } ], legende: "Digue (trait) / zone protégée (aplat) — niveau inconnu" }
     absence: "Endiguement : aucune digue ni zone protégée dans l'emprise visible."
     absence_type: absente_ici
     statut_juridique: informatif
