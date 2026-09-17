@@ -51,10 +51,11 @@ donnees:
   - quoi:  dispositifs_couche
     ou:    { rang: 10, etat: replie, section: "Dispositifs fiscaux" }
     comment: { libelle: "TVA réduite (primo-accédant)", format: liste, i: "Périmètre de TVA à taux réduit (5,5 %) pour l'accession sociale — buffer 500 m DÉRIVÉ des QPV (ANRU / quartiers prioritaires)." }
-    carte: { kind: tva_primo, agregat: false, famille: dispositifs, geometrie: polygone, zoom_min: 0, rang_carte: 4, style: { couleur: "#56C5D0", opacite: 0.24, trait: "#56C5D0" }, legende: "TVA réduite 5,5 % (buffer 500 m des QPV)" }
+    # COUCHES-RECETTE-2 C3 : teinte FRANCHE (le cyan à 0,24 était trop pastel) → turquoise soutenu.
+    carte: { kind: tva_primo, agregat: false, famille: dispositifs, geometrie: polygone, zoom_min: 0, rang_carte: 4, style: { couleur: "#12A6B4", opacite: 0.40, trait: "#0A6B75" }, legende: "TVA réduite 5,5 % (buffer 500 m des QPV)" }
     absence: "TVA primo : parcelle hors périmètre de TVA réduite dans l'emprise visible."
     absence_type: absente_ici
-    pourquoi: "Rendu identique (#56C5D0 cyan) ; périmètre dérivé des QPV."
+    pourquoi: "C3 : turquoise franc (#12A6B4 @0,40) au lieu du cyan pastel."
 ---
 surface:   couche_qpv
 nom:       "Quartiers prioritaires (QPV)"

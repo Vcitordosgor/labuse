@@ -32,10 +32,11 @@ donnees:
   - quoi:  cinquante_pas_couche
     ou:    { rang: 10, etat: replie, section: "Littoral" }
     comment: { libelle: "50 pas géométriques", format: liste, i: "Réserve des 50 pas géométriques (bande littorale du domaine public, ~81,20 m) — inconstructibilité de principe, gestion État." }
-    carte: { kind: cinquante_pas, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 20, style: { couleur: "#4CC3E8", opacite: 0.16, trait: "#4CC3E8", tirets: [2, 1.4], epaisseur: 1.6 }, legende: "Réserve des 50 pas géométriques (littoral)" }
+    # COUCHES-RECETTE-2 C3 : teinte FRANCHE (le cyan à 0,16 était trop pastel) → bleu littoral soutenu.
+    carte: { kind: cinquante_pas, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 20, style: { couleur: "#1E9BD8", opacite: 0.34, trait: "#0B6FA6", tirets: [2, 1.4], epaisseur: 1.8 }, legende: "Réserve des 50 pas géométriques (littoral)" }
     absence: "50 pas : parcelle hors bande littorale des 50 pas dans l'emprise visible."
     absence_type: absente_ici
-    pourquoi: "Rendu identique (#4CC3E8 cyan, contour tireté)."
+    pourquoi: "C3 : bleu littoral franc (#1E9BD8 @0,34) au lieu du cyan pastel."
 ---
 surface:   couche_artificialisation
 nom:       "Artificialisation (OCS GE)"
@@ -62,11 +63,13 @@ donnees:
   - quoi:  dpu_couche
     ou:    { rang: 10, etat: replie, section: "Préemption" }
     comment: { libelle: "Droit de préemption urbain (DPU)", format: liste, i: "Périmètres de DPU (simple / renforcé) — la commune peut se substituer à l'acquéreur lors d'une vente." }
-    carte: { kind: dpu, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 24, style: { couleur: "#6B8FD4", opacite: 0.30, trait: "#6B8FD4" }, popup: [ { champ: libelle, libelle: "Type" }, { champ: txt, libelle: "Précision" } ], legende: "Périmètre DPU (simple / renforcé)" }
+    # COUCHES-RECETTE-2 Lot D : la donnée DISTINGUE simple (subtype=dpu, 197) et renforcé
+    # (dpu_renforce, 5) → DEUX couleurs en légende.
+    carte: { kind: dpu, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 24, style: { couleur_propriete: subtype, couleur: "#6B8FD4", opacite: 0.32, trait: "#33507f" }, niveaux: [ { id: simple, propriete: subtype, valeur: dpu, couleur: "#6B8FD4", legende: "DPU simple" }, { id: renforce, propriete: subtype, valeur: dpu_renforce, couleur: "#E0574A", legende: "DPU renforcé" } ], popup: [ { champ: libelle, libelle: "Type" }, { champ: txt, libelle: "Précision" } ], legende: "Périmètre DPU — simple (bleu) / renforcé (rouge)" }
     absence: "DPU : parcelle hors périmètre de préemption dans l'emprise visible."
     absence_type: absente_ici
     statut_juridique: opposable
-    pourquoi: "Rendu identique (#6B8FD4 bleu ; opacité 0,30, relevée COUCHES-1 car DPU invisible)."
+    pourquoi: "Lot D : 2 couleurs (simple #6B8FD4 / renforcé #E0574A) — la donnée porte bien la distinction."
 ---
 surface:   couche_sup
 nom:       "Servitudes d'utilité publique (SUP)"

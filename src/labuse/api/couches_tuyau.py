@@ -188,6 +188,10 @@ def registre() -> dict[str, CoucheTuyau]:
                 # tient). Additif : spatial_layers.piscine_cosia reste intacte.
                 if s.execute(text("SELECT to_regclass('tuyau_piscines')")).scalar() and "piscine_cosia" in reg:
                     reg["piscine_cosia"] = _replace(reg["piscine_cosia"], table="tuyau_piscines")
+                # COUCHES-RECETTE-2 Lot D : telepherique = Papang servi + ligne Payanké (projet) →
+                # repointé sur tuyau_telepherique (additif ; spatial_layers.telepherique intacte).
+                if s.execute(text("SELECT to_regclass('tuyau_telepherique')")).scalar() and "telepherique" in reg:
+                    reg["telepherique"] = _replace(reg["telepherique"], table="tuyau_telepherique")
         except Exception:  # noqa: BLE001 — pas de base au chargement : défaut spatial_layers
             pass
         _REGISTRE = reg
@@ -306,8 +310,12 @@ def build_tuyau_piscines(db: Session) -> int:
     db.execute(text("ANALYZE _ortho_pisc"))
     db.execute(text("""
         CREATE TABLE tuyau_piscines AS
+        -- COUCHES-RECETTE-2 Lot A : une piscine = UN POINT (ST_PointOnSurface) — la donnée CoSIA est
+        -- un POLYGONE (l'empreinte du bassin) ; servie telle quelle, le calque cercle posait un rond
+        -- par sommet (« 5 points par piscine »). On sert le point représentatif → un rond par piscine.
         SELECT 'piscine_cosia'::text AS kind, u.niveau AS subtype, NULL::text AS name, u.commune,
-               jsonb_build_object('niveau', u.niveau, 'surface_m2', u.surf) AS attrs, u.geom_2975
+               jsonb_build_object('niveau', u.niveau, 'surface_m2', u.surf) AS attrs,
+               ST_PointOnSurface(u.geom_2975) AS geom_2975
         FROM (
             SELECT c.geom_2975, c.commune, c.surf,
                    CASE WHEN EXISTS (SELECT 1 FROM _ortho_pisc o
@@ -324,6 +332,40 @@ def build_tuyau_piscines(db: Session) -> int:
     db.execute(text("CREATE INDEX tuyau_piscines_kind ON tuyau_piscines (kind, subtype)"))
     db.execute(text("ANALYZE tuyau_piscines"))
     n = db.execute(text("SELECT count(*) FROM tuyau_piscines")).scalar() or 0
+    db.commit()
+    _CACHE.clear()
+    return int(n)
+
+
+def build_tuyau_telepherique(db: Session) -> int:
+    """COUCHES-RECETTE-2 Lot D — ajoute le 2e téléphérique EN PROJET « Payanké » (CINOR, ligne
+    Bellepierre ↔ La Montagne, mise en service annoncée ~2029) à la couche telepherique, SANS toucher
+    spatial_layers (donc :8020 intact) : table dérivée = telepherique servi + la ligne projet.
+
+    Le TRACÉ officiel (câble au-dessus de la Ravine du Butor) n'est pas publié en GIS. Les deux
+    STATIONS, elles, sont publiées : station haute « Belvédère - La Vigie » à La Montagne (nœud OSM,
+    55.4330/-20.8848) et station basse à Bellepierre (bas, intersection rue Bertin, près du CHU Félix
+    Guyon, ~55.4448/-20.8918). On sert donc un SEGMENT INDICATIF entre les deux stations annoncées,
+    étiqueté « Projet — tracé indicatif » (subtype=ligne_projet), source CINOR citée. Rien inventé
+    au-delà des stations publiées ; la précision du câble n'est pas revendiquée."""
+    db.execute(text("DROP TABLE IF EXISTS tuyau_telepherique"))
+    db.execute(text("""
+        CREATE TABLE tuyau_telepherique AS
+        SELECT kind, subtype, name, commune, attrs, geom_2975
+        FROM spatial_layers WHERE kind = 'telepherique'
+        UNION ALL
+        SELECT 'telepherique'::text, 'ligne_projet'::text, 'Payanké (projet)'::text, 'Saint-Denis'::text,
+               jsonb_build_object(
+                 'reseau', 'CINOR',
+                 'statut', 'en projet (mise en service annoncée ~2029)',
+                 'source', 'CINOR — ligne Bellepierre ↔ La Montagne ; tracé INDICATIF entre les deux stations annoncées'),
+               ST_Transform(ST_SetSRID(
+                 ST_MakeLine(ARRAY[ST_MakePoint(55.4448, -20.8918), ST_MakePoint(55.4330, -20.8848)]),
+                 4326), 2975)"""))
+    db.execute(text("CREATE INDEX tuyau_telepherique_gix ON tuyau_telepherique USING GIST (geom_2975)"))
+    db.execute(text("CREATE INDEX tuyau_telepherique_kind ON tuyau_telepherique (kind, subtype)"))
+    db.execute(text("ANALYZE tuyau_telepherique"))
+    n = db.execute(text("SELECT count(*) FROM tuyau_telepherique")).scalar() or 0
     db.commit()
     _CACHE.clear()
     return int(n)

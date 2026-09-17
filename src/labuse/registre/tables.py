@@ -326,6 +326,7 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "tuyau_subdivise": "tuyau (build_tuyau_subdivise — méga-polygones en morceaux ST_Subdivide, dédup SUP)",
     "mvt_communes": "tuyau (build_mvt_communes — contours IGN des 24 communes)",
     "tuyau_piscines": "tuyau (build_tuyau_piscines — piscines dédoublonnées + niveau de confiance)",
+    "tuyau_telepherique": "tuyau (build_tuyau_telepherique — Papang servi + ligne Payanké projet)",
     "p_model_bati": "modèle P (features bâti)",
     "p_model_candidates": "modèle P (candidats)",
     "p_model_dataset": "modèle P (dataset v1)",
