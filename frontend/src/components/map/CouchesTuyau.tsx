@@ -335,18 +335,9 @@ export function CouchesTuyauLayers({ map, ready }: {
       if (sid && sid.startsWith('tuyau-')) setTuyauError(sid.slice(6), true)
     }
     m.on('error', onErr as never)
-    // COUCHES-RECETTE-2 C1 — VOILE DE MISE EN AVANT : un calque `background` gris posé AVANT les couches
-    // du tuyau (donc au-dessus du fond — parcelles, communes, tous basemaps — et SOUS les couches, qui
-    // sont ajoutées ensuite). Opacité pilotée plus bas (0 tant qu'aucune couche non-Repères n'est active).
-    // COUCHES-STYLE-3 : la teinte était #0B0E0C (quasi noir) — imperceptible sur le fond Sombre (déjà
-    // presque noir), d'où l'impression que « le voile ne se déclenche plus ». On la passe à un GRIS
-    // franc (#4E5450, gris-vert désaturé de la palette) : sur Sombre il éclaircit le fond vers un gris
-    // net (le maillage parcellaire s'atténue), sur Clair il l'assombrit vers ce même gris ; dans les
-    // deux cas la couche thématique, rendue AU-DESSUS du voile, ressort. Opacité active relevée plus bas.
-    if (!m.getLayer('couche-veil')) {
-      m.addLayer({ id: 'couche-veil', type: 'background',
-        paint: { 'background-color': '#4E5450', 'background-opacity': 0 } })
-    }
+    // COUCHES-STYLE-4 : le voile de mise en avant (calque `background` couche-veil, RECETTE-2 C1) est
+    // RETIRÉ. Le fond n'est plus atténué quand une couche thématique est cochée — les couches du tuyau
+    // se posent directement au-dessus du fond, sans calque intermédiaire.
     for (const c of plan) {
       if (HORS_PANNEAU(c)) continue   // A11 : le bâti 3D est géré par le bouton 3D, pas monté ici
       const src = `tuyau-${c.kind}`
@@ -406,16 +397,7 @@ export function CouchesTuyauLayers({ map, ready }: {
     }
   }, [tuyauActives, ready, plan, map])
 
-  // COUCHES-RECETTE-2 C1 : le voile de mise en avant s'active dès qu'une couche AUTRE que les deux
-  // Repères est visible ; il disparaît quand plus aucune ne l'est. Vrai sur tous les fonds.
-  useEffect(() => {
-    const m = map.current
-    if (!m || !ready || !plan) return
-    const actif = plan.some((c) => tuyauActives[c.kind] && c.famille !== 'reperes')
-    // COUCHES-STYLE-3 : opacité active 0.34 → 0.50 pour que le gris s'installe NETTEMENT (le maillage
-    // parcellaire du fond s'estompe visiblement) sans effacer la carte ; 0 quand seuls les Repères restent.
-    if (m.getLayer('couche-veil')) m.setPaintProperty('couche-veil', 'background-opacity', actif ? 0.5 : 0)
-  }, [tuyauActives, ready, plan, map])
+  // COUCHES-STYLE-4 : plus de pilotage d'opacité du voile — le mécanisme couche-veil a été retiré.
 
   // COUCHES-RECETTE-2 B5 : suit le zoom courant pour dire « Zoomez pour voir … » quand une couche
   // active n'apparaît qu'à partir d'un zoom minimum.
