@@ -142,19 +142,46 @@ front `fiche/*.tsx`). **51/56 PRÉSENTES**. Les ABSENTES sont un futur mandat (n
 
 ---
 
-## Différé (honnête — prochains lots)
+## Session 2 — points différés TRAITÉS (stack dédié + captures réelles)
 
-1. **Captures navigateur** (île + commune par couche modifiée, ortho voile, panneau Repères + `i`,
-   légende accordéon) — exige le stack complet (API worktree + front + navigateur) ; la parité
-   géométrique est prouvée par **V7a**, les couleurs/familles/`i` par le plan `/map/tuyau/couches`.
-2. **A2 points d'île (centroïde)** — cimetières/barrages en points visibles à l'échelle île
-   (câblage `centroide` dans le tuyau + prise en compte par le verrou).
-3. **Transport public** — fusion lignes+arrêts en une couche à 2 sous-calques.
-4. **Zonage PLU par parcelle** — étiquettes de zone (texte) + profilage de la lenteur.
-5. **A7 navigateur** — waterfall, cache tuiles, debounce.
-6. **Données** : dédoublonnage SUP PM1 (~4×) ; dédoublonnage piscines (62 paires < 2 m à SDN) +
-   attribut `niveau` sur la couche carte ; vocation SAR ; icônes par type sur Équipements OSM.
-7. **A12** légende dynamique « pas de donnée publiée pour : … » (aléa mvt communes noires).
-8. **Bâti 3D** — mesure du calage (superposition ortho au zoom rue, seuil 2 m).
+Stack lancé : **API `:8055`** (mon code, `PYTHONPATH` du worktree) + **front vite `:5255`** (proxy → 8055)
++ **navigateur Chrome (Playwright)**. `:8020` intouché. Captures dans `captures/recette1/`.
+
+| Point | Fait | Preuve (capture) |
+|---|---|---|
+| **A2 centroïdes** cimetières/barrages | ✅ symbole (pastille couleur) au centroïde du polygone → visible dès l'île ; géométrie servie inchangée (V7a intact) | `couche_cimetiere_commune.png` (points violets) |
+| **Fusion Transport public** | ✅ lignes + arrêts en UNE entrée (un toggle, 2 sous-calques) via `groupe` ; légende par réseau | `legende_accordeon_5.png` |
+| **Étiquettes zonage parcelle + lenteur** | ✅ calque symbole `zone_lib` dès z12 ; CAUSE lenteur = 431 k parcelles servies dès l'île → `zoom_min 11` (LOD, géométrie inchangée) | `zonage_parcelle_etiquettes_stdenis.png`, `zonage_parcelle_{stdenis,stpaul,saintemarie}.png` |
+| **A7 waterfall + message** | ✅ message « Votre carte se charge pour vous donner l'information la plus précise possible » ; gating par `zoom_min` (semis de points/parcelles ne chargent plus la tuile île) | `a7_message_chargement.png` |
+| **Dédoublonnage SUP PM1** | ✅ `build_tuyau_subdivise` dédoublonne par (kind, subtype, idass) — 417 → **123 assiettes** ; table dérivée seule (`:8020` intouché) | `couche_sup_commune.png` |
+| **Dédoublonnage piscines + niveau** | ✅ `tuyau_piscines` : 1 piscine = 1 point (ST_ClusterDBSCAN, **0 doublon résiduel**), niveau en attribut (confirmee 11 877 / probable 34 062 / rare 4 504) | `couche_piscines_niveaux.png` (3 couleurs) |
+| **Vocations SAR** | ✅ légende par vocation (7 vocations, couleurs distinctes) + popup | `couche_sar_commune.png` |
+| **Icônes OSM + nom au clic** | ✅ nom au clic (popup name + catégorie). *NB : l'ancienne couche rendait rond+COULEUR par type (pas d'icône — emoji en text-field volontairement évité, glyphes absents) ; principe repris à l'identique.* | — |
+| **A12 légende « pas de donnée »** | ✅ mesuré : seule **Saint-Denis** a 0 donnée aléa mvt ; note en légende | `couche_alea_mvt_ile.png` |
+| **Calage bâti 3D** | ✅ mesuré : extrusion BD TOPO alignée sur l'ortho au zoom rue (St-Denis), **aucun décalage systématique visible (< 2 m)**, pas d'erreur de projection | `bati_3d_calage_ortho.png` |
+
+**Verrous après session 2** : **V7a VERT** (56 couches, tuiles = brute) ; **V1c VERT** (réparé : les
+3 tables dérivées du tuyau — tuyau_subdivise / mvt_communes / tuyau_piscines — enregistrées dans
+`TABLES_FABRIQUEES` ; V1c était CASSÉ depuis COUCHES-TUYAU-1). Reste **G7 seul** (sonde nocturne non
+passée depuis > 48 h — 0 fuite ouverte, purement environnemental).
+
+## Captures (navigateur réel, Chrome via Playwright, `:5255` → API `:8055`)
+
+`node frontend/qa/recette1_couches.mjs` (+ tranches). Dossier `captures/recette1/` :
+- **Preuves mandat** : `panneau_reperes_full.png` (Repères en tête, cochés) · `legende_accordeon_5.png`
+  (accordéon, 5 couches, une dépliée) · `ortho_voile_propre.png` (ortho + voile gris + couches) ·
+  `a7_message_chargement.png` (message A7).
+- **Par couche modifiée** (île + commune) : `couche_<kind>_{ile,commune}.png` pour limites_communes,
+  endiguement, telepherique (ligne rose rendue), tcsp (4 teintes), sar (vocations), ppr, bruit_route,
+  alea_mvt, znieff, parc_national, tri_zone, cimetiere (centroïdes), sup, plus `couche_piscines_niveaux.png`.
+- **Zonage par parcelle** sur 3 communes : `zonage_parcelle_{stdenis,stpaul,saintemarie}.png` + zoom rue.
+- **Limite du harnais** : `alea_mvt`/`zonage` en vue commune très dense font parfois sauter le transport
+  CDP de Playwright (message > 512 Mo, artefact connu COUCHES-TUYAU-1) → ces vues sont capturées à l'île
+  ou à un zoom intermédiaire ; la donnée est servie (vérifiée aussi par tuile SQL) et V7a la valide.
+
+## Reste (hors périmètre de ce mandat)
+
+- Lot C ABSENTES (ligne_mt, bassin_versant, zone_activite en fiche) — mandat séparé annoncé.
+- G7 : relancer la sonde nocturne (environnement).
 
 « Ne merge pas. »
