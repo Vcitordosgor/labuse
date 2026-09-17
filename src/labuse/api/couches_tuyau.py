@@ -451,10 +451,12 @@ def tuyau_couches() -> dict:
             # du YAML (comment.i) et est transmis au front pour l'info-bulle par couche.
             "i": c.get("i"),
             # COUCHES-RECETTE-1 : centroïde (A2 — point d'île pour un polygone minuscule), groupe (fusion
-            # de couches en un toggle), etiquette (calque symbole d'étiquettes) — tous rendus côté front.
+            # de couches en un toggle), etiquette (calque symbole d'étiquettes), icones (emoji par
+            # sous-type) — tous rendus côté front.
             "centroide": bool(c.get("centroide", False)),
             "groupe": c.get("groupe"),
             "etiquette": c.get("etiquette"),
+            "icones": c.get("icones"),
             "note": c.get("note"),
             "statut_juridique": c.get("statut_juridique"),
             "tuiles_url": f"/map/tiles/{k}/{{z}}/{{x}}/{{y}}.pbf",

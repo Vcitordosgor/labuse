@@ -247,6 +247,8 @@ def couches_carte() -> list[dict]:
                 # `etiquette` (propriété + zoom_min pour un calque symbole d'étiquettes, ex. zonage parcelle).
                 "groupe": c.get("groupe"),
                 "etiquette": c.get("etiquette"),
+                # COUCHES-RECETTE-1 (Lot B) : icône par sous-type (aménités OSM) — {subtype: emoji}.
+                "icones": c.get("icones"),
                 # COUCHES-RECETTE-1 A12 : note de couverture affichée en légende (« pas de donnée
                 # publiée pour : … ») — jamais un blanc silencieux.
                 "note": c.get("note"),

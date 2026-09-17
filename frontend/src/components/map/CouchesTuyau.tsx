@@ -31,6 +31,7 @@ export interface TuyauCouche {
   groupe?: string | null // fusion de couches en un seul toggle (ex. transport_public)
   etiquette?: TuyauEtiquette | null // calque symbole d'étiquettes (ex. zonage parcelle : zone_lib)
   note?: string | null  // A12 : note de couverture en légende (« pas de donnée publiée pour : … »)
+  icones?: Record<string, string> | null // Lot B : {subtype: emoji} — icône par type (aménités OSM)
 }
 
 // COUCHES-RECETTE-1 A11 : ordre des catégories du panneau (Repères en tête ; « Fond de plan » n'y
@@ -134,6 +135,19 @@ function calques(c: TuyauCouche): maplibregl.AddLayerObject[] {
         'icon-size': ['interpolate', ['linear'], ['zoom'], 8, 0.55, 12, 0.85, 16, 1] as never } as never,
       paint: {} as never })
   }
+  // COUCHES-RECETTE-1 (Lot B) : ICÔNE PAR TYPE (aménités OSM) — un calque symbole au-dessus du rond,
+  // icon-image choisie par sous-type (image emoji générée au montage). Comme l'ancienne couche.
+  if (c.icones && Object.keys(c.icones).length) {
+    const cas: unknown[] = ['match', ['get', 'subtype']]
+    for (const sub of Object.keys(c.icones)) cas.push(sub, `tuyau-ic-${c.kind}-${sub}`)
+    cas.push('')  // sous-type sans icône → pas d'image (le rond coloré reste)
+    out.push({ id: `${src}-icone`, source: src, 'source-layer': sl, type: 'symbol',
+      minzoom: c.zoom_min ?? 12,
+      layout: { visibility: 'none', 'icon-image': cas as never, 'icon-allow-overlap': true,
+        'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.5, 16, 0.85, 20, 1.1] as never,
+        'icon-anchor': 'center' } as never,
+      paint: {} as never })
+  }
   // COUCHES-RECETTE-1 : étiquettes (ex. zonage parcelle → zone_lib) — un calque symbole, dès son zoom.
   if (c.etiquette && c.etiquette.propriete) {
     const e = c.etiquette
@@ -158,6 +172,20 @@ function ajouterPastilleIcone(m: maplibregl.Map, kind: string, couleur: string, 
   ctx.beginPath(); ctx.arc(r, r, r - 3, 0, Math.PI * 2)
   ctx.fillStyle = couleur; ctx.fill()
   ctx.lineWidth = 2; ctx.strokeStyle = trait; ctx.stroke()
+  const img = ctx.getImageData(0, 0, D, D)
+  m.addImage(id, { width: D, height: D, data: new Uint8Array(img.data.buffer) }, { pixelRatio: 2 })
+}
+
+// COUCHES-RECETTE-1 (Lot B) : image d'icône = un EMOJI rendu au canvas (robuste — la police système
+// porte les emoji, contrairement au text-field du style qui n'a pas ces glyphes) → `tuyau-ic-{kind}-{sub}`.
+function ajouterEmojiIcone(m: maplibregl.Map, id: string, emoji: string) {
+  if (m.hasImage(id)) return
+  const D = 34
+  const cv = document.createElement('canvas'); cv.width = D; cv.height = D
+  const ctx = cv.getContext('2d'); if (!ctx) return
+  ctx.font = '24px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+  ctx.fillText(emoji, D / 2, D / 2 + 1)
   const img = ctx.getImageData(0, 0, D, D)
   m.addImage(id, { width: D, height: D, data: new Uint8Array(img.data.buffer) }, { pixelRatio: 2 })
 }
@@ -218,6 +246,7 @@ export function CouchesTuyauLayers({ map, ready }: {
         const dc = c.style?.couleur || c.niveaux?.[0]?.couleur || FALLBACK
         ajouterPastilleIcone(m, c.kind, dc, c.style?.trait || '#0b0f14')
       }
+      if (c.icones) for (const [sub, emoji] of Object.entries(c.icones)) ajouterEmojiIcone(m, `tuyau-ic-${c.kind}-${sub}`, emoji)
       for (const spec of calques(c)) {
         if (!m.getLayer(spec.id)) m.addLayer(spec)
         if (c.popup && c.popup.length && (spec.id.endsWith('-fill') || spec.id.endsWith('-point') || spec.id.endsWith('-line'))) {
