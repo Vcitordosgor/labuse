@@ -338,9 +338,14 @@ export function CouchesTuyauLayers({ map, ready }: {
     // COUCHES-RECETTE-2 C1 — VOILE DE MISE EN AVANT : un calque `background` gris posé AVANT les couches
     // du tuyau (donc au-dessus du fond — parcelles, communes, tous basemaps — et SOUS les couches, qui
     // sont ajoutées ensuite). Opacité pilotée plus bas (0 tant qu'aucune couche non-Repères n'est active).
+    // COUCHES-STYLE-3 : la teinte était #0B0E0C (quasi noir) — imperceptible sur le fond Sombre (déjà
+    // presque noir), d'où l'impression que « le voile ne se déclenche plus ». On la passe à un GRIS
+    // franc (#4E5450, gris-vert désaturé de la palette) : sur Sombre il éclaircit le fond vers un gris
+    // net (le maillage parcellaire s'atténue), sur Clair il l'assombrit vers ce même gris ; dans les
+    // deux cas la couche thématique, rendue AU-DESSUS du voile, ressort. Opacité active relevée plus bas.
     if (!m.getLayer('couche-veil')) {
       m.addLayer({ id: 'couche-veil', type: 'background',
-        paint: { 'background-color': '#0B0E0C', 'background-opacity': 0 } })
+        paint: { 'background-color': '#4E5450', 'background-opacity': 0 } })
     }
     for (const c of plan) {
       if (HORS_PANNEAU(c)) continue   // A11 : le bâti 3D est géré par le bouton 3D, pas monté ici
@@ -407,7 +412,9 @@ export function CouchesTuyauLayers({ map, ready }: {
     const m = map.current
     if (!m || !ready || !plan) return
     const actif = plan.some((c) => tuyauActives[c.kind] && c.famille !== 'reperes')
-    if (m.getLayer('couche-veil')) m.setPaintProperty('couche-veil', 'background-opacity', actif ? 0.34 : 0)
+    // COUCHES-STYLE-3 : opacité active 0.34 → 0.50 pour que le gris s'installe NETTEMENT (le maillage
+    // parcellaire du fond s'estompe visiblement) sans effacer la carte ; 0 quand seuls les Repères restent.
+    if (m.getLayer('couche-veil')) m.setPaintProperty('couche-veil', 'background-opacity', actif ? 0.5 : 0)
   }, [tuyauActives, ready, plan, map])
 
   // COUCHES-RECETTE-2 B5 : suit le zoom courant pour dire « Zoomez pour voir … » quand une couche
