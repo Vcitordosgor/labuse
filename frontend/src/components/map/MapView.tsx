@@ -369,6 +369,9 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   // V1 : sous un fond ORTHO, le canvas EST la mer (aplat unique MER_ORTHO — le proxy fond la
   // photo vers lui au large) ; le Plan IGN dessine sa propre mer, Sombre/Clair gardent la leur.
   set('bg', 'background-color', basemap === 'ortho' ? MER_ORTHO : sombre ? SOMBRE_MER : SOMBRE_BG)
+  // COUCHES-RECETTE-1 A6 : le voile gris n'est présent qu'en ORTHO (0 partout ailleurs → aucun effet
+  // sur Sombre/Clair/Plan). ~0,3 : assez pour que les aplats/traits des couches ressortent sur la photo.
+  set('ortho-veil', 'background-opacity', basemap === 'ortho' ? 0.3 : 0)
   // TERRE : masse île dissoute — grise en Clair, terre mesurée en Sombre ; CACHÉE sous Plan/Ortho
   // (dans la pile elle est AU-DESSUS des rasters de fond, elle les recouvrirait).
   vis('ile-mass', clair || sombre)
@@ -1008,6 +1011,12 @@ export function MapView() {
       m.addSource('ile-mass', { type: 'geojson', data: `${(import.meta as unknown as { env: { BASE_URL: string } }).env.BASE_URL}ile974.geojson` })
       m.addLayer({ id: 'ile-mass', type: 'fill', source: 'ile-mass', layout: { visibility: 'none' },
         paint: { 'fill-color': '#C9C4B8', 'fill-opacity': 1 } })
+      // COUCHES-RECETTE-1 A6 — VOILE ORTHO : un voile gris translucide entre l'orthophoto et les
+      // couches, UNIQUEMENT en vue ortho, pour que les couleurs des couches ressortent. Posé
+      // au-dessus des rasters de fond et sous les overlays/parcelles (donc sous les couches du tuyau,
+      // ajoutées après). Opacité pilotée par applyClairMode (0 hors ortho → aucun effet ailleurs).
+      m.addLayer({ id: 'ortho-veil', type: 'background',
+        paint: { 'background-color': '#20242A', 'background-opacity': 0 } })
       // MNT (relief 3D) — terrarium AWS (libre)
       m.addSource('dem', { type: 'raster-dem', encoding: 'terrarium', tileSize: 256, maxzoom: 13,
         tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'] })
