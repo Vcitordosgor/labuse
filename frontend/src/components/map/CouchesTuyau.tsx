@@ -307,12 +307,40 @@ function popupDetailHTML(c: TuyauCouche, servitudes: Record<string, unknown>[]):
     + `${titre}${corps}</div>`
 }
 
+// COUCHES-STYLE-5 — la couche parcelles du tuyau (contour cadastral) suit le FOND actif, exactement
+// comme V1 (MapView.applyClairMode + variant photo RETOURS-11 C4). Le gris-vert #8FA69A/0,3/0,4 est
+// illisible sur Ortho et sur Clair ; on reporte les VALEURS DE V1 telles quelles, par fond :
+//  - Sombre (dark) : INCHANGÉ — #8FA69A, largeur 0,3, opacité 0,4 (constantes STYLE-2, témoin) ;
+//  - Ortho : contour #0A0F0C, largeur/opacité interpolées au zoom (variant photo — se renforce au zoom) ;
+//  - Clair : contour #000000, largeur/opacité interpolées (bloc clair||plan de V1) ;
+//  - Plan IGN : contour #000000 avec la rampe photo (couleur du bloc clair||plan, rampes du variant photo).
+// Ces expressions sont copiées VERBATIM de applyClairMode (aucun recalibrage). Le seul calque touché
+// est le contour des parcelles du tuyau (`tuyau-limites_parcelles-outline`).
+const PARCELLES_OUTLINE = 'tuyau-limites_parcelles-outline'
+type PaintParcelles = { color: string; width: unknown; opacity: unknown }
+function paintParcellesParFond(basemap: string): PaintParcelles {
+  if (basemap === 'clair')
+    return { color: '#000000',
+      width: ['interpolate', ['linear'], ['zoom'], 13, 0.4, 15, 1.0, 17, 1.6, 19, 2.0],
+      opacity: ['interpolate', ['linear'], ['zoom'], 13, 0, 14, 0.3, 16, 0.7, 18, 0.9] }
+  if (basemap === 'ortho')
+    return { color: '#0A0F0C',
+      width: ['interpolate', ['linear'], ['zoom'], 13, 0.4, 15, 1.0, 17, 1.8, 19, 2.2],
+      opacity: ['interpolate', ['linear'], ['zoom'], 13, 0, 14, 0.25, 16, 0.7, 18, 0.9] }
+  if (basemap === 'plan')   // couleur du bloc clair||plan (#000000) + rampe du variant photo
+    return { color: '#000000',
+      width: ['interpolate', ['linear'], ['zoom'], 13, 0.4, 15, 1.0, 17, 1.8, 19, 2.2],
+      opacity: ['interpolate', ['linear'], ['zoom'], 13, 0, 14, 0.25, 16, 0.7, 18, 0.9] }
+  // Sombre (dark) et tout autre fond = témoin : valeurs STYLE-2 constantes, rien ne bouge.
+  return { color: '#8FA69A', width: 0.3, opacity: 0.4 }
+}
+
 // ── le composant de RENDU (monté dans MapView) : sources + calques + popups + légende ──
 export function CouchesTuyauLayers({ map, ready }: {
   map: React.MutableRefObject<maplibregl.Map | null>; ready: boolean
 }) {
   const { data: plan } = useTuyauPlan()
-  const { tuyauActives, setTuyauActives, setTuyauError } = useApp()
+  const { tuyauActives, setTuyauActives, setTuyauError, basemap } = useApp()
   const monte = useRef(false)
 
   // COUCHES-RECETTE-1 A5 : à l'initialisation, seuls les Repères (limites) sont cochés ; les autres
@@ -396,6 +424,19 @@ export function CouchesTuyauLayers({ map, ready }: {
       for (const spec of calques(c)) if (m.getLayer(spec.id)) m.setLayoutProperty(spec.id, 'visibility', vis)
     }
   }, [tuyauActives, ready, plan, map])
+
+  // COUCHES-STYLE-5 : le contour des parcelles du tuyau suit le FOND actif (comme V1). Réappliqué à
+  // chaque bascule de fond ET au montage (dép. plan) ; en Sombre les valeurs STYLE-2 sont ré-posées
+  // à l'identique → le témoin ne bouge pas. Seul `tuyau-limites_parcelles-outline` est touché.
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready || !plan) return
+    if (!m.getLayer(PARCELLES_OUTLINE)) return
+    const p = paintParcellesParFond(basemap)
+    m.setPaintProperty(PARCELLES_OUTLINE, 'line-color', p.color as never)
+    m.setPaintProperty(PARCELLES_OUTLINE, 'line-width', p.width as never)
+    m.setPaintProperty(PARCELLES_OUTLINE, 'line-opacity', p.opacity as never)
+  }, [basemap, ready, plan, map])
 
   // COUCHES-STYLE-4 : plus de pilotage d'opacité du voile — le mécanisme couche-veil a été retiré.
 
