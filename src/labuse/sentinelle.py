@@ -689,6 +689,10 @@ SEED: list[dict] = [
 #: réels). Les 6 sources récupérées (DEAL PPR/WMS, Région ODS, Géorisques cavités/mvt/ssp) sont passées
 #: au SEED et retirées d'ici.
 RAISONS_NON_SURVEILLEES: dict[str, str] = {
+    # COUCHES-REGISTRE-2 lot 1 — le seed des contours communaux est un référentiel STATIQUE embarqué
+    # (fichier communes974.geojson d'IGN ADMIN EXPRESS, matérialisé en mvt_communes) : aucun flux ni
+    # millésime machine amont à sonder. Contours administratifs quasi immuables (fusions rarissimes).
+    "Communes La Réunion — contours (IGN ADMIN EXPRESS via geo.api.gouv, seed)": "Seed statique embarqué (contours des 24 communes, IGN ADMIN EXPRESS via geo.api.gouv) — aucun flux amont à surveiller ; découpage administratif quasi immuable.",
     # SOURCES-3b lot 2 — 17 sources sorties d'ici : une sentinelle producteur RÉELLE a été
     # trouvée et probée (SEED) — elles ne sont plus « non surveillées ». Le reste garde sa raison.
     "GPU — zonages d'assainissement (info-surf typeinf 19)": "Doublon du GPU assainissement (canal info-surf) — même amont, non re-surveillé.",

@@ -10,12 +10,21 @@ import { useEffect, useState } from 'react'
 
 import {
   getAdminCircuitCompteur, getAdminCircuitNoteVersion, getAdminCircuitPompe,
-  getAdminCircuitReservoir, getAdminCircuitRobinet,
+  getAdminCircuitReservoir, getAdminCircuitRobinet, getSourcesCouches,
   postAdminCircuitAgents, postAdminCircuitFiltreRevenir, postAdminCircuitFiltreServir,
   postAdminCircuitRevenir, postAdminFluxBascule, postAdminFluxLancerRun, postAdminSourceVeilleInjecter,
 } from '../../../lib/api'
+import { useApp } from '../../../store/useApp'
 
 import type { CircuitData, Couleur } from './types'
+
+// PAGES-RANGEMENT-1 (lot 1) — clic sur une couche alimentée : l'allumer (si éteinte) et basculer sur
+// la carte cliente (setView sort de l'admin). MÊME geste qu'à l'ancien endroit (page Sources cliente).
+const versCouche = (kind: string) => {
+  const app = useApp.getState()
+  if (!app.tuyauActives[kind]) app.toggleTuyau(kind)
+  app.setView('cartes')
+}
 
 type Ouvrir = (type: 'reservoir' | 'robinet' | 'pompe' | 'compteur', id: number | string) => void
 type Props = { type: 'reservoir' | 'robinet' | 'pompe' | 'compteur'; id: number | string; data: CircuitData; onClose: () => void; onOpen: Ouvrir }
@@ -76,9 +85,16 @@ function DetailCompteur({ back, onOpen }: { back: JSX.Element; onOpen: Ouvrir })
           physiquement en base (registre/tables.py, la même déclaration que le verrou V1). */}
       {Array.isArray(carte) && carte.length > 0 && (
         <div className="card"><h3>La carte : chaque réservoir, ses tables</h3>
+          {/* COHERENCE-1 — précision : pour spatial_layers on liste les KINDS STOCKÉS (lignes physiques),
+              dont tous ne sont pas des couches carte servies au client (ex. BD TOPO stocke aussi voirie/
+              water/ravine). Le sous-ensemble réellement servi comme couche = « Couches carte alimentées »
+              sur la fiche du réservoir. Deux notions distinctes, deux chiffres attendus — jamais le même. */}
           <div className="muted" style={{ marginBottom: 8 }}>
-            Ce que chaque réservoir sert en base (tables, couches <code>spatial_layers</code>, millésime) —
-            la déclaration que les verrous font respecter : aucun moteur ne lit une table hors de cette carte.
+            Ce que chaque réservoir sert en base : ses tables, et pour <code>spatial_layers</code> les
+            <em> kinds stockés</em> (lignes physiques — tous ne sont pas des couches carte servies ; le
+            sous-ensemble servi au client est « Couches carte alimentées » sur la fiche du réservoir),
+            plus le millésime. La déclaration que les verrous font respecter : aucun moteur ne lit une
+            table hors de cette carte.
           </div>
           <ul className="list">{carte.map((r: any) => (
             <li key={r.id}>
@@ -105,6 +121,9 @@ function DetailCompteur({ back, onOpen }: { back: JSX.Element; onOpen: Ouvrir })
 function DetailReservoir({ id, data, back, onOpen, rafraichir }:
   { id: number; data: CircuitData; back: JSX.Element; onOpen: Ouvrir; rafraichir: () => void }) {
   const q = useQuery({ queryKey: ['circuit-detail', 'reservoir', id], queryFn: () => getAdminCircuitReservoir(id) })
+  // PAGES-RANGEMENT-1 (lot 1) — les couches carte que ce réservoir alimente (arrivées de la page Sources
+  // cliente). Clé = le nom du réservoir (= data_sources.name), la même que sert /sources/couches.
+  const couchesParSource = useQuery({ queryKey: ['sources-couches'], queryFn: getSourcesCouches, staleTime: 5 * 60_000 }).data
   const [msgAgent, setMsgAgent] = useState<string | null>(null)
   // CIRCUIT-P2 (lot 3.3) — « Envoyer un agent » : jamais grisé sans mot (sans crédit → message).
   const agent = useMutation({
@@ -194,6 +213,17 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
               <li key={ch.id}><span>{ch.libelle}</span><span className="muted">{ch.robinets} robinet{ch.robinets > 1 ? 's' : ''}</span></li>
             )) : <li className="muted">aucun</li>}</ul>
           </div>
+          {/* PAGES-RANGEMENT-1 (lot 1) — LES COUCHES CARTE alimentées par ce réservoir (déplacées de la
+              page Sources cliente). Chaque pastille ouvre la couche sur la carte. Muet si aucune. */}
+          {(() => { const couches = couchesParSource?.[r.nom] ?? []
+            return couches.length ? (
+              <div className="card"><h3>Couches carte alimentées · {couches.length}</h3>
+                <div>{couches.map((c) => (
+                  <span key={c.kind} className="chip" title={`Ouvrir « ${c.nom} » sur la carte`}
+                    onClick={() => versCouche(c.kind)}>{c.nom} ↗</span>
+                ))}</div>
+              </div>
+            ) : null })()}
         </div>
       </div>
     </div>

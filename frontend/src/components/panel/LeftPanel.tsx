@@ -1,12 +1,9 @@
 import { useEffect, useRef } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { useApp, type LayerToggles } from '../../store/useApp'
-import { getAccueilFraicheur } from '../../lib/api'
+import { useApp } from '../../store/useApp'
 import { Legend } from '../map/Legend'
-import { LAYER_INFO } from '../../lib/layers'
+import { NouvellesCouches } from '../map/CouchesTuyau'  // COUCHES-TUYAU-1 lot 2
 import { countActiveFilters } from '../../lib/filters'
 import { MODULES } from '../outils/registry'
-import { Tip } from '../Tip'
 import { ChevronSection, CroixEntete } from './ChevronSection'
 import { ResultsSection } from './ResultsSection'
 import { FiltreLabuse } from './FiltreLabuse'
@@ -84,176 +81,9 @@ export function ScoringExplainer({ onClose }: { onClose: () => void }) {
   )
 }
 
-// M12 C4 — ORDRE des couches, du PLUS UTILISÉ au moins utilisé (justif. au rapport) :
-//  1. parcelles       — la couche de travail (verdict coloré) — vue à chaque session
-//  2. limites         — contour cadastral, référence constante posée sur le fond
-//  3. zonage_parcelle — couche PARCELLAIRE UNIQUE (M55-A fusion A) : colore toutes les parcelles
-//                       par famille + code au zoom/clic — remplace « colorisation » + « par parcelle »
-//  4. zonage          — zones officielles brutes du GPU (document opposable) — moins fréquent
-//  5. ppr             — écran risques, filtre d'exclusion précoce fréquent
-//  6. equipements     — contexte de proximité, courant en due diligence
-//  7. communes        — repère communal (défaut ON, rarement basculé)
-//  8. parc            — Parc national, situationnel (relief/mi-pentes)
-//  9. anru            — périmètres de renouvellement, de niche
-// 10. cinquante_pas   — bande littorale, la plus rare (communes côtières uniquement)
-const LAYERS: { key: keyof LayerToggles; label: string }[] = [
-  // RETOURS-13 R2 — décision PAR LA CAPTURE (captures/R2-*-seule.png) : cochée seule, « Parcelles —
-  // classement LABUSE » ne montre RIEN de lisible en mode neutre (la trame cadastrale quasi éteinte —
-  // les couleurs du classement n'apparaissent qu'en mode ANALYSE, indépendamment de cette case).
-  // La différence avec « Limites parcelles » n'est pas évidente à l'œil en 2 s → la case SORT du menu
-  // (demande Vic). La clé de store `parcelles` est CONSERVÉE (défaut true) : l'aplat du classement en
-  // mode analyse et la trame neutre de fond continuent de fonctionner — même patron que M62-P1 (g).
-  { key: 'limites', label: 'Limites parcelles (contour cadastral)' },
-  // M62-P1 (g) : les toggles « Verdict — toute l'île » (couleurs_verdict) et « Renouvellement »
-  // (renouv) sont RETIRÉS du panneau (P5, diagnostic P0-3 : sûr — OFF par défaut, seuls setters =
-  // ce panneau ; le filtre `renouvellement`, le module et le bloc fiche sont indépendants). Les clés
-  // de store `layers.couleurs_verdict`/`layers.renouv` sont CONSERVÉES (défaut false) → MapView/Legend
-  // compilent et lisent false (mode opinion reste accessible par verdict && analyseLabuse).
-  // M55-A (fusion A) : couche PARCELLAIRE UNIQUE — colore d'emblée toutes les parcelles par famille
-  // ET révèle le code exact au zoom / au clic (l'ancienne case « Colorisation » est fusionnée ici).
-  { key: 'zonage_parcelle', label: 'Zonage PLU par parcelle (calibré)' },
-  // RETOURS-11 C5 (03/09) — REMPLACE la décision 31/08 (sous-option) : la couche officielle BRUTE du
-  // GPU (document opposable) redevient une couche de PREMIER NIVEAU, indépendante, au même retrait que
-  // les autres, avec sa légende. La clé de store `zonage` est inchangée (MapView/Legend l'écoutent déjà).
-  // COUCHES-1 lot 3 (B4/item 12) — « Limites officielles du PLU » : couche de raison ~1 parcelle
-  // sur 10 (9,93 % à cheval sur ≥2 zones, mesuré sur le run servi, seuil anti-liseré 10 %). Retirée
-  // du premier niveau → SOUS-OPTION MANUELLE de la couche calibrée (LAYER_SUBOPTIONS). « GPU brut »
-  // passe au « i » (B3 : le titre dit ce que c'est, le « i » dit d'où ça vient).
-  { key: 'zonage', label: 'Limites officielles du PLU' },
-  { key: 'ppr', label: 'PPR multirisque' },
-  // M106 P1 : les aléas DEAL séparés — la séparation inondation/mouvement de terrain n'existe
-  // PAS dans le zonage réglementaire PPR (document multirisque) ; elle vit dans la carte d'aléas.
-  { key: 'alea_inondation', label: 'Aléa inondation' },
-  { key: 'alea_mvt', label: 'Aléa mouvement de terrain' },
-  // M137-U — deux items ÉQUIPEMENTS étiquetés par source (jamais fusionnés → pas de doublon caché).
-  { key: 'equipements', label: 'Équipements (OpenStreetMap)' },
-  { key: 'equipements_bpe', label: 'Équipements (INSEE BPE)' },
-  { key: 'communes', label: 'Limites communes' },
-  { key: 'parc', label: 'Parc national' },
-  // M137-U — ZNIEFF : contrainte (patrimoine naturel), à côté de Parc national / PPR.
-  { key: 'znieff', label: 'ZNIEFF — patrimoine naturel' },
-  // M6.1 item 2 : réserve domaniale littorale — libellé métier exact exigé par le mandat
-  { key: 'cinquante_pas', label: '50 pas géométriques' },
-  // RETOURS-14 S7/S8/S9 — groupe « Réseaux » resserré (demandes Vic) : les arrêts FUSIONNÉS
-  // dans Transport public ; les lignes électriques HTA+HTB sous UNE entrée ; le TCSP renommé
-  // par son USAGE (« Stationnement allégé »), avec sa zone de 800 m dessinée.
-  { key: 'transport', label: 'Transport public (lignes et arrêts)' },
-  { key: 'tcsp', label: 'Stationnement allégé — TCSP (art. L151-36)' },
-  { key: 'axes', label: 'Axes structurants' },
-  // COUCHES-1 lot 3 (B3) — source hors du titre : « HTA / HTB » (et EDF/BD TOPO) vivent dans le « i ».
-  { key: 'lignes_ht', label: 'Lignes électriques' },
-  // M134 — couche « Dispositifs et périmètres ». Jamais un sigle nu : chaque libellé développe.
-  { key: 'qpv', label: 'QPV — quartier prioritaire' },
-  { key: 'tva_primo', label: 'TVA réduite primo-accédant (QPV + 500 m)' },
-  { key: 'anru', label: 'NPNRU / ANRU — renouvellement urbain' },
-  { key: 'zfang', label: 'ZFANG — zone franche d’activité' },
-  { key: 'frr', label: 'FRR — France Ruralités Revitalisation' },
-  // SECTEUR-2 (T4) — prix du logement neuf (VEFA acté), aplat commune choropleth.
-  { key: 'vefa_neuf', label: 'Prix du logement neuf (VEFA)' },
-  // SOURCES-1 lot 1 — contraintes du droit des sols. Jamais un sigle nu : chaque libellé développe.
-  { key: 'er', label: 'Emplacements réservés' },
-  { key: 'ebc', label: 'Espaces boisés classés' },
-  { key: 'dpu', label: 'Droit de préemption (DPU)' },
-  { key: 'peb', label: 'Plan d’exposition au bruit (PEB)' },
-  { key: 'sup', label: 'Servitudes d’utilité publique (SUP)' },
-  // SOURCES-1 lot 2 — la nature et l'eau.
-  { key: 'dpf', label: 'Ravines et reculs (DPF)' },
-  { key: 'endiguement', label: 'Digues et zones protégées' },
-  { key: 'zone_humide', label: 'Zones humides' },
-  { key: 'enp', label: 'Espaces naturels protégés' },
-  { key: 'rpg', label: 'Cultures déclarées (RPG)' },
-  // SOURCES-1 lot 3 — les sols et le bruit.
-  { key: 'sis', label: 'Secteurs d’information sur les sols' },
-  { key: 'casias', label: 'Anciens sites industriels (CASIAS)' },
-  { key: 'bruit_route', label: 'Classement sonore (bruit routier)' },
-  { key: 'bruit_carte', label: 'Cartes de bruit — dépassements' },
-  { key: 'artificialisation', label: 'Artificialisation (OCS GE)' },
-]
 
-// M56-C · DA §5 — les couches groupées par FAMILLES silencieuses (une .gcard par famille,
-// micro-label au-dessus). L'ordre des couches et les libellés sont INCHANGÉS ; seul le
-// regroupement visuel est ajouté. M62-P1 (g) : la famille « L'analyse LABUSE » (couleurs_verdict +
-// renouv) est retirée ; les 10 clés restantes sont couvertes une et une seule fois.
-// COUCHES-1 lot 3 (item 10 · taxonomie §3) — 7 catégories homogènes remplacent les 9 en-têtes
-// hétérogènes (où une couche = sa propre catégorie). Le regroupement suit la NATURE de la couche
-// (constat B2 : les aléas sont des risques, EBC/ER/DPU/SUP sont de l'urbanisme, RPG est un usage du
-// sol, DPF/50 pas de la domanialité) — plus « Contraintes » fourre-tout. « Le fond » (limites,
-// communes) reste à part : c'est le socle cartographique, pas une catégorie de données.
-// RECETTE-1 R20 — huit familles, ordre et contenu FIXÉS par le mandat. RECETTE-1 R19 — plus AUCUNE
-// sous-couche : « Limites officielles du PLU » (zonage) et « TVA réduite primo-accédant » (tva_primo)
-// deviennent des couches normales, au même niveau que les autres (voir LAYER_SUBOPTIONS vidé plus bas).
-const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
-  { famille: 'Repères', keys: ['limites', 'communes'] },
-  { famille: 'Urbanisme', keys: ['zonage_parcelle', 'zonage', 'ebc', 'er', 'dpu', 'sup'] },
-  { famille: 'Risques et nuisances', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'endiguement', 'peb', 'bruit_route', 'bruit_carte', 'sis', 'casias'] },
-  { famille: 'Nature et protections', keys: ['parc', 'znieff', 'enp', 'zone_humide', 'artificialisation'] },
-  { famille: 'Domanialité', keys: ['dpf', 'cinquante_pas'] },
-  { famille: 'Usage du sol', keys: ['rpg'] },
-  { famille: 'Réseaux, mobilité et équipements', keys: ['transport', 'tcsp', 'axes', 'lignes_ht', 'equipements_bpe', 'equipements'] },
-  { famille: 'Dispositifs et marché', keys: ['qpv', 'tva_primo', 'anru', 'zfang', 'frr', 'vefa_neuf'] },
-]
 
-// RECETTE-1 R19 — « Aucune sous-couche » : la table des sous-options est VIDÉE. `zonage` et `tva_primo`
-// sont désormais des couches de premier niveau (rangées dans Urbanisme et Dispositifs et marché
-// ci-dessus). La mécanique de rendu (`LAYER_SUBOPTIONS[key] ?? []`) reste, inerte.
-const LAYER_SUBOPTIONS: Partial<Record<keyof LayerToggles, (keyof LayerToggles)[]>> = {}
-const LAYER_LABEL: Record<string, string> = Object.fromEntries(LAYERS.map((l) => [l.key, l.label]))
 
-// M12 C2 — pastille « i » d'une couche : au survol OU au clic, l'explication CLIENT (LAYER_INFO,
-// centralisée) apparaît. Le clic sur la pastille NE bascule PAS la couche (stopPropagation dans Tip).
-function LayerInfoPill({ info }: { info: string }) {
-  if (!info) return null
-  return (
-    <Tip garder side="top" tip={info} className="shrink-0">
-      <span
-        role="button"
-        tabIndex={0}
-        aria-label="En savoir plus sur cette couche"
-        className="flex h-[15px] w-[15px] items-center justify-center rounded-full border border-line-2 text-[9px] font-bold leading-none text-txt-dim transition-colors duration-quick hover:border-mint hover:text-mint"
-      >
-        i
-      </span>
-    </Tip>
-  )
-}
-
-// COUCHES-1 lot 3 — UNE ligne de couche (parent ou sous-option). `sub` : indentée + trait de
-// rattachement, bascule manuelle indépendante. Le libellé + le « i » (LAYER_INFO + source/fabrication
-// de /map/couches-info) sont identiques au patron d'origine — seule la mise en retrait change.
-function LayerRow({ layers, toggleLayer, couchesInfo, lkey, sub }: {
-  layers: LayerToggles
-  toggleLayer: (k: keyof LayerToggles) => void
-  couchesInfo: Record<string, { source: string; fabrication?: string }>
-  lkey: keyof LayerToggles
-  sub?: boolean
-}) {
-  const on = layers[lkey]
-  const meta = couchesInfo[lkey]
-  const info = (LAYER_INFO[lkey] ?? '')
-    + (meta ? `\n\nSource : ${meta.source}${meta.fabrication ? ` · ${meta.fabrication}` : ''}` : '')
-  const label = LAYER_LABEL[lkey] ?? lkey
-  return (
-    <div className={`flex items-center justify-between gap-2 px-3 py-2.5 ${sub ? 'pl-8' : ''}`}>
-      <button
-        data-layer={lkey}
-        data-layer-sub={sub ? true : undefined}
-        onClick={() => toggleLayer(lkey)}
-        className="flex min-h-[24px] flex-1 items-center gap-3 text-left transition-colors duration-quick"
-      >
-        {sub && <span aria-hidden className="-ml-3 mr-0.5 text-[10px] leading-none text-txt-dim">↳</span>}
-        <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-3'}`}>
-          {on && (
-            <svg viewBox="0 0 10 10" className="h-2.5 w-2.5">
-              <polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="#06301A" strokeWidth="1.8" />
-            </svg>
-          )}
-        </span>
-        <span className={`${sub ? 'text-[11px]' : 'text-xs'} ${on ? 'text-txt-hi' : 'text-[#97A39B]'}`}>{label}</span>
-      </button>
-      <LayerInfoPill info={info} />
-    </div>
-  )
-}
 
 // M12 C1 / M14 B3 (QA-64, reprise M13-D1/QA-47) — « Couches » est un TIROIR REPLIABLE, OUVERT
 // PAR DÉFAUT tant que l'analyse LABUSE n'est pas affichée. Il se referme quand on clique
@@ -263,16 +93,6 @@ function LayerRow({ layers, toggleLayer, couchesInfo, lkey, sub }: {
 // ni résultats en dessous), elle occupe la hauteur restante (flex-1) et son tiroir remplit
 // (pas de plafond max-h) → plus de gros gap vide sous le contenu, le fond reste continu jusqu'en
 // bas. Sinon (accueil/résultats présents = eux flex-1), comportement plafonné inchangé.
-// CIRCUIT-2 lot 5.2 — le « i » d'une couche dit aussi SOURCE, MILLÉSIME, FABRICATION (traçage
-// côté client, sobre, sans identifiant technique) : lu du registre via /map/couches-info.
-function useCouchesInfo(): Record<string, { source: string; fabrication?: string }> {
-  const q = useQuery({
-    queryKey: ['couches-info'],
-    queryFn: async () => (await fetch('/map/couches-info')).json(),
-    staleTime: 3_600_000, retry: 1,
-  })
-  return q.data && typeof q.data === 'object' ? q.data : {}
-}
 
 function LayersSection({ open, onToggle, fill, closable }: {
   open: boolean
@@ -280,9 +100,6 @@ function LayersSection({ open, onToggle, fill, closable }: {
   fill?: boolean
   closable?: boolean   // M55-M point 1 : un listing existe → la section ouverte peut se refermer (→ listing)
 }) {
-  const { layers, toggleLayer } = useApp()
-  const couchesInfo = useCouchesInfo()
-  const activeCount = LAYERS.reduce((n, { key }) => n + (layers[key] ? 1 : 0), 0)
   return (
     <div className={`px-5 pt-4 ${open && fill ? 'flex min-h-0 flex-1 flex-col' : 'shrink-0'}`}>
       <button
@@ -293,14 +110,7 @@ function LayersSection({ open, onToggle, fill, closable }: {
         title={open ? (closable ? 'Refermer — rendre la place au listing' : 'Section ouverte (une section reste toujours ouverte)') : 'Ouvrir les couches — replie Filtres'}
       >
         <span className="label-caps">Couches</span>
-        {/* M55-C point 3bis : le badge « N actives » respire (gap-3 = 12 px) — la zone de clic
-            du chevron n'est plus ambiguë. */}
-        <span className="flex items-center gap-3">
-          {activeCount > 0 && (
-            <span className="rounded-full bg-mint/15 px-1.5 py-0.5 text-[9.5px] font-medium text-mint">{activeCount} active{activeCount > 1 ? 's' : ''}</span>
-          )}
-          <ChevronSection open={open} />
-        </span>
+        <ChevronSection open={open} />
       </button>
       {open && (
         // plafonné + scrollable : sur un volet court, la liste des résultats garde sa hauteur.
@@ -310,25 +120,10 @@ function LayersSection({ open, onToggle, fill, closable }: {
         // défilement, le tooltip reste peint. Défaut identique corrigé partout (fiche/CRM/tri).
         <div data-couches-drawer className={`mt-3 overflow-y-auto overflow-x-clip ${fill ? 'min-h-0 flex-1' : 'max-h-[38vh]'}`}>
           <div className="flex flex-col gap-3.5">
-            {LAYER_FAMILIES.map(({ famille, keys }) => (
-              <div key={famille}>
-                <p className="layer-cat mb-1.5 block">{famille}</p>
-                <div className="gcard">
-                  {keys.map((key) => {
-                    // COUCHES-1 lot 3/4 — une couche + ses éventuelles sous-options (indentées).
-                    const subs = LAYER_SUBOPTIONS[key] ?? []
-                    return (
-                      <div key={key} className="border-b border-line last:border-b-0">
-                        <LayerRow layers={layers} toggleLayer={toggleLayer} couchesInfo={couchesInfo} lkey={key} />
-                        {subs.map((sk) => (
-                          <LayerRow key={sk} layers={layers} toggleLayer={toggleLayer} couchesInfo={couchesInfo} lkey={sk} sub />
-                        ))}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
+            {/* COUCHES-RETRAIT-1 lot 2 — l'ancien panneau de bascules V1 (LAYER_FAMILIES / getMapLayer)
+                est retiré ; le tuyau (« Couches », 56 couches en tuiles vectorielles, rangées par
+                famille, cochables) est désormais le SEUL panneau de couches. */}
+            <NouvellesCouches />
           </div>
         </div>
       )}
@@ -484,12 +279,10 @@ function AccEntry({ ton, icone, titre, sous, onClick }: {
 
 function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const { setView, setAccueilVu, toggleOutils } = useApp()
-  // CONNEXIONS-2 Lot 6.1 (KO-11) — la ligne de fraîcheur n'est plus un texte FIGÉ : elle est CALCULÉE
-  // depuis l'état RÉEL des sources (/accueil/fraicheur, même champ que la page Sources et le dashboard).
-  const { data: fraicheur } = useQuery({ queryKey: ['accueil-fraicheur'], queryFn: getAccueilFraicheur,
-    staleTime: 5 * 60_000 })
-  // M87 P1 — le bloc « Cette semaine » (M83) est RETIRÉ (composant + appel /accueil/cette-semaine + calcul
-  // d'activité). Le claim et la ligne de fraîcheur restent : le foncier vit sans compteur 7 jours en tête.
+  // PAGES-RANGEMENT-1 (lot 3) — la ligne de FRAÎCHEUR (pastille ok/warn/error + phrase d'état, lue de
+  // /accueil/fraicheur) est RETIRÉE de l'accueil client : c'est de l'exploitation, elle vit au dashboard
+  // admin. L'appel /accueil/fraicheur est supprimé du front ; il ne reste que la porte vers Sources.
+  // M87 P1 — le bloc « Cette semaine » (M83) était déjà retiré (composant + appel /accueil/cette-semaine).
   return (
     <div data-accueil className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-5">
       {/* B1 — la promesse (2e ligne en --mint) */}
@@ -517,13 +310,10 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
 
       {/* M87 P1 — bloc « Cette semaine » RETIRÉ (M83). */}
 
-      {/* B5 — la ligne de fraîcheur. OUTILS-1 B1 : phrase courte + lien vers la page Sources (le détail
-          daté par source vit là-bas, jamais promis faussement ici). */}
+      {/* PAGES-RANGEMENT-1 (lot 3) — la pastille d'état (ok/warn/error) et la phrase de fraîcheur sont
+          retirées ; reste une ligne neutre + la porte vers la page Sources (quelles données, pas leur état). */}
       <div className="mt-auto flex items-center gap-2 border-t border-[#1E2622] pt-3">
-        <span className="h-[5px] w-[5px] shrink-0 rounded-full"
-          style={{ background: fraicheur?.ton === 'error' ? '#E05252' : fraicheur?.ton === 'warn' ? '#D9873D' : '#4ADE80' }} />
-        <span data-accueil-fraicheur className="text-[10.5px] leading-snug text-[#7C8A83]">
-          {fraicheur?.phrase ?? 'Toutes les données au même endroit.'}</span>
+        <span className="text-[10.5px] leading-snug text-[#7C8A83]">Toutes les données au même endroit.</span>
         <button data-accueil-sources onClick={() => { setAccueilVu(); setView('sources') }}
           className="ml-auto shrink-0 whitespace-nowrap text-[10.5px] text-mint hover:underline">voir les données →</button>
       </div>

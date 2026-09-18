@@ -129,28 +129,6 @@ def test_admin_desactiver_source_exclut_la_vitrine(client, engine):
     assert name0 in encore
 
 
-def test_couche_source_desactivee_sert_vide(client, engine):
-    """M2 (propagation, couche) — une couche dont la source est désactivée sert un FeatureCollection
-    VIDE marqué « source désactivée », jamais des objets d'une source coupée."""
-    kind = "parc_national"   # kind carte valide
-    with engine.begin() as c:
-        sid = c.execute(text("INSERT INTO data_sources (name, status) "
-                             "VALUES ('TEST Couche desac', 'connecte') RETURNING id")).scalar()
-        c.execute(text(
-            "INSERT INTO spatial_layers (kind, subtype, name, geom, data_source_id) "
-            "VALUES (:k, 'test', 'zone test', "
-            "  ST_SetSRID(ST_GeomFromText('POLYGON((55 -21,55.01 -21,55.01 -21.01,55 -21.01,55 -21))'), 4326), :i)"),
-            {"k": kind, "i": sid})
-        c.execute(text("UPDATE data_sources SET affichage_desactive=true WHERE id=:i"), {"i": sid})
-    try:
-        r = client.get(f"/map/layers.geojson?kind={kind}").json()
-        assert r.get("source_desactivee") is True and r["features"] == []
-    finally:
-        with engine.begin() as c:
-            c.execute(text("DELETE FROM spatial_layers WHERE data_source_id=:i"), {"i": sid})
-            c.execute(text("DELETE FROM data_sources WHERE id=:i"), {"i": sid})
-
-
 def test_outil_ortho_source_desactivee(client, engine):
     """M2 (propagation, outil) — /ortho/equipements sert « source désactivée » plutôt qu'un chiffre
     quand la source ortho est coupée au dashboard."""

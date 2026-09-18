@@ -1852,16 +1852,21 @@ function TraducteurBloc({ idu }: { idu: string }) {
       const r = await fetch(`/traducteur-plu/${idu}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
       if (!r.ok) throw new Error(`traducteur ${r.status}`)
       return r.json() as Promise<{
-        ok: boolean; zone: string | null; zone_calibree: boolean
-        regles_appliquees: { regle: string; valeur: string; source: string }[]
-        reglement: { url: string | null; note: string | null }
+        ok: boolean; zone: string | null; zone_calibree?: boolean
+        // FICHE-COUCHES-4 lot 1 : `ok:false` (zone non calibrée, ex. Ncor) OMET `regles_appliquees`
+        // et `reglement` — le champ est donc OPTIONNEL, jamais supposé présent.
+        regles_appliquees?: { regle: string; valeur: string; source: string }[]
+        reglement?: { url: string | null; note: string | null }
       }>
     },
     enabled: true, staleTime: 300_000,
   })
   const d = q.data
   // M76 pt4 — tant qu'on ne sait pas OU rien à traduire → aucun bloc (jamais « Aucune règle traduite »).
-  if (!d || d.regles_appliquees.length === 0) return null
+  // FICHE-COUCHES-4 lot 1 : `regles_appliquees` peut être ABSENT (ok:false, zone non calibrée) → le
+  // lire sans `?.` faisait planter TOUTE la fiche (« Cannot read properties of undefined (reading
+  // 'length') »), masquant au passage les exclusions rédhibitoires (ex. forêt domaniale). Garde optionnelle.
+  if (!d || !d.regles_appliquees?.length) return null
   return (
     <div data-traducteur className="mb-3 rounded-lg border border-violet/30 bg-violet/[0.06] px-3 py-2">
       <button data-traducteur-toggle onClick={() => setOpen((o) => !o)}

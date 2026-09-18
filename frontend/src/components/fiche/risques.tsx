@@ -142,6 +142,12 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
             <Rappel src={f.proximites.ligne_ht.source}>{f.proximites.ligne_ht.libelle}</Rappel>
           </div>
         )}
+        {/* FICHE-COUCHES-2 lot 1 — ligne moyenne tension (HTA) : même famille que la HT, contrainte de proximité. */}
+        {f.proximites?.ligne_mt && (
+          <div data-ligne-mt>
+            <Rappel src={f.proximites.ligne_mt.source}>{f.proximites.ligne_mt.libelle}</Rappel>
+          </div>
+        )}
         {/* « rien à signaler » REPLIÉ — ne noie plus les vraies alertes. */}
         {sansObjet.length > 0 && (
           <details data-risques-sans-objet>

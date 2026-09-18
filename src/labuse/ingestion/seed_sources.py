@@ -834,14 +834,18 @@ SOURCES: list[dict] = [
          provider="SDES (répertoire des logements locatifs des bailleurs sociaux)", access_type="téléchargement/CSV",
          status=S.CONNECTE, reliability_level=R.VERIFIE,
          source_millesime="RPLS — millésime 01/01/2025 (SDES)",
-         documentation_url="https://www.statistiques.developpement-durable.gouv.fr/le-repertoire-des-logements-locatifs-des-bailleurs-sociaux-rpls",
+         # PAGE-SOURCES-2 — l'ancienne page SDES (…/le-repertoire-…-rpls) renvoie 404 (déplacée).
+         # Le jeu RPLS est publié par le SDES sur data.gouv (slug stable, = celui que la sentinelle sonde).
+         documentation_url="https://www.data.gouv.fr/datasets/repertoire-des-logements-locatifs-des-bailleurs-sociaux/",
          legal_notes="Licence Ouverte — attribution : « Source : SDES — Répertoire des logements locatifs des bailleurs sociaux (RPLS) ».",
          technical_notes="Table `rpls_commune` (parc social par commune : nb_logements, construction médiane). Servi au contexte marché de la fiche commune, au Flash et au PDF premium. `pct_qpv` NON servi (valeur non discriminante — 100 % pour les 24 communes, RETOURS-11F). Millésime 01/01/2025."),
     dict(name="Consommation d'espaces NAF (Cerema — portail de l'artificialisation)", category="urbanisme",
          provider="Cerema (portail national de l'artificialisation des sols)", access_type="téléchargement/CSV",
          status=S.CONNECTE, reliability_level=R.VERIFIE,
          source_millesime="conso ENAF 2021-2024 (portail artificialisation, Cerema)",
-         documentation_url="https://artificialisation.developpement-durable.gouv.fr/les-donnees/donnees-de-consommation-despaces",
+         # PAGE-SOURCES-2 — l'ancienne URL (…/les-donnees/donnees-de-consommation-despaces) renvoie 404
+         # (portail Cerema restructuré). Nouvelle page « télécharger les données » du portail artificialisation.
+         documentation_url="https://artificialisation.developpement-durable.gouv.fr/mesurer-la-consommation-despaces/telecharger-les-donnees",
          legal_notes="Licence Ouverte — attribution : « Source : Cerema — portail national de l'artificialisation des sols ».",
          technical_notes="Table `commune_conso_enaf` (consommation d'espaces NAF par commune, période 2021-2024). Lue par la pression ZAN et l'enveloppe ZAN restante (fiche commune, comparateur). Millésime annuel."),
     # ── SOURCES-1 lot 1 — les prescriptions et périmètres du droit des sols ──
@@ -979,19 +983,20 @@ SOURCES: list[dict] = [
                          "« inondation résiduelle au-delà du niveau de protection »."),
     dict(name="Carte hypsométrique du littoral (DEAL Lizmap)", category="risques",
          provider="DEAL Réunion (Lizmap — deal974.lizmap.com)",
-         access_type="WMS (image seule)", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         access_type="WMS (image seule)", status=S.PARTENARIAT, reliability_level=R.SOUS_CONVENTION,
          documentation_url="https://deal974.lizmap.com/cartes/index.php/view/map?repository=02sprinr&project=04tsunami",
          endpoint_url="https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=04tsunami",
          legal_notes="Licence non écrite sur Lizmap — confirmation demandée à la DEAL (SOURCES-2 lot 5).",
-         technical_notes="CHANTIER SOURCES-2 lot 3 — la « Carte hypsométrique du littoral de La "
-                         "Réunion » (projet 02sprinr/04tsunami) n'est servie par le producteur "
-                         "qu'en WMS IMAGE : la couche Courbes_de_niveau_hypsometrique__en_metres "
-                         "est REFUSÉE en WFS (ServiceException, vérifié 13/09/2026) — aucun "
-                         "vecteur à ingérer sans convention. La donnée RÉGLEMENTAIRE de "
-                         "submersion est servie à la place par les aléas PPRL vecteur du projet "
-                         "01risque (georisque_alea subtypes submersion_marine / "
-                         "submersion_marine_cc, même mandat). Chantier : demander le vecteur "
-                         "hypsométrique à la DEAL (courrier lot 5)."),
+         technical_notes="PARTENARIAT REQUIS (NETTOYAGE-1, ex-a_faire) — la « Carte hypsométrique du "
+                         "littoral de La Réunion » (DEAL, projet 02sprinr/04tsunami) n'est servie par "
+                         "le producteur qu'en WMS IMAGE : la couche "
+                         "Courbes_de_niveau_hypsometrique__en_metres est REFUSÉE en WFS "
+                         "(ServiceException, vérifié 13/09/2026) — aucun vecteur à ingérer sans "
+                         "CONVENTION avec la DEAL. La donnée RÉGLEMENTAIRE de submersion est déjà "
+                         "servie à la place par les aléas PPRL vecteur du projet 01risque "
+                         "(georisque_alea subtypes submersion_marine / submersion_marine_cc). Ligne "
+                         "conservée (trace de l'évaluation) ; débloquable par convention DEAL "
+                         "(courrier lot 5)."),
     dict(name="BAN PLUS — lien adresse ↔ bâtiment (IGN)", category="cadastre",
          provider="IGN (Géoplateforme — BAN PLUS)",
          access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,

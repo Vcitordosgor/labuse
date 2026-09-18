@@ -51,13 +51,6 @@ def test_fiche_axe_qa_et_onglets():
     assert m._LAYER_ONGLET["icpe"] == "risques"
 
 
-def test_layers_whitelist():
-    # /map/layers.geojson n'expose que la whitelist (pas d'énumération libre de spatial_layers)
-    import pytest
-    from fastapi import HTTPException
-    with pytest.raises(HTTPException):
-        m.map_layers_geojson(kind="batiment", commune=None, limit=10, db=None)
-
 
 def test_pdf_verdict_pas_de_matrice_morte():
     # M-P (P2-62) : la matrice STATUT (Q/A morte) est SUPPRIMÉE du PDF.

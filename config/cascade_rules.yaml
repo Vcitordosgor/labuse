@@ -459,6 +459,55 @@ layers:
     enabled: true
     params: {}
 
+  # ─── FICHE-COUCHES-2 lot 1 — couches dont le thème était déjà croisé, la couche non ───
+  # (znieff↔environnement, tri_zone/endiguement↔inondation, bruit_carte↔bruit). Intersection
+  # simple, onglet `risques` (cf. served_cascade._ONGLET) ; sévérité dans la couche.
+  - name: znieff         # FICHE-COUCHES-2 : ZNIEFF type I/II (INPN) — inventaire du patrimoine naturel
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: znieff
+  - name: tri_zone       # FICHE-COUCHES-2 : scénarios d'inondation TRI (fréquent/moyen/extrême)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: tri_zone
+  - name: bruit_carte    # FICHE-COUCHES-2 : dépassements des cartes de bruit stratégiques (Lden/Ln)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: bruit_carte
+  - name: endiguement    # FICHE-COUCHES-2 : zone protégée derrière une digue (inondation résiduelle)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: endiguement
+
+  # ─── FICHE-COUCHES-2 lot 2 — deux couches à enjeu foncier (nouveaux handlers) ───
+  - name: bassin_versant # FICHE-COUCHES-2 : contexte hydrographique (INFO — délimitation, 0 point)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: bassin_versant
+  - name: zone_activite  # FICHE-COUCHES-2 : destination économique (onglet Marché)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: zone_activite
+
+  # ─── FICHE-COUCHES-4 lot 2 — cimetière (servitude 100 m, Risques) + VEFA neuf (Marché) ───
+  - name: cimetiere      # FICHE-COUCHES-4 : servitude de voisinage cimetière (≤ 100 m)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: cimetiere
+      cap_m: 100
+  - name: vefa_neuf      # FICHE-COUCHES-4 : contexte marché du logement neuf (INFO, onglet Marché)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: vefa_neuf
+
   # ───────────────────────── PHASE 2 — coûteuse / externe ─────────────────────────
 
   - name: dvf

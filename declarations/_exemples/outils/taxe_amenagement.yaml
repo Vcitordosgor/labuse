@@ -1,0 +1,27 @@
+# ── SURFACE VALIDÉE #2 (lot 0) : un outil ──
+# L'outil « Taxe d'aménagement » (/modules/taxe-amenagement). Robinet : outil_taxe_amenagement.
+surface:   outil_taxe_amenagement
+nom:       "Taxe d'aménagement"
+categorie: outil
+parent:    null
+route:     "/modules/taxe-amenagement"
+rendu:     sections
+
+donnees:
+  - quoi:  taxe_amenagement_eur
+    ou:    { rang: 10, etat: en_tete, section: "Résultat" }
+    comment:
+      libelle: "Taxe d'aménagement"
+      unite:   "€"
+      format:  euro
+      i:       "Calcul ligne-à-ligne (art. L331 c. urb.) : valeur forfaitaire × surface taxable × taux communal + part départementale. Le taux communal SAISI est obligatoire — jamais un défaut."
+    absence: "Taxe d'aménagement : taux communal non disponible pour cette commune — le montant n'est pas calculé (jamais estimé par défaut)."
+    absence_type: non_ingeree        # le taux communal est public (délibération DGFiP) ; absent ici = pas encore ingéré
+    pourquoi: "C'est le résultat de l'outil ; en tête, avec le détail ligne-à-ligne dessous."
+
+# ── Ce que le registre POURRAIT offrir à cet outil et qu'il ne prend pas (lot 3, liste d'idées) ──
+# Ces lignes ne sont PAS câblées — commentées, à trancher au lot 3. Le format les porte pour
+# que « ce qu'il pourrait prendre de plus » vive dans le fichier de la surface, pas en tête.
+#   - taxe_amenagement_estimee_eur  # le taux communal de référence (daté) — déjà servi sur la fiche
+#   - redevance_archeologie_eur     # la RAP se calcule sur la même assiette (art. L524 c. patr.)
+#   - sdp_residuelle_m2             # pré-remplir la surface taxable par le potentiel résiduel servi

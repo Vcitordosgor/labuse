@@ -151,8 +151,18 @@ _ONGLET = {
                "residuel_socle", "safer", "sar", "surface", "parc_national", "foret_publique",
                "friche", "ocs_ge"},
     "risques": {"risques", "sol_pollue", "cavite", "icpe", "mvt", "pente", "ravine",
-                "trait_de_cote", "abf", "ens", "eau", "bruit_route", "cinquante_pas", "sup"},
-    "marche": {"dvf", "sitadel", "amenites", "potentiel_foncier_region"},
+                "trait_de_cote", "abf", "ens", "eau", "bruit_route", "cinquante_pas", "sup",
+                # FICHE-COUCHES-2 lot 1 : couches manquantes rattachées à l'onglet Risques.
+                "znieff", "tri_zone", "bruit_carte", "endiguement",
+                # FICHE-COUCHES-2 lot 2 : bassin versant = contexte hydrographique (Risques).
+                "bassin_versant",
+                # FICHE-COUCHES-4 lot 2 : cimetière = servitude de voisinage (Risques).
+                "cimetiere"},
+    "marche": {"dvf", "sitadel", "amenites", "potentiel_foncier_region",
+               # FICHE-COUCHES-2 lot 2 : zone d'activité = destination économique (Marché).
+               "zone_activite",
+               # FICHE-COUCHES-4 lot 2 : contexte marché du logement neuf (VEFA).
+               "vefa_neuf"},
     "reseaux": {"acces"},
     "proprio": {"proprietaire", "age_dirigeant", "bodacc", "assemblage"},
 }

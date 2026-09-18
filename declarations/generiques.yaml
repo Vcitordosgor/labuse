@@ -1,0 +1,27 @@
+# ── LES SURFACES GÉNÉRIQUES ──
+# Elles consomment TOUT ce que le registre offre, d'office. Aucun fichier par surface : un seul
+# câble, gros, déclaré ici. Une source nouvelle y arrive sans qu'on écrive une ligne.
+generiques:
+  - surface: copilote
+    nom:     "Copilote"
+    route:   "/api/copilote-v2/ask"
+    consomme: tout
+    regle:   "Chaque chiffre d'une réponse porte son identifiant de registre, sinon la réponse est refusée avant d'être servie (verrou du chat, lot 5 — même verrou que les PDF)."
+
+  - surface: page_sources_client
+    nom:     "Sources de données"
+    route:   "/sources"
+    consomme: tout
+    regle:   "Liste les sources de la vitrine (88 servies) ; une source nouvelle apparaît d'elle-même."
+
+  - surface: fiche_manifeste
+    nom:     "Manifeste de la fiche parcelle"
+    route:   "/parcels/{idu}"
+    consomme: tout
+    regle:   "La fiche assemble en UN appel toutes les données de niveau parcelle que le registre offre ; les sections (fichiers spécifiques) décident du placement, le manifeste décide de la présence."
+
+  - surface: fiche_commune
+    nom:     "Fiche commune"
+    route:   "/communes/{commune}/contexte"
+    consomme: tout
+    regle:   "Consomme toutes les données de niveau commune que le registre offre."

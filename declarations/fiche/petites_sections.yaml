@@ -1,0 +1,51 @@
+# ── PRODUCTION (lot 2) : sections à une donnée — Fibre, Quartier, Filiation, Score ──
+# (le format = un fichier par SURFACE ; ces quatre surfaces distinctes sont regroupées dans un seul
+#  fichier LISIBLE via le champ `surface` — chaque bloc `---` est une surface. Cf. FORMAT : une
+#  surface = un `surface:` ; le loader lit chaque document YAML.)
+surface:   fiche_parcelle_fibre
+nom:       "Fibre (Réseaux et accès)"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  fibre_parcelle
+    ou:    { rang: 10, etat: en_tete, section: "Fibre" }
+    comment: { libelle: "Fibre (FTTH)", format: verdict, i: "Éligibilité fibre à l'adresse (Arcep) — état de déploiement et FTTH." }
+    absence: "Fibre : aucune information de déploiement à l'adresse."
+    absence_type: absente_ici
+    pourquoi: "Desserte numérique ; en tête de sa section."
+---
+surface:   fiche_parcelle_filiation
+nom:       "Historique cadastral (filiation DFI)"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  filiation_parcelle
+    ou:    { rang: 10, etat: replie, section: "Historique cadastral" }
+    comment: { libelle: "Filiation cadastrale", format: texte, i: "Parcelles mères et filles (documents de filiation DFI) — signale une division récente." }
+    absence: "Filiation cadastrale : aucune filiation connue (parcelle stable)."
+    absence_type: absente_ici
+    pourquoi: "Historique parcellaire ; technique, replié."
+---
+surface:   fiche_parcelle_score
+nom:       "Score d'opportunité (tier)"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  tier_opportunite
+    ou:    { rang: 10, etat: en_tete, section: "Classement" }
+    comment: { libelle: "Classement servi", format: classe, i: "Tier du run servi (brûlante → froide) — lecture seule, aucun rescoring." }
+    absence: "Classement : parcelle hors run servi."
+    absence_type: absente_ici
+    pourquoi: "Le verdict du modèle ; en tête, lecture seule."
+  - quoi:  rang_tier
+    ou:    { rang: 20, etat: replie, section: "Classement" }
+    comment: { libelle: "Rang dans le tier", format: entier }
+    absence: "Rang : non calculé pour cette parcelle."
+    absence_type: absente_ici
+    pourquoi: "Position fine dans le tier ; replié — à rebrancher."

@@ -16,6 +16,8 @@ vi.mock('../../../lib/api', () => ({
     rapport_agent: null,
   })),
   getAdminCircuitRobinet: vi.fn(), getAdminCircuitPompe: vi.fn(), getAdminCircuitNoteVersion: vi.fn(),
+  // PAGES-RANGEMENT-1 (lot 1) — la fiche réservoir liste désormais les couches carte alimentées.
+  getSourcesCouches: vi.fn(() => Promise.resolve({})),
   postAdminSourceVeilleInjecter: vi.fn(), postAdminCircuitFiltreServir: vi.fn(),
   postAdminCircuitFiltreRevenir: vi.fn(), postAdminCircuitRevenir: vi.fn(),
   postAdminFluxBascule: vi.fn(), postAdminFluxLancerRun: vi.fn(),

@@ -22,6 +22,15 @@ from .chiffres import CHIFFRES
 #: (les ids data_sources peuvent différer entre bases ; le nom est la clé stable du seed).
 _RESERVOIR_NAME_ILIKE: dict[str, str] = {
     "cadastre_api_carto": "Cadastre (API Carto%", "cadastre_etalab_bulk": "Cadastre Etalab%",
+    # COUCHES-REGISTRE-2 lot 1 — réservoir des contours communaux (repère limites_communes, seed créé).
+    "communes_ign": "Communes La Réunion — contours%",
+    # COUCHES-REGISTRE-2 lot 2 — les 6 réservoirs alimentant une couche mais que couches-info ne savait
+    # pas nommer (le « i » disait « source inconnue »). Ajoutés → source affichée pour endiguement,
+    # foret_publique, artificialisation, sar (et les doublons OCS/potentiel).
+    "endiguement": "Systèmes d'endiguement%", "forets_onf_bdtopo": "Forêts publiques%",
+    "ocsge": "OCS GE%", "bd_carto_ocs": "IGN BD CARTO%",
+    "potentiel_foncier_region": "data.regionreunion.com — Potentiel foncier%",
+    "potentiel_foncier_ods": "data.regionreunion.com — Potentiel foncier%",
     "gpu_plu_api_carto": "Urbanisme PLU/GPU%", "georisques_api": "Géorisques",
     "dvf": "DVF / valeurs%", "rge_alti": "RGE ALTI (altimétrie)%", "bd_topo": "BD TOPO IGN%",
     "ban": "Base Adresse Nationale%", "osm_overpass": "OpenStreetMap / Overpass%",

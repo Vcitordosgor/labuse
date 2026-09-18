@@ -650,13 +650,9 @@ export interface AntiFiche {
 }
 export const getAntiFiche = (idu: string) => j<AntiFiche>(`/anti-fiche/${idu}`)
 
-// M55-E : `limit` exposé — la couche ÉQUIPEMENTS (15 214 objets) dépassait le LIMIT 6000 par
-// défaut de l'endpoint → 61 % des marqueurs silencieusement absents en mode île (centre de
-// Saint-Denis VIDE alors que la base est pleine). Le payload complet pèse 271 Ko gzippé.
-export const getMapLayer = (kind: string, limit?: number) => {
-  const c = commune()
-  return j<ParcelFeatureCollection>(`/map/layers.geojson?kind=${kind}${c ? `&commune=${encodeURIComponent(c)}` : ''}${limit ? `&limit=${limit}` : ''}`)
-}
+// COUCHES-RETRAIT-1 lot 3 — `getMapLayer` (client de l'ancien `/map/layers.geojson`) retiré avec
+// l'endpoint : les 56 couches sont servies par le tuyau (tuiles MVT `/map/tiles/{kind}`, cf.
+// CouchesTuyau). Plus aucun appelant front depuis le retrait du lot 2.
 // M6.1 : capacités des tuiles île — `zonage_parcelle` dit si mvt_parcels embarque zone_fam
 // (sinon la couche « Zonage PLU (parcelles) » est grisée en mode île jusqu'au prochain build).
 // FIX-CARTE T1 — `carte_le` = date de la donnée peinte (build des tuiles) ; `perime` = tuiles en
@@ -1134,6 +1130,9 @@ export interface SourcesCouverture {
   analyse_label: string | null; analyse_date: string | null
 }
 export const getSourcesCouverture = () => j<SourcesCouverture>('/sources/couverture')
+// COUCHES-REGISTRE-2 lot 3 — le sens inverse : par nom de source, les couches carte qu'elle alimente.
+export type SourceCouche = { kind: string; nom: string }
+export const getSourcesCouches = () => j<Record<string, SourceCouche[]>>('/sources/couches')
 
 // ── Modules outils (Vague 1) ──
 // M129-C (Vic 19/08/2026) : modDivision retiré — division hors produit (endpoint dormant).

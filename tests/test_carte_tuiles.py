@@ -23,11 +23,6 @@ def test_zoom_borne_a_15_comme_la_source(client):
     assert client.get("/map/tiles/8/1/1.pbf").status_code == 204   # sous la source (minzoom 9)
 
 
-def test_overlay_zoom_borne_a_15(client):
-    """C2 — même borne haute pour les overlays MVT (ovmvt-* maxzoom 15)."""
-    assert client.get("/map/tiles/ov/plu_gpu_zone/16/1/1.pbf").status_code == 204
-    assert client.get("/map/tiles/ov/ppr/22/1/1.pbf").status_code == 204
-
 
 def test_meta_expose_la_fraicheur(client):
     """T1 — /map/tiles/meta annonce la date de ce que la carte peint + le drapeau de péremption,

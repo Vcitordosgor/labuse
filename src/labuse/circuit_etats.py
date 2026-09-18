@@ -93,6 +93,8 @@ def categorie_affichage(slug: str | None) -> str:
 #    data_sources (id numérique + nom) au slug du registre, pour allumer réservoir → catégories.
 #    Un réservoir absent de ce pont s'allume seul (comportement d'avant CIRCUIT-P), sans erreur. ──
 NOM_VERS_SLUG = {
+    # COUCHES-REGISTRE-2 lot 1 — seed des contours communaux (réservoir communes_ign, repère limites_communes).
+    'Communes La Réunion — contours (IGN ADMIN EXPRESS via geo.api.gouv, seed)': 'communes_ign',
     'RNB — Référentiel National des Bâtiments': 'rnb',
     'OCS GE (IGN) — occupation du sol et artificialisation': 'ocsge',
     'Cadastre (API Carto PCI)': 'cadastre_api_carto',

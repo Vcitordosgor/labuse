@@ -12,6 +12,7 @@ fonctionne à l'identique sur chaîne et tableau.
 """
 from __future__ import annotations
 
+import threading
 import time
 from collections import OrderedDict
 
@@ -263,7 +264,8 @@ def rebuild_mvt_servies(db: Session, run_label: str | None = None, log=lambda *_
                                   check_sources_declarees, check_unicite_pm)
     t0 = _t.perf_counter()
     n = build_mvt_table(db, run_label)
-    n_ov = build_overlay_mvt(db)
+    # COUCHES-RETRAIT-1 lot 3 — l'overlay MVT V1 (mvt_overlays : zonage/PPR île) est retiré : ces
+    # couches sont servies par le tuyau (/map/tiles/{kind}). Plus de build_overlay_mvt ici.
     pf = build_parcel_flags_table(db, run_label)
     log(f"✓ parcel_flags : {pf['n']} paires sur {pf['couches']} couches · cohérence OK · {pf['seconds']} s.")
     rr = _renouv.build(db, run_label=run_label, commit=False)
@@ -277,7 +279,7 @@ def rebuild_mvt_servies(db: Session, run_label: str | None = None, log=lambda *_
                        (key varchar(48) PRIMARY KEY, value varchar(64), updated_at timestamptz)"""))
     db.execute(text("""INSERT INTO mvt_meta (key, value, updated_at) VALUES ('run_label', :l, now())
                        ON CONFLICT (key) DO UPDATE SET value = :l, updated_at = now()"""), {"l": run_label})
-    log(f"✓ mvt_parcels : {n} parcelles · overlays {n_ov} · {round(_t.perf_counter() - t0, 1)} s "
+    log(f"✓ mvt_parcels : {n} parcelles · {round(_t.perf_counter() - t0, 1)} s "
         f"(run {run_label}).")
     # M48 : garde de péremption DANS le point unique → CLI `build-mvt` ET bascules la voient (post-build
     # elle confirme la fraîcheur ; entre deux builds elle crie si un re-score hors geste a eu lieu).
@@ -295,7 +297,7 @@ def rebuild_mvt_servies(db: Session, run_label: str | None = None, log=lambda *_
     # M-A : garde d'unicité du lien PM ↔ parcelle (sinon le build V sert un propriétaire arbitraire
     # pour un idu multi-lié) — même séquence, bruyante, non bloquante.
     upm = check_unicite_pm(session=db)
-    return {"n": n, "overlays": n_ov, "parcel_flags": pf["n"], "renouvellement": rr["n"],
+    return {"n": n, "parcel_flags": pf["n"], "renouvellement": rr["n"],
             "score_e": se["total"], "renouv_coherence": cr["statut"], "peremption_ok": per["ok"],
             "tables_coherence": coh, "run_fiche": coh_fiche.get("statut"), "sources_declarees": srcs,
             "unicite_pm": upm, "run_label": run_label}
@@ -316,16 +318,28 @@ _TILE_HEADERS = {"Cache-Control": "public, max-age=3600, stale-while-revalidate=
 # les octets périmés ne sont PLUS jamais retrouvés en cache (invalidation qui traverse le process,
 # sans redémarrage). Lecture mémoïsée (TTL court) pour ne pas frapper la DB à chaque tuile.
 _VERSION: dict = {"v": "", "at": -1e9}
-_VERSION_TTL_S = 10.0
+_VERSION_TTL_S = 60.0            # COUCHES-RECETTE-1 : rafraîchie au plus toutes les 60 s
+_VERSION_LOCK = threading.Lock()
 
 
 def _mvt_version(db: Session) -> str:
+    """COUCHES-RECETTE-1 — même garde single-flight que le tuyau (couches_tuyau._version) : un viewport
+    charge des dizaines de tuiles ; sans verrou, à l'expiration du TTL elles frappaient TOUTES `mvt_meta`
+    en même temps (stampede) → pression sur le pool. Un seul thread rafraîchit (TTL 60 s), les autres
+    servent la version en cache."""
     now = time.monotonic()
-    if now - _VERSION["at"] > _VERSION_TTL_S:
-        v = db.execute(text(
-            "SELECT to_char(updated_at, 'YYYYMMDDHH24MISSMS') FROM mvt_meta WHERE key = 'run_label'")).scalar()
-        _VERSION["v"] = v or ""
-        _VERSION["at"] = now
+    if now - _VERSION["at"] <= _VERSION_TTL_S:
+        return _VERSION["v"]
+    if not _VERSION_LOCK.acquire(blocking=_VERSION["at"] < 0):
+        return _VERSION["v"]
+    try:
+        if time.monotonic() - _VERSION["at"] > _VERSION_TTL_S:
+            v = db.execute(text(
+                "SELECT to_char(updated_at, 'YYYYMMDDHH24MISSMS') FROM mvt_meta WHERE key = 'run_label'")).scalar()
+            _VERSION["v"] = v or ""
+            _VERSION["at"] = time.monotonic()
+    finally:
+        _VERSION_LOCK.release()
     return _VERSION["v"]
 
 
@@ -429,56 +443,6 @@ SELECT ST_AsMVTGeom({geom_expr}, b.env, {extent}, {buffer}, true) AS geom,
         )
         SELECT ST_AsMVT(mvt.*, 'parcels', {extent}, 'geom') FROM mvt
     """), {"z": z, "x": x, "y": y}).scalar()
-    body = bytes(data) if data else b""
-    _CACHE[key] = body
-    if len(_CACHE) > _CACHE_MAX:
-        _CACHE.popitem(last=False)
-    return Response(content=body, media_type="application/x-protobuf", headers=_TILE_HEADERS)
-
-
-# ═══════════ OVERLAYS MVT (R6, revue Vic n°2) — zonage PLU + PPR île entière ═══════════
-# 6 306 zones (29 Mo) + 164 PPR (88 Mo, mégapolygones 320k pts) : le GeoJSON île ne tient
-# pas → même mécanique matérialisée que mvt_parcels. Reconstruit par `labuse build-mvt`.
-
-OVERLAY_KINDS = ("plu_gpu_zone", "ppr")
-
-
-def build_overlay_mvt(db: Session) -> int:
-    db.execute(text("DROP TABLE IF EXISTS mvt_overlays"))
-    db.execute(text("""
-        CREATE TABLE mvt_overlays AS
-        SELECT id, kind, subtype, name, commune, ST_Transform(geom, 3857) AS geom_3857
-        FROM spatial_layers WHERE kind IN ('plu_gpu_zone', 'ppr')"""))
-    db.execute(text("CREATE INDEX mvt_overlays_gix ON mvt_overlays USING GIST (geom_3857)"))
-    db.execute(text("CREATE INDEX mvt_overlays_kind ON mvt_overlays (kind)"))
-    db.execute(text("ANALYZE mvt_overlays"))
-    n = db.execute(text("SELECT count(*) FROM mvt_overlays")).scalar() or 0
-    db.commit()
-    _CACHE.clear()
-    return int(n)
-
-
-@router.get("/map/tiles/ov/{kind}/{z}/{x}/{y}.pbf")
-def mvt_overlay_tile(kind: str, z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
-    """Tuile MVT d'une couche overlay (couche = `kind`) — mode île."""
-    # FIX-CARTE C2 : borne haute alignée sur la source front (ovmvt-* maxzoom 15).
-    if kind not in OVERLAY_KINDS or z < 8 or z > 15:
-        return Response(status_code=204)
-    key = ("ov", _mvt_version(db), kind, z, x, y)   # FIX-CARTE T3 : clé versionnée
-    if key in _CACHE:
-        _CACHE.move_to_end(key)
-        return Response(content=_CACHE[key], media_type="application/x-protobuf", headers=_TILE_HEADERS)
-    if not db.execute(text("SELECT to_regclass('mvt_overlays')")).scalar():
-        return Response(status_code=204)
-    data = db.execute(text("""
-        WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env),
-        mvt AS (
-          SELECT ST_AsMVTGeom(m.geom_3857, b.env, 4096, 64, true) AS geom,
-                 m.subtype, m.name, m.commune
-          FROM mvt_overlays m, b
-          WHERE m.kind = :k AND m.geom_3857 && b.env)
-        SELECT ST_AsMVT(mvt.*, :k, 4096, 'geom') FROM mvt"""),
-        {"z": z, "x": x, "y": y, "k": kind}).scalar()
     body = bytes(data) if data else b""
     _CACHE[key] = body
     if len(_CACHE) > _CACHE_MAX:

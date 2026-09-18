@@ -1,0 +1,174 @@
+# ── PRODUCTION (lot 2) : sections restantes de la fiche (docs YAML séparés par `---`, 1 par surface) ──
+# Ordre du regard, repli par défaut. Certaines données restent `non_branchee` (producteur à câbler) —
+# déclarées ici pour être VUES et comptées dans la dette (Vic veut voir la liste).
+surface:   fiche_parcelle_constructibilite
+nom:       "Constructibilité"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  potentiel_verdict
+    ou:    { rang: 10, etat: en_tete, section: "Ce qui est constructible" }
+    comment: { libelle: "Potentiel (verdict)", format: verdict, i: "Phrase du bloc « au sol / en hauteur / table rase » (moteur potentiel, run servi)." }
+    absence: "Potentiel : rien d'évaluable (zone non constructible ou données manquantes)."
+    absence_type: absente_ici
+    pourquoi: "Le verdict de constructibilité ; en tête."
+  - quoi:  capacite_logements
+    ou:    { rang: 20, etat: en_tete, section: "Ce qui est constructible" }
+    comment: { libelle: "Capacité (logements)", format: entier, i: "Logements estimés du scénario table rase (après plafond de densité et stationnement)." }
+    absence: "Capacité (logements) : non estimable sur cette parcelle."
+    absence_type: absente_ici
+    pourquoi: "L'ordre de grandeur du programme ; en tête."
+  - quoi:  charge_fonciere_eur
+    ou:    { rang: 30, etat: replie, section: "Bilan indicatif" }
+    comment: { libelle: "Charge foncière (indicative)", unite: "€", format: euro, i: "Bilan à rebours INDICATIF sur hypothèses PAR DÉFAUT du secteur (aucun projet saisi) — à valider. Une charge négative se dit en français, jamais en euros négatifs." }
+    absence: "Charge foncière : bilan non calculable (prix de sortie ou SDP manquants)."
+    absence_type: absente_ici
+    pourquoi: "Ordre de grandeur indicatif, ses hypothèses dites ; replié (pas un chiffre à défaut affiché comme ferme)."
+  - quoi:  taxe_amenagement_estimee_eur
+    ou:    { rang: 40, etat: replie, section: "Bilan indicatif" }
+    comment: { libelle: "Taxe d'aménagement — taux communal", unite: "%", format: pourcent, i: "Taux communal de la taxe d'aménagement. Sans projet, SEUL le taux est servi : le montant en euros se calcule sur la surface de plancher CRÉÉE par un projet (art. L331 c. urb.), chiffré au Financier." }
+    absence: "Taxe d'aménagement : taux communal non renseigné pour cette commune."
+    absence_type: non_ingeree
+    pourquoi: "Le taux (référence), avec la phrase disant sur quoi le montant se calcule ; replié."
+---
+surface:   fiche_parcelle_proprietaire
+nom:       "Propriétaire"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  type_proprietaire
+    ou:    { rang: 10, etat: en_tete, section: "Qui détient" }
+    comment: { libelle: "Type de propriétaire", format: classe }
+    absence: "Type de propriétaire : non déterminé."
+    absence_type: absente_ici
+    pourquoi: "Qui détient oriente l'approche ; en tête — à rebrancher (producteur propriétaire)."
+  - quoi:  proprietaire_timeline_liste
+    ou:    { rang: 20, etat: replie, section: "Qui détient" }
+    comment: { libelle: "Historique de détention (PM)", format: liste }
+    absence: "Historique de détention : aucun millésime de détention connu."
+    absence_type: absente_ici
+    pourquoi: "Parcours de détention ; replié — à rebrancher."
+---
+surface:   fiche_parcelle_division
+nom:       "Division (copropriétés/lots)"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  divisible_classe
+    ou:    { rang: 10, etat: en_tete, section: "Division" }
+    comment: { libelle: "Divisibilité", format: classe }
+    absence: "Divisibilité : non évaluée."
+    absence_type: absente_ici
+    pourquoi: "Potentiel de division ; en tête — à rebrancher."
+  - quoi:  coproprietes_liste
+    ou:    { rang: 20, etat: replie, section: "Division" }
+    comment: { libelle: "Copropriétés (RNIC)", format: liste }
+    absence: "Copropriétés : aucune copropriété immatriculée sur la parcelle."
+    absence_type: absente_ici
+    pourquoi: "Lots en copropriété ; replié — à rebrancher."
+---
+surface:   fiche_parcelle_solaire
+nom:       "Solaire (productible)"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  prod_spec_kwh_kwc
+    ou:    { rang: 10, etat: replie, section: "Solaire" }
+    comment: { libelle: "Productible solaire", unite: "kWh/kWc", format: entier }
+    absence: "Productible solaire : non calculé sur cette toiture."
+    absence_type: absente_ici
+    pourquoi: "Aptitude solaire du toit ; replié — à rebrancher (producteur solaire)."
+---
+surface:   fiche_parcelle_confiance
+nom:       "Confiance données"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  verdict_icd
+    ou:    { rang: 10, etat: replie, section: "Confiance" }
+    comment: { libelle: "Indice de confiance (ICD)", format: verdict }
+    absence: "Indice de confiance : non calculé."
+    absence_type: absente_ici
+    pourquoi: "Fiabilité des données de la fiche ; replié — à rebrancher (ICD)."
+---
+surface:   fiche_parcelle_dispositifs
+nom:       "Dispositifs et périmètres"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+# FUSION (Vic) : « Dispositifs et périmètres » ABSORBE « Dispositifs et périmètres (droit des sols) » —
+# même sujet, un lecteur ne doit pas hésiter entre deux sections. dispositifs_parcelle (ER/EBC/DPU/PEB)
+# rejoint ici (le droit des sols), sous les dispositifs fiscaux/urbains.
+donnees:
+  - quoi:  perimetres_dispositifs_liste
+    ou:    { rang: 10, etat: en_tete, section: "Dispositifs fiscaux et urbains" }
+    comment: { libelle: "Dispositifs (QPV, ANRU, ZFANG, FRR…)", format: liste, i: "Dispositifs territoriaux (fiscaux/urbains) intersectant la parcelle." }
+    absence: "Dispositifs : la parcelle n'est dans aucun dispositif territorial repéré."
+    absence_type: absente_ici
+    pourquoi: "Dispositifs fiscaux/urbains ; en tête."
+  - quoi:  dispositifs_parcelle
+    ou:    { rang: 20, etat: replie, section: "Droit des sols (ER · EBC · DPU · PEB)" }
+    comment: { libelle: "Prescriptions du droit des sols", format: liste, i: "Emplacements réservés, espaces boisés classés, droit de préemption, plan d'exposition au bruit intersectant la parcelle." }
+    absence: "Droit des sols : aucune prescription (ER/EBC/DPU/PEB) sur la parcelle."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Prescriptions opposables du droit des sols ; replié, dans la même section que les dispositifs."
+---
+surface:   fiche_parcelle_autour
+nom:       "Autour de cette parcelle"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+# FUSION (Vic) : « Autour de cette parcelle » ABSORBE « Quartier INSEE » — même question (le secteur).
+# iris_quartier (le quartier + sa population) rejoint ici, en tête du secteur.
+donnees:
+  - quoi:  iris_quartier
+    ou:    { rang: 5, etat: en_tete, section: "Le secteur" }
+    comment: { libelle: "Quartier (IRIS)", format: texte, i: "Quartier IRIS de la parcelle (INSEE) et sa population." }
+    absence: "Quartier (IRIS) : parcelle hors découpage IRIS connu."
+    absence_type: absente_ici
+    pourquoi: "L'ancrage du bien dans son quartier ; en tête du secteur."
+  - quoi:  population_zone
+    ou:    { rang: 10, etat: replie, section: "Le secteur" }
+    comment: { libelle: "Population du secteur", format: entier, i: "Population du quartier/secteur autour de la parcelle." }
+    absence: "Population du secteur : non disponible."
+    absence_type: absente_ici
+    pourquoi: "Le voisinage humain ; replié (sous le quartier)."
+  - quoi:  voisinage_100m_liste
+    ou:    { rang: 20, etat: replie, section: "Le secteur" }
+    comment: { libelle: "Ventes voisines (100 m)", format: liste }
+    absence: "Ventes voisines : aucune vente à moins de 100 m."
+    absence_type: absente_ici
+    pourquoi: "Comparables très proches ; replié — à rebrancher."
+  - quoi:  n_permis_proximite
+    ou:    { rang: 30, etat: replie, section: "Le secteur" }
+    comment: { libelle: "Permis à proximité", format: entier }
+    absence: "Permis à proximité : aucun permis récent repéré."
+    absence_type: absente_ici
+    pourquoi: "Dynamique de construction autour ; replié — à rebrancher."
+---
+surface:   fiche_parcelle_urbanisme
+nom:       "Règlement d'urbanisme"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  reglement_plu_bloc
+    ou:    { rang: 10, etat: en_tete, section: "Règlement" }
+    comment: { libelle: "Règlement de la zone (extraits)", format: liste, i: "Extraits du règlement de la zone PLU applicable à la parcelle." }
+    absence: "Règlement de la zone : extraits non disponibles pour cette zone."
+    absence_type: absente_ici
+    pourquoi: "Les règles applicables ; en tête."

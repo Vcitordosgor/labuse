@@ -1,0 +1,502 @@
+[
+ {
+  "kind": "zfang",
+  "famille": "dispositifs",
+  "panel": true,
+  "i": "Zone Franche d'Activité Nouvelle Génération — exonérations fiscales pour les entreprises. Deux régimes : renforcée (avantage majoré) et standard.",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "frr",
+  "famille": "dispositifs",
+  "panel": true,
+  "i": "France Ruralités Revitalisation (ex-ZRR) — exonérations fiscales et sociales en zone rurale. La commune peut être classée en totalité ou en partie.",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "tva_primo",
+  "famille": "dispositifs",
+  "panel": true,
+  "i": "Périmètre de TVA à taux réduit (5,5 %) pour l'accession sociale — buffer 500 m DÉRIVÉ des QPV (ANRU / quartiers prioritaires).",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "qpv",
+  "famille": "dispositifs",
+  "panel": true,
+  "i": "Quartiers Prioritaires de la politique de la Ville (2024) — abattement TFPB, exonérations, priorités de rénovation.",
+  "montre_source": false,
+  "montre_millesime": true,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "anru",
+  "famille": "dispositifs",
+  "panel": true,
+  "i": "Périmètres NPNRU / ANRU (nouveau programme national de renouvellement urbain) — quartiers en rénovation.",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "parc_national",
+  "famille": "environnement",
+  "panel": true,
+  "i": "Périmètre du Parc national de La Réunion. Deux assiettes : le CŒUR (~40 % de l'île, inconstructible) et l'AIRE D'ADHÉSION (réglementée mais constructible). Urbanisation très restreinte.",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "bassin_versant",
+  "famille": "environnement",
+  "panel": true,
+  "i": "Territoire de drainage — bassins versants (BD Carthage / hydrographie). Rien à voir avec les ouvrages (barrages).",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "znieff",
+  "famille": "environnement",
+  "panel": true,
+  "i": "Inventaire du patrimoine naturel (INPN/MNHN PatriNat, maj 2025). Type I : secteur de fort intérêt biologique, plus restreint et sensible ; type II : grand ensemble naturel peu modifié. PAS une interdiction — un signal fo",
+  "montre_source": true,
+  "montre_millesime": true,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "enp",
+  "famille": "environnement",
+  "panel": true,
+  "i": "ENP par type (réserves naturelles dont marine, APB, conservatoire du littoral, réserves biologiques, Ramsar, sites classés/inscrits) — INPN + compléments DEAL Carmen. Protection réglementaire, souvent rédhibitoire.",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "zone_humide",
+  "famille": "environnement",
+  "panel": true,
+  "i": "Inventaires DEAL par secteurs (2003, 2009 + espaces fonctionnels, habitats 2011, basse altitude 2019) — couverture PARTIELLE : l'absence d'inventaire n'est pas une preuve d'absence.",
+  "montre_source": true,
+  "montre_millesime": true,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "foret_publique",
+  "famille": "environnement",
+  "panel": true,
+  "i": "Forêts domaniales et publiques (ONF/BD TOPO).",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "amenite_bpe",
+  "famille": "equipements",
+  "panel": true,
+  "i": "Base Permanente des Équipements (INSEE) par domaine A–G : services aux particuliers, commerces, enseignement, santé, transports, sport/loisirs, tourisme. Anneau sombre = source INSEE.",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "amenite",
+  "famille": "equipements",
+  "panel": true,
+  "i": "Aménités OpenStreetMap : mairie, école, santé, commerce, police, marché, crèche, collège/lycée. Icône par type, clic → nom.",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "sar",
+  "famille": "foncier",
+  "panel": true,
+  "i": "Schéma d'Aménagement Régional — vocations. C'est aussi le « potentiel foncier Région » indicatif (même géométrie, un seul nom désormais).",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "safer",
+  "famille": "foncier",
+  "panel": true,
+  "i": "Parcelles agricoles déclarées (RPG) — même géométrie que le périmètre de préemption SAFER. UNE SEULE couche (le recensement a montré des lignes identiques : ma séparation de la veille était fausse).",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "zone_activite",
+  "famille": "foncier",
+  "panel": true,
+  "i": "Zones d'activité économique (vocation, distinct des équipements BPE).",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "friche",
+  "famille": "foncier",
+  "panel": true,
+  "i": "Friches recensées (Cartofriches + recensement AGORAH des friches urbaines BÂTIES, bâtiment désaffecté). Statut : avec projet / potentielle / sans projet.",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "piscine_cosia",
+  "famille": "foncier",
+  "panel": true,
+  "i": "Trois niveaux de confiance. Aucune n'est fiscale (signal « piscine non déclarée » fermé sans fichiers fonciers DGFiP).",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "construction_surfacique",
+  "famille": "fond_de_plan",
+  "panel": true,
+  "i": "Ouvrages surfaciques construits (BD TOPO) : barrages, ponts, dalles. 305 objets sur l'île.",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "construction_lineaire",
+  "famille": "fond_de_plan",
+  "panel": true,
+  "i": "Murs de soutènement et constructions linéaires (BD TOPO) — enjeu de terrassement en pente.",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "batiment",
+  "famille": "fond_de_plan",
+  "panel": false,
+  "raison": "hors panneau (bâti 3D)",
+  "i": ""
+ },
+ {
+  "kind": "vefa_neuf",
+  "famille": "marche",
+  "panel": true,
+  "i": "Prix médian du neuf VEFA par commune (DVF, ventes en l'état futur d'achèvement) — choroplèthe par tranche €/m². Les communes sous 10 ventes sont GRISÉES (prix non fiable), pas peintes en tranche.",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "cimetiere",
+  "famille": "patrimoine",
+  "panel": true,
+  "i": "Cimetières (BD TOPO) — servitude de voisinage (100 m).",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "abf",
+  "famille": "patrimoine",
+  "panel": true,
+  "i": "Périmètres ABF / monuments (arrêtés).",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "limites_communes",
+  "famille": "reperes",
+  "panel": true,
+  "i": "Limites administratives des 24 communes de La Réunion (contours IGN).",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "limites_parcelles",
+  "famille": "reperes",
+  "panel": true,
+  "i": "Contour cadastral de chaque parcelle (DGFiP). Repère de base pour se situer.",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "ligne_mt",
+  "famille": "reseaux",
+  "panel": true,
+  "i": "Réseau HTA 15-20 kV EDF (aérien + souterrain) — tracé indicatif (sécurité publique), ne remplace pas une DT-DICT. Distinct de la HTB.",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "ligne_ht",
+  "famille": "reseaux",
+  "panel": true,
+  "i": "Réseau de transport 63/90 kV (BD TOPO, aérien) — servitude de voisinage, champ électromagnétique.",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "tri_zone",
+  "famille": "risques",
+  "panel": true,
+  "i": "Territoires à risque important d'inondation (Géorisques).",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "alea_inondation",
+  "famille": "risques",
+  "panel": true,
+  "i": "Aléa inondation (Géorisques), gradué par classe (faible / moyen / fort).",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "alea_mvt",
+  "famille": "risques",
+  "panel": true,
+  "i": "Aléa mouvement de terrain (Géorisques), gradué par classe (faible → très élevé).",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "casias",
+  "famille": "risques",
+  "panel": true,
+  "i": "Inventaire historique des sites industriels/de service (Géorisques CASIAS + sites en instruction) — informatif.",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "bruit_carte",
+  "famille": "risques",
+  "panel": true,
+  "i": "Cartes de bruit stratégiques — zones de dépassement des seuils (informatif).",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "bruit_route",
+  "famille": "risques",
+  "panel": true,
+  "i": "Classement sonore des voies (catégories 1 à 5) — isolement acoustique requis.",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "peb",
+  "famille": "risques",
+  "panel": true,
+  "i": "Plan d'Exposition au Bruit aérien : zones A (fort) à D — opposable (constructibilité limitée).",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "endiguement",
+  "famille": "risques",
+  "panel": true,
+  "i": "Digues et zones protégées (DEAL). ⚠ Ni classe ni niveau de protection fournis — une digue ne garantit aucun niveau de sécurité.",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "trait_de_cote",
+  "famille": "risques",
+  "panel": true,
+  "i": "Recul du trait de côte (Cerema/GéoLittoral).",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "dpf",
+  "famille": "risques",
+  "panel": true,
+  "i": "Ravines du domaine public fluvial (DEAL) et leurs reculs — inconstructibilité de berge. (Absorbe la couche ravine, fusion recette.)",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "ppr",
+  "famille": "risques",
+  "panel": true,
+  "i": "Plan de Prévention des Risques (document multirisque, opposable).",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "icpe",
+  "famille": "risques",
+  "panel": true,
+  "i": "Installations classées (Géorisques), par régime.",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "sis",
+  "famille": "risques",
+  "panel": true,
+  "i": "Secteurs d'Information sur les Sols (Géorisques) — servitude opposable aux autorisations d'urbanisme.",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "cavite",
+  "famille": "risques",
+  "panel": true,
+  "i": "Cavités souterraines (Géorisques).",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "tcsp",
+  "famille": "transport",
+  "panel": true,
+  "i": "Transport en commun en site propre : voies en site propre (OSM) + stations + zone des 800 m (L151-36, parcelles couvertes teintées où le stationnement peut être allégé). UNE couche, 3 kinds unis.",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "axe_structurant",
+  "famille": "transport",
+  "panel": true,
+  "i": "Axes routiers structurants (BD TOPO, importance IGN 1-2) — l'armature viaire.",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "transport_ligne",
+  "famille": "transport",
+  "panel": true,
+  "i": "Réseau de transport en commun (bus + téléphérique) : lignes et arrêts GTFS des 6 réseaux, couleur par réseau. Deux sous-calques (lignes / arrêts) sous un seul interrupteur.",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "telepherique",
+  "famille": "transport",
+  "panel": true,
+  "i": "Téléphérique urbain de Saint-Denis. En service : le Papang (CINOR, réseau Citalis) — ligne (tireté) + stations. En projet : le Payanké (Bellepierre ↔ La Montagne, ~2029) — tracé officiel non publié, non représenté.",
+  "montre_source": true,
+  "montre_millesime": true,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "pole_echange",
+  "famille": "transport",
+  "panel": true,
+  "i": "Pôles d'échange multimodaux (gares routières OSM) — les nœuds du réseau.",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "transport_arret",
+  "famille": "transport",
+  "panel": false,
+  "raison": "fusionné (transport_public)",
+  "i": ""
+ },
+ {
+  "kind": "zonage_parcelle",
+  "famille": "urbanisme",
+  "panel": true,
+  "i": "Zone du PLU CALIBRÉE parcelle par parcelle (famille U urbaine / AU à urbaniser / A agricole / N naturelle). L'étiquette de zone (Ncu, U1b…) apparaît dès le zoom commune.",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "plu_gpu_zone",
+  "famille": "urbanisme",
+  "panel": true,
+  "i": "Zones du PLU telles que publiées au Géoportail de l'Urbanisme (GPU). Deux teintes : U (urbaine, en vert) / le reste A·AU·N (brun). Pour l'étiquette de zone parcelle par parcelle, voir « Zonage PLU par parcelle (calibré) ",
+  "montre_source": true,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "cinquante_pas",
+  "famille": "urbanisme",
+  "panel": true,
+  "i": "Réserve des 50 pas géométriques (bande littorale du domaine public, ~81,20 m) — inconstructibilité de principe, gestion État.",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "artificialisation",
+  "famille": "urbanisme",
+  "panel": true,
+  "i": "Occupation du sol OCS GE : sols artificialisés 2022 + évolution renaturée 2017→2022 (matrice décret 2023-1096, suivi ZAN).",
+  "montre_source": false,
+  "montre_millesime": true,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "dpu",
+  "famille": "urbanisme",
+  "panel": true,
+  "i": "Périmètres de DPU (simple / renforcé) — la commune peut se substituer à l'acquéreur lors d'une vente.",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "sup",
+  "famille": "urbanisme",
+  "panel": true,
+  "i": "Servitudes d'utilité publique, opposables au PLU. Colorées PAR FAMILLE : AC monuments/sites/réserves/SPR, PM plans de prévention des risques, EL littoral/domaine public. Le code et le libellé exact au clic.",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "er",
+  "famille": "urbanisme",
+  "panel": true,
+  "i": "Emplacements réservés du PLU (voirie, équipement, espace vert) — l'emprise est grevée au bénéfice d'une collectivité.",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ },
+ {
+  "kind": "ebc",
+  "famille": "urbanisme",
+  "panel": true,
+  "i": "Espaces boisés classés du PLU — protection stricte du boisement, tout défrichement interdit (art. L113-1).",
+  "montre_source": false,
+  "montre_millesime": false,
+  "montre_date_controle": false
+ }
+]

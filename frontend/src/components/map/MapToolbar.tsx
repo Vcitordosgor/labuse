@@ -3,11 +3,11 @@ import { useApp, type Basemap, type MapTool } from '../../store/useApp'
 import { ORTHO_YEARS } from './basemaps'   // FIX-FONDS B5 — millésimes partagés avec l'outil TEMPS
 import { Tip } from '../Tip'   // M62-P1 (c) : infobulles à 150 ms (survol) / immédiat (focus/clic)
 
-// M63-P1 (a) : le fond CLAIR rejoint le sélecteur existant (pas un nouveau bouton). Libellés simples.
 // M105 P4.2 — SOMBRE EN PREMIER (défaut au boot : readBasemap = 'dark', vérifié).
+// COUCHES-STYLE-6 : le fond « Clair » est RETIRÉ du sélecteur (bouton + option). Restent Sombre,
+// Plan IGN et Ortho IGN, inchangés. (M63-P1 avait ajouté Clair au sélecteur ; on l'en retire.)
 const BASEMAPS: { key: Basemap; label: string }[] = [
   { key: 'dark', label: 'Sombre' },
-  { key: 'clair', label: 'Clair' },
   { key: 'plan', label: 'Plan IGN' },
   { key: 'ortho', label: 'Ortho IGN' },
 ]

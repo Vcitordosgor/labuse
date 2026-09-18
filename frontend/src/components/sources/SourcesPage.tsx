@@ -1,42 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { getSources, getSourcesCouverture } from '../../lib/api'
-import { CLIENT } from '../../lib/strings'
 import { TOKENS } from '../../lib/tokens'
 import type { SourceInfo } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 
-// ── FIX-SOURCES S6 (corrige M6 Phase 2a) : la licence est DÉRIVÉE de legal_notes CÔTÉ SERVEUR
-// (`app._source_licence`) et servie dans `license_label` / `license_url`. Le front ne code PLUS aucune
-// licence ni aucune carte par nom : corriger la mention en base suffit, la vitrine suit. Défaut sûr
-// si un vieux cache n'a pas encore le champ : « Licence à confirmer » (jamais un libellé inventé).
-function licence(s: SourceInfo): string { return s.license_label || 'Licence à confirmer' }
+// PAGE-SOURCES-1 (lot 2) — la LICENCE (« licence ouverte »…) est retirée de la vitrine cliente : le
+// client voit la source et son producteur, pas la mention de licence (elle reste en base, lue ailleurs).
 
-// RETOURS-9 (Q11.3) — les prédicats de MÉTHODE DE VEILLE (sondable/suiviManuel) ne servent plus côté
-// client : la « dernière colonne » (collecte manuelle/automatique) disparaît. Le client lit source ·
-// producteur · publié le · à jour. Ces distinctions restent dans Données (admin).
-// RETOURS-8 (R2) — le client ne voit que DEUX états, et le mot « retard » n'apparaît JAMAIS. L'arbitre
-// unique du serveur (etats_sources → `etat_client`) tranche : « pas à jour » = une version plus récente
-// existe chez le producteur et n'est pas encore intégrée (« mise à jour en cours », jamais rouge) ; tout
-// le reste = « à jour ». Les anciens prédicats fraîcheur (en_retard / en_panne / en_erreur / amont en
-// avance) NE SONT PLUS surfacés côté client : leur détail vit au dashboard admin (R1).
-const pasAJour = (s: SourceInfo) => s.etat_client === 'pas_a_jour'
-const aJour = (s: SourceInfo) => !pasAJour(s)
-// RETOURS-11 A8 — `versionMeta`/`majReelle`/`millesimeNote` (fraîcheur amont + « ingéré le ») retirés :
-// la colonne de version n'est plus rendue côté client (information admin, elle vit dans Données).
-
-// FIX-SOURCES S4 — la FIABILITÉ (data_sources.reliability_level) était STOCKÉE mais jamais rendue
-// (champ mort). On la montre quand elle appelle une réserve honnête (« à confirmer » / convention /
-// légal) ; « vérifié » = l'état par défaut d'une source servie, pas un badge (ce serait du bruit).
-function fiabiliteBadge(s: SourceInfo): { label: string; title: string } | null {
-  switch (s.reliability_level) {
-    case 'a_confirmer': return { label: 'fiabilité à confirmer', title: 'Donnée servie, mais sa fiabilité (ou sa licence) reste à confirmer avec le producteur.' }
-    case 'sous_convention': return { label: 'accès sous convention', title: 'Accès encadré par une convention avec le producteur.' }
-    case 'legal': return { label: 'accès légal restreint', title: 'Réutilisation juridiquement encadrée.' }
-    default: return null
-  }
-}
+// PAGES-RANGEMENT-1 (lot 1) — L'EXPLOITATION SORT DE L'APP CLIENTE. Le client voit QUELLES sources
+// alimentent LABUSE et leur MILLÉSIME, rien d'autre. Tout ce qui relève de l'exploitation — fraîcheur,
+// états (« à jour » / « mise à jour en cours »), compteur « X à jour », fiabilité (reliability_level) —
+// est retiré ici : ce détail vit au dashboard admin (Données / le Circuit). Les pastilles de couches
+// par source (COUCHES-REGISTRE-2 lot 3) ont elles aussi migré vers la fiche du réservoir (Données).
 
 // ── Badge (classe .badge de la maquette) : mono, majuscule, 3 variantes. `auto` = mint (le producteur
 // expose une date interrogeable), `late` = warn (#D9873D, en retard sur sa cadence), `dashed` = pointillé
@@ -51,82 +28,50 @@ function Badge({ kind, children, title }: { kind: 'auto' | 'late' | 'dashed' | '
 }
 
 function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
-  const ref = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLElement | null>(null)
   useEffect(() => { if (focused) ref.current?.scrollIntoView({ block: 'center' }) }, [focused])
+  const setRef = (el: HTMLElement | null) => { ref.current = el }
 
-  const majEnCours = pasAJour(s)
-  const lic = licence(s)
-  const fiab = fiabiliteBadge(s)
-  const prod = [s.provider, lic].filter(Boolean)
-
-  return (
-    // RECETTE-1 R31 — survol vert opaque (hover-fill) comme le reste de l'app, au lieu du lavis blanc.
-    <div ref={ref} data-source-row
-      className={`hover-fill grid grid-cols-[14px_1fr_20px] items-center gap-x-3.5 gap-y-1.5 border-b border-line px-4 py-3 last:border-b-0 md:grid-cols-[14px_1fr_190px_20px] ${focused ? 'bg-mint/[0.06]' : ''}`}>
-      {/* RETOURS-8 (R2) — pastille JAMAIS rouge : mint (à jour) ou mint atténué (mise à jour en cours).
-          Le client ne doit jamais croire que LABUSE est en retard. */}
-      <span className="h-[7px] w-[7px] shrink-0 rounded-full"
-        style={majEnCours
-          ? { background: TOKENS.mint, opacity: 0.5, boxShadow: '0 0 0 3px rgba(74,222,128,.08)' }
-          : { background: TOKENS.mint, boxShadow: '0 0 0 3px rgba(74,222,128,.10)' }}
-        title={majEnCours ? 'Mise à jour en cours (une version plus récente arrive)' : 'À jour : la dernière version publiée par le producteur est dans l\'app'} />
-
-      {/* nom + badges d'état */}
-      <span className="flex flex-wrap items-center gap-2 text-[13.5px] text-txt">
-        {s.name}
-        {/* RETOURS-8 (R2) — le seul état « non à jour » possible côté client : « mise à jour en cours »
-            (une version plus récente existe chez le producteur). Neutre, jamais rouge, jamais « retard ». */}
-        {majEnCours && (
-          <Badge kind="auto" title="Une version plus récente existe chez le producteur ; son intégration est en cours.">
-            <span data-source-maj>mise à jour en cours</span>
-          </Badge>
+  // PAGE-SOURCES-1 (lot 2) — la ligne est ALIGNÉE À GAUCHE (plus de colonne-espaceur fantôme qui la
+  // décalait) et TOUTE la ligne est CLIQUABLE vers la page du producteur (plus seulement la flèche).
+  // Retiré : la licence (« licence ouverte »…) et le millésime (« Publié le … »). Restent le nom, le
+  // producteur, la cadence habituelle du producteur et la couverture réelle.
+  const contenu = (
+    <>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <span className="flex flex-wrap items-center gap-2 text-[13.5px] text-txt">
+            {s.name}
+            {/* nature (« proxy — donnée approchée ») : honnêteté sur la donnée, pas un état d'exploitation. */}
+            {s.nature?.dashed && (
+              <Badge kind="dashed" title={s.nature.detail}><span data-source-nature>{s.nature.label}</span></Badge>
+            )}
+          </span>
+          {s.provider && <span data-source-provider className="shrink-0 text-[12px] text-txt-dim">{s.provider}</span>}
+        </div>
+        {/* cadence habituelle du producteur (à titre d'information ; jamais un jugement, jamais « retard »). */}
+        {s.cadence_mention && (
+          <p data-source-publication className="mt-1 text-[12px] leading-snug text-txt-dim">
+            Le producteur publie habituellement {s.cadence_mention}.
+          </p>
         )}
-        {/* RETOURS-9 (Q11.3) — badges « version vérifiée » / « suivi manuel » (méthode de veille) retirés côté client. */}
-        {s.nature?.dashed && (
-          <Badge kind="dashed" title={s.nature.detail}><span data-source-nature>{s.nature.label}</span></Badge>
+        {/* REPARATIONS-1 lot 3 — la COUVERTURE RÉELLE : où la source arrive et où elle s'arrête. */}
+        {s.couverture_note && (
+          <p data-source-couverture className="mt-1 text-[12px] leading-snug text-txt-dim">{s.couverture_note}</p>
         )}
-        {fiab && <Badge kind="dashed" title={fiab.title}><span data-source-fiabilite>{fiab.label}</span></Badge>}
-      </span>
-
-      {/* lien source officielle — col 3 sur mobile (1re ligne), col 5 en large */}
-      {s.documentation_url
-        ? <a className="col-[3/4] row-start-1 text-right text-[13px] text-txt-dim hover:text-mint md:col-[4/5] md:row-auto" href={s.documentation_url} target="_blank" rel="noreferrer" title="Source officielle">↗</a>
-        : <span className="col-[3/4] row-start-1 md:col-[4/5] md:row-auto" />}
-
-      {/* producteur · licence (lien vers le texte de licence — audit §1.11) */}
-      {/* RECETTE-2 (S26) — sur large, FORCÉ en rangée 1 (`md:row-start-1`) : sans ça, comme il vient
-          APRÈS le lien ↗ (col 4) dans le DOM, l'auto-placement non-dense de la grille le renvoyait en
-          rangée 2 → le nom (gauche) s'affichait en haut et le producteur (droite) en bas de la cellule.
-          Il partage désormais la rangée du nom, les deux alignés (items-center) sur la même ligne. */}
-      <span className="col-[2/-1] min-w-0 truncate text-[12px] text-txt-dim md:col-[3/4] md:row-start-1">
-        {s.provider}{s.provider && prod.length > 1 ? ' · ' : ''}
-        {s.license_url
-          ? <a data-source-licence href={s.license_url} target="_blank" rel="noreferrer" className="hover:text-mint hover:underline" title="Texte de la licence">{lic}</a>
-          : <span data-source-licence>{lic}</span>}
-      </span>
-
-      {/* RETOURS-11 A8 (03/09) — la fraîcheur AMONT en service (« jusqu'au … · ingéré le … ») est de
-          l'information ADMIN : elle vit dans Données, plus côté client. Ne reste que la DATE de publication
-          par le producteur (ci-dessous). */}
-      {/* RETOURS-8 (R2) — chaque ligne dit la DATE de publication par le producteur et sa cadence
-          habituelle, À TITRE D'INFORMATION (jamais un jugement, jamais « retard »). */}
-      {(s.publie_le || s.cadence_mention) && (
-        <p data-source-publication className="col-[2/-1] text-[12px] leading-snug text-txt-dim">
-          {s.publie_le && <>Publié le {s.publie_le}.</>}
-          {s.publie_le && s.cadence_mention ? ' ' : ''}
-          {s.cadence_mention && <>Le producteur publie habituellement {s.cadence_mention}.</>}
-        </p>
+      </div>
+      {s.documentation_url && (
+        <span aria-hidden className="ml-3 shrink-0 self-center text-[13px] text-txt-dim group-hover:text-mint">↗</span>
       )}
-      {/* REPARATIONS-1 lot 3 — la COUVERTURE RÉELLE, dite : où la source arrive et où elle
-          s'arrête (trou chez nous ou chez le producteur, communes nommées quand elles le sont). */}
-      {s.couverture_note && (
-        <p data-source-couverture className="col-[2/-1] text-[12px] leading-snug text-txt-dim">
-          {s.couverture_note}
-        </p>
-      )}
-      {/* RETOURS-11 A8 — note interne (« proxy RPG (IGN) — RP… », etc.) retirée côté client (vit dans Données). */}
-    </div>
+    </>
   )
+
+  // RECETTE-1 R31 — survol vert opaque (hover-fill). PAGE-SOURCES-1 : toute la ligne = un lien.
+  const cls = `group flex items-start justify-between gap-3 border-b border-line px-4 py-3 text-left last:border-b-0 hover-fill ${focused ? 'bg-mint/[0.06]' : ''}`
+  return s.documentation_url
+    ? <a ref={setRef} data-source-row href={s.documentation_url} target="_blank" rel="noreferrer"
+        title="Ouvrir la page du producteur" className={cls}>{contenu}</a>
+    : <div ref={setRef} data-source-row className={cls}>{contenu}</div>
 }
 
 export function SourcesPage() {
@@ -139,23 +84,12 @@ export function SourcesPage() {
   const [theme, setTheme] = useState<string | null>(null)
   const [themeOuvert, setThemeOuvert] = useState(false)
 
-  // M5 : version du modèle P v2 (sha + avertissement censure) — RÉSERVE DE MÉTHODE conservée (repliée
-  // en bas), jamais supprimée : la maquette ne la montre pas mais la doctrine interdit d'effacer une réserve.
-  const modele = useQuery({
-    queryKey: ['v2-modele'],
-    queryFn: async () => {
-      const r = await fetch('/v2/modele')
-      if (!r.ok) throw new Error(`v2 ${r.status}`)
-      return r.json() as Promise<{ model_version: string; sha256_court: string;
-        avertissement_censure: string; politique_recalibration: string }>
-    },
-    retry: false, staleTime: 5 * 60_000,
-  }).data
+  // PAGE-SOURCES-1 (lot 2) — le bloc « détail technique » (modèle de scoring, hash, recalage d'intercept,
+  // avertissement de recalibration) est RETIRÉ de la page cliente ; l'appel /v2/modele l'est aussi.
 
   // Les sources servies (hors doublons). L'API ne sert déjà que connecte-hors-masquées ; filtre défensif.
   const comptees = useMemo(() => (data ?? []).filter((s) => !s.doublon), [data])
   const nTotal = comptees.length
-  const nAJour = comptees.filter(aJour).length
   // FIX-SOURCES S3 — la réserve DVF ne code plus « 2025–2026 » en dur : la borne RÉCENTE est LUE dans
   // la base (dernière donnée servie de la source DVF). Sans donnée → phrase sans chiffre.
   const dvfMaxAnnee = useMemo(() => {
@@ -170,12 +104,12 @@ export function SourcesPage() {
     return [...set.entries()].sort((a, b) => a[0].localeCompare(b[0], 'fr'))
   }, [comptees])
 
-  // Recherche (nom / producteur / licence / catégorie) + thème actif. Groupé par catégorie.
+  // Recherche (nom / producteur / catégorie) + thème actif. Groupé par catégorie.
   const cats = useMemo(() => {
     const ql = q.trim().toLowerCase()
     const passeTheme = (s: SourceInfo) => theme == null || (s.category || 'Autres') === theme
     const passeSearch = (s: SourceInfo) =>
-      !ql || [s.name, s.provider, s.category, licence(s)].some((v) => (v ?? '').toLowerCase().includes(ql))
+      !ql || [s.name, s.provider, s.category].some((v) => (v ?? '').toLowerCase().includes(ql))
     const m = new Map<string, SourceInfo[]>()
     for (const s of comptees) {
       if (!passeTheme(s) || !passeSearch(s)) continue
@@ -190,29 +124,26 @@ export function SourcesPage() {
   return (
     <div data-sources-page className="sources-print flex min-w-0 flex-1 flex-col overflow-y-auto">
       <div className="mx-auto w-full max-w-[1060px] px-7 py-10">
-        {/* en-tête */}
-        <p className="mb-3.5 font-mono text-[10.5px] uppercase tracking-[.16em] text-txt-dim">Données et méthode</p>
-        <h1 className="mb-2 text-[26px] font-semibold tracking-[-.02em] text-txt-hi">Sources &amp; fraîcheur</h1>
-        {/* RETOURS-9 (Q11.4) — intro en PLEINE LARGEUR (plus de marge interne étroite), raccourcie. */}
+        {/* en-tête — PAGE-SOURCES-1 (lot 2) : le sur-titre « Données et méthode » est retiré. */}
+        <h1 className="mb-2 text-[26px] font-semibold tracking-[-.02em] text-txt-hi">Sources</h1>
+        {/* PAGE-SOURCES-1 (lot 2) — phrase sur la VÉRIFICATION des sources. Formulation vérifiée sur la
+            couverture RÉELLE de la sentinelle : 78 des 94 sources sont sondées chaque jour (cadence 24 h) ;
+            16 ne le sont pas (source manuelle sans amont public, ou hors de portée de la sonde). On écrit
+            donc « la plupart », jamais « toutes » (l'affirmation quotidienne globale serait fausse). */}
         <p data-sources-positionnement className="mb-7 text-[13px] leading-relaxed text-txt-mut">
-          Chaque chiffre LABUSE est traçable jusqu'à sa source publique : d'où il vient, quand son
-          producteur l'a publié, et s'il est à jour dans l'app.
+          La plupart de nos sources sont vérifiées automatiquement chaque jour : une sentinelle repère
+          quand leur producteur publie une nouvelle version.
         </p>
 
-        {/* M105 P1 — l'encart HIÉRARCHISÉ : en grand l'essentiel (sources · à jour), en petit la
-            méthode (vérifiées auto · sans date exposée PAR LE PRODUCTEUR — ce n'est pas LABUSE qui
-            ne trace pas). Le compteur « en retard » a QUITTÉ l'encart : l'information vit sur la
-            ligne de chaque source concernée (badge + formulation, jamais masquée). Tous les
-            compteurs restent CALCULÉS (nAJour dérivé), aucun chiffre en dur. */}
-        {/* RETOURS-9 (Q11.5) — cinq tuiles au plus, une ligne : les deux chiffres cœur (sources · à jour)
-            gagnent des voisins qui parlent au client, LUS des données réelles (couverture). Q11.2 : la
-            ligne d'exploitation (« vérifiées automatiquement · radar amont… ») est retirée. */}
+        {/* PAGES-RANGEMENT-1 (lot 1) — l'encart ne porte plus que des chiffres CLIENTS : le nombre de
+            sources et la couverture réelle (parcelles · communes), LUS des données. La tuile « à jour »
+            (compteur d'exploitation) est retirée — la fraîcheur vit au dashboard admin. */}
         {data && (
           <div data-sources-bandeau className="mb-3.5 overflow-hidden rounded-[10px] border border-line bg-surface-2">
             <div className="flex flex-wrap">
               {([
                 { v: String(nTotal), l: 'sources', mint: false },
-                { v: String(nAJour), l: 'à jour', mint: true },
+                // PAGES-RANGEMENT-1 (lot 1) — la tuile « à jour » (compteur d'exploitation) est retirée.
                 { v: couverture?.parcelles != null ? couverture.parcelles.toLocaleString('fr-FR') : '—', l: 'parcelles couvertes', mint: false },
                 { v: couverture?.communes != null ? `${couverture.communes}/${couverture.communes_total}` : '—', l: 'communes', mint: false },
                 // RETOURS-10 (T7) — la tuile « dernière analyse » est retirée : la date de l'analyse
@@ -227,26 +158,22 @@ export function SourcesPage() {
           </div>
         )}
 
-        {/* les DEUX réserves de méthode — conservées, repliées (jamais supprimées) */}
+        {/* PAGE-SOURCES-1 (lot 2) — la réserve « Densifier l'existant » est retirée ; reste la seule
+            réserve sur les ventes (retard de publication DVF). Une limite → « Une limite ». */}
         <details data-sources-reserves className="mb-8 rounded-[10px] border border-line bg-surface-2">
           <summary className="flex cursor-pointer list-none items-center gap-2.5 px-[18px] py-3.5 text-[13px] text-txt-mut [&::-webkit-details-marker]:hidden">
             <span className="rounded-[3px] border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[.12em]"
-              style={{ borderColor: TOKENS.warn, color: TOKENS.warn }}>Réserves</span>
-            Deux limites à connaître avant de lire les scores
+              style={{ borderColor: TOKENS.warn, color: TOKENS.warn }}>Réserve</span>
+            Une limite à connaître avant de lire les scores
           </summary>
           <div className="border-t border-line px-[18px] pb-[18px] pt-4">
-            <p className="mb-3 max-w-[78ch] text-[13px] leading-relaxed text-txt-mut">
+            <p className="max-w-[78ch] text-[13px] leading-relaxed text-txt-mut">
               <strong className="font-semibold text-txt">Retard de publication des ventes.</strong> Les ventes
               mettent 1 à 3 ans à apparaître dans DVF.{' '}
               {dvfMaxAnnee
                 ? <>Les niveaux de prix les plus récents (jusqu’à {dvfMaxAnnee}) sont provisoires</>
                 : <>Les niveaux de prix les plus récents sont provisoires</>} ; le
               classement relatif entre parcelles, lui, reste fiable.
-            </p>
-            <p className="max-w-[78ch] text-[13px] leading-relaxed text-txt-mut">
-              <strong className="font-semibold text-txt">Segment « Densifier l’existant ».</strong> Il identifie un
-              potentiel physique et réglementaire sur des parcelles déjà bâties. Il ne prédit pas une mise en
-              vente et ne constitue pas une opportunité qualifiée.
             </p>
           </div>
         </details>
@@ -304,28 +231,14 @@ export function SourcesPage() {
           </div>
         ))}
 
-        {/* légende — RETOURS-9 (Q11.3) : plus de méthode de veille, le client lit source · producteur · publié le · à jour. */}
+        {/* légende — PAGES-RANGEMENT-1 (lot 1) : les entrées de fraîcheur (« à jour » / « mise à jour en
+            cours ») sont retirées ; reste la seule nature de donnée qui parle au client (proxy). */}
         {data && (
           <div className="mt-9 flex flex-wrap gap-x-6 gap-y-2.5 border-t border-line pt-4 text-[12px] text-txt-dim">
-            <span className="flex items-center gap-2"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: TOKENS.mint }} /> à jour : la dernière version publiée est dans l'app</span>
-            <span className="flex items-center gap-2"><Badge kind="auto">mise à jour en cours</Badge> une version plus récente arrive</span>
             <span className="flex items-center gap-2"><Badge kind="dashed">proxy</Badge> donnée approchée, jamais servie comme source</span>
           </div>
         )}
 
-        {/* RÉSERVE DE MÉTHODE conservée : le modèle de scoring (version + avertissement censure), replié */}
-        {modele && (
-          <details data-sources-modele className="mt-6 rounded-lg border border-line-2 bg-surface-2 px-4 py-2.5">
-            <summary className="cursor-pointer list-none text-[11px] font-medium text-txt-mut hover:text-txt">▸ {CLIENT.modele.detailToggle}</summary>
-            <p className="mt-2 text-[11px] leading-snug text-txt">{CLIENT.modele.confiance}</p>
-            <p className="mt-2 text-[10.5px] font-medium text-txt">
-              Modèle de scoring : <span className="font-mono">{modele.model_version}</span>
-              <span className="ml-1.5 font-mono text-[10px] text-txt-dim">sha {modele.sha256_court}</span>
-            </p>
-            <p className="mt-1 text-[10.5px] leading-snug text-st-creuser">▲ {modele.avertissement_censure}.</p>
-            <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">{modele.politique_recalibration}.</p>
-          </details>
-        )}
       </div>
     </div>
   )

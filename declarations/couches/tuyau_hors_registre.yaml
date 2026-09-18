@@ -1,0 +1,63 @@
+# COUCHES-TUYAU-1 retour §2 — les 3 couches « ABSENTE » rétablies dans « Nouvelles couches ».
+# Une couche n'a PAS besoin d'être dans spatial_layers : elle déclare ici sa SOURCE (table, colonne
+# géométrie, srid, filtre). Le tuyau les sert comme les autres ; le front les rend génériquement.
+# Rendu identique à l'ancien (couleurs U/AU/A/N, étiquettes de zone, légende pour le zonage).
+- kind: limites_parcelles
+  nom: "Limites parcelles (contour cadastral)"
+  # COUCHES-RECETTE-1 A5 : catégorie « Repères » (en tête du panneau, cochée par défaut).
+  famille: reperes
+  # COUCHES-RECETTE-2 (retour, RÉGRESSION) : la donnée mvt_parcels est du POLYGONE (431 640), pas de la
+  # ligne. Déclarée « ligne », le filtre geometry-type du Lot A (line → LineString) excluait TOUS les
+  # polygones → la couche ne s'affichait plus. Correct : « polygone » + contour_seul → seul le CONTOUR
+  # (anneaux, filtre Polygon) est dessiné, sans remplissage = le contour cadastral attendu.
+  geometrie: polygone
+  i: "Contour cadastral de chaque parcelle (DGFiP). Repère de base pour se situer."
+  # mvt_parcels porte TOUTES les parcelles servies (géométrie 3857 déjà projetée, SRID 0 → on force 3857).
+  source: { table: mvt_parcels, geom: geom_3857, srid: 3857 }
+  # COUCHES-STYLE-2 : rendu ALIGNÉ sur la couche V1 (ancienne couche parcelles, calques ile-limites /
+  # parcels-limites de MapView) — valeurs LUES telles quelles, sans recalibrage : trait #8FA69A,
+  # line-width 0.3, line-opacity 0.4, CONSTANTES (la V1 n'a pas de rampe de zoom dans sa déclaration).
+  style: { contour_seul: true, couleur: "#8FA69A", trait: "#8FA69A", epaisseur: 0.3, trait_opacite: 0.4 }
+  legende: "Contour cadastral des parcelles"
+
+- kind: zonage_parcelle
+  nom: "Zonage PLU par parcelle (calibré)"
+  famille: urbanisme
+  geometrie: polygone
+  i: "Zone du PLU CALIBRÉE parcelle par parcelle (famille U urbaine / AU à urbaniser / A agricole / N naturelle). L'étiquette de zone (Ncu, U1b…) apparaît dès le zoom commune."
+  # COUCHES-RECETTE-1 (Lot B) — LENTEUR : servie depuis mvt_parcels (431 k parcelles) sans bornage,
+  # la tuile ÎLE portait les 431 k polygones (des Mo par tuile, un aplat par parcelle qui n'a aucun
+  # sens à l'échelle île). CAUSE = pas de LOD sur une couche par-parcelle. CORRECTION SANS DÉGRADER :
+  # zoom_min 11 → la couche n'est servie/demandée qu'à partir du zoom commune (là où elle a un sens),
+  # géométrie INCHANGÉE. Les étiquettes de zone (zone_lib) apparaissent dès z12 (comme l'ancienne).
+  zoom_min: 11
+  etiquette: { propriete: zone_lib, zoom_min: 12 }
+  # zone PLU CALIBRÉE par parcelle (mvt_parcels.zone_fam / zone_lib — dérivée du run servi).
+  source: { table: mvt_parcels, geom: geom_3857, srid: 3857, where: "zone_fam IS NOT NULL" }
+  style: { couleur_propriete: zone_fam, opacite: 0.55, trait: "#0b0f14" }
+  # grades = familles de zone, couleurs de l'ancien ZONE_FAM_META (libellés PROPRES, jamais la clé).
+  niveaux:
+    - { id: U,   propriete: zone_fam, valeur: U,     couleur: "#E5417F", legende: "U — urbaine" }
+    - { id: AU,  propriete: zone_fam, valeur: AU,    couleur: "#4C7DF0", legende: "AU — à urbaniser" }
+    - { id: A,   propriete: zone_fam, valeur: A,     couleur: "#E8B23A", legende: "A — agricole" }
+    - { id: N,   propriete: zone_fam, valeur: N,     couleur: "#3FB56A", legende: "N — naturelle" }
+    - { id: aut, propriete: zone_fam, valeur: autre, couleur: "#8A94A6", legende: "Autre zonage" }
+  popup:
+    - { champ: zone_lib, libelle: "Zone" }
+    - { champ: commune,  libelle: "Commune" }
+  legende: "Zonage PLU par parcelle — famille U/AU/A/N (calibré)"
+
+- kind: limites_communes
+  nom: "Limites communes"
+  # COUCHES-RECETTE-1 A5 : catégorie « Repères » (en tête, cochée par défaut).
+  famille: reperes
+  geometrie: ligne
+  i: "Limites administratives des 24 communes de La Réunion (contours IGN)."
+  # COUCHES-RECETTE-1 (Lot B) — RÉPARÉE : mvt_communes est désormais bâtie du GeoJSON officiel
+  # communes974.geojson (contours IGN), plus de la dissolution des parcelles qui laissait les arêtes
+  # internes (jusqu'à 667 k points/commune → un « réseau », pas les communes). Cf. build_mvt_communes.
+  source: { table: mvt_communes, geom: geom_3857, srid: 3857 }
+  style: { couleur: "#5CE6A1", epaisseur: 1.6, opacite: 0.9 }
+  popup:
+    - { champ: commune, libelle: "Commune" }
+  legende: "Limites administratives des 24 communes"

@@ -1,0 +1,177 @@
+# ── PRODUCTION (lot 3, les 37) : FAMILLE RISQUES — couches legacy migrées, RENDU REPRODUIT À
+# L'IDENTIQUE (couleurs exactes de mapTheme.ts). Les kinds virtuels (georisque_alea→inondation/mvt,
+# sol_pollue→sis/casias) portent un `filtre` subtype ; les data-driven (PEB, bruit, aléas) portent
+# `couleurs {valeur: hex}`. Toutes petites → détail direct (agregat: false), rapides.
+
+surface:   couche_ppr
+nom:       "PPR multirisque"
+categorie: couche
+parent:    null
+route:     "/map/tiles/ppr/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  ppr_couche
+    ou:    { rang: 10, etat: en_tete, section: "PPR" }
+    comment: { libelle: "PPR multirisque", format: liste, i: "Plan de Prévention des Risques (document multirisque, opposable)." }
+    # COUCHES-RECETTE-1 A3 : Information / Prescription / Interdiction en 3 teintes distinctes ordonnées
+    # (jaune → orange → rouge) — plus le camaïeu de rouges qui ne se lisait pas. Emboîtement conservé.
+    carte: { kind: ppr, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 65, style: { opacite: 0.45, trait: "#7a1414" }, niveaux: [ { id: i, propriete: subtype, valeur: i, couleur: "#F2D06B", legende: "Information" }, { id: prescription, propriete: subtype, valeur: PRESCRIPTION, couleur: "#E8843D", legende: "Prescription" }, { id: interdiction, propriete: subtype, valeur: INTERDICTION, couleur: "#C0142A", legende: "Interdiction" } ], popup: [ { champ: risque, libelle: "Risque" }, { champ: document, libelle: "Document" }, { champ: approbation, libelle: "Approuvé le" }, { champ: statut, libelle: "Statut" } ], legende: "PPR multirisque — information (jaune) → prescription (orange) → interdiction (rouge)" }
+    absence: "PPR : parcelle hors périmètre PPR sur l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Le risque opposable de référence ; rendu identique au legacy (#E8695A)."
+---
+surface:   couche_dpf
+nom:       "Ravines et reculs (DPF)"
+categorie: couche
+parent:    null
+route:     "/map/tiles/dpf/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  dpf_couche
+    ou:    { rang: 10, etat: en_tete, section: "Hydrographie" }
+    comment: { libelle: "Ravines et reculs (DPF)", format: liste, i: "Ravines du domaine public fluvial (DEAL) et leurs reculs — inconstructibilité de berge. (Absorbe la couche ravine, fusion recette.)" }
+    carte: { kind: dpf, agregat: false, famille: risques, geometrie: ligne, zoom_min: 0, rang_carte: 62, style: { couleur: "#4FC3E8", epaisseur: 2.0, opacite: 0.9 }, popup: [ { champ: toponyme, libelle: "Toponyme" }, { champ: typologie, libelle: "Type" }, { champ: classe, libelle: "Classe" } ], legende: "Ravine DPF (recul inconstructible)" }
+    absence: "Ravines DPF : aucune ravine du domaine public fluvial dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Recul de berge opposable ; rendu identique (#4FC3E8)."
+---
+surface:   couche_endiguement
+nom:       "Systèmes d'endiguement"
+categorie: couche
+parent:    null
+route:     "/map/tiles/endiguement/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  endiguement_couche
+    ou:    { rang: 10, etat: en_tete, section: "Ouvrages de protection" }
+    comment: { libelle: "Systèmes d'endiguement", format: liste, i: "Digues et zones protégées (DEAL). ⚠ Ni classe ni niveau de protection fournis — une digue ne garantit aucun niveau de sécurité." }
+    # COUCHES-RECETTE-1 (Lot B « rien de visible ») : la donnée est à géométrie MIXTE — 42 polygones
+    # (zones protégées) MAIS 69 lignes (digues) + 6 collections. Déclarée `polygone`, le front ne
+    # dessinait QUE les polygones (à 0,18, à peine perceptibles) → les digues (le gros) n'apparaissaient
+    # jamais. Corrigé : geometrie `mixte` (fond + contour + ligne), opacité 0,32, trait épais (digue = trait).
+    carte: { kind: endiguement, agregat: false, famille: risques, geometrie: mixte, zoom_min: 0, rang_carte: 52, style: { couleur: "#F0509E", opacite: 0.40, trait: "#F0509E", epaisseur: 3.4 }, popup: [ { champ: classe, libelle: "Classe d'ouvrage" }, { champ: n_protect, libelle: "Niveau de protection (années)" }, { champ: population, libelle: "Population protégée" }, { champ: gestion, libelle: "Gestionnaire" }, { champ: statut, libelle: "Statut" }, { champ: source, libelle: "Source" } ], legende: "Digue (trait) / zone protégée (aplat) — niveau inconnu" }
+    absence: "Endiguement : aucune digue ni zone protégée dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: informatif
+    pourquoi: "Lot B : géométrie mixte (69 digues-lignes + 42 zones) désormais rendue ; digues invisibles avant (geometrie=polygone)."
+---
+surface:   couche_peb
+nom:       "Plan d'exposition au bruit (PEB)"
+categorie: couche
+parent:    null
+route:     "/map/tiles/peb/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  peb_couche
+    ou:    { rang: 10, etat: en_tete, section: "Bruit aérien" }
+    comment: { libelle: "PEB (zones A–D)", format: liste, i: "Plan d'Exposition au Bruit aérien : zones A (fort) à D — opposable (constructibilité limitée)." }
+    # PEB : zones d'exposition NICHÉES (A la plus forte/petite, D la plus faible/étendue) → emboîté,
+    # D dessous (clair), A dessus (foncé). Un sous-calque par zone.
+    carte: { kind: peb, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 50, style: { opacite: 0.45, trait: "#5E6B64" }, niveaux: [ { id: d, propriete: subtype, valeur: d, couleur: "#C7CBD0", legende: "D (faible)" }, { id: c, propriete: subtype, valeur: c, couleur: "#E3C13C", legende: "C" }, { id: b, propriete: subtype, valeur: b, couleur: "#F0913D", legende: "B" }, { id: a, propriete: subtype, valeur: a, couleur: "#D0342A", legende: "A (fort)" } ], legende: "PEB — D (faible) → A (fort), emboîté" }
+    absence: "PEB : parcelle hors plan d'exposition au bruit aérien."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Couleurs exactes pebRamp (A→D) ; opposable."
+---
+surface:   couche_bruit_route
+nom:       "Classement sonore (bruit routier)"
+categorie: couche
+parent:    null
+route:     "/map/tiles/bruit_route/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  bruit_couche
+    ou:    { rang: 10, etat: en_tete, section: "Bruit routier" }
+    comment: { libelle: "Classement sonore", format: liste, i: "Classement sonore des voies (catégories 1 à 5) — isolement acoustique requis." }
+    # COUCHES-RECETTE-1 A3 : catégories 1→5 en teintes DISTINCTES ORDONNÉES (jaune → orange → rouge →
+    # violet) — plus le camaïeu de violets (5 nuances d'une même teinte). Emboîtement conservé : cat.5
+    # (la moins bruyante, la plus large) dessous en clair, cat.1 (la plus forte) dessus. Un sous-calque/cat.
+    carte: { kind: bruit_route, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 48, style: { opacite: 0.42, trait: "#3a1150" }, niveaux: [ { id: cat5, propriete: subtype, valeur: cat5, couleur: "#F2E06B", legende: "Catégorie 5 (la moins bruyante)" }, { id: cat4, propriete: subtype, valeur: cat4, couleur: "#F4B740", legende: "Catégorie 4" }, { id: cat3, propriete: subtype, valeur: cat3, couleur: "#EE7B30", legende: "Catégorie 3" }, { id: cat2, propriete: subtype, valeur: cat2, couleur: "#DA3B3B", legende: "Catégorie 2" }, { id: cat1, propriete: subtype, valeur: cat1, couleur: "#8B2FC7", legende: "Catégorie 1 (la plus bruyante)" } ], legende: "Classement sonore — cat. 5 (jaune) → cat. 1 (violet), emboîté" }
+    absence: "Classement sonore : parcelle hors secteur affecté par le bruit routier."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Couleurs exactes bruitRamp (cat1→5) ; opposable (isolement)."
+---
+surface:   couche_bruit_carte
+nom:       "Cartes de bruit — dépassements"
+categorie: couche
+parent:    null
+route:     "/map/tiles/bruit_carte/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  bruit_carte_couche
+    ou:    { rang: 10, etat: replie, section: "Bruit routier" }
+    comment: { libelle: "Cartes de bruit (CBS)", format: liste, i: "Cartes de bruit stratégiques — zones de dépassement des seuils (informatif)." }
+    carte: { kind: bruit_carte, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 46, style: { couleur: "#B03A6B", opacite: 0.30, trait: "#B03A6B" }, legende: "Dépassement de seuil de bruit (CBS)" }
+    absence: "Cartes de bruit : aucun dépassement cartographié dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: informatif
+    pourquoi: "Rendu identique (#B03A6B) ; informatif."
+---
+surface:   couche_alea_inondation
+nom:       "Aléa inondation"
+categorie: couche
+parent:    null
+route:     "/map/tiles/alea_inondation/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  alea_inondation_couche
+    ou:    { rang: 10, etat: en_tete, section: "Aléas" }
+    comment: { libelle: "Aléa inondation", format: liste, i: "Aléa inondation (Géorisques), gradué par classe (faible / moyen / fort)." }
+    carte: { kind: alea_inondation, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 33, style: { opacite: 0.42, trait: "#45B4C6" }, niveaux: [ { id: faible, propriete: classe, valeur: faible, couleur: "#9AD0F5", legende: "Faible" }, { id: moyen, propriete: classe, valeur: moyen, couleur: "#F0913D", legende: "Moyen" }, { id: fort, propriete: classe, valeur: fort, couleur: "#D0342A", legende: "Fort" } ], popup: [ { champ: degre, libelle: "Degré" }, { champ: risque, libelle: "Risque" }, { champ: document, libelle: "Document" } ], legende: "Aléa inondation — degré : faible → fort (emboîté)" }
+    absence: "Aléa inondation : parcelle hors zone d'aléa cartographié."
+    absence_type: absente_ici
+    pourquoi: "Couleurs exactes aleaInondationRamp ; filtre subtype (kind virtuel)."
+---
+surface:   couche_alea_mvt
+nom:       "Aléa mouvement de terrain"
+categorie: couche
+parent:    null
+route:     "/map/tiles/alea_mvt/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  alea_mvt_couche
+    ou:    { rang: 10, etat: en_tete, section: "Aléas" }
+    comment: { libelle: "Aléa mouvement de terrain", format: liste, i: "Aléa mouvement de terrain (Géorisques), gradué par classe (faible → très élevé)." }
+    # COUCHES-RECETTE-1 A3 : 4 grades en teintes distinctes ordonnées (jaune → orange → rouge → violet)
+    # — plus la rampe orange/orange qui confondait moyen/élevé. Emboîtement conservé.
+    carte: { kind: alea_mvt, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 34, style: { opacite: 0.44, trait: "#3a1150" }, niveaux: [ { id: faible, propriete: classe, valeur: faible, couleur: "#F2D98A", legende: "Faible" }, { id: moyen, propriete: classe, valeur: moyen, couleur: "#F0A030", legende: "Moyen" }, { id: eleve, propriete: classe, valeur: eleve, couleur: "#E0491F", legende: "Élevé" }, { id: tres_eleve, propriete: classe, valeur: tres_eleve, couleur: "#8B2FC7", legende: "Très élevé" } ], popup: [ { champ: degre, libelle: "Degré" }, { champ: risque, libelle: "Risque" }, { champ: document, libelle: "Document" } ], note: "Pas de donnée publiée pour : Saint-Denis (aléa mouvement de terrain non cartographié). Couverture partielle ailleurs — l'absence n'est pas une preuve d'absence de risque.", legende: "Aléa mvt — faible (jaune) → très élevé (violet), emboîté" }
+    absence: "Aléa mouvement de terrain : parcelle hors zone d'aléa cartographié."
+    absence_type: absente_ici
+    pourquoi: "Couleurs exactes aleaMvtRamp ; filtre subtype (kind virtuel)."
+---
+surface:   couche_sis
+nom:       "Secteurs d'information sur les sols (SIS)"
+categorie: couche
+parent:    null
+route:     "/map/tiles/sis/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  sis_couche
+    ou:    { rang: 10, etat: en_tete, section: "Sols" }
+    comment: { libelle: "Sols pollués (SIS)", format: liste, i: "Secteurs d'Information sur les Sols (Géorisques) — servitude opposable aux autorisations d'urbanisme." }
+    # COUCHES-RECETTE-2 (retour) : points SIS à la MÊME taille que Cavités (rayon 6, halo 2) et opaques
+    # (point_opacite 0.95) — le polygone d'emprise reste translucide (opacite 0.34).
+    carte: { kind: sis, agregat: false, centroide: true, famille: risques, geometrie: point_et_polygone, zoom_min: 0, rang_carte: 70, style: { couleur: "#A0522D", opacite: 0.34, point_opacite: 0.95, trait: "#A0522D", rayon: 6, halo: 2 }, popup: [ { champ: statut, libelle: "Statut" }, { champ: adresse, libelle: "Adresse" }, { champ: id_sis, libelle: "Identifiant SIS" }, { champ: fiche_risque, libelle: "Fiche", lien: true } ], legende: "SIS — secteur d'information sur les sols (opposable)" }
+    absence: "SIS : la parcelle n'est dans aucun secteur d'information sur les sols."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Rendu identique (#A0522D) ; filtre subtype sis (kind virtuel sol_pollue)."
+---
+surface:   couche_casias
+nom:       "Anciens sites industriels (CASIAS)"
+categorie: couche
+parent:    null
+route:     "/map/tiles/casias/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  casias_couche
+    ou:    { rang: 10, etat: replie, section: "Sols" }
+    comment: { libelle: "Anciens sites industriels (CASIAS)", format: liste, i: "Inventaire historique des sites industriels/de service (Géorisques CASIAS + sites en instruction) — informatif." }
+    carte: { kind: casias, agregat: false, famille: risques, geometrie: point_et_polygone, zoom_min: 0, rang_carte: 44, style: { couleur: "#D9973B", opacite: 0.24, trait: "#D9973B", rayon: 4, halo: 1.4 }, popup: [ { champ: statut, libelle: "État du dossier" }, { champ: adresse, libelle: "Adresse" }, { champ: superficie, libelle: "Superficie" }, { champ: identifiant_casias, libelle: "Identifiant" } ], legende: "CASIAS — ancien site industriel (informatif)" }
+    absence: "CASIAS : aucun ancien site industriel recensé dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: informatif
+    pourquoi: "Rendu identique (#D9973B) ; filtre subtype casias+instruction."

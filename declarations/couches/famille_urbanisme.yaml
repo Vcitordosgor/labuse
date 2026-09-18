@@ -1,0 +1,125 @@
+# ── PRODUCTION (lot 3, les 37) : FAMILLE URBANISME — zonage PLU, ER, EBC, SUP, DPU, artificialisation,
+# 50 pas. Rendu reproduit à l'identique (mapTheme T_SOMBRE). ER/EBC = kinds VIRTUELS (plu_gpu_prescription
+# filtré 05/01). ⚠ ZONAGE : teintes CONVENTIONNELLES, JAMAIS changées sans accord Vic (couche la plus
+# regardée). La couche zonage actuelle est BINAIRE (U vs autre), pas une palette par type — dit au rapport.
+
+surface:   couche_zonage
+nom:       "Limites officielles du PLU (GPU)"
+categorie: couche
+parent:    null
+route:     "/map/tiles/plu_gpu_zone/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  zonage_plu_couche
+    ou:    { rang: 10, etat: en_tete, section: "Zonage réglementaire" }
+    # COUCHES-RECETTE-1 (Lot B) : renommée « Limites officielles du PLU (GPU) » pour la distinguer de
+    # la couche « Zonage PLU par parcelle (calibré) » qui, elle, étiquette chaque parcelle (Ncu, U1b…).
+    # Ici = les zones du GPU telles que publiées, 2 teintes, légende à 2 entrées (comme l'ancienne).
+    comment: { libelle: "Limites officielles du PLU (GPU)", format: liste, i: "Zones du PLU telles que publiées au Géoportail de l'Urbanisme (GPU). Deux teintes : U (urbaine, en vert) / le reste A·AU·N (brun). Pour l'étiquette de zone parcelle par parcelle, voir « Zonage PLU par parcelle (calibré) »." }
+    carte: { kind: plu_gpu_zone, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 1, style: { couleur_propriete: subtype, couleurs: { U: "#5CE6A1" }, couleur: "#8a6b3f", opacite: 0.10, trait: "#8a6b3f" }, legende: "Limites PLU (GPU) — U (vert) / A·AU·N (brun)" }
+    absence: "Zonage PLU : parcelle hors zone GPU dans l'emprise visible (Saint-Philippe : PLU non publié au GPU)."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Rendu identique (U vs autre, 0,10) ; teintes conventionnelles verrouillées (accord Vic requis)."
+---
+surface:   couche_cinquante_pas
+nom:       "50 pas géométriques"
+categorie: couche
+parent:    null
+route:     "/map/tiles/cinquante_pas/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  cinquante_pas_couche
+    ou:    { rang: 10, etat: replie, section: "Littoral" }
+    comment: { libelle: "50 pas géométriques", format: liste, i: "Réserve des 50 pas géométriques (bande littorale du domaine public, ~81,20 m) — inconstructibilité de principe, gestion État." }
+    # COUCHES-RECETTE-2 C3 : teinte FRANCHE (le cyan à 0,16 était trop pastel) → bleu littoral soutenu.
+    carte: { kind: cinquante_pas, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 20, style: { couleur: "#1E9BD8", opacite: 0.34, trait: "#0B6FA6", tirets: [2, 1.4], epaisseur: 1.8 }, legende: "Réserve des 50 pas géométriques (littoral)" }
+    absence: "50 pas : parcelle hors bande littorale des 50 pas dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "C3 : bleu littoral franc (#1E9BD8 @0,34) au lieu du cyan pastel."
+---
+surface:   couche_artificialisation
+nom:       "Artificialisation (OCS GE)"
+categorie: couche
+parent:    null
+route:     "/map/tiles/artificialisation/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  artificialisation_couche
+    ou:    { rang: 10, etat: replie, section: "Consommation d'espace" }
+    comment: { libelle: "Artificialisation (OCS GE)", format: liste, i: "Occupation du sol OCS GE : sols artificialisés 2022 + évolution renaturée 2017→2022 (matrice décret 2023-1096, suivi ZAN)." }
+    carte: { kind: artificialisation, agregat: false, limite: 40000, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 22, style: { couleur_propriete: subtype, couleurs: { artificialise_2022: "#8E6AA8", evolution_renaturation: "#3F9B6A" }, couleur: "#8E6AA8", opacite: 0.32, trait: "#5E4470" }, legende: "Artificialisé 2022 (violine) / renaturé (vert)" }
+    absence: "Artificialisation : aucune emprise OCS GE dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "Rendu identique (violine artificialisé / vert renaturé)."
+---
+surface:   couche_dpu
+nom:       "Droit de préemption urbain (DPU)"
+categorie: couche
+parent:    null
+route:     "/map/tiles/dpu/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  dpu_couche
+    ou:    { rang: 10, etat: replie, section: "Préemption" }
+    comment: { libelle: "Droit de préemption urbain (DPU)", format: liste, i: "Périmètres de DPU (simple / renforcé) — la commune peut se substituer à l'acquéreur lors d'une vente." }
+    # COUCHES-RECETTE-2 Lot D : la donnée DISTINGUE simple (subtype=dpu, 197) et renforcé
+    # (dpu_renforce, 5) → DEUX couleurs en légende.
+    carte: { kind: dpu, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 24, style: { couleur_propriete: subtype, couleur: "#6B8FD4", opacite: 0.32, trait: "#33507f" }, niveaux: [ { id: simple, propriete: subtype, valeur: dpu, couleur: "#6B8FD4", legende: "DPU simple" }, { id: renforce, propriete: subtype, valeur: dpu_renforce, couleur: "#E0574A", legende: "DPU renforcé" } ], popup: [ { champ: libelle, libelle: "Type" }, { champ: txt, libelle: "Précision" } ], legende: "Périmètre DPU — simple (bleu) / renforcé (rouge)" }
+    absence: "DPU : parcelle hors périmètre de préemption dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Lot D : 2 couleurs (simple #6B8FD4 / renforcé #E0574A) — la donnée porte bien la distinction."
+---
+surface:   couche_sup
+nom:       "Servitudes d'utilité publique (SUP)"
+categorie: couche
+parent:    null
+route:     "/map/tiles/sup/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  sup_couche
+    ou:    { rang: 10, etat: replie, section: "Servitudes" }
+    comment: { libelle: "Servitudes d'utilité publique (SUP)", format: liste, i: "Servitudes d'utilité publique, opposables au PLU. Colorées PAR FAMILLE : AC monuments/sites/réserves/SPR, PM plans de prévention des risques, EL littoral/domaine public. Le code et le libellé exact au clic." }
+    # COUCHES-RECETTE-1 (Lot B) : une seule teinte magenta rendait la couche illisible → légende PAR
+    # FAMILLE de servitude, couleurs distinctes (le code `subtype` porte la famille : ac1-4, pm1-3, el10).
+    # AC (patrimoine) = or→indigo ; PM (risques, PPR) = rouge→ambre ; EL (littoral/DP) = bleu. Le clic
+    # donne le code + le libellé exact (subtype + typeass + nomass). ⚠ Assiettes PM1 dupliquées ~4× en
+    # base (311 lignes) : signalé au rapport, dédoublonnage = tâche donnée (non fait ici, additif).
+    carte: { kind: sup, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 26, style: { couleur_propriete: subtype, couleur: "#C05884", opacite: 0.24, trait: "#5a2540" }, niveaux: [ { id: pm1, propriete: subtype, valeur: pm1, couleur: "#D0342A", legende: "PM1 — PPR naturels (inondation, mouvement de terrain…)" }, { id: pm2, propriete: subtype, valeur: pm2, couleur: "#E8721F", legende: "PM2 — PPR miniers" }, { id: pm3, propriete: subtype, valeur: pm3, couleur: "#F2A83A", legende: "PM3 — PPR technologiques" }, { id: ac1, propriete: subtype, valeur: ac1, couleur: "#C9A227", legende: "AC1 — abords de monuments historiques" }, { id: ac2, propriete: subtype, valeur: ac2, couleur: "#8FA64B", legende: "AC2 — sites inscrits / classés" }, { id: ac3, propriete: subtype, valeur: ac3, couleur: "#3FA6A0", legende: "AC3 — réserves naturelles" }, { id: ac4, propriete: subtype, valeur: ac4, couleur: "#6A4CC2", legende: "AC4 — sites patrimoniaux remarquables (SPR)" }, { id: el10, propriete: subtype, valeur: el10, couleur: "#4FA8E0", legende: "EL10 — servitude littorale / domaine public" } ], popup: [ { champ: subtype, libelle: "Code servitude" } ], detail_kind: sup, popup_detail: [ { champ: code, libelle: "Code" }, { champ: libelle, libelle: "Servitude" }, { champ: acte, libelle: "Acte / périmètre" }, { champ: urlreg, libelle: "Règlement", lien: true } ], legende: "SUP — par famille (AC patrimoine / PM risques / EL littoral)" }
+    absence: "SUP : parcelle hors servitude d'utilité publique dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Lot B : légende par famille de servitude (couleurs distinctes) + code au clic ; PM1 dupliqués signalés."
+---
+surface:   couche_er
+nom:       "Emplacements réservés (ER)"
+categorie: couche
+parent:    null
+route:     "/map/tiles/er/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  er_couche
+    ou:    { rang: 10, etat: replie, section: "Réservations" }
+    comment: { libelle: "Emplacements réservés (ER)", format: liste, i: "Emplacements réservés du PLU (voirie, équipement, espace vert) — l'emprise est grevée au bénéfice d'une collectivité." }
+    carte: { kind: er, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 28, style: { couleur: "#D4A017", opacite: 0.30, trait: "#D4A017" }, popup: [ { champ: txt, libelle: "Destination / bénéficiaire" }, { champ: libelle, libelle: "Libellé" }, { champ: url_source, libelle: "Document", lien: true } ], legende: "Emplacement réservé (emprise grevée)" }
+    absence: "ER : parcelle hors emplacement réservé dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Rendu identique (#D4A017 or) ; kind virtuel er→plu_gpu_prescription/05."
+---
+surface:   couche_ebc
+nom:       "Espaces boisés classés (EBC)"
+categorie: couche
+parent:    null
+route:     "/map/tiles/ebc/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  ebc_couche
+    ou:    { rang: 10, etat: replie, section: "Réservations" }
+    comment: { libelle: "Espaces boisés classés (EBC)", format: liste, i: "Espaces boisés classés du PLU — protection stricte du boisement, tout défrichement interdit (art. L113-1)." }
+    carte: { kind: ebc, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 29, style: { couleur: "#1B7A4A", opacite: 0.30, trait: "#1B7A4A" }, popup: [ { champ: txt, libelle: "Prescription" }, { champ: libelle, libelle: "Libellé" }, { champ: url_source, libelle: "Règlement", lien: true } ], legende: "Espace boisé classé (défrichement interdit)" }
+    absence: "EBC : parcelle hors espace boisé classé dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Rendu identique (#1B7A4A vert forêt) ; kind virtuel ebc→plu_gpu_prescription/01."

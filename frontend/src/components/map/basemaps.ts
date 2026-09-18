@@ -29,11 +29,11 @@ export const BASEMAP_SOURCES: Record<string, BasemapDef> = {
   // FOND-SOMBRE : le raster CARTO dark_nolabels (bm-carto) est RETIRÉ — CARTO exige désormais une
   // clé (« API KEY REQUIRED » en filigrane) et le raster n'apportait rien à l'échelle de l'île
   // (décision Vic, captures à l'appui). « Sombre » = canvas + masse terrestre + nos couches, même
-  // mécanisme que « Clair » (cf. MapView.applyClairMode), aux teintes MESURÉES du rendu d'avant.
+  // mécanisme que « Clair » (cf. MapView.applyBasemapStyle), aux teintes MESURÉES du rendu d'avant.
   // La décision R4 (aucun nom de localité sur le Sombre, à tous les zooms) tient de fait : plus
   // aucune tuile de labels ; le Plan IGN reste disponible pour qui veut des labels.
   // M64-P1 : le fond « Clair » n'est PLUS un raster (Positron retiré) — c'est le rendu SOMBRE avec le
-  // fond du canvas passé au blanc (cf. MapView.applyClairMode). Aucune tuile claire à charger.
+  // fond du canvas passé au blanc (cf. MapView.applyBasemapStyle). Aucune tuile claire à charger.
   // RETOURS-11F4 C6 (révisé) — GetCapabilities + GetTile RÉELS Géoplateforme (2026-09-04) sur St-Denis,
   // St-Pierre, St-Paul + 5 points intérieur/est (cirques, Mafate) : la MOSAÏQUE `ORTHOIMAGERY.ORTHOPHOTOS`
   // ne sert QUE 2022 au 974 (les annuels 2023/2024 → 404), MAIS la couche `ORTHO-EXPRESS.2025`

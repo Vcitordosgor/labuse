@@ -4355,7 +4355,20 @@ def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
         "SELECT sl.name FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
         "WHERE sl.kind = 'anru' AND ST_Intersects(p.geom_2975, sl.geom_2975) LIMIT 1"),
         {"idu": idu}).scalar()
+    # FICHE-COUCHES-4 lot 2 — PISCINE détectée (CoSIA) SUR la parcelle : élément bâti IMPOSABLE
+    # (taxe foncière ; à déclarer aux impôts, art. 1406 CGI). Recensement IA, à confirmer sur place.
+    piscine = db.execute(text(
+        "SELECT count(*) FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
+        "WHERE sl.kind = 'piscine_cosia' AND ST_Intersects(p.geom_2975, sl.geom_2975)"),
+        {"idu": idu}).scalar()
     perimetres = []
+    if piscine:
+        perimetres.append({
+            "libelle": f"Piscine détectée — {piscine} bassin{'s' if piscine > 1 else ''} (CoSIA)",
+            "detail": "Une piscine est un élément bâti IMPOSABLE : elle majore la taxe foncière et "
+                      "doit être déclarée aux impôts dans les 90 jours de l'achèvement (art. 1406 CGI). "
+                      "Détection automatique par IA (orthophoto 20 cm) — à confirmer sur place.",
+            "source": "CoSIA (IGN, PVA juil.–août 2025, 20 cm)", "derive": True})
     if anru:
         perimetres.append({
             "libelle": "Renouvellement urbain — NPNRU / ANRU",
@@ -4456,6 +4469,10 @@ SEUILS_PROXIMITE_M = {
     "pole": 3000,         # pôle d'échange : structurant, rayon plus large
     "telepherique": 2000, # un téléphérique à 24 km n'a aucun sens pour la parcelle
     "ligne_ht": 500,      # servitude I4 : au-delà de 500 m, ni contrainte ni recul
+    # FICHE-COUCHES-2 lot 1 — le thème « ligne électrique » (ligne_ht) et « transport » (arrêt/pôle)
+    # étaient déjà croisés ; on étend au kind manquant :
+    "ligne_mt": 50,       # HTA (moyenne tension) : nuisance/recul de PROXIMITÉ (aérien), rayon serré
+    "transport_ligne": 400,  # desserte par un TRACÉ de transport public : ~5 min à pied
 }
 
 
@@ -4471,6 +4488,10 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         pole = _sous_seuil(_plus_proche(db, idu, "pole_echange"), "pole")
         tele = _sous_seuil(_plus_proche(db, idu, "telepherique", "station"), "telepherique")
         ht = _sous_seuil(_plus_proche(db, idu, "ligne_ht"), "ligne_ht")
+        # FICHE-COUCHES-2 lot 1 — extension du même patron KNN : moyenne tension (HTA) et tracé de
+        # transport public (desserte). Mêmes seuils de pertinence (SEUILS_PROXIMITE_M).
+        mt = _sous_seuil(_plus_proche(db, idu, "ligne_mt"), "ligne_mt")
+        lgn = _sous_seuil(_plus_proche(db, idu, "transport_ligne"), "transport_ligne")
         # RETOURS-13 R5 — le fait BAOBAB (distance à l'axe, seuil 500 m) est REMPLACÉ : la distance
         # se mesure À LA STATION TCSP EN SERVICE la plus proche (kind tcsp_station — arrêts GTFS sur
         # une voie bus en site propre OSM), À VOL D'OISEAU (Conseil d'État 2022), jamais au tracé ni
@@ -4486,7 +4507,7 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         return _bloc_indisponible("proximites")   # M125 — panne ≠ absence
     tcsp = (dict(tcsp_row) if (tcsp_row and tcsp_row["d"] is not None and tcsp_row["d"] <= 1500)
             else None)
-    if not any((arret, pole, tele, ht, tcsp)):
+    if not any((arret, pole, tele, ht, tcsp, mt, lgn)):
         return None
     out: dict = {}
     if arret:
@@ -4548,6 +4569,31 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
                         "pas cartographiée en donnée ouverte : à vérifier auprès du gestionnaire "
                         "de réseau (EDF SEI)."),
             "source": "BD TOPO IGN (aérien seul — le souterrain n'y figure pas)",
+        }
+    # FICHE-COUCHES-2 lot 1 — MOYENNE TENSION (HTA) : même famille que la HT, contrainte de proximité
+    # (recul/nuisance). Non couverte par la servitude I4 (réservée à la HTB) → simple distance dite.
+    if mt:
+        t = (mt["attrs"] or {}).get("tension") or "HTA"
+        out["ligne_mt"] = {
+            "distance_m": mt["distance_m"], "tension": t,
+            "libelle": (f"Ligne moyenne tension ({t}) "
+                        + ("au contact de la parcelle" if mt["distance_m"] <= 5
+                           else f"à ~{mt['distance_m']} m")
+                        + " — contrainte de proximité (recul, sécurité). À vérifier auprès du "
+                        "gestionnaire de réseau (EDF SEI)."),
+            "source": "EDF — réseau HTA (open data ; aérien et souterrain)",
+        }
+    # FICHE-COUCHES-2 lot 1 — TRACÉ de transport public : les arrêts/pôles étaient déjà servis, pas la
+    # ligne elle-même. Signal de DESSERTE (accès), jamais une nuisance.
+    if lgn:
+        rez = (lgn["attrs"] or {}).get("reseau") or lgn["nom"]
+        out["transport_ligne"] = {
+            "nom": lgn["nom"], "reseau": rez, "distance_m": lgn["distance_m"],
+            "libelle": (f"Ligne de transport public{f' ({rez})' if rez else ''} "
+                        + ("au contact de la parcelle" if lgn["distance_m"] <= 5
+                           else f"à ~{lgn['distance_m']} m")
+                        + " — desserte (le tracé passe à proximité)."),
+            "source": "réseaux de transport public — tracés (OSM / GTFS)",
         }
     if tcsp:
         d = tcsp["d"]
@@ -5378,240 +5424,119 @@ def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_d
     return res if res.get("calculable") else None
 
 
-#: kinds de couches carte exposées au front (Brique 1) — whitelist stricte.
-#: M6.1 item 2 : + cinquante_pas (réserve des 50 pas géométriques, 163 polygones île).
-_MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "cinquante_pas",
-                    # REPARATIONS-1 lot 5 — Artificialisation (OCS GE native 974) : artificialisé
-                    # 2022 dissous (pièces ≥ 2 500 m²) + évolution officielle 2017→2022.
-                    "artificialisation",
-                    # M106 P1 : aléas DEAL séparés (inondation / mouvement_terrain en subtype) —
-                    # le zonage PPR réglementaire reste agrégé (document multirisque insécable).
-                    "georisque_alea",
-                    # M106 P4 / M106-B : transport public (tracés + arrêts + pôles + Papang),
-                    # lignes HT et axes structurants (BD TOPO, hiérarchie « importance » IGN 1-2).
-                    # Les arrêts sont servis en couche depuis M106-B (petits points, minzoom front).
-                    "transport_ligne", "transport_arret", "pole_echange", "telepherique",
-                    "ligne_ht", "axe_structurant",
-                    # M134 — couche « Dispositifs et périmètres » : QPV + NPNRU/ANRU (géométrie),
-                    # TVA primo (buffer 500 m dérivé), ZFANG/FRR (aplat COMMUNE, subtype=régime).
-                    "qpv", "tva_primo", "zfang", "frr",
-                    # M137-U — ZNIEFF (contrainte environnementale, subtype type I/II) + BPE INSEE
-                    # (équipements géolocalisés, couche DISTINCTE d'OSM 'amenite' — deux items par source).
-                    "znieff", "amenite_bpe",
-                    # SECTEUR-2 (T4) — prix du logement NEUF (VEFA acté DVF) en aplat COMMUNE ; subtype =
-                    # tranche de prix (choropleth). ECLN écartée (métropole seule, N/A DOM) → jamais de stock.
-                    "vefa_neuf",
-                    # RETOURS-13 R5 — la couche BAOBAB (tcsp_axe synthétique) est RETIRÉE (décision
-                    # Vic : « je veux la couche TCSP, pas la ligne BAOBAB »). À la place : les
-                    # tronçons en site propre (OSM) et les stations dérivées (arrêts GTFS ≤ 60 m).
-                    "tcsp_troncon", "tcsp_station",
-                    # RETOURS-14 S8 — zone « stationnement allégé » matérialisée (rayon 800 m
-                    # autour des stations + union des parcelles couvertes, calculés par ingest_tcsp).
-                    "tcsp_zone",
-                    # RETOURS-13 R4 — moyenne tension EDF (HTA aérien/souterrain, open data retrouvé).
-                    "ligne_mt",
-                    # SOURCES-1 lot 1 — droit des sols : DPU (typeinf 04), PEB (typeinf 27, zones
-                    # A-D en subtype), SUP (assiettes par catégorie en subtype). ER/EBC sont servis
-                    # par les KINDS VIRTUELS 'er'/'ebc' (plu_gpu_prescription filtré par famille,
-                    # cf. _VIRTUAL_MAP_KINDS) — jamais un kind stocké de plus pour la même donnée.
-                    "dpu", "peb", "sup",
-                    # SOURCES-1 lot 2 — nature et eau : DPF (marchepied), zones humides.
-                    "dpf", "zone_humide",
-                    # SOURCES-1 lot 3 — classement sonore (bandes sect_bruit réglementaires) et
-                    # cartes de bruit stratégiques (dépassements Lden/Ln — ≠ classement). SIS et
-                    # CASIAS sont servis par les kinds VIRTUELS 'sis'/'casias' (sol_pollue filtré).
-                    "bruit_route", "bruit_carte",
-                    # SOURCES-2 lot 3 — systèmes d'endiguement DEAL (digues + zones protégées :
-                    # l'inondation RÉSIDUELLE derrière l'ouvrage, classe/niveau/population).
-                    "endiguement",
-                    # SOURCES-2 lot 4 — scénarios d'inondation des TRI (fréquent/moyen/extrême).
-                    "tri_zone",
-                    # SOURCES-4 lot 2 — piscines détectées par CoSIA (46 599 polygones IA 20 cm 2025),
-                    # rattachées parcelle : recensement mappable, croisable propriétaire.
-                    "piscine_cosia",
-                    # SOURCES-4 lot 2 — cimetières BD TOPO (contrainte foncière : emprise + périmètre).
-                    "cimetiere",
-                    # SOURCES-4 lot 2 — BD TOPO 4 couches : constructions linéaires/surfaciques (mur de
-                    # soutènement/barrage — décisif en pente), zone d'activité, bassin versant (inondation).
-                    "construction_lineaire", "construction_surfacique", "zone_activite", "bassin_versant"}
 
-# SOURCES-1 lot 1 — kinds VIRTUELS de la carte : une clé front → le kind stocké + un filtre
-# subtype. ER = typepsc 05 (les 6 ER de Saint-Louis codés « 02 » sont captés par la cascade via
-# le rescue libellé ; la couche affiche le standard CNIG, l'écart est dit au filtre) ; EBC = 01.
-# Lot 2 : enp = kind ens entier (tous types) ; rpg = kind safer (cultures déclarées) —
-# subtypes None = pas de filtre, le kind stocké entier.
-_VIRTUAL_MAP_KINDS: dict[str, tuple[str, tuple[str, ...] | None]] = {
-    "er": ("plu_gpu_prescription", ("05",)),
-    "ebc": ("plu_gpu_prescription", ("01",)),
-    "enp": ("ens", None),
-    "rpg": ("safer", None),
-    # Lot 3 : sols — périmètres SIS et sites CASIAS/instructions du kind sol_pollue.
-    "sis": ("sol_pollue", ("sis",)),
-    "casias": ("sol_pollue", ("casias", "instruction")),
+#: COUCHES-REGISTRE-2 lot 2 — tuyau kind → clé front (pour retrouver le cid DONNEES / la fabrication).
+_KIND2FRONT_INFO = {
+    "plu_gpu_zone": "zonage", "limites_parcelles": "limites", "limites_communes": "communes",
+    "safer": "rpg", "amenite": "equipements", "amenite_bpe": "equipements_bpe",
+    "parc_national": "parc", "transport_ligne": "transport", "transport_arret": "transport",
+    "pole_echange": "axes", "axe_structurant": "axes", "ligne_ht": "lignes_ht", "ligne_mt": "lignes_ht",
+    "tcsp": "tcsp", "zonage_parcelle": "zonage_parcelle",
 }
-
-# COUCHES-1 lot 7 (G1) — couches (kinds STOCKÉS) dont le clic mérite un popup RICHE : la source
-# porte des champs à valeur métier non exposés (SUP type/acte/gestionnaire, ER/EBC prescription,
-# CASIAS nom/activité/état, ZNIEFF n°/nom, PPR/aléa document/prescription, DPU/PEB libellé). On joint
-# `attrs` complet à la géométrie POUR CES KINDS SEULEMENT (petits volumes — jamais les semis de points).
-_RICH_POPUP_KINDS: frozenset[str] = frozenset({
-    "sup", "plu_gpu_prescription", "sol_pollue", "znieff", "ppr", "georisque_alea",
-    "dpu", "peb", "ens", "zone_humide", "dpf",
-    # SOURCES-2 lot 3 — endiguement : classe d'ouvrage, niveau, population protégée au clic.
-    "endiguement",
-    # SOURCES-2 lot 4 — scénarios TRI : scénario, hauteurs d'eau, TRI au clic.
-    "tri_zone",
-    # SOURCES-4 lot 2 — Parc national : superficie (ha) + décret/arrêté qui établit la zone au clic
-    # (3 features seulement — coût nul). Le cœur/adhésion était déjà servi ; on ajoute la référence légale.
-    "parc_national",
-    # SOURCES-4 lot 2 — piscine : surface (m²) + parcelle rattachée au clic.
-    "piscine_cosia",
-    # SOURCES-4 lot 2 — cimetière : toponyme + nature (civil/militaire) au clic.
-    "cimetiere",
-    # SOURCES-4 lot 2 — BD TOPO : constructions (nature : mur de soutènement/barrage…), zone
-    # d'activité (catégorie), bassin versant (bassin hydrographique) au clic.
-    "construction_lineaire", "construction_surfacique", "zone_activite", "bassin_versant",
-})
-
-# M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran
-# que ce qui compte pour du foncier : stade, gymnase, piscine, complexe sportif. Le tag OSM `leisure`
-# n'ayant PAS été stocké (seul le nom l'est), le tri se fait par NOM : ~5 100 terrains sans nom
-# (pitch isolés) + pétanque/tennis sortent. FILTRE D'AFFICHAGE SEUL — aucune ligne supprimée ; le
-# sport n'est de toute façon pas lu par le modèle (parcel_amenites n'a pas de colonne sport).
-_SPORT_KEEP_RE = r'(stade|gymnase|piscine|nautique|complexe|omnisport|palais des sports|halle des sports)'
-_SPORT_DROP_RE = r'city.?stade|citystade'
 
 
 @app.get("/map/couches-info")
 def map_couches_info(db: Session = Depends(get_db)) -> dict:
-    """CIRCUIT-2 lot 5.2 — le « i » d'une couche affiche SOURCE, MILLÉSIME et FABRICATION :
-    le traçage côté client, sobre, sans identifiant technique. Une entrée par clé de couche du
-    front (COUCHE_PAR_CLE_FRONT), lue du registre + data_sources — jamais saisi deux fois."""
+    """CIRCUIT-2 / COUCHES-REGISTRE-2 lot 2 — le « i » de CHAQUE couche du tuyau (56 kind) affiche
+    SOURCE · MILLÉSIME · DATE DU DERNIER CONTRÔLE, tirés du réservoir RÉELLEMENT lu : le
+    `data_source_id` porté par les lignes servies (spatial_layers), ou — pour un repère dérivé
+    (mvt_parcels/mvt_communes) — le réservoir déclaré. Sans date de contrôle → le front dit « jamais
+    contrôlé ». Clé = le `kind` du tuyau (jamais un identifiant technique de plus)."""
+    from .couches_tuyau import registre as _tuyau_registre
     from ..registre.couverture import COUCHE_PAR_CLE_FRONT
     from ..registre.donnees import DONNEES
-    from ..registre.valeur import _millesimes
+    from ..registre.valeur import _RESERVOIR_NAME_ILIKE
     fabrications = {"build-mvt": "tuiles reconstruites à la bascule",
                     "geom_simple": "table matérialisée", "vue": "vue dérivée",
                     "requete": "lue en direct de la base", "wmts_distant": "tuiles IGN en direct"}
-    from ..registre.valeur import _RESERVOIR_NAME_ILIKE
-    out: dict = {}
-    noms: dict[str, tuple[str | None, str | None]] = {}
-    for rid in {r for cid in set(COUCHE_PAR_CLE_FRONT.values())
-                for r in DONNEES[cid].reservoirs if cid in DONNEES}:
-        motif = _RESERVOIR_NAME_ILIKE.get(rid)
-        if motif:
-            try:
+    # date du dernier contrôle par source — MÊME définition que la garantie G5 (verrou_g5) :
+    # le plus récent entre le dernier passage de la sonde de veille et la dernière synchro. NULL
+    # (source non surveillée, ex. seed statique) → le front affichera « jamais contrôlé ».
+    checks = {int(r["id"]): r["dernier_controle"] for r in db.execute(text(
+        "SELECT d.id, GREATEST(v.dernier_passage_at, d.last_sync_at) AS dernier_controle "
+        "FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id")).mappings().all()
+        if r["dernier_controle"] is not None}
+
+    def source_reelle(c):
+        """(source_id, nom, millésime) via le data_source_id RÉEL des lignes servies."""
+        best = None
+        for sk, subs in (c.resolution or ()):
+            q = ("SELECT ds.id, ds.name, ds.source_millesime, count(*) n FROM spatial_layers sl "
+                 "JOIN data_sources ds ON ds.id = sl.data_source_id WHERE sl.kind = :k")
+            p = {"k": sk}
+            if subs:
+                q += " AND sl.subtype = ANY(:s)"; p["s"] = list(subs)
+            q += " GROUP BY ds.id, ds.name, ds.source_millesime ORDER BY n DESC LIMIT 1"
+            row = db.execute(text(q), p).first()
+            if row and (best is None or row[3] > best[3]):
+                best = row
+        return (best[0], best[1], best[2]) if best else None
+
+    def source_declaree(cid):
+        """(source_id, nom, millésime) du réservoir déclaré — pour les repères dérivés."""
+        for rid in (getattr(DONNEES.get(cid), "reservoirs", ()) or ()):
+            motif = _RESERVOIR_NAME_ILIKE.get(rid)
+            if motif:
                 row = db.execute(text(
-                    "SELECT name, source_millesime FROM data_sources WHERE name ILIKE :m LIMIT 1"),
+                    "SELECT id, name, source_millesime FROM data_sources WHERE name ILIKE :m LIMIT 1"),
                     {"m": motif}).first()
-                noms[rid] = (row[0], row[1]) if row else (None, None)
-            except Exception:  # noqa: BLE001
-                noms[rid] = (None, None)
-    _ = _millesimes   # (même chemin de millésimes que le tampon — la jointure nom est ici)
-    for cle, cid in COUCHE_PAR_CLE_FRONT.items():
-        d = DONNEES.get(cid)
-        if d is None:
-            continue
-        sources = []
-        for rid in d.reservoirs:
-            nom, m = noms.get(rid, (None, None))
-            sources.append((nom or rid.replace("_", " ")) + (f" — millésime {m}" if m else ""))
-        out[cle] = {"source": " · ".join(sources) or "référentiel embarqué (seed)",
-                    "fabrication": fabrications.get(d.fabrication or "", d.fabrication)}
+                if row:
+                    return (row[0], row[1], row[2])
+        return None
+
+    out: dict = {}
+    for kind, c in _tuyau_registre().items():
+        fk = _KIND2FRONT_INFO.get(kind, kind)
+        cid = COUCHE_PAR_CLE_FRONT.get(fk)
+        info = source_reelle(c) if c.resolution else source_declaree(cid)
+        sid, nom, mill = info if info else (None, None, None)
+        date_ctrl = checks.get(sid) if sid else None
+        d = DONNEES.get(cid) if cid else None
+        out[kind] = {
+            "source": nom or "référentiel embarqué (seed)",
+            "millesime": mill,
+            "date_controle": date_ctrl.isoformat() if date_ctrl else None,
+            "fabrication": fabrications.get((getattr(d, "fabrication", "") or ""),
+                                            getattr(d, "fabrication", None)) if d else None,
+        }
     return out
 
 
-@app.get("/map/layers.geojson")
-def map_layers_geojson(kind: str, commune: str | None = None,
-                       # FIX-COUCHES P1 : plafond relevé 20 000 → 40 000 pour servir la couche BPE
-                       # INSEE ENTIÈRE (35 546 objets, ~8 Mo brut / ~0,7 Mo gzip mesuré) sans troncature
-                       # en vue île ; le garde no-silent-caps du front reste en filet si un kind dépasse.
-                       limit: int = Query(6000, ge=1, le=40000), db: Session = Depends(get_db)) -> dict:
-    """Couches carte (zonage PLU, PPR, Parc national) — géométries simplifiées pour l'overlay.
-
-    Les couches sans commune (île entière, ex. Parc) passent le filtre commune."""
-    # SOURCES-1 lot 1 — kinds virtuels (er/ebc) : kind stocké + filtre subtype, même chemin.
-    subtypes: tuple[str, ...] | None = None
-    if kind in _VIRTUAL_MAP_KINDS:
-        kind, subtypes = _VIRTUAL_MAP_KINDS[kind]
-    elif kind not in _MAP_LAYER_KINDS:
-        raise HTTPException(422, f"kind inconnu : {kind}")
-    # RETOURS-13 R5 — la couche synthétique BAOBAB (tcsp_axe) est retirée : le TCSP est désormais
-    # servi par les kinds STOCKÉS tcsp_troncon/tcsp_station (ingestion transport_reseaux.ingest_tcsp).
-    # CONNEXIONS-2 Lot 6.3 (propagation M2) — si la SOURCE de cette couche est DÉSACTIVÉE au dashboard,
-    # on sert une couche VIDE marquée « source désactivée » plutôt que des objets d'une source coupée.
-    ds_off = db.execute(text(
-        "SELECT bool_or(COALESCE(ds.affichage_desactive, false)) "
-        "FROM spatial_layers sl JOIN data_sources ds ON ds.id = sl.data_source_id "
-        "WHERE sl.kind = :k"), {"k": kind}).scalar()
-    if ds_off:
-        return {"type": "FeatureCollection", "features": [], "source_desactivee": True,
-                "message": "Source désactivée au dashboard", "millesime_integration": None,
-                "source_millesime": None}
-    rows = db.execute(text(
-        """SELECT sl.id, sl.subtype, sl.name, sl.attrs->>'niveau' AS niveau,
-                  sl.attrs->>'classe' AS classe, sl.attrs->>'etat' AS etat,
-                  sl.attrs->'lignes_noms' AS lignes_noms, sl.attrs->>'reseau' AS reseau,
-                  sl.attrs->>'critere' AS critere, sl.attrs->>'concordance' AS concordance,
-                  sl.attrs->>'tension' AS tension, sl.attrs->>'nature' AS nature,
-                  -- SOURCES-1 lot 2 : code culture RPG (couche « Cultures déclarées »)
-                  sl.attrs->>'code_cultu' AS code_cultu,
-                  -- COUCHES-1 lot 7 (G1) — attrs COMPLET pour les couches à popup riche : le clic
-                  -- exposait « catégorie » seule alors que la source porte type/acte/gestionnaire (SUP),
-                  -- bénéficiaire/destination (ER), nom/activité/état (CASIAS), n°/nom (ZNIEFF), etc.
-                  sl.attrs AS attrs,
-                  -- RETOURS-14 S6 : géométrie simplifiée MATÉRIALISÉE (geom_simple, entretenue par
-                  -- ensure_geom_2975) — la simplification à la volée coûtait ~11 s sur les aléas et
-                  -- la couche restait muette au premier clic. Repli à la volée si non peuplée.
-                  ST_AsGeoJSON(COALESCE(sl.geom_simple, ST_SimplifyPreserveTopology(sl.geom, 0.0002))) AS g
-           FROM spatial_layers sl
-           WHERE sl.kind = :k AND (CAST(:c AS text) IS NULL OR sl.commune = :c OR sl.commune IS NULL)
-             -- SOURCES-1 lot 1 : filtre subtype des kinds virtuels (er/ebc), NULL ailleurs
-             AND (CAST(:st AS text[]) IS NULL OR sl.subtype = ANY(:st))
-             -- M137-V : FILTRE D'AFFICHAGE SEUL — les arrêts de bus OSM (kind 'amenite', subtype
-             -- 'tcsp') sont à 93 % un doublon visible de la couche GTFS dédiée « Transport public ».
-             -- On les MASQUE de la couche Équipements, on NE SUPPRIME AUCUNE LIGNE : le modèle lit
-             -- `spatial_layers` en direct (amenites.compute_amenites_commune → parcel_amenites.
-             -- dist_tcsp_m → feature de score p_model) — inchangé (garde d'invariance test_display_seul).
-             AND NOT (sl.kind = 'amenite' AND sl.subtype = 'tcsp')
-             -- M137-W : sport OSM resserré à l'affichage (stade/gymnase/piscine/complexe) — même
-             -- doctrine display-only ; le sport n'alimente aucune feature (parcel_amenites sans sport).
-             AND NOT (sl.kind = 'amenite' AND sl.subtype = 'sport'
-                      AND NOT (COALESCE(sl.name, '') ~* :sport_keep AND COALESCE(sl.name, '') !~* :sport_drop))
-           LIMIT :lim"""),
-        {"k": kind, "c": commune, "lim": limit, "st": list(subtypes) if subtypes else None,
-         "sport_keep": _SPORT_KEEP_RE, "sport_drop": _SPORT_DROP_RE}).mappings().all()
-    # M106 : `niveau` (aléa), `critere`/`concordance` (pôles dérivés — le seuil vient de la config,
-    # jamais en dur à l'écran) et `tension` (HT) voyagent avec la géométrie — null ailleurs.
-    # RETOURS-13 : + `classe` (R6, classe d'affichage des aléas — le degré réel, jamais écrasé),
-    # `etat` (R5, tcsp en_service), `lignes_noms`/`reseau` (R9, bulle d'arrêt : nom + lignes + réseau).
-    # COUCHES-1 lot 7 (G1) — `attrs` complet joint SEULEMENT pour les couches à popup riche (petites :
-    # SUP 417, ER/EBC 10 490, CASIAS 513, ZNIEFF 162, PPR 164, aléas 993, DPU 202, PEB 4…) — jamais
-    # pour les gros semis de points (amenite/BPE) où il alourdirait la charge pour rien.
-    _rich = kind in _RICH_POPUP_KINDS
-    feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
-              "properties": {"id": r["id"], "subtype": r["subtype"], "name": r["name"],
-                             "niveau": r["niveau"], "classe": r["classe"], "etat": r["etat"],
-                             "lignes_noms": r["lignes_noms"], "reseau": r["reseau"],
-                             "critere": r["critere"],
-                             "concordance": r["concordance"], "tension": r["tension"],
-                             "nature": r["nature"], "code_cultu": r["code_cultu"],
-                             **({"attrs": r["attrs"]} if _rich else {})}}
-             for r in rows if r["g"]]
-    # M106 : millésime SERVI, jamais en dur (doctrine M86). FIX-COUCHES P3 : on distingue désormais
-    # deux dates — le MILLÉSIME AMONT (data_sources.source_millesime, la vraie fraîcheur de la donnée,
-    # affiché en premier par la légende) et la date d'INTÉGRATION (max created_at, mention secondaire
-    # « ingéré le »). Le millésime amont vient du data_source_id des lignes du kind ; NULL si la couche
-    # est dérivée/non rattachée (ex. tva_primo) → la légende retombe honnêtement sur « ingéré le ».
-    meta = db.execute(text(
-        """SELECT max(sl.created_at)::date AS ingere,
-                  (SELECT ds.source_millesime FROM spatial_layers s2
-                     JOIN data_sources ds ON ds.id = s2.data_source_id
-                    WHERE s2.kind = :k AND ds.source_millesime IS NOT NULL LIMIT 1) AS source_millesime
-           FROM spatial_layers sl WHERE sl.kind = :k"""), {"k": kind}).mappings().first()
-    return {"type": "FeatureCollection", "features": feats,
-            "millesime_integration": meta["ingere"].isoformat() if meta and meta["ingere"] else None,
-            "source_millesime": (meta["source_millesime"] if meta else None)}
+@app.get("/sources/couches")
+def sources_couches() -> dict:
+    """COUCHES-REGISTRE-2 lot 3 — le SENS INVERSE : pour chaque source (nom), la liste des couches
+    carte qu'elle alimente (kind + nom), pour que le détail d'un réservoir dans le Circuit les liste,
+    chacune cliquable vers la carte. Dérivé du registre (NOM_VERS_SLUG → RESERVOIR_TABLES.couches →
+    kinds du tuyau) — jamais saisi deux fois."""
+    from .couches_tuyau import registre as _tuyau_registre, _charger_hors_registre
+    from ..registre import tables as _T
+    from ..registre.declarations import couches_carte
+    from ..circuit_etats import NOM_VERS_SLUG
+    reg = _tuyau_registre()
+    noms = {c["kind"]: c.get("nom") or c["kind"] for c in couches_carte()}
+    noms.update({c["kind"]: c.get("nom") or c["kind"] for c in _charger_hors_registre()})  # limites/batiment
+    # kind STOCKÉ (côté RESERVOIR_TABLES) → kind(s) du tuyau (résolution inversée ; repère dérivé = lui-même)
+    stocked_to_tuyau: dict[str, list[str]] = {}
+    for kind, c in reg.items():
+        for sk, _ in (c.resolution or ()):
+            stocked_to_tuyau.setdefault(sk, []).append(kind)
+        if not c.resolution:
+            stocked_to_tuyau.setdefault(kind, []).append(kind)
+    out: dict[str, list] = {}
+    for name, slug in NOM_VERS_SLUG.items():
+        rt = _T.RESERVOIR_TABLES.get(slug)
+        if rt is None:
+            continue
+        vus: set[str] = set()
+        couches: list[dict] = []
+        for stocked in (getattr(rt, "couches", None) or ()):
+            for tk in stocked_to_tuyau.get(stocked, []):
+                if tk in reg and tk not in vus:
+                    vus.add(tk)
+                    couches.append({"kind": tk, "nom": noms.get(tk, tk)})
+        if couches:
+            out[name] = couches
+    return out
 
 
 @app.get("/map/bati")
@@ -7339,6 +7264,7 @@ from .ortho import router as _ortho_router  # noqa: E402
 from .ortho_proxy import router as _ortho_proxy_router  # noqa: E402  (RETOURS-16 V1 — fonds ortho proxifiés)
 from .recherche import router as _recherche_router  # noqa: E402  (RETOURS-16 V5 — suggest unifié)
 from .tiles import router as _tiles_router  # noqa: E402
+from .couches_tuyau import router as _couches_tuyau_router  # noqa: E402  (COUCHES-TUYAU-1 — MVT 52 couches)
 from .score_v2 import router as _score_v2_router  # noqa: E402  (M5, additif)
 from .fiche_ask import router as _fiche_ask_router  # noqa: E402  (M11 surface A — barre de fiche)
 from .crm_columns import router as _crm_columns_router  # noqa: E402  (M12 LOT H — CRM personnalisable)
@@ -7380,6 +7306,7 @@ app.include_router(_rarete_router)
 app.include_router(_ops_router)
 app.include_router(_protection_router)
 app.include_router(_tiles_router)
+app.include_router(_couches_tuyau_router)  # COUCHES-TUYAU-1 — chemin dédié /map/tiles/{kind}/…
 app.include_router(_ortho_proxy_router)
 app.include_router(_recherche_router)
 app.include_router(_ia_router)

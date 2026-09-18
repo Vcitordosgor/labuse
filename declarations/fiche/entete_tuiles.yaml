@@ -1,0 +1,79 @@
+# ── PRODUCTION (lot 2) : l'en-tête de la fiche — les six tuiles ──
+# Câble VIVANT : l'assembleur `?raccorde=1` lit ce fichier. Chaque tuile déclarée ici s'affiche ;
+# rien d'autre. Rangs de 10 en 10. exposition_versant = PREMIER ORPHELIN RÉSORBÉ (créé au registre,
+# résolu par resolveurs_fiche.py). Une tuile déclarée mais sans résolveur = « non branchée » (dette
+# de rebranchement honnête, PAS une absence côté client) — rebranchées lot 2 au fil de l'eau.
+surface:   fiche_entete_tuiles
+nom:       "En-tête de la fiche — les six tuiles"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     tuiles
+
+donnees:
+  - quoi:  surface_parcelle_m2
+    ou:    { rang: 10, etat: en_tete, section: "En-tête" }
+    comment:
+      libelle: "Surface"
+      unite:   "m²"
+      format:  entier_m2
+      i:       "Contenance cadastrale de la parcelle (DGFiP)."
+    absence: "Surface : contenance cadastrale non disponible pour cette parcelle."
+    absence_type: absente_ici
+    pourquoi: "Première mesure du bien ; toujours en tête, jamais repliée."
+
+  - quoi:  zone_plu_famille
+    ou:    { rang: 20, etat: en_tete, section: "En-tête" }
+    comment:
+      libelle: "Zone"
+      format:  classe
+      i:       "Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n'a pas déposé de document opposable."
+    absence: "Zone : non publié au GPU pour cette commune."
+    absence_type: non_publiee        # le producteur (la commune) n'a pas déposé de document
+    pourquoi: "La zone commande tout le reste de la faisabilité ; visible d'emblée."
+
+  - quoi:  pente_deg
+    ou:    { rang: 30, etat: en_tete, section: "En-tête" }
+    comment:
+      libelle: "Pente"
+      unite:   "°"
+      format:  degre
+      i:       "Pente moyenne du terrain, calculée sur le modèle de relief RGE ALTI (IGN). À La Réunion elle commande le coût de terrassement autant que la constructibilité."
+    absence: "Pente : relief non disponible sur la parcelle."
+    absence_type: absente_ici
+    pourquoi: "À La Réunion la pente décide du coût de terrassement ; en tête."
+
+  # ✓ ORPHELIN RÉSORBÉ (lot 2) : `exposition_versant` est désormais AU REGISTRE (donnees.py) et
+  # RÉSOLU (resolveurs_fiche.py → faisabilite/exposition.py). Le chemin complet est validé :
+  # donnée absente du registre → créée → déclarée ici → affichée par l'assembleur.
+  - quoi:  exposition_versant
+    ou:    { rang: 40, etat: en_tete, section: "En-tête" }
+    comment:
+      libelle: "Exposition"
+      format:  classe
+      i:       "Orientation du versant (Nord, Sud-Est…) et sa pente moyenne, calculées sur le MNT RGE ALTI (IGN), localement — sans ligne de vue. Remplace la « vue mer » (abandonnée)."
+    absence: "Exposition : relief non disponible sur la parcelle."
+    absence_type: absente_ici
+    pourquoi: "Remplace la vue mer ; en tête car recherchée par les acheteurs."
+
+  - quoi:  tfpb_taux_pct
+    ou:    { rang: 50, etat: en_tete, section: "En-tête" }
+    comment:
+      libelle: "Taxe foncière"
+      unite:   "%"
+      format:  pourcent
+      i:       "Taux de taxe foncière (TFPB) voté par la commune — fichier REI (DGFiP). C'est la charge annuelle, que le bien soit gardé, loué ou porté."
+    absence: "Taxe foncière : taux non disponible pour cette commune."
+    absence_type: non_ingeree        # le REI publie ; LABUSE ne l'a pas encore ingéré ici
+    pourquoi: "Charge annuelle du bien ; part communale servie en tête."
+
+  - quoi:  sdp_residuelle_m2
+    ou:    { rang: 60, etat: en_tete, section: "En-tête" }
+    comment:
+      libelle: "SDP restante"
+      unite:   "m²"
+      format:  entier_m2
+      i:       "Surface de plancher que le PLU autorise ENCORE sur la parcelle (potentiel résiduel)."
+    absence: "SDP restante : zone non constructible ou plus de potentiel résiduel."
+    absence_type: absente_ici
+    pourquoi: "Le potentiel constructible restant ; en tête, résumé du bien."

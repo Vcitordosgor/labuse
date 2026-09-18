@@ -1,0 +1,53 @@
+# ── PRODUCTION (lot 2) : « Risques et protections » — la section la plus dense en signaux contradictoires ──
+# ORDRE = ce qui CONTRAINT LE PLUS d'abord (Vic) : le compte, puis les aléas (rédhibitoires/PPR en
+# premier), puis le SIS (opposable) ; l'informatif (endiguement, CASIAS) replié.
+# Chaque ligne porte son STATUT JURIDIQUE — un promoteur distingue d'un coup d'œil ce qui BLOQUE
+# (opposable) de ce qui INFORME. Les aléas portent leur statut PAR ITEM (un PPR est opposable, une
+# carte d'aléa nue est informative).
+surface:   fiche_parcelle_risques
+nom:       "Risques et protections"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+
+donnees:
+  # ── EN TÊTE : ce qui contraint (compte + aléas + SIS opposable) ──
+  - quoi:  n_vigilances
+    ou:    { rang: 10, etat: en_tete, section: "Ce qui contraint" }
+    comment: { libelle: "Points de risque", format: entier, i: "Nombre de signaux de risque servis pour la parcelle (rédhibitoires + vigilances de la cascade). 0 = parcelle sans point bloquant." }
+    absence: "Points de risque : non évalués (parcelle hors run servi)."
+    absence_type: absente_ici
+    pourquoi: "Le compte en tête donne la mesure immédiate de la contrainte."
+
+  - quoi:  aleas_parcelle_liste
+    ou:    { rang: 20, etat: en_tete, section: "Ce qui contraint" }
+    comment: { libelle: "Aléas", format: liste, i: "Aléas touchant la parcelle (mêmes que « Pièges et risques »), triés rédhibitoire puis niveau. Chaque aléa porte son statut : un PPR est OPPOSABLE, une carte d'aléa Géorisques nue est INFORMATIVE." }
+    absence: "Aléas : aucun aléa réglementaire ne touche cette parcelle."
+    absence_type: absente_ici
+    pourquoi: "Le cœur des signaux contradictoires ; en tête, rédhibitoires d'abord, statut par item."
+
+  - quoi:  sis_classe
+    ou:    { rang: 30, etat: en_tete, section: "Ce qui contraint" }
+    comment: { libelle: "Sols pollués (SIS)", format: classe, i: "La parcelle est dans un Secteur d'Information sur les Sols (Géorisques) — servitude OPPOSABLE aux autorisations d'urbanisme (art. L125-6 c. env.)." }
+    absence: "Sols pollués (SIS) : la parcelle n'est dans aucun secteur d'information sur les sols."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Le SIS est opposable au permis ; il contraint, donc en tête."
+
+  # ── REPLIÉ : l'informatif (il éclaire, il ne bloque pas) ──
+  - quoi:  endiguement_zone_protegee
+    ou:    { rang: 40, etat: replie, section: "Pour information" }
+    comment: { libelle: "Système d'endiguement", format: classe, i: "La parcelle est dans une zone déclarée protégée par un système d'endiguement (DEAL). ⚠ La source ne fournit NI la classe d'ouvrage NI le niveau de protection : la présence d'une digue ne garantit aucun niveau de sécurité." }
+    absence: "Système d'endiguement : la parcelle n'est dans aucune zone protégée déclarée."
+    absence_type: absente_ici
+    statut_juridique: informatif
+    pourquoi: "Protection de niveau INCONNU — dite en clair, repliée, pour ne pas donner de fausse sécurité (Vic)."
+
+  - quoi:  casias_statut
+    ou:    { rang: 50, etat: replie, section: "Pour information" }
+    comment: { libelle: "Anciens sites industriels (CASIAS)", format: classe, i: "Ancien site industriel/de service recensé sur ou près de la parcelle (Géorisques CASIAS) — inventaire historique, INFORMATIF (n'est pas une servitude opposable)." }
+    absence: "Anciens sites industriels (CASIAS) : aucun site recensé sur ou près de la parcelle."
+    absence_type: absente_ici
+    statut_juridique: informatif
+    pourquoi: "Inventaire historique informatif ; éclaire sans bloquer — replié."

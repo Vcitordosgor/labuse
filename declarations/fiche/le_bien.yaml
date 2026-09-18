@@ -1,0 +1,99 @@
+# ── PRODUCTION (lot 2) : « Le bien » — ce qui est physiquement sur la parcelle ──
+# La section qui accueille les données SOURCES-2→5 sans place (OCS GE, CoSIA, BAN PLUS).
+# ORDRE = le regard d'un promoteur (Vic), PAS l'ordre d'ingestion : ce qu'il y a dessus, puis ce
+# qu'il reste à bâtir, puis la couverture du sol, puis les identifiants (RNB/technique en dernier).
+# REPLI = la règle : en tête ce qui change une décision, replié tout le reste.
+surface:   fiche_parcelle_le_bien
+nom:       "Le bien"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+
+donnees:
+  # ── EN TÊTE : ce qu'il y a dessus, et ce qu'il reste à bâtir (ça change la décision) ──
+  - quoi:  n_batiments
+    ou:    { rang: 10, etat: en_tete, section: "Ce qu'il y a dessus" }
+    comment: { libelle: "Bâtiments", format: entier, i: "Nombre de bâtiments sur la parcelle (empreinte BD TOPO IGN)." }
+    absence: "Bâtiments : aucun bâtiment détecté (parcelle nue au bâti cartographié)."
+    absence_type: absente_ici
+    pourquoi: "La première question du promoteur : est-ce bâti, et combien ? En tête."
+
+  - quoi:  emprise_batie_m2
+    ou:    { rang: 20, etat: en_tete, section: "Ce qu'il y a dessus" }
+    comment: { libelle: "Emprise bâtie", unite: "m²", format: entier_m2, i: "Somme des empreintes bâties (BD TOPO IGN) sur la parcelle." }
+    absence: "Emprise bâtie : aucun bâti au sol détecté sur cette parcelle."
+    absence_type: absente_ici
+    pourquoi: "L'emprise au sol dit tout de suite la densité déjà là ; en tête."
+
+  - quoi:  hauteur_bati_m
+    ou:    { rang: 30, etat: en_tete, section: "Ce qu'il y a dessus" }
+    comment: { libelle: "Hauteur du bâti", unite: "m", format: metre, i: "Hauteur du bâti — faîtage LiDAR HD mesuré quand disponible, sinon hauteur BD TOPO déclarée." }
+    absence: "Hauteur du bâti : non mesurée (ni LiDAR ni hauteur BD TOPO sur ce bâti)."
+    absence_type: absente_ici
+    pourquoi: "La hauteur mesurée commande le potentiel de surélévation ; en tête."
+
+  - quoi:  surface_libre_sol_m2
+    ou:    { rang: 40, etat: en_tete, section: "Ce qu'il reste à bâtir" }
+    comment: { libelle: "Surface au sol libre", unite: "m²", format: entier_m2, i: "Surface de la parcelle non couverte par du bâti (parcelle − emprise bâtie)." }
+    absence: "Surface au sol libre : non calculable (emprise ou surface parcelle manquante)."
+    absence_type: absente_ici
+    pourquoi: "Ce qu'il reste à bâtir au sol — la place disponible ; en tête."
+
+  # ── REPLIÉ : la couverture du sol (OCS GE / CoSIA) et le toit ──
+  - quoi:  part_artificialisee_pct
+    ou:    { rang: 50, etat: replie, section: "Couverture du sol" }
+    comment: { libelle: "Part artificialisée (OCS GE)", unite: "%", format: pourcent, i: "Part de la parcelle artificialisée d'après l'OCS GE 2022 (donnée d'îlot, pas la précision cadastrale) ; n'entre pas dans le score." }
+    absence: "Part artificialisée : hors couverture OCS GE pour cette parcelle."
+    absence_type: absente_ici
+    pourquoi: "Contexte d'artificialisation ; utile mais ne décide pas seul — replié."
+
+  - quoi:  usage_sol_dominant
+    ou:    { rang: 60, etat: replie, section: "Couverture du sol" }
+    comment: { libelle: "Usage du sol dominant (OCS GE)", format: classe, i: "Code d'usage OCS GE dominant par aire intersectée (millésime 2022, nomenclature IGN) — donnée d'îlot." }
+    absence: "Usage du sol dominant : hors couverture OCS GE pour cette parcelle."
+    absence_type: absente_ici
+    pourquoi: "Nature dominante de l'occupation ; contexte, replié."
+
+  - quoi:  cosia_detecte_m2
+    ou:    { rang: 70, etat: replie, section: "Couverture du sol" }
+    comment: { libelle: "Bâti détecté CoSIA (hors BD TOPO)", unite: "m²", format: entier_m2, i: "Surface bâtie que CoSIA 2025 détecte sur la parcelle mais que l'empreinte BD TOPO n'a pas — signale un bâti récent ou non cartographié." }
+    absence: "Bâti CoSIA hors BD TOPO : aucune sur-détection (CoSIA et BD TOPO d'accord)."
+    absence_type: absente_ici
+    pourquoi: "Signal de bâti récent non cartographié ; ponctuel, replié."
+
+  - quoi:  pente_toit_deg
+    ou:    { rang: 80, etat: replie, section: "Couverture du sol" }
+    comment: { libelle: "Pente du toit", unite: "°", format: degre, i: "Pente médiane des toitures (LiDAR HD) — commande l'aptitude solaire et la surélévation." }
+    absence: "Pente du toit : non relevée (LiDAR toiture non calculé sur ce bâti)."
+    absence_type: absente_ici
+    pourquoi: "Détail technique du toit ; secondaire à la décision — replié."
+
+  - quoi:  nature_toit
+    ou:    { rang: 85, etat: replie, section: "Couverture du sol" }
+    comment: { libelle: "Forme du toit", format: classe, i: "Forme du toit du plus grand bâtiment (LiDAR HD, ≥ 0,70 de confiance) : plat, monopente, double pente ou croupe complexe." }
+    absence: "Forme du toit : non déterminée (pans non nets ou LiDAR indisponible)."
+    absence_type: absente_ici
+    pourquoi: "Forme du toit : ne change aucune décision foncière (Vic) — replié, la pente suffit."
+
+  # ── REPLIÉ, EN DERNIER : les identifiants et références techniques (RNB, adresses, DPE) ──
+  - quoi:  dpe_connu
+    ou:    { rang: 90, etat: replie, section: "Identifiants et références" }
+    comment: { libelle: "DPE connu", format: texte, i: "Étiquette du dernier DPE enregistré à l'adresse (base ADEME), quand il existe." }
+    absence: "DPE connu : aucun diagnostic enregistré à cette adresse (ADEME)."
+    absence_type: absente_ici
+    pourquoi: "Référence documentaire ; en dernier, replié."
+
+  - quoi:  rnb_batiments_liste
+    ou:    { rang: 100, etat: replie, section: "Identifiants et références" }
+    comment: { libelle: "Identifiants RNB", format: entier, i: "Nombre de bâtiments rattachés au Référentiel National des Bâtiments (identifiants RNB)." }
+    absence: "Identifiants RNB : aucun bâtiment rattaché au RNB sur cette parcelle."
+    absence_type: absente_ici
+    pourquoi: "Référence technique du bâti (RNB) ; en dernier, replié."
+
+  - quoi:  ban_plus_adresses_bati
+    ou:    { rang: 110, etat: replie, section: "Identifiants et références" }
+    comment: { libelle: "Adresses liées au bâti (BAN PLUS)", format: entier, i: "Nombre d'adresses BAN PLUS rattachées aux bâtiments de la parcelle (liens adresse↔bâtiment)." }
+    absence: "Adresses BAN PLUS : aucun lien adresse↔bâtiment sur cette parcelle."
+    absence_type: absente_ici
+    pourquoi: "Référence adressage du bâti ; en dernier, replié."
