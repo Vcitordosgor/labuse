@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { getSources, getSourcesCouverture } from '../../lib/api'
+import { getSources, getSourcesCouverture, getSourcesCouches, type SourceCouche } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
 import { TOKENS } from '../../lib/tokens'
 import type { SourceInfo } from '../../lib/types'
@@ -50,8 +50,14 @@ function Badge({ kind, children, title }: { kind: 'auto' | 'late' | 'dashed' | '
   return <span title={title} className={`${base} border border-dashed border-line-2 text-txt-dim`}>{children}</span>
 }
 
-function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
+function Row({ s, focused, couches }: { s: SourceInfo; focused: boolean; couches?: SourceCouche[] }) {
   const ref = useRef<HTMLDivElement>(null)
+  // COUCHES-REGISTRE-2 lot 3 — clic sur une couche alimentée : l'allumer (si éteinte) et aller à la carte.
+  const versCouche = (kind: string) => {
+    const st = useApp.getState()
+    if (!st.tuyauActives[kind]) st.toggleTuyau(kind)
+    st.setView('cartes')
+  }
   useEffect(() => { if (focused) ref.current?.scrollIntoView({ block: 'center' }) }, [focused])
 
   const majEnCours = pasAJour(s)
@@ -124,6 +130,20 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
           {s.couverture_note}
         </p>
       )}
+      {/* COUCHES-REGISTRE-2 lot 3 — LE SENS INVERSE : les couches carte que cette source alimente,
+          chacune cliquable → l'allume sur la carte. Muet si la source ne nourrit aucune couche. */}
+      {couches && couches.length > 0 && (
+        <p data-source-couches className="col-[2/-1] flex flex-wrap items-center gap-1.5 text-[12px] text-txt-dim">
+          <span className="text-txt-mut">Couches carte :</span>
+          {couches.map((c) => (
+            <button key={c.kind} data-source-couche={c.kind} onClick={() => versCouche(c.kind)}
+              title={`Voir « ${c.nom} » sur la carte`}
+              className="rounded-full border border-line-2 px-2 py-0.5 text-[11px] text-txt-dim transition-colors hover:border-mint hover:text-mint">
+              {c.nom} ↗
+            </button>
+          ))}
+        </p>
+      )}
       {/* RETOURS-11 A8 — note interne (« proxy RPG (IGN) — RP… », etc.) retirée côté client (vit dans Données). */}
     </div>
   )
@@ -133,6 +153,8 @@ export function SourcesPage() {
   const { data, isLoading, isError } = useQuery({ queryKey: ['sources'], queryFn: getSources })
   // RETOURS-9 (Q11.5) — les chiffres de couverture qui parlent au client, lus des données réelles.
   const couverture = useQuery({ queryKey: ['sources-couverture'], queryFn: getSourcesCouverture, staleTime: 5 * 60_000 }).data
+  // COUCHES-REGISTRE-2 lot 3 — le sens inverse : les couches carte que chaque source alimente.
+  const couchesParSource = useQuery({ queryKey: ['sources-couches'], queryFn: getSourcesCouches, staleTime: 5 * 60_000 }).data
   const sourcesFocus = useApp((s) => s.sourcesFocus)
   const [q, setQ] = useState('')
   // RETOURS-9 (Q11.1) — plus de chips de tri : « Toutes » ou un thème (accordéon replié « Filtrer par thème »).
@@ -299,7 +321,7 @@ export function SourcesPage() {
               <span className="font-mono text-[10.5px] text-txt-dim opacity-60">{list.length}</span>
             </div>
             <div className="overflow-hidden rounded-[10px] border border-line bg-surface-1">
-              {list.map((s) => <Row key={s.id} s={s} focused={s.name === sourcesFocus} />)}
+              {list.map((s) => <Row key={s.id} s={s} focused={s.name === sourcesFocus} couches={couchesParSource?.[s.name]} />)}
             </div>
           </div>
         ))}

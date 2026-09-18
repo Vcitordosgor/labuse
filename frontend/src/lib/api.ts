@@ -1130,6 +1130,9 @@ export interface SourcesCouverture {
   analyse_label: string | null; analyse_date: string | null
 }
 export const getSourcesCouverture = () => j<SourcesCouverture>('/sources/couverture')
+// COUCHES-REGISTRE-2 lot 3 — le sens inverse : par nom de source, les couches carte qu'elle alimente.
+export type SourceCouche = { kind: string; nom: string }
+export const getSourcesCouches = () => j<Record<string, SourceCouche[]>>('/sources/couches')
 
 // ── Modules outils (Vague 1) ──
 // M129-C (Vic 19/08/2026) : modDivision retiré — division hors produit (endpoint dormant).

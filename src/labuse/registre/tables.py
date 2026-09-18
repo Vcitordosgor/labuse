@@ -50,8 +50,13 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                           "artificialisation 2017→2022 (2025-09-16)"),
     # ── cadastre / foncier ──────────────────────────────────────────────────────────
     # RECETTE-11 D6 — millésime affiché au client : plus de note d'ingénierie « « latest » ingérée ».
-    "cadastre_api_carto": Rt(("parcels",), millesime="PCI Parcellaire Express (DGFiP), édition courante"),
-    "cadastre_etalab_bulk": Rt(("parcels",), millesime="Etalab cadastre (DGFiP), édition courante",
+    # COUCHES-REGISTRE-2 lot 3 — le cadastre alimente le repère `limites_parcelles` (contour cadastral,
+    # via `parcels` → tuiles `mvt_parcels`) : déclaré ICI pour que le sens inverse (source → couches)
+    # ne soit plus muet. cf. donnees limites_parcelles_couche.reservoirs = ('cadastre_api_carto',).
+    "cadastre_api_carto": Rt(("parcels",), couches=("limites_parcelles",),
+                             millesime="PCI Parcellaire Express (DGFiP), édition courante"),
+    "cadastre_etalab_bulk": Rt(("parcels",), couches=("limites_parcelles",),
+                               millesime="Etalab cadastre (DGFiP), édition courante",
                                note="DOUBLON (canal bulk du même réservoir que cadastre_api_carto)"),
     "cadastre_epoque": Rt(("cadastre_historique",),
                           millesime="PCI vecteur Etalab — corpus complet 2008 + 2017-02 + 35 éditions 2017-07→2026-06 (SOURCES-5)"),

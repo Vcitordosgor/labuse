@@ -5502,6 +5502,43 @@ def map_couches_info(db: Session = Depends(get_db)) -> dict:
     return out
 
 
+@app.get("/sources/couches")
+def sources_couches() -> dict:
+    """COUCHES-REGISTRE-2 lot 3 — le SENS INVERSE : pour chaque source (nom), la liste des couches
+    carte qu'elle alimente (kind + nom), pour que le détail d'un réservoir dans le Circuit les liste,
+    chacune cliquable vers la carte. Dérivé du registre (NOM_VERS_SLUG → RESERVOIR_TABLES.couches →
+    kinds du tuyau) — jamais saisi deux fois."""
+    from .couches_tuyau import registre as _tuyau_registre, _charger_hors_registre
+    from ..registre import tables as _T
+    from ..registre.declarations import couches_carte
+    from ..circuit_etats import NOM_VERS_SLUG
+    reg = _tuyau_registre()
+    noms = {c["kind"]: c.get("nom") or c["kind"] for c in couches_carte()}
+    noms.update({c["kind"]: c.get("nom") or c["kind"] for c in _charger_hors_registre()})  # limites/batiment
+    # kind STOCKÉ (côté RESERVOIR_TABLES) → kind(s) du tuyau (résolution inversée ; repère dérivé = lui-même)
+    stocked_to_tuyau: dict[str, list[str]] = {}
+    for kind, c in reg.items():
+        for sk, _ in (c.resolution or ()):
+            stocked_to_tuyau.setdefault(sk, []).append(kind)
+        if not c.resolution:
+            stocked_to_tuyau.setdefault(kind, []).append(kind)
+    out: dict[str, list] = {}
+    for name, slug in NOM_VERS_SLUG.items():
+        rt = _T.RESERVOIR_TABLES.get(slug)
+        if rt is None:
+            continue
+        vus: set[str] = set()
+        couches: list[dict] = []
+        for stocked in (getattr(rt, "couches", None) or ()):
+            for tk in stocked_to_tuyau.get(stocked, []):
+                if tk in reg and tk not in vus:
+                    vus.add(tk)
+                    couches.append({"kind": tk, "nom": noms.get(tk, tk)})
+        if couches:
+            out[name] = couches
+    return out
+
+
 @app.get("/map/bati")
 def map_bati(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     """Taux de bâti par parcelle (BD TOPO), pour le mode carte « mutabilité » (LOT 2).
