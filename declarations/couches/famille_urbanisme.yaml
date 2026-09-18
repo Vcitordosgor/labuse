@@ -7,7 +7,7 @@ surface:   couche_zonage
 nom:       "Limites officielles du PLU (GPU)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=plu_gpu_zone"
+route:     "/map/tiles/plu_gpu_zone/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  zonage_plu_couche
@@ -26,7 +26,7 @@ surface:   couche_cinquante_pas
 nom:       "50 pas géométriques"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=cinquante_pas"
+route:     "/map/tiles/cinquante_pas/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  cinquante_pas_couche
@@ -42,7 +42,7 @@ surface:   couche_artificialisation
 nom:       "Artificialisation (OCS GE)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=artificialisation"
+route:     "/map/tiles/artificialisation/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  artificialisation_couche
@@ -57,7 +57,7 @@ surface:   couche_dpu
 nom:       "Droit de préemption urbain (DPU)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=dpu"
+route:     "/map/tiles/dpu/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  dpu_couche
@@ -75,7 +75,7 @@ surface:   couche_sup
 nom:       "Servitudes d'utilité publique (SUP)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=sup"
+route:     "/map/tiles/sup/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  sup_couche
@@ -96,7 +96,7 @@ surface:   couche_er
 nom:       "Emplacements réservés (ER)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=er"
+route:     "/map/tiles/er/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  er_couche
@@ -112,7 +112,7 @@ surface:   couche_ebc
 nom:       "Espaces boisés classés (EBC)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=ebc"
+route:     "/map/tiles/ebc/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  ebc_couche

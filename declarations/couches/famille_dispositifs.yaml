@@ -15,7 +15,7 @@ surface:   couche_zfang
 nom:       "ZFANG (zone franche activités)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=zfang"
+route:     "/map/tiles/zfang/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  dispositifs_couche
@@ -30,7 +30,7 @@ surface:   couche_frr
 nom:       "FRR (revitalisation rurale)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=frr"
+route:     "/map/tiles/frr/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  dispositifs_couche
@@ -45,7 +45,7 @@ surface:   couche_tva_primo
 nom:       "TVA réduite primo-accédant"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=tva_primo"
+route:     "/map/tiles/tva_primo/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  dispositifs_couche
@@ -61,7 +61,7 @@ surface:   couche_qpv
 nom:       "Quartiers prioritaires (QPV)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=qpv"
+route:     "/map/tiles/qpv/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  dispositifs_couche
@@ -76,7 +76,7 @@ surface:   couche_anru
 nom:       "Rénovation urbaine (ANRU / NPNRU)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=anru"
+route:     "/map/tiles/anru/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  dispositifs_couche

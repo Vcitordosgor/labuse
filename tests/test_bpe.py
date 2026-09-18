@@ -36,6 +36,7 @@ def test_bpe_attrs_sans_sectoriels_ni_adresse():
 
 def test_parc_national_popup_riche_sources4():
     """SOURCES-4 lot 2 — Parc national : superficie (ha) + décret/arrêté publiés par l'ODS
-    pnrun_2021 servis au clic. Le kind doit être « popup riche » pour que ses attrs voyagent."""
-    from labuse.api.app import _RICH_POPUP_KINDS
-    assert "parc_national" in _RICH_POPUP_KINDS
+    pnrun_2021 servis au clic. COUCHES-RETRAIT-1 lot 3 — l'ancien endpoint V1 (_RICH_POPUP_KINDS)
+    est retiré : la couche est servie (attrs au clic) par le tuyau."""
+    from labuse.registre.declarations import couches_carte
+    assert "parc_national" in {c["kind"] for c in couches_carte()}

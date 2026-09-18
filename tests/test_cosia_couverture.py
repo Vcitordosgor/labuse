@@ -32,8 +32,10 @@ def test_couche_cimetiere_declaree_et_servie():
     et servi en carte à popup riche (toponyme + nature au clic)."""
     from labuse.registre import tables
     assert "cimetiere" in tables.RESERVOIR_TABLES["bd_topo"].couches
-    from labuse.api.app import _MAP_LAYER_KINDS, _RICH_POPUP_KINDS
-    assert "cimetiere" in _MAP_LAYER_KINDS and "cimetiere" in _RICH_POPUP_KINDS
+    # COUCHES-RETRAIT-1 lot 3 — servie en carte par le TUYAU (l'ancien endpoint V1 /map/layers.geojson
+    # + _MAP_LAYER_KINDS/_RICH_POPUP_KINDS est retiré ; la couche vit dans les déclarations du tuyau).
+    from labuse.registre.declarations import couches_carte
+    assert "cimetiere" in {c["kind"] for c in couches_carte()}
     from labuse.ingestion.layers_ingest import KIND_SOURCE
     assert KIND_SOURCE["cimetiere"] == "BD TOPO IGN"
 
@@ -42,11 +44,12 @@ def test_bdtopo_4_couches_declarees_et_servies():
     """SOURCES-4 lot 2 — les 4 thèmes BD TOPO (constructions lin/surf, zone d'activité, bassin
     versant) sont rattachés au réservoir bd_topo (V1c) et servis carte + popup riche."""
     from labuse.registre import tables
-    from labuse.api.app import _MAP_LAYER_KINDS, _RICH_POPUP_KINDS
+    from labuse.registre.declarations import couches_carte
     from labuse.ingestion.layers_ingest import KIND_SOURCE
+    _servies = {c["kind"] for c in couches_carte()}   # COUCHES-RETRAIT-1 lot 3 — servies par le tuyau
     for k in ("construction_lineaire", "construction_surfacique", "zone_activite", "bassin_versant"):
         assert k in tables.RESERVOIR_TABLES["bd_topo"].couches, k
-        assert k in _MAP_LAYER_KINDS and k in _RICH_POPUP_KINDS, k
+        assert k in _servies, k
         assert KIND_SOURCE[k] == "BD TOPO IGN", k
 
 
@@ -56,5 +59,5 @@ def test_couche_piscine_declaree_et_servie():
     from labuse.registre import tables
     from labuse.ingestion.cosia_couverture import PISCINE_KIND
     assert PISCINE_KIND in tables.RESERVOIR_TABLES["cosia"].couches
-    from labuse.api.app import _MAP_LAYER_KINDS, _RICH_POPUP_KINDS
-    assert PISCINE_KIND in _MAP_LAYER_KINDS and PISCINE_KIND in _RICH_POPUP_KINDS
+    from labuse.registre.declarations import couches_carte
+    assert PISCINE_KIND in {c["kind"] for c in couches_carte()}   # servie par le tuyau (lot 3)

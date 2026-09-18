@@ -9,7 +9,7 @@ surface:   couche_zone_humide
 nom:       "Zones humides"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=zone_humide"
+route:     "/map/tiles/zone_humide/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  zone_humide_couche
@@ -24,7 +24,7 @@ surface:   couche_enp
 nom:       "Espaces naturels protégés"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=enp"
+route:     "/map/tiles/enp/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  enp_couche
@@ -40,7 +40,7 @@ surface:   couche_znieff
 nom:       "ZNIEFF (type I & II)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=znieff"
+route:     "/map/tiles/znieff/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  znieff_couche
@@ -58,7 +58,7 @@ surface:   couche_parc
 nom:       "Parc national"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=parc_national"
+route:     "/map/tiles/parc_national/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  parc_national_couche

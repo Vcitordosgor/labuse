@@ -8,7 +8,7 @@ surface:   couche_vefa_neuf
 nom:       "Prix du logement neuf (VEFA)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=vefa_neuf"
+route:     "/map/tiles/vefa_neuf/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  vefa_couche

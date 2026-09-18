@@ -13,7 +13,7 @@ surface:   couche_amenite
 nom:       "Équipements et services (OSM)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=amenite"
+route:     "/map/tiles/amenite/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  equip_osm_couche
@@ -33,7 +33,7 @@ surface:   couche_amenite_bpe
 nom:       "Équipements INSEE (BPE)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=amenite_bpe"
+route:     "/map/tiles/amenite_bpe/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  bpe_couche

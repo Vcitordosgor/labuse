@@ -8,7 +8,7 @@ surface:   couche_piscine
 nom:       "Piscines (3 niveaux de confiance)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=piscine_cosia"
+route:     "/map/tiles/piscine_cosia/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  piscine_couche
@@ -36,7 +36,7 @@ surface:   couche_icpe
 nom:       "Installations classées (ICPE)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=icpe"
+route:     "/map/tiles/icpe/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  icpe_couche
@@ -54,7 +54,7 @@ surface:   couche_friche
 nom:       "Friches (Cartofriches)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=friche"
+route:     "/map/tiles/friche/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  friche_couche
@@ -72,7 +72,7 @@ surface:   couche_cavite
 nom:       "Cavités souterraines"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=cavite"
+route:     "/map/tiles/cavite/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  cavite_couche
@@ -89,7 +89,7 @@ surface:   couche_trait_de_cote
 nom:       "Érosion côtière (trait de côte)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=trait_de_cote"
+route:     "/map/tiles/trait_de_cote/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  trait_de_cote_couche
@@ -108,7 +108,7 @@ surface:   couche_tri_zone
 nom:       "TRI — zones inondables"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=tri_zone"
+route:     "/map/tiles/tri_zone/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  tri_zone_couche
@@ -131,7 +131,7 @@ surface:   couche_abf
 nom:       "Périmètres ABF / monuments"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=abf"
+route:     "/map/tiles/abf/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  abf_couche
@@ -148,7 +148,7 @@ surface:   couche_sar
 nom:       "SAR — vocations / potentiel foncier Région"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=sar"
+route:     "/map/tiles/sar/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  sar_couche
@@ -168,7 +168,7 @@ surface:   couche_foret_publique
 nom:       "Forêts publiques"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=foret_publique"
+route:     "/map/tiles/foret_publique/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  foret_publique_couche
@@ -185,7 +185,7 @@ surface:   couche_bassin_versant
 nom:       "Bassins versants (hydrographie)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=bassin_versant"
+route:     "/map/tiles/bassin_versant/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  bassin_versant_couche
@@ -202,7 +202,7 @@ surface:   couche_cimetiere
 nom:       "Cimetières"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=cimetiere"
+route:     "/map/tiles/cimetiere/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  cimetiere_couche
@@ -221,7 +221,7 @@ surface:   couche_safer
 nom:       "Foncier agricole déclaré — RPG / SAFER"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=safer"
+route:     "/map/tiles/safer/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  safer_couche
@@ -240,7 +240,7 @@ surface:   couche_zone_activite
 nom:       "Zones d'activité"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=zone_activite"
+route:     "/map/tiles/zone_activite/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  zone_activite_couche
@@ -257,7 +257,7 @@ surface:   couche_construction_lineaire
 nom:       "Murs de soutènement"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=construction_lineaire"
+route:     "/map/tiles/construction_lineaire/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  construction_lineaire_couche
@@ -276,7 +276,7 @@ surface:   couche_construction_surfacique
 nom:       "Barrages, ponts et dalles"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=construction_surfacique"
+route:     "/map/tiles/construction_surfacique/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  construction_surfacique_couche

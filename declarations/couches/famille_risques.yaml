@@ -7,7 +7,7 @@ surface:   couche_ppr
 nom:       "PPR multirisque"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=ppr"
+route:     "/map/tiles/ppr/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  ppr_couche
@@ -25,7 +25,7 @@ surface:   couche_dpf
 nom:       "Ravines et reculs (DPF)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=dpf"
+route:     "/map/tiles/dpf/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  dpf_couche
@@ -41,7 +41,7 @@ surface:   couche_endiguement
 nom:       "Systèmes d'endiguement"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=endiguement"
+route:     "/map/tiles/endiguement/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  endiguement_couche
@@ -61,7 +61,7 @@ surface:   couche_peb
 nom:       "Plan d'exposition au bruit (PEB)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=peb"
+route:     "/map/tiles/peb/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  peb_couche
@@ -79,7 +79,7 @@ surface:   couche_bruit_route
 nom:       "Classement sonore (bruit routier)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=bruit_route"
+route:     "/map/tiles/bruit_route/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  bruit_couche
@@ -98,7 +98,7 @@ surface:   couche_bruit_carte
 nom:       "Cartes de bruit — dépassements"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=bruit_carte"
+route:     "/map/tiles/bruit_carte/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  bruit_carte_couche
@@ -114,7 +114,7 @@ surface:   couche_alea_inondation
 nom:       "Aléa inondation"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=alea_inondation"
+route:     "/map/tiles/alea_inondation/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  alea_inondation_couche
@@ -129,7 +129,7 @@ surface:   couche_alea_mvt
 nom:       "Aléa mouvement de terrain"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=alea_mvt"
+route:     "/map/tiles/alea_mvt/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  alea_mvt_couche
@@ -146,7 +146,7 @@ surface:   couche_sis
 nom:       "Secteurs d'information sur les sols (SIS)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=sis"
+route:     "/map/tiles/sis/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  sis_couche
@@ -164,7 +164,7 @@ surface:   couche_casias
 nom:       "Anciens sites industriels (CASIAS)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=casias"
+route:     "/map/tiles/casias/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  casias_couche

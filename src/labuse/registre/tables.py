@@ -318,7 +318,6 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "parcel_residuel_base_legacy": "LEGACY — lecteur faisabilite/residuel_runs.py (à rattacher ou purger, CIRCUIT-0)",
     "residuel_runs": "résiduel (manifeste)",
     "mvt_parcels": "build-mvt (tuiles parcelles)",
-    "mvt_overlays": "build-mvt (tuiles couches)",
     "mvt_meta": "build-mvt (pointeurs)",
     # COUCHES-TUYAU-1 / COUCHES-RECETTE-1 : tables dérivées du TUYAU vectoriel (fabriquées par les
     # build_* de api/couches_tuyau.py, reconstruites au run — pas des réservoirs). Enregistrées ici

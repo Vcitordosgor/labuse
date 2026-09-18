@@ -9,7 +9,7 @@ surface:   couche_axe
 nom:       "Axes structurants"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=axe_structurant"
+route:     "/map/tiles/axe_structurant/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  axes_couche
@@ -24,7 +24,7 @@ surface:   couche_transport_ligne
 nom:       "Transport public — lignes"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=transport_ligne"
+route:     "/map/tiles/transport_ligne/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  transport_couche
@@ -39,7 +39,7 @@ surface:   couche_transport_arret
 nom:       "Transport public — arrêts"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=transport_arret"
+route:     "/map/tiles/transport_arret/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  transport_couche
@@ -54,7 +54,7 @@ surface:   couche_telepherique
 nom:       "Téléphérique"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=telepherique"
+route:     "/map/tiles/telepherique/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  transport_couche
@@ -76,7 +76,7 @@ surface:   couche_pole
 nom:       "Pôles d'échange"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=pole_echange"
+route:     "/map/tiles/pole_echange/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  axes_couche
@@ -92,7 +92,7 @@ surface:   couche_ligne_ht
 nom:       "Lignes haute tension (HTB)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=ligne_ht"
+route:     "/map/tiles/ligne_ht/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  lignes_ht_couche
@@ -107,7 +107,7 @@ surface:   couche_ligne_mt
 nom:       "Lignes moyenne tension (HTA)"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=ligne_mt"
+route:     "/map/tiles/ligne_mt/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  ligne_mt_couche
@@ -122,7 +122,7 @@ surface:   couche_tcsp
 nom:       "TCSP / stationnement allégé"
 categorie: couche
 parent:    null
-route:     "/map/layers.geojson?kind=tcsp"
+route:     "/map/tiles/tcsp/{z}/{x}/{y}.pbf"
 rendu:     carte
 donnees:
   - quoi:  tcsp_couche
