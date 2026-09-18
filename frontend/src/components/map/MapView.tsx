@@ -98,8 +98,8 @@ const statusLineExpr = (clair: boolean): maplibregl.ExpressionSpecification => !
   ['match', TIER_V2,
     ...Object.entries(ALL_TIER_META).flatMap(([k, mt]) => [k,
       // PALIERS-1 — priorite/a_suivre (codes v2 q_v14) colorés comme brulante/chaude (codes servis)
-      k === 'brulante' || k === 'priorite' ? MAP_THEME.clair.contourBrulante
-        : k === 'chaude' || k === 'a_suivre' ? MAP_THEME.clair.contourChaude
+      k === 'brulante' || k === 'priorite' ? MAP_THEME.sombre.contourBrulante
+        : k === 'chaude' || k === 'a_suivre' ? MAP_THEME.sombre.contourChaude
           : k === 'ecartee' ? ECARTEE_COLOR : mt.color]),
     LEGACY_COLOR],
 ] as unknown as maplibregl.ExpressionSpecification
@@ -226,7 +226,7 @@ const fitPadding = (w: number, h: number) => Math.max(8, Math.min(40, Math.floor
 
 // M105-B — les couleurs/opacités de zonage, PPR, ANRU et 50 pas vivent dans lib/mapTheme
 // (un jeu de tokens PAR THÈME) : ici la colonne `sombre` (création des couches),
-// `applyClairMode` pose la colonne du thème courant au même format. Un seul endroit.
+// `applyBasemapStyle` pose la colonne du thème courant au même format. Un seul endroit.
 const zonageFillExpr = (t: MapTokens) => ['case',
   ['in', ['slice', ['upcase', ['coalesce', ['get', 'subtype'], '']], 0, 1], ['literal', ['U']]],
   t.zonageU, t.zonageAutre] as unknown as maplibregl.ExpressionSpecification
@@ -355,8 +355,7 @@ const SOMBRE_BG = '#060A08'   // canvas historique — mer du mode Clair (et sou
 const MER_ORTHO = '#0A3B59'
 // largeur des limites communes en Sombre (interpolée par zoom) — restaurée hors Clair.
 const COMMUNES_W_SOMBRE = ['interpolate', ['linear'], ['zoom'], 8, 1.1, 13, 1.8]
-function applyClairMode(m: maplibregl.Map, basemap: string) {
-  const clair = basemap === 'clair'
+function applyBasemapStyle(m: maplibregl.Map, basemap: string) {
   const sombre = basemap === 'dark'
   // RETOURS-11 C4 — fonds PHOTO/CLAIR (Plan IGN, Ortho IGN, tous millésimes) : les traits fins et
   // les aplats sombres se noient sur la tuile claire/photographique. On applique un variant de style
@@ -374,31 +373,30 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('ortho-veil', 'background-opacity', basemap === 'ortho' ? 0.3 : 0)
   // TERRE : masse île dissoute — grise en Clair, terre mesurée en Sombre ; CACHÉE sous Plan/Ortho
   // (dans la pile elle est AU-DESSUS des rasters de fond, elle les recouvrirait).
-  vis('ile-mass', clair || sombre)
-  set('ile-mass', 'fill-color', clair ? '#C9C4B8' : SOMBRE_TERRE)
-  vis('ile-cote', clair)
+  vis('ile-mass', sombre)
+  set('ile-mass', 'fill-color', SOMBRE_TERRE)
   // traits achromatiques (#ECF5EF) invisibles sur terre claire → foncés en Clair (bascule M64).
-  const selLine = clair ? '#14181A' : '#ECF5EF'
+  const selLine = '#ECF5EF'
   for (const id of ['parcels-sel', 'ile-sel', 'parcels-ping', 'ile-ping']) set(id, 'line-color', selLine)
   // RETOURS-11 C4 — text-halo-width réappliqué à sa valeur de création (1.3) hors fond photo, pour
   // que le retour en Clair/Sombre efface l'épaississement du variant photo (témoins intacts).
-  for (const id of ['parcels-zone-label', 'ile-zone-label']) { set(id, 'text-color', clair ? '#14181A' : '#ECF5EF'); set(id, 'text-halo-color', clair ? '#FFFFFF' : '#06130C'); set(id, 'text-halo-width', 1.3) }
+  for (const id of ['parcels-zone-label', 'ile-zone-label']) { set(id, 'text-color', '#ECF5EF'); set(id, 'text-halo-color', '#06130C'); set(id, 'text-halo-width', 1.3) }
   // M105 P4.1 — limites parcelles NOIRES en vue claire (le beige #B9B3A6 se noyait sur la
   // terre claire) ; la vue sombre ne bouge pas. Deux traitements selon le fond, assumés.
   for (const id of ['parcels-limites', 'ile-limites']) {
-    set(id, 'line-color', clair ? '#000000' : '#8FA69A')
-    set(id, 'line-width', clair ? 0.5 : 0.3)
+    set(id, 'line-color', '#8FA69A')
+    set(id, 'line-width', 0.3)
     set(id, 'line-opacity', 0.4)   // RETOURS-11 C4 — valeur de création restaurée (le variant photo la monte à 0,9)
   }
   // limites communes : vert foncé #2E7D52 / 1,6 px (≈3× parcelles) sur terre claire — elles ne se
   // noient plus dans le cadastre ; sinon menthe + interpolation sombre d'origine.
-  set('communes-bounds', 'line-color', clair ? '#2E7D52' : '#5CE6A1')
-  set('communes-bounds', 'line-width', clair ? 1.6 : COMMUNES_W_SOMBRE)
+  set('communes-bounds', 'line-color', '#5CE6A1')
+  set('communes-bounds', 'line-width', COMMUNES_W_SOMBRE)
   set('communes-bounds', 'line-opacity', 0.55)   // RETOURS-11 C4 — création restaurée (variant photo la monte à 0,95)
   // M105-B — les couches d'INFORMATION consomment le jeu de tokens du thème (lib/mapTheme,
   // un jeu par thème, un seul endroit) : zonage, PPR, ANRU (+trame), 50 pas, liseré brûlantes.
   // Le contour des tiers (parcels-line/ile-line) a son propriétaire unique : l'effet violet.
-  const t = MAP_THEME[clair ? 'clair' : 'sombre']
+  const t = MAP_THEME.sombre
   // MESURÉ SUR CAPTURES (P3) : en Clair les parcelles sont OPAQUES (#F4F2EC @1) — l'ordre de
   // création les peignait AU-DESSUS des couches d'information : l'aplat de zonage ne rendait
   // que sur la masse non parcellisée, et les limites communes étaient recouvertes. En Clair,
@@ -406,12 +404,8 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   // sélections et étiquettes restent au-dessus) ; en Sombre, l'ordre d'origine est RESTAURÉ —
   // la vue sombre ne bouge pas.
   const mv = (id: string, before: string) => { if (m.getLayer(id) && m.getLayer(before)) m.moveLayer(id, before) }
-  if (clair) {
-    for (const id of ['parcels-base', 'parcels-fill', 'ile-base', 'ile-fill']) mv(id, 'ov-zonage')
-  } else {
-    for (const id of ['parcels-base', 'parcels-fill']) mv(id, 'parcels-limites')
-    for (const id of ['ile-base', 'ile-fill']) mv(id, 'ile-limites')
-  }
+  for (const id of ['parcels-base', 'parcels-fill']) mv(id, 'parcels-limites')
+  for (const id of ['ile-base', 'ile-fill']) mv(id, 'ile-limites')
   // COUCHES-1 lot 4 — ORDRES D'EMPILEMENT DÉCLARÉS (constat C4/C2 : des couches se recouvraient
   // au hasard de l'ordre de création). L'ancre = première limite présente ; mv(id, ancre) place la
   // couche juste SOUS l'ancre, dans l'ordre d'appel → la première citée finit la plus basse.
@@ -465,7 +459,7 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('ov-bruit_route', 'fill-color', bruitColorExpr(t)); set('ov-bruit_route', 'fill-opacity', t.bruitOpacity); set('ov-bruit_route', 'fill-outline-color', bruitColorExpr(t))
   set('ov-bruit_carte', 'fill-color', t.bruitCarte); set('ov-bruit_carte', 'fill-opacity', t.bruitCarteOpacity); set('ov-bruit_carte', 'fill-outline-color', t.bruitCarte)
   for (const [src, , tok] of DISPO_TRAMES) {
-    set(`${src}-trame`, 'fill-pattern', `trame-${tok}-${clair ? 'clair' : 'sombre'}`)
+    set(`${src}-trame`, 'fill-pattern', `trame-${tok}-sombre`)
     set(`${src}-trame`, 'fill-opacity', t.aleaTrameOpacity)
   }
   set('ov-50pas', 'fill-color', t.cinquantePas); set('ov-50pas', 'fill-opacity', t.cinquantePasFillOpacity)
@@ -484,7 +478,7 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('ov-trans-arret', 'circle-color', reseauColorExpr(t))
   set('ov-tele', 'line-color', t.transportReseaux['Papang'])
   set('ov-tele-st', 'circle-color', t.transportReseaux['Papang'])
-  set('ov-tele-st', 'circle-stroke-color', clair ? '#FFFFFF' : SOMBRE_BG)
+  set('ov-tele-st', 'circle-stroke-color', SOMBRE_BG)
   set('ov-pole', 'circle-color', t.pole); set('ov-pole', 'circle-stroke-color', t.pole)
   set('ov-axe', 'line-color', t.axe)
   set('ov-ht', 'line-color', t.ht)
@@ -549,16 +543,11 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   // COUCHES-RECETTE-2 C2 — sur CLAIR et IGN (Plan) uniquement : contours de PARCELLES en NOIR et
   // limites de COMMUNES en GRIS FONCÉ (Sombre et Ortho ne passent pas ici → inchangés). S'exécute
   // APRÈS les blocs clair/photo, donc écrase leur couleur de contour pour ces deux fonds.
-  if (clair || basemap === 'plan') {
+  if (basemap === 'plan') {
     for (const id of ['parcels-limites', 'ile-limites']) {
       set(id, 'line-color', '#000000')
-      if (clair) {
-        set(id, 'line-opacity', ['interpolate', ['linear'], ['zoom'], 13, 0, 14, 0.3, 16, 0.7, 18, 0.9])
-        set(id, 'line-width', ['interpolate', ['linear'], ['zoom'], 13, 0.4, 15, 1.0, 17, 1.6, 19, 2.0])
-      }
     }
     set('communes-bounds', 'line-color', '#3A403C')
-    if (clair) { set('communes-bounds', 'line-opacity', 0.8); set('communes-bounds', 'line-width', ['interpolate', ['linear'], ['zoom'], 8, 1.4, 13, 2.4]) }
   }
 }
 
@@ -671,7 +660,7 @@ function makeTrame(m: maplibregl.Map, id: string, color: string, orient: 'slash'
   m.addImage(id, ctx.getImageData(0, 0, S, S), { pixelRatio: 2 })
 }
 // M105-B : trame ANRU (chartreuse claire — opacité 0 en Sombre, posée en Clair)
-const makeTrameAnru = (m: maplibregl.Map) => makeTrame(m, 'trame-anru', MAP_THEME.clair.anru, 'slash')
+const makeTrameAnru = (m: maplibregl.Map) => makeTrame(m, 'trame-anru', MAP_THEME.sombre.anru, 'slash')
 // M137-X — les deux trames de dispositif : [source, subtype MARQUÉ par la hachure, token couleur, orientation].
 // ZFANG renforcée (slash) · FRR en partie (backslash) — orientations distinctes (superposables).
 // M137-Y — la hachure (SECOND signal) marque l'état MOINDRE : ZFANG standard, FRR en partie.
@@ -1018,7 +1007,7 @@ export function MapView() {
       }
       // M65 P8 — MASSE TERRESTRE (île dissoute) : la terre sans parcelle (cirques, forêt, volcan)
       // prend l'aplat du thème — GRIS #C9C4B8 en Clair, terre mesurée SOMBRE_TERRE en Sombre
-      // (FOND-SOMBRE ; applyClairMode pose teinte et visibilité). Posée TOUT EN BAS de la pile
+      // (FOND-SOMBRE ; applyBasemapStyle pose teinte et visibilité). Posée TOUT EN BAS de la pile
       // vectorielle (juste au-dessus des rasters) → sous TOUS les overlays (risques, zonages) et
       // les parcelles, qui restent lisibles par-dessus. Masquée sous Plan/Ortho (elle recouvrirait
       // leurs tuiles). Source ile974.geojson = 24 communes DISSOUES.
@@ -1028,7 +1017,7 @@ export function MapView() {
       // COUCHES-RECETTE-1 A6 — VOILE ORTHO : un voile gris translucide entre l'orthophoto et les
       // couches, UNIQUEMENT en vue ortho, pour que les couleurs des couches ressortent. Posé
       // au-dessus des rasters de fond et sous les overlays/parcelles (donc sous les couches du tuyau,
-      // ajoutées après). Opacité pilotée par applyClairMode (0 hors ortho → aucun effet ailleurs).
+      // ajoutées après). Opacité pilotée par applyBasemapStyle (0 hors ortho → aucun effet ailleurs).
       m.addLayer({ id: 'ortho-veil', type: 'background',
         paint: { 'background-color': '#20242A', 'background-opacity': 0 } })
       // MNT (relief 3D) — terrarium AWS (libre)
@@ -1051,7 +1040,7 @@ export function MapView() {
         paint: { 'line-color': T_SOMBRE.ppr, 'line-width': T_SOMBRE.pprContourW, 'line-opacity': 0.9 } })
       // M105-B : TRAME diagonale ANRU (daltonisme — zonage U vert et ANRU chartreuse quasi
       // confondus en deutéranopie : la trame est la seconde variable). Opacité portée par le
-      // thème : 0 en Sombre (invisible), posée en Clair par applyClairMode.
+      // thème : 0 en Sombre (invisible), posée en Clair par applyBasemapStyle.
       makeTrameAnru(m)
       m.addLayer({ id: 'ov-anru-trame', type: 'fill', source: 'ov-anru', layout: { visibility: 'none' },
         paint: { 'fill-pattern': 'trame-anru', 'fill-opacity': T_SOMBRE.anruTrameOpacity } })
@@ -1100,7 +1089,6 @@ export function MapView() {
       for (const [src, sub, tok, orient] of DISPO_TRAMES) {
         // hachure = shade PLUS FONCÉ de l'aplat → lisible quelle que soit la teinte de l'état.
         makeTrame(m, `trame-${tok}-sombre`, darken(MAP_THEME.sombre[tok], 0.6), orient)
-        makeTrame(m, `trame-${tok}-clair`, darken(MAP_THEME.clair[tok], 0.55), orient)
         m.addLayer({ id: `${src}-trame`, type: 'fill', source: src,
           filter: ['==', ['get', 'subtype'], sub] as never, layout: { visibility: 'none' },
           paint: { 'fill-pattern': 'trame-' + tok + '-sombre', 'fill-opacity': T_SOMBRE.aleaTrameOpacity } })
@@ -1353,7 +1341,7 @@ export function MapView() {
       // (#14713E, 3,49:1 sur la masse grise, son fond principal ; le #4ADE80 d'origine y
       // faisait 1,00 — invisible). Le vert reste vert, la famille mint est conservée.
       m.addLayer({ id: 'ile-cote', type: 'line', source: 'ile-mass', layout: { visibility: 'none' },
-        paint: { 'line-color': MAP_THEME.clair.cote, 'line-width': 2.2, 'line-opacity': 0.95 } })
+        paint: { 'line-color': MAP_THEME.sombre.cote, 'line-width': 2.2, 'line-opacity': 0.95 } })
 
       // mesure (ligne + polygone + points + étiquette)
       m.addSource('measure', { type: 'geojson', data: EMPTY_FC as never })
@@ -1844,7 +1832,7 @@ export function MapView() {
     if (m.getLayer('bm-ortho-monde')) {
       m.setLayoutProperty('bm-ortho-monde', 'visibility', active?.startsWith('bm-ortho') ? 'visible' : 'none')
     }
-    applyClairMode(m, basemap)   // mer/terre du thème + traits achromatiques (aucune autre couleur touchée)
+    applyBasemapStyle(m, basemap)   // mer/terre du thème + traits achromatiques (aucune autre couleur touchée)
     // sur ortho/plan (fonds clairs ou photo), les écartées quasi invisibles gênent moins que le voile sombre
     // M6.1 : couche zonage parcelle active → NE PAS écraser son opacité dédiée
     // M55-G point 8 : seulement en mode OPINION — le mode factuel garde sa surbrillance neutre
@@ -2035,8 +2023,7 @@ export function MapView() {
         // Le voile avait déjà été retiré du mode ANALYSE (opinion, opacité uniforme) en RECETTE-2 S11.
         // M65 P8 : en CLAIR, trame neutre = PARCELLES en BLANC CASSÉ #F4F2EC (opaques) sur la terre
         // grise ; en Sombre, la trame neutre d'origine (#22302A/0,28).
-        const clair = basemap === 'clair'
-        // RECETTE-9 T5 — le test décisif (captures A→E) tranche : le GRIS est le FOND DE PLAN Sombre
+              // RECETTE-9 T5 — le test décisif (captures A→E) tranche : le GRIS est le FOND DE PLAN Sombre
         // (analyse ON/OFF donne une image IDENTIQUE → ce n'est pas l'analyse ; passer en Clair/Ortho le
         // fait disparaître → c'est bien le fond). Le SEUL gris que peignent NOS calques (pas le fond) est
         // ce remplissage neutre #22302A/0,28 : sur le Sombre il a quasi la couleur du fond → il ne
@@ -2044,8 +2031,8 @@ export function MapView() {
         // parcelles restent délimitées par « Limites parcelles » et sélectionnables via parcelAt),
         // achevant sur le BON calque la règle W9/S11/V1 « couleur de palier ou RIEN, jamais un gris ».
         // En CLAIR le remplissage blanc reste utile (parcelles blanches sur terre claire) → conservé.
-        m.setPaintProperty(fill, 'fill-color', clair ? '#F4F2EC' : '#22302A')
-        m.setPaintProperty(fill, 'fill-opacity', clair ? 1 : 0)
+        m.setPaintProperty(fill, 'fill-color', '#22302A')
+        m.setPaintProperty(fill, 'fill-opacity', 0)
       }
     }
     // lisérés promues/brûlantes : des couleurs d'OPINION — mode analyse ou couche Verdict cochée ;

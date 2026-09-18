@@ -308,12 +308,12 @@ function popupDetailHTML(c: TuyauCouche, servitudes: Record<string, unknown>[]):
 }
 
 // COUCHES-STYLE-5 — la couche parcelles du tuyau (contour cadastral) suit le FOND actif, exactement
-// comme V1 (MapView.applyClairMode + variant photo RETOURS-11 C4). Le gris-vert #8FA69A/0,3/0,4 est
+// comme V1 (MapView.applyBasemapStyle + variant photo RETOURS-11 C4). Le gris-vert #8FA69A/0,3/0,4 est
 // illisible sur Ortho ; on reporte les VALEURS DE V1 telles quelles, par fond :
 //  - Sombre (dark) : INCHANGÉ — #8FA69A, largeur 0,3, opacité 0,4 (constantes STYLE-2, témoin) ;
 //  - Ortho : contour #0A0F0C, largeur/opacité interpolées au zoom (variant photo — se renforce au zoom) ;
 //  - Plan IGN : contour #000000 avec la rampe photo (couleur du bloc clair||plan, rampes du variant photo).
-// Ces expressions sont copiées VERBATIM de applyClairMode (aucun recalibrage). Le seul calque touché
+// Ces expressions sont copiées VERBATIM de applyBasemapStyle (aucun recalibrage). Le seul calque touché
 // est le contour des parcelles du tuyau (`tuyau-limites_parcelles-outline`).
 // COUCHES-STYLE-6 : le fond « Clair » est retiré du sélecteur → sa branche est retirée ici aussi.
 const PARCELLES_OUTLINE = 'tuyau-limites_parcelles-outline'

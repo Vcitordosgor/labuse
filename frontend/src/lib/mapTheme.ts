@@ -2,7 +2,7 @@
 // Un thème = un jeu de valeurs, au MÊME endroit que les valeurs sombres — jamais de
 // conditions `clair ? … : …` éparpillées dans les couches (interdit du mandat).
 // Consommé par MapView : à la création des couches (colonne `sombre`, valeurs d'origine
-// verbatim) et par `applyClairMode` (bascule de thème, un seul point).
+// verbatim) et par `applyBasemapStyle` (bascule de thème, un seul point).
 //
 // Doctrine arbitrée (AUDIT_M105B) : un aplat d'information est distinguable à
 // ratio composite/fond ≥ 1,25:1 ET porte un contour de SA teinte à ≥ 3:1 ; un trait
@@ -14,9 +14,11 @@
 //
 // Ratios mesurés (WCAG, composite alpha exact sur la terre #F4F2EC) en colonne clair.
 
-import { CINQUANTE_PAS_COLOR, PRIORITE_SERVIE, TIER_V2_META } from './status'
+import { CINQUANTE_PAS_COLOR, TIER_V2_META } from './status'
 
-export type MapThemeName = 'sombre' | 'clair'
+// COUCHES-RETRAIT-1 lot 1 — le thème « clair » est retiré (le fond Clair a quitté le sélecteur en
+// STYLE-6, applyBasemapStyle n'est plus atteignable). Un seul thème demeure : sombre.
+export type MapThemeName = 'sombre'
 
 export type MapTokens = {
   /** zonage GPU : famille U (la couche la plus consultée) / autres familles */
@@ -225,80 +227,6 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     bruitRamp: { cat1: '#7A2FC7', cat2: '#9B6BD6', cat3: '#A98BD9', cat4: '#C9BCE6', cat5: '#DAD2EE' },
     bruitOpacity: 0.26,                                   // violet gradué — classement sonore
     bruitCarte: '#B03A6B', bruitCarteOpacity: 0.30,       // COUCHES-1 lot 5 (D3) — 0,22 → 0,30 (CBS quasi invisible)
-  },
-  // Colonne CLAIR = les valeurs arbitrées M105-B (mêmes teintes, assombries/saturées).
-  clair: {
-    zonageU: '#1E9E58',        // mint CANON DA (M73-G) — aplat @0,22 → 1,26 ✓ ; contour 3,08 ✓
-    zonageAutre: '#6E4F27',    // brun foncé — aplat 1,39 ✓ ; contour 6,67 ✓
-    zonageOpacity: 0.22,
-    zonageContourW: 1,
-    ppr: '#D14432',            // rouge profond — aplat @0,20 → 1,31 ✓ ; contour 4,09 ✓
-    pprOpacity: 0.28,          // COUCHES-1 lot 5 (D3) — 0,20 → 0,28 (PPR quasi invisible)
-    pprContourW: 1,
-    znieff: '#6E7A2E', znieffOpacity: 0.24,                 // vert olive foncé (contrainte naturelle)
-    bpe: '#2E77C2',                                          // bleu foncé — cercles BPE (mode clair)
-    anru: '#8FA818',           // chartreuse foncée — aplat @0,30 → 1,28 ✓ ; trame compense le trait 2,41
-    anruOpacity: 0.30,
-    anruTrameOpacity: 0.6,
-    cinquantePas: '#1777A3',   // cyan profond — aplat @0,20 → 1,30 ✓ ; tireté 4,46 ✓
-    cinquantePasFillOpacity: 0.20,
-    cote: '#14713E',           // vert de la famille mint — 3,49 ✓ sur la masse #C9C4B8 (son fond principal)
-    // REPARATIONS-1 lot 2b — Priorité non servie : la tête classée suit la teinte À suivre.
-    contourBrulante: PRIORITE_SERVIE ? '#C23A28' : '#A8720F', // braise assombrie ↔ ambre assombri
-    contourChaude: '#A8720F',   // 3,69 ✓ (ambre assombri)
-    lisereBrulantes: '#C1440E', // 4,57 ✓ (orange assombri)
-    aleaInondation: '#0F6B7A',  // pétrole profond — contour 5,51 ✓ (identité/contour/trame)
-    aleaMvt: '#935F0C',         // ocre profond — contour 4,83 ✓ (identité/contour/trame)
-    aleaOpacity: { faible: 0.18, moyen: 0.28, fort: 0.40 },
-    aleaContourW: 1,
-    aleaTrameOpacity: 0.5,
-    // C3 — teintes profondes sur terre claire, franchement distinctes (bleu→orange→rouge / beige→marron→rouge)
-    aleaInondationRamp: { faible: '#2563EB', moyen: '#D97706', fort: '#DC2626' },
-    aleaMvtRamp: { faible: '#C79A3A', moyen: '#C77A16', eleve: '#B85A0A', tres_eleve: '#B91C1C', fort: '#B91C1C' },   // COUCHES-1 lot 5 (D2) — 4 crans distincts
-    aleaFillOpacity: 0.55,
-    transportReseaux: {
-      'Car Jaune': '#8A6D08',   // or profond — 4,39 sur terre claire
-      'Citalis': '#B01E63',     // rose — 5,84
-      "Kar'Ouest": '#1D5FC2',   // azur — 5,41
-      'Alternéo': '#0B7D68',    // turquoise — 4,52
-      'Estival': '#A34A00',     // orange — 5,30
-      'Carsud': '#667000',      // olive — 4,83
-      'Papang': '#B01E63',      // = Citalis
-    },
-    transportDefaut: '#B01E63',
-    pole: '#C21F7E',            // M137-X — magenta profond : ressort sur l'axe et l'ortho claire — 5,6
-    axe: '#33506B',             // bleu-gris profond — 7,50
-    ht: '#3F4A47',              // 8,22 terre / 5,29 masse ✓ (HTB anthracite)
-    mt: '#3A4E8C',              // COUCHES-1 lot 5 (D2) — HTA ardoise-bleu profond (distinct de l'HTB)
-    tcsp: '#0E8F7E',             // C2 — turquoise profond structurant (terre claire)
-    // M134 dispositifs (clair = teintes profondes, mesurées sur terre #F4F2EC)
-    qpv: '#C25E1B', qpvOpacity: 0.28,                     // orange — aplat 1,40 ✓ ; contour 3,82 ✓
-    tvaPrimo: '#1487A0', tvaPrimoOpacity: 0.24,           // cyan — aplat 1,34 ✓ ; contour 3,75 ✓
-    // M137-Y — clair : le SABLE est FONCÉ (#8A7A52) pour passer M105-B sur l'ortho (le clair #C6B08A
-    // échouait à 1,12) — « version plus foncée du même sable, pas un retour au chaud ».
-    zfangRenforce: '#2A54C8', zfangStandard: '#8A7A52',   // bleu roi 1,43 · sable foncé 1,31
-    frrTotalite: '#147A8C', frrPartie: '#6E3FB5',         // COUCHES-1 lot 5 (D1) — sarcelle (ex-émeraude vert) · améthyste
-    dispoFillOpacity: 0.12,     // COUCHES-2 point 4 — opacité très basse (parcellaire + communes lisibles dessous)
-    // SOURCES-1 lot 1 — contraintes du droit des sols (teintes profondes, terre claire)
-    er: '#8A6D08', erOpacity: 0.30,                       // or profond
-    ebc: '#14603A', ebcOpacity: 0.30,                     // COUCHES-1 lot 5 (D1) — forêt profond (hors camaïeu mint)
-    dpu: '#2D4FA0', dpuOpacity: 0.30,                     // COUCHES-1 lot 5 (D3) — 0,22 → 0,30 (DPU invisible)
-    pebRamp: { a: '#B91C1C', b: '#D97706', c: '#A8720F', d: '#6B7280' },
-    pebOpacity: 0.30,
-    sup: '#8E2F5C', supOpacity: 0.18,                     // COUCHES-1 lot 5 (D4) — 0,24 → 0,18 (SUP écrasait tout)
-
-    // SOURCES-1 lot 2 — nature et eau (thème clair : mêmes teintes assombries)
-    dpf: '#1A7FA8',
-    endiguement: '#1F8A70',
-    zoneHumide: '#1F7A6E', zoneHumideOpacity: 0.30,
-    enp: '#4A32A0', enpOpacity: 0.28,                     // COUCHES-1 lot 5 (D1) — indigo profond (ex-vert)
-    rpg: '#8F7E2E', rpgOpacity: 0.22,
-    // SOURCES-1 lot 3 — sols et bruit (thème clair : mêmes teintes assombries)
-    sis: '#7A3C1E', sisOpacity: 0.34,
-    casias: '#A66E1F',
-    bruitRamp: { cat1: '#5A1E9E', cat2: '#7A4AB5', cat3: '#8A66BE', cat4: '#B0A0D4', cat5: '#C4BADE' },   // COUCHES-1 lot 5 (D2) — paliers plus séparés
-    bruitOpacity: 0.28,
-    bruitCarte: '#8A2450', bruitCarteOpacity: 0.32,      // COUCHES-1 lot 5 (D3) — 0,24 → 0,32 (CBS invisible)
   },
 }
 

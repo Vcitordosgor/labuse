@@ -64,7 +64,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const analyse = useApp((s) => s.filters.analyseLabuse)
   const peint = useApp((s) => s.mapPeint)
   const commune = useApp((s) => s.commune)
-  const basemap = useApp((s) => s.basemap)
+  // COUCHES-RETRAIT-1 lot 1 — `basemap` n'est plus lu ici (thème unique depuis le retrait du clair).
   const bpeDomains = useApp((s) => s.bpeDomains)
   const toggleBpeDomain = useApp((s) => s.toggleBpeDomain)
   const v2 = useV2Actif()
@@ -77,7 +77,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const htQ = useQuery({ queryKey: ['layer', 'ligne_ht'], queryFn: () => getMapLayer('ligne_ht'), enabled: layers.lignes_ht })
   // COUCHES-1 lot 2 (A7) — qpvQ/anruQ retirés : ils ne servaient qu'au millésime inline du libellé,
   // désormais porté par le « i » de la couche (menu, /map/couches-info) — plus deux requêtes pour rien.
-  const tTheme = MAP_THEME[basemap === 'clair' ? 'clair' : 'sombre']
+  const tTheme = MAP_THEME.sombre   // COUCHES-RETRAIT-1 lot 1 : thème unique
   const mill = (q: { data?: unknown }) => (q.data as { millesime_integration?: string } | undefined)?.millesime_integration
   const srcMill = (q: { data?: unknown }) => (q.data as { source_millesime?: string } | undefined)?.source_millesime
   const dISO = (m?: string) => (m ? m.split('-').reverse().join('/') : '')

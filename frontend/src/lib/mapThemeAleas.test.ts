@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest'
 import { MAP_THEME } from './mapTheme'
 
 describe('C3 — rampes d\'aléas à teintes distinctes', () => {
-  for (const theme of ['sombre', 'clair'] as const) {
+  for (const theme of ['sombre'] as const) {
     for (const ramp of ['aleaInondationRamp', 'aleaMvtRamp'] as const) {
       it(`${theme}/${ramp} : faible ≠ moyen ≠ fort (3 teintes distinctes)`, () => {
         const r = MAP_THEME[theme][ramp]
@@ -17,7 +17,6 @@ describe('C3 — rampes d\'aléas à teintes distinctes', () => {
     }
   }
   it('opacité d\'aplat désormais UNIQUE (la couleur porte le niveau, plus l\'opacité)', () => {
-    expect(typeof MAP_THEME.sombre.aleaFillOpacity).toBe('number')
-    expect(typeof MAP_THEME.clair.aleaFillOpacity).toBe('number')
+    expect(typeof MAP_THEME.sombre.aleaFillOpacity).toBe('number')   // COUCHES-RETRAIT-1 : thème clair retiré
   })
 })
