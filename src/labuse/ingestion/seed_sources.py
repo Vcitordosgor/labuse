@@ -983,19 +983,20 @@ SOURCES: list[dict] = [
                          "« inondation résiduelle au-delà du niveau de protection »."),
     dict(name="Carte hypsométrique du littoral (DEAL Lizmap)", category="risques",
          provider="DEAL Réunion (Lizmap — deal974.lizmap.com)",
-         access_type="WMS (image seule)", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         access_type="WMS (image seule)", status=S.PARTENARIAT, reliability_level=R.SOUS_CONVENTION,
          documentation_url="https://deal974.lizmap.com/cartes/index.php/view/map?repository=02sprinr&project=04tsunami",
          endpoint_url="https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=04tsunami",
          legal_notes="Licence non écrite sur Lizmap — confirmation demandée à la DEAL (SOURCES-2 lot 5).",
-         technical_notes="CHANTIER SOURCES-2 lot 3 — la « Carte hypsométrique du littoral de La "
-                         "Réunion » (projet 02sprinr/04tsunami) n'est servie par le producteur "
-                         "qu'en WMS IMAGE : la couche Courbes_de_niveau_hypsometrique__en_metres "
-                         "est REFUSÉE en WFS (ServiceException, vérifié 13/09/2026) — aucun "
-                         "vecteur à ingérer sans convention. La donnée RÉGLEMENTAIRE de "
-                         "submersion est servie à la place par les aléas PPRL vecteur du projet "
-                         "01risque (georisque_alea subtypes submersion_marine / "
-                         "submersion_marine_cc, même mandat). Chantier : demander le vecteur "
-                         "hypsométrique à la DEAL (courrier lot 5)."),
+         technical_notes="PARTENARIAT REQUIS (NETTOYAGE-1, ex-a_faire) — la « Carte hypsométrique du "
+                         "littoral de La Réunion » (DEAL, projet 02sprinr/04tsunami) n'est servie par "
+                         "le producteur qu'en WMS IMAGE : la couche "
+                         "Courbes_de_niveau_hypsometrique__en_metres est REFUSÉE en WFS "
+                         "(ServiceException, vérifié 13/09/2026) — aucun vecteur à ingérer sans "
+                         "CONVENTION avec la DEAL. La donnée RÉGLEMENTAIRE de submersion est déjà "
+                         "servie à la place par les aléas PPRL vecteur du projet 01risque "
+                         "(georisque_alea subtypes submersion_marine / submersion_marine_cc). Ligne "
+                         "conservée (trace de l'évaluation) ; débloquable par convention DEAL "
+                         "(courrier lot 5)."),
     dict(name="BAN PLUS — lien adresse ↔ bâtiment (IGN)", category="cadastre",
          provider="IGN (Géoplateforme — BAN PLUS)",
          access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,

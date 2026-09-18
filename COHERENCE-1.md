@@ -31,7 +31,7 @@
 |---|---|---|---|---|
 | Client · carte · légende du tuyau (`TuyauLegend`) | couches actives | *(aucun nombre)* | liste les couches cochées, **sans compteur** | s.o. |
 | Client · panneau « Couches » (`NouvellesCouches`) | couches par famille | *(aucun total)* | liste par famille (`/map/tuyau/couches`), **sans compteur** | s.o. |
-| Client · légende V1 (`Legend.tsx`) « · N couches » | couches actives | *(jamais rendu)* | `layers` (store **V1 mort**) filtré `!BASE_FOND` | **CODE MORT** — ne s'affiche jamais dans l'UI tuyau (retourne `null`, store V1 non alimenté) |
+| Client · légende V1 (`Legend.tsx`) « · N couches » | couches actives | toujours **0** | `layers` (store **V1 mort**) filtré `!BASE_FOND` | **non** — compteur bogué (⚠️ CORRIGÉ par NETTOYAGE-1 : la légende rend en fait Verdict/Zonage/Permis ; seul le compteur « · N couches » et les groupes `if(layers.X)` étaient morts → retirés) |
 | Admin · fiche réservoir · « Couches carte alimentées · N » | couches carte **servies** par le réservoir | **8** (BD TOPO) | `couchesParSource[r.nom].length` → `/sources/couches` (résolution `registre()`) | **oui** |
 | Admin · compteur « La carte » · `spatial_layers(…)` | **kinds `spatial_layers` stockés** (physique) | **11** (BD TOPO) | `r.couches` = `spatial_layers.kind` bruts | **oui** — notion **distincte** (libellé précisé, cf. correction) |
 
@@ -50,7 +50,7 @@ Ces nombres sont des **notions différentes**, pas des recalculs divergents d'un
 
 ## Les deux quasi-écarts (ni l'un ni l'autre n'est un bug)
 
-1. **Légende V1 « · N couches » = code mort.** `Legend.tsx` compte le store `layers` (l'ancien système V1, retiré à COUCHES-RETRAIT-1). Ce store n'est plus alimenté (le tuyau utilise `tuyauActives`), donc la légende V1 ne construit aucun groupe et **retourne `null`** — vérifié en navigateur (0 nœud `[data-legend]`, même en mode verdict). Le compteur n'est donc **jamais affiché**. *Signalé comme vestige à nettoyer un jour ; non retiré ici (hors périmètre, et éviter tout risque sur un chemin non testé).*
+1. **Légende V1 « · N couches » = compteur bogué.** ⚠️ **Correction (NETTOYAGE-1)** : ce point de COHERENCE-1 était **inexact**. `Legend.tsx` n'est *pas* mort — il rend les légendes de **peinture** Verdict (mode analyse) / Zonage / Permis (pilotées par `mapPeint`/`module`, bien vivants ; ma vérification initiale n'avait testé que le mode verdict sans `analyse`, d'où le faux « 0 nœud »). Ce qui était mort : (a) le compteur « · N couches » — il lisait le store `layers` V1 non alimenté → affichait toujours **« · 0 couche »** sur une légende pourtant visible ; (b) les groupes `if (layers.X)` des anciennes couches overlay (remplacées par le tuyau). **NETTOYAGE-1 lot 1** les a retirés (compteur + BASE_FOND + groupes `layers.X`), en gardant la légende Verdict/Zonage/Permis. Voir `NETTOYAGE-1.md`.
 
 2. **BD TOPO : 11 vs 8 = deux notions.** Le compteur « La carte » liste **11 kinds `spatial_layers`** stockés (`batiment, voirie, water, ravine, cimetiere, construction_lineaire, construction_surfacique, zone_activite, bassin_versant, axe_structurant, ligne_ht`) ; la fiche réservoir liste **8 couches carte servies** (les 11 moins `voirie`, `water`, `ravine`, qui sont des sous-couches BD TOPO internes, **absentes de `registre()`**, jamais servies comme couche carte). Ce sont deux notions légitimes (physique en base vs servi au client). **Correction appliquée** : le libellé du compteur « La carte » est précisé (`kinds stockés` ≠ `Couches carte alimentées`) pour qu'on n'attende jamais l'égalité des deux chiffres.
 
