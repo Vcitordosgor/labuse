@@ -85,9 +85,16 @@ function DetailCompteur({ back, onOpen }: { back: JSX.Element; onOpen: Ouvrir })
           physiquement en base (registre/tables.py, la même déclaration que le verrou V1). */}
       {Array.isArray(carte) && carte.length > 0 && (
         <div className="card"><h3>La carte : chaque réservoir, ses tables</h3>
+          {/* COHERENCE-1 — précision : pour spatial_layers on liste les KINDS STOCKÉS (lignes physiques),
+              dont tous ne sont pas des couches carte servies au client (ex. BD TOPO stocke aussi voirie/
+              water/ravine). Le sous-ensemble réellement servi comme couche = « Couches carte alimentées »
+              sur la fiche du réservoir. Deux notions distinctes, deux chiffres attendus — jamais le même. */}
           <div className="muted" style={{ marginBottom: 8 }}>
-            Ce que chaque réservoir sert en base (tables, couches <code>spatial_layers</code>, millésime) —
-            la déclaration que les verrous font respecter : aucun moteur ne lit une table hors de cette carte.
+            Ce que chaque réservoir sert en base : ses tables, et pour <code>spatial_layers</code> les
+            <em> kinds stockés</em> (lignes physiques — tous ne sont pas des couches carte servies ; le
+            sous-ensemble servi au client est « Couches carte alimentées » sur la fiche du réservoir),
+            plus le millésime. La déclaration que les verrous font respecter : aucun moteur ne lit une
+            table hors de cette carte.
           </div>
           <ul className="list">{carte.map((r: any) => (
             <li key={r.id}>
