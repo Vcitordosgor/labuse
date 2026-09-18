@@ -64,6 +64,38 @@ export function useTuyauPlan() {
   return useQuery({ queryKey: ['tuyau-couches'], queryFn: chargerPlan, staleTime: 3_600_000 })
 }
 
+// COUCHES-REGISTRE-2 lot 2 — le « i » dit la vérité : source · millésime · date du dernier contrôle,
+// tirés du réservoir réel (endpoint /map/couches-info, clé = kind). La prose YAML reste EN DESSOUS.
+type CoucheInfo = { source: string; millesime: string | null; date_controle: string | null; fabrication: string | null }
+async function chargerCouchesInfo(): Promise<Record<string, CoucheInfo>> {
+  const r = await fetch('/map/couches-info')
+  if (!r.ok) return {}
+  return (await r.json()) as Record<string, CoucheInfo>
+}
+function useCouchesInfo() {
+  return useQuery({ queryKey: ['couches-info'], queryFn: chargerCouchesInfo, staleTime: 3_600_000 })
+}
+// le contenu du « i » : bloc registre (source/millésime/contrôle) + prose YAML séparée en dessous.
+function InfoTuyau({ meta, prose }: { meta?: CoucheInfo; prose?: string | null }) {
+  const controle = meta?.date_controle
+    ? `contrôlé le ${new Date(meta.date_controle).toLocaleDateString('fr-FR')}`
+    : 'jamais contrôlé'
+  return (
+    <span className="block">
+      {meta && (
+        <span className="block">
+          <span className="font-medium text-txt">{meta.source}</span>
+          {meta.millesime && <span className="text-txt-dim"> · millésime {meta.millesime.replace(/^mill[ée]sime\s+/i, '')}</span>}
+          <span className={meta.date_controle ? 'text-txt-dim' : 'text-danger'}> · {controle}</span>
+        </span>
+      )}
+      {prose && (
+        <span className="mt-1.5 block border-t border-line-2 pt-1.5 text-txt-dim">{prose}</span>
+      )}
+    </span>
+  )
+}
+
 // ── expressions de style : la COULEUR vient de la déclaration (grades = sous-calques) ──
 type Expr = maplibregl.ExpressionSpecification
 function couleurExpr(c: TuyauCouche): string | Expr {
@@ -605,6 +637,7 @@ function pastillesLegende(e: Entree): SwLeg[] {
 // liste (LayerRowUI) → DA indiscernable, « i » au survol immédiat (Tip). Familles ordonnées, bâti exclu.
 export function NouvellesCouches() {
   const { data: plan } = useTuyauPlan()
+  const { data: couchesInfo } = useCouchesInfo()   // COUCHES-REGISTRE-2 lot 2 — source/millésime/contrôle
   const { tuyauActives, toggleTuyau, tuyauErrors } = useApp()
   const familles = useMemo(() => {
     const par: Record<string, TuyauCouche[]> = {}
@@ -628,8 +661,9 @@ export function NouvellesCouches() {
               const bascule = () => { for (const m of e.membres) if (!!tuyauActives[m.kind] === on) toggleTuyau(m.kind) }
               return (
                 <div key={e.cle} className="border-b border-line last:border-b-0">
-                  <LayerRowUI on={on} label={e.nom} info={e.i ?? undefined} onToggle={bascule}
-                    dataKey={e.membres[0]?.kind} err={err} />
+                  <LayerRowUI on={on} label={e.nom}
+                    info={<InfoTuyau meta={couchesInfo?.[e.membres[0]?.kind ?? '']} prose={e.i} />}
+                    onToggle={bascule} dataKey={e.membres[0]?.kind} err={err} />
                 </div>
               )
             })}

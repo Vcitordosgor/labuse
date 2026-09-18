@@ -5425,42 +5425,80 @@ def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_d
 
 
 
+#: COUCHES-REGISTRE-2 lot 2 — tuyau kind → clé front (pour retrouver le cid DONNEES / la fabrication).
+_KIND2FRONT_INFO = {
+    "plu_gpu_zone": "zonage", "limites_parcelles": "limites", "limites_communes": "communes",
+    "safer": "rpg", "amenite": "equipements", "amenite_bpe": "equipements_bpe",
+    "parc_national": "parc", "transport_ligne": "transport", "transport_arret": "transport",
+    "pole_echange": "axes", "axe_structurant": "axes", "ligne_ht": "lignes_ht", "ligne_mt": "lignes_ht",
+    "tcsp": "tcsp", "zonage_parcelle": "zonage_parcelle",
+}
+
+
 @app.get("/map/couches-info")
 def map_couches_info(db: Session = Depends(get_db)) -> dict:
-    """CIRCUIT-2 lot 5.2 — le « i » d'une couche affiche SOURCE, MILLÉSIME et FABRICATION :
-    le traçage côté client, sobre, sans identifiant technique. Une entrée par clé de couche du
-    front (COUCHE_PAR_CLE_FRONT), lue du registre + data_sources — jamais saisi deux fois."""
+    """CIRCUIT-2 / COUCHES-REGISTRE-2 lot 2 — le « i » de CHAQUE couche du tuyau (56 kind) affiche
+    SOURCE · MILLÉSIME · DATE DU DERNIER CONTRÔLE, tirés du réservoir RÉELLEMENT lu : le
+    `data_source_id` porté par les lignes servies (spatial_layers), ou — pour un repère dérivé
+    (mvt_parcels/mvt_communes) — le réservoir déclaré. Sans date de contrôle → le front dit « jamais
+    contrôlé ». Clé = le `kind` du tuyau (jamais un identifiant technique de plus)."""
+    from .couches_tuyau import registre as _tuyau_registre
     from ..registre.couverture import COUCHE_PAR_CLE_FRONT
     from ..registre.donnees import DONNEES
-    from ..registre.valeur import _millesimes
+    from ..registre.valeur import _RESERVOIR_NAME_ILIKE
     fabrications = {"build-mvt": "tuiles reconstruites à la bascule",
                     "geom_simple": "table matérialisée", "vue": "vue dérivée",
                     "requete": "lue en direct de la base", "wmts_distant": "tuiles IGN en direct"}
-    from ..registre.valeur import _RESERVOIR_NAME_ILIKE
-    out: dict = {}
-    noms: dict[str, tuple[str | None, str | None]] = {}
-    for rid in {r for cid in set(COUCHE_PAR_CLE_FRONT.values())
-                for r in DONNEES[cid].reservoirs if cid in DONNEES}:
-        motif = _RESERVOIR_NAME_ILIKE.get(rid)
-        if motif:
-            try:
+    # date du dernier contrôle par source — MÊME définition que la garantie G5 (verrou_g5) :
+    # le plus récent entre le dernier passage de la sonde de veille et la dernière synchro. NULL
+    # (source non surveillée, ex. seed statique) → le front affichera « jamais contrôlé ».
+    checks = {int(r["id"]): r["dernier_controle"] for r in db.execute(text(
+        "SELECT d.id, GREATEST(v.dernier_passage_at, d.last_sync_at) AS dernier_controle "
+        "FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id")).mappings().all()
+        if r["dernier_controle"] is not None}
+
+    def source_reelle(c):
+        """(source_id, nom, millésime) via le data_source_id RÉEL des lignes servies."""
+        best = None
+        for sk, subs in (c.resolution or ()):
+            q = ("SELECT ds.id, ds.name, ds.source_millesime, count(*) n FROM spatial_layers sl "
+                 "JOIN data_sources ds ON ds.id = sl.data_source_id WHERE sl.kind = :k")
+            p = {"k": sk}
+            if subs:
+                q += " AND sl.subtype = ANY(:s)"; p["s"] = list(subs)
+            q += " GROUP BY ds.id, ds.name, ds.source_millesime ORDER BY n DESC LIMIT 1"
+            row = db.execute(text(q), p).first()
+            if row and (best is None or row[3] > best[3]):
+                best = row
+        return (best[0], best[1], best[2]) if best else None
+
+    def source_declaree(cid):
+        """(source_id, nom, millésime) du réservoir déclaré — pour les repères dérivés."""
+        for rid in (getattr(DONNEES.get(cid), "reservoirs", ()) or ()):
+            motif = _RESERVOIR_NAME_ILIKE.get(rid)
+            if motif:
                 row = db.execute(text(
-                    "SELECT name, source_millesime FROM data_sources WHERE name ILIKE :m LIMIT 1"),
+                    "SELECT id, name, source_millesime FROM data_sources WHERE name ILIKE :m LIMIT 1"),
                     {"m": motif}).first()
-                noms[rid] = (row[0], row[1]) if row else (None, None)
-            except Exception:  # noqa: BLE001
-                noms[rid] = (None, None)
-    _ = _millesimes   # (même chemin de millésimes que le tampon — la jointure nom est ici)
-    for cle, cid in COUCHE_PAR_CLE_FRONT.items():
-        d = DONNEES.get(cid)
-        if d is None:
-            continue
-        sources = []
-        for rid in d.reservoirs:
-            nom, m = noms.get(rid, (None, None))
-            sources.append((nom or rid.replace("_", " ")) + (f" — millésime {m}" if m else ""))
-        out[cle] = {"source": " · ".join(sources) or "référentiel embarqué (seed)",
-                    "fabrication": fabrications.get(d.fabrication or "", d.fabrication)}
+                if row:
+                    return (row[0], row[1], row[2])
+        return None
+
+    out: dict = {}
+    for kind, c in _tuyau_registre().items():
+        fk = _KIND2FRONT_INFO.get(kind, kind)
+        cid = COUCHE_PAR_CLE_FRONT.get(fk)
+        info = source_reelle(c) if c.resolution else source_declaree(cid)
+        sid, nom, mill = info if info else (None, None, None)
+        date_ctrl = checks.get(sid) if sid else None
+        d = DONNEES.get(cid) if cid else None
+        out[kind] = {
+            "source": nom or "référentiel embarqué (seed)",
+            "millesime": mill,
+            "date_controle": date_ctrl.isoformat() if date_ctrl else None,
+            "fabrication": fabrications.get((getattr(d, "fabrication", "") or ""),
+                                            getattr(d, "fabrication", None)) if d else None,
+        }
     return out
 
 

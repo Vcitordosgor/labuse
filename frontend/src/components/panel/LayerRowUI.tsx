@@ -2,11 +2,13 @@
 // (LeftPanel/LayerRow) et les couches du tuyau (CouchesTuyau/NouvellesCouches). Même case à cocher
 // (13 px + coche), même libellé, même « i » (Tip au survol immédiat, sans curseur « ? »), même
 // espacement → DA indiscernable, jamais une imitation.
+import type { ReactNode } from 'react'
 import { Tip } from '../Tip'
 
 // Le « i » : une pastille ronde ; le Tip s'affiche AU SURVOL immédiat (hoverDelayMs défaut 0),
 // curseur normal (aucun « ? »). Clic sur la pastille ne bascule pas la couche (stopPropagation du Tip).
-export function LayerInfoPill({ info }: { info: string }) {
+// COUCHES-REGISTRE-2 lot 2 : `info` peut être un bloc (source/millésime/date + prose), pas juste une string.
+export function LayerInfoPill({ info }: { info: ReactNode }) {
   if (!info) return null
   return (
     <Tip garder side="top" tip={info} className="shrink-0">
@@ -26,7 +28,7 @@ export function LayerInfoPill({ info }: { info: string }) {
 export function LayerRowUI({ on, label, info, onToggle, sub, dataKey, err }: {
   on: boolean
   label: string
-  info?: string
+  info?: ReactNode
   onToggle: () => void
   sub?: boolean
   dataKey?: string
