@@ -62,9 +62,10 @@ def test_g1_statut_hors_liste_fermee_casse(monkeypatch):
     class _Faux:
         def execute(self, *a, **k):
             raise AssertionError("non appelé")
-    # la liste fermée elle-même (REPARATIONS-1 lot 3 : + partenariat_requis, hors vitrine client)
+    # la liste fermée elle-même (REPARATIONS-1 lot 3 : + partenariat_requis ; SOURCES-CORRECTION-2
+    # lot 1 : + interne = référentiel technique lu par la pompe, hors vitrine client mais visible admin)
     assert CG.STATUTS_ADMIS == {"connecte", "manuel", "a_faire", "retiree", "alias", "hub",
-                                "partenariat_requis"}
+                                "partenariat_requis", "interne"}
 
 
 @pytest.mark.local

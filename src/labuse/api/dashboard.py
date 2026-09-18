@@ -1961,7 +1961,11 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
     from .. import filtres as _filtres
     from ..sources_catalog import WHERE_AFFICHEES, masquees_param
     _now = _dt.now(tz=_tz.utc)
-    where = WHERE_AFFICHEES + (" AND d.id = :only_id" if only_id is not None else "")
+    # SOURCES-CORRECTION-2 lot 1 — le Circuit ADMIN montre la vitrine ∪ les référentiels INTERNES
+    # (hors vitrine client mais lus par la pompe : leur rôle est déclaré ici, pas masqué). Les
+    # compteurs client (WHERE_AFFICHEES : /sources, accueil, flux, V2a) restent inchangés.
+    vitrine_ou_interne = f"(({WHERE_AFFICHEES}) OR lower(d.status) = 'interne')"
+    where = vitrine_ou_interne + (" AND d.id = :only_id" if only_id is not None else "")
     params = {"masquees": masquees_param()}
     if only_id is not None:
         params["only_id"] = only_id

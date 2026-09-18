@@ -258,6 +258,11 @@ def analyse_catalogue(rows: list[dict]) -> list[str]:
             # la note DOIT nommer le partenaire (Région, EPCI, Département, Cerema…).
             if not (r.get("technical_notes") or "").strip():
                 pbs.append(f"{nom} : partenariat_requis sans partenaire nommé (note vide)")
+        elif statut == "interne":
+            # SOURCES-CORRECTION-2 lot 1 — référentiel interne (lu par la pompe, rien au client) :
+            # la note DOIT nommer le rôle interne (qui la lit). Visible admin, hors vitrine client.
+            if not (r.get("technical_notes") or "").strip():
+                pbs.append(f"{nom} : interne sans rôle nommé (note vide)")
         else:
             pbs.append(f"{nom} : hors vitrine avec un statut de vitrine ({statut or 'vide'}) "
                        "— doublon caché ou note-préfixe sans statut de première classe")

@@ -708,18 +708,19 @@ SOURCES: list[dict] = [
     # sonde sentinelle (rien n'y change jamais).
     dict(name="Cadastre d'époque (Etalab / PCI vecteur DGFiP)", category="topographie",
          provider="Etalab / DGFiP via cadastre.data.gouv.fr",
-         access_type="GeoJSON + EDIGEO (archives)", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         access_type="GeoJSON + EDIGEO (archives)", status=S.INTERNE, reliability_level=R.VERIFIE,
          documentation_url="https://cadastre.data.gouv.fr/datasets/cadastre-etalab",
          endpoint_url="https://cadastre.data.gouv.fr/data/etalab-cadastre/",
          source_millesime="archives 2017-02 (PCI) et 2017-07→2026-06 (Etalab)",
          legal_notes="Licence Ouverte 2.0 — attribution : « Etalab / DGFiP, cadastre.data.gouv.fr ».",
-         technical_notes="Table cadastre_historique (référence + géométrie SEULEMENT — mandat "
-                         "RETOURS-14 S5) : parcelles d'ORIGINE des permis Sitadel orphelins, "
-                         "rattachées par la géométrie aux parcelles actuelles (> 50 % → une seule ; "
-                         "à cheval → toutes, « origine redécoupée »). Une parcelle disparue avant "
-                         "2017-02 est irrécupérable (aucune archive ouverte plus ancienne) — "
-                         "compté et dit, jamais contourné. CLI : python -m "
-                         "labuse.ingestion.cadastre_historique"),
+         technical_notes="RÉFÉRENTIEL INTERNE (SOURCES-CORRECTION-2 lot 1) : hors vitrine CLIENT — "
+                         "rien ne l'affiche au client. RÔLE : la table cadastre_historique (géométrie "
+                         "d'archive) est lue par `ingestion/cadastre_historique.py:rattacher_par_geometrie` "
+                         "pour RECALER la géométrie des permis Sitadel orphelins (parcelles d'origine "
+                         "redécoupées : > 50 % → une seule ; à cheval → toutes). Aucune surface fiche/carte/"
+                         "outil. Reste visible dans le Circuit ADMIN avec ce rôle (pas masquée comme les "
+                         "retirées). Une parcelle disparue avant 2017-02 est irrécupérable (aucune archive "
+                         "ouverte plus ancienne) — compté et dit. CLI : python -m labuse.ingestion.cadastre_historique"),
     # RETOURS-13 R5 — le tracé du RÉUNION EXPRESS n'existe qu'en carte interactive de débat
     # public (aucun export SIG) : source « à venir », suivie par la sentinelle — le tracé
     # bougera après le débat (clôture 26/11/2026).
