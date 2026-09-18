@@ -107,3 +107,43 @@ feature **ne contribue pas** → 0 surface client aujourd'hui.
   réel (rien de servi au client).
 - **Recommandation** : **dépend de la feuille de route `q_v14`** — si sa promotion est planifiée, **Option A**
   (rester, rôle candidat déclaré) ; sinon **Option B** (`dormant`). À trancher par Vic (je m'arrête sans décider).
+
+---
+
+## Lot 3 — notes périmées
+
+### Corrigé : `taxe_amenagement` (la note du mandat)
+
+`registre/tables.py` — note du réservoir `taxe_amenagement` : **« a_faire — mécanisme CIRCUIT-3 lot 6.2,
+taux communaux à saisir »** → **PÉRIMÉE**. La table `taxe_amenagement_taux` est **remplie 24/24 communes**
+(part communale 1→5 %, part départementale 2,5 %, jeu ouvert DGFiP DELTA, ingérée le **08/09/2026** via
+`labuse ingest-taxe-amenagement`). Note réécrite (état réel + millésime). *(La note **en base**
+`data_sources.technical_notes` de cette source était déjà correcte — seule la note du registre code l'était plus.)*
+
+### Corrigé aussi : la note DPE (que le lot 1 venait de rendre périmée)
+
+En corrigeant l'ingestion DPE (lot 1), j'ai rendu **sa propre note périmée** : `seed_sources.py` **et**
+`data_sources.technical_notes` disaient encore « géocodage BAN contaminé à ~98 % (914 dont 900
+métropolitaines) → on tranche au CP brut … 16 réunionnaises ». Laisser une source dont la note contredit
+son ingestion serait un lot 1 inachevé : note réécrite (seed + DB) à l'état corrigé (UNION BAN 974 ∪ CP brut,
+1123 DPE). *C'est le seul « au-delà de taxe_amenagement » que je corrige, et parce que c'est mon propre effet
+de bord — pas une note tierce préexistante.*
+
+### Recherche exhaustive des autres contradictions — **aucune**
+
+Balayé **les deux gisements de notes** : le registre code (`RESERVOIR_TABLES.note`) et la base
+(`data_sources.technical_notes`, 93 sources vitrine), en croisant chaque note à signal d'incomplétude
+(`a_faire`, `à saisir`, `aucune donnée`, `CHANTIER`, `en attente`, `non ingéré`…) avec le **compte réel de
+lignes** de la source. Résultat :
+
+- **9 notes `a_faire`/`CHANTIER` — toutes EXACTES** (table à 0 ligne, l'attente est réelle) : `zppa_culture`
+  (Atlas des patrimoines injoignable), `region_dvf` (échantillon filtre), `assainissement_sig_epci`, `zae_epci`,
+  `zac_perimetres`, `opah_pig`, `ort_perimetres_epci`, `ens_departement`, `oll_microdonnees` (les 7 chantiers
+  SOURCES-1 lot 7, en attente de convention/demande). **Rien à corriger.**
+- Les occurrences de « jamais / non publié / non ingéré » restantes sont **descriptives**, pas des
+  contradictions (ex. GTFS-RT « non ingéré : donnée d'exploitation éphémère », DPE « domaine privé de l'État
+  non diffusé », « jamais deux lignes servies ») — état réel respecté.
+
+**Conclusion** : après le balayage, **les deux seules notes qui contredisaient l'état réel** étaient
+`taxe_amenagement` (la cible du mandat) et la note DPE (effet de bord du lot 1) — les deux corrigées ;
+**aucune autre note du catalogue ne ment**.
