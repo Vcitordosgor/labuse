@@ -137,7 +137,7 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                             millesime="CBS 2022 — dépassements Lden/Ln (type c, RN/RD/VC)"),
     "sudocuh": Rt(("sudocuh_procedures",), millesime="Sudocuh — état au 31/12/2024"),
     "sitadel": Rt(("sitadel_permits", "via_permits_geo"), millesime="2026-07"),
-    "qpv_2024": Rt(("spatial_layers",), couches=("qpv",), millesime="génération 2024"),
+    "qpv_2024": Rt(("spatial_layers",), couches=("qpv", "tva_primo"), millesime="génération 2024"),
     "npnru": Rt(("anru_quartiers", "spatial_layers"), couches=("anru",)),
     "sru_dhup": Rt(("commune_contexte_sru",), millesime="inventaire LLS — CSV v2 du 18/12/2025"),
     "plh_epci": Rt(("plh_epci",), millesime="extraction documentaire 07/07/2026"),
@@ -147,7 +147,9 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                                     millesime="GPU — idurba par commune ; SIG 4/24 au 11/07/2026"),
     "gpu_assainissement_infosurf": Rt((), note="DOUBLON (canal info-surf de gpu_zonage_assainissement)"),
     "rtaa_dom": Rt((), note="règles portées par le code (aucune table)"),
-    "zfang": Rt(("spatial_layers", "territoire_fiscal_commune"), couches=("zfang", "tva_primo"),
+    "zfang": Rt(("spatial_layers", "territoire_fiscal_commune"), couches=("zfang",),
+                # COUCHES-REGISTRE-2 lot 1 — `tva_primo` RETIRÉ : buffer QPV+500 m, sa source RÉELLE est
+                # « QPV 2024 (ANCT) ». Rendu à `qpv_2024` (cf. donnees dispositifs_couche, qpv_2024 déjà listé).
                 millesime="Décret n° 2026-421 du 29 mai 2026 (LF 2026, art. 18)"),
     "frr_ex_zrr": Rt(("spatial_layers", "territoire_fiscal_commune"), couches=("frr",),
                      millesime="ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017"),
@@ -223,10 +225,19 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "bd_topo": Rt(("spatial_layers",),
                   # SOURCES-4 lot 2 — thèmes non doublon ajoutés : cimetière, constructions
                   # linéaires/surfaciques (mur soutènement/barrage), zone d'activité, bassin versant.
+                  # COUCHES-REGISTRE-2 lot 1 — `axe_structurant` et `ligne_ht` (HTB) RATTACHÉS ICI :
+                  # leur source RÉELLE (data_source_id) est BD TOPO IGN, pas GTFS/EDF.
                   couches=("batiment", "voirie", "water", "ravine", "cimetiere",
                            "construction_lineaire", "construction_surfacique",
-                           "zone_activite", "bassin_versant"),
+                           "zone_activite", "bassin_versant", "axe_structurant", "ligne_ht"),
                   millesime="BD TOPO® V3 (IGN)"),
+    # COUCHES-REGISTRE-2 lot 1 — contours des 24 communes (repère `limites_communes`). Le seed
+    # geo.api.gouv/ADMIN EXPRESS (fichier communes974.geojson, matérialisé en `mvt_communes` par
+    # build-mvt) n'avait AUCUN data_source : une ligne est créée (scripts/registre2_raccord_db.py)
+    # → le compteur vitrine « connecté » passe 91→92. Aucune table propre (le seed est un fichier ;
+    # `mvt_communes` appartient déjà à build-mvt).
+    "communes_ign": Rt((), couches=("limites_communes",),
+                       millesime="IGN ADMIN EXPRESS (contours communaux, via geo.api.gouv — seed)"),
     "rge_alti": Rt(("rgealti_pente_5m", "rgealti_mnt_5m", "spatial_layers"),
                    couches=("pente", "altitude"), millesime="RGE ALTI® (IGN)"),   # RECETTE-7 D — MNT altitude ajouté
     "rge_alti_5m": Rt(("rgealti_pente_5m",), note="DOUBLON (même réservoir que rge_alti)"),
@@ -262,12 +273,16 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "osm_transport": Rt(("spatial_layers",), couches=("telepherique", "pole_echange"),
                         millesime="extraction Overpass (base OSM vivante, ODbL)"),
     "gtfs_pan": Rt(("spatial_layers",),
-                   couches=("transport_arret", "transport_ligne", "pole_echange", "axe_structurant"),
+                   # COUCHES-REGISTRE-2 lot 1 — `axe_structurant` RETIRÉ : ses lignes portent la source
+                   # RÉELLE « BD TOPO IGN » (data_source_id), pas GTFS. Rendu à `bd_topo` (cf. donnees axes_couche).
+                   couches=("transport_arret", "transport_ligne", "pole_echange"),
                    millesime="7 jeux PAN, màj 2025-12-29 → 2026-08-17"),
     "tcsp_osm": Rt(("spatial_layers",), couches=("tcsp_troncon", "tcsp_station", "tcsp_zone"),
                    millesime="extraction Overpass (OSM, ODbL) — voies bus 974"),
     "trafic_rn": Rt(("trafic_rn",), millesime="Trafic RN Région — millésime porté par tronçon"),
-    "edf_hta": Rt(("spatial_layers",), couches=("ligne_mt", "ligne_ht"),
+    "edf_hta": Rt(("spatial_layers",), couches=("ligne_mt",),
+                  # COUCHES-REGISTRE-2 lot 1 — `ligne_ht` RETIRÉ : la HTB (63/90 kV) porte la source RÉELLE
+                  # « BD TOPO IGN » ; EDF ne fournit que la HTA (`ligne_mt`). Rendu à `bd_topo`.
                   millesime="EDF géométrie ~02/2020 · publié 16/10/2025"),
     "parkings_osm_aper": Rt(("parkings_aper",)),
     # ── hubs et retirées (hors vitrine — déclarées pour que rien ne soit un oubli) ──

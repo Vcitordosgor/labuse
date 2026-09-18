@@ -866,12 +866,15 @@ DONNEES: dict[str, Donnee] = {
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/couches_tuyau.py:couche_tuile (ligne_ht)",
     reservoirs=("bd_topo",), portee="live",
     type="couche", table="spatial_layers (kind=ligne_ht)", fabrication="requete"),
- "tcsp_couche": C("Axe de transport structurant (couche)", "couche", "commune",
-    "l'EXPRESS BAOBAB (Citalis/CINOR) — vue dérivée du GTFS (route BAO), jamais une ingestion neuve",
-    moteur=None, calcul="passe_plat", fonction="src/labuse/api/couches_tuyau.py:couche_tuile (tcsp_axe)",
-    reservoirs=("gtfs_pan",), portee="live",
-    type="couche", table="spatial_layers (kind=transport_ligne WHERE route_id='BAO')",
-    fabrication="vue"),
+ "tcsp_couche": C("Stationnement allégé — TCSP (couche)", "couche", "commune",
+    # COUCHES-REGISTRE-2 lot 1 — l'ancienne déclaration BAOBAB (tcsp_axe, réservoir gtfs_pan) était
+    # PÉRIMÉE (couche retirée en RETOURS-13). La couche réelle = voies bus en site propre + stations
+    # dérivées + zone 800 m (art. L151-36), servie depuis spatial_layers, source OSM (tcsp_osm).
+    "voies bus en site propre (OSM) + stations dérivées + zone de 800 m (art. L151-36)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/couches_tuyau.py:couche_tuile (tcsp)",
+    reservoirs=("tcsp_osm",), portee="live",
+    type="couche", table="spatial_layers (kind=tcsp_troncon/tcsp_station/tcsp_zone)",
+    fabrication="requete"),
  "dispositifs_couche": C("Dispositifs et périmètres (couche)", "couche", "commune",
     "QPV, NPNRU/ANRU, TVA primo (buffer 500 m DÉRIVÉ des QPV), ZFANG et FRR (maille commune)",
     moteur=None, calcul="passe_plat",
@@ -908,9 +911,11 @@ DONNEES: dict[str, Donnee] = {
     type="couche", table="parcels.geom → tuiles", fabrication="build-mvt"),
  "communes_couche": C("Limites communes (couche)", "couche", "global",
     "frontières officielles des 24 communes (référentiel embarqué geo.api.gouv/IGN, seed)",
-    moteur=None, calcul="passe_plat", fonction="frontend (contours embarqués au seed)",
-    reservoirs=(), portee="live",
-    type="couche", table="communes (contours, seed geo.api.gouv)", fabrication="requete"),
+    # COUCHES-REGISTRE-2 lot 1 — RATTACHÉE au réservoir `communes_ign` (ligne data_sources créée via le
+    # seed ; compteur vitrine 91→92). Servie par le tuyau depuis `mvt_communes` (dérivée de `communes`).
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/couches_tuyau.py:couche_tuile (limites_communes)",
+    reservoirs=("communes_ign",), portee="live",
+    type="couche", table="communes (contours, seed geo.api.gouv) → mvt_communes", fabrication="requete"),
  "equip_osm_couche": C("Équipements OSM (couche)", "couche", "commune",
     "équipements du quotidien relevés dans OpenStreetMap (couverture partielle DITE — "
     "l'absence n'est pas une preuve)",

@@ -22,6 +22,8 @@ from .chiffres import CHIFFRES
 #: (les ids data_sources peuvent différer entre bases ; le nom est la clé stable du seed).
 _RESERVOIR_NAME_ILIKE: dict[str, str] = {
     "cadastre_api_carto": "Cadastre (API Carto%", "cadastre_etalab_bulk": "Cadastre Etalab%",
+    # COUCHES-REGISTRE-2 lot 1 — réservoir des contours communaux (repère limites_communes, seed créé).
+    "communes_ign": "Communes La Réunion — contours%",
     "gpu_plu_api_carto": "Urbanisme PLU/GPU%", "georisques_api": "Géorisques",
     "dvf": "DVF / valeurs%", "rge_alti": "RGE ALTI (altimétrie)%", "bd_topo": "BD TOPO IGN%",
     "ban": "Base Adresse Nationale%", "osm_overpass": "OpenStreetMap / Overpass%",
