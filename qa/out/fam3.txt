@@ -1,0 +1,23 @@
+arcep_fibre | Fibre Arcep — Ma connexion internet (immeuble) | tables=arcep_immeubles | couches= | rempli=330051 | mode=job_sur_clic
+bd_ortho | BD ORTHO 20 cm (IGN) | tables=ortho_tiles,ortho_detections,parcel_equipements | couches= | rempli=36518 | mode=one_shot
+bpe_insee | BPE INSEE | tables=spatial_layers | couches=amenite_bpe | rempli=35544 | mode=one_shot
+cartofriches | Cartofriches (Cerema) | tables=spatial_layers | couches=friche | rempli=372 | mode=one_shot
+contours_iris | Contours IRIS (IGN/INSEE) | tables=spatial_layers | couches=iris_insee | rempli=344 | mode=one_shot
+deal_dpf_dpe | Ravines — domaine public fluvial (DEAL Carmen) | tables=spatial_layers | couches=dpf | rempli=281 | mode=job_sur_clic
+dgfip_dfi | DFI — documents de filiation informatisés (DGFiP) | tables=dfi_filiation | couches= | rempli=409623 | mode=job_sur_clic
+dpu_perimetres | GPU — droit de préemption urbain (info-surf) | tables=spatial_layers | couches=dpu | rempli=202 | mode=job_sur_clic
+endiguement | Systèmes d'endiguement et zones protégées (DEAL Lizmap) | tables=spatial_layers | couches=endiguement | rempli=117 | mode=one_shot
+forets_onf_bdtopo | Forêts publiques (ONF) | tables=spatial_layers | couches=foret_publique | rempli=65 | mode=one_shot
+georisques_casias | Géorisques — CASIAS (anciens sites industriels) | tables=spatial_layers | couches=sol_pollue | rempli=531 | mode=en_direct
+georisques_sis | Géorisques — secteurs d'information sur les sols (SIS) | tables=spatial_layers | couches=sol_pollue | rempli=531 | mode=en_direct
+gpu_prescriptions_er | GPU — emplacements réservés (prescriptions CNIG) | tables=spatial_layers | couches=plu_gpu_prescription | rempli=10490 | mode=en_direct
+inpn_espaces_proteges | INPN / patrinat — espaces protégés | tables=spatial_layers | couches=ens | rempli=411 | mode=one_shot
+lidar_hd_mnh | LiDAR HD — MNH 50 cm (IGN) | tables=toiture_lidar,batiment_hauteur_lidar,lidar_dalle_grille | couches= | rempli=306144 | mode=one_shot
+ocsge | OCS GE (IGN) — occupation du sol et artificialisation | tables=ocsge_sol,ocsge_evolution,parcel_ocsge | couches=artificialisation | rempli=846206 | mode=one_shot
+parkings_osm_aper | Parkings OSM (loi APER) | tables=parkings_aper | couches= | rempli=901 | mode=one_shot
+pvgis | PVGIS (Commission européenne) | tables=solar_grid,parcel_solar | couches= | rempli=447343 | mode=one_shot
+rge_alti | RGE ALTI (altimétrie) | tables=rgealti_pente_5m,rgealti_mnt_5m,spatial_layers | couches=pente,altitude | rempli=150193 | mode=one_shot
+rpls_sdes | RPLS — répertoire des logements locatifs sociaux (SDES) | tables=rpls_commune | couches= | rempli=24 | mode=one_shot
+sitadel | SITADEL (autorisations d'urbanisme) | tables=sitadel_permits,via_permits_geo | couches= | rempli=97615 | mode=cron_mensuel
+sup_gpu | SUP — assiettes GPU (API Carto) | tables=spatial_layers | couches=sup | rempli=417 | mode=cron_mensuel
+zfang | ZFANG — zone franche d'activité nouvelle génération (Légifrance) | tables=spatial_layers,territoire_fiscal_commune | couches=zfang | rempli=48 | mode=one_shot

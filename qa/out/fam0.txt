@@ -1,0 +1,24 @@
+abf_merimee | ABF / Monuments historiques | tables=spatial_layers | couches=abf | rempli=200 | mode=one_shot
+ban | Base Adresse Nationale | tables=adresses,adresse_parcelles | couches= | rempli=756280 | mode=job_sur_clic
+bd_ortho_irc | BD ORTHO IRC (IGN) | tables=ortho_detections,parcel_vegetation,vegetation_zonal_acc | couches= | rempli=1608138 | mode=one_shot
+bruit_itt_cerema | Classement sonore ITT (Cerema) | tables=spatial_layers | couches=bruit_route | rempli=1004 | mode=one_shot
+catnat_gaspar | CatNat (arrêtés GASPAR / Géorisques) | tables=catnat_arretes | couches= | rempli=426 | mode=job_sur_clic
+cosia | CoSIA (couverture du sol IA, IGN) | tables=spatial_layers,p_model_bati_cosia,qa_cosia_bati,parcel_cosia_couverture | couches=batiment_cosia,piscine_cosia | rempli=3205312 | mode=one_shot
+deal_ppr | DEAL Réunion — PPR / aléas | tables=spatial_layers | couches=ppr | rempli=164 | mode=one_shot
+dgfip_parcelles_pm | DGFiP — parcelles des personnes morales | tables=parcelle_personne_morale,pm_proprietaires_millesimes | couches= | rempli=544271 | mode=one_shot
+dvf | DVF / valeurs foncières | tables=dvf_mutations,dvf_mutations_parcelle,dvf_mutations_histo,dvf_secteur_medianes,dvf_prix_sortie_neuf,spatial_layers,dvf_mutation_detail | couches=vefa_neuf | rempli=300005 | mode=job_sur_clic
+enp_complements_deal | Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen) | tables=spatial_layers | couches=ens | rempli=411 | mode=job_sur_clic
+frr_ex_zrr | FRR ex-ZRR — zone spéciale d'action rurale (Légifrance) | tables=spatial_layers,territoire_fiscal_commune | couches=frr | rempli=47 | mode=one_shot
+georisques_cavites | Géorisques — cavités souterraines | tables=spatial_layers | couches=cavite | rempli=151 | mode=one_shot
+georisques_ssp | Géorisques — sites et sols pollués | tables=spatial_layers | couches=sol_pollue | rempli=531 | mode=one_shot
+gpu_zonage_assainissement | GPU — zonages d'assainissement | tables=spatial_layers,parcel_anc | couches=zonage_assainissement | rempli=278943 | mode=one_shot
+insee_rp2022_egoul | INSEE RP2022 — fichier détail Logements (EGOUL) | tables=anc_maille_taux,rp_logement_commune | couches= | rempli=374 | mode=one_shot
+loyers_dhup | Loyers DHUP — carte des loyers (annonces) | tables=(aucune) | couches= | rempli=0 | mode=depot_manuel
+osm_overpass | OpenStreetMap / Overpass | tables=parcel_amenites,spatial_layers | couches=amenite,osm_faux_positif | rempli=453224 | mode=one_shot
+peb_dgac | PEB — plans d'exposition au bruit (DGAC via annexes GPU) | tables=spatial_layers | couches=peb | rempli=8 | mode=job_sur_clic
+qpv_2024 | QPV 2024 (ANCT) | tables=spatial_layers | couches=qpv,tva_primo | rempli=70 | mode=one_shot
+rnb | RNB — Référentiel National des Bâtiments | tables=rnb_batiments,rnb_rattachement_bdtopo | couches= | rempli=1231587 | mode=cron_mensuel
+rtaa_dom | RTAA DOM (textes réglementaires) | tables=(aucune) | couches= | rempli=0 | mode=one_shot
+spanc_epci | VRD / assainissement (SPANC) | tables=(aucune) | couches= | rempli=0 | mode=depot_manuel
+taxe_amenagement | Taxe d'aménagement — taux communaux (délibérations) | tables=taxe_amenagement_taux | couches= | rempli=24 | mode=job_sur_clic
+znieff_inpn | ZNIEFF (INPN/MNHN) | tables=spatial_layers | couches=znieff | rempli=162 | mode=one_shot

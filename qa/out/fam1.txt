@@ -1,0 +1,24 @@
+anct_ort | ACV / PVD / ORT (DGALN — liste des communes) | tables=commune_ort | couches= | rempli=19 | mode=job_sur_clic
+ban_plus | BAN PLUS — lien adresse ↔ bâtiment (IGN) | tables=ban_plus_liens | couches= | rempli=738540 | mode=cron_mensuel
+bd_topo | BD TOPO IGN | tables=spatial_layers | couches=batiment,voirie,water,ravine,cimetiere,construction_lineaire,construction_surfacique,zone_activite,bassin_versant,axe_structurant,ligne_ht | rempli=1091872 | mode=one_shot
+cadastre_api_carto | Cadastre (API Carto PCI) | tables=parcels | couches=limites_parcelles | rempli=431663 | mode=one_shot
+cinquante_pas_deal | 50 pas géométriques — limite haute (DEAL) | tables=spatial_layers | couches=cinquante_pas | rempli=163 | mode=one_shot
+cout_construction_sdes | Coût de construction (EPTB SDES + choix LABUSE) | tables=cout_construction_ref | couches= | rempli=3 | mode=job_sur_clic
+deal_wms_wfs | DEAL Réunion (WMS/WFS) | tables=(aucune) | couches= | rempli=0 | mode=one_shot
+dgfip_rei | Taux de taxe foncière — fichier REI (DGFiP) | tables=commune_rei | couches= | rempli=24 | mode=job_sur_clic
+edf_hta | EDF Réunion — lignes moyenne tension HTA (open data) | tables=spatial_layers | couches=ligne_mt | rempli=19480 | mode=one_shot
+erosion_cotiere_geolittoral | Cerema / GéoLittoral — indicateur d'érosion côtière | tables=spatial_layers | couches=trait_de_cote | rempli=24168 | mode=one_shot
+georisques_api | Géorisques | tables=spatial_layers | couches=georisque_alea | rempli=1093 | mode=one_shot
+georisques_icpe | Géorisques — ICPE | tables=spatial_layers | couches=icpe | rempli=1268 | mode=one_shot
+gpu_plu_api_carto | Urbanisme PLU/GPU (API Carto) | tables=spatial_layers,plu_reglement_extrait | couches=plu_gpu_zone,plu_gpu_prescription | rempli=19589 | mode=en_direct
+gtfs_pan | Transport public — GTFS (PAN, 7 réseaux) | tables=spatial_layers | couches=transport_arret,transport_ligne,pole_echange | rempli=10317 | mode=one_shot
+insee_rp_iris | INSEE RP2022 — bases IRIS (logement, population) | tables=iris_rp | couches= | rempli=344 | mode=job_sur_clic
+loyers_oll | Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires) | tables=oll_loyers,oll_zonage | couches= | rempli=326 | mode=job_sur_clic
+osm_transport | OSM — transport (pôles d'échange & téléphérique) | tables=spatial_layers | couches=telepherique,pole_echange | rempli=68 | mode=one_shot
+plh_epci | PLH des 5 EPCI (extraction documentaire) | tables=plh_epci | couches= | rempli=5 | mode=depot_manuel
+radar_pige | Radar (pige d'annonces) | tables=pige_annonces,pige_biens,pige_faits,pige_depots,pige_captures,pige_clics,pige_prix_historique,pige_interets_agence,radar_releves | couches= | rempli=337 | mode=depot_manuel
+rnic_anah | RNIC — registre national des copropriétés (Anah) | tables=rnic_coproprietes | couches= | rempli=2220 | mode=one_shot
+sirene_etablissements | SIRENE établissements géolocalisés | tables=sirene_etablissements | couches= | rempli=158515 | mode=cron_mensuel
+sru_dhup | Inventaire SRU (DHUP) | tables=commune_contexte_sru | couches= | rempli=24 | mode=one_shot
+tcsp_osm | TCSP — voies bus en site propre (OSM) | tables=spatial_layers | couches=tcsp_troncon,tcsp_station,tcsp_zone | rempli=188 | mode=one_shot
+zonage_abc_dhup | Zonage ABC des communes (DHUP) | tables=commune_zonage_abc | couches= | rempli=24 | mode=job_sur_clic
