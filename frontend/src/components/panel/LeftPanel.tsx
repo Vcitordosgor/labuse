@@ -1,7 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
-import { getAccueilFraicheur } from '../../lib/api'
 import { Legend } from '../map/Legend'
 import { NouvellesCouches } from '../map/CouchesTuyau'  // COUCHES-TUYAU-1 lot 2
 import { countActiveFilters } from '../../lib/filters'
@@ -281,12 +279,10 @@ function AccEntry({ ton, icone, titre, sous, onClick }: {
 
 function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const { setView, setAccueilVu, toggleOutils } = useApp()
-  // CONNEXIONS-2 Lot 6.1 (KO-11) — la ligne de fraîcheur n'est plus un texte FIGÉ : elle est CALCULÉE
-  // depuis l'état RÉEL des sources (/accueil/fraicheur, même champ que la page Sources et le dashboard).
-  const { data: fraicheur } = useQuery({ queryKey: ['accueil-fraicheur'], queryFn: getAccueilFraicheur,
-    staleTime: 5 * 60_000 })
-  // M87 P1 — le bloc « Cette semaine » (M83) est RETIRÉ (composant + appel /accueil/cette-semaine + calcul
-  // d'activité). Le claim et la ligne de fraîcheur restent : le foncier vit sans compteur 7 jours en tête.
+  // PAGES-RANGEMENT-1 (lot 3) — la ligne de FRAÎCHEUR (pastille ok/warn/error + phrase d'état, lue de
+  // /accueil/fraicheur) est RETIRÉE de l'accueil client : c'est de l'exploitation, elle vit au dashboard
+  // admin. L'appel /accueil/fraicheur est supprimé du front ; il ne reste que la porte vers Sources.
+  // M87 P1 — le bloc « Cette semaine » (M83) était déjà retiré (composant + appel /accueil/cette-semaine).
   return (
     <div data-accueil className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-5">
       {/* B1 — la promesse (2e ligne en --mint) */}
@@ -314,13 +310,10 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
 
       {/* M87 P1 — bloc « Cette semaine » RETIRÉ (M83). */}
 
-      {/* B5 — la ligne de fraîcheur. OUTILS-1 B1 : phrase courte + lien vers la page Sources (le détail
-          daté par source vit là-bas, jamais promis faussement ici). */}
+      {/* PAGES-RANGEMENT-1 (lot 3) — la pastille d'état (ok/warn/error) et la phrase de fraîcheur sont
+          retirées ; reste une ligne neutre + la porte vers la page Sources (quelles données, pas leur état). */}
       <div className="mt-auto flex items-center gap-2 border-t border-[#1E2622] pt-3">
-        <span className="h-[5px] w-[5px] shrink-0 rounded-full"
-          style={{ background: fraicheur?.ton === 'error' ? '#E05252' : fraicheur?.ton === 'warn' ? '#D9873D' : '#4ADE80' }} />
-        <span data-accueil-fraicheur className="text-[10.5px] leading-snug text-[#7C8A83]">
-          {fraicheur?.phrase ?? 'Toutes les données au même endroit.'}</span>
+        <span className="text-[10.5px] leading-snug text-[#7C8A83]">Toutes les données au même endroit.</span>
         <button data-accueil-sources onClick={() => { setAccueilVu(); setView('sources') }}
           className="ml-auto shrink-0 whitespace-nowrap text-[10.5px] text-mint hover:underline">voir les données →</button>
       </div>
