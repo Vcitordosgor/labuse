@@ -264,7 +264,9 @@ donnees:
     ou:    { rang: 10, etat: replie, section: "Ouvrages" }
     comment: { libelle: "Murs de soutènement", format: liste, i: "Murs de soutènement et constructions linéaires (BD TOPO) — enjeu de terrassement en pente." }
     # recette : zoom_min 14→12 (trop haut) + ligne épaissie + orange vif (visible sur ortho).
-    carte: { kind: construction_lineaire, agregat: false, limite: 40000, famille: risques, geometrie: ligne, zoom_min: 0, rang_carte: 55, style: { couleur: "#FFA726", epaisseur: 3, opacite: 0.95 }, legende: "Mur de soutènement (BD TOPO)" }
+    # FICHE-COUCHES-4 lot 3 — reclassée FOND/REPÈRE (fond_de_plan) : ouvrage physique de base BD TOPO,
+    # PAS une contrainte croisée en fiche (comme le bâti). Sort du décompte des couches thématiques.
+    carte: { kind: construction_lineaire, agregat: false, limite: 40000, famille: fond_de_plan, geometrie: ligne, zoom_min: 0, rang_carte: 55, style: { couleur: "#FFA726", epaisseur: 3, opacite: 0.95 }, legende: "Mur de soutènement (BD TOPO)" }
     absence: "Murs de soutènement : aucun ouvrage linéaire dans l'emprise visible."
     absence_type: absente_ici
     pourquoi: "Latent SOURCES-4 sorti du cul-de-sac (Vic) : un promoteur en pente les regarde ; replié."
@@ -282,7 +284,8 @@ donnees:
     # recette Vic : « Bassins et barrages » collait avec « Bassins versants ». Compté en base : 305
     # ouvrages, subtypes RÉELS = Barrage / Dalle / Pont (BD TOPO). Le nom dit les 3, pas juste barrage.
     comment: { libelle: "Barrages, ponts et dalles", format: liste, i: "Ouvrages surfaciques construits (BD TOPO) : barrages, ponts, dalles. 305 objets sur l'île." }
-    carte: { kind: construction_surfacique, agregat: false, centroide: true, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 42, style: { couleur: "#7C9CFF", opacite: 0.45, trait: "#AEC2FF", epaisseur: 1.4, halo: 1.5, rayon: 4 }, legende: "Barrage / pont / dalle (BD TOPO)" }
+    # FICHE-COUCHES-4 lot 3 — reclassée FOND/REPÈRE (fond_de_plan), pas de croisement fiche (cf. lineaire).
+    carte: { kind: construction_surfacique, agregat: false, centroide: true, famille: fond_de_plan, geometrie: polygone, zoom_min: 0, rang_carte: 42, style: { couleur: "#7C9CFF", opacite: 0.45, trait: "#AEC2FF", epaisseur: 1.4, halo: 1.5, rayon: 4 }, legende: "Barrage / pont / dalle (BD TOPO)" }
     absence: "Barrages, ponts et dalles : aucun ouvrage surfacique dans l'emprise visible."
     absence_type: absente_ici
     pourquoi: "Latent SOURCES-4 sorti du cul-de-sac (Vic) : ouvrages hydrauliques du secteur ; replié."
