@@ -4456,6 +4456,10 @@ SEUILS_PROXIMITE_M = {
     "pole": 3000,         # pôle d'échange : structurant, rayon plus large
     "telepherique": 2000, # un téléphérique à 24 km n'a aucun sens pour la parcelle
     "ligne_ht": 500,      # servitude I4 : au-delà de 500 m, ni contrainte ni recul
+    # FICHE-COUCHES-2 lot 1 — le thème « ligne électrique » (ligne_ht) et « transport » (arrêt/pôle)
+    # étaient déjà croisés ; on étend au kind manquant :
+    "ligne_mt": 50,       # HTA (moyenne tension) : nuisance/recul de PROXIMITÉ (aérien), rayon serré
+    "transport_ligne": 400,  # desserte par un TRACÉ de transport public : ~5 min à pied
 }
 
 
@@ -4471,6 +4475,10 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         pole = _sous_seuil(_plus_proche(db, idu, "pole_echange"), "pole")
         tele = _sous_seuil(_plus_proche(db, idu, "telepherique", "station"), "telepherique")
         ht = _sous_seuil(_plus_proche(db, idu, "ligne_ht"), "ligne_ht")
+        # FICHE-COUCHES-2 lot 1 — extension du même patron KNN : moyenne tension (HTA) et tracé de
+        # transport public (desserte). Mêmes seuils de pertinence (SEUILS_PROXIMITE_M).
+        mt = _sous_seuil(_plus_proche(db, idu, "ligne_mt"), "ligne_mt")
+        lgn = _sous_seuil(_plus_proche(db, idu, "transport_ligne"), "transport_ligne")
         # RETOURS-13 R5 — le fait BAOBAB (distance à l'axe, seuil 500 m) est REMPLACÉ : la distance
         # se mesure À LA STATION TCSP EN SERVICE la plus proche (kind tcsp_station — arrêts GTFS sur
         # une voie bus en site propre OSM), À VOL D'OISEAU (Conseil d'État 2022), jamais au tracé ni
@@ -4486,7 +4494,7 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         return _bloc_indisponible("proximites")   # M125 — panne ≠ absence
     tcsp = (dict(tcsp_row) if (tcsp_row and tcsp_row["d"] is not None and tcsp_row["d"] <= 1500)
             else None)
-    if not any((arret, pole, tele, ht, tcsp)):
+    if not any((arret, pole, tele, ht, tcsp, mt, lgn)):
         return None
     out: dict = {}
     if arret:
@@ -4548,6 +4556,31 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
                         "pas cartographiée en donnée ouverte : à vérifier auprès du gestionnaire "
                         "de réseau (EDF SEI)."),
             "source": "BD TOPO IGN (aérien seul — le souterrain n'y figure pas)",
+        }
+    # FICHE-COUCHES-2 lot 1 — MOYENNE TENSION (HTA) : même famille que la HT, contrainte de proximité
+    # (recul/nuisance). Non couverte par la servitude I4 (réservée à la HTB) → simple distance dite.
+    if mt:
+        t = (mt["attrs"] or {}).get("tension") or "HTA"
+        out["ligne_mt"] = {
+            "distance_m": mt["distance_m"], "tension": t,
+            "libelle": (f"Ligne moyenne tension ({t}) "
+                        + ("au contact de la parcelle" if mt["distance_m"] <= 5
+                           else f"à ~{mt['distance_m']} m")
+                        + " — contrainte de proximité (recul, sécurité). À vérifier auprès du "
+                        "gestionnaire de réseau (EDF SEI)."),
+            "source": "EDF — réseau HTA (open data ; aérien et souterrain)",
+        }
+    # FICHE-COUCHES-2 lot 1 — TRACÉ de transport public : les arrêts/pôles étaient déjà servis, pas la
+    # ligne elle-même. Signal de DESSERTE (accès), jamais une nuisance.
+    if lgn:
+        rez = (lgn["attrs"] or {}).get("reseau") or lgn["nom"]
+        out["transport_ligne"] = {
+            "nom": lgn["nom"], "reseau": rez, "distance_m": lgn["distance_m"],
+            "libelle": (f"Ligne de transport public{f' ({rez})' if rez else ''} "
+                        + ("au contact de la parcelle" if lgn["distance_m"] <= 5
+                           else f"à ~{lgn['distance_m']} m")
+                        + " — desserte (le tracé passe à proximité)."),
+            "source": "réseaux de transport public — tracés (OSM / GTFS)",
         }
     if tcsp:
         d = tcsp["d"]

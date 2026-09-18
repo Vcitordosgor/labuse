@@ -88,10 +88,12 @@ export function ReseauxSection({ f, idu }: { f: Fiche; idu: string }) {
             ? <div className="flex flex-col gap-1">{accesLignes.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
             : <p className="text-[11px] text-txt-dim">Accès non évalué sur cette parcelle.</p>}
           {trans?.indisponible && <div className="mt-1"><BlocIndisponible titre="Proximités (transport)" /></div>}
-          {trans && !trans.indisponible && (trans.arret || trans.pole || trans.telepherique) && (
+          {trans && !trans.indisponible && (trans.arret || trans.pole || trans.telepherique || trans.transport_ligne) && (
             <div data-proximites-transport className="mt-1.5 flex flex-col gap-1 text-[11.5px] leading-snug text-txt">
               <p className="text-[11px] font-semibold text-txt-hi">Transport public — au plus proche</p>
               {trans.arret && <p>Arrêt « {trans.arret.nom} » ({trans.arret.reseau}) à ~{fmtDistanceM(trans.arret.distance_m)}.</p>}
+              {/* FICHE-COUCHES-2 lot 1 — tracé de ligne de transport public (desserte). */}
+              {trans.transport_ligne && <p data-transport-ligne>Ligne de transport{trans.transport_ligne.reseau ? ` « ${trans.transport_ligne.reseau} »` : ''} à ~{fmtDistanceM(trans.transport_ligne.distance_m)}.</p>}
               {trans.pole && (
                 <p>Pôle d’échange « {trans.pole.nom} » à ~{fmtDistanceM(trans.pole.distance_m)}{' '}
                   <b className="text-txt-hi">{trans.pole.statut}</b> ({trans.pole.source}
