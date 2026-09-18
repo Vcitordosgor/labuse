@@ -407,6 +407,70 @@ def sentinelle_sources(ctx: JobContext) -> None:
                rappels=rap["rappels"], rappels_en_retard=rap["retards"], details=recap["details"])
 
 
+def sonde_sources(ctx: JobContext) -> None:
+    """CRON-1 lot 1 — le job s'appelle désormais `sonde-sources` (la SONDE mécanique). Même passage que
+    l'ancien `sentinelle-sources` : parcourt les lignes source_veille échues, sonde l'amont, alerte,
+    n'ingère rien. Alias conservé pour ne pas dupliquer la logique."""
+    sentinelle_sources(ctx)
+
+
+def _cout_agent_source_eur(db) -> float:
+    """Coût cumulé (EUR) des appels `agent_source` au ledger ia_log — pour le plafond du passage."""
+    from sqlalchemy import text
+    try:
+        v = db.execute(text("SELECT COALESCE(SUM(cout_eur), 0) FROM ia_log WHERE kind = 'agent_source'")).scalar()
+        return float(v or 0.0)
+    except Exception:  # noqa: BLE001 — pas de ledger → pas de plafond mesurable, on ne bloque pas
+        return 0.0
+
+
+def agents_sources(ctx: JobContext) -> None:
+    """CRON-1 lot 1 — LE DÉTECTIVE (dimanche) : `agent_source` sur les sources vitrine, 5 en parallèle,
+    SOUS PLAFOND de dépense par passage (env `LABUSE_AGENT_PLAFOND_EUR`, défaut 0 = ne dépense RIEN tant
+    que Vic n'a pas fixé un plafond). On sonde le coût cumulé au ledger ia_log entre chaque source ; dès
+    que la dépense du passage atteint le plafond, on ARRÊTE proprement et on signale les sources NON
+    TRAITÉES (elles repasseront). Un résultat sans URL réellement consultée est rejeté par agent_source."""
+    import os
+    from sqlalchemy import text
+    from . import agent_source, sources_catalog as _sc
+    from .db import session_scope
+
+    plafond = 0.0
+    try:
+        plafond = float(os.environ.get("LABUSE_AGENT_PLAFOND_EUR", "0") or 0)
+    except ValueError:
+        plafond = 0.0
+    if plafond <= 0:
+        ctx.compte(traites=0, non_traites=0, plafond_eur=0.0,
+                   note="LABUSE_AGENT_PLAFOND_EUR non fixé (0) — passage sauté, aucune dépense")
+        return
+
+    ids = [r[0] for r in ctx.db.execute(
+        text("SELECT d.id FROM data_sources d WHERE " + _sc.WHERE_AFFICHEES + " ORDER BY d.id"),
+        {"masquees": _sc.masquees_param()}).all()]
+    depart = _cout_agent_source_eur(ctx.db)
+    traites, neuf, rejetes, non_traites = 0, 0, 0, list(ids)
+    for i, sid in enumerate(ids):
+        if _cout_agent_source_eur(ctx.db) - depart >= plafond:
+            non_traites = ids[i:]
+            break
+        try:
+            out = agent_source.lancer_agents(session_scope, [sid])
+            traites += 1
+            for r in out or []:
+                if r.get("verdict") in ("nouvelle_version", "nouveau", "vu_neuf"):
+                    neuf += 1
+                if r.get("rejete") or r.get("url_consultee") in (None, ""):
+                    rejetes += 1
+        except Exception:  # noqa: BLE001 — un agent qui échoue n'arrête pas le passage
+            rejetes += 1
+        else:
+            non_traites = ids[i + 1:]
+    depense = round(_cout_agent_source_eur(ctx.db) - depart, 4)
+    ctx.compte(traites=traites, neuf=neuf, rejetes=rejetes, non_traites=len(non_traites),
+               plafond_eur=plafond, depense_eur=depense)
+
+
 def sentinelle_dvf_cadastre(ctx: JobContext) -> None:
     """SUPERSÉDÉ par `sentinelle_sources` (SENTINELLE-1 W2) — conservé pour le test de NON-RÉGRESSION :
     l'ancienne heuristique DATE (prochain_millesime_at échu) est comparée au nouveau passage réel.

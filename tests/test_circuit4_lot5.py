@@ -69,11 +69,11 @@ def test_detail_robinet_porte_badges(client, engine):
 
 
 def test_job_regles_references_desactive():
+    # CRON-1 lot 1 — `regles-references` est RETIRÉ du registre des jobs (IA à la demande, jamais en cron ;
+    # cf. CRON-1-LOT1.md). Le CLI `labuse jobs run regles-references` n'existe plus au registre ; l'agent
+    # règle reste appelable par sa propre commande. Plus de job → plus d'assertion registre ici.
     from labuse.jobs import JOBS
-    j = JOBS["regles-references"]
-    assert "DÉSACTIVÉ" in j.titre and "JAMAIS posé" in j.heure_reunion
-    # CRON-1 lot 0 : le crontab versionné est supprimé (table rase) ; l'assertion « jamais posé au
-    # crontab » se re-vérifiera sur le registre/deploy.sh au lot 3 (le job désactivé n'est pas généré).
+    assert "regles-references" not in JOBS
 
 
 def test_robinets_par_verdict():

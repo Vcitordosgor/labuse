@@ -441,12 +441,13 @@ def admin_pilotage(request: Request) -> dict:
     except Exception:  # noqa: BLE001 — la tuile Radar ne casse jamais la page Pilotage
         radar_tuile = None
 
-    # ADMIN-1 (AD5) — garde de cohérence : on LIT le dernier état du job coherence-run (jamais de
-    # re-sonde ici, qui serait coûteuse). Compteurs posés par jobs_impl.coherence_run (ok/n_surfaces).
+    # ADMIN-1 (AD5) / CRON-1 lot 1 — garde de cohérence : on LIT le dernier état de la sonde du circuit
+    # `coherence-robinets` (coherence-run retiré du registre au lot 1 ; la sonde des robinets porte la
+    # cohérence). Jamais de re-sonde ici (coûteuse). Compteur absent → None (affichage sobre).
     coherence = {"ok": None, "n_surfaces": None, "verifie_le": None}
     try:
         from .. import jobs as _jobs
-        etat = _jobs.lire_etat("coherence-run") or {}
+        etat = _jobs.lire_etat("coherence-robinets") or {}
         cpt = etat.get("compteurs") or {}
         coherence = {"ok": cpt.get("ok"), "n_surfaces": cpt.get("n_surfaces"),
                      "verifie_le": etat.get("fin") or etat.get("debut")}

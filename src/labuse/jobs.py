@@ -47,6 +47,12 @@ class Job:
     cron_utc: str                   # expression cron EN HEURE SERVEUR (UTC)
     heure_reunion: str              # affichage humain (heure Réunion = UTC+4)
     fn: Callable[[JobContext], None]
+    # CRON-1 lot 1 — un job sans RAISON n'existe pas. Chaque job porte : pourquoi il existe (raison, en
+    # français), ce qu'il touche (`eau` = surveille/ingère/contrôle la donnée des 94 ; `exploitation` =
+    # fait tourner le serveur), et le node-id du TEST qui le couvre (vérifié par le méta-test du registre).
+    raison: str = ""
+    touche: str = "exploitation"    # 'eau' | 'exploitation'
+    test: str = ""
     timeout_s: int = 900
     envoie_mail: bool = False       # concerné par la règle dry-run
     besoin_db: bool = True
@@ -267,96 +273,121 @@ def _impl(nom: str) -> Callable[[JobContext], None]:
     return _run
 
 
-def _j(nom, titre, cadence, cron_utc, heure_reunion, *, timeout_s=900, envoie_mail=False, besoin_db=True):
+def _j(nom, titre, cadence, cron_utc, heure_reunion, *, raison, touche, test,
+       timeout_s=900, envoie_mail=False, besoin_db=True):
+    assert raison and test and touche in ("eau", "exploitation"), f"job {nom} : raison/touche/test obligatoires"
     return Job(nom, titre, cadence, cron_utc, heure_reunion, _impl(nom),
+               raison=raison, touche=touche, test=test,
                timeout_s=timeout_s, envoie_mail=envoie_mail, besoin_db=besoin_db)
 
 
-#: CIRCUIT-1 lot 8.3 — les jobs qui TOUCHENT L'EAU (ingèrent, sondent, calculent, contrôlent) :
-#: chacun laisse une ligne au journal unifié `circuit_journal` (quoi, quand, résultat, compteurs).
-TOUCHE_EAU = frozenset({
-    "sources-fraicheur", "radar-cycle", "fiche-commune-cache", "ingest-bodacc", "ingest-sirene",
-    "ingest-sitadel", "ingest-dpe", "sync-gpu", "sentinelle-sources", "radar-releves",
-    "coherence-run", "coherence-robinets", "filtres-sources",
-})
-
 JOBS: dict[str, Job] = {j.nom: j for j in [
-    # K3 — quotidiens
-    _j("backup-postgres", "Sauvegarde PostgreSQL (dump + rotation)", "quotidien",
-       "45 1 * * *", "05:45", timeout_s=1800, besoin_db=False),
-    _j("sources-fraicheur", "Fraîcheur des 59 sources (à_jour / en_retard / en_panne)", "quotidien",
-       "0 2 * * *", "06:00", timeout_s=600),
-    _j("radar-cycle", "Radar — traite les dépôts de la veille (parse, rattache, événements, badges)",
-       "quotidien", "30 2 * * *", "06:30", timeout_s=1800),
-    _j("radar-digests", "Digests & alertes de veille — un mail par client (Brevo)", "quotidien",
-       "0 14 * * *", "18:00", timeout_s=1200, envoie_mail=True),
-    _j("fiche-commune-cache", "Fiche commune — précalcule le contexte des communes (ouverture < 500 ms)",
-       "quotidien", "0 23 * * *", "03:00", timeout_s=1800),
-    # RETOURS-8 (R11) — purge des conversations Copilote au-delà de la rétention (défaut 7 j, réglage admin).
-    _j("copilote-purge", "Copilote — purge des conversations au-delà de la rétention (défaut 7 j)",
-       "quotidien", "30 23 * * *", "03:30", timeout_s=300),
-    _j("healthcheck", "Sonde /health locale + espace disque (2 échecs → alerte)", "15 min",
-       "*/15 * * * *", "toutes les 15 min", timeout_s=120, besoin_db=False),
-    # CONNEXIONS-2 Lot 7.2 (N3) — sonde des endpoints MÉTIER (avec DB) : capte « écran vide » (run absent),
-    # source vide, Radar/projets cassés — ce que /health sans DB ne voit pas. Notifie l'admin à la panne.
-    _j("sante-endpoints", "Sonde endpoints métier (accueil/sources/fiche/radar/projets/ask) avec DB",
-       "15 min", "7,37 * * * *", "toutes les 30 min", timeout_s=300),
-    # K4 — hebdo & mensuels
-    _j("pg-maintenance", "VACUUM ANALYZE des tables chaudes", "hebdo (dim)",
-       "0 0 * * 0", "04:00 dim", timeout_s=3600, besoin_db=False),
-    _j("rapport-admin", "Rapport hebdomadaire d'exploitation (mail admin)", "hebdo (lun)",
-       "15 2 * * 1", "06:15 lun", timeout_s=600, envoie_mail=True),
-    # CIRCUIT-1 lot 8.1 — BODACC entre au WRAPPER (quotidien, comme le legacy 02:30 UTC) : les
-    # procédures collectives J+2 arrivent avant les notifications de 03:00.
-    _j("ingest-bodacc", "BODACC quotidien (procédures collectives) + chaîne des dérivés légers",
-       "quotidien", "40 2 * * *", "06:40", timeout_s=1800),
-    _j("ingest-sirene", "SIRENE mensuel (date_creation + date_dernier_traitement, refresh concurrents)",
-       "mensuel (7)", "0 0 7 * *", "04:00 le 7", timeout_s=3600),
-    _j("ingest-sitadel", "Permis SITADEL mensuel → événements de veille foncière + golden candidat",
-       "mensuel (10)", "30 0 10 * *", "04:30 le 10", timeout_s=3600, envoie_mail=True),
-    _j("ingest-dpe", "DPE ADEME mensuel", "mensuel (12)", "0 0 12 * *", "04:00 le 12", timeout_s=3600),
-    _j("sync-gpu", "Diff PLU des 24 communes → événements de veille foncière + bandeau PLU",
-       "mensuel (15)", "0 0 15 * *", "04:00 le 15", timeout_s=1800, envoie_mail=True),
-    # CIRCUIT-1 lot 8.1 — `ingest-bdnb` RETIRÉ du registre : l'amont BDNB ne couvre pas le 974
-    # (SCORING-3 L3, constat mesuré 03/09/2026). Le CLI `labuse ingest-bdnb` reste pour le jour où
-    # le 974 entrera dans l'export ; aucun cron ne le pose plus.
-    # SENTINELLE-1 (W3) — veille QUOTIDIENNE des sources amont (généralise l'ancien sentinelle-dvf-cadastre,
-    # devenu deux lignes de source_veille). Sonde api/page/entete, alerte, n'ingère RIEN. envoie_mail=False :
-    # la notification passe par la cloche admin (event_log systeme), pas par un mail (bruit quotidien évité).
-    _j("sentinelle-sources", "Veille des sources amont : détecte un nouveau millésime et alerte (n'ingère pas)",
-       "quotidien", "0 3 * * *", "07:00", timeout_s=900),
-    # FLUX-1 (F3.2) — relevé quotidien des compteurs Radar (fin de journée Réunion) : la courbe
-    # d'accumulation se lit de radar_releves. Après le cycle Radar, avant les digests.
-    _j("radar-releves", "Radar — relevé quotidien des compteurs (annonces, rattachées, paires DVF)",
-       "quotidien", "0 13 * * *", "17:00", timeout_s=300),
-    # CIRCUIT-3 lot 5.1 — LE FILTRE DE NUIT : rejoue les contrôles des filtres sur les versions
-    # SERVIES (dérive dans le temps : une table modifiée par un correctif, un raster remplacé).
-    # 07:05, AVANT la sonde de cohérence (07:15/07:25) — même famille, jamais en même temps.
+    # ══════════════════ L'EAU — surveillance & ingestion des 94 sources ══════════════════
+    _j("sonde-sources", "Sonde des sources amont — détecte une nouvelle version, n'ingère pas",
+       "quotidien", "0 3 * * *", "07:00", touche="eau", timeout_s=1800,
+       raison="L'œil sur les 94 : chaque nuit, une requête HTTP sur toute source à amont interrogeable "
+              "(millésime API/page, GetCapabilities daté, en-tête de fichier). Une version amont plus "
+              "récente ⇒ cloche admin. N'ingère rien : la sentinelle prévient, Vic décide.",
+       test="tests/test_cron1_registre.py::test_sonde_sources_couvre_le_max"),
+    _j("agents-sources", "Agents de source (veille amont par IA) — le dimanche, plafonné",
+       "hebdo (dim)", "0 19 * * 0", "23:00 dim", touche="eau", timeout_s=3600,
+       raison="Le détective : là où la sonde mécanique ne suffit pas, un agent IA lit la page amont et "
+              "dit s'il y a du neuf (jamais une réponse sans URL réellement consultée). Un passage par "
+              "semaine (dimanche nuit), sous PLAFOND de dépense (LABUSE_AGENT_PLAFOND_EUR, défaut 0 = ne "
+              "dépense rien) qui arrête proprement et signale les sources non traitées.",
+       test="tests/test_cron1_registre.py::test_agents_sources_dimanche"),
     _j("filtres-sources", "Filtres des sources : rejoue les contrôles qualité sur les versions servies",
-       "quotidien", "5 3 * * *", "07:05", timeout_s=1800),
-    # FLUX-1 (F4) — garde de cohérence quotidienne : personne ne lit une ancienne donnée. Après la
-    # sentinelle (07:00), avant l'ouverture. Notifie l'admin à la divergence.
-    _j("coherence-run", "Garde de cohérence : chaque surface lit le run courant (tier/date identiques)",
-       "quotidien", "15 3 * * *", "07:15", timeout_s=600),
-    # CIRCUIT-1 (lot 4) — la sonde « Vérifier que tout coule » : fuites entre robinets + eau
-    # ancienne par tampon → circuit_ecarts / circuit_eau_ancienne / circuit_controles. 07:25
-    # (après coherence-run 07:15 — même famille, jamais en même temps sur les mêmes tables).
+       "quotidien", "5 3 * * *", "07:05", touche="eau", timeout_s=1800,
+       raison="Le filtre de nuit : rejoue les contrôles qualité sur les versions RÉELLEMENT servies (une "
+              "table dérive : correctif, raster remplacé). 07:05, avant la sonde du circuit.",
+       test="tests/test_cron1_registre.py::test_filtres_sources_repris"),
     _j("coherence-robinets", "Sonde du circuit : fuites entre robinets + eau ancienne (tampons)",
-       # 0-bis : le passage nocturne joue AUSSI le cas recette_exports1 (24 PDF des 4 témoins,
-       # WeasyPrint + pdftotext) → timeout élargi.
-       "quotidien", "25 3 * * *", "07:25", timeout_s=3600),
-    # CIRCUIT-1 lot 6.4 — agents-sources : le job MENSUEL EXISTE mais reste DÉSACTIVÉ (décision
-    # Vic n° 8 : agents À LA DEMANDE, jamais en cron par défaut). Absent du crontab par
-    # construction (test lot 8 : posés == registre − {agents-sources}).
-    _j("agents-sources", "Agents de source (veille amont par IA) — DÉSACTIVÉ (à la demande seulement)",
-       "mensuel (désactivé)", "0 0 3 * *", "04:00 le 3 (JAMAIS posé)", timeout_s=3600),
-    # CIRCUIT-4 lot 5.4 — regles-references : renvoie les agents « règle » sur les références
-    # datées de plus de six mois (un texte peut changer) et signale toute version nouvelle.
-    # EXISTE au registre mais reste DÉSACTIVÉ (même doctrine que agents-sources : IA à la
-    # demande, jamais en cron par défaut — absent du crontab par construction, test lot 8).
-    _j("regles-references", "Agents de règle (références des calculs > 6 mois) — DÉSACTIVÉ",
-       "mensuel (désactivé)", "0 0 4 * *", "04:00 le 4 (JAMAIS posé)", timeout_s=3600),
-    # K9 — robustesse
+       "quotidien", "25 3 * * *", "07:25", touche="eau", timeout_s=3600,
+       raison="La sonde « tout coule » : deux chemins d'un même chiffre doivent donner la même valeur ; "
+              "sinon fuite (ligne rouge du Résumé). Détecte aussi l'eau ancienne (tampons). 07:25.",
+       test="tests/test_cron1_registre.py::test_coherence_robinets_repris"),
+    _j("ingest-bodacc", "BODACC quotidien (procédures collectives) + chaîne des dérivés légers",
+       "quotidien", "40 2 * * *", "06:40", touche="eau", timeout_s=1800,
+       raison="Les procédures collectives (BODACC) arrivent J+2 et nourrissent Radar/score. RECOUPEMENT "
+              "tranché : QUOTIDIEN (les deux jeux l'avaient en quotidien), à 06:40 — AVANT les alertes de "
+              "07:00 (l'heure du wrapper l'emporte : elle place l'ingestion avant les notifications).",
+       test="tests/test_cron1_registre.py::test_recoupements_arbitres"),
+    _j("ingest-sitadel", "Permis SITADEL → événements de veille foncière + golden candidat",
+       "mensuel (10)", "30 0 10 * *", "04:30 le 10", touche="eau", timeout_s=3600, envoie_mail=True,
+       raison="Les permis SDES/Sitadel nourrissent la veille foncière. RECOUPEMENT tranché : MENSUEL le 10 "
+              "(cadence du wrapper) — le producteur SDES publie une fois par mois ; le QUOTIDIEN legacy "
+              "re-téléchargeait chaque jour le même jeu (gâchis + faux « frais »).",
+       test="tests/test_cron1_registre.py::test_recoupements_arbitres"),
+    _j("ingest-dpe", "DPE ADEME mensuel", "mensuel (12)", "0 0 12 * *", "04:00 le 12",
+       touche="eau", timeout_s=3600,
+       raison="Les DPE ADEME sortent en train MENSUEL (mesuré : dataUpdatedAt mensuel). RECOUPEMENT tranché : "
+              "MENSUEL le 12 (wrapper) — l'HEBDO legacy (mardi) re-téléchargeait sans nouvelle donnée.",
+       test="tests/test_cron1_registre.py::test_recoupements_arbitres"),
+    _j("ingest-sirene", "SIRENE mensuel (refresh des concurrents géolocalisés)",
+       "mensuel (7)", "0 0 7 * *", "04:00 le 7", touche="eau", timeout_s=3600,
+       raison="SIRENE (établissements géolocalisés) rafraîchit les concurrents de l'étude de zone. "
+              "Mensuel le 7 — cadence du producteur.",
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+    _j("sync-gpu", "Diff PLU des 24 communes → événements de veille foncière + bandeau PLU",
+       "mensuel (15)", "0 0 15 * *", "04:00 le 15", touche="eau", timeout_s=1800, envoie_mail=True,
+       raison="Le diff des 24 documents PLU (GPU) fait remonter une révision opposable en événement de "
+              "veille + bandeau. Mensuel le 15.",
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+
+    # ══════════════════ L'EXPLOITATION — faire tourner le serveur ══════════════════
+    _j("backup-postgres", "Sauvegarde PostgreSQL (dump + rotation, 7 conservés)", "quotidien",
+       "30 9 * * *", "13:30", touche="exploitation", timeout_s=1800, besoin_db=False,
+       raison="La seule sauvegarde : sans elle, une panne disque perd toute la base. Quotidien, 7 dumps "
+              "conservés. RECOUPEMENT tranché : l'expression LEGACY (`30 9 * * *`) est reprise à "
+              "l'identique — c'est le job réellement actif en prod ; garder l'horaire exact garantit un "
+              "remplacement SANS TROU (le nouveau tourne au même instant que l'ancien ; deploy.sh pose "
+              "avant de retirer le legacy).",
+       test="tests/test_cron1_registre.py::test_backup_sans_trou"),
+    _j("pg-maintenance", "VACUUM ANALYZE des tables chaudes", "hebdo (dim)",
+       "0 0 * * 0", "04:00 dim", touche="exploitation", timeout_s=3600, besoin_db=False,
+       raison="Sans VACUUM ANALYZE, le planner PostgreSQL dérive et les requêtes chaudes ralentissent. "
+              "Hebdomadaire (dimanche), hors des heures d'usage.",
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+    _j("healthcheck", "Sonde /health locale + espace disque (2 échecs → alerte)", "15 min",
+       "*/15 * * * *", "toutes les 15 min", touche="exploitation", timeout_s=120, besoin_db=False,
+       raison="Dead-man local : si /health tombe ou le disque se remplit, l'admin est alerté (2 échecs). "
+              "La seule alerte qui survit même quand le reste est mort.",
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+    _j("sante-endpoints", "Sonde endpoints métier (accueil/sources/fiche/radar/projets/ask) avec DB",
+       "15 min", "7,37 * * * *", "toutes les 30 min", touche="exploitation", timeout_s=300,
+       raison="/health sans DB ne voit pas un « écran vide » (run absent), une source vide, Radar/projets "
+              "cassés. Cette sonde métier (avec DB) le voit et alerte.",
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+    _j("copilote-purge", "Copilote — purge des conversations au-delà de la rétention (défaut 7 j)",
+       "quotidien", "30 23 * * *", "03:30", touche="exploitation", timeout_s=300,
+       raison="Les conversations Copilote au-delà de la rétention (défaut 7 j) sont purgées : coût de "
+              "stockage + minimisation des données.",
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+    _j("radar-digests", "Alertes de veille — un mail par client (les biens qui matchent)", "quotidien",
+       "0 14 * * *", "18:00", touche="exploitation", timeout_s=1200, envoie_mail=True,
+       raison="Les clients paient la veille : chaque jour, un mail par client avec les biens qui matchent "
+              "ses critères (Brevo). Sans dépôt Radar récent, il n'y a rien à envoyer (dry-run si SMTP absent).",
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
     _j("restore-test", "Restaure le dernier dump dans une base jetable et vérifie (puis DROP)",
-       "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", timeout_s=3600, envoie_mail=True, besoin_db=False),
+       "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", touche="exploitation", timeout_s=3600,
+       envoie_mail=True, besoin_db=False,
+       raison="Une sauvegarde non restaurable ne vaut rien : une fois par mois, on restaure le dernier dump "
+              "dans une base jetable, on vérifie, on DROP. Alerte si la restauration échoue.",
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+
+    # ── NON REPRIS (retirés du registre par CRON-1 lot 1, avec la raison — cf. CRON-1-LOT1.md) ──
+    # Radar : PAS de job. Le traitement des dépôts est déclenché au dépôt (manuel) ; une ÉCHÉANCE
+    #   attendue vit en base → dépassée = tâche du Résumé (verrou G8, lot 2). Donc radar-cycle,
+    #   radar-releves : retirés.
+    # sources-fraicheur : le verdict de fraîcheur est calculé À LA LECTURE (etats_sources) + la sonde
+    #   des sources (sonde-sources) porte la veille amont ; un job nocturne de plus faisait doublon.
+    # fiche-commune-cache : réchauffeur de cache non essentiel (la fiche commune se calcule à la demande).
+    # coherence-run : le mandat ne reprend QUE filtres-sources + coherence-robinets ; la cohérence de run
+    #   est couverte par ces deux + les verrous (labuse circuit verrous).
+    # rapport-admin : redondant avec la Tour de contrôle (Pilotage), qui montre l'exploitation en direct.
+    # regles-references / ingest-bdnb : IA à la demande / amont 974 absent — jamais en cron (inchangé).
 ]}
+
+#: CRON-1 lot 1 — les jobs qui TOUCHENT L'EAU, DÉRIVÉS du registre (`touche == 'eau'`) : chacun laisse
+#: une ligne au journal unifié `circuit_journal`. Plus de liste tenue à la main (une seule source).
+TOUCHE_EAU = frozenset(nom for nom, j in JOBS.items() if j.touche == "eau")

@@ -252,12 +252,12 @@ def test_q2_4_cron_run_dossiers_locaux(monkeypatch):
     # importe subprocess dans le module au moment de l'appel : on patche la lib standard
     import subprocess as _sp
     monkeypatch.setattr(_sp, "Popen", _fake_popen)
-    res = ops.admin_cron_run("sentinelle-sources", types.SimpleNamespace(state=types.SimpleNamespace()))
+    res = ops.admin_cron_run("sonde-sources", types.SimpleNamespace(state=types.SimpleNamespace()))
     assert res["ok"] is True
     s = get_settings()
     assert captured["env"]["LABUSE_JOBS_LOG_DIR"] == s.jobs_log_dir
     assert captured["env"]["LABUSE_LOCK_DIR"] == s.jobs_lock_dir
-    assert captured["argv"][1:] == ["jobs", "run", "sentinelle-sources"]
+    assert captured["argv"][1:] == ["jobs", "run", "sonde-sources"]
 
 
 def test_source_relance_sans_commande_404(client, engine):
