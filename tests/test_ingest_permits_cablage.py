@@ -32,11 +32,10 @@ def test_cli_ingest_permits_defaut_backfill(monkeypatch):
 
 
 def test_cron_d_appelle_la_voie_vivante():
-    # le cron de prod pointe permits_sdes --refresh (jamais la voie ODS morte)
-    from pathlib import Path
-    cron = (Path(__file__).resolve().parents[1] / "deploy/cron.d/sitadel").read_text(encoding="utf-8")
-    assert "labuse.ingestion.permits_sdes --refresh" in cron
-    assert "ingestion.permits " not in cron              # pas la legacy
+    # CRON-1 lot 0 : `deploy/cron.d/sitadel` est supprimé (table rase). Le job sitadel du registre
+    # appelle la voie VIVANTE (permits_sdes --refresh) — ré-asserté sur le registre au lot 1.
+    from labuse.jobs import JOBS
+    assert "ingest-sitadel" in JOBS   # le job existe au registre ; sa commande = permits_sdes (lot 1)
 
 
 def test_voie_morte_reste_documentee_non_appelee():

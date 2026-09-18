@@ -72,10 +72,8 @@ def test_job_regles_references_desactive():
     from labuse.jobs import JOBS
     j = JOBS["regles-references"]
     assert "DÉSACTIVÉ" in j.titre and "JAMAIS posé" in j.heure_reunion
-    # jamais posé au crontab (même doctrine qu'agents-sources) — verrouillé par test_circuit1_lot8
-    from pathlib import Path
-    cron = Path("deploy/cron.d-labuse").read_text()
-    assert "regles-references" not in cron
+    # CRON-1 lot 0 : le crontab versionné est supprimé (table rase) ; l'assertion « jamais posé au
+    # crontab » se re-vérifiera sur le registre/deploy.sh au lot 3 (le job désactivé n'est pas généré).
 
 
 def test_robinets_par_verdict():

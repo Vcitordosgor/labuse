@@ -16,18 +16,11 @@ def test_81_registre_bodacc_entre_bdnb_sorti():
 
 
 def test_81_crontab_wrapper_complet():
-    """Le crontab versionné pose TOUS les jobs du registre (plus aucun « enregistré mais
-    jamais posé » — constat CIRCUIT-0) et ne pose rien d'inconnu."""
-    from pathlib import Path
-    from labuse.jobs import JOBS
-    lignes = Path("deploy/cron.d-labuse").read_text(encoding="utf-8")
-    poses = set()
-    for l in lignes.splitlines():
-        if "jobs run" in l and not l.strip().startswith("#"):
-            poses.add(l.split("jobs run ")[1].split("'")[0].strip())
-    # agents-sources : EXISTE au registre mais reste DÉSACTIVÉ (jamais posé — décision Vic n° 8)
-    attendu = set(JOBS) - {"agents-sources", "regles-references"}  # CIRCUIT-4 5.4 : désactivé aussi
-    assert poses == attendu, f"écart crontab/registre : {poses ^ attendu}"
+    """CRON-1 lot 0 (table rase) — les crontab versionnés (`deploy/cron.d-labuse` + legacy) sont
+    SUPPRIMÉS ; l'invariant « crontab == registre » est reconstruit au lot 3 (deploy.sh génère le
+    crontab DEPUIS le registre et refuse tout écart). Neutralisé en attendant."""
+    import pytest
+    pytest.skip("CRON-1 lot 0 : artefact crontab supprimé ; invariant re-porté au registre/deploy.sh (lot 3)")
 
 
 def test_82_healthz_cadences_du_registre():
