@@ -834,14 +834,18 @@ SOURCES: list[dict] = [
          provider="SDES (répertoire des logements locatifs des bailleurs sociaux)", access_type="téléchargement/CSV",
          status=S.CONNECTE, reliability_level=R.VERIFIE,
          source_millesime="RPLS — millésime 01/01/2025 (SDES)",
-         documentation_url="https://www.statistiques.developpement-durable.gouv.fr/le-repertoire-des-logements-locatifs-des-bailleurs-sociaux-rpls",
+         # PAGE-SOURCES-2 — l'ancienne page SDES (…/le-repertoire-…-rpls) renvoie 404 (déplacée).
+         # Le jeu RPLS est publié par le SDES sur data.gouv (slug stable, = celui que la sentinelle sonde).
+         documentation_url="https://www.data.gouv.fr/datasets/repertoire-des-logements-locatifs-des-bailleurs-sociaux/",
          legal_notes="Licence Ouverte — attribution : « Source : SDES — Répertoire des logements locatifs des bailleurs sociaux (RPLS) ».",
          technical_notes="Table `rpls_commune` (parc social par commune : nb_logements, construction médiane). Servi au contexte marché de la fiche commune, au Flash et au PDF premium. `pct_qpv` NON servi (valeur non discriminante — 100 % pour les 24 communes, RETOURS-11F). Millésime 01/01/2025."),
     dict(name="Consommation d'espaces NAF (Cerema — portail de l'artificialisation)", category="urbanisme",
          provider="Cerema (portail national de l'artificialisation des sols)", access_type="téléchargement/CSV",
          status=S.CONNECTE, reliability_level=R.VERIFIE,
          source_millesime="conso ENAF 2021-2024 (portail artificialisation, Cerema)",
-         documentation_url="https://artificialisation.developpement-durable.gouv.fr/les-donnees/donnees-de-consommation-despaces",
+         # PAGE-SOURCES-2 — l'ancienne URL (…/les-donnees/donnees-de-consommation-despaces) renvoie 404
+         # (portail Cerema restructuré). Nouvelle page « télécharger les données » du portail artificialisation.
+         documentation_url="https://artificialisation.developpement-durable.gouv.fr/mesurer-la-consommation-despaces/telecharger-les-donnees",
          legal_notes="Licence Ouverte — attribution : « Source : Cerema — portail national de l'artificialisation des sols ».",
          technical_notes="Table `commune_conso_enaf` (consommation d'espaces NAF par commune, période 2021-2024). Lue par la pression ZAN et l'enveloppe ZAN restante (fiche commune, comparateur). Millésime annuel."),
     # ── SOURCES-1 lot 1 — les prescriptions et périmètres du droit des sols ──

@@ -137,19 +137,31 @@ Les 94 `documentation_url` ont été testés (HTTP, suivi des redirections, UA n
 
 | Source | Code | Verdict |
 |---|---|---|
-| Consommation d'espaces NAF (Cerema — portail artificialisation) | **404** | **Cassé** — page déplacée (titre « Erreur 404 »). À corriger en base. |
-| RPLS — répertoire des logements locatifs sociaux (SDES) | **404** | **Cassé** — page déplacée (titre « Page non trouvée »). À corriger en base. |
+| Consommation d'espaces NAF (Cerema — portail artificialisation) | ~~404~~ → **200** | **CORRIGÉ (PAGE-SOURCES-2)** — nouvelle page `…/mesurer-la-consommation-despaces/telecharger-les-donnees`. |
+| RPLS — répertoire des logements locatifs sociaux (SDES) | ~~404~~ → **200** | **CORRIGÉ (PAGE-SOURCES-2)** — page data.gouv du jeu SDES `…/repertoire-des-logements-locatifs-des-bailleurs-sociaux/`. |
 | LiDAR HD — MNH 50 cm (IGN) | **503** | Transitoire — serveur IGN en maintenance (« IGN-MUT : 503 »), lien valide hors incident. |
 | FRR ex-ZRR (Légifrance) | 403 | **Valide** — Légifrance bloque les non-navigateurs (challenge Cloudflare « Just a moment… ») ; s'ouvre en navigateur. |
 | RTAA DOM (Légifrance) | 403 | **Valide** — idem Cloudflare. |
 | ZFANG (Légifrance) | 403 | **Valide** — idem Cloudflare. |
 
-**Aucun lien « faux »** (pointant vers le mauvais producteur) détecté. **2 réellement cassés** (404, pages Cerema/SDES déplacées) : signalés ici pour correction du `documentation_url` en base — **non corrigés dans ce mandat** (donnée backend, hors du nettoyage front ; réversible, à trancher). Les 3 « 403 » sont des faux positifs de robot (Cloudflare), pas des liens morts.
+**Aucun lien « faux »** (pointant vers le mauvais producteur). **Les 2 liens cassés (404) ont été corrigés par PAGE-SOURCES-2** (seed `seed_sources.py` + ligne `data_sources` en base ; testés → **200/200** ; servis par `/sources`). Les 3 « 403 » sont des faux positifs de robot (Cloudflare), pas des liens morts ; le 503 IGN est transitoire.
 
 La liste complète des 94 liens testés avec leur code figure en **annexe** ci-dessous.
 
 ### 3.3 Réserve manquante ailleurs ? (signalé, non ajouté)
 En retirant le bloc « détail technique », l'**avertissement de recalibration / censure du modèle** (`/v2/modele.avertissement_censure`) a quitté la page. C'est la seule réserve *utile* qui disparaît avec ce bloc : si l'on veut la conserver côté client, elle mériterait d'être reformulée en une phrase de réserve simple (comme celle sur les ventes). **Signalé, non ajouté** (conforme à la consigne).
+
+---
+
+## 4. D'où vient le « 94 sources » du client (et pourquoi pas 88 ni 92) — PAGE-SOURCES-2
+
+Le « 94 » n'est **jamais un chiffre en dur** : c'est `COUNT(*)` sur `data_sources` filtré par l'expression **canonique** `sources_catalog.WHERE_AFFICHEES` — `lower(status) IN ('connecte','manuel')`, moins les `DOUBLON` / `RETIRÉ` / `DORMANT` / masquées / `affichage_desactive`. La **même** expression est lue par le compteur d'accueil (`accueil.py`), la liste `/sources` (page cliente) **et** l'admin « Données » (Circuit) → les trois affichent le même nombre par construction, aucune divergence possible.
+
+Décomposition (mesurée en base aujourd'hui) : **121 sources au total = 94 en vitrine + 27 hors vitrine** (hors vitrine = `partenariat_requis` 13 · `alias` 5 · `retiree` 5 · `hub` 3 · `a_faire` 1).
+
+- **94 (client)** = `connecte` (92) **+** `manuel` (2). Les 2 `manuel` = **VRD / assainissement (SPANC)** et **Radar (pige d'annonces)** : câblées et alimentées à la main, aucun amont public auto. La règle M123 les rend visibles (« la vitrine montre ce qui SERT », pas seulement l'auto-branché).
+- **92** = le sous-ensemble `status = 'connecte'` **strict** (sans les 2 `manuel`). C'est l'ancienne définition de la vitrine (avant M123) et le compte qui apparaît si l'on filtre `connecte` seul. La différence 94 − 92 = exactement ces 2 sources manuelles.
+- **88** = **pas un compteur en vigueur.** Le nombre de vitrine est **dynamique** et a bougé au fil des connexions / retraits / re-tags (mesuré : 91→92 à COUCHES-REGISTRE-2 ; 93 / 95 / 96 dans les rapports SOURCES antérieurs, quand 13 sources sont passées `partenariat_requis` = invisibles client). 88 correspond à un **état antérieur** (moins de sources branchées), pas à une définition actuelle ; aucun filtre canonique d'aujourd'hui ne rend 88 (le seul qui tombe dessus — retirer les 6 lignes annotées « proxy » — est fortuit, et ne colle même pas au badge « proxy » servi, qui en compte 5). **Le chiffre en vigueur est 94** ; 88 est périmé.
 
 ---
 
@@ -176,7 +188,7 @@ En retirant le bloc « détail technique », l'**avertissement de recalibration 
 | Cerema / GéoLittoral — indicateur d'érosion côtière | https://www.geolittoral.developpement-durable.gouv.fr/indicateur-national-de-l-erosion-cotiere-a1434.html | 200 |
 | Classement sonore ITT (Cerema) | https://cartagene.cerema.fr | 200 |
 | Communes La Réunion — contours (IGN ADMIN EXPRESS via geo.api.gouv, seed) | — | ABSENT |
-| Consommation d'espaces NAF (Cerema — portail de l'artificialisation) | https://artificialisation.developpement-durable.gouv.fr/les-donnees/donnees-de-consommation-despaces | 404 |
+| Consommation d'espaces NAF (Cerema — portail de l'artificialisation) | https://artificialisation.developpement-durable.gouv.fr/mesurer-la-consommation-despaces/telecharger-les-donnees | 200 (corrigé PAGE-SOURCES-2) |
 | Contours IRIS (IGN/INSEE) | https://geoservices.ign.fr/contoursiris | 200 |
 | CoSIA (couverture du sol IA, IGN) | https://geoservices.ign.fr/cosia | 200 |
 | Coût de construction (EPTB SDES + choix LABUSE) | https://dreal.statistiques.developpement-durable.gouv.fr/eptb/2024/la_reunion/index.html | 200 |
@@ -232,7 +244,7 @@ En retirant le bloc « détail technique », l'**avertissement de recalibration 
 | RNB — Référentiel National des Bâtiments | https://rnb.beta.gouv.fr/doc | 200 |
 | RNIC — registre national des copropriétés (Anah) | https://www.data.gouv.fr/fr/datasets/registre-national-dimmatriculation-des-coproprietes/ | 200 |
 | RPG — déclarations agricoles (IGN/ASP) | https://geoservices.ign.fr/services-geoplateforme-diffusion | 200 |
-| RPLS — répertoire des logements locatifs sociaux (SDES) | https://www.statistiques.developpement-durable.gouv.fr/le-repertoire-des-logements-locatifs-des-bailleurs-sociaux-rpls | 404 |
+| RPLS — répertoire des logements locatifs sociaux (SDES) | https://www.data.gouv.fr/datasets/repertoire-des-logements-locatifs-des-bailleurs-sociaux/ | 200 (corrigé PAGE-SOURCES-2) |
 | RTAA DOM (textes réglementaires) | https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530547 | 403 |
 | SIRENE | https://recherche-entreprises.api.gouv.fr/docs | 200 |
 | SIRENE établissements géolocalisés | https://www.data.gouv.fr/fr/datasets/geolocalisation-des-etablissements-du-repertoire-sirene-pour-les-etudes-statistiques/ | 200 |
