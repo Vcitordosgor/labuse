@@ -597,21 +597,11 @@ def tuyau_couches() -> dict:
     return {"couches": couches}
 
 
-# COUCHES-RECETTE-2 (retour) — gestionnaire d'une SUP, DÉRIVÉ de la famille (le jeu source ne porte
-# pas de champ « gestionnaire » ; l'autorité responsable est standardisée par catégorie de servitude).
-# DONNÉE (dict), pas du branchement.
-_SUP_GESTIONNAIRE: dict[str, str] = {
-    "pm1": "État — préfecture / DEAL (plan de prévention des risques naturels)",
-    "pm2": "État — préfecture / DEAL (plan de prévention des risques)",
-    "pm3": "État — préfecture / DREAL (plan de prévention des risques technologiques)",
-    "ac1": "État — ABF / UDAP (abords de monuments historiques)",
-    "ac2": "État — DREAL / préfecture (sites inscrits et classés)",
-    "ac3": "Gestionnaire de la réserve naturelle / DEAL",
-    "ac4": "Commune / ABF (site patrimonial remarquable)",
-    "el10": "État — DDTM (domaine public maritime / littoral)",
-}
-
-
+# SUP-GESTIONNAIRE-1 — le champ « gestionnaire » d'une SUP était DÉDUIT de la catégorie (subtype),
+# pas présent dans la donnée source (le jeu GPU des assiettes ne porte AUCUN champ d'autorité :
+# attrs = generateur_type/nom, nomass, urlreg, typeass…). Un libellé standardisé par famille n'est
+# pas la donnée : il est retiré du détail au clic (endpoint + popup_detail). Le générateur de la
+# servitude (generateur_type → « Servitude », generateur_nom → « Acte / périmètre ») reste, lui, réel.
 @router.get("/map/couche-detail/{kind}")
 def couche_detail(kind: str, lon: float, lat: float, db: Session = Depends(get_db)) -> dict:
     """COUCHES-RECETTE-2 (retour) — clic PRÉCIS sur une couche affichée dissoute : interroge la table
@@ -635,11 +625,9 @@ def couche_detail(kind: str, lon: float, lat: float, db: Session = Depends(get_d
     rows = db.execute(sql, {"k": kind, "lon": lon, "lat": lat}).mappings().all()
     servitudes = []
     for r in rows:
-        st = (r["subtype"] or "").lower()
         servitudes.append({
             "code": (r["subtype"] or "").upper(),
             "libelle": r["libelle"] or "",
-            "gestionnaire": _SUP_GESTIONNAIRE.get(st, "État"),
             "acte": r["acte"] or "",
             "assiette": r["assiette"] or "",
             "urlreg": r["urlreg"] or "",
