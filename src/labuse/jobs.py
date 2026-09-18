@@ -285,7 +285,7 @@ def _j(nom, titre, cadence, cron_utc, heure_reunion, *, raison, touche, test,
 
 
 JOBS: dict[str, Job] = {j.nom: j for j in [
-    # ══════════════════ L'EAU — surveillance & ingestion des 94 sources ══════════════════
+    # ══════════════════ L'EAU — surveillance & ingestion des sources vitrine ══════════════════
     _j("sonde-sources", "Sonde des sources amont — détecte une nouvelle version, n'ingère pas",
        "quotidien", "0 3 * * *", "07:00", touche="eau", timeout_s=1800,
        raison="L'œil sur les 94 : chaque nuit, une requête HTTP sur toute source à amont interrogeable "

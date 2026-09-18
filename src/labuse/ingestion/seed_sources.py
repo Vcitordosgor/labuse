@@ -239,15 +239,17 @@ SOURCES: list[dict] = [
          documentation_url="https://peigeo.re", endpoint_url=None,
          legal_notes="Licence à confirmer par jeu (AGORAH/PEIGEO — audit M6 §1.11 R8).",
          technical_notes="⚠ Hôte injoignable depuis l'infra (HTTP 000, 2026-06-07). Fallback Région ODS / import."),
-    dict(name="DEAL Réunion (WMS/WFS)", category="urbanisme", provider="DEAL Réunion",
+    dict(name="DEAL Réunion (WMS/WFS)", category="hub", provider="DEAL Réunion",
          source_millesime="NPNRU — QP génération 2024 (DEAL/ANCT)",   # M125-1bis : anru attrs code_qp_2024 (8 quartiers)
-         access_type="WMS/WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
+         access_type="WMS/WFS", status=S.HUB, reliability_level=R.A_CONFIRMER,
          documentation_url="https://www.reunion.developpement-durable.gouv.fr", endpoint_url=None,
          legal_notes="Données État — Licence Ouverte ; attribution : « Source : DEAL Réunion ». Licence à consigner couche par couche (audit M6 §1.11 R8).",
-         technical_notes="SERVI PAR PROXYS : l'hôte carto DEAL (carto.reunion.developpement-durable.gouv.fr) est "
-                         "INJOIGNABLE (HTTP 000). Les couches sont servies via proxys — 8 emprises ANRU intégrées "
-                         "(spatial_layers kind='anru'), lues par la fiche (contexte commune). M74 A : requalifiée "
-                         "connecte (mesurée, servie par proxys) — catégorie hub→urbanisme (une source, pas un portail)."),
+         technical_notes="HUB (SOURCES-CORRECTION-1 lot 2) : l'hôte carto DEAL (carto.reunion.developpement-durable.gouv.fr) "
+                         "est INJOIGNABLE (HTTP 000) ; c'est un CANAL servi par proxys, sans vanne d'ingestion propre — "
+                         "hors vitrine, comme les 3 autres hubs. Renverse la requalification M74 (« hub→urbanisme »). "
+                         "N.B. la couche kind='anru' (8 emprises) reste rattachée à cette ligne en base (data_source_id 13, "
+                         "héritage M74) alors que le registre (RESERVOIR_TABLES) la déclare au réservoir npnru : "
+                         "ré-attribution = décision couche-registre, laissée à Vic (hors périmètre de ce lot)."),
     dict(name="Géoplateforme IGN", category="hub", provider="IGN",
          access_type="WFS/WMS/téléchargement", status=S.HUB, reliability_level=R.VERIFIE,
          rate_limit="10 req/s (téléchargement)",
@@ -1445,6 +1447,10 @@ RETRAITS: dict[str, str] = {
 
 HUBS: tuple[str, ...] = (
     "Région Réunion Open Data (Opendatasoft)", "PEIGEO (hub régional)", "Géoplateforme IGN",
+    # SOURCES-CORRECTION-1 lot 2 (décision Vic) — DEAL WMS/WFS rejoint les hubs hors vitrine : c'est
+    # un CANAL carto (hôte injoignable, servi par proxys), pas une source de première classe. Renverse
+    # la requalification M74 « hub→urbanisme ». La vitrine passe de 94 à 93.
+    "DEAL Réunion (WMS/WFS)",
 )
 
 

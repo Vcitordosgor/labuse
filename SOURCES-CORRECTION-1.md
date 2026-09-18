@@ -55,3 +55,55 @@ en INSEE **95563** (Saint-Leu-la-**Forêt**, Val-d'Oise) — donc **hors** `code
   `sources_fraicheur` recalculé : 0 `en_retard` / 0 `en_panne` sur les 94). Recouvrement des données passé
   de ~65 j à **17 j** (dernier DPE établi 2026-09-02 = le plus récent que l'ADEME publie pour l'île).
 - `tests/test_dpe.py` + `tests/test_garde_974.py` : **21 passed**. `tsc -b` : aucun fichier front touché.
+
+---
+
+## Lot 2 — statuts
+
+### `deal_wms_wfs` → **hub** (fait) : vitrine **94 → 93**
+
+Décision Vic appliquée. `deal_wms_wfs` était `connecte`/`urbanisme` ; il rejoint les 3 autres hubs
+hors vitrine (`status='hub'`, `category='hub'`). C'est un **canal carto** (hôte DEAL injoignable, HTTP 000,
+servi par proxys, **aucune vanne d'ingestion propre**) — pas une source de première classe. Ceci **renverse
+la requalification M74** (« hub→urbanisme », qui l'avait fait rentrer en vitrine).
+
+- **Où** : `seed_sources.py` (ajouté au tuple `HUBS` → `appliquer_statuts_circuit()` pose `status='hub'`
+  de façon **idempotente et durable au re-seed** ; entrée de catalogue passée `S.HUB`/`category="hub"` +
+  note refaite) ; **DB** `UPDATE data_sources SET status='hub', category='hub'`.
+- **Vérifié** : `V2a` **OK — 93 = 93 = 93** (vitrine SQL = prédicat Python = page) ; `V2b` OK (toute ligne
+  hors vitrine dit pourquoi — `hub` est un statut de première classe) ; `V1d` OK. Le « 94 » n'est gravé
+  nulle part : tout lit `WHERE_AFFICHEES`, tout est passé à 93 ensemble.
+- **⚠ Trouvé, PAS corrigé (hors périmètre)** : la couche `kind='anru'` (8 emprises) reste rattachée en base
+  à cette ligne (`spatial_layers.data_source_id = 13`, héritage M74) alors que le registre code
+  (`RESERVOIR_TABLES`) la déclare au réservoir **`npnru`**. Un hub ne devrait rien « posséder » : la
+  **ré-attribution `anru` → `npnru`** rendrait le hub vraiment vide. C'est une décision **couche-registre**
+  (aucun verrou ne la contraint — V1d/V2b lisent le registre code, pas le `data_source_id`), **laissée à Vic**.
+
+### `cadastre_epoque` — proposition (NON tranchée)
+
+**Fait** : table `cadastre_historique` (6 526 lignes), lue **uniquement** par un fabricant d'ingestion
+(`ingestion/cadastre_historique.py:rattacher_par_geometrie`, qui **géoréférence `sitadel_permits.geom`**) ;
+**aucune surface client** (la fiche n'affiche qu'une prose statique). Elle *sert*, mais au **pipeline**, pas au client.
+
+- **Option A — rester en vitrine, rôle interne déclaré** : garder `connecte`, note « référentiel
+  géométrique **interne** — géoréférence les permis Sitadel, aucune donnée servie au client ». *Contre* :
+  la vitrine « ne montre que ce qui SERT **au client** » (règle Vic M123) → une source interne y détonne.
+- **Option B — sortir de la vitrine** : `status='dormant'` (servie nulle part **côté client**), table et rôle
+  interne **conservés** dans la note. *Pour* : la vitrine reste honnête (que du client-facing) ; la donnée
+  et son usage-pipeline ne bougent pas.
+- **Recommandation** : **Option B** (sortir, `dormant`, rôle interne écrit) — c'est un outil de la pompe, pas
+  une source cliente. À trancher par Vic.
+
+### `sudocuh` — proposition (NON tranchée)
+
+**Fait** : table `sudocuh_procedures` (24 lignes), lue **uniquement** par le **modèle candidat**
+`scoring/p_v2/qv14.py` (feature `anciennete_plu`) ; le run **servi** en prod est `q_v11_m137`, où cette
+feature **ne contribue pas** → 0 surface client aujourd'hui.
+
+- **Option A — rester, rôle déclaré** : garder `connecte`, note « alimente le modèle candidat `q_v14`
+  (`anciennete_plu`), **non encore promu** ». *Pour* : si `q_v14` est sur une trajectoire de promotion, la
+  source deviendra servie ; la sortir puis la rentrer serait du yo-yo.
+- **Option B — sortir** : `status='dormant'` tant que `q_v14` n'est pas le run servi. *Pour* : reflète l'état
+  réel (rien de servi au client).
+- **Recommandation** : **dépend de la feuille de route `q_v14`** — si sa promotion est planifiée, **Option A**
+  (rester, rôle candidat déclaré) ; sinon **Option B** (`dormant`). À trancher par Vic (je m'arrête sans décider).
