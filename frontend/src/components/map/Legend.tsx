@@ -3,7 +3,6 @@ import { useState, type ReactNode } from 'react'
 import { BPE_DOM, CINQUANTE_PAS_COLOR, EQUIP_META, LEGEND_ORDER, LEGEND_V2_ORDER, STATUT_META, TIER_V2_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { PERMIS_LEGENDE } from '../../lib/permisEtats'
 import { MAP_THEME } from '../../lib/mapTheme'
-import { getMapLayer } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Tip } from '../Tip'
@@ -63,29 +62,16 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const verdict = useApp((s) => s.verdict)
   const analyse = useApp((s) => s.filters.analyseLabuse)
   const peint = useApp((s) => s.mapPeint)
-  const commune = useApp((s) => s.commune)
   // COUCHES-RETRAIT-1 lot 1 — `basemap` n'est plus lu ici (thème unique depuis le retrait du clair).
   const bpeDomains = useApp((s) => s.bpeDomains)
   const toggleBpeDomain = useApp((s) => s.toggleBpeDomain)
   const v2 = useV2Actif()
-  const aleaActifHook = layers.alea_inondation || layers.alea_mvt
-  const aleaQ = useQuery({ queryKey: ['layer', 'georisque_alea', commune], queryFn: () => getMapLayer('georisque_alea'), enabled: aleaActifHook })
-  const transQ = useQuery({ queryKey: ['layer', 'transport_ligne'], queryFn: () => getMapLayer('transport_ligne'), enabled: layers.transport })
-  const polesQ = useQuery({ queryKey: ['layer', 'pole_echange'], queryFn: () => getMapLayer('pole_echange'), enabled: layers.axes })
-  const critereDerive = (polesQ.data?.features.find((f) => (f.properties as { subtype?: string; critere?: string }).critere)
-    ?.properties as { critere?: string } | undefined)?.critere ?? 'arrêt desservi par de nombreuses lignes (dérivé GTFS)'
-  const htQ = useQuery({ queryKey: ['layer', 'ligne_ht'], queryFn: () => getMapLayer('ligne_ht'), enabled: layers.lignes_ht })
-  // COUCHES-1 lot 2 (A7) — qpvQ/anruQ retirés : ils ne servaient qu'au millésime inline du libellé,
-  // désormais porté par le « i » de la couche (menu, /map/couches-info) — plus deux requêtes pour rien.
+  // COUCHES-RETRAIT-1 lot 2 — les 4 hooks getMapLayer (alea/transport/pôles/HT) sont RETIRÉS avec
+  // l'ancien système d'overlay : ils n'alimentaient que le millésime inline du libellé (`fmtFraich`,
+  // supprimé) et le critère de pôle dérivé, désormais portés par le « i » de chaque couche du tuyau
+  // (/map/couches-info). COUCHES-1 lot 2 (A7) : qpvQ/anruQ avaient déjà été retirés pour ce motif.
+  const critereDerive = 'arrêt desservi par de nombreuses lignes (dérivé GTFS)'
   const tTheme = MAP_THEME.sombre   // COUCHES-RETRAIT-1 lot 1 : thème unique
-  const mill = (q: { data?: unknown }) => (q.data as { millesime_integration?: string } | undefined)?.millesime_integration
-  const srcMill = (q: { data?: unknown }) => (q.data as { source_millesime?: string } | undefined)?.source_millesime
-  const dISO = (m?: string) => (m ? m.split('-').reverse().join('/') : '')
-  const fmtFraich = (q: { data?: unknown }) => {
-    const sm = srcMill(q); const ing = mill(q)
-    if (sm) return ` · millésime ${sm}${ing ? ` (ingéré le ${dISO(ing)})` : ''}`
-    return ing ? ` · ingéré le ${dISO(ing)}` : ''
-  }
   const [leg, setLeg] = useState(readLeg)
   const set = (v: typeof leg) => { setLeg(v); writeLeg(v) }
 
@@ -193,7 +179,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   })
   ;(['alea_inondation', 'alea_mvt'] as const).forEach((k) => { if (layers[k]) groupes.push({
     id: k, titre: k === 'alea_inondation' ? 'Aléa inondation' : 'Aléa mouvement de terrain',
-    note: `DEAL Réunion — cartographie des aléas (exposition au phénomène, pas la règle du PPR)${fmtFraich(aleaQ)}`,
+    note: 'DEAL Réunion — cartographie des aléas (exposition au phénomène, pas la règle du PPR).',
     /* RETOURS-13 R6 — la légende suit les CLASSES RÉELLEMENT SERVIES par le flux (dérivées des
        données à l'écran, jamais promises d'avance) : inondation faible/moyen/fort ; mouvement de
        terrain faible/moyen/élevé/très élevé — la classe LA PLUS GRAVE est ROUGE. */
@@ -205,12 +191,10 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       // élevé / très élevé (le synonyme « fort » de l'inondation devient « élevé »). Chaque aléa
       // n'affiche que ses crans réellement servis ; la classe la plus grave reste ROUGE (doctrine R6).
       const LAB: Record<string, string> = { faible: 'faible', moyen: 'moyen', fort: 'élevé', eleve: 'élevé', tres_eleve: 'très élevé' }
-      const servies = new Set((aleaQ.data?.features ?? [])
-        .filter((f) => (f.properties as { subtype?: string }).subtype === sub)
-        .map((f) => String((f.properties as { classe?: string; niveau?: string }).classe
-          ?? (f.properties as { niveau?: string }).niveau ?? '')))
-      const classes = ORDRE.filter((c) => servies.has(c))
-      const shown = classes.length ? classes : (['faible', 'moyen', 'fort'] as unknown as typeof classes)
+      // COUCHES-RETRAIT-1 lot 2 — la couche d'aléas (et son détail par classe) est servie par le
+      // tuyau ; la légende n'interroge plus l'ancien endpoint. On montre l'échelle canonique des crans.
+      void sub
+      const shown = ['faible', 'moyen', 'fort'] as unknown as typeof ORDRE
       return <div data-legend-alea={k} className="flex flex-wrap items-center gap-2">{shown.map((n) => (
         <span key={n} className="flex items-center gap-1"><span className="h-2.5 w-4 rounded-sm border" style={{ background: ramp[n], borderColor: ramp[n] }} /><span className="text-[10.5px] text-txt-dim">{LAB[n]}</span></span>
       ))}</div>
@@ -218,7 +202,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   }) })
   if (layers.transport) groupes.push({
     id: 'transport', titre: 'Transport public',
-    note: `GTFS : réseaux officiels de La Réunion (Licence Ouverte) · Papang : © les contributeurs d'OpenStreetMap (ODbL)${fmtFraich(transQ)}. Les pôles d'échange sont dans « Axes structurants ».`,
+    note: 'GTFS : réseaux officiels de La Réunion (Licence Ouverte) · Papang : © les contributeurs d\'OpenStreetMap (ODbL). Les pôles d\'échange sont dans « Axes structurants ».',
     body: <div data-legend-transport className="flex flex-col gap-1 text-[11px] text-txt">
       {([['Car Jaune', 'cars interurbains (Région)'], ['Citalis', 'bus du Nord (CINOR) — et le téléphérique Papang, en tireté'], ["Kar'Ouest", 'bus de l’Ouest (TCO)'], ['Alternéo', 'bus du Sud-Ouest (CIVIS)'], ['Estival', 'bus de l’Est (CIREST)'], ['Carsud', 'bus du Sud (CASUD)']] as const).map(([r, d]) => (
         <span key={r} className="flex items-center gap-2"><span className="h-0.5 w-4 shrink-0 rounded" style={{ background: tTheme.transportReseaux[r] }} /><span><b>{r}</b> — {d}</span></span>
@@ -239,7 +223,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   // RETOURS-14 S9 — UNE couche « Lignes électriques » : deux styles, deux sources citées.
   if (layers.lignes_ht) groupes.push({
     id: 'ht', titre: 'Lignes électriques (HTA / HTB)',
-    note: `HTA (moyenne tension ~15-20 kV, distribution) : EDF Réunion open data, LO 2.0, géométrie ~02/2020 republiée 16/10/2025 — tracé indicatif (sécurité publique), jamais une DT-DICT. HTB (63/90 kV, transport) : BD TOPO IGN (aérien, tension indiquée)${fmtFraich(htQ)}. Contrainte potentielle (servitudes, reculs) — à vérifier auprès d'EDF SEI.`,
+    note: 'HTA (moyenne tension ~15-20 kV, distribution) : EDF Réunion open data, LO 2.0, géométrie ~02/2020 republiée 16/10/2025 — tracé indicatif (sécurité publique), jamais une DT-DICT. HTB (63/90 kV, transport) : BD TOPO IGN (aérien, tension indiquée). Contrainte potentielle (servitudes, reculs) — à vérifier auprès d\'EDF SEI.',
     body: <div data-legend-ht className="flex flex-col gap-1 text-[11px] text-txt">
       {/* COUCHES-1 lot 5 (D2) — HTB argent (trait épais) vs HTA ardoise-bleu (trait fin mais VISIBLE,
           h-[2px]) : avant deux swatchs quasi blancs indistincts. */}

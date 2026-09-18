@@ -11,10 +11,9 @@ from __future__ import annotations
 import json
 
 import pytest
-from fastapi import HTTPException
 from sqlalchemy import text
 
-from labuse.api.app import _proximites_block, map_layers_geojson
+from labuse.api.app import _proximites_block
 
 pytestmark = pytest.mark.db
 
@@ -47,23 +46,6 @@ def _setup(db) -> None:
             f"('tcsp_troncon', :s, '__test_tcsp_troncon__', {line}, CAST(:a AS jsonb))"),
             {"lon": LON, "lat": LAT, "s": sub,
              "a": json.dumps({"etat": "en_service", "nature": nat})})
-
-
-def test_couche_tcsp_sert_troncons_et_distinction(db_session):
-    _setup(db_session)
-    fc = map_layers_geojson(kind="tcsp_troncon", db=db_session, limit=2000)
-    miens = [f for f in fc["features"] if f["properties"]["name"] == "__test_tcsp_troncon__"]
-    subs = {f["properties"]["subtype"] for f in miens}
-    assert {"site_propre", "couloir"} <= subs        # la distinction est DITE, jamais fusionnée
-    assert all(f["geometry"]["type"] in ("LineString", "MultiLineString") for f in miens)
-    st = map_layers_geojson(kind="tcsp_station", db=db_session, limit=2000)
-    assert any(f["properties"]["name"] == "__test_tcsp_station__" for f in st["features"])
-
-
-def test_baobab_axe_retire(db_session):
-    # R5 : le kind synthétique tcsp_axe n'existe plus (couche BAOBAB retirée, pas un vestige)
-    with pytest.raises(HTTPException):
-        map_layers_geojson(kind="tcsp_axe", db=db_session, limit=100)
 
 
 def test_fiche_drapeau_station_800m(db_session):

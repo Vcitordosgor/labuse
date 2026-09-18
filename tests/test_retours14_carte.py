@@ -14,8 +14,6 @@ import json
 import pytest
 from sqlalchemy import text
 
-from labuse.api.app import _MAP_LAYER_KINDS, map_layers_geojson
-
 pytestmark = pytest.mark.db
 
 
@@ -69,19 +67,3 @@ def test_s5_repli_adresse_ne_pose_jamais_un_point(db_session):
     assert "approximative" in r["g"]                     # la liste le DIT
 
 
-def test_s6_endpoint_lit_geom_simple(db_session):
-    # la requête de couche doit lire geom_simple (matérialisée) — repli à la volée sinon
-    import inspect
-    src = inspect.getsource(map_layers_geojson)
-    assert "geom_simple" in src
-
-
-def test_s8_zone_stationnement_allege_servie(db_session):
-    assert "tcsp_zone" in _MAP_LAYER_KINDS
-    db_session.execute(text("DELETE FROM spatial_layers WHERE kind = 'tcsp_zone' AND name = '__test_s8__'"))
-    db_session.execute(text(
-        "INSERT INTO spatial_layers (kind, subtype, name, geom) VALUES "
-        "('tcsp_zone', 'parcelles', '__test_s8__', "
-        " ST_SetSRID(ST_Buffer(ST_MakePoint(55.5, -21.0), 0.002), 4326))"))
-    fc = map_layers_geojson(kind="tcsp_zone", db=db_session, limit=100)
-    assert any(f["properties"]["name"] == "__test_s8__" for f in fc["features"])

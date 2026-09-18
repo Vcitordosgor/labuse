@@ -2,12 +2,12 @@ import { useQuery, useIsFetching } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
-import { getBatiments, getCommunes, getFiche, getFiltreIdus, getMapLayer, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
-import { ALL_TIER_META, BPE_DOM, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
-import { MAP_THEME, type MapTokens } from '../../lib/mapTheme'
+import { getBatiments, getCommunes, getFiche, getFiltreIdus, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
+import { ALL_TIER_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
+import { MAP_THEME } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
 import { PERMIS_ETAT_COLOR } from '../../lib/permisEtats'
-import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
+import { fmtArea, fmtDistance, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { communePastille } from '../../lib/communes'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES, ORTHO_MONDE, activeBasemapKey } from './basemaps'
@@ -191,22 +191,6 @@ const EMPTY_FC = { type: 'FeatureCollection', features: [] } as const
 // COUCHES-1 lot 1 (E2) — remonte des POLYGONES en POINTS (centroïde du bbox) pour les couches
 // dont les emprises sont trop petites pour être vues en aplat à l'échelle île (cas SIS : 4 périmètres
 // de 0,6 à 1,4 ha). Le marqueur reste visible à toute échelle ; l'aplat sert au zoom parcelle.
-function centroidsFC(fc: { features?: Array<{ geometry?: { coordinates?: unknown }; properties?: unknown }> } | undefined) {
-  const walk = (c: unknown, acc: number[]): void => {
-    if (Array.isArray(c)) {
-      if (typeof c[0] === 'number' && typeof c[1] === 'number') { acc[0] = Math.min(acc[0], c[0]); acc[1] = Math.min(acc[1], c[1]); acc[2] = Math.max(acc[2], c[0]); acc[3] = Math.max(acc[3], c[1]) }
-      else for (const x of c) walk(x, acc)
-    }
-  }
-  const feats = (fc?.features ?? []).map((f) => {
-    const acc = [Infinity, Infinity, -Infinity, -Infinity]
-    walk(f.geometry?.coordinates, acc)
-    if (!isFinite(acc[0])) return null
-    return { type: 'Feature', geometry: { type: 'Point', coordinates: [(acc[0] + acc[2]) / 2, (acc[1] + acc[3]) / 2] }, properties: f.properties ?? {} }
-  }).filter(Boolean)
-  return { type: 'FeatureCollection', features: feats }
-}
-
 // M83 A1 — emprise réelle de l'île = union des bbox de communes servies par /communes (ST_Extent du
 // parcellaire). Repli sur ILE_BOUNDS tant que la donnée n'est pas là (1er frame).
 function ileBounds(communes: { bbox?: number[] }[] | undefined): [number, number, number, number] {
@@ -224,104 +208,7 @@ function ileBounds(communes: { bbox?: number[] }[] | undefined): [number, number
 // carte). Jamais plus d'un dixième de la plus petite dimension, plancher 8 px.
 const fitPadding = (w: number, h: number) => Math.max(8, Math.min(40, Math.floor(Math.min(w, h) / 10)))
 
-// M105-B — les couleurs/opacités de zonage, PPR, ANRU et 50 pas vivent dans lib/mapTheme
-// (un jeu de tokens PAR THÈME) : ici la colonne `sombre` (création des couches),
-// `applyBasemapStyle` pose la colonne du thème courant au même format. Un seul endroit.
-const zonageFillExpr = (t: MapTokens) => ['case',
-  ['in', ['slice', ['upcase', ['coalesce', ['get', 'subtype'], '']], 0, 1], ['literal', ['U']]],
-  t.zonageU, t.zonageAutre] as unknown as maplibregl.ExpressionSpecification
-// M137-Y — couleur ZFANG/FRR PAR ÉTAT (data-driven sur le subtype), comme zonageFillExpr.
-const dispoColorExpr = (t: MapTokens, kind: 'zfang' | 'frr') => (kind === 'zfang'
-  ? ['match', ['get', 'subtype'], 'renforce', t.zfangRenforce, t.zfangStandard]
-  : ['match', ['get', 'subtype'], 'totalite', t.frrTotalite, t.frrPartie]) as unknown as maplibregl.ExpressionSpecification
-// M137-Y — assombrit une teinte (hachure = shade plus foncé de l'aplat → visible sur toute couleur).
-const darken = (hex: string, f: number): string => {
-  const n = parseInt(hex.slice(1), 16)
-  const r = Math.round(((n >> 16) & 255) * f), g = Math.round(((n >> 8) & 255) * f), b = Math.round((n & 255) * f)
-  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`
-}
 const T_SOMBRE = MAP_THEME.sombre
-// SECTEUR-2b (U1) — choropleth du prix du neuf VEFA : rampe séquentielle DISTINCTE (jaune → orange →
-// magenta), tranchée franchement sur le fond sombre VERT, hors du vert des statuts. Communes sous le
-// seuil (subtype 'sous_seuil') : gris muet + HACHURE grise (couche -trame dédiée), jamais vides.
-const VEFA_RAMP: Record<string, string> = {
-  moins_4000: '#FDE047', '4000_4500': '#FB923C', '4500_5000': '#EA6D2A',
-  '5000_5500': '#D6337A', '5500_plus': '#A21CAF', sous_seuil: '#3B4046',
-}
-const vefaColorExpr = ['match', ['get', 'subtype'],
-  'moins_4000', VEFA_RAMP.moins_4000, '4000_4500', VEFA_RAMP['4000_4500'],
-  '4500_5000', VEFA_RAMP['4500_5000'], '5000_5500', VEFA_RAMP['5000_5500'],
-  '5500_plus', VEFA_RAMP['5500_plus'], 'sous_seuil', VEFA_RAMP.sous_seuil,
-  '#3B4046'] as unknown as maplibregl.ExpressionSpecification
-// opacité : aplat lisible pour les tranches peintes, plus discret pour le gris sous-seuil (la hachure porte).
-const vefaOpacityExpr = ['match', ['get', 'subtype'], 'sous_seuil', 0.28, 0.55] as unknown as maplibregl.ExpressionSpecification
-// SOURCES-1 lot 1 — PEB : la COULEUR dit la zone (A rouge → D gris), expression data-driven par
-// subtype (comme vefa). Une zone inconnue prend le gris D (le back n'ingère que a/b/c/d, garde filtre).
-const pebColorExpr = (t: MapTokens) => ['match', ['get', 'subtype'],
-  'a', t.pebRamp.a, 'b', t.pebRamp.b, 'c', t.pebRamp.c, 'd', t.pebRamp.d,
-  t.pebRamp.d] as unknown as maplibregl.ExpressionSpecification
-// SOURCES-1 lot 3 — classement sonore : violet gradué par catégorie (1 = grands axes, plus sombre).
-const bruitColorExpr = (t: MapTokens) => ['match', ['get', 'subtype'],
-  'cat1', t.bruitRamp.cat1, 'cat2', t.bruitRamp.cat2, 'cat3', t.bruitRamp.cat3,
-  'cat4', t.bruitRamp.cat4, 'cat5', t.bruitRamp.cat5,
-  t.bruitRamp.cat3] as unknown as maplibregl.ExpressionSpecification
-const OVERLAYS = {
-  // SECTEUR-2b (U1) — prix du neuf VEFA (aplat commune) : teinte par tranche + gris pour sous_seuil.
-  vefa_neuf: { paint: { 'fill-color': vefaColorExpr, 'fill-outline-color': '#0b0f14', 'fill-opacity': vefaOpacityExpr } },
-  // SOURCES-1 lot 1 — contraintes du droit des sols (ER / EBC / DPU / PEB / SUP), aplat + contour teinte.
-  er: { paint: { 'fill-color': T_SOMBRE.er, 'fill-opacity': T_SOMBRE.erOpacity, 'fill-outline-color': T_SOMBRE.er } },
-  ebc: { paint: { 'fill-color': T_SOMBRE.ebc, 'fill-opacity': T_SOMBRE.ebcOpacity, 'fill-outline-color': T_SOMBRE.ebc } },
-  dpu: { paint: { 'fill-color': T_SOMBRE.dpu, 'fill-opacity': T_SOMBRE.dpuOpacity, 'fill-outline-color': T_SOMBRE.dpu } },
-  peb: { paint: { 'fill-color': pebColorExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.pebOpacity, 'fill-outline-color': pebColorExpr(T_SOMBRE) } },
-  sup: { paint: { 'fill-color': T_SOMBRE.sup, 'fill-opacity': T_SOMBRE.supOpacity, 'fill-outline-color': T_SOMBRE.sup } },
-  // SOURCES-1 lot 2 — nature et eau (aplats ; le DPF est une LIGNE, couche dédiée ov-dpf).
-  zone_humide: { paint: { 'fill-color': T_SOMBRE.zoneHumide, 'fill-opacity': T_SOMBRE.zoneHumideOpacity, 'fill-outline-color': T_SOMBRE.zoneHumide } },
-  // SOURCES-1 lot 3 — sols (SIS aplat, CASIAS points via couche circle dédiée) et bruit.
-  sis: { paint: { 'fill-color': T_SOMBRE.sis, 'fill-opacity': T_SOMBRE.sisOpacity, 'fill-outline-color': T_SOMBRE.sis } },
-  bruit_route: { paint: { 'fill-color': bruitColorExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.bruitOpacity, 'fill-outline-color': bruitColorExpr(T_SOMBRE) } },
-  bruit_carte: { paint: { 'fill-color': T_SOMBRE.bruitCarte, 'fill-opacity': T_SOMBRE.bruitCarteOpacity, 'fill-outline-color': T_SOMBRE.bruitCarte } },
-  // REPARATIONS-1 lot 5 — Artificialisation (OCS GE) : rampe DISTINCTE (violine), trois classes
-  // (artificialisé 2022 dissous · artificialisé 2017→2022 · renaturé 2017→2022).
-  artificialisation: { paint: {
-    'fill-color': ['match', ['get', 'classe'],
-      'artificialise', '#8E6AA8', 'evolution_artificialisation', '#C2452F',
-      'evolution_renaturation', '#3F9B6A', '#8E6AA8'] as unknown as maplibregl.ExpressionSpecification,
-    'fill-opacity': 0.32,
-    'fill-outline-color': '#5E4470',
-  } },
-  enp: { paint: { 'fill-color': T_SOMBRE.enp, 'fill-opacity': T_SOMBRE.enpOpacity, 'fill-outline-color': T_SOMBRE.enp } },
-  rpg: { paint: { 'fill-color': T_SOMBRE.rpg, 'fill-opacity': T_SOMBRE.rpgOpacity, 'fill-outline-color': T_SOMBRE.rpg } },
-  zonage: { paint: { 'fill-color': zonageFillExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.zonageOpacity } },
-  // P10 : Parc national en MARRON/terre — distinct du menthe des statuts et du vert-clair d'avant.
-  // COUCHES-1 lot 1 (E3) — DEUX assiettes distinctes servies par le subtype : le CŒUR (marron
-  // profond, ~40 % de l'île, inconstructible) et l'AIRE D'ADHÉSION (marron clair, réglementée mais
-  // constructible). Plus un aplat unique indistinct ; deux entrées de légende (cf. Legend.tsx).
-  parc: { paint: {
-    'fill-color': ['match', ['get', 'subtype'], 'coeur', '#6B3E17', 'adhesion', '#C08A54', '#8B5A2B'] as unknown as maplibregl.ExpressionSpecification,
-    'fill-opacity': ['match', ['get', 'subtype'], 'coeur', 0.34, 'adhesion', 0.16, 0.22] as unknown as maplibregl.ExpressionSpecification } },
-  ppr: { paint: { 'fill-color': T_SOMBRE.ppr, 'fill-opacity': T_SOMBRE.pprOpacity } },
-  // M137-U — ZNIEFF (contrainte patrimoine naturel) : aplat vert olive, distinct du Parc (marron) et du PPR (rouge).
-  // COUCHES-1 lot 2 (A5) — ZNIEFF type I (secteur à fort intérêt, plus sensible) rendu en aplat plus
-  // DENSE ; type II (grand ensemble naturel) plus léger. Deux portées juridiques → deux intensités,
-  // deux entrées de légende (avant : un seul swatch pour les deux).
-  znieff: { paint: { 'fill-color': T_SOMBRE.znieff,
-    'fill-opacity': ['match', ['get', 'subtype'], 'type II', Math.max(0.06, T_SOMBRE.znieffOpacity - 0.14), T_SOMBRE.znieffOpacity] as unknown as maplibregl.ExpressionSpecification,
-    'fill-outline-color': T_SOMBRE.znieff } },
-  // M55-A-bis : chartreuse/lime = le seul creux franc de la palette (or ~45°, verts ~148°),
-  // tranche fort sur fond sombre, hors du violet RÉSERVÉ aux résultats de recherche.
-  anru: { paint: { 'fill-color': T_SOMBRE.anru, 'fill-opacity': T_SOMBRE.anruOpacity } },
-  // M134 — couche « Dispositifs ». Contour = teinte pleine (fill-outline-color, ≥3:1). ZFANG/FRR :
-  // l'intensité du régime (renforcé/totalité) se lit à l'OPACITÉ via un `match` sur le subtype
-  // (même teinte identitaire, doctrine M105-B) — comme `zonage` porte déjà une expression data-driven.
-  qpv: { paint: { 'fill-color': T_SOMBRE.qpv, 'fill-opacity': T_SOMBRE.qpvOpacity, 'fill-outline-color': T_SOMBRE.qpv } },
-  tva_primo: { paint: { 'fill-color': T_SOMBRE.tvaPrimo, 'fill-opacity': T_SOMBRE.tvaPrimoOpacity, 'fill-outline-color': T_SOMBRE.tvaPrimo } },
-  // M137-X — ZFANG/FRR : APLAT plein pour l'état de base ; l'AUTRE état (ZFANG renforcée / FRR en
-  // partie) est marqué par des HACHURES (couche `-trame` dédiée) — texture catégorielle, plus le
-  // dégradé d'opacité ambigu d'avant. Une seule opacité d'aplat par dispositif.
-  zfang: { paint: { 'fill-color': dispoColorExpr(T_SOMBRE, 'zfang'), 'fill-outline-color': dispoColorExpr(T_SOMBRE, 'zfang'), 'fill-opacity': T_SOMBRE.dispoFillOpacity } },
-  frr: { paint: { 'fill-color': dispoColorExpr(T_SOMBRE, 'frr'), 'fill-outline-color': dispoColorExpr(T_SOMBRE, 'frr'), 'fill-opacity': T_SOMBRE.dispoFillOpacity } },
-} as const
-const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 
 
 
@@ -353,15 +240,12 @@ const SOMBRE_BG = '#060A08'   // canvas historique — mer du mode Clair (et sou
 // du 974 (moyenne rgb(10,59,89)) — même valeur que MER_HEX côté proxy (api/ortho_proxy.py).
 // Le proxy fond la photo vers cet aplat au-delà de la bande côtière : la mer est uniforme.
 const MER_ORTHO = '#0A3B59'
-// largeur des limites communes en Sombre (interpolée par zoom) — restaurée hors Clair.
-const COMMUNES_W_SOMBRE = ['interpolate', ['linear'], ['zoom'], 8, 1.1, 13, 1.8]
 function applyBasemapStyle(m: maplibregl.Map, basemap: string) {
   const sombre = basemap === 'dark'
   // RETOURS-11 C4 — fonds PHOTO/CLAIR (Plan IGN, Ortho IGN, tous millésimes) : les traits fins et
   // les aplats sombres se noient sur la tuile claire/photographique. On applique un variant de style
   // « lisibilité fond clair » en surcouche, PILOTÉ ICI (seul propriétaire du paint basemap-dépendant),
   // sans DUPLIQUER de couche. Clair et Sombre (témoins) ne passent JAMAIS par ce bloc.
-  const photo = basemap === 'plan' || basemap === 'ortho'
   const set = (id: string, prop: string, val: unknown) => { if (m.getLayer(id)) m.setPaintProperty(id, prop as never, val as never) }
   const vis = (id: string, on: boolean) => { if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none') }
   // FOND-SOMBRE : la mer du Sombre = teinte mesurée du rendu raster d'avant ; Clair garde le noir.
@@ -381,328 +265,18 @@ function applyBasemapStyle(m: maplibregl.Map, basemap: string) {
   // RETOURS-11 C4 — text-halo-width réappliqué à sa valeur de création (1.3) hors fond photo, pour
   // que le retour en Clair/Sombre efface l'épaississement du variant photo (témoins intacts).
   for (const id of ['parcels-zone-label', 'ile-zone-label']) { set(id, 'text-color', '#ECF5EF'); set(id, 'text-halo-color', '#06130C'); set(id, 'text-halo-width', 1.3) }
-  // M105 P4.1 — limites parcelles NOIRES en vue claire (le beige #B9B3A6 se noyait sur la
-  // terre claire) ; la vue sombre ne bouge pas. Deux traitements selon le fond, assumés.
-  for (const id of ['parcels-limites', 'ile-limites']) {
-    set(id, 'line-color', '#8FA69A')
-    set(id, 'line-width', 0.3)
-    set(id, 'line-opacity', 0.4)   // RETOURS-11 C4 — valeur de création restaurée (le variant photo la monte à 0,9)
-  }
-  // limites communes : vert foncé #2E7D52 / 1,6 px (≈3× parcelles) sur terre claire — elles ne se
-  // noient plus dans le cadastre ; sinon menthe + interpolation sombre d'origine.
-  set('communes-bounds', 'line-color', '#5CE6A1')
-  set('communes-bounds', 'line-width', COMMUNES_W_SOMBRE)
-  set('communes-bounds', 'line-opacity', 0.55)   // RETOURS-11 C4 — création restaurée (variant photo la monte à 0,95)
-  // M105-B — les couches d'INFORMATION consomment le jeu de tokens du thème (lib/mapTheme,
-  // un jeu par thème, un seul endroit) : zonage, PPR, ANRU (+trame), 50 pas, liseré brûlantes.
-  // Le contour des tiers (parcels-line/ile-line) a son propriétaire unique : l'effet violet.
-  const t = MAP_THEME.sombre
-  // MESURÉ SUR CAPTURES (P3) : en Clair les parcelles sont OPAQUES (#F4F2EC @1) — l'ordre de
-  // création les peignait AU-DESSUS des couches d'information : l'aplat de zonage ne rendait
-  // que sur la masse non parcellisée, et les limites communes étaient recouvertes. En Clair,
-  // les remplissages parcellaires DESCENDENT sous le bloc d'information (les limites noires,
-  // sélections et étiquettes restent au-dessus) ; en Sombre, l'ordre d'origine est RESTAURÉ —
-  // la vue sombre ne bouge pas.
-  const mv = (id: string, before: string) => { if (m.getLayer(id) && m.getLayer(before)) m.moveLayer(id, before) }
-  for (const id of ['parcels-base', 'parcels-fill']) mv(id, 'parcels-limites')
-  for (const id of ['ile-base', 'ile-fill']) mv(id, 'ile-limites')
-  // COUCHES-1 lot 4 — ORDRES D'EMPILEMENT DÉCLARÉS (constat C4/C2 : des couches se recouvraient
-  // au hasard de l'ordre de création). L'ancre = première limite présente ; mv(id, ancre) place la
-  // couche juste SOUS l'ancre, dans l'ordre d'appel → la première citée finit la plus basse.
-  const _ancre = ['parcels-limites', 'ile-limites', 'communes-bounds'].find((id) => m.getLayer(id))
-  if (_ancre) {
-    // C4 — famille nature : la couche qui CONTIENT (la plus large) dessous, la plus spécifique dessus :
-    // parc ⊃ ZNIEFF ⊃ ENP ⊃ zones humides. Le liseré du parc reste au-dessus de son propre aplat.
-    for (const id of ['ov-parc', 'ov-parc-line', 'ov-znieff', 'ov-enp', 'ov-zone_humide']) mv(id, _ancre)
-    // C2 — points de transport : pôle d'échange (rôle le plus large) dessous, station TCSP au milieu,
-    // ARRÊT au-dessus. Combinés à la station en ANNEAU (halo), un même point physique se lit comme UN
-    // objet enrichi (anneaux emboîtés + pastille), plus trois pastilles concurrentes superposées.
-    for (const id of ['ov-pole', 'ov-tcsp-st', 'ov-trans-arret']) mv(id, _ancre)
-    // COUCHES-2 point 4 — ZFANG/FRR sont des aplats COMMUNE : ils passent TOUT EN BAS de la pile
-    // vectorielle, sous les limites de communes (ancre la plus basse, présente en vue île ET commune).
-    // Ainsi le parcellaire (base + cadastre) ET les limites de communes restent au-dessus ; combiné à
-    // l'opacité très basse (0,10/0,12), tout reste lisible quand la couche est allumée. UN seul move
-    // par couche (deux ancres se relayaient et remontaient la couche au-dessus des limites).
-    const _bas = ['communes-bounds', 'parcels-base', 'ile-base'].find((id) => m.getLayer(id))
-    if (_bas) for (const id of ['ov-zfang', 'ov-zfang-trame', 'ov-frr', 'ov-frr-trame']) mv(id, _bas)
-  }
-  for (const id of ['ov-zonage', 'ovmvt-zonage']) { set(id, 'fill-color', zonageFillExpr(t)); set(id, 'fill-opacity', t.zonageOpacity) }
-  for (const id of ['ov-zonage-line', 'ovmvt-zonage-line']) { set(id, 'line-color', zonageFillExpr(t)); set(id, 'line-width', t.zonageContourW) }
-  for (const id of ['ov-ppr', 'ovmvt-ppr']) { set(id, 'fill-color', t.ppr); set(id, 'fill-opacity', t.pprOpacity) }
-  for (const id of ['ov-ppr-line', 'ovmvt-ppr-line']) { set(id, 'line-color', t.ppr); set(id, 'line-width', t.pprContourW) }
-  set('ov-anru', 'fill-color', t.anru); set('ov-anru', 'fill-opacity', t.anruOpacity)
-  set('ov-anru-trame', 'fill-opacity', t.anruTrameOpacity)
-  // M134 — dispositifs : la teinte suit le thème ; l'opacité de ZFANG/FRR est un `match` constant
-  // (l'intensité du régime ne dépend pas du thème), on ne met à jour que la couleur (aplat + contour).
-  set('ov-qpv', 'fill-color', t.qpv); set('ov-qpv', 'fill-opacity', t.qpvOpacity); set('ov-qpv', 'fill-outline-color', t.qpv)
-  set('ov-tva_primo', 'fill-color', t.tvaPrimo); set('ov-tva_primo', 'fill-opacity', t.tvaPrimoOpacity); set('ov-tva_primo', 'fill-outline-color', t.tvaPrimo)
-  // M137-X — aplat plein (une opacité) + hachure sur l'état « fort » ; le motif suit le thème.
-  set('ov-zfang', 'fill-color', dispoColorExpr(t, 'zfang')); set('ov-zfang', 'fill-outline-color', dispoColorExpr(t, 'zfang')); set('ov-zfang', 'fill-opacity', t.dispoFillOpacity)
-  set('ov-frr', 'fill-color', dispoColorExpr(t, 'frr')); set('ov-frr', 'fill-outline-color', dispoColorExpr(t, 'frr')); set('ov-frr', 'fill-opacity', t.dispoFillOpacity)
-  // SOURCES-1 lot 1 — contraintes du droit des sols : teinte + opacité suivent le thème.
-  set('ov-er', 'fill-color', t.er); set('ov-er', 'fill-opacity', t.erOpacity); set('ov-er', 'fill-outline-color', t.er)
-  set('ov-ebc', 'fill-color', t.ebc); set('ov-ebc', 'fill-opacity', t.ebcOpacity); set('ov-ebc', 'fill-outline-color', t.ebc)
-  set('ov-dpu', 'fill-color', t.dpu); set('ov-dpu', 'fill-opacity', t.dpuOpacity); set('ov-dpu', 'fill-outline-color', t.dpu)
-  set('ov-peb', 'fill-color', pebColorExpr(t)); set('ov-peb', 'fill-opacity', t.pebOpacity); set('ov-peb', 'fill-outline-color', pebColorExpr(t))
-  set('ov-sup', 'fill-color', t.sup); set('ov-sup', 'fill-opacity', t.supOpacity); set('ov-sup', 'fill-outline-color', t.sup)
-  // SOURCES-1 lot 2 — nature et eau : teinte + opacité suivent le thème.
-  set('ov-dpf', 'line-color', t.dpf)
-  set('ov-endiguement', 'fill-color', t.endiguement)
-  set('ov-endiguement-digue', 'line-color', t.endiguement)
-  set('ov-zone_humide', 'fill-color', t.zoneHumide); set('ov-zone_humide', 'fill-opacity', t.zoneHumideOpacity); set('ov-zone_humide', 'fill-outline-color', t.zoneHumide)
-  set('ov-enp', 'fill-color', t.enp); set('ov-enp', 'fill-opacity', t.enpOpacity); set('ov-enp', 'fill-outline-color', t.enp)
-  set('ov-rpg', 'fill-color', t.rpg); set('ov-rpg', 'fill-opacity', t.rpgOpacity); set('ov-rpg', 'fill-outline-color', t.rpg)
-  // SOURCES-1 lot 3 — sols et bruit : teinte + opacité suivent le thème.
-  set('ov-sis', 'fill-color', t.sis); set('ov-sis', 'fill-opacity', t.sisOpacity); set('ov-sis', 'fill-outline-color', t.sis)
-  set('ov-sis-pt', 'circle-color', t.sis)   // COUCHES-1 lot 1 (E2) — points SIS suivent le thème
-  set('ov-casias', 'circle-color', t.casias); set('ov-casias-fill', 'fill-color', t.casias); set('ov-casias-fill', 'fill-outline-color', t.casias)
-  set('ov-bruit_route', 'fill-color', bruitColorExpr(t)); set('ov-bruit_route', 'fill-opacity', t.bruitOpacity); set('ov-bruit_route', 'fill-outline-color', bruitColorExpr(t))
-  set('ov-bruit_carte', 'fill-color', t.bruitCarte); set('ov-bruit_carte', 'fill-opacity', t.bruitCarteOpacity); set('ov-bruit_carte', 'fill-outline-color', t.bruitCarte)
-  for (const [src, , tok] of DISPO_TRAMES) {
-    set(`${src}-trame`, 'fill-pattern', `trame-${tok}-sombre`)
-    set(`${src}-trame`, 'fill-opacity', t.aleaTrameOpacity)
-  }
-  set('ov-50pas', 'fill-color', t.cinquantePas); set('ov-50pas', 'fill-opacity', t.cinquantePasFillOpacity)
-  set('ov-50pas-line', 'line-color', t.cinquantePas)
-  set('parcels-brulantes', 'line-color', t.lisereBrulantes)
-  // M106 : les deux couches d'aléa suivent le jeu du thème (teinte + gradation + contour).
-  // RETOURS-13 R7 — plus de trame ; R8 — contour au ZOOM (mêmes expressions sur les 4 fonds).
-  for (const c of ALEA_COUCHES) {
-    set(c.id, 'fill-color', aleaColorExpr(t, c.ramp)); set(c.id, 'fill-opacity', t.aleaFillOpacity)
-    set(`${c.id}-line`, 'line-color', t[c.token])
-    set(`${c.id}-line`, 'line-width', ALEA_LINE_W); set(`${c.id}-line`, 'line-opacity', ALEA_LINE_OP)
-  }
-  // M106 P4 / M106-B : la couleur dit le RÉSEAU (expression par subtype), la forme dit le type ;
-  // pôles neutres ; Papang = couleur Citalis ; axes ardoise ; HT anthracite — tokens par thème
-  set('ov-trans-ligne', 'line-color', reseauColorExpr(t))
-  set('ov-trans-arret', 'circle-color', reseauColorExpr(t))
-  set('ov-tele', 'line-color', t.transportReseaux['Papang'])
-  set('ov-tele-st', 'circle-color', t.transportReseaux['Papang'])
-  set('ov-tele-st', 'circle-stroke-color', SOMBRE_BG)
-  set('ov-pole', 'circle-color', t.pole); set('ov-pole', 'circle-stroke-color', t.pole)
-  set('ov-axe', 'line-color', t.axe)
-  set('ov-ht', 'line-color', t.ht)
-  set('ov-mt', 'line-color', t.mt)       // RETOURS-13 R4 — moyenne tension HTA
-  // RETOURS-14 S8 — TCSP : tronçons, stations et zone 800 m suivent le thème
-  set('ov-tcsp', 'line-color', t.tcsp)
-  set('ov-tcsp-zone-parcelles', 'fill-color', t.tcsp)
-  set('ov-tcsp-zone-rayon', 'line-color', t.tcsp)
-  set('ov-tcsp-st', 'circle-color', 'rgba(0,0,0,0)')   // COUCHES-1 lot 4 (C2) — station en ANNEAU (halo), sans disque plein
-  set('ov-tcsp-st', 'circle-stroke-color', t.tcsp)
-
-  // ═══ RETOURS-11 C4 — VARIANT LISIBILITÉ « fond photo/clair » (Plan & Ortho) ═══
-  // Ce bloc s'exécute EN DERNIER : il écrase, pour les seuls fonds photo, les propriétés posées
-  // plus haut (colonne « sombre » par défaut hors clair/sombre). Il ne s'exécute jamais en Clair ni
-  // en Sombre → les deux témoins gardent EXACTEMENT leur rendu (les lignes ci-dessus les ré-appliquent
-  // à chaque bascule, ce bloc étant sauté). Aucune couche neuve : uniquement setPaintProperty.
-  if (photo) {
-    // Limites parcelles : sur ortho/plan le beige fin (#8FA69A / 0,3 px) disparaît. Le vrai casing
-    // (liseré sombre large SOUS un trait clair fin) demanderait une 2e couche — interdit ici (« pas
-    // de couche dupliquée »). FAIT AUTREMENT : un TRAIT SOMBRE nettement plus large (jusqu'à 2,2 px)
-    // et opaque, très lisible sur la photo (cf. rapport C4).
-    // RETOURS-11 R5 (04/09) — sur ortho, TOUTES les limites parcellaires sur l'île entière =
-    // illisible. La densité SUIT LE ZOOM : au zoom large seules les limites communes portent
-    // (les parcelles sont éteintes, opacité → 0 sous ~14) ; en zoomant elles apparaissent
-    // PROGRESSIVEMENT (opacité ET épaisseur montent). Gate sur photo uniquement → Sombre/Clair
-    // (témoins) inchangés. Le contour des tiers (parcels-line/ile-line) suit la même rampe.
-    for (const id of ['parcels-limites', 'ile-limites']) {
-      set(id, 'line-color', '#0A0F0C')
-      set(id, 'line-width', ['interpolate', ['linear'], ['zoom'], 13, 0.4, 15, 1.0, 17, 1.8, 19, 2.2])
-      set(id, 'line-opacity', ['interpolate', ['linear'], ['zoom'], 13, 0, 14, 0.25, 16, 0.7, 18, 0.9])
-    }
-    for (const id of ['parcels-line', 'ile-line']) {
-      set(id, 'line-opacity', ['interpolate', ['linear'], ['zoom'], 13, 0.2, 15, 0.6, 17, 0.9])
-    }
-    // Limites communes : même recette de casing — trait sombre large, très visible sur ortho/plan.
-    set('communes-bounds', 'line-color', '#0A2417')
-    set('communes-bounds', 'line-width', ['interpolate', ['linear'], ['zoom'], 8, 2.0, 13, 3.2])
-    set('communes-bounds', 'line-opacity', 0.95)
-    // Zonage (aplat) : plus opaque + contour sombre net — l'aplat clair ressort sur la photo.
-    // RETOURS-11 R5 — l'aplat MONTE avec le zoom (au zoom large il noierait l'île entière) :
-    // faible loin, ~0,34 en approche. Contour idem. Gate photo → Sombre/Clair intacts.
-    for (const id of ['ov-zonage', 'ovmvt-zonage']) set(id, 'fill-opacity', ['interpolate', ['linear'], ['zoom'], 11, 0.10, 14, 0.22, 16, 0.34])
-    for (const id of ['ov-zonage-line', 'ovmvt-zonage-line']) { set(id, 'line-color', '#0A0F0C'); set(id, 'line-width', 1.4) }
-    // NB : l'aplat parcellaire (parcels-fill/ile-fill) est fondu au zoom sur photo AILLEURS — dans
-    // l'effet qui possède fill-opacity (il la re-pilote à chaque filtre/couche) ; cf. photoFade().
-    // Zonage — LETTRES (symbol) : halo SOMBRE épaissi → les lettres blanches restent lisibles sur photo.
-    for (const id of ['parcels-zone-label', 'ile-zone-label']) {
-      set(id, 'text-color', '#FFFFFF'); set(id, 'text-halo-color', '#000000'); set(id, 'text-halo-width', 2.2)
-    }
-    // Risques (PPR + aléas DEAL) : aplat plus opaque + contour sombre — même gain de lisibilité.
-    for (const id of ['ov-ppr', 'ovmvt-ppr']) set(id, 'fill-opacity', 0.30)
-    for (const id of ['ov-ppr-line', 'ovmvt-ppr-line']) { set(id, 'line-color', '#0A0F0C'); set(id, 'line-width', 1.4) }
-    // RETOURS-13 R7/R8 — sur photo : aplat calibré (0,45, teintes par classe déjà vives) ; le
-    // contour garde sa COULEUR sombre (lisible sur la photo) mais suit la MÊME règle de zoom que
-    // les autres fonds (ALEA_LINE_W/OP) — fini la bouillie noire au zoom large sur ortho.
-    for (const c of ALEA_COUCHES) {
-      set(c.id, 'fill-opacity', 0.45)
-      set(`${c.id}-line`, 'line-color', '#0A0F0C')
-      set(`${c.id}-line`, 'line-width', ALEA_LINE_W); set(`${c.id}-line`, 'line-opacity', ALEA_LINE_OP)
-    }
-  }
-  // COUCHES-RECETTE-2 C2 — sur CLAIR et IGN (Plan) uniquement : contours de PARCELLES en NOIR et
-  // limites de COMMUNES en GRIS FONCÉ (Sombre et Ortho ne passent pas ici → inchangés). S'exécute
-  // APRÈS les blocs clair/photo, donc écrase leur couleur de contour pour ces deux fonds.
-  if (basemap === 'plan') {
-    for (const id of ['parcels-limites', 'ile-limites']) {
-      set(id, 'line-color', '#000000')
-    }
-    set('communes-bounds', 'line-color', '#3A403C')
-  }
+  // COUCHES-RETRAIT-1 lot 2 — le liseré des « brûlantes » (opinion) suit le thème ; toutes les
+  // autres couches d'information sont désormais servies par le tuyau (fin de l'ancien overlay V1).
+  set('parcels-brulantes', 'line-color', MAP_THEME.sombre.lisereBrulantes)
 }
 
 //: ÉQUIPEMENTS (contexte promotrice, affichage seul) — 7 catégories, pictogramme + pastille.
 // Point 13 : un SYMBOLE parlant par type d'équipement. La META est partagée (lib/status.ts) :
 // même source pour la légende (Legend.tsx) et le rendu carte. Émoji rendu via canvas → addImage
 // (aucune lib ; repli = la pastille colorée + la légende si l'OS n'a pas la police émoji).
-const EQUIP_CATS = EQUIP_META.map((e) => e.key)
-// M55-A item 4 : libellé CLIENT d'une catégorie d'équipement (« École », « Commerce »…) —
-// la même source que la légende (EQUIP_META), pour ne jamais exposer la clé technique au clic.
-const EQUIP_LABEL: Record<string, string> = Object.fromEntries(EQUIP_META.map((e) => [e.key, e.label]))
-// COUCHES-1 lot 7 (G1) — POPUPS RICHES par couche. Le clic n'exposait que « catégorie » (ou rien)
-// alors que la source porte des champs à valeur métier. Chaque entrée lit properties.attrs (jsonb
-// joint par l'API pour les couches à popup riche) ; libellés CLIENT, jamais la clé technique ; les
-// champs vides sont omis (jamais « — » vide), un `link:true` devient un lien cliquable.
-type PopupField = { key: string; label: string; link?: boolean }
-const OVERLAY_POPUP: Record<string, { titre: string; fields: PopupField[] }> = {
-  'ov-sup': { titre: 'Servitude d’utilité publique', fields: [
-    { key: 'nomsuplitt', label: 'Type' }, { key: 'typeass', label: 'Catégorie d’assiette' },
-    { key: 'nomass', label: 'Assiette' }, { key: 'urlreg', label: 'Acte / règlement', link: true } ] },
-  'ov-er': { titre: 'Emplacement réservé', fields: [
-    { key: 'txt', label: 'Destination / bénéficiaire' }, { key: 'libelle', label: 'Libellé' },
-    { key: 'url_source', label: 'Document', link: true } ] },
-  'ov-ebc': { titre: 'Espace boisé classé', fields: [
-    { key: 'txt', label: 'Prescription' }, { key: 'libelle', label: 'Libellé' },
-    { key: 'url_source', label: 'Règlement', link: true } ] },
-  'ov-dpu': { titre: 'Droit de préemption urbain', fields: [
-    { key: 'libelle', label: 'Type' }, { key: 'txt', label: 'Précision' } ] },
-  'ov-casias': { titre: 'Ancien site industriel (CASIAS)', fields: [
-    { key: 'statut', label: 'État du dossier' }, { key: 'adresse', label: 'Adresse' },
-    { key: 'superficie', label: 'Superficie' }, { key: 'identifiant_casias', label: 'Identifiant' } ] },
-  'ov-sis-pt': { titre: 'Secteur d’information sur les sols', fields: [
-    { key: 'statut', label: 'Statut' }, { key: 'adresse', label: 'Adresse' },
-    { key: 'id_sis', label: 'Identifiant SIS' }, { key: 'fiche_risque', label: 'Fiche', link: true } ] },
-  'ov-znieff': { titre: 'ZNIEFF', fields: [
-    { key: 'id_mnhn', label: 'Numéro national' }, { key: 'type', label: 'Type' },
-    { key: 'gestionnaire', label: 'Gestionnaire' }, { key: 'url_fiche', label: 'Fiche INPN', link: true } ] },
-  'ov-ppr': { titre: 'PPR multirisque', fields: [
-    { key: 'risque', label: 'Risque' }, { key: 'document', label: 'Document' },
-    { key: 'approbation', label: 'Approuvé le' }, { key: 'statut', label: 'Statut' } ] },
-  'ov-alea-inond': { titre: 'Aléa inondation', fields: [
-    { key: 'degre', label: 'Degré' }, { key: 'risque', label: 'Risque' }, { key: 'document', label: 'Document' } ] },
-  'ov-alea-mvt': { titre: 'Aléa mouvement de terrain', fields: [
-    { key: 'degre', label: 'Degré' }, { key: 'risque', label: 'Risque' }, { key: 'document', label: 'Document' } ] },
-  'ov-enp': { titre: 'Espace naturel protégé', fields: [
-    { key: 'type', label: 'Type' }, { key: 'surface_ha', label: 'Surface (ha)' } ] },
-  'ov-zone_humide': { titre: 'Zone humide', fields: [
-    { key: 'nature', label: 'Nature' }, { key: 'typename', label: 'Inventaire' } ] },
-  'ov-dpf': { titre: 'Ravine / domaine public fluvial', fields: [
-    { key: 'toponyme', label: 'Toponyme' }, { key: 'typologie', label: 'Type' }, { key: 'classe', label: 'Classe' } ] },
-  // SOURCES-2 lot 3 — endiguement : la zone protégée dit sa classe, son niveau et sa population.
-  'ov-endiguement': { titre: 'Système d’endiguement', fields: [
-    { key: 'classe', label: 'Classe d’ouvrage' }, { key: 'n_protect', label: 'Niveau de protection (années)' },
-    { key: 'population', label: 'Population protégée' }, { key: 'gestion', label: 'Gestionnaire' },
-    { key: 'statut', label: 'Statut' }, { key: 'source', label: 'Source' } ] },
-}
-// attrs voyage en jsonb : MapLibre peut le sérialiser en chaîne selon la source — on parse au besoin.
-function attrsOf(p: Record<string, unknown>): Record<string, unknown> {
-  const a = p.attrs
-  if (a && typeof a === 'object') return a as Record<string, unknown>
-  if (typeof a === 'string') { try { return JSON.parse(a) } catch { return {} } }
-  return {}
-}
 
-// COUCHES-1 lot 5 (D6) + lot 4 (C1) — équipements OSM en PASTILLE COLORÉE (plus d'emoji, corps
-// étranger à la DA) : la catégorie se lit à la COULEUR (EQUIP_META), la source au CONTOUR (OSM =
-// anneau BLANC ; INSEE BPE = anneau sombre). Un seul langage visuel — deux couches de points colorés.
-const equipColorExpr = ['match', ['get', 'subtype'],
-  ...EQUIP_META.flatMap((e) => [e.key, e.color]), '#9AA0A6'] as unknown as maplibregl.ExpressionSpecification
 
-// M55-A item 4 : centroïde (approx) de la parcelle SÉLECTIONNÉE, si elle est rendue à l'écran —
-// pour afficher « à ~N m de la parcelle sélectionnée » dans la bulle d'un équipement. Renvoie
-// null hors sélection / hors champ : la bulle tombe alors proprement sur nom + catégorie seuls.
-function selectedParcelCentroid(m: maplibregl.Map): LngLat | null {
-  const sel = useApp.getState().selectedIdu
-  if (!sel) return null
-  const lids = ['parcels-fill', 'ile-fill'].filter((l) => m.getLayer(l))
-  if (!lids.length) return null
-  const feats = m.queryRenderedFeatures({ layers: lids, filter: ['==', ['get', 'idu'], sel] as never })
-  return feats[0] ? roughCentroid(feats[0].geometry) : null
-}
 
-// M105-B / M106 — motifs de TRAME (canvas → addImage, comme les icônes équipements).
-// Trois ORIENTATIONS distinctes : la texture différencie des couches superposables même
-// quand les teintes se rapprochent (doctrine M105-B, daltonisme). Segments décalés pour
-// un raccord sans couture d'une tuile à l'autre.
-function makeTrame(m: maplibregl.Map, id: string, color: string, orient: 'slash' | 'backslash' | 'horiz') {
-  if (m.hasImage(id)) return
-  const S = 12
-  const cv = document.createElement('canvas')
-  cv.width = cv.height = S
-  const ctx = cv.getContext('2d')
-  if (!ctx) return
-  ctx.strokeStyle = color
-  ctx.lineWidth = 2
-  ctx.beginPath()
-  if (orient === 'slash') {
-    ctx.moveTo(0, S); ctx.lineTo(S, 0)
-    ctx.moveTo(-S / 2, S / 2); ctx.lineTo(S / 2, -S / 2)
-    ctx.moveTo(S / 2, S * 1.5); ctx.lineTo(S * 1.5, S / 2)
-  } else if (orient === 'backslash') {
-    ctx.moveTo(0, 0); ctx.lineTo(S, S)
-    ctx.moveTo(S / 2, -S / 2); ctx.lineTo(S * 1.5, S / 2)
-    ctx.moveTo(-S / 2, S / 2); ctx.lineTo(S / 2, S * 1.5)
-  } else {
-    ctx.moveTo(0, S / 4); ctx.lineTo(S, S / 4)
-    ctx.moveTo(0, S * 3 / 4); ctx.lineTo(S, S * 3 / 4)
-  }
-  ctx.stroke()
-  m.addImage(id, ctx.getImageData(0, 0, S, S), { pixelRatio: 2 })
-}
-// M105-B : trame ANRU (chartreuse claire — opacité 0 en Sombre, posée en Clair)
-const makeTrameAnru = (m: maplibregl.Map) => makeTrame(m, 'trame-anru', MAP_THEME.sombre.anru, 'slash')
-// M137-X — les deux trames de dispositif : [source, subtype MARQUÉ par la hachure, token couleur, orientation].
-// ZFANG renforcée (slash) · FRR en partie (backslash) — orientations distinctes (superposables).
-// M137-Y — la hachure (SECOND signal) marque l'état MOINDRE : ZFANG standard, FRR en partie.
-// [source, subtype hachuré, token couleur de l'état, orientation].
-const DISPO_TRAMES = [
-  ['ov-zfang', 'standard', 'zfangStandard', 'slash'],
-  ['ov-frr', 'partie', 'frrPartie', 'backslash'],
-] as const
-// M106 : l'aplat des aléas est GRADUÉ par la classe servie — expression partagée
-// création/bascule de thème (les valeurs vivent dans mapTheme, un seul endroit).
-// RETOURS-13 R6 — la couleur suit la CLASSE RÉELLE du jeu (`classe`, dérivée du degré DEAL —
-// repli `niveau` si absente) : le mouvement de terrain porte QUATRE classes (faible, moyen,
-// élevé, très élevé — 360 zones élevées + 124 très élevées étaient écrasées en « moyen » et le
-// rouge n'apparaissait jamais). Une teinte par classe, la plus grave en ROUGE. Le libellé
-// officiel de l'aléa reste la vérité ; la couleur ne fait qu'ordonner.
-const aleaColorExpr = (t: MapTokens, ramp: 'aleaInondationRamp' | 'aleaMvtRamp'): maplibregl.ExpressionSpecification => {
-  const r = t[ramp] as unknown as Record<string, string>
-  return ['match', ['coalesce', ['get', 'classe'], ['get', 'niveau'], 'moyen'],
-    ...Object.entries(r).flatMap(([k, c]) => [k, c]),
-    r.moyen] as unknown as maplibregl.ExpressionSpecification
-}
-// RETOURS-13 R8 — le CONTOUR des aléas est géré par le ZOOM : absent aux petits zooms (l'aplat
-// suffit, les contours faisaient une bouillie noire sur ortho), il apparaît en zoomant — MÊME
-// RÈGLE SUR LES 4 FONDS (sombre, clair, ortho, IGN) : expressions partagées, jamais re-décidées
-// par fond.
-const ALEA_LINE_W = ['interpolate', ['linear'], ['zoom'], 13, 0, 14, 0.8, 16, 1.4] as unknown as maplibregl.ExpressionSpecification
-const ALEA_LINE_OP = ['interpolate', ['linear'], ['zoom'], 13, 0, 14, 0.5, 16, 0.9] as unknown as maplibregl.ExpressionSpecification
-// M106-B — LA COULEUR DIT LE RÉSEAU : expression match sur subtype (= réseau GTFS), tokens
-// par thème (mapTheme.transportReseaux) ; repli transportDefaut pour un réseau futur.
-const reseauColorExpr = (t: MapTokens): maplibregl.ExpressionSpecification => [
-  'match', ['coalesce', ['get', 'subtype'], ''],
-  ...Object.entries(t.transportReseaux).flatMap(([k, c]) => [k, c]),
-  t.transportDefaut,
-] as unknown as maplibregl.ExpressionSpecification
-
-//: M106 — les deux couches d'aléa DEAL (id, subtype du flux, token de teinte).
-//: RETOURS-13 R7 — les TRAMES (hachures) d'aléa sont RETIRÉES (décision Vic : « enlève le
-//: hachurage », illisibles) : aplats pleins semi-transparents seuls, opacité calibrée par fond.
-const ALEA_COUCHES = [
-  { id: 'ov-alea-inond', sub: 'inondation', token: 'aleaInondation', ramp: 'aleaInondationRamp' },
-  { id: 'ov-alea-mvt', sub: 'mouvement_terrain', token: 'aleaMvt', ramp: 'aleaMvtRamp' },
-] as const
 
 // RETOURS-11F3 avenant R10 — la GOUTTE D'EAU des piscines, rendue en ICÔNE CANVAS (addImage) et non
 // en `text-field:'💧'` : un emoji en text-field dépend des glyphes du style (souvent ABSENTS pour les
@@ -726,16 +300,6 @@ function makePiscineIcon(m: maplibregl.Map) {
 // M6.1 item 2 : une géométrie de la collection touche-t-elle la bbox de la commune ?
 // Test sommet-dans-bbox, suffisant pour le toast « commune sans littoral » (les bandes des
 // 50 pas sont étroites et longent le rivage — pas besoin d'intersection géométrique fine).
-function fcTouchesBbox(fc: { features: { geometry: unknown }[] },
-                       bbox: (number | null)[]): boolean {
-  const [minX, minY, maxX, maxY] = bbox as number[]
-  const touch = (c: unknown): boolean => Array.isArray(c) && (
-    typeof c[0] === 'number'
-      ? c[0] >= minX && c[0] <= maxX && (c[1] as number) >= minY && (c[1] as number) <= maxY
-      : (c as unknown[]).some(touch))
-  return fc.features.some((f) => touch((f.geometry as { coordinates?: unknown })?.coordinates))
-}
-
 /** Machine à mesurer : points cliqués + rendu geojson + lecture (distance/surface/alti/zone). */
 interface Measure {
   pts: LngLat[]
@@ -824,73 +388,6 @@ export function MapView() {
   }, [mapReady])
 
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
-  const zonage = useQuery({ queryKey: ['layer', 'zonage', commune], queryFn: () => getMapLayer('plu_gpu_zone'), enabled: layers.zonage && !ile })
-  const ppr = useQuery({ queryKey: ['layer', 'ppr', commune], queryFn: () => getMapLayer('ppr'), enabled: layers.ppr && !ile })
-  // (mode île : zonage/PPR passent par les tuiles MVT overlays — sources posées à l'init)
-  // R6 : parc (8 Mo simplifiés, opt-in), ANRU (10 Ko) et équipements (2,3 Mo) servis ÎLE
-  const parc = useQuery({ queryKey: ['layer', 'parc', commune], queryFn: () => getMapLayer('parc_national'), enabled: layers.parc })
-  // M137-U — ZNIEFF (162 polygones île, commune NULL → servis partout) : contrainte, opt-in.
-  const znieff = useQuery({ queryKey: ['layer', 'znieff', commune], queryFn: () => getMapLayer('znieff'), enabled: layers.znieff })
-  const anru = useQuery({ queryKey: ['layer', 'anru', commune], queryFn: () => getMapLayer('anru'), enabled: layers.anru })
-  // M134 — couche « Dispositifs » (servie île entière : QPV 57, buffer 13, ZFANG 24, FRR 23 — léger)
-  const qpv = useQuery({ queryKey: ['layer', 'qpv', commune], queryFn: () => getMapLayer('qpv'), enabled: layers.qpv })
-  const tvaPrimo = useQuery({ queryKey: ['layer', 'tva_primo', commune], queryFn: () => getMapLayer('tva_primo'), enabled: layers.tva_primo })
-  const zfang = useQuery({ queryKey: ['layer', 'zfang', commune], queryFn: () => getMapLayer('zfang'), enabled: layers.zfang })
-  const frr = useQuery({ queryKey: ['layer', 'frr', commune], queryFn: () => getMapLayer('frr'), enabled: layers.frr })
-  // SECTEUR-2 (T4) — prix du neuf VEFA (aplat commune), choropleth par tranche.
-  const vefaNeuf = useQuery({ queryKey: ['layer', 'vefa_neuf', commune], queryFn: () => getMapLayer('vefa_neuf'), enabled: layers.vefa_neuf })
-  // SOURCES-1 lot 1 — contraintes du droit des sols. er/ebc = kinds VIRTUELS résolus côté back
-  // (plu_gpu_prescription filtré typepsc 05/01) ; dpu par commune ; peb/sup légers, servis île.
-  const erQ = useQuery({ queryKey: ['layer', 'er', commune], queryFn: () => getMapLayer('er', 10_000), enabled: layers.er })
-  const ebcQ = useQuery({ queryKey: ['layer', 'ebc', commune], queryFn: () => getMapLayer('ebc', 10_000), enabled: layers.ebc })
-  const dpuQ = useQuery({ queryKey: ['layer', 'dpu', commune], queryFn: () => getMapLayer('dpu'), enabled: layers.dpu })
-  const pebQ = useQuery({ queryKey: ['layer', 'peb', commune], queryFn: () => getMapLayer('peb'), enabled: layers.peb })
-  const supQ = useQuery({ queryKey: ['layer', 'sup', commune], queryFn: () => getMapLayer('sup'), enabled: layers.sup })
-  // SOURCES-1 lot 2 — nature et eau. dpf/zone_humide/enp = couches d'île (commune NULL) ;
-  // rpg = kind virtuel (safer, 38 460 déclarations) par commune, plafond relevé.
-  const dpfQ = useQuery({ queryKey: ['layer', 'dpf'], queryFn: () => getMapLayer('dpf'), enabled: layers.dpf })
-  const endigQ = useQuery({ queryKey: ['layer', 'endiguement'], queryFn: () => getMapLayer('endiguement'), enabled: layers.endiguement })
-  const zhQ = useQuery({ queryKey: ['layer', 'zone_humide'], queryFn: () => getMapLayer('zone_humide', 10_000), enabled: layers.zone_humide })
-  const enpQ = useQuery({ queryKey: ['layer', 'enp'], queryFn: () => getMapLayer('enp'), enabled: layers.enp })
-  const rpgQ = useQuery({ queryKey: ['layer', 'rpg', commune], queryFn: () => getMapLayer('rpg', 40_000), enabled: layers.rpg })
-  // SOURCES-1 lot 3 — sols et bruit. sis/casias = kinds virtuels (sol_pollue filtré) ;
-  // bruit_route par commune (1 004 bandes) ; bruit_carte = couche d'île (6 entités).
-  const sisQ = useQuery({ queryKey: ['layer', 'sis'], queryFn: () => getMapLayer('sis'), enabled: layers.sis })
-  const casiasQ = useQuery({ queryKey: ['layer', 'casias'], queryFn: () => getMapLayer('casias', 10_000), enabled: layers.casias })
-  const bruitQ = useQuery({ queryKey: ['layer', 'bruit_route', commune], queryFn: () => getMapLayer('bruit_route', 10_000), enabled: layers.bruit_route })
-  const bruitCarteQ = useQuery({ queryKey: ['layer', 'bruit_carte'], queryFn: () => getMapLayer('bruit_carte'), enabled: layers.bruit_carte })
-  const artifQ = useQuery({ queryKey: ['layer', 'artificialisation'], queryFn: () => getMapLayer('artificialisation', 40000), enabled: layers.artificialisation })
-  // M55-E : la couche équipements COMPLÈTE (limit 20000 = plafond endpoint ; 15 214 en base,
-  // 271 Ko gzippé) — le défaut 6000 tronquait 61 % des marqueurs en mode île (centre de
-  // Saint-Denis vide, Hauts couverts : l'ordre des lignes décidait des survivants).
-  const equip = useQuery({ queryKey: ['layer', 'equip', commune], queryFn: () => getMapLayer('amenite', 20_000), enabled: layers.equipements })
-  // M137-U — équipements INSEE BPE (kind distinct 'amenite_bpe') : 2e item, servi comme OSM. Cercles
-  // bleus (vs icônes OSM) = zéro doublon visuel. FIX-COUCHES P1 : plafond porté 20 000 → 40 000 pour
-  // servir les 35 546 objets ENTIERS en vue île (payload mesuré ~8 Mo brut / ~0,7 Mo gzip) ; un garde
-  // no-silent-caps couvre désormais AUSSI cette couche (avant : seul l'OSM avait le sien).
-  const equipBpe = useQuery({ queryKey: ['layer', 'equip_bpe', commune], queryFn: () => getMapLayer('amenite_bpe', 40_000), enabled: layers.equipements_bpe })
-  // M6.1 item 2 : 50 pas géométriques (163 polygones île, commune NULL → servis partout)
-  const cinquantePas = useQuery({ queryKey: ['layer', 'cinquante_pas'], queryFn: () => getMapLayer('cinquante_pas'), enabled: layers.cinquante_pas })
-  // M106 P1 : aléas DEAL (993 objets île, un seul fetch — les 2 couches filtrent par subtype)
-  const alea = useQuery({ queryKey: ['layer', 'georisque_alea', commune], queryFn: () => getMapLayer('georisque_alea'), enabled: layers.alea_inondation || layers.alea_mvt })
-  // M106 P4 : transport public (tracés + pôles + Papang, 3 kinds servis île) et lignes HT
-  const transLignes = useQuery({ queryKey: ['layer', 'transport_ligne'], queryFn: () => getMapLayer('transport_ligne'), enabled: layers.transport })
-  // RETOURS-14 S7 — les ARRÊTS sont FUSIONNÉS dans « Transport public (lignes et arrêts) »
-  // (demande Vic) ; ils restent cliquables (bulle : nom + lignes + réseau — R9).
-  const transArrets = useQuery({ queryKey: ['layer', 'transport_arret'], queryFn: () => getMapLayer('transport_arret', 20_000), enabled: layers.transport })
-  // M137-X — les pôles d'échange rejoignent « Axes structurants » (nœuds du réseau structurant).
-  const poles = useQuery({ queryKey: ['layer', 'pole_echange'], queryFn: () => getMapLayer('pole_echange'), enabled: layers.axes })
-  const tele = useQuery({ queryKey: ['layer', 'telepherique'], queryFn: () => getMapLayer('telepherique'), enabled: layers.transport })
-  const lignesHt = useQuery({ queryKey: ['layer', 'ligne_ht'], queryFn: () => getMapLayer('ligne_ht'), enabled: layers.lignes_ht })
-  // RETOURS-14 S8 — « Stationnement allégé — TCSP » : voies en site propre + stations + ZONE
-  // de 800 m matérialisée (rayon autour des stations + union des parcelles couvertes, teintées).
-  const tcspTroncons = useQuery({ queryKey: ['layer', 'tcsp_troncon'], queryFn: () => getMapLayer('tcsp_troncon'), enabled: layers.tcsp })
-  const tcspStations = useQuery({ queryKey: ['layer', 'tcsp_station'], queryFn: () => getMapLayer('tcsp_station'), enabled: layers.tcsp })
-  const tcspZone = useQuery({ queryKey: ['layer', 'tcsp_zone'], queryFn: () => getMapLayer('tcsp_zone'), enabled: layers.tcsp })
-  // RETOURS-14 S9 — lignes électriques FUSIONNÉES : la HTA suit la même entrée que la HTB.
-  const lignesMt = useQuery({ queryKey: ['layer', 'ligne_mt'], queryFn: () => getMapLayer('ligne_mt', 40_000), enabled: layers.lignes_ht })
-  // M106-B P3 : axes structurants (3 481 tronçons BD TOPO importance 1-2)
-  const axes = useQuery({ queryKey: ['layer', 'axe_structurant'], queryFn: () => getMapLayer('axe_structurant', 5_000), enabled: layers.axes })
   // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut, top rangs servis
   const renouv = useQuery({ queryKey: ['layer', 'renouv', commune], queryFn: getRenouvGeojson, enabled: layers.renouv })
   // M6.1 item 1 : les tuiles île portent-elles zone_fam ? (sinon repli honnête au prochain build)
@@ -1027,196 +524,16 @@ export function MapView() {
       m.addSource('parcels', { type: 'geojson', data: EMPTY_FC as never, promoteId: 'idu' })
       // RECETTE-6 (A3) — source du bâti 3D (empreinte + hauteur), remplie par BBOX quand le 3D est actif.
       m.addSource('batiments', { type: 'geojson', data: EMPTY_FC as never })
-      for (const k of Object.keys(OVERLAYS)) m.addSource(`ov-${k}`, { type: 'geojson', data: EMPTY_FC as never })
-      for (const [k, o] of Object.entries(OVERLAYS)) {
-        m.addLayer({ id: `ov-${k}`, type: 'fill', source: `ov-${k}`, layout: { visibility: 'none' }, paint: o.paint as never })
-      }
-      // M105-B : CONTOURS de zonage et PPR (teinte identitaire saturée) — c'est le contour qui
-      // différencie les couches actives ensemble, pas l'aplat (doctrine arbitrée). Largeur portée
-      // par le thème : 0 en Sombre (aucun contour, comme toujours), 1 px en Clair.
-      m.addLayer({ id: 'ov-zonage-line', type: 'line', source: 'ov-zonage', layout: { visibility: 'none' },
-        paint: { 'line-color': zonageFillExpr(T_SOMBRE), 'line-width': T_SOMBRE.zonageContourW, 'line-opacity': 0.9 } })
-      m.addLayer({ id: 'ov-ppr-line', type: 'line', source: 'ov-ppr', layout: { visibility: 'none' },
-        paint: { 'line-color': T_SOMBRE.ppr, 'line-width': T_SOMBRE.pprContourW, 'line-opacity': 0.9 } })
-      // M105-B : TRAME diagonale ANRU (daltonisme — zonage U vert et ANRU chartreuse quasi
-      // confondus en deutéranopie : la trame est la seconde variable). Opacité portée par le
-      // thème : 0 en Sombre (invisible), posée en Clair par applyBasemapStyle.
-      makeTrameAnru(m)
-      m.addLayer({ id: 'ov-anru-trame', type: 'fill', source: 'ov-anru', layout: { visibility: 'none' },
-        paint: { 'fill-pattern': 'trame-anru', 'fill-opacity': T_SOMBRE.anruTrameOpacity } })
-      // SECTEUR-2b (U1) — HACHURE GRISE des communes VEFA sous le seuil (subtype 'sous_seuil') : jamais
-      // vides. Motif gris posé sur l'aplat gris muet ; « moins de 10 ventes » se lit dans le « i ».
-      makeTrame(m, 'trame-vefa-sous', '#9AA0A6', 'backslash')
-      m.addLayer({ id: 'ov-vefa_neuf-trame', type: 'fill', source: 'ov-vefa_neuf',
-        filter: ['==', ['get', 'subtype'], 'sous_seuil'] as unknown as maplibregl.FilterSpecification,
-        layout: { visibility: 'none' },
-        paint: { 'fill-pattern': 'trame-vefa-sous', 'fill-opacity': 0.55 } })
-      // SECTEUR-2b (U1) — CLIC sur une commune de la couche VEFA → panneau de détail. Le `name` porte
-      // « Commune · … » : on en tire le nom, le panneau résout l'INSEE et lit les moteurs existants.
-      m.on('click', 'ov-vefa_neuf', (e) => {
-        if (!useApp.getState().layers.vefa_neuf) return
-        const nom = String(e.features?.[0]?.properties?.name ?? '').split(' · ')[0].trim()
-        if (nom) { useApp.getState().setVefaCommune(nom); (e as maplibregl.MapLayerMouseEvent).preventDefault() }
-      })
-      m.on('mouseenter', 'ov-vefa_neuf', () => { if (useApp.getState().layers.vefa_neuf) m.getCanvas().style.cursor = 'pointer' })
-      m.on('mouseleave', 'ov-vefa_neuf', () => { m.getCanvas().style.cursor = '' })
-      // P10 : liseré marron du Parc national (borne nette)
-      m.addLayer({ id: 'ov-parc-line', type: 'line', source: 'ov-parc', layout: { visibility: 'none' },
-        paint: { 'line-color': PARC_LINE, 'line-width': 1.2, 'line-opacity': 0.7 } })
-      // M6.1 item 2 : 50 pas géométriques — remplissage léger + CONTOUR CÔTIER tireté
-      // (style distinct : bande littorale, pas une couche de zonage pleine)
-      m.addSource('ov-50pas', { type: 'geojson', data: EMPTY_FC as never })
-      m.addLayer({ id: 'ov-50pas', type: 'fill', source: 'ov-50pas', layout: { visibility: 'none' },
-        paint: { 'fill-color': T_SOMBRE.cinquantePas, 'fill-opacity': T_SOMBRE.cinquantePasFillOpacity } })
-      m.addLayer({ id: 'ov-50pas-line', type: 'line', source: 'ov-50pas', layout: { visibility: 'none' },
-        paint: { 'line-color': T_SOMBRE.cinquantePas, 'line-width': 1.6, 'line-dasharray': [2, 1.4], 'line-opacity': 0.9 } })
-      // M106 P1 : ALÉAS DEAL SÉPARÉS — deux couches depuis un même flux (kind=georisque_alea,
-      // filtrées par subtype), là où le zonage PPR réglementaire est multirisque insécable.
-      // Aplat GRADUÉ par le niveau servi + contour + trame (superposables, doctrine M105-B) —
-      // dans les DEUX thèmes ; les valeurs vivent dans mapTheme.
-      m.addSource('ov-alea', { type: 'geojson', data: EMPTY_FC as never })
-      for (const c of ALEA_COUCHES) {
-        const filt = ['==', ['get', 'subtype'], c.sub] as unknown as maplibregl.FilterSpecification
-        // R7 — plus de trame : aplat plein semi-transparent seul. R8 — contour géré par le zoom
-        // (ALEA_LINE_W/OP, même règle sur les 4 fonds).
-        m.addLayer({ id: c.id, type: 'fill', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
-          paint: { 'fill-color': aleaColorExpr(T_SOMBRE, c.ramp), 'fill-opacity': T_SOMBRE.aleaFillOpacity } })
-        m.addLayer({ id: `${c.id}-line`, type: 'line', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
-          paint: { 'line-color': T_SOMBRE[c.token], 'line-width': ALEA_LINE_W, 'line-opacity': ALEA_LINE_OP } })
-      }
-      // M137-X — trame ZFANG/FRR : l'état « fort » (renforcée / en partie) se lit à la HACHURE
-      // (aplat = état de base), texture catégorielle plutôt qu'un dégradé d'opacité ambigu.
-      for (const [src, sub, tok, orient] of DISPO_TRAMES) {
-        // hachure = shade PLUS FONCÉ de l'aplat → lisible quelle que soit la teinte de l'état.
-        makeTrame(m, `trame-${tok}-sombre`, darken(MAP_THEME.sombre[tok], 0.6), orient)
-        m.addLayer({ id: `${src}-trame`, type: 'fill', source: src,
-          filter: ['==', ['get', 'subtype'], sub] as never, layout: { visibility: 'none' },
-          paint: { 'fill-pattern': 'trame-' + tok + '-sombre', 'fill-opacity': T_SOMBRE.aleaTrameOpacity } })
-      }
-      // M106 P4 / M106-B : TRANSPORT PUBLIC — LA COULEUR DIT LE RÉSEAU, LA FORME DIT LE TYPE :
-      // tracé = trait · arrêt = petit point (minzoom 12, sinon 9 956 points noient l'île) ·
-      // pôle OSM (Sourcé) = disque plein NEUTRE · pôle dérivé (Estimé) = anneau ·
-      // téléphérique = tireté couleur CINOR/Citalis. Plus les AXES STRUCTURANTS (BD TOPO,
-      // importance IGN 1-2, trait plein ardoise) et les LIGNES HT (anthracite tireté).
-      for (const src of ['ov-trans-ligne', 'ov-trans-arret', 'ov-pole', 'ov-tele', 'ov-axe', 'ov-ht', 'ov-mt', 'ov-tcsp', 'ov-tcsp-st', 'ov-tcsp-zone']) {
-        m.addSource(src, { type: 'geojson', data: EMPTY_FC as never })
-      }
-      m.addLayer({ id: 'ov-axe', type: 'line', source: 'ov-axe', layout: { visibility: 'none' },
-        paint: { 'line-color': T_SOMBRE.axe, 'line-width': 2.2, 'line-opacity': 0.85 } })
-      m.addLayer({ id: 'ov-trans-ligne', type: 'line', source: 'ov-trans-ligne', layout: { visibility: 'none' },
-        paint: { 'line-color': reseauColorExpr(T_SOMBRE), 'line-width': 1.3, 'line-opacity': 0.75 } })
-      // RETOURS-12 C5 — arrêts NETTEMENT plus visibles : rayon proportionné au zoom (discret à
-      // l'échelle île, franc à l'échelle quartier) + contour sombre pour tenir sur fond clair comme
-      // sur ortho. Un arrêt se lit comme un arrêt, plus comme un pixel sur le trait.
-      m.addLayer({ id: 'ov-trans-arret', type: 'circle', source: 'ov-trans-arret', minzoom: 11,
-        layout: { visibility: 'none' },
-        paint: {
-          'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 3, 14, 5.5, 16, 8, 18, 10] as unknown as maplibregl.ExpressionSpecification,
-          'circle-color': reseauColorExpr(T_SOMBRE), 'circle-opacity': 0.9,
-          'circle-stroke-color': '#0A0F0C', 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 11, 0.8, 16, 1.6] as unknown as maplibregl.ExpressionSpecification,
-        } })
-      // RETOURS-13 R9 — arrêts CLIQUABLES : une bulle MINIMALE — nom de l'arrêt, ligne(s) qui le
-      // desservent, réseau. Rien d'autre (demande Vic). Les noms de lignes viennent de routes.txt
-      // (attrs.lignes_noms, backfillés + posés à l'ingestion) ; nested array → maplibre sérialise
-      // en chaîne JSON dans les properties, on la reparse.
-      const escHtml = (s: unknown) => String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c] as string))
-      m.on('click', 'ov-trans-arret', (e) => {
-        const f = e.features?.[0]
-        if (!f) return
-        const p = f.properties as Record<string, unknown>
-        let lignes: string[] = []
-        try {
-          lignes = typeof p.lignes_noms === 'string' ? JSON.parse(p.lignes_noms) : ((p.lignes_noms as string[]) ?? [])
-        } catch { lignes = [] }
-        const html = `<div style="${POPUP_BOX_CSS}">`
-          + `<div style="font-weight:600">${escHtml(p.name)}</div>`
-          + (lignes.length ? `<div style="margin-top:4px">Ligne${lignes.length > 1 ? 's' : ''} ${escHtml(lignes.join(' · '))}</div>` : '')
-          + `<div style="margin-top:2px;color:#96A69C">${escHtml(p.reseau ?? p.subtype ?? '')}</div></div>`
-        new maplibregl.Popup({ closeButton: false, maxWidth: '300px' }).setLngLat(e.lngLat).setHTML(html).addTo(m)
-      })
-      m.on('mouseenter', 'ov-trans-arret', () => { m.getCanvas().style.cursor = 'pointer' })
-      m.on('mouseleave', 'ov-trans-arret', () => { m.getCanvas().style.cursor = '' })
-      m.addLayer({ id: 'ov-tele', type: 'line', source: 'ov-tele', layout: { visibility: 'none' },
-        filter: ['==', ['get', 'subtype'], 'ligne'] as never,
-        paint: { 'line-color': T_SOMBRE.transportReseaux['Papang'], 'line-width': 2.4, 'line-dasharray': [1.6, 1.2], 'line-opacity': 0.95 } })
-      m.addLayer({ id: 'ov-tele-st', type: 'circle', source: 'ov-tele', layout: { visibility: 'none' },
-        filter: ['==', ['get', 'subtype'], 'station'] as never,
-        paint: { 'circle-radius': 4, 'circle-color': T_SOMBRE.transportReseaux['Papang'], 'circle-stroke-color': SOMBRE_BG, 'circle-stroke-width': 1.2 } })
-      m.addLayer({ id: 'ov-pole', type: 'circle', source: 'ov-pole', layout: { visibility: 'none' },
-        paint: { 'circle-radius': 5,
-                 'circle-color': T_SOMBRE.pole,
-                 'circle-opacity': ['case', ['==', ['get', 'subtype'], 'osm'], 0.95, 0] as never,
-                 'circle-stroke-color': T_SOMBRE.pole, 'circle-stroke-width': 2 } })
-      m.addLayer({ id: 'ov-ht', type: 'line', source: 'ov-ht', layout: { visibility: 'none' },
-        paint: { 'line-color': T_SOMBRE.ht, 'line-width': 1.6, 'line-dasharray': [5, 2.5], 'line-opacity': 0.9 } })
-      // RETOURS-13 R4 — moyenne tension HTA (EDF open data) : même famille de contrainte que la
-      // HTB mais tireté COURT et FIN (la forme et la valeur les séparent), teinte gris-sarcelle.
-      m.addLayer({ id: 'ov-mt', type: 'line', source: 'ov-mt', layout: { visibility: 'none' },
-        paint: { 'line-color': T_SOMBRE.mt, 'line-width': 1.1, 'line-dasharray': [2, 1.6], 'line-opacity': 0.85 } })
-      // SOURCES-1 lot 2 — DPF : trait d'eau PLEIN (domaine public fluvial, marchepied 3,25 m).
-      m.addSource('ov-dpf', { type: 'geojson', data: EMPTY_FC as never })
-      m.addLayer({ id: 'ov-dpf', type: 'line', source: 'ov-dpf', layout: { visibility: 'none' },
-        paint: { 'line-color': T_SOMBRE.dpf, 'line-width': 2.0, 'line-opacity': 0.9 } })
-      // SOURCES-2 lot 3 — endiguement : zones protégées en aplat léger + digues en trait épais.
-      m.addSource('ov-endiguement', { type: 'geojson', data: EMPTY_FC as never })
-      m.addLayer({ id: 'ov-endiguement', type: 'fill', source: 'ov-endiguement',
-        filter: ['==', ['get', 'subtype'], 'zone_protegee'] as never, layout: { visibility: 'none' },
-        paint: { 'fill-color': T_SOMBRE.endiguement, 'fill-opacity': 0.18 } })
-      m.addLayer({ id: 'ov-endiguement-digue', type: 'line', source: 'ov-endiguement',
-        filter: ['==', ['get', 'subtype'], 'digue'] as never, layout: { visibility: 'none' },
-        paint: { 'line-color': T_SOMBRE.endiguement, 'line-width': 2.6, 'line-opacity': 0.95 } })
-      // SOURCES-1 lot 3 — CASIAS : 480 sites en POINT (cercles) + 29 emprises (aplat), même source.
-      m.addSource('ov-casias', { type: 'geojson', data: EMPTY_FC as never })
-      m.addLayer({ id: 'ov-casias-fill', type: 'fill', source: 'ov-casias', layout: { visibility: 'none' },
-        filter: ['==', ['geometry-type'], 'Polygon'],
-        paint: { 'fill-color': T_SOMBRE.casias, 'fill-opacity': 0.24, 'fill-outline-color': T_SOMBRE.casias } })
-      m.addLayer({ id: 'ov-casias', type: 'circle', source: 'ov-casias', layout: { visibility: 'none' },
-        filter: ['==', ['geometry-type'], 'Point'],
-        paint: { 'circle-color': T_SOMBRE.casias, 'circle-radius': 4, 'circle-opacity': 0.85,
-                 'circle-stroke-color': '#00000066', 'circle-stroke-width': 1 } })
-      // COUCHES-1 lot 1 (E2) — SIS : les 4 périmètres (0,6–1,4 ha) sont INVISIBLES en aplat seul à
-      // l'échelle île (la couche s'allumait sans rien montrer). On les REMONTE EN POINTS au centroïde
-      // (même doctrine que CASIAS) — visibles à toute échelle ; l'aplat ov-sis reste au zoom parcelle.
-      m.addSource('ov-sis-pt', { type: 'geojson', data: EMPTY_FC as never })
-      m.addLayer({ id: 'ov-sis-pt', type: 'circle', source: 'ov-sis-pt', layout: { visibility: 'none' },
-        paint: { 'circle-color': T_SOMBRE.sis,
-                 'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 5, 14, 8] as unknown as maplibregl.ExpressionSpecification,
-                 'circle-opacity': 0.9, 'circle-stroke-color': '#0A0F0C', 'circle-stroke-width': 1.4 } })
-      // RETOURS-13 R5 — TCSP : trait PLEIN ÉPAIS pour les tronçons EN SITE PROPRE (la voie dédiée
-      // se lit d'un coup) ; trait FIN TIRETÉ pour les simples couloirs bus (dits, jamais confondus) ;
-      // STATIONS dérivées en disques (le drapeau < 800 m se mesure à la station, pas au tracé).
-      // RETOURS-14 S8 — la ZONE d'abord (sous les tronçons) : parcelles couvertes TEINTÉES
-      // (union exacte de leurs géométries) + contour du rayon de 800 m. Les couloirs bus ne
-      // s'affichent plus ici (pas un site propre L151-36 — légende à 3 entrées).
-      m.addLayer({ id: 'ov-tcsp-zone-parcelles', type: 'fill', source: 'ov-tcsp-zone',
-        filter: ['==', ['get', 'subtype'], 'parcelles'] as never, layout: { visibility: 'none' },
-        paint: { 'fill-color': T_SOMBRE.tcsp, 'fill-opacity': 0.22 } })
-      m.addLayer({ id: 'ov-tcsp-zone-rayon', type: 'line', source: 'ov-tcsp-zone',
-        filter: ['==', ['get', 'subtype'], 'rayon'] as never, layout: { visibility: 'none' },
-        paint: { 'line-color': T_SOMBRE.tcsp, 'line-width': 1.6, 'line-dasharray': [3, 2], 'line-opacity': 0.85 } })
-      m.addLayer({ id: 'ov-tcsp', type: 'line', source: 'ov-tcsp', layout: { visibility: 'none', 'line-cap': 'round' },
-        filter: ['==', ['get', 'subtype'], 'site_propre'] as never,
-        paint: { 'line-color': T_SOMBRE.tcsp, 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 2.5, 13, 4, 16, 6] as unknown as maplibregl.ExpressionSpecification, 'line-opacity': 0.95 } })
-      // COUCHES-1 lot 4 (C2) — la station TCSP est un ANNEAU (halo), pas un disque plein : une station
-      // est dérivée d'un arrêt GTFS (≤ 60 m) donc CO-LOCALISÉE avec la couche « Transport public ». En
-      // anneau, elle ENTOURE l'arrêt (rayon un cran plus grand) → un seul objet lisible au lieu de deux
-      // pastilles concurrentes. Le fill transparent laisse voir l'arrêt dessous.
-      m.addLayer({ id: 'ov-tcsp-st', type: 'circle', source: 'ov-tcsp-st', layout: { visibility: 'none' },
-        paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 14, 8.5, 17, 12] as unknown as maplibregl.ExpressionSpecification,
-                 'circle-color': 'rgba(0,0,0,0)',
-                 'circle-stroke-color': T_SOMBRE.tcsp, 'circle-stroke-width': 2.2, 'circle-stroke-opacity': 0.95 } })
-      // M-RENOUV : segment Renouvellement — CUIVRE (token dédié), remplissage + contour fin.
-      // Parcelles OCCUPÉES à potentiel : style volontairement distinct des tiers (ni vert ni violet).
+      // M-RENOUV : segment Renouvellement (occupees, potentiel) — cuivre dedie.
       m.addSource('ov-renouv', { type: 'geojson', data: EMPTY_FC as never })
       m.addLayer({ id: 'ov-renouv', type: 'fill', source: 'ov-renouv', layout: { visibility: 'none' },
         paint: { 'fill-color': TOKENS.renouv, 'fill-opacity': 0.38 } })
       m.addLayer({ id: 'ov-renouv-line', type: 'line', source: 'ov-renouv', layout: { visibility: 'none' },
         paint: { 'line-color': TOKENS.renouv, 'line-width': 1.1, 'line-opacity': 0.85 } })
-      // P11 : limites communales OFFICIELLES (geo.api.gouv 974) — ligne verte de la charte
+      // COUCHES-RETRAIT-1 lot 2 — la ligne « Limites communes » (repère) est désormais servie par le
+      // tuyau (couche `limites_communes`, famille Repères). On garde la SOURCE communes974.geojson : elle
+      // alimente le voile d'atténuation `commune-attenuation` (clic commune, ci-dessous).
       m.addSource('communes-bounds', { type: 'geojson', data: `${(import.meta as unknown as { env: { BASE_URL: string } }).env.BASE_URL}communes974.geojson` })
-      m.addLayer({ id: 'communes-bounds', type: 'line', source: 'communes-bounds', layout: { visibility: 'none' },
-        paint: { 'line-color': '#5CE6A1', 'line-width': ['interpolate', ['linear'], ['zoom'], 8, 1.1, 13, 1.8],
-                 'line-opacity': 0.55 } })
       // COUCHES-RECETTE-2 C4 — clic commune : la commune choisie garde sa valeur, le RESTE de l'île est
       // ATTÉNUÉ (voile sombre sur les autres communes). Filtre piloté par l'état `commune` (effet plus bas).
       m.addLayer({ id: 'commune-attenuation', type: 'fill', source: 'communes-bounds',
@@ -1234,9 +551,8 @@ export function MapView() {
       // qu'un contour gris uni sans couleur. Les deux ne font PAS doublon → on garde le second
       // interrupteur et on précise son « i » (cf. lib/layers LAYER_INFO.parcelles).
       m.addLayer({ id: 'parcels-fill', type: 'fill', source: 'parcels', paint: { 'fill-color': STATUS_COLOR, 'fill-opacity': STATUS_OPACITY } })
-      // contours : promues (statut) OU toutes (couche « limites parcelles »)
-      m.addLayer({ id: 'parcels-limites', type: 'line', source: 'parcels', layout: { visibility: 'none' },
-        paint: { 'line-color': '#8FA69A', 'line-width': 0.3, 'line-opacity': 0.4 } })
+      // contours promues (statut) — la couche « Limites parcelles » (repère cadastral) est servie par
+      // le tuyau (couche `limites_parcelles`, famille Repères). COUCHES-RETRAIT-1 lot 2.
       m.addLayer({ id: 'parcels-line', type: 'line', source: 'parcels', filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
       // RECETTE-12 B1 — contour DISCRET des non-promues (Sans signal/Écartée), en mode analyse
       // SEULEMENT et au ZOOM SEULEMENT (minzoom) : elles ne sont plus peintes (aucun aplat gris), mais
@@ -1285,23 +601,6 @@ export function MapView() {
         paint: { 'text-color': '#ECF5EF', 'text-halo-color': '#06130C', 'text-halo-width': 1.3 },
       })
 
-      // R6 : overlays zonage/PPR en tuiles MVT pour le mode ÎLE (29 Mo / 88 Mo en GeoJSON)
-      m.addSource('ovmvt-zonage', { type: 'vector', minzoom: 8, maxzoom: 15,
-        tiles: [`${window.location.origin}/map/tiles/ov/plu_gpu_zone/{z}/{x}/{y}.pbf`] })
-      m.addSource('ovmvt-ppr', { type: 'vector', minzoom: 8, maxzoom: 15,
-        tiles: [`${window.location.origin}/map/tiles/ov/ppr/{z}/{x}/{y}.pbf`] })
-      m.addLayer({ id: 'ovmvt-zonage', type: 'fill', source: 'ovmvt-zonage', 'source-layer': 'plu_gpu_zone',
-        layout: { visibility: 'none' }, paint: OVERLAYS.zonage.paint as never })
-      m.addLayer({ id: 'ovmvt-ppr', type: 'fill', source: 'ovmvt-ppr', 'source-layer': 'ppr',
-        layout: { visibility: 'none' }, paint: OVERLAYS.ppr.paint as never })
-      // M105-B : contours jumeaux côté île (mêmes tokens de thème que ov-zonage-line/ov-ppr-line)
-      m.addLayer({ id: 'ovmvt-zonage-line', type: 'line', source: 'ovmvt-zonage', 'source-layer': 'plu_gpu_zone',
-        layout: { visibility: 'none' },
-        paint: { 'line-color': zonageFillExpr(T_SOMBRE), 'line-width': T_SOMBRE.zonageContourW, 'line-opacity': 0.9 } })
-      m.addLayer({ id: 'ovmvt-ppr-line', type: 'line', source: 'ovmvt-ppr', 'source-layer': 'ppr',
-        layout: { visibility: 'none' },
-        paint: { 'line-color': T_SOMBRE.ppr, 'line-width': T_SOMBRE.pprContourW, 'line-opacity': 0.9 } })
-
       // ── mode ÎLE : calques jumeaux sur tuiles MVT (431k parcelles — le GeoJSON ne tient pas) ──
       m.addSource('parcels-ile', { type: 'vector', minzoom: 9, maxzoom: 15,
         tiles: [`${window.location.origin}/map/tiles/{z}/{x}/{y}.pbf`] })
@@ -1311,8 +610,6 @@ export function MapView() {
         paint: { 'fill-color': '#22302A', 'fill-opacity': 0.28 } })
       m.addLayer({ id: 'ile-fill', type: 'fill', ...SL, layout: { visibility: 'none' },
         paint: { 'fill-color': STATUS_COLOR, 'fill-opacity': STATUS_OPACITY } })
-      m.addLayer({ id: 'ile-limites', type: 'line', ...SL, layout: { visibility: 'none' },
-        paint: { 'line-color': '#8FA69A', 'line-width': 0.3, 'line-opacity': 0.4 } })
       m.addLayer({ id: 'ile-line', type: 'line', ...SL, layout: { visibility: 'none' },
         filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
       // RECETTE-12 B1 — jumeau île du contour discret des non-promues (minzoom, mode analyse seul)
@@ -1514,61 +811,7 @@ export function MapView() {
         m.on('mouseleave', lid, leavePt)
       }
 
-      // équipements (points OSM, affichage seul) — cercles colorés, plancher z13 (pas
-      // d'icônes par milliers à l'écran), clic = nom de l'équipement
       makePiscineIcon(m)   // R10 — la goutte des piscines en icône canvas (voir makePiscineIcon)
-      m.addSource('ov-equip', { type: 'geojson', data: EMPTY_FC as never })
-      // M12 C3 — les pastilles d'équipement GROSSISSENT quand on zoome (elles rétrécissaient) :
-      // l'ancienne rampe 12→0,32 / 17→0,60 s'aplatissait vite et PLAFONNAIT à z17 ; au zoom
-      // rapproché (z18-20, l'échelle de travail sur une parcelle) elles restaient figées à 0,60
-      // pendant que tout le reste de la carte grossissait → effet de rétrécissement relatif.
-      // Rampe croissante et CONTINUE jusqu'à z20 : plus on approche, plus la pastille est lisible.
-      // M14 B2 (QA-63, reprise M13-D3/QA-49) : icônes ×1,5 — rampe M12 (0,30/0,55/0,85/1,3)
-      // multipliée par 1,5 → 0,45/0,825/1,275/1,95. Aucune autre taille ne l'écrase (seule
-      // définition d'icon-size pour ov-equip ; le bitmap addImage garde son pixelRatio).
-      // COUCHES-1 lot 5 (D6) / lot 4 (C1) — OSM en PASTILLE COLORÉE (cercle), plus d'emoji. Catégorie
-      // = couleur (equipColorExpr) ; source OSM = anneau BLANC (la BPE porte un anneau sombre). Même
-      // langage visuel que la BPE, la seule différence est le contour → plus de « pastilles emoji vs
-      // points colorés ». Rampe de rayon croissante jusqu'à z20 (lisibilité au travail sur parcelle).
-      m.addLayer({ id: 'ov-equip', type: 'circle', source: 'ov-equip', minzoom: 12,
-        layout: { visibility: 'none' },
-        paint: { 'circle-color': equipColorExpr, 'circle-opacity': 0.92,
-                 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 3.2, 16, 5.5, 20, 8.5] as unknown as maplibregl.ExpressionSpecification,
-                 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 1.4, 'circle-stroke-opacity': 0.9 } })
-      // M137-U — équipements INSEE BPE : cercles colorés par domaine, ANNEAU SOMBRE → distincts d'OSM
-      // (anneau blanc) sans changer de langage visuel. Source et couche dédiées.
-      m.addSource('ov-equip-bpe', { type: 'geojson', data: EMPTY_FC as never })
-      // M137-V — couleur par DOMAINE (A..G) via match sur le subtype (data-driven, comme zfang/frr).
-      const bpeColor = ['match', ['get', 'subtype'],
-        ...BPE_DOM.flatMap((d) => [d.code, d.color]), T_SOMBRE.bpe] as never
-      m.addLayer({ id: 'ov-equip-bpe', type: 'circle', source: 'ov-equip-bpe', minzoom: 12,
-        layout: { visibility: 'none' },
-        paint: { 'circle-color': bpeColor, 'circle-opacity': 0.9,
-                 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 3.2, 16, 5.5, 20, 8.5],
-                 // COUCHES-1 lot 4 (C1) — anneau SOMBRE (OSM porte un anneau blanc) : même taille, même
-                 // forme, la source se lit au contour. Rayon aligné sur OSM pour un langage unique.
-                 'circle-stroke-color': '#0d1420', 'circle-stroke-width': 1.4 } })
-      // M55-A item 4 : les équipements RÉAGISSENT au clic — bulle sobre (nom + catégorie CLIENT,
-      // et distance à la parcelle sélectionnée si pertinent). `preventDefault()` empêche le clic
-      // d'ouvrir AUSSI la fiche de la parcelle sous l'icône (les handlers parcels-fill / clic
-      // universel testent `defaultPrevented`) — sinon le geste « paraissait » sans effet propre.
-      m.on('click', 'ov-equip', (e) => {
-        const ev = e as maplibregl.MapLayerMouseEvent
-        const f = ev.features?.[0]
-        if (!f) return
-        ev.preventDefault()
-        const sub = String(f.properties?.subtype ?? '')
-        const cat = EQUIP_LABEL[sub] ?? sub
-        const nom = f.properties?.name && f.properties.name !== 'null' ? String(f.properties.name) : '(sans nom OSM)'
-        const c = selectedParcelCentroid(m)
-        const dist = c ? `<div style="color:#5CE6A1;font-size:10px;margin-top:2px">à ~${fmtDistance(haversine([ev.lngLat.lng, ev.lngLat.lat], c))} de la parcelle sélectionnée</div>` : ''
-        new maplibregl.Popup({ closeButton: false, className: 'labuse-popup' })
-          .setLngLat(ev.lngLat)
-          .setHTML(`<div style="background:#0F1A14;border:1px solid #2E6B4F;color:#ECF5EF;font:12px Inter,sans-serif;padding:6px 10px;border-radius:8px">${nom}<div style="color:#8FA69A;font-size:10px">${cat}</div>${dist}</div>`)
-          .addTo(m)
-      })
-      m.on('mouseenter', 'ov-equip', () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
-      m.on('mouseleave', 'ov-equip', () => { m.getCanvas().style.cursor = toolRef.current ? 'crosshair' : '' })
 
       // zone dessinée persistante (filtre les résultats)
       m.addSource('zone', { type: 'geojson', data: EMPTY_FC as never })
@@ -1631,38 +874,6 @@ export function MapView() {
       m.on('dataloading', () => setTilesLoading(true))
       m.on('idle', () => setTilesLoading(false))
 
-      // COUCHES-1 lot 7 (G1) — popups RICHES : chaque couche listée expose au clic les champs à
-      // valeur métier de sa source (SUP type/acte/gestionnaire, ER destination/bénéficiaire, CASIAS
-      // état/adresse, ZNIEFF n°/nom, PPR document/prescription…). Avant : 30+ couches muettes au clic.
-      for (const [layerId, spec] of Object.entries(OVERLAY_POPUP)) {
-        if (!m.getLayer(layerId)) continue
-        m.on('click', layerId, (e) => {
-          const f = e.features?.[0]
-          if (!f) return
-          const p = f.properties as Record<string, unknown>
-          const a = attrsOf(p)
-          const rows = spec.fields
-            .map((fd) => ({ fd, v: a[fd.key] }))
-            .filter((x) => x.v !== null && x.v !== undefined && String(x.v).trim() !== '')
-          const titre = String(p.name ?? '').trim() || spec.titre
-          const sousTitre = String(p.name ?? '').trim() ? spec.titre : ''
-          let html = `<div style="${POPUP_BOX_CSS}"><div style="font-weight:600">${escHtml(titre)}</div>`
-          if (sousTitre) html += `<div style="color:#96A69C;font-size:11px">${escHtml(sousTitre)}</div>`
-          for (const { fd, v } of rows) {
-            const val = fd.link
-              ? `<a href="${escHtml(v)}" target="_blank" rel="noreferrer" style="color:#5CE6A1">ouvrir ↗</a>`
-              : escHtml(v)
-            html += `<div style="margin-top:3px"><span style="color:#96A69C">${escHtml(fd.label)} : </span>${val}</div>`
-          }
-          if (!rows.length) html += `<div style="margin-top:3px;color:#96A69C">Détail non renseigné à la source.</div>`
-          html += '</div>'
-          new maplibregl.Popup({ closeButton: true, maxWidth: '320px' }).setLngLat(e.lngLat).setHTML(html).addTo(m)
-          ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
-        })
-        m.on('mouseenter', layerId, () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
-        m.on('mouseleave', layerId, () => { m.getCanvas().style.cursor = toolRef.current ? 'crosshair' : '' })
-      }
-
       ready.current = true
       setMapReady(true)
       ;(window as unknown as Record<string, unknown>).__labuse_map = m // hook QA (ping sémantique)
@@ -1684,75 +895,7 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
-    const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['znieff', znieff], ['anru', anru], ['alea', alea],
-      ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt], ['mt', lignesMt], ['tcsp', tcspTroncons], ['tcsp-st', tcspStations], ['tcsp-zone', tcspZone],
-      ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr], ['vefa_neuf', vefaNeuf],   // M134 dispositifs · M137-U znieff · T4 vefa
-      ['er', erQ], ['ebc', ebcQ], ['dpu', dpuQ], ['peb', pebQ], ['sup', supQ],   // SOURCES-1 lot 1 — droit des sols
-      ['dpf', dpfQ], ['endiguement', endigQ], ['zone_humide', zhQ], ['enp', enpQ], ['rpg', rpgQ],   // SOURCES-1 lot 2 — nature et eau · SOURCES-2 lot 3 endiguement
-      ['sis', sisQ], ['casias', casiasQ], ['bruit_route', bruitQ], ['bruit_carte', bruitCarteQ],
-      ['artificialisation', artifQ]]   // SOURCES-1 lot 3 — sols et bruit · REPARATIONS-1 lot 5 — OCS GE
-    for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
-    // COUCHES-1 lot 1 (E2) — points SIS (centroïdes) alimentés en plus de l'aplat.
-    if (sisQ.data) (m.getSource('ov-sis-pt') as maplibregl.GeoJSONSource | undefined)?.setData(centroidsFC(sisQ.data as never) as never)
-    // M137-U — équipements BPE (points, source dédiée) : bind comme les OSM.
-    if (equipBpe.data) {
-      (m.getSource('ov-equip-bpe') as maplibregl.GeoJSONSource | undefined)?.setData(equipBpe.data as never)
-      // FIX-COUCHES P1 — garde no-silent-caps ÉTENDU à la BPE (avant : seul l'OSM l'avait). Le plafond
-      // (40 000) couvre les 35 546 actuels ; ce filet parle si un futur millésime BPE le dépasse.
-      if (layers.equipements_bpe && equipBpe.data.features.length >= 40_000) {
-        useApp.getState().setToast('Équipements INSEE (BPE) : plus de 40 000 objets — l’affichage est tronqué au plafond du serveur.')
-      }
-    }
-    if (equip.data) {
-      const feats = equip.data.features.filter((f) => EQUIP_CATS.includes((f.properties as { subtype?: string }).subtype as never))
-      ;(m.getSource('ov-equip') as maplibregl.GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: feats } as never)
-      // M55-E : plafond endpoint (20 000) ATTEINT → la couche est tronquée, on le DIT (règle
-      // no-silent-caps — un marqueur manquant sans avertissement est un mensonge visuel).
-      if (layers.equipements && equip.data.features.length >= 20_000) {
-        useApp.getState().setToast('Équipements : plus de 20 000 objets — l\u2019affichage est tronqué au plafond du serveur.')
-      }
-    }
-    // M6 2a (§1.6, anomalie A3) : couche activée mais VIDE sur le périmètre → le dire,
-    // jamais un silence (l'utilisateur ne sait pas si la couche est vide ou cassée).
-    if (layers.anru && anru.data && anru.data.features.length === 0) {
-      useApp.getState().setToast(
-        commune ? `Aucun périmètre ANRU (NPNRU) sur ${commune} — 6 communes en portent un.`
-                : 'Aucun périmètre ANRU (NPNRU) sur ce cadrage.')
-    }
-    // M134 — dispositifs activés mais vides sur le périmètre : le dire (jamais un silence).
-    if (layers.qpv && qpv.data && qpv.data.features.length === 0) {
-      useApp.getState().setToast(commune ? `Aucun quartier prioritaire (QPV) sur ${commune} — 13 communes en portent un.`
-                                         : 'Aucun quartier prioritaire (QPV) sur ce cadrage.')
-    }
-    if (layers.tva_primo && tvaPrimo.data && tvaPrimo.data.features.length === 0) {
-      useApp.getState().setToast(commune ? `Aucune bande TVA réduite (QPV + 500 m) sur ${commune}.`
-                                         : 'Aucune bande TVA réduite (QPV + 500 m) sur ce cadrage.')
-    }
-    // SOURCES-1 lot 1 — couches activées mais vides : le dire, avec la BONNE raison (règle 3 du
-    // mandat : une commune qui n'a pas publié n'est pas un zéro — le DPU est dit « non publié »).
-    if (layers.dpu && dpuQ.data && dpuQ.data.features.length === 0) {
-      useApp.getState().setToast(commune
-        ? `Aucun périmètre DPU publié au Géoportail de l'urbanisme pour ${commune} — non publié par la commune, pas forcément inexistant.`
-        : 'Aucun périmètre DPU publié au GPU sur ce cadrage.')
-    }
-    if (layers.peb && pebQ.data && pebQ.data.features.length === 0) {
-      useApp.getState().setToast('Aucune zone PEB sur ce cadrage — Roland-Garros est servi (annexes GPU) ; le PEB de Pierrefonds n’est pas publié au GPU.')
-    }
-    if (layers.er && erQ.data && erQ.data.features.length === 0) {
-      useApp.getState().setToast(commune ? `Aucun emplacement réservé publié au GPU sur ${commune}.`
-                                         : 'Aucun emplacement réservé sur ce cadrage.')
-    }
-    if (layers.zone_humide && zhQ.data && zhQ.data.features.length === 0) {
-      useApp.getState().setToast('Aucune zone humide inventoriée sur ce cadrage — les inventaires DEAL couvrent des SECTEURS (2003→2019) : l’absence d’inventaire n’est pas une preuve d’absence.')
-    }
-    if (layers.ebc && ebcQ.data && ebcQ.data.features.length === 0) {
-      useApp.getState().setToast(commune ? `Aucun espace boisé classé publié au GPU sur ${commune}.`
-                                         : 'Aucun espace boisé classé sur ce cadrage.')
-    }
-    // M6.1 item 2 : 50 pas — servis île entière (commune NULL en base) ; en mode commune,
-    // même pattern honnête que l'ANRU : commune SANS littoral → toast, jamais un silence.
-    // M-RENOUV : calque Renouvellement — si le serveur tronque (top rangs), le DIRE (toast),
-    // jamais un « tout » silencieux (règle no-silent-caps).
+    // M-RENOUV : calque Renouvellement — si le serveur tronque (top rangs), le DIRE (toast).
     if (renouv.data) {
       ;(m.getSource('ov-renouv') as maplibregl.GeoJSONSource | undefined)?.setData(renouv.data as never)
       if (layers.renouv && renouv.data.total > renouv.data.servis) {
@@ -1761,17 +904,7 @@ export function MapView() {
           `${renouv.data.total.toLocaleString('fr-FR')} (meilleurs rangs)${commune ? ` — ${commune}` : ' — île entière'}.`)
       }
     }
-    if (cinquantePas.data) {
-      ;(m.getSource('ov-50pas') as maplibregl.GeoJSONSource | undefined)?.setData(cinquantePas.data as never)
-      if (layers.cinquante_pas && commune) {
-        const bbox = communes.data?.find((c) => c.commune === commune)?.bbox
-        if (bbox && bbox[0] != null && !fcTouchesBbox(cinquantePas.data, bbox)) {
-          useApp.getState().setToast(
-            `Aucune bande des 50 pas géométriques sur ${commune} — commune sans littoral.`)
-        }
-      }
-    }
-  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, lignesMt.data, tcspTroncons.data, tcspStations.data, tcspZone.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, erQ.data, ebcQ.data, dpuQ.data, pebQ.data, supQ.data, dpfQ.data, endigQ.data, zhQ.data, enpQ.data, rpgQ.data, sisQ.data, casiasQ.data, bruitQ.data, bruitCarteQ.data, artifQ.data, layers.artificialisation, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, layers.er, layers.ebc, layers.dpu, layers.peb, layers.sup, layers.dpf, layers.endiguement, layers.zone_humide, layers.enp, layers.rpg, layers.sis, layers.casias, layers.bruit_route, layers.bruit_carte, commune, communes.data, mapReady])
+  }, [renouv.data, layers.renouv, commune, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -1894,91 +1027,18 @@ export function MapView() {
     // Le fill est visible dès que les limites OU le zonage-par-parcelle (zonageFill) sont actifs.
     m.setLayoutProperty('parcels-fill', 'visibility', vis((layers.parcelles || zonageFill) && !ile))
     m.setLayoutProperty('parcels-line', 'visibility', vis(layers.parcelles && !ile))
-    m.setLayoutProperty('parcels-limites', 'visibility', vis(layers.limites && !ile))
     m.setLayoutProperty('ile-fill', 'visibility', vis((layers.parcelles || zonageFill) && ile))
     m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile))
-    m.setLayoutProperty('ile-limites', 'visibility', vis(layers.limites && ile))
     m.setLayoutProperty('ile-sel', 'visibility', vis(ile))
     m.setLayoutProperty('ile-hl', 'visibility', vis(ile))
     // M15 A1 : couche de picking Assemblage — contours violets visibles seulement quand l'outil est actif
     m.setLayoutProperty('ile-pick', 'visibility', vis((module === 'assemblage' || comparePicking) && ile))
-    m.setLayoutProperty('ov-zonage', 'visibility', vis(layers.zonage && !ile))
-    m.setLayoutProperty('ov-ppr', 'visibility', vis(layers.ppr && !ile))
-    m.setLayoutProperty('ovmvt-zonage', 'visibility', vis(layers.zonage && ile))
-    m.setLayoutProperty('ovmvt-ppr', 'visibility', vis(layers.ppr && ile))
-    // M105-B : les contours suivent EXACTEMENT leur remplissage (largeur 0 en Sombre)
-    m.setLayoutProperty('ov-zonage-line', 'visibility', vis(layers.zonage && !ile))
-    m.setLayoutProperty('ov-ppr-line', 'visibility', vis(layers.ppr && !ile))
-    m.setLayoutProperty('ovmvt-zonage-line', 'visibility', vis(layers.zonage && ile))
-    m.setLayoutProperty('ovmvt-ppr-line', 'visibility', vis(layers.ppr && ile))
-    m.setLayoutProperty('ov-parc', 'visibility', vis(layers.parc))
-    m.setLayoutProperty('ov-parc-line', 'visibility', vis(layers.parc))
-    m.setLayoutProperty('ov-znieff', 'visibility', vis(layers.znieff))   // M137-U — contrainte ZNIEFF
-    m.setLayoutProperty('ov-anru', 'visibility', vis(layers.anru))
-    m.setLayoutProperty('ov-anru-trame', 'visibility', vis(layers.anru))
-    // M134 — couche « Dispositifs »
-    m.setLayoutProperty('ov-qpv', 'visibility', vis(layers.qpv))
-    m.setLayoutProperty('ov-tva_primo', 'visibility', vis(layers.tva_primo))
-    m.setLayoutProperty('ov-zfang', 'visibility', vis(layers.zfang))
-    m.setLayoutProperty('ov-zfang-trame', 'visibility', vis(layers.zfang))   // M137-Y — hachure ZFANG standard (moindre)
-    m.setLayoutProperty('ov-frr', 'visibility', vis(layers.frr))
-    m.setLayoutProperty('ov-frr-trame', 'visibility', vis(layers.frr))       // M137-Y — hachure FRR en partie (moindre)
-    m.setLayoutProperty('ov-vefa_neuf', 'visibility', vis(layers.vefa_neuf)) // SECTEUR-2 (T4) — prix du neuf VEFA
-    m.setLayoutProperty('ov-vefa_neuf-trame', 'visibility', vis(layers.vefa_neuf)) // U1 — hachure sous-seuil
-    // SOURCES-1 lot 1 — contraintes du droit des sols
-    m.setLayoutProperty('ov-er', 'visibility', vis(layers.er))
-    m.setLayoutProperty('ov-ebc', 'visibility', vis(layers.ebc))
-    m.setLayoutProperty('ov-dpu', 'visibility', vis(layers.dpu))
-    m.setLayoutProperty('ov-peb', 'visibility', vis(layers.peb))
-    m.setLayoutProperty('ov-sup', 'visibility', vis(layers.sup))
-    // SOURCES-1 lot 2 — nature et eau
-    m.setLayoutProperty('ov-dpf', 'visibility', vis(layers.dpf))
-    m.setLayoutProperty('ov-endiguement', 'visibility', vis(layers.endiguement))
-    m.setLayoutProperty('ov-endiguement-digue', 'visibility', vis(layers.endiguement))
-    m.setLayoutProperty('ov-zone_humide', 'visibility', vis(layers.zone_humide))
-    m.setLayoutProperty('ov-enp', 'visibility', vis(layers.enp))
-    m.setLayoutProperty('ov-rpg', 'visibility', vis(layers.rpg))
-    // SOURCES-1 lot 3 — sols et bruit
-    m.setLayoutProperty('ov-sis', 'visibility', vis(layers.sis))
-    m.setLayoutProperty('ov-sis-pt', 'visibility', vis(layers.sis))
-    m.setLayoutProperty('ov-casias', 'visibility', vis(layers.casias))
-    m.setLayoutProperty('ov-casias-fill', 'visibility', vis(layers.casias))
-    m.setLayoutProperty('ov-bruit_route', 'visibility', vis(layers.bruit_route))
-    m.setLayoutProperty('ov-bruit_carte', 'visibility', vis(layers.bruit_carte))
-    m.setLayoutProperty('ov-artificialisation', 'visibility', vis(layers.artificialisation))
-    // M106 P1 : les deux couches d'aléa (aplat + contour suivent leur toggle — R7 : plus de trame)
-    for (const [id, on] of [['ov-alea-inond', layers.alea_inondation], ['ov-alea-mvt', layers.alea_mvt]] as const) {
-      m.setLayoutProperty(id, 'visibility', vis(on))
-      m.setLayoutProperty(`${id}-line`, 'visibility', vis(on))
-    }
-    // M106 P4 / M106-B : transport public — RETOURS-14 S7 : lignes ET arrêts ensemble.
-    for (const id of ['ov-trans-ligne', 'ov-trans-arret', 'ov-tele', 'ov-tele-st']) {
-      m.setLayoutProperty(id, 'visibility', vis(layers.transport))
-    }
-    m.setLayoutProperty('ov-axe', 'visibility', vis(layers.axes))
-    m.setLayoutProperty('ov-pole', 'visibility', vis(layers.axes))   // M137-X — pôles sur « Axes structurants »
-    // RETOURS-14 S9 : lignes électriques fusionnées (HTB + HTA sous une entrée).
-    m.setLayoutProperty('ov-ht', 'visibility', vis(layers.lignes_ht))
-    m.setLayoutProperty('ov-mt', 'visibility', vis(layers.lignes_ht))
-    // RETOURS-14 S8 : « Stationnement allégé » = zone 800 m + parcelles teintées + stations + voies.
-    m.setLayoutProperty('ov-tcsp', 'visibility', vis(layers.tcsp))
-    m.setLayoutProperty('ov-tcsp-zone-parcelles', 'visibility', vis(layers.tcsp))
-    m.setLayoutProperty('ov-tcsp-zone-rayon', 'visibility', vis(layers.tcsp))
-    m.setLayoutProperty('ov-tcsp-st', 'visibility', vis(layers.tcsp))
-    // M6.1 item 2 : 50 pas géométriques (remplissage + contour tireté) — servis île entière
-    m.setLayoutProperty('ov-50pas', 'visibility', vis(layers.cinquante_pas))
-    m.setLayoutProperty('ov-50pas-line', 'visibility', vis(layers.cinquante_pas))
     // M-RENOUV : segment Renouvellement (cuivre) — OFF par défaut
     m.setLayoutProperty('ov-renouv', 'visibility', vis(layers.renouv))
     m.setLayoutProperty('ov-renouv-line', 'visibility', vis(layers.renouv))
     // M6.1 item 1 : étiquette de zone PRÉCISE (zone_lib, z ≥ 16) — suit la couche zonage
     m.setLayoutProperty('parcels-zone-label', 'visibility', vis(layers.zonage_parcelle && !ile))
     m.setLayoutProperty('ile-zone-label', 'visibility', vis(layers.zonage_parcelle && ile))
-    m.setLayoutProperty('ov-equip', 'visibility', vis(layers.equipements))
-    m.setLayoutProperty('ov-equip-bpe', 'visibility', vis(layers.equipements_bpe))   // M137-U — 2e source
-    // M137-V — filtre par domaine BPE (A..G) : n'afficher que les domaines cochés dans la légende.
-    if (m.getLayer('ov-equip-bpe')) m.setFilter('ov-equip-bpe', ['in', ['get', 'subtype'], ['literal', bpeDomains]] as never)
-    m.setLayoutProperty('communes-bounds', 'visibility', vis(layers.communes))   // P11
     // M55-G suite (point 1) — LE FILTRE DE PALETTE :
     //  · couche « Verdict — toute l'île » cochée → AUCUN filtre (peinture explicite du
     //    classement entier, indépendante des filtres — le libellé de la couche le dit) ;
