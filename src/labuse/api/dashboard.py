@@ -2208,12 +2208,19 @@ def admin_circuit(request: Request) -> dict:
             _verrous = _verrous_mod.synthese_pour_page(_c2)
     except Exception:  # noqa: BLE001 — page jamais bloquée par la synthèse
         _verrous = None
+    # CRON-1 lot 2 (G8) — les sources que personne ne contrôle, pour la ligne rouge NOMMÉE du Résumé.
+    try:
+        from .. import circuit_garanties as _garanties
+        with engine().begin() as _c3:
+            _sans_controle = _garanties.sources_sans_controle(_c3)
+    except Exception:  # noqa: BLE001 — la ligne G8 ne bloque jamais la page
+        _sans_controle = []
     resume = _resume.composer(reservoirs, robinets, compteurs=compteurs, residuel=residuel,
                               run_servi=runs.current(), candidat=_candidat,
                               fuite_robinets=_fuite_rob, eau_robinets=_eau_rob,
                               regles_ecart=sorted(_verdicts_rob["ecart"]),
                               regles_choix=sorted(_verdicts_rob["choix"]),
-                              verrous=_verrous)
+                              verrous=_verrous, sources_sans_controle=_sans_controle)
     # ── CIRCUIT-6 — les sept garanties, jouées côté serveur (le front les REND, lot 8) +
     # le catalogue calculé (G1 : 116 en base / 95 en vitrine, jamais gravé) + les doublons.
     from dataclasses import asdict as _asdict

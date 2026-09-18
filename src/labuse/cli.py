@@ -4595,7 +4595,7 @@ def circuit_verrous_cmd(
     sans_journal: bool = typer.Option(False, "--sans-journal", help="Ne pas écrire au journal du circuit."),
 ) -> None:
     """CIRCUIT-5 lot 6.1 + CIRCUIT-6 lot 8 — LA commande unique : joue les SEIZE verrous
-    (V1a…V5c) PUIS les SEPT garanties (G1…G7) — 23, TOUJOURS TOUS (plus d'arrêt au premier
+    (V1a…V5c) PUIS les HUIT garanties (G1…G8) — CRON-1 lot 2 a ajouté G8, TOUJOURS TOUS (plus d'arrêt au premier
     cassé : un cassé ne doit jamais en cacher un autre). Une ligne chacun (phrase, verdict,
     preuve) ; fin : « tout va bien » ou la liste de ce qui casse ; code retour 1 si ≥ 1 cassé.
     Jouée par pytest (marque `verrous`), par la sonde de nuit, et par deploy.sh (même commande,
@@ -4623,11 +4623,11 @@ def circuit_verrous_cmd(
                  "preuves": {r.id: r.preuve for r in resultats}})
             s.commit()
     if casses:
-        typer.echo(f"— {len(resultats)} joués (17 verrous + 7 garanties) : "
+        typer.echo(f"— {len(resultats)} joués (17 verrous + 8 garanties) : "
                    f"{len(casses)} CASSÉ(S) — {', '.join(r.id for r in casses)}"
                    + (f" · {len(a_decider)} à décider" if a_decider else ""))
         raise typer.Exit(1)
-    typer.echo(f"— {len(resultats)} joués (17 verrous + 7 garanties) : tout va bien"
+    typer.echo(f"— {len(resultats)} joués (17 verrous + 8 garanties) : tout va bien"
                + (f" · {len(a_decider)} à décider" if a_decider else ""))
 
 
