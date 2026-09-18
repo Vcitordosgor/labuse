@@ -134,3 +134,62 @@ class EndiguementLayer(Layer):
             f"Parcelle protégée par un système d'endiguement — {i.name or 'ouvrage'}{det} : "
             "inondation RÉSIDUELLE en cas de défaillance ou de dépassement du niveau de protection.",
             Severity.MOYEN, source=SRC_ENDIG), i.id)
+
+
+# ───────────────────────── LOT 2 — deux couches à enjeu foncier ─────────────────────────
+
+SRC_BV = "BD TOPO / BD Carthage — bassins versants (hydrographie)"
+SRC_ZA = "BD TOPO — zones d'activité ou d'intérêt"
+
+
+@register
+class BassinVersantLayer(Layer):
+    """Bassin versant — nouveau handler (le thème hydrographie n'était pas croisé). CONTEXTE
+    hydrographique : l'urbanisation amont pèse sur le ruissellement/la submersion en aval, un
+    facteur de décision. La donnée est une DÉLIMITATION (code hydro), sans attribut de risque
+    par bassin → sévérité INFO (ligne de contexte affichée, 0 point ; pas une alerte graduée)."""
+
+    name = "bassin_versant"
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, "Bassins versants non ingérés.", source=SRC_BV)
+        inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
+        if not inter:
+            return passed(self.name, "Hors bassin versant cartographié.", source=SRC_BV)
+        i = max(inter, key=lambda x: x.coverage)
+        code = (i.attrs or {}).get("code_hydro")
+        ref = f"code hydro {code}" if code else (i.name or "bassin")
+        return _trace(soft_flag(
+            self.name,
+            f"Bassin versant ({ref}) — {_pct(i.coverage)} de la parcelle : contexte hydrographique "
+            "(ruissellement amont/aval, submersion). L'urbanisation en amont pèse sur l'aval — à "
+            "considérer avec les aléas et scénarios d'inondation.",
+            Severity.INFO, source=SRC_BV), i.id)
+
+
+@register
+class ZoneActiviteLayer(Layer):
+    """Zone d'activité ou d'intérêt (BD TOPO) — nouveau handler à enjeu FONCIER : la destination
+    économique de la zone (industrielle, commerciale, équipement…) pèse sur la valeur, les
+    nuisances et les règles propres. SOFT_FLAG faible, servi à l'onglet Marché (served_cascade)."""
+
+    name = "zone_activite"
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, "Zones d'activité non ingérées.", source=SRC_ZA)
+        inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
+        if not inter:
+            return passed(self.name, "Hors zone d'activité.", source=SRC_ZA)
+        i = max(inter, key=lambda x: x.coverage)
+        nature = i.subtype or "zone d'activité"
+        nom = f" « {i.name} »" if i.name and i.name != nature else ""
+        return _trace(soft_flag(
+            self.name,
+            f"Parcelle dans une zone d'activité ou d'intérêt — {nature}{nom} ({_pct(i.coverage)} "
+            "de la parcelle) : destination économique à considérer (valeur, nuisances éventuelles, "
+            "règles propres à la zone).",
+            Severity.FAIBLE, source=SRC_ZA), i.id)

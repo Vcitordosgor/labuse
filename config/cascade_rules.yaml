@@ -483,6 +483,18 @@ layers:
     params:
       spatial_kind: endiguement
 
+  # ─── FICHE-COUCHES-2 lot 2 — deux couches à enjeu foncier (nouveaux handlers) ───
+  - name: bassin_versant # FICHE-COUCHES-2 : contexte hydrographique (INFO — délimitation, 0 point)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: bassin_versant
+  - name: zone_activite  # FICHE-COUCHES-2 : destination économique (onglet Marché)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: zone_activite
+
   # ───────────────────────── PHASE 2 — coûteuse / externe ─────────────────────────
 
   - name: dvf

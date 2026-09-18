@@ -153,8 +153,12 @@ _ONGLET = {
     "risques": {"risques", "sol_pollue", "cavite", "icpe", "mvt", "pente", "ravine",
                 "trait_de_cote", "abf", "ens", "eau", "bruit_route", "cinquante_pas", "sup",
                 # FICHE-COUCHES-2 lot 1 : couches manquantes rattachées à l'onglet Risques.
-                "znieff", "tri_zone", "bruit_carte", "endiguement"},
-    "marche": {"dvf", "sitadel", "amenites", "potentiel_foncier_region"},
+                "znieff", "tri_zone", "bruit_carte", "endiguement",
+                # FICHE-COUCHES-2 lot 2 : bassin versant = contexte hydrographique (Risques).
+                "bassin_versant"},
+    "marche": {"dvf", "sitadel", "amenites", "potentiel_foncier_region",
+               # FICHE-COUCHES-2 lot 2 : zone d'activité = destination économique (Marché).
+               "zone_activite"},
     "reseaux": {"acces"},
     "proprio": {"proprietaire", "age_dirigeant", "bodacc", "assemblage"},
 }
