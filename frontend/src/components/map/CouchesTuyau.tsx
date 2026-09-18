@@ -64,8 +64,11 @@ export function useTuyauPlan() {
   return useQuery({ queryKey: ['tuyau-couches'], queryFn: chargerPlan, staleTime: 3_600_000 })
 }
 
-// COUCHES-REGISTRE-2 lot 2 — le « i » dit la vérité : source · millésime · date du dernier contrôle,
-// tirés du réservoir réel (endpoint /map/couches-info, clé = kind). La prose YAML reste EN DESSOUS.
+// COUCHES-REGISTRE-2 lot 2 — le « i » dit la vérité : source · millésime, tirés du réservoir réel
+// (endpoint /map/couches-info, clé = kind). La prose YAML reste EN DESSOUS.
+// PAGES-RANGEMENT-1 (lot 2) — la DATE DU DERNIER CONTRÔLE (et « jamais contrôlé ») est retirée du « i » :
+// c'est de l'exploitation (elle vit au dashboard admin, fiche du réservoir). `date_controle` reste servi
+// par l'endpoint (utilisé côté admin) mais n'est plus rendu ici.
 type CoucheInfo = { source: string; millesime: string | null; date_controle: string | null; fabrication: string | null }
 async function chargerCouchesInfo(): Promise<Record<string, CoucheInfo>> {
   const r = await fetch('/map/couches-info')
@@ -75,18 +78,14 @@ async function chargerCouchesInfo(): Promise<Record<string, CoucheInfo>> {
 function useCouchesInfo() {
   return useQuery({ queryKey: ['couches-info'], queryFn: chargerCouchesInfo, staleTime: 3_600_000 })
 }
-// le contenu du « i » : bloc registre (source/millésime/contrôle) + prose YAML séparée en dessous.
+// le contenu du « i » : bloc registre (source · millésime) + prose YAML séparée en dessous.
 function InfoTuyau({ meta, prose }: { meta?: CoucheInfo; prose?: string | null }) {
-  const controle = meta?.date_controle
-    ? `contrôlé le ${new Date(meta.date_controle).toLocaleDateString('fr-FR')}`
-    : 'jamais contrôlé'
   return (
     <span className="block">
       {meta && (
         <span className="block">
           <span className="font-medium text-txt">{meta.source}</span>
           {meta.millesime && <span className="text-txt-dim"> · millésime {meta.millesime.replace(/^mill[ée]sime\s+/i, '')}</span>}
-          <span className={meta.date_controle ? 'text-txt-dim' : 'text-danger'}> · {controle}</span>
         </span>
       )}
       {prose && (
