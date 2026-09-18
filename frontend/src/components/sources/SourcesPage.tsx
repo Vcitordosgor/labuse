@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { getSources, getSourcesCouverture, getSourcesCouches, type SourceCouche } from '../../lib/api'
+import { getSources, getSourcesCouverture } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
 import { TOKENS } from '../../lib/tokens'
 import type { SourceInfo } from '../../lib/types'
@@ -13,30 +13,11 @@ import { Loading } from '../Loading'
 // si un vieux cache n'a pas encore le champ : « Licence à confirmer » (jamais un libellé inventé).
 function licence(s: SourceInfo): string { return s.license_label || 'Licence à confirmer' }
 
-// RETOURS-9 (Q11.3) — les prédicats de MÉTHODE DE VEILLE (sondable/suiviManuel) ne servent plus côté
-// client : la « dernière colonne » (collecte manuelle/automatique) disparaît. Le client lit source ·
-// producteur · publié le · à jour. Ces distinctions restent dans Données (admin).
-// RETOURS-8 (R2) — le client ne voit que DEUX états, et le mot « retard » n'apparaît JAMAIS. L'arbitre
-// unique du serveur (etats_sources → `etat_client`) tranche : « pas à jour » = une version plus récente
-// existe chez le producteur et n'est pas encore intégrée (« mise à jour en cours », jamais rouge) ; tout
-// le reste = « à jour ». Les anciens prédicats fraîcheur (en_retard / en_panne / en_erreur / amont en
-// avance) NE SONT PLUS surfacés côté client : leur détail vit au dashboard admin (R1).
-const pasAJour = (s: SourceInfo) => s.etat_client === 'pas_a_jour'
-const aJour = (s: SourceInfo) => !pasAJour(s)
-// RETOURS-11 A8 — `versionMeta`/`majReelle`/`millesimeNote` (fraîcheur amont + « ingéré le ») retirés :
-// la colonne de version n'est plus rendue côté client (information admin, elle vit dans Données).
-
-// FIX-SOURCES S4 — la FIABILITÉ (data_sources.reliability_level) était STOCKÉE mais jamais rendue
-// (champ mort). On la montre quand elle appelle une réserve honnête (« à confirmer » / convention /
-// légal) ; « vérifié » = l'état par défaut d'une source servie, pas un badge (ce serait du bruit).
-function fiabiliteBadge(s: SourceInfo): { label: string; title: string } | null {
-  switch (s.reliability_level) {
-    case 'a_confirmer': return { label: 'fiabilité à confirmer', title: 'Donnée servie, mais sa fiabilité (ou sa licence) reste à confirmer avec le producteur.' }
-    case 'sous_convention': return { label: 'accès sous convention', title: 'Accès encadré par une convention avec le producteur.' }
-    case 'legal': return { label: 'accès légal restreint', title: 'Réutilisation juridiquement encadrée.' }
-    default: return null
-  }
-}
+// PAGES-RANGEMENT-1 (lot 1) — L'EXPLOITATION SORT DE L'APP CLIENTE. Le client voit QUELLES sources
+// alimentent LABUSE et leur MILLÉSIME, rien d'autre. Tout ce qui relève de l'exploitation — fraîcheur,
+// états (« à jour » / « mise à jour en cours »), compteur « X à jour », fiabilité (reliability_level) —
+// est retiré ici : ce détail vit au dashboard admin (Données / le Circuit). Les pastilles de couches
+// par source (COUCHES-REGISTRE-2 lot 3) ont elles aussi migré vers la fiche du réservoir (Données).
 
 // ── Badge (classe .badge de la maquette) : mono, majuscule, 3 variantes. `auto` = mint (le producteur
 // expose une date interrogeable), `late` = warn (#D9873D, en retard sur sa cadence), `dashed` = pointillé
@@ -50,48 +31,28 @@ function Badge({ kind, children, title }: { kind: 'auto' | 'late' | 'dashed' | '
   return <span title={title} className={`${base} border border-dashed border-line-2 text-txt-dim`}>{children}</span>
 }
 
-function Row({ s, focused, couches }: { s: SourceInfo; focused: boolean; couches?: SourceCouche[] }) {
+function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
-  // COUCHES-REGISTRE-2 lot 3 — clic sur une couche alimentée : l'allumer (si éteinte) et aller à la carte.
-  const versCouche = (kind: string) => {
-    const st = useApp.getState()
-    if (!st.tuyauActives[kind]) st.toggleTuyau(kind)
-    st.setView('cartes')
-  }
   useEffect(() => { if (focused) ref.current?.scrollIntoView({ block: 'center' }) }, [focused])
 
-  const majEnCours = pasAJour(s)
   const lic = licence(s)
-  const fiab = fiabiliteBadge(s)
   const prod = [s.provider, lic].filter(Boolean)
 
   return (
     // RECETTE-1 R31 — survol vert opaque (hover-fill) comme le reste de l'app, au lieu du lavis blanc.
     <div ref={ref} data-source-row
       className={`hover-fill grid grid-cols-[14px_1fr_20px] items-center gap-x-3.5 gap-y-1.5 border-b border-line px-4 py-3 last:border-b-0 md:grid-cols-[14px_1fr_190px_20px] ${focused ? 'bg-mint/[0.06]' : ''}`}>
-      {/* RETOURS-8 (R2) — pastille JAMAIS rouge : mint (à jour) ou mint atténué (mise à jour en cours).
-          Le client ne doit jamais croire que LABUSE est en retard. */}
-      <span className="h-[7px] w-[7px] shrink-0 rounded-full"
-        style={majEnCours
-          ? { background: TOKENS.mint, opacity: 0.5, boxShadow: '0 0 0 3px rgba(74,222,128,.08)' }
-          : { background: TOKENS.mint, boxShadow: '0 0 0 3px rgba(74,222,128,.10)' }}
-        title={majEnCours ? 'Mise à jour en cours (une version plus récente arrive)' : 'À jour : la dernière version publiée par le producteur est dans l\'app'} />
+      {/* PAGES-RANGEMENT-1 (lot 1) — la pastille d'état (fraîcheur ok/mise à jour) est RETIRÉE côté
+          client. La colonne reste (espaceur) pour ne pas déplacer les cellules alignées ci-dessous. */}
+      <span aria-hidden className="h-[7px] w-[7px] shrink-0" />
 
-      {/* nom + badges d'état */}
+      {/* nom + nature de la donnée (proxy) — plus aucun badge d'état ni de fiabilité */}
       <span className="flex flex-wrap items-center gap-2 text-[13.5px] text-txt">
         {s.name}
-        {/* RETOURS-8 (R2) — le seul état « non à jour » possible côté client : « mise à jour en cours »
-            (une version plus récente existe chez le producteur). Neutre, jamais rouge, jamais « retard ». */}
-        {majEnCours && (
-          <Badge kind="auto" title="Une version plus récente existe chez le producteur ; son intégration est en cours.">
-            <span data-source-maj>mise à jour en cours</span>
-          </Badge>
-        )}
-        {/* RETOURS-9 (Q11.3) — badges « version vérifiée » / « suivi manuel » (méthode de veille) retirés côté client. */}
+        {/* nature (« proxy — donnée approchée ») : honnêteté sur la donnée, pas un état d'exploitation. */}
         {s.nature?.dashed && (
           <Badge kind="dashed" title={s.nature.detail}><span data-source-nature>{s.nature.label}</span></Badge>
         )}
-        {fiab && <Badge kind="dashed" title={fiab.title}><span data-source-fiabilite>{fiab.label}</span></Badge>}
       </span>
 
       {/* lien source officielle — col 3 sur mobile (1re ligne), col 5 en large */}
@@ -130,20 +91,9 @@ function Row({ s, focused, couches }: { s: SourceInfo; focused: boolean; couches
           {s.couverture_note}
         </p>
       )}
-      {/* COUCHES-REGISTRE-2 lot 3 — LE SENS INVERSE : les couches carte que cette source alimente,
-          chacune cliquable → l'allume sur la carte. Muet si la source ne nourrit aucune couche. */}
-      {couches && couches.length > 0 && (
-        <p data-source-couches className="col-[2/-1] flex flex-wrap items-center gap-1.5 text-[12px] text-txt-dim">
-          <span className="text-txt-mut">Couches carte :</span>
-          {couches.map((c) => (
-            <button key={c.kind} data-source-couche={c.kind} onClick={() => versCouche(c.kind)}
-              title={`Voir « ${c.nom} » sur la carte`}
-              className="rounded-full border border-line-2 px-2 py-0.5 text-[11px] text-txt-dim transition-colors hover:border-mint hover:text-mint">
-              {c.nom} ↗
-            </button>
-          ))}
-        </p>
-      )}
+      {/* PAGES-RANGEMENT-1 (lot 1) — les pastilles « couches carte alimentées » (COUCHES-REGISTRE-2 lot 3)
+          ont migré vers la fiche du réservoir dans Données (dashboard admin) : elles relèvent du circuit
+          de la donnée, pas de la vitrine cliente. Le clic y ouvre la couche comme avant. */}
       {/* RETOURS-11 A8 — note interne (« proxy RPG (IGN) — RP… », etc.) retirée côté client (vit dans Données). */}
     </div>
   )
@@ -153,8 +103,6 @@ export function SourcesPage() {
   const { data, isLoading, isError } = useQuery({ queryKey: ['sources'], queryFn: getSources })
   // RETOURS-9 (Q11.5) — les chiffres de couverture qui parlent au client, lus des données réelles.
   const couverture = useQuery({ queryKey: ['sources-couverture'], queryFn: getSourcesCouverture, staleTime: 5 * 60_000 }).data
-  // COUCHES-REGISTRE-2 lot 3 — le sens inverse : les couches carte que chaque source alimente.
-  const couchesParSource = useQuery({ queryKey: ['sources-couches'], queryFn: getSourcesCouches, staleTime: 5 * 60_000 }).data
   const sourcesFocus = useApp((s) => s.sourcesFocus)
   const [q, setQ] = useState('')
   // RETOURS-9 (Q11.1) — plus de chips de tri : « Toutes » ou un thème (accordéon replié « Filtrer par thème »).
@@ -177,7 +125,6 @@ export function SourcesPage() {
   // Les sources servies (hors doublons). L'API ne sert déjà que connecte-hors-masquées ; filtre défensif.
   const comptees = useMemo(() => (data ?? []).filter((s) => !s.doublon), [data])
   const nTotal = comptees.length
-  const nAJour = comptees.filter(aJour).length
   // FIX-SOURCES S3 — la réserve DVF ne code plus « 2025–2026 » en dur : la borne RÉCENTE est LUE dans
   // la base (dernière donnée servie de la source DVF). Sans donnée → phrase sans chiffre.
   const dvfMaxAnnee = useMemo(() => {
@@ -214,27 +161,23 @@ export function SourcesPage() {
       <div className="mx-auto w-full max-w-[1060px] px-7 py-10">
         {/* en-tête */}
         <p className="mb-3.5 font-mono text-[10.5px] uppercase tracking-[.16em] text-txt-dim">Données et méthode</p>
-        <h1 className="mb-2 text-[26px] font-semibold tracking-[-.02em] text-txt-hi">Sources &amp; fraîcheur</h1>
-        {/* RETOURS-9 (Q11.4) — intro en PLEINE LARGEUR (plus de marge interne étroite), raccourcie. */}
+        <h1 className="mb-2 text-[26px] font-semibold tracking-[-.02em] text-txt-hi">Sources</h1>
+        {/* PAGES-RANGEMENT-1 (lot 1) — la promesse cliente : d'où vient le chiffre et de quand il date.
+            L'« à jour dans l'app » (fraîcheur/exploitation) a quitté cette page pour le dashboard admin. */}
         <p data-sources-positionnement className="mb-7 text-[13px] leading-relaxed text-txt-mut">
-          Chaque chiffre LABUSE est traçable jusqu'à sa source publique : d'où il vient, quand son
-          producteur l'a publié, et s'il est à jour dans l'app.
+          Chaque chiffre LABUSE est traçable jusqu'à sa source publique : d'où il vient et quand son
+          producteur l'a publié.
         </p>
 
-        {/* M105 P1 — l'encart HIÉRARCHISÉ : en grand l'essentiel (sources · à jour), en petit la
-            méthode (vérifiées auto · sans date exposée PAR LE PRODUCTEUR — ce n'est pas LABUSE qui
-            ne trace pas). Le compteur « en retard » a QUITTÉ l'encart : l'information vit sur la
-            ligne de chaque source concernée (badge + formulation, jamais masquée). Tous les
-            compteurs restent CALCULÉS (nAJour dérivé), aucun chiffre en dur. */}
-        {/* RETOURS-9 (Q11.5) — cinq tuiles au plus, une ligne : les deux chiffres cœur (sources · à jour)
-            gagnent des voisins qui parlent au client, LUS des données réelles (couverture). Q11.2 : la
-            ligne d'exploitation (« vérifiées automatiquement · radar amont… ») est retirée. */}
+        {/* PAGES-RANGEMENT-1 (lot 1) — l'encart ne porte plus que des chiffres CLIENTS : le nombre de
+            sources et la couverture réelle (parcelles · communes), LUS des données. La tuile « à jour »
+            (compteur d'exploitation) est retirée — la fraîcheur vit au dashboard admin. */}
         {data && (
           <div data-sources-bandeau className="mb-3.5 overflow-hidden rounded-[10px] border border-line bg-surface-2">
             <div className="flex flex-wrap">
               {([
                 { v: String(nTotal), l: 'sources', mint: false },
-                { v: String(nAJour), l: 'à jour', mint: true },
+                // PAGES-RANGEMENT-1 (lot 1) — la tuile « à jour » (compteur d'exploitation) est retirée.
                 { v: couverture?.parcelles != null ? couverture.parcelles.toLocaleString('fr-FR') : '—', l: 'parcelles couvertes', mint: false },
                 { v: couverture?.communes != null ? `${couverture.communes}/${couverture.communes_total}` : '—', l: 'communes', mint: false },
                 // RETOURS-10 (T7) — la tuile « dernière analyse » est retirée : la date de l'analyse
@@ -321,16 +264,15 @@ export function SourcesPage() {
               <span className="font-mono text-[10.5px] text-txt-dim opacity-60">{list.length}</span>
             </div>
             <div className="overflow-hidden rounded-[10px] border border-line bg-surface-1">
-              {list.map((s) => <Row key={s.id} s={s} focused={s.name === sourcesFocus} couches={couchesParSource?.[s.name]} />)}
+              {list.map((s) => <Row key={s.id} s={s} focused={s.name === sourcesFocus} />)}
             </div>
           </div>
         ))}
 
-        {/* légende — RETOURS-9 (Q11.3) : plus de méthode de veille, le client lit source · producteur · publié le · à jour. */}
+        {/* légende — PAGES-RANGEMENT-1 (lot 1) : les entrées de fraîcheur (« à jour » / « mise à jour en
+            cours ») sont retirées ; reste la seule nature de donnée qui parle au client (proxy). */}
         {data && (
           <div className="mt-9 flex flex-wrap gap-x-6 gap-y-2.5 border-t border-line pt-4 text-[12px] text-txt-dim">
-            <span className="flex items-center gap-2"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: TOKENS.mint }} /> à jour : la dernière version publiée est dans l'app</span>
-            <span className="flex items-center gap-2"><Badge kind="auto">mise à jour en cours</Badge> une version plus récente arrive</span>
             <span className="flex items-center gap-2"><Badge kind="dashed">proxy</Badge> donnée approchée, jamais servie comme source</span>
           </div>
         )}
