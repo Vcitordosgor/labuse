@@ -495,6 +495,19 @@ layers:
     params:
       spatial_kind: zone_activite
 
+  # ─── FICHE-COUCHES-4 lot 2 — cimetière (servitude 100 m, Risques) + VEFA neuf (Marché) ───
+  - name: cimetiere      # FICHE-COUCHES-4 : servitude de voisinage cimetière (≤ 100 m)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: cimetiere
+      cap_m: 100
+  - name: vefa_neuf      # FICHE-COUCHES-4 : contexte marché du logement neuf (INFO, onglet Marché)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: vefa_neuf
+
   # ───────────────────────── PHASE 2 — coûteuse / externe ─────────────────────────
 
   - name: dvf

@@ -4355,7 +4355,20 @@ def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
         "SELECT sl.name FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
         "WHERE sl.kind = 'anru' AND ST_Intersects(p.geom_2975, sl.geom_2975) LIMIT 1"),
         {"idu": idu}).scalar()
+    # FICHE-COUCHES-4 lot 2 — PISCINE détectée (CoSIA) SUR la parcelle : élément bâti IMPOSABLE
+    # (taxe foncière ; à déclarer aux impôts, art. 1406 CGI). Recensement IA, à confirmer sur place.
+    piscine = db.execute(text(
+        "SELECT count(*) FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
+        "WHERE sl.kind = 'piscine_cosia' AND ST_Intersects(p.geom_2975, sl.geom_2975)"),
+        {"idu": idu}).scalar()
     perimetres = []
+    if piscine:
+        perimetres.append({
+            "libelle": f"Piscine détectée — {piscine} bassin{'s' if piscine > 1 else ''} (CoSIA)",
+            "detail": "Une piscine est un élément bâti IMPOSABLE : elle majore la taxe foncière et "
+                      "doit être déclarée aux impôts dans les 90 jours de l'achèvement (art. 1406 CGI). "
+                      "Détection automatique par IA (orthophoto 20 cm) — à confirmer sur place.",
+            "source": "CoSIA (IGN, PVA juil.–août 2025, 20 cm)", "derive": True})
     if anru:
         perimetres.append({
             "libelle": "Renouvellement urbain — NPNRU / ANRU",
