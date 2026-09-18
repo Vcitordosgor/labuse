@@ -63,12 +63,15 @@ def test_is_reunion_authentic():
     # CP brut réunionnais → authentique (int ou str, avec ou sans zéro de tête normalisé).
     assert is_reunion_authentic({"code_postal_brut": 97460})
     assert is_reunion_authentic({"code_postal_brut": "97400"})
-    # CP brut métropolitain (le géocodeur BAN a menti sur code_insee_ban) → rejeté.
-    assert not is_reunion_authentic({"code_postal_brut": 59440, "code_insee_ban": "97411"})
-    assert not is_reunion_authentic({"code_postal_brut": "62200", "code_insee_ban": "97415"})
-    # autres DOM (Mayotte 976xx) → pas La Réunion.
+    # SOURCES-CORRECTION-1 — géocodage BAN vers un INSEE 974* = signal fiable : AUTHENTIQUE même si
+    # le CP brut est métropolitain (bruit de saisie du diagnostiqueur ; ~900 DPE 974 réels sont ainsi).
+    assert is_reunion_authentic({"code_postal_brut": 59440, "code_insee_ban": "97411"})
+    assert is_reunion_authentic({"code_postal_brut": "62200", "code_insee_ban": "97415"})
+    # NI BAN 974 NI CP brut 974 → rejeté (ex. Lille : CP brut 59440 + BAN géocodé hors 974).
+    assert not is_reunion_authentic({"code_postal_brut": 59440, "code_insee_ban": "59350"})
+    # autres DOM (Mayotte 976xx) sans BAN 974 → pas La Réunion.
     assert not is_reunion_authentic({"code_postal_brut": 97600})
-    # CP brut absent → on laisse passer (0 cas mesuré ; la cascade locale tranche).
+    # BAN 974 seul (CP brut absent) → authentique ; CP brut réunionnais seul → authentique.
     assert is_reunion_authentic({"code_insee_ban": "97415"})
     assert is_reunion_authentic({"code_postal_brut": None})
 
@@ -205,24 +208,25 @@ def test_adresse_locale_ambigue_refusee(db_session):
 
 
 @pytest.mark.db
-def test_contamination_metropole_ecartee(db_session):
-    """Logement métropolitain rabattu par BAN sur un INSEE 974 : son id_ban réunionnais matche
-    une adresse locale — mais le CP brut métropolitain le fait ÉCARTER avant tout épinglage.
-    Sans le garde-fou, ce bien de métropole serait épinglé sur une vraie parcelle réunionnaise."""
+def test_ban974_cp_brut_metropolitain_garde(db_session):
+    """SOURCES-CORRECTION-1 (inverse de l'ancien `test_contamination_metropole_ecartee`) — un DPE
+    géocodé BAN en 974, dont l'`identifiant_ban` corrobore une adresse RÉUNIONNAISE locale et dont les
+    coordonnées tombent sur l'île, est un DPE réunionnais AUTHENTIQUE : il est GARDÉ, même si son CP
+    brut est métropolitain (bruit de saisie du diagnostiqueur ; ~900 DPE 974 réels sont dans ce cas).
+    L'ancienne règle tranchait sur le CP brut et l'écartait à tort (base bloquée à 16). La sécurité
+    contre un VRAI bien de métropole reste le garde-fou COORDONNÉES (cf. test_garde_974 : coords
+    Val-d'Oise → rejet), pas le CP brut."""
     _ensure_adresses(db_session)
     _parcel(db_session, "97415000AB0001", "Saint-Paul", PARCEL_WKT)
-    # l'adresse locale existe : la passe 1 (id_ban) matcherait sans le garde-fou.
     _adresse(db_session, "97415_9999_00012", "12", "Rue des Bougainvilliers", "97415",
              55.291, -21.009, "97415000AB0001")
     db_session.flush()
-    # même id_ban réunionnais, mais CP brut = 62200 (Boulogne-sur-Mer) : c'est un bien métropolitain.
-    rec = {**REC, "numero_dpe": "META0000001X", "code_postal_brut": 62200,
-           "nom_commune_brut": "BOULOGNE-SUR-MER"}
+    # BAN géocodé 974 + coords Réunion + id_ban qui matche l'adresse locale ; CP brut 62200 = bruit.
+    rec = {**REC, "numero_dpe": "REU9000001X", "code_postal_brut": 62200}
     res = ingest_commune(db_session, "97415", "Saint-Paul", connector=_StubDpe([rec]))
-    assert res == {"dpe": 0, "geocodes": 0, "rattaches_parcelle": 0, "hors_reunion": 1}
-    # rien inséré → aucune parcelle réunionnaise fantôme, aucun signal passoire.
-    assert db_session.execute(text("SELECT count(*) FROM dpe_records")).scalar() == 0
-    assert db_session.execute(text("SELECT count(*) FROM v_passoire_thermique")).scalar() == 0
+    assert res["dpe"] == 1 and res["hors_reunion"] == 0 and res["rattaches_parcelle"] == 1
+    # gardé ET rattaché à sa vraie parcelle réunionnaise (le CP brut métropolitain n'écarte plus).
+    assert db_session.execute(text("SELECT count(*) FROM dpe_records")).scalar() == 1
 
 
 @pytest.mark.db
