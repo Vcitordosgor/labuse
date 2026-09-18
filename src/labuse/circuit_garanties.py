@@ -618,9 +618,87 @@ def verrou_g7(db: Session) -> ResultatVerrou:
 
 # ── l'assembleur (rempli garantie par garantie, lots 1→7) ─────────────────────────────
 
+# ── G8 — personne ne contrôle une source hors sonde (CRON-1 lot 2) ─────────────────────
+#: méthodes de sonde AMONT réelles (une requête HTTP qui vérifie le producteur) ; `rappel` n'en est
+#: pas une (simple rappel d'une source manuelle), et l'absence de méthode non plus.
+_METHODES_SONDE = ("api", "page", "entete", "temoin")
+
+
+def classer_sans_controle(rows, seuil) -> list[dict]:
+    """CRON-1 lot 2 — LOGIQUE PURE (testable sans DB) : parmi des lignes {name, methode, actif,
+    dernier_passage_at}, celles que PERSONNE ne contrôle. Contrôlée = passage de sonde ≥ `seuil`, OU
+    sonde configurée en attente de son 1er passage (surveillée). Sinon : aucune sonde (rappel/aucune) ou
+    sonde en panne (dernier passage < seuil)."""
+    out: list[dict] = []
+    for r in rows:
+        a_sonde = r["methode"] in _METHODES_SONDE and bool(r["actif"])
+        p = r["dernier_passage_at"]
+        if p is not None and p >= seuil:
+            continue                       # contrôlée récemment (sonde ou agent a écrit un passage)
+        if a_sonde and p is None:
+            continue                       # sonde configurée, 1er passage en attente — surveillée
+        if a_sonde:
+            motif = f"sonde configurée mais muette depuis le {p.strftime('%d/%m')}" if p else "sonde muette"
+        elif r["methode"] == "rappel":
+            motif = "rappel manuel — aucune sonde amont, l'agent est à 0 €"
+        else:
+            motif = "aucune sonde amont, l'agent est à 0 €"
+        out.append({"name": r["name"], "motif": motif})
+    return out
+
+
+def sources_sans_controle(db: Session, jours: int = 7) -> list[dict]:
+    """Les sources VITRINE que personne ne contrôle (cf. `classer_sans_controle`). Avec l'agent
+    (agents-sources) plafonné à 0 €, une source hors sonde n'a plus aucun contrôleur."""
+    from datetime import datetime, timezone, timedelta
+    from .sources_catalog import WHERE_AFFICHEES, masquees_param
+    rows = db.execute(text(
+        "SELECT d.name, v.methode, v.actif, v.dernier_passage_at"
+        " FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id"
+        f" WHERE {WHERE_AFFICHEES} ORDER BY d.name"), {"masquees": masquees_param()}).mappings().all()
+    return classer_sans_controle(rows, datetime.now(timezone.utc) - timedelta(days=jours))
+
+
+def radar_sans_depot(db: Session, jours: int | None = None) -> str | None:
+    """Radar sans dépôt depuis plus que son échéance (env `LABUSE_RADAR_DEPOT_ECHEANCE_JOURS`, défaut
+    14 j) — Radar n'a pas de cron (dépôt manuel) ; l'échéance vit ici. Retourne le motif si en retard."""
+    import os
+    from datetime import datetime, timezone
+    if jours is None:
+        try:
+            jours = int(os.environ.get("LABUSE_RADAR_DEPOT_ECHEANCE_JOURS", "14") or 14)
+        except ValueError:
+            jours = 14
+    try:
+        last = db.execute(text("SELECT max(date_depot) FROM pige_depots")).scalar()
+    except Exception:  # noqa: BLE001 — pas de table dépôts → rien à dire
+        return None
+    if last is None:
+        return f"aucun dépôt Radar enregistré (échéance {jours} j)"
+    age = (datetime.now(timezone.utc) - last).days
+    return f"dernier dépôt Radar il y a {age} j (échéance {jours} j)" if age > jours else None
+
+
+def verrou_g8(db: Session) -> ResultatVerrou:
+    phrase = ("Aucune source vitrine sans contrôle depuis plus de 7 jours ; Radar sans dépôt depuis plus "
+              "que son échéance. Avec l'agent plafonné à 0 €, une source hors sonde n'est contrôlée par "
+              "personne — le verrou le dit, le Résumé la nomme.")
+    from .sources_catalog import WHERE_AFFICHEES, masquees_param
+    sans = sources_sans_controle(db, 7)
+    radar = radar_sans_depot(db)
+    pbs = [f"{x['name']} : {x['motif']}" for x in sans]
+    if radar:
+        pbs.append(f"Radar : {radar}")
+    n_vit = db.execute(text(f"SELECT count(*) FROM data_sources d WHERE {WHERE_AFFICHEES}"),
+                       {"masquees": masquees_param()}).scalar()
+    preuve = (f"{len(sans)} source(s) vitrine sur {n_vit} sans contrôle récent (agent à 0 €)"
+              + (f" · {radar}" if radar else " · Radar à jour"))
+    return ResultatVerrou("G8", phrase, "casse" if pbs else "ok", preuve, pbs[:20])
+
+
 def jouer_garanties(db: Session) -> list[ResultatVerrou]:
     """Joue les garanties implémentées, dans l'ordre. Le Résumé de la page Circuit et la CLI
     `labuse circuit verrous` les affichent avec les 16 verrous de CIRCUIT-5 (lot 8)."""
     jouees = [verrou_g1(db), verrou_g2(db), verrou_g3(db), verrou_g4(db), verrou_g5(db),
-              verrou_g6(db), verrou_g7(db)]
+              verrou_g6(db), verrou_g7(db), verrou_g8(db)]
     return jouees

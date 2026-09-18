@@ -680,6 +680,11 @@ SEED: list[dict] = [
     {"name": "INSEE RP2022 — bases IRIS (logement, population)", "methode": "page",
      "url": "https://www.insee.fr/fr/statistiques/8647012",
      "selecteur": r"Logement en (20\d{2})"},
+    # CRON-1 lot 1 — SRU (DHUP) SORT des rappels : le jeu data.gouv « communes-et-inventaire-sru » porte
+    # un `last_update` (appelé pour de vrai le 18/09 : HTTP 200, last_update 2026-08-11). Le CSV a une URL
+    # datée (donc instable), mais l'API du DATASET donne, elle, une date stable et lisible → vraie sonde.
+    {"name": "Inventaire SRU (DHUP)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/communes-et-inventaire-sru/", "selecteur": "last_update"},
 ]
 
 #: SENTINELLE-2 (X3.3) — les sources NON surveillées gardent un état EXPLICITE au panneau admin
@@ -731,7 +736,6 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     # NAF (Cerema) sorties d'ici : sous sonde RÉELLE (SEED SOURCES-3b) désormais ; une source ne peut
     # pas être à la fois surveillée et déclarée non surveillable (test_sentinelle).
     "INSEE RP Logement 2023": "Millésime ANNUEL du recensement (publication INSEE sans endpoint de version stable pour les tableaux communaux) — rappel par cadence, le millésime suivant s'ingère à la main (RP 2024 attendu fin 2026).",
-    "Inventaire SRU (DHUP)": "CSV national republié par la DHUP SANS URL de version stable (inventaire triennal, dernier v2 du 18/12/2025) — rappel par cadence, réingestion au fichier suivant.",
     "NPNRU (DEAL Réunion / ANCT)": "Liste ANCT FIGÉE (génération 2024) — pas de flux de version ; les quartiers NPNRU ne changent qu'à une nouvelle génération (geste manuel).",
     "PLH des 5 EPCI (extraction documentaire)": "Extraction DOCUMENTAIRE manuelle (dépôt) — la version vit dans les documents des EPCI, pas dans un flux ; rappel par cadence.",
     "RTAA DOM (textes réglementaires)": "Règles portées par le code (config/rtaa_dom.yaml), vérifiées sur Légifrance À LA MAIN aux versions consolidées « en vigueur » — pas d'API de version Légifrance exploitable pour ces articles.",
@@ -764,7 +768,6 @@ RAPPELS_MANUELS: list[dict] = [
     # version absente, texte légal figé, liste ANCT figée, API de calcul) : leur fraîcheur se suit
     # par cadence de relecture (rappel Y4), jamais par une fausse veille. Elles gardent leur raison
     # écrite (RAISONS_NON_SURVEILLEES / notes) — le rappel dit « ingérée le X, re-contrôle attendu ».
-    {"name": "Inventaire SRU (DHUP)", "cadence_jours": 1095, "convention_echeance": None},   # triennal
     {"name": "NPNRU (DEAL Réunion / ANCT)", "cadence_jours": 365, "convention_echeance": None},
     {"name": "INSEE RP Logement 2023", "cadence_jours": 365, "convention_echeance": None},
     {"name": "PLH des 5 EPCI (extraction documentaire)", "cadence_jours": 365, "convention_echeance": None},

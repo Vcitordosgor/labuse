@@ -441,12 +441,13 @@ def admin_pilotage(request: Request) -> dict:
     except Exception:  # noqa: BLE001 — la tuile Radar ne casse jamais la page Pilotage
         radar_tuile = None
 
-    # ADMIN-1 (AD5) — garde de cohérence : on LIT le dernier état du job coherence-run (jamais de
-    # re-sonde ici, qui serait coûteuse). Compteurs posés par jobs_impl.coherence_run (ok/n_surfaces).
+    # ADMIN-1 (AD5) / CRON-1 lot 1 — garde de cohérence : on LIT le dernier état de la sonde du circuit
+    # `coherence-robinets` (coherence-run retiré du registre au lot 1 ; la sonde des robinets porte la
+    # cohérence). Jamais de re-sonde ici (coûteuse). Compteur absent → None (affichage sobre).
     coherence = {"ok": None, "n_surfaces": None, "verifie_le": None}
     try:
         from .. import jobs as _jobs
-        etat = _jobs.lire_etat("coherence-run") or {}
+        etat = _jobs.lire_etat("coherence-robinets") or {}
         cpt = etat.get("compteurs") or {}
         coherence = {"ok": cpt.get("ok"), "n_surfaces": cpt.get("n_surfaces"),
                      "verifie_le": etat.get("fin") or etat.get("debut")}
@@ -2207,12 +2208,19 @@ def admin_circuit(request: Request) -> dict:
             _verrous = _verrous_mod.synthese_pour_page(_c2)
     except Exception:  # noqa: BLE001 — page jamais bloquée par la synthèse
         _verrous = None
+    # CRON-1 lot 2 (G8) — les sources que personne ne contrôle, pour la ligne rouge NOMMÉE du Résumé.
+    try:
+        from .. import circuit_garanties as _garanties
+        with engine().begin() as _c3:
+            _sans_controle = _garanties.sources_sans_controle(_c3)
+    except Exception:  # noqa: BLE001 — la ligne G8 ne bloque jamais la page
+        _sans_controle = []
     resume = _resume.composer(reservoirs, robinets, compteurs=compteurs, residuel=residuel,
                               run_servi=runs.current(), candidat=_candidat,
                               fuite_robinets=_fuite_rob, eau_robinets=_eau_rob,
                               regles_ecart=sorted(_verdicts_rob["ecart"]),
                               regles_choix=sorted(_verdicts_rob["choix"]),
-                              verrous=_verrous)
+                              verrous=_verrous, sources_sans_controle=_sans_controle)
     # ── CIRCUIT-6 — les sept garanties, jouées côté serveur (le front les REND, lot 8) +
     # le catalogue calculé (G1 : 116 en base / 95 en vitrine, jamais gravé) + les doublons.
     from dataclasses import asdict as _asdict

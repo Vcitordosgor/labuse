@@ -4241,6 +4241,58 @@ def jobs_status_cmd() -> None:
                    f"{str(d.get('duree_s') or '—'):9s} {d.get('fin') or 'jamais'}")
 
 
+def _crontab_du_registre(tz: str) -> str:
+    """CRON-1 lot 3 — le crontab /etc/cron.d/labuse GÉNÉRÉ depuis le registre (jobs.py). Aucune ligne
+    écrite à la main. `tz` = 'utc' (heure serveur = cron_utc tel quel) ou 'reunion' (+4 h, modulo 24 —
+    sûr : les jobs concernés sont quotidiens, aucun décalage de date ni de jour de semaine)."""
+    from .jobs import JOBS
+
+    def _h_reunion(cron_utc: str) -> str:
+        champs = cron_utc.split()
+        h = champs[1]
+        if h.isdigit():                       # heure simple → +4 (modulo 24) ; '*'/listes intacts
+            champs[1] = str((int(h) + 4) % 24)
+        return " ".join(champs)
+
+    conv = _h_reunion if tz == "reunion" else (lambda c: c)
+    lignes = [
+        "# ─────────────────────────────────────────────────────────────────────────────",
+        "# GÉNÉRÉ depuis le registre labuse.jobs (CRON-1) — NE PAS ÉDITER À LA MAIN.",
+        f"#   deploy.sh régénère et refuse tout écart. Heures en {'Réunion' if tz == 'reunion' else 'UTC'}.",
+        "# ─────────────────────────────────────────────────────────────────────────────",
+        "SHELL=/bin/sh", "MAILTO=root", "",
+    ]
+    for nom, j in JOBS.items():
+        lignes.append(f"# {j.cadence} · {j.heure_reunion} Réunion · {j.touche} — {j.titre}")
+        lignes.append(f"{conv(j.cron_utc)}   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run {nom}'")
+        lignes.append("")
+    return "\n".join(lignes).rstrip("\n") + "\n"
+
+
+@jobs_app.command("crontab")
+def jobs_crontab_cmd(
+    tz: str = typer.Option("utc", "--tz", help="Fuseau du serveur : 'utc' ou 'reunion' (+4 h)."),
+    verifier: str = typer.Option(None, "--verifier",
+        help="Compare le fichier posé au registre ; sort en erreur (1) au MOINDRE écart."),
+) -> None:
+    """Génère le crontab /etc/cron.d/labuse DEPUIS le registre (une ligne par job, jamais à la main).
+    `--verifier <fichier>` : le fichier posé DOIT être identique au registre régénéré, sinon REFUS."""
+    if tz not in ("utc", "reunion"):
+        typer.echo(f"✗ --tz doit être 'utc' ou 'reunion' (reçu {tz!r})", err=True)
+        raise typer.Exit(2)
+    contenu = _crontab_du_registre(tz)
+    if verifier:
+        from pathlib import Path
+        pose = Path(verifier).read_text(encoding="utf-8") if Path(verifier).exists() else ""
+        if pose != contenu:
+            typer.echo(f"✗ ÉCART : {verifier} ne correspond pas au registre (tz={tz}). "
+                       "Régénérer via deploy.sh — jamais éditer le crontab à la main.", err=True)
+            raise typer.Exit(1)
+        typer.echo(f"✓ {verifier} == registre (aucun écart, tz={tz})")
+        return
+    typer.echo(contenu, nl=False)
+
+
 # ═══════════════════════ CIRCUIT-1 (lot 1.5) — registre : le miroir en base ═══════════════════════
 registre_app = typer.Typer(add_completion=False,
                            help="Registre des chiffres/robinets (CIRCUIT-1) : le code est la vérité.")
@@ -4593,9 +4645,13 @@ def circuit_verrous_cmd(
     complet: bool = typer.Option(True, "--complet/--arret-premier", hidden=True,
                                  help="(déprécié — tout se joue toujours ; --arret-premier pour l'ancien mode)"),
     sans_journal: bool = typer.Option(False, "--sans-journal", help="Ne pas écrire au journal du circuit."),
+    avertissement: list[str] = typer.Option([], "--avertissement", "-w",
+        help="Garanties NON BLOQUANTES (répétable) : affichées et cassées, mais SANS code retour 1. "
+             "CRON-1 lot 3 : deploy.sh passe `-w G8` (G8 mesure la fraîcheur de la veille, pas la santé "
+             "du code ; déployer n'aggrave rien et le blocage empêcherait de poser les horloges)."),
 ) -> None:
     """CIRCUIT-5 lot 6.1 + CIRCUIT-6 lot 8 — LA commande unique : joue les SEIZE verrous
-    (V1a…V5c) PUIS les SEPT garanties (G1…G7) — 23, TOUJOURS TOUS (plus d'arrêt au premier
+    (V1a…V5c) PUIS les HUIT garanties (G1…G8) — CRON-1 lot 2 a ajouté G8, TOUJOURS TOUS (plus d'arrêt au premier
     cassé : un cassé ne doit jamais en cacher un autre). Une ligne chacun (phrase, verdict,
     preuve) ; fin : « tout va bien » ou la liste de ce qui casse ; code retour 1 si ≥ 1 cassé.
     Jouée par pytest (marque `verrous`), par la sonde de nuit, et par deploy.sh (même commande,
@@ -4607,8 +4663,11 @@ def circuit_verrous_cmd(
         resultats += circuit_garanties.jouer_garanties(s)
         casses = [r for r in resultats if r.verdict == "casse"]
         a_decider = [r for r in resultats if r.verdict == "a_decider"]
+        # CRON-1 lot 3 — garanties NON BLOQUANTES (`-w G8`) : cassées mais sans code retour 1.
+        avertis = [r for r in casses if r.id in set(avertissement)]
+        bloquants = [r for r in casses if r.id not in set(avertissement)]
         for r in resultats:
-            pictos = {"ok": "✓", "casse": "✗", "a_decider": "…"}
+            pictos = {"ok": "✓", "casse": "⚠" if r.id in set(avertissement) else "✗", "a_decider": "…"}
             typer.echo(f"{pictos[r.verdict]} {r.id:4} {r.phrase}")
             typer.echo(f"       {r.preuve}")
             for d in r.details[:10]:
@@ -4622,12 +4681,17 @@ def circuit_verrous_cmd(
                  "a_decider": [r.id for r in a_decider],
                  "preuves": {r.id: r.preuve for r in resultats}})
             s.commit()
-    if casses:
-        typer.echo(f"— {len(resultats)} joués (17 verrous + 7 garanties) : "
-                   f"{len(casses)} CASSÉ(S) — {', '.join(r.id for r in casses)}"
+    if avertis:
+        typer.echo(f"⚠ avertissement (non bloquant) : {', '.join(r.id for r in avertis)} cassé(s) — "
+                   "signalé, n'empêche pas le déploiement.")
+    if bloquants:
+        typer.echo(f"— {len(resultats)} joués (17 verrous + 8 garanties) : "
+                   f"{len(bloquants)} CASSÉ(S) — {', '.join(r.id for r in bloquants)}"
+                   + (f" · {len(avertis)} en avertissement" if avertis else "")
                    + (f" · {len(a_decider)} à décider" if a_decider else ""))
         raise typer.Exit(1)
-    typer.echo(f"— {len(resultats)} joués (17 verrous + 7 garanties) : tout va bien"
+    typer.echo(f"— {len(resultats)} joués (17 verrous + 8 garanties) : tout va bien"
+               + (f" · {len(avertis)} en avertissement ({', '.join(r.id for r in avertis)})" if avertis else "")
                + (f" · {len(a_decider)} à décider" if a_decider else ""))
 
 

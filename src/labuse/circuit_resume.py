@@ -38,7 +38,8 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
              compteurs: dict, residuel: dict | None, run_servi: str, candidat: str | None,
              fuite_robinets=(), eau_robinets=(),
              regles_ecart: list[str] = (), regles_choix: list[str] = (),
-             horloges: list[str] = (), verrous: dict | None = None) -> dict:
+             horloges: list[str] = (), verrous: dict | None = None,
+             sources_sans_controle: list[dict] = ()) -> dict:
     """Compose le bloc `resume`. Chaque réservoir / robinet porte déjà son `etat` ([couleur, lib])
     (posé par l'endpoint via circuit_etats) : le résumé n'invente pas d'état, il regroupe.
     CIRCUIT-P3 (lot 2) : `fuite_robinets` / `eau_robinets` sont les ids de robinets REGISTRE dérivés
@@ -129,6 +130,13 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
                "Le dernier passage de « labuse circuit verrous » a cassé : "
                + ", ".join((verrous or {}).get("casses", [])) + ". Le déploiement refuse tant "
                "que ça tient. Chaque verrou a sa phrase dans VERROUS.md.",
+               "Voir", "compteur", []),
+        # CRON-1 lot 2 (G8) — les sources que PERSONNE ne contrôle, NOMMÉES : avec l'agent à 0 €, une
+        # source hors sonde n'a plus aucun contrôleur. Ligne ROUGE tant qu'il y en a.
+        _ligne(len(sources_sans_controle), "rouge", "sources sans contrôle (agent à 0 €)",
+               ("Personne ne vérifie : " + ", ".join(s["name"] for s in sources_sans_controle) + ". "
+                "Fixer LABUSE_AGENT_PLAFOND_EUR (l'agent du dimanche les reprend) ou leur poser une sonde amont.")
+               if sources_sans_controle else "",
                "Voir", "compteur", []),
     ]
 
