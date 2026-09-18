@@ -252,6 +252,9 @@ def liste() -> list[dict]:
         out.append({
             "nom": j.nom, "titre": j.titre, "cadence": j.cadence,
             "cron_utc": j.cron_utc, "heure_reunion": j.heure_reunion,
+            # CRON-1 lot 3 — la page Horloge lit LE REGISTRE : la raison (fr) et ce qu'il touche
+            # (eau/exploitation) voyagent avec chaque job, à côté de son dernier passage.
+            "raison": j.raison, "touche": j.touche, "test": j.test,
             "timeout_s": j.timeout_s, "envoie_mail": j.envoie_mail,
             "prochaine_utc": p.isoformat() if p else None,
             "prochaine_reunion": p.astimezone(REUNION_TZ).strftime("%d/%m %H:%M") if p else None,

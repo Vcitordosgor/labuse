@@ -1,110 +1,92 @@
 #!/bin/sh
-# CRON-1 (K8) → CIRCUIT-1 (lot 8.1) — POSE de l'exploitation planifiée sur le serveur.
-# À lancer SUR LE VPS (root). Pose le crontab versionné + le logrotate, avec DEUX gardes :
+# CRON-1 (lot 3) — POSE de l'exploitation planifiée sur le serveur, DEPUIS LE REGISTRE.
+# À lancer SUR LE VPS (root). Le crontab /etc/cron.d/labuse est GÉNÉRÉ depuis le registre
+# (labuse.jobs) — jamais écrit à la main. Trois principes :
 #
-#   1. FUSEAU — le crontab deploy/cron.d-labuse est écrit en UTC (heure Réunion en commentaire).
-#      · serveur en UTC            → posé tel quel ;
-#      · serveur en Indian/Reunion → CONVERTI automatiquement (+4 h, modulo 24 — sûr ici : seuls
-#        des jobs QUOTIDIENS franchissent minuit, aucun décalage de date ni de jour de semaine).
-#        C'est LE piège qui a empêché la pose du wrapper (constat CIRCUIT-1 lot 0.1 : le VPS est
-#        passé en Indian/Reunion au mandat VPS du 27/08, l'ancien deploy.sh REFUSAIT → seuls les
-#        crons LEGACY tournaient) ;
-#      · tout autre fuseau         → refus.
-#   2. LEGACY — refuse de déployer si /etc/cron.d/ contient encore un fichier labuse-* (l'ancien
-#      jeu, 13 lignes) : DEUX jeux de crons = doubles ingestions et un healthz qui ment.
-#      Retrait : deploy/scripts/retirer_crons_legacy.sh (geste explicite, jamais automatique).
+#   1. VERROUS — `labuse circuit verrous` est la porte : un verrou OU une garantie BLOQUANTE
+#      cassée → refus. G8 est NON BLOQUANT (`-w G8`) : il mesure la FRAÎCHEUR DE LA VEILLE
+#      (sources hors sonde, agent à 0 €), pas la santé du code. Déployer n'aggrave jamais ce
+#      que G8 signale, et le bloquer empêcherait de poser les horloges qui le feraient passer
+#      au vert. G8 s'AFFICHE (sources nommées), n'empêche pas.
+#   2. REGISTRE = VÉRITÉ — le crontab est régénéré du registre et VÉRIFIÉ : aucun écart toléré
+#      (un crontab édité à la main est refusé). Les fichiers legacy /etc/cron.d/labuse-* (hors
+#      registre) sont RETIRÉS.
+#   3. BACKUP SANS TROU — le nouveau crontab (qui contient le backup, à l'horaire EXACT du legacy)
+#      est posé AVANT le retrait des legacy → jamais une nuit sans sauvegarde.
+#
+#   FUSEAU — le registre porte les heures en UTC ; `labuse jobs crontab --tz reunion` convertit
+#   (+4 h, modulo 24) pour un serveur en Indian/Reunion (le piège qui bloquait l'ancien wrapper).
 #
 # Idempotent. N'installe RIEN d'autre (code/venv/systemd : deploy/scripts/deploy_app.sh).
 set -eu
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
-
-# ── CIRCUIT-5 (lot 6.1) — LA PORTE : les verrous d'abord, le déploiement ensuite. ──────────
-# `labuse circuit verrous` joue TOUT — les 16 verrous (CIRCUIT-5) + les 7 garanties
-# (CIRCUIT-6), 23 en tout, jamais d'arrêt au premier cassé — et sort en erreur si ≥ 1
-# casse : un déploiement qui passe cette porte est la preuve que tout tient. Aucun
-# contournement : binaire introuvable = refus (on ne déploie pas sans vérifier).
 LABUSE_BIN="${LABUSE_BIN:-$(command -v labuse || echo /opt/labuse/venv/bin/labuse)}"
-echo "→ Porte des verrous : $LABUSE_BIN circuit verrous…"
+
+# ── Porte 1 : les verrous (G8 non bloquant) ────────────────────────────────────────────────
+echo "→ Porte des verrous : $LABUSE_BIN circuit verrous -w G8…"
 if [ ! -x "$LABUSE_BIN" ]; then
   echo "✗ REFUS : binaire labuse introuvable ($LABUSE_BIN) — on ne déploie pas sans jouer les verrous." >&2
   exit 1
 fi
-if ! "$LABUSE_BIN" circuit verrous --par deploy; then
+if ! "$LABUSE_BIN" circuit verrous --par deploy -w G8; then
   cat >&2 <<MSG
-✗ REFUS : un verrou est cassé (détail ci-dessus, phrases dans docs/CIRCUIT/VERROUS.md).
+✗ REFUS : un verrou BLOQUANT est cassé (détail ci-dessus, phrases dans docs/CIRCUIT/VERROUS.md).
+  (G8 « sources sans contrôle » est non bloquant : il s'affiche mais n'empêche pas le déploiement.)
   Corriger, rejouer « labuse circuit verrous », puis relancer ce déploiement.
 MSG
   exit 1
 fi
-echo "  ✓ tous les verrous tiennent"
+echo "  ✓ verrous bloquants OK (G8 en avertissement si rouge — non bloquant)"
 
-# ── TESTS-1 (lot 3) — LA DEUXIÈME PORTE : la suite de tests, même commande, même verdict. ──
-# `labuse circuit suite` joue la suite pytest COMPLÈTE et confronte ses échecs à
-# docs/TESTS-TOLERES.md : un rouge sans ligne de tolérance (raison + date + échéance), une
-# échéance passée, ou une suite injouable (pytest absent) = REFUS. Les 24 verrous protègent
-# le circuit des données ; la suite protège le reste de l'app — un déploiement ne part
-# jamais avec l'une des deux portes rouge.
+# ── Porte 2 : la suite de tests ────────────────────────────────────────────────────────────
 echo "→ Porte de la suite : $LABUSE_BIN circuit suite…"
 if ! "$LABUSE_BIN" circuit suite --racine "$REPO"; then
-  cat >&2 <<MSG
-✗ REFUS : la suite de tests n'est pas verte (détail ci-dessus).
-  Corriger, ou nommer/dater/justifier l'échec dans docs/TESTS-TOLERES.md (échéance courte),
-  rejouer « labuse circuit suite », puis relancer ce déploiement.
-MSG
+  echo "✗ REFUS : la suite de tests n'est pas verte (détail ci-dessus)." >&2
   exit 1
 fi
 echo "  ✓ la suite est verte"
 
-echo "→ Garde legacy : /etc/cron.d/labuse-* doit être vide…"
-legacy="$(ls /etc/cron.d/labuse-* 2>/dev/null || true)"
-if [ -n "$legacy" ]; then
-  cat >&2 <<MSG
-✗ REFUS : d'anciens crons legacy sont encore posés :
-$legacy
-  Deux jeux de crons = doubles ingestions (bodacc/dpe/dvf/sitadel) et un healthz incohérent.
-  Retirez-les d'abord (geste explicite) :  sudo sh deploy/scripts/retirer_crons_legacy.sh
-MSG
-  exit 1
-fi
-echo "  ✓ aucun cron legacy"
-
+# ── Fuseau serveur → tz de génération ──────────────────────────────────────────────────────
 echo "→ Fuseau serveur…"
-tz="$(timedatectl show -p Timezone --value 2>/dev/null || cat /etc/timezone 2>/dev/null || echo inconnu)"
-CRONSRC="$REPO/deploy/cron.d-labuse"
-case "$tz" in
-  UTC|Etc/UTC)
-    echo "  ✓ UTC — crontab posé tel quel" ;;
-  Indian/Reunion)
-    echo "  ✓ Indian/Reunion — conversion +4 h (modulo 24) du crontab UTC"
-    CRONSRC="/tmp/cron.d-labuse.reunion"
-    awk '
-      /^[0-9*]/ {
-        h = $2
-        if (h ~ /^[0-9]+$/) { h = (h + 4) % 24; $2 = h }
-        print; next
-      }
-      { print }
-    ' "$REPO/deploy/cron.d-labuse" > "$CRONSRC"
-    ;;
-  *)
-    cat >&2 <<MSG
-✗ REFUS : fuseau serveur « $tz » ni UTC ni Indian/Reunion.
-  Le crontab est écrit en UTC ; seul le décalage Réunion (+4 h, sans heure d'été) est converti.
-MSG
-    exit 1 ;;
+srvtz="$(timedatectl show -p Timezone --value 2>/dev/null || cat /etc/timezone 2>/dev/null || echo inconnu)"
+case "$srvtz" in
+  UTC|Etc/UTC)        gentz="utc"     ; echo "  ✓ UTC" ;;
+  Indian/Reunion)     gentz="reunion" ; echo "  ✓ Indian/Reunion — conversion +4 h du registre" ;;
+  *) echo "✗ REFUS : fuseau serveur « $srvtz » ni UTC ni Indian/Reunion (le registre est en UTC)." >&2; exit 1 ;;
 esac
 
-echo "→ Pose du crontab /etc/cron.d/labuse…"
-install -o root -g root -m 644 "$CRONSRC" /etc/cron.d/labuse
-echo "  ✓ /etc/cron.d/labuse (source : $(basename "$CRONSRC"))"
+# ── Pose du crontab GÉNÉRÉ depuis le registre (AVANT retrait legacy → backup sans trou) ─────
+echo "→ Génération du crontab depuis le registre (tz=$gentz)…"
+tmp="$(mktemp)"
+"$LABUSE_BIN" jobs crontab --tz "$gentz" > "$tmp"
+install -o root -g root -m 644 "$tmp" /etc/cron.d/labuse
+rm -f "$tmp"
+echo "  ✓ /etc/cron.d/labuse posé (contient le backup à son horaire exact — pose avant retrait legacy)"
 
-echo "→ Pose du logrotate des logs de jobs…"
+# ── Refuse tout écart : le fichier posé DOIT être le registre régénéré ──────────────────────
+echo "→ Vérification : aucun écart crontab/registre…"
+if ! "$LABUSE_BIN" jobs crontab --tz "$gentz" --verifier /etc/cron.d/labuse; then
+  echo "✗ REFUS : /etc/cron.d/labuse diverge du registre (édité à la main ?)." >&2
+  exit 1
+fi
+
+# ── Retrait des fichiers legacy /etc/cron.d/labuse-* (hors registre) — APRÈS la pose du neuf ─
+echo "→ Retrait des crons legacy /etc/cron.d/labuse-* (hors registre)…"
+legacy="$(ls /etc/cron.d/labuse-* 2>/dev/null || true)"
+if [ -n "$legacy" ]; then
+  sauve="/root/crons-legacy-$(date +%Y%m%d-%H%M)"; mkdir -p "$sauve"
+  for f in $legacy; do cp "$f" "$sauve/"; rm "$f"; echo "  − $f (sauvé dans $sauve/)"; done
+  echo "  ✓ legacy retiré ($(echo "$legacy" | wc -w | tr -d ' ') fichiers) — le nouveau crontab était déjà posé (aucun trou)"
+else
+  echo "  ✓ aucun cron legacy"
+fi
+command -v systemctl >/dev/null 2>&1 && systemctl restart cron 2>/dev/null || service cron restart 2>/dev/null || true
+
+# ── logrotate + dossiers d'état/logs ───────────────────────────────────────────────────────
+echo "→ Pose du logrotate + dossiers d'état/logs…"
 install -o root -g root -m 644 "$REPO/deploy/logrotate.d/labuse-jobs" /etc/logrotate.d/labuse-jobs
-echo "  ✓ /etc/logrotate.d/labuse-jobs (30 j)"
-
-echo "→ Dossiers d'état et de logs…"
 install -d -o labuse -g labuse -m 755 /opt/labuse/state/jobs /var/log/labuse
-echo "  ✓ /opt/labuse/state/jobs · /var/log/labuse"
+echo "  ✓ logrotate (30 j) · /opt/labuse/state/jobs · /var/log/labuse"
 
-echo "✓ Exploitation planifiée posée. Vérifier :  labuse jobs list   et   tail -f /var/log/labuse/*.log"
+echo "✓ Exploitation planifiée posée depuis le registre. Vérifier : labuse jobs list · tail -f /var/log/labuse/*.log"
