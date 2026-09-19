@@ -86,8 +86,9 @@ export function BatiBlock({ f }: { f: Fiche }) {
             <FactNote>{toit.methode}</FactNote>
           </>
         ) : (
-          <FactRow label="Nature du toit" tone="mute"
-            value="non encore relevée — ouvrez la fiche soleil pour la calculer" />
+          /* FICHE-RANGEMENT-3 Lot 4 — la fiche AFFICHE, elle ne demande pas d'action : « non
+             disponible » plutôt que « ouvrez la fiche soleil pour la calculer ». */
+          <FactRow label="Nature du toit" tone="mute" value="non disponible" />
         )}
       </div>
       {/* REPARATIONS-1 lot 4 — RNB ID (Référentiel National des Bâtiments) de chaque bâtiment. */}

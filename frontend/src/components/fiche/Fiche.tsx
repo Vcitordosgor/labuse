@@ -497,8 +497,15 @@ export function Fiche({ idu }: { idu: string }) {
   // RETOURS-11F F11 — 🔴 double en-tête : quand un propriétaire moral est connu (ex. « PACIFIC »),
   // une ligne cascade résiduelle « propriétaire inconnu / non renseigné » ne doit PLUS coexister
   // (deux affirmations contradictoires sur le même écran). On masque ces lignes-là dès qu'un PM est su.
-  const proprioLines = ongletLines('proprio').filter((l) =>
-    !(f?.proprietaire_moral && /inconnu|non renseign|non recens/i.test(l.detail ?? '')))
+  // FICHE-RANGEMENT-3 Lot 4 — les lignes SANS OBJET PAR NATURE n'apprennent rien : quand le
+  // propriétaire est une personne physique, les attributs de personne morale (âge du dirigeant,
+  // BODACC, dénomination PM) ne s'affichent plus. (PM connu : on masque déjà les résidus « inconnu ».)
+  const proprioLines = ongletLines('proprio').filter((l) => {
+    const det = l.detail ?? ''
+    if (f?.proprietaire_moral && /inconnu|non renseign|non recens/i.test(det)) return false
+    if (!f?.proprietaire_moral && /sans objet|dirigeant|personne morale|bodacc/i.test(det)) return false
+    return true
+  })
   const proprioSignal = proprioLines.filter((l) => (l.weight ?? 0) > 0).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0]
   const proprioType = f?.proprietaire_moral?.denomination ?? (f?.proprietaire_moral ? 'personne morale' : 'personne physique / non recensé')
   // Règles : zone PLU + SDP résiduelle (données déjà chargées).
@@ -1064,8 +1071,10 @@ export function Fiche({ idu }: { idu: string }) {
             {/* ① IDENTITÉ — ce qui identifie le bien : surface (ex-tuile), propriétaire (relocalisé
                 §1), dernière vente DVF (ex-Marché), filiation cadastrale, historique des permis DE la
                 parcelle (ex-Autour). CARTE ACCENTUÉE VIOLETTE = le signal propriétaire chaud. */}
+            {/* FICHE-RANGEMENT-3 Lot 4 — la commune n'est plus rappelée en sous-titre (déjà dans
+                l'en-tête « PARCELLE · <COMMUNE> ») : le sous-titre ne porte que le signal propriétaire. */}
             <RefDrawer id="identite" icon={IC.proprio} name="Identité" accent={proprioAccent}
-              context={proprioSignal ? (f.proprietaire_moral ? proprioType : 'personne physique') : (f.commune ?? undefined)}
+              context={proprioSignal ? (f.proprietaire_moral ? proprioType : 'personne physique') : undefined}
               value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : (f.surface_m2 != null ? fmtM2(f.surface_m2) : 'privé'))}
               micro={proprioPastilles.length ? <MicroPastilles items={proprioPastilles} /> : undefined}>
               <div className="flex flex-col gap-3">
@@ -1325,8 +1334,8 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* ⑦ FISCALITÉ ET DISPOSITIFS — taxe foncière (ex-tuile) + fiscal & leviers (QPV/TVA §7) +
                 taxe d'aménagement (§7) + dispositifs territoriaux ZFANG/FRR/DOM (relocalisés §7). */}
+            {/* FICHE-RANGEMENT-3 Lot 4 — la commune (sous-titre) est retirée : déjà dans l'en-tête. */}
             <RefDrawer id="fiscalite" icon={IC.fiscal} name="Fiscalité et dispositifs"
-              context={f.territoire_fiscal?.commune}
               value={f.territoire_fiscal?.zfang?.regime === 'renforce'
                 ? <span className="pill-mint">ZFANG renforcé</span>
                 : tfpb != null ? `${nf(tfpb)} %` : undefined}>
