@@ -454,53 +454,91 @@ export function Fiche({ idu }: { idu: string }) {
   const expo = useQuery({ queryKey: ['exposition', idu], queryFn: () => getParcelExposition(idu),
     enabled: !!idu, staleTime: 6 * 60 * 60 * 1000, retry: false })
   const fq = ficheQuery.trim().toLowerCase()
-  // FICHE-RANGEMENT-2 Lot 3 — « recherche dans tout » : la loupe ne remplace plus la fiche par une
-  // liste à plat. Une requête ouvre TOUS les tiroirs (forceOpen via le contexte accordéon) et le
-  // nombre de correspondances est compté par le surligneur (hlCount, effet ci-dessous).
-  const [hlCount, setHlCount] = useState(0)
+  // FICHE-RANGEMENT-2 Lot 3 / FICHE-RECHERCHE-1 — « recherche dans tout » : une requête ouvre TOUS
+  // les tiroirs (forceOpen via le contexte accordéon), surligne en place ET liste les résultats
+  // (effet ci-dessous → `results`), qui pilotent la liste sous la barre.
   const accValueF = useMemo(() => ({ ...accValue, forceOpen: !!fq }), [accValue, fq])
-  // Surlignage EN PLACE via l'API Custom Highlight (CSS.highlights) : construit des Range sur les
-  // nœuds texte de la fiche SANS muter le DOM géré par React (sûr). Ouvre aussi les <details>
-  // « sans objet » pour que rien ne reste caché. Un MutationObserver re-surligne quand un bloc
-  // asynchrone (bilan, traducteur PLU…) finit d'arriver. Requête vide → surlignage effacé.
+  // FICHE-RECHERCHE-1 — la loupe fonctionne comme une barre de recherche : en tapant, une LISTE de
+  // résultats (libellé de la ligne + nom de sa section) apparaît sous la barre ; un clic ouvre la
+  // section et scrolle jusqu'à la ligne. Le surlignage EN PLACE (API Custom Highlight, sans mutation
+  // du DOM React) est conservé pour le reste. `results` alimente la liste ; `focusKey` le résultat cliqué.
+  type FicheResult = { key: string; label: string; section: string; el: HTMLElement }
+  const [results, setResults] = useState<FicheResult[]>([])
+  const [focusKey, setFocusKey] = useState<string | null>(null)
   useEffect(() => {
     const HL: any = (typeof CSS !== 'undefined' && (CSS as any).highlights) ? (CSS as any).highlights : null
     const q = ficheQuery.trim().toLowerCase()
-    if (!HL) { setHlCount(0); return }
-    if (!q) { HL.delete('fiche-search'); setHlCount(0); return }
+    if (!HL) { setResults([]); return }
+    if (!q) { HL.delete('fiche-search'); HL.delete('fiche-search-focus'); setResults([]); setFocusKey(null); return }
     let raf = 0
     const run = () => {
       const box = document.querySelector('.fiche-v6') as HTMLElement | null
       if (!box) return
       box.querySelectorAll('details:not([open])').forEach((d) => { (d as HTMLDetailsElement).open = true })
       const ranges: Range[] = []
+      const res: FicheResult[] = []
+      const seen = new Set<HTMLElement>()
       const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, {
         acceptNode: (n) => {
           const p = (n as Text).parentElement
-          if (!p || p.closest('input,textarea,script,style')) return NodeFilter.FILTER_REJECT
+          if (!p || p.closest('input,textarea,script,style,[data-fiche-results]')) return NodeFilter.FILTER_REJECT
           return (n.textContent || '').toLowerCase().includes(q) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
         },
       })
-      let node: Node | null; let first: Range | null = null
+      let node: Node | null
       while ((node = walker.nextNode())) {
         const low = (node.textContent || '').toLowerCase()
-        let i = low.indexOf(q)
+        let i = low.indexOf(q); let matched = false
         while (i !== -1) {
           const r = document.createRange(); r.setStart(node, i); r.setEnd(node, i + q.length)
-          ranges.push(r); if (!first) first = r
+          ranges.push(r); matched = true
           i = low.indexOf(q, i + q.length)
         }
+        if (!matched) continue
+        // le RÉSULTAT = la « ligne » qui contient la correspondance (FactRow, filet, porte, item de
+        // liste, paragraphe…), dédupliquée ; sa SECTION = le tiroir conteneur (SECTION_LABELS).
+        const p = (node as Text).parentElement!
+        const lineEl = (p.closest('.f-row, .f-vig, .f-rappel, .porte-outil, li, p, .stat, [data-fiche-perimetre], [data-dispositif-dom], [data-aleas-detail] > div') as HTMLElement) || p
+        if (seen.has(lineEl)) continue
+        seen.add(lineEl)
+        const sid = p.closest('[data-drawer]')?.getAttribute('data-drawer') || ''
+        const section = SECTION_LABELS[sid] || 'Analyse LABUSE'
+        const label = (lineEl.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80)
+        if (label) res.push({ key: `${sid}#${res.length}#${label.slice(0, 24)}`, label, section, el: lineEl })
       }
       HL.set('fiche-search', new (window as any).Highlight(...ranges))
-      setHlCount(ranges.length)
-      if (first) first.startContainer.parentElement?.scrollIntoView({ block: 'center' })
+      setResults(res)
     }
     run()
-    const obs = new MutationObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(run) })
+    // le MutationObserver rattrape les blocs asynchrones (bilan, traducteur…) MAIS ignore les
+    // mutations de notre propre liste de résultats (sinon boucle : liste rendue → mutation → run).
+    const obs = new MutationObserver((muts) => {
+      if (muts.every((m) => (m.target as Element).parentElement?.closest?.('[data-fiche-results]') || (m.target as Element).closest?.('[data-fiche-results]'))) return
+      cancelAnimationFrame(raf); raf = requestAnimationFrame(run)
+    })
     const box0 = document.querySelector('.fiche-v6')
     if (box0) obs.observe(box0, { childList: true, subtree: true, characterData: true })
-    return () => { cancelAnimationFrame(raf); obs.disconnect(); HL.delete('fiche-search') }
+    return () => { cancelAnimationFrame(raf); obs.disconnect(); HL.delete('fiche-search'); HL.delete('fiche-search-focus') }
   }, [ficheQuery, f])
+  // FICHE-RECHERCHE-1 — clic sur un résultat : ouvre (déjà ouvert via forceOpen) + scrolle la ligne
+  // au centre + surligne PLUS FORT la correspondance cliquée (registre `fiche-search-focus`).
+  const goToResult = (r: { key: string; el: HTMLElement }) => {
+    setFocusKey(r.key)
+    r.el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    const HL: any = (typeof CSS !== 'undefined' && (CSS as any).highlights) ? (CSS as any).highlights : null
+    const q = ficheQuery.trim().toLowerCase()
+    if (!HL || !q) return
+    const ranges: Range[] = []
+    const w = document.createTreeWalker(r.el, NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) => (n.textContent || '').toLowerCase().includes(q) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT,
+    })
+    let n: Node | null
+    while ((n = w.nextNode())) {
+      const low = (n.textContent || '').toLowerCase(); let i = low.indexOf(q)
+      while (i !== -1) { const rg = document.createRange(); rg.setStart(n, i); rg.setEnd(n, i + q.length); ranges.push(rg); i = low.indexOf(q, i + q.length) }
+    }
+    HL.set('fiche-search-focus', new (window as any).Highlight(...ranges))
+  }
 
   // Correctif M5 (verdict d'en-tête) : étage 0 prime (bannière écartée + motifs, inchangé) ;
   // sinon un run v2 présent pilote bannière + badge (tier, rang, ×N) ; le statut matrice
@@ -951,12 +989,32 @@ export function Fiche({ idu }: { idu: string }) {
         </div>{/* /wrapper non-flex du bloc Analyse (M68 P1a) — la suite défile aussi */}
 
       {ficheSearchOpen && (
-        <div className="flex shrink-0 items-center gap-2 border-b border-line bg-surface-2 px-5 py-2">
-          <input autoFocus data-fiche-search value={ficheQuery} onChange={(e) => setFicheQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Escape' && (setFicheQuery(''), setFicheSearchOpen(false))}
-            placeholder="Chercher dans cette fiche (risque, réseau, ICPE…)"
-            className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
-          {fq && <span data-fiche-search-count className="shrink-0 text-[11px] text-txt-mut">{hlCount} résultat{hlCount > 1 ? 's' : ''}{hlCount === 0 ? ' — rien dans cette fiche' : ' surlignés'}</span>}
+        <div className="shrink-0 border-b border-line bg-surface-2">
+          <div className="flex items-center gap-2 px-5 py-2">
+            <input autoFocus data-fiche-search value={ficheQuery} onChange={(e) => setFicheQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Escape' && (setFicheQuery(''), setFicheSearchOpen(false))}
+              placeholder="Chercher dans cette fiche (risque, réseau, ICPE…)"
+              className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+            {/* FICHE-RECHERCHE-1 — accord correct (« 1 résultat surligné ») ; « aucun résultat »
+                (jamais un compteur à zéro). Le compteur = le nombre de LIGNES trouvées (la liste). */}
+            {fq && <span data-fiche-search-count className="shrink-0 text-[11px] text-txt-mut">{results.length === 0
+              ? 'aucun résultat'
+              : `${results.length} résultat${results.length > 1 ? 's' : ''} surligné${results.length > 1 ? 's' : ''}`}</span>}
+          </div>
+          {/* FICHE-RECHERCHE-1 — la LISTE des résultats sous la barre : libellé de la ligne + sa
+              section. Un clic ouvre la section (déjà ouverte via forceOpen) et scrolle jusqu'à la
+              ligne, surlignée plus fort (goToResult). */}
+          {fq && results.length > 0 && (
+            <div data-fiche-results className="max-h-52 overflow-y-auto border-t border-line/60">
+              {results.map((r) => (
+                <button key={r.key} data-fiche-result onClick={() => goToResult(r)}
+                  className={`flex w-full items-baseline justify-between gap-3 px-5 py-1.5 text-left text-[11px] transition-colors hover:bg-surface-3 ${focusKey === r.key ? 'bg-surface-3' : ''}`}>
+                  <span className="min-w-0 truncate text-txt">{r.label}</span>
+                  <span className="shrink-0 text-[10px] uppercase tracking-wide text-txt-dim">{r.section}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

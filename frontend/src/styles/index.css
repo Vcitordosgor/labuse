@@ -593,6 +593,8 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 /* FICHE-RANGEMENT-2 Lot 3 — surlignage de la recherche intra-fiche (API Custom Highlight :
    aucune mutation du DOM géré par React). Ambre LABUSE sur encre sombre, lisible sur tous fonds. */
 ::highlight(fiche-search) { background: var(--amber); color: var(--ink); border-radius: 2px; }
+/* FICHE-RECHERCHE-1 — la correspondance CLIQUÉE dans la liste est surlignée plus fort (soulignée). */
+::highlight(fiche-search-focus) { background: var(--amber); color: var(--ink); text-decoration: underline; text-decoration-thickness: 2px; }
 
 /* FICHE-RANGEMENT-2 Lot 4 — tons du filet d'attention (grammaire unique §4) */
 .fiche-v6 .f-vig.mint { border-left-color: var(--mint); }
