@@ -1,0 +1,240 @@
+# ── FICHE-RANGEMENT-2 Lot 2 — « tout par déclaration » ──
+# Les dernières données à MAILLE PARCELLE servies sur la fiche par un robinet mais pas encore
+# DÉCLARÉES (l'audit FICHE-AUDIT-1 en comptait 60 ; les lots précédents en ont résorbé la plupart,
+# il en restait 17). Chacune est câblée ici avec sa SECTION, pour que le verrou V5d tienne :
+# « toute donnée maille parcelle servie sur la fiche est déclarée avec une section ». Regroupées par
+# nature (les 11 sections de la fiche), une surface par groupe.
+
+# ── §1 IDENTITÉ ─────────────────────────────────────────────────────────────────────────
+surface:   fiche_parcelle_identite_reste
+nom:       "Identité — adresse, géométrie, permis"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  adresse_ban
+    ou:    { rang: 10, etat: en_tete, section: "Identité" }
+    comment:
+      libelle: "Adresse"
+      format:  texte
+      i:       "Meilleure adresse BAN rattachée à la parcelle (IGN)."
+    absence: "Adresse non disponible — parcelle non rattachée à une voie (BAN)."
+    absence_type: absente_ici
+    pourquoi: "L'adresse identifie le bien ; en tête de la fiche."
+  - quoi:  parcelle_geometrie
+    ou:    { rang: 20, etat: replie, section: "Identifiants et références" }
+    comment:
+      libelle: "Géométrie de la parcelle"
+      i:       "Polygone cadastral de la parcelle (contour carte/fiche/PDF, même table partout)."
+    absence: "Géométrie de la parcelle non disponible pour cette référence."
+    absence_type: absente_ici
+    pourquoi: "Le contour cadastral situe le bien ; base de tous les croisements."
+  - quoi:  historique_permis_liste
+    ou:    { rang: 30, etat: replie, section: "Sur la parcelle" }
+    comment:
+      libelle: "Sur cette parcelle (permis)"
+      format:  liste
+      i:       "Permis déposés/autorisés sur la parcelle (Sitadel) + caducité, chaque ligne datée."
+    absence: "Aucun permis recensé sur cette parcelle (Sitadel)."
+    absence_type: absente_ici
+    pourquoi: "L'historique de construction du bien ; fait d'identité de la parcelle."
+
+---
+# ── §4 URBANISME — droit des sols ───────────────────────────────────────────────────────
+surface:   fiche_parcelle_urbanisme_reste
+nom:       "Urbanisme — dispositifs et contraintes du droit des sols"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  er_emplacement_reserve
+    ou:    { rang: 10, etat: replie, section: "Droit des sols (ER · EBC · DPU · PEB)" }
+    comment:
+      libelle: "Emplacement réservé (ER)"
+      format:  classe
+      i:       "La parcelle est-elle grevée d'un emplacement réservé du PLU (destination, part de la parcelle)."
+    absence: "Hors emplacement réservé du PLU."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Un ER déduit de l'emprise constructible ; contrainte du droit des sols."
+  - quoi:  ebc_classe
+    ou:    { rang: 20, etat: replie, section: "Droit des sols (ER · EBC · DPU · PEB)" }
+    comment:
+      libelle: "Espace boisé classé (EBC)"
+      format:  classe
+      i:       "La parcelle intersecte-t-elle un espace boisé classé du PLU (part soustraite de l'assiette)."
+    absence: "Hors espace boisé classé du PLU."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "L'EBC interdit la construction sur l'emprise boisée ; contrainte du droit des sols."
+  - quoi:  dpu_perimetre
+    ou:    { rang: 30, etat: replie, section: "Droit des sols (ER · EBC · DPU · PEB)" }
+    comment:
+      libelle: "Droit de préemption urbain (DPU)"
+      format:  classe
+      i:       "La parcelle est-elle dans un périmètre de préemption publié (DPU simple/renforcé)."
+    absence: "Hors périmètre de préemption urbaine publié."
+    absence_type: non_publiee
+    statut_juridique: opposable
+    pourquoi: "Le DPU commande la transaction (DIA) ; à connaître avant d'acheter."
+  - quoi:  peb_zone
+    ou:    { rang: 40, etat: replie, section: "Droit des sols (ER · EBC · DPU · PEB)" }
+    comment:
+      libelle: "Plan d'exposition au bruit (PEB)"
+      format:  classe
+      i:       "Zone PEB de l'aérodrome (A/B/C/D) si la parcelle y est (annexes GPU)."
+    absence: "Hors zones du plan d'exposition au bruit."
+    absence_type: non_publiee
+    statut_juridique: opposable
+    pourquoi: "Le PEB limite ou interdit l'habitation ; contrainte réglementaire majeure."
+  - quoi:  mixite_clause
+    ou:    { rang: 50, etat: replie, section: "Mixité sociale" }
+    comment:
+      libelle: "Mixité sociale (clause)"
+      format:  verdict
+      i:       "Déclenchement de la clause de mixité (SDP/logements/terrain ≥ seuil de la zone)."
+    absence: "Mixité sociale : seuils de la zone non renseignés à ce jour."
+    absence_type: non_ingeree
+    statut_juridique: opposable
+    pourquoi: "La clause de mixité impose un quota de logements sociaux ; change le programme."
+  - quoi:  sar_divergence
+    ou:    { rang: 60, etat: replie, section: "Ce qui contraint" }
+    comment:
+      libelle: "Divergence SAR (indication)"
+      format:  verdict
+      i:       "Zone PLU U/AU croisant une vocation naturelle/agricole du proxy Région — indication non opposable."
+    absence: "Aucune divergence SAR indiquée."
+    absence_type: absente_ici
+    statut_juridique: informatif
+    pourquoi: "Un signal de vigilance sur la vocation du sol ; à confirmer, jamais opposable."
+
+---
+# ── §10 POTENTIEL ───────────────────────────────────────────────────────────────────────
+surface:   fiche_parcelle_potentiel_reste
+nom:       "Potentiel — plancher, vendable, surélévation"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  surface_plancher_m2
+    ou:    { rang: 10, etat: replie, section: "Ce qui est constructible" }
+    comment:
+      libelle: "Surface de plancher créée (table rase)"
+      unite:   "m²"
+      format:  entier_m2
+      i:       "Surface de plancher CRÉÉE par le scénario table rase (moteur commun : emprise × occupation × niveaux)."
+    absence: "Surface de plancher non calculable (zone non constructible ou capacité nulle)."
+    absence_type: absente_ici
+    pourquoi: "Le volume constructible du scénario neuf ; base du bilan."
+  - quoi:  surface_vendable_m2
+    ou:    { rang: 20, etat: replie, section: "Ce qui est constructible" }
+    comment:
+      libelle: "Surface vendable (Estimé)"
+      unite:   "m²"
+      format:  entier_m2
+      i:       "SHAB vendable du scénario table rase (fourchette du moteur commun) — distincte de la capacité logements."
+    absence: "Surface vendable non calculable pour cette parcelle."
+    absence_type: absente_ici
+    pourquoi: "La surface qui fait le chiffre d'affaires ; base de la charge foncière."
+  - quoi:  marge_surelevation_m
+    ou:    { rang: 30, etat: replie, section: "Ce qui est constructible" }
+    comment:
+      libelle: "Marge de surélévation (au faîtage)"
+      unite:   "m"
+      format:  metre
+      i:       "Hauteur restante sous la règle de faîtage de la zone, comparée au faîtage bâti mesuré (BD TOPO)."
+    absence: "Marge de surélévation non calculable (hauteur de règle ou bâti non déterminés)."
+    absence_type: absente_ici
+    pourquoi: "Le potentiel d'un étage en plus sur l'existant ; lecture de densification."
+
+---
+# ── §6 RÉSEAUX ET DESSERTE ──────────────────────────────────────────────────────────────
+surface:   fiche_parcelle_reseaux_reste
+nom:       "Réseaux et desserte — égout, stationnement allégé"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  part_logements_egout_pct
+    ou:    { rang: 10, etat: replie, section: "Viabilisation" }
+    comment:
+      libelle: "Logements raccordés à l'égout"
+      unite:   "%"
+      format:  pourcent
+      i:       "Part des logements raccordés au tout-à-l'égout (INSEE RP2022 EGOUL, maille IRIS, repli commune)."
+    absence: "Taux de raccordement à l'égout non disponible pour ce secteur."
+    absence_type: absente_ici
+    pourquoi: "Un repère de viabilisation du secteur ; le tout-à-l'égout change le coût du projet."
+  - quoi:  tcsp_stationnement_allege
+    ou:    { rang: 20, etat: replie, section: "Accès" }
+    comment:
+      libelle: "Stationnement allégé (TCSP, L151-36)"
+      format:  classe
+      i:       "La parcelle est-elle à moins de 800 m d'une station de transport en site propre (plafond de stationnement L151-36)."
+    absence: "Hors rayon de 800 m d'une station TCSP."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Le plafond de stationnement s'impose au PLU ; il change la faisabilité."
+
+---
+# ── §5 RISQUES ET ENVIRONNEMENT ─────────────────────────────────────────────────────────
+surface:   fiche_parcelle_risques_reste
+nom:       "Risques — sols (SIS / CASIAS)"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  sols_parcelle
+    ou:    { rang: 10, etat: replie, section: "Sols (SIS · CASIAS)" }
+    comment:
+      libelle: "Sols (SIS/CASIAS, parcelle)"
+      format:  liste
+      i:       "État des sols : périmètre SIS intersecté, site CASIAS/instruction le plus proche (≤ 100 m)."
+    absence: "Aucun secteur d'information sur les sols ni site CASIAS à proximité."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Un SIS impose une étude de sols au changement d'usage ; à connaître avant d'acheter."
+
+---
+# ── §9 QUARTIER ─────────────────────────────────────────────────────────────────────────
+surface:   fiche_parcelle_quartier_reste
+nom:       "Quartier — équipements du quotidien"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  equipements_proximite_liste
+    ou:    { rang: 10, etat: replie, section: "À proximité" }
+    comment:
+      libelle: "À proximité (équipements)"
+      format:  liste
+      i:       "Équipements du quotidien nommés + distance (moteur BPE ; couverture partielle dite)."
+    absence: "Équipements du quotidien non renseignés autour de cette parcelle."
+    absence_type: absente_ici
+    pourquoi: "Ce qui est accessible à pied ; premier réflexe d'un acheteur."
+
+---
+# ── §8 MARCHÉ ───────────────────────────────────────────────────────────────────────────
+surface:   fiche_parcelle_marche_reste
+nom:       "Marché — voisinage proche (ventes < 100 m)"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/parcels/{idu}"
+rendu:     sections
+donnees:
+  - quoi:  ventes_100m_n
+    ou:    { rang: 10, etat: replie, section: "Le secteur" }
+    comment:
+      libelle: "Ventes à moins de 100 m (36 mois)"
+      unite:   "nombre"
+      format:  entier
+      i:       "Nombre de mutations DVF à moins de 100 m sur 36 mois (+ médiane) — voisinage immédiat."
+    absence: "Aucune vente DVF recensée à moins de 100 m sur 36 mois."
+    absence_type: absente_ici
+    pourquoi: "Le marché au pied du bien ; le comparable le plus proche."

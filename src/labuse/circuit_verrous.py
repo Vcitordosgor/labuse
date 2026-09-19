@@ -656,6 +656,30 @@ def verrou_couples_sondes(db=None) -> ResultatVerrou:
                           f"{monos} mono-robinet (golden/règles)")
 
 
+def verrou_fiche_sections(db=None) -> ResultatVerrou:
+    """V5d — tout par déclaration (FICHE-RANGEMENT-2 lot 2) : chaque donnée à la maille parcelle
+    servie sur la fiche (robinet catégorie=fiche) est DÉCLARÉE dans une surface fiche portant une
+    SECTION nommée. Une donnée fiche sans section = un câble muet (affiché hors déclaration)."""
+    from .registre import ROBINETS
+    from .registre import declarations as DEC
+    from .registre.donnees import DONNEES
+
+    parc = {k for k, v in DONNEES.items() if v.niveau == "parcelle" and not v.en_attente}
+    servies: set[str] = set()
+    for r in ROBINETS.values():
+        if r.categorie == "fiche":
+            servies |= {c for c in r.chiffres if c in parc}
+    surfaces, _ = DEC.charger()
+    avec_section = {l.quoi for s in surfaces if s.categorie == "fiche" for l in s.donnees if l.section}
+    pbs = [f"donnée fiche « {c} » servie sans section déclarée"
+           for c in sorted(servies) if c not in avec_section]
+    if pbs:
+        return ResultatVerrou("V5d", PHRASES["V5d"], "casse", f"{len(pbs)} donnée(s) fiche sans section", pbs)
+    return ResultatVerrou("V5d", PHRASES["V5d"], "ok",
+                          f"{len(servies)} données maille parcelle servies sur la fiche, "
+                          "toutes déclarées avec une section")
+
+
 # ── le registre des verrous (complété lot par lot) ──────────────────────────────────────
 
 PHRASES: dict[str, str] = {
@@ -676,6 +700,7 @@ PHRASES: dict[str, str] = {
     "V5a": "Un concept = un id : deux données au libellé ou à la définition identiques n'existent pas, hors synonymes assumés et motivés.",
     "V5b": "Une donnée = une fonction : chaque id porte un producteur nommé, plus aucun sql_propre ni front, et le registre est intègre.",
     "V5c": "Zéro couple silencieux : chaque couple (donnée, robinet) est sondé, mono-robinet (golden/règles), ou porte sa raison nommée.",
+    "V5d": "Tout par déclaration : chaque donnée à la maille parcelle servie sur la fiche est déclarée avec une section nommée — aucun câble muet.",
     "V7a": "Chaque tuile servie reproduit la brute : même nombre d'objets, aucune partie perdue (GeometryCollections comprises), contour < 1 px, position exacte — décodage de la tuile RÉELLEMENT servie, aux zooms 10/13/16.",
 }
 
@@ -699,6 +724,7 @@ VERROUS: tuple[Verrou, ...] = (
     Verrou("V5a", 5, PHRASES["V5a"], verrou_concepts),
     Verrou("V5b", 5, PHRASES["V5b"], verrou_une_donnee_une_fonction),
     Verrou("V5c", 5, PHRASES["V5c"], verrou_couples_sondes),
+    Verrou("V5d", 5, PHRASES["V5d"], verrou_fiche_sections),   # FICHE-RANGEMENT-2 lot 2
     Verrou("V7a", 7, PHRASES["V7a"], verrou_tuiles),   # COUCHES-TUYAU-1 lot 3
 )
 
