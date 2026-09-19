@@ -45,3 +45,25 @@ garde `connecte` : la sortir puis la rentrer à la promotion de `q_v14` serait d
 - *Les autres tests rouges (les 4 « morts » d'avant CRON-1 + `test_g2_signature_dpe`, périmé par la
   ré-ingestion DPE du mandat précédent qui asserte encore `dpe_ademe quasi_vide` + la composition
   25 verrous/garanties) sont réconciliés au **lot 3** (« pytest sans échec »).*
+
+---
+
+## Lot 2 — l'attribution `anru`
+
+SOURCES-CORRECTION-1 lot 2 avait fait passer `deal_wms_wfs` en `hub`, mais les 8 lignes
+`spatial_layers kind='anru'` pointaient encore ce hub par leur `data_source_id` (héritage M74), alors
+que le registre (`RESERVOIR_TABLES`) déclare le réservoir **`npnru`**. La source RÉELLE de la couche
+était donc un `hub` (hors vitrine) → l'audit couche↔source tombait à **55/56** (check 2 : « la source
+réelle est-elle `connecte` ? »).
+
+**Corrigé** — `scripts/correction2_anru_raccord.py` (idempotent, ré-exécutable, rattachement **par nom**,
+comme les 3 provenances fausses de COUCHES-REGISTRE-2 : axe_structurant/ligne_ht/tva_primo) : les 8 lignes
+`anru` passent de `data_source_id` = « DEAL Réunion (WMS/WFS) » (hub) à « NPNRU (DEAL Réunion / ANCT) »
+(connecte, id résolu par nom). **Aucune géométrie touchée** (colonne `data_source_id` seule), aucune tuile
+reconstruite. `deal_wms_wfs` devient un **hub réellement vide** (ne possède plus aucune couche).
+
+### Preuve
+- `scripts/audit_couches_registre.py` : **CHECK 1 (Registre) 56/56 | CHECK 2 (Réservoir réel) 56/56** (le
+  `real` d'`anru` est désormais « NPNRU … [connecte] ×8 »). Idempotence vérifiée : ré-exécution = 0 ligne déplacée.
+- `verrous -w G8` exit 0 ; `tsc -b` : aucun fichier front touché (le script est backend/DB, le registre code
+  déclarait déjà npnru — rien à changer côté `RESERVOIR_TABLES`).
