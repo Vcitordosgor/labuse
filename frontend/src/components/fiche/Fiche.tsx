@@ -588,6 +588,14 @@ export function Fiche({ idu }: { idu: string }) {
     if (!f?.proprietaire_moral && /sans objet|dirigeant|personne morale|bodacc/i.test(det)) return false
     return true
   })
+  // FICHE-SANS-OBJET-1 — même repli qu'en §4/§5 pour §1 Identité : les vérifications proprio
+  // SANS OBJET PAR NATURE d'une personne physique (BODACC, âge dirigeant, dénomination PM) ne sont
+  // plus JETÉES en silence (Lot 4 les retirait du flux) — elles reviennent dans un repli « N sans
+  // objet », replié par défaut (flux principal inchangé). Côté PM, les résidus « inconnu » masqués
+  // sont des CONTRADICTIONS (RETOURS-11F F11), pas des « sans objet » → jamais surfacés.
+  const proprioSansObjet = f && !f.proprietaire_moral
+    ? ongletLines('proprio').filter((l) => /sans objet|dirigeant|personne morale|bodacc/i.test(l.detail ?? ''))
+    : []
   const proprioSignal = proprioLines.filter((l) => (l.weight ?? 0) > 0).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0]
   const proprioType = f?.proprietaire_moral?.denomination ?? (f?.proprietaire_moral ? 'personne morale' : 'personne physique / non recensé')
   // Règles : zone PLU + SDP résiduelle (données déjà chargées).
@@ -1255,6 +1263,19 @@ export function Fiche({ idu }: { idu: string }) {
                 <FiliationBlock f={f} />
                 {/* HISTORIQUE des permis DE la parcelle — relocalisé de « Autour » (§9→§1). */}
                 <HistoriqueSiteBlock f={f} />
+                {/* FICHE-SANS-OBJET-1 — repli « N sans objet » de §1 (modèle §5) : les vérifications
+                    proprio sans objet par nature d'une personne physique reviennent ici (repliées),
+                    au lieu d'être jetées en silence. */}
+                {proprioSansObjet.length > 0 && (
+                  <details data-identite-sans-objet>
+                    <summary className="cursor-pointer text-[12px] font-semibold text-txt-mut" style={{ listStyle: 'none' }}>
+                      <span className="text-mint">✓</span> {proprioSansObjet.length} couche{proprioSansObjet.length > 1 ? 's' : ''} sans objet — déplier
+                    </summary>
+                    <div className="mt-1.5 flex flex-col gap-1">
+                      {proprioSansObjet.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}
+                    </div>
+                  </details>
+                )}
               </div>
             </RefDrawer>
 
@@ -1418,6 +1439,25 @@ export function Fiche({ idu }: { idu: string }) {
                   <FactRow label="Seuil de déclenchement" tone="mute" value="non renseigné" />
                   <FactNote>Servitude de mixité sociale — non extraite du règlement de zone GPU à ce jour (en attente).</FactNote>
                 </div>
+                {/* FICHE-SANS-OBJET-1 — §4 a désormais SON propre repli « N sans objet », calqué EXACT
+                    sur §5 Risques (même libellé, même style, replié par défaut). Les lignes PASS de
+                    l'onglet `regles` (« Hors forêt publique », « Hors zone humide », « Hors parc
+                    national », « Non concerné SAFER »…) y sont ramassées au lieu de disparaître en
+                    silence. EXCLUES car déjà re-servies ailleurs (jamais deux fois) : `bati` (→ §3
+                    Bâti), `dpu` & `peb` (→ Dispositifs et périmètres), `zonage_plu_gpu` (→ tuile Zone). */}
+                {(() => {
+                  const so = reglesLines.filter((l) => l.result === 'PASS' && !['bati', 'dpu', 'peb', 'zonage_plu_gpu'].includes(l.layer))
+                  return so.length > 0 ? (
+                    <details data-urbanisme-sans-objet>
+                      <summary className="cursor-pointer text-[12px] font-semibold text-txt-mut" style={{ listStyle: 'none' }}>
+                        <span className="text-mint">✓</span> {so.length} couche{so.length > 1 ? 's' : ''} sans objet — déplier
+                      </summary>
+                      <div className="mt-1.5 flex flex-col gap-1">
+                        {so.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}
+                      </div>
+                    </details>
+                  ) : null
+                })()}
               </div>
             </RefDrawer>
 
