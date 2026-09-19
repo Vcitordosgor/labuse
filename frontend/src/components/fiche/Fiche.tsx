@@ -18,7 +18,7 @@ import { ScoreV2Block } from './ScoreV2Block'
 import { BlocIndisponible } from './BlocIndisponible'
 import { CoproprietesBlock } from './CoproprietesBlock'
 import { ProprietaireHistorique } from './ProprietaireHistorique'
-import type { FicheLine, FicheZoneDestinations, IcdBlock, Onglet, ReglementPlu } from '../../lib/types'
+import type { FicheZoneDestinations, IcdBlock, Onglet, ReglementPlu } from '../../lib/types'
 import { DestinationBadge } from '../outils/DestinationSelect'   // DESTINATIONS-1 (X4.2) — pastille contour partagée
 import { useApp } from '../../store/useApp'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille d'outils partagée
@@ -527,29 +527,9 @@ function ProjetButton({ idu }: { idu: string }) {
 
 // RETOURS-11F4 (F8) : EquipementsBadges (piscine/pente) a déménagé dans `reseaux.tsx`.
 
-// EBC / ER (dette #10) — drapeaux d'INFORMATION dérivés des prescriptions PLU DÉJÀ calculées
-// par la cascade (layer 'prescription_plu', libellés servis). Lecture seule : ne filtre, n'exclut
-// ni ne pondère JAMAIS — le verdict et les scores restent ceux du run servi.
-function prescriptionsInfo(lines: FicheLine[]): { ebc: { coverage: number | null } | null; ers: { num: string | null }[] } {
-  let ebc: { coverage: number | null } | null = null
-  const ers: { num: string | null }[] = []
-  const vus = new Set<string>()
-  for (const l of lines || []) {
-    if (l.layer !== 'prescription_plu') continue
-    const d = l.detail || ''
-    if (d.startsWith('Espace boisé classé (EBC)')) {
-      const m = d.match(/~\s*(\d+)\s*%/)
-      const cov = m ? Number(m[1]) : null
-      if (!ebc || (cov != null && (ebc.coverage == null || cov > ebc.coverage))) ebc = { coverage: cov }
-    } else if (d.startsWith('Emplacement réservé')) {
-      const m = d.match(/ER\s*n?°?\s*(\d+)/i) || d.match(/réservé\s*n?°?\s*(\d+)/i)
-      const num = m ? m[1] : null
-      const key = num ?? d.slice(0, 40)
-      if (!vus.has(key)) { vus.add(key); ers.push({ num }) }
-    }
-  }
-  return { ebc, ers }
-}
+// FICHE-RANGEMENT-1 Lot 1 (doublon #5) — `prescriptionsInfo` ne dérivait les drapeaux EBC/ER QUE
+// pour le bloc Signaux du haut, retiré (doublon du tiroir « Dispositifs et périmètres », qui porte
+// EBC/ER avec leur contexte). Plus aucun lecteur → fonction retirée.
 
 
 /** M11 · SURFACE C — onglet FAISABILITÉ : le résultat, le calcul TRACÉ étape par étape (déterministe,
@@ -713,8 +693,8 @@ export function Fiche({ idu }: { idu: string }) {
           </Tip>
         </span>
       : undefined
-  // Dette #10 : drapeaux EBC / ER (information seule), dérivés des prescriptions PLU du run servi.
-  const presc = f ? prescriptionsInfo(f.lines) : null
+  // FICHE-RANGEMENT-1 Lot 1 (doublon #5) — `presc` (drapeaux EBC/ER) alimentait le bloc Signaux du
+  // haut, retiré (doublon du tiroir « Dispositifs et périmètres »). Plus de lecteur → const retirée.
 
   // M56-B5 : conteneur fiche ramené de 440px (M55-L, +10 %) à 400px — sa largeur d'avant.
   // VALEUR UNIQUE ici (un critère, un seul endroit). `max-w-full` garde la fiche dans l'écran
@@ -979,14 +959,10 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
               {f.score_v2 != null && (
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  {/* M135 — la MÊME fraction que la carte de tri (jamais un ×N). « — » = peu probable. */}
-                  <p style={{ margin: 0, fontSize: 19, fontWeight: 500, color: signalEcarte ? '#8C7468' : verdict.color, lineHeight: 1 }}>{f.score_v2.fraction ?? '—'}</p>
-                  <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--lab)' }}>
-                    {signalEcarte ? 'signal brut' : (f.score_v2.fraction ? 'sous 1 an' : 'peu probable')}
-                    {f.score_v2.verbal?.info && (
-                      <span title={f.score_v2.verbal.info} style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
-                    )}
-                  </p>
+                  {/* FICHE-RANGEMENT-1 Lot 1 (doublon #7) — la « Probabilité de vente sous 1 an » (fraction)
+                      vit UNE fois, dans le bloc canonique ScoreV2Block plus bas (qui seul porte percentile,
+                      rang et les badges copro/veille/événement). On retire l'écho de l'en-tête du verdict ;
+                      le mot d'échelle (unique) reste ici, à côté du verdict. */}
                   {/* mot d'échelle : en couleur du tier quand servable ; ATTÉNUÉ quand écartée à
                       signal fort (le mot ne doit pas faire promesse à côté d'un statut mort). */}
                   {f.score_v2.verbal?.mot && (
@@ -1030,19 +1006,10 @@ export function Fiche({ idu }: { idu: string }) {
                     <span title={f.score_v2.verbal.frequence.source_dite} style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
                   </p>
                 )}
-                {(f.score_v2.pourquoi?.length ?? 0) > 0 && (
-                  <details data-pourquoi style={{ marginTop: 8 }} open={montreMultiple || signalEcarte}>
-                    <summary style={{ cursor: 'pointer', fontSize: 11.5, color: '#a78bfa', fontWeight: 600 }}>{signalEcarte ? 'Pourquoi ce signal (avant l’écart)' : 'Pourquoi ce score'}</summary>
-                    <ul style={{ margin: '6px 0 0', padding: 0, listStyle: 'none' }}>
-                      {f.score_v2.pourquoi!.slice(0, 5).map((c, i) => (
-                        <li key={i} style={{ padding: '3px 0', fontSize: 11.5, color: '#c9d6cf' }}>
-                          <span style={{ color: c.signe === '-' ? '#8ba69a' : '#5fd0a8' }}>{c.signe === '-' ? '▽' : '▲'}</span>{' '}
-                          {c.phrase || c.libelle}
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                )}
+                {/* FICHE-RANGEMENT-1 Lot 1 (doublon #6) — « Pourquoi ce score » vivait DEUX fois dans la
+                    même carte Analyse (ici en inline + dans ScoreV2Block juste dessous). On garde le bloc
+                    canonique ScoreV2Block (self-fetch /v2/score, versionné, porte percentile/rang/badges)
+                    et on retire l'écho inline. Réglette et fréquence (non dupliquées) restent au-dessus. */}
               </div>
             )}
             {/* chips d'arguments — M61 P3 : les pastilles « constructible {zone} » et « N vigilance(s) »
@@ -1258,30 +1225,10 @@ export function Fiche({ idu }: { idu: string }) {
             {/* M55-O phase 2.1c : Mode B unifié et rattaché à la Constructibilité (rendu unique plus
                 bas). L'ancien rendu « remonté » pour la déclassée à signal fort est retiré. */}
 
-            {/* M56-B4 point 2 — SIGNAUX de la parcelle (drapeaux EBC / ER, information seule),
-                regroupés ici juste avant LE TERRAIN, jamais au milieu des actions. Micro-label
-                « SIGNAUX » ; si un seul signal, la pastille reste seule mais à cette place. */}
-            {presc && (presc.ebc || presc.ers.length > 0) && (
-              <div data-signaux-parcelle>
-                <GroupLabel first>Signaux</GroupLabel>
-                <div data-prescriptions-badges style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {presc.ebc && (
-                    <Tip tip="Espace boisé classé — information. Toute construction est interdite sur l’emprise boisée (Art. L113-1 CU). N’exclut pas la parcelle.">
-                      <span data-badge-ebc className="pill-mint">
-                        partiellement en EBC{presc.ebc.coverage != null ? ` (~${presc.ebc.coverage} %)` : ''}
-                      </span>
-                    </Tip>
-                  )}
-                  {presc.ers.map((er, i) => (
-                    <Tip key={i} tip="Emplacement réservé — information. Emprise grevée au profit d’un projet public (servitude levable si l’ER est abandonné). N’exclut pas la parcelle.">
-                      <span data-badge-er className="pill-amber">
-                        emplacement réservé{er.num ? ` n°${er.num}` : ''}
-                      </span>
-                    </Tip>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* FICHE-RANGEMENT-1 Lot 1 (doublon #5) — les badges SIGNAUX (EBC / ER) faisaient doublon avec
+                le tiroir « Dispositifs et périmètres », qui porte EBC et ER AVEC leur contexte (n° d'ER,
+                part d'emprise, aux côtés des SUP / DPU / PEB). On retire le teaser du haut ; la présence
+                reste signalée en un coup d'œil par la pastille « N périmètres » de la ligne fermée du tiroir. */}
 
             {/* M55-O phase 3.4 — GROUPE SILENCIEUX « LE TERRAIN » : Urbanisme · Constructibilité
                 (+ Mode B) · Risques et protections. */}
@@ -1292,12 +1239,16 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* M56-B6 · DA-FICHE-v6 — plus de conteneur .gcard : chaque tiroir est une carte autonome. */}
             {/* ① URBANISME — droit du sol (PLU, procédure, zonage, traducteur, règlement). */}
+            {/* FICHE-RANGEMENT-1 Lot 1 (doublon #2) — le CODE DE ZONE (« Nerl »…) vit UNE fois dans la
+                tuile d'en-tête « Zone » (glance : U/AU/A/N) et, en détail, dans ReglementPluBlock
+                (« Règlement — zone X », qui doit nommer sa zone). On retire l'écho « zone X » de la
+                ligne fermée et de la micro-jauge (l'article RNU, lui, n'est PAS dans la tuile → conservé). */}
             <RefDrawer id="regles" icon={IC.regles} name="Urbanisme"
               value={reglesGabarit}
-              context={[reglesZone ? `zone ${reglesZone}` : reglesArticle ? `art. ${reglesArticle}` : 'zone non publiée au GPU', pctConsomme != null ? CLIENT.fiche.sdpConsommee(pctConsomme) : null].filter(Boolean).join(' · ')}
+              context={[reglesZone ? null : reglesArticle ? `art. ${reglesArticle}` : 'zone non publiée au GPU', pctConsomme != null ? CLIENT.fiche.sdpConsommee(pctConsomme) : null].filter(Boolean).join(' · ')}
               micro={pctConsomme != null
                 ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
-                : <MicroJauge pct={0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
+                : <MicroJauge pct={0} label={[reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
               <div className="flex flex-col gap-3">
                 {/* M75 — obligation APER (ombrières PV, grand parking > 1 500 m²) : contrainte
                     réglementaire portant sur le terrain, INFORMATION. Libellé backend (mêmes mots

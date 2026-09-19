@@ -9,7 +9,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { faisabiliteExplain, getCalculetteDefaults, getFaisabilite, getModeB, postChargeFonciere, type CalculetteDefaults } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
-import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
+import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { AvisIA } from '../AvisIA'
@@ -32,7 +32,9 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
       }>Potentiel de transformation</GroupLabel>
       <p className="mt-1 text-[11px] leading-snug text-txt-mut">{pt.libelle}</p>
       {pt.pct_consomme != null && <FactRow label="SDP consommée / autorisée" value={<>{pt.pct_consomme} <small>%</small></>} />}
-      {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <FactRow label={`SDP résiduelle estimée · ${PERIM_RESIDUEL_COURT}`} value={<>~{fmtInt(pt.sdp_residuelle_m2)} <small>m²</small></>} />}
+      {/* FICHE-RANGEMENT-1 Lot 1 (doublon #1) — la « SDP résiduelle » vit UNE fois, dans la tuile
+          d'en-tête « SDP restante » (triage glance, jeu délibéré des 6 tuiles). Ici on garde le
+          ratio consommée/autorisée et la marge en hauteur (le raisonnement), sans répéter le nombre. */}
       {/* RECETTE-11 A6 — plus de verdict (« possible »/« non ») : la marge mesurée sous la règle et
           la contrainte qui mord ; A3 : la date de survol quand c'est une mesure LiDAR HD. */}
       {pt.hauteur_marge_m != null && <FactRow label="Marge en hauteur" value={<>~{pt.hauteur_marge_m} <small>m sous la règle{pt.hauteur_contrainte ? `, contrainte : ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}` : ''}{pt.hauteur_survol ? ` — mesuré au LiDAR HD, survol de ${pt.hauteur_survol}` : ''}{pt.hauteur_permis_posterieur ? ` ; antérieur au permis du ${pt.hauteur_permis_posterieur}, possiblement dépassé` : ''}</small></>} />}
@@ -499,11 +501,14 @@ function BilanTab({ idu }: { idu: string }) {
           unique). La Constructibilité ne montre QUE le prix RETENU pour le bilan + un renvoi ; plus de
           fiche de marché rivale ici (le détail — n ventes, rayon, tendance, fraîcheur — est dans Marché). */}
       {/* RETOURS-20 Z3 — les Sec (card-elev) deviennent kicker + FactRow/FactNote (plus de boîte). */}
+      {/* FICHE-RANGEMENT-1 Lot 1 (doublon #3) — le PRIX DE SORTIE bâti secteur est un FAIT de marché :
+          il vit UNE fois, dans « Marché et secteur » (échantillon, rayon, tendance, fraîcheur). Le
+          bilan ne répète plus le chiffre — il renvoie au fait unique (la charge foncière ci-dessous
+          s'appuie dessus). */}
       {b.marche?.median != null && (
         <div>
           <GroupLabel>Prix de sortie retenu (bilan)</GroupLabel>
-          <FactRow label="Prix de sortie retenu" value={<>{fmtInt(Number(b.marche.median))} <small>€/m² bâti</small></>} />
-          <FactNote>Valeur retenue pour le calcul de charge foncière. Détail du marché (échantillon, rayon, tendance, fraîcheur) → section « Marché et secteur ».</FactNote>
+          <FactNote>Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché et secteur » (échantillon, rayon, tendance, fraîcheur y sont détaillés).</FactNote>
         </div>
       )}
       {/* M58-P1 : note « la charge foncière est dans Faisabilité » RETIRÉE — elle pointait vers la

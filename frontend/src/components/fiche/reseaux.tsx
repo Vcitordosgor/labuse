@@ -29,10 +29,9 @@ function EquipementsBadges({ idu }: { idu: string }) {
   const rows: { label: string; value: ReactNode; tone?: 'warn'; src?: string }[] = []
   if (e['piscine']) rows.push({ label: 'Piscine', value: <>~{e['piscine_m2']} <small>m²</small></>,
     src: `détection ortho — confiance ${e['piscine_confiance']}` })
-  if (e['pente_moy_deg'] != null) rows.push({ label: 'Pente',
-    value: <>{Math.round(Number(e['pente_non_batie_deg'] ?? e['pente_moy_deg']))}<small>°</small></>,
-    tone: e['flag_terrassement_lourd'] ? 'warn' : undefined,
-    src: `pente moyenne ${e['pente_non_batie_deg'] != null ? 'hors bâti ' : ''}(RGE ALTI 5 m)${e['flag_terrassement_lourd'] ? ' — terrassement lourd probable' : ''}` })
+  // FICHE-RANGEMENT-1 Lot 1 (doublon #4) — la PENTE vit UNE fois, dans la tuile d'en-tête « Pente »
+  // (triage glance, même source RGE ALTI ; son sous-titre dit plat/modérée/forte/très forte). On ne
+  // la répète plus ici ; « Terrain » ne garde que la piscine (fait propre à l'ortho).
   if (!rows.length) return null
   return (
     <div data-terrain>
