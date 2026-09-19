@@ -526,7 +526,9 @@ export function FiscalLeviersBlock({ idu }: { idu: string }) {
     <div>
       <GroupLabel>Fiscal &amp; leviers</GroupLabel>
       <FactRow label="QPV" value={<span className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</span>} tone={b.fiscal.qpv ? undefined : 'mute'} />
-      <FactRow label="TVA" value={b.fiscal.tva} />
+      {/* FICHE-RANGEMENT-2 Lot 4 — la TVA outre-mer (8,5 % / 2,1 % LLS) n'est plus RÉPÉTÉE ici :
+          elle est expliquée UNE fois, en « Dispositifs territoriaux » (dispositifs_dom, formulation
+          complète). « Fiscal & leviers » ne garde que QPV + la note de taxe d'aménagement. */}
       <FactNote>{b.fiscal.ta_note}</FactNote>
     </div>
   )

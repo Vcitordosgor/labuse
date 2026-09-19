@@ -174,8 +174,11 @@ function StatusLine({ tone = 'mint', children }: { tone?: 'mint' | 'amber'; chil
 
 // Z1·05 — VIGILANCE (filet ambre à gauche, pas de boîte) · RAPPEL (fond un cran plus clair, sans
 // bordure) · NOTE de méthode 11,5 px sous la ligne (plus un paragraphe plein).
-function Vigilance({ title, children }: { title: ReactNode; children?: ReactNode }) {
-  return <div className="f-vig"><div className="t">{title}</div>{children != null && <div className="p">{children}</div>}</div>
+// FICHE-RANGEMENT-2 Lot 4 — grammaire visuelle unique : le filet d'attention `.f-vig` accepte un
+// `tone` (défaut ambre ; `mint` = à jour/positif ; `creuser` = en cours) pour absorber les blocs
+// « alerte/procédure/fraîcheur » de §4 qui codaient chacun leur propre filet à la main.
+function Vigilance({ title, children, tone }: { title: ReactNode; children?: ReactNode; tone?: 'mint' | 'creuser' }) {
+  return <div className={`f-vig${tone ? ' ' + tone : ''}`}><div className="t">{title}</div>{children != null && <div className="p">{children}</div>}</div>
 }
 function Rappel({ children, src }: { children: ReactNode; src?: ReactNode }) {
   return <div className="f-rappel">{children}{src != null && <span className="src">{src}</span>}</div>

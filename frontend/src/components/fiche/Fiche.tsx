@@ -1255,71 +1255,62 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* M75 — obligation APER (ombrières PV, grand parking > 1 500 m²) : contrainte
                     réglementaire portant sur le terrain, INFORMATION. Libellé backend (mêmes mots
                     que les exports). « potentiellement concerné », jamais « soumis à ». */}
-                {/* RETOURS-20 Z3 — plus de boîte bordée : filet ambre à gauche (grammaire .vig),
-                    contenu inchangé. */}
+                {/* FICHE-RANGEMENT-2 Lot 4 — grammaire visuelle unique : APER, fraîcheur PLU et Radar
+                    procédures partageaient le MÊME motif (filet gauche + titre + prose) codé à la main
+                    trois fois. Ils passent au filet partagé <Vigilance> (ambre par défaut ; mint « à
+                    jour » ; creuser « en cours »). Contenu inchangé ; le style est désormais unique. */}
                 {f.aper && (
-                  <div data-aper className="border-l-2 border-amber py-0.5 pl-3 text-[11px] leading-snug text-txt">
-                    <span className="mr-1" aria-hidden>🅿</span>{f.aper.note}
-                    <span className="ml-1 text-[10px] text-txt-dim">{f.aper.etat}.</span>
+                  <div data-aper>
+                    <Vigilance title={<><span aria-hidden className="mr-1">🅿</span>{f.aper.note}</>}>
+                      {f.aper.etat}.
+                    </Vigilance>
                   </div>
                 )}
-                {/* M32 §2 + M40 : source qui fait foi. Les 3 choses distinctes, jamais mélangées :
-                    (1) quel document LABUSE sert · (2) qu'il fait foi à ce jour · (3) ce qui est en
-                    cours et non servi. + action « vérifier en mairie ». Couleur d'alerte hors « à jour ». */}
-                {/* RETOURS-20 Z3 — de-boxé : filet gauche (mint « à jour » / ambre sinon), plus de
-                    boîte bordée. Contenu (document servi, fait foi, en cours, action) inchangé. */}
                 {f.plu_fraicheur?.libelle && (
-                  <div data-plu-fraicheur={f.plu_fraicheur.statut}
-                    className={`border-l-2 py-0.5 pl-3 text-[11px] leading-snug ${
-                      f.plu_fraicheur.statut === 'a_jour'
-                        ? 'border-mint text-txt-mut'
-                        : 'border-st-creuser text-txt'}`}>
-                    <span className="mr-1">{f.plu_fraicheur.statut === 'a_jour' ? '🕓' : '▲'}</span>
-                    {f.plu_fraicheur.document_servi ? (
-                      <>
-                        <span>{f.plu_fraicheur.document_servi}</span>
-                        {f.plu_fraicheur.fait_foi && (
-                          <span className="block text-[10px] text-txt-dim mt-0.5">✓ {f.plu_fraicheur.fait_foi}</span>
-                        )}
-                        {f.plu_fraicheur.en_cours && (
-                          /* M57-P1 (d) : a_jour → avertissement NEUTRE (générique : assertion de config,
-                             pas une procédure), sans sablier ni « En cours (non servi) ». Les autres
-                             statuts (annule_partiel / opposabilite_en_attente) portent une procédure
-                             RÉELLE → cadre « En cours (non servi) » conservé. */
-                          f.plu_fraicheur.statut === 'a_jour'
-                            ? <span className="block text-[10px] text-txt-dim mt-0.5">{f.plu_fraicheur.en_cours}</span>
-                            : <span className="block text-[10px] text-st-creuser mt-0.5">⏳ En cours (non servi) : {f.plu_fraicheur.en_cours}</span>
-                        )}
-                        {f.plu_fraicheur.action && (
-                          <span className="block text-[10px] text-txt-mut mt-0.5">→ {f.plu_fraicheur.action}</span>
-                        )}
-                      </>
-                    ) : (
-                      <>{f.plu_fraicheur.libelle}
-                        {f.plu_fraicheur.note && f.plu_fraicheur.statut !== 'a_jour' && (
-                          <span className="block text-[10px] text-txt-dim mt-0.5">{f.plu_fraicheur.note}</span>
-                        )}
-                      </>
-                    )}
+                  <div data-plu-fraicheur={f.plu_fraicheur.statut}>
+                    <Vigilance tone={f.plu_fraicheur.statut === 'a_jour' ? 'mint' : 'creuser'}
+                      title={<><span className="mr-1">{f.plu_fraicheur.statut === 'a_jour' ? '🕓' : '▲'}</span>{f.plu_fraicheur.document_servi || f.plu_fraicheur.libelle}</>}>
+                      {f.plu_fraicheur.document_servi ? (
+                        <>
+                          {f.plu_fraicheur.fait_foi && (
+                            <span className="block text-[10px] text-txt-dim">✓ {f.plu_fraicheur.fait_foi}</span>
+                          )}
+                          {f.plu_fraicheur.en_cours && (
+                            /* M57-P1 (d) : a_jour → avertissement NEUTRE ; les autres statuts portent une
+                               procédure RÉELLE → « En cours (non servi) » conservé. */
+                            f.plu_fraicheur.statut === 'a_jour'
+                              ? <span className="block text-[10px] text-txt-dim">{f.plu_fraicheur.en_cours}</span>
+                              : <span className="block text-[10px] text-st-creuser">⏳ En cours (non servi) : {f.plu_fraicheur.en_cours}</span>
+                          )}
+                          {f.plu_fraicheur.action && (
+                            <span className="block text-[10px] text-txt-mut">→ {f.plu_fraicheur.action}</span>
+                          )}
+                        </>
+                      ) : (
+                        f.plu_fraicheur.note && f.plu_fraicheur.statut !== 'a_jour'
+                          ? <span className="block text-[10px] text-txt-dim">{f.plu_fraicheur.note}</span>
+                          : null
+                      )}
+                    </Vigilance>
                   </div>
                 )}
-                {/* M41 — Radar procédures PLU : stade + conséquences parcellaires servables
-                    (veille AU ; sursis si armé). Jamais l'issue de la procédure. */}
+                {/* M41 — Radar procédures PLU : stade + conséquences parcellaires servables. */}
                 {f.radar_procedure?.indisponible && <BlocIndisponible titre="Radar procédures PLU" />}
                 {f.radar_procedure?.synthese?.etat && (
-                  <div data-radar-procedure className="border-l-2 border-st-creuser py-0.5 pl-3 text-[11px] leading-snug text-txt">
-                    <span className="mr-1">📡</span>{f.radar_procedure.synthese.etat}
-                    {f.radar_procedure.veille_au && (
-                      <span className="block text-[10px] text-mint mt-1">Veille AU — {f.radar_procedure.veille_au}</span>
-                    )}
-                    {f.radar_procedure.sursis ? (
-                      <span className="block text-[10px] text-st-ecartee mt-1">
-                        Sursis à statuer — {f.radar_procedure.sursis.texte}
-                        <span className="block text-txt-dim">{f.radar_procedure.sursis.base_legale}</span>
-                      </span>
-                    ) : (
-                      <span className="block text-[10px] text-txt-dim mt-1">Sursis à statuer : non servi (débat PADD non constaté à ce jour).</span>
-                    )}
+                  <div data-radar-procedure>
+                    <Vigilance tone="creuser" title={<><span className="mr-1">📡</span>{f.radar_procedure.synthese.etat}</>}>
+                      {f.radar_procedure.veille_au && (
+                        <span className="block text-[10px] text-mint">Veille AU — {f.radar_procedure.veille_au}</span>
+                      )}
+                      {f.radar_procedure.sursis ? (
+                        <span className="block text-[10px] text-st-ecartee">
+                          Sursis à statuer — {f.radar_procedure.sursis.texte}
+                          <span className="block text-txt-dim">{f.radar_procedure.sursis.base_legale}</span>
+                        </span>
+                      ) : (
+                        <span className="block text-[10px] text-txt-dim">Sursis à statuer : non servi (débat PADD non constaté à ce jour).</span>
+                      )}
+                    </Vigilance>
                   </div>
                 )}
                 {/* M55-O phase 2.2 — la jauge « Qualité » (q_score) est RETIRÉE de la fiche : mesurée
