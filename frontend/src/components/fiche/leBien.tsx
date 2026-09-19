@@ -106,6 +106,14 @@ export function BatiBlock({ f }: { f: Fiche }) {
           ))}
         </div>
       )}
+      {/* FICHE-RANGEMENT-3 Lot 5 — adresses BAN PLUS (IGN) : lien adresse ↔ bâtiment de la parcelle. */}
+      {b.adresses_bati && (b.adresses_bati.adresses > 0 || b.adresses_bati.batiments > 0) && (
+        <div data-le-bien-ban>
+          <FactRow label="Adresses BAN PLUS"
+            value={<>{b.adresses_bati.adresses} <small>adresse{b.adresses_bati.adresses > 1 ? 's' : ''} · {b.adresses_bati.batiments} bâtiment{b.adresses_bati.batiments > 1 ? 's' : ''}</small></>}
+            src={b.adresses_bati.source} />
+        </div>
+      )}
       <FactNote>Bâti existant — {b.source_bati}. Information de fiche, jamais un signal de classement.</FactNote>
     </div>
   )

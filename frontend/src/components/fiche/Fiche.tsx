@@ -1170,6 +1170,15 @@ export function Fiche({ idu }: { idu: string }) {
               <div className="flex flex-col gap-3">
                 <ChiffreDissous l="Pente" t={tuilePente} />
                 <ChiffreDissous l="Exposition" t={tuileExpo} />
+                {/* FICHE-RANGEMENT-3 Lot 5 — AZIMUT du versant (aspect_deg, MNT RGE ALTI) : le cap
+                    précis derrière l'orientation lisible (0° = Nord, sens horaire). */}
+                {expoData?.aspect_deg != null && (
+                  <div data-terrain-azimut>
+                    <FactRow label="Azimut du versant"
+                      value={<>{nf(expoData.aspect_deg)} <small>° (0 = Nord, sens horaire)</small></>}
+                      src="RGE ALTI (IGN) — MNT" />
+                  </div>
+                )}
                 <TerrainDuBienBlock f={f} />
                 <EquipementsBadges idu={idu} />
               </div>

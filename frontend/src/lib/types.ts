@@ -563,6 +563,8 @@ export interface LeBien {
   } | null
   // REPARATIONS-1 lot 4 — identifiants RNB des bâtiments de la parcelle (lien officiel).
   rnb?: { rnb_id: string; statut: string | null; lien: string }[]
+  // FICHE-RANGEMENT-3 Lot 5 — adresses BAN PLUS (IGN) : lien adresse ↔ bâtiment sur la parcelle.
+  adresses_bati?: { liens: number; adresses: number; batiments: number; source: string } | null
   // REPARATIONS-1 lot 5 — occupation du sol / artificialisation d'après OCS GE (donnée d'îlot).
   ocsge?: { part_artif_pct: number | null; cs_dominant: string | null; us_dominant: string | null
     millesime: string | null; source: string } | null
