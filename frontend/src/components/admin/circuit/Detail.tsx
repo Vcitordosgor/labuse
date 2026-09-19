@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react'
 
 import {
   getAdminCircuitCompteur, getAdminCircuitNoteVersion, getAdminCircuitPompe,
-  getAdminCircuitReservoir, getAdminCircuitRobinet, getSourcesCouches, getSourcesRattachements,
+  getAdminCircuitReservoir, getAdminCircuitRobinet, getSourcesCalibrages, getSourcesCouches, getSourcesRattachements,
   postAdminCircuitAgents, postAdminCircuitFiltreRevenir, postAdminCircuitFiltreServir,
   postAdminCircuitRevenir, postAdminFluxBascule, postAdminFluxLancerRun, postAdminSourceVeilleInjecter,
 } from '../../../lib/api'
@@ -127,6 +127,9 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
   // CIRCUIT-SOURCES-1 (lot 3) — les 2 autres blocs de « tout ce que la source touche » : lignes de la
   // fiche parcelle + ailleurs (commune/outils/Radar/exports). Clé = nom du réservoir (= data_sources.name).
   const rattachements = useQuery({ queryKey: ['sources-rattachements'], queryFn: getSourcesRattachements, staleTime: 5 * 60_000 }).data
+  // PLU-CALIBRAGE-1 (lot 2) — les calibrages PLU (un par commune), lecteurs du réservoir GPU.
+  // Clé = nom du réservoir (= data_sources.name) ; n'apparaît que pour le réservoir GPU.
+  const calibragesParSource = useQuery({ queryKey: ['sources-calibrages'], queryFn: getSourcesCalibrages, staleTime: 5 * 60_000 }).data
   const [msgAgent, setMsgAgent] = useState<string | null>(null)
   // CIRCUIT-P2 (lot 3.3) — « Envoyer un agent » : jamais grisé sans mot (sans crédit → message).
   const agent = useMutation({
@@ -224,7 +227,22 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
             const rat = rattachements?.[r.nom]
             const lignes = rat?.lignes_fiche ?? []
             const ailleurs = rat?.ailleurs ?? []
+            const calibrages = calibragesParSource?.[r.nom] ?? []
             return (<>
+              {/* PLU-CALIBRAGE-1 (lot 2) — les calibrages PLU, lecteurs du réservoir GPU : une pastille
+                  par commune, ambre quand une nouvelle version du PLU est servie (« à revérifier »). */}
+              {calibrages.length > 0 && (
+                <div className="card"><h3>Calibrages PLU · {calibrages.length} lecteurs</h3>
+                  <div>{calibrages.map((cb) => (
+                    <span key={cb.insee} className={`chip ${cb.a_reverifier ? 'ambre' : ''}`}
+                      title={`${cb.commune} — ${cb.etat_label}`
+                        + (cb.document_gpu ? ` · calibré sur ${cb.document_gpu}` : '')
+                        + (cb.a_reverifier && cb.document_gpu_servi ? ` · servi ${cb.document_gpu_servi}` : '')
+                        + (cb.n_regles ? ` · ${cb.n_regles} règles` : '')}>
+                      {cb.commune} · {cb.etat_label}{cb.n_regles ? ` (${cb.n_regles})` : ''}</span>
+                  ))}</div>
+                </div>
+              )}
               <div className="card"><h3>Couches carte alimentées · {couches.length}</h3>
                 {couches.length ? <div>{couches.map((c) => (
                   <span key={c.kind} className="chip" title={`Ouvrir « ${c.nom} » sur la carte`}

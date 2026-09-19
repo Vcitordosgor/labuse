@@ -5610,6 +5610,24 @@ def sources_rattachements() -> dict:
     return out
 
 
+@app.get("/sources/calibrages")
+def sources_calibrages() -> dict:
+    """PLU-CALIBRAGE-1 lot 2 — pour le réservoir GPU (clé = data_sources.name), la liste de ses
+    LECTEURS calibrage : un par commune dotée d'un PLU (config/plu_destinations/<insee>_*.yaml),
+    avec l'état repris de destinations.etat_commune (« à jour » / « à revérifier » quand une
+    nouvelle version du PLU est servie / « non calibré »). Même forme que /sources/couches :
+    {nom_source: [calibrages]} — le détail Circuit du réservoir GPU les liste. 23 lecteurs de
+    plus sur une source existante, aucun job nouveau."""
+    from ..circuit_etats import NOM_VERS_SLUG
+    from ..plu.destinations import calibrages_gpu
+    cal = calibrages_gpu()
+    out: dict[str, list] = {}
+    for name, slug in NOM_VERS_SLUG.items():
+        if slug == "gpu_plu_api_carto":
+            out[name] = cal
+    return out
+
+
 @app.get("/map/bati")
 def map_bati(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     """Taux de bâti par parcelle (BD TOPO), pour le mode carte « mutabilité » (LOT 2).

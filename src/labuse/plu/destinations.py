@@ -643,3 +643,46 @@ def iter_regles_calibrees():
             for chemin, feuille in iter_regles_feuilles(zv["regles"]):
                 yield {"fichier": path.name, "insee": insee, "zone": zone,
                        "chemin": ".".join(chemin), **feuille}
+
+
+# ---------------------------------------------------------------------------
+# PLU-CALIBRAGE-1 lot 2 — LES CALIBRAGES, LECTEURS DU RÉSERVOIR GPU
+# ---------------------------------------------------------------------------
+# Chaque calibration de commune (config/plu_destinations/<insee>_*.yaml) LIT le règlement
+# opposable servi par le réservoir GPU (`gpu_plu_api_carto`, qui sert `plu_reglement_extrait`)
+# et grave la version calibrée (identifiant GPU `meta.document_gpu` + date `meta.millesime`).
+# Ce sont donc 23 LECTEURS de plus sur une source existante — aucun job nouveau. Quand une
+# nouvelle version du PLU d'une commune est servie (catalogue `plu_millesimes.yaml` rafraîchi
+# par la veille GPU, idurba plus récent que celui gravé au calibrage), `etat_commune` bascule
+# la commune en « a_relire » : le calibrage passe « à revérifier » dans le Circuit.
+CALIBRAGE_ETAT_LABEL = {
+    "calibree": "à jour",
+    "a_relire": "à revérifier",
+    "non_calibree": "non calibré",
+}
+
+
+def calibrages_gpu() -> list[dict]:
+    """Les calibrages PLU (un par commune dotée d'un PLU), lecteurs du réservoir GPU. Le RNU
+    (Saint-Philippe) n'est pas un calibrage de règlement PLU — exclu. État repris de
+    `etat_commune` : « à jour » / « à revérifier » (nouvelle version GPU) / « non calibré »."""
+    out: list[dict] = []
+    for e in etats_ile():
+        if e.get("etat") == "rnu":
+            continue
+        insee = e.get("insee")
+        out.append({
+            "insee": insee,
+            "commune": e.get("commune"),
+            "etat": e.get("etat"),
+            "etat_label": CALIBRAGE_ETAT_LABEL.get(e.get("etat"), e.get("etat")),
+            "a_reverifier": e.get("etat") == "a_relire",
+            "millesime": e.get("millesime"),
+            "document_gpu": e.get("document_gpu"),
+            "document_gpu_servi": e.get("document_gpu_servi"),
+            "lu_le": e.get("lu_le"),
+            "note": e.get("note"),
+            "n_zones": len(e.get("zones") or []),
+            "n_regles": len(regles_commune(insee or "")),
+        })
+    return out
