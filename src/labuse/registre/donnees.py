@@ -160,7 +160,11 @@ DONNEES: dict[str, Donnee] = {
     "compte des couches cascade en SOFT_FLAG/HARD_EXCLUDE",
     moteur="cascade", calcul="moteur",
     fonction="src/labuse/api/anti_fiche.py (motifs RÉDHIBITOIRE/VIGILANCE de la cascade)",
-    reservoirs=("abf_merimee", "deal_ppr", "georisques_api", "znieff_inpn",), portee="run"),
+    # CIRCUIT-SOURCES-1 lot 2 — attribution GRANULAIRE : le compte agrège les vigilances de chaque
+    # sous-source Géorisques réellement lue (mvt, ICPE, cavités, sites/sols pollués), plus ABF, PPR,
+    # ZNIEFF — au lieu de l'agrégat `georisques_api` (qui masquait quelle source touche la fiche).
+    reservoirs=("abf_merimee", "deal_ppr", "georisques_mvt", "georisques_icpe",
+                "georisques_cavites", "georisques_ssp", "znieff_inpn",), portee="run"),
  # FICHE-1 lot 3 — le DÉTAIL des aléas (nature/niveau/part/réf. PPR), dérivé des mêmes lignes
  # servies que « Pièges et risques » (cascade arbitrée, point de vérité unique M73).
  # SOURCES-1 lot 4 — la divergence SAR (proxy de vocations) servie dans les vigilances de la
@@ -177,7 +181,10 @@ DONNEES: dict[str, Donnee] = {
     "risques",
     moteur="cascade", calcul="moteur",
     fonction="src/labuse/api/app.py:_aleas_block (lignes servies layer='risques')",
-    reservoirs=("deal_ppr", "georisques_api",), portee="run", type="liste"),
+    # CIRCUIT-SOURCES-1 lot 2 — attribution GRANULAIRE : les aléas lus sont le mouvement de terrain
+    # (`georisques_mvt`) et l'inondation AZI/TRI (`georisques_azi_tri`), plus l'arrêté PPR (`deal_ppr`)
+    # — au lieu de l'agrégat `georisques_api` (depuis le Circuit, on voit désormais la ligne alimentée).
+    reservoirs=("deal_ppr", "georisques_mvt", "georisques_azi_tri",), portee="run", type="liste"),
  "n_extraits_plu": C("extraits (règlement)", "nombre", "commune",
     "extraits de règlement servis par commune (corpus)",
     moteur="commune_compteurs", calcul="moteur",
