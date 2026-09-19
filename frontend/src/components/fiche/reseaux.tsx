@@ -23,7 +23,7 @@ import { REF, IC, RefDrawer, Line, GroupLabel, FactRow, FactNote } from './primi
 // RETOURS-23 — les caractéristiques du terrain (piscine / pente) vivent SOUS un kicker « Terrain »
 // comme les autres faits : valeur chiffrée à droite en mono, source sous la ligne (pente en ambre
 // quand terrassement lourd probable). Donnée inchangée (mêmes chiffres, même source ortho).
-function EquipementsBadges({ idu }: { idu: string }) {
+export function EquipementsBadges({ idu }: { idu: string }) {
   const { data: e } = useQuery({ queryKey: ['equip', idu], queryFn: () => getOrthoEquipements(idu), retry: false })
   if (!e) return null
   const rows: { label: string; value: ReactNode; tone?: 'warn'; src?: string }[] = []

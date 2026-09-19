@@ -18,6 +18,29 @@ import { DepotsBlock } from './DepotsBlock'
 import { AutourZoneBlock } from './AutourZoneBlock'
 import { IC, RefDrawer, GroupLabel, FactNote } from './primitives'
 
+// FICHE-RANGEMENT-2 Lot 1 — §1 Identité : l'historique des permis DE la parcelle (fait d'identité
+// du bien), extrait pour la future section.
+export function HistoriqueSiteBlock({ f }: { f: Fiche }) {
+  const h = f.historique_site
+  if (!h) return null
+  if (h.indisponible) return <div className="mt-2"><BlocIndisponible titre="Sur cette parcelle (historique)" /></div>
+  if (!(h.permis.length > 0 || h.caducite)) return null
+  return (
+    <div data-historique-site>
+      <GroupLabel>🏗️ {h.titre}</GroupLabel>
+      <ul className="mt-1 list-disc pl-4 text-[11px] leading-snug text-txt-mut">
+        {h.permis.slice(0, 6).map((pm, i) => (
+          <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}</li>
+        ))}
+        {h.caducite && (
+          <li className="text-st-ecartee">PC {h.caducite.pc_annee ?? ''} — {h.caducite.libelle_court ?? 'caduc'}</li>
+        )}
+      </ul>
+      <FactNote>{h.honnetete}</FactNote>
+    </div>
+  )
+}
+
 export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
   const eq = f.proximites_equipements
   return (
@@ -79,23 +102,8 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
       {/* PERMIS À PROXIMITÉ — UN tableau cliquable (rapatrié de Réseaux, F0). */}
       <PermitsProximityBlock idu={idu} />
 
-      {/* Historique permis DE la parcelle (rapatrié de Marché). */}
-      {f.historique_site?.indisponible && <div className="mt-2"><BlocIndisponible titre="Sur cette parcelle (historique)" /></div>}
-      {f.historique_site && !f.historique_site.indisponible && (f.historique_site.permis.length > 0 || f.historique_site.caducite) && (
-        <div data-historique-site>
-          {/* Z1·02 / Z3 — la boîte (rounded border bg) devient un kicker + liste ; note → FactNote. */}
-          <GroupLabel>🏗️ {f.historique_site.titre}</GroupLabel>
-          <ul className="mt-1 list-disc pl-4 text-[11px] leading-snug text-txt-mut">
-            {f.historique_site.permis.slice(0, 6).map((pm, i) => (
-              <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}</li>
-            ))}
-            {f.historique_site.caducite && (
-              <li className="text-st-ecartee">PC {f.historique_site.caducite.pc_annee ?? ''} — {f.historique_site.caducite.libelle_court ?? 'caduc'}</li>
-            )}
-          </ul>
-          <FactNote>{f.historique_site.honnetete}</FactNote>
-        </div>
-      )}
+      {/* Historique permis DE la parcelle (→ §1 Identité au basculement). */}
+      <HistoriqueSiteBlock f={f} />
 
       {/* Activité de dépôt du secteur (Sitadel) — rapatrié de Réseaux. */}
       {f.depots && <DepotsBlock d={f.depots} />}
