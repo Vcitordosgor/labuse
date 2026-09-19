@@ -488,7 +488,7 @@ export function FaisabiliteTab({ idu, embedded }: { idu: string; embedded?: bool
   )
 }
 
-function BilanTab({ idu }: { idu: string }) {
+export function BilanTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
   if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
   if (isError || !b) return <ErrorState message="Bilan indisponible." retry={() => refetch()} />

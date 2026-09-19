@@ -44,7 +44,7 @@ export function HistoriqueSiteBlock({ f }: { f: Fiche }) {
 export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
   const eq = f.proximites_equipements
   return (
-    <RefDrawer id="autour-zone" icon={IC.contexte} name="Autour de cette parcelle"
+    <RefDrawer id="quartier" icon={IC.contexte} name="Quartier"
       context="Équipements, population et permis du voisinage"
       value={<span className="pill-mint">isochrone</span>}>
       {/* ÉQUIPEMENTS — UN moteur (BPE+OSM dédoublonnés, distance à pied). Absent = omis (jamais « 0 m »).
@@ -102,8 +102,8 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
       {/* PERMIS À PROXIMITÉ — UN tableau cliquable (rapatrié de Réseaux, F0). */}
       <PermitsProximityBlock idu={idu} />
 
-      {/* Historique permis DE la parcelle (→ §1 Identité au basculement). */}
-      <HistoriqueSiteBlock f={f} />
+      {/* FICHE-RANGEMENT-2 Lot 1 — l'historique permis DE la parcelle (fait d'identité) est relocalisé
+          en §1 Identité (HistoriqueSiteBlock composé là) ; §9 Quartier ne garde que le voisinage. */}
 
       {/* Activité de dépôt du secteur (Sitadel) — rapatrié de Réseaux. */}
       {f.depots && <DepotsBlock d={f.depots} />}

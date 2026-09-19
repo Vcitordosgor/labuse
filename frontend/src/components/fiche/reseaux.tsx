@@ -42,7 +42,7 @@ export function EquipementsBadges({ idu }: { idu: string }) {
   )
 }
 
-export function ReseauxSection({ f, idu }: { f: Fiche; idu: string }) {
+export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
   const viabValue = f.viabilisation?.libelle?.replace(/^Viabilisation\s+/i, '') ?? (f.gestionnaires ? 'réseaux renseignés' : '—')
   const viabColor = f.viabilisation?.band === 'confirmee' ? REF.ok : REF.gris
   const viabConfirmee = f.viabilisation?.band === 'confirmee'
@@ -54,12 +54,12 @@ export function ReseauxSection({ f, idu }: { f: Fiche; idu: string }) {
   const accesLignes = f.lines.filter((l) => l.layer === 'acces')
   const trans = f.proximites
   return (
-    <RefDrawer id="viabilisation" icon={IC.viab} name="Réseaux et accès" context={viabContext}
+    <RefDrawer id="reseaux" icon={IC.viab} name="Réseaux et desserte" context={viabContext}
       value={viabConfirmee ? <span className="pill-mint">confirmée</span> : viabValue}
       valueColor={viabConfirmee ? undefined : viabColor}>
       <div className="flex flex-col gap-3">
-        {/* caractéristiques du terrain (piscine / pente) — informatif. */}
-        <EquipementsBadges idu={idu} />
+        {/* FICHE-RANGEMENT-2 Lot 1 — les caractéristiques du terrain (piscine, EquipementsBadges) sont
+            relocalisées en §2 Terrain ; §6 Réseaux et desserte ne porte plus que réseaux/accès/desserte. */}
 
         {/* SOURCES-1 lot 5 — fibre Arcep : immeuble le plus proche, DISTANCE DITE, jamais un
             booléen nu ; bloc omis si la source n'est pas ingérée (f.fibre absent). */}

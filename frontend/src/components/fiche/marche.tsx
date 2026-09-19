@@ -58,20 +58,15 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
   const horizon = mb?.fraicheur?.horizon_libelle || mb?.dvf_couverture?.libelle
   const contexte = (dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} vente${dvfSecteur.n_ventes > 1 ? 's' : ''} secteur` : 'comparables DVF') + (horizon ? ` · DVF — ${horizon}` : '')
   return (
-    <RefDrawer id="marche" icon={IC.marche} name="Marché et secteur"
+    <RefDrawer id="marche" icon={IC.marche} name="Marché"
       context={contexte}
       value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
       micro={<MicroSpark label={contexte} />}>
       {marcheLines.length
         ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
         : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
-      {/* RECETTE-6 (C2/C3/C4) — DERNIÈRE VENTE rapatriée ici (elle vivait dans « Le reste des faits »,
-          supprimé) : un fait, une section. C4 — SEUIL DE VRAISEMBLANCE : une mutation MULTI-PARCELLES
-          porte le prix GLOBAL de la vente (plusieurs parcelles vendues ensemble), PAS celui de cette
-          parcelle seule (mesuré : 41 % des dernières ventes ; ex. 81 219 € affichés à l'identique sur
-          deux parcelles d'une même mutation). On ne présente donc jamais ce montant comme « le prix du
-          bien » : on l'annonce comme une vente groupée. Le montant est sinon la mutation DVF de la parcelle. */}
-      <DerniereVenteBlock f={f} />
+      {/* FICHE-RANGEMENT-2 Lot 1 — la DERNIÈRE VENTE (fait d'identité du bien) est relocalisée en
+          §1 Identité (DerniereVenteBlock composé là) ; Marché ne porte plus que du prix de secteur. */}
 
       {/* RETOURS-11F4 F7/F0 — PRIX DE SORTIE bâti secteur : le fait vit ICI (la Constructibilité y renvoie).
           Même moteur que le bilan (`marche.median`). Sous le seuil : dit tel quel, jamais un chiffre inventé.

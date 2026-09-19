@@ -29,7 +29,7 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
   const sols = f.sols
   const autresVig = vigilances.filter((l) => l.layer !== 'risques')
   return (
-    <RefDrawer id="risques" icon={IC.risques} name="Risques et protections"
+    <RefDrawer id="risques" icon={IC.risques} name="Risques et environnement"
       context={`${evaluees} couche${evaluees > 1 ? 's' : ''} évaluée${evaluees > 1 ? 's' : ''}`}
       value={vigilances.length === 0
         ? <span className="pill-mint">rien à signaler</span>
