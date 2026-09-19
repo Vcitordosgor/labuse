@@ -16,7 +16,8 @@ import { MarcheSecteurBlock } from './MarcheSecteurBlock'
 import { PermitsProximityBlock } from './PermitsProximityBlock'
 import { DepotsBlock } from './DepotsBlock'
 import { AutourZoneBlock } from './AutourZoneBlock'
-import { IC, RefDrawer, GroupLabel, FactNote } from './primitives'
+import { useApp } from '../../store/useApp'
+import { IC, RefDrawer, GroupLabel, FactNote, PorteOutil } from './primitives'
 
 // FICHE-RANGEMENT-2 Lot 1 — §1 Identité : l'historique des permis DE la parcelle (fait d'identité
 // du bien), extrait pour la future section.
@@ -101,6 +102,13 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
 
       {/* PERMIS À PROXIMITÉ — UN tableau cliquable (rapatrié de Réseaux, F0). */}
       <PermitsProximityBlock idu={idu} />
+      {/* FICHE-PORTES-1 Lot 2 — porte « Permis » (M03) : prolonge la liste des permis à proximité
+          ci-dessus (l'outil est à la maille commune → contexte = la commune de la parcelle). */}
+      {f.commune && (
+        <PorteOutil ico="▤" data="permis" titre="Permis de la commune"
+          sous={`Qui construit quoi à ${f.commune} — et les permis dormants`}
+          onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setCommunesFilter([f.commune!]); st.setModule('permis') }} />
+      )}
 
       {/* FICHE-RANGEMENT-2 Lot 1 — l'historique permis DE la parcelle (fait d'identité) est relocalisé
           en §1 Identité (HistoriqueSiteBlock composé là) ; §9 Quartier ne garde que le voisinage. */}

@@ -1609,6 +1609,14 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* RETOURS-20 Z5 — l'alerte « délaissé » = une Vigilance (filet ambre). */}
                 {faisa.data?.delaisse && <div data-delaisse><Vigilance title={faisa.data.delaisse.libelle} /></div>}
                 {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
+                {/* FICHE-PORTES-1 Lot 2 — porte « Densifier l'existant » (MR1) : à la suite de la SDP
+                    consommée (potentiel de densification). Outil à la maille commune → contexte = la
+                    commune de la parcelle. */}
+                {f.commune && (
+                  <PorteOutil ico="◫" data="renouvellement" titre="Densifier l'existant"
+                    sous={`Le bâti en zone U de ${f.commune} qui peut porter davantage`}
+                    onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setCommunesFilter([f.commune!]); st.setModule('renouvellement') }} />
+                )}
                 <FaisabiliteTab idu={idu} />
               </div>
             </RefDrawer>
