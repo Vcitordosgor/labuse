@@ -20,7 +20,7 @@ import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroTriple, PorteOutil, StepProv, HypInput, GroupLabel, FactRow, FactNote, RefLink, Vigilance } from './primitives'
 
 const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280' }
-function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
+export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
   if (pt.indisponible) return <BlocIndisponible titre="Potentiel de transformation" />   // M125 — panne ≠ absence
   const color = PT_COLORS[pt.niveau] ?? '#9AA6A0'
   // RETOURS-20 Z3 — plus de card-elev : kicker (titre + badge d'état à droite), les lignes
@@ -49,7 +49,7 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
 // table rase que personne n'avait choisie). On sert le taux communal (public, daté) + départemental
 // et la phrase disant sur quoi elle se calculera ; le montant est chiffré au Dossier financier, sur
 // la SDP du projet. Taux communal inconnu → « non renseigné », jamais inventé (CIRCUIT-3 lot 6.2).
-function TaxeAmenagementBlock({ t }: { t: NonNullable<Fiche['taxe_amenagement']> }) {
+export function TaxeAmenagementBlock({ t }: { t: NonNullable<Fiche['taxe_amenagement']> }) {
   return (
     <div data-taxe-amenagement>
       <GroupLabel>Taxe d'aménagement</GroupLabel>
@@ -511,17 +511,34 @@ function BilanTab({ idu }: { idu: string }) {
           <FactNote>Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché et secteur » (échantillon, rayon, tendance, fraîcheur y sont détaillés).</FactNote>
         </div>
       )}
-      {/* M58-P1 : note « la charge foncière est dans Faisabilité » RETIRÉE — elle pointait vers la
-          calculette rendue juste au-dessus (FaisabiliteTab), dans le MÊME tiroir : redondante. */}
-      <div>
-        <GroupLabel>Fiscal &amp; leviers</GroupLabel>
-        <FactRow label="QPV" value={<span className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</span>} tone={b.fiscal.qpv ? undefined : 'mute'} />
-        <FactRow label="TVA" value={b.fiscal.tva} />
-        <FactNote>{b.fiscal.ta_note}</FactNote>
-      </div>
-      {b.rtaa && <RtaaBlock rtaa={b.rtaa} />}
+      {/* FICHE-RANGEMENT-2 Lot 1 — Fiscal & leviers → §7 Fiscalité ; RTAA → §4 Urbanisme.
+          Extraits en blocs feuilles (FiscalLeviersBlock, RtaaFromBilan) composés ici en attendant
+          le basculement des sections (non-breaking). */}
+      <FiscalLeviersBlock idu={idu} />
+      <RtaaFromBilan idu={idu} />
     </div>
   )
+}
+
+/** §7 Fiscalité — QPV / TVA / note taxe d'aménagement (levier fiscal du bilan). */
+export function FiscalLeviersBlock({ idu }: { idu: string }) {
+  const { data: b } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
+  if (!b) return null
+  return (
+    <div>
+      <GroupLabel>Fiscal &amp; leviers</GroupLabel>
+      <FactRow label="QPV" value={<span className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</span>} tone={b.fiscal.qpv ? undefined : 'mute'} />
+      <FactRow label="TVA" value={b.fiscal.tva} />
+      <FactNote>{b.fiscal.ta_note}</FactNote>
+    </div>
+  )
+}
+
+/** §4 Urbanisme — rappel RTAA DOM (conception), servi par le bilan (b.rtaa). */
+export function RtaaFromBilan({ idu }: { idu: string }) {
+  const { data: b } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
+  if (!b?.rtaa) return null
+  return <RtaaBlock rtaa={b.rtaa} />
 }
 
 /** RTAA DOM (mandat 5bis) — rappel réglementaire de CONCEPTION, vérifié Légifrance
@@ -530,7 +547,7 @@ function BilanTab({ idu }: { idu: string }) {
 /** M33 — MODE B (réhabilitation) : lecture COMPLÉMENTAIRE, visuellement subordonnée au tier
  *  (M34 intact). TOUJOURS Estimé (le paramètre travaux l'est) — assumé au libellé. Le
  *  paramètre est un état d'UI : rien n'est persisté (recalcul via /parcels/{idu}/mode-b). */
-function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib/types').ModeB }) {   // M55-L point 10 : defaultOpen retiré (accordéon contrôlé, initial fermé)
+export function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib/types').ModeB }) {   // M55-L point 10 : defaultOpen retiré (accordéon contrôlé, initial fermé)
   // M45-B (L2) : le coût travaux est une VALEUR DE SESSION PARTAGÉE (fiche ↔ filtre) — le curseur
   // du tiroir Économie et cette fiche lisent/écrivent le même `modeB.travauxM2` (rien persisté).
   const travaux = useApp((s) => s.modeB.travauxM2)
@@ -716,15 +733,15 @@ const PEB_PHRASES: Record<string, string> = {
   D: 'zone d’information sur le bruit (art. L112-10 CU)',
 }
 
-function DispositifsDrawer({ d }: { d: NonNullable<Fiche['dispositifs']> }) {
-  const nEls = (d.er?.length ?? 0) + (d.ebc?.length ?? 0) + (d.sup?.length ?? 0)
+// FICHE-RANGEMENT-2 Lot 1 — nombre de périmètres du droit des sols (pour le résumé de §4/tiroir).
+export function dispositifsCount(d: NonNullable<Fiche['dispositifs']>): number {
+  return (d.er?.length ?? 0) + (d.ebc?.length ?? 0) + (d.sup?.length ?? 0)
     + (d.dpu.etat === 'servi' ? 1 : 0) + (['A', 'B', 'C', 'D'].includes(d.peb.zone) ? 1 : 0)
+}
+
+/** §4 Urbanisme — corps « droit des sols » (ER / EBC / doc urba / DPU / PEB / SUP), sans son RefDrawer. */
+export function DispositifsBody({ d }: { d: NonNullable<Fiche['dispositifs']> }) {
   return (
-    <RefDrawer id="dispositifs" icon={IC.faisa} name="Dispositifs et périmètres"
-      context="ER · EBC · DPU · PEB · SUP"
-      value={nEls > 0
-        ? <span className="pill-amber">{nEls} périmètre{nEls > 1 ? 's' : ''}</span>
-        : <span className="pill-mint">rien à signaler</span>}>
       <div className="flex flex-col gap-3">
         {d.er && d.er.length > 0 && (
           <div data-dispositifs-er>
@@ -794,6 +811,19 @@ function DispositifsDrawer({ d }: { d: NonNullable<Fiche['dispositifs']> }) {
           </div>
         )}
       </div>
+  )
+}
+
+// tiroir « Dispositifs et périmètres » actuel = corps + son RefDrawer (conservé jusqu'au basculement).
+function DispositifsDrawer({ d }: { d: NonNullable<Fiche['dispositifs']> }) {
+  const nEls = dispositifsCount(d)
+  return (
+    <RefDrawer id="dispositifs" icon={IC.faisa} name="Dispositifs et périmètres"
+      context="ER · EBC · DPU · PEB · SUP"
+      value={nEls > 0
+        ? <span className="pill-amber">{nEls} périmètre{nEls > 1 ? 's' : ''}</span>
+        : <span className="pill-mint">rien à signaler</span>}>
+      <DispositifsBody d={d} />
     </RefDrawer>
   )
 }
