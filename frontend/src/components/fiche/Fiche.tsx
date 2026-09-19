@@ -758,12 +758,73 @@ export function Fiche({ idu }: { idu: string }) {
             l'en-tête à côté de la cloche, en boutons-logos (voir .hbtns ci-dessus). Les anciennes
             pastilles pleines sur deux lignes sont retirées. */}
 
-        {/* FICHE-RANGEMENT-2 Lot 1 — LES 6 TUILES D'EN-TÊTE SONT DISSOUTES dans leurs sections par
-            nature : Surface → §1 Identité · Zone → §4 Urbanisme · Pente + Exposition → §2 Terrain ·
-            Taxe foncière → §7 Fiscalité · SDP restante → §10 Potentiel. L'en-tête ne porte plus que
-            l'identité (référence, adresse, accès cartographiques, cloche, recherche). Chaque valeur
-            (et son « i » de source) est reportée VERBATIM dans le RefDrawer de sa section. */}
-        </div>{/* /.head — la carte d'en-tête (identité seule ; les chiffres vivent dans les sections). */}
+        {/* FICHE-TUILES-OUTILS-1 Lot 1 — LE BANDEAU DE SIX CHIFFRES est REMIS sous l'en-tête (il avait
+            été dissous en FICHE-RANGEMENT-2 Lot 1 ; à l'usage, la vue d'ensemble manquait avec un
+            accordéon tout replié). Style d'origine (data-bandeau-chiffres, « i » de source par tuile).
+            CHANGEMENT : « Taxe foncière » → « Risques » (compteur + niveau, comme le badge de §5).
+            DOUBLON ASSUMÉ : ces six valeurs vivent AUSSI dans leur section — c'est un SOMMAIRE, pas
+            une duplication. NE PAS les retirer lors d'un audit « une notion, un endroit ». */}
+        {f && (() => {
+          const nf = (n: number) => n.toLocaleString('fr-FR')
+          const z = (reglesZone ?? '').toUpperCase()
+          const zoneSous = !z ? undefined
+            : z.startsWith('AU') ? 'à urbaniser' : z.startsWith('U') ? 'constructible'
+            : z.startsWith('A') ? 'agricole' : z.startsWith('N') ? 'naturelle' : undefined
+          const pente = f.terrain?.pente_moy_deg
+          const penteSous = pente == null ? undefined
+            : pente < 5 ? 'plat' : pente < 15 ? 'modérée' : pente < 30 ? 'forte' : 'très forte'
+          // Risques — compteur (vigilances de l'onglet risques) + niveau, comme le badge de §5.
+          const vigils = f.lines.filter((l) => l.onglet === 'risques' && (l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE'))
+          const aleas = f.aleas?.liste ?? []
+          const risqueNiveau = aleas.some((a) => a.redhibitoire) ? 'aléa rédhibitoire'
+            : aleas.some((a) => /fort|élev/i.test(a.niveau ?? '')) ? 'aléa fort'
+            : vigils.length > 0 ? `vigilance${vigils.length > 1 ? 's' : ''}` : 'rien à signaler'
+          type Tuile = { l: string; v: string; s?: string; i?: string; vide?: boolean }
+          const tuiles: Tuile[] = [
+            { l: 'Surface', v: f.surface_m2 != null ? fmtM2(f.surface_m2) : '—', vide: f.surface_m2 == null,
+              i: 'Contenance cadastrale de la parcelle (DGFiP).' },
+            { l: 'Zone', v: reglesZone ?? 'Non publié au GPU', s: zoneSous, vide: reglesZone == null,
+              i: 'Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n’a pas déposé de document opposable.' },
+            { l: 'Pente', v: pente != null ? `${nf(pente)} °` : '—', s: penteSous, vide: pente == null,
+              i: 'Pente moyenne du terrain, calculée sur le modèle de relief RGE ALTI (IGN). À La Réunion elle commande le coût de terrassement autant que la constructibilité. « — » : relief non disponible sur la parcelle.' },
+            (() => {
+              const e = expo.data
+              const orient = e?.orientation
+              const v = expo.isLoading ? '…' : (orient && orient !== 'plat' ? orient : orient === 'plat' ? 'Plat' : '—')
+              const s = orient && orient !== 'plat' && e?.pente_moyenne_deg != null ? `pente ${nf(e.pente_moyenne_deg)} °`
+                : orient === 'plat' ? 'terrain quasi plat'
+                : expo.isLoading ? 'calcul en cours' : 'relief non disponible'
+              return { l: 'Exposition', v, s, vide: !orient,
+                i: 'Orientation du versant de la parcelle (Nord, Sud-Est…) et sa pente moyenne, calculées sur le modèle d’altitude RGE ALTI (IGN), localement — sans ligne de vue. Remplace la « vue mer » (abandonnée). « — » : relief non disponible sur la parcelle.' } as Tuile
+            })(),
+            { l: 'Risques', v: vigils.length > 0 ? `${vigils.length}` : '—', s: risqueNiveau, vide: vigils.length === 0,
+              i: 'Vigilances évaluées sur la parcelle (aléas, servitudes, sols…) — compteur et niveau, comme le badge de §5. Le détail est dans « Risques et environnement ».' },
+            { l: 'SDP restante', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
+              s: reglesSdp != null && reglesSdp > 0 ? undefined : (reglesZone && /^(A|N)/i.test(reglesZone) ? 'zone non constructible' : 'pas de potentiel résiduel'),
+              vide: !(reglesSdp != null && reglesSdp > 0),
+              i: 'Surface de plancher que le PLU autorise ENCORE sur la parcelle (potentiel résiduel). « — » : zone non constructible ou plus de potentiel.' },
+          ]
+          return (
+            <div className="stats" data-bandeau-chiffres>
+              {tuiles.map((c) => (
+                <div className="stat" key={c.l}>
+                  <div className="stat-l">
+                    {c.l.toUpperCase()}
+                    {c.i && (
+                      <Tip tip={c.i} garder side="bottom">
+                        <span role="button" tabIndex={0} aria-label={`Source : ${c.l}`}
+                          className="flex h-[12px] w-[12px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[7px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+                      </Tip>
+                    )}
+                  </div>
+                  <div className={`stat-v${c.vide ? ' vide' : ''}`}>{c.v}</div>
+                  {c.s && <div className="stat-s">{c.s}</div>}
+                </div>
+              ))}
+            </div>
+          )
+        })()}
+        </div>{/* /.head — la carte d'en-tête (identité + bandeau de six chiffres, sommaire). */}
         {/* RETOURS-9 (Q8.1) — ONGLETS Analyse · Autour · Actions RETIRÉS : retour à la fiche UNIQUE qui
             défile. « Autour » est un tiroir de la fiche (et existe dans les outils) ; « Actions » (CRM/
             Projet/exports) vit déjà en pied de fiche. Plus rien à choisir : tout défile d'un seul tenant. */}
