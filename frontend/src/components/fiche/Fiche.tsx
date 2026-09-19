@@ -6,7 +6,6 @@ import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatu
 import { verdictMeta } from '../../lib/status'
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
-import { Trace } from '../../lib/trace'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
 import { AskBar, renderRich } from './AskBar'
@@ -18,11 +17,10 @@ import { ScoreV2Block } from './ScoreV2Block'
 import { BlocIndisponible } from './BlocIndisponible'
 import { CoproprietesBlock } from './CoproprietesBlock'
 import { ProprietaireHistorique } from './ProprietaireHistorique'
-import type { FicheZoneDestinations, IcdBlock, Onglet, ReglementPlu } from '../../lib/types'
-import { DestinationBadge } from '../outils/DestinationSelect'   // DESTINATIONS-1 (X4.2) — pastille contour partagée
+import type { IcdBlock, Onglet } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille d'outils partagée
-import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastilles, MicroTriple, RateLimit429, Line, EligibiliteReplie, icdColor, PorteOutil, FactRow, RefLink, FactNote } from './primitives'
+import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastilles, MicroTriple, RateLimit429, Line, EligibiliteReplie, icdColor, PorteOutil, FactNote } from './primitives'
 // RETOURS-11F4 (F5) — la section Constructibilité + sa machinerie vivent dans `constructibilite.tsx`.
 // Fiche ré-exporte Calculette + FaisabiliteTab (consommés par EtudierBien / M22Programme / le test).
 import { ConstructibiliteSection } from './constructibilite'
@@ -31,6 +29,7 @@ import { RisquesSection } from './risques'
 import { MarcheSection } from './marche'
 import { ReseauxSection } from './reseaux'
 import { AutourSection } from './autour'
+import { ReglementPluBlock, TraducteurBloc } from './blocks'   // FICHE-RANGEMENT-2 Lot 1 — extraits (cycle-free)
 export { Calculette, FaisabiliteTab } from './constructibilite'
 export type { CalcResult } from './constructibilite'
 
@@ -68,127 +67,6 @@ function IcdBlockView({ icd }: { icd: IcdBlock }) {
           <p className="mt-2 text-[10px] leading-snug text-txt-dim">{icd.cloisonnement}</p>
         </div>
       )}
-    </div>
-  )
-}
-
-// ── M9 lot 4 — Potentiel de transformation (fond de l'ancien outil Mutabilité) ──
-function ZoneDestinationsLigne({ d }: { d: FicheZoneDestinations }) {
-  const [open, setOpen] = useState(false)
-  // phrase seule (non calibrée / zone non lue) — dite telle quelle, rien à déplier
-  if (d.phrase && !d.lignes?.length) {
-    return <p data-fiche-destinations className="mt-1 text-[10.5px] text-txt-mut">Destinations · {d.phrase}</p>
-  }
-  const resume = [
-    d.autorisees?.length ? `${d.autorisees.length} autorisée${d.autorisees.length > 1 ? 's' : ''} (${d.autorisees.slice(0, 3).join(', ')}${d.autorisees.length > 3 ? '…' : ''})` : null,
-    d.interdites?.length ? `${d.interdites.length} interdite${d.interdites.length > 1 ? 's' : ''}` : null,
-    d.sous_conditions?.length ? `${d.sous_conditions.length} sous condition` : null,
-    d.seuil_commerce_m2 != null
-      ? `commerce ≤ ${fmtInt(d.seuil_commerce_m2)} m²${d.seuil_commerce_type === 'emprise_sol' ? ' (emprise au sol)' : ''}` : null,
-  ].filter(Boolean).join(' · ')
-  return (
-    <div data-fiche-destinations className="mt-1">
-      <button onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left text-[10.5px] text-txt-mut transition-colors duration-quick hover:bg-surface-3 hover:text-txt">
-        <span className="text-mint">{open ? '▾' : '▸'}</span>
-        <span className="min-w-0 flex-1 truncate"><b className="text-txt">Destinations</b>{resume ? ` · ${resume}` : ''}</span>
-      </button>
-      {open && (
-        <div className="mt-1 flex flex-col gap-1 border-l border-line-2 pl-2.5">
-          {d.lignes!.map((l) => (
-            <div key={l.sous_destination} className="flex items-start gap-2">
-              <DestinationBadge etat={l.statut_effectif} />
-              {/* la phrase SERVIE, telle quelle (libellé + verdict + article/page/millésime + CDAC) */}
-              <span className="min-w-0 flex-1 text-[10.5px] leading-snug text-txt-mut">{l.phrase}</span>
-            </div>
-          ))}
-          {(d.millesime || d.referentiel) && (
-            <p className="text-[9.5px] leading-snug text-txt-dim">
-              {d.millesime ? `PLU millésime ${d.millesime}` : ''}
-              {d.millesime && d.referentiel ? ' · ' : ''}
-              {d.referentiel ? `référentiel : ${d.referentiel}` : ''}
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── M9 lot 2 — Lien règlement PLU par zone ──────────────────────────────────
-function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
-  if (rp.indisponible) return <BlocIndisponible titre="Règlement PLU" />   // M125 — panne ≠ absence
-  // M76 pt5 : plus de lien-module ici — l'Annuaire PLU passe par sa porte (tiroir Urbanisme).
-  // M62-P1 (j) : la phrase d'explication (`note`) était répétée par zone alors qu'elle est
-  // identique pour les deux → une seule fois, en gris, sous les lignes. Si les notes diffèrent,
-  // on reste par zone (repli honnête).
-  const notes = rp.zones.map((z) => z.note).filter(Boolean) as string[]
-  const noteCommune = notes.length === rp.zones.length && notes.every((n) => n === notes[0]) ? notes[0] : null
-  // COUCHES-1 lot 3 (item 12 / B4) — parcelle À CHEVAL sur plusieurs zones du PLU (~1 sur 10 : 9,93 %
-  // du run servi). La couche « par parcelle » n'affiche que la zone DOMINANTE — sur ces parcelles elle
-  // ment. La fiche dit ici la vérité : toutes les zones et leur SURFACE respective. Le tracé officiel
-  // se visualise via la sous-option carte « Limites officielles du PLU ».
-  const partsConnues = rp.zones.filter((z) => typeof z.part === 'number')
-  const aCheval = partsConnues.length >= 2 && (partsConnues[0].part ?? 1) < 0.9
-  const pct = (p?: number | null) => (typeof p === 'number' ? `${Math.round(p * 100)} %` : null)
-  return (
-    // RETOURS-20 Z2/Z3 — la boîte « RÈGLEMENT PLU » (card-elev) disparaît : chaque zone est un
-    // KICKER « Règlement — zone X » (renvoi « voir l'article » à droite) suivi de LIGNES DE FAIT
-    // (libellé · valeur mono à droite · renvoi d'article ↗ sous la ligne). Données inchangées :
-    // mêmes règles, mêmes valeurs, « non réglementé » / « à vérifier » dits et jamais comblés.
-    <div data-reglement-plu>
-      {aCheval && (
-        <div data-plu-a-cheval className="mb-2 rounded-md border border-amber/40 bg-amber/10 px-2.5 py-1.5 text-[11px] text-txt">
-          <b>Parcelle à cheval sur {partsConnues.length} zones du PLU.</b> La colorisation « par parcelle »
-          n’affiche que la zone dominante — voici la surface réelle de chacune :
-          <span className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-            {partsConnues.map((z, i) => (
-              <span key={i} className="tabular-nums">{z.zone} <span className="text-txt-hi">{pct(z.part)}</span></span>
-            ))}
-          </span>
-          <span className="mt-1 block text-txt-dim">Tracé officiel : couche « Limites officielles du PLU » (sous-option du zonage sur la carte).</span>
-        </div>
-      )}
-      {rp.zones.map((z, i) => (
-        <div key={i}>
-          {/* Z1·02 — kicker : le titre porte la zone (Trace = classe CIRCUIT-2) ; le renvoi d'article
-              va dans le slot droit (Z1·04, lien mono ↗). M76 pt5 : « Annuaire PLU » reste une porte.
-              COUCHES-1 lot 3 — quand à cheval, la part de surface de la zone est rappelée au kicker. */}
-          <GroupLabel right={z.url
-            ? <a data-plu-link className="f-ref" href={z.url} target="_blank" rel="noreferrer">{z.calibree ? 'voir l’article' : 'voir le règlement'}</a>
-            : undefined}>
-            Règlement — zone <Trace id="zone_plu_famille"><span>{z.zone}</span></Trace>{aCheval && pct(z.part) ? <span className="text-txt-dim"> · {pct(z.part)} de la parcelle</span> : null}
-          </GroupLabel>
-          {/* RETOURS-11F3 F4 — les règles de la zone AVEC leurs valeurs (hauteur, emprise, reculs…),
-              chacune avec son article/page cliquable. Z1·03 : ligne de fait ; valeur « non réglementé »
-              / « à vérifier » en gris atténué (etat ≠ chiffre/texte → tone mute). */}
-          {z.regles_valeurs && z.regles_valeurs.length > 0 ? (
-            <div>
-              {z.regles_valeurs.map((rv, j) => (
-                <FactRow key={j} label={rv.libelle} value={rv.valeur}
-                  tone={rv.etat === 'chiffre' || rv.etat === 'texte' ? undefined : 'mute'}
-                  src={rv.reference
-                    ? <RefLink href={rv.url} title={rv.reference}>{rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || 'source'}</RefLink>
-                    : undefined} />
-              ))}
-            </div>
-          ) : z.articles.length > 0 && (
-            <ul className="mt-1 flex flex-col gap-0.5">
-              {z.articles.slice(0, 6).map((a, j) => (
-                <li key={j} className="text-[11.5px]">
-                  <a className="f-ref" href={a.url ?? z.url ?? '#'} target="_blank" rel="noreferrer" title={a.reference}>{a.reference}</a>
-                </li>
-              ))}
-            </ul>
-          )}
-          {/* DESTINATIONS-1 (X4.2) — la ligne « Destinations » de la zone (résumé + dépliable). */}
-          {z.destinations && <ZoneDestinationsLigne d={z.destinations} />}
-          {/* note par zone UNIQUEMENT si elles diffèrent (sinon rendue une fois plus bas) */}
-          {z.note && !noteCommune && <FactNote>{z.note}</FactNote>}
-        </div>
-      ))}
-      {noteCommune && <FactNote>{noteCommune}</FactNote>}
-      <FactNote>{rp.disclaimer}</FactNote>
     </div>
   )
 }
@@ -1789,73 +1667,3 @@ function BanquierButton({ idu }: { idu: string }) {
 }
 
 
-/** BLOC B · S45 — Traducteur PLU (variante B, verdict Vic) : bloc dépliable de l'onglet
- *  Règles. Sourcé = article calibré, Estimé = générique.
- *  M76 pt4 : le bloc ne s'affiche QUE s'il a quelque chose à dire — masqué entièrement quand aucune
- *  règle n'est traduisible pour la zone (ex. zones A/N non constructibles, 152 638 parcelles). Le
- *  fetch est donc AVANCÉ (déterministe, pas d'IA sur `{}`) pour connaître `regles_appliquees` avant
- *  de rendre : plus de bloc qui s'affiche pour annoncer son propre vide. */
-function TraducteurBloc({ idu }: { idu: string }) {
-  const [open, setOpen] = useState(false)
-  const q = useQuery({
-    queryKey: ['traducteur', idu],
-    queryFn: async () => {
-      const r = await fetch(`/traducteur-plu/${idu}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
-      if (!r.ok) throw new Error(`traducteur ${r.status}`)
-      return r.json() as Promise<{
-        ok: boolean; zone: string | null; zone_calibree?: boolean
-        // FICHE-COUCHES-4 lot 1 : `ok:false` (zone non calibrée, ex. Ncor) OMET `regles_appliquees`
-        // et `reglement` — le champ est donc OPTIONNEL, jamais supposé présent.
-        regles_appliquees?: { regle: string; valeur: string; source: string }[]
-        reglement?: { url: string | null; note: string | null }
-      }>
-    },
-    enabled: true, staleTime: 300_000,
-  })
-  const d = q.data
-  // M76 pt4 — tant qu'on ne sait pas OU rien à traduire → aucun bloc (jamais « Aucune règle traduite »).
-  // FICHE-COUCHES-4 lot 1 : `regles_appliquees` peut être ABSENT (ok:false, zone non calibrée) → le
-  // lire sans `?.` faisait planter TOUTE la fiche (« Cannot read properties of undefined (reading
-  // 'length') »), masquant au passage les exclusions rédhibitoires (ex. forêt domaniale). Garde optionnelle.
-  if (!d || !d.regles_appliquees?.length) return null
-  return (
-    <div data-traducteur className="mb-3 rounded-lg border border-violet/30 bg-violet/[0.06] px-3 py-2">
-      <button data-traducteur-toggle onClick={() => setOpen((o) => !o)}
-        className="flex min-h-7 w-full items-center justify-between gap-2 text-left">
-        {/* M62-P1 (j) : casse NORMALE (plus de capitales `label-caps`) — « Demander à l'IA de traduire le PLU ». */}
-        <span className="text-[11px] font-medium tracking-normal normal-case text-violet">✦ Demander à l'IA de traduire le PLU</span>
-        <span className="text-[11px] text-txt-dim">{open ? 'replier ▴' : 'déplier ▾'}</span>
-      </button>
-      {open && (
-        <div className="mt-2">
-          {/* M55-N point 9 (décision Vic) : <AvisIA/> RETIRÉ du traducteur — la traduction de règles
-              PLU est une LECTURE FACTUELLE (rien à « juger »), la mise en garde IA y était hors-sujet.
-              Les surfaces IA GÉNÉRATIVES la conservent (Synthèse/explication, « Une question ? »,
-              recherche IA, entretien, copilote, restitution). */}
-          {/* M76 pt4 — d est garanti chargé + non vide (sinon le bloc entier est masqué au-dessus) :
-              plus de rendu de chargement/erreur/vide (« Aucune règle traduite » supprimé). */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {d.zone && <span className="rounded-full border border-violet/50 px-2 py-0.5 text-[10px] font-semibold text-violet">zone {d.zone}</span>}
-            {!d.zone_calibree && (
-              <span className="rounded-full border border-st-creuser/40 bg-st-creuser/10 px-2 py-0.5 text-[10px] text-st-creuser">
-                zone non calibrée — valeurs génériques (Estimé)</span>
-            )}
-          </div>
-          <div className="mt-1.5 space-y-1">
-            {d.regles_appliquees.map((r, i) => (
-              <div key={i} className="flex items-baseline gap-2 text-[11.5px]">
-                <span className="min-w-0 flex-1 text-txt">{r.regle}</span>
-                <b className="tnum text-txt-hi">{r.valeur}</b>
-                <span className="shrink-0 rounded-full border border-st-creuser/40 bg-st-creuser/10 px-1.5 text-[8.5px] font-medium text-st-creuser"
-                  title={r.source}>{d.zone_calibree ? 'Sourcé' : 'Estimé'}</span>
-              </div>
-            ))}
-          </div>
-          <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">
-            La référence opposable reste le règlement écrit{d.reglement?.url ? <> — <a className="text-mint hover:underline" href={d.reglement.url} target="_blank" rel="noreferrer">l'ouvrir ↗</a></> : ''}.
-          </p>
-        </div>
-      )}
-    </div>
-  )
-}
