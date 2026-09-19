@@ -6,7 +6,6 @@ import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatu
 import { verdictMeta } from '../../lib/status'
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
-import { Trace } from '../../lib/trace'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
 import { AskBar, renderRich } from './AskBar'
@@ -18,194 +17,46 @@ import { ScoreV2Block } from './ScoreV2Block'
 import { BlocIndisponible } from './BlocIndisponible'
 import { CoproprietesBlock } from './CoproprietesBlock'
 import { ProprietaireHistorique } from './ProprietaireHistorique'
-import type { FicheLine, FicheZoneDestinations, IcdBlock, Onglet, ReglementPlu } from '../../lib/types'
-import { DestinationBadge } from '../outils/DestinationSelect'   // DESTINATIONS-1 (X4.2) — pastille contour partagée
+import type { Onglet } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille d'outils partagée
-import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastilles, MicroTriple, RateLimit429, Line, EligibiliteReplie, icdColor, PorteOutil, FactRow, RefLink, FactNote } from './primitives'
-// RETOURS-11F4 (F5) — la section Constructibilité + sa machinerie vivent dans `constructibilite.tsx`.
+import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastilles, MicroTriple, RateLimit429, Line, EligibiliteReplie, PorteOutil, FactRow, FactNote, Vigilance } from './primitives'
+// FICHE-RANGEMENT-2 Lot 1 — LE BASCULEMENT : la fiche est recomposée en 11 sections PAR NATURE,
+// chacune un RefDrawer inline qui COMPOSE les blocs feuilles (extraits aux étapes 3a-3c). Les
+// sections « fourre-tout » ConstructibiliteSection / LeBienSection sont dissoutes ; les quatre
+// sections encore mono-nature (Risques, Réseaux, Marché, Quartier) restent des composants réutilisés.
 // Fiche ré-exporte Calculette + FaisabiliteTab (consommés par EtudierBien / M22Programme / le test).
-import { ConstructibiliteSection } from './constructibilite'
-import { LeBienSection } from './leBien'
+import { TransformationBlock, FaisabiliteTab, BilanTab, TaxeAmenagementBlock, FiscalLeviersBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
+import { BatiBlock, TerrainDuBienBlock, FiliationBlock } from './leBien'
 import { RisquesSection } from './risques'
-import { MarcheSection } from './marche'
-import { ReseauxSection } from './reseaux'
-import { AutourSection } from './autour'
+import { MarcheSection, DerniereVenteBlock } from './marche'
+import { ReseauxSection, EquipementsBadges } from './reseaux'
+import { AutourSection, HistoriqueSiteBlock } from './autour'
+import { ReglementPluBlock, TraducteurBloc } from './blocks'   // FICHE-RANGEMENT-2 Lot 1 — extraits (cycle-free)
 export { Calculette, FaisabiliteTab } from './constructibilite'
 export type { CalcResult } from './constructibilite'
 
 
-function IcdBlockView({ icd }: { icd: IcdBlock }) {
-  const [open, setOpen] = useState(false)
-  const color = icdColor(icd.bande)
-  return (
-    <div data-icd className="card-elev">
-      {/* M70 décision 5 — plus de jauge ni de score chiffré (une seule jauge dans la fiche = l'ICD
-          n'en est plus une : verdict qualitatif). La barre et le nombre {icd.score} sont retirés ;
-          reste le verdict `icd.libelle` (« confiance haute »). Le détail (couches manquantes) déplie. */}
-      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
-        title="Confiance données : déplier le détail">
-        <Tip tip="Complétude des couches de données pour cette parcelle — n'entre pas dans le score d'opportunité (P, calculé indépendamment)." className="shrink-0">
-          <span className="text-left text-xs text-txt underline decoration-dotted decoration-line-2 underline-offset-4">Confiance données</span>
-        </Tip>
-        <span data-icd-verdict className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
-          style={{ background: `${color}1f`, color }}>{icd.libelle}</span>
-        <span className="shrink-0 text-txt-dim">{open ? '▾' : '▸'}</span>
-      </button>
-      {open && (
-        <div className="border-t border-line-2 px-3 py-2">
-          {/* M70 : le verdict `icd.libelle` est déjà dans l'en-tête — plus de doublon ici. */}
-          {icd.manquants.length > 0 ? (
-            <>
-              <p className="label-caps mt-2 pb-1">Ce qui manque</p>
-              <ul data-icd-manquants className="flex flex-col gap-0.5">
-                {icd.manquants.map((m, i) => (
-                  <li key={i} className="flex items-start gap-1.5 text-[11px] text-txt-mut"><span className="text-st-ecartee">•</span>{m}</li>
-                ))}
-              </ul>
-            </>
-          ) : <p className="mt-2 text-[11px] text-txt-dim">Toutes les couches de données sont présentes pour cette parcelle.</p>}
-          <p className="mt-2 text-[10px] leading-snug text-txt-dim">{icd.cloisonnement}</p>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── M9 lot 4 — Potentiel de transformation (fond de l'ancien outil Mutabilité) ──
-function ZoneDestinationsLigne({ d }: { d: FicheZoneDestinations }) {
-  const [open, setOpen] = useState(false)
-  // phrase seule (non calibrée / zone non lue) — dite telle quelle, rien à déplier
-  if (d.phrase && !d.lignes?.length) {
-    return <p data-fiche-destinations className="mt-1 text-[10.5px] text-txt-mut">Destinations · {d.phrase}</p>
-  }
-  const resume = [
-    d.autorisees?.length ? `${d.autorisees.length} autorisée${d.autorisees.length > 1 ? 's' : ''} (${d.autorisees.slice(0, 3).join(', ')}${d.autorisees.length > 3 ? '…' : ''})` : null,
-    d.interdites?.length ? `${d.interdites.length} interdite${d.interdites.length > 1 ? 's' : ''}` : null,
-    d.sous_conditions?.length ? `${d.sous_conditions.length} sous condition` : null,
-    d.seuil_commerce_m2 != null
-      ? `commerce ≤ ${fmtInt(d.seuil_commerce_m2)} m²${d.seuil_commerce_type === 'emprise_sol' ? ' (emprise au sol)' : ''}` : null,
-  ].filter(Boolean).join(' · ')
-  return (
-    <div data-fiche-destinations className="mt-1">
-      <button onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left text-[10.5px] text-txt-mut transition-colors duration-quick hover:bg-surface-3 hover:text-txt">
-        <span className="text-mint">{open ? '▾' : '▸'}</span>
-        <span className="min-w-0 flex-1 truncate"><b className="text-txt">Destinations</b>{resume ? ` · ${resume}` : ''}</span>
-      </button>
-      {open && (
-        <div className="mt-1 flex flex-col gap-1 border-l border-line-2 pl-2.5">
-          {d.lignes!.map((l) => (
-            <div key={l.sous_destination} className="flex items-start gap-2">
-              <DestinationBadge etat={l.statut_effectif} />
-              {/* la phrase SERVIE, telle quelle (libellé + verdict + article/page/millésime + CDAC) */}
-              <span className="min-w-0 flex-1 text-[10.5px] leading-snug text-txt-mut">{l.phrase}</span>
-            </div>
-          ))}
-          {(d.millesime || d.referentiel) && (
-            <p className="text-[9.5px] leading-snug text-txt-dim">
-              {d.millesime ? `PLU millésime ${d.millesime}` : ''}
-              {d.millesime && d.referentiel ? ' · ' : ''}
-              {d.referentiel ? `référentiel : ${d.referentiel}` : ''}
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── M9 lot 2 — Lien règlement PLU par zone ──────────────────────────────────
-function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
-  if (rp.indisponible) return <BlocIndisponible titre="Règlement PLU" />   // M125 — panne ≠ absence
-  // M76 pt5 : plus de lien-module ici — l'Annuaire PLU passe par sa porte (tiroir Urbanisme).
-  // M62-P1 (j) : la phrase d'explication (`note`) était répétée par zone alors qu'elle est
-  // identique pour les deux → une seule fois, en gris, sous les lignes. Si les notes diffèrent,
-  // on reste par zone (repli honnête).
-  const notes = rp.zones.map((z) => z.note).filter(Boolean) as string[]
-  const noteCommune = notes.length === rp.zones.length && notes.every((n) => n === notes[0]) ? notes[0] : null
-  // COUCHES-1 lot 3 (item 12 / B4) — parcelle À CHEVAL sur plusieurs zones du PLU (~1 sur 10 : 9,93 %
-  // du run servi). La couche « par parcelle » n'affiche que la zone DOMINANTE — sur ces parcelles elle
-  // ment. La fiche dit ici la vérité : toutes les zones et leur SURFACE respective. Le tracé officiel
-  // se visualise via la sous-option carte « Limites officielles du PLU ».
-  const partsConnues = rp.zones.filter((z) => typeof z.part === 'number')
-  const aCheval = partsConnues.length >= 2 && (partsConnues[0].part ?? 1) < 0.9
-  const pct = (p?: number | null) => (typeof p === 'number' ? `${Math.round(p * 100)} %` : null)
-  return (
-    // RETOURS-20 Z2/Z3 — la boîte « RÈGLEMENT PLU » (card-elev) disparaît : chaque zone est un
-    // KICKER « Règlement — zone X » (renvoi « voir l'article » à droite) suivi de LIGNES DE FAIT
-    // (libellé · valeur mono à droite · renvoi d'article ↗ sous la ligne). Données inchangées :
-    // mêmes règles, mêmes valeurs, « non réglementé » / « à vérifier » dits et jamais comblés.
-    <div data-reglement-plu>
-      {aCheval && (
-        <div data-plu-a-cheval className="mb-2 rounded-md border border-amber/40 bg-amber/10 px-2.5 py-1.5 text-[11px] text-txt">
-          <b>Parcelle à cheval sur {partsConnues.length} zones du PLU.</b> La colorisation « par parcelle »
-          n’affiche que la zone dominante — voici la surface réelle de chacune :
-          <span className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-            {partsConnues.map((z, i) => (
-              <span key={i} className="tabular-nums">{z.zone} <span className="text-txt-hi">{pct(z.part)}</span></span>
-            ))}
-          </span>
-          <span className="mt-1 block text-txt-dim">Tracé officiel : couche « Limites officielles du PLU » (sous-option du zonage sur la carte).</span>
-        </div>
-      )}
-      {rp.zones.map((z, i) => (
-        <div key={i}>
-          {/* Z1·02 — kicker : le titre porte la zone (Trace = classe CIRCUIT-2) ; le renvoi d'article
-              va dans le slot droit (Z1·04, lien mono ↗). M76 pt5 : « Annuaire PLU » reste une porte.
-              COUCHES-1 lot 3 — quand à cheval, la part de surface de la zone est rappelée au kicker. */}
-          <GroupLabel right={z.url
-            ? <a data-plu-link className="f-ref" href={z.url} target="_blank" rel="noreferrer">{z.calibree ? 'voir l’article' : 'voir le règlement'}</a>
-            : undefined}>
-            Règlement — zone <Trace id="zone_plu_famille"><span>{z.zone}</span></Trace>{aCheval && pct(z.part) ? <span className="text-txt-dim"> · {pct(z.part)} de la parcelle</span> : null}
-          </GroupLabel>
-          {/* RETOURS-11F3 F4 — les règles de la zone AVEC leurs valeurs (hauteur, emprise, reculs…),
-              chacune avec son article/page cliquable. Z1·03 : ligne de fait ; valeur « non réglementé »
-              / « à vérifier » en gris atténué (etat ≠ chiffre/texte → tone mute). */}
-          {z.regles_valeurs && z.regles_valeurs.length > 0 ? (
-            <div>
-              {z.regles_valeurs.map((rv, j) => (
-                <FactRow key={j} label={rv.libelle} value={rv.valeur}
-                  tone={rv.etat === 'chiffre' || rv.etat === 'texte' ? undefined : 'mute'}
-                  src={rv.reference
-                    ? <RefLink href={rv.url} title={rv.reference}>{rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || 'source'}</RefLink>
-                    : undefined} />
-              ))}
-            </div>
-          ) : z.articles.length > 0 && (
-            <ul className="mt-1 flex flex-col gap-0.5">
-              {z.articles.slice(0, 6).map((a, j) => (
-                <li key={j} className="text-[11.5px]">
-                  <a className="f-ref" href={a.url ?? z.url ?? '#'} target="_blank" rel="noreferrer" title={a.reference}>{a.reference}</a>
-                </li>
-              ))}
-            </ul>
-          )}
-          {/* DESTINATIONS-1 (X4.2) — la ligne « Destinations » de la zone (résumé + dépliable). */}
-          {z.destinations && <ZoneDestinationsLigne d={z.destinations} />}
-          {/* note par zone UNIQUEMENT si elles diffèrent (sinon rendue une fois plus bas) */}
-          {z.note && !noteCommune && <FactNote>{z.note}</FactNote>}
-        </div>
-      ))}
-      {noteCommune && <FactNote>{noteCommune}</FactNote>}
-      <FactNote>{rp.disclaimer}</FactNote>
-    </div>
-  )
-}
+// FICHE-RANGEMENT-2 Lot 1 — le tiroir client « Données et méthode » est RETIRÉ (métrologie de
+// complétude = lecture admin/Circuit, pas cliente) : IcdBlockView supprimé (0-caller côté fiche).
+// Le payload `f.icd` reste servi par le back (disponible côté admin).
 
 // RETOURS-11 F2 — id de tiroir (RefDrawer) → libellé de section, pour tagger le signalement
 // avec « la section ouverte » (jamais une clé technique à l'écran).
+// FICHE-RANGEMENT-2/3 — les 11 sections PAR NATURE (accordéon exclusif). Mode B (Réhabilitation)
+// n'est plus un tiroir : il vit DANS §11 Simulation (FICHE-RANGEMENT-3 Lot 3).
 const SECTION_LABELS: Record<string, string> = {
-  regles: 'Urbanisme',
-  faisabilite: 'Constructibilité',
-  'mode-b': 'Constructibilité',
-  risques: 'Risques et protections',
-  marche: 'Marché et secteur',
-  reseaux: 'Réseaux et accès',
-  autour: 'Autour de cette parcelle',
-  dispositifs: 'Dispositifs territoriaux',
-  proprio: 'Propriétaire',
-  donnees: 'Données et méthode',
+  identite: 'Identité',
+  terrain: 'Terrain',
+  bati: 'Bâti',
+  urbanisme: 'Urbanisme',
+  risques: 'Risques et environnement',
+  reseaux: 'Réseaux et desserte',
+  fiscalite: 'Fiscalité et dispositifs',
+  marche: 'Marché',
+  quartier: 'Quartier',
+  potentiel: 'Potentiel',
+  simulation: 'Simulation',
 }
 
 // ── M9 lot 3 — Signaler une erreur (file de QA humaine, aucune action automatique) ──
@@ -527,29 +378,9 @@ function ProjetButton({ idu }: { idu: string }) {
 
 // RETOURS-11F4 (F8) : EquipementsBadges (piscine/pente) a déménagé dans `reseaux.tsx`.
 
-// EBC / ER (dette #10) — drapeaux d'INFORMATION dérivés des prescriptions PLU DÉJÀ calculées
-// par la cascade (layer 'prescription_plu', libellés servis). Lecture seule : ne filtre, n'exclut
-// ni ne pondère JAMAIS — le verdict et les scores restent ceux du run servi.
-function prescriptionsInfo(lines: FicheLine[]): { ebc: { coverage: number | null } | null; ers: { num: string | null }[] } {
-  let ebc: { coverage: number | null } | null = null
-  const ers: { num: string | null }[] = []
-  const vus = new Set<string>()
-  for (const l of lines || []) {
-    if (l.layer !== 'prescription_plu') continue
-    const d = l.detail || ''
-    if (d.startsWith('Espace boisé classé (EBC)')) {
-      const m = d.match(/~\s*(\d+)\s*%/)
-      const cov = m ? Number(m[1]) : null
-      if (!ebc || (cov != null && (ebc.coverage == null || cov > ebc.coverage))) ebc = { coverage: cov }
-    } else if (d.startsWith('Emplacement réservé')) {
-      const m = d.match(/ER\s*n?°?\s*(\d+)/i) || d.match(/réservé\s*n?°?\s*(\d+)/i)
-      const num = m ? m[1] : null
-      const key = num ?? d.slice(0, 40)
-      if (!vus.has(key)) { vus.add(key); ers.push({ num }) }
-    }
-  }
-  return { ebc, ers }
-}
+// FICHE-RANGEMENT-1 Lot 1 (doublon #5) — `prescriptionsInfo` ne dérivait les drapeaux EBC/ER QUE
+// pour le bloc Signaux du haut, retiré (doublon du tiroir « Dispositifs et périmètres », qui porte
+// EBC/ER avec leur contexte). Plus aucun lecteur → fonction retirée.
 
 
 /** M11 · SURFACE C — onglet FAISABILITÉ : le résultat, le calcul TRACÉ étape par étape (déterministe,
@@ -572,6 +403,7 @@ export function Fiche({ idu }: { idu: string }) {
   const setFlyToF = useApp((s) => s.setFlyTo)
   const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
   const setPluVueF = useApp((s) => s.setPluVue)            // M137-P — porte directe vers une vue de l'outil PLU
+  const setCalcPrefill = useApp((s) => s.setCalcPrefill)   // FICHE-RANGEMENT-2 Lot 1 — porte Calculette (§11)
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
   // EXPORTS-2 lot 8 — `calculette` ne pilote plus le PDF/Argumentaire (retirés) ; le Financier lit
@@ -622,9 +454,91 @@ export function Fiche({ idu }: { idu: string }) {
   const expo = useQuery({ queryKey: ['exposition', idu], queryFn: () => getParcelExposition(idu),
     enabled: !!idu, staleTime: 6 * 60 * 60 * 1000, retry: false })
   const fq = ficheQuery.trim().toLowerCase()
-  const ficheMatches = fq && f
-    ? f.lines.filter((l) => `${l.layer} ${layerLabel(l.layer)} ${l.detail ?? ''} ${l.source ?? ''} ${l.result ?? ''}`.toLowerCase().includes(fq))
-    : []
+  // FICHE-RANGEMENT-2 Lot 3 / FICHE-RECHERCHE-1 — « recherche dans tout » : une requête ouvre TOUS
+  // les tiroirs (forceOpen via le contexte accordéon), surligne en place ET liste les résultats
+  // (effet ci-dessous → `results`), qui pilotent la liste sous la barre.
+  const accValueF = useMemo(() => ({ ...accValue, forceOpen: !!fq }), [accValue, fq])
+  // FICHE-RECHERCHE-1 — la loupe fonctionne comme une barre de recherche : en tapant, une LISTE de
+  // résultats (libellé de la ligne + nom de sa section) apparaît sous la barre ; un clic ouvre la
+  // section et scrolle jusqu'à la ligne. Le surlignage EN PLACE (API Custom Highlight, sans mutation
+  // du DOM React) est conservé pour le reste. `results` alimente la liste ; `focusKey` le résultat cliqué.
+  type FicheResult = { key: string; label: string; section: string; el: HTMLElement }
+  const [results, setResults] = useState<FicheResult[]>([])
+  const [focusKey, setFocusKey] = useState<string | null>(null)
+  useEffect(() => {
+    const HL: any = (typeof CSS !== 'undefined' && (CSS as any).highlights) ? (CSS as any).highlights : null
+    const q = ficheQuery.trim().toLowerCase()
+    if (!HL) { setResults([]); return }
+    if (!q) { HL.delete('fiche-search'); HL.delete('fiche-search-focus'); setResults([]); setFocusKey(null); return }
+    let raf = 0
+    const run = () => {
+      const box = document.querySelector('.fiche-v6') as HTMLElement | null
+      if (!box) return
+      box.querySelectorAll('details:not([open])').forEach((d) => { (d as HTMLDetailsElement).open = true })
+      const ranges: Range[] = []
+      const res: FicheResult[] = []
+      const seen = new Set<HTMLElement>()
+      const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, {
+        acceptNode: (n) => {
+          const p = (n as Text).parentElement
+          if (!p || p.closest('input,textarea,script,style,[data-fiche-results]')) return NodeFilter.FILTER_REJECT
+          return (n.textContent || '').toLowerCase().includes(q) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+        },
+      })
+      let node: Node | null
+      while ((node = walker.nextNode())) {
+        const low = (node.textContent || '').toLowerCase()
+        let i = low.indexOf(q); let matched = false
+        while (i !== -1) {
+          const r = document.createRange(); r.setStart(node, i); r.setEnd(node, i + q.length)
+          ranges.push(r); matched = true
+          i = low.indexOf(q, i + q.length)
+        }
+        if (!matched) continue
+        // le RÉSULTAT = la « ligne » qui contient la correspondance (FactRow, filet, porte, item de
+        // liste, paragraphe…), dédupliquée ; sa SECTION = le tiroir conteneur (SECTION_LABELS).
+        const p = (node as Text).parentElement!
+        const lineEl = (p.closest('.f-row, .f-vig, .f-rappel, .porte-outil, li, p, .stat, [data-fiche-perimetre], [data-dispositif-dom], [data-aleas-detail] > div') as HTMLElement) || p
+        if (seen.has(lineEl)) continue
+        seen.add(lineEl)
+        const sid = p.closest('[data-drawer]')?.getAttribute('data-drawer') || ''
+        const section = SECTION_LABELS[sid] || 'Analyse LABUSE'
+        const label = (lineEl.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80)
+        if (label) res.push({ key: `${sid}#${res.length}#${label.slice(0, 24)}`, label, section, el: lineEl })
+      }
+      HL.set('fiche-search', new (window as any).Highlight(...ranges))
+      setResults(res)
+    }
+    run()
+    // le MutationObserver rattrape les blocs asynchrones (bilan, traducteur…) MAIS ignore les
+    // mutations de notre propre liste de résultats (sinon boucle : liste rendue → mutation → run).
+    const obs = new MutationObserver((muts) => {
+      if (muts.every((m) => (m.target as Element).parentElement?.closest?.('[data-fiche-results]') || (m.target as Element).closest?.('[data-fiche-results]'))) return
+      cancelAnimationFrame(raf); raf = requestAnimationFrame(run)
+    })
+    const box0 = document.querySelector('.fiche-v6')
+    if (box0) obs.observe(box0, { childList: true, subtree: true, characterData: true })
+    return () => { cancelAnimationFrame(raf); obs.disconnect(); HL.delete('fiche-search'); HL.delete('fiche-search-focus') }
+  }, [ficheQuery, f])
+  // FICHE-RECHERCHE-1 — clic sur un résultat : ouvre (déjà ouvert via forceOpen) + scrolle la ligne
+  // au centre + surligne PLUS FORT la correspondance cliquée (registre `fiche-search-focus`).
+  const goToResult = (r: { key: string; el: HTMLElement }) => {
+    setFocusKey(r.key)
+    r.el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    const HL: any = (typeof CSS !== 'undefined' && (CSS as any).highlights) ? (CSS as any).highlights : null
+    const q = ficheQuery.trim().toLowerCase()
+    if (!HL || !q) return
+    const ranges: Range[] = []
+    const w = document.createTreeWalker(r.el, NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) => (n.textContent || '').toLowerCase().includes(q) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT,
+    })
+    let n: Node | null
+    while ((n = w.nextNode())) {
+      const low = (n.textContent || '').toLowerCase(); let i = low.indexOf(q)
+      while (i !== -1) { const rg = document.createRange(); rg.setStart(n, i); rg.setEnd(n, i + q.length); ranges.push(rg); i = low.indexOf(q, i + q.length) }
+    }
+    HL.set('fiche-search-focus', new (window as any).Highlight(...ranges))
+  }
 
   // Correctif M5 (verdict d'en-tête) : étage 0 prime (bannière écartée + motifs, inchangé) ;
   // sinon un run v2 présent pilote bannière + badge (tier, rang, ×N) ; le statut matrice
@@ -653,13 +567,8 @@ export function Fiche({ idu }: { idu: string }) {
   // SERVABLE (verdict.tier ≠ null : brûlante/chaude/à-creuser/réserve). L'écartée simple n'ouvre
   // M55-L point 10 : `servable` (ex-pilote de defaultOpen des tiroirs Règles/Faisabilité) retiré —
   // l'accordéon est désormais tout fermé à l'ouverture (état initial légal), plus d'auto-ouverture.
-  // M52 L3 — données ABSENTES, DITES (jamais approximées) : dérivées de nuls RÉELS du payload +
-  // faits open-data connus. Chaque entrée est un fait vérifiable, pas une excuse vague.
-  const donneesAbsentes: { quoi: string; pourquoi: string }[] = f ? [
-    { quoi: 'Année de construction', pourquoi: 'non disponible en open data à la parcelle (ABSENTE)' },
-    ...(!f.adresse ? [{ quoi: 'Adresse postale', pourquoi: 'parcelle non rattachée à une voie (BAN)' }] : []),
-    ...(!f.proprietaire_moral ? [{ quoi: 'Identité du propriétaire', pourquoi: 'personne physique — non automatisée (workflow SPF/CERFA)' }] : []),
-  ] : []
+  // FICHE-RANGEMENT-2 Lot 1 — `donneesAbsentes` (« Ce que LABUSE ne peut pas savoir ») vivait dans le
+  // tiroir client « Données et méthode », retiré (métrologie admin) → calcul supprimé (0-caller).
   const ongletLines = (o: Onglet) => f?.lines.filter((l) => l.onglet === o) ?? []
   // RETOURS-11F4 (F6/F7) : les lignes Risques ET Marché (marcheLines, prix de sortie, socio-éco)
   // vivent dans `RisquesSection` / `MarcheSection`. RECETTE-6 (C5) : les tuiles « Terrain nu » et
@@ -670,8 +579,23 @@ export function Fiche({ idu }: { idu: string }) {
   // RETOURS-11F F11 — 🔴 double en-tête : quand un propriétaire moral est connu (ex. « PACIFIC »),
   // une ligne cascade résiduelle « propriétaire inconnu / non renseigné » ne doit PLUS coexister
   // (deux affirmations contradictoires sur le même écran). On masque ces lignes-là dès qu'un PM est su.
-  const proprioLines = ongletLines('proprio').filter((l) =>
-    !(f?.proprietaire_moral && /inconnu|non renseign|non recens/i.test(l.detail ?? '')))
+  // FICHE-RANGEMENT-3 Lot 4 — les lignes SANS OBJET PAR NATURE n'apprennent rien : quand le
+  // propriétaire est une personne physique, les attributs de personne morale (âge du dirigeant,
+  // BODACC, dénomination PM) ne s'affichent plus. (PM connu : on masque déjà les résidus « inconnu ».)
+  const proprioLines = ongletLines('proprio').filter((l) => {
+    const det = l.detail ?? ''
+    if (f?.proprietaire_moral && /inconnu|non renseign|non recens/i.test(det)) return false
+    if (!f?.proprietaire_moral && /sans objet|dirigeant|personne morale|bodacc/i.test(det)) return false
+    return true
+  })
+  // FICHE-SANS-OBJET-1 — même repli qu'en §4/§5 pour §1 Identité : les vérifications proprio
+  // SANS OBJET PAR NATURE d'une personne physique (BODACC, âge dirigeant, dénomination PM) ne sont
+  // plus JETÉES en silence (Lot 4 les retirait du flux) — elles reviennent dans un repli « N sans
+  // objet », replié par défaut (flux principal inchangé). Côté PM, les résidus « inconnu » masqués
+  // sont des CONTRADICTIONS (RETOURS-11F F11), pas des « sans objet » → jamais surfacés.
+  const proprioSansObjet = f && !f.proprietaire_moral
+    ? ongletLines('proprio').filter((l) => /sans objet|dirigeant|personne morale|bodacc/i.test(l.detail ?? ''))
+    : []
   const proprioSignal = proprioLines.filter((l) => (l.weight ?? 0) > 0).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0]
   const proprioType = f?.proprietaire_moral?.denomination ?? (f?.proprietaire_moral ? 'personne morale' : 'personne physique / non recensé')
   // Règles : zone PLU + SDP résiduelle (données déjà chargées).
@@ -713,15 +637,15 @@ export function Fiche({ idu }: { idu: string }) {
           </Tip>
         </span>
       : undefined
-  // Dette #10 : drapeaux EBC / ER (information seule), dérivés des prescriptions PLU du run servi.
-  const presc = f ? prescriptionsInfo(f.lines) : null
+  // FICHE-RANGEMENT-1 Lot 1 (doublon #5) — `presc` (drapeaux EBC/ER) alimentait le bloc Signaux du
+  // haut, retiré (doublon du tiroir « Dispositifs et périmètres »). Plus de lecteur → const retirée.
 
   // M56-B5 : conteneur fiche ramené de 440px (M55-L, +10 %) à 400px — sa largeur d'avant.
   // VALEUR UNIQUE ici (un critère, un seul endroit). `max-w-full` garde la fiche dans l'écran
   // aux petites largeurs (aucun débordement horizontal). Ne PAS toucher les tailles de texte
   // ni les paddings (calés en M56-B3 : panneau 14, .gr 10 vertical, .gr partagée).
   return (
-    <FicheAccordionCtx.Provider value={accValue}>
+    <FicheAccordionCtx.Provider value={accValueF}>
     <aside className="fiche-v6 absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line shadow-2xl">
       {/* C1 : le bandeau « écartée » séparé est retiré — le motif s'affiche à côté du badge
           (en-tête, plus bas) et « voir pourquoi » ouvre l'onglet « Pourquoi pas ». Les motifs
@@ -834,32 +758,28 @@ export function Fiche({ idu }: { idu: string }) {
             l'en-tête à côté de la cloche, en boutons-logos (voir .hbtns ci-dessus). Les anciennes
             pastilles pleines sur deux lignes sont retirées. */}
 
-        {/* RECETTE-5 (V4→V8) — EN-TÊTE À HUIT TUILES (maquette-entete-fiche-v2) : surface · zone ·
-            pente · vue mer · terrain nu · bâti ancien · taxe foncière · SDP restante. Chaque valeur
-            est SERVIE (jamais en dur), avec un « i » qui dit sa source. V7 : une valeur inconnue
-            s'écrit « — » avec sa raison, jamais un zéro. V8 : la tuile « vue mer » n'apparaît que si
-            un verdict favorable est servi (non calculé à ce jour → omise, pas de tuile vide). V5 :
-            les étiquettes passent SOUS la grille. V6 : le reste des faits va dans l'accordéon. */}
+        {/* FICHE-TUILES-OUTILS-1 Lot 1 — LE BANDEAU DE SIX CHIFFRES est REMIS sous l'en-tête (il avait
+            été dissous en FICHE-RANGEMENT-2 Lot 1 ; à l'usage, la vue d'ensemble manquait avec un
+            accordéon tout replié). Style d'origine (data-bandeau-chiffres, « i » de source par tuile).
+            CHANGEMENT : « Taxe foncière » → « Risques » (compteur + niveau, comme le badge de §5).
+            DOUBLON ASSUMÉ : ces six valeurs vivent AUSSI dans leur section — c'est un SOMMAIRE, pas
+            une duplication. NE PAS les retirer lors d'un audit « une notion, un endroit ». */}
         {f && (() => {
           const nf = (n: number) => n.toLocaleString('fr-FR')
-          // sous-titre de zone (constructible / à urbaniser / agricole / naturelle) depuis la lettre.
           const z = (reglesZone ?? '').toUpperCase()
           const zoneSous = !z ? undefined
             : z.startsWith('AU') ? 'à urbaniser' : z.startsWith('U') ? 'constructible'
             : z.startsWith('A') ? 'agricole' : z.startsWith('N') ? 'naturelle' : undefined
-          // pente du terrain (RGE ALTI) — sous-titre lisible par degrés (plat → très forte).
           const pente = f.terrain?.pente_moy_deg
           const penteSous = pente == null ? undefined
             : pente < 5 ? 'plat' : pente < 15 ? 'modérée' : pente < 30 ? 'forte' : 'très forte'
-          // taxe foncière part communale (TFPB, REI DGFiP) — servie sur le payload parcelle (V4).
-          const tfpb = f.fiscalite?.tfpb_commune_pct
-          type Tuile = { l: string; v: string; s?: string; i?: string; vide?: boolean; neuf?: boolean }
-          // RECETTE-6 (C5, décision Vic) — EXACTEMENT SIX TUILES, deux rangs de trois :
-          //   Surface · Zone · Pente / Vue mer · Taxe foncière · SDP restante.
-          // « Terrain nu » et « Bâti ancien » RETIRÉES de l'en-tête (les prix vivent dans « Marché et
-          // secteur »). « Vue mer » (C5) RÉTABLIE et TOUJOURS affichée : « — » tant que la donnée
-          // n'existe pas — le verdict de vue mer n'est pas encore calculé (cf. lot H, lecture seule).
-          // C1 : plus de pastilles sous les tuiles. C2 : plus d'accordéon « Le reste des faits ».
+          // Risques — compteur (vigilances de l'onglet risques) + niveau, comme le badge de §5.
+          const vigils = f.lines.filter((l) => l.onglet === 'risques' && (l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE'))
+          const aleas = f.aleas?.liste ?? []
+          const risqueNiveau = aleas.some((a) => a.redhibitoire) ? 'aléa rédhibitoire'
+            : aleas.some((a) => /fort|élev/i.test(a.niveau ?? '')) ? 'aléa fort'
+            : vigils.length > 0 ? `vigilance${vigils.length > 1 ? 's' : ''}` : 'rien à signaler'
+          type Tuile = { l: string; v: string; s?: string; i?: string; vide?: boolean }
           const tuiles: Tuile[] = [
             { l: 'Surface', v: f.surface_m2 != null ? fmtM2(f.surface_m2) : '—', vide: f.surface_m2 == null,
               i: 'Contenance cadastrale de la parcelle (DGFiP).' },
@@ -867,9 +787,6 @@ export function Fiche({ idu }: { idu: string }) {
               i: 'Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n’a pas déposé de document opposable.' },
             { l: 'Pente', v: pente != null ? `${nf(pente)} °` : '—', s: penteSous, vide: pente == null,
               i: 'Pente moyenne du terrain, calculée sur le modèle de relief RGE ALTI (IGN). À La Réunion elle commande le coût de terrassement autant que la constructibilité. « — » : relief non disponible sur la parcelle.' },
-            // RECETTE-8 W22 — la vue mer est ABANDONNÉE (55 h de calcul pour l'affirmation la moins
-            // fiable). L'exposition prend sa place : orientation du versant + pente moyenne, calculées
-            // sur le MNT RGE ALTI, localement, sans ligne de vue.
             (() => {
               const e = expo.data
               const orient = e?.orientation
@@ -878,11 +795,10 @@ export function Fiche({ idu }: { idu: string }) {
                 : orient === 'plat' ? 'terrain quasi plat'
                 : expo.isLoading ? 'calcul en cours' : 'relief non disponible'
               return { l: 'Exposition', v, s, vide: !orient,
-                i: 'Orientation du versant de la parcelle (Nord, Sud-Est…) et sa pente moyenne, calculées sur le modèle d’altitude RGE ALTI (IGN), localement — sans ligne de vue. Remplace la « vue mer » (abandonnée : 55 h de calcul pour une donnée peu fiable, cf. rapport). « — » : relief non disponible sur la parcelle.' } as Tuile
+                i: 'Orientation du versant de la parcelle (Nord, Sud-Est…) et sa pente moyenne, calculées sur le modèle d’altitude RGE ALTI (IGN), localement — sans ligne de vue. Remplace la « vue mer » (abandonnée). « — » : relief non disponible sur la parcelle.' } as Tuile
             })(),
-            { l: 'Taxe foncière', v: tfpb != null ? `${nf(tfpb)} %` : '—', s: tfpb != null ? 'part communale' : 'taux non ingéré',
-              vide: tfpb == null,
-              i: 'Taux de taxe foncière (TFPB) voté par la commune — fichier REI (DGFiP). C’est la charge annuelle, que le bien soit gardé, loué ou porté. « — » : taux non ingéré pour cette commune.' },
+            { l: 'Risques', v: vigils.length > 0 ? `${vigils.length}` : '—', s: risqueNiveau, vide: vigils.length === 0,
+              i: 'Vigilances évaluées sur la parcelle (aléas, servitudes, sols…) — compteur et niveau, comme le badge de §5. Le détail est dans « Risques et environnement ».' },
             { l: 'SDP restante', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
               s: reglesSdp != null && reglesSdp > 0 ? undefined : (reglesZone && /^(A|N)/i.test(reglesZone) ? 'zone non constructible' : 'pas de potentiel résiduel'),
               vide: !(reglesSdp != null && reglesSdp > 0),
@@ -895,24 +811,20 @@ export function Fiche({ idu }: { idu: string }) {
                   <div className="stat-l">
                     {c.l.toUpperCase()}
                     {c.i && (
-                      // RECETTE-8 W11 — le « i » de la tête de fiche est un déclencheur FONCTIONNEL
-                      // icône-seule (la bulle EST son seul contenu) : il faut `garder` pour que la
-                      // bulle s'affiche (RECETTE-2 S10 a retiré les bulles de survol SAUF ce cas).
-                      // Sans lui, les six « i » de la tête ne faisaient RIEN au survol/tap.
                       <Tip tip={c.i} garder side="bottom">
                         <span role="button" tabIndex={0} aria-label={`Source : ${c.l}`}
                           className="flex h-[12px] w-[12px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[7px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
                       </Tip>
                     )}
                   </div>
-                  <div className={`stat-v${c.vide ? ' vide' : ''}${c.neuf ? ' neuf' : ''}`}>{c.v}</div>
+                  <div className={`stat-v${c.vide ? ' vide' : ''}`}>{c.v}</div>
                   {c.s && <div className="stat-s">{c.s}</div>}
                 </div>
               ))}
             </div>
           )
         })()}
-        </div>{/* /.head — la carte d'en-tête (identité + 8 tuiles + étiquettes + reste des faits). */}
+        </div>{/* /.head — la carte d'en-tête (identité + bandeau de six chiffres, sommaire). */}
         {/* RETOURS-9 (Q8.1) — ONGLETS Analyse · Autour · Actions RETIRÉS : retour à la fiche UNIQUE qui
             défile. « Autour » est un tiroir de la fiche (et existe dans les outils) ; « Actions » (CRM/
             Projet/exports) vit déjà en pied de fiche. Plus rien à choisir : tout défile d'un seul tenant. */}
@@ -979,14 +891,10 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
               {f.score_v2 != null && (
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  {/* M135 — la MÊME fraction que la carte de tri (jamais un ×N). « — » = peu probable. */}
-                  <p style={{ margin: 0, fontSize: 19, fontWeight: 500, color: signalEcarte ? '#8C7468' : verdict.color, lineHeight: 1 }}>{f.score_v2.fraction ?? '—'}</p>
-                  <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--lab)' }}>
-                    {signalEcarte ? 'signal brut' : (f.score_v2.fraction ? 'sous 1 an' : 'peu probable')}
-                    {f.score_v2.verbal?.info && (
-                      <span title={f.score_v2.verbal.info} style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
-                    )}
-                  </p>
+                  {/* FICHE-RANGEMENT-1 Lot 1 (doublon #7) — la « Probabilité de vente sous 1 an » (fraction)
+                      vit UNE fois, dans le bloc canonique ScoreV2Block plus bas (qui seul porte percentile,
+                      rang et les badges copro/veille/événement). On retire l'écho de l'en-tête du verdict ;
+                      le mot d'échelle (unique) reste ici, à côté du verdict. */}
                   {/* mot d'échelle : en couleur du tier quand servable ; ATTÉNUÉ quand écartée à
                       signal fort (le mot ne doit pas faire promesse à côté d'un statut mort). */}
                   {f.score_v2.verbal?.mot && (
@@ -1030,19 +938,10 @@ export function Fiche({ idu }: { idu: string }) {
                     <span title={f.score_v2.verbal.frequence.source_dite} style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
                   </p>
                 )}
-                {(f.score_v2.pourquoi?.length ?? 0) > 0 && (
-                  <details data-pourquoi style={{ marginTop: 8 }} open={montreMultiple || signalEcarte}>
-                    <summary style={{ cursor: 'pointer', fontSize: 11.5, color: '#a78bfa', fontWeight: 600 }}>{signalEcarte ? 'Pourquoi ce signal (avant l’écart)' : 'Pourquoi ce score'}</summary>
-                    <ul style={{ margin: '6px 0 0', padding: 0, listStyle: 'none' }}>
-                      {f.score_v2.pourquoi!.slice(0, 5).map((c, i) => (
-                        <li key={i} style={{ padding: '3px 0', fontSize: 11.5, color: '#c9d6cf' }}>
-                          <span style={{ color: c.signe === '-' ? '#8ba69a' : '#5fd0a8' }}>{c.signe === '-' ? '▽' : '▲'}</span>{' '}
-                          {c.phrase || c.libelle}
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                )}
+                {/* FICHE-RANGEMENT-1 Lot 1 (doublon #6) — « Pourquoi ce score » vivait DEUX fois dans la
+                    même carte Analyse (ici en inline + dans ScoreV2Block juste dessous). On garde le bloc
+                    canonique ScoreV2Block (self-fetch /v2/score, versionné, porte percentile/rang/badges)
+                    et on retire l'écho inline. Réglette et fréquence (non dupliquées) restent au-dessus. */}
               </div>
             )}
             {/* chips d'arguments — M61 P3 : les pastilles « constructible {zone} » et « N vigilance(s) »
@@ -1159,12 +1058,32 @@ export function Fiche({ idu }: { idu: string }) {
         </div>{/* /wrapper non-flex du bloc Analyse (M68 P1a) — la suite défile aussi */}
 
       {ficheSearchOpen && (
-        <div className="flex shrink-0 items-center gap-2 border-b border-line bg-surface-2 px-5 py-2">
-          <input autoFocus data-fiche-search value={ficheQuery} onChange={(e) => setFicheQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Escape' && (setFicheQuery(''), setFicheSearchOpen(false))}
-            placeholder="Chercher dans cette fiche (risque, réseau, ICPE…)"
-            className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
-          {fq && <span className="shrink-0 text-[11px] text-txt-mut">{ficheMatches.length} résultat{ficheMatches.length > 1 ? 's' : ''}</span>}
+        <div className="shrink-0 border-b border-line bg-surface-2">
+          <div className="flex items-center gap-2 px-5 py-2">
+            <input autoFocus data-fiche-search value={ficheQuery} onChange={(e) => setFicheQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Escape' && (setFicheQuery(''), setFicheSearchOpen(false))}
+              placeholder="Chercher dans cette fiche (risque, réseau, ICPE…)"
+              className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+            {/* FICHE-RECHERCHE-1 — accord correct (« 1 résultat surligné ») ; « aucun résultat »
+                (jamais un compteur à zéro). Le compteur = le nombre de LIGNES trouvées (la liste). */}
+            {fq && <span data-fiche-search-count className="shrink-0 text-[11px] text-txt-mut">{results.length === 0
+              ? 'aucun résultat'
+              : `${results.length} résultat${results.length > 1 ? 's' : ''} surligné${results.length > 1 ? 's' : ''}`}</span>}
+          </div>
+          {/* FICHE-RECHERCHE-1 — la LISTE des résultats sous la barre : libellé de la ligne + sa
+              section. Un clic ouvre la section (déjà ouverte via forceOpen) et scrolle jusqu'à la
+              ligne, surlignée plus fort (goToResult). */}
+          {fq && results.length > 0 && (
+            <div data-fiche-results className="max-h-52 overflow-y-auto border-t border-line/60">
+              {results.map((r) => (
+                <button key={r.key} data-fiche-result onClick={() => goToResult(r)}
+                  className={`flex w-full items-baseline justify-between gap-3 px-5 py-1.5 text-left text-[11px] transition-colors hover:bg-surface-3 ${focusKey === r.key ? 'bg-surface-3' : ''}`}>
+                  <span className="min-w-0 truncate text-txt">{r.label}</span>
+                  <span className="shrink-0 text-[10px] uppercase tracking-wide text-txt-dim">{r.section}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1173,15 +1092,9 @@ export function Fiche({ idu }: { idu: string }) {
 
       {/* M68 P1a — l'ancien conteneur de défilement est FUSIONNÉ dans celui ouvert après l'en-tête
           (plus haut) : un seul conteneur `overflow-y-auto flex-1` pour tout le corps de la fiche. */}
-        {/* A6 : recherche active → on remplace les onglets par les lignes de la fiche qui matchent */}
-        {fq && f && (
-          <div data-fiche-search-results>
-            <p className="label-caps mb-2">Dans cette fiche · « {ficheQuery.trim()} »</p>
-            {ficheMatches.length === 0
-              ? <p className="text-xs text-txt-dim">Aucune donnée de la fiche ne correspond.</p>
-              : <div className="flex flex-col gap-1">{ficheMatches.map((l, i) => <Line key={i} line={l} />)}</div>}
-          </div>
-        )}
+        {/* FICHE-RANGEMENT-2 Lot 3 — plus de liste à plat qui remplaçait la fiche : la recherche
+            garde la pile, ouvre tous les tiroirs (forceOpen) + les « sans objet », et surligne
+            les correspondances en place (effet CSS.highlights). Le compteur est dans la barre. */}
         {isLoading && (
           <div className="flex flex-col gap-2">
             <Loading label="Chargement de la fiche" className="text-xs" />
@@ -1211,15 +1124,60 @@ export function Fiche({ idu }: { idu: string }) {
             <button onClick={() => refetch()} className="mt-2 min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Réessayer</button>
           </div>
         ))}
-        {!fq && f && tab === 'synthese' && (() => {
+        {f && tab === 'synthese' && (() => {
           // micro-preuves (spec) dérivées des données déjà chargées
           const shorten = (s: string) => fmtLibelleBrut(s).replace(/\s*[—(].*$/, '').trim()
           const proprioPastilles = proprioLines.filter((l) => (l.weight ?? 0) > 0).slice(0, 3).map((l) => shorten(l.detail).slice(0, 26))
           // ALGO-1 item 2 : l'accent proprio ne dépend plus du Score V (retiré de l'affichage)
           const proprioAccent = !!proprioSignal
+          // FICHE-RANGEMENT-2 Lot 1 — les 6 tuiles d'en-tête sont DISSOUTES : chaque valeur (et son
+          // « i » de source) est reportée VERBATIM dans le RefDrawer de sa section (RECETTE-5..8).
+          const nf = (n: number) => n.toLocaleString('fr-FR')
+          // Surface → §1 Identité (contenance cadastrale DGFiP).
+          const tuileSurface = { v: f.surface_m2 != null ? fmtM2(f.surface_m2) : '—', vide: f.surface_m2 == null,
+            i: 'Contenance cadastrale de la parcelle (DGFiP).' }
+          // Zone → §4 Urbanisme (zone PLU au point de la parcelle) + son sous-titre lisible.
+          const zUp = (reglesZone ?? '').toUpperCase()
+          const zoneSous = !zUp ? undefined
+            : zUp.startsWith('AU') ? 'à urbaniser' : zUp.startsWith('U') ? 'constructible'
+            : zUp.startsWith('A') ? 'agricole' : zUp.startsWith('N') ? 'naturelle' : undefined
+          const tuileZone = { v: reglesZone ?? 'Non publié au GPU', s: zoneSous, vide: reglesZone == null,
+            i: 'Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n’a pas déposé de document opposable.' }
+          // Pente → §2 Terrain (RGE ALTI) + sous-titre par degrés (plat → très forte).
+          const penteDeg = f.terrain?.pente_moy_deg
+          const penteSous = penteDeg == null ? undefined
+            : penteDeg < 5 ? 'plat' : penteDeg < 15 ? 'modérée' : penteDeg < 30 ? 'forte' : 'très forte'
+          const tuilePente = { v: penteDeg != null ? `${nf(penteDeg)} °` : '—', s: penteSous, vide: penteDeg == null,
+            i: 'Pente moyenne du terrain, calculée sur le modèle de relief RGE ALTI (IGN). À La Réunion elle commande le coût de terrassement autant que la constructibilité. « — » : relief non disponible sur la parcelle.' }
+          // Exposition → §2 Terrain (orientation du versant + pente, MNT RGE ALTI, sans ligne de vue).
+          const expoData = expo.data
+          const expoOrient = expoData?.orientation
+          const tuileExpo = {
+            v: expo.isLoading ? '…' : (expoOrient && expoOrient !== 'plat' ? expoOrient : expoOrient === 'plat' ? 'Plat' : '—'),
+            s: expoOrient && expoOrient !== 'plat' && expoData?.pente_moyenne_deg != null ? `pente ${nf(expoData.pente_moyenne_deg)} °`
+              : expoOrient === 'plat' ? 'terrain quasi plat'
+              : expo.isLoading ? 'calcul en cours' : 'relief non disponible',
+            vide: !expoOrient,
+            i: 'Orientation du versant de la parcelle (Nord, Sud-Est…) et sa pente moyenne, calculées sur le modèle d’altitude RGE ALTI (IGN), localement — sans ligne de vue. Remplace la « vue mer » (abandonnée : 55 h de calcul pour une donnée peu fiable, cf. rapport). « — » : relief non disponible sur la parcelle.' }
+          // Taxe foncière → §7 Fiscalité (TFPB part communale, REI DGFiP).
+          const tfpb = f.fiscalite?.tfpb_commune_pct
+          const tuileTaxe = { v: tfpb != null ? `${nf(tfpb)} %` : '—', s: tfpb != null ? 'part communale' : 'taux non ingéré', vide: tfpb == null,
+            i: 'Taux de taxe foncière (TFPB) voté par la commune — fichier REI (DGFiP). C’est la charge annuelle, que le bien soit gardé, loué ou porté. « — » : taux non ingéré pour cette commune.' }
+          // SDP restante → §10 Potentiel (potentiel résiduel autorisé par le PLU).
+          const tuileSdp = { v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
+            s: reglesSdp != null && reglesSdp > 0 ? undefined : (reglesZone && /^(A|N)/i.test(reglesZone) ? 'zone non constructible' : 'pas de potentiel résiduel'),
+            vide: !(reglesSdp != null && reglesSdp > 0),
+            i: 'Surface de plancher que le PLU autorise ENCORE sur la parcelle (potentiel résiduel). « — » : zone non constructible ou plus de potentiel.' }
+          // ChiffreDissous — présente une ex-tuile d'en-tête comme un fait de section (label · valeur ·
+          // sous-titre · « i » source), grammaire FactRow. Reporté verbatim des 6 tuiles (RECETTE-8 W11).
+          const ChiffreDissous = ({ l, t }: { l: string; t: { v: string; s?: string; vide?: boolean; i: string } }) => (
+            <FactRow label={<>{l}{' '}
+              <Tip tip={t.i} garder side="bottom"><span role="button" tabIndex={0} aria-label={`Source : ${l}`}
+                className="ml-0.5 inline-flex h-[12px] w-[12px] items-center justify-center rounded-full border border-line-2 text-[7px] font-bold leading-none text-txt-dim align-middle hover:border-mint hover:text-mint">i</span></Tip></>}
+              value={<>{t.v}{t.s ? <small className="ml-1 text-txt-dim">{t.s}</small> : null}</>}
+              tone={t.vide ? 'mute' : undefined} />
+          )
           // RETOURS-11F4 (F8) : viabValue/viabColor/viabConfirmee/viabContext vivent dans `ReseauxSection`.
-          // M56-B6 · DA-FICHE-v6 « pas de % nu » : la couverture ICD vit dans le sous-titre du
-          // tiroir « Données et méthode » (plus de valeur % nue à droite) — `confianceValue` retiré.
           return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {/* rien ne flotte : équipements, alerte accès, Q/A, statut, signaux → DANS les tiroirs (R1). */}
@@ -1258,241 +1216,36 @@ export function Fiche({ idu }: { idu: string }) {
             {/* M55-O phase 2.1c : Mode B unifié et rattaché à la Constructibilité (rendu unique plus
                 bas). L'ancien rendu « remonté » pour la déclassée à signal fort est retiré. */}
 
-            {/* M56-B4 point 2 — SIGNAUX de la parcelle (drapeaux EBC / ER, information seule),
-                regroupés ici juste avant LE TERRAIN, jamais au milieu des actions. Micro-label
-                « SIGNAUX » ; si un seul signal, la pastille reste seule mais à cette place. */}
-            {presc && (presc.ebc || presc.ers.length > 0) && (
-              <div data-signaux-parcelle>
-                <GroupLabel first>Signaux</GroupLabel>
-                <div data-prescriptions-badges style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {presc.ebc && (
-                    <Tip tip="Espace boisé classé — information. Toute construction est interdite sur l’emprise boisée (Art. L113-1 CU). N’exclut pas la parcelle.">
-                      <span data-badge-ebc className="pill-mint">
-                        partiellement en EBC{presc.ebc.coverage != null ? ` (~${presc.ebc.coverage} %)` : ''}
-                      </span>
-                    </Tip>
-                  )}
-                  {presc.ers.map((er, i) => (
-                    <Tip key={i} tip="Emplacement réservé — information. Emprise grevée au profit d’un projet public (servitude levable si l’ER est abandonné). N’exclut pas la parcelle.">
-                      <span data-badge-er className="pill-amber">
-                        emplacement réservé{er.num ? ` n°${er.num}` : ''}
-                      </span>
-                    </Tip>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* FICHE-RANGEMENT-1 Lot 1 (doublon #5) — les badges SIGNAUX (EBC / ER) faisaient doublon avec
+                le tiroir « Dispositifs et périmètres », qui porte EBC et ER AVEC leur contexte (n° d'ER,
+                part d'emprise, aux côtés des SUP / DPU / PEB). On retire le teaser du haut ; la présence
+                reste signalée en un coup d'œil par la pastille « N périmètres » de la ligne fermée du tiroir. */}
 
             {/* M55-O phase 3.4 — GROUPE SILENCIEUX « LE TERRAIN » : Urbanisme · Constructibilité
                 (+ Mode B) · Risques et protections. */}
             {/* M137-E — le Copilote embarqué « Demander au Copilote sur cette parcelle… » est RETIRÉ :
                 la loupe (recherche intra-fiche) + « Poser une question » (AskBar) couvrent déjà le besoin. */}
 
-            <GroupLabel>Le terrain</GroupLabel>
+            {/* ═══ FICHE-RANGEMENT-2 Lot 1 — LES 11 SECTIONS PAR NATURE (basculement) ═══
+                Groupes silencieux : Le bien (Identité·Terrain·Bâti) · Le droit du sol (Urbanisme·
+                Risques·Réseaux·Fiscalité) · Le marché (Marché·Quartier) · Le projet (Potentiel·
+                Simulation). Accordéon exclusif inchangé (RefDrawer / FicheAccordionCtx). Chaque
+                section COMPOSE des blocs feuilles ; aucune ligne n'est perdue vs les 12 tiroirs. */}
+            <GroupLabel>Le bien</GroupLabel>
 
-            {/* M56-B6 · DA-FICHE-v6 — plus de conteneur .gcard : chaque tiroir est une carte autonome. */}
-            {/* ① URBANISME — droit du sol (PLU, procédure, zonage, traducteur, règlement). */}
-            <RefDrawer id="regles" icon={IC.regles} name="Urbanisme"
-              value={reglesGabarit}
-              context={[reglesZone ? `zone ${reglesZone}` : reglesArticle ? `art. ${reglesArticle}` : 'zone non publiée au GPU', pctConsomme != null ? CLIENT.fiche.sdpConsommee(pctConsomme) : null].filter(Boolean).join(' · ')}
-              micro={pctConsomme != null
-                ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
-                : <MicroJauge pct={0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
-              <div className="flex flex-col gap-3">
-                {/* M75 — obligation APER (ombrières PV, grand parking > 1 500 m²) : contrainte
-                    réglementaire portant sur le terrain, INFORMATION. Libellé backend (mêmes mots
-                    que les exports). « potentiellement concerné », jamais « soumis à ». */}
-                {/* RETOURS-20 Z3 — plus de boîte bordée : filet ambre à gauche (grammaire .vig),
-                    contenu inchangé. */}
-                {f.aper && (
-                  <div data-aper className="border-l-2 border-amber py-0.5 pl-3 text-[11px] leading-snug text-txt">
-                    <span className="mr-1" aria-hidden>🅿</span>{f.aper.note}
-                    <span className="ml-1 text-[10px] text-txt-dim">{f.aper.etat}.</span>
-                  </div>
-                )}
-                {/* M32 §2 + M40 : source qui fait foi. Les 3 choses distinctes, jamais mélangées :
-                    (1) quel document LABUSE sert · (2) qu'il fait foi à ce jour · (3) ce qui est en
-                    cours et non servi. + action « vérifier en mairie ». Couleur d'alerte hors « à jour ». */}
-                {/* RETOURS-20 Z3 — de-boxé : filet gauche (mint « à jour » / ambre sinon), plus de
-                    boîte bordée. Contenu (document servi, fait foi, en cours, action) inchangé. */}
-                {f.plu_fraicheur?.libelle && (
-                  <div data-plu-fraicheur={f.plu_fraicheur.statut}
-                    className={`border-l-2 py-0.5 pl-3 text-[11px] leading-snug ${
-                      f.plu_fraicheur.statut === 'a_jour'
-                        ? 'border-mint text-txt-mut'
-                        : 'border-st-creuser text-txt'}`}>
-                    <span className="mr-1">{f.plu_fraicheur.statut === 'a_jour' ? '🕓' : '▲'}</span>
-                    {f.plu_fraicheur.document_servi ? (
-                      <>
-                        <span>{f.plu_fraicheur.document_servi}</span>
-                        {f.plu_fraicheur.fait_foi && (
-                          <span className="block text-[10px] text-txt-dim mt-0.5">✓ {f.plu_fraicheur.fait_foi}</span>
-                        )}
-                        {f.plu_fraicheur.en_cours && (
-                          /* M57-P1 (d) : a_jour → avertissement NEUTRE (générique : assertion de config,
-                             pas une procédure), sans sablier ni « En cours (non servi) ». Les autres
-                             statuts (annule_partiel / opposabilite_en_attente) portent une procédure
-                             RÉELLE → cadre « En cours (non servi) » conservé. */
-                          f.plu_fraicheur.statut === 'a_jour'
-                            ? <span className="block text-[10px] text-txt-dim mt-0.5">{f.plu_fraicheur.en_cours}</span>
-                            : <span className="block text-[10px] text-st-creuser mt-0.5">⏳ En cours (non servi) : {f.plu_fraicheur.en_cours}</span>
-                        )}
-                        {f.plu_fraicheur.action && (
-                          <span className="block text-[10px] text-txt-mut mt-0.5">→ {f.plu_fraicheur.action}</span>
-                        )}
-                      </>
-                    ) : (
-                      <>{f.plu_fraicheur.libelle}
-                        {f.plu_fraicheur.note && f.plu_fraicheur.statut !== 'a_jour' && (
-                          <span className="block text-[10px] text-txt-dim mt-0.5">{f.plu_fraicheur.note}</span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
-                {/* M41 — Radar procédures PLU : stade + conséquences parcellaires servables
-                    (veille AU ; sursis si armé). Jamais l'issue de la procédure. */}
-                {f.radar_procedure?.indisponible && <BlocIndisponible titre="Radar procédures PLU" />}
-                {f.radar_procedure?.synthese?.etat && (
-                  <div data-radar-procedure className="border-l-2 border-st-creuser py-0.5 pl-3 text-[11px] leading-snug text-txt">
-                    <span className="mr-1">📡</span>{f.radar_procedure.synthese.etat}
-                    {f.radar_procedure.veille_au && (
-                      <span className="block text-[10px] text-mint mt-1">Veille AU — {f.radar_procedure.veille_au}</span>
-                    )}
-                    {f.radar_procedure.sursis ? (
-                      <span className="block text-[10px] text-st-ecartee mt-1">
-                        Sursis à statuer — {f.radar_procedure.sursis.texte}
-                        <span className="block text-txt-dim">{f.radar_procedure.sursis.base_legale}</span>
-                      </span>
-                    ) : (
-                      <span className="block text-[10px] text-txt-dim mt-1">Sursis à statuer : non servi (débat PADD non constaté à ce jour).</span>
-                    )}
-                  </div>
-                )}
-                {/* M55-O phase 2.2 — la jauge « Qualité » (q_score) est RETIRÉE de la fiche : mesurée
-                    non discriminante en M55-N (82,5 % à la base neutre 50). Seule « Confiance données »
-                    (ICD, tiroir Données) reste. Le champ back q_score n'est PAS touché (consommé
-                    ailleurs : App, Kanban, MapView, filtres…) — seul l'affichage fiche disparaît. */}
-                <TraducteurBloc idu={idu} />
-                {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
-                {/* M55-O phase 2.1c : le potentiel de transformation (SDP consommée/résiduelle/
-                    surélévation) DÉMÉNAGE vers « Constructibilité » — il relève de la capacité, pas
-                    du droit du sol pur. */}
-                {/* M55-O phase 2.1b : les contrôles PASS (« sans objet ») partent dans
-                    « Vérifications d'éligibilité » (bloc Analyse) ; ici, seules les lignes PLU
-                    substantielles (non-PASS) restent — fini le mur de lignes « sans objet ». */}
-                {/* M57-P1 (Q4) : points signés RETIRÉS ici (hideWeight) — le fait, la source et la
-                    date restent. « Pourquoi ce score » (bloc Analyse) garde ses contributions. */}
-                {/* RETOURS-23 — les faits de situation (zonage, SDP résiduelle, surface, parc…) sous un
-                    kicker « Situation », comme la maquette ; primitive Line inchangée (détail + source). */}
-                {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS'); return rl.length > 0
-                  ? <div><GroupLabel>Situation</GroupLabel><div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div></div> : null })()}
-                {/* M60 P1c — PORTES en pied d'Urbanisme : les liens Annuaire PLU + lettre de zonage
-                    REPRIS en forme porte (.porte-outil), accroches contextualisées (zone PLU). */}
-                {/* M137-P — les 3 outils PLU fusionnés dans le hub « plu » : la porte Annuaire ouvre le
-                    hub PRÉ-REMPLI sur l'Annuaire (pluPrefill : commune + zone servie). */}
-                <PorteOutil ico="§" data="annuaire" titre="Annuaire PLU de la commune"
-                  sous={reglesZone ? `Le règlement de la zone ${reglesZone} — articles, prescriptions` : 'Le règlement PLU de la commune'}
-                  onClick={() => { setPluPrefillF({ insee: idu.slice(0, 5), zone: reglesZone ?? null }); setModule('plu') }} />
-                {/* EXPORTS-2 lot 8 — « Lettre de vérification de zonage » supprimée (décision Vic
-                    07/09) : la section 2 du Dossier couvre le zonage entièrement. */}
-                {/* M70 déc. 9 — PORTE Vérif procédure PLU dans Urbanisme (grille terminale supprimée).
-                    L'outil lit selectedIdu (préservé par setModule) → pré-rempli sur la parcelle. */}
-                <PorteOutil ico="⚖" data="verif-procedure" titre="Vérif procédure PLU"
-                  sous={reglesZone ? `Commune en procédure ? (zone ${reglesZone})` : 'La commune est-elle en procédure PLU ?'}
-                  onClick={() => { setPluVueF('procedure'); setModule('plu') }} />
-              </div>
-            </RefDrawer>
-
-            {/* ③ ÉCONOMIE — Constructibilité (capacité/bilan/calcul tracé) + Mode B. RETOURS-11F4 (F5) :
-                la section entière vit dans sections `constructibilite.tsx` (auto-suffisante). */}
-            <ConstructibiliteSection f={f} idu={idu} />
-
-            {/* FICHE-1 lot 1 — « Le bien » : le bâtiment existant (emprise, hauteur, nombre, surface
-                libre) + nature/pente du toit (LiDAR). Placé après Constructibilité ; s'omet si rien
-                d'évaluable (couche bâtiments non ingérée). */}
-            <LeBienSection f={f} idu={idu} />
-
-            {/* Risques et protections — clôt le groupe LE TERRAIN. RETOURS-11F4 (F6) : vigilances
-                d'abord, « sans objet » repliés, SUP rapatriées, compteur vrai → module `risques.tsx`. */}
-            <RisquesSection f={f} idu={idu} />
-
-            {/* M55-O phase 3.4 — GROUPE SILENCIEUX « LE CONTEXTE » : Marché et secteur · Réseaux et
-                accès · Propriétaire · Données et méthode. */}
-            <GroupLabel>Le contexte</GroupLabel>
-
-            {/* MARCHÉ — micro : sparkline + volume */}
-            {/* M55-O phase 2.3 (incohérence 3) : le prix d'en-tête est étiqueté « terrain nu » — à
-                distinguer du « prix de sortie bâti » (bilan) : deux métriques légitimes, jamais
-                confondues (269-286 €/m² terrain vs ~2 000 €/m² bâti). */}
-            {/* MARCHÉ — RETOURS-11F4 (F7) : recentré sur le PRIX (prix de sortie rapatrié ici, socio-éco
-                et permis déménagés vers Autour) → module `marche.tsx`. */}
-            <MarcheSection f={f} idu={idu} />
-
-            {/* RÉSEAUX ET ACCÈS — RETOURS-11F4 (F8) : 4 blocs (Accès/Réseaux/Viabilisation/Axes),
-                un seul verdict d'accès, permis & dépôts déménagés vers Autour → module `reseaux.tsx`. */}
-            <ReseauxSection f={f} idu={idu} />
-
-            {/* AUTOUR DE CETTE PARCELLE — RETOURS-11F4 (F9) : équipements (un moteur), socio-éco
-                rapatrié de Marché, permis à proximité (un tableau), isochrone → module `autour.tsx`. */}
-            <AutourSection f={f} idu={idu} />
-
-            {/* M106 P3 — DISPOSITIFS TERRITORIAUX (ZFANG / FRR ex-ZRR) : attribut de COMMUNE,
-                des états sourcés + lien vers le texte. JAMAIS un chiffre fiscal (ni taux, ni
-                plafond, ni calcul) — le fiscaliste tranche, et la fiche le dit. */}
-            {f.territoire_fiscal && (
-              <RefDrawer id="territoire" icon={IC.marche} name="Dispositifs territoriaux"
-                context={f.territoire_fiscal.commune}
-                value={f.territoire_fiscal.zfang?.regime === 'renforce'
-                  ? <span className="pill-mint">ZFANG renforcé</span> : f.territoire_fiscal.zfang ? 'ZFANG standard' : undefined}>
-                <div className="flex flex-col gap-2.5" data-territoire-fiscal>
-                  {/* RETOURS-23 Z3 — plus de boîtes : chaque dispositif est un fait à plat (titre ferré
-                      à gauche · détail · source en note 11,5 px). Le périmètre fin qui touche LA parcelle
-                      (QPV / bande TVA 500 m) garde un filet gauche mint (marqueur, pas un cadre). Données
-                      inchangées (mêmes libellés, mêmes sources, mêmes liens). */}
-                  {(f.territoire_fiscal.perimetres ?? []).map((p) => (
-                    <div key={p.libelle} data-fiche-perimetre className="border-l-2 border-mint pl-3">
-                      <p className="text-[12px] font-semibold text-txt-hi">{p.libelle}{p.derive && <span className="ml-1.5 rounded bg-surface-2 px-1 py-px text-[9px] uppercase tracking-wide text-txt-dim">estimé</span>}</p>
-                      <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{p.detail}</p>
-                      <FactNote>{p.source}</FactNote>
-                    </div>
-                  ))}
-                  {([['ZFANG — zone franche d’activité', f.territoire_fiscal.zfang],
-                     ['FRR — France Ruralités Revitalisation (ex-ZRR)', f.territoire_fiscal.frr]] as const)
-                    .filter(([, a]) => !!a).map(([titre, a]) => (
-                    <div key={titre}>
-                      <p className="text-[12px] font-semibold text-txt-hi">{titre}</p>
-                      <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{a!.libelle}</p>
-                      <FactNote>{a!.source_ref} · <a href={a!.lien} target="_blank" rel="noreferrer" className="underline hover:text-mint">voir le texte</a></FactNote>
-                    </div>
-                  ))}
-                  {/* RETOURS-11F3 F10 — dispositifs valables sur TOUTE La Réunion (zonage B1, TVA DOM
-                      8,5 % / 2,1 % LLS), rapatriés de Constructibilité. Repères, jamais un calcul fiscal. */}
-                  {(f.territoire_fiscal.dispositifs_dom ?? []).map((d) => (
-                    <div key={d.libelle} data-dispositif-dom>
-                      <p className="text-[12px] font-semibold text-txt-hi">{d.libelle}</p>
-                      <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{d.detail}</p>
-                      <FactNote>{d.source}</FactNote>
-                    </div>
-                  ))}
-                  {f.territoire_fiscal.avertissement && (
-                    <FactNote>{f.territoire_fiscal.avertissement}</FactNote>
-                  )}
-                </div>
-              </RefDrawer>
-            )}
-
-            {/* M55-O phase 2.1c : Mode B rendu une seule fois, rattaché à la Constructibilité (plus haut). */}
-
-            {/* M55-O phase 2.1c : le tiroir « Contexte » (historique + voisinage) est ABSORBÉ dans
-                « Marché et secteur » (hyper-local). Il ne vit plus en tiroir séparé. */}
-
-            {/* ⑤ PROPRIÉTÉ — société (M43) + signaux vendeur. CARTE ACCENTUÉE VIOLETTE = le signal chaud. */}
-            <RefDrawer id="proprio" icon={IC.proprio} name="Propriétaire" accent={proprioAccent}
+            {/* ① IDENTITÉ — ce qui identifie le bien : surface (ex-tuile), propriétaire (relocalisé
+                §1), dernière vente DVF (ex-Marché), filiation cadastrale, historique des permis DE la
+                parcelle (ex-Autour). CARTE ACCENTUÉE VIOLETTE = le signal propriétaire chaud. */}
+            {/* FICHE-RANGEMENT-3 Lot 4 — la commune n'est plus rappelée en sous-titre (déjà dans
+                l'en-tête « PARCELLE · <COMMUNE> ») : le sous-titre ne porte que le signal propriétaire. */}
+            <RefDrawer id="identite" icon={IC.proprio} name="Identité" accent={proprioAccent}
               context={proprioSignal ? (f.proprietaire_moral ? proprioType : 'personne physique') : undefined}
-              value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : 'privé')}
+              value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : (f.surface_m2 != null ? fmtM2(f.surface_m2) : 'privé'))}
               micro={proprioPastilles.length ? <MicroPastilles items={proprioPastilles} /> : undefined}>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
+                <ChiffreDissous l="Surface" t={tuileSurface} />
+                {/* ⑤ PROPRIÉTÉ (relocalisée §1) — société (M43) + signaux vendeur. */}
+                <div className="flex flex-col gap-2">
                 {f.proprietaire_moral ? (
                   <div>
                     {/* RETOURS-23 Z3 — plus de card-elev : kicker + fait à plat. */}
@@ -1552,108 +1305,343 @@ export function Fiche({ idu }: { idu: string }) {
                 <ProprietaireHistorique h={f.proprietaire_historique} pm={!!f.proprietaire_moral} />
                 {/* M125-2 — copropriété(s) RNIC rattachées (donnée réelle, cible bailleur/copro) */}
                 {f.coproprietes && f.coproprietes.length > 0 && <CoproprietesBlock copros={f.coproprietes} />}
-                {/* FICHE-1 lot 6 — les annonces Radar rattachées ont DÉMÉNAGÉ vers « Marché et
-                    secteur » (MarcheSection), en liste datée avec statut + lien fiche annonce. */}
-                {/* FICHE-1 lot 2 — DPE RÉTABLI : la fiche premium sert désormais `dpe_connu`
-                    (_dpe_connu_block lit `dpe_records`), affiché dans le tiroir « Le bien »
-                    (LeBienSection). M71 B1 : info fiche seule, jamais un signal de classement. */}
-                {/* M60 P1c — PORTE en pied de Propriétaire : Scan patrimoine PRÉ-REMPLI (SIREN du
-                    propriétaire). Accroche contextualisée (dénomination + SIREN), jamais générique. */}
+                {/* M60 P1c — PORTE en pied : Scan patrimoine PRÉ-REMPLI (SIREN du propriétaire). */}
                 {f.proprietaire_moral?.siren && (
                   <PorteOutil ico="⌂" data="patrimoine" titre="Scan patrimoine du propriétaire"
                     sous={`Tout le foncier de ${f.proprietaire_moral.denomination ?? 'ce propriétaire'} · SIREN ${f.proprietaire_moral.siren}`}
                     onClick={() => { setM02Prefill(f.proprietaire_moral!.siren!); setModule('patrimoine') }} />
                 )}
-                {/* M70 point 7a — PORTE en pied de Propriétaire : Courrier SPF (personne physique /
-                    non recensée). L'outil courrier (M09) s'ouvre pré-rempli sur la parcelle courante.
-                    Une seule porte par outil (M60) : le courrier n'a de porte QUE dans ce tiroir. */}
+                {/* M70 point 7a — PORTE en pied : Courrier SPF (personne physique / non recensée). */}
                 {!f.proprietaire_moral && (
                   <PorteOutil ico="✉" data="spf-letter" titre={CLIENT.fiche.export.spf}
                     sous="Courrier pré-rempli à envoyer au SPF pour identifier le propriétaire."
                     onClick={() => { setCourrierPrefill(idu); setModule('courriers') }} />
                 )}
+                </div>
+                {/* DERNIÈRE VENTE (DVF) — fait d'identité, relocalisé de Marché (§8→§1). */}
+                <DerniereVenteBlock f={f} />
+                {/* FILIATION cadastrale officielle — relocalisée de « Le bien » (leBien.tsx §1). */}
+                <FiliationBlock f={f} />
+                {/* HISTORIQUE des permis DE la parcelle — relocalisé de « Autour » (§9→§1). */}
+                <HistoriqueSiteBlock f={f} />
+                {/* FICHE-SANS-OBJET-1 — repli « N sans objet » de §1 (modèle §5) : les vérifications
+                    proprio sans objet par nature d'une personne physique reviennent ici (repliées),
+                    au lieu d'être jetées en silence. */}
+                {proprioSansObjet.length > 0 && (
+                  <details data-identite-sans-objet>
+                    <summary className="cursor-pointer text-[12px] font-semibold text-txt-mut" style={{ listStyle: 'none' }}>
+                      <span className="text-mint">✓</span> {proprioSansObjet.length} couche{proprioSansObjet.length > 1 ? 's' : ''} sans objet — déplier
+                    </summary>
+                    <div className="mt-1.5 flex flex-col gap-1">
+                      {proprioSansObjet.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}
+                    </div>
+                  </details>
+                )}
               </div>
             </RefDrawer>
 
-            {/* M55-O phase 3.4 : « Risques et protections » remonte dans le groupe LE TERRAIN
-                (rendu plus haut, après la Constructibilité). */}
-
-            {/* M55-O phase 2.1b : les tiroirs « Renouvellement — pourquoi ce rang » et « Pourquoi
-                pas ? » sont ABSORBÉS dans le bloc Analyse (carte verdict, plus haut). Ils ne vivent
-                plus en tiroirs séparés. */}
-
-            {/* ⑧ LES DONNÉES — dernier bloc de contenu (M52 L3). Sources RÉELLEMENT utilisées sur
-                cette fiche (data_sources) + données ABSENTES dites + confiance (ICD, score P), flags,
-                signaler. Zéro nouvelle donnée : tout vient de tables existantes ou de nuls dits. */}
-            {/* M70 décision 5 — plus de « couverture {icd.score} % » (score nu) dans le sous-titre :
-                la confiance est portée par le verdict qualitatif de l'ICD (bloc plus bas). */}
-            <RefDrawer id="confiance" icon={IC.confiance} name="Données et méthode"
-              context={f.data_sources?.length ? `${f.data_sources.length} sources` : undefined}
-              value={<></>/* DA-FICHE-v6 « pas de % nu » : à droite, juste le chevron. */}>
+            {/* ② TERRAIN — ce qui touche le sol : pente + exposition (ex-tuiles), surface au sol libre
+                + artificialisation OCS GE (TerrainDuBienBlock §2), piscine (EquipementsBadges, ex-Réseaux). */}
+            <RefDrawer id="terrain" icon={IC.terrain} name="Terrain"
+              context={[penteSous ? `pente ${penteSous}` : null, expoOrient && expoOrient !== 'plat' ? String(expoOrient) : null].filter(Boolean).join(' · ') || undefined}
+              value={penteDeg != null ? `${nf(penteDeg)} °` : (expoOrient && expoOrient !== 'plat' ? String(expoOrient) : undefined)}>
               <div className="flex flex-col gap-3">
-                {/* Sources utilisées sur cette fiche — nom · fournisseur · millésime · fiabilité. */}
-                {f.data_sources && f.data_sources.length > 0 && (
-                  <div data-data-sources>
-                    <GroupLabel>Sources utilisées sur cette fiche</GroupLabel>
-                    <div className="flex flex-col gap-1">
-                      {f.data_sources.map((s, i) => {
-                        // millésime affiché seulement s'il est une date propre (AAAA / AAAA-MM) — les
-                        // notes longues (« révisions par commune… ») cassent la ligne, le détail vit ailleurs.
-                        const mill = s.millesime && /^\d{4}(-\d{2})?$/.test(s.millesime) ? s.millesime : null
-                        return (
-                        <div key={i} className="flex items-baseline justify-between gap-3 border-b border-line/60 py-1.5 last:border-0">
-                          <div className="min-w-0">
-                            <span className="text-xs text-txt">{s.nom}</span>
-                            {s.fournisseur && <span className="ml-1 text-[10.5px] text-txt-dim">· {s.fournisseur}</span>}
-                          </div>
-                          <div className="flex shrink-0 items-baseline gap-2 whitespace-nowrap text-[10.5px] text-txt-mut">
-                            {mill && <span className="tnum">{mill}</span>}
-                            {/* M70 décision 4 — couleurs honnêtes : « suivie » (cataloguée + radar) en
-                                mint calme, le reste (estimée/déclarative) neutre.
-                                RETOURS-11F F12 (doctrine 02/09) — « à confirmer » = licence à vérifier
-                                CÔTÉ VIC, PAS une information client → la chip n'est plus rendue au client
-                                (le client ne voit que « à jour / pas à jour » + date, ailleurs). */}
-                            {s.fiabilite && s.fiabilite !== 'à confirmer' && (() => {
-                              const bg = s.fiabilite === 'suivie' ? '#5CE6A122' : '#8A968F22'
-                              const fg = s.fiabilite === 'suivie' ? '#5CE6A1' : '#8A968F'
-                              return <span className="rounded-full px-1.5" style={{ background: bg, color: fg }}>{s.fiabilite}</span>
-                            })()}
-                          </div>
-                        </div>
-                      )})}
-                    </div>
+                <ChiffreDissous l="Pente" t={tuilePente} />
+                <ChiffreDissous l="Exposition" t={tuileExpo} />
+                {/* FICHE-RANGEMENT-3 Lot 5 — AZIMUT du versant (aspect_deg, MNT RGE ALTI) : le cap
+                    précis derrière l'orientation lisible (0° = Nord, sens horaire). */}
+                {expoData?.aspect_deg != null && (
+                  <div data-terrain-azimut>
+                    <FactRow label="Azimut du versant"
+                      value={<>{nf(expoData.aspect_deg)} <small>° (0 = Nord, sens horaire)</small></>}
+                      src="RGE ALTI (IGN) — MNT" />
                   </div>
                 )}
-                {/* M70 décision 8 — le bloc du 3ᵉ terme de la doctrine (Sourcé/Estimé/ABSENT) est
-                    CONSERVÉ (le retirer laisserait croire la fiche complète) mais REPLIÉ par défaut
-                    et reformulé « Ce que LABUSE ne peut pas savoir sur cette parcelle ». */}
-                {donneesAbsentes.length > 0 && (
-                  <details data-donnees-absentes>
-                    <summary className="label-caps cursor-pointer list-none select-none">
-                      Ce que LABUSE ne peut pas savoir sur cette parcelle <span className="text-txt-dim">({donneesAbsentes.length})</span>
-                    </summary>
-                    <ul className="mt-1.5 flex flex-col gap-1">
-                      {donneesAbsentes.map((a, i) => (
-                        <li key={i} className="flex gap-2 text-[11px] leading-snug text-txt-mut">
-                          <span aria-hidden className="text-txt-dim">○</span>
-                          <span><span className="text-txt">{a.quoi}</span> — {a.pourquoi}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
+                <TerrainDuBienBlock f={f} />
+                <EquipementsBadges idu={idu} />
+              </div>
+            </RefDrawer>
+
+            {/* ③ BÂTI — le bâtiment existant (emprise, CoSIA, hauteur, DPE, toit, RNB → BatiBlock §3).
+                S'omet si rien d'évaluable (couche bâtiments non ingérée → le_bien absent). */}
+            {f.le_bien?.disponible && (
+              <RefDrawer id="bati" icon={IC.faisa} name="Bâti"
+                context={f.le_bien.occupation_label || 'bâti existant'}
+                value={f.le_bien.nb_batiments != null && f.le_bien.nb_batiments > 0
+                  ? <span className="pill-mint">{f.le_bien.nb_batiments} bâtiment{f.le_bien.nb_batiments > 1 ? 's' : ''}</span>
+                  : <span className="pill-mint">terrain nu</span>}>
+                <BatiBlock f={f} />
+              </RefDrawer>
+            )}
+
+            <GroupLabel>Le droit du sol</GroupLabel>
+
+            {/* ④ URBANISME — droit du sol : zone (ex-tuile) + PLU/procédure/traducteur/règlement/
+                situation (ex-tiroir Règles) + RTAA DOM (§4) + dispositifs ER/EBC/DPU/PEB/SUP (§4) +
+                mixité sociale (non renseignée à ce jour). */}
+            {/* FICHE-RANGEMENT-1 Lot 1 (doublon #2) — le CODE DE ZONE vit UNE fois : ici en tuile
+                dissoute (glance) + en détail dans ReglementPluBlock (« Règlement — zone X »). */}
+            {/* FICHE-RANGEMENT-3 Lot 2 — « N % SDP consommée » n'apparaît plus DANS le sous-titre :
+                la micro-jauge (première ligne du tiroir ouvert) le porte déjà. Le sous-titre ne garde
+                que l'article/zone non publiée (rien quand la zone est connue → la jauge suffit). */}
+            <RefDrawer id="urbanisme" icon={IC.regles} name="Urbanisme"
+              value={reglesGabarit}
+              context={reglesZone ? undefined : (reglesArticle ? `art. ${reglesArticle}` : 'zone non publiée au GPU')}
+              micro={pctConsomme != null
+                ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
+                : <MicroJauge pct={0} label={[reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
+              <div className="flex flex-col gap-3">
+                <ChiffreDissous l="Zone" t={tuileZone} />
+                {/* M75 — obligation APER (ombrières PV, grand parking > 1 500 m²) : contrainte
+                    réglementaire portant sur le terrain, INFORMATION. Libellé backend (mêmes mots
+                    que les exports). « potentiellement concerné », jamais « soumis à ». */}
+                {/* FICHE-RANGEMENT-2 Lot 4 — grammaire visuelle unique : APER, fraîcheur PLU et Radar
+                    procédures partageaient le MÊME motif (filet gauche + titre + prose) codé à la main
+                    trois fois. Ils passent au filet partagé <Vigilance> (ambre par défaut ; mint « à
+                    jour » ; creuser « en cours »). Contenu inchangé ; le style est désormais unique. */}
+                {f.aper && (
+                  <div data-aper>
+                    <Vigilance title={<><span aria-hidden className="mr-1">🅿</span>{f.aper.note}</>}>
+                      {f.aper.etat}.
+                    </Vigilance>
+                  </div>
                 )}
-                {/* RETOURS-7 Z6 — carte « Qualité de la mesure · commune » RETIRÉE de la fiche client :
-                    métrologie interne (RR intra, base %, audit fold), illisible pour un promoteur. La
-                    donnée `f.qualite_commune` reste servie par le back (disponible côté admin). */}
-                {/* Confiance données (ICD) — jauge de confiance UNIQUE (M55-O 2.2). */}
-                {f.icd && <IcdBlockView icd={f.icd} />}
-                {/* M55-O phase 2.1b : ScoreV2Block (P + « pourquoi ce score ») DÉMÉNAGÉ dans le bloc
-                    Analyse (carte verdict) — l'avis LABUSE est rassemblé, plus dans « Les données ». */}
-                {/* M55-O phase 2.2 — le bloc « Signaux additionnels » (f.flags) est SUPPRIMÉ : ce sont
-                    des redites des tiroirs dédiés (ABF → Risques, bâti/SDP → Constructibilité, PPR →
-                    Risques). Chaque information n'apparaît qu'une fois. */}
-                {/* RETOURS-11 F2 — « Signaler une erreur » a QUITTÉ « Données et méthode » : c'est
-                    désormais le TOUT DERNIER bloc de la fiche (voir bas de fiche). */}
+                {f.plu_fraicheur?.libelle && (
+                  <div data-plu-fraicheur={f.plu_fraicheur.statut}>
+                    <Vigilance tone={f.plu_fraicheur.statut === 'a_jour' ? 'mint' : 'creuser'}
+                      title={<><span className="mr-1">{f.plu_fraicheur.statut === 'a_jour' ? '🕓' : '▲'}</span>{f.plu_fraicheur.document_servi || f.plu_fraicheur.libelle}</>}>
+                      {f.plu_fraicheur.document_servi ? (
+                        <>
+                          {f.plu_fraicheur.fait_foi && (
+                            <span className="block text-[10px] text-txt-dim">✓ {f.plu_fraicheur.fait_foi}</span>
+                          )}
+                          {f.plu_fraicheur.en_cours && (
+                            /* M57-P1 (d) : a_jour → avertissement NEUTRE ; les autres statuts portent une
+                               procédure RÉELLE → « En cours (non servi) » conservé. */
+                            f.plu_fraicheur.statut === 'a_jour'
+                              ? <span className="block text-[10px] text-txt-dim">{f.plu_fraicheur.en_cours}</span>
+                              : <span className="block text-[10px] text-st-creuser">⏳ En cours (non servi) : {f.plu_fraicheur.en_cours}</span>
+                          )}
+                          {f.plu_fraicheur.action && (
+                            <span className="block text-[10px] text-txt-mut">→ {f.plu_fraicheur.action}</span>
+                          )}
+                        </>
+                      ) : (
+                        f.plu_fraicheur.note && f.plu_fraicheur.statut !== 'a_jour'
+                          ? <span className="block text-[10px] text-txt-dim">{f.plu_fraicheur.note}</span>
+                          : null
+                      )}
+                    </Vigilance>
+                  </div>
+                )}
+                {/* M41 — Radar procédures PLU : stade + conséquences parcellaires servables. */}
+                {f.radar_procedure?.indisponible && <BlocIndisponible titre="Radar procédures PLU" />}
+                {f.radar_procedure?.synthese?.etat && (
+                  <div data-radar-procedure>
+                    <Vigilance tone="creuser" title={<><span className="mr-1">📡</span>{f.radar_procedure.synthese.etat}</>}>
+                      {f.radar_procedure.veille_au && (
+                        <span className="block text-[10px] text-mint">Veille AU — {f.radar_procedure.veille_au}</span>
+                      )}
+                      {f.radar_procedure.sursis ? (
+                        <span className="block text-[10px] text-st-ecartee">
+                          Sursis à statuer — {f.radar_procedure.sursis.texte}
+                          <span className="block text-txt-dim">{f.radar_procedure.sursis.base_legale}</span>
+                        </span>
+                      ) : (
+                        <span className="block text-[10px] text-txt-dim">Sursis à statuer : non servi (débat PADD non constaté à ce jour).</span>
+                      )}
+                    </Vigilance>
+                  </div>
+                )}
+                {/* M55-O phase 2.2 — la jauge « Qualité » (q_score) est RETIRÉE de la fiche : mesurée
+                    non discriminante en M55-N (82,5 % à la base neutre 50). Seule « Confiance données »
+                    (ICD, tiroir Données) reste. Le champ back q_score n'est PAS touché (consommé
+                    ailleurs : App, Kanban, MapView, filtres…) — seul l'affichage fiche disparaît. */}
+                <TraducteurBloc idu={idu} />
+                {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
+                {/* M55-O phase 2.1c : le potentiel de transformation (SDP consommée/résiduelle/
+                    surélévation) DÉMÉNAGE vers « Constructibilité » — il relève de la capacité, pas
+                    du droit du sol pur. */}
+                {/* M55-O phase 2.1b : les contrôles PASS (« sans objet ») partent dans
+                    « Vérifications d'éligibilité » (bloc Analyse) ; ici, seules les lignes PLU
+                    substantielles (non-PASS) restent — fini le mur de lignes « sans objet ». */}
+                {/* M57-P1 (Q4) : points signés RETIRÉS ici (hideWeight) — le fait, la source et la
+                    date restent. « Pourquoi ce score » (bloc Analyse) garde ses contributions. */}
+                {/* RETOURS-23 — les faits de situation (zonage, SDP résiduelle, surface, parc…) sous un
+                    kicker « Situation », comme la maquette ; primitive Line inchangée (détail + source). */}
+                {/* FICHE-RANGEMENT-3 Lot 2 — la ligne « Zonage PLU » (layer zonage_plu_gpu) répète la
+                    tuile « Zone » en tête → retirée (une seule ligne pour la zone). La ligne « bâti :
+                    N bâtiments » (layer bati) répète §3 Bâti (nb_batiments) → retirée. */}
+                {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS' && l.layer !== 'zonage_plu_gpu' && l.layer !== 'bati'); return rl.length > 0
+                  ? <div><GroupLabel>Situation</GroupLabel><div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div></div> : null })()}
+                {/* M60 P1c — PORTES en pied d'Urbanisme : les liens Annuaire PLU + lettre de zonage
+                    REPRIS en forme porte (.porte-outil), accroches contextualisées (zone PLU). */}
+                {/* M137-P — les 3 outils PLU fusionnés dans le hub « plu » : la porte Annuaire ouvre le
+                    hub PRÉ-REMPLI sur l'Annuaire (pluPrefill : commune + zone servie). */}
+                <PorteOutil ico="§" data="annuaire" titre="Annuaire PLU de la commune"
+                  sous={reglesZone ? `Le règlement de la zone ${reglesZone} — articles, prescriptions` : 'Le règlement PLU de la commune'}
+                  onClick={() => { setPluPrefillF({ insee: idu.slice(0, 5), zone: reglesZone ?? null }); setModule('plu') }} />
+                {/* EXPORTS-2 lot 8 — « Lettre de vérification de zonage » supprimée (décision Vic
+                    07/09) : la section 2 du Dossier couvre le zonage entièrement. */}
+                {/* M70 déc. 9 — PORTE Vérif procédure PLU dans Urbanisme (grille terminale supprimée).
+                    L'outil lit selectedIdu (préservé par setModule) → pré-rempli sur la parcelle. */}
+                <PorteOutil ico="⚖" data="verif-procedure" titre="Vérif procédure PLU"
+                  sous={reglesZone ? `Commune en procédure ? (zone ${reglesZone})` : 'La commune est-elle en procédure PLU ?'}
+                  onClick={() => { setPluVueF('procedure'); setModule('plu') }} />
+                {/* RTAA DOM (§4) — rappel réglementaire de conception, servi par le bilan (b.rtaa). */}
+                <RtaaFromBilan idu={idu} />
+                {/* Dispositifs et périmètres (§4) — ER / EBC / doc urba / DPU / PEB / SUP (SOURCES-1 lot 1). */}
+                {f.dispositifs && <DispositifsBody d={f.dispositifs} />}
+                {/* FICHE-RANGEMENT-2 Lot 1 — mixité sociale (SMS) : quota + seuil NON RENSEIGNÉS (non
+                    extraits du règlement de zone GPU à ce jour ; cf. FICHE-RANGEMENT-1 lot 2, data absente). */}
+                <div data-mixite>
+                  <GroupLabel>Mixité sociale (LLS)</GroupLabel>
+                  <FactRow label="Quota de logements sociaux" tone="mute" value="non renseigné" />
+                  <FactRow label="Seuil de déclenchement" tone="mute" value="non renseigné" />
+                  <FactNote>Servitude de mixité sociale — non extraite du règlement de zone GPU à ce jour (en attente).</FactNote>
+                </div>
+                {/* FICHE-SANS-OBJET-1 — §4 a désormais SON propre repli « N sans objet », calqué EXACT
+                    sur §5 Risques (même libellé, même style, replié par défaut). Les lignes PASS de
+                    l'onglet `regles` (« Hors forêt publique », « Hors zone humide », « Hors parc
+                    national », « Non concerné SAFER »…) y sont ramassées au lieu de disparaître en
+                    silence. EXCLUES car déjà re-servies ailleurs (jamais deux fois) : `bati` (→ §3
+                    Bâti), `dpu` & `peb` (→ Dispositifs et périmètres), `zonage_plu_gpu` (→ tuile Zone). */}
+                {(() => {
+                  const so = reglesLines.filter((l) => l.result === 'PASS' && !['bati', 'dpu', 'peb', 'zonage_plu_gpu'].includes(l.layer))
+                  return so.length > 0 ? (
+                    <details data-urbanisme-sans-objet>
+                      <summary className="cursor-pointer text-[12px] font-semibold text-txt-mut" style={{ listStyle: 'none' }}>
+                        <span className="text-mint">✓</span> {so.length} couche{so.length > 1 ? 's' : ''} sans objet — déplier
+                      </summary>
+                      <div className="mt-1.5 flex flex-col gap-1">
+                        {so.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}
+                      </div>
+                    </details>
+                  ) : null
+                })()}
+              </div>
+            </RefDrawer>
+
+            {/* ⑤ RISQUES ET ENVIRONNEMENT — aléas, sols, vigilances, SUP, lignes HT/MT → risques.tsx. */}
+            <RisquesSection f={f} idu={idu} />
+
+            {/* ⑥ RÉSEAUX ET DESSERTE — fibre, accès + transport, gestionnaires, viabilisation (+ solaire),
+                axes et nuisances → reseaux.tsx. */}
+            <ReseauxSection f={f} idu={idu} />
+
+            {/* ⑦ FISCALITÉ ET DISPOSITIFS — taxe foncière (ex-tuile) + fiscal & leviers (QPV/TVA §7) +
+                taxe d'aménagement (§7) + dispositifs territoriaux ZFANG/FRR/DOM (relocalisés §7). */}
+            {/* FICHE-RANGEMENT-3 Lot 4 — la commune (sous-titre) est retirée : déjà dans l'en-tête. */}
+            <RefDrawer id="fiscalite" icon={IC.fiscal} name="Fiscalité et dispositifs"
+              value={f.territoire_fiscal?.zfang?.regime === 'renforce'
+                ? <span className="pill-mint">ZFANG renforcé</span>
+                : tfpb != null ? `${nf(tfpb)} %` : undefined}>
+              <div className="flex flex-col gap-3">
+                <ChiffreDissous l="Taxe foncière" t={tuileTaxe} />
+                {/* Fiscal & leviers (QPV / TVA / note taxe) — levier fiscal du bilan (§7). */}
+                <FiscalLeviersBlock idu={idu} />
+                {/* FICHE-1 lot 5 — taxe d'aménagement estimée + porte pour changer les hypothèses (§7). */}
+                {f.taxe_amenagement && <TaxeAmenagementBlock t={f.taxe_amenagement} />}
+                {f.taxe_amenagement && (
+                  <PorteOutil ico="€" data="taxe-amenagement-outil" titre="Taxe d'aménagement"
+                    sous="Changer les hypothèses (résidence principale, logement aidé, piscine, taux communal)"
+                    onClick={() => { setParcelPrefill(idu); setModule('taxe-amenagement') }} />
+                )}
+                {/* M106 P3 — DISPOSITIFS TERRITORIAUX (ZFANG / FRR ex-ZRR) relocalisés §7 : attribut de
+                    COMMUNE, états sourcés + lien texte. JAMAIS un chiffre fiscal (le fiscaliste tranche). */}
+                {f.territoire_fiscal && (
+                  <div className="flex flex-col gap-2.5" data-territoire-fiscal>
+                    <GroupLabel>Dispositifs territoriaux</GroupLabel>
+                    {/* RETOURS-23 Z3 — chaque dispositif est un fait à plat (titre · détail · source en
+                        note). Le périmètre fin qui touche LA parcelle (QPV / bande TVA 500 m) garde un
+                        filet gauche mint (marqueur, pas un cadre). Données/libellés/sources inchangés. */}
+                    {(f.territoire_fiscal.perimetres ?? []).map((p) => (
+                      <div key={p.libelle} data-fiche-perimetre className="border-l-2 border-mint pl-3">
+                        <p className="text-[12px] font-semibold text-txt-hi">{p.libelle}{p.derive && <span className="ml-1.5 rounded bg-surface-2 px-1 py-px text-[9px] uppercase tracking-wide text-txt-dim">estimé</span>}</p>
+                        <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{p.detail}</p>
+                        <FactNote>{p.source}</FactNote>
+                      </div>
+                    ))}
+                    {([['ZFANG — zone franche d’activité', f.territoire_fiscal.zfang],
+                       ['FRR — France Ruralités Revitalisation (ex-ZRR)', f.territoire_fiscal.frr]] as const)
+                      .filter(([, a]) => !!a).map(([titre, a]) => (
+                      <div key={titre}>
+                        <p className="text-[12px] font-semibold text-txt-hi">{titre}</p>
+                        <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{a!.libelle}</p>
+                        <FactNote>{a!.source_ref} · <a href={a!.lien} target="_blank" rel="noreferrer" className="underline hover:text-mint">voir le texte</a></FactNote>
+                      </div>
+                    ))}
+                    {/* RETOURS-11F3 F10 — dispositifs valables sur TOUTE La Réunion (zonage B1, TVA DOM
+                        8,5 % / 2,1 % LLS). Repères, jamais un calcul fiscal. */}
+                    {(f.territoire_fiscal.dispositifs_dom ?? []).map((d) => (
+                      <div key={d.libelle} data-dispositif-dom>
+                        <p className="text-[12px] font-semibold text-txt-hi">{d.libelle}</p>
+                        <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{d.detail}</p>
+                        <FactNote>{d.source}</FactNote>
+                      </div>
+                    ))}
+                    {f.territoire_fiscal.avertissement && (
+                      <FactNote>{f.territoire_fiscal.avertissement}</FactNote>
+                    )}
+                  </div>
+                )}
+              </div>
+            </RefDrawer>
+
+            <GroupLabel>Le marché</GroupLabel>
+
+            {/* ⑧ MARCHÉ — prix de secteur, prix de sortie, VEFA, voisinage, annonces Radar → marche.tsx. */}
+            <MarcheSection f={f} idu={idu} />
+
+            {/* ⑨ QUARTIER — équipements, socio-éco, IRIS, isochrone, permis à proximité → autour.tsx. */}
+            <AutourSection f={f} idu={idu} />
+
+            <GroupLabel>Le projet</GroupLabel>
+
+            {/* ⑩ POTENTIEL — SDP restante (ex-tuile) + potentiel de transformation (SDP conso/résid,
+                marge H) + capacité constructible (SHAB vendable, calcul tracé). Lecture ; la simulation
+                interactive (charge foncière, outils) vit en §11. */}
+            <RefDrawer id="potentiel" icon={IC.potentiel} name="Potentiel"
+              context={fo?.niveaux ? `${fo.niveaux} · calcul tracé` : 'calcul tracé'}
+              value={reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² SDP` : undefined}>
+              <div className="flex flex-col gap-3">
+                <ChiffreDissous l="SDP restante" t={tuileSdp} />
+                {/* RETOURS-20 Z5 — l'alerte « délaissé » = une Vigilance (filet ambre). */}
+                {faisa.data?.delaisse && <div data-delaisse><Vigilance title={faisa.data.delaisse.libelle} /></div>}
+                {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
+                {/* FICHE-PORTES-1 Lot 2 — porte « Densifier l'existant » (MR1) : à la suite de la SDP
+                    consommée (potentiel de densification). Outil à la maille commune → contexte = la
+                    commune de la parcelle. */}
+                {f.commune && (
+                  <PorteOutil ico="◫" data="renouvellement" titre="Densifier l'existant"
+                    sous={`Le bâti en zone U de ${f.commune} qui peut porter davantage`}
+                    onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setCommunesFilter([f.commune!]); st.setModule('renouvellement') }} />
+                )}
+                <FaisabiliteTab idu={idu} />
+              </div>
+            </RefDrawer>
+
+            {/* ⑪ SIMULATION — la charge foncière (bilan) + la Réhabilitation (Mode B, FICHE-RANGEMENT-3
+                Lot 3 : rentrée DANS §11, plus un 12e tiroir) + les outils de projet (Faisabilité,
+                Calculette, Assemblage). 11 tiroirs au total. */}
+            <RefDrawer id="simulation" icon={IC.confiance} name="Simulation"
+              context="charge foncière · réhabilitation · outils projet"
+              value={<span className="pill-mint">bilan</span>}>
+              <div className="flex flex-col gap-3">
+                <BilanTab idu={idu} />
+                {/* Réhabilitation (Mode B) — bloc inline (ModeBBody), plus un tiroir séparé. */}
+                {f.mode_b?.indisponible
+                  ? <BlocIndisponible titre="Réhabilitation (Mode B)" />
+                  : f.mode_b?.disponible && <ModeBBody idu={idu} initial={f.mode_b} />}
+                <PorteOutil ico="◱" data="faisabilite-outil" titre="Faisabilité"
+                  sous={`La capacité constructible de ces ${fmtM2(f.surface_m2)} : SDP, hauteur PLU, calcul tracé`}
+                  onClick={() => { setParcelPrefill(idu); setModule('programme') }} />
+                <PorteOutil ico="▦" data="calculette" titre="Calculette foncière"
+                  sous={`Ce terrain de ${fmtM2(f.surface_m2)} : SDP, prix de sortie, votre coût et marge`}
+                  onClick={() => { setCalcPrefill(idu); setModule('calculette-fonciere') }} />
+                <PorteOutil ico="⧉" data="assemblage-outil" titre="Assemblage"
+                  sous={`Partir de ces ${fmtM2(f.surface_m2)} et agréger les parcelles contiguës`}
+                  onClick={() => { setParcelPrefill(idu); setModule('assemblage') }} />
               </div>
             </RefDrawer>
 
@@ -1838,73 +1826,3 @@ function BanquierButton({ idu }: { idu: string }) {
 }
 
 
-/** BLOC B · S45 — Traducteur PLU (variante B, verdict Vic) : bloc dépliable de l'onglet
- *  Règles. Sourcé = article calibré, Estimé = générique.
- *  M76 pt4 : le bloc ne s'affiche QUE s'il a quelque chose à dire — masqué entièrement quand aucune
- *  règle n'est traduisible pour la zone (ex. zones A/N non constructibles, 152 638 parcelles). Le
- *  fetch est donc AVANCÉ (déterministe, pas d'IA sur `{}`) pour connaître `regles_appliquees` avant
- *  de rendre : plus de bloc qui s'affiche pour annoncer son propre vide. */
-function TraducteurBloc({ idu }: { idu: string }) {
-  const [open, setOpen] = useState(false)
-  const q = useQuery({
-    queryKey: ['traducteur', idu],
-    queryFn: async () => {
-      const r = await fetch(`/traducteur-plu/${idu}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
-      if (!r.ok) throw new Error(`traducteur ${r.status}`)
-      return r.json() as Promise<{
-        ok: boolean; zone: string | null; zone_calibree?: boolean
-        // FICHE-COUCHES-4 lot 1 : `ok:false` (zone non calibrée, ex. Ncor) OMET `regles_appliquees`
-        // et `reglement` — le champ est donc OPTIONNEL, jamais supposé présent.
-        regles_appliquees?: { regle: string; valeur: string; source: string }[]
-        reglement?: { url: string | null; note: string | null }
-      }>
-    },
-    enabled: true, staleTime: 300_000,
-  })
-  const d = q.data
-  // M76 pt4 — tant qu'on ne sait pas OU rien à traduire → aucun bloc (jamais « Aucune règle traduite »).
-  // FICHE-COUCHES-4 lot 1 : `regles_appliquees` peut être ABSENT (ok:false, zone non calibrée) → le
-  // lire sans `?.` faisait planter TOUTE la fiche (« Cannot read properties of undefined (reading
-  // 'length') »), masquant au passage les exclusions rédhibitoires (ex. forêt domaniale). Garde optionnelle.
-  if (!d || !d.regles_appliquees?.length) return null
-  return (
-    <div data-traducteur className="mb-3 rounded-lg border border-violet/30 bg-violet/[0.06] px-3 py-2">
-      <button data-traducteur-toggle onClick={() => setOpen((o) => !o)}
-        className="flex min-h-7 w-full items-center justify-between gap-2 text-left">
-        {/* M62-P1 (j) : casse NORMALE (plus de capitales `label-caps`) — « Demander à l'IA de traduire le PLU ». */}
-        <span className="text-[11px] font-medium tracking-normal normal-case text-violet">✦ Demander à l'IA de traduire le PLU</span>
-        <span className="text-[11px] text-txt-dim">{open ? 'replier ▴' : 'déplier ▾'}</span>
-      </button>
-      {open && (
-        <div className="mt-2">
-          {/* M55-N point 9 (décision Vic) : <AvisIA/> RETIRÉ du traducteur — la traduction de règles
-              PLU est une LECTURE FACTUELLE (rien à « juger »), la mise en garde IA y était hors-sujet.
-              Les surfaces IA GÉNÉRATIVES la conservent (Synthèse/explication, « Une question ? »,
-              recherche IA, entretien, copilote, restitution). */}
-          {/* M76 pt4 — d est garanti chargé + non vide (sinon le bloc entier est masqué au-dessus) :
-              plus de rendu de chargement/erreur/vide (« Aucune règle traduite » supprimé). */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {d.zone && <span className="rounded-full border border-violet/50 px-2 py-0.5 text-[10px] font-semibold text-violet">zone {d.zone}</span>}
-            {!d.zone_calibree && (
-              <span className="rounded-full border border-st-creuser/40 bg-st-creuser/10 px-2 py-0.5 text-[10px] text-st-creuser">
-                zone non calibrée — valeurs génériques (Estimé)</span>
-            )}
-          </div>
-          <div className="mt-1.5 space-y-1">
-            {d.regles_appliquees.map((r, i) => (
-              <div key={i} className="flex items-baseline gap-2 text-[11.5px]">
-                <span className="min-w-0 flex-1 text-txt">{r.regle}</span>
-                <b className="tnum text-txt-hi">{r.valeur}</b>
-                <span className="shrink-0 rounded-full border border-st-creuser/40 bg-st-creuser/10 px-1.5 text-[8.5px] font-medium text-st-creuser"
-                  title={r.source}>{d.zone_calibree ? 'Sourcé' : 'Estimé'}</span>
-              </div>
-            ))}
-          </div>
-          <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">
-            La référence opposable reste le règlement écrit{d.reglement?.url ? <> — <a className="text-mint hover:underline" href={d.reglement.url} target="_blank" rel="noreferrer">l'ouvrir ↗</a></> : ''}.
-          </p>
-        </div>
-      )}
-    </div>
-  )
-}

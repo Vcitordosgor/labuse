@@ -1133,6 +1133,13 @@ export const getSourcesCouverture = () => j<SourcesCouverture>('/sources/couvert
 // COUCHES-REGISTRE-2 lot 3 — le sens inverse : par nom de source, les couches carte qu'elle alimente.
 export type SourceCouche = { kind: string; nom: string }
 export const getSourcesCouches = () => j<Record<string, SourceCouche[]>>('/sources/couches')
+// CIRCUIT-SOURCES-1 lot 3 — par nom de source, les 2 autres blocs du détail réservoir :
+// lignes de la fiche parcelle (quelle ligne, quelle section) + ailleurs (commune/outils/Radar/exports).
+export type SourceRattachements = {
+  lignes_fiche: { ligne: string; section: string }[]
+  ailleurs: { quoi: string; ou: string }[]
+}
+export const getSourcesRattachements = () => j<Record<string, SourceRattachements>>('/sources/rattachements')
 
 // ── Modules outils (Vague 1) ──
 // M129-C (Vic 19/08/2026) : modDivision retiré — division hors produit (endpoint dormant).

@@ -1,6 +1,6 @@
 # FICHES — donnée par donnée (commune · annonce · propriétaire · soleil)
 
-*Généré du registre le 2026-09-14 par `labuse registre fiche autres` (même format que FICHE-PARCELLE-DONNEES.md, plus court).*
+*Généré du registre le 2026-09-19 par `labuse registre fiche autres` (même format que FICHE-PARCELLE-DONNEES.md, plus court).*
 
 # Fiche commune
 
@@ -68,7 +68,7 @@
 |---|---|---|---|---|---|---|---|
 | `zan_reste_ha` | nombre | Enveloppe ZAN (reste) | enaf_cerema | moteur `commune_compteurs` · src/labuse/api/rarete.py:compute_rarete (reste_zan_ha — producteur nommé, délégation) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *enveloppe restante estimée depuis conso ENAF* | | | | | |
-| `zan_evolution_commune` | nombre | Artificialisation 2017→2022 (OCS GE) | ocsge | moteur `commune_compteurs` · src/labuse/registre/moteurs/commune.py:zan_ocsge_commune (ocsge_evolution) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| `zan_evolution_commune` | nombre | Artificialisation 2017→2022 (OCS GE) | ocsge (OCS GE 2.0 D974 — 2017 + 2022 ; diff artif 2025-09-16) | moteur `commune_compteurs` · src/labuse/registre/moteurs/commune.py:zan_ocsge_commune (ocsge_evolution) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *surface artificialisée entre les millésimes OCS GE 2017 et 2022, par commune — produit différentiel OFFICIEL IGN (flags artif du portail de l'artificialisation) ; la pression ZAN a sa source officielle* | | | | | |
 
 ## Logement social — SRU

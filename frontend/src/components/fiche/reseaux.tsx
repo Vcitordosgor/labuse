@@ -23,16 +23,15 @@ import { REF, IC, RefDrawer, Line, GroupLabel, FactRow, FactNote } from './primi
 // RETOURS-23 — les caractéristiques du terrain (piscine / pente) vivent SOUS un kicker « Terrain »
 // comme les autres faits : valeur chiffrée à droite en mono, source sous la ligne (pente en ambre
 // quand terrassement lourd probable). Donnée inchangée (mêmes chiffres, même source ortho).
-function EquipementsBadges({ idu }: { idu: string }) {
+export function EquipementsBadges({ idu }: { idu: string }) {
   const { data: e } = useQuery({ queryKey: ['equip', idu], queryFn: () => getOrthoEquipements(idu), retry: false })
   if (!e) return null
   const rows: { label: string; value: ReactNode; tone?: 'warn'; src?: string }[] = []
   if (e['piscine']) rows.push({ label: 'Piscine', value: <>~{e['piscine_m2']} <small>m²</small></>,
     src: `détection ortho — confiance ${e['piscine_confiance']}` })
-  if (e['pente_moy_deg'] != null) rows.push({ label: 'Pente',
-    value: <>{Math.round(Number(e['pente_non_batie_deg'] ?? e['pente_moy_deg']))}<small>°</small></>,
-    tone: e['flag_terrassement_lourd'] ? 'warn' : undefined,
-    src: `pente moyenne ${e['pente_non_batie_deg'] != null ? 'hors bâti ' : ''}(RGE ALTI 5 m)${e['flag_terrassement_lourd'] ? ' — terrassement lourd probable' : ''}` })
+  // FICHE-RANGEMENT-1 Lot 1 (doublon #4) — la PENTE vit UNE fois, dans la tuile d'en-tête « Pente »
+  // (triage glance, même source RGE ALTI ; son sous-titre dit plat/modérée/forte/très forte). On ne
+  // la répète plus ici ; « Terrain » ne garde que la piscine (fait propre à l'ortho).
   if (!rows.length) return null
   return (
     <div data-terrain>
@@ -43,7 +42,7 @@ function EquipementsBadges({ idu }: { idu: string }) {
   )
 }
 
-export function ReseauxSection({ f, idu }: { f: Fiche; idu: string }) {
+export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
   const viabValue = f.viabilisation?.libelle?.replace(/^Viabilisation\s+/i, '') ?? (f.gestionnaires ? 'réseaux renseignés' : '—')
   const viabColor = f.viabilisation?.band === 'confirmee' ? REF.ok : REF.gris
   const viabConfirmee = f.viabilisation?.band === 'confirmee'
@@ -55,12 +54,12 @@ export function ReseauxSection({ f, idu }: { f: Fiche; idu: string }) {
   const accesLignes = f.lines.filter((l) => l.layer === 'acces')
   const trans = f.proximites
   return (
-    <RefDrawer id="viabilisation" icon={IC.viab} name="Réseaux et accès" context={viabContext}
+    <RefDrawer id="reseaux" icon={IC.viab} name="Réseaux et desserte" context={viabContext}
       value={viabConfirmee ? <span className="pill-mint">confirmée</span> : viabValue}
       valueColor={viabConfirmee ? undefined : viabColor}>
       <div className="flex flex-col gap-3">
-        {/* caractéristiques du terrain (piscine / pente) — informatif. */}
-        <EquipementsBadges idu={idu} />
+        {/* FICHE-RANGEMENT-2 Lot 1 — les caractéristiques du terrain (piscine, EquipementsBadges) sont
+            relocalisées en §2 Terrain ; §6 Réseaux et desserte ne porte plus que réseaux/accès/desserte. */}
 
         {/* SOURCES-1 lot 5 — fibre Arcep : immeuble le plus proche, DISTANCE DITE, jamais un
             booléen nu ; bloc omis si la source n'est pas ingérée (f.fibre absent). */}

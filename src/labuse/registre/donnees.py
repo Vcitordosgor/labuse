@@ -160,7 +160,11 @@ DONNEES: dict[str, Donnee] = {
     "compte des couches cascade en SOFT_FLAG/HARD_EXCLUDE",
     moteur="cascade", calcul="moteur",
     fonction="src/labuse/api/anti_fiche.py (motifs RÉDHIBITOIRE/VIGILANCE de la cascade)",
-    reservoirs=("abf_merimee", "deal_ppr", "georisques_api", "znieff_inpn",), portee="run"),
+    # CIRCUIT-SOURCES-1 lot 2 — attribution GRANULAIRE : le compte agrège les vigilances de chaque
+    # sous-source Géorisques réellement lue (mvt, ICPE, cavités, sites/sols pollués), plus ABF, PPR,
+    # ZNIEFF — au lieu de l'agrégat `georisques_api` (qui masquait quelle source touche la fiche).
+    reservoirs=("abf_merimee", "deal_ppr", "georisques_mvt", "georisques_icpe",
+                "georisques_cavites", "georisques_ssp", "znieff_inpn",), portee="run"),
  # FICHE-1 lot 3 — le DÉTAIL des aléas (nature/niveau/part/réf. PPR), dérivé des mêmes lignes
  # servies que « Pièges et risques » (cascade arbitrée, point de vérité unique M73).
  # SOURCES-1 lot 4 — la divergence SAR (proxy de vocations) servie dans les vigilances de la
@@ -177,7 +181,10 @@ DONNEES: dict[str, Donnee] = {
     "risques",
     moteur="cascade", calcul="moteur",
     fonction="src/labuse/api/app.py:_aleas_block (lignes servies layer='risques')",
-    reservoirs=("deal_ppr", "georisques_api",), portee="run", type="liste"),
+    # CIRCUIT-SOURCES-1 lot 2 — attribution GRANULAIRE : les aléas lus sont le mouvement de terrain
+    # (`georisques_mvt`) et l'inondation AZI/TRI (`georisques_azi_tri`), plus l'arrêté PPR (`deal_ppr`)
+    # — au lieu de l'agrégat `georisques_api` (depuis le Circuit, on voit désormais la ligne alimentée).
+    reservoirs=("deal_ppr", "georisques_mvt", "georisques_azi_tri",), portee="run", type="liste"),
  "n_extraits_plu": C("extraits (règlement)", "nombre", "commune",
     "extraits de règlement servis par commune (corpus)",
     moteur="commune_compteurs", calcul="moteur",
@@ -348,6 +355,27 @@ DONNEES: dict[str, Donnee] = {
     "surface détectée parcel_equipements (BD ORTHO 2025)",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:3283",
     reservoirs=("bd_ortho",), portee="live", table="parcel_equipements.piscine_surface_m2"),
+ # FICHE-RANGEMENT-1 Lot 3 — orphelins déclarés (données réelles, affichées, source fiable) :
+ "exposition_versant": C("Exposition (versant)", "classe", "parcelle",
+    "orientation du versant (octant dominant) et pente moyenne autour de la parcelle, calculées "
+    "à la volée sur le MNT RGE ALTI (gdaldem aspect, fenêtre 200 m, pondérée par la pente) ; "
+    "terrain quasi plat → « plat », jamais une orientation inventée sur du bruit",
+    # FICHE-RANGEMENT-1 Lot 3 — passe-plat SERVI : la valeur n'est pas stockée, elle est produite
+    # à la demande par exposition_parcelle (aucun moteur.csv / aucune fiche-règle : donnée
+    # informative secondaire, RGE ALTI), servie telle quelle à la tuile. sql_propre interdit (V5b).
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/faisabilite/exposition.py:exposition_parcelle",
+    reservoirs=("rge_alti",), portee="live", type="classe",
+    domaine=("Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest", "plat"),
+    domaine_source="octants du MNT RGE ALTI (faisabilite/exposition.py)"),
+ "cosia_detecte_m2": C("Bâti détecté CoSIA (hors BD TOPO)", "m²", "parcelle",
+    "surface de bâti détectée par CoSIA au-delà de l'empreinte BD TOPO (parcel_bati_revele), "
+    "servie À PART car CoSIA sur-détecte à la maille parcelle ; None tant qu'il n'y a pas de "
+    "sur-détection nette (> emprise BD TOPO + 50 m²)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/bati.py:le_bien_block (cosia_detecte_m2)",
+    reservoirs=("cosia",), portee="live", type="nombre",
+    table="parcel_bati_revele.emprise_cosia_m2"),
  "distance_arret_m": C("Transport public — au plus proche", "m", "parcelle",
     "plus proche arrêt/pôle (distance en m)",
     moteur="parcelle_proximites", calcul="moteur",
@@ -1528,6 +1556,17 @@ DONNEES: dict[str, Donnee] = {
     table="spatial_layers (kind=sol_pollue, subtypes casias/instruction)",
     domaine=("sur_place", "proche_100m", "hors"),
     domaine_source="CASIAS/instructions Géorisques (canal SSP)"),
+ # FICHE-RANGEMENT-1 Lot 3 — orphelin déclaré : la parcelle est-elle dans une zone protégée
+ # derrière un système d'endiguement (cascade risques, FICHE-COUCHES-2). Donnée réelle et servie.
+ "endiguement_zone_protegee": C("Système d'endiguement", "classe", "parcelle",
+    "la parcelle est-elle dans une ZONE PROTÉGÉE derrière une digue — information : la protection "
+    "n'est pas une garantie d'inconstructibilité mais un fait à instruire (aléa résiduel)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/cascade/layers/fiche_couches2.py (endiguement)",
+    reservoirs=("endiguement",), portee="live", type="classe",
+    table="spatial_layers (kind=endiguement)",
+    domaine=("dans", "hors"),
+    domaine_source="systèmes d'endiguement DEAL Réunion (Lizmap)"),
  "sis_couche": C("Secteurs d'information sur les sols (couche)", "couche", "commune",
     "périmètres SIS réglementaires (4 au 974 : Le Port, Saint-Benoît, Saint-Louis, "
     "Sainte-Marie)",

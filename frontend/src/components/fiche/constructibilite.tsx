@@ -9,7 +9,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { faisabiliteExplain, getCalculetteDefaults, getFaisabilite, getModeB, postChargeFonciere, type CalculetteDefaults } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
-import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
+import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { AvisIA } from '../AvisIA'
@@ -20,7 +20,7 @@ import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroTriple, PorteOutil, StepProv, HypInput, GroupLabel, FactRow, FactNote, RefLink, Vigilance } from './primitives'
 
 const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280' }
-function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
+export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
   if (pt.indisponible) return <BlocIndisponible titre="Potentiel de transformation" />   // M125 — panne ≠ absence
   const color = PT_COLORS[pt.niveau] ?? '#9AA6A0'
   // RETOURS-20 Z3 — plus de card-elev : kicker (titre + badge d'état à droite), les lignes
@@ -32,7 +32,9 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
       }>Potentiel de transformation</GroupLabel>
       <p className="mt-1 text-[11px] leading-snug text-txt-mut">{pt.libelle}</p>
       {pt.pct_consomme != null && <FactRow label="SDP consommée / autorisée" value={<>{pt.pct_consomme} <small>%</small></>} />}
-      {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <FactRow label={`SDP résiduelle estimée · ${PERIM_RESIDUEL_COURT}`} value={<>~{fmtInt(pt.sdp_residuelle_m2)} <small>m²</small></>} />}
+      {/* FICHE-RANGEMENT-1 Lot 1 (doublon #1) — la « SDP résiduelle » vit UNE fois, dans la tuile
+          d'en-tête « SDP restante » (triage glance, jeu délibéré des 6 tuiles). Ici on garde le
+          ratio consommée/autorisée et la marge en hauteur (le raisonnement), sans répéter le nombre. */}
       {/* RECETTE-11 A6 — plus de verdict (« possible »/« non ») : la marge mesurée sous la règle et
           la contrainte qui mord ; A3 : la date de survol quand c'est une mesure LiDAR HD. */}
       {pt.hauteur_marge_m != null && <FactRow label="Marge en hauteur" value={<>~{pt.hauteur_marge_m} <small>m sous la règle{pt.hauteur_contrainte ? `, contrainte : ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}` : ''}{pt.hauteur_survol ? ` — mesuré au LiDAR HD, survol de ${pt.hauteur_survol}` : ''}{pt.hauteur_permis_posterieur ? ` ; antérieur au permis du ${pt.hauteur_permis_posterieur}, possiblement dépassé` : ''}</small></>} />}
@@ -47,7 +49,7 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
 // table rase que personne n'avait choisie). On sert le taux communal (public, daté) + départemental
 // et la phrase disant sur quoi elle se calculera ; le montant est chiffré au Dossier financier, sur
 // la SDP du projet. Taux communal inconnu → « non renseigné », jamais inventé (CIRCUIT-3 lot 6.2).
-function TaxeAmenagementBlock({ t }: { t: NonNullable<Fiche['taxe_amenagement']> }) {
+export function TaxeAmenagementBlock({ t }: { t: NonNullable<Fiche['taxe_amenagement']> }) {
   return (
     <div data-taxe-amenagement>
       <GroupLabel>Taxe d'aménagement</GroupLabel>
@@ -486,7 +488,7 @@ export function FaisabiliteTab({ idu, embedded }: { idu: string; embedded?: bool
   )
 }
 
-function BilanTab({ idu }: { idu: string }) {
+export function BilanTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
   if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
   if (isError || !b) return <ErrorState message="Bilan indisponible." retry={() => refetch()} />
@@ -499,24 +501,44 @@ function BilanTab({ idu }: { idu: string }) {
           unique). La Constructibilité ne montre QUE le prix RETENU pour le bilan + un renvoi ; plus de
           fiche de marché rivale ici (le détail — n ventes, rayon, tendance, fraîcheur — est dans Marché). */}
       {/* RETOURS-20 Z3 — les Sec (card-elev) deviennent kicker + FactRow/FactNote (plus de boîte). */}
+      {/* FICHE-RANGEMENT-1 Lot 1 (doublon #3) — le PRIX DE SORTIE bâti secteur est un FAIT de marché :
+          il vit UNE fois, dans « Marché et secteur » (échantillon, rayon, tendance, fraîcheur). Le
+          bilan ne répète plus le chiffre — il renvoie au fait unique (la charge foncière ci-dessous
+          s'appuie dessus). */}
       {b.marche?.median != null && (
         <div>
           <GroupLabel>Prix de sortie retenu (bilan)</GroupLabel>
-          <FactRow label="Prix de sortie retenu" value={<>{fmtInt(Number(b.marche.median))} <small>€/m² bâti</small></>} />
-          <FactNote>Valeur retenue pour le calcul de charge foncière. Détail du marché (échantillon, rayon, tendance, fraîcheur) → section « Marché et secteur ».</FactNote>
+          <FactNote>Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché » (échantillon, rayon, tendance, fraîcheur y sont détaillés).</FactNote>
         </div>
       )}
-      {/* M58-P1 : note « la charge foncière est dans Faisabilité » RETIRÉE — elle pointait vers la
-          calculette rendue juste au-dessus (FaisabiliteTab), dans le MÊME tiroir : redondante. */}
-      <div>
-        <GroupLabel>Fiscal &amp; leviers</GroupLabel>
-        <FactRow label="QPV" value={<span className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</span>} tone={b.fiscal.qpv ? undefined : 'mute'} />
-        <FactRow label="TVA" value={b.fiscal.tva} />
-        <FactNote>{b.fiscal.ta_note}</FactNote>
-      </div>
-      {b.rtaa && <RtaaBlock rtaa={b.rtaa} />}
+      {/* FICHE-RANGEMENT-3 Lot 1 — « Fiscal & leviers » (QPV/TVA/taxe) et « RTAA DOM » RETIRÉS de la
+          Simulation : ils vivent déjà en §7 Fiscalité (FiscalLeviersBlock) et §4 Urbanisme
+          (RtaaFromBilan). §11 ne garde que le prix de sortie retenu (+ les 3 portes, côté Fiche). */}
     </div>
   )
+}
+
+/** §7 Fiscalité — QPV / TVA / note taxe d'aménagement (levier fiscal du bilan). */
+export function FiscalLeviersBlock({ idu }: { idu: string }) {
+  const { data: b } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
+  if (!b) return null
+  return (
+    <div>
+      <GroupLabel>Fiscal &amp; leviers</GroupLabel>
+      <FactRow label="QPV" value={<span className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</span>} tone={b.fiscal.qpv ? undefined : 'mute'} />
+      {/* FICHE-RANGEMENT-2 Lot 4 — la TVA outre-mer (8,5 % / 2,1 % LLS) n'est plus RÉPÉTÉE ici :
+          elle est expliquée UNE fois, en « Dispositifs territoriaux » (dispositifs_dom, formulation
+          complète). « Fiscal & leviers » ne garde que QPV + la note de taxe d'aménagement. */}
+      <FactNote>{b.fiscal.ta_note}</FactNote>
+    </div>
+  )
+}
+
+/** §4 Urbanisme — rappel RTAA DOM (conception), servi par le bilan (b.rtaa). */
+export function RtaaFromBilan({ idu }: { idu: string }) {
+  const { data: b } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
+  if (!b?.rtaa) return null
+  return <RtaaBlock rtaa={b.rtaa} />
 }
 
 /** RTAA DOM (mandat 5bis) — rappel réglementaire de CONCEPTION, vérifié Légifrance
@@ -525,7 +547,9 @@ function BilanTab({ idu }: { idu: string }) {
 /** M33 — MODE B (réhabilitation) : lecture COMPLÉMENTAIRE, visuellement subordonnée au tier
  *  (M34 intact). TOUJOURS Estimé (le paramètre travaux l'est) — assumé au libellé. Le
  *  paramètre est un état d'UI : rien n'est persisté (recalcul via /parcels/{idu}/mode-b). */
-function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib/types').ModeB }) {   // M55-L point 10 : defaultOpen retiré (accordéon contrôlé, initial fermé)
+// FICHE-RANGEMENT-3 Lot 3 — Mode B (Réhabilitation) rendu DANS §11 Simulation (plus un 12e tiroir) :
+// mêmes calculs, wrapper RefDrawer remplacé par un GroupLabel (bloc inline sous la Simulation).
+export function ModeBBody({ idu, initial }: { idu: string; initial: import('../../lib/types').ModeB }) {
   // M45-B (L2) : le coût travaux est une VALEUR DE SESSION PARTAGÉE (fiche ↔ filtre) — le curseur
   // du tiroir Économie et cette fiche lisent/écrivent le même `modeB.travauxM2` (rien persisté).
   const travaux = useApp((s) => s.modeB.travauxM2)
@@ -539,22 +563,23 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
   if (!mb.disponible) return null
   // M59-P1 (Q4) — sous le seuil de SHAB : la section ne montre PAS le calcul, elle DIT pourquoi.
   if (mb.trop_petit) return (
-    <RefDrawer id="mode-b" icon={IC.faisa} name="Réhabilitation" context="bâti trop petit"
-      value={<span className="pill-amber">non pertinent</span>}>
-      <p data-mode-b-trop-petit style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: '#8FA69A' }}>
+    <div data-mode-b-section>
+      <GroupLabel right={<span className="pill-amber">non pertinent</span>}>Réhabilitation (Mode B)</GroupLabel>
+      <p data-mode-b-trop-petit style={{ margin: '4px 0 0', fontSize: 11.5, lineHeight: 1.5, color: '#8FA69A' }}>
         {mb.motif ?? `Bâti trop petit (SHAB ~${mb.shab_rehabilitable_m2 ?? '—'} m²) pour une thèse de réhabilitation.`}
       </p>
-    </RefDrawer>
+    </div>
   )
   if (!mb.composantes) return null
   const c = mb.composantes
   const [bMin, bMax] = c.travaux.bornes
   const foncierM2 = mb.surface_parcelle_m2 ?? mb.terrain_nu?.surface_m2 ?? null
   return (
-    <RefDrawer id="mode-b" icon={IC.faisa} name="Réhabilitation"
-      context="Estimé — hypothèse travaux à ajuster"
-      value={mb.negatif ? <span className="pill-amber">bilan négatif</span> : `~${mb.achat_max_libelle ?? ''}`}>
-      <div data-mode-b style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div data-mode-b-section>
+      <GroupLabel right={mb.negatif
+        ? <span className="pill-amber">bilan négatif</span>
+        : <span className="text-[10.5px] text-txt-dim">Estimé · ~{mb.achat_max_libelle ?? ''}</span>}>Réhabilitation (Mode B)</GroupLabel>
+      <div data-mode-b style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6 }}>
         {/* M101 A2 — la PORTE du mode B en tête : pourquoi cette parcelle est « bâtie »,
             en français lisible (servie par compute_mode_b, jamais un libellé interne). */}
         {mb.porte && (
@@ -651,7 +676,7 @@ function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib
         )}
         <p style={{ margin: 0, fontSize: 9.5, lineHeight: 1.45, color: '#6b7a72' }}>{mb.avertissement}</p>
       </div>
-    </RefDrawer>
+    </div>
   )
 }
 
@@ -711,15 +736,15 @@ const PEB_PHRASES: Record<string, string> = {
   D: 'zone d’information sur le bruit (art. L112-10 CU)',
 }
 
-function DispositifsDrawer({ d }: { d: NonNullable<Fiche['dispositifs']> }) {
-  const nEls = (d.er?.length ?? 0) + (d.ebc?.length ?? 0) + (d.sup?.length ?? 0)
+// FICHE-RANGEMENT-2 Lot 1 — nombre de périmètres du droit des sols (pour le résumé de §4/tiroir).
+export function dispositifsCount(d: NonNullable<Fiche['dispositifs']>): number {
+  return (d.er?.length ?? 0) + (d.ebc?.length ?? 0) + (d.sup?.length ?? 0)
     + (d.dpu.etat === 'servi' ? 1 : 0) + (['A', 'B', 'C', 'D'].includes(d.peb.zone) ? 1 : 0)
+}
+
+/** §4 Urbanisme — corps « droit des sols » (ER / EBC / doc urba / DPU / PEB / SUP), sans son RefDrawer. */
+export function DispositifsBody({ d }: { d: NonNullable<Fiche['dispositifs']> }) {
   return (
-    <RefDrawer id="dispositifs" icon={IC.faisa} name="Dispositifs et périmètres"
-      context="ER · EBC · DPU · PEB · SUP"
-      value={nEls > 0
-        ? <span className="pill-amber">{nEls} périmètre{nEls > 1 ? 's' : ''}</span>
-        : <span className="pill-mint">rien à signaler</span>}>
       <div className="flex flex-col gap-3">
         {d.er && d.er.length > 0 && (
           <div data-dispositifs-er>
@@ -789,6 +814,19 @@ function DispositifsDrawer({ d }: { d: NonNullable<Fiche['dispositifs']> }) {
           </div>
         )}
       </div>
+  )
+}
+
+// tiroir « Dispositifs et périmètres » actuel = corps + son RefDrawer (conservé jusqu'au basculement).
+function DispositifsDrawer({ d }: { d: NonNullable<Fiche['dispositifs']> }) {
+  const nEls = dispositifsCount(d)
+  return (
+    <RefDrawer id="dispositifs" icon={IC.faisa} name="Dispositifs et périmètres"
+      context="ER · EBC · DPU · PEB · SUP"
+      value={nEls > 0
+        ? <span className="pill-amber">{nEls} périmètre{nEls > 1 ? 's' : ''}</span>
+        : <span className="pill-mint">rien à signaler</span>}>
+      <DispositifsBody d={d} />
     </RefDrawer>
   )
 }
@@ -863,10 +901,11 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
       </RefDrawer>
       {/* SOURCES-1 lot 1 — Dispositifs et périmètres (ER/EBC/DPU/PEB/SUP), tiroir distinct. */}
       {f.dispositifs && <DispositifsDrawer d={f.dispositifs} />}
-      {/* Mode B — Réhabilitation, rattaché à la Constructibilité (tiroir distinct, accordéon exclusif). */}
+      {/* FICHE-RANGEMENT-3 Lot 3 — ModeBDrawer devenu ModeBBody (bloc inline §11). Ce composant
+          ConstructibiliteSection est mort (dissous au basculement rangement-2) — conservé compilable. */}
       {f.mode_b?.indisponible
         ? <BlocIndisponible titre="Réhabilitation (Mode B)" />
-        : f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
+        : f.mode_b?.disponible && <ModeBBody idu={idu} initial={f.mode_b} />}
     </>
   )
 }

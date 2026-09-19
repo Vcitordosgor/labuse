@@ -1,6 +1,6 @@
 # FICHE PARCELLE — donnée par donnée
 
-*Généré du registre le 2026-09-14 par `labuse registre fiche parcelle` (le code est la vérité — ne pas éditer à la main ; relu avant commit).*
+*Généré du registre le 2026-09-19 par `labuse registre fiche parcelle` (le code est la vérité — ne pas éditer à la main ; relu avant commit).*
 
 Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient (source et millésime servis), par quel chemin (moteur nommé ou passe-plat), sa portée (`run` = change à la bascule · `live` = à l'injection · `projet` = saisie du client), ses états possibles, et où ailleurs elle s'affiche.
 
@@ -71,6 +71,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *meilleure adresse BAN rattachée à la parcelle — None si aucune (le front dit « Adresse non disponible », jamais un champ vide)* | | | | | |
 | `parcelle_geometrie` | geometrie | Géométrie de la parcelle | cadastre_api_carto (PCI Parcellaire Express (DGFiP), édition courante) | passe-plat · src/labuse/api/app.py (parcels.geom / geom_2975) — table lue : parcels.geom (geom_simple pour les tuiles) | live | servie · non calculée | nulle part ailleurs |
 | | | *le polygone cadastral de la parcelle (contour carte, fiche, PDF) — même table cadastre, même millésime partout (sonde lot 4.5)* | | | | | |
+| `exposition_versant` | classe — domaine : Nord, Nord-Est, Est, Sud-Est, Sud, Sud-Ouest, Ouest, Nord-Ouest, plat | Exposition (versant) | rge_alti (RGE ALTI® (IGN) — édition courante) | passe-plat · src/labuse/faisabilite/exposition.py:exposition_parcelle | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *orientation du versant (octant dominant) et pente moyenne autour de la parcelle, calculées à la volée sur le MNT RGE ALTI (gdaldem aspect, fenêtre 200 m, pondérée par la pente) ; terrain quasi plat → « plat », jamais une orientation inventée sur du bruit* | | | | | |
 
 ## Règlement d'urbanisme (zones + extraits)
 
@@ -129,6 +131,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *hauteur restante sous la règle de FAÎTAGE de la zone, comparée au faîtage bâti mesuré (BD TOPO) — RECETTE-7 E1 : faîtage contre faîtage ; repli égout+toiture type avec incertitude* | | | | | |
 | `taxe_amenagement_estimee_eur` | nombre | Taxe d'aménagement — taux communal (référence) | taxe_amenagement | moteur `taxe_amenagement` · src/labuse/api/app.py:_taxe_amenagement_block (taxe_amenagement.calculer, surface=0) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *référence de taxe d'aménagement servie sur la fiche/le Dossier : le TAUX communal public (daté) et la part départementale de droit (plafond 2,5 %) — SANS montant en euros, car la taxe porte sur la surface de plancher CRÉÉE par un projet (art. L331 c. urb.) et aucun projet n'est saisi à ce stade (RECETTE-8 W1/W2 : avant, elle imprimait « 22 469 € pour 458 m² de table rase », un scénario que personne n'avait choisi). Le montant chiffré est au Financier, sur la SDP du projet. Taux communal PUBLIC si connu, sinon « non renseigné » (jamais inventé)* | | | | | |
+| `rtaa_exigences` | liste | Rappel RTAA DOM (exigences de conception) | rtaa_dom | passe-plat · src/labuse/api/modules.py:faisabilite_sens1 (load_yaml_config rtaa_dom) — table lue : config/rtaa_dom.yaml | live | servie (possiblement vide, dit) · non calculée | outil « Faisabilité » |
+| | | *exigences réglementaires de conception DOM (aération, protection solaire, eau chaude solaire) servies en rappel dans la Faisabilité — règles portées par config/rtaa_dom.yaml, vérifiées sur Légifrance, hors scoring* | | | | | |
 
 ## Le bien
 
@@ -154,10 +158,12 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *identifiant national (RNB) de chaque bâtiment ACTIF dont l'emprise recoupe la parcelle, du plus grand recouvrement au plus petit, avec le lien officiel rnb.beta.gouv.fr* | | | | | |
 | `ban_plus_adresses_bati` | nombre | Adresses liées au bâti (BAN PLUS) | ban_plus | moteur `bati_revele` · src/labuse/bati.py:le_bien_block (liens adresse↔bâtiment — ban_plus_liens) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *nombre de liens officiels adresse ↔ bâtiment de la parcelle (BAN PLUS, IGN) — la clé qui relie l'adresse BAN au bâtiment BD TOPO et, par le RNB local, à l'ID-RNB* | | | | | |
-| `part_artificialisee_pct` | nombre | Part artificialisée (OCS GE) | ocsge | moteur `bati_revele` · src/labuse/bati.py:le_bien_block (parcel_ocsge — précalcul ingestion/ocsge.py) | live | servie · non couverte (n sous seuil, dit) · non calculée | couche « Artificialisation (OCS GE) » |
+| `part_artificialisee_pct` | nombre | Part artificialisée (OCS GE) | ocsge (OCS GE 2.0 D974 — 2017 + 2022 ; diff artif 2025-09-16) | moteur `bati_revele` · src/labuse/bati.py:le_bien_block (parcel_ocsge — précalcul ingestion/ocsge.py) | live | servie · non couverte (n sous seuil, dit) · non calculée | couche « Artificialisation (OCS GE) » |
 | | | *part de la parcelle artificialisée d'après l'OCS GE 2022 (matrice du décret 2023-1096, étape 1 — avant lissage des seuils réglementaires) — donnée d'îlot, jamais la précision cadastrale ; n'entre pas dans le score* | | | | | |
-| `usage_sol_dominant` | classe | Usage du sol dominant (OCS GE) | ocsge | moteur `bati_revele` · src/labuse/bati.py:le_bien_block (parcel_ocsge — précalcul ingestion/ocsge.py) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| `usage_sol_dominant` | classe | Usage du sol dominant (OCS GE) | ocsge (OCS GE 2.0 D974 — 2017 + 2022 ; diff artif 2025-09-16) | moteur `bati_revele` · src/labuse/bati.py:le_bien_block (parcel_ocsge — précalcul ingestion/ocsge.py) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
 | | | *code d'usage OCS GE dominant par aire intersectée (millésime 2022) — donnée d'îlot* | | | | | |
+| `cosia_detecte_m2` | nombre | Bâti détecté CoSIA (hors BD TOPO) | cosia (CoSIA 2025 (PVA juil.-août 2025, 20 cm)) | passe-plat · src/labuse/bati.py:le_bien_block (cosia_detecte_m2) — table lue : parcel_bati_revele.emprise_cosia_m2 | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *surface de bâti détectée par CoSIA au-delà de l'empreinte BD TOPO (parcel_bati_revele), servie À PART car CoSIA sur-détecte à la maille parcelle ; None tant qu'il n'y a pas de sur-détection nette (> emprise BD TOPO + 50 m²)* | | | | | |
 
 ## Risques et protections
 
@@ -171,6 +177,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *liste des aléas touchant la parcelle (nature, niveau, part concernée, référence de l'arrêté PPR pour un aléa réglementaire) — dérivée de la cascade servie, accord garanti avec Pièges et risques* | | | | | |
 | `sar_divergence` | texte | Divergence SAR (indication) | sar_region (couche SIG officielle NON diffusée (recherche 07/09/2026)) | moteur `cascade` · src/labuse/cascade/layers/phase1.py:SarLayer | run | servie · non déterminée · non calculée | nulle part ailleurs |
 | | | *warning « zone PLU U/AU ∩ vocation naturelle/agricole du proxy de vocations Région » — indication non opposable (le SAR officiel n'est pas diffusé en vecteur), jamais un malus* | | | | | |
+| `endiguement_zone_protegee` | classe — domaine : dans, hors | Système d'endiguement | endiguement (EDD Hydrétudes déc. 2024 (attrs Source par zone)) | passe-plat · src/labuse/cascade/layers/fiche_couches2.py (endiguement) — table lue : spatial_layers (kind=endiguement) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *la parcelle est-elle dans une ZONE PROTÉGÉE derrière une digue — information : la protection n'est pas une garantie d'inconstructibilité mais un fait à instruire (aléa résiduel)* | | | | | |
 
 ## Marché et secteur
 

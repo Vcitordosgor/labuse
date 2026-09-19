@@ -1416,6 +1416,10 @@ ALIAS_CANONIQUES: dict[str, str] = {
     "DVF Réunion (Région, data.regionreunion.com)": "DVF / valeurs foncières",
     # SOURCES-3 lot 0.5 — un seul potentiel foncier servi : id 15 fait foi, l'ODS (id 9) est son alias.
     "Potentiel foncier Région (Région ODS)": "data.regionreunion.com — Potentiel foncier",
+    # CIRCUIT-SOURCES-1 lot 1 — « SIRENE » nue est un doublon de « SIRENE établissements géolocalisés »
+    # (la seule qui alimente la fiche : identité PM, événements, concurrents). Alias → sort de la
+    # vitrine (92 → 91), reste en base. Cf. FICHE-SOURCES-1 (AUCUN réconcilié).
+    "SIRENE": "SIRENE établissements géolocalisés",
 }
 
 RETRAITS: dict[str, str] = {

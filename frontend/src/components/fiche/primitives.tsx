@@ -58,6 +58,10 @@ const IC = {
   viab: drSvg(<><path d="M12 3v6" /><path d="M8 9h8l-1 5a3 3 0 0 1-6 0z" /><path d="M12 17v4" /></>),
   confiance: drSvg(<><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6" /><path d="M9 17h4" /></>),
   contexte: drSvg(<><circle cx="12" cy="10" r="3" /><path d="M12 21c-4-4-7-7.5-7-11a7 7 0 0 1 14 0c0 3.5-3 7-7 11z" /></>),
+  // FICHE-RANGEMENT-2 Lot 1 — 3 icônes pour les nouvelles sections (mêmes tracés « line », idiom drSvg).
+  terrain: drSvg(<><path d="M3 20h18" /><path d="m4 20 5-8 3 4 2-3 6 7" /><circle cx="17" cy="7" r="1.6" /></>),
+  fiscal: drSvg(<><circle cx="12" cy="12" r="8.5" /><path d="M15 9.5a3.5 3.5 0 1 0 0 5" /><path d="M8 11h4.5" /><path d="M8 13.5h4.5" /></>),
+  potentiel: drSvg(<><path d="M12 3l2.2 5.2 5.6.4-4.3 3.7 1.4 5.5L12 20l-4.9 3.3 1.4-5.5L4.2 9l5.6-.4z" /></>),
 }
 
 // M55-L point 6 : `TheatreCompteur` (« N parcelles analysées ») retiré de la fiche → 0-caller,
@@ -66,7 +70,9 @@ const IC = {
 // M55-L point 10 — ACCORDÉON EXCLUSIF des tiroirs de la fiche : un seul ouvert à la fois, zéro
 // ouvert légal (initial). État à champ unique (store.ficheTiroir[idu]), exposé par contexte pour
 // éviter le prop-drilling sur les 11 tiroirs. `openId` = id du tiroir ouvert (null = tout fermé).
-const FicheAccordionCtx = createContext<{ openId: string | null; toggle: (id: string) => void }>({ openId: null, toggle: () => {} })
+// FICHE-RANGEMENT-2 Lot 3 — `forceOpen` : la recherche intra-fiche ouvre TOUS les tiroirs (pour
+// chercher « dans tout », y compris les repliés) sans changer l'accordéon exclusif au repos.
+const FicheAccordionCtx = createContext<{ openId: string | null; toggle: (id: string) => void; forceOpen?: boolean }>({ openId: null, toggle: () => {} })
 
 /** M56-B2 · tiroir de la fiche — GABARIT STRICT de la DA §4/4b (docs/DA-LABUSE.html) : la rangée
  *  fermée EST une `.gr` (colonne gauche `.gr-t` titre + `.gr-s` UNE ligne de contexte grise ;
@@ -81,14 +87,16 @@ function RefDrawer({ id, name, context, value, valueColor, accent, icon, micro, 
   accent?: boolean; micro?: ReactNode; children?: ReactNode
 }) {
   const acc = useContext(FicheAccordionCtx)
-  const open = !!id && acc.openId === id
+  const open = !!acc.forceOpen || (!!id && acc.openId === id)
   const absent = valueColor === 'var(--txt-faint)'
   // M57-P1 (a) : à l'ouverture, l'en-tête du tiroir remonte en HAUT de la zone visible — après
   // l'animation d'ouverture (~200ms), en 'smooth' ; 'auto' (immédiat) si l'OS demande moins de
   // mouvement. Vaut pour les 7 tiroirs (comportement porté par RefDrawer). scrollMarginTop garde 8px.
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (!open || !ref.current) return
+    // FICHE-RANGEMENT-2 Lot 3 — pas de scroll auto quand la recherche force TOUS les tiroirs ouverts
+    // (sinon 11 scrollIntoView se battent) ; le scroll vers le 1ᵉʳ résultat est piloté par la recherche.
+    if (!open || acc.forceOpen || !ref.current) return
     const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     const t = setTimeout(() => ref.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }), reduced ? 0 : 220)
     return () => clearTimeout(t)
@@ -166,8 +174,11 @@ function StatusLine({ tone = 'mint', children }: { tone?: 'mint' | 'amber'; chil
 
 // Z1·05 — VIGILANCE (filet ambre à gauche, pas de boîte) · RAPPEL (fond un cran plus clair, sans
 // bordure) · NOTE de méthode 11,5 px sous la ligne (plus un paragraphe plein).
-function Vigilance({ title, children }: { title: ReactNode; children?: ReactNode }) {
-  return <div className="f-vig"><div className="t">{title}</div>{children != null && <div className="p">{children}</div>}</div>
+// FICHE-RANGEMENT-2 Lot 4 — grammaire visuelle unique : le filet d'attention `.f-vig` accepte un
+// `tone` (défaut ambre ; `mint` = à jour/positif ; `creuser` = en cours) pour absorber les blocs
+// « alerte/procédure/fraîcheur » de §4 qui codaient chacun leur propre filet à la main.
+function Vigilance({ title, children, tone }: { title: ReactNode; children?: ReactNode; tone?: 'mint' | 'creuser' }) {
+  return <div className={`f-vig${tone ? ' ' + tone : ''}`}><div className="t">{title}</div>{children != null && <div className="p">{children}</div>}</div>
 }
 function Rappel({ children, src }: { children: ReactNode; src?: ReactNode }) {
   return <div className="f-rappel">{children}{src != null && <span className="src">{src}</span>}</div>
