@@ -1,0 +1,59 @@
+### labuse jobs status (registre CRON-1 — état JSON local vide : les jobs tournent sur le VPS)
+JOB                        STATUT     DRY  DURÉE     DERNIER
+sonde-sources              —          non  —         jamais
+agents-sources             —          non  —         jamais
+filtres-sources            —          non  —         jamais
+coherence-robinets         —          non  —         jamais
+ingest-bodacc              —          non  —         jamais
+ingest-sitadel             —          non  —         jamais
+ingest-dpe                 —          non  —         jamais
+ingest-sirene              —          non  —         jamais
+sync-gpu                   —          non  —         jamais
+backup-postgres            —          non  —         jamais
+pg-maintenance             —          non  —         jamais
+healthcheck                —          non  —         jamais
+sante-endpoints            —          non  —         jamais
+copilote-purge             —          non  —         jamais
+radar-digests              —          non  —         jamais
+restore-test               —          non  —         jamais
+
+### Dernier passage RÉEL des jobs d'ingestion (preuve DB : data_sources.last_sync_at / ingestion_runs.ok)
+-- ingestion_runs (jobs plannifiés au registre) --
+974 (BODACC quotidien) | ok | 2026-09-06
+974 (DPE ADEME) | ok | 2026-09-15
+974 (SDES Sitadel3 — backfill) | ok | 2026-09-05
+974 (SDES Sitadel3 — refresh) | ok | 2026-09-03
+-- data_sources.last_sync_at (sources aux vannes horodatées) --
+DPE ADEME (logements existants) | 2026-09-15 | en_retard
+Géorisques — ICPE | 2026-09-14 | sans_echeance
+BAN PLUS — lien adresse ↔ bâtiment (IGN) | 2026-09-14 | 
+Géorisques — mouvements de terrain | 2026-09-14 | sans_echeance
+SUP — assiettes GPU (API Carto) | 2026-09-14 | sans_echeance
+BODACC (procédures collectives) | 2026-09-14 | sans_echeance
+ZNIEFF (INPN/MNHN) | 2026-09-14 | sans_echeance
+DVF / valeurs foncières | 2026-09-14 | en_retard
+BPE INSEE | 2026-09-14 | sans_echeance
+Classement sonore ITT (Cerema) | 2026-09-14 | sans_echeance
+Géorisques — sites et sols pollués | 2026-09-14 | sans_echeance
+Géorisques — cavités souterraines | 2026-09-14 | sans_echeance
+EDF Réunion — lignes moyenne tension HTA (open data) | 2026-09-14 | 
+CoSIA (couverture du sol IA, IGN) | 2026-09-14 | sans_echeance
+Radar (pige d'annonces) | 2026-09-09 | sans_echeance
+TCSP — voies bus en site propre (OSM) | 2026-09-05 | 
+SITADEL (autorisations d'urbanisme) | 2026-09-05 | a_jour
+SIRENE établissements géolocalisés | 2026-08-29 | sans_echeance
+Trafic RN (Région Réunion — SIR) | 2026-08-29 | sans_echeance
+PVGIS (Commission européenne) | 2026-08-23 | sans_echeance
+Base Adresse Nationale | 2026-08-19 | a_jour
+Cartofriches (Cerema) | 2026-08-13 | sans_echeance
+DGFiP — parcelles des personnes morales | 2026-07-12 | a_jour
+Parkings OSM (loi APER) | 2026-07-11 | sans_echeance
+Inventaire SRU (DHUP) | 2026-07-08 | sans_echeance
+PLH des 5 EPCI (extraction documentaire) | 2026-07-08 | sans_echeance
+INSEE RP Logement 2023 | 2026-07-08 | sans_echeance
+NPNRU (DEAL Réunion / ANCT) | 2026-07-08 | sans_echeance
+RTAA DOM (textes réglementaires) | 2026-07-08 | sans_echeance
+OpenStreetMap / Overpass | 2026-07-06 | sans_echeance
+INPI RNE (dirigeants) | 2026-07-06 | sans_echeance
+QPV 2024 (ANCT) | 2026-07-05 | sans_echeance
+ABF / Monuments historiques | 2026-07-05 | sans_echeance

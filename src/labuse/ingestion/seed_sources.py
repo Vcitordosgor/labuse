@@ -239,15 +239,17 @@ SOURCES: list[dict] = [
          documentation_url="https://peigeo.re", endpoint_url=None,
          legal_notes="Licence à confirmer par jeu (AGORAH/PEIGEO — audit M6 §1.11 R8).",
          technical_notes="⚠ Hôte injoignable depuis l'infra (HTTP 000, 2026-06-07). Fallback Région ODS / import."),
-    dict(name="DEAL Réunion (WMS/WFS)", category="urbanisme", provider="DEAL Réunion",
+    dict(name="DEAL Réunion (WMS/WFS)", category="hub", provider="DEAL Réunion",
          source_millesime="NPNRU — QP génération 2024 (DEAL/ANCT)",   # M125-1bis : anru attrs code_qp_2024 (8 quartiers)
-         access_type="WMS/WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
+         access_type="WMS/WFS", status=S.HUB, reliability_level=R.A_CONFIRMER,
          documentation_url="https://www.reunion.developpement-durable.gouv.fr", endpoint_url=None,
          legal_notes="Données État — Licence Ouverte ; attribution : « Source : DEAL Réunion ». Licence à consigner couche par couche (audit M6 §1.11 R8).",
-         technical_notes="SERVI PAR PROXYS : l'hôte carto DEAL (carto.reunion.developpement-durable.gouv.fr) est "
-                         "INJOIGNABLE (HTTP 000). Les couches sont servies via proxys — 8 emprises ANRU intégrées "
-                         "(spatial_layers kind='anru'), lues par la fiche (contexte commune). M74 A : requalifiée "
-                         "connecte (mesurée, servie par proxys) — catégorie hub→urbanisme (une source, pas un portail)."),
+         technical_notes="HUB (SOURCES-CORRECTION-1 lot 2) : l'hôte carto DEAL (carto.reunion.developpement-durable.gouv.fr) "
+                         "est INJOIGNABLE (HTTP 000) ; c'est un CANAL servi par proxys, sans vanne d'ingestion propre — "
+                         "hors vitrine, comme les 3 autres hubs. Renverse la requalification M74 (« hub→urbanisme »). "
+                         "N.B. la couche kind='anru' (8 emprises) reste rattachée à cette ligne en base (data_source_id 13, "
+                         "héritage M74) alors que le registre (RESERVOIR_TABLES) la déclare au réservoir npnru : "
+                         "ré-attribution = décision couche-registre, laissée à Vic (hors périmètre de ce lot)."),
     dict(name="Géoplateforme IGN", category="hub", provider="IGN",
          access_type="WFS/WMS/téléchargement", status=S.HUB, reliability_level=R.VERIFIE,
          rate_limit="10 req/s (téléchargement)",
@@ -392,7 +394,7 @@ SOURCES: list[dict] = [
          documentation_url="https://data.ademe.fr/datasets/dpe03existant",
          endpoint_url="https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines",
          legal_notes="Licence Ouverte — attribution : « Source : ADEME, base DPE ». RGPD : diagnostic du bien, pas nominatif.",
-         technical_notes="SOURCES-2 lot 0 (13/09/2026) : les TROIS jeux post-2021 ingérés — dpe03existant + dpe02neuf + dpe01tertiaire (colonne `jeu` de dpe_records), moisson directe CP BRUT 974xx (`labuse ingest-dpe`). ⚠ Le « filtre 974 » ADEME (code_insee_ban, seul INSEE du schéma) est du géocodage BAN contaminé à ~98 % par la métropole (914 lignes dont 900 métropolitaines, mesuré 13/09/2026) → on tranche au CP brut, jamais au BAN. Gisement mesuré : 93 lignes au CP brut 974 dont 16 RÉUNIONNAISES corroborées (14 existants + 0 neuf + 2 tertiaires) — le CP brut lui-même ment par homonymie (75 « ST LEU » = Saint-Leu-la-Forêt 95, 2 = Montpellier/Lille), corroboration locale exigée. Les DPE DROM (obligation 01/07/2024) ne remontent presque pas à l'observatoire ADEME : trou producteur. Rattachement parcelle 100 % local + bâtiment rnb_id (clé BAN → rnb_batiments.adresses, sinon géométrie). ⚠ REPRÉSENTATIVITÉ : DPE obligatoire en DROM seulement depuis le 01/07/2024 → base JEUNE, signal « positif quand présent », jamais exhaustif. Table dpe_records, signal passoire_thermique. SOURCES-5 #18 : le `select` restreint (18 champs curés) est LEVÉ — l'API renvoie désormais TOUT le schéma ADEME (existant 148 champs : conso_5_usages_ef/ep, besoin_chauffage/ecs, déperditions Ubât, config chauffage/ECS, isolation… ; tertiaire 54 ; neuf idem), conservé INTÉGRALEMENT dans dpe_records.raw. Volume 974 dérisoire (16) mais SCHÉMA COMPLET, prêt pour le jour où l'ADEME réparera le flux DROM. Sentinelle sur le VOLUME = `compteur_reveil_dpe` (fraicheur.py, réveil sur les F/G) + cron mensuel — un saut de volume (DROM réparé) sera vu."),
+         technical_notes="SOURCES-CORRECTION-1 (19/09/2026) : les TROIS jeux post-2021 (dpe03existant + dpe02neuf + dpe01tertiaire, colonne `jeu`) moissonnés à l'UNION `code_insee_ban:974*` ∪ CP brut 974 (`labuse ingest-dpe`). ⚠ INVERSION de l'hypothèse SOURCES-2 : le signal FIABLE est le géocodage BAN vers un INSEE 974* (l'adresse a été résolue en Réunion — identifiant_ban 974xx, correspondance EXACTE table adresses locale, adresses réelles « RN 5 Petit Serre, Saint-Louis »). Le CP BRUT est le champ BRUYANT (saisie du diagnostiqueur) — l'ancien filtre CP-brut ratait ~900 DPE 974 authentiques → base bloquée à 16. La corroboration locale (adresses + garde-fou coordonnées verifier_974) reste seul juge de l'homonymie : rejetés 75 « ST LEU 97436 » (Saint-Leu-la-Forêt, BAN 95 — hors 974*) + 2 existants Montpellier/Lille. Gisement corrigé : 914 existants + 179 neufs + 30 tertiaires = 1123 DPE, 20/24 communes, 1109 rattachés parcelle (100 % local + bâtiment rnb_id). Table dpe_records, signal passoire_thermique. Schéma ADEME complet conservé dans dpe_records.raw. DPE obligatoire en DROM depuis 01/07/2024 → base jeune, « positif quand présent », jamais exhaustif ; sentinelle volume = `compteur_reveil_dpe` (fraicheur.py) + cron mensuel."),
     dict(name="Cartofriches (Cerema)", category="foncier", provider="Cerema / DGALN",
          access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE, rate_limit="non exposé (throttle prudent)",
          documentation_url="https://schema.data.gouv.fr/cnigfr/schema-friches",
@@ -706,18 +708,19 @@ SOURCES: list[dict] = [
     # sonde sentinelle (rien n'y change jamais).
     dict(name="Cadastre d'époque (Etalab / PCI vecteur DGFiP)", category="topographie",
          provider="Etalab / DGFiP via cadastre.data.gouv.fr",
-         access_type="GeoJSON + EDIGEO (archives)", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         access_type="GeoJSON + EDIGEO (archives)", status=S.INTERNE, reliability_level=R.VERIFIE,
          documentation_url="https://cadastre.data.gouv.fr/datasets/cadastre-etalab",
          endpoint_url="https://cadastre.data.gouv.fr/data/etalab-cadastre/",
          source_millesime="archives 2017-02 (PCI) et 2017-07→2026-06 (Etalab)",
          legal_notes="Licence Ouverte 2.0 — attribution : « Etalab / DGFiP, cadastre.data.gouv.fr ».",
-         technical_notes="Table cadastre_historique (référence + géométrie SEULEMENT — mandat "
-                         "RETOURS-14 S5) : parcelles d'ORIGINE des permis Sitadel orphelins, "
-                         "rattachées par la géométrie aux parcelles actuelles (> 50 % → une seule ; "
-                         "à cheval → toutes, « origine redécoupée »). Une parcelle disparue avant "
-                         "2017-02 est irrécupérable (aucune archive ouverte plus ancienne) — "
-                         "compté et dit, jamais contourné. CLI : python -m "
-                         "labuse.ingestion.cadastre_historique"),
+         technical_notes="RÉFÉRENTIEL INTERNE (SOURCES-CORRECTION-2 lot 1) : hors vitrine CLIENT — "
+                         "rien ne l'affiche au client. RÔLE : la table cadastre_historique (géométrie "
+                         "d'archive) est lue par `ingestion/cadastre_historique.py:rattacher_par_geometrie` "
+                         "pour RECALER la géométrie des permis Sitadel orphelins (parcelles d'origine "
+                         "redécoupées : > 50 % → une seule ; à cheval → toutes). Aucune surface fiche/carte/"
+                         "outil. Reste visible dans le Circuit ADMIN avec ce rôle (pas masquée comme les "
+                         "retirées). Une parcelle disparue avant 2017-02 est irrécupérable (aucune archive "
+                         "ouverte plus ancienne) — compté et dit. CLI : python -m labuse.ingestion.cadastre_historique"),
     # RETOURS-13 R5 — le tracé du RÉUNION EXPRESS n'existe qu'en carte interactive de débat
     # public (aucun export SIG) : source « à venir », suivie par la sentinelle — le tracé
     # bougera après le débat (clôture 26/11/2026).
@@ -1445,6 +1448,10 @@ RETRAITS: dict[str, str] = {
 
 HUBS: tuple[str, ...] = (
     "Région Réunion Open Data (Opendatasoft)", "PEIGEO (hub régional)", "Géoplateforme IGN",
+    # SOURCES-CORRECTION-1 lot 2 (décision Vic) — DEAL WMS/WFS rejoint les hubs hors vitrine : c'est
+    # un CANAL carto (hôte injoignable, servi par proxys), pas une source de première classe. Renverse
+    # la requalification M74 « hub→urbanisme ». La vitrine passe de 94 à 93.
+    "DEAL Réunion (WMS/WFS)",
 )
 
 

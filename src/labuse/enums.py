@@ -70,6 +70,11 @@ class DataSourceStatus(StrEnum):
     # Visible ADMIN (avec le partenaire nommé en note), INVISIBLE client, conservée en base.
     # Le courrier/la convention reste le geste de Vic.
     PARTENARIAT = "partenariat_requis"
+    # SOURCES-CORRECTION-2 lot 1 — référentiel technique INTERNE : ingéré et LU par la pompe
+    # (fabrication/pipeline), mais rien ne l'affiche au CLIENT. Hors vitrine (comme partenariat/hub),
+    # MAIS visible dans le Circuit ADMIN avec son rôle déclaré (pas masquée comme les retirées).
+    # La note DOIT nommer le rôle interne (qui la lit, pour quoi faire).
+    INTERNE = "interne"
 
 
 class ReliabilityLevel(StrEnum):

@@ -1,0 +1,14 @@
+# DPE dpe_records — AVANT SOURCES-CORRECTION-1 (Sam 19 sep 2026 00:47:10 CEST)
+## total + par jeu
+existant | 14
+tertiaire | 2
+TOTAL | 16
+## par commune (code_insee)
+97416 | 4 | 4
+97411 | 3 | 3
+97408 | 2 | 2
+97409 | 2 | 2
+97414 | 2 | 2
+97417 | 1 | 1
+97415 | 1 | 1
+97404 | 1 | 1

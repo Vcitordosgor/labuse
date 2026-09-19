@@ -11,18 +11,21 @@ Puis rattachement BÂTIMENT (SOURCES-2) : `rnb_id` par la clé BAN dans `rnb_bat
 sinon par contenance géométrique du point local dans `shape_2975` — l'ID-RNB devient la clé de
 jointure DPE ↔ RPLS ↔ BAN.
 
-⚠ CONTAMINATION MÉTROPOLE (mesuré live 09/08/2026, re-mesuré 13/09/2026, SOURCES-2 lot 0).
-Le filtre amont `code_insee_ban:974*` rend ~914 lignes pour l'île — mais **900 d'entre elles
-portent un CP BRUT métropolitain** (ex. 62200 Boulogne-sur-Mer, 34200 Sète, 67300 Schiltigheim) :
-le géocodeur BAN de l'ADEME rabat massivement des logements de métropole sur des codes INSEE 974,
-avec un `identifiant_ban` d'allure réunionnaise (`97415_1330_00038`). Ce faux id_ban matche la
-table `adresses` locale en passe 1 → le logement métropolitain se voit ÉPINGLÉ sur une vraie
-parcelle réunionnaise (coordonnées valides mais FAUSSES). Il n'existe AUCUN champ « INSEE brut »
-au schéma ADEME : filtrer par INSEE ne répare rien. On tranche sur le CP BRUT (saisi par le
-diagnostiqueur d'après le bien, fiable), JAMAIS sur le géocodage BAN : cf. `is_reunion_authentic`
-— PUIS on exige la corroboration locale contre l'homonymie (cf. `ingest_jeu`). Gisement mesuré
-13/09/2026 : 93 lignes au CP brut 974 (16 existants + 75 neufs + 2 tertiaires), dont 16
-RÉUNIONNAISES corroborées (14 + 0 + 2) — les 77 autres sont métropolitaines (homonymie/typo CP).
+⚠ SOURCES-CORRECTION-1 (mesuré live 19/09/2026) — INVERSION de l'hypothèse SOURCES-2.
+Le filtre amont `code_insee_ban:974*` rend ~914 lignes (existants) : ce sont des DPE RÉUNIONNAIS
+AUTHENTIQUES, pas de la contamination. Preuve : leur `identifiant_ban` est en 974xx (300/300), il
+correspond EXACTEMENT à la table `adresses` locale (BAN Réunion) pour 150/300, et l'`adresse_ban`
+géocodée est une adresse réunionnaise réelle (« RN 5 Petit Serre, Saint-Louis », « Chemin de la
+Plaine, Saint-Louis », score 0,88–0,89). Ce qui est FAUX chez ~900 d'entre elles est le CP BRUT
+(62200 Boulogne, 66000 Perpignan…) : un champ saisi par le diagnostiqueur, souvent son propre CP
+ou une valeur par défaut — du BRUIT, pas la vérité. L'ancienne moisson SOURCES-2 tranchait sur ce
+CP brut et RATAIT donc ces ~900 DPE (base bloquée à 16). On tranche désormais sur le géocodage BAN
+974 (signal fiable), en UNION avec le CP brut 974 (rattrape les orphelins BAN≠974) — cf.
+`connectors.dpe.fetch_reunion_authentiques` et `is_reunion_authentic` — PUIS la corroboration locale
+(`ingest_jeu`) reste seul juge de l'homonymie. Les vrais homonymes existent et sont bien rejetés :
+75 « neufs ST LEU 97436 » = Saint-Leu-la-FORÊT (Val-d'Oise, BAN 95563 — donc HORS `code_insee_ban:974*`,
+et sans corroboration locale) ; 2 « existants 97490/97434 » = Montpellier / Lille. Gisement corrigé
+19/09/2026 : `code_insee_ban:974*` = 914 existants + 179 neufs + 30 tertiaires (≈ 1123), à corroborer.
 
 Signal « positif quand présent », JAMAIS exhaustif. La donnée d'abord, le scoring ensuite : ce
 module PEUPLE `dpe_records` ; le signal est branché par le Score V (famille E) et v_passoire_thermique.
@@ -70,13 +73,18 @@ def _cp_reunion(cp) -> bool:
 
 
 def is_reunion_authentic(rec: dict) -> bool:
-    """Vrai si l'enregistrement est un logement RÉUNIONNAIS d'après le CP BRUT (saisi par le
-    diagnostiqueur d'après le bien — fiable), et JAMAIS d'après le géocodage BAN de l'ADEME
-    (faux à ~98 % au 974 : il rabat des logements métropolitains sur des codes INSEE 974).
+    """PRÉ-FILTRE (la corroboration locale de `ingest_jeu` reste seul juge de l'homonymie).
 
-    Règle : on rejette une ligne dont le CP brut CONTREDIT La Réunion. CP brut absent → on laisse
-    passer (0 cas mesuré sur les 913 lignes 974 au 09/08/2026 ; la cascade locale reste seul juge).
-    """
+    SOURCES-CORRECTION-1 — INVERSION de l'hypothèse SOURCES-2 : le géocodage BAN vers un INSEE 974*
+    est le signal FIABLE (l'adresse a été résolue sur une adresse réunionnaise réelle — vérifié :
+    50 % de correspondance EXACTE d'`identifiant_ban` dans la table `adresses` locale, adresses type
+    « RN 5 Petit Serre, Saint-Louis »). Le CP BRUT est du BRUIT : ~900 DPE 974 authentiques portent
+    un CP brut métropolitain (saisie du diagnostiqueur). On accepte donc si BAN a géocodé en 974 OU
+    si le CP brut est réunionnais (ou absent) ; on ne rejette QUE si aucun des deux ne dit Réunion.
+    Les homonymes (Saint-Leu-la-Forêt : CP brut 974 mais BAN 95) passent ce pré-filtre par le CP brut,
+    puis sont rejetés faute de corroboration locale (`ingest_jeu`)."""
+    if str(rec.get("code_insee_ban") or "").startswith("974"):
+        return True
     cp = rec.get("code_postal_brut")
     if cp in (None, ""):
         return True

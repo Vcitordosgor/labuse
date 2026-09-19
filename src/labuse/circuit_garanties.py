@@ -17,7 +17,8 @@ from .circuit_verrous import ResultatVerrou
 
 #: statuts admis pour une ligne data_sources (liste FERMÉE — un statut inventé casse G1).
 STATUTS_ADMIS = frozenset({"connecte", "manuel", "a_faire", "retiree", "alias", "hub",
-                           "partenariat_requis"})   # REPARATIONS-1 lot 3
+                           "partenariat_requis",     # REPARATIONS-1 lot 3
+                           "interne"})               # SOURCES-CORRECTION-2 lot 1 (référentiel interne)
 
 #: paires de sources qui portent le MÊME concept sans partager table/endpoint (détection
 #: par recouvrement impossible) — déclarées ici, l'arbitrage reste exigé comme pour les autres.
@@ -439,7 +440,17 @@ _FICHIERS_EXEMPTS_G6 = ("circuit_verrous.py", "circuit_garanties.py", "circuit_e
 #: lecteurs CONNUS et ASSUMÉS hors du champ `fonction` du registre — chaque entrée dit
 #: pourquoi (déclaration lisible, même doctrine que ACTIONS_PROPOSEES pour les orphelines).
 #: Vide au départ : le verrou G6 dit ce qui manque, et chaque ajout ici est un arbitrage écrit.
-LECTEURS_ASSUMES_G6: dict[str, str] = {}
+LECTEURS_ASSUMES_G6: dict[str, str] = {
+    # SOURCES-CORRECTION-2 lot 3 — deux lecteurs de MACHINERIE (pas des chiffres de fiche), assumés :
+    "api/couches_tuyau.py":
+        "le tuyau vectoriel qui SERT les tuiles MVT des couches ; il lit ortho_detections "
+        "(surface_m2, geom_2975) pour la couche des détections ortho — machinerie de tuilage, "
+        "aucun chiffre de fiche.",
+    "cascade/layers/fiche_couches4.py":
+        "couche de cascade (FICHE-COUCHES-4) : lit la géométrie de la parcelle évaluée "
+        "(parcels.geom_2975 WHERE id) pour ses croisements — machinerie de cascade, "
+        "aucun chiffre servi directement.",
+}
 
 
 from functools import lru_cache

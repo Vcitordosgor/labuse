@@ -1,0 +1,96 @@
+# 94 sources
+
+47	50 pas géométriques — limite haute (DEAL)	cinquante_pas_deal	spatial_layers	cinquante_pas	163		sans_echeance		one_shot	proposee	
+24	ABF / Monuments historiques	abf_merimee	spatial_layers	abf	200	2026-07-05	sans_echeance		one_shot	proposee	
+128	ACV / PVD / ORT (DGALN — liste des communes)	anct_ort	commune_ort		19				job_sur_clic	proposee	
+114	AZI / TRI — inondation (Géorisques GASPAR)	georisques_azi_tri	azi_communes,spatial_layers	tri_zone	167				job_sur_clic	proposee	
+99	Annuaire de l'administration (service-public.fr / DILA)	annuaire_service_public	mairies,annuaire_services		460				cron_mensuel	proposee	
+147	BAN PLUS — lien adresse ↔ bâtiment (IGN)	ban_plus	ban_plus_liens		738540	2026-09-14			cron_mensuel	proposee	
+61	BD ORTHO 20 cm (IGN)	bd_ortho	ortho_tiles,ortho_detections,parcel_equipements		36518		sans_echeance		one_shot	proposee	
+69	BD ORTHO IRC (IGN)	bd_ortho_irc	ortho_detections,parcel_vegetation,vegetation_zonal_acc		1608138		sans_echeance		one_shot	proposee	
+17	BD TOPO IGN	bd_topo	spatial_layers	batiment,voirie,water,ravine,cimetiere,construction_lineaire,construction_surfacique,zone_activite,bassin_versant,axe_structurant,ligne_ht	1091872		sans_echeance		one_shot	proposee	
+29	BODACC (procédures collectives)	bodacc	bodacc_sondages,bodacc_procedures,bodacc_annonces_owner,annonces,bodacc_depots		28775	2026-09-14	sans_echeance		job_sur_clic	proposee	
+20	BPE INSEE	bpe_insee	spatial_layers	amenite_bpe	35544	2026-09-14	sans_echeance		one_shot	proposee	
+18	Base Adresse Nationale	ban	adresses,adresse_parcelles		756280	2026-08-19	a_jour		job_sur_clic	declaree	
+1	Cadastre (API Carto PCI)	cadastre_api_carto	parcels	limites_parcelles	431663		sans_echeance		one_shot	proposee	
+96	Cadastre d'époque (Etalab / PCI vecteur DGFiP)	cadastre_epoque	cadastre_historique		6526				one_shot	proposee	
+35	Cartofriches (Cerema)	cartofriches	spatial_layers	friche	372	2026-08-13	sans_echeance		one_shot	proposee	
+97	CatNat (arrêtés GASPAR / Géorisques)	catnat_gaspar	catnat_arretes		426				job_sur_clic	proposee	
+28	Cerema / GéoLittoral — indicateur d'érosion côtière	erosion_cotiere_geolittoral	spatial_layers	trait_de_cote	24168		sans_echeance		one_shot	proposee	
+46	Classement sonore ITT (Cerema)	bruit_itt_cerema	spatial_layers	bruit_route	1004	2026-09-14	sans_echeance		one_shot	proposee	
+83	CoSIA (couverture du sol IA, IGN)	cosia	spatial_layers,p_model_bati_cosia,qa_cosia_bati,parcel_cosia_couverture	batiment_cosia,piscine_cosia	3205312	2026-09-14	sans_echeance		one_shot	declaree	
+148	Communes La Réunion — contours (IGN ADMIN EXPRESS via geo.api.gouv, seed)	communes_ign	(aucune)	limites_communes	0				None		
+102	Consommation d'espaces NAF (Cerema — portail de l'artificialisation)	enaf_cerema	commune_conso_enaf		24				one_shot	proposee	
+64	Contours IRIS (IGN/INSEE)	contours_iris	spatial_layers	iris_insee	344		sans_echeance		one_shot	proposee	
+131	Coût de construction (EPTB SDES + choix LABUSE)	cout_construction_sdes	cout_construction_ref		3				job_sur_clic	proposee	
+13	DEAL Réunion (WMS/WFS)	deal_wms_wfs	(aucune)		0		sans_echeance		one_shot	proposee	canal servi par proxys — les tables sont portées par qpv_2024/npnru
+30	DEAL Réunion — PPR / aléas	deal_ppr	spatial_layers	ppr	164		sans_echeance		one_shot	proposee	
+117	DEAL — cartes de bruit stratégiques (CBS)	deal_bruit_cartes	spatial_layers	bruit_carte	6				job_sur_clic	proposee	
+132	DFI — documents de filiation informatisés (DGFiP)	dgfip_dfi	dfi_filiation		409623				job_sur_clic	declaree	
+71	DGFiP — parcelles des personnes morales	dgfip_parcelles_pm	parcelle_personne_morale,pm_proprietaires_millesimes		544271	2026-07-12	a_jour		one_shot	declaree	
+37	DPE ADEME (logements existants)	dpe_ademe	dpe_records		16	2026-09-15	en_retard		cron_mensuel	declaree	
+5	DVF / valeurs foncières	dvf	dvf_mutations,dvf_mutations_parcelle,dvf_mutations_histo,dvf_secteur_medianes,dvf_prix_sortie_neuf,spatial_layers,dvf_mutation_detail	vefa_neuf	300005	2026-09-14	en_retard		job_sur_clic	declaree	
+93	EDF Réunion — lignes moyenne tension HTA (open data)	edf_hta	spatial_layers	ligne_mt	19480	2026-09-14			one_shot	proposee	
+113	Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)	enp_complements_deal	spatial_layers	ens	411				job_sur_clic	proposee	complète le kind ens de l'INPN (subtypes ramsar/site_classe/site_inscrit/reserve_naturelle — purge par subtype)
+73	FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)	frr_ex_zrr	spatial_layers,territoire_fiscal_commune	frr	47		sans_echeance		one_shot	proposee	
+126	Fibre Arcep — Ma connexion internet (immeuble)	arcep_fibre	arcep_immeubles		330051				job_sur_clic	declaree	
+52	Filosofi INSEE (carreaux 200 m)	filosofi_carreaux	filosofi_carreaux_200m,p_model_filo		400152		sans_echeance		one_shot	proposee	
+8	Forêts publiques (ONF)	forets_onf_bdtopo	spatial_layers	foret_publique	65		sans_echeance		one_shot	proposee	
+107	GPU — droit de préemption urbain (info-surf)	dpu_perimetres	spatial_layers	dpu	202				job_sur_clic	proposee	
+105	GPU — emplacements réservés (prescriptions CNIG)	gpu_prescriptions_er	spatial_layers	plu_gpu_prescription	10490				en_direct	sans_objet	réservoir LOGIQUE sur la famille ER du kind plu_gpu_prescription (typepsc 05 + rescue libellé — même canal que gpu_plu_api_carto)
+106	GPU — espaces boisés classés (prescriptions CNIG)	gpu_prescriptions_ebc	spatial_layers	plu_gpu_prescription	10490				en_direct	sans_objet	réservoir LOGIQUE sur les EBC (typepsc 01) du kind plu_gpu_prescription — même canal que gpu_plu_api_carto
+63	GPU — zonages d'assainissement	gpu_zonage_assainissement	spatial_layers,parcel_anc	zonage_assainissement	278943		sans_echeance		one_shot	proposee	
+4	Géorisques	georisques_api	spatial_layers	georisque_alea	1093		sans_echeance		one_shot	proposee	
+116	Géorisques — CASIAS (anciens sites industriels)	georisques_casias	spatial_layers	sol_pollue	531				en_direct	sans_objet	réservoir LOGIQUE sur les subtypes casias/instruction du kind sol_pollue (même canal que georisques_ssp)
+34	Géorisques — ICPE	georisques_icpe	spatial_layers	icpe	1268	2026-09-14	sans_echeance		one_shot	proposee	
+33	Géorisques — cavités souterraines	georisques_cavites	spatial_layers	cavite	151	2026-09-14	sans_echeance		one_shot	proposee	
+36	Géorisques — mouvements de terrain	georisques_mvt	spatial_layers	mvt	3085	2026-09-14	sans_echeance		one_shot	proposee	
+115	Géorisques — secteurs d'information sur les sols (SIS)	georisques_sis	spatial_layers	sol_pollue	531				en_direct	sans_objet	réservoir LOGIQUE sur le subtype sis du kind sol_pollue (même canal que georisques_ssp)
+32	Géorisques — sites et sols pollués	georisques_ssp	spatial_layers	sol_pollue	531	2026-09-14	sans_echeance		one_shot	proposee	
+22	IGN BD CARTO V5 — occupation du sol	bd_carto_ocs	spatial_layers	ocs_ge	1643		sans_echeance		one_shot	proposee	
+31	INPI RNE (dirigeants)	inpi_rne	pm_dirigeants,pm_dirigeant_gigogne		29270	2026-07-06	sans_echeance		one_shot	proposee	
+25	INPN / patrinat — espaces protégés	inpn_espaces_proteges	spatial_layers	ens	411		sans_echeance		one_shot	proposee	
+41	INSEE RP Logement 2023	insee_rp_logement	commune_insee_logement		24	2026-07-08	sans_echeance		one_shot	proposee	
+133	INSEE RP2022 — bases IRIS (logement, population)	insee_rp_iris	iris_rp		344				job_sur_clic	declaree	
+66	INSEE RP2022 — fichier détail Logements (EGOUL)	insee_rp2022_egoul	anc_maille_taux,rp_logement_commune		374		sans_echeance		one_shot	proposee	
+39	Inventaire SRU (DHUP)	sru_dhup	commune_contexte_sru		24	2026-07-08	sans_echeance		one_shot	proposee	
+70	LiDAR HD — MNH 50 cm (IGN)	lidar_hd_mnh	toiture_lidar,batiment_hauteur_lidar,lidar_dalle_grille		306144		sans_echeance		one_shot	proposee	
+130	Loyers DHUP — carte des loyers (annonces)	loyers_dhup	(aucune)		0				depot_manuel	proposee	extrait embarqué versionné (data/carte_loyers_reunion_2025.json, loyers.py) — repli de l'OLL, aucun réservoir en base
+129	Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)	loyers_oll	oll_loyers,oll_zonage		326				job_sur_clic	declaree	
+40	NPNRU (DEAL Réunion / ANCT)	npnru	anru_quartiers,spatial_layers	anru	16	2026-07-08	sans_echeance		one_shot	proposee	
+144	OCS GE (IGN) — occupation du sol et artificialisation	ocsge	ocsge_sol,ocsge_evolution,parcel_ocsge	artificialisation	846206				one_shot	proposee	
+75	OSM — transport (pôles d'échange & téléphérique)	osm_transport	spatial_layers	telepherique,pole_echange	68		sans_echeance		one_shot	proposee	
+19	OpenStreetMap / Overpass	osm_overpass	parcel_amenites,spatial_layers	amenite,osm_faux_positif	453224	2026-07-06	sans_echeance		one_shot	proposee	
+108	PEB — plans d'exposition au bruit (DGAC via annexes GPU)	peb_dgac	spatial_layers	peb	8				job_sur_clic	proposee	
+42	PLH des 5 EPCI (extraction documentaire)	plh_epci	plh_epci		5	2026-07-08	sans_echeance		depot_manuel	proposee	
+48	PVGIS (Commission européenne)	pvgis	solar_grid,parcel_solar		447343	2026-08-23	sans_echeance		one_shot	proposee	
+7	Parc National de La Réunion (INPN)	parc_national_inpn	spatial_layers	parc_national	3		sans_echeance		one_shot	proposee	
+51	Parkings OSM (loi APER)	parkings_osm_aper	parkings_aper		901	2026-07-11	sans_echeance		one_shot	proposee	
+38	QPV 2024 (ANCT)	qpv_2024	spatial_layers	qpv,tva_primo	70	2026-07-05	sans_echeance		one_shot	proposee	
+6	RGE ALTI (altimétrie)	rge_alti	rgealti_pente_5m,rgealti_mnt_5m,spatial_layers	pente,altitude	150193		sans_echeance		one_shot	proposee	
+143	RNB — Référentiel National des Bâtiments	rnb	rnb_batiments,rnb_rattachement_bdtopo		1231587				cron_mensuel	proposee	
+100	RNIC — registre national des copropriétés (Anah)	rnic_anah	rnic_coproprietes		2220				one_shot	proposee	
+10	RPG — déclarations agricoles (IGN/ASP)	rpg_proxy_ign	spatial_layers	safer	38460		sans_echeance		en_direct	sans_objet	SOURCES-1 lot 2 : code_cultu servi (CSA canne 12 464/38 460) — couche carte « Cultures déclarées » + cascade zone A/canne
+101	RPLS — répertoire des logements locatifs sociaux (SDES)	rpls_sdes	rpls_commune		24				one_shot	proposee	
+43	RTAA DOM (textes réglementaires)	rtaa_dom	(aucune)		0	2026-07-08	sans_echeance		one_shot	proposee	règles portées par le code (aucune table)
+84	Radar (pige d'annonces)	radar_pige	pige_annonces,pige_biens,pige_faits,pige_depots,pige_captures,pige_clics,pige_prix_historique,pige_interets_agence,radar_releves		337	2026-09-09	sans_echeance		depot_manuel	declaree	
+111	Ravines — domaine public fluvial (DEAL Carmen)	deal_dpf_dpe	spatial_layers	dpf	281				job_sur_clic	proposee	le DPE (domaine privé de l'État) n'est pas diffusé — demande DEAL (lot 7)
+45	Recherche d'entreprises (DINUM)	recherche_entreprises_dinum	owner_denom_lookup,owner_enrichment		12380		sans_echeance		en_direct	sans_objet	
+21	SIRENE	sirene_recherche_entreprises	(aucune)		0		sans_echeance		en_direct	sans_objet	API INSEE interrogée à la requête (aucune table)
+86	SIRENE établissements géolocalisés	sirene_etablissements	sirene_etablissements		158515	2026-08-29	sans_echeance		cron_mensuel	proposee	
+16	SITADEL (autorisations d'urbanisme)	sitadel	sitadel_permits,via_permits_geo		97615	2026-09-05	a_jour		cron_mensuel	declaree	
+44	SUP — assiettes GPU (API Carto)	sup_gpu	spatial_layers	sup	417	2026-09-14	sans_echeance		cron_mensuel	proposee	
+62	Sudocuh (procédures d'urbanisme)	sudocuh	sudocuh_procedures		24		sans_echeance		depot_manuel	proposee	
+145	Systèmes d'endiguement et zones protégées (DEAL Lizmap)	endiguement	spatial_layers	endiguement	117				one_shot	proposee	
+94	TCSP — voies bus en site propre (OSM)	tcsp_osm	spatial_layers	tcsp_troncon,tcsp_station,tcsp_zone	188	2026-09-05			one_shot	proposee	
+127	Taux de taxe foncière — fichier REI (DGFiP)	dgfip_rei	commune_rei		24				job_sur_clic	declaree	
+98	Taxe d'aménagement — taux communaux (délibérations)	taxe_amenagement	taxe_amenagement_taux		24				job_sur_clic	proposee	a_faire — mécanisme CIRCUIT-3 lot 6.2, taux communaux à saisir
+88	Trafic RN (Région Réunion — SIR)	trafic_rn	trafic_rn		692	2026-08-29	sans_echeance		one_shot	proposee	
+74	Transport public — GTFS (PAN, 7 réseaux)	gtfs_pan	spatial_layers	transport_arret,transport_ligne,pole_echange	10317		sans_echeance		one_shot	proposee	
+3	Urbanisme PLU/GPU (API Carto)	gpu_plu_api_carto	spatial_layers,plu_reglement_extrait	plu_gpu_zone,plu_gpu_prescription	19589		sans_echeance		en_direct	sans_objet	
+26	VRD / assainissement (SPANC)	spanc_epci	(aucune)		0		sans_echeance		depot_manuel	proposee	manuel — collectif/non collectif saisi, aucune table dédiée
+72	ZFANG — zone franche d'activité nouvelle génération (Légifrance)	zfang	spatial_layers,territoire_fiscal_commune	zfang	48		sans_echeance		one_shot	proposee	
+76	ZNIEFF (INPN/MNHN)	znieff_inpn	spatial_layers	znieff	162	2026-09-14	sans_echeance		one_shot	proposee	
+109	Zonage ABC des communes (DHUP)	zonage_abc_dhup	commune_zonage_abc		24				job_sur_clic	declaree	
+112	Zones humides — inventaires DEAL (Carmen)	deal_zones_humides	spatial_layers	zone_humide	3122				job_sur_clic	proposee	
+15	data.regionreunion.com — Potentiel foncier	potentiel_foncier_ods	spatial_layers	potentiel_foncier	2453		sans_echeance		one_shot	proposee	

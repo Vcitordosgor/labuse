@@ -5496,8 +5496,13 @@ def map_couches_info(db: Session = Depends(get_db)) -> dict:
             "source": nom or "référentiel embarqué (seed)",
             "millesime": mill,
             "date_controle": date_ctrl.isoformat() if date_ctrl else None,
-            "fabrication": fabrications.get((getattr(d, "fabrication", "") or ""),
-                                            getattr(d, "fabrication", None)) if d else None,
+            # SOURCES-CORRECTION-2 lot 3 — fabrication pour CHAQUE couche : la carte DONNEES (via cid)
+            # quand elle existe, sinon le défaut vrai du tuyau vectoriel (toute couche du registre est
+            # reconstruite à la bascule). Sans ce défaut, les kinds absents du pont COUCHE_PAR_CLE_FRONT
+            # (hérité, partiel) affichaient une fabrication vide dans le « i ».
+            "fabrication": (fabrications.get((getattr(d, "fabrication", "") or ""),
+                                             getattr(d, "fabrication", None)) if d else None)
+                           or "reconstruite à la bascule (tuyau vectoriel)",
         }
     return out
 

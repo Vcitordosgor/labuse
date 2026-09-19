@@ -247,8 +247,13 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     noms = {r["name"] for r in SOURCES}
     seed_noms = {e["name"] for e in sentinelle.SEED}
     raison_noms = set(sentinelle.RAISONS_NON_SURVEILLEES)
-    assert seed_noms <= noms, f"noms de SEED absents du catalogue : {seed_noms - noms}"
-    assert raison_noms <= noms, f"raisons pour des noms absents du catalogue : {raison_noms - noms}"
+    # SOURCES-CORRECTION-2 lot 3 — communes_ign est une source RÉELLE (au catalogue DB) mais seedée par le
+    # référentiel EMBARQUÉ (scripts/registre2_raccord_db.py, « seed (référentiel embarqué) »), hors de la
+    # liste SOURCES — comme les doublons couverts. Elle porte sa raison de non-surveillance. On l'admet.
+    seedees_hors_sources = {"Communes La Réunion — contours (IGN ADMIN EXPRESS via geo.api.gouv, seed)"}
+    catalogue = noms | seedees_hors_sources
+    assert seed_noms <= catalogue, f"noms de SEED absents du catalogue : {seed_noms - catalogue}"
+    assert raison_noms <= catalogue, f"raisons pour des noms absents du catalogue : {raison_noms - catalogue}"
     assert not (seed_noms & raison_noms), f"sources à la fois surveillées et non surveillées : {seed_noms & raison_noms}"
     # les 2 seuls noms hors seed/raisons = doublons amont couverts par leur canonique (une seule veille).
     doublons_couverts = {"Cadastre Etalab (bulk DGFiP/Etalab)", "RGE ALTI 5 m (IGN)"}

@@ -1,0 +1,23 @@
+annuaire_service_public | Annuaire de l'administration (service-public.fr / DILA) | tables=mairies,annuaire_services | couches= | rempli=460 | mode=cron_mensuel
+bd_carto_ocs | IGN BD CARTO V5 — occupation du sol | tables=spatial_layers | couches=ocs_ge | rempli=1643 | mode=one_shot
+bodacc | BODACC (procédures collectives) | tables=bodacc_sondages,bodacc_procedures,bodacc_annonces_owner,annonces,bodacc_depots | couches= | rempli=28775 | mode=job_sur_clic
+cadastre_epoque | Cadastre d'époque (Etalab / PCI vecteur DGFiP) | tables=cadastre_historique | couches= | rempli=6526 | mode=one_shot
+communes_ign | Communes La Réunion — contours (IGN ADMIN EXPRESS via geo.api.gouv, seed) | tables=(aucune) | couches=limites_communes | rempli=0 | mode=None
+deal_bruit_cartes | DEAL — cartes de bruit stratégiques (CBS) | tables=spatial_layers | couches=bruit_carte | rempli=6 | mode=job_sur_clic
+deal_zones_humides | Zones humides — inventaires DEAL (Carmen) | tables=spatial_layers | couches=zone_humide | rempli=3122 | mode=job_sur_clic
+dpe_ademe | DPE ADEME (logements existants) | tables=dpe_records | couches= | rempli=16 | mode=cron_mensuel
+enaf_cerema | Consommation d'espaces NAF (Cerema — portail de l'artificialisation) | tables=commune_conso_enaf | couches= | rempli=24 | mode=one_shot
+filosofi_carreaux | Filosofi INSEE (carreaux 200 m) | tables=filosofi_carreaux_200m,p_model_filo | couches= | rempli=400152 | mode=one_shot
+georisques_azi_tri | AZI / TRI — inondation (Géorisques GASPAR) | tables=azi_communes,spatial_layers | couches=tri_zone | rempli=167 | mode=job_sur_clic
+georisques_mvt | Géorisques — mouvements de terrain | tables=spatial_layers | couches=mvt | rempli=3085 | mode=one_shot
+gpu_prescriptions_ebc | GPU — espaces boisés classés (prescriptions CNIG) | tables=spatial_layers | couches=plu_gpu_prescription | rempli=10490 | mode=en_direct
+inpi_rne | INPI RNE (dirigeants) | tables=pm_dirigeants,pm_dirigeant_gigogne | couches= | rempli=29270 | mode=one_shot
+insee_rp_logement | INSEE RP Logement 2023 | tables=commune_insee_logement | couches= | rempli=24 | mode=one_shot
+npnru | NPNRU (DEAL Réunion / ANCT) | tables=anru_quartiers,spatial_layers | couches=anru | rempli=16 | mode=one_shot
+parc_national_inpn | Parc National de La Réunion (INPN) | tables=spatial_layers | couches=parc_national | rempli=3 | mode=one_shot
+potentiel_foncier_ods | data.regionreunion.com — Potentiel foncier | tables=spatial_layers | couches=potentiel_foncier | rempli=2453 | mode=one_shot
+recherche_entreprises_dinum | Recherche d'entreprises (DINUM) | tables=owner_denom_lookup,owner_enrichment | couches= | rempli=12380 | mode=en_direct
+rpg_proxy_ign | RPG — déclarations agricoles (IGN/ASP) | tables=spatial_layers | couches=safer | rempli=38460 | mode=en_direct
+sirene_recherche_entreprises | SIRENE | tables=(aucune) | couches= | rempli=0 | mode=en_direct
+sudocuh | Sudocuh (procédures d'urbanisme) | tables=sudocuh_procedures | couches= | rempli=24 | mode=depot_manuel
+trafic_rn | Trafic RN (Région Réunion — SIR) | tables=trafic_rn | couches= | rempli=692 | mode=one_shot

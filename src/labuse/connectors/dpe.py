@@ -4,18 +4,17 @@ API data-fair : GET https://data.ademe.fr/data-fair/api/v1/datasets/{jeu}/lines
     filtre `qs=` (Lucene), pagination par curseur `after` (URL `next`), `size`, `select`.
 Sans clé (quota anonyme réduit ; ~1200 req/min authentifié). Base nationale 15,5 M (existants).
 
-⚠ SOURCES-2 lot 0, mesuré live 13/09/2026 : il n'existe AUCUN champ « code INSEE commune brut »
-au schéma ADEME — le seul INSEE est `code_insee_ban` (géocodé), et `code_insee_ban:974*` =
-`code_departement_ban:974` = 914 lignes sur les existants, dont 900 avec CP BRUT métropolitain
-(Boulogne-sur-Mer, Sète, Schiltigheim… : logements de métropole rabattus sur l'île par le
-géocodeur BAN de l'ADEME). Filtrer « par code INSEE » ne débloque RIEN : le filtre honnête est
-le CP BRUT — et lui-même peut mentir par HOMONYMIE (75 « neufs ST LEU 97436 » = un programme de
-Saint-Leu-la-Forêt, Val-d'Oise ; 2 « existants » = Montpellier et Lille) : l'ingesteur exige une
-corroboration locale, cf. `ingestion.dpe.ingest_jeu`. Gisement mesuré 13/09/2026 : 93 lignes au
-CP brut 974 sur les 3 jeux, dont 16 RÉUNIONNAISES corroborées (14 existants + 2 tertiaires + 0
-neuf). Les DPE DROM (obligation 01/07/2024) ne remontent presque pas à l'observatoire ADEME —
-trou producteur, pas trou de filtre. Aucune ligne `code_insee_ban:974*` sans CP brut (mesuré 0
-sur les 3 jeux) → la moisson par `fetch_reunion_authentiques()` attrape TOUT, orphelins compris.
+⚠ SOURCES-CORRECTION-1, mesuré live 19/09/2026 — le FILTRE FIABLE est le géocodage BAN 974.
+`code_insee_ban:974*` = 914 existants (+179 neufs +30 tertiaires) : DPE réunionnais AUTHENTIQUES.
+SOURCES-2 les croyait « rabattus de métropole » (à cause d'un CP BRUT métropolitain sur ~900) et
+tranchait sur le CP brut → base bloquée à 16. C'était l'inverse : l'`identifiant_ban` est en 974xx
+(300/300), il matche EXACTEMENT `adresses` locale (150/300), l'`adresse_ban` est réunionnaise réelle
+(« RN 5 Petit Serre, Saint-Louis », score 0,88). Le CP brut est le champ BRUYANT (saisi), pas la
+vérité. On moissonne donc l'UNION `code_insee_ban:974*` ∪ CP brut 974 (`fetch_reunion_authentiques`),
+la corroboration locale (`ingestion.dpe.ingest_jeu`) restant seul juge de l'homonymie — les vrais
+homonymes (75 « neufs ST LEU 97436 » = Saint-Leu-la-Forêt Val-d'Oise, BAN 95563, donc HORS 974* ;
+2 existants 97490/97434 = Montpellier/Lille) sont bien rejetés. Il existe aussi 2 orphelins existants
+CP brut 974 dont le BAN est non-974 (gardés via `adresse_brut` si corroborés, cf. `parse_record`).
 
 ⚠ Le champ `_geopoint` de l'ADEME est FAUX au 974 (100 % hors Réunion). En revanche
 `coordonnee_cartographique_x/y_ban` sont les coordonnées BAN natives en EPSG:2975 (RGR92 /
@@ -51,8 +50,15 @@ _SELECT_PAR_JEU = {
 }
 SELECT = ",".join(_SELECT_PAR_JEU["existant"])
 
-# Filtre AUTHENTIQUE : CP brut réunionnais, quel que soit le géocodage BAN (cf. tête de module).
-QS_REUNION_AUTHENTIQUES = "code_postal_brut:[97400 TO 97490]"
+# SOURCES-CORRECTION-1 — le signal FIABLE est le géocodage BAN vers un INSEE 974* (l'adresse a été
+# résolue en Réunion) : ~914 existants, corroborés à 50 % par correspondance EXACTE d'`identifiant_ban`
+# dans la table `adresses` locale (BAN Réunion), adresses réunionnaises réelles (« RN 5 Petit Serre,
+# Saint-Louis », « Chemin de la Plaine, Saint-Louis »). Le CP BRUT (saisi par le diagnostiqueur) est du
+# BRUIT : il rate ~900 DPE réunionnais authentiques au CP métropolitain (62200/66000…), et laisse passer
+# des homonymes (Saint-Leu-la-Forêt, CP 97436 mais BAN 95). La corroboration locale (ingest_jeu) tranche.
+QS_BAN_974 = "code_insee_ban:974*"                       # BAN a géocodé l'adresse en Réunion
+QS_CP_BRUT_974 = "code_postal_brut:[97400 TO 97490]"     # rattrape les orphelins BAN≠974 (CP brut 974)
+QS_REUNION_AUTHENTIQUES = QS_BAN_974                      # compat : la vérité = géocodage BAN 974
 
 # DPE 974 invisibles du filtre commune : CP brut réunionnais mais géocodage BAN absent.
 QS_ORPHELINS_974 = "code_postal_brut:[97400 TO 97490] AND NOT code_insee_ban:974*"
@@ -129,9 +135,19 @@ class DpeConnector(Connector):
                 time.sleep(self.throttle_s)
 
     def fetch_reunion_authentiques(self, size: int = 100) -> Iterator[dict]:
-        """TOUS les DPE au CP BRUT réunionnais du jeu — la moisson SOURCES-2, orphelins compris
-        (0 ligne `code_insee_ban:974*` sans CP brut, mesuré sur les 3 jeux le 13/09/2026)."""
-        yield from self._fetch_qs(QS_REUNION_AUTHENTIQUES, size=size)
+        """SOURCES-CORRECTION-1 — TOUS les DPE réunionnais du jeu : l'UNION du géocodage BAN 974
+        (`code_insee_ban:974*`, le signal fiable) ET du CP brut 974 (rattrape les orphelins dont le
+        BAN contredit ou manque), dédupliquée par `numero_dpe`. La corroboration locale (`ingest_jeu`)
+        reste seul juge de l'homonymie. Le filtre CP-brut SEUL (moisson SOURCES-2) ratait ~900 DPE
+        974 authentiques dont le CP brut est métropolitain (bruit de saisie du diagnostiqueur)."""
+        vus: set[str] = set()
+        for qs in (QS_BAN_974, QS_CP_BRUT_974):
+            for rec in self._fetch_qs(qs, size=size):
+                num = str(rec.get("numero_dpe") or "")
+                if not num or num in vus:
+                    continue
+                vus.add(num)
+                yield rec
 
     def fetch_commune(self, code_insee: str, size: int = 100) -> Iterator[dict]:
         """Itère TOUS les DPE d'une commune (filtre `code_insee_ban`)."""

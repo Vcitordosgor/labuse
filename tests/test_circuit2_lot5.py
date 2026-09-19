@@ -21,15 +21,19 @@ def test_couche_par_cle_front_pointe_des_couches_declarees():
 def test_couches_info_sert_source_et_fabrication(db_session):
     from fastapi.testclient import TestClient
 
+    from labuse.api.couches_tuyau import registre as tuyau_registre
     from labuse.api.app import app
     client = TestClient(app)
     d = client.get("/map/couches-info").json()
-    assert set(d) == set(COUCHE_PAR_CLE_FRONT)
+    # SOURCES-CORRECTION-2 lot 3 — REMIS SUR LA VALEUR RÉELLE : le « i » couvre CHAQUE couche du tuyau
+    # (56 kind, cf. couches_tuyau.registre), pas le pont COUCHE_PAR_CLE_FRONT (hérité, partiel — 38 clés
+    # aux anciens noms V1). Chaque couche a source ET fabrication (défaut tuyau vectoriel si pas de cid).
+    assert set(d) == set(tuyau_registre())
     for cle, meta in d.items():
         assert meta["source"], cle
         assert meta["fabrication"], cle
-    # sobre, sans identifiant technique : la fabrication est en français
-    assert d["parcelles"]["fabrication"] == "tuiles reconstruites à la bascule"
+    # sobre, sans identifiant technique : la fabrication est en français (noms de kind ACTUELS)
+    assert d["limites_parcelles"]["fabrication"] == "tuiles reconstruites à la bascule"
     assert d["zonage_parcelle"]["fabrication"] == "lue en direct de la base"
 
 

@@ -159,7 +159,11 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "frr_ex_zrr": Rt(("spatial_layers", "territoire_fiscal_commune"), couches=("frr",),
                      millesime="ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017"),
     "taxe_amenagement": Rt(("taxe_amenagement_taux",),
-                           note="a_faire — mécanisme CIRCUIT-3 lot 6.2, taux communaux à saisir"),
+                           millesime="taux communaux DGFiP DELTA — 24/24 communes (part communale "
+                                     "1→5 %, part départementale 2,5 %), ingérés le 08/09/2026",
+                           note="SOURCES-CORRECTION-1 lot 3 : note « a_faire — taux à saisir » PÉRIMÉE "
+                                "— la table taxe_amenagement_taux est remplie (24/24, jeu ouvert "
+                                "delta_deliberation_tam, `labuse ingest-taxe-amenagement`)."),
     # ── risques / environnement ─────────────────────────────────────────────────────
     "georisques_api": Rt(("spatial_layers",), couches=("georisque_alea",)),
     "catnat_gaspar": Rt(("catnat_arretes",), millesime="GASPAR — 426 arrêtés sur 24 communes"),

@@ -58,6 +58,7 @@ question t'attend, sans urgence, jamais bloquante).
 | **V5a** | Un concept = un id : deux données au même libellé ou à la même définition n'existent pas. | Normalisation (casse, accents, espaces) sur tout le registre ; les DEUX seuls groupes assumés sont déclarés dans le code et motivés dans CONCEPTS-CANONIQUES.md. | CONCEPTS-CANONIQUES.md. |
 | **V5b** | Une donnée = une fonction : un producteur nommé partout, plus aucun `sql_propre` ni `front`. | Les gardes CIRCUIT-2, réunies dans les verrous, plus l'intégrité du registre. | Détail Robinet (moteur). |
 | **V5c** | Zéro couple (donnée, robinet) silencieux. | Chaque couple est sondé la nuit, mono-robinet (le golden et les règles CIRCUIT-4 font foi), ou porte SA raison nommée — jamais un « non couvert » muet. Les témoins tournent : 54 fixes + 50 tirés chaque nuit parmi les parcelles consultées la veille. | Journal (passage de nuit, compte des témoins). |
+| **V7a** | Chaque tuile servie reproduit la brute : même nombre d'objets, aucune partie perdue (GeometryCollections comprises), contour < 1 px, position exacte — aux zooms 10/13/16. | Le verrou décode la tuile RÉELLEMENT servie par le tuyau vectoriel (56 couches × z10/13/16) et la compare à la géométrie brute : nombre d'objets, aires, position. Une couche qui perd un morceau à la subdivision, ou décale une géométrie, casse ici (COUCHES-TUYAU-1). | Décodage des tuiles servies ; `verrou_tuiles`. |
 
 ## Ce que tu peux dire sans réserve
 
