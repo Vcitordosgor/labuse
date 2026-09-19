@@ -545,7 +545,9 @@ export function RtaaFromBilan({ idu }: { idu: string }) {
 /** M33 — MODE B (réhabilitation) : lecture COMPLÉMENTAIRE, visuellement subordonnée au tier
  *  (M34 intact). TOUJOURS Estimé (le paramètre travaux l'est) — assumé au libellé. Le
  *  paramètre est un état d'UI : rien n'est persisté (recalcul via /parcels/{idu}/mode-b). */
-export function ModeBDrawer({ idu, initial }: { idu: string; initial: import('../../lib/types').ModeB }) {   // M55-L point 10 : defaultOpen retiré (accordéon contrôlé, initial fermé)
+// FICHE-RANGEMENT-3 Lot 3 — Mode B (Réhabilitation) rendu DANS §11 Simulation (plus un 12e tiroir) :
+// mêmes calculs, wrapper RefDrawer remplacé par un GroupLabel (bloc inline sous la Simulation).
+export function ModeBBody({ idu, initial }: { idu: string; initial: import('../../lib/types').ModeB }) {
   // M45-B (L2) : le coût travaux est une VALEUR DE SESSION PARTAGÉE (fiche ↔ filtre) — le curseur
   // du tiroir Économie et cette fiche lisent/écrivent le même `modeB.travauxM2` (rien persisté).
   const travaux = useApp((s) => s.modeB.travauxM2)
@@ -559,22 +561,23 @@ export function ModeBDrawer({ idu, initial }: { idu: string; initial: import('..
   if (!mb.disponible) return null
   // M59-P1 (Q4) — sous le seuil de SHAB : la section ne montre PAS le calcul, elle DIT pourquoi.
   if (mb.trop_petit) return (
-    <RefDrawer id="mode-b" icon={IC.faisa} name="Réhabilitation" context="bâti trop petit"
-      value={<span className="pill-amber">non pertinent</span>}>
-      <p data-mode-b-trop-petit style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: '#8FA69A' }}>
+    <div data-mode-b-section>
+      <GroupLabel right={<span className="pill-amber">non pertinent</span>}>Réhabilitation (Mode B)</GroupLabel>
+      <p data-mode-b-trop-petit style={{ margin: '4px 0 0', fontSize: 11.5, lineHeight: 1.5, color: '#8FA69A' }}>
         {mb.motif ?? `Bâti trop petit (SHAB ~${mb.shab_rehabilitable_m2 ?? '—'} m²) pour une thèse de réhabilitation.`}
       </p>
-    </RefDrawer>
+    </div>
   )
   if (!mb.composantes) return null
   const c = mb.composantes
   const [bMin, bMax] = c.travaux.bornes
   const foncierM2 = mb.surface_parcelle_m2 ?? mb.terrain_nu?.surface_m2 ?? null
   return (
-    <RefDrawer id="mode-b" icon={IC.faisa} name="Réhabilitation"
-      context="Estimé — hypothèse travaux à ajuster"
-      value={mb.negatif ? <span className="pill-amber">bilan négatif</span> : `~${mb.achat_max_libelle ?? ''}`}>
-      <div data-mode-b style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div data-mode-b-section>
+      <GroupLabel right={mb.negatif
+        ? <span className="pill-amber">bilan négatif</span>
+        : <span className="text-[10.5px] text-txt-dim">Estimé · ~{mb.achat_max_libelle ?? ''}</span>}>Réhabilitation (Mode B)</GroupLabel>
+      <div data-mode-b style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6 }}>
         {/* M101 A2 — la PORTE du mode B en tête : pourquoi cette parcelle est « bâtie »,
             en français lisible (servie par compute_mode_b, jamais un libellé interne). */}
         {mb.porte && (
@@ -671,7 +674,7 @@ export function ModeBDrawer({ idu, initial }: { idu: string; initial: import('..
         )}
         <p style={{ margin: 0, fontSize: 9.5, lineHeight: 1.45, color: '#6b7a72' }}>{mb.avertissement}</p>
       </div>
-    </RefDrawer>
+    </div>
   )
 }
 
@@ -896,10 +899,11 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
       </RefDrawer>
       {/* SOURCES-1 lot 1 — Dispositifs et périmètres (ER/EBC/DPU/PEB/SUP), tiroir distinct. */}
       {f.dispositifs && <DispositifsDrawer d={f.dispositifs} />}
-      {/* Mode B — Réhabilitation, rattaché à la Constructibilité (tiroir distinct, accordéon exclusif). */}
+      {/* FICHE-RANGEMENT-3 Lot 3 — ModeBDrawer devenu ModeBBody (bloc inline §11). Ce composant
+          ConstructibiliteSection est mort (dissous au basculement rangement-2) — conservé compilable. */}
       {f.mode_b?.indisponible
         ? <BlocIndisponible titre="Réhabilitation (Mode B)" />
-        : f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
+        : f.mode_b?.disponible && <ModeBBody idu={idu} initial={f.mode_b} />}
     </>
   )
 }

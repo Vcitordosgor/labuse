@@ -26,7 +26,7 @@ import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, Group
 // sections « fourre-tout » ConstructibiliteSection / LeBienSection sont dissoutes ; les quatre
 // sections encore mono-nature (Risques, Réseaux, Marché, Quartier) restent des composants réutilisés.
 // Fiche ré-exporte Calculette + FaisabiliteTab (consommés par EtudierBien / M22Programme / le test).
-import { TransformationBlock, FaisabiliteTab, BilanTab, TaxeAmenagementBlock, FiscalLeviersBlock, RtaaFromBilan, DispositifsBody, ModeBDrawer } from './constructibilite'
+import { TransformationBlock, FaisabiliteTab, BilanTab, TaxeAmenagementBlock, FiscalLeviersBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
 import { BatiBlock, TerrainDuBienBlock, FiliationBlock } from './leBien'
 import { RisquesSection } from './risques'
 import { MarcheSection, DerniereVenteBlock } from './marche'
@@ -43,8 +43,8 @@ export type { CalcResult } from './constructibilite'
 
 // RETOURS-11 F2 — id de tiroir (RefDrawer) → libellé de section, pour tagger le signalement
 // avec « la section ouverte » (jamais une clé technique à l'écran).
-// FICHE-RANGEMENT-2 Lot 1 — les 11 sections PAR NATURE (accordéon exclusif) ; « mode-b »
-// (Réhabilitation, conditionnel) est étiqueté sous Simulation (son voisinage).
+// FICHE-RANGEMENT-2/3 — les 11 sections PAR NATURE (accordéon exclusif). Mode B (Réhabilitation)
+// n'est plus un tiroir : il vit DANS §11 Simulation (FICHE-RANGEMENT-3 Lot 3).
 const SECTION_LABELS: Record<string, string> = {
   identite: 'Identité',
   terrain: 'Terrain',
@@ -57,7 +57,6 @@ const SECTION_LABELS: Record<string, string> = {
   quartier: 'Quartier',
   potentiel: 'Potentiel',
   simulation: 'Simulation',
-  'mode-b': 'Simulation',
 }
 
 // ── M9 lot 3 — Signaler une erreur (file de QA humaine, aucune action automatique) ──
@@ -1408,13 +1407,18 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             </RefDrawer>
 
-            {/* ⑪ SIMULATION — la charge foncière (bilan) + les outils de projet (Faisabilité,
-                Calculette, Assemblage). Mode B (Réhabilitation) = tiroir conditionnel voisin. */}
+            {/* ⑪ SIMULATION — la charge foncière (bilan) + la Réhabilitation (Mode B, FICHE-RANGEMENT-3
+                Lot 3 : rentrée DANS §11, plus un 12e tiroir) + les outils de projet (Faisabilité,
+                Calculette, Assemblage). 11 tiroirs au total. */}
             <RefDrawer id="simulation" icon={IC.confiance} name="Simulation"
-              context="charge foncière · outils projet"
+              context="charge foncière · réhabilitation · outils projet"
               value={<span className="pill-mint">bilan</span>}>
               <div className="flex flex-col gap-3">
                 <BilanTab idu={idu} />
+                {/* Réhabilitation (Mode B) — bloc inline (ModeBBody), plus un tiroir séparé. */}
+                {f.mode_b?.indisponible
+                  ? <BlocIndisponible titre="Réhabilitation (Mode B)" />
+                  : f.mode_b?.disponible && <ModeBBody idu={idu} initial={f.mode_b} />}
                 <PorteOutil ico="◱" data="faisabilite-outil" titre="Faisabilité"
                   sous={`La capacité constructible de ces ${fmtM2(f.surface_m2)} : SDP, hauteur PLU, calcul tracé`}
                   onClick={() => { setParcelPrefill(idu); setModule('programme') }} />
@@ -1426,11 +1430,6 @@ export function Fiche({ idu }: { idu: string }) {
                   onClick={() => { setParcelPrefill(idu); setModule('assemblage') }} />
               </div>
             </RefDrawer>
-            {/* Mode B — Réhabilitation : tiroir conditionnel voisin de la Simulation (accordéon exclusif,
-                id « mode-b » étiqueté Simulation dans SECTION_LABELS). */}
-            {f.mode_b?.indisponible
-              ? <BlocIndisponible titre="Réhabilitation (Mode B)" />
-              : f.mode_b?.disponible && <ModeBDrawer idu={idu} initial={f.mode_b} />}
 
             {/* M55-L point 11 : le bloc IA (« Une question ? » + « Synthèse ») est REMONTÉ en tête
                 de fiche (voir plus haut, data-ia-tete). Il ne vit plus en bas de la pile. */}
