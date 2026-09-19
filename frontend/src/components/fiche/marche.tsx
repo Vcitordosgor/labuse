@@ -172,9 +172,9 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           sous="La fiche commune complète — marché (9 lignes sourcées), rareté et horizon ZAN, rythme d’instruction"
           onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setContexteCommune(f.commune!) }} />
       )}
-      <PorteOutil ico="€" data="taxe-amenagement" titre="Taxe d'aménagement"
-        sous={`Estimation détaillée pour un projet ici${f.commune ? ` (${f.commune})` : ''} — barème officiel daté, taux jamais inventés`}
-        onClick={() => setModule('taxe-amenagement')} />
+      {/* FICHE-PORTES-1 Lot 1 — la porte « Taxe d'aménagement » est RETIRÉE de §8 Marché (la taxe
+          est un levier fiscal/projet, pas du marché) : une seule porte vers cet outil, en §7
+          Fiscalité (son foyer). Comparer + Remonter le temps restent (ils portent sur le marché). */}
       {f.secteur_opportunites && f.secteur_opportunites.n > 0 && f.commune && (
         <button data-secteur-opp
           onClick={() => {
