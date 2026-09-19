@@ -5544,6 +5544,72 @@ def sources_couches() -> dict:
     return out
 
 
+@app.get("/sources/rattachements")
+def sources_rattachements() -> dict:
+    """CIRCUIT-SOURCES-1 lot 3 — pour chaque source (clé = data_sources.name), TOUT ce qu'elle touche,
+    en deux blocs dérivés du registre (le 3e bloc « Couches carte » vient de /sources/couches) :
+      - lignes_fiche : les lignes de la FICHE PARCELLE qu'elle alimente [{ligne, section}] ;
+      - ailleurs     : fiche commune, outils, Radar, exports, page client, copilote… [{quoi, ou}].
+    Chemin : NOM_VERS_SLUG → donnees.py (réservoirs) → robinets.py (catégorie+parent) + déclarations
+    fiche parcelle. Les couches restent dans leur bloc dédié (/sources/couches) — pas de doublon ici.
+    Le détail Circuit tient chaque bloc TOUJOURS présent, vide si la source n'y touche rien."""
+    from ..registre.donnees import DONNEES
+    from ..registre.robinets import ROBINETS
+    from ..registre import declarations as DEC
+    from ..circuit_etats import NOM_VERS_SLUG
+    slug2don: dict[str, list[str]] = {}
+    for cid, d in DONNEES.items():
+        for s in d.reservoirs:
+            slug2don.setdefault(s, []).append(cid)
+    don2rob: dict[str, list[tuple]] = {}
+    for _rid, r in ROBINETS.items():
+        for cid in r.chiffres:
+            don2rob.setdefault(cid, []).append((r.categorie, r.parent, r.nom))
+    quoi2sec: dict[str, set] = {}
+    for s in DEC.charger()[0]:
+        if s.categorie == "fiche":
+            for ligne in s.donnees:
+                if ligne.section:
+                    quoi2sec.setdefault(ligne.quoi, set()).add(ligne.section)
+    AILLEURS_LABEL = {"outil": "Outil", "pdf": "Exports", "page_client": "Page client",
+                      "veille": "Radar", "copilote": "Copilote", "projets": "Projets", "crm": "CRM",
+                      "notification": "Notification", "admin": "Admin"}
+    out: dict[str, dict] = {}
+    for name, slug in NOM_VERS_SLUG.items():
+        donnees = sorted(set(slug2don.get(slug, []))) if slug else []
+        lignes: list[dict] = []
+        ailleurs: list[dict] = []
+        vus_l: set = set()
+        vus_a: set = set()
+        for cid in donnees:
+            d = DONNEES.get(cid)
+            if d is None:
+                continue
+            for cat, par, nom in don2rob.get(cid, []):
+                if cat == "fiche" and par == "fiche_parcelle":
+                    key = (d.libelle, nom)
+                    if key not in vus_l:
+                        vus_l.add(key)
+                        lignes.append({"ligne": d.libelle, "section": nom})
+                elif cat in ("couche", "fond"):
+                    continue  # déjà couvert par le bloc « Couches carte »
+                else:
+                    ou = ("Fiche commune · " + nom) if (cat == "fiche" and par == "fiche_commune") \
+                        else ("Radar · " + nom) if cat == "fiche" \
+                        else (AILLEURS_LABEL.get(cat, cat) + " · " + nom)
+                    key = (d.libelle, ou)
+                    if key not in vus_a:
+                        vus_a.add(key)
+                        ailleurs.append({"quoi": d.libelle, "ou": ou})
+            for sec in quoi2sec.get(cid, ()):  # donnée DÉCLARÉE sur la fiche parcelle
+                key = (d.libelle, sec)
+                if key not in vus_l:
+                    vus_l.add(key)
+                    lignes.append({"ligne": d.libelle, "section": sec})
+        out[name] = {"lignes_fiche": lignes, "ailleurs": ailleurs}
+    return out
+
+
 @app.get("/map/bati")
 def map_bati(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     """Taux de bâti par parcelle (BD TOPO), pour le mode carte « mutabilité » (LOT 2).

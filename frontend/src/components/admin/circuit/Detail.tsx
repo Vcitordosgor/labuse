@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react'
 
 import {
   getAdminCircuitCompteur, getAdminCircuitNoteVersion, getAdminCircuitPompe,
-  getAdminCircuitReservoir, getAdminCircuitRobinet, getSourcesCouches,
+  getAdminCircuitReservoir, getAdminCircuitRobinet, getSourcesCouches, getSourcesRattachements,
   postAdminCircuitAgents, postAdminCircuitFiltreRevenir, postAdminCircuitFiltreServir,
   postAdminCircuitRevenir, postAdminFluxBascule, postAdminFluxLancerRun, postAdminSourceVeilleInjecter,
 } from '../../../lib/api'
@@ -124,6 +124,9 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
   // PAGES-RANGEMENT-1 (lot 1) — les couches carte que ce réservoir alimente (arrivées de la page Sources
   // cliente). Clé = le nom du réservoir (= data_sources.name), la même que sert /sources/couches.
   const couchesParSource = useQuery({ queryKey: ['sources-couches'], queryFn: getSourcesCouches, staleTime: 5 * 60_000 }).data
+  // CIRCUIT-SOURCES-1 (lot 3) — les 2 autres blocs de « tout ce que la source touche » : lignes de la
+  // fiche parcelle + ailleurs (commune/outils/Radar/exports). Clé = nom du réservoir (= data_sources.name).
+  const rattachements = useQuery({ queryKey: ['sources-rattachements'], queryFn: getSourcesRattachements, staleTime: 5 * 60_000 }).data
   const [msgAgent, setMsgAgent] = useState<string | null>(null)
   // CIRCUIT-P2 (lot 3.3) — « Envoyer un agent » : jamais grisé sans mot (sans crédit → message).
   const agent = useMutation({
@@ -213,17 +216,33 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
               <li key={ch.id}><span>{ch.libelle}</span><span className="muted">{ch.robinets} robinet{ch.robinets > 1 ? 's' : ''}</span></li>
             )) : <li className="muted">aucun</li>}</ul>
           </div>
-          {/* PAGES-RANGEMENT-1 (lot 1) — LES COUCHES CARTE alimentées par ce réservoir (déplacées de la
-              page Sources cliente). Chaque pastille ouvre la couche sur la carte. Muet si aucune. */}
-          {(() => { const couches = couchesParSource?.[r.nom] ?? []
-            return couches.length ? (
+          {/* CIRCUIT-SOURCES-1 (lot 3) — « tout ce que la source touche », 3 blocs TOUJOURS présents
+              (vides mais jamais absents) : Couches carte (pastilles cliquables, arrivées de PAGES-
+              RANGEMENT-1) · Lignes de la fiche parcelle (quelle ligne, quelle section) · Ailleurs. */}
+          {(() => {
+            const couches = couchesParSource?.[r.nom] ?? []
+            const rat = rattachements?.[r.nom]
+            const lignes = rat?.lignes_fiche ?? []
+            const ailleurs = rat?.ailleurs ?? []
+            return (<>
               <div className="card"><h3>Couches carte alimentées · {couches.length}</h3>
-                <div>{couches.map((c) => (
+                {couches.length ? <div>{couches.map((c) => (
                   <span key={c.kind} className="chip" title={`Ouvrir « ${c.nom} » sur la carte`}
                     onClick={() => versCouche(c.kind)}>{c.nom} ↗</span>
-                ))}</div>
+                ))}</div> : <span className="muted">aucune couche carte</span>}
               </div>
-            ) : null })()}
+              <div className="card"><h3>Lignes de la fiche parcelle · {lignes.length}</h3>
+                {lignes.length ? <ul className="list">{lignes.map((x, i) => (
+                  <li key={i}><span>{x.ligne}</span><span className="muted">{x.section}</span></li>
+                ))}</ul> : <span className="muted">aucune ligne de la fiche parcelle</span>}
+              </div>
+              <div className="card"><h3>Ailleurs · {ailleurs.length}</h3>
+                {ailleurs.length ? <ul className="list">{ailleurs.map((x, i) => (
+                  <li key={i}><span>{x.quoi}</span><span className="muted">{x.ou}</span></li>
+                ))}</ul> : <span className="muted">ni fiche commune, ni outil, ni Radar, ni export</span>}
+              </div>
+            </>)
+          })()}
         </div>
       </div>
     </div>
