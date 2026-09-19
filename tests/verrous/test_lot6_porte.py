@@ -76,7 +76,9 @@ def test_deploy_sh_joue_les_verrous_avant_tout():
     pose = s.index("Pose du crontab")
     assert porte < pose, "la porte doit être jouée AVANT la pose"
     assert "exit 1" in s[s.index("REFUS : binaire labuse introuvable"):pose]
-    assert "REFUS : un verrou est cassé" in s
+    # SOURCES-CORRECTION-2 lot 3 — CRON-1 lot 3 a réécrit deploy.sh : le refus vise un verrou BLOQUANT
+    # (G8 « sources sans contrôle » est non bloquant, -w G8). Remis sur le texte réel du script.
+    assert "REFUS : un verrou BLOQUANT est cassé" in s
 
 
 def test_la_commande_couvre_tous_les_lots():

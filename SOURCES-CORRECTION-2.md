@@ -67,3 +67,38 @@ reconstruite. `deal_wms_wfs` devient un **hub réellement vide** (ne possède pl
   `real` d'`anru` est désormais « NPNRU … [connecte] ×8 »). Idempotence vérifiée : ré-exécution = 0 ligne déplacée.
 - `verrous -w G8` exit 0 ; `tsc -b` : aucun fichier front touché (le script est backend/DB, le registre code
   déclarait déjà npnru — rien à changer côté `RESERVOIR_TABLES`).
+
+---
+
+## Lot 3 — les tests morts (pytest sans échec)
+
+« Remettre sur les valeurs réelles, ou retirer si l'invariant est porté par un verrou. » Aucun n'est
+retiré : chaque invariant reste valide — seule la **valeur** figée avait dérivé. Pour chacun, le geste :
+
+| Test | Ce qu'il affirmait (périmé) | Geste (dire lequel) |
+|---|---|---|
+| `test_circuit1_lot6` (renommé `test_agent_source_surface_et_plafond`) | « `désactivé` in agents-sources.cadence » | **Valeur réelle** : CRON-1 registre agents-sources en cron **du dimanche** ; l'invariant « jamais de dépense par défaut » est désormais porté par le **plafond `LABUSE_AGENT_PLAFOND_EUR` (défaut 0 €)**, pas par une cadence « désactivé ». Asserte cadence=`hebdo (dim)` + titre « plafonné ». |
+| `test_circuit_p_lot1::test_detail_reservoir…` | `len(jobs_eau) == 13` | **Valeur réelle** : `TOUCHE_EAU` = **9** jobs eau (CRON-1 a refait le registre). 13 → 9. |
+| `test_sentinelle::…_64_sources…` | `raison ⊆ SOURCES` casse sur `communes_ign` | **Valeur réelle** : `communes_ign` est une source **réelle** mais seedée par le **référentiel embarqué** (`scripts/registre2_raccord_db.py`), hors de la liste `SOURCES` — comme les 2 doublons déjà exceptés. Admise. |
+| `test_circuit2_lot5::test_couches_info…` | `set(couches-info) == COUCHE_PAR_CLE_FRONT` | **Valeur réelle** : le « i » couvre **les 56 kind du tuyau** (`couches_tuyau.registre`), pas le pont `COUCHE_PAR_CLE_FRONT` (hérité, 38 clés aux anciens noms V1). Asserte contre le registre tuyau ; `parcelles` → `limites_parcelles`. **+ correctif endpoint** (`app.py`) : fabrication par **défaut** « reconstruite à la bascule (tuyau vectoriel) » pour les kinds sans cid — sinon 18 couches affichaient une fabrication VIDE dans leur « i ». |
+| `test_garanties::test_g2_signature_dpe…` | `dpe_ademe quasi_vide is True` | **Valeur réelle** : SOURCES-CORRECTION-1 a rempli DPE (16 → 1123) → `quasi_vide` **False**. Devient un **garde-fou anti-régression** du correctif DPE. |
+| `test_garanties::test_g2_vert…` | « `dpe_ademe` in preuve » (la vide nommée) | **Valeur réelle** : DPE rempli → G2 mesure **0 source vide**. Asserte « 0 source » ; la promesse « une vide est nommée » reste portée par `verrou_g2`. |
+| `test_garanties::test_les_24…` | ids = 18 verrous + 7 garanties (25) | **Valeur réelle** : CRON-1 lot 2 a ajouté **G8** → 18 verrous + **8** garanties = **26**. + G8. |
+| `test_garanties::test_g1_statut…` (déjà au lot 1) | `STATUTS_ADMIS` figée sans `interne` | **Valeur réelle** (lot 1) : + `interne`. |
+
+### + 3 rouges pré-existants découverts par la suite COMPLÈTE (hors des 4 nommés, d'autres mandats)
+
+Mon rapport SOURCES-CORRECTION-1 n'avait listé « 4 échecs » qu'à partir de sous-ensembles ; la suite
+ENTIÈRE en révèle **3 de plus**, tous pré-existants (rien de mon fait SC-2 — je n'ai touché aucun de ces
+fichiers), qu'il faut aussi verdir pour « pytest sans échec » :
+
+| Test | Origine | Geste |
+|---|---|---|
+| `test_lot6_porte::test_deploy_sh_joue_les_verrous_avant_tout` | CRON-1 lot 3 a réécrit `deploy.sh` (refus d'un verrou **BLOQUANT** — G8 non bloquant). | **Valeur réelle** : le test asserte le texte réel du script (`un verrou BLOQUANT est cassé`). |
+| `test_lot6_porte::test_verrous_md_se_lit_sans_le_code` | COUCHES-TUYAU a ajouté le verrou **V7a** (tuiles) sans documenter `docs/CIRCUIT/VERROUS.md`. | **Doc remise à jour** : ligne V7a ajoutée à VERROUS.md (le document pour Vic liste bien chaque verrou joué). |
+| `test_reparations1_lot2::test_graphe_exact_dans_les_deux_sens` | 2 lecteurs de MACHINERIE non déclarés au graphe G6 : `api/couches_tuyau.py` (lit `ortho_detections`), `cascade/layers/fiche_couches4.py` (lit `parcels`). | **Arbitrage écrit** : ajoutés à `LECTEURS_ASSUMES_G6` avec leur raison (tuilage / cascade — pas des chiffres). `lecteurs_non_declares()` == []. |
+
+### Preuve
+- **`pytest tests/` (suite COMPLÈTE) : 0 échec** (les 8 + 3 rouges ci-dessus verts ; ~3099 passed). `verrous -w G8` exit 0.
+- Aucun test **retiré** : chaque invariant reste valide, seule la valeur figée avait dérivé (déclaré test par test).
+- `tsc -b` : les seuls fichiers non-test touchés sont **backend** (`api/app.py` défaut de fabrication ; `circuit_garanties.py` LECTEURS_ASSUMES) → front inchangé.

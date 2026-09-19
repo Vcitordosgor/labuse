@@ -78,9 +78,14 @@ def test_66_verdict_vide_et_page_js(db_session, source_test):
     assert r["verdict"] == "vide" and r["page_js"] == "oui"
 
 
-def test_64_surface_et_job_desactive():
+def test_agent_source_surface_et_plafond():
     from labuse.ai_models import SURFACES, model_for
     from labuse.jobs import JOBS
     assert "agent_source" in SURFACES
     assert model_for("agent_source")     # résout sans lever (modèle actif)
-    assert "désactivé" in JOBS["agents-sources"].cadence, "jamais en cron par défaut"
+    # SOURCES-CORRECTION-2 lot 3 — REMIS SUR LA VALEUR RÉELLE (avant : « désactivé » in cadence).
+    # CRON-1 a re-registré agents-sources avec un cron du DIMANCHE ; l'invariant « jamais de dépense
+    # par défaut » n'est plus porté par une cadence « désactivé » mais par le PLAFOND
+    # LABUSE_AGENT_PLAFOND_EUR (défaut 0 € = ne dépense rien), annoncé par le titre « plafonné ».
+    j = JOBS["agents-sources"]
+    assert j.cadence == "hebdo (dim)" and "plafonné" in j.titre.lower()

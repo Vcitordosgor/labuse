@@ -95,8 +95,10 @@ def test_g2_etat_invisible_sort_rouge():
 
 @pytest.mark.local
 def test_g2_signature_dpe_sur_la_base_reelle():
-    """DPE : type parcelle, 0/12, table quasi vide → quasi_vide. RNIC (riche) : 0/12 SANS
-    quasi_vide (les témoins ne sont pas des copros). Cadastre : 12/12."""
+    """SOURCES-CORRECTION-2 lot 3 — REMIS SUR LA VALEUR RÉELLE : SOURCES-CORRECTION-1 a rempli DPE
+    (16 → 1123). DPE est 0/12 sur les témoins (ils ne sont pas dans les 20 communes couvertes) MAIS sa
+    table n'est PLUS quasi vide → quasi_vide=False (garde-fou anti-régression du correctif DPE). RNIC
+    (riche) : 0/12 sans quasi_vide (les témoins ne sont pas des copros). Cadastre : 12/12."""
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
     from labuse.registre import remplissage as R
@@ -105,7 +107,7 @@ def test_g2_signature_dpe_sur_la_base_reelle():
     with sessionmaker(bind=create_engine(url))() as s:
         tem = R.temoins_du_jour(s)
         assert len(tem) == 12
-        assert R.remplissage_source(s, "dpe_ademe", tem)["quasi_vide"] is True
+        assert R.remplissage_source(s, "dpe_ademe", tem)["quasi_vide"] is False  # table pleine (1123)
         assert R.remplissage_source(s, "rnic_anah", tem)["quasi_vide"] is False
         assert R.remplissage_source(s, "cadastre_api_carto", tem)["remplis"] == 12
 
@@ -118,7 +120,10 @@ def test_g2_vert_sur_la_base_reelle():
     with sessionmaker(bind=create_engine(url))() as s:
         r = CG.verrou_g2(s)
         assert r.verdict == "ok", (r.preuve, r.details[:3])
-        assert "dpe_ademe" in r.preuve  # la vide est NOMMÉE, jamais tue
+        # SOURCES-CORRECTION-2 lot 3 : DPE rempli (SC-1) → G2 ne mesure PLUS aucune source vide.
+        # La promesse « une vide est nommée, jamais tue » reste portée par verrou_g2 (qui les liste
+        # dans sa preuve) ; ici on prouve simplement que la base réelle n'a plus de source vide.
+        assert "0 source" in r.preuve  # 0 source(s) vide(s) mesurée(s)
 
 
 # ── G3 — je sais ce qui nourrit le score ───────────────────────────────────────────────
@@ -321,10 +326,11 @@ def test_fuite2_lidar_plus_quasi_vide():
 # ── la commande unique : 24, toujours tous ─────────────────────────────────────────────
 @pytest.mark.local
 def test_les_24_se_jouent_toujours_tous():
-    """La composition de « labuse circuit verrous » : 18 verrous + 7 garanties = 25, TOUJOURS
+    """La composition de « labuse circuit verrous » : 18 verrous + 8 garanties = 26, TOUJOURS
     tous — même quand un verrou casse en route (le vécu : l'arrêt-au-premier sur V3a masquait
     les suivants, la commande n'en montrait que 7). SOURCES-3 lot 4 : V4e (garde-fou 974) ajouté ;
-    COUCHES-TUYAU-1 : V7a (verrou des tuiles) ajouté."""
+    COUCHES-TUYAU-1 : V7a (verrou des tuiles) ajouté ; SOURCES-CORRECTION-2 lot 3 : + G8 (sources
+    sans contrôle, ajouté par CRON-1 lot 2) — REMIS SUR LA VALEUR RÉELLE (avant : G1..G7 = 25)."""
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
     from labuse import circuit_verrous
@@ -334,7 +340,7 @@ def test_les_24_se_jouent_toujours_tous():
     ids = [r.id for r in resultats]
     assert ids == ["V1a", "V1b", "V1c", "V1d", "V2a", "V2b", "V3a", "V3b", "V3c",
                    "V4a", "V4b", "V4c", "V4d", "V4e", "V5a", "V5b", "V5c", "V7a",
-                   "G1", "G2", "G3", "G4", "G5", "G6", "G7"], ids
+                   "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8"], ids
 
 
 def test_la_cli_ne_conditionne_plus_les_garanties():
