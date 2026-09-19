@@ -224,8 +224,10 @@ ROBINETS: dict[str, Robinet] = {
     "/parcels/{idu}", "json_puis_js", chiffres=("perimetres_dispositifs_liste",)),
  "fiche_parcelle_score": _r("fiche", "Score d'opportunité (tier)", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("tier_opportunite", "rang_tier",)),
+ # FICHE-RANGEMENT-1 Lot 2 — + rtaa_exigences : le rappel RTAA DOM (RtaaBlock du bilan) est SERVI
+ # par le tiroir Constructibilité de la fiche, pas seulement par l'outil Faisabilité → entre au graphe.
  "fiche_parcelle_constructibilite": _r("fiche", "Constructibilité", "fiche_parcelle",
-    "/parcels/{idu}", "json_puis_js", chiffres=("capacite_logements", "sdp_residuelle_m2", "charge_fonciere_eur", "potentiel_verdict", "prix_neuf_observe_eur_m2", "mixite_clause", "surface_vendable_m2", "surface_plancher_m2", "marge_surelevation_m", "taxe_amenagement_estimee_eur",)),
+    "/parcels/{idu}", "json_puis_js", chiffres=("capacite_logements", "sdp_residuelle_m2", "charge_fonciere_eur", "potentiel_verdict", "prix_neuf_observe_eur_m2", "mixite_clause", "surface_vendable_m2", "surface_plancher_m2", "marge_surelevation_m", "taxe_amenagement_estimee_eur", "rtaa_exigences",)),
  "fiche_parcelle_le_bien": _r("fiche", "Le bien", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("emprise_batie_m2", "hauteur_bati_m", "n_batiments", "surface_libre_sol_m2", "nature_toit", "pente_toit_deg", "dpe_connu", "rnb_batiments_liste", "ban_plus_adresses_bati", "part_artificialisee_pct", "usage_sol_dominant",)),
  "fiche_parcelle_risques": _r("fiche", "Risques et protections", "fiche_parcelle",

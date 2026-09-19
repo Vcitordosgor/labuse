@@ -32,6 +32,15 @@ donnees:
     absence: "Taxe d'aménagement : taux communal non renseigné pour cette commune."
     absence_type: non_ingeree
     pourquoi: "Le taux (référence), avec la phrase disant sur quoi le montant se calcule ; replié."
+  # FICHE-RANGEMENT-1 Lot 2 — rtaa_exigences était RENDU dans ce tiroir (RtaaBlock du bilan) mais
+  # déclaré seulement à l'outil Faisabilité. On le CÂBLE ici, à son tiroir réel (donnée existante,
+  # passe-plat config/rtaa_dom.yaml — pas de chantier requis).
+  - quoi:  rtaa_exigences
+    ou:    { rang: 50, etat: replie, section: "Bilan indicatif" }
+    comment: { libelle: "Rappel RTAA DOM", format: liste, i: "Exigences réglementaires de conception DOM (aération, protection solaire, eau chaude solaire) — rappel au stade faisabilité, hors scoring. Règles versionnées config/rtaa_dom.yaml, vérifiées sur Légifrance." }
+    absence: "RTAA DOM : aucune exigence de conception à rappeler ici."
+    absence_type: absente_ici
+    pourquoi: "Rappel réglementaire de conception utile au promoteur ; replié derrière « N exigences » (information, jamais un filtre)."
 ---
 surface:   fiche_parcelle_proprietaire
 nom:       "Propriétaire"
