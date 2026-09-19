@@ -1186,9 +1186,12 @@ export function Fiche({ idu }: { idu: string }) {
                 mixité sociale (non renseignée à ce jour). */}
             {/* FICHE-RANGEMENT-1 Lot 1 (doublon #2) — le CODE DE ZONE vit UNE fois : ici en tuile
                 dissoute (glance) + en détail dans ReglementPluBlock (« Règlement — zone X »). */}
+            {/* FICHE-RANGEMENT-3 Lot 2 — « N % SDP consommée » n'apparaît plus DANS le sous-titre :
+                la micro-jauge (première ligne du tiroir ouvert) le porte déjà. Le sous-titre ne garde
+                que l'article/zone non publiée (rien quand la zone est connue → la jauge suffit). */}
             <RefDrawer id="urbanisme" icon={IC.regles} name="Urbanisme"
               value={reglesGabarit}
-              context={[reglesZone ? null : reglesArticle ? `art. ${reglesArticle}` : 'zone non publiée au GPU', pctConsomme != null ? CLIENT.fiche.sdpConsommee(pctConsomme) : null].filter(Boolean).join(' · ')}
+              context={reglesZone ? undefined : (reglesArticle ? `art. ${reglesArticle}` : 'zone non publiée au GPU')}
               micro={pctConsomme != null
                 ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
                 : <MicroJauge pct={0} label={[reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
@@ -1280,7 +1283,10 @@ export function Fiche({ idu }: { idu: string }) {
                     date restent. « Pourquoi ce score » (bloc Analyse) garde ses contributions. */}
                 {/* RETOURS-23 — les faits de situation (zonage, SDP résiduelle, surface, parc…) sous un
                     kicker « Situation », comme la maquette ; primitive Line inchangée (détail + source). */}
-                {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS'); return rl.length > 0
+                {/* FICHE-RANGEMENT-3 Lot 2 — la ligne « Zonage PLU » (layer zonage_plu_gpu) répète la
+                    tuile « Zone » en tête → retirée (une seule ligne pour la zone). La ligne « bâti :
+                    N bâtiments » (layer bati) répète §3 Bâti (nb_batiments) → retirée. */}
+                {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS' && l.layer !== 'zonage_plu_gpu' && l.layer !== 'bati'); return rl.length > 0
                   ? <div><GroupLabel>Situation</GroupLabel><div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div></div> : null })()}
                 {/* M60 P1c — PORTES en pied d'Urbanisme : les liens Annuaire PLU + lettre de zonage
                     REPRIS en forme porte (.porte-outil), accroches contextualisées (zone PLU). */}
