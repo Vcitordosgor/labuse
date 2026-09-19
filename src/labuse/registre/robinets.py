@@ -216,8 +216,10 @@ ROBINETS: dict[str, Robinet] = {
     "/radar/biens", "json_puis_js", chiffres=("annonces_actives_n", "prix_demande_median_eur_m2",)),
  "outil_radar_marche": _r("outil", "Marché", "outil_radar_client",
     "/radar/marche", "json_puis_js", chiffres=("annonces_actives_n", "prix_demande_median_eur_m2", "delai_vente_median_j", "ecart_demande_acte_pct",)),
+ # FICHE-RANGEMENT-1 Lot 3 — + exposition_versant : la tuile « Exposition » de l'en-tête sert cette
+ # donnée (RGE ALTI) ; elle entre au graphe (orpheline du registre déclarée).
  "fiche_parcelle_entete": _r("fiche", "En-tête (adresse, géométrie)", "fiche_parcelle",
-    "/parcels/{idu}", "json_puis_js", chiffres=("adresse_ban", "parcelle_geometrie",)),
+    "/parcels/{idu}", "json_puis_js", chiffres=("adresse_ban", "parcelle_geometrie", "exposition_versant",)),
  "fiche_parcelle_urbanisme": _r("fiche", "Règlement d'urbanisme (zones + extraits)", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("reglement_plu_bloc", "zone_plu_famille",)),
  "fiche_parcelle_dispositifs": _r("fiche", "Dispositifs et périmètres (QPV, ANRU, ZFANG, FRR)", "fiche_parcelle",
@@ -228,11 +230,15 @@ ROBINETS: dict[str, Robinet] = {
  # par le tiroir Constructibilité de la fiche, pas seulement par l'outil Faisabilité → entre au graphe.
  "fiche_parcelle_constructibilite": _r("fiche", "Constructibilité", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("capacite_logements", "sdp_residuelle_m2", "charge_fonciere_eur", "potentiel_verdict", "prix_neuf_observe_eur_m2", "mixite_clause", "surface_vendable_m2", "surface_plancher_m2", "marge_surelevation_m", "taxe_amenagement_estimee_eur", "rtaa_exigences",)),
+ # FICHE-RANGEMENT-1 Lot 3 — + cosia_detecte_m2 : le tiroir « Le bien » sert le bâti CoSIA hors
+ # BD TOPO (orpheline du registre déclarée).
  "fiche_parcelle_le_bien": _r("fiche", "Le bien", "fiche_parcelle",
-    "/parcels/{idu}", "json_puis_js", chiffres=("emprise_batie_m2", "hauteur_bati_m", "n_batiments", "surface_libre_sol_m2", "nature_toit", "pente_toit_deg", "dpe_connu", "rnb_batiments_liste", "ban_plus_adresses_bati", "part_artificialisee_pct", "usage_sol_dominant",)),
+    "/parcels/{idu}", "json_puis_js", chiffres=("emprise_batie_m2", "hauteur_bati_m", "n_batiments", "surface_libre_sol_m2", "nature_toit", "pente_toit_deg", "dpe_connu", "rnb_batiments_liste", "ban_plus_adresses_bati", "part_artificialisee_pct", "usage_sol_dominant", "cosia_detecte_m2",)),
+ # FICHE-RANGEMENT-1 Lot 3 — + endiguement_zone_protegee : la cascade risques sert le système
+ # d'endiguement (orpheline du registre déclarée).
  "fiche_parcelle_risques": _r("fiche", "Risques et protections", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("n_vigilances", "aleas_parcelle_liste",
-                                                "sar_divergence",)),
+                                                "sar_divergence", "endiguement_zone_protegee",)),
  "fiche_parcelle_marche": _r("fiche", "Marché et secteur", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("prix_terrain_secteur_eur_m2", "prix_sortie_bati_eur_m2", "ventes_100m_n", "ventes_retenues_n", "ventes_ecartees_n", "dvf_parcelle_liste", "parc_social_rpls_logements", "radar_annonces_liste",)),
  "fiche_parcelle_reseaux": _r("fiche", "Réseaux et accès", "fiche_parcelle",

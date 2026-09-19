@@ -515,6 +515,13 @@ SONDE_COUVRE: dict[str, tuple[str, ...]] = {
 #: raison (un couple silencieux = verrou V5c cassé, jamais un « non couvert »). Raison par
 #: chiffre (elle vaut pour tous ses couples non couverts).
 NON_SONDES: dict[str, str] = {
+    # FICHE-RANGEMENT-1 Lot 2 — rtaa_exigences servi à DEUX robinets (fiche Constructibilité +
+    # outil Faisabilité) par le MÊME passe-plat load_yaml_config('rtaa_dom') : un seul chemin
+    # machine (config/rtaa_dom.yaml versionné), aucun recalcul — comparaison robinet à robinet
+    # sans objet.
+    "rtaa_exigences": "fiche (Constructibilité) + outil (Faisabilité) lisent le MÊME passe-plat "
+                      "config/rtaa_dom.yaml (modules.py:faisabilite_sens1) — un seul chemin machine, "
+                      "aucun recalcul",
     # SOURCES-3 lot 1 — deux robinets, deux surfaces, deux définitions ASSUMÉES : la fiche/potentiel
     # sert la hauteur BD TOPO (max des bâtiments intersectants, _hauteur_bati_m) ; l'extrusion 3D de
     # la carte (couche_batiments_3d) préfère le faîtage LiDAR HD mesuré (batiment_hauteur_lidar), repli
