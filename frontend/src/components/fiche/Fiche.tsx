@@ -454,9 +454,53 @@ export function Fiche({ idu }: { idu: string }) {
   const expo = useQuery({ queryKey: ['exposition', idu], queryFn: () => getParcelExposition(idu),
     enabled: !!idu, staleTime: 6 * 60 * 60 * 1000, retry: false })
   const fq = ficheQuery.trim().toLowerCase()
-  const ficheMatches = fq && f
-    ? f.lines.filter((l) => `${l.layer} ${layerLabel(l.layer)} ${l.detail ?? ''} ${l.source ?? ''} ${l.result ?? ''}`.toLowerCase().includes(fq))
-    : []
+  // FICHE-RANGEMENT-2 Lot 3 — « recherche dans tout » : la loupe ne remplace plus la fiche par une
+  // liste à plat. Une requête ouvre TOUS les tiroirs (forceOpen via le contexte accordéon) et le
+  // nombre de correspondances est compté par le surligneur (hlCount, effet ci-dessous).
+  const [hlCount, setHlCount] = useState(0)
+  const accValueF = useMemo(() => ({ ...accValue, forceOpen: !!fq }), [accValue, fq])
+  // Surlignage EN PLACE via l'API Custom Highlight (CSS.highlights) : construit des Range sur les
+  // nœuds texte de la fiche SANS muter le DOM géré par React (sûr). Ouvre aussi les <details>
+  // « sans objet » pour que rien ne reste caché. Un MutationObserver re-surligne quand un bloc
+  // asynchrone (bilan, traducteur PLU…) finit d'arriver. Requête vide → surlignage effacé.
+  useEffect(() => {
+    const HL: any = (typeof CSS !== 'undefined' && (CSS as any).highlights) ? (CSS as any).highlights : null
+    const q = ficheQuery.trim().toLowerCase()
+    if (!HL) { setHlCount(0); return }
+    if (!q) { HL.delete('fiche-search'); setHlCount(0); return }
+    let raf = 0
+    const run = () => {
+      const box = document.querySelector('.fiche-v6') as HTMLElement | null
+      if (!box) return
+      box.querySelectorAll('details:not([open])').forEach((d) => { (d as HTMLDetailsElement).open = true })
+      const ranges: Range[] = []
+      const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, {
+        acceptNode: (n) => {
+          const p = (n as Text).parentElement
+          if (!p || p.closest('input,textarea,script,style')) return NodeFilter.FILTER_REJECT
+          return (n.textContent || '').toLowerCase().includes(q) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+        },
+      })
+      let node: Node | null; let first: Range | null = null
+      while ((node = walker.nextNode())) {
+        const low = (node.textContent || '').toLowerCase()
+        let i = low.indexOf(q)
+        while (i !== -1) {
+          const r = document.createRange(); r.setStart(node, i); r.setEnd(node, i + q.length)
+          ranges.push(r); if (!first) first = r
+          i = low.indexOf(q, i + q.length)
+        }
+      }
+      HL.set('fiche-search', new (window as any).Highlight(...ranges))
+      setHlCount(ranges.length)
+      if (first) first.startContainer.parentElement?.scrollIntoView({ block: 'center' })
+    }
+    run()
+    const obs = new MutationObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(run) })
+    const box0 = document.querySelector('.fiche-v6')
+    if (box0) obs.observe(box0, { childList: true, subtree: true, characterData: true })
+    return () => { cancelAnimationFrame(raf); obs.disconnect(); HL.delete('fiche-search') }
+  }, [ficheQuery, f])
 
   // Correctif M5 (verdict d'en-tête) : étage 0 prime (bannière écartée + motifs, inchangé) ;
   // sinon un run v2 présent pilote bannière + badge (tier, rang, ×N) ; le statut matrice
@@ -555,7 +599,7 @@ export function Fiche({ idu }: { idu: string }) {
   // aux petites largeurs (aucun débordement horizontal). Ne PAS toucher les tailles de texte
   // ni les paddings (calés en M56-B3 : panneau 14, .gr 10 vertical, .gr partagée).
   return (
-    <FicheAccordionCtx.Provider value={accValue}>
+    <FicheAccordionCtx.Provider value={accValueF}>
     <aside className="fiche-v6 absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line shadow-2xl">
       {/* C1 : le bandeau « écartée » séparé est retiré — le motif s'affiche à côté du badge
           (en-tête, plus bas) et « voir pourquoi » ouvre l'onglet « Pourquoi pas ». Les motifs
@@ -912,7 +956,7 @@ export function Fiche({ idu }: { idu: string }) {
             onKeyDown={(e) => e.key === 'Escape' && (setFicheQuery(''), setFicheSearchOpen(false))}
             placeholder="Chercher dans cette fiche (risque, réseau, ICPE…)"
             className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
-          {fq && <span className="shrink-0 text-[11px] text-txt-mut">{ficheMatches.length} résultat{ficheMatches.length > 1 ? 's' : ''}</span>}
+          {fq && <span data-fiche-search-count className="shrink-0 text-[11px] text-txt-mut">{hlCount} résultat{hlCount > 1 ? 's' : ''}{hlCount === 0 ? ' — rien dans cette fiche' : ' surlignés'}</span>}
         </div>
       )}
 
@@ -921,15 +965,9 @@ export function Fiche({ idu }: { idu: string }) {
 
       {/* M68 P1a — l'ancien conteneur de défilement est FUSIONNÉ dans celui ouvert après l'en-tête
           (plus haut) : un seul conteneur `overflow-y-auto flex-1` pour tout le corps de la fiche. */}
-        {/* A6 : recherche active → on remplace les onglets par les lignes de la fiche qui matchent */}
-        {fq && f && (
-          <div data-fiche-search-results>
-            <p className="label-caps mb-2">Dans cette fiche · « {ficheQuery.trim()} »</p>
-            {ficheMatches.length === 0
-              ? <p className="text-xs text-txt-dim">Aucune donnée de la fiche ne correspond.</p>
-              : <div className="flex flex-col gap-1">{ficheMatches.map((l, i) => <Line key={i} line={l} />)}</div>}
-          </div>
-        )}
+        {/* FICHE-RANGEMENT-2 Lot 3 — plus de liste à plat qui remplaçait la fiche : la recherche
+            garde la pile, ouvre tous les tiroirs (forceOpen) + les « sans objet », et surligne
+            les correspondances en place (effet CSS.highlights). Le compteur est dans la barre. */}
         {isLoading && (
           <div className="flex flex-col gap-2">
             <Loading label="Chargement de la fiche" className="text-xs" />
@@ -959,7 +997,7 @@ export function Fiche({ idu }: { idu: string }) {
             <button onClick={() => refetch()} className="mt-2 min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Réessayer</button>
           </div>
         ))}
-        {!fq && f && tab === 'synthese' && (() => {
+        {f && tab === 'synthese' && (() => {
           // micro-preuves (spec) dérivées des données déjà chargées
           const shorten = (s: string) => fmtLibelleBrut(s).replace(/\s*[—(].*$/, '').trim()
           const proprioPastilles = proprioLines.filter((l) => (l.weight ?? 0) > 0).slice(0, 3).map((l) => shorten(l.detail).slice(0, 26))

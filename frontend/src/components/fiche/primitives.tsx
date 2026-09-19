@@ -70,7 +70,9 @@ const IC = {
 // M55-L point 10 — ACCORDÉON EXCLUSIF des tiroirs de la fiche : un seul ouvert à la fois, zéro
 // ouvert légal (initial). État à champ unique (store.ficheTiroir[idu]), exposé par contexte pour
 // éviter le prop-drilling sur les 11 tiroirs. `openId` = id du tiroir ouvert (null = tout fermé).
-const FicheAccordionCtx = createContext<{ openId: string | null; toggle: (id: string) => void }>({ openId: null, toggle: () => {} })
+// FICHE-RANGEMENT-2 Lot 3 — `forceOpen` : la recherche intra-fiche ouvre TOUS les tiroirs (pour
+// chercher « dans tout », y compris les repliés) sans changer l'accordéon exclusif au repos.
+const FicheAccordionCtx = createContext<{ openId: string | null; toggle: (id: string) => void; forceOpen?: boolean }>({ openId: null, toggle: () => {} })
 
 /** M56-B2 · tiroir de la fiche — GABARIT STRICT de la DA §4/4b (docs/DA-LABUSE.html) : la rangée
  *  fermée EST une `.gr` (colonne gauche `.gr-t` titre + `.gr-s` UNE ligne de contexte grise ;
@@ -85,14 +87,16 @@ function RefDrawer({ id, name, context, value, valueColor, accent, icon, micro, 
   accent?: boolean; micro?: ReactNode; children?: ReactNode
 }) {
   const acc = useContext(FicheAccordionCtx)
-  const open = !!id && acc.openId === id
+  const open = !!acc.forceOpen || (!!id && acc.openId === id)
   const absent = valueColor === 'var(--txt-faint)'
   // M57-P1 (a) : à l'ouverture, l'en-tête du tiroir remonte en HAUT de la zone visible — après
   // l'animation d'ouverture (~200ms), en 'smooth' ; 'auto' (immédiat) si l'OS demande moins de
   // mouvement. Vaut pour les 7 tiroirs (comportement porté par RefDrawer). scrollMarginTop garde 8px.
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (!open || !ref.current) return
+    // FICHE-RANGEMENT-2 Lot 3 — pas de scroll auto quand la recherche force TOUS les tiroirs ouverts
+    // (sinon 11 scrollIntoView se battent) ; le scroll vers le 1ᵉʳ résultat est piloté par la recherche.
+    if (!open || acc.forceOpen || !ref.current) return
     const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     const t = setTimeout(() => ref.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }), reduced ? 0 : 220)
     return () => clearTimeout(t)
