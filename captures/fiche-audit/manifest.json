@@ -1,0 +1,134 @@
+[
+ {
+  "idu": "97410000AN0347",
+  "key": "constrained",
+  "drawers": [
+   {
+    "title": "Urbanisme",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Constructibilité",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Dispositifs et périmètres",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Réhabilitation",
+    "present": false,
+    "opened": false
+   },
+   {
+    "title": "Le bien",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Risques et protections",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Marché et secteur",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Réseaux et accès",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Autour de cette parcelle",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Dispositifs territoriaux",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Propriétaire",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Données et méthode",
+    "present": true,
+    "opened": true
+   }
+  ]
+ },
+ {
+  "idu": "97422000AK0924",
+  "key": "simple",
+  "drawers": [
+   {
+    "title": "Urbanisme",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Constructibilité",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Dispositifs et périmètres",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Réhabilitation",
+    "present": false,
+    "opened": false
+   },
+   {
+    "title": "Le bien",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Risques et protections",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Marché et secteur",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Réseaux et accès",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Autour de cette parcelle",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Dispositifs territoriaux",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Propriétaire",
+    "present": true,
+    "opened": true
+   },
+   {
+    "title": "Données et méthode",
+    "present": true,
+    "opened": true
+   }
+  ]
+ }
+]
