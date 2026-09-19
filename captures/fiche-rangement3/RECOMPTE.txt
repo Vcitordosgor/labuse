@@ -1,0 +1,30 @@
+FICHE-RANGEMENT-3 — RECOMPTE avant(355ac3ff) / après(lots 1-5)
+témoins 97410000AN0347 (constrained), 97422000AK0924 (simple)
+
+===== constrained (97410000AN0347) =====
+markers before=77 after=79 | LOST=(aucun) | ADDED=data-le-bien-ban,data-terrain-azimut
+  [OK] §11 Fiscal&leviers retiré (QPV)  (avant true / après true)
+  [OK] §11 RTAA retiré  (avant true / après true)
+  [OK] §7 Fiscalité garde QPV/TVA  (avant true / après true)
+  [OK] §4 Urbanisme garde RTAA  (avant true / après true)
+  [OK] §8 Marché : Commerces retiré  (avant true / après true)
+  [OK] §9 Quartier garde À proximité (commerces)  (avant true / après true)
+  [OK] §4 ligne Zonage PLU retirée (recouvrement)  (avant true / après true)
+  [OK] §2 Azimut ajouté  (avant true / après true)
+  [OK] §3 Adresses BAN PLUS ajouté  (avant true / après true)
+
+===== simple (97422000AK0924) =====
+markers before=79 after=81 | LOST=(aucun) | ADDED=data-le-bien-ban,data-terrain-azimut
+  [OK] §11 Fiscal&leviers retiré (QPV)  (avant true / après true)
+  [OK] §11 RTAA retiré  (avant true / après true)
+  [OK] §7 Fiscalité garde QPV/TVA  (avant true / après true)
+  [OK] §4 Urbanisme garde RTAA  (avant true / après true)
+  [OK] §8 Marché : Commerces retiré  (avant true / après true)
+  [OK] §9 Quartier garde À proximité (commerces)  (avant true / après true)
+  [OK] §8 Marché : Sitadel(permis) retiré  (avant true / après true)
+  [OK] §4 SDP consommée : 2 -> 1  (avant true / après true)
+  [OK] §4 ligne Zonage PLU retirée (urbaine)  (avant true / après true)
+  [OK] §2 Azimut ajouté  (avant true / après true)
+  [OK] §3 Adresses BAN PLUS ajouté  (avant true / après true)
+
+BILAN : TOUS OK — 0 marqueur perdu, doublons déplacés, ajouts présents
