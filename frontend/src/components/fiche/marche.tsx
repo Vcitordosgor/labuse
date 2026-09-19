@@ -53,7 +53,10 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
   const faisa = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu), enabled: !!f })
   // SECTEUR = prix du TERRAIN NU SEUL (dvf_marche `bati_m2=0`) — jamais moyenné avec le bâti (M137-G).
   const dvfSecteur = f.dvf_parcelle?.secteur?.find((s) => s.type_bien === 'terrain')
-  const marcheLines = f.lines.filter((l) => l.onglet === 'marche')
+  // FICHE-RANGEMENT-3 Lot 1 — « Commerces et services à proximité » (layer amenites) et « Permis
+  // SITADEL » (layer sitadel) vivent déjà en §9 Quartier (proximites_equipements, PermitsProximityBlock,
+  // DepotsBlock) → retirés de §8 Marché pour qu'un fait ne vive qu'une fois.
+  const marcheLines = f.lines.filter((l) => l.onglet === 'marche' && l.layer !== 'amenites' && l.layer !== 'sitadel')
   const mb = faisa.data?.marche
   const horizon = mb?.fraicheur?.horizon_libelle || mb?.dvf_couverture?.libelle
   const contexte = (dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} vente${dvfSecteur.n_ventes > 1 ? 's' : ''} secteur` : 'comparables DVF') + (horizon ? ` · DVF — ${horizon}` : '')

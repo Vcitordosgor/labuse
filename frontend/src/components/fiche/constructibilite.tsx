@@ -508,14 +508,12 @@ export function BilanTab({ idu }: { idu: string }) {
       {b.marche?.median != null && (
         <div>
           <GroupLabel>Prix de sortie retenu (bilan)</GroupLabel>
-          <FactNote>Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché et secteur » (échantillon, rayon, tendance, fraîcheur y sont détaillés).</FactNote>
+          <FactNote>Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché » (échantillon, rayon, tendance, fraîcheur y sont détaillés).</FactNote>
         </div>
       )}
-      {/* FICHE-RANGEMENT-2 Lot 1 — Fiscal & leviers → §7 Fiscalité ; RTAA → §4 Urbanisme.
-          Extraits en blocs feuilles (FiscalLeviersBlock, RtaaFromBilan) composés ici en attendant
-          le basculement des sections (non-breaking). */}
-      <FiscalLeviersBlock idu={idu} />
-      <RtaaFromBilan idu={idu} />
+      {/* FICHE-RANGEMENT-3 Lot 1 — « Fiscal & leviers » (QPV/TVA/taxe) et « RTAA DOM » RETIRÉS de la
+          Simulation : ils vivent déjà en §7 Fiscalité (FiscalLeviersBlock) et §4 Urbanisme
+          (RtaaFromBilan). §11 ne garde que le prix de sortie retenu (+ les 3 portes, côté Fiche). */}
     </div>
   )
 }
