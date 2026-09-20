@@ -141,6 +141,23 @@ zones:
           comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité
           sociale.
         statut: valide
+      emprise_sol:
+        ces:
+          plage: true
+          plage_pct:
+            min: 70
+            max: 80
+          secteurs_pct:
+            Upi: 80
+            Upr: 70
+          article: Up.9
+          page_pdf: 33
+          citation: 'En secteur Upi : L''emprise au sol des constructions ne devra pas excéder 80 % de la
+            superficie de l''unité foncière. Elle pourra être portée à 100 %, uniquement en rez-de-chaussée.
+            En secteur Upr : L''emprise au sol des constructions ne devra pas excéder 70 % de la superficie
+            de l''unité foncière. Elle pourra être de 80 % pour les parcelles dont la superficie est inférieure
+            à 200 m2.'
+          statut: valide
     silence: autorise
     silence_src: 'Le règlement procède par liste fermée d''interdictions : article Up.1 « Occupations et utilisations
       du sol interdites — Sont interdites : … » (p. 30) puis article Up.2 « Occupations et utilisations du sol soumises

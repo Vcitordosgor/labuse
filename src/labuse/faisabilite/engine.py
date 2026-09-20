@@ -312,6 +312,16 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         steps.append(Step("Emprise au sol — % réglementé",
                           f"min(reculs, {surface_m2:.0f}×{rules.emprise_sol_pct:g}%)",
                           f"~{emprise:.0f} m²", rules.sources.get("emprise", "Art. 9")))
+    elif rules.emprise_plage:
+        # PLU-CALIBRAGE-2 lot 2 : l'emprise varie par secteur (base) — on AFFICHE la plage et on
+        # reste ESTIMÉ (secteur non déterminé), bornée par les reculs. Jamais simplifié en silence.
+        pl = rules.emprise_plage.get("plage_pct") or {}
+        sec = " ; ".join(f"{k} {v} %" for k, v in (rules.emprise_plage.get("secteurs_pct") or {}).items())
+        steps.append(Step("Emprise au sol — % réglementé",
+                          f"varie par secteur ({pl.get('min')}–{pl.get('max')} % : {sec}) — "
+                          "secteur non déterminé → bornée par les reculs",
+                          "—", rules.emprise_plage.get("source", rules.sources.get("emprise", "Art. 9")),
+                          prov="estimee"))
     else:
         steps.append(Step("Emprise au sol — % réglementé",
                           "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
@@ -341,6 +351,18 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         steps.append(Step("Niveaux constructibles",
                           f"R+{int(rules.niveaux_max)} lu au règlement = {niveaux} niveaux",
                           f"R+{int(rules.niveaux_max)}", he_src))
+    elif rules.hauteur_plage:
+        # PLU-CALIBRAGE-2 lot 2 : la hauteur varie par secteur (base) — on AFFICHE la plage et on
+        # reste ESTIMÉ (secteur non déterminé). Valeur retenue = borne BASSE (prudent).
+        pl = rules.hauteur_plage.get("plage_m") or {}
+        sec = " ; ".join(f"{k} {v} m" for k, v in (rules.hauteur_plage.get("secteurs_m") or {}).items())
+        h_bas = float(pl.get("min") or hyp.etage_m)
+        niveaux = max(1, int(h_bas // hyp.etage_m))
+        steps.append(Step("Niveaux constructibles",
+                          f"hauteur par secteur {pl.get('min')}–{pl.get('max')} m ({sec}) — secteur non "
+                          f"déterminé → borne basse {pl.get('min')} m ÷ {hyp.etage_m:g} = {niveaux} (estimé)",
+                          f"R+{max(0, niveaux - 1)}",
+                          rules.hauteur_plage.get("source", he_src), prov="estimee"))
     elif _is_num(rules.he_m):
         niveaux = int(float(rules.he_m) // hyp.etage_m)
         steps.append(Step("Niveaux constructibles",

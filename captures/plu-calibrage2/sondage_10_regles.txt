@@ -1,10 +1,27 @@
 ============================================================================================
-PLU-CALIBRAGE-2 — SONDAGE : 10 règles tirées au hasard parmi 75 validées
+PLU-CALIBRAGE-2 — SONDAGE : 10 règles tirées au hasard parmi 76 validées
 Commune : Saint-Denis (97411) · règlement 97411_reglement_20260805.pdf · millésime 2026-08-05 · md5 43426a8faf55efcdaa2a235e95a45d2f
 Tirage reproductible (graine 20260920). Vic lit CE fichier, pas le PDF.
 ============================================================================================
 
-── 1/10 ── zone Uj · rubrique retraits · feuille voie   [OK · recouvrement 100% · attribuée à Uj]
+── 1/10 ── zone Uvl · rubrique hauteur · feuille faitage   [OK · recouvrement 100% · attribuée à Uvl]
+   valeur retenue : m = 10
+   article        : Uv.10   ·   page PDF : 84
+   citation       : En secteur Uvl : … ne doit pas excéder 10m.
+   — extrait du PDF autour de la citation (p.84, 5 lignes avant / 5 après) —
+     | Article Uv.10
+     | Hauteur maximale des constructions
+     | Il sera fait application des prescriptions mentionnées aux «Dispositions Générales - paragraphe
+     | XV. Prospects. Hauteur maximale des constructions ».
+     | 
+     | En secteur Uva :
+     | 
+     | La hauteur maximale H des constructions ne doit pas excéder 4 m.
+     | 
+     | En secteur Uvac :
+     | 
+
+── 2/10 ── zone Uj · rubrique retraits · feuille voie   [OK · recouvrement 100% · attribuée à Uj]
    valeur retenue : formule = Les constructions principales seront implantées avec un recul de 4 m minimum par rapport à l’alignement. En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à 3 m minimum de l'alignement. · min_m = 3
    article        : Article Uj.6   ·   page PDF : 61
    citation       : En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à 3 m minimum de l'alignement.
@@ -21,7 +38,7 @@ Tirage reproductible (graine 20260920). Vic lit CE fichier, pas le PDF.
      | Les constructions annexes à la construction principale à destination de stationnement pourront
      | s’implanter à l’alignement.
 
-── 2/10 ── zone Udp · rubrique hauteur · feuille faitage   [OK · recouvrement 72% · attribuée à Udp]
+── 3/10 ── zone Udp · rubrique hauteur · feuille faitage   [OK · recouvrement 72% · attribuée à Udp]
    valeur retenue : m = 18
    article        : Ud.10   ·   page PDF : 44
    citation       : En secteur Udp : Hauteur maximale R+5, soit 18 m, au faîtage ou à l'acrotère, généralisé sauf sur les rues suivantes : R+8 Blvd Jean Jaurès, Bld Lancastel et rue L. Rambaud, soit 27 m ; R+3, soit 12 m, ruelles Tadar, Beauvillain, Magnan, Turpin, Nicaise, rues Marcadet et Magnan et allée de la cité Ah Soune.
@@ -35,73 +52,7 @@ Tirage reproductible (graine 20260920). Vic lit CE fichier, pas le PDF.
      | : ruelles Tadar, Beauvillain, Magnan, Turpin, Nicaise, rues Marcadet et Magnan et
      | allée de la cité Ah Soune
 
-── 3/10 ── zone Upi · rubrique hauteur · feuille egout   [OK · recouvrement 62% · attribuée à Up]
-   valeur retenue : m = 6.5
-   article        : Up.10   ·   page PDF : 34
-   citation       : En secteur Upi (hauteur à l'égout he) : RDC+1 étage +Comble sans dépasser 6m50.
-   — extrait du PDF autour de la citation (p.34, 5 lignes avant / 5 après) —
-     | 
-     | Toitures:
-     | Les chiens-assis et lucarnes rampantes sont interdits. Les ouvertures de toiture seront limitées
-     | en nombre et en surface. Un seul niveau sous combles est autorisé.
-     | Upr
-     | RDC+3 étages +Comble ou attique sans dépasser 12m.
-     | Upi.
-     | RDC+1 étage +Comble sans dépasser 6m50.
-     | Upr
-     | Upi
-     | 16 m
-
-── 4/10 ── zone Up · rubrique retraits · feuille voie   [OK · recouvrement 100% · attribuée à Up]
-   valeur retenue : formule = soit à l’alignement de la voie, soit avec un recul : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à l’alignement. · min_m = 3
-   article        : Article Up.6   ·   page PDF : 32
-   citation       : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à l’alignement.
-   — extrait du PDF autour de la citation (p.32, 5 lignes avant / 5 après) —
-     | Les constructions peuvent être implantées :
-     | -
-     | soit à l’alignement de la voie,
-     | -
-     | soit avec un recul :
-     | de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique
-     | de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique
-     | par rapport à l’alignement.
-     | Cette disposition ne s'applique pas aux constructions existantes faisant l’objet de réhabilitation.
-
-── 5/10 ── zone Um · rubrique stationnement · feuille par_logement   [OK · recouvrement 100% · dispositions générales / tête d'article]
-   valeur retenue : places = 1
-   article        : XVII. STATIONNEMENT   ·   page PDF : 19
-   citation       : 1 place par logement d'une surface plancher < 100 m2
-   — extrait du PDF autour de la citation (p.19, 5 lignes avant / 5 après) —
-     | (TCSP+Centre ville)
-     | Zone souple
-     | (reste de la commune)
-     | Habitations :
-     | Logements aidés
-     | Autres logements
-     | 1 place par logement aidé
-     | 1 place par logement d'une surface plancher < 100
-     | m2
-     | 1,5 places par logement d'une surface plancher > ou
-     | = 100 m2
-
-── 6/10 ── zone Ui · rubrique stationnement · feuille par_logement   [OK · recouvrement 100% · dispositions générales / tête d'article]
-   valeur retenue : places = 1
-   article        : XVII. STATIONNEMENT   ·   page PDF : 19
-   citation       : 1 place par logement d'une surface plancher < 100 m2
-   — extrait du PDF autour de la citation (p.19, 5 lignes avant / 5 après) —
-     | (TCSP+Centre ville)
-     | Zone souple
-     | (reste de la commune)
-     | Habitations :
-     | Logements aidés
-     | Autres logements
-     | 1 place par logement aidé
-     | 1 place par logement d'une surface plancher < 100
-     | m2
-     | 1,5 places par logement d'une surface plancher > ou
-     | = 100 m2
-
-── 7/10 ── zone Upi · rubrique hauteur · feuille faitage   [OK · recouvrement 88% · attribuée à Up]
+── 4/10 ── zone Upi · rubrique hauteur · feuille faitage   [OK · recouvrement 88% · attribuée à Up]
    valeur retenue : m = 11
    article        : Up.10   ·   page PDF : 34
    citation       : La hauteur maximale H des constructions ne doit pas excéder dans le secteur : Upi = 11 m (tableau Up.10).
@@ -118,21 +69,90 @@ Tirage reproductible (graine 20260920). Vic lit CE fichier, pas le PDF.
      | 
      | 
 
-── 8/10 ── zone Uv · rubrique retraits · feuille limites_separatives   [OK · recouvrement 100% · attribuée à Uv]
-   valeur retenue : formule = Toute construction ou installation pourra être implantée : soit sur une ou plusieurs limites séparatives, soit avec un recul de 4 m minimum. · min_m = 4
-   article        : Article Uv.7   ·   page PDF : 83
-   citation       : soit avec un recul de 4 m minimum.
-   — extrait du PDF autour de la citation (p.83, 5 lignes avant / 5 après) —
-     | 
-     | Article Uv.7 .
-     | Implantation des constructions par rapport aux limites séparatives
-     | Toute construction ou installation pourra être implantée :
+── 5/10 ── zone Up · rubrique retraits · feuille voie   [OK · recouvrement 100% · attribuée à Up]
+   valeur retenue : formule = soit à l’alignement de la voie, soit avec un recul : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à l’alignement. · min_m = 3
+   article        : Article Up.6   ·   page PDF : 32
+   citation       : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à l’alignement.
+   — extrait du PDF autour de la citation (p.32, 5 lignes avant / 5 après) —
+     | Les constructions peuvent être implantées :
      | -
-     | soit sur une ou plusieurs limites séparatives,
+     | soit à l’alignement de la voie,
      | -
-     | soit avec un recul de 4 m minimum.
+     | soit avec un recul :
+     | de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique
+     | de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique
+     | par rapport à l’alignement.
+     | Cette disposition ne s'applique pas aux constructions existantes faisant l’objet de réhabilitation.
 
-── 9/10 ── zone Ua · rubrique retraits · feuille voie   [OK · recouvrement 100% · attribuée à Ua]
+── 6/10 ── zone Um · rubrique stationnement · feuille par_logement   [OK · recouvrement 100% · dispositions générales / tête d'article]
+   valeur retenue : places = 1
+   article        : XVII. STATIONNEMENT   ·   page PDF : 19
+   citation       : 1 place par logement d'une surface plancher < 100 m2
+   — extrait du PDF autour de la citation (p.19, 5 lignes avant / 5 après) —
+     | (TCSP+Centre ville)
+     | Zone souple
+     | (reste de la commune)
+     | Habitations :
+     | Logements aidés
+     | Autres logements
+     | 1 place par logement aidé
+     | 1 place par logement d'une surface plancher < 100
+     | m2
+     | 1,5 places par logement d'une surface plancher > ou
+     | = 100 m2
+
+── 7/10 ── zone Ui · rubrique stationnement · feuille par_logement   [OK · recouvrement 100% · dispositions générales / tête d'article]
+   valeur retenue : places = 1
+   article        : XVII. STATIONNEMENT   ·   page PDF : 19
+   citation       : 1 place par logement d'une surface plancher < 100 m2
+   — extrait du PDF autour de la citation (p.19, 5 lignes avant / 5 après) —
+     | (TCSP+Centre ville)
+     | Zone souple
+     | (reste de la commune)
+     | Habitations :
+     | Logements aidés
+     | Autres logements
+     | 1 place par logement aidé
+     | 1 place par logement d'une surface plancher < 100
+     | m2
+     | 1,5 places par logement d'une surface plancher > ou
+     | = 100 m2
+
+── 8/10 ── zone Up · rubrique emprise_sol · feuille ces   [OK · recouvrement 63% · plage de base (variations par secteur)]
+   valeur retenue : (aucune valeur)
+   article        : Up.9   ·   page PDF : 33
+   citation       : En secteur Upi : L'emprise au sol des constructions ne devra pas excéder 80 % de la superficie de l'unité foncière. Elle pourra être portée à 100 %, uniquement en rez-de-chaussée. En secteur Upr : L'emprise au sol des constructions ne devra pas excéder 70 % de la superficie de l'unité foncière. Elle pourra être de 80 % pour les parcelles dont la superficie est inférieure à 200 m2.
+   — extrait du PDF autour de la citation (p.33, 5 lignes avant / 5 après) —
+     | 
+     | En secteur Upi :
+     | 
+     | L’emprise au sol des constructions ne devra pas excéder 80 % de la superficie de l’unité
+     | foncière.
+     | Pour toute unité foncière située sur plusieurs zones du PLU, l’emprise au sol sera calculée
+     | selon la superficie de chaque zone du PLU concernée
+     | Elle pourra être portée à 100 %, uniquement en rez-de-chaussée.
+     | 
+     | En secteur Upr :
+     | 
+
+── 9/10 ── zone Uv · rubrique retraits · feuille voie   [OK · recouvrement 100% · attribuée à Uv]
+   valeur retenue : formule = Toute construction ou installation sera implantée avec un recul de 4 m minimum par rapport à l’alignement. · min_m = 4
+   article        : Article Uv.6   ·   page PDF : 83
+   citation       : Toute construction ou installation sera implantée avec un recul de 4 m minimum par rapport à l’alignement.
+   — extrait du PDF autour de la citation (p.83, 5 lignes avant / 5 après) —
+     | Implantation des constructions par rapport aux voies et emprises publiques
+     | Les dispositions de cet article sont également applicables aux voies privées.
+     | Il sera fait application des prescriptions mentionnées aux « Dispositions Générales, paragraphe
+     | XII. Alignement ».
+     | 
+     | 
+     | Toute construction ou installation sera implantée avec un recul de 4 m minimum par rapport à
+     | l’alignement.
+     | 
+     | 
+     | 
+
+── 10/10 ── zone Ua · rubrique retraits · feuille voie   [OK · recouvrement 100% · attribuée à Ua]
    valeur retenue : formule = En secteur Ua : Les constructions peuvent être implantées : soit à l’alignement, soit avec un recul de 4 m minimum. · min_m = 4
    article        : Article Ua.6   ·   page PDF : 77
    citation       : soit avec un recul de 4 m minimum.
@@ -146,23 +166,8 @@ Tirage reproductible (graine 20260920). Vic lit CE fichier, pas le PDF.
      | -
      | soit avec un recul de 4 m minimum.
 
-── 10/10 ── zone Uvac · rubrique hauteur · feuille faitage   [OK · recouvrement 100% · attribuée à Uva]
-   valeur retenue : m = 10
-   article        : Uv.10   ·   page PDF : 84
-   citation       : En secteur Uvac : … ne doit pas excéder 10m
-   — extrait du PDF autour de la citation (p.84, 5 lignes avant / 5 après) —
-     | Il sera fait application des prescriptions mentionnées aux «Dispositions Générales - paragraphe
-     | XV. Prospects. Hauteur maximale des constructions ».
-     | 
-     | En secteur Uva :
-     | 
-     | La hauteur maximale H des constructions ne doit pas excéder 4 m.
-     | 
-     | En secteur Uvac :
-     | 
-     | La hauteur maximale H des constructions ne doit pas excéder 10m
-     | 
-
 ============================================================================================
 VERDICT : les 10 règles tiennent — citation retrouvée ET attribuée à la bonne zone (ou aux dispositions générales). Calibrage sûr.
 ============================================================================================
+
+→ écrit : /Users/openclaw/Desktop/labuse/captures/plu-calibrage2/sondage_10_regles.txt

@@ -64,3 +64,26 @@ def test_niveaux_max_utilise_la_valeur_lue():
 
 def test_prov_absent_reconnu():
     assert _faisa_step_prov("pas de règle dans le PLU (silence prouvé — Art. Uv.9 · p.84)", "") == "absent"
+
+
+def test_base_up_affiche_la_plage_et_reste_estime():
+    """Lot 2 — zone Up de BASE : hauteur ET emprise varient par secteur (Upi/Upr). La parcelle
+    ne porte pas de secteur → l'étape AFFICHE la plage et reste ESTIMÉ (jamais un silence)."""
+    champs, _src = _ov("Up")
+    assert champs.get("hauteur_plage") and champs.get("emprise_plage")
+    assert "hf_m" not in champs and "emprise_sol_pct" not in champs   # aucune valeur unique branchée
+    rules = PR.resolve_zone("Up", "Saint-Denis")
+    f = estimate_capacity(rules, 1200.0, hyp=Hypotheses())
+    emp = next(s for s in f.steps if s.label == "Emprise au sol — % réglementé")
+    niv = next(s for s in f.steps if s.label == "Niveaux constructibles")
+    assert "varie par secteur" in emp.formule and _faisa_step_prov(emp.source, emp.prov) == "estimee"
+    assert "par secteur" in niv.formule and _faisa_step_prov(niv.source, niv.prov) == "estimee"
+    assert "11" in niv.formule and "16" in niv.formule            # la plage 11–16 m est montrée
+
+
+def test_secteur_upr_utilise_sa_valeur():
+    """Lot 2 — zone Upr (secteur porté par le zonage GPU) : sa hauteur (16 m/R+3) et son emprise
+    (70 %) sont utilisées, sourcées."""
+    champs, src = _ov("Upr")
+    assert champs["hf_m"] == 16.0 and champs["niveaux_max"] == 3 and champs["emprise_sol_pct"] == 70.0
+    assert _faisa_step_prov(src["hauteur"], "") == "sourcee"

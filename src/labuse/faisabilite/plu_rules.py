@@ -48,6 +48,8 @@ class ZoneRules:
     calibree: bool = True                    # True = règles d'un YAML PLU communal ; False = estimation générique
     hauteur_mode: str | None = None          # 'prospect' = hf_m calculé PAR PARCELLE (L≥H, largeur voirie)
     niveaux_max: int | None = None           # PLU-CALIBRAGE-2 : R+n LU au règlement (validé) → niveaux imposés
+    hauteur_plage: dict | None = None         # PLU-CALIBRAGE-2 lot 2 : hauteur variant par secteur (base) → plage
+    emprise_plage: dict | None = None         # idem emprise au sol
     notes: list[str] = field(default_factory=list)
     sources: dict[str, str] = field(default_factory=dict)
     raw: dict = field(default_factory=dict)
@@ -220,7 +222,12 @@ def _calibrage_overlay(code: str, commune: str | None):
     fait = _feuille("hauteur", "faitage")
     ego = _feuille("hauteur", "egout")
     niv = _feuille("hauteur", "niveaux")
-    if fait and not fait.get("absent") and isinstance(fait.get("m"), (int, float)):
+    if fait and fait.get("plage"):
+        # PLU-CALIBRAGE-2 lot 2 : base dont la hauteur varie par secteur — on affiche la plage et
+        # on RESTE ESTIMÉ (secteur non déterminé) ; ne jamais simplifier en silence.
+        champs["hauteur_plage"] = {**fait, "source": _src_validee(fait)}
+        src["hauteur"] = _src_validee(fait)
+    elif fait and not fait.get("absent") and isinstance(fait.get("m"), (int, float)):
         champs["hf_m"] = float(fait["m"]); src["hauteur"] = _src_validee(fait)
         champs["hauteur_mode"] = None      # une hauteur ABSOLUE validée prime sur le mode prospect
     if ego and not ego.get("absent") and isinstance(ego.get("m"), (int, float)):
@@ -233,7 +240,10 @@ def _calibrage_overlay(code: str, commune: str | None):
 
     # emprise au sol (CES)
     ces = _feuille("emprise_sol", "ces")
-    if ces and not ces.get("absent") and isinstance(ces.get("pct"), (int, float)):
+    if ces and ces.get("plage"):
+        champs["emprise_plage"] = {**ces, "source": _src_validee(ces)}
+        src["emprise"] = _src_validee(ces)
+    elif ces and not ces.get("absent") and isinstance(ces.get("pct"), (int, float)):
         champs["emprise_sol_pct"] = float(ces["pct"]); src["emprise"] = _src_validee(ces)
     elif ces and ces.get("absent"):
         src["emprise"] = _src_absente(ces)         # l'étape « % réglementé » le dira

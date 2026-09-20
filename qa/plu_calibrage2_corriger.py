@@ -51,6 +51,16 @@ UP_HAUTEUR_PLAGE = {
                   "paragraphe XV. Prospects ». Les hauteurs maximales H sont fixées par secteur "
                   "(tableau Up.10) : Upr = 16 m, Upi = 11 m."))
 }
+UP_EMPRISE_PLAGE = {
+    "ces": _v(
+        plage=True, plage_pct={"min": 70, "max": 80}, secteurs_pct={"Upi": 80, "Upr": 70},
+        article="Up.9", page_pdf=33,
+        citation=("En secteur Upi : L'emprise au sol des constructions ne devra pas excéder 80 % de "
+                  "la superficie de l'unité foncière. Elle pourra être portée à 100 %, uniquement en "
+                  "rez-de-chaussée. En secteur Upr : L'emprise au sol des constructions ne devra pas "
+                  "excéder 70 % de la superficie de l'unité foncière. Elle pourra être de 80 % pour "
+                  "les parcelles dont la superficie est inférieure à 200 m2."))
+}
 
 # ── valeurs par SECTEUR (feuilles validées, citations verbatim, article + page) ──────────────
 SECTEURS = {
@@ -140,7 +150,7 @@ def main() -> int:
 
     up = copy.deepcopy(D.regles_zone(INSEE, "Up"))
     up["hauteur"] = UP_HAUTEUR_PLAGE
-    up.pop("emprise_sol", None)                            # base Up : pas de règle d'emprise (seuls Upi/Upr)
+    up["emprise_sol"] = UP_EMPRISE_PLAGE                   # base Up : plage 70–80 % selon secteur
     regles_par_zone["Up"] = up
 
     uv = copy.deepcopy(D.regles_zone(INSEE, "Uv"))

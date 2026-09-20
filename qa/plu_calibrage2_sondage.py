@@ -147,13 +147,19 @@ def main() -> int:
         page_txt = pdf.load_page(page_no - 1).get_text() if isinstance(page_no, int) and 1 <= page_no <= pdf.page_count else ""
         extrait, score, best_i = _extrait_autour(page_txt, r.get("citation", ""))
         tient = score >= 0.5
-        marq, att = _attribution(page_txt, r.get("citation", ""), r["zone"], best_i)
+        # une feuille PLAGE est un résumé de BASE des variations par secteur : elle cite
+        # légitimement plusieurs secteurs → jamais jugée « misattribuée ».
+        if r.get("plage"):
+            marq, att = "plage (base)", "plage"
+        else:
+            marq, att = _attribution(page_txt, r.get("citation", ""), r["zone"], best_i)
         if not tient:
             douteuses.append(f"#{n} {r['zone']}/{r['chemin']} (p.{page_no}, recouvrement {score:.0%})")
         if att == "misattribue":
             misattribuees.append(f"#{n} {r['zone']}/{r['chemin']} : citation sous « secteur {marq} » (p.{page_no})")
         att_lbl = {"ok": f"attribuée à {marq}", "misattribue": f"⚠ ATTRIBUÉE À {marq} (≠ {r['zone']})",
-                   "general": "dispositions générales / tête d'article"}[att]
+                   "general": "dispositions générales / tête d'article",
+                   "plage": "plage de base (variations par secteur)"}[att]
         W("")
         W(f"── {n}/{N} ── zone {r['zone']} · rubrique {r['rubrique']}"
           + (f" · feuille {r['feuille']}" if r.get("feuille") else "")
