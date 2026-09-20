@@ -1,0 +1,12 @@
+{
+  "insee": "97415",
+  "decisions": [
+    {
+      "zone": "U1pru",
+      "chemin": "retraits.voie",
+      "geste": "propose",
+      "preuve": "En cas de retrait, celui-ci ne pourra excéder 6 mètres.",
+      "note": "6 m est un plafond (max, « ne pourra excéder »), pas un minimum chiffré ni un recul relatif à la hauteur ; aucune formule H/2 ni plancher chiffré → reste propose (lu PDF p.19)."
+    }
+  ]
+}

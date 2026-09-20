@@ -1,1520 +1,805 @@
 [
  {
-  "insee": "97401",
+  "insee": "97402",
   "zone": "Ua",
-  "chemin": "hauteur.faitage",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 15.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "Ua",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 12.0
-  },
-  "preuve": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "Ua",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 15.0
-  },
-  "preuve": "En zone Ua : 15% de la superficie totale de l'unité foncière"
- },
- {
-  "insee": "97401",
-  "zone": "Uc3",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 40.0
-  },
-  "preuve": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière"
- },
- {
-  "insee": "97401",
-  "zone": "Ud",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 10.0
-  },
-  "preuve": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "Ud",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 7.0
-  },
-  "preuve": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "Ud",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 40.0
-  },
-  "preuve": "En zone Ud : 40% de la superficie totale de l'unité foncière"
- },
- {
-  "insee": "97401",
-  "zone": "Ud1",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 10.0
-  },
-  "preuve": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "Ud1",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 7.0
-  },
-  "preuve": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "Ud1",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 40.0
-  },
-  "preuve": "En zone Ud : 40% de la superficie totale de l'unité foncière"
- },
- {
-  "insee": "97401",
-  "zone": "Ud2",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 9.0
-  },
-  "preuve": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "Ud2",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 6.0
-  },
-  "preuve": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "Ud2",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 40.0
-  },
-  "preuve": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière"
- },
- {
-  "insee": "97401",
-  "zone": "Ud3",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 9.0
-  },
-  "preuve": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "Ud3",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 6.0
-  },
-  "preuve": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "Ud3",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 40.0
-  },
-  "preuve": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière"
- },
- {
-  "insee": "97401",
-  "zone": "AUa",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 15.0
-  },
-  "preuve": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "AUa",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 12.0
-  },
-  "preuve": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "AUa",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 15.0
-  },
-  "preuve": "En zone Ua : 15% de la superficie totale de l'unité foncière"
- },
- {
-  "insee": "97401",
-  "zone": "AUc",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 11.0
-  },
-  "preuve": "en zone Uc et secteur Ub2 : - 8 mètres à l'égout du toit ou au sommet de l'acrotère ; - 11 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "AUc",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 8.0
-  },
-  "preuve": "en zone Uc et secteur Ub2 : - 8 mètres à l'égout du toit ou au sommet de l'acrotère ; - 11 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "AUd",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 10.0
-  },
-  "preuve": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "AUd",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 7.0
-  },
-  "preuve": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage."
- },
- {
-  "insee": "97401",
-  "zone": "AUd",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 40.0
-  },
-  "preuve": "En zone Ud : 40% de la superficie totale de l'unité foncière"
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
  },
  {
   "insee": "97402",
   "zone": "Ub",
-  "chemin": "hauteur.faitage",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 11.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "11 mètres au faîtage"
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
  },
  {
   "insee": "97402",
-  "zone": "Ub",
-  "chemin": "hauteur.egout",
+  "zone": "Uc",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 8.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "8 mètres à l’égout du toit ou au sommet de l’acrotère"
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
  },
  {
   "insee": "97402",
-  "zone": "Uba",
-  "chemin": "hauteur.faitage",
+  "zone": "Ud",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 11.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "11 mètres au faîtage"
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
  },
  {
   "insee": "97402",
-  "zone": "Uba",
-  "chemin": "hauteur.egout",
+  "zone": "Udu",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 8.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "8 mètres à l’égout du toit ou au sommet de l’acrotère"
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97402",
+  "zone": "1AUa",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
  },
  {
   "insee": "97402",
   "zone": "1AUb",
-  "chemin": "hauteur.faitage",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 11.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "11 mètres au faîtage"
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
  },
  {
   "insee": "97402",
-  "zone": "1AUb",
-  "chemin": "hauteur.egout",
+  "zone": "1AUc",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 8.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "8 mètres à l’égout du toit ou au sommet de l’acrotère"
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
  },
  {
-  "insee": "97403",
-  "zone": "Ua",
-  "chemin": "hauteur.faitage",
+  "insee": "97402",
+  "zone": "1AUd",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 11.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : ... - 11 mètres au faitage."
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
  },
  {
-  "insee": "97403",
-  "zone": "Ua",
-  "chemin": "hauteur.egout",
+  "insee": "97402",
+  "zone": "1AUec",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 7.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ;"
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
  },
  {
-  "insee": "97404",
-  "zone": "AUa",
-  "chemin": "emprise_sol.ces",
+  "insee": "97402",
+  "zone": "1AUt",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "pct": 70
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "70% en zone AUa"
- },
- {
-  "insee": "97404",
-  "zone": "AUb",
-  "chemin": "emprise_sol.ces",
-  "geste": "valider",
-  "valeur": {
-   "pct": 65
-  },
-  "preuve": "65% en zone AUb"
- },
- {
-  "insee": "97404",
-  "zone": "AUc",
-  "chemin": "emprise_sol.ces",
-  "geste": "valider",
-  "valeur": {
-   "pct": 60
-  },
-  "preuve": "60% en zone AUc"
- },
- {
-  "insee": "97404",
-  "zone": "AUt",
-  "chemin": "emprise_sol.ces",
-  "geste": "valider",
-  "valeur": {
-   "pct": 65
-  },
-  "preuve": "65% en zone AUt"
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
  },
  {
   "insee": "97407",
   "zone": "1AUa",
-  "chemin": "hauteur.faitage",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 9.0
+   "min_m": 3,
+   "formule": "sur limite (max 2), sinon retrait minimum 3 m"
   },
-  "preuve": "La hauteur maximale des constructions ne peut excéder 9 mètres au faitage ou au sommet de l’acrotère."
+  "preuve": "la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres"
  },
  {
   "insee": "97407",
-  "zone": "1AUa",
-  "chemin": "hauteur.egout",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "La hauteur maximale des constructions ne peut excéder 9 mètres au faitage ou au sommet de l’acrotère."
- },
- {
-  "insee": "97407",
-  "zone": "1AUa",
-  "chemin": "emprise_sol.ces",
-  "geste": "valider",
-  "valeur": {
-   "pct": 60.0
-  },
-  "preuve": "L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière."
- },
- {
-  "insee": "97407",
-  "zone": "1AUa",
+  "zone": "1AUc",
   "chemin": "retraits.voie",
   "geste": "valider",
   "valeur": {
-   "min_m": 3.0
+   "min_m": 3,
+   "formule": "à l’alignement, sinon recul minimum 3 m"
   },
-  "preuve": "Les constructions doivent être implantées en retrait de l’alignement, avec un recul minimum de 3 mètres"
+  "preuve": "Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum de 3 mètres."
  },
  {
   "insee": "97407",
   "zone": "1AUc",
-  "chemin": "hauteur.faitage",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 16.0
+   "min_m": 4,
+   "formule": "sur limite, sinon retrait minimum 4 m"
   },
-  "preuve": "La hauteur maximale des constructions ne peut excéder 16 mètres au faitage ou au sommet de l’acrotère."
- },
- {
-  "insee": "97407",
-  "zone": "1AUc",
-  "chemin": "hauteur.egout",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "La hauteur maximale des constructions ne peut excéder 16 mètres au faitage ou au sommet de l’acrotère."
- },
- {
-  "insee": "97407",
-  "zone": "1AUc",
-  "chemin": "emprise_sol.ces",
-  "geste": "valider",
-  "valeur": {
-   "pct": 80.0
-  },
-  "preuve": "L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité foncière."
+  "preuve": "la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres"
  },
  {
   "insee": "97407",
   "zone": "1AUem",
-  "chemin": "hauteur.faitage",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 18.0
+   "min_m": 5,
+   "formule": "sur limite, sinon retrait minimum 5 m"
   },
-  "preuve": "En secteur Uem, la hauteur maximale des constructions est fixée 18 mètres."
- },
- {
-  "insee": "97407",
-  "zone": "1AUem",
-  "chemin": "emprise_sol.ces",
-  "geste": "valider",
-  "valeur": {
-   "pct": 60.0
-  },
-  "preuve": "L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière."
- },
- {
-  "insee": "97407",
-  "zone": "1AUem",
-  "chemin": "retraits.voie",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 5.0
-  },
-  "preuve": "Les constructions doivent être implantées en retrait par rapport aux voies et emprises publiques avec un recul minimal de 5 mètres."
+  "preuve": "la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 5 mètres"
  },
  {
   "insee": "97407",
   "zone": "1AUs",
-  "chemin": "hauteur.faitage",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 18.0
+   "min_m": 5,
+   "formule": "sur limite, sinon retrait minimum 5 m"
   },
-  "preuve": "La hauteur maximale des constructions est fixée 18 mètres."
+  "preuve": "la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 5 mètres"
  },
  {
-  "insee": "97407",
-  "zone": "1AUs",
-  "chemin": "emprise_sol.ces",
+  "insee": "97408",
+  "zone": "UA",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "pct": 60.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière."
+  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "UAa",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
  },
  {
   "insee": "97408",
   "zone": "UAm",
-  "chemin": "pleine_terre.pct",
-  "geste": "corriger",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
   "valeur": {
-   "pct": 25
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "Dans le secteur UAm, au minimum 25% de la superficie totale de l’unité foncière doit être traité en espace perméable planté en pleine terre"
+  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "UB",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "UBa",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "UBb",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "UBc",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "UBpsfr2",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "UBpszc",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "UE",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "UEm",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "UT",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "UTfr2",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "AUB",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "AUBb",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "AUBpsfr2",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "AUT",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97408",
+  "zone": "AUEm",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
  },
  {
   "insee": "97408",
   "zone": "UApsfr2",
-  "chemin": "hauteur.faitage",
-  "geste": "corriger",
-  "valeur": {
-   "m": 12
-  },
-  "preuve": "Dans le secteur UApsfr2, la hauteur maximale des constructions est fixée à 12 mètres"
- },
- {
-  "insee": "97408",
-  "zone": "UApsfr2",
-  "chemin": "hauteur.egout",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "A l’exception des secteurs UAa, UApsfr2, UAm et UAv, la hauteur maximale des constructions est fixée à  16 mètres au faitage"
- },
- {
-  "insee": "97408",
-  "zone": "UAv",
-  "chemin": "hauteur.egout",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel"
- },
- {
-  "insee": "97408",
-  "zone": "UAv",
-  "chemin": "pleine_terre.pct",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité foncière"
- },
- {
-  "insee": "97408",
-  "zone": "AUAv",
-  "chemin": "hauteur.egout",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel"
- },
- {
-  "insee": "97408",
-  "zone": "AUAv",
-  "chemin": "pleine_terre.pct",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité foncière"
- },
- {
-  "insee": "97410",
-  "zone": "Ua",
-  "chemin": "emprise_sol.ces",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "pct": 80.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "L'emprise au sol des constructions ne peut excéder 80 % du terrain."
+  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
  },
  {
-  "insee": "97410",
-  "zone": "Ua",
-  "chemin": "pleine_terre.pct",
+  "insee": "97412",
+  "zone": "U2",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "pct": 20.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "Le pourcentage d'espaces libres doit correspondre  à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable."
- },
- {
-  "insee": "97410",
-  "zone": "Ub",
-  "chemin": "emprise_sol.ces",
-  "geste": "valider",
-  "valeur": {
-   "pct": 80.0
-  },
-  "preuve": "L'emprise au sol des constructions ne peut excéder 80 % du terrain."
- },
- {
-  "insee": "97410",
-  "zone": "Ub",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 20.0
-  },
-  "preuve": "Le pourcentage d'espaces libres doit correspondre  à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable."
- },
- {
-  "insee": "97410",
-  "zone": "Ue",
-  "chemin": "emprise_sol.ces",
-  "geste": "valider",
-  "valeur": {
-   "pct": 80.0
-  },
-  "preuve": "L'emprise au sol des constructions ne peut excéder 80 % du terrain."
- },
- {
-  "insee": "97410",
-  "zone": "Ue",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 20.0
-  },
-  "preuve": "Le pourcentage d'espaces libres doit correspondre  à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable."
- },
- {
-  "insee": "97410",
-  "zone": "Up",
-  "chemin": "emprise_sol.ces",
-  "geste": "valider",
-  "valeur": {
-   "pct": 80.0
-  },
-  "preuve": "L'emprise au sol des constructions ne peut excéder 80 % du terrain."
- },
- {
-  "insee": "97410",
-  "zone": "Up",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 20.0
-  },
-  "preuve": "Le pourcentage d'espaces libres doit correspondre  à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable."
- },
- {
-  "insee": "97410",
-  "zone": "Ut",
-  "chemin": "emprise_sol.ces",
-  "geste": "valider",
-  "valeur": {
-   "pct": 80.0
-  },
-  "preuve": "L'emprise au sol des constructions ne peut excéder 80 % du terrain."
- },
- {
-  "insee": "97410",
-  "zone": "Ut",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 20.0
-  },
-  "preuve": "Le pourcentage d'espaces libres doit correspondre  à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable."
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
  },
  {
   "insee": "97412",
   "zone": "U2a",
-  "chemin": "stationnement.par_logement",
-  "geste": "corriger",
-  "valeur": {
-   "places": 2.0
-  },
-  "preuve": "dans le secteur U2a, ce seuil est porté à 2 places de stationnement minimum par logement"
- },
- {
-  "insee": "97412",
-  "zone": "1AUto",
-  "chemin": "hauteur.faitage",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 9.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "Pour les zones AUto, la hauteur maximale des constructions ne peut excéder : - 6 mètres à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faîtage."
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
  },
  {
   "insee": "97412",
-  "zone": "1AUto",
-  "chemin": "hauteur.egout",
+  "zone": "U3",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 6.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "Pour les zones AUto, la hauteur maximale des constructions ne peut excéder : - 6 mètres à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faîtage."
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
+ },
+ {
+  "insee": "97412",
+  "zone": "U3a",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
+ },
+ {
+  "insee": "97412",
+  "zone": "U3ar",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
+ },
+ {
+  "insee": "97412",
+  "zone": "U4",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 1.9,
+   "formule": "H/2, minimum 1,9 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 1,9 mètre"
+ },
+ {
+  "insee": "97412",
+  "zone": "U5",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
+ },
+ {
+  "insee": "97412",
+  "zone": "U5cv",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m (ou sur limites)"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
+ },
+ {
+  "insee": "97412",
+  "zone": "U5ma",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
+ },
+ {
+  "insee": "97412",
+  "zone": "U6",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
+ },
+ {
+  "insee": "97412",
+  "zone": "U6c",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
  },
  {
   "insee": "97412",
   "zone": "1AUto",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
+ },
+ {
+  "insee": "97412",
+  "zone": "1AUtok",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
+ },
+ {
+  "insee": "97414",
+  "zone": "UC1",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3.0,
+   "formule": "H1/2, minimum 3,00 m"
+  },
+  "preuve": "sans être inférieur à 3,00 mètres, soit : L = H1/2"
+ },
+ {
+  "insee": "97414",
+  "zone": "UE",
   "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 4.0
-  },
-  "preuve": "Pour les zones AUto, les constructions doivent être implantées en retrait de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres."
- },
- {
-  "insee": "97412",
-  "zone": "1AUtok",
-  "chemin": "hauteur.faitage",
   "geste": "valider",
   "valeur": {
-   "m": 12.0
+   "min_m": 5.0,
+   "formule": "H/2, minimum 5 m"
   },
-  "preuve": "En secteur AUtok, la hauteur des constructions de type industrie ne peut excéder : - 9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faîtage."
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres"
  },
  {
-  "insee": "97412",
-  "zone": "1AUtok",
-  "chemin": "hauteur.egout",
+  "insee": "97414",
+  "zone": "UE",
+  "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "m": 9.0
+   "min_m": 4.0,
+   "formule": "H/2, minimum 4 m"
   },
-  "preuve": "En secteur AUtok, la hauteur des constructions de type industrie ne peut excéder : - 9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faîtage."
+  "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres"
  },
  {
-  "insee": "97412",
-  "zone": "1AUtok",
+  "insee": "97414",
+  "zone": "US",
   "chemin": "retraits.voie",
-  "geste": "corriger",
+  "geste": "valider",
   "valeur": {
-   "min_m": 4.0
+   "min_m": 5.0,
+   "formule": "H/2, minimum 5 m"
   },
-  "preuve": "Pour les zones AUto, les constructions doivent être implantées en retrait de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres."
+  "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 5 mètres"
+ },
+ {
+  "insee": "97414",
+  "zone": "US",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 4.0,
+   "formule": "H/2, minimum 4 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc1",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3.0,
+   "formule": "H1/2, minimum 3,00 m"
+  },
+  "preuve": "sans être inférieur à 3,00 mètres, soit : L = H1/2"
  },
  {
   "insee": "97414",
   "zone": "1AUe",
-  "chemin": "hauteur.faitage",
-  "geste": "corriger",
+  "chemin": "retraits.voie",
+  "geste": "valider",
   "valeur": {
-   "m": 20.0
+   "min_m": 5.0,
+   "formule": "H/2, minimum 5 m"
   },
-  "preuve": "20 mètres au faîtage"
+  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres"
  },
  {
   "insee": "97414",
   "zone": "1AUe",
-  "chemin": "hauteur.egout",
-  "geste": "corriger",
-  "valeur": {
-   "m": 17.0
-  },
-  "preuve": "17 mètres à l'égout du toit ou au sommet de l'acrotère,"
- },
- {
-  "insee": "97415",
-  "zone": "U1b",
-  "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 3
-  },
-  "preuve": "implantées en retrait de 3 m minimum de la voie ou de l'emprise publique"
- },
- {
-  "insee": "97415",
-  "zone": "U1c",
-  "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 3
-  },
-  "preuve": "à l'alignement ou en retrait de 3 m minimum de la voie ou de l'emprise publique"
- },
- {
-  "insee": "97415",
-  "zone": "U1d",
-  "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 3
-  },
-  "preuve": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique."
- },
- {
-  "insee": "97415",
-  "zone": "U1d",
-  "chemin": "pleine_terre.pct",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "en zone U1d — Il n'est pas fixé de règle."
- },
- {
-  "insee": "97415",
-  "zone": "U1f",
-  "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 3
-  },
-  "preuve": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique."
- },
- {
-  "insee": "97415",
-  "zone": "U1g",
-  "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 3
-  },
-  "preuve": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique."
- },
- {
-  "insee": "97415",
-  "zone": "U1pru",
-  "chemin": "pleine_terre.pct",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "en zone U1pru — Il n'est pas fixé de règle."
- },
- {
-  "insee": "97415",
-  "zone": "U1pso",
-  "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 3
-  },
-  "preuve": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique."
- },
- {
-  "insee": "97415",
-  "zone": "U1e",
-  "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 6
-  },
-  "preuve": "implantées en retrait de 6 m minimum de la voie ou de l'emprise publique"
- },
- {
-  "insee": "97415",
-  "zone": "U1e",
-  "chemin": "pleine_terre.pct",
-  "geste": "corriger",
-  "valeur": {
-   "pct": 20
-  },
-  "preuve": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet."
- },
- {
-  "insee": "97415",
-  "zone": "U1l",
-  "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 6
-  },
-  "preuve": "implantées en retrait de 6 m minimum de la voie ou de l'emprise publique"
- },
- {
-  "insee": "97415",
-  "zone": "U1l",
-  "chemin": "pleine_terre.pct",
-  "geste": "corriger",
-  "valeur": {
-   "pct": 20
-  },
-  "preuve": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet."
- },
- {
-  "insee": "97415",
-  "zone": "U2b",
-  "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 4
-  },
-  "preuve": "s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique"
- },
- {
-  "insee": "97415",
-  "zone": "U2c",
-  "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 4
-  },
-  "preuve": "s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique"
- },
- {
-  "insee": "97415",
-  "zone": "U2c",
   "chemin": "retraits.limites_separatives",
-  "geste": "corriger",
+  "geste": "valider",
   "valeur": {
-   "min_m": 4
+   "min_m": 4.0,
+   "formule": "H/2, minimum 4 m"
   },
-  "preuve": "En cas de retrait, un recul de 4 mètres minimum est obligatoire."
+  "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres"
  },
  {
-  "insee": "97415",
-  "zone": "U2d",
-  "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 4
-  },
-  "preuve": "s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique"
- },
- {
-  "insee": "97415",
-  "zone": "U2d",
+  "insee": "97418",
+  "zone": "UA",
   "chemin": "retraits.limites_separatives",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 4
-  },
-  "preuve": "Un recul de 4 mètres minimum est obligatoire."
- },
- {
-  "insee": "97415",
-  "zone": "U2h",
-  "chemin": "retraits.limites_separatives",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 4
-  },
-  "preuve": "En cas de retrait, un recul de 4 mètres minimum est obligatoire."
- },
- {
-  "insee": "97415",
-  "zone": "U2e",
-  "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 6
-  },
-  "preuve": "implantées en retrait de 6 m minimum de la voie ou de l’emprise publique"
- },
- {
-  "insee": "97415",
-  "zone": "U2e",
-  "chemin": "pleine_terre.pct",
-  "geste": "corriger",
-  "valeur": {
-   "pct": 20
-  },
-  "preuve": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet."
- },
- {
-  "insee": "97415",
-  "zone": "U3e",
-  "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 6
-  },
-  "preuve": "implantées en retrait de 6 m minimum de la voie ou de l'emprise publique"
- },
- {
-  "insee": "97415",
-  "zone": "U3e",
-  "chemin": "pleine_terre.pct",
-  "geste": "corriger",
-  "valeur": {
-   "pct": 20
-  },
-  "preuve": "Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du terrain d'assiette du projet."
- },
- {
-  "insee": "97415",
-  "zone": "AU5e",
-  "chemin": "emprise_sol.ces",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "Article 9-  Emprise au sol des constructions \nIl n’est pas fixé de règle."
- },
- {
-  "insee": "97415",
-  "zone": "AU5e",
-  "chemin": "retraits.voie",
-  "geste": "corriger",
-  "valeur": {
-   "min_m": 6
-  },
-  "preuve": "implantées en retrait de 6 m minimum de la voie ou de l'emprise publique"
- },
- {
-  "insee": "97415",
-  "zone": "AU5e",
-  "chemin": "pleine_terre.pct",
-  "geste": "corriger",
-  "valeur": {
-   "pct": 20
-  },
-  "preuve": "Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du terrain d'assiette du projet."
- },
- {
-  "insee": "97416",
-  "zone": "AUdma",
-  "chemin": "hauteur.faitage",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "En zone AUdma : non règlementé pour l’ensemble de l’article"
- },
- {
-  "insee": "97416",
-  "zone": "AUdma",
-  "chemin": "hauteur.egout",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "En zone AUdma : non règlementé pour l’ensemble de l’article"
- },
- {
-  "insee": "97416",
-  "zone": "AUdma",
-  "chemin": "emprise_sol.ces",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "En zone AUdma : non règlementé pour l’ensemble de l’article"
- },
- {
-  "insee": "97416",
-  "zone": "AUdma",
-  "chemin": "retraits.voie",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "En zone AUdma : non règlementé pour l’ensemble de l’article"
- },
- {
-  "insee": "97416",
-  "zone": "AUdma",
-  "chemin": "retraits.limites_separatives",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "En zone AUdma : non règlementé pour l’ensemble de l’article"
- },
- {
-  "insee": "97416",
-  "zone": "AUdma",
-  "chemin": "pleine_terre.pct",
-  "geste": "absent",
-  "valeur": null,
-  "preuve": "En zone AUdma : non règlementé pour l’ensemble de l’article"
- },
- {
-  "insee": "97416",
-  "zone": "AUf",
-  "chemin": "hauteur.faitage",
   "geste": "valider",
   "valeur": {
-   "m": 11.0
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
   },
-  "preuve": "à 11 m au faîtage"
- },
- {
-  "insee": "97416",
-  "zone": "AUf",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 6.0
-  },
-  "preuve": "fixée à 6 m à l’égout du toit ou au sommet de l’acrotère"
- },
- {
-  "insee": "97416",
-  "zone": "Uazp",
-  "chemin": "hauteur.faitage",
-  "geste": "corriger",
-  "valeur": {
-   "m": 20.0
-  },
-  "preuve": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage."
- },
- {
-  "insee": "97416",
-  "zone": "Uazp",
-  "chemin": "hauteur.egout",
-  "geste": "corriger",
-  "valeur": {
-   "m": 15.5
-  },
-  "preuve": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage."
- },
- {
-  "insee": "97416",
-  "zone": "Uazpc",
-  "chemin": "hauteur.faitage",
-  "geste": "corriger",
-  "valeur": {
-   "m": 20.0
-  },
-  "preuve": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage."
- },
- {
-  "insee": "97416",
-  "zone": "Uazpc",
-  "chemin": "hauteur.egout",
-  "geste": "corriger",
-  "valeur": {
-   "m": 15.5
-  },
-  "preuve": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage."
- },
- {
-  "insee": "97416",
-  "zone": "Uaza",
-  "chemin": "hauteur.faitage",
-  "geste": "corriger",
-  "valeur": {
-   "m": 14.0
-  },
-  "preuve": "Dans le secteur Uaza, la hauteur maximale des constructions est fixée à 14 m au faîtage."
- },
- {
-  "insee": "97416",
-  "zone": "Uaza",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 16.0
-  },
-  "preuve": "fixée à 16 m à l’égout du toit ou au sommet de l’acrotère"
- },
- {
-  "insee": "97416",
-  "zone": "Uaza",
-  "chemin": "retraits.voie",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4.0
-  },
-  "preuve": "doivent être implantées à 4 m minimum de l’emprise des voies"
- },
- {
-  "insee": "97416",
-  "zone": "Uazc",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 18.0
-  },
-  "preuve": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage"
- },
- {
-  "insee": "97416",
-  "zone": "Uazc",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 13.0
-  },
-  "preuve": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage"
- },
- {
-  "insee": "97416",
-  "zone": "AUazc",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 18.0
-  },
-  "preuve": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage"
- },
- {
-  "insee": "97416",
-  "zone": "AUazc",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 13.0
-  },
-  "preuve": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage"
- },
- {
-  "insee": "97416",
-  "zone": "AUazc",
-  "chemin": "retraits.voie",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4.0
-  },
-  "preuve": "doivent être implantées à 4 m minimum de l’emprise des voies"
- },
- {
-  "insee": "97416",
-  "zone": "Uazi",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 21.0
-  },
-  "preuve": "fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage"
- },
- {
-  "insee": "97416",
-  "zone": "Uazi",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 16.0
-  },
-  "preuve": "fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage"
- },
- {
-  "insee": "97416",
-  "zone": "Uazi",
-  "chemin": "retraits.voie",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4.0
-  },
-  "preuve": "doivent être implantées à 4 m minimum de l’emprise des voies"
- },
- {
-  "insee": "97416",
-  "zone": "AUazi",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 21.0
-  },
-  "preuve": "fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage"
- },
- {
-  "insee": "97416",
-  "zone": "AUazi",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 16.0
-  },
-  "preuve": "fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage"
- },
- {
-  "insee": "97416",
-  "zone": "AUazi",
-  "chemin": "retraits.voie",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4.0
-  },
-  "preuve": "doivent être implantées à 4 m minimum de l’emprise des voies"
- },
- {
-  "insee": "97416",
-  "zone": "Ue",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 21.0
-  },
-  "preuve": "fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage"
- },
- {
-  "insee": "97416",
-  "zone": "Ue",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 16.0
-  },
-  "preuve": "fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage"
- },
- {
-  "insee": "97416",
-  "zone": "Uemi",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 21.0
-  },
-  "preuve": "fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage"
- },
- {
-  "insee": "97416",
-  "zone": "Uemi",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 16.0
-  },
-  "preuve": "fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage"
- },
- {
-  "insee": "97416",
-  "zone": "Uep",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 21.0
-  },
-  "preuve": "fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage"
- },
- {
-  "insee": "97416",
-  "zone": "Uep",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 16.0
-  },
-  "preuve": "fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage"
+  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
  },
  {
   "insee": "97418",
   "zone": "UEa",
-  "chemin": "pleine_terre.pct",
-  "geste": "corriger",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
   "valeur": {
-   "pct": 15
+   "min_m": 4,
+   "formule": "H/2, minimum 4 m"
   },
-  "preuve": "en zones UEa, UEm et UEp : 15% de la surface"
+  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres"
  },
  {
   "insee": "97418",
   "zone": "UEc",
-  "chemin": "pleine_terre.pct",
-  "geste": "corriger",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
   "valeur": {
-   "pct": 25
+   "min_m": 4,
+   "formule": "H/2, minimum 4 m"
   },
-  "preuve": "en zone UEc : 25% de la surface"
+  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres"
  },
  {
   "insee": "97418",
   "zone": "UEm",
-  "chemin": "pleine_terre.pct",
-  "geste": "corriger",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
   "valeur": {
-   "pct": 15
+   "min_m": 4,
+   "formule": "H/2, minimum 4 m"
   },
-  "preuve": "en zones UEa, UEm et UEp : 15% de la surface"
+  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres"
  },
  {
   "insee": "97418",
   "zone": "UEp",
-  "chemin": "pleine_terre.pct",
-  "geste": "corriger",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
   "valeur": {
-   "pct": 15
+   "min_m": 4,
+   "formule": "H/2, minimum 4 m"
   },
-  "preuve": "en zones UEa, UEm et UEp : 15% de la surface"
+  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres"
  },
  {
   "insee": "97418",
   "zone": "UR",
-  "chemin": "pleine_terre.pct",
-  "geste": "corriger",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
   "valeur": {
-   "pct": 20
+   "min_m": 4,
+   "formule": "H/2, minimum 4 m"
   },
-  "preuve": "en zone UR : 20 % de de la surface"
+  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres"
  },
  {
   "insee": "97418",
   "zone": "UT",
-  "chemin": "pleine_terre.pct",
-  "geste": "corriger",
-  "valeur": {
-   "pct": 55
-  },
-  "preuve": "en zone UT : 55% de la surface"
- },
- {
-  "insee": "97419",
-  "zone": "1AUa",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 12.0
-  },
-  "preuve": "La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faitage."
- },
- {
-  "insee": "97419",
-  "zone": "1AUa",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 9.0
-  },
-  "preuve": "La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faitage."
- },
- {
-  "insee": "97419",
-  "zone": "1AUa",
-  "chemin": "emprise_sol.ces",
-  "geste": "valider",
-  "valeur": {
-   "pct": 70.0
-  },
-  "preuve": "ARTICLE UA 9 - EMPRISE AU SOL DES CONSTRUCTIONS \nL’emprise maximale des constructions est fixée à 70% de la superficie du terrain."
- },
- {
-  "insee": "97419",
-  "zone": "1AUa",
-  "chemin": "retraits.voie",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4.0
-  },
-  "preuve": "au point le plus proche de la voie, au moins égale à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum."
- },
- {
-  "insee": "97419",
-  "zone": "1AUa",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 25.0
-  },
-  "preuve": "Au minimum 25% de la superficie totale de l’unité foncière doit être traité en espace perméable."
- },
- {
-  "insee": "97419",
-  "zone": "1AUc",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 9.0
-  },
-  "preuve": "La hauteur maximale des constructions est fixée à : - 6 mètres à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faitage."
- },
- {
-  "insee": "97419",
-  "zone": "1AUc",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 6.0
-  },
-  "preuve": "La hauteur maximale des constructions est fixée à : - 6 mètres à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faitage."
- },
- {
-  "insee": "97419",
-  "zone": "1AUc",
-  "chemin": "emprise_sol.ces",
-  "geste": "valider",
-  "valeur": {
-   "pct": 50.0
-  },
-  "preuve": "ARTICLE UC 9 - EMPRISE AU SOL DES CONSTRUCTIONS \nL’emprise maximale des constructions est fixée à 50% de la superficie du terrain."
- },
- {
-  "insee": "97419",
-  "zone": "1AUc",
-  "chemin": "retraits.voie",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4.0
-  },
-  "preuve": "au point le plus proche de \nla voie, au moins égale à 4 mètres. Le long de la RN2  et de la RD57, cette distance de recul est portée à 7 mètres minimum."
- },
- {
-  "insee": "97419",
-  "zone": "1AUc",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 30.0
-  },
-  "preuve": "Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace perméable."
- },
- {
-  "insee": "97419",
-  "zone": "1AUe",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 14.0
-  },
-  "preuve": "La hauteur maximale des constructions est fixée à : - 11 mètres à l’égout du toit ou au sommet de l’acrotère, - 14 mètres au faitage."
- },
- {
-  "insee": "97419",
-  "zone": "1AUe",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 11.0
-  },
-  "preuve": "La hauteur maximale des constructions est fixée à : - 11 mètres à l’égout du toit ou au sommet de l’acrotère, - 14 mètres au faitage."
- },
- {
-  "insee": "97419",
-  "zone": "1AUe",
-  "chemin": "emprise_sol.ces",
-  "geste": "valider",
-  "valeur": {
-   "pct": 70.0
-  },
-  "preuve": "ARTICLE UE 9 - EMPRISE AU SOL DES CONSTRUCTIONS \nL’emprise maximale des constructions est fixée à 70% de la superficie du terrain."
- },
- {
-  "insee": "97419",
-  "zone": "1AUe",
-  "chemin": "retraits.voie",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4.0
-  },
-  "preuve": "au point le plus proche de \nla voie, au moins égale à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum."
- },
- {
-  "insee": "97419",
-  "zone": "1AUe",
-  "chemin": "pleine_terre.pct",
-  "geste": "valider",
-  "valeur": {
-   "pct": 25.0
-  },
-  "preuve": "Au minimum 25% de la superficie totale de l’unité foncière doit être traité en espace perméable."
- },
- {
-  "insee": "97423",
-  "zone": "Ua",
-  "chemin": "hauteur.faitage",
-  "geste": "valider",
-  "valeur": {
-   "m": 14.0
-  },
-  "preuve": "14 mètres au faîtage"
- },
- {
-  "insee": "97423",
-  "zone": "Ua",
-  "chemin": "hauteur.egout",
-  "geste": "valider",
-  "valeur": {
-   "m": 10.0
-  },
-  "preuve": "10 mètres à l’égout du toit ou au sommet de l’acrotère"
- },
- {
-  "insee": "97423",
-  "zone": "Ua",
   "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "min_m": 3.0
+   "min_m": 4,
+   "formule": "H/2, minimum 4 m"
   },
-  "preuve": "doit être au minimum de 3 mètres"
+  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres"
+ },
+ {
+  "insee": "97418",
+  "zone": "UTp",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 4,
+   "formule": "H/2, minimum 4 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres"
+ },
+ {
+  "insee": "97419",
+  "zone": "Ue",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 5,
+   "formule": "H/2, minimum 5 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 5 mètres"
+ },
+ {
+  "insee": "97419",
+  "zone": "1AUa",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97419",
+  "zone": "1AUc",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3,
+   "formule": "H/2, minimum 3 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+ },
+ {
+  "insee": "97419",
+  "zone": "1AUe",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 5,
+   "formule": "H/2, minimum 5 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 5 mètres"
+ },
+ {
+  "insee": "97420",
+  "zone": "UE",
+  "chemin": "retraits.voie",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 5,
+   "formule": "H/2, minimum 5 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5 mètres"
+ },
+ {
+  "insee": "97420",
+  "zone": "UE",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 4,
+   "formule": "H/2, minimum 4 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 4 mètres"
+ },
+ {
+  "insee": "97420",
+  "zone": "1AUe",
+  "chemin": "retraits.voie",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 5,
+   "formule": "H/2, minimum 5 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5 mètres"
+ },
+ {
+  "insee": "97420",
+  "zone": "1AUe",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 4,
+   "formule": "H/2, minimum 4 m"
+  },
+  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 4 mètres"
+ },
+ {
+  "insee": "97423",
+  "zone": "Ue",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 4.0,
+   "formule": "D=H/2, sans être inférieure à 4,00 mètres"
+  },
+  "preuve": "doit être au moins égale à D=H/2 (H étant la hauteur à l’égout du toit ou au sommet de l’acrotère), sans être inférieure à 4,00 mètres."
  }
 ]

@@ -1,0 +1,19 @@
+{
+  "insee": "97405",
+  "decisions": [
+    {
+      "zone": "UZ",
+      "chemin": "retraits.voie",
+      "geste": "propose",
+      "preuve": "Les constructions pourront être implantées soit à l'alignement soit en retrait des voies publiques.",
+      "note": "alternative alignement/retrait, aucun minimum chiffré ni formule de hauteur"
+    },
+    {
+      "zone": "UZ",
+      "chemin": "retraits.limites_separatives",
+      "geste": "propose",
+      "preuve": "Les constructions pourront s'implanter soit en limite séparative soit en retrait.",
+      "note": "alternative sur limite/retrait, aucun minimum chiffré (pas de « au moins N m ») ni formule de hauteur"
+    }
+  ]
+}

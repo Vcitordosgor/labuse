@@ -1,0 +1,164 @@
+{
+ "insee": "97408",
+ "decisions": [
+  {
+   "zone": "UA",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  },
+  {
+   "zone": "UAa",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  },
+  {
+   "zone": "UAm",
+   "chemin": "retraits.voie",
+   "geste": "propose",
+   "preuve": "au moins égale à la hauteur du bâtiment",
+   "note": "recul ≥ hauteur du bâtiment sans minimum chiffré sur la relation ; le 10 m ne vaut que le long de la RN1E (cas particulier), pas un plancher général"
+  },
+  {
+   "zone": "UAm",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  },
+  {
+   "zone": "UB",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  },
+  {
+   "zone": "UBa",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  },
+  {
+   "zone": "UBb",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  },
+  {
+   "zone": "UBc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  },
+  {
+   "zone": "UBpsfr2",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  },
+  {
+   "zone": "UBpszc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  },
+  {
+   "zone": "UE",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 (faitage), plancher 3 m explicite"
+  },
+  {
+   "zone": "UEm",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  },
+  {
+   "zone": "UT",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 (faitage), plancher 3 m explicite"
+  },
+  {
+   "zone": "UTfr2",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 (faitage), plancher 3 m explicite"
+  },
+  {
+   "zone": "AUB",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  },
+  {
+   "zone": "AUBb",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  },
+  {
+   "zone": "AUBpsfr2",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  },
+  {
+   "zone": "AUT",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 (faitage), plancher 3 m explicite"
+  },
+  {
+   "zone": "AUEm",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  },
+  {
+   "zone": "UApsfr2",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher 3 m explicite"
+  }
+ ]
+}

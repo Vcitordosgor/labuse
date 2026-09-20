@@ -1,0 +1,160 @@
+{
+ "insee": "97412",
+ "commune": "Saint-Joseph",
+ "pdf": "97412_Reglement_20251210.pdf",
+ "n": 13,
+ "rules": [
+  {
+   "insee": "97412",
+   "zone": "U2",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "formule H/2 min 3 m, pas un nombre unique (5,5 non cité)",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "article": "U2 7.2",
+   "page_pdf": 33,
+   "valeur_actuelle": {
+    "min_m": 5.5
+   }
+  },
+  {
+   "insee": "97412",
+   "zone": "U2a",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "formule H/2 min 3 m (art. U2 7.2 partagé U2/U2a)",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "article": "U2 7.2",
+   "page_pdf": 33,
+   "valeur_actuelle": {
+    "min_m": 5.5
+   }
+  },
+  {
+   "insee": "97412",
+   "zone": "U3",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "formule H/2 min 3 m (5,5 non cité)",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "article": "U3 7.2",
+   "page_pdf": 49,
+   "valeur_actuelle": {
+    "min_m": 5.5
+   }
+  },
+  {
+   "insee": "97412",
+   "zone": "U3a",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "formule H/2 min 3 m (4 non cité)",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "article": "U3 7.2",
+   "page_pdf": 49,
+   "valeur_actuelle": {
+    "min_m": 4.0
+   }
+  },
+  {
+   "insee": "97412",
+   "zone": "U3ar",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "formule H/2 min 3 m (4 non cité)",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "article": "U3 7.2",
+   "page_pdf": 49,
+   "valeur_actuelle": {
+    "min_m": 4.0
+   }
+  },
+  {
+   "insee": "97412",
+   "zone": "U4",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "formule H/2 min 1,9 m (3 non cité)",
+   "citation": "En cas de retrait de la construction, la distance (D) comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 1,9 mètre.",
+   "article": "U4 7.2",
+   "page_pdf": 63,
+   "valeur_actuelle": {
+    "min_m": 3.0
+   }
+  },
+  {
+   "insee": "97412",
+   "zone": "U5",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "formule H/2 min 3 m (3,5 non cité)",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "article": "U5 7.2",
+   "page_pdf": 78,
+   "valeur_actuelle": {
+    "min_m": 3.5
+   }
+  },
+  {
+   "insee": "97412",
+   "zone": "U5cv",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "formule H/2 min 3 m ; implantation possible sur limites (3,5 non cité)",
+   "citation": "Dans les secteurs U5cv et U5cvd, les constructions peuvent être implantées sur deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "article": "U5 7.2",
+   "page_pdf": 78,
+   "valeur_actuelle": {
+    "min_m": 3.5
+   }
+  },
+  {
+   "insee": "97412",
+   "zone": "U5ma",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "formule H/2 min 3 m (3,5 non cité)",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "article": "U5 7.2",
+   "page_pdf": 78,
+   "valeur_actuelle": {
+    "min_m": 3.5
+   }
+  },
+  {
+   "insee": "97412",
+   "zone": "U6",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "formule H/2 min 3 m (6 non cité)",
+   "citation": "En cas de retrait de la construction, la distance (D) comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "article": "U6 7.2",
+   "page_pdf": 93,
+   "valeur_actuelle": {
+    "min_m": 6.0
+   }
+  },
+  {
+   "insee": "97412",
+   "zone": "U6c",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "formule H/2 min 3 m (7,5 non cité)",
+   "citation": "En cas de retrait de la construction, la distance (D) comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "article": "U6 7.2",
+   "page_pdf": 93,
+   "valeur_actuelle": {
+    "min_m": 7.5
+   }
+  },
+  {
+   "insee": "97412",
+   "zone": "1AUto",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": null,
+   "citation": "Pour les zones AUto, les constructions doivent être implantées en retrait avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "article": "Art. AUindicée 7",
+   "page_pdf": 109,
+   "valeur_actuelle": {}
+  },
+  {
+   "insee": "97412",
+   "zone": "1AUtok",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": null,
+   "citation": "Pour les zones AUto, les constructions doivent être implantées en retrait avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "article": "Art. AUindicée 7",
+   "page_pdf": 109,
+   "valeur_actuelle": {}
+  }
+ ]
+}

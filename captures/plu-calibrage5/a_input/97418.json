@@ -1,0 +1,104 @@
+{
+ "insee": "97418",
+ "commune": "Sainte-Marie",
+ "pdf": "97418_reglement_20251126.pdf",
+ "n": 8,
+ "rules": [
+  {
+   "insee": "97418",
+   "zone": "UA",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "Recul = formule H/2 min 3 m ; aucune valeur fixe 7.5. Confirmé PDF p.20.",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "Art. U5.2 « résidentielles »",
+   "page_pdf": 20,
+   "valeur_actuelle": {
+    "min_m": 7.5
+   }
+  },
+  {
+   "insee": "97418",
+   "zone": "UEa",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "Recul = formule H/2 min 4 m ; aucune valeur fixe 12.",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 33,
+   "valeur_actuelle": {
+    "min_m": 12.0
+   }
+  },
+  {
+   "insee": "97418",
+   "zone": "UEc",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "Recul = formule H/2 min 4 m ; aucune valeur fixe 7.",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 33,
+   "valeur_actuelle": {
+    "min_m": 7.0
+   }
+  },
+  {
+   "insee": "97418",
+   "zone": "UEm",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "Recul = formule H/2 min 4 m ; aucune valeur fixe 8.",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 33,
+   "valeur_actuelle": {
+    "min_m": 8.0
+   }
+  },
+  {
+   "insee": "97418",
+   "zone": "UEp",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "Recul = formule H/2 min 4 m ; aucune valeur fixe 8.",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 33,
+   "valeur_actuelle": {
+    "min_m": 8.0
+   }
+  },
+  {
+   "insee": "97418",
+   "zone": "UR",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "Recul = formule H/2 min 4 m ; aucune valeur fixe 12.",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 33,
+   "valeur_actuelle": {
+    "min_m": 12.0
+   }
+  },
+  {
+   "insee": "97418",
+   "zone": "UT",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "Recul = formule H/2 min 4 m ; aucune valeur fixe 5.5.",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 33,
+   "valeur_actuelle": {
+    "min_m": 5.5
+   }
+  },
+  {
+   "insee": "97418",
+   "zone": "UTp",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "Recul = formule H/2 min 4 m ; aucune valeur fixe 5.5.",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 33,
+   "valeur_actuelle": {
+    "min_m": 5.5
+   }
+  }
+ ]
+}

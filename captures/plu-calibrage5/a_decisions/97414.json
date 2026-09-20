@@ -1,0 +1,69 @@
+{
+ "insee": "97414",
+ "decisions": [
+  {
+   "zone": "UC1",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3.0, "formule": "H1/2, minimum 3,00 m" },
+   "preuve": "sans être inférieur à 3,00 mètres, soit : L = H1/2",
+   "note": "recul H/2 à l'égout du toit (ou faîtage), plancher 3,00 m ; lu PDF p.46"
+  },
+  {
+   "zone": "UE",
+   "chemin": "retraits.voie",
+   "geste": "valider",
+   "valeur": { "min_m": 5.0, "formule": "H/2, minimum 5 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres",
+   "note": "recul voie H/2, plancher 5 m ; lu PDF p.73"
+  },
+  {
+   "zone": "UE",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 4.0, "formule": "H/2, minimum 4 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres",
+   "note": "recul limites latérales H/2, plancher 4 m (fond 4 m) ; lu PDF p.74"
+  },
+  {
+   "zone": "US",
+   "chemin": "retraits.voie",
+   "geste": "valider",
+   "valeur": { "min_m": 5.0, "formule": "H/2, minimum 5 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 5 mètres",
+   "note": "recul voie H/2, plancher 5 m ; lu PDF p.85"
+  },
+  {
+   "zone": "US",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 4.0, "formule": "H/2, minimum 4 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres",
+   "note": "recul limites latérales H/2, plancher 4 m (fond 4 m) ; lu PDF p.86"
+  },
+  {
+   "zone": "1AUc1",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3.0, "formule": "H1/2, minimum 3,00 m" },
+   "preuve": "sans être inférieur à 3,00 mètres, soit : L = H1/2",
+   "note": "renvoi zone AUindicée → règle UC1, texte cité verbatim, plancher 3,00 m ; lu PDF p.46+107"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "retraits.voie",
+   "geste": "valider",
+   "valeur": { "min_m": 5.0, "formule": "H/2, minimum 5 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres",
+   "note": "renvoi zone AUindicée → règle UE voie, plancher 5 m ; lu PDF p.73+107"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 4.0, "formule": "H/2, minimum 4 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres",
+   "note": "renvoi zone AUindicée → règle UE limites, plancher 4 m (fond 4 m) ; lu PDF p.74+107"
+  }
+ ]
+}

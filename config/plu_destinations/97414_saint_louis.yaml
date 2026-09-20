@@ -370,14 +370,15 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
-          min_m: 4.5
+          min_m: 3.0
           article: UC 7.2/7.3
           page_pdf: 46
           citation: 'Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum
             à la moitié de la hauteur à l''égout du toit (ou au faîtage en l''absence d''égout de toit) de
             la construction sans être inférieur à 3,00 mètres, soit : L = H1/2'
-          statut: propose
+          statut: valide
           raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
+          formule: H1/2, minimum 3,00 m
       stationnement:
         par_logement:
           places: 2.0
@@ -653,21 +654,23 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 6.0
+          min_m: 5.0
           article: UE 6.2
           page_pdf: 73
           citation: Les constructions doivent être implantées en retrait de la voie, avec distance (D) (...)
             au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 5 m
         limites_separatives:
-          min_m: 6.0
+          min_m: 4.0
           article: UE 7.2
           page_pdf: 73
           citation: 'En cas de retrait de la construction, la distance (D) (...) au moins égale à la moitié
             de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)'
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 4 m
       pleine_terre:
         pct:
           pct: 15.0
@@ -759,21 +762,23 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 6.0
+          min_m: 5.0
           article: US 6.2
           page_pdf: 85
           citation: Les constructions doivent être implantées en retrait de la voie, avec distance (D) (...)
             au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 5 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 5 m
         limites_separatives:
-          min_m: 6.0
+          min_m: 4.0
           article: US 7.2
           page_pdf: 85
           citation: 'En cas de retrait de la construction, la distance (D) (...) au moins égale à la moitié
             de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)'
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 4 m
       pleine_terre:
         pct:
           pct: 15.0
@@ -1177,15 +1182,16 @@ zones:
             (...) au moins égale à 4 mètres.'
           statut: valide
         limites_separatives:
-          min_m: 4.5
+          min_m: 3.0
           article: UC 7.2/7.3
           page_pdf: 46
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC1 : Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit
             correspondre au minimum à la moitié de la hauteur à l''égout du toit (ou au faîtage en l''absence
             d''égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2'
-          statut: propose
+          statut: valide
           raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
+          formule: H1/2, minimum 3,00 m
       stationnement:
         par_logement:
           places: 2.0
@@ -1451,25 +1457,27 @@ zones:
           raison: citation non retrouvée autour de p.76 (recouvrement 47%)
       retraits:
         voie:
-          min_m: 6.0
+          min_m: 5.0
           article: UE 6.2
           page_pdf: 73
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UE : Les constructions doivent être implantées en retrait de la voie,
             avec distance (D) (...) au moins égale à la moitié de la hauteur (H) de la façade concernée, avec
             un minimum de 5 mètres.'
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 5 m
         limites_separatives:
-          min_m: 6.0
+          min_m: 4.0
           article: UE 7.2
           page_pdf: 73
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UE : En cas de retrait de la construction, la distance (D) (...) au moins
             égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale
             à 4 mètres)'
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 4 m
       pleine_terre:
         pct:
           pct: 15.0

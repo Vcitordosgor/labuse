@@ -1,0 +1,90 @@
+{
+ "insee": "97407",
+ "commune": "Le Port",
+ "pdf": "97407_reglement_20241209.pdf",
+ "n": 7,
+ "rules": [
+  {
+   "insee": "97407",
+   "zone": "Ud",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "lu PDF p.68 — implantation en limite (0) OU alignement des constructions limitrophes : alternative, pas un minimum unique ; 0 n'apparaît pas littéralement",
+   "citation": "Les constructions doivent être implantées en limite séparative et/ou suivant l’alignement des constructions limitrophes existantes.",
+   "article": "Ud 5",
+   "page_pdf": 68,
+   "valeur_actuelle": {
+    "min_m": 0.0
+   }
+  },
+  {
+   "insee": "97407",
+   "zone": "1AUa",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "lu PDF p.24 (Ua 5, via renvoi) — sur limite OU retrait ≥ 3 m : alternative, pas un minimum unique",
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "article": "Ua 5",
+   "page_pdf": 145,
+   "valeur_actuelle": {
+    "min_m": 3.0
+   }
+  },
+  {
+   "insee": "97407",
+   "zone": "1AUc",
+   "chemin": "retraits.voie",
+   "note_lot2": "lu PDF p.53 (Uc 4, via renvoi) — alignement OU recul ≥ 3 m : alternative, pas un minimum unique",
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "article": "Uc 4",
+   "page_pdf": 145,
+   "valeur_actuelle": {
+    "min_m": 3.0
+   }
+  },
+  {
+   "insee": "97407",
+   "zone": "1AUc",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "lu PDF p.54 (Uc 5, via renvoi) — sur limite OU retrait ≥ 4 m : alternative, pas un minimum unique",
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "article": "Uc 5",
+   "page_pdf": 145,
+   "valeur_actuelle": {
+    "min_m": 4.0
+   }
+  },
+  {
+   "insee": "97407",
+   "zone": "1AUem",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "lu PDF p.82 (Ue 5, via renvoi) — sur limite OU retrait ≥ 5 m : alternative, pas un minimum unique",
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "article": "Ue 5",
+   "page_pdf": 145,
+   "valeur_actuelle": {
+    "min_m": 5.0
+   }
+  },
+  {
+   "insee": "97407",
+   "zone": "1AUs",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "lu PDF p.122 (Us 5, via renvoi) — sur limite OU retrait ≥ 5 m : alternative, pas un minimum unique",
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "article": "Us 5",
+   "page_pdf": 145,
+   "valeur_actuelle": {
+    "min_m": 5.0
+   }
+  },
+  {
+   "insee": "97407",
+   "zone": "1AUm",
+   "chemin": "retraits.voie",
+   "note_lot2": null,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent. [Aucun recul général propre à 1AUm ; 1AUmut = 5 m, 1AUs = 25 m/RN7, 1AUa = 45 m/RN4a]",
+   "article": "1AU 4",
+   "page_pdf": 146,
+   "valeur_actuelle": {}
+  }
+ ]
+}

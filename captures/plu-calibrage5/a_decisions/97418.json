@@ -1,0 +1,69 @@
+{
+ "insee": "97418",
+ "decisions": [
+  {
+   "zone": "UA",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "H/2 avec plancher chiffré 3 m (citation Art. U5.2 résidentielles)"
+  },
+  {
+   "zone": "UEa",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 4, "formule": "H/2, minimum 4 m" },
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres",
+   "note": "H/2 avec plancher chiffré 4 m (citation Art. U5.2 activités)"
+  },
+  {
+   "zone": "UEc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 4, "formule": "H/2, minimum 4 m" },
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres",
+   "note": "H/2 avec plancher chiffré 4 m (citation Art. U5.2 activités)"
+  },
+  {
+   "zone": "UEm",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 4, "formule": "H/2, minimum 4 m" },
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres",
+   "note": "H/2 avec plancher chiffré 4 m (citation Art. U5.2 activités)"
+  },
+  {
+   "zone": "UEp",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 4, "formule": "H/2, minimum 4 m" },
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres",
+   "note": "H/2 avec plancher chiffré 4 m (citation Art. U5.2 activités)"
+  },
+  {
+   "zone": "UR",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 4, "formule": "H/2, minimum 4 m" },
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres",
+   "note": "H/2 avec plancher chiffré 4 m (citation Art. U5.2 activités)"
+  },
+  {
+   "zone": "UT",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 4, "formule": "H/2, minimum 4 m" },
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres",
+   "note": "H/2 avec plancher chiffré 4 m (citation Art. U5.2 activités)"
+  },
+  {
+   "zone": "UTp",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 4, "formule": "H/2, minimum 4 m" },
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres",
+   "note": "H/2 avec plancher chiffré 4 m (citation Art. U5.2 activités)"
+  }
+ ]
+}

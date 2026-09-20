@@ -1267,13 +1267,14 @@ zones:
           statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
         limites_separatives:
-          min_m: 3.0
+          min_m: 3
           article: Ua 5
           page_pdf: 145
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
-            et de Programmation lorsqu’elles existent.
-          statut: propose
+          citation: la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la limite latérale, doit être au moins égale à 3 mètres
+          statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          formule: sur limite (max 2), sinon retrait minimum 3 m
       stationnement:
         par_logement:
           places: 0.3
@@ -1328,21 +1329,23 @@ zones:
           raison: valeur 80 absente de la citation (harmonisation ≠ texte)
       retraits:
         voie:
-          min_m: 3.0
+          min_m: 3
           article: Uc 4
           page_pdf: 145
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
-            et de Programmation lorsqu’elles existent.
-          statut: propose
+          citation: Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum
+            de 3 mètres.
+          statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          formule: à l’alignement, sinon recul minimum 3 m
         limites_separatives:
-          min_m: 4.0
+          min_m: 4
           article: Uc 5
           page_pdf: 145
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
-            et de Programmation lorsqu’elles existent.
-          statut: propose
+          citation: la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la limite latérale, doit être au moins égale à 4 mètres
+          statut: valide
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+          formule: sur limite, sinon retrait minimum 4 m
       stationnement:
         par_logement:
           places: 0.3
@@ -1400,13 +1403,14 @@ zones:
           statut: valide
           raison: valeur 5 absente de la citation (harmonisation ≠ texte)
         limites_separatives:
-          min_m: 5.0
+          min_m: 5
           article: Ue 5
           page_pdf: 145
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
-            et de Programmation lorsqu’elles existent.
-          statut: propose
+          citation: la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la limite latérale, doit être au moins égale à 5 mètres
+          statut: valide
           raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+          formule: sur limite, sinon retrait minimum 5 m
       pleine_terre:
         pct:
           pct: 20.0
@@ -1602,13 +1606,14 @@ zones:
             de la RN7 ;'
           statut: valide
         limites_separatives:
-          min_m: 5.0
+          min_m: 5
           article: Us 5
           page_pdf: 145
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
-            et de Programmation lorsqu’elles existent.
-          statut: propose
+          citation: la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la limite latérale, doit être au moins égale à 5 mètres
+          statut: valide
           raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+          formule: sur limite, sinon retrait minimum 5 m
       pleine_terre:
         pct:
           pct: 10.0

@@ -434,15 +434,16 @@ zones:
             de l’alignement est de 4 mètres minimum.
           statut: valide
         limites_separatives:
-          min_m: 5.0
+          min_m: 4.0
           article: Ue 7.2-7.3
           page_pdf: 57
           citation: En cas de retrait, la distance (D) comptée horizontalement et perpendiculairement de tout
             point de la façade de la construction au point le plus proche de la limite séparative, doit être
             au moins égale à D=H/2 (H étant la hauteur à l’égout du toit ou au sommet de l’acrotère), sans
             être inférieure à 4,00 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+          formule: D=H/2, sans être inférieure à 4,00 mètres
       pleine_terre:
         pct:
           pct: 25.0

@@ -1,0 +1,100 @@
+{
+ "insee": "97402",
+ "decisions": [
+  {
+   "zone": "Ua",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 avec plancher 3 m chiffré"
+  },
+  {
+   "zone": "Ub",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 avec plancher 3 m chiffré"
+  },
+  {
+   "zone": "Uba",
+   "chemin": "retraits.limites_separatives",
+   "geste": "propose",
+   "preuve": "les constructions peuvent être implantées sur une seule limite latérale ou en retrait",
+   "note": "sur limite OU en retrait, mais aucun minimum chiffré pour le retrait"
+  },
+  {
+   "zone": "Uc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 avec plancher 3 m chiffré"
+  },
+  {
+   "zone": "Ud",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 avec plancher 3 m chiffré"
+  },
+  {
+   "zone": "Udu",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 avec plancher 3 m chiffré"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 avec plancher 3 m chiffré"
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 avec plancher 3 m chiffré"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 avec plancher 3 m chiffré"
+  },
+  {
+   "zone": "1AUd",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 avec plancher 3 m chiffré"
+  },
+  {
+   "zone": "1AUec",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 avec plancher 3 m chiffré"
+  },
+  {
+   "zone": "1AUt",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul relatif hauteur H/2 avec plancher 3 m chiffré"
+  }
+ ]
+}

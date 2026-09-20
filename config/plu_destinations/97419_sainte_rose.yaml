@@ -451,14 +451,15 @@ zones:
             à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
-          min_m: 3.0
+          min_m: 5
           article: UE 7
           page_pdf: 49
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 5 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 5 m
       pleine_terre:
         pct:
           pct: 25.0
@@ -633,13 +634,14 @@ zones:
           statut: valide
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
         limites_separatives:
-          min_m: 3.0
+          min_m: 3
           article: UA 7
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être
+            inférieure à 3 mètres
+          statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -705,13 +707,14 @@ zones:
           statut: valide
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
         limites_separatives:
-          min_m: 3.0
+          min_m: 3
           article: UC 7
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être
+            inférieure à 3 mètres
+          statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -774,13 +777,14 @@ zones:
           statut: valide
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
         limites_separatives:
-          min_m: 3.0
+          min_m: 5
           article: UE 7
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être
+            inférieure à 5 mètres
+          statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 5 m
       pleine_terre:
         pct:
           pct: 25.0

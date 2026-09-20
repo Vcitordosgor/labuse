@@ -72,13 +72,18 @@ def main() -> int:
             if geste in ("valider", "corriger"):
                 if not d.get("valeur"):
                     refuses.append(f"{insee} {zone} {chemin} : valeur manquante"); counts["REFUS"] += 1; continue
-                val = next(iter(d["valeur"].values()))
-                if not _num_dans_preuve(val, d.get("preuve", "")):
-                    refuses.append(f"{insee} {zone} {chemin} {geste} : « {val} » absent de la preuve « {str(d.get('preuve'))[:60]} »")
+                # garde : TOUTE valeur numérique décidée (min_m, pct, places…) doit être littéralement
+                # dans la preuve. La `formule` (texte) n'est pas soumise au contrôle numérique.
+                nums = [v for v in d["valeur"].values() if isinstance(v, (int, float))]
+                manque = next((v for v in nums if not _num_dans_preuve(v, d.get("preuve", ""))), None)
+                if manque is not None:
+                    refuses.append(f"{insee} {zone} {chemin} {geste} : « {manque} » absent de la preuve « {str(d.get('preuve'))[:60]} »")
                     counts["REFUS"] += 1; continue
-                if geste == "corriger":
-                    for k, v in d["valeur"].items():
-                        leaf[k] = v
+                val = nums[0] if nums else next(iter(d["valeur"].values()))
+                # valider ET corriger posent la valeur décidée (pour valider = valeur confirmée,
+                # idempotent ; pour une formule = min_m + formule nouvellement encodés).
+                for k, v in d["valeur"].items():
+                    leaf[k] = v
                 # « chaque décision porte sa citation » : si la citation stockée ne contient pas la
                 # valeur décidée (cas des renvois 1AU→U lus ailleurs dans le PDF, ou d'un écart
                 # harmonisé), on grave la PREUVE vérifiée comme citation — plus jamais un `valide`

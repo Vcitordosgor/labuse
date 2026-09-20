@@ -1,0 +1,152 @@
+{
+ "insee": "97402",
+ "commune": "Bras-Panon",
+ "pdf": "97402_reglement_20260428.pdf",
+ "n": 12,
+ "rules": [
+  {
+   "insee": "97402",
+   "zone": "Ua",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul H/2 min 3 m : formule, pas de nombre fixe pour 5",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UA 7.2-7.3",
+   "page_pdf": 17,
+   "valeur_actuelle": {
+    "min_m": 5.0
+   }
+  },
+  {
+   "insee": "97402",
+   "zone": "Ub",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul H/2 min 3 m : formule, pas de nombre fixe pour 4",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UB 7.2-7.3",
+   "page_pdf": 30,
+   "valeur_actuelle": {
+    "min_m": 4.0
+   }
+  },
+  {
+   "insee": "97402",
+   "zone": "Uba",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "« sur une seule limite latérale ou en retrait » : formule (sur limite OU recul), pas de nombre fixe pour 4",
+   "citation": "En secteur Uba, les constructions peuvent être implantées sur une seule limite latérale ou en retrait.",
+   "article": "UB 7.2",
+   "page_pdf": 30,
+   "valeur_actuelle": {
+    "min_m": 4.0
+   }
+  },
+  {
+   "insee": "97402",
+   "zone": "Uc",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul H/2 min 3 m : formule, pas de nombre fixe pour 4",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UC 7.2-7.3",
+   "page_pdf": 44,
+   "valeur_actuelle": {
+    "min_m": 4.0
+   }
+  },
+  {
+   "insee": "97402",
+   "zone": "Ud",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul H/2 min 3 m : formule, pas de nombre fixe pour 3.5",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UD 7.2-7.3",
+   "page_pdf": 57,
+   "valeur_actuelle": {
+    "min_m": 3.5
+   }
+  },
+  {
+   "insee": "97402",
+   "zone": "Udu",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul H/2 min 3 m : formule, pas de nombre fixe pour 3.5",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UD 7.2-7.3",
+   "page_pdf": 57,
+   "valeur_actuelle": {
+    "min_m": 3.5
+   }
+  },
+  {
+   "insee": "97402",
+   "zone": "1AUa",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul H/2 min 3 m : formule, pas de nombre fixe pour 5",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UA 7.2-7.3",
+   "page_pdf": 17,
+   "valeur_actuelle": {
+    "min_m": 5.0
+   }
+  },
+  {
+   "insee": "97402",
+   "zone": "1AUb",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul H/2 min 3 m : formule, pas de nombre fixe pour 4",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UB 7.2-7.3",
+   "page_pdf": 30,
+   "valeur_actuelle": {
+    "min_m": 4.0
+   }
+  },
+  {
+   "insee": "97402",
+   "zone": "1AUc",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul H/2 min 3 m : formule, pas de nombre fixe pour 4",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UC 7.2-7.3",
+   "page_pdf": 44,
+   "valeur_actuelle": {
+    "min_m": 4.0
+   }
+  },
+  {
+   "insee": "97402",
+   "zone": "1AUd",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul H/2 min 3 m : formule, pas de nombre fixe pour 3.5",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UD 7.2-7.3",
+   "page_pdf": 57,
+   "valeur_actuelle": {
+    "min_m": 3.5
+   }
+  },
+  {
+   "insee": "97402",
+   "zone": "1AUec",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul H/2 min 3 m : formule, pas de nombre fixe pour 9",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UA 7.2-7.3",
+   "page_pdf": 17,
+   "valeur_actuelle": {
+    "min_m": 9.0
+   }
+  },
+  {
+   "insee": "97402",
+   "zone": "1AUt",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul H/2 min 3 m : formule, pas de nombre fixe pour 5",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UA 7.2-7.3",
+   "page_pdf": 17,
+   "valeur_actuelle": {
+    "min_m": 5.0
+   }
+  }
+ ]
+}

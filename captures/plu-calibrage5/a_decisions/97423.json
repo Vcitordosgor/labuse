@@ -1,0 +1,16 @@
+{
+ "insee": "97423",
+ "decisions": [
+  {
+   "zone": "Ue",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": {
+    "min_m": 4.0,
+    "formule": "D=H/2, sans être inférieure à 4,00 mètres"
+   },
+   "preuve": "doit être au moins égale à D=H/2 (H étant la hauteur à l’égout du toit ou au sommet de l’acrotère), sans être inférieure à 4,00 mètres.",
+   "note": "Recul relatif à la hauteur avec minimum chiffré 4,00 m ; valeur_actuelle 5.0 absente du texte, corrigée à 4."
+  }
+ ]
+}

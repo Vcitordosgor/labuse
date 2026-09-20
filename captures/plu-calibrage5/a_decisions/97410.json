@@ -1,0 +1,75 @@
+{
+ "insee": "97410",
+ "decisions": [
+  {
+   "zone": "Ua",
+   "chemin": "retraits.voie",
+   "geste": "propose",
+   "preuve": "un recul minimum de : - 7 mètres par rapport à l'axe de la rue George Pompidou ; - 5 mètres par rapport à l'axe des rues Monfleury et Louis Brunet",
+   "note": "reculs fixes par rapport a des axes nommes (7 m / 5 m / 75 m RN), pas une formule de hauteur ni 'sur limite OU retrait' ; valeurs multiples selon l'axe"
+  },
+  {
+   "zone": "Ub",
+   "chemin": "retraits.voie",
+   "geste": "propose",
+   "preuve": "un recul minimum de 75 mètres par rapport à l'axe des routes nationales",
+   "note": "recul fixe a un axe nomme (75 m RN hors agglomeration), pas une formule de hauteur ni 'sur limite OU retrait'"
+  },
+  {
+   "zone": "Ue",
+   "chemin": "retraits.voie",
+   "geste": "propose",
+   "preuve": "un recul minimum de 75 mètres par rapport à l'axe des routes nationales",
+   "note": "recul fixe a un axe nomme (75 m RN hors agglomeration), pas une formule de hauteur ni 'sur limite OU retrait'"
+  },
+  {
+   "zone": "Up",
+   "chemin": "retraits.voie",
+   "geste": "propose",
+   "preuve": "un recul minimum de 75 mètres par rapport à l'axe des routes nationales",
+   "note": "recul fixe a un axe nomme (75 m RN hors agglomeration), pas une formule de hauteur ni 'sur limite OU retrait'"
+  },
+  {
+   "zone": "Ut",
+   "chemin": "retraits.voie",
+   "geste": "propose",
+   "preuve": "un recul minimum de 75 mètres par rapport à l'axe des routes nationales",
+   "note": "recul fixe a un axe nomme (75 m RN hors agglomeration), pas une formule de hauteur ni 'sur limite OU retrait'"
+  },
+  {
+   "zone": "Ua",
+   "chemin": "retraits.limites_separatives",
+   "geste": "propose",
+   "preuve": "2° Soit avec un recul d'un mètre au moins.",
+   "note": "conditionnelle 'sur limite OU recul' mais minimum ecrit en toutes lettres ('un metre'), aucun chiffre litteral dans la citation"
+  },
+  {
+   "zone": "Ub",
+   "chemin": "retraits.limites_separatives",
+   "geste": "propose",
+   "preuve": "2° Soit avec un recul d'un mètre au moins.",
+   "note": "conditionnelle 'sur limite OU recul' mais minimum ecrit en toutes lettres ('un metre'), aucun chiffre litteral dans la citation"
+  },
+  {
+   "zone": "Ue",
+   "chemin": "retraits.limites_separatives",
+   "geste": "propose",
+   "preuve": "2° Soit avec un recul d'un mètre au moins.",
+   "note": "conditionnelle 'sur limite OU recul' mais minimum ecrit en toutes lettres ('un metre'), aucun chiffre litteral dans la citation"
+  },
+  {
+   "zone": "Up",
+   "chemin": "retraits.limites_separatives",
+   "geste": "propose",
+   "preuve": "2° Soit avec un recul d'un mètre au moins.",
+   "note": "conditionnelle 'sur limite OU recul' mais minimum ecrit en toutes lettres ('un metre'), aucun chiffre litteral dans la citation"
+  },
+  {
+   "zone": "Ut",
+   "chemin": "retraits.limites_separatives",
+   "geste": "propose",
+   "preuve": "2° Soit avec un recul d'un mètre au moins.",
+   "note": "conditionnelle 'sur limite OU recul' mais minimum ecrit en toutes lettres ('un metre'), aucun chiffre litteral dans la citation"
+  }
+ ]
+}
