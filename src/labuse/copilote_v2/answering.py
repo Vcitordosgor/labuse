@@ -558,6 +558,19 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
             rep = _reply(clarif, "QUESTION", clarification=True)
             rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
             return rep
+    # COPILOTE-2 lot 1 — LE CHEMIN FICHE, DÉTERMINISTE ET SANS MODÈLE : une parcelle NOMMÉE (IDU dans
+    # le message ou le contexte embarqué) avec une demande de résumé ou de champ précis est servie AVANT
+    # le routeur — le résumé se construit sans appel modèle (preuve du mandat, mode dégradé compris).
+    if not scenario:
+        idu_fiche = (contexte or {}).get("idu") or _idu_dans(message)
+        if idu_fiche:
+            m = _fold_py(message.lower())
+            if any(k in m for k in _RESUME_KW) or (not any(k in m for k in _ACTION_KW)
+                                                   and _quel_champ_fiche(message)):
+                rep = _chemin_fiche(db, message, {"idu": idu_fiche}, contexte)
+                if rep is not None:
+                    rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_fiche}, "voie": prior_voie}
+                    return rep
     route = classify(db, message, history=history, contexte=contexte, prior_params=prior_params)
     if scenario and scenario in SCENARIOS and not route.degraded:
         # le chip lève l'ambiguïté d'INTENTION : intent forcé, clarification d'intention retirée. La
@@ -1358,6 +1371,13 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         return _reply(HORS_SUJET, intent, refus="hors_sujet")
 
     if intent == "QUESTION":
+        # COPILOTE-2 lot 1 — LE CHEMIN FICHE d'abord : une parcelle/commune nommée reçoit un résumé
+        # déterministe (ou la valeur d'un champ précis, ligne déclarée + id) AVANT toute sélection
+        # d'outil. Le résumé se construit sans modèle (preuve du mandat, mode dégradé compris).
+        fiche_rep = _chemin_fiche(db, message, params, contexte)
+        if fiche_rep is not None:
+            fiche_rep["_faits_tour"] = None
+            return fiche_rep
         sel = _select_tool(db, message, params)
         refus = sel.get("refus")
         if refus == "proprietaire_pp":
@@ -1588,6 +1608,70 @@ def _match_concept(message: str):
     for kws, cible in _CONCEPT_MAP:
         if any(k in m for k in kws):
             return cible
+    return None
+
+
+# COPILOTE-2 lot 1 — LE CHEMIN FICHE. Une parcelle (ou commune) NOMMÉE : résumé DÉTERMINISTE
+# (mêmes déclarations/ids que la fiche et le Dossier — `resume_fiche`) + la porte vers la fiche.
+# « Dis-moi tout sur X » → le résumé complet ; « qui est le propriétaire / quel taux de TA » → la
+# LIGNE DÉCLARÉE et son id (plus de champ jeté par l'outil, COPILOTE-AUDIT-1). Le modèle ne calcule
+# ni ne choisit aucun chiffre ; en mode dégradé le résumé se sert SANS lui.
+_RESUME_KW = ("dis-moi tout", "dis moi tout", "dis moi ce que", "tout sur", "tout ce que tu sais",
+              "resume", "résumé", "synthese", "synthèse", "parle-moi", "parle moi", "presente",
+              "présente", "que sais-tu", "que sais tu", "analyse cette", "analyse la parcelle",
+              "fiche de", "fiche complete", "fais le point", "donne-moi la fiche", "brief")
+# un verbe d'ACTION / de destination ne doit pas être happé comme une question de champ (il a sa voie).
+_ACTION_KW = ("ouvrir", "implanter", "restaurant", "commerce", "hotel", "hôtel", "bureau", "entrepot",
+              "usine", "peut-on", "peut on", "puis-je", "puis je", "autorise", "construire un",
+              "vaut", "vaut-elle", "prix demande", "divis", "decoup", "lotir", "compare", "assembl")
+
+
+_IDU_RE = re.compile(r"\b(\d{5}[0-9A-Za-z]{9})\b")
+
+
+def _idu_dans(message: str) -> str | None:
+    """Un IDU (14 car., 5 chiffres INSEE + 9) présent dans le message — extraction déterministe."""
+    m = _IDU_RE.search(message or "")
+    return m.group(1) if m else None
+
+
+def _quel_champ_fiche(message: str):
+    from . import resume_fiche as RF
+    return RF._quel_champ(message)
+
+
+def _chemin_fiche(db: Session, message: str, params: dict, contexte: dict | None) -> dict | None:
+    """Le chemin FICHE : un résumé déterministe d'une parcelle/commune nommée, ou la valeur d'un
+    champ précis (ligne déclarée + id). Rend un reply, ou None si la demande n'est pas de ce chemin."""
+    from . import resume_fiche as RF
+    idu = params.get("idu") or (contexte or {}).get("idu")
+    m = _fold_py(message.lower())
+    veut_resume = any(k in m for k in _RESUME_KW)
+    action = any(k in m for k in _ACTION_KW)
+    if idu:
+        # (1) une question de champ précis (propriétaire, taxe, zone, risques, pente…) — sauf action.
+        if not action and not veut_resume:
+            ch = RF.champ_precis(db, idu, message)
+            if ch is not None:
+                return _reply(ch["texte"], "QUESTION", tool="fiche_parcelle", sources=[ch["source"]],
+                              champ_id=ch.get("champ_id"),
+                              voie={"cible": "fiche", "libelle": "Voir la fiche parcelle complète", "idu": idu})
+        # (2) « dis-moi tout » → le résumé complet + la porte fiche.
+        if veut_resume:
+            r = RF.resume_parcelle(db, idu)
+            if r is not None:
+                return _reply(RF.phrase(r), "QUESTION", tool="fiche_parcelle",
+                              sources=[r["source"]], resume_fiche=r,
+                              voie={"cible": "fiche", "libelle": "Voir la fiche parcelle complète", "idu": idu})
+        return None
+    # (3) une COMMUNE nommée + demande de résumé → le résumé commune + la porte Communes.
+    commune = params.get("commune")
+    if commune and veut_resume:
+        r = RF.resume_commune(db, commune)
+        if r is not None:
+            return _reply(RF.phrase_commune(r), "QUESTION", tool="stats_commune",
+                          sources=[r["source"]], resume_commune=r,
+                          porte="communes", prefill="communePrefill", prefill_commune=r["commune"])
     return None
 
 
