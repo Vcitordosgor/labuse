@@ -97,6 +97,13 @@ export function TaxeAmenagement() {
   const depDefaut = cfg.data?.taux.part_departementale_defaut ?? null
   const tauxDepEffectif = tauxDepartemental ?? depDefaut
 
+  // OUTILS-FIX-5 L2 — le taux communal PUBLIC de la parcelle, servi par le prefill (même id que la
+  // fiche §7). Quand il existe (24/24 communes), l'outil l'AFFICHE et ne le fait plus saisir : on
+  // envoie `insee` au calcul, le back applique le taux public (total chiffré) — plus aucune saisie.
+  const insee = prefill.data?.insee ?? null
+  const tauxCommunalPublic = prefill.data?.taux_communal_source === 'public'
+    ? (prefill.data.taux_communal_pct ?? null) : null
+
   // Paramètres du calcul — envoyés seulement quand une surface taxable est saisie.
   const params: TaxeParams | null = useMemo(() => {
     if (surface == null || surface <= 0) return null
@@ -108,10 +115,13 @@ export function TaxeAmenagement() {
       pv_sol_m2: pvSol ?? undefined,
       stationnement_ext_places: stationnement ?? undefined,
       eoliennes_mats: eoliennes ?? undefined,
-      taux_communal_pct: tauxCommunal,               // null → total non calculé (jamais inventé)
+      // taux communal : `insee` sert le taux PUBLIC au back ; `taux_communal_pct` reste une
+      // correction FACULTATIVE (null par défaut → le back prend le public, source 'public').
+      taux_communal_pct: tauxCommunal,
       taux_departemental_pct: tauxDepEffectif,
+      insee: insee ?? undefined,
     }
-  }, [surface, residencePrincipale, logementAide, piscine, pvSol, stationnement, eoliennes, tauxCommunal, tauxDepEffectif])
+  }, [surface, residencePrincipale, logementAide, piscine, pvSol, stationnement, eoliennes, tauxCommunal, tauxDepEffectif, insee])
 
   const calc = useQuery({
     queryKey: ['taxe-calc', params],
@@ -210,17 +220,36 @@ export function TaxeAmenagement() {
           </div>
         </div>
 
-        {/* TAUX — communal OBLIGATOIRE (jamais de défaut) · départemental pré-rempli au plafond légal. */}
+        {/* TAUX — OUTILS-FIX-5 L2 : le taux communal PUBLIC (servi par le prefill, même id que la
+            fiche §7) est AFFICHÉ, plus saisi. La saisie manuelle ne réapparaît qu'en repli si la
+            commune n'a aucun taux public en base (défensif — les 24 sont peuplées). */}
         <div className="grid grid-cols-2 gap-2">
-          <NumField dataAttr="taux-communal" label="Taux communal *" unit="%" value={tauxCommunal} onChange={setTauxCommunal}
-            placeholder={`≤ ${fmtInt(c.taux.part_communale_plafond_pct)}`}
-            hint={`Obligatoire — voté par la commune (plafond ${fmtInt(c.taux.part_communale_plafond_pct)} %). L’outil ne l’invente pas.`} />
+          {tauxCommunalPublic != null ? (
+            <div data-taxe-taux-communal-public className="flex flex-col gap-1">
+              <span className="label-caps flex min-h-[2.1em] items-start text-[9.5px] leading-tight text-txt-dim">Taux communal</span>
+              <span className="flex items-center gap-1.5 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5">
+                <span className="min-w-0 flex-1 font-mono text-xs tabular-nums text-mint">{tauxCommunalPublic} %</span>
+                <span className="shrink-0 text-[9px] uppercase tracking-[.06em] text-txt-dim">public</span>
+              </span>
+              <span className="text-[10px] leading-snug text-txt-dim">
+                Voté par la commune — {prefill.data?.taux_communal_millesime ?? 'délibération communale'}.
+                {prefill.data?.taux_communal_perime && (
+                  <span data-taxe-taux-perime className="ml-1 font-medium text-st-creuser">⚠ non rafraîchi depuis plus d'un an.</span>
+                )}
+              </span>
+            </div>
+          ) : (
+            <NumField dataAttr="taux-communal" label="Taux communal *" unit="%" value={tauxCommunal} onChange={setTauxCommunal}
+              placeholder={`≤ ${fmtInt(c.taux.part_communale_plafond_pct)}`}
+              hint={`Obligatoire — voté par la commune (plafond ${fmtInt(c.taux.part_communale_plafond_pct)} %). L’outil ne l’invente pas.`} />
+          )}
           <NumField dataAttr="taux-departemental" label="Taux départemental" unit="%" value={tauxDepEffectif} onChange={setTauxDepartemental}
             placeholder={depDefaut != null ? String(depDefaut) : undefined}
             hint={`Plafond légal ${depDefaut != null ? depDefaut : '—'} % — à confirmer auprès du département.`} />
         </div>
-        {/* RV2-V2 — aide CONCRÈTE pour trouver le taux communal (pas d'open data exploitable).
-            RETOURS-11 O4b : repliée par défaut (accordéon <details>). */}
+        {/* RV2-V2 — aide pour trouver le taux communal : n'apparaît qu'en REPLI (taux public absent),
+            sinon l'outil sert déjà le taux et la question ne se pose plus. */}
+        {tauxCommunalPublic == null && (
         <details data-taux-aide className="group rounded-md border border-line-2 bg-surface-3/50 text-[10.5px] leading-snug text-txt-mut">
           <summary className="hover-fill flex cursor-pointer list-none items-center gap-1.5 rounded-md px-2.5 py-2 text-txt">
             <span aria-hidden className="text-txt-dim transition-transform duration-quick group-open:rotate-90">›</span>
@@ -233,6 +262,7 @@ export function TaxeAmenagement() {
             administratifs). À défaut de délibération, le taux légal minimal est de 1 %.
           </div>
         </details>
+        )}
       </div>
       )}
 

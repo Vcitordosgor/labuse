@@ -2638,11 +2638,22 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
     if not row:
         raise HTTPException(404, "Parcelle inconnue")
     sdp = row["sdp_gabarit_m2"]
-    return {"idu": idu, "commune": row["commune"],
+    # OUTILS-FIX-5 L2 — le taux communal PUBLIC de la parcelle, par le MÊME id/résolution que la
+    # fiche §7 (_taxe_amenagement_block : taux_communal_public(db, idu[:5])) et le Financier. Avant,
+    # l'outil n'envoyait jamais `insee` et faisait recopier à la main un taux que LABUSE connaît
+    # (24/24 communes en base) : total_eur restait null tant que l'utilisateur ne saisissait rien.
+    # On sert donc l'insee (clé de la table) + le taux public daté, pour un affichage identique.
+    from .. import taxe_amenagement as _tax
+    pub = _tax.taux_communal_public(db, idu[:5])
+    return {"idu": idu, "commune": row["commune"], "insee": idu[:5],
             "surface_terrain_m2": row["surface_terrain_m2"],
             "zone_plu": row["zone_libelle"] or row["zone_fam"],
             "sdp_gabarit_m2": int(sdp) if (sdp is not None and sdp > 0) else None,
-            "deja_batie": bool(row["taux_emprise_pct"] and float(row["taux_emprise_pct"]) > 0)}
+            "deja_batie": bool(row["taux_emprise_pct"] and float(row["taux_emprise_pct"]) > 0),
+            "taux_communal_pct": (pub["part_communale_pct"] if pub else None),
+            "taux_communal_source": ("public" if pub else None),
+            "taux_communal_millesime": (pub["millesime"] if pub else None),
+            "taux_communal_perime": (pub["perime"] if pub else None)}
 
 
 @app.get("/outils/taxe-amenagement")
