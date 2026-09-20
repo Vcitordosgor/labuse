@@ -12,6 +12,65 @@ meta:
   structure: silence lu dans la structure de chaque zone et cité (voir notes des zones).
 zones:
   Ua:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: UA 10
+          page_pdf: 15
+          citation: 'La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 12 mètres au faitage.'
+          statut: valide
+        egout:
+          m: 9.0
+          article: UA 10
+          page_pdf: 15
+          citation: 'La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 12 mètres au faitage.'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UA 9
+          page_pdf: 14
+          citation: L’emprise maximale des constructions est fixée à 70% de la superficie du terrain.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UA 6
+          page_pdf: 13
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UA 7
+          page_pdf: 13
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UA 12
+          page_pdf: 17
+          citation: 'Pour les constructions à destination d’habitation : - 1 place de stationnement minimum
+            par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par
+            logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par
+            logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.'
+          statut: propose
+          raison: valeur 2 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: UA 13
+          page_pdf: 17
+          citation: Au minimum 25% de la superficie totale de l’unité foncière doit être traité en espace
+            perméable.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UA 2.2, p. 10 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article UA 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -63,6 +122,65 @@ zones:
       des risques » — condition générale sur les activités, terme trop large pour être mappé à des sous-destinations
       précises.'
   Ub:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: UB 10
+          page_pdf: 24
+          citation: 'La hauteur maximale des constructions est fixée à : - 7 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 12 mètres au faitage.'
+          statut: valide
+        egout:
+          m: 7.0
+          article: UB 10
+          page_pdf: 24
+          citation: 'La hauteur maximale des constructions est fixée à : - 7 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 12 mètres au faitage.'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: UB 9
+          page_pdf: 23
+          citation: L’emprise maximale des constructions est fixée à 60% de la superficie du terrain.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UB 6
+          page_pdf: 22
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UB 7
+          page_pdf: 22
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UB 12
+          page_pdf: 26
+          citation: 'Pour les constructions à destination d’habitation : - 1 place de stationnement minimum
+            par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par
+            logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par
+            logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.'
+          statut: propose
+          raison: valeur 2 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UB 13
+          page_pdf: 26
+          citation: Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace
+            perméable.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UB 2.2, p. 19 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article UB 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -107,6 +225,65 @@ zones:
     - 'UB 2.2, 2° (p. 20) : activités admises sous réserve d''absence d''incommodité/aggravation des risques pour
       le voisinage.'
   Uc:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: UC 10
+          page_pdf: 33
+          citation: 'La hauteur maximale des constructions est fixée à : - 6 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 9 mètres au faitage.'
+          statut: valide
+        egout:
+          m: 6.0
+          article: UC 10
+          page_pdf: 33
+          citation: 'La hauteur maximale des constructions est fixée à : - 6 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 9 mètres au faitage.'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UC 9
+          page_pdf: 32
+          citation: L’emprise maximale des constructions est fixée à 50% de la superficie du terrain.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UC 6
+          page_pdf: 31
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 4 mètres. Le long de la RN2 et de la RD57, cette distance de recul est portée à 7 mètres minimum.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UC 7
+          page_pdf: 31
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UC 12
+          page_pdf: 35
+          citation: 'Pour les constructions à destination d’habitation : - 1 place de stationnement minimum
+            par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par
+            logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par
+            logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.'
+          statut: propose
+          raison: valeur 2 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UC 13
+          page_pdf: 35
+          citation: Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace
+            perméable.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UC 2.2, p. 28 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article UC 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -155,6 +332,59 @@ zones:
     renvoi_src: Le règlement ne connaît qu'une seule zone UC (sommaire p. 3, « ZONE UC …26 » ; corps p. 28) ; le
       doublon UC/Uc est une variation de casse des codes GPU, pas une zone distincte du règlement.
   Ud:
+    regles:
+      hauteur:
+        faitage:
+          m: 7.0
+          article: UD 10
+          page_pdf: 41
+          citation: La hauteur maximale des constructions est fixée à 7 mètres.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UD 9
+          page_pdf: 41
+          citation: L’emprise maximale des constructions est fixée à 50% de la superficie du terrain.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UD 6
+          page_pdf: 39
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UD 7
+          page_pdf: 40
+          citation: Les constructions doivent être implantées en retrait ou sur une limite séparative latérale
+            pour les terrains dont la largeur sur voie est inférieure ou égale à 14 mètres. En cas de retrait
+            de la construction, la distance comptée horizontalement de tout point de la façade au point le
+            plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur de la
+            façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UD 12
+          page_pdf: 43
+          citation: 'Pour les constructions à destination d’habitation : - 1 place de stationnement minimum
+            par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par
+            logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par
+            logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.'
+          statut: propose
+          raison: valeur 2 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: UD 13
+          page_pdf: 44
+          citation: Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace
+            perméable.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UD 2.2, p. 37 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article UD 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -188,6 +418,55 @@ zones:
     - 'UD 2.2, 1° (p. 37) : activités admises sous réserve d''absence d''incommodité/aggravation des risques pour
       le voisinage.'
   Ue:
+    regles:
+      hauteur:
+        faitage:
+          m: 14.0
+          article: UE 10
+          page_pdf: 50
+          citation: 'La hauteur maximale des constructions est fixée à : - 11 mètres à l’égout du toit ou
+            au sommet de l’acrotère, - 14 mètres au faitage.'
+          statut: valide
+        egout:
+          m: 11.0
+          article: UE 10
+          page_pdf: 50
+          citation: 'La hauteur maximale des constructions est fixée à : - 11 mètres à l’égout du toit ou
+            au sommet de l’acrotère, - 14 mètres au faitage.'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UE 9
+          page_pdf: 50
+          citation: L’emprise maximale des constructions est fixée à 70% de la superficie du terrain.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UE 6
+          page_pdf: 49
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UE 7
+          page_pdf: 49
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 5 mètres.
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: UE 13
+          page_pdf: 53
+          citation: Au minimum 25% de la superficie totale de l’unité foncière doit être traité en espace
+            perméable.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UE 2.2, p. 46 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article UE 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — les
@@ -317,6 +596,68 @@ zones:
     - Industrie, entrepôt, artisanat, restauration, etc. ne figurent pas à l'art. UE 1.2 → admis par le silence
       (art. UE 2.2, chapeau).
   1AUa:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: UA 10
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 12 absente de la citation (harmonisation ≠ texte)
+        egout:
+          m: 9.0
+          article: UA 10
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 9 absente de la citation (harmonisation ≠ texte)
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UA 9
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 70 absente de la citation (harmonisation ≠ texte)
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UA 6
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 3.0
+          article: UA 7
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UA 12
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 2 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: UA 13
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 25 absente de la citation (harmonisation ≠ texte)
     renvoi: Ua
     renvoi_src: 'Caractère de la zone AUindicée, p. 55 : « Pour appliquer le présent règlement, il convient de se
       reporter en fonction de l''indice de la zone AU considérée au règlement des zones urbaines correspondantes.
@@ -327,6 +668,68 @@ zones:
     - 'Conditions supplémentaires art. AUindicée 2 (p. 55-56) : infrastructures suffisantes (1°) ; densité minimale
       20 logements/ha à l''échelle de la zone, équivalent logement 80 m² de surface de plancher (3°).'
   1AUc:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: UC 10
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 9 absente de la citation (harmonisation ≠ texte)
+        egout:
+          m: 6.0
+          article: UC 10
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UC 9
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 50 absente de la citation (harmonisation ≠ texte)
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UC 6
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 3.0
+          article: UC 7
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UC 12
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 2 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UC 13
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 30 absente de la citation (harmonisation ≠ texte)
     renvoi: Uc
     renvoi_src: 'Caractère de la zone AUindicée, p. 55 : « se reporter en fonction de l''indice de la zone AU considérée
       au règlement des zones urbaines correspondantes » ; art. AUindicée 1.2 et 2, p. 55 — indice c → zone UC.'
@@ -334,6 +737,59 @@ zones:
     - 'Conditions supplémentaires art. AUindicée 2 : infrastructures suffisantes (1°, p. 55) ; densité spécifique
       1AUc de Bois Blanc : 10 logements/ha minimum, équivalent logement 80 m² de surface de plancher (4°, p. 56).'
   1AUe:
+    regles:
+      hauteur:
+        faitage:
+          m: 14.0
+          article: UE 10
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 14 absente de la citation (harmonisation ≠ texte)
+        egout:
+          m: 11.0
+          article: UE 10
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 11 absente de la citation (harmonisation ≠ texte)
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UE 9
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 70 absente de la citation (harmonisation ≠ texte)
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UE 6
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 3.0
+          article: UE 7
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: UE 13
+          page_pdf: 55
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes.
+          statut: propose
+          raison: valeur 25 absente de la citation (harmonisation ≠ texte)
     renvoi: Ue
     renvoi_src: 'Caractère de la zone AUindicée, p. 55 : « se reporter en fonction de l''indice de la zone AU considérée
       au règlement des zones urbaines correspondantes » ; art. AUindicée 1.2 et 2, p. 55 — indice e → zone UE.'
@@ -341,6 +797,46 @@ zones:
     - 'Conditions supplémentaires art. AUindicée 2 (p. 55-56) : infrastructures suffisantes (1°) ; densité 20 logements/ha
       (3°).'
   1AUto:
+    regles:
+      hauteur:
+        faitage:
+          m: 6.0
+          article: AUto 10
+          page_pdf: 62
+          citation: La hauteur maximale des constructions est fixée à 6 mètres.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: AUto 9
+          page_pdf: 61
+          citation: L’emprise maximale des constructions est fixée à 50% de la superficie du terrain.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: AUto 6
+          page_pdf: 60
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 4 mètres. Le long de la RN2 et de la RD57, cette distance de recul est portée à 7 mètres minimum.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: AUto 7
+          page_pdf: 61
+          citation: Les constructions doivent être implantées en retrait des limites séparatives, avec une
+            distance comptée horizontalement de tout point de la façade au point le plus proche de la limite
+            séparative, au moins égale à 4 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: AUto 13
+          page_pdf: 63
+          citation: Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace
+            perméable.
+          statut: valide
     silence: interdit
     silence_src: 'Art. AUto 1.2, p. 58 : « Sont interdits toutes les constructions, ouvrages et travaux à l''exception
       de ceux visés à l''article 2. »'
