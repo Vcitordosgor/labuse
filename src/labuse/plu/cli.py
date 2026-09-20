@@ -63,4 +63,13 @@ def plu_extraire_cmd(
     typer.echo(f"   rejetées      : {rap.n_rejetees}")
 
 
-# `labuse plu revue` est ajoutée au lot 4 (revue humaine + verrou V6a).
+@plu_app.command("revue")
+def plu_revue_cmd(
+    insee: str = typer.Argument(..., help="Code INSEE de la commune (ex. 97411 = Saint-Denis)."),
+    zone: list[str] = typer.Option([], "--zone", "-z", help="Restreindre à ces zones (répétable)."),
+    apercu: bool = typer.Option(False, "--apercu", help="Afficher les propositions sans rien écrire."),
+) -> None:
+    """La revue humaine : chaque proposition avec sa citation, zone par zone, rubrique par
+    rubrique — [v]alider / [c]orriger / [r]ejeter. Écrit `valide` dans le YAML (verrou V6a)."""
+    from . import revue
+    revue.revue_interactive(insee, zones=list(zone) or None, apercu=apercu)

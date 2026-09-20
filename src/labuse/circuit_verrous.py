@@ -680,6 +680,30 @@ def verrou_fiche_sections(db=None) -> ResultatVerrou:
                           "toutes déclarées avec une section")
 
 
+def verrou_regles_citations(db=None) -> ResultatVerrou:
+    """V6a — PLU-CALIBRAGE-1 : aucune règle chiffrée VALIDÉE sans sa source. Toute feuille de
+    `regles` de la calibration PLU (lue par destinations.iter_regles_calibrees) au statut
+    `valide` porte article + page_pdf + citation — une valeur validée sans preuve n'existe pas
+    (les `propose` sont libres : ils attendent la revue)."""
+    from .plu import destinations as D
+
+    pbs: list[str] = []
+    n_valides = 0
+    for f in D.iter_regles_calibrees():
+        if f.get("statut") != "valide":
+            continue
+        n_valides += 1
+        manque = D.regle_feuille_defauts(f)
+        if manque:
+            pbs.append(f"{f.get('insee')} {f.get('zone')} {f.get('chemin')} : "
+                       f"valide sans {', '.join(manque)}")
+    if pbs:
+        return ResultatVerrou("V6a", PHRASES["V6a"], "casse",
+                              f"{len(pbs)} règle(s) validée(s) sans référence complète", pbs)
+    return ResultatVerrou("V6a", PHRASES["V6a"], "ok",
+                          f"{n_valides} règle(s) chiffrée(s) validée(s), toutes avec article + page + citation")
+
+
 # ── le registre des verrous (complété lot par lot) ──────────────────────────────────────
 
 PHRASES: dict[str, str] = {
@@ -701,6 +725,7 @@ PHRASES: dict[str, str] = {
     "V5b": "Une donnée = une fonction : chaque id porte un producteur nommé, plus aucun sql_propre ni front, et le registre est intègre.",
     "V5c": "Zéro couple silencieux : chaque couple (donnée, robinet) est sondé, mono-robinet (golden/règles), ou porte sa raison nommée.",
     "V5d": "Tout par déclaration : chaque donnée à la maille parcelle servie sur la fiche est déclarée avec une section nommée — aucun câble muet.",
+    "V6a": "Aucune règle chiffrée VALIDÉE sans sa source : article + page + citation, toujours — une valeur validée sans preuve n'existe pas.",
     "V7a": "Chaque tuile servie reproduit la brute : même nombre d'objets, aucune partie perdue (GeometryCollections comprises), contour < 1 px, position exacte — décodage de la tuile RÉELLEMENT servie, aux zooms 10/13/16.",
 }
 
@@ -725,6 +750,7 @@ VERROUS: tuple[Verrou, ...] = (
     Verrou("V5b", 5, PHRASES["V5b"], verrou_une_donnee_une_fonction),
     Verrou("V5c", 5, PHRASES["V5c"], verrou_couples_sondes),
     Verrou("V5d", 5, PHRASES["V5d"], verrou_fiche_sections),   # FICHE-RANGEMENT-2 lot 2
+    Verrou("V6a", 6, PHRASES["V6a"], verrou_regles_citations),   # PLU-CALIBRAGE-1 lot 4
     Verrou("V7a", 7, PHRASES["V7a"], verrou_tuiles),   # COUCHES-TUYAU-1 lot 3
 )
 

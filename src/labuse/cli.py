@@ -4650,8 +4650,8 @@ def circuit_verrous_cmd(
              "CRON-1 lot 3 : deploy.sh passe `-w G8` (G8 mesure la fraîcheur de la veille, pas la santé "
              "du code ; déployer n'aggrave rien et le blocage empêcherait de poser les horloges)."),
 ) -> None:
-    """CIRCUIT-5 lot 6.1 + CIRCUIT-6 lot 8 — LA commande unique : joue les SEIZE verrous
-    (V1a…V5c) PUIS les HUIT garanties (G1…G8) — CRON-1 lot 2 a ajouté G8, TOUJOURS TOUS (plus d'arrêt au premier
+    """CIRCUIT-5 lot 6.1 + CIRCUIT-6 lot 8 — LA commande unique : joue les DIX-HUIT verrous
+    (V1a…V7a) PUIS les HUIT garanties (G1…G8) — CRON-1 lot 2 a ajouté G8, TOUJOURS TOUS (plus d'arrêt au premier
     cassé : un cassé ne doit jamais en cacher un autre). Une ligne chacun (phrase, verdict,
     preuve) ; fin : « tout va bien » ou la liste de ce qui casse ; code retour 1 si ≥ 1 cassé.
     Jouée par pytest (marque `verrous`), par la sonde de nuit, et par deploy.sh (même commande,
@@ -4685,12 +4685,12 @@ def circuit_verrous_cmd(
         typer.echo(f"⚠ avertissement (non bloquant) : {', '.join(r.id for r in avertis)} cassé(s) — "
                    "signalé, n'empêche pas le déploiement.")
     if bloquants:
-        typer.echo(f"— {len(resultats)} joués (17 verrous + 8 garanties) : "
+        typer.echo(f"— {len(resultats)} joués (20 verrous + 8 garanties) : "
                    f"{len(bloquants)} CASSÉ(S) — {', '.join(r.id for r in bloquants)}"
                    + (f" · {len(avertis)} en avertissement" if avertis else "")
                    + (f" · {len(a_decider)} à décider" if a_decider else ""))
         raise typer.Exit(1)
-    typer.echo(f"— {len(resultats)} joués (17 verrous + 8 garanties) : tout va bien"
+    typer.echo(f"— {len(resultats)} joués (20 verrous + 8 garanties) : tout va bien"
                + (f" · {len(avertis)} en avertissement ({', '.join(r.id for r in avertis)})" if avertis else "")
                + (f" · {len(a_decider)} à décider" if a_decider else ""))
 
