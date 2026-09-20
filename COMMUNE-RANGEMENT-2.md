@@ -94,3 +94,48 @@ hors) — plus le PLH absent — passent de **carte absente** à **carte toujour
 Chaque carte garde sa **ligne de source** même vide. Les autres cartes conditionnelles (loyer,
 terrain nu, fiscalité, zonage…) portent un **trou de donnée** (source non ingérée), pas un creux
 légitime ; le lot 4 les range dans les 10 cartes maquette toutes présentes. Front seul, `tsc -b` vert.
+
+---
+
+## Lot 4 — le rangement sur la maquette (19 → 10 cartes, 5 groupes)
+
+Le corps de rendu de `ContextePanel` passe de **3 groupes / 19 cartes** à **5 groupes / 10 cartes**
+(chirurgie `qa/commune_rangement2_lot4_surgery.py`, splice entre ancres, haut du fichier et pied
+intacts). La grammaire `LigneCarte` (accordéon mémorisé) reste.
+
+**En-tête** : bandeau **6 chiffres en 3 × 3** (`data-bandeau-chiffres`) — Parcelles (Cadastre) ·
+Habitants (INSEE) · Permis/an (SITADEL) · Prix ancien €/m² (DVF) · Tendance 12 mois (DVF) · État du PLU
+(GPU · Sudocuh) — puis l'action « Voir ses parcelles » et **3 raccourcis** (`data-raccourcis`) : **PLU ·
+Communes · Étude de zone**. **Pas de rang comparatif.** Deux **portes dans les cartes** : PLU
+(carte Urbanisme, `data-voir-plu`) · Étude de zone (carte Équipements, Shortcut).
+
+### Correspondance carte actuelle → carte cible (ligne par ligne)
+
+| Carte actuelle (19) | → Carte cible (10) | Groupe |
+|---|---|---|
+| Mairie & service urbanisme (adresse/tél/e-mail/site/annuaire + contacts) · quartiers IRIS (ex-Population) · intercommunalité (ex-en-tête) | **Identité** | Le territoire |
+| Population & logement (habitants/ménages/niveau de vie/logements) · Parc social RPLS · barres occupation & typologie · **SRU** (ex-carte SRU : taux/objectif/lecture) | **Population et logement** | Le territoire |
+| Prix & tendance (ancien/neuf VEFA/**neuf observé**/tendance) · **Terrain nu** (U/AU) · **Loyers** | **Prix** | Le marché |
+| Annonces — Radar (biens/prix demandé/écart + sans objet) · mutations (ex-Prix) | **Activité** | Le marché |
+| Permis & délais (12 m/5 ans/délai/offre/dormants) | **Permis et rythme** | La construction |
+| Foncier repéré (parcelles/stock/densifiables/SDP) · **Enveloppe ZAN** (conso NAF/reste/rythme/horizon) | **Foncier et rareté** | La construction |
+| Règles d'urbanisme (statut PLU) · **Zonage** (répartition U/AU/A/N) · **PLH** (objectif/part sociale) | **Urbanisme** | Les règles |
+| Taxe foncière (TFPB/TFPNB/TEOM) · **Zonage ABC** · **ZFANG/FRR** · **Revitalisation ORT** · **Quartiers prioritaires** (QPV/NPNRU) | **Fiscalité et dispositifs** | Les règles |
+| Risques (PPR/mvt/CatNat + détail/AZI-TRI/Parc National) | **Risques et contraintes** | Le cadre de vie |
+| *(nouvelle — équipements/transport/fibre/solaire renvoient à l'Étude de zone via porte)* | **Équipements et desserte** | Le cadre de vie |
+
+### Recomptage automatique — 0 ligne perdue
+
+`qa/commune_rangement2_census.py` extrait chaque libellé de ligne (`RowT`) et de barre (`Bar`) du bloc
+de rendu, avant (`census_before.json`) et après (`census_after.json`) :
+
+| | Avant | Après | Perdues | Ajoutées |
+|---|---|---|---|---|
+| Libellés de ligne (`RowT`) | 40 | 41 | **0** | 1 (« Intercommunalité ») |
+| Libellés de barre (`Bar`) | 9 | 9 | **0** | 0 |
+
+**0 ligne perdue** ; la seule addition est « Intercommunalité » (ex-sous-titre d'en-tête, désormais une
+ligne déclarée). Les blocs sur mesure (SRU, terrain nu, foncier, détail CatNat, coordonnées mairie,
+barres) sont tous repris. L'ancienne **grille d'outils** est dissoute : ses accès vivent dans les
+raccourcis (PLU/Communes/Étude de zone), les portes de cartes (Permis/Densifier/Radar en Shortcut) et
+le lien « Voir tous les outils → ». `tsc -b` vert.
