@@ -36,8 +36,48 @@ router = APIRouter(prefix="/pre-dossier", tags=["pre-dossier"])
 # pièce en INDISPONIBLE explicite, cf. pre_dossier_zip). Contrôle réseau automatique ÉCARTÉ (Vic).
 CERFA_VERSION = "13406*17"
 CERFA_VERIFIE_LE = "21/08/2026"     # date de vérification service-public.gouv.fr — affichée au LISEZMOI
-_CERFA_PATH = Path(__file__).resolve().parents[3] / "data" / "cerfa" / "cerfa_13406-17.pdf"
+_CERFA_DIR = Path(__file__).resolve().parents[3] / "data" / "cerfa"
+_CERFA_PATH = _CERFA_DIR / "cerfa_13406-17.pdf"
+# EXPORTS-REBRANCHEMENT-2 lot 4 — le CERFA par scénario : maison individuelle → 13406, collectif
+# (≥ 3 logements) → 13409 (téléchargé et vendorisé à côté du 13406, mêmes champs T2* de terrain).
+# `numCerfa` sert le contrôle de millésime en ligne (service-public.gouv.fr, fiche signalétique).
+_CERFA_FICHIERS = {
+    "13406": {"fichier": _CERFA_DIR / "cerfa_13406-17.pdf", "version": "13406*17", "num": "13406"},
+    "13409": {"fichier": _CERFA_DIR / "cerfa_13409-17.pdf", "version": "13409*17", "num": "13409"},
+}
 _FONTS = Path(__file__).resolve().parent / "fonts"
+
+
+def cerfa_millesime_perime(num_cerfa: str, version_locale: str) -> tuple[bool, str | None]:
+    """EXPORTS-REBRANCHEMENT-2 lot 4 — lit le millésime COURANT du CERFA sur la fiche signalétique
+    service-public.gouv.fr et le compare à notre fichier vendorisé. Rend (perime, millesime_courant).
+
+    Doctrine : un millésime PÉRIMÉ (le courant est plus récent que le nôtre) BLOQUE la pièce (le pack
+    la dégrade en INDISPONIBLE et le dit) plutôt que de servir un formulaire refusé en téléprocédure.
+    MAIS le contrôle est BEST-EFFORT et NON FATAL : réseau indisponible / page illisible → (False, None)
+    (on ne bloque JAMAIS sur notre incapacité à vérifier ; on sert le fichier vérifié, cf. CERFA_VERIFIE_LE).
+    L'ancien « contrôle réseau écarté » (Vic) est rouvert ICI, borné à ce garde-fou non bloquant."""
+    import re as _re
+    import urllib.request
+    url = ("https://www.formulaires.service-public.gouv.fr/gf/"
+           f"showFormulaireSignaletiqueConsulter.do?numCerfa={num_cerfa}")
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "LABUSE/1.0 (+predossier)"})
+        with urllib.request.urlopen(req, timeout=6) as r:  # noqa: S310 — URL constante, https
+            page = r.read(200_000).decode("utf-8", "replace")
+    except Exception:  # noqa: BLE001 — réseau/timeout : on ne bloque pas sur notre incapacité à vérifier
+        return (False, None)
+    # le millésime apparaît « 13409*17 » (ou 13409-17) sur la fiche. On prend le PLUS ÉLEVÉ vu.
+    hits = _re.findall(rf"{num_cerfa}\s*[\*x-]\s*0?(\d{{1,2}})", page)
+    if not hits:
+        return (False, None)
+    courant = max(int(h) for h in hits)
+    local = 0
+    ml = _re.search(r"[\*x-]\s*0?(\d{1,2})", version_locale)
+    if ml:
+        local = int(ml.group(1))
+    millesime_courant = f"{num_cerfa}*{courant:02d}"
+    return (courant > local, millesime_courant)
 
 LIBELLE = ("Document préparatoire établi à partir de données publiques — ne constitue "
            "pas un dossier de demande de permis. À compléter et vérifier par le "
@@ -119,19 +159,29 @@ def _tampon_libelle() -> bytes:
     return bytes(pdf.output())
 
 
-def _cerfa_prerempli(parcelle: dict, adresse: dict | None) -> bytes:
+def _cerfa_prerempli(parcelle: dict, adresse: dict | None, cerfa_num: str = "13406") -> bytes:
     """Pré-remplit les SEULS champs TERRAIN du cadre 2 : adresse du terrain (BAN, rattachement
     automatique à vérifier) et références cadastrales (préfixe, section, numéro) + la commune.
     La SUPERFICIE n'est PAS remplie (M129 §1 : contenance à relever par le déposant). Aucun champ
     d'identité du demandeur, aucune donnée de projet. Chaque page est tamponnée du libellé
-    préparatoire."""
+    préparatoire.
+
+    EXPORTS-REBRANCHEMENT-2 lot 4 — `cerfa_num` ∈ {13406 (maison), 13409 (collectif)} : le 13409
+    partage les mêmes champs T2* de terrain. La pièce est dégradée en INDISPONIBLE (None) si le
+    fichier manque OU si son millésime est PÉRIMÉ (le courant en ligne est plus récent) — jamais un
+    formulaire refusé en téléprocédure servi en silence."""
     from pypdf import PdfReader, PdfWriter
-    if not _CERFA_PATH.exists():
-        # M129 §2.2 : millésime non confirmable (fichier absent) → on NE sert PAS un CERFA douteux.
-        # La pièce est dégradée en INDISPONIBLE explicite (le reste du pack est généré) ; jamais un
-        # formulaire périmé servi en silence, jamais tout le pack cassé par un 503.
+    meta = _CERFA_FICHIERS.get(cerfa_num) or _CERFA_FICHIERS["13406"]
+    chemin = meta["fichier"]
+    if not chemin.exists():
+        # fichier absent (13409 non encore vendorisé, p. ex.) → INDISPONIBLE explicite, pack sans
+        # formulaire ; jamais un CERFA douteux servi en silence, jamais tout le pack cassé.
         return None
-    reader = PdfReader(str(_CERFA_PATH))
+    # millésime périmé (contrôle en ligne, best-effort, non fatal) → INDISPENIBLE + dit au LISEZMOI.
+    perime, _courant = cerfa_millesime_perime(meta["num"], meta["version"])
+    if perime:
+        return None
+    reader = PdfReader(str(chemin))
     writer = PdfWriter(clone_from=reader)
     idu = parcelle["idu"]
     champs = {
@@ -910,11 +960,15 @@ def pre_dossier_zip(idu: str, request: Request, db: Session = Depends(get_db)) -
     # M129 E — nommage aligné sur la doctrine {IDU}-labuse (pack multi-pièces : préfixe commun +
     # suffixe de pièce explicite). Le ZIP lui-même : {IDU}-labuse-predossier-pc.zip.
     pfx = f"{idu}-labuse"
-    cerfa = _cerfa_prerempli(parcelle, adr)   # None si INDISPONIBLE
+    # EXPORTS-REBRANCHEMENT-2 lot 4 — le CERFA suit le SCÉNARIO : 13406 (maison) ou 13409 (collectif,
+    # ≥ 3 logements). None si le fichier manque OU si son millésime est périmé (pack sans formulaire,
+    # dit au LISEZMOI). Le nom de fichier porte le VRAI numéro/millésime servi.
+    cerfa_meta = _CERFA_FICHIERS.get(scen.get("cerfa", "13406")) or _CERFA_FICHIERS["13406"]
+    cerfa = _cerfa_prerempli(parcelle, adr, scen.get("cerfa", "13406"))   # None si INDISPONIBLE
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
         if cerfa is not None:
-            z.writestr(f"{pfx}-CERFA-{CERFA_VERSION.replace('*', '-')}-prerempli.pdf", cerfa)
+            z.writestr(f"{pfx}-CERFA-{cerfa_meta['version'].replace('*', '-')}-prerempli.pdf", cerfa)
         for nom, gen in (
             (f"{pfx}-PCMI1-plan-situation.pdf", lambda: _pcmi1(parcelle)),
             (f"{pfx}-PCMI2-plan-masse-existant.pdf", lambda: _pcmi2(db, parcelle, fiche)),
