@@ -82,4 +82,16 @@ les zones A et N.
 
 `captures/plu-calibrage1/` : `revue_3zones.txt`, `revue_toutes_zones.txt`, `mesures_lot3.txt`,
 `lot2_calibrages_gpu.txt`, `v6a_casse_puis_vert.txt`, `verrous_wG8.txt`.
-Checks : `tsc -b` vert ; tests PLU + V6a + revue verts ; `labuse circuit verrous -w G8`.
+Checks : `tsc -b` vert ; tests PLU + V6a + revue verts ; `labuse circuit verrous -w G8` = 28
+joués, tout va bien.
+
+### `pytest tests/` complet
+
+`3103 passed, 5 failed, 56 skipped` (817 s). Les 5 échecs sont **antérieurs à ce mandat**,
+prouvés en rejouant sur `main` (worktree `labuse-merge`, `1a3711de`) : `test_circuit2_lot16`,
+`test_circuit2_lot5`, `test_retours11f4` (×2) échouent à l'identique sur `main` ;
+`test_ops_healthz::test_jamais_vu…` dépend de l'état du wrapper `backup-postgres`
+(« en_retard » = environnemental, sans lien avec ce mandat). **Ce mandat n'introduit AUCUN
+échec.** Il a au passage remis d'aplomb 3 tests-miroirs du registre des verrous
+(`test_les_24…`, `test_la_commande_couvre_tous_les_lots`, `test_verrous_md…`) + `VERROUS.md`,
+qui étaient déjà périmés sur `main` (V5d jamais reporté) et que V6a complète (commit `85079318`).
