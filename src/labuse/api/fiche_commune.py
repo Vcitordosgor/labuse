@@ -155,8 +155,31 @@ def population(db: Session, commune: str, insee: str | None) -> dict:
         "logements": logements,
         "vacants": vacants,
         "vacance_pct": vacance_pct(logements, vacants),
+        # DONNEES-1 lot 2.4 — ÂGE DU PARC (RP2022, table rp_logement_commune, variable ACHL) :
+        # part du parc de logements construit AVANT 1991 (stock ancien = potentiel de rénovation /
+        # démolition-reconstruction). Le reste des variables logement de rp_logement_commune (type
+        # maison/appartement, tenure, vacance, parc social) est DÉJÀ servi ici via
+        # commune_insee_logement / IRIS / RPLS — donc DOUBLON, non rebranché. L'âge du parc, lui,
+        # n'était nulle part (seul le millésime médian du parc SOCIAL l'était via RPLS).
+        "parc_ancien_pct": _parc_ancien_pct(db, insee),
         "source": "INSEE Filosofi 2021 (carreaux 200 m, agrégat commune) · INSEE RP (logements).",
     }
+
+
+def _parc_ancien_pct(db: Session, insee: str | None) -> float | None:
+    """Part (%) du parc de logements construit AVANT 1991, depuis la distribution ACHL (période
+    d'achèvement) de rp_logement_commune (RP2022). Codes INSEE : A11 (< 1919), A12 (1919-1945),
+    B11 (1946-1970), B12 (1971-1990) = ancien ; C… = 1991 et après. None si table/donnée absente."""
+    if not insee or not db.execute(text("SELECT to_regclass('rp_logement_commune')")).scalar():
+        return None
+    row = db.execute(text("SELECT distributions -> 'ACHL' AS achl FROM rp_logement_commune "
+                          "WHERE insee = :i"), {"i": insee}).mappings().first()
+    achl = (row or {}).get("achl") if row else None
+    if not achl:
+        return None
+    total = sum(float(v) for v in achl.values())
+    ancien = sum(float(v) for k, v in achl.items() if k[:1] in ("A", "B"))
+    return round(100.0 * ancien / total, 1) if total > 0 else None
 
 
 # ───────────────────────────── C5 — le PLU (statut + document d'urbanisme) ─────────────────────────────

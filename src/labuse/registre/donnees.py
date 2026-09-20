@@ -541,6 +541,17 @@ DONNEES: dict[str, Donnee] = {
     moteur="commune_compteurs", calcul="moteur",
     fonction="src/labuse/registre/moteurs/commune.py:vacance_pct",
     reservoirs=("insee_rp_logement",), portee="live"),
+ # DONNEES-1 lot 2.4 — âge du parc (RP2022, table rp_logement_commune jusqu'ici ingérée mais montrée
+ # nulle part) : part construit avant 1991 (stock ancien = potentiel rénovation/démolition-recons-
+ # truction). Les autres variables logement de rp_logement_commune (type, tenure, vacance, social)
+ # sont DÉJÀ servies via commune_insee_logement / IRIS / RPLS — doublon, non rebranchées.
+ "parc_ancien_pct": C("Parc construit avant 1991", "%", "commune",
+    "part (%) du parc de logements achevé avant 1991 (RP2022, distribution ACHL : A/B = ancien) — "
+    "stock ancien, indicatif du potentiel de rénovation ; le reste des variables logement RP2022 "
+    "est déjà servi via commune_insee_logement / IRIS / RPLS (doublon)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/fiche_commune.py:_parc_ancien_pct",
+    reservoirs=("insee_rp2022_egoul",), portee="live"),
  "qpv_n": C("QPV", "nombre", "commune",
     "count QPV intersectant la commune",
     moteur="commune_compteurs", calcul="moteur",
