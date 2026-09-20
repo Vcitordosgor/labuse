@@ -1,0 +1,260 @@
+— Revue PLU Saint-Denis (97411) · millésime 2026-08-05 · 97411_reglement_20260805.pdf
+
+═ Zone Ua · 5 règle(s)
+  ▸ Hauteur
+    · hauteur.faitage            [valide] m=18
+        art. Article Ua.10 · p.79 (PDF)
+        En secteur Ua : La hauteur maximale H des constructions ne devra pas excéder 18 m.
+  ▸ Emprise au sol
+    · emprise_sol.ces            [valide] pct=70
+        art. Article Ua.9 · p.79 (PDF)
+        L’emprise au sol des constructions est limitée à 70% de la superficie de l’unité foncière.
+  ▸ Retraits (implantation)
+    · retraits.voie              [valide] formule=En secteur Ua : Les constructions peuvent être implantées : soit à l’alignement, soit avec un recul de 4 m minimum. · min_m=4
+        art. Article Ua.6 · p.77 (PDF)
+        soit avec un recul de 4 m minimum.
+    · retraits.limites_separatives [valide] formule=soit sur une ou plusieurs limites séparatives soit en recul. ... supérieure ou égale à au tiers de la différence d'altitude h entre ces deux points, avec un minimum de 2m : 2m ≤ L ≥ h/3. · min_m=2
+        art. Article Ua.7 · p.78 (PDF)
+        supérieure ou égale à au tiers de la différence d'altitude h entre ces deux points, avec un minimum de 2m : 2m ≤ L ≥ h/3.
+  ▸ Stationnement
+    · stationnement.par_logement [valide] places=1
+        art. XVII. STATIONNEMENT · p.19 (PDF)
+        1 place par logement d'une surface plancher < 100 m2
+
+═ Zone Uavap · 2 règle(s)
+  ▸ Stationnement
+    · stationnement.par_logement [valide] places=1
+        art. XVII. STATIONNEMENT · p.19 (PDF)
+        1 place par logement d'une surface plancher < 100 m2
+  ▸ Mixité sociale
+    · mixite                     [valide] seuil_logements=30 · quota_pct=15 · portee=zone
+        art. Article Uavap.2 · p.27 (PDF)
+        les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+
+═ Zone Ud · 7 règle(s)
+  ▸ Hauteur
+    · hauteur.faitage            [valide] m=18
+        art. Article Ud.10 · p.44 (PDF)
+        Hauteur maximale R+5, soit 18m, au faîtage ou à l'acrotère, généralisé
+    · hauteur.niveaux            [valide] r_plus=5
+        art. Article Ud.10 · p.44 (PDF)
+        Hauteur maximale R+5, soit 18m, au faîtage ou à l'acrotère, généralisé
+  ▸ Emprise au sol
+    · emprise_sol.ces            [valide] pct=80
+        art. Article Ud.9 · p.43 (PDF)
+        En secteur Ud : L'emprise au sol des constructions est limitée à 80 % de la superficie de l'unité foncière.
+  ▸ Retraits (implantation)
+    · retraits.voie              [valide] formule=Voies et emprises publiques de 12 m ou plus : les constructions seront implantées soit à l’alignement, soit à 4 m de l'alignement. Voies et emprises publiques de moins de 12 m : les constructions seront implantées à 4 m minimum de l'alignement. Voies et emprises publiques de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l'alignement. · min_m=3
+        art. Article Ud.6 · p.40 (PDF)
+        Voies et emprises publiques de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l'alignement.
+    · retraits.limites_separatives [valide] formule=Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives sur une hauteur maximale de 18 m par limite. Au-delà de cette hauteur, les constructions seront implantées en tout point à 4 mètres minimum de la limite séparative. ... 4m ≤ L ≥ h/2. · min_m=4
+        art. Article Ud.7 · p.42 (PDF)
+        supérieure ou égale à la moitié de la différence d'altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.
+  ▸ Stationnement
+    · stationnement.par_logement [valide] places=1
+        art. XVII. STATIONNEMENT · p.19 (PDF)
+        1 place par logement d'une surface plancher < 100 m2
+  ▸ Mixité sociale
+    · mixite                     [valide] seuil_logements=30 · quota_pct=15 · portee=zone
+        art. Article Ud.2 · p.39 (PDF)
+        les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+
+═ Zone Uh · 7 règle(s)
+  ▸ Hauteur
+    · hauteur.faitage            [valide] m=7
+        art. Article Uh.10 · p.73 (PDF)
+        7 m pour la hauteur maximale H
+    · hauteur.egout              [valide] m=4.5
+        art. Article Uh.10 · p.73 (PDF)
+        4,5 m pour la hauteur d’égout he
+  ▸ Emprise au sol
+    · emprise_sol.ces            [valide] pct=30
+        art. Article Uh.9 · p.73 (PDF)
+        L’emprise au sol des constructions est limitée à 30% de la superficie de l’unité foncière.
+  ▸ Retraits (implantation)
+    · retraits.voie              [valide] formule=Les constructions seront implantées avec un recul de 4 m minimum par rapport à l’alignement. En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à 3 m minimum de l'alignement. · min_m=3
+        art. Article Uh.6 · p.72 (PDF)
+        En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à 3 m minimum de l'alignement.
+    · retraits.limites_separatives [valide] formule=Chaque construction pourra s'implanter sur 1 limite séparative sur une longueur maximale de 10 mètres et sur une hauteur maximale H de 4,5m. ... 4m ≤ L ≥ h/2. · min_m=4
+        art. Article Uh.7 · p.73 (PDF)
+        supérieure ou égale à la moitié de la différence d'altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.
+  ▸ Stationnement
+    · stationnement.par_logement [valide] places=1
+        art. XVII. STATIONNEMENT · p.19 (PDF)
+        1 place par logement d'une surface plancher < 100 m2
+  ▸ Mixité sociale
+    · mixite                     [valide] seuil_logements=30 · quota_pct=15 · portee=zone
+        art. Article Uh.2 · p.71 (PDF)
+        les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+
+═ Zone Ui · 6 règle(s)
+  ▸ Hauteur
+    · hauteur.faitage            [valide] m=18
+        art. Article Ui.10 · p.56 (PDF)
+        En secteur Ui : La hauteur maximale H des constructions ne doit pas excéder 18 m.
+  ▸ Emprise au sol
+    · emprise_sol.ces            [valide] pct=60
+        art. Article Ui.9 · p.56 (PDF)
+        En secteur Ui : L’emprise au sol des constructions est limitée à 60 % de la superficie de l’unité foncière.
+  ▸ Retraits (implantation)
+    · retraits.voie              [valide] formule=Voies d’une emprise de 12 m ou plus : les constructions seront implantées soit à l’alignement, soit à 4 m minimum de l'alignement. Voies d’une emprise de moins de 12 m : les constructions seront implantées à 4 m minimum de l'alignement. Voies d’une emprise de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l'alignement. · min_m=3
+        art. Article Ui.6 · p.54 (PDF)
+        Voies d’une emprise de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l'alignement.
+    · retraits.limites_separatives [valide] formule=En secteur Ui : Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite. ... 4m ≤ L ≥ h/2. · min_m=4
+        art. Article Ui.7 · p.55 (PDF)
+        supérieure ou égale à la moitié de la différence d'altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.
+  ▸ Stationnement
+    · stationnement.par_logement [valide] places=1
+        art. XVII. STATIONNEMENT · p.19 (PDF)
+        1 place par logement d'une surface plancher < 100 m2
+  ▸ Mixité sociale
+    · mixite                     [valide] seuil_logements=30 · quota_pct=15 · portee=zone
+        art. Article Ui.2 · p.52 (PDF)
+        les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+
+═ Zone Uj · 7 règle(s)
+  ▸ Hauteur
+    · hauteur.faitage            [valide] m=13
+        art. Article Uj.10 · p.62 (PDF)
+        13 m pour la hauteur maximale H
+    · hauteur.egout              [valide] m=10
+        art. Article Uj.10 · p.62 (PDF)
+        10 m pour la hauteur d’égout he
+  ▸ Emprise au sol
+    · emprise_sol.ces            [valide] pct=60
+        art. Article Uj.9 · p.62 (PDF)
+        L'emprise au sol des constructions est limitée à 60 % de la superficie de l'unité foncière.
+  ▸ Retraits (implantation)
+    · retraits.voie              [valide] formule=Les constructions principales seront implantées avec un recul de 4 m minimum par rapport à l’alignement. En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à 3 m minimum de l'alignement. · min_m=3
+        art. Article Uj.6 · p.61 (PDF)
+        En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à 3 m minimum de l'alignement.
+    · retraits.limites_separatives [valide] formule=Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite. ... 4m ≤ L ≥ h/2 · min_m=4
+        art. Article Uj.7 · p.61 (PDF)
+        supérieure ou égale à la moitié de la différence d'altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2
+  ▸ Stationnement
+    · stationnement.par_logement [valide] places=1
+        art. XVII. STATIONNEMENT · p.19 (PDF)
+        1 place par logement d'une surface plancher < 100 m2
+  ▸ Mixité sociale
+    · mixite                     [valide] seuil_logements=30 · quota_pct=15 · portee=zone
+        art. Article Uj.2 · p.60 (PDF)
+        les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+
+═ Zone Um · 7 règle(s)
+  ▸ Hauteur
+    · hauteur.faitage            [valide] m=10
+        art. Article Um.10 · p.68 (PDF)
+        10 m pour la hauteur maximale H
+    · hauteur.egout              [valide] m=7
+        art. Article Um.10 · p.68 (PDF)
+        7 m pour la hauteur d’égout he
+  ▸ Emprise au sol
+    · emprise_sol.ces            [valide] pct=50
+        art. Article Um.9 · p.68 (PDF)
+        L'emprise au sol des constructions est limitée à 50 % de la superficie de l'unité foncière.
+  ▸ Retraits (implantation)
+    · retraits.voie              [valide] formule=Les constructions principales seront implantées avec un recul de 4 m minimum par rapport à l’alignement. En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à 3 m minimum de l'alignement. · min_m=3
+        art. Article Um.6 · p.67 (PDF)
+        En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à 3 m minimum de l'alignement.
+    · retraits.limites_separatives [valide] formule=Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 10m par limite. ... 4m ≤ L ≥ h/2. · min_m=4
+        art. Article Um.7 · p.67 (PDF)
+        supérieure ou égale à la moitié de la différence d'altitude he entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.
+  ▸ Stationnement
+    · stationnement.par_logement [valide] places=1
+        art. XVII. STATIONNEMENT · p.19 (PDF)
+        1 place par logement d'une surface plancher < 100 m2
+  ▸ Mixité sociale
+    · mixite                     [valide] seuil_logements=30 · quota_pct=15 · portee=zone
+        art. Article Um.2 · p.66 (PDF)
+        les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+
+═ Zone Uma · 5 règle(s)
+  ▸ Hauteur
+    · hauteur.faitage            [valide] non réglementé (silence prouvé)
+        art. Article Uma.10 · p.87 (PDF)
+        Article Uma.10 . Hauteur maximale des constructions Non réglementée.
+  ▸ Emprise au sol
+    · emprise_sol.ces            [valide] pct=60
+        art. Article Uma.9 · p.87 (PDF)
+        L’emprise au sol des constructions n’excèdera pas 60% de la superficie de l’unité foncière.
+  ▸ Retraits (implantation)
+    · retraits.voie              [valide] formule=Les constructions devront être implantées : soit à l’alignement de la voie ou de l’emprise publique, soit avec un recul déterminé par les impératifs propres à la maison d’arrêt.
+        art. Article Uma.6 · p.87 (PDF)
+        soit avec un recul déterminé par les impératifs propres à la maison d’arrêt.
+    · retraits.limites_separatives [valide] formule=Les constructions pourront s’implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 m par limite et sur une hauteur maximale de 6m.
+        art. Article Uma.7 · p.87 (PDF)
+        Les constructions pourront s’implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 m par limite et sur une hauteur maximale de 6m.
+  ▸ Stationnement
+    · stationnement.par_logement [valide] non réglementé (silence prouvé)
+        art. Article Uma.12 · p.88 (PDF)
+        Nonobstant, aucune norme de stationnement n’est fixée pour la maison d’arrêt.
+
+═ Zone Up · 7 règle(s)
+  ▸ Hauteur
+    · hauteur.faitage            [valide] m=16
+        art. Article Up.10 · p.34 (PDF)
+        Upr 16 m
+    · hauteur.niveaux            [valide] r_plus=3
+        art. Article Up.10 · p.34 (PDF)
+        Upr RDC+3 étages +Comble ou attique sans dépasser 12m.
+  ▸ Emprise au sol
+    · emprise_sol.ces            [valide] pct=80
+        art. Article Up.9 · p.33 (PDF)
+        En secteur Upi : L’emprise au sol des constructions ne devra pas excéder 80 % de la superficie de l’unité foncière.
+  ▸ Retraits (implantation)
+    · retraits.voie              [valide] formule=soit à l’alignement de la voie, soit avec un recul : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à l’alignement. · min_m=3
+        art. Article Up.6 · p.32 (PDF)
+        de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à l’alignement.
+    · retraits.limites_separatives [valide] formule=soit sur une ou plusieurs limites séparatives soit avec un recul : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à la limite séparative. · min_m=3
+        art. Article Up.7 · p.33 (PDF)
+        de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à la limite séparative.
+  ▸ Stationnement
+    · stationnement.par_logement [valide] places=1
+        art. XVII. STATIONNEMENT · p.19 (PDF)
+        1 place par logement d'une surface plancher < 100 m2
+  ▸ Mixité sociale
+    · mixite                     [valide] seuil_logements=30 · quota_pct=15 · portee=zone
+        art. Article Up.2 · p.31 (PDF)
+        les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+
+═ Zone Uu · 5 règle(s)
+  ▸ Hauteur
+    · hauteur.faitage            [valide] non réglementé (silence prouvé)
+        art. Article Uu.10 · p.49 (PDF)
+        La hauteur maximale des constructions n’est pas réglementée.
+  ▸ Emprise au sol
+    · emprise_sol.ces            [valide] pct=80
+        art. Article Uu.9 · p.49 (PDF)
+        L'emprise au sol des constructions est limitée à 80 % de la superficie de l'unité foncière.
+  ▸ Retraits (implantation)
+    · retraits.voie              [valide] formule=soit à l’alignement soit avec un recul de 4 m minimum par rapport à l’alignement. · min_m=4
+        art. Article Uu.6 · p.48 (PDF)
+        soit avec un recul de 4 m minimum par rapport à l’alignement.
+    · retraits.limites_separatives [valide] formule=Chaque construction pourra s'implanter sur une ou plusieurs limites séparatives. ... à une distance L supérieure ou égale à la moitié de la différence d'altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2. · min_m=4
+        art. Article Uu.7 · p.49 (PDF)
+        supérieure ou égale à la moitié de la différence d'altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.
+  ▸ Stationnement
+    · stationnement.par_logement [valide] places=1
+        art. XVII. STATIONNEMENT · p.19 (PDF)
+        1 place par logement d'une surface plancher < 100 m2
+
+═ Zone Uv · 5 règle(s)
+  ▸ Hauteur
+    · hauteur.faitage            [valide] m=4
+        art. Article Uv.10 · p.84 (PDF)
+        En secteur Uva : La hauteur maximale H des constructions ne doit pas excéder 4 m.
+  ▸ Emprise au sol
+    · emprise_sol.ces            [valide] non réglementé (silence prouvé)
+        art. Article Uv.9 · p.84 (PDF)
+        Non réglementé
+  ▸ Retraits (implantation)
+    · retraits.voie              [valide] formule=Toute construction ou installation sera implantée avec un recul de 4 m minimum par rapport à l’alignement. · min_m=4
+        art. Article Uv.6 · p.83 (PDF)
+        Toute construction ou installation sera implantée avec un recul de 4 m minimum par rapport à l’alignement.
+    · retraits.limites_separatives [valide] formule=Toute construction ou installation pourra être implantée : soit sur une ou plusieurs limites séparatives, soit avec un recul de 4 m minimum. · min_m=4
+        art. Article Uv.7 · p.83 (PDF)
+        soit avec un recul de 4 m minimum.
+  ▸ Stationnement
+    · stationnement.par_logement [valide] places=1
+        art. XVII. STATIONNEMENT · p.19 (PDF)
+        1 place par logement d'une surface plancher < 100 m2

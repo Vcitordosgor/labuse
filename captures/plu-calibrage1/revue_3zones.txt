@@ -1,0 +1,67 @@
+— Revue PLU Saint-Denis (97411) · millésime 2026-08-05 · 97411_reglement_20260805.pdf
+
+═ Zone Uavap · 2 règle(s)
+  ▸ Stationnement
+    · stationnement.par_logement [propose] places=1
+        art. XVII. STATIONNEMENT · p.19 (PDF)
+        1 place par logement d'une surface plancher < 100 m2
+  ▸ Mixité sociale
+    · mixite                     [propose] seuil_logements=30 · quota_pct=15 · portee=zone
+        art. Article Uavap.2 · p.27 (PDF)
+        les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+
+═ Zone Ud · 7 règle(s)
+  ▸ Hauteur
+    · hauteur.faitage            [propose] m=18
+        art. Article Ud.10 · p.44 (PDF)
+        Hauteur maximale R+5, soit 18m, au faîtage ou à l'acrotère, généralisé
+    · hauteur.niveaux            [propose] r_plus=5
+        art. Article Ud.10 · p.44 (PDF)
+        Hauteur maximale R+5, soit 18m, au faîtage ou à l'acrotère, généralisé
+  ▸ Emprise au sol
+    · emprise_sol.ces            [propose] pct=80
+        art. Article Ud.9 · p.43 (PDF)
+        En secteur Ud : L'emprise au sol des constructions est limitée à 80 % de la superficie de l'unité foncière.
+  ▸ Retraits (implantation)
+    · retraits.voie              [propose] formule=Voies et emprises publiques de 12 m ou plus : les constructions seront implantées soit à l’alignement, soit à 4 m de l'alignement. Voies et emprises publiques de moins de 12 m : les constructions seront implantées à 4 m minimum de l'alignement. Voies et emprises publiques de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l'alignement. · min_m=3
+        art. Article Ud.6 · p.40 (PDF)
+        Voies et emprises publiques de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l'alignement.
+    · retraits.limites_separatives [propose] formule=Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives sur une hauteur maximale de 18 m par limite. Au-delà de cette hauteur, les constructions seront implantées en tout point à 4 mètres minimum de la limite séparative. ... 4m ≤ L ≥ h/2. · min_m=4
+        art. Article Ud.7 · p.42 (PDF)
+        supérieure ou égale à la moitié de la différence d'altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.
+  ▸ Stationnement
+    · stationnement.par_logement [propose] places=1
+        art. XVII. STATIONNEMENT · p.19 (PDF)
+        1 place par logement d'une surface plancher < 100 m2
+  ▸ Mixité sociale
+    · mixite                     [propose] seuil_logements=30 · quota_pct=15 · portee=zone
+        art. Article Ud.2 · p.39 (PDF)
+        les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+
+═ Zone Up · 7 règle(s)
+  ▸ Hauteur
+    · hauteur.faitage            [propose] m=16
+        art. Article Up.10 · p.34 (PDF)
+        Upr 16 m
+    · hauteur.niveaux            [propose] r_plus=3
+        art. Article Up.10 · p.34 (PDF)
+        Upr RDC+3 étages +Comble ou attique sans dépasser 12m.
+  ▸ Emprise au sol
+    · emprise_sol.ces            [propose] pct=80
+        art. Article Up.9 · p.33 (PDF)
+        En secteur Upi : L’emprise au sol des constructions ne devra pas excéder 80 % de la superficie de l’unité foncière.
+  ▸ Retraits (implantation)
+    · retraits.voie              [propose] formule=soit à l’alignement de la voie, soit avec un recul : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à l’alignement. · min_m=3
+        art. Article Up.6 · p.32 (PDF)
+        de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à l’alignement.
+    · retraits.limites_separatives [propose] formule=soit sur une ou plusieurs limites séparatives soit avec un recul : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à la limite séparative. · min_m=3
+        art. Article Up.7 · p.33 (PDF)
+        de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à la limite séparative.
+  ▸ Stationnement
+    · stationnement.par_logement [propose] places=1
+        art. XVII. STATIONNEMENT · p.19 (PDF)
+        1 place par logement d'une surface plancher < 100 m2
+  ▸ Mixité sociale
+    · mixite                     [propose] seuil_logements=30 · quota_pct=15 · portee=zone
+        art. Article Up.2 · p.31 (PDF)
+        les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
