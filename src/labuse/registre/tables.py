@@ -486,9 +486,7 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "copilote_messages": "Copilote — messages",
     "copilote_faits": "Copilote — faits",
     "copilote_telemetrie": "Copilote — télémétrie",
-    "agent_runs": "Copilote — runs d'agents",
-    "agent_run_parcels": "Copilote — parcelles d'agents",
-    "agent_events": "Copilote — événements d'agents",
+    # COPILOTE-2 lot 4 — les tables agent_runs/agent_events/agent_run_parcels (moteur v1) sont retirées.
     "ia_log": "IA — grand livre",
     "ia_cache": "IA — cache",
     "ia_ask_quota": "IA — quotas",

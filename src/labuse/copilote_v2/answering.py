@@ -1266,48 +1266,38 @@ def _recap_recherche(params: dict) -> str:
 
 
 def _mission_recherche(db: Session, message: str, params: dict) -> dict:
-    """RECHERCHE → récap-péage (needs_confirmation) ; le front lancera le run lourd. Le moteur cherche
-    commune par commune : sans commune, on DEMANDE (clarification-récap), jamais un run à vide."""
-    if not params.get("commune"):
-        return _reply("Sur quelle commune dois-je chercher ? J'instruis commune par commune.",
-                      "RECHERCHE", needs_confirmation=True, brief_effectif=message,
-                      clarification_recap={"question": "Sur quelle commune dois-je chercher les terrains ?",
-                                           "options": [], "champ": "commune"})
-    recap = _recap_recherche(params)
-    return _reply(recap, "RECHERCHE", needs_confirmation=True, recap=recap,
-                  brief_effectif=_brief_effectif_recherche(message, params))
+    """COPILOTE-2 lot 4 — RECHERCHE (chercher des parcelles par critères) devient une PASSERELLE vers
+    l'outil « Trouver » (le moteur run-scopé v1 est retiré). Le Copilote extrait les critères, ouvre
+    l'outil pré-rempli, et le DIT — il ne produit aucune shortlist lui-même."""
+    crit = [x for x in (
+        f"à {params['commune']}" if params.get("commune") else None,
+        f"≥ {int(params['surface_min'])} m²" if params.get("surface_min") else None,
+        f"≤ {int(params['surface_max'])} m²" if params.get("surface_max") else None,
+        f"pour {int(params['programme_logements'])} logements" if params.get("programme_logements") else None,
+        f"sous {int(params['budget_eur'])} €" if params.get("budget_eur") else None,
+    ) if x]
+    filtres = _criteres_vers_filtres(params)
+    libelle = "les parcelles" + (" " + ", ".join(crit) if crit else "")
+    txt = ("Je vous ouvre la carte filtrée sur vos critères" + (" (" + ", ".join(crit) + ")" if crit else "")
+           + " — la facette liste et classe les parcelles ; je ne produis pas la sélection moi-même.")
+    return _reply(txt, "OUTIL",
+                  carte_filtre={"commune": params.get("commune"), "filtres": filtres, "libelle": libelle})
 
 
 def _mission_verification(db: Session, message: str, params: dict, contexte: dict | None,
                           confirme: bool) -> dict:
-    """VERIFICATION → récap-péage, puis (confirme=True) AVIS instruit face au prix (missions_lourdes :
-    marché DVF, réserve de méthode, verrou anti-invention). Sans IDU résoluble, on DEMANDE l'IDU."""
+    """COPILOTE-2 lot 4 — VERIFICATION (évaluer une parcelle face à un prix) devient une PASSERELLE vers
+    « Étudier un bien » (le run/avis lourd est retiré). Sans IDU, on demande l'IDU (précision, pas un run)."""
     idu = (params.get("idu") or (contexte or {}).get("idu")
            or _resoudre_idu_court(db, message, params.get("commune")))
-    if idu:
-        params["idu"] = idu
-    if confirme:
-        from . import missions_lourdes
-        av = missions_lourdes.verification(db, params)
-        if av.get("clarification"):
-            return _reply(av["text"], "VERIFICATION", clarification=True)
-        if av.get("refus"):
-            return _reply(av["text"], "VERIFICATION", refus=av["refus"],
-                          voie={"cible": "fiche", "libelle": "Ouvrir la fiche", **({"idu": idu} if idu else {})})
-        return _reply(av["text"], "VERIFICATION", tool=av.get("tool"), idu=av.get("idu"),
-                      sources=av.get("sources"), actions=av.get("actions"))
     if not idu:
-        return _reply("Quelle parcelle dois-je vérifier ?", "VERIFICATION", needs_confirmation=True,
-                      brief_effectif=message,
-                      clarification_recap={"question": "Donnez-moi l'IDU (14 caractères) de la parcelle "
-                                                       "à vérifier — et son prix demandé si vous l'avez.",
-                                           "options": [], "champ": "idu"})
+        return _reply("Quelle parcelle dois-je évaluer ? Donnez-moi l'IDU (14 caractères) — j'ouvre "
+                      "Étudier un bien pour la comparer au marché.", "OUTIL", clarification=True)
     prix = params.get("prix_eur") or params.get("budget_eur")
-    recap = (f"J'ai compris : vérifier la parcelle {idu}"
-             + (f" face à un prix de {int(prix)} €" if prix else " (donnez-moi le prix demandé pour l'avis complet)")
-             + ".")
-    brief_eff = f"Vérifie la parcelle {idu}" + (f" proposée à {int(prix)} €" if prix else "")
-    return _reply(recap, "VERIFICATION", needs_confirmation=True, recap=recap, brief_effectif=brief_eff)
+    txt = (f"Je vous ouvre Étudier un bien avec la parcelle {idu}"
+           + (f" pour la situer face au prix de {int(prix)} €" if prix else " pour l'évaluer face au marché")
+           + " — l'outil sert l'avis, je ne le calcule pas ici.")
+    return _reply(txt, "OUTIL", porte="scoreur-adresse", prefill="calcPrefill", prefill_idu=idu)
 
 
 def _answer_with_route(db: Session, message: str, route, contexte: dict | None = None,

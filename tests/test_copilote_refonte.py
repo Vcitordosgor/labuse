@@ -199,15 +199,15 @@ def test_q11_programme_ouvre_la_faisabilite(monkeypatch):
     assert r.get("prefill_programme") == {"batiments": 3, "niveaux": 3, "logements_par_batiment": 8}
 
 
-def test_q13_verification_recap_peage_pas_muette(monkeypatch):
-    """Q13 + SUITE-1 S9 — « BZ1065 elle vaut quoi » n'est plus une voie fiche muette : le v2 l'instruit
-    DANS le chat (récap-péage → avis complet face au prix). Le récap NOMME la parcelle, ne refuse pas."""
+def test_q13_verification_passerelle_etudier(monkeypatch):
+    """Q13 + COPILOTE-2 lot 4 — « BZ1065 elle vaut quoi » : le run/avis v1 est retiré → passerelle vers
+    « Étudier un bien » préremplie de la parcelle (NOMMÉE), jamais une voie fiche muette ni un run."""
     from labuse.copilote_v2.router import Route
     r = answering._answer_with_route(None, "97411000BZ1065 elle vaut quoi",
                                      Route("VERIFICATION", params={"idu": "97411000BZ1065"}))
-    assert r.get("refus") is None and r.get("intent") == "VERIFICATION"
-    assert r.get("needs_confirmation") is True
-    assert "97411000BZ1065" in (r.get("recap") or "")
+    assert r.get("refus") is None
+    assert r.get("porte") == "scoreur-adresse" and r.get("prefill_idu") == "97411000BZ1065"
+    assert "97411000BZ1065" in r["text"]
 
 
 def test_q3_herite_la_commune_du_fil(monkeypatch):

@@ -31,29 +31,27 @@ def test_intent_hors_mission_donne_sa_voie(monkeypatch, intent, cible):
     assert (r.get("voie") or {}).get("cible") == cible
 
 
-def test_recherche_est_une_mission_lourde_pas_un_refus(monkeypatch):
-    # S9 — RECHERCHE (avec commune) → récap-péage dans le chat, jamais un refus-voie.
+def test_recherche_devient_passerelle_carte(monkeypatch):
+    # COPILOTE-2 lot 4 — RECHERCHE (moteur v1 retiré) → passerelle carte filtrée (facette), pas un run.
     _force(monkeypatch, "RECHERCHE", commune="Saint-Leu", programme_logements=15)
     r = answering.answer(None, "trouve des terrains à Saint-Leu pour 15 logements")
-    assert r.get("refus") is None
-    assert r.get("intent") == "RECHERCHE" and r.get("needs_confirmation") is True
-    assert r.get("brief_effectif")                      # le run partira de ce brief
+    assert r.get("refus") is None and not r.get("needs_confirmation")
+    assert (r.get("carte_filtre") or {}).get("commune") == "Saint-Leu"
 
 
-def test_recherche_sans_commune_demande_la_commune(monkeypatch):
+def test_recherche_sans_commune_ouvre_la_carte_ile(monkeypatch):
     _force(monkeypatch, "RECHERCHE")
     r = answering.answer(None, "trouve des terrains")
-    assert r.get("refus") is None and r.get("needs_confirmation") is True
-    assert (r.get("clarification_recap") or {}).get("champ") == "commune"
+    assert r.get("refus") is None and not r.get("needs_confirmation")
+    assert "carte_filtre" in r                          # ouverte à l'échelle île (commune None)
 
 
-def test_verification_est_une_mission_lourde_avec_idu(monkeypatch):
-    # S9 — VERIFICATION → récap-péage (puis confirme → avis), plus un refus-voie fiche.
+def test_verification_devient_passerelle_etudier(monkeypatch):
+    # COPILOTE-2 lot 4 — VERIFICATION → passerelle « Étudier un bien » préremplie, plus un run/avis.
     _force(monkeypatch, "VERIFICATION", idu="97415000AC0016")
     r = answering.answer(None, "cette parcelle vaut-elle 320000 € ?")
     assert r.get("refus") is None
-    assert r.get("intent") == "VERIFICATION" and r.get("needs_confirmation") is True
-    assert "97415000AC0016" in (r.get("brief_effectif") or "")
+    assert r.get("porte") == "scoreur-adresse" and r.get("prefill_idu") == "97415000AC0016"
 
 
 def test_outil_courrier_voie_courriers(monkeypatch):
