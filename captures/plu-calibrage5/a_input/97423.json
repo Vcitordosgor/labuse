@@ -1,0 +1,20 @@
+{
+ "insee": "97423",
+ "commune": "Les Trois-Bassins",
+ "pdf": "97423_reglement_20220602.pdf",
+ "n": 1,
+ "rules": [
+  {
+   "insee": "97423",
+   "zone": "Ue",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "Règle Ue 7.2 = formule D=H/2 min 4 m, pas un nombre unique ; valeur 5 absente du texte. lu PDF p.57",
+   "citation": "En cas de retrait, la distance (D) comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au moins égale à D=H/2 (H étant la hauteur à l’égout du toit ou au sommet de l’acrotère), sans être inférieure à 4,00 mètres.",
+   "article": "Ue 7.2-7.3",
+   "page_pdf": 57,
+   "valeur_actuelle": {
+    "min_m": 5.0
+   }
+  }
+ ]
+}

@@ -1,0 +1,204 @@
+{
+ "insee": "97407",
+ "decisions": [
+  {
+   "zone": "Ua",
+   "chemin": "pleine_terre.pct",
+   "geste": "formule",
+   "preuve": "au minimum 30% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre",
+   "note": "lu PDF p.27 — pleine terre = produit (50% des 30% éco-aménageables), pas un nombre unique ; 15 n'apparaît pas littéralement"
+  },
+  {
+   "zone": "Uc",
+   "chemin": "pleine_terre.pct",
+   "geste": "formule",
+   "preuve": "au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre",
+   "note": "lu PDF p.58 — pleine terre = produit (50% des 20%), pas un nombre unique ; 10 n'apparaît pas littéralement"
+  },
+  {
+   "zone": "Uca",
+   "chemin": "pleine_terre.pct",
+   "geste": "formule",
+   "preuve": "au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre",
+   "note": "Uca relève de Uc 11.1 (p.58) — pleine terre = produit (50% des 20%), pas un nombre unique ; 10 n'apparaît pas littéralement"
+  },
+  {
+   "zone": "Ud",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "Les constructions doivent être implantées en limite séparative et/ou suivant l’alignement des constructions limitrophes existantes.",
+   "note": "lu PDF p.68 — implantation en limite (0) OU alignement des constructions limitrophes : alternative, pas un minimum unique ; 0 n'apparaît pas littéralement"
+  },
+  {
+   "zone": "Us",
+   "chemin": "pleine_terre.pct",
+   "geste": "formule",
+   "preuve": "au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre",
+   "note": "lu PDF p.125 — pleine terre = produit (50% des 20%), pas un nombre unique ; 10 n'apparaît pas littéralement"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 9.0 },
+   "preuve": "La hauteur maximale des constructions ne peut excéder 9 mètres au faitage ou au sommet de l’acrotère.",
+   "note": "lu PDF p.25 (Ua 8) — 1AUa renvoie à la zone U en indice (Ua) ; 9 m au faîtage confirmé"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "hauteur.egout",
+   "geste": "absent",
+   "preuve": "La hauteur maximale des constructions ne peut excéder 9 mètres au faitage ou au sommet de l’acrotère.",
+   "note": "lu PDF p.25 (Ua 8) — hauteur réglementée uniquement au faîtage/acrotère ; aucune règle d'égout"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": { "pct": 60.0 },
+   "preuve": "L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière.",
+   "note": "lu PDF p.25 (Ua 7) — 1AUa renvoie à Ua ; CES 60% confirmé"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "retraits.voie",
+   "geste": "valider",
+   "valeur": { "min_m": 3.0 },
+   "preuve": "Les constructions doivent être implantées en retrait de l’alignement, avec un recul minimum de 3 mètres",
+   "note": "lu PDF p.23 (Ua 4) — 1AUa renvoie à Ua ; recul minimum 3 m (le 45 m ne vise que la RN4a/périmètre Loi Barnier)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "Les constructions peuvent être implantées au maximum sur deux limites séparatives. En cas de retrait de la construction, la distance ... doit être au moins égale à 3 mètres.",
+   "note": "lu PDF p.24 (Ua 5, via renvoi) — sur limite OU retrait ≥ 3 m : alternative, pas un minimum unique"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "pleine_terre.pct",
+   "geste": "formule",
+   "preuve": "au minimum 30% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre",
+   "note": "lu PDF p.27 (Ua 11.1, via renvoi) — pleine terre = produit (50% des 30%), pas un nombre unique"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 16.0 },
+   "preuve": "La hauteur maximale des constructions ne peut excéder 16 mètres au faitage ou au sommet de l’acrotère.",
+   "note": "lu PDF p.55 (Uc 8) — 1AUc renvoie à Uc ; 16 m au faîtage confirmé"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "hauteur.egout",
+   "geste": "absent",
+   "preuve": "La hauteur maximale des constructions ne peut excéder 16 mètres au faitage ou au sommet de l’acrotère.",
+   "note": "lu PDF p.55 (Uc 8) — hauteur réglementée uniquement au faîtage/acrotère ; aucune règle d'égout"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": { "pct": 80.0 },
+   "preuve": "L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité foncière.",
+   "note": "lu PDF p.55 (Uc 7) — 1AUc renvoie à Uc ; CES 80% confirmé"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.voie",
+   "geste": "formule",
+   "preuve": "Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum de 3 mètres.",
+   "note": "lu PDF p.53 (Uc 4, via renvoi) — alignement OU recul ≥ 3 m : alternative, pas un minimum unique"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "Les constructions peuvent être implantées soit en limite séparative, soit en retrait. En cas de retrait de la construction, la distance ... doit être au moins égale à 4 mètres.",
+   "note": "lu PDF p.54 (Uc 5, via renvoi) — sur limite OU retrait ≥ 4 m : alternative, pas un minimum unique"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "pleine_terre.pct",
+   "geste": "formule",
+   "preuve": "au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre",
+   "note": "lu PDF p.58 (Uc 11.1, via renvoi) — pleine terre = produit (50% des 20%), pas un nombre unique"
+  },
+  {
+   "zone": "1AUem",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 18.0 },
+   "preuve": "En secteur Uem, la hauteur maximale des constructions est fixée 18 mètres.",
+   "note": "lu PDF p.82 (Ue 8) — 1AUem renvoie à Uem ; 18 m confirmé"
+  },
+  {
+   "zone": "1AUem",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": { "pct": 60.0 },
+   "preuve": "L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière.",
+   "note": "lu PDF p.82 (Ue 7) — 1AUem renvoie à Ue ; CES 60% confirmé"
+  },
+  {
+   "zone": "1AUem",
+   "chemin": "retraits.voie",
+   "geste": "valider",
+   "valeur": { "min_m": 5.0 },
+   "preuve": "Les constructions doivent être implantées en retrait par rapport aux voies et emprises publiques avec un recul minimal de 5 mètres.",
+   "note": "lu PDF p.81 (Ue 4) — 1AUem renvoie à Ue ; recul minimal 5 m confirmé"
+  },
+  {
+   "zone": "1AUem",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "Les constructions peuvent être implantées soit en limite séparative, soit en retrait. En cas de retrait de la construction, la distance ... doit être au moins égale à 5 mètres.",
+   "note": "lu PDF p.82 (Ue 5, via renvoi) — sur limite OU retrait ≥ 5 m : alternative, pas un minimum unique"
+  },
+  {
+   "zone": "1AUem",
+   "chemin": "pleine_terre.pct",
+   "geste": "formule",
+   "preuve": "au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre",
+   "note": "pleine terre = produit (50% de la surface éco-aménageable), pas un nombre unique (Ue 11.1, via renvoi)"
+  },
+  {
+   "zone": "1AUm",
+   "chemin": "pleine_terre.pct",
+   "geste": "formule",
+   "preuve": "au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre",
+   "note": "lu PDF p.150 (1AU 11.1) — pleine terre = produit (50% des 20%), pas un nombre unique"
+  },
+  {
+   "zone": "1AUs",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 18.0 },
+   "preuve": "La hauteur maximale des constructions est fixée 18 mètres.",
+   "note": "lu PDF p.122 (Us 8) — 1AUs renvoie à Us ; 18 m confirmé"
+  },
+  {
+   "zone": "1AUs",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": { "pct": 60.0 },
+   "preuve": "L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière.",
+   "note": "lu PDF p.122 (Us 7) — 1AUs renvoie à Us ; CES 60% confirmé"
+  },
+  {
+   "zone": "1AUs",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "Les constructions peuvent être implantées soit en limite séparative, soit en retrait. En cas de retrait de la construction, la distance ... doit être au moins égale à 5 mètres.",
+   "note": "lu PDF p.122 (Us 5, via renvoi) — sur limite OU retrait ≥ 5 m : alternative, pas un minimum unique"
+  },
+  {
+   "zone": "1AUs",
+   "chemin": "pleine_terre.pct",
+   "geste": "formule",
+   "preuve": "au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre",
+   "note": "pleine terre = produit (50% de la surface éco-aménageable), pas un nombre unique (Us 11.1, via renvoi)"
+  }
+ ]
+}

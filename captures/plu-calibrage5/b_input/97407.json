@@ -1,0 +1,305 @@
+{
+ "insee": "97407",
+ "commune": "Le Port",
+ "pdf": "97407_reglement_20241209.pdf",
+ "n": 27,
+ "rules": [
+  {
+   "zone": "Ua",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 15.0
+   },
+   "article": "Ua 11.1",
+   "page_pdf": 27,
+   "citation": "Dans le cadre de tout projet, au minimum 30% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).",
+   "raison": "valeur 15 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "Uc",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 10.0
+   },
+   "article": "Uc 11.1",
+   "page_pdf": 58,
+   "citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).",
+   "raison": "valeur 10 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "Uca",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 10.0
+   },
+   "article": "Uc 11.1",
+   "page_pdf": 58,
+   "citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).",
+   "raison": "valeur 10 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "Ud",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 0.0
+   },
+   "article": "Ud 5",
+   "page_pdf": 68,
+   "citation": "Les constructions doivent être implantées en limite séparative et/ou suivant l’alignement des constructions limitrophes existantes.",
+   "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "Us",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 10.0
+   },
+   "article": "Us 11.1",
+   "page_pdf": 125,
+   "citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).",
+   "raison": "valeur 10 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 9.0
+   },
+   "article": "Ua 8",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 9 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 9.0
+   },
+   "article": "Ua 8",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 9 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 60.0
+   },
+   "article": "Ua 7",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 60 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "Ua 4",
+   "page_pdf": 146,
+   "citation": "En zone 1AUa : un retrait minimal de 45 mètres doit être observé par rapport à l'axe de la RN4a ;",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "Ua 5",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 15.0
+   },
+   "article": "Ua 11.1",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 15 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 16.0
+   },
+   "article": "Uc 8",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 16 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 16.0
+   },
+   "article": "Uc 8",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 16 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 80.0
+   },
+   "article": "Uc 7",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 80 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "Uc 4",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "Uc 5",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 10.0
+   },
+   "article": "Uc 11.1",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 10 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUem",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 18.0
+   },
+   "article": "Ue 8",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 18 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUem",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 60.0
+   },
+   "article": "Ue 7",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 60 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUem",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 5.0
+   },
+   "article": "Ue 4",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUem",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 5.0
+   },
+   "article": "Ue 5",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUem",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 20.0
+   },
+   "article": "Ue 11.1",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 20 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUm",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 10.0
+   },
+   "article": "1AU 11.1",
+   "page_pdf": 150,
+   "citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).",
+   "raison": "valeur 10 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUs",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 18.0
+   },
+   "article": "Us 8",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 18 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUs",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 60.0
+   },
+   "article": "Us 7",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 60 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUs",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 5.0
+   },
+   "article": "Us 5",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUs",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 10.0
+   },
+   "article": "Us 11.1",
+   "page_pdf": 145,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+   "raison": "valeur 10 absente de la citation (harmonisation ≠ texte)"
+  }
+ ]
+}

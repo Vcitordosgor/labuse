@@ -1,0 +1,18 @@
+{
+ "insee": "97415",
+ "commune": "Saint-Paul",
+ "pdf": "97415_reglement_20251217.pdf",
+ "n": 1,
+ "rules": [
+  {
+   "insee": "97415",
+   "zone": "U1pru",
+   "chemin": "retraits.voie",
+   "note_lot2": "règle = alignement possible OU retrait plafonné à 6 m (max, pas un min unique) ; formule",
+   "citation": "en zone U1pru — Cas général : Les constructions pourront s'implanter à l'alignement. En cas de retrait, celui-ci ne pourra excéder 6 mètres.",
+   "article": "6",
+   "page_pdf": 19,
+   "valeur_actuelle": {}
+  }
+ ]
+}

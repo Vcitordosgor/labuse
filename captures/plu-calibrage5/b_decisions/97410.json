@@ -1,0 +1,120 @@
+{
+  "insee": "97410",
+  "decisions": [
+    {
+      "zone": "Ua",
+      "chemin": "emprise_sol.ces",
+      "geste": "valider",
+      "valeur": { "pct": 80.0 },
+      "preuve": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+      "note": "Article U-5 unique pour toutes les zones U (Ua,Ub,Ue,Up,Ut : cf. U-1 'applicable dans les zones urbaines Ua, Ub, Ue, Up et Ut'). lu PDF p.10"
+    },
+    {
+      "zone": "Ua",
+      "chemin": "retraits.voie",
+      "geste": "formule",
+      "preuve": "recul minimum de : - 7 mètres par rapport à l'axe de la rue George Pompidou ; - 5 mètres par rapport à l'axe des rues Monfleury et Louis Brunet",
+      "note": "U-6 : non reglementee sauf reculs par rapport a des axes nommes (7 m Pompidou / 5 m Monfleury-Brunet / 75 m axe RN hors agglomeration) = formule, pas un nombre unique. lu PDF p.10"
+    },
+    {
+      "zone": "Ua",
+      "chemin": "pleine_terre.pct",
+      "geste": "valider",
+      "valeur": { "pct": 20.0 },
+      "preuve": "Le pourcentage d'espaces libres doit correspondre  à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+      "note": "Article U-9 unique pour toutes les zones U. lu PDF p.13"
+    },
+    {
+      "zone": "Ub",
+      "chemin": "emprise_sol.ces",
+      "geste": "valider",
+      "valeur": { "pct": 80.0 },
+      "preuve": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+      "note": "Article U-5 unique pour toutes les zones U. lu PDF p.10"
+    },
+    {
+      "zone": "Ub",
+      "chemin": "retraits.voie",
+      "geste": "formule",
+      "preuve": "recul minimum de 75 mètres par rapport à l'axe des routes nationales",
+      "note": "U-6 : non reglementee sauf recul 75 m axe RN hors agglomeration (rues Pompidou/Montfleury/Brunet non concernees en Ub) = formule. lu PDF p.10"
+    },
+    {
+      "zone": "Ub",
+      "chemin": "pleine_terre.pct",
+      "geste": "valider",
+      "valeur": { "pct": 20.0 },
+      "preuve": "Le pourcentage d'espaces libres doit correspondre  à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+      "note": "Article U-9 unique pour toutes les zones U. lu PDF p.13"
+    },
+    {
+      "zone": "Ue",
+      "chemin": "emprise_sol.ces",
+      "geste": "valider",
+      "valeur": { "pct": 80.0 },
+      "preuve": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+      "note": "Article U-5 unique pour toutes les zones U. lu PDF p.10"
+    },
+    {
+      "zone": "Ue",
+      "chemin": "retraits.voie",
+      "geste": "formule",
+      "preuve": "recul minimum de 75 mètres par rapport à l'axe des routes nationales",
+      "note": "U-6 : non reglementee sauf recul 75 m axe RN hors agglomeration = formule. lu PDF p.10"
+    },
+    {
+      "zone": "Ue",
+      "chemin": "pleine_terre.pct",
+      "geste": "valider",
+      "valeur": { "pct": 20.0 },
+      "preuve": "Le pourcentage d'espaces libres doit correspondre  à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+      "note": "Article U-9 unique pour toutes les zones U. lu PDF p.13"
+    },
+    {
+      "zone": "Up",
+      "chemin": "emprise_sol.ces",
+      "geste": "valider",
+      "valeur": { "pct": 80.0 },
+      "preuve": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+      "note": "Article U-5 unique pour toutes les zones U. lu PDF p.10"
+    },
+    {
+      "zone": "Up",
+      "chemin": "retraits.voie",
+      "geste": "formule",
+      "preuve": "recul minimum de 75 mètres par rapport à l'axe des routes nationales",
+      "note": "U-6 : non reglementee sauf recul 75 m axe RN hors agglomeration = formule. lu PDF p.10"
+    },
+    {
+      "zone": "Up",
+      "chemin": "pleine_terre.pct",
+      "geste": "valider",
+      "valeur": { "pct": 20.0 },
+      "preuve": "Le pourcentage d'espaces libres doit correspondre  à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+      "note": "Article U-9 unique pour toutes les zones U. lu PDF p.13"
+    },
+    {
+      "zone": "Ut",
+      "chemin": "emprise_sol.ces",
+      "geste": "valider",
+      "valeur": { "pct": 80.0 },
+      "preuve": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+      "note": "Article U-5 unique pour toutes les zones U. lu PDF p.10"
+    },
+    {
+      "zone": "Ut",
+      "chemin": "retraits.voie",
+      "geste": "formule",
+      "preuve": "recul minimum de 75 mètres par rapport à l'axe des routes nationales",
+      "note": "U-6 : non reglementee sauf recul 75 m axe RN hors agglomeration = formule. lu PDF p.10"
+    },
+    {
+      "zone": "Ut",
+      "chemin": "pleine_terre.pct",
+      "geste": "valider",
+      "valeur": { "pct": 20.0 },
+      "preuve": "Le pourcentage d'espaces libres doit correspondre  à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+      "note": "Article U-9 unique pour toutes les zones U. lu PDF p.13"
+    }
+  ]
+}

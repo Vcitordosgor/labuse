@@ -1,0 +1,30 @@
+{
+ "insee": "97405",
+ "commune": "Petite-Île",
+ "pdf": "97405_reglement_20230609.pdf",
+ "n": 2,
+ "rules": [
+  {
+   "zone": "UZ",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 0.0
+   },
+   "article": "UZ.6",
+   "page_pdf": 83,
+   "citation": "Les constructions pourront être implantées soit à l'alignement soit en retrait des voies publiques.",
+   "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UZ",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 0.0
+   },
+   "article": "UZ.7",
+   "page_pdf": 83,
+   "citation": "Les constructions pourront s'implanter soit en limite séparative soit en retrait.",
+   "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)"
+  }
+ ]
+}

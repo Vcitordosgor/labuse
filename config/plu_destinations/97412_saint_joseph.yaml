@@ -161,14 +161,15 @@ zones:
             au point le plus proche de la voie, doit être au minimum égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 5.5
+          min_m: 3
           article: U2 7.2
           page_pdf: 33
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié
             de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 5.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 1.0
@@ -250,21 +251,22 @@ zones:
             au point le plus proche de la voie, doit être au minimum égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 5.5
+          min_m: 3
           article: U2 7.2
           page_pdf: 33
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié
             de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 5.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
-          places: 1.0
+          places: 2.0
           article: U2 12.2
           page_pdf: 39
           citation: '- dans le secteur U2a, ce seuil est porté à 2 places de stationnement minimum par logement'
-          statut: propose
+          statut: valide
           raison: valeur 1 absente de la citation (harmonisation ≠ texte)
       pleine_terre:
         pct:
@@ -337,14 +339,15 @@ zones:
             au point le plus proche de la voie, doit être au minimum égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 5.5
+          min_m: 3
           article: U3 7.2
           page_pdf: 49
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 5.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -429,14 +432,15 @@ zones:
             la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 4.0
+          min_m: 3
           article: U3 7.2
           page_pdf: 49
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -514,14 +518,15 @@ zones:
             la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 4.0
+          min_m: 3
           article: U3 7.2
           page_pdf: 49
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -598,14 +603,15 @@ zones:
             au point le plus proche de la voie, doit être au minimum égale à 2 mètres.
           statut: valide
         limites_separatives:
-          min_m: 3.0
+          min_m: 1.9
           article: U4 7.2
           page_pdf: 63
           citation: En cas de retrait de la construction, la distance (D) comptée horizontalement de tout
             point de la façade au point le plus proche de la limite séparative, doit être au moins égale à
             la moitié de la hauteur (H) de la façade concernée, avec un minimum de 1,9 mètre.
-          statut: propose
+          statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 1,9 m
       stationnement:
         par_logement:
           places: 1.0
@@ -702,14 +708,15 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
-          min_m: 3.5
+          min_m: 3
           article: U5 7.2
           page_pdf: 78
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -795,15 +802,16 @@ zones:
             mètres.'
           statut: valide
         limites_separatives:
-          min_m: 3.5
+          min_m: 3
           article: U5 7.2
           page_pdf: 78
           citation: Dans les secteurs U5cv et U5cvd, les constructions peuvent être implantées sur deux limites
             séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout
             point de la façade au point le plus proche de la limite séparative, doit être au moins égale à
             la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m (ou sur limites)
       stationnement:
         par_logement:
           places: 2.0
@@ -968,14 +976,15 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
-          min_m: 3.5
+          min_m: 3
           article: U5 7.2
           page_pdf: 78
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -1241,14 +1250,15 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
-          min_m: 6.0
+          min_m: 3
           article: U6 7.2
           page_pdf: 93
           citation: En cas de retrait de la construction, la distance (D) comptée horizontalement de tout
             point de la façade au point le plus proche de la limite séparative, doit être au moins égale à
             la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       pleine_terre:
         pct:
           pct: 15.0
@@ -1362,14 +1372,15 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
-          min_m: 7.5
+          min_m: 3
           article: U6 7.2
           page_pdf: 93
           citation: En cas de retrait de la construction, la distance (D) comptée horizontalement de tout
             point de la façade au point le plus proche de la limite séparative, doit être au moins égale à
             la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 7.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       pleine_terre:
         pct:
           pct: 15.0
@@ -2058,7 +2069,7 @@ zones:
           page_pdf: 110
           citation: 'Pour les zones AUto, la hauteur maximale des constructions ne peut excéder : - 6 mètres
             à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faîtage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 6.0
@@ -2066,7 +2077,7 @@ zones:
           page_pdf: 110
           citation: 'Pour les zones AUto, la hauteur maximale des constructions ne peut excéder : - 6 mètres
             à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faîtage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -2078,23 +2089,24 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 4.0
           article: Art. AUindicée 6
           page_pdf: 109
           citation: Pour les zones AUto, les constructions doivent être implantées en retrait de la voie,
             avec une distance comptée horizontalement de tout point de la façade au point le plus proche de
             la voie, au moins égale à 4 mètres.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
-          min_m: null
+          min_m: 3
           article: Art. AUindicée 7
           page_pdf: 109
           citation: Pour les zones AUto, les constructions doivent être implantées en retrait avec une distance
             comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative,
             au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
+          formule: H/2, minimum 3 m
       pleine_terre:
         pct:
           pct: null
@@ -2189,7 +2201,7 @@ zones:
           page_pdf: 110
           citation: 'En secteur AUtok, la hauteur des constructions de type industrie ne peut excéder : -
             9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faîtage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 9.0
@@ -2197,7 +2209,7 @@ zones:
           page_pdf: 110
           citation: 'En secteur AUtok, la hauteur des constructions de type industrie ne peut excéder : -
             9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faîtage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -2209,23 +2221,24 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 4.0
           article: Art. AUindicée 6
           page_pdf: 109
           citation: Pour les zones AUto, les constructions doivent être implantées en retrait de la voie,
             avec une distance comptée horizontalement de tout point de la façade au point le plus proche de
             la voie, au moins égale à 4 mètres.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
-          min_m: null
+          min_m: 3
           article: Art. AUindicée 7
           page_pdf: 109
           citation: Pour les zones AUto, les constructions doivent être implantées en retrait avec une distance
             comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative,
             au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
+          formule: H/2, minimum 3 m
       pleine_terre:
         pct:
           pct: null

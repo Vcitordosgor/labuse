@@ -1,0 +1,316 @@
+{
+ "insee": "97408",
+ "commune": "La Possession",
+ "pdf": "97408_reglement_20251217.pdf",
+ "n": 30,
+ "rules": [
+  {
+   "zone": "UA",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 8.0
+   },
+   "article": "UA 7",
+   "page_pdf": 15,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UAa",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 4.5
+   },
+   "article": "UA 7",
+   "page_pdf": 15,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 4.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UAm",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "UA 6.2",
+   "page_pdf": 14,
+   "citation": "Dans le secteur UAm, les constructions peuvent être implantées à l’alignement ou en recul de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à la hauteur du bâtiment. Pour les constructions implantées le long de la RN1E (rue Mahatma Gandhi), la distance de recul par rapport à la voie doit être au moins égale à 10 mètres.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UAm",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 6.0
+   },
+   "article": "UA 7",
+   "page_pdf": 15,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UAm",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "UA 13.1",
+   "page_pdf": 22,
+   "citation": "Dans le secteur UAm, au minimum 25% de la superficie totale de l’unité foncière doit être traité en espace perméable planté en pleine terre comprenant au minimum trois strates, arborescente, arbustive et herbacée.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "UApsfr2",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {},
+   "article": "UA 10.2",
+   "page_pdf": 16,
+   "citation": "Dans le secteur UApsfr2, la hauteur maximale des constructions est fixée à 12 mètres.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "UApsfr2",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {},
+   "article": "UA 10.2",
+   "page_pdf": 16,
+   "citation": "Dans le secteur UApsfr2, la hauteur maximale des constructions est fixée à 12 mètres.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "UAv",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {},
+   "article": "UA 10.2",
+   "page_pdf": 17,
+   "citation": "Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel de la manière suivante : Ilots 1/3B3 15 m ; Ilot 2 12 m ; Ilot 3A 9 m ; Ilots 3B1/3B2 9 m ; Ilot 9 25 m ; Ilot 10A 19 m ; Ilot 10B 16 m ; Ilots 10C/11D 10 m ; Ilot 11A 22 m ; Ilot 11B 10 m ; Ilot 11C 13 m.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "UAv",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {},
+   "article": "UA 10.2",
+   "page_pdf": 17,
+   "citation": "Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel de la manière suivante : Ilot / Hauteur maximale autorisée [...] Ilots 1/3B3 15 mètres ; Ilot 2 12 mètres ; Ilot 3A 9 mètres ; Ilots 3B1/3B2 9 mètres ; Ilot 9 25 mètres ; Ilot 10A 19 mètres ; Ilot 10B 16 mètres ; Ilots 10C/11D 10 mètres ; Ilot 11A 22 mètres ; Ilot 11B 10 mètres ; Ilot 11C 13 mètres.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "UAv",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "UA 13.1",
+   "page_pdf": 22,
+   "citation": "A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité foncière...",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "UB",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 4.5
+   },
+   "article": "UB 7",
+   "page_pdf": 30,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 4.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UBa",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.5
+   },
+   "article": "UB 7",
+   "page_pdf": 30,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UBb",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.5
+   },
+   "article": "UB 7",
+   "page_pdf": 30,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UBc",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.5
+   },
+   "article": "UB 7",
+   "page_pdf": 30,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UBpsfr2",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 4.5
+   },
+   "article": "UB 7",
+   "page_pdf": 30,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 4.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UBpszc",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.5
+   },
+   "article": "UB 7",
+   "page_pdf": 30,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UE",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 6.0
+   },
+   "article": "UE 7",
+   "page_pdf": 41,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UEm",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 6.0
+   },
+   "article": "UEm 7",
+   "page_pdf": 50,
+   "citation": "Les constructions doivent être implantées en retrait des limites séparatives avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UT",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 5.0
+   },
+   "article": "UT 7",
+   "page_pdf": 60,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UTfr2",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 5.0
+   },
+   "article": "UT 7",
+   "page_pdf": 60,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "AUBm",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {},
+   "article": "AUBm 10.2",
+   "page_pdf": 75,
+   "citation": "La hauteur maximale des constructions est fixée à R+3.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "AUBm",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {},
+   "article": "AUBm 10.2",
+   "page_pdf": 75,
+   "citation": "La hauteur maximale des constructions est fixée à R+3.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "AUAv",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {},
+   "article": "UA 10.2",
+   "page_pdf": 17,
+   "citation": "Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel de la manière suivante : Ilots 1/3B3 15 m ; Ilot 2 12 m ; Ilot 3A 9 m ; Ilots 3B1/3B2 9 m ; Ilot 9 25 m ; Ilot 10A 19 m ; Ilot 10B 16 m ; Ilots 10C/11D 10 m ; Ilot 11A 22 m ; Ilot 11B 10 m ; Ilot 11C 13 m.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "AUAv",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {},
+   "article": "UA 10.2",
+   "page_pdf": 17,
+   "citation": "Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel de la manière suivante : Ilots 1/3B3 15 m ; Ilot 2 12 m ; Ilot 3A 9 m ; Ilots 3B1/3B2 9 m ; Ilot 9 25 m ; Ilot 10A 19 m ; Ilot 10B 16 m ; Ilots 10C/11D 10 m ; Ilot 11A 22 m ; Ilot 11B 10 m ; Ilot 11C 13 m.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "AUAv",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "UA 13.1",
+   "page_pdf": 22,
+   "citation": "A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité foncière...",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "AUB",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 4.5
+   },
+   "article": "UB 7",
+   "page_pdf": 30,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 4.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "AUBb",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.5
+   },
+   "article": "UB 7",
+   "page_pdf": 30,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "AUBpsfr2",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 4.5
+   },
+   "article": "UB 7",
+   "page_pdf": 30,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 4.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "AUT",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 5.0
+   },
+   "article": "UT 7",
+   "page_pdf": 60,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "AUEm",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 6.0
+   },
+   "article": "UEm 7",
+   "page_pdf": 50,
+   "citation": "Les constructions doivent être implantées en retrait des limites séparatives avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)"
+  }
+ ]
+}

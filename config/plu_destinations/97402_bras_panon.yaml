@@ -46,14 +46,15 @@ zones:
             à 2 mètres.
           statut: valide
         limites_separatives:
-          min_m: 5.0
+          min_m: 3
           article: UA 7.2-7.3
           page_pdf: 17
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 1.0
@@ -137,7 +138,7 @@ zones:
           page_pdf: 31
           citation: 'La hauteur maximale des constructions est fixée à : - 8 mètres à l’égout du toit ou au
             sommet de l’acrotère, - 11 mètres au faîtage,'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 8.0
@@ -145,7 +146,7 @@ zones:
           page_pdf: 31
           citation: 'La hauteur maximale des constructions est fixée à : - 8 mètres à l’égout du toit ou au
             sommet de l’acrotère, - 11 mètres au faîtage,'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -165,14 +166,15 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
-          min_m: 4.0
+          min_m: 3
           article: UB 7.2-7.3
           page_pdf: 30
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 1.0
@@ -255,19 +257,15 @@ zones:
           m: 11.0
           article: UB 10.2
           page_pdf: 31
-          citation: A l’exception du secteur Uba, pour les projets d’aménagement dont la superficie du terrain
-            d’assiette est au moins égale à 2 000 m², les constructions peuvent avoir une hauteur maximale
-            de 10 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.
-          statut: propose
+          citation: 11 mètres au faîtage
+          statut: valide
           raison: valeur 11 absente de la citation (harmonisation ≠ texte)
         egout:
           m: 8.0
           article: UB 10.2
           page_pdf: 31
-          citation: A l’exception du secteur Uba, pour les projets d’aménagement dont la superficie du terrain
-            d’assiette est au moins égale à 2 000 m², les constructions peuvent avoir une hauteur maximale
-            de 10 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.
-          statut: propose
+          citation: 8 mètres à l’égout du toit ou au sommet de l’acrotère
+          statut: valide
           raison: valeur 8 absente de la citation (harmonisation ≠ texte)
       emprise_sol:
         ces:
@@ -354,14 +352,15 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
-          min_m: 4.0
+          min_m: 3
           article: UC 7.2-7.3
           page_pdf: 44
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 1.0
@@ -459,14 +458,15 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
-          min_m: 3.5
+          min_m: 3
           article: UD 7.2-7.3
           page_pdf: 57
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 1.0
@@ -565,14 +565,15 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
-          min_m: 3.5
+          min_m: 3
           article: UD 7.2-7.3
           page_pdf: 57
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       pleine_terre:
         pct:
           pct: 40.0
@@ -819,14 +820,15 @@ zones:
             à 2 mètres.
           statut: valide
         limites_separatives:
-          min_m: 5.0
+          min_m: 3
           article: UA 7.2-7.3
           page_pdf: 17
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 1.0
@@ -861,7 +863,7 @@ zones:
           page_pdf: 31
           citation: 'La hauteur maximale des constructions est fixée à : - 8 mètres à l’égout du toit ou au
             sommet de l’acrotère, - 11 mètres au faîtage,'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 8.0
@@ -869,7 +871,7 @@ zones:
           page_pdf: 31
           citation: 'La hauteur maximale des constructions est fixée à : - 8 mètres à l’égout du toit ou au
             sommet de l’acrotère, - 11 mètres au faîtage,'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -889,14 +891,15 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
-          min_m: 4.0
+          min_m: 3
           article: UB 7.2-7.3
           page_pdf: 30
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 1.0
@@ -954,14 +957,15 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
-          min_m: 4.0
+          min_m: 3
           article: UC 7.2-7.3
           page_pdf: 44
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 1.0
@@ -1019,14 +1023,15 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
-          min_m: 3.5
+          min_m: 3
           article: UD 7.2-7.3
           page_pdf: 57
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 1.0
@@ -1138,14 +1143,15 @@ zones:
             à 2 mètres.
           statut: valide
         limites_separatives:
-          min_m: 9.0
+          min_m: 3
           article: UA 7.2-7.3
           page_pdf: 17
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 9 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       pleine_terre:
         pct:
           pct: 20.0
@@ -1272,14 +1278,15 @@ zones:
             à 2 mètres.
           statut: valide
         limites_separatives:
-          min_m: 5.0
+          min_m: 3
           article: UA 7.2-7.3
           page_pdf: 17
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       pleine_terre:
         pct:
           pct: 30.0

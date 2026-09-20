@@ -1,0 +1,255 @@
+{
+ "insee": "97415",
+ "decisions": [
+  {
+   "zone": "U1a",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 0 },
+   "preuve": "Les constructions s'implanteront à l'alignement de la voie ou de l'emprise publique.",
+   "note": "en zone U1a, implantation à l'alignement = retrait 0 m ; valeur_actuelle vide corrigée à 0"
+  },
+  {
+   "zone": "U1b",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 3 },
+   "preuve": "implantées en retrait de 3 m minimum de la voie ou de l'emprise publique",
+   "note": "en zone U1b, retrait 3 m minimum"
+  },
+  {
+   "zone": "U1c",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 3 },
+   "preuve": "à l'alignement ou en retrait de 3 m minimum de la voie ou de l'emprise publique",
+   "note": "en zone U1c, alignement OU retrait 3 m min ; min posé à 3 m"
+  },
+  {
+   "zone": "U1d",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 3 },
+   "preuve": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+   "note": "citation liste U1d parmi les zones à 3 m minimum"
+  },
+  {
+   "zone": "U1d",
+   "chemin": "pleine_terre.pct",
+   "geste": "absent",
+   "preuve": "en zone U1d — Il n'est pas fixé de règle.",
+   "note": "pas de règle de pleine terre en U1d"
+  },
+  {
+   "zone": "U1f",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 3 },
+   "preuve": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+   "note": "citation liste U1f parmi les zones à 3 m minimum"
+  },
+  {
+   "zone": "U1g",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 3 },
+   "preuve": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+   "note": "citation liste U1g parmi les zones à 3 m minimum"
+  },
+  {
+   "zone": "U1pru",
+   "chemin": "retraits.voie",
+   "geste": "formule",
+   "preuve": "Les constructions pourront s'implanter à l'alignement. En cas de retrait, celui-ci ne pourra excéder 6 mètres.",
+   "note": "règle = alignement possible OU retrait plafonné à 6 m (max, pas un min unique) ; formule"
+  },
+  {
+   "zone": "U1pru",
+   "chemin": "pleine_terre.pct",
+   "geste": "absent",
+   "preuve": "en zone U1pru — Il n'est pas fixé de règle.",
+   "note": "pas de règle de pleine terre en U1pru"
+  },
+  {
+   "zone": "U1pso",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 3 },
+   "preuve": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+   "note": "citation liste U1pso parmi les zones à 3 m minimum"
+  },
+  {
+   "zone": "U1e",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 6 },
+   "preuve": "implantées en retrait de 6 m minimum de la voie ou de l'emprise publique",
+   "note": "en zone U1e, retrait 6 m minimum"
+  },
+  {
+   "zone": "U1e",
+   "chemin": "pleine_terre.pct",
+   "geste": "corriger",
+   "valeur": { "pct": 20 },
+   "preuve": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet.",
+   "note": "en zone U1e, 20% de pleine terre / espaces perméables"
+  },
+  {
+   "zone": "U1l",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 6 },
+   "preuve": "implantées en retrait de 6 m minimum de la voie ou de l'emprise publique",
+   "note": "en zone U1l, retrait 6 m minimum"
+  },
+  {
+   "zone": "U1l",
+   "chemin": "pleine_terre.pct",
+   "geste": "corriger",
+   "valeur": { "pct": 20 },
+   "preuve": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet.",
+   "note": "en zone U1l, 20% de pleine terre / espaces perméables"
+  },
+  {
+   "zone": "U2b",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 4 },
+   "preuve": "s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique",
+   "note": "en zone U2b, retrait 4 m minimum"
+  },
+  {
+   "zone": "U2c",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 4 },
+   "preuve": "s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique",
+   "note": "en zone U2c, retrait 4 m minimum"
+  },
+  {
+   "zone": "U2c",
+   "chemin": "retraits.limites_separatives",
+   "geste": "corriger",
+   "valeur": { "min_m": 4 },
+   "preuve": "En cas de retrait, un recul de 4 mètres minimum est obligatoire.",
+   "note": "citation impose 4 m ; valeur_actuelle 3 (harmonisation) corrigée à 4"
+  },
+  {
+   "zone": "U2d",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 4 },
+   "preuve": "s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique",
+   "note": "en zone U2d, retrait 4 m minimum"
+  },
+  {
+   "zone": "U2d",
+   "chemin": "retraits.limites_separatives",
+   "geste": "corriger",
+   "valeur": { "min_m": 4 },
+   "preuve": "Un recul de 4 mètres minimum est obligatoire.",
+   "note": "citation impose 4 m ; valeur_actuelle 3 (harmonisation) corrigée à 4"
+  },
+  {
+   "zone": "U2h",
+   "chemin": "retraits.limites_separatives",
+   "geste": "corriger",
+   "valeur": { "min_m": 4 },
+   "preuve": "En cas de retrait, un recul de 4 mètres minimum est obligatoire.",
+   "note": "citation impose 4 m ; valeur_actuelle 3 (harmonisation) corrigée à 4"
+  },
+  {
+   "zone": "U2e",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 6 },
+   "preuve": "implantées en retrait de 6 m minimum de la voie ou de l’emprise publique",
+   "note": "en zone U2e, retrait 6 m minimum"
+  },
+  {
+   "zone": "U2e",
+   "chemin": "pleine_terre.pct",
+   "geste": "corriger",
+   "valeur": { "pct": 20 },
+   "preuve": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet.",
+   "note": "en zone U2e, 20% de pleine terre / espaces perméables"
+  },
+  {
+   "zone": "U3a",
+   "chemin": "retraits.voie",
+   "geste": "valider",
+   "valeur": { "min_m": 0 },
+   "preuve": "Les constructions devront être implantées à l'alignement.",
+   "note": "implantation à l'alignement = 0 m ; confirme valeur_actuelle 0"
+  },
+  {
+   "zone": "Usdu",
+   "chemin": "emprise_sol.ces",
+   "geste": "propose",
+   "note": "lu PDF p.133 : Article 9 exprime l'emprise au sol en m² (150 m² habitation/commerce, 25 m² annexe, 200 m² équipements) et non en pourcentage (CES) ; aucun pct disponible, reste indéterminable"
+  },
+  {
+   "zone": "U3e",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 6 },
+   "preuve": "implantées en retrait de 6 m minimum de la voie ou de l'emprise publique",
+   "note": "en zone U3e, retrait 6 m minimum"
+  },
+  {
+   "zone": "U3e",
+   "chemin": "pleine_terre.pct",
+   "geste": "corriger",
+   "valeur": { "pct": 20 },
+   "preuve": "Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du terrain d'assiette du projet.",
+   "note": "en zone U3e, 20% de pleine terre / espaces perméables"
+  },
+  {
+   "zone": "U4a",
+   "chemin": "retraits.voie",
+   "geste": "valider",
+   "valeur": { "min_m": 0 },
+   "preuve": "en zone U4a Les constructions devront être implantées à l'alignement.",
+   "note": "implantation à l'alignement = 0 m ; confirme valeur_actuelle 0"
+  },
+  {
+   "zone": "U5a",
+   "chemin": "retraits.voie",
+   "geste": "valider",
+   "valeur": { "min_m": 0 },
+   "preuve": "en zone U5a Les constructions devront être implantées à l'alignement.",
+   "note": "implantation à l'alignement = 0 m ; confirme valeur_actuelle 0"
+  },
+  {
+   "zone": "AU5e",
+   "chemin": "emprise_sol.ces",
+   "geste": "absent",
+   "preuve": "Article 9-  Emprise au sol des constructions \nIl n’est pas fixé de règle.",
+   "note": "lu PDF p.259 : Article 9 AU5e « Il n'est pas fixé de règle » → pas d'emprise au sol"
+  },
+  {
+   "zone": "AU5e",
+   "chemin": "retraits.voie",
+   "geste": "corriger",
+   "valeur": { "min_m": 6 },
+   "preuve": "implantées en retrait de 6 m minimum de la voie ou de l'emprise publique",
+   "note": "en zone AU5e, retrait 6 m minimum"
+  },
+  {
+   "zone": "AU5e",
+   "chemin": "pleine_terre.pct",
+   "geste": "corriger",
+   "valeur": { "pct": 20 },
+   "preuve": "Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du terrain d'assiette du projet.",
+   "note": "en zone AU5e, 20% de pleine terre / espaces perméables"
+  },
+  {
+   "zone": "U6a",
+   "chemin": "retraits.voie",
+   "geste": "valider",
+   "valeur": { "min_m": 0 },
+   "preuve": "en zone U6a Les constructions devront être implantées à l'alignement.",
+   "note": "implantation à l'alignement = 0 m ; confirme valeur_actuelle 0"
+  }
+ ]
+}

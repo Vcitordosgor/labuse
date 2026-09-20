@@ -1,0 +1,32 @@
+{
+ "insee": "97416",
+ "commune": "Saint-Pierre",
+ "pdf": "97416_reglement_20240625.pdf",
+ "n": 2,
+ "rules": [
+  {
+   "insee": "97416",
+   "zone": "Uazp",
+   "chemin": "retraits.voie",
+   "note_lot2": "Recul conditionnel : alignement sauf en aval RN 1 où recul minimum 40 m (Nord) / 50 m (Sud) — formule, pas un nombre unique.",
+   "citation": "Dans les secteurs Uazp et Uazpc les constructions nouvelles peuvent être implantées à l’alignement des voies sauf en aval de la RN 1 ou le recul minimum est fixé à 40 m dans la partie Nord et à 50 m dans la partie Sud, l’axe du giratoire avec la RD 26 faisant la séparation entre ces deux zones de reculs.",
+   "article": "Ua3.1",
+   "page_pdf": 176,
+   "valeur_actuelle": {
+    "min_m": 0.0
+   }
+  },
+  {
+   "insee": "97416",
+   "zone": "Uazpc",
+   "chemin": "retraits.voie",
+   "note_lot2": "Recul conditionnel : alignement sauf en aval RN 1 où recul minimum 40 m (Nord) / 50 m (Sud) — formule, pas un nombre unique.",
+   "citation": "Dans les secteurs Uazp et Uazpc les constructions nouvelles peuvent être implantées à l’alignement des voies sauf en aval de la RN 1 ou le recul minimum est fixé à 40 m dans la partie Nord et à 50 m dans la partie Sud, l’axe du giratoire avec la RD 26 faisant la séparation entre ces deux zones de reculs.",
+   "article": "Ua3.1",
+   "page_pdf": 176,
+   "valeur_actuelle": {
+    "min_m": 0.0
+   }
+  }
+ ]
+}

@@ -1,0 +1,52 @@
+{
+ "insee": "97423",
+ "commune": "Les Trois-Bassins",
+ "pdf": "97423_reglement_20220602.pdf",
+ "n": 4,
+ "rules": [
+  {
+   "zone": "Ua",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 14.0
+   },
+   "article": "Ua 10.2",
+   "page_pdf": 18,
+   "citation": "La hauteur maximale des constructions est fixée à : 10 mètres à l’égout du toit ou au sommet de l’acrotère, 14 mètres au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ua",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 10.0
+   },
+   "article": "Ua 10.2",
+   "page_pdf": 18,
+   "citation": "La hauteur maximale des constructions est fixée à : 10 mètres à l’égout du toit ou au sommet de l’acrotère, 14 mètres au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ua",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "Ua 7.2-7.3",
+   "page_pdf": 15,
+   "citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ue",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 5.0
+   },
+   "article": "Ue 7.2-7.3",
+   "page_pdf": 57,
+   "citation": "En cas de retrait, la distance (D) comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au moins égale à D=H/2 (H étant la hauteur à l’égout du toit ou au sommet de l’acrotère), sans être inférieure à 4,00 mètres.",
+   "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)"
+  }
+ ]
+}

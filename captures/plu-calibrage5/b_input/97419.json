@@ -1,0 +1,283 @@
+{
+ "insee": "97419",
+ "commune": "Sainte-Rose",
+ "pdf": "97419_reglement_20190504.pdf",
+ "n": 25,
+ "rules": [
+  {
+   "zone": "Ua",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "UA 12",
+   "page_pdf": 17,
+   "citation": "Pour les constructions à destination d’habitation : - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.",
+   "raison": "valeur 2 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "Ub",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "UB 12",
+   "page_pdf": 26,
+   "citation": "Pour les constructions à destination d’habitation : - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.",
+   "raison": "valeur 2 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "Uc",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "UC 12",
+   "page_pdf": 35,
+   "citation": "Pour les constructions à destination d’habitation : - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.",
+   "raison": "valeur 2 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "Ud",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "UD 12",
+   "page_pdf": 43,
+   "citation": "Pour les constructions à destination d’habitation : - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.",
+   "raison": "valeur 2 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "Ue",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "UE 7",
+   "page_pdf": 49,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 5 mètres.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 12.0
+   },
+   "article": "UA 10",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 12 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 9.0
+   },
+   "article": "UA 10",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 9 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 70.0
+   },
+   "article": "UA 9",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 70 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "UA 6",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "UA 7",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "UA 12",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 2 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 25.0
+   },
+   "article": "UA 13",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 25 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 9.0
+   },
+   "article": "UC 10",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 9 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 6.0
+   },
+   "article": "UC 10",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 50.0
+   },
+   "article": "UC 9",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 50 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "UC 6",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "UC 7",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "UC 12",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 2 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 30.0
+   },
+   "article": "UC 13",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 30 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 14.0
+   },
+   "article": "UE 10",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 14 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 11.0
+   },
+   "article": "UE 10",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 11 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 70.0
+   },
+   "article": "UE 9",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 70 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "UE 6",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "UE 7",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 25.0
+   },
+   "article": "UE 13",
+   "page_pdf": 55,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "raison": "valeur 25 absente de la citation (harmonisation ≠ texte)"
+  }
+ ]
+}

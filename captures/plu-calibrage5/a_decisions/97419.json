@@ -1,0 +1,37 @@
+{
+ "insee": "97419",
+ "decisions": [
+  {
+   "zone": "Ue",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 5, "formule": "H/2, minimum 5 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 5 mètres",
+   "note": "UE 7.2 : recul H/2 avec plancher 5 m ; 5 dans la citation"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "1AUa renvoie a UA 7.2 (H/2, plancher 3 m) ; lu PDF p.13"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "1AUc renvoie a UC 7.2 (H/2, plancher 3 m) ; lu PDF p.31"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 5, "formule": "H/2, minimum 5 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 5 mètres",
+   "note": "1AUe renvoie a UE 7.2 (H/2, plancher 5 m) ; lu PDF p.49"
+  }
+ ]
+}

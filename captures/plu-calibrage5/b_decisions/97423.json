@@ -1,0 +1,36 @@
+{
+  "insee": "97423",
+  "decisions": [
+    {
+      "zone": "Ua",
+      "chemin": "hauteur.faitage",
+      "geste": "valider",
+      "valeur": { "m": 14.0 },
+      "preuve": "14 mètres au faîtage",
+      "note": "Citation Ua 10.2 soutient explicitement 14 m au faîtage pour la zone Ua."
+    },
+    {
+      "zone": "Ua",
+      "chemin": "hauteur.egout",
+      "geste": "valider",
+      "valeur": { "m": 10.0 },
+      "preuve": "10 mètres à l’égout du toit ou au sommet de l’acrotère",
+      "note": "Citation Ua 10.2 soutient explicitement 10 m à l'égout pour la zone Ua."
+    },
+    {
+      "zone": "Ua",
+      "chemin": "retraits.limites_separatives",
+      "geste": "valider",
+      "valeur": { "min_m": 3.0 },
+      "preuve": "doit être au minimum de 3 mètres",
+      "note": "Citation Ua 7.2-7.3 : retrait minimal de 3 m pour la zone Ua."
+    },
+    {
+      "zone": "Ue",
+      "chemin": "retraits.limites_separatives",
+      "geste": "formule",
+      "preuve": "D=H/2 (H étant la hauteur à l’égout du toit ou au sommet de l’acrotère), sans être inférieure à 4,00 mètres",
+      "note": "Règle Ue 7.2 = formule D=H/2 min 4 m, pas un nombre unique ; valeur 5 absente du texte. lu PDF p.57"
+    }
+  ]
+}

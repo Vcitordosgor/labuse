@@ -35,15 +35,16 @@ zones:
             à 3 mètres (voir illustrations explicatives dans les annexes du règlement).
           statut: valide
         limites_separatives:
-          min_m: 8.0
+          min_m: 3
           article: UA 7
           page_pdf: 15
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur 8 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -131,15 +132,16 @@ zones:
             à 3 mètres (voir illustrations explicatives dans les annexes du règlement).
           statut: valide
         limites_separatives:
-          min_m: 4.5
+          min_m: 3
           article: UA 7
           page_pdf: 15
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       pleine_terre:
         pct:
           pct: 35.0
@@ -224,15 +226,16 @@ zones:
           statut: propose
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
         limites_separatives:
-          min_m: 6.0
+          min_m: 3
           article: UA 7
           page_pdf: 15
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -242,13 +245,13 @@ zones:
           statut: valide
       pleine_terre:
         pct:
-          pct: null
+          pct: 25
           article: UA 13.1
           page_pdf: 22
           citation: Dans le secteur UAm, au minimum 25% de la superficie totale de l’unité foncière doit être
             traité en espace perméable planté en pleine terre comprenant au minimum trois strates, arborescente,
             arbustive et herbacée.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: 'Art. UA 2, 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées
@@ -289,19 +292,20 @@ zones:
     regles:
       hauteur:
         faitage:
-          m: null
+          m: 12
           article: UA 10.2
           page_pdf: 16
           citation: Dans le secteur UApsfr2, la hauteur maximale des constructions est fixée à 12 mètres.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         egout:
-          m: null
           article: UA 10.2
           page_pdf: 16
-          citation: Dans le secteur UApsfr2, la hauteur maximale des constructions est fixée à 12 mètres.
-          statut: propose
+          citation: A l’exception des secteurs UAa, UApsfr2, UAm et UAv, la hauteur maximale des constructions
+            est fixée à  16 mètres au faitage
+          statut: valide
           raison: valeur non numérique ('a_verifier')
+          absent: true
       retraits:
         voie:
           min_m: 3.0
@@ -312,15 +316,16 @@ zones:
             à 3 mètres (voir illustrations explicatives dans les annexes du règlement).
           statut: valide
         limites_separatives:
-          min_m: null
+          min_m: 3
           article: UA 7
           page_pdf: 15
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -397,16 +402,12 @@ zones:
           statut: propose
           raison: valeur non numérique ('a_verifier')
         egout:
-          m: null
           article: UA 10.2
           page_pdf: 17
-          citation: 'Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel
-            de la manière suivante : Ilot / Hauteur maximale autorisée [...] Ilots 1/3B3 15 mètres ; Ilot
-            2 12 mètres ; Ilot 3A 9 mètres ; Ilots 3B1/3B2 9 mètres ; Ilot 9 25 mètres ; Ilot 10A 19 mètres
-            ; Ilot 10B 16 mètres ; Ilots 10C/11D 10 mètres ; Ilot 11A 22 mètres ; Ilot 11B 10 mètres ; Ilot
-            11C 13 mètres.'
-          statut: propose
+          citation: Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel
+          statut: valide
           raison: valeur non numérique ('a_verifier')
+          absent: true
       retraits:
         voie:
           min_m: 3.0
@@ -437,13 +438,13 @@ zones:
           raison: stationnement non chiffrable par logement ('a_verifier')
       pleine_terre:
         pct:
-          pct: null
           article: UA 13.1
           page_pdf: 22
           citation: A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité
-            foncière...
-          statut: propose
+            foncière
+          statut: valide
           raison: valeur non numérique ('a_verifier')
+          absent: true
     silence: autorise
     silence_src: 'Art. UA 2, 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UA 1.2 » (secteur UAv de la zone UA, mêmes articles UA 1/UA 2, p. 10-11)'
@@ -497,15 +498,16 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 4.5
+          min_m: 3
           article: UB 7
           page_pdf: 30
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -595,15 +597,16 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 3.5
+          min_m: 3
           article: UB 7
           page_pdf: 30
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -680,15 +683,16 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 3.5
+          min_m: 3
           article: UB 7
           page_pdf: 30
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -764,15 +768,16 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 3.5
+          min_m: 3
           article: UB 7
           page_pdf: 30
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -848,15 +853,16 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 4.5
+          min_m: 3
           article: UB 7
           page_pdf: 30
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -936,15 +942,16 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 3.5
+          min_m: 3
           article: UB 7
           page_pdf: 30
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -1034,14 +1041,15 @@ zones:
             RN1, cette distance minimale est portée respectivement à 5 mètres et 25 mètres.
           statut: valide
         limites_separatives:
-          min_m: 6.0
+          min_m: 3
           article: UE 7
           page_pdf: 41
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       pleine_terre:
         pct:
           pct: null
@@ -1222,15 +1230,16 @@ zones:
             à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 6.0
+          min_m: 3
           article: UEm 7
           page_pdf: 50
           citation: Les constructions doivent être implantées en retrait des limites séparatives avec une
             distance comptée horizontalement de tout point de la façade au point le plus proche de la limite
             séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir
             être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: null
@@ -1313,14 +1322,15 @@ zones:
             la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 5.0
+          min_m: 3
           article: UT 7
           page_pdf: 60
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       pleine_terre:
         pct:
           pct: 30.0
@@ -1447,14 +1457,15 @@ zones:
             la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 5.0
+          min_m: 3
           article: UT 7
           page_pdf: 60
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       pleine_terre:
         pct:
           pct: 40.0
@@ -1681,15 +1692,12 @@ zones:
           statut: propose
           raison: valeur non numérique ('a_verifier')
         egout:
-          m: null
           article: UA 10.2
           page_pdf: 17
-          citation: 'Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel
-            de la manière suivante : Ilots 1/3B3 15 m ; Ilot 2 12 m ; Ilot 3A 9 m ; Ilots 3B1/3B2 9 m ; Ilot
-            9 25 m ; Ilot 10A 19 m ; Ilot 10B 16 m ; Ilots 10C/11D 10 m ; Ilot 11A 22 m ; Ilot 11B 10 m ;
-            Ilot 11C 13 m.'
-          statut: propose
+          citation: Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel
+          statut: valide
           raison: valeur non numérique ('a_verifier')
+          absent: true
       retraits:
         voie:
           min_m: 3.0
@@ -1719,13 +1727,13 @@ zones:
           raison: stationnement non chiffrable par logement ('a_verifier')
       pleine_terre:
         pct:
-          pct: null
           article: UA 13.1
           page_pdf: 22
           citation: A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité
-            foncière...
-          statut: propose
+            foncière
+          statut: valide
           raison: valeur non numérique ('a_verifier')
+          absent: true
     renvoi: UAv
     renvoi_src: 'DG art.3 2°, p.7 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
       au règlement des zones urbaines correspondantes » — indice Av → secteur UAv de la zone UA (« le secteur UAv,
@@ -1757,15 +1765,16 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 4.5
+          min_m: 3
           article: UB 7
           page_pdf: 30
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -1813,15 +1822,16 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 3.5
+          min_m: 3
           article: UB 7
           page_pdf: 30
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -1868,15 +1878,16 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 4.5
+          min_m: 3
           article: UB 7
           page_pdf: 30
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -1914,14 +1925,15 @@ zones:
             la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 5.0
+          min_m: 3
           article: UT 7
           page_pdf: 60
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       pleine_terre:
         pct:
           pct: 30.0
@@ -1960,15 +1972,16 @@ zones:
             à 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 6.0
+          min_m: 3
           article: UEm 7
           page_pdf: 50
           citation: Les constructions doivent être implantées en retrait des limites séparatives avec une
             distance comptée horizontalement de tout point de la façade au point le plus proche de la limite
             séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir
             être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: null

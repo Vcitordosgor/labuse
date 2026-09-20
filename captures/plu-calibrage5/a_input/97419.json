@@ -1,0 +1,56 @@
+{
+ "insee": "97419",
+ "commune": "Sainte-Rose",
+ "pdf": "97419_reglement_20190504.pdf",
+ "n": 4,
+ "rules": [
+  {
+   "insee": "97419",
+   "zone": "Ue",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "Recul = H/2 avec plancher 5 m : formule, pas un nombre unique ; la valeur 3 est absente. lu PDF p.49",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 5 mètres.",
+   "article": "UE 7",
+   "page_pdf": 49,
+   "valeur_actuelle": {
+    "min_m": 3.0
+   }
+  },
+  {
+   "insee": "97419",
+   "zone": "1AUa",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "1AUa -> UA 7.2 : recul = H/2 avec plancher 3 m, formule et non nombre unique. lu PDF p.14 (UA 7) et p.55 (renvoi)",
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "article": "UA 7",
+   "page_pdf": 55,
+   "valeur_actuelle": {
+    "min_m": 3.0
+   }
+  },
+  {
+   "insee": "97419",
+   "zone": "1AUc",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "1AUc -> UC 7.2 : recul = H/2 avec plancher 3 m, formule. lu PDF p.30 (UC 7) et p.55 (renvoi)",
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "article": "UC 7",
+   "page_pdf": 55,
+   "valeur_actuelle": {
+    "min_m": 3.0
+   }
+  },
+  {
+   "insee": "97419",
+   "zone": "1AUe",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "1AUe -> UE 7.2 : recul = H/2 avec plancher 5 m, formule (le 3 stocké n'est pas fondé). lu PDF p.49 (UE 7) et p.55 (renvoi)",
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+   "article": "UE 7",
+   "page_pdf": 55,
+   "valeur_actuelle": {
+    "min_m": 3.0
+   }
+  }
+ ]
+}

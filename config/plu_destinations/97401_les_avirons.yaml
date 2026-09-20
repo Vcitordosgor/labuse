@@ -20,7 +20,7 @@ zones:
           page_pdf: 13
           citation: 'en zones Ua et Ub : - 12 mètres à l''égout du toit ou au sommet de l''acrotère ; - 15
             mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 12.0
@@ -28,7 +28,7 @@ zones:
           page_pdf: 13
           citation: 'en zones Ua et Ub : - 12 mètres à l''égout du toit ou au sommet de l''acrotère ; - 15
             mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -71,7 +71,7 @@ zones:
           citation: 'Le terrain doit être traité en espace libre et perméable comprenant des plantations et
             devant recevoir un traitement paysager sur au moins : En zone Ua : 15% de la superficie totale
             de l''unité foncière'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
     silence: autorise
     silence_src: 'Art. U 2.2, p. 8 : « A l''exception du secteur Ub5, sont admises toutes les occupations et utilisations
@@ -952,7 +952,7 @@ zones:
           article: U 13.1
           page_pdf: 18
           citation: 'En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l''unité foncière'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
     renvoi: Uc
     renvoi_src: 'Dispositions générales, Article 3, p. 4 : règle de zone sauf disposition particulière — les dispositions
@@ -967,7 +967,7 @@ zones:
           page_pdf: 12
           citation: 'en zone Ud et secteur Ub3 : - 7 mètres à l''égout du toit ou au sommet de l''acrotère
             ; - 10 mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 7.0
@@ -975,7 +975,7 @@ zones:
           page_pdf: 12
           citation: 'en zone Ud et secteur Ub3 : - 7 mètres à l''égout du toit ou au sommet de l''acrotère
             ; - 10 mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -1015,7 +1015,7 @@ zones:
           article: U 13.1
           page_pdf: 18
           citation: 'En zone Ud : 40% de la superficie totale de l''unité foncière'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
     silence: autorise
     silence_src: 'Art. U 2.2, p. 8 : « A l''exception du secteur Ub5, sont admises toutes les occupations et utilisations
@@ -1146,7 +1146,7 @@ zones:
           page_pdf: 12
           citation: 'en zone Ud et secteur Ub3 : - 7 mètres à l''égout du toit ou au sommet de l''acrotère
             ; - 10 mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 7.0
@@ -1154,7 +1154,7 @@ zones:
           page_pdf: 12
           citation: 'en zone Ud et secteur Ub3 : - 7 mètres à l''égout du toit ou au sommet de l''acrotère
             ; - 10 mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -1194,7 +1194,7 @@ zones:
           article: U 13.1
           page_pdf: 18
           citation: 'En zone Ud : 40% de la superficie totale de l''unité foncière'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
     silence: interdit
     silence_src: 'Art. U 2.2, p. 8 : « En secteur Ud1, les constructions et installations peuvent être autorisées
@@ -1237,7 +1237,7 @@ zones:
           page_pdf: 12
           citation: 'en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l''égout du toit ou au sommet de l''acrotère
             ; - 9 mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 6.0
@@ -1245,7 +1245,7 @@ zones:
           page_pdf: 12
           citation: 'en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l''égout du toit ou au sommet de l''acrotère
             ; - 9 mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -1277,7 +1277,7 @@ zones:
           article: U 13.1
           page_pdf: 18
           citation: 'En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l''unité foncière'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
     silence: interdit
     silence_src: 'Art. U 2.2, p. 8 : « En secteur Ud2, seules les constructions destinées à la pratique du tourisme,
@@ -1323,7 +1323,7 @@ zones:
           page_pdf: 12
           citation: 'en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l''égout du toit ou au sommet de l''acrotère
             ; - 9 mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 6.0
@@ -1331,7 +1331,7 @@ zones:
           page_pdf: 12
           citation: 'en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l''égout du toit ou au sommet de l''acrotère
             ; - 9 mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -1372,7 +1372,7 @@ zones:
           article: U 13.1
           page_pdf: 18
           citation: 'En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l''unité foncière'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
     renvoi: Ud
     renvoi_src: 'Dispositions générales, Article 3, p. 4 : règle de zone sauf disposition particulière — les dispositions
@@ -1606,7 +1606,7 @@ zones:
           page_pdf: 13
           citation: 'en zones Ua et Ub : - 12 mètres à l''égout du toit ou au sommet de l''acrotère ; - 15
             mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 12.0
@@ -1614,7 +1614,7 @@ zones:
           page_pdf: 13
           citation: 'en zones Ua et Ub : - 12 mètres à l''égout du toit ou au sommet de l''acrotère ; - 15
             mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -1654,7 +1654,7 @@ zones:
           article: U 13.1
           page_pdf: 18
           citation: 'En zone Ua : 15% de la superficie totale de l''unité foncière'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
     renvoi: Ua
     renvoi_src: 'Chapeau AUindicée, p. 26 : « Pour appliquer le présent règlement, il convient de se reporter en
@@ -1674,7 +1674,7 @@ zones:
           page_pdf: 12
           citation: 'en zone Uc et secteur Ub2 : - 8 mètres à l''égout du toit ou au sommet de l''acrotère
             ; - 11 mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 8.0
@@ -1682,7 +1682,7 @@ zones:
           page_pdf: 12
           citation: 'en zone Uc et secteur Ub2 : - 8 mètres à l''égout du toit ou au sommet de l''acrotère
             ; - 11 mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -1740,7 +1740,7 @@ zones:
           page_pdf: 12
           citation: 'en zone Ud et secteur Ub3 : - 7 mètres à l''égout du toit ou au sommet de l''acrotère
             ; - 10 mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 7.0
@@ -1748,7 +1748,7 @@ zones:
           page_pdf: 12
           citation: 'en zone Ud et secteur Ub3 : - 7 mètres à l''égout du toit ou au sommet de l''acrotère
             ; - 10 mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -1788,7 +1788,7 @@ zones:
           article: U 13.1
           page_pdf: 18
           citation: 'En zone Ud : 40% de la superficie totale de l''unité foncière'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
     renvoi: Ud
     renvoi_src: 'Chapeau AUindicée, p. 26 : « se reporter en fonction de l''indice de la zone AU considérée au règlement

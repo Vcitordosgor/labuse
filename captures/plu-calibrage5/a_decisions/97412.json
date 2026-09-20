@@ -1,0 +1,109 @@
+{
+ "insee": "97412",
+ "decisions": [
+  {
+   "zone": "U2",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres",
+   "note": "recul relatif hauteur H/2, plancher chiffré 3 m dans la citation"
+  },
+  {
+   "zone": "U2a",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres",
+   "note": "art. U2 7.2 partagé, plancher 3 m cité"
+  },
+  {
+   "zone": "U3",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres",
+   "note": "recul H/2, plancher 3 m cité"
+  },
+  {
+   "zone": "U3a",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres",
+   "note": "recul H/2, plancher 3 m cité (art. U3 7.2)"
+  },
+  {
+   "zone": "U3ar",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres",
+   "note": "recul H/2, plancher 3 m cité (art. U3 7.2)"
+  },
+  {
+   "zone": "U4",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 1.9, "formule": "H/2, minimum 1,9 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 1,9 mètre",
+   "note": "recul H/2, plancher chiffré 1,9 m dans la citation"
+  },
+  {
+   "zone": "U5",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres",
+   "note": "recul H/2, plancher 3 m cité"
+  },
+  {
+   "zone": "U5cv",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m (ou sur limites)" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres",
+   "note": "implantation possible sur deux limites OU en retrait H/2 min 3 m cité"
+  },
+  {
+   "zone": "U5ma",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres",
+   "note": "recul H/2, plancher 3 m cité (art. U5 7.2)"
+  },
+  {
+   "zone": "U6",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres",
+   "note": "recul H/2, plancher 3 m cité"
+  },
+  {
+   "zone": "U6c",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres",
+   "note": "recul H/2, plancher 3 m cité (art. U6 7.2)"
+  },
+  {
+   "zone": "1AUto",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres",
+   "note": "recul H/2, plancher 3 m cité (art. AUindicée 7)"
+  },
+  {
+   "zone": "1AUtok",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 3, "formule": "H/2, minimum 3 m" },
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres",
+   "note": "recul H/2, plancher 3 m cité (art. AUindicée 7)"
+  }
+ ]
+}

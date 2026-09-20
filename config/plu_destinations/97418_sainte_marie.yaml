@@ -44,14 +44,15 @@ zones:
             par rapport à l’alignement.
           statut: valide
         limites_separatives:
-          min_m: 7.5
+          min_m: 3
           article: Art. U5.2 « résidentielles »
           page_pdf: 20
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 7.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 1.5
@@ -853,23 +854,24 @@ zones:
             • en zones UEa et UR : 5 mètres'
           statut: valide
         limites_separatives:
-          min_m: 12.0
+          min_m: 4
           article: Art. U5.2 « activités »
           page_pdf: 33
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 12 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 4 m
       pleine_terre:
         pct:
-          pct: null
+          pct: 15
           article: Art. U12 « activités »
           page_pdf: 38
           citation: 'La parcelle doit être perméable sur au moins :
 
             • en zones UEa, UEm et UEp : 15% de la surface'
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
     silence: interdit
     silence_src: 'Art. U1 « activités » 1.2, p. 29 : « A l''exception de ceux visés à l''article U2 « activités
@@ -1012,23 +1014,24 @@ zones:
           citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
           statut: valide
         limites_separatives:
-          min_m: 7.0
+          min_m: 4
           article: Art. U5.2 « activités »
           page_pdf: 33
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 7 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 4 m
       pleine_terre:
         pct:
-          pct: null
+          pct: 25
           article: Art. U12 « activités »
           page_pdf: 38
           citation: 'La parcelle doit être perméable sur au moins :
 
             • en zone UEc : 25% de la surface'
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
     silence: interdit
     silence_src: 'Art. U1 « activités » 1.2, p. 29 : « A l''exception de ceux visés à l''article U2 « activités
@@ -1134,23 +1137,24 @@ zones:
           citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
           statut: valide
         limites_separatives:
-          min_m: 8.0
+          min_m: 4
           article: Art. U5.2 « activités »
           page_pdf: 33
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 8 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 4 m
       pleine_terre:
         pct:
-          pct: null
+          pct: 15
           article: Art. U12 « activités »
           page_pdf: 38
           citation: 'La parcelle doit être perméable sur au moins :
 
             • en zones UEa, UEm et UEp : 15% de la surface'
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
     silence: interdit
     silence_src: 'Art. U1 « activités » 1.2, p. 29 : « A l''exception de ceux visés à l''article U2 « activités
@@ -1272,23 +1276,24 @@ zones:
           citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
           statut: valide
         limites_separatives:
-          min_m: 8.0
+          min_m: 4
           article: Art. U5.2 « activités »
           page_pdf: 33
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 8 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 4 m
       pleine_terre:
         pct:
-          pct: null
+          pct: 15
           article: Art. U12 « activités »
           page_pdf: 38
           citation: 'La parcelle doit être perméable sur au moins :
 
             • en zones UEa, UEm et UEp : 15% de la surface'
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
     silence: interdit
     silence_src: 'Art. U1 « activités » 1.2, p. 29 : « A l''exception de ceux visés à l''article U2 « activités
@@ -1414,23 +1419,24 @@ zones:
           citation: 'en zones UEa et UR : 5 mètres'
           statut: valide
         limites_separatives:
-          min_m: 12.0
+          min_m: 4
           article: Art. U5.2 « activités »
           page_pdf: 33
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 12 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 4 m
       pleine_terre:
         pct:
-          pct: null
+          pct: 20
           article: Art. U12 « activités »
           page_pdf: 38
           citation: 'La parcelle doit être perméable sur au moins :
 
             • en zone UR : 20 % de de la surface'
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
     silence: interdit
     silence_src: 'Art. U1 « activités » 1.2, p. 29 : « A l''exception de ceux visés à l''article U2 « activités
@@ -1572,23 +1578,24 @@ zones:
           citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
           statut: valide
         limites_separatives:
-          min_m: 5.5
+          min_m: 4
           article: Art. U5.2 « activités »
           page_pdf: 33
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 5.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 4 m
       pleine_terre:
         pct:
-          pct: null
+          pct: 55
           article: Art. U12 « activités »
           page_pdf: 38
           citation: 'La parcelle doit être perméable sur au moins :
 
             • en zone UT : 55% de la surface'
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
     silence: interdit
     silence_src: 'Art. U1 « activités » 1.2, p. 29 (interdiction générale) + Art. U2 « activités »-10, p. 30 : «
@@ -1626,14 +1633,15 @@ zones:
           citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
           statut: valide
         limites_separatives:
-          min_m: 5.5
+          min_m: 4
           article: Art. U5.2 « activités »
           page_pdf: 33
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 5.5 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 4 m
       pleine_terre:
         pct:
           pct: null

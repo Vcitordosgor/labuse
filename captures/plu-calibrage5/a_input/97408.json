@@ -1,0 +1,246 @@
+{
+ "insee": "97408",
+ "commune": "La Possession",
+ "pdf": "97408_reglement_20251217.pdf",
+ "n": 20,
+ "rules": [
+  {
+   "insee": "97408",
+   "zone": "UA",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UA 7",
+   "page_pdf": 15,
+   "valeur_actuelle": {
+    "min_m": 8.0
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "UAa",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UA 7",
+   "page_pdf": 15,
+   "valeur_actuelle": {
+    "min_m": 4.5
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "UAm",
+   "chemin": "retraits.voie",
+   "note_lot2": "recul = formule (hauteur du bâtiment / 10 m le long de la RN1E), pas un nombre unique",
+   "citation": "Dans le secteur UAm, les constructions peuvent être implantées à l’alignement ou en recul de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à la hauteur du bâtiment. Pour les constructions implantées le long de la RN1E (rue Mahatma Gandhi), la distance de recul par rapport à la voie doit être au moins égale à 10 mètres.",
+   "article": "UA 6.2",
+   "page_pdf": 14,
+   "valeur_actuelle": {
+    "min_m": 3.0
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "UAm",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UA 7",
+   "page_pdf": 15,
+   "valeur_actuelle": {
+    "min_m": 6.0
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "UB",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UB 7",
+   "page_pdf": 30,
+   "valeur_actuelle": {
+    "min_m": 4.5
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "UBa",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UB 7",
+   "page_pdf": 30,
+   "valeur_actuelle": {
+    "min_m": 3.5
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "UBb",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UB 7",
+   "page_pdf": 30,
+   "valeur_actuelle": {
+    "min_m": 3.5
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "UBc",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UB 7",
+   "page_pdf": 30,
+   "valeur_actuelle": {
+    "min_m": 3.5
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "UBpsfr2",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UB 7",
+   "page_pdf": 30,
+   "valeur_actuelle": {
+    "min_m": 4.5
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "UBpszc",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UB 7",
+   "page_pdf": 30,
+   "valeur_actuelle": {
+    "min_m": 3.5
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "UE",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UE 7",
+   "page_pdf": 41,
+   "valeur_actuelle": {
+    "min_m": 6.0
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "UEm",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "Les constructions doivent être implantées en retrait des limites séparatives avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UEm 7",
+   "page_pdf": 50,
+   "valeur_actuelle": {
+    "min_m": 6.0
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "UT",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UT 7",
+   "page_pdf": 60,
+   "valeur_actuelle": {
+    "min_m": 5.0
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "UTfr2",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UT 7",
+   "page_pdf": 60,
+   "valeur_actuelle": {
+    "min_m": 5.0
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "AUB",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UB 7",
+   "page_pdf": 30,
+   "valeur_actuelle": {
+    "min_m": 4.5
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "AUBb",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UB 7",
+   "page_pdf": 30,
+   "valeur_actuelle": {
+    "min_m": 3.5
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "AUBpsfr2",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UB 7",
+   "page_pdf": 30,
+   "valeur_actuelle": {
+    "min_m": 4.5
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "AUT",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UT 7",
+   "page_pdf": 60,
+   "valeur_actuelle": {
+    "min_m": 5.0
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "AUEm",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": "recul = formule H/2 min 3 m, pas un nombre unique",
+   "citation": "Les constructions doivent être implantées en retrait des limites séparatives avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UEm 7",
+   "page_pdf": 50,
+   "valeur_actuelle": {
+    "min_m": 6.0
+   }
+  },
+  {
+   "insee": "97408",
+   "zone": "UApsfr2",
+   "chemin": "retraits.limites_separatives",
+   "note_lot2": null,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "article": "UA 7",
+   "page_pdf": 15,
+   "valeur_actuelle": {}
+  }
+ ]
+}

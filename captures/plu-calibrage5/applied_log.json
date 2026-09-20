@@ -1,0 +1,412 @@
+[
+ {
+  "insee": "97403",
+  "zone": "AUb",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 13.0
+  },
+  "preuve": "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : \n- 9 mètres à l’égout du toit ou au sommet de l’acrotère ; \n- 13 mètres au faitage."
+ },
+ {
+  "insee": "97403",
+  "zone": "AUb",
+  "chemin": "hauteur.egout",
+  "geste": "valider",
+  "valeur": {
+   "m": 9.0
+  },
+  "preuve": "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : \n- 9 mètres à l’égout du toit ou au sommet de l’acrotère ; \n- 13 mètres au faitage."
+ },
+ {
+  "insee": "97403",
+  "zone": "AUb",
+  "chemin": "retraits.voie",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 4.0
+  },
+  "preuve": "de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres."
+ },
+ {
+  "insee": "97403",
+  "zone": "AUb",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3.0
+  },
+  "preuve": "le plus proche de la limite séparative, doit au moins être égale à 3 mètres."
+ },
+ {
+  "insee": "97413",
+  "zone": "UA",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2
+  },
+  "preuve": "HABITAT INDIVIDUEL 2 places par logement"
+ },
+ {
+  "insee": "97413",
+  "zone": "UB",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2
+  },
+  "preuve": "HABITAT INDIVIDUEL 2 places par logement"
+ },
+ {
+  "insee": "97413",
+  "zone": "UC",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2
+  },
+  "preuve": "HABITAT INDIVIDUEL 2 places par logement"
+ },
+ {
+  "insee": "97413",
+  "zone": "UD",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2
+  },
+  "preuve": "HABITAT INDIVIDUEL 2 places par logement"
+ },
+ {
+  "insee": "97413",
+  "zone": "UE",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2
+  },
+  "preuve": "HABITAT INDIVIDUEL 2 places par logement"
+ },
+ {
+  "insee": "97413",
+  "zone": "UF",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2
+  },
+  "preuve": "HABITAT INDIVIDUEL 2 places par logement"
+ },
+ {
+  "insee": "97413",
+  "zone": "UP",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2
+  },
+  "preuve": "HABITAT INDIVIDUEL 2 places par logement"
+ },
+ {
+  "insee": "97414",
+  "zone": "UA1",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 19.0
+  },
+  "preuve": "19 mètres au faîtage"
+ },
+ {
+  "insee": "97414",
+  "zone": "UD1",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 10.0
+  },
+  "preuve": "10 mètres au faîtage."
+ },
+ {
+  "insee": "97414",
+  "zone": "UD1",
+  "chemin": "hauteur.egout",
+  "geste": "valider",
+  "valeur": {
+   "m": 6.0
+  },
+  "preuve": "6 mètres à l’égout du toit ou au sommet de l’acrotère"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUa",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 19.0
+  },
+  "preuve": "19 mètres au faîtage"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUa",
+  "chemin": "hauteur.egout",
+  "geste": "valider",
+  "valeur": {
+   "m": 15.0
+  },
+  "preuve": "15 mètres à l’égout du toit ou au sommet de l’acrotère"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUa",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2.0
+  },
+  "preuve": "2 places de stationnement par logement"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 11.0
+  },
+  "preuve": "11 mètres au faîtage"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc",
+  "chemin": "hauteur.egout",
+  "geste": "valider",
+  "valeur": {
+   "m": 7.0
+  },
+  "preuve": "7 mètres à l’égout du toit ou au sommet de l’acrotère"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3.0
+  },
+  "preuve": "au moins égale 3 mètres"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2.0
+  },
+  "preuve": "2 places de stationnement par logement"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc1",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 13.0
+  },
+  "preuve": "13 mètres au faîtage"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc1",
+  "chemin": "emprise_sol.ces",
+  "geste": "valider",
+  "valeur": {
+   "pct": 60.0
+  },
+  "preuve": "ne doit pas excéder 60%"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc1",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2.0
+  },
+  "preuve": "2 places de stationnement par logement"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc1",
+  "chemin": "pleine_terre.pct",
+  "geste": "valider",
+  "valeur": {
+   "pct": 25.0
+  },
+  "preuve": "Au minimum 25% de la superficie totale"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc2",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 10.0
+  },
+  "preuve": "10 mètres au faîtage."
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc2",
+  "chemin": "emprise_sol.ces",
+  "geste": "valider",
+  "valeur": {
+   "pct": 50.0
+  },
+  "preuve": "seuil est limité à 50%"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc2",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3.0
+  },
+  "preuve": "au moins égale 3 mètres"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc2",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2.0
+  },
+  "preuve": "2 places de stationnement par logement"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc2",
+  "chemin": "pleine_terre.pct",
+  "geste": "valider",
+  "valeur": {
+   "pct": 25.0
+  },
+  "preuve": "Au minimum 25% de la superficie totale"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 10.0
+  },
+  "preuve": "10 mètres au faîtage."
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd",
+  "chemin": "hauteur.egout",
+  "geste": "valider",
+  "valeur": {
+   "m": 6.0
+  },
+  "preuve": "6 mètres à l’égout du toit ou au sommet de l’acrotère"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2.0
+  },
+  "preuve": "2 places de stationnement par logement"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd1",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 10.0
+  },
+  "preuve": "10 mètres au faîtage."
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd1",
+  "chemin": "hauteur.egout",
+  "geste": "valider",
+  "valeur": {
+   "m": 6.0
+  },
+  "preuve": "6 mètres à l’égout du toit ou au sommet de l’acrotère"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd1",
+  "chemin": "emprise_sol.ces",
+  "geste": "valider",
+  "valeur": {
+   "pct": 40.0
+  },
+  "preuve": "seuil est limité à 40%"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd1",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3.0
+  },
+  "preuve": "au moins égale 3 mètres"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd1",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2.0
+  },
+  "preuve": "2 places de stationnement par logement"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd1",
+  "chemin": "pleine_terre.pct",
+  "geste": "valider",
+  "valeur": {
+   "pct": 35.0
+  },
+  "preuve": "seuil est porté à 35% minimum"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUe",
+  "chemin": "emprise_sol.ces",
+  "geste": "valider",
+  "valeur": {
+   "pct": 70.0
+  },
+  "preuve": "ne doit pas excéder 70% de la superficie"
+ },
+ {
+  "insee": "97423",
+  "zone": "1AUt",
+  "chemin": "pleine_terre.pct",
+  "geste": "valider",
+  "valeur": {
+   "pct": 30.0
+  },
+  "preuve": "Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace vert et perméable"
+ }
+]

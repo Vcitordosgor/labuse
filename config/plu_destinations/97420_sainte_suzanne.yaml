@@ -547,21 +547,23 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 6.0
+          min_m: 5
           article: UE4.2
           page_pdf: 22
           citation: Les constructions doivent être implantées en recul de la voie, avec une distance ... au
             moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 5 m
         limites_separatives:
-          min_m: 6.0
+          min_m: 4
           article: UE5.2
           page_pdf: 22
           citation: En cas de retrait de la construction, la distance ... au moins égale à la moitié de la
             hauteur de la façade concernée, avec un minimum de 4 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 4 m
       pleine_terre:
         pct:
           pct: 15.0
@@ -897,21 +899,23 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 6.0
+          min_m: 5
           article: UE4.2
           page_pdf: 22
           citation: au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 5 m
         limites_separatives:
-          min_m: 6.0
+          min_m: 4
           article: UE5.2
           page_pdf: 22
           citation: au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 4
             mètres.
-          statut: propose
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 4 m
       pleine_terre:
         pct:
           pct: 15.0

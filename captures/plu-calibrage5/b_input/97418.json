@@ -1,0 +1,357 @@
+{
+ "insee": "97418",
+ "commune": "Sainte-Marie",
+ "pdf": "97418_reglement_20251126.pdf",
+ "n": 33,
+ "rules": [
+  {
+   "zone": "UA",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 7.5
+   },
+   "article": "Art. U5.2 « résidentielles »",
+   "page_pdf": 20,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "raison": "valeur 7.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UEa",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 12.0
+   },
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 33,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+   "raison": "valeur 12 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UEa",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "Art. U12 « activités »",
+   "page_pdf": 38,
+   "citation": "La parcelle doit être perméable sur au moins :\n• en zones UEa, UEm et UEp : 15% de la surface",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "UEc",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 7.0
+   },
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 33,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+   "raison": "valeur 7 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UEc",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "Art. U12 « activités »",
+   "page_pdf": 38,
+   "citation": "La parcelle doit être perméable sur au moins :\n• en zone UEc : 25% de la surface",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "UEm",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 8.0
+   },
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 33,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+   "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UEm",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "Art. U12 « activités »",
+   "page_pdf": 38,
+   "citation": "La parcelle doit être perméable sur au moins :\n• en zones UEa, UEm et UEp : 15% de la surface",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "UEp",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 8.0
+   },
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 33,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+   "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UEp",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "Art. U12 « activités »",
+   "page_pdf": 38,
+   "citation": "La parcelle doit être perméable sur au moins :\n• en zones UEa, UEm et UEp : 15% de la surface",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "UR",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 12.0
+   },
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 33,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+   "raison": "valeur 12 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UR",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "Art. U12 « activités »",
+   "page_pdf": 38,
+   "citation": "La parcelle doit être perméable sur au moins :\n• en zone UR : 20 % de de la surface",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "UT",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 5.5
+   },
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 33,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+   "raison": "valeur 5.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UT",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "Art. U12 « activités »",
+   "page_pdf": 38,
+   "citation": "La parcelle doit être perméable sur au moins :\n• en zone UT : 55% de la surface",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "UTp",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 5.5
+   },
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 33,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+   "raison": "valeur 5.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UTp",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "Art. U12 « activités »",
+   "page_pdf": 38,
+   "citation": "INTROUVABLE",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 15.0
+   },
+   "article": "Art. U8.2 « résidentielles »",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 15 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 12.0
+   },
+   "article": "Art. U8.2 « résidentielles »",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 12 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 70.0
+   },
+   "article": "U7.2",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 70 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "U4.2",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "U5.2",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 1.5
+   },
+   "article": "U13.2",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 1.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 25.0
+   },
+   "article": "U12",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 25 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 13.0
+   },
+   "article": "U8.2",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 13 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 10.0
+   },
+   "article": "U8.2",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 10 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 60.0
+   },
+   "article": "U7.2",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 60 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "U4.2",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "U5.2",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 1.5
+   },
+   "article": "U13.2",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 1.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 30.0
+   },
+   "article": "U12",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 30 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUep",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 16.0
+   },
+   "article": "Art. U8.2 « activités »",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 16 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUep",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 75.0
+   },
+   "article": "Art. U7.2 « activités »",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 75 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUep",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "Art. U4.2 « activités »",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUep",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 8.0
+   },
+   "article": "Art. U5.2 « activités »",
+   "page_pdf": 41,
+   "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+   "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)"
+  }
+ ]
+}

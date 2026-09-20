@@ -780,7 +780,7 @@ zones:
           citation: 'Le pourcentage maximale de l''emprise au sol cumulée de l''ensemble des constructions
             est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en
             zone AUt'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       retraits:
         voie:
@@ -903,7 +903,7 @@ zones:
           citation: 'Le pourcentage maximale de l''emprise au sol cumulée de l''ensemble des constructions
             est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en
             zone AUt'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       retraits:
         voie:
@@ -1013,7 +1013,7 @@ zones:
           citation: 'Le pourcentage maximale de l''emprise au sol cumulée de l''ensemble des constructions
             est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en
             zone AUt'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       retraits:
         voie:
@@ -1217,7 +1217,7 @@ zones:
           citation: 'Le pourcentage maximale de l''emprise au sol cumulée de l''ensemble des constructions
             est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en
             zone AUt'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       retraits:
         voie:

@@ -112,12 +112,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 3
           article: '6'
           page_pdf: 19
           citation: 'en zone U1b — Cas général : Les constructions devront être implantées en retrait de 3
             m minimum de la voie ou de l''emprise publique.'
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
           min_m: 3.0
@@ -160,12 +160,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 3
           article: '6'
           page_pdf: 19
           citation: 'en zone U1c — Cas général : Les constructions peuvent être implantées à l''alignement
             ou en retrait de 3 m minimum de la voie ou de l''emprise publique.'
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
           min_m: 3.0
@@ -208,12 +208,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 3
           article: '6'
           page_pdf: 19
           citation: en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum
             de l'emprise publique.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
           min_m: 3.0
@@ -230,12 +230,12 @@ zones:
           statut: valide
       pleine_terre:
         pct:
-          pct: null
           article: '13.1'
           page_pdf: 35
           citation: en zone U1d — Il n'est pas fixé de règle.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
+          absent: true
     renvoi: U1a
     renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; articles 1 et 2 (pp.
       14-15) communs à toutes les sous-zones.
@@ -256,12 +256,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 3
           article: '6'
           page_pdf: 19
           citation: en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum
             de l'emprise publique.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
           min_m: 3.0
@@ -304,12 +304,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 3
           article: '6'
           page_pdf: 19
           citation: en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum
             de l'emprise publique.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
           min_m: 3.0
@@ -377,12 +377,12 @@ zones:
           raison: 'stationnement non chiffrable par logement (''exempté : aucune place imposée'')'
       pleine_terre:
         pct:
-          pct: null
           article: '13'
           page_pdf: 35
           citation: en zone U1pru — Il n'est pas fixé de règle.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
+          absent: true
     renvoi: U1a
     renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; articles 1 et 2 (pp.
       14-15) communs à toutes les sous-zones.
@@ -403,12 +403,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 3
           article: '6'
           page_pdf: 19
           citation: en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum
             de l'emprise publique.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
           min_m: 3.0
@@ -446,12 +446,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 6
           article: '6'
           page_pdf: 41
           citation: Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise
             publique.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
           min_m: 5.0
@@ -470,12 +470,12 @@ zones:
           raison: stationnement non chiffrable par logement ('a_verifier')
       pleine_terre:
         pct:
-          pct: null
+          pct: 20
           article: '13'
           page_pdf: 51
           citation: Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du
             terrain d’assiette du projet.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: Art. 1, § 1.2 "Sont interdits — en zones U1e" = liste fermée de 4 occupations (agricole, habitation,
@@ -570,12 +570,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 6
           article: '6'
           page_pdf: 41
           citation: Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise
             publique.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
           min_m: 5.0
@@ -594,12 +594,12 @@ zones:
           raison: stationnement non chiffrable par logement ('a_verifier')
       pleine_terre:
         pct:
-          pct: null
+          pct: 20
           article: '13'
           page_pdf: 51
           citation: Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du
             terrain d’assiette du projet.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: Art. 1, § 1.2 "Sont interdits — en zone U1l" = liste fermée de 7 postes (agricole, habitation sauf
@@ -894,12 +894,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 4
           article: '6'
           page_pdf: 70
           citation: Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise
             publique.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
           min_m: 3.0
@@ -966,19 +966,19 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 4
           article: '6'
           page_pdf: 70
           citation: Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise
             publique.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
-          min_m: 3.0
+          min_m: 4
           article: '7.2'
           page_pdf: 72
           citation: En cas de retrait, un recul de 4 mètres minimum est obligatoire.
-          statut: propose
+          statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
       stationnement:
         par_logement:
@@ -1040,19 +1040,19 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 4
           article: '6'
           page_pdf: 70
           citation: Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise
             publique.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
-          min_m: 3.0
+          min_m: 4
           article: '7.2'
           page_pdf: 72
           citation: Un recul de 4 mètres minimum est obligatoire.
-          statut: propose
+          statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
       stationnement:
         par_logement:
@@ -1120,11 +1120,11 @@ zones:
             publique.
           statut: valide
         limites_separatives:
-          min_m: 3.0
+          min_m: 4
           article: '7.2'
           page_pdf: 72
           citation: En cas de retrait, un recul de 4 mètres minimum est obligatoire.
-          statut: propose
+          statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
       stationnement:
         par_logement:
@@ -1190,12 +1190,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
-          article: null
+          min_m: 6
+          article: '6'
           page_pdf: 91
           citation: Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l’emprise
             publique.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
           min_m: 5.0
@@ -1214,12 +1214,12 @@ zones:
           raison: stationnement non chiffrable par logement ('a_verifier')
       pleine_terre:
         pct:
-          pct: null
+          pct: 20
           article: '13'
           page_pdf: 100
           citation: Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du
             terrain d’assiette du projet.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: U2e, Art. 1.2 « Sont interdits » = liste fermée d'interdictions (p. 88) ; ce qui n'y figure pas
@@ -1607,12 +1607,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
-          article: null
+          min_m: 6
+          article: '6'
           page_pdf: 148
           citation: Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise
             publique.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
           min_m: 5.0
@@ -1630,12 +1630,12 @@ zones:
           raison: stationnement non chiffrable par logement ('a_verifier')
       pleine_terre:
         pct:
-          pct: null
+          pct: 20
           article: '13'
           page_pdf: 156
           citation: Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du
             terrain d'assiette du projet.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: U3e, Art. 1.2 « Sont interdits » = liste fermée de 4 interdictions (agricole, habitation, camping/caravanes,
@@ -2225,20 +2225,20 @@ zones:
           statut: valide
       emprise_sol:
         ces:
-          pct: null
-          article: null
+          article: '9'
           page_pdf: 259
-          citation: INTROUVABLE
-          statut: propose
+          citation: "Article 9-  Emprise au sol des constructions \nIl n’est pas fixé de règle."
+          statut: valide
           raison: valeur non numérique ('a_verifier')
+          absent: true
       retraits:
         voie:
-          min_m: null
-          article: null
+          min_m: 6
+          article: '6'
           page_pdf: 257
           citation: Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise
             publique.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
           min_m: 5.0
@@ -2257,12 +2257,12 @@ zones:
           raison: stationnement non chiffrable par logement ('a_verifier')
       pleine_terre:
         pct:
-          pct: null
-          article: null
+          pct: 20
+          article: '13'
           page_pdf: 265
           citation: Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du
             terrain d'assiette du projet.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: 'Zone AU5e, Art. 1.2, p. 254 : liste fermée d''interdictions (« Sont interdits » — 4 postes : agricole,

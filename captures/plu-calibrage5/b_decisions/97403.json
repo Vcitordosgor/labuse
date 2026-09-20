@@ -1,0 +1,21 @@
+{
+ "insee": "97403",
+ "decisions": [
+  {
+   "zone": "Ua",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 11.0 },
+   "preuve": "En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : ... - 11 mètres au faitage.",
+   "note": "Citation nomme explicitement « En zone Ua » ; confirmé PDF art. 7.2. lu PDF p.21"
+  },
+  {
+   "zone": "Ua",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 7.0 },
+   "preuve": "En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ;",
+   "note": "Citation nomme explicitement « En zone Ua » ; confirmé PDF art. 7.2. lu PDF p.21"
+  }
+ ]
+}

@@ -1,0 +1,66 @@
+{
+ "idu": "97410000AB0003",
+ "commune": "Saint-Benoît",
+ "zone": "Ub",
+ "avant": {
+  "Emprise au sol — % réglementé": {
+   "valeur": "—",
+   "source": "Art. 9"
+  }
+ },
+ "apres": {
+  "verdict": "R+2 · au sol ~8-11 / sous-sol ~8-11 logts",
+  "steps": [
+   {
+    "label": "Emprise au sol — reculs (géométrie réelle)",
+    "valeur": "~643 m²",
+    "source": "Art. 7 (non calibré → hypothèse prudente) (séparatif) ; recul voirie en sus"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "valeur": "~643 m²",
+    "source": "Art. U 5 · p.10 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "valeur": "R+2",
+    "source": "estimation générique (PLU non outillé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "valeur": "~289 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "valeur": "~868 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "valeur": "~694 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 17 logts)",
+    "valeur": "~9 à 11",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "valeur": "plafond au sol",
+    "source": "Art. U 12 · p.17 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "valeur": "~9–11 logts",
+    "source": "Art. U 12 · p.17 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "valeur": "~8 à 11",
+    "source": "dérivé"
+   }
+  ]
+ }
+}

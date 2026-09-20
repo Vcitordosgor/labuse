@@ -1,0 +1,59 @@
+{
+  "insee": "97407",
+  "decisions": [
+    {
+      "zone": "Ud",
+      "chemin": "retraits.limites_separatives",
+      "geste": "propose",
+      "preuve": "Les constructions doivent être implantées en limite séparative et/ou suivant l’alignement des constructions limitrophes existantes.",
+      "note": "implantation sur limite et/ou alignement des limitrophes ; aucun minimum chiffré, pas une formule de hauteur"
+    },
+    {
+      "zone": "1AUa",
+      "chemin": "retraits.limites_separatives",
+      "geste": "valider",
+      "valeur": { "min_m": 3, "formule": "sur limite (max 2), sinon retrait minimum 3 m" },
+      "preuve": "la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres",
+      "note": "renvoi Ua 5 ; lu PDF p.24 — sur limite OU retrait ≥ 3 m"
+    },
+    {
+      "zone": "1AUc",
+      "chemin": "retraits.voie",
+      "geste": "valider",
+      "valeur": { "min_m": 3, "formule": "à l’alignement, sinon recul minimum 3 m" },
+      "preuve": "Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum de 3 mètres.",
+      "note": "renvoi Uc 4 ; lu PDF p.53 — alignement OU recul ≥ 3 m"
+    },
+    {
+      "zone": "1AUc",
+      "chemin": "retraits.limites_separatives",
+      "geste": "valider",
+      "valeur": { "min_m": 4, "formule": "sur limite, sinon retrait minimum 4 m" },
+      "preuve": "la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres",
+      "note": "renvoi Uc 5 ; lu PDF p.54 — sur limite OU retrait ≥ 4 m"
+    },
+    {
+      "zone": "1AUem",
+      "chemin": "retraits.limites_separatives",
+      "geste": "valider",
+      "valeur": { "min_m": 5, "formule": "sur limite, sinon retrait minimum 5 m" },
+      "preuve": "la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 5 mètres",
+      "note": "renvoi Ue 5 ; lu PDF p.82 — sur limite OU retrait ≥ 5 m"
+    },
+    {
+      "zone": "1AUs",
+      "chemin": "retraits.limites_separatives",
+      "geste": "valider",
+      "valeur": { "min_m": 5, "formule": "sur limite, sinon retrait minimum 5 m" },
+      "preuve": "la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 5 mètres",
+      "note": "renvoi Us 5 ; lu PDF p.122 — sur limite OU retrait ≥ 5 m"
+    },
+    {
+      "zone": "1AUm",
+      "chemin": "retraits.voie",
+      "geste": "propose",
+      "preuve": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+      "note": "lu PDF p.146 — 1AU 4 ne chiffre un recul voie que pour 1AUmut (5 m)/1AUa (45 m RN4a) ; aucun minimum général propre à 1AUm"
+    }
+  ]
+}

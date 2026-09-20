@@ -1,0 +1,19 @@
+{
+  "insee": "97416",
+  "decisions": [
+    {
+      "zone": "Uazp",
+      "chemin": "retraits.voie",
+      "geste": "propose",
+      "preuve": "à l’alignement des voies sauf en aval de la RN 1 ou le recul minimum est fixé à 40 m dans la partie Nord et à 50 m dans la partie Sud",
+      "note": "Pas une formule de hauteur (aucun H/2) ; recul conditionnel à double minimum Nord 40 m / Sud 50 m selon sous-secteur, pas un plancher unique — reste propose. Lu PDF p.176."
+    },
+    {
+      "zone": "Uazpc",
+      "chemin": "retraits.voie",
+      "geste": "propose",
+      "preuve": "à l’alignement des voies sauf en aval de la RN 1 ou le recul minimum est fixé à 40 m dans la partie Nord et à 50 m dans la partie Sud",
+      "note": "Pas une formule de hauteur (aucun H/2) ; recul conditionnel à double minimum Nord 40 m / Sud 50 m selon sous-secteur, pas un plancher unique — reste propose. Lu PDF p.176."
+    }
+  ]
+}

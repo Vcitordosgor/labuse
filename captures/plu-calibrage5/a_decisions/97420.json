@@ -1,0 +1,37 @@
+{
+ "insee": "97420",
+ "decisions": [
+  {
+   "zone": "UE",
+   "chemin": "retraits.voie",
+   "geste": "valider",
+   "valeur": { "min_m": 5, "formule": "H/2, minimum 5 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5 mètres",
+   "note": "UE4.2 recul H/2 min 5 m ; valeur_actuelle 6 m absente du texte. lu PDF p.22"
+  },
+  {
+   "zone": "UE",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 4, "formule": "H/2, minimum 4 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 4 mètres",
+   "note": "UE5.2 limites latérales, retrait H/2 min 4 m ; valeur_actuelle 6 m absente du texte. lu PDF p.22"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "retraits.voie",
+   "geste": "valider",
+   "valeur": { "min_m": 5, "formule": "H/2, minimum 5 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5 mètres",
+   "note": "AUindicée 4 renvoie à UE4.2 (indice e) : H/2 min 5 m ; valeur_actuelle 6 m absente. lu PDF p.22 et p.30"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": { "min_m": 4, "formule": "H/2, minimum 4 m" },
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 4 mètres",
+   "note": "AUindicée 5 renvoie à UE5.2 (indice e) : H/2 min 4 m ; valeur_actuelle 6 m absente. lu PDF p.22 et p.30"
+  }
+ ]
+}

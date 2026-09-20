@@ -1,0 +1,310 @@
+{
+ "insee": "97415",
+ "commune": "Saint-Paul",
+ "pdf": "97415_reglement_20251217.pdf",
+ "n": 32,
+ "rules": [
+  {
+   "zone": "U1a",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "6",
+   "page_pdf": 18,
+   "citation": "en zone U1a — Cas général : Les constructions s'implanteront à l'alignement de la voie ou de l'emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U1b",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "6",
+   "page_pdf": 19,
+   "citation": "en zone U1b — Cas général : Les constructions devront être implantées en retrait de 3 m minimum de la voie ou de l'emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U1c",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "6",
+   "page_pdf": 19,
+   "citation": "en zone U1c — Cas général : Les constructions peuvent être implantées à l'alignement ou en retrait de 3 m minimum de la voie ou de l'emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U1d",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "6",
+   "page_pdf": 19,
+   "citation": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U1d",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "13.1",
+   "page_pdf": 35,
+   "citation": "en zone U1d — Il n'est pas fixé de règle.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U1f",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "6",
+   "page_pdf": 19,
+   "citation": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U1g",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "6",
+   "page_pdf": 19,
+   "citation": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U1pru",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "6",
+   "page_pdf": 19,
+   "citation": "en zone U1pru — Cas général : Les constructions pourront s'implanter à l'alignement. En cas de retrait, celui-ci ne pourra excéder 6 mètres.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U1pru",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "13",
+   "page_pdf": 35,
+   "citation": "en zone U1pru — Il n'est pas fixé de règle.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U1pso",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "6",
+   "page_pdf": 19,
+   "citation": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U1e",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "6",
+   "page_pdf": 41,
+   "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U1e",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "13",
+   "page_pdf": 51,
+   "citation": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U1l",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "6",
+   "page_pdf": 41,
+   "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U1l",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "13",
+   "page_pdf": 51,
+   "citation": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U2b",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "6",
+   "page_pdf": 70,
+   "citation": "Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U2c",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "6",
+   "page_pdf": 70,
+   "citation": "Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U2c",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "7.2",
+   "page_pdf": 72,
+   "citation": "En cas de retrait, un recul de 4 mètres minimum est obligatoire.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U2d",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "6",
+   "page_pdf": 70,
+   "citation": "Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U2d",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "7.2",
+   "page_pdf": 72,
+   "citation": "Un recul de 4 mètres minimum est obligatoire.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U2h",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "7.2",
+   "page_pdf": 72,
+   "citation": "En cas de retrait, un recul de 4 mètres minimum est obligatoire.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U2e",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": null,
+   "page_pdf": 91,
+   "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l’emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U2e",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "13",
+   "page_pdf": 100,
+   "citation": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U3a",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 0.0
+   },
+   "article": "6",
+   "page_pdf": 110,
+   "citation": "Les constructions devront être implantées à l'alignement.",
+   "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "Usdu",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {},
+   "article": "9",
+   "page_pdf": 133,
+   "citation": "INTROUVABLE",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U3e",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": null,
+   "page_pdf": 148,
+   "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U3e",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "13",
+   "page_pdf": 156,
+   "citation": "Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du terrain d'assiette du projet.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U4a",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 0.0
+   },
+   "article": "6",
+   "page_pdf": 172,
+   "citation": "en zone U4a Les constructions devront être implantées à l'alignement.",
+   "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U5a",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 0.0
+   },
+   "article": "6",
+   "page_pdf": 218,
+   "citation": "en zone U5a Les constructions devront être implantées à l'alignement.",
+   "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "AU5e",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {},
+   "article": null,
+   "page_pdf": 259,
+   "citation": "INTROUVABLE",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "AU5e",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": null,
+   "page_pdf": 257,
+   "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise publique.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "AU5e",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": null,
+   "page_pdf": 265,
+   "citation": "Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du terrain d'assiette du projet.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "U6a",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 0.0
+   },
+   "article": "6",
+   "page_pdf": 278,
+   "citation": "en zone U6a Les constructions devront être implantées à l'alignement.",
+   "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)"
+  }
+ ]
+}

@@ -1,0 +1,37 @@
+{
+ "insee": "97404",
+ "decisions": [
+  {
+   "zone": "AUa",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": { "pct": 70 },
+   "preuve": "70% en zone AUa",
+   "note": "La citation liste explicitement 70% pour la zone AUa (art. AU 2.4)."
+  },
+  {
+   "zone": "AUb",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": { "pct": 65 },
+   "preuve": "65% en zone AUb",
+   "note": "La citation liste explicitement 65% pour la zone AUb (art. AU 2.4)."
+  },
+  {
+   "zone": "AUc",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": { "pct": 60 },
+   "preuve": "60% en zone AUc",
+   "note": "La citation liste explicitement 60% pour la zone AUc (art. AU 2.4)."
+  },
+  {
+   "zone": "AUt",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": { "pct": 65 },
+   "preuve": "65% en zone AUt",
+   "note": "La citation liste explicitement 65% pour la zone AUt (art. AU 2.4)."
+  }
+ ]
+}

@@ -1,0 +1,195 @@
+{
+ "insee": "97419",
+ "decisions": [
+  {
+   "zone": "Ua",
+   "chemin": "stationnement.par_logement",
+   "geste": "formule",
+   "preuve": "1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m²  - 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.",
+   "note": "Norme échelonnée (1 place ou 1,5 place selon surface/financement du logement), pas un nombre unique ; la valeur 2 est absente du texte. lu PDF p.17"
+  },
+  {
+   "zone": "Ub",
+   "chemin": "stationnement.par_logement",
+   "geste": "formule",
+   "preuve": "1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m²  - 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.",
+   "note": "Norme échelonnée (1 ou 1,5 place selon surface/financement), pas un nombre unique ; 2 absent. lu PDF p.26"
+  },
+  {
+   "zone": "Uc",
+   "chemin": "stationnement.par_logement",
+   "geste": "formule",
+   "preuve": "1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.",
+   "note": "Norme échelonnée (1 ou 1,5 place selon surface/financement), pas un nombre unique ; 2 absent. lu PDF p.35"
+  },
+  {
+   "zone": "Ud",
+   "chemin": "stationnement.par_logement",
+   "geste": "formule",
+   "preuve": "1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m²  - 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.",
+   "note": "Norme échelonnée (1 ou 1,5 place selon surface/financement), pas un nombre unique ; 2 absent. lu PDF p.43"
+  },
+  {
+   "zone": "Ue",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 5 mètres.",
+   "note": "Recul = H/2 avec plancher 5 m : formule, pas un nombre unique ; la valeur 3 est absente. lu PDF p.49"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 12.0 },
+   "note": "Zone 1AUa renvoie au règlement UA (art. AUindicée : se reporter au règlement de la zone U en indice). UA 10.2 = 12 m au faitage. lu PDF p.13-14 (UA 10) et p.55 (renvoi)",
+   "preuve": "La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faitage."
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 9.0 },
+   "note": "1AUa -> UA 10.2 = 9 m à l’égout. lu PDF p.13-14 (UA 10) et p.55 (renvoi)",
+   "preuve": "La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faitage."
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": { "pct": 70.0 },
+   "note": "1AUa -> UA 9. lu PDF p.13 (UA 9) et p.55 (renvoi)",
+   "preuve": "ARTICLE UA 9 - EMPRISE AU SOL DES CONSTRUCTIONS \nL’emprise maximale des constructions est fixée à 70% de la superficie du terrain."
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "retraits.voie",
+   "geste": "valider",
+   "valeur": { "min_m": 4.0 },
+   "note": "1AUa -> UA 6.2, règle générale = recul >= 4 m (le long RN2 porté à 7 m). lu PDF p.13 (UA 6) et p.55 (renvoi)",
+   "preuve": "au point le plus proche de la voie, au moins égale à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum."
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "note": "1AUa -> UA 7.2 : recul = H/2 avec plancher 3 m, formule et non nombre unique. lu PDF p.14 (UA 7) et p.55 (renvoi)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "stationnement.par_logement",
+   "geste": "formule",
+   "preuve": "1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m²  - 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.",
+   "note": "1AUa -> UA 12 : norme échelonnée (1 ou 1,5 place), pas un nombre unique ; 2 absent. lu PDF p.17 (UA 12) et p.55 (renvoi)"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": { "pct": 25.0 },
+   "note": "1AUa -> UA 13.1. lu PDF p.17 (UA 13) et p.55 (renvoi)",
+   "preuve": "Au minimum 25% de la superficie totale de l’unité foncière doit être traité en espace perméable."
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 9.0 },
+   "note": "1AUc -> UC 10.2 = 9 m au faitage. lu PDF p.29-30 (UC 10) et p.55 (renvoi)",
+   "preuve": "La hauteur maximale des constructions est fixée à : - 6 mètres à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faitage."
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 6.0 },
+   "note": "1AUc -> UC 10.2 = 6 m à l’égout. lu PDF p.29-30 (UC 10) et p.55 (renvoi)",
+   "preuve": "La hauteur maximale des constructions est fixée à : - 6 mètres à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faitage."
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": { "pct": 50.0 },
+   "note": "1AUc -> UC 9. lu PDF p.29 (UC 9) et p.55 (renvoi)",
+   "preuve": "ARTICLE UC 9 - EMPRISE AU SOL DES CONSTRUCTIONS \nL’emprise maximale des constructions est fixée à 50% de la superficie du terrain."
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.voie",
+   "geste": "valider",
+   "valeur": { "min_m": 4.0 },
+   "note": "1AUc -> UC 6.2 règle générale = recul >= 4 m. lu PDF p.29 (UC 6) et p.55 (renvoi)",
+   "preuve": "au point le plus proche de \nla voie, au moins égale à 4 mètres. Le long de la RN2  et de la RD57, cette distance de recul est portée à 7 mètres minimum."
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+   "note": "1AUc -> UC 7.2 : recul = H/2 avec plancher 3 m, formule. lu PDF p.30 (UC 7) et p.55 (renvoi)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "stationnement.par_logement",
+   "geste": "formule",
+   "preuve": "1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.",
+   "note": "1AUc -> UC 12 : norme échelonnée (1 ou 1,5 place), pas un nombre unique ; 2 absent. lu PDF p.35 (UC 12) et p.55 (renvoi)"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": { "pct": 30.0 },
+   "note": "1AUc -> UC 13.1. lu PDF p.35 (UC 13) et p.55 (renvoi)",
+   "preuve": "Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace perméable."
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 14.0 },
+   "note": "1AUe -> UE 10.2 = 14 m au faitage. lu PDF p.45 (UE 10) et p.55 (renvoi)",
+   "preuve": "La hauteur maximale des constructions est fixée à : - 11 mètres à l’égout du toit ou au sommet de l’acrotère, - 14 mètres au faitage."
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 11.0 },
+   "note": "1AUe -> UE 10.2 = 11 m à l’égout. lu PDF p.45 (UE 10) et p.55 (renvoi)",
+   "preuve": "La hauteur maximale des constructions est fixée à : - 11 mètres à l’égout du toit ou au sommet de l’acrotère, - 14 mètres au faitage."
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": { "pct": 70.0 },
+   "note": "1AUe -> UE 9. lu PDF p.45 (UE 9) et p.55 (renvoi)",
+   "preuve": "ARTICLE UE 9 - EMPRISE AU SOL DES CONSTRUCTIONS \nL’emprise maximale des constructions est fixée à 70% de la superficie du terrain."
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "retraits.voie",
+   "geste": "valider",
+   "valeur": { "min_m": 4.0 },
+   "note": "1AUe -> UE 6.2 règle générale = recul >= 4 m. lu PDF p.45 (UE 6) et p.55 (renvoi)",
+   "preuve": "au point le plus proche de \nla voie, au moins égale à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum."
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 5 mètres.",
+   "note": "1AUe -> UE 7.2 : recul = H/2 avec plancher 5 m, formule (le 3 stocké n'est pas fondé). lu PDF p.49 (UE 7) et p.55 (renvoi)"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": { "pct": 25.0 },
+   "note": "1AUe -> UE 13.1. lu PDF p.53 (UE 13) et p.55 (renvoi)",
+   "preuve": "Au minimum 25% de la superficie totale de l’unité foncière doit être traité en espace perméable."
+  }
+ ]
+}

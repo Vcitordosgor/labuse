@@ -1,0 +1,163 @@
+{
+ "insee": "97410",
+ "commune": "Saint-Benoît",
+ "pdf": "97410_reglement_20200206.pdf",
+ "n": 15,
+ "rules": [
+  {
+   "zone": "Ua",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 80.0
+   },
+   "article": "U 5",
+   "page_pdf": 10,
+   "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+   "raison": "attribution douteuse (secteur None)"
+  },
+  {
+   "zone": "Ua",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "U 6",
+   "page_pdf": 10,
+   "citation": "L'implantation par rapport aux voies publiques ou privées n'est pas réglementée, sauf dans les cas suivants : 1° Les constructions nouvelles doivent être implantées avec un recul minimum de : - 7 mètres par rapport à l'axe de la rue George Pompidou ; - 5 mètres par rapport à l'axe des rues Monfleury et Louis Brunet. [...] 2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+   "raison": "attribution douteuse (secteur None)"
+  },
+  {
+   "zone": "Ua",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 20.0
+   },
+   "article": "U 9",
+   "page_pdf": 13,
+   "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+   "raison": "attribution douteuse (secteur None)"
+  },
+  {
+   "zone": "Ub",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 80.0
+   },
+   "article": "U 5",
+   "page_pdf": 10,
+   "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+   "raison": "attribution douteuse (secteur None)"
+  },
+  {
+   "zone": "Ub",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "U 6",
+   "page_pdf": 11,
+   "citation": "L'implantation par rapport aux voies publiques ou privées n'est pas réglementée, sauf dans les cas suivants : [...] 2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+   "raison": "valeur non numérique ('75 m axe RN hors agglomération (rues Pompidou/Montfleury/Brunet non concernées en Ub)')"
+  },
+  {
+   "zone": "Ub",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 20.0
+   },
+   "article": "U 9",
+   "page_pdf": 13,
+   "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+   "raison": "attribution douteuse (secteur None)"
+  },
+  {
+   "zone": "Ue",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 80.0
+   },
+   "article": "U 5",
+   "page_pdf": 10,
+   "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+   "raison": "attribution douteuse (secteur None)"
+  },
+  {
+   "zone": "Ue",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "U 6",
+   "page_pdf": 11,
+   "citation": "2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+   "raison": "valeur non numérique ('75 m axe RN hors agglomération')"
+  },
+  {
+   "zone": "Ue",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 20.0
+   },
+   "article": "U 9",
+   "page_pdf": 13,
+   "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+   "raison": "attribution douteuse (secteur None)"
+  },
+  {
+   "zone": "Up",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 80.0
+   },
+   "article": "U 5",
+   "page_pdf": 10,
+   "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+   "raison": "attribution douteuse (secteur None)"
+  },
+  {
+   "zone": "Up",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "U 6",
+   "page_pdf": 11,
+   "citation": "2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+   "raison": "valeur non numérique ('75 m axe RN hors agglomération')"
+  },
+  {
+   "zone": "Up",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 20.0
+   },
+   "article": "U 9",
+   "page_pdf": 13,
+   "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+   "raison": "attribution douteuse (secteur None)"
+  },
+  {
+   "zone": "Ut",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 80.0
+   },
+   "article": "U 5",
+   "page_pdf": 10,
+   "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+   "raison": "attribution douteuse (secteur None)"
+  },
+  {
+   "zone": "Ut",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "U 6",
+   "page_pdf": 11,
+   "citation": "2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+   "raison": "valeur non numérique ('75 m axe RN hors agglomération')"
+  },
+  {
+   "zone": "Ut",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 20.0
+   },
+   "article": "U 9",
+   "page_pdf": 13,
+   "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+   "raison": "attribution douteuse (secteur None)"
+  }
+ ]
+}

@@ -1,0 +1,85 @@
+{
+ "insee": "97413",
+ "commune": "Saint-Leu",
+ "pdf": "97413_reglement_2007.pdf",
+ "n": 7,
+ "rules": [
+  {
+   "zone": "UA",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "UA 12 renvoi Art. 11 dispositions générales",
+   "page_pdf": 13,
+   "citation_actuelle": "12.2 - Normes de stationnement Cf. dispositions générales du présent règlement. [Art.11] HABITAT COLLECTIF - chambre individuelle 0,5 place par chambre, - studio et 2 pièces 1 place par logement, - 3 et 5 pièces 1,5 place par logement, - 6 pièces et plus 2 places par logement. HABITAT INDIVIDUEL 2 places par logement",
+   "raison": "citation non retrouvée (recouvrement 44%)"
+  },
+  {
+   "zone": "UB",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "UB 12 renvoi Art. 11 dispositions générales",
+   "page_pdf": 10,
+   "citation_actuelle": "12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.",
+   "raison": "citation non retrouvée (recouvrement 33%)"
+  },
+  {
+   "zone": "UC",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "UC 12 renvoi Art. 11 dispositions générales",
+   "page_pdf": 10,
+   "citation_actuelle": "12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.",
+   "raison": "citation non retrouvée (recouvrement 33%)"
+  },
+  {
+   "zone": "UD",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "UD 12 renvoi Art. 11 dispositions générales",
+   "page_pdf": 10,
+   "citation_actuelle": "12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.",
+   "raison": "citation non retrouvée (recouvrement 33%)"
+  },
+  {
+   "zone": "UE",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "UE 12 renvoi Art. 11 dispositions générales",
+   "page_pdf": 10,
+   "citation_actuelle": "12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.",
+   "raison": "citation non retrouvée (recouvrement 33%)"
+  },
+  {
+   "zone": "UF",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "UF 12 renvoi Art. 11 dispositions générales",
+   "page_pdf": 10,
+   "citation_actuelle": "12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.",
+   "raison": "citation non retrouvée (recouvrement 33%)"
+  },
+  {
+   "zone": "UP",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "UP 12 renvoi Art. 11 dispositions générales",
+   "page_pdf": 10,
+   "citation_actuelle": "12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.",
+   "raison": "citation non retrouvée (recouvrement 33%)"
+  }
+ ]
+}

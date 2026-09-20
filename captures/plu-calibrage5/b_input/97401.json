@@ -1,0 +1,272 @@
+{
+ "insee": "97401",
+ "commune": "Les Avirons",
+ "pdf": "97401_reglement_20241206.pdf",
+ "n": 24,
+ "rules": [
+  {
+   "zone": "Ua",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 15.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 13,
+   "citation": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ua",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 12.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 13,
+   "citation": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ua",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 15.0
+   },
+   "article": "U 13.1",
+   "page_pdf": 18,
+   "citation": "Le terrain doit être traité en espace libre et perméable comprenant des plantations et devant recevoir un traitement paysager sur au moins : En zone Ua : 15% de la superficie totale de l'unité foncière",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uc3",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 40.0
+   },
+   "article": "U 13.1",
+   "page_pdf": 18,
+   "citation": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ud",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 10.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 12,
+   "citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ud",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 7.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 12,
+   "citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ud",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 40.0
+   },
+   "article": "U 13.1",
+   "page_pdf": 18,
+   "citation": "En zone Ud : 40% de la superficie totale de l'unité foncière",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ud1",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 10.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 12,
+   "citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ud1",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 7.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 12,
+   "citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ud1",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 40.0
+   },
+   "article": "U 13.1",
+   "page_pdf": 18,
+   "citation": "En zone Ud : 40% de la superficie totale de l'unité foncière",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ud2",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 9.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 12,
+   "citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ud2",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 6.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 12,
+   "citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ud2",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 40.0
+   },
+   "article": "U 13.1",
+   "page_pdf": 18,
+   "citation": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ud3",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 9.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 12,
+   "citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ud3",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 6.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 12,
+   "citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ud3",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 40.0
+   },
+   "article": "U 13.1",
+   "page_pdf": 18,
+   "citation": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUa",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 15.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 13,
+   "citation": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUa",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 12.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 13,
+   "citation": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUa",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 15.0
+   },
+   "article": "U 13.1",
+   "page_pdf": 18,
+   "citation": "En zone Ua : 15% de la superficie totale de l'unité foncière",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUc",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 11.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 12,
+   "citation": "en zone Uc et secteur Ub2 : - 8 mètres à l'égout du toit ou au sommet de l'acrotère ; - 11 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUc",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 8.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 12,
+   "citation": "en zone Uc et secteur Ub2 : - 8 mètres à l'égout du toit ou au sommet de l'acrotère ; - 11 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUd",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 10.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 12,
+   "citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUd",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 7.0
+   },
+   "article": "U 10.2",
+   "page_pdf": 12,
+   "citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUd",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 40.0
+   },
+   "article": "U 13.1",
+   "page_pdf": 18,
+   "citation": "En zone Ud : 40% de la superficie totale de l'unité foncière",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  }
+ ]
+}

@@ -451,14 +451,15 @@ zones:
             à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
-          min_m: 3.0
+          min_m: 5
           article: UE 7
           page_pdf: 49
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 5 mètres.
-          statut: propose
+          statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 5 m
       pleine_terre:
         pct:
           pct: 25.0
@@ -602,44 +603,45 @@ zones:
           m: 12.0
           article: UA 10
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: 'La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 12 mètres au faitage.'
+          statut: valide
           raison: valeur 12 absente de la citation (harmonisation ≠ texte)
         egout:
           m: 9.0
           article: UA 10
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: 'La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 12 mètres au faitage.'
+          statut: valide
           raison: valeur 9 absente de la citation (harmonisation ≠ texte)
       emprise_sol:
         ces:
           pct: 70.0
           article: UA 9
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: "ARTICLE UA 9 - EMPRISE AU SOL DES CONSTRUCTIONS \nL’emprise maximale des constructions\
+            \ est fixée à 70% de la superficie du terrain."
+          statut: valide
           raison: valeur 70 absente de la citation (harmonisation ≠ texte)
       retraits:
         voie:
           min_m: 4.0
           article: UA 6
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: au point le plus proche de la voie, au moins égale à 4 mètres. Le long de la RN2, cette
+            distance de recul est portée à 7 mètres minimum.
+          statut: valide
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
         limites_separatives:
-          min_m: 3.0
+          min_m: 3
           article: UA 7
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être
+            inférieure à 3 mètres
+          statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -654,9 +656,9 @@ zones:
           pct: 25.0
           article: UA 13
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: Au minimum 25% de la superficie totale de l’unité foncière doit être traité en espace
+            perméable.
+          statut: valide
           raison: valeur 25 absente de la citation (harmonisation ≠ texte)
     renvoi: Ua
     renvoi_src: 'Caractère de la zone AUindicée, p. 55 : « Pour appliquer le présent règlement, il convient de se
@@ -674,44 +676,45 @@ zones:
           m: 9.0
           article: UC 10
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: 'La hauteur maximale des constructions est fixée à : - 6 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 9 mètres au faitage.'
+          statut: valide
           raison: valeur 9 absente de la citation (harmonisation ≠ texte)
         egout:
           m: 6.0
           article: UC 10
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: 'La hauteur maximale des constructions est fixée à : - 6 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 9 mètres au faitage.'
+          statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
       emprise_sol:
         ces:
           pct: 50.0
           article: UC 9
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: "ARTICLE UC 9 - EMPRISE AU SOL DES CONSTRUCTIONS \nL’emprise maximale des constructions\
+            \ est fixée à 50% de la superficie du terrain."
+          statut: valide
           raison: valeur 50 absente de la citation (harmonisation ≠ texte)
       retraits:
         voie:
           min_m: 4.0
           article: UC 6
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: "au point le plus proche de \nla voie, au moins égale à 4 mètres. Le long de la RN2  et\
+            \ de la RD57, cette distance de recul est portée à 7 mètres minimum."
+          statut: valide
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
         limites_separatives:
-          min_m: 3.0
+          min_m: 3
           article: UC 7
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être
+            inférieure à 3 mètres
+          statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 3 m
       stationnement:
         par_logement:
           places: 2.0
@@ -726,9 +729,9 @@ zones:
           pct: 30.0
           article: UC 13
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace
+            perméable.
+          statut: valide
           raison: valeur 30 absente de la citation (harmonisation ≠ texte)
     renvoi: Uc
     renvoi_src: 'Caractère de la zone AUindicée, p. 55 : « se reporter en fonction de l''indice de la zone AU considérée
@@ -743,52 +746,53 @@ zones:
           m: 14.0
           article: UE 10
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: 'La hauteur maximale des constructions est fixée à : - 11 mètres à l’égout du toit ou
+            au sommet de l’acrotère, - 14 mètres au faitage.'
+          statut: valide
           raison: valeur 14 absente de la citation (harmonisation ≠ texte)
         egout:
           m: 11.0
           article: UE 10
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: 'La hauteur maximale des constructions est fixée à : - 11 mètres à l’égout du toit ou
+            au sommet de l’acrotère, - 14 mètres au faitage.'
+          statut: valide
           raison: valeur 11 absente de la citation (harmonisation ≠ texte)
       emprise_sol:
         ces:
           pct: 70.0
           article: UE 9
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: "ARTICLE UE 9 - EMPRISE AU SOL DES CONSTRUCTIONS \nL’emprise maximale des constructions\
+            \ est fixée à 70% de la superficie du terrain."
+          statut: valide
           raison: valeur 70 absente de la citation (harmonisation ≠ texte)
       retraits:
         voie:
           min_m: 4.0
           article: UE 6
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: "au point le plus proche de \nla voie, au moins égale à 4 mètres. Le long de la RN2, cette\
+            \ distance de recul est portée à 7 mètres minimum."
+          statut: valide
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
         limites_separatives:
-          min_m: 3.0
+          min_m: 5
           article: UE 7
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être
+            inférieure à 5 mètres
+          statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          formule: H/2, minimum 5 m
       pleine_terre:
         pct:
           pct: 25.0
           article: UE 13
           page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
+          citation: Au minimum 25% de la superficie totale de l’unité foncière doit être traité en espace
+            perméable.
+          statut: valide
           raison: valeur 25 absente de la citation (harmonisation ≠ texte)
     renvoi: Ue
     renvoi_src: 'Caractère de la zone AUindicée, p. 55 : « se reporter en fonction de l''indice de la zone AU considérée

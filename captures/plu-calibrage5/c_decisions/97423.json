@@ -1,0 +1,15 @@
+{
+ "insee": "97423",
+ "decisions": [
+  {
+   "zone": "1AUt",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": {
+    "pct": 30.0
+   },
+   "preuve": "Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace vert et perméable",
+   "note": "AUt art.13 (p.70) renvoie à Ub ; Ub 13.1 « Espaces libres » 30% lu p.38. Valeur = valeur_actuelle."
+  }
+ ]
+}
