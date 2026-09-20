@@ -38,7 +38,10 @@ _MOIS = ["", "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "
          "septembre", "octobre", "novembre", "décembre"]
 
 # RECETTE-5 (V20d) — le langage de plomberie GPU à retirer de la ligne « Zone » de l'apporteur.
-_RE_GPU_PLOMBERIE = re.compile(r"\s*—?\s*Document à jour du GPU.*$", re.IGNORECASE)
+# EXPORTS-REBRANCHEMENT-1 lot 4 — la phrase de fraîcheur du PLU a changé au lot 0 (« Document
+# opposable — il fait foi à ce jour ») : l'abréviation de l'Apporteur suit (il garde le fait
+# « PLU approuvé le … », la mention d'opposabilité reste aux autres documents).
+_RE_GPU_PLOMBERIE = re.compile(r"\s*—?\s*Document (à jour du GPU|opposable).*$", re.IGNORECASE)
 
 
 def _mois_an(iso) -> str:
