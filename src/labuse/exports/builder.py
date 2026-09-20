@@ -391,12 +391,26 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
     industriel = bool(_icpe and _icpe.get("result") not in (None, "PASS"))
     icpe_detail = _icpe.get("detail") if industriel else None
     voisines = _apporteur_voisines(db, idu)
+    # EXPORTS-REBRANCHEMENT-2 lot 3 — les DRAPEAUX D'OBSERVATION du §6 « Le terrain, vu sur place » :
+    # une question n'est imprimée que si la couche TOUCHE la parcelle (même moteur que le Dossier, la
+    # cascade `lines` + les aléas). L'apporteur observe ce que le foncier signale, jamais une liste vide.
+    _lines = [l for l in (fiche.get("lines") or []) if isinstance(l, dict)]
+    def _releve(layer: str) -> bool:
+        return any(l.get("layer") == layer and l.get("result") not in (None, "PASS") for l in _lines)
+    _aleas = (fiche.get("aleas") or {}).get("liste") or []
+    obs_eau = (_releve("ravine") or _releve("zone_humide") or _releve("tri_zone") or _releve("dpf")
+               or any(isinstance(a, dict) and any(k in (a.get("nature") or a.get("libelle") or "").lower()
+                      for k in ("inond", "submers", "ravine", "humide")) for a in _aleas))
+    obs_pollution = industriel or _releve("sol_pollue") or _releve("casias")
     return {
         "idu": idu, "adresse": fiche.get("adresse") or "", "emetteur": _emetteur(db, compte_id),
         "emission": f"{jour:%d/%m/%Y}", "validite": f"{jour + timedelta(days=90):%d/%m/%Y}",
         "is_bati": bool(lb.get("nb_batiments") or lb.get("emprise_batie_m2")),
         "is_pm": isinstance(pm, dict) and bool(pm),
         "industriel_proche": industriel,
+        # §6 — questions d'observation conditionnelles (imprimées si la couche touche). La ligne
+        # HTA/HTB (< 50 m) n'a pas de couche fiable dans le socle → question omise tant qu'elle manque.
+        "obs_eau": obs_eau, "obs_pollution": obs_pollution, "obs_ligne_ht": False,
         "icpe_detail": icpe_detail,   # RECETTE-11 D7 — description/distance de l'ICPE relevée
         "voisines": voisines,
         "plan": _apporteur_plan(db, idu, voisines),

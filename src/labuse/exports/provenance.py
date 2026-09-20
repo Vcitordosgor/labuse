@@ -207,7 +207,12 @@ def _texte_de(html: str) -> str:
     imprimés) puis les balises."""
     sans_tete = re.sub(r'(?is)<(style|script|head)\b.*?</\1>', ' ', html)  # CSS/JS/tête @font-face
     sans_img = re.sub(r'<img[^>]*>', ' ', sans_tete)      # les images (base64) ne s'impriment pas
-    sans_attr = re.sub(r'<[^>]+>', ' ', sans_img)         # balises → espace
+    # EXPORTS-REBRANCHEMENT-2 lot 3 — les balises de BLOC (titres, lignes, sections) deviennent des
+    # SAUTS DE LIGNE (pas des espaces) : un titre « §10 / 10. Votre retour » se retrouve alors en début
+    # de ligne, où le motif STRUCTURE (numéro de section) l'attrape — sinon le « 10 » du titre fuyait
+    # (faux positif de provenance) faute d'être ancré à une donnée servie.
+    sans_bloc = re.sub(r'(?i)</?(h1|h2|h3|section|div|p|tr|li|table)\b[^>]*>', '\n', sans_img)
+    sans_attr = re.sub(r'<[^>]+>', ' ', sans_bloc)        # balises restantes → espace
     import html as _h
     return _h.unescape(sans_attr)
 

@@ -74,9 +74,9 @@ def test_parcelle_enrichie_spec_e1():
     assert "peut y bâtir" not in html and "plancher restant" not in html
 
 
-def test_recette12_e1_contact_essentiel_voisines_photos():
-    # RECETTE-12 E1 — contact = 1er champ OBLIGATOIRE SANS étiquette ; TROIS « l'essentiel » (prix,
-    # bail, voisines) ; photos + retour à l'ÉMETTEUR nommé (jamais « n'imprimez rien »).
+def test_v4_dix_sections_vous_dabord_voisines_au_4_photos():
+    # EXPORTS-REBRANCHEMENT-2 lot 3 — v4 : 10 sections numérotées ; §2 « Vous » (l'apporteur d'abord) ;
+    # les voisines passent au §4 « La vente » ; photos à l'émetteur nommé, en citant la référence.
     v = _valeurs()
     v["prix_achat_historique_eur"] = _V("prix_achat_historique_eur",
                                         {"valeur": 186000, "date_mutation": "2019-03-15"})
@@ -84,17 +84,18 @@ def test_recette12_e1_contact_essentiel_voisines_photos():
                                              {"idu": "97415000CY0046", "ref": "CY 0046", "surface_m2": 670}],
                          "surface_totale_m2": 1340})
     html = apporteur.rendu(v, ctx)
-    # contact = 1re question, SANS badge « l'essentiel », marqué « (obligatoire) »
-    assert "Nom et coordonnées" in html and "(obligatoire)" in html
-    assert html.index("Nom et coordonnées") < html.index("Tous les décideurs")
-    # EXACTEMENT trois « l'essentiel » : prix + bail (bâti) + voisines
-    assert html.count("ESSENTIEL") == 3
-    # dernière vente datée + chiffrée (S8 : présente ici)
+    for n in range(1, 11):
+        assert f"{n}. " in html                               # 10 sections numérotées
+    # §2 « Vous » vient AVANT « Qui décide » ; l'apporteur se présente en premier
+    assert "2. Vous" in html and "Votre nom, téléphone" in html
+    assert html.index("2. Vous") < html.index("3. Qui décide")
+    # les voisines sont citées au §4 « La vente » (bloc entre §4 et §5)
+    s4 = html[html.index("4. La vente"):html.index("6. Le terrain")]
+    assert "CY 0045" in s4 and "Vendrait-il aussi" in s4
+    # dernière vente au coup d'œil (S8 : présente ici)
     assert "Dernière vente" in html and "mars 2019" in html and "186" in html
-    # à côté (Blocs fonciers) + question voisinage citant les références
-    assert "À côté" in html and "CY 0045" in html and "340" in html
-    # photos à l'émetteur nommé, jamais « n'imprimez rien »
-    assert "Envoyez-les à Groupe Océan Promotion" in html and "97415000BO0852" in html
+    # photos à l'émetteur nommé, en citant la référence ; jamais « n'imprimez rien »
+    assert "Groupe Océan Promotion" in html and "97415000BO0852" in html
     assert "n'imprimez rien" not in html and "Si loué : sous quel bail" in html
 
 
@@ -102,23 +103,27 @@ def test_champs_remplissables():
     html = apporteur.rendu(_valeurs(), _ctx())
     assert html.count("<input") >= 4 and "<textarea" in html
     assert "appearance:auto" in html                          # champs de formulaire PDF
-    assert "Par quel canal" in html                           # RECETTE-3 (T1) : par quel canal le joindre
+    assert "notaire attitré" in html                          # v4 §7 — à demander au propriétaire
 
 
 def test_blocs_adaptatifs():
-    # personne morale → question « société » ; bâti → section occupation
+    # personne morale → question « société » ; bâti → section occupation (§5)
     pm = apporteur.rendu(_valeurs(bati=True), _ctx(is_pm=True, is_bati=True))
-    assert "société" in pm and "occupés" in pm
+    assert "société" in pm and "Occupé" in pm and "5. Le bâti" in pm
     # terrain nu, personne physique → pas de section occupation, question générique
     nu = apporteur.rendu(_valeurs(bati=False), _ctx(is_pm=False, is_bati=False))
-    assert "occupés" not in nu and "société" not in nu
+    assert "Occupé" not in nu and "société" not in nu and "5. Le bâti" not in nu
 
 
-def test_industriel_proche_adapte_la_question_du_sol():
-    sans = apporteur.rendu(_valeurs(), _ctx(industriel_proche=False))
-    avec = apporteur.rendu(_valeurs(), _ctx(industriel_proche=True))
-    assert "établissement classé" not in sans
-    assert "établissement classé" in avec
+def test_v4_observation_conditionnelle_du_terrain():
+    # EXPORTS-REBRANCHEMENT-2 lot 3 — §6 « Le terrain, vu sur place » : les questions d'observation
+    # ne s'impriment que si la couche touche la parcelle (eau, sol pollué).
+    import html as _H
+    sans = _H.unescape(apporteur.rendu(_valeurs(), _ctx(obs_eau=False, obs_pollution=False)))
+    assert "Traces d'eau" not in sans and "Remblais" not in sans
+    assert "Accès : depuis quelle voie" in sans               # les questions générales restent
+    avec = _H.unescape(apporteur.rendu(_valeurs(), _ctx(obs_eau=True, obs_pollution=True)))
+    assert "Traces d'eau" in avec and "Remblais" in avec
 
 
 def test_emetteur_absent_du_contexte_pas_de_bloc():
