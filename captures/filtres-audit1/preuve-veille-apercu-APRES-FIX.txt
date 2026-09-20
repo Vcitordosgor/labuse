@@ -1,0 +1,11 @@
+=== /events/searches/apercu — ce qu'une veille RÉÉVALUE (moteur partagé carte↔veille) ===
+--- hash avec ZFANG + FRR + mm + surface : tous SURVEILLÉS, non_retenu VIDE ---
+{
+    "surveille": [
+        "FRR (ruralit\u00e9s)",
+        "ZFANG (zone franche)",
+        "multiplicateur min",
+        "surface min"
+    ],
+    "non_retenu": []
+}

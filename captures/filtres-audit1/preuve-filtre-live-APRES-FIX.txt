@@ -1,0 +1,22 @@
+FILTRES-FIX-1 — preuve /filtre APRÈS correctifs (moteur servi q_v11_m137, API :8105)
+
+A · analyse défaut (écartée exclue)                  compte=  7484  témoin=absent  OK | attendu: ABSENT (étage 0)
+A · tri factuel · surface>=4500 & zonage=N           compte=   753  témoin=PRÉSENT OK | attendu: PRÉSENT
+A · surface>=4501 (=valeur AFFICHÉE) [LOT 2]         compte=   753  témoin=PRÉSENT OK | attendu: PRÉSENT (corrigé : arrondi)
+A · surface>=4502 (au-dessus de l'affiché)           compte=   752  témoin=absent  OK | attendu: ABSENT
+A · surface<=4501 (=valeur AFFICHÉE, borne max)      compte=  1129  témoin=PRÉSENT OK | attendu: PRÉSENT
+A · surface>=4500 & zonage=U (adjacent)              compte=   230  témoin=absent  OK | attendu: ABSENT
+A · etat_sol=nu (=fiche)                             compte=  1874  témoin=PRÉSENT OK | attendu: PRÉSENT
+A · etat_sol=bati (adjacent)                         compte=     7  témoin=absent  OK | attendu: ABSENT
+A · zfang=renforce (=fiche)                          compte=  1881  témoin=PRÉSENT OK | attendu: PRÉSENT
+A · zfang=standard (adjacent)                        compte=     0  témoin=absent  OK | attendu: ABSENT
+A · frr=partie (=fiche)                              compte=  1881  témoin=PRÉSENT OK | attendu: PRÉSENT
+A · frr=hors (adjacent)                              compte=     0  témoin=absent  OK | attendu: ABSENT
+A · commune=Saint-Pierre (adjacent)                  compte=  1410  témoin=absent  OK | attendu: ABSENT
+A · signaux=pm_privee (parcelle PUBLIQUE)            compte=  1894  témoin=absent  OK | attendu: ABSENT (public)
+B · tri factuel · surface>=1300 & zone_plu=UC        compte=   153  témoin=PRÉSENT OK | attendu: PRÉSENT
+B · zone_plu=UB (adjacent)                           compte=   335  témoin=absent  OK | attendu: ABSENT
+B · etat_sol=bati (=fiche)                           compte=   589  témoin=PRÉSENT OK | attendu: PRÉSENT
+
+=== 17/17 conformes au comportement attendu ===
+Note: 17 lignes = les 14 filtres croisés sur les 2 témoins + variantes de borne surface.
