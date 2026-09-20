@@ -18,7 +18,9 @@ _LIMITES = [
 ]
 
 
-def rendu(valeurs) -> str:
+def corps_sources(valeurs) -> str:
+    """EXPORTS-REBRANCHEMENT-2 lot 1 — le CORPS de la clôture (limites + noms des sources), sans
+    l'en-tête de section : le miroir le rend en §12 (numérotation unique dans miroir.rendu_sections)."""
     corps = "<h3>Ce que ce document ne peut pas dire</h3>"
     corps += table_kv([ligne_kv(k, esc(v), "") for k, v in _LIMITES])
     ds = val(valeurs, "run_label_servi") or []
@@ -44,5 +46,9 @@ def rendu(valeurs) -> str:
     # RECETTE-12 D4 — la ligne « Sources : BD TOPO… CoSIA… » (pied) imprimée APRÈS les mentions
     # légales, à la fin du §10, est RETIRÉE : le §10 porte déjà sa propre liste « Sources et
     # millésimes » ci-dessus ; ce pied faisait doublon (et fuyait les libellés techniques, D5).
+    return corps
+
+
+def rendu(valeurs) -> str:
     # EXPORTS-REBRANCHEMENT-1 lot 1 — la clôture suit les 11 sections du miroir : plus de numéro.
-    return section("Sources, limites et mentions", corps)
+    return section("Sources, limites et mentions", corps_sources(valeurs))

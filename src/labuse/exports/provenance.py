@@ -169,7 +169,8 @@ def nombres_ancres(valeurs: dict[str, Valeur], ctx: dict | None = None) -> dict[
 # ── La liste blanche des nombres de STRUCTURE (pas des grandeurs de données) ─────────────────
 #: nombre → raison (documentée, jointe au rapport). Un nombre de structure n'est pas une donnée.
 ALLOWLIST: dict[float, str] = {
-    2.0: "version du modèle de document (builder.MODELE_VERSION)",
+    2.0: "version du modèle de document (builder.MODELE_VERSION, historique)",
+    3.0: "version du modèle de document (builder.MODELE_VERSION)",
     90.0: "durée de validité du brief apporteur (90 jours, constante d'affichage)",
     100.0: "base de pourcentage (100 %)",
     800.0: "seuil légal L151-36 (800 m) cité en clair — référence de droit, pas une mesure",
