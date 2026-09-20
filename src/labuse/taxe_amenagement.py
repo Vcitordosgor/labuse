@@ -80,13 +80,13 @@ def taux_communal_public(db, insee: str | None, *, today: date | None = None) ->
     ref = today or date.today()
     perime = bool(maj_d is not None and (ref - maj_d).days > _PERIME_JOURS)
     depuis = _fr_date(delib)
-    releve = _fr_date(maj_d)
+    # EXPORTS-REBRANCHEMENT-1 lot 0 — la phrase servie au client dit le FAIT juridique
+    # (délibération en vigueur), plus notre plomberie (« source DGFiP/DELTA, relevé le … » =
+    # millésime de relevé, interdit côté client depuis PAGE-SOURCES-1 18/09). Les champs
+    # structurés (source, delib_date, maj_at, perime) restent servis — admin et sonde de fraîcheur.
     millesime = "Taux communal"
     if depuis:
-        millesime += f" en vigueur depuis le {depuis}"
-    millesime += " — source DGFiP/DELTA"
-    if releve:
-        millesime += f", relevé le {releve}"
+        millesime += f" en vigueur depuis le {depuis} (délibération communale)"
     return {"part_communale_pct": float(row[0]), "source": row[1],
             "delib_date": delib.isoformat() if delib else None,
             "maj_at": maj_d.isoformat() if maj_d else None,

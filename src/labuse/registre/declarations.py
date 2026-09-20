@@ -68,6 +68,9 @@ class Ligne:
     #: legende, niveaux[] (pour un rendu multi — piscines : 3 niveaux, chacun couleur+quand+legende)}.
     carte: dict = field(default_factory=dict)
     pourquoi: str = ""
+    #: EXPORTS-REBRANCHEMENT-1 lot 1 — surcharge PAR LIGNE de la section fiche (`ou.fiche_section`)
+    #: quand une surface chevauche deux sections (le_bien : bâti + terrain). None = celle de la surface.
+    fiche_section: str | None = None
 
 
 @dataclass(frozen=True)
@@ -80,6 +83,9 @@ class Surface:
     rendu: str
     donnees: tuple[Ligne, ...]
     chemin: str = ""
+    #: EXPORTS-REBRANCHEMENT-1 lot 1 — la SECTION de la fiche (sections.yaml) à laquelle cette
+    #: surface appartient ; le Dossier PDF (miroir) s'ordonne par elle. None = hors sections (couches…).
+    fiche_section: str | None = None
 
 
 @dataclass(frozen=True)
@@ -107,6 +113,10 @@ def _fichiers(inclure_exemples: bool = False) -> list[pathlib.Path]:
         # par le tuyau (liste de couches), pas une Surface du format standard.
         if p.name == "tuyau_hors_registre.yaml":
             continue
+        # EXPORTS-REBRANCHEMENT-1 lot 1 — les 11 sections de la fiche (ordre + titres), pas une
+        # Surface : lues par sections_fiche(), source du miroir Dossier.
+        if p.name == "sections.yaml":
+            continue
         if not inclure_exemples and EXEMPLES in p.parents:
             continue
         out.append(p)
@@ -131,14 +141,16 @@ def charger(inclure_exemples: bool = False) -> tuple[list[Surface], list[Generiq
                       absence_type=str(x.get("absence_type", "")),
                       statut_juridique=x.get("statut_juridique"),
                       carte=x.get("carte") or {},
-                      pourquoi=str(x.get("pourquoi", "")))
+                      pourquoi=str(x.get("pourquoi", "")),
+                      fiche_section=(x.get("ou") or {}).get("fiche_section"))
                 for x in (d.get("donnees") or [])
             ), key=lambda l: l.rang))   # le RANG fait foi de l'ordre (numéroté de 10 en 10)
             surfaces.append(Surface(
                 surface=str(d.get("surface", p.stem)), nom=str(d.get("nom", "")),
                 categorie=str(d.get("categorie", "")), parent=d.get("parent"),
                 route=str(d.get("route", "")), rendu=str(d.get("rendu", "")),
-                donnees=lignes, chemin=str(p.relative_to(_RACINE))))
+                donnees=lignes, chemin=str(p.relative_to(_RACINE)),
+                fiche_section=d.get("fiche_section")))
     gpath = DECLARATIONS / "generiques.yaml"
     generiques: list[Generique] = []
     if gpath.exists():
@@ -147,6 +159,20 @@ def charger(inclure_exemples: bool = False) -> tuple[list[Surface], list[Generiq
             generiques.append(Generique(surface=str(x.get("surface", "")), nom=str(x.get("nom", "")),
                                         route=str(x.get("route", "")), regle=str(x.get("regle", ""))))
     return surfaces, generiques
+
+
+def sections_fiche() -> list[dict]:
+    """EXPORTS-REBRANCHEMENT-1 lot 1 — les 11 sections de la fiche parcelle (+ l'en-tête), dans
+    l'ORDRE déclaré (declarations/fiche/sections.yaml). Chaque entrée : {id, titre, numerote}.
+    C'est LA source de l'ordre et des noms — la fiche écran (SECTION_LABELS) et le Dossier PDF
+    (miroir) la reflètent. Vide si le fichier manque (aucun défaut inventé)."""
+    p = DECLARATIONS / "fiche" / "sections.yaml"
+    if not p.exists():
+        return []
+    d = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+    return [{"id": str(s.get("id", "")), "titre": str(s.get("titre", "")),
+             "numerote": bool(s.get("numerote", True))}
+            for s in (d.get("sections") or []) if s.get("id")]
 
 
 def verifier(inclure_exemples: bool = True) -> tuple[list[str], list[str]]:
@@ -158,6 +184,8 @@ def verifier(inclure_exemples: bool = True) -> tuple[list[str], list[str]]:
     violations: list[str] = []
     orphelins: list[str] = []
     vus: set[str] = set()
+    # EXPORTS-REBRANCHEMENT-1 lot 1 — les surfaces fiche se rattachent aux sections déclarées.
+    _sections = {s["id"] for s in sections_fiche()}
     for s in surfaces:
         if s.categorie not in CATEGORIES:
             violations.append(f"{s.chemin} : catégorie inconnue « {s.categorie} »")
@@ -167,6 +195,15 @@ def verifier(inclure_exemples: bool = True) -> tuple[list[str], list[str]]:
         rangs = [l.rang for l in s.donnees]
         if not s.donnees:
             violations.append(f"{s.chemin} : surface spécifique sans aucune donnée")
+        # lot 1 — une surface FICHE porte un `fiche_section` valide ; les surcharges par ligne aussi.
+        if s.categorie == "fiche" and _sections:
+            if s.fiche_section not in _sections:
+                violations.append(f"{s.chemin} ({s.surface}) : fiche_section "
+                                  f"« {s.fiche_section} » ∉ sections.yaml")
+            for l in s.donnees:
+                if l.fiche_section is not None and l.fiche_section not in _sections:
+                    violations.append(f"{s.surface}/{l.quoi} : fiche_section "
+                                      f"« {l.fiche_section} » ∉ sections.yaml")
         for l in s.donnees:
             ref = f"{s.surface}/{l.quoi or '?'}"
             if not l.quoi:

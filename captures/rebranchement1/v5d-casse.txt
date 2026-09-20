@@ -1,0 +1,2 @@
+verdict: casse | 1 câble(s) muet(s) ou ligne(s) hors déclaration
+détails: ['ligne du Dossier hors déclaration fiche : « ligne_inventee_pdf »']

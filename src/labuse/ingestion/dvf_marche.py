@@ -22,7 +22,7 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-FENETRE = "2021-2025 (millésimes géo-DVF disponibles)"
+FENETRE = "2021-2025"   # EXPORTS-REBRANCHEMENT-1 lot 0 — plus de « (millésimes géo-DVF…) » côté client
 
 
 def ensure_dvf_views(engine) -> None:

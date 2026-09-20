@@ -10,6 +10,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: risques
 
 donnees:
   # ── EN TÊTE : ce qui contraint (compte + aléas + SIS opposable) ──

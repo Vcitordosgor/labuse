@@ -51,16 +51,16 @@ def test_collectes_attachent_les_valeurs_registre():
     """EXPORTS-2 lot 8 : la collecte du builder unique n'assemble QUE des objets `Valeur`
     tamponnés (`valeurs_pour`) — les blocs ne reçoivent ni calcul ni requête, seulement des
     Valeur. La mise en page (blocs/*.py) lit ces Valeur, jamais la base."""
-    collecte = (RACINE / "src/labuse/exports/collecte.py").read_text()
+    collecte = (RACINE / "src/labuse/exports/robinet_fiche.py").read_text()
     assert "valeurs_pour" in collecte, "la collecte doit tamponner via le registre"
     assert "dict[str, Valeur]" in collecte, "la collecte rend {id → Valeur}, rien d'autre"
 
 
-def test_sources_des_pdf_millesime_depuis_la_fiche():
-    """EXPORTS-2 lot 8 : le bloc « Sources et millésimes » LIT les millésimes des sources
-    réellement servies (data_sources de la fiche) — jamais une année en dur dans le builder."""
+def test_sources_des_pdf_sans_millesime():
+    """EXPORTS-REBRANCHEMENT-1 lot 2 (doctrine PAGE-SOURCES-1 18/09) : le bloc Sources des PDF
+    n'imprime PLUS de millésime — noms de sources et producteurs seuls, aucune date en dur."""
     src = (RACINE / "src/labuse/exports/blocs/sources.py").read_text()
-    assert "s['millesime']" in src or 's["millesime"]' in src, "le millésime vient de la source servie"
-    # aucune année ortho gravée dans le bloc
+    assert "millesime']}" not in src and 'millesime"]}' not in src, "plus de millésime imprimé"
+    # aucune année gravée dans le bloc
     import re
     assert not re.search(r"\b(19|20)\d{2}\b", src), "aucun millésime en dur dans le bloc Sources"

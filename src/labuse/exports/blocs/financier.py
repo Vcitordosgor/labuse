@@ -320,11 +320,12 @@ def _fiscalite_locale(tfpb: dict | None, zonage: dict | None, resolved: dict) ->
             f"Zone {zonage.get('zone')} (DHUP) : elle fixe l'éligibilité au PTZ dans le neuf, les "
             "plafonds de loyer et de ressources des dispositifs, et le prix de vente au bailleur "
             "social. À La Réunion, la TVA du logement neuf est de 8,5 % (2,1 % en locatif social).")
+    # EXPORTS-REBRANCHEMENT-1 lot 2 — noms de sources seuls, aucun millésime côté client.
     src = []
     if tfpb:
-        src.append(f"DGFiP — fichier REI ({esc(str(tfpb.get('millesime') or 'impositions primitives'))})")
+        src.append("DGFiP — fichier REI")
     if zonage:
-        src.append(f"DHUP — zonage A/B/C ({esc(str(zonage.get('millesime') or ''))})")
+        src.append("DHUP — zonage A/B/C")
     if src:
         corps += note("Sources : " + " · ".join(src) + ".")
     return corps

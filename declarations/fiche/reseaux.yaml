@@ -5,6 +5,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: reseaux
 donnees:
   - quoi:  viabilisation_verdict
     ou:    { rang: 10, etat: en_tete, section: "Viabilisation" }
@@ -13,7 +14,7 @@ donnees:
     absence_type: absente_ici
     pourquoi: "Le raccordement décide du coût d'aménagement ; en tête."
   - quoi:  piscine_m2
-    ou:    { rang: 20, etat: replie, section: "Sur la parcelle" }
+    ou:    { rang: 20, etat: replie, section: "Sur la parcelle" , fiche_section: terrain }
     comment: { libelle: "Piscine détectée", unite: "m²", format: entier_m2, i: "Surface de piscine détectée sur la parcelle (BD ORTHO)." }
     absence: "Piscine détectée : aucune piscine repérée sur la parcelle."
     absence_type: absente_ici

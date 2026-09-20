@@ -1,0 +1,22 @@
+# ── EXPORTS-REBRANCHEMENT-1 lot 1 — LES 11 SECTIONS DE LA FICHE PARCELLE, DÉCLARÉES ──
+# La source de vérité de l'ORDRE et des NOMS des sections (= SECTION_LABELS de Fiche.tsx,
+# FICHE-RANGEMENT-2/3). Le Dossier PDF est le MIROIR de cette liste : mêmes sections, mêmes
+# noms, même ordre. Chaque surface fiche déclare son `fiche_section` (surcharge possible par
+# ligne via `ou.fiche_section`) ; ce fichier n'est PAS une surface (pas de `donnees`).
+#
+# `entete` est le bandeau de tuiles AVANT les sections (pas une section numérotée) ; `simulation`
+# est rendue au Dossier comme un renvoi au document Financier (lot 2).
+
+sections:
+  - { id: entete,     titre: "En-tête",                  numerote: false }
+  - { id: identite,   titre: "Identité",                 numerote: true }
+  - { id: terrain,    titre: "Terrain",                  numerote: true }
+  - { id: bati,       titre: "Bâti",                     numerote: true }
+  - { id: urbanisme,  titre: "Urbanisme",                numerote: true }
+  - { id: risques,    titre: "Risques et environnement", numerote: true }
+  - { id: reseaux,    titre: "Réseaux et desserte",      numerote: true }
+  - { id: fiscalite,  titre: "Fiscalité et dispositifs", numerote: true }
+  - { id: marche,     titre: "Marché",                   numerote: true }
+  - { id: quartier,   titre: "Quartier",                 numerote: true }
+  - { id: potentiel,  titre: "Potentiel",                numerote: true }
+  - { id: simulation, titre: "Simulation",               numerote: true }

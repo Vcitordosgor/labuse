@@ -42,7 +42,8 @@ def test_fiscalite_locale_dit_le_taux_et_la_zone_sources():
     # la taxe foncière de portage est DITE, jamais devinée : on exige la valeur locative cadastrale.
     assert "valeur locative cadastrale" in html
     assert "invente pas de valeur locative" in html   # l'apostrophe est échappée par note()
-    assert "REI 2025" in html                     # source + millésime servis
+    # EXPORTS-REBRANCHEMENT-1 lot 2 — la source est nommée SANS millésime côté client.
+    assert "DGFiP — fichier REI" in html and "REI 2025" not in html
     # aucune balise HTML crue échappée ne fuit dans les notes (note() échappe son texte).
     assert "&lt;strong&gt;" not in html
 

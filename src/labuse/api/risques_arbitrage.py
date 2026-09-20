@@ -49,6 +49,7 @@ def libelle_client_detail(detail: str | None) -> str | None:
     d = re.sub(r"PPR ([A-Z][A-Z_]+)", lambda m: "PPR " + m.group(1).lower().replace("_", " "), d)
     # clé de type d'aléa avec underscore.
     d = d.replace("mouvement_terrain", "mouvement de terrain")
+    d = d.replace("submersion_marine", "submersion marine")
     # niveaux techniques / sans accent.
     for raw, lab in (("niveau eleve", "niveau élevé"), ("niveau tres_fort", "niveau très fort"),
                      ("niveau faible_a_modere", "niveau faible à modéré"),
@@ -72,6 +73,8 @@ def arbitrer_risques(lines: list[dict]) -> list[dict]:
     """Arbitre et nettoie les lignes servies (nouvelle liste, entrée non mutée).
 
     - ne garde qu'une ligne par type d'aléa (le niveau le plus contraignant) ;
+    - ne garde qu'UNE exclusion « PPR zone rouge » (la part maximale) — deux rouges côte à côte
+      sans nom de plan se lisent comme une contradiction (EXPORTS-REBRANCHEMENT-1 lot 0) ;
     - retire l'« intersection marginale < 10 % » (PPR géométrique) si un régime PPR réglementaire
       (HARD_EXCLUDE) est présent sur la parcelle ;
     - passe chaque détail conservé par `libelle_client_detail`.
@@ -80,6 +83,19 @@ def arbitrer_risques(lines: list[dict]) -> list[dict]:
     ppr_reglementaire = any(
         (l.get("result") == "HARD_EXCLUDE") and ("PPR" in (l.get("detail") or ""))
         for l in lines)
+
+    # 1-bis) EXPORTS-REBRANCHEMENT-1 lot 0 — UNE seule exclusion « PPR zone rouge » servie : la plus
+    # contraignante (part maximale). Le run peut porter plusieurs intersections rouges (plans PPR
+    # distincts ou fragments d'un même plan) dont les verdicts stockés ne NOMMENT pas le plan :
+    # servies côte à côte (« 54 % » puis « 100 % »), elles se lisent comme une contradiction sur la
+    # même zone. Doctrine M73 (« un seul niveau par aléa, le plus contraignant ») appliquée au rouge.
+    _ROUGE_RE = re.compile(r"PPR zone rouge.*?(\d+(?:[.,]\d+)?)\s*%")
+    rouges = [(i, float(m.group(1).replace(",", ".")))
+              for i, l in enumerate(lines)
+              if l.get("result") == "HARD_EXCLUDE"
+              and (m := _ROUGE_RE.search(l.get("detail") or ""))]
+    rouges_exclus = ({i for i, _ in rouges} - {max(rouges, key=lambda t: t[1])[0]}
+                     if len(rouges) > 1 else set())
 
     # 2) meilleur niveau par type d'aléa (indice de la ligne à conserver).
     alea_best: dict[str, tuple[int, int]] = {}
@@ -96,6 +112,9 @@ def arbitrer_risques(lines: list[dict]) -> list[dict]:
     out: list[dict] = []
     for i, l in enumerate(lines):
         d = l.get("detail") or ""
+        # rouge PPR : seule l'exclusion à la part MAXIMALE est servie (1-bis).
+        if i in rouges_exclus:
+            continue
         # aléa : ne conserver que la ligne du niveau le plus contraignant par type.
         if _ALEA_RE.match(d) and i not in keep_alea:
             continue

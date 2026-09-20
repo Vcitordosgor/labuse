@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maquette — Dossier financier</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --paper:#fff; --bg:#eeeeea; --ink:#15211b; --muted:#6a7671; --line:#e2e0d9;
+    --mint:#2f6b4f; --mint-soft:#e6f0ea; --amber:#a8713a; --amber-soft:#f6ede4;
+    --grey-soft:#f0f0ed; --red:#a8433a; --red-soft:#f6e6e4; --app:#0f1411; --app-card:#171d19; --app-line:#2a332d; --app-ink:#e8ece9; --app-muted:#8d9a93;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#1b1e1c; } }
+  :root[data-theme="dark"]{ --bg:#1b1e1c; }
+  html{scroll-padding-top:env(safe-area-inset-top,0px)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:13.5px/1.5 Inter,ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .toolbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ink);color:#fff;padding:10px 20px;font-size:12.5px;display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+  .toolbar b{font-weight:600}.toolbar span{opacity:.75}
+  .wrap{max-width:820px;margin:24px auto 80px}
+  .stage{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:30px 0 10px}
+  @media (max-width:640px){.wrap{margin:0}}
+
+  /* écran app */
+  .app{background:var(--app);color:var(--app-ink);border-radius:14px;padding:26px 28px;box-shadow:0 2px 20px rgba(0,0,0,.2)}
+  .app h3{margin:0 0 4px;font-size:17px;font-weight:600}
+  .app .sub{color:var(--app-muted);font-size:12.5px;margin-bottom:18px}
+  .field{background:var(--app-card);border:1px solid var(--app-line);border-radius:10px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .field label{font-weight:500}
+  .field small{display:block;color:var(--app-muted);font-size:11.5px;font-weight:400;margin-top:2px}
+  .field .in{border:1px solid var(--app-line);border-radius:6px;padding:6px 10px;min-width:130px;color:var(--app-muted);font-family:ui-monospace,Menlo,monospace;font-size:12px;text-align:right}
+  .req{color:#8FA69A;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin-left:6px}
+  details{margin-top:14px;border-top:1px solid var(--app-line);padding-top:12px}
+  summary{cursor:pointer;color:var(--app-muted);font-size:12.5px;list-style:none}
+  summary::before{content:'▸ ';}
+  details[open] summary::before{content:'▾ ';}
+  .adv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  @media (max-width:640px){.adv{grid-template-columns:1fr}}
+  .adv .field{margin:0;flex-direction:column;align-items:flex-start}
+  .adv .field .in{width:100%;text-align:left;margin-top:6px}
+  .cta{display:inline-block;margin-top:16px;background:#7fdc8f;color:#0f1411;font-weight:600;padding:10px 18px;border-radius:10px;font-size:13.5px}
+
+  /* document */
+  .doc{background:var(--paper);box-shadow:0 2px 20px rgba(0,0,0,.08);padding:48px 56px}
+  @media (max-width:640px){.doc{padding:28px 20px}}
+  .head{display:flex;justify-content:space-between;gap:16px;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:22px;font-size:12px;color:var(--muted)}
+  .head b{color:var(--ink);font-size:16px;display:block;font-weight:600}
+  section{margin-top:26px;break-inside:avoid-page}
+  .sec-head{display:flex;align-items:baseline;gap:12px;border-bottom:1.5px solid var(--ink);padding-bottom:6px;margin-bottom:8px}
+  .sec-head .num{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.1em}
+  .sec-head h2{font-size:16px;margin:0;font-weight:600;flex:1}
+  .verdict{padding:8px 12px;border-left:3px solid var(--mint);background:var(--mint-soft);font-size:13px;margin:8px 0 12px}
+  .verdict.rouge{border-color:var(--red);background:var(--red-soft)}
+  .verdict i{color:var(--muted);font-style:normal;font-size:11.5px;display:block;margin-top:2px}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0 4px}
+  .tiles div{background:var(--grey-soft);border-radius:8px;padding:10px 12px}
+  .tiles b{display:block;font-size:15px;font-weight:600}
+  .tiles span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+  td.l{width:50%} td.v{width:14%;color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:11.5px;text-align:right}
+  td.s{width:26%;color:var(--muted);font-size:11.5px} td.n{width:10%;text-align:right}
+  tr.total td{border-top:1.5px solid var(--ink);font-weight:600}
+  .chip{display:inline-block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:3px;font-weight:600}
+  .chip.src{background:var(--mint-soft);color:var(--mint)} .chip.der{background:#eef0f4;color:#4a5566}
+  .chip.est{background:var(--grey-soft);color:var(--muted)} .chip.pro{background:var(--amber-soft);color:var(--amber)}
+  .grid3{display:grid;grid-template-columns:auto repeat(3,1fr);gap:0;font-size:12px;margin-top:8px;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .grid3 div{padding:6px 10px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);text-align:center;color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:11.5px}
+  .grid3 div.h{background:var(--grey-soft);font-family:Inter;color:var(--ink);font-weight:500}
+  .note{font-size:11.5px;color:var(--muted);margin-top:8px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin:10px 0 0}
+  .decision{margin:28px 0 0;padding:14px 16px;border:1px dashed var(--amber);border-radius:8px;background:var(--amber-soft);font-size:12.5px}
+  .decision b{display:block;margin-bottom:4px}
+  ul.plain{margin:6px 0 0;padding-left:18px} ul.plain li{margin:2px 0}
+</style>
+</head>
+<body>
+<div class="toolbar"><b>Maquette</b><span>Dossier financier · questionnaire à 3 champs + document 4 pages</span><span>Version validée le 20/09 · valeurs non renseignées, seule la source est indiquée</span></div>
+<div class="wrap">
+
+<div class="stage">1 · Écran app — avant génération</div>
+<div class="app">
+  <h3>Votre opération sur 97410000AN0347</h3>
+  <div class="sub">Trois questions. Tout le reste est pré-rempli depuis les données publiques, modifiable si vous le souhaitez.</div>
+
+  <div class="field"><div><label>Prix demandé par le vendeur<span class="req">obligatoire</span></label><small>Ou « inconnu » — le bilan donnera alors le prix d'achat maximal supportable.</small></div><div class="in">€ · inconnu</div></div>
+  <div class="field"><div><label>Programme visé<span class="req">obligatoire</span></label><small>Nombre de logements et typologie moyenne. Pré-rempli depuis la capacité constructible (§10 du Dossier), affiché grisé comme exemple — à confirmer.</small></div><div class="in" style="opacity:.5">ex. n logts · T3</div></div>
+  <div class="field"><div><label>Régime de TVA<span class="req">obligatoire</span></label><small>Assujetti avec récupération · LLS · TVA réduite (QPV) · non assujetti.</small></div><div class="in">choix</div></div>
+
+  <details>
+    <summary>Hypothèses avancées — 10 valeurs pré-remplies, chacune avec sa source</summary>
+    <div class="adv">
+      <div class="field"><label>Prix de sortie €/m²<small>DVF — neuf observé du secteur</small></label><div class="in">—</div></div>
+      <div class="field"><label>Coût de construction €/m²<small>EPTB SDES 2024 — La Réunion</small></label><div class="in">—</div></div>
+      <div class="field"><label>Honoraires techniques %<small>convention LABUSE</small></label><div class="in">—</div></div>
+      <div class="field"><label>VRD — assiette et €/m²<small>saisie · défaut sur surface aménagée</small></label><div class="in">—</div></div>
+      <div class="field"><label>Stationnement — type et coût/place<small>saisie · défaut « non chiffré »</small></label><div class="in">—</div></div>
+      <div class="field"><label>Démolition / dépollution<small>saisie · défaut « non chiffré »</small></label><div class="in">—</div></div>
+      <div class="field"><label>Aléas %<small>convention LABUSE</small></label><div class="in">—</div></div>
+      <div class="field"><label>Marge visée %<small>convention LABUSE</small></label><div class="in">—</div></div>
+      <div class="field"><label>Frais d'acquisition %<small>convention LABUSE</small></label><div class="in">—</div></div>
+      <div class="field"><label>Durée de portage · taux<small>instruction + chantier · défaut « non chiffré »</small></label><div class="in">—</div></div>
+    </div>
+    <div class="note" style="color:var(--app-muted)">Un champ vidé s'imprime « non chiffré ». Jamais de défaut silencieux. Les taxes (TA, TFPB) ne sont pas des hypothèses : elles viennent de la DGFiP et ne se modifient pas ici.</div>
+  </details>
+  <div class="cta">Générer le Dossier financier →</div>
+</div>
+
+<div class="stage">2 · Le document — 4 pages</div>
+<div class="doc">
+  <div class="head">
+    <div><b>Dossier financier</b>97410000AN0347 · 7 Rue du Stade de l'Ilet, Saint-Benoît</div>
+    <div style="text-align:right"><b>FI-AAAAMMJJ-0347</b>généré le JJ/MM/AAAA · contenance Cadastre</div>
+  </div>
+  <div class="note">En-tête compact, pas de page de garde. Tous les montants en <b>hors taxes</b>.</div>
+
+  <section>
+    <div class="sec-head"><span class="num">1</span><h2>Le verdict</h2></div>
+    <div class="verdict rouge">Une phrase : ce que l'opération supporte comme prix d'achat, ou ce qu'il manque.<i>Rouge / vert selon le signe de la charge foncière. Jamais de prose IA.</i></div>
+    <div class="tiles">
+      <div><b>—</b><span>Charge foncière supportable</span></div>
+      <div><b>—</b><span>Plancher → plafond (sensibilité)</span></div>
+      <div><b>—</b><span>Écart au prix demandé</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">2</span><h2>Vos hypothèses</h2></div>
+    <table>
+      <tr><td class="l">Prix demandé</td><td class="v">—</td><td class="s">saisi</td><td class="n"><span class="chip pro">projet</span></td></tr>
+      <tr><td class="l">Programme : logements, typologie</td><td class="v">—</td><td class="s">saisi · pré-proposé depuis la capacité</td><td class="n"><span class="chip pro">projet</span></td></tr>
+      <tr><td class="l">Régime de TVA</td><td class="v">—</td><td class="s">saisi</td><td class="n"><span class="chip pro">projet</span></td></tr>
+      <tr><td class="l">Prix de sortie €/m²</td><td class="v">—</td><td class="s">DVF — neuf observé du secteur</td><td class="n"><span class="chip src">sourcé</span></td></tr>
+      <tr><td class="l">Coût de construction €/m²</td><td class="v">—</td><td class="s">EPTB SDES 2024</td><td class="n"><span class="chip src">sourcé</span></td></tr>
+      <tr><td class="l">Honoraires, aléas, marge, frais d'acquisition</td><td class="v">—</td><td class="s">conventions LABUSE, modifiables</td><td class="n"><span class="chip est">estimé</span></td></tr>
+      <tr><td class="l">VRD, stationnement, démolition, portage</td><td class="v">—</td><td class="s">saisis ou « non chiffré »</td><td class="n"><span class="chip pro">projet</span></td></tr>
+    </table>
+    <div class="note">Chaque ligne dit d'où elle vient. Une hypothèse modifiée par l'utilisateur passe en « projet ».</div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">3</span><h2>Le programme</h2></div>
+    <table>
+      <tr><td class="l">Surface de plancher constructible</td><td class="v">—</td><td class="s">règlement PLU calibré · BD TOPO</td><td class="n"><span class="chip der">dérivé</span></td></tr>
+      <tr><td class="l">Surface habitable vendable</td><td class="v">—</td><td class="s">rendement conventionnel</td><td class="n"><span class="chip est">estimé</span></td></tr>
+      <tr><td class="l">Logements retenus</td><td class="v">—</td><td class="s">saisi ou capacité</td><td class="n"><span class="chip pro">projet</span></td></tr>
+    </table>
+    <div class="note">Mêmes chiffres que le §10 du Dossier — même moteur, même id du registre.</div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">4</span><h2>Le bilan à rebours (HT)</h2></div>
+    <table>
+      <tr><td class="l">Chiffre d'affaires HT</td><td class="v">—</td><td class="s">prix de sortie × surface vendable, TVA retirée</td><td class="n"><span class="chip der">dérivé</span></td></tr>
+      <tr><td class="l">− Construction</td><td class="v">—</td><td class="s">EPTB × SDP</td><td class="n"><span class="chip der">dérivé</span></td></tr>
+      <tr><td class="l">− Honoraires techniques</td><td class="v">—</td><td class="s">% construction</td><td class="n"><span class="chip der">dérivé</span></td></tr>
+      <tr><td class="l">− VRD</td><td class="v">—</td><td class="s">€/m² × surface aménagée (assiette corrigée)</td><td class="n"><span class="chip der">dérivé</span></td></tr>
+      <tr><td class="l">− Stationnement</td><td class="v">—</td><td class="s">saisi</td><td class="n"><span class="chip pro">projet</span></td></tr>
+      <tr><td class="l">− Démolition · dépollution</td><td class="v">—</td><td class="s">saisi</td><td class="n"><span class="chip pro">projet</span></td></tr>
+      <tr><td class="l">− Aléas</td><td class="v">—</td><td class="s">% travaux</td><td class="n"><span class="chip der">dérivé</span></td></tr>
+      <tr><td class="l">− Taxe d'aménagement</td><td class="v">—</td><td class="s">DGFiP — taux communal + départemental × SDP</td><td class="n"><span class="chip src">sourcé</span></td></tr>
+      <tr><td class="l">− Redevance d'archéologie préventive</td><td class="v">—</td><td class="s">barème national × SDP</td><td class="n"><span class="chip src">sourcé</span></td></tr>
+      <tr><td class="l">− Portage financier</td><td class="v">—</td><td class="s">durée × taux</td><td class="n"><span class="chip der">dérivé</span></td></tr>
+      <tr><td class="l">− Frais d'acquisition</td><td class="v">—</td><td class="s">% prix d'achat</td><td class="n"><span class="chip der">dérivé</span></td></tr>
+      <tr><td class="l">− Taxe foncière pendant le portage</td><td class="v">—</td><td class="s">DGFiP REI × durée</td><td class="n"><span class="chip der">dérivé</span></td></tr>
+      <tr><td class="l">− Marge visée</td><td class="v">—</td><td class="s">% CA</td><td class="n"><span class="chip der">dérivé</span></td></tr>
+      <tr class="total"><td class="l">= Charge foncière supportable</td><td class="v">—</td><td class="s">ce que le terrain peut coûter</td><td class="n"><span class="chip der">dérivé</span></td></tr>
+    </table>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">5</span><h2>Sensibilité</h2></div>
+    <div class="note">Charge foncière selon le prix de sortie (lignes) et le coût de construction (colonnes), ±10 %.</div>
+    <div class="grid3">
+      <div class="h"></div><div class="h">coût −10 %</div><div class="h">coût</div><div class="h">coût +10 %</div>
+      <div class="h">sortie +10 %</div><div>—</div><div>—</div><div>—</div>
+      <div class="h">sortie</div><div>—</div><div>—</div><div>—</div>
+      <div class="h">sortie −10 %</div><div>—</div><div>—</div><div>—</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">6</span><h2>Face au prix demandé</h2></div>
+    <table>
+      <tr><td class="l">Ce que l'opération supporte</td><td class="v">—</td><td class="s">charge foncière</td><td class="n"><span class="chip der">dérivé</span></td></tr>
+      <tr><td class="l">Seuil de rentabilité (prix d'achat max)</td><td class="v">—</td><td class="s">marge à 0</td><td class="n"><span class="chip der">dérivé</span></td></tr>
+      <tr><td class="l">Prix de revient au m² vendable</td><td class="v">—</td><td class="s">total coûts / surface vendable</td><td class="n"><span class="chip der">dérivé</span></td></tr>
+      <tr><td class="l">Prix d'achat historique de la parcelle — information, hors calcul</td><td class="v">—</td><td class="s">DVF — dernière mutation</td><td class="n"><span class="chip src">sourcé</span></td></tr>
+    </table>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">7</span><h2>Fiscalité et calendrier</h2></div>
+    <table>
+      <tr><td class="l">TFPB : part communale, EPCI, TEOM</td><td class="v">—</td><td class="s">DGFiP — REI</td><td class="n"><span class="chip src">sourcé</span></td></tr>
+      <tr><td class="l">Zonage A/B/C</td><td class="v">—</td><td class="s">DHUP</td><td class="n"><span class="chip src">sourcé</span></td></tr>
+      <tr><td class="l">Dispositifs ouverts : ZFANG, TVA réduite QPV, LLS</td><td class="v">—</td><td class="s">Légifrance · ANCT · CGI</td><td class="n"><span class="chip src">sourcé</span></td></tr>
+      <tr><td class="l">Calendrier : acquisition → instruction → chantier → livraison</td><td class="v">—</td><td class="s">durée de portage</td><td class="n"><span class="chip est">estimé</span></td></tr>
+    </table>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">8</span><h2>Ce que ce document n'établit pas</h2></div>
+    <div class="note">Financement, valeur vénale, coût réel de démolition, certificat d'urbanisme, position du propriétaire. Cinq lignes fixes.</div>
+  </section>
+
+  <div class="legend">
+    <span><span class="chip src">sourcé</span> lu dans la source</span>
+    <span><span class="chip der">dérivé</span> calculé</span>
+    <span><span class="chip est">estimé</span> convention, dite comme telle</span>
+    <span><span class="chip pro">projet</span> saisi par vous</span>
+  </div>
+
+  <div class="decision" style="border-style:solid;border-color:var(--mint);background:var(--mint-soft)">
+    <b>Validé le 20/09</b>
+    <ul class="plain">
+      <li>Questionnaire : un écran, 3 champs obligatoires ; hypothèses avancées repliées, pré-remplies avec source.</li>
+      <li>Programme pré-rempli depuis la capacité du Dossier, affiché grisé « exemple », à confirmer.</li>
+      <li>Prix d'achat historique (DVF) imprimé en §6 à titre d'information, hors calcul.</li>
+      <li>Stationnement : saisie, « non chiffré » par défaut — un défaut seulement s'il existe un référentiel public sûr.</li>
+      <li>VRD : assiette = surface aménagée, pas le terrain entier.</li>
+      <li>Tout en HT. Les taxes (TA, TFPB) viennent de la DGFiP et ne se modifient pas.</li>
+    </ul>
+  </div>
+</div>
+</div>
+</body>
+</html>

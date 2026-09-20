@@ -303,7 +303,7 @@ LECTURES: tuple[Lecture, ...] = (
       "contrôles de conformité de la démo (comptes, validité geom, index) — diagnostics internes, rien de servi au client"),
     L("parcels", "exports/builder.py", None, None,
       "lit ST_AsGeoJSON(geom) pour dessiner le plan de situation des PDF — fond de carte ; les valeurs imprimées viennent de la fiche (collecte)"),
-    L("parcels", "exports/collecte.py", None, None,
+    L("parcels", "exports/robinet_fiche.py", None, None,
       "résolution idu→parcels.id ; les valeurs des PDF sont relues de la fiche /parcels/{idu} (doctrine écran = PDF)"),
     L("parcels", "faisabilite/au_ouverture.py", None, None,
       "surface/geom des parcelles AU voisines pour instruire l'ouverture des zones AU et les délaissés — instruction interne, chiffre AU hors candidats"),

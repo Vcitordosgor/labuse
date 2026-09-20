@@ -9,6 +9,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: bati
 
 donnees:
   # ── EN TÊTE : ce qu'il y a dessus, et ce qu'il reste à bâtir (ça change la décision) ──
@@ -34,7 +35,7 @@ donnees:
     pourquoi: "La hauteur mesurée commande le potentiel de surélévation ; en tête."
 
   - quoi:  surface_libre_sol_m2
-    ou:    { rang: 40, etat: en_tete, section: "Ce qu'il reste à bâtir" }
+    ou:    { rang: 40, etat: en_tete, section: "Ce qu'il reste à bâtir" , fiche_section: terrain }
     comment: { libelle: "Surface au sol libre", unite: "m²", format: entier_m2, i: "Surface de la parcelle non couverte par du bâti (parcelle − emprise bâtie)." }
     absence: "Surface au sol libre : non calculable (emprise ou surface parcelle manquante)."
     absence_type: absente_ici
@@ -42,14 +43,14 @@ donnees:
 
   # ── REPLIÉ : la couverture du sol (OCS GE / CoSIA) et le toit ──
   - quoi:  part_artificialisee_pct
-    ou:    { rang: 50, etat: replie, section: "Couverture du sol" }
+    ou:    { rang: 50, etat: replie, section: "Couverture du sol" , fiche_section: terrain }
     comment: { libelle: "Part artificialisée (OCS GE)", unite: "%", format: pourcent, i: "Part de la parcelle artificialisée d'après l'OCS GE 2022 (donnée d'îlot, pas la précision cadastrale) ; n'entre pas dans le score." }
     absence: "Part artificialisée : hors couverture OCS GE pour cette parcelle."
     absence_type: absente_ici
     pourquoi: "Contexte d'artificialisation ; utile mais ne décide pas seul — replié."
 
   - quoi:  usage_sol_dominant
-    ou:    { rang: 60, etat: replie, section: "Couverture du sol" }
+    ou:    { rang: 60, etat: replie, section: "Couverture du sol" , fiche_section: terrain }
     comment: { libelle: "Usage du sol dominant (OCS GE)", format: classe, i: "Code d'usage OCS GE dominant par aire intersectée (millésime 2022, nomenclature IGN) — donnée d'îlot." }
     absence: "Usage du sol dominant : hors couverture OCS GE pour cette parcelle."
     absence_type: absente_ici

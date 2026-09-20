@@ -13,8 +13,9 @@ from datetime import date
 
 from ..registre.valeur import Valeur
 from . import archive, numeros
-from .blocs import (apporteur, autour, bilan, commune, financier, identite, marche, potentiel,
-                    reseaux, risques, sources, zonage)
+# EXPORTS-REBRANCHEMENT-1 lot 1 — le Dossier miroir ne consomme plus les anciens blocs de
+# section ; restent les blocs-documents (financier, apporteur) et la clôture (sources).
+from .blocs import apporteur, financier
 from .registre_fmt import fmt_m2
 from .rendu import Cartouche, esc, esc_noms, page_html, render_pdf
 
@@ -56,13 +57,15 @@ _FOOT = {
                   "transmettre au propriétaire. Ne vaut pas mandat. Données publiques LABUSE au {au}."),
 }
 
-#: composition de chaque document = la suite ordonnée des blocs (catalogue EXPORTS-SOURCES).
-#: Le Dossier = 10 sections ; le Flash = le Dossier SANS la section 9 (bilan), même builder.
+#: composition de chaque document. EXPORTS-REBRANCHEMENT-1 lot 1 : le Dossier n'est PLUS une
+#: suite de blocs — il est le MIROIR des déclarations de la fiche (exports/miroir.py, 11
+#: sections de declarations/fiche/sections.yaml) + la clôture Sources/limites. Le Flash EST le
+#: Dossier (un nom commercial, pas un document : rendu identique, même numéro DP).
 #: RECETTE-3 (T2, décision Vic) — le document Résumé est SUPPRIMÉ (route, builder, bloc, bouton).
-_DOSSIER = [identite, zonage, potentiel, risques, marche, reseaux, autour, commune, bilan, sources]
-DOCUMENTS: dict[str, list] = {
-    "dossier": _DOSSIER,
-    "flash": [b for b in _DOSSIER if b is not bilan],
+_MIROIR = "miroir"
+DOCUMENTS: dict[str, object] = {
+    "dossier": _MIROIR,
+    "flash": _MIROIR,
     "financier": [financier],
     "apporteur": [apporteur],
 }
@@ -382,12 +385,35 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
                jour: date | None = None, compte_id: int | None = None) -> ResultatDoc:
     """Assemble le HTML complet d'un document et les Valeur lues (pour l'archive). Pour le Financier,
     `compte_id` sert à charger le questionnaire persisté du porteur."""
-    from .collecte import collecte
+    from .robinet_fiche import EXTRACTEURS, collecte
     if document not in DOCUMENTS:
         raise ValueError(f"document inconnu : {document!r} (câblé : {sorted(DOCUMENTS)})")
     j = jour or date.today()
     f = fiche or {}
+    # EXPORTS-REBRANCHEMENT-1 lot 1 — Flash = Dossier (nom commercial) : rendu, libellé et
+    # NUMÉRO identiques (preuve : pdftotext diff vide). L'entrée « flash » reste acceptée
+    # (facturation _flash_fulfill), le document rendu est LE Dossier.
+    document = "dossier" if document == "flash" else document
     numero = numeros.numero_rapport(document, idu, j)
+    if DOCUMENTS[document] == _MIROIR:
+        from . import miroir
+        from .blocs import sources as bloc_sources
+        ids = sorted(ids_m for ids_m in miroir.ids_declares() | {"run_label_servi"}
+                     if ids_m in EXTRACTEURS)
+        valeurs = collecte(db, idu, ids, fiche=f)
+        label, _st = _LABEL["dossier"]
+        adresse = f.get("adresse") or ""
+        au = f.get("donnees_labuse_au") or f"{j:%d/%m/%Y}"
+        cart = Cartouche(
+            doc_title=f"LABUSE — {label}" + (f" · {adresse}" if adresse else ""),
+            doc_ref=f"{idu} · {numero}",
+            doc_foot=_FOOT["dossier"].format(au=au))
+        corps = (_cover("dossier", idu, f, numero, j, valeurs)
+                 + miroir.rendu_sections(valeurs, f)
+                 + bloc_sources.rendu(valeurs))
+        html = page_html(label, cart, corps)
+        return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart,
+                           contexte={"adresse": adresse})
     blocs = DOCUMENTS[document]
     ids = sorted({cid for b in blocs for cid in b.IDS})
     valeurs = collecte(db, idu, ids, fiche=f)

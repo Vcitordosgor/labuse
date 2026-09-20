@@ -105,17 +105,20 @@ def test_verdict_zonage_et_contenu():
     # articles cités (plus de « Zone U » tronqué à côté d'un règlement « U1a »).
     assert "Zone U1a (famille U) — urbaine, constructible" in html
     assert "Interdites" in html and "CDAC" in html
-    assert 'class="cloud"' in html               # nuage des ventes
-    assert "maille IRIS" in html                 # §7 mode réel dans le titre
+    # EXPORTS-REBRANCHEMENT-1 lot 1 — le Dossier est le MIROIR de la fiche : sections de
+    # sections.yaml (le nuage des ventes et le titre « maille IRIS » étaient l'ancien gabarit).
+    assert "8. Marché" in html and "9. Quartier" in html
 
 
-def test_flash_est_dossier_moins_neuf():
+def test_flash_est_dossier_identique():
+    # EXPORTS-REBRANCHEMENT-1 lot 1 — Flash = Dossier (un nom commercial, pas un document) :
+    # rendu STRICTEMENT identique, même numéro DP, même libellé « Dossier parcelle ».
     d = _dossier().html
     f = builder.construire(_FakeDB(), "97415000BO0852", "flash", fiche=FICHE, jour=date(2026, 9, 5)).html
-    assert "Renseignez votre opération" in d          # §9 dans le Dossier
-    assert "Renseignez votre opération" not in f      # absent du Flash
-    assert "10. Sources" in f                          # le reste est là
-    assert "Rapport Flash" in f
+    assert f == d
+    assert "Renseignez votre opération" in f           # §11 Simulation (renvoi au Financier)
+    assert "Sources, limites et mentions" in f
+    assert "Rapport Flash" not in f
 
 
 def test_faux_constructible_jamais(zone="N"):
@@ -134,8 +137,10 @@ def test_omission_quand_donnee_absente():
     html = builder.construire(_FakeDB(), "IDU", "dossier",
                               fiche={"surface_m2": 500, "commune": "X"}, jour=date(2026, 9, 5)).html
     assert "◌" not in html and "non chiffré" not in html
-    assert "1. Identité et situation" in html          # surface servie
-    assert "2. Zonage" not in html                     # pas de règlement → section omise
+    # EXPORTS-REBRANCHEMENT-1 lot 1 — le miroir garde les 11 sections de la fiche et DIT les
+    # absences (« Vérifié, sans objet », phrases déclarées) au lieu d'omettre des sections.
+    assert "1. Identité" in html
+    assert "Vérifié, sans objet" in html
 
 
 def test_archive_reproductible(tmp_path):

@@ -12,6 +12,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: identite
 donnees:
   - quoi:  adresse_ban
     ou:    { rang: 10, etat: en_tete, section: "Identité" }
@@ -22,6 +23,15 @@ donnees:
     absence: "Adresse non disponible — parcelle non rattachée à une voie (BAN)."
     absence_type: absente_ici
     pourquoi: "L'adresse identifie le bien ; en tête de la fiche."
+  # EXPORTS-REBRANCHEMENT-1 lot 1 — l'écran (① Identité) montre la dernière vente DVF de la
+  # parcelle ; elle était servie au PDF hors déclaration (id des blocs). Déclarée ici.
+  - quoi:  prix_achat_historique_eur
+    ou:    { rang: 15, etat: replie, section: "Sur la parcelle" }
+    comment: { libelle: "Dernière vente (DVF)", format: euro, i: "Dernière mutation DVF observée sur la parcelle (valeur actée, ventes publiées avec un à trois ans de délai)." }
+    absence: "Dernière vente : aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025)."
+    absence_type: absente_ici
+    pourquoi: "Le prix déjà payé ancre toute négociation ; replié sous l'identité."
+
   - quoi:  parcelle_geometrie
     ou:    { rang: 20, etat: replie, section: "Identifiants et références" }
     comment:
@@ -48,6 +58,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: urbanisme
 donnees:
   - quoi:  er_emplacement_reserve
     ou:    { rang: 10, etat: replie, section: "Droit des sols (ER · EBC · DPU · PEB)" }
@@ -118,6 +129,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: potentiel
 donnees:
   - quoi:  surface_plancher_m2
     ou:    { rang: 10, etat: replie, section: "Ce qui est constructible" }
@@ -158,6 +170,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: reseaux
 donnees:
   - quoi:  part_logements_egout_pct
     ou:    { rang: 10, etat: replie, section: "Viabilisation" }
@@ -188,6 +201,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: risques
 donnees:
   - quoi:  sols_parcelle
     ou:    { rang: 10, etat: replie, section: "Sols (SIS · CASIAS)" }
@@ -208,6 +222,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: quartier
 donnees:
   - quoi:  equipements_proximite_liste
     ou:    { rang: 10, etat: replie, section: "À proximité" }
@@ -227,6 +242,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: marche
 donnees:
   - quoi:  ventes_100m_n
     ou:    { rang: 10, etat: replie, section: "Le secteur" }

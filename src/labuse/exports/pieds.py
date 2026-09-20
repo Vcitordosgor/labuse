@@ -31,7 +31,11 @@ def _noms_reservoirs() -> dict[str, str]:
 
 #: RECETTE-11 D6 — réservoirs enregistrés mais absents de reservoirs.csv : sans nom affiché, leur
 #: id technique (« rpls_sdes ») fuyait au client dans le pied « Sources : … ». On donne le nom public.
-_NOMS_REPLI = {"rpls_sdes": "RPLS — logements locatifs sociaux (SDES)"}
+_NOMS_REPLI = {"rpls_sdes": "RPLS — logements locatifs sociaux (SDES)",
+               # EXPORTS-REBRANCHEMENT-1 lot 1 — réservoirs du miroir sans nom au catalogue.
+               "rnb": "RNB — Référentiel national des bâtiments (IGN)",
+               "ban_plus": "BAN PLUS — liens adresse-bâtiment (IGN)",
+               "taxe_amenagement": "Taxe d'aménagement — barème public (DGFiP/DELTA)"}
 
 
 def sources_lues(valeurs: Iterable[Valeur]) -> list[tuple[str, str | None]]:
@@ -47,11 +51,13 @@ def sources_lues(valeurs: Iterable[Valeur]) -> list[tuple[str, str | None]]:
 
 
 def pied_section(valeurs: Iterable[Valeur]) -> str:
-    """Le fragment HTML du pied d'une section : « Sources : Nom (millésime) · Nom · … »
+    """Le fragment HTML du pied d'une section : « Sources : Nom · Nom · … » — noms seuls.
     Rien (chaîne vide) si aucune source n'est en jeu (bloc purement interne)."""
     sources = sources_lues(valeurs)
     if not sources:
         return ""
-    parts = [f"{nom} ({mill})" if mill else nom for nom, mill in sources]
+    # EXPORTS-REBRANCHEMENT-1 lot 2 — NOMS seuls, aucun millésime ni date côté client
+    # (doctrine PAGE-SOURCES-1 18/09) ; le millésime reste lisible côté admin (Circuit, trace=1).
+    parts = [nom for nom, _mill in sources]
     from .rendu import note
     return note("Sources : " + " · ".join(parts))

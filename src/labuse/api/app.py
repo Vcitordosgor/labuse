@@ -3675,6 +3675,13 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "SELECT type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre "
         "FROM dvf_secteur_medianes WHERE secteur = substring(:idu FROM 1 FOR 10) "
         "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()]
+    # EXPORTS-REBRANCHEMENT-1 lot 0 — la fenêtre STOCKÉE porte encore « (millésimes géo-DVF
+    # disponibles) » (jargon de source, interdit côté client depuis PAGE-SOURCES-1 18/09) :
+    # normalisée AU SERVICE en « ventes 2021-2025 » ; la constante d'ingestion (dvf_marche.FENETRE)
+    # est corrigée pour les prochains rebuilds de dvf_secteur_medianes.
+    for _r in dvf_secteur:
+        if _r.get("fenetre"):
+            _r["fenetre"] = str(_r["fenetre"]).split(" (")[0]
     # SOURCES-4 lot 2 (DVF+) — adresse / nombre de pièces / surfaces Carrez / nombre de lots de la
     # DERNIÈRE mutation de la parcelle, depuis la table latérale dvf_mutation_detail (ne nourrit NI le
     # scoring NI le marché). Jointe via la dernière mutation (id_mutation) de la parcelle.
@@ -4817,7 +4824,9 @@ def _plu_fraicheur(idu: str) -> dict | None:
     # le `note` config détaillé reste servi à part (traçabilité), il ne se substitue pas aux 3 temps.
     doc = f"PLU approuvé le {horizon}" if horizon else "PLU"
     if statut == "a_jour":
-        document_servi, fait_foi = doc, "Document à jour du GPU — c'est celui qui fait foi."
+        # EXPORTS-REBRANCHEMENT-1 lot 0 — « à jour du GPU » (fraîcheur de NOTRE synchronisation)
+        # ne se dit plus au client (doctrine PAGE-SOURCES-1, 18/09) : on dit le FAIT juridique.
+        document_servi, fait_foi = doc, "Document opposable — il fait foi à ce jour."
         # M57-P1 (d) : ce libellé est GÉNÉRIQUE (gated sur `note` config = assertion d'agent, PAS
         # une source ni une procédure détectée). Reformulé en avertissement NEUTRE, sans « en cours »
         # ni sablier (cf. rendu front qui n'applique plus le cadre « En cours (non servi) » à a_jour).
@@ -4966,15 +4975,22 @@ def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
     # (zone principale d'abord) et on écarte les zones sous le SEUIL (2 %) — en gardant TOUJOURS au moins
     # la dominante (une parcelle 100 % UD garde UD ; une 60/40 U/N garde les deux ; le contact de bord tombe).
     _SEUIL_PART = 0.02
+    # EXPORTS-REBRANCHEMENT-1 lot 0 — grouper par CODE de zone réel (même token que
+    # zone_servie._TOK : premier mot du libellé GPU), plus jamais par `subtype` (famille) : deux
+    # zones d'une même famille (N à 99,8 % + Nerl à 0,2 %) fusionnaient et `max(libelle)` faisait
+    # gagner le libellé du LISERÉ — le Dossier disait « Zone Nerl » et servait ses règles pour une
+    # parcelle à 99,8 % en N, quand le Pré-dossier (zone_servie) disait N. Une seule vérité : le token.
     zr = [dict(r) for r in db.execute(text(
-        """SELECT sl.subtype AS zone, max(sl.attrs->>'libelle') AS libelle,
+        """SELECT COALESCE(NULLIF(rtrim(split_part(btrim(sl.attrs->>'libelle'), ' ', 1), ':'), ''),
+                           rtrim(split_part(btrim(sl.name), ' ', 1), ':')) AS zone,
+                  max(sl.attrs->>'libelle') AS libelle,
                   max(sl.attrs->>'idurba') AS idurba,
                   sum(ST_Area(ST_Intersection(sl.geom_2975, p.geom_2975)))
                     / NULLIF(max(ST_Area(p.geom_2975)), 0) AS part
              FROM spatial_layers sl JOIN parcels p ON p.idu = :idu
             WHERE sl.kind = 'plu_gpu_zone'
               AND ST_Intersects(sl.geom_2975, p.geom_2975)
-            GROUP BY sl.subtype
+            GROUP BY 1
             ORDER BY part DESC NULLS LAST"""), {"idu": idu}).mappings().all()]
     zones = [{"zone": z["zone"], "libelle": z["libelle"], "idurba": z["idurba"],
               "part": round(float(z["part"]), 4) if z["part"] is not None else None}

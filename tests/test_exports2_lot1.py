@@ -91,7 +91,8 @@ def test_verdict_zonage_deterministe():
 def test_pied_section_depuis_reservoirs():
     v = _V("surface_parcelle_m2", 742, reservoirs={"cadastre_api_carto": "PCI 2026-08"})
     pied = pieds.pied_section([v])
-    assert "Sources" in pied and "Cadastre" in pied and "PCI 2026-08" in pied
+    # EXPORTS-REBRANCHEMENT-1 lot 2 — le pied dit le NOM de la source, jamais son millésime.
+    assert "Sources" in pied and "Cadastre" in pied and "PCI 2026-08" not in pied
     assert pieds.pied_section([_V("surface_parcelle_m2", 1)]) == ""  # aucun réservoir → pas de pied
 
 
@@ -151,7 +152,9 @@ def test_builder_construit_dossier_partiel():
              "commune": "Saint-Paul", "proprietaire_moral": True}
     res = builder.construire(_FakeDB(), "97415000BO0852", "dossier", fiche=fiche, jour=date(2026, 9, 5))
     assert res.numero == "DP-20260905-0852"
-    assert "Dossier parcelle" in res.html and "1. Identité et situation" in res.html
+    # EXPORTS-REBRANCHEMENT-1 lot 1 — le Dossier est le MIROIR de la fiche : sections de
+    # declarations/fiche/sections.yaml (« 1. Identité »), plus les anciens titres de blocs.
+    assert "Dossier parcelle" in res.html and "1. Identité" in res.html
     assert "surface_parcelle_m2" in res.valeurs
     assert "<html" in res.html and "theme.css" in res.html
     # cartouche @page : n° court, mais l'IDU ENTIER y vit (doc_ref) et sur la page de garde

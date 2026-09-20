@@ -211,8 +211,8 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
     regles = ""
     if ident["regles"]:
         r = ident["regles"]
-        if r.get("emprise_max_m2"):
-            regles += f"<tr><td>Emprise au sol maximale (calibrée)</td><td>{r['emprise_max_m2']} m²</td></tr>"
+        # EXPORTS-REBRANCHEMENT-1 lot 0 — `emprise_max_m2` retiré : plus AUCUN producteur ne le
+        # remplit (lecture parcel_residuel_bati supprimée en EXPORTS-1 lot 3) — la ligne était morte.
         # M129-2 A/A.3 : hauteur du PLU CALIBRÉ (source unique collect_report_data → resolve_zone),
         # égout et faîtage nommés distinctement ; plus de « hauteur max » générique (9 m). D : plus de
         # « Confiance du calibrage » (indice interne) sur un exportable.
@@ -462,21 +462,29 @@ def _bati_geojson(db: Session, idu: str) -> str | None:
     return row
 
 
-def _terrain_dims(db: Session, idu: str) -> dict:
-    """Enveloppe rectangulaire du terrain (bbox, mètres vrais 2975), surface réelle, et emprise
-    bâtie DANS la parcelle. M129-2 E : l'emprise est CLIPPÉE à la parcelle (ST_Intersection) — seule
-    la surface bâtie DANS le terrain a un sens sur un plan de masse (jamais l'emprise totale d'un
-    bâtiment qui déborde). F : la bbox est une ENVELOPPE, pas la surface (terrain non rectangulaire)."""
+def _terrain_dims(db: Session, idu: str, fiche: dict | None = None) -> dict:
+    """Enveloppe rectangulaire du terrain (bbox, mètres vrais 2975) + surface et emprise bâtie.
+    EXPORTS-REBRANCHEMENT-1 lot 3 — surface et emprise viennent de LA FICHE (`surface_m2`,
+    `le_bien.emprise_batie_m2` : les mêmes robinets que l'écran et le Dossier — plus de
+    recalcul propre au pré-dossier) ; la bbox reste géométrique (une COTE de dessin, pas une
+    donnée du registre). Repli SQL historique si la fiche n'est pas fournie (M129-2 E :
+    emprise clippée à la parcelle)."""
     r = db.execute(text(
         """SELECT round((ST_XMax(geom_2975) - ST_XMin(geom_2975))::numeric) AS larg,
                   round((ST_YMax(geom_2975) - ST_YMin(geom_2975))::numeric) AS prof,
                   round(ST_Area(geom_2975)::numeric) AS surface
            FROM parcels WHERE idu = :idu"""), {"idu": idu}).mappings().first() or {}
+    _int = lambda v: int(v) if v is not None else None    # noqa: E731 — cast Decimal → int
+    if fiche:
+        surf = fiche.get("surface_m2")
+        emp = (fiche.get("le_bien") or {}).get("emprise_batie_m2")
+        return {"largeur_m": _int(r.get("larg")), "profondeur_m": _int(r.get("prof")),
+                "surface_m2": _int(round(float(surf))) if surf is not None else _int(r.get("surface")),
+                "emprise_batie_m2": _int(emp)}
     emp = db.execute(text(
         """SELECT round(coalesce(sum(ST_Area(ST_Intersection(sl.geom_2975, p.geom_2975))), 0)) AS emprise
            FROM spatial_layers sl JOIN parcels p ON ST_Intersects(sl.geom_2975, p.geom_2975)
            WHERE sl.kind = 'batiment' AND p.idu = :idu"""), {"idu": idu}).scalar()
-    _int = lambda v: int(v) if v is not None else None    # noqa: E731 — cast Decimal → int
     return {"largeur_m": _int(r.get("larg")), "profondeur_m": _int(r.get("prof")),
             "surface_m2": _int(r.get("surface")), "emprise_batie_m2": _int(emp)}
 
@@ -516,13 +524,13 @@ def _rings_2975(gj_str: str | None) -> list[list[tuple[float, float]]]:
     return []
 
 
-def _pcmi2(db: Session, parcelle: dict) -> bytes:
+def _pcmi2(db: Session, parcelle: dict, fiche: dict | None = None) -> bytes:
     """B (PCMI2) — plan de masse de l'ÉTAT EXISTANT, coté. M129-2 C : DESSIN VECTORIEL (contour
     cadastral + bâti) à une ÉCHELLE du domaine plan de masse (1/200–1/500), qui remplit la feuille —
     l'ortho plafonne à z18 (flou au recadrage serré). Cotes lisibles, Nord + barre d'échelle. La
     partie PROJET reste vide : c'est au pétitionnaire de la dessiner."""
     idu = parcelle["idu"]
-    dims = _terrain_dims(db, idu)
+    dims = _terrain_dims(db, idu, fiche)
     pgj = db.execute(text("SELECT ST_AsGeoJSON(geom_2975, 2) FROM parcels WHERE idu = :i"),
                      {"i": idu}).scalar()
     # P4 — les bâtiments RESTENT DISTINCTS (ST_Collect, pas ST_Union) : la fiche dit 2 bâtiments,
@@ -626,7 +634,8 @@ def _pcmi2(db: Session, parcelle: dict) -> bytes:
     return bytes(pdf.output())
 
 
-def _pcmi4(db: Session, idu: str, parcelle: dict, adr: dict | None = None) -> bytes:
+def _pcmi4(db: Session, idu: str, parcelle: dict, adr: dict | None = None,
+           fiche: dict | None = None) -> bytes:
     """C (PCMI4) — notice décrivant le TERRAIN, pré-rédigée (partie projet laissée vide).
     Chaque affirmation porte sa source ; aucun verdict, aucune appréciation (doctrine). P3 : la
     notice reprend l'adresse, le PPR (zone bleue), le bruit, les servitudes (SUP/PM1), l'ABF —
@@ -651,7 +660,7 @@ def _pcmi4(db: Session, idu: str, parcelle: dict, adr: dict | None = None) -> by
         lignes.append(("Végétation",
                        f"Couvert arboré estimé à ~{terr['canopee']['ombrage_pct']} % de la parcelle.",
                        "détection canopée (ortho)"))
-    dims = _terrain_dims(db, idu)
+    dims = _terrain_dims(db, idu, fiche)
     if dims.get("emprise_batie_m2"):
         lignes.append(("Bâti existant",
                        f"Emprise bâtie existante estimée à ~{int(dims['emprise_batie_m2'])} m² (au sol).",
@@ -890,6 +899,13 @@ def pre_dossier_zip(idu: str, request: Request, db: Session = Depends(get_db)) -
 
     parcelle = dict(p)
     adr = dict(adresse) if adresse else None
+    # EXPORTS-REBRANCHEMENT-1 lot 3 — LA FICHE est lue UNE fois : les chiffres des pièces
+    # (surface, emprise bâtie…) viennent des mêmes robinets que l'écran et le Dossier.
+    try:
+        from .app import parcel_fiche
+        fiche = parcel_fiche(idu, db=db, request=request)
+    except Exception:  # noqa: BLE001 — une fiche en échec ne bloque pas le pack (repli SQL dit)
+        fiche = None
     scen = _scenario(db, idu)          # P1 — maison individuelle / collectif
     # M129 E — nommage aligné sur la doctrine {IDU}-labuse (pack multi-pièces : préfixe commun +
     # suffixe de pièce explicite). Le ZIP lui-même : {IDU}-labuse-predossier-pc.zip.
@@ -901,8 +917,8 @@ def pre_dossier_zip(idu: str, request: Request, db: Session = Depends(get_db)) -
             z.writestr(f"{pfx}-CERFA-{CERFA_VERSION.replace('*', '-')}-prerempli.pdf", cerfa)
         for nom, gen in (
             (f"{pfx}-PCMI1-plan-situation.pdf", lambda: _pcmi1(parcelle)),
-            (f"{pfx}-PCMI2-plan-masse-existant.pdf", lambda: _pcmi2(db, parcelle)),
-            (f"{pfx}-PCMI4-notice-terrain.pdf", lambda: _pcmi4(db, idu, parcelle, adr)),
+            (f"{pfx}-PCMI2-plan-masse-existant.pdf", lambda: _pcmi2(db, parcelle, fiche)),
+            (f"{pfx}-PCMI4-notice-terrain.pdf", lambda: _pcmi4(db, idu, parcelle, adr, fiche)),
             (f"{pfx}-PCMI7-8-prises-de-vue.pdf", lambda: _pcmi78(db, parcelle)),
             (f"{pfx}-regles-zonage.pdf", lambda: _regles_et_pieces(db, idu, scen)),
         ):

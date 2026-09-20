@@ -76,16 +76,28 @@ def generer(idu: str, outdir: Path) -> dict:
     d.mkdir(parents=True, exist_ok=True)
     fiche = c.get(f"/parcels/{idu}").json()
     (d / "fiche.json").write_text(json.dumps(fiche, ensure_ascii=False, indent=1))
-    # 1) les 4 documents servis par une route → le PDF EXACT que le client télécharge.
+    # 1) les documents servis par une route → le PDF EXACT que le client télécharge.
+    # EXPORTS-REBRANCHEMENT-1 — le Résumé n'existe plus (RECETTE-3, décision Vic) : retiré de la
+    # recette (il la faisait échouer 8 fois pour un document supprimé volontairement). Le
+    # Pré-dossier PC (ZIP) entre à la recette. Le Financier SANS questionnaire répond 422
+    # « document_non_etablissable » (RECETTE-5 V18b) : c'est le comportement VOULU, pas un échec.
     for name, url in (("dossier.pdf", f"/dossier/{idu}.pdf?carte=false"),
-                      ("resume.pdf", f"/resume/{idu}.pdf"),
                       ("financier.pdf", f"/financier/{idu}.pdf"),
                       ("apporteur.pdf", f"/apporteur/{idu}.pdf")):
         r = c.get(url)
+        if name == "financier.pdf" and r.status_code == 422                 and "document_non_etablissable" in r.text:
+            ok(f"{idu}/financier : 422 non établissable (V18b — saisie requise, comportement voulu)")
+            continue
         if r.status_code != 200:
             ko(f"{idu}/{name} : HTTP {r.status_code}")
             continue
         (d / name).write_bytes(r.content)
+    rz = c.get(f"/pre-dossier/{idu}.zip")
+    if rz.status_code != 200 or len(rz.content) < 10000:
+        ko(f"{idu}/predossier_pc.zip : HTTP {rz.status_code} ({len(rz.content)} o)")
+    else:
+        (d / "predossier_pc.zip").write_bytes(rz.content)
+        ok(f"{idu}/predossier_pc.zip : {len(rz.content)} o")
     # 2) le Flash par le builder (même chemin que la facturation).
     arch = d / "archives"
     arch.mkdir(exist_ok=True)
@@ -95,8 +107,9 @@ def generer(idu: str, outdir: Path) -> dict:
                                 chemin_pdf=str(d / "flash.pdf"))
     except Exception as exc:  # noqa: BLE001
         ko(f"{idu}/flash.pdf : {exc}")
-    # 3) archive JSON (1.6) — vérifiée pour les CINQ documents, sans écraser les PDF client.
-    for doc in ("dossier", "resume", "financier", "apporteur", "flash"):
+    # 3) archive JSON (1.6) — Résumé supprimé (RECETTE-3) ; le Financier sans saisie ne
+    # s'établit pas (V18b) : archives vérifiées pour dossier/apporteur/flash.
+    for doc in ("dossier", "apporteur", "flash"):
         try:
             with session_scope() as s:
                 builder.generer_pdf(s, idu, doc, fiche=fiche, jour=_date(2026, 9, 5),
@@ -109,6 +122,17 @@ def generer(idu: str, outdir: Path) -> dict:
             ko(f"{idu}/{doc} : {exc}")
     for f in d.glob("*.pdf"):
         subprocess.run(["pdftotext", "-layout", str(f), str(f.with_suffix(".txt"))], check=True)
+    # EXPORTS-REBRANCHEMENT-1 — Flash = Dossier (nom commercial) : les textes extraits des
+    # DEUX rendus par le builder doivent être IDENTIQUES.
+    fl, do = arch / "flash.txt", arch / "dossier.txt"
+    for pdfa in (arch / "flash.pdf", arch / "dossier.pdf"):
+        if pdfa.exists():
+            subprocess.run(["pdftotext", "-layout", str(pdfa), str(pdfa.with_suffix(".txt"))], check=True)
+    if fl.exists() and do.exists():
+        if fl.read_text() == do.read_text():
+            ok(f"{idu} : Flash = Dossier (pdftotext identiques)")
+        else:
+            ko(f"{idu} : Flash ≠ Dossier (le nom commercial diverge du document)")
     return fiche
 
 

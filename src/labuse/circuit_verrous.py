@@ -673,11 +673,42 @@ def verrou_fiche_sections(db=None) -> ResultatVerrou:
     avec_section = {l.quoi for s in surfaces if s.categorie == "fiche" for l in s.donnees if l.section}
     pbs = [f"donnée fiche « {c} » servie sans section déclarée"
            for c in sorted(servies) if c not in avec_section]
+    # EXPORTS-REBRANCHEMENT-1 lot 1 — 2e clause : TOUTE ligne du Dossier est une ligne DÉCLARÉE
+    # de la fiche, jamais une ligne inventée pour le PDF. On rend la STRUCTURE du miroir (fiche
+    # vide, sans base : chaque ligne câblée dit sa phrase d'absence, tampon `data-quoi`) et on
+    # confronte chaque `data-quoi` imprimé aux déclarations. Limite dite : une ligne codée en
+    # dur SANS data-quoi échapperait à ce crible (même limite que le verrou des libellés) — le
+    # rendu du miroir passe par un point unique (_ligne_tr) qui tamponne toujours.
+    import re as _re
+
+    from .exports import builder as _builder
+    declares = {l.quoi for s in surfaces if s.categorie == "fiche" for l in s.donnees}
+    # fiche SYNTHÉTIQUE minimale : elle ALLUME des lignes à valeur (une ligne codée en dur dans
+    # le chemin des valeurs serait invisible sur un rendu à vide) ET laisse des absences.
+    _fiche_type = {
+        "surface_m2": 500, "adresse": "1 rue du Verrou, 97400",
+        "terrain": {"pente_moy_deg": 5.0},
+        "le_bien": {"nb_batiments": 1, "emprise_batie_m2": 80, "surface_libre_m2": 420},
+        "aleas": {"liste": [{"nature": "Inondation",
+                             "libelle": "Aléa inondation — niveau fort.", "niveau": "fort"}]},
+        "fibre": {"etat": "servi"},
+    }
+    try:
+        html = _builder.construire(None, "97400000XX0000", "dossier", fiche=_fiche_type).html
+    except Exception as exc:  # noqa: BLE001 — un miroir qui ne rend pas est une casse, pas un skip
+        html = ""
+        pbs.append(f"miroir Dossier non rendu (fiche synthétique) : {exc}")
+    quois = set(_re.findall(r'data-quoi="([^"]+)"', html))
+    if html and not quois:
+        pbs.append("miroir Dossier rendu sans aucun tampon data-quoi (crible aveugle)")
+    pbs += [f"ligne du Dossier hors déclaration fiche : « {q} »" for q in sorted(quois - declares)]
     if pbs:
-        return ResultatVerrou("V5d", PHRASES["V5d"], "casse", f"{len(pbs)} donnée(s) fiche sans section", pbs)
+        return ResultatVerrou("V5d", PHRASES["V5d"], "casse",
+                              f"{len(pbs)} câble(s) muet(s) ou ligne(s) hors déclaration", pbs)
     return ResultatVerrou("V5d", PHRASES["V5d"], "ok",
-                          f"{len(servies)} données maille parcelle servies sur la fiche, "
-                          "toutes déclarées avec une section")
+                          f"{len(servies)} données maille parcelle servies sur la fiche, toutes "
+                          f"déclarées avec une section · {len(quois)} lignes du Dossier miroir, "
+                          "toutes déclarées")
 
 
 def verrou_regles_citations(db=None) -> ResultatVerrou:
@@ -724,7 +755,7 @@ PHRASES: dict[str, str] = {
     "V5a": "Un concept = un id : deux données au libellé ou à la définition identiques n'existent pas, hors synonymes assumés et motivés.",
     "V5b": "Une donnée = une fonction : chaque id porte un producteur nommé, plus aucun sql_propre ni front, et le registre est intègre.",
     "V5c": "Zéro couple silencieux : chaque couple (donnée, robinet) est sondé, mono-robinet (golden/règles), ou porte sa raison nommée.",
-    "V5d": "Tout par déclaration : chaque donnée à la maille parcelle servie sur la fiche est déclarée avec une section nommée — aucun câble muet.",
+    "V5d": "Tout par déclaration : chaque donnée à la maille parcelle servie sur la fiche est déclarée avec une section nommée — aucun câble muet ; et toute ligne du Dossier miroir est une ligne déclarée de la fiche, jamais une ligne inventée pour le PDF.",
     "V6a": "Aucune règle chiffrée VALIDÉE sans sa source : article + page + citation, toujours — une valeur validée sans preuve n'existe pas.",
     "V7a": "Chaque tuile servie reproduit la brute : même nombre d'objets, aucune partie perdue (GeometryCollections comprises), contour < 1 px, position exacte — décodage de la tuile RÉELLEMENT servie, aux zooms 10/13/16.",
 }

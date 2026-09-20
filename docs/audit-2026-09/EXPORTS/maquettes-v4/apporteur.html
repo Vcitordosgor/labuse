@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maquette — Brief apporteur</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root{--paper:#fff;--bg:#eeeeea;--ink:#15211b;--muted:#6a7671;--line:#e2e0d9;--mint:#2f6b4f;--mint-soft:#e6f0ea;--amber:#a8713a;--amber-soft:#f6ede4;--grey-soft:#f0f0ed;--red:#a8433a;--red-soft:#f6e6e4;--add:#1f6f8b;--add-soft:#e4eff4;
+    box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1b1e1c}}
+  :root[data-theme="dark"]{--bg:#1b1e1c}
+  html{scroll-padding-top:env(safe-area-inset-top,0px)} *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:13.5px/1.5 Inter,ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .toolbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ink);color:#fff;padding:10px 20px;font-size:12.5px;display:flex;gap:18px;flex-wrap:wrap}
+  .toolbar b{font-weight:600}.toolbar span{opacity:.75}
+  .doc{max-width:820px;margin:24px auto 80px;background:var(--paper);box-shadow:0 2px 20px rgba(0,0,0,.08);padding:48px 56px}
+  @media (max-width:640px){.doc{padding:28px 20px;margin:0}}
+  .band{background:var(--ink);color:#fff;border-radius:8px;padding:12px 16px;font-size:12px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .band b{font-weight:600}
+  .head{margin:22px 0 6px}
+  .head .kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .head h1{font-size:24px;margin:4px 0 2px;letter-spacing:-.01em}
+  .head .sub{color:var(--muted)}
+  .meta{display:flex;gap:26px;font-size:12px;color:var(--muted);margin:10px 0 0}
+  .meta b{color:var(--ink);display:block;font-weight:600}
+  section{margin-top:28px;break-inside:avoid-page}
+  .sec-head{display:flex;align-items:baseline;gap:12px;border-bottom:1.5px solid var(--ink);padding-bottom:6px;margin-bottom:8px}
+  .sec-head .num{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.1em}
+  .sec-head h2{font-size:16px;margin:0;font-weight:600;flex:1}
+  .tag{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:3px;font-weight:600;background:var(--grey-soft);color:var(--muted)}
+  .tag.ess{background:var(--amber-soft);color:var(--amber)}
+  .tag.add{background:var(--add-soft);color:var(--add)}
+  .tag.mod{background:var(--mint-soft);color:var(--mint)}
+  .tag.del{background:var(--red-soft);color:var(--red);text-decoration:none}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+  td.l{width:56%} td.v{width:16%;color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:11.5px} td.s{width:28%;color:var(--muted);font-size:11.5px}
+  .plan{border:1px dashed var(--line);border-radius:8px;height:150px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;margin:10px 0 4px;background:var(--grey-soft)}
+  .q{display:grid;grid-template-columns:1fr auto;gap:8px 12px;font-size:12.5px}
+  .q .row{display:contents}
+  .q .row>div{padding:6px 0;border-bottom:1px solid var(--line)}
+  .q .a{color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:11px;white-space:nowrap}
+  .q .a.long::after{content:'________________________'}
+  .q .a.short::after{content:'________'}
+  .q .a.yn::after{content:'☐ oui  ☐ non  ☐ ne sait pas'}
+  .why{font-size:11px;color:var(--muted);display:block;margin-top:1px}
+  .del{text-decoration:line-through;color:var(--muted)}
+  .note{font-size:11.5px;color:var(--muted);margin-top:8px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin:14px 0 0}
+  .decision{margin:28px 0 0;padding:14px 16px;border:1px dashed var(--amber);border-radius:8px;background:var(--amber-soft);font-size:12.5px}
+  .decision b{display:block;margin-bottom:4px}
+  ul.plain{margin:6px 0 0;padding-left:18px} ul.plain li{margin:3px 0}
+</style>
+</head>
+<body>
+<div class="toolbar"><b>Maquette</b><span>Brief apporteur · 3 pages · champs remplissables</span><span>Version validée le 20/09 (v4) · 10 sections · 3 pages</span></div>
+<div class="doc">
+
+  <div class="band">
+    <div><b>Confidentiel</b> — document destiné à votre apporteur d'affaires, ne pas transmettre au propriétaire.</div>
+    <div><b>Sans mandat</b> — ce brief n'engage aucune commission ni exclusivité.</div>
+  </div>
+
+  <div class="head">
+    <div class="kicker">Brief apporteur</div>
+    <h1>97410000AN0347</h1>
+    <div class="sub">7 Rue du Stade de l'Ilet, 97470 Saint-Benoît</div>
+    <div class="meta">
+      <div><b>Émis par</b>nom du promoteur (jamais anonyme)</div>
+      <div><b>Le</b>JJ/MM/AAAA</div>
+      <div><b>Valable jusqu'au</b>JJ+90</div>
+      <div><b>Référence</b>AP-AAAAMMJJ-0347</div>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="num">1</span><h2>La parcelle en un coup d'œil</h2><span class="tag">ce que l'apporteur doit savoir, rien de plus</span></div>
+    <table>
+      <tr><td class="l">Surface</td><td class="v">—</td><td class="s">Cadastre</td></tr>
+      <tr><td class="l">Zone du PLU, en clair (constructible / à condition / non)</td><td class="v">—</td><td class="s">GPU · règlement PLU</td></tr>
+      <tr><td class="l">Sur place : bâtiments, emprise, hauteur</td><td class="v">—</td><td class="s">BD TOPO · LiDAR HD</td></tr>
+      <tr><td class="l">Propriétaire (type, nom si personne morale)</td><td class="v">—</td><td class="s">DGFiP — personnes morales</td></tr>
+      <tr><td class="l">Voisines du même propriétaire (références, surface cumulée)</td><td class="v">—</td><td class="s">Cadastre · DGFiP</td></tr>
+      <tr><td class="l">Dernière vente : date et prix (non imprimée si inconnue)</td><td class="v">—</td><td class="s">DVF</td></tr>
+      <tr><td class="l">Déjà en vente ? Annonce repérée, prix demandé</td><td class="v">—</td><td class="s">Radar — pige d'annonces</td></tr>
+      <tr><td class="l">Permis déposés sur la parcelle (date, état)</td><td class="v">—</td><td class="s">SITADEL</td></tr>
+      <tr><td class="l">Accès : arrêt de bus, voie</td><td class="v">—</td><td class="s">GTFS · BD TOPO</td></tr>
+      <tr><td class="l">À observer sur place (détail en §6)</td><td class="v">—</td><td class="s">DEAL · Géorisques · EDF — traduit en questions</td></tr>
+    </table>
+    <div class="plan">Plan de situation — ortho IGN, contour de la parcelle, voisines du même propriétaire surlignées, nord, échelle</div>
+    <div class="note">Absents volontairement : capacité constructible, SDP, charge foncière, score, niveau d'intérêt. L'apporteur n'a pas à connaître ce que le promoteur compte faire ni combien ça vaut.</div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">2</span><h2>Vous</h2><span class="tag ess">en premier</span></div>
+    <div class="q">
+      <div class="row"><div>Votre nom, téléphone, e-mail</div><div class="a long"></div></div>
+      <div class="row"><div>Date de la visite ou du contact</div><div class="a short"></div></div>
+      <div class="row"><div>Comment vous connaissez le propriétaire (voisin, famille, hasard, démarche)</div><div class="a long"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">3</span><h2>Qui décide</h2></div>
+    <div class="q">
+      <div class="row"><div>Nom du décideur réel (propriétaire, gérant de SCI, mandataire, tuteur)</div><div class="a long"></div></div>
+      <div class="row"><div>Plusieurs propriétaires ? (indivision, succession en cours, époux)<span class="why">Un seul « non » bloque une vente.</span></div><div class="a yn"></div></div>
+      <div class="row"><div>Âge approximatif du décideur, situation (retraite, éloignement, santé)</div><div class="a long"></div></div>
+      <div class="row"><div>Le bien est-il déjà confié à un agent ou un notaire ?</div><div class="a yn"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">4</span><h2>La vente</h2><span class="tag ess">l'essentiel</span></div>
+    <div class="q">
+      <div class="row"><div>Envisage-t-il de vendre ? Dans quel délai ?</div><div class="a yn"></div></div>
+      <div class="row"><div>Prix attendu, ou ordre d'idée</div><div class="a short"></div></div>
+      <div class="row"><div>Un prix a-t-il déjà été refusé ? Lequel, quand, à qui ?</div><div class="a long"></div></div>
+      <div class="row"><div>Vendrait-il aussi les voisines ? (références listées en §1)</div><div class="a yn"></div></div>
+      <div class="row"><div>Préfère-t-il vendre le terrain, ou participer à l'opération (dation, échange) ?</div><div class="a long"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">5</span><h2>Le bâti et son occupation</h2></div>
+    <div class="q">
+      <div class="row"><div>Occupé ? Par qui — propriétaire, locataires, gratuit, vacant</div><div class="a long"></div></div>
+      <div class="row"><div>Baux en cours : échéance, loyer approximatif</div><div class="a long"></div></div>
+      <div class="row"><div>État apparent : entretenu, dégradé, ruine, travaux récents</div><div class="a long"></div></div>
+      <div class="row"><div>Activité sur place (commerce, atelier, élevage, dépôt)</div><div class="a long"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">6</span><h2>Le terrain, vu sur place</h2></div>
+    <div class="note">Questions générées depuis les couches de la parcelle : seules celles qui s'appliquent sont imprimées.</div>
+    <div class="q">
+      <div class="row"><div>Accès : depuis quelle voie, largeur, portail, servitude de passage visible</div><div class="a long"></div></div>
+      <div class="row"><div>Pente, talus, murs de soutènement</div><div class="a long"></div></div>
+      <div class="row"><div>Traces d'eau : inondation, ravine, zone humide, drainage<span class="why">Imprimée si aléa inondation / ravine / zone humide sur la parcelle.</span></div><div class="a long"></div></div>
+      <div class="row"><div>Ligne électrique, pylône, transformateur sur ou au bord<span class="why">Imprimée si ligne HTA/HTB à moins de 50 m.</span></div><div class="a yn"></div></div>
+      <div class="row"><div>Remblais, déchets, cuves, dépôt, odeur<span class="why">Imprimée si ancien site industriel / sol pollué à proximité.</span></div><div class="a long"></div></div>
+      <div class="row"><div>Arbres remarquables, boisement, clôtures, limites incertaines</div><div class="a long"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">7</span><h2>À demander au propriétaire</h2></div>
+    <div class="note">L'apporteur ne lit pas les actes : il pose la question.</div>
+    <div class="q">
+      <div class="row"><div>Servitudes privées connues (passage, vue, canalisation)</div><div class="a long"></div></div>
+      <div class="row"><div>Hypothèque, prêt en cours, litige, procédure</div><div class="a long"></div></div>
+      <div class="row"><div>Projet déjà tenté : permis, promoteur passé, refus de la mairie</div><div class="a long"></div></div>
+      <div class="row"><div>A-t-il un notaire attitré ?</div><div class="a long"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">8</span><h2>Le voisinage et la mairie</h2></div>
+    <div class="q">
+      <div class="row"><div>Voisins : opposants probables, projets en cours, nuisances</div><div class="a long"></div></div>
+      <div class="row"><div>Ce que la mairie en dit, si vous l'avez approchée</div><div class="a long"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">9</span><h2>Les photos</h2></div>
+    <div class="note">Cinq vues, aux mêmes points que le pré-dossier de permis (PCMI7-8). Envoyez-les par message en citant la référence <b>AP-AAAAMMJJ-0347</b> et le numéro de vue — pas collées ici.</div>
+    <table>
+      <tr><td class="l">Vue 1 — depuis la voie, façade principale</td><td class="v"></td><td class="s">point PCMI7</td></tr>
+      <tr><td class="l">Vue 2 — depuis la voie, vers le fond</td><td class="v"></td><td class="s">point PCMI7</td></tr>
+      <tr><td class="l">Vue 3 — intérieur de la parcelle, vers la voie</td><td class="v"></td><td class="s">point PCMI8</td></tr>
+      <tr><td class="l">Vue 4 — les voisines du même propriétaire</td><td class="v"></td><td class="s">plan §1</td></tr>
+      <tr><td class="l">Vue 5 — ce qui vous a gêné ou étonné</td><td class="v"></td><td class="s">libre</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">10</span><h2>Votre retour</h2></div>
+    <div class="q">
+      <div class="row"><div>Votre impression en trois lignes</div><div class="a long"></div></div>
+      <div class="row"><div>Prochaine étape convenue avec le propriétaire (rappel, visite, rien)</div><div class="a long"></div></div>
+      <div class="row"><div>Chance que ça aboutisse, selon vous</div><div class="a">☐ forte ☐ moyenne ☐ faible</div></div>
+    </div>
+  </section>
+
+  <div class="decision" style="border-style:solid;border-color:var(--mint);background:var(--mint-soft)">
+    <b>Validé le 20/09 — v4</b>
+    <ul class="plain">
+      <li>Bandeau confidentiel + sans mandat, émetteur nommé, valable 90 jours.</li>
+      <li>§1 coup d'œil sans capacité, SDP, charge foncière ni score. Plan de situation avec voisines du même propriétaire.</li>
+      <li>§6 : questions d'observation imprimées seulement si la couche touche la parcelle.</li>
+      <li>Photos par message en citant la référence, jamais collées.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
