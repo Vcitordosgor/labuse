@@ -1,0 +1,69 @@
+✓ V1a  Aucun moteur ne lit une table hors de la carte table → réservoir (analyse statique).
+       6 module(s) moteur + 256 données passés au crible
+✓ V1b  Pendant un passage de la sonde sur les témoins, aucune table hors carte n'est touchée.
+       55 tables touchées pendant la sonde, toutes dans la carte
+✓ V1c  Toute table du schéma appartient à la carte, ou est une orpheline listée qui attend le geste de Vic.
+       aucune table orpheline dans le schéma
+✓ V1d  Chaque réservoir servi est lu par au moins une donnée — aucun réservoir muet ne dort dans la vitrine.
+       chaque réservoir servi est lu par au moins une donnée du registre
+✓ V2a  Le nombre de sources servies est LE MÊME partout : vitrine SQL, prédicat Python, page — et chacune a sa place dans la carte.
+       91 = 91 = 91 (vitrine SQL, prédicat, page) ; 91 sources servies toutes dans la carte
+✓ V2b  Toute ligne du catalogue hors vitrine dit pourquoi : alias (cible en vitrine), retirée (date + raison), hub, ou chantier nommé.
+       toutes les lignes hors vitrine disent pourquoi
+✓ V3a  Chaque réservoir n'a qu'une version servie : ses seules générations sont la table, son __attente et sa __precedente — et les tuiles servent le run du manifeste.
+       90 tables de réservoir, une génération servie chacune
+✓ V3b  Après une bascule, zéro eau ancienne : rien d'ouvert hors « gelé, étiqueté » — sinon le verrou nomme la donnée et le robinet.
+       aucune eau ouverte (2 gel(s) assumé(s) étiqueté(s))
+✓ V3c  La sonde écrit des ids, plus des libellés : chaque écart et chaque eau ancienne sont attribuables à leur donnée et à leur robinet du registre.
+       écarts et eau ancienne attribuables (ids du registre)
+✓ V4a  Toute table à la maille commune porte une clé étrangère sur le référentiel des 24 — un code hors référentiel ne peut plus entrer.
+       24 tables sous clé étrangère, toutes validées
+✓ V4b  Saint-Benoît sert les valeurs de Saint-Benoît, Sainte-Marie celles de Sainte-Marie — celles attendues chez le producteur, pas seulement différentes.
+       Saint-Benoît et Sainte-Marie servent chacune SES valeurs (identité SRU + attendus producteur)
+✓ V4c  Sur les parcelles frontière, la commune de rattachement et la zone PLU au centroïde sont celles de LEUR commune, jamais de la voisine.
+       3 parcelles frontière : commune et document PLU de LEUR commune
+✓ V4d  Chacune des 15 cartes de la fiche commune a, pour chacune des 24 communes, son attendu producteur ou sa ligne à valider — jamais un trou silencieux.
+       15 cartes × 24 communes : un attendu ou un à-valider partout
+✓ V4e  Aucune ligne servie à maille adresse / parcelle / bâtiment ne porte un code postal hors 974/977 ni une commune hors des 24 — le garde d'ingestion croise CP, commune et coordonnées (deux qui se contredisent → rejet).
+       5 table(s) à maille adresse au crible : aucun CP hors 974/977, commune dans les 24 (garde d'ingestion garde_974)
+✓ V5a  Un concept = un id : deux données au libellé ou à la définition identiques n'existent pas, hors synonymes assumés et motivés.
+       256 données, aucun libellé ni définition en double hors 2 groupes assumés
+✓ V5b  Une donnée = une fonction : chaque id porte un producteur nommé, plus aucun sql_propre ni front, et le registre est intègre.
+       256 données : une fonction chacune, sql_propre = 0, front = 0
+✓ V5c  Zéro couple silencieux : chaque couple (donnée, robinet) est sondé, mono-robinet (golden/règles), ou porte sa raison nommée.
+       8 couples sondés · 120 raisonnés (NON_SONDES) · 210 mono-robinet (golden/règles)
+✓ V5d  Tout par déclaration : chaque donnée à la maille parcelle servie sur la fiche est déclarée avec une section nommée — aucun câble muet.
+       66 données maille parcelle servies sur la fiche, toutes déclarées avec une section
+✓ V6a  Aucune règle chiffrée VALIDÉE sans sa source : article + page + citation, toujours — une valeur validée sans preuve n'existe pas.
+       76 règle(s) chiffrée(s) validée(s), toutes avec article + page + citation
+✓ V7a  Chaque tuile servie reproduit la brute : même nombre d'objets, aucune partie perdue (GeometryCollections comprises), contour < 1 px, position exacte — décodage de la tuile RÉELLEMENT servie, aux zooms 10/13/16.
+       56 couches × zooms 10/13/16 : 168 tuile(s) décodée(s) EN ENTIER, objets/parties/contour/position identiques à la brute ; contour reporté à z13/z16 (comptage vérifié à ce zoom) pour : alea_inondation z10, alea_inondation z13, alea_mvt z10, alea_mvt z13, artificialisation z10, artificialisation z13, bassin_versant z10, batiment z10, batiment z13, dpf z10, ebc z10, ebc z13, er z13, ligne_mt z10, limites_parcelles z10, limites_parcelles z13, plu_gpu_zone z10, ppr z10, ppr z13, safer z10, safer z13, sup z10, transport_ligne z10, tri_zone z10, tri_zone z13, znieff z10, zonage_parcelle z10, zonage_parcelle z13, zone_humide z10
+✓ G1   La page Circuit montre les 121 sources de la base, chacune avec son état (liste fermée), et signale tout doublon — aucun doublon sans arbitrage écrit.
+       121 en base = 91 en vitrine + 30 hors vitrine ; 18 recouvrement(s) signalé(s), 0 sans arbitrage
+✓ G2   Pour chaque source, la page dit sur quelle surface elle arrive et si sa fiche est réellement remplie — aucune source connectée de type parcelle vide sur l'ensemble des témoins sans un état INVISIBLE affiché ; et (SOURCES-4 lot 4) aucun champ de source servie ne reste au verdict « à voir » (tout champ tranché).
+       0 source(s) vide(s) mesurée(s) sur les 12 témoins ; 0 sans état INVISIBLE ; 0 champ(s) « à voir » nu (SCHEMAS.csv — G2 étendu)
+✓ G3   Chaque source dit si elle nourrit le score ou la cascade, par quelle variable — et aucune variable du modèle servi n'est nourrie par une source hors registre, retirée, ou vide.
+       43 sources nourrissent score/cascade · dernière maj 2026-09-14 · run servi q_v11_m137 ; 0 problème(s)
+✓ G4   Chaque source connectée porte soit un état de version calculé (sonde), soit une raison de non-vérifiabilité écrite — jamais rien ; et « à jour » n'est jamais vrai sur une source vide (version ET remplissage).
+       91 en vitrine : 84 sondées + 7 avec raison écrite + 0 NUES ; 0 vide(s) → état « pas à jour »
+✓ G5   Pour chaque source, la date du dernier contrôle est affichée — et une source jamais contrôlée le dit, en rouge, jamais en silence.
+       91 en vitrine : 82 avec date de dernier contrôle ou état parlant, 9 « jamais vérifié » (affichés ROUGE)
+✓ G6   Depuis une source je vois tout ce qu'elle alimente, depuis un endroit de l'app toutes les sources qu'il lit — et aucune table de réservoir n'est lue par l'app avec un réservoir MUET (zéro chiffre : provenance impossible).
+       89 tables de réservoirs au crible ; 0 lecture(s) de réservoir muet ; dette fine (lecteurs non déclarés) : 0 ; lectures fines déclarées : 97 chiffre+robinet + 127 machineries motivées ; déclarations périmées : 0
+✓ G7   Un même identifiant du registre servi par deux chemins donne la même valeur sur les témoins de la nuit — la sonde a tourné, et chaque écart ouvert est une ligne rouge complète (les deux chemins, les deux valeurs).
+       dernier passage sonde 18/09 19:11 ; 0 fuite(s) ouverte(s), toutes affichables (deux chemins, deux valeurs)
+⚠ G8   Aucune source vitrine sans contrôle depuis plus de 7 jours ; Radar sans dépôt depuis plus que son échéance. Avec l'agent plafonné à 0 €, une source hors sonde n'est contrôlée par personne — le verrou le dit, le Résumé la nomme.
+       15 source(s) vitrine sur 91 sans contrôle récent (agent à 0 €) · Radar à jour
+       · Communes La Réunion — contours (IGN ADMIN EXPRESS via geo.api.gouv, seed) : aucune sonde amont, l'agent est à 0 €
+       · Coût de construction (EPTB SDES + choix LABUSE) : rappel manuel — aucune sonde amont, l'agent est à 0 €
+       · DEAL — cartes de bruit stratégiques (CBS) : aucune sonde amont, l'agent est à 0 €
+       · FRR ex-ZRR — zone spéciale d'action rurale (Légifrance) : aucune sonde amont, l'agent est à 0 €
+       · INPI RNE (dirigeants) : aucune sonde amont, l'agent est à 0 €
+       · INPN / patrinat — espaces protégés : aucune sonde amont, l'agent est à 0 €
+       · INSEE RP Logement 2023 : rappel manuel — aucune sonde amont, l'agent est à 0 €
+       · NPNRU (DEAL Réunion / ANCT) : rappel manuel — aucune sonde amont, l'agent est à 0 €
+       · OpenStreetMap / Overpass : aucune sonde amont, l'agent est à 0 €
+       · PLH des 5 EPCI (extraction documentaire) : rappel manuel — aucune sonde amont, l'agent est à 0 €
+       · … et 5 autres
+⚠ avertissement (non bloquant) : G8 cassé(s) — signalé, n'empêche pas le déploiement.
+— 28 joués (20 verrous + 8 garanties) : tout va bien · 1 en avertissement (G8)
