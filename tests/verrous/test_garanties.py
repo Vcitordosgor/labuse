@@ -326,11 +326,12 @@ def test_fuite2_lidar_plus_quasi_vide():
 # ── la commande unique : 24, toujours tous ─────────────────────────────────────────────
 @pytest.mark.local
 def test_les_24_se_jouent_toujours_tous():
-    """La composition de « labuse circuit verrous » : 18 verrous + 8 garanties = 26, TOUJOURS
+    """La composition de « labuse circuit verrous » : 20 verrous + 8 garanties = 28, TOUJOURS
     tous — même quand un verrou casse en route (le vécu : l'arrêt-au-premier sur V3a masquait
     les suivants, la commande n'en montrait que 7). SOURCES-3 lot 4 : V4e (garde-fou 974) ajouté ;
     COUCHES-TUYAU-1 : V7a (verrou des tuiles) ajouté ; SOURCES-CORRECTION-2 lot 3 : + G8 (sources
-    sans contrôle, ajouté par CRON-1 lot 2) — REMIS SUR LA VALEUR RÉELLE (avant : G1..G7 = 25)."""
+    sans contrôle, ajouté par CRON-1 lot 2) ; FICHE-RANGEMENT-2 : + V5d (fiche par déclaration) ;
+    PLU-CALIBRAGE-1 : + V6a (règles chiffrées validées) — REMIS SUR LA VALEUR RÉELLE."""
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
     from labuse import circuit_verrous
@@ -339,7 +340,7 @@ def test_les_24_se_jouent_toujours_tous():
         resultats = circuit_verrous.jouer_tous(s, arret_premier=False) + CG.jouer_garanties(s)
     ids = [r.id for r in resultats]
     assert ids == ["V1a", "V1b", "V1c", "V1d", "V2a", "V2b", "V3a", "V3b", "V3c",
-                   "V4a", "V4b", "V4c", "V4d", "V4e", "V5a", "V5b", "V5c", "V7a",
+                   "V4a", "V4b", "V4c", "V4d", "V4e", "V5a", "V5b", "V5c", "V5d", "V6a", "V7a",
                    "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8"], ids
 
 
