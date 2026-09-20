@@ -75,3 +75,22 @@ Les 13 données à la maille commune du registre qui n'apparaissaient dans aucun
 **Bilan : 2 placées (`prix_neuf_observe`, `pression_zan`), 11 motivées** (5 doublons · 3 internes · 1
 exclue maquette · 1 coût/porte · 1 déjà visible via tuile). Le robinet de `prix_neuf_observe_eur_m2`
 sur la fiche commune est déclaré au lot 5.
+
+---
+
+## Lot 3 — rien de jeté en silence
+
+Audit de chaque carte : une carte conditionnelle qui **disparaît** quand sa donnée est un creux légitime
+= une information jetée en silence. Les creux nommés par le mandat (Radar sous seuil, QPV absent, ORT
+hors) — plus le PLH absent — passent de **carte absente** à **carte toujours présente qui le dit** :
+
+| Carte | Avant | Après (repli « sans objet ») |
+|---|---|---|
+| Annonces — Radar | absente si `!marche_annonces` (sinon phrase si sous seuil) | **toujours présente** — `data-annonces-sans-objet` : « **Pas d'annonce repérée sur cette commune** » (19/24 communes) |
+| Quartiers prioritaires | absente si 0 QPV et 0 NPNRU | **toujours présente** — `data-qpv-sans-objet` : « **Aucun quartier prioritaire … ni périmètre NPNRU** » (12/24) |
+| Revitalisation ACV/PVD/ORT | absente si `statut = hors` | **toujours présente** — `data-ort-sans-objet` : « **Hors dispositif — ni ACV, ni PVD, ni ORT** » (5/24) |
+| Programme local — PLH | absente si l'EPCI n'a pas de PLH | **toujours présente** — `data-plh-sans-objet` : « **Aucun programme local de l'habitat recensé pour l'intercommunalité** » |
+
+Chaque carte garde sa **ligne de source** même vide. Les autres cartes conditionnelles (loyer,
+terrain nu, fiscalité, zonage…) portent un **trou de donnée** (source non ingérée), pas un creux
+légitime ; le lot 4 les range dans les 10 cartes maquette toutes présentes. Front seul, `tsc -b` vert.

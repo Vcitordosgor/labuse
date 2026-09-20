@@ -394,17 +394,21 @@ export function ContextePanel() {
                 <Source nom={d.permis_bloc.source} />
               </LigneCarte>
 
-              {d.plh && (
-                <LigneCarte id="regle-plh" chiffre="plh_objectif_logements_an" ic="≡" titre="Programme local — PLH"
-                  sous={`${d.epci ?? ''}${d.plh.part_sociale_pct != null ? ` · ${Number(d.plh.part_sociale_pct).toLocaleString('fr-FR')} % part sociale` : ''}`}
-                  val={d.plh.obj_logements_an != null ? `${fmt(d.plh.obj_logements_an)} logts/an` : null}>
+              {/* COMMUNE-RANGEMENT-2 lot 3 — carte TOUJOURS présente : sans PLH pour l'EPCI, elle le DIT
+                  (« aucun PLH »), jamais absente. */}
+              <LigneCarte id="regle-plh" chiffre="plh_objectif_logements_an" ic="≡" titre="Programme local — PLH"
+                sous={d.plh ? `${d.epci ?? ''}${d.plh.part_sociale_pct != null ? ` · ${Number(d.plh.part_sociale_pct).toLocaleString('fr-FR')} % part sociale` : ''}` : `${d.epci ?? 'EPCI'} · aucun PLH recensé`}
+                val={d.plh?.obj_logements_an != null ? `${fmt(d.plh.obj_logements_an)} logts/an` : null}>
+                {d.plh ? (
                   <div className="flex flex-col gap-0.5 text-[12px]">
                     <RowT lbl={`PLH ${d.epci ?? ''} — objectif`} val={d.plh.obj_logements_an != null ? `${fmt(d.plh.obj_logements_an)} logts/an` : '—'} />
                     {d.plh.part_sociale_pct != null && <RowT lbl="Part sociale visée" val={`${Number(d.plh.part_sociale_pct).toLocaleString('fr-FR')} %`} />}
                   </div>
-                  <Source nom="PLH (EPCI)" />
-                </LigneCarte>
-              )}
+                ) : (
+                  <p data-plh-sans-objet className="text-[12px] text-txt-mut">Aucun programme local de l'habitat recensé pour l'intercommunalité {d.epci ?? ''}.</p>
+                )}
+                <Source nom="PLH (EPCI)" />
+              </LigneCarte>
 
               {/* ── LE MARCHÉ ── */}
               <GroupeLabel>Le marché</GroupeLabel>
@@ -441,29 +445,35 @@ export function ContextePanel() {
                 </LigneCarte>
               )}
 
-              {d.marche_annonces && (
+              {/* COMMUNE-RANGEMENT-2 lot 3 — carte TOUJOURS présente : sans couverture Radar ou sous le seuil,
+                  elle DIT « Pas d'annonce repérée sur cette commune », jamais absente. */}
+              {(() => {
+                const ma = d.marche_annonces
+                const vide = !ma || ma.sous_seuil
+                return (
                 <LigneCarte id="annonces" chiffre="annonces_actives_n" ic="◉" titre="Annonces en cours — Radar"
-                  sous={`${fmt(d.marche_annonces.biens)} biens en vente · écart demandé / acté`}
-                  val={!d.marche_annonces.sous_seuil && d.marche_annonces.ecart_demande_acte_pct != null ? `${d.marche_annonces.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(d.marche_annonces.ecart_demande_acte_pct)} %` : null}
-                  ton={d.marche_annonces.ecart_demande_acte_pct != null && d.marche_annonces.ecart_demande_acte_pct < 0 ? 'vert' : undefined}>
-                  {d.marche_annonces.sous_seuil ? (
-                    <p className="text-[12px] text-txt-mut">Trop peu d'annonces relevées pour un signal fiable ({d.marche_annonces.biens} bien(s), seuil {d.marche_annonces.seuil_n}). Le Radar affine la couverture au fil des relevés.</p>
+                  sous={ma ? `${fmt(ma.biens)} biens en vente · écart demandé / acté` : 'aucune annonce repérée'}
+                  val={ma && !ma.sous_seuil && ma.ecart_demande_acte_pct != null ? `${ma.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(ma.ecart_demande_acte_pct)} %` : null}
+                  ton={ma?.ecart_demande_acte_pct != null && ma.ecart_demande_acte_pct < 0 ? 'vert' : undefined}>
+                  {vide ? (
+                    <p data-annonces-sans-objet className="text-[12px] text-txt-mut">Pas d'annonce repérée sur cette commune{ma ? ` (${ma.biens} bien(s), seuil ${ma.seuil_n})` : ''}. Le Radar affine la couverture au fil des relevés.</p>
                   ) : (
                     <>
                       <div className="flex flex-col gap-0.5 text-[12px]">
-                        <RowT lbl="Biens en vente" val={fmt(d.marche_annonces.biens)} />
-                        <RowT lbl="Prix demandé médian" val={`${fmt(d.marche_annonces.prix_demande_median_eur_m2)} €/m²`} />
-                        {d.marche_annonces.ecart_demande_acte_pct != null && (
-                          <RowT lbl="Écart demandé / acté" strong val={`${d.marche_annonces.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(d.marche_annonces.ecart_demande_acte_pct)} %`} />
+                        <RowT lbl="Biens en vente" val={fmt(ma!.biens)} />
+                        <RowT lbl="Prix demandé médian" val={`${fmt(ma!.prix_demande_median_eur_m2)} €/m²`} />
+                        {ma!.ecart_demande_acte_pct != null && (
+                          <RowT lbl="Écart demandé / acté" strong val={`${ma!.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(ma!.ecart_demande_acte_pct)} %`} />
                         )}
                       </div>
                       <p className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">L'écart demandé/acté est la marge de négociation du moment — le signal exclusif LABUSE.</p>
                       <Shortcut label="Voir les annonces dans le Radar" onClick={() => ouvrirOutil(commune, insee, 'radar')} />
                     </>
                   )}
-                  <Source nom={d.marche_annonces.source} />
+                  <Source nom={ma?.source ?? 'Radar LABUSE (annonces relevées)'} />
                 </LigneCarte>
-              )}
+                )
+              })()}
 
               {d.loyer && (
                 <LigneCarte id="loyer" chiffre="loyer_median_eur_m2" ic="€" titre="Loyers"
@@ -513,18 +523,28 @@ export function ContextePanel() {
               )}
 
               {/* SOURCES-1 lot 5 — ACV/PVD/ORT + condition communale Denormandie (état, jamais
-                  un calcul d'avantage — le périmètre conventionné n'est pas publié). */}
-              {d.ort && d.ort.statut !== 'hors' && (
+                  un calcul d'avantage — le périmètre conventionné n'est pas publié).
+                  COMMUNE-RANGEMENT-2 lot 3 — carte TOUJOURS présente : hors dispositif, elle DIT « hors ORT »,
+                  jamais absente. */}
+              {(() => {
+                const o = d.ort
+                const hors = !o || o.statut === 'hors'
+                return (
                 <LigneCarte id="ort" chiffre="ort_statut" ic="◎" titre="Revitalisation (ACV / PVD / ORT)"
-                  sous={d.ort.ort_signee ? `convention ORT signée${d.ort.date_signature ? ` le ${d.ort.date_signature}` : ''}` : 'convention ORT non signée'}
-                  val={d.ort.statut === 'acv' ? 'ACV' : d.ort.statut === 'pvd' ? 'PVD' : 'ORT'}>
-                  <div className="flex flex-col gap-0.5 text-[12px]">
-                    <RowT lbl="Dispositif" val={d.ort.statut === 'acv' ? 'Action Cœur de Ville' : d.ort.statut === 'pvd' ? 'Petites Villes de Demain' : 'ORT (autre commune signataire)'} strong />
-                    <p className="text-[11.5px] text-txt-dim">Denormandie : {d.ort.denormandie}</p>
-                  </div>
-                  {d.ort.source && <Source nom={d.ort.source} />}
+                  sous={hors ? 'hors dispositif' : (o!.ort_signee ? `convention ORT signée${o!.date_signature ? ` le ${o!.date_signature}` : ''}` : 'convention ORT non signée')}
+                  val={hors ? 'hors' : (o!.statut === 'acv' ? 'ACV' : o!.statut === 'pvd' ? 'PVD' : 'ORT')}>
+                  {hors ? (
+                    <p data-ort-sans-objet className="text-[12px] text-txt-mut">Hors dispositif — ni Action Cœur de Ville, ni Petites Villes de Demain, ni ORT.</p>
+                  ) : (
+                    <div className="flex flex-col gap-0.5 text-[12px]">
+                      <RowT lbl="Dispositif" val={o!.statut === 'acv' ? 'Action Cœur de Ville' : o!.statut === 'pvd' ? 'Petites Villes de Demain' : 'ORT (autre commune signataire)'} strong />
+                      <p className="text-[11.5px] text-txt-dim">Denormandie : {o!.denormandie}</p>
+                    </div>
+                  )}
+                  <Source nom={o?.source ?? 'DGALN — communes ORT'} />
                 </LigneCarte>
-              )}
+                )
+              })()}
 
               {/* COUCHES-2 point 4 — ZFANG / FRR : une ligne chacun avec son STATUT EXACT. Source
                   UNIQUE (territoire_fiscal) — le même statut peint la carte et filtre les parcelles. */}
@@ -659,17 +679,28 @@ export function ContextePanel() {
                 <Source nom={`${d.population.source}${d.parc_social ? ` · ${d.parc_social.source}` : ''}`} />
               </LigneCarte>
 
-              {(d.qpv.length > 0 || d.anru.length > 0) && (
+              {/* COMMUNE-RANGEMENT-2 lot 3 — carte TOUJOURS présente : sans QPV ni NPNRU, elle DIT
+                  « aucun quartier prioritaire », jamais absente. */}
+              {(() => {
+                const aucun = d.qpv.length === 0 && d.anru.length === 0
+                return (
                 <LigneCarte id="qpv" chiffre="qpv_n" ic="◈" titre="Quartiers prioritaires" sous="ANCT · NPNRU"
-                  val={`${d.qpv.length} QPV`}>
-                  <div className="flex flex-col gap-0.5 text-[12px]">
-                    <RowT lbl="QPV" val={d.qpv.length > 0 ? `${d.qpv.length} quartier(s)` : 'aucun'} />
-                    <RowT lbl="NPNRU" val={d.anru.length > 0 ? `${d.anru.length} périmètre(s)` : 'aucun'} />
-                  </div>
-                  {d.qpv.length > 0 && <p className="mt-1 text-[10.5px] leading-snug text-txt-dim">{d.qpv.map((x) => x.nom).join(' · ')}</p>}
+                  val={aucun ? 'aucun' : `${d.qpv.length} QPV`}>
+                  {aucun ? (
+                    <p data-qpv-sans-objet className="text-[12px] text-txt-mut">Aucun quartier prioritaire de la politique de la ville (QPV) ni périmètre NPNRU sur cette commune.</p>
+                  ) : (
+                    <>
+                      <div className="flex flex-col gap-0.5 text-[12px]">
+                        <RowT lbl="QPV" val={d.qpv.length > 0 ? `${d.qpv.length} quartier(s)` : 'aucun'} />
+                        <RowT lbl="NPNRU" val={d.anru.length > 0 ? `${d.anru.length} périmètre(s)` : 'aucun'} />
+                      </div>
+                      {d.qpv.length > 0 && <p className="mt-1 text-[10.5px] leading-snug text-txt-dim">{d.qpv.map((x) => x.nom).join(' · ')}</p>}
+                    </>
+                  )}
                   <Source nom="ANCT" />
                 </LigneCarte>
-              )}
+                )
+              })()}
 
               {d.mairie && (
                 <LigneCarte id="contacts" ic="☎" titre="Mairie &amp; service urbanisme"
