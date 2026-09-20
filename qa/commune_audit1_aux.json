@@ -1,0 +1,4470 @@
+{
+ "rarete": {
+  "Cilaos": {
+   "insee": "97424",
+   "commune": "Cilaos",
+   "rythme_conso_ha_an": 7.6,
+   "budget_zan_ha": 16.5,
+   "reste_zan_ha": -6.2,
+   "pct_budget_consomme": 137,
+   "pct_budget_restant": -37,
+   "horizon_epuisement_ans": 0.0,
+   "statut": "budget dépassé",
+   "stock_opportunites_ha": 1.9,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Les Trois-Bassins": {
+   "insee": "97423",
+   "commune": "Les Trois-Bassins",
+   "rythme_conso_ha_an": 6.8,
+   "budget_zan_ha": 21.1,
+   "reste_zan_ha": 0.6,
+   "pct_budget_consomme": 97,
+   "pct_budget_restant": 3,
+   "horizon_epuisement_ans": 0.1,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 3.6,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Petite-Île": {
+   "insee": "97405",
+   "commune": "Petite-Île",
+   "rythme_conso_ha_an": 6.0,
+   "budget_zan_ha": 19.6,
+   "reste_zan_ha": 1.5,
+   "pct_budget_consomme": 92,
+   "pct_budget_restant": 8,
+   "horizon_epuisement_ans": 0.2,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 3.1,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Les Avirons": {
+   "insee": "97401",
+   "commune": "Les Avirons",
+   "rythme_conso_ha_an": 4.9,
+   "budget_zan_ha": 18.7,
+   "reste_zan_ha": 3.9,
+   "pct_budget_consomme": 79,
+   "pct_budget_restant": 21,
+   "horizon_epuisement_ans": 0.8,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 2.7,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Bras-Panon": {
+   "insee": "97402",
+   "commune": "Bras-Panon",
+   "rythme_conso_ha_an": 4.2,
+   "budget_zan_ha": 16.1,
+   "reste_zan_ha": 3.5,
+   "pct_budget_consomme": 78,
+   "pct_budget_restant": 22,
+   "horizon_epuisement_ans": 0.8,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 1.7,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Saint-Philippe": {
+   "insee": "97417",
+   "commune": "Saint-Philippe",
+   "rythme_conso_ha_an": 4.1,
+   "budget_zan_ha": 15.5,
+   "reste_zan_ha": 3.2,
+   "pct_budget_consomme": 79,
+   "pct_budget_restant": 21,
+   "horizon_epuisement_ans": 0.8,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 0.2,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Saint-Denis": {
+   "insee": "97411",
+   "commune": "Saint-Denis",
+   "rythme_conso_ha_an": 27.5,
+   "budget_zan_ha": 113.1,
+   "reste_zan_ha": 30.7,
+   "pct_budget_consomme": 73,
+   "pct_budget_restant": 27,
+   "horizon_epuisement_ans": 1.1,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 15.9,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Saint-Joseph": {
+   "insee": "97412",
+   "commune": "Saint-Joseph",
+   "rythme_conso_ha_an": 12.0,
+   "budget_zan_ha": 52.7,
+   "reste_zan_ha": 16.7,
+   "pct_budget_consomme": 68,
+   "pct_budget_restant": 32,
+   "horizon_epuisement_ans": 1.4,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 3.8,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Salazie": {
+   "insee": "97421",
+   "commune": "Salazie",
+   "rythme_conso_ha_an": 4.8,
+   "budget_zan_ha": 20.7,
+   "reste_zan_ha": 6.5,
+   "pct_budget_consomme": 69,
+   "pct_budget_restant": 31,
+   "horizon_epuisement_ans": 1.4,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 0.8,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "L'Étang-Salé": {
+   "insee": "97404",
+   "commune": "L'Étang-Salé",
+   "rythme_conso_ha_an": 6.8,
+   "budget_zan_ha": 33.3,
+   "reste_zan_ha": 12.7,
+   "pct_budget_consomme": 62,
+   "pct_budget_restant": 38,
+   "horizon_epuisement_ans": 1.9,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 2.0,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Saint-Louis": {
+   "insee": "97414",
+   "commune": "Saint-Louis",
+   "rythme_conso_ha_an": 12.6,
+   "budget_zan_ha": 63.5,
+   "reste_zan_ha": 25.6,
+   "pct_budget_consomme": 60,
+   "pct_budget_restant": 40,
+   "horizon_epuisement_ans": 2.0,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 6.2,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Saint-Leu": {
+   "insee": "97413",
+   "commune": "Saint-Leu",
+   "rythme_conso_ha_an": 11.8,
+   "budget_zan_ha": 62.3,
+   "reste_zan_ha": 27.1,
+   "pct_budget_consomme": 57,
+   "pct_budget_restant": 43,
+   "horizon_epuisement_ans": 2.3,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 13.1,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Le Tampon": {
+   "insee": "97422",
+   "commune": "Le Tampon",
+   "rythme_conso_ha_an": 22.2,
+   "budget_zan_ha": 117.3,
+   "reste_zan_ha": 50.9,
+   "pct_budget_consomme": 57,
+   "pct_budget_restant": 43,
+   "horizon_epuisement_ans": 2.3,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 17.5,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "La Plaine-des-Palmistes": {
+   "insee": "97406",
+   "commune": "La Plaine-des-Palmistes",
+   "rythme_conso_ha_an": 4.4,
+   "budget_zan_ha": 27.6,
+   "reste_zan_ha": 14.3,
+   "pct_budget_consomme": 48,
+   "pct_budget_restant": 52,
+   "horizon_epuisement_ans": 3.2,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 3.8,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Entre-Deux": {
+   "insee": "97403",
+   "commune": "Entre-Deux",
+   "rythme_conso_ha_an": 1.9,
+   "budget_zan_ha": 12.2,
+   "reste_zan_ha": 6.4,
+   "pct_budget_consomme": 48,
+   "pct_budget_restant": 52,
+   "horizon_epuisement_ans": 3.3,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 1.5,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Saint-André": {
+   "insee": "97409",
+   "commune": "Saint-André",
+   "rythme_conso_ha_an": 7.2,
+   "budget_zan_ha": 45.5,
+   "reste_zan_ha": 23.9,
+   "pct_budget_consomme": 48,
+   "pct_budget_restant": 52,
+   "horizon_epuisement_ans": 3.3,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 8.0,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Sainte-Suzanne": {
+   "insee": "97420",
+   "commune": "Sainte-Suzanne",
+   "rythme_conso_ha_an": 6.7,
+   "budget_zan_ha": 47.4,
+   "reste_zan_ha": 27.5,
+   "pct_budget_consomme": 42,
+   "pct_budget_restant": 58,
+   "horizon_epuisement_ans": 4.1,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 2.1,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Saint-Paul": {
+   "insee": "97415",
+   "commune": "Saint-Paul",
+   "rythme_conso_ha_an": 30.0,
+   "budget_zan_ha": 217.5,
+   "reste_zan_ha": 127.5,
+   "pct_budget_consomme": 41,
+   "pct_budget_restant": 59,
+   "horizon_epuisement_ans": 4.2,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 48.7,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Saint-Pierre": {
+   "insee": "97416",
+   "commune": "Saint-Pierre",
+   "rythme_conso_ha_an": 20.2,
+   "budget_zan_ha": 145.5,
+   "reste_zan_ha": 85.0,
+   "pct_budget_consomme": 42,
+   "pct_budget_restant": 58,
+   "horizon_epuisement_ans": 4.2,
+   "statut": "tension forte",
+   "stock_opportunites_ha": 10.9,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "La Possession": {
+   "insee": "97408",
+   "commune": "La Possession",
+   "rythme_conso_ha_an": 5.6,
+   "budget_zan_ha": 56.1,
+   "reste_zan_ha": 39.4,
+   "pct_budget_consomme": 30,
+   "pct_budget_restant": 70,
+   "horizon_epuisement_ans": 7.1,
+   "statut": "tension modérée",
+   "stock_opportunites_ha": 19.3,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Le Port": {
+   "insee": "97407",
+   "commune": "Le Port",
+   "rythme_conso_ha_an": 2.1,
+   "budget_zan_ha": 21.0,
+   "reste_zan_ha": 14.9,
+   "pct_budget_consomme": 29,
+   "pct_budget_restant": 71,
+   "horizon_epuisement_ans": 7.2,
+   "statut": "tension modérée",
+   "stock_opportunites_ha": 5.5,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Saint-Benoît": {
+   "insee": "97410",
+   "commune": "Saint-Benoît",
+   "rythme_conso_ha_an": 4.8,
+   "budget_zan_ha": 58.7,
+   "reste_zan_ha": 44.5,
+   "pct_budget_consomme": 24,
+   "pct_budget_restant": 76,
+   "horizon_epuisement_ans": 9.4,
+   "statut": "tension modérée",
+   "stock_opportunites_ha": 3.5,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Sainte-Rose": {
+   "insee": "97419",
+   "commune": "Sainte-Rose",
+   "rythme_conso_ha_an": 1.5,
+   "budget_zan_ha": 20.6,
+   "reste_zan_ha": 16.1,
+   "pct_budget_consomme": 22,
+   "pct_budget_restant": 78,
+   "horizon_epuisement_ans": 10.8,
+   "statut": "tension modérée",
+   "stock_opportunites_ha": 0.8,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  },
+  "Sainte-Marie": {
+   "insee": "97418",
+   "commune": "Sainte-Marie",
+   "rythme_conso_ha_an": 5.8,
+   "budget_zan_ha": 86.5,
+   "reste_zan_ha": 69.2,
+   "pct_budget_consomme": 20,
+   "pct_budget_restant": 80,
+   "horizon_epuisement_ans": 12.0,
+   "statut": "tension modérée",
+   "stock_opportunites_ha": 3.4,
+   "source": "Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux)"
+  }
+ },
+ "marche": {
+  "Bras-Panon": {
+   "commune": "Bras-Panon",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 375,
+        "n": 115,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 271,
+        "n": 64,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": false,
+     "motif": "Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.",
+     "valeurs": {},
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · DVF neuf"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 4.3,
+      "sens": "hausse",
+      "median_12m": 1888,
+      "median_prec": 1811,
+      "n12": 59,
+      "nprev": 42
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 13
+       },
+       {
+        "trim": "2025T3",
+        "n": 13
+       },
+       {
+        "trim": "2025T2",
+        "n": 15
+       },
+       {
+        "trim": "2025T1",
+        "n": 18
+       }
+      ],
+      "mutations_dernier_trim": 13,
+      "delta_pct_an": 18
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 162,
+      "permis_12m": 54
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-31",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 219749,
+      "parcelles": 710
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "aucun DPE connu sur la commune",
+     "valeurs": {
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031",
+      "dpe_connus": 0
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · sur 0 DPE connu"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 10.3,
+      "type": "tous types",
+      "zone_oll": 5,
+      "n_obs": 2006
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 5)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "neutre",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "+",
+      "valeur": "13 ventes au dernier trimestre (+18 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "162 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 30/12/2025",
+     "offre": "dernier permis 2026-07-31"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Cilaos": {
+   "commune": "Cilaos",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 106,
+        "n": 138,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 102,
+        "n": 35,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": false,
+     "motif": "Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.",
+     "valeurs": {},
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · DVF neuf"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": false,
+     "motif": "tendance non calculable — n < 30 par fenêtre",
+     "valeurs": {
+      "n12": 36,
+      "nprev": 17
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · DVF"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 12
+       },
+       {
+        "trim": "2025T3",
+        "n": 8
+       },
+       {
+        "trim": "2025T2",
+        "n": 8
+       },
+       {
+        "trim": "2025T1",
+        "n": 8
+       }
+      ],
+      "mutations_dernier_trim": 12,
+      "delta_pct_an": 300
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 26,
+      "permis_12m": 24
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-06",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 493953,
+      "parcelles": 1501
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "aucun DPE connu sur la commune",
+     "valeurs": {
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031",
+      "dpe_connus": 0
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · sur 0 DPE connu"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 9.2,
+      "type": "tous types",
+      "zone_oll": 6,
+      "n_obs": 955
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 6)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "favorable",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "+",
+      "valeur": "12 ventes au dernier trimestre (+300 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "+",
+      "valeur": "26 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 30/12/2025",
+     "offre": "dernier permis 2026-07-06"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Entre-Deux": {
+   "commune": "Entre-Deux",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 290,
+        "n": 132,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 141,
+        "n": 10,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": false,
+     "motif": "Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.",
+     "valeurs": {},
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 24/12/2025",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · DVF neuf"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 4.3,
+      "sens": "hausse",
+      "median_12m": 3091,
+      "median_prec": 2963,
+      "n12": 45,
+      "nprev": 39
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 24/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 7
+       },
+       {
+        "trim": "2025T3",
+        "n": 17
+       },
+       {
+        "trim": "2025T2",
+        "n": 10
+       },
+       {
+        "trim": "2025T1",
+        "n": 12
+       }
+      ],
+      "mutations_dernier_trim": 7,
+      "delta_pct_an": -36
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 24/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 117,
+      "permis_12m": 54
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-21",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 673442,
+      "parcelles": 1920
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "aucun DPE connu sur la commune",
+     "valeurs": {
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031",
+      "dpe_connus": 0
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · sur 0 DPE connu"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 9.2,
+      "type": "tous types",
+      "zone_oll": 6,
+      "n_obs": 955
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 6)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "prudence",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "7 ventes au dernier trimestre (-36 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "117 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 24/12/2025",
+     "offre": "dernier permis 2026-07-21"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "L'Étang-Salé": {
+   "commune": "L'Étang-Salé",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 527,
+        "n": 298,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 369,
+        "n": 31,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4375,
+      "niveau": "ile_validee",
+      "n": null
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 22/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — estimation à l'échelle de l'île (± 12 %)"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 3.7,
+      "sens": "hausse",
+      "median_12m": 4052,
+      "median_prec": 3906,
+      "n12": 78,
+      "nprev": 53
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 22/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 22
+       },
+       {
+        "trim": "2025T3",
+        "n": 17
+       },
+       {
+        "trim": "2025T2",
+        "n": 19
+       },
+       {
+        "trim": "2025T1",
+        "n": 19
+       }
+      ],
+      "mutations_dernier_trim": 22,
+      "delta_pct_an": 57
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 22/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 156,
+      "permis_12m": 102
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-15",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 1039379,
+      "parcelles": 2820
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "échantillon DPE insuffisant (2 connus < 30)",
+     "valeurs": {
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031",
+      "dpe_connus": 2
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · 2 DPE connus (sous le seuil fiable de 30)"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 12.2,
+      "type": "tous types",
+      "zone_oll": 2,
+      "n_obs": 1533
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 2)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "favorable",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "+",
+      "valeur": "22 ventes au dernier trimestre (+57 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "156 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 22/12/2025",
+     "offre": "dernier permis 2026-07-15"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "La Plaine-des-Palmistes": {
+   "commune": "La Plaine-des-Palmistes",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 129,
+        "n": 204,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 98,
+        "n": 39,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": false,
+     "motif": "Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.",
+     "valeurs": {},
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 19/12/2025",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · DVF neuf"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 12.3,
+      "sens": "hausse",
+      "median_12m": 2126,
+      "median_prec": 1893,
+      "n12": 50,
+      "nprev": 39
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 19/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 7
+       },
+       {
+        "trim": "2025T3",
+        "n": 15
+       },
+       {
+        "trim": "2025T2",
+        "n": 17
+       },
+       {
+        "trim": "2025T1",
+        "n": 9
+       }
+      ],
+      "mutations_dernier_trim": 7,
+      "delta_pct_an": -36
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 19/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 69,
+      "permis_12m": 61
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-21",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 578070,
+      "parcelles": 1430
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "échantillon DPE insuffisant (2 connus < 30)",
+     "valeurs": {
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031",
+      "dpe_connus": 2
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · 2 DPE connus (sous le seuil fiable de 30)"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 9.2,
+      "type": "tous types",
+      "zone_oll": 6,
+      "n_obs": 955
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 6)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "prudence",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "7 ventes au dernier trimestre (-36 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "69 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 19/12/2025",
+     "offre": "dernier permis 2026-07-21"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "La Possession": {
+   "commune": "La Possession",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 436,
+        "n": 444,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 409,
+        "n": 96,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4375,
+      "niveau": "ile_validee",
+      "n": null
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — estimation à l'échelle de l'île (± 12 %)"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 2.6,
+      "sens": "hausse",
+      "median_12m": 3086,
+      "median_prec": 3008,
+      "n12": 228,
+      "nprev": 221
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 71
+       },
+       {
+        "trim": "2025T3",
+        "n": 68
+       },
+       {
+        "trim": "2025T2",
+        "n": 56
+       },
+       {
+        "trim": "2025T1",
+        "n": 34
+       }
+      ],
+      "mutations_dernier_trim": 71,
+      "delta_pct_an": 1
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 109,
+      "permis_12m": 75
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-29",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 1827469,
+      "parcelles": 3990
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "pct_fg": 0.0,
+      "fg": 0,
+      "dpe_connus": 31,
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031"
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · sur 31 DPE connus · G interdit à la location au 01/01/2028, F au 01/01/2031"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 15.45,
+      "type": "appartement"
+     },
+     "source": "DHUP (carte des loyers) — repli (commune sur plusieurs zones OLL ou OLL non ingéré ; détail OLL par zone à la parcelle)",
+     "date_amont": "2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · DHUP 2025"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "neutre",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "+",
+      "valeur": "71 ventes au dernier trimestre (+1 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "109 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 31/12/2025",
+     "offre": "dernier permis 2026-07-29"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Le Port": {
+   "commune": "Le Port",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 371,
+        "n": 262,
+        "calculable": true
+       },
+       "AU": {
+        "calculable": false,
+        "n": 4,
+        "motif": "n < 10"
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": false,
+     "motif": "Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.",
+     "valeurs": {},
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 29/12/2025",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · DVF neuf"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 24.3,
+      "sens": "hausse",
+      "median_12m": 2337,
+      "median_prec": 1880,
+      "n12": 116,
+      "nprev": 62
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 29/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 32
+       },
+       {
+        "trim": "2025T3",
+        "n": 41
+       },
+       {
+        "trim": "2025T2",
+        "n": 26
+       },
+       {
+        "trim": "2025T1",
+        "n": 14
+       }
+      ],
+      "mutations_dernier_trim": 32,
+      "delta_pct_an": 45
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 29/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 38,
+      "permis_12m": 64
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-14",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 1959597,
+      "parcelles": 2566
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "pct_fg": 4.2,
+      "fg": 2,
+      "dpe_connus": 48,
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031"
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · sur 48 DPE connus · G interdit à la location au 01/01/2028, F au 01/01/2031"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 11.0,
+      "type": "tous types",
+      "zone_oll": 4,
+      "n_obs": 1437
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 4)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "favorable",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "+",
+      "valeur": "32 ventes au dernier trimestre (+45 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "+",
+      "valeur": "38 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 29/12/2025",
+     "offre": "dernier permis 2026-07-14"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Le Tampon": {
+   "commune": "Le Tampon",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 285,
+        "n": 1106,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 154,
+        "n": 78,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4318,
+      "niveau": "commune",
+      "n": 36
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — médiane locale, 36 ventes"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 2.4,
+      "sens": "hausse",
+      "median_12m": 2425,
+      "median_prec": 2368,
+      "n12": 486,
+      "nprev": 417
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 113
+       },
+       {
+        "trim": "2025T3",
+        "n": 134
+       },
+       {
+        "trim": "2025T2",
+        "n": 122
+       },
+       {
+        "trim": "2025T1",
+        "n": 119
+       }
+      ],
+      "mutations_dernier_trim": 113,
+      "delta_pct_an": -2
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 406,
+      "permis_12m": 277
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-31",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 11085318,
+      "parcelles": 16923
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "pct_fg": 5.6,
+      "fg": 3,
+      "dpe_connus": 54,
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031"
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · sur 54 DPE connus · G interdit à la location au 01/01/2028, F au 01/01/2031"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 13.52,
+      "type": "appartement"
+     },
+     "source": "DHUP (carte des loyers) — repli (commune sur plusieurs zones OLL ou OLL non ingéré ; détail OLL par zone à la parcelle)",
+     "date_amont": "2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · DHUP 2025"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "prudence",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "113 ventes au dernier trimestre (-2 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "406 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 31/12/2025",
+     "offre": "dernier permis 2026-07-31"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Les Avirons": {
+   "commune": "Les Avirons",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 376,
+        "n": 276,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 84,
+        "n": 21,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4375,
+      "niveau": "ile_validee",
+      "n": null
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 24/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — estimation à l'échelle de l'île (± 12 %)"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 8.6,
+      "sens": "hausse",
+      "median_12m": 3529,
+      "median_prec": 3250,
+      "n12": 81,
+      "nprev": 71
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 24/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 23
+       },
+       {
+        "trim": "2025T3",
+        "n": 21
+       },
+       {
+        "trim": "2025T2",
+        "n": 18
+       },
+       {
+        "trim": "2025T1",
+        "n": 19
+       }
+      ],
+      "mutations_dernier_trim": 23,
+      "delta_pct_an": 35
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 24/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 37,
+      "permis_12m": 44
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-06-12",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 544568,
+      "parcelles": 1615
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "échantillon DPE insuffisant (1 connus < 30)",
+     "valeurs": {
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031",
+      "dpe_connus": 1
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · 1 DPE connus (sous le seuil fiable de 30)"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 11.0,
+      "type": "tous types",
+      "zone_oll": 4,
+      "n_obs": 1437
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 4)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "favorable",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "+",
+      "valeur": "23 ventes au dernier trimestre (+35 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "+",
+      "valeur": "37 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 24/12/2025",
+     "offre": "dernier permis 2026-06-12"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Les Trois-Bassins": {
+   "commune": "Les Trois-Bassins",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 178,
+        "n": 139,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 160,
+        "n": 75,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4375,
+      "niveau": "ile_validee",
+      "n": null
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 17/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — estimation à l'échelle de l'île (± 12 %)"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": false,
+     "motif": "tendance non calculable — n < 30 par fenêtre",
+     "valeurs": {
+      "n12": 21,
+      "nprev": 30
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 17/12/2025",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · DVF"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 5
+       },
+       {
+        "trim": "2025T3",
+        "n": 7
+       },
+       {
+        "trim": "2025T2",
+        "n": 3
+       },
+       {
+        "trim": "2025T1",
+        "n": 4
+       }
+      ],
+      "mutations_dernier_trim": 5,
+      "delta_pct_an": -17
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 17/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 38,
+      "permis_12m": 43
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-31",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 338192,
+      "parcelles": 1126
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "pct_fg": 2.1,
+      "fg": 1,
+      "dpe_connus": 47,
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031"
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · sur 47 DPE connus · G interdit à la location au 01/01/2028, F au 01/01/2031"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 11.5,
+      "type": "tous types",
+      "zone_oll": 3,
+      "n_obs": 1994
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 3)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "neutre",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "5 ventes au dernier trimestre (-17 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "+",
+      "valeur": "38 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 17/12/2025",
+     "offre": "dernier permis 2026-07-31"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Petite-Île": {
+   "commune": "Petite-Île",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 245,
+        "n": 410,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 66,
+        "n": 24,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": false,
+     "motif": "Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.",
+     "valeurs": {},
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 29/12/2025",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · DVF neuf"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": -11.6,
+      "sens": "baisse",
+      "median_12m": 2481,
+      "median_prec": 2806,
+      "n12": 81,
+      "nprev": 68
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 29/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 18
+       },
+       {
+        "trim": "2025T3",
+        "n": 19
+       },
+       {
+        "trim": "2025T2",
+        "n": 23
+       },
+       {
+        "trim": "2025T1",
+        "n": 17
+       }
+      ],
+      "mutations_dernier_trim": 18,
+      "delta_pct_an": -5
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 29/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 68,
+      "permis_12m": 66
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-28",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 406019,
+      "parcelles": 1789
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "échantillon DPE insuffisant (9 connus < 30)",
+     "valeurs": {
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031",
+      "dpe_connus": 9
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · 9 DPE connus (sous le seuil fiable de 30)"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 9.2,
+      "type": "tous types",
+      "zone_oll": 6,
+      "n_obs": 955
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 6)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "neutre",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "18 ventes au dernier trimestre (-5 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "68 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 29/12/2025",
+     "offre": "dernier permis 2026-07-28"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Saint-André": {
+   "commune": "Saint-André",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 264,
+        "n": 522,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 253,
+        "n": 49,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4375,
+      "niveau": "ile_validee",
+      "n": null
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — estimation à l'échelle de l'île (± 12 %)"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 0.9,
+      "sens": "stable",
+      "median_12m": 2007,
+      "median_prec": 1989,
+      "n12": 172,
+      "nprev": 156
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 31
+       },
+       {
+        "trim": "2025T3",
+        "n": 47
+       },
+       {
+        "trim": "2025T2",
+        "n": 51
+       },
+       {
+        "trim": "2025T1",
+        "n": 45
+       }
+      ],
+      "mutations_dernier_trim": 31,
+      "delta_pct_an": -21
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 186,
+      "permis_12m": 154
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-06-28",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 5075725,
+      "parcelles": 11244
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "pct_fg": 0.6,
+      "fg": 2,
+      "dpe_connus": 312,
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031"
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · sur 312 DPE connus · G interdit à la location au 01/01/2028, F au 01/01/2031"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 9.2,
+      "type": "tous types",
+      "zone_oll": 6,
+      "n_obs": 955
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 6)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "prudence",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "31 ventes au dernier trimestre (-21 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "186 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 31/12/2025",
+     "offre": "dernier permis 2026-06-28"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Saint-Benoît": {
+   "commune": "Saint-Benoît",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 237,
+        "n": 487,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 261,
+        "n": 17,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4375,
+      "niveau": "ile_validee",
+      "n": null
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — estimation à l'échelle de l'île (± 12 %)"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 13.2,
+      "sens": "hausse",
+      "median_12m": 1951,
+      "median_prec": 1724,
+      "n12": 108,
+      "nprev": 97
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 33
+       },
+       {
+        "trim": "2025T3",
+        "n": 30
+       },
+       {
+        "trim": "2025T2",
+        "n": 22
+       },
+       {
+        "trim": "2025T1",
+        "n": 21
+       }
+      ],
+      "mutations_dernier_trim": 33,
+      "delta_pct_an": 32
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 396,
+      "permis_12m": 174
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-17",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 3424501,
+      "parcelles": 6876
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "échantillon DPE insuffisant (18 connus < 30)",
+     "valeurs": {
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031",
+      "dpe_connus": 18
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · 18 DPE connus (sous le seuil fiable de 30)"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 10.3,
+      "type": "tous types",
+      "zone_oll": 5,
+      "n_obs": 2006
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 5)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "neutre",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "+",
+      "valeur": "33 ventes au dernier trimestre (+32 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "396 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 30/12/2025",
+     "offre": "dernier permis 2026-07-17"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Saint-Denis": {
+   "commune": "Saint-Denis",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 485,
+        "n": 1248,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 350,
+        "n": 35,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4275,
+      "niveau": "commune",
+      "n": 77
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — médiane locale, 77 ventes"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": -0.3,
+      "sens": "stable",
+      "median_12m": 2682,
+      "median_prec": 2691,
+      "n12": 1234,
+      "nprev": 1313
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 311
+       },
+       {
+        "trim": "2025T3",
+        "n": 356
+       },
+       {
+        "trim": "2025T2",
+        "n": 323
+       },
+       {
+        "trim": "2025T1",
+        "n": 247
+       }
+      ],
+      "mutations_dernier_trim": 311,
+      "delta_pct_an": -13
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 356,
+      "permis_12m": 215
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-24",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 4885040,
+      "parcelles": 7663
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "pct_fg": 13.3,
+      "fg": 8,
+      "dpe_connus": 60,
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031"
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · sur 60 DPE connus · G interdit à la location au 01/01/2028, F au 01/01/2031"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 15.09,
+      "type": "appartement"
+     },
+     "source": "DHUP (carte des loyers) — repli (commune sur plusieurs zones OLL ou OLL non ingéré ; détail OLL par zone à la parcelle)",
+     "date_amont": "2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · DHUP 2025"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "prudence",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "311 ventes au dernier trimestre (-13 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "356 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 31/12/2025",
+     "offre": "dernier permis 2026-07-24"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Saint-Joseph": {
+   "commune": "Saint-Joseph",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 262,
+        "n": 708,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 90,
+        "n": 54,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": false,
+     "motif": "Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.",
+     "valeurs": {},
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · DVF neuf"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 8.2,
+      "sens": "hausse",
+      "median_12m": 2285,
+      "median_prec": 2111,
+      "n12": 190,
+      "nprev": 203
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 49
+       },
+       {
+        "trim": "2025T3",
+        "n": 54
+       },
+       {
+        "trim": "2025T2",
+        "n": 43
+       },
+       {
+        "trim": "2025T1",
+        "n": 42
+       }
+      ],
+      "mutations_dernier_trim": 49,
+      "delta_pct_an": -9
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 380,
+      "permis_12m": 173
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-27",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 1420932,
+      "parcelles": 6207
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "échantillon DPE insuffisant (18 connus < 30)",
+     "valeurs": {
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031",
+      "dpe_connus": 18
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · 18 DPE connus (sous le seuil fiable de 30)"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 9.2,
+      "type": "tous types",
+      "zone_oll": 6,
+      "n_obs": 955
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 6)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "prudence",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "49 ventes au dernier trimestre (-9 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "380 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 30/12/2025",
+     "offre": "dernier permis 2026-07-27"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Saint-Leu": {
+   "commune": "Saint-Leu",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 325,
+        "n": 618,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 527,
+        "n": 72,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4953,
+      "niveau": "commune",
+      "n": 41
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — médiane locale, 41 ventes"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 1.8,
+      "sens": "stable",
+      "median_12m": 4209,
+      "median_prec": 4136,
+      "n12": 185,
+      "nprev": 177
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 45
+       },
+       {
+        "trim": "2025T3",
+        "n": 49
+       },
+       {
+        "trim": "2025T2",
+        "n": 46
+       },
+       {
+        "trim": "2025T1",
+        "n": 43
+       }
+      ],
+      "mutations_dernier_trim": 45,
+      "delta_pct_an": 18
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 30/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 115,
+      "permis_12m": 128
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-30",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 5454450,
+      "parcelles": 9665
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "échantillon DPE insuffisant (20 connus < 30)",
+     "valeurs": {
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031",
+      "dpe_connus": 20
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · 20 DPE connus (sous le seuil fiable de 30)"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 16.49,
+      "type": "appartement"
+     },
+     "source": "DHUP (carte des loyers) — repli (commune sur plusieurs zones OLL ou OLL non ingéré ; détail OLL par zone à la parcelle)",
+     "date_amont": "2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · DHUP 2025"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "neutre",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "+",
+      "valeur": "45 ventes au dernier trimestre (+18 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "115 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 30/12/2025",
+     "offre": "dernier permis 2026-07-30"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Saint-Louis": {
+   "commune": "Saint-Louis",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 293,
+        "n": 688,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 278,
+        "n": 112,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4375,
+      "niveau": "ile_validee",
+      "n": null
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — estimation à l'échelle de l'île (± 12 %)"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 5.4,
+      "sens": "hausse",
+      "median_12m": 2500,
+      "median_prec": 2373,
+      "n12": 213,
+      "nprev": 196
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 48
+       },
+       {
+        "trim": "2025T3",
+        "n": 71
+       },
+       {
+        "trim": "2025T2",
+        "n": 56
+       },
+       {
+        "trim": "2025T1",
+        "n": 39
+       }
+      ],
+      "mutations_dernier_trim": 48,
+      "delta_pct_an": -25
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 31/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 313,
+      "permis_12m": 236
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-29",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 2882783,
+      "parcelles": 7350
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "pct_fg": 1.1,
+      "fg": 1,
+      "dpe_connus": 88,
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031"
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · sur 88 DPE connus · G interdit à la location au 01/01/2028, F au 01/01/2031"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 10.3,
+      "type": "tous types",
+      "zone_oll": 5,
+      "n_obs": 2006
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 5)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "prudence",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "48 ventes au dernier trimestre (-25 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "313 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 31/12/2025",
+     "offre": "dernier permis 2026-07-29"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Saint-Paul": {
+   "commune": "Saint-Paul",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 479,
+        "n": 1531,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 328,
+        "n": 132,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4730,
+      "niveau": "commune",
+      "n": 54
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 10/08/2026",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — médiane locale, 54 ventes"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": -4.4,
+      "sens": "baisse",
+      "median_12m": 4490,
+      "median_prec": 4697,
+      "n12": 218,
+      "nprev": 580
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 10/08/2026",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 136
+       },
+       {
+        "trim": "2025T3",
+        "n": 161
+       },
+       {
+        "trim": "2025T2",
+        "n": 134
+       },
+       {
+        "trim": "2025T1",
+        "n": 112
+       }
+      ],
+      "mutations_dernier_trim": 136,
+      "delta_pct_an": -13
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 10/08/2026",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 524,
+      "permis_12m": 323
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-30",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 11424198,
+      "parcelles": 21527
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "pct_fg": 6.5,
+      "fg": 14,
+      "dpe_connus": 217,
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031"
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · sur 217 DPE connus · G interdit à la location au 01/01/2028, F au 01/01/2031"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 18.86,
+      "type": "appartement"
+     },
+     "source": "DHUP (carte des loyers) — repli (commune sur plusieurs zones OLL ou OLL non ingéré ; détail OLL par zone à la parcelle)",
+     "date_amont": "2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · DHUP 2025"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "prudence",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "136 ventes au dernier trimestre (-13 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "524 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 10/08/2026",
+     "offre": "dernier permis 2026-07-30"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Saint-Philippe": {
+   "commune": "Saint-Philippe",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": false,
+     "motif": "aucune cellule U/AU ≥ 10",
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "calculable": false,
+        "n": 0,
+        "motif": "n < 10"
+       },
+       "AU": {
+        "calculable": false,
+        "n": 0,
+        "motif": "n < 10"
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": null,
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": false,
+     "motif": "Charge foncière de marché non atteignable sur cette commune — le collectif y est majoritairement social ou aidé.",
+     "valeurs": {},
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 24/12/2025",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · DVF neuf"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": false,
+     "motif": "tendance non calculable — n < 30 par fenêtre",
+     "valeurs": {
+      "n12": 35,
+      "nprev": 24
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 24/12/2025",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · DVF"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 14
+       },
+       {
+        "trim": "2025T3",
+        "n": 11
+       },
+       {
+        "trim": "2025T2",
+        "n": 4
+       },
+       {
+        "trim": "2025T1",
+        "n": 6
+       }
+      ],
+      "mutations_dernier_trim": 14,
+      "delta_pct_an": 133
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 24/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 50,
+      "permis_12m": 31
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-27",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "aucune parcelle servable avec SDP résiduelle",
+     "valeurs": {
+      "sdp_residuelle_m2": 0,
+      "parcelles": 0
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": null,
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé LABUSE"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "échantillon DPE insuffisant (7 connus < 30)",
+     "valeurs": {
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031",
+      "dpe_connus": 7
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · 7 DPE connus (sous le seuil fiable de 30)"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 9.2,
+      "type": "tous types",
+      "zone_oll": 6,
+      "n_obs": 955
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 6)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "favorable",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "+",
+      "valeur": "14 ventes au dernier trimestre (+133 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "50 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 24/12/2025",
+     "offre": "dernier permis 2026-07-27"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Saint-Pierre": {
+   "commune": "Saint-Pierre",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 422,
+        "n": 1388,
+        "calculable": true
+       },
+       "AU": {
+        "calculable": false,
+        "n": 9,
+        "motif": "n < 10"
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4258,
+      "niveau": "commune",
+      "n": 76
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 29/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — médiane locale, 76 ventes"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 4.1,
+      "sens": "hausse",
+      "median_12m": 3389,
+      "median_prec": 3255,
+      "n12": 529,
+      "nprev": 523
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 29/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 138
+       },
+       {
+        "trim": "2025T3",
+        "n": 143
+       },
+       {
+        "trim": "2025T2",
+        "n": 126
+       },
+       {
+        "trim": "2025T1",
+        "n": 112
+       }
+      ],
+      "mutations_dernier_trim": 138,
+      "delta_pct_an": -3
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 29/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 523,
+      "permis_12m": 327
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-29",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 4159121,
+      "parcelles": 11524
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "pct_fg": 7.5,
+      "fg": 8,
+      "dpe_connus": 107,
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031"
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · sur 107 DPE connus · G interdit à la location au 01/01/2028, F au 01/01/2031"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 15.81,
+      "type": "appartement"
+     },
+     "source": "DHUP (carte des loyers) — repli (commune sur plusieurs zones OLL ou OLL non ingéré ; détail OLL par zone à la parcelle)",
+     "date_amont": "2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · DHUP 2025"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "prudence",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "138 ventes au dernier trimestre (-3 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "523 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 29/12/2025",
+     "offre": "dernier permis 2026-07-29"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Sainte-Marie": {
+   "commune": "Sainte-Marie",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 479,
+        "n": 426,
+        "calculable": true
+       },
+       "AU": {
+        "calculable": false,
+        "n": 4,
+        "motif": "n < 10"
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4375,
+      "niveau": "ile_validee",
+      "n": null
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 29/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — estimation à l'échelle de l'île (± 12 %)"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 11.0,
+      "sens": "hausse",
+      "median_12m": 2604,
+      "median_prec": 2347,
+      "n12": 151,
+      "nprev": 170
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 29/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 33
+       },
+       {
+        "trim": "2025T3",
+        "n": 47
+       },
+       {
+        "trim": "2025T2",
+        "n": 29
+       },
+       {
+        "trim": "2025T1",
+        "n": 40
+       }
+      ],
+      "mutations_dernier_trim": 33,
+      "delta_pct_an": -37
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 29/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 328,
+      "permis_12m": 110
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-29",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 2543816,
+      "parcelles": 5057
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "échantillon DPE insuffisant (13 connus < 30)",
+     "valeurs": {
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031",
+      "dpe_connus": 13
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · 13 DPE connus (sous le seuil fiable de 30)"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 13.46,
+      "type": "appartement"
+     },
+     "source": "DHUP (carte des loyers) — repli (commune sur plusieurs zones OLL ou OLL non ingéré ; détail OLL par zone à la parcelle)",
+     "date_amont": "2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · DHUP 2025"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "prudence",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "33 ventes au dernier trimestre (-37 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "328 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 29/12/2025",
+     "offre": "dernier permis 2026-07-29"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Sainte-Rose": {
+   "commune": "Sainte-Rose",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 127,
+        "n": 73,
+        "calculable": true
+       },
+       "AU": {
+        "median_eur_m2": 139,
+        "n": 36,
+        "calculable": true
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4375,
+      "niveau": "ile_sans_operation",
+      "n": null
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 16/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — estimation île, aucune opération de marché observée sur cette commune"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": false,
+     "motif": "tendance non calculable — n < 30 par fenêtre",
+     "valeurs": {
+      "n12": 17,
+      "nprev": 23
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 16/12/2025",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · DVF"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 4
+       },
+       {
+        "trim": "2025T3",
+        "n": 5
+       },
+       {
+        "trim": "2025T2",
+        "n": 5
+       },
+       {
+        "trim": "2025T1",
+        "n": 2
+       }
+      ],
+      "mutations_dernier_trim": 4,
+      "delta_pct_an": -33
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 16/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 30,
+      "permis_12m": 27
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 889254,
+      "parcelles": 1950
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "échantillon DPE insuffisant (1 connus < 30)",
+     "valeurs": {
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031",
+      "dpe_connus": 1
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · 1 DPE connus (sous le seuil fiable de 30)"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 9.2,
+      "type": "tous types",
+      "zone_oll": 6,
+      "n_obs": 955
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 6)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "prudence",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "4 ventes au dernier trimestre (-33 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "+",
+      "valeur": "30 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 16/12/2025",
+     "offre": "dernier permis 2026-07-23"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Sainte-Suzanne": {
+   "commune": "Sainte-Suzanne",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 321,
+        "n": 323,
+        "calculable": true
+       },
+       "AU": {
+        "calculable": false,
+        "n": 2,
+        "motif": "n < 10"
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4375,
+      "niveau": "ile_validee",
+      "n": null
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 17/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — estimation à l'échelle de l'île (± 12 %)"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "delta_pct": 14.8,
+      "sens": "hausse",
+      "median_12m": 2515,
+      "median_prec": 2192,
+      "n12": 66,
+      "nprev": 60
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 17/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · fenêtres 12 m. glissantes affichées"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 14
+       },
+       {
+        "trim": "2025T3",
+        "n": 14
+       },
+       {
+        "trim": "2025T2",
+        "n": 13
+       },
+       {
+        "trim": "2025T1",
+        "n": 14
+       }
+      ],
+      "mutations_dernier_trim": 14,
+      "delta_pct_an": -39
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 17/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 257,
+      "permis_12m": 72
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-28",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 1465641,
+      "parcelles": 3428
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "pct_fg": 0.0,
+      "fg": 0,
+      "dpe_connus": 58,
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031"
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · sur 58 DPE connus · G interdit à la location au 01/01/2028, F au 01/01/2031"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 14.34,
+      "type": "appartement"
+     },
+     "source": "DHUP (carte des loyers) — repli (commune sur plusieurs zones OLL ou OLL non ingéré ; détail OLL par zone à la parcelle)",
+     "date_amont": "2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · DHUP 2025"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "prudence",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "14 ventes au dernier trimestre (-39 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "−",
+      "valeur": "257 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 17/12/2025",
+     "offre": "dernier permis 2026-07-28"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  },
+  "Salazie": {
+   "commune": "Salazie",
+   "lignes": [
+    {
+     "cle": "prix_terrain_nu_par_zone",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "par_zone": {
+       "U": {
+        "median_eur_m2": 147,
+        "n": 99,
+        "calculable": true
+       },
+       "AU": {
+        "calculable": false,
+        "n": 8,
+        "motif": "n < 10"
+       }
+      }
+     },
+     "source": "DVF terrains (dvf_mutations_parcelle) × zonage calibré LABUSE",
+     "date_amont": "DVF terrain 2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · millésime DVF terrain · zonage calibré"
+    },
+    {
+     "cle": "prix_sortie_neuf",
+     "groupe": "PRIX",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "prix_eur_m2": 4375,
+      "niveau": "ile_sans_operation",
+      "n": null
+     },
+     "source": "DVF neuf (dvf_prix_sortie_neuf)",
+     "date_amont": "ventes jusqu'au 18/12/2025",
+     "fiabilite": "moyenne",
+     "etiquette": "Sourcé · Estimé — estimation île, aucune opération de marché observée sur cette commune"
+    },
+    {
+     "cle": "tendance_12m",
+     "groupe": "DYNAMIQUE",
+     "calculable": false,
+     "motif": "tendance non calculable — n < 30 par fenêtre",
+     "valeurs": {
+      "n12": 23,
+      "nprev": 16
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 18/12/2025",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · DVF"
+    },
+    {
+     "cle": "liquidite",
+     "groupe": "DYNAMIQUE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "trimestres": [
+       {
+        "trim": "2025T4",
+        "n": 7
+       },
+       {
+        "trim": "2025T3",
+        "n": 3
+       },
+       {
+        "trim": "2025T2",
+        "n": 3
+       },
+       {
+        "trim": "2025T1",
+        "n": 5
+       }
+      ],
+      "mutations_dernier_trim": 7,
+      "delta_pct_an": -22
+     },
+     "source": "DVF",
+     "date_amont": "ventes jusqu'au 18/12/2025",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · DVF (mutations/trimestre)"
+    },
+    {
+     "cle": "offre_engagee",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "logements_12m": 43,
+      "permis_12m": 41
+     },
+     "source": "Sitadel (SDES)",
+     "date_amont": "dernier permis 2026-07-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · date dernier permis"
+    },
+    {
+     "cle": "gisement_constructible",
+     "groupe": "OFFRE",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "sdp_residuelle_m2": 1630696,
+      "parcelles": 1489
+     },
+     "source": "LABUSE — SDP résiduelle, tiers servables",
+     "date_amont": "run q_v11_m137 · 2026-08-23",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé LABUSE · run q_v11_m137"
+    },
+    {
+     "cle": "pression_dpe",
+     "groupe": "OFFRE",
+     "calculable": false,
+     "motif": "aucun DPE connu sur la commune",
+     "valeurs": {
+      "echeances": "G interdit à la location au 01/01/2028, F au 01/01/2031",
+      "dpe_connus": 0
+     },
+     "source": "DPE ADEME + calendrier DOM (M-G)",
+     "date_amont": "ADEME",
+     "fiabilite": "insuffisant",
+     "etiquette": "Sourcé · sur 0 DPE connu"
+    },
+    {
+     "cle": "loyer_median",
+     "groupe": "LOYER",
+     "calculable": true,
+     "motif": null,
+     "valeurs": {
+      "loyer_eur_m2": 9.2,
+      "type": "tous types",
+      "zone_oll": 6,
+      "n_obs": 955
+     },
+     "source": "OLL — ADIL Réunion / AGORAH (loyers observés)",
+     "date_amont": "2024",
+     "fiabilite": "bonne",
+     "etiquette": "Sourcé · OLL 2024 (zone 6)"
+    }
+   ],
+   "market_signal": {
+    "disponible": true,
+    "label": "neutre",
+    "composantes": [
+     {
+      "cle": "Liquidité (DVF)",
+      "sens": "−",
+      "valeur": "7 ventes au dernier trimestre (-22 % vs an−1)"
+     },
+     {
+      "cle": "Offre engagée (Sitadel)",
+      "sens": "+",
+      "valeur": "43 logements autorisés / 12 mois"
+     }
+    ],
+    "fiabilite": "bonne",
+    "source": "DVF (actes) + Sitadel (autorisations)",
+    "date_amont": {
+     "liquidite": "ventes jusqu'au 18/12/2025",
+     "offre": "dernier permis 2026-07-23"
+    }
+   },
+   "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un millésime unique (P2-54). Fraîcheur = date source amont."
+  }
+ }
+}

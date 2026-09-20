@@ -1,0 +1,196 @@
+[
+ {
+  "commune": "Saint-Denis",
+  "key": "saint-denis",
+  "cards": [
+   {
+    "id": "regle-plu",
+    "titre": "Règles d'urbanisme",
+    "file": "01_regle-plu.png"
+   },
+   {
+    "id": "regle-zan",
+    "titre": "Enveloppe ZAN",
+    "file": "02_regle-zan.png"
+   },
+   {
+    "id": "regle-sru",
+    "titre": "Logement social — SRU",
+    "file": "03_regle-sru.png"
+   },
+   {
+    "id": "construire",
+    "titre": "Permis & délais",
+    "file": "04_construire.png"
+   },
+   {
+    "id": "regle-plh",
+    "titre": "Programme local — PLH",
+    "file": "05_regle-plh.png"
+   },
+   {
+    "id": "marche",
+    "titre": "Prix & tendance",
+    "file": "06_marche.png"
+   },
+   {
+    "id": "terrain-nu",
+    "titre": "Terrain nu",
+    "file": "07_terrain-nu.png"
+   },
+   {
+    "id": "annonces",
+    "titre": "Annonces en cours — Radar",
+    "file": "08_annonces.png"
+   },
+   {
+    "id": "loyer",
+    "titre": "Loyers",
+    "file": "09_loyer.png"
+   },
+   {
+    "id": "zonage-abc",
+    "titre": "Zonage logement (ABC)",
+    "file": "10_zonage-abc.png"
+   },
+   {
+    "id": "fiscalite",
+    "titre": "Taxe foncière (taux)",
+    "file": "11_fiscalite.png"
+   },
+   {
+    "id": "zfang-frr",
+    "titre": "ZFANG / FRR (dispositifs fiscaux)",
+    "file": "12_zfang-frr.png"
+   },
+   {
+    "id": "foncier",
+    "titre": "Foncier repéré",
+    "file": "13_foncier.png"
+   },
+   {
+    "id": "zonage",
+    "titre": "Zonage",
+    "file": "14_zonage.png"
+   },
+   {
+    "id": "risques",
+    "titre": "Risques",
+    "file": "15_risques.png"
+   },
+   {
+    "id": "population",
+    "titre": "Population & logement",
+    "file": "16_population.png"
+   },
+   {
+    "id": "qpv",
+    "titre": "Quartiers prioritaires",
+    "file": "17_qpv.png"
+   },
+   {
+    "id": "contacts",
+    "titre": "Mairie & service urbanisme",
+    "file": "18_contacts.png"
+   }
+  ],
+  "n_cards": 18
+ },
+ {
+  "commune": "Cilaos",
+  "key": "cilaos",
+  "cards": [
+   {
+    "id": "regle-plu",
+    "titre": "Règles d'urbanisme",
+    "file": "01_regle-plu.png"
+   },
+   {
+    "id": "regle-zan",
+    "titre": "Enveloppe ZAN",
+    "file": "02_regle-zan.png"
+   },
+   {
+    "id": "regle-sru",
+    "titre": "Logement social — SRU",
+    "file": "03_regle-sru.png"
+   },
+   {
+    "id": "construire",
+    "titre": "Permis & délais",
+    "file": "04_construire.png"
+   },
+   {
+    "id": "regle-plh",
+    "titre": "Programme local — PLH",
+    "file": "05_regle-plh.png"
+   },
+   {
+    "id": "marche",
+    "titre": "Prix & tendance",
+    "file": "06_marche.png"
+   },
+   {
+    "id": "terrain-nu",
+    "titre": "Terrain nu",
+    "file": "07_terrain-nu.png"
+   },
+   {
+    "id": "annonces",
+    "titre": "Annonces en cours — Radar",
+    "file": "08_annonces.png"
+   },
+   {
+    "id": "loyer",
+    "titre": "Loyers",
+    "file": "09_loyer.png"
+   },
+   {
+    "id": "zonage-abc",
+    "titre": "Zonage logement (ABC)",
+    "file": "10_zonage-abc.png"
+   },
+   {
+    "id": "fiscalite",
+    "titre": "Taxe foncière (taux)",
+    "file": "11_fiscalite.png"
+   },
+   {
+    "id": "ort",
+    "titre": "Revitalisation (ACV / PVD / ORT)",
+    "file": "12_ort.png"
+   },
+   {
+    "id": "zfang-frr",
+    "titre": "ZFANG / FRR (dispositifs fiscaux)",
+    "file": "13_zfang-frr.png"
+   },
+   {
+    "id": "foncier",
+    "titre": "Foncier repéré",
+    "file": "14_foncier.png"
+   },
+   {
+    "id": "zonage",
+    "titre": "Zonage",
+    "file": "15_zonage.png"
+   },
+   {
+    "id": "risques",
+    "titre": "Risques",
+    "file": "16_risques.png"
+   },
+   {
+    "id": "population",
+    "titre": "Population & logement",
+    "file": "17_population.png"
+   },
+   {
+    "id": "contacts",
+    "titre": "Mairie & service urbanisme",
+    "file": "18_contacts.png"
+   }
+  ],
+  "n_cards": 18
+ }
+]
