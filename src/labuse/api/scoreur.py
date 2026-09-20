@@ -59,7 +59,7 @@ def _geocode(q: str) -> dict:
 _AVERT = "Estimé — ni un prix ni une promesse ; hypothèses de bilan génériques."
 
 
-def _prix_constat(prix: float, charge, prix_probable, surface) -> dict:
+def _prix_constat(prix: float, charge, surface) -> dict:
     """M128-6-§1 — CONSTAT chiffré nu confronté à un prix SAISI par un tiers. Deux règles :
 
       - §1 : la `charge` vient de la MÉTHODE DOCUMENTS (bilan à rebours, `compute_bilan`), jamais de
@@ -67,14 +67,11 @@ def _prix_constat(prix: float, charge, prix_probable, surface) -> dict:
       - §1.3 : AUCUN verdict, aucune conclusion. « bonne affaire », « au-dessus du marché »,
         « rentable », « validé » sont bannis — on sert les NOMBRES et leur méthode, le lecteur conclut.
 
-    Le prix probable du foncier (médiane terrain sectorielle) est NON divergent : servi tel quel."""
+    OUTILS-FIX-5 L4 — le « prix probable du foncier » (médiane sectorielle) venait de `score_e` ;
+    cette lecture legacy morte est retirée (seule la charge méthode-documents est confrontée au prix)."""
     out: dict = {"prix_saisi_eur": round(prix)}
     if surface and surface > 0:
         out["prix_saisi_m2_terrain"] = round(prix / surface)
-    if prix_probable is not None:
-        out["prix_probable_foncier_eur"] = round(prix_probable)
-        out["ecart_vs_prix_probable_pct"] = (round(100 * (prix - prix_probable) / prix_probable)
-                                             if prix_probable else None)
     if charge is not None:
         out["charge_fonciere_supportable_eur"] = round(charge)   # méthode documents (bilan à rebours)
         out["marge_a_ce_prix_eur"] = round(charge - prix)
@@ -122,21 +119,11 @@ def scoreur_adresse(body: ScoreurIn, db: Session = Depends(get_db)) -> dict:
     verdict = {"tier": tier, "libelle": _TIER_LABELS.get(tier, "Non évaluée"),
                "rang": row["rang"], "percentile": float(row["percentile"]) if row["percentile"] is not None else None}
 
-    # M128-5-§2 / M128-6-§1 : aucune marge score_e (barème sectoriel) servie à un tiers. Le prix
-    # probable du foncier (médiane terrain sectorielle) est NON divergent → lu tel quel dans score_e.
-    # La CHARGE, elle, ne vient plus de score_e mais de la MÉTHODE DOCUMENTS (compute_bilan), et
-    # seulement si un prix est saisi (§1). Aucun chiffre de marge auto-affiché.
-    prix_probable = None
-    try:
-        if db.execute(text("SELECT to_regclass('score_e')")).scalar() is not None:
-            se = db.execute(text(
-                "SELECT estimable, prix_probable FROM score_e WHERE idu = :i"),
-                {"i": row["idu"]}).mappings().first()
-            if se and se["estimable"]:
-                prix_probable = se["prix_probable"]
-    except Exception:  # noqa: BLE001
-        pass
-
+    # OUTILS-FIX-5 L4 — lecture morte de `score_e` retirée. Elle interrogeait la table à CHAQUE
+    # requête pour `prix_probable`, seul consommé dans la branche `prix` ci-dessous — que le front
+    # fusionné n'atteint jamais (EtudierBien.tsx:55 appelle toujours avec prix=null, aucun autre
+    # appelant n'envoie prix_demande_eur). La doctrine M128-6-§1 bannit déjà score_e du chiffre servi
+    # (la charge vient de la méthode documents). On cesse donc de lire ce barème legacy pour rien.
     out = {"ok": True, "adresse": label, "idu": row["idu"], "commune": row["commune"],
            "section": row["section"], "numero": row["numero"], "surface_m2": row["surface_m2"],
            "verdict": verdict,
@@ -156,7 +143,7 @@ def scoreur_adresse(body: ScoreurIn, db: Session = Depends(get_db)) -> dict:
                     charge = (b.charge_fonciere or {}).get("central")
         except Exception:  # noqa: BLE001
             pass
-        out["prix"] = _prix_constat(float(body.prix_demande_eur), charge, prix_probable, row["surface_m2"])
+        out["prix"] = _prix_constat(float(body.prix_demande_eur), charge, row["surface_m2"])
 
     if body.with_constat:
         # CONSTAT servi (fusion « Étudier un bien ») : la charge CALIBRÉE (bilan à rebours par

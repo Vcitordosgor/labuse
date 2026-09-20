@@ -1,0 +1,16 @@
+OUTILS-FIX-5 Lot 4 — les quatre vestiges retirés/rebranchés (mesures API :8065, 2026-09-20)
+
+V4a — Étudier un bien : lecture morte score_e retirée
+  POST /scoreur-adresse {97410000AN0347, with_constat} → clés = ok/adresse/idu/commune/section/numero/surface_m2/verdict/fiche_url/constat
+  'prix' absent (branche morte non atteinte, front envoie prix=null) ; score_e n'est plus interrogé.
+
+V4b — Faisabilité : ta_note « taux non ingéré » retirée
+  fiscal = ['qpv', 'tva'] | ta_note présent : False
+
+V4c — Comparer : contrainte_majeure rebranchée (id = cascade servie, comme la fiche)
+  contrainte_majeure = 'Exclue : PPR zone rouge (inconstructible) — 100 % de la surface.'
+
+V4d — Risques : doublon ZNIEFF (cascade vs append) supprimé, append en repli, distinctes préservées
+  97410000AN0347 : lignes ZNIEFF = 1 | layers = ['znieff']
+  97415000BC0103 : lignes ZNIEFF = 2 | layers = ['ZNIEFF', 'ZNIEFF']
+  AN0347 dans le backfill cascade (znieff) → 1 ligne (append sauté) ; BC0103 hors backfill → 2 ZNIEFF DISTINCTES (Ravine jardin I + Etang Saint-Paul II) via repli. Zéro doublon, zéro régression.

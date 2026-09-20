@@ -527,9 +527,10 @@ export function FiscalLeviersBlock({ idu }: { idu: string }) {
       <GroupLabel>Fiscal &amp; leviers</GroupLabel>
       <FactRow label="QPV" value={<span className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</span>} tone={b.fiscal.qpv ? undefined : 'mute'} />
       {/* FICHE-RANGEMENT-2 Lot 4 — la TVA outre-mer (8,5 % / 2,1 % LLS) n'est plus RÉPÉTÉE ici :
-          elle est expliquée UNE fois, en « Dispositifs territoriaux » (dispositifs_dom, formulation
-          complète). « Fiscal & leviers » ne garde que QPV + la note de taxe d'aménagement. */}
-      <FactNote>{b.fiscal.ta_note}</FactNote>
+          elle est expliquée UNE fois, en « Dispositifs territoriaux » (dispositifs_dom).
+          OUTILS-FIX-5 L4 — la note de taxe d'aménagement « taux non ingéré » est RETIRÉE (fausse
+          depuis TAXE-AMENAGEMENT-1) : le taux communal public daté est servi par le bloc taxe de la
+          fiche (§7) et l'outil Taxe. « Fiscal & leviers » ne garde donc que QPV. */}
     </div>
   )
 }

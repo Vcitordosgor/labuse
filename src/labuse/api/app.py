@@ -6484,6 +6484,11 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "charge_fonciere_m2": cf.get("par_m2_terrain"),
         "n_contraintes": len(contraintes),
         "contraintes": [c["detail"] for c in contraintes[:4]],
+        # OUTILS-FIX-5 L4 — `contrainte_majeure` REBRANCHÉE : elle était calculée (HARD_EXCLUDE
+        # d'abord, sinon 1er SOFT_FLAG) mais absente du payload depuis e6b7b5bb → le front retombait
+        # en permanence sur « N signalée(s) ». On sert la valeur, tirée des MÊMES lignes de cascade
+        # servie (`qv2.lines`) que la fiche — même id, même détail que la contrainte dominante à l'écran.
+        "contrainte_majeure": majeure,
         # RETOURS-11F M13 (O9) — colonnes ajoutées :
         "proprietaire": proprietaire,                                   # moral / particulier
         "bati_existant_pct": bati_pct,                                  # emprise bâtie ÷ terrain
