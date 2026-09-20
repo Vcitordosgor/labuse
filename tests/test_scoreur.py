@@ -1,7 +1,8 @@
 """O2 — SCOREUR D'ADRESSE INVERSÉ : tests logique prix (pur) + flux adresse→parcelle→verdict (DB).
 
-Le prix demandé est saisi À LA MAIN (jamais scrapé) ; confronté à la charge foncière supportable et
-au prix probable (Score É V2). Une adresse hors base → réponse honnête, jamais un verdict inventé.
+Le prix demandé est saisi À LA MAIN (jamais scrapé) ; confronté à la charge foncière supportable
+(méthode documents). OUTILS-FIX-5 L4 : le « prix probable » (barème score_e) n'est plus lu ni servi.
+Une adresse hors base → réponse honnête, jamais un verdict inventé.
 """
 from __future__ import annotations
 
@@ -17,10 +18,11 @@ from labuse.scoring.score_v_constants import Q_A_RUN_LABEL  # M31 : seed sous le
 
 def test_constat_marge_chiffree_sans_verdict():
     # charge 200 000 (méthode documents) − prix 80 000 = +120 000. Aucun mot de verdict.
-    r = scoreur._prix_constat(80000, charge=200000, prix_probable=100000, surface=1000)
+    # OUTILS-FIX-5 L4 — `prix_probable` (barème score_e) retiré : plus de prix_probable_foncier_eur.
+    r = scoreur._prix_constat(80000, charge=200000, surface=1000)
     assert r["marge_a_ce_prix_eur"] == 120000 and r["charge_fonciere_supportable_eur"] == 200000
     assert r["prix_saisi_m2_terrain"] == 80 and "Estimé" in r["avertissement"]
-    assert r["prix_probable_foncier_eur"] == 100000 and r["ecart_vs_prix_probable_pct"] == -20
+    assert "prix_probable_foncier_eur" not in r and "ecart_vs_prix_probable_pct" not in r
     # AUCUN verdict / conclusion servie au tiers
     assert "verdict" not in r and "synthese" not in r
     txt = " ".join(str(v) for v in r.values()).lower()
@@ -29,13 +31,13 @@ def test_constat_marge_chiffree_sans_verdict():
 
 
 def test_constat_marge_negative_reste_un_nombre():
-    r = scoreur._prix_constat(100000, charge=90000, prix_probable=100000, surface=1000)
-    assert r["marge_a_ce_prix_eur"] == -10000 and r["ecart_vs_prix_probable_pct"] == 0
+    r = scoreur._prix_constat(100000, charge=90000, surface=1000)
+    assert r["marge_a_ce_prix_eur"] == -10000
     assert "verdict" not in r and "synthese" not in r
 
 
 def test_constat_prix_non_chiffrable_sans_charge():
-    r = scoreur._prix_constat(80000, charge=None, prix_probable=None, surface=1000)
+    r = scoreur._prix_constat(80000, charge=None, surface=1000)
     assert "marge_a_ce_prix_eur" not in r and "non calculable" in r["message"].lower()
     assert "verdict" not in r
 
@@ -81,11 +83,12 @@ def test_flux_adresse_verdict_et_prix(db_session, monkeypatch):
     # M128-5-§2 : la marge score_e (barème sectoriel, méthode divergente) n'est plus servie au tiers.
     assert "score_e" not in out
     # M128-6-§1 : le prix saisi est confronté à la charge DOCUMENTS (compute_bilan), servie seulement
-    # si le bilan est calculable. Le prix probable (médiane terrain, NON divergent) reste servi ;
-    # aucun verdict / conclusion (§1.3).
+    # si le bilan est calculable ; aucun verdict / conclusion (§1.3).
+    # OUTILS-FIX-5 L4 — la lecture morte de score_e est retirée : le prix probable (médiane terrain,
+    # barème legacy) N'EST PLUS servi. Le constat ne porte plus que le prix saisi (± charge documents).
     assert "verdict" not in out["prix"] and "synthese" not in out["prix"]
-    assert out["prix"]["prix_probable_foncier_eur"] == 100000
-    assert out["prix"]["ecart_vs_prix_probable_pct"] == -20
+    assert "prix_probable_foncier_eur" not in out["prix"]
+    assert out["prix"]["prix_saisi_eur"] == 80000
 
 
 @pytest.mark.db

@@ -1,0 +1,26 @@
+OUTILS-FIX-5 Lot 7 — RECENSEMENT : tout chiffre affiché par un outil porte un id du registre
+(V5f vert : 17 outils du menu, tous robinet ; chaque chiffre = un id du registre)
+
+outil (clé front)            robinet                     chiffres (ids registre) · raison partagée
+--------------------------------------------------------------------------------------------------------------
+assemblage                   outil_assemblage           assemblage_parcelles_n, assemblage_surface_m2
+blocs-fonciers               outil_blocs_fonciers       n_blocs_pm, n_parcelles_bloc, sdp_residuelle_m2 [partagé→NON_SONDES], type_proprietaire [partagé→NON_SONDES]
+communes                     outil_communes             prix_ancien_median_eur_m2 [partagé→NON_SONDES], prix_neuf_vefa_acte_eur_m2 [partagé→NON_SONDES], stock_opportunites [partagé→NON_SONDES], velocite_delai_median_mois [partagé→NON_SONDES], deficit_sru_pts [partagé→NON_SONDES]
+comparer                     outil_comparer_parcelles   comparateur_composite [partagé→NON_SONDES], stock_opportunites [partagé→NON_SONDES], velocite_delai_median_mois [partagé→NON_SONDES], permis_5a_n [partagé→NON_SONDES], deficit_sru_pts [partagé→NON_SONDES], pression_zan_ha [partagé→NON_SONDES], prix_neuf_vefa_acte_eur_m2 [partagé→NON_SONDES], prix_ancien_median_eur_m2 [partagé→NON_SONDES]
+courriers                    outil_courrier             courrier_demandes_n
+etude-zone                   outil_etude_zone           population_zone [partagé→NON_SONDES], n_concurrents_zone, emplois_fourchette, revenu_approche_eur, trafic_mja, iris_quartier [partagé→NON_SONDES]
+patrimoine                   outil_scan_patrimoine      n_parcelles_pm [partagé→NON_SONDES], dirigeant_pm_signal
+permis                       outil_permis               permis_12m_n [partagé→NON_SONDES], velocite_delai_median_mois [partagé→NON_SONDES]
+plu                          outil_plu                  n_extraits_plu, n_communes_rnu [partagé→NON_SONDES]
+programme                    outil_faisabilite          capacite_logements [partagé→NON_SONDES], sdp_residuelle_m2 [partagé→NON_SONDES], charge_fonciere_eur [partagé→NON_SONDES], cout_construction_saisi_eur_m2, marge_frais_saisie_pct, prix_demande_saisi_eur, ecart_prix_demande_pct, rtaa_exigences [partagé→NON_SONDES]
+prospection-solaire          outil_prospection_solaire  prod_spec_kwh_kwc [partagé→NON_SONDES], azimut_bati_deg [partagé→NON_SONDES]
+renouvellement               outil_densifier            n_densifiables [partagé→NON_SONDES], sdp_residuelle_m2 [partagé→NON_SONDES]
+risques                      outil_pieges               n_vigilances [partagé→NON_SONDES]
+scoreur-adresse              outil_etudier_bien         tier_opportunite [partagé→NON_SONDES], surface_parcelle_m2 [partagé→NON_SONDES]
+successions                  outil_successions          n_successions_veille, sdp_residuelle_m2 [partagé→NON_SONDES], type_proprietaire [partagé→NON_SONDES]
+taxe-amenagement             outil_taxe_amenagement     taxe_amenagement_eur
+temps                        outil_remonter_temps       annee_ortho
+
+Lectures partagées entre outils (mêmes id, raison déclarée en NON_SONDES, V5c) :
+  sdp_residuelle_m2: servi par ['programme', 'renouvellement', 'successions', 'blocs-fonciers'] — raison: outils densifier/faisa et PDF lisent le même bloc potentiel — PDF couverts par r
+  type_proprietaire: servi par ['successions', 'blocs-fonciers'] — raison: fiche §1 + Successions + Blocs lisent le MÊME passe-plat parcelle_personne_moral

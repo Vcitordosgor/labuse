@@ -605,7 +605,15 @@ NON_SONDES: dict[str, str] = {
     "prod_spec_kwh_kwc": "outil, fiche soleil et toits lisent le MÊME builder solaire (gel "
                          "étiqueté, eau 4) — pas de second calcul à comparer",
     "sdp_residuelle_m2": "outils densifier/faisa et PDF lisent le même bloc potentiel — "
-                         "PDF couverts par recette_exports1 (nocturne)",
+                         "PDF couverts par recette_exports1 (nocturne) ; OUTILS-FIX-5 L6 — "
+                         "Successions/Blocs servent la SDP résiduelle « Estimé » (blocs = somme "
+                         "parcel_residuel de la vue servie ; successions = SDP feature-store), "
+                         "affichage étiqueté, pas un second calcul concurrent à comparer au bouton",
+    # OUTILS-FIX-5 L6 — type_proprietaire (PM nommée / particulier) est servi par la fiche §1 ET
+    # les deux outils neufs (Successions, Blocs) via le MÊME passe-plat parcelle_personne_morale
+    # (fichier DGFiP PM, millésime 2025) — un seul chemin machine, aucun recalcul concurrent.
+    "type_proprietaire": "fiche §1 + Successions + Blocs lisent le MÊME passe-plat "
+                         "parcelle_personne_morale (fichier PM DGFiP) — un seul chemin, aucun recalcul",
     "surface_parcelle_m2": "outil_etudier_bien lit le même passe-plat parcels.surface_m2 — "
                            "la sonde compare déjà HTTP/SQL/Copilote (chemins réels 0-bis)",
     "zone_plu_famille": "couche comparée par la catégorielle 4.1 ; PDF zonage par "

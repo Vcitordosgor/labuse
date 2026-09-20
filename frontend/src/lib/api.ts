@@ -513,6 +513,7 @@ export interface TaxeParams {
   eoliennes_mats?: number
   taux_communal_pct?: number | null
   taux_departemental_pct?: number | null
+  insee?: string | null   // OUTILS-FIX-5 L2 — clé de la table des taux : le back sert le taux public de la commune
 }
 export const getTaxeAmenagement = (p: TaxeParams) => {
   const params = new URLSearchParams({ surface_taxable_m2: String(p.surface_taxable_m2) })
@@ -524,6 +525,7 @@ export const getTaxeAmenagement = (p: TaxeParams) => {
   if (p.eoliennes_mats) params.set('eoliennes_mats', String(p.eoliennes_mats))
   if (p.taux_communal_pct != null) params.set('taux_communal_pct', String(p.taux_communal_pct))
   if (p.taux_departemental_pct != null) params.set('taux_departemental_pct', String(p.taux_departemental_pct))
+  if (p.insee) params.set('insee', p.insee)
   return j<TaxeResult>(`/outils/taxe-amenagement?${params.toString()}`)
 }
 
@@ -604,7 +606,16 @@ export interface PromoteurAcquisitions { siren: string; denomination: string | n
 export const getPromoteurAcquisitions = (siren: string) => j<PromoteurAcquisitions>(`/outils/veille-promoteurs/${encodeURIComponent(siren)}/acquisitions`)
 
 // RETOURS-15 U6 — deja_batie : le chiffre pré-rempli est un RÉSIDUEL sur une parcelle bâtie, l'écran le nomme.
-export interface TaxePrefill { idu: string; commune: string; surface_terrain_m2: number | null; zone_plu: string | null; sdp_gabarit_m2: number | null; deja_batie?: boolean }
+// OUTILS-FIX-5 L2 — insee (clé de la table des taux) + taux communal PUBLIC daté, servis par la MÊME
+// résolution que la fiche §7 (taux_communal_public(idu[:5])) : l'outil affiche le taux, ne le fait plus saisir.
+export interface TaxePrefill {
+  idu: string; commune: string; insee: string
+  surface_terrain_m2: number | null; zone_plu: string | null; sdp_gabarit_m2: number | null; deja_batie?: boolean
+  taux_communal_pct: number | null
+  taux_communal_source: 'public' | null
+  taux_communal_millesime: string | null
+  taux_communal_perime: boolean | null
+}
 export const getTaxePrefill = (idu: string) => j<TaxePrefill>(`/outils/taxe-amenagement/prefill?idu=${encodeURIComponent(idu)}`)
 
 // M13-B1 · autocomplétion d'adresse INTERNE : on interroge NOTRE table `adresses` (BAN

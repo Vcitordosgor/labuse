@@ -133,3 +133,30 @@ def test_temoins_tournants_deterministes_et_bornes(db_session):
     db_session.execute(text(
         "UPDATE consultation_log SET ts = now() - interval '3 days'"))
     assert sonde_circuit.temoins_tournants(db_session, n=50) == []   # rien consulté hier
+
+
+# ── V5f — tout chiffre d'un outil porte un id du registre (OUTILS-FIX-5 lot 7) ────────────
+
+def test_v5f_prouve_casse_sur_une_lecture_directe(monkeypatch):
+    """Un robinet d'outil qui sert un chiffre ABSENT du registre (= une lecture directe de la
+    base, hors id) casse le verrou, et le détail NOMME l'outil et le chiffre."""
+    from labuse.registre.robinets import Robinet
+    import labuse.registre as reg
+    faux = dict(reg.ROBINETS)
+    faux["outil_faisabilite"] = Robinet(
+        "outil", "Faisabilité", None, "/modules/faisabilite", "json_puis_js",
+        ("chiffre_lu_en_direct_hors_registre",), None)
+    monkeypatch.setattr(reg, "ROBINETS", faux)
+    r = CV.verrou_outils_registre()
+    assert r.verdict == "casse"
+    assert any("chiffre_lu_en_direct_hors_registre" in d for d in r.details)
+
+
+def test_v5f_vert_sur_les_17_outils():
+    """Sur l'état réel : les 17 outils du menu (registry.ts, cartes visibles) ont tous leur
+    robinet, et chaque chiffre servi est un id du registre — aucune lecture directe."""
+    cles = CV._cles_outils_menu()
+    assert len(cles) == 17, f"attendu 17 outils au menu, vu {len(cles)} : {sorted(cles)}"
+    r = CV.verrou_outils_registre()
+    assert r.verdict == "ok", r.details[:5]
+    assert "17 outils du menu" in r.preuve

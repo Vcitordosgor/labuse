@@ -193,14 +193,17 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
 # ───────────────────────────── C5 — construire ici (permis + point mort) ─────────────────────────────
 def permis_bloc(db: Session, commune: str) -> dict:
     """Le bloc « Construire ici » : permis autorisés (12 mois / 5 ans) et délai d'instruction viennent des
-    MÊMES sources que le comparateur (SITADEL + m10, cf. `comparable`) ; les permis AU POINT MORT (accordés
-    puis frappés de caducité, sans DAACT) sont le gisement dormant déjà calculé par `pc_caducs` — servi ici
-    à la maille commune."""
+    MÊMES sources que le comparateur (SITADEL + m10, cf. `comparable`) ; les permis DORMANTS (au point
+    mort) viennent du MÊME moteur/id que l'outil Permis (`permis_point_mort` / point_mort_n)."""
     from ..faisabilite.marche_commune import ligne6_offre_engagee
+    from ..registre.moteurs.commune import permis_point_mort
+    from .. import runs
     offre = ligne6_offre_engagee(db, commune)
-    point_mort = db.execute(text(
-        "SELECT count(*) FROM pc_caducs pc JOIN parcels p ON p.idu = pc.idu WHERE p.commune = :c"),
-        {"c": commune}).scalar() or 0
+    # OUTILS-FIX-5 L5 — « dormants » de la fiche commune = LE MÊME id que l'outil Permis
+    # (point_mort_n = permis_point_mort : PC sans DAACT depuis 36 mois sur parcelle non bâtie au run
+    # servi). Avant, la fiche comptait pc_caducs (103 à Saint-Benoît) quand l'outil affichait le point
+    # mort (651) sous le même mot « dormants » — un seul id, un seul chiffre désormais (cœur OUTILS-FIX-5).
+    point_mort = permis_point_mort(db, commune, months=36, run=runs.cascade())
     cmp = comparable(db, commune) or {}
     return {
         "permis_12m": (offre.get("valeurs") or {}).get("permis_12m") or 0,
@@ -208,7 +211,7 @@ def permis_bloc(db: Session, commune: str) -> dict:
         "logements_12m": (offre.get("valeurs") or {}).get("logements_12m"),
         "delai_median_mois": cmp.get("delai_median_mois"),
         "point_mort": int(point_mort),
-        "source": "SITADEL (autorisations) · m10 (délais) · PC caducs (dormants, Estimé).",
+        "source": "SITADEL (autorisations) · m10 (délais) · permis au point mort (36 mois sans DAACT, run servi).",
     }
 
 

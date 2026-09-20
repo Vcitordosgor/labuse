@@ -631,11 +631,16 @@ export function M18() {
         </select>
         <span className="text-[10px] text-txt-dim">{d?.perimetre ?? ''} — 8 derniers trimestres.</span>
       </div>
-      {nr && (
+      {nr && (nr.prix_m2_neuf != null ? (
         <p className="text-[10.5px] text-txt-dim">Neuf : <b className="text-txt">~{fmt(nr.prix_m2_neuf)} €/m²</b> (référence actuelle, sur {fmt(nr.n)} ventes)
           <Tip garder tip="La VEFA (neuf) est trop rare dans DVF (0-4 ventes/trimestre) pour une série trimestrielle honnête : on sert le prix de sortie neuf ACTUEL (référence île), pas une fausse courbe."><span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span></Tip>
         </p>
-      )}
+      ) : (
+        // OUTILS-FIX-5 L5 — sous le seuil de fiabilité (même que la fiche/le tableau Communes), aucun
+        // prix neuf fragile : « — » assumé, le n est dit. Fini le 1 304 €/m² sur 6 ventes ici seul.
+        <p className="text-[10.5px] text-txt-dim">Neuf : <b className="text-txt">—</b> (VEFA trop rare : {fmt(nr.n)} vente{nr.n > 1 ? 's' : ''} &lt; seuil de {fmt(nr.seuil)} — même règle que la fiche et le tableau Communes)
+        </p>
+      ))}
       {/* RETOURS-12 O10 — les 3 séries (ancien · terrain · permis) fusionnées en UN VRAI TABLEAU,
           une ligne par trimestre, en-tête collant (.thead-sticky, T4) : « ça respire », même grammaire
           que la comparaison des communes. Les tendances /an restent en pied (légende). */}

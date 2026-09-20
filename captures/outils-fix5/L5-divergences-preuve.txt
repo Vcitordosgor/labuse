@@ -1,0 +1,15 @@
+OUTILS-FIX-5 Lot 5 — les deux divergences restantes (mesures, 2026-09-20)
+
+== VEFA Évolution : même seuil (neuf_vefa_seuil=8) que le comparateur/la fiche ==
+  barometre Saint-Benoît neuf_reference = {'prix_m2_neuf': None, 'n': 6, 'suffisant': False, 'seuil': 8}
+  barometre île entière  neuf_reference = {'prix_m2_neuf': 4375, 'n': 315, 'suffisant': True, 'seuil': 8}
+  -> Saint-Benoît 6 ventes < seuil 8 => prix null (= comparateur « — ») ; avant : 1 304 EUR/m2 servi ici seul.
+  -> Écran Évolution : « Neuf : — (VEFA trop rare : 6 ventes < seuil de 8 …) » (capture L5-vefa-evolution-tiret.png).
+
+== Dormants : UN SEUL id (tranché pour l'unification, pas deux mots) ==
+  outil Permis (permis_point_mort/point_mort_n) = 565
+  fiche commune permis_bloc.point_mort          = 565 (rebranché sur le MÊME moteur)
+  IDENTIQUES : True
+  -> « Permis dormants » : même mot (vocabulaire RETOURS-17 préservé) ET même chiffre des deux côtés.
+     Avant : fiche 103 (pc_caducs) vs outil 565 (point mort) sous le même mot. Le réflexe « deux mots
+     (caducs/dormants) » a été abandonné : il créait deux vocabulaires et contredisait RETOURS-17.

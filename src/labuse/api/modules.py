@@ -1538,16 +1538,22 @@ def _diligence_dossier(db: Session, parcel_id: int, idu: str) -> dict:
         _vus.add(k)
         _uniq.append(c)
     checklist = _uniq
-    # M137-U — ZNIEFF : contrainte HORS CASCADE (ne remonte pas dans dryrun_cascade_results) ; on la
-    # lit géométriquement dans spatial_layers pour qu'elle apparaisse AUSSI dans l'entrée « lot »
-    # (comme dans l'entrée « parcelle » / servitudes). Vigilance, jamais un blocage (severity faible).
-    for z in db.execute(text(
-            "SELECT sl.subtype, sl.name FROM spatial_layers sl JOIN parcels p ON p.id = :pid "
-            "WHERE sl.kind = 'znieff' AND sl.geom_2975 IS NOT NULL "
-            "  AND ST_Intersects(sl.geom_2975, p.geom_2975)"), {"pid": parcel_id}).mappings().all():
-        checklist.append({"layer": "ZNIEFF", "severity": "faible", "result": "SOFT_FLAG",
-                          "detail": f"{z['subtype'] or 'ZNIEFF'} — {z['name']} : contrainte "
-                                    "environnementale (études d'impact, risque de recours), n'interdit pas de construire"})
+    # OUTILS-FIX-5 L4 — ZNIEFF : l'append géométrique de M137-U (« contrainte HORS CASCADE ») produisait
+    # un DOUBLON depuis que le run servi émet une couche cascade `znieff` (le backfill FICHE-COUCHES-2
+    # remonte la ZNIEFF dans dryrun_cascade_results) : le crible « lot » montrait la MÊME parcelle deux
+    # fois — ligne cascade `znieff` + ligne appendée `ZNIEFF` (la dédup ci-dessus ne les replie pas :
+    # layer et libellé diffèrent). Or ce backfill est PARTIEL (toutes les parcelles n'ont pas encore
+    # leur ligne cascade `znieff`) : on ne peut pas simplement retirer l'append sans perdre la vigilance
+    # ZNIEFF au crible sur ces parcelles. On garde donc l'append en REPLI — seulement si la cascade
+    # servie n'a pas déjà émis de znieff pour la parcelle. Doublon supprimé, zéro régression.
+    if not any(c["layer"] == "znieff" for c in checklist):
+        for z in db.execute(text(
+                "SELECT sl.subtype, sl.name FROM spatial_layers sl JOIN parcels p ON p.id = :pid "
+                "WHERE sl.kind = 'znieff' AND sl.geom_2975 IS NOT NULL "
+                "  AND ST_Intersects(sl.geom_2975, p.geom_2975)"), {"pid": parcel_id}).mappings().all():
+            checklist.append({"layer": "ZNIEFF", "severity": "faible", "result": "SOFT_FLAG",
+                              "detail": f"{z['subtype'] or 'ZNIEFF'} — {z['name']} : contrainte "
+                                        "environnementale (études d'impact, risque de recours), n'interdit pas de construire"})
     pm = db.execute(text("SELECT denomination, siren FROM parcelle_personne_morale WHERE idu = :i"),
                     {"i": idu}).mappings().first()
     proprio = ({"type": "personne_morale", "denomination": pm["denomination"], "siren": pm["siren"]}
@@ -1754,10 +1760,10 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
         "qpv": qpv,
         "tva": ("2,1 % (LLS en QPV — LODEOM) au lieu de 8,5 % DOM" if qpv
                 else "8,5 % (taux DOM) — 2,1 % possible en LLS selon montage"),
-        # M58-P1 (f) : le taux communal n'est PAS ingéré — on ne l'INVENTE pas (l'ancien
-        # « hypothèse indicative 5 % » était un taux fictif, non utilisé dans aucun calcul servi).
-        "ta_note": "Taxe d'aménagement : taux communal non ingéré — à confirmer en mairie "
-                   "(part communale + part départementale).",
+        # OUTILS-FIX-5 L4 — `ta_note` « taux communal non ingéré — à confirmer en mairie » RETIRÉE :
+        # fausse depuis TAXE-AMENAGEMENT-1 (taxe_amenagement_taux 24/24 communes). Le taux communal
+        # PUBLIC daté est servi par le bloc `taxe_amenagement` de la fiche (§7, _taxe_amenagement_block)
+        # et par l'outil Taxe — un seul point de vérité, plus de contradiction dans le même écran.
     }
     # RTAA DOM (mandat contexte-commune, 5bis) — rappel réglementaire de conception,
     # vérifié sur Légifrance (config/rtaa_dom.yaml), hors scoring

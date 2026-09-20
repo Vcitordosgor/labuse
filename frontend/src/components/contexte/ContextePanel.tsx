@@ -473,6 +473,9 @@ export function ContextePanel() {
                   <RowT lbl="Permis autorisés (12 mois)" val={`${fmt(d.permis_bloc.permis_12m)}${d.permis_bloc.permis_5a != null ? ` · ${fmt(d.permis_bloc.permis_5a)} sur 5 ans` : ''}`} strong />
                   {d.permis_bloc.delai_median_mois != null && <RowT lbl="Délai d'instruction médian" val={`${fmtDec(d.permis_bloc.delai_median_mois)} mois`} />}
                   {d.permis_bloc.logements_12m != null && <RowT lbl="Offre engagée" val={`${fmt(d.permis_bloc.logements_12m)} logts / 12 mois`} />}
+                  {/* OUTILS-FIX-5 L5 — « Permis dormants » : d.permis_bloc.point_mort sert désormais
+                      le MÊME id que l'outil Permis (point_mort_n / permis_point_mort, unifié dans
+                      fiche_commune.permis_bloc) — un seul mot, un seul chiffre, fiche commune == outil. */}
                   <RowT lbl="Permis dormants" val={fmt(d.permis_bloc.point_mort)} />
                 </div>
                 <Shortcut label="Ouvrir Permis — cette commune" onClick={() => ouvrirOutil(commune, insee, 'permis')} />

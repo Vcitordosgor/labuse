@@ -211,6 +211,15 @@ ROBINETS: dict[str, Robinet] = {
     "/modules/promesses", "json_puis_js", chiffres=("point_mort_n",)),
  "outil_densifier": _r("outil", "Densifier l'existant", None,
     "/modules/renouvellement", "json_puis_js", chiffres=("n_densifiables", "sdp_residuelle_m2",)),
+ # OUTILS-FIX-5 L6 — Successions (M28) et Blocs fonciers (M29) étaient absents du registre → invisibles
+ # de /sources/rattachements. Déclarés ici : chaque chiffre affiché porte son id, leurs sources
+ # (fichier PM DGFiP, RNE INPI) apparaissent dans le Circuit.
+ "outil_successions": _r("outil", "Successions à venir", None,
+    "/modules/successions", "json_puis_js",
+    chiffres=("n_successions_veille", "sdp_residuelle_m2", "type_proprietaire",)),
+ "outil_blocs_fonciers": _r("outil", "Blocs fonciers", None,
+    "/modules/blocs", "json_puis_js",
+    chiffres=("n_blocs_pm", "n_parcelles_bloc", "sdp_residuelle_m2", "type_proprietaire",)),
  "outil_etude_zone": _r("outil", "Étude de zone", None,
     "/modules/etude-zone", "json_puis_js", chiffres=("population_zone", "n_concurrents_zone", "emplois_fourchette", "revenu_approche_eur", "trafic_mja", "iris_quartier",)),
  "outil_remonter_temps": _r("outil", "Remonter le temps", None,
