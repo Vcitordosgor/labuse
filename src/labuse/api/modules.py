@@ -230,6 +230,41 @@ _TIERS_ACTIONNABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser",
                        "priorite", "a_suivre", "sans_signal")  # PALIERS-1 : deux vocabulaires
 
 
+def _depots_par_siren(db: Session, sirens: list[str]) -> dict[str, dict]:
+    """DONNEES-1 lot 2.3 — dernier dépôt de comptes annuels (table `bodacc_depots`) pour une liste de
+    SIREN, en UNE requête. Pour chaque siren : `annee` = exercice le plus récent (max date_cloture
+    plausible, ≤ aujourd'hui, garde-fou contre les dates aberrantes de la source), `depuis_ans` =
+    années écoulées depuis la dernière PARUTION (le dépôt le plus récemment publié). FACTUEL, jamais
+    un scoring. Siren absent du résultat = aucun dépôt de comptes publié."""
+    sirens = [s for s in {s for s in sirens if s} ]
+    if not sirens:
+        return {}
+    # La table peut manquer sur une base neuve / de test (ingestion non jouée) — jamais un 500.
+    if not db.execute(text("SELECT to_regclass('bodacc_depots')")).scalar():
+        return {}
+    rows = db.execute(text(
+        "SELECT siren, "
+        "  max(date_cloture) FILTER (WHERE date_cloture <= now()::date) AS derniere_cloture, "
+        "  max(date_parution) AS derniere_parution "
+        "FROM bodacc_depots WHERE siren = ANY(:s) GROUP BY siren"),
+        {"s": sirens}).mappings().all()
+    out: dict[str, dict] = {}
+    from datetime import date as _date
+    today = db.execute(text("SELECT now()::date")).scalar()
+    annee_courante = (today or _date(2026, 1, 1)).year
+    for r in rows:
+        cloture, parution = r["derniere_cloture"], r["derniere_parution"]
+        annee = cloture.year if cloture else (parution.year if parution else None)
+        depuis = (annee_courante - parution.year) if parution else None
+        out[r["siren"]] = {"annee": annee, "depuis_ans": depuis}
+    return out
+
+
+def _dernier_depot_comptes(db: Session, siren: str) -> dict | None:
+    """Le dépôt de comptes le plus récent d'UN siren (passe-plat de bodacc_depots). None si aucun."""
+    return _depots_par_siren(db, [siren]).get(siren)
+
+
 @router.get("/patrimoine")
 def patrimoine(siren: str, fmt: str = "json",
                limit: int = Query(200, ge=1, le=2000), offset: int = Query(0, ge=0),
@@ -266,6 +301,11 @@ def patrimoine(siren: str, fmt: str = "json",
     bodacc = db.execute(text(
         "SELECT type_procedure, date_annonce FROM v_foncier_sous_pression WHERE siren = :s LIMIT 1"),
         {"s": siren}).mappings().first()
+    # DONNEES-1 lot 2.3 — SIGNAL « dépôts de comptes » (table bodacc_depots, 14 k, jusqu'ici
+    # ingérée/surveillée mais montrée nulle part). Un dépôt récent = société vivante ; un silence
+    # prolongé = société en sommeil (signal d'approche patrimoniale, comme inpi_sans_dirigeant).
+    # FACTUEL, jamais un scoring : « dernier dépôt de comptes : AAAA » / « aucun depuis N ans ».
+    depot = _dernier_depot_comptes(db, siren) if bool(rows) else None
     nom = db.execute(text(
         "SELECT max(denomination) FROM parcelle_personne_morale WHERE siren = :s"), {"s": siren}).scalar()
     # OUTILS-FIX-4 A1 — MILLÉSIME MAJIC servi (fichiers fonciers DGFiP) : lu EN BASE
@@ -401,6 +441,7 @@ def patrimoine(siren: str, fmt: str = "json",
         "valorisation_nu_eur": round(val_nu) if n_valorisables else None,
         "n_valorisables": n_valorisables,
         "bodacc": dict(bodacc) if bodacc else None,
+        "depot_comptes": depot,          # DONNEES-1 lot 2.3 — {annee, depuis_ans} ou None (aucun dépôt)
         "inpi_sans_dirigeant": inpi_sans_dirigeant,
         "assiette_contigue": assiette_contigue,
         "total": len(rows), "affiches": len(page), "offset": offset, "limit": limit,
@@ -989,11 +1030,16 @@ def successions_liste(commune: str | None = None,
         ORDER BY {ordre}
         LIMIT :lim OFFSET :off"""),
         {**params, "lim": limit, "off": offset}).mappings().all()
+    # DONNEES-1 lot 2.3 — dernier dépôt de comptes par SIREN de la page (batch, table bodacc_depots).
+    depots = _depots_par_siren(db, [r["siren"] for r in rows if r["siren"]])
     items = []
     for r in rows:
         d_ = dict(r)
         d_["sci_dormante"] = bool(r["sci_dormante"])
         d_["proprio"] = _solaire_proprio(r)   # MÊME règle privacy que Solaire/Assemblage
+        # Signal « dépôt de comptes » du propriétaire PM (public) : renforce le radar succession
+        # (une SCI sans dépôt récent = en sommeil). None (pas de clé) = aucun dépôt publié.
+        d_["depot_comptes"] = depots.get(r["siren"]) if r["siren"] else None
         d_.pop("denomination", None); d_.pop("siren", None)
         items.append(d_)
     # Millésime du SIGNAL = date du calcul Score V (globale — la table est un snapshot mono-run) ;

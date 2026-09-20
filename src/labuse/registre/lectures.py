@@ -65,6 +65,8 @@ LECTURES: tuple[Lecture, ...] = (
       "Notifications « parcelle suivie » : nouvelle procédure BODACC sur le propriétaire PM (type_procedure, date_annonce, dénomination) — même donnée que la fiche propriétaire."),
     L("bodacc_procedures", "api/projets.py", "evenements_proprietaire_liste", "fiche_parcelle_proprietaire",
       "_signaux_parcelles : présence d'une procédure BODACC sur le propriétaire → badge signal « procédure » des listes Projets (donnée événements propriétaire condensée en drapeau)."),
+    L("bodacc_depots", "api/modules.py", "dernier_depot_comptes", "outil_scan_patrimoine",
+      "DONNEES-1 lot 2.3 — _dernier_depot_comptes / _depots_par_siren : dernier dépôt de comptes annuels d'une PM (max date_cloture plausible + années depuis la dernière parution) → signal « dépôt de comptes : AAAA / aucun depuis N ans » du Scan patrimoine ET des Successions (même donnée)."),
     L("bodacc_sondages", "cascade/context.py", None, None,
       "Journal de sondage BODACC (M70 déc.3) chargé pour que la couche cascade dise « sondé le X → rien » au lieu d'affirmer l'absence à nu — état interne de sondage, pas la liste d'événements."),
     L("catnat_arretes", "api/modules.py", "catnat_n", "fiche_commune_risques",

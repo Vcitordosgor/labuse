@@ -1111,6 +1111,16 @@ DONNEES: dict[str, Donnee] = {
     moteur=None, calcul="passe_plat",
     fonction="src/labuse/api/modules.py (Scan patrimoine — inpi_sans_dirigeant / dirigeant_inactif)",
     reservoirs=("inpi_rne",), portee="live", type="texte", table="pm_dirigeants"),
+ # DONNEES-1 lot 2.3 — les dépôts de comptes BODACC (table bodacc_depots, 14 k, jusqu'ici ingérée
+ # et surveillée mais montrée nulle part) entrent au registre comme SIGNAL d'approche sur le
+ # propriétaire moral : Scan patrimoine + Successions. Factuel, jamais un scoring.
+ "dernier_depot_comptes": C("Dépôt de comptes (dernier / silence)", "texte", "proprietaire",
+    "année du dernier dépôt de comptes annuels d'une société propriétaire (BODACC) et années "
+    "écoulées depuis — un silence prolongé = société en sommeil (signal d'approche foncière), "
+    "jamais un scoring ; None si aucun dépôt publié",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/modules.py:_dernier_depot_comptes (Scan patrimoine + Successions)",
+    reservoirs=("bodacc",), portee="live", type="texte", table="bodacc_depots"),
  "proprietaire_timeline_liste": C("Historique propriétaire (millésimes PM)", "liste", "proprietaire",
     "timeline unifiée versionné∪servi du fichier PM (2019→2025), diff CONSTAT — servi jamais écrasé",
     moteur="proprietaire_historique", calcul="moteur",

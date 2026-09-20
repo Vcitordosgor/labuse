@@ -260,6 +260,17 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               ● Aucun dirigeant au registre INPI — succession ou société en sommeil probable (signal d'approche). À vérifier au registre.
             </div>
           )}
+          {/* DONNEES-1 lot 2.3 — dépôts de comptes BODACC : un dépôt récent = société vivante ; un
+              silence prolongé = société en sommeil (signal d'approche). Factuel. */}
+          {d['depot_comptes'] != null && (
+            <div data-m02-depot className="text-[10.5px] text-txt-dim">
+              Dépôt de comptes — {(() => {
+                const dc = d['depot_comptes'] as { annee: number | null; depuis_ans: number | null }
+                if (dc.depuis_ans != null && dc.depuis_ans >= 3) return `aucun dépôt depuis ${dc.depuis_ans} ans (société en sommeil probable)`
+                return `dernier exercice déposé : ${dc.annee ?? '—'}`
+              })()}
+            </div>
+          )}
           {/* RETOURS-12 O5 — BANDEAU repliable : replié, une barre compacte rouvrable ; déplié, le nom +
               les 3 chiffres + le détail. Replier libère toute la hauteur pour la LISTE des parcelles. */}
           {bandeauReplie ? (

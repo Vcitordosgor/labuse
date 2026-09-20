@@ -37,10 +37,18 @@ const SDP_MIN = [
 ]
 
 // Motif RÉEL du signal, par parcelle (la seule donnée datée est le calcul — servie au bandeau).
+// DONNEES-1 lot 2.3 — le silence de dépôt de comptes BODACC (≥ 3 ans) renforce le motif « sommeil ».
 function Motif({ it }: { it: SuccessionItem }) {
-  if (it.sci_dormante) return <span className="text-txt-dim">SCI dormante</span>
-  if (it.dirigeant_age != null) return <span className="text-txt-dim">dirigeant {it.dirigeant_age} ans</span>
-  return null
+  const depotMuet = it.depot_comptes != null && it.depot_comptes.depuis_ans != null && it.depot_comptes.depuis_ans >= 3
+  const base = it.sci_dormante ? 'SCI dormante'
+    : it.dirigeant_age != null ? `dirigeant ${it.dirigeant_age} ans` : null
+  if (!base && !depotMuet) return null
+  return (
+    <span className="text-txt-dim">
+      {base}
+      {depotMuet && <>{base ? ' · ' : ''}aucun dépôt de comptes depuis {it.depot_comptes!.depuis_ans} ans</>}
+    </span>
+  )
 }
 
 export function Successions() {
