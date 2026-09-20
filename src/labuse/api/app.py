@@ -1324,8 +1324,6 @@ def _q_v2_where(run_label: str,
                 tiers: str | None = None,
                 hors_copro: bool = False, veille: bool = False,
                 personne_morale: bool = False, zonage: str | None = None,
-                defisc_active: bool = False, pc_caduc: bool = False,
-                marge_min: int | None = None,
                 sdp_max: int | None = None, constructibilite: str | None = None,
                 etat_sol: str | None = None, capacite_min: int | None = None,
                 zone_plu: str | None = None,
@@ -1432,13 +1430,9 @@ def _q_v2_where(run_label: str,
         conds.append("EXISTS (SELECT 1 FROM parcel_zone_plu z0 WHERE z0.idu = p.idu"
                      " AND z0.zone_fam = ANY(SELECT upper(v) FROM unnest(CAST(:f_zonage AS text[])) v))")
         params["f_zonage"] = [z.strip() for z in zonage.split(",") if z.strip()]
-    # ── Phase A-1 : fenêtre de sortie de défiscalisation ACTIVE (badge, maisons/monopropriété).
-    # Simple test de présence dans la table dérivée defisc_fenetres ; aucun lien avec le run servi.
-    if defisc_active:
-        conds.append("EXISTS (SELECT 1 FROM defisc_fenetres df0 WHERE df0.idu = p.idu AND df0.fenetre_active)")
-    # ── Phase A cycle 2 : PC caduc probable (badge). Simple test de présence dans pc_caducs.
-    if pc_caduc:
-        conds.append("EXISTS (SELECT 1 FROM pc_caducs pcz WHERE pcz.idu = p.idu)")
+    # FILTRES-FIX-1 (lot 4) — `defisc_active` et `pc_caduc` (booléens autonomes) RETIRÉS : doublons
+    # morts des signaux `defisc` (defisc_fenetres) et `permis_caduc` (pc_caducs) ci-dessous, qui
+    # portent la MÊME requête et sont, eux, exposés à l'écran (§3 Signaux de vie).
     # ── M55-D stage 6 : SIGNAUX DE VIE (liste validée Vic phase 2) — événements SOURCÉS, jamais
     # des jugements : filtrables SANS analyse. Composition = OU entre signaux du groupe, ET avec
     # le reste des filtres. Les 3 lourds (permis_actif/friche/assemblage_pm) lisent la table
@@ -1453,24 +1447,15 @@ def _q_v2_where(run_label: str,
             "permis_caduc": "EXISTS (SELECT 1 FROM pc_caducs pcv WHERE pcv.idu = p.idu)",
             "defisc": ("EXISTS (SELECT 1 FROM defisc_fenetres dfv "
                        "WHERE dfv.idu = p.idu AND dfv.fenetre_active)"),
-            # terrain quasi nu (emprise < 5 %, même seuil que etat_sol=nu) détenu par une société
-            # PRIVÉE (groupe MAJIC 0 — arbitrage Vic : pas les communes/État/HLM)
-            "nu_pm": ("EXISTS (SELECT 1 FROM parcel_residuel rnu JOIN parcelle_personne_morale pmn "
-                      "ON pmn.idu = p.idu AND pmn.groupe = 0 "
-                      "WHERE rnu.parcel_id = p.id AND rnu.taux_emprise_pct < 5)"),
             # M55-G point 11 (décision Vic) : signal LARGE — parcelle détenue par une société
-            # PRIVÉE (groupe MAJIC 0, même arbitrage que nu_pm), nu ET bâti confondus.
+            # PRIVÉE (groupe MAJIC 0), nu ET bâti confondus.
             # Volumétrie mesurée 12/08/2026 : 33 622 île / 7 460 servables (< plafond 100k).
             "pm_privee": ("EXISTS (SELECT 1 FROM parcelle_personne_morale pmt "
                           "WHERE pmt.idu = p.idu AND pmt.groupe = 0)"),
             "friche": ("EXISTS (SELECT 1 FROM parcel_signaux_vie sv2 "
                        "WHERE sv2.idu = p.idu AND sv2.signal = 'friche')"),
-            # cession de fonds < 24 mois (arbitrage Vic)
-            "cession": ("EXISTS (SELECT 1 FROM parcelle_personne_morale pmc "
-                        "JOIN bodacc_annonces_owner bac ON bac.siren = pmc.siren "
-                        "AND bac.famille = 'vente_cession' "
-                        "AND bac.date_annonce >= now() - interval '24 months' "
-                        "WHERE pmc.idu = p.idu)"),
+            # FILTRES-FIX-1 (lot 4) — branches `nu_pm` et `cession` RETIRÉES : retirées de l'UI
+            # (SIGNAUX_KEYS) ET du hash (SIGNAUX_VALIDES) → aucune entrée ne les produisait plus.
             "assemblage": ("EXISTS (SELECT 1 FROM parcel_signaux_vie sv3 "
                            "WHERE sv3.idu = p.idu AND sv3.signal = 'assemblage_pm')"),
             # FILTRE-NETTOYAGE #4 — succession (veille patrimoniale) : société au capital exposé à
@@ -1483,11 +1468,8 @@ def _q_v2_where(run_label: str,
                   (x.strip() for x in signaux.split(",")) if s in _SIG_SQL]
         if picked:
             conds.append("(" + " OR ".join(picked) + ")")
-    # ── Nuit N1 : filtre « marge estimée » — parcelles dont la marge € estimable ≥ seuil.
-    if marge_min is not None:
-        conds.append("EXISTS (SELECT 1 FROM score_e se0 WHERE se0.idu = p.idu"
-                     " AND se0.estimable AND se0.marge_estimee >= :f_marge)")
-        params["f_marge"] = marge_min
+    # FILTRES-FIX-1 (lot 4) — filtre `marge_min` (score_e.marge_estimee) RETIRÉ : aucun appelant
+    # (ni panneau, ni hash, ni cadrage projet, ni Copilote) — mort de bout en bout.
     # ── M45 (P2a) — barre niveau 1 + tiroir « Puis-je construire ? » (facettes composables) ──
     if sdp_max is not None:   # SDP résiduelle plafonnée (barre niveau 1, borne haute)
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel r1 WHERE r1.parcel_id = p.id"
@@ -1748,9 +1730,8 @@ class FiltreCriteres:
     veille: bool = False
     personne_morale: bool = False
     zonage: str | None = None
-    defisc_active: bool = False
-    pc_caduc: bool = False
-    marge_min: int | None = None
+    # FILTRES-FIX-1 (lot 4) — champs `defisc_active` / `pc_caduc` / `marge_min` retirés (morts,
+    # doublons des signaux `defisc`/`permis_caduc` ou sans aucun appelant).
     # M45 (P2a) — barre niveau 1 + tiroir « Puis-je construire ? »
     sdp_max: int | None = None
     constructibilite: str | None = None
@@ -1782,7 +1763,7 @@ class FiltreCriteres:
     modeb_loyer_m2: float | None = None
     modeb_rendement_pct: float | None = None
     # M55-D stage 6 — SIGNAUX DE VIE (CSV parmi : procedure, permis_actif, permis_caduc,
-    # defisc, nu_pm, friche, cession, assemblage). OU dans le groupe, ET avec le reste.
+    # defisc, pm_privee, friche, assemblage, succession). OU dans le groupe, ET avec le reste.
     signaux: str | None = None
     # K1 (rattrapage KelFoncier) — FILTRES PROPRIÉTAIRE PERSONNE MORALE (données DGFiP millésime
     # 2025 + INPI RNE, déjà en base). denomination (autocomplétion), siren (CSV), forme juridique
@@ -1801,7 +1782,7 @@ class FiltreCriteres:
         return _q_v2_where(self.source, self.surface_min, self.surface_max,
                            self.sdp_min, self.evenement, self.flags, self.communes, self.flags_exclus,
                            self.tiers, self.hors_copro, self.veille, self.personne_morale,
-                           self.zonage, self.defisc_active, self.pc_caduc, self.marge_min,
+                           self.zonage,
                            self.sdp_max, self.constructibilite, self.etat_sol, self.capacite_min,
                            self.zone_plu, self.sous_densite, self.mult_min, self.rang_max,
                            self.renouvellement, self.division_or, self.proprietaire_type,
@@ -1819,7 +1800,7 @@ class FiltreCriteres:
         return ("filtre", self.source, self.commune, self.surface_min,
                 self.surface_max, self.sdp_min, self.evenement, self.flags, self.communes,
                 self.flags_exclus, self.tiers, self.hors_copro, self.veille,
-                self.personne_morale, self.zonage, self.defisc_active, self.pc_caduc, self.marge_min,
+                self.personne_morale, self.zonage,
                 self.sdp_max, self.constructibilite, self.etat_sol, self.capacite_min, self.zone_plu,
                 self.sous_densite, self.mult_min, self.rang_max, self.renouvellement, self.division_or,
                 self.proprietaire_type, self.etat_societe, self.copro, self.npnru, self.adresse_absente,
@@ -1842,8 +1823,6 @@ def list_parcels(commune: str | None = None,
                  tiers: str | None = None,
                  hors_copro: bool = False, veille: bool = False,
                  personne_morale: bool = False, zonage: str | None = None,
-                 defisc_active: bool = False, pc_caduc: bool = False,
-                 marge_min: int | None = None,
                  sort: str | None = Query(None, pattern="^(v|rang|mult|surface|commune)$"),
                  db: Session = Depends(get_db)) -> list[dict]:
     """Liste PAGINÉE (commune OU île entière), pilotée par le scoring v2.
@@ -1861,7 +1840,7 @@ def list_parcels(commune: str | None = None,
     extra, extra_params = _q_v2_where(source, surface_min, surface_max,
                                       sdp_min, evenement, flags, communes, flags_exclus,
                                       tiers, hors_copro, veille,
-                                      personne_morale, zonage, defisc_active, pc_caduc, marge_min)
+                                      personne_morale, zonage)
     return _q_v2_list(db, commune, limit, offset, run_label=source,
                       extra_where=extra, extra_params=extra_params, sort=sort)
 

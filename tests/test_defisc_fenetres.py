@@ -137,10 +137,12 @@ def test_build_idempotent(db_session):
 
 # ───────────────────────── filtre SQL ─────────────────────────
 
-def test_filtre_defisc_active_fragment():
+def test_filtre_defisc_signal_fragment():
+    # FILTRES-FIX-1 (lot 4) — le filtre défisc passe par le SIGNAL `defisc` (le booléen autonome a
+    # été retiré, mort) : MÊME requête (defisc_fenetres + fenetre_active).
     from labuse.api.app import _q_v2_where
-    where, params = _q_v2_where("q_v6_m8", None, None, None, None, None, False, False, None,
-                                defisc_active=True)
+    where, _ = _q_v2_where("q_v6_m8", None, None, None, None, None, False, False, None,
+                           signaux="defisc")
     assert "defisc_fenetres" in where and "fenetre_active" in where
 
     where0, _ = _q_v2_where("q_v6_m8", None, None, None, None, None, False, False, None)

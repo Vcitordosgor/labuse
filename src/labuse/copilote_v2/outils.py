@@ -103,26 +103,27 @@ def _refus_commune(outil: str, nom: str) -> ToolResult:
 
 
 #: M110 — signaux de vie interrogeables (facette FiltreCriteres.signaux, mêmes clés qu'à l'écran).
-_SIGNAUX_OK = {"procedure", "friche", "cession", "permis_actif", "permis_caduc",
-               "defisc", "nu_pm", "assemblage"}
+#: FILTRES-FIX-1 (lot 4) — `nu_pm` et `cession` retirés (branches _SIG_SQL mortes, hors UI/hash).
+_SIGNAUX_OK = {"procedure", "friche", "permis_actif", "permis_caduc",
+               "defisc", "assemblage"}
 #: libellés client des signaux (le récap nomme le critère appliqué, jamais la clé technique).
 _SIGNAUX_FR = {"procedure": "procédure judiciaire (BODACC)", "friche": "friche",
-               "cession": "cession de fonds récente", "permis_actif": "permis actif",
+               "permis_actif": "permis actif",
                "permis_caduc": "permis caduc", "defisc": "en défiscalisation",
-               "nu_pm": "terrain nu détenu par une société", "assemblage": "candidate à l'assemblage"}
+               "assemblage": "candidate à l'assemblage"}
 
 # M116 · D1 — la SOURCE de chaque critère (défaut de véracité corrigé : ne plus créditer le cadastre
 # pour un critère qui vient d'ailleurs). La source servie est celle des DONNÉES qui fondent le compte,
 # pas l'inventaire parcellaire. Quand plusieurs critères concourent, toutes leurs sources sont nommées.
-# Provenances établies depuis la facette (api.app) : procédure/cession/événement = BODACC ; permis =
+# Provenances établies depuis la facette (api.app) : procédure/événement = BODACC ; permis =
 # Sitadel ; adresse absente = BAN ; copropriété = RNIC ; personne morale = DGFiP (SIREN) ; zonage =
 # GPU ; friche/assemblage/défisc/renouvellement/tier = analyses dérivées LABUSE (sources multiples,
 # pas un référentiel unique — on le DIT plutôt que de fausser). Le cadastre ne reste crédité que pour
 # ce qu'il fonde réellement : l'inventaire et la surface des parcelles.
 _SOURCE_SIGNAL = {
-    "procedure": "BODACC", "cession": "BODACC",
+    "procedure": "BODACC",
     "permis_actif": "Sitadel (permis de construire)", "permis_caduc": "Sitadel (permis de construire)",
-    "defisc": "défiscalisation (analyse LABUSE)", "nu_pm": "DGFiP (SIREN) · cadastre",
+    "defisc": "défiscalisation (analyse LABUSE)",
     "friche": "signaux de vie (analyse LABUSE)", "assemblage": "signaux de vie (analyse LABUSE)",
 }
 
@@ -146,8 +147,12 @@ def compter_parcelles(db: Session, *, commune: str | None = None, surface_min: i
             return _refus_commune("compter_parcelles", commune)
         commune = resolue
     tiers = _TIER_ALIAS.get((tier or "").lower().strip()) if tier else None
-    sig = ",".join(s for s in [x.strip().lower() for x in (signaux or "").split(",")]
-                   if s in _SIGNAUX_OK) or None
+    # FILTRES-FIX-1 (lot 4) — `defisc` (booléen) passe par le SIGNAL `defisc` (defisc_active retiré ;
+    # même requête, un seul endroit — comme le fait déjà answering.py). Dédup en préservant l'ordre.
+    _sig_in = [x.strip().lower() for x in (signaux or "").split(",")]
+    if defisc:
+        _sig_in.append("defisc")
+    sig = ",".join(dict.fromkeys(s for s in _sig_in if s in _SIGNAUX_OK)) or None
     cp = (copro or "").strip().lower() if copro and copro.strip().lower() in ("avec", "sans") else None
     zon = ",".join(z for z in [x.strip().upper() for x in (zonage or "").split(",")]
                    if z in ("U", "AU", "A", "N")) or None
@@ -156,14 +161,14 @@ def compter_parcelles(db: Session, *, commune: str | None = None, surface_min: i
                         surface_max=int(surface_max) if surface_max is not None else None,
                         tiers=tiers, personne_morale=bool(personne_morale),
                         evenement=bool(evenement), signaux=sig, adresse_absente=bool(adresse_absente),
-                        copro=cp, defisc_active=bool(defisc), renouvellement=bool(renouvellement),
+                        copro=cp, renouvellement=bool(renouvellement),
                         zonage=zon)
     out = filtre(c=fc, limit=0, offset=0, sort=None, idus=0, groupes=0, db=db)
     n = out.get("compte")
     crit = {k: v for k, v in {"commune": commune, "surface_min": surface_min,
             "surface_max": surface_max, "tier": tiers, "personne_morale": personne_morale or None,
             "evenement": evenement or None, "signaux": sig, "adresse_absente": adresse_absente or None,
-            "copro": cp, "defisc": defisc or None, "renouvellement": renouvellement or None,
+            "copro": cp, "renouvellement": renouvellement or None,   # `defisc` est désormais dans `signaux`
             "zonage": zon}.items() if v is not None}
     # M110 — libellés client des critères de FACETTE appliqués (le récap les nomme, comme aujourd'hui).
     labels: list[str] = []
@@ -178,8 +183,7 @@ def compter_parcelles(db: Session, *, commune: str | None = None, surface_min: i
         labels.append("en copropriété")
     elif cp == "sans":
         labels.append("hors copropriété")
-    if defisc:
-        labels.append("en défiscalisation")
+    # `defisc` est nommé par la boucle `sig` ci-dessus (signal `defisc` → « en défiscalisation »)
     if renouvellement:
         labels.append("en renouvellement urbain")
     if zon:

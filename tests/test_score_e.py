@@ -108,12 +108,4 @@ def test_build_ecartee_exclue_et_non_estimable(db_session):
     assert B not in rows                                       # écartée : jamais de marge
     assert C in rows and rows[C]["estimable"] is False         # sans médiane : non estimable
 
-
-# ───────────────────────── filtre ─────────────────────────
-
-def test_filtre_marge_min_fragment():
-    from labuse.api.app import _q_v2_where
-    where, params = _q_v2_where("q_v7_defisc", None, None, None, None, None, False, False, None, marge_min=100000)
-    assert "score_e" in where and "marge_estimee >=" in where and params["f_marge"] == 100000
-    where0, _ = _q_v2_where("q_v7_defisc", None, None, None, None, None, False, False, None)
-    assert "score_e" not in where0
+# FILTRES-FIX-1 (lot 4) — test_filtre_marge_min_fragment retiré avec le filtre `marge_min` (mort).
