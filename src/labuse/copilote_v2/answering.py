@@ -28,6 +28,27 @@ from . import telemetrie
 from .outils import OUTILS
 from .router import classify
 
+# COPILOTE-2 lot 5 — LES 9 INTENTIONS DU ROUTEUR → 3 CHEMINS + REFUS. Le routeur classe (9 intents,
+# vocabulaire fermé) ; l'aiguillage les ramène à TROIS chemins servis (FICHE / OUTIL / WEB) ou à un
+# refus honnête. Une seule table, testable, source de vérité de « d'où sort une réponse ».
+#   FICHE — une parcelle/commune NOMMÉE : résumé déterministe + porte (lot 1).
+#   OUTIL — une analyse (chercher, comparer, calculer, vérifier, surveiller, créer) : passerelle vers
+#           l'outil pré-rempli, jamais de résultat produit par le Copilote (lot 2).
+#   WEB   — une connaissance (loi, dispositif, notion) : recherche web + sources (lot 3).
+#   REFUS — hors des trois : le Copilote le dit et propose le chemin le plus proche.
+def chemin_pour(intent: str, *, a_idu: bool = False, a_commune: bool = False) -> str:
+    """Le chemin servi pour une intention du routeur (+ signaux de lieu). Déterministe, testable."""
+    if intent == "EXPLIQUER":
+        return "WEB"
+    if intent == "QUESTION":
+        return "FICHE" if (a_idu or a_commune) else "OUTIL"
+    if intent in ("OUTIL", "RECHERCHE", "VERIFICATION", "VEILLE", "PROJET", "PREPARER"):
+        return "OUTIL"
+    if intent == "HORS_SUJET":
+        return "REFUS"
+    return "OUTIL"   # défaut prudent : une passerelle, jamais une invention
+
+
 # ───────────────────────── Réponses fixes (issues 5, 3, 4) ─────────────────────────
 HORS_SUJET = ("Je suis le copilote foncier de LABUSE — je réponds sur l'immobilier et le foncier de "
               "La Réunion.")
@@ -1448,7 +1469,7 @@ _OUTIL_MAP = [
     (("charge fonci", "combien payer", "combien je peux payer", "marge", "prix d'achat max"),
      ("calculette-fonciere", "Calculette foncière", "calcPrefill")),
     (("courrier", "ecrire au proprietaire", "ecrire au proprio"), ("courriers", "Courrier au propriétaire", "idu")),
-    (("comparer", "cote a cote", "cote-a-cote"), ("comparer", "Comparateur de parcelles", "selection")),
+    (("comparer", "compare ", "comparez", "cote a cote", "cote-a-cote"), ("comparer", "Comparateur de parcelles", "selection")),
     # COPILOTE-2 lot 2 — INTÉGRITÉ DE ROUTAGE : les 3 outils PLU (annuaire, procédure, changement) et les
     # 2 « avant-achat » (due diligence, servitudes) ont été FONDUS dans les hubs `plu` et `risques`
     # (M137-P/T). Les anciennes clés (plu-annuaire, lettre-zonage, verif-procedure, duediligence,
