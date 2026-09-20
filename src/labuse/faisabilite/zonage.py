@@ -98,7 +98,8 @@ def _zone_rules_from_regles(commune: str, code: str, zmeta: dict):
         hauteur_mode=zm.get("hauteur_mode"),
         habitat=zm.get("habitat"),
         constructible_neuf=zm.get("constructible_neuf", True),
-        calibree=True, sources={}, raw={"_regles": True},
+        notes=list(zm.get("notes") or []),   # provenance/ouverture — lues par classify_au_statut
+        calibree=True, sources={}, raw={"_regles": True, "notes": zm.get("notes") or []},
     )
 
 

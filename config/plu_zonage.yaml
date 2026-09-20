@@ -15,20 +15,56 @@
   zones:
     AUa:
       bassin: Les Avirons
+      notes:
+      - 'Urbanisation par opération d''ensemble OU au fur et à mesure des équipements internes ; conditions
+        : infrastructures suffisantes, compatibilité OAP, densité minimale 30 logements/ha à l''échelle
+        de la zone (Art. AUindicée 2.2, p.26).'
     AUc:
       bassin: Les Avirons
+      notes:
+      - Renvoi à la zone Uc ; densité minimale 30 logements/ha à l'échelle de la zone (Art. AUindicée
+        2.2.4, p.26).
     AUd:
       bassin: Les Avirons
+      notes:
+      - Renvoi à la zone Ud ; densité minimale 20 logements/ha à l'échelle de la zone (Art. AUindicée
+        2.2.4, p.26).
     AUec:
       bassin: Les Avirons
       habitat: interdit
+      notes:
+      - 'Dépendances : 3 m max.'
+      - Sans objet (habitat interdit).
+      - 'Urbanisation future à vocation économique (commerce, services, production, hôtellerie — caractère
+        de zone, p.29) ; condition : infrastructures suffisantes (Art. AUec 2.2.1, p.29).'
     AUt:
       bassin: Les Avirons
       habitat: interdit
+      notes:
+      - « 9 mètres à l'égout du toit ou au sommet de l'acrotère ; 12 mètres au faitage » ; dépendances
+        3 m max.
+      - '1 ou 2 limites possibles (profondeur bâtie <= 20 m) ; en retrait : 3 m min.'
+      - 'Sans objet pour le moteur (habitat limité au gardiennage) ; tableau : 1 place/logement autorisé,
+        hôtelier 1 place/2 chambres (Art. AUt 12.2, p.40).'
+      - Urbanisation future pour équipements touristiques et de loisirs (hébergement hôtelier, sports,
+        détente — Art. AUt 2.2, p.35).
     Ua:
       bassin: Les Avirons
+      notes:
+      - '« en zones Ua et Ub : 12 mètres à l''égout du toit ou au sommet de l''acrotère ; 15 mètres au
+        faitage ». Bonus +3 m (LLS >= 50 % SDP, hébergement hôtelier) cf. regles_transverses.'
+      - 'Dépendances : 25 m² d''emprise max.'
+      - 'Implantation possible sur 1 ou 2 limites (profondeur bâtie <= 12 m habitat, 15 m RDC autre destination)
+        ; en retrait : 1,90 m min ; fond de propriété : 3 m (Art. U 7.3, p.11).'
+      - 'Collectif : 1,25/logt ou 1 place/35 m² SDP (norme la plus productive).'
+      - 'Zone mixte du centre-ville (caractère de zone, p.7). Linéaire L.151-16 : RDC obligatoirement
+        actifs (Art. U 2.2.6, p.8).'
     Ub:
       bassin: Les Avirons
+      notes:
+      - '1 ou 2 limites possibles (profondeur bâtie <= 20 m en zone Ub) ; retrait 1,90 m min ; fond de
+        propriété : 1,90 m (Art. U 7.3, p.11).'
+      - ZAC du Ruisseau-Bois de Nèfles en achèvement (caractère de zone, p.7).
     Ub1:
       bassin: Les Avirons
     Ub2:
@@ -38,24 +74,66 @@
     Ub4:
       bassin: Les Avirons
       habitat: interdit
+      notes:
+      - Plafond absolu unique => he = hf = 8.
+      - Sans objet (habitat interdit).
+      - Secteur destiné aux équipements d'intérêt collectif (caractère de zone, p.7).
     Uc:
       bassin: Les Avirons
+      notes:
+      - '1 ou 2 limites possibles (profondeur <= 12 m habitat) ; retrait 1,90 m min ; fond de propriété
+        : 3 m (Art. U 7.3, p.11).'
     Uc1:
       bassin: Les Avirons
+      notes:
+      - 'En limite séparative : 6 m max dans une bande de 3 m. SURÉLÉVATION des constructions existantes
+        INTERDITE en Uc1 ; extension/reconstruction plafonnée aux hauteurs du bâtiment initial (Art. U
+        10.2, p.12).'
+      - Lotissement récent et structuré, reprend la règlementation initiale du lotissement (caractère
+        de zone, p.7).
     Uc3:
       bassin: Les Avirons
+      notes:
+      - 'En limite séparative : 6 m max dans une bande de 3 m.'
+      - 'En secteurs Uc3 et Ud3 : UNE seule limite possible (profondeur <= 12 m habitat) ; retrait 1,90
+        m min ; fond : 3 m.'
+      - Bourg du Tévelave — prescriptions renforcées de perméabilité (caractère de zone, p.7).
     Ud:
       bassin: Les Avirons
+      notes:
+      - '1 ou 2 limites possibles (profondeur <= 12 m habitat) ; retrait 1,90 m min ; fond de propriété
+        : 3 m (Art. U 7.3, p.11).'
     Ud1:
       bassin: Les Avirons
+      notes:
+      - 'Secteur déjà urbanisé (SDU loi ELAN) au sein de l''espace agricole/naturel : constructions admises
+        « à des fins exclusives d''amélioration de l''offre de logement ou d''hébergement et d''implantation
+        de services publics », SANS extension du périmètre bâti ni modification significative du bâti
+        ; avis CDNPS obligatoire (Art. U 2.2, p.8).'
     Ud2:
       bassin: Les Avirons
       habitat: interdit
+      notes:
+      - Sans objet (pas de logement neuf).
+      - Quartier de Bois Blanc, constructions limitées (caractère de zone, p.7) ; SDP totale admise 60
+        m² par bâtiment, 120 m² max par unité foncière (Art. U 2.2, p.8).
     Ud3:
       bassin: Les Avirons
+      notes:
+      - 'En limite séparative : 6 m max dans une bande de 3 m.'
+      - 'En secteurs Uc3 et Ud3 : UNE seule limite possible ; retrait 1,90 m min ; fond : 3 m.'
+      - Bourg du Tévelave — prescriptions renforcées de perméabilité (caractère de zone, p.7).
     Ue:
       bassin: Les Avirons
       habitat: interdit
+      notes:
+      - 'Dépendances : 3 m max.'
+      - 1 ou 2 limites possibles OU retrait 5 m min ; retrait OBLIGATOIRE contre toute limite avec une
+        zone urbaine (UA, UB) ou AU non dédiée à l'activité économique de production.
+      - Sans objet (habitat interdit).
+      - Zone d'activités économiques (production, transformation, artisanat, recherche/formation — caractère
+        de zone, p.19). Commerces/bureaux/équipements plafonnés à 5 % de l'emprise foncière de la zone
+        (Art. UE 2.2.2, p.19).
   zones_au_renvoi: {}
   zones_au_st:
     liste:
@@ -85,37 +163,110 @@
   zones:
     1AUa:
       bassin: Bras-Panon
+      notes:
+      - 'Urbanisation prioritaire SAR (préambule AUindicée, p.75). Densité MINIMALE 30 logts/ha (Art.
+        AUINDICEE 2.2.4, p.76) ; raccordement assainissement collectif obligatoire (2.2.5). Graphie :
+        le texte écrit « zones AUa » (p.76), type 1AUindicée défini p.75.'
     1AUb:
       bassin: Bras-Panon
+      notes:
+      - 'Tiroir Ub : 10/13 m si assiette >= 2 000 m² (hors Uba) — tranche conservatrice gravée.'
+      - Urbanisation prioritaire SAR. Densité MINIMALE 30 logts/ha ; assainissement collectif obligatoire
+        (Art. AUINDICEE 2.2.4-2.2.5, p.76). Graphie 1AUb attestée p.1 (révision allégée n°1).
     1AUc:
       bassin: Bras-Panon
+      notes:
+      - Urbanisation prioritaire SAR. Densité MINIMALE 20 logts/ha (« en zone AUc », Art. AUINDICEE 2.2.4,
+        p.76).
     1AUd:
       bassin: Bras-Panon
+      notes:
+      - Urbanisation prioritaire SAR. Densité MINIMALE 10 logts/ha (« en zone AUd », Art. AUINDICEE 2.2.4,
+        p.76).
     1AUe:
       bassin: Bras-Panon
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit via règlement Ue).
+      - 'Zone d''activités future (indice e -> Ue). Graphie 1AUe attestée p.1 (révision allégée n°2 :
+        « d''une zone A en zone 1AUe »). O12 hors liste (« urbanisation prioritaire SAR ») mais habitat
+        interdit CONFIRMÉ par le renvoi Ue.'
     1AUec:
       bassin: Bras-Panon
       habitat: interdit
+      notes:
+      - Hauteur ABSOLUE unique => he = hf = 18 (règle 8 du mandat-cadre, arbitrage Vic 28/07/2026 — un
+        null accidentel déclencherait un repli plus permissif que le plafond réel).
+      - Sans objet (habitat interdit hors gardiennage 70 m²).
+      - 'Zone dédiée équipements/commerces/activités autres que de production. Graphie : « zones 1AUec
+        » nommées au préambule p.75 et aux dispositions générales p.6 ; règles écrites sous « zone AUec
+        ».'
     1AUt:
       bassin: Bras-Panon
       habitat: interdit
+      notes:
+      - 'Sans objet (habitat interdit — vocation touristique exclusive ; hébergement hôtelier : 1 place/3
+        chambres via tableau Ua).'
+      - 'Zone AU touristique (indice t sans zone U correspondante : le chapitre renvoie explicitement
+        à Ua article par article). Graphie : règles écrites sous « zone AUt », type 1AUindicée défini
+        p.75.'
     Ua:
       bassin: Bras-Panon
+      notes:
+      - 'Annexes : 3,50 m (p.17). En limite séparative : max +1 niveau par rapport à la construction principale
+        voisine.'
+      - 'Implantation sur les deux limites latérales autorisée OU retrait H/2 >= 3 m ; fond de parcelle
+        : retrait H/2 >= 3 m obligatoire.'
+      - 'SDP <= 100 m². Logement >= 100 m² : 1,5 place. Logement aidé : 1 place MAXIMUM.'
+      - 'Centre aggloméré, densité et fonctions centrales à conforter (caractère de zone, p.10). Interdits
+        : industrie, entrepôt exclusif, agricole/forestier, camping (Art. UA 1.2, p.10).'
     Ub:
       bassin: Bras-Panon
+      notes:
+      - 'Tiroir : projets d''aménagement sur assiette >= 2 000 m² (hors secteur Uba) : 10 m égout / 13
+        m faîtage — tranche conservatrice 8/11 gravée. Rue des Limites : 6 m à l''égout sur voie, 9 m
+        si recul >= 8 m (p.30). Annexes : 3,50 m.'
+      - Ramené à 2 m rues Dufour, ruelle des Jacques, ruelle Montprès, rue Roger Vidot ; alignement possible
+        rue des Limites.
+      - 'Deux limites latérales autorisées OU retrait H/2 >= 3 m ; fond : H/2 >= 3 m.'
+      - 'Périphérie de l''hypercentre jusqu''au littoral (caractère de zone, p.23). Aléas trait de côte/submersion
+        : constructions interdites en aléa fort (Art. UB 1.2.5-6, p.23).'
     Uba:
       bassin: Bras-Panon
+      notes:
+      - Secteur de tissu urbain patrimonial à valoriser (caractère de zone, p.23).
     Uc:
       bassin: Bras-Panon
+      notes:
+      - 'Annexes : 3,50 m (p.44).'
+      - 'Une seule limite latérale (profondeur bâtie 20 m max) OU retrait H/2 >= 3 m ; 2 limites si largeur
+        du terrain < 14 m ; fond : H/2 >= 3 m.'
+      - Bourg de Rivière du Mât, dominante résidentielle (caractère de zone, p.37).
     Ud:
       bassin: Bras-Panon
+      notes:
+      - Une seule limite latérale (profondeur 20 m max) OU retrait H/2 >= 3 m ; 2 limites si largeur <
+        14 m.
+      - 'Écarts agglomérés semi-ruraux : Libéria, la Caroline, Bellevue, le Refuge, Paniandy (caractère
+        de zone, p.50).'
     Udu:
       bassin: Bras-Panon
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit — seuls équipements, commerces de restauration et hébergement en
+        résidences/foyers avec service).
+      - Secteur du projet médico-social et social du Domaine de l'Union (déclaration de projet approuvée
+        le 28/04/2026, p.1 et caractère de zone p.50). Pas de logement ordinaire — capacité logement nulle,
+        hébergement spécialisé seulement.
     Ue:
       bassin: Bras-Panon
       habitat: interdit
+      notes:
+      - 'Retrait 5 m (une limite latérale possible, retrait OBLIGATOIRE en limite de zone Ua/Ub/Uc/Ud
+        ou AU d''habitat) ; fond : 5 m.'
+      - Sans objet (habitat interdit, gardiennage compris).
+      - Zone d'activités économiques de production (caractère de zone, p.63). Commerces/bureaux/équipements
+        plafonnés à 5 % de l'emprise foncière de la zone (Art. UE 2.2.1, p.64).
   zones_au_renvoi: {}
   zones_au_st:
     liste:
@@ -149,8 +300,12 @@
   zones:
     AUb:
       bassin: Entre-Deux
+      notes:
+      - Densité minimale 20 logts/ha (Art. AU1.2, p.29).
     Ua:
       bassin: Entre-Deux
+      notes:
+      - 'Ua : retrait OBLIGATOIRE des limites (exception terrains <200 m²) ; retrait >= 3 m.'
     Ub:
       bassin: Entre-Deux
     Ub1:
@@ -182,32 +337,59 @@
   zones:
     AUa:
       bassin: L'Étang-Salé
+      notes:
+      - Tableau AU 2.7 non extractible.
+      - 'Urbanisation par opérations d''ensemble (caractère de zone, p.76-77). Mixité : >1 000 m² SDP
+        => 20 % logement aidé (AU 1.3, p.77).'
     AUb:
       bassin: L'Étang-Salé
+      notes:
+      - Tableau AU 2.7 non extractible.
+      - 'Mixité : >1 000 m² SDP => 20 % logement aidé (AU 1.3).'
     AUc:
       bassin: L'Étang-Salé
+      notes:
+      - Tableau AU 2.7 non extractible.
     AUe:
       bassin: L'Étang-Salé
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage 50 m²).
     AUt:
       bassin: L'Étang-Salé
       habitat: interdit
+      notes:
+      - Sans objet (habitat non prévu aux admissions).
     UA:
       bassin: L'Étang-Salé
+      notes:
+      - 'Tableau des normes (2.7.3) non extractible en texte ; LLS : 1 place max.'
     UB:
       bassin: L'Étang-Salé
+      notes:
+      - Tableau 2.7.3 non extractible ; LLS 1 place max.
     UBv:
       bassin: L'Étang-Salé
+      notes:
+      - Tableau 2.7.3 non extractible.
     UC:
       bassin: L'Étang-Salé
+      notes:
+      - Tableau 2.7.3 non extractible ; LLS 1 place max.
     UD:
       bassin: L'Étang-Salé
+      notes:
+      - Tableau 2.7.3 non extractible.
     UE:
       bassin: L'Étang-Salé
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage 50 m²).
     UT:
       bassin: L'Étang-Salé
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage).
   zones_au_renvoi: {}
   zones_au_st:
     liste:
@@ -233,40 +415,120 @@
   zones:
     1AU:
       bassin: Petite-Île
+      notes:
+      - 'Terrains > 10 % de pente : +1,50 m à l''égout toléré. Annexes : 3 m. Bâtiments publics exemptés.'
+      - Sous réserve 1AU.4 (assainissement) et 1AU.13 (perméabilité) ; ne s'applique pas aux équipements
+        publics d'intérêt collectif.
+      - Zone à urbaniser à court/moyen terme (chapeau, p.88) — le règlement n'impose PAS d'opération d'ensemble
+        en 1AU non indicée.
     1AUa:
       bassin: Petite-Île
+      notes:
+      - 'Sous-secteur 1AUa : habitat admis À CONDITION d''opérations d''ensemble, densité tendant vers
+        les objectifs du SAR (Art. 1 AU.2 « Pour 1AUa », p.89 ; caractère de zone p.88).'
     1AUz:
       bassin: Petite-Île
+      notes:
+      - 'Terrains > 10 % de pente : +1,50 m à l''égout toléré. Annexes : 3 m. Bâtiments publics exemptés.'
+      - 'Graphie manifeste « 1AUz » = chapitre « ZONE 1AUZ » (p.99, zone unique). ZAC en cours (phases
+        restantes), occupations soumises aux conditions de l''OAP du secteur (Art. 1AUZ.2, p.99) — candidate
+        O12 INFIRMÉE : 1AUZ.1 (p.99) n''interdit pas l''habitation.'
     AUE:
       bassin: Petite-Île
       habitat: interdit
+      notes:
+      - 'Installations à nécessité technique : 13 m à l''égout admis. Ouvrages techniques exemptés.'
+      - 'Sans objet (habitat interdit hors logements de fonction). Règle : surface >= 20 % de la SDP,
+        minimum 8 places (Art. AUE.12, p.115).'
     AUT:
       bassin: Petite-Île
       habitat: interdit
+      notes:
+      - 'Annexes : 3 m au faîtage.'
+      - 'Sans objet (habitat interdit hors gardiennage — logements de gardiennage : 1,5 place/logement
+        ; hôtels : 1 place/chambre, Art. AUT.12, p.138).'
     AUs:
       bassin: Petite-Île
       habitat: interdit
+      notes:
+      - 'Constructions en façade de la RN2 : 6 m à l''égout / 9 m au faîtage (repérage positionnel hors
+        manifeste — valeur générale gravée, restriction en note).'
+      - 10 m des routes départementales, 30 m des routes nationales (bande d'inconstructibilité RN2 de
+        30 m, seuls stationnements/aires de jeux/protections phoniques admis) ; 8 m de l'axe si alignement
+        non défini.
+      - 'Sans objet (habitat interdit hors logements liés aux équipements — ceux-ci : 1 place/logement
+        ; hébergement hôtelier 1 place/chambre ; équipements >= 50 % SDP, Art. AUS.12, p.129).'
+      - 'Graphie manifeste « AUs » = chapitre « ZONE AUS » (p.122, zone unique) : équipements publics
+        ou d''intérêt collectif (santé, social, formation) ; accès direct depuis la RN2 interdit (AUS.3,
+        p.126).'
     UB:
       bassin: Petite-Île
+      notes:
+      - 'Terrains > 10 % de pente : +1,50 m à l''égout toléré. Annexes : 3 m au faîtage. Bâtiments publics
+        exemptés.'
+      - Alignement possible (0) OU retrait 4 m min ; 8 m de l'axe si alignement non défini ; 4 m des voies
+        privées.
+      - En limite possible (bande de 20 m / parcelle < 15 m ; au-delà 1 limite max) ; retrait 3 m, ramené
+        à 2 m en mur plein ; fond de propriété 3 m.
+      - 'Logements aidés : 1 place/logement, LLTS 0 place ; collectifs : 20 % du stationnement aérien
+        perméable.'
+      - « conservées en espaces de pleine terre à hauteur de 25 % de l'unité foncière », végétalisées.
     UC:
       bassin: Petite-Île
+      notes:
+      - 'Terrains > 10 % de pente : +1,50 m à l''égout toléré. Annexes : 3 m. Bâtiments publics exemptés.'
+      - 50 % de l'unité foncière, sous réserve UC.4 (assainissement) et UC.13 (perméabilité) ; ne s'applique
+        pas aux équipements publics d'intérêt collectif.
+      - 4 m de l'alignement (pas d'option alignement) ; 8 m de l'axe si alignement non défini ; 4 m des
+        voies privées.
     UCe:
       bassin: Petite-Île
+      notes:
+      - 'Sous-secteur UCe : couloir réservé au doublement de la ligne haute tension Langevin — Bras de
+        la Plaine (caractère de zone, p.33) ; seule la hauteur diffère de UC.'
     UD:
       bassin: Petite-Île
+      notes:
+      - 'Annexes : 3 m au faîtage. Bâtiments publics exemptés. Pas de tolérance de pente en UD.'
     UDe:
       bassin: Petite-Île
+      notes:
+      - 'Sous-secteur UDe : couloir réservé au doublement de la ligne haute tension (caractère de zone,
+        p.43) ; seule la hauteur diffère de UD.'
     UE:
       bassin: Petite-Île
       habitat: interdit
+      notes:
+      - 'Constructions en façade sur la RN2 : 6 m à l''égout max. Bâtiments industriels à nécessité technique
+        exemptés.'
+      - Demi-hauteur à l'égout, minimum 4 m ; dépendances/extensions <= 3,50 m possibles en limite ; fond
+        de propriété 3 m (2 m en mur plein).
+      - 'Sans objet (habitat interdit hors gardiennage). Règle : surface de stationnement >= 50 % de la
+        SDP (Art. UE.12, p.58).'
     UEa:
       bassin: Petite-Île
       habitat: interdit
+      notes:
+      - 'Installations à nécessité technique : 13 m à l''égout admis. Ouvrages techniques exemptés.'
+      - 5 m de l'alignement (toutes voies) ; 20 m minimum de l'axe de la RN2.
+      - 'Sans objet (habitat interdit hors logements de fonction). Règle : surface de stationnement >=
+        20 % de la SDP, minimum 8 places (Art. UEa.12, p.65).'
     UT:
       bassin: Petite-Île
       habitat: interdit
+      notes:
+      - 'Annexes : 3 m au faîtage.'
+      - Demi-hauteur à l'égout, minimum 4 m (limites sur voie ET fond de propriété) ; dépendances <= 3,50
+        m possibles en limite.
+      - 'Sans objet (habitat interdit hors gardiennage — logements de gardiennage : 1,5 place/logement
+        ; hôtels : 1 place/chambre, Art. UT.12, p.79).'
     UZ:
       bassin: Petite-Île
+      notes:
+      - 'Terrains > 10 % de pente : +1,50 m toléré. Bâtiments publics exemptés.'
+      - 'Routes départementales : recul d''axe selon annexe 5 (non gravé).'
+      - 'ZAC Cambrai, « zone à usage d''habitat et d''équipements » (caractère de zone, p.81) — candidate
+        O12 INFIRMÉE : UZ.1 (p.81) n''interdit pas l''habitation.'
   zones_au_renvoi: {}
   zones_au_st:
     liste:
@@ -356,24 +618,72 @@
   zones:
     AUb:
       bassin: La Plaine-des-Palmistes
+      notes:
+      - 'Urbanisation future : opération d''ensemble OU au fur et à mesure des équipements internes (ZONE
+        AUindicée, p.75). Renvoi intégral au règlement Ub, confirmé par la modification n°3 (p.135 PDF).'
     AUc:
       bassin: La Plaine-des-Palmistes
+      notes:
+      - 'Urbanisation future : opération d''ensemble OU au fur et à mesure des équipements internes (ZONE
+        AUindicée, p.75).'
     AUe:
       bassin: La Plaine-des-Palmistes
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
+      - Zone d'activité future — O12 confirmé par le renvoi au règlement Ue (habitat interdit).
     AUr:
       bassin: La Plaine-des-Palmistes
+      notes:
+      - 'Exception LLS >= 10 logements : 6 m / 10 m / R+1+c (Art. Ur 10.2, p.54, via renvoi).'
+      - 'Urbanisation future : opération d''ensemble OU au fur et à mesure des équipements internes (ZONE
+        AUindicée, p.75).'
     Ua:
       bassin: La Plaine-des-Palmistes
+      notes:
+      - '9 m à l''égout/acrotère, 11 m au faîtage, R+2. Annexes : 3,50 m absolu. RDC >=80 % commerce/bureaux/artisanat
+        : +1 m.'
+      - Alignement autorisé (0) ; en cas de retrait, celui-ci est AU MAXIMUM de 6 m (bande d'implantation).
+      - 'Implantation possible sur 2 limites séparatives max (en fond de parcelle : 1 seule latérale +
+        3,50 m des angles) OU retrait 3,50 m min.'
+      - 'Zone mixte du coeur de village (caractère de zone, p.11) ; habitat admis (Art. Ua 1.2, p.11 :
+        interdits limités à industrie, entrepôt exclusif, agricole, camping, dépôts, carrières).'
     Ub:
       bassin: La Plaine-des-Palmistes
+      notes:
+      - '6 m à l''égout/acrotère, 9 m au faîtage, R+1+C. Annexes : 3,50 m. RDC >=80 % commerce/bureaux/artisanat
+        : +1 m ; commerce >= 800 m² SDP : +4 m.'
+      - Retrait obligatoire 4 m min ; 5 m sur voie de délestage/boulevard urbain du PADD ; 10 m si commerce
+        >= 800 m² SDP.
+      - Implantation possible sur 1 limite séparative max OU retrait 3,50 m min.
+      - Zone mixte de la zone agglomérée du village (caractère de zone, p.23) ; habitat admis (Art. Ub
+        1.2, p.23).
     Uc:
       bassin: La Plaine-des-Palmistes
+      notes:
+      - '6 m à l''égout/acrotère, 8 m au faîtage, R+1. Annexes : 3,50 m.'
+      - Implantation possible sur 1 limite séparative max OU retrait 3,50 m min.
+      - Zone mixte de transition village/espaces ruraux + Bras des Calumets (caractère de zone, p.35)
+        ; habitat admis (Art. Uc 1.2, p.35).
     Ue:
       bassin: La Plaine-des-Palmistes
       habitat: interdit
+      notes:
+      - 70 % dans le secteur de la Pyramide, 60 % à Bras des Calumets — tranche la plus conservatrice
+        (60) gravée.
+      - Implantation possible sur 2 limites séparatives max OU retrait 3,50 m min.
+      - Sans objet (habitat interdit).
+      - Zone d'activité économique — industrie/artisanat de production, transformation, conditionnement,
+        distribution (caractère de zone, p.59). O12 confirmé dans le texte.
     Ur:
       bassin: La Plaine-des-Palmistes
+      notes:
+      - '3,50 m à l''égout/acrotère, 7 m au faîtage, R+c. EXCEPTION (p.54) : opérations d''ensemble >=
+        10 logements locatifs sociaux : 6 m égout / 10 m faîtage / R+1+c — tranche générale (la plus conservatrice)
+        gravée.'
+      - 'Zone mixte des quartiers ruraux — Petite Plaine, Bras Piton, la Pyramide (caractère de zone,
+        p.47) ; habitat admis (Art. Ur 1.2, p.47 : interdits limités à industrie/entrepôt exclusif/dépôts/carrières
+        — l''agricole n''y est PAS interdit).'
   zones_au_renvoi: {}
   zones_au_st:
     hauteur_max_m: 9
@@ -408,35 +718,98 @@
   zones:
     1AUa:
       bassin: Le Port
+      notes:
+      - 'En zone 1AUa : retrait minimal de 45 m de l''axe de la RN4a (Art. 1AU 4, p.146).'
+      - Urbanisation par opération d'ensemble OU au fur et à mesure des équipements internes (caractère
+        de zone 1AU, p.142) ; densités minimales des OAP à respecter (Art. 1AU 2, p.144).
     1AUc:
       bassin: Le Port
+      notes:
+      - 'Renvoi à la zone Uc (indice « c »). Assainissement 1AUe/graphies : la seule 1AUc du manifeste
+        (12,6 ha) suit le régime Uc ; densités minimales OAP (Art. 1AU 2, p.144).'
     1AUem:
       bassin: Le Port
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit hors logement de surveillance).
     1AUm:
       bassin: Le Port
+      notes:
+      - Sans point de référence => gravée au faîtage (conservateur).
+      - 'LACUNE du règlement : l''Art. 1AU 4 renvoie « au règlement de la zone U indiquée en indice »
+        mais il n''existe AUCUNE zone Um ; seuls 1AUmut (5 m), 1AUs et 1AUa reçoivent une règle propre
+        => non attribuable sans deviner.'
+      - En limite OU retrait 5 m min ; 3 m pour l'habitat individuel — tranche la plus conservatrice gravée
+        (5 m).
+      - 'Secteur à dominante urbaine mixte, habitat admis (Art. 1AU 1, p.143 : Habitation non cochée ;
+        Art. 1AU 2, p.144 : « Outre les constructions destinées à l''habitat… »). Urbanisation par opération
+        d''ensemble ou au fur et à mesure des équipements (p.142).'
     1AUs:
       bassin: Le Port
       habitat: interdit
+      notes:
+      - 'En zone 1AUs : retrait minimal de 25 m de l''axe de la RN7 (Art. 1AU 4, p.145).'
+      - Sans objet (habitat interdit hors logement de surveillance).
     Ua:
       bassin: Le Port
+      notes:
+      - « 9 mètres au faitage ou au sommet de l'acrotère » — plafond unique (he = hf).
+      - 'Retrait obligatoire, recul min 3 m (alignement autorisé uniquement au niveau de l''OAP Mascareignes).
+        RN4a : 45 m de l''axe (périmètre Loi Barnier).'
+      - 'Implantation possible sur 2 limites max ; en retrait : 3 m min.'
+      - '+ 1 place visiteur / 100 m² SDP ; LLS : 0,2 place/logt + 8 places/1000 m² SDP.'
+      - 30 % de l'unité foncière non imperméabilisés/éco-aménageables DONT au moins 50 % de pleine terre
+        plantée 3 strates => minimum 15 % de l'UF en pleine terre.
     Ub:
       bassin: Le Port
+      notes:
+      - « 13 mètres au faitage ou au sommet de l'acrotère » (centre historique, plan en damier).
+      - Alignement possible (0) OU recul min 3 m ; alignement OBLIGATOIRE le long des linéaires de diversité
+        commerciale repérés au zonage.
+      - 'Bande de 20 m depuis l''alignement : implantation EN limite obligatoire (2 limites si façade
+        <= 12 m, 1 limite sinon) ; en retrait : 3 m min. Fond de parcelle : annexes uniquement.'
+      - Le % éco-aménageable n'est pas un % de pleine terre => null.
     Uc:
       bassin: Le Port
+      notes:
+      - « 16 mètres au faitage ou au sommet de l'acrotère » (règle générale hors secteur Uca).
+      - 60 % dans l'OAP Mascareignes, le secteur Uca et la ZAC « Rivière des Galets ».
+      - 'Alignement possible (0) OU recul min 3 m ; alignement obligatoire le long des linéaires commerciaux
+        ; RN4a : 45 m de l''axe (Loi Barnier).'
+      - 'En limite autorisée OU retrait 4 m min (périmètre RHI : 1,5 m/1 m selon baies).'
+      - 20 % éco-aménageables dont au moins 50 % de pleine terre 3 strates => minimum 10 % de l'UF.
     Uca:
       bassin: Le Port
+      notes:
+      - 'Poches d''habitat entre le triangle agricole et La Possession, NON desservies par l''assainissement
+        collectif : constructibilité limitée (caractère de zone, p.50).'
     Ud:
       bassin: Le Port
+      notes:
+      - « 22 mètres au faitage ou au sommet de l'acrotère » (grands ensembles).
+      - « Les constructions doivent être implantées en limite séparative et/ou suivant l'alignement des
+        constructions limitrophes existantes » — implantation en limite, aucun retrait minimal chiffré
+        => 0 sourcé.
     Uem:
       bassin: Le Port
       habitat: interdit
+      notes:
+      - Sans point de référence (ni égout ni faîtage distingués) => gravée au faîtage (conservateur).
+      - Sans objet (habitat interdit hors logement de surveillance).
+      - 'Secteur « zone tampon » de la zone Ue en continuité des quartiers résidentiels : activités industrielles
+        INTERDITES (caractère de zone, p.79 ; maintien de l''existant seulement, Art. Ue 2, p.81).'
     Umi:
       bassin: Le Port
       habitat: interdit
+      notes:
+      - « 16 mètres au faitage ou au sommet de l'acrotère ».
+      - Sans objet (habitat interdit hors gardiennage/caserne).
     Us:
       bassin: Le Port
       habitat: interdit
+      notes:
+      - Sans point de référence => gravée au faîtage (conservateur).
+      - Sans objet (habitat interdit hors logement de surveillance).
   zones_au_renvoi: {}
   zones_au_st:
     liste:
@@ -482,30 +855,72 @@
   zones:
     AUAv:
       bassin: La Possession
+      notes:
+      - Renvoi au secteur UAv, dont la hauteur est définie PAR ÎLOT opérationnel (tableau) — non attribuable,
+        repli générique (prudent).
+      - Densité minimale 50 logts/ha (AUA/AUAv, Art. AUindicée 2.3).
     AUB:
       bassin: La Possession
+      notes:
+      - Densité MINIMALE 30 logts/ha (Art. AUindicée 2.3, p.67-68).
     AUBb:
       bassin: La Possession
+      notes:
+      - Densité 20 à 30 logts/ha max (Art. AUindicée 2.3, p.67-68).
     AUBm:
       bassin: La Possession
+      notes:
+      - '« La hauteur maximale des constructions est fixée à R+3 » (Art. AUBm 10.2, p.75) — exprimée en
+        NIVEAUX, sans équivalent métrique au règlement : non convertie (on ne grave pas une hypothèse
+        d''étage maison comme règle).'
+      - Densité minimale 30 logts/ha (Art. AUindicée 2.3).
     AUBpsfr2:
       bassin: La Possession
+      notes:
+      - Densité minimale 30 logts/ha (AUB/AUBpsfr2/AUBm).
     AUEm:
       bassin: La Possession
+      notes:
+      - Habitat admis (cf. UEm) ; norme logement non trouvée.
     AUT:
       bassin: La Possession
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
     UA:
       bassin: La Possession
+      notes:
+      - '16 m au faîtage (hé non précisé). Bonus en retrait de 2 m : 19 m, puis 22 m sur 30 % de l''emprise
+        (conditionnels, non gravés).'
+      - 'Logements >50 m² SDP ; <=50 m² : 1 place ; +1 visiteur/5 logements ; LLS 1 (0,5 près TCSP).'
     UAa:
       bassin: La Possession
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
     UAm:
       bassin: La Possession
+      notes:
+      - '15 m à l''égout dans la bande de 50 m de part et d''autre de la voie RN1E (rue Gandhi)–rue du
+        Moulin Joli (non gravé : bande).'
+      - 'UAm EXCEPTÉ de la règle des 35 % (Art. UA 13.1 : « A l''exception des secteurs UAm et UAv »)
+        — pas de % attribuable.'
     UApsfr2:
       bassin: La Possession
+      notes:
+      - 'ARBITRAGE VIC 28/07/2026 : ni l''une ni l''autre — contradiction textuelle interne, ne se départage
+        pas depuis un bureau (choisir la plus basse serait arbitraire, la plus précise supposerait une
+        primauté que le texte ne dit pas). a_verifier, question à poser à la commune (même traitement
+        que 1AUe Trois-Bassins, leçon §9).'
+      - psfr2 = périmètre de protection rapprochée du Puits (servitude captage).
     UAv:
       bassin: La Possession
+      notes:
+      - 'Hauteur définie PAR ÎLOT OPÉRATIONNEL (tableau Art. UA 10.2, p.17 : ex. îlots 1/3B3 15 m, +30
+        % emprise à 18 m) — non attribuable à la zone entière sans le plan des îlots : friction consignée,
+        repli générique (prudent).'
+      - 'UAv EXCEPTÉ du tableau de stationnement (Art. UA 12.2 : « A l''exception du secteur UAv »).'
+      - UAv excepté de la règle des 35 %.
     UB:
       bassin: La Possession
     UBa:
@@ -516,19 +931,35 @@
       bassin: La Possession
     UBpsfr2:
       bassin: La Possession
+      notes:
+      - psfr2 = périmètre de protection rapprochée du Puits.
     UBpszc:
       bassin: La Possession
     UE:
       bassin: La Possession
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage 70 m²).
+      - 'Art. UE 13 : « espace libre dont au moins la moitié en espace perméable » — % de base tronqué
+        à l''extraction (« 0% ») : non attribuable sûrement.'
     UEm:
       bassin: La Possession
+      notes:
+      - HABITAT ADMIS en UEm (l'Art. UEm 1.2 n'interdit que l'entrepôt exclusif, l'agricole, le camping
+        et les décharges — divergence avec la liste O12 « inféré », le règlement prime) ; norme logement
+        non trouvée au tableau UEm 12 → a_verifier.
+      - 10 % « éco-aménageable » (≠ pleine terre stricte) — valeur la plus proche portée par le schéma.
     UT:
       bassin: La Possession
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
     UTfr2:
       bassin: La Possession
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
+      - fr2 = périmètre de protection rapprochée du Puits.
   zones_au_renvoi: {}
   zones_au_st:
     liste:
@@ -704,61 +1135,178 @@
   zones:
     AUa:
       bassin: Saint-Denis
+      notes:
+      - Seul H (10 m) donné.
+      - alignement possible ou recul 4 m min
+      - tiers de h, min 2 m
     AUh:
       bassin: Saint-Denis
+      notes:
+      - 3 m si voie < 3,50 m
+      - 'Domenjod : 6 m de l''enceinte de la maison d''arrêt'
     AUj:
       bassin: Saint-Denis
+      notes:
+      - 3 m si voie < 3,50 m ; prospect L>=H par rapport à l'axe
     AUm:
       bassin: Saint-Denis
+      notes:
+      - 3 m si voie < 3,50 m
     AUx:
       bassin: Saint-Denis
+      notes:
+      - « Non réglementé » (zone d'activités). Bandes Domenjod 6/9 m conditionnelles à l'ouverture future.
+      - « Non réglementée »
+      - « Non réglementé »
+      - « Non réglementé »
+      - « Non réglementé »
+      - « Non réglementé »
     Ua:
       bassin: Saint-Denis
+      notes:
+      - Seul H (18 m) donné ; hé non précisé.
+      - alignement possible (0) ou recul 4 m min
+      - règle au tiers de h, minimum 2 m (2m ≤ L)
+      - Art. 13 = plantation (1 arbre/100 m²), pas de %
     Uac:
       bassin: Saint-Denis
+      notes:
+      - Seul H (18 m) donné.
+      - tiers de h, min 2 m
+      - 1/3 des places en sous-sol (Art. Ua.12)
+      - « 20 % au moins … laissée libre de toute construction … engazonnée et plantée » (espace libre
+        planté ≈ pleine terre)
     Uad:
       bassin: Saint-Denis
+      notes:
+      - Le long du boulevard Sud.
+      - tiers de h, min 2 m
+      - 1/3 des places en sous-sol (Art. Ua.12)
+      - « 20 % … engazonnée et plantée »
     Uat:
       bassin: Saint-Denis
+      notes:
+      - Uat NON cité à l'Art. Ua.10 (hauteur non donnée) → estimation progressive.
+      - tiers de h, min 2 m
+      - 1/3 des places en sous-sol (Art. Ua.12)
     Uavap:
       bassin: Saint-Denis
+      notes:
+      - 'Renvoi AVAP, art. 5 « Hauteur et volume » (AVAP : règle architecturale, pas de valeur chiffrée).'
+      - Renvoi AVAP, art. 4 « Emprise au sol, espaces libres et plantés ».
+      - Renvoi AVAP, art. 1.
+      - Renvoi AVAP, art. 2.
+      - renvoi §XVII ; exemption si <=2 logements
+      - Renvoi AVAP, art. 4.
+      - NON CALIBRABLE PAR NATURE — l'AVAP est un règlement architectural (lucarnes, menuiseries, matériaux,
+        toitures) SANS capacité chiffrée (ni emprise %, ni hauteur m). Estimation prudente volontaire,
+        pas un manque ni un TODO.
     Ud:
       bassin: Saint-Denis
       hauteur_mode: prospect
+      notes:
+      - Hauteur bornée par prospect L>=H (relatif à la voie), sans valeur absolue.
+      - 'voie >=12 m : alignement OU 4 m ; voie <12 m : 4 m min'
+      - Art. 13 = plantation, pas de %
     Udo:
       bassin: Saint-Denis
+      notes:
+      - Prospect inapplicable en Udo ; H <= 50 m UNIQUEMENT en bordure de la grande place / Bld Leclerc
+        / Bld Nehru — pas de hauteur générale.
+      - « L'emprise au sol des constructions n'est pas réglementée »
     Udop:
       bassin: Saint-Denis
+      notes:
+      - R+5 = 18 m au faîtage/acrotère (sauf R+8=27 m / R+3=12 m sur rues précises) ; hé non précisé.
+      - 'logements aidés réhab : 0,8 pl. (Art. Ud.12)'
     Udp:
       bassin: Saint-Denis
       hauteur_mode: prospect
+      notes:
+      - Udp non explicité à l'Art. Ud.10 (texte détaille Ud/Udo/Udop).
+      - 'logements aidés réhab : 0,8 pl. (Art. Ud.12)'
     Uh:
       bassin: Saint-Denis
+      notes:
+      - « 4,5 m pour la hauteur d'égout he » ; « 7 m pour la hauteur maximale H ».
+      - 3 m si voie < 3,50 m
+      - Art. 13 = plantation, pas de %
     Ui:
       bassin: Saint-Denis
+      notes:
+      - Seule la hauteur maximale H (18 m) est donnée ; hé non précisé.
+      - prospect L>=H (pas de recul fixe)
+      - Art. 13 = plantation, pas de %
     Uicm:
       bassin: Saint-Denis
+      notes:
+      - Seul H (12 m) donné ; hé non précisé.
+      - prospect (Art. Ui.6)
     Uip:
       bassin: Saint-Denis
+      notes:
+      - R+5 = 18 m au faîtage/acrotère (sauf rue Marcadet R+3 = 12 m).
+      - Uip non cité à l'Art. Ui.9
+      - Uip non confirmé à l'Art. Ui.7
+      - 'logements aidés en réhab : 0,8 pl. (Art. Ui.12)'
     Uj:
       bassin: Saint-Denis
+      notes:
+      - '« 10 m pour la hauteur d''égout he » ; « 13 m pour la hauteur maximale H ». Secteur Montgaillard
+        : he 11,80 m.'
+      - 3 m si voie < 3,50 m
+      - Art. 13 = plantation, pas de %
     Um:
       bassin: Saint-Denis
+      notes:
+      - '« 7 m pour la hauteur d''égout he » ; « 10 m pour la hauteur maximale H ». Secteur Domenjod (Uma)
+        : 6 m en bande 0-20 m de la maison d''arrêt.'
+      - 3 m si voie d'emprise < 3,50 m
+      - 1 pl. <100 m² SP / 1,5 pl. >=100 m² (renvoi §XVII)
+      - Art. 13 = plantation (1 arbre/100 m²), pas de % pleine terre
     Uma:
       bassin: Saint-Denis
+      notes:
+      - « Non réglementée » (zone maison d'arrêt).
+      - alignement possible ou « recul déterminé par les impératifs propres à la maison d'arrêt »
+      - implantation sur limites possible ; pas de retrait minimal chiffré
+      - « aucune norme de stationnement … pour la maison d'arrêt »
+      - « Non réglementés »
     Upi:
       bassin: Saint-Denis
+      notes:
+      - 'TODO: hauteur dans tableau image p.34 — lecture manuelle requise (non extractible du texte).'
+      - « ne devra pas excéder 80 % … portée à 100 %, uniquement en rez-de-chaussée »
+      - 3 m (≤ R+1+combles/attique) / 4 m (> R+1)
+      - 3 m (≤ R+1+combles/attique) / 4 m (> R+1)
     Upr:
       bassin: Saint-Denis
+      notes:
+      - 'TODO: hauteur dans tableau image p.34 — lecture manuelle requise (non extractible du texte).'
+      - « ne devra pas excéder 70 % … 80 % pour les parcelles … inférieure à 200 m2 »
+      - 3 m (≤ R+1+combles/attique) / 4 m (> R+1)
+      - « recul de 6 m » (secteur Upr)
     Uu:
       bassin: Saint-Denis
       hauteur_mode: prospect
+      notes:
+      - « La hauteur … n'est pas réglementée. La règle de prospect … s'applique » → pas de hauteur absolue.
     Uva:
       bassin: Saint-Denis
+      notes:
+      - Seul H (4 m) donné.
+      - « Non réglementé »
+      - plantation, pas de %
     Uvac:
       bassin: Saint-Denis
+      notes:
+      - Seul H (10 m) donné.
+      - « Non réglementé »
     Uvl:
       bassin: Saint-Denis
+      notes:
+      - Seul H (10 m) donné.
+      - « Non réglementé »
   zones_au_renvoi: {}
   zones_au_st:
     liste: []
@@ -780,6 +1328,9 @@
   zones:
     1AU3:
       bassin: Saint-Joseph
+      notes:
+      - '1AU = urbanisation prioritaire SAR (ex-NA/NAU du POS), opération d''ensemble ou au fur et à mesure
+        des équipements. Densité minimale AU3 : 50 logts/ha (Art. AUindicée 2.2, p.106-107).'
     1AU3a:
       bassin: Saint-Joseph
     1AU5:
@@ -791,47 +1342,102 @@
     1AU6:
       bassin: Saint-Joseph
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
     1AU6c:
       bassin: Saint-Joseph
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
     1AUto:
       bassin: Saint-Joseph
       habitat: interdit
+      notes:
+      - 'Renvoi générique à la zone U d''indice — l''indice « to » n''a PAS de zone U : non attribuable
+        sûrement.'
+      - Sans objet (habitat interdit).
     1AUtok:
       bassin: Saint-Joseph
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
+      - Hauteur gravée = constructions de type industrie (seule valeur donnée pour AUtok).
     U1:
       bassin: Saint-Joseph
+      notes:
+      - 'BANDES : 7/9 m dans les 4 premiers mètres depuis l''alignement (rue R. Babet/emprise publique)
+        ; 10/12 m au-delà (gravé — règle du cœur de parcelle, précédent Saint-Paul U1a). Annexes 3,5 m.'
+      - 'Façade sur voie <12 m : implantation sur les DEUX limites latérales OBLIGATOIRE ; sinon retrait
+        3 m ou une limite.'
     U2:
       bassin: Saint-Joseph
+      notes:
+      - 'BANDES : 8/10 m (0-6 m depuis l''alignement) ; 10/12 m (6-12 m) ; 11/13 m au-delà (gravé). Bonus
+        au-delà de 12 m si RDC commercial/services ou RPA : 13/15 m (non gravé, conditionnel). Annexes
+        3,5 m.'
+      - '2 limites, 1 ou retrait ; retrait >= H/2 de la façade, minimum 3 m (gravé : H/2 à H max).'
     U2a:
       bassin: Saint-Joseph
+      notes:
+      - Secteur U2a = « diverses centralités du Grand Centre-ville » (caractère de zone p.27) ; mêmes
+        règles chiffrées que U2.
     U3:
       bassin: Saint-Joseph
+      notes:
+      - 'BANDES identiques à U2 : 8/10 (0-6 m), 10/12 (6-12 m), 11/13 au-delà (gravé) ; bonus RDC commercial/RPA
+        au-delà de 12 m : 13/15 (conditionnel, non gravé).'
     U3a:
       bassin: Saint-Joseph
+      notes:
+      - Bonus conditionnel au-delà de 6 m de profondeur si RDC commercial/services (valeur du bonus au
+        texte, non gravée).
     U3ar:
       bassin: Saint-Joseph
+      notes:
+      - 'Indice « r » (risque) : plancher bas surélevé >= 0,5 m au-dessus du TN, hauteur mesurée depuis
+        le plancher bas (Art. U3 10.1, p.49).'
     U4:
       bassin: Saint-Joseph
+      notes:
+      - 'Bonus si locaux commerciaux/services/bureaux : 7/10 m (conditionnel, non gravé). Annexes 3,5
+        m.'
+      - '2 limites si terrain <=400 m², 1 limite si >400 m² ; retrait >= H/2, minimum 1,9 m (gravé : H/2
+        à H max).'
     U5:
       bassin: Saint-Joseph
+      notes:
+      - 'Logements aidés : 8/10 m (conditionnel, non gravé). Annexes 3,5 m.'
     U5cv:
       bassin: Saint-Joseph
+      notes:
+      - Alignement possible (0) en U5cv/U5cvd.
     U5cvd:
       bassin: Saint-Joseph
+      notes:
+      - 'BANDES : 8/10 m (0-6 m depuis l''alignement) ; 10/12 m au-delà (gravé, précédent Saint-Paul U1a).'
+      - Alignement possible (0) en U5cv/U5cvd.
     U5ma:
       bassin: Saint-Joseph
+      notes:
+      - Camping/hébergements de loisirs ADMIS en U5ma/U5vi (exception à l'interdiction générale, Art.
+        U5 1.2, p.71-72).
     U5ru:
       bassin: Saint-Joseph
     U5vi:
       bassin: Saint-Joseph
+      notes:
+      - Camping/hébergements de loisirs admis (Art. U5 1.2).
     U6:
       bassin: Saint-Joseph
       habitat: interdit
+      notes:
+      - 'Secteur U6ch et ZA de Vincendo : 10/13 m (aucun polygone U6ch au zonage servi).'
+      - Sans objet (habitat interdit).
     U6c:
       bassin: Saint-Joseph
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
   zones_au_renvoi: {}
   zones_au_st:
     liste:
@@ -878,54 +1484,140 @@
   zones:
     1AUa:
       bassin: Saint-Louis
+      notes:
+      - 'Urbanisation prioritaire SAR (préambule AUindicée, p.105). Pour les 1AUa « se rapportant à l''OAP2
+        » : normes de stationnement spécifiques (LLS 0,8 place/logt, équipements 1,5 place/10 pers., Art.
+        AUindicée 12, p.108) — base UA conservée (plus exigeante).'
     1AUa oap1:
       bassin: Saint-Louis
+      notes:
+      - 'Libellé GPU « 1AUa oap1 » : zone 1AUa soumise à une OAP — le règlement ne définit aucune règle
+        chiffrée propre aux suffixes « oapN », il impose de « respecter les OAP lorsqu''elles existent
+        » (p.105) => règles UA via renvoi.'
     1AUa oap3:
       bassin: Saint-Louis
+      notes:
+      - Zone 1AUa soumise à OAP (suffixe cartographique) => règles UA via renvoi (p.105).
     1AUc:
       bassin: Saint-Louis
     1AUc oap4:
       bassin: Saint-Louis
+      notes:
+      - Zone 1AUc soumise à OAP (suffixe cartographique) => règles UC via renvoi (p.105).
     1AUc oap5:
       bassin: Saint-Louis
+      notes:
+      - Zone 1AUc soumise à OAP (suffixe cartographique) => règles UC via renvoi (p.105).
     1AUc1:
       bassin: Saint-Louis
+      notes:
+      - Indice « c1 » = secteur UC1 du règlement (seul homonyme existant, caractère de zone p.38) => règles
+        du secteur UC1 via renvoi AUindicée.
     1AUc2:
       bassin: Saint-Louis
+      notes:
+      - Indice « c2 » = secteur UC2 du règlement (seul homonyme existant, p.38) => règles du secteur UC2
+        via renvoi AUindicée.
     1AUd:
       bassin: Saint-Louis
     1AUd1:
       bassin: Saint-Louis
+      notes:
+      - Indice « d1 » = secteur UD1 du règlement (village des Makes, seul homonyme existant, p.53) =>
+        règles du secteur UD1 via renvoi AUindicée.
     1AUe:
       bassin: Saint-Louis
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
+      - Pour la « zone 1AUe se rapportant à l'OAP2 », hauteur spécifique 17 m égout / 20 m faîtage (Art.
+        AUindicée 10, p.108) — NON gravée (le manifeste GPU ne porte pas de suffixe oap2 ; base UE 12/15
+        conservée, plus conservatrice).
     1AUe oap1:
       bassin: Saint-Louis
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
+      - Zone 1AUe soumise à OAP (suffixe cartographique) => règles UE via renvoi (p.105).
     UA:
       bassin: Saint-Louis
+      notes:
+      - 'Dépendances : 3,50 m de hauteur absolue.'
+      - Alignement possible (0) OU retrait >= 3 m. Servitude de galerie rue du Dr R. Vergés (RDC à 3 m
+        de retrait, étages à l'alignement).
+      - 'Implantation sur les deux limites latérales, sur une seule ou en retrait 3 m ; fond de parcelle
+        : en limite si <= 4 m au droit de la limite, sinon 3 m (Art. UA 7.3).'
+      - 'LLS : 1 place/logement ; opérations > 10 logements : +0,5 place publique/logement.'
+      - 'Grand centre-ville. Interdits : industrie, entrepôt exclusif, agricole (Art. UA 1.2, p.10). Mixité
+        : > 2 000 m² SDP => 30 % logements aidés (Art. UA 2.2, p.11).'
     UA1:
       bassin: Saint-Louis
+      notes:
+      - Secteur du centre historique de Saint-Louis, morphologie et fonctions urbaines à préserver (caractère
+        de zone, p.10).
     UB:
       bassin: Saint-Louis
+      notes:
+      - 'Dépendances : 3,50 m de hauteur absolue.'
+      - 'LLS : 1 place/logement ; opérations > 10 logements : +0,5 place publique/logement.'
+      - 'Bois de Nèfles Cocos, quartier stratégique (caractère de zone, p.24). Mixité : > 1 500 m² SDP
+        => 30 % logements aidés (Art. UB 2.2, p.25).'
     UC:
       bassin: Saint-Louis
+      notes:
+      - 'Tiroir NON gravé (conservateur) : projets d''aménagement sur terrain >= 4 000 m² : au max 40
+        % des constructions à 9 m égout / 13 m faîtage. Dépendances : 3,50 m.'
+      - 'Tissu aggloméré du quartier de la Rivière (caractère de zone, p.38). Mixité : > 1 500 m² SDP
+        => 30 % logements aidés (Art. UC 2.2, p.39).'
     UC1:
       bassin: Saint-Louis
+      notes:
+      - 'Tiroir NON gravé : terrain >= 4 000 m² : au max 40 % des constructions à 12 m égout / 16 m faîtage.'
+      - 'Valeur gravée = H/2 à la hauteur max du secteur (9 m égout => 4,5 m) ; plancher du texte : 3
+        m.'
+      - Secteur d'emprises foncières pour opérations d'habitat collectif relativement denses (caractère
+        de zone, p.38).
     UC2:
       bassin: Saint-Louis
+      notes:
+      - Quartier du Ruisseau, densités moindres (caractère de zone, p.38).
     UD:
       bassin: Saint-Louis
+      notes:
+      - 'Dépendances : 3,50 m de hauteur absolue.'
+      - 'Tissu résidentiel peu dense en territoire rural (caractère de zone, p.53). Mixité : > 1 000 m²
+        SDP => 20 % logements aidés (Art. UD 2.2, p.54).'
     UD1:
       bassin: Saint-Louis
+      notes:
+      - 'Village des Makes, bourg relais SAR, label Villages Créoles (caractère de zone, p.53). Aspect
+        : toitures 2 ou 4 pans, toits terrasses interdits (Art. UD 11, p.62).'
     UE:
       bassin: Saint-Louis
       habitat: interdit
+      notes:
+      - 'Valeur gravée = H/2 à la hauteur max (12 m égout => 6 m) ; plancher du texte : 5 m. RN1 : 25
+        m minimum de l''axe.'
+      - 'Valeur gravée = H/2 à la hauteur max (12 m => 6 m) ; planchers du texte : 4 m.'
+      - Sans objet (habitat interdit, gardiennage compris).
     US:
       bassin: Saint-Louis
       habitat: interdit
+      notes:
+      - Valeur gravée = H/2 à la hauteur max (12 m => 6 m).
+      - Sans objet (habitat limité au gardiennage, 70 m² max ; 1 place/logement autorisé, Art. US 12.2,
+        p.88).
     UZ:
       bassin: Saint-Louis
+      notes:
+      - 'Règle à tiroirs dépendant du schéma d''annexe de la ZAC (non parcellisable ici) => tranche LA
+        PLUS CONSERVATRICE gravée : 9 m hors tout (affectations individuelles).'
+      - Bande non aedificandi de 35 m depuis l'axe de la RN1 ; implantations conformes au schéma d'annexe
+        de la ZAC.
+      - Réductible à 1 m (façade aveugle) pour terrains < 12 m de large en habitat individuel.
+      - 'ZAC de l''Avenir (caractère de zone, p.91). Habitat admis selon les affectations du schéma joint
+        en annexe (Art. UZ 2.2, p.92 : 1 logement/parcelle si parcelle <= 400 m² en « affectations dominantes
+        en habitat » ; gardiennage seul en « activités tertiaires »).'
   zones_au_renvoi: {}
   zones_au_st:
     hauteur_max_m: 4
@@ -999,78 +1691,188 @@
     AU5e:
       bassin: La Saline
       habitat: interdit
+      notes:
+      - 'Zone AU avec règle PROPRE (ne renvoie pas à un U) : hf 14 m ; hé non précisé.'
+      - 'RÉSOLU (consolidation 27/07/2026) : retrait 5 m min.'
     U1a:
       bassin: Saint-Paul Centre
+      notes:
+      - 'Bande 15 m depuis voie : hé 9 / hf 13 ; au-delà (ou si jouxte bâti >3 niveaux) : hé 12 / hf 16.'
+      - 'U1a : 10 % ; parking sous-sol : 10 % min en pleine terre. Aléa fort PPRI : 50 % (transverse).'
     U1b:
       bassin: Saint-Paul Centre
+      notes:
+      - 'RÉSOLU (consolidation 27/07/2026) : zones U1b/U1c/U1f/U1g/U1pso : 30 %.'
     U1c:
       bassin: Saint-Paul Centre
+      notes:
+      - 'RÉSOLU (consolidation 27/07/2026) : zones U1b/U1c/U1f/U1g/U1pso : 30 %.'
     U1d:
       bassin: Saint-Paul Centre
+      notes:
+      - 'U1d NON CITÉ au 13.1 Perméabilité (listes : U1a ; U1b/c/f/g/pso) — pas de % attribuable sûrement.'
     U1e:
       bassin: Saint-Paul Centre
       habitat: interdit
+      notes:
+      - Seul hf donné (14 m au faîtage) ; hé non précisé.
+      - 'CORRIGÉ (consolidation 27/07/2026) : 3 gravé à tort → « en cas de retrait … 5 m minimum » ; retrait
+        OBLIGATOIRE en limite de zone U/AU.'
     U1ec:
       bassin: Saint-Paul Centre
       habitat: interdit
+      notes:
+      - 18 m au faîtage ; porté à 21 m pour parcs de stationnement communs à <250 m de l'axe de la RN7.
+        hé non précisé.
+      - 'CORRIGÉ (consolidation 27/07/2026) : 3 sans source → 5 m (Art. 7.2 du chapitre U1e/U1l).'
+      - Mentionnée dans la section U1e/U1l ; non listée séparément au sommaire.
     U1f:
       bassin: Saint-Paul Centre
+      notes:
+      - 'RÉSOLU (consolidation 27/07/2026) : zones U1b/U1c/U1f/U1g/U1pso : 30 %.'
     U1g:
       bassin: Saint-Paul Centre
+      notes:
+      - 'RÉSOLU (consolidation 27/07/2026) : zones U1b/U1c/U1f/U1g/U1pso : 30 %.'
     U1l:
       bassin: Saint-Paul Centre
+      notes:
+      - Idem U1e (section commune). hé non précisé.
+      - 'CORRIGÉ (consolidation 27/07/2026) : 3 → 5 m (Art. 7.2).'
     U1lec:
       bassin: Saint-Paul Centre
+      notes:
+      - Zone citée comme renvoi par AU1lec ; règles propres non localisées précisément — à vérifier.
+      - 'RÉSOLU (consolidation 27/07/2026) : « En zone U1lec … retrait de 3 m minimum de la voie ».'
     U1pru:
       bassin: Saint-Paul Centre
+      notes:
+      - 'U1pru : plantations dans >=80 cm de terre comptées en pleine terre (Art. 13.3)'
     U1pso:
       bassin: Saint-Paul Centre
+      notes:
+      - 'RÉSOLU : U1pso dans la liste U1b/c/f/g/pso : 30 %.'
     U2a:
       bassin: Saint-Gilles
+      notes:
+      - retrait 4 m min de la voie ; terrasses commerces RDC à l'alignement
+      - 'RÉSOLU (consolidation 27/07/2026) : U2a et U2b : 30 %.'
     U2b:
       bassin: Saint-Gilles
+      notes:
+      - 'RÉSOLU : U2a et U2b : 30 %.'
     U2c:
       bassin: Saint-Gilles
+      notes:
+      - 'RÉSOLU : U2c « autres constructions, y compris habitations » : 50 % ; constructions à usage touristique
+        : 40 %.'
     U2d:
       bassin: Saint-Gilles
+      notes:
+      - 'RÉSOLU, tranche CONSERVATRICE gravée : 90 % si terrain <700 m² ; 65 % si >=700 m² ET en démolition/reconstruction
+        ou extension (quelle que soit la surface). Distribution du pool inconnue sans base (mesure phase
+        4).'
     U2e:
       bassin: Saint-Gilles
       habitat: interdit
+      notes:
+      - Seul hf (14 m) ; hé non précisé.
+      - 'CORRIGÉ (consolidation 27/07/2026) : 3 sans source → 5 m.'
     U2h:
       bassin: Saint-Gilles
+      notes:
+      - bande 5 m à compter du retrait 4 m min de la voie
+      - 'RÉSOLU : U2h : 40 %.'
     U3a:
       bassin: Plateau Caillou
+      notes:
+      - 'Sous-cas : hé 18 / hf 22 (secteur spécifique).'
+      - 'à l''alignement ; ZAC Savane des Tamarins : retrait 3 m possible'
+      - 'CONFIRMÉ à la consolidation 27/07/2026 (13.1 Perméabilité). Parking sous-sol totalité : 20 %
+        min en pleine terre.'
     U3b:
       bassin: Plateau Caillou
+      notes:
+      - retrait 3 m min ; commerces RDC à l'alignement
+      - 'CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 30 % au 13.1.'
     U3c:
       bassin: Plateau Caillou
+      notes:
+      - retrait 4 m min
+      - 'CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 40 % au 13.1.'
     U3e:
       bassin: Plateau Caillou
       habitat: interdit
+      notes:
+      - 'Seul hf (14 m) ; ZAC Savane des Tamarins : 19 m. hé non précisé.'
+      - 'CORRIGÉ (consolidation 27/07/2026) : 3 sans source → 5 m.'
     U3h:
       bassin: Plateau Caillou
+      notes:
+      - bande 5 m à compter du retrait 4 m min
+      - 'CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 40 % au 13.1.'
     U4a:
       bassin: La Plaine-Bois de Nèfles
+      notes:
+      - 'à l''alignement ; ZAC Marie Caze / Sans Souci : retrait 3 m possible'
+      - CONFIRMÉ à la consolidation 27/07/2026 (13.1 Perméabilité).
     U4b:
       bassin: La Plaine-Bois de Nèfles
+      notes:
+      - retrait 3 m min ; commerces RDC à l'alignement
+      - 'CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 30 % au 13.1.'
     U4c:
       bassin: La Plaine-Bois de Nèfles
+      notes:
+      - retrait 4 m min
+      - 'CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 40 % au 13.1.'
     U5a:
       bassin: La Saline
+      notes:
+      - 'à l''alignement ; ZAC Saline : retrait 3 m possible'
+      - CONFIRMÉ à la consolidation 27/07/2026 (13.1 Perméabilité).
     U5b:
       bassin: La Saline
+      notes:
+      - retrait 3 m min ; commerces RDC à l'alignement
+      - 'CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 30 % au 13.1.'
     U5c:
       bassin: La Saline
+      notes:
+      - retrait 4 m min
+      - 'CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 40 % au 13.1.'
     U6a:
       bassin: Le Guillaume
+      notes:
+      - à l'alignement
+      - CONFIRMÉ à la consolidation 27/07/2026 (13.1 Perméabilité).
     U6b:
       bassin: Le Guillaume
+      notes:
+      - retrait 3 m min ; commerces RDC à l'alignement
+      - 'CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 30 % au 13.1.'
     U6c:
       bassin: Le Guillaume
+      notes:
+      - retrait 4 m min
+      - 'CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 40 % au 13.1.'
     Usdu:
       bassin: multi (Plateau C., Plaine, Saline, Guillaume)
+      notes:
+      - 'PLAFONDS ABSOLUS par destination (Art. 9) : habitation/commerce 150 m² max, annexes 25 m², équipements
+        200 m², hébergement hôtelier 300 m² max — dans la limite des surfaces perméables. NON PORTABLE
+        par le schéma v1 (emprise en %) : friction consignée au rapport de nuit ; le repli sans plafond
+        SURESTIME les grandes parcelles.'
+      - 'RÉSOLU (consolidation 27/07/2026) : retrait 4 m min de la voie.'
+      - 'RÉSOLU : retrait OBLIGATOIRE de toutes les limites, 4 m min.'
+      - 'RÉSOLU : « Autres logements : 2 places / logement » ; logements aidés 1 place.'
+      - 'RÉSOLU : 50 % d''espaces libres perméables (identique aux 4 bassins), dont au moins 50 % en pleine
+        terre plantée (règle transverse).'
     Usdu_PlateauCaillou:
       bassin: Plateau Caillou
+      notes:
+      - Plafonds ABSOLUS par destination — cf. entrée Usdu.
+      - Zone Usdu présente dans plusieurs bassins (mêmes règles constatées aux 4 chapitres).
   zones_au_renvoi:
     AU1: 'Règles de U1 de même indice (AU1a->U1a, AU1b->U1b, ...). Source: « caractère de zone », p.49.'
     AU1e: 'Règles de U1e (et U1ec). Source: p.51.'
@@ -1130,72 +1932,229 @@
     AUazc:
       bassin: Saint-Pierre
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
+      - 'Préambule p.171 : AUazc sous OAP ; urbanisation UNIQUEMENT après opération d''aménagement d''ensemble.'
     AUazi:
       bassin: Saint-Pierre
       habitat: interdit
+      notes:
+      - 'Installations d''extraction (ZI n°4) : pas de règle de hauteur (cf. Uazi).'
+      - Sans objet (habitat interdit).
+      - 'Préambule p.171 : AUazi sous OAP ; urbanisation UNIQUEMENT après opération d''aménagement d''ensemble.'
     AUdma:
       bassin: Saint-Pierre
+      notes:
+      - '« En zone AUdma : non règlementé pour l''ensemble de l''article » — règles portées par les seules
+        OAP (R151-8).'
+      - Idem — non réglementé au règlement écrit, régi par les OAP.
+      - « non règlementé pour l'ensemble de l'article »
+      - NON CALIBRABLE PAR NATURE — zone régie uniquement par les OAP (R151-8, préambule p.76). Estimation
+        prudente volontaire, pas un manque.
     AUf:
       bassin: Saint-Pierre
+      notes:
+      - 'Préambule p.112 : AUf couverte par OAP ; urbanisation UNIQUEMENT après opération d''aménagement
+        d''ensemble (ZAC, PUP ou permis d''aménager). Condition opérationnelle non portée par le schéma,
+        cf. § Frictions.'
     AUfGB:
       bassin: Saint-Pierre
+      notes:
+      - Seul le faîtage (5,5 m) est donné ; hé non précisé.
+      - 'Secteur à urbaniser spécifique Grand Bois. Préambule p.112 : couvert par OAP ; urbanisation UNIQUEMENT
+        après opération d''aménagement d''ensemble.'
     AUg:
       bassin: Saint-Pierre
+      notes:
+      - Mêmes règles que Ug (chapitre unique). Bonus conditionnels non gravés, cf. Ug.
+      - Tranches 80/70/50 % — gravé 50 % (>250 m² ; la totalité du pool servi AUg est >250 m², médiane
+        3 561 m²).
+      - 'Préambule p.97 : AUg couverte par OAP ; urbanisation possible UNIQUEMENT après opération d''aménagement
+        d''ensemble (totalité de la zone, ou partie identifiée aux OAP) — ZAC, PUP ou permis d''aménager.
+        Capacité calculée sous cette condition opérationnelle (non portée par le schéma, cf. § Frictions).'
     AUt1:
       bassin: Saint-Pierre
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
+      - 'Préambule p.156 : AUt1 sous OAP ; urbanisation UNIQUEMENT après opération d''aménagement d''ensemble.'
     AUt2:
       bassin: Saint-Pierre
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
+      - 'Préambule p.156 : AUt2 sous OAP ; urbanisation UNIQUEMENT après opération d''aménagement d''ensemble.'
     Uaza:
       bassin: Saint-Pierre
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
     Uazc:
       bassin: Saint-Pierre
       habitat: interdit
+      notes:
+      - '13/18 m, SAUF ZAC Canabady et Condé Concession : 7 m égout / 12 m faîtage. Équipements publics
+        : 25/30 m.'
+      - 'ZAC Canabady : 5 m (et 65 m de l''axe RN3, 20 m des bretelles) ; terrains face à la ZAC : alignement
+        OU 4 m.'
+      - Sans objet (habitat interdit).
     Uazi:
       bassin: Saint-Pierre
       habitat: interdit
+      notes:
+      - 'Installations d''extraction de matériaux (ZI n°4) : pas de règle de hauteur. ZI n°4 parcelles
+        1,9,11,21-24 : 8 m max dans la bande de 15 m longeant la Ravine des Cabris.'
+      - Sans objet (habitat interdit).
     Uazp:
       bassin: Saint-Pierre
       habitat: interdit
+      notes:
+      - 'Alignement possible SAUF aval RN1 : recul 40 m (Nord) / 50 m (Sud) depuis le giratoire RD26.'
+      - Sans objet (habitat interdit).
     Uazpc:
       bassin: Saint-Pierre
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
     Ucv:
       bassin: Saint-Pierre
+      notes:
+      - '« comprises entre 9 m et 15 m à l''égout/acrotère, 20 m maximum au faîtage » : hauteur MINIMALE
+        9 m imposée (non portée par le schéma). Bonus >10 logts aidés et/ou CBS>60 % : 18/23 m ; + attique
+        si désartificialisation : 21/25 m. ZAC du Mail/Bld H. Delisle : RDC min 4 m.'
+      - '70 % de l''unité foncière. UF<200 m² et équipements publics : emprise NON réglementée (le 70
+        % gravé sous-estime pour les petites parcelles).'
+      - 'Alignement OBLIGATOIRE en premier rideau (voies piétonnes : 2 m).'
+      - Implantation obligatoire sur AU MOINS une limite séparative (une limite reste libre), max 80 %
+        du linéaire ; sinon retrait 3 m.
+      - Norme AU M² DE SDP, pas par logement (non consommée par le moteur, cf. § Frictions). 0,85 place
+        / logement social.
+      - CBS 30 % (UF>250 m²) ou 15 % (UF<=250 m²), pleine terre 20 % dans LES DEUX tranches.
     Ud:
       bassin: Saint-Pierre
+      notes:
+      - '« comprises ENTRE 6 et 15 m à l''égout/acrotère et de 20 m maximum au faîtage » : hauteur MINIMALE
+        6 m imposée (non portée par le schéma). UF<200 m² : max 7/12 m. À l''alignement : H <= emprise
+        de la voie, plafonné 9 m, puis oblique 100 % (gabarit de front de rue — non gravé). Bonus >10
+        logts aidés et/ou CBS>60 % : 18/23 m. Limites séparatives : 9 m max dans la bande de 3 m.'
+      - '60 % de l''unité foncière. UF<200 m² et équipements publics : emprise NON réglementée (exception
+        non portée — le 60 % gravé sous-estime pour les petites parcelles).'
+      - 'Premier rideau : à l''alignement (0) OU recul minimal 3 m ; en cas d''alignement, 50-70 % du
+        linéaire à l''alignement. Voies piétonnes 2 m. RN3 : 10-30 m selon destination.'
+      - Implantation obligatoire sur AU MOINS une limite séparative (une limite reste libre), max 80 %
+        du linéaire ; sinon retrait 3 m. Règles de mitoyenneté selon le bâti contigu (premier rideau).
+      - Norme AU M² DE SDP, pas par logement (non consommée par le moteur, cf. § Frictions). 1 place /
+        logement locatif social.
+      - CBS 30 % (UF>250 m²) ou 15 % (UF<=250 m²), avec pleine terre 20 % dans LES DEUX tranches — pas
+        d'ambiguïté de tranche pour la pleine terre.
     UdBO:
       bassin: Saint-Pierre
+      notes:
+      - '« entre 8 et 16 m à l''égout/acrotère et entre 11 et 19 m au faîtage » : hauteurs MINIMALES 8/11
+        m imposées (non portées). CBS porté à 60 % : +3 m dérogatoires.'
+      - 'Règle générale du chapitre (alignement OU 3 m) ; voies piétonnes en UdBO : recul entre 3 et 5
+        m.'
+      - Sur au moins une limite, max 65 % du linéaire en UdBO ; sinon retrait 3 m.
+      - 'Norme au m² de SDP (cf. § Frictions). Stationnements >20 places : 80 % intégrés aux bâtiments
+        en UdBO.'
+      - 'UdBO PAR TRANCHE : UF>250 m² : CBS 50 % dont 40 % pleine terre ; UF<=250 m² : CBS 20 % dont 25
+        %. Gravé : 40 % (67 % du pool servi UdBO est >250 m²).'
     Udl:
       bassin: Saint-Pierre
+      notes:
+      - 'Secteur littoral. Hôtels sur terrain >=2 000 m² : 8/12 m. Limites séparatives : 6 m max dans
+        la bande de 3 m (au lieu de 9).'
+      - Norme au m² de SDP (cf. § Frictions).
     Ue:
       bassin: Saint-Pierre
       habitat: interdit
+      notes:
+      - 'Équipements publics structurants et ouvrages techniques : pas de règle de hauteur maximale.'
+      - Sans objet (habitat limité au gardiennage/fonction).
     Uea:
       bassin: Saint-Pierre
       habitat: interdit
+      notes:
+      - 'Aérodrome de Pierrefonds : plafonds du Plan de Servitude Aéronautique en sus ; ouvrages techniques
+        (tour de contrôle…) sans règle.'
+      - Sans objet (habitat limité au gardiennage/fonction).
     Uemi:
       bassin: Saint-Pierre
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage/fonction).
     Uep:
       bassin: Saint-Pierre
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
     Uf:
       bassin: Saint-Pierre
+      notes:
+      - 'Règle générale : 6 m égout/acrotère, 11 m faîtage. Limites séparatives : 4 m max dans la bande
+        de 3 m. Équipements publics 8/13 m ; pente : +1,5 m aval ; surtoiture/toiture végétalisée : +0,5
+        m. Pas de bonus mixité/CBS en Uf.'
+      - 'PAR TRANCHE : 70 % si UF<150 m² ; 50 % si UF>150 m² (le texte ne statue pas UF=150 m² exactement).
+        Gravé : 50 % (93 % du pool servi Uf est >150 m², médiane 502 m²).'
+      - '4 m min de l''emprise des voies (voies piétonnes 2 m ; RN1/RN2/RN3 : 10 à 30 m selon destination
+        ; ZAC Cap Austral : 20 m de l''axe RN2).'
+      - En limite autorisée (max 2 limites, 60 % du linéaire) OU retrait 3 m.
+      - 1 place / logement locatif social. Réductions/exemptions transverses cf. regles_transverses.
+      - 'PAR TRANCHE : UF>250 m² : CBS 50 % min dont >=40 % pleine terre plantée ; UF<=250 m² : CBS 40
+        % dont >=30 %. Gravé : tranche >250 m² (83 % du pool servi Uf).'
     UfCA:
       bassin: Saint-Pierre
+      notes:
+      - 'Secteur ZAC Cap Austral (Grand Bois). Mesure de la hauteur : par rapport au terrain livré par
+        l''aménageur (ou au déblai si affouillements) — spécifique UfCA.'
+      - Tranches 70/50 % — gravé 50 % (>150 m² ; 87 % du pool servi UfCA).
+      - 'ZAC Cap Austral : retrait minimal 20 m depuis l''axe de la RN2 (façade RN uniquement) ; sinon
+        règle générale 4 m.'
+      - 'Tranches CBS 50/40 % dont pleine terre 40/30 % — gravé 40 % (>250 m² : 73 % du pool servi UfCA).'
     Ug:
       bassin: Saint-Pierre
+      notes:
+      - 'Règle générale : 7 m égout/acrotère, 12 m faîtage. Bonus conditionnels NON gravés : >10 logts
+        aidés et/ou CBS>70 % => 10/15 m ; attique => 13 m faîtage ; équipements publics 10/15 m ; 50 pas
+        géométriques => 6/9 m ; terrain en pente : +1,5 m en aval ; surtoiture/toiture végétalisée : +0,5
+        m.'
+      - 'PAR TRANCHE : 80 % si UF<=150 m² ; 70 % si 150<UF<=250 m² ; 50 % si UF>250 m². Gravé : tranche
+        >250 m² (81 % du pool servi Ug, médiane 458 m²) — sous-estime pour les petites parcelles.'
+      - '3 m min de l''emprise des voies routières (1 m si construction <=3 m égout et <=5 m faîtage ;
+        voies piétonnes 2 m ; RN1/RN2/RN3 : 10 à 30 m selon destination).'
+      - En limite autorisée (max 2 limites, 70 % du linéaire, h<=6 m sur la bande de 3 m) OU retrait 3
+        m.
+      - 1 place / logement locatif social. Réductions transverses (TCSP -30 %, mutualisation) et exemptions
+        cf. regles_transverses.
+      - 'PAR TRANCHE : UF>250 m² : CBS 40 % min dont >=30 % pleine terre plantée ; UF<=250 m² : CBS 30
+        % dont >=25 % pleine terre. Gravé : tranche >250 m² (dominante).'
     Up:
       bassin: Saint-Pierre
+      notes:
+      - '6 m égout/acrotère, 11 m faîtage. 50 pas géométriques : 9 m faîtage max. Limites séparatives
+        : 4 m max dans la bande de 1,90 m. Équipements publics 10 m égout.'
+      - 'PAR TRANCHE : 80 % si UF<150 m² ; 60 % si UF>150 m². Gravé : 60 % (tranche dominante : 87 % du
+        pool servi Up est >=150 m², médiane 261 m² — pour les 26 parcelles <150 m² le 60 % SOUS-estime,
+        prudent).'
+      - 'Implantation libre (alignement ou retrait) ; voies piétonnes : 1 m de l''axe.'
+      - '1 place / logement locatif social. Parcelles <150 m² à façade <8 m ou accessibles à pied : exemptées
+        (transverse).'
     Us:
       bassin: Saint-Pierre
       constructible_neuf: false
+      notes:
+      - 'Règle générale LOGEMENT : 6 m égout/acrotère, 11 m faîtage (Art. Us3 §5, p.134). Équipements
+        publics 8/13 m ÉCARTÉS (destination ≠ logement — convention Uf3.5). Limites séparatives 4 m dans
+        la bande de 3 m ; PPRN +surélévation ; pente +1,5 m aval ; surtoiture +0,5 m. Gravable telle quelle
+        dès réouverture de la zone.'
+      - Zone urbaine peu dense GELÉE provisoirement (construction neuve non autorisée, extensions <=25
+        % SDP — préambule p.129, Art. Us1 p.130). Hauteur servie ; capacité = aucune (gel).
     Ut:
       bassin: Saint-Pierre
       habitat: interdit
+      notes:
+      - 'Sans objet (habitat limité à la présence permanente nécessaire). Tableau Art. Ut6 : 1 place/logement
+        min le cas échéant.'
   zones_au_renvoi: {}
   zones_au_st:
     liste:
@@ -1227,50 +2186,87 @@
   zones:
     1AUb:
       bassin: Sainte-Marie
+      notes:
+      - 1AU ouvertes dès l'approbation (V., p.40) — opération d'ensemble ou au fur et à mesure des équipements,
+        OAP à respecter.
     1AUc:
       bassin: Sainte-Marie
     1AUep:
       bassin: Sainte-Marie
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage).
     UA:
       bassin: Sainte-Marie
+      notes:
+      - '16 m à l''acrotère en toiture-terrasse. Attique hors calcul ; RDC commerces/bureaux : +0,5 m
+        (Art. U8.3).'
+      - 'UA/UB : alignement possible (0) OU recul >= 3 m.'
+      - '1 ou 2 limites possibles ; retrait >= H/2, minimum 3 m (gravé : H/2 à H max).'
+      - 'Norme des opérations de plusieurs logements >=100 m² ; <100 m² : 1 pl. ; 1 logement >=100 m²
+        : 2 pl. ; TCSP <500 m : 1 pl.'
     UAb:
       bassin: Sainte-Marie
+      notes:
+      - 19 m à l'acrotère en toiture-terrasse.
     UAz:
       bassin: Sainte-Marie
+      notes:
+      - 28 m à l'acrotère en toiture-terrasse — le plus haut gabarit de la commune.
     UB:
       bassin: Sainte-Marie
+      notes:
+      - 13 m à l'acrotère en toiture-terrasse.
     UC:
       bassin: Sainte-Marie
+      notes:
+      - 11 m à l'acrotère en toiture-terrasse.
     UC1:
       bassin: Sainte-Marie
     UC2:
       bassin: Sainte-Marie
     UD:
       bassin: Sainte-Marie
+      notes:
+      - 10 m à l'acrotère en toiture-terrasse.
     UD1:
       bassin: Sainte-Marie
     UEa:
       bassin: Sainte-Marie
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage).
+      - Le % perméable du groupe activités n'a pas été isolé avec certitude — non gravé.
     UEc:
       bassin: Sainte-Marie
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage).
     UEm:
       bassin: Sainte-Marie
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage).
     UEp:
       bassin: Sainte-Marie
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage).
     UR:
       bassin: Sainte-Marie
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage).
     UT:
       bassin: Sainte-Marie
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage).
     UTp:
       bassin: Sainte-Marie
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage).
   zones_au_renvoi: {}
   zones_au_st:
     liste:
@@ -1300,12 +2296,18 @@
       bassin: Sainte-Rose
     1AUc:
       bassin: Sainte-Rose
+      notes:
+      - Comprend la zone du territoire rural habité de Bois Blanc (caractère AUindicée, p.53).
     1AUe:
       bassin: Sainte-Rose
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage).
     1AUto:
       bassin: Sainte-Rose
       habitat: interdit
+      notes:
+      - Sans objet (habitat non prévu aux admissions).
     Ua:
       bassin: Sainte-Rose
     Ub:
@@ -1317,6 +2319,8 @@
     Ue:
       bassin: Sainte-Rose
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage 70 m²).
   zones_au_renvoi: {}
   zones_au_st:
     liste:
@@ -1348,18 +2352,28 @@
     1AUac:
       bassin: Sainte-Suzanne
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
     1AUb:
       bassin: Sainte-Suzanne
     1AUc:
       bassin: Sainte-Suzanne
+      notes:
+      - Densité 10 logements/ha (Titre III, p.30-31).
     1AUe:
       bassin: Sainte-Suzanne
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
     UA:
       bassin: Sainte-Suzanne
+      notes:
+      - 'Logements >=50 m² ; <50 m² : 1 place (cf. regles_transverses).'
     UAc:
       bassin: Sainte-Suzanne
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
     UAv:
       bassin: Sainte-Suzanne
     UB:
@@ -1368,9 +2382,16 @@
       bassin: Sainte-Suzanne
     UC1:
       bassin: Sainte-Suzanne
+      notes:
+      - 'SDU loi ELAN / L.121-8 (Art. U1 rappel 6, p.10-11) : constructions autorisées EXCLUSIVEMENT pour
+        l''amélioration de l''offre de logement/hébergement et services publics, SANS extension du périmètre
+        bâti ni modification significative du bâti ; avis CDNPS requis. Densification contrainte — capacité
+        à interpréter avec prudence.'
     UE:
       bassin: Sainte-Suzanne
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit sans exception).
   zones_au_renvoi: {}
   zones_au_st:
     liste:
@@ -1404,13 +2425,21 @@
     AUe:
       bassin: Salazie
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage).
     AUt:
       bassin: Salazie
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage).
     UA:
       bassin: Salazie
+      notes:
+      - 'Logements >50 m² ; <=50 m² : 1 place.'
     UA1:
       bassin: Salazie
+      notes:
+      - 'Centre d''Hell-Bourg (patrimonial) : R+1 maximum.'
     UB:
       bassin: Salazie
     UC:
@@ -1418,6 +2447,8 @@
     UT:
       bassin: Salazie
       habitat: interdit
+      notes:
+      - Sans objet (habitat limité au gardiennage 50 m² d'emprise).
   zones_au_renvoi: {}
   zones_au_st:
     liste: []
@@ -1439,55 +2470,112 @@
   zones:
     1AUa:
       bassin: Le Tampon
+      notes:
+      - 'Urbanisation prioritaire SAR — opération d''ensemble OU au fur et à mesure des équipements (préambule
+        AUindicée p.83). Densité MINIMALE : 50 logts/ha (AUindicée 2.2.4, p.84).'
     1AUb:
       bassin: Le Tampon
+      notes:
+      - 'Densité minimale : 50 logts/ha (pôle secondaire SAR) ou 30 logts/ha (ville relais) — AUindicée
+        2.2.4, p.85.'
     1AUc:
       bassin: Le Tampon
+      notes:
+      - 'Densité minimale : 50 (pôle secondaire) / 30 (ville relais) / 20 logts/ha — AUindicée 2.2.4,
+        p.85.'
     1AUcto:
       bassin: Le Tampon
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit hors gardiennage).
     1AUe:
       bassin: Le Tampon
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit).
     1AUto:
       bassin: Le Tampon
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit hors gardiennage).
     2AUa:
       bassin: Le Tampon
       constructible_neuf: false
+      notes:
+      - 2AU d'extension urbaine — construction neuve non autorisée (ouverture conditionnée, Art. AUindicée
+        2.2.3, p.84). Hauteur par renvoi (AUindicée 10, p.86 -> zone Ua).
     2AUb:
       bassin: Le Tampon
       constructible_neuf: false
+      notes:
+      - 2AU d'extension urbaine — construction neuve non autorisée. Hauteur par renvoi (AUindicée 10,
+        p.86 -> zone Ub).
     2AUc:
       bassin: Le Tampon
       constructible_neuf: false
+      notes:
+      - 2AU d'extension urbaine — construction neuve non autorisée. Hauteur par renvoi (AUindicée 10,
+        p.86 -> zone Uc).
     2AUd:
       bassin: Le Tampon
       constructible_neuf: false
+      notes:
+      - 2AU d'extension urbaine — construction neuve non autorisée. Hauteur par renvoi (AUindicée 10,
+        p.86 -> zone Ud).
     2AUe:
       bassin: Le Tampon
       constructible_neuf: false
+      notes:
+      - '2AU d''extension urbaine — construction neuve non autorisée. Hauteur par renvoi (AUindicée 10,
+        p.86 -> zone Ue) : égout 12 m ; faîtage NON PRÉCISÉ au règlement (hf non gravé, rien inféré).'
     UCto:
       bassin: Le Tampon
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit hors gardiennage).
     UCtom:
       bassin: Le Tampon
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit hors gardiennage).
+      - Secteur Ucto + servitude du dépôt de munitions.
     Ua:
       bassin: Le Tampon
+      notes:
+      - 'Annexes/dépendances : 3,5 m. Bande de 3,60 m en limite séparative : 18 m max (Art. Ua10.3).'
+      - 'Alignement possible (0) OU 4 m min. RD3 (RN3-Ravine Blanche) : 10,50 m de l''axe.'
+      - 1 ou 2 limites autorisées (18 m de profondeur max) OU retrait 3 m.
+      - 'Habitat individuel. Collectif hors LLS : 0,5 place par chambre et studio ; LLS : 1 place max
+        (cf. regles_transverses).'
+      - 20 % perméable dont 15 % pleine terre plantée (3 strates).
     Uav:
       bassin: Le Tampon
+      notes:
+      - 'Secteur d''habitation de densité moyenne (caractère de zone p.9). Bande 3,60 m : 13 m max.'
+      - 30 % perméable dont 20 % pleine terre.
     Ub:
       bassin: Le Tampon
+      notes:
+      - 'Annexes : 3,5 m. Bande 3,60 m en limite : 10 m max.'
     Uc:
       bassin: Le Tampon
+      notes:
+      - 'Annexes : 3,5 m. Bande 3,60 m en limite : 6 m max.'
     Ucm:
       bassin: Le Tampon
+      notes:
+      - 'Indice « m » : terrains dans le polygone de protection du dépôt de munitions de la Plaine des
+        Cafres (caractère de zone, p.39 ; PPRT 31/10/2016) — servitude d''usage, règles chiffrées de la
+        zone Uc.'
     Ud:
       bassin: Le Tampon
+      notes:
+      - 'Annexes : 3,5 m. Pas de règle de bande en limite (Art. Ud10 sans 10.3).'
     Ue:
       bassin: Le Tampon
       habitat: interdit
+      notes:
+      - Sans objet (habitat interdit, gardiennage compris).
   zones_au_renvoi: {}
   zones_au_st:
     liste: []
@@ -1512,24 +2600,84 @@
   zones:
     1AUa:
       bassin: Les Trois-Bassins
+      notes:
+      - Renvoi hauteur SPÉCIFIQUE AUa -> Uaa (12/16), distinct du renvoi d'indice général (Ua 10/14) ;
+        « Aua » du texte = zone AUa, seule lecture possible dans le chapitre AU.
+      - 'Urbanisation prioritaire SAR (préambule AUindicée, p.64). Densité MINIMALE 35 logts/ha hors OAP
+        (Art. AUINDICEE 2.2, p.66). Graphie : le texte écrit « en zone AUa » (p.66), type 1AUindicée défini
+        p.64.'
     1AUb:
       bassin: Les Trois-Bassins
+      notes:
+      - Urbanisation prioritaire SAR. Densité MINIMALE 30 logts/ha hors OAP (Art. AUINDICEE 2.2, p.66).
     1AUc:
       bassin: Les Trois-Bassins
+      notes:
+      - Urbanisation prioritaire SAR. Densité MINIMALE 20 logts/ha hors OAP (Art. AUINDICEE 2.2, p.66).
     1AUt:
       bassin: Les Trois-Bassins
       habitat: interdit
+      notes:
+      - Hauteur PROPRE au chapitre AU (déroge au renvoi AUt -> Ub des autres articles).
+      - 'Sans objet (habitat interdit — vocation d''hébergement touristique exclusive ; hôtellerie : 1
+        place/3 chambres via tableau Ub).'
+      - 'Zone AU touristique. Graphie : règles écrites sous « zone AUt » (p.64-65, 69), type 1AUindicée
+        défini p.64 ; le manifeste ne compte aucun polygone 2AUt.'
     Ua:
       bassin: Les Trois-Bassins
+      notes:
+      - 'Annexes : 3,50 m (p.18). Prise de mitoyenneté : hauteur de la construction voisine +3 m sans
+        excéder le plafond.'
+      - 'Annexes : 10 % max en sus du plafond global. Portée à 80 % si raccordement à l''assainissement
+        collectif ET terrain <= 150 m², ou pour les CINASPIC (Art. Ua 9.3, p.17).'
+      - 'Alignement possible pour les seules constructions de bureaux/commerce/artisanat ou à RDC commercial
+        — le logement reste à 4 m. RN1a : 17 m de l''axe ; ravines DPF : 10 m.'
+      - 'Implantation sur une limite latérale autorisée (patio 3 m si habitation > 10 m de profondeur)
+        OU retrait 3 m ; fond : 3 m obligatoire.'
+      - 'Collectif : 1,25 place/logement OU 1 place/35 m² SDP (norme la plus productive), plafond 2 places/logement.'
+      - Ramené à 10 % pour les terrains <= 150 m² et les CINASPIC.
+      - 'Zone mixte de centralité (caractère de zone, p.10). Interdits : industrie, entrepôt exclusif,
+        agricole, camping, dépôts, carrières (Art. Ua 1.2, p.10). Densité MINIMALE 30 logts/ha (Art. Ua
+        2.2, p.11).'
     Uaa:
       bassin: Les Trois-Bassins
+      notes:
+      - Secteur de l'hypercentre, front bâti sur rue encouragé (caractère de zone, p.10).
     Ub:
       bassin: Les Trois-Bassins
+      notes:
+      - 'Annexes : 3,50 m.'
+      - 'Annexes : 10 % max. Portée à 70 % si assainissement collectif ET terrain <= 150 m², ou CINASPIC
+        (Art. Ub 9.3, p.32).'
+      - 'RN1a : 17 m de l''axe ; ravines DPF : 10 m.'
+      - 'Une limite latérale autorisée (patio 3 m si habitation > 10 m de profondeur) OU retrait 3 m ;
+        fond : 3 m.'
+      - 'Zone mixte de périphérie du centre-ville et espaces urbanisés littoraux (caractère de zone, p.25).
+        Dans les cinquante pas géométriques : destinations restreintes (Art. Ub 2.2 (al. 1), p.26). Densité
+        MINIMALE 30 logts/ha (Art. Ub 2.2, p.26-27).'
     Uc:
       bassin: Les Trois-Bassins
+      notes:
+      - 'Annexes : 3,50 m (p.47). Majoration CINASPIC limitée à 20 % (Art. Uc 10.3, p.47).'
+      - 'Annexes : 10 % max. Portée à 60 % si assainissement collectif ET terrain <= 150 m², ou CINASPIC
+        (Art. Uc 9.3, p.46).'
+      - 'RN1a : 17 m de l''axe ; ravines DPF : 10 m.'
+      - 'Une limite latérale autorisée OU retrait 3 m ; fond : 3 m.'
+      - 'Zone mixte des écarts ruraux habités : Petite Ravine, Cocâtre, Piveteau (caractère de zone, p.39).'
     Ue:
       bassin: Les Trois-Bassins
       habitat: interdit
+      notes:
+      - 'Annexes : 3,50 m.'
+      - 'Une seule limite latérale possible ; en cas de retrait D=H/2 (H à l''égout/acrotère) sans être
+        inférieur à 4 m ; valeur gravée = H/2 à la hauteur max gravée (10 m égout => 5 m), plancher du
+        texte 4 m (doctrine harmonisée) ; fond de propriété : 4 m obligatoire.'
+      - 'Sans objet (habitat interdit). Activités : surface de stationnement >= 30 % de la SDP de l''établissement,
+        stockage compris.'
+      - 'Zone d''activité économique : production, transformation, conditionnement, distribution (caractère
+        de zone, p.53). Hôtellerie/restauration/hébergement touristique également interdits (Art. Ue 1.2
+        (al. 3), p.53) ; commerces/bureaux limités (surface de vente < surface de production, Art. Ue
+        2.2, p.54).'
   zones_au_renvoi: {}
   zones_au_st:
     liste:
@@ -1583,20 +2731,72 @@
   zones:
     AUb:
       bassin: Cilaos
+      notes:
+      - 'Urbanisation future OUVERTE : opération d''aménagement d''ensemble OU au fur et à mesure des
+        équipements internes (caractère de zone, p.57) ; constructions sous réserve d''infrastructures
+        suffisantes (Art. AUindicée 2.2, p.58).'
     AUb1:
       bassin: Cilaos
+      notes:
+      - Secteur de la ZAC Roland Garros (caractère de zone, p.57).
     AUb2:
       bassin: Cilaos
+      notes:
+      - 'Équipements sportifs couverts d''intérêt collectif : hauteur absolue portée à 14 m.'
+      - 'Commerces/services/bureaux en AUb2 : 40 % de la SHON (Art. AUindicée 12, p.60).'
+      - 'Secteur de la ZAC Roland Garros (p.57). Spécificité : l''industriel et l''entrepôt exclusif y
+        sont ADMIS (Art. AUindicée 1.2/2.2, p.57-58) — l''habitat reste admis (règles Ub via renvoi).'
     Ua:
       bassin: Cilaos
+      notes:
+      - 'Dépendances : 3,50 m de hauteur absolue. Secteurs à risque d''inondation moyen : +1 m admis (Art.
+        Ua 10.3, p.24-25).'
+      - 'Dépendances comprises ; emprise des dépendances <= 40 m² par logement. Équipements publics d''intérêt
+        collectif : pas de règle.'
+      - Alignement possible (0) OU retrait >= 3 m.
+      - 'Implantation sur les deux limites autorisée (profondeur <= 15 m habitat, 20 m RDC commerces/bureaux
+        et 15 m à l''étage) OU retrait 3 m ; fond de propriété : en limite ou retrait 3 m.'
+      - 'Centre-ville de Cilaos, morphologie à préserver (caractère de zone, p.17). Interdits : industriel,
+        entrepôt exclusif, agricole, camping, carrières (Art. Ua 1.2, p.17).'
     Uah:
       bassin: Cilaos
+      notes:
+      - 'R+1+combles. Dépendances : 3,50 m de hauteur absolue.'
+      - Graphie du manifeste « Uah » = secteur « UAh » du texte (caractère de zone, p.17 ; Art. Ua 10.2,
+        p.24).
     Ub:
       bassin: Cilaos
+      notes:
+      - 'Dépendances : 3,50 m de hauteur absolue. Secteurs à risque d''inondation moyen : +1 m admis (Art.
+        Ub 10.3, p.36).'
+      - Dépendances comprises ; emprise des dépendances <= 40 m² par logement.
+      - Alignement possible (0) OU retrait >= 3 m.
+      - 'Une seule limite (ou les deux si façade sur voie < 20 m ; profondeur <= 15 m habitat, 20 m RDC
+        commerces) OU retrait 3 m ; fond de propriété : retrait 3 m obligatoire (dépendances en limite
+        admises, regroupées).'
+      - 'Opérations > 5 logements/lots : 30 m² d''espaces verts publics par logement, portés à 40 m² au-delà
+        de 10 (Art. Ub 13.2, p.40).'
+      - 'Tissu urbain lâche et discontinu : continuité du centre-ville, Bras Sec, Palmiste Rouge, Peter
+        Both (caractère de zone, p.29). Interdits : industriel, entrepôt exclusif, agricole, camping,
+        carrières (Art. Ub 1.2, p.29).'
     Ub1:
       bassin: Cilaos
+      notes:
+      - 'Libellé « Ub1 » ABSENT du règlement (aucun secteur au chapitre Ub, p.29-40). Sigle U => zone
+        urbaine ; seul chapitre possible : Ub, qui ne prévoit AUCUNE disposition particulière de secteur
+        => règle générale Ub (Titre I, p.5 : la règle générale s''applique aux secteurs sans disposition
+        particulière). Sous-numérotation cartographique sans règle propre — même décision que Saint-Louis
+        (1AUb1/1AUb2).'
     Uc:
       bassin: Cilaos
+      notes:
+      - 'Dépendances : 3,50 m de hauteur absolue.'
+      - Emprise des dépendances <= 40 m² par logement (p.48).
+      - 'Une seule limite autorisée (profondeur <= 15 m) OU retrait 3 m ; fond de propriété : retrait
+        3 m obligatoire.'
+      - Îlet à Cordes, éco-village agriculture/bâti (caractère de zone, p.41). Les « espaces cultivés
+        » du document graphique sont inconstructibles (Art. Uc 1.2.1, p.41 ; extensions existantes <=
+        170 m² SHOB, Art. Uc 2.2.1, p.42).
   zones_au_renvoi: {}
   zones_au_st:
     hauteur_max_m: 6

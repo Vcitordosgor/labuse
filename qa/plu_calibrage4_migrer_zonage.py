@@ -52,6 +52,10 @@ def main() -> int:
             if not isinstance(zv, dict):
                 continue
             m = {k: zv[k] for k in _ZONE_META if zv.get(k) is not None}
+            # notes libres (provenance, ouverture d'urbanisation…) — lues par classify_au_statut
+            notes = [v for k, v in zv.items() if (k.endswith("_note") or k == "note") and v]
+            if notes:
+                m["notes"] = notes
             if m:
                 zmeta[zc] = m
         if zmeta:
