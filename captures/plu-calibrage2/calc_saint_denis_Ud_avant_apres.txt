@@ -1,0 +1,21 @@
+=== AVANT (sans branchement) · parcelle 97411000AZ0343 · zone Ud · R+1 · au sol ~14-18 / sous-sol ~14-18 logts
+   [SOURCÉ     ] Emprise au sol — reculs (géométrie réelle)   = ~1638 m²     :: Art. Ud.7, p.42 (séparatif) ; recul voirie en sus
+   [SOURCÉ     ] Emprise au sol — % réglementé                = ~1638 m²     :: Art. Ud.9, p.43
+   [SOURCÉ     ] Niveaux constructibles                       = R+1          :: Art. Ud.10, p.44
+   [ESTIMÉ     ] Emprise bâtie (occupation du gabarit)        = ~737 m²      :: hypothèse occupation
+   [Dérivé     ] Surface de plancher brute                    = ~1474 m²     :: dérivé occupation×hauteur
+   [ESTIMÉ     ] Surface habitable (rendement)                = ~1179 m²     :: hypothèse rendement
+   [ESTIMÉ     ] Logements — après plafond de densité (≤ 18 logts) = ~15 à 18     :: hypothèse densité (ex-COS)
+   [SOURCÉ     ] Stationnement — scénario au sol              = plafond au sol :: Art. 12
+   [SOURCÉ     ] Stationnement — scénario sous-sol/silo       = ~15–18 logts :: Art. 12
+   [Dérivé     ] Logements retenus au sol                     = ~14 à 18     :: dérivé
+
+=== APRÈS (branché sur le YAML validé) · parcelle 97411000AZ0343 · zone Ud · R+5 · ~44 à 54 logts
+   [SOURCÉ     ] Emprise au sol — reculs (géométrie réelle)   = ~1638 m²     :: Art. Ud.7 · p.42 (PLU, calibrage validé) (séparatif) ; recul voirie en sus
+   [SOURCÉ     ] Emprise au sol — % réglementé                = ~1638 m²     :: Art. Ud.9 · p.43 (PLU, calibrage validé)
+   [SOURCÉ     ] Niveaux constructibles                       = R+5          :: Art. Ud.10 · p.44 (PLU, calibrage validé)
+   [ESTIMÉ     ] Emprise bâtie (occupation du gabarit)        = ~737 m²      :: hypothèse occupation
+   [Dérivé     ] Surface de plancher brute                    = ~4422 m²     :: dérivé occupation×hauteur
+   [ESTIMÉ     ] Surface habitable (rendement)                = ~3538 m²     :: hypothèse rendement
+   [ESTIMÉ     ] Logements — après plafond de densité (≤ 54 logts) = ~44 à 54     :: hypothèse densité (ex-COS)
+   [Dérivé     ] Logements retenus au sol                     = ~44 à 54     :: dérivé

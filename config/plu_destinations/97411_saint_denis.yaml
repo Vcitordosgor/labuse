@@ -89,24 +89,19 @@ zones:
     regles:
       hauteur:
         faitage:
-          m: 16
-          article: Article Up.10
+          plage: true
+          regle_base: prospect L ≥ H (Disp. Gén. XV)
+          plage_m:
+            min: 11
+            max: 16
+          secteurs_m:
+            Upi: 11
+            Upr: 16
+          article: Up.10
           page_pdf: 34
-          citation: Upr 16 m
-          statut: valide
-        niveaux:
-          r_plus: 3
-          article: Article Up.10
-          page_pdf: 34
-          citation: Upr RDC+3 étages +Comble ou attique sans dépasser 12m.
-          statut: valide
-      emprise_sol:
-        ces:
-          pct: 80
-          article: Article Up.9
-          page_pdf: 33
-          citation: 'En secteur Upi : L’emprise au sol des constructions ne devra pas excéder 80 % de la superficie
-            de l’unité foncière.'
+          citation: 'Il sera fait application des prescriptions des « Dispositions Générales – paragraphe
+            XV. Prospects ». Les hauteurs maximales H sont fixées par secteur (tableau Up.10) : Upr = 16 m,
+            Upi = 11 m.'
           statut: valide
       retraits:
         voie:
@@ -196,11 +191,65 @@ zones:
         citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent
           un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   Upi:
+    regles:
+      hauteur:
+        faitage:
+          m: 11
+          article: Up.10
+          page_pdf: 34
+          citation: 'La hauteur maximale H des constructions ne doit pas excéder dans le secteur : Upi = 11
+            m (tableau Up.10).'
+          statut: valide
+        egout:
+          m: 6.5
+          article: Up.10
+          page_pdf: 34
+          citation: 'En secteur Upi (hauteur à l''égout he) : RDC+1 étage +Comble sans dépasser 6m50.'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 80
+          article: Up.9
+          page_pdf: 33
+          citation: 'En secteur Upi : L''emprise au sol des constructions ne devra pas excéder 80 % de la
+            superficie de l''unité foncière. Elle pourra être portée à 100 %, uniquement en rez-de-chaussée.'
+          statut: valide
     renvoi: Up
     renvoi_src: « La zone comprend un secteur Upi et un secteur Upr. » (caractère de la zone Up, p. 30). Les articles
       Up.1 et Up.2 (p. 30-31) ne prévoient aucune règle de destination propre au secteur Upi (les seules règles
       propres à Upi portent sur l'emprise au sol et la hauteur, Up.9-Up.10, p. 33-34).
   Upr:
+    regles:
+      hauteur:
+        faitage:
+          m: 16
+          article: Up.10
+          page_pdf: 34
+          citation: 'La hauteur maximale H des constructions ne doit pas excéder dans le secteur : Upr = 16
+            m (tableau Up.10).'
+          statut: valide
+        egout:
+          m: 12
+          article: Up.10
+          page_pdf: 34
+          citation: 'En secteur Upr (hauteur à l''égout he) : RDC+3 étages +Comble ou attique sans dépasser
+            12m.'
+          statut: valide
+        niveaux:
+          r_plus: 3
+          article: Up.10
+          page_pdf: 34
+          citation: 'En secteur Upr : RDC+3 étages +Comble ou attique sans dépasser 12m.'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70
+          article: Up.9
+          page_pdf: 33
+          citation: 'En secteur Upr : L''emprise au sol des constructions ne devra pas excéder 70 % de la
+            superficie de l''unité foncière. Elle pourra être de 80 % pour les parcelles dont la superficie
+            est inférieure à 200 m2.'
+          statut: valide
     renvoi: Up
     renvoi_src: « La zone comprend un secteur Upi et un secteur Upr. » (caractère de la zone Up, p. 30). Les articles
       Up.1 et Up.2 (p. 30-31) ne prévoient aucune règle de destination propre au secteur Upr (les seules règles
@@ -209,16 +258,19 @@ zones:
     regles:
       hauteur:
         faitage:
-          m: 18
-          article: Article Ud.10
+          plage: true
+          regle_base: prospect L ≥ H
+          plage_m:
+            min: 12
+            max: 27
+          secteurs_m:
+            Udop: 18
+            Udp: 18
+          article: Ud.10
           page_pdf: 44
-          citation: Hauteur maximale R+5, soit 18m, au faîtage ou à l'acrotère, généralisé
-          statut: valide
-        niveaux:
-          r_plus: 5
-          article: Article Ud.10
-          page_pdf: 44
-          citation: Hauteur maximale R+5, soit 18m, au faîtage ou à l'acrotère, généralisé
+          citation: 'En secteur Ud : les constructions devront respecter un prospect L ≥ H (alignement opposé,
+            ou ligne à 10 m si l''emprise de la voie < 10 m). Aucune hauteur absolue en base — les valeurs
+            (R+5 = 18 m généralisé, R+8 = 27 m, R+3 = 12 m) sont fixées par secteur (Udop, Udp).'
           statut: valide
       emprise_sol:
         ces:
@@ -317,6 +369,31 @@ zones:
       au secteur Udo (ses règles propres portent sur les accès, l'assainissement, l'implantation, l'emprise, la
       hauteur, les clôtures et la perméabilité, Ud.3/Ud.4/Ud.6/Ud.8/Ud.9/Ud.10/Ud.11/Ud.13, p. 39-46).
   Udop:
+    regles:
+      hauteur:
+        faitage:
+          m: 18
+          article: Ud.10
+          page_pdf: 44
+          citation: 'En secteur Udop : Hauteur maximale R+5, soit 18m, au faîtage ou à l''acrotère, généralisé
+            sauf sur les rues suivantes : R+8 Bld Lancastel et rue L. Rambaud, soit 27 m ; R+3, soit 12 m,
+            ruelle Sanisal, rue Mérancienne.'
+          statut: valide
+        niveaux:
+          r_plus: 5
+          article: Ud.10
+          page_pdf: 44
+          citation: 'En secteur Udop : Hauteur maximale R+5, soit 18m, au faîtage ou à l''acrotère, généralisé
+            (R+8 sur Bld Lancastel/rue L. Rambaud, R+3 sur ruelle Sanisal/rue Mérancienne).'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70
+          article: Ud.9
+          page_pdf: 44
+          citation: 'En secteur Udop, Udp : L''emprise au sol des constructions est limitée à 70 % de la superficie
+            de l''unité foncière, 30% minimum de la parcelle doit être en pleine terre.'
+          statut: valide
     silence: autorise
     silence_src: 'Même structure que la zone Ud : article Ud.1 « Occupations et utilisations du sol interdites —
       Sont interdits : … », complété par une liste fermée « En sus dans les secteurs Udp et Udop : … » (p. 38),
@@ -363,6 +440,31 @@ zones:
           de locaux commerciaux en logements dans les espaces aux nuisances importantes : Blvd Lancastel, rue Léopold
           Rambaud, Blvd Sud J. Jaurès »'
   Udp:
+    regles:
+      hauteur:
+        faitage:
+          m: 18
+          article: Ud.10
+          page_pdf: 44
+          citation: 'En secteur Udp : Hauteur maximale R+5, soit 18 m, au faîtage ou à l''acrotère, généralisé
+            sauf sur les rues suivantes : R+8 Blvd Jean Jaurès, Bld Lancastel et rue L. Rambaud, soit 27 m
+            ; R+3, soit 12 m, ruelles Tadar, Beauvillain, Magnan, Turpin, Nicaise, rues Marcadet et Magnan
+            et allée de la cité Ah Soune.'
+          statut: valide
+        niveaux:
+          r_plus: 5
+          article: Ud.10
+          page_pdf: 44
+          citation: 'En secteur Udp : Hauteur maximale R+5, soit 18 m, au faîtage ou à l''acrotère, généralisé.'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70
+          article: Ud.9
+          page_pdf: 44
+          citation: 'En secteur Udop, Udp : L''emprise au sol des constructions est limitée à 70 % de la superficie
+            de l''unité foncière, 30% minimum de la parcelle doit être en pleine terre.'
+          statut: valide
     silence: autorise
     silence_src: 'Même structure que la zone Ud : article Ud.1 « Occupations et utilisations du sol interdites —
       Sont interdits : … », complété par une liste fermée « En sus dans les secteurs Udp et Udop : … » (p. 38),
@@ -1075,13 +1177,6 @@ zones:
       et Ua.2 (p. 76) ne distinguent aucun secteur.'
   Uv:
     regles:
-      hauteur:
-        faitage:
-          m: 4
-          article: Article Uv.10
-          page_pdf: 84
-          citation: 'En secteur Uva : La hauteur maximale H des constructions ne doit pas excéder 4 m.'
-          statut: valide
       emprise_sol:
         ces:
           absent: true
@@ -1120,6 +1215,14 @@ zones:
     note: L'article Uv.2 ne liste les occupations admises que secteur par secteur (Uva, Uvac, Uvl, p. 81-82) ; le
       zonage sert ces trois codes, pas « Uv » nu — voir les entrées Uva, Uvac, Uvl.
   Uva:
+    regles:
+      hauteur:
+        faitage:
+          m: 4
+          article: Uv.10
+          page_pdf: 84
+          citation: 'En secteur Uva : La hauteur maximale H des constructions ne doit pas excéder 4 m.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. Uv.1 (p. 81), applicable à toute la zone : « Sont interdites : toutes les constructions ou
       installations autres que celles prévues à l''article 2. »'
@@ -1206,6 +1309,14 @@ zones:
         citation: « les constructions à destination de commerces ou d'artisanat à la condition que leur surface
           n'excède pas 50 m² de surface plancher »
   Uvac:
+    regles:
+      hauteur:
+        faitage:
+          m: 10
+          article: Uv.10
+          page_pdf: 84
+          citation: 'En secteur Uvac : … ne doit pas excéder 10m'
+          statut: valide
     silence: interdit
     silence_src: 'Art. Uv.1 (p. 81), applicable à toute la zone : « Sont interdites : toutes les constructions ou
       installations autres que celles prévues à l''article 2. »'
@@ -1304,6 +1415,14 @@ zones:
           ou d'artisanat à la condition que leurs surfaces n'excèdent pas 100 m² de surface plancher pour 100 m²
           de terrain »
   Uvl:
+    regles:
+      hauteur:
+        faitage:
+          m: 10
+          article: Uv.10
+          page_pdf: 84
+          citation: 'En secteur Uvl : … ne doit pas excéder 10m.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. Uv.1 (p. 81), applicable à toute la zone : « Sont interdites : toutes les constructions ou
       installations autres que celles prévues à l''article 2. »'

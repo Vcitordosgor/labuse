@@ -1,0 +1,182 @@
+============================================================================================
+PLU-CALIBRAGE-2 — SONDAGE : 10 règles tirées au hasard parmi 63 validées
+Commune : Saint-Denis (97411) · règlement 97411_reglement_20260805.pdf · millésime 2026-08-05 · md5 43426a8faf55efcdaa2a235e95a45d2f
+Tirage reproductible (graine 20260920). Vic lit CE fichier, pas le PDF.
+============================================================================================
+
+── 1/10 ── zone Um · rubrique retraits · feuille voie   [OK · recouvrement 100% · attribuée à Um]
+   valeur retenue : formule = Les constructions principales seront implantées avec un recul de 4 m minimum par rapport à l’alignement. En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à 3 m minimum de l'alignement. · min_m = 3
+   article        : Article Um.6   ·   page PDF : 67
+   citation       : En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à 3 m minimum de l'alignement.
+   — extrait du PDF autour de la citation (p.67, 5 lignes avant / 5 après) —
+     | Les dispositions de cet article sont également applicables aux voies privées.
+     | Il sera fait application des prescriptions mentionnées aux « Dispositions Générales, paragraphe
+     | XII. Alignement ».
+     | 
+     | 
+     | Les constructions principales seront implantées avec un recul de 4 m minimum par rapport à
+     | l’alignement.
+     | En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à
+     | 3 m minimum de l'alignement.
+     | Les constructions annexes à la construction principale à destination de stationnement pourront
+     | s’implanter à l’alignement.
+
+── 2/10 ── zone Um · rubrique mixite   [OK · recouvrement 100% · dispositions générales / tête d'article]
+   valeur retenue : seuil_logements = 30 · quota_pct = 15 · portee = zone
+   article        : Article Um.2   ·   page PDF : 66
+   citation       : les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+   — extrait du PDF autour de la citation (p.66, 5 lignes avant / 5 après) —
+     | les affouillements ou exhaussements au titre de l'article R.421-19 et suivants du
+     | Code de l'Urbanisme nécessaires à la réalisation des constructions ou occupations
+     | autorisées dans la zone, ou susceptibles de diminuer les risques naturels prévisi-
+     | bles ;
+     | -
+     | les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve
+     | qu’elles comportent un minimum de 15% de logements sociaux et/ou
+     | intermédiaires dans le respect de la mixité sociale.
+     | -
+     | Sont autorisées la réalisation de serres nécessaires à une activité de production
+     | alimentaire.
+
+── 3/10 ── zone Uma · rubrique stationnement · feuille par_logement   [OK · recouvrement 100% · attribuée à Uma]
+   valeur retenue : non réglementé (silence prouvé)
+   article        : Article Uma.12   ·   page PDF : 88
+   citation       : Nonobstant, aucune norme de stationnement n’est fixée pour la maison d’arrêt.
+   — extrait du PDF autour de la citation (p.88, 5 lignes avant / 5 après) —
+     | 
+     | Article Uma.12 .
+     | Aires de stationnement:
+     | Il sera fait application des prescriptions mentionnées aux « Dispositions générales - paragraphe
+     | XVII. Stationnement ».
+     | 
+     | 
+     | Nonobstant, aucune norme de stationnement n’est fixée pour la maison d’arrêt.
+     | 
+     | 
+     | 
+
+── 4/10 ── zone Uh · rubrique retraits · feuille voie   [OK · recouvrement 100% · attribuée à Uh]
+   valeur retenue : formule = Les constructions seront implantées avec un recul de 4 m minimum par rapport à l’alignement. En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à 3 m minimum de l'alignement. · min_m = 3
+   article        : Article Uh.6   ·   page PDF : 72
+   citation       : En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à 3 m minimum de l'alignement.
+   — extrait du PDF autour de la citation (p.72, 5 lignes avant / 5 après) —
+     | 
+     | 
+     | Article Uh.6 .Implantation des constructions par rapport aux voies et emprises publiques
+     | Les dispositions de cet article sont également applicables aux voies privées.
+     | Il sera fait application des prescriptions mentionnées aux « Dispositions Générales, paragraphe
+     | XII. Alignement ».
+     | Les constructions seront implantées avec un recul de 4 m minimum par rapport à l’alignement.
+     | En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à
+     | 3 m minimum de l'alignement.
+     | Les constructions annexes à la construction principale à destination de stationnement pourront
+     | s’implanter à l’alignement.
+
+── 5/10 ── zone Ud · rubrique hauteur · feuille niveaux   [DOUTEUSE · recouvrement 100% · ⚠ ATTRIBUÉE À Udop (≠ Ud)]
+   valeur retenue : r_plus = 5
+   article        : Article Ud.10   ·   page PDF : 44
+   citation       : Hauteur maximale R+5, soit 18m, au faîtage ou à l'acrotère, généralisé
+   — extrait du PDF autour de la citation (p.44, 5 lignes avant / 5 après) —
+     | 
+     | 
+     | Rue Maréchal Leclerc et Boulevard Jawaharlal Nehru (ex boulevard de l’Océan):
+     | La hauteur maximale H ne dépassera pas 50 m.
+     | 
+     | En secteur Udop :
+     | 
+     | Hauteur maximale R+5, soit 18m, au faîtage ou à l'acrotère, généralisé sauf sur les rues suivantes :
+     | -
+     | Hauteur maximale R+8 Bld Lancastel et rue L. Rambaud, soit 27 m au faîtage ou à
+     | l'acrotère
+
+── 6/10 ── zone Uj · rubrique hauteur · feuille egout   [OK · recouvrement 100% · attribuée à Uj]
+   valeur retenue : m = 10
+   article        : Article Uj.10   ·   page PDF : 62
+   citation       : 10 m pour la hauteur d’égout he
+   — extrait du PDF autour de la citation (p.62, 5 lignes avant / 5 après) —
+     | XV. Prospects. Hauteur maximale des constructions ».
+     | 
+     | 
+     | La hauteur des constructions n’excèdera pas :
+     | -
+     | 13 m pour la hauteur maximale H
+     | -
+     | 10 m pour la hauteur d’égout he
+     | -
+     | 10m pour la hauteur maximale H des parties de constructions couvertes par une
+     | toiture–terrasse.
+
+── 7/10 ── zone Up · rubrique mixite   [OK · recouvrement 100% · dispositions générales / tête d'article]
+   valeur retenue : seuil_logements = 30 · quota_pct = 15 · portee = zone
+   article        : Article Up.2   ·   page PDF : 31
+   citation       : les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+   — extrait du PDF autour de la citation (p.31, 5 lignes avant / 5 après) —
+     | -
+     | Les affouillements ou exhaussements au titre de l'article R.421-19 et suivants du
+     | Code de l'Urbanisme nécessaires à la réalisation des constructions ou occupations
+     | autorisées dans la zone.
+     | -
+     | les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve
+     | qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires
+     | dans le respect de la mixité sociale.
+     | -
+     | Sont autorisées la réalisation de serres nécessaires à une activité de production
+     | alimentaire.
+
+── 8/10 ── zone Ui · rubrique mixite   [OK · recouvrement 100% · dispositions générales / tête d'article]
+   valeur retenue : seuil_logements = 30 · quota_pct = 15 · portee = zone
+   article        : Article Ui.2   ·   page PDF : 52
+   citation       : les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+   — extrait du PDF autour de la citation (p.52, 5 lignes avant / 5 après) —
+     | les affouillements ou exhaussements au titre de l'article R.421-19 et suivants du
+     | Code de l'Urbanisme nécessaires à la réalisation des constructions ou occupations
+     | autorisées dans la zone, ou susceptibles de diminuer les risques naturels prévisi-
+     | bles ;
+     | -
+     | les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve
+     | qu’elles comportent un minimum de 15% de logements sociaux et/ou
+     | intermédiaires dans le respect de la mixité sociale.
+     | -
+     | Sont autorisées la réalisation de serres nécessaires à une activité de production
+     | alimentaire.
+
+── 9/10 ── zone Ui · rubrique emprise_sol · feuille ces   [OK · recouvrement 100% · attribuée à Ui]
+   valeur retenue : pct = 60
+   article        : Article Ui.9   ·   page PDF : 56
+   citation       : En secteur Ui : L’emprise au sol des constructions est limitée à 60 % de la superficie de l’unité foncière.
+   — extrait du PDF autour de la citation (p.56, 5 lignes avant / 5 après) —
+     | page 56
+     | 
+     | 
+     | 
+     | Article Ui.9
+     | Emprise au sol des constructions
+     | En secteur Ui :
+     | L’emprise au sol des constructions est limitée à 60 % de la superficie de l’unité foncière.
+     | Pour toute unité foncière située sur plusieurs zones du PLU, l’emprise au sol sera calculée
+     | selon la superficie de chaque zone du PLU concernée
+     | Toutefois, pour les unités foncières dont la superficie est égale ou inférieure à 200 m² et sur
+
+── 10/10 ── zone Uh · rubrique hauteur · feuille egout   [OK · recouvrement 100% · attribuée à Uh]
+   valeur retenue : m = 4.5
+   article        : Article Uh.10   ·   page PDF : 73
+   citation       : 4,5 m pour la hauteur d’égout he
+   — extrait du PDF autour de la citation (p.73, 5 lignes avant / 5 après) —
+     | XV. Prospects. Hauteur maximale des constructions ».
+     | 
+     | 
+     | La hauteur des constructions n’excèdera pas :
+     | -
+     | 7 m pour la hauteur maximale H
+     | -
+     | 4,5 m pour la hauteur d’égout he
+     | -
+     | 4,5 m pour la hauteur maximale H des parties de constructions couvertes par une
+     | toiture–terrasse.
+
+============================================================================================
+VERDICT : 0 citation(s) introuvable(s) · 1 misattribution(s) de zone — le mandat S'ARRÊTE.
+   ⚠ attribution : #5 Ud/hauteur.niveaux : citation sous « secteur Udop » (p.44)
+============================================================================================
+
+→ écrit : /Users/openclaw/Desktop/labuse/captures/plu-calibrage2/sondage_10_regles.txt
