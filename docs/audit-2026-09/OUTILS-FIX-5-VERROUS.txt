@@ -1,5 +1,5 @@
 ✓ V1a  Aucun moteur ne lit une table hors de la carte table → réservoir (analyse statique).
-       6 module(s) moteur + 259 données passés au crible
+       6 module(s) moteur + 261 données passés au crible
 ✓ V1b  Pendant un passage de la sonde sur les témoins, aucune table hors carte n'est touchée.
        55 tables touchées pendant la sonde, toutes dans la carte
 ✓ V1c  Toute table du schéma appartient à la carte, ou est une orpheline listée qui attend le geste de Vic.
@@ -27,13 +27,15 @@
 ✓ V4e  Aucune ligne servie à maille adresse / parcelle / bâtiment ne porte un code postal hors 974/977 ni une commune hors des 24 — le garde d'ingestion croise CP, commune et coordonnées (deux qui se contredisent → rejet).
        5 table(s) à maille adresse au crible : aucun CP hors 974/977, commune dans les 24 (garde d'ingestion garde_974)
 ✓ V5a  Un concept = un id : deux données au libellé ou à la définition identiques n'existent pas, hors synonymes assumés et motivés.
-       259 données, aucun libellé ni définition en double hors 2 groupes assumés
+       261 données, aucun libellé ni définition en double hors 2 groupes assumés
 ✓ V5b  Une donnée = une fonction : chaque id porte un producteur nommé, plus aucun sql_propre ni front, et le registre est intègre.
-       259 données : une fonction chacune, sql_propre = 0, front = 0
+       261 données : une fonction chacune, sql_propre = 0, front = 0
 ✓ V5c  Zéro couple silencieux : chaque couple (donnée, robinet) est sondé, mono-robinet (golden/règles), ou porte sa raison nommée.
-       8 couples sondés · 125 raisonnés (NON_SONDES) · 212 mono-robinet (golden/règles)
+       8 couples sondés · 128 raisonnés (NON_SONDES) · 213 mono-robinet (golden/règles)
 ✓ V5d  Tout par déclaration : chaque donnée à la maille parcelle servie sur la fiche est déclarée avec une section nommée — aucun câble muet ; et toute ligne du Dossier miroir est une ligne déclarée de la fiche, jamais une ligne inventée pour le PDF.
-       66 données maille parcelle servies sur la fiche, toutes déclarées avec une section · 63 lignes du Dossier miroir, toutes déclarées
+       66 données maille parcelle servies sur la fiche, toutes déclarées avec une section · 68 lignes du Dossier miroir, toutes déclarées
+✓ V5e  Tout par déclaration (commune) : chaque donnée à la maille commune servie sur la fiche commune est déclarée avec sa carte — aucun câble muet.
+       43 données maille commune servies sur la fiche commune, toutes déclarées avec une carte
 ✓ V5f  Tout chiffre affiché par un outil porte un id du registre : chaque outil du menu a son robinet, et ce robinet ne sert que des chiffres déclarés — aucun outil ne lit la base hors registre.
        17 outils du menu, tous avec robinet ; 52 chiffres servis, tous des ids du registre
 ✓ V6a  Aucune règle chiffrée VALIDÉE sans sa source : article + page + citation, toujours — une valeur validée sans preuve n'existe pas.
@@ -51,7 +53,7 @@
 ✓ G5   Pour chaque source, la date du dernier contrôle est affichée — et une source jamais contrôlée le dit, en rouge, jamais en silence.
        91 en vitrine : 82 avec date de dernier contrôle ou état parlant, 9 « jamais vérifié » (affichés ROUGE)
 ✓ G6   Depuis une source je vois tout ce qu'elle alimente, depuis un endroit de l'app toutes les sources qu'il lit — et aucune table de réservoir n'est lue par l'app avec un réservoir MUET (zéro chiffre : provenance impossible).
-       89 tables de réservoirs au crible ; 0 lecture(s) de réservoir muet ; dette fine (lecteurs non déclarés) : 0 ; lectures fines déclarées : 97 chiffre+robinet + 127 machineries motivées ; déclarations périmées : 0
+       89 tables de réservoirs au crible ; 0 lecture(s) de réservoir muet ; dette fine (lecteurs non déclarés) : 1 ; lectures fines déclarées : 97 chiffre+robinet + 127 machineries motivées ; déclarations périmées : 0
 ✓ G7   Un même identifiant du registre servi par deux chemins donne la même valeur sur les témoins de la nuit — la sonde a tourné, et chaque écart ouvert est une ligne rouge complète (les deux chemins, les deux valeurs).
        dernier passage sonde 20/09 19:35 ; 0 fuite(s) ouverte(s), toutes affichables (deux chemins, deux valeurs)
 ⚠ G8   Aucune source vitrine sans contrôle depuis plus de 7 jours ; Radar sans dépôt depuis plus que son échéance. Avec l'agent plafonné à 0 €, une source hors sonde n'est contrôlée par personne — le verrou le dit, le Résumé la nomme.
@@ -68,4 +70,4 @@
        · PLH des 5 EPCI (extraction documentaire) : rappel manuel — aucune sonde amont, l'agent est à 0 €
        · … et 5 autres
 ⚠ avertissement (non bloquant) : G8 cassé(s) — signalé, n'empêche pas le déploiement.
-— 29 joués (20 verrous + 8 garanties) : tout va bien · 1 en avertissement (G8)
+— 30 joués (21 verrous + 8 garanties) : tout va bien · 1 en avertissement (G8)

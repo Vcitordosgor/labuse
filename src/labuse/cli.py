@@ -4685,12 +4685,12 @@ def circuit_verrous_cmd(
         typer.echo(f"⚠ avertissement (non bloquant) : {', '.join(r.id for r in avertis)} cassé(s) — "
                    "signalé, n'empêche pas le déploiement.")
     if bloquants:
-        typer.echo(f"— {len(resultats)} joués (21 verrous + 8 garanties) : "
+        typer.echo(f"— {len(resultats)} joués (22 verrous + 8 garanties) : "
                    f"{len(bloquants)} CASSÉ(S) — {', '.join(r.id for r in bloquants)}"
                    + (f" · {len(avertis)} en avertissement" if avertis else "")
                    + (f" · {len(a_decider)} à décider" if a_decider else ""))
         raise typer.Exit(1)
-    typer.echo(f"— {len(resultats)} joués (21 verrous + 8 garanties) : tout va bien"
+    typer.echo(f"— {len(resultats)} joués (22 verrous + 8 garanties) : tout va bien"
                + (f" · {len(avertis)} en avertissement ({', '.join(r.id for r in avertis)})" if avertis else "")
                + (f" · {len(a_decider)} à décider" if a_decider else ""))
 

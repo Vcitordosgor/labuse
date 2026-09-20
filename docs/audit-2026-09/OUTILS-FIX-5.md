@@ -1,8 +1,9 @@
 # OUTILS-FIX-5 — Les 17 outils lisent la même donnée que la fiche
 
-**Exécuté par :** CC (Opus), 20/09/2026.
-**Branche :** `feat/outils-audit-2`, rebasée sur **`edcebed7`** (main, contient REBRANCHEMENT-1 : correctif N/Nerl).
-**Départ :** `6f4c3f44` (rapport OUTILS-AUDIT-2) → rebasé → `445ef6b9`. **Sept commits, un par lot.**
+**Exécuté par :** CC (Opus), 20-21/09/2026.
+**Branche :** `feat/outils-audit-2`, **re-rebasée sur `main` `15cffe08`** (après avancée de main : COMMUNE-RANGEMENT-2 = verrou **V5e** + fiche commune 10 cartes, EXPORTS-REBRANCHEMENT-2). Base initiale `edcebed7` (REBRANCHEMENT-1, correctif N/Nerl).
+**Conflits de re-rebase résolus en gardant les deux côtés :** V5e (main) **et** V5f (ce mandat) coexistent (circuit_verrous, VERROUS.md, test_garanties, test_lot6_porte : **22 verrous** + 8 garanties = 30) ; ContextePanel garde les 10 cartes de COMMUNE-RANGEMENT-2, l'unification des dormants vivant dans le backend (`fiche_commune.permis_bloc` → `permis_point_mort`), affichée par la carte « Permis dormants ».
+**Sept commits, un par lot** (+ commit de validation finale).
 **Environnement :** API `:8065` (.venv du checkout principal, PYTHONPATH worktree), Vite `:5265`, `LABUSE_API_DEV` dessus. Parcelle témoin **97410000AN0347** (Saint-Benoît, zone N, COMMUNE DE SAINT BENOIT).
 
 Le principe : un chiffre affiché par un outil est le même que celui de la fiche parcelle sur la même parcelle — même id du registre, même valeur, même libellé. À la fin, un verrou (V5f) l'impose.
@@ -42,7 +43,8 @@ Le principe : un chiffre affiché par un outil est le même que celui de la fich
 - **tsc -b** : vert.
 - **Tests ciblés** : `test_scoreur` 6✓, Lot 4 (85), Lot 5 (220), registre/CIRCUIT-4/V5 verts. Échecs restants (`exposition_versant` passe_plat sans table ; `Trace zone_plu_famille` dans Fiche.tsx) PRÉ-EXISTANTS sur `edcebed7` (vérifiés par checkout).
 - **V5f** : cassé (lecture construite) → vert (17 outils), 12 tests V5.
-- **labuse circuit verrous -w G8** : voir `docs/audit-2026-09/OUTILS-FIX-5-VERROUS.txt`.
+- **labuse circuit verrous -w G8** (après re-rebase sur `15cffe08`) : exit 0 — **30 joués (22 verrous + 8 garanties), tout va bien** ; V5e (main) **et** V5f (ce mandat) verts ; seul G8 en avertissement non bloquant (environnemental, agent à 0 €). Verdict : `docs/audit-2026-09/OUTILS-FIX-5-VERROUS.txt`.
+- **pytest tests/ complet** (sur `15cffe08`) : **3136 passés, 62 ignorés, 5 échecs — TOUS PRÉ-EXISTANTS sur main 15cffe08** (vérifiés par checkout de main pur) : `exposition_versant` (passe_plat sans table), `traçage` (`<Trace zone_plu_famille>` absent de Fiche.tsx), `test_graphe_exact_dans_les_deux_sens` (`rpls_commune` lue par fiche_commune.py — COMMUNE-RANGEMENT-1), `retours11f4::decoupe` et `::f7`. **0 échec nouveau** introduit par cette branche (les 5 régressions du premier passage — choix témoin, dormant, compte V5f×3 — sont corrigées).
 
 ## Note d'exploitation
 
