@@ -711,6 +711,32 @@ def verrou_fiche_sections(db=None) -> ResultatVerrou:
                           "toutes déclarées")
 
 
+def verrou_fiche_commune_cartes(db=None) -> ResultatVerrou:
+    """V5e — tout par déclaration (COMMUNE-RANGEMENT-2 lot 5) : chaque donnée à la maille COMMUNE
+    servie sur la fiche commune (robinet `fiche_commune_*`) est DÉCLARÉE dans `declarations/commune/`
+    avec sa CARTE nommée (le `section` de la déclaration = la carte de la maquette). Une donnée commune
+    servie sans carte = un câble muet — le pendant, pour la fiche commune, du V5d de la fiche parcelle."""
+    from .registre import ROBINETS
+    from .registre import declarations as DEC
+    from .registre.donnees import DONNEES
+
+    comm = {k for k, v in DONNEES.items() if v.niveau == "commune" and not v.en_attente}
+    servies: set[str] = set()
+    for rid, r in ROBINETS.items():
+        if rid.startswith("fiche_commune"):
+            servies |= {c for c in r.chiffres if c in comm}
+    surfaces, _ = DEC.charger()
+    avec_carte = {l.quoi for s in surfaces if s.categorie == "fiche_commune"
+                  for l in s.donnees if l.section}
+    pbs = [f"donnée commune « {c} » servie sur la fiche sans carte déclarée"
+           for c in sorted(servies) if c not in avec_carte]
+    if pbs:
+        return ResultatVerrou("V5e", PHRASES["V5e"], "casse", f"{len(pbs)} donnée(s) commune sans carte", pbs)
+    return ResultatVerrou("V5e", PHRASES["V5e"], "ok",
+                          f"{len(servies)} données maille commune servies sur la fiche commune, "
+                          "toutes déclarées avec une carte")
+
+
 def verrou_regles_citations(db=None) -> ResultatVerrou:
     """V6a — PLU-CALIBRAGE-1 : aucune règle chiffrée VALIDÉE sans sa source. Toute feuille de
     `regles` de la calibration PLU (lue par destinations.iter_regles_calibrees) au statut
@@ -756,6 +782,7 @@ PHRASES: dict[str, str] = {
     "V5b": "Une donnée = une fonction : chaque id porte un producteur nommé, plus aucun sql_propre ni front, et le registre est intègre.",
     "V5c": "Zéro couple silencieux : chaque couple (donnée, robinet) est sondé, mono-robinet (golden/règles), ou porte sa raison nommée.",
     "V5d": "Tout par déclaration : chaque donnée à la maille parcelle servie sur la fiche est déclarée avec une section nommée — aucun câble muet ; et toute ligne du Dossier miroir est une ligne déclarée de la fiche, jamais une ligne inventée pour le PDF.",
+    "V5e": "Tout par déclaration (commune) : chaque donnée à la maille commune servie sur la fiche commune est déclarée avec sa carte — aucun câble muet.",
     "V6a": "Aucune règle chiffrée VALIDÉE sans sa source : article + page + citation, toujours — une valeur validée sans preuve n'existe pas.",
     "V7a": "Chaque tuile servie reproduit la brute : même nombre d'objets, aucune partie perdue (GeometryCollections comprises), contour < 1 px, position exacte — décodage de la tuile RÉELLEMENT servie, aux zooms 10/13/16.",
 }
@@ -781,6 +808,7 @@ VERROUS: tuple[Verrou, ...] = (
     Verrou("V5b", 5, PHRASES["V5b"], verrou_une_donnee_une_fonction),
     Verrou("V5c", 5, PHRASES["V5c"], verrou_couples_sondes),
     Verrou("V5d", 5, PHRASES["V5d"], verrou_fiche_sections),   # FICHE-RANGEMENT-2 lot 2
+    Verrou("V5e", 5, PHRASES["V5e"], verrou_fiche_commune_cartes),   # COMMUNE-RANGEMENT-2 lot 5
     Verrou("V6a", 6, PHRASES["V6a"], verrou_regles_citations),   # PLU-CALIBRAGE-1 lot 4
     Verrou("V7a", 7, PHRASES["V7a"], verrou_tuiles),   # COUCHES-TUYAU-1 lot 3
 )

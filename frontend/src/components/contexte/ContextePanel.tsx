@@ -5,7 +5,6 @@ import { TOKENS } from '../../lib/tokens'
 import { Trace } from '../../lib/trace'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
-import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille partagée
 import { CONTACT_VIDE, ContactEdit, trimContact, type ContactForm } from '../shared/ContactEdit'  // RETOURS-8 (R6)
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
@@ -234,7 +233,12 @@ export function ContextePanel() {
   // tendance / liquidité : lues sur les lignes du MÊME moteur Marché commune (build_marche_commune)
   const marLignes = (mar.data?.['lignes'] ?? []) as Record<string, any>[]
   const ligneMar = (cle: string) => marLignes.find((l) => l['cle'] === cle)?.['valeurs'] as Record<string, any> | undefined
+  // COMMUNE-RANGEMENT-1 (lot 1) — la tendance 12 mois se lit sur `delta_pct`, LA clé émise par le moteur
+  // Marché commune (`build_marche_commune`, `ligne4_tendance` → `valeurs.delta_pct`) et déjà lue par
+  // l'outil Marché (moteurs.tsx). L'ancien `tend['pct']` n'existait nulle part → la tendance ne
+  // s'affichait jamais. Absente (fenêtre sous le seuil DVF) → `delta_pct` manque et rien n'est rendu.
   const tend = ligneMar('tendance_12m')
+  const tendPct = tend?.['delta_pct'] as number | null | undefined
   const commune = contexteCommune
   const insee = d?.insee ?? null
 
@@ -261,41 +265,40 @@ export function ContextePanel() {
         {q.isError && <p className="p-5 text-xs text-st-ecartee">Erreur de chargement — réessayez.</p>}
         {d && (
           <>
-            {/* EN-TÊTE PERMANENT — les quatre chiffres qui décident d'y aller ou non + les deux gestes. */}
+            {/* ── EN-TÊTE (maquette v1) — bandeau 6 chiffres en 3×3 + 3 raccourcis. Pas de rang comparatif. ── */}
             <div className="border-b border-line bg-surface-2/40 px-5 py-3">
-              {/* FICHE-COMMUNE-2 (C2, maquette V2) — les QUATRE chiffres qui décident : terrain nu U (coût du
-                  sol) · neuf (ce que rapporte la sortie) · SRU (l'obligation, donc le débouché VEFA) · ZAN
-                  (le temps restant). L'ancien médian et le délai d'instruction restent sur leurs lignes. */}
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-                <div><p className="font-display text-[17px] font-bold text-txt-hi">{fmt(d.foncier?.prix_terrain_nu?.par_zone?.['U']?.median_eur_m2)} €/m²</p><p className="text-[10.5px] text-txt-dim">terrain nu zone U</p></div>
-                <div><p className="font-display text-[17px] font-bold text-txt-hi">{fmt(d.comparable?.neuf_eur_m2)} €/m²</p><p className="text-[10.5px] text-txt-dim">neuf (sortie)</p></div>
-                {/* RETOURS-12 O8 — SRU : on nomme EXPLICITEMENT la grandeur affichée (TAUX de logement
-                    social, en %) et on montre le DÉFICIT (objectif − taux, en points) — la même grandeur
-                    que la colonne « Déficit SRU (pts) » du tableau des 24 communes. Fini les deux chiffres
-                    (« 18 % » vs « 6,7 ») qui semblaient se contredire : ce sont deux vues du même fait. */}
-                <div><p className={`font-display text-[17px] font-bold ${d.sru && d.sru.taux_lls != null && d.sru.objectif_pct != null && d.sru.taux_lls < d.sru.objectif_pct ? 'text-st-ecartee' : 'text-txt-hi'}`}>{d.sru?.taux_lls != null ? `${fmtDec(d.sru.taux_lls)} %` : '—'}</p><p className="text-[10.5px] text-txt-dim">taux de logement social (SRU){d.sru?.detail?.nb_lls != null ? ` — ${fmt(d.sru.detail.nb_lls)} LLS` : ''}{d.sru?.deficit != null && d.sru.deficit > 0 ? ` — déficit ${fmtDec(d.sru.deficit)} pts` : ''}</p></div>
-                <div><p className={`font-display text-[17px] font-bold ${(r?.['horizon_epuisement_ans'] ?? 99) < 6 ? 'text-st-creuser' : 'text-txt-hi'}`}>{r?.['horizon_epuisement_ans'] == null ? '—' : `${fmtDec(r['horizon_epuisement_ans'])} ans`}</p><p className="text-[10.5px] text-txt-dim">avant épuisement du ZAN</p></div>
+              <div data-bandeau-chiffres className="grid grid-cols-3 gap-2">
+                {[
+                  { v: `${fmt(d.foncier?.n_parcelles)}`, n: 'Parcelles', s: 'Cadastre' },
+                  { v: d.population?.habitants != null ? `${fmt(d.population.habitants)}` : '—', n: 'Habitants', s: 'INSEE' },
+                  { v: `${fmt(d.permis_bloc?.permis_12m)}`, n: 'Permis / an', s: 'SITADEL' },
+                  { v: d.comparable?.ancien_median_eur_m2 != null ? `${fmt(d.comparable.ancien_median_eur_m2)} €/m²` : '—', n: 'Prix ancien', s: 'DVF' },
+                  { v: tendPct != null ? `${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %` : '—', n: 'Tendance 12 m', s: 'DVF' },
+                  { v: d.plu_statut?.statut ?? '—', n: 'État du PLU', s: 'GPU · Sudocuh' },
+                ].map((c) => (
+                  <div key={c.n} className="rounded-lg bg-surface-3 px-2.5 py-1.5">
+                    <p className="tnum font-display text-[14px] font-bold leading-tight text-txt-hi">{c.v}</p>
+                    <p className="mt-0.5 text-[9.5px] uppercase tracking-[0.04em] text-txt-mut">{c.n}</p>
+                    <p className="text-[9px] text-txt-dim">{c.s}</p>
+                  </div>
+                ))}
               </div>
-              {/* FICHE-COMMUNE-2 (C2, maquette V2) — l'action verte pleine largeur, puis DEUX actions
-                  violettes (Comparer · Étude de zone). */}
-              {/* PROJETS-V5 (E8) — DA : vert PLEIN = action principale. « Voir ses parcelles » devient
-                  opaque (le même que « Demander à LABUSE d'analyser » sur la fiche parcelle). */}
+              {/* Action principale conservée (DA) : voir les parcelles de la commune. */}
               <button data-communes-parcelles onClick={() => {
                 const s = useApp.getState()
                 s.setView('cartes'); s.setCommune(commune); s.setCommunesFilter([commune])
                 s.setFilter('analyseLabuse', true); s.setVerdict(true)
-                s.openListing()   // C3 — Couches replié, le listing prend la place
+                s.openListing()
               }} className="mt-3 w-full rounded-md border border-mint bg-mint px-2.5 py-2 text-[12.5px] font-semibold text-mint-ink transition-[filter] duration-quick hover:brightness-110">Voir ses parcelles →</button>
-              {/* PROJETS-V5 (E8) — DA : le MAUVE est RÉSERVÉ au Copilote IA. « Comparer » et « Étude de zone »
-                  ne sont pas des fonctions IA → boutons NEUTRES (contour gris, comme PDF / Renommer). */}
-              <div className="mt-2 flex gap-2">
+              {/* Trois raccourcis : PLU · Communes · Étude de zone — commune déjà en contexte. */}
+              <div data-raccourcis className="mt-2 grid grid-cols-3 gap-2">
+                <button data-raccourci-plu onClick={() => ouvrirOutil(commune, insee, 'plu')}
+                  className="rounded-lg border border-line-2 border-l-2 border-l-mint px-2.5 py-1.5 text-left text-[12px] font-medium text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">PLU<span className="block text-[10px] font-normal text-txt-dim">règlement</span></button>
                 <button data-communes-comparer onClick={() => ouvrirOutil(commune, insee, 'communes')}
-                  className="flex-1 rounded-md border border-line-2 px-2.5 py-1.5 text-[12px] font-medium text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">⊞ Comparer aux 24</button>
+                  className="rounded-lg border border-line-2 border-l-2 border-l-mint px-2.5 py-1.5 text-left text-[12px] font-medium text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">Communes<span className="block text-[10px] font-normal text-txt-dim">les 24</span></button>
                 <button data-communes-etude-zone onClick={() => ouvrirOutil(commune, insee, 'etude-zone')}
-                  className="flex-1 rounded-md border border-line-2 px-2.5 py-1.5 text-[12px] font-medium text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">◎ Étude de zone</button>
+                  className="rounded-lg border border-line-2 border-l-2 border-l-mint px-2.5 py-1.5 text-left text-[12px] font-medium text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">Étude de zone<span className="block text-[10px] font-normal text-txt-dim">autour d'un point</span></button>
               </div>
-              {/* FICHE-COMMUNE-2 (C2) — SIGNAUX NOMMÉS en puces (règle en constante ; n'apparaissent que si
-                  vrais). Remplacent « signal : prudence ». Ton rouge = obligation/baisse, orange = contrainte. */}
               {signauxNommes.length > 0 && (
                 <div data-fiche-signaux className="mt-3">
                   <p className="label-caps text-txt-dim">Signaux</p>
@@ -322,309 +325,53 @@ export function ContextePanel() {
               </div>
             )}
 
-            {/* 1 · LE FONCIER (ouvert) — qu'y a-t-il ici ? */}
-            {/* FICHE-COMMUNE-2 (C2, maquette V2) — la même grammaire que la fiche parcelle : des LIGNES-CARTES
-                distinctes, en trois groupes titrés. Chaque ligne dit l'essentiel fermée, et ouvre son détail. */}
-
-            {/* ── CONSTRUIRE ICI ── */}
+            {/* ── 5 GROUPES · 10 CARTES (maquette v1). Les 70 lignes des 19 cartes d'avant, redistribuées
+                par NATURE d'information. La grammaire LigneCarte (accordéon mémorisé) reste. ── */}
             <div className="px-5 pt-3">
-              <GroupeLabel>Construire ici</GroupeLabel>
 
-              <LigneCarte id="regle-plu" chiffre="statut_plu" ic="§" titre="Règles d'urbanisme"
-                sous={`PLU ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${d.plu_statut.date_reglement}` : ''}`}
-                val={d.plu_statut.statut} badge ton={d.plu_statut.statut === 'RNU' ? 'orange' : 'vert'}>
-                {/* PROJETS-V5 (E10) — le statut RÉEL, jamais le stade technique brut (`libelle`, ex. « aucune »
-                    = aucune procédure en cours, lu à tort « pas de PLU »). Une phrase claire + « Voir le PLU → ». */}
-                <p className="text-[12px] leading-relaxed text-txt">
-                  {d.plu_statut.statut === 'RNU' ? "Pas de PLU opposable : c'est le Règlement National d'Urbanisme qui s'applique."
-                    : d.plu_statut.statut === 'à jour' ? `Le PLU est opposable${d.plu_statut.date_reglement ? ` (approuvé le ${d.plu_statut.date_reglement})` : ''}.`
-                      : `Document local — ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${d.plu_statut.date_reglement}` : ''}.`}
-                </p>
-                <button data-voir-plu onClick={() => ouvrirOutil(commune, insee, 'plu')} className="mt-2 text-[11.5px] text-mint hover:underline">Voir le PLU →</button>
-                <Source nom={d.plu_statut.source ?? 'GPU'} />
-              </LigneCarte>
-
-              <LigneCarte id="regle-zan" chiffre="zan_reste_ha" ic="◐" titre="Enveloppe ZAN"
-                sous={r ? `${fmtV(r['reste_zan_ha'], ' ha')} restants · ${fmtV(r['rythme_conso_ha_an'], ' ha/an')}` : 'horizon non projetable'}
-                val={r?.['horizon_epuisement_ans'] != null ? `${fmtDec(r['horizon_epuisement_ans'])} ans` : null} ton="orange">
-                <div className="flex flex-col gap-0.5 text-[12px]">
-                  <RowT lbl="Budget ZAN restant (estimé)" val={fmtV(r?.['reste_zan_ha'], ' ha')} />
-                  <RowT lbl="Rythme de consommation" val={fmtV(r?.['rythme_conso_ha_an'], ' ha/an')} />
-                  <RowT lbl="Horizon d'épuisement" val={r?.['horizon_epuisement_ans'] != null ? `${fmtDec(r['horizon_epuisement_ans'])} ans` : '—'} strong />
-                </div>
-                <Source nom="Consommation ENAF Cerema · enveloppe loi Climat (estimé)" />
-              </LigneCarte>
-
-              {d.sru && (() => {
-                const m = SRU_META[d.sru.statut] ?? SRU_META.conforme
-                return (
-                  <LigneCarte id="regle-sru" chiffre="taux_lls_pct" ic="⌂" titre="Logement social — SRU"
-                    sous={`${d.sru.detail?.nb_lls != null ? `${fmt(d.sru.detail.nb_lls)} LLS · ` : ''}objectif ${Number(d.sru.objectif_pct).toLocaleString('fr-FR')} %`}
-                    val={m.label.toLowerCase()} badge ton={d.sru.statut === 'carencee' ? 'rouge' : d.sru.statut === 'deficitaire' ? 'orange' : d.sru.statut === 'conforme' ? 'vert' : undefined}>
-                    <div className="rounded-lg border px-3 py-2" style={{ borderColor: `${m.color}55`, background: `${m.color}14` }}>
-                      <span className="font-display text-[14px] font-bold" style={{ color: m.color }}>SRU {Number(d.sru.taux_lls).toLocaleString('fr-FR')} %</span>
-                      <span className="ml-2 text-[11px] text-txt-mut">objectif {Number(d.sru.objectif_pct).toLocaleString('fr-FR')} %</span>
-                      <p className="mt-1 text-[11px] leading-relaxed text-txt">{m.lecture}</p>
-                    </div>
-                    <Source nom="Inventaire SRU (DHUP)" />
-                  </LigneCarte>
-                )
-              })()}
-
-              <LigneCarte id="construire" chiffre="permis_12m_n" ic="▤" titre="Permis & délais"
-                sous={`${fmt(d.permis_bloc.permis_12m)} permis / 12 mois${d.permis_bloc.logements_12m != null ? ` · ${fmt(d.permis_bloc.logements_12m)} logts` : ''}`}
-                val={d.permis_bloc.delai_median_mois != null ? `${fmtDec(d.permis_bloc.delai_median_mois)} mois` : null}>
-                <div className="flex flex-col gap-0.5 text-[12px]">
-                  <RowT lbl="Permis autorisés (12 mois)" val={`${fmt(d.permis_bloc.permis_12m)}${d.permis_bloc.permis_5a != null ? ` · ${fmt(d.permis_bloc.permis_5a)} sur 5 ans` : ''}`} strong />
-                  {d.permis_bloc.delai_median_mois != null && <RowT lbl="Délai d'instruction médian" val={`${fmtDec(d.permis_bloc.delai_median_mois)} mois`} />}
-                  {d.permis_bloc.logements_12m != null && <RowT lbl="Offre engagée" val={`${fmt(d.permis_bloc.logements_12m)} logts / 12 mois`} />}
-                  <RowT lbl="Permis dormants" val={fmt(d.permis_bloc.point_mort)} />
-                </div>
-                <Shortcut label="Ouvrir Permis — cette commune" onClick={() => ouvrirOutil(commune, insee, 'permis')} />
-                <Source nom={d.permis_bloc.source} />
-              </LigneCarte>
-
-              {d.plh && (
-                <LigneCarte id="regle-plh" chiffre="plh_objectif_logements_an" ic="≡" titre="Programme local — PLH"
-                  sous={`${d.epci ?? ''}${d.plh.part_sociale_pct != null ? ` · ${Number(d.plh.part_sociale_pct).toLocaleString('fr-FR')} % part sociale` : ''}`}
-                  val={d.plh.obj_logements_an != null ? `${fmt(d.plh.obj_logements_an)} logts/an` : null}>
-                  <div className="flex flex-col gap-0.5 text-[12px]">
-                    <RowT lbl={`PLH ${d.epci ?? ''} — objectif`} val={d.plh.obj_logements_an != null ? `${fmt(d.plh.obj_logements_an)} logts/an` : '—'} />
-                    {d.plh.part_sociale_pct != null && <RowT lbl="Part sociale visée" val={`${Number(d.plh.part_sociale_pct).toLocaleString('fr-FR')} %`} />}
-                  </div>
-                  <Source nom="PLH (EPCI)" />
-                </LigneCarte>
-              )}
-
-              {/* ── LE MARCHÉ ── */}
-              <GroupeLabel>Le marché</GroupeLabel>
-
-              <LigneCarte id="marche" chiffre="prix_ancien_median_eur_m2" ic="↗" titre="Prix &amp; tendance" defaultOpen
-                sous={`ancien ${fmt(d.comparable?.ancien_median_eur_m2)} · neuf ${fmt(d.comparable?.neuf_eur_m2)} €/m² · ${fmt(d.foncier?.mutations_12m)} mutations/12m`}
-                val={tend?.['pct'] != null ? `${Number(tend['pct']) > 0 ? '+' : ''}${fmtDec(tend['pct'])} %` : null}
-                ton={tend?.['pct'] != null && Number(tend['pct']) < 0 ? 'rouge' : 'vert'}>
-                <div className="flex flex-col gap-0.5 text-[12px]">
-                  <RowT lbl="Ancien médian (commune entière)" val={`${fmt(d.comparable?.ancien_median_eur_m2)} €/m²`} strong />
-                  <RowT lbl="Neuf (prix de sortie)" val={`${fmt(d.comparable?.neuf_eur_m2)} €/m²`} />
-                  {tend?.['pct'] != null && <RowT lbl="Tendance 12 mois" val={`${Number(tend['pct']) > 0 ? '+' : ''}${fmtDec(tend['pct'])} %`} />}
-                  <RowT lbl="Mutations (12 mois, DVF)" val={fmt(d.foncier?.mutations_12m)} />
-                </div>
-                <Source nom="DVF — médiane commune entière (même moteur que le comparateur)" />
-              </LigneCarte>
-
-              {d.foncier?.prix_terrain_nu.par_zone && (
-                <LigneCarte id="terrain-nu" chiffre="prix_terrain_zone_eur_m2" ic="▦" titre="Terrain nu"
-                  sous={`zone U ${fmt(d.foncier.prix_terrain_nu.par_zone['U']?.n)} ventes · zone AU ${fmt(d.foncier.prix_terrain_nu.par_zone['AU']?.n)} ventes`}
-                  val={`${fmt(d.foncier.prix_terrain_nu.par_zone['U']?.median_eur_m2)} · ${fmt(d.foncier.prix_terrain_nu.par_zone['AU']?.median_eur_m2)} €/m²`}>
-                  <div className="flex gap-5">
-                    {(['U', 'AU'] as const).map((fam) => {
-                      const pz = d.foncier!.prix_terrain_nu.par_zone?.[fam]
-                      return pz?.calculable
-                        ? <div key={fam}><p className="font-display text-base font-bold text-txt-hi">{fmt(pz.median_eur_m2)} €/m²</p><p className="text-[10.5px] text-txt-dim">terrain nu zone {fam} · {fmt(pz.n)} ventes</p></div>
-                        : <div key={fam}><p className="font-display text-sm text-txt-mut">zone {fam} —</p><p className="text-[10.5px] text-txt-dim">&lt; {d.foncier!.prix_terrain_nu.seuil_n} ventes</p></div>
-                    })}
-                  </div>
-                  <Source nom="DVF terrain nu par zone PLU" />
-                </LigneCarte>
-              )}
-
-              {d.marche_annonces && (
-                <LigneCarte id="annonces" chiffre="annonces_actives_n" ic="◉" titre="Annonces en cours — Radar"
-                  sous={`${fmt(d.marche_annonces.biens)} biens en vente · écart demandé / acté`}
-                  val={!d.marche_annonces.sous_seuil && d.marche_annonces.ecart_demande_acte_pct != null ? `${d.marche_annonces.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(d.marche_annonces.ecart_demande_acte_pct)} %` : null}
-                  ton={d.marche_annonces.ecart_demande_acte_pct != null && d.marche_annonces.ecart_demande_acte_pct < 0 ? 'vert' : undefined}>
-                  {d.marche_annonces.sous_seuil ? (
-                    <p className="text-[12px] text-txt-mut">Trop peu d'annonces relevées pour un signal fiable ({d.marche_annonces.biens} bien(s), seuil {d.marche_annonces.seuil_n}). Le Radar affine la couverture au fil des relevés.</p>
-                  ) : (
-                    <>
-                      <div className="flex flex-col gap-0.5 text-[12px]">
-                        <RowT lbl="Biens en vente" val={fmt(d.marche_annonces.biens)} />
-                        <RowT lbl="Prix demandé médian" val={`${fmt(d.marche_annonces.prix_demande_median_eur_m2)} €/m²`} />
-                        {d.marche_annonces.ecart_demande_acte_pct != null && (
-                          <RowT lbl="Écart demandé / acté" strong val={`${d.marche_annonces.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(d.marche_annonces.ecart_demande_acte_pct)} %`} />
-                        )}
-                      </div>
-                      <p className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">L'écart demandé/acté est la marge de négociation du moment — le signal exclusif LABUSE.</p>
-                      <Shortcut label="Voir les annonces dans le Radar" onClick={() => ouvrirOutil(commune, insee, 'radar')} />
-                    </>
-                  )}
-                  <Source nom={d.marche_annonces.source} />
-                </LigneCarte>
-              )}
-
-              {d.loyer && (
-                <LigneCarte id="loyer" chiffre="loyer_median_eur_m2" ic="€" titre="Loyers"
-                  sous={`${d.loyer.type ?? 'logement'} · ${d.loyer.source}`}
-                  val={d.loyer.median_eur_m2 != null ? `${fmtDec(d.loyer.median_eur_m2)} €/m²` : null}>
-                  <div className="flex flex-col gap-0.5 text-[12px]">
-                    <RowT lbl={`Loyer médian${d.loyer.type ? ` (${d.loyer.type})` : ''}`} val={`${fmtDec(d.loyer.median_eur_m2)} €/m²`} strong />
-                  </div>
-                  <Source nom={d.loyer.source} />
-                </LigneCarte>
-              )}
-
-              {/* SOURCES-1 lot 1 — zonage A/B/C (DHUP) : la classe logement de la commune,
-                  passe-plat sourcé + daté ; absente → « non déterminée », jamais devinée. */}
-              <LigneCarte id="zonage-abc" chiffre="zonage_abc_logement" ic="◈" titre="Zonage logement (ABC)"
-                sous={d.zonage_abc ? d.zonage_abc.millesime : 'non déterminée'}
-                val={d.zonage_abc ? `zone ${d.zonage_abc.zone}` : null}>
-                <div className="flex flex-col gap-0.5 text-[12px]">
-                  {d.zonage_abc
-                    ? <RowT lbl="Classe de la commune" val={`zone ${d.zonage_abc.zone}`} strong />
-                    : <p className="text-[12px] text-txt-dim">Non déterminée — zonage ABC non ingéré.</p>}
-                </div>
-                {d.zonage_abc && <Source nom={d.zonage_abc.source} />}
-              </LigneCarte>
-
-              {/* SOURCES-1 lot 5 — taux fonciers (REI DGFiP) : passe-plat sourcé + daté.
-                  RECETTE-4 U1 — drapeau de fraîcheur : donnée de plus d'un an = « à rafraîchir ». */}
-              {d.fiscalite && (
-                <LigneCarte id="fiscalite" chiffre="tfpb_taux_pct" ic="₣" titre="Taxe foncière (taux)"
-                  sous={d.fiscalite.perime ? `${d.fiscalite.millesime} · à rafraîchir` : d.fiscalite.millesime}
-                  val={d.fiscalite.tfpb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpb_commune_pct)} %` : null}>
-                  <div className="flex flex-col gap-0.5 text-[12px]">
-                    <RowT lbl="TFPB commune" val={d.fiscalite.tfpb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpb_commune_pct)} %` : '—'} strong />
-                    <RowT lbl="TFPB intercommunalité" val={d.fiscalite.tfpb_epci_pct != null ? `${fmtDec(d.fiscalite.tfpb_epci_pct)} %` : '—'} />
-                    {/* SOURCES-4 lot 2 — TFPNB (foncier NON bâti = terrain), désormais servie */}
-                    <RowT lbl="TFPNB commune (non bâti)" val={d.fiscalite.tfpnb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpnb_commune_pct)} %` : '—'} />
-                    <RowT lbl="TFPNB intercommunalité" val={d.fiscalite.tfpnb_epci_pct != null ? `${fmtDec(d.fiscalite.tfpnb_epci_pct)} %` : '—'} />
-                    <RowT lbl="TEOM (taux plein)" val={d.fiscalite.teom_pct != null ? `${fmtDec(d.fiscalite.teom_pct)} %` : '—'} />
-                  </div>
-                  {d.fiscalite.perime && (
-                    <p data-fiscalite-perime className="mt-1 text-[11px] text-st-creuser">
-                      Donnée ingérée il y a plus d'un an — à rafraîchir (fichier REI annuel).
-                    </p>
-                  )}
-                  <Source nom={d.fiscalite.source} />
-                </LigneCarte>
-              )}
-
-              {/* SOURCES-1 lot 5 — ACV/PVD/ORT + condition communale Denormandie (état, jamais
-                  un calcul d'avantage — le périmètre conventionné n'est pas publié). */}
-              {d.ort && d.ort.statut !== 'hors' && (
-                <LigneCarte id="ort" chiffre="ort_statut" ic="◎" titre="Revitalisation (ACV / PVD / ORT)"
-                  sous={d.ort.ort_signee ? `convention ORT signée${d.ort.date_signature ? ` le ${d.ort.date_signature}` : ''}` : 'convention ORT non signée'}
-                  val={d.ort.statut === 'acv' ? 'ACV' : d.ort.statut === 'pvd' ? 'PVD' : 'ORT'}>
-                  <div className="flex flex-col gap-0.5 text-[12px]">
-                    <RowT lbl="Dispositif" val={d.ort.statut === 'acv' ? 'Action Cœur de Ville' : d.ort.statut === 'pvd' ? 'Petites Villes de Demain' : 'ORT (autre commune signataire)'} strong />
-                    <p className="text-[11.5px] text-txt-dim">Denormandie : {d.ort.denormandie}</p>
-                  </div>
-                  {d.ort.source && <Source nom={d.ort.source} />}
-                </LigneCarte>
-              )}
-
-              {/* COUCHES-2 point 4 — ZFANG / FRR : une ligne chacun avec son STATUT EXACT. Source
-                  UNIQUE (territoire_fiscal) — le même statut peint la carte et filtre les parcelles. */}
-              {d.zfang_frr && (
-                <LigneCarte id="zfang-frr" ic="◧" titre="ZFANG / FRR (dispositifs fiscaux)"
-                  sous={d.zfang_frr.zfang.regime === 'renforce' ? 'zone franche renforcée' : 'zone franche standard'}
-                  val={d.zfang_frr.zfang.regime === 'renforce' ? 'ZFANG renforcée' : 'ZFANG standard'}>
-                  <div className="flex flex-col gap-1 text-[12px]">
-                    <RowT lbl="ZFANG" val={d.zfang_frr.zfang.regime === 'renforce' ? 'Régime renforcé' : 'Régime standard'} strong />
-                    <RowT lbl="FRR" val={d.zfang_frr.frr.classement === 'totalite' ? 'Classée en totalité'
-                      : d.zfang_frr.frr.classement === 'partie' ? 'Classée en partie (les Hauts)' : 'Hors dispositif'} strong />
-                    <p className="text-[11.5px] text-txt-dim">{d.zfang_frr.frr.libelle}</p>
-                  </div>
-                  <Source nom={`ZFANG : ${d.zfang_frr.zfang.source_ref} · FRR : ${d.zfang_frr.frr.source_ref}`} />
-                </LigneCarte>
-              )}
-
-              {/* ── LE TERRITOIRE ── */}
+              {/* ═══ LE TERRITOIRE ═══ */}
               <GroupeLabel>Le territoire</GroupeLabel>
 
-              {d.foncier && (
-                <LigneCarte id="foncier" chiffre="n_parcelles_commune" ic="◫" titre="Foncier repéré" defaultOpen
-                  sous={`${fmt(d.foncier.stock_opportunites.n)} parcelles promues${d.densifiables?.parcelles != null ? ` · ${fmt(d.densifiables.parcelles)} densifiables` : ''}`}
-                  val={`${fmt(d.foncier.stock_opportunites.ha)} ha`}>
-                  <div className="mb-3 flex gap-5">
-                    <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.n_parcelles)}</p><p className="text-[11px] text-txt-dim">parcelles<i className="block not-italic text-[10px]">{fmt(d.foncier.surface_ha)} ha</i></p></div>
-                    <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.stock_opportunites.n)}</p><p className="text-[11px] text-txt-dim">stock foncier repéré<i className="block not-italic text-[10px]">{fmt(d.foncier.stock_opportunites.ha)} ha promus</i></p></div>
-                  </div>
-                  {d.densifiables?.parcelles != null && (
-                    <div className="mb-1 flex gap-5">
-                      <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.densifiables.parcelles)}</p><p className="text-[11px] text-txt-dim">densifiables<i className="block not-italic text-[10px]">capacité résiduelle</i></p></div>
-                      {d.densifiables.sdp_residuelle_m2 != null && <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(Math.round(d.densifiables.sdp_residuelle_m2 / 1e6 * 10) / 10)} M m²</p><p className="text-[11px] text-txt-dim">SDP résiduelle théorique</p></div>}
-                    </div>
-                  )}
-                  <Shortcut label="Densifier l'existant — cette commune" onClick={() => ouvrirOutil(commune, insee, 'renouvellement')} />
-                  <Source nom={`Cadastre DGFiP · zonage PLU · ${d.densifiables?.source ?? 'analyse LABUSE'}`} />
-                </LigneCarte>
-              )}
-
-              {d.foncier?.repartition_zonage && (() => {
-                const f = d.foncier.repartition_zonage.familles
-                return (
-                  <LigneCarte id="zonage" chiffre="part_zone_U_pct" ic="▥" titre="Zonage"
-                    sous={`U ${fmtDec(f.U.pct)} · AU ${fmtDec(f.AU.pct)} · A ${fmtDec(f.A.pct)} · N ${fmtDec(f.N.pct)} % de la surface`}
-                    val="4 familles">
-                    <p className="mb-1 flex items-center gap-1.5 text-[11px] text-txt-dim">Répartition du zonage <span className="text-txt-mut">(parts de surface)</span>
-                      <span className="rounded bg-mint/10 px-1 text-[9px] text-mint">{d.foncier!.repartition_zonage!.total_ha.toLocaleString('fr-FR')} ha</span></p>
-                    <Bar parts={[
-                      { label: 'U', pct: f.U.pct, color: TOKENS.mint },
-                      { label: 'AU', pct: f.AU.pct, color: TOKENS.vizCyan },
-                      { label: 'A', pct: f.A.pct, color: TOKENS.stCreuser },
-                      { label: 'N', pct: f.N.pct, color: TOKENS.vizGreenDeep },
-                    ]} />
-                    <Source nom="Zonage PLU (GPU)" />
-                  </LigneCarte>
-                )
-              })()}
-
-              <LigneCarte id="risques" chiffre="ppr_pct" ic="⚠" titre="Risques"
-                sous="PPR · mouvement de terrain · CatNat"
-                val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % en PPR` : (d.risques.parc_national ? 'Parc National' : null)}
-                badge={d.risques.ppr_pct != null} ton="orange">
+              <LigneCarte id="identite" ic="I" titre="Identité"
+                sous={`${d.epci ?? ''}${d.population?.quartiers ? ` · ${d.population.quartiers.n_iris} IRIS` : ''}`}
+                val={insee ?? undefined}>
                 <div className="flex flex-col gap-0.5 text-[12px]">
-                  <RowT lbl="PPR (risque naturel)" val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % des parcelles` : '—'} />
-                  <RowT lbl="Mouvement de terrain" val={d.risques.mouvement_terrain_pct != null ? `${fmtDec(d.risques.mouvement_terrain_pct)} %` : '—'} />
-                  <RowT lbl="Arrêtés CatNat" val={fmt(d.risques.catnat_arretes)} />
-                  {/* SOURCES-4 lot 1 — le DÉTAIL des arrêtés dormait dans catnat_arretes (seul le compte
-                      était servi) : péril, dates début→fin, code national + JO. Les plus récents. */}
-                  {d.risques.catnat_detail?.length ? (
-                    <div className="ml-2 flex flex-col gap-0.5 border-l border-line pl-2">
-                      {d.risques.catnat_detail.slice(0, 6).map((a, i) => (
-                        <RowT key={a.code_national ?? i} lbl={a.type_peril}
-                          val={[a.date_debut && a.date_fin ? `${a.date_debut} → ${a.date_fin}` : (a.date_arrete ?? ''),
-                                a.code_national].filter(Boolean).join(' · ')} />
-                      ))}
-                      {d.risques.catnat_arretes > 6 ? (
-                        <div className="text-[11px] text-txt-dim">et {d.risques.catnat_arretes - 6} autre{d.risques.catnat_arretes - 6 > 1 ? 's' : ''}…</div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {/* SOURCES-1 lot 2 — le fait AZI/TRI (GASPAR) : quels documents inondation couvrent la commune */}
-                  {d.risques.azi_tri && (d.risques.azi_tri.azi?.length || d.risques.azi_tri.tri?.length) ? (
-                    <RowT lbl="Inondation (AZI / TRI)"
-                      val={[...(d.risques.azi_tri.azi ?? []).map((x: { libelle?: string }) => `AZI ${x.libelle ?? ''}`),
-                            ...(d.risques.azi_tri.tri ?? []).map((x: { libelle?: string }) => `TRI ${x.libelle ?? ''}`)].join(' · ')} />
-                  ) : d.risques.azi_tri ? (
-                    <RowT lbl="Inondation (AZI / TRI)" val="aucun document recensé (GASPAR)" />
-                  ) : null}
-                  <RowT lbl="Aire d'adhésion Parc National" val={d.risques.parc_national ? 'oui' : 'non'} />
+                  <RowT lbl="Intercommunalité" val={d.epci ?? '—'} />
+                  {d.epci_nom && <p className="-mt-0.5 mb-0.5 text-[10.5px] text-txt-dim">{d.epci_nom}</p>}
+                  {d.population?.quartiers && (
+                    <RowT lbl={`Par quartier (${d.population.quartiers.n_iris} IRIS)`}
+                      val={`vacance ${fmtDec(d.population.quartiers.vacance_min_pct)} → ${fmtDec(d.population.quartiers.vacance_max_pct)} % (méd. ${fmtDec(d.population.quartiers.vacance_mediane_pct)} %)`} />
+                  )}
                 </div>
-                <Source nom={d.risques.source} />
+                {d.mairie && (
+                  <div className="mt-2 border-t border-line pt-2">
+                    <dl className="space-y-1.5 text-[12px]">
+                      <MairieLigne label="Adresse" val={[d.mairie.adresse, [d.mairie.code_postal, d.mairie.commune].filter(Boolean).join(' ')].filter(Boolean).join(', ') || null} />
+                      <MairieLigne label="Téléphone" val={d.mairie.telephone} href={d.mairie.telephone ? `tel:${d.mairie.telephone.replace(/\s/g, '')}` : undefined} />
+                      <MairieLigne label="E-mail" val={d.mairie.email} href={d.mairie.email ? `mailto:${d.mairie.email}` : undefined} />
+                      <MairieLigne label="Site officiel" val={d.mairie.site_officiel} href={d.mairie.site_officiel ?? undefined} />
+                      <MairieLigne label="Annuaire" val={d.mairie.url_annuaire ? 'Fiche service-public' : null} href={d.mairie.url_annuaire ?? undefined} />
+                    </dl>
+                    <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">{d.mairie.source}{d.mairie.date_import ? ` · relevé le ${fmtDateFr(d.mairie.date_import)}` : ''}</p>
+                    <ContactsMairie insee={insee} commune={commune} />
+                  </div>
+                )}
+                <Source nom="INSEE · IGN contours IRIS · Annuaire de l'administration" />
               </LigneCarte>
 
-              <LigneCarte id="population" chiffre="habitants_n" ic="⚇" titre="Population &amp; logement"
+              <LigneCarte id="population" chiffre="habitants_n" ic="P" titre="Population et logement" defaultOpen
                 sous={`${d.population.logements != null ? `${fmt(d.population.logements)} logts` : ''}${d.population.vacance_pct != null ? ` · ${fmtDec(d.population.vacance_pct)} % vacants` : ''} · INSEE`}
                 val={d.population.habitants != null ? `${fmt(d.population.habitants)} hab.` : null}>
                 <div className="mb-2 flex flex-col gap-0.5 text-[12px]">
                   {d.population.habitants != null && <RowT lbl="Habitants · ménages" val={`${fmt(d.population.habitants)} · ${fmt(d.population.menages)}`} />}
                   {d.population.niveau_vie_moyen_eur != null && <RowT lbl="Niveau de vie moyen" val={`${fmt(d.population.niveau_vie_moyen_eur)} €/an`} />}
                   {d.population.logements != null && <RowT lbl="Logements" val={`${fmt(d.population.logements)}${d.population.vacants != null ? ` · ${fmt(d.population.vacants)} vacants (${fmtDec(d.population.vacance_pct)} %)` : ''}`} />}
-                  {/* SOURCES-1 lot 6 — l'affinage par QUARTIER (IRIS RP2022) : la vacance n'est
-                      pas uniforme dans la commune ; maille dite, la vérité communale reste INSEE RP. */}
-                  {d.population.quartiers && (
-                    <RowT lbl={`Par quartier (${d.population.quartiers.n_iris} IRIS)`}
-                      val={`vacance ${fmtDec(d.population.quartiers.vacance_min_pct)} → ${fmtDec(d.population.quartiers.vacance_max_pct)} % (méd. ${fmtDec(d.population.quartiers.vacance_mediane_pct)} %)`} />
-                  )}
+                  {d.parc_social?.logements != null && <RowT lbl="Parc social (RPLS)" val={`${fmt(d.parc_social.logements)} logts${d.parc_social.construct_median != null ? ` · constr. médiane ${d.parc_social.construct_median}` : ''}`} />}
                 </div>
                 {d.marche && (
-                  <div className="flex flex-col gap-2.5">
+                  <div className="mb-2 flex flex-col gap-2.5">
                     {(() => {
                       const loc = Number(d.marche.locataires_pct); const prop = Number(d.marche.proprietaires_pct)
-                      // CIRCUIT-1 lot 2.4 — le chiffre vient du SERVEUR (registre `autres_loges_pct`) ;
-                      // repli local identique tant qu'un vieux cache commune n'est pas recalculé.
                       const autres = (d.marche as any).autres_loges_pct != null
                         ? Number((d.marche as any).autres_loges_pct)
                         : Math.max(0, Math.round((100 - loc - prop) * 10) / 10)
@@ -640,53 +387,248 @@ export function ContextePanel() {
                     ]} />
                   </div>
                 )}
-                <Source nom={d.population.source} />
+                {/* Parc social / SRU — taux et objectif (maquette : « Parc social RPLS, taux SRU, objectif »). */}
+                {d.sru && (() => {
+                  const m = SRU_META[d.sru.statut] ?? SRU_META.conforme
+                  return (
+                    <div className="rounded-lg border px-3 py-2" style={{ borderColor: `${m.color}55`, background: `${m.color}14` }}>
+                      <span className="font-display text-[13px] font-bold" style={{ color: m.color }}>SRU {Number(d.sru.taux_lls).toLocaleString('fr-FR')} %</span>
+                      <span className="ml-2 text-[11px] text-txt-mut">objectif {Number(d.sru.objectif_pct).toLocaleString('fr-FR')} %{d.sru.detail?.nb_lls != null ? ` · ${fmt(d.sru.detail.nb_lls)} LLS` : ''}</span>
+                      <p className="mt-1 text-[11px] leading-relaxed text-txt">{m.lecture}</p>
+                    </div>
+                  )
+                })()}
+                <Source nom={`${d.population.source}${d.parc_social ? ` · ${d.parc_social.source}` : ''} · Inventaire SRU (DHUP)`} />
               </LigneCarte>
 
-              {(d.qpv.length > 0 || d.anru.length > 0) && (
-                <LigneCarte id="qpv" chiffre="qpv_n" ic="◈" titre="Quartiers prioritaires" sous="ANCT · NPNRU"
-                  val={`${d.qpv.length} QPV`}>
+              {/* ═══ LE MARCHÉ ═══ */}
+              <GroupeLabel>Le marché</GroupeLabel>
+
+              <LigneCarte id="marche" chiffre="prix_ancien_median_eur_m2" ic="↗" titre="Prix" defaultOpen
+                sous={`ancien ${fmt(d.comparable?.ancien_median_eur_m2)} · neuf ${fmt(d.comparable?.neuf_eur_m2)} €/m²`}
+                val={tendPct != null ? `${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %` : null}
+                ton={tendPct != null && Number(tendPct) < 0 ? 'rouge' : 'vert'}>
+                <div className="flex flex-col gap-0.5 text-[12px]">
+                  <RowT lbl="Ancien médian (commune entière)" val={`${fmt(d.comparable?.ancien_median_eur_m2)} €/m²`} strong />
+                  <RowT lbl="Neuf VEFA (prix de sortie)" val={`${fmt(d.comparable?.neuf_eur_m2)} €/m²`} />
+                  <RowT lbl="Neuf observé (ventes récentes)" val={d.prix_neuf_observe?.eur_m2 != null ? `${fmt(d.prix_neuf_observe.eur_m2)} €/m²` : '—'} />
+                  {tendPct != null && <RowT lbl="Tendance 12 mois" val={`${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %`} />}
+                </div>
+                {d.foncier?.prix_terrain_nu.par_zone && (
+                  <div className="mt-2 flex gap-5 border-t border-line pt-2">
+                    {(['U', 'AU'] as const).map((fam) => {
+                      const pz = d.foncier!.prix_terrain_nu.par_zone?.[fam]
+                      return pz?.calculable
+                        ? <div key={fam}><p className="font-display text-base font-bold text-txt-hi">{fmt(pz.median_eur_m2)} €/m²</p><p className="text-[10.5px] text-txt-dim">terrain nu zone {fam} · {fmt(pz.n)} ventes</p></div>
+                        : <div key={fam}><p className="font-display text-sm text-txt-mut">zone {fam} —</p><p className="text-[10.5px] text-txt-dim">&lt; {d.foncier!.prix_terrain_nu.seuil_n} ventes</p></div>
+                    })}
+                  </div>
+                )}
+                {d.loyer && (
+                  <div className="mt-2 flex flex-col gap-0.5 border-t border-line pt-2 text-[12px]">
+                    <RowT lbl={`Loyer médian${d.loyer.type ? ` (${d.loyer.type})` : ''}`} val={`${fmtDec(d.loyer.median_eur_m2)} €/m²`} strong />
+                  </div>
+                )}
+                <Source nom={`DVF — médiane commune entière · terrain nu par zone PLU${d.loyer ? ` · ${d.loyer.source}` : ''}`} />
+              </LigneCarte>
+
+              {/* Activité — TOUJOURS présente ; sans annonce Radar, elle le dit. */}
+              {(() => {
+                const ma = d.marche_annonces
+                const vide = !ma || ma.sous_seuil
+                return (
+                <LigneCarte id="annonces" chiffre="annonces_actives_n" ic="◉" titre="Activité"
+                  sous={`${fmt(d.foncier?.mutations_12m)} mutations/12m${ma ? ` · ${fmt(ma.biens)} biens en vente` : ''}`}
+                  val={ma && !ma.sous_seuil && ma.ecart_demande_acte_pct != null ? `${ma.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(ma.ecart_demande_acte_pct)} %` : null}
+                  ton={ma?.ecart_demande_acte_pct != null && ma.ecart_demande_acte_pct < 0 ? 'vert' : undefined}>
                   <div className="flex flex-col gap-0.5 text-[12px]">
-                    <RowT lbl="QPV" val={d.qpv.length > 0 ? `${d.qpv.length} quartier(s)` : 'aucun'} />
+                    <RowT lbl="Mutations (12 mois, DVF)" val={fmt(d.foncier?.mutations_12m)} />
+                  </div>
+                  {vide ? (
+                    <p data-annonces-sans-objet className="mt-1 text-[12px] text-txt-mut">Pas d'annonce repérée sur cette commune{ma ? ` (${ma.biens} bien(s), seuil ${ma.seuil_n})` : ''}. Le Radar affine la couverture au fil des relevés.</p>
+                  ) : (
+                    <>
+                      <div className="flex flex-col gap-0.5 text-[12px]">
+                        <RowT lbl="Biens en vente" val={fmt(ma!.biens)} />
+                        <RowT lbl="Prix demandé médian" val={`${fmt(ma!.prix_demande_median_eur_m2)} €/m²`} />
+                        {ma!.ecart_demande_acte_pct != null && (
+                          <RowT lbl="Écart demandé / acté" strong val={`${ma!.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(ma!.ecart_demande_acte_pct)} %`} />
+                        )}
+                      </div>
+                      <Shortcut label="Voir les annonces dans le Radar" onClick={() => ouvrirOutil(commune, insee, 'radar')} />
+                    </>
+                  )}
+                  <Source nom={`DVF (mutations)${ma ? ` · ${ma.source}` : ' · Radar LABUSE'}`} />
+                </LigneCarte>
+                )
+              })()}
+
+              {/* ═══ LA CONSTRUCTION ═══ */}
+              <GroupeLabel>La construction</GroupeLabel>
+
+              <LigneCarte id="construire" chiffre="permis_12m_n" ic="▤" titre="Permis et rythme"
+                sous={`${fmt(d.permis_bloc.permis_12m)} permis / 12 mois${d.permis_bloc.logements_12m != null ? ` · ${fmt(d.permis_bloc.logements_12m)} logts` : ''}`}
+                val={d.permis_bloc.delai_median_mois != null ? `${fmtDec(d.permis_bloc.delai_median_mois)} mois` : null}>
+                <div className="flex flex-col gap-0.5 text-[12px]">
+                  <RowT lbl="Permis autorisés (12 mois)" val={`${fmt(d.permis_bloc.permis_12m)}${d.permis_bloc.permis_5a != null ? ` · ${fmt(d.permis_bloc.permis_5a)} sur 5 ans` : ''}`} strong />
+                  {d.permis_bloc.delai_median_mois != null && <RowT lbl="Délai d'instruction médian" val={`${fmtDec(d.permis_bloc.delai_median_mois)} mois`} />}
+                  {d.permis_bloc.logements_12m != null && <RowT lbl="Offre engagée" val={`${fmt(d.permis_bloc.logements_12m)} logts / 12 mois`} />}
+                  <RowT lbl="Permis dormants" val={fmt(d.permis_bloc.point_mort)} />
+                </div>
+                <Shortcut label="Ouvrir Permis — cette commune" onClick={() => ouvrirOutil(commune, insee, 'permis')} />
+                <Source nom={d.permis_bloc.source} />
+              </LigneCarte>
+
+              <LigneCarte id="foncier" chiffre="n_parcelles_commune" ic="◫" titre="Foncier et rareté"
+                sous={`${fmt(d.foncier?.stock_opportunites.n)} parcelles promues${r?.['horizon_epuisement_ans'] != null ? ` · ZAN ${fmtDec(r['horizon_epuisement_ans'])} ans` : ''}`}
+                val={d.foncier ? `${fmt(d.foncier.stock_opportunites.ha)} ha` : null} ton="orange">
+                {d.foncier && (
+                  <>
+                    <div className="mb-3 flex gap-5">
+                      <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.n_parcelles)}</p><p className="text-[11px] text-txt-dim">parcelles<i className="block not-italic text-[10px]">{fmt(d.foncier.surface_ha)} ha</i></p></div>
+                      <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.stock_opportunites.n)}</p><p className="text-[11px] text-txt-dim">stock foncier repéré<i className="block not-italic text-[10px]">{fmt(d.foncier.stock_opportunites.ha)} ha promus</i></p></div>
+                    </div>
+                    {d.densifiables?.parcelles != null && (
+                      <div className="mb-2 flex gap-5">
+                        <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.densifiables.parcelles)}</p><p className="text-[11px] text-txt-dim">densifiables<i className="block not-italic text-[10px]">capacité résiduelle</i></p></div>
+                        {d.densifiables.sdp_residuelle_m2 != null && <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(Math.round(d.densifiables.sdp_residuelle_m2 / 1e6 * 10) / 10)} M m²</p><p className="text-[11px] text-txt-dim">SDP résiduelle théorique</p></div>}
+                      </div>
+                    )}
+                  </>
+                )}
+                <div className="flex flex-col gap-0.5 border-t border-line pt-2 text-[12px]">
+                  <RowT lbl="Consommation NAF (budget ZAN consommé)" val={r?.['pct_budget_consomme'] != null ? `${fmtDec(r['pct_budget_consomme'])} %${r?.['budget_zan_ha'] != null ? ` de ${fmtV(r['budget_zan_ha'], ' ha')}` : ''}` : '—'} />
+                  <RowT lbl="Budget ZAN restant (estimé)" val={fmtV(r?.['reste_zan_ha'], ' ha')} />
+                  <RowT lbl="Rythme de consommation" val={fmtV(r?.['rythme_conso_ha_an'], ' ha/an')} />
+                  <RowT lbl="Horizon d'épuisement" val={r?.['horizon_epuisement_ans'] != null ? `${fmtDec(r['horizon_epuisement_ans'])} ans` : '—'} strong />
+                </div>
+                <Shortcut label="Densifier l'existant — cette commune" onClick={() => ouvrirOutil(commune, insee, 'renouvellement')} />
+                <Source nom={`Cadastre DGFiP · ${d.densifiables?.source ?? 'analyse LABUSE'} · Consommation ENAF Cerema (estimé)`} />
+              </LigneCarte>
+
+              {/* ═══ LES RÈGLES ═══ */}
+              <GroupeLabel>Les règles</GroupeLabel>
+
+              <LigneCarte id="regle-plu" chiffre="statut_plu" ic="§" titre="Urbanisme"
+                sous={`PLU ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${d.plu_statut.date_reglement}` : ''}`}
+                val={d.plu_statut.statut} badge ton={d.plu_statut.statut === 'RNU' ? 'orange' : 'vert'}>
+                <p className="text-[12px] leading-relaxed text-txt">
+                  {d.plu_statut.statut === 'RNU' ? "Pas de PLU opposable : c'est le Règlement National d'Urbanisme qui s'applique."
+                    : d.plu_statut.statut === 'à jour' ? `Le PLU est opposable${d.plu_statut.date_reglement ? ` (approuvé le ${d.plu_statut.date_reglement})` : ''}.`
+                      : `Document local — ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${d.plu_statut.date_reglement}` : ''}.`}
+                </p>
+                {d.foncier?.repartition_zonage && (() => {
+                  const f = d.foncier.repartition_zonage.familles
+                  return (
+                    <div className="mt-2 border-t border-line pt-2">
+                      <p className="mb-1 flex items-center gap-1.5 text-[11px] text-txt-dim">Zones du PLU <span className="text-txt-mut">(parts de surface)</span>
+                        <span className="rounded bg-mint/10 px-1 text-[9px] text-mint">{d.foncier!.repartition_zonage!.total_ha.toLocaleString('fr-FR')} ha</span></p>
+                      <Bar parts={[
+                        { label: 'U', pct: f.U.pct, color: TOKENS.mint },
+                        { label: 'AU', pct: f.AU.pct, color: TOKENS.vizCyan },
+                        { label: 'A', pct: f.A.pct, color: TOKENS.stCreuser },
+                        { label: 'N', pct: f.N.pct, color: TOKENS.vizGreenDeep },
+                      ]} />
+                    </div>
+                  )
+                })()}
+                <div className="mt-2 flex flex-col gap-0.5 border-t border-line pt-2 text-[12px]">
+                  {d.plh ? (
+                    <>
+                      <RowT lbl={`PLH ${d.epci ?? ''} — objectif`} val={d.plh.obj_logements_an != null ? `${fmt(d.plh.obj_logements_an)} logts/an` : '—'} />
+                      {d.plh.part_sociale_pct != null && <RowT lbl="Part sociale visée" val={`${Number(d.plh.part_sociale_pct).toLocaleString('fr-FR')} %`} />}
+                    </>
+                  ) : (
+                    <p data-plh-sans-objet className="text-[12px] text-txt-mut">Aucun programme local de l'habitat recensé pour l'intercommunalité {d.epci ?? ''}.</p>
+                  )}
+                </div>
+                <button data-voir-plu onClick={() => ouvrirOutil(commune, insee, 'plu')} className="mt-2 text-[11.5px] text-mint hover:underline">Voir le PLU →</button>
+                <Source nom={`${d.plu_statut.source ?? 'GPU'} · Zonage PLU (GPU) · PLH (EPCI)`} />
+              </LigneCarte>
+
+              {/* Fiscalité et dispositifs — taxes + zonages + QPV/ORT (creux dits). */}
+              {(() => {
+                const o = d.ort
+                const horsOrt = !o || o.statut === 'hors'
+                const aucunQpv = d.qpv.length === 0 && d.anru.length === 0
+                return (
+                <LigneCarte id="fiscalite" chiffre="tfpb_taux_pct" ic="₣" titre="Fiscalité et dispositifs"
+                  sous={`${d.fiscalite?.tfpb_commune_pct != null ? `TFPB ${fmtDec(d.fiscalite.tfpb_commune_pct)} %` : 'taxes'}${d.zonage_abc ? ` · zone ${d.zonage_abc.zone}` : ''}`}
+                  val={horsOrt ? null : (o!.statut === 'acv' ? 'ACV' : o!.statut === 'pvd' ? 'PVD' : 'ORT')}>
+                  {d.fiscalite && (
+                    <div className="flex flex-col gap-0.5 text-[12px]">
+                      <RowT lbl="TFPB commune" val={d.fiscalite.tfpb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpb_commune_pct)} %` : '—'} strong />
+                      <RowT lbl="TFPB intercommunalité" val={d.fiscalite.tfpb_epci_pct != null ? `${fmtDec(d.fiscalite.tfpb_epci_pct)} %` : '—'} />
+                      <RowT lbl="TFPNB commune (non bâti)" val={d.fiscalite.tfpnb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpnb_commune_pct)} %` : '—'} />
+                      <RowT lbl="TFPNB intercommunalité" val={d.fiscalite.tfpnb_epci_pct != null ? `${fmtDec(d.fiscalite.tfpnb_epci_pct)} %` : '—'} />
+                      <RowT lbl="TEOM (taux plein)" val={d.fiscalite.teom_pct != null ? `${fmtDec(d.fiscalite.teom_pct)} %` : '—'} />
+                    </div>
+                  )}
+                  {d.fiscalite?.perime && (
+                    <p data-fiscalite-perime className="mt-1 text-[11px] text-st-creuser">Donnée ingérée il y a plus d'un an — à rafraîchir (fichier REI annuel).</p>
+                  )}
+                  <div className="mt-2 flex flex-col gap-0.5 border-t border-line pt-2 text-[12px]">
+                    <RowT lbl="Classe de la commune" val={d.zonage_abc ? `zone ${d.zonage_abc.zone}` : 'non déterminée'} />
+                    {d.zfang_frr && <RowT lbl="ZFANG" val={d.zfang_frr.zfang.regime === 'renforce' ? 'Régime renforcé' : 'Régime standard'} />}
+                    {d.zfang_frr && <RowT lbl="FRR" val={d.zfang_frr.frr.classement === 'totalite' ? 'Classée en totalité' : d.zfang_frr.frr.classement === 'partie' ? 'Classée en partie (les Hauts)' : 'Hors dispositif'} />}
+                    <RowT lbl="Dispositif" val={horsOrt ? 'hors ORT' : (o!.statut === 'acv' ? 'Action Cœur de Ville' : o!.statut === 'pvd' ? 'Petites Villes de Demain' : 'ORT (autre commune signataire)')} />
+                    <RowT lbl="QPV" val={aucunQpv ? 'aucun' : `${d.qpv.length} quartier(s)`} />
                     <RowT lbl="NPNRU" val={d.anru.length > 0 ? `${d.anru.length} périmètre(s)` : 'aucun'} />
                   </div>
-                  {d.qpv.length > 0 && <p className="mt-1 text-[10.5px] leading-snug text-txt-dim">{d.qpv.map((x) => x.nom).join(' · ')}</p>}
-                  <Source nom="ANCT" />
+                  {(horsOrt || aucunQpv) && (
+                    <p data-fiscalite-sans-objet className="mt-1.5 text-[11px] text-txt-dim">{[aucunQpv ? 'Aucun quartier prioritaire' : null, horsOrt ? 'hors ORT' : null].filter(Boolean).join(' · ')} — dit, jamais une carte absente.</p>
+                  )}
+                  <Source nom="DGFiP REI · DHUP (zonage A/B/C) · territoire_fiscal (ZFANG/FRR) · DGALN (ORT) · ANCT (QPV/NPNRU)" />
                 </LigneCarte>
-              )}
+                )
+              })()}
 
-              {d.mairie && (
-                <LigneCarte id="contacts" ic="☎" titre="Mairie &amp; service urbanisme"
-                  sous={[d.mairie.adresse, d.mairie.telephone].filter(Boolean).join(' · ') || 'coordonnées'}
-                  val="contacter" ton="vert">
-                  <dl className="space-y-1.5 text-[12px]">
-                    <MairieLigne label="Adresse" val={[d.mairie.adresse, [d.mairie.code_postal, d.mairie.commune].filter(Boolean).join(' ')].filter(Boolean).join(', ') || null} />
-                    <MairieLigne label="Téléphone" val={d.mairie.telephone} href={d.mairie.telephone ? `tel:${d.mairie.telephone.replace(/\s/g, '')}` : undefined} />
-                    <MairieLigne label="E-mail" val={d.mairie.email} href={d.mairie.email ? `mailto:${d.mairie.email}` : undefined} />
-                    <MairieLigne label="Site officiel" val={d.mairie.site_officiel} href={d.mairie.site_officiel ?? undefined} />
-                    <MairieLigne label="Annuaire" val={d.mairie.url_annuaire ? 'Fiche service-public' : null} href={d.mairie.url_annuaire ?? undefined} />
-                  </dl>
-                  <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">{d.mairie.source}{d.mairie.date_import ? ` · relevé le ${fmtDateFr(d.mairie.date_import)}` : ''}</p>
-                  {/* ADMIN-1 (AD10) — contacts NOMMÉS de la commune, sous le standard officiel (tous comptes). */}
-                  <ContactsMairie insee={insee} commune={commune} />
-                </LigneCarte>
-              )}
+              {/* ═══ LE CADRE DE VIE ═══ */}
+              <GroupeLabel>Le cadre de vie</GroupeLabel>
 
-              {/* ── OUTILS — PROJETS-V5 (E9) : le composant PARTAGÉ GrilleOutils (même rendu que les exports
-                  de la fiche parcelle). Sous la grille, « Voir plus d'outils → » ouvre la catégorie Outils. ── */}
-              <GroupeLabel>Outils — pré-remplis sur {commune}</GroupeLabel>
-              <GrilleOutils>
-                <OutilCase ic="§" nom="PLU" chiffre="règlement" onClick={() => ouvrirOutil(commune, insee, 'plu')} />
-                <OutilCase ic="▤" nom="Permis" chiffre={d.outils.permis_en_cours > 0 ? fmt(d.outils.permis_en_cours) : '—'} onClick={() => ouvrirOutil(commune, insee, 'permis')} />
-                <OutilCase ic="◫" nom="Densifier" chiffre={d.outils.densifiables > 0 ? fmt(d.outils.densifiables) : '—'} onClick={() => ouvrirOutil(commune, insee, 'renouvellement')} />
-                <OutilCase ic="◉" nom="Radar" chiffre={d.outils.radar_biens > 0 ? `${fmt(d.outils.radar_biens)} biens` : '—'} onClick={() => ouvrirOutil(commune, insee, 'radar')} />
-                <OutilCase ic="☰" nom="Scan patrimoine" chiffre={d.outils.scan_pm > 0 ? fmt(d.outils.scan_pm) : '—'} onClick={() => ouvrirOutil(commune, insee, 'patrimoine')} />
-                <OutilCase ic="☀" nom="Solaire" chiffre={d.outils.solaire_piscines > 0 ? fmt(d.outils.solaire_piscines) : '—'} onClick={() => ouvrirOutil(commune, insee, 'prospection-solaire')} />
-                <OutilCase ic="◎" nom="Étude de zone" chiffre="un point" onClick={() => ouvrirOutil(commune, insee, 'etude-zone')} />
-                <OutilCase ic="⊞" nom="Comparer" chiffre="24 communes" onClick={() => ouvrirOutil(commune, insee, 'communes')} />
-              </GrilleOutils>
+              <LigneCarte id="risques" chiffre="ppr_pct" ic="⚠" titre="Risques et contraintes"
+                sous="PPR · mouvement de terrain · CatNat"
+                val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % en PPR` : (d.risques.parc_national ? 'Parc National' : null)}
+                badge={d.risques.ppr_pct != null} ton="orange">
+                <div className="flex flex-col gap-0.5 text-[12px]">
+                  <RowT lbl="PPR (risque naturel)" val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % des parcelles` : '—'} />
+                  <RowT lbl="Mouvement de terrain" val={d.risques.mouvement_terrain_pct != null ? `${fmtDec(d.risques.mouvement_terrain_pct)} %` : '—'} />
+                  <RowT lbl="Arrêtés CatNat" val={fmt(d.risques.catnat_arretes)} />
+                  {d.risques.catnat_detail?.length ? (
+                    <div className="ml-2 flex flex-col gap-0.5 border-l border-line pl-2">
+                      {d.risques.catnat_detail.slice(0, 6).map((a, i) => (
+                        <RowT key={a.code_national ?? i} lbl={a.type_peril}
+                          val={[a.date_debut && a.date_fin ? `${a.date_debut} → ${a.date_fin}` : (a.date_arrete ?? ''),
+                                a.code_national].filter(Boolean).join(' · ')} />
+                      ))}
+                      {d.risques.catnat_arretes > 6 ? (
+                        <div className="text-[11px] text-txt-dim">et {d.risques.catnat_arretes - 6} autre{d.risques.catnat_arretes - 6 > 1 ? 's' : ''}…</div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {d.risques.azi_tri && (d.risques.azi_tri.azi?.length || d.risques.azi_tri.tri?.length) ? (
+                    <RowT lbl="Inondation (AZI / TRI)"
+                      val={[...(d.risques.azi_tri.azi ?? []).map((x: { libelle?: string }) => `AZI ${x.libelle ?? ''}`),
+                            ...(d.risques.azi_tri.tri ?? []).map((x: { libelle?: string }) => `TRI ${x.libelle ?? ''}`)].join(' · ')} />
+                  ) : d.risques.azi_tri ? (
+                    <RowT lbl="Inondation (AZI / TRI)" val="aucun document recensé (GASPAR)" />
+                  ) : null}
+                  <RowT lbl="Aire d'adhésion Parc National" val={d.risques.parc_national ? 'oui' : 'non'} />
+                </div>
+                <Source nom={d.risques.source} />
+              </LigneCarte>
+
+              <LigneCarte id="equipements" ic="⌘" titre="Équipements et desserte"
+                sous="services, transport, réseaux"
+                val={undefined}>
+                <p className="text-[12px] leading-relaxed text-txt-mut">Équipements (écoles, santé, commerces), transport public, trafic, fibre, assainissement et productible
+                  solaire de la commune se lisent au plus près dans l'Étude de zone (autour d'un point).</p>
+                <Shortcut label="Étude de zone — habitants, emplois, concurrents" onClick={() => ouvrirOutil(commune, insee, 'etude-zone')} />
+                <Source nom="BPE INSEE · GTFS PAN · OSM · Arcep · INSEE RP · PVGIS (via Étude de zone)" />
+              </LigneCarte>
+
               <button data-voir-plus-outils onClick={() => { const s = useApp.getState(); s.setContexteCommune(null); s.toggleOutils() }}
-                className="mt-2 text-[11.5px] text-mint transition-colors duration-quick hover:underline">Voir plus d'outils →</button>
+                className="mt-2 text-[11.5px] text-mint transition-colors duration-quick hover:underline">Voir tous les outils →</button>
             </div>
 
             {/* FICHE-COMMUNE-2 (C1) — pied : les compteurs sont PRÉCALCULÉS chaque nuit et servis tels quels

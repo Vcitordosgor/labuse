@@ -539,6 +539,12 @@ NON_SONDES: dict[str, str] = {
     # la table iris_rp ; la comparaison robinet à robinet est sans objet (aucun recalcul).
     "iris_quartier": "fiche (Autour) + étude de zone lisent le MÊME producteur "
                      "(ingestion/iris_rp.py, passe-plat iris_rp) — un seul chemin machine",
+    # COMMUNE-RANGEMENT-1 lot 2 — parc social RPLS servi à DEUX robinets (fiche commune Population +
+    # fiche parcelle Marché) par le MÊME passe-plat de la table rpls_commune (SELECT nb_logements … WHERE
+    # insee = …) — une seule clé, un seul chemin machine, aucun recalcul : comparaison robinet à robinet
+    # sans objet.
+    "parc_social_rpls_logements": "fiche commune (Population) + fiche parcelle (Marché) lisent la MÊME "
+                                  "table rpls_commune par insee — un seul chemin machine, aucun recalcul",
     "tier_opportunite": "run SERVI (codes par rang) : tenu par le golden (qa/golden_check, 119 "
                         "parcelles) ; run à politique v2 (PALIERS-1) : SONDÉ par 4.7 — domaine ⊆ "
                         "4 valeurs + cohérence palier↔p_raw (seuils config)",
@@ -604,8 +610,9 @@ NON_SONDES: dict[str, str] = {
                            "la sonde compare déjà HTTP/SQL/Copilote (chemins réels 0-bis)",
     "zone_plu_famille": "couche comparée par la catégorielle 4.1 ; PDF zonage par "
                         "recette_exports1 (nocturne)",
-    "prix_neuf_observe_eur_m2": "PDF banquier couvert par recette_exports1 ; la scission du "
-                                "neuf est mesurée par verifier_scission_neuf",
+    "prix_neuf_observe_eur_m2": "PDF banquier + fiche commune (carte Prix, COMMUNE-RANGEMENT-2) "
+                                "couverts par recette_exports1 ; la scission du neuf (observé vs VEFA "
+                                "acté) est mesurée par verifier_scission_neuf",
 }
 
 

@@ -1,0 +1,116 @@
+[
+ {
+  "commune": "Saint-Denis",
+  "key": "saint-denis",
+  "cards": [
+   {
+    "id": "identite",
+    "titre": "Identité",
+    "file": "01_identite.png"
+   },
+   {
+    "id": "population",
+    "titre": "Population et logement",
+    "file": "02_population.png"
+   },
+   {
+    "id": "marche",
+    "titre": "Prix",
+    "file": "03_marche.png"
+   },
+   {
+    "id": "annonces",
+    "titre": "Activité",
+    "file": "04_annonces.png"
+   },
+   {
+    "id": "construire",
+    "titre": "Permis et rythme",
+    "file": "05_construire.png"
+   },
+   {
+    "id": "foncier",
+    "titre": "Foncier et rareté",
+    "file": "06_foncier.png"
+   },
+   {
+    "id": "regle-plu",
+    "titre": "Urbanisme",
+    "file": "07_regle-plu.png"
+   },
+   {
+    "id": "fiscalite",
+    "titre": "Fiscalité et dispositifs",
+    "file": "08_fiscalite.png"
+   },
+   {
+    "id": "risques",
+    "titre": "Risques et contraintes",
+    "file": "09_risques.png"
+   },
+   {
+    "id": "equipements",
+    "titre": "Équipements et desserte",
+    "file": "10_equipements.png"
+   }
+  ],
+  "n_cards": 10
+ },
+ {
+  "commune": "Cilaos",
+  "key": "cilaos",
+  "cards": [
+   {
+    "id": "identite",
+    "titre": "Identité",
+    "file": "01_identite.png"
+   },
+   {
+    "id": "population",
+    "titre": "Population et logement",
+    "file": "02_population.png"
+   },
+   {
+    "id": "marche",
+    "titre": "Prix",
+    "file": "03_marche.png"
+   },
+   {
+    "id": "annonces",
+    "titre": "Activité",
+    "file": "04_annonces.png"
+   },
+   {
+    "id": "construire",
+    "titre": "Permis et rythme",
+    "file": "05_construire.png"
+   },
+   {
+    "id": "foncier",
+    "titre": "Foncier et rareté",
+    "file": "06_foncier.png"
+   },
+   {
+    "id": "regle-plu",
+    "titre": "Urbanisme",
+    "file": "07_regle-plu.png"
+   },
+   {
+    "id": "fiscalite",
+    "titre": "Fiscalité et dispositifs",
+    "file": "08_fiscalite.png"
+   },
+   {
+    "id": "risques",
+    "titre": "Risques et contraintes",
+    "file": "09_risques.png"
+   },
+   {
+    "id": "equipements",
+    "titre": "Équipements et desserte",
+    "file": "10_equipements.png"
+   }
+  ],
+  "n_cards": 10
+ }
+]

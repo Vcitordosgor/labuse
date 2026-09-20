@@ -2060,6 +2060,9 @@ def _rafraichir_partages(db: Session, commune: str, payload: dict) -> dict:
     """RETOURS-12 O8 — réinjecte dans le payload caché les indicateurs PARTAGÉS avec le comparateur,
     calculés LIVE (source unique raw_rows + commune_contexte_sru) → la fiche et le tableau ne peuvent
     plus diverger. Idempotent, sans effet sur les blocs statiques."""
+    # COMMUNE-RANGEMENT-1 lot 3 — un cache nocturne antérieur au lot transporte encore `acquisitions_pm`
+    # (retirée du calcul). On la retire aussi du payload caché : plus aucune fiche ne la transporte.
+    payload.pop("acquisitions_pm", None)
     try:
         from .fiche_commune import comparable as _comparable
         live = _comparable(db, commune)
@@ -2092,13 +2095,23 @@ def _rafraichir_partages(db: Session, commune: str, payload: dict) -> dict:
         # passe-plats bon marché (une ligne). Le CACHE nocturne les figeait à `null` (il précède
         # SOURCES-1) : un client ne voyait NI le taux foncier NI la zone de tension pourtant en base.
         # On les resservit LIVE (même doctrine O8 que comparable/SRU) → jamais périmés, toujours servis.
-        from .fiche_commune import fiscalite as _fiscalite, zonage_abc as _zonage_abc
+        from .fiche_commune import fiscalite as _fiscalite, zonage_abc as _zonage_abc, parc_social as _parc_social
         fisc = _fiscalite(db, insee)
         if fisc is not None:
             payload["fiscalite"] = fisc
         zab = _zonage_abc(db, insee)
         if zab is not None:
             payload["zonage_abc"] = zab
+        # COMMUNE-RANGEMENT-1 lot 2 — le parc social RPLS est un passe-plat bon marché (une ligne) que le
+        # CACHE nocturne (antérieur au lot) ignore encore : re-servi LIVE (même doctrine O8/RECETTE-4).
+        psoc = _parc_social(db, insee)
+        if psoc is not None:
+            payload["parc_social"] = psoc
+        # COMMUNE-RANGEMENT-2 lot 2 — le neuf observé (commune) est un passe-plat bon marché absent du
+        # cache nocturne antérieur : re-servi live (même doctrine O8).
+        from .fiche_commune import prix_neuf_observe as _pno
+        pno = _pno(db, insee)
+        payload["prix_neuf_observe"] = pno   # None inclus (le front affiche « — » sinon absent)
     except Exception:  # noqa: BLE001 — le rafraîchissement ne doit jamais casser la fiche
         _FICHE_LOG.exception("fiche commune · rafraîchissement des indicateurs partagés (O8) impossible")
     return payload
@@ -2210,12 +2223,10 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
     # K2 — coordonnées de la mairie (Annuaire de l'administration). Champs absents = null → « Absent ».
     from ..ingestion.mairies import mairie_de
     mairie = mairie_de(db, commune)
-    # L1 (KF-2) — acquisitions PM récentes de la commune (changement de propriétaire moral d'un
-    # millésime au suivant, depuis 2022). Aperçu borné ; maille = COMMUNE ; constat, hors scoring.
-    acquisitions_pm = None
-    if _insee_c:
-        from ..proprietaire_historique import acquisitions_recentes
-        acquisitions_pm = acquisitions_recentes(db, _insee_c, depuis_millesime=2022, limit=8)
+    # COMMUNE-RANGEMENT-1 lot 3 — les acquisitions PM récentes ne sont PLUS calculées ici. Elles avaient
+    # quitté la fiche (RETOURS-1 R3 → outil Communes « Acquisitions récentes ») ; le payload continuait
+    # pourtant de les calculer (acquisitions_recentes, requête coûteuse) et de les transporter, sans qu'aucune
+    # carte ne les rende. Elles restent servies par l'endpoint dédié /communes/{c}/acquisitions-pm (ci-dessous).
     # OUTILS-6 (C2/C5/C6) — les blocs AJOUTÉS + les compteurs des passerelles, chacun servi depuis le
     # moteur de son outil d'origine (aucun recalcul, cf. fiche_commune). Le front les range en accordéons.
     from . import fiche_commune as _fc
@@ -2227,7 +2238,6 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
             "epci_nom": epci_cfg[epci]["nom"] if epci else None,
             "rnu": rnu,
             "mairie": mairie,                           # K2 — adresse/tél/e-mail/site + fraîcheur
-            "acquisitions_pm": acquisitions_pm,         # L1 KF-2 — acquisitions PM récentes (constat)
             "foncier": _foncier_commune(db, commune),   # M83 C1 — le foncier de la commune, EN TÊTE
             "comparable": blocs["comparable"],          # C2 — chiffres communs (identiques au comparateur)
             "marche_annonces": blocs["marche_annonces"],# C5 — Radar (annonces + écart demandé/acté)
@@ -2237,6 +2247,8 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
             "permis_bloc": blocs["permis"],             # C5 — construire ici + permis au point mort
             "densifiables": blocs["densifiables"],      # C5 — gisement de densification
             "loyer": blocs["loyer"],                    # C5 — loyer médian SOURCÉ
+            "parc_social": blocs["parc_social"],        # COMMUNE-RANGEMENT-1 lot 2 — parc social RPLS (SDES)
+            "prix_neuf_observe": blocs["prix_neuf_observe"],  # COMMUNE-RANGEMENT-2 lot 2 — neuf observé (commune)
             "zonage_abc": blocs["zonage_abc"],          # SOURCES-1 lot 1 — zone A/B/C (DHUP)
             "fiscalite": blocs["fiscalite"],            # SOURCES-1 lot 5 — taux TFPB/TEOM (REI)
             "ort": blocs["ort"],                        # SOURCES-1 lot 5 — ACV/PVD/ORT (Denormandie)

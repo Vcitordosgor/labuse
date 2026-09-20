@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maquette — Fiche commune</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root{--bg:#0d100e;--card:#151915;--ink:#e8ece9;--muted:#8d9a93;--line:#262c27;--mint:#8FA69A;--mint-soft:#1b2620;--amber:#d08a6c;--amber-soft:#2a1e18;--grey-soft:#1c221e;
+    box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#0d100e}}
+  html{scroll-padding-top:env(safe-area-inset-top,0px)} *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:13.5px/1.5 Inter,ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .toolbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:#000;color:#fff;padding:10px 20px;font-size:12.5px;display:flex;gap:18px;flex-wrap:wrap}
+  .toolbar b{font-weight:600}.toolbar span{opacity:.75}
+  .panel{max-width:520px;margin:24px auto 80px;padding:0 16px}
+  .head{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .head .kicker{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .head h1{font-size:22px;margin:4px 0 2px;font-weight:600}
+  .head .sub{color:var(--muted);font-size:12.5px}
+  .band{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+  .band div{background:var(--grey-soft);border-radius:8px;padding:8px 10px}
+  .band b{display:block;font-size:13px;font-weight:600;color:var(--mint)}
+  .band span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .raccourcis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .raccourcis div{border:1px solid var(--line);border-left:3px solid var(--mint);border-radius:8px;padding:7px 10px;font-size:12px;font-weight:500}
+  .raccourcis div span{display:block;font-weight:400;font-size:10.5px;color:var(--muted)}
+  .group{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:22px 0 8px;display:flex;align-items:center;gap:10px}
+  .group::after{content:'';flex:1;height:1px;background:var(--line)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+  .card-head{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer}
+  .card-head .ico{width:34px;height:34px;border-radius:8px;background:var(--grey-soft);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;font-weight:600}
+  .card-head .t{flex:1}
+  .card-head .t b{display:block;font-weight:600}
+  .card-head .t span{font-size:11.5px;color:var(--muted)}
+  .card-head .badge{font-size:11px;color:var(--mint);background:var(--mint-soft);padding:2px 8px;border-radius:20px;white-space:nowrap}
+  .card-head .chev{color:var(--muted)}
+  .card-body{border-top:1px solid var(--line);padding:6px 14px 12px}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+  .row:last-child{border-bottom:none}
+  .row .l{flex:1}
+  .row .s{color:var(--muted);font-size:11px;white-space:nowrap}
+  .row .v{color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:11.5px;min-width:22px;text-align:right}
+  .so{margin-top:8px;font-size:11px;color:var(--muted);background:var(--grey-soft);border-radius:6px;padding:6px 10px}
+  .so b{color:var(--ink);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:10px;display:block;margin-bottom:2px}
+  .porte{margin-top:8px;border:1px solid var(--line);border-left:3px solid var(--mint);border-radius:8px;padding:8px 12px;font-size:12px;display:flex;justify-content:space-between;gap:10px}
+  .porte span{color:var(--muted);font-size:11px}
+  .note{font-size:11.5px;color:var(--muted);margin:14px 0 0}
+  .decision{margin:24px 0 0;padding:12px 14px;border:1px dashed var(--amber);border-radius:10px;background:var(--amber-soft);font-size:12.5px}
+  .decision b{display:block;margin-bottom:4px}
+  ul.plain{margin:6px 0 0;padding-left:18px} ul.plain li{margin:3px 0}
+  .count{font-size:11px;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+<div class="toolbar"><b>Maquette</b><span>Fiche commune · redécoupée par nature d'information</span><span id="count"></span><span>Valeurs non renseignées, seule la source est indiquée.</span></div>
+<div class="panel">
+
+  <div class="head">
+    <div class="kicker">Commune · Nord</div>
+    <h1>Saint-Denis</h1>
+    <div class="sub">97411 · CINOR · 24 communes comparables</div>
+    <div class="band">
+      <div><b>Cadastre</b><span>Parcelles</span></div>
+      <div><b>INSEE 2023</b><span>Habitants</span></div>
+      <div><b>SITADEL</b><span>Permis / an</span></div>
+      <div><b>DVF</b><span>Prix ancien €/m²</span></div>
+      <div><b>DVF</b><span>Tendance 12 mois</span></div>
+      <div><b>GPU · Sudocuh</b><span>PLU — état</span></div>
+    </div>
+    <div class="raccourcis">
+      <div>PLU <span>règlement, destinations</span></div>
+      <div>Communes <span>les 24 en chiffres</span></div>
+      <div>Étude de zone <span>autour d'un point</span></div>
+    </div>
+    <div class="note">Six chiffres en 3 × 3, puis les trois outils qui partent de la commune.</div>
+  </div>
+
+  <div id="cards"></div>
+
+  <div class="decision" style="border-style:solid;border-color:var(--mint);background:var(--mint-soft)">
+    <b>Validé le 20/09</b>
+    <ul class="plain">
+      <li>Bandeau : Parcelles · Habitants (INSEE 2023) · Permis/an · Prix ancien · Tendance 12 mois · État du PLU — en 3 × 3.</li>
+      <li>Trois raccourcis sous le bandeau : PLU, Communes, Étude de zone.</li>
+      <li>Cartes conditionnelles toujours présentes : elles disent « aucun quartier prioritaire », « hors ORT ». Jamais absentes.</li>
+      <li>Pas de rang comparatif.</li>
+      <li>Les 19 cartes actuelles sont réparties dans ces 10 par Claude Code au lot 5 — cette maquette fixe la cible.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+const S=[
+ {g:'Le territoire',cards:[
+  {t:'Identité',s:'intercommunalité, surface, IRIS',badge:'—',rows:[
+   ['Surface, altitude, façade littorale','BD TOPO · RGE ALTI'],
+   ['Intercommunalité, compétences (eau, assainissement, urbanisme)','CIREST / CINOR / TCO… · DT-DICT'],
+   ['Quartiers IRIS (liste, cliquables)','INSEE · IGN contours IRIS'],
+   ['Communes voisines','Admin Express IGN'],
+  ]},
+  {t:'Population et logement',s:'habitants, ménages, parc',badge:'RP2022',rows:[
+   ['Habitants, ménages, évolution','INSEE RP2022'],
+   ['Niveau de vie médian, taux de pauvreté','Filosofi INSEE'],
+   ['Parc de logements, vacance, résidences secondaires','INSEE RP Logement'],
+   ['Part de propriétaires / locataires, logés gratuitement','INSEE RP Logement'],
+   ['Parc social (logements RPLS), taux SRU, objectif','RPLS SDES · inventaire SRU DHUP'],
+   ['Copropriétés immatriculées','RNIC Anah'],
+  ]},
+ ]},
+ {g:'Le marché',cards:[
+  {t:'Prix',s:'ancien, neuf, terrain, loyers',badge:'DVF',rows:[
+   ['Prix médian ancien €/m² (maison, appartement)','DVF'],
+   ['Prix du neuf observé · VEFA à l\'acte','DVF'],
+   ['Prix du terrain nu (zone U / AU)','DVF · GPU'],
+   ['Tendance 12 mois et sur 3 ans','DVF'],
+   ['Loyer médian, plafonds','OLL ADIL · DHUP · zonage ABC'],
+  ]},
+  {t:'Activité',s:'mutations, offre, promoteurs',badge:'36 mois',rows:[
+   ['Mutations par an, dont terrains','DVF'],
+   ['Biens en vente, prix demandé, écart demandé/acté','Radar · DVF'],
+   ['Programmes neufs en commercialisation','Radar'],
+   ['Acquisitions par des personnes morales','DGFiP PM · BODACC'],
+  ],so:'« Pas d\'annonce repérée sur cette commune » — dit, jamais absent.'},
+ ]},
+ {g:'La construction',cards:[
+  {t:'Permis et rythme',s:'dépôts, autorisations, délais',badge:'SITADEL',rows:[
+   ['Permis déposés / autorisés par an, logements créés','SITADEL'],
+   ['Rythme d\'instruction (délai médian)','SITADEL'],
+   ['Permis dormants (autorisés, non commencés)','SITADEL'],
+   ['Coût de construction de référence €/m²','EPTB SDES'],
+  ]},
+  {t:'Foncier et rareté',s:'consommation, potentiel, ZAN',badge:'ZAN',rows:[
+   ['Consommation d\'espaces NAF, trajectoire ZAN','Cerema — portail artificialisation'],
+   ['Potentiel foncier identifié','Région Réunion'],
+   ['Friches recensées','Cartofriches Cerema'],
+   ['Part artificialisée, usage du sol','OCS GE IGN'],
+   ['Horizon foncier (années de stock au rythme actuel)','dérivé'],
+  ]},
+ ]},
+ {g:'Les règles',cards:[
+  {t:'Urbanisme',s:'PLU, procédures, calibrage',badge:'GPU',rows:[
+   ['Document opposable, date d\'approbation','GPU'],
+   ['Procédure en cours (révision, modification, stade)','Sudocuh'],
+   ['Zones du PLU et leur part du territoire','GPU'],
+   ['Règles calibrées : nombre de zones, règles validées','règlement PLU (citations)'],
+   ['PLH : objectifs de production','PLH des 5 EPCI'],
+   ['SAR : espaces et coupures','SAR Région'],
+  ],porte:['PLU — règlement et destinations','outil PLU']},
+  {t:'Fiscalité et dispositifs',s:'taxes, zonages',badge:'DGFiP',rows:[
+   ['Taxe foncière : TFPB, TFPNB, EPCI, TEOM','DGFiP REI'],
+   ['Taxe d\'aménagement : taux communal, départemental','DGFiP DELTA · délibérations'],
+   ['Zonage A/B/C','DHUP'],
+   ['ZFANG (régime), FRR ex-ZRR','Légifrance'],
+   ['ACV / PVD / ORT','DGALN'],
+   ['QPV, NPNRU (liste des quartiers)','ANCT · DEAL'],
+  ],so:'« Aucun quartier prioritaire », « hors ORT » — une ligne, jamais une carte absente.'},
+ ]},
+ {g:'Le cadre de vie',cards:[
+  {t:'Risques et contraintes',s:'part du territoire exposée',badge:'DEAL',rows:[
+   ['PPR : part du territoire en zone rouge / bleue','DEAL'],
+   ['AZI / TRI, arrêtés CatNat','Géorisques GASPAR'],
+   ['ICPE, sites pollués, SIS (compte)','Géorisques'],
+   ['Espaces protégés, parc national, ZNIEFF (part)','INPN · DEAL Carmen'],
+   ['50 pas géométriques, littoral','DEAL · Cerema'],
+   ['Bruit : classement sonore, PEB','Cerema ITT · DGAC'],
+  ]},
+  {t:'Équipements et desserte',s:'services, transport, réseaux',badge:'BPE',rows:[
+   ['Équipements par type (écoles, santé, commerces)','BPE INSEE'],
+   ['Transport public : réseaux, lignes, TCSP','GTFS PAN · OSM'],
+   ['Trafic routier (axes principaux)','Région Réunion — SIR'],
+   ['Fibre : part des locaux raccordables','Arcep'],
+   ['Assainissement : collectif / non collectif','INSEE RP2022 · SPANC'],
+   ['Productible solaire moyen','PVGIS'],
+  ],porte:['Étude de zone — habitants, emplois, concurrents','outil Étude de zone']},
+ ]},
+];
+let n=0;const root=document.getElementById('cards');
+S.forEach(g=>{
+  root.innerHTML+=`<div class="group">${g.g}</div>`;
+  g.cards.forEach(c=>{
+    let rows=c.rows.map(r=>{n++;return `<div class="row"><div class="l">${r[0]}</div><div class="s">${r[1]}</div><div class="v">—</div></div>`}).join('');
+    let so=c.so?`<div class="so"><b>Sans objet, dit</b>${c.so}</div>`:'';
+    let porte=c.porte?`<div class="porte"><div>${c.porte[0]}</div><span>→ ${c.porte[1]}</span></div>`:'';
+    root.innerHTML+=`<div class="card"><div class="card-head"><div class="ico">${c.t[0]}</div><div class="t"><b>${c.t}</b><span>${c.s}</span></div><div class="badge">${c.badge}</div><div class="chev">›</div></div><div class="card-body">${rows}${so}${porte}</div></div>`;
+  });
+});
+document.getElementById('count').textContent=`5 groupes · 10 cartes · ${n} lignes`;
+</script>
+</body>
+</html>

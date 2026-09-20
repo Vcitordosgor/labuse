@@ -1,0 +1,57 @@
+# COMMUNE-RANGEMENT-2 lot 5 — « La construction » : chaque ligne des cartes de la fiche commune,
+# déclarée avec sa CARTE (section). Modèle : declarations/fiche/. Libellé/définition = registre.
+surface:   fiche_commune_construction
+nom:       "La construction"
+categorie: fiche_commune
+parent:    fiche_commune
+route:     "/communes/{c}/contexte"
+rendu:     cartes
+donnees:
+  - quoi:  permis_12m_n
+    ou:    { rang: 10, etat: en_tete, section: "Permis et rythme" }
+    comment: { libelle: "Permis de la commune sur 12 mois", format: entier, i: "count sitadel_permits de la commune, fenêtre 12 mois, sans rayon (commune entière)" }
+    absence: "Permis de la commune sur 12 mois : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Les permis autorisés sur 12 mois : le rythme de production."
+  - quoi:  velocite_delai_median_mois
+    ou:    { rang: 20, etat: replie, section: "Permis et rythme" }
+    comment: { libelle: "Vélocité admin (délai médian dépôt→autorisation, mois)", format: entier, i: "percentile_cont(0.5) sur m10_permit_delais famille logements" }
+    absence: "Vélocité admin (délai médian dépôt→autorisation, mois) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le délai médian d'instruction : la vélocité administrative."
+  - quoi:  point_mort_n
+    ou:    { rang: 30, etat: replie, section: "Permis et rythme" }
+    comment: { libelle: "Permis au point mort", format: entier, i: "permis autorisés sans DOC/DAACT dans la fenêtre" }
+    absence: "Permis au point mort : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Les permis dormants (autorisés, non commencés) : le gisement latent."
+  - quoi:  n_parcelles_commune
+    ou:    { rang: 40, etat: replie, section: "Foncier et rareté" }
+    comment: { libelle: "N parcelles", format: entier, i: "count parcels par commune" }
+    absence: "N parcelles : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "L'assiette foncière : le nombre de parcelles de la commune."
+  - quoi:  stock_opportunites
+    ou:    { rang: 50, etat: replie, section: "Foncier et rareté" }
+    comment: { libelle: "Stock d'opportunités (brûlantes + chaudes)", format: entier, i: "count tiers brûlante+chaude au run servi, par insee" }
+    absence: "Stock d'opportunités (brûlantes + chaudes) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le stock d'opportunités repérées (brûlantes + chaudes)."
+  - quoi:  n_densifiables
+    ou:    { rang: 60, etat: replie, section: "Foncier et rareté" }
+    comment: { libelle: "Parcelles densifiables", format: entier, i: "count parcel_renouvellement au run servi" }
+    absence: "Parcelles densifiables : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Les parcelles densifiables : la capacité résiduelle."
+  - quoi:  zan_reste_ha
+    ou:    { rang: 70, etat: replie, section: "Foncier et rareté" }
+    comment: { libelle: "Enveloppe ZAN (reste)", format: entier, i: "enveloppe restante estimée depuis conso ENAF" }
+    absence: "Enveloppe ZAN (reste) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "L'enveloppe ZAN restante : le budget d'artificialisation."
+  - quoi:  zan_evolution_commune
+    ou:    { rang: 80, etat: replie, section: "Foncier et rareté" }
+    comment: { libelle: "Artificialisation 2017→2022 (OCS GE)", format: entier, i: "surface artificialisée entre les millésimes OCS GE 2017 et 2022, par commune — produit différentiel OFFICIEL IGN (flags artif du portail de l'artificialisation) ; la pression ZAN a" }
+    absence: "Artificialisation 2017→2022 (OCS GE) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "L'artificialisation récente (OCS GE) : la trajectoire ZAN."

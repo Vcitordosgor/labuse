@@ -27,7 +27,7 @@ import yaml
 _RACINE = pathlib.Path(__file__).resolve().parents[3]
 DECLARATIONS = _RACINE / "declarations"
 
-CATEGORIES = ("fiche", "outil", "couche", "radar", "document", "score", "cascade")
+CATEGORIES = ("fiche", "fiche_commune", "outil", "couche", "radar", "document", "score", "cascade")
 ETATS = ("en_tete", "replie", "sur_demande")
 FORMATS = ("entier", "entier_m2", "metre", "pourcent", "euro", "euro_m2", "degre",
            "classe", "texte", "liste", "date", "verdict")

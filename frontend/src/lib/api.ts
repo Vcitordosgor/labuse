@@ -224,11 +224,9 @@ export interface ContexteCommune {
     telephone: string | null; email: string | null; site_officiel: string | null
     url_annuaire: string | null; source: string; date_import: string | null
   } | null
-  // L1 (KF-2) — acquisitions PM récentes de la commune (changement de propriétaire moral d'un
-  // millésime au suivant, DGFiP). Constat, hors scoring. Maille = commune. null si commune sans INSEE.
-  // RETOURS-1 R3 : le bloc a QUITTÉ la fiche contexte (il vit dans Communes › Acquisitions récentes,
-  // via getCommuneAcquisitions) — le payload back reste servi (réversible), le front ne le rend plus.
-  acquisitions_pm: AcquisitionsPm | null
+  // COMMUNE-RANGEMENT-1 lot 3 — `acquisitions_pm` a été RETIRÉE du payload contexte (elle avait quitté
+  // la fiche en RETOURS-1 R3 → outil Communes « Acquisitions récentes », via getCommuneAcquisitions, et
+  // le back cessait de la calculer). Le type AcquisitionsPm reste servi par cet endpoint dédié.
   // M83 C1 — le foncier de la commune (points de calcul existants réutilisés)
   // OUTILS-6 C1 : repartition_zonage passe en parts de SURFACE (somme = 100 %, ha par famille) ;
   // stock_opportunites porte le stock foncier EN PARCELLES ET EN HA (même compte que le comparateur).
@@ -273,6 +271,10 @@ export interface ContexteCommune {
   }
   densifiables: { parcelles: number | null; sdp_residuelle_m2: number | null; source: string | null } | null
   loyer: { median_eur_m2: number; type: string | null; source: string } | null
+  // COMMUNE-RANGEMENT-1 lot 2 — parc social RPLS (SDES), fait communal. null = non ingéré.
+  parc_social: { logements: number; construct_median: number | null; millesime: string; source: string } | null
+  // COMMUNE-RANGEMENT-2 lot 2 — prix du neuf OBSERVÉ (commune), aux côtés du VEFA à l'acte. null = absent.
+  prix_neuf_observe: { eur_m2: number; niveau: string; n: number | null; source: string } | null
   // SOURCES-1 lot 1 — zonage A/B/C (DHUP, arrêté national) : passe-plat sourcé + daté. null = non ingéré.
   zonage_abc: { zone: string; millesime: string; source: string } | null
   // SOURCES-1 lot 5 — taux fonciers (REI) + ACV/PVD/ORT (Denormandie)

@@ -1,0 +1,33 @@
+# COMMUNE-RANGEMENT-2 lot 5 — « Le cadre de vie » : chaque ligne des cartes de la fiche commune,
+# déclarée avec sa CARTE (section). Modèle : declarations/fiche/. Libellé/définition = registre.
+surface:   fiche_commune_cadre_de_vie
+nom:       "Le cadre de vie"
+categorie: fiche_commune
+parent:    fiche_commune
+route:     "/communes/{c}/contexte"
+rendu:     cartes
+donnees:
+  - quoi:  ppr_pct
+    ou:    { rang: 10, etat: en_tete, section: "Risques et contraintes" }
+    comment: { libelle: "PPR (part des parcelles)", format: pourcent, i: "part des parcelles de la commune intersectant la couche ppr" }
+    absence: "PPR (part des parcelles) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "La part du territoire exposée à un risque (PPR) : la contrainte majeure."
+  - quoi:  catnat_n
+    ou:    { rang: 20, etat: replie, section: "Risques et contraintes" }
+    comment: { libelle: "Arrêtés CatNat", format: entier, i: "count catnat_arretes" }
+    absence: "Arrêtés CatNat : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le nombre d'arrêtés de catastrophe naturelle : l'historique du risque."
+  - quoi:  catnat_arretes_liste
+    ou:    { rang: 30, etat: replie, section: "Risques et contraintes" }
+    comment: { libelle: "Arrêtés CatNat (détail)", format: liste, i: "arrêtés CatNat de la commune détaillés : péril, dates de début/fin/arrêté, code national et date de publication au JO — 12 plus récents (le compte total reste catnat_n)" }
+    absence: "Arrêtés CatNat (détail) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le détail des arrêtés CatNat (péril, dates, code national)."
+  - quoi:  azi_tri_commune
+    ou:    { rang: 40, etat: replie, section: "Risques et contraintes" }
+    comment: { libelle: "AZI / TRI de la commune", format: liste, i: "atlas des zones inondables et TRI couvrant la commune (GASPAR : libellé, risques, date) — fait documentaire ; la géométrie d'aléa reste servie par georisque_alea" }
+    absence: "AZI / TRI de la commune : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Les documents inondation (AZI / TRI) couvrant la commune."
