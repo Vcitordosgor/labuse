@@ -14,6 +14,7 @@ from labuse.copilote_v2.router import Route
 @pytest.fixture(autouse=True)
 def _no_telemetrie(monkeypatch):
     monkeypatch.setattr(answering.telemetrie, "refus", lambda *a, **k: None)
+    monkeypatch.setattr(answering.telemetrie, "web", lambda *a, **k: None)   # lot 3 : voie b web
 
 
 def _force_route(monkeypatch, intent, *, nouveau_sujet=True, **params):
@@ -21,10 +22,20 @@ def _force_route(monkeypatch, intent, *, nouveau_sujet=True, **params):
                         lambda *a, **k: Route(intent, params=params, nouveau_sujet=nouveau_sujet))
 
 
-def _mock_general(monkeypatch, text="Le dispositif X est un mécanisme fiscal outre-mer."):
-    """core.complete renvoie `text` (une seule réponse suffit pour la voie b déterministe)."""
-    monkeypatch.setattr(answering.core, "complete",
-                        lambda *a, **k: SimpleNamespace(text=text, degraded=False, reason=None))
+def _mock_general(monkeypatch, text="Le dispositif X est un mécanisme fiscal outre-mer.",
+                  domaines=("service-public.fr",), ok=True):
+    """COPILOTE-2 lot 3 — le chemin WEB : la voie b passe DÉSORMAIS par la recherche web (jamais la
+    mémoire). On mocke l'OUTIL `recherche_web` (pas core.complete)."""
+    from labuse.copilote_v2.outils import ToolResult
+    from datetime import date
+
+    def _fake(db, *, question, history=None, mode="fait"):
+        if not ok:
+            return ToolResult("recherche_web", ok=False, refus="rien trouvé sur le web")
+        return ToolResult("recherche_web", ok=True, web=True,
+                          data={"reponse": text, "domaines": list(domaines), "date": date.today().isoformat()},
+                          source="web")
+    monkeypatch.setitem(answering.OUTILS, "recherche_web", _fake)
 
 
 # ───────────────────────── LE REPRO GIRARDIN (voie b + continuité) ─────────────────────────
@@ -91,11 +102,13 @@ def test_mise_en_doute_detection():
     assert not answering._est_mise_en_doute("combien de parcelles sûres à Saint-Paul avec un bon potentiel ?")
 
 
-# ───────────────────────── HORS-DOMAINE (1 phrase) ─────────────────────────
-def test_hors_domaine_une_phrase(monkeypatch):
-    """Le modèle répond « HORS_DOMAINE » (cuisine) → refus d'UNE phrase, jamais badgé general."""
-    _mock_general(monkeypatch, "HORS_DOMAINE")
-    r = answering._general(None, "fais-moi une recette de rougail saucisse")
+# ───────────────────────── HORS-DOMAINE (traité en amont par le routeur) ─────────────────────────
+def test_hors_domaine_refus(monkeypatch):
+    """COPILOTE-2 — le hors-domaine (cuisine/météo) est traité par le ROUTEUR (HORS_SUJET), pas par la
+    voie b : refus d'une phrase, jamais un web bancal ni un badge general. « Une question hors des trois :
+    le Copilote le dit »."""
+    _force_route(monkeypatch, "HORS_SUJET")
+    r = answering.answer(None, "fais-moi une recette de rougail saucisse")
     assert r.get("refus") == "hors_sujet" and not r.get("general")
     assert r["text"].count(".") <= 2                     # une phrase
 

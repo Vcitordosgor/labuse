@@ -565,8 +565,8 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         idu_fiche = (contexte or {}).get("idu") or _idu_dans(message)
         if idu_fiche:
             m = _fold_py(message.lower())
-            if any(k in m for k in _RESUME_KW) or (not any(k in m for k in _ACTION_KW)
-                                                   and _quel_champ_fiche(message)):
+            if any(k in m for k in _RESUME_FICHE_KW) or (not any(k in m for k in _ACTION_KW)
+                                                         and _quel_champ_fiche(message)):
                 rep = _chemin_fiche(db, message, {"idu": idu_fiche}, contexte)
                 if rep is not None:
                     rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_fiche}, "voie": prior_voie}
@@ -789,27 +789,32 @@ def garde_generale_sans_chiffre(txt: str) -> tuple[str, int]:
 
 
 def _general(db: Session, message: str, history: list[dict] | None = None) -> dict:
-    """VOIE B (COPILOTE-REFONTE) — connaissance générale foncier/fiscalité/urbanisme/vocabulaire.
-    Portée dans le FIL (l'historique résout l'anaphore « elle »). Réponse COURTE, honnête sur l'état
-    du droit, badgée `voie="generale"` (le front l'annonce « Réponse générale — hors données LABUSE »).
-    Hors-domaine (cuisine/météo) → refus d'UNE phrase. JAMAIS un chiffre LABUSE inventé —
-    garde formelle `garde_generale_sans_chiffre` (CIRCUIT-1 lot 2.6) appliquée à toute réponse."""
+    """LE CHEMIN WEB (COPILOTE-2 lot 3) — une question de CONNAISSANCE (notion, loi, dispositif,
+    vocabulaire) passe DÉSORMAIS par une RECHERCHE WEB OBLIGATOIRE, JAMAIS par la mémoire du modèle.
+    Chaque affirmation porte sa source ; le contexte DOM (Pinel outre-mer, TVA 8,5 %, ZFANG) est injecté
+    (outils.WEB_CONNAISSANCE_SYSTEM). Sans source fiable → « je n'ai pas trouvé de source fiable » (jamais
+    une réponse de mémoire). Badge `general=True` (surface IA mauve, « hors données LABUSE ») + `web=True`
+    + « Source : web · domaine · consulté le … ». Portée dans le FIL (l'historique résout l'anaphore)."""
+    from datetime import date as _date
+
     hist = [{"role": str(m.get("role", "user")), "content": str(m.get("content", ""))[:600]}
             for m in (history or [])[-4:]]
-    out = core.complete(db, kind="copilote-general", model=core.model_for("copilote-general"), max_tokens=300,
-                        system=GENERAL_SYSTEM, history=hist, context={"question": message})
-    if out.degraded:
-        return _reply(erreur_infra(), "EXPLIQUER", degraded=True)
-    txt = (out.text or "").strip()
-    if not txt or txt.upper().startswith("HORS_DOMAINE"):
-        telemetrie.refus(db, "hors_domaine", message, "EXPLIQUER")
-        return _reply(HORS_SUJET, "HORS_SUJET", refus="hors_sujet")
-    # CIRCUIT-1 lot 2.6 — garde formelle : aucun chiffre précis hors outil ne sort de la voie B.
-    txt, _n_retires = garde_generale_sans_chiffre(txt)
-    # `general=True` = le discriminant servi au front (badge « Réponse générale — hors données LABUSE »
-    # + surface IA assumée) ; `tool="general"` reste pour la télémétrie. La promesse « sourcée/datée » de
-    # l'en-tête ne vaut QUE pour la voie a. NB : distinct du champ `voie` (objet de NAVIGATION des refus).
-    return _reply(txt, "EXPLIQUER", general=True, tool="general")
+    res = OUTILS["recherche_web"](db, question=message, history=hist, mode="connaissance")
+    if not res.ok:
+        # clé absente / recherche échouée → erreur infra honnête (pas de mémoire). Rien trouvé → refus honnête.
+        if (res.refus or "").startswith(("recherche web indispon", "recherche web échou")):
+            return _reply(erreur_infra(), "EXPLIQUER", degraded=True)
+        telemetrie.refus(db, "web_rien_trouve", message, "EXPLIQUER")
+        return _reply("Je n'ai pas trouvé de source fiable sur le web pour cette question — je ne "
+                      "réponds pas de mémoire. Reformulez-la, ou posez-la sur les données LABUSE.",
+                      "EXPLIQUER", refus="web_rien_trouve", general=True)
+    telemetrie.web(db, message, res.data.get("domaines", []))
+    d = res.data
+    # garde formelle 2.6 : même sur une réponse web, aucun chiffre-donnée hors fourchette non sourcé.
+    txt, _n = garde_generale_sans_chiffre(d["reponse"])
+    marque = f"Source : web · {d['domaines'][0]} · consulté le {d['date']}"
+    return _reply(f"{txt}\n\n{marque}", "EXPLIQUER", general=True, web=True, tool="general",
+                  sources=d["domaines"])
 
 
 # COPILOTE-REFONTE — helpers de conversation (continuité de voie + tenue de position).
@@ -1616,7 +1621,7 @@ def _match_concept(message: str):
 # « Dis-moi tout sur X » → le résumé complet ; « qui est le propriétaire / quel taux de TA » → la
 # LIGNE DÉCLARÉE et son id (plus de champ jeté par l'outil, COPILOTE-AUDIT-1). Le modèle ne calcule
 # ni ne choisit aucun chiffre ; en mode dégradé le résumé se sert SANS lui.
-_RESUME_KW = ("dis-moi tout", "dis moi tout", "dis moi ce que", "tout sur", "tout ce que tu sais",
+_RESUME_FICHE_KW = ("dis-moi tout", "dis moi tout", "dis moi ce que", "tout sur", "tout ce que tu sais",
               "resume", "résumé", "synthese", "synthèse", "parle-moi", "parle moi", "presente",
               "présente", "que sais-tu", "que sais tu", "analyse cette", "analyse la parcelle",
               "fiche de", "fiche complete", "fais le point", "donne-moi la fiche", "brief")
@@ -1646,7 +1651,7 @@ def _chemin_fiche(db: Session, message: str, params: dict, contexte: dict | None
     from . import resume_fiche as RF
     idu = params.get("idu") or (contexte or {}).get("idu")
     m = _fold_py(message.lower())
-    veut_resume = any(k in m for k in _RESUME_KW)
+    veut_resume = any(k in m for k in _RESUME_FICHE_KW)
     action = any(k in m for k in _ACTION_KW)
     if idu:
         # (1) une question de champ précis (propriétaire, taxe, zone, risques, pente…) — sauf action.

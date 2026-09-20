@@ -436,27 +436,50 @@ def _marche_valeur_primaire(v) -> float | int | None:
 
 
 # ───────────────────────── recherche_web (M78-ter) ─────────────────────────
+# COPILOTE-2 lot 3 — LE CONTEXTE DOM, injecté dans TOUTE réponse de connaissance : La Réunion est un
+# département d'outre-mer, ses dispositifs et sa fiscalité PRÉVALENT sur la métropole. Sans ça, le web
+# ramène le régime métropolitain (mauvais taux, mauvais dispositif).
+_DOM = ("CONTEXTE — La Réunion est un DÉPARTEMENT D'OUTRE-MER (DOM) : les dispositifs et la fiscalité "
+        "OUTRE-MER PRÉVALENT sur ceux de la métropole. En particulier : défiscalisation Pinel OUTRE-MER "
+        "et Girardin (pas le Pinel métropolitain) ; TVA à 8,5 % (pas 20 %) ; ZFANG (zones franches "
+        "d'activité nouvelle génération) ; zonage A/B/C spécifique DOM. Ne réponds JAMAIS avec le régime "
+        "métropolitain quand un régime DOM existe — cite le régime DOM.")
+
 WEB_SYSTEM = """Tu es le copilote foncier de LABUSE (La Réunion). Réponds à la question EN FRANÇAIS en
 t'appuyant sur la recherche web. N'invente RIEN : chaque fait vient d'une source web trouvée. Si les
 sources DIVERGENT ou sont faibles, dis-le (« Les sources divergent — à vérifier »). Tu ne réponds QUE sur
 l'immobilier, le foncier, l'urbanisme, les collectivités et leurs acteurs à La Réunion.
+""" + _DOM + """
 FORMAT (M117 · D5) — STRICT : UNE phrase, le FAIT PRINCIPAL SEUL, ~150 caractères MAXIMUM. INTERDIT :
 phrase d'introduction, reformulation de la question, ET tout détail secondaire (pourcentage, score,
 date d'élection, prédécesseur, nombre de voix) SAUF s'il EST la question posée. Ne cite pas d'URL (le
 serveur ajoute la source). Exemple attendu, à imiter EXACTEMENT : « Le maire de Saint-Denis est Ericka
 Bareigts. »"""
 
+# COPILOTE-2 lot 3 — LE CHEMIN WEB de CONNAISSANCE (notion, loi, dispositif) : recherche web OBLIGATOIRE
+# avant toute réponse, DOM injecté, 2 à 4 phrases (une notion se définit), chaque affirmation portée par
+# une source. Sans source → refus honnête (jamais une réponse de mémoire) — géré côté tool (pas de citation
+# → ok=False). Le modèle ne raisonne pas « de tête » : il résume des pages trouvées.
+WEB_CONNAISSANCE_SYSTEM = """Tu es le copilote foncier de LABUSE (La Réunion). On te pose une question de
+CONNAISSANCE (une notion, une loi, un dispositif, une définition d'urbanisme/fiscalité). Réponds EN
+FRANÇAIS UNIQUEMENT à partir de la RECHERCHE WEB — jamais de mémoire. Chaque affirmation vient d'une
+source trouvée ; si tu n'as pas de source fiable, ne réponds PAS (le serveur dira « pas de source »).
+""" + _DOM + """
+FORMAT : 2 à 4 phrases, claires et concrètes, orientées La Réunion / outre-mer. Donne la définition ou le
+principe, l'état du droit s'il est établi par une source (sinon dis l'incertitude), et renvoie au besoin
+au BOFiP / à un notaire. Ne cite pas d'URL (le serveur ajoute la source). Pas d'introduction."""
 
-def _deux_phrases(texte: str, max_car: int = 180) -> str:
-    """M117 · D5 — garde-fou DÉTERMINISTE de la brièveté web : au plus DEUX phrases, ~180 car. Le
-    prompt ne suffit pas (le modèle sur-produit) ; on tronque à une frontière de phrase, sinon de
-    clause, sinon net avec une ellipse. Jamais couper un mot en deux."""
+
+def _deux_phrases(texte: str, max_car: int = 180, max_phrases: int = 2) -> str:
+    """M117 · D5 — garde-fou DÉTERMINISTE de la brièveté web : au plus `max_phrases` phrases (2 pour un
+    fait, 4 pour une notion — COPILOTE-2 lot 3), ~max_car. Le prompt ne suffit pas (le modèle
+    sur-produit) ; on tronque à une frontière de phrase, sinon de clause, sinon net avec une ellipse."""
     import re
     texte = " ".join((texte or "").split())
     phrases = [p for p in re.split(r"(?<=[.!?])\s+", texte) if p.strip()]
     out = ""
     for i, p in enumerate(phrases):
-        if i >= 2:
+        if i >= max_phrases:
             break
         cand = (out + " " + p).strip() if out else p
         if out and len(cand) > max_car:
@@ -471,13 +494,17 @@ def _deux_phrases(texte: str, max_car: int = 180) -> str:
     return out.strip()
 
 
-def recherche_web(db: Session, *, question: str, history: list[dict] | None = None) -> ToolResult:
-    """M78-ter — répondre au-delà de la base pour du PUBLIC hors base (élus, organigrammes, actualité
-    réglementaire…) via la recherche web NATIVE de l'API Anthropic (pas de scraping maison). Marqué web,
-    jamais Sourcé/Estimé. La hiérarchie (base d'abord) est gérée par l'aiguillage en amont.
+def recherche_web(db: Session, *, question: str, history: list[dict] | None = None,
+                  mode: str = "fait") -> ToolResult:
+    """M78-ter — répondre au-delà de la base via la recherche web NATIVE de l'API Anthropic (pas de
+    scraping maison). Marqué web, jamais Sourcé/Estimé. La hiérarchie (base d'abord) est gérée par
+    l'aiguillage en amont.
 
-    M117 · D9 — `history` (fil du chip web) : les derniers tours sont passés au modèle pour résoudre
-    un enchaînement (« et à Saint-Pierre ? »). Le modèle résout la référence ; il ne SOMME pas."""
+    COPILOTE-2 lot 3 — `mode` : « fait » (un fait public : élu, organigramme, actualité — 1 phrase) ou
+    « connaissance » (une NOTION/loi/dispositif — 2 à 4 phrases, contexte DOM injecté). Dans les DEUX cas
+    la recherche web est OBLIGATOIRE et l'absence de citation → ok=False (jamais une réponse de mémoire).
+
+    M117 · D9 — `history` (fil) : les derniers tours résolvent un enchaînement (« et à Saint-Pierre ? »)."""
     import urllib.parse as up
     from datetime import date
 
@@ -489,9 +516,11 @@ def recherche_web(db: Session, *, question: str, history: list[dict] | None = No
     msgs = [{"role": str(m.get("role", "user")), "content": str(m.get("content", ""))[:600]}
             for m in (history or [])[-4:] if m.get("content")] + [{"role": "user", "content": question}]
     web_model = core.model_for("copilote-web")   # RETOURS-7 Z7 — modèle par usage (registre unique)
+    connaissance = mode == "connaissance"
+    systeme = WEB_CONNAISSANCE_SYSTEM if connaissance else WEB_SYSTEM
     try:
         msg = client.messages.create(
-            model=web_model, max_tokens=300, system=WEB_SYSTEM,
+            model=web_model, max_tokens=400 if connaissance else 300, system=systeme,
             tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}],
             messages=msgs)
     except Exception:
@@ -513,8 +542,10 @@ def recherche_web(db: Session, *, question: str, history: list[dict] | None = No
         pass
     if not texte.strip() or not domaines:
         return ToolResult("recherche_web", ok=False, refus="rien trouvé sur le web")
+    # une notion se dit en 2-4 phrases (~600 car.) ; un fait en 1-2 phrases (~180). Jamais un pavé.
+    rendu = _deux_phrases(texte, max_car=600, max_phrases=4) if connaissance else _deux_phrases(texte)
     return ToolResult("recherche_web", ok=True, web=True, valeur=None,
-                      data={"reponse": _deux_phrases(texte), "domaines": domaines[:3], "date": date.today().isoformat()},
+                      data={"reponse": rendu, "domaines": domaines[:3], "date": date.today().isoformat()},
                       source="web")
 
 
