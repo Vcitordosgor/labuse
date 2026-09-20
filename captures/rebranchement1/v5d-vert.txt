@@ -1,0 +1,1 @@
+verdict: ok | 66 données maille parcelle servies sur la fiche, toutes déclarées avec une section · 63 lignes du Dossier miroir, toutes déclarées

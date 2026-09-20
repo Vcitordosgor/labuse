@@ -406,6 +406,7 @@ def _ligne_tr(cid: str, cle: str, valeur_html: str, chip_html: str) -> str:
 #: valeur COURTE d'une tuile pour les ids structurés de l'en-tête (jamais un dict imprimé).
 _TUILE_FMT = {
     "tfpb_taux_pct": lambda v: fmt_pct(v["tfpb_commune_pct"], 2) if isinstance(v, dict) else fmt_pct(v, 2),
+    "rang_tier": lambda v: f"{groupe(v['rang'])} / {groupe(v['total'])}" if v.get("total") else groupe(v["rang"]),
 }
 
 
