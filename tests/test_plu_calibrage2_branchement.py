@@ -7,7 +7,7 @@ branchent aucune hauteur (l'étape reste ESTIMÉ)."""
 from __future__ import annotations
 
 from labuse.api.modules import _faisa_step_prov
-from labuse.faisabilite import plu_rules as PR
+from labuse.faisabilite import zonage as PR
 from labuse.faisabilite.engine import Hypotheses, estimate_capacity
 
 

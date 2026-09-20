@@ -13,7 +13,7 @@ Cascade de coût (arbitrage Vic, revue plafond M26-A) :
 
 Le filtre géométrique n'écarte une parcelle QUE si son majorant de SDP — emprise insetée
 du recul × niveaux(hé) × coef_occupation, valeurs lues AUX MÊMES SOURCES que le moteur
-(plu_rules.resolve_zone + Hypotheses.charger, jamais dupliquées) — reste sous la cible
+(zonage.resolve_zone + Hypotheses.charger, jamais dupliquées) — reste sous la cible
 moins la marge d'arrondi. Preuve 0 faux négatif : vérité terrain complète Saint-Paul
 (3 852 retenues), Bras-Panon, Le Port (rapport §9-bis).
 """
@@ -175,14 +175,14 @@ def criblage(db: Session, brief: dict, dossier: Dossier) -> StepResult:
 # ── filtre_geometrique — majorant de SDP prouvablement conservateur (SQL) ───────────────
 def _regles_filtre(commune: str, zone_libs: set[str]) -> tuple[dict, str]:
     """zone_lib → (niveaux majorants, recul) depuis LES MÊMES SOURCES que le moteur :
-    plu_rules.resolve_zone (YAML calibré ou repli générique) + Hypotheses.charger().
+    zonage.resolve_zone (YAML calibré ou repli générique) + Hypotheses.charger().
     Renvoie aussi le mode de calibrage de la commune (article_plu | regle_generique).
     Zone sans plafond exploitable (à_vérifier…) → absente du mapping → NON filtrée."""
     from ..faisabilite.engine import Hypotheses
-    from ..faisabilite.plu_rules import _calibrated_yaml, resolve_zone
+    from ..faisabilite.zonage import est_outillee, resolve_zone
 
     hyp = Hypotheses.charger()
-    calibree = _calibrated_yaml(commune) is not None
+    calibree = est_outillee(commune)
     regles: dict[str, tuple[int, float]] = {}
     for lib in zone_libs:
         r = resolve_zone(lib, commune)

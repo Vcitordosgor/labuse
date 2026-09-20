@@ -21,7 +21,10 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from labuse.db import session_scope                       # noqa: E402
 from sqlalchemy import text                               # noqa: E402
-import labuse.faisabilite.plu_rules as PR                 # noqa: E402
+try:                                                      # avant lot 3 : l'ancien système existe
+    import labuse.faisabilite.plu_rules as PR             # noqa: E402
+except ModuleNotFoundError:                               # après bascule : plu_rules supprimé
+    import labuse.faisabilite.zonage as PR                # noqa: E402  (« ancien » = nouveau → --apres)
 import labuse.faisabilite.au_statut as AU                 # noqa: E402
 from labuse.faisabilite.zonage import resolve_zone_v2     # noqa: E402
 from labuse.faisabilite import db as FDB                  # noqa: E402

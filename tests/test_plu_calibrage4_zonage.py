@@ -8,7 +8,7 @@ from labuse.faisabilite.zonage import resolve_zone_v2, hypotheses_faisabilite_v2
 
 
 # ── repli générique (_zone_generique) — vit dans zonage._resolve_v2_base (réutilise
-#    plu_rules._zone_generique) ────────────────────────────────────────────────────────────────
+#    zonage._zone_generique) ────────────────────────────────────────────────────────────────
 def test_generique_progressif_zone_inconnue():
     """Commune progressive + zone U inconnue → estimation générique (calibree=False, constructible)."""
     r = resolve_zone_v2("Uzzz999", "97401")   # Les Avirons (progressif), code U hors calibrage

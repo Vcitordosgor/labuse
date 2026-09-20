@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from labuse.faisabilite.engine import HE_DEFAUT_GENERIQUE_M, Hypotheses
-from labuse.faisabilite.plu_rules import _hypotheses_faisabilite, _zone_generique
+from labuse.faisabilite.zonage import hypotheses_faisabilite, _zone_generique
 from labuse.faisabilite.bilan import compute_bilan, _fiabilite_prix_neuf
 from labuse.radar import _parse_date_amont
 
@@ -21,12 +21,12 @@ def test_yaml_communal_effectivement_lu():
     assert Hypotheses.charger("Saint-Paul").mixite_source_ref == "Art. 2 règlement PLU"
     assert Hypotheses.charger("Saint-Denis").mixite_source_ref is None
     # la section existe bien et est non vide pour une commune outillée
-    assert _hypotheses_faisabilite("Le Tampon"), "section hypotheses_faisabilite du Tampon vide ?"
+    assert hypotheses_faisabilite("Le Tampon"), "section hypotheses_faisabilite du Tampon vide ?"
 
 
 def test_repli_defauts_dataclass_pas_saint_paul():
     """Validation #3 : commune SANS YAML → défauts du DATACLASS, jamais Saint-Paul."""
-    assert _hypotheses_faisabilite("Communefictive") == {}
+    assert hypotheses_faisabilite("Communefictive") == {}
     h, d = Hypotheses.charger("Communefictive"), Hypotheses()
     assert h.mixite_source_ref is None                      # jamais l'Art. 2 emprunté
     assert h.pct_lls == d.pct_lls == 0.0                    # pas le 30 % de Saint-Paul

@@ -41,7 +41,7 @@ def surelevation(session: Session, parcel_id: int, rules=None,
     possible=None quand une des deux hauteurs manque (jamais un faux « non »)."""
     if rules is None or ctx is None:
         from .db import parcel_context
-        from .plu_rules import resolve_zone
+        from .zonage import resolve_zone
         ctx = ctx or parcel_context(session, parcel_id)
         if ctx is None or not ctx.zone:
             return {"possible": None, "marge_m": None, "base": None,
@@ -134,7 +134,7 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
       densité et stationnement — 3.3).
     None si la parcelle est inconnue."""
     from .db import parcel_faisabilite
-    from .plu_rules import resolve_zone
+    from .zonage import resolve_zone
     from .zone_servie import garde_sdp_residuelle
     fz = fz or parcel_faisabilite(session, parcel_id)
     ctx = fz[0] if fz else None

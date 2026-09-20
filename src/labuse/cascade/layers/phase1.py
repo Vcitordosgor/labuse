@@ -305,7 +305,7 @@ class ZonagePluGpuLayer(Layer):
             return ((i.name or i.subtype) or "").strip()
 
         def _habitat_interdit(libelle: str) -> bool:
-            from ...faisabilite.plu_rules import resolve_zone
+            from ...faisabilite.zonage import resolve_zone
             r = resolve_zone(libelle, parcel.commune)
             return r is not None and r.calibree and r.habitat == "interdit"
 
@@ -313,7 +313,7 @@ class ZonagePluGpuLayer(Layer):
         eco_cov = min(1.0, sum(i.coverage for i in eco))
         if eco and eco_cov >= seuil:
             lib_eco = _zone_lib(_dominant(eco))
-            from ...faisabilite.plu_rules import resolve_zone
+            from ...faisabilite.zonage import resolve_zone
             r_eco = resolve_zone(lib_eco, parcel.commune)
             src_eco = (r_eco.raw.get("habitat_src") or "règlement de zone") if r_eco else "règlement de zone"
             return [hard_exclude(

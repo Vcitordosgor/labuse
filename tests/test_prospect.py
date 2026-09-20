@@ -62,7 +62,7 @@ def test_facade_largeur_multi_facades_prend_la_plus_large():
 # ═══════════ A3 : le hook moteur (gating prospect + non-régression) ═══════════
 from labuse.faisabilite import db as _fdb                           # noqa: E402
 from labuse.faisabilite.engine import Contraintes, estimate_capacity  # noqa: E402
-from labuse.faisabilite.plu_rules import ZoneRules, _has_usable_height  # noqa: E402
+from labuse.faisabilite.zonage import ZoneRules, _has_usable_height  # noqa: E402
 
 
 class _Row:

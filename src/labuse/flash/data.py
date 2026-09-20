@@ -204,7 +204,7 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
     if _zc:
         _cm = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
         try:
-            from ..faisabilite.plu_rules import resolve_zone
+            from ..faisabilite.zonage import resolve_zone
             _zr = resolve_zone(_zc, _cm) if _zc else None
         except Exception:  # noqa: BLE001
             _zr = None

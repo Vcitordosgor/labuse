@@ -803,8 +803,8 @@ def _emprise_max_sql(commune: str) -> str:
     (config/plu_<slug>.yaml, `emprise_sol_pct` chiffré, clé = libellé de zone) priment via un
     CASE sur zone_lib ; toute zone non calibrée retombe sur le plancher EMPRISE_RESTANTE_MAX."""
     try:
-        from ..faisabilite import plu_rules
-        rules = plu_rules.load_rules(commune)
+        from ..faisabilite import zonage
+        rules = zonage.load_rules(commune)
     except Exception:  # noqa: BLE001 — pas de PLU calibré lisible → plancher prudent partout
         rules = {}
     pairs = [(code, r.emprise_sol_pct) for code, r in sorted(rules.items())

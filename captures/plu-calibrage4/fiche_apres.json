@@ -1,0 +1,290 @@
+{
+ "97411000HV0175": {
+  "commune": "Saint-Denis",
+  "fourchette": {
+   "emprise_batie_max_m2": 810,
+   "emprise_constructible_m2": 1800,
+   "hauteur_etage_m": 3.0,
+   "hauteur_m": 15.0,
+   "logements_au_sol": [
+    40,
+    45
+   ],
+   "logements_sous_sol": [
+    40,
+    45
+   ],
+   "niveaux": "R+4",
+   "niveaux_max": 5,
+   "shab_vendable_m2": 3240,
+   "shab_vendable_silo_m2": 3240,
+   "stationnement_regime": "borne",
+   "surface_plancher_m2": 4050
+  },
+  "steps": [
+   {
+    "formule": "contour cadastral réel inseté du recul limites séparatives (4 m)",
+    "label": "Emprise au sol — reculs (géométrie réelle)",
+    "prov": "",
+    "source": "Art. Ui.7 · p.55 (PLU, calibrage validé) (séparatif) ; recul voirie en sus",
+    "valeur": "~2182 m²"
+   },
+   {
+    "formule": "min(reculs, 3000×60%)",
+    "label": "Emprise au sol — % réglementé",
+    "prov": "",
+    "source": "Art. Ui.9 · p.56 (PLU, calibrage validé)",
+    "valeur": "~1800 m²"
+   },
+   {
+    "formule": "hauteur d'égout non précisée → (hauteur faîtage 18−3) ÷ 3 = 5",
+    "label": "Niveaux constructibles",
+    "prov": "",
+    "source": "Art. Ui.10 · p.56 (PLU, calibrage validé)",
+    "valeur": "R+4"
+   },
+   {
+    "formule": "1800 m² × 45% (espaces entre bâtiments, accès…)",
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "prov": "",
+    "source": "hypothèse occupation",
+    "valeur": "~810 m²"
+   },
+   {
+    "formule": "810 m² × 5 niveaux",
+    "label": "Surface de plancher brute",
+    "prov": "",
+    "source": "dérivé occupation×hauteur",
+    "valeur": "~4050 m²"
+   },
+   {
+    "formule": "4050 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "label": "Surface habitable (rendement)",
+    "prov": "",
+    "source": "hypothèse rendement",
+    "valeur": "~3240 m²"
+   },
+   {
+    "formule": "0.30 ha × 150 logts/ha (30/niveau × 5)",
+    "label": "Logements — après plafond de densité (≤ 45 logts)",
+    "prov": "",
+    "source": "hypothèse densité (ex-COS)",
+    "valeur": "~40 à 45"
+   },
+   {
+    "formule": "sol restant = terrain 3000 − emprise bâtie 810 − pleine terre 0 = 2190 m² ; 1 pl./logt × 25 m² → ≤ 88 logts",
+    "label": "Stationnement — scénario au sol",
+    "prov": "",
+    "source": "Art. XVII. STATIONNEMENT · p.19 (PLU, calibrage validé)",
+    "valeur": "plafond au sol"
+   },
+   {
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "label": "Stationnement — scénario sous-sol/silo",
+    "prov": "",
+    "source": "Art. XVII. STATIONNEMENT · p.19 (PLU, calibrage validé)",
+    "valeur": "~40–45 logts"
+   },
+   {
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "label": "Logements retenus au sol",
+    "prov": "",
+    "source": "dérivé",
+    "valeur": "~40 à 45"
+   }
+  ],
+  "verdict": "R+4 · au sol ~40-45 / sous-sol ~40-45 logts"
+ },
+ "97416000EI1048": {
+  "commune": "Saint-Pierre",
+  "fourchette": {
+   "emprise_batie_max_m2": 809,
+   "emprise_constructible_m2": 1797,
+   "hauteur_etage_m": 3.0,
+   "hauteur_m": 15.0,
+   "logements_au_sol": [
+    40,
+    45
+   ],
+   "logements_sous_sol": [
+    40,
+    45
+   ],
+   "niveaux": "R+4",
+   "niveaux_max": 5,
+   "shab_vendable_m2": 3234,
+   "shab_vendable_silo_m2": 3234,
+   "stationnement_regime": "non_applique",
+   "surface_plancher_m2": 4043
+  },
+  "steps": [
+   {
+    "formule": "contour cadastral réel inseté du recul limites séparatives (3 m)",
+    "label": "Emprise au sol — reculs (géométrie réelle)",
+    "prov": "",
+    "source": "Art. Ud3.2 · p.82 (PLU, calibrage validé) (séparatif) ; recul voirie en sus",
+    "valeur": "~2367 m²"
+   },
+   {
+    "formule": "min(reculs, 2995×60%)",
+    "label": "Emprise au sol — % réglementé",
+    "prov": "",
+    "source": "Art. Ud3.4 · p.83 (PLU, calibrage validé)",
+    "valeur": "~1797 m²"
+   },
+   {
+    "formule": "emprise ≤ 2995×(1−20%) = 2396 m²",
+    "label": "Contrainte pleine terre",
+    "prov": "",
+    "source": "Art. 13",
+    "valeur": "~1797 m² retenu"
+   },
+   {
+    "formule": "hauteur d'égout retenue 15 m ÷ 3 m/niveau = 5 niveaux",
+    "label": "Niveaux constructibles",
+    "prov": "",
+    "source": "Art. Ud3.5 · p.84 (PLU, calibrage validé)",
+    "valeur": "R+4"
+   },
+   {
+    "formule": "1797 m² × 45% (espaces entre bâtiments, accès…)",
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "prov": "",
+    "source": "hypothèse occupation",
+    "valeur": "~809 m²"
+   },
+   {
+    "formule": "809 m² × 5 niveaux",
+    "label": "Surface de plancher brute",
+    "prov": "",
+    "source": "dérivé occupation×hauteur",
+    "valeur": "~4043 m²"
+   },
+   {
+    "formule": "4043 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "label": "Surface habitable (rendement)",
+    "prov": "",
+    "source": "hypothèse rendement",
+    "valeur": "~3234 m²"
+   },
+   {
+    "formule": "0.30 ha × 150 logts/ha (30/niveau × 5)",
+    "label": "Logements — après plafond de densité (≤ 45 logts)",
+    "prov": "",
+    "source": "hypothèse densité (ex-COS)",
+    "valeur": "~40 à 45"
+   },
+   {
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "label": "Logements retenus au sol",
+    "prov": "",
+    "source": "dérivé",
+    "valeur": "~40 à 45"
+   }
+  ],
+  "verdict": "R+4 · ~40 à 45 logts"
+ },
+ "97422000BW1034": {
+  "commune": "Le Tampon",
+  "fourchette": {
+   "emprise_batie_max_m2": 1067,
+   "emprise_constructible_m2": 2372,
+   "hauteur_etage_m": 3.0,
+   "hauteur_m": 15.0,
+   "logements_au_sol": [
+    44,
+    45
+   ],
+   "logements_sous_sol": [
+    44,
+    45
+   ],
+   "niveaux": "R+4",
+   "niveaux_max": 5,
+   "shab_vendable_m2": 3259,
+   "shab_vendable_silo_m2": 3259,
+   "stationnement_regime": "borne",
+   "surface_plancher_m2": 5337
+  },
+  "steps": [
+   {
+    "formule": "contour cadastral réel inseté du recul limites séparatives (3 m)",
+    "label": "Emprise au sol — reculs (géométrie réelle)",
+    "prov": "",
+    "source": "Art. Ua7.1 · p.16 (PLU, calibrage validé) (séparatif) ; recul voirie en sus",
+    "valeur": "~2372 m²"
+   },
+   {
+    "formule": "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
+    "label": "Emprise au sol — % réglementé",
+    "prov": "",
+    "source": "Art. 9",
+    "valeur": "—"
+   },
+   {
+    "formule": "emprise ≤ 2996×(1−20%) = 2397 m²",
+    "label": "Contrainte pleine terre",
+    "prov": "",
+    "source": "Art. 13",
+    "valeur": "~2372 m² retenu"
+   },
+   {
+    "formule": "hauteur d'égout retenue 16 m ÷ 3 m/niveau = 5 niveaux",
+    "label": "Niveaux constructibles",
+    "prov": "",
+    "source": "Art. Ua10.2 · p.18 (PLU, calibrage validé)",
+    "valeur": "R+4"
+   },
+   {
+    "formule": "2372 m² × 45% (espaces entre bâtiments, accès…)",
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "prov": "",
+    "source": "hypothèse occupation",
+    "valeur": "~1067 m²"
+   },
+   {
+    "formule": "1067 m² × 5 niveaux",
+    "label": "Surface de plancher brute",
+    "prov": "",
+    "source": "dérivé occupation×hauteur",
+    "valeur": "~5337 m²"
+   },
+   {
+    "formule": "5337 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "label": "Surface habitable (rendement)",
+    "prov": "",
+    "source": "hypothèse rendement",
+    "valeur": "~4269 m²"
+   },
+   {
+    "formule": "0.30 ha × 150 logts/ha (30/niveau × 5)",
+    "label": "Logements — après plafond de densité (≤ 45 logts)",
+    "prov": "",
+    "source": "hypothèse densité (ex-COS)",
+    "valeur": "~45 à 45"
+   },
+   {
+    "formule": "sol restant = terrain 2996 − emprise bâtie 1067 − pleine terre 599 = 1330 m² ; 1 pl./logt × 25 m² → ≤ 53 logts",
+    "label": "Stationnement — scénario au sol",
+    "prov": "",
+    "source": "Art. Ua12.2 · p.22 (PLU, calibrage validé)",
+    "valeur": "plafond au sol"
+   },
+   {
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "label": "Stationnement — scénario sous-sol/silo",
+    "prov": "",
+    "source": "Art. Ua12.2 · p.22 (PLU, calibrage validé)",
+    "valeur": "~45–45 logts"
+   },
+   {
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "label": "Logements retenus au sol",
+    "prov": "",
+    "source": "dérivé",
+    "valeur": "~44 à 45"
+   }
+  ],
+  "verdict": "R+4 · au sol ~44-45 / sous-sol ~44-45 logts"
+ }
+}

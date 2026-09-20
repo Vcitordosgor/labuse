@@ -15,13 +15,13 @@ import math
 import re
 from dataclasses import dataclass, field, replace
 
-from .plu_rules import A_VERIFIER, EXEMPT, NON_MODELISABLE, ZoneRules
+from .zonage import A_VERIFIER, EXEMPT, NON_MODELISABLE, ZoneRules
 
 SEUIL_EXIGU_M2 = 5.0  # en deçà, le contour inseté est considéré vidé → "trop exigu"
 
 # hé prudent (~R+2) des zones U/AU des communes NON outillées (config/plu_<commune>.yaml absent).
 # SOURCE UNIQUE du défaut générique (M-N P1-13) : partagée par le champ de dataclass ci-dessous ET
-# par plu_rules._zone_generique, pour que l'estimation d'une commune sans YAML ne LISE JAMAIS le
+# par zonage._zone_generique, pour que l'estimation d'une commune sans YAML ne LISE JAMAIS le
 # YAML Saint-Paul (emprunt à la commune la mieux calibrée = faux « générique »).
 HE_DEFAUT_GENERIQUE_M = 9.0
 
@@ -125,8 +125,8 @@ class Hypotheses:
           - commune SANS YAML → DÉFAUTS DU DATACLASS, JAMAIS Saint-Paul (plus d'emprunt silencieux
             des seuils/coûts de la commune la mieux calibrée).
         On mémorise la provenance des seuils de mixité (`mixite_source`) pour l'affichage."""
-        from .plu_rules import _hypotheses_faisabilite, _hypotheses_ile
-        h = _hypotheses_faisabilite(commune)
+        from .zonage import hypotheses_faisabilite, _hypotheses_ile
+        h = hypotheses_faisabilite(commune)
         out = cls()
         out.commune = commune
         # M-PLU-REF — BASE île-générique (source neutre `hypotheses_ile.yaml`), PUIS override commune

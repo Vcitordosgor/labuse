@@ -8,7 +8,7 @@ from __future__ import annotations
 from types import SimpleNamespace as NS
 
 from labuse.api import traducteur as t
-from labuse.faisabilite.plu_rules import A_VERIFIER
+from labuse.faisabilite.zonage import A_VERIFIER
 
 
 def _zr(**kw):

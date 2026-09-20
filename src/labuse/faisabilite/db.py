@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 
 from .. import config
 from .engine import Contraintes, Faisabilite, estimate_capacity
-from .plu_rules import resolve_zone
+from .zonage import resolve_zone
 
 _CTX = text("""
 SELECT p.idu, p.commune,

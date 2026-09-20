@@ -11,7 +11,6 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from . import config
 from . import runs  # run servi (point de vérité unique) — lu à la requête
 from .proprietaire_type import classify_owner_type
 
@@ -20,7 +19,8 @@ _INTERESSANT = ("opportunite", "a_creuser")
 
 
 def _params() -> dict:
-    h = (config.load_yaml_config("plu_saint_paul").get("hypotheses_faisabilite") or {})
+    from .faisabilite.zonage import hypotheses_faisabilite
+    h = hypotheses_faisabilite(None)     # défaut Saint-Paul (hypothèses migrées dans plu_zonage.yaml)
     return {
         "min_surface_m2": float(h.get("assemblage_min_surface_m2", 1000)),  # PLACEHOLDER
         "individuel_max_m2": float(h.get("assemblage_individuel_max_m2", 1000)),  # PLACEHOLDER

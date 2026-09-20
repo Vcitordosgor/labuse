@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 
-from .faisabilite.plu_rules import A_VERIFIER, _calibrated_yaml, _doc, resolve_zone
+from .faisabilite.zonage import A_VERIFIER, est_outillee, reglement_source, resolve_zone
 
 _GPU_CONSULT = "https://www.geoportail-urbanisme.gouv.fr/"
 
@@ -85,8 +85,7 @@ def resolve_reglement(commune: str | None, zone_code: str | None,
     """Référence règlement d'UNE zone. None si code de zone vide."""
     if not zone_code:
         return None
-    yaml_path = _calibrated_yaml(commune)
-    if yaml_path is None:
+    if not est_outillee(commune):
         # Commune non outillée : repli propre (pas de deep link fiable).
         return {
             "zone": zone_code,
@@ -101,10 +100,9 @@ def resolve_reglement(commune: str | None, zone_code: str | None,
                     + (f" Réf. document : {idurba}." if idurba else ""),
         }
 
-    doc = _doc(commune)
-    src = doc.get("source", {}) or {}
+    src = reglement_source(commune) or {}
     base_url = src.get("url")
-    offset = int(src.get("offset_pdf_vs_imprimee") or 0)
+    offset = int(src.get("offset") or 0)      # regles portent page_pdf (page PDF réelle) → 0
     rules = resolve_zone(zone_code, commune)
 
     articles = []

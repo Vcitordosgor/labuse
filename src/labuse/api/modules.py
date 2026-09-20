@@ -1977,7 +1977,7 @@ class ProgrammeIn(BaseModel):
 def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
     """SENS 2 (programme → parcelles) : critères CALCULÉS et AFFICHÉS → candidates triées par
     marge de capacité. La hauteur PLU est vérifiée zone par zone (resolve_zone) quand calibrée."""
-    from ..faisabilite.plu_rules import resolve_zone
+    from ..faisabilite.zonage import resolve_zone
 
     unites = max(1, body.batiments) * max(1, body.logements_par_batiment)
     # B.1 (+ arbitrage Vic) — besoin SDP = surface utile × coefficient utile→SDP ÉDITABLE (défaut 1,20),

@@ -30,7 +30,7 @@ import re
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from .plu_rules import resolve_zone
+from .zonage import resolve_zone
 from .constructibilite import (
     DECLASSE_AU_FERMEE, DECLASSE_AU_STATUT_INCONNU, AU_SOUS_PLANCHER,
 )

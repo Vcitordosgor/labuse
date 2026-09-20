@@ -105,7 +105,7 @@ _CDAC_SOUS_DESTINATIONS = {"artisanat_commerce_detail"}
 
 
 def _slug(commune: str) -> str:
-    """« Saint-Denis » → « saint_denis » (même convention que plu_rules)."""
+    """« Saint-Denis » → « saint_denis » (même convention que zonage)."""
     s = unicodedata.normalize("NFKD", commune).encode("ascii", "ignore").decode("ascii")
     return re.sub(r"[^A-Za-z0-9]+", "_", s).strip("_").lower()
 
@@ -130,6 +130,14 @@ def _fichier_commune(commune: str) -> Path | None:
 def _doc(commune: str) -> dict | None:
     p = _fichier_commune(commune)
     return _load_yaml(str(p)) if p else None
+
+
+def reglement_meta(commune: str) -> dict | None:
+    """Métadonnée `meta` du règlement de la commune (document, url, millésime, édition), ou None si
+    non calibrée. Point d'accès PUBLIC pour que les surfaces (fiche règlement) ne lisent jamais le
+    dossier de calibration directement."""
+    doc = _doc(commune)
+    return (doc.get("meta") or {}) if doc else None
 
 
 def _millesimes() -> dict:

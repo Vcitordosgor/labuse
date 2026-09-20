@@ -11,7 +11,7 @@ from sqlalchemy import text
 
 from labuse.faisabilite.db import volume3d_payload
 from labuse.faisabilite.engine import estimate_capacity
-from labuse.faisabilite.plu_rules import resolve_zone
+from labuse.faisabilite.zonage import resolve_zone
 
 # Parcelle ~30 m de côté, BIEN À L'INTÉRIEUR de la zone (lon 55.30→55.31, lat -21.00→-20.99).
 _PARC = ("POLYGON((55.3050 -20.9953,55.3053 -20.9953,55.3053 -20.9950,"
