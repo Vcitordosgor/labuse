@@ -2060,6 +2060,9 @@ def _rafraichir_partages(db: Session, commune: str, payload: dict) -> dict:
     """RETOURS-12 O8 — réinjecte dans le payload caché les indicateurs PARTAGÉS avec le comparateur,
     calculés LIVE (source unique raw_rows + commune_contexte_sru) → la fiche et le tableau ne peuvent
     plus diverger. Idempotent, sans effet sur les blocs statiques."""
+    # COMMUNE-RANGEMENT-1 lot 3 — un cache nocturne antérieur au lot transporte encore `acquisitions_pm`
+    # (retirée du calcul). On la retire aussi du payload caché : plus aucune fiche ne la transporte.
+    payload.pop("acquisitions_pm", None)
     try:
         from .fiche_commune import comparable as _comparable
         live = _comparable(db, commune)
@@ -2215,12 +2218,10 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
     # K2 — coordonnées de la mairie (Annuaire de l'administration). Champs absents = null → « Absent ».
     from ..ingestion.mairies import mairie_de
     mairie = mairie_de(db, commune)
-    # L1 (KF-2) — acquisitions PM récentes de la commune (changement de propriétaire moral d'un
-    # millésime au suivant, depuis 2022). Aperçu borné ; maille = COMMUNE ; constat, hors scoring.
-    acquisitions_pm = None
-    if _insee_c:
-        from ..proprietaire_historique import acquisitions_recentes
-        acquisitions_pm = acquisitions_recentes(db, _insee_c, depuis_millesime=2022, limit=8)
+    # COMMUNE-RANGEMENT-1 lot 3 — les acquisitions PM récentes ne sont PLUS calculées ici. Elles avaient
+    # quitté la fiche (RETOURS-1 R3 → outil Communes « Acquisitions récentes ») ; le payload continuait
+    # pourtant de les calculer (acquisitions_recentes, requête coûteuse) et de les transporter, sans qu'aucune
+    # carte ne les rende. Elles restent servies par l'endpoint dédié /communes/{c}/acquisitions-pm (ci-dessous).
     # OUTILS-6 (C2/C5/C6) — les blocs AJOUTÉS + les compteurs des passerelles, chacun servi depuis le
     # moteur de son outil d'origine (aucun recalcul, cf. fiche_commune). Le front les range en accordéons.
     from . import fiche_commune as _fc
@@ -2232,7 +2233,6 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
             "epci_nom": epci_cfg[epci]["nom"] if epci else None,
             "rnu": rnu,
             "mairie": mairie,                           # K2 — adresse/tél/e-mail/site + fraîcheur
-            "acquisitions_pm": acquisitions_pm,         # L1 KF-2 — acquisitions PM récentes (constat)
             "foncier": _foncier_commune(db, commune),   # M83 C1 — le foncier de la commune, EN TÊTE
             "comparable": blocs["comparable"],          # C2 — chiffres communs (identiques au comparateur)
             "marche_annonces": blocs["marche_annonces"],# C5 — Radar (annonces + écart demandé/acté)
