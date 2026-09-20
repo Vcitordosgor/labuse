@@ -47,6 +47,7 @@ class ZoneRules:
                                              # règlement (zones éco — M6 2b, A-03) ; None = admis
     calibree: bool = True                    # True = règles d'un YAML PLU communal ; False = estimation générique
     hauteur_mode: str | None = None          # 'prospect' = hf_m calculé PAR PARCELLE (L≥H, largeur voirie)
+    niveaux_max: int | None = None           # PLU-CALIBRAGE-2 : R+n LU au règlement (validé) → niveaux imposés
     notes: list[str] = field(default_factory=list)
     sources: dict[str, str] = field(default_factory=dict)
     raw: dict = field(default_factory=dict)
@@ -164,7 +165,124 @@ def _to_rules(code: str, v: dict) -> ZoneRules:
     )
 
 
+# ── PLU-CALIBRAGE-2 lot 1 — branchement du calcul sur les règles CHIFFRÉES VALIDÉES ──────────
+# Le calcul lit `resolve_zone`. On l'ENRICHIT ici, en UN point, des règles chiffrées calibrées et
+# VALIDÉES lues par `destinations.regles_zone` (mandat PLU-CALIBRAGE-1) : une feuille `valide`
+# impose sa valeur ET sa source (article + page → l'étape passe SOURCÉ) ; une feuille `absent`
+# (silence prouvé) fait dire à l'étape « pas de règle dans le PLU » ; `propose` ou non calibrée =
+# on ne touche à rien (l'étape reste ESTIMÉE, comme avant). Seules les communes dotées de règles
+# validées (aujourd'hui : Saint-Denis) sont concernées — ailleurs, IDENTITÉ stricte.
+from functools import lru_cache as _lru_cache
+
+_ABSENT_SENTINELLE = "pas de règle dans le PLU"
+
+
+def _art(leaf: dict) -> str:
+    """« Article Ud.7 » ou « Ud 10 » → « Art. Ud.7 » (jamais « Art. Article … »)."""
+    a = str(leaf.get("article") or "").strip()
+    a = re.sub(r"^\s*articles?\s+", "", a, flags=re.I)
+    return f"Art. {a}"
+
+
+def _src_validee(leaf: dict) -> str:
+    return f"{_art(leaf)} · p.{leaf.get('page_pdf')} (PLU, calibrage validé)"
+
+
+def _src_absente(leaf: dict) -> str:
+    return f"{_ABSENT_SENTINELLE} (silence prouvé — {_art(leaf)} · p.{leaf.get('page_pdf')})"
+
+
+@_lru_cache(maxsize=4096)
+def _calibrage_overlay(code: str, commune: str | None):
+    """Overrides (valeurs + sources) tirés des règles chiffrées VALIDÉES de la (commune, zone),
+    ou None si rien à appliquer. Ne considère QUE les feuilles `valide` / `absent` — jamais
+    `propose`. Mis en cache (le YAML ne change pas en cours de process)."""
+    if not commune:
+        return None
+    from ..plu import destinations as _D
+    reg = _D.regles_zone(commune, code)
+    if not reg:
+        return None
+    champs: dict = {}
+    src: dict[str, str] = {}
+
+    def _feuille(*chemin):
+        """La feuille (valeur OU silence prouvé) SEULEMENT si son statut est `valide` ; sinon
+        None (un `propose` ne branche jamais le calcul)."""
+        n = reg
+        for k in chemin:
+            n = n.get(k) if isinstance(n, dict) else None
+            if n is None:
+                return None
+        return n if (isinstance(n, dict) and n.get("statut") == "valide") else None
+
+    # hauteur : faîtage (hf), égout (he), niveaux (R+n imposé)
+    fait = _feuille("hauteur", "faitage")
+    ego = _feuille("hauteur", "egout")
+    niv = _feuille("hauteur", "niveaux")
+    if fait and not fait.get("absent") and isinstance(fait.get("m"), (int, float)):
+        champs["hf_m"] = float(fait["m"]); src["hauteur"] = _src_validee(fait)
+        champs["hauteur_mode"] = None      # une hauteur ABSOLUE validée prime sur le mode prospect
+    if ego and not ego.get("absent") and isinstance(ego.get("m"), (int, float)):
+        champs["he_m"] = float(ego["m"]); src.setdefault("hauteur", _src_validee(ego))
+    if niv and not niv.get("absent") and isinstance(niv.get("r_plus"), int):
+        champs["niveaux_max"] = int(niv["r_plus"]); src.setdefault("hauteur", _src_validee(niv))
+    for leaf in (fait, ego, niv):
+        if leaf and leaf.get("absent"):
+            src.setdefault("hauteur", _src_absente(leaf))
+
+    # emprise au sol (CES)
+    ces = _feuille("emprise_sol", "ces")
+    if ces and not ces.get("absent") and isinstance(ces.get("pct"), (int, float)):
+        champs["emprise_sol_pct"] = float(ces["pct"]); src["emprise"] = _src_validee(ces)
+    elif ces and ces.get("absent"):
+        src["emprise"] = _src_absente(ces)         # l'étape « % réglementé » le dira
+
+    # retraits : voie, limites séparatives (min_m — la formule est évaluée telle quelle par le moteur)
+    voie = _feuille("retraits", "voie")
+    lim = _feuille("retraits", "limites_separatives")
+    if voie and not voie.get("absent") and isinstance(voie.get("min_m"), (int, float)):
+        champs["recul_voirie_m"] = float(voie["min_m"]); src["recul_voirie"] = _src_validee(voie)
+    elif voie and voie.get("absent"):
+        src["recul_voirie"] = _src_absente(voie)
+    if lim and not lim.get("absent") and isinstance(lim.get("min_m"), (int, float)):
+        champs["recul_limites_sep_m"] = float(lim["min_m"]); src["recul_limites"] = _src_validee(lim)
+    elif lim and lim.get("absent"):
+        src["recul_limites"] = _src_absente(lim)
+
+    # stationnement (par logement)
+    st = _feuille("stationnement", "par_logement")
+    if st and not st.get("absent") and isinstance(st.get("places"), (int, float)):
+        p = st["places"]; p = int(p) if float(p).is_integer() else p
+        # format LISIBLE par ZoneRules.places_par_logement() (« N place[s] / logement »)
+        champs["stat_logement"] = f"{p} place / logement" if p == 1 else f"{p} places / logement"
+        src["stationnement"] = _src_validee(st)
+    elif st and st.get("absent"):
+        src["stationnement"] = _src_absente(st)
+
+    if not champs and not src:
+        return None
+    return champs, src
+
+
+def _appliquer_calibrage(rules: ZoneRules | None, code: str, commune: str | None) -> ZoneRules | None:
+    """Superpose les règles chiffrées validées à un ZoneRules (identité si rien à appliquer)."""
+    if rules is None:
+        return None
+    ov = _calibrage_overlay(code, commune)
+    if ov is None:
+        return rules
+    champs, src = ov
+    from dataclasses import replace as _replace
+    return _replace(rules, sources={**(rules.sources or {}), **src}, **champs)
+
+
 def resolve_zone(code: str, commune: str | None = None) -> ZoneRules | None:
+    """Résout le code de zone, PUIS superpose les règles chiffrées validées (PLU-CALIBRAGE-2)."""
+    return _appliquer_calibrage(_resolve_zone_base(code, commune), code, commune)
+
+
+def _resolve_zone_base(code: str, commune: str | None = None) -> ZoneRules | None:
     """Résout le code de zone en ZoneRules applicables.
 
     Priorité : (1) YAML PLU CALIBRÉ de la commune ; (2) fallback GÉNÉRIQUE estimé.

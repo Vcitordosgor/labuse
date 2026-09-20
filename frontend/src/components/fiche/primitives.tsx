@@ -366,6 +366,8 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
 function StepProv({ prov }: { prov?: string }) {
   const map: Record<string, [string, string]> = {
     sourcee: ['Sourcé', 's'], estimee: ['Estimé', 'e'], derive: ['Dérivé', 'd'],
+    // PLU-CALIBRAGE-2 : silence PROUVÉ du règlement (pas une hypothèse).
+    absent: ['Pas de règle PLU', 'a'],
   }
   const [label, cls] = map[prov ?? ''] ?? ['—', 'd']
   return <span className={`b ${cls}`}>{label}</span>

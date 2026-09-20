@@ -334,7 +334,14 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
 
     # ---- Niveaux (hé prioritaire) ----
     he_src = rules.sources.get("hauteur", "Art. 10")
-    if _is_num(rules.he_m):
+    if rules.niveaux_max is not None:
+        # PLU-CALIBRAGE-2 : R+n LU au règlement (feuille `niveaux` validée) — la valeur est
+        # utilisée telle quelle, jamais dérivée d'une hauteur (l'étape passe SOURCÉ).
+        niveaux = int(rules.niveaux_max) + 1
+        steps.append(Step("Niveaux constructibles",
+                          f"R+{int(rules.niveaux_max)} lu au règlement = {niveaux} niveaux",
+                          f"R+{int(rules.niveaux_max)}", he_src))
+    elif _is_num(rules.he_m):
         niveaux = int(float(rules.he_m) // hyp.etage_m)
         steps.append(Step("Niveaux constructibles",
                           f"hauteur d'égout retenue {rules.he_m:g} m ÷ {hyp.etage_m:g} m/niveau = {niveaux} niveaux",

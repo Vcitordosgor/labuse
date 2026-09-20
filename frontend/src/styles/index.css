@@ -550,6 +550,8 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .b.s { color:var(--mint); border-color:color-mix(in srgb, var(--mint) 45%, transparent); }
 .fiche-v6 .b.e { color:var(--amber); border-color:color-mix(in srgb, var(--amber) 50%, transparent); }
 .fiche-v6 .b.d { color:var(--txt-dim); border-color:var(--line-2); }
+/* PLU-CALIBRAGE-2 — « Pas de règle PLU » : silence prouvé du règlement (contour tireté). */
+.fiche-v6 .b.a { color:var(--txt-dim); border-color:color-mix(in srgb, var(--txt-dim) 45%, transparent); border-style:dashed; }
 .fiche-v6 .f-ref { font-family:var(--mono); font-size:11.5px; color:var(--mint); white-space:nowrap; }
 .fiche-v6 a.f-ref:hover { text-decoration:underline; }
 .fiche-v6 .f-ref:after { content:" ↗"; opacity:.7; }
