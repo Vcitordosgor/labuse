@@ -1,0 +1,38 @@
+{
+ "divergences": {
+  "Prix ancien médian €/m²": [],
+  "Prix neuf VEFA €/m²": [],
+  "Pression ZAN (ha, comparateur)": [
+   "Bras-Panon(None≠12.6)",
+   "Cilaos(None≠22.7)",
+   "Entre-Deux(None≠5.8)",
+   "L'Étang-Salé(None≠20.5)",
+   "La Plaine-des-Palmistes(None≠13.3)",
+   "La Possession(None≠16.7)",
+   "Le Port(None≠6.2)",
+   "Le Tampon(None≠66.5)",
+   "Les Avirons(None≠14.8)",
+   "Les Trois-Bassins(None≠20.5)",
+   "Petite-Île(None≠18.1)",
+   "Saint-André(None≠21.6)",
+   "Saint-Benoît(None≠14.3)",
+   "Saint-Denis(None≠82.4)",
+   "Saint-Joseph(None≠35.9)",
+   "Saint-Leu(None≠35.3)",
+   "Saint-Louis(None≠37.9)",
+   "Saint-Paul(None≠90.0)",
+   "Saint-Philippe(None≠12.3)",
+   "Saint-Pierre(None≠60.5)",
+   "Sainte-Marie(None≠17.3)",
+   "Sainte-Rose(None≠4.5)",
+   "Sainte-Suzanne(None≠20.0)",
+   "Salazie(None≠14.3)"
+  ],
+  "Permis 5 ans": [],
+  "Délai médian (mois)": [],
+  "Stock opportunités (n)": [],
+  "SRU statut": [],
+  "SRU déficit (pts)": [],
+  "Terrain nu €/m²": []
+ }
+}

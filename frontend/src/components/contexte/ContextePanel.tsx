@@ -353,6 +353,11 @@ export function ContextePanel() {
                 sous={r ? `${fmtV(r['reste_zan_ha'], ' ha')} restants · ${fmtV(r['rythme_conso_ha_an'], ' ha/an')}` : 'horizon non projetable'}
                 val={r?.['horizon_epuisement_ans'] != null ? `${fmtDec(r['horizon_epuisement_ans'])} ans` : null} ton="orange">
                 <div className="flex flex-col gap-0.5 text-[12px]">
+                  {/* COMMUNE-RANGEMENT-2 lot 1 — la CONSOMMATION NAF (budget ZAN déjà consommé, même source
+                      Cerema ENAF que la « pression ZAN » du comparateur) était transportée par motRarete
+                      (pct_budget_consomme, budget_zan_ha) mais jamais affichée : le comparateur la montrait,
+                      la fiche non. Servie ici — un seul chemin, une seule donnée. */}
+                  <RowT lbl="Consommation NAF (budget ZAN consommé)" val={r?.['pct_budget_consomme'] != null ? `${fmtDec(r['pct_budget_consomme'])} %${r?.['budget_zan_ha'] != null ? ` de ${fmtV(r['budget_zan_ha'], ' ha')}` : ''}` : '—'} />
                   <RowT lbl="Budget ZAN restant (estimé)" val={fmtV(r?.['reste_zan_ha'], ' ha')} />
                   <RowT lbl="Rythme de consommation" val={fmtV(r?.['rythme_conso_ha_an'], ' ha/an')} />
                   <RowT lbl="Horizon d'épuisement" val={r?.['horizon_epuisement_ans'] != null ? `${fmtDec(r['horizon_epuisement_ans'])} ans` : '—'} strong />
