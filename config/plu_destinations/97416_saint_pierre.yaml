@@ -19,6 +19,62 @@ meta:
     en note (50 pas géométriques, linéaires RDC Ucv, carrières).'
 zones:
   Ucv:
+    regles:
+      hauteur:
+        faitage:
+          m: 20.0
+          article: Ucv3.5
+          page_pdf: 65
+          citation: Les hauteurs des constructions nouvelles, sauf celles des équipements publics et des bâtiments
+            d’intérêts collectifs, doivent être comprises entre 9 m et 15 m à l’égout du toit ou au sommet
+            de l’acrotère, et elles doivent être de 20 m maximum au faîtage.
+          statut: valide
+        egout:
+          m: 15.0
+          article: Ucv3.5
+          page_pdf: 65
+          citation: Les hauteurs des constructions nouvelles, sauf celles des équipements publics et des bâtiments
+            d’intérêts collectifs, doivent être comprises entre 9 m et 15 m à l’égout du toit ou au sommet
+            de l’acrotère, et elles doivent être de 20 m maximum au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: Ucv3.4
+          page_pdf: 65
+          citation: L’emprise au sol des constructions est limitée à 70% de la superficie de l’unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 0.0
+          article: Ucv3.1
+          page_pdf: 63
+          citation: Les constructions nouvelles en premier rideau doivent être implantées à l’alignement.
+          statut: propose
+          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 3.0
+          article: Ucv3.2
+          page_pdf: 63
+          citation: Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives
+            soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: Ucv6
+          page_pdf: 72
+          citation: 1 place de stationnement par tranche de 75 m² de surface de plancher.
+          statut: propose
+          raison: stationnement non chiffrable par logement ('1 place par tranche de 75 m² de surface de plancher')
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ucv5.1
+          page_pdf: 70
+          citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 30 % minimum
+            avec au moins 20 % de la superficie de l’unité foncière en espace planté de pleine terre,
+          statut: valide
     silence: autorise
     silence_src: 'art. Ucv1, p. 60 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. Le règlement et
@@ -151,6 +207,62 @@ zones:
         page_pdf: 61
         citation: « Exploitation forestière X »
   Ud:
+    regles:
+      hauteur:
+        faitage:
+          m: 20.0
+          article: Ud3.5
+          page_pdf: 84
+          citation: Les hauteurs des constructions nouvelles, sauf celles des équipements publics et des bâtiments
+            d’intérêts collectifs, doivent être comprises entre 6 et 15 m à l’égout du toit ou au sommet de
+            l’acrotère et de 20 m maximum au faîtage.
+          statut: valide
+        egout:
+          m: 15.0
+          article: Ud3.5
+          page_pdf: 84
+          citation: Les hauteurs des constructions nouvelles, sauf celles des équipements publics et des bâtiments
+            d’intérêts collectifs, doivent être comprises entre 6 et 15 m à l’égout du toit ou au sommet de
+            l’acrotère et de 20 m maximum au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: Ud3.4
+          page_pdf: 83
+          citation: L’emprise au sol des constructions est limitée à 60% de la superficie de l’unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ud3.1
+          page_pdf: 81
+          citation: Les constructions nouvelles en premier rideau doivent être implantées à l’alignement ou
+            avec un recul minimal de 3 m.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ud3.2
+          page_pdf: 82
+          citation: Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives
+            soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: Ud6
+          page_pdf: 93
+          citation: 1 place de stationnement par tranche de 75 m² de surface de plancher.
+          statut: propose
+          raison: stationnement non chiffrable par logement ('1 place par tranche de 75 m² de surface de plancher')
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ud5.1
+          page_pdf: 91
+          citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 30 % minimum
+            avec au moins 20 % de la superficie de l’unité foncière en espace planté de pleine terre,
+          statut: valide
     silence: autorise
     silence_src: 'art. Ud1, p. 77 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. Le règlement et
@@ -289,6 +401,60 @@ zones:
         page_pdf: 79
         citation: « Exploitation forestière X X X »
   Udl:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: Ud3.5
+          page_pdf: 84
+          citation: Dans le secteur Udl, la hauteur des constructions nouvelles est limitée à 6 m à l’égout
+            du toit ou au sommet de l’acrotère et à 9 m au faîtage.
+          statut: valide
+        egout:
+          m: 6.0
+          article: Ud3.5
+          page_pdf: 84
+          citation: Dans le secteur Udl, la hauteur des constructions nouvelles est limitée à 6 m à l’égout
+            du toit ou au sommet de l’acrotère et à 9 m au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: Ud3.4
+          page_pdf: 83
+          citation: L’emprise au sol des constructions est limitée à 60% de la superficie de l’unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ud3.1
+          page_pdf: 81
+          citation: Les constructions nouvelles en premier rideau doivent être implantées à l’alignement ou
+            avec un recul minimal de 3 m.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ud3.2
+          page_pdf: 82
+          citation: Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives
+            soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: Ud6
+          page_pdf: 93
+          citation: 1 place de stationnement par tranche de 75 m² de surface de plancher.
+          statut: propose
+          raison: stationnement non chiffrable par logement ('1 place par tranche de 75 m² de surface de plancher')
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ud5.1
+          page_pdf: 91
+          citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 30 % minimum
+            avec au moins 20 % de la superficie de l’unité foncière en espace planté de pleine terre,
+          statut: valide
     silence: autorise
     silence_src: 'art. Ud1, p. 77 (le secteur Udl relève de la zone Ud, préambule p. 76 : « Elle comprend un secteur
       Udl, sur le littoral ») : « Tous les usages et affectations des sols, types d''activités et catégories de
@@ -420,6 +586,64 @@ zones:
         page_pdf: 79
         citation: « Exploitation forestière X X X »
   UdBO:
+    regles:
+      hauteur:
+        faitage:
+          m: 19.0
+          article: Ud3.5
+          page_pdf: 84
+          citation: 'En secteur UdBO : Les hauteurs des constructions nouvelles, sauf celles des équipements
+            publics et des bâtiments d’intérêts collectifs, doivent être comprises entre 8 et 16 m à l’égout
+            du toit ou au sommet de l’acrotère et entre 11 et 19 m maximum au faîtage.'
+          statut: valide
+        egout:
+          m: 16.0
+          article: Ud3.5
+          page_pdf: 84
+          citation: 'En secteur UdBO : Les hauteurs des constructions nouvelles, sauf celles des équipements
+            publics et des bâtiments d’intérêts collectifs, doivent être comprises entre 8 et 16 m à l’égout
+            du toit ou au sommet de l’acrotère et entre 11 et 19 m maximum au faîtage.'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 55.0
+          article: Ud3.4
+          page_pdf: 83
+          citation: 'En secteur UdBO : L’emprise au sol des constructions est limitée à 55 % de la superficie
+            de l’unité foncière.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ud3.1
+          page_pdf: 81
+          citation: Les constructions nouvelles en premier rideau doivent être implantées à l’alignement ou
+            avec un recul minimal de 3 m.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ud3.2
+          page_pdf: 82
+          citation: Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives
+            soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: Ud6
+          page_pdf: 93
+          citation: 1 place de stationnement par tranche de 75 m² de surface de plancher.
+          statut: propose
+          raison: stationnement non chiffrable par logement ('1 place par tranche de 75 m² de surface de plancher')
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: Ud5.1
+          page_pdf: 91
+          citation: 'En secteur UdBO : Pour les unités foncières de plus de 250 m², le coefficient de Biotope
+            est de 50 % minimum avec au moins 40 % de la superficie de l’unité foncière en espace planté de
+            pleine terre,'
+          statut: valide
     silence: autorise
     silence_src: 'art. Ud1, p. 77 (le secteur UdBO relève de la zone Ud, préambule p. 76 : « un secteur UdBO spécifique
       au quartier de Bois d''Olives ») : « Tous les usages et affectations des sols, types d''activités et catégories
@@ -550,6 +774,61 @@ zones:
         page_pdf: 79
         citation: « Exploitation forestière X X X »
   AUdma:
+    regles:
+      hauteur:
+        faitage:
+          m: null
+          article: Ud3
+          page_pdf: 80
+          citation: 'En zone AUdma : non règlementé pour l’ensemble de l’article'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: null
+          article: Ud3
+          page_pdf: 80
+          citation: 'En zone AUdma : non règlementé pour l’ensemble de l’article'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: null
+          article: Ud3
+          page_pdf: 80
+          citation: 'En zone AUdma : non règlementé pour l’ensemble de l’article'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      retraits:
+        voie:
+          min_m: null
+          article: Ud3
+          page_pdf: 80
+          citation: 'En zone AUdma : non règlementé pour l’ensemble de l’article'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        limites_separatives:
+          min_m: null
+          article: Ud3
+          page_pdf: 80
+          citation: 'En zone AUdma : non règlementé pour l’ensemble de l’article'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      stationnement:
+        par_logement:
+          places: null
+          article: Ud6
+          page_pdf: 91
+          citation: 'En zone AUdma : non règlementé pour l’ensemble de l’article'
+          statut: propose
+          raison: stationnement non chiffrable par logement ('a_verifier')
+      pleine_terre:
+        pct:
+          pct: null
+          article: Ud5
+          page_pdf: 91
+          citation: 'En zone AUdma : non règlementé pour l’ensemble de l’article'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: 'art. Ud1, p. 77 : « En zone AUdma : non règlementé » — le règlement écrit ne règlemente pas les
       destinations dans cette zone ; préambule p. 76 : « La zone AUdma est uniquement régie par les Orientations
@@ -561,6 +840,62 @@ zones:
       « En zone AUdma : non règlementé » (p. 80, 81, 87, 91, 93, 96).'
     sous_destinations: {}
   Ug:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: Ug3.5
+          page_pdf: 103
+          citation: La hauteur maximale des constructions nouvelles est fixée à 7 m à l’égout du toit ou au
+            sommet de l’acrotère et à 12 m au faîtage.
+          statut: valide
+        egout:
+          m: 7.0
+          article: Ug3.5
+          page_pdf: 103
+          citation: La hauteur maximale des constructions nouvelles est fixée à 7 m à l’égout du toit ou au
+            sommet de l’acrotère et à 12 m au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: Ug3.4
+          page_pdf: 103
+          citation: 50% de la superficie de l’unité foncière, pour les unités foncières supérieures à 250
+            m².
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ug3.1
+          page_pdf: 101
+          citation: Les constructions nouvelles (sauf clôtures) doivent être implantées à 3 m minimum de l’emprise
+            des voies routières et à 1 m minimum pour les constructions d’une hauteur inférieure ou égale
+            à 3 m à l’égout du toit ou au sommet de l’acrotère et de 5 m maximum au faîtage.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ug3.2
+          page_pdf: 101
+          citation: 'Les constructions nouvelles doivent être implantées : Soit en limites séparatives et
+            au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de
+            parcelle, Soit en retrait de 3 mètres.'
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Ug6
+          page_pdf: 110
+          citation: 1,5 place de stationnement par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: Ug5.1
+          page_pdf: 108
+          citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 40 % minimum
+            avec au moins 30 % de la superficie de l’unité foncière en espaces plantés de pleine terre.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ug1, p. 98 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
@@ -698,12 +1033,122 @@ zones:
         page_pdf: 100
         citation: « Exploitation forestière X »
   AUg:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: Ug3.5
+          page_pdf: 103
+          citation: La hauteur maximale des constructions nouvelles est fixée à 7 m à l’égout du toit ou au
+            sommet de l’acrotère et à 12 m au faîtage.
+          statut: valide
+        egout:
+          m: 7.0
+          article: Ug3.5
+          page_pdf: 103
+          citation: La hauteur maximale des constructions nouvelles est fixée à 7 m à l’égout du toit ou au
+            sommet de l’acrotère et à 12 m au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: Ug3.4
+          page_pdf: 103
+          citation: 50% de la superficie de l’unité foncière, pour les unités foncières supérieures à 250
+            m².
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ug3.1
+          page_pdf: 101
+          citation: Les constructions nouvelles (sauf clôtures) doivent être implantées à 3 m minimum de l’emprise
+            des voies routières et à 1 m minimum pour les constructions d’une hauteur inférieure ou égale
+            à 3 m à l’égout du toit ou au sommet de l’acrotère et de 5 m maximum au faîtage.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ug3.2
+          page_pdf: 101
+          citation: 'Les constructions nouvelles doivent être implantées : Soit en limites séparatives et
+            au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de
+            parcelle, Soit en retrait de 3 mètres.'
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Ug6
+          page_pdf: 110
+          citation: 1,5 place de stationnement par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: Ug5.1
+          page_pdf: 108
+          citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 40 % minimum
+            avec au moins 30 % de la superficie de l’unité foncière en espaces plantés de pleine terre.
+          statut: valide
     renvoi: Ug
     renvoi_src: chapitre « Dispositions applicables à la zone Ug et AUg », p. 97, et tableau unique intitulé « Ug
       / AUg », p. 98 — la zone AUg n'a aucune colonne ni condition propre au chapitre 1
     note: L'urbanisation de la zone AUg n'est possible qu'après réalisation d'opérations d'aménagement d'ensemble
       (préambule, p. 97) ; OAP à respecter, le règlement prévaut en cas de conflit (p. 97).
   Uf:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: Uf3.5
+          page_pdf: 119
+          citation: La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au
+            sommet de l’acrotère et à 11 m au faîtage.
+          statut: valide
+        egout:
+          m: 6.0
+          article: Uf3.5
+          page_pdf: 119
+          citation: La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au
+            sommet de l’acrotère et à 11 m au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: Uf3.4
+          page_pdf: 118
+          citation: 50% de la superficie de l’unité foncière, pour les unités foncières supérieures à 150
+            m².
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Uf3.1
+          page_pdf: 117
+          citation: Les constructions nouvelles doivent être implantées à 4 m minimum de l’emprise des voies.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Uf3.2
+          page_pdf: 117
+          citation: 'Les constructions nouvelles doivent être implantées : Soit en limites séparatives et
+            au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de
+            parcelle, Soit en retrait de 3 mètres.'
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Uf6
+          page_pdf: 127
+          citation: 1,5 place de stationnement par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: Uf5.1
+          page_pdf: 123
+          citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 50 % minimum
+            avec au moins 40 % de la superficie de l’unité foncière en espaces plantés de pleine terre.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Uf1, p. 113 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
@@ -849,24 +1294,194 @@ zones:
         page_pdf: 115
         citation: « Exploitation forestière X »
   UfCA:
+    regles:
+      hauteur:
+        faitage:
+          m: 7.5
+          article: Uf3.5
+          page_pdf: 119
+          citation: Dans le secteur UfCa limiter la hauteur à 6 m égout et 7,5 m au faîtage.
+          statut: valide
+        egout:
+          m: 6.0
+          article: Uf3.5
+          page_pdf: 119
+          citation: Dans le secteur UfCa limiter la hauteur à 6 m égout et 7,5 m au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: Uf3.4
+          page_pdf: 118
+          citation: 50% de la superficie de l’unité foncière, pour les unités foncières supérieures à 150
+            m².
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Uf3.1
+          page_pdf: 117
+          citation: Les constructions nouvelles doivent être implantées à 4 m minimum de l’emprise des voies.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Uf3.2
+          page_pdf: 117
+          citation: 'Les constructions nouvelles doivent être implantées : Soit en limites séparatives et
+            au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de
+            parcelle, Soit en retrait de 3 mètres.'
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Uf6
+          page_pdf: 127
+          citation: 1,5 place de stationnement par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: Uf5.1
+          page_pdf: 123
+          citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 50 % minimum
+            avec au moins 40 % de la superficie de l’unité foncière en espaces plantés de pleine terre.
+          statut: valide
     renvoi: Uf
     renvoi_src: tableau unique intitulé « Uf /UfCA / AUf / AUfGB », p. 114 — le secteur UfCA n'a aucune colonne
       ni condition propre pour les destinations (il n'est distingué au chapitre 1 que pour les affouillements/exhaussements,
       p. 113)
     note: Secteur spécifique à la ZAC Cap Austral à Grand Bois (préambule, p. 112).
   AUf:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: Uf3.5
+          page_pdf: 119
+          citation: La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au
+            sommet de l’acrotère et à 11 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 6.0
+          article: Uf3.5
+          page_pdf: 119
+          citation: La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au
+            sommet de l’acrotère et à 11 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: Uf3.4
+          page_pdf: 118
+          citation: 50% de la superficie de l’unité foncière, pour les unités foncières supérieures à 150
+            m².
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Uf3.1
+          page_pdf: 117
+          citation: Les constructions nouvelles doivent être implantées à 4 m minimum de l’emprise des voies.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Uf3.2
+          page_pdf: 117
+          citation: 'Les constructions nouvelles doivent être implantées : Soit en limites séparatives et
+            au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de
+            parcelle, Soit en retrait de 3 mètres.'
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Uf6
+          page_pdf: 127
+          citation: 1,5 place de stationnement par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: Uf5.1
+          page_pdf: 123
+          citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 50 % minimum
+            avec au moins 40 % de la superficie de l’unité foncière en espaces plantés de pleine terre.
+          statut: valide
     renvoi: Uf
     renvoi_src: chapitre « Dispositions applicables à la zone Uf et AUf », p. 112, et tableau unique intitulé «
       Uf /UfCA / AUf / AUfGB », p. 114 — aucune colonne ni condition propre au chapitre 1
     note: L'urbanisation des zones AUf et AUfGB n'est possible qu'après réalisation d'opérations d'aménagement d'ensemble
       (préambule, p. 112) ; OAP à respecter, le règlement prévaut en cas de conflit (p. 112).
   AUfGB:
+    regles:
+      hauteur:
+        faitage:
+          m: 5.5
+          article: Uf3.5
+          page_pdf: 119
+          citation: Dans le secteur AUfGB limiter la hauteur à 5,5 m au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: Uf3.4
+          page_pdf: 118
+          citation: 50% de la superficie de l’unité foncière, pour les unités foncières supérieures à 150
+            m².
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Uf3.1
+          page_pdf: 117
+          citation: Les constructions nouvelles doivent être implantées à 4 m minimum de l’emprise des voies.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Uf3.2
+          page_pdf: 117
+          citation: 'Les constructions nouvelles doivent être implantées : Soit en limites séparatives et
+            au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de
+            parcelle, Soit en retrait de 3 mètres.'
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Uf6
+          page_pdf: 127
+          citation: 1,5 place de stationnement par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: Uf5.1
+          page_pdf: 123
+          citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 50 % minimum
+            avec au moins 40 % de la superficie de l’unité foncière en espaces plantés de pleine terre.
+          statut: valide
     renvoi: Uf
     renvoi_src: 'tableau unique intitulé « Uf /UfCA / AUf / AUfGB », p. 114 — aucune colonne ni condition propre
       au chapitre 1 (seule la hauteur diffère : art. Uf3, p. 119)'
     note: L'urbanisation des zones AUf et AUfGB n'est possible qu'après réalisation d'opérations d'aménagement d'ensemble
       (préambule, p. 112) ; OAP à respecter, le règlement prévaut en cas de conflit (p. 112).
   Us:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: Art. Us3 §5 (« 5/ Hauteur — Règle générale »)
+          page_pdf: 134
+          citation: La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au
+            sommet de l’acrotère et à 11 m au faîtage.
+          statut: valide
+        egout:
+          m: 6.0
+          article: Art. Us3 §5 (« 5/ Hauteur — Règle générale »)
+          page_pdf: 134
+          citation: La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au
+            sommet de l’acrotère et à 11 m au faîtage.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Us1, p. 130 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
@@ -1023,6 +1638,53 @@ zones:
         page_pdf: 131
         citation: « Exploitation forestière X »
   Up:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: Up3.5
+          page_pdf: 147
+          citation: La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au
+            sommet de l’acrotère et à 11 m au faîtage.
+          statut: valide
+        egout:
+          m: 6.0
+          article: Up3.5
+          page_pdf: 147
+          citation: La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au
+            sommet de l’acrotère et à 11 m au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: Up3.4
+          page_pdf: 147
+          citation: 60% de la superficie de l’unité foncière, pour les unités foncières supérieures à 150
+            m².
+          statut: valide
+      retraits:
+        voie:
+          min_m: 0.0
+          article: Up3.1
+          page_pdf: 146
+          citation: Les constructions nouvelles peuvent être implantées à l’alignement ou en retrait libre.
+          statut: propose
+          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 1.9
+          article: Up3.2
+          page_pdf: 146
+          citation: 'Les constructions nouvelles doivent être implantées : Soit en limites séparatives et
+            au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de
+            parcelle, Soit en retrait de 1,9 m.'
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: Up6
+          page_pdf: 153
+          citation: 1 place de stationnement par logement minimum
+          statut: valide
     silence: autorise
     silence_src: 'Art. Up1, p. 143 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
@@ -1159,6 +1821,45 @@ zones:
         page_pdf: 145
         citation: « Exploitation forestière X »
   Ut:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: Ut3.5
+          page_pdf: 162
+          citation: En zone Ut, la hauteur maximale des constructions nouvelles est fixée à 9 m à l’égout
+            des toits ou au sommet de l’acrotère et à 12 m au faîtage.
+          statut: valide
+        egout:
+          m: 9.0
+          article: Ut3.5
+          page_pdf: 162
+          citation: En zone Ut, la hauteur maximale des constructions nouvelles est fixée à 9 m à l’égout
+            des toits ou au sommet de l’acrotère et à 12 m au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: Ut3.4
+          page_pdf: 162
+          citation: L’emprise au sol est au maximum de 50 % de la superficie de l’unité foncière. Cependant
+            les piscines de moins de 30 m² ne sont pas intégrées dans l’emprise au sol.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 2.0
+          article: Ut3.1
+          page_pdf: 161
+          citation: Les constructions nouvelles (sauf clôtures) doivent être implantées en retrait de 2 m
+            minimum de l’emprise des voies ainsi qu’entre 2 et 4 m de l’axe des voies piétonnes.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ut3.2
+          page_pdf: 161
+          citation: Les nouvelles constructions doivent être implantées en retrait de 3 m minimum des limites
+            séparatives latérales et de fond de parcelle.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ut1, p. 157 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
@@ -1305,6 +2006,37 @@ zones:
         page_pdf: 160
         citation: « Exploitation forestière X X X »
   AUt1:
+    regles:
+      hauteur:
+        faitage:
+          m: 15.0
+          article: Ut3.5
+          page_pdf: 162
+          citation: En zone AUt1, la hauteur maximale des constructions nouvelles est fixée à 15 m au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: Ut3.4
+          page_pdf: 162
+          citation: L’emprise au sol est au maximum de 50 % de la superficie de l’unité foncière. Cependant
+            les piscines de moins de 30 m² ne sont pas intégrées dans l’emprise au sol.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 2.0
+          article: Ut3.1
+          page_pdf: 161
+          citation: Les constructions nouvelles (sauf clôtures) doivent être implantées en retrait de 2 m
+            minimum de l’emprise des voies ainsi qu’entre 2 et 4 m de l’axe des voies piétonnes.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ut3.2
+          page_pdf: 161
+          citation: Les nouvelles constructions doivent être implantées en retrait de 3 m minimum des limites
+            séparatives latérales et de fond de parcelle.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ut1, p. 157 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
@@ -1454,6 +2186,37 @@ zones:
         page_pdf: 160
         citation: « Exploitation forestière X X X »
   AUt2:
+    regles:
+      hauteur:
+        faitage:
+          m: 6.0
+          article: Ut3.5
+          page_pdf: 162
+          citation: En zone AUt2, la hauteur maximale des constructions nouvelles est fixée à 6 m au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: Ut3.4
+          page_pdf: 162
+          citation: L’emprise au sol est au maximum de 50 % de la superficie de l’unité foncière. Cependant
+            les piscines de moins de 30 m² ne sont pas intégrées dans l’emprise au sol.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 2.0
+          article: Ut3.1
+          page_pdf: 161
+          citation: Les constructions nouvelles (sauf clôtures) doivent être implantées en retrait de 2 m
+            minimum de l’emprise des voies ainsi qu’entre 2 et 4 m de l’axe des voies piétonnes.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ut3.2
+          page_pdf: 161
+          citation: Les nouvelles constructions doivent être implantées en retrait de 3 m minimum des limites
+            séparatives latérales et de fond de parcelle.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ut1, p. 157 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
@@ -1585,6 +2348,58 @@ zones:
         page_pdf: 160
         citation: « Exploitation forestière X X X »
   Uazp:
+    regles:
+      hauteur:
+        faitage:
+          m: 21.0
+          article: Ua3.5
+          page_pdf: 178
+          citation: Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser
+            15,5 m à l’égout et 20 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 16.0
+          article: Ua3.5
+          page_pdf: 178
+          citation: Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser
+            15,5 m à l’égout et 20 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: Ua3.4
+          page_pdf: 177
+          citation: L’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière ; elle est
+            limitée à 70 % dans le secteur Uazp.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 0.0
+          article: Ua3.1
+          page_pdf: 176
+          citation: Dans les secteurs Uazp et Uazpc les constructions nouvelles peuvent être implantées à
+            l’alignement des voies sauf en aval de la RN 1 ou le recul minimum est fixé à 40 m dans la partie
+            Nord et à 50 m dans la partie Sud, l’axe du giratoire avec la RD 26 faisant la séparation entre
+            ces deux zones de reculs.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        limites_separatives:
+          min_m: 5.0
+          article: Ua3.2
+          page_pdf: 177
+          citation: Dans les secteurs Uazp et Uazpc de la ZAC Pierrefonds, les constructions nouvelles peuvent
+            être implantées sur une limite séparative au maximum ou en retrait de 5 m minimum.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ua5.1
+          page_pdf: 182
+          citation: Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité
+            foncière en espace planté de pleine terre.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
@@ -1720,6 +2535,58 @@ zones:
         page_pdf: 175
         citation: « Exploitation forestière X X X X X »
   Uazpc:
+    regles:
+      hauteur:
+        faitage:
+          m: 21.0
+          article: Ua3.5
+          page_pdf: 178
+          citation: Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser
+            15,5 m à l’égout et 20 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 16.0
+          article: Ua3.5
+          page_pdf: 178
+          citation: Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser
+            15,5 m à l’égout et 20 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 75.0
+          article: Ua3.4
+          page_pdf: 177
+          citation: L’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière ; elle est
+            limitée à 70 % dans le secteur Uazp.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 0.0
+          article: Ua3.1
+          page_pdf: 176
+          citation: Dans les secteurs Uazp et Uazpc les constructions nouvelles peuvent être implantées à
+            l’alignement des voies sauf en aval de la RN 1 ou le recul minimum est fixé à 40 m dans la partie
+            Nord et à 50 m dans la partie Sud, l’axe du giratoire avec la RD 26 faisant la séparation entre
+            ces deux zones de reculs.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        limites_separatives:
+          min_m: 5.0
+          article: Ua3.2
+          page_pdf: 177
+          citation: Dans les secteurs Uazp et Uazpc de la ZAC Pierrefonds, les constructions nouvelles peuvent
+            être implantées sur une limite séparative au maximum ou en retrait de 5 m minimum.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ua5.1
+          page_pdf: 182
+          citation: Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité
+            foncière en espace planté de pleine terre.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
@@ -1846,6 +2713,54 @@ zones:
         page_pdf: 175
         citation: « Exploitation forestière X X X X X »
   Uaza:
+    regles:
+      hauteur:
+        faitage:
+          m: 21.0
+          article: Ua3.5
+          page_pdf: 178
+          citation: Dans le secteur Uaza, la hauteur maximale des constructions est fixée à 14 m au faîtage.
+          statut: propose
+          raison: valeur 21 absente de la citation (harmonisation ≠ texte)
+        egout:
+          m: 16.0
+          article: Ua3.5
+          page_pdf: 177
+          citation: La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou
+            au sommet de l’acrotère et à 21 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 75.0
+          article: Ua3.4
+          page_pdf: 177
+          citation: L’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière ; elle est
+            limitée à 70 % dans le secteur Uazp.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Ua3.1
+          page_pdf: 176
+          citation: Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise
+            des voies.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        limites_separatives:
+          min_m: 3.0
+          article: Ua3.2
+          page_pdf: 177
+          citation: Soit en limites séparatives, sur deux limites au maximum, Soit en retrait de 3 m minimum.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ua5.1
+          page_pdf: 182
+          citation: Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité
+            foncière en espace planté de pleine terre.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
@@ -1988,6 +2903,54 @@ zones:
         page_pdf: 175
         citation: « Exploitation forestière X X X X X »
   Uazc:
+    regles:
+      hauteur:
+        faitage:
+          m: 18.0
+          article: Ua3.5
+          page_pdf: 177
+          citation: 'Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13
+            m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 13.0
+          article: Ua3.5
+          page_pdf: 177
+          citation: 'Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13
+            m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 75.0
+          article: Ua3.4
+          page_pdf: 177
+          citation: L’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière ; elle est
+            limitée à 70 % dans le secteur Uazp.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Ua3.1
+          page_pdf: 176
+          citation: Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise
+            des voies.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ua3.2
+          page_pdf: 177
+          citation: Soit en limites séparatives, sur deux limites au maximum, Soit en retrait de 3 m minimum.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ua5.1
+          page_pdf: 182
+          citation: Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité
+            foncière en espace planté de pleine terre.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
@@ -2113,11 +3076,110 @@ zones:
         page_pdf: 175
         citation: « Exploitation forestière X X X X X »
   AUazc:
+    regles:
+      hauteur:
+        faitage:
+          m: 18.0
+          article: Ua3.5
+          page_pdf: 177
+          citation: 'Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13
+            m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 13.0
+          article: Ua3.5
+          page_pdf: 177
+          citation: 'Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13
+            m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 75.0
+          article: Ua3.4
+          page_pdf: 177
+          citation: L’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière ; elle est
+            limitée à 70 % dans le secteur Uazp.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Ua3.1
+          page_pdf: 176
+          citation: Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise
+            des voies.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        limites_separatives:
+          min_m: 3.0
+          article: Ua3.2
+          page_pdf: 177
+          citation: Soit en limites séparatives, sur deux limites au maximum, Soit en retrait de 3 m minimum.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ua5.1
+          page_pdf: 182
+          citation: Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité
+            foncière en espace planté de pleine terre.
+          statut: valide
     renvoi: Uazc
     renvoi_src: 'Art. Ua1, tableau p. 173 : colonne unique intitulée « Uazc / AUazc » (mêmes lignes et conditions
       pour les deux secteurs) ; préambule p. 171 : « Uazc et AUazc sont créés pour n''autoriser que les activités
       tertiaires et commerciales et industrie. »'
   Uazi:
+    regles:
+      hauteur:
+        faitage:
+          m: 21.0
+          article: Ua3.5
+          page_pdf: 177
+          citation: La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou
+            au sommet de l’acrotère et à 21 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 16.0
+          article: Ua3.5
+          page_pdf: 177
+          citation: La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou
+            au sommet de l’acrotère et à 21 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 75.0
+          article: Ua3.4
+          page_pdf: 177
+          citation: L’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière ; elle est
+            limitée à 70 % dans le secteur Uazp.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Ua3.1
+          page_pdf: 176
+          citation: Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise
+            des voies.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        limites_separatives:
+          min_m: 5.0
+          article: Ua3.2
+          page_pdf: 177
+          citation: Dans les secteurs Uazi et AUazi, les constructions nouvelles peuvent être implantées sur
+            deux limites séparatives au maximum ou en retrait de 5 m minimum.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ua5.1
+          page_pdf: 182
+          citation: Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité
+            foncière en espace planté de pleine terre.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
@@ -2266,12 +3328,112 @@ zones:
         page_pdf: 175
         citation: « Exploitation forestière X X X X X »
   AUazi:
+    regles:
+      hauteur:
+        faitage:
+          m: 21.0
+          article: Ua3.5
+          page_pdf: 177
+          citation: La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou
+            au sommet de l’acrotère et à 21 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 16.0
+          article: Ua3.5
+          page_pdf: 177
+          citation: La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou
+            au sommet de l’acrotère et à 21 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 75.0
+          article: Ua3.4
+          page_pdf: 177
+          citation: L’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière ; elle est
+            limitée à 70 % dans le secteur Uazp.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Ua3.1
+          page_pdf: 176
+          citation: Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise
+            des voies.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        limites_separatives:
+          min_m: 5.0
+          article: Ua3.2
+          page_pdf: 177
+          citation: Dans les secteurs Uazi et AUazi, les constructions nouvelles peuvent être implantées sur
+            deux limites séparatives au maximum ou en retrait de 5 m minimum.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ua5.1
+          page_pdf: 182
+          citation: Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité
+            foncière en espace planté de pleine terre.
+          statut: valide
     renvoi: Uazi
     renvoi_src: 'Art. Ua1, tableau p. 173 : colonne unique intitulée « Uazi / AUazi » (mêmes lignes et conditions
       pour les deux secteurs) ; préambule p. 171 : « AUazi et Uazi destinés à l''accueil d''activités industrielles
       et artisanales (…) » ; p. 171 : « Les secteurs AUazc et AUazi font l''objet d''Orientations d''Aménagement
       et de Programmation dont les prescriptions et principes d''aménagement sont à respecter. »'
   Ue:
+    regles:
+      hauteur:
+        faitage:
+          m: 21.0
+          article: Ue3.5
+          page_pdf: 193
+          citation: La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au
+            sommet de l’acrotère et à 21 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 16.0
+          article: Ue3.5
+          page_pdf: 193
+          citation: La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au
+            sommet de l’acrotère et à 21 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 75.0
+          article: Ue3.4
+          page_pdf: 192
+          citation: En zones Ue et Uemi, l’emprise au sol est au maximum de 75 % de la superficie de l’unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Ue3.1
+          page_pdf: 192
+          citation: Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise
+            des voies. 1 m minimum pour les constructions d’une hauteur inférieure ou égale à 3 m.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ue3.2
+          page_pdf: 192
+          citation: En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, est de
+            3 m minimum et de 1 m minimum pour les transformateurs EDF.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ue5.1
+          page_pdf: 197
+          citation: Le Coefficient de Biotope est de 25 % minimum avec au moins 20% de la superficie de l’unité
+            foncière en espace planté de pleine terre.
+          statut: valide
     silence: autorise
     silence_src: 'art. Ue1, p. 188 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. Le règlement et
@@ -2421,6 +3583,53 @@ zones:
         page_pdf: 191
         citation: « Exploitation forestière X »
   Uea:
+    regles:
+      hauteur:
+        faitage:
+          m: 15.0
+          article: Ue3.5
+          page_pdf: 193
+          citation: Dans le secteur Uea, la hauteur maximale des constructions est fixée à 9 m à l’égout du
+            toit ou au sommet de l’acrotère et à 15 m au faîtage.
+          statut: valide
+        egout:
+          m: 9.0
+          article: Ue3.5
+          page_pdf: 193
+          citation: Dans le secteur Uea, la hauteur maximale des constructions est fixée à 9 m à l’égout du
+            toit ou au sommet de l’acrotère et à 15 m au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 30.0
+          article: Ue3.4
+          page_pdf: 192
+          citation: En zone Uea, l’emprise au sol est au maximum de 30 % de la superficie de l’unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Ue3.1
+          page_pdf: 192
+          citation: Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise
+            des voies. 1 m minimum pour les constructions d’une hauteur inférieure ou égale à 3 m.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ue3.2
+          page_pdf: 192
+          citation: En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, est de
+            3 m minimum et de 1 m minimum pour les transformateurs EDF.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ue5.1
+          page_pdf: 197
+          citation: Le Coefficient de Biotope est de 25 % minimum avec au moins 20% de la superficie de l’unité
+            foncière en espace planté de pleine terre.
+          statut: valide
     note: Secteur aérodrome de Pierrefonds. Une règle unique couvre toutes les destinations et sous-destinations
       (aucun silence résiduel — le tableau Ue1 ne comporte que des colonnes Ue et Uep, pas de colonne Uea). Hauteurs
       soumises au Plan de servitude aéronautique (art. Ue3, p. 193).
@@ -2587,6 +3796,56 @@ zones:
         citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
           à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
   Uemi:
+    regles:
+      hauteur:
+        faitage:
+          m: 21.0
+          article: Ue3.5
+          page_pdf: 193
+          citation: La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au
+            sommet de l’acrotère et à 21 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 16.0
+          article: Ue3.5
+          page_pdf: 193
+          citation: La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au
+            sommet de l’acrotère et à 21 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 75.0
+          article: Ue3.4
+          page_pdf: 192
+          citation: En zones Ue et Uemi, l’emprise au sol est au maximum de 75 % de la superficie de l’unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Ue3.1
+          page_pdf: 192
+          citation: Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise
+            des voies. 1 m minimum pour les constructions d’une hauteur inférieure ou égale à 3 m.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ue3.2
+          page_pdf: 192
+          citation: En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, est de
+            3 m minimum et de 1 m minimum pour les transformateurs EDF.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ue5.1
+          page_pdf: 197
+          citation: Le Coefficient de Biotope est de 25 % minimum avec au moins 20% de la superficie de l’unité
+            foncière en espace planté de pleine terre.
+          statut: valide
     note: Secteur des activités militaires. Une règle unique couvre toutes les destinations et sous-destinations
       (aucun silence résiduel — pas de colonne Uemi dans le tableau Ue1). Emprise au sol max 75 % comme en Ue (art.
       Ue3, p. 192).
@@ -2753,6 +4012,57 @@ zones:
         citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
           à l'exploitation et au fonctionnement de l'Armée. »
   Uep:
+    regles:
+      hauteur:
+        faitage:
+          m: 21.0
+          article: Ue3.5
+          page_pdf: 193
+          citation: La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au
+            sommet de l’acrotère et à 21 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 16.0
+          article: Ue3.5
+          page_pdf: 193
+          citation: La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au
+            sommet de l’acrotère et à 21 m au faîtage.
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 0.2
+          article: Ue3.4
+          page_pdf: 192
+          citation: En zone Uep, l’emprise au sol est limitée au maximum à 20 m² par ha (calculée au prorata
+            de la superficie de l’unité foncière).
+          statut: propose
+          raison: valeur 0.2 absente de la citation (harmonisation ≠ texte)
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Ue3.1
+          page_pdf: 192
+          citation: Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise
+            des voies. 1 m minimum pour les constructions d’une hauteur inférieure ou égale à 3 m.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ue3.2
+          page_pdf: 192
+          citation: En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, est de
+            3 m minimum et de 1 m minimum pour les transformateurs EDF.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ue5.1
+          page_pdf: 197
+          citation: Le Coefficient de Biotope est de 25 % minimum avec au moins 20% de la superficie de l’unité
+            foncière en espace planté de pleine terre.
+          statut: valide
     silence: autorise
     silence_src: 'art. Ue1, p. 188 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (le tableau

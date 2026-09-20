@@ -11,7 +11,7 @@ Chaque résultat est tracé à sa règle source. Tout est en fourchette, jamais 
 chiffre exact.
 """
 from .engine import Faisabilite, Hypotheses, Step, estimate_capacity  # noqa: F401
-from .plu_rules import ZoneRules, load_rules, resolve_zone  # noqa: F401
+from .zonage import ZoneRules, load_rules, resolve_zone  # noqa: F401
 
 BANDEAU = (
     "Pré-faisabilité indicative sur règlement PLU public — ne remplace pas une "

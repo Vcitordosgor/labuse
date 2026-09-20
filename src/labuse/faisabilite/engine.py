@@ -15,13 +15,13 @@ import math
 import re
 from dataclasses import dataclass, field, replace
 
-from .plu_rules import A_VERIFIER, EXEMPT, NON_MODELISABLE, ZoneRules
+from .zonage import A_VERIFIER, EXEMPT, NON_MODELISABLE, ZoneRules
 
 SEUIL_EXIGU_M2 = 5.0  # en deçà, le contour inseté est considéré vidé → "trop exigu"
 
 # hé prudent (~R+2) des zones U/AU des communes NON outillées (config/plu_<commune>.yaml absent).
 # SOURCE UNIQUE du défaut générique (M-N P1-13) : partagée par le champ de dataclass ci-dessous ET
-# par plu_rules._zone_generique, pour que l'estimation d'une commune sans YAML ne LISE JAMAIS le
+# par zonage._zone_generique, pour que l'estimation d'une commune sans YAML ne LISE JAMAIS le
 # YAML Saint-Paul (emprunt à la commune la mieux calibrée = faux « générique »).
 HE_DEFAUT_GENERIQUE_M = 9.0
 
@@ -125,8 +125,8 @@ class Hypotheses:
           - commune SANS YAML → DÉFAUTS DU DATACLASS, JAMAIS Saint-Paul (plus d'emprunt silencieux
             des seuils/coûts de la commune la mieux calibrée).
         On mémorise la provenance des seuils de mixité (`mixite_source`) pour l'affichage."""
-        from .plu_rules import _hypotheses_faisabilite, _hypotheses_ile
-        h = _hypotheses_faisabilite(commune)
+        from .zonage import hypotheses_faisabilite, _hypotheses_ile
+        h = hypotheses_faisabilite(commune)
         out = cls()
         out.commune = commune
         # M-PLU-REF — BASE île-générique (source neutre `hypotheses_ile.yaml`), PUIS override commune
@@ -312,6 +312,16 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         steps.append(Step("Emprise au sol — % réglementé",
                           f"min(reculs, {surface_m2:.0f}×{rules.emprise_sol_pct:g}%)",
                           f"~{emprise:.0f} m²", rules.sources.get("emprise", "Art. 9")))
+    elif rules.emprise_plage:
+        # PLU-CALIBRAGE-2 lot 2 : l'emprise varie par secteur (base) — on AFFICHE la plage et on
+        # reste ESTIMÉ (secteur non déterminé), bornée par les reculs. Jamais simplifié en silence.
+        pl = rules.emprise_plage.get("plage_pct") or {}
+        sec = " ; ".join(f"{k} {v} %" for k, v in (rules.emprise_plage.get("secteurs_pct") or {}).items())
+        steps.append(Step("Emprise au sol — % réglementé",
+                          f"varie par secteur ({pl.get('min')}–{pl.get('max')} % : {sec}) — "
+                          "secteur non déterminé → bornée par les reculs",
+                          "—", rules.emprise_plage.get("source", rules.sources.get("emprise", "Art. 9")),
+                          prov="estimee"))
     else:
         steps.append(Step("Emprise au sol — % réglementé",
                           "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
@@ -334,7 +344,26 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
 
     # ---- Niveaux (hé prioritaire) ----
     he_src = rules.sources.get("hauteur", "Art. 10")
-    if _is_num(rules.he_m):
+    if rules.niveaux_max is not None:
+        # PLU-CALIBRAGE-2 : R+n LU au règlement (feuille `niveaux` validée) — la valeur est
+        # utilisée telle quelle, jamais dérivée d'une hauteur (l'étape passe SOURCÉ).
+        niveaux = int(rules.niveaux_max) + 1
+        steps.append(Step("Niveaux constructibles",
+                          f"R+{int(rules.niveaux_max)} lu au règlement = {niveaux} niveaux",
+                          f"R+{int(rules.niveaux_max)}", he_src))
+    elif rules.hauteur_plage:
+        # PLU-CALIBRAGE-2 lot 2 : la hauteur varie par secteur (base) — on AFFICHE la plage et on
+        # reste ESTIMÉ (secteur non déterminé). Valeur retenue = borne BASSE (prudent).
+        pl = rules.hauteur_plage.get("plage_m") or {}
+        sec = " ; ".join(f"{k} {v} m" for k, v in (rules.hauteur_plage.get("secteurs_m") or {}).items())
+        h_bas = float(pl.get("min") or hyp.etage_m)
+        niveaux = max(1, int(h_bas // hyp.etage_m))
+        steps.append(Step("Niveaux constructibles",
+                          f"hauteur par secteur {pl.get('min')}–{pl.get('max')} m ({sec}) — secteur non "
+                          f"déterminé → borne basse {pl.get('min')} m ÷ {hyp.etage_m:g} = {niveaux} (estimé)",
+                          f"R+{max(0, niveaux - 1)}",
+                          rules.hauteur_plage.get("source", he_src), prov="estimee"))
+    elif _is_num(rules.he_m):
         niveaux = int(float(rules.he_m) // hyp.etage_m)
         steps.append(Step("Niveaux constructibles",
                           f"hauteur d'égout retenue {rules.he_m:g} m ÷ {hyp.etage_m:g} m/niveau = {niveaux} niveaux",

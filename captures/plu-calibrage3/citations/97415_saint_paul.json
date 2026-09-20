@@ -1,0 +1,1112 @@
+{
+  "U1a": {
+    "he_m": {
+      "citation": "Pour les constructions s'implantant au-delà de cette bande de 15 m : la hauteur maximale hé est fixée à 12 m ;",
+      "page_confirmee": 24,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "Pour les constructions s'implantant au-delà de cette bande de 15 m : ... la hauteur maximale hf est fixée à 16 m.",
+      "page_confirmee": 24,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zone U1a — Cas général : Les constructions s'implanteront à l'alignement de la voie ou de l'emprise publique.",
+      "page_confirmee": 18,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "en zone U1a — ... Pour les étages, en cas de retrait, un recul de 3 m minimum est obligatoire.",
+      "page_confirmee": 21,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "Autres logements — en zones U1a, U1b, U1c, U1d: 1 place / logement",
+      "page_confirmee": 30,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U1a — Le pourcentage minimal d'espaces libres perméables sera de 10 % de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 35,
+      "marqueur": ""
+    }
+  },
+  "U1b": {
+    "he_m": {
+      "citation": "en zone U1b — la hauteur maximale hé est fixée à 12 m ;",
+      "page_confirmee": 24,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zone U1b — ... la hauteur maximale hf est fixée à 16 m.",
+      "page_confirmee": 24,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zone U1b — Cas général : Les constructions devront être implantées en retrait de 3 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 19,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "en zone U1b — ... En cas de retrait, un recul de 3 mètres minimum est obligatoire.",
+      "page_confirmee": 21,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "Autres logements — en zones U1a, U1b, U1c, U1d: 1 place / logement",
+      "page_confirmee": 30,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U1b, U1c, U1f, U1g et U1pso — Le pourcentage minimal d'espaces libres perméables sera de 30 % de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 35,
+      "marqueur": ""
+    }
+  },
+  "U1c": {
+    "he_m": {
+      "citation": "en zone U1c — la hauteur maximale hé est fixée à 15 m ;",
+      "page_confirmee": 24,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zone U1c — ... la hauteur maximale hf est fixée à 19 m.",
+      "page_confirmee": 24,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zone U1c — Cas général : Les constructions peuvent être implantées à l'alignement ou en retrait de 3 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 19,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "en zone U1c — ... En cas de retrait, un recul de 3 mètres minimum est obligatoire.",
+      "page_confirmee": 21,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "Autres logements — en zones U1a, U1b, U1c, U1d: 1 place / logement",
+      "page_confirmee": 30,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U1b, U1c, U1f, U1g et U1pso — Le pourcentage minimal d'espaces libres perméables sera de 30 % de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 35,
+      "marqueur": ""
+    }
+  },
+  "U1d": {
+    "he_m": {
+      "citation": "en zones U1d et U1g — la hauteur maximale hé est fixée à 6 m ;",
+      "page_confirmee": 24,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zones U1d et U1g — ... la hauteur maximale hf est fixée à 9 m.",
+      "page_confirmee": 24,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+      "page_confirmee": 19,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "U1d, U1f, U1g et U1pso — ... En cas de retrait, un recul de 3 mètres minimum est obligatoire.",
+      "page_confirmee": 21,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "Autres logements — en zones U1a, U1b, U1c, U1d: 1 place / logement",
+      "page_confirmee": 30,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U1d — Il n'est pas fixé de règle.",
+      "page_confirmee": 35,
+      "marqueur": ""
+    }
+  },
+  "U1f": {
+    "he_m": {
+      "citation": "en zone U1f — la hauteur maximale hé est fixée à 9 m ;",
+      "page_confirmee": 24,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zone U1f — ... la hauteur maximale hf est fixée à 13 m.",
+      "page_confirmee": 24,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+      "page_confirmee": 19,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "U1d, U1f, U1g et U1pso — ... En cas de retrait, un recul de 3 mètres minimum est obligatoire.",
+      "page_confirmee": 21,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "Autres logements — en zonesU1f, U1g : 2 places / logement",
+      "page_confirmee": 30,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U1b, U1c, U1f, U1g et U1pso — Le pourcentage minimal d'espaces libres perméables sera de 30 % de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 35,
+      "marqueur": ""
+    }
+  },
+  "U1g": {
+    "he_m": {
+      "citation": "en zones U1d et U1g — la hauteur maximale hé est fixée à 6 m ;",
+      "page_confirmee": 24,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zones U1d et U1g — ... la hauteur maximale hf est fixée à 9 m.",
+      "page_confirmee": 24,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+      "page_confirmee": 19,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "U1d, U1f, U1g et U1pso — ... En cas de retrait, un recul de 3 mètres minimum est obligatoire.",
+      "page_confirmee": 21,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "Autres logements — en zonesU1f, U1g : 2 places / logement",
+      "page_confirmee": 30,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U1b, U1c, U1f, U1g et U1pso — Le pourcentage minimal d'espaces libres perméables sera de 30 % de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 35,
+      "marqueur": ""
+    }
+  },
+  "U1pru": {
+    "he_m": {
+      "citation": "en zones U1pru et U1pso — la hauteur maximale hé est fixée à 30 m ;",
+      "page_confirmee": 25,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zones U1pru et U1pso — ... la hauteur maximale hf est fixée à 34 m.",
+      "page_confirmee": 25,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zone U1pru — Cas général : Les constructions pourront s'implanter à l'alignement. En cas de retrait, celui-ci ne pourra excéder 6 mètres.",
+      "page_confirmee": 19,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "en zone U1pru — ... En cas de retrait, celui-ci ne pourra excéder 5 mètres (recul <=3 m INTROUVABLE tel quel).",
+      "page_confirmee": 21,
+      "marqueur": "recul max 5 m, PAS 3 m min"
+    },
+    "stat_logement": {
+      "citation": "Lors de toute opération de construction, il doit être réalisé, sauf en zone U1pru, des places de stationnement",
+      "page_confirmee": 30,
+      "marqueur": "exempté"
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U1pru — Il n'est pas fixé de règle.",
+      "page_confirmee": 35,
+      "marqueur": ""
+    }
+  },
+  "U1pso": {
+    "he_m": {
+      "citation": "en zones U1pru et U1pso — la hauteur maximale hé est fixée à 30 m ;",
+      "page_confirmee": 25,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zones U1pru et U1pso — ... la hauteur maximale hf est fixée à 34 m.",
+      "page_confirmee": 25,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+      "page_confirmee": 19,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "U1d, U1f, U1g et U1pso — ... En cas de retrait, un recul de 3 mètres minimum est obligatoire.",
+      "page_confirmee": 21,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "INTROUVABLE",
+      "page_confirmee": 30,
+      "marqueur": "U1pso absent du tableau logement 12.2"
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U1b, U1c, U1f, U1g et U1pso — Le pourcentage minimal d'espaces libres perméables sera de 30 % de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 35,
+      "marqueur": ""
+    }
+  },
+  "U1e": {
+    "hf_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 14 m.",
+      "page_confirmee": 44,
+      "marqueur": "hf par défaut (art 10.2)"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 41,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, la distance ... au point le plus proche de la limite séparative, est de 5 m minimum.",
+      "page_confirmee": 43,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "Habitations autorisées dans la zone — 1 place par logement",
+      "page_confirmee": 48,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet.",
+      "page_confirmee": 51,
+      "marqueur": ""
+    }
+  },
+  "U1l": {
+    "hf_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 14 m.",
+      "page_confirmee": 44,
+      "marqueur": "hf par défaut (art 10.2)"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 41,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, la distance ... au point le plus proche de la limite séparative, est de 5 m minimum.",
+      "page_confirmee": 43,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "Habitations autorisées dans la zone — 1 place par logement",
+      "page_confirmee": 48,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet.",
+      "page_confirmee": 51,
+      "marqueur": ""
+    }
+  },
+  "U1ec": {
+    "hf_m": {
+      "citation": "En zone U1ec, la hauteur maximale des constructions est fixée à 18 m au faîtage.",
+      "page_confirmee": 45,
+      "marqueur": "En zone U1ec"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 41,
+      "marqueur": "règle générale (U1ec suit la règle générale, seules exceptions de débord en 6.3)"
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, la distance ... au point le plus proche de la limite séparative, est de 5 m minimum.",
+      "page_confirmee": 43,
+      "marqueur": "règle générale"
+    },
+    "stat_logement": {
+      "citation": "Habitations autorisées dans la zone — 1 place par logement",
+      "page_confirmee": 48,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "En zone U1ec, une Orientation d’Aménagement et de Programmation vient préciser cet objectif.",
+      "page_confirmee": 51,
+      "marqueur": "En zone U1ec : renvoi à l'OAP, aucun % fixé dans le règlement"
+    }
+  },
+  "U1lec": {
+    "he_m": {
+      "citation": "INTROUVABLE",
+      "page_confirmee": null,
+      "marqueur": "champ non traité"
+    },
+    "hf_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 14 m.",
+      "page_confirmee": 44,
+      "marqueur": "En zone U1lec : pas de hauteur propre, règle générale 14 m s'applique"
+    },
+    "emprise_sol_pct": {
+      "citation": "INTROUVABLE",
+      "page_confirmee": null,
+      "marqueur": "champ non traité"
+    },
+    "recul_voirie_m": {
+      "citation": "En zone U1lec — Les constructions doivent être implantées en retrait de 3 m minimum de la voie ou de l’emprise publique.",
+      "page_confirmee": 42,
+      "marqueur": "En zone U1lec"
+    },
+    "recul_limites_sep_m": {
+      "citation": "En zone U1lec — En cas de retrait, un recul de 6 mètres minimum est obligatoire.",
+      "page_confirmee": 43,
+      "marqueur": "En zone U1lec (recul_limites = 6, l'ancien 3 était a_verifier)"
+    },
+    "stat_logement": {
+      "citation": "Habitations autorisées dans la zone — 1 place par logement",
+      "page_confirmee": 48,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "En zone U1lec, ... Le pourcentage minimal d’espaces libres perméables sera de 35% minimum.",
+      "page_confirmee": 51,
+      "marqueur": "En zone U1lec (perméables 35% ; espaces libres 50%)"
+    }
+  },
+  "U2a": {
+    "he_m": {
+      "citation": "la hauteur maximale hé est fixée à 12 m ;",
+      "page_confirmee": 74,
+      "marqueur": "en zone U2a"
+    },
+    "hf_m": {
+      "citation": "la hauteur maximale hf est fixée à 16 m",
+      "page_confirmee": 74,
+      "marqueur": "en zone U2a"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 70,
+      "marqueur": "sur l’ensemble des zones (règle générale)"
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, les constructions respecteront un recul minimal de 3 m.",
+      "page_confirmee": 72,
+      "marqueur": "en zone U2a"
+    },
+    "stat_logement": {
+      "citation": "en zones U2a, U2b : 1,5 places par logement",
+      "page_confirmee": 81,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Le pourcentage minimal d’espaces libres perméables sera de 30% de la surface totale du terrain d’assiette du projet.",
+      "page_confirmee": 85,
+      "marqueur": "en zone U2a et U2b"
+    }
+  },
+  "U2b": {
+    "he_m": {
+      "citation": "la hauteur maximale hé est fixée à 15 m ;",
+      "page_confirmee": 75,
+      "marqueur": "en zone U2b"
+    },
+    "hf_m": {
+      "citation": "la hauteur maximale hf est fixée à 19 m.",
+      "page_confirmee": 75,
+      "marqueur": "en zone U2b"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 70,
+      "marqueur": "sur l’ensemble des zones (règle générale)"
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, un recul de 3 mètres minimum est obligatoire.",
+      "page_confirmee": 72,
+      "marqueur": "en zone U2b"
+    },
+    "stat_logement": {
+      "citation": "en zones U2a, U2b : 1,5 places par logement",
+      "page_confirmee": 81,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Le pourcentage minimal d’espaces libres perméables sera de 30% de la surface totale du terrain d’assiette du projet.",
+      "page_confirmee": 85,
+      "marqueur": "en zone U2a et U2b"
+    }
+  },
+  "U2c": {
+    "he_m": {
+      "citation": "la hauteur maximale hé est fixée à 6 m ;",
+      "page_confirmee": 75,
+      "marqueur": "en zone U2c"
+    },
+    "hf_m": {
+      "citation": "la hauteur maximale hf est fixée à 9 m.",
+      "page_confirmee": 75,
+      "marqueur": "en zone U2c"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 70,
+      "marqueur": "sur l’ensemble des zones (règle générale)"
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, un recul de 4 mètres minimum est obligatoire.",
+      "page_confirmee": 72,
+      "marqueur": "en zones U2c et U2h (ancien 3 → 4)"
+    },
+    "stat_logement": {
+      "citation": "en zones U2c, U2d : 2 places / logement",
+      "page_confirmee": 81,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Pour les autres constructions, y compris les constructions à usage d’habitations — Le pourcentage minimal d’espaces libres perméables sera de 50% de la surface totale du terrain d’assiette du projet.",
+      "page_confirmee": 85,
+      "marqueur": "en zone U2c (habitations 50% ; touristique 40%)"
+    }
+  },
+  "U2d": {
+    "he_m": {
+      "citation": "la hauteur maximale hé est fixée à4,5 m ;",
+      "page_confirmee": 75,
+      "marqueur": "en zone U2d"
+    },
+    "hf_m": {
+      "citation": "la hauteur maximale hf est fixée à6,5 m ;",
+      "page_confirmee": 75,
+      "marqueur": "en zone U2d"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 70,
+      "marqueur": "sur l’ensemble des zones (règle générale)"
+    },
+    "recul_limites_sep_m": {
+      "citation": "Un recul de 4 mètres minimum est obligatoire.",
+      "page_confirmee": 72,
+      "marqueur": "en zone U2d (ancien 3 → 4)"
+    },
+    "stat_logement": {
+      "citation": "en zones U2c, U2d : 2 places / logement",
+      "page_confirmee": 81,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "90% de la surface totale du terrain d’assiette du projet lorsque ce dernier a une surface comprise entre 0 et 700 m² exclus ;",
+      "page_confirmee": 85,
+      "marqueur": "en zone U2d (90% si 0–700 m² ; 65% si ≥700 m²)"
+    }
+  },
+  "U2h": {
+    "he_m": {
+      "citation": "la hauteur maximale hé est fixée à 9 m ;",
+      "page_confirmee": 75,
+      "marqueur": "en zone U2h"
+    },
+    "hf_m": {
+      "citation": "la hauteur maximale hf est fixée à 13 m.",
+      "page_confirmee": 75,
+      "marqueur": "en zone U2h"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 70,
+      "marqueur": "sur l’ensemble des zones (règle générale)"
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, un recul de 4 mètres minimum est obligatoire.",
+      "page_confirmee": 72,
+      "marqueur": "en zones U2c et U2h (ancien 3 → 4)"
+    },
+    "stat_logement": {
+      "citation": "INTROUVABLE",
+      "page_confirmee": null,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Le pourcentage minimal d’espaces libres perméables sera de 40% de la surface totale du terrain d’assiette du projet.",
+      "page_confirmee": 85,
+      "marqueur": "en zone U2h"
+    }
+  },
+  "U2e": {
+    "hf_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 14 m.",
+      "page_confirmee": 94,
+      "marqueur": "hf par défaut (art 10.2)"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l’emprise publique.",
+      "page_confirmee": 91,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, la distance ... au point le plus proche de la limite séparative, est de 5 m minimum.",
+      "page_confirmee": 92,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "Habitations autorisées dans la zone — 1 place par logement",
+      "page_confirmee": 97,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet.",
+      "page_confirmee": 100,
+      "marqueur": ""
+    }
+  },
+  "U3a": {
+    "he_m": {
+      "citation": "la hauteur maximale hé est fixée à 15 m ;",
+      "page_confirmee": 114,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "la hauteur maximale hf est fixée à 19 m.",
+      "page_confirmee": 114,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions devront être implantées à l'alignement.",
+      "page_confirmee": 110,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "Les constructions devront s'implanter sur une limite séparative ou en retrait minimum de 3 m.",
+      "page_confirmee": 112,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "en zones U3a, U3b : 1,5 places par logement",
+      "page_confirmee": 120,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 124,
+      "marqueur": ""
+    }
+  },
+  "U3b": {
+    "he_m": {
+      "citation": "la hauteur maximale hé est fixée à 12 m ;",
+      "page_confirmee": 114,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "la hauteur maximale hf est fixée à 16 m.",
+      "page_confirmee": 114,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions devront être implantées en retrait de 3 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 110,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, les constructions respecteront un recul minimal de 3 m.",
+      "page_confirmee": 112,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "en zones U3a, U3b : 1,5 places par logement",
+      "page_confirmee": 120,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Le pourcentage minimal d'espaces libres perméables sera de 30% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 124,
+      "marqueur": ""
+    }
+  },
+  "U3c": {
+    "he_m": {
+      "citation": "la hauteur maximale hé est fixée à 9 m ;",
+      "page_confirmee": 115,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "la hauteur maximale hf est fixée à 12m.",
+      "page_confirmee": 115,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions devront être implantées en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 110,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, les constructions respecteront un recul minimal de 3 m.",
+      "page_confirmee": 112,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "en zone U3c : 2 places / logement",
+      "page_confirmee": 120,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Le pourcentage minimal d'espaces libres perméables sera de 40% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 124,
+      "marqueur": ""
+    }
+  },
+  "U3h": {
+    "he_m": {
+      "citation": "la hauteur maximale hé est fixée à 9 m ;",
+      "page_confirmee": 115,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "la hauteur maximale hf est fixée à 13 m.",
+      "page_confirmee": 115,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "Dans une bande de 5 m à compter du retrait de 4 m minimum de la voie ou de l'emprise publique, les constructions auront une hauteur maximale de 6 m à l'égout.",
+      "page_confirmee": 111,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, un recul de 4 mètres minimum est obligatoire.",
+      "page_confirmee": 112,
+      "marqueur": "ancien 3 -> 4"
+    },
+    "stat_logement": {
+      "citation": "INTROUVABLE",
+      "page_confirmee": 120,
+      "marqueur": "U3h non listé dans le tableau art.12.2 (seuls U3a,U3b,U3c)"
+    },
+    "pleine_terre_pct": {
+      "citation": "Le pourcentage minimal d'espaces libres perméables sera de 40% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 124,
+      "marqueur": "en zone U3c et U3h"
+    }
+  },
+  "U3e": {
+    "hf_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 14 m.",
+      "page_confirmee": 151,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 148,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "...au point le plus proche de la limite séparative, est de 5 m minimum.",
+      "page_confirmee": 149,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "1 place par logement",
+      "page_confirmee": 154,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 156,
+      "marqueur": ""
+    }
+  },
+  "Usdu_PlateauCaillou": {
+    "he_m": {
+      "citation": "La hauteur devra être fixée en fonction de l'insertion dans le site et des bâtis de référence, avec un maximum de 6 m à l'égout et 9 m au faîtage.",
+      "page_confirmee": 134,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "...avec un maximum de 6 m à l'égout et 9 m au faîtage.",
+      "page_confirmee": 134,
+      "marqueur": ""
+    },
+    "emprise_sol_pct": {
+      "citation": "INTROUVABLE",
+      "page_confirmee": 133,
+      "marqueur": "emprise en m2 absolus (habitation/commerce <=150 m2, annexe <=25 m2), pas en %"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions devront être implantées en retrait de 4 m minimum de la voie ou de l'emprise publique",
+      "page_confirmee": 131,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "...au point le plus proche de la limite séparative est de 4 m minimum",
+      "page_confirmee": 132,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "Autres logements : 2 places / logement",
+      "page_confirmee": 139,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Le pourcentage minimal d'espaces libres perméables sera de 50% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 143,
+      "marqueur": "en zone Usdu"
+    }
+  },
+  "U4a": {
+    "he_m": {
+      "citation": "en zone U4a la hauteur maximale hé est fixée à 12 m ;",
+      "page_confirmee": 176,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zone U4a ... la hauteur maximale hf est fixée à 16 m.",
+      "page_confirmee": 176,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zone U4a Les constructions devront être implantées à l'alignement.",
+      "page_confirmee": 172,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "en zone U4a Les constructions devront s'implanter sur une limite séparative sur une longueur maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m",
+      "page_confirmee": 173,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "en zone U4a : 1,5 places par logement",
+      "page_confirmee": 182,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U4a Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 186,
+      "marqueur": ""
+    }
+  },
+  "U4b": {
+    "he_m": {
+      "citation": "en zone U4b la hauteur maximale hé est fixée à 9 m ;",
+      "page_confirmee": 176,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zone U4b ... la hauteur maximale hf est fixée à 13 m.",
+      "page_confirmee": 176,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zone U4b Les constructions devront être implantées en retrait de 3 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 172,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "en zones U4b et U4c ... En cas de retrait, les constructions respecteront un recul minimal de 3 m.",
+      "page_confirmee": 174,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "en zones U4b, U4c : 2 places / logement",
+      "page_confirmee": 182,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U4b Le pourcentage minimal d'espaces libres perméables sera de 30% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 186,
+      "marqueur": ""
+    }
+  },
+  "U4c": {
+    "he_m": {
+      "citation": "en zone U4c la hauteur maximale hé est fixée à 6 m ;",
+      "page_confirmee": 176,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zone U4c ... la hauteur maximale hf est fixée à 9 m.",
+      "page_confirmee": 176,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zone U4c Les constructions devront être implantées en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 172,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "en zones U4b et U4c ... En cas de retrait, les constructions respecteront un recul minimal de 3 m.",
+      "page_confirmee": 174,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "en zones U4b, U4c : 2 places / logement",
+      "page_confirmee": 182,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U4c Le pourcentage minimal d'espaces libres perméables sera de 40% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 186,
+      "marqueur": ""
+    }
+  },
+  "U5a": {
+    "he_m": {
+      "citation": "en zone U5a la hauteur maximale hé est fixée à 12 m ;",
+      "page_confirmee": 222,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zone U5a ... la hauteur maximale hf est fixée à 16 m.",
+      "page_confirmee": 222,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zone U5a Les constructions devront être implantées à l'alignement.",
+      "page_confirmee": 218,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "en zone U5a Les constructions devront s'implanter sur une limite séparative sur une longueur maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m",
+      "page_confirmee": 219,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "en zone U5a : 1,5 places par logement",
+      "page_confirmee": 228,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U5a Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 232,
+      "marqueur": ""
+    }
+  },
+  "U5b": {
+    "he_m": {
+      "citation": "en zone U5b la hauteur maximale hé est fixée à 9 m ;",
+      "page_confirmee": 222,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zone U5b ... la hauteur maximale hf est fixée à 13 m.",
+      "page_confirmee": 222,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zone U5b Les constructions devront être implantées en retrait de 3 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 218,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "en zone U5b et U5c ... En cas de retrait, les constructions respecteront un recul minimal de 3 m.",
+      "page_confirmee": 220,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "en zones U5b, U5c : 2 places / logement",
+      "page_confirmee": 228,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U5b Le pourcentage minimal d'espaces libres perméables sera de 30% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 232,
+      "marqueur": ""
+    }
+  },
+  "U5c": {
+    "he_m": {
+      "citation": "en zone U5c la hauteur maximale hé est fixée à 6 m ;",
+      "page_confirmee": 222,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zone U5c ... la hauteur maximale hf est fixée à 9 m.",
+      "page_confirmee": 222,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zone U5c Les constructions devront être implantées en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 218,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "en zone U5b et U5c ... En cas de retrait, les constructions respecteront un recul minimal de 3 m.",
+      "page_confirmee": 220,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "en zones U5b, U5c : 2 places / logement",
+      "page_confirmee": 228,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U5c Le pourcentage minimal d'espaces libres perméables sera de 40% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 232,
+      "marqueur": ""
+    }
+  },
+  "AU5e": {
+    "hf_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 14 m.",
+      "page_confirmee": 260,
+      "marqueur": ""
+    },
+    "emprise_sol_pct": {
+      "citation": "INTROUVABLE",
+      "page_confirmee": 259,
+      "marqueur": "Article 9 Emprise au sol : Il n'est pas fixé de règle"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 257,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, la distance ... au point le plus proche de la limite séparative, est de 5 m minimum.",
+      "page_confirmee": 258,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "Habitations autorisées dans la zone : 1 place par logement",
+      "page_confirmee": 263,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 265,
+      "marqueur": ""
+    }
+  },
+  "U6a": {
+    "he_m": {
+      "citation": "en zone U6a la hauteur maximale hé est fixée à 12 m ;",
+      "page_confirmee": 282,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zone U6a ... la hauteur maximale hf est fixée à 16 m.",
+      "page_confirmee": 282,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zone U6a Les constructions devront être implantées à l'alignement.",
+      "page_confirmee": 278,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "en zone U6a Les constructions devront s'implanter sur une limite séparative sur une longueur maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m.",
+      "page_confirmee": 279,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "en zone U6a : 1,5 places par logement",
+      "page_confirmee": 288,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U6a Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 292,
+      "marqueur": ""
+    }
+  },
+  "U6b": {
+    "he_m": {
+      "citation": "en zone U6b la hauteur maximale hé est fixée à 9 m ;",
+      "page_confirmee": 282,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zone U6b ... la hauteur maximale hf est fixée à 13 m.",
+      "page_confirmee": 282,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zone U6b Les constructions devront être implantées en retrait de 3 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 278,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "en zone U6b et U6c ... En cas de retrait, les constructions respecteront un recul minimal de 3 m.",
+      "page_confirmee": 279,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "en zones U6b, U6c : 2 places / logement",
+      "page_confirmee": 288,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U6b Le pourcentage minimal d'espaces libres perméables sera de 30% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 292,
+      "marqueur": ""
+    }
+  },
+  "U6c": {
+    "he_m": {
+      "citation": "en zone U6c la hauteur maximale hé est fixée à 6 m ;",
+      "page_confirmee": 282,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "en zone U6c ... la hauteur maximale hf est fixée à 9 m.",
+      "page_confirmee": 282,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "en zone U6c Les constructions devront être implantées en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+      "page_confirmee": 278,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "en zone U6b et U6c ... En cas de retrait, les constructions respecteront un recul minimal de 3 m.",
+      "page_confirmee": 279,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "en zones U6b, U6c : 2 places / logement",
+      "page_confirmee": 288,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "en zone U6c Le pourcentage minimal d'espaces libres perméables sera de 40% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 292,
+      "marqueur": ""
+    }
+  },
+  "Usdu": {
+    "he_m": {
+      "citation": "La hauteur devra être fixée en fonction de l'insertion dans le site et des bâtis de référence, avec un maximum de 6 m à l'égout et 9 m au faîtage.",
+      "page_confirmee": 134,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "...avec un maximum de 6 m à l'égout et 9 m au faîtage.",
+      "page_confirmee": 134,
+      "marqueur": ""
+    },
+    "emprise_sol_pct": {
+      "citation": "INTROUVABLE",
+      "page_confirmee": 133,
+      "marqueur": "emprise en m2 absolus (habitation/commerce <=150 m2, annexe <=25 m2), pas en %"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions devront être implantées en retrait de 4 m minimum de la voie ou de l'emprise publique",
+      "page_confirmee": 131,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "...au point le plus proche de la limite séparative est de 4 m minimum",
+      "page_confirmee": 132,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "Autres logements : 2 places / logement",
+      "page_confirmee": 139,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Le pourcentage minimal d'espaces libres perméables sera de 50% de la surface totale du terrain d'assiette du projet.",
+      "page_confirmee": 143,
+      "marqueur": "en zone Usdu"
+    }
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "Ua": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 21 mètres à l’égout du toit ou au sommet de l’acrotère et 25 mètres au faîtage.", "page_confirmee": 18, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 21 mètres à l’égout du toit ou au sommet de l’acrotère et 25 mètres au faîtage.", "page_confirmee": 18, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions peuvent s’implanter soit à l’alignement, soit à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 15, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 16, "marqueur": ""},
+    "stat_logement": {"citation": "Habitat individuel 1 place par logement", "page_confirmee": 23, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au minimum 20% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 15% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre", "page_confirmee": 24, "marqueur": ""}
+  },
+  "Uav": {
+    "he_m": {"citation": "Dans le secteur Uav, ce seuil est limité à 16 mètres à l’égout du toit ou au sommet de l’acrotère et 20 mètres au faîtage.", "page_confirmee": 18, "marqueur": "En secteur Uav (secteur de la zone Ua)"},
+    "hf_m": {"citation": "Dans le secteur Uav, ce seuil est limité à 16 mètres à l’égout du toit ou au sommet de l’acrotère et 20 mètres au faîtage.", "page_confirmee": 18, "marqueur": "En secteur Uav (secteur de la zone Ua)"},
+    "recul_voirie_m": {"citation": "Les constructions peuvent s’implanter soit à l’alignement, soit à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 15, "marqueur": "règle Ua (pas de disposition Uav spécifique en Art.6)"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 16, "marqueur": "règle Ua (pas de disposition Uav spécifique en Art.7.1)"},
+    "stat_logement": {"citation": "Habitat individuel 1 place par logement", "page_confirmee": 23, "marqueur": "règle Ua (tableau Ua12.2)"},
+    "pleine_terre_pct": {"citation": "En secteur Uav, ces seuils sont respectivement portés à 30% et 20%.", "page_confirmee": 25, "marqueur": "En secteur Uav (les 30%/20% portent respectivement sur perméable/pleine terre → pleine terre = 20%)"}
+  },
+  "Ub": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 13 mètres à l’égout du toit ou au sommet de l’acrotère et 17 mètres au faîtage.", "page_confirmee": 33, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 13 mètres à l’égout du toit ou au sommet de l’acrotère et 17 mètres au faîtage.", "page_confirmee": 33, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions peuvent s’implanter soit à l’alignement, soit à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 30, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 31, "marqueur": ""},
+    "stat_logement": {"citation": "Habitat individuel 1 place par logement", "page_confirmee": 37, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au minimum 35% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 25% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre", "page_confirmee": 39, "marqueur": ""}
+  },
+  "Uc": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent s’implanter à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 45, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 46, "marqueur": ""},
+    "stat_logement": {"citation": "Habitat individuel 1 place par logement", "page_confirmee": 52, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 30% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre", "page_confirmee": 54, "marqueur": ""}
+  },
+  "Ucm": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": "via renvoi Uc (indice « m », aucune règle de hauteur propre)"},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": "via renvoi Uc (indice « m », aucune règle de hauteur propre)"},
+    "recul_voirie_m": {"citation": "Les constructions doivent s’implanter à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 45, "marqueur": "via renvoi Uc"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 46, "marqueur": "via renvoi Uc"},
+    "stat_logement": {"citation": "Habitat individuel 1 place par logement", "page_confirmee": 52, "marqueur": "via renvoi Uc"},
+    "pleine_terre_pct": {"citation": "Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 30% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre", "page_confirmee": 54, "marqueur": "via renvoi Uc"}
+  },
+  "UCto": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": "via renvoi Uc (secteur Ucto, aucune règle chiffrée propre dans l'Art. Uc10.2)"},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": "via renvoi Uc (secteur Ucto, aucune règle chiffrée propre dans l'Art. Uc10.2)"},
+    "recul_voirie_m": {"citation": "Les constructions doivent s’implanter à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 45, "marqueur": "via renvoi Uc"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 46, "marqueur": "via renvoi Uc"},
+    "pleine_terre_pct": {"citation": "Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 30% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre", "page_confirmee": 54, "marqueur": "via renvoi Uc"}
+  },
+  "UCtom": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": "via renvoi Uc (secteur Ucto + indice « m », aucune règle chiffrée propre)"},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": "via renvoi Uc (secteur Ucto + indice « m », aucune règle chiffrée propre)"},
+    "recul_voirie_m": {"citation": "Les constructions doivent s’implanter à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 45, "marqueur": "via renvoi Uc"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 46, "marqueur": "via renvoi Uc"},
+    "pleine_terre_pct": {"citation": "Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 30% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre", "page_confirmee": 54, "marqueur": "via renvoi Uc"}
+  },
+  "Ud": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 7 mètres à l’égout du toit ou au sommet de l’acrotère et 11 mètres au faîtage.", "page_confirmee": 63, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 7 mètres à l’égout du toit ou au sommet de l’acrotère et 11 mètres au faîtage.", "page_confirmee": 63, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent s’implanter à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 60, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 61, "marqueur": "Ud7.1 : « sur une seule limite séparative ou en retrait » (pas deux limites)"},
+    "stat_logement": {"citation": "Habitat individuel 1 place par logement", "page_confirmee": 67, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 30% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre", "page_confirmee": 69, "marqueur": ""}
+  },
+  "Ue": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 12 mètres à l’égout du toit ou au sommet de l’acrotère.", "page_confirmee": 77, "marqueur": "faîtage non réglementé (Art. Ue10.2 ne cite que l'égout/acrotère)"},
+    "recul_voirie_m": {"citation": "Les constructions doivent s’implanter à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 75, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 76, "marqueur": ""}
+  },
+  "1AUa": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 21 mètres à l’égout du toit ou au sommet de l’acrotère et 25 mètres au faîtage.", "page_confirmee": 18, "marqueur": "via renvoi — ZONE AUindicée : « il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes » (PDF p.85) → règle Ua"},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 21 mètres à l’égout du toit ou au sommet de l’acrotère et 25 mètres au faîtage.", "page_confirmee": 18, "marqueur": "via renvoi ZONE AUindicée → règle Ua (PDF p.85)"},
+    "recul_voirie_m": {"citation": "Les constructions peuvent s’implanter soit à l’alignement, soit à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 15, "marqueur": "via renvoi — Art. AUindicée 6 : « Se reporter au règlement de la zone U indiquée en indice » (PDF p.88) → règle Ua"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 16, "marqueur": "via renvoi Art. AUindicée 7 (PDF p.88) → règle Ua"},
+    "stat_logement": {"citation": "Habitat individuel 1 place par logement", "page_confirmee": 23, "marqueur": "via renvoi Art. AUindicée 12 (PDF p.89) → tableau Ua12.2"},
+    "pleine_terre_pct": {"citation": "Au minimum 20% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 15% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre", "page_confirmee": 24, "marqueur": "via renvoi Art. AUindicée 13 (PDF p.89) → règle Ua13.2"}
+  },
+  "1AUb": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 13 mètres à l’égout du toit ou au sommet de l’acrotère et 17 mètres au faîtage.", "page_confirmee": 33, "marqueur": "via renvoi ZONE AUindicée → règle Ub (PDF p.85)"},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 13 mètres à l’égout du toit ou au sommet de l’acrotère et 17 mètres au faîtage.", "page_confirmee": 33, "marqueur": "via renvoi ZONE AUindicée → règle Ub (PDF p.85)"},
+    "recul_voirie_m": {"citation": "Les constructions peuvent s’implanter soit à l’alignement, soit à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 30, "marqueur": "via renvoi Art. AUindicée 6 (PDF p.88) → règle Ub"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 31, "marqueur": "via renvoi Art. AUindicée 7 (PDF p.88) → règle Ub"},
+    "stat_logement": {"citation": "Habitat individuel 1 place par logement", "page_confirmee": 37, "marqueur": "via renvoi Art. AUindicée 12 (PDF p.89) → tableau Ub12.2"},
+    "pleine_terre_pct": {"citation": "Au minimum 35% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 25% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre", "page_confirmee": 39, "marqueur": "via renvoi Art. AUindicée 13 (PDF p.89) → règle Ub13.2"}
+  },
+  "1AUc": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": "via renvoi ZONE AUindicée → règle Uc (PDF p.85)"},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": "via renvoi ZONE AUindicée → règle Uc (PDF p.85)"},
+    "recul_voirie_m": {"citation": "Les constructions doivent s’implanter à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 45, "marqueur": "via renvoi Art. AUindicée 6 (PDF p.88) → règle Uc"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 46, "marqueur": "via renvoi Art. AUindicée 7 (PDF p.88) → règle Uc"},
+    "stat_logement": {"citation": "Habitat individuel 1 place par logement", "page_confirmee": 52, "marqueur": "via renvoi Art. AUindicée 12 (PDF p.89) → tableau Uc12.2"},
+    "pleine_terre_pct": {"citation": "Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 30% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre", "page_confirmee": 54, "marqueur": "via renvoi Art. AUindicée 13 (PDF p.89) → règle Uc13.2"}
+  },
+  "1AUe": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 12 mètres à l’égout du toit ou au sommet de l’acrotère.", "page_confirmee": 77, "marqueur": "via renvoi ZONE AUindicée → règle Ue (PDF p.85) ; faîtage non réglementé"},
+    "recul_voirie_m": {"citation": "Les constructions doivent s’implanter à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 75, "marqueur": "via renvoi Art. AUindicée 6 (PDF p.88) → règle Ue"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 76, "marqueur": "via renvoi Art. AUindicée 7 (PDF p.88) → règle Ue"}
+  },
+  "1AUto": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": "via renvoi AUto→Ucto : « Pour la zone AUto, il convient de se reporter au règlement de la zone Ucto » (répété à chaque article, PDF p.86-89) → règle Uc10.2"},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": "via renvoi AUto→Ucto (« Pour la zone AUto, il convient de se reporter au règlement de la zone Ucto », PDF p.86-89) → règle Uc10.2"},
+    "recul_voirie_m": {"citation": "Les constructions doivent s’implanter à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 45, "marqueur": "via renvoi AUto→Ucto (PDF p.88) → règle Uc6.2"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 46, "marqueur": "via renvoi AUto→Ucto (PDF p.88) → règle Uc7.1"},
+    "pleine_terre_pct": {"citation": "Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 30% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre", "page_confirmee": 54, "marqueur": "via renvoi AUto→Ucto (PDF p.89) → règle Uc13.2"}
+  },
+  "1AUcto": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": "via renvoi ZONE AUindicée → indice « cto » → règlement Uc/Ucto (PDF p.85) → règle Uc10.2"},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": "via renvoi ZONE AUindicée → indice « cto » → règlement Uc/Ucto (PDF p.85) → règle Uc10.2"},
+    "recul_voirie_m": {"citation": "Les constructions doivent s’implanter à 4 mètres minimum de l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.", "page_confirmee": 45, "marqueur": "via renvoi Art. AUindicée 6 (PDF p.88) → règle Uc6.2"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 46, "marqueur": "via renvoi Art. AUindicée 7 (PDF p.88) → règle Uc7.1"},
+    "pleine_terre_pct": {"citation": "Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 30% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre", "page_confirmee": 54, "marqueur": "via renvoi Art. AUindicée 13 (PDF p.89) → règle Uc13.2"}
+  },
+  "2AUa": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 21 mètres à l’égout du toit ou au sommet de l’acrotère et 25 mètres au faîtage.", "page_confirmee": 18, "marqueur": "via renvoi ZONE AUindicée → règle Ua (PDF p.85)"},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 21 mètres à l’égout du toit ou au sommet de l’acrotère et 25 mètres au faîtage.", "page_confirmee": 18, "marqueur": "via renvoi ZONE AUindicée → règle Ua (PDF p.85)"}
+  },
+  "2AUb": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 13 mètres à l’égout du toit ou au sommet de l’acrotère et 17 mètres au faîtage.", "page_confirmee": 33, "marqueur": "via renvoi ZONE AUindicée → règle Ub (PDF p.85)"},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 13 mètres à l’égout du toit ou au sommet de l’acrotère et 17 mètres au faîtage.", "page_confirmee": 33, "marqueur": "via renvoi ZONE AUindicée → règle Ub (PDF p.85)"}
+  },
+  "2AUc": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": "via renvoi ZONE AUindicée → règle Uc (PDF p.85)"},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 9 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.", "page_confirmee": 48, "marqueur": "via renvoi ZONE AUindicée → règle Uc (PDF p.85)"}
+  },
+  "2AUd": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 7 mètres à l’égout du toit ou au sommet de l’acrotère et 11 mètres au faîtage.", "page_confirmee": 63, "marqueur": "via renvoi ZONE AUindicée → règle Ud (PDF p.85)"},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à 7 mètres à l’égout du toit ou au sommet de l’acrotère et 11 mètres au faîtage.", "page_confirmee": 63, "marqueur": "via renvoi ZONE AUindicée → règle Ud (PDF p.85)"}
+  },
+  "2AUe": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à 12 mètres à l’égout du toit ou au sommet de l’acrotère.", "page_confirmee": 77, "marqueur": "via renvoi ZONE AUindicée → règle Ue (PDF p.85) ; faîtage non réglementé"}
+  }
+}

@@ -105,7 +105,7 @@ _CDAC_SOUS_DESTINATIONS = {"artisanat_commerce_detail"}
 
 
 def _slug(commune: str) -> str:
-    """« Saint-Denis » → « saint_denis » (même convention que plu_rules)."""
+    """« Saint-Denis » → « saint_denis » (même convention que zonage)."""
     s = unicodedata.normalize("NFKD", commune).encode("ascii", "ignore").decode("ascii")
     return re.sub(r"[^A-Za-z0-9]+", "_", s).strip("_").lower()
 
@@ -130,6 +130,14 @@ def _fichier_commune(commune: str) -> Path | None:
 def _doc(commune: str) -> dict | None:
     p = _fichier_commune(commune)
     return _load_yaml(str(p)) if p else None
+
+
+def reglement_meta(commune: str) -> dict | None:
+    """Métadonnée `meta` du règlement de la commune (document, url, millésime, édition), ou None si
+    non calibrée. Point d'accès PUBLIC pour que les surfaces (fiche règlement) ne lisent jamais le
+    dossier de calibration directement."""
+    doc = _doc(commune)
+    return (doc.get("meta") or {}) if doc else None
 
 
 def _millesimes() -> dict:
@@ -487,3 +495,204 @@ def referentiel() -> dict:
             "sous_destinations": [{"slug": k, "destination": p, "libelle": lib}
                                   for k, (p, lib) in SOUS_DESTINATIONS.items()],
             "source": REF_SOURCE}
+
+
+# ---------------------------------------------------------------------------
+# PLU-CALIBRAGE-1 lot 1 — LE SCHÉMA DES RÈGLES CHIFFRÉES PAR ZONE
+# ---------------------------------------------------------------------------
+# Sœur de `sous_destinations`, la clé `regles:` d'une zone porte les règles CHIFFRÉES
+# (les valeurs que le calcul de capacité affiche aujourd'hui « ESTIMÉ »). Cinq rubriques,
+# chacune éclatée en FEUILLES nommées. Une feuille = une règle atomique :
+#   · soit une valeur lue     : {<valeur…>, formule?, min_m?, article, page_pdf, citation, statut}
+#   · soit un silence prouvé  : {absent: true, article, page_pdf, citation, statut}
+# Chaque feuille porte OBLIGATOIREMENT article + page_pdf + citation (verrou V6a pour un statut
+# `valide`) et un `statut` ∈ {propose, valide}. Le silence du règlement s'écrit `absent: true`
+# avec la citation qui le prouve — jamais une feuille vide ambiguë. Rien n'est déduit : une
+# règle non trouvée n'est pas écrite (la feuille est absente du YAML, distinct de `absent:true`
+# qui affirme, citation à l'appui, que le règlement ne réglemente pas).
+#
+# Feuilles attendues par rubrique (une zone peut n'en porter qu'une partie — le reste est
+# « non lu », c.-à-d. absent du YAML) :
+#   hauteur       → faitage · egout · niveaux      (les trois séparément — R151-39/40)
+#   emprise_sol   → ces                            (% d'emprise au sol, ou coefficient CES)
+#   retraits      → voie · limites_separatives     (chacune : formule texte + min_m)
+#   stationnement → par_logement · par_m2_sdp · par_typologie
+#   mixite        → feuille plate : seuil_logements|seuil_m2 + quota_pct + portee
+REGLES_STATUTS = ("propose", "valide")
+
+REGLES_RUBRIQUES: dict[str, tuple[str, ...]] = {
+    "hauteur": ("faitage", "egout", "niveaux"),
+    "emprise_sol": ("ces",),
+    "retraits": ("voie", "limites_separatives"),
+    "stationnement": ("par_logement", "par_m2_sdp", "par_typologie"),
+    "pleine_terre": ("pct",),   # PLU-CALIBRAGE-3 : porté par l'ancien système (unification)
+    "mixite": (),   # feuille plate (la rubrique EST la feuille)
+}
+
+REGLES_RUBRIQUES_LIB: dict[str, str] = {
+    "hauteur": "Hauteur",
+    "emprise_sol": "Emprise au sol",
+    "retraits": "Retraits (implantation)",
+    "stationnement": "Stationnement",
+    "pleine_terre": "Pleine terre",
+    "mixite": "Mixité sociale",
+}
+
+# Correspondance des DEUX générations de PLU. Avant la réforme de modernisation (décret
+# n° 2015-1783, applicable aux PLU prescrits/révisés à compter du 01/01/2016), le règlement
+# numérotait des ARTICLES 1 à 16 par zone ; après, il s'organise en CHAPITRES THÉMATIQUES
+# (usage / caractéristiques urbaines, architecturales, environnementales et paysagères /
+# équipements et réseaux — art. R151-17 et R151-27 à R151-50). Une rubrique `regles` se lit
+# indifféremment dans l'une ou l'autre — la feuille cite l'article/chapitre RÉEL du document.
+CORRESPONDANCE_GENERATIONS: dict[str, dict[str, str]] = {
+    "hauteur": {"articles_6_16": "art. 10 (hauteur maximale des constructions)",
+                "chapitres_2016": "Volumétrie et implantation — hauteur (R151-39/40)"},
+    "emprise_sol": {"articles_6_16": "art. 9 (emprise au sol)",
+                    "chapitres_2016": "Volumétrie et implantation — emprise au sol (R151-39)"},
+    "retraits": {"articles_6_16": "art. 6 (implantation / voies et emprises publiques) "
+                                  "+ art. 7 (implantation / limites séparatives)",
+                 "chapitres_2016": "Volumétrie et implantation — implantation (R151-39)"},
+    "stationnement": {"articles_6_16": "art. 12 (obligations de stationnement)",
+                      "chapitres_2016": "Équipements et réseaux — stationnement (R151-44/45)"},
+    "mixite": {"articles_6_16": "servitude de mixité sociale (art. 2 / dispositions générales) "
+                                "— L151-15, L151-41 4°",
+               "chapitres_2016": "Usage des sols et destinations — mixité sociale (L151-15) / OAP"},
+}
+
+
+def _est_feuille_regle(v: object) -> bool:
+    """Une feuille de règle = un dict qui porte un `statut` (règle lue ou silence prouvé)."""
+    return isinstance(v, dict) and "statut" in v
+
+
+def iter_regles_feuilles(regles: dict | None):
+    """Parcourt un bloc `regles` d'une zone → (chemin, feuille). `chemin` est le tuple
+    (rubrique[, feuille]) ; `mixite` est plate (chemin d'un élément)."""
+    for rubrique, contenu in (regles or {}).items():
+        if _est_feuille_regle(contenu):
+            yield (rubrique,), contenu
+        elif isinstance(contenu, dict):
+            for sous, feuille in contenu.items():
+                if _est_feuille_regle(feuille):
+                    yield (rubrique, sous), feuille
+
+
+def regle_feuille_defauts(feuille: dict) -> list[str]:
+    """Ce qui manque à une feuille pour être traçable : article, page_pdf, citation (verrou
+    V6a). Vaut pour une valeur lue COMME pour un `absent: true` (le silence se prouve aussi)."""
+    manques = []
+    if not str(feuille.get("article") or "").strip():
+        manques.append("article")
+    if feuille.get("page_pdf") in (None, ""):
+        manques.append("page_pdf")
+    if not str(feuille.get("citation") or "").strip():
+        manques.append("citation")
+    return manques
+
+
+def _zone_regles_brut(doc: dict, zone: str) -> dict:
+    """Le bloc `regles` d'une zone, résolu par clé normalisée. Les règles suivent le `renvoi`
+    UNIQUEMENT si la zone n'a pas ses propres règles (un secteur porte souvent ses règles de
+    volumétrie propres tout en renvoyant ses destinations à la zone mère)."""
+    zones = doc.get("zones") or {}
+    norm = {_norm_zone(z): z for z in zones}
+    hit = norm.get(_norm_zone(zone))
+    if hit is None:
+        return {}
+    v = zones[hit]
+    if isinstance(v, dict) and v.get("regles"):
+        return v["regles"]
+    seen = {hit}
+    while isinstance(v, dict) and v.get("renvoi") and not v.get("regles"):
+        cible = norm.get(_norm_zone(v["renvoi"]))
+        if cible is None or cible in seen:
+            break
+        seen.add(cible)
+        v = zones[cible]
+    return (v.get("regles") if isinstance(v, dict) else None) or {}
+
+
+def regles_zone(commune: str, zone: str) -> dict:
+    """Les règles chiffrées calibrées d'une (commune, zone) — LE point de lecture unique du
+    bloc `regles`. {} si la commune n'est pas calibrée, la zone n'existe pas, ou aucune règle
+    n'est lue. Ne fabrique rien : relaie le YAML tel quel (feuilles `propose`/`valide`)."""
+    doc = _doc(commune)
+    if not doc:
+        return {}
+    return _zone_regles_brut(doc, zone)
+
+
+def regles_commune(commune: str) -> list[dict]:
+    """Toutes les feuilles de règles calibrées d'une commune, à plat (revue, contrôle) :
+    [{zone, rubrique, feuille, chemin, statut, absent, article, page_pdf, citation, valeur}]."""
+    doc = _doc(commune)
+    if not doc:
+        return []
+    out: list[dict] = []
+    for zone in sorted((doc.get("zones") or {}).keys()):
+        zv = (doc.get("zones") or {}).get(zone) or {}
+        if not isinstance(zv, dict) or not zv.get("regles"):
+            continue  # seule la zone qui PORTE ses règles les déclare (pas les renvois)
+        for chemin, feuille in iter_regles_feuilles(zv["regles"]):
+            out.append({"zone": zone, "rubrique": chemin[0],
+                        "feuille": chemin[1] if len(chemin) > 1 else None,
+                        "chemin": ".".join(chemin), **feuille})
+    return out
+
+
+def iter_regles_calibrees():
+    """Parcourt TOUTES les calibrations (config/plu_destinations/*.yaml) → dict par feuille,
+    pour le verrou V6a et les contrôles transverses. `absent` distingue silence prouvé de
+    valeur lue ; `fichier` et `insee` situent la feuille."""
+    for path in sorted(_DEST_DIR.glob("974??_*.yaml")):
+        doc = _load_yaml(str(path))
+        insee = (doc.get("meta") or {}).get("insee")
+        for zone, zv in (doc.get("zones") or {}).items():
+            if not isinstance(zv, dict) or not zv.get("regles"):
+                continue
+            for chemin, feuille in iter_regles_feuilles(zv["regles"]):
+                yield {"fichier": path.name, "insee": insee, "zone": zone,
+                       "chemin": ".".join(chemin), **feuille}
+
+
+# ---------------------------------------------------------------------------
+# PLU-CALIBRAGE-1 lot 2 — LES CALIBRAGES, LECTEURS DU RÉSERVOIR GPU
+# ---------------------------------------------------------------------------
+# Chaque calibration de commune (config/plu_destinations/<insee>_*.yaml) LIT le règlement
+# opposable servi par le réservoir GPU (`gpu_plu_api_carto`, qui sert `plu_reglement_extrait`)
+# et grave la version calibrée (identifiant GPU `meta.document_gpu` + date `meta.millesime`).
+# Ce sont donc 23 LECTEURS de plus sur une source existante — aucun job nouveau. Quand une
+# nouvelle version du PLU d'une commune est servie (catalogue `plu_millesimes.yaml` rafraîchi
+# par la veille GPU, idurba plus récent que celui gravé au calibrage), `etat_commune` bascule
+# la commune en « a_relire » : le calibrage passe « à revérifier » dans le Circuit.
+CALIBRAGE_ETAT_LABEL = {
+    "calibree": "à jour",
+    "a_relire": "à revérifier",
+    "non_calibree": "non calibré",
+}
+
+
+def calibrages_gpu() -> list[dict]:
+    """Les calibrages PLU (un par commune dotée d'un PLU), lecteurs du réservoir GPU. Le RNU
+    (Saint-Philippe) n'est pas un calibrage de règlement PLU — exclu. État repris de
+    `etat_commune` : « à jour » / « à revérifier » (nouvelle version GPU) / « non calibré »."""
+    out: list[dict] = []
+    for e in etats_ile():
+        if e.get("etat") == "rnu":
+            continue
+        insee = e.get("insee")
+        out.append({
+            "insee": insee,
+            "commune": e.get("commune"),
+            "etat": e.get("etat"),
+            "etat_label": CALIBRAGE_ETAT_LABEL.get(e.get("etat"), e.get("etat")),
+            "a_reverifier": e.get("etat") == "a_relire",
+            "millesime": e.get("millesime"),
+            "document_gpu": e.get("document_gpu"),
+            "document_gpu_servi": e.get("document_gpu_servi"),
+            "lu_le": e.get("lu_le"),
+            "note": e.get("note"),
+            "n_zones": len(e.get("zones") or []),
+            "n_regles": len(regles_commune(insee or "")),
+        })
+    return out

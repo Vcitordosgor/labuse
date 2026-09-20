@@ -68,7 +68,7 @@ def _cause_indisponible(session: Session, parcel_id: int, f=None) -> tuple[str, 
         return code, 0          # terrain_exigu / redhibitoire / hauteur_indispo / capacite_nulle
     # parcel_faisabilite → None : distinguer « aucune zone » (hors PLU) d'une zone sans règle.
     from .db import parcel_context
-    from .plu_rules import resolve_zone
+    from .zonage import resolve_zone
     ctx = parcel_context(session, parcel_id)
     if ctx is None or not ctx.zone:
         return "hors_plu", None                      # réellement inconnaissable — dit, jamais muet

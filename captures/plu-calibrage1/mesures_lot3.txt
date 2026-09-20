@@ -1,0 +1,16 @@
+=== MESURES LOT 3 — extraction Saint-Denis (97411) ===
+11 zones U ; 63 feuilles (59 valeurs lues + 4 absences prouvées) ; 4 mixités vides rejetées (anti-invention)
+citations vérifiées mot-à-mot contre le PDF : 62/63 ≥0.8, la 63e = cellule tableau confirmée p.34
+coût API facturable : 0 € (clé sans crédit) — extraction jouée par lecture directe via le pipeline validé
+
+  Ua      5 règles
+  Uavap   2 règles
+  Ud      7 règles
+  Uh      7 règles
+  Ui      6 règles
+  Uj      7 règles
+  Um      7 règles
+  Uma     5 règles
+  Up      7 règles
+  Uu      5 règles
+  Uv      5 règles

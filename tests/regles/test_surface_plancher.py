@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 
 from labuse.faisabilite.engine import Hypotheses, estimate_capacity
-from labuse.faisabilite.plu_rules import ZoneRules
+from labuse.faisabilite.zonage import ZoneRules
 
 
 def _regles(he=9.0, ces=None, pt=None):

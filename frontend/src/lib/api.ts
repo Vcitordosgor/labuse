@@ -1140,6 +1140,16 @@ export type SourceRattachements = {
   ailleurs: { quoi: string; ou: string }[]
 }
 export const getSourcesRattachements = () => j<Record<string, SourceRattachements>>('/sources/rattachements')
+// PLU-CALIBRAGE-1 lot 2 — par nom de source (réservoir GPU), ses lecteurs calibrage : un par
+// commune dotée d'un PLU, avec l'état repris de destinations.etat_commune.
+export type SourceCalibrage = {
+  insee: string; commune: string
+  etat: 'calibree' | 'a_relire' | 'non_calibree'
+  etat_label: string; a_reverifier: boolean
+  millesime: string | null; document_gpu: string | null; document_gpu_servi?: string | null
+  lu_le: string | null; note?: string | null; n_zones: number; n_regles: number
+}
+export const getSourcesCalibrages = () => j<Record<string, SourceCalibrage[]>>('/sources/calibrages')
 
 // ── Modules outils (Vague 1) ──
 // M129-C (Vic 19/08/2026) : modDivision retiré — division hors produit (endpoint dormant).

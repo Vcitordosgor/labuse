@@ -1,0 +1,219 @@
+{
+  "Ug": {
+    "he_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 7 m à l’égout du toit ou au sommet de l’acrotère et à 12 m au faîtage.", "page_confirmee": 103, "marqueur": "règle générale Ug3.5"},
+    "hf_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 7 m à l’égout du toit ou au sommet de l’acrotère et à 12 m au faîtage.", "page_confirmee": 103, "marqueur": "règle générale Ug3.5"},
+    "emprise_sol_pct": {"citation": "50% de la superficie de l’unité foncière, pour les unités foncières supérieures à 250 m².", "page_confirmee": 103, "marqueur": "tranche >250 m² (gravée) — Ug3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 3 m minimum de l’emprise des voies routières et à 1 m minimum pour les constructions d’une hauteur inférieure ou égale à 3 m à l’égout du toit ou au sommet de l’acrotère et de 5 m maximum au faîtage.", "page_confirmee": 101, "marqueur": "règle générale Ug3.1"},
+    "recul_limites_sep_m": {"citation": "Les constructions nouvelles doivent être implantées : Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.", "page_confirmee": 101, "marqueur": "règle générale Ug3.2"},
+    "stat_logement": {"citation": "1,5 place de stationnement par logement", "page_confirmee": 109, "marqueur": "tableau Ug6 — Habitation/Logement"},
+    "pleine_terre_pct": {"citation": "Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 40 % minimum avec au moins 30 % de la superficie de l’unité foncière en espaces plantés de pleine terre.", "page_confirmee": 108, "marqueur": "tranche >250 m² (gravée) — Ug5.1"}
+  },
+  "AUg": {
+    "he_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 7 m à l’égout du toit ou au sommet de l’acrotère et à 12 m au faîtage.", "page_confirmee": 103, "marqueur": "chapitre commun Ug/AUg — via renvoi"},
+    "hf_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 7 m à l’égout du toit ou au sommet de l’acrotère et à 12 m au faîtage.", "page_confirmee": 103, "marqueur": "chapitre commun Ug/AUg — via renvoi"},
+    "emprise_sol_pct": {"citation": "50% de la superficie de l’unité foncière, pour les unités foncières supérieures à 250 m².", "page_confirmee": 103, "marqueur": "chapitre commun — tranche >250 m² gravée"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 3 m minimum de l’emprise des voies routières et à 1 m minimum pour les constructions d’une hauteur inférieure ou égale à 3 m à l’égout du toit ou au sommet de l’acrotère et de 5 m maximum au faîtage.", "page_confirmee": 101, "marqueur": "chapitre commun — via renvoi"},
+    "recul_limites_sep_m": {"citation": "Les constructions nouvelles doivent être implantées : Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.", "page_confirmee": 101, "marqueur": "chapitre commun — via renvoi"},
+    "stat_logement": {"citation": "1,5 place de stationnement par logement", "page_confirmee": 109, "marqueur": "tableau Ug6 — chapitre commun"},
+    "pleine_terre_pct": {"citation": "Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 40 % minimum avec au moins 30 % de la superficie de l’unité foncière en espaces plantés de pleine terre.", "page_confirmee": 108, "marqueur": "chapitre commun — tranche >250 m² gravée"}
+  },
+  "Uf": {
+    "he_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 11 m au faîtage.", "page_confirmee": 119, "marqueur": "règle générale Uf3.5"},
+    "hf_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 11 m au faîtage.", "page_confirmee": 119, "marqueur": "règle générale Uf3.5"},
+    "emprise_sol_pct": {"citation": "50% de la superficie de l’unité foncière, pour les unités foncières supérieures à 150 m².", "page_confirmee": 118, "marqueur": "tranche >150 m² (gravée) — Uf3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles doivent être implantées à 4 m minimum de l’emprise des voies.", "page_confirmee": 117, "marqueur": "règle générale Uf3.1"},
+    "recul_limites_sep_m": {"citation": "Les constructions nouvelles doivent être implantées : Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.", "page_confirmee": 117, "marqueur": "règle générale Uf3.2"},
+    "stat_logement": {"citation": "1,5 place de stationnement par logement", "page_confirmee": 126, "marqueur": "tableau Uf6 — Habitation/Logement"},
+    "pleine_terre_pct": {"citation": "Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 50 % minimum avec au moins 40 % de la superficie de l’unité foncière en espaces plantés de pleine terre.", "page_confirmee": 123, "marqueur": "tranche >250 m² (gravée) — Uf5.1"}
+  },
+  "UfCA": {
+    "he_m": {"citation": "Dans le secteur UfCa limiter la hauteur à 6 m égout et 7,5 m au faîtage.", "page_confirmee": 119, "marqueur": "secteur UfCa — Uf3.5"},
+    "hf_m": {"citation": "Dans le secteur UfCa limiter la hauteur à 6 m égout et 7,5 m au faîtage.", "page_confirmee": 119, "marqueur": "secteur UfCa — Uf3.5"},
+    "emprise_sol_pct": {"citation": "50% de la superficie de l’unité foncière, pour les unités foncières supérieures à 150 m².", "page_confirmee": 118, "marqueur": "règle générale chapitre (pas d'exception UfCA) — tranche >150 m² gravée"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles doivent être implantées à 4 m minimum de l’emprise des voies.", "page_confirmee": 117, "marqueur": "règle générale Uf3.1"},
+    "recul_limites_sep_m": {"citation": "Les constructions nouvelles doivent être implantées : Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.", "page_confirmee": 117, "marqueur": "règle générale Uf3.2"},
+    "stat_logement": {"citation": "1,5 place de stationnement par logement", "page_confirmee": 126, "marqueur": "tableau Uf6"},
+    "pleine_terre_pct": {"citation": "Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 50 % minimum avec au moins 40 % de la superficie de l’unité foncière en espaces plantés de pleine terre.", "page_confirmee": 123, "marqueur": "règle générale Uf5.1 — tranche >250 m² gravée"}
+  },
+  "AUf": {
+    "he_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 11 m au faîtage.", "page_confirmee": 119, "marqueur": "chapitre commun Uf/AUf — via renvoi"},
+    "hf_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 11 m au faîtage.", "page_confirmee": 119, "marqueur": "chapitre commun Uf/AUf — via renvoi"},
+    "emprise_sol_pct": {"citation": "50% de la superficie de l’unité foncière, pour les unités foncières supérieures à 150 m².", "page_confirmee": 118, "marqueur": "chapitre commun — tranche >150 m² gravée"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles doivent être implantées à 4 m minimum de l’emprise des voies.", "page_confirmee": 117, "marqueur": "chapitre commun — via renvoi"},
+    "recul_limites_sep_m": {"citation": "Les constructions nouvelles doivent être implantées : Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.", "page_confirmee": 117, "marqueur": "chapitre commun — via renvoi"},
+    "stat_logement": {"citation": "1,5 place de stationnement par logement", "page_confirmee": 126, "marqueur": "tableau Uf6 — chapitre commun"},
+    "pleine_terre_pct": {"citation": "Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 50 % minimum avec au moins 40 % de la superficie de l’unité foncière en espaces plantés de pleine terre.", "page_confirmee": 123, "marqueur": "chapitre commun — tranche >250 m² gravée"}
+  },
+  "AUfGB": {
+    "hf_m": {"citation": "Dans le secteur AUfGB limiter la hauteur à 5,5 m au faîtage.", "page_confirmee": 119, "marqueur": "secteur AUfGB — Uf3.5"},
+    "emprise_sol_pct": {"citation": "50% de la superficie de l’unité foncière, pour les unités foncières supérieures à 150 m².", "page_confirmee": 118, "marqueur": "règle générale chapitre — tranche >150 m² gravée"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles doivent être implantées à 4 m minimum de l’emprise des voies.", "page_confirmee": 117, "marqueur": "chapitre commun — via renvoi"},
+    "recul_limites_sep_m": {"citation": "Les constructions nouvelles doivent être implantées : Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.", "page_confirmee": 117, "marqueur": "chapitre commun — via renvoi"},
+    "stat_logement": {"citation": "1,5 place de stationnement par logement", "page_confirmee": 126, "marqueur": "tableau Uf6 — chapitre commun"},
+    "pleine_terre_pct": {"citation": "Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 50 % minimum avec au moins 40 % de la superficie de l’unité foncière en espaces plantés de pleine terre.", "page_confirmee": 123, "marqueur": "chapitre commun — tranche >250 m² gravée"}
+  },
+  "Ud": {
+    "he_m": {"citation": "Les hauteurs des constructions nouvelles, sauf celles des équipements publics et des bâtiments d’intérêts collectifs, doivent être comprises entre 6 et 15 m à l’égout du toit ou au sommet de l’acrotère et de 20 m maximum au faîtage.", "page_confirmee": 84, "marqueur": "règle générale Ud3.5 — plafond 15 gravé"},
+    "hf_m": {"citation": "Les hauteurs des constructions nouvelles, sauf celles des équipements publics et des bâtiments d’intérêts collectifs, doivent être comprises entre 6 et 15 m à l’égout du toit ou au sommet de l’acrotère et de 20 m maximum au faîtage.", "page_confirmee": 84, "marqueur": "règle générale Ud3.5"},
+    "emprise_sol_pct": {"citation": "L’emprise au sol des constructions est limitée à 60% de la superficie de l’unité foncière.", "page_confirmee": 83, "marqueur": "règle générale Ud3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles en premier rideau doivent être implantées à l’alignement ou avec un recul minimal de 3 m.", "page_confirmee": 81, "marqueur": "règle générale Ud3.1"},
+    "recul_limites_sep_m": {"citation": "Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.", "page_confirmee": 82, "marqueur": "règle générale Ud3.2"},
+    "stat_logement": {"citation": "1 place de stationnement par tranche de 75 m² de surface de plancher.", "page_confirmee": 93, "marqueur": "tableau Ud6 — Habitation/Logement"},
+    "pleine_terre_pct": {"citation": "Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 30 % minimum avec au moins 20 % de la superficie de l’unité foncière en espace planté de pleine terre,", "page_confirmee": 91, "marqueur": "tranche >250 m² (gravée) — Ud5.1"}
+  },
+  "UdBO": {
+    "he_m": {"citation": "En secteur UdBO : Les hauteurs des constructions nouvelles, sauf celles des équipements publics et des bâtiments d’intérêts collectifs, doivent être comprises entre 8 et 16 m à l’égout du toit ou au sommet de l’acrotère et entre 11 et 19 m maximum au faîtage.", "page_confirmee": 84, "marqueur": "secteur UdBO — plafond 16 gravé"},
+    "hf_m": {"citation": "En secteur UdBO : Les hauteurs des constructions nouvelles, sauf celles des équipements publics et des bâtiments d’intérêts collectifs, doivent être comprises entre 8 et 16 m à l’égout du toit ou au sommet de l’acrotère et entre 11 et 19 m maximum au faîtage.", "page_confirmee": 84, "marqueur": "secteur UdBO — plafond 19 gravé"},
+    "emprise_sol_pct": {"citation": "En secteur UdBO : L’emprise au sol des constructions est limitée à 55 % de la superficie de l’unité foncière.", "page_confirmee": 83, "marqueur": "secteur UdBO — Ud3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles en premier rideau doivent être implantées à l’alignement ou avec un recul minimal de 3 m.", "page_confirmee": 81, "marqueur": "règle générale Ud3.1 (pas d'exception recul UdBO sur voie routière)"},
+    "recul_limites_sep_m": {"citation": "Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.", "page_confirmee": 82, "marqueur": "règle générale Ud3.2"},
+    "stat_logement": {"citation": "1 place de stationnement par tranche de 75 m² de surface de plancher.", "page_confirmee": 93, "marqueur": "tableau Ud6"},
+    "pleine_terre_pct": {"citation": "En secteur UdBO : Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 50 % minimum avec au moins 40 % de la superficie de l’unité foncière en espace planté de pleine terre,", "page_confirmee": 92, "marqueur": "secteur UdBO — tranche >250 m² gravée"}
+  },
+  "Udl": {
+    "he_m": {"citation": "Dans le secteur Udl, la hauteur des constructions nouvelles est limitée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 9 m au faîtage.", "page_confirmee": 84, "marqueur": "secteur Udl — Ud3.5"},
+    "hf_m": {"citation": "Dans le secteur Udl, la hauteur des constructions nouvelles est limitée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 9 m au faîtage.", "page_confirmee": 84, "marqueur": "secteur Udl — Ud3.5"},
+    "emprise_sol_pct": {"citation": "L’emprise au sol des constructions est limitée à 60% de la superficie de l’unité foncière.", "page_confirmee": 83, "marqueur": "règle générale (aucune exception Udl) — Ud3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles en premier rideau doivent être implantées à l’alignement ou avec un recul minimal de 3 m.", "page_confirmee": 81, "marqueur": "règle générale Ud3.1"},
+    "recul_limites_sep_m": {"citation": "Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.", "page_confirmee": 82, "marqueur": "règle générale Ud3.2"},
+    "stat_logement": {"citation": "1 place de stationnement par tranche de 75 m² de surface de plancher.", "page_confirmee": 93, "marqueur": "tableau Ud6"},
+    "pleine_terre_pct": {"citation": "Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 30 % minimum avec au moins 20 % de la superficie de l’unité foncière en espace planté de pleine terre,", "page_confirmee": 91, "marqueur": "règle générale Ud5.1 — tranche >250 m² gravée"}
+  },
+  "AUdma": {
+    "he_m": {"citation": "En zone AUdma : non règlementé pour l’ensemble de l’article", "page_confirmee": 81, "marqueur": "AUdma — Ud3 non réglementé (article entier)"},
+    "hf_m": {"citation": "En zone AUdma : non règlementé pour l’ensemble de l’article", "page_confirmee": 81, "marqueur": "AUdma — Ud3 non réglementé (article entier)"},
+    "emprise_sol_pct": {"citation": "En zone AUdma : non règlementé pour l’ensemble de l’article", "page_confirmee": 81, "marqueur": "AUdma — Ud3 non réglementé"},
+    "recul_voirie_m": {"citation": "En zone AUdma : non règlementé pour l’ensemble de l’article", "page_confirmee": 81, "marqueur": "AUdma — Ud3 non réglementé"},
+    "recul_limites_sep_m": {"citation": "En zone AUdma : non règlementé pour l’ensemble de l’article", "page_confirmee": 81, "marqueur": "AUdma — Ud3 non réglementé"},
+    "stat_logement": {"citation": "En zone AUdma : non règlementé pour l’ensemble de l’article", "page_confirmee": 93, "marqueur": "AUdma — Ud6 non réglementé (article entier)"},
+    "pleine_terre_pct": {"citation": "En zone AUdma : non règlementé pour l’ensemble de l’article", "page_confirmee": 91, "marqueur": "AUdma — Ud5 non réglementé (article entier)"}
+  },
+  "Up": {
+    "he_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 11 m au faîtage.", "page_confirmee": 147, "marqueur": "règle générale Up3.5"},
+    "hf_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 11 m au faîtage.", "page_confirmee": 147, "marqueur": "règle générale Up3.5"},
+    "emprise_sol_pct": {"citation": "60% de la superficie de l’unité foncière, pour les unités foncières supérieures à 150 m².", "page_confirmee": 147, "marqueur": "tranche >150 m² (gravée) — Up3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles peuvent être implantées à l’alignement ou en retrait libre.", "page_confirmee": 146, "marqueur": "règle générale Up3.1"},
+    "recul_limites_sep_m": {"citation": "Les constructions nouvelles doivent être implantées : Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle, Soit en retrait de 1,9 m.", "page_confirmee": 146, "marqueur": "règle générale Up3.2"},
+    "stat_logement": {"citation": "1 place de stationnement par logement minimum", "page_confirmee": 153, "marqueur": "tableau Up6 — Habitation/Logement"}
+  },
+  "Ucv": {
+    "he_m": {"citation": "Les hauteurs des constructions nouvelles, sauf celles des équipements publics et des bâtiments d’intérêts collectifs, doivent être comprises entre 9 m et 15 m à l’égout du toit ou au sommet de l’acrotère, et elles doivent être de 20 m maximum au faîtage.", "page_confirmee": 65, "marqueur": "règle générale Ucv3.5 — plafond 15 gravé"},
+    "hf_m": {"citation": "Les hauteurs des constructions nouvelles, sauf celles des équipements publics et des bâtiments d’intérêts collectifs, doivent être comprises entre 9 m et 15 m à l’égout du toit ou au sommet de l’acrotère, et elles doivent être de 20 m maximum au faîtage.", "page_confirmee": 65, "marqueur": "règle générale Ucv3.5"},
+    "emprise_sol_pct": {"citation": "L’emprise au sol des constructions est limitée à 70% de la superficie de l’unité foncière.", "page_confirmee": 65, "marqueur": "règle générale Ucv3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles en premier rideau doivent être implantées à l’alignement.", "page_confirmee": 63, "marqueur": "règle générale Ucv3.1"},
+    "recul_limites_sep_m": {"citation": "Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.", "page_confirmee": 63, "marqueur": "règle générale Ucv3.2"},
+    "stat_logement": {"citation": "1 place de stationnement par tranche de 75 m² de surface de plancher.", "page_confirmee": 72, "marqueur": "tableau Ucv6 — Habitation/Logement"},
+    "pleine_terre_pct": {"citation": "Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 30 % minimum avec au moins 20 % de la superficie de l’unité foncière en espace planté de pleine terre,", "page_confirmee": 70, "marqueur": "tranche >250 m² (gravée) — Ucv5.1"}
+  },
+  "Uaza": {
+    "he_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.", "page_confirmee": 177, "marqueur": "règle générale Ua3.5 (aucune valeur égout propre au secteur Uaza)"},
+    "hf_m": {"citation": "Dans le secteur Uaza, la hauteur maximale des constructions est fixée à 14 m au faîtage.", "page_confirmee": 178, "marqueur": "secteur Uaza — Ua3.5 — VALEUR DIFFÉRENTE (14 ≠ 21 gravé)"},
+    "emprise_sol_pct": {"citation": "L’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière ; elle est limitée à 70 % dans le secteur Uazp.", "page_confirmee": 177, "marqueur": "règle générale Ua3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies.", "page_confirmee": 176, "marqueur": "règle générale Ua3.1"},
+    "recul_limites_sep_m": {"citation": "Soit en limites séparatives, sur deux limites au maximum, Soit en retrait de 3 m minimum.", "page_confirmee": 177, "marqueur": "règle générale Ua3.2"},
+    "pleine_terre_pct": {"citation": "Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.", "page_confirmee": 182, "marqueur": "Ua5.1 (audit citait p.180, réel p.182)"}
+  },
+  "Uazc": {
+    "he_m": {"citation": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :", "page_confirmee": 177, "marqueur": "secteur Uazc — Ua3.5"},
+    "hf_m": {"citation": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :", "page_confirmee": 177, "marqueur": "secteur Uazc — Ua3.5"},
+    "emprise_sol_pct": {"citation": "L’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière ; elle est limitée à 70 % dans le secteur Uazp.", "page_confirmee": 177, "marqueur": "règle générale Ua3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies.", "page_confirmee": 176, "marqueur": "règle générale Ua3.1 (secteurs ZAC Canabady/face 5 m ou alignement — non gravés ici)"},
+    "recul_limites_sep_m": {"citation": "Soit en limites séparatives, sur deux limites au maximum, Soit en retrait de 3 m minimum.", "page_confirmee": 177, "marqueur": "règle générale Ua3.2"},
+    "pleine_terre_pct": {"citation": "Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.", "page_confirmee": 182, "marqueur": "Ua5.1"}
+  },
+  "Uazi": {
+    "he_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.", "page_confirmee": 177, "marqueur": "règle générale Ua3.5 — via renvoi (pas d'exception hauteur générale Uazi)"},
+    "hf_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.", "page_confirmee": 177, "marqueur": "règle générale Ua3.5 — via renvoi"},
+    "emprise_sol_pct": {"citation": "L’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière ; elle est limitée à 70 % dans le secteur Uazp.", "page_confirmee": 177, "marqueur": "règle générale Ua3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies.", "page_confirmee": 176, "marqueur": "règle générale Ua3.1"},
+    "recul_limites_sep_m": {"citation": "Dans les secteurs Uazi et AUazi, les constructions nouvelles peuvent être implantées sur deux limites séparatives au maximum ou en retrait de 5 m minimum.", "page_confirmee": 177, "marqueur": "secteur Uazi — Ua3.2"},
+    "pleine_terre_pct": {"citation": "Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.", "page_confirmee": 182, "marqueur": "Ua5.1"}
+  },
+  "Uazp": {
+    "he_m": {"citation": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage.", "page_confirmee": 178, "marqueur": "secteur Uazp — Ua3.5 — VALEUR DIFFÉRENTE (15,5 ≠ 16 gravé)"},
+    "hf_m": {"citation": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage.", "page_confirmee": 178, "marqueur": "secteur Uazp — Ua3.5 — VALEUR DIFFÉRENTE (20 ≠ 21 gravé)"},
+    "emprise_sol_pct": {"citation": "L’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière ; elle est limitée à 70 % dans le secteur Uazp.", "page_confirmee": 177, "marqueur": "secteur Uazp — Ua3.4 (70 %)"},
+    "recul_voirie_m": {"citation": "Dans les secteurs Uazp et Uazpc les constructions nouvelles peuvent être implantées à l’alignement des voies sauf en aval de la RN 1 ou le recul minimum est fixé à 40 m dans la partie Nord et à 50 m dans la partie Sud, l’axe du giratoire avec la RD 26 faisant la séparation entre ces deux zones de reculs.", "page_confirmee": 176, "marqueur": "secteur Uazp — Ua3.1 (alignement)"},
+    "recul_limites_sep_m": {"citation": "Dans les secteurs Uazp et Uazpc de la ZAC Pierrefonds, les constructions nouvelles peuvent être implantées sur une limite séparative au maximum ou en retrait de 5 m minimum.", "page_confirmee": 177, "marqueur": "secteur Uazp — Ua3.2"},
+    "pleine_terre_pct": {"citation": "Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.", "page_confirmee": 182, "marqueur": "Ua5.1"}
+  },
+  "Uazpc": {
+    "he_m": {"citation": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage.", "page_confirmee": 178, "marqueur": "secteur Uazpc — Ua3.5 — VALEUR DIFFÉRENTE (15,5 ≠ 16 gravé)"},
+    "hf_m": {"citation": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage.", "page_confirmee": 178, "marqueur": "secteur Uazpc — Ua3.5 — VALEUR DIFFÉRENTE (20 ≠ 21 gravé)"},
+    "emprise_sol_pct": {"citation": "L’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière ; elle est limitée à 70 % dans le secteur Uazp.", "page_confirmee": 177, "marqueur": "règle générale Ua3.4 (limite 70 % ne vise que Uazp → Uazpc = 75 %)"},
+    "recul_voirie_m": {"citation": "Dans les secteurs Uazp et Uazpc les constructions nouvelles peuvent être implantées à l’alignement des voies sauf en aval de la RN 1 ou le recul minimum est fixé à 40 m dans la partie Nord et à 50 m dans la partie Sud, l’axe du giratoire avec la RD 26 faisant la séparation entre ces deux zones de reculs.", "page_confirmee": 176, "marqueur": "secteur Uazpc — Ua3.1 (alignement)"},
+    "recul_limites_sep_m": {"citation": "Dans les secteurs Uazp et Uazpc de la ZAC Pierrefonds, les constructions nouvelles peuvent être implantées sur une limite séparative au maximum ou en retrait de 5 m minimum.", "page_confirmee": 177, "marqueur": "secteur Uazpc — Ua3.2"},
+    "pleine_terre_pct": {"citation": "Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.", "page_confirmee": 182, "marqueur": "Ua5.1"}
+  },
+  "AUazc": {
+    "he_m": {"citation": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :", "page_confirmee": 177, "marqueur": "secteur AUazc — chapitre commun Ua/AUa — Ua3.5"},
+    "hf_m": {"citation": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :", "page_confirmee": 177, "marqueur": "secteur AUazc — chapitre commun — Ua3.5"},
+    "emprise_sol_pct": {"citation": "L’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière ; elle est limitée à 70 % dans le secteur Uazp.", "page_confirmee": 177, "marqueur": "règle générale Ua3.4 — chapitre commun"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies.", "page_confirmee": 176, "marqueur": "règle générale Ua3.1 — chapitre commun"},
+    "recul_limites_sep_m": {"citation": "Soit en limites séparatives, sur deux limites au maximum, Soit en retrait de 3 m minimum.", "page_confirmee": 177, "marqueur": "règle générale Ua3.2 — chapitre commun"},
+    "pleine_terre_pct": {"citation": "Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.", "page_confirmee": 182, "marqueur": "Ua5.1 — chapitre commun"}
+  },
+  "AUazi": {
+    "he_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.", "page_confirmee": 177, "marqueur": "règle générale Ua3.5 — chapitre commun (pas d'exception hauteur générale AUazi)"},
+    "hf_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.", "page_confirmee": 177, "marqueur": "règle générale Ua3.5 — chapitre commun"},
+    "emprise_sol_pct": {"citation": "L’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière ; elle est limitée à 70 % dans le secteur Uazp.", "page_confirmee": 177, "marqueur": "règle générale Ua3.4 — chapitre commun"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies.", "page_confirmee": 176, "marqueur": "règle générale Ua3.1 — chapitre commun"},
+    "recul_limites_sep_m": {"citation": "Dans les secteurs Uazi et AUazi, les constructions nouvelles peuvent être implantées sur deux limites séparatives au maximum ou en retrait de 5 m minimum.", "page_confirmee": 177, "marqueur": "secteur AUazi — Ua3.2"},
+    "pleine_terre_pct": {"citation": "Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.", "page_confirmee": 182, "marqueur": "Ua5.1 — chapitre commun"}
+  },
+  "Ue": {
+    "he_m": {"citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.", "page_confirmee": 193, "marqueur": "règle générale Ue3.5"},
+    "hf_m": {"citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.", "page_confirmee": 193, "marqueur": "règle générale Ue3.5"},
+    "emprise_sol_pct": {"citation": "En zones Ue et Uemi, l’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière.", "page_confirmee": 192, "marqueur": "Ue3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies. 1 m minimum pour les constructions d’une hauteur inférieure ou égale à 3 m.", "page_confirmee": 192, "marqueur": "règle générale Ue3.1"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 m minimum et de 1 m minimum pour les transformateurs EDF.", "page_confirmee": 192, "marqueur": "Ue3.2 (implantation sur limite possible ; en retrait 3 m)"},
+    "pleine_terre_pct": {"citation": "Le Coefficient de Biotope est de 25 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.", "page_confirmee": 197, "marqueur": "Ue5.1"}
+  },
+  "Uea": {
+    "he_m": {"citation": "Dans le secteur Uea, la hauteur maximale des constructions est fixée à 9 m à l’égout du toit ou au sommet de l’acrotère et à 15 m au faîtage.", "page_confirmee": 193, "marqueur": "secteur Uea — Ue3.5"},
+    "hf_m": {"citation": "Dans le secteur Uea, la hauteur maximale des constructions est fixée à 9 m à l’égout du toit ou au sommet de l’acrotère et à 15 m au faîtage.", "page_confirmee": 193, "marqueur": "secteur Uea — Ue3.5"},
+    "emprise_sol_pct": {"citation": "En zone Uea, l’emprise au sol est au maximum de 30 % de la superficie de l’unité foncière.", "page_confirmee": 192, "marqueur": "zone Uea — Ue3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies. 1 m minimum pour les constructions d’une hauteur inférieure ou égale à 3 m.", "page_confirmee": 192, "marqueur": "règle générale Ue3.1"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 m minimum et de 1 m minimum pour les transformateurs EDF.", "page_confirmee": 192, "marqueur": "Ue3.2"},
+    "pleine_terre_pct": {"citation": "Le Coefficient de Biotope est de 25 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.", "page_confirmee": 197, "marqueur": "Ue5.1"}
+  },
+  "Uep": {
+    "he_m": {"citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.", "page_confirmee": 193, "marqueur": "règle générale Ue3.5 (aucune exception Uep)"},
+    "hf_m": {"citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.", "page_confirmee": 193, "marqueur": "règle générale Ue3.5 (aucune exception Uep)"},
+    "emprise_sol_pct": {"citation": "En zone Uep, l’emprise au sol est limitée au maximum à 20 m² par ha (calculée au prorata de la superficie de l’unité foncière).", "page_confirmee": 192, "marqueur": "zone Uep — Ue3.4 (20 m²/ha = 0,2 %)"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies. 1 m minimum pour les constructions d’une hauteur inférieure ou égale à 3 m.", "page_confirmee": 192, "marqueur": "règle générale Ue3.1"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 m minimum et de 1 m minimum pour les transformateurs EDF.", "page_confirmee": 192, "marqueur": "Ue3.2"},
+    "pleine_terre_pct": {"citation": "Le Coefficient de Biotope est de 25 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.", "page_confirmee": 197, "marqueur": "Ue5.1"}
+  },
+  "Uemi": {
+    "he_m": {"citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.", "page_confirmee": 193, "marqueur": "règle générale Ue3.5 (aucune exception Uemi)"},
+    "hf_m": {"citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.", "page_confirmee": 193, "marqueur": "règle générale Ue3.5 (aucune exception Uemi)"},
+    "emprise_sol_pct": {"citation": "En zones Ue et Uemi, l’emprise au sol est au maximum de 75 % de la superficie de l’unité foncière.", "page_confirmee": 192, "marqueur": "zones Ue et Uemi — Ue3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies. 1 m minimum pour les constructions d’une hauteur inférieure ou égale à 3 m.", "page_confirmee": 192, "marqueur": "règle générale Ue3.1"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 m minimum et de 1 m minimum pour les transformateurs EDF.", "page_confirmee": 192, "marqueur": "Ue3.2"},
+    "pleine_terre_pct": {"citation": "Le Coefficient de Biotope est de 25 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.", "page_confirmee": 197, "marqueur": "Ue5.1"}
+  },
+  "Ut": {
+    "he_m": {"citation": "En zone Ut, la hauteur maximale des constructions nouvelles est fixée à 9 m à l’égout des toits ou au sommet de l’acrotère et à 12 m au faîtage.", "page_confirmee": 162, "marqueur": "zone Ut — Ut3.5"},
+    "hf_m": {"citation": "En zone Ut, la hauteur maximale des constructions nouvelles est fixée à 9 m à l’égout des toits ou au sommet de l’acrotère et à 12 m au faîtage.", "page_confirmee": 162, "marqueur": "zone Ut — Ut3.5"},
+    "emprise_sol_pct": {"citation": "L’emprise au sol est au maximum de 50 % de la superficie de l’unité foncière. Cependant les piscines de moins de 30 m² ne sont pas intégrées dans l’emprise au sol.", "page_confirmee": 162, "marqueur": "Ut3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées en retrait de 2 m minimum de l’emprise des voies ainsi qu’entre 2 et 4 m de l’axe des voies piétonnes.", "page_confirmee": 161, "marqueur": "règle générale Ut3.1 (bretelle échangeur RN1 : 25 m)"},
+    "recul_limites_sep_m": {"citation": "Les nouvelles constructions doivent être implantées en retrait de 3 m minimum des limites séparatives latérales et de fond de parcelle.", "page_confirmee": 161, "marqueur": "règle générale Ut3.2"}
+  },
+  "AUt1": {
+    "hf_m": {"citation": "En zone AUt1, la hauteur maximale des constructions nouvelles est fixée à 15 m au faîtage.", "page_confirmee": 162, "marqueur": "zone AUt1 — Ut3.5 (seul le faîtage donné)"},
+    "emprise_sol_pct": {"citation": "L’emprise au sol est au maximum de 50 % de la superficie de l’unité foncière. Cependant les piscines de moins de 30 m² ne sont pas intégrées dans l’emprise au sol.", "page_confirmee": 162, "marqueur": "chapitre commun — Ut3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées en retrait de 2 m minimum de l’emprise des voies ainsi qu’entre 2 et 4 m de l’axe des voies piétonnes.", "page_confirmee": 161, "marqueur": "chapitre commun — Ut3.1"},
+    "recul_limites_sep_m": {"citation": "Les nouvelles constructions doivent être implantées en retrait de 3 m minimum des limites séparatives latérales et de fond de parcelle.", "page_confirmee": 161, "marqueur": "chapitre commun — Ut3.2"}
+  },
+  "AUt2": {
+    "hf_m": {"citation": "En zone AUt2, la hauteur maximale des constructions nouvelles est fixée à 6 m au faîtage.", "page_confirmee": 162, "marqueur": "zone AUt2 — Ut3.5 (seul le faîtage donné)"},
+    "emprise_sol_pct": {"citation": "L’emprise au sol est au maximum de 50 % de la superficie de l’unité foncière. Cependant les piscines de moins de 30 m² ne sont pas intégrées dans l’emprise au sol.", "page_confirmee": 162, "marqueur": "chapitre commun — Ut3.4"},
+    "recul_voirie_m": {"citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées en retrait de 2 m minimum de l’emprise des voies ainsi qu’entre 2 et 4 m de l’axe des voies piétonnes.", "page_confirmee": 161, "marqueur": "chapitre commun — Ut3.1"},
+    "recul_limites_sep_m": {"citation": "Les nouvelles constructions doivent être implantées en retrait de 3 m minimum des limites séparatives latérales et de fond de parcelle.", "page_confirmee": 161, "marqueur": "chapitre commun — Ut3.2"}
+  },
+  "Us": {
+    "he_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 11 m au faîtage.", "page_confirmee": 134, "marqueur": "règle générale Us3.5"},
+    "hf_m": {"citation": "La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 11 m au faîtage.", "page_confirmee": 134, "marqueur": "règle générale Us3.5"}
+  }
+}

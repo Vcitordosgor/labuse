@@ -1671,6 +1671,9 @@ def _faisa_step_prov(source: str, prov: str) -> str:
     if prov:
         return prov
     s = (source or "").lower()
+    # PLU-CALIBRAGE-2 : silence PROUVÉ du règlement — l'étape le dit, ce n'est pas une hypothèse.
+    if "pas de règle dans le plu" in s:
+        return "absent"
     if "hypoth" in s:
         return "estimee"
     if "dériv" in s or "deriv" in s:
@@ -1844,7 +1847,8 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
 
 
 # ── M11 · SURFACE C — l'IA EXPLIQUE le chiffrage (à partir des STEPS tracés, jamais elle ne recalcule) ──
-_PROV_SOCLE = {"sourcee": "SOURCE", "estimee": "ESTIME", "derive": "ESTIME"}  # derive hérite d'estimé (prudence)
+_PROV_SOCLE = {"sourcee": "SOURCE", "estimee": "ESTIME", "derive": "ESTIME",
+               "absent": "SOURCE"}  # « pas de règle » = fait PROUVÉ du PLU (silence cité), pas une estimation
 
 _EXPLAIN_FAISA_SYSTEM = (
     "Tu es l'assistant foncier de LA BUSE. On te donne les ÉTAPES DÉJÀ CALCULÉES d'un chiffrage de "
@@ -1973,7 +1977,7 @@ class ProgrammeIn(BaseModel):
 def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
     """SENS 2 (programme → parcelles) : critères CALCULÉS et AFFICHÉS → candidates triées par
     marge de capacité. La hauteur PLU est vérifiée zone par zone (resolve_zone) quand calibrée."""
-    from ..faisabilite.plu_rules import resolve_zone
+    from ..faisabilite.zonage import resolve_zone
 
     unites = max(1, body.batiments) * max(1, body.logements_par_batiment)
     # B.1 (+ arbitrage Vic) — besoin SDP = surface utile × coefficient utile→SDP ÉDITABLE (défaut 1,20),

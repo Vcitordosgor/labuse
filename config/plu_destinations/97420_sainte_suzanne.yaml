@@ -12,6 +12,51 @@ meta:
   structure: silence lu dans la structure de chaque zone et cité (voir notes des zones).
 zones:
   UA:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UA : ... 16 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 13.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UA : 13 mètres à l''égout du toit ou au sommet de l''acrotère,'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 2.0
+          article: U4.2
+          page_pdf: 12
+          citation: 'Les constructions peuvent être implantées à l''alignement ou en recul de la voie, avec
+            une distance ... au moins égale à : en zone UA : 2 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 13
+          citation: En cas de retrait de la construction, la distance ... au point le plus proche de la limite
+            latérale, doit être au moins égale 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U13
+          page_pdf: 17
+          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
+            par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: U12.1
+          page_pdf: 16
+          citation: 'La superficie totale de l''unité foncière doit être traité en espace perméable à hauteur
+            minimum de : en zone UA : 20%'
+          statut: valide
     silence: autorise
     silence_src: 'Art. U2, p. 10 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       U 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -65,6 +110,48 @@ zones:
     - Tableau de synthèse « Sont interdits, admis ou soumis à conditions » p. 11-12 illisible à l'extraction texte
       (symboles autorisé/interdit perdus) — relayé depuis le texte des articles U1 à U3.
   UB:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UB : ... 12 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 9.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UB : 9 mètres à l''égout du toit ou au sommet de l''acrotère,'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U4.2
+          page_pdf: 12
+          citation: 'au moins égale à : ... en zones UB et UC : 4 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 13
+          citation: En cas de retrait de la construction, la distance ... doit être au moins égale 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U13
+          page_pdf: 17
+          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
+            par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U12.1
+          page_pdf: 16
+          citation: 'traité en espace perméable à hauteur minimum de : ... en zone UB : 30%'
+          statut: valide
     silence: autorise
     silence_src: 'Art. U2, p. 10 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       U 1.2 » (chapitre commun « ZONES UA, UB et UC », p. 10)'
@@ -108,6 +195,49 @@ zones:
     - Mêmes articles U1 à U3 que la zone UA (chapitre commun « ZONES UA, UB et UC », p. 10-11) ; voir notes UA (élevage
       et dépôts interdits, condition générale U2-2, cinquante pas U2-1, tableau p. 11-12 illisible).
   UC:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UC : ... 10 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 7.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UC : 7 mètres à l''égout du toit ou au sommet de l''acrotère,'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U4.2
+          page_pdf: 12
+          citation: 'au moins égale à : ... en zones UB et UC : 4 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 13
+          citation: En zone UC, la construction peut être implantée en retrait ou sur une seule limite séparative
+            latérale. En cas de retrait ... doit être au moins égale 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U13
+          page_pdf: 17
+          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
+            par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: U12.1
+          page_pdf: 16
+          citation: 'traité en espace perméable à hauteur minimum de : ... en zone UC : 40%'
+          statut: valide
     silence: autorise
     silence_src: 'Art. U2, p. 10 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       U 1.2 » (chapitre commun « ZONES UA, UB et UC », p. 10)'
@@ -150,6 +280,40 @@ zones:
     notes:
     - Mêmes articles U1 à U3 que la zone UA (chapitre commun « ZONES UA, UB et UC », p. 10-11) ; voir notes UA.
   UAc:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UA : ... 16 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 13.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UA : 13 mètres à l''égout du toit ou au sommet de l''acrotère,'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 2.0
+          article: U4.2
+          page_pdf: 12
+          citation: 'au moins égale à : en zone UA : 2 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 13
+          citation: En cas de retrait de la construction, la distance ... doit être au moins égale 3 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: U12.1
+          page_pdf: 16
+          citation: 'traité en espace perméable à hauteur minimum de : en zone UA : 20%'
+          statut: valide
     silence: interdit
     silence_src: 'Art. U1.2-5, p. 10 : « Dans le secteur UAc, les constructions, ouvrages et travaux autres que
       ceux visées à l''article U2. » [sont interdits] + Art. U2-5, p. 11 : « Dans le secteur UAc, seules sont autorisées
@@ -205,6 +369,49 @@ zones:
       eux aussi « visés à l''article U2 » au sens de l''U1.2-5 — tension de rédaction non tranchée ici : lecture
       stricte retenue = commerce et activités de service seulement.'
   UAv:
+    regles:
+      hauteur:
+        faitage:
+          m: 17.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en secteur UAv : ... 17 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 14.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en secteur UAv : 14 mètres à l''égout du toit ou au sommet de l''acrotère,'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 2.0
+          article: U4.2
+          page_pdf: 12
+          citation: 'au moins égale à : en zone UA : 2 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 13
+          citation: En cas de retrait de la construction, la distance ... au point le plus proche de la limite
+            latérale, doit être au moins égale 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U13
+          page_pdf: 17
+          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
+            par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: U12.1
+          page_pdf: 16
+          citation: 'traité en espace perméable à hauteur minimum de : en zone UA : 20%'
+          statut: valide
     silence: autorise
     silence_src: 'Art. U2, p. 10 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       U 1.2 » (le secteur UAv appartient au chapitre commun UA/UB/UC ; seule l''habitation y est ajoutée à la liste
@@ -250,6 +457,49 @@ zones:
     notes:
     - Voir notes UA (condition générale U2-2, cinquante pas U2-1, tableau p. 11-12 illisible).
   UC1:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UC : ... 10 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 7.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UC : 7 mètres à l''égout du toit ou au sommet de l''acrotère,'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U4.2
+          page_pdf: 12
+          citation: 'au moins égale à : ... en zones UB et UC : 4 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 13
+          citation: En zone UC, la construction peut être implantée en retrait ... En cas de retrait ... doit
+            être au moins égale 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U13
+          page_pdf: 17
+          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
+            par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: U12.1
+          page_pdf: 16
+          citation: 'traité en espace perméable à hauteur minimum de : ... en zone UC : 40%'
+          statut: valide
     silence: interdit
     silence_src: 'Art. U2-6, p. 11 : « Dans le secteur UC1, seules sont autorisées les constructions et installations
       peuvent être autorisées à des fins exclusives d''amélioration de l''offre de logement ou d''hébergement et
@@ -280,6 +530,46 @@ zones:
     - Phrase de l'U2-6 grammaticalement défectueuse dans la source (« seules sont autorisées les constructions et
       installations peuvent être autorisées ») — relayée telle quelle.
   UE:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: UE8
+          page_pdf: 23
+          citation: La hauteur maximale des constructions au faitage est fixée à 12 mètres.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UE7
+          page_pdf: 23
+          citation: L'emprise maximale des constructions est limitée à 70% de la superficie du terrain.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 6.0
+          article: UE4.2
+          page_pdf: 22
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance ... au
+            moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5 mètres.
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 6.0
+          article: UE5.2
+          page_pdf: 22
+          citation: En cas de retrait de la construction, la distance ... au moins égale à la moitié de la
+            hauteur de la façade concernée, avec un minimum de 4 mètres.
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 15.0
+          article: UE12
+          page_pdf: 25
+          citation: Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace
+            perméable.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UE2, p. 20 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       UE 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -400,6 +690,48 @@ zones:
       à UE3.
     - 'UE3 (mixité sociale) : « Sans objet » (p. 21).'
   1AUa:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UA : ... 16 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 13.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UA : 13 mètres à l''égout du toit ou au sommet de l''acrotère,'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 2.0
+          article: U4.2
+          page_pdf: 12
+          citation: 'au moins égale à : en zone UA : 2 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 13
+          citation: En cas de retrait de la construction, la distance ... doit être au moins égale 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U13
+          page_pdf: 17
+          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
+            par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: U12.1
+          page_pdf: 16
+          citation: 'traité en espace perméable à hauteur minimum de : en zone UA : 20%'
+          statut: valide
     renvoi: UA
     renvoi_src: 'Art. AUindicée 1.2, p. 29 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation. » ; Titre III, p. 29 : « il convient de se reporter en fonction
@@ -409,6 +741,40 @@ zones:
       densité minimale brute « en zones AUa, 30 logements par hectare » (2-5, p. 30 ; équivalent logement = 80 m²
       de surface de plancher).'
   1AUac:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UA : ... 16 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 13.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UA : 13 mètres à l''égout du toit ou au sommet de l''acrotère,'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 2.0
+          article: U4.2
+          page_pdf: 12
+          citation: 'au moins égale à : en zone UA : 2 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 13
+          citation: En cas de retrait de la construction, la distance ... doit être au moins égale 3 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: U12.1
+          page_pdf: 16
+          citation: 'traité en espace perméable à hauteur minimum de : en zone UA : 20%'
+          statut: valide
     renvoi: UAc
     renvoi_src: 'Art. AUindicée 1.2, p. 29 : « Se reporter au règlement de la zone U indiquée en indice » — l''indice
       « Ac » désigne le secteur UAc (zone de développement commercial, p. 5 et 10). Le règlement ne liste pas nommément
@@ -417,18 +783,143 @@ zones:
     - 'Conditions propres AU (AUindicée 2, p. 29-30) : infrastructures, OAP ; densité 2-5 : la zone porte l''indice
       a (« en zones AUa, 30 logements par hectare », p. 30) — application à 1AUac non explicitée par le texte.'
   1AUb:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UB : ... 12 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 9.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UB : 9 mètres à l''égout du toit ou au sommet de l''acrotère,'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U4.2
+          page_pdf: 12
+          citation: 'au moins égale à : ... en zones UB et UC : 4 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 13
+          citation: En cas de retrait de la construction, la distance ... doit être au moins égale 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U13
+          page_pdf: 17
+          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
+            par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U12.1
+          page_pdf: 16
+          citation: 'traité en espace perméable à hauteur minimum de : ... en zone UB : 30%'
+          statut: valide
     renvoi: UB
     renvoi_src: 'Art. AUindicée 1.2, p. 29 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation. »'
     notes:
     - 'Densité minimale brute : « en zones AUb, 20 logements par hectare » (AUindicée 2-5, p. 30).'
   1AUc:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UC : ... 10 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 7.0
+          article: U8.2
+          page_pdf: 14
+          citation: 'en zone UC : 7 mètres à l''égout du toit ou au sommet de l''acrotère,'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U4.2
+          page_pdf: 12
+          citation: 'au moins égale à : ... en zones UB et UC : 4 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 13
+          citation: En zone UC, la construction peut être implantée en retrait ... En cas de retrait ... doit
+            être au moins égale 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U13
+          page_pdf: 17
+          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
+            par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: U12.1
+          page_pdf: 16
+          citation: 'traité en espace perméable à hauteur minimum de : ... en zone UC : 40%'
+          statut: valide
     renvoi: UC
     renvoi_src: 'Art. AUindicée 1.2, p. 29 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation. »'
     notes:
     - 'Densité minimale brute : « en zone AUc, 10 logements par hectare » (AUindicée 2-5, p. 30).'
   1AUe:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: UE8
+          page_pdf: 23
+          citation: La hauteur maximale des constructions au faitage est fixée à 12 mètres.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UE7
+          page_pdf: 23
+          citation: L'emprise maximale des constructions est limitée à 70% de la superficie du terrain.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 6.0
+          article: UE4.2
+          page_pdf: 22
+          citation: au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5
+            mètres.
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 6.0
+          article: UE5.2
+          page_pdf: 22
+          citation: au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 4
+            mètres.
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 15.0
+          article: UE12
+          page_pdf: 25
+          citation: Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace
+            perméable.
+          statut: valide
     renvoi: UE
     renvoi_src: 'Art. AUindicée 1.2, p. 29 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation. » (l''AUindicée 2-3, p. 29, cite expressément des « zones

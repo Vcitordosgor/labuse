@@ -15,6 +15,61 @@ meta:
     d''activité ». La règle de silence est lue dans la structure de chaque chapitre et citée par zone.'
 zones:
   UA:
+    regles:
+      hauteur:
+        faitage:
+          m: 18.0
+          article: Art. U8.2 « résidentielles »
+          page_pdf: 22
+          citation: 'Zone UA :
+
+            ▪ 15,00 mètres à l’égout du toit
+
+            ▪ 18,00 mètres au faîtage'
+          statut: valide
+        egout:
+          m: 15.0
+          article: Art. U8.2 « résidentielles »
+          page_pdf: 22
+          citation: 'Zone UA :
+
+            ▪ 15,00 mètres à l’égout du toit'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Art. U4.2 « résidentielles »
+          page_pdf: 19
+          citation: En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00 mètres
+            par rapport à l’alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 7.5
+          article: Art. U5.2 « résidentielles »
+          page_pdf: 20
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: propose
+          raison: valeur 7.5 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U13.2
+          page_pdf: 26
+          citation: 'Opération de plusieurs logements
+
+            1,5 place minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Art. U12 « résidentielles »
+          page_pdf: 25
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zone UA : 20% de la surface'
+          statut: valide
     silence: autorise
     silence_src: 'Art. U2, p. 17 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       U 1.2 »'
@@ -82,17 +137,189 @@ zones:
       » soumis au DAACL du SCoT de la CINOR.'
     - Tableau de synthèse p. 17-18 illisible à l'extraction (coches perdues) — relayé depuis le texte des articles.
   UAb:
+    regles:
+      hauteur:
+        faitage:
+          m: 21.0
+          article: Art. U8.2 « résidentielles »
+          page_pdf: 22
+          citation: 'Secteur UAb :
+
+            ▪ 18,00 mètres à l’égout du toit
+
+            ▪ 21,00 mètres au faîtage'
+          statut: valide
+        egout:
+          m: 18.0
+          article: Art. U8.2 « résidentielles »
+          page_pdf: 22
+          citation: 'Secteur UAb :
+
+            ▪ 18,00 mètres à l’égout du toit'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U4.2
+          page_pdf: 19
+          citation: En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00 mètres
+            par rapport à l’alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 20
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U13.2
+          page_pdf: 26
+          citation: 'Opération de plusieurs logements
+
+            1,5 place minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: U12
+          page_pdf: 25
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zone UA : 20% de la surface'
+          statut: valide
     renvoi: UA
     renvoi_src: 'secteur de la zone UA (p. 16 : « Deux secteurs UAb et UAz sont définis ») ; DG p. 4 : « la règle
       générale de la zone s''applique à chacun [des secteurs] sauf lorsqu''une disposition particulière est prévue
       » — aucune disposition particulière de destination au chapitre 1 (p. 16-18) pour UAb (les dispositions propres
       portent sur hauteurs, p. 22)'
   UAz:
+    regles:
+      hauteur:
+        faitage:
+          m: 30.0
+          article: Art. U8.2 « résidentielles »
+          page_pdf: 22
+          citation: 'Secteur UAz :
+
+            ▪ 27,00 mètres à l’égout du toit
+
+            ▪ 30,00 mètres au faîtage'
+          statut: valide
+        egout:
+          m: 27.0
+          article: Art. U8.2 « résidentielles »
+          page_pdf: 22
+          citation: 'Secteur UAz :
+
+            ▪ 27,00 mètres à l’égout du toit'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 2.0
+          article: U4.2
+          page_pdf: 19
+          citation: En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00 mètres
+            par rapport à l’alignement. Ce seuil est réduit à 2,00 mètres minimum en secteur UAz.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 20
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U13.2
+          page_pdf: 26
+          citation: 'Opération de plusieurs logements
+
+            1,5 place minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: U12
+          page_pdf: 25
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zone UA : 20% de la surface'
+          statut: valide
     renvoi: UA
     renvoi_src: 'secteur de la zone UA (p. 16) ; DG p. 4 : règle générale de la zone applicable aux secteurs sauf
       disposition particulière — aucune disposition particulière de destination au chapitre 1 (p. 16-18) pour UAz
       (dispositions propres : recul p. 19, hauteurs p. 22, espaces libres p. 25)'
   UB:
+    regles:
+      hauteur:
+        faitage:
+          m: 15.0
+          article: Art. U8.2 « résidentielles »
+          page_pdf: 22
+          citation: 'Zone UB :
+
+            ▪ 12,00 mètres à l’égout du toit
+
+            ▪ 15,00 mètres au faîtage'
+          statut: valide
+        egout:
+          m: 12.0
+          article: Art. U8.2 « résidentielles »
+          page_pdf: 22
+          citation: 'Zone UB :
+
+            ▪ 12,00 mètres à l’égout du toit'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: U7.2
+          page_pdf: 21
+          citation: 'L’emprise au sol maximale autorisée de l’ensemble des constructions ne doit pas excéder
+            en zone :
+
+            • UB : 70 % de l’unité foncière'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U4.2
+          page_pdf: 19
+          citation: En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00 mètres
+            par rapport à l’alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 20
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U13.2
+          page_pdf: 26
+          citation: 'Opération de plusieurs logements
+
+            1,5 place minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: U12
+          page_pdf: 25
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zone UB : 25% de la surface'
+          statut: valide
     silence: autorise
     silence_src: 'Art. U2, p. 17 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       U 1.2 »'
@@ -141,6 +368,68 @@ zones:
     notes:
     - Mêmes usages du sol interdits et linéaires L.151-16 que la zone UA (articles communs U1/U2, p. 16-17).
   UC:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: Art. U8.2 « résidentielles »
+          page_pdf: 22
+          citation: 'Zone UC (y compris UC1 et UC2) :
+
+            ▪ 10,00 mètres à l’égout du toit
+
+            ▪ 13,00 mètres au faîtage'
+          statut: valide
+        egout:
+          m: 10.0
+          article: Art. U8.2 « résidentielles »
+          page_pdf: 22
+          citation: 'Zone UC (y compris UC1 et UC2) :
+
+            ▪ 10,00 mètres à l’égout du toit'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: U7.2
+          page_pdf: 21
+          citation: 'UC (y compris UC1 et UC2) : 60 % de l’unité foncière'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U4.2
+          page_pdf: 19
+          citation: En zones UC (y compris UC1 et UC2) et UD (y compris UD1), les constructions doivent s’implanter
+            avec un recul. En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00
+            mètres par rapport à l’alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 20
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U13.2
+          page_pdf: 26
+          citation: 'Opération de plusieurs logements
+
+            1,5 place minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U12
+          page_pdf: 25
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zones UC (y compris UC1 et UC2) et UD (y compris UD1) : 30% de la surface'
+          statut: valide
     silence: autorise
     silence_src: 'Art. U2, p. 17 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       U 1.2 »'
@@ -189,6 +478,68 @@ zones:
     notes:
     - Mêmes usages du sol interdits et linéaires L.151-16 que la zone UA (articles communs U1/U2, p. 16-17).
   UC1:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: U8.2
+          page_pdf: 22
+          citation: 'Zone UC (y compris UC1 et UC2) :
+
+            ▪ 10,00 mètres à l’égout du toit
+
+            ▪ 13,00 mètres au faîtage'
+          statut: valide
+        egout:
+          m: 10.0
+          article: U8.2
+          page_pdf: 22
+          citation: 'Zone UC (y compris UC1 et UC2) :
+
+            ▪ 10,00 mètres à l’égout du toit'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: U7.2
+          page_pdf: 21
+          citation: 'UC (y compris UC1 et UC2) : 60 % de l’unité foncière'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U4.2
+          page_pdf: 19
+          citation: En zones UC (y compris UC1 et UC2) et UD (y compris UD1), les constructions doivent s’implanter
+            avec un recul. En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00
+            mètres par rapport à l’alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 20
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U13.2
+          page_pdf: 26
+          citation: 'Opération de plusieurs logements
+
+            1,5 place minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U12
+          page_pdf: 25
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zones UC (y compris UC1 et UC2) et UD (y compris UD1) : 30% de la surface'
+          statut: valide
     silence: interdit
     silence_src: 'Art. U2-6, p. 17 : « Dans les secteurs UC1 et UD1, seules peuvent être autorisées les constructions
       et installations à des fins exclusives d''amélioration de l''offre de logement ou d''hébergement et d''implantation
@@ -215,6 +566,68 @@ zones:
     - 'Les interdictions de zone U1.2 (p. 16-17 : industrie, entrepôt exclusif, agricole/forestier, camping, dépôts,
       carrières, HLL) s''appliquent au secteur (DG p. 4).'
   UC2:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: U8.2
+          page_pdf: 22
+          citation: 'Zone UC (y compris UC1 et UC2) :
+
+            ▪ 10,00 mètres à l’égout du toit
+
+            ▪ 13,00 mètres au faîtage'
+          statut: valide
+        egout:
+          m: 10.0
+          article: U8.2
+          page_pdf: 22
+          citation: 'Zone UC (y compris UC1 et UC2) :
+
+            ▪ 10,00 mètres à l’égout du toit'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: U7.2
+          page_pdf: 21
+          citation: 'UC (y compris UC1 et UC2) : 60 % de l’unité foncière'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U4.2
+          page_pdf: 19
+          citation: En zones UC (y compris UC1 et UC2) et UD (y compris UD1), les constructions doivent s’implanter
+            avec un recul. En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00
+            mètres par rapport à l’alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 20
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U13.2
+          page_pdf: 26
+          citation: 'Opération de plusieurs logements
+
+            1,5 place minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U12
+          page_pdf: 25
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zones UC (y compris UC1 et UC2) et UD (y compris UD1) : 30% de la surface'
+          statut: valide
     silence: interdit
     silence_src: 'Art. U2-7, p. 17 : « Dans les secteurs UC2, seule la réhabilitation et l''extension limitée des
       constructions existantes est autorisée » (« seule … est autorisée » = liste fermée dans le secteur)'
@@ -225,6 +638,68 @@ zones:
       p. 17).'
     - Les interdictions de zone U1.2 (p. 16-17) s'appliquent au secteur.
   UD:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: Art. U8.2 « résidentielles »
+          page_pdf: 22
+          citation: 'Zone UD (y compris UD1) :
+
+            ▪ 8,00 mètres à l’égout du toit
+
+            ▪ 11,00 mètres au faîtage'
+          statut: valide
+        egout:
+          m: 8.0
+          article: Art. U8.2 « résidentielles »
+          page_pdf: 22
+          citation: 'Zone UD (y compris UD1) :
+
+            ▪ 8,00 mètres à l’égout du toit'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: U7.2
+          page_pdf: 21
+          citation: 'UD (y compris UD1): 50 % de l’unité foncière'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U4.2
+          page_pdf: 19
+          citation: En zones UC (y compris UC1 et UC2) et UD (y compris UD1), les constructions doivent s’implanter
+            avec un recul. En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00
+            mètres par rapport à l’alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 20
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U13.2
+          page_pdf: 26
+          citation: 'Opération de plusieurs logements
+
+            1,5 place minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U12
+          page_pdf: 25
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zones UC (y compris UC1 et UC2) et UD (y compris UD1) : 30% de la surface'
+          statut: valide
     silence: autorise
     silence_src: 'Art. U2, p. 17 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       U 1.2 »'
@@ -267,6 +742,68 @@ zones:
       est pas nommée : logement non mentionné → régi par le silence (autorisé).'
     - Mêmes usages du sol interdits et linéaires L.151-16 que la zone UA (articles communs U1/U2, p. 16-17).
   UD1:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: U8.2
+          page_pdf: 22
+          citation: 'Zone UD (y compris UD1) :
+
+            ▪ 8,00 mètres à l’égout du toit
+
+            ▪ 11,00 mètres au faîtage'
+          statut: valide
+        egout:
+          m: 8.0
+          article: U8.2
+          page_pdf: 22
+          citation: 'Zone UD (y compris UD1) :
+
+            ▪ 8,00 mètres à l’égout du toit'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: U7.2
+          page_pdf: 21
+          citation: 'UD (y compris UD1): 50 % de l’unité foncière'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U4.2
+          page_pdf: 19
+          citation: En zones UC (y compris UC1 et UC2) et UD (y compris UD1), les constructions doivent s’implanter
+            avec un recul. En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00
+            mètres par rapport à l’alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 20
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U13.2
+          page_pdf: 26
+          citation: 'Opération de plusieurs logements
+
+            1,5 place minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U12
+          page_pdf: 25
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zones UC (y compris UC1 et UC2) et UD (y compris UD1) : 30% de la surface'
+          statut: valide
     silence: interdit
     silence_src: 'Art. U2-6, p. 17 : « Dans les secteurs UC1 et UD1, seules peuvent être autorisées les constructions
       et installations à des fins exclusives d''amélioration de l''offre de logement ou d''hébergement et d''implantation
@@ -288,6 +825,52 @@ zones:
     - « l'implantation de services publics » également admise (U2-6, p. 17) — terme non mappé.
     - Les interdictions de zone U1.2 (p. 16-17) s'appliquent au secteur.
   UEa:
+    regles:
+      hauteur:
+        faitage:
+          m: 24.0
+          article: Art. U8.2 « activités »
+          page_pdf: 35
+          citation: 'La hauteur maximale au faitage des constructions est limitée à :
+
+            • Zone UEa : 24 mètres'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: Art. U7.2 « activités »
+          page_pdf: 34
+          citation: 'UEa : 60 % de l’unité foncière'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 5.0
+          article: Art. U4.2 « activités »
+          page_pdf: 32
+          citation: 'Les constructions doivent s’implanter avec un recul de la voie avec un minimum par rapport
+            à l’alignement de :
+
+            • en zones UEa et UR : 5 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 12.0
+          article: Art. U5.2 « activités »
+          page_pdf: 33
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.
+          statut: propose
+          raison: valeur 12 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: null
+          article: Art. U12 « activités »
+          page_pdf: 38
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zones UEa, UEm et UEp : 15% de la surface'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: interdit
     silence_src: 'Art. U1 « activités » 1.2, p. 29 : « A l''exception de ceux visés à l''article U2 « activités
       », sont interdits toutes les constructions et tous les ouvrages et travaux »'
@@ -406,6 +989,47 @@ zones:
     - 'Extension limitée des constructions existantes même non autorisées dans la zone : +30 % max, limite 20 m²
       (habitation) / 100 m² (autres vocations) (U2 « activités »-1, p. 29).'
   UEc:
+    regles:
+      hauteur:
+        faitage:
+          m: 14.0
+          article: Art. U8.2 « activités »
+          page_pdf: 32
+          citation: 'Zone UEc : 14 mètres'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: Art. U7.2 « activités »
+          page_pdf: 34
+          citation: 'UEc : 70% de l’unité foncière'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Art. U4.2 « activités »
+          page_pdf: 32
+          citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 7.0
+          article: Art. U5.2 « activités »
+          page_pdf: 33
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.
+          statut: propose
+          raison: valeur 7 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: null
+          article: Art. U12 « activités »
+          page_pdf: 38
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zone UEc : 25% de la surface'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: interdit
     silence_src: 'Art. U1 « activités » 1.2, p. 29 : « A l''exception de ceux visés à l''article U2 « activités
       », sont interdits toutes les constructions et tous les ouvrages et travaux »'
@@ -487,6 +1111,47 @@ zones:
     - 'Rappel 1.1-7 (p. 29) : commerce dont la surface de vente > 500 m² de surface de plancher soumis au DAACL
       du SCoT CINOR.'
   UEm:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: Art. U8.2 « activités »
+          page_pdf: 32
+          citation: 'Zones UEm et UEp : 16 m'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 75.0
+          article: Art. U7.2 « activités »
+          page_pdf: 34
+          citation: 'UEm et UEp : 75% de l’unité foncière'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Art. U4.2 « activités »
+          page_pdf: 32
+          citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 8.0
+          article: Art. U5.2 « activités »
+          page_pdf: 33
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.
+          statut: propose
+          raison: valeur 8 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: null
+          article: Art. U12 « activités »
+          page_pdf: 38
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zones UEa, UEm et UEp : 15% de la surface'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: interdit
     silence_src: 'Art. U1 « activités » 1.2, p. 29 : « A l''exception de ceux visés à l''article U2 « activités
       », sont interdits toutes les constructions et tous les ouvrages et travaux »'
@@ -584,6 +1249,47 @@ zones:
     - 'Extension limitée de l''existant même non autorisé : +30 % max, 20 m² habitation / 100 m² autres (U2 « activités
       »-1, p. 29).'
   UEp:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: Art. U8.2 « activités »
+          page_pdf: 32
+          citation: 'Zones UEm et UEp : 16 m'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 75.0
+          article: Art. U7.2 « activités »
+          page_pdf: 34
+          citation: 'UEm et UEp : 75% de l’unité foncière'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Art. U4.2 « activités »
+          page_pdf: 32
+          citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 8.0
+          article: Art. U5.2 « activités »
+          page_pdf: 33
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.
+          statut: propose
+          raison: valeur 8 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: null
+          article: Art. U12 « activités »
+          page_pdf: 38
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zones UEa, UEm et UEp : 15% de la surface'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: interdit
     silence_src: 'Art. U1 « activités » 1.2, p. 29 : « A l''exception de ceux visés à l''article U2 « activités
       », sont interdits toutes les constructions et tous les ouvrages et travaux »'
@@ -685,6 +1391,47 @@ zones:
     - 'Extension limitée de l''existant même non autorisé : +30 % max, 20 m² habitation / 100 m² autres (U2 « activités
       »-1, p. 29).'
   UR:
+    regles:
+      hauteur:
+        faitage:
+          m: 24.0
+          article: Art. U8.2 « activités »
+          page_pdf: 32
+          citation: 'Zone UR : 24 mètres'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 75.0
+          article: Art. U7.2 « activités »
+          page_pdf: 34
+          citation: 'UR : 75 % de l’unité foncière'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 5.0
+          article: Art. U4.2 « activités »
+          page_pdf: 32
+          citation: 'en zones UEa et UR : 5 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 12.0
+          article: Art. U5.2 « activités »
+          page_pdf: 33
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.
+          statut: propose
+          raison: valeur 12 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: null
+          article: Art. U12 « activités »
+          page_pdf: 38
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zone UR : 20 % de de la surface'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: interdit
     silence_src: 'Art. U1 « activités » 1.2, p. 29 : « A l''exception de ceux visés à l''article U2 « activités
       », sont interdits toutes les constructions et tous les ouvrages et travaux »'
@@ -802,6 +1549,47 @@ zones:
     - 'Extension limitée de l''existant même non autorisé : +30 % max, 20 m² habitation / 100 m² autres (U2 « activités
       »-1, p. 29).'
   UT:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: Art. U8.2 « activités »
+          page_pdf: 32
+          citation: 'Zone UT : 11 mètres'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 30.0
+          article: Art. U7.2 « activités »
+          page_pdf: 34
+          citation: 'UT : 30% de l’unité foncière'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Art. U4.2 « activités »
+          page_pdf: 32
+          citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 5.5
+          article: Art. U5.2 « activités »
+          page_pdf: 33
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.
+          statut: propose
+          raison: valeur 5.5 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: null
+          article: Art. U12 « activités »
+          page_pdf: 38
+          citation: 'La parcelle doit être perméable sur au moins :
+
+            • en zone UT : 55% de la surface'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: interdit
     silence_src: 'Art. U1 « activités » 1.2, p. 29 (interdiction générale) + Art. U2 « activités »-10, p. 30 : «
       En zone UT, à condition d''être en lien avec une activité touristique et de loisirs, seules la réhabilitation
@@ -815,6 +1603,45 @@ zones:
       zone UEp » (donc littéralement aussi en UT), alors que U2-10 dit « seules » pour UT — non tranché ici, relevé
       en anomalie.'
   UTp:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: Art. U8.2 « activités »
+          page_pdf: 32
+          citation: 'Zone UT : 11 mètres'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 30.0
+          article: Art. U7.2 « activités »
+          page_pdf: 34
+          citation: 'UT : 30% de l’unité foncière'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Art. U4.2 « activités »
+          page_pdf: 32
+          citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
+          statut: valide
+        limites_separatives:
+          min_m: 5.5
+          article: Art. U5.2 « activités »
+          page_pdf: 33
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.
+          statut: propose
+          raison: valeur 5.5 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: null
+          article: Art. U12 « activités »
+          page_pdf: 38
+          citation: INTROUVABLE
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: interdit
     silence_src: Art. U1 « activités » 1.2, p. 29 + U2 « activités »-10, p. 30 (secteur de la zone UT)
     sous_destinations:
@@ -831,6 +1658,68 @@ zones:
       le tourisme/loisirs) : également autorisées dans UTp (U2-10, p. 30).'
     - '« activités économiques » : terme générique non mappé en sous-destinations.'
   1AUb:
+    regles:
+      hauteur:
+        faitage:
+          m: 15.0
+          article: Art. U8.2 « résidentielles »
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 15 absente de la citation (harmonisation ≠ texte)
+        egout:
+          m: 12.0
+          article: Art. U8.2 « résidentielles »
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 12 absente de la citation (harmonisation ≠ texte)
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: U7.2
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 70 absente de la citation (harmonisation ≠ texte)
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U4.2
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U13.2
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 1.5 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: U12
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 25 absente de la citation (harmonisation ≠ texte)
     renvoi: UB
     renvoi_src: 'Art. AUindicée 1.2, p. 41 : « Se reporter au règlement de la zone U indiquée en indice » (indice
       b → zone UB) + chapeau p. 41'
@@ -840,6 +1729,68 @@ zones:
     - 'Densité minimale brute : « en zone AUb, 25 logements par hectare » dans le respect des OAP (AUindicée 2-6,
       p. 42) ; équivalent logement = 80 m² SP pour les projets non habitat.'
   1AUc:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: U8.2
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 13 absente de la citation (harmonisation ≠ texte)
+        egout:
+          m: 10.0
+          article: U8.2
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 10 absente de la citation (harmonisation ≠ texte)
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: U7.2
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 60 absente de la citation (harmonisation ≠ texte)
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U4.2
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 3.0
+          article: U5.2
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U13.2
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 1.5 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U12
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 30 absente de la citation (harmonisation ≠ texte)
     renvoi: UC
     renvoi_src: 'Art. AUindicée 1.2, p. 41 : « Se reporter au règlement de la zone U indiquée en indice » (indice
       c → zone UC)'
@@ -847,6 +1798,51 @@ zones:
     - Ouverte dès l'approbation du PLU si infrastructures suffisantes (AUindicée 2-1, p. 41).
     - 'Densité minimale brute : « en zone AUc, 25 logements par hectare » (AUindicée 2-6, p. 42).'
   1AUep:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: Art. U8.2 « activités »
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 16 absente de la citation (harmonisation ≠ texte)
+      emprise_sol:
+        ces:
+          pct: 75.0
+          article: Art. U7.2 « activités »
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 75 absente de la citation (harmonisation ≠ texte)
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Art. U4.2 « activités »
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 8.0
+          article: Art. U5.2 « activités »
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur 8 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: null
+          article: Art. U12 « activités »
+          page_pdf: 41
+          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
+            de la zone AU considérée au règlement des zones urbaines correspondantes
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     renvoi: UEp
     renvoi_src: 'Art. AUindicée 1.2, p. 41 : « Se reporter au règlement de la zone U indiquée en indice » (indice
       ep → zone UEp)'

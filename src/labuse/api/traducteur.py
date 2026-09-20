@@ -39,7 +39,7 @@ def get_db():
 
 def _applied(zr, surface: float) -> list[dict]:
     """Règles chiffrées de la zone appliquées à la surface de la parcelle, chacune sourcée."""
-    from ..faisabilite.plu_rules import A_VERIFIER
+    from ..faisabilite.zonage import A_VERIFIER
     out: list[dict] = []
 
     def add(label, value, source, *, note=None, calc=None):
@@ -113,7 +113,7 @@ def _translate(db: Session, article: str, applied: list[dict], zone: str, commun
 def traducteur_plu(idu: str, body: TraducteurIn, db: Session = Depends(get_db)) -> dict:
     """IDU (+ article collé optionnel) → règles PLU chiffrées appliquées à la parcelle, sourcées, + traduction IA."""
     from ..faisabilite.db import parcel_context
-    from ..faisabilite.plu_rules import resolve_zone
+    from ..faisabilite.zonage import resolve_zone
     from ..plu_reglement import resolve_reglement
 
     p = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()

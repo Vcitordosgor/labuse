@@ -1,0 +1,12 @@
+=== Saint-Denis SECTEUR Up (Upi/Upr) — valeur du secteur · zone Upi · R+1 · ~12 à 13 logts
+   [ESTIMÉ     ] Emprise au sol — reculs (géométrie réelle)=~1501 m²  :: Art. 7 (non calibré → hypothèse prudente) (séparatif) ; recul voirie en sus
+   [SOURCÉ     ] Emprise au sol — % réglementé           =~1501 m²  :: Art. Up.9 · p.33 (PLU, calibrage validé)
+   [SOURCÉ     ] Niveaux constructibles                  =R+1       :: Art. Up.10 · p.34 (PLU, calibrage validé)
+   [ESTIMÉ     ] Emprise bâtie (occupation du gabarit)   =~676 m²   :: hypothèse occupation
+   [Dérivé     ] Surface de plancher brute               =~1351 m²  :: dérivé occupation×hauteur
+   [ESTIMÉ     ] Surface habitable (rendement)           =~1081 m²  :: hypothèse rendement
+   [ESTIMÉ     ] Logements — après plafond de densité (≤ 12 logts)=~12 à 12  :: hypothèse densité (ex-COS)
+   [Dérivé     ] Logements retenus au sol                =~12 à 13  :: dérivé
+
+(aucune parcelle BASE Up nue — le zonage sert Upi/Upr)
+

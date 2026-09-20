@@ -1,0 +1,3 @@
+V6a réel : ok · 63 règle(s) chiffrée(s) validée(s), toutes avec article + page + citation
+V6a cassé: casse · 1 règle(s) validée(s) sans référence complète
+   détail: 97411 Ud mixite : valide sans citation

@@ -1,0 +1,27 @@
+PLU-CALIBRAGE-4 lot 1 — équivalence CALCUL (resolve_zone vs resolve_zone_v2), avant bascule
+
+97401 Les Avirons              15 parcelles · 0 diff capacité
+97402 Bras-Panon               15 parcelles · 0 diff capacité
+97403 Entre-Deux               15 parcelles · 0 diff capacité
+97404 L'Étang-Salé             15 parcelles · 0 diff capacité
+97405 Petite-Île               15 parcelles · 0 diff capacité
+97406 La Plaine-des-Palmistes  15 parcelles · 0 diff capacité
+97407 Le Port                  15 parcelles · 0 diff capacité
+97408 La Possession            15 parcelles · 0 diff capacité
+97409 Saint-André              15 parcelles · 0 diff capacité
+97410 Saint-Benoît             15 parcelles · 0 diff capacité
+97411 Saint-Denis              15 parcelles · 0 diff capacité
+97412 Saint-Joseph             15 parcelles · 0 diff capacité
+97413 Saint-Leu                15 parcelles · 0 diff capacité
+97414 Saint-Louis              15 parcelles · 0 diff capacité
+97415 Saint-Paul               15 parcelles · 0 diff capacité
+97416 Saint-Pierre             15 parcelles · 0 diff capacité
+97418 Sainte-Marie             15 parcelles · 0 diff capacité
+97419 Sainte-Rose              15 parcelles · 0 diff capacité
+97420 Sainte-Suzanne           15 parcelles · 0 diff capacité
+97421 Salazie                  15 parcelles · 0 diff capacité
+97422 Le Tampon                15 parcelles · 0 diff capacité
+97423 Les Trois-Bassins        15 parcelles · 0 diff capacité
+97424 Cilaos                   15 parcelles · 0 diff capacité
+
+TOTAL 345 parcelles · 0 différence(s) de capacité

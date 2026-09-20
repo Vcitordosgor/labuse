@@ -1419,7 +1419,7 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
     DONNÉE pure : SDP résiduelle (Estimé), hauteurs égout/faîtage calibrées (resolve_zone — source
     corrigée M128-2-A/M129-2), zone PLU + famille + millésime amont. `figee=False` si le projet n'a
     pas de shortlist figée exploitable (date + parcelles) — on le DIT, on ne fabrique aucun run."""
-    from ..faisabilite.plu_rules import resolve_zone
+    from ..faisabilite.zonage import resolve_zone
     from .app import _ETAGE0_SQL
     from .export_commun import adresses_ban, format_adresse
     rows = db.execute(text(

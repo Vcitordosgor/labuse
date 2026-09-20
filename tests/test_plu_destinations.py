@@ -248,7 +248,12 @@ def test_module_unique_aucune_autre_lecture():
     # `plu_destinations` (chiffres.py) ; il ne lit jamais la calibration YAML. L'intention de la
     # garde (les surfaces passent par le module, jamais par les YAML) reste entière.
     registre_dir = str(Path("src") / "labuse" / "registre")
+    # PLU-CALIBRAGE-1 — le module PLU lui-même (src/labuse/plu/) porte, en plus du lecteur
+    # `destinations.py`, les outils d'AUTORAT de la calibration : `extraction.py` (l'agent qui
+    # PROPOSE), `revue.py` (qui VALIDE) et `cli.py`. Ce ne sont pas des surfaces qui contournent
+    # le module — ce SONT le module. La garde vise les surfaces d'affichage, pas les auteurs.
+    plu_dir = str(Path("src") / "labuse" / "plu")
     offenders = [p for p in out
                  if Path(p).name != "destinations.py" and "__pycache__" not in p
-                 and registre_dir not in p]
+                 and registre_dir not in p and plu_dir not in p]
     assert not offenders, f"lectures hors module unique : {offenders}"

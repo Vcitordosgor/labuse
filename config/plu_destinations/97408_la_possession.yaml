@@ -16,6 +16,51 @@ meta:
     de la pièce écrite → non_lu (dit tel quel).'
 zones:
   UA:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: UA 10.2
+          page_pdf: 16
+          citation: A l’exception des secteurs UAa, UApsfr2, UAm et UAv, la hauteur maximale des constructions
+            est fixée à 16 mètres au faitage.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UA 6.2
+          page_pdf: 14
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 3 mètres (voir illustrations explicatives dans les annexes du règlement).
+          statut: valide
+        limites_separatives:
+          min_m: 8.0
+          article: UA 7
+          page_pdf: 15
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: propose
+          raison: valeur 8 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UA 12.2
+          page_pdf: 21
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 35.0
+          article: UA 13.1
+          page_pdf: 22
+          citation: 'A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité
+            foncière, porté à 40% minimum en secteur UApsfr2, doit être traité en espace perméable : - soit
+            planté intégralement en pleine terre comprenant au minimum trois strates, arborescente, arbustive
+            et herbacée, - soit avec une plantation en pleine terre comprenant au minimum trois strates...'
+          statut: valide
     silence: autorise
     silence_src: 'Art. UA 2, 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UA 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -68,6 +113,42 @@ zones:
           une surface de plancher supérieure à 1 500 m², au minimum 20% de ce programme doit être affecté à des
           logement locatifs financés par un prêt aidé de l'État »
   UAa:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: UA 10.2
+          page_pdf: 16
+          citation: Dans le secteur UAa, la hauteur maximale des constructions est fixée à 9 mètres.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UA 6.2
+          page_pdf: 14
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 3 mètres (voir illustrations explicatives dans les annexes du règlement).
+          statut: valide
+        limites_separatives:
+          min_m: 4.5
+          article: UA 7
+          page_pdf: 15
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: propose
+          raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 35.0
+          article: UA 13.1
+          page_pdf: 22
+          citation: 'A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité
+            foncière, porté à 40% minimum en secteur UApsfr2, doit être traité en espace perméable : - soit
+            planté intégralement en pleine terre...'
+          statut: valide
     silence: autorise
     silence_src: 'Art. UA 2, 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UA 1.2 » (secteur UAa de la zone UA, mêmes articles UA 1/UA 2, p. 10-11)'
@@ -119,6 +200,56 @@ zones:
         citation: « A l'exception du secteur UAv, les constructions, ouvrages et travaux à destination agricole
           et forestière. »
   UAm:
+    regles:
+      hauteur:
+        egout:
+          m: 12.0
+          article: UA 10.2
+          page_pdf: 16
+          citation: Dans le secteur UAm, la hauteur maximale autorisée à l’égout du toit est de 15 mètres
+            sur une profondeur de 50 mètres de part et d’autre de la voie reliant la RN1E (rue Mahatma Gandhi)
+            à la rue du Moulin Joli. Sur le reste du secteur, la hauteur maximale à l’égout du toit est limitée
+            à 12 mètres.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UA 6.2
+          page_pdf: 14
+          citation: Dans le secteur UAm, les constructions peuvent être implantées à l’alignement ou en recul
+            de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus
+            proche de la voie, au moins égale à la hauteur du bâtiment. Pour les constructions implantées
+            le long de la RN1E (rue Mahatma Gandhi), la distance de recul par rapport à la voie doit être
+            au moins égale à 10 mètres.
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 6.0
+          article: UA 7
+          page_pdf: 15
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UA 12.2
+          page_pdf: 21
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: null
+          article: UA 13.1
+          page_pdf: 22
+          citation: Dans le secteur UAm, au minimum 25% de la superficie totale de l’unité foncière doit être
+            traité en espace perméable planté en pleine terre comprenant au minimum trois strates, arborescente,
+            arbustive et herbacée.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: 'Art. UA 2, 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UA 1.2 » (secteur UAm de la zone UA, mêmes articles UA 1/UA 2, p. 10-11)'
@@ -155,6 +286,56 @@ zones:
         citation: « A l'exception du secteur UAv, les constructions, ouvrages et travaux à destination agricole
           et forestière. »
   UApsfr2:
+    regles:
+      hauteur:
+        faitage:
+          m: null
+          article: UA 10.2
+          page_pdf: 16
+          citation: Dans le secteur UApsfr2, la hauteur maximale des constructions est fixée à 12 mètres.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        egout:
+          m: null
+          article: UA 10.2
+          page_pdf: 16
+          citation: Dans le secteur UApsfr2, la hauteur maximale des constructions est fixée à 12 mètres.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UA 6.2
+          page_pdf: 14
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 3 mètres (voir illustrations explicatives dans les annexes du règlement).
+          statut: valide
+        limites_separatives:
+          min_m: null
+          article: UA 7
+          page_pdf: 15
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UA 12.2
+          page_pdf: 21
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: UA 13.1
+          page_pdf: 22
+          citation: A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité
+            foncière, porté à 40% minimum en secteur UApsfr2, doit être traité en espace perméable...
+          statut: valide
     silence: autorise
     silence_src: 'Art. UA 2, 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UA 1.2 » (secteur UApsfr2 de la zone UA, mêmes articles UA 1/UA 2, p. 10-11)'
@@ -203,6 +384,66 @@ zones:
           une surface de plancher supérieure à 1 500 m², au minimum 20% de ce programme doit être affecté à des
           logement locatifs financés par un prêt aidé de l'État »
   UAv:
+    regles:
+      hauteur:
+        faitage:
+          m: null
+          article: UA 10.2
+          page_pdf: 17
+          citation: 'Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel
+            de la manière suivante : Ilots 1/3B3 15 m ; Ilot 2 12 m ; Ilot 3A 9 m ; Ilots 3B1/3B2 9 m ; Ilot
+            9 25 m ; Ilot 10A 19 m ; Ilot 10B 16 m ; Ilots 10C/11D 10 m ; Ilot 11A 22 m ; Ilot 11B 10 m ;
+            Ilot 11C 13 m.'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        egout:
+          m: null
+          article: UA 10.2
+          page_pdf: 17
+          citation: 'Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel
+            de la manière suivante : Ilot / Hauteur maximale autorisée [...] Ilots 1/3B3 15 mètres ; Ilot
+            2 12 mètres ; Ilot 3A 9 mètres ; Ilots 3B1/3B2 9 mètres ; Ilot 9 25 mètres ; Ilot 10A 19 mètres
+            ; Ilot 10B 16 mètres ; Ilots 10C/11D 10 mètres ; Ilot 11A 22 mètres ; Ilot 11B 10 mètres ; Ilot
+            11C 13 mètres.'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UA 6.2
+          page_pdf: 14
+          citation: Dans le secteur UAv, les constructions peuvent être implantées à l’alignement ou en recul
+            de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus
+            proche de la voie, au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UA 7
+          page_pdf: 15
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: UA 12.2
+          page_pdf: 21
+          citation: 'Dans le secteur UAv, en plus des places de stationnement obligatoires pour les personnes
+            à mobilité réduite [...] les normes de stationnement sont les suivantes : [...] Autres logements
+            > à 50 m² de SDP | 2 places minimum par logement'
+          statut: propose
+          raison: stationnement non chiffrable par logement ('a_verifier')
+      pleine_terre:
+        pct:
+          pct: null
+          article: UA 13.1
+          page_pdf: 22
+          citation: A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité
+            foncière...
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: 'Art. UA 2, 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UA 1.2 » (secteur UAv de la zone UA, mêmes articles UA 1/UA 2, p. 10-11)'
@@ -230,6 +471,58 @@ zones:
           d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 20% de
           la surface de plancher totale de l'activité. »
   UB:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 12 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 9.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 12 mètres au faîtage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UB 6.2
+          page_pdf: 29
+          citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas
+            de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la voie doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 4.5
+          article: UB 7
+          page_pdf: 30
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: propose
+          raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UB 12.2
+          page_pdf: 35
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 35.0
+          article: UB 13.1
+          page_pdf: 36
+          citation: Au minimum 35% de la superficie totale de l’unité foncière doit être traité en espace
+            perméable. Ce pourcentage est porté à 50% en secteur UBa et 40% en secteurs UBb, UBc, UBpszc et
+            UBpsfr2. Pour les terrains d’une superficie inférieure ou égale à 300 m², ce pourcentage est réduit
+            à 35%.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UB 2, 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UB 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -276,6 +569,58 @@ zones:
           représentant une surface de plancher supérieure à 1 500 m², au minimum 20% de ce programme doit être affecté
           à des logement locatifs financés par un prêt aidé de l'État »
   UBa:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à
+            : - 7 mètres à l’égout du toit ou au sommet de l’acrotère, - 10 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 7.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à
+            : - 7 mètres à l’égout du toit ou au sommet de l’acrotère, - 10 mètres au faîtage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UB 6.2
+          page_pdf: 29
+          citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas
+            de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la voie doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.5
+          article: UB 7
+          page_pdf: 30
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: propose
+          raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UB 12.2
+          page_pdf: 35
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 50.0
+          article: UB 13.1
+          page_pdf: 36
+          citation: Au minimum 35% de la superficie totale de l’unité foncière doit être traité en espace
+            perméable. Ce pourcentage est porté à 50% en secteur UBa et 40% en secteurs UBb, UBc, UBpszc et
+            UBpsfr2. Pour les terrains d’une superficie inférieure ou égale à 300 m², ce pourcentage est réduit
+            à 35%.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UB 2, 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UB 1.2 » (secteur UBa de la zone UB, mêmes articles UB 1/UB 2, p. 26-27)'
@@ -309,6 +654,56 @@ zones:
         page_pdf: 26
         citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
   UBb:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à
+            : - 7 mètres à l’égout du toit ou au sommet de l’acrotère, - 10 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 7.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à
+            : - 7 mètres à l’égout du toit ou au sommet de l’acrotère, - 10 mètres au faîtage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UB 6.2
+          page_pdf: 29
+          citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas
+            de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la voie doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.5
+          article: UB 7
+          page_pdf: 30
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: propose
+          raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UB 12.2
+          page_pdf: 35
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: UB 13.1
+          page_pdf: 36
+          citation: Ce pourcentage est porté à 50% en secteur UBa et 40% en secteurs UBb, UBc, UBpszc et UBpsfr2.
+            Pour les terrains d’une superficie inférieure ou égale à 300 m², ce pourcentage est réduit à 35%.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UB 2, 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UB 1.2 » (secteur UBb de la zone UB, mêmes articles UB 1/UB 2, p. 26-27)'
@@ -343,6 +738,56 @@ zones:
         page_pdf: 26
         citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
   UBc:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à
+            : - 7 mètres à l’égout du toit ou au sommet de l’acrotère, - 10 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 7.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à
+            : - 7 mètres à l’égout du toit ou au sommet de l’acrotère, - 10 mètres au faîtage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UB 6.2
+          page_pdf: 29
+          citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas
+            de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la voie doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.5
+          article: UB 7
+          page_pdf: 30
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: propose
+          raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UB 12.2
+          page_pdf: 35
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: UB 13.1
+          page_pdf: 36
+          citation: Ce pourcentage est porté à 50% en secteur UBa et 40% en secteurs UBb, UBc, UBpszc et UBpsfr2.
+            Pour les terrains d’une superficie inférieure ou égale à 300 m², ce pourcentage est réduit à 35%.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UB 2, 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UB 1.2 » (secteur UBc de la zone UB, mêmes articles UB 1/UB 2, p. 26-27)'
@@ -377,6 +822,55 @@ zones:
         page_pdf: 26
         citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
   UBpsfr2:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 12 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 9.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 12 mètres au faîtage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UB 6.2
+          page_pdf: 29
+          citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas
+            de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la voie doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 4.5
+          article: UB 7
+          page_pdf: 30
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: propose
+          raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UB 12.2
+          page_pdf: 35
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: UB 13.1
+          page_pdf: 36
+          citation: Ce pourcentage est porté à 50% en secteur UBa et 40% en secteurs UBb, UBc, UBpszc et UBpsfr2.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UB 2, 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UB 1.2 » (secteur UBpsfr2 de la zone UB, mêmes articles UB 1/UB 2, p. 26-27)'
@@ -424,6 +918,47 @@ zones:
           représentant une surface de plancher supérieure à 1 500 m², au minimum 20% de ce programme doit être affecté
           à des logement locatifs financés par un prêt aidé de l'État »
   UBpszc:
+    regles:
+      hauteur:
+        faitage:
+          m: 7.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UB 6.2
+          page_pdf: 29
+          citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas
+            de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la voie doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.5
+          article: UB 7
+          page_pdf: 30
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: propose
+          raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UB 12.2
+          page_pdf: 35
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: UB 13.1
+          page_pdf: 36
+          citation: Ce pourcentage est porté à 50% en secteur UBa et 40% en secteurs UBb, UBc, UBpszc et UBpsfr2.
+          statut: valide
     silence: interdit
     silence_src: 'Art. UB 1.2 5°, p. 26 : « Dans le secteur UBpszc, à l''exception de ceux visés à l''article UB2.2.,
       sont interdits toutes les constructions et tous les ouvrages et travaux. » (liste fermée : seul ce qui est
@@ -479,6 +1014,43 @@ zones:
         page_pdf: 26
         citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
   UE:
+    regles:
+      hauteur:
+        egout:
+          m: 12.0
+          article: UE 10.2
+          page_pdf: 43
+          citation: La hauteur maximale des constructions est fixée à 12 mètres à l'égout du toit ou au sommet
+            de l’acrotère.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UE 6.2
+          page_pdf: 41
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 3 mètres. Pour les constructions implantées le long de la RN1E (rue Mahatma Gandhi) et de la
+            RN1, cette distance minimale est portée respectivement à 5 mètres et 25 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 6.0
+          article: UE 7
+          page_pdf: 41
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: null
+          article: UE 13
+          page_pdf: 45
+          citation: Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace
+            libre dont au moins la moitié en espace perméable.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: 'Art. UE 2, 2.2, p. 39 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UE 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -625,6 +1197,59 @@ zones:
           foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5% de la superficie de la zone
           d'implantation. »
   UEm:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: UEm 10.2
+          page_pdf: 52
+          citation: La hauteur maximale des constructions est fixée à 12 mètres au faitage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UEm 9
+          page_pdf: 51
+          citation: L’emprise au sol des bâtiments de doit pas excéder 70% de l’unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UEm 6.2
+          page_pdf: 49
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 6.0
+          article: UEm 7
+          page_pdf: 50
+          citation: Les constructions doivent être implantées en retrait des limites séparatives avec une
+            distance comptée horizontalement de tout point de la façade au point le plus proche de la limite
+            séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir
+            être inférieure à 3 mètres.
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: null
+          article: UEm 12
+          page_pdf: 54
+          citation: Logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: propose
+          raison: stationnement non chiffrable par logement ('a_verifier')
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: UEm 13
+          page_pdf: 55
+          citation: Pour les constructions à usage commercial, de bureau ou d’hôtellerie au moins 10% de la
+            surface de l’unité foncière doit être traité en espace éco-aménageable. [...] Les espaces verts
+            de pleine terre représenteront à minima 5% de la superficie du terrain, avec la plantation d’au
+            moins un arbre haute-tige par tranche de 50m² d’espace concerné et au minimum un arbre par unité
+            foncière.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UEm 2, p. 47 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article UEm 1.2 ainsi que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -670,6 +1295,41 @@ zones:
         citation: « Les constructions à usage d'habitation à condition qu'elles soient nécessaires au gardiennage
           ou à la surveillance des établissements. »
   UT:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UT 10.2
+          page_pdf: 61
+          citation: La hauteur maximale des constructions est fixée à 10 mètres.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UT 6.2
+          page_pdf: 59
+          citation: Les constructions peuvent être implantées soit à l’alignement, soit en recul de la voie,
+            avec une distance comptée horizontalement de tout point de la façade au point le plus proche de
+            la voie, au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 5.0
+          article: UT 7
+          page_pdf: 60
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: propose
+          raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UT 13
+          page_pdf: 64
+          citation: Au minimum 30% de la superficie totale de l’unité foncière, porté à 40% en secteur UTfr2,
+            doit être traité en espace perméable planté en pleine terre comprenant au minimum trois strates,
+            arborescente, arbustive et herbacée.
+          statut: valide
     silence: interdit
     silence_src: 'Art. UT 1.2, p. 57 : « Sont interdits toutes les constructions, ouvrages et travaux à l''exception
       de ceux visés à l''article UT 2. » (liste fermée : seul ce qui est visé à UT 2 est admis)'
@@ -769,6 +1429,41 @@ zones:
         citation: « Les constructions à destination d'équipement d'intérêt collectif. » (admis au titre de la liste
           de l'art. UT 2, aucune condition propre énoncée)
   UTfr2:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UT 10.2
+          page_pdf: 61
+          citation: La hauteur maximale des constructions est fixée à 10 mètres.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UT 6.2
+          page_pdf: 59
+          citation: Les constructions peuvent être implantées soit à l’alignement, soit en recul de la voie,
+            avec une distance comptée horizontalement de tout point de la façade au point le plus proche de
+            la voie, au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 5.0
+          article: UT 7
+          page_pdf: 60
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: propose
+          raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: UT 13
+          page_pdf: 64
+          citation: Au minimum 30% de la superficie totale de l’unité foncière, porté à 40% en secteur UTfr2,
+            doit être traité en espace perméable planté en pleine terre comprenant au minimum trois strates,
+            arborescente, arbustive et herbacée.
+          statut: valide
     silence: interdit
     silence_src: 'Art. UT 1.2, p. 57 : « Sont interdits toutes les constructions, ouvrages et travaux à l''exception
       de ceux visés à l''article UT 2. » (secteur UTfr2 de la zone UT — « La zone UT comprend un secteur spécifique,
@@ -862,6 +1557,64 @@ zones:
         citation: « Les constructions à destination d'équipement d'intérêt collectif. » (admis au titre de la liste
           de l'art. UT 2, aucune condition propre énoncée)
   AUBm:
+    regles:
+      hauteur:
+        faitage:
+          m: null
+          article: AUBm 10.2
+          page_pdf: 75
+          citation: La hauteur maximale des constructions est fixée à R+3.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        egout:
+          m: null
+          article: AUBm 10.2
+          page_pdf: 75
+          citation: La hauteur maximale des constructions est fixée à R+3.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: AUBm 9
+          page_pdf: 75
+          citation: L’emprise au sol des bâtiments de doit pas excéder 60%de l’unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: AUBm 6.2
+          page_pdf: 73
+          citation: Les constructions peuvent être implantées à l’alingement ou en recul de la voie, avec
+            une distance comptée horizontalement de tout point de la façade au point le plus proche de la
+            voie au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: AUBm 7
+          page_pdf: 74
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: AUBm 12
+          page_pdf: 78
+          citation: Autre logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: AUBm 13
+          page_pdf: 79
+          citation: A l’exception d’une prescription contraire édictée par les arrêtés de déclaration d’utilité
+            publique en lien avec un périmètre de protection induit par la présence d’un ouvrage de captage,
+            au minimum 25% de la superficie totale de l’unité foncière doit être traité en espace perméable
+            planté en pleine terre comprenant au minimum trois strates, arborescente, arbustive et herbacée.
+          statut: valide
     silence: autorise
     silence_src: 'Art. AUBm 2, p.71 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article AUBm 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -915,29 +1668,324 @@ zones:
       l''existant, pas des destinations nouvelles ouvertes.'
     - 'Coquille du règlement : l''article 5 est intitulé « ARTICLE A AUST 5 » (p.82).'
   AUAv:
+    regles:
+      hauteur:
+        faitage:
+          m: null
+          article: UA 10.2
+          page_pdf: 17
+          citation: 'Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel
+            de la manière suivante : Ilots 1/3B3 15 m ; Ilot 2 12 m ; Ilot 3A 9 m ; Ilots 3B1/3B2 9 m ; Ilot
+            9 25 m ; Ilot 10A 19 m ; Ilot 10B 16 m ; Ilots 10C/11D 10 m ; Ilot 11A 22 m ; Ilot 11B 10 m ;
+            Ilot 11C 13 m.'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        egout:
+          m: null
+          article: UA 10.2
+          page_pdf: 17
+          citation: 'Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel
+            de la manière suivante : Ilots 1/3B3 15 m ; Ilot 2 12 m ; Ilot 3A 9 m ; Ilots 3B1/3B2 9 m ; Ilot
+            9 25 m ; Ilot 10A 19 m ; Ilot 10B 16 m ; Ilots 10C/11D 10 m ; Ilot 11A 22 m ; Ilot 11B 10 m ;
+            Ilot 11C 13 m.'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UA 6.2
+          page_pdf: 14
+          citation: Dans le secteur UAv, les constructions peuvent être implantées à l’alignement ou en recul
+            de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus
+            proche de la voie, au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UA 7
+          page_pdf: 15
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: UA 12.2
+          page_pdf: 21
+          citation: 'Dans le secteur UAv, [...] les normes de stationnement sont les suivantes : [...] Autres
+            logements > à 50 m² de SDP | 2 places minimum par logement'
+          statut: propose
+          raison: stationnement non chiffrable par logement ('a_verifier')
+      pleine_terre:
+        pct:
+          pct: null
+          article: UA 13.1
+          page_pdf: 22
+          citation: A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité
+            foncière...
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     renvoi: UAv
     renvoi_src: 'DG art.3 2°, p.7 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
       au règlement des zones urbaines correspondantes » — indice Av → secteur UAv de la zone UA (« le secteur UAv,
       pour l''opération d''aménagement Cœur de Ville », DG p.7)'
   AUB:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 12 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 9.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 12 mètres au faîtage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UB 6.2
+          page_pdf: 29
+          citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas
+            de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la voie doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 4.5
+          article: UB 7
+          page_pdf: 30
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: propose
+          raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UB 12.2
+          page_pdf: 35
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 35.0
+          article: UB 13.1
+          page_pdf: 36
+          citation: Au minimum 35% de la superficie totale de l’unité foncière doit être traité en espace
+            perméable. Ce pourcentage est porté à 50% en secteur UBa et 40% en secteurs UBb, UBc, UBpszc et
+            UBpsfr2. Pour les terrains d’une superficie inférieure ou égale à 300 m², ce pourcentage est réduit
+            à 35%.
+          statut: valide
     renvoi: UB
     renvoi_src: 'DG art.3 2°, p.7 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
       au règlement des zones urbaines correspondantes » — indice B → zone UB (DG p.7)'
   AUBb:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à
+            : - 7 mètres à l’égout du toit ou au sommet de l’acrotère, - 10 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 7.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à
+            : - 7 mètres à l’égout du toit ou au sommet de l’acrotère, - 10 mètres au faîtage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UB 6.2
+          page_pdf: 29
+          citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas
+            de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la voie doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.5
+          article: UB 7
+          page_pdf: 30
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: propose
+          raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UB 12.2
+          page_pdf: 35
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: UB 13.1
+          page_pdf: 36
+          citation: Ce pourcentage est porté à 50% en secteur UBa et 40% en secteurs UBb, UBc, UBpszc et UBpsfr2.
+            Pour les terrains d’une superficie inférieure ou égale à 300 m², ce pourcentage est réduit à 35%.
+          statut: valide
     renvoi: UBb
     renvoi_src: 'DG art.3 2°, p.7 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
       au règlement des zones urbaines correspondantes » — indice Bb → secteur UBb de la zone UB (« le secteur UBb,
       correspondant au bourg de Dos d''Ane », DG p.7)'
   AUBpsfr2:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 12 mètres au faîtage.'
+          statut: valide
+        egout:
+          m: 9.0
+          article: UB 10.2
+          page_pdf: 31
+          citation: 'La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au
+            sommet de l’acrotère, - 12 mètres au faîtage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UB 6.2
+          page_pdf: 29
+          citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas
+            de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la voie doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 4.5
+          article: UB 7
+          page_pdf: 30
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3
+            mètres.
+          statut: propose
+          raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UB 12.2
+          page_pdf: 35
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: UB 13.1
+          page_pdf: 36
+          citation: Ce pourcentage est porté à 50% en secteur UBa et 40% en secteurs UBb, UBc, UBpszc et UBpsfr2.
+          statut: valide
     renvoi: UBpsfr2
     renvoi_src: 'DG art.3 2°, p.7 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
       au règlement des zones urbaines correspondantes » — indice Bpsfr2 → secteur UBpsfr2 de la zone UB (périmètre
       de protection Puits Samy / forage FR2, DG p.7)'
   AUT:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UT 10.2
+          page_pdf: 61
+          citation: La hauteur maximale des constructions est fixée à 10 mètres.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UT 6.2
+          page_pdf: 59
+          citation: Les constructions peuvent être implantées soit à l’alignement, soit en recul de la voie,
+            avec une distance comptée horizontalement de tout point de la façade au point le plus proche de
+            la voie, au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 5.0
+          article: UT 7
+          page_pdf: 60
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié
+            de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: propose
+          raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UT 13
+          page_pdf: 64
+          citation: Au minimum 30% de la superficie totale de l’unité foncière, porté à 40% en secteur UTfr2,
+            doit être traité en espace perméable planté en pleine terre comprenant au minimum trois strates,
+            arborescente, arbustive et herbacée.
+          statut: valide
     renvoi: UT
     renvoi_src: 'DG art.3 2°, p.7 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
       au règlement des zones urbaines correspondantes » — indice T → zone UT (DG p.7)'
   AUEm:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: UEm 10.2
+          page_pdf: 52
+          citation: La hauteur maximale des constructions est fixée à 12 mètres au faitage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UEm 9
+          page_pdf: 51
+          citation: L’emprise au sol des bâtiments de doit pas excéder 70% de l’unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UEm 6.2
+          page_pdf: 49
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 6.0
+          article: UEm 7
+          page_pdf: 50
+          citation: Les constructions doivent être implantées en retrait des limites séparatives avec une
+            distance comptée horizontalement de tout point de la façade au point le plus proche de la limite
+            séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir
+            être inférieure à 3 mètres.
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: null
+          article: UEm 12
+          page_pdf: 54
+          citation: Logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: propose
+          raison: stationnement non chiffrable par logement ('a_verifier')
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: UEm 13
+          page_pdf: 55
+          citation: Pour les constructions à usage commercial, de bureau ou d’hôtellerie au moins 10% de la
+            surface de l’unité foncière doit être traité en espace éco-aménageable. [...] Les espaces verts
+            de pleine terre représenteront à minima 5% de la superficie du terrain...
+          statut: valide
     etat: non_lu
     note: 'DG art.3 2°, p.7 : les dispositions règlementaires de AUBm et AUEm « font l''objet de chapitres spécifiques
       » (pas de report possible au règlement des zones urbaines, dit le texte) — mais le chapitre AUEm ne figure

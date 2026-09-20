@@ -336,7 +336,7 @@ def resolve_prix_sortie_servi(session: Session, parcel_id: int, secteur: str | N
     from ..ingestion.dvf_prix_neuf import resolve_prix_neuf_marche, niveau_prix_label
     if secteur is None:
         from .db import parcel_context
-        from .plu_rules import resolve_zone
+        from .zonage import resolve_zone
         ctx = parcel_context(session, parcel_id)
         rules = resolve_zone(ctx.zone, ctx.commune) if ctx and ctx.zone else None
         secteur = (rules.bassin if rules else None) or "Saint-Paul"
@@ -356,7 +356,7 @@ def compute_bilan_servi(session: Session, parcel_id: int, fz=None) -> tuple["Bil
     contexte éco (mixité/pluvial). Renvoie (Bilan | None, info_prix_sortie). Non calculable
     (commune social-dominante) → Bilan(fiable=False) SERVI avec la mention, jamais None écarté."""
     from .db import parcel_faisabilite
-    from .plu_rules import resolve_zone
+    from .zonage import resolve_zone
     from .engine import Hypotheses
     from . import bilan_params as bpmod
     fz = fz or parcel_faisabilite(session, parcel_id)

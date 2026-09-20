@@ -17,6 +17,58 @@ meta:
     » introuvables au règlement (non_lu).'
 zones:
   UA:
+    regles:
+      hauteur:
+        faitage:
+          m: 19.0
+          article: UA 10.2
+          page_pdf: 20
+          citation: 'La hauteur maximale des constructions est fixée à : (...) 19 mètres au faîtage,'
+          statut: valide
+        egout:
+          m: 15.0
+          article: UA 10.2
+          page_pdf: 20
+          citation: 'La hauteur maximale des constructions est fixée à : 15 mètres à l''égout du toit ou au
+            sommet de l''acrotère,'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UA 9.2
+          page_pdf: 19
+          citation: L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UA 6.2
+          page_pdf: 16
+          citation: Les constructions peuvent être implantées à l'alignement ou en retrait de la voie, avec
+            une distance (...) au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UA 7.2
+          page_pdf: 17
+          citation: En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UA 12.2
+          page_pdf: 23
+          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 15.0
+          article: UA 13.1
+          page_pdf: 24
+          citation: Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations
+          statut: valide
     silence: autorise
     silence_src: 'art. UA 2.2, p. 13 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U A 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » —
@@ -59,6 +111,43 @@ zones:
           à 2000 m², au minimum 30% de ce programme doit être affecté à des logements aidés (logements locatifs
           sociaux, logements intermédiaires…). »
   UA1:
+    regles:
+      hauteur:
+        faitage:
+          m: 19.0
+          article: UA 10.2
+          page_pdf: 17
+          citation: (...) 19 mètres au faîtage [zone UA, aucune règle propre au secteur UA1]
+          statut: propose
+          raison: citation non retrouvée autour de p.17 (recouvrement 29%)
+        egout:
+          m: 15.0
+          article: UA 10.2
+          page_pdf: 20
+          citation: 'La hauteur maximale des constructions est fixée à : 15 mètres à l''égout du toit (...)
+            [zone UA, aucune règle propre au secteur UA1]'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UA 6.2
+          page_pdf: 16
+          citation: Les constructions peuvent être implantées à l'alignement ou en retrait (...) au moins
+            égale à 3 mètres. [règle UA]
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UA 7.2
+          page_pdf: 17
+          citation: En cas de retrait (...) au moins égale 3 mètres. [règle UA]
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UA 12.2
+          page_pdf: 23
+          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UA]'
+          statut: valide
     renvoi: UA
     renvoi_src: 'caractère de la zone UA, p. 12 : « Il existe le secteur UA1 correspondant au centre historique
       de Saint-Louis dont la morphologie et les fonctions urbaines doivent être préservées. » — secteur de la zone
@@ -66,6 +155,58 @@ zones:
     note: 'Seules règles propres au secteur UA1 lues : emprise au sol non réglementée (UA 9.2, p. 19) et pas de
       règle d''espaces perméables (UA 13.1, p. 24) — sans effet sur les destinations.'
   UB:
+    regles:
+      hauteur:
+        faitage:
+          m: 17.0
+          article: UB 10.2
+          page_pdf: 34
+          citation: (...) 17 mètres au faîtage,
+          statut: valide
+        egout:
+          m: 12.0
+          article: UB 10.2
+          page_pdf: 34
+          citation: 'La hauteur maximale des constructions est fixée à : 12 mètres à l''égout du toit ou au
+            sommet de l''acrotère,'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UB 9.2
+          page_pdf: 33
+          citation: L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UB 6.2
+          page_pdf: 30
+          citation: Les constructions peuvent être implantées à l'alignement ou en retrait de la voie, avec
+            une distance (...) au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UB 7.2
+          page_pdf: 31
+          citation: En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UB 12.2
+          page_pdf: 37
+          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: UB 13.1
+          page_pdf: 38
+          citation: Au minimum 20% de la superficie totale de l'unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations
+          statut: valide
     silence: autorise
     silence_src: 'art. UB 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U B 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » —
@@ -107,6 +248,58 @@ zones:
           à 1500 m², au minimum 30% de ce programme doit être affecté à des logements aidés (logements locatifs
           sociaux, logements intermédiaires…). »
   UC:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: UC 10.2
+          page_pdf: 46
+          citation: (...) 11 mètres au faîtage,
+          statut: valide
+        egout:
+          m: 7.0
+          article: UC 10.2
+          page_pdf: 49
+          citation: 'La hauteur maximale des constructions est fixée à : 7 mètres à l''égout du toit ou au
+            sommet de l''acrotère,'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: UC 9.2
+          page_pdf: 48
+          citation: L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité
+            foncière. Dans le secteur UC2 ce seuil est limité à 50%.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UC 6.2
+          page_pdf: 44
+          citation: Les constructions doivent être implantées en retrait de la voie, avec une distance (...)
+            au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UC 7.2
+          page_pdf: 46
+          citation: En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UC 12.2
+          page_pdf: 52
+          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: UC 13.1
+          page_pdf: 53
+          citation: Au minimum 25% de la superficie totale de l'unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations
+          statut: valide
     silence: autorise
     silence_src: 'art. UC 2.2, p. 41 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U C 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » —
@@ -146,6 +339,60 @@ zones:
           à 1500 m², au minimum 30% de ce programme doit être affecté à des logements aidés (logements locatifs
           sociaux, logements intermédiaires…). »
   UC1:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: UC 10.2
+          page_pdf: 49
+          citation: En secteur UC1, la hauteur maximale des constructions est fixée à (...) 13 mètres au faîtage,
+          statut: valide
+        egout:
+          m: 9.0
+          article: UC 10.2
+          page_pdf: 49
+          citation: En secteur UC1, la hauteur maximale des constructions est fixée à 9 mètres à l'égout du
+            toit ou au sommet de l'acrotère,
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: UC 9.2
+          page_pdf: 48
+          citation: L'emprise au sol des constructions ne doit pas excéder 60% (...) [seul UC2 abaissé à 50%]
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UC 6.2
+          page_pdf: 44
+          citation: Les constructions doivent être implantées en retrait de la voie, (...) au moins égale
+            à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 4.5
+          article: UC 7.2/7.3
+          page_pdf: 46
+          citation: 'Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum
+            à la moitié de la hauteur à l''égout du toit (ou au faîtage en l''absence d''égout de toit) de
+            la construction sans être inférieur à 3,00 mètres, soit : L = H1/2'
+          statut: propose
+          raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UC 12.2
+          page_pdf: 52
+          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UC]'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: UC 13.1
+          page_pdf: 53
+          citation: Au minimum 25% de la superficie totale de l'unité foncière (...) [règle UC, aucune disposition
+            propre au secteur]
+          statut: valide
     renvoi: UC
     renvoi_src: 'caractère de la zone UC, p. 40 : « Il existe deux secteurs spécifiques : Le secteur UC1 correspondant
       à des emprises foncières devant permettre la réalisation d''opérations d''habitat collectif relativement denses.
@@ -153,6 +400,57 @@ zones:
     note: 'Règles propres au secteur UC1 lues : retrait obligatoire par rapport aux limites séparatives (UC 7, p.
       46) et hauteur maximale spécifique (UC 10.2, p. 49) — sans effet sur les destinations.'
   UC2:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UC 10.2
+          page_pdf: 49
+          citation: En secteur UC2, la hauteur maximale des constructions est fixée à (...) 10 mètres au faîtage.
+          statut: valide
+        egout:
+          m: 6.0
+          article: UC 10.2
+          page_pdf: 49
+          citation: En secteur UC2, la hauteur maximale des constructions est fixée à 6 mètres à l'égout du
+            toit ou au sommet de l'acrotère,
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UC 9.2
+          page_pdf: 48
+          citation: Dans le secteur UC2 ce seuil est limité à 50%.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UC 6.2
+          page_pdf: 44
+          citation: Les constructions doivent être implantées en retrait de la voie, (...) au moins égale
+            à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UC 7.2
+          page_pdf: 44
+          citation: En cas de retrait de la construction, la distance (...) au moins égale 3 mètres. [règle
+            UC ; secteur UC1 seul dérogé]
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UC 12.2
+          page_pdf: 52
+          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UC]'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: UC 13.1
+          page_pdf: 53
+          citation: Au minimum 25% de la superficie totale de l'unité foncière (...) [règle UC]
+          statut: valide
     renvoi: UC
     renvoi_src: 'caractère de la zone UC, p. 40 : « Le secteur UC2, correspondant essentiellement au quartier du
       Ruisseau, dans lequel les densités admises sont moindres compte tenu du caractère discontinu du tissu urbain.
@@ -160,6 +458,58 @@ zones:
     note: 'Règles propres au secteur UC2 lues : emprise au sol limitée à 50 % (UC 9.2, p. 48) et hauteur maximale
       spécifique (UC 10.2, p. 49) — sans effet sur les destinations.'
   UD:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UD 10.2
+          page_pdf: 62
+          citation: (...) 10 mètres au faîtage.
+          statut: valide
+        egout:
+          m: 6.0
+          article: UD 10.2
+          page_pdf: 62
+          citation: 'La hauteur maximale des constructions est fixée à : 6 mètres à l''égout du toit ou au
+            sommet de l''acrotère,'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UD 9.2
+          page_pdf: 62
+          citation: L'emprise au sol des constructions ne doit pas excéder 50% de la superficie de l'unité
+            foncière. Dans le secteur UD1, ce seuil est limité à 40%.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UD 6.2
+          page_pdf: 59
+          citation: Les constructions doivent être implantées en retrait de la voie, (...) au moins égale
+            à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UD 7.2
+          page_pdf: 60
+          citation: En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UD 12.2
+          page_pdf: 66
+          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UD 13.1
+          page_pdf: 67
+          citation: Au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace
+            vert et perméable (...). Dans le secteur UD1, ce seuil est porté à 35% minimum.
+          statut: valide
     silence: autorise
     silence_src: 'art. UD 2.2, p. 56 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U D 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » —
@@ -219,6 +569,58 @@ zones:
           à 1000 m², au minimum 20% de ce programme doit être affecté à des logements aidés (logements locatifs
           sociaux, logements intermédiaires…). »
   UD1:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UD 10.2
+          page_pdf: 59
+          citation: (...) 10 mètres au faîtage [règle UD, aucune règle propre au secteur UD1]
+          statut: propose
+          raison: citation non retrouvée autour de p.59 (recouvrement 43%)
+        egout:
+          m: 6.0
+          article: UD 10.2
+          page_pdf: 60
+          citation: La hauteur maximale (...) 6 mètres à l'égout [règle UD, aucune règle propre au secteur
+            UD1]
+          statut: propose
+          raison: citation non retrouvée autour de p.60 (recouvrement 44%)
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: UD 9.2
+          page_pdf: 62
+          citation: Dans le secteur UD1, ce seuil est limité à 40%.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UD 6.2
+          page_pdf: 59
+          citation: Les constructions doivent être implantées en retrait (...) au moins égale à 4 mètres.
+            [règle UD]
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UD 7.2
+          page_pdf: 59
+          citation: En cas de retrait (...) au moins égale 3 mètres. [règle UD]
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UD 12.2
+          page_pdf: 66
+          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UD]'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 35.0
+          article: UD 13.1
+          page_pdf: 67
+          citation: Dans le secteur UD1, ce seuil est porté à 35% minimum.
+          statut: valide
     renvoi: UD
     renvoi_src: 'caractère de la zone UD, p. 55 : « Il existe un secteur UD1, correspondant au village des Makes,
       identifié en tant que bourg relais au SAR et labellisé Villages Créoles®. » — secteur de la zone UD, les articles
@@ -226,6 +628,54 @@ zones:
     note: 'Règles propres au secteur UD1 lues : emprise au sol limitée à 40 % (UD 9, p. 62), règles de hauteur spécifiques
       (UD 10, p. 64), espaces perméables portés à 35 % minimum (UD 13, p. 67) — sans effet sur les destinations.'
   UE:
+    regles:
+      hauteur:
+        faitage:
+          m: 15.0
+          article: UE 10.2
+          page_pdf: 76
+          citation: (...) 15 mètres au faîtage,
+          statut: valide
+        egout:
+          m: 12.0
+          article: UE 10.2
+          page_pdf: 76
+          citation: 'La hauteur maximale des constructions est fixée à : 12 mètres à l''égout du toit ou au
+            sommet de l''acrotère,'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UE 9.2
+          page_pdf: 76
+          citation: L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 6.0
+          article: UE 6.2
+          page_pdf: 73
+          citation: Les constructions doivent être implantées en retrait de la voie, avec distance (D) (...)
+            au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres.
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 6.0
+          article: UE 7.2
+          page_pdf: 73
+          citation: 'En cas de retrait de la construction, la distance (D) (...) au moins égale à la moitié
+            de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)'
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 15.0
+          article: UE 13.1
+          page_pdf: 79
+          citation: Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations
+          statut: valide
     silence: autorise
     silence_src: 'art. UE 2.2, p. 70 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U E 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » —
@@ -284,6 +734,54 @@ zones:
         citation: « 3. Les constructions ouvrages et travaux à usage d'hébergement hôtelier. » — « hébergement hôtelier
           » couvre hotels et autres_hebergements_touristiques.
   US:
+    regles:
+      hauteur:
+        faitage:
+          m: 15.0
+          article: US 10.2
+          page_pdf: 88
+          citation: (...) 15 mètres au faîtage,
+          statut: valide
+        egout:
+          m: 12.0
+          article: US 10.2
+          page_pdf: 88
+          citation: 'La hauteur maximale des constructions est fixée à : 12 mètres à l''égout du toit ou au
+            sommet de l''acrotère,'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: US 9.2
+          page_pdf: 87
+          citation: L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 6.0
+          article: US 6.2
+          page_pdf: 85
+          citation: Les constructions doivent être implantées en retrait de la voie, avec distance (D) (...)
+            au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 5 mètres.
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 6.0
+          article: US 7.2
+          page_pdf: 85
+          citation: 'En cas de retrait de la construction, la distance (D) (...) au moins égale à la moitié
+            de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)'
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 15.0
+          article: US 13.1
+          page_pdf: 91
+          citation: Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations
+          statut: valide
     silence: autorise
     silence_src: 'art. US 2.2, p. 82 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U S 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » —
@@ -326,6 +824,56 @@ zones:
         citation: « 3. Les constructions ouvrages et travaux à usage d'hébergement hôtelier. » — « hébergement hôtelier
           » couvre hotels et autres_hebergements_touristiques.
   UZ:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: UZ 10.2
+          page_pdf: 99
+          citation: la hauteur maximale de tout point des constructions (...) « individuels » (...) ne doit
+            pas dépasser 9 mètres. [plafond en tout point => he=hf]
+          statut: valide
+        egout:
+          m: 9.0
+          article: UZ 10.2
+          page_pdf: 99
+          citation: 'la hauteur maximale de tout point des constructions (...) légendés en « individuels »
+            (...) ne doit pas dépasser 9 mètres. [collectifs 17 m ; tertiaires 12 m ; hors tout : cote NGR
+            42 m]'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: UZ 9.2
+          page_pdf: 98
+          citation: L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        limites_separatives:
+          min_m: 3.0
+          article: UZ 7.2
+          page_pdf: 97
+          citation: si la construction n'est pas implantée sur une ou sur les deux limites séparatives, la
+            marge d'isolement est égale à la moitié de la hauteur de la construction sans être inférieure
+            à 3 mètres
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: UZ 12
+          page_pdf: 103
+          citation: 'Pour les constructions à usage d''habitation : 1,5 place de stationnement par logement,
+            arrondi à l''entier supérieur (...). Pour le logement social : 1 place par logement.'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: UZ 13.1
+          page_pdf: 104
+          citation: Au minimum 25% de la superficie totale de l'unité foncière resteront libres, paysagés
+            (au minimum engazonnés) et seront destinés à l'agrément, aux loisirs et aux jeux.
+          statut: valide
     silence: autorise
     silence_src: 'art. UZ 2.2, p. 94 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U Z 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » —
@@ -405,6 +953,71 @@ zones:
           services, bureaux,…), dans le respect des affectations et implantations indiquées au schéma joint en annexe.
           » — « bureaux » couvre bureau.
   1AUa:
+    regles:
+      hauteur:
+        faitage:
+          m: 19.0
+          article: UA 10.2
+          page_pdf: 19
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UA : La hauteur maximale des constructions est fixée à : (...) 19 mètres
+            au faîtage,'
+          statut: propose
+          raison: citation non retrouvée autour de p.19 (recouvrement 31%)
+        egout:
+          m: 15.0
+          article: UA 10.2
+          page_pdf: 20
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UA : La hauteur maximale des constructions est fixée à : 15 mètres à
+            l''égout du toit ou au sommet de l''acrotère,'
+          statut: propose
+          raison: citation non retrouvée autour de p.20 (recouvrement 47%)
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UA 9.2
+          page_pdf: 19
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UA : L''emprise au sol des constructions ne doit pas excéder 70% de la
+            superficie de l''unité foncière.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UA 6.2
+          page_pdf: 16
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UA : Les constructions peuvent être implantées à l''alignement ou en
+            retrait de la voie, avec une distance (...) au moins égale à 3 mètres.'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UA 7.2
+          page_pdf: 17
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UA : En cas de retrait de la construction, la distance (...) doit être
+            au moins égale 3 mètres.'
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UA 12.2
+          page_pdf: 23
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UA : Habitations — Pour les autres constructions : 2 places de stationnement
+            par logement'
+          statut: propose
+          raison: citation non retrouvée autour de p.23 (recouvrement 41%)
+      pleine_terre:
+        pct:
+          pct: 15.0
+          article: UA 13.1
+          page_pdf: 24
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UA : Au minimum 15% de la superficie totale de l''unité foncière doit
+            être traité en espace vert et perméable comprenant des plantations'
+          statut: valide
     renvoi: UA
     renvoi_src: 'Art. AUindicée 1.2, p. 108 : « Se reporter au règlement de la zone U indiquée en indice » ; art.
       AUindicée 2.2, p. 108 : « Sont admises toutes les occupations et utilisations du sol prévues au règlement
@@ -445,6 +1058,71 @@ zones:
     note: 'Aucun secteur UB2 écrit au règlement (DG p. 7) ; renvoi lu vers UB seule. Conditions AU 2.2 (p. 108)
       : infrastructures + respect OAP.'
   1AUc:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: UC 10.2
+          page_pdf: 46
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC : (...) 11 mètres au faîtage,'
+          statut: propose
+          raison: citation non retrouvée autour de p.46 (recouvrement 25%)
+        egout:
+          m: 7.0
+          article: UC 10.2
+          page_pdf: 49
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC : La hauteur maximale des constructions est fixée à : 7 mètres à l''égout
+            du toit ou au sommet de l''acrotère,'
+          statut: propose
+          raison: citation non retrouvée autour de p.49 (recouvrement 47%)
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: UC 9.2
+          page_pdf: 48
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC : L''emprise au sol des constructions ne doit pas excéder 60% de la
+            superficie de l''unité foncière. Dans le secteur UC2 ce seuil est limité à 50%.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UC 6.2
+          page_pdf: 44
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC : Les constructions doivent être implantées en retrait de la voie,
+            avec une distance (...) au moins égale à 4 mètres.'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UC 7.2
+          page_pdf: 44
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC : En cas de retrait de la construction, la distance (...) doit être
+            au moins égale 3 mètres.'
+          statut: propose
+          raison: citation non retrouvée autour de p.44 (recouvrement 44%)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UC 12.2
+          page_pdf: 52
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC : Habitations — Pour les autres constructions : 2 places de stationnement
+            par logement'
+          statut: propose
+          raison: citation non retrouvée autour de p.52 (recouvrement 41%)
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: UC 13.1
+          page_pdf: 53
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC : Au minimum 25% de la superficie totale de l''unité foncière doit
+            être traité en espace vert et perméable comprenant des plantations'
+          statut: valide
     renvoi: UC
     renvoi_src: 'Art. AUindicée 1.2, p. 108 : « Se reporter au règlement de la zone U indiquée en indice » (indice
       c = zone UC).'
@@ -460,26 +1138,347 @@ zones:
       OAP lorsqu''elles existent » (indice c = zone UC).'
     note: 'Conditions AU 2.2 (p. 108) : infrastructures + respect OAP (OAP n°5 non lue ici).'
   1AUc1:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: UC 10.2
+          page_pdf: 49
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC1 : En secteur UC1, la hauteur maximale des constructions est fixée
+            à (...) 13 mètres au faîtage,'
+          statut: propose
+          raison: citation non retrouvée autour de p.49 (recouvrement 35%)
+        egout:
+          m: 9.0
+          article: UC 10.2
+          page_pdf: 49
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC1 : En secteur UC1, la hauteur maximale des constructions est fixée
+            à 9 mètres à l''égout du toit ou au sommet de l''acrotère,'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: UC 9.2
+          page_pdf: 48
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC1 : L''emprise au sol des constructions ne doit pas excéder 60% (...)
+            [seul UC2 abaissé à 50%]'
+          statut: propose
+          raison: citation non retrouvée autour de p.48 (recouvrement 31%)
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UC 6.2
+          page_pdf: 44
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC1 : Les constructions doivent être implantées en retrait de la voie,
+            (...) au moins égale à 4 mètres.'
+          statut: valide
+        limites_separatives:
+          min_m: 4.5
+          article: UC 7.2/7.3
+          page_pdf: 46
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC1 : Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit
+            correspondre au minimum à la moitié de la hauteur à l''égout du toit (ou au faîtage en l''absence
+            d''égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2'
+          statut: propose
+          raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UC 12.2
+          page_pdf: 52
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC1 : Pour les autres constructions : 2 places de stationnement par logement
+            [règle UC]'
+          statut: propose
+          raison: citation non retrouvée autour de p.52 (recouvrement 41%)
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: UC 13.1
+          page_pdf: 53
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC1 : Au minimum 25% de la superficie totale de l''unité foncière (...)
+            [règle UC, aucune disposition propre au secteur]'
+          statut: propose
+          raison: citation non retrouvée autour de p.53 (recouvrement 25%)
     renvoi: UC1
     renvoi_src: 'Art. AUindicée 1.2, p. 108 : « Se reporter au règlement de la zone U indiquée en indice » (indice
       c1 = secteur UC1, existant au règlement : DG p. 7 « Il existe le secteur UC1 »).'
     note: 'Conditions AU 2.2 (p. 108) : infrastructures + respect OAP.'
   1AUc2:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UC 10.2
+          page_pdf: 49
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC2 : En secteur UC2, la hauteur maximale des constructions est fixée
+            à (...) 10 mètres au faîtage.'
+          statut: propose
+          raison: citation non retrouvée autour de p.49 (recouvrement 35%)
+        egout:
+          m: 6.0
+          article: UC 10.2
+          page_pdf: 49
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC2 : En secteur UC2, la hauteur maximale des constructions est fixée
+            à 6 mètres à l''égout du toit ou au sommet de l''acrotère,'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UC 9.2
+          page_pdf: 48
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC2 : Dans le secteur UC2 ce seuil est limité à 50%.'
+          statut: propose
+          raison: citation non retrouvée autour de p.48 (recouvrement 36%)
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UC 6.2
+          page_pdf: 44
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC2 : Les constructions doivent être implantées en retrait de la voie,
+            (...) au moins égale à 4 mètres.'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UC 7.2
+          page_pdf: 44
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC2 : En cas de retrait de la construction, la distance (...) au moins
+            égale 3 mètres. [règle UC ; secteur UC1 seul dérogé]'
+          statut: propose
+          raison: citation non retrouvée autour de p.44 (recouvrement 40%)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UC 12.2
+          page_pdf: 52
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC2 : Pour les autres constructions : 2 places de stationnement par logement
+            [règle UC]'
+          statut: propose
+          raison: citation non retrouvée autour de p.52 (recouvrement 41%)
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: UC 13.1
+          page_pdf: 53
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UC2 : Au minimum 25% de la superficie totale de l''unité foncière (...)
+            [règle UC]'
+          statut: propose
+          raison: citation non retrouvée autour de p.53 (recouvrement 31%)
     renvoi: UC2
     renvoi_src: 'Art. AUindicée 1.2, p. 108 : « Se reporter au règlement de la zone U indiquée en indice » (indice
       c2 = secteur UC2, existant au règlement : DG p. 7 « Il existe le secteur UC2 »).'
     note: 'Conditions AU 2.2 (p. 108) : infrastructures + respect OAP.'
   1AUd:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UD 10.2
+          page_pdf: 59
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UD : (...) 10 mètres au faîtage.'
+          statut: propose
+          raison: citation non retrouvée autour de p.59 (recouvrement 25%)
+        egout:
+          m: 6.0
+          article: UD 10.2
+          page_pdf: 62
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UD : La hauteur maximale des constructions est fixée à : 6 mètres à l''égout
+            du toit ou au sommet de l''acrotère,'
+          statut: propose
+          raison: citation non retrouvée autour de p.62 (recouvrement 47%)
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UD 9.2
+          page_pdf: 62
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UD : L''emprise au sol des constructions ne doit pas excéder 50% de la
+            superficie de l''unité foncière. Dans le secteur UD1, ce seuil est limité à 40%.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UD 6.2
+          page_pdf: 59
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UD : Les constructions doivent être implantées en retrait de la voie,
+            (...) au moins égale à 4 mètres.'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UD 7.2
+          page_pdf: 60
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UD : En cas de retrait de la construction, la distance (...) doit être
+            au moins égale 3 mètres.'
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UD 12.2
+          page_pdf: 66
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UD : Habitations — Pour les autres constructions : 2 places de stationnement
+            par logement'
+          statut: propose
+          raison: citation non retrouvée autour de p.66 (recouvrement 41%)
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UD 13.1
+          page_pdf: 67
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UD : Au minimum 30% de la superficie totale de l''unité foncière doit
+            être traité en espace vert et perméable (...). Dans le secteur UD1, ce seuil est porté à 35% minimum.'
+          statut: valide
     renvoi: UD
     renvoi_src: 'Art. AUindicée 1.2, p. 108 : « Se reporter au règlement de la zone U indiquée en indice » (indice
       d = zone UD).'
     note: 'Conditions AU 2.2 (p. 108) : infrastructures + respect OAP.'
   1AUd1:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UD 10.2
+          page_pdf: 59
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UD1 : (...) 10 mètres au faîtage [règle UD, aucune règle propre au secteur
+            UD1]'
+          statut: propose
+          raison: citation non retrouvée autour de p.59 (recouvrement 29%)
+        egout:
+          m: 6.0
+          article: UD 10.2
+          page_pdf: 60
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UD1 : La hauteur maximale (...) 6 mètres à l''égout [règle UD, aucune
+            règle propre au secteur UD1]'
+          statut: propose
+          raison: citation non retrouvée autour de p.60 (recouvrement 32%)
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: UD 9.2
+          page_pdf: 62
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UD1 : Dans le secteur UD1, ce seuil est limité à 40%.'
+          statut: propose
+          raison: citation non retrouvée autour de p.62 (recouvrement 36%)
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UD 6.2
+          page_pdf: 59
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UD1 : Les constructions doivent être implantées en retrait (...) au moins
+            égale à 4 mètres. [règle UD]'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UD 7.2
+          page_pdf: 60
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UD1 : En cas de retrait (...) au moins égale 3 mètres. [règle UD]'
+          statut: propose
+          raison: citation non retrouvée autour de p.60 (recouvrement 47%)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UD 12.2
+          page_pdf: 66
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UD1 : Pour les autres constructions : 2 places de stationnement par logement
+            [règle UD]'
+          statut: propose
+          raison: citation non retrouvée autour de p.66 (recouvrement 41%)
+      pleine_terre:
+        pct:
+          pct: 35.0
+          article: UD 13.1
+          page_pdf: 67
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UD1 : Dans le secteur UD1, ce seuil est porté à 35% minimum.'
+          statut: propose
+          raison: citation non retrouvée autour de p.67 (recouvrement 33%)
     renvoi: UD1
     renvoi_src: 'Art. AUindicée 1.2, p. 108 : « Se reporter au règlement de la zone U indiquée en indice » (indice
       d1 = secteur UD1, existant au règlement : DG p. 7 « Il existe un secteur UD1 »).'
     note: 'Conditions AU 2.2 (p. 108) : infrastructures + respect OAP.'
   1AUe:
+    regles:
+      hauteur:
+        faitage:
+          m: 15.0
+          article: UE 10.2
+          page_pdf: 110
+          citation: Pour la zone 1AUe se rapportant à l'OAP2 (...) 20 mètres au faîtage, 20 mètres (hauteur
+            absolue) pour les toits terrasses végétalisés
+          statut: propose
+          raison: valeur 15 absente de la citation (harmonisation ≠ texte)
+        egout:
+          m: 12.0
+          article: UE 10.2
+          page_pdf: 110
+          citation: 'Pour la zone 1AUe se rapportant à l''OAP2, la hauteur maximale des constructions est
+            fixée à : 17 mètres à l''égout du toit ou au sommet de l''acrotère,'
+          statut: propose
+          raison: valeur 12 absente de la citation (harmonisation ≠ texte)
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UE 9.2
+          page_pdf: 76
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UE : L''emprise au sol des constructions ne doit pas excéder 70% de la
+            superficie de l''unité foncière.'
+          statut: propose
+          raison: citation non retrouvée autour de p.76 (recouvrement 47%)
+      retraits:
+        voie:
+          min_m: 6.0
+          article: UE 6.2
+          page_pdf: 73
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UE : Les constructions doivent être implantées en retrait de la voie,
+            avec distance (D) (...) au moins égale à la moitié de la hauteur (H) de la façade concernée, avec
+            un minimum de 5 mètres.'
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 6.0
+          article: UE 7.2
+          page_pdf: 73
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UE : En cas de retrait de la construction, la distance (D) (...) au moins
+            égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale
+            à 4 mètres)'
+          statut: propose
+          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 15.0
+          article: UE 13.1
+          page_pdf: 79
+          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
+            reporter en fon => règle UE : Au minimum 15% de la superficie totale de l''unité foncière doit
+            être traité en espace vert et perméable comprenant des plantations'
+          statut: valide
     renvoi: UE
     renvoi_src: 'Art. AUindicée 1.2, p. 108 : « Se reporter au règlement de la zone U indiquée en indice » (indice
       e = zone UE).'

@@ -18,6 +18,57 @@ meta:
     PAR LE RÈGLEMENT (liste des codes du zonage servi non consultable — DB indisponible).'
 zones:
   UA:
+    regles:
+      hauteur:
+        egout:
+          m: 9.0
+          article: UA 10
+          page_pdf: 24
+          citation: 'La hauteur maximale des constructions ne doit pas dépasser : - 9,00m à l''égout du toit
+            - 12,00m au faîtage ou 13,00m pour les constructions comportant un rez-de-chaussée commercial
+            et pour le secteur UAt - R+2+combles'
+          statut: valide
+        faitage:
+          m: 12.0
+          article: UA 10
+          page_pdf: 24
+          citation: 12,00m au faîtage ou 13,00m pour les constructions comportant un rez-de-chaussée commercial
+            et pour le secteur UAt
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: UA 9
+          page_pdf: 23
+          citation: L'emprise au sol maximale autorisée de l'ensemble des constructions ne doit pas excéder
+            80% de l'unité foncière (70% en secteur UAt).
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UA 6
+          page_pdf: 22
+          citation: sur les autres rues, soit à l'alignement, soit avec un recul minimum de 4,00m par rapport
+            à l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UA 7
+          page_pdf: 22
+          citation: Si une construction est implantée en retrait des limites séparatives d'une unité foncière,
+            la marge d'isolement minimale doit être de 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UA 12 renvoi Art. 11 dispositions générales
+          page_pdf: 13
+          citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement. [Art.11]
+            HABITAT COLLECTIF - chambre individuelle 0,5 place par chambre, - studio et 2 pièces 1 place par
+            logement, - 3 et 5 pièces 1,5 place par logement, - 6 pièces et plus 2 places par logement. HABITAT
+            INDIVIDUEL 2 places par logement
+          statut: propose
+          raison: citation non retrouvée (recouvrement 44%)
     silence: autorise
     silence_src: 'Structure ancien format : art. UA1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
       p. 18) et art. UA2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 19-20) ; ce qui ne figure dans aucune des
@@ -189,6 +240,61 @@ zones:
     note: 'Aucune règle de destination propre au secteur UAa (hauteurs seulement, UA10-3 p. 24). Occupations non
       rattachables : cf. note UA.'
   UB:
+    regles:
+      hauteur:
+        egout:
+          m: 7.0
+          article: UB 10
+          page_pdf: 33
+          citation: 'La hauteur maximale des constructions, mesurée verticalement par rapport au sol naturel
+            avant travaux, est limitée à : - 7,00m à l''égout du toit - 10,00m au faîtage - R+1+combles'
+          statut: valide
+        faitage:
+          m: 10.0
+          article: UB 10
+          page_pdf: 33
+          citation: 10,00m au faîtage
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: UB 9
+          page_pdf: 33
+          citation: L'emprise au sol maximale autorisée de l'ensemble des constructions ne doit pas excéder
+            60% de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UB 6
+          page_pdf: 31
+          citation: 'Les constructions doivent s''implanter avec un recul minimum de 4,00m par rapport à l''alignement,
+            sauf : - le long du Boulevard Bonnier où le recul minimum est de 2,00m - indication contraire
+            portée au règlement graphique.'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UB 7
+          page_pdf: 32
+          citation: Si une construction est implantée en retrait des limites séparatives d'une unité foncière,
+            la marge d'isolement minimale doit être de 3,00m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UB 12 renvoi Art. 11 dispositions générales
+          page_pdf: 10
+          citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
+          statut: propose
+          raison: citation non retrouvée (recouvrement 33%)
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UB 13
+          page_pdf: 37
+          citation: 30 % au moins de la surface de la parcelle doivent être perméables ; le sol des aires
+            de stationnement sera donc, si nécessaire, traité de façon à le rester.
+          statut: valide
     silence: autorise
     silence_src: 'Structure ancien format : art. UB1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
       p. 28) et art. UB2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 28-29) ; ce qui n''y figure pas n''est
@@ -239,6 +345,60 @@ zones:
       R 442-2 §C (UB1-8), habitations légères de loisirs (UB1-9), affouillements (UB2 2.1), bâtiments protégés L.123-1
       7° (UB2 2.2-3). Anomalie : UB1-4 et UB1-11 répètent la même interdiction agricole.'
   UC:
+    regles:
+      hauteur:
+        egout:
+          m: 6.0
+          article: UC 10
+          page_pdf: 44
+          citation: 'La hauteur maximale des constructions, mesurée verticalement par rapport au sol naturel
+            avant travaux, est limitée à : - 6,00m à l''égout du toit - 9,00m au faîtage - R+1+combles'
+          statut: valide
+        faitage:
+          m: 9.0
+          article: UC 10
+          page_pdf: 44
+          citation: 9,00m au faîtage
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UC 9
+          page_pdf: 43
+          citation: L'emprise au sol de l'ensemble des bâtiments ne doit pas excéder 50% de la superficie
+            de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UC 6
+          page_pdf: 41
+          citation: Les constructions doivent s'implanter avec un recul minimum de 3,00m par rapport à l'alignement,
+            sauf indication contraire portée au règlement graphique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UC 7
+          page_pdf: 42
+          citation: Si une construction est implantée en retrait des limites séparatives d'une unité foncière,
+            la marge d'isolement minimale doit être de 3,00m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UC 12 renvoi Art. 11 dispositions générales
+          page_pdf: 10
+          citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
+          statut: propose
+          raison: citation non retrouvée (recouvrement 33%)
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UC 13
+          page_pdf: 47
+          citation: 30 % au moins de la surface de la parcelle doivent être perméables ; le sol des aires
+            de stationnement sera donc, si nécessaire, traité de façon à le rester.
+          statut: valide
     silence: autorise
     silence_src: 'Structure ancien format : art. UC1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
       p. 38) et art. UC2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 38-39) ; ce qui n''y figure pas n''est
@@ -369,6 +529,60 @@ zones:
     note: 'Aucune règle de destination propre au secteur UCc (hauteurs seulement, UC10-3 p. 44). Occupations non
       rattachables : cf. note UC.'
   UD:
+    regles:
+      hauteur:
+        egout:
+          m: 4.0
+          article: UD 10
+          page_pdf: 54
+          citation: 'La hauteur maximale des constructions, mesurée verticalement par rapport au sol naturel
+            avant travaux, est limitée à : - 4,00m à l''égout du toit - 6,00m au faîtage - R+combles'
+          statut: valide
+        faitage:
+          m: 6.0
+          article: UD 10
+          page_pdf: 54
+          citation: 6,00m au faîtage
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: UD 9
+          page_pdf: 53
+          citation: L'emprise au sol de l'ensemble des bâtiments ne doit pas excéder 40% de la superficie
+            de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UD 6
+          page_pdf: 51
+          citation: Les constructions doivent s'implanter avec un recul minimum de 3,00m par rapport à l'alignement,
+            sauf indication contraire portée au règlement graphique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UD 7
+          page_pdf: 52
+          citation: Si une construction est implantée en retrait des limites séparatives d'une unité foncière,
+            la marge d'isolement minimale doit être de 3,00m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UD 12 renvoi Art. 11 dispositions générales
+          page_pdf: 10
+          citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
+          statut: propose
+          raison: citation non retrouvée (recouvrement 33%)
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: UD 13
+          page_pdf: 57
+          citation: 40 % au moins de la surface de la parcelle doivent être perméables ; le sol des aires
+            de stationnement sera donc, si nécessaire, traité de façon à le rester.
+          statut: valide
     silence: autorise
     silence_src: 'Structure ancien format : art. UD1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
       p. 48) et art. UD2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 48-49) ; ce qui n''y figure pas n''est
@@ -484,6 +698,54 @@ zones:
       à l''article UD6-2 (5, p. 52) pour « la zone UD de Quatre Robinets » sans citer le code UDb. Aucune règle
       de destination propre au secteur.'
   UE:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UE 10
+          page_pdf: 62
+          citation: Elle est limitée à 10,00m à l'égout du toit.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: UE 9
+          page_pdf: 62
+          citation: L'emprise au sol des bâtiments ne doit pas excéder 60% de la superficie de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 5.0
+          article: UE 6
+          page_pdf: 60
+          citation: Les constructions doivent s'implanter en retrait par rapport à l'alignement en respectant
+            un prospect L=1/2H(*) avec un minimum de 5,00m (10,00m dans le cas d'une installation classée
+            soumise à autorisation).
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: UE 7
+          page_pdf: 61
+          citation: Si une construction est implantée en retrait des limites séparatives d'une unité foncière,
+            la marge d'isolement minimale doit être égal à la moitié de la hauteur (L=1/2H), avec un minimum
+            de 4,00m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UE 12 renvoi Art. 11 dispositions générales
+          page_pdf: 10
+          citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
+          statut: propose
+          raison: citation non retrouvée (recouvrement 33%)
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UE 13
+          page_pdf: 65
+          citation: 30 % au moins de la surface de la parcelle doivent être perméables ; le sol des aires
+            de stationnement sera donc, si nécessaire, traité de façon à le rester.
+          statut: valide
     silence: autorise
     silence_src: 'Structure ancien format : art. UE1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
       p. 58) et art. UE2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 58-59) ; ce qui n''y figure pas n''est
@@ -512,6 +774,53 @@ zones:
       (UE2 2.1), bâtiments protégés L.123-1 7° (UE2 2.2-3). Le seuil de 30 m² SHON vaut pour l''habitation de fonctionnement/gardiennage
       ; 20 m² pour l''extension d''une habitation existante non liée à une activité (le texte parle en SHON).'
   UF:
+    regles:
+      hauteur:
+        faitage:
+          m: 15.0
+          article: UF 10
+          page_pdf: 70
+          citation: Elle est limitée à 15,00m au faîtage
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UF 9
+          page_pdf: 69
+          citation: L'emprise au sol des constructions ne doit pas excéder 50% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 5.0
+          article: UF 6
+          page_pdf: 69
+          citation: Les constructions doivent respecter un recul de 5,00m minimum de la limite de l'emprise
+            des voies ou emprises publiques.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: UF 7
+          page_pdf: 69
+          citation: Les constructions doivent respecter un recul correspondant à la hauteur maximale de la
+            construction (L=H), avec un minimum de 4,00m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UF 12 renvoi Art. 11 dispositions générales
+          page_pdf: 10
+          citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
+          statut: propose
+          raison: citation non retrouvée (recouvrement 33%)
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UF 13
+          page_pdf: 72
+          citation: 30 % au moins de la surface de la parcelle doivent être perméables ; le sol des aires
+            de stationnement sera donc, si nécessaire, traité de façon à le rester.
+          statut: valide
     silence: autorise
     silence_src: 'Structure ancien format : art. UF1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
       p. 66) et art. UF2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 66-67) ; ce qui n''y figure pas n''est
@@ -556,6 +865,37 @@ zones:
     note: 'Toute construction interdite (UF1-10) : aucune sous-destination n''est admise ; les interdictions et
       conditions de la zone UF sont sans objet dans ce secteur.'
   UP:
+    regles:
+      hauteur:
+        faitage:
+          m: 8.0
+          article: UP 10
+          page_pdf: 77
+          citation: Elle est limitée à rez-de-chaussée, avec un maximum de 8,00m au faîtage.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 5.0
+          article: UP 6
+          page_pdf: 76
+          citation: Les constructions doivent respecter un recul de 5,00m minimum de la limite de l'emprise
+            des voies ou emprises publiques.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: UP 7
+          page_pdf: 76
+          citation: Les constructions doivent respecter un recul correspondant à la hauteur maximale de la
+            construction (L=H), avec un minimum de 4,00m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: UP 12 renvoi Art. 11 dispositions générales
+          page_pdf: 10
+          citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
+          statut: propose
+          raison: citation non retrouvée (recouvrement 33%)
     silence: interdit
     silence_src: 'Art. UP1, p. 73 : « Sont interdites toutes les occupations ou utilisations non mentionnées à l''article
       UP2 » — clause explicite « seules sont admises » inversée : le silence vaut interdiction.'

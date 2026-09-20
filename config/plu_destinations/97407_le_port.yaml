@@ -19,6 +19,65 @@ meta:
     reste du PLU est intact (cf. config/plu_millesimes.yaml, statut annule_partiel).'
 zones:
   Ua:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: Ua 8
+          page_pdf: 25
+          citation: La hauteur maximale des constructions ne peut excéder 9 mètres au faitage ou au sommet
+            de l’acrotère.
+          statut: valide
+        egout:
+          m: 9.0
+          article: Ua 8
+          page_pdf: 25
+          citation: La hauteur maximale des constructions ne peut excéder 9 mètres au faitage ou au sommet
+            de l’acrotère.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: Ua 7
+          page_pdf: 25
+          citation: L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ua 4
+          page_pdf: 23
+          citation: Les constructions doivent être implantées en retrait de l’alignement, avec un recul minimum
+            de 3 mètres à l’exception des constructions au niveau de l’OAP Mascareignes où l’alignement est
+            [imposé].
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ua 5
+          page_pdf: 24
+          citation: Les constructions peuvent être implantées au maximum sur deux limites séparatives. En
+            cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade
+            au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 0.3
+          article: Ua 12.1
+          page_pdf: 30
+          citation: 0,3 place de stationnement par logement, - En outre, il est demandé 1 place de stationnement
+            pour visiteur par tranche de 100 m² de surface de plancher.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 15.0
+          article: Ua 11.1
+          page_pdf: 27
+          citation: Dans le cadre de tout projet, au minimum 30% de la superficie totale de l’unité foncière
+            devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine
+            terre plantées avec 3 strates (couvrante, arbustive et arborée).
+          statut: propose
+          raison: valeur 15 absente de la citation (harmonisation ≠ texte)
     silence: autorise
     silence_src: 'Art. Ua 2, p. 22 : « Sont admises toutes les occupations et utilisations du sol non cochées à
       l''article Ua 1 susceptibles de s''insérer dans le tissu urbain sous réserve qu''il n''en résulte pas pour
@@ -108,6 +167,60 @@ zones:
           où s'effectue l'accueil d'une clientèle sous réserve qu'ils ne présentent pas pour le voisinage immédiat
           de nuisances particulières »
   Ub:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: Ub 8
+          page_pdf: 40
+          citation: La hauteur maximale des constructions ne peut excéder 13 mètres au faitage ou au sommet
+            de l’acrotère.
+          statut: valide
+        egout:
+          m: 13.0
+          article: Ub 8
+          page_pdf: 40
+          citation: La hauteur maximale des constructions ne peut excéder 13 mètres au faitage ou au sommet
+            de l’acrotère.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 90.0
+          article: Ub 7
+          page_pdf: 40
+          citation: L'emprise au sol des constructions ne doit pas excéder 90% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ub 4
+          page_pdf: 37
+          citation: Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum
+            de 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ub 5
+          page_pdf: 38
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 0.3
+          article: Ub 12.1
+          page_pdf: 44
+          citation: 0,3 place de stationnement par logement,
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: Ub 11.1
+          page_pdf: 43
+          citation: Dans le cadre de tout projet, au minimum 10% de la superficie totale de l’unité foncière
+            devront être des surfaces non imperméabilisées ou éco-aménageables.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ub 2, p. 36 : « Sont admises toutes les occupations et utilisations du sol non cochées à
       l''article Ub 1 susceptibles de s''insérer dans le tissu urbain sous réserve qu''il n''en résulte pas pour
@@ -157,6 +270,63 @@ zones:
         page_pdf: 35
         citation: « ☒ Cuisine dédiée à la vente en ligne » (case cochée = interdit)
   Uc:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: Uc 8
+          page_pdf: 55
+          citation: La hauteur maximale des constructions ne peut excéder 16 mètres au faitage ou au sommet
+            de l’acrotère.
+          statut: valide
+        egout:
+          m: 16.0
+          article: Uc 8
+          page_pdf: 55
+          citation: La hauteur maximale des constructions ne peut excéder 16 mètres au faitage ou au sommet
+            de l’acrotère.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: Uc 7
+          page_pdf: 55
+          citation: L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Uc 4
+          page_pdf: 53
+          citation: Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum
+            de 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: Uc 5
+          page_pdf: 54
+          citation: Les constructions peuvent être implantées soit en limite séparative, soit en retrait.
+            En cas de retrait de la construction, la distance comptée horizontalement de tout point de la
+            façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 0.3
+          article: Uc 12.1
+          page_pdf: 59
+          citation: 0,3 place de stationnement par logement,
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: Uc 11.1
+          page_pdf: 58
+          citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
+            devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine
+            terre plantées avec 3 strates (couvrante, arbustive et arborée).
+          statut: propose
+          raison: valeur 10 absente de la citation (harmonisation ≠ texte)
     silence: autorise
     silence_src: 'Art. Uc 2, p. 51 : « Sont admises toutes les occupations et utilisations du sol non cochées à
       l''article Uc 1 susceptibles de s''insérer dans le tissu urbain sous réserve qu''il n''en résulte pas pour
@@ -203,6 +373,64 @@ zones:
         page_pdf: 50
         citation: « ☒ Cuisine dédiée à la vente en ligne » (case cochée = interdit)
   Uca:
+    regles:
+      hauteur:
+        faitage:
+          m: 6.0
+          article: Uc 8
+          page_pdf: 55
+          citation: En secteur Uca, la hauteur maximale des constructions ne peut excéder 6 mètres au faitage
+            ou au sommet de l’acrotère.
+          statut: valide
+        egout:
+          m: 6.0
+          article: Uc 8
+          page_pdf: 55
+          citation: En secteur Uca, la hauteur maximale des constructions ne peut excéder 6 mètres au faitage
+            ou au sommet de l’acrotère.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: Uc 7
+          page_pdf: 55
+          citation: 'Dans les secteurs ou périmètres suivants, l’emprise au sol des constructions ne doit
+            pas excéder 60% de la superficie de l’unité foncière : ▪ OAP Mascareignes ; ▪ Uca ; ▪ ZAC « Rivière
+            des Galets ».'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Uc 4
+          page_pdf: 53
+          citation: Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum
+            de 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: Uc 5
+          page_pdf: 54
+          citation: Les constructions peuvent être implantées soit en limite séparative, soit en retrait.
+            En cas de retrait de la construction, la distance comptée horizontalement de tout point de la
+            façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 0.3
+          article: Uc 12.1
+          page_pdf: 59
+          citation: 0,3 place de stationnement par logement,
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: Uc 11.1
+          page_pdf: 58
+          citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
+            devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine
+            terre plantées avec 3 strates (couvrante, arbustive et arborée).
+          statut: propose
+          raison: valeur 10 absente de la citation (harmonisation ≠ texte)
     renvoi: Uc
     renvoi_src: 'Caractère de la zone Uc, p. 50 : « Il existe un secteur spécifique : Le secteur Uca correspond
       aux poches d''habitations individuelles, commerces et services de proximité comprises entre le triangle agricole
@@ -212,6 +440,61 @@ zones:
       maximale 6 m au lieu de 16 m (art. Uc 8, p. 55), assainissement semi-collectif admis dans l''attente du raccordement
       au réseau collectif (art. Uc 14.3, p. 63) — rien sur les destinations.'
   Ud:
+    regles:
+      hauteur:
+        faitage:
+          m: 22.0
+          article: Ud 8
+          page_pdf: 68
+          citation: La hauteur maximale des constructions ne peut excéder 22 mètres au faitage ou au sommet
+            de l’acrotère.
+          statut: valide
+        egout:
+          m: 22.0
+          article: Ud 8
+          page_pdf: 68
+          citation: La hauteur maximale des constructions ne peut excéder 22 mètres au faitage ou au sommet
+            de l’acrotère.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: Ud 7
+          page_pdf: 68
+          citation: L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ud 4
+          page_pdf: 67
+          citation: Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum
+            de 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 0.0
+          article: Ud 5
+          page_pdf: 68
+          citation: Les constructions doivent être implantées en limite séparative et/ou suivant l’alignement
+            des constructions limitrophes existantes.
+          statut: propose
+          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 0.3
+          article: Ud 12.1
+          page_pdf: 73
+          citation: 0,3 place de stationnement par logement,
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ud 11.1
+          page_pdf: 71
+          citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
+            devront être des surfaces non imperméabilisées ou éco-aménageables.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ud 2, p. 66 : « Sont admises toutes les occupations et utilisations du sol non cochées à
       l''article Ud 1 susceptibles de s''insérer dans le tissu urbain sous réserve qu''il n''en résulte pas pour
@@ -321,6 +604,46 @@ zones:
       hotels: *id001
       autres_hebergements_touristiques: *id001
   Uem:
+    regles:
+      hauteur:
+        faitage:
+          m: 18.0
+          article: Ue 8
+          page_pdf: 82
+          citation: En secteur Uem, la hauteur maximale des constructions est fixée 18 mètres.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: Ue 7
+          page_pdf: 82
+          citation: L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 5.0
+          article: Ue 4
+          page_pdf: 81
+          citation: Les constructions doivent être implantées en retrait par rapport aux voies et emprises
+            publiques avec un recul minimal de 5 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 5.0
+          article: Ue 5
+          page_pdf: 82
+          citation: Les constructions peuvent être implantées soit en limite séparative, soit en retrait.
+            En cas de retrait de la construction, la distance comptée horizontalement de tout point de la
+            façade au point le plus proche de la limite latérale, doit être au moins égale à 5 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ue 11.1
+          page_pdf: 85
+          citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
+            devront être des surfaces non imperméabilisées ou éco-aménageables.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ue 2, p. 80 : « Sont admises toutes les occupations et utilisations du sol non cochées à
       l''article Ue 1 dès lors qu''elles respectent les conditions suivantes » (art. Ue 1, p. 79 : liste fermée
@@ -397,6 +720,54 @@ zones:
       hotels: *id002
       autres_hebergements_touristiques: *id002
   Umi:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: Umi 8
+          page_pdf: 94
+          citation: La hauteur maximale des constructions ne peut excéder 16 mètres au faitage ou au sommet
+            de l’acrotère.
+          statut: valide
+        egout:
+          m: 16.0
+          article: Umi 8
+          page_pdf: 94
+          citation: La hauteur maximale des constructions ne peut excéder 16 mètres au faitage ou au sommet
+            de l’acrotère.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: Umi 7
+          page_pdf: 94
+          citation: L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Umi 4
+          page_pdf: 93
+          citation: Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum
+            de 3 mètres ;
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Umi 5
+          page_pdf: 94
+          citation: Les constructions peuvent être implantées soit en limite séparative, soit en retrait.
+            En cas de retrait de la construction, la distance comptée horizontalement de tout point de la
+            façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Umi 11.1
+          page_pdf: 97
+          citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
+            devront être des surfaces non imperméabilisées ou éco-aménageables.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Umi 2, p. 92 : « Sont admises toutes les occupations et utilisations du sol non cochées à
       l''article Umi 1 dès lors qu''elles respectent les conditions suivantes » (art. Umi 1, p. 91 : liste fermée
@@ -650,6 +1021,48 @@ zones:
       entrepot: *id005
       bureau: *id005
   Us:
+    regles:
+      hauteur:
+        faitage:
+          m: 18.0
+          article: Us 8
+          page_pdf: 122
+          citation: La hauteur maximale des constructions est fixée 18 mètres.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: Us 7
+          page_pdf: 122
+          citation: L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 5.0
+          article: Us 4
+          page_pdf: 121
+          citation: Les constructions doivent être implantées en retrait par rapport aux voies et emprises
+            publiques avec un recul minimal de 5 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 5.0
+          article: Us 5
+          page_pdf: 122
+          citation: Les constructions peuvent être implantées soit en limite séparative, soit en retrait.
+            En cas de retrait de la construction, la distance comptée horizontalement de tout point de la
+            façade au point le plus proche de la limite latérale, doit être au moins égale à 5 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: Us 11.1
+          page_pdf: 125
+          citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
+            devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine
+            terre plantées avec 3 strates (couvrante, arbustive et arborée).
+          statut: propose
+          raison: valeur 10 absente de la citation (harmonisation ≠ texte)
     silence: autorise
     silence_src: 'Art. Us 2, p. 120 : « Sont admises toutes les occupations et utilisations du sol non cochées à
       l''article Us 1 dès lors qu''elles respectent les conditions suivantes » (art. Us 1, p. 119 : liste fermée
@@ -817,6 +1230,66 @@ zones:
         page_pdf: 131
         citation: coché ☒ « Hébergement »
   1AUa:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: Ua 8
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 9 absente de la citation (harmonisation ≠ texte)
+        egout:
+          m: 9.0
+          article: Ua 8
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 9 absente de la citation (harmonisation ≠ texte)
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: Ua 7
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 60 absente de la citation (harmonisation ≠ texte)
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ua 4
+          page_pdf: 146
+          citation: 'En zone 1AUa : un retrait minimal de 45 mètres doit être observé par rapport à l''axe
+            de la RN4a ;'
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 3.0
+          article: Ua 5
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 0.3
+          article: Ua 12.1
+          page_pdf: 151
+          citation: 0,3 place de stationnement par logement,
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 15.0
+          article: Ua 11.1
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 15 absente de la citation (harmonisation ≠ texte)
     renvoi: Ua
     renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent. » ; caractère de la zone, p. 142 :
@@ -826,6 +1299,66 @@ zones:
       de desserte et densités des OAP). Recul 45 m de l'axe de la RN4a (art. 1AUindicée 4, p. 146 — règle d'implantation,
       pas de destination).
   1AUc:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: Uc 8
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 16 absente de la citation (harmonisation ≠ texte)
+        egout:
+          m: 16.0
+          article: Uc 8
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 16 absente de la citation (harmonisation ≠ texte)
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: Uc 7
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 80 absente de la citation (harmonisation ≠ texte)
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Uc 4
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 4.0
+          article: Uc 5
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 0.3
+          article: Uc 12.1
+          page_pdf: 151
+          citation: 0,3 place de stationnement par logement,
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: Uc 11.1
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 10 absente de la citation (harmonisation ≠ texte)
     renvoi: Uc
     renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
@@ -839,6 +1372,51 @@ zones:
       art. 1AUindicée 14.3, p. 155-156 : « pour la zone 1AUe (Haut du Triangle Agricole) », assainissement semi-collectif
       admis dans l''attente du réseau collectif.'
   1AUem:
+    regles:
+      hauteur:
+        faitage:
+          m: 18.0
+          article: Ue 8
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 18 absente de la citation (harmonisation ≠ texte)
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: Ue 7
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 60 absente de la citation (harmonisation ≠ texte)
+      retraits:
+        voie:
+          min_m: 5.0
+          article: Ue 4
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 5.0
+          article: Ue 5
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ue 11.1
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 20 absente de la citation (harmonisation ≠ texte)
     renvoi: Uem
     renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent. » — l''indice « em » désigne le secteur
@@ -846,6 +1424,59 @@ zones:
     note: S'ajoutent les conditions générales de l'art. 1AUindicée 2, p. 144 (infrastructures suffisantes, principes
       de desserte et densités des OAP).
   1AUm:
+    regles:
+      hauteur:
+        faitage:
+          m: 18.0
+          article: 1AU 8
+          page_pdf: 146
+          citation: Dans les zones 1AUm et 1AUmut, la hauteur maximale des constructions est fixée 18 mètres.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: 1AU 7
+          page_pdf: 146
+          citation: Dans les zones 1AUm et 1AUmut, l'emprise au sol des constructions ne doit pas excéder
+            60% de [la superficie de l'unité foncière].
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: 1AU 4
+          page_pdf: 146
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent. [Aucun recul général propre à 1AUm ; 1AUmut = 5 m,
+            1AUs = 25 m/RN7, 1AUa = 45 m/RN4a]
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 5.0
+          article: 1AU 5
+          page_pdf: 146
+          citation: Dans les zones 1AUm et 1AUmut, les constructions peuvent être implantées soit en limite
+            séparative, soit en retrait. En cas de retrait de la construction, la distance comptée horizontalement
+            de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale
+            à 5 mètres à l’exception des constructions destinées à de l’habitat individuel où la distance
+            doit être au moins égale à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 0.3
+          article: 1AU 12.1
+          page_pdf: 151
+          citation: 0,3 place de stationnement par logement,
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: 1AU 11.1
+          page_pdf: 150
+          citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
+            devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine
+            terre plantées avec 3 strates (couvrante, arbustive et arborée).
+          statut: propose
+          raison: valeur 10 absente de la citation (harmonisation ≠ texte)
     silence: autorise
     silence_src: 'Art. 1AUindicée 1, p. 143 : « Dans la zone 1AUm sont interdits les éléments cochés ci-dessous
       » — tableau à cocher en nomenclature complète des destinations : liste fermée d''interdictions ; les lignes
@@ -945,6 +1576,50 @@ zones:
       la vocation résidentielle future. Caractère p. 142 (indicatif) : secteur soumis à échéancier OAP « Centrale
       EDF ».'
   1AUs:
+    regles:
+      hauteur:
+        faitage:
+          m: 18.0
+          article: Us 8
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 18 absente de la citation (harmonisation ≠ texte)
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: Us 7
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 60 absente de la citation (harmonisation ≠ texte)
+      retraits:
+        voie:
+          min_m: 5.0
+          article: Us 4
+          page_pdf: 145
+          citation: 'En zone 1AUs : un retrait minimal de 25 mètres doit être observé par rapport à l''axe
+            de la RN7 ;'
+          statut: valide
+        limites_separatives:
+          min_m: 5.0
+          article: Us 5
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 5 absente de la citation (harmonisation ≠ texte)
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: Us 11.1
+          page_pdf: 145
+          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
+            et de Programmation lorsqu’elles existent.
+          statut: propose
+          raison: valeur 10 absente de la citation (harmonisation ≠ texte)
     renvoi: Us
     renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'

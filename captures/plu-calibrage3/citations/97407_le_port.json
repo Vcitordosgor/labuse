@@ -1,0 +1,109 @@
+{
+  "Ua": {
+    "he_m": {"citation": "La hauteur maximale des constructions ne peut excéder 9 mètres au faitage ou au sommet de l’acrotère.", "page_confirmee": 25, "marqueur": "Article Ua 8 - Hauteur des constructions (règle unique faitage/acrotère)"},
+    "hf_m": {"citation": "La hauteur maximale des constructions ne peut excéder 9 mètres au faitage ou au sommet de l’acrotère.", "page_confirmee": 25, "marqueur": "Article Ua 8"},
+    "emprise_sol_pct": {"citation": "L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière.", "page_confirmee": 25, "marqueur": "Article Ua 7 - Emprise au sol des constructions"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en retrait de l’alignement, avec un recul minimum de 3 mètres à l’exception des constructions au niveau de l’OAP Mascareignes où l’alignement est [imposé].", "page_confirmee": 23, "marqueur": "Article Ua 4 ; exception OAP Mascareignes (alignement) + RN4a 45 m de l'axe"},
+    "recul_limites_sep_m": {"citation": "Les constructions peuvent être implantées au maximum sur deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.", "page_confirmee": 24, "marqueur": "Article Ua 5 (limite OU retrait 3 m min)"},
+    "stat_logement": {"citation": "0,3 place de stationnement par logement, - En outre, il est demandé 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher.", "page_confirmee": 30, "marqueur": "Article Ua 12.1 (tableau Habitation/Logement)"},
+    "pleine_terre_pct": {"citation": "Dans le cadre de tout projet, au minimum 30% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).", "page_confirmee": 27, "marqueur": "Article Ua 11.1 : 30% éco-aménageables dont 50% pleine terre => 15% ; libellé 2024 = 30%/50% (vs formule 2018)"}
+  },
+  "Ub": {
+    "he_m": {"citation": "La hauteur maximale des constructions ne peut excéder 13 mètres au faitage ou au sommet de l’acrotère.", "page_confirmee": 40, "marqueur": "Article Ub 8"},
+    "hf_m": {"citation": "La hauteur maximale des constructions ne peut excéder 13 mètres au faitage ou au sommet de l’acrotère.", "page_confirmee": 40, "marqueur": "Article Ub 8"},
+    "emprise_sol_pct": {"citation": "L'emprise au sol des constructions ne doit pas excéder 90% de la superficie de l'unité foncière.", "page_confirmee": 40, "marqueur": "Article Ub 7"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum de 3 mètres.", "page_confirmee": 37, "marqueur": "Article Ub 4 (alignement (0) OU recul 3 m)"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.", "page_confirmee": 38, "marqueur": "Article Ub 5"},
+    "stat_logement": {"citation": "0,3 place de stationnement par logement,", "page_confirmee": 45, "marqueur": "Article Ub 12.1 (tableau Habitation/Logement)"},
+    "pleine_terre_pct": {"citation": "Dans le cadre de tout projet, au minimum 10% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables.", "page_confirmee": 43, "marqueur": "Article Ub 11.1 : 10% SANS sous-minimum de pleine terre"}
+  },
+  "Uc": {
+    "he_m": {"citation": "La hauteur maximale des constructions ne peut excéder 16 mètres au faitage ou au sommet de l’acrotère.", "page_confirmee": 55, "marqueur": "Article Uc 8"},
+    "hf_m": {"citation": "La hauteur maximale des constructions ne peut excéder 16 mètres au faitage ou au sommet de l’acrotère.", "page_confirmee": 55, "marqueur": "Article Uc 8"},
+    "emprise_sol_pct": {"citation": "L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité foncière.", "page_confirmee": 55, "marqueur": "Article Uc 7"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum de 3 mètres.", "page_confirmee": 53, "marqueur": "Article Uc 4"},
+    "recul_limites_sep_m": {"citation": "Les constructions peuvent être implantées soit en limite séparative, soit en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres.", "page_confirmee": 54, "marqueur": "Article Uc 5 (règle générale ; périmètre RHI = règles spécifiques 1,5/2 m)"},
+    "stat_logement": {"citation": "0,3 place de stationnement par logement,", "page_confirmee": 60, "marqueur": "Article Uc 12.1 (tableau)"},
+    "pleine_terre_pct": {"citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).", "page_confirmee": 58, "marqueur": "Article Uc 11.1 : 20% dont 50% pleine terre => 10%"}
+  },
+  "Uca": {
+    "he_m": {"citation": "En secteur Uca, la hauteur maximale des constructions ne peut excéder 6 mètres au faitage ou au sommet de l’acrotère.", "page_confirmee": 55, "marqueur": "Article Uc 8 (secteur Uca)"},
+    "hf_m": {"citation": "En secteur Uca, la hauteur maximale des constructions ne peut excéder 6 mètres au faitage ou au sommet de l’acrotère.", "page_confirmee": 55, "marqueur": "Article Uc 8 (secteur Uca)"},
+    "emprise_sol_pct": {"citation": "Dans les secteurs ou périmètres suivants, l’emprise au sol des constructions ne doit pas excéder 60% de la superficie de l’unité foncière : ▪ OAP Mascareignes ; ▪ Uca ; ▪ ZAC « Rivière des Galets ».", "page_confirmee": 55, "marqueur": "Article Uc 7 (Uca listé à 60%)"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum de 3 mètres.", "page_confirmee": 53, "marqueur": "Article Uc 4 (chapitre Uc, secteur Uca)"},
+    "recul_limites_sep_m": {"citation": "Les constructions peuvent être implantées soit en limite séparative, soit en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres.", "page_confirmee": 54, "marqueur": "Article Uc 5 (chapitre Uc, secteur Uca)"},
+    "stat_logement": {"citation": "0,3 place de stationnement par logement,", "page_confirmee": 60, "marqueur": "Article Uc 12.1 (tableau)"},
+    "pleine_terre_pct": {"citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).", "page_confirmee": 58, "marqueur": "Article Uc 11.1 (chapitre Uc) => 10%"}
+  },
+  "Ud": {
+    "he_m": {"citation": "La hauteur maximale des constructions ne peut excéder 22 mètres au faitage ou au sommet de l’acrotère.", "page_confirmee": 68, "marqueur": "Article Ud 8"},
+    "hf_m": {"citation": "La hauteur maximale des constructions ne peut excéder 22 mètres au faitage ou au sommet de l’acrotère.", "page_confirmee": 68, "marqueur": "Article Ud 8"},
+    "emprise_sol_pct": {"citation": "L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité foncière.", "page_confirmee": 68, "marqueur": "Article Ud 7"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum de 3 mètres.", "page_confirmee": 67, "marqueur": "Article Ud 4 (alignement (0) OU recul 3 m)"},
+    "recul_limites_sep_m": {"citation": "Les constructions doivent être implantées en limite séparative et/ou suivant l’alignement des constructions limitrophes existantes.", "page_confirmee": 68, "marqueur": "Article Ud 5 (implantation en limite = 0 m)"},
+    "stat_logement": {"citation": "0,3 place de stationnement par logement,", "page_confirmee": 74, "marqueur": "Article Ud 12.1 (tableau)"},
+    "pleine_terre_pct": {"citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables.", "page_confirmee": 71, "marqueur": "Article Ud 11.1 : 20% SANS sous-minimum de pleine terre"}
+  },
+  "Uem": {
+    "hf_m": {"citation": "En secteur Uem, la hauteur maximale des constructions est fixée 18 mètres.", "page_confirmee": 82, "marqueur": "Article Ue 8 (secteur Uem ; seule règle de hauteur du chapitre Ue)"},
+    "emprise_sol_pct": {"citation": "L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière.", "page_confirmee": 82, "marqueur": "Article Ue 7"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en retrait par rapport aux voies et emprises publiques avec un recul minimal de 5 mètres.", "page_confirmee": 81, "marqueur": "Article Ue 4 (retrait obligatoire 5 m ; RN1/RN1001 25 m de l'axe, Loi Barnier)"},
+    "recul_limites_sep_m": {"citation": "Les constructions peuvent être implantées soit en limite séparative, soit en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 5 mètres.", "page_confirmee": 82, "marqueur": "Article Ue 5 (limite OU 5 m)"},
+    "pleine_terre_pct": {"citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables.", "page_confirmee": 85, "marqueur": "Article Ue 11.1 : 20% SANS sous-minimum de pleine terre"}
+  },
+  "Umi": {
+    "he_m": {"citation": "La hauteur maximale des constructions ne peut excéder 16 mètres au faitage ou au sommet de l’acrotère.", "page_confirmee": 94, "marqueur": "Article Umi 8"},
+    "hf_m": {"citation": "La hauteur maximale des constructions ne peut excéder 16 mètres au faitage ou au sommet de l’acrotère.", "page_confirmee": 94, "marqueur": "Article Umi 8"},
+    "emprise_sol_pct": {"citation": "L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité foncière.", "page_confirmee": 94, "marqueur": "Article Umi 7"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum de 3 mètres ;", "page_confirmee": 93, "marqueur": "Article Umi 4 (alignement (0) OU recul 3 m)"},
+    "recul_limites_sep_m": {"citation": "Les constructions peuvent être implantées soit en limite séparative, soit en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.", "page_confirmee": 94, "marqueur": "Article Umi 5 (limite OU 3 m)"},
+    "pleine_terre_pct": {"citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables.", "page_confirmee": 97, "marqueur": "Article Umi 11.1 : 20% SANS sous-minimum de pleine terre"}
+  },
+  "Us": {
+    "hf_m": {"citation": "La hauteur maximale des constructions est fixée 18 mètres.", "page_confirmee": 122, "marqueur": "Article Us 8 (règle unique)"},
+    "emprise_sol_pct": {"citation": "L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière.", "page_confirmee": 122, "marqueur": "Article Us 7"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en retrait par rapport aux voies et emprises publiques avec un recul minimal de 5 mètres.", "page_confirmee": 121, "marqueur": "Article Us 4 (retrait 5 m ; RN7 25 m de l'axe, Loi Barnier)"},
+    "recul_limites_sep_m": {"citation": "Les constructions peuvent être implantées soit en limite séparative, soit en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 5 mètres.", "page_confirmee": 122, "marqueur": "Article Us 5 (limite OU 5 m)"},
+    "pleine_terre_pct": {"citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).", "page_confirmee": 125, "marqueur": "Article Us 11.1 : 20% dont 50% pleine terre => 10%"}
+  },
+  "1AUa": {
+    "he_m": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 8 (renvoi zone Ua => 9 m ; Art. Ua 8 p.25)"},
+    "hf_m": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "renvoi Art. Ua 8 => 9 m"},
+    "emprise_sol_pct": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 7 (renvoi Art. Ua 7 => 60%)"},
+    "recul_voirie_m": {"citation": "En zone 1AUa : un retrait minimal de 45 mètres doit être observé par rapport à l'axe de la RN4a ;", "page_confirmee": 146, "marqueur": "Article 1AUindicée 4 : recul spécifique 45 m/axe RN4a ; sinon renvoi Art. Ua 4 (3 m)"},
+    "recul_limites_sep_m": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 5 (renvoi Art. Ua 5 => 3 m)"},
+    "stat_logement": {"citation": "0,3 place de stationnement par logement,", "page_confirmee": 152, "marqueur": "Article 1AUindicée 12.1 (tableau)"},
+    "pleine_terre_pct": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 11 (renvoi Art. Ua 11 => 15%)"}
+  },
+  "1AUc": {
+    "he_m": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 8 (renvoi Art. Uc 8 => 16 m)"},
+    "hf_m": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "renvoi Art. Uc 8 => 16 m"},
+    "emprise_sol_pct": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 7 (renvoi Art. Uc 7 => 80%)"},
+    "recul_voirie_m": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 4 (renvoi Art. Uc 4 => 3 m)"},
+    "recul_limites_sep_m": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 5 (renvoi Art. Uc 5 => 4 m)"},
+    "stat_logement": {"citation": "0,3 place de stationnement par logement,", "page_confirmee": 152, "marqueur": "Article 1AUindicée 12.1 (tableau)"},
+    "pleine_terre_pct": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 11 (renvoi Art. Uc 11 => 10%)"}
+  },
+  "1AUem": {
+    "hf_m": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 8 (renvoi Art. Ue 8 secteur Uem => 18 m)"},
+    "emprise_sol_pct": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 7 (renvoi Art. Ue 7 => 60%)"},
+    "recul_voirie_m": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 4 (renvoi Art. Ue 4 => 5 m)"},
+    "recul_limites_sep_m": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 5 (renvoi Art. Ue 5 => 5 m)"},
+    "pleine_terre_pct": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 11 (renvoi Art. Ue 11 => 20% sans sous-minimum)"}
+  },
+  "1AUs": {
+    "hf_m": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 8 (renvoi Art. Us 8 => 18 m)"},
+    "emprise_sol_pct": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 7 (renvoi Art. Us 7 => 60%)"},
+    "recul_voirie_m": {"citation": "En zone 1AUs : un retrait minimal de 25 mètres doit être observé par rapport à l'axe de la RN7 ;", "page_confirmee": 145, "marqueur": "Article 1AUindicée 4 : recul spécifique 25 m/axe RN7 ; sinon renvoi Art. Us 4 (5 m)"},
+    "recul_limites_sep_m": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 5 (renvoi Art. Us 5 => 5 m)"},
+    "pleine_terre_pct": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 11 (renvoi Art. Us 11 => 10%)"}
+  },
+  "1AUm": {
+    "hf_m": {"citation": "Dans les zones 1AUm et 1AUmut, la hauteur maximale des constructions est fixée 18 mètres.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 8 (règle propre 1AUm)"},
+    "emprise_sol_pct": {"citation": "Dans les zones 1AUm et 1AUmut, l'emprise au sol des constructions ne doit pas excéder 60% de [la superficie de l'unité foncière].", "page_confirmee": 146, "marqueur": "Article 1AUindicée 7 (règle propre 1AUm)"},
+    "recul_voirie_m": {"citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent. [Aucun recul général propre à 1AUm ; 1AUmut = 5 m, 1AUs = 25 m/RN7, 1AUa = 45 m/RN4a]", "page_confirmee": 145, "marqueur": "Article 1AUindicée 4 : pas de recul général propre à 1AUm (renvoi indice) ; anciennement 'a_verifier'"},
+    "recul_limites_sep_m": {"citation": "Dans les zones 1AUm et 1AUmut, les constructions peuvent être implantées soit en limite séparative, soit en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 5 mètres à l’exception des constructions destinées à de l’habitat individuel où la distance doit être au moins égale à 3 mètres.", "page_confirmee": 146, "marqueur": "Article 1AUindicée 5 : 5 m (3 m pour habitat individuel — NUANCE 2024)"},
+    "stat_logement": {"citation": "0,3 place de stationnement par logement,", "page_confirmee": 152, "marqueur": "Article 1AUindicée 12.1 (tableau)"},
+    "pleine_terre_pct": {"citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).", "page_confirmee": 150, "marqueur": "Article 1AUindicée 11 (1AUm/1AUmut) : 20% dont 50% pleine terre => 10%"}
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "Ua": {
+    "he_m": {"citation": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "hf_m": {"citation": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "L'emprise au sol maximale des constructions au regard de la superficie du terrain est fixée à : en zone Ua : 80%", "page_confirmee": 12, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": ""},
+    "stat_logement": {"citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots.", "page_confirmee": 17, "marqueur": "ligne tableau « Logements locatifs financés avec un prêt aidé par l'Etat »"},
+    "pleine_terre_pct": {"citation": "Le terrain doit être traité en espace libre et perméable comprenant des plantations et devant recevoir un traitement paysager sur au moins : En zone Ua : 15% de la superficie totale de l'unité foncière", "page_confirmee": 18, "marqueur": ""}
+  },
+  "Ub": {
+    "he_m": {"citation": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "hf_m": {"citation": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": ""},
+    "stat_logement": {"citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots.", "page_confirmee": 17, "marqueur": "ligne tableau « Logements locatifs financés avec un prêt aidé par l'Etat »"},
+    "pleine_terre_pct": {"citation": "En zones Ub et secteurs Ub1, Ub2 et Ub3 : au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace libre et perméable au minimum 10% de la superficie totale de l'unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir un traitement paysager.", "page_confirmee": 18, "marqueur": ""}
+  },
+  "Ub1": {
+    "he_m": {"citation": "en secteur Ub1 : - 10 mètres à l'égout du toit ou au sommet de l'acrotère ; - 13 mètres au faitage.", "page_confirmee": 13, "marqueur": ""},
+    "hf_m": {"citation": "en secteur Ub1 : - 10 mètres à l'égout du toit ou au sommet de l'acrotère ; - 13 mètres au faitage.", "page_confirmee": 13, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": "règle générale zone (base, secteur Ub1 non nommé explicitement)"},
+    "stat_logement": {"citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots.", "page_confirmee": 17, "marqueur": "ligne tableau « Logements locatifs financés avec un prêt aidé par l'Etat »"},
+    "pleine_terre_pct": {"citation": "En zones Ub et secteurs Ub1, Ub2 et Ub3 : au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace libre et perméable au minimum 10% de la superficie totale de l'unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir un traitement paysager.", "page_confirmee": 18, "marqueur": ""}
+  },
+  "Ub2": {
+    "he_m": {"citation": "en zone Uc et secteur Ub2 : - 8 mètres à l'égout du toit ou au sommet de l'acrotère ; - 11 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "hf_m": {"citation": "en zone Uc et secteur Ub2 : - 8 mètres à l'égout du toit ou au sommet de l'acrotère ; - 11 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": "règle générale zone (base, secteur Ub2 non nommé explicitement)"},
+    "stat_logement": {"citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots.", "page_confirmee": 17, "marqueur": "ligne tableau « Logements locatifs financés avec un prêt aidé par l'Etat »"},
+    "pleine_terre_pct": {"citation": "En zones Ub et secteurs Ub1, Ub2 et Ub3 : au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace libre et perméable au minimum 10% de la superficie totale de l'unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir un traitement paysager.", "page_confirmee": 18, "marqueur": ""}
+  },
+  "Ub3": {
+    "he_m": {"citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.", "page_confirmee": 13, "marqueur": ""},
+    "hf_m": {"citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.", "page_confirmee": 13, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": "règle générale zone (base, secteur Ub3 non nommé explicitement)"},
+    "stat_logement": {"citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots.", "page_confirmee": 17, "marqueur": "ligne tableau « Logements locatifs financés avec un prêt aidé par l'Etat »"},
+    "pleine_terre_pct": {"citation": "En zones Ub et secteurs Ub1, Ub2 et Ub3 : au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace libre et perméable au minimum 10% de la superficie totale de l'unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir un traitement paysager.", "page_confirmee": 18, "marqueur": ""}
+  },
+  "Ub4": {
+    "he_m": {"citation": "en secteur Ub4 : 8 mètres en hauteur absolue.", "page_confirmee": 13, "marqueur": "hauteur absolue unique (pas de distinction égout/faîtage)"},
+    "hf_m": {"citation": "en secteur Ub4 : 8 mètres en hauteur absolue.", "page_confirmee": 13, "marqueur": "hauteur absolue unique (pas de distinction égout/faîtage)"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": "règle générale zone (base, secteur Ub4 non nommé explicitement)"},
+    "pleine_terre_pct": {"citation": "En secteur Ub4 : au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace libre et perméable au minimum 20% de la superficie totale de l'unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir un traitement paysager.", "page_confirmee": 18, "marqueur": ""}
+  },
+  "Uc": {
+    "he_m": {"citation": "en zone Uc et secteur Ub2 : - 8 mètres à l'égout du toit ou au sommet de l'acrotère ; - 11 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "hf_m": {"citation": "en zone Uc et secteur Ub2 : - 8 mètres à l'égout du toit ou au sommet de l'acrotère ; - 11 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "L'emprise au sol maximale des constructions au regard de la superficie du terrain est fixée à : en zone Uc : 60%", "page_confirmee": 12, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": ""},
+    "stat_logement": {"citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots.", "page_confirmee": 17, "marqueur": "ligne tableau « Logements locatifs financés avec un prêt aidé par l'Etat »"},
+    "pleine_terre_pct": {"citation": "En zone Uc : 30% de l'unité foncière", "page_confirmee": 18, "marqueur": ""}
+  },
+  "Uc1": {
+    "he_m": {"citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "hf_m": {"citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "en zone Uc : 60% ... en secteurs Uc3, Ud2 et Ud3 : 40%", "page_confirmee": 12, "marqueur": "aucune ligne propre au secteur Uc1 ; valeur héritée de la zone Uc (60%), seuls Uc3/Ud2/Ud3 dérogent"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": "règle générale zone (base, secteur Uc1 non nommé)"},
+    "stat_logement": {"citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots.", "page_confirmee": 17, "marqueur": "ligne tableau « Logements locatifs financés avec un prêt aidé par l'Etat »"},
+    "pleine_terre_pct": {"citation": "En zone Uc : 30% de l'unité foncière", "page_confirmee": 18, "marqueur": "valeur zone Uc ; aucune ligne propre à Uc1"}
+  },
+  "Uc3": {
+    "he_m": {"citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "hf_m": {"citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "en secteurs Uc3, Ud2 et Ud3 : 40%", "page_confirmee": 12, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": "En secteurs Uc3 et Ud3, implantation sur une seule limite ; la valeur de retrait 1,90 m reste la règle générale de la zone"},
+    "stat_logement": {"citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots.", "page_confirmee": 17, "marqueur": "ligne tableau « Logements locatifs financés avec un prêt aidé par l'Etat »"},
+    "pleine_terre_pct": {"citation": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière", "page_confirmee": 18, "marqueur": ""}
+  },
+  "Ud": {
+    "he_m": {"citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.", "page_confirmee": 13, "marqueur": ""},
+    "hf_m": {"citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.", "page_confirmee": 13, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "en zone Ud : 50%", "page_confirmee": 12, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": ""},
+    "stat_logement": {"citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots.", "page_confirmee": 17, "marqueur": "ligne tableau « Logements locatifs financés avec un prêt aidé par l'Etat »"},
+    "pleine_terre_pct": {"citation": "En zone Ud : 40% de la superficie totale de l'unité foncière", "page_confirmee": 18, "marqueur": ""}
+  },
+  "Ud1": {
+    "he_m": {"citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.", "page_confirmee": 13, "marqueur": "valeur zone Ud ; aucune ligne propre au secteur Ud1"},
+    "hf_m": {"citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.", "page_confirmee": 13, "marqueur": "valeur zone Ud ; aucune ligne propre au secteur Ud1"},
+    "emprise_sol_pct": {"citation": "en zone Ud : 50%", "page_confirmee": 12, "marqueur": "valeur zone Ud ; seuls Ud2/Ud3 reçoivent 40%"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": "règle générale zone (base, secteur Ud1 non nommé)"},
+    "stat_logement": {"citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots.", "page_confirmee": 17, "marqueur": "ligne tableau « Logements locatifs financés avec un prêt aidé par l'Etat »"},
+    "pleine_terre_pct": {"citation": "En zone Ud : 40% de la superficie totale de l'unité foncière", "page_confirmee": 18, "marqueur": "valeur zone Ud ; aucune ligne propre à Ud1"}
+  },
+  "Ud2": {
+    "he_m": {"citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "hf_m": {"citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "en secteurs Uc3, Ud2 et Ud3 : 40%", "page_confirmee": 12, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": "règle générale zone (base, secteur Ud2 non nommé)"},
+    "pleine_terre_pct": {"citation": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière", "page_confirmee": 18, "marqueur": ""}
+  },
+  "Ud3": {
+    "he_m": {"citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "hf_m": {"citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.", "page_confirmee": 12, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "en secteurs Uc3, Ud2 et Ud3 : 40%", "page_confirmee": 12, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une seule limite séparative ... En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": "secteur Ud3 régime « une seule limite » ; valeur retrait 1,90 m = règle générale de la zone"},
+    "stat_logement": {"citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots.", "page_confirmee": 17, "marqueur": "ligne tableau « Logements locatifs financés avec un prêt aidé par l'Etat »"},
+    "pleine_terre_pct": {"citation": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière", "page_confirmee": 18, "marqueur": ""}
+  },
+  "Ue": {
+    "he_m": {"citation": "La hauteur maximale des constructions est fixée à : 9 mètres à l'égout du toit ou au sommet de l'acrotère ; 13 mètres au faitage.", "page_confirmee": 22, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions est fixée à : 9 mètres à l'égout du toit ou au sommet de l'acrotère ; 13 mètres au faitage.", "page_confirmee": 22, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie au moins égale à 4 mètres.", "page_confirmee": 21, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite séparative, doit au moins être égale à 5 mètres.", "page_confirmee": 21, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace libre et perméable, comprenant des plantations et devant recevoir un traitement paysager.", "page_confirmee": 24, "marqueur": ""}
+  },
+  "AUa": {
+    "he_m": {"citation": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.", "page_confirmee": 12, "marqueur": "renvoi zone U indicée (AUa->Ua) — voir p.26 « se reporter au règlement des zones urbaines correspondantes »"},
+    "hf_m": {"citation": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.", "page_confirmee": 12, "marqueur": "renvoi zone U indicée (AUa->Ua)"},
+    "emprise_sol_pct": {"citation": "en zone Ua : 80%", "page_confirmee": 12, "marqueur": "renvoi zone U indicée (AUa->Ua)"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": "renvoi zone U indicée (AUa->Ua)"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": "renvoi zone U indicée (AUa->Ua)"},
+    "stat_logement": {"citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots.", "page_confirmee": 17, "marqueur": "renvoi zone U indicée (AUa->Ua) ; ligne tableau « Logements locatifs financés avec un prêt aidé par l'Etat »"},
+    "pleine_terre_pct": {"citation": "En zone Ua : 15% de la superficie totale de l'unité foncière", "page_confirmee": 18, "marqueur": "renvoi zone U indicée (AUa->Ua)"}
+  },
+  "AUc": {
+    "he_m": {"citation": "en zone Uc et secteur Ub2 : - 8 mètres à l'égout du toit ou au sommet de l'acrotère ; - 11 mètres au faitage.", "page_confirmee": 12, "marqueur": "renvoi zone U indicée (AUc->Uc)"},
+    "hf_m": {"citation": "en zone Uc et secteur Ub2 : - 8 mètres à l'égout du toit ou au sommet de l'acrotère ; - 11 mètres au faitage.", "page_confirmee": 12, "marqueur": "renvoi zone U indicée (AUc->Uc)"},
+    "emprise_sol_pct": {"citation": "en zone Uc : 60%", "page_confirmee": 12, "marqueur": "renvoi zone U indicée (AUc->Uc)"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": "renvoi zone U indicée (AUc->Uc)"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": "renvoi zone U indicée (AUc->Uc)"},
+    "stat_logement": {"citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots.", "page_confirmee": 17, "marqueur": "renvoi zone U indicée (AUc->Uc) ; ligne tableau « Logements locatifs financés avec un prêt aidé par l'Etat »"},
+    "pleine_terre_pct": {"citation": "En zone Uc : 30% de l'unité foncière", "page_confirmee": 18, "marqueur": "renvoi zone U indicée (AUc->Uc)"}
+  },
+  "AUd": {
+    "he_m": {"citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.", "page_confirmee": 13, "marqueur": "renvoi zone U indicée (AUd->Ud)"},
+    "hf_m": {"citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.", "page_confirmee": 13, "marqueur": "renvoi zone U indicée (AUd->Ud)"},
+    "emprise_sol_pct": {"citation": "en zone Ud : 50%", "page_confirmee": 12, "marqueur": "renvoi zone U indicée (AUd->Ud)"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.", "page_confirmee": 10, "marqueur": "renvoi zone U indicée (AUd->Ud)"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.", "page_confirmee": 11, "marqueur": "renvoi zone U indicée (AUd->Ud)"},
+    "stat_logement": {"citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots.", "page_confirmee": 17, "marqueur": "renvoi zone U indicée (AUd->Ud) ; ligne tableau « Logements locatifs financés avec un prêt aidé par l'Etat »"},
+    "pleine_terre_pct": {"citation": "En zone Ud : 40% de la superficie totale de l'unité foncière", "page_confirmee": 18, "marqueur": "renvoi zone U indicée (AUd->Ud)"}
+  },
+  "AUec": {
+    "he_m": {"citation": "La hauteur maximale des constructions est fixée à : 9 mètres à l'égout du toit ou au sommet de l'acrotère ; 13 mètres au faitage.", "page_confirmee": 32, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions est fixée à : 9 mètres à l'égout du toit ou au sommet de l'acrotère ; 13 mètres au faitage.", "page_confirmee": 32, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie au moins égale à 4 mètres.", "page_confirmee": 31, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite séparative, doit au moins être égale à 5 mètres.", "page_confirmee": 31, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace libre et perméable, comprenant des plantations et devant recevoir un traitement paysager.", "page_confirmee": 34, "marqueur": ""}
+  },
+  "AUt": {
+    "he_m": {"citation": "La hauteur maximale des constructions est fixée à : 9 mètres à l'égout du toit ou au sommet de l'acrotère ; 12 mètres au faitage.", "page_confirmee": 38, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions est fixée à : 9 mètres à l'égout du toit ou au sommet de l'acrotère ; 12 mètres au faitage.", "page_confirmee": 38, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie au moins égale à 4 mètres.", "page_confirmee": 37, "marqueur": "Art. AUt 6.2 sur p.37 (audit citait p.36-37)"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.", "page_confirmee": 37, "marqueur": "Art. AUt 7.2 sur p.37 (audit citait p.37)"},
+    "pleine_terre_pct": {"citation": "Au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.", "page_confirmee": 40, "marqueur": "libellé « espace vert et perméable » (les autres zones disent « espace libre et perméable »)"}
+  }
+}

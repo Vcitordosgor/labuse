@@ -12,6 +12,62 @@ meta:
   structure: silence lu dans la structure de chaque zone et cité (voir notes des zones).
 zones:
   Ua:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: Ua 10.1
+          page_pdf: 18
+          citation: 11 mètres au faîtage,
+          statut: valide
+        egout:
+          m: 9.0
+          article: Ua 10.1
+          page_pdf: 18
+          citation: 9 mètres à l’égout du toit ou au sommet de l’acrotère.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: Ua 9.2
+          page_pdf: 18
+          citation: L'emprise au sol des bâtiments (y compris les annexes) ne doit pas excéder 70% de la superficie
+            de l'unité foncière,
+          statut: valide
+      retraits:
+        voie:
+          min_m: 0.0
+          article: Ua 6.2
+          page_pdf: 15
+          citation: Les constructions peuvent être implantées en retrait ou à l’alignement. En cas de retrait,
+            le retrait de la construction compté horizontalement et perpendiculairement de tout point de la
+            façade de la construction (exception faite des balcons, éléments de modénature, débords de toiture,
+            descente d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement,
+            est au maximum égal à 6,00 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.5
+          article: Ua 7.2
+          page_pdf: 16
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 3,50 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Ua 12.2
+          page_pdf: 21
+          citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: Ua 13.3
+          page_pdf: 22
+          citation: Au minimum 20% de la superficie totale de l’unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations et devant recevoir un traitement paysager.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ua 2.2, p. 12 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article Ua 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste
@@ -58,6 +114,64 @@ zones:
       ou d''entreposage (4.), création/extension de carrières (5.) — p. 11. « Terrains de camping » ne couvre pas
       pleinement une sous-destination R151-28 → non mappé.'
   Ub:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: Ub 10.1
+          page_pdf: 30
+          citation: 9 mètres au faîtage,
+          statut: valide
+        egout:
+          m: 6.0
+          article: Ub 10.1
+          page_pdf: 30
+          citation: 6 mètres à l’égout du toit ou au sommet de l’acrotère.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: Ub 9.2
+          page_pdf: 30
+          citation: L'emprise au sol des bâtiments (y compris les annexes) ne doit pas excéder 50% de la superficie
+            de l'unité foncière,
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Ub 6.2
+          page_pdf: 27
+          citation: Les constructions doivent être implantées en retrait par rapport à l’alignement. Le retrait
+            de la construction compté horizontalement et perpendiculairement de tout point de la façade de
+            la construction (exception faite des balcons, éléments de modénature, débords de toiture, descente
+            d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement, est
+            de 4,00 mètres minimum.
+          statut: valide
+        limites_separatives:
+          min_m: 3.5
+          article: Ub 7.2
+          page_pdf: 28
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 3,50 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Ub 12.2
+          page_pdf: 33
+          citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: Ub 13.3
+          page_pdf: 34
+          citation: Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations et devant recevoir un traitement paysager. Dans le
+            cas d’une construction comportant au minimum 800 m² de surface de plancher destinée à du commerce,
+            ce seuil est réduit à 20%.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ub 2.2, p. 24 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article Ua 1.2 (sic), ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes
@@ -104,6 +218,62 @@ zones:
       admis sur moitié d''emprise (Ub 11.3, p. 32), clôtures 2,50 m (Ub 11.4, p. 32) — relayées ici en note, ce
       ne sont pas des conditions d''admission.'
   Uc:
+    regles:
+      hauteur:
+        faitage:
+          m: 8.0
+          article: Uc 10.1
+          page_pdf: 42
+          citation: 8 mètres au faîtage,
+          statut: valide
+        egout:
+          m: 6.0
+          article: Uc 10.1
+          page_pdf: 42
+          citation: 6 mètres à l’égout du toit ou au sommet de l’acrotère.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: Uc 9.2
+          page_pdf: 42
+          citation: L'emprise au sol des bâtiments (y compris les annexes) ne doit pas excéder 40% de la superficie
+            de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Uc 6.2
+          page_pdf: 39
+          citation: Les constructions doivent être implantées en retrait par rapport à l’alignement. Le retrait
+            de la construction compté horizontalement et perpendiculairement de tout point de la façade de
+            la construction (exception faite des balcons, éléments de modénature, débords de toiture, descente
+            d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement, est
+            de 4,00 mètres minimum.
+          statut: valide
+        limites_separatives:
+          min_m: 3.5
+          article: Uc 7.2
+          page_pdf: 40
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 3,50 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Uc 12.2
+          page_pdf: 45
+          citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 50.0
+          article: Uc 13.3
+          page_pdf: 46
+          citation: Au minimum 50% de la superficie totale de l’unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations et devant recevoir un traitement paysager.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Uc 2.2, p. 36 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article Ua 1.2 (sic), ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes
@@ -145,6 +315,62 @@ zones:
           → artisanat_commerce_detail + commerce_gros)
     note: Mêmes interdictions hors nomenclature qu'en Ua (camping/caravaning, dépôts, carrières — Uc 1.2, p. 35).
   Ur:
+    regles:
+      hauteur:
+        faitage:
+          m: 7.0
+          article: Ur 10.1
+          page_pdf: 54
+          citation: 7,00 mètres au faîtage,
+          statut: valide
+        egout:
+          m: 3.5
+          article: Ur 10.1
+          page_pdf: 54
+          citation: 3,50 mètres à l’égout du toit ou au sommet de l’acrotère.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: Ur 9.2
+          page_pdf: 53
+          citation: L'emprise au sol des bâtiments (y compris les annexes) ne doit pas excéder 40% de la superficie
+            de l'unité foncière,
+          statut: valide
+      retraits:
+        voie:
+          min_m: 5.0
+          article: Ur 6.2
+          page_pdf: 51
+          citation: Les constructions doivent être implantées en retrait par rapport à l’alignement. Le retrait
+            de la construction compté horizontalement et perpendiculairement de tout point de la façade de
+            la construction (exception faite des balcons, éléments de modénature, débords de toiture, descente
+            d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement, est
+            de 5,00 mètres minimum.
+          statut: valide
+        limites_separatives:
+          min_m: 3.5
+          article: Ur 7.2
+          page_pdf: 52
+          citation: Les constructions doivent être implantées en retrait de toute limite séparative. La distance
+            comptée horizontalement et perpendiculairement de tout point de la façade de la construction au
+            point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Ur 12.2
+          page_pdf: 57
+          citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 50.0
+          article: Ur 13.3
+          page_pdf: 58
+          citation: Au minimum 50% de la superficie totale de l’unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations et devant recevoir un traitement paysager.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ur 2.2, p. 48 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article Ua 1.2 (sic), ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes
@@ -186,6 +412,52 @@ zones:
       « Ua 1.2 » de Ur 2.2 (voir silence_src). Interdits hors nomenclature : dépôts (2.), carrières (3.), affouillements
       > 2,50 m (4.) — p. 47.'
   Ue:
+    regles:
+      hauteur:
+        faitage:
+          m: 8.0
+          article: Ue 10.1
+          page_pdf: 66
+          citation: La hauteur maximale des constructions, mesurée verticalement par rapport au sol naturel
+            avant travaux, est limitée à 8 mètres au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: Ue 9.2
+          page_pdf: 66
+          citation: 'L''emprise au sol des bâtiments (y compris les annexes) ne doit pas excéder : - 70% de
+            la superficie de l’unité foncière dans le secteur de la Pyramide - 60% de la superficie de l''unité
+            foncière à Bras des Calumets'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ue 6.2
+          page_pdf: 63
+          citation: Les constructions doivent être implantées en retrait par rapport à l’alignement. Le retrait
+            de la construction compté horizontalement et perpendiculairement de tout point de la façade de
+            la construction (exception faite des balcons, éléments de modénature, débords de toiture, descente
+            d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement, est
+            de 3 mètres minimum.
+          statut: valide
+        limites_separatives:
+          min_m: 3.5
+          article: Ue 7.2
+          page_pdf: 64
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 3,50 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: Ue 13.3
+          page_pdf: 69
+          citation: A Bras des calumets, au minimum 25% de la superficie totale de l’unité foncière doit être
+            traité en espace vert et perméable comprenant des plantations et devant recevoir un traitement
+            paysager. Dans le secteur de la Pyramide, le taux est ramené à 10%.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ue 2.2, p. 60 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article Ua 1.2 (sic), ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes
@@ -280,22 +552,238 @@ zones:
       des zones AUs à une modification du PLU ».'
     note: Code absent du règlement lui-même ; renvoi fondé sur la pièce jointe p. 191 (voir anomalies).
   AUb:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: Ub 10.1
+          page_pdf: 30
+          citation: 9 mètres au faîtage,
+          statut: valide
+        egout:
+          m: 6.0
+          article: Ub 10.1
+          page_pdf: 30
+          citation: 6 mètres à l’égout du toit ou au sommet de l’acrotère.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: Ub 9.2
+          page_pdf: 30
+          citation: L'emprise au sol des bâtiments (y compris les annexes) ne doit pas excéder 50% de la superficie
+            de l'unité foncière,
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Ub 6.2
+          page_pdf: 27
+          citation: Les constructions doivent être implantées en retrait par rapport à l’alignement. Le retrait
+            de la construction compté horizontalement et perpendiculairement de tout point de la façade de
+            la construction (exception faite des balcons, éléments de modénature, débords de toiture, descente
+            d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement, est
+            de 4,00 mètres minimum.
+          statut: valide
+        limites_separatives:
+          min_m: 3.5
+          article: Ub 7.2
+          page_pdf: 28
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 3,50 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Ub 12.2
+          page_pdf: 33
+          citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: Ub 13.3
+          page_pdf: 34
+          citation: Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations et devant recevoir un traitement paysager. Dans le
+            cas d’une construction comportant au minimum 800 m² de surface de plancher destinée à du commerce,
+            ce seuil est réduit à 20%.
+          statut: valide
     renvoi: Ub
     renvoi_src: 'ZONE AU indicée, p. 75 : « Pour appliquer le présent règlement, il convient de se reporter, en
       fonction de l''indice de la zone AU considérée, au règlement des zones urbaines correspondantes à savoir Ub
       pour AUb, etc. » ; Art. AU indicée 1 et 2, p. 75 : « Se reporter au règlement de la zone U indiquée en indice.
       »'
   AUc:
+    regles:
+      hauteur:
+        faitage:
+          m: 8.0
+          article: Uc 10.1
+          page_pdf: 42
+          citation: 8 mètres au faîtage,
+          statut: valide
+        egout:
+          m: 6.0
+          article: Uc 10.1
+          page_pdf: 42
+          citation: 6 mètres à l’égout du toit ou au sommet de l’acrotère.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: Uc 9.2
+          page_pdf: 42
+          citation: L'emprise au sol des bâtiments (y compris les annexes) ne doit pas excéder 40% de la superficie
+            de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Uc 6.2
+          page_pdf: 39
+          citation: Les constructions doivent être implantées en retrait par rapport à l’alignement. Le retrait
+            de la construction compté horizontalement et perpendiculairement de tout point de la façade de
+            la construction (exception faite des balcons, éléments de modénature, débords de toiture, descente
+            d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement, est
+            de 4,00 mètres minimum.
+          statut: valide
+        limites_separatives:
+          min_m: 3.5
+          article: Uc 7.2
+          page_pdf: 40
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 3,50 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Uc 12.2
+          page_pdf: 45
+          citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 50.0
+          article: Uc 13.3
+          page_pdf: 46
+          citation: Au minimum 50% de la superficie totale de l’unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations et devant recevoir un traitement paysager.
+          statut: valide
     renvoi: Uc
     renvoi_src: 'ZONE AU indicée, p. 75 : « il convient de se reporter, en fonction de l''indice de la zone AU considérée,
       au règlement des zones urbaines correspondantes à savoir Ub pour AUb, etc. » ; Art. AU indicée 1 et 2, p.
       75 : « Se reporter au règlement de la zone U indiquée en indice. »'
   AUe:
+    regles:
+      hauteur:
+        faitage:
+          m: 8.0
+          article: Ue 10.1
+          page_pdf: 66
+          citation: La hauteur maximale des constructions, mesurée verticalement par rapport au sol naturel
+            avant travaux, est limitée à 8 mètres au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: Ue 9.2
+          page_pdf: 66
+          citation: 'L''emprise au sol des bâtiments (y compris les annexes) ne doit pas excéder : - 70% de
+            la superficie de l’unité foncière dans le secteur de la Pyramide - 60% de la superficie de l''unité
+            foncière à Bras des Calumets'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ue 6.2
+          page_pdf: 63
+          citation: Les constructions doivent être implantées en retrait par rapport à l’alignement. Le retrait
+            de la construction compté horizontalement et perpendiculairement de tout point de la façade de
+            la construction (exception faite des balcons, éléments de modénature, débords de toiture, descente
+            d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement, est
+            de 3 mètres minimum.
+          statut: valide
+        limites_separatives:
+          min_m: 3.5
+          article: Ue 7.2
+          page_pdf: 64
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 3,50 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: Ue 13.3
+          page_pdf: 69
+          citation: A Bras des calumets, au minimum 25% de la superficie totale de l’unité foncière doit être
+            traité en espace vert et perméable comprenant des plantations et devant recevoir un traitement
+            paysager. Dans le secteur de la Pyramide, le taux est ramené à 10%.
+          statut: valide
     renvoi: Ue
     renvoi_src: 'ZONE AU indicée, p. 75 : « il convient de se reporter, en fonction de l''indice de la zone AU considérée,
       au règlement des zones urbaines correspondantes à savoir Ub pour AUb, etc. » ; Art. AU indicée 1 et 2, p.
       75 : « Se reporter au règlement de la zone U indiquée en indice. »'
   AUr:
+    regles:
+      hauteur:
+        faitage:
+          m: 7.0
+          article: Ur 10.1
+          page_pdf: 54
+          citation: 7,00 mètres au faîtage,
+          statut: valide
+        egout:
+          m: 3.5
+          article: Ur 10.1
+          page_pdf: 54
+          citation: 3,50 mètres à l’égout du toit ou au sommet de l’acrotère.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: Ur 9.2
+          page_pdf: 53
+          citation: L'emprise au sol des bâtiments (y compris les annexes) ne doit pas excéder 40% de la superficie
+            de l'unité foncière,
+          statut: valide
+      retraits:
+        voie:
+          min_m: 5.0
+          article: Ur 6.2
+          page_pdf: 51
+          citation: Les constructions doivent être implantées en retrait par rapport à l’alignement. Le retrait
+            de la construction compté horizontalement et perpendiculairement de tout point de la façade de
+            la construction (exception faite des balcons, éléments de modénature, débords de toiture, descente
+            d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement, est
+            de 5,00 mètres minimum.
+          statut: valide
+        limites_separatives:
+          min_m: 3.5
+          article: Ur 7.2
+          page_pdf: 52
+          citation: Les constructions doivent être implantées en retrait de toute limite séparative. La distance
+            comptée horizontalement et perpendiculairement de tout point de la façade de la construction au
+            point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Ur 12.2
+          page_pdf: 57
+          citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 50.0
+          article: Ur 13.3
+          page_pdf: 58
+          citation: Au minimum 50% de la superficie totale de l’unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations et devant recevoir un traitement paysager.
+          statut: valide
     renvoi: Ur
     renvoi_src: 'ZONE AU indicée, p. 75 : « il convient de se reporter, en fonction de l''indice de la zone AU considérée,
       au règlement des zones urbaines correspondantes à savoir Ub pour AUb, etc. » ; Art. AU indicée 1 et 2, p.

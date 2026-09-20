@@ -1,0 +1,27 @@
+=== PREUVE LOT 2 — le réservoir GPU liste ses 23 lecteurs calibrage ===
+endpoint /sources/calibrages, clé = data_sources.name :
+  Urbanisme PLU/GPU (API Carto) -> 23 lecteurs calibrage
+
+  97401 Les Avirons            à jour         gpu=97401_PLU_20241206  (0 règles)
+  97402 Bras-Panon             à jour         gpu=97402_PLU_20260428  (0 règles)
+  97403 Entre-Deux             à jour         gpu=97403_PLU_20240924  (0 règles)
+  97404 L'Étang-Salé           à jour         gpu=97404_PLU_20250917  (0 règles)
+  97405 Petite-Île             à jour         gpu=97405_PLU_20230609  (0 règles)
+  97406 La Plaine-des-Palmistes à jour         gpu=97406_PLU_20230527  (0 règles)
+  97407 Le Port                à jour         gpu=97407_PLU_20241209  (0 règles)
+  97408 La Possession          à jour         gpu=97408_PLU_20251217  (0 règles)
+  97409 Saint-André            à jour         gpu=97409_20190228  (0 règles)
+  97410 Saint-Benoît           à jour         gpu=97410_PLU_20200206  (0 règles)
+  97411 Saint-Denis            à jour         gpu=97411_PLU_20260805  (63 règles)
+  97412 Saint-Joseph           à jour         gpu=97412_PLU_20251210  (0 règles)
+  97413 Saint-Leu              à jour         gpu=97413_20070226  (0 règles)
+  97414 Saint-Louis            à jour         gpu=97414_PLU_20251218  (0 règles)
+  97415 Saint-Paul             à jour         gpu=97415_PLU_20251217  (0 règles)
+  97416 Saint-Pierre           à jour         gpu=97416_PLU_20240625  (0 règles)
+  97418 Sainte-Marie           à jour         gpu=97418_plu_20251126  (0 règles)
+  97419 Sainte-Rose            à jour         gpu=97419_PLU_20190504  (0 règles)
+  97420 Sainte-Suzanne         à jour         gpu=97420_PLU_20250929  (0 règles)
+  97421 Salazie                à jour         gpu=97421_PLU_20220524  (0 règles)
+  97422 Le Tampon              à jour         gpu=97422_PLU_20230811  (0 règles)
+  97423 Les Trois-Bassins      à jour         gpu=97423_PLU_20220602  (0 règles)
+  97424 Cilaos                 à jour         gpu=97424_PLU_20240213  (0 règles)

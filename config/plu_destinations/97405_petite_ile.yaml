@@ -12,6 +12,54 @@ meta:
   structure: silence lu dans la structure de chaque zone et cité (voir notes des zones).
 zones:
   UB:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: UB.10
+          page_pdf: 28
+          citation: La hauteur d'une construction ne doit pas excéder 10 mètres à l'égout du toit et 13 mètres
+            au faîtage.
+          statut: valide
+        egout:
+          m: 10.0
+          article: UB.10
+          page_pdf: 28
+          citation: La hauteur d'une construction ne doit pas excéder 10 mètres à l'égout du toit et 13 mètres
+            au faîtage.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UB.6
+          page_pdf: 26
+          citation: En cas de retrait, elles doivent respecter un recul minimal de 4 mètres par rapport à
+            l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UB.7
+          page_pdf: 27
+          citation: Si une construction est implantée en retrait de ces limites, la marge de recul minimale
+            doit être égale à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: UB.12
+          page_pdf: 31
+          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
+            ;'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: UB.13
+          page_pdf: 32
+          citation: Les surfaces libres de toute construction ainsi que les surfaces délaissées des aires
+            de stationnement doivent être conservées en espaces de pleine terre à hauteur de 25 % de l'unité
+            foncière
+          statut: valide
     silence: autorise
     silence_src: 'Structure des art. UB.1 (liste limitative d''interdictions) et UB.2 (conditions), p. 23 — aucune
       clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé.'
@@ -60,6 +108,59 @@ zones:
         page_pdf: 23
         citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
   UC:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UC.10
+          page_pdf: 38
+          citation: La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres
+            au faîtage.
+          statut: valide
+        egout:
+          m: 7.0
+          article: UC.10
+          page_pdf: 38
+          citation: La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres
+            au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UC.9
+          page_pdf: 38
+          citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UC.6
+          page_pdf: 36
+          citation: Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UC.7
+          page_pdf: 37
+          citation: Si une construction est implantée en retrait de ces limites, la marge de recul minimale
+            doit être égale à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: UC.12
+          page_pdf: 40
+          citation: 'pour les constructions : 1 place de stationnement par logement ;'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UC.13
+          page_pdf: 42
+          citation: Les surfaces libres de toute construction ainsi que les surfaces délaissées des aires
+            de stationnement doivent être conservées en espaces de pleine terre à hauteur de 30 % de l'unité
+            foncière
+          statut: valide
     silence: autorise
     silence_src: 'Structure des art. UC.1 (liste limitative d''interdictions) et UC.2 (conditions), p. 33 — aucune
       clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé.'
@@ -107,6 +208,52 @@ zones:
         page_pdf: 33
         citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
   UCe:
+    regles:
+      hauteur:
+        faitage:
+          m: 6.0
+          article: UC.10
+          page_pdf: 38
+          citation: 'Pour UCe : La hauteur d''une construction ne doit pas excéder 6 mètres au faîtage. Cette
+            hauteur est mesurée à partir du sol existant après travaux.'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UC.9
+          page_pdf: 38
+          citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UC.6
+          page_pdf: 36
+          citation: Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UC.7
+          page_pdf: 37
+          citation: Si une construction est implantée en retrait de ces limites, la marge de recul minimale
+            doit être égale à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: UC.12
+          page_pdf: 40
+          citation: 'pour les constructions : 1 place de stationnement par logement ;'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UC.13
+          page_pdf: 42
+          citation: Les surfaces libres de toute construction ainsi que les surfaces délaissées des aires
+            de stationnement doivent être conservées en espaces de pleine terre à hauteur de 30 % de l'unité
+            foncière
+          statut: valide
     silence: autorise
     silence_src: 'Sous-secteur de la zone UC : « La zone UC comprend un sous-secteur : un sous-secteur UCe correspondant
       au couloir réservé au doublement de la ligne haute tension Langevin — Bras de la Plaine » (caractère de la
@@ -154,6 +301,60 @@ zones:
         page_pdf: 33
         citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
   UD:
+    regles:
+      hauteur:
+        faitage:
+          m: 7.0
+          article: UD.10
+          page_pdf: 48
+          citation: La hauteur d'une construction ne doit pas excéder 4 mètres à l'égout du toit et 7 mètres
+            au faîtage.
+          statut: valide
+        egout:
+          m: 4.0
+          article: UD.10
+          page_pdf: 48
+          citation: La hauteur d'une construction ne doit pas excéder 4 mètres à l'égout du toit et 7 mètres
+            au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: UD.9
+          page_pdf: 48
+          citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 40 % de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UD.6
+          page_pdf: 46
+          citation: Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UD.7
+          page_pdf: 47
+          citation: Si une construction est implantée en retrait de ces limites, la marge de recul minimale
+            doit être égale à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: UD.12
+          page_pdf: 50
+          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
+            ;'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 35.0
+          article: UD.13
+          page_pdf: 51
+          citation: Les surfaces libres de toute construction ainsi que les surfaces délaissées des aires
+            de stationnement doivent être conservées en espaces de pleine terre à hauteur de 35 % de l'unité
+            foncière
+          statut: valide
     silence: autorise
     silence_src: 'Structure des art. UD.1 (liste limitative d''interdictions) et UD.2 (conditions), p. 43 — aucune
       clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé.'
@@ -206,6 +407,53 @@ zones:
         page_pdf: 43
         citation: « Les constructions liées à l'exploitation agricole ou forestière. »
   UDe:
+    regles:
+      hauteur:
+        faitage:
+          m: 6.0
+          article: UD.10
+          page_pdf: 48
+          citation: 'Pour UDe : La hauteur d''une construction ne doit pas excéder 6 mètres au faîtage. Cette
+            hauteur est mesurée à partir du sol existant après travaux.'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: UD.9
+          page_pdf: 48
+          citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 40 % de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UD.6
+          page_pdf: 46
+          citation: Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UD.7
+          page_pdf: 47
+          citation: Si une construction est implantée en retrait de ces limites, la marge de recul minimale
+            doit être égale à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: UD.12
+          page_pdf: 50
+          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
+            ;'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 35.0
+          article: UD.13
+          page_pdf: 51
+          citation: Les surfaces libres de toute construction ainsi que les surfaces délaissées des aires
+            de stationnement doivent être conservées en espaces de pleine terre à hauteur de 35 % de l'unité
+            foncière
+          statut: valide
     silence: autorise
     silence_src: 'Sous-secteur de la zone UD : « La zone UD comprend un sous-secteur : un sous-secteur UDe correspondant
       au couloir réservé au doublement de la ligne haute tension Langevin — Bras de la Plaine » (caractère de la
@@ -254,6 +502,44 @@ zones:
         page_pdf: 43
         citation: « Les constructions liées à l'exploitation agricole ou forestière. »
   UE:
+    regles:
+      hauteur:
+        egout:
+          m: 10.0
+          article: UE.10
+          page_pdf: 56
+          citation: La hauteur d'une construction ne doit pas excéder 10 mètres à l'égout du toit.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UE.9
+          page_pdf: 56
+          citation: L'emprise au sol de l'ensemble des bâtiments, annexes comprises, ne pourra pas excéder
+            70 % de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UE.6
+          page_pdf: 55
+          citation: En cas de retrait, elles doivent respecter un recul minimal de 4 mètres par rapport à
+            l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: UE.7
+          page_pdf: 55
+          citation: Les constructions doivent s'implanter à une distance au moins égale à la demi-hauteur
+            du bâtiment mesurée à l'égout du toit, avec un minimum de 4 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: UE.13
+          page_pdf: 58
+          citation: conservées en espaces de pleine terre à hauteur de 10 % de l'unité foncière
+          statut: valide
     silence: autorise
     silence_src: 'Structure des art. UE.1 (liste limitative d''interdictions) et UE.2 (conditions), p. 52 — aucune
       clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé (industrie, entrepôt,
@@ -309,6 +595,52 @@ zones:
         page_pdf: 52
         citation: « Les constructions liées à l'exploitation agricole ou forestière. »
   UEa:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: UEa.10
+          page_pdf: 62
+          citation: La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurés
+            à l'égout du toit et 10 mètres au faîtage.
+          statut: valide
+        egout:
+          m: 7.0
+          article: UEa.10
+          page_pdf: 62
+          citation: La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurés
+            à l'égout du toit et 10 mètres au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UEa.9
+          page_pdf: 62
+          citation: L'emprise des constructions et leurs annexes ne doit pas excéder 50 % de la superficie
+            du lot.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 5.0
+          article: UEa.6
+          page_pdf: 61
+          citation: Pour toutes les autres voies, les constructions doivent respecter un recul minimum de
+            5 mètres par rapport à l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: UEa.7
+          page_pdf: 62
+          citation: Si elles ne sont pas implantées sur la limite séparative, les constructions doivent respecter
+            un recul de 4 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: UEa.13
+          page_pdf: 65
+          citation: conservées en espaces de pleine terre à hauteur de 10 % de l'unité foncière
+          statut: valide
     silence: autorise
     silence_src: 'Structure des art. UEa.1 (liste limitative d''interdictions) et UEa.2 (conditions), p. 59 — aucune
       clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé.'
@@ -440,6 +772,52 @@ zones:
       UF.1 (p. 66) s''appliquent à la zone UF, sous-secteur compris.'
     sous_destinations: {}
   UT:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: UT.10
+          page_pdf: 77
+          citation: La hauteur d'une construction ne doit pas excéder 10 mètres à l'égout du toit et 13 mètres
+            au faîtage.
+          statut: valide
+        egout:
+          m: 10.0
+          article: UT.10
+          page_pdf: 77
+          citation: La hauteur d'une construction ne doit pas excéder 10 mètres à l'égout du toit et 13 mètres
+            au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UT.9
+          page_pdf: 77
+          citation: L'emprise au sol de l'ensemble des bâtiments, annexes comprises, ne pourra pas excéder
+            50 % de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UT.6
+          page_pdf: 76
+          citation: En cas de retrait, elles doivent respecter un recul minimal de 4 mètres par rapport à
+            l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: UT.7
+          page_pdf: 76
+          citation: Les constructions doivent s'implanter à une distance au moins égale à la demi-hauteur
+            du bâtiment mesurée à l'égout du toit, avec un minimum de 4 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: UT.13
+          page_pdf: 80
+          citation: conservés en espaces de pleine terre à hauteur de 40 % de l'unité foncière
+          statut: valide
     silence: autorise
     silence_src: 'Structure des art. UT.1 (liste limitative d''interdictions) et UT.2 (conditions), p. 73 — aucune
       clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé.'
@@ -526,6 +904,51 @@ zones:
         page_pdf: 73
         citation: « Les constructions liées à l'exploitation agricole ou forestière. »
   UZ:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: UZ.10
+          page_pdf: 84
+          citation: La hauteur totale d'une construction ne doit pas excéder 12 mètres.
+          statut: valide
+        egout:
+          m: 12.0
+          article: UZ.10
+          page_pdf: 84
+          citation: La hauteur totale d'une construction ne doit pas excéder 12 mètres.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 0.0
+          article: UZ.6
+          page_pdf: 83
+          citation: Les constructions pourront être implantées soit à l'alignement soit en retrait des voies
+            publiques.
+          statut: propose
+          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 0.0
+          article: UZ.7
+          page_pdf: 83
+          citation: Les constructions pourront s'implanter soit en limite séparative soit en retrait.
+          statut: propose
+          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: UZ.12
+          page_pdf: 85
+          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
+            ;'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: UZ.13
+          page_pdf: 86
+          citation: conservés en espaces de pleine terre à hauteur de 10 % de l'unité foncière
+          statut: valide
     silence: autorise
     silence_src: 'Structure des art. UZ.1 (liste limitative d''interdictions) et UZ.2 (conditions), p. 81 — aucune
       clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé (l''habitation n''est
@@ -581,6 +1004,57 @@ zones:
         page_pdf: 81
         citation: « Les constructions liées à l'exploitation agricole ou forestière. »
   1AU:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: 1AU.10
+          page_pdf: 94
+          citation: La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres
+            au faîtage.
+          statut: valide
+        egout:
+          m: 7.0
+          article: 1AU.10
+          page_pdf: 94
+          citation: La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres
+            au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: 1 AU.9
+          page_pdf: 93
+          citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: 1 AU.6
+          page_pdf: 91
+          citation: Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: 1 AU.7
+          page_pdf: 92
+          citation: Si une construction est implantée en retrait de ces limites, la marge de recul minimale
+            doit être égale à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: 1AU.12
+          page_pdf: 96
+          citation: 'pour les constructions : 1 place de stationnement par logement ;'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: 1AU.13
+          page_pdf: 97
+          citation: conservés en espaces de pleine terre à hauteur de 30 % de l'unité foncière
+          statut: valide
     silence: autorise
     silence_src: 'Structure des art. 1 AU.1 (liste limitative d''interdictions, p. 88) et 1 AU.2 (conditions, p.
       89) — aucune clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé (l''habitation
@@ -628,6 +1102,57 @@ zones:
         page_pdf: 89
         citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
   1AUa:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: 1AU.10
+          page_pdf: 94
+          citation: La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres
+            au faîtage.
+          statut: valide
+        egout:
+          m: 7.0
+          article: 1AU.10
+          page_pdf: 94
+          citation: La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres
+            au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: 1 AU.9
+          page_pdf: 93
+          citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: 1 AU.6
+          page_pdf: 91
+          citation: Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: 1 AU.7
+          page_pdf: 92
+          citation: Si une construction est implantée en retrait de ces limites, la marge de recul minimale
+            doit être égale à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: 1AU.12
+          page_pdf: 96
+          citation: 'pour les constructions : 1 place de stationnement par logement ;'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: 1AU.13
+          page_pdf: 97
+          citation: conservés en espaces de pleine terre à hauteur de 30 % de l'unité foncière
+          statut: valide
     silence: autorise
     silence_src: 'Sous-secteur de la zone 1AU : « La zone 1AU comprend deux sous-secteurs : un sous-secteur 1AUa
       qui devra s''urbaniser sous forme d''opérations d''ensemble… » (caractère de la zone 1AU, p. 88). Les art.
@@ -690,6 +1215,57 @@ zones:
         page_pdf: 89
         citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
   1AUz:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: 1AUZ.10
+          page_pdf: 104
+          citation: La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres
+            au faîtage.
+          statut: valide
+        egout:
+          m: 7.0
+          article: 1AUZ.10
+          page_pdf: 104
+          citation: La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres
+            au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: 1AUZ.9
+          page_pdf: 103
+          citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: 1AUZ.6
+          page_pdf: 102
+          citation: Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: 1AUZ.7
+          page_pdf: 102
+          citation: Si une construction est implantée en retrait de ces limites, la marge de recul minimale
+            doit être égale à 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: 1AUZ.12
+          page_pdf: 106
+          citation: 'pour les constructions : 1 place de stationnement par logement ;'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: 1AUZ.13
+          page_pdf: 108
+          citation: conservés en espaces de pleine terre à hauteur de 30 % de l'unité foncière
+          statut: valide
     silence: autorise
     silence_src: 'Structure des art. 1AUZ.1 (liste limitative d''interdictions) et 1AUZ.2 (conditions), p. 99 —
       aucune clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé.'
@@ -954,6 +1530,52 @@ zones:
         citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
           »
   AUE:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: AUE.10
+          page_pdf: 112
+          citation: La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurée
+            à l'égout du toit et 10 mètres au faîtage.
+          statut: valide
+        egout:
+          m: 7.0
+          article: AUE.10
+          page_pdf: 112
+          citation: La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurée
+            à l'égout du toit et 10 mètres au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: AUE.9
+          page_pdf: 112
+          citation: L'emprise des constructions et leurs annexes ne doit pas excéder 50 % de la superficie
+            du lot.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 5.0
+          article: AUE.6
+          page_pdf: 111
+          citation: Pour toutes les autres voies, les constructions doivent respecter un recul minimum de
+            5 mètres par rapport à l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: AUE.7
+          page_pdf: 112
+          citation: Si elles ne sont pas implantées sur la limite séparative, les constructions doivent respecter
+            un recul de 4 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: AUE.13
+          page_pdf: 115
+          citation: conservés en espaces de pleine terre à hauteur de 10 % de l'unité foncière
+          statut: valide
     silence: autorise
     silence_src: 'Structure des art. AUE.1 (liste limitative d''interdictions) et AUE.2 (conditions), p. 109 — aucune
       clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé (industrie et entrepôt
@@ -1133,6 +1755,52 @@ zones:
         page_pdf: 116
         citation: « Les constructions liées à l'exploitation agricole ou forestière. »
   AUT:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: AUT.10
+          page_pdf: 136
+          citation: La hauteur d'une construction ne doit pas excéder 10 mètres à l'égout du toit et 13 mètres
+            au faîtage.
+          statut: valide
+        egout:
+          m: 10.0
+          article: AUT.10
+          page_pdf: 136
+          citation: La hauteur d'une construction ne doit pas excéder 10 mètres à l'égout du toit et 13 mètres
+            au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: AUT.9
+          page_pdf: 136
+          citation: L'emprise au sol de l'ensemble des bâtiments, annexes comprises, ne pourra pas excéder
+            50 % de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: AUT.6
+          page_pdf: 135
+          citation: En cas de retrait, elles doivent respecter un recul minimal de 4 mètres par rapport à
+            l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: AUT.7
+          page_pdf: 135
+          citation: Les constructions doivent s'implanter à une distance au moins égale à la demi-hauteur
+            du bâtiment mesurée à l'égout du toit, avec un minimum de 4 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: AUT.13
+          page_pdf: 139
+          citation: conservés en espaces de pleine terre à hauteur de 40 % de l'unité foncière
+          statut: valide
     silence: autorise
     silence_src: 'Structure des art. AUT.1 (liste limitative d''interdictions) et AUT.2 (conditions), p. 132 — aucune
       clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé.'
@@ -1219,6 +1887,52 @@ zones:
         page_pdf: 132
         citation: « Les constructions liées à l'exploitation agricole ou forestière. »
   AUs:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: AUS.10
+          page_pdf: 127
+          citation: Dans le reste de la zone, la hauteur des constructions ne doit pas excéder 10 m à l'égout
+            du toit et 13 m au faîtage.
+          statut: valide
+        egout:
+          m: 10.0
+          article: AUS.10
+          page_pdf: 127
+          citation: Dans le reste de la zone, la hauteur des constructions ne doit pas excéder 10 m à l'égout
+            du toit et 13 m au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: AUS.9
+          page_pdf: 127
+          citation: L'emprise au sol des constructions est limitée à 50 % de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: AUS.6
+          page_pdf: 126
+          citation: 'Les constructions doivent respecter un recul minimal de : - 10 mètres par rapport aux
+            routes départementales - 30 mètres par rapport aux routes nationales - 4 mètres par rapport aux
+            autres voies.'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: AUS.7
+          page_pdf: 127
+          citation: Les constructions doivent respecter un recul minimum de 3 mètres par rapport aux limites
+            séparatives.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: AUS.13
+          page_pdf: 131
+          citation: conservés en espaces de pleine terre à hauteur de 20 % de l'unité foncière
+          statut: valide
     silence: autorise
     silence_src: 'Structure des art. AUS.1 (liste limitative d''interdictions, p. 122) et AUS.2 (« OCCUPATIONS ET
       UTILISATIONS DU SOL AUTORISÉES OU SOUMISES À CONDITION », p. 122-123) — aucune clause « seules sont admises

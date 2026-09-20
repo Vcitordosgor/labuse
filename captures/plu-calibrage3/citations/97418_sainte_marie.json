@@ -1,0 +1,154 @@
+{
+  "UA": {
+    "he_m": {"citation": "Zone UA :\n▪ 15,00 mètres à l’égout du toit", "page_confirmee": 22, "marqueur": ""},
+    "hf_m": {"citation": "Zone UA :\n▪ 15,00 mètres à l’égout du toit\n▪ 18,00 mètres au faîtage", "page_confirmee": 22, "marqueur": ""},
+    "recul_voirie_m": {"citation": "En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00 mètres par rapport à l’alignement.", "page_confirmee": 19, "marqueur": "En zones UA et UB, les constructions peuvent s’implanter soit à l’alignement soit avec un recul."},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.", "page_confirmee": 20, "marqueur": "valeur JSON 7,5 m = doctrine dérivée, INTROUVABLE telle quelle ; PDF = H/2, plancher 3 m"},
+    "stat_logement": {"citation": "Opération de plusieurs logements\n1,5 place minimum par logement", "page_confirmee": 26, "marqueur": "règle tiérée ; 1,5 s’applique aux logements privés >=100 m² en opération de plusieurs logements (Art. U13.2)"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zone UA : 20% de la surface", "page_confirmee": 25, "marqueur": ""}
+  },
+  "UAb": {
+    "he_m": {"citation": "Secteur UAb :\n▪ 18,00 mètres à l’égout du toit", "page_confirmee": 22, "marqueur": "Secteur UAb"},
+    "hf_m": {"citation": "Secteur UAb :\n▪ 18,00 mètres à l’égout du toit\n▪ 21,00 mètres au faîtage", "page_confirmee": 22, "marqueur": "Secteur UAb"},
+    "recul_voirie_m": {"citation": "En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00 mètres par rapport à l’alignement.", "page_confirmee": 19, "marqueur": "UAb non nommé séparément ; règle UA/UB (alignement ou recul >= 3 m)"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.", "page_confirmee": 20, "marqueur": "valeur JSON 3 m = plancher, mais règle réelle = H/2 min 3 m"},
+    "stat_logement": {"citation": "Opération de plusieurs logements\n1,5 place minimum par logement", "page_confirmee": 26, "marqueur": "règle tiérée (Art. U13.2)"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zone UA : 20% de la surface", "page_confirmee": 25, "marqueur": "UAb non nommé ; zone UA = 20%"}
+  },
+  "UAz": {
+    "he_m": {"citation": "Secteur UAz :\n▪ 27,00 mètres à l’égout du toit", "page_confirmee": 22, "marqueur": "Secteur UAz"},
+    "hf_m": {"citation": "Secteur UAz :\n▪ 27,00 mètres à l’égout du toit\n▪ 30,00 mètres au faîtage", "page_confirmee": 22, "marqueur": "Secteur UAz"},
+    "recul_voirie_m": {"citation": "En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00 mètres par rapport à l’alignement. Ce seuil est réduit à 2,00 mètres minimum en secteur UAz.", "page_confirmee": 19, "marqueur": "En secteur UAz : seuil réduit à 2,00 m minimum"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.", "page_confirmee": 20, "marqueur": "valeur JSON 3 m = plancher ; règle réelle = H/2 min 3 m"},
+    "stat_logement": {"citation": "Opération de plusieurs logements\n1,5 place minimum par logement", "page_confirmee": 26, "marqueur": "règle tiérée (Art. U13.2)"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zone UA : 20% de la surface", "page_confirmee": 25, "marqueur": "UAz non listé au perméable ; zone UA = 20% (note : espaces libres UAz = « il n’est pas fixé de règles »)"}
+  },
+  "UB": {
+    "he_m": {"citation": "Zone UB :\n▪ 12,00 mètres à l’égout du toit", "page_confirmee": 22, "marqueur": ""},
+    "hf_m": {"citation": "Zone UB :\n▪ 12,00 mètres à l’égout du toit\n▪ 15,00 mètres au faîtage", "page_confirmee": 22, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "L’emprise au sol maximale autorisée de l’ensemble des constructions ne doit pas excéder en zone :\n• UB : 70 % de l’unité foncière", "page_confirmee": 21, "marqueur": ""},
+    "recul_voirie_m": {"citation": "En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00 mètres par rapport à l’alignement.", "page_confirmee": 19, "marqueur": "En zones UA et UB : alignement possible OU recul >= 3 m"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.", "page_confirmee": 20, "marqueur": "valeur JSON 3 m = plancher ; règle réelle = H/2 min 3 m"},
+    "stat_logement": {"citation": "Opération de plusieurs logements\n1,5 place minimum par logement", "page_confirmee": 26, "marqueur": "règle tiérée (Art. U13.2)"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zone UB : 25% de la surface", "page_confirmee": 25, "marqueur": ""}
+  },
+  "UC": {
+    "he_m": {"citation": "Zone UC (y compris UC1 et UC2) :\n▪ 10,00 mètres à l’égout du toit", "page_confirmee": 22, "marqueur": "y compris UC1 et UC2"},
+    "hf_m": {"citation": "Zone UC (y compris UC1 et UC2) :\n▪ 10,00 mètres à l’égout du toit\n▪ 13,00 mètres au faîtage", "page_confirmee": 22, "marqueur": "y compris UC1 et UC2"},
+    "emprise_sol_pct": {"citation": "UC (y compris UC1 et UC2) : 60 % de l’unité foncière", "page_confirmee": 21, "marqueur": "y compris UC1 et UC2"},
+    "recul_voirie_m": {"citation": "En zones UC (y compris UC1 et UC2) et UD (y compris UD1), les constructions doivent s’implanter avec un recul. En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00 mètres par rapport à l’alignement.", "page_confirmee": 19, "marqueur": "recul obligatoire en UC/UD"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.", "page_confirmee": 20, "marqueur": "valeur JSON 3 m = plancher ; règle réelle = H/2 min 3 m"},
+    "stat_logement": {"citation": "Opération de plusieurs logements\n1,5 place minimum par logement", "page_confirmee": 26, "marqueur": "règle tiérée (Art. U13.2)"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zones UC (y compris UC1 et UC2) et UD (y compris UD1) : 30% de la surface", "page_confirmee": 25, "marqueur": "y compris UC1 et UC2"}
+  },
+  "UC1": {
+    "he_m": {"citation": "Zone UC (y compris UC1 et UC2) :\n▪ 10,00 mètres à l’égout du toit", "page_confirmee": 22, "marqueur": "y compris UC1 (pas de règle propre)"},
+    "hf_m": {"citation": "Zone UC (y compris UC1 et UC2) :\n▪ 10,00 mètres à l’égout du toit\n▪ 13,00 mètres au faîtage", "page_confirmee": 22, "marqueur": "y compris UC1 (pas de règle propre)"},
+    "emprise_sol_pct": {"citation": "UC (y compris UC1 et UC2) : 60 % de l’unité foncière", "page_confirmee": 21, "marqueur": "y compris UC1"},
+    "recul_voirie_m": {"citation": "En zones UC (y compris UC1 et UC2) et UD (y compris UD1), les constructions doivent s’implanter avec un recul. En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00 mètres par rapport à l’alignement.", "page_confirmee": 19, "marqueur": "y compris UC1"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.", "page_confirmee": 20, "marqueur": "valeur JSON 3 m = plancher ; règle réelle = H/2 min 3 m"},
+    "stat_logement": {"citation": "Opération de plusieurs logements\n1,5 place minimum par logement", "page_confirmee": 26, "marqueur": "règle tiérée (Art. U13.2)"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zones UC (y compris UC1 et UC2) et UD (y compris UD1) : 30% de la surface", "page_confirmee": 25, "marqueur": "y compris UC1"}
+  },
+  "UC2": {
+    "he_m": {"citation": "Zone UC (y compris UC1 et UC2) :\n▪ 10,00 mètres à l’égout du toit", "page_confirmee": 22, "marqueur": "y compris UC2 (pas de règle propre)"},
+    "hf_m": {"citation": "Zone UC (y compris UC1 et UC2) :\n▪ 10,00 mètres à l’égout du toit\n▪ 13,00 mètres au faîtage", "page_confirmee": 22, "marqueur": "y compris UC2 (pas de règle propre)"},
+    "emprise_sol_pct": {"citation": "UC (y compris UC1 et UC2) : 60 % de l’unité foncière", "page_confirmee": 21, "marqueur": "y compris UC2"},
+    "recul_voirie_m": {"citation": "En zones UC (y compris UC1 et UC2) et UD (y compris UD1), les constructions doivent s’implanter avec un recul. En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00 mètres par rapport à l’alignement.", "page_confirmee": 19, "marqueur": "y compris UC2"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.", "page_confirmee": 20, "marqueur": "valeur JSON 3 m = plancher ; règle réelle = H/2 min 3 m"},
+    "stat_logement": {"citation": "Opération de plusieurs logements\n1,5 place minimum par logement", "page_confirmee": 26, "marqueur": "règle tiérée (Art. U13.2)"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zones UC (y compris UC1 et UC2) et UD (y compris UD1) : 30% de la surface", "page_confirmee": 25, "marqueur": "y compris UC2"}
+  },
+  "UD": {
+    "he_m": {"citation": "Zone UD (y compris UD1) :\n▪ 8,00 mètres à l’égout du toit", "page_confirmee": 22, "marqueur": "y compris UD1"},
+    "hf_m": {"citation": "Zone UD (y compris UD1) :\n▪ 8,00 mètres à l’égout du toit\n▪ 11,00 mètres au faîtage", "page_confirmee": 22, "marqueur": "y compris UD1"},
+    "emprise_sol_pct": {"citation": "UD (y compris UD1): 50 % de l’unité foncière", "page_confirmee": 21, "marqueur": "y compris UD1"},
+    "recul_voirie_m": {"citation": "En zones UC (y compris UC1 et UC2) et UD (y compris UD1), les constructions doivent s’implanter avec un recul. En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00 mètres par rapport à l’alignement.", "page_confirmee": 19, "marqueur": "recul obligatoire en UC/UD"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.", "page_confirmee": 20, "marqueur": "valeur JSON 3 m = plancher ; règle réelle = H/2 min 3 m"},
+    "stat_logement": {"citation": "Opération de plusieurs logements\n1,5 place minimum par logement", "page_confirmee": 26, "marqueur": "règle tiérée (Art. U13.2)"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zones UC (y compris UC1 et UC2) et UD (y compris UD1) : 30% de la surface", "page_confirmee": 25, "marqueur": "y compris UD1"}
+  },
+  "UD1": {
+    "he_m": {"citation": "Zone UD (y compris UD1) :\n▪ 8,00 mètres à l’égout du toit", "page_confirmee": 22, "marqueur": "y compris UD1 (pas de règle propre)"},
+    "hf_m": {"citation": "Zone UD (y compris UD1) :\n▪ 8,00 mètres à l’égout du toit\n▪ 11,00 mètres au faîtage", "page_confirmee": 22, "marqueur": "y compris UD1 (pas de règle propre)"},
+    "emprise_sol_pct": {"citation": "UD (y compris UD1): 50 % de l’unité foncière", "page_confirmee": 21, "marqueur": "y compris UD1"},
+    "recul_voirie_m": {"citation": "En zones UC (y compris UC1 et UC2) et UD (y compris UD1), les constructions doivent s’implanter avec un recul. En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00 mètres par rapport à l’alignement.", "page_confirmee": 19, "marqueur": "y compris UD1"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.", "page_confirmee": 20, "marqueur": "valeur JSON 3 m = plancher ; règle réelle = H/2 min 3 m"},
+    "stat_logement": {"citation": "Opération de plusieurs logements\n1,5 place minimum par logement", "page_confirmee": 26, "marqueur": "règle tiérée (Art. U13.2)"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zones UC (y compris UC1 et UC2) et UD (y compris UD1) : 30% de la surface", "page_confirmee": 25, "marqueur": "y compris UD1"}
+  },
+  "UEa": {
+    "hf_m": {"citation": "La hauteur maximale au faitage des constructions est limitée à :\n• Zone UEa : 24 mètres", "page_confirmee": 35, "marqueur": "faîtage seul (activités)"},
+    "emprise_sol_pct": {"citation": "UEa : 60 % de l’unité foncière", "page_confirmee": 34, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent s’implanter avec un recul de la voie avec un minimum par rapport à l’alignement de :\n• en zones UEa et UR : 5 mètres", "page_confirmee": 32, "marqueur": "en zones UEa et UR : 5 mètres"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.", "page_confirmee": 33, "marqueur": "valeur JSON 12 m = doctrine dérivée, INTROUVABLE telle quelle ; PDF = H/2, plancher 4 m ; UEa = 1 limite possible"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zones UEa, UEm et UEp : 15% de la surface", "page_confirmee": 38, "marqueur": "valeur JSON = « a_verifier » ; PDF = 15% pour UEa"}
+  },
+  "UEc": {
+    "hf_m": {"citation": "Zone UEc : 14 mètres", "page_confirmee": 35, "marqueur": "faîtage seul (activités)"},
+    "emprise_sol_pct": {"citation": "UEc : 70% de l’unité foncière", "page_confirmee": 34, "marqueur": ""},
+    "recul_voirie_m": {"citation": "en zones UEc, UEm, UEp et UT : 3 mètres", "page_confirmee": 32, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.", "page_confirmee": 33, "marqueur": "valeur JSON 7 m = doctrine dérivée, INTROUVABLE telle quelle ; PDF = H/2, plancher 4 m ; UEc = 1 ou 2 limites"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zone UEc : 25% de la surface", "page_confirmee": 38, "marqueur": "valeur JSON = « a_verifier » ; PDF = 25% pour UEc"}
+  },
+  "UEm": {
+    "hf_m": {"citation": "Zones UEm et UEp : 16 m", "page_confirmee": 35, "marqueur": "Zones UEm et UEp : 16 m (faîtage)"},
+    "emprise_sol_pct": {"citation": "UEm et UEp : 75% de l’unité foncière", "page_confirmee": 34, "marqueur": "UEm et UEp : 75%"},
+    "recul_voirie_m": {"citation": "en zones UEc, UEm, UEp et UT : 3 mètres", "page_confirmee": 32, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.", "page_confirmee": 33, "marqueur": "valeur JSON 8 m = doctrine dérivée, INTROUVABLE telle quelle ; PDF = H/2, plancher 4 m ; UEm = 1 ou 2 limites"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zones UEa, UEm et UEp : 15% de la surface", "page_confirmee": 38, "marqueur": "valeur JSON = « a_verifier » ; PDF = 15% pour UEm"}
+  },
+  "UEp": {
+    "hf_m": {"citation": "Zones UEm et UEp : 16 m", "page_confirmee": 35, "marqueur": "Zones UEm et UEp : 16 m (faîtage)"},
+    "emprise_sol_pct": {"citation": "UEm et UEp : 75% de l’unité foncière", "page_confirmee": 34, "marqueur": "UEm et UEp : 75%"},
+    "recul_voirie_m": {"citation": "en zones UEc, UEm, UEp et UT : 3 mètres", "page_confirmee": 32, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.", "page_confirmee": 33, "marqueur": "valeur JSON 8 m = doctrine dérivée, INTROUVABLE telle quelle ; PDF = H/2, plancher 4 m ; UEp = 1 ou 2 limites"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zones UEa, UEm et UEp : 15% de la surface", "page_confirmee": 38, "marqueur": "valeur JSON = « a_verifier » ; PDF = 15% pour UEp"}
+  },
+  "UR": {
+    "hf_m": {"citation": "Zone UR : 24 mètres", "page_confirmee": 35, "marqueur": "faîtage seul (activités)"},
+    "emprise_sol_pct": {"citation": "UR : 75 % de l’unité foncière", "page_confirmee": 34, "marqueur": ""},
+    "recul_voirie_m": {"citation": "en zones UEa et UR : 5 mètres", "page_confirmee": 32, "marqueur": "en zones UEa et UR : 5 mètres"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.", "page_confirmee": 33, "marqueur": "valeur JSON 12 m = doctrine dérivée, INTROUVABLE telle quelle ; PDF = H/2, plancher 4 m ; UR = 1 limite possible"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zone UR : 20 % de de la surface", "page_confirmee": 38, "marqueur": "valeur JSON = « a_verifier » ; PDF = 20% pour UR"}
+  },
+  "UT": {
+    "hf_m": {"citation": "Zone UT : 11 mètres", "page_confirmee": 35, "marqueur": "faîtage seul (activités)"},
+    "emprise_sol_pct": {"citation": "UT : 30% de l’unité foncière", "page_confirmee": 34, "marqueur": ""},
+    "recul_voirie_m": {"citation": "en zones UEc, UEm, UEp et UT : 3 mètres", "page_confirmee": 32, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.", "page_confirmee": 33, "marqueur": "valeur JSON 5,5 m = doctrine dérivée, INTROUVABLE telle quelle ; PDF = H/2, plancher 4 m ; UT = 1 ou 2 limites"},
+    "pleine_terre_pct": {"citation": "La parcelle doit être perméable sur au moins :\n• en zone UT : 55% de la surface", "page_confirmee": 38, "marqueur": "valeur JSON = « a_verifier » ; PDF = 55% pour UT"}
+  },
+  "UTp": {
+    "hf_m": {"citation": "Zone UT : 11 mètres", "page_confirmee": 35, "marqueur": "UTp non nommé ; zone UT = 11 m (faîtage)"},
+    "emprise_sol_pct": {"citation": "UT : 30% de l’unité foncière", "page_confirmee": 34, "marqueur": "UTp non nommé ; zone UT = 30%"},
+    "recul_voirie_m": {"citation": "en zones UEc, UEm, UEp et UT : 3 mètres", "page_confirmee": 32, "marqueur": "UTp non nommé ; zone UT = 3 m"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.", "page_confirmee": 33, "marqueur": "valeur JSON 5,5 m = doctrine dérivée, INTROUVABLE ; PDF = H/2, plancher 4 m ; UTp non nommé (zone UT)"},
+    "pleine_terre_pct": {"citation": "INTROUVABLE", "page_confirmee": 38, "marqueur": "UTp non listé au perméable (Art. U12 activités) ; zone UT = 55%, mais UTp absent de la liste"}
+  },
+  "1AUb": {
+    "he_m": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UB ; valeur 12 m sur p.22 (Zone UB : 12 m égout)"},
+    "hf_m": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UB ; valeur 15 m sur p.22 (Zone UB : 15 m faîtage)"},
+    "emprise_sol_pct": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UB ; 70% sur p.21"},
+    "recul_voirie_m": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UB ; recul >= 3 m sur p.19"},
+    "recul_limites_sep_m": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UB ; H/2 min 3 m sur p.20 (valeur JSON 3 m = plancher)"},
+    "stat_logement": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UB ; « 1,5 place minimum par logement » (opération de plusieurs logements) sur p.26, règle tiérée"},
+    "pleine_terre_pct": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UB ; « en zone UB : 25% » sur p.25"}
+  },
+  "1AUc": {
+    "he_m": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UC ; valeur 10 m sur p.22 (Zone UC : 10 m égout)"},
+    "hf_m": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UC ; valeur 13 m sur p.22 (Zone UC : 13 m faîtage)"},
+    "emprise_sol_pct": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UC ; 60% sur p.21"},
+    "recul_voirie_m": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UC ; recul obligatoire >= 3 m sur p.19"},
+    "recul_limites_sep_m": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UC ; H/2 min 3 m sur p.20 (valeur JSON 3 m = plancher)"},
+    "stat_logement": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UC ; « 1,5 place minimum par logement » sur p.26, règle tiérée"},
+    "pleine_terre_pct": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UC ; « UC (y compris UC1 et UC2) et UD (y compris UD1) : 30% » sur p.25"}
+  },
+  "1AUep": {
+    "hf_m": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UEp ; « Zones UEm et UEp : 16 m » sur p.35"},
+    "emprise_sol_pct": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UEp ; « UEm et UEp : 75% » sur p.34"},
+    "recul_voirie_m": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UEp ; « UEc, UEm, UEp et UT : 3 mètres » sur p.32"},
+    "recul_limites_sep_m": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UEp ; H/2 min 4 m sur p.33 (valeur JSON 8 m = doctrine dérivée, INTROUVABLE)"},
+    "pleine_terre_pct": {"citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes", "page_confirmee": 41, "marqueur": "via renvoi → zone UEp ; « UEa, UEm et UEp : 15% » sur p.38 (valeur JSON = « a_verifier »)"}
+  }
+}

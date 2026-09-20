@@ -20,6 +20,52 @@ meta:
     AU SOL (art. 9), rendus en condition.'
 zones:
   U1a:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: '10.2'
+          page_pdf: 24
+          citation: 'Pour les constructions s''implantant au-delà de cette bande de 15 m : ... la hauteur
+            maximale hf est fixée à 16 m.'
+          statut: valide
+        egout:
+          m: 12.0
+          article: '10.2'
+          page_pdf: 24
+          citation: 'Pour les constructions s''implantant au-delà de cette bande de 15 m : la hauteur maximale
+            hé est fixée à 12 m ;'
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: '6'
+          page_pdf: 18
+          citation: 'en zone U1a — Cas général : Les constructions s''implanteront à l''alignement de la voie
+            ou de l''emprise publique.'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 21
+          citation: en zone U1a — ... Pour les étages, en cas de retrait, un recul de 3 m minimum est obligatoire.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: '12.2'
+          page_pdf: 30
+          citation: 'Autres logements — en zones U1a, U1b, U1c, U1d: 1 place / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: '13.1'
+          page_pdf: 35
+          citation: en zone U1a — Le pourcentage minimal d'espaces libres perméables sera de 10 % de la surface
+            totale du terrain d'assiette du projet.
+          statut: valide
     silence: autorise
     silence_src: Art. 1, § 1.2 "Sont interdits" = liste fermée de 3 occupations (entrepôt exclusif, agricole, campeurs/caravanes),
       p. 14 ; tout le reste n'est ni interdit ni conditionné par les articles 1 et 2.
@@ -50,34 +96,387 @@ zones:
           ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
           aidés »
   U1b:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: '10.2'
+          page_pdf: 24
+          citation: en zone U1b — ... la hauteur maximale hf est fixée à 16 m.
+          statut: valide
+        egout:
+          m: 12.0
+          article: '10.2'
+          page_pdf: 24
+          citation: en zone U1b — la hauteur maximale hé est fixée à 12 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: '6'
+          page_pdf: 19
+          citation: 'en zone U1b — Cas général : Les constructions devront être implantées en retrait de 3
+            m minimum de la voie ou de l''emprise publique.'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 21
+          citation: en zone U1b — ... En cas de retrait, un recul de 3 mètres minimum est obligatoire.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: '12.2'
+          page_pdf: 30
+          citation: 'Autres logements — en zones U1a, U1b, U1c, U1d: 1 place / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: '13.1'
+          page_pdf: 35
+          citation: en zone U1b, U1c, U1f, U1g et U1pso — Le pourcentage minimal d'espaces libres perméables
+            sera de 30 % de la surface totale du terrain d'assiette du projet.
+          statut: valide
     renvoi: U1a
     renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; les articles 1 et 2
       (pp. 14-15) ne distinguent aucune sous-zone (zone mère U1 nue non servie, entrée complète portée par U1a).
   U1c:
+    regles:
+      hauteur:
+        faitage:
+          m: 19.0
+          article: '10.2'
+          page_pdf: 24
+          citation: en zone U1c — ... la hauteur maximale hf est fixée à 19 m.
+          statut: valide
+        egout:
+          m: 15.0
+          article: '10.2'
+          page_pdf: 24
+          citation: en zone U1c — la hauteur maximale hé est fixée à 15 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: '6'
+          page_pdf: 19
+          citation: 'en zone U1c — Cas général : Les constructions peuvent être implantées à l''alignement
+            ou en retrait de 3 m minimum de la voie ou de l''emprise publique.'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 21
+          citation: en zone U1c — ... En cas de retrait, un recul de 3 mètres minimum est obligatoire.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: '12.2'
+          page_pdf: 30
+          citation: 'Autres logements — en zones U1a, U1b, U1c, U1d: 1 place / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: '13.1'
+          page_pdf: 35
+          citation: en zone U1b, U1c, U1f, U1g et U1pso — Le pourcentage minimal d'espaces libres perméables
+            sera de 30 % de la surface totale du terrain d'assiette du projet.
+          statut: valide
     renvoi: U1a
     renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; articles 1 et 2 (pp.
       14-15) communs à toutes les sous-zones.
   U1d:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: '10.2'
+          page_pdf: 24
+          citation: en zones U1d et U1g — ... la hauteur maximale hf est fixée à 9 m.
+          statut: valide
+        egout:
+          m: 6.0
+          article: '10.2'
+          page_pdf: 24
+          citation: en zones U1d et U1g — la hauteur maximale hé est fixée à 6 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: '6'
+          page_pdf: 19
+          citation: en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum
+            de l'emprise publique.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 21
+          citation: U1d, U1f, U1g et U1pso — ... En cas de retrait, un recul de 3 mètres minimum est obligatoire.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: '12.2'
+          page_pdf: 30
+          citation: 'Autres logements — en zones U1a, U1b, U1c, U1d: 1 place / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: null
+          article: '13.1'
+          page_pdf: 35
+          citation: en zone U1d — Il n'est pas fixé de règle.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     renvoi: U1a
     renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; articles 1 et 2 (pp.
       14-15) communs à toutes les sous-zones.
   U1f:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: '10.2'
+          page_pdf: 24
+          citation: en zone U1f — ... la hauteur maximale hf est fixée à 13 m.
+          statut: valide
+        egout:
+          m: 9.0
+          article: '10.2'
+          page_pdf: 24
+          citation: en zone U1f — la hauteur maximale hé est fixée à 9 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: '6'
+          page_pdf: 19
+          citation: en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum
+            de l'emprise publique.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 21
+          citation: U1d, U1f, U1g et U1pso — ... En cas de retrait, un recul de 3 mètres minimum est obligatoire.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: '12.2'
+          page_pdf: 30
+          citation: 'Autres logements — en zonesU1f, U1g : 2 places / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: '13.1'
+          page_pdf: 35
+          citation: en zone U1b, U1c, U1f, U1g et U1pso — Le pourcentage minimal d'espaces libres perméables
+            sera de 30 % de la surface totale du terrain d'assiette du projet.
+          statut: valide
     renvoi: U1a
     renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; articles 1 et 2 (pp.
       14-15) communs à toutes les sous-zones.
   U1g:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: '10.2'
+          page_pdf: 24
+          citation: en zones U1d et U1g — ... la hauteur maximale hf est fixée à 9 m.
+          statut: valide
+        egout:
+          m: 6.0
+          article: '10.2'
+          page_pdf: 24
+          citation: en zones U1d et U1g — la hauteur maximale hé est fixée à 6 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: '6'
+          page_pdf: 19
+          citation: en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum
+            de l'emprise publique.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 21
+          citation: U1d, U1f, U1g et U1pso — ... En cas de retrait, un recul de 3 mètres minimum est obligatoire.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: '12.2'
+          page_pdf: 30
+          citation: 'Autres logements — en zonesU1f, U1g : 2 places / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: '13.1'
+          page_pdf: 35
+          citation: en zone U1b, U1c, U1f, U1g et U1pso — Le pourcentage minimal d'espaces libres perméables
+            sera de 30 % de la surface totale du terrain d'assiette du projet.
+          statut: valide
     renvoi: U1a
     renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; articles 1 et 2 (pp.
       14-15) communs à toutes les sous-zones.
   U1pru:
+    regles:
+      hauteur:
+        faitage:
+          m: 34.0
+          article: '10.2'
+          page_pdf: 25
+          citation: en zones U1pru et U1pso — ... la hauteur maximale hf est fixée à 34 m.
+          statut: valide
+        egout:
+          m: 30.0
+          article: '10.2'
+          page_pdf: 25
+          citation: en zones U1pru et U1pso — la hauteur maximale hé est fixée à 30 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: '6'
+          page_pdf: 19
+          citation: 'en zone U1pru — Cas général : Les constructions pourront s''implanter à l''alignement.
+            En cas de retrait, celui-ci ne pourra excéder 6 mètres.'
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 21
+          citation: en zone U1pru — ... En cas de retrait, celui-ci ne pourra excéder 5 mètres (recul <=3
+            m INTROUVABLE tel quel).
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: 'Art. 12 : « il doit être réalisé'
+          page_pdf: 30
+          citation: Lors de toute opération de construction, il doit être réalisé, sauf en zone U1pru, des
+            places de stationnement
+          statut: propose
+          raison: 'stationnement non chiffrable par logement (''exempté : aucune place imposée'')'
+      pleine_terre:
+        pct:
+          pct: null
+          article: '13'
+          page_pdf: 35
+          citation: en zone U1pru — Il n'est pas fixé de règle.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     renvoi: U1a
     renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; articles 1 et 2 (pp.
       14-15) communs à toutes les sous-zones.
   U1pso:
+    regles:
+      hauteur:
+        faitage:
+          m: 34.0
+          article: '10.2'
+          page_pdf: 25
+          citation: en zones U1pru et U1pso — ... la hauteur maximale hf est fixée à 34 m.
+          statut: valide
+        egout:
+          m: 30.0
+          article: '10.2'
+          page_pdf: 25
+          citation: en zones U1pru et U1pso — la hauteur maximale hé est fixée à 30 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: '6'
+          page_pdf: 19
+          citation: en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum
+            de l'emprise publique.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 21
+          citation: U1d, U1f, U1g et U1pso — ... En cas de retrait, un recul de 3 mètres minimum est obligatoire.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: '12.2'
+          page_pdf: 30
+          citation: INTROUVABLE
+          statut: propose
+          raison: stationnement non chiffrable par logement ('a_verifier')
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: '13.1'
+          page_pdf: 35
+          citation: en zone U1b, U1c, U1f, U1g et U1pso — Le pourcentage minimal d'espaces libres perméables
+            sera de 30 % de la surface totale du terrain d'assiette du projet.
+          statut: valide
     renvoi: U1a
     renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; articles 1 et 2 (pp.
       14-15) communs à toutes les sous-zones.
   U1e:
+    regles:
+      hauteur:
+        faitage:
+          m: 14.0
+          article: '10.2'
+          page_pdf: 44
+          citation: La hauteur maximale des constructions est fixée à 14 m.
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: '6'
+          page_pdf: 41
+          citation: Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise
+            publique.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 5.0
+          article: '7.2'
+          page_pdf: 43
+          citation: En cas de retrait, la distance ... au point le plus proche de la limite séparative, est
+            de 5 m minimum.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: '12'
+          page_pdf: 48
+          citation: Habitations autorisées dans la zone — 1 place par logement
+          statut: propose
+          raison: stationnement non chiffrable par logement ('a_verifier')
+      pleine_terre:
+        pct:
+          pct: null
+          article: '13'
+          page_pdf: 51
+          citation: Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du
+            terrain d’assiette du projet.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: Art. 1, § 1.2 "Sont interdits — en zones U1e" = liste fermée de 4 occupations (agricole, habitation,
       campeurs/caravanes, hébergement hôtelier), p. 37.
@@ -161,6 +560,47 @@ zones:
         citation: « les ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
           dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques »
   U1l:
+    regles:
+      hauteur:
+        faitage:
+          m: 14.0
+          article: '10.2'
+          page_pdf: 44
+          citation: La hauteur maximale des constructions est fixée à 14 m.
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: '6'
+          page_pdf: 41
+          citation: Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise
+            publique.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 5.0
+          article: '7.2'
+          page_pdf: 43
+          citation: En cas de retrait, la distance ... au point le plus proche de la limite séparative, est
+            de 5 m minimum.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: '12'
+          page_pdf: 48
+          citation: Habitations autorisées dans la zone — 1 place par logement
+          statut: propose
+          raison: stationnement non chiffrable par logement ('a_verifier')
+      pleine_terre:
+        pct:
+          pct: null
+          article: '13'
+          page_pdf: 51
+          citation: Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du
+            terrain d’assiette du projet.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: Art. 1, § 1.2 "Sont interdits — en zone U1l" = liste fermée de 7 postes (agricole, habitation sauf
       2.2, campeurs/caravanes, commerces sauf 2.2, hébergement hôtelier sauf U1lec, artisanal/industriel/entrepôt,
@@ -359,6 +799,49 @@ zones:
       pas les deux zones (la vocation « exclusivement de l'activité économique et de service » de AU1e st figure
       au caractère de zone, donné à titre indicatif, p. 59).
   U2a:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: '10.2'
+          page_pdf: 74
+          citation: la hauteur maximale hf est fixée à 16 m
+          statut: valide
+        egout:
+          m: 12.0
+          article: '10.2'
+          page_pdf: 74
+          citation: la hauteur maximale hé est fixée à 12 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: '6'
+          page_pdf: 70
+          citation: Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise
+            publique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 72
+          citation: En cas de retrait, les constructions respecteront un recul minimal de 3 m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: '12.2'
+          page_pdf: 81
+          citation: 'en zones U2a, U2b : 1,5 places par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: '13.1'
+          page_pdf: 85
+          citation: Le pourcentage minimal d’espaces libres perméables sera de 30% de la surface totale du
+            terrain d’assiette du projet.
+          statut: valide
     silence: autorise
     silence_src: U2a-U2h, Art. 1.2 « Sont interdits » = liste fermée d'interdictions (p. 66) ; ce qui n'y figure
       pas et n'est pas conditionné à l'Art. 2 est admis
@@ -395,6 +878,50 @@ zones:
           ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
           aidés »
   U2b:
+    regles:
+      hauteur:
+        faitage:
+          m: 19.0
+          article: '10.2'
+          page_pdf: 74
+          citation: la hauteur maximale hf est fixée à 19 m.
+          statut: valide
+        egout:
+          m: 15.0
+          article: '10.2'
+          page_pdf: 74
+          citation: la hauteur maximale hé est fixée à 15 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: '6'
+          page_pdf: 70
+          citation: Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise
+            publique.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 72
+          citation: En cas de retrait, un recul de 3 mètres minimum est obligatoire.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: '12.2'
+          page_pdf: 81
+          citation: 'en zones U2a, U2b : 1,5 places par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: '13.1'
+          page_pdf: 85
+          citation: Le pourcentage minimal d’espaces libres perméables sera de 30% de la surface totale du
+            terrain d’assiette du projet.
+          statut: valide
     silence: autorise
     silence_src: U2a-U2h, Art. 1.2 « Sont interdits » = liste fermée d'interdictions (p. 66) ; ce qui n'y figure
       pas et n'est pas conditionné à l'Art. 2 est admis
@@ -423,6 +950,52 @@ zones:
           ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
           aidés »
   U2c:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: '10.2'
+          page_pdf: 74
+          citation: la hauteur maximale hf est fixée à 9 m.
+          statut: valide
+        egout:
+          m: 6.0
+          article: '10.2'
+          page_pdf: 74
+          citation: la hauteur maximale hé est fixée à 6 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: '6'
+          page_pdf: 70
+          citation: Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise
+            publique.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 72
+          citation: En cas de retrait, un recul de 4 mètres minimum est obligatoire.
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: '12.2'
+          page_pdf: 81
+          citation: 'en zones U2c, U2d : 2 places / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 50.0
+          article: '13.1'
+          page_pdf: 85
+          citation: Pour les autres constructions, y compris les constructions à usage d’habitations — Le
+            pourcentage minimal d’espaces libres perméables sera de 50% de la surface totale du terrain d’assiette
+            du projet.
+          statut: valide
     silence: autorise
     silence_src: U2a-U2h, Art. 1.2 « Sont interdits » = liste fermée d'interdictions (p. 66) ; ce qui n'y figure
       pas et n'est pas conditionné à l'Art. 2 est admis
@@ -451,6 +1024,51 @@ zones:
           ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
           aidés »
   U2d:
+    regles:
+      hauteur:
+        faitage:
+          m: 6.5
+          article: '10.2'
+          page_pdf: 74
+          citation: la hauteur maximale hf est fixée à6,5 m ;
+          statut: valide
+        egout:
+          m: 4.5
+          article: '10.2'
+          page_pdf: 74
+          citation: la hauteur maximale hé est fixée à4,5 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: '6'
+          page_pdf: 70
+          citation: Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise
+            publique.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 72
+          citation: Un recul de 4 mètres minimum est obligatoire.
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: '12.2'
+          page_pdf: 81
+          citation: 'en zones U2c, U2d : 2 places / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 90.0
+          article: '13.1'
+          page_pdf: 85
+          citation: 90% de la surface totale du terrain d’assiette du projet lorsque ce dernier a une surface
+            comprise entre 0 et 700 m² exclus ;
+          statut: valide
     silence: autorise
     silence_src: U2a-U2h, Art. 1.2 « Sont interdits » = liste fermée d'interdictions (p. 66) ; ce qui n'y figure
       pas et n'est pas conditionné à l'Art. 2 est admis
@@ -479,6 +1097,51 @@ zones:
           ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
           aidés »
   U2h:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: '10.2'
+          page_pdf: 74
+          citation: la hauteur maximale hf est fixée à 13 m.
+          statut: valide
+        egout:
+          m: 9.0
+          article: '10.2'
+          page_pdf: 74
+          citation: la hauteur maximale hé est fixée à 9 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: '6'
+          page_pdf: 70
+          citation: Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise
+            publique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 72
+          citation: En cas de retrait, un recul de 4 mètres minimum est obligatoire.
+          statut: propose
+          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+      stationnement:
+        par_logement:
+          places: null
+          article: '12.2'
+          page_pdf: 76
+          citation: INTROUVABLE
+          statut: propose
+          raison: stationnement non chiffrable par logement ('a_verifier')
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: '13.1'
+          page_pdf: 85
+          citation: Le pourcentage minimal d’espaces libres perméables sera de 40% de la surface totale du
+            terrain d’assiette du projet.
+          statut: valide
     silence: interdit
     silence_src: 'U2a-U2h, Art. 1.2 (en zone U2h), p. 66 : « Toutes les occupations et utilisations du sol à l''exception
       de l''hébergement hôtelier et touristique, des activités touristiques et de loisirs, et d''une extension d''une
@@ -517,6 +1180,47 @@ zones:
         page_pdf: 66
         citation: « Les constructions, ouvrages et travaux à destination agricole. »
   U2e:
+    regles:
+      hauteur:
+        faitage:
+          m: 14.0
+          article: '10.2'
+          page_pdf: 94
+          citation: La hauteur maximale des constructions est fixée à 14 m.
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: null
+          page_pdf: 91
+          citation: Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l’emprise
+            publique.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 5.0
+          article: '7.2'
+          page_pdf: 92
+          citation: En cas de retrait, la distance ... au point le plus proche de la limite séparative, est
+            de 5 m minimum.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: null
+          page_pdf: 97
+          citation: Habitations autorisées dans la zone — 1 place par logement
+          statut: propose
+          raison: stationnement non chiffrable par logement ('a_verifier')
+      pleine_terre:
+        pct:
+          pct: null
+          article: '13'
+          page_pdf: 100
+          citation: Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du
+            terrain d’assiette du projet.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: U2e, Art. 1.2 « Sont interdits » = liste fermée d'interdictions (p. 88) ; ce qui n'y figure pas
       et n'est pas conditionné à l'Art. 2 est admis
@@ -609,6 +1313,50 @@ zones:
     note: 'AU2, Art. 2.2, p. 101 — condition supplémentaire préalable à toute construction : « 1. Disposer des infrastructures
       suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
   U3a:
+    regles:
+      hauteur:
+        faitage:
+          m: 19.0
+          article: '10.2'
+          page_pdf: 114
+          citation: la hauteur maximale hf est fixée à 19 m.
+          statut: valide
+        egout:
+          m: 15.0
+          article: '10.2'
+          page_pdf: 114
+          citation: la hauteur maximale hé est fixée à 15 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: 0.0
+          article: '6'
+          page_pdf: 110
+          citation: Les constructions devront être implantées à l'alignement.
+          statut: propose
+          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 112
+          citation: Les constructions devront s'implanter sur une limite séparative ou en retrait minimum
+            de 3 m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: '12.2'
+          page_pdf: 120
+          citation: 'en zones U3a, U3b : 1,5 places par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: '13.1'
+          page_pdf: 124
+          citation: Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du
+            terrain d'assiette du projet.
+          statut: valide
     silence: autorise
     silence_src: Zones U3a-U3b-U3c-U3h, Art. 1.2 « Sont interdits » = liste fermée de 3 interdictions (entrepôt
       exclusif, destination agricole, camping/caravanes), p. 106 ; ce qui n'y figure pas relève de l'art. 2 ou demeure
@@ -642,14 +1390,152 @@ zones:
           ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
           aidés » (pp. 106-107)
   U3b:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: '10.2'
+          page_pdf: 114
+          citation: la hauteur maximale hf est fixée à 16 m.
+          statut: valide
+        egout:
+          m: 12.0
+          article: '10.2'
+          page_pdf: 114
+          citation: la hauteur maximale hé est fixée à 12 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: '6'
+          page_pdf: 110
+          citation: Les constructions devront être implantées en retrait de 3 m minimum de la voie ou de l'emprise
+            publique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 112
+          citation: En cas de retrait, les constructions respecteront un recul minimal de 3 m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: '12.2'
+          page_pdf: 120
+          citation: 'en zones U3a, U3b : 1,5 places par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: '13.1'
+          page_pdf: 124
+          citation: Le pourcentage minimal d'espaces libres perméables sera de 30% de la surface totale du
+            terrain d'assiette du projet.
+          statut: valide
     renvoi: U3a
     renvoi_src: chapitre unique « ZONES U3a, U3b, U3c, U3h », p. 105 ; les articles 1 (« Sont interdits », p. 106)
       et 2 (« Sont admis sous condition », p. 106) ne distinguent pas U3b (seule U3h a un alinéa propre)
   U3c:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: '10.2'
+          page_pdf: 114
+          citation: la hauteur maximale hf est fixée à 12m.
+          statut: valide
+        egout:
+          m: 9.0
+          article: '10.2'
+          page_pdf: 114
+          citation: la hauteur maximale hé est fixée à 9 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: '6'
+          page_pdf: 110
+          citation: Les constructions devront être implantées en retrait de 4 m minimum de la voie ou de l'emprise
+            publique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 112
+          citation: En cas de retrait, les constructions respecteront un recul minimal de 3 m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: '12.2'
+          page_pdf: 120
+          citation: 'en zone U3c : 2 places / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: '13.1'
+          page_pdf: 124
+          citation: Le pourcentage minimal d'espaces libres perméables sera de 40% de la surface totale du
+            terrain d'assiette du projet.
+          statut: valide
     renvoi: U3a
     renvoi_src: chapitre unique « ZONES U3a, U3b, U3c, U3h », p. 105 ; les articles 1 (« Sont interdits », p. 106)
       et 2 (« Sont admis sous condition », p. 106) ne distinguent pas U3c (seule U3h a un alinéa propre)
   Usdu:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: '10.2'
+          page_pdf: 134
+          citation: '...avec un maximum de 6 m à l''égout et 9 m au faîtage.'
+          statut: valide
+        egout:
+          m: 6.0
+          article: '10.2'
+          page_pdf: 134
+          citation: La hauteur devra être fixée en fonction de l'insertion dans le site et des bâtis de référence,
+            avec un maximum de 6 m à l'égout et 9 m au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: null
+          article: '9'
+          page_pdf: 133
+          citation: INTROUVABLE
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+      retraits:
+        voie:
+          min_m: 4.0
+          article: '6.2'
+          page_pdf: 131
+          citation: Les constructions devront être implantées en retrait de 4 m minimum de la voie ou de l'emprise
+            publique
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: '7.2'
+          page_pdf: 132
+          citation: '...au point le plus proche de la limite séparative est de 4 m minimum'
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: '12.2'
+          page_pdf: 139
+          citation: 'Autres logements : 2 places / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 50.0
+          article: '13.1'
+          page_pdf: 143
+          citation: Le pourcentage minimal d'espaces libres perméables sera de 50% de la surface totale du
+            terrain d'assiette du projet.
+          statut: valide
     silence: interdit
     silence_src: 'Usdu, Art. 1.2, p. 127 : « A l''exception de ceux visés à l''article 2.2, toute nouvelle construction
       et tout nouvel ouvrage ou travaux. » — tout ce qui n''est pas admis à l''art. 2.2 est interdit'
@@ -711,6 +1597,46 @@ zones:
         citation: « Les constructions à destination de commerce » (p. 128) ; « Pour les constructions à destination
           d'habitation et commerce, l'emprise au sol ne doit pas dépasser 150 m² » (Art. 9, p. 133)
   U3e:
+    regles:
+      hauteur:
+        faitage:
+          m: 14.0
+          article: '10.2'
+          page_pdf: 151
+          citation: La hauteur maximale des constructions est fixée à 14 m.
+          statut: valide
+      retraits:
+        voie:
+          min_m: null
+          article: null
+          page_pdf: 148
+          citation: Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise
+            publique.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 5.0
+          article: '7.2'
+          page_pdf: 149
+          citation: '...au point le plus proche de la limite séparative, est de 5 m minimum.'
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: null
+          page_pdf: 154
+          citation: 1 place par logement
+          statut: propose
+          raison: stationnement non chiffrable par logement ('a_verifier')
+      pleine_terre:
+        pct:
+          pct: null
+          article: '13'
+          page_pdf: 156
+          citation: Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du
+            terrain d'assiette du projet.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: U3e, Art. 1.2 « Sont interdits » = liste fermée de 4 interdictions (agricole, habitation, camping/caravanes,
       hébergement hôtelier), p. 145 ; ce qui n'y figure pas relève de l'art. 2 ou demeure non mentionné
@@ -855,6 +1781,50 @@ zones:
       du PLU (p. 162).'
     sous_destinations: {}
   U4a:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: '10.2'
+          page_pdf: 176
+          citation: en zone U4a ... la hauteur maximale hf est fixée à 16 m.
+          statut: valide
+        egout:
+          m: 12.0
+          article: '10.2'
+          page_pdf: 176
+          citation: en zone U4a la hauteur maximale hé est fixée à 12 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: 0.0
+          article: '6'
+          page_pdf: 172
+          citation: en zone U4a Les constructions devront être implantées à l'alignement.
+          statut: propose
+          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 173
+          citation: en zone U4a Les constructions devront s'implanter sur une limite séparative sur une longueur
+            maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: '12.2'
+          page_pdf: 182
+          citation: 'en zone U4a : 1,5 places par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: '13.1'
+          page_pdf: 186
+          citation: en zone U4a Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface
+            totale du terrain d'assiette du projet.
+          statut: valide
     silence: autorise
     silence_src: 'Art. 1.2 « Sont interdits » (p. 168) = liste fermée de trois interdictions (« 1. Les constructions,
       ouvrages et travaux à destination exclusive d''entrepôt. 2. Les constructions ouvrages et travaux à destination
@@ -897,12 +1867,100 @@ zones:
           ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
           aidés de type logements locatifs sociaux (LLTS, LLS, PLS) »
   U4b:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: '10.2'
+          page_pdf: 176
+          citation: en zone U4b ... la hauteur maximale hf est fixée à 13 m.
+          statut: valide
+        egout:
+          m: 9.0
+          article: '10.2'
+          page_pdf: 176
+          citation: en zone U4b la hauteur maximale hé est fixée à 9 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: '6'
+          page_pdf: 172
+          citation: en zone U4b Les constructions devront être implantées en retrait de 3 m minimum de la
+            voie ou de l'emprise publique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 173
+          citation: en zones U4b et U4c ... En cas de retrait, les constructions respecteront un recul minimal
+            de 3 m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: '12.2'
+          page_pdf: 182
+          citation: 'en zones U4b, U4c : 2 places / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: '13.1'
+          page_pdf: 186
+          citation: en zone U4b Le pourcentage minimal d'espaces libres perméables sera de 30% de la surface
+            totale du terrain d'assiette du projet.
+          statut: valide
     renvoi: U4a
     renvoi_src: 'chapitre unique « ZONES U4a, U4b, U4c » (p. 167) : les articles 1 « Occupations et utilisations
       du sol interdites » et 2 « Occupations et utilisations du sol soumises à des conditions particulières » (p.
       167-169) sont communs aux trois zones et ne distinguent pas de règle propre à U4b ; la zone mère U4 nue n''étant
       pas servie, l''entrée complète est portée par U4a.'
   U4c:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: '10.2'
+          page_pdf: 176
+          citation: en zone U4c ... la hauteur maximale hf est fixée à 9 m.
+          statut: valide
+        egout:
+          m: 6.0
+          article: '10.2'
+          page_pdf: 176
+          citation: en zone U4c la hauteur maximale hé est fixée à 6 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: '6'
+          page_pdf: 172
+          citation: en zone U4c Les constructions devront être implantées en retrait de 4 m minimum de la
+            voie ou de l'emprise publique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 173
+          citation: en zones U4b et U4c ... En cas de retrait, les constructions respecteront un recul minimal
+            de 3 m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: '12.2'
+          page_pdf: 182
+          citation: 'en zones U4b, U4c : 2 places / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: '13.1'
+          page_pdf: 186
+          citation: en zone U4c Le pourcentage minimal d'espaces libres perméables sera de 40% de la surface
+            totale du terrain d'assiette du projet.
+          statut: valide
     renvoi: U4a
     renvoi_src: 'chapitre unique « ZONES U4a, U4b, U4c » (p. 167) : les articles 1 « Occupations et utilisations
       du sol interdites » et 2 « Occupations et utilisations du sol soumises à des conditions particulières » (p.
@@ -929,6 +1987,50 @@ zones:
       suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). 2. Se reporter
       au règlement de la zone U ayant le même indice. » — s''ajoute aux règles U4c pour toute construction.'
   U5a:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: '10.2'
+          page_pdf: 222
+          citation: en zone U5a ... la hauteur maximale hf est fixée à 16 m.
+          statut: valide
+        egout:
+          m: 12.0
+          article: '10.2'
+          page_pdf: 222
+          citation: en zone U5a la hauteur maximale hé est fixée à 12 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: 0.0
+          article: '6'
+          page_pdf: 218
+          citation: en zone U5a Les constructions devront être implantées à l'alignement.
+          statut: propose
+          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 219
+          citation: en zone U5a Les constructions devront s'implanter sur une limite séparative sur une longueur
+            maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: '12.2'
+          page_pdf: 228
+          citation: 'en zone U5a : 1,5 places par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: '13.1'
+          page_pdf: 232
+          citation: en zone U5a Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface
+            totale du terrain d'assiette du projet.
+          statut: valide
     silence: autorise
     silence_src: 'Zones U5a, U5b, U5c, Art. 1.2, p. 213 : liste fermée d''interdictions (« Sont interdits » — 3
       postes : entrepôt exclusif, destination agricole, camping/caravanes) ; l''article 2.2 énumère les seules occupations
@@ -979,11 +2081,99 @@ zones:
           ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
           aidés de type logements locatifs sociaux (LLTS, LLS, PLS) »
   U5b:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: '10.2'
+          page_pdf: 222
+          citation: en zone U5b ... la hauteur maximale hf est fixée à 13 m.
+          statut: valide
+        egout:
+          m: 9.0
+          article: '10.2'
+          page_pdf: 222
+          citation: en zone U5b la hauteur maximale hé est fixée à 9 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: '6'
+          page_pdf: 218
+          citation: en zone U5b Les constructions devront être implantées en retrait de 3 m minimum de la
+            voie ou de l'emprise publique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 219
+          citation: en zone U5b et U5c ... En cas de retrait, les constructions respecteront un recul minimal
+            de 3 m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: '12.2'
+          page_pdf: 228
+          citation: 'en zones U5b, U5c : 2 places / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: '13.1'
+          page_pdf: 232
+          citation: en zone U5b Le pourcentage minimal d'espaces libres perméables sera de 30% de la surface
+            totale du terrain d'assiette du projet.
+          statut: valide
     renvoi: U5a
     renvoi_src: 'chapitre unique « ZONES U5a, U5b, U5c », p. 213 : les articles 1 (« Occupations et utilisations
       du sol interdites ») et 2 (« soumises à des conditions particulières ») sont communs aux trois zones, sans
       aucune règle propre à U5b.'
   U5c:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: '10.2'
+          page_pdf: 222
+          citation: en zone U5c ... la hauteur maximale hf est fixée à 9 m.
+          statut: valide
+        egout:
+          m: 6.0
+          article: '10.2'
+          page_pdf: 222
+          citation: en zone U5c la hauteur maximale hé est fixée à 6 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: '6'
+          page_pdf: 218
+          citation: en zone U5c Les constructions devront être implantées en retrait de 4 m minimum de la
+            voie ou de l'emprise publique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 219
+          citation: en zone U5b et U5c ... En cas de retrait, les constructions respecteront un recul minimal
+            de 3 m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: '12.2'
+          page_pdf: 228
+          citation: 'en zones U5b, U5c : 2 places / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: '13.1'
+          page_pdf: 232
+          citation: en zone U5c Le pourcentage minimal d'espaces libres perméables sera de 40% de la surface
+            totale du terrain d'assiette du projet.
+          statut: valide
     renvoi: U5a
     renvoi_src: 'chapitre unique « ZONES U5a, U5b, U5c », p. 213 : les articles 1 (« Occupations et utilisations
       du sol interdites ») et 2 (« soumises à des conditions particulières ») sont communs aux trois zones, sans
@@ -1025,6 +2215,55 @@ zones:
       citation: « 1. Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie,
         réseaux, sécurité incendie, etc.). »
   AU5e:
+    regles:
+      hauteur:
+        faitage:
+          m: 14.0
+          article: '10.2'
+          page_pdf: 260
+          citation: La hauteur maximale des constructions est fixée à 14 m.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: null
+          article: null
+          page_pdf: 259
+          citation: INTROUVABLE
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+      retraits:
+        voie:
+          min_m: null
+          article: null
+          page_pdf: 257
+          citation: Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise
+            publique.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
+        limites_separatives:
+          min_m: 5.0
+          article: '7.2'
+          page_pdf: 258
+          citation: En cas de retrait, la distance ... au point le plus proche de la limite séparative, est
+            de 5 m minimum.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: null
+          page_pdf: 263
+          citation: 'Habitations autorisées dans la zone : 1 place par logement'
+          statut: propose
+          raison: stationnement non chiffrable par logement ('a_verifier')
+      pleine_terre:
+        pct:
+          pct: null
+          article: null
+          page_pdf: 265
+          citation: Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du
+            terrain d'assiette du projet.
+          statut: propose
+          raison: valeur non numérique ('a_verifier')
     silence: autorise
     silence_src: 'Zone AU5e, Art. 1.2, p. 254 : liste fermée d''interdictions (« Sont interdits » — 4 postes : agricole,
       habitation, camping/caravanes, hébergement hôtelier) ; l''article 2.2 énumère les occupations admises sous
@@ -1133,6 +2372,50 @@ zones:
         et d'habitabilité dans la limite de 30 m2 de surface de plancher réalisés sur des constructions existantes.
         »
   U6a:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: '10.2'
+          page_pdf: 282
+          citation: en zone U6a ... la hauteur maximale hf est fixée à 16 m.
+          statut: valide
+        egout:
+          m: 12.0
+          article: '10.2'
+          page_pdf: 282
+          citation: en zone U6a la hauteur maximale hé est fixée à 12 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: 0.0
+          article: '6'
+          page_pdf: 278
+          citation: en zone U6a Les constructions devront être implantées à l'alignement.
+          statut: propose
+          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 279
+          citation: en zone U6a Les constructions devront s'implanter sur une limite séparative sur une longueur
+            maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: '12.2'
+          page_pdf: 288
+          citation: 'en zone U6a : 1,5 places par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: '13.1'
+          page_pdf: 292
+          citation: en zone U6a Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface
+            totale du terrain d'assiette du projet.
+          statut: valide
     silence: autorise
     silence_src: 'Art. 1, « 1.2 - Sont interdits » (p. 273) : liste fermée de 3 occupations (entrepôt exclusif,
       destination agricole, terrains de campeurs/caravanes) ; Art. 2, « 2.2 - Sont admis sous condition » (p. 274).
@@ -1181,10 +2464,98 @@ zones:
           ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
           aidés de type logements locatifs sociaux (LLTS, LLS, PLS) »
   U6b:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: '10.2'
+          page_pdf: 282
+          citation: en zone U6b ... la hauteur maximale hf est fixée à 13 m.
+          statut: valide
+        egout:
+          m: 9.0
+          article: '10.2'
+          page_pdf: 282
+          citation: en zone U6b la hauteur maximale hé est fixée à 9 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: '6'
+          page_pdf: 278
+          citation: en zone U6b Les constructions devront être implantées en retrait de 3 m minimum de la
+            voie ou de l'emprise publique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 279
+          citation: en zone U6b et U6c ... En cas de retrait, les constructions respecteront un recul minimal
+            de 3 m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: '12.2'
+          page_pdf: 288
+          citation: 'en zones U6b, U6c : 2 places / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: '13.1'
+          page_pdf: 292
+          citation: en zone U6b Le pourcentage minimal d'espaces libres perméables sera de 30% de la surface
+            totale du terrain d'assiette du projet.
+          statut: valide
     renvoi: U6a
     renvoi_src: chapitre unique « ZONES U6a, U6b, U6c » (p. 273) ; les articles 1 (« 1.2 - Sont interdits », p.
       273) et 2 (« 2.2 - Sont admis sous condition », p. 274) ne distinguent pas les sous-zones U6a/U6b/U6c
   U6c:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: '10.2'
+          page_pdf: 282
+          citation: en zone U6c ... la hauteur maximale hf est fixée à 9 m.
+          statut: valide
+        egout:
+          m: 6.0
+          article: '10.2'
+          page_pdf: 282
+          citation: en zone U6c la hauteur maximale hé est fixée à 6 m ;
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: '6'
+          page_pdf: 278
+          citation: en zone U6c Les constructions devront être implantées en retrait de 4 m minimum de la
+            voie ou de l'emprise publique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: '7.2'
+          page_pdf: 279
+          citation: en zone U6b et U6c ... En cas de retrait, les constructions respecteront un recul minimal
+            de 3 m.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: '12.2'
+          page_pdf: 288
+          citation: 'en zones U6b, U6c : 2 places / logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: '13.1'
+          page_pdf: 292
+          citation: en zone U6c Le pourcentage minimal d'espaces libres perméables sera de 40% de la surface
+            totale du terrain d'assiette du projet.
+          statut: valide
     renvoi: U6a
     renvoi_src: chapitre unique « ZONES U6a, U6b, U6c » (p. 273) ; les articles 1 (« 1.2 - Sont interdits », p.
       273) et 2 (« 2.2 - Sont admis sous condition », p. 274) ne distinguent pas les sous-zones U6a/U6b/U6c

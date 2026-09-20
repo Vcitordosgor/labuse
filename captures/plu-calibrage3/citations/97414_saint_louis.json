@@ -1,0 +1,818 @@
+{
+ "UA": {
+  "he_m": {
+   "citation": "La hauteur maximale des constructions est fixée à : 15 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 19,
+   "marqueur": ""
+  },
+  "hf_m": {
+   "citation": "La hauteur maximale des constructions est fixée à : (...) 19 mètres au faîtage,",
+   "page_confirmee": 19,
+   "marqueur": ""
+  },
+  "emprise_sol_pct": {
+   "citation": "L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité foncière.",
+   "page_confirmee": 19,
+   "marqueur": "En secteur UA1, l'emprise au sol n'est pas réglementée."
+  },
+  "recul_voirie_m": {
+   "citation": "Les constructions peuvent être implantées à l'alignement ou en retrait de la voie, avec une distance (...) au moins égale à 3 mètres.",
+   "page_confirmee": 16,
+   "marqueur": ""
+  },
+  "recul_limites_sep_m": {
+   "citation": "En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.",
+   "page_confirmee": 17,
+   "marqueur": ""
+  },
+  "stat_logement": {
+   "citation": "Habitations — Pour les autres constructions : 2 places de stationnement par logement",
+   "page_confirmee": 22,
+   "marqueur": "Pour les logements sociaux : 1 place / logement ; opérations de plus de 10 logements : 0,5 place publique / logement"
+  },
+  "pleine_terre_pct": {
+   "citation": "Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable comprenant des plantations",
+   "page_confirmee": 24,
+   "marqueur": "En secteur UA1, il n'est pas fixé de règle."
+  }
+ },
+ "UA1": {
+  "he_m": {
+   "citation": "La hauteur maximale des constructions est fixée à : 15 mètres à l'égout du toit (...) [zone UA, aucune règle propre au secteur UA1]",
+   "page_confirmee": 19,
+   "marqueur": "secteur UA1"
+  },
+  "hf_m": {
+   "citation": "(...) 19 mètres au faîtage [zone UA, aucune règle propre au secteur UA1]",
+   "page_confirmee": 19,
+   "marqueur": "secteur UA1"
+  },
+  "recul_voirie_m": {
+   "citation": "Les constructions peuvent être implantées à l'alignement ou en retrait (...) au moins égale à 3 mètres. [règle UA]",
+   "page_confirmee": 16,
+   "marqueur": "secteur UA1"
+  },
+  "recul_limites_sep_m": {
+   "citation": "En cas de retrait (...) au moins égale 3 mètres. [règle UA]",
+   "page_confirmee": 17,
+   "marqueur": "secteur UA1"
+  },
+  "stat_logement": {
+   "citation": "Pour les autres constructions : 2 places de stationnement par logement [règle UA]",
+   "page_confirmee": 22,
+   "marqueur": "secteur UA1"
+  }
+ },
+ "UB": {
+  "he_m": {
+   "citation": "La hauteur maximale des constructions est fixée à : 12 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 33,
+   "marqueur": ""
+  },
+  "hf_m": {
+   "citation": "(...) 17 mètres au faîtage,",
+   "page_confirmee": 33,
+   "marqueur": ""
+  },
+  "emprise_sol_pct": {
+   "citation": "L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité foncière.",
+   "page_confirmee": 33,
+   "marqueur": ""
+  },
+  "recul_voirie_m": {
+   "citation": "Les constructions peuvent être implantées à l'alignement ou en retrait de la voie, avec une distance (...) au moins égale à 3 mètres.",
+   "page_confirmee": 30,
+   "marqueur": ""
+  },
+  "recul_limites_sep_m": {
+   "citation": "En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.",
+   "page_confirmee": 31,
+   "marqueur": ""
+  },
+  "stat_logement": {
+   "citation": "Habitations — Pour les autres constructions : 2 places de stationnement par logement",
+   "page_confirmee": 37,
+   "marqueur": ""
+  },
+  "pleine_terre_pct": {
+   "citation": "Au minimum 20% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable comprenant des plantations",
+   "page_confirmee": 38,
+   "marqueur": ""
+  }
+ },
+ "UC": {
+  "he_m": {
+   "citation": "La hauteur maximale des constructions est fixée à : 7 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 49,
+   "marqueur": ""
+  },
+  "hf_m": {
+   "citation": "(...) 11 mètres au faîtage,",
+   "page_confirmee": 49,
+   "marqueur": ""
+  },
+  "emprise_sol_pct": {
+   "citation": "L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière. Dans le secteur UC2 ce seuil est limité à 50%.",
+   "page_confirmee": 48,
+   "marqueur": "secteur UC2 = 50%"
+  },
+  "recul_voirie_m": {
+   "citation": "Les constructions doivent être implantées en retrait de la voie, avec une distance (...) au moins égale à 4 mètres.",
+   "page_confirmee": 44,
+   "marqueur": ""
+  },
+  "recul_limites_sep_m": {
+   "citation": "En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.",
+   "page_confirmee": 45,
+   "marqueur": "secteur UC1 : retrait obligatoire = moitié de la hauteur à l'égout, min 3,00 m"
+  },
+  "stat_logement": {
+   "citation": "Habitations — Pour les autres constructions : 2 places de stationnement par logement",
+   "page_confirmee": 52,
+   "marqueur": ""
+  },
+  "pleine_terre_pct": {
+   "citation": "Au minimum 25% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable comprenant des plantations",
+   "page_confirmee": 53,
+   "marqueur": ""
+  }
+ },
+ "UC1": {
+  "he_m": {
+   "citation": "En secteur UC1, la hauteur maximale des constructions est fixée à 9 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 49,
+   "marqueur": "secteur UC1"
+  },
+  "hf_m": {
+   "citation": "En secteur UC1, la hauteur maximale des constructions est fixée à (...) 13 mètres au faîtage,",
+   "page_confirmee": 49,
+   "marqueur": "secteur UC1"
+  },
+  "emprise_sol_pct": {
+   "citation": "L'emprise au sol des constructions ne doit pas excéder 60% (...) [seul UC2 abaissé à 50%]",
+   "page_confirmee": 48,
+   "marqueur": "secteur UC1 = 60% (règle UC)"
+  },
+  "recul_voirie_m": {
+   "citation": "Les constructions doivent être implantées en retrait de la voie, (...) au moins égale à 4 mètres.",
+   "page_confirmee": 44,
+   "marqueur": "secteur UC1"
+  },
+  "recul_limites_sep_m": {
+   "citation": "Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum à la moitié de la hauteur à l'égout du toit (ou au faîtage en l'absence d'égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2",
+   "page_confirmee": 45,
+   "marqueur": "secteur UC1 ; formule L=H/2 min 3,00 m (2014 audit calculait 4,5 m)"
+  },
+  "stat_logement": {
+   "citation": "Pour les autres constructions : 2 places de stationnement par logement [règle UC]",
+   "page_confirmee": 52,
+   "marqueur": "secteur UC1"
+  },
+  "pleine_terre_pct": {
+   "citation": "Au minimum 25% de la superficie totale de l'unité foncière (...) [règle UC, aucune disposition propre au secteur]",
+   "page_confirmee": 53,
+   "marqueur": "secteur UC1"
+  }
+ },
+ "UC2": {
+  "he_m": {
+   "citation": "En secteur UC2, la hauteur maximale des constructions est fixée à 6 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 49,
+   "marqueur": "secteur UC2"
+  },
+  "hf_m": {
+   "citation": "En secteur UC2, la hauteur maximale des constructions est fixée à (...) 10 mètres au faîtage.",
+   "page_confirmee": 49,
+   "marqueur": "secteur UC2"
+  },
+  "emprise_sol_pct": {
+   "citation": "Dans le secteur UC2 ce seuil est limité à 50%.",
+   "page_confirmee": 48,
+   "marqueur": "secteur UC2"
+  },
+  "recul_voirie_m": {
+   "citation": "Les constructions doivent être implantées en retrait de la voie, (...) au moins égale à 4 mètres.",
+   "page_confirmee": 44,
+   "marqueur": "secteur UC2"
+  },
+  "recul_limites_sep_m": {
+   "citation": "En cas de retrait de la construction, la distance (...) au moins égale 3 mètres. [règle UC ; secteur UC1 seul dérogé]",
+   "page_confirmee": 45,
+   "marqueur": "secteur UC2 = règle UC 3 m"
+  },
+  "stat_logement": {
+   "citation": "Pour les autres constructions : 2 places de stationnement par logement [règle UC]",
+   "page_confirmee": 52,
+   "marqueur": "secteur UC2"
+  },
+  "pleine_terre_pct": {
+   "citation": "Au minimum 25% de la superficie totale de l'unité foncière (...) [règle UC]",
+   "page_confirmee": 53,
+   "marqueur": "secteur UC2"
+  }
+ },
+ "UD": {
+  "he_m": {
+   "citation": "La hauteur maximale des constructions est fixée à : 6 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 62,
+   "marqueur": ""
+  },
+  "hf_m": {
+   "citation": "(...) 10 mètres au faîtage.",
+   "page_confirmee": 62,
+   "marqueur": ""
+  },
+  "emprise_sol_pct": {
+   "citation": "L'emprise au sol des constructions ne doit pas excéder 50% de la superficie de l'unité foncière. Dans le secteur UD1, ce seuil est limité à 40%.",
+   "page_confirmee": 62,
+   "marqueur": "secteur UD1 = 40%"
+  },
+  "recul_voirie_m": {
+   "citation": "Les constructions doivent être implantées en retrait de la voie, (...) au moins égale à 4 mètres.",
+   "page_confirmee": 59,
+   "marqueur": ""
+  },
+  "recul_limites_sep_m": {
+   "citation": "En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.",
+   "page_confirmee": 60,
+   "marqueur": ""
+  },
+  "stat_logement": {
+   "citation": "Habitations — Pour les autres constructions : 2 places de stationnement par logement",
+   "page_confirmee": 65,
+   "marqueur": ""
+  },
+  "pleine_terre_pct": {
+   "citation": "Au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable (...). Dans le secteur UD1, ce seuil est porté à 35% minimum.",
+   "page_confirmee": 67,
+   "marqueur": "secteur UD1 = 35%"
+  }
+ },
+ "UD1": {
+  "he_m": {
+   "citation": "La hauteur maximale (...) 6 mètres à l'égout [règle UD, aucune règle propre au secteur UD1]",
+   "page_confirmee": 62,
+   "marqueur": "secteur UD1"
+  },
+  "hf_m": {
+   "citation": "(...) 10 mètres au faîtage [règle UD, aucune règle propre au secteur UD1]",
+   "page_confirmee": 62,
+   "marqueur": "secteur UD1"
+  },
+  "emprise_sol_pct": {
+   "citation": "Dans le secteur UD1, ce seuil est limité à 40%.",
+   "page_confirmee": 62,
+   "marqueur": "secteur UD1"
+  },
+  "recul_voirie_m": {
+   "citation": "Les constructions doivent être implantées en retrait (...) au moins égale à 4 mètres. [règle UD]",
+   "page_confirmee": 59,
+   "marqueur": "secteur UD1"
+  },
+  "recul_limites_sep_m": {
+   "citation": "En cas de retrait (...) au moins égale 3 mètres. [règle UD]",
+   "page_confirmee": 60,
+   "marqueur": "secteur UD1"
+  },
+  "stat_logement": {
+   "citation": "Pour les autres constructions : 2 places de stationnement par logement [règle UD]",
+   "page_confirmee": 65,
+   "marqueur": "secteur UD1"
+  },
+  "pleine_terre_pct": {
+   "citation": "Dans le secteur UD1, ce seuil est porté à 35% minimum.",
+   "page_confirmee": 67,
+   "marqueur": "secteur UD1"
+  }
+ },
+ "UE": {
+  "he_m": {
+   "citation": "La hauteur maximale des constructions est fixée à : 12 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 76,
+   "marqueur": ""
+  },
+  "hf_m": {
+   "citation": "(...) 15 mètres au faîtage,",
+   "page_confirmee": 76,
+   "marqueur": "15 m absolue aussi pour toits terrasses végétalisés"
+  },
+  "emprise_sol_pct": {
+   "citation": "L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité foncière.",
+   "page_confirmee": 75,
+   "marqueur": ""
+  },
+  "recul_voirie_m": {
+   "citation": "Les constructions doivent être implantées en retrait de la voie, avec distance (D) (...) au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres.",
+   "page_confirmee": 73,
+   "marqueur": "RN1 : recul 25 m de l'axe"
+  },
+  "recul_limites_sep_m": {
+   "citation": "En cas de retrait de la construction, la distance (D) (...) au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)",
+   "page_confirmee": 74,
+   "marqueur": "latéral H/2 min 4 m ; fond 4 m"
+  },
+  "pleine_terre_pct": {
+   "citation": "Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable comprenant des plantations",
+   "page_confirmee": 79,
+   "marqueur": ""
+  }
+ },
+ "US": {
+  "he_m": {
+   "citation": "La hauteur maximale des constructions est fixée à : 12 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 88,
+   "marqueur": ""
+  },
+  "hf_m": {
+   "citation": "(...) 15 mètres au faîtage,",
+   "page_confirmee": 88,
+   "marqueur": "15 m absolue aussi pour toits terrasses végétalisés"
+  },
+  "emprise_sol_pct": {
+   "citation": "L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité foncière.",
+   "page_confirmee": 87,
+   "marqueur": ""
+  },
+  "recul_voirie_m": {
+   "citation": "Les constructions doivent être implantées en retrait de la voie, avec distance (D) (...) au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 5 mètres.",
+   "page_confirmee": 85,
+   "marqueur": "RN1 : recul 25 m de l'axe"
+  },
+  "recul_limites_sep_m": {
+   "citation": "En cas de retrait de la construction, la distance (D) (...) au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)",
+   "page_confirmee": 86,
+   "marqueur": "latéral H/2 min 4 m ; fond 4 m"
+  },
+  "pleine_terre_pct": {
+   "citation": "Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable comprenant des plantations",
+   "page_confirmee": 91,
+   "marqueur": ""
+  }
+ },
+ "UZ": {
+  "he_m": {
+   "citation": "la hauteur maximale de tout point des constructions (...) légendés en « individuels » (...) ne doit pas dépasser 9 mètres. [collectifs 17 m ; tertiaires 12 m ; hors tout : cote NGR 42 m]",
+   "page_confirmee": 98,
+   "marqueur": "hauteur en tout point par affectation ; plafond NGR 42 m"
+  },
+  "hf_m": {
+   "citation": "la hauteur maximale de tout point des constructions (...) « individuels » (...) ne doit pas dépasser 9 mètres. [plafond en tout point => he=hf]",
+   "page_confirmee": 98,
+   "marqueur": "hauteur en tout point par affectation ; plafond NGR 42 m"
+  },
+  "emprise_sol_pct": {
+   "citation": "L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière.",
+   "page_confirmee": 98,
+   "marqueur": ""
+  },
+  "recul_limites_sep_m": {
+   "citation": "si la construction n'est pas implantée sur une ou sur les deux limites séparatives, la marge d'isolement est égale à la moitié de la hauteur de la construction sans être inférieure à 3 mètres",
+   "page_confirmee": 96,
+   "marqueur": "marge d'isolement H/2 min 3 m"
+  },
+  "stat_logement": {
+   "citation": "Pour les constructions à usage d'habitation : 1,5 place de stationnement par logement, arrondi à l'entier supérieur (...). Pour le logement social : 1 place par logement.",
+   "page_confirmee": 102,
+   "marqueur": ""
+  },
+  "pleine_terre_pct": {
+   "citation": "Au minimum 25% de la superficie totale de l'unité foncière resteront libres, paysagés (au minimum engazonnés) et seront destinés à l'agrément, aux loisirs et aux jeux.",
+   "page_confirmee": 104,
+   "marqueur": "« libres et paysagés » (pas d'exigence de pleine terre stricte)"
+  }
+ },
+ "1AUa": {
+  "he_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : La hauteur maximale des constructions est fixée à : 15 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 19,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "hf_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : La hauteur maximale des constructions est fixée à : (...) 19 mètres au faîtage,",
+   "page_confirmee": 19,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "emprise_sol_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité foncière.",
+   "page_confirmee": 19,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "recul_voirie_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : Les constructions peuvent être implantées à l'alignement ou en retrait de la voie, avec une distance (...) au moins égale à 3 mètres.",
+   "page_confirmee": 16,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "recul_limites_sep_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.",
+   "page_confirmee": 17,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "stat_logement": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : Habitations — Pour les autres constructions : 2 places de stationnement par logement",
+   "page_confirmee": 22,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "pleine_terre_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable comprenant des plantations",
+   "page_confirmee": 24,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  }
+ },
+ "1AUa oap1": {
+  "he_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : La hauteur maximale des constructions est fixée à : 15 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 19,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "hf_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : La hauteur maximale des constructions est fixée à : (...) 19 mètres au faîtage,",
+   "page_confirmee": 19,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "emprise_sol_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité foncière.",
+   "page_confirmee": 19,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "recul_voirie_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : Les constructions peuvent être implantées à l'alignement ou en retrait de la voie, avec une distance (...) au moins égale à 3 mètres.",
+   "page_confirmee": 16,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "recul_limites_sep_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.",
+   "page_confirmee": 17,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "stat_logement": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : Habitations — Pour les autres constructions : 2 places de stationnement par logement",
+   "page_confirmee": 22,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "pleine_terre_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable comprenant des plantations",
+   "page_confirmee": 24,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  }
+ },
+ "1AUa oap3": {
+  "he_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : La hauteur maximale des constructions est fixée à : 15 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 19,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "hf_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : La hauteur maximale des constructions est fixée à : (...) 19 mètres au faîtage,",
+   "page_confirmee": 19,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "emprise_sol_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité foncière.",
+   "page_confirmee": 19,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "recul_voirie_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : Les constructions peuvent être implantées à l'alignement ou en retrait de la voie, avec une distance (...) au moins égale à 3 mètres.",
+   "page_confirmee": 16,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "recul_limites_sep_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.",
+   "page_confirmee": 17,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "stat_logement": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : Habitations — Pour les autres constructions : 2 places de stationnement par logement",
+   "page_confirmee": 22,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  },
+  "pleine_terre_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable comprenant des plantations",
+   "page_confirmee": 24,
+   "marqueur": "renvoi -> UA (chap. p107)"
+  }
+ },
+ "1AUc": {
+  "he_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : La hauteur maximale des constructions est fixée à : 7 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 49,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "hf_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : (...) 11 mètres au faîtage,",
+   "page_confirmee": 49,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "emprise_sol_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière. Dans le secteur UC2 ce seuil est limité à 50%.",
+   "page_confirmee": 48,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "recul_voirie_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : Les constructions doivent être implantées en retrait de la voie, avec une distance (...) au moins égale à 4 mètres.",
+   "page_confirmee": 44,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "recul_limites_sep_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.",
+   "page_confirmee": 45,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "stat_logement": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : Habitations — Pour les autres constructions : 2 places de stationnement par logement",
+   "page_confirmee": 52,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "pleine_terre_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : Au minimum 25% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable comprenant des plantations",
+   "page_confirmee": 53,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  }
+ },
+ "1AUc oap4": {
+  "he_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : La hauteur maximale des constructions est fixée à : 7 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 49,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "hf_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : (...) 11 mètres au faîtage,",
+   "page_confirmee": 49,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "emprise_sol_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière. Dans le secteur UC2 ce seuil est limité à 50%.",
+   "page_confirmee": 48,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "recul_voirie_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : Les constructions doivent être implantées en retrait de la voie, avec une distance (...) au moins égale à 4 mètres.",
+   "page_confirmee": 44,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "recul_limites_sep_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.",
+   "page_confirmee": 45,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "stat_logement": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : Habitations — Pour les autres constructions : 2 places de stationnement par logement",
+   "page_confirmee": 52,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "pleine_terre_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : Au minimum 25% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable comprenant des plantations",
+   "page_confirmee": 53,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  }
+ },
+ "1AUc oap5": {
+  "he_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : La hauteur maximale des constructions est fixée à : 7 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 49,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "hf_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : (...) 11 mètres au faîtage,",
+   "page_confirmee": 49,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "emprise_sol_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : L'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière. Dans le secteur UC2 ce seuil est limité à 50%.",
+   "page_confirmee": 48,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "recul_voirie_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : Les constructions doivent être implantées en retrait de la voie, avec une distance (...) au moins égale à 4 mètres.",
+   "page_confirmee": 44,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "recul_limites_sep_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.",
+   "page_confirmee": 45,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "stat_logement": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : Habitations — Pour les autres constructions : 2 places de stationnement par logement",
+   "page_confirmee": 52,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  },
+  "pleine_terre_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : Au minimum 25% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable comprenant des plantations",
+   "page_confirmee": 53,
+   "marqueur": "renvoi -> UC (chap. p107)"
+  }
+ },
+ "1AUc1": {
+  "he_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC1 : En secteur UC1, la hauteur maximale des constructions est fixée à 9 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 49,
+   "marqueur": "renvoi -> UC1 (chap. p107)"
+  },
+  "hf_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC1 : En secteur UC1, la hauteur maximale des constructions est fixée à (...) 13 mètres au faîtage,",
+   "page_confirmee": 49,
+   "marqueur": "renvoi -> UC1 (chap. p107)"
+  },
+  "emprise_sol_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC1 : L'emprise au sol des constructions ne doit pas excéder 60% (...) [seul UC2 abaissé à 50%]",
+   "page_confirmee": 48,
+   "marqueur": "renvoi -> UC1 (chap. p107)"
+  },
+  "recul_voirie_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC1 : Les constructions doivent être implantées en retrait de la voie, (...) au moins égale à 4 mètres.",
+   "page_confirmee": 44,
+   "marqueur": "renvoi -> UC1 (chap. p107)"
+  },
+  "recul_limites_sep_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC1 : Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum à la moitié de la hauteur à l'égout du toit (ou au faîtage en l'absence d'égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2",
+   "page_confirmee": 45,
+   "marqueur": "renvoi -> UC1 (chap. p107)"
+  },
+  "stat_logement": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC1 : Pour les autres constructions : 2 places de stationnement par logement [règle UC]",
+   "page_confirmee": 52,
+   "marqueur": "renvoi -> UC1 (chap. p107)"
+  },
+  "pleine_terre_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC1 : Au minimum 25% de la superficie totale de l'unité foncière (...) [règle UC, aucune disposition propre au secteur]",
+   "page_confirmee": 53,
+   "marqueur": "renvoi -> UC1 (chap. p107)"
+  }
+ },
+ "1AUc2": {
+  "he_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC2 : En secteur UC2, la hauteur maximale des constructions est fixée à 6 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 49,
+   "marqueur": "renvoi -> UC2 (chap. p107)"
+  },
+  "hf_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC2 : En secteur UC2, la hauteur maximale des constructions est fixée à (...) 10 mètres au faîtage.",
+   "page_confirmee": 49,
+   "marqueur": "renvoi -> UC2 (chap. p107)"
+  },
+  "emprise_sol_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC2 : Dans le secteur UC2 ce seuil est limité à 50%.",
+   "page_confirmee": 48,
+   "marqueur": "renvoi -> UC2 (chap. p107)"
+  },
+  "recul_voirie_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC2 : Les constructions doivent être implantées en retrait de la voie, (...) au moins égale à 4 mètres.",
+   "page_confirmee": 44,
+   "marqueur": "renvoi -> UC2 (chap. p107)"
+  },
+  "recul_limites_sep_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC2 : En cas de retrait de la construction, la distance (...) au moins égale 3 mètres. [règle UC ; secteur UC1 seul dérogé]",
+   "page_confirmee": 45,
+   "marqueur": "renvoi -> UC2 (chap. p107)"
+  },
+  "stat_logement": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC2 : Pour les autres constructions : 2 places de stationnement par logement [règle UC]",
+   "page_confirmee": 52,
+   "marqueur": "renvoi -> UC2 (chap. p107)"
+  },
+  "pleine_terre_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC2 : Au minimum 25% de la superficie totale de l'unité foncière (...) [règle UC]",
+   "page_confirmee": 53,
+   "marqueur": "renvoi -> UC2 (chap. p107)"
+  }
+ },
+ "1AUd": {
+  "he_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD : La hauteur maximale des constructions est fixée à : 6 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 62,
+   "marqueur": "renvoi -> UD (chap. p107)"
+  },
+  "hf_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD : (...) 10 mètres au faîtage.",
+   "page_confirmee": 62,
+   "marqueur": "renvoi -> UD (chap. p107)"
+  },
+  "emprise_sol_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD : L'emprise au sol des constructions ne doit pas excéder 50% de la superficie de l'unité foncière. Dans le secteur UD1, ce seuil est limité à 40%.",
+   "page_confirmee": 62,
+   "marqueur": "renvoi -> UD (chap. p107)"
+  },
+  "recul_voirie_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD : Les constructions doivent être implantées en retrait de la voie, (...) au moins égale à 4 mètres.",
+   "page_confirmee": 59,
+   "marqueur": "renvoi -> UD (chap. p107)"
+  },
+  "recul_limites_sep_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD : En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.",
+   "page_confirmee": 60,
+   "marqueur": "renvoi -> UD (chap. p107)"
+  },
+  "stat_logement": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD : Habitations — Pour les autres constructions : 2 places de stationnement par logement",
+   "page_confirmee": 65,
+   "marqueur": "renvoi -> UD (chap. p107)"
+  },
+  "pleine_terre_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD : Au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable (...). Dans le secteur UD1, ce seuil est porté à 35% minimum.",
+   "page_confirmee": 67,
+   "marqueur": "renvoi -> UD (chap. p107)"
+  }
+ },
+ "1AUd1": {
+  "he_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD1 : La hauteur maximale (...) 6 mètres à l'égout [règle UD, aucune règle propre au secteur UD1]",
+   "page_confirmee": 62,
+   "marqueur": "renvoi -> UD1 (chap. p107)"
+  },
+  "hf_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD1 : (...) 10 mètres au faîtage [règle UD, aucune règle propre au secteur UD1]",
+   "page_confirmee": 62,
+   "marqueur": "renvoi -> UD1 (chap. p107)"
+  },
+  "emprise_sol_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD1 : Dans le secteur UD1, ce seuil est limité à 40%.",
+   "page_confirmee": 62,
+   "marqueur": "renvoi -> UD1 (chap. p107)"
+  },
+  "recul_voirie_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD1 : Les constructions doivent être implantées en retrait (...) au moins égale à 4 mètres. [règle UD]",
+   "page_confirmee": 59,
+   "marqueur": "renvoi -> UD1 (chap. p107)"
+  },
+  "recul_limites_sep_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD1 : En cas de retrait (...) au moins égale 3 mètres. [règle UD]",
+   "page_confirmee": 60,
+   "marqueur": "renvoi -> UD1 (chap. p107)"
+  },
+  "stat_logement": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD1 : Pour les autres constructions : 2 places de stationnement par logement [règle UD]",
+   "page_confirmee": 65,
+   "marqueur": "renvoi -> UD1 (chap. p107)"
+  },
+  "pleine_terre_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD1 : Dans le secteur UD1, ce seuil est porté à 35% minimum.",
+   "page_confirmee": 67,
+   "marqueur": "renvoi -> UD1 (chap. p107)"
+  }
+ },
+ "1AUe": {
+  "he_m": {
+   "citation": "Pour la zone 1AUe se rapportant à l'OAP2, la hauteur maximale des constructions est fixée à : 17 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 110,
+   "marqueur": "OVERRIDE OAP2 : 17 m égout (vs 12 m base UE). Hors OAP2 : renvoi UE 12 m."
+  },
+  "hf_m": {
+   "citation": "Pour la zone 1AUe se rapportant à l'OAP2 (...) 20 mètres au faîtage, 20 mètres (hauteur absolue) pour les toits terrasses végétalisés",
+   "page_confirmee": 110,
+   "marqueur": "OVERRIDE OAP2 : 20 m faîtage (vs 15 m base UE). Hors OAP2 : renvoi UE 15 m."
+  },
+  "emprise_sol_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UE : L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité foncière.",
+   "page_confirmee": 75,
+   "marqueur": "renvoi -> UE (chap. p107)"
+  },
+  "recul_voirie_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UE : Les constructions doivent être implantées en retrait de la voie, avec distance (D) (...) au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres.",
+   "page_confirmee": 73,
+   "marqueur": "renvoi -> UE (chap. p107)"
+  },
+  "recul_limites_sep_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UE : En cas de retrait de la construction, la distance (D) (...) au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)",
+   "page_confirmee": 74,
+   "marqueur": "renvoi -> UE (chap. p107)"
+  },
+  "pleine_terre_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UE : Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable comprenant des plantations",
+   "page_confirmee": 79,
+   "marqueur": "renvoi -> UE (chap. p107)"
+  }
+ },
+ "1AUe oap1": {
+  "he_m": {
+   "citation": "Pour la zone 1AUe se rapportant à l'OAP2, la hauteur maximale des constructions est fixée à : 17 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "page_confirmee": 110,
+   "marqueur": "OVERRIDE OAP2 : 17 m égout (vs 12 m base UE). Hors OAP2 : renvoi UE 12 m."
+  },
+  "hf_m": {
+   "citation": "Pour la zone 1AUe se rapportant à l'OAP2 (...) 20 mètres au faîtage, 20 mètres (hauteur absolue) pour les toits terrasses végétalisés",
+   "page_confirmee": 110,
+   "marqueur": "OVERRIDE OAP2 : 20 m faîtage (vs 15 m base UE). Hors OAP2 : renvoi UE 15 m."
+  },
+  "emprise_sol_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UE : L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité foncière.",
+   "page_confirmee": 75,
+   "marqueur": "renvoi -> UE (chap. p107)"
+  },
+  "recul_voirie_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UE : Les constructions doivent être implantées en retrait de la voie, avec distance (D) (...) au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres.",
+   "page_confirmee": 73,
+   "marqueur": "renvoi -> UE (chap. p107)"
+  },
+  "recul_limites_sep_m": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UE : En cas de retrait de la construction, la distance (D) (...) au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)",
+   "page_confirmee": 74,
+   "marqueur": "renvoi -> UE (chap. p107)"
+  },
+  "pleine_terre_pct": {
+   "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UE : Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable comprenant des plantations",
+   "page_confirmee": 79,
+   "marqueur": "renvoi -> UE (chap. p107)"
+  }
+ }
+}
