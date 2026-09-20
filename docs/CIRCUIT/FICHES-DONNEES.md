@@ -1,6 +1,6 @@
 # FICHES — donnée par donnée (commune · annonce · propriétaire · soleil)
 
-*Généré du registre le 2026-09-19 par `labuse registre fiche autres` (même format que FICHE-PARCELLE-DONNEES.md, plus court).*
+*Généré du registre le 2026-09-20 par `labuse registre fiche autres` (même format que FICHE-PARCELLE-DONNEES.md, plus court).*
 
 # Fiche commune
 
@@ -50,6 +50,17 @@
 |---|---|---|---|---|---|---|---|
 | `ort_statut` | classe — domaine : acv, pvd, autre, hors | ACV / PVD / ORT | anct_ort (table DGALN vivante — 19 communes 974, 13 ORT signées) | passe-plat · src/labuse/ingestion/ort.py:ort_commune — table lue : commune_ort | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
 | | | *statut du dispositif de revitalisation de la commune (table DGALN) + convention ORT signée (date) + condition communale Denormandie DITE (le périmètre conventionné n'est pas publié)* | | | | | |
+
+## ZFANG / FRR (dispositifs fiscaux)
+
+*Robinet `fiche_commune_zfang_frr` — route `/communes/{commune} (clé zfang_frr)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `zfang_regime_commune` | classe — domaine : standard, renforce | ZFANG — régime de la commune | zfang (Décret n° 2026-421 du 29 mai 2026 (LF 2026, art. 18)) | passe-plat · src/labuse/territoire_fiscal.py:attributs_commune — table lue : territoire_fiscal_commune.zfang_regime | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *régime ZFANG de la commune (standard | renforcé) — passe-plat depuis territoire_fiscal_commune, la même source qui peint la carte des dispositifs et filtre les parcelles ; jamais recalculé* | | | | | |
+| `frr_classement_commune` | classe — domaine : totalite, partie, hors | FRR — classement de la commune | frr_ex_zrr (ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017 (Région)) | passe-plat · src/labuse/territoire_fiscal.py:attributs_commune — table lue : territoire_fiscal_commune.frr_classement | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *classement France Ruralités Revitalisation de la commune (totalité | partie (les Hauts) | hors) — passe-plat depuis territoire_fiscal_commune ; jamais recalculé* | | | | | |
 
 ## Règles d'urbanisme
 
@@ -116,6 +127,8 @@
 | | | *médiane DVF ventes strictes, filtre de retenue du baromètre* | | | | | |
 | `prix_neuf_vefa_acte_eur_m2` | nombre | Prix du neuf — VEFA à l'acte (€/m²) | dvf (géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020) | moteur `marche_service` · src/labuse/ingestion/dvf_marche.py:neuf_vefa_commune (via marche_service, profil neuf_vefa) | live | servie · non couverte (n sous seuil, dit) · non calculée | outil « Comparer des parcelles » · outil « Communes » · outil « Comparaison communes » |
 | | | *médiane VEFA déclarée à l'acte (neuf_vefa_commune, live, 36 mois) — USAGE RÉSERVÉ : le scoring (score_e) lit CET id ; affiché comparateur/communes/fiche commune sous libellé VEFA (scission 0-bis : ≠ prix_neuf_observe_eur_m2, jamais l'un sous le libellé de l'autre)* | | | | | |
+| `prix_neuf_observe_eur_m2` | nombre | Prix du neuf — observé (€/m²) | dvf (géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020) | moteur `marche_service` · src/labuse/ingestion/dvf_prix_neuf.py:resolve_prix_neuf_marche (servi par faisabilite/bilan.py:resolve_prix_sortie_servi) | live | servie · non couverte (n sous seuil, dit) · non calculée | fiche « Constructibilité » · PDF « Dossier banquier » |
+| | | *neuf observé ≤ 3 ans après achèvement (resolve_prix_neuf_marche : bassin sourcé > secteur > commune > repli île) — USAGE RÉSERVÉ : bilan et exports (fiche, PDF) lisent CET id (arbitrage Q3 ; scission 0-bis)* | | | | | |
 | `mutations_12m_n` | nombre | Mutations 12 mois | dvf (géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020) | moteur `commune_compteurs` · src/labuse/registre/moteurs/commune.py:mutations_12m | live | servie · non couverte (n sous seuil, dit) · non calculée | outil « Évolution du marché » |
 | | | *count dvf_mutations sur les 12 derniers mois DE DONNÉES (pas calendaire)* | | | | | |
 
@@ -203,6 +216,8 @@
 | | | *100 × vacants / logements (RP)* | | | | | |
 | `autres_loges_pct` | nombre | logés gratuitement | insee_rp_logement | moteur `commune_compteurs` · src/labuse/registre/moteurs/commune.py:autres_loges_pct | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *100 − locataires_pct − proprietaires_pct (INSEE RP), arrondi 0,1, plancher 0 — calculé au SERVEUR (lot 2.4, avant : ContextePanel.tsx:526)* | | | | | |
+| `parc_social_rpls_logements` | nombre | Parc social (logements RPLS) | rpls_sdes | passe-plat · src/labuse/api/app.py (marche_secteur — rpls_commune) — table lue : rpls_commune (nb_logements, construct_median) | live | servie · non couverte (n sous seuil, dit) · non calculée | fiche « Marché et secteur » |
+| | | *nombre de logements locatifs sociaux de la commune (RPLS SDES, millésime 01/01/2025) — contexte marché de la fiche commune, du Flash et du PDF, jamais un signal scoring* | | | | | |
 
 ## Quartiers prioritaires
 

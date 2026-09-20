@@ -1,0 +1,63 @@
+# COMMUNE-RANGEMENT-2 lot 5 — « Le territoire » : chaque ligne des cartes de la fiche commune,
+# déclarée avec sa CARTE (section). Modèle : declarations/fiche/. Libellé/définition = registre.
+surface:   fiche_commune_territoire
+nom:       "Le territoire"
+categorie: fiche_commune
+parent:    fiche_commune
+route:     "/communes/{c}/contexte"
+rendu:     cartes
+donnees:
+  - quoi:  mairie_coordonnees
+    ou:    { rang: 10, etat: en_tete, section: "Identité" }
+    comment: { libelle: "Mairie & service urbanisme (coordonnées)", format: texte, i: "adresse, téléphone, courriel et horaires de la mairie — champ manquant = ABSENT, jamais inventé" }
+    absence: "Mairie & service urbanisme (coordonnées) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le point de contact civique de la commune : mairie et service urbanisme."
+  - quoi:  iris_commune_quartiers
+    ou:    { rang: 20, etat: replie, section: "Identité" }
+    comment: { libelle: "Quartiers de la commune (IRIS)", format: liste, i: "l'affinage par quartier de la vérité communale : n IRIS, vacance min/médiane/max par IRIS (RP2022) — commune_insee_logement reste la vérité communale" }
+    absence: "Quartiers de la commune (IRIS) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "La commune n'est pas homogène : les quartiers IRIS en donnent le grain."
+  - quoi:  habitants_n
+    ou:    { rang: 30, etat: replie, section: "Population et logement" }
+    comment: { libelle: "Habitants", format: entier, i: "population INSEE/Filosofi commune" }
+    absence: "Habitants : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "La taille du marché résidentiel : combien d'habitants."
+  - quoi:  vacance_pct
+    ou:    { rang: 40, etat: replie, section: "Population et logement" }
+    comment: { libelle: "Vacance", format: pourcent, i: "100 × vacants / logements (RP)" }
+    absence: "Vacance : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "La vacance mesure la tension (ou le desserrement) du parc de logements."
+  - quoi:  autres_loges_pct
+    ou:    { rang: 50, etat: replie, section: "Population et logement" }
+    comment: { libelle: "logés gratuitement", format: pourcent, i: "100 − locataires_pct − proprietaires_pct (INSEE RP), arrondi 0,1, plancher 0 — calculé au SERVEUR (lot 2.4, avant : ContextePanel.tsx:526)" }
+    absence: "logés gratuitement : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "La structure d'occupation (part logés gratuitement) complète propriétaires/locataires."
+  - quoi:  parc_social_rpls_logements
+    ou:    { rang: 60, etat: replie, section: "Population et logement" }
+    comment: { libelle: "Parc social (logements RPLS)", format: entier, i: "nombre de logements locatifs sociaux de la commune (RPLS SDES, millésime 01/01/2025) — contexte marché de la fiche commune, du Flash et du PDF, jamais un signal scoring" }
+    absence: "Parc social (logements RPLS) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le parc social existant (RPLS) — le débouché LLS et son ampleur."
+  - quoi:  taux_lls_pct
+    ou:    { rang: 70, etat: replie, section: "Population et logement" }
+    comment: { libelle: "Taux LLS", format: pourcent, i: "taux LLS de l'inventaire SRU" }
+    absence: "Taux LLS : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le taux SRU : l'obligation de production sociale de la commune."
+  - quoi:  deficit_sru_pts
+    ou:    { rang: 80, etat: replie, section: "Population et logement" }
+    comment: { libelle: "Déficit SRU (objectif − taux LLS, points)", format: pourcent, i: "greatest(objectif_pct − taux_lls, 0) depuis commune_contexte_sru" }
+    absence: "Déficit SRU (objectif − taux LLS, points) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le déficit SRU (objectif − taux) : la pression de rattrapage social."
+  - quoi:  lls_inventaire_n
+    ou:    { rang: 90, etat: replie, section: "Population et logement" }
+    comment: { libelle: "Logements sociaux (inventaire SRU)", format: entier, i: "nombre de logements locatifs sociaux de l'inventaire SRU (effectif brut, detail->nb_lls)" }
+    absence: "Logements sociaux (inventaire SRU) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le nombre de logements sociaux inventoriés (SRU) : la base du taux."

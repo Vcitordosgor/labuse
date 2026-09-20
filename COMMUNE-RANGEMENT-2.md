@@ -139,3 +139,63 @@ ligne déclarée). Les blocs sur mesure (SRU, terrain nu, foncier, détail CatNa
 barres) sont tous repris. L'ancienne **grille d'outils** est dissoute : ses accès vivent dans les
 raccourcis (PLU/Communes/Étude de zone), les portes de cartes (Permis/Densifier/Radar en Shortcut) et
 le lien « Voir tous les outils → ». `tsc -b` vert.
+
+---
+
+## Lot 5 — tout par déclaration + verrou V5e
+
+Chaque ligne des 10 cartes est déclarée dans **`declarations/commune/`** (5 fichiers, un par groupe),
+sur le modèle de `declarations/fiche/` : `quoi` (id registre) · `ou {rang, etat, section=carte}` ·
+`comment {libelle, format, i}` · `absence` · `absence_type` · `pourquoi`. Générées depuis le registre
+(`qa/commune_rangement2_gen_declarations.py` — libellé/définition = `donnees.py`, une seule vérité) :
+**43 lignes** déclarées (Identité 2 · Population et logement 7 · Prix 5 · Activité 4 · Permis et rythme
+3 · Foncier et rareté 5 · Urbanisme 6 · Fiscalité et dispositifs 7 · Risques et contraintes 4).
+`registre.verifier()` : **0 violation de format**. Catégorie `fiche_commune` ajoutée à `CATEGORIES`.
+
+**Nouveau verrou `V5e`** (`circuit_verrous.verrou_fiche_commune_cartes`, groupe 5) — le pendant commune
+du `V5d` de la fiche parcelle : *« toute donnée à la maille commune servie sur la fiche commune
+(robinet `fiche_commune_*`) est déclarée dans `declarations/commune/` avec sa carte »*. Le neuf observé
+(`prix_neuf_observe_eur_m2`, lot 2) est ajouté au robinet `fiche_commune_prix` (couple multi-robinet
+couvert par `NON_SONDES` — scission neuf mesurée par `verifier_scission_neuf`).
+
+**Prouvé cassé → vert :**
+
+```
+V5e (déclarations masquées) : CASSÉ — 43 donnée(s) commune sans carte
+  - donnée commune « annonces_actives_n » servie sur la fiche sans carte déclarée
+  - … (43 câbles muets nommés)
+V5e (déclarations présentes) : OK — 43 données maille commune servies sur la fiche commune,
+                                    toutes déclarées avec une carte
+```
+
+Test : `tests/verrous/test_commune_cartes.py` (vert sur le registre réel · prouve cassé sur une donnée
+commune nue) — 2 tests verts, aux côtés des 2 tests V5d.
+
+---
+
+## Preuves globales
+
+- **`tsc -b` vert** à chaque lot.
+- **`labuse circuit verrous -w G8` vert** : **29 joués** (21 verrous + 8 garanties, V5e ajouté) —
+  « tout va bien », V5c/V5d/**V5e**/V6a ✓ ; G8 en avertissement non bloquant (environnemental,
+  pré-existant).
+- **`pytest tests/` complet — 0 échec NOUVEAU.** Établi par comparaison avec le commit de départ
+  `ce303410` (worktree, même base) : les 6 échecs registre-doc/infra restants
+  (`test_chaque_passe_plat_declare_sa_table`, `test_traçage_des_classes_pose`,
+  `test_graphe_exact_dans_les_deux_sens`, `test_decoupe_un_module_par_section`,
+  `test_f7_marche_ne_porte_plus_le_socio_eco`, `test_les_24_se_jouent_toujours_tous` — verrous lourds
+  V7a/V1b qui pendent sur l'infra) **échouent déjà sur `ce303410`**. `test_ops_healthz::test_jamais_vu`
+  est environnemental (cron `backup-postgres` « en_retard », sans rapport avec ce mandat). Les **2
+  seuls tests cassés par ce mandat** (V5e ajouté au registre des verrous) — `test_verrous_md_se_lit`
+  (VERROUS.md) et `test_lot6_porte::…couvre_tous_les_lots` (`len==21`) — plus le
+  `test_documents_commites` (doc `FICHES-DONNEES.md` régénérée pour les chiffres commune) sont
+  **corrigés et verts**. Verrou-liste `test_les_24` et count `test_la_commande` mis à jour pour V5e.
+
+## Captures
+
+`captures/commune-rangement2/{saint-denis,cilaos}/` — les **10 cartes dépliées** + le bandeau 6 chiffres,
+avant (`captures/commune-audit/` = fiche 19 cartes à `7b411d7b`) / après (10 cartes). Saint-Denis (ORT
+hors) et Cilaos (**sans QPV → carte Fiscalité « aucun quartier prioritaire »**). Script
+`frontend/qa/commune_rangement2_cap.mjs`.
+
+**« Ne merge pas. »**

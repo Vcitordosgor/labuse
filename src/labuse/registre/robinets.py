@@ -268,7 +268,9 @@ ROBINETS: dict[str, Robinet] = {
  "fiche_commune_plh": _r("fiche", "Programme local — PLH", "fiche_commune",
     "/communes/{c}/contexte", "json_puis_js", chiffres=("plh_objectif_logements_an",)),
  "fiche_commune_prix": _r("fiche", "Prix & tendance", "fiche_commune",
-    "/communes/{c}/contexte", "json_puis_js", chiffres=("prix_ancien_median_eur_m2", "prix_neuf_vefa_acte_eur_m2", "mutations_12m_n",)),
+    "/communes/{c}/contexte", "json_puis_js",
+    # COMMUNE-RANGEMENT-2 lot 2 — le neuf OBSERVÉ (commune) sert désormais la carte Prix aux côtés du VEFA à l'acte.
+    chiffres=("prix_ancien_median_eur_m2", "prix_neuf_vefa_acte_eur_m2", "prix_neuf_observe_eur_m2", "mutations_12m_n",)),
  "fiche_commune_terrain_nu": _r("fiche", "Terrain nu", "fiche_commune",
     "/communes/{c}/contexte", "json_puis_js", chiffres=("prix_terrain_zone_eur_m2",)),
  "fiche_commune_annonces": _r("fiche", "Annonces en cours — Radar", "fiche_commune",

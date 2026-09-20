@@ -610,8 +610,9 @@ NON_SONDES: dict[str, str] = {
                            "la sonde compare déjà HTTP/SQL/Copilote (chemins réels 0-bis)",
     "zone_plu_famille": "couche comparée par la catégorielle 4.1 ; PDF zonage par "
                         "recette_exports1 (nocturne)",
-    "prix_neuf_observe_eur_m2": "PDF banquier couvert par recette_exports1 ; la scission du "
-                                "neuf est mesurée par verifier_scission_neuf",
+    "prix_neuf_observe_eur_m2": "PDF banquier + fiche commune (carte Prix, COMMUNE-RANGEMENT-2) "
+                                "couverts par recette_exports1 ; la scission du neuf (observé vs VEFA "
+                                "acté) est mesurée par verifier_scission_neuf",
 }
 
 

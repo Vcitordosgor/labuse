@@ -1,0 +1,63 @@
+# COMMUNE-RANGEMENT-2 lot 5 — « Le marché » : chaque ligne des cartes de la fiche commune,
+# déclarée avec sa CARTE (section). Modèle : declarations/fiche/. Libellé/définition = registre.
+surface:   fiche_commune_marche
+nom:       "Le marché"
+categorie: fiche_commune
+parent:    fiche_commune
+route:     "/communes/{c}/contexte"
+rendu:     cartes
+donnees:
+  - quoi:  prix_ancien_median_eur_m2
+    ou:    { rang: 10, etat: en_tete, section: "Prix" }
+    comment: { libelle: "€/m² ancien", format: euro_m2, i: "médiane DVF ventes strictes, filtre de retenue du baromètre" }
+    absence: "€/m² ancien : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le prix de sortie de référence : la médiane de l'ancien, commune entière."
+  - quoi:  prix_neuf_vefa_acte_eur_m2
+    ou:    { rang: 20, etat: replie, section: "Prix" }
+    comment: { libelle: "Prix du neuf — VEFA à l'acte (€/m²)", format: euro_m2, i: "médiane VEFA déclarée à l'acte (neuf_vefa_commune, live, 36 mois) — USAGE RÉSERVÉ : le scoring (score_e) lit CET id ; affiché comparateur/communes/fiche commune sous libellé VEFA (" }
+    absence: "Prix du neuf — VEFA à l'acte (€/m²) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le neuf VEFA à l'acte : le prix affiché à la vente sur plan."
+  - quoi:  prix_neuf_observe_eur_m2
+    ou:    { rang: 30, etat: replie, section: "Prix" }
+    comment: { libelle: "Prix du neuf — observé (€/m²)", format: euro_m2, i: "neuf observé ≤ 3 ans après achèvement (resolve_prix_neuf_marche : bassin sourcé > secteur > commune > repli île) — USAGE RÉSERVÉ : bilan et exports (fiche, PDF) lisent CET id (arbi" }
+    absence: "Prix du neuf — observé (€/m²) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le neuf observé (ventes récentes) : notion scindée du VEFA, le prix constaté."
+  - quoi:  prix_terrain_zone_eur_m2
+    ou:    { rang: 40, etat: replie, section: "Prix" }
+    comment: { libelle: "Terrain nu (zone U / AU)", format: euro_m2, i: "médiane DVF terrain nu par famille de zone, seuil 10 ventes" }
+    absence: "Terrain nu (zone U / AU) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le coût du sol par zone U/AU : l'entrée du bilan promoteur."
+  - quoi:  loyer_median_eur_m2
+    ou:    { rang: 50, etat: replie, section: "Prix" }
+    comment: { libelle: "Loyer médian", format: euro_m2, i: "SOURCES-1 lot 5 — bascule CANONIQUE/REPLI : loyer OBSERVÉ de la zone OLL (ADIL 974/AGORAH) quand la commune tient dans UNE zone (16/24) ; sinon loyer d'ANNONCE DHUP (carte des loye" }
+    absence: "Loyer médian : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le loyer médian : le rendement locatif de sortie."
+  - quoi:  mutations_12m_n
+    ou:    { rang: 60, etat: replie, section: "Activité" }
+    comment: { libelle: "Mutations 12 mois", format: entier, i: "count dvf_mutations sur les 12 derniers mois DE DONNÉES (pas calendaire)" }
+    absence: "Mutations 12 mois : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le volume de mutations sur 12 mois : la liquidité du marché."
+  - quoi:  annonces_actives_n
+    ou:    { rang: 70, etat: replie, section: "Activité" }
+    comment: { libelle: "Biens en vente", format: entier, i: "count pige_biens actifs a_qualifier=false ; n<5 → NULL insuffisant" }
+    absence: "Biens en vente : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Les biens en vente (Radar) : l'offre du moment."
+  - quoi:  prix_demande_median_eur_m2
+    ou:    { rang: 80, etat: replie, section: "Activité" }
+    comment: { libelle: "Prix demandé (médiane)", format: euro_m2, i: "médiane des prix affichés terrain/bâti, n<5 masqué" }
+    absence: "Prix demandé (médiane) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le prix demandé médian : ce que les vendeurs affichent."
+  - quoi:  ecart_demande_acte_pct
+    ou:    { rang: 90, etat: replie, section: "Activité" }
+    comment: { libelle: "Écart demandé/acté", format: pourcent, i: "médiane demandé vs médiane DVF actée, servi dès SEUIL_N biens" }
+    absence: "Écart demandé/acté : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "L'écart demandé/acté : la marge de négociation, signal exclusif LABUSE."

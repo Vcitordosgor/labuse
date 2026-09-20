@@ -1,0 +1,87 @@
+# COMMUNE-RANGEMENT-2 lot 5 — « Les règles » : chaque ligne des cartes de la fiche commune,
+# déclarée avec sa CARTE (section). Modèle : declarations/fiche/. Libellé/définition = registre.
+surface:   fiche_commune_regles
+nom:       "Les règles"
+categorie: fiche_commune
+parent:    fiche_commune
+route:     "/communes/{c}/contexte"
+rendu:     cartes
+donnees:
+  - quoi:  statut_plu
+    ou:    { rang: 10, etat: en_tete, section: "Urbanisme" }
+    comment: { libelle: "Règles d'urbanisme (statut)", format: classe, i: "RNU (registre) l'emporte ; sinon statut du registre veille_plu" }
+    absence: "Règles d'urbanisme (statut) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le document opposable et son état : la règle qui s'applique."
+  - quoi:  part_zone_U_pct
+    ou:    { rang: 20, etat: replie, section: "Urbanisme" }
+    comment: { libelle: "Zonage — U", format: pourcent, i: "surface cadastrée U / surface zonée totale (somme=100 %)" }
+    absence: "Zonage — U : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "La part urbanisée (zone U) du territoire."
+  - quoi:  part_zone_AU_pct
+    ou:    { rang: 30, etat: replie, section: "Urbanisme" }
+    comment: { libelle: "Zonage — AU", format: pourcent, i: "surface AU / surface zonée" }
+    absence: "Zonage — AU : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "La part à urbaniser (zone AU) : la réserve foncière ouverte."
+  - quoi:  part_zone_A_pct
+    ou:    { rang: 40, etat: replie, section: "Urbanisme" }
+    comment: { libelle: "Zonage — A", format: pourcent, i: "surface A / surface zonée (Saint-Paul : 35,8 % — la part en PARCELLES vaut 17,8 %)" }
+    absence: "Zonage — A : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "La part agricole (zone A) du territoire."
+  - quoi:  part_zone_N_pct
+    ou:    { rang: 50, etat: replie, section: "Urbanisme" }
+    comment: { libelle: "Zonage — N", format: pourcent, i: "surface N / surface zonée (Saint-Paul : 47,2 % — la part en PARCELLES vaut 6,8 %)" }
+    absence: "Zonage — N : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "La part naturelle (zone N) du territoire."
+  - quoi:  plh_objectif_logements_an
+    ou:    { rang: 60, etat: replie, section: "Urbanisme" }
+    comment: { libelle: "Objectif logements/an", format: entier, i: "objectif PLH, chaque chiffre porte sa référence doc+page" }
+    absence: "Objectif logements/an : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "L'objectif de production du PLH intercommunal."
+  - quoi:  tfpb_taux_pct
+    ou:    { rang: 70, etat: replie, section: "Fiscalité et dispositifs" }
+    comment: { libelle: "Taxe foncière (taux TFPB)", format: pourcent, i: "taux de TFPB appliqué sur la commune (E12 du REI) + part EPCI (E32) + TEOM (F22) — impositions primitives, passe-plat du fichier DGFiP" }
+    absence: "Taxe foncière (taux TFPB) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "La taxe foncière sur le bâti (TFPB) : la charge portée par l'acquéreur."
+  - quoi:  tfpnb_taux_pct
+    ou:    { rang: 80, etat: replie, section: "Fiscalité et dispositifs" }
+    comment: { libelle: "Taxe foncière non bâti (taux TFPNB)", format: pourcent, i: "taux de TFPNB appliqué sur la commune (B12 du REI) + part EPCI (B32) — impositions primitives, passe-plat du fichier DGFiP (foncier non bâti = terrain)" }
+    absence: "Taxe foncière non bâti (taux TFPNB) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "La taxe foncière sur le non bâti (TFPNB) : la charge du terrain."
+  - quoi:  zonage_abc_logement
+    ou:    { rang: 90, etat: replie, section: "Fiscalité et dispositifs" }
+    comment: { libelle: "Zonage A/B/C (logement)", format: classe, i: "zone A/B/C du dispositif d'investissement locatif pour la commune (arrêté du 23/06/2026, en vigueur 26/06/2026 — passe-plat, jamais recalculé)" }
+    absence: "Zonage A/B/C (logement) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "La zone A/B/C : la classe de tension du dispositif d'investissement."
+  - quoi:  zfang_regime_commune
+    ou:    { rang: 100, etat: replie, section: "Fiscalité et dispositifs" }
+    comment: { libelle: "ZFANG — régime de la commune", format: classe, i: "régime ZFANG de la commune (standard | renforcé) — passe-plat depuis territoire_fiscal_commune, la même source qui peint la carte des dispositifs et filtre les parcelles ; jamais r" }
+    absence: "ZFANG — régime de la commune : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le régime ZFANG : l'avantage fiscal d'implantation d'activité."
+  - quoi:  frr_classement_commune
+    ou:    { rang: 110, etat: replie, section: "Fiscalité et dispositifs" }
+    comment: { libelle: "FRR — classement de la commune", format: classe, i: "classement France Ruralités Revitalisation de la commune (totalité | partie (les Hauts) | hors) — passe-plat depuis territoire_fiscal_commune ; jamais recalculé" }
+    absence: "FRR — classement de la commune : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Le classement FRR (ex-ZRR) : le dispositif de revitalisation rurale."
+  - quoi:  ort_statut
+    ou:    { rang: 120, etat: replie, section: "Fiscalité et dispositifs" }
+    comment: { libelle: "ACV / PVD / ORT", format: classe, i: "statut du dispositif de revitalisation de la commune (table DGALN) + convention ORT signée (date) + condition communale Denormandie DITE (le périmètre conventionné n'est pas publié" }
+    absence: "ACV / PVD / ORT : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "ACV / PVD / ORT : le dispositif de revitalisation, condition Denormandie."
+  - quoi:  qpv_n
+    ou:    { rang: 130, etat: replie, section: "Fiscalité et dispositifs" }
+    comment: { libelle: "QPV", format: entier, i: "count QPV intersectant la commune" }
+    absence: "QPV : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "Les quartiers prioritaires (QPV) : le zonage politique de la ville."
