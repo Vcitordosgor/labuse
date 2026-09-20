@@ -19,6 +19,54 @@ meta:
     : listes positives (silence = interdit) ; U/AU : silence = autorisé sauf Ut.'
 zones:
   Ua:
+    regles:
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: U 5
+          page_pdf: 10
+          citation: L'emprise au sol des constructions ne peut excéder 80 % du terrain.
+          statut: propose
+          raison: attribution douteuse (secteur None)
+      retraits:
+        voie:
+          min_m: null
+          article: U 6
+          page_pdf: 10
+          citation: 'L''implantation par rapport aux voies publiques ou privées n''est pas réglementée, sauf
+            dans les cas suivants : 1° Les constructions nouvelles doivent être implantées avec un recul minimum
+            de : - 7 mètres par rapport à l''axe de la rue George Pompidou ; - 5 mètres par rapport à l''axe
+            des rues Monfleury et Louis Brunet. [...] 2° Hors agglomération, les constructions doivent être
+            implantées avec un recul minimum de 75 mètres par rapport à l''axe des routes nationales.'
+          statut: propose
+          raison: attribution douteuse (secteur None)
+        limites_separatives:
+          min_m: null
+          article: U 7
+          page_pdf: 11
+          citation: 'Les bâtiments doivent être implantés : 1° Soit sur l''une ou sur les deux limites séparatives
+            latérales, 2° Soit avec un recul d''un mètre au moins.'
+          statut: propose
+          raison: valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: U 9
+          page_pdf: 13
+          citation: Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie
+            totale du terrain, qui doit être traités en surface perméable.
+          statut: propose
+          raison: attribution douteuse (secteur None)
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: U 12
+          page_pdf: 17
+          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par
+            logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place
+            visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences
+            universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          statut: valide
     silence: autorise
     silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative d''interdictions,
       pp. 5-7) puis Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause
@@ -78,6 +126,53 @@ zones:
       pente supérieure ou égale à 35° » (Art. U-8 2°, p. 12), protection du patrimoine bâti (Art. U-8 4°, p. 13).
       Les fiches annexes n°60 à 82 (pp. 97 sq.) sont des fiches d''immeubles patrimoniales : aucune règle de destination.'
   Ub:
+    regles:
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: U 5
+          page_pdf: 10
+          citation: L'emprise au sol des constructions ne peut excéder 80 % du terrain.
+          statut: propose
+          raison: attribution douteuse (secteur None)
+      retraits:
+        voie:
+          min_m: null
+          article: U 6
+          page_pdf: 11
+          citation: 'L''implantation par rapport aux voies publiques ou privées n''est pas réglementée, sauf
+            dans les cas suivants : [...] 2° Hors agglomération, les constructions doivent être implantées
+            avec un recul minimum de 75 mètres par rapport à l''axe des routes nationales.'
+          statut: propose
+          raison: valeur non numérique ('75 m axe RN hors agglomération (rues Pompidou/Montfleury/Brunet non
+            concernées en Ub)')
+        limites_separatives:
+          min_m: null
+          article: U 7
+          page_pdf: 11
+          citation: 'Les bâtiments doivent être implantés : 1° Soit sur l''une ou sur les deux limites séparatives
+            latérales, 2° Soit avec un recul d''un mètre au moins.'
+          statut: propose
+          raison: valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: U 9
+          page_pdf: 13
+          citation: Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie
+            totale du terrain, qui doit être traités en surface perméable.
+          statut: propose
+          raison: attribution douteuse (secteur None)
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: U 12
+          page_pdf: 17
+          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par
+            logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place
+            visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences
+            universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          statut: valide
     silence: autorise
     silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative, pp. 5-7) puis
       Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause « seules sont
@@ -119,6 +214,51 @@ zones:
       graphique, qui correspondent à un corridor écologique protégé (de part et d''autre de la ravine la Sourdine),
       toute construction est interdite. » (Art. U-2 7°, p. 7).'
   Ue:
+    regles:
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: U 5
+          page_pdf: 10
+          citation: L'emprise au sol des constructions ne peut excéder 80 % du terrain.
+          statut: propose
+          raison: attribution douteuse (secteur None)
+      retraits:
+        voie:
+          min_m: null
+          article: U 6
+          page_pdf: 11
+          citation: 2° Hors agglomération, les constructions doivent être implantées avec un recul minimum
+            de 75 mètres par rapport à l'axe des routes nationales.
+          statut: propose
+          raison: valeur non numérique ('75 m axe RN hors agglomération')
+        limites_separatives:
+          min_m: null
+          article: U 7
+          page_pdf: 11
+          citation: 'Les bâtiments doivent être implantés : 1° Soit sur l''une ou sur les deux limites séparatives
+            latérales, 2° Soit avec un recul d''un mètre au moins.'
+          statut: propose
+          raison: valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: U 9
+          page_pdf: 13
+          citation: Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie
+            totale du terrain, qui doit être traités en surface perméable.
+          statut: propose
+          raison: attribution douteuse (secteur None)
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: U 12
+          page_pdf: 17
+          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par
+            logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place
+            visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences
+            universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          statut: valide
     silence: autorise
     silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative, pp. 5-7) puis
       Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause « seules sont
@@ -163,6 +303,51 @@ zones:
       Ua et Ub) ; la colonne explicative (non opposable, p. 5) confirme que les industries sont attendues en Ue,
       mais aucune règle opposable de destination « industrie » n''est écrite pour Ue → non mentionnée (silence).'
   Up:
+    regles:
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: U 5
+          page_pdf: 10
+          citation: L'emprise au sol des constructions ne peut excéder 80 % du terrain.
+          statut: propose
+          raison: attribution douteuse (secteur None)
+      retraits:
+        voie:
+          min_m: null
+          article: U 6
+          page_pdf: 11
+          citation: 2° Hors agglomération, les constructions doivent être implantées avec un recul minimum
+            de 75 mètres par rapport à l'axe des routes nationales.
+          statut: propose
+          raison: valeur non numérique ('75 m axe RN hors agglomération')
+        limites_separatives:
+          min_m: null
+          article: U 7
+          page_pdf: 11
+          citation: 'Les bâtiments doivent être implantés : 1° Soit sur l''une ou sur les deux limites séparatives
+            latérales, 2° Soit avec un recul d''un mètre au moins.'
+          statut: propose
+          raison: valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: U 9
+          page_pdf: 13
+          citation: Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie
+            totale du terrain, qui doit être traités en surface perméable.
+          statut: propose
+          raison: attribution douteuse (secteur None)
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: U 12
+          page_pdf: 17
+          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par
+            logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place
+            visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences
+            universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          statut: valide
     silence: autorise
     silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative, pp. 5-7) puis
       Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause « seules sont
@@ -217,6 +402,51 @@ zones:
     - 'Règle spatiale : « En zones Up et Ub, dans les espaces hachurés en vert […] corridor écologique protégé (de
       part et d''autre de la ravine la Sourdine), toute construction est interdite. » (Art. U-2 7°, p. 7).'
   Ut:
+    regles:
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: U 5
+          page_pdf: 10
+          citation: L'emprise au sol des constructions ne peut excéder 80 % du terrain.
+          statut: propose
+          raison: attribution douteuse (secteur None)
+      retraits:
+        voie:
+          min_m: null
+          article: U 6
+          page_pdf: 11
+          citation: 2° Hors agglomération, les constructions doivent être implantées avec un recul minimum
+            de 75 mètres par rapport à l'axe des routes nationales.
+          statut: propose
+          raison: valeur non numérique ('75 m axe RN hors agglomération')
+        limites_separatives:
+          min_m: null
+          article: U 7
+          page_pdf: 11
+          citation: 'Les bâtiments doivent être implantés : 1° Soit sur l''une ou sur les deux limites séparatives
+            latérales, 2° Soit avec un recul d''un mètre au moins.'
+          statut: propose
+          raison: valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: U 9
+          page_pdf: 13
+          citation: Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie
+            totale du terrain, qui doit être traités en surface perméable.
+          statut: propose
+          raison: attribution douteuse (secteur None)
+      stationnement:
+        par_logement:
+          places: 1.0
+          article: U 12
+          page_pdf: 17
+          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par
+            logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place
+            visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences
+            universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. U-2 6° (p. 7) : « 6° En zone Ut : - Toutes les constructions à l''exception des équipements
       et hébergements touristiques et des constructions affectées au logement du personnel travaillant sur le site.

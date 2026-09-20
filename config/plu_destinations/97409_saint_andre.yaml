@@ -19,6 +19,57 @@ meta:
     liste des codes du zonage servi n''était pas consultable — DB indisponible) ; rapprochement au zonage à faire.'
 zones:
   UA:
+    regles:
+      hauteur:
+        egout:
+          m: 14.0
+          article: UA 10
+          page_pdf: 17
+          citation: 'La hauteur maximale des constructions est fixee a : - 14 metres a l''egout du toit ou
+            au sommet de l''acrotere,'
+          statut: valide
+        faitage:
+          m: 17.0
+          article: UA 10
+          page_pdf: 17
+          citation: '- 17 metres au faitage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UA 6
+          page_pdf: 15
+          citation: Toutefois, la facade principale de la construction ne doit pas etre implantee au-dela
+            d'une marge de recul de 4 metres parallele a la limite de la voie ou de l'emprise publique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UA 7
+          page_pdf: 15
+          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point
+            de la facade au point le plus proche de la limite laterale, doit etre au moins egale a 3 metres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: UA 12.2
+          page_pdf: 20
+          citation: 1 place de stationnement minimum par logement locatifs finances par un pret aide de l'Etat
+            ; 1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ;
+            1 place de stationnement minimum par logement situe a moins de 500m d'une gare routiere ; 1,5
+            places de stationnement minimum par logement d'une surface de plancher superieure ou egale a 50m2,
+            arrondi a l'entier inferieur.
+          statut: propose
+          raison: stationnement non chiffrable ("1 place min par logement (locatif aide, <50m2, ou <500m d'une
+            gare routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)")
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: UA 13.1
+          page_pdf: 21
+          citation: Au minimum 20% de la superficie totale de l'unite fonciere doit etre traite en espace
+            libre dont au moins la moitie en espace permeable.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UA 2.2, p.12 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article UA 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste
@@ -56,6 +107,22 @@ zones:
       « ni incommodité et ni aggravation des risques » — terme « activités » générique, non mappable à des sous-destinations
       précises → non écrit par sous-destination.'
   UA1:
+    regles:
+      hauteur:
+        egout:
+          m: 11.0
+          article: UA 10
+          page_pdf: 17
+          citation: 'En secteur UA1, la hauteur maximale des constructions est fixee a : - 11 metres a l''egout
+            du toit ou au sommet de l''acrotere,'
+          statut: valide
+        faitage:
+          m: 14.0
+          article: UA 10
+          page_pdf: 17
+          citation: 'En secteur UA1, la hauteur maximale des constructions est fixee a : ... - 14 metres au
+            faitage.'
+          statut: valide
     silence: autorise
     silence_src: 'Secteur de la zone UA (chapeau p.11 : « Il existe un secteur UA1 couvrant le quartier ancien autour
       de l''avenue Bourbon »). Les articles UA 1.2 (p.11) et UA 2.2 (p.12) s''appliquent sans distinction de secteur
@@ -89,6 +156,57 @@ zones:
     - Le secteur UA1 ne diffère de UA qu'aux articles UA 7.3 (implantation en fond de terrain, p.16), UA 10.2 (hauteurs
       11/14 m, p.17) et UA 11.2 (toitures-terrasses ≤ 40 %, p.18) — aucune règle de destination propre.
   UB:
+    regles:
+      hauteur:
+        egout:
+          m: 12.0
+          article: UB 10
+          page_pdf: 29
+          citation: 'La hauteur maximale des constructions est fixee a : - 12 metres a l''egout du toit ou
+            au sommet de l''acrotere,'
+          statut: valide
+        faitage:
+          m: 14.0
+          article: UB 10
+          page_pdf: 29
+          citation: '- 14 metres au faitage,'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 6.0
+          article: UB 6
+          page_pdf: 27
+          citation: Toutefois, la facade principale de la construction ne doit pas etre implantee au-dela
+            d'une marge de recul de 6 metres parallele a la limite de la voie ou de l'emprise publique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UB 7
+          page_pdf: 27
+          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point
+            de la facade au point le plus proche de la limite laterale, doit etre au moins egale 3 metres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: UB 12.2
+          page_pdf: 31
+          citation: 1 place de stationnement minimum par logement locatifs finances par un pret aide de l'Etat
+            ; 1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ;
+            1 place de stationnement minimum par logement situe a moins de 500m d'une gare routiere ; 1,5
+            places de stationnement minimum par logement d'une surface de plancher superieure ou egale a 50m2,
+            arrondi a l'entier inferieur.
+          statut: propose
+          raison: stationnement non chiffrable ("1 place min par logement (locatif aide, <50m2, ou <500m d'une
+            gare routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)")
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UB 13.1
+          page_pdf: 32
+          citation: Au minimum 30% de la superficie totale de l'unite fonciere doit etre traite en espace
+            libre dont au moins la moitie en espace permeable.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UB 2.2, p.24 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article UB 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste
@@ -134,6 +252,58 @@ zones:
     - 'Art. UB 2.1 al.3 (p.24) : bande de constructibilité interdite de 35 m de part et d''autre de la RN2 repérée
       aux documents graphiques (L.111-6 à L.111-8) — règle localisée, pas une règle de destination de zone.'
   UC:
+    regles:
+      hauteur:
+        egout:
+          m: 9.0
+          article: UC 10
+          page_pdf: 40
+          citation: 'La hauteur maximale des constructions est fixee a : - 9 metres a l''egout du toit ou
+            au sommet de l''acrotere,'
+          statut: valide
+        faitage:
+          m: 12.0
+          article: UC 10
+          page_pdf: 40
+          citation: '- 12 metres au faitage,'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UC 6
+          page_pdf: 38
+          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee
+            horizontalement de tout point de la facade au point le plus proche de la voie, au moins egale
+            a 4 metres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UC 7
+          page_pdf: 39
+          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point
+            de la facade au point le plus proche de la limite laterale, doit etre au moins egale a 3 metres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: UC 12.2
+          page_pdf: 42
+          citation: 1 place de stationnement minimum par logement locatifs finances par un pret aide de l'Etat
+            ; 1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ;
+            1 place de stationnement minimum par logement situe a moins de 500m d'une gare routiere ; 1,5
+            places de stationnement minimum par logement d'une surface de plancher superieure ou egale a 50m2,
+            arrondi a l'entier inferieur.
+          statut: propose
+          raison: stationnement non chiffrable ("1 place min par logement (locatif aide, <50m2, ou <500m d'une
+            gare routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)")
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: UC 13.1
+          page_pdf: 43
+          citation: Au minimum 40% de la superficie totale de l'unite fonciere doit etre traite en espace
+            libre dont au moins la moitie en espace permeable.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UC 2.2, p.35 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article UC 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste
@@ -187,6 +357,58 @@ zones:
     - 'Art. UC 2.2 al.4 (p.35) : « constructions à destination d''activités » sous condition de non-nuisance — terme
       générique, non mappable.'
   UD:
+    regles:
+      hauteur:
+        egout:
+          m: 6.0
+          article: UD 10
+          page_pdf: 51
+          citation: 'La hauteur maximale des constructions est fixee a : - 6 metres a l''egout du toit ou
+            au sommet de l''acrotere,'
+          statut: valide
+        faitage:
+          m: 10.0
+          article: UD 10
+          page_pdf: 51
+          citation: '- 10 metres au faitage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 6.0
+          article: UD 6
+          page_pdf: 49
+          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee
+            horizontalement de tout point de la facade au point le plus proche de la voie, au moins egale
+            a 6 metres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UD 7
+          page_pdf: 50
+          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point
+            de la facade au point le plus proche de la limite laterale, doit etre au moins egale 3 metres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: UD 12.2
+          page_pdf: 53
+          citation: 1 place de stationnement minimum par logement locatifs finances par un pret aide de l'Etat
+            ; 1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ;
+            1 place de stationnement minimum par logement situe a moins de 500m d'une gare routiere ; 1,5
+            places de stationnement minimum par logement d'une surface de plancher superieure ou egale a 50m2,
+            arrondi a l'entier inferieur.
+          statut: propose
+          raison: stationnement non chiffrable ("1 place min par logement (locatif aide, <50m2, ou <500m d'une
+            gare routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)")
+      pleine_terre:
+        pct:
+          pct: 50.0
+          article: UD 13.1
+          page_pdf: 54
+          citation: Au minimum 50% de la superficie totale de l'unite fonciere doit etre traite en espace
+            libre dont au moins la moitie en espace permeable.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UD 2.2, p.46 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article UD 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste
@@ -255,6 +477,50 @@ zones:
     - 'Art. UD 2.2 al.4 (p.46, première série) : « constructions à destination d''activités » sous condition de
       non-nuisance — terme générique, non mappable.'
   UE:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: UE 10
+          page_pdf: 63
+          citation: La hauteur maximale des constructions est fixee a 16 metres.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 6.0
+          article: UE 6
+          page_pdf: 61
+          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee
+            horizontalement de tout point de la facade au point le plus proche de la voie, au moins egale
+            a 6 metres.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: UE 7
+          page_pdf: 61
+          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point
+            de la facade au point le plus proche de la limite laterale, doit etre au moins egale a 4 metres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: UE 12.2
+          page_pdf: 65
+          citation: '1. Pour les constructions a destination de commerces et bureaux : ... 2. Pour les constructions
+            a destination d''activites artisanales ou industrielles : ... 3. Pour les constructions a usage
+            d''entrepot sans activite commerciale : 1 place de stationnement minimum pour 2 emplois. 4. Pour
+            les constructions et installations d''interet collectif : ...'
+          statut: propose
+          raison: stationnement non chiffrable ("Non reglemente pour l'habitation (normes UE 12.2 = commerces/bureaux,
+            artisanat/industrie, entrepots, equipements ; pas de norme logement)")
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: UE 13.1
+          page_pdf: 66
+          citation: Au minimum 20% de la superficie totale de l'unite fonciere doit etre traite en espace
+            libre dont au moins la moitie en espace permeable.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UE 2.2, p.58 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article UE 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste
@@ -375,6 +641,47 @@ zones:
     - 'Art. UE 1.2 al.5-6 (p.57) et UE 2.2 al.1-2 (p.58) : secteurs d''aléa fort recul du trait de côte / submersion
       marine — règles localisées aux documents graphiques.'
   US:
+    regles:
+      hauteur:
+        faitage:
+          m: 16.0
+          article: US 10
+          page_pdf: 74
+          citation: La hauteur maximale des constructions est fixee a 16 metres.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: US 6
+          page_pdf: 71
+          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee
+            horizontalement de tout point de la facade au point le plus proche de la voie, au moins egale
+            a 3 metres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: US 7
+          page_pdf: 72
+          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point
+            de la facade au point le plus proche de la limite laterale, doit etre au moins egale a 3 metres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: US 12.2
+          page_pdf: 76
+          citation: '1. Pour les constructions a destination d''habitation autorisees dans la zone : 1 place
+            de stationnement minimum par logement.'
+          statut: propose
+          raison: stationnement non chiffrable ('1 place min par logement')
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: US 13.1
+          page_pdf: 77
+          citation: Au minimum 30% de la superficie totale de l'unite fonciere doit etre traite en espace
+            libre dont au moins la moitie en espace permeable.
+          statut: valide
     silence: autorise
     silence_src: 'Art. US 2.2, p.69 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article US 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste
@@ -420,6 +727,54 @@ zones:
     - « À usage d'habitation » mappé au seul logement ; « hébergement » (foyers, résidences) non nommé — douteux
       → non écrit.
   UT:
+    regles:
+      hauteur:
+        egout:
+          m: 9.0
+          article: UT 10
+          page_pdf: 84
+          citation: 'La hauteur maximale des constructions est fixee a : - 9 metres a l''egout du toit ou
+            au sommet de l''acrotere,'
+          statut: valide
+        faitage:
+          m: 12.0
+          article: UT 10
+          page_pdf: 84
+          citation: '- 12 metres au faitage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 6.0
+          article: UT 6
+          page_pdf: 82
+          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee
+            horizontalement de tout point de la facade au point le plus proche de la voie, au moins egale
+            a 6 metres.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: UT 7
+          page_pdf: 83
+          citation: Les constructions doivent etre implantees en retrait des limites laterales et des limites
+            de fond de propriete. Le retrait ... doit etre au minimum de 4 metres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: null
+          article: UT 12.2
+          page_pdf: 85
+          citation: '1. Pour les constructions a destination d''habitation autorisees dans la zone : 1 place
+            de stationnement minimum par logement.'
+          statut: propose
+          raison: stationnement non chiffrable ('1 place min par logement')
+      pleine_terre:
+        pct:
+          pct: 50.0
+          article: UT 13.1
+          page_pdf: 86
+          citation: Au minimum 50% de la superficie totale de l'unite fonciere doit etre traite en espace
+            vert et permeable comprenant des plantations et devant recevoir un traitement paysager.
+          statut: valide
     silence: interdit
     silence_src: 'Art. UT 1.2, p.79 : « Sont interdits toutes les constructions, ouvrages et travaux à l''exception
       de ceux visés à l''article UT 2.2. » — seules les occupations listées à l''art. UT 2.2 (p.80) sont admises.'

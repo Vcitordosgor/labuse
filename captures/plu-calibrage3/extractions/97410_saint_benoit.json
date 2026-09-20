@@ -1,0 +1,187 @@
+{
+  "Ua": {
+    "emprise_sol_pct": {
+      "valeur": 80,
+      "article": "U 5",
+      "page_pdf": 10,
+      "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+      "marqueur": "base (art. U 5 applicable à toutes les zones U)"
+    },
+    "recul_voirie_m": {
+      "valeur": "7 m axe rue George Pompidou ; 5 m axe rues Montfleury et Louis Brunet ; 75 m axe RN hors agglomération",
+      "article": "U 6",
+      "page_pdf": 10,
+      "citation": "L'implantation par rapport aux voies publiques ou privées n'est pas réglementée, sauf dans les cas suivants : 1° Les constructions nouvelles doivent être implantées avec un recul minimum de : - 7 mètres par rapport à l'axe de la rue George Pompidou ; - 5 mètres par rapport à l'axe des rues Monfleury et Louis Brunet. [...] 2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+      "marqueur": "base (art. U 6 ; hors ces rues/RN : non réglementé)"
+    },
+    "recul_limites_sep_m": {
+      "valeur": "sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m",
+      "article": "U 7",
+      "page_pdf": 11,
+      "citation": "Les bâtiments doivent être implantés : 1° Soit sur l'une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d'un mètre au moins.",
+      "marqueur": "base (art. U 7 applicable à toutes les zones U)"
+    },
+    "pleine_terre_pct": {
+      "valeur": 20,
+      "article": "U 9",
+      "page_pdf": 13,
+      "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+      "marqueur": "base (art. U 9 applicable à toutes les zones U)"
+    },
+    "stat_logement": {
+      "valeur": "1 place / logement (individuel ou opération ≤5 logements) ; opération >5 logements : 1 place/logement + 1 place visiteur / 5 lots ou logements ; logements aidés : 1 place / 2 logements ; résidences universitaires et personnes âgées : 1 place / 3 logements ou chambres",
+      "article": "U 12",
+      "page_pdf": "16-17",
+      "citation": "Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.",
+      "marqueur": "base (art. U 12 ; barème logement identique toutes zones U)"
+    }
+  },
+  "Ub": {
+    "emprise_sol_pct": {
+      "valeur": 80,
+      "article": "U 5",
+      "page_pdf": 10,
+      "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+      "marqueur": "base (art. U 5 applicable à toutes les zones U)"
+    },
+    "recul_voirie_m": {
+      "valeur": "75 m axe RN hors agglomération (rues Pompidou/Montfleury/Brunet non concernées en Ub)",
+      "article": "U 6",
+      "page_pdf": "10-11",
+      "citation": "L'implantation par rapport aux voies publiques ou privées n'est pas réglementée, sauf dans les cas suivants : [...] 2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+      "marqueur": "base (art. U 6 ; hors RN : non réglementé)"
+    },
+    "recul_limites_sep_m": {
+      "valeur": "sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m",
+      "article": "U 7",
+      "page_pdf": 11,
+      "citation": "Les bâtiments doivent être implantés : 1° Soit sur l'une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d'un mètre au moins.",
+      "marqueur": "base (art. U 7 applicable à toutes les zones U)"
+    },
+    "pleine_terre_pct": {
+      "valeur": 20,
+      "article": "U 9",
+      "page_pdf": 13,
+      "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+      "marqueur": "base (art. U 9 applicable à toutes les zones U)"
+    },
+    "stat_logement": {
+      "valeur": "1 place / logement (individuel ou opération ≤5 logements) ; opération >5 logements : 1 place/logement + 1 place visiteur / 5 lots ou logements ; logements aidés : 1 place / 2 logements ; résidences universitaires et personnes âgées : 1 place / 3 logements ou chambres",
+      "article": "U 12",
+      "page_pdf": "16-17",
+      "citation": "Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.",
+      "marqueur": "base (art. U 12 ; barème logement identique toutes zones U)"
+    }
+  },
+  "Ue": {
+    "emprise_sol_pct": {
+      "valeur": 80,
+      "article": "U 5",
+      "page_pdf": 10,
+      "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+      "marqueur": "base (art. U 5 applicable à toutes les zones U)"
+    },
+    "recul_voirie_m": {
+      "valeur": "75 m axe RN hors agglomération",
+      "article": "U 6",
+      "page_pdf": "10-11",
+      "citation": "2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+      "marqueur": "base (art. U 6 ; hors RN : non réglementé)"
+    },
+    "recul_limites_sep_m": {
+      "valeur": "sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m",
+      "article": "U 7",
+      "page_pdf": 11,
+      "citation": "Les bâtiments doivent être implantés : 1° Soit sur l'une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d'un mètre au moins.",
+      "marqueur": "base (art. U 7 applicable à toutes les zones U)"
+    },
+    "pleine_terre_pct": {
+      "valeur": 20,
+      "article": "U 9",
+      "page_pdf": 13,
+      "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+      "marqueur": "base (art. U 9 applicable à toutes les zones U)"
+    },
+    "stat_logement": {
+      "valeur": "1 place / logement (individuel ou opération ≤5 logements) ; opération >5 logements : 1 place/logement + 1 place visiteur / 5 lots ou logements ; logements aidés : 1 place / 2 logements ; résidences universitaires et personnes âgées : 1 place / 3 logements ou chambres",
+      "article": "U 12",
+      "page_pdf": "16-17",
+      "citation": "Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.",
+      "marqueur": "base (art. U 12 ; barème logement identique toutes zones U)"
+    }
+  },
+  "Up": {
+    "emprise_sol_pct": {
+      "valeur": 80,
+      "article": "U 5",
+      "page_pdf": 10,
+      "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+      "marqueur": "base (art. U 5 applicable à toutes les zones U)"
+    },
+    "recul_voirie_m": {
+      "valeur": "75 m axe RN hors agglomération",
+      "article": "U 6",
+      "page_pdf": "10-11",
+      "citation": "2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+      "marqueur": "base (art. U 6 ; hors RN : non réglementé)"
+    },
+    "recul_limites_sep_m": {
+      "valeur": "sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m",
+      "article": "U 7",
+      "page_pdf": 11,
+      "citation": "Les bâtiments doivent être implantés : 1° Soit sur l'une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d'un mètre au moins.",
+      "marqueur": "base (art. U 7 applicable à toutes les zones U)"
+    },
+    "pleine_terre_pct": {
+      "valeur": 20,
+      "article": "U 9",
+      "page_pdf": 13,
+      "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+      "marqueur": "base (art. U 9 applicable à toutes les zones U)"
+    },
+    "stat_logement": {
+      "valeur": "1 place / logement (individuel ou opération ≤5 logements) ; opération >5 logements : 1 place/logement + 1 place visiteur / 5 lots ou logements ; logements aidés : 1 place / 2 logements ; résidences universitaires et personnes âgées : 1 place / 3 logements ou chambres",
+      "article": "U 12",
+      "page_pdf": "16-17",
+      "citation": "Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.",
+      "marqueur": "base (art. U 12 ; barème logement identique toutes zones U)"
+    }
+  },
+  "Ut": {
+    "emprise_sol_pct": {
+      "valeur": 80,
+      "article": "U 5",
+      "page_pdf": 10,
+      "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+      "marqueur": "base (art. U 5 applicable à toutes les zones U)"
+    },
+    "recul_voirie_m": {
+      "valeur": "75 m axe RN hors agglomération",
+      "article": "U 6",
+      "page_pdf": "10-11",
+      "citation": "2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+      "marqueur": "base (art. U 6 ; hors RN : non réglementé)"
+    },
+    "recul_limites_sep_m": {
+      "valeur": "sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m",
+      "article": "U 7",
+      "page_pdf": 11,
+      "citation": "Les bâtiments doivent être implantés : 1° Soit sur l'une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d'un mètre au moins.",
+      "marqueur": "base (art. U 7 applicable à toutes les zones U)"
+    },
+    "pleine_terre_pct": {
+      "valeur": 20,
+      "article": "U 9",
+      "page_pdf": 13,
+      "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+      "marqueur": "base (art. U 9 applicable à toutes les zones U)"
+    },
+    "stat_logement": {
+      "valeur": "1 place / logement (individuel ou opération ≤5 logements) ; opération >5 logements : 1 place/logement + 1 place visiteur / 5 lots ou logements ; logements aidés : 1 place / 2 logements ; résidences universitaires et personnes âgées : 1 place / 3 logements ou chambres",
+      "article": "U 12",
+      "page_pdf": "16-17",
+      "citation": "Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.",
+      "marqueur": "base (art. U 12 ; barème logement identique toutes zones U)"
+    }
+  }
+}

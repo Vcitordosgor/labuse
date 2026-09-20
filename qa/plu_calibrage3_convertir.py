@@ -140,5 +140,74 @@ def convertir(insee: str, slug: str, citations_path: str) -> dict:
     return stats
 
 
+def convertir_extraction(insee: str, ext_path: str) -> dict:
+    """EXTRACTION fraîche (communes sans ancien plu_<slug> : Saint-André/Leu/Benoît). Le JSON
+    `ext_path` porte, par zone×champ : {valeur, article, page_pdf, citation, marqueur}. Même gate
+    que la conversion préservante (citation retrouvée ± fenêtre, attribution, valeur↔citation) :
+    valide si tout passe, sinon propose + raison."""
+    ext = json.loads(Path(ext_path).read_text(encoding="utf-8"))
+    dest = D._fichier_commune(insee)
+    meta = (D._load_yaml(str(dest)).get("meta") or {})
+    pdf = fitz.open(str(Path("data/plu_reglements") / meta["document"]))
+    stats = {"valide": 0, "propose": 0}
+    regles_par_zone: dict[str, dict] = {}
+    for zone, champs in ext.items():
+        regles: dict = {}
+        for champ, info in (champs or {}).items():
+            if champ not in MAP or not isinstance(info, dict):
+                continue
+            rub, feuille, cle, coerce = MAP[champ]
+            art = str(info.get("article") or "").strip()
+            page_c = info.get("page_pdf")
+            if not isinstance(page_c, int):
+                m = re.search(r"\d+", str(page_c or ""))
+                page_c = int(m.group()) if m else None
+            citation = info.get("citation")
+            raison = None
+            val_ok = True
+            if coerce == "places":
+                v = _places(info.get("valeur"))
+                if v is None:
+                    val_ok, raison = False, f"stationnement non chiffrable ({info.get('valeur')!r})"
+            else:
+                try:
+                    v = coerce(info.get("valeur"))
+                except (TypeError, ValueError):
+                    v, val_ok, raison = None, False, f"valeur non numérique ({info.get('valeur')!r})"
+            att = "general"
+            if not citation or citation == "INTROUVABLE":
+                val_ok, raison = False, raison or "citation absente"
+            else:
+                best = (0.0, page_c, "", 0)
+                for cand in range(max(1, (page_c or 1) - 3), min(pdf.page_count, (page_c or 1) + 3) + 1):
+                    txt = pdf.load_page(cand - 1).get_text()
+                    _e, sc, bi = _extrait_autour(txt, citation)
+                    if sc > best[0]:
+                        best = (sc, cand, txt, bi)
+                sc, page_c, txt, bi = best
+                _m, att = _attribution(txt, citation, zone, bi)
+                if sc < 0.5:
+                    val_ok, raison = False, f"citation non retrouvée (recouvrement {sc:.0%})"
+                elif att == "misattribue":
+                    val_ok, raison = False, f"attribution douteuse (secteur {_m})"
+                elif val_ok and v is not None and (coerce is float or coerce == "places"):
+                    cands = {str(v), re.sub(r"\.0$", "", str(v)), str(v).replace(".", ",")}
+                    if not any(re.search(re.escape(c).replace(",", "[.,]"), citation) for c in cands):
+                        val_ok, raison = False, f"valeur {v:g} absente de la citation"
+            fe = {cle: v, "article": art, "page_pdf": page_c, "citation": citation or "(à relire)",
+                  "statut": "valide" if (val_ok and citation and citation != "INTROUVABLE") else "propose"}
+            if fe["statut"] == "propose" and raison:
+                fe["raison"] = raison
+            stats[fe["statut"]] += 1
+            regles.setdefault(rub, {})[feuille] = fe
+        if regles:
+            regles_par_zone[zone] = regles
+    X._ecrire_regles(dest, regles_par_zone)
+    D._load_yaml.cache_clear()
+    print(f"{insee} (extraction) : {stats['valide']} valide · {stats['propose']} propose "
+          f"· {len(regles_par_zone)} zones")
+    return stats
+
+
 if __name__ == "__main__":
     convertir(sys.argv[1], sys.argv[2], sys.argv[3])
