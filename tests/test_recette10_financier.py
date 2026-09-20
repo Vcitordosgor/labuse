@@ -85,7 +85,8 @@ def test_t5_prix_bailleur_plausible_passe():
 # ── T2b — le tri des questions (garder/affiner/supprimer) ─────────────────────────────────────
 def test_t2b_tri_des_questions():
     from labuse import financier_questionnaire as qf
-    assert qf.tri_champ("prix_sortie_saisi_eur_m2") == "garder"
+    # EXPORTS-REBRANCHEMENT-2 lot 2 — prix de sortie pré-rempli (DVF) → hypothèse avancée « affiner ».
+    assert qf.tri_champ("prix_sortie_saisi_eur_m2") == "affiner"
     assert qf.tri_champ("regime_tva_saisi") == "garder"
     assert qf.tri_champ("aleas_saisi_pct") == "affiner"
 
@@ -96,7 +97,8 @@ def test_t2b_scenario_franchement_retire():
     from labuse import financier_questionnaire as qf
     from labuse.exports.blocs import financier as fbloc
     assert "scenario_saisi" not in qf.CHAMPS                          # plus une question (aucune étape)
-    assert "scenario_saisi" not in dict(qf.ECRANS)["Votre projet"]    # plus à l'étape 1
+    # EXPORTS-REBRANCHEMENT-2 lot 2 — un SEUL écran (« Votre opération ») ; scénario absent de ses champs.
+    assert "scenario_saisi" not in dict(qf.ECRANS)["Votre opération"]
     assert "scenario_saisi" not in qf.prefill({"potentiel_transformation": {"capacite_estimee": 8}})
     resolved = qf.resoudre({}, qf.prefill({"potentiel_transformation": {"capacite_estimee": 8}}))
     assert "scenario_saisi" not in resolved                            # plus résolu → plus servi
