@@ -3337,7 +3337,10 @@ _HASH_STR = {"fx": "flags_exclus", "cs": "communes", "zf": "zonage", "sv": "sign
              "zfa": "zfang", "frr": "frr"}   # FILTRES-FIX-1 (lot 1) — ZFANG/FRR évalués par la veille (même moteur que la carte)
 #: dimensions du hash RÉELLEMENT évaluables (les seules connues du mappage) — pour l'annonce
 #: « cette veille surveille : … » et le signalement de ce qui n'est PAS retenu (KO-7 point 2).
-DIMENSIONS_VEILLE_EVALUABLES = frozenset({"tv", *_HASH_NUM, *_HASH_BOOL, *_HASH_STR})
+#: FILTRES-FIX-1 (lot 3) — `mm` (multiplicateur min) EST appliqué par filtre_from_hash (branche
+#: dédiée `mult_min`) : il est donc évaluable, plus jamais étiqueté « non évaluable » alors qu'il
+#: filtre. Il figure déjà dans _DIM_LABELS → annoncé dans « cette veille surveille : … ».
+DIMENSIONS_VEILLE_EVALUABLES = frozenset({"tv", "mm", *_HASH_NUM, *_HASH_BOOL, *_HASH_STR})
 
 
 def filtre_from_hash(hash_str: str) -> "FiltreCriteres":
