@@ -1,0 +1,1613 @@
+# PLU-CALIBRAGE-4 — métadonnée de zonage migrée hors des plu_<slug>.yaml (généré par
+# qa/plu_calibrage4_migrer_zonage.py). Les règles chiffrées sont dans plu_destinations.
+'97401':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: les_avirons
+  zones:
+    AUa:
+      bassin: Les Avirons
+    AUc:
+      bassin: Les Avirons
+    AUd:
+      bassin: Les Avirons
+    AUec:
+      bassin: Les Avirons
+      habitat: interdit
+    AUt:
+      bassin: Les Avirons
+      habitat: interdit
+    Ua:
+      bassin: Les Avirons
+    Ub:
+      bassin: Les Avirons
+    Ub1:
+      bassin: Les Avirons
+    Ub2:
+      bassin: Les Avirons
+    Ub3:
+      bassin: Les Avirons
+    Ub4:
+      bassin: Les Avirons
+      habitat: interdit
+    Uc:
+      bassin: Les Avirons
+    Uc1:
+      bassin: Les Avirons
+    Uc3:
+      bassin: Les Avirons
+    Ud:
+      bassin: Les Avirons
+    Ud1:
+      bassin: Les Avirons
+    Ud2:
+      bassin: Les Avirons
+      habitat: interdit
+    Ud3:
+      bassin: Les Avirons
+    Ue:
+      bassin: Les Avirons
+      habitat: interdit
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste:
+    - AUes
+    - Ub5
+    portee: 'Construction neuve de logement impossible : AUes gelée (ouverture à l''urbanisation conditionnée
+      à une modification du PLU après études préalables ; seuls réseaux, ouvrages techniques, reconstruction
+      après sinistre et extension de mise aux normes 20 m² SDP admis) ; Ub5 non aedificandi (chemins piétons
+      et voies d''entretien des ravines uniquement).'
+    source: Art. AUes 1.2 et AUes 2, p.42 ; Art. AUes 10, p.43 ; Art. U 1.2, p.7 et Art. U 2.2, p.8 (secteur
+      Ub5).
+  zones_non_constructibles:
+  - A (chap. p.44-49)
+  - N, Nli, Npnr, Nr, Nto (chap. p.50-56)
+'97402':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: bras_panon
+  zones:
+    1AUa:
+      bassin: Bras-Panon
+    1AUb:
+      bassin: Bras-Panon
+    1AUc:
+      bassin: Bras-Panon
+    1AUd:
+      bassin: Bras-Panon
+    1AUe:
+      bassin: Bras-Panon
+      habitat: interdit
+    1AUec:
+      bassin: Bras-Panon
+      habitat: interdit
+    1AUt:
+      bassin: Bras-Panon
+      habitat: interdit
+    Ua:
+      bassin: Bras-Panon
+    Ub:
+      bassin: Bras-Panon
+    Uba:
+      bassin: Bras-Panon
+    Uc:
+      bassin: Bras-Panon
+    Ud:
+      bassin: Bras-Panon
+    Udu:
+      bassin: Bras-Panon
+      habitat: interdit
+    Ue:
+      bassin: Bras-Panon
+      habitat: interdit
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste:
+    - 2AUa
+    - 2AUb
+    - 2AUc
+    - 2AUec
+    - AUst
+    portee: 'Construction neuve non autorisée en l''état : 2AUa/2AUb/2AUc/2AUec = extension urbaine SAR,
+      ouverture conditionnée à l''engagement de l''aménagement de TOUTES les 1AUindicée du pôle urbain
+      SAR de référence (Art. AUINDICEE 2.2.3, p.76) ; AUst = urbanisation future gelée, ouverture conditionnée
+      à une MODIFICATION du PLU (réseaux et accès insuffisants, études préalables requises), seuls admis
+      réseaux/ouvrages techniques/extension mineure <= 20 m² SDP (Art. AUst 1.2, p.80 et 2.2, p.81). Le
+      manifeste ne compte AUCUN polygone 2AUd, 2AUe ni 2AUt.'
+    source: 'Art. AUINDICEE 2.2.3, p.76 ; ZONE AUst : Art. AUst 1.2, p.80 et Art. AUst 2.2, p.81.'
+  zones_non_constructibles:
+  - A, Acu (chap. p.84-92)
+  - N, Nli, Npnr, Nr, Nsc, Nt2, Nt3, Nup (chap. p.94-103)
+'97403':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: entre_deux
+  zones:
+    AUb:
+      bassin: Entre-Deux
+    Ua:
+      bassin: Entre-Deux
+    Ub:
+      bassin: Entre-Deux
+    Ub1:
+      bassin: Entre-Deux
+    Ub2:
+      bassin: Entre-Deux
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste:
+    - AUst
+    portee: 'Réseaux et accès insuffisants — ouverture à l''urbanisation conditionnée à une modification
+      du PLU : construction neuve non autorisée en l''état.'
+    source: IV — caractère des zones AU, p.29.
+  zones_non_constructibles:
+  - A, Aba (V, zones agricoles)
+  - N, Nci, Npnr, Nr, Nstep, Nt (VI, zones naturelles)
+'97404':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: l_etang_sale
+  zones:
+    AUa:
+      bassin: L'Étang-Salé
+    AUb:
+      bassin: L'Étang-Salé
+    AUc:
+      bassin: L'Étang-Salé
+    AUe:
+      bassin: L'Étang-Salé
+      habitat: interdit
+    AUt:
+      bassin: L'Étang-Salé
+      habitat: interdit
+    UA:
+      bassin: L'Étang-Salé
+    UB:
+      bassin: L'Étang-Salé
+    UBv:
+      bassin: L'Étang-Salé
+    UC:
+      bassin: L'Étang-Salé
+    UD:
+      bassin: L'Étang-Salé
+    UE:
+      bassin: L'Étang-Salé
+      habitat: interdit
+    UT:
+      bassin: L'Étang-Salé
+      habitat: interdit
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste:
+    - AUs
+    portee: 'Réserve d''urbanisation à long terme : seuls ouvrages techniques/réseaux admis — construction
+      neuve non autorisée en l''état.'
+    source: Caractère de zone AU (p.76-77) + AU 1.2 clause 11, p.77.
+  zones_non_constructibles:
+  - A, Acu (chap. p.91-100)
+  - N, Na, Nce, Ne, Nep, Nerl, Nparc, Nt, Nt1 (chap. p.101+)
+'97405':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: petite_ile
+  zones:
+    1AU:
+      bassin: Petite-Île
+    1AUa:
+      bassin: Petite-Île
+    1AUz:
+      bassin: Petite-Île
+    AUE:
+      bassin: Petite-Île
+      habitat: interdit
+    AUT:
+      bassin: Petite-Île
+      habitat: interdit
+    AUs:
+      bassin: Petite-Île
+      habitat: interdit
+    UB:
+      bassin: Petite-Île
+    UC:
+      bassin: Petite-Île
+    UCe:
+      bassin: Petite-Île
+    UD:
+      bassin: Petite-Île
+    UDe:
+      bassin: Petite-Île
+    UE:
+      bassin: Petite-Île
+      habitat: interdit
+    UEa:
+      bassin: Petite-Île
+      habitat: interdit
+    UT:
+      bassin: Petite-Île
+      habitat: interdit
+    UZ:
+      bassin: Petite-Île
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste:
+    - 2AU
+    - 2AUe
+    - UF
+    - UFcim
+    - AUF
+    portee: 'Capacité logement nulle. 2AU/2AUe : zones gelées (« les possibilités de construire sont nulles
+      », p.140), ouverture après urbanisation de l''ensemble des 1AU/1AUa + assainissement collectif Ville
+      Relais SAR + modification/révision du PLU.'
+    source: Chapeau ZONE 2AU + Art. 2 AU.1, p.140.
+  zones_habitat_interdit_sans_hauteur:
+    AUF:
+      bassin: Petite-Île
+      emprise_sol_pct: null
+      emprise_src: Art. AUF.9, p.119
+      habitat: interdit
+      habitat_src: Art. AUF.1/2, p.116-118 (équipements — habitation limitée aux logements de gardiennage/surveillance)
+      hauteur_note: 'Comme UF : hauteur par schéma, aucune valeur chiffrée.'
+      hauteur_src: Art. AUF.10, p.120
+      he_m: a_verifier
+      hf_m: a_verifier
+      pleine_terre_pct: 20
+      pleine_terre_src: Art. AUF.13, p.121
+      recul_limites_sep_m: a_verifier
+      recul_limites_src: Art. AUF.7, p.119
+      recul_voirie_m: 4
+      recul_voirie_src: Art. AUF.6, p.119
+      stat_logement: null
+      stat_note: Sans objet.
+      stat_src: Art. AUF.12, p.121
+    UF:
+      bassin: Petite-Île
+      emprise_sol_pct: null
+      emprise_src: Art. UF.9, p.69 (« Non règlementé sous réserve … UF.13 »)
+      habitat: interdit
+      habitat_src: 'Art. UF.1/2, p.66-68 : habitation interdite sauf logements des employés/gardiennage/surveillance'
+      hauteur_note: « La hauteur autorisée des constructions sera réglementée en fonction du terrain naturel
+        avant travaux (voir schéma) » — aucune valeur chiffrée hors schéma.
+      hauteur_src: Art. UF.10, p.70
+      he_m: a_verifier
+      hf_m: a_verifier
+      pleine_terre_pct: 20
+      pleine_terre_src: Art. UF.13, p.72
+      recul_limites_sep_m: a_verifier
+      recul_limites_src: Art. UF.7, p.69
+      recul_voirie_m: 4
+      recul_voirie_src: Art. UF.6, p.69
+      stat_logement: null
+      stat_note: 'Sans objet (habitat limité au gardiennage : 1 place/logement pour ces logements).'
+      stat_src: Art. UF.12, p.71
+    UFcim:
+      bassin: Petite-Île
+      emprise_sol_pct: null
+      emprise_src: Art. UF.9, p.69
+      habitat: interdit
+      habitat_src: 'Caractère UF p.66-67 : « Pour UFcim : SEULS sont autorisés les équipements et installations
+        liées aux activités et services funéraires » (futur cimetière)'
+      hauteur_src: Art. UF.10, p.70 (règles UF — schéma)
+      he_m: a_verifier
+      hf_m: a_verifier
+      pleine_terre_pct: 20
+      pleine_terre_src: Art. UF.13, p.72
+      recul_limites_sep_m: a_verifier
+      recul_limites_src: Art. UF.7, p.69
+      recul_voirie_m: 4
+      recul_voirie_src: Art. UF.6, p.69
+      stat_logement: null
+      stat_note: Sans objet.
+      stat_src: Art. UF.12, p.71
+  zones_non_constructibles:
+  - A, Ac, Acu, Ad, Ae (chap. p.143-152)
+  - N, Na, Nb, Nce, Ncu, Ne, Np, Ntl, Ntla (chap. p.153-162)
+'97406':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: la_plaine_des_palmistes
+  zones:
+    AUb:
+      bassin: La Plaine-des-Palmistes
+    AUc:
+      bassin: La Plaine-des-Palmistes
+    AUe:
+      bassin: La Plaine-des-Palmistes
+      habitat: interdit
+    AUr:
+      bassin: La Plaine-des-Palmistes
+    Ua:
+      bassin: La Plaine-des-Palmistes
+    Ub:
+      bassin: La Plaine-des-Palmistes
+    Uc:
+      bassin: La Plaine-des-Palmistes
+    Ue:
+      bassin: La Plaine-des-Palmistes
+      habitat: interdit
+    Ur:
+      bassin: La Plaine-des-Palmistes
+  zones_au_renvoi: {}
+  zones_au_st:
+    hauteur_max_m: 9
+    liste:
+    - AUs1
+    - AUs2
+    portee: 'Construction neuve non autorisée en l''état : zone AUs d''urbanisation future gelée, ouverture
+      conditionnée à une MODIFICATION du PLU (réseaux et accès insuffisants). Seuls admis : réseaux/voirie,
+      ouvrages techniques de service public, reconstruction après sinistre, extension mineure <= 20 m²
+      SDP sur l''existant (hauteur 6 m égout / 9 m faîtage). AUs1 (« moyen terme ») et AUs2 (« long terme
+      », notice 2016 p.190 PDF) : aucune disposition particulière au chapitre AUs => règle de la zone
+      entière pour chacun (dispositions générales, p.7). La parcelle AV 613 (ex-AUs1/AUs2) a été reclassée
+      AUb par la modification n°3 du 27/05/2023 — le zonage du manifeste (millésime 20230527) intègre
+      déjà ce reclassement.'
+    source: ZONE AUs (caractère de zone, p.71) ; Art. AUs 1.2, p.71 ; Art. AUs 2.2, p.72 ; Art. AUs 10,
+      p.73 ; Art. AUs 14, p.74.
+  zones_non_constructibles:
+  - A, Aco, Ama (chap. p.79-87)
+  - N, Nco, Nma, Np, Nr, Nto, Nu (chap. p.89-98)
+'97407':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: le_port
+  zones:
+    1AUa:
+      bassin: Le Port
+    1AUc:
+      bassin: Le Port
+    1AUem:
+      bassin: Le Port
+      habitat: interdit
+    1AUm:
+      bassin: Le Port
+    1AUs:
+      bassin: Le Port
+      habitat: interdit
+    Ua:
+      bassin: Le Port
+    Ub:
+      bassin: Le Port
+    Uc:
+      bassin: Le Port
+    Uca:
+      bassin: Le Port
+    Ud:
+      bassin: Le Port
+    Uem:
+      bassin: Le Port
+      habitat: interdit
+    Umi:
+      bassin: Le Port
+      habitat: interdit
+    Us:
+      bassin: Le Port
+      habitat: interdit
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste:
+    - 2AUem
+    - 2AUmut
+    - 2AUp
+    - 1AUmut
+    - Ue
+    - Up
+    - Uppp
+    - Uv
+    - 1AUe
+    - 1AUv
+    portee: 'Construction neuve de logement impossible : gels 2AU* (ouverture conditionnée à une modification
+      du PLU) et 1AUmut (échéancier OAP Centrale EDF — constructions légères démontables uniquement dans
+      l''attente) ; zones Ue/Up/Uppp/Uv et renvois 1AUe/1AUv : habitat interdit (logement de surveillance/gardiennage
+      uniquement) SANS hauteur chiffrée.'
+    source: Art. 2AU 1 et 2AU 2, p.157-158 ; ZONE 1AU (1AUmut), p.142-144 ; Art. Ue 2, p.80 et Ue 8, p.82
+      ; Art. Up 2, p.109 et Up 8, p.110 ; Art. Uv 2, p.132 et Uv 8, p.133.
+  zones_non_calibrees:
+    Uoap:
+      motif: 'Zone du périmètre de l''OAP « Portes de l''océan » (OAP de secteur d''aménagement R.151-8
+        : « l''OAP s''applique seule, en l''absence de dispositions réglementaires dans le secteur »,
+        caractère de zone p.103). Les 14 articles du chapitre renvoient TOUS à la pièce écrite n°4 (hors
+        règlement) — aucune règle chiffrée gravable sans deviner. 7,2 ha, 0,42 % de la surface du manifeste.'
+      source: Art. Uoap 1 à Uoap 14, p.103-106 (« Se reporter à l'OAP Portes de l'Océan — pièce écrite
+        n°4 » à chaque article).
+  zones_non_constructibles:
+  - A (chap. p.162-169)
+  - N, Nerl (chap. p.170-176)
+'97408':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: la_possession
+  zones:
+    AUAv:
+      bassin: La Possession
+    AUB:
+      bassin: La Possession
+    AUBb:
+      bassin: La Possession
+    AUBm:
+      bassin: La Possession
+    AUBpsfr2:
+      bassin: La Possession
+    AUEm:
+      bassin: La Possession
+    AUT:
+      bassin: La Possession
+      habitat: interdit
+    UA:
+      bassin: La Possession
+    UAa:
+      bassin: La Possession
+      habitat: interdit
+    UAm:
+      bassin: La Possession
+    UApsfr2:
+      bassin: La Possession
+    UAv:
+      bassin: La Possession
+    UB:
+      bassin: La Possession
+    UBa:
+      bassin: La Possession
+    UBb:
+      bassin: La Possession
+    UBc:
+      bassin: La Possession
+    UBpsfr2:
+      bassin: La Possession
+    UBpszc:
+      bassin: La Possession
+    UE:
+      bassin: La Possession
+      habitat: interdit
+    UEm:
+      bassin: La Possession
+    UT:
+      bassin: La Possession
+      habitat: interdit
+    UTfr2:
+      bassin: La Possession
+      habitat: interdit
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste:
+    - AUst
+    portee: 'Construction neuve non autorisée : ouverture à l''urbanisation conditionnée à une modification
+      du PLU (études préalables) ; extensions <= 20 m² SDP uniquement.'
+    source: Art. AUst 1.2 et 2, p.81-82.
+  zones_non_constructibles:
+  - A (chap. p.85-91)
+  - N, Ni1, Ni2, Nli, Npnr, Nr (chap. p.93+)
+'97410':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: saint_benoit
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste:
+    - Ue
+    - Up
+    - Ut
+    - AUe3
+    - AUp1
+    portee: 'Habitat interdit par le texte : Ue/Up — Art. U 2 (5°), p.5-6 : « En zone Ue et Up » sont
+      interdites les constructions à usage d''habitation à l''exception des logements de gardiennage incorporés
+      au bâtiment d''activité (+ internat CFPPA en Ue Beaulieu) ; Ut — Art. U 2 (6°), p.5-7 : tout est
+      interdit sauf équipements et hébergements touristiques et logement du personnel du site ; AUe3/AUp1
+      — Art. AU 2 (2°), p.21 : « En zone AUe et AUp » habitations interdites sauf gardiennage incorporé.
+      Hauteurs de ces zones également définies par secteurs graphiques (Art. U 4, p.9 ; Art. AU 4, p.23)
+      — sans incidence sur la capacité logement (zéro).'
+    source: Art. U 2 (5°-6°), p.5-7 ; Art. AU 2 (2°), p.21
+  zones_non_calibrees:
+    A:
+      motif: 'Zone agricole : « toute construction nouvelle » interdite à l''exception des constructions
+        nécessaires à l''exploitation agricole ; pour l''habitat existant, seules annexes/extensions dans
+        la limite TOTALE de 160 m² de SDP (300 m² si agrotourisme) — aucune règle consommable pour du
+        logement neuf ordinaire. Hauteur consignée : 12 m agricole, 4 m égout / 8 m faîtage autres constructions.'
+      source: Art. A 2, p.34 ; Art. A 3 (4°-5°), p.35 ; Art. A 4, p.37
+    ? AUa5, AUa8, AUa9, AUa18, AUb2, AUb6, AUb7, AUb10, AUb11, AUb12, AUb13, AUb14, AUb15, AUb16, AUb17,
+      AUb19 (zones AU à habitat admis)
+    : motif: 'ARBITRAGE VIC 28/07/2026 — hauteur définie par secteur graphique, non portable par le schéma
+        v1 : Art. AU 4 (p.23) fixe 15/13/10/7 m « selon les secteurs repérés sur le document graphique
+        » (même règle que U 4, écart facteur 2). Régime d''urbanisation : chaque zone AU a sa fiche annexe
+        N°01-19 (opération d''ensemble OU équipements internes réalisés — régime 1AU, précédent Tampon),
+        n° du libellé GPU = n° de fiche (confirmé Art. AU 1, p.19). Valeurs textuelles saines consignées
+        pour un futur v2 : emprise 80 % (Art. AU 5, p.24) ; limites 1 m (Art. AU 7, p.25) ; stationnement
+        (Art. AU 12, p.29-30) ; 20 % perméable (Art. AU 9, p.26) ; AUb2 : recul voirie 10 m (fiche N°02,
+        p.55 : « Recul minimum obligatoire des constructions : 10 mètres à compter de l''emprise de la
+        voie »).'
+      source: 'Art. AU 4, p.23 : « selon les secteurs repérés sur le document graphique » ; Art. AU 1,
+        p.19 ; Art. AU 5, p.24'
+    Acor:
+      motif: 'Corridors écologiques agricoles : toute construction nouvelle interdite sauf extension limitée
+        des constructions agricoles pour mise aux normes et changements de destination listés.'
+      source: Art. A 2, p.34 ; Art. A 3 (zones Acu et Acor), p.36
+    Acu:
+      motif: 'Coupures d''urbanisation (loi Littoral) : « toutes les constructions, même agricoles, sont
+        interdites » (caractère de zone) ; seules extensions de mise aux normes, changements de destination
+        et carrières du Schéma départemental.'
+      source: Art. A 1, p.32 ; Art. A 2, p.34 ; Art. A 3, p.36
+    Ai:
+      motif: 'Espace agricole inconstructible de Le Conardel (future zone d''activités) : tous travaux/constructions
+        interdits sauf aménagement et extension mineure de mise aux normes <= 20 m² de SDP sur constructions
+        existantes.'
+      source: Art. A 1, p.32 ; Art. A 2, p.34 ; Art. A 3 (zone Ai), p.37
+    N:
+      motif: 'Zone naturelle : toute construction nouvelle interdite sauf exploitation agricole/forestière
+        ; habitat existant limité à 160 m² SDP total (annexes/extensions). Hauteur consignée : 12 m agricole,
+        4 m égout / 8 m faîtage autres.'
+      source: Art. N 2, p.42 ; Art. N 3 (4°), p.44 ; Art. N 4, p.46
+    Nci:
+      motif: 'Cimetières : toute construction nouvelle interdite sauf ouvrages liés à la gestion des cimetières
+        dans la limite de 300 m² de SDP.'
+      source: Art. N 2, p.42
+    Nerl:
+      motif: 'Espaces remarquables du littoral (SAR) : tous travaux/constructions interdits sauf aménagements
+        légers de gestion/mise en valeur.'
+      source: Art. N 2, p.42 ; Art. N 3 (zone Nerl), p.45
+    Np:
+      motif: 'Sites naturels à forte valeur écologique protégés de manière stricte : « toute construction
+        nouvelle » interdite, sans exception consommable.'
+      source: Art. N 2, p.42
+    Npnr:
+      motif: 'Cœur du Parc national de La Réunion : tous travaux, constructions et installations interdits
+        sauf autorisation spéciale de l''établissement public du Parc.'
+      source: Art. N 2, p.42
+    'Ns20 à Ns46 (27 libellés du manifeste, graphie texte « Ns 20 »… : fiches N°20 à 46)':
+      motif: 'STECAL « hameaux nouveaux » loi Littoral (anciennes zones Nba 2006). L''habitat en hameau
+        intégré y est admis dans le principe (Art. N 2) MAIS l''annexe 3 rend le droit à construire caduc
+        : en espace proche du rivage (Ns 20, 21, 41 à 46) « les constructions seront interdites à partir
+        du 31/12/2021 » ; hors espace proche du rivage, partie non bâtie (rouge) interdite depuis le 31/12/2021
+        et partie déjà bâtie (bleue) constructible seulement « si le STECAL est pris en compte avant cette
+        date par le Préfet ou par le SCOT de la CIREST » — fait extérieur au règlement, invérifiable ici
+        ; découpage rouge/bleu par schémas de fiche non parcellisable. Graver une capacité serait deviner
+        => non calibrées. Chiffres consignés : hauteur 4 m égout / 8 m faîtage, emprise 70 % (Art. N 4
+        et N 5, p.46).'
+      source: 'Art. N 1, p.40 ; Art. N 2, p.42 ; annexe 3, p.73 : « les constructions seront interdites
+        à partir du 31/12/2021 » ; Art. N 4, p.46'
+    Nta47 à Nta54 (8 libellés, fiches N°47 à 54):
+      motif: 'STECAL touristiques (anciennes zones Nto/Ntc 2006) : en zone Nt toute construction nouvelle
+        est interdite « à l''exception des équipements et hébergements touristiques, ainsi que des constructions
+        affectées au logement du personnel » — pas de logement neuf ordinaire ; même caducité loi ELAN
+        que les Ns (annexe 3, p.73). Nta n°53 (Kanopea Forest Lodge) : cabanes arboricoles démontables,
+        350 m² de SDP max par unité foncière, emprise 10 %, hauteurs 5/8 m (10 m max au sol) — fiche N°53,
+        p.86.'
+      source: 'Art. N 2, p.42-43 ; Art. N 1, p.40 ; annexe 4, fiche N°53, p.86 : « dans la limite de 350
+        m² de surface de plancher par unité foncière »'
+    Ntb55, Ntb57, Ntb59 (3 libellés, fiches N°55, 57, 59):
+      motif: 'STECAL « hameaux touristiques nouveaux » à projet unique, vocation exclusivement touristique
+        (zone Nt, Art. N 2) + caducité loi ELAN (annexe 3, p.73). Plafonds de fiche consignés : Ntb55
+        Domaine Anamoutou — emprise totale 1700 m², 10 m au faîtage (p.88) ; Ntb57 Diana Dea Lodge — SPA
+        1075 m² d''emprise, hameau 500 m² de SDP, hauteurs 4,5/6 m (p.91-92) ; Ntb59 Le Verger — 30 bungalows
+        max, emprise totale 1050 m², 6 m égout / 8 m faîtage (p.94, zone en espace proche du rivage :
+        constructions interdites depuis le 31/12/2021).'
+      source: 'Art. N 2, p.42-43 ; annexe 5, fiche N°55, p.88 : « L''emprise au sol totale des constructions
+        ne pourra excéder 1700 m² » ; fiche N°59, p.94'
+    Ua, Uap, Ub (zones U à habitat admis):
+      motif: 'ARBITRAGE VIC 28/07/2026 — hauteur définie par secteur graphique, non portable par le schéma
+        v1 : Art. U 4 (p.9) fixe 15/13/10/7/4 m à l''égout/acrotère « selon les secteurs repérés sur le
+        document graphique » ; l''écart 4-15 m n''est pas une tranche à choisir, graver 4 m sous-estimait
+        d''un facteur 4 (faux négatifs en série). Valeurs textuelles saines consignées pour un futur v2
+        : emprise 80 % (Art. U 5, p.10) ; limites séparatives 1 m ou implantation en limite (Art. U 7,
+        p.11) ; recul voirie non réglementé sauf exceptions Pompidou/Montfleury/Brunet et RN 75 m hors
+        agglomération (Art. U 6, p.10-11) ; stationnement 1 place/logement + visiteurs (Art. U 12, p.16-17)
+        ; 20 % perméable (Art. U 9, p.13). Uap : secteur patrimonial (toitures >= 35°, Art. U 8 2°, p.12).
+        Ub : corridor écologique la Sourdine, constructions interdites dans les hachures vertes (Art.
+        U 2 7°, p.7).'
+      source: 'Art. U 4, p.9 : « selon les secteurs repérés sur le document graphique » ; Art. U 5, p.10
+        ; Art. U 7, p.11'
+  zones_non_constructibles:
+  - A, Acor, Acu, Ai (chap. ZONES A, p.32-39)
+  - N, Npnr, Nerl, Np, Nci (chap. ZONES N, p.40-48)
+  - Ns20, Ns21, Ns22, Ns23, Ns24, Ns25, Ns26, Ns27, Ns28, Ns29, Ns30, Ns31, Ns32, Ns33, Ns34, Ns35, Ns36,
+    Ns37, Ns38, Ns39, Ns40, Ns41, Ns42, Ns43, Ns44, Ns45, Ns46 (STECAL, fiches N°20-46, p.73-81)
+  - Nta47, Nta48, Nta49, Nta50, Nta51, Nta52, Nta53, Nta54 (STECAL, fiches N°47-54, p.82-87)
+  - Ntb55, Ntb57, Ntb59 (STECAL, fiches N°55/57/59, p.88-96)
+'97411':
+  hypotheses_faisabilite:
+    assemblage_individuel_max_m2: 1000
+    assemblage_min_surface_m2: 1000
+    coef_occupation: 0.45
+    coef_plancher_habitable: 1.15
+    coef_rendement: 0.8
+    cout_construction_m2_bas: 2300.0
+    cout_construction_m2_haut: 2800.0
+    densite_logts_ha_par_niveau: 30.0
+    dvf_min_ventes: 8
+    dvf_radius_m: 1500.0
+    etage_m: 3.0
+    frais_annexes_pct: 0.12
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    majoration_vrd_pluvial: 0
+    marge_promoteur_pct: 0.09
+    mixite_logements_seuil: 20
+    mixite_sdp_seuil_m2: 1500
+    mixite_terrain_seuil_m2: 6000
+    niveaux_bati_existant_defaut: 1
+    pct_lls: 30
+    place_m2: 25.0
+    prix_m2_lls: 0
+    sous_densite_seuil_pct: 40
+  mode: progressif
+  slug: saint_denis
+  zones:
+    AUa:
+      bassin: Saint-Denis
+    AUh:
+      bassin: Saint-Denis
+    AUj:
+      bassin: Saint-Denis
+    AUm:
+      bassin: Saint-Denis
+    AUx:
+      bassin: Saint-Denis
+    Ua:
+      bassin: Saint-Denis
+    Uac:
+      bassin: Saint-Denis
+    Uad:
+      bassin: Saint-Denis
+    Uat:
+      bassin: Saint-Denis
+    Uavap:
+      bassin: Saint-Denis
+    Ud:
+      bassin: Saint-Denis
+      hauteur_mode: prospect
+    Udo:
+      bassin: Saint-Denis
+    Udop:
+      bassin: Saint-Denis
+    Udp:
+      bassin: Saint-Denis
+      hauteur_mode: prospect
+    Uh:
+      bassin: Saint-Denis
+    Ui:
+      bassin: Saint-Denis
+    Uicm:
+      bassin: Saint-Denis
+    Uip:
+      bassin: Saint-Denis
+    Uj:
+      bassin: Saint-Denis
+    Um:
+      bassin: Saint-Denis
+    Uma:
+      bassin: Saint-Denis
+    Upi:
+      bassin: Saint-Denis
+    Upr:
+      bassin: Saint-Denis
+    Uu:
+      bassin: Saint-Denis
+      hauteur_mode: prospect
+    Uva:
+      bassin: Saint-Denis
+    Uvac:
+      bassin: Saint-Denis
+    Uvl:
+      bassin: Saint-Denis
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste: []
+  zones_non_constructibles:
+  - A (chap. p.113)
+  - N (chap. p.119)
+'97412':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: saint_joseph
+  zones:
+    1AU3:
+      bassin: Saint-Joseph
+    1AU3a:
+      bassin: Saint-Joseph
+    1AU5:
+      bassin: Saint-Joseph
+    1AU5ru:
+      bassin: Saint-Joseph
+    1AU5vi:
+      bassin: Saint-Joseph
+    1AU6:
+      bassin: Saint-Joseph
+      habitat: interdit
+    1AU6c:
+      bassin: Saint-Joseph
+      habitat: interdit
+    1AUto:
+      bassin: Saint-Joseph
+      habitat: interdit
+    1AUtok:
+      bassin: Saint-Joseph
+      habitat: interdit
+    U1:
+      bassin: Saint-Joseph
+    U2:
+      bassin: Saint-Joseph
+    U2a:
+      bassin: Saint-Joseph
+    U3:
+      bassin: Saint-Joseph
+    U3a:
+      bassin: Saint-Joseph
+    U3ar:
+      bassin: Saint-Joseph
+    U4:
+      bassin: Saint-Joseph
+    U5:
+      bassin: Saint-Joseph
+    U5cv:
+      bassin: Saint-Joseph
+    U5cvd:
+      bassin: Saint-Joseph
+    U5ma:
+      bassin: Saint-Joseph
+    U5ru:
+      bassin: Saint-Joseph
+    U5vi:
+      bassin: Saint-Joseph
+    U6:
+      bassin: Saint-Joseph
+      habitat: interdit
+    U6c:
+      bassin: Saint-Joseph
+      habitat: interdit
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste:
+    - 2AU2
+    - 2AU3
+    - 2AU3a
+    - 2AU5
+    - 2AU5cvd
+    - 2AU5ma
+    - 2AU5ru
+    - 2AU5st
+    - 2AU5vi
+    - 2AU6
+    - 2AU6ch
+    - 3AU3
+    - 3AU3a
+    - 3AU3st
+    - 3AU5
+    - 3AU5ma
+    - 3AU5st
+    - 3AU5vist
+    - 3AU6
+    - 3AU6ch
+    - 3AUto
+    portee: 'Construction neuve non autorisée en l''état : 2AU ouvrables seulement après aménagement de
+      toutes les 1AU du pôle SAR ; 3AU après les 2AU (et à partir de 2026) ; zones *st par MODIFICATION
+      du PLU (extensions <= 20 m² SDP uniquement, Art. AUst 2.2).'
+    source: Caractère ZONE AUindicée, p.105 ; chapitre ZONE AUst, p.100-104.
+  zones_non_constructibles:
+  - A, Aba, Acu (chap. p.112-122)
+  - N, Nba, Nci, Nco, Nli, Nma, Npnr, Ntoh, Ntok, Ntol (chap. p.124+)
+'97414':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: saint_louis
+  zones:
+    1AUa:
+      bassin: Saint-Louis
+    1AUa oap1:
+      bassin: Saint-Louis
+    1AUa oap3:
+      bassin: Saint-Louis
+    1AUc:
+      bassin: Saint-Louis
+    1AUc oap4:
+      bassin: Saint-Louis
+    1AUc oap5:
+      bassin: Saint-Louis
+    1AUc1:
+      bassin: Saint-Louis
+    1AUc2:
+      bassin: Saint-Louis
+    1AUd:
+      bassin: Saint-Louis
+    1AUd1:
+      bassin: Saint-Louis
+    1AUe:
+      bassin: Saint-Louis
+      habitat: interdit
+    1AUe oap1:
+      bassin: Saint-Louis
+      habitat: interdit
+    UA:
+      bassin: Saint-Louis
+    UA1:
+      bassin: Saint-Louis
+    UB:
+      bassin: Saint-Louis
+    UC:
+      bassin: Saint-Louis
+    UC1:
+      bassin: Saint-Louis
+    UC2:
+      bassin: Saint-Louis
+    UD:
+      bassin: Saint-Louis
+    UD1:
+      bassin: Saint-Louis
+    UE:
+      bassin: Saint-Louis
+      habitat: interdit
+    US:
+      bassin: Saint-Louis
+      habitat: interdit
+    UZ:
+      bassin: Saint-Louis
+  zones_au_renvoi: {}
+  zones_au_st:
+    hauteur_max_m: 4
+    liste:
+    - 1AUst
+    - 1AUst oap1
+    - 1AUste
+    - 2AUst
+    - 2AUste
+    - 2AUd
+    - 2AUd1
+    - 2AUe
+    portee: 'Construction neuve non autorisée en l''état. AUst (1AUst/1AUste/2AUst/2AUste et OAP associées)
+      : ouverture conditionnée à une MODIFICATION du PLU, seuls réseaux, ouvrages techniques, reconstruction
+      après sinistre et extensions <= 20 m² SDP sont admis. 2AUindicée (2AUd/2AUd1/2AUe ; 2AUb1/2AUb2
+      exclues par arbitrage Vic 28/07/2026, cf. zones_non_calibrees) : ouverture conditionnée à l''aménagement
+      préalable de l''ensemble des 1AUindicée et 1AUst de la polarité SAR. 2AUe : indice e => habitat
+      au surplus interdit par renvoi UE.'
+    source: ZONE AUst (caractère de zone, p.110) ; Art. AUst 1.2 et 2.2, p.111 ; Art. AUst 10, p.114 ;
+      Art. AUindicée 2.2, p.106.
+  zones_non_calibrees:
+    1AUb1, 1AUb2, 2AUb1, 2AUb2:
+      motif: 'Rattachement non fondé sur une clause du règlement, indice cartographique sans disposition
+        écrite. Les libellés n''apparaissent nulle part dans le règlement, aucun secteur UB1/UB2 n''existe
+        (caractère de zone UB p.24 ; liste des zones urbaines p.5-6) La clause générale des secteurs EXISTE
+        (p.4 imprimée : « Dès lors que la zone comprend un ou plusieurs secteurs, la règle générale de
+        la zone s''applique à chacun d''eux sauf lorsqu''une disposition particulière est prévue ») mais
+        elle vise les secteurs DÉCLARÉS d''une zone — or aucun secteur UB1/UB2 n''est déclaré nulle part
+        : la clause ne peut fonder le rattachement d''un libellé que le règlement ne reconnaît pas ; il
+        reposait sur une déduction par élimination (indice « b » => UB), refusée (leçon §9 : une clause
+        écrite fonde un rattachement d''un secteur déclaré, une déduction par élimination non). Pool concerné
+        : 1AUb1 7 polygones/7,1 ha ; 1AUb2 12/20,8 ha ; 2AUb1 1/2,0 ha ; 2AUb2 8/7,6 ha — total 28 polygones,
+        37,5 ha (parcelles : mesure phase 4). NB : 2AUb1/2AUb2 perdent aussi le gel 2AUindicée (Art. AUindicée
+        2.2, p.106) car leur appartenance au chapitre reposait sur le même rattachement d''indice non
+        écrit.'
+      source: Liste des zones urbaines p.5-6 ; caractère de zone UB, p.24 ; ZONE AUindicée, p.105
+  zones_non_constructibles:
+  - A, Aco, Acu, Ama, Arh, Ato (chap. p.116-124)
+  - N, Nco, Nli, Nma, Npnr, Nr, Nstep, Nto, Nto 1, Nto2, Nto3 (chap. p.126-133)
+'97415':
+  hypotheses_faisabilite:
+    assemblage_individuel_max_m2: 1000
+    assemblage_min_surface_m2: 1000
+    coef_occupation: 0.45
+    coef_plancher_habitable: 1.15
+    coef_rendement: 0.8
+    cout_construction_m2_bas: 2300.0
+    cout_construction_m2_haut: 2800.0
+    densite_logts_ha_par_niveau: 30.0
+    dvf_min_ventes: 8
+    dvf_radius_m: 1500.0
+    etage_m: 3.0
+    frais_annexes_pct: 0.12
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    majoration_vrd_pluvial: 0
+    marge_promoteur_pct: 0.09
+    mixite_logements_seuil: 20
+    mixite_sdp_seuil_m2: 1500
+    mixite_source_ref: Art. 2 règlement PLU
+    mixite_terrain_seuil_m2: 6000
+    niveaux_bati_existant_defaut: 1
+    pct_lls: 30
+    place_m2: 25.0
+    prix_m2_lls: 0
+    sous_densite_seuil_pct: 40
+  mode: strict
+  slug: saint_paul
+  zones:
+    AU5e:
+      bassin: La Saline
+      habitat: interdit
+    U1a:
+      bassin: Saint-Paul Centre
+    U1b:
+      bassin: Saint-Paul Centre
+    U1c:
+      bassin: Saint-Paul Centre
+    U1d:
+      bassin: Saint-Paul Centre
+    U1e:
+      bassin: Saint-Paul Centre
+      habitat: interdit
+    U1ec:
+      bassin: Saint-Paul Centre
+      habitat: interdit
+    U1f:
+      bassin: Saint-Paul Centre
+    U1g:
+      bassin: Saint-Paul Centre
+    U1l:
+      bassin: Saint-Paul Centre
+    U1lec:
+      bassin: Saint-Paul Centre
+    U1pru:
+      bassin: Saint-Paul Centre
+    U1pso:
+      bassin: Saint-Paul Centre
+    U2a:
+      bassin: Saint-Gilles
+    U2b:
+      bassin: Saint-Gilles
+    U2c:
+      bassin: Saint-Gilles
+    U2d:
+      bassin: Saint-Gilles
+    U2e:
+      bassin: Saint-Gilles
+      habitat: interdit
+    U2h:
+      bassin: Saint-Gilles
+    U3a:
+      bassin: Plateau Caillou
+    U3b:
+      bassin: Plateau Caillou
+    U3c:
+      bassin: Plateau Caillou
+    U3e:
+      bassin: Plateau Caillou
+      habitat: interdit
+    U3h:
+      bassin: Plateau Caillou
+    U4a:
+      bassin: La Plaine-Bois de Nèfles
+    U4b:
+      bassin: La Plaine-Bois de Nèfles
+    U4c:
+      bassin: La Plaine-Bois de Nèfles
+    U5a:
+      bassin: La Saline
+    U5b:
+      bassin: La Saline
+    U5c:
+      bassin: La Saline
+    U6a:
+      bassin: Le Guillaume
+    U6b:
+      bassin: Le Guillaume
+    U6c:
+      bassin: Le Guillaume
+    Usdu:
+      bassin: multi (Plateau C., Plaine, Saline, Guillaume)
+    Usdu_PlateauCaillou:
+      bassin: Plateau Caillou
+  zones_au_renvoi:
+    AU1: 'Règles de U1 de même indice (AU1a->U1a, AU1b->U1b, ...). Source: « caractère de zone », p.49.'
+    AU1e: 'Règles de U1e (et U1ec). Source: p.51.'
+    AU1lec: 'Règles de U1lec. Source: p.53.'
+    AU2: 'Règles de U2 de même indice. Source: p.97.'
+    AU3: 'Règles de U3 de même indice. Source: p.154.'
+    AU3e: 'Règles de U3e. Source: p.156.'
+    AU4: 'Règles de U4 de même indice. Source: p.202.'
+    AU5: 'Règles de U5 de même indice. Source: p.248.'
+    AU6: 'Règles de U6 de même indice. Source: p.308.'
+  zones_au_st:
+    hauteur_max_m: 4
+    liste:
+    - AU1st
+    - AU1e st
+    - AU3st
+    - AU4st
+    - AU5st
+    - AU6st
+    portee: Uniquement travaux d'aménagement et d'extension mineure pour mise aux normes sanitaires et
+      d'habitabilité (pas de construction neuve).
+    source: Art. 10 des sections AU*st (ex. p.59, 158, 204, 263, 310).
+  zones_non_constructibles:
+  - A (p.329)
+  - N (p.338)
+  - Ni, Ntol (p.315 — Mafate/forestière)
+'97416':
+  hypotheses_faisabilite:
+    assemblage_individuel_max_m2: 1000
+    assemblage_min_surface_m2: 1000
+    coef_occupation: 0.45
+    coef_plancher_habitable: 1.15
+    coef_rendement: 0.8
+    cout_construction_m2_bas: 2300.0
+    cout_construction_m2_haut: 2800.0
+    densite_logts_ha_par_niveau: 30.0
+    dvf_min_ventes: 8
+    dvf_radius_m: 1500.0
+    etage_m: 3.0
+    frais_annexes_pct: 0.12
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    majoration_vrd_pluvial: 0
+    marge_promoteur_pct: 0.09
+    mixite_logements_seuil: 20
+    mixite_sdp_seuil_m2: 1500
+    mixite_terrain_seuil_m2: 6000
+    niveaux_bati_existant_defaut: 1
+    pct_lls: 30
+    place_m2: 25.0
+    prix_m2_lls: 0
+    sous_densite_seuil_pct: 40
+  mode: progressif
+  slug: saint_pierre
+  zones:
+    AUazc:
+      bassin: Saint-Pierre
+      habitat: interdit
+    AUazi:
+      bassin: Saint-Pierre
+      habitat: interdit
+    AUdma:
+      bassin: Saint-Pierre
+    AUf:
+      bassin: Saint-Pierre
+    AUfGB:
+      bassin: Saint-Pierre
+    AUg:
+      bassin: Saint-Pierre
+    AUt1:
+      bassin: Saint-Pierre
+      habitat: interdit
+    AUt2:
+      bassin: Saint-Pierre
+      habitat: interdit
+    Uaza:
+      bassin: Saint-Pierre
+      habitat: interdit
+    Uazc:
+      bassin: Saint-Pierre
+      habitat: interdit
+    Uazi:
+      bassin: Saint-Pierre
+      habitat: interdit
+    Uazp:
+      bassin: Saint-Pierre
+      habitat: interdit
+    Uazpc:
+      bassin: Saint-Pierre
+      habitat: interdit
+    Ucv:
+      bassin: Saint-Pierre
+    Ud:
+      bassin: Saint-Pierre
+    UdBO:
+      bassin: Saint-Pierre
+    Udl:
+      bassin: Saint-Pierre
+    Ue:
+      bassin: Saint-Pierre
+      habitat: interdit
+    Uea:
+      bassin: Saint-Pierre
+      habitat: interdit
+    Uemi:
+      bassin: Saint-Pierre
+      habitat: interdit
+    Uep:
+      bassin: Saint-Pierre
+      habitat: interdit
+    Uf:
+      bassin: Saint-Pierre
+    UfCA:
+      bassin: Saint-Pierre
+    Ug:
+      bassin: Saint-Pierre
+    Up:
+      bassin: Saint-Pierre
+    Us:
+      bassin: Saint-Pierre
+      constructible_neuf: false
+    Ut:
+      bassin: Saint-Pierre
+      habitat: interdit
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste:
+    - Us
+    - AU01
+    - AU02
+    - AU03
+    - AU0c-1
+    portee: 'Construction neuve NON autorisée : Us gelée provisoirement (extensions <=25 % SDP uniquement,
+      dans l''attente de la modification du SCoT — préambule p.129 + Art. Us1 p.130) ; zones AU0 fermées
+      (toute construction interdite, extensions <=20 % SDP, ouverture par modification du PLU selon échéancier
+      2-6/6-12/>12 ans — Art. AU01 p.200).'
+    source: Préambule Us p.129 + Art. Us1 (tableau) p.130 ; Art. AU01, p.200.
+  zones_non_constructibles:
+  - A, Ac, Ac1, Acu, Acu1, At (chap. p.202-211)
+  - N, Nr, Nc, Ncu, Nci, Np, Npnr, Nge (chap. p.212-221)
+'97418':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: sainte_marie
+  zones:
+    1AUb:
+      bassin: Sainte-Marie
+    1AUc:
+      bassin: Sainte-Marie
+    1AUep:
+      bassin: Sainte-Marie
+      habitat: interdit
+    UA:
+      bassin: Sainte-Marie
+    UAb:
+      bassin: Sainte-Marie
+    UAz:
+      bassin: Sainte-Marie
+    UB:
+      bassin: Sainte-Marie
+    UC:
+      bassin: Sainte-Marie
+    UC1:
+      bassin: Sainte-Marie
+    UC2:
+      bassin: Sainte-Marie
+    UD:
+      bassin: Sainte-Marie
+    UD1:
+      bassin: Sainte-Marie
+    UEa:
+      bassin: Sainte-Marie
+      habitat: interdit
+    UEc:
+      bassin: Sainte-Marie
+      habitat: interdit
+    UEm:
+      bassin: Sainte-Marie
+      habitat: interdit
+    UEp:
+      bassin: Sainte-Marie
+      habitat: interdit
+    UR:
+      bassin: Sainte-Marie
+      habitat: interdit
+    UT:
+      bassin: Sainte-Marie
+      habitat: interdit
+    UTp:
+      bassin: Sainte-Marie
+      habitat: interdit
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste:
+    - 2AUa
+    - 2AUb
+    - 2AUc
+    portee: Zones 2AU ouvertes à l'urbanisation à partir de 2031 seulement (et sous condition de voies/réseaux
+      suffisants en périphérie) — construction neuve non autorisée en l'état.
+    source: V. Dispositions applicables aux zones AU, p.40.
+  zones_non_constructibles:
+  - A, Acu, Aenr, Ap (VI., p.43-50)
+  - N, Ncu, Nli, Npnr, Npv, Nr (VII., p.51-58)
+'97419':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: sainte_rose
+  zones:
+    1AUa:
+      bassin: Sainte-Rose
+    1AUc:
+      bassin: Sainte-Rose
+    1AUe:
+      bassin: Sainte-Rose
+      habitat: interdit
+    1AUto:
+      bassin: Sainte-Rose
+      habitat: interdit
+    Ua:
+      bassin: Sainte-Rose
+    Ub:
+      bassin: Sainte-Rose
+    Uc:
+      bassin: Sainte-Rose
+    Ud:
+      bassin: Sainte-Rose
+    Ue:
+      bassin: Sainte-Rose
+      habitat: interdit
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste:
+    - 2AUa
+    - 2AUb
+    - 2AUc
+    - 2AUd
+    portee: 'Zones 2AU : ouverture conditionnée à l''aménagement de l''ensemble des 1AU (hors 1AUc Bois-Blanc
+      et 1AUe) — construction neuve non autorisée en l''état.'
+    source: Caractère ZONE AUindicée, p.53.
+  zones_non_constructibles:
+  - A, Acu, Ai (Titre IV, p.64+)
+  - N, Nec, Nli, Npnr, Nrev, Ntvb (Titre V, p.72+)
+'97420':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: sainte_suzanne
+  zones:
+    1AUa:
+      bassin: Sainte-Suzanne
+    1AUac:
+      bassin: Sainte-Suzanne
+      habitat: interdit
+    1AUb:
+      bassin: Sainte-Suzanne
+    1AUc:
+      bassin: Sainte-Suzanne
+    1AUe:
+      bassin: Sainte-Suzanne
+      habitat: interdit
+    UA:
+      bassin: Sainte-Suzanne
+    UAc:
+      bassin: Sainte-Suzanne
+      habitat: interdit
+    UAv:
+      bassin: Sainte-Suzanne
+    UB:
+      bassin: Sainte-Suzanne
+    UC:
+      bassin: Sainte-Suzanne
+    UC1:
+      bassin: Sainte-Suzanne
+    UE:
+      bassin: Sainte-Suzanne
+      habitat: interdit
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste:
+    - 2AUa
+    - 2AUb
+    portee: 'Zones 2AU : ouverture à l''urbanisation à l''horizon 2031 ET après l''aménagement de l''ensemble
+      des 1AU — construction neuve non autorisée en l''état.'
+    source: Titre III — caractère des zones AU, p.29.
+  zones_non_constructibles:
+  - A, Acu, Aenr (Titre IV, p.32-38)
+  - N, Ndé, Nenr, Nlit, Npnr, Nr, Nt (Titre V, p.39+)
+'97421':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: salazie
+  zones:
+    AUa1:
+      bassin: Salazie
+    AUb:
+      bassin: Salazie
+    AUc:
+      bassin: Salazie
+    AUe:
+      bassin: Salazie
+      habitat: interdit
+    AUt:
+      bassin: Salazie
+      habitat: interdit
+    UA:
+      bassin: Salazie
+    UA1:
+      bassin: Salazie
+    UB:
+      bassin: Salazie
+    UC:
+      bassin: Salazie
+    UT:
+      bassin: Salazie
+      habitat: interdit
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste: []
+  zones_non_constructibles:
+  - A, Aba (chap. p.39-46)
+  - N, Npnr, Nr (chap. p.48+)
+'97422':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: le_tampon
+  zones:
+    1AUa:
+      bassin: Le Tampon
+    1AUb:
+      bassin: Le Tampon
+    1AUc:
+      bassin: Le Tampon
+    1AUcto:
+      bassin: Le Tampon
+      habitat: interdit
+    1AUe:
+      bassin: Le Tampon
+      habitat: interdit
+    1AUto:
+      bassin: Le Tampon
+      habitat: interdit
+    2AUa:
+      bassin: Le Tampon
+      constructible_neuf: false
+    2AUb:
+      bassin: Le Tampon
+      constructible_neuf: false
+    2AUc:
+      bassin: Le Tampon
+      constructible_neuf: false
+    2AUd:
+      bassin: Le Tampon
+      constructible_neuf: false
+    2AUe:
+      bassin: Le Tampon
+      constructible_neuf: false
+    UCto:
+      bassin: Le Tampon
+      habitat: interdit
+    UCtom:
+      bassin: Le Tampon
+      habitat: interdit
+    Ua:
+      bassin: Le Tampon
+    Uav:
+      bassin: Le Tampon
+    Ub:
+      bassin: Le Tampon
+    Uc:
+      bassin: Le Tampon
+    Ucm:
+      bassin: Le Tampon
+    Ud:
+      bassin: Le Tampon
+    Ue:
+      bassin: Le Tampon
+      habitat: interdit
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste: []
+    portee: Zones 2AU d'extension urbaine (construction neuve non autorisée, ouverture conditionnée Art.
+      AUindicée 2.2.3, p.84) — désormais portées par des entrées `zones:` propres.
+    source: ZONE AUindicée, Art. 2.2.3, p.84.
+  zones_non_constructibles:
+  - A, Aba (chap. p.89-100)
+  - N, Nco, Npnr, Nto1, Nto2, Nto3, Nto4, Nto5 (chap. p.101+)
+'97423':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+  mode: progressif
+  slug: les_trois_bassins
+  zones:
+    1AUa:
+      bassin: Les Trois-Bassins
+    1AUb:
+      bassin: Les Trois-Bassins
+    1AUc:
+      bassin: Les Trois-Bassins
+    1AUt:
+      bassin: Les Trois-Bassins
+      habitat: interdit
+    Ua:
+      bassin: Les Trois-Bassins
+    Uaa:
+      bassin: Les Trois-Bassins
+    Ub:
+      bassin: Les Trois-Bassins
+    Uc:
+      bassin: Les Trois-Bassins
+    Ue:
+      bassin: Les Trois-Bassins
+      habitat: interdit
+  zones_au_renvoi: {}
+  zones_au_st:
+    liste:
+    - 2AUa
+    - 2AUb
+    - 2AUc
+    - AUs
+    - AUse
+    portee: 'Construction neuve non autorisée en l''état : 2AUa/2AUb/2AUc = extension urbaine SAR, ouverture
+      conditionnée à l''engagement de l''aménagement de l''ensemble des zones 1AUindicée (Art. AUINDICEE
+      2.2, p.65) ; AUs et son secteur AUse = urbanisation future gelée, ouverture conditionnée à une MODIFICATION
+      du PLU (réseaux et accès insuffisants, études préalables requises — caractère de zone p.70), seuls
+      admis réseaux/ouvrages techniques/reconstruction après sinistre (Art. AUs 1.2 et 2.2, p.71). Le
+      manifeste ne compte AUCUN polygone 2AUe ni 2AUt.'
+    source: 'Art. AUINDICEE 2.2, p.65 ; ZONE AUs : caractère de zone p.70, Art. AUs 1.2 et Art. AUs 2.2,
+      p.71.'
+  zones_non_calibrees:
+    1AUe:
+      motif: 'Contradiction sur la destination habitat. Lecture 1 (chapitre AU autoportant) : l''Art.
+        AUINDICEE 1.2 (p.65) n''interdit pour « les autres zones » (dont AUe) que industrie/entrepôt/agricole/camping/dépôts/carrières/sports
+        motorisés/affouillements, et l''Art. AUINDICEE 2.2 (p.65) admet « toutes les occupations et utilisations
+        du sol non citées à l''article 1.2 » => l''habitat serait ADMIS (et l''industrie INTERDITE, dans
+        une zone pourtant indexée sur la zone d''activité Ue). Lecture 2 (renvoi d''indice, p.64 : « se
+        reporter en fonction de l''indice […] au règlement des zones urbaines correspondantes ») : l''Art.
+        Ue 1.2 (al. 1), p.53, INTERDIT l''habitat. Les deux lectures divergent sur une destination ; la
+        clause densité qui exclut AUe (Art. AUINDICEE 2.2, p.66 : « à l''exception de celles des zones
+        AUe et AUt ») et le renvoi explicite AUe -> Ue de l''Art. 7 (p.67) suggèrent l''intention « activité
+        » sans l''écrire à l''Art. 1/2. O12 signalait 1AUe candidate habitat-interdit : NON confirmée
+        à l''Art. 1/2 comme l''exige le mandat => non calibrée. ARBITRAGE VIC 28/07/2026 : reste non calibrée
+        — trancher depuis un bureau serait deviner, écart maximal entre les deux lectures (constructible
+        résidentiel vs interdit), enjeu 1 polygone/1,9 ha ; à poser à la commune si l''occasion se présente.
+        Repli générique.'
+      source: Art. AUINDICEE 1.2 et 2.2, p.65 ; Art. AUINDICEE 2.2 (clause densité), p.66 ; Art. AUINDICEE
+        7, p.67 ; Art. Ue 1.2, p.53.
+  zones_non_constructibles:
+  - A, Acu, Arh (chap. p.74-83)
+  - N, Nr, Nco, Nli, Nu, Nto, Nto1, Nto2, Nto3, Nto4, Nto5, Nto6 (chap. p.84-94)
+'97424':
+  hypotheses_faisabilite:
+    coef_occupation: 0.45
+    coef_rendement: 0.8
+    densite_logts_ha_par_niveau: 30.0
+    etage_m: 3.0
+    he_defaut_generique_m: 9.0
+    logement_m2_bas: 65.0
+    logement_m2_haut: 80.0
+    place_m2: 25.0
+    place_m2_source_ref: Cilaos, Art. <Z> 12 — « Une place = 25 m² »
+  mode: progressif
+  slug: cilaos
+  zones:
+    AUb:
+      bassin: Cilaos
+    AUb1:
+      bassin: Cilaos
+    AUb2:
+      bassin: Cilaos
+    Ua:
+      bassin: Cilaos
+    Uah:
+      bassin: Cilaos
+    Ub:
+      bassin: Cilaos
+    Ub1:
+      bassin: Cilaos
+    Uc:
+      bassin: Cilaos
+  zones_au_renvoi: {}
+  zones_au_st:
+    hauteur_max_m: 6
+    liste:
+    - AUst
+    portee: 'Construction neuve non autorisée en l''état : ouverture à l''urbanisation conditionnée à
+      une MODIFICATION du PLU ; seuls réseaux, ouvrages techniques, reconstruction après sinistre et extensions
+      mineures <= 20 m² de SHON sont admis, hauteur max 6 m.'
+    source: ZONE AUst (caractère de zone, p.53) ; Art. AUst 1.2, p.53 ; Art. AUst 2.2, p.54 ; Art. AUst
+      10, p.56.
+  zones_non_constructibles:
+  - A, Anc (chap. p.63-71)
+  - N, Ndé, Nto (chap. p.73-80)
+  - NtoPOS (libellé absent du règlement — repli générique, famille N)
