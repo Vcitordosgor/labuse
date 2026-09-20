@@ -1,0 +1,12 @@
+OUTILS-FIX-5 Lot 6 — M28/M29 au registre : ce que /sources/rattachements sert désormais
+
+  source « INPI RNE (dirigeants) » -> Outil · Successions à venir  (chiffre n_successions_veille)
+  source « DGFiP — parcelles des personnes morales » -> Outil · Blocs fonciers  (chiffre n_blocs_pm)
+  source « DGFiP — parcelles des personnes morales » -> Outil · Blocs fonciers  (chiffre n_parcelles_bloc)
+  source « DGFiP — parcelles des personnes morales » -> Outil · Blocs fonciers  (chiffre type_proprietaire)
+  source « DGFiP — parcelles des personnes morales » -> Outil · Successions à venir  (chiffre n_successions_veille)
+  source « DGFiP — parcelles des personnes morales » -> Outil · Successions à venir  (chiffre type_proprietaire)
+
+Robinets déclarés :
+  outil_successions: Successions à venir — /modules/successions — chiffres ('n_successions_veille', 'sdp_residuelle_m2', 'type_proprietaire')
+  outil_blocs_fonciers: Blocs fonciers — /modules/blocs — chiffres ('n_blocs_pm', 'n_parcelles_bloc', 'sdp_residuelle_m2', 'type_proprietaire')

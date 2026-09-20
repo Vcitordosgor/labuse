@@ -291,6 +291,23 @@ DONNEES: dict[str, Donnee] = {
     "count parcel_renouvellement au run servi",
     moteur="renouvellement", calcul="moteur", fonction="src/labuse/api/app.py:renouvellement_liste",
     reservoirs=(), portee="run"),
+ # OUTILS-FIX-5 L6 — les deux outils neufs (Successions M28, Blocs M29) étaient invisibles du Circuit
+ # (aucun robinet). On déclare leurs chiffres pour que leurs sources apparaissent dans /sources/rattachements.
+ "n_successions_veille": C("Successions à venir", "nombre", "commune",
+    "count parcel_veille_succession (signal Score V : dirigeant PM ≥ 70 ans OU SCI dormante) — "
+    "île entière ou commune ; snapshot RNE INPI daté, jamais une succession ouverte",
+    moteur="v_score", calcul="moteur", fonction="src/labuse/api/modules.py:successions_liste "
+             "(lit le snapshot parcel_veille_succession produit par le moteur Score V)",
+    reservoirs=("dgfip_parcelles_pm", "inpi_rne",), portee="live"),
+ "n_blocs_pm": C("Blocs fonciers", "nombre", "commune",
+    "count parcel_blocs (assiettes contiguës d'un même propriétaire PM, ST_DWithin 0,5 m, ≥ 2 "
+    "parcelles) — île entière ou commune ; résiduel agrégé lu de la vue servie",
+    moteur="blocs_fonciers", calcul="moteur", fonction="src/labuse/api/modules.py:blocs_liste",
+    reservoirs=("dgfip_parcelles_pm",), portee="run"),
+ "n_parcelles_bloc": C("Parcelles du bloc", "nombre", "parcelle",
+    "nombre de parcelles réunies dans un bloc foncier (parcel_bloc_membres)",
+    moteur="blocs_fonciers", calcul="moteur", fonction="src/labuse/api/modules.py:blocs_liste",
+    reservoirs=("dgfip_parcelles_pm",), portee="run"),
  "population_zone": C("Habitants (zone)", "nombre", "zone",
     "somme carreaux Filosofi 200 m intersectant l'isochrone",
     moteur="zone", calcul="moteur", fonction="src/labuse/zone.py (population_zone — point Filosofi UNIQUE)",
