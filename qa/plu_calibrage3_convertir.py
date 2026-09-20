@@ -117,9 +117,10 @@ def convertir(insee: str, slug: str, citations_path: str) -> dict:
                     val_ok, raison = False, f"citation non retrouvée autour de p.{page_c} (recouvrement {sc:.0%})"
                 elif att == "misattribue":
                     val_ok, raison = False, f"attribution douteuse (citation sous secteur {_m})"
-                elif val_ok and v is not None and coerce is float:
+                elif val_ok and v is not None and (coerce is float or coerce == "places"):
                     # la VALEUR doit se lire DANS la citation (sinon = harmonisation « doctrine »
-                    # de l'ancien système ≠ texte littéral, ex. recul 6 m gravé vs « 5 mètres »).
+                    # de l'ancien système ≠ texte littéral, ex. recul 6 m gravé vs « 5 mètres » ;
+                    # ou une valeur CHANGÉE dans le nouveau doc, ex. stat U2a 1 → « 2 places »).
                     cands = {str(v), re.sub(r"\.0$", "", str(v)), str(v).replace(".", ",")}
                     if not any(re.search(re.escape(c).replace(",", "[.,]"), citation) for c in cands):
                         val_ok, raison = False, f"valeur {v:g} absente de la citation (harmonisation ≠ texte)"
