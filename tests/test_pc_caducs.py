@@ -99,9 +99,11 @@ def test_recent_pc_non_caduc(db_session):
 
 # ───────────────────────── filtre SQL ─────────────────────────
 
-def test_filtre_pc_caduc_fragment():
+def test_filtre_permis_caduc_signal_fragment():
+    # FILTRES-FIX-1 (lot 4) — le filtre PC caduc passe par le SIGNAL `permis_caduc` (le booléen
+    # autonome a été retiré, mort) : MÊME requête (table pc_caducs).
     from labuse.api.app import _q_v2_where
-    where, _ = _q_v2_where("q_v7_defisc", None, None, None, None, None, False, False, None, pc_caduc=True)
+    where, _ = _q_v2_where("q_v7_defisc", None, None, None, None, None, False, False, None, signaux="permis_caduc")
     assert "pc_caducs" in where
     where0, _ = _q_v2_where("q_v7_defisc", None, None, None, None, None, False, False, None)
     assert "pc_caducs" not in where0

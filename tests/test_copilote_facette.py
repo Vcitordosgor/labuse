@@ -25,8 +25,10 @@ def test_compter_parcelles_plumbing_vers_la_facette(monkeypatch):
     r = compter_parcelles(None, commune=None, signaux="friche,procedure", adresse_absente=True,
                           copro="avec", defisc=True, renouvellement=True, zonage="U,AU", evenement=True)
     fc = cap["fc"]
-    assert fc.signaux == "friche,procedure" and fc.adresse_absente and fc.copro == "avec"
-    assert fc.defisc_active and fc.renouvellement and fc.zonage == "U,AU" and fc.evenement
+    # FILTRES-FIX-1 (lot 4) — `defisc` passe désormais par le SIGNAL `defisc` (defisc_active retiré) :
+    # il est plié dans `signaux`, et toujours NOMMÉ « en défiscalisation » (boucle sig, cf. labels).
+    assert fc.signaux == "friche,procedure,defisc" and fc.adresse_absente and fc.copro == "avec"
+    assert fc.renouvellement and fc.zonage == "U,AU" and fc.evenement
     assert r.valeur == 42 and not r.criteres_non_appliques        # branchés → aucun aveu
     labels = r.data["criteres_labels"]
     for attendu in ("friche", "procédure judiciaire (BODACC)", "sans adresse (BAN)",

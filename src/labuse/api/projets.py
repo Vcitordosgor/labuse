@@ -208,6 +208,7 @@ _CADRAGE_MAP: dict[str, tuple[str, str]] = {
     "caMin": ("ca_min", "num"), "modeBRentable": ("mode_b_rentable", "bool"),
     "modebTravauxM2": ("modeb_travaux_m2", "num"), "modebLoyerM2": ("modeb_loyer_m2", "num"),
     "modebRendementPct": ("modeb_rendement_pct", "num"), "signaux": ("signaux", "csv"),
+    "zfangRegime": ("zfang", "csv"), "frrClassement": ("frr", "csv"),   # FILTRES-FIX-1 (lot 1) — parité facettes
 }
 
 

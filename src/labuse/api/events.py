@@ -909,6 +909,7 @@ _DIM_LABELS = {
     "pt": "type de propriétaire", "soc": "état de la société", "cp": "copropriété",
     "drr": "droits résiduels", "pmf": "forme juridique", "pma": "code APE",
     "pmd": "dénomination", "pms": "SIREN", "pdmin": "dirigeants min", "pdmax": "dirigeants max",
+    "zfa": "ZFANG (zone franche)", "frr": "FRR (ruralités)",   # FILTRES-FIX-1 (lot 1)
 }
 
 

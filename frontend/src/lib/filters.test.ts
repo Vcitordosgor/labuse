@@ -19,6 +19,7 @@ describe('filters URL persistence (M55-D)', () => {
       zonagePlu: ['U', 'AU'], constructibilite: ['constructible'], etatSol: ['nu'],
       zonePlu: ['UA'], proprietaireType: ['pm'], etatSociete: ['radiee'], copro: ['sans'],
       signaux: ['defisc', 'friche'],   // stage 6 : le groupe Signaux de vie persiste (clé sv)
+      zfangRegime: ['renforce'], frrClassement: ['partie'],   // FILTRES-FIX-1 (lot 1) — ZFANG/FRR persistent (clés zfa/frr)
       analyseLabuse: true,   // stage 4 : allumé (cohérent avec les critères d'opinion présents)
     }
     const hash = filtersToHash(f, null)

@@ -60,8 +60,11 @@ export const inDefaultPerimetre = (p: ParcelProps): boolean =>
 export function matchScope(p: ParcelProps, f: Filters, zone: LngLat[] | null): boolean {
   // FIX-SCOREMIN : le filtre scoreMin (sur q_score, matrice morte M129-B, jamais servi →
   // p.q_score toujours absent) est RETIRÉ — il ne filtrait rien côté client non plus.
-  if (f.surfaceMin != null && (p.surface_m2 ?? 0) < f.surfaceMin) return false
-  if (f.surfaceMax != null && (p.surface_m2 ?? Infinity) > f.surfaceMax) return false
+  // FILTRES-FIX-1 (lot 2) : on compare la surface ARRONDIE — la même valeur que la fiche affiche
+  // (fmtM2→fmtInt=Math.round) et que le SQL (round(::numeric)) ; régler la borne sur le nombre lu
+  // sur la fiche fait donc ressortir la parcelle (avant : 4 500,50 affiché « 4 501 » mais < 4501).
+  if (f.surfaceMin != null && Math.round(p.surface_m2 ?? 0) < f.surfaceMin) return false
+  if (f.surfaceMax != null && Math.round(p.surface_m2 ?? Infinity) > f.surfaceMax) return false
   if (f.sdpMin != null && (p.sdp_residuelle_m2 ?? -1) < f.sdpMin) return false
   if (f.evenement && p.evenement !== 'rouge') return false
   if (f.veille && !p.veille) return false
@@ -93,7 +96,8 @@ export interface Chip { token: string; label: string }
 // aient été posés (rapides du header OU panneau). Le MODE (analyseLabuse) n'est PAS un filtre → exclu.
 const F_ARRAYS: (keyof Filters)[] = ['tiers', 'flags', 'flagsExclus', 'communes', 'zonagePlu',
   'constructibilite', 'etatSol', 'zonePlu', 'proprietaireType', 'etatSociete', 'copro', 'signaux', 'droitsResiduels',
-  'pmForme', 'pmApe']   // KF1 (rattrapage KelFoncier) — facettes propriétaire
+  'pmForme', 'pmApe',   // KF1 (rattrapage KelFoncier) — facettes propriétaire
+  'zfangRegime', 'frrClassement']   // FILTRES-FIX-1 (lot 1) — ZFANG/FRR comptés comme les autres facettes (badge, compteur vivant)
 const F_NUMS: (keyof Filters)[] = ['surfaceMin', 'surfaceMax', 'sdpMin', 'sdpMax',
   'capaciteMin', 'multMin', 'rangMax', 'budgetMax', 'chargeMin', 'chargeMax',
   'prixMarcheMin', 'prixMarcheMax', 'caMin', 'pmDirigMin', 'pmDirigMax']
@@ -117,7 +121,8 @@ export function countActiveFilters(f: Filters): number {
 const TERRAIN_FIELDS = new Set<keyof Filters>(['surfaceMin', 'surfaceMax', 'zonagePlu', 'zonePlu',
   'etatSol', 'flags', 'flagsExclus', 'communes',
   'signaux',   // M55-D stage 6 : les Signaux de vie = ÉVÉNEMENTS SOURCÉS, filtrables sans analyse
-  'pmForme', 'pmApe', 'pmDirigMin', 'pmDirigMax'])   // KF1 — critères propriétaire = faits (DGFiP), pas une opinion LABUSE
+  'pmForme', 'pmApe', 'pmDirigMin', 'pmDirigMax',   // KF1 — critères propriétaire = faits (DGFiP), pas une opinion LABUSE
+  'zfangRegime', 'frrClassement'])   // FILTRES-FIX-1 (lot 1) — statut fiscal de la commune = un FAIT (territoire_fiscal), pas une opinion
 export function hasOpinion(f: Filters): boolean {
   for (const k of F_ARRAYS) if (!TERRAIN_FIELDS.has(k) && (f[k] as unknown[]).length) return true
   for (const k of F_NUMS) if (!TERRAIN_FIELDS.has(k) && f[k] != null) return true
@@ -200,6 +205,7 @@ const CSV_KEYS: [keyof Filters, string][] = [
   ['constructibilite', 'cst'], ['etatSol', 'es'], ['zonePlu', 'zpx'],
   ['proprietaireType', 'pt'], ['etatSociete', 'soc'], ['copro', 'cp'], ['droitsResiduels', 'drr'],
   ['pmForme', 'pmf'], ['pmApe', 'pma'],   // KF1 — forme juridique / code APE (codes réels des facettes)
+  ['zfangRegime', 'zfa'], ['frrClassement', 'frr'],   // FILTRES-FIX-1 (lot 1) — ZFANG/FRR persistés (URL, Mes vues, veille)
 ]
 // KF1 — clés texte (dénomination, SIREN) : persistées telles quelles dans le hash.
 const STR_KEYS: [keyof Filters, string][] = [['pmDenom', 'pmd'], ['pmSiren', 'pms']]

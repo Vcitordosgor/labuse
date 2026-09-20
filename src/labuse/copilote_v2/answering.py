@@ -114,13 +114,13 @@ CATALOGUE = [
     {"nom": "compter_parcelles", "desc": "Compter des parcelles d'une commune (ou de TOUTE L'ÎLE si commune "
      "absente) selon des critères de la facette : surface (min/max en m²), tier (brûlante/chaude/RÉSERVE "
      "FONCIÈRE/opportunités), détention par une personne morale, événement rouge, signaux de vie (procédure "
-     "judiciaire/BODACC, friche, cession, permis actif/caduc, défiscalisation, terrain nu de société), "
+     "judiciaire/BODACC, friche, permis actif/caduc, défiscalisation, société privée), "
      "adresse absente, copropriété, renouvellement urbain, zonage PLU (U/AU/A/N). « réserves foncières » "
      "→ tier reserve_fonciere ; « sur toute l'île / partout » → commune absente.",
      "params": {"commune": "str (absent = TOUTE L'ÎLE)", "surface_min": "int m²", "surface_max": "int m²",
                 "tier": "brulante|chaude|reserve_fonciere|opportunites", "personne_morale": "bool",
                 "evenement": "bool (événement rouge)",
-                "signaux": "csv parmi procedure,friche,cession,permis_actif,permis_caduc,defisc,nu_pm,assemblage",
+                "signaux": "csv parmi procedure,friche,permis_actif,permis_caduc,defisc,pm_privee,assemblage,succession",
                 "adresse_absente": "bool (sans adresse)", "copro": "avec|sans (copropriété)",
                 "defisc": "bool (défiscalisation)", "renouvellement": "bool (renouvellement urbain)",
                 "zonage": "csv parmi U,AU,A,N (famille de zone PLU)"}},
@@ -168,8 +168,8 @@ RÈGLES :
   « brûlantes » SEULES → tier "brulante" ; « opportunités » OU « brûlantes ET chaudes » → tier
   "opportunites" ; « personnes morales » → personne_morale=true ; un IDU = 14 caractères ; un
   nom/SIREN de société → q). MAPPING FACETTE (M110) : « en procédure judiciaire / redressement /
-  liquidation / BODACC » → signaux "procedure" ; « friche(s) » → signaux "friche" ; « cession de
-  fonds » → signaux "cession" ; « en défiscalisation / défisc » → defisc=true ; « renouvellement
+  liquidation / BODACC » → signaux "procedure" ; « friche(s) » → signaux "friche" ; « en
+  défiscalisation / défisc » → defisc=true ; « renouvellement
   urbain » → renouvellement=true ; « sans adresse / adresse absente » → adresse_absente=true ;
   « copropriété(s) / en copro » → copro "avec" ; « hors copropriété » → copro "sans" ; « à événement
   (rouge) » → evenement=true ; « en zone U / AU / A / N » → zonage (ex. "U"). Ces critères sont
