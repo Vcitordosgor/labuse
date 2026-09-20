@@ -60,14 +60,14 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 2
           article: UA 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
           citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement. [Art.11]
             HABITAT COLLECTIF - chambre individuelle 0,5 place par chambre, - studio et 2 pièces 1 place par
             logement, - 3 et 5 pièces 1,5 place par logement, - 6 pièces et plus 2 places par logement. HABITAT
             INDIVIDUEL 2 places par logement
-          statut: propose
+          statut: valide
           raison: citation non retrouvée (recouvrement 44%)
     silence: autorise
     silence_src: 'Structure ancien format : art. UA1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
@@ -281,11 +281,11 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 2
           article: UB 12 renvoi Art. 11 dispositions générales
           page_pdf: 10
           citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
-          statut: propose
+          statut: valide
           raison: citation non retrouvée (recouvrement 33%)
       pleine_terre:
         pct:
@@ -385,11 +385,11 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 2
           article: UC 12 renvoi Art. 11 dispositions générales
           page_pdf: 10
           citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
-          statut: propose
+          statut: valide
           raison: citation non retrouvée (recouvrement 33%)
       pleine_terre:
         pct:
@@ -569,11 +569,11 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 2
           article: UD 12 renvoi Art. 11 dispositions générales
           page_pdf: 10
           citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
-          statut: propose
+          statut: valide
           raison: citation non retrouvée (recouvrement 33%)
       pleine_terre:
         pct:
@@ -732,11 +732,11 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 2
           article: UE 12 renvoi Art. 11 dispositions générales
           page_pdf: 10
           citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
-          statut: propose
+          statut: valide
           raison: citation non retrouvée (recouvrement 33%)
       pleine_terre:
         pct:
@@ -807,11 +807,11 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 2
           article: UF 12 renvoi Art. 11 dispositions générales
           page_pdf: 10
           citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
-          statut: propose
+          statut: valide
           raison: citation non retrouvée (recouvrement 33%)
       pleine_terre:
         pct:
@@ -890,11 +890,11 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 2
           article: UP 12 renvoi Art. 11 dispositions générales
           page_pdf: 10
           citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
-          statut: propose
+          statut: valide
           raison: citation non retrouvée (recouvrement 33%)
     silence: interdit
     silence_src: 'Art. UP1, p. 73 : « Sont interdites toutes les occupations ou utilisations non mentionnées à l''article

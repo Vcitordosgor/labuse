@@ -1,0 +1,19 @@
+{
+ "insee": "97423",
+ "commune": "Les Trois-Bassins",
+ "pdf": "97423_reglement_20220602.pdf",
+ "n": 1,
+ "rules": [
+  {
+   "zone": "1AUt",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 30.0
+   },
+   "article": "Ub 13.1",
+   "page_pdf": 69,
+   "citation_actuelle": "Pour la zone AUt, se reporter au règlement de la zone Ub. [renvoi -> Ub 13.1 p.38 : « Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace vert et perméable... »]",
+   "raison": "citation non retrouvée autour de p.69 (recouvrement 41%)"
+  }
+ ]
+}

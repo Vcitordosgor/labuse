@@ -1,0 +1,37 @@
+{
+  "insee": "97403",
+  "decisions": [
+    {
+      "zone": "AUb",
+      "chemin": "hauteur.faitage",
+      "geste": "valider",
+      "valeur": { "m": 13.0 },
+      "preuve": "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : \n- 9 mètres à l’égout du toit ou au sommet de l’acrotère ; \n- 13 mètres au faitage.",
+      "note": "AUb renvoie au règlement de la zone U en indice (art. AU7 p.30 « Se reporter au règlement de la zone U indiquée en indice ») ; hauteur Ub à l'art. U7.2 (p.21 lue)."
+    },
+    {
+      "zone": "AUb",
+      "chemin": "hauteur.egout",
+      "geste": "valider",
+      "valeur": { "m": 9.0 },
+      "preuve": "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : \n- 9 mètres à l’égout du toit ou au sommet de l’acrotère ; \n- 13 mètres au faitage.",
+      "note": "AUb→Ub via art. AU7 ; égout Ub art. U7.2 (p.21 lue). Distinct du faîtage (13 m)."
+    },
+    {
+      "zone": "AUb",
+      "chemin": "retraits.voie",
+      "geste": "valider",
+      "valeur": { "min_m": 4.0 },
+      "preuve": "de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.",
+      "note": "AUb→Ub via art. AU3 (p.30) ; règle générale U3.2 (p.19 lue) recul ≥ 4 m, applicable à toutes zones dont Ub."
+    },
+    {
+      "zone": "AUb",
+      "chemin": "retraits.limites_separatives",
+      "geste": "valider",
+      "valeur": { "min_m": 3.0 },
+      "preuve": "le plus proche de la limite séparative, doit au moins être égale à 3 mètres.",
+      "note": "AUb→Ub via art. AU4 (p.30) ; U4.2 (p.20 lue) : en Ub implantation sur une limite ou en retrait, retrait min 3 m (Ue porté à 5 m)."
+    }
+  ]
+}

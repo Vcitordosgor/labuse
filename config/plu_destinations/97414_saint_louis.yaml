@@ -118,7 +118,7 @@ zones:
           article: UA 10.2
           page_pdf: 17
           citation: (...) 19 mètres au faîtage [zone UA, aucune règle propre au secteur UA1]
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.17 (recouvrement 29%)
         egout:
           m: 15.0
@@ -577,7 +577,7 @@ zones:
           article: UD 10.2
           page_pdf: 59
           citation: (...) 10 mètres au faîtage [règle UD, aucune règle propre au secteur UD1]
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.59 (recouvrement 43%)
         egout:
           m: 6.0
@@ -585,7 +585,7 @@ zones:
           page_pdf: 60
           citation: La hauteur maximale (...) 6 mètres à l'égout [règle UD, aucune règle propre au secteur
             UD1]
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.60 (recouvrement 44%)
       emprise_sol:
         ces:
@@ -967,7 +967,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UA : La hauteur maximale des constructions est fixée à : (...) 19 mètres
             au faîtage,'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.19 (recouvrement 31%)
         egout:
           m: 15.0
@@ -976,7 +976,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UA : La hauteur maximale des constructions est fixée à : 15 mètres à
             l''égout du toit ou au sommet de l''acrotère,'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.20 (recouvrement 47%)
       emprise_sol:
         ces:
@@ -1012,7 +1012,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UA : Habitations — Pour les autres constructions : 2 places de stationnement
             par logement'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.23 (recouvrement 41%)
       pleine_terre:
         pct:
@@ -1071,7 +1071,7 @@ zones:
           page_pdf: 46
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC : (...) 11 mètres au faîtage,'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.46 (recouvrement 25%)
         egout:
           m: 7.0
@@ -1080,7 +1080,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC : La hauteur maximale des constructions est fixée à : 7 mètres à l''égout
             du toit ou au sommet de l''acrotère,'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.49 (recouvrement 47%)
       emprise_sol:
         ces:
@@ -1107,7 +1107,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC : En cas de retrait de la construction, la distance (...) doit être
             au moins égale 3 mètres.'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.44 (recouvrement 44%)
       stationnement:
         par_logement:
@@ -1117,7 +1117,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC : Habitations — Pour les autres constructions : 2 places de stationnement
             par logement'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.52 (recouvrement 41%)
       pleine_terre:
         pct:
@@ -1152,7 +1152,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC1 : En secteur UC1, la hauteur maximale des constructions est fixée
             à (...) 13 mètres au faîtage,'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.49 (recouvrement 35%)
         egout:
           m: 9.0
@@ -1170,7 +1170,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC1 : L''emprise au sol des constructions ne doit pas excéder 60% (...)
             [seul UC2 abaissé à 50%]'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.48 (recouvrement 31%)
       retraits:
         voie:
@@ -1200,7 +1200,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC1 : Pour les autres constructions : 2 places de stationnement par logement
             [règle UC]'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.52 (recouvrement 41%)
       pleine_terre:
         pct:
@@ -1210,7 +1210,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC1 : Au minimum 25% de la superficie totale de l''unité foncière (...)
             [règle UC, aucune disposition propre au secteur]'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.53 (recouvrement 25%)
     renvoi: UC1
     renvoi_src: 'Art. AUindicée 1.2, p. 108 : « Se reporter au règlement de la zone U indiquée en indice » (indice
@@ -1226,7 +1226,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC2 : En secteur UC2, la hauteur maximale des constructions est fixée
             à (...) 10 mètres au faîtage.'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.49 (recouvrement 35%)
         egout:
           m: 6.0
@@ -1243,7 +1243,7 @@ zones:
           page_pdf: 48
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC2 : Dans le secteur UC2 ce seuil est limité à 50%.'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.48 (recouvrement 36%)
       retraits:
         voie:
@@ -1261,7 +1261,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC2 : En cas de retrait de la construction, la distance (...) au moins
             égale 3 mètres. [règle UC ; secteur UC1 seul dérogé]'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.44 (recouvrement 40%)
       stationnement:
         par_logement:
@@ -1271,7 +1271,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC2 : Pour les autres constructions : 2 places de stationnement par logement
             [règle UC]'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.52 (recouvrement 41%)
       pleine_terre:
         pct:
@@ -1281,7 +1281,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC2 : Au minimum 25% de la superficie totale de l''unité foncière (...)
             [règle UC]'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.53 (recouvrement 31%)
     renvoi: UC2
     renvoi_src: 'Art. AUindicée 1.2, p. 108 : « Se reporter au règlement de la zone U indiquée en indice » (indice
@@ -1296,7 +1296,7 @@ zones:
           page_pdf: 59
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UD : (...) 10 mètres au faîtage.'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.59 (recouvrement 25%)
         egout:
           m: 6.0
@@ -1305,7 +1305,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UD : La hauteur maximale des constructions est fixée à : 6 mètres à l''égout
             du toit ou au sommet de l''acrotère,'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.62 (recouvrement 47%)
       emprise_sol:
         ces:
@@ -1341,7 +1341,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UD : Habitations — Pour les autres constructions : 2 places de stationnement
             par logement'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.66 (recouvrement 41%)
       pleine_terre:
         pct:
@@ -1366,7 +1366,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UD1 : (...) 10 mètres au faîtage [règle UD, aucune règle propre au secteur
             UD1]'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.59 (recouvrement 29%)
         egout:
           m: 6.0
@@ -1375,7 +1375,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UD1 : La hauteur maximale (...) 6 mètres à l''égout [règle UD, aucune
             règle propre au secteur UD1]'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.60 (recouvrement 32%)
       emprise_sol:
         ces:
@@ -1384,7 +1384,7 @@ zones:
           page_pdf: 62
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UD1 : Dans le secteur UD1, ce seuil est limité à 40%.'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.62 (recouvrement 36%)
       retraits:
         voie:
@@ -1401,7 +1401,7 @@ zones:
           page_pdf: 60
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UD1 : En cas de retrait (...) au moins égale 3 mètres. [règle UD]'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.60 (recouvrement 47%)
       stationnement:
         par_logement:
@@ -1411,7 +1411,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UD1 : Pour les autres constructions : 2 places de stationnement par logement
             [règle UD]'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.66 (recouvrement 41%)
       pleine_terre:
         pct:
@@ -1420,7 +1420,7 @@ zones:
           page_pdf: 67
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UD1 : Dans le secteur UD1, ce seuil est porté à 35% minimum.'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.67 (recouvrement 33%)
     renvoi: UD1
     renvoi_src: 'Art. AUindicée 1.2, p. 108 : « Se reporter au règlement de la zone U indiquée en indice » (indice
@@ -1453,7 +1453,7 @@ zones:
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UE : L''emprise au sol des constructions ne doit pas excéder 70% de la
             superficie de l''unité foncière.'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.76 (recouvrement 47%)
       retraits:
         voie:

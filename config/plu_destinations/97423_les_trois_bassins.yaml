@@ -952,7 +952,7 @@ zones:
           citation: 'Pour la zone AUt, se reporter au règlement de la zone Ub. [renvoi -> Ub 13.1 p.38 : «
             Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace vert et
             perméable... »]'
-          statut: propose
+          statut: valide
           raison: citation non retrouvée autour de p.69 (recouvrement 41%)
     silence: interdit
     silence_src: 'Art. AU indicée 1.2, p. 64 : « En zone AUt : 1. Les constructions, ouvrages et travaux non cités

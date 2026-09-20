@@ -1,0 +1,237 @@
+{
+ "insee": "97414",
+ "decisions": [
+  {
+   "zone": "UA1",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": {"m": 19.0},
+   "preuve": "19 mètres au faîtage",
+   "note": "UA 10.2 règle générale; secteur UA1 sans règle propre de hauteur → hérite UA. p.20 lue"
+  },
+  {
+   "zone": "UD1",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": {"m": 10.0},
+   "preuve": "10 mètres au faîtage.",
+   "note": "UD 10.2 règle générale; UD1 sans règle propre de hauteur → hérite UD. p.62 lue"
+  },
+  {
+   "zone": "UD1",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": {"m": 6.0},
+   "preuve": "6 mètres à l’égout du toit ou au sommet de l’acrotère",
+   "note": "UD 10.2 règle générale; UD1 sans règle propre → hérite UD. p.62 lue"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": {"m": 19.0},
+   "preuve": "19 mètres au faîtage",
+   "note": "AUindicée renvoie à la zone U en indice (UA); UA 10.2. p.20/p.109 lues"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": {"m": 15.0},
+   "preuve": "15 mètres à l’égout du toit ou au sommet de l’acrotère",
+   "note": "AUindicée→UA; UA 10.2. p.20 lue"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "stationnement.par_logement",
+   "geste": "valider",
+   "valeur": {"places": 2.0},
+   "preuve": "2 places de stationnement par logement",
+   "note": "AUindicée→UA 12.2, ligne « Pour les autres constructions ». p.23/p.110 lues"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": {"m": 11.0},
+   "preuve": "11 mètres au faîtage",
+   "note": "AUindicée→UC 10.2 règle générale. p.49 lue"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": {"m": 7.0},
+   "preuve": "7 mètres à l’égout du toit ou au sommet de l’acrotère",
+   "note": "AUindicée→UC 10.2 règle générale. p.49 lue"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": {"min_m": 3.0},
+   "preuve": "au moins égale 3 mètres",
+   "note": "AUindicée→UC 7.2 limites latérales, en cas de retrait. p.46 lue"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "stationnement.par_logement",
+   "geste": "valider",
+   "valeur": {"places": 2.0},
+   "preuve": "2 places de stationnement par logement",
+   "note": "AUindicée→UC 12.2 « autres constructions ». p.52 lue"
+  },
+  {
+   "zone": "1AUc1",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": {"m": 13.0},
+   "preuve": "13 mètres au faîtage",
+   "note": "AUindicée→UC1: « En secteur UC1... 13 mètres au faîtage ». p.49 lue"
+  },
+  {
+   "zone": "1AUc1",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": {"pct": 60.0},
+   "preuve": "ne doit pas excéder 60%",
+   "note": "AUindicée→UC 9.2 règle générale (UC1 non abaissé). p.48 lue"
+  },
+  {
+   "zone": "1AUc1",
+   "chemin": "stationnement.par_logement",
+   "geste": "valider",
+   "valeur": {"places": 2.0},
+   "preuve": "2 places de stationnement par logement",
+   "note": "AUindicée→UC 12.2 « autres constructions ». p.52 lue"
+  },
+  {
+   "zone": "1AUc1",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": {"pct": 25.0},
+   "preuve": "Au minimum 25% de la superficie totale",
+   "note": "AUindicée→UC 13.1 espaces perméables. p.53 lue"
+  },
+  {
+   "zone": "1AUc2",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": {"m": 10.0},
+   "preuve": "10 mètres au faîtage.",
+   "note": "AUindicée→UC2: « En secteur UC2... 10 mètres au faîtage ». p.49 lue"
+  },
+  {
+   "zone": "1AUc2",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": {"pct": 50.0},
+   "preuve": "seuil est limité à 50%",
+   "note": "AUindicée→UC 9.2: « Dans le secteur UC2 ce seuil est limité à 50% ». p.48 lue"
+  },
+  {
+   "zone": "1AUc2",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": {"min_m": 3.0},
+   "preuve": "au moins égale 3 mètres",
+   "note": "AUindicée→UC 7.2 limites latérales (UC2 non dérogé). p.46 lue"
+  },
+  {
+   "zone": "1AUc2",
+   "chemin": "stationnement.par_logement",
+   "geste": "valider",
+   "valeur": {"places": 2.0},
+   "preuve": "2 places de stationnement par logement",
+   "note": "AUindicée→UC 12.2 « autres constructions ». p.52 lue"
+  },
+  {
+   "zone": "1AUc2",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": {"pct": 25.0},
+   "preuve": "Au minimum 25% de la superficie totale",
+   "note": "AUindicée→UC 13.1 espaces perméables. p.53 lue"
+  },
+  {
+   "zone": "1AUd",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": {"m": 10.0},
+   "preuve": "10 mètres au faîtage.",
+   "note": "AUindicée→UD 10.2 règle générale. p.62 lue"
+  },
+  {
+   "zone": "1AUd",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": {"m": 6.0},
+   "preuve": "6 mètres à l’égout du toit ou au sommet de l’acrotère",
+   "note": "AUindicée→UD 10.2 règle générale. p.62 lue"
+  },
+  {
+   "zone": "1AUd",
+   "chemin": "stationnement.par_logement",
+   "geste": "valider",
+   "valeur": {"places": 2.0},
+   "preuve": "2 places de stationnement par logement",
+   "note": "AUindicée→UD 12.2 « autres constructions ». p.66 lue"
+  },
+  {
+   "zone": "1AUd1",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": {"m": 10.0},
+   "preuve": "10 mètres au faîtage.",
+   "note": "AUindicée→UD 10.2; UD1 sans règle propre de hauteur. p.62 lue"
+  },
+  {
+   "zone": "1AUd1",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": {"m": 6.0},
+   "preuve": "6 mètres à l’égout du toit ou au sommet de l’acrotère",
+   "note": "AUindicée→UD 10.2; UD1 sans règle propre. p.62 lue"
+  },
+  {
+   "zone": "1AUd1",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": {"pct": 40.0},
+   "preuve": "seuil est limité à 40%",
+   "note": "AUindicée→UD 9.2: « Dans le secteur UD1, ce seuil est limité à 40% ». p.62 lue"
+  },
+  {
+   "zone": "1AUd1",
+   "chemin": "retraits.limites_separatives",
+   "geste": "valider",
+   "valeur": {"min_m": 3.0},
+   "preuve": "au moins égale 3 mètres",
+   "note": "AUindicée→UD 7.2 limites latérales, en cas de retrait. p.60 lue"
+  },
+  {
+   "zone": "1AUd1",
+   "chemin": "stationnement.par_logement",
+   "geste": "valider",
+   "valeur": {"places": 2.0},
+   "preuve": "2 places de stationnement par logement",
+   "note": "AUindicée→UD 12.2 « autres constructions ». p.66 lue"
+  },
+  {
+   "zone": "1AUd1",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": {"pct": 35.0},
+   "preuve": "seuil est porté à 35% minimum",
+   "note": "AUindicée→UD 13.1: « Dans le secteur UD1, ce seuil est porté à 35% minimum ». p.67 lue"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "emprise_sol.ces",
+   "geste": "valider",
+   "valeur": {"pct": 70.0},
+   "preuve": "ne doit pas excéder 70% de la superficie",
+   "note": "AUindicée→UE 9.2 règle générale (pas de dérogation emprise pour 1AUe). p.76 lue"
+  }
+ ]
+}

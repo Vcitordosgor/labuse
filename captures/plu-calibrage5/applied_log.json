@@ -1,805 +1,412 @@
 [
  {
-  "insee": "97402",
-  "zone": "Ua",
-  "chemin": "retraits.limites_separatives",
+  "insee": "97403",
+  "zone": "AUb",
+  "chemin": "hauteur.faitage",
   "geste": "valider",
   "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
+   "m": 13.0
   },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+  "preuve": "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : \n- 9 mètres à l’égout du toit ou au sommet de l’acrotère ; \n- 13 mètres au faitage."
  },
  {
-  "insee": "97402",
-  "zone": "Ub",
-  "chemin": "retraits.limites_separatives",
+  "insee": "97403",
+  "zone": "AUb",
+  "chemin": "hauteur.egout",
   "geste": "valider",
   "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
+   "m": 9.0
   },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+  "preuve": "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : \n- 9 mètres à l’égout du toit ou au sommet de l’acrotère ; \n- 13 mètres au faitage."
  },
  {
-  "insee": "97402",
-  "zone": "Uc",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97402",
-  "zone": "Ud",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97402",
-  "zone": "Udu",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97402",
-  "zone": "1AUa",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97402",
-  "zone": "1AUb",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97402",
-  "zone": "1AUc",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97402",
-  "zone": "1AUd",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97402",
-  "zone": "1AUec",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97402",
-  "zone": "1AUt",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97407",
-  "zone": "1AUa",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "sur limite (max 2), sinon retrait minimum 3 m"
-  },
-  "preuve": "la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres"
- },
- {
-  "insee": "97407",
-  "zone": "1AUc",
+  "insee": "97403",
+  "zone": "AUb",
   "chemin": "retraits.voie",
   "geste": "valider",
   "valeur": {
-   "min_m": 3,
-   "formule": "à l’alignement, sinon recul minimum 3 m"
+   "min_m": 4.0
   },
-  "preuve": "Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum de 3 mètres."
+  "preuve": "de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres."
  },
  {
-  "insee": "97407",
-  "zone": "1AUc",
+  "insee": "97403",
+  "zone": "AUb",
   "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "min_m": 4,
-   "formule": "sur limite, sinon retrait minimum 4 m"
+   "min_m": 3.0
   },
-  "preuve": "la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres"
+  "preuve": "le plus proche de la limite séparative, doit au moins être égale à 3 mètres."
  },
  {
-  "insee": "97407",
-  "zone": "1AUem",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 5,
-   "formule": "sur limite, sinon retrait minimum 5 m"
-  },
-  "preuve": "la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 5 mètres"
- },
- {
-  "insee": "97407",
-  "zone": "1AUs",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 5,
-   "formule": "sur limite, sinon retrait minimum 5 m"
-  },
-  "preuve": "la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 5 mètres"
- },
- {
-  "insee": "97408",
+  "insee": "97413",
   "zone": "UA",
-  "chemin": "retraits.limites_separatives",
+  "chemin": "stationnement.par_logement",
   "geste": "valider",
   "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
+   "places": 2
   },
-  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+  "preuve": "HABITAT INDIVIDUEL 2 places par logement"
  },
  {
-  "insee": "97408",
-  "zone": "UAa",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97408",
-  "zone": "UAm",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97408",
+  "insee": "97413",
   "zone": "UB",
-  "chemin": "retraits.limites_separatives",
+  "chemin": "stationnement.par_logement",
   "geste": "valider",
   "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
+   "places": 2
   },
-  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+  "preuve": "HABITAT INDIVIDUEL 2 places par logement"
  },
  {
-  "insee": "97408",
-  "zone": "UBa",
-  "chemin": "retraits.limites_separatives",
+  "insee": "97413",
+  "zone": "UC",
+  "chemin": "stationnement.par_logement",
   "geste": "valider",
   "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
+   "places": 2
   },
-  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+  "preuve": "HABITAT INDIVIDUEL 2 places par logement"
  },
  {
-  "insee": "97408",
-  "zone": "UBb",
-  "chemin": "retraits.limites_separatives",
+  "insee": "97413",
+  "zone": "UD",
+  "chemin": "stationnement.par_logement",
   "geste": "valider",
   "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
+   "places": 2
   },
-  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+  "preuve": "HABITAT INDIVIDUEL 2 places par logement"
  },
  {
-  "insee": "97408",
-  "zone": "UBc",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97408",
-  "zone": "UBpsfr2",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97408",
-  "zone": "UBpszc",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97408",
+  "insee": "97413",
   "zone": "UE",
-  "chemin": "retraits.limites_separatives",
+  "chemin": "stationnement.par_logement",
   "geste": "valider",
   "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
+   "places": 2
   },
-  "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+  "preuve": "HABITAT INDIVIDUEL 2 places par logement"
  },
  {
-  "insee": "97408",
-  "zone": "UEm",
-  "chemin": "retraits.limites_separatives",
+  "insee": "97413",
+  "zone": "UF",
+  "chemin": "stationnement.par_logement",
   "geste": "valider",
   "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
+   "places": 2
   },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
+  "preuve": "HABITAT INDIVIDUEL 2 places par logement"
  },
  {
-  "insee": "97408",
-  "zone": "UT",
-  "chemin": "retraits.limites_separatives",
+  "insee": "97413",
+  "zone": "UP",
+  "chemin": "stationnement.par_logement",
   "geste": "valider",
   "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
+   "places": 2
   },
-  "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97408",
-  "zone": "UTfr2",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97408",
-  "zone": "AUB",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97408",
-  "zone": "AUBb",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97408",
-  "zone": "AUBpsfr2",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97408",
-  "zone": "AUT",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97408",
-  "zone": "AUEm",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97408",
-  "zone": "UApsfr2",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97412",
-  "zone": "U2",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
- },
- {
-  "insee": "97412",
-  "zone": "U2a",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
- },
- {
-  "insee": "97412",
-  "zone": "U3",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
- },
- {
-  "insee": "97412",
-  "zone": "U3a",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
- },
- {
-  "insee": "97412",
-  "zone": "U3ar",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
- },
- {
-  "insee": "97412",
-  "zone": "U4",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 1.9,
-   "formule": "H/2, minimum 1,9 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 1,9 mètre"
- },
- {
-  "insee": "97412",
-  "zone": "U5",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
- },
- {
-  "insee": "97412",
-  "zone": "U5cv",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m (ou sur limites)"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
- },
- {
-  "insee": "97412",
-  "zone": "U5ma",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
- },
- {
-  "insee": "97412",
-  "zone": "U6",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
- },
- {
-  "insee": "97412",
-  "zone": "U6c",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
- },
- {
-  "insee": "97412",
-  "zone": "1AUto",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
- },
- {
-  "insee": "97412",
-  "zone": "1AUtok",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres"
+  "preuve": "HABITAT INDIVIDUEL 2 places par logement"
  },
  {
   "insee": "97414",
-  "zone": "UC1",
+  "zone": "UA1",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 19.0
+  },
+  "preuve": "19 mètres au faîtage"
+ },
+ {
+  "insee": "97414",
+  "zone": "UD1",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 10.0
+  },
+  "preuve": "10 mètres au faîtage."
+ },
+ {
+  "insee": "97414",
+  "zone": "UD1",
+  "chemin": "hauteur.egout",
+  "geste": "valider",
+  "valeur": {
+   "m": 6.0
+  },
+  "preuve": "6 mètres à l’égout du toit ou au sommet de l’acrotère"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUa",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 19.0
+  },
+  "preuve": "19 mètres au faîtage"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUa",
+  "chemin": "hauteur.egout",
+  "geste": "valider",
+  "valeur": {
+   "m": 15.0
+  },
+  "preuve": "15 mètres à l’égout du toit ou au sommet de l’acrotère"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUa",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2.0
+  },
+  "preuve": "2 places de stationnement par logement"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 11.0
+  },
+  "preuve": "11 mètres au faîtage"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc",
+  "chemin": "hauteur.egout",
+  "geste": "valider",
+  "valeur": {
+   "m": 7.0
+  },
+  "preuve": "7 mètres à l’égout du toit ou au sommet de l’acrotère"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc",
   "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "min_m": 3.0,
-   "formule": "H1/2, minimum 3,00 m"
+   "min_m": 3.0
   },
-  "preuve": "sans être inférieur à 3,00 mètres, soit : L = H1/2"
+  "preuve": "au moins égale 3 mètres"
  },
  {
   "insee": "97414",
-  "zone": "UE",
-  "chemin": "retraits.voie",
+  "zone": "1AUc",
+  "chemin": "stationnement.par_logement",
   "geste": "valider",
   "valeur": {
-   "min_m": 5.0,
-   "formule": "H/2, minimum 5 m"
+   "places": 2.0
   },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres"
- },
- {
-  "insee": "97414",
-  "zone": "UE",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4.0,
-   "formule": "H/2, minimum 4 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres"
- },
- {
-  "insee": "97414",
-  "zone": "US",
-  "chemin": "retraits.voie",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 5.0,
-   "formule": "H/2, minimum 5 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 5 mètres"
- },
- {
-  "insee": "97414",
-  "zone": "US",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4.0,
-   "formule": "H/2, minimum 4 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres"
+  "preuve": "2 places de stationnement par logement"
  },
  {
   "insee": "97414",
   "zone": "1AUc1",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 13.0
+  },
+  "preuve": "13 mètres au faîtage"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc1",
+  "chemin": "emprise_sol.ces",
+  "geste": "valider",
+  "valeur": {
+   "pct": 60.0
+  },
+  "preuve": "ne doit pas excéder 60%"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc1",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2.0
+  },
+  "preuve": "2 places de stationnement par logement"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc1",
+  "chemin": "pleine_terre.pct",
+  "geste": "valider",
+  "valeur": {
+   "pct": 25.0
+  },
+  "preuve": "Au minimum 25% de la superficie totale"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc2",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 10.0
+  },
+  "preuve": "10 mètres au faîtage."
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc2",
+  "chemin": "emprise_sol.ces",
+  "geste": "valider",
+  "valeur": {
+   "pct": 50.0
+  },
+  "preuve": "seuil est limité à 50%"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc2",
   "chemin": "retraits.limites_separatives",
   "geste": "valider",
   "valeur": {
-   "min_m": 3.0,
-   "formule": "H1/2, minimum 3,00 m"
+   "min_m": 3.0
   },
-  "preuve": "sans être inférieur à 3,00 mètres, soit : L = H1/2"
+  "preuve": "au moins égale 3 mètres"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc2",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2.0
+  },
+  "preuve": "2 places de stationnement par logement"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUc2",
+  "chemin": "pleine_terre.pct",
+  "geste": "valider",
+  "valeur": {
+   "pct": 25.0
+  },
+  "preuve": "Au minimum 25% de la superficie totale"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 10.0
+  },
+  "preuve": "10 mètres au faîtage."
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd",
+  "chemin": "hauteur.egout",
+  "geste": "valider",
+  "valeur": {
+   "m": 6.0
+  },
+  "preuve": "6 mètres à l’égout du toit ou au sommet de l’acrotère"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2.0
+  },
+  "preuve": "2 places de stationnement par logement"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd1",
+  "chemin": "hauteur.faitage",
+  "geste": "valider",
+  "valeur": {
+   "m": 10.0
+  },
+  "preuve": "10 mètres au faîtage."
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd1",
+  "chemin": "hauteur.egout",
+  "geste": "valider",
+  "valeur": {
+   "m": 6.0
+  },
+  "preuve": "6 mètres à l’égout du toit ou au sommet de l’acrotère"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd1",
+  "chemin": "emprise_sol.ces",
+  "geste": "valider",
+  "valeur": {
+   "pct": 40.0
+  },
+  "preuve": "seuil est limité à 40%"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd1",
+  "chemin": "retraits.limites_separatives",
+  "geste": "valider",
+  "valeur": {
+   "min_m": 3.0
+  },
+  "preuve": "au moins égale 3 mètres"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd1",
+  "chemin": "stationnement.par_logement",
+  "geste": "valider",
+  "valeur": {
+   "places": 2.0
+  },
+  "preuve": "2 places de stationnement par logement"
+ },
+ {
+  "insee": "97414",
+  "zone": "1AUd1",
+  "chemin": "pleine_terre.pct",
+  "geste": "valider",
+  "valeur": {
+   "pct": 35.0
+  },
+  "preuve": "seuil est porté à 35% minimum"
  },
  {
   "insee": "97414",
   "zone": "1AUe",
-  "chemin": "retraits.voie",
+  "chemin": "emprise_sol.ces",
   "geste": "valider",
   "valeur": {
-   "min_m": 5.0,
-   "formule": "H/2, minimum 5 m"
+   "pct": 70.0
   },
-  "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres"
- },
- {
-  "insee": "97414",
-  "zone": "1AUe",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4.0,
-   "formule": "H/2, minimum 4 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres"
- },
- {
-  "insee": "97418",
-  "zone": "UA",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97418",
-  "zone": "UEa",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4,
-   "formule": "H/2, minimum 4 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres"
- },
- {
-  "insee": "97418",
-  "zone": "UEc",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4,
-   "formule": "H/2, minimum 4 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres"
- },
- {
-  "insee": "97418",
-  "zone": "UEm",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4,
-   "formule": "H/2, minimum 4 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres"
- },
- {
-  "insee": "97418",
-  "zone": "UEp",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4,
-   "formule": "H/2, minimum 4 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres"
- },
- {
-  "insee": "97418",
-  "zone": "UR",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4,
-   "formule": "H/2, minimum 4 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres"
- },
- {
-  "insee": "97418",
-  "zone": "UT",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4,
-   "formule": "H/2, minimum 4 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres"
- },
- {
-  "insee": "97418",
-  "zone": "UTp",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4,
-   "formule": "H/2, minimum 4 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres"
- },
- {
-  "insee": "97419",
-  "zone": "Ue",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 5,
-   "formule": "H/2, minimum 5 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 5 mètres"
- },
- {
-  "insee": "97419",
-  "zone": "1AUa",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97419",
-  "zone": "1AUc",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 3,
-   "formule": "H/2, minimum 3 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres"
- },
- {
-  "insee": "97419",
-  "zone": "1AUe",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 5,
-   "formule": "H/2, minimum 5 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 5 mètres"
- },
- {
-  "insee": "97420",
-  "zone": "UE",
-  "chemin": "retraits.voie",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 5,
-   "formule": "H/2, minimum 5 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5 mètres"
- },
- {
-  "insee": "97420",
-  "zone": "UE",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4,
-   "formule": "H/2, minimum 4 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 4 mètres"
- },
- {
-  "insee": "97420",
-  "zone": "1AUe",
-  "chemin": "retraits.voie",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 5,
-   "formule": "H/2, minimum 5 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5 mètres"
- },
- {
-  "insee": "97420",
-  "zone": "1AUe",
-  "chemin": "retraits.limites_separatives",
-  "geste": "valider",
-  "valeur": {
-   "min_m": 4,
-   "formule": "H/2, minimum 4 m"
-  },
-  "preuve": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 4 mètres"
+  "preuve": "ne doit pas excéder 70% de la superficie"
  },
  {
   "insee": "97423",
-  "zone": "Ue",
-  "chemin": "retraits.limites_separatives",
+  "zone": "1AUt",
+  "chemin": "pleine_terre.pct",
   "geste": "valider",
   "valeur": {
-   "min_m": 4.0,
-   "formule": "D=H/2, sans être inférieure à 4,00 mètres"
+   "pct": 30.0
   },
-  "preuve": "doit être au moins égale à D=H/2 (H étant la hauteur à l’égout du toit ou au sommet de l’acrotère), sans être inférieure à 4,00 mètres."
+  "preuve": "Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace vert et perméable"
  }
 ]

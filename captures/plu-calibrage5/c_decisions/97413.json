@@ -1,0 +1,61 @@
+{
+ "insee": "97413",
+ "decisions": [
+  {
+   "zone": "UA",
+   "chemin": "stationnement.par_logement",
+   "geste": "valider",
+   "valeur": { "places": 2 },
+   "preuve": "HABITAT INDIVIDUEL 2 places par logement",
+   "note": "Art.11 Normes de stationnement (dispositions générales), table s'appliquant à l'ensemble des zones ; UA renvoie 'stationnement (article 11)' p.18. Habitat individuel = 2. p.13-14 lues."
+  },
+  {
+   "zone": "UB",
+   "chemin": "stationnement.par_logement",
+   "geste": "valider",
+   "valeur": { "places": 2 },
+   "preuve": "HABITAT INDIVIDUEL 2 places par logement",
+   "note": "Art.11 général (à l'ensemble des zones) ; UB renvoie article 11 p.28. p.13-14 lues."
+  },
+  {
+   "zone": "UC",
+   "chemin": "stationnement.par_logement",
+   "geste": "valider",
+   "valeur": { "places": 2 },
+   "preuve": "HABITAT INDIVIDUEL 2 places par logement",
+   "note": "Art.11 général (à l'ensemble des zones) ; UC renvoie article 11 p.38. p.13-14 lues."
+  },
+  {
+   "zone": "UD",
+   "chemin": "stationnement.par_logement",
+   "geste": "valider",
+   "valeur": { "places": 2 },
+   "preuve": "HABITAT INDIVIDUEL 2 places par logement",
+   "note": "Art.11 général (à l'ensemble des zones) ; UD renvoie article 11 p.48. p.13-14 lues."
+  },
+  {
+   "zone": "UE",
+   "chemin": "stationnement.par_logement",
+   "geste": "valider",
+   "valeur": { "places": 2 },
+   "preuve": "HABITAT INDIVIDUEL 2 places par logement",
+   "note": "Art.11 général (à l'ensemble des zones) ; UE renvoie article 11 p.58. p.13-14 lues."
+  },
+  {
+   "zone": "UF",
+   "chemin": "stationnement.par_logement",
+   "geste": "valider",
+   "valeur": { "places": 2 },
+   "preuve": "HABITAT INDIVIDUEL 2 places par logement",
+   "note": "Art.11 général (à l'ensemble des zones) ; UF renvoie article 11 p.66. p.13-14 lues."
+  },
+  {
+   "zone": "UP",
+   "chemin": "stationnement.par_logement",
+   "geste": "valider",
+   "valeur": { "places": 2 },
+   "preuve": "HABITAT INDIVIDUEL 2 places par logement",
+   "note": "Art.11 général (à l'ensemble des zones) ; UP renvoie article 11 p.73. p.13-14 lues."
+  }
+ ]
+}

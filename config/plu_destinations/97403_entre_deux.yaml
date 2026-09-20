@@ -579,30 +579,32 @@ zones:
           m: 13.0
           article: U7.2
           page_pdf: 29
-          citation: INTROUVABLE
-          statut: propose
+          citation: "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : \n- 9 mètres à\
+            \ l’égout du toit ou au sommet de l’acrotère ; \n- 13 mètres au faitage."
+          statut: valide
           raison: citation INTROUVABLE à la re-lecture du PDF
         egout:
           m: 9.0
           article: U7.2
           page_pdf: 29
-          citation: INTROUVABLE
-          statut: propose
+          citation: "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : \n- 9 mètres à\
+            \ l’égout du toit ou au sommet de l’acrotère ; \n- 13 mètres au faitage."
+          statut: valide
           raison: citation INTROUVABLE à la re-lecture du PDF
       retraits:
         voie:
           min_m: 4.0
           article: U3.2
           page_pdf: 19
-          citation: INTROUVABLE
-          statut: propose
+          citation: de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.
+          statut: valide
           raison: citation INTROUVABLE à la re-lecture du PDF
         limites_separatives:
           min_m: 3.0
           article: U4.2
           page_pdf: 20
-          citation: INTROUVABLE
-          statut: propose
+          citation: le plus proche de la limite séparative, doit au moins être égale à 3 mètres.
+          statut: valide
           raison: citation INTROUVABLE à la re-lecture du PDF
       stationnement:
         par_logement:

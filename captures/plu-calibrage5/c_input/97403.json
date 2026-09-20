@@ -1,0 +1,52 @@
+{
+ "insee": "97403",
+ "commune": "Entre-Deux",
+ "pdf": "97403_reglement_20240924.pdf",
+ "n": 4,
+ "rules": [
+  {
+   "zone": "AUb",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 13.0
+   },
+   "article": "U7.2",
+   "page_pdf": 29,
+   "citation_actuelle": "INTROUVABLE",
+   "raison": "citation INTROUVABLE à la re-lecture du PDF"
+  },
+  {
+   "zone": "AUb",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 9.0
+   },
+   "article": "U7.2",
+   "page_pdf": 29,
+   "citation_actuelle": "INTROUVABLE",
+   "raison": "citation INTROUVABLE à la re-lecture du PDF"
+  },
+  {
+   "zone": "AUb",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "U3.2",
+   "page_pdf": 19,
+   "citation_actuelle": "INTROUVABLE",
+   "raison": "citation INTROUVABLE à la re-lecture du PDF"
+  },
+  {
+   "zone": "AUb",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "U4.2",
+   "page_pdf": 20,
+   "citation_actuelle": "INTROUVABLE",
+   "raison": "citation INTROUVABLE à la re-lecture du PDF"
+  }
+ ]
+}
