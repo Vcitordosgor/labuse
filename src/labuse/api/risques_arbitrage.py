@@ -49,6 +49,7 @@ def libelle_client_detail(detail: str | None) -> str | None:
     d = re.sub(r"PPR ([A-Z][A-Z_]+)", lambda m: "PPR " + m.group(1).lower().replace("_", " "), d)
     # clé de type d'aléa avec underscore.
     d = d.replace("mouvement_terrain", "mouvement de terrain")
+    d = d.replace("submersion_marine", "submersion marine")
     # niveaux techniques / sans accent.
     for raw, lab in (("niveau eleve", "niveau élevé"), ("niveau tres_fort", "niveau très fort"),
                      ("niveau faible_a_modere", "niveau faible à modéré"),

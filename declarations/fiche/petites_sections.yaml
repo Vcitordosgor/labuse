@@ -8,6 +8,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: reseaux
 donnees:
   - quoi:  fibre_parcelle
     ou:    { rang: 10, etat: en_tete, section: "Fibre" }
@@ -22,6 +23,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: identite
 donnees:
   - quoi:  filiation_parcelle
     ou:    { rang: 10, etat: replie, section: "Historique cadastral" }
@@ -36,6 +38,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: entete
 donnees:
   - quoi:  tier_opportunite
     ou:    { rang: 10, etat: en_tete, section: "Classement" }

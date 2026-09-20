@@ -7,7 +7,7 @@ la valeur servie est l'objet mutation lui-même (montant/date non recalculés), 
 et une mutation sans montant est refusée (garde anti-faux-zéro)."""
 from __future__ import annotations
 
-from labuse.exports.collecte import _c_prix_achat
+from labuse.exports.robinet_fiche import _c_prix_achat
 
 
 def _attendu(fiche: dict):

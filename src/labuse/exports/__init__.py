@@ -7,6 +7,6 @@ Points d'entrée : `builder.construire` / `builder.generer_pdf`.
 """
 from __future__ import annotations
 
-from . import archive, builder, collecte, nature, numeros, pieds, rendu, verdicts  # noqa: F401
+from . import archive, builder, miroir, nature, numeros, pieds, rendu, robinet_fiche, verdicts  # noqa: F401
 
 __all__ = ["archive", "builder", "collecte", "nature", "numeros", "pieds", "rendu", "verdicts"]

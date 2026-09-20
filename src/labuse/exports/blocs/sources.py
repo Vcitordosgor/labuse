@@ -46,4 +46,5 @@ def rendu(valeurs) -> str:
     # RECETTE-12 D4 — la ligne « Sources : BD TOPO… CoSIA… » (pied) imprimée APRÈS les mentions
     # légales, à la fin du §10, est RETIRÉE : le §10 porte déjà sa propre liste « Sources et
     # millésimes » ci-dessus ; ce pied faisait doublon (et fuyait les libellés techniques, D5).
-    return section("10. Sources, limites et mentions", corps)
+    # EXPORTS-REBRANCHEMENT-1 lot 1 — la clôture suit les 11 sections du miroir : plus de numéro.
+    return section("Sources, limites et mentions", corps)

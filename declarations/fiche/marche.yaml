@@ -8,6 +8,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: marche
 
 donnees:
   # ── CONSTATÉ : ventes passées, actées (DVF) ──

@@ -7,6 +7,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: potentiel
 donnees:
   - quoi:  potentiel_verdict
     ou:    { rang: 10, etat: en_tete, section: "Ce qui est constructible" }
@@ -21,13 +22,13 @@ donnees:
     absence_type: absente_ici
     pourquoi: "L'ordre de grandeur du programme ; en tête."
   - quoi:  charge_fonciere_eur
-    ou:    { rang: 30, etat: replie, section: "Bilan indicatif" }
+    ou:    { rang: 30, etat: replie, section: "Bilan indicatif" , fiche_section: simulation }
     comment: { libelle: "Charge foncière (indicative)", unite: "€", format: euro, i: "Bilan à rebours INDICATIF sur hypothèses PAR DÉFAUT du secteur (aucun projet saisi) — à valider. Une charge négative se dit en français, jamais en euros négatifs." }
     absence: "Charge foncière : bilan non calculable (prix de sortie ou SDP manquants)."
     absence_type: absente_ici
     pourquoi: "Ordre de grandeur indicatif, ses hypothèses dites ; replié (pas un chiffre à défaut affiché comme ferme)."
   - quoi:  taxe_amenagement_estimee_eur
-    ou:    { rang: 40, etat: replie, section: "Bilan indicatif" }
+    ou:    { rang: 40, etat: replie, section: "Bilan indicatif" , fiche_section: fiscalite }
     comment: { libelle: "Taxe d'aménagement — taux communal", unite: "%", format: pourcent, i: "Taux communal de la taxe d'aménagement. Sans projet, SEUL le taux est servi : le montant en euros se calcule sur la surface de plancher CRÉÉE par un projet (art. L331 c. urb.), chiffré au Financier." }
     absence: "Taxe d'aménagement : taux communal non renseigné pour cette commune."
     absence_type: non_ingeree
@@ -36,7 +37,7 @@ donnees:
   # déclaré seulement à l'outil Faisabilité. On le CÂBLE ici, à son tiroir réel (donnée existante,
   # passe-plat config/rtaa_dom.yaml — pas de chantier requis).
   - quoi:  rtaa_exigences
-    ou:    { rang: 50, etat: replie, section: "Bilan indicatif" }
+    ou:    { rang: 50, etat: replie, section: "Bilan indicatif" , fiche_section: urbanisme }
     comment: { libelle: "Rappel RTAA DOM", format: liste, i: "Exigences réglementaires de conception DOM (aération, protection solaire, eau chaude solaire) — rappel au stade faisabilité, hors scoring. Règles versionnées config/rtaa_dom.yaml, vérifiées sur Légifrance." }
     absence: "RTAA DOM : aucune exigence de conception à rappeler ici."
     absence_type: absente_ici
@@ -48,6 +49,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: identite
 donnees:
   - quoi:  type_proprietaire
     ou:    { rang: 10, etat: en_tete, section: "Qui détient" }
@@ -68,6 +70,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: identite
 donnees:
   - quoi:  divisible_classe
     ou:    { rang: 10, etat: en_tete, section: "Division" }
@@ -88,6 +91,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: reseaux
 donnees:
   - quoi:  prod_spec_kwh_kwc
     ou:    { rang: 10, etat: replie, section: "Solaire" }
@@ -102,6 +106,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: simulation
 donnees:
   - quoi:  verdict_icd
     ou:    { rang: 10, etat: replie, section: "Confiance" }
@@ -116,6 +121,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: fiscalite
 # FUSION (Vic) : « Dispositifs et périmètres » ABSORBE « Dispositifs et périmètres (droit des sols) » —
 # même sujet, un lecteur ne doit pas hésiter entre deux sections. dispositifs_parcelle (ER/EBC/DPU/PEB)
 # rejoint ici (le droit des sols), sous les dispositifs fiscaux/urbains.
@@ -127,7 +133,7 @@ donnees:
     absence_type: absente_ici
     pourquoi: "Dispositifs fiscaux/urbains ; en tête."
   - quoi:  dispositifs_parcelle
-    ou:    { rang: 20, etat: replie, section: "Droit des sols (ER · EBC · DPU · PEB)" }
+    ou:    { rang: 20, etat: replie, section: "Droit des sols (ER · EBC · DPU · PEB)" , fiche_section: urbanisme }
     comment: { libelle: "Prescriptions du droit des sols", format: liste, i: "Emplacements réservés, espaces boisés classés, droit de préemption, plan d'exposition au bruit intersectant la parcelle." }
     absence: "Droit des sols : aucune prescription (ER/EBC/DPU/PEB) sur la parcelle."
     absence_type: absente_ici
@@ -140,6 +146,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: quartier
 # FUSION (Vic) : « Autour de cette parcelle » ABSORBE « Quartier INSEE » — même question (le secteur).
 # iris_quartier (le quartier + sa population) rejoint ici, en tête du secteur.
 donnees:
@@ -174,6 +181,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
+fiche_section: urbanisme
 donnees:
   - quoi:  reglement_plu_bloc
     ou:    { rang: 10, etat: en_tete, section: "Règlement" }
@@ -181,3 +189,12 @@ donnees:
     absence: "Règlement de la zone : extraits non disponibles pour cette zone."
     absence_type: absente_ici
     pourquoi: "Les règles applicables ; en tête."
+
+  # EXPORTS-REBRANCHEMENT-1 lot 1 — la fraîcheur du PLU (document servi, fait foi) est montrée
+  # par l'écran (④ Urbanisme) ; elle était servie au PDF hors déclaration. Déclarée ici.
+  - quoi:  statut_plu
+    ou:    { rang: 20, etat: replie, section: "Règlement" }
+    comment: { libelle: "PLU", format: texte, i: "Document d'urbanisme servi (date d'approbation) et son statut d'opposabilité." }
+    absence: "PLU : document d'urbanisme non résolu pour cette commune."
+    absence_type: non_publiee
+    pourquoi: "Dire de quel document viennent les règles ; replié sous le règlement."

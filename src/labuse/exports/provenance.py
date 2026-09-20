@@ -51,6 +51,9 @@ _STRUCTURE = [
     re.compile(r"\b974\d{2}\b"),                     # code postal réunionnais (974xx)
     re.compile(r"\b[A-Z]{1,2}\s?\d{3,4}\b"),        # référence cadastrale courte (DH 1880)
     re.compile(r"\b[LRD]\.?\s?\d+(?:[.\-]\d+)*\b"),  # article de loi (L151-36, R111-22)
+    # EXPORTS-REBRANCHEMENT-1 lot 1 — numéro de SECTION du miroir (« 11. Simulation ») : un
+    # ordinal de structure, jamais une grandeur (le « 11 » n'était ancré que par chance).
+    re.compile(r"(?m)^\s*\d{1,2}\.\s+\S"),
     re.compile(r"\bart(?:icle)?s?\.?\s+[A-Za-z]{1,4}\.?\s?\d+(?:[.\-]\d+)*", re.IGNORECASE),
 ]
 
@@ -170,6 +173,7 @@ ALLOWLIST: dict[float, str] = {
     90.0: "durée de validité du brief apporteur (90 jours, constante d'affichage)",
     100.0: "base de pourcentage (100 %)",
     800.0: "seuil légal L151-36 (800 m) cité en clair — référence de droit, pas une mesure",
+    500.0: "rayon de recherche du secteur (500 m) — paramètre d'affichage, pas une mesure",
     2.5: "plafond légal de la part départementale de la taxe (2,5 %) — référence de droit",
     60.0: "libellé de tranche d'âge INSEE (« 60 ans et plus ») — définition, pas une mesure",
     8.5: "taux légal de TVA sur le logement neuf à La Réunion (8,5 %) — référence de droit",

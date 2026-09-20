@@ -9,6 +9,7 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     tuiles
+fiche_section: entete
 
 donnees:
   - quoi:  surface_parcelle_m2

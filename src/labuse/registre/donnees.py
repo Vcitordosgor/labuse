@@ -1272,7 +1272,7 @@ DONNEES: dict[str, Donnee] = {
     "dernier prix d'acquisition de la parcelle elle-même (mutation DVF sur l'IDU) avec sa date "
     "— fait foncier D-a ; « non disponible » si aucune mutation DVF n'est rattachée à la parcelle",
     moteur="marche_service", calcul="moteur",
-    fonction="src/labuse/exports/collecte.py (EXPORTS-2 lot 2 — D-a, dvf_parcelle.derniere_mutation)",
+    fonction="src/labuse/exports/robinet_fiche.py (EXPORTS-2 lot 2 — D-a, dvf_parcelle.derniere_mutation)",
     reservoirs=("dvf",), portee="live"),
  "mixite_seuil_m2": C("Mixité sociale — seuil de déclenchement", "m²", "parcelle",
     "seuil de surface de plancher au-delà duquel la clause de mixité sociale s'applique (source "

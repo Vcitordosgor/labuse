@@ -51,7 +51,7 @@ def test_collectes_attachent_les_valeurs_registre():
     """EXPORTS-2 lot 8 : la collecte du builder unique n'assemble QUE des objets `Valeur`
     tamponnés (`valeurs_pour`) — les blocs ne reçoivent ni calcul ni requête, seulement des
     Valeur. La mise en page (blocs/*.py) lit ces Valeur, jamais la base."""
-    collecte = (RACINE / "src/labuse/exports/collecte.py").read_text()
+    collecte = (RACINE / "src/labuse/exports/robinet_fiche.py").read_text()
     assert "valeurs_pour" in collecte, "la collecte doit tamponner via le registre"
     assert "dict[str, Valeur]" in collecte, "la collecte rend {id → Valeur}, rien d'autre"
 
