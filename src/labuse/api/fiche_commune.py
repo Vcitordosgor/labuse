@@ -207,8 +207,12 @@ def permis_bloc(db: Session, commune: str) -> dict:
         "permis_5a": cmp.get("permis_5a"),
         "logements_12m": (offre.get("valeurs") or {}).get("logements_12m"),
         "delai_median_mois": cmp.get("delai_median_mois"),
+        # OUTILS-FIX-5 L5 — `point_mort` ici = pc_caducs (PC frappés de CADUCITÉ, validité expirée).
+        # C'est une NOTION DISTINCTE du « dormant » de l'outil Permis (permis_point_mort : PC sans
+        # achèvement depuis 36 mois sur parcelle non bâtie au run servi — plus large). Deux ids, deux
+        # chiffres : l'écran de la fiche commune dit « caducs », l'outil dit « dormants ». Pas de fusion.
         "point_mort": int(point_mort),
-        "source": "SITADEL (autorisations) · m10 (délais) · PC caducs (dormants, Estimé).",
+        "source": "SITADEL (autorisations) · m10 (délais) · PC caducs (caducité, Estimé).",
     }
 
 

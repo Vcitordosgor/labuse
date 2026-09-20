@@ -1,0 +1,19 @@
+OUTILS-FIX-5 Lot 5 — les deux divergences restantes (mesures API :8065, 2026-09-20)
+
+== VEFA Évolution : même seuil (neuf_vefa_seuil=8) que le comparateur/la fiche ==
+  barometre Saint-Benoît (insee=97410) :
+    neuf_reference = {'prix_m2_neuf': None, 'n': 6, 'suffisant': False, 'seuil': 8}
+  barometre île entière :
+    neuf_reference = {'prix_m2_neuf': 4375, 'n': 315, 'suffisant': True, 'seuil': 8}
+  comparateur (source unique du seuil) :
+    (rows: ['communes', 'indicateurs', 'poids_total', 'methode', 'avertissement'] )
+  -> Saint-Benoît : 6 ventes < seuil 8 => prix null des DEUX côtés (avant : 1 304 EUR/m2 servi ici seul).
+  -> Écran Évolution : « Neuf : — (VEFA trop rare : 6 ventes < seuil de 8 — même règle que la fiche et le tableau Communes) » (capture L5-vefa-evolution-tiret.png).
+
+== Dormants : deux notions, deux mots (tranché) ==
+  Fiche commune point_mort = 103 (table pc_caducs = PC frappés de CADUCITÉ, validité expirée)
+  Outil Permis dormants = 651 (permis_point_mort = PC sans DAACT 36 mois, parcelle non bâtie au run servi — plus large)
+  -> Deux ids distincts, deux chiffres distincts, DÉSORMAIS deux MOTS :
+     · Fiche commune : libellé « Permis caducs (validité expirée) » (ContextePanel.tsx, ex-« Permis dormants »).
+     · Outil Permis  : libellé « Dormant · ancien PC sans achèvement » (inchangé).
+  -> Plus aucune collision « dormants=103 ici / dormants=651 là » sous le même mot.

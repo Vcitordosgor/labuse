@@ -763,14 +763,24 @@ def _barometre_data(db: Session, insee: str | None = None) -> dict:
     # §2 — NEUF : PAS de série (VEFA DVF trop rare : 0-4 ventes/trim récents → une courbe sur 2 points
     # mentirait). On sert la RÉFÉRENCE actuelle. Île : dvf_prix_sortie_neuf. Commune : le moteur UNIQUE
     # M1 (`neuf_vefa_commune`, même chiffre que la fiche/la table Communes/la carte).
+    from ..marche_service import neuf_vefa_seuil
+    _seuil_neuf = neuf_vefa_seuil()
     if insee:
         from ..ingestion.dvf_marche import neuf_vefa_commune
         _nv = neuf_vefa_commune(db, insee)
-        neuf_ref = ({"prix_m2_neuf": _nv["mediane_prix_m2_bati"], "n": _nv["n"]}
-                    if _nv.get("mediane_prix_m2_bati") is not None else None)
+        _n_neuf = _nv.get("n") or 0
+        # OUTILS-FIX-5 L5 — MÊME seuil que le comparateur (comparateur.py:55) et la fiche/la carte
+        # (`neuf_vefa_seuil`) : sous le seuil, aucun prix neuf servi (l'Évolution montrait ~1 304 €/m²
+        # sur 6 ventes quand le tableau Communes et la fiche disaient « — »). Un seul comportement.
+        _suffisant = _nv.get("mediane_prix_m2_bati") is not None and _n_neuf >= _seuil_neuf
+        neuf_ref = {"prix_m2_neuf": (_nv["mediane_prix_m2_bati"] if _suffisant else None),
+                    "n": _n_neuf, "suffisant": _suffisant, "seuil": _seuil_neuf}
     else:
-        neuf_ref = db.execute(text(
+        _row = db.execute(text(
             "SELECT prix_m2_neuf, n FROM dvf_prix_sortie_neuf WHERE niveau = 'ile' LIMIT 1")).mappings().first()
+        # Île entière : agrégat précalculé robuste (bien au-dessus du seuil) — servi tel quel.
+        neuf_ref = ({"prix_m2_neuf": _row["prix_m2_neuf"], "n": _row["n"],
+                     "suffisant": True, "seuil": _seuil_neuf} if _row else None)
     # M137-Z — le plafond du classement prix sort du DUR (config/moteurs.yaml). §1b — le « prix par
     # commune » du PDF lit la SOURCE UNIQUE `prix_ancien_communes` (la même que le tableau Communes) :
     # un seul chiffre par commune dans tout le produit, plus une 2ᵉ requête qui pourrait dériver.
@@ -809,7 +819,7 @@ def _barometre_data(db: Session, insee: str | None = None) -> dict:
             "tendance_ancien_pct": _tendance_pct(dvf_l, "median_eur_m2_bati"),
             "tendance_terrain_pct": _tendance_pct(terrain_l, "median_eur_m2_terrain"),
             "tendance_permis_pct": _tendance_pct(permis_l, "permis"),
-            "neuf_reference": ({"prix_m2_neuf": neuf_ref["prix_m2_neuf"], "n": neuf_ref["n"]} if neuf_ref else None),
+            "neuf_reference": (dict(neuf_ref) if neuf_ref else None),   # prix (None sous le seuil), n, suffisant, seuil
             "top_communes_prix": [{k: r[k] for k in ("commune", "mutations", "median_eur_m2")} for r in top_communes],
             # M137-Z — le plafond DIT, jamais muet : « les N premières sur M » (les M ont la donnée).
             "top_communes_cap": cap, "top_communes_total": n_communes,
