@@ -1449,12 +1449,16 @@ _OUTIL_MAP = [
      ("calculette-fonciere", "Calculette foncière", "calcPrefill")),
     (("courrier", "ecrire au proprietaire", "ecrire au proprio"), ("courriers", "Courrier au propriétaire", "idu")),
     (("comparer", "cote a cote", "cote-a-cote"), ("comparer", "Comparateur de parcelles", "selection")),
-    (("reglement", "annuaire plu"), ("plu-annuaire", "Annuaire PLU", "pluPrefill")),
-    (("lettre de zonage", "verification de zonage"), ("lettre-zonage", "Lettre de vérification de zonage", "idu")),
-    (("procedure plu", "revision plu", "sursis a statuer", "nouveau plu", "plu disponible", "plu a jour",
-      "plu en cours", "nouveau document d'urbanisme"), ("verif-procedure", "Vérif procédure PLU", "idu")),
-    (("due diligence", "controle avant achat", "avant d'acheter"), ("duediligence", "Contrôle avant achat", "idu")),
-    (("servitude",), ("o5-servitudes", "Servitudes invisibles", "idu")),
+    # COPILOTE-2 lot 2 — INTÉGRITÉ DE ROUTAGE : les 3 outils PLU (annuaire, procédure, changement) et les
+    # 2 « avant-achat » (due diligence, servitudes) ont été FONDUS dans les hubs `plu` et `risques`
+    # (M137-P/T). Les anciennes clés (plu-annuaire, lettre-zonage, verif-procedure, duediligence,
+    # o5-servitudes, simulplu) N'EXISTENT PLUS au registre front → c'étaient des LIENS MORTS (constat
+    # COPILOTE-AUDIT-1). On route désormais vers les hubs LIVE. Le test verrouille : aucune porte morte.
+    (("reglement", "annuaire plu", "lettre de zonage", "verification de zonage", "procedure plu",
+      "revision plu", "sursis a statuer", "nouveau plu", "plu disponible", "plu a jour", "plu en cours",
+      "nouveau document d'urbanisme", "changement de plu"), ("plu", "PLU (règlement, procédure)", "pluPrefill")),
+    (("due diligence", "controle avant achat", "avant d'acheter", "servitude"),
+     ("risques", "Pièges et risques (avant-achat)", "idu")),
     (("remonter le temps", "evolution dans le temps", "en 1950", "historique du site"),
      ("temps", "Remonter le temps", "idu")),
 ]
@@ -1501,10 +1505,12 @@ _CONCEPT_MAP = [
     (("potentiel de renouvellement", "renouvellement du territoire", "outil renouvellement",
       "vue renouvellement du", "densifier", "densification de l'existant", "densification de l existant",
       "construire plus", "surelever", "surélever"), ("renouvellement", "Densifier l'existant")),
+    # COPILOTE-2 lot 2 — « simulplu » (Changement PLU) fondu dans le hub `plu` (M137) : route LIVE, plus
+    # un lien mort. Le hub PLU porte la prospective de zonage.
     (("changement de plu", "si cette zone passait", "zone passait constructible",
       "si cette zone devenait constructible", "zone devenait constructible",
       "prospective de territoire", "simuler un plu", "simuler un changement de zonage"),
-     ("simulplu", "Changement PLU")),
+     ("plu", "PLU (prospective de zonage)")),
     # Retiré du produit le 21/08/2026 (DORMANT) : outil « Quoi de neuf » (o10-bascules). Sa concept-route
     # est SUPPRIMÉE — router vers un module absent = lien mort (piège attrapé sur « Foncier fantôme »).
     # Ces demandes retombent sur le traitement normal du Copilote. Le flux d'événements reste servi
@@ -1777,10 +1783,16 @@ def _outil(db: Session, message: str, params: dict) -> dict:
         return _reply("Dites-moi ce que vous voulez faire, ou choisissez parmi les outils d'analyse.",
                       "OUTIL", outils_liste=True)
     module, label, prefill = cible
-    txt = f"Je peux ouvrir l'outil {label}"
+    txt = f"Je vous ouvre l'outil {label}"
     if idu and prefill in ("parcelPrefill", "calcPrefill", "idu", "pluPrefill"):
         txt += f", pré-rempli avec la parcelle {idu}."
     else:
         txt += "."
-    return _reply(txt, "OUTIL", porte=module, prefill=prefill,
-                  prefill_idu=idu if prefill in ("parcelPrefill", "calcPrefill", "idu") else None)
+    # COPILOTE-2 lot 2 — le hub PLU consomme `prefill_plu {insee, zone}` (jamais prefill_idu) : on le
+    # sert correctement (l'ancien pluPrefill posait prefill_idu, ignoré par Plu.tsx).
+    extra: dict = {}
+    if prefill == "pluPrefill":
+        extra["prefill_plu"] = {"insee": idu[:5], "zone": None} if idu else None
+    elif prefill in ("parcelPrefill", "calcPrefill", "idu"):
+        extra["prefill_idu"] = idu
+    return _reply(txt, "OUTIL", porte=module, prefill=prefill, **extra)
