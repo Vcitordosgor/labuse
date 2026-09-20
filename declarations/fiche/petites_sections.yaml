@@ -38,7 +38,10 @@ categorie: fiche
 parent:    fiche_parcelle
 route:     "/parcels/{idu}"
 rendu:     sections
-fiche_section: entete
+# EXPORTS-REBRANCHEMENT-2 lot 1 — PAS de `fiche_section` : le classement (score/tier) est une
+# surface d'ÉCRAN SEUL. Le Dossier NE L'IMPRIME PAS (mandat : « Score, probabilité de vente et
+# signaux ne s'impriment pas ») — donc pas de section miroir. Reste déclaré (section « Classement »)
+# pour l'écran et le verrou V5d.
 donnees:
   - quoi:  tier_opportunite
     ou:    { rang: 10, etat: en_tete, section: "Classement" }

@@ -39,13 +39,13 @@ def test_regime_tva_est_une_classe_avec_domaine():
     assert d.type == "classe" and set(d.domaine) == {"assujetti_recuperation", "tva_marge", "autre"}
 
 
-def test_quatre_ecrans_vingtaine_de_champs():
-    assert len(qf.ECRANS) == 4
-    assert [t for t, _ in qf.ECRANS] == ["Votre projet", "Le foncier", "Vos coûts", "Vos conditions"]
+def test_un_seul_ecran_vingtaine_de_champs():
+    # EXPORTS-REBRANCHEMENT-2 lot 2 — UN SEUL écran (maquette v4) : « Votre opération ».
+    assert len(qf.ECRANS) == 1
+    assert [t for t, _ in qf.ECRANS] == ["Votre opération"]
     assert 18 <= len(qf.CHAMPS) <= 26
-    # RECETTE-5 (V19) — deux champs INDISPENSABLES au calcul de la charge foncière : le prix de sortie
-    # (chiffre d'affaires du bilan à rebours, sans pré-remplissage) et le régime de TVA (HT/TTC).
-    assert qf.OBLIGATOIRES == {"prix_sortie_saisi_eur_m2", "regime_tva_saisi"}
+    # le prix de sortie est désormais PRÉ-REMPLI (DVF) → une seule question bloquante : le régime de TVA.
+    assert qf.OBLIGATOIRES == {"regime_tva_saisi"}
     # chaque champ porte une aide (le « i ») — ce qu'on attend comme valeur.
     assert all(fid in qf.AIDES for fid in qf.CHAMPS)
 
@@ -86,12 +86,12 @@ def test_vide_reste_vide():
 
 # ── règle 3 : régime de TVA obligatoire ──────────────────────────────────────────────────────
 
-def test_complet_exige_prix_sortie_et_regime_tva():
-    # RECETTE-5 (V19) — complet ssi les DEUX indispensables sont saisis (prix de sortie + régime TVA).
-    assert qf.est_complet({"prix_sortie_saisi_eur_m2": 4200, "regime_tva_saisi": "tva_marge"}) is True
-    assert qf.est_complet({"regime_tva_saisi": "tva_marge"}) is False           # prix de sortie manquant
+def test_complet_exige_le_regime_tva():
+    # EXPORTS-REBRANCHEMENT-2 lot 2 — le prix de sortie est pré-rempli (DVF) : la SEULE question
+    # bloquante du parcours construction est le régime de TVA (règle 3).
+    assert qf.est_complet({"regime_tva_saisi": "tva_marge"}) is True
     assert qf.est_complet({"prix_sortie_saisi_eur_m2": 4200}) is False          # régime TVA manquant
-    assert qf.est_complet({"regime_tva_saisi": None, "prix_sortie_saisi_eur_m2": 4200}) is False
+    assert qf.est_complet({"regime_tva_saisi": None}) is False
     assert qf.est_complet({"prix_demande_saisi_eur": 650000}) is False
     assert "expert-comptable" in qf.TVA_EXPLICATION and "8,5" in qf.TVA_EXPLICATION
 

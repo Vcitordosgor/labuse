@@ -105,7 +105,7 @@ def test_b2_garde_bailleur_dans_le_questionnaire():
         {"_usage": "construction", "prix_sortie_saisi_eur_m2": 4500,
          "prix_vente_bailleur_saisi_eur_m2": 5500}, {})
     assert hm and hm["champ_id"] == "prix_vente_bailleur_saisi_eur_m2"
-    assert hm["ecran"] == 3 and hm["affiner"] is True
+    assert hm["ecran"] == 0 and hm["affiner"] is True
     assert "prix de vente libre" in hm["message"]
     # coherent : bailleur sous le libre → le bilan peut s'établir
     assert qf.valider_hors_marche(
@@ -116,7 +116,7 @@ def test_b2_prix_total_saisi():
     """B2 — un prix TOTAL saisi à la place d'un €/m² (borne absolue) est refusé, écran nommé."""
     from labuse import financier_questionnaire as qf
     hm = qf.valider_hors_marche({"prix_sortie_saisi_eur_m2": 250000}, {})
-    assert hm and hm["champ_id"] == "prix_sortie_saisi_eur_m2" and hm["ecran"] == 3
+    assert hm and hm["champ_id"] == "prix_sortie_saisi_eur_m2" and hm["ecran"] == 0
 
 
 def test_b3_hypotheses_listent_tous_les_champs():
