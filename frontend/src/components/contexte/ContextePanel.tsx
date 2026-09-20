@@ -234,7 +234,12 @@ export function ContextePanel() {
   // tendance / liquidité : lues sur les lignes du MÊME moteur Marché commune (build_marche_commune)
   const marLignes = (mar.data?.['lignes'] ?? []) as Record<string, any>[]
   const ligneMar = (cle: string) => marLignes.find((l) => l['cle'] === cle)?.['valeurs'] as Record<string, any> | undefined
+  // COMMUNE-RANGEMENT-1 (lot 1) — la tendance 12 mois se lit sur `delta_pct`, LA clé émise par le moteur
+  // Marché commune (`build_marche_commune`, `ligne4_tendance` → `valeurs.delta_pct`) et déjà lue par
+  // l'outil Marché (moteurs.tsx). L'ancien `tend['pct']` n'existait nulle part → la tendance ne
+  // s'affichait jamais. Absente (fenêtre sous le seuil DVF) → `delta_pct` manque et rien n'est rendu.
   const tend = ligneMar('tendance_12m')
+  const tendPct = tend?.['delta_pct'] as number | null | undefined
   const commune = contexteCommune
   const insee = d?.insee ?? null
 
@@ -401,12 +406,12 @@ export function ContextePanel() {
 
               <LigneCarte id="marche" chiffre="prix_ancien_median_eur_m2" ic="↗" titre="Prix &amp; tendance" defaultOpen
                 sous={`ancien ${fmt(d.comparable?.ancien_median_eur_m2)} · neuf ${fmt(d.comparable?.neuf_eur_m2)} €/m² · ${fmt(d.foncier?.mutations_12m)} mutations/12m`}
-                val={tend?.['pct'] != null ? `${Number(tend['pct']) > 0 ? '+' : ''}${fmtDec(tend['pct'])} %` : null}
-                ton={tend?.['pct'] != null && Number(tend['pct']) < 0 ? 'rouge' : 'vert'}>
+                val={tendPct != null ? `${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %` : null}
+                ton={tendPct != null && Number(tendPct) < 0 ? 'rouge' : 'vert'}>
                 <div className="flex flex-col gap-0.5 text-[12px]">
                   <RowT lbl="Ancien médian (commune entière)" val={`${fmt(d.comparable?.ancien_median_eur_m2)} €/m²`} strong />
                   <RowT lbl="Neuf (prix de sortie)" val={`${fmt(d.comparable?.neuf_eur_m2)} €/m²`} />
-                  {tend?.['pct'] != null && <RowT lbl="Tendance 12 mois" val={`${Number(tend['pct']) > 0 ? '+' : ''}${fmtDec(tend['pct'])} %`} />}
+                  {tendPct != null && <RowT lbl="Tendance 12 mois" val={`${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %`} />}
                   <RowT lbl="Mutations (12 mois, DVF)" val={fmt(d.foncier?.mutations_12m)} />
                 </div>
                 <Source nom="DVF — médiane commune entière (même moteur que le comparateur)" />
