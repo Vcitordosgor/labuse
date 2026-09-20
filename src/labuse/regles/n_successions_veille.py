@@ -14,6 +14,7 @@ declarer(FicheRegle(
     choix=("« Succession à venir » = définition LABUSE d'un SIGNAL d'approche (dirigeant PM âgé ou "
            "SCI dormante), pas un fait juridique : ni succession ouverte, ni décès, ni certitude. "
            "Seuils 70 ans / SCI 20 ans + 5 ans d'inactivité, RNE INPI daté (OUTILS-MUSCLER-1)."),
+    exemple_temoin="tests/regles/test_outils_fix5_temoins.py::test_n_successions_veille",
     valide_par="en_attente",
     verifie_le="2026-09-20",
 ))

@@ -17,6 +17,7 @@ declarer(FicheRegle(
            "contiguïté, ≥ 2 parcelles) — ce qu'un promoteur ne voit pas parcelle par parcelle. "
            "Personnes morales SEULEMENT (les particuliers n'ont pas d'identité stable d'une parcelle "
            "à l'autre) ; publics écartés par défaut (OUTILS-MUSCLER-3)."),
+    exemple_temoin="tests/regles/test_outils_fix5_temoins.py::test_n_blocs_pm",
     valide_par="en_attente",
     verifie_le="2026-09-20",
 ))
