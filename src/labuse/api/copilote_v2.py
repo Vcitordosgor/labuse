@@ -132,6 +132,13 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
                        "serveur. Reformulez-la autrement, ou réessayez dans un instant.",
                "intent": None, "erreur": True}
     rep.pop("_route", None)                           # ceinture : jamais servi, même sur un chemin d'action
+    # COPILOTE-2 lot 7 — la LIGNE DE JOURNAL lisible du tour (« J'ai lu la fiche… », « J'ai ouvert
+    # Faisabilité… », « J'ai cherché sur le web : 3 sources »). Le payload brut reste en admin (télémétrie).
+    if not rep.get("journal"):
+        from ..copilote_v2.answering import journal_ligne
+        jl = journal_ligne(rep)
+        if jl:
+            rep["journal"] = jl
     faits_tour = rep.pop("_faits_tour", None)         # M102-B3 — faits du tour → registre, jamais servis
     cid = historique.enregistrer(db, compte_id=current_compte(request),
                                  conversation_id=body.conversation_id, message=body.message,

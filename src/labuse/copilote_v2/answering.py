@@ -36,6 +36,40 @@ from .router import classify
 #           l'outil pré-rempli, jamais de résultat produit par le Copilote (lot 2).
 #   WEB   — une connaissance (loi, dispositif, notion) : recherche web + sources (lot 3).
 #   REFUS — hors des trois : le Copilote le dit et propose le chemin le plus proche.
+# COPILOTE-2 lot 7 — LE JOURNAL D'INSTRUCTION, LISIBLE. Le journal SSE brut (#seq kind {payload}) est
+# retiré (lot 4) ; à sa place, UNE ligne humaine par tour qui dit ce que le Copilote a FAIT — « J'ai lu
+# la fiche… », « J'ai ouvert Faisabilité… », « J'ai cherché sur le web : 3 sources ». Déterministe, lue
+# de la réponse (jamais un payload technique — celui-ci reste en admin, télémétrie). Rend None si rien.
+_PORTE_LABEL = {
+    "communes": "Communes", "permis": "Permis", "promesses": "Permis (dormants)", "plu": "PLU",
+    "risques": "Pièges et risques", "programme": "Faisabilité", "comparer": "le Comparateur",
+    "assemblage": "l'Assemblage", "taxe-amenagement": "Taxe d'aménagement", "temps": "Remonter le temps",
+    "calculette-fonciere": "la Calculette foncière", "scoreur-adresse": "Étudier un bien",
+    "courriers": "Courrier au propriétaire", "etude-zone": "Étude de zone", "renouvellement": "Densifier l'existant",
+}
+
+
+def journal_ligne(rep: dict) -> str | None:
+    """La ligne de journal d'un tour — ce que le Copilote a fait, en clair. Lue des champs de la réponse."""
+    if rep.get("web") or rep.get("refus") == "web_rien_trouve":
+        n = len(rep.get("sources") or [])
+        return f"J'ai cherché sur le web : {n} source{'s' if n > 1 else ''}." if n else "J'ai cherché sur le web."
+    if rep.get("resume_commune"):
+        return f"J'ai lu la fiche de la commune {rep['resume_commune'].get('commune', '')}.".replace("  ", " ")
+    idu_fiche = (rep.get("resume_fiche") or {}).get("idu") or (
+        rep.get("voie", {}).get("idu") if rep.get("tool") == "fiche_parcelle" else None)
+    if rep.get("tool") == "fiche_parcelle" and idu_fiche:
+        return f"J'ai lu la fiche de la parcelle {idu_fiche}."
+    if rep.get("porte"):
+        lbl = _PORTE_LABEL.get(rep["porte"], "l'outil demandé")
+        return f"J'ai ouvert {lbl}" + (f" pour la parcelle {rep['prefill_idu']}" if rep.get("prefill_idu") else "") + "."
+    if rep.get("carte_filtre"):
+        return "J'ai filtré la carte sur vos critères."
+    if rep.get("tool") and rep["tool"] not in ("general",):
+        return f"J'ai interrogé l'outil {rep['tool']}."
+    return None
+
+
 def chemin_pour(intent: str, *, a_idu: bool = False, a_commune: bool = False) -> str:
     """Le chemin servi pour une intention du routeur (+ signaux de lieu). Déterministe, testable."""
     if intent == "EXPLIQUER":

@@ -105,6 +105,15 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
       {v2.compris && <p data-compris className="mb-2.5 text-[12px] leading-snug text-cp-muted">{v2.compris}</p>}
       <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-cp-txt">{v2.text}</p>
 
+      {/* COPILOTE-2 lot 7 — le JOURNAL D'INSTRUCTION lisible : une ligne « ce que j'ai fait » (« J'ai lu
+          la fiche… », « J'ai ouvert Faisabilité… », « J'ai cherché sur le web : 3 sources »), au lieu du
+          #seq/kind/payload d'avant. Le payload brut reste en admin (télémétrie). */}
+      {v2.journal && (
+        <p data-journal-ligne className="mt-2 flex items-center gap-1.5 font-mono text-[10.5px] text-cp-faint">
+          <span className="text-cp-ia">›</span> {v2.journal}
+        </p>
+      )}
+
       {/* DESTINATIONS-1 (X4.4) — la PHRASE SOURCÉE du verdict destination, servie TELLE QUELLE
           (article/page/millésime/CDAC) — le fait exact sous la formulation, jamais reformulé. */}
       {v2.destination_phrase && (

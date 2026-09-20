@@ -751,6 +751,9 @@ export interface CopiloteV2Reponse {
   resume_fiche?: { idu: string; commune: string; tuiles: { id: string; libelle: string; valeur: string }[]; sections: { id: string; titre: string; verdict: string; ton: string }[]; source: string; millesime: string | null } | null
   resume_commune?: { commune: string; tuiles: { libelle: string; valeur: string }[]; cartes: { titre: string; verdict: string }[]; source: string; millesime: string | null } | null
   prefill_commune?: string | null       // porte 'communes' préremplie de la commune du résumé
+  // COPILOTE-2 lot 7 — la ligne de JOURNAL lisible du tour (« J'ai lu la fiche… », « J'ai ouvert
+  // Faisabilité… », « J'ai cherché sur le web : 3 sources »). Le payload brut reste en admin.
+  journal?: string | null
 }
 export const copiloteV2Ask = (message: string, opts?: {
   history?: { role: string; content: string }[]; contexte?: Record<string, unknown>
