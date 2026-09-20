@@ -517,6 +517,7 @@ REGLES_RUBRIQUES: dict[str, tuple[str, ...]] = {
     "emprise_sol": ("ces",),
     "retraits": ("voie", "limites_separatives"),
     "stationnement": ("par_logement", "par_m2_sdp", "par_typologie"),
+    "pleine_terre": ("pct",),   # PLU-CALIBRAGE-3 : porté par l'ancien système (unification)
     "mixite": (),   # feuille plate (la rubrique EST la feuille)
 }
 
@@ -525,6 +526,7 @@ REGLES_RUBRIQUES_LIB: dict[str, str] = {
     "emprise_sol": "Emprise au sol",
     "retraits": "Retraits (implantation)",
     "stationnement": "Stationnement",
+    "pleine_terre": "Pleine terre",
     "mixite": "Mixité sociale",
 }
 

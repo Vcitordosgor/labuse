@@ -1,0 +1,288 @@
+{
+  "Ua": {
+    "he_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 10 mètres à l'égout du toit ou au sommet de l'acrotère et 14 mètres au faîtage.",
+      "page_confirmee": 25,
+      "marqueur": "Article Ua 10.2 - Règle générale (cité p.24, réel p.25, base de zone)"
+    },
+    "hf_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 10 mètres à l'égout du toit ou au sommet de l'acrotère et 14 mètres au faîtage.",
+      "page_confirmee": 25,
+      "marqueur": "Article Ua 10.2 - Règle générale (cité p.24, réel p.25, base de zone)"
+    },
+    "emprise_sol_pct": {
+      "citation": "L'emprise au sol des constructions (dépendances comprises) ne doit pas excéder 80% de la superficie de l'unité foncière.",
+      "page_confirmee": 25,
+      "marqueur": "Article Ua 9.2 - Règle (cité p.24, réel p.25)"
+    },
+    "recul_voirie_m": {
+      "citation": "En cas de retrait, le recul minimum est de 3 mètres, compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la voie.",
+      "page_confirmee": 22,
+      "marqueur": "Article Ua 6.2 - Règle générale (cité p.21, réel p.22)"
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.",
+      "page_confirmee": 23,
+      "marqueur": "Article Ua 7.2 - limites latérales (cité p.22, réel p.23) ; Ua 7.3 fond de propriété = même 3 m minimum"
+    },
+    "stat_logement": {
+      "citation": "Pour les constructions à destination d'habitation : 1,5 place de stationnement par logement.",
+      "page_confirmee": 28,
+      "marqueur": "Article Ua 12.2 - Normes de stationnement, point 1 (cité p.27, réel p.28)"
+    },
+    "pleine_terre_pct": {
+      "citation": "Au minimum 10% de la superficie totale de l'unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir un traitement paysager. Les aires de stationnement peuvent être traitées en espaces verts si nécessaire.",
+      "page_confirmee": 29,
+      "marqueur": "Article Ua 13.1 - Espaces libres (cité p.28, réel p.29 ; espace vert paysager, stationnements admis, pas de pleine terre stricte)"
+    }
+  },
+  "Uah": {
+    "he_m": {
+      "citation": "En secteur UAh, la hauteur maximale des constructions ne devra pas excéder 2 niveaux plus combles (R+1+C) ou 7 mètres à l'égout des toitures et 11 mètres au faîtage.",
+      "page_confirmee": 25,
+      "marqueur": "Article Ua 10.2 - En secteur UAh (cité p.24, réel p.25 ; alinéa secteur, cohérent avec la zone Uah)"
+    },
+    "hf_m": {
+      "citation": "En secteur UAh, la hauteur maximale des constructions ne devra pas excéder 2 niveaux plus combles (R+1+C) ou 7 mètres à l'égout des toitures et 11 mètres au faîtage.",
+      "page_confirmee": 25,
+      "marqueur": "Article Ua 10.2 - En secteur UAh (cité p.24, réel p.25)"
+    },
+    "emprise_sol_pct": {
+      "citation": "L'emprise au sol des constructions (dépendances comprises) ne doit pas excéder 80% de la superficie de l'unité foncière.",
+      "page_confirmee": 25,
+      "marqueur": "Article Ua 9.2 - Règle (cité p.24, réel p.25 ; règle générale Ua, aucune règle d'emprise propre au secteur UAh)"
+    },
+    "recul_voirie_m": {
+      "citation": "En cas de retrait, le recul minimum est de 3 mètres, compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la voie.",
+      "page_confirmee": 22,
+      "marqueur": "Article Ua 6.2 - Règle générale (cité p.21, réel p.22)"
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.",
+      "page_confirmee": 23,
+      "marqueur": "Article Ua 7.2/7.3 (cité p.22, réel p.23)"
+    },
+    "stat_logement": {
+      "citation": "Pour les constructions à destination d'habitation : 1,5 place de stationnement par logement.",
+      "page_confirmee": 28,
+      "marqueur": "Article Ua 12.2, point 1 (cité p.27, réel p.28)"
+    },
+    "pleine_terre_pct": {
+      "citation": "Au minimum 10% de la superficie totale de l'unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir un traitement paysager. Les aires de stationnement peuvent être traitées en espaces verts si nécessaire.",
+      "page_confirmee": 29,
+      "marqueur": "Article Ua 13.1 - Espaces libres (cité p.28, réel p.29 ; règle générale Ua)"
+    }
+  },
+  "Ub": {
+    "he_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 7 mètres à l'égout du toit ou au sommet de l'acrotère et 11 mètres au faîtage.",
+      "page_confirmee": 37,
+      "marqueur": "Article Ub 10.2 - Règle générale (cité p.36, réel p.37)"
+    },
+    "hf_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 7 mètres à l'égout du toit ou au sommet de l'acrotère et 11 mètres au faîtage.",
+      "page_confirmee": 37,
+      "marqueur": "Article Ub 10.2 - Règle générale (cité p.36, réel p.37)"
+    },
+    "emprise_sol_pct": {
+      "citation": "L'emprise au sol des constructions (dépendances comprises) ne doit pas excéder 50% de la superficie de l'unité foncière.",
+      "page_confirmee": 37,
+      "marqueur": "Article Ub 9.2 - Règle (cité p.36, réel p.37)"
+    },
+    "recul_voirie_m": {
+      "citation": "En cas de retrait, le recul minimum est de 3 mètres, compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la voie.",
+      "page_confirmee": 34,
+      "marqueur": "Article Ub 6.2 - Règle générale (cité p.33, réel p.34)"
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.",
+      "page_confirmee": 35,
+      "marqueur": "Article Ub 7.2 - limites latérales (cité p.34, réel p.35) ; Ub 7.3 fond = retrait de 3 mètres minimum"
+    },
+    "stat_logement": {
+      "citation": "Pour les constructions à destination d'habitation : 1,5 place de stationnement par logement.",
+      "page_confirmee": 40,
+      "marqueur": "Article Ub 12.2, point 1 (cité p.39, réel p.40)"
+    },
+    "pleine_terre_pct": {
+      "citation": "Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir un traitement paysager. Les aires de stationnement peuvent être traitées en espaces verts si nécessaire.",
+      "page_confirmee": 41,
+      "marqueur": "Article Ub 13.1 - Espaces libres (cité p.40, réel p.41)"
+    }
+  },
+  "Ub1": {
+    "he_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 7 mètres à l'égout du toit ou au sommet de l'acrotère et 11 mètres au faîtage.",
+      "page_confirmee": 37,
+      "marqueur": "Article Ub 10.2 - Règle générale (cité p.36, réel p.37 ; règle générale de la zone Ub appliquée à Ub1)"
+    },
+    "hf_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 7 mètres à l'égout du toit ou au sommet de l'acrotère et 11 mètres au faîtage.",
+      "page_confirmee": 37,
+      "marqueur": "Article Ub 10.2 - Règle générale (cité p.36, réel p.37)"
+    },
+    "emprise_sol_pct": {
+      "citation": "L'emprise au sol des constructions (dépendances comprises) ne doit pas excéder 50% de la superficie de l'unité foncière.",
+      "page_confirmee": 37,
+      "marqueur": "Article Ub 9.2 - Règle (cité p.36, réel p.37)"
+    },
+    "recul_voirie_m": {
+      "citation": "En cas de retrait, le recul minimum est de 3 mètres, compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la voie.",
+      "page_confirmee": 34,
+      "marqueur": "Article Ub 6.2 - Règle générale (cité p.33, réel p.34)"
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.",
+      "page_confirmee": 35,
+      "marqueur": "Article Ub 7.2/7.3 (cité p.34, réel p.35)"
+    },
+    "stat_logement": {
+      "citation": "Pour les constructions à destination d'habitation : 1,5 place de stationnement par logement.",
+      "page_confirmee": 40,
+      "marqueur": "Article Ub 12.2, point 1 (cité p.39, réel p.40)"
+    },
+    "pleine_terre_pct": {
+      "citation": "Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir un traitement paysager. Les aires de stationnement peuvent être traitées en espaces verts si nécessaire.",
+      "page_confirmee": 41,
+      "marqueur": "Article Ub 13.1 - Espaces libres (cité p.40, réel p.41)"
+    }
+  },
+  "Uc": {
+    "he_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 4 mètres à l'égout du toit ou au sommet de l'acrotère et 8 mètres au faîtage.",
+      "page_confirmee": 49,
+      "marqueur": "Article Uc 10.2 - Règle générale (cité p.48, réel p.49)"
+    },
+    "hf_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 4 mètres à l'égout du toit ou au sommet de l'acrotère et 8 mètres au faîtage.",
+      "page_confirmee": 49,
+      "marqueur": "Article Uc 10.2 - Règle générale (cité p.48, réel p.49)"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions doivent être implantées en retrait de 4 mètres minimum de l'alignement.",
+      "page_confirmee": 46,
+      "marqueur": "Article Uc 6.2 - Règle générale (cité p.45, réel p.46 ; retrait obligatoire 4 m, pas d'option alignement)"
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.",
+      "page_confirmee": 47,
+      "marqueur": "Article Uc 7.2 - limites latérales (cité p.46, réel p.47) ; Uc 7.3 fond = retrait de 3 mètre minimum"
+    },
+    "stat_logement": {
+      "citation": "Pour les constructions à destination d'habitation : 1,5 place de stationnement par logement.",
+      "page_confirmee": 51,
+      "marqueur": "Article Uc 12.2, point 1 (cité p.50, réel p.51)"
+    }
+  },
+  "AUb": {
+    "he_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 7 mètres à l'égout du toit ou au sommet de l'acrotère et 11 mètres au faîtage. [renvoi : « il convient de se reporter […] au règlement des zones urbaines correspondantes à savoir Ub pour AUb »]",
+      "page_confirmee": 37,
+      "marqueur": "Via renvoi ZONE AUindicée (p.58, cité p.57) vers Article Ub 10.2 p.37 (cité p.36)"
+    },
+    "hf_m": {
+      "citation": "La hauteur maximale des constructions est fixée à 7 mètres à l'égout du toit ou au sommet de l'acrotère et 11 mètres au faîtage. [via renvoi Ub pour AUb]",
+      "page_confirmee": 37,
+      "marqueur": "Via renvoi AUindicée p.58 vers Article Ub 10.2 p.37"
+    },
+    "emprise_sol_pct": {
+      "citation": "L'emprise au sol des constructions (dépendances comprises) ne doit pas excéder 50% de la superficie de l'unité foncière. [via renvoi Ub pour AUb ; AUindicée 9 ne fixe une emprise propre que pour AUb1 (60%) et AUb2 (70%)]",
+      "page_confirmee": 37,
+      "marqueur": "Via renvoi AUindicée p.58 vers Article Ub 9.2 p.37 (AUb sans secteur = règle Ub)"
+    },
+    "recul_voirie_m": {
+      "citation": "En cas de retrait, le recul minimum est de 3 mètres [...] au point le plus proche de la voie. [via renvoi Ub pour AUb]",
+      "page_confirmee": 34,
+      "marqueur": "Via renvoi AUindicée 6 (Se reporter au règlement de la zone U indiquée en indice, p.60) vers Article Ub 6.2 p.34"
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, la distance comptée [...] au point le plus proche de la limite séparative, doit être au minimum de 3 mètres. [via renvoi Ub pour AUb]",
+      "page_confirmee": 35,
+      "marqueur": "Via renvoi AUindicée 7 (p.60) vers Article Ub 7.2/7.3 p.35"
+    },
+    "stat_logement": {
+      "citation": "Pour les constructions à destination d'habitation : 1,5 place de stationnement par logement. [via renvoi Ub pour AUb]",
+      "page_confirmee": 40,
+      "marqueur": "Via renvoi AUindicée 12 (Se reporter au règlement de la zone U indiquée en indice, p.61) vers Article Ub 12.2 p.40"
+    },
+    "pleine_terre_pct": {
+      "citation": "Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace vert [...]. [via renvoi Ub pour AUb ; AUindicée 13 ne fixe une valeur propre que pour AUb1 (40%) et AUb2 (30%)]",
+      "page_confirmee": 41,
+      "marqueur": "Via renvoi AUindicée 13 (Pour les autres zones se reporter au règlement de la zone U, p.61) vers Article Ub 13.1 p.41"
+    }
+  },
+  "AUb1": {
+    "he_m": {
+      "citation": "Dans le secteur AUb1, la hauteur maximale des constructions est fixée à 9 mètres à l'égout du toit ou au sommet de l'acrotère et 12 mètres au faîtage.",
+      "page_confirmee": 61,
+      "marqueur": "Article AUindicée 10 - Dans le secteur AUb1 (cité p.60, réel p.61)"
+    },
+    "hf_m": {
+      "citation": "Dans le secteur AUb1, la hauteur maximale des constructions est fixée à 9 mètres à l'égout du toit ou au sommet de l'acrotère et 12 mètres au faîtage.",
+      "page_confirmee": 61,
+      "marqueur": "Article AUindicée 10 - Dans le secteur AUb1 (cité p.60, réel p.61)"
+    },
+    "emprise_sol_pct": {
+      "citation": "Pour le secteur AUb1, l'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière.",
+      "page_confirmee": 60,
+      "marqueur": "Article AUindicée 9 - Pour le secteur AUb1 (cité p.59, réel p.60)"
+    },
+    "recul_voirie_m": {
+      "citation": "En cas de retrait, le recul minimum est de 3 mètres [...] au point le plus proche de la voie. [via renvoi Ub pour AUb1]",
+      "page_confirmee": 34,
+      "marqueur": "Via renvoi AUindicée 6 (p.60) vers Article Ub 6.2 p.34"
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, la distance comptée [...] au point le plus proche de la limite séparative, doit être au minimum de 3 mètres. [via renvoi Ub pour AUb1]",
+      "page_confirmee": 35,
+      "marqueur": "Via renvoi AUindicée 7 (p.60) vers Article Ub 7.2/7.3 p.35"
+    },
+    "stat_logement": {
+      "citation": "Pour les constructions à destination d'habitation : 1,5 place de stationnement par logement. [via renvoi Ub pour AUb1]",
+      "page_confirmee": 40,
+      "marqueur": "Via renvoi AUindicée 12 (p.61) vers Article Ub 12.2 p.40"
+    },
+    "pleine_terre_pct": {
+      "citation": "Dans le secteur AUb1, au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir un traitement paysager. Les aires de stationnement peuvent être traitées en espaces verts si nécessaire. L'article UB13.2 ne s'applique pas pour ce secteur.",
+      "page_confirmee": 61,
+      "marqueur": "Article AUindicée 13 - Dans le secteur AUb1 (cité p.60, réel p.61)"
+    }
+  },
+  "AUb2": {
+    "he_m": {
+      "citation": "Dans le secteur AUb2, la hauteur maximale des constructions est fixée à 7 mètres à l'égout du toit ou au sommet de l'acrotère et 11 mètres au faîtage.",
+      "page_confirmee": 61,
+      "marqueur": "Article AUindicée 10 - Dans le secteur AUb2 (cité p.60, réel p.61)"
+    },
+    "hf_m": {
+      "citation": "Dans le secteur AUb2, la hauteur maximale des constructions est fixée à 7 mètres à l'égout du toit ou au sommet de l'acrotère et 11 mètres au faîtage.",
+      "page_confirmee": 61,
+      "marqueur": "Article AUindicée 10 - Dans le secteur AUb2 (cité p.60, réel p.61)"
+    },
+    "emprise_sol_pct": {
+      "citation": "Pour le secteur AUb2, l'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité foncière.",
+      "page_confirmee": 60,
+      "marqueur": "Article AUindicée 9 - Pour le secteur AUb2 (cité p.59, réel p.60)"
+    },
+    "recul_voirie_m": {
+      "citation": "En cas de retrait, le recul minimum est de 3 mètres [...] au point le plus proche de la voie. [via renvoi Ub pour AUb2]",
+      "page_confirmee": 34,
+      "marqueur": "Via renvoi AUindicée 6 (p.60) vers Article Ub 6.2 p.34"
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait, la distance comptée [...] au point le plus proche de la limite séparative, doit être au minimum de 3 mètres. [via renvoi Ub pour AUb2]",
+      "page_confirmee": 35,
+      "marqueur": "Via renvoi AUindicée 7 (p.60) vers Article Ub 7.2/7.3 p.35"
+    },
+    "stat_logement": {
+      "citation": "Pour les constructions à destination d'habitation : 1,5 place de stationnement par logement. [via renvoi Ub pour AUb2]",
+      "page_confirmee": 40,
+      "marqueur": "Via renvoi AUindicée 12 (p.61) vers Article Ub 12.2 p.40 (le 40% de AUindicée 12 vise seulement commerces/services/bureaux, pas l'habitation)"
+    },
+    "pleine_terre_pct": {
+      "citation": "Dans le secteur AUb2, au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir un traitement paysager. Les aires de stationnement peuvent être traitées en espaces verts si nécessaire.",
+      "page_confirmee": 61,
+      "marqueur": "Article AUindicée 13 - Dans le secteur AUb2 (cité p.60, réel p.61)"
+    }
+  }
+}

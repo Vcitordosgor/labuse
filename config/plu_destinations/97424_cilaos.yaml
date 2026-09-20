@@ -12,6 +12,62 @@ meta:
   structure: silence lu dans la structure de chaque zone et cité (voir notes des zones).
 zones:
   Ua:
+    regles:
+      hauteur:
+        faitage:
+          m: 14.0
+          article: Ua 10.2
+          page_pdf: 25
+          citation: La hauteur maximale des constructions est fixée à 10 mètres à l'égout du toit ou au sommet
+            de l'acrotère et 14 mètres au faîtage.
+          statut: valide
+        egout:
+          m: 10.0
+          article: Ua 10.2
+          page_pdf: 25
+          citation: La hauteur maximale des constructions est fixée à 10 mètres à l'égout du toit ou au sommet
+            de l'acrotère et 14 mètres au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: Ua 9.2
+          page_pdf: 25
+          citation: L'emprise au sol des constructions (dépendances comprises) ne doit pas excéder 80% de
+            la superficie de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ua 6.2
+          page_pdf: 22
+          citation: En cas de retrait, le recul minimum est de 3 mètres, compté horizontalement et perpendiculairement
+            de tout point de la façade de la construction au point le plus proche de la voie.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ua 7.2/7.3
+          page_pdf: 23
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Ua 12.2
+          page_pdf: 28
+          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: Ua 13.1
+          page_pdf: 29
+          citation: Au minimum 10% de la superficie totale de l'unité foncière doit être traité en espace
+            vert comprenant des plantations et devant recevoir un traitement paysager. Les aires de stationnement
+            peuvent être traitées en espaces verts si nécessaire.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ua 2.2, p. 19 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article Ua 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste
@@ -38,11 +94,123 @@ zones:
       précise ; condition transversale sur les activités. « à usage agricole » ne dit rien de l''exploitation forestière
       → non mentionnée (régie par le silence).'
   Uah:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: Ua 10.2
+          page_pdf: 25
+          citation: En secteur UAh, la hauteur maximale des constructions ne devra pas excéder 2 niveaux plus
+            combles (R+1+C) ou 7 mètres à l'égout des toitures et 11 mètres au faîtage.
+          statut: valide
+        egout:
+          m: 7.0
+          article: Ua 10.2
+          page_pdf: 25
+          citation: En secteur UAh, la hauteur maximale des constructions ne devra pas excéder 2 niveaux plus
+            combles (R+1+C) ou 7 mètres à l'égout des toitures et 11 mètres au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: Ua 9.2
+          page_pdf: 25
+          citation: L'emprise au sol des constructions (dépendances comprises) ne doit pas excéder 80% de
+            la superficie de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ua 6.2
+          page_pdf: 22
+          citation: En cas de retrait, le recul minimum est de 3 mètres, compté horizontalement et perpendiculairement
+            de tout point de la façade de la construction au point le plus proche de la voie.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ua 7.2/7.3
+          page_pdf: 23
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Ua 12.2
+          page_pdf: 28
+          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: Ua 13.1
+          page_pdf: 29
+          citation: Au minimum 10% de la superficie totale de l'unité foncière doit être traité en espace
+            vert comprenant des plantations et devant recevoir un traitement paysager. Les aires de stationnement
+            peuvent être traitées en espaces verts si nécessaire.
+          statut: valide
     renvoi: Ua
     renvoi_src: 'Caractère de la zone Ua, p. 18 : « Elle comporte un secteur UAh où les constructions sont limitées
       à R+1+combles » ; Titre I art. 3, p. 6 : la règle générale de la zone s''applique aux secteurs sauf disposition
       particulière. Seule disposition propre à UAh : la hauteur (art. Ua 10.2, p. 25) — rien sur les destinations.'
   Ub:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: Ub 10.2
+          page_pdf: 37
+          citation: La hauteur maximale des constructions est fixée à 7 mètres à l'égout du toit ou au sommet
+            de l'acrotère et 11 mètres au faîtage.
+          statut: valide
+        egout:
+          m: 7.0
+          article: Ub 10.2
+          page_pdf: 37
+          citation: La hauteur maximale des constructions est fixée à 7 mètres à l'égout du toit ou au sommet
+            de l'acrotère et 11 mètres au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: Ub 9.2
+          page_pdf: 37
+          citation: L'emprise au sol des constructions (dépendances comprises) ne doit pas excéder 50% de
+            la superficie de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ub 6.2
+          page_pdf: 34
+          citation: En cas de retrait, le recul minimum est de 3 mètres, compté horizontalement et perpendiculairement
+            de tout point de la façade de la construction au point le plus proche de la voie.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ub 7.2/7.3
+          page_pdf: 35
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Ub 12.2
+          page_pdf: 40
+          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: Ub 13.1
+          page_pdf: 41
+          citation: Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace
+            vert comprenant des plantations et devant recevoir un traitement paysager. Les aires de stationnement
+            peuvent être traitées en espaces verts si nécessaire.
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ub 2.2, p. 31 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article Ub 1.2, ainsi, que celles ci-après… » — liste fermée d''interdictions à l''art. Ub 1.2 (p. 30).'
@@ -66,11 +234,105 @@ zones:
     note: 'Ub 2.2 (1), p. 31 : même condition générique « constructions à usage d''activités » que Ua (incommodité/insalubrité)
       — non mappée.'
   Ub1:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: Ub 10.2
+          page_pdf: 37
+          citation: La hauteur maximale des constructions est fixée à 7 mètres à l'égout du toit ou au sommet
+            de l'acrotère et 11 mètres au faîtage.
+          statut: valide
+        egout:
+          m: 7.0
+          article: Ub 10.2
+          page_pdf: 37
+          citation: La hauteur maximale des constructions est fixée à 7 mètres à l'égout du toit ou au sommet
+            de l'acrotère et 11 mètres au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: Ub 9.2
+          page_pdf: 37
+          citation: L'emprise au sol des constructions (dépendances comprises) ne doit pas excéder 50% de
+            la superficie de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ub 6.2
+          page_pdf: 34
+          citation: En cas de retrait, le recul minimum est de 3 mètres, compté horizontalement et perpendiculairement
+            de tout point de la façade de la construction au point le plus proche de la voie.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ub 7.2/7.3
+          page_pdf: 35
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Ub 12.2
+          page_pdf: 40
+          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: Ub 13.1
+          page_pdf: 41
+          citation: Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace
+            vert comprenant des plantations et devant recevoir un traitement paysager. Les aires de stationnement
+            peuvent être traitées en espaces verts si nécessaire.
+          statut: valide
     etat: non_lu
     note: 'Code servi introuvable au règlement : la zone Ub (p. 29-40) ne comporte aucun secteur et « Ub1 » n''apparaît
       nulle part dans la pièce écrite (seul le secteur AUb1 de la zone AUindicée existe, p. 58). Probable code du
       zonage GPU sans chapitre propre dans cette pièce.'
   Uc:
+    regles:
+      hauteur:
+        faitage:
+          m: 8.0
+          article: Uc 10.2
+          page_pdf: 49
+          citation: La hauteur maximale des constructions est fixée à 4 mètres à l'égout du toit ou au sommet
+            de l'acrotère et 8 mètres au faîtage.
+          statut: valide
+        egout:
+          m: 4.0
+          article: Uc 10.2
+          page_pdf: 49
+          citation: La hauteur maximale des constructions est fixée à 4 mètres à l'égout du toit ou au sommet
+            de l'acrotère et 8 mètres au faîtage.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Uc 6.2
+          page_pdf: 46
+          citation: Les constructions doivent être implantées en retrait de 4 mètres minimum de l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Uc 7.2/7.3
+          page_pdf: 47
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 3 mètres.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Uc 12.2
+          page_pdf: 51
+          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
+          statut: valide
     silence: autorise
     silence_src: 'Art. Uc 2.2, p. 43 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article Uc 1.2, ainsi, que celles ci-après… » — liste fermée d''interdictions à l''art. Uc 1.2 (p. 42).'
@@ -112,6 +374,64 @@ zones:
       dans la limite de 20 m2 de SHON réalisés sur des constructions existantes » (5) — travaux et ouvrages non
       assimilables à une sous-destination R151-28.'
   AUb:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: Ub 10.2
+          page_pdf: 37
+          citation: La hauteur maximale des constructions est fixée à 7 mètres à l'égout du toit ou au sommet
+            de l'acrotère et 11 mètres au faîtage. [via renvoi Ub pour AUb]
+          statut: valide
+        egout:
+          m: 7.0
+          article: Ub 10.2
+          page_pdf: 37
+          citation: 'La hauteur maximale des constructions est fixée à 7 mètres à l''égout du toit ou au sommet
+            de l''acrotère et 11 mètres au faîtage. [renvoi : « il convient de se reporter […] au règlement
+            des zones urbaines correspondantes à savoir Ub pour AUb »]'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: Ub 9.2
+          page_pdf: 37
+          citation: L'emprise au sol des constructions (dépendances comprises) ne doit pas excéder 50% de
+            la superficie de l'unité foncière. [via renvoi Ub pour AUb ; AUindicée 9 ne fixe une emprise propre
+            que pour AUb1 (60%) et AUb2 (70%)]
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ub 6.2
+          page_pdf: 34
+          citation: En cas de retrait, le recul minimum est de 3 mètres [...] au point le plus proche de la
+            voie. [via renvoi Ub pour AUb]
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ub 7.2/7.3
+          page_pdf: 35
+          citation: En cas de retrait, la distance comptée [...] au point le plus proche de la limite séparative,
+            doit être au minimum de 3 mètres. [via renvoi Ub pour AUb]
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Ub 12.2
+          page_pdf: 40
+          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.
+            [via renvoi Ub pour AUb]'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: Ub 13.1
+          page_pdf: 41
+          citation: Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace
+            vert [...]. [via renvoi Ub pour AUb ; AUindicée 13 ne fixe une valeur propre que pour AUb1 (40%)
+            et AUb2 (30%)]
+          statut: valide
     renvoi: Ub
     renvoi_src: 'Caractère de la zone AUindicée, p. 58 : « il convient de se reporter en fonction de l''indice de
       la zone AU considérée au règlement des zones urbaines correspondantes à savoir Ub pour AUb, etc. sauf spécification
@@ -121,6 +441,63 @@ zones:
       autorisées sous réserve de disposer des infrastructures suffisantes pour desservir le projet de construction
       (voirie, réseaux, sécurité incendie, etc.). »'
   AUb1:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: Art. AUindicée 10
+          page_pdf: 61
+          citation: Dans le secteur AUb1, la hauteur maximale des constructions est fixée à 9 mètres à l'égout
+            du toit ou au sommet de l'acrotère et 12 mètres au faîtage.
+          statut: valide
+        egout:
+          m: 9.0
+          article: Art. AUindicée 10
+          page_pdf: 61
+          citation: Dans le secteur AUb1, la hauteur maximale des constructions est fixée à 9 mètres à l'égout
+            du toit ou au sommet de l'acrotère et 12 mètres au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: Art. AUindicée 9
+          page_pdf: 60
+          citation: Pour le secteur AUb1, l'emprise au sol des constructions ne doit pas excéder 60% de la
+            superficie de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ub 6.2
+          page_pdf: 34
+          citation: En cas de retrait, le recul minimum est de 3 mètres [...] au point le plus proche de la
+            voie. [via renvoi Ub pour AUb1]
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ub 7.2/7.3
+          page_pdf: 35
+          citation: En cas de retrait, la distance comptée [...] au point le plus proche de la limite séparative,
+            doit être au minimum de 3 mètres. [via renvoi Ub pour AUb1]
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Ub 12.2
+          page_pdf: 40
+          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.
+            [via renvoi Ub pour AUb1]'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: Art. AUindicée 13
+          page_pdf: 61
+          citation: Dans le secteur AUb1, au minimum 40% de la superficie totale de l'unité foncière doit
+            être traité en espace vert comprenant des plantations et devant recevoir un traitement paysager.
+            Les aires de stationnement peuvent être traitées en espaces verts si nécessaire. L'article UB13.2
+            ne s'applique pas pour ce secteur.
+          statut: valide
     renvoi: Ub
     renvoi_src: 'Caractère de la zone AUindicée, p. 58 (« Ub pour AUb, etc. ») ; secteur AUb1 de la ZAC Roland Garros
       (p. 58). Ses seules dispositions propres portent sur l''emprise au sol (AUindicée 9, p. 59), la hauteur (AUindicée
@@ -129,6 +506,62 @@ zones:
     note: 'Condition supplémentaire AU (art. AUindicée 2.2, p. 59) : infrastructures suffisantes pour desservir
       le projet.'
   AUb2:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: Art. AUindicée 10
+          page_pdf: 61
+          citation: Dans le secteur AUb2, la hauteur maximale des constructions est fixée à 7 mètres à l'égout
+            du toit ou au sommet de l'acrotère et 11 mètres au faîtage.
+          statut: valide
+        egout:
+          m: 7.0
+          article: Art. AUindicée 10
+          page_pdf: 61
+          citation: Dans le secteur AUb2, la hauteur maximale des constructions est fixée à 7 mètres à l'égout
+            du toit ou au sommet de l'acrotère et 11 mètres au faîtage.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: Art. AUindicée 9
+          page_pdf: 60
+          citation: Pour le secteur AUb2, l'emprise au sol des constructions ne doit pas excéder 70% de la
+            superficie de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Ub 6.2
+          page_pdf: 34
+          citation: En cas de retrait, le recul minimum est de 3 mètres [...] au point le plus proche de la
+            voie. [via renvoi Ub pour AUb2]
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Ub 7.2/7.3
+          page_pdf: 35
+          citation: En cas de retrait, la distance comptée [...] au point le plus proche de la limite séparative,
+            doit être au minimum de 3 mètres. [via renvoi Ub pour AUb2]
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: Ub 12.2
+          page_pdf: 40
+          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.
+            [via renvoi Ub pour AUb2]'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: Art. AUindicée 13
+          page_pdf: 61
+          citation: Dans le secteur AUb2, au minimum 30% de la superficie totale de l'unité foncière doit
+            être traité en espace vert comprenant des plantations et devant recevoir un traitement paysager.
+            Les aires de stationnement peuvent être traitées en espaces verts si nécessaire.
+          statut: valide
     silence: autorise
     silence_src: 'Par renvoi (caractère AUindicée, p. 58 : « Ub pour AUb ») la structure est celle de l''art. Ub
       2.2, p. 31 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article Ub 1.2 »
