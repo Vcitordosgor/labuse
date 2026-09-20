@@ -4341,8 +4341,9 @@ def _dpe_connu_block(db: Session, idu: str) -> dict | None:
 
     Sert le PLUS RÉCENT (classe énergétique, classe GES, date, type de bâtiment) et le NOMBRE de
     DPE connus. C'est le dernier DPE du BÂTIMENT (rattachement adresse/BAN → parcelle), pas de la
-    parcelle. None si aucun DPE ne se rattache (le front dit « non déterminée »). M71 B1 : info de
-    fiche uniquement, jamais un signal de classement (l'amont DPE est neuf en DROM)."""
+    parcelle. None si aucun DPE ne se rattache — DONNEES-1 lot 2 : le front et le Dossier
+    n'affichent alors AUCUNE ligne (plus de « non déterminée » : DPE non obligatoire en DROM,
+    ~0,3 % de couverture). M71 B1 : info de fiche uniquement, jamais un signal de classement."""
     rows = db.execute(text(
         "SELECT etiquette_dpe, etiquette_ges, date_etablissement, type_batiment "
         "FROM dpe_records WHERE parcelle_idu = :i AND etiquette_dpe IS NOT NULL "

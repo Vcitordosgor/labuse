@@ -646,7 +646,8 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
         for s, l in sec["lignes"]:
             v = valeurs.get(l.quoi)
             if v is None:
-                if l.quoi in EXTRACTEURS and l.absence:
+                # DONNEES-1 lot 2 — `masquer_si_absent` : la ligne disparaît, aucune phrase d'absence.
+                if l.quoi in EXTRACTEURS and l.absence and not l.masquer_si_absent:
                     absents.append((l.quoi, l.absence))
                 continue                              # sans extracteur : omis (non_cables le compte)
             vals_lus.append(v)

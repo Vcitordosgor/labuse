@@ -58,17 +58,14 @@ export function BatiBlock({ f }: { f: Fiche }) {
           src={b.hauteur_nature === 'sourcé'
             ? `LiDAR HD (mesuré${b.hauteur_survol ? `, survol de ${b.hauteur_survol}` : ''})`
             : b.hauteur_bati_m != null ? 'BD TOPO' : undefined} />
-        {/* FICHE-1 lot 2 — DPE du BÂTIMENT (pas de la parcelle). Affiché quand il y a du bâti. */}
-        {nb != null && nb > 0 && (
-          dpe ? (
-            <FactRow label="DPE du bâtiment"
-              value={<>{dpe.etiquette}{dpe.etiquette_ges ? <> / GES {dpe.etiquette_ges}</> : null}
-                {dpe.annee ? <> <small>({dpe.annee})</small></> : null}</>}
-              src={<>{dpe.source}{dpe.n > 1 ? ` · ${dpe.n} DPE connus, le plus récent` : ''}</>} />
-          ) : (
-            <FactRow label="DPE du bâtiment" tone="mute"
-              value="non déterminée — aucun DPE rattaché" />
-          )
+        {/* FICHE-1 lot 2 — DPE du BÂTIMENT (pas de la parcelle). DONNEES-1 lot 2 — la ligne ne
+            s'affiche QUE si un DPE existe : aucune ligne « non déterminé » (DPE non obligatoire
+            en DROM, ~0,3 % de couverture ; il ne sert aucun outil ni ciblage). */}
+        {dpe && (
+          <FactRow label="DPE du bâtiment"
+            value={<>{dpe.etiquette}{dpe.etiquette_ges ? <> / GES {dpe.etiquette_ges}</> : null}
+              {dpe.annee ? <> <small>({dpe.annee})</small></> : null}</>}
+            src={<>{dpe.source}{dpe.n > 1 ? ` · ${dpe.n} DPE connus, le plus récent` : ''}</>} />
         )}
       </div>
       {/* Toit — LiDAR HD (cache). null = non encore relevé (relevé à l'ouverture de la fiche soleil). */}

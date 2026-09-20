@@ -83,7 +83,11 @@ donnees:
     comment: { libelle: "DPE connu", format: texte, i: "Étiquette du dernier DPE enregistré à l'adresse (base ADEME), quand il existe." }
     absence: "DPE connu : aucun diagnostic enregistré à cette adresse (ADEME)."
     absence_type: absente_ici
-    pourquoi: "Référence documentaire ; en dernier, replié."
+    masquer_si_absent: true
+    pourquoi: "Référence documentaire, repliée en dernier. DONNEES-1 lot 2 — la ligne ne
+      s'affiche QUE si un DPE existe : le DPE n'est PAS obligatoire dans les DROM et la
+      couverture est d'environ 0,3 % ; dire « non déterminé » sur 99,7 % des parcelles est un
+      bruit trompeur (Vic). Le DPE ne sert aucun outil ni ciblage — information de fiche seule."
 
   - quoi:  rnb_batiments_liste
     ou:    { rang: 100, etat: replie, section: "Identifiants et références" }

@@ -1026,7 +1026,9 @@ DONNEES: dict[str, Donnee] = {
  # plus affiché) : dernier DPE du BÂTIMENT rattaché + nombre. Info fiche SEULE (M71 B1).
  "dpe_connu": C("DPE connu (étiquette, année)", "texte", "parcelle",
     "dernier DPE connu du bâtiment rattaché (étiquette énergie/GES, date, type de bâtiment) + "
-    "nombre de DPE — info fiche SEULE, jamais un signal scoring (M71 B1 : DPE neuf en DROM)",
+    "nombre de DPE — info fiche SEULE, jamais un signal scoring ni un ciblage (M71 B1 : DPE neuf "
+    "en DROM) ; DONNEES-1 lot 2 : la ligne ne s'affiche QUE si un DPE existe (non obligatoire en "
+    "DROM, ~0,3 % de couverture — aucune ligne « non déterminé »)",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:_dpe_connu_block",
     reservoirs=("dpe_ademe",), portee="live", type="texte", table="dpe_records"),
  "copilote_texte_web": C("Réponse web (Copilote, dernier recours)", "texte", "global",
