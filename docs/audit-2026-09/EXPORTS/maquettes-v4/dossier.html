@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maquette — Dossier parcelle, miroir de la fiche</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --paper:#ffffff; --bg:#eeeeea; --ink:#15211b; --muted:#6a7671; --line:#e2e0d9;
+    --mint:#2f6b4f; --mint-soft:#e6f0ea; --amber:#a8713a; --amber-soft:#f6ede4;
+    --grey-soft:#f0f0ed; --red:#a8433a; --red-soft:#f6e6e4;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#1b1e1c; } }
+  :root[data-theme="dark"]{ --bg:#1b1e1c; }
+  html{scroll-padding-top:env(safe-area-inset-top,0px)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:13.5px/1.5 Inter,ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .toolbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ink);color:#fff;padding:10px 20px;font-size:12.5px;display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+  .toolbar b{font-weight:600}
+  .toolbar span{opacity:.75}
+  .doc{max-width:820px;margin:24px auto 80px;background:var(--paper);box-shadow:0 2px 20px rgba(0,0,0,.08);padding:56px 64px}
+  @media (max-width:640px){ .doc{padding:28px 20px;margin:0} }
+  .cover{border-bottom:2px solid var(--ink);padding-bottom:22px;margin-bottom:30px}
+  .cover .kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .cover h1{font-size:26px;margin:6px 0 4px;letter-spacing:-.01em}
+  .cover .sub{color:var(--muted);font-size:13px}
+  .cover .meta{display:flex;gap:26px;margin-top:14px;font-size:12px;color:var(--muted)}
+  .cover .meta b{color:var(--ink);display:block;font-size:14px;font-weight:600}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0 8px}
+  .plan{border:1px dashed var(--line);border-radius:8px;height:150px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;margin:10px 0 4px;background:var(--grey-soft)}
+  .summary div{background:var(--grey-soft);border-radius:8px;padding:10px 12px}
+  .summary b{display:block;font-size:20px;font-weight:600}
+  .summary span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .toc{columns:2;column-gap:30px;font-size:12.5px;margin:14px 0 0;padding:0;list-style:none}
+  .toc li{padding:3px 0;border-bottom:1px dotted var(--line);break-inside:avoid;display:flex;justify-content:space-between}
+  .toc li span{color:var(--muted)}
+  section{margin-top:34px;break-inside:avoid-page}
+  .sec-head{display:flex;align-items:baseline;gap:12px;border-bottom:1.5px solid var(--ink);padding-bottom:6px;margin-bottom:8px}
+  .sec-head .num{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.1em}
+  .sec-head h2{font-size:17px;margin:0;font-weight:600;flex:1}
+  .sec-head .fiche{font-size:11px;color:var(--muted)}
+  .verdict{padding:8px 12px;border-left:3px solid var(--mint);background:var(--mint-soft);font-size:13px;margin:8px 0 12px;color:var(--ink)}
+  .verdict.rouge{border-color:var(--red);background:var(--red-soft)}
+  .verdict.gris{border-color:var(--muted);background:var(--grey-soft)}
+  .verdict i{color:var(--muted);font-style:normal;font-size:11.5px;display:block;margin-top:2px}
+  .group{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:14px 0 4px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+  td.l{width:52%}
+  td.v{width:16%;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}
+  td.s{width:24%;color:var(--muted);font-size:11.5px}
+  td.n{width:8%;text-align:right}
+  .chip{display:inline-block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:3px;font-weight:600}
+  .chip.src{background:var(--mint-soft);color:var(--mint)}
+  .chip.est{background:var(--grey-soft);color:var(--muted)}
+  .chip.der{background:#eef0f4;color:#4a5566}
+  .chip.pro{background:var(--amber-soft);color:var(--amber)}
+  .chip.nr{background:var(--red-soft);color:var(--red)}
+  .sansobjet{margin-top:12px;background:var(--grey-soft);border-radius:6px;padding:8px 12px;font-size:11.5px;color:var(--muted)}
+  .sansobjet b{color:var(--ink);font-weight:600;display:block;margin-bottom:3px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .encart{border:1px solid var(--line);border-radius:8px;padding:16px 18px;background:var(--grey-soft)}
+  .encart b{display:block;font-weight:600;margin-bottom:4px}
+  .note{font-size:11.5px;color:var(--muted);margin-top:8px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin:8px 0 0}
+  .pagehint{font-size:10.5px;color:var(--muted);text-align:right;margin-top:6px}
+  .decision{margin:28px 0 0;padding:14px 16px;border:1px dashed var(--amber);border-radius:8px;background:var(--amber-soft);font-size:12.5px}
+  .decision b{display:block;margin-bottom:4px}
+  ul.plain{margin:6px 0 0;padding-left:18px}
+  ul.plain li{margin:2px 0}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <b>Maquette</b><span>Dossier parcelle · miroir des 11 sections de la fiche</span>
+  <span id="count"></span>
+  <span>Version validée le 20/09 · valeurs non renseignées, seule la source est indiquée</span>
+</div>
+
+<div class="doc">
+
+  <div class="cover">
+    <div class="kicker">Dossier parcelle</div>
+    <h1>97410000AN0347</h1>
+    <div class="sub">7 Rue du Stade de l'Ilet, 97470 Saint-Benoît</div>
+    <div class="meta">
+      <div><b>DP-AAAAMMJJ-0347</b>n° de rapport</div>
+      <div><b>JJ/MM/AAAA</b>généré le</div>
+      <div><b>Cadastre</b>contenance</div>
+      <div><b>Modèle 3.0</b>miroir de la fiche</div>
+    </div>
+    <div class="summary">
+      <div><b>Cadastre</b><span>Surface</span></div>
+      <div><b>GPU</b><span>Zone</span></div>
+      <div><b>RGE ALTI</b><span>Pente</span></div>
+      <div><b>RGE ALTI</b><span>Exposition</span></div>
+      <div><b>DEAL · Géorisques</b><span>Risques</span></div>
+      <div><b>PLU calibré</b><span>SDP restante</span></div>
+    </div>
+    <div class="note">Le bandeau de six chiffres de la fiche, en 3 × 3.</div>
+    <ul class="toc" id="toc"></ul>
+    <div class="legend">
+      <span><span class="chip src">sourcé</span> lu dans la source</span>
+      <span><span class="chip der">dérivé</span> calculé depuis des sources</span>
+      <span><span class="chip est">estimé</span> hypothèse, dit comme telle</span>
+      <span><span class="chip nr">non renseigné</span> la donnée n'existe pas encore</span>
+    </div>
+  </div>
+
+  <div id="sections"></div>
+
+  <section>
+    <div class="sec-head"><span class="num">§11</span><h2>Simulation</h2><span class="fiche">fiche ⑪</span></div>
+    <div class="encart">
+      <b>Bilan de l'opération</b>
+      Le bilan promoteur et la réhabilitation se construisent sur vos hypothèses. Ils font l'objet du <b style="display:inline">Dossier financier</b>, produit après le questionnaire.
+      <div class="note">Encart de renvoi, aucun chiffre. Flash = ce Dossier, à l'identique.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">§12</span><h2>Ce que ce document ne peut pas dire — et ses sources</h2><span class="fiche">annexe</span></div>
+    <div class="group">Ce que ce document ne peut pas dire</div>
+    <table>
+      <tr><td class="l">Certificat d'urbanisme, valeur vénale, état du bâti, coût de démolition, état réel des réseaux, position du propriétaire</td><td class="v"></td><td class="s">6 lignes fixes</td><td class="n"></td></tr>
+    </table>
+    <div class="group">Sources lues pour cette parcelle</div>
+    <table>
+      <tr><td class="l">Liste des <b>noms</b> des sources réellement lues (une trentaine). Aucun millésime, aucune date de contrôle : doctrine du 18/09.</td><td class="v"></td><td class="s">registre</td><td class="n"></td></tr>
+    </table>
+  </section>
+
+  <div class="decision" style="border-style:solid;border-color:var(--mint);background:var(--mint-soft)">
+    <b>Validé le 20/09</b>
+    <ul class="plain">
+      <li>Longueur ≈ 15 pages acceptée, aucune condensation.</li>
+      <li>Page de garde : bandeau des six chiffres de la fiche, en 3 × 3.</li>
+      <li>§1 : plan de situation (ortho IGN, contour, voisines du même propriétaire) — le même composant que l'Apporteur.</li>
+      <li>§10 : capacité, SDP, charge foncière et calcul en 9 étapes gardés. Score, probabilité de vente et signaux ne s'impriment pas.</li>
+      <li>Flash = ce Dossier à l'identique. §11 = encart de renvoi au Financier. §12 = limites + noms des sources, sans millésime.</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+const N={src:'sourcé',der:'dérivé',est:'estimé',nr:'non renseigné',pro:'projet'};
+const S=[
+ {n:'§1',t:'Identité',f:'fiche ①',verdict:['gris','Une phrase : qui possède la parcelle, depuis quand, et ce qui s\'y est passé.'],groups:[
+  ['Parcelle',[
+   ['Référence cadastrale, contenance','Cadastre — DGFiP / API Carto','src'],
+   ['Adresse','Base Adresse Nationale','src'],
+   ['Plan de situation (ortho, contour, voisines)','BD ORTHO IGN + Cadastre','src'],
+  ]],
+  ['Propriétaire',[
+   ['Propriétaire (type : personne physique / morale)','DGFiP — parcelles des personnes morales','src'],
+   ['Historique propriétaire (millésimes)','DGFiP — parcelles des personnes morales','src'],
+   ['Événements propriétaire','BODACC · SIRENE · Recherche d\'entreprises (DINUM)','src'],
+   ['Parcelles détenues par le même propriétaire','DGFiP — parcelles des personnes morales','src'],
+   ['Copropriété','RNIC — Anah','src'],
+  ]],
+  ['Histoire de la parcelle',[
+   ['Historique cadastral (filiation)','DGFiP — DFI','src'],
+   ['Mutations de la parcelle','DVF','src'],
+   ['Prix d\'achat historique','DVF','src'],
+   ['Permis déposés sur la parcelle','SITADEL','src'],
+   ['Parcelles assemblées / division candidate','Cadastre · CoSIA · GPU','der'],
+  ]],
+ ],plan:true,so:'Événements BODACC, âge du dirigeant — quand le propriétaire est une personne physique.'},
+
+ {n:'§2',t:'Terrain',f:'fiche ②',verdict:['gris','Une phrase : relief, sol libre, artificialisation.'],groups:[
+  ['',[
+   ['Pente','RGE ALTI — IGN','src'],
+   ['Exposition','RGE ALTI — IGN','der'],
+   ['Azimut','BD TOPO — IGN','est'],
+   ['Surface au sol libre','BD TOPO · CoSIA · Cadastre','der'],
+   ['Part artificialisée','OCS GE — IGN','src'],
+   ['Usage du sol dominant','OCS GE — IGN','src'],
+   ['Piscine','BD ORTHO · CoSIA — IGN','src'],
+  ]],
+ ]},
+
+ {n:'§3',t:'Bâti',f:'fiche ③',verdict:['gris','Une phrase : déjà bâtie ou non, combien, quelle hauteur.'],groups:[
+  ['Existant',[
+   ['Emprise bâtie au sol','BD TOPO · CoSIA — IGN','src'],
+   ['Nombre de bâtiments','BD TOPO — IGN','src'],
+   ['Hauteur du bâti (faîtage · égout)','LiDAR HD — IGN','src'],
+   ['Nature et pente du toit','LiDAR HD — IGN','src'],
+   ['Bâti détecté hors BD TOPO','CoSIA — IGN','src'],
+   ['Identifiants RNB des bâtiments','RNB','src'],
+   ['Adresses liées au bâti','BAN PLUS — IGN','src'],
+   ['DPE du bâtiment','ADEME','src'],
+  ]],
+  ['Ce que le bâti peut porter',[
+   ['Densifier l\'existant','BD TOPO · Cadastre · CoSIA','der'],
+   ['Marge de surélévation','LiDAR HD + règlement PLU calibré','der'],
+  ]],
+ ]},
+
+ {n:'§4',t:'Urbanisme',f:'fiche ④',verdict:['mint','Une phrase : la zone, constructible ou non, et la règle qui le dit.'],groups:[
+  ['Zone et règlement',[
+   ['Zone PLU','GPU — API Carto','src'],
+   ['Document opposable, procédure en cours','GPU · Sudocuh','src'],
+   ['Règles chiffrées de la zone (hauteur, emprise, reculs, stationnement)','Règlement PLU — article + page cités','src'],
+   ['Destinations autorisées / interdites / sous condition','Règlement PLU','src'],
+   ['Peut-on ouvrir une activité ?','Règlement PLU','der'],
+   ['Divergence SAR','SAR — Région Réunion','src'],
+   ['Rappel RTAA DOM','Textes réglementaires','src'],
+  ]],
+  ['Prescriptions et périmètres',[
+   ['Emplacement réservé (ER)','GPU — prescriptions','src'],
+   ['Espace boisé classé (EBC)','GPU — prescriptions','src'],
+   ['Droit de préemption urbain (DPU)','DPU — périmètres','src'],
+   ['Plan d\'exposition au bruit (PEB)','DGAC via GPU','src'],
+   ['Servitudes d\'utilité publique (SUP)','GPU — assiettes','src'],
+  ]],
+  ['Mixité sociale',[
+   ['Quota de logements aidés','Règlement PLU','nr'],
+   ['Seuil de déclenchement','Règlement PLU','nr'],
+  ]],
+ ],so:'Hors ER, hors EBC, hors DPU, hors PEB… — une ligne par prescription vérifiée et non applicable.'},
+
+ {n:'§5',t:'Risques et environnement',f:'fiche ⑤',verdict:['rouge','Une phrase : le risque le plus contraignant, et s\'il est rédhibitoire.'],groups:[
+  ['Aléas',[
+   ['PPR — aléas et zonage réglementaire','DEAL Réunion','src'],
+   ['Inondation, mouvement de terrain','Géorisques','src'],
+   ['AZI / TRI','Géorisques — GASPAR','src'],
+   ['Submersion, érosion, trait de côte','Cerema — GéoLittoral','src'],
+   ['Système d\'endiguement','DEAL — Lizmap','src'],
+   ['Bassin versant','BD TOPO — IGN','src'],
+   ['50 pas géométriques','DEAL','src'],
+  ]],
+  ['Sols et installations',[
+   ['Secteur d\'information sur les sols (SIS)','Géorisques','src'],
+   ['Ancien site industriel (CASIAS)','Géorisques','src'],
+   ['Sites et sols pollués','Géorisques','src'],
+   ['ICPE à proximité','Géorisques','src'],
+   ['Cavités souterraines','Géorisques','src'],
+   ['Ligne moyenne tension à proximité','EDF Réunion','src'],
+   ['Cimetière à proximité','BD TOPO — IGN','src'],
+  ]],
+  ['Patrimoine et nature',[
+   ['ABF / Monuments historiques','Mérimée — Ministère de la Culture','src'],
+   ['Parc national','INPN','src'],
+   ['ZNIEFF','INPN / MNHN','src'],
+   ['Espaces protégés','INPN — patrinat · DEAL Carmen','src'],
+   ['Zones humides','DEAL — Carmen','src'],
+   ['Forêt publique','ONF','src'],
+   ['Ravines — domaine public fluvial','DEAL — Carmen','src'],
+  ]],
+  ['Nuisances',[
+   ['Classement sonore (bruit routier)','Cerema — ITT','src'],
+   ['Cartes de bruit stratégiques','DEAL — CBS','src'],
+  ]],
+ ],so:'Chaque couche vérifiée et non applicable, en une ligne : « Hors zone humide », « Aucune cavité recensée »… Une trentaine possible.'},
+
+ {n:'§6',t:'Réseaux et desserte',f:'fiche ⑥',verdict:['mint','Une phrase : viabilisée ou probable, desservie ou non.'],groups:[
+  ['Accès et transport',[
+   ['Accès voirie','BD TOPO — IGN','src'],
+   ['Transport public au plus proche','GTFS — PAN · OSM','src'],
+   ['Stationnement allégé (TCSP)','OSM — TCSP','src'],
+   ['Axes et nuisances','BD TOPO — IGN','src'],
+  ]],
+  ['Réseaux',[
+   ['Viabilisation (faisceau de preuves)','BD TOPO · RGE ALTI · OSM · SITADEL','der'],
+   ['Assainissement (zonage, raccordement)','GPU · INSEE RP2022 · SPANC','src'],
+   ['Gestionnaires des réseaux','DT-DICT · délégations','src'],
+   ['Fibre','Arcep','src'],
+   ['Productible solaire','PVGIS · LiDAR HD','est'],
+  ]],
+ ]},
+
+ {n:'§7',t:'Fiscalité et dispositifs',f:'fiche ⑦',verdict:['gris','Une phrase : le régime fiscal qui s\'applique et les dispositifs ouverts.'],groups:[
+  ['Taxes',[
+   ['Taxe foncière — TFPB, TFPNB, EPCI, TEOM','DGFiP — REI','src'],
+   ['Taxe d\'aménagement — taux communal et départemental','DGFiP — DELTA','src'],
+   ['TVA outre-mer','CGI','src'],
+  ]],
+  ['Dispositifs territoriaux',[
+   ['Zonage A/B/C','DHUP','src'],
+   ['QPV — bande TVA réduite','ANCT','der'],
+   ['NPNRU','DEAL · ANCT','src'],
+   ['ZFANG','Légifrance','src'],
+   ['FRR (ex-ZRR)','Légifrance','src'],
+   ['ACV / PVD / ORT','DGALN','src'],
+  ]],
+ ]},
+
+ {n:'§8',t:'Marché',f:'fiche ⑧',verdict:['gris','Une phrase : le prix du secteur, sa tendance, sa fiabilité.'],groups:[
+  ['Prix',[
+   ['Prix du secteur (€/m² ancien)','DVF','src'],
+   ['Prix du neuf observé · VEFA à l\'acte','DVF','src'],
+   ['Terrain nu (zone U / AU)','DVF · GPU','src'],
+   ['Tendance','DVF','der'],
+   ['Loyer médian','OLL — ADIL · DHUP','src'],
+  ]],
+  ['Ventes',[
+   ['Ventes à moins de 100 m (36 mois)','DVF','src'],
+   ['Ventes retenues / écartées','DVF','der'],
+   ['Distribution min · médiane · max','DVF','der'],
+  ]],
+  ['Offre',[
+   ['Biens en vente, prix demandé','Radar — pige d\'annonces','src'],
+   ['Écart demandé / acté','Radar · DVF','der'],
+   ['Parc social','RPLS — SDES','src'],
+   ['Potentiel foncier','Région Réunion','src'],
+  ]],
+ ]},
+
+ {n:'§9',t:'Quartier',f:'fiche ⑨',verdict:['gris','Une phrase : qui vit là, ce qu\'on y trouve, ce qui s\'y construit.'],groups:[
+  ['Population',[
+   ['Habitants, ménages, niveau de vie, pauvreté','Filosofi — INSEE','src'],
+   ['Quartier IRIS : logements, vacance, ancienneté','INSEE — RP2022','src'],
+  ]],
+  ['Équipements et activité',[
+   ['Équipements à proximité','BPE — INSEE · OSM','src'],
+   ['Permis à proximité, activité de dépôt','SITADEL','src'],
+   ['Ventes autour','DVF','src'],
+  ]],
+ ]},
+
+ {n:'§10',t:'Potentiel',f:'fiche ⑩',verdict:['mint','Une phrase : ce qu\'on peut construire, et le degré de confiance.'],groups:[
+  ['Capacité',[
+   ['SDP restante','Règlement PLU calibré + BD TOPO','der'],
+   ['SDP consommée / autorisée','Règlement PLU calibré + BD TOPO','der'],
+   ['Gabarit, SDP, logements, surface vendable','Règlement PLU calibré · BD TOPO · CoSIA','der'],
+   ['Le calcul, étape par étape (9 lignes, chacune sourcée / estimée / dérivée)','Règlement PLU — article + page cités','src'],
+  ]],
+  ['Valeur',[
+   ['Charge foncière (bornes basse et haute)','DVF + coûts de construction (EPTB)','der'],
+   ['Verdict','Modèle LABUSE','der'],
+  ]],
+ ]},
+];
+let total=0,so=0;
+const secs=document.getElementById('sections'),toc=document.getElementById('toc');
+S.forEach(s=>{
+  const sec=document.createElement('section');
+  let h=`<div class="sec-head"><span class="num">${s.n}</span><h2>${s.t}</h2><span class="fiche">${s.f}</span></div>`;
+  h+=`<div class="verdict ${s.verdict[0]}">Verdict en tête de section<i>${s.verdict[1]}</i></div>`;
+  s.groups.forEach(g=>{
+    if(g[0]) h+=`<div class="group">${g[0]}</div>`;
+    h+='<table>';
+    g[1].forEach(r=>{total++;h+=`<tr><td class="l">${r[0]}</td><td class="v">—</td><td class="s">${r[1]}</td><td class="n"><span class="chip ${r[2]}">${N[r[2]]}</span></td></tr>`;});
+    h+='</table>';
+  });
+  if(s.plan) h+=`<div class="plan">Plan de situation — ortho IGN, contour de la parcelle, voisines du même propriétaire surlignées, nord, échelle</div>`;
+  if(s.so){so++;h+=`<div class="sansobjet"><b>Vérifié, sans objet</b>${s.so}</div>`;}
+  sec.innerHTML=h;secs.appendChild(sec);
+  toc.innerHTML+=`<li>${s.n} ${s.t}<span>${s.f}</span></li>`;
+});
+toc.innerHTML+=`<li>§11 Simulation<span>fiche ⑪</span></li><li>§12 Limites et sources<span>annexe</span></li>`;
+document.getElementById('count').textContent=`${total} lignes · 12 sections · ${so} blocs « sans objet » · ≈ 14–16 pages A4`;
+</script>
+</body>
+</html>
