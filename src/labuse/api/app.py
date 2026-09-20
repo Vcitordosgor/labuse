@@ -3327,7 +3327,8 @@ _HASH_STR = {"fx": "flags_exclus", "cs": "communes", "zf": "zonage", "sv": "sign
              "cst": "constructibilite", "es": "etat_sol", "zpx": "zone_plu",
              "pt": "proprietaire_type", "soc": "etat_societe", "cp": "copro",
              "drr": "droits_residuels", "pmf": "pm_forme", "pma": "pm_ape",
-             "pmd": "pm_denom", "pms": "pm_siren"}
+             "pmd": "pm_denom", "pms": "pm_siren",
+             "zfa": "zfang", "frr": "frr"}   # FILTRES-FIX-1 (lot 1) — ZFANG/FRR évalués par la veille (même moteur que la carte)
 #: dimensions du hash RÉELLEMENT évaluables (les seules connues du mappage) — pour l'annonce
 #: « cette veille surveille : … » et le signalement de ce qui n'est PAS retenu (KO-7 point 2).
 DIMENSIONS_VEILLE_EVALUABLES = frozenset({"tv", *_HASH_NUM, *_HASH_BOOL, *_HASH_STR})
