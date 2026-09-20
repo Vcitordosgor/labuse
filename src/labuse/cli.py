@@ -4784,6 +4784,10 @@ tables_app = typer.Typer(add_completion=False,
                          help="Les tables du schéma (CIRCUIT-5) : orphelines, purge vers `poubelle`.")
 app.add_typer(tables_app, name="tables")
 
+# PLU-CALIBRAGE-1 — `labuse plu` : extraire (agent) et valider les règles chiffrées par zone.
+from .plu.cli import plu_app  # noqa: E402
+app.add_typer(plu_app, name="plu")
+
 
 @tables_app.command("purger")
 def tables_purger_cmd(

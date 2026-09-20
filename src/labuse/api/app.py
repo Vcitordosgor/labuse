@@ -5613,7 +5613,7 @@ def sources_rattachements() -> dict:
 @app.get("/sources/calibrages")
 def sources_calibrages() -> dict:
     """PLU-CALIBRAGE-1 lot 2 — pour le réservoir GPU (clé = data_sources.name), la liste de ses
-    LECTEURS calibrage : un par commune dotée d'un PLU (config/plu_destinations/<insee>_*.yaml),
+    LECTEURS calibrage : un par commune dotée d'un PLU (via destinations.calibrages_gpu),
     avec l'état repris de destinations.etat_commune (« à jour » / « à revérifier » quand une
     nouvelle version du PLU est servie / « non calibré »). Même forme que /sources/couches :
     {nom_source: [calibrages]} — le détail Circuit du réservoir GPU les liste. 23 lecteurs de

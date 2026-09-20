@@ -18,6 +18,24 @@ meta:
     (captages/forages n°5, carrières n°4, PPRNP) prévalent sur le règlement (Dispositions générales IV-V, p. 10-12).'
 zones:
   Uavap:
+    regles:
+      stationnement:
+        par_logement:
+          places: 1
+          article: XVII. STATIONNEMENT
+          page_pdf: 19
+          citation: 1 place par logement d'une surface plancher < 100 m2
+          statut: propose
+      mixite:
+        seuil_logements: 30
+        quota_pct: 15
+        portee: zone
+        article: Article Uavap.2
+        page_pdf: 27
+        citation: les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles
+          comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité
+          sociale.
+        statut: propose
     silence: autorise
     silence_src: 'Le règlement procède par liste fermée d''interdictions : article Uavap.1 « Occupations et utilisations
       du sol interdites — Sont interdites : … » (p. 26) puis article Uavap.2 « Occupations et utilisations du sol
@@ -68,6 +86,66 @@ zones:
         citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent
           un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   Up:
+    regles:
+      hauteur:
+        faitage:
+          m: 16
+          article: Article Up.10
+          page_pdf: 34
+          citation: Upr 16 m
+          statut: propose
+        niveaux:
+          r_plus: 3
+          article: Article Up.10
+          page_pdf: 34
+          citation: Upr RDC+3 étages +Comble ou attique sans dépasser 12m.
+          statut: propose
+      emprise_sol:
+        ces:
+          pct: 80
+          article: Article Up.9
+          page_pdf: 33
+          citation: 'En secteur Upi : L’emprise au sol des constructions ne devra pas excéder 80 % de la superficie
+            de l’unité foncière.'
+          statut: propose
+      retraits:
+        voie:
+          formule: 'soit à l’alignement de la voie, soit avec un recul : de 3 m minimum pour les bâtiments
+            ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+
+            Comble ou attique par rapport à l’alignement.'
+          min_m: 3
+          article: Article Up.6
+          page_pdf: 32
+          citation: de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum
+            pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à l’alignement.
+          statut: propose
+        limites_separatives:
+          formule: 'soit sur une ou plusieurs limites séparatives soit avec un recul : de 3 m minimum pour
+            les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1
+            étage droit+ Comble ou attique par rapport à la limite séparative.'
+          min_m: 3
+          article: Article Up.7
+          page_pdf: 33
+          citation: de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum
+            pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à la limite séparative.
+          statut: propose
+      stationnement:
+        par_logement:
+          places: 1
+          article: XVII. STATIONNEMENT
+          page_pdf: 19
+          citation: 1 place par logement d'une surface plancher < 100 m2
+          statut: propose
+      mixite:
+        seuil_logements: 30
+        quota_pct: 15
+        portee: zone
+        article: Article Up.2
+        page_pdf: 31
+        citation: les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles
+          comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité
+          sociale.
+        statut: propose
     silence: autorise
     silence_src: 'Le règlement procède par liste fermée d''interdictions : article Up.1 « Occupations et utilisations
       du sol interdites — Sont interdites : … » (p. 30) puis article Up.2 « Occupations et utilisations du sol soumises
@@ -128,6 +206,67 @@ zones:
       Up.1 et Up.2 (p. 30-31) ne prévoient aucune règle de destination propre au secteur Upr (les seules règles
       propres à Upr portent sur l'implantation, l'emprise au sol et la hauteur, Up.7/Up.9/Up.10, p. 33-34).
   Ud:
+    regles:
+      hauteur:
+        faitage:
+          m: 18
+          article: Article Ud.10
+          page_pdf: 44
+          citation: Hauteur maximale R+5, soit 18m, au faîtage ou à l'acrotère, généralisé
+          statut: propose
+        niveaux:
+          r_plus: 5
+          article: Article Ud.10
+          page_pdf: 44
+          citation: Hauteur maximale R+5, soit 18m, au faîtage ou à l'acrotère, généralisé
+          statut: propose
+      emprise_sol:
+        ces:
+          pct: 80
+          article: Article Ud.9
+          page_pdf: 43
+          citation: 'En secteur Ud : L''emprise au sol des constructions est limitée à 80 % de la superficie
+            de l''unité foncière.'
+          statut: propose
+      retraits:
+        voie:
+          formule: 'Voies et emprises publiques de 12 m ou plus : les constructions seront implantées soit
+            à l’alignement, soit à 4 m de l''alignement. Voies et emprises publiques de moins de 12 m : les
+            constructions seront implantées à 4 m minimum de l''alignement. Voies et emprises publiques de
+            moins de 3,50 m : les constructions seront implantées à 3 m minimum de l''alignement.'
+          min_m: 3
+          article: Article Ud.6
+          page_pdf: 40
+          citation: 'Voies et emprises publiques de moins de 3,50 m : les constructions seront implantées
+            à 3 m minimum de l''alignement.'
+          statut: propose
+        limites_separatives:
+          formule: Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives sur une hauteur maximale
+            de 18 m par limite. Au-delà de cette hauteur, les constructions seront implantées en tout point
+            à 4 mètres minimum de la limite séparative. ... 4m ≤ L ≥ h/2.
+          min_m: 4
+          article: Article Ud.7
+          page_pdf: 42
+          citation: 'supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points,
+            avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+          statut: propose
+      stationnement:
+        par_logement:
+          places: 1
+          article: XVII. STATIONNEMENT
+          page_pdf: 19
+          citation: 1 place par logement d'une surface plancher < 100 m2
+          statut: propose
+      mixite:
+        seuil_logements: 30
+        quota_pct: 15
+        portee: zone
+        article: Article Ud.2
+        page_pdf: 39
+        citation: les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles
+          comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité
+          sociale.
+        statut: propose
     silence: autorise
     silence_src: 'Le règlement procède par liste fermée d''interdictions : article Ud.1 « Occupations et utilisations
       du sol interdites — Sont interdits : … » (p. 38) puis article Ud.2 « Occupations et utilisations du sol soumises
@@ -270,6 +409,46 @@ zones:
           de locaux commerciaux en logements dans les espaces aux nuisances importantes : Blvd Lancastel, rue Léopold
           Rambaud, Blvd Sud J. Jaurès »'
   Uu:
+    regles:
+      hauteur:
+        faitage:
+          absent: true
+          article: Article Uu.10
+          page_pdf: 49
+          citation: La hauteur maximale des constructions n’est pas réglementée.
+          statut: propose
+      emprise_sol:
+        ces:
+          pct: 80
+          article: Article Uu.9
+          page_pdf: 49
+          citation: L'emprise au sol des constructions est limitée à 80 % de la superficie de l'unité foncière.
+          statut: propose
+      retraits:
+        voie:
+          formule: soit à l’alignement soit avec un recul de 4 m minimum par rapport à l’alignement.
+          min_m: 4
+          article: Article Uu.6
+          page_pdf: 48
+          citation: soit avec un recul de 4 m minimum par rapport à l’alignement.
+          statut: propose
+        limites_separatives:
+          formule: 'Chaque construction pourra s''implanter sur une ou plusieurs limites séparatives. ...
+            à une distance L supérieure ou égale à la moitié de la différence d''altitude h entre ces deux
+            points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+          min_m: 4
+          article: Article Uu.7
+          page_pdf: 49
+          citation: 'supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points,
+            avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+          statut: propose
+      stationnement:
+        par_logement:
+          places: 1
+          article: XVII. STATIONNEMENT
+          page_pdf: 19
+          citation: 1 place par logement d'une surface plancher < 100 m2
+          statut: propose
     silence: autorise
     silence_src: 'Le règlement procède par liste fermée d''interdictions : article Uu.1 « Occupations et utilisations
       du sol interdites — Sont interdits : … » (p. 47) puis article Uu.2 « Occupations et utilisations du sol soumises
@@ -297,6 +476,60 @@ zones:
         page_pdf: 47
         citation: « Les entrepôts » (interdiction sans renvoi à l'article 2)
   Ui:
+    regles:
+      hauteur:
+        faitage:
+          m: 18
+          article: Article Ui.10
+          page_pdf: 56
+          citation: 'En secteur Ui : La hauteur maximale H des constructions ne doit pas excéder 18 m.'
+          statut: propose
+      emprise_sol:
+        ces:
+          pct: 60
+          article: Article Ui.9
+          page_pdf: 56
+          citation: 'En secteur Ui : L’emprise au sol des constructions est limitée à 60 % de la superficie
+            de l’unité foncière.'
+          statut: propose
+      retraits:
+        voie:
+          formule: 'Voies d’une emprise de 12 m ou plus : les constructions seront implantées soit à l’alignement,
+            soit à 4 m minimum de l''alignement. Voies d’une emprise de moins de 12 m : les constructions
+            seront implantées à 4 m minimum de l''alignement. Voies d’une emprise de moins de 3,50 m : les
+            constructions seront implantées à 3 m minimum de l''alignement.'
+          min_m: 3
+          article: Article Ui.6
+          page_pdf: 54
+          citation: 'Voies d’une emprise de moins de 3,50 m : les constructions seront implantées à 3 m minimum
+            de l''alignement.'
+          statut: propose
+        limites_separatives:
+          formule: 'En secteur Ui : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives
+            sur une longueur maximale de 18 mètres par limite. ... 4m ≤ L ≥ h/2.'
+          min_m: 4
+          article: Article Ui.7
+          page_pdf: 55
+          citation: 'supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points,
+            avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+          statut: propose
+      stationnement:
+        par_logement:
+          places: 1
+          article: XVII. STATIONNEMENT
+          page_pdf: 19
+          citation: 1 place par logement d'une surface plancher < 100 m2
+          statut: propose
+      mixite:
+        seuil_logements: 30
+        quota_pct: 15
+        portee: zone
+        article: Article Ui.2
+        page_pdf: 52
+        citation: les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles
+          comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité
+          sociale.
+        statut: propose
     silence: autorise
     silence_src: 'Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée
       d''interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières
@@ -393,6 +626,64 @@ zones:
           de locaux commerciaux en logements dans les espaces aux nuisances importantes : Blvd Lancastel, rue Léopold
           Rambaud, Blvd Sud J. Jaurès »'
   Uj:
+    regles:
+      hauteur:
+        faitage:
+          m: 13
+          article: Article Uj.10
+          page_pdf: 62
+          citation: 13 m pour la hauteur maximale H
+          statut: propose
+        egout:
+          m: 10
+          article: Article Uj.10
+          page_pdf: 62
+          citation: 10 m pour la hauteur d’égout he
+          statut: propose
+      emprise_sol:
+        ces:
+          pct: 60
+          article: Article Uj.9
+          page_pdf: 62
+          citation: L'emprise au sol des constructions est limitée à 60 % de la superficie de l'unité foncière.
+          statut: propose
+      retraits:
+        voie:
+          formule: Les constructions principales seront implantées avec un recul de 4 m minimum par rapport
+            à l’alignement. En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront
+            implantées à 3 m minimum de l'alignement.
+          min_m: 3
+          article: Article Uj.6
+          page_pdf: 61
+          citation: En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées
+            à 3 m minimum de l'alignement.
+          statut: propose
+        limites_separatives:
+          formule: Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives sur une longueur
+            maximale de 18 mètres par limite. ... 4m ≤ L ≥ h/2
+          min_m: 4
+          article: Article Uj.7
+          page_pdf: 61
+          citation: 'supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points,
+            avec un minimum de 4m : 4m ≤ L ≥ h/2'
+          statut: propose
+      stationnement:
+        par_logement:
+          places: 1
+          article: XVII. STATIONNEMENT
+          page_pdf: 19
+          citation: 1 place par logement d'une surface plancher < 100 m2
+          statut: propose
+      mixite:
+        seuil_logements: 30
+        quota_pct: 15
+        portee: zone
+        article: Article Uj.2
+        page_pdf: 60
+        citation: les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles
+          comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité
+          sociale.
+        statut: propose
     silence: autorise
     silence_src: 'Art. Uj.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée
       d''interdictions, p. 59) ; art. Uj.2 « Occupations et utilisations du sol soumises à des conditions particulières
@@ -434,6 +725,64 @@ zones:
         citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent
           un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   Um:
+    regles:
+      hauteur:
+        faitage:
+          m: 10
+          article: Article Um.10
+          page_pdf: 68
+          citation: 10 m pour la hauteur maximale H
+          statut: propose
+        egout:
+          m: 7
+          article: Article Um.10
+          page_pdf: 68
+          citation: 7 m pour la hauteur d’égout he
+          statut: propose
+      emprise_sol:
+        ces:
+          pct: 50
+          article: Article Um.9
+          page_pdf: 68
+          citation: L'emprise au sol des constructions est limitée à 50 % de la superficie de l'unité foncière.
+          statut: propose
+      retraits:
+        voie:
+          formule: Les constructions principales seront implantées avec un recul de 4 m minimum par rapport
+            à l’alignement. En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront
+            implantées à 3 m minimum de l'alignement.
+          min_m: 3
+          article: Article Um.6
+          page_pdf: 67
+          citation: En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées
+            à 3 m minimum de l'alignement.
+          statut: propose
+        limites_separatives:
+          formule: Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives sur une longueur
+            maximale de 10m par limite. ... 4m ≤ L ≥ h/2.
+          min_m: 4
+          article: Article Um.7
+          page_pdf: 67
+          citation: 'supérieure ou égale à la moitié de la différence d''altitude he entre ces deux points,
+            avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+          statut: propose
+      stationnement:
+        par_logement:
+          places: 1
+          article: XVII. STATIONNEMENT
+          page_pdf: 19
+          citation: 1 place par logement d'une surface plancher < 100 m2
+          statut: propose
+      mixite:
+        seuil_logements: 30
+        quota_pct: 15
+        portee: zone
+        article: Article Um.2
+        page_pdf: 66
+        citation: les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles
+          comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité
+          sociale.
+        statut: propose
     silence: autorise
     silence_src: 'Art. Um.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée
       d''interdictions, p. 65, dont « les constructions à usage d''activités, sauf celles prévues à l''article 2
@@ -516,6 +865,64 @@ zones:
         citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent
           un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   Uh:
+    regles:
+      hauteur:
+        faitage:
+          m: 7
+          article: Article Uh.10
+          page_pdf: 73
+          citation: 7 m pour la hauteur maximale H
+          statut: propose
+        egout:
+          m: 4.5
+          article: Article Uh.10
+          page_pdf: 73
+          citation: 4,5 m pour la hauteur d’égout he
+          statut: propose
+      emprise_sol:
+        ces:
+          pct: 30
+          article: Article Uh.9
+          page_pdf: 73
+          citation: L’emprise au sol des constructions est limitée à 30% de la superficie de l’unité foncière.
+          statut: propose
+      retraits:
+        voie:
+          formule: Les constructions seront implantées avec un recul de 4 m minimum par rapport à l’alignement.
+            En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à
+            3 m minimum de l'alignement.
+          min_m: 3
+          article: Article Uh.6
+          page_pdf: 72
+          citation: En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées
+            à 3 m minimum de l'alignement.
+          statut: propose
+        limites_separatives:
+          formule: Chaque construction pourra s'implanter sur 1 limite séparative sur une longueur maximale
+            de 10 mètres et sur une hauteur maximale H de 4,5m. ... 4m ≤ L ≥ h/2.
+          min_m: 4
+          article: Article Uh.7
+          page_pdf: 73
+          citation: 'supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points,
+            avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+          statut: propose
+      stationnement:
+        par_logement:
+          places: 1
+          article: XVII. STATIONNEMENT
+          page_pdf: 19
+          citation: 1 place par logement d'une surface plancher < 100 m2
+          statut: propose
+      mixite:
+        seuil_logements: 30
+        quota_pct: 15
+        portee: zone
+        article: Article Uh.2
+        page_pdf: 71
+        citation: les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles
+          comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité
+          sociale.
+        statut: propose
     silence: autorise
     silence_src: 'Art. Uh.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée
       d''interdictions, p. 71, dont « les constructions à usage d''activités, sauf celles prévues à l''article 2
@@ -585,6 +992,47 @@ zones:
         citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent
           un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   Ua:
+    regles:
+      hauteur:
+        faitage:
+          m: 18
+          article: Article Ua.10
+          page_pdf: 79
+          citation: 'En secteur Ua : La hauteur maximale H des constructions ne devra pas excéder 18 m.'
+          statut: propose
+      emprise_sol:
+        ces:
+          pct: 70
+          article: Article Ua.9
+          page_pdf: 79
+          citation: L’emprise au sol des constructions est limitée à 70% de la superficie de l’unité foncière.
+          statut: propose
+      retraits:
+        voie:
+          formule: 'En secteur Ua : Les constructions peuvent être implantées : soit à l’alignement, soit
+            avec un recul de 4 m minimum.'
+          min_m: 4
+          article: Article Ua.6
+          page_pdf: 77
+          citation: soit avec un recul de 4 m minimum.
+          statut: propose
+        limites_separatives:
+          formule: 'soit sur une ou plusieurs limites séparatives soit en recul. ... supérieure ou égale à
+            au tiers de la différence d''altitude h entre ces deux points, avec un minimum de 2m : 2m ≤ L
+            ≥ h/3.'
+          min_m: 2
+          article: Article Ua.7
+          page_pdf: 78
+          citation: 'supérieure ou égale à au tiers de la différence d''altitude h entre ces deux points,
+            avec un minimum de 2m : 2m ≤ L ≥ h/3.'
+          statut: propose
+      stationnement:
+        par_logement:
+          places: 1
+          article: XVII. STATIONNEMENT
+          page_pdf: 19
+          citation: 1 place par logement d'une surface plancher < 100 m2
+          statut: propose
     silence: autorise
     silence_src: 'Art. Ua.1 « Occupations et utilisations du sol interdites — Sont interdits : … » (liste fermée
       de trois tirets, p. 76) et art. Ua.2 « Occupations et utilisations du sol soumises à des conditions particulières
@@ -626,6 +1074,46 @@ zones:
     renvoi_src: 'Caractère de la zone, p. 76 : « Le secteur Uat recouvrant la ZAC Triangle » ; les articles Ua.1
       et Ua.2 (p. 76) ne distinguent aucun secteur.'
   Uv:
+    regles:
+      hauteur:
+        faitage:
+          m: 4
+          article: Article Uv.10
+          page_pdf: 84
+          citation: 'En secteur Uva : La hauteur maximale H des constructions ne doit pas excéder 4 m.'
+          statut: propose
+      emprise_sol:
+        ces:
+          absent: true
+          article: Article Uv.9
+          page_pdf: 84
+          citation: Non réglementé
+          statut: propose
+      retraits:
+        voie:
+          formule: Toute construction ou installation sera implantée avec un recul de 4 m minimum par rapport
+            à l’alignement.
+          min_m: 4
+          article: Article Uv.6
+          page_pdf: 83
+          citation: Toute construction ou installation sera implantée avec un recul de 4 m minimum par rapport
+            à l’alignement.
+          statut: propose
+        limites_separatives:
+          formule: 'Toute construction ou installation pourra être implantée : soit sur une ou plusieurs limites
+            séparatives, soit avec un recul de 4 m minimum.'
+          min_m: 4
+          article: Article Uv.7
+          page_pdf: 83
+          citation: soit avec un recul de 4 m minimum.
+          statut: propose
+      stationnement:
+        par_logement:
+          places: 1
+          article: XVII. STATIONNEMENT
+          page_pdf: 19
+          citation: 1 place par logement d'une surface plancher < 100 m2
+          statut: propose
     silence: interdit
     silence_src: 'Art. Uv.1 (p. 81) : « Sont interdites : toutes les constructions ou installations autres que celles
       prévues à l''article 2. »'
@@ -911,6 +1399,44 @@ zones:
         page_pdf: 82
         citation: « les commerces, services, structures artisanales liées à l'accueil du public »
   Uma:
+    regles:
+      hauteur:
+        faitage:
+          absent: true
+          article: Article Uma.10
+          page_pdf: 87
+          citation: Article Uma.10 . Hauteur maximale des constructions Non réglementée.
+          statut: propose
+      emprise_sol:
+        ces:
+          pct: 60
+          article: Article Uma.9
+          page_pdf: 87
+          citation: L’emprise au sol des constructions n’excèdera pas 60% de la superficie de l’unité foncière.
+          statut: propose
+      retraits:
+        voie:
+          formule: 'Les constructions devront être implantées : soit à l’alignement de la voie ou de l’emprise
+            publique, soit avec un recul déterminé par les impératifs propres à la maison d’arrêt.'
+          article: Article Uma.6
+          page_pdf: 87
+          citation: soit avec un recul déterminé par les impératifs propres à la maison d’arrêt.
+          statut: propose
+        limites_separatives:
+          formule: Les constructions pourront s’implanter sur 1 ou 2 limites séparatives sur une longueur
+            maximale de 18 m par limite et sur une hauteur maximale de 6m.
+          article: Article Uma.7
+          page_pdf: 87
+          citation: Les constructions pourront s’implanter sur 1 ou 2 limites séparatives sur une longueur
+            maximale de 18 m par limite et sur une hauteur maximale de 6m.
+          statut: propose
+      stationnement:
+        par_logement:
+          absent: true
+          article: Article Uma.12
+          page_pdf: 88
+          citation: Nonobstant, aucune norme de stationnement n’est fixée pour la maison d’arrêt.
+          statut: propose
     silence: interdit
     silence_src: 'Art. Uma.1 (p. 86) : « Sont interdits : les constructions de toute nature sauf celles prévues
       à l''article 2. »'
