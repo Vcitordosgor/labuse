@@ -47,9 +47,11 @@ def test_absent_dit_pas_de_regle():
 
 
 def test_autre_commune_identite():
-    """Une commune sans règles validées dans plu_destinations → overlay None (rien ne change)."""
-    assert _ov("Ud", "Saint-Pierre") is None
-    assert PR._appliquer_calibrage(PR._resolve_zone_base("U1a", None), "U1a", None) is not None  # Saint-Paul intact
+    """Une commune sans règles calibrées (ici inexistante ; PLU-CALIBRAGE-3 a migré les 23) →
+    overlay None (rien ne change)."""
+    assert _ov("Ud", "Commune-Inexistante-ZZ") is None      # aucun fichier → aucune règle
+    assert _ov("ZZ", "Saint-Denis") is None                 # zone inconnue d'une commune calibrée
+    assert PR._appliquer_calibrage(PR._resolve_zone_base("U1a", None), "U1a", None) is not None  # commune=None intact
 
 
 def test_niveaux_max_utilise_la_valeur_lue():
