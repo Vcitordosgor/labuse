@@ -64,11 +64,16 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
   // de barre partagé porte désormais la suggestion (propriétaire/SIREN/parcelle/adresse, typée).
   const choisir = (siren: string, nom?: string) => { setOwner(siren); setOwnerLabel(nom ?? null); setMsg(null) }
   const changer = () => { setOwner(null); setOwnerLabel(null); setQ(''); setMsg(null) }
-  // résout l'IDU → propriétaire moral de la fiche (owner_siren) ; null si particulier / non renseigné.
+  // résout l'IDU → propriétaire moral de la fiche ; null si particulier / non renseigné.
+  // OUTILS-FIX-5 L1 — on lit le MÊME id que la fiche §1 (`proprietaire_moral.siren`, app.py:3839,
+  // id registre `type_proprietaire`). L'ancienne lecture `f.owner_siren` visait un champ RACINE
+  // inexistant (il ne vit que sous `score_v.owner_siren`) : le cast `as {owner_siren}` masquait
+  // l'erreur au compilateur → l'entrée par IDU/adresse rendait TOUJOURS « pas de PM », même quand
+  // la fiche affichait le propriétaire (mesuré cassé sur AN0347 avant ce correctif).
   const ownerDeIdu = async (idu: string): Promise<string | null> => {
     const clean = iduComplet(idu.toUpperCase().replace(/\s/g, ''))
     const f = await qc.fetchQuery({ queryKey: ['scan-idu', clean], queryFn: () => getFiche(clean) }).catch(() => null)
-    const s = (f as { owner_siren?: string | null } | null)?.owner_siren
+    const s = f?.proprietaire_moral?.siren
     return s ? String(s) : null
   }
 
