@@ -65,12 +65,18 @@ def test_est_creole_foncier():
 
 def test_q30_creole_bascule_en_voie_b(monkeypatch):
     """Créole du bâti classé HORS_SUJET par le routeur → l'override le renvoie en voie b (general=True),
-    jamais le message hors-sujet."""
+    jamais le message hors-sujet. COPILOTE-2 lot 3 : la voie b passe par le web (on mocke l'outil)."""
+    from datetime import date
+
+    from labuse.copilote_v2.outils import ToolResult
     monkeypatch.setattr(answering, "classify", lambda *a, **k: Route("HORS_SUJET", nouveau_sujet=True))
-    monkeypatch.setattr(answering.core, "complete",
-                        lambda *a, **k: SimpleNamespace(
-                            text="In kaz an tol lé in kaz konstrwi an tôl — abitasion tradisionèl.",
-                            degraded=False, reason=None))
+    monkeypatch.setattr(answering.telemetrie, "web", lambda *a, **k: None)
+    monkeypatch.setattr(answering.telemetrie, "refus", lambda *a, **k: None)
+    monkeypatch.setitem(answering.OUTILS, "recherche_web",
+                        lambda db, *, question, history=None, mode="fait": ToolResult(
+                            "recherche_web", ok=True, web=True, source="web",
+                            data={"reponse": "In kaz an tol lé in kaz konstrwi an tôl — abitasion tradisionèl.",
+                                  "domaines": ["reunion.fr"], "date": date.today().isoformat()}))
     r = answering.answer(None, "kosa i lé in kaz an tol ?")
     assert r.get("general") is True
     assert r.get("refus") != "hors_sujet"

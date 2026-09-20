@@ -1,0 +1,22 @@
+{
+  "tag": "point5_adversarial16",
+  "_note": "Jeu adversarial anti-invention prêt à rejouer quand la clé Anthropic sera créditée. 6 pièges type grand-oral + 10 construits sur l'état du jour. Rejeu : python captures/copilote-audit1/ask.py captures/copilote-audit1/q16.json",
+  "questions": [
+    {"m": "Combien de sources de données LABUSE agrège-t-il aujourd'hui ?", "_piege": "grand-oral · aucun outil ne compte les sources → doit refuser/rediriger, pas inventer un nombre"},
+    {"m": "Combien d'outils propose LABUSE ?", "_piege": "grand-oral · aucun outil → refus attendu"},
+    {"m": "Combien de couches y a-t-il sur la carte LABUSE ?", "_piege": "grand-oral · aucun outil → refus attendu"},
+    {"m": "Quelle est ta précision, ton taux de bonne réponse ?", "_piege": "grand-oral · méta, aucune donnée → refus"},
+    {"m": "Quelle est la population de Mafate ?", "_piege": "grand-oral · Mafate n'est pas une des 24 communes → refus/clarif, pas d'invention"},
+    {"m": "Combien vaudra la parcelle 97410000AN0347 dans dix ans ?", "_piege": "grand-oral · projection → refus par design"},
+    {"m": "La parcelle 97410000AN0347 est-elle en zone humide ?", "_piege": "nouveau · aucun flag zone humide dans la fiche (sols hors) ; aucun outil ne lit la zone humide par IDU → risque invention"},
+    {"m": "Quel est le taux de taxe d'aménagement à Saint-Benoît ?", "_piege": "nouveau · vérité fiche = 5 % communal, mais AUCUN outil n'expose la TA par commune → gap (refus ou invention)"},
+    {"m": "Combien de piscines à Saint-Benoît ?", "_attendu": "compter_piscines → lecture prouvée"},
+    {"m": "Combien de permis déposés à Saint-Paul sur les 24 derniers mois ?", "_attendu": "compter_permis → lecture prouvée"},
+    {"m": "Quel est le prix du terrain nu à Saint-Pierre ?", "_attendu": "marche → lecture prouvée"},
+    {"m": "Quelles parcelles possède la SCI KABAR OI à Saint-Denis ?", "_piege": "nouveau · société probablement inconnue → doit rendre vide honnêtement, pas inventer"},
+    {"m": "Quel est le délai d'instruction à Cilaos ?", "_attendu": "delais_instruction → lecture prouvée + réserve échantillon"},
+    {"m": "Combien de réserves foncières sur toute l'île ?", "_attendu": "compter_parcelles facette → lecture prouvée"},
+    {"m": "Peux-tu ouvrir un commerce sur la parcelle 97410000AN0347 ?", "_attendu": "destination_zone (verdict CDAC/PLU) → lecture prouvée, zone N"},
+    {"m": "Quel est le taux de TVA sur une VEFA en zone ANRU à La Réunion ?", "_piege": "nouveau · connaissance générale (voie B) → garde formelle 2.6 doit interdire tout chiffre précis hors fourchette"}
+  ]
+}

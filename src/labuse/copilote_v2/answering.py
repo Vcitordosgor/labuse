@@ -28,6 +28,61 @@ from . import telemetrie
 from .outils import OUTILS
 from .router import classify
 
+# COPILOTE-2 lot 5 — LES 9 INTENTIONS DU ROUTEUR → 3 CHEMINS + REFUS. Le routeur classe (9 intents,
+# vocabulaire fermé) ; l'aiguillage les ramène à TROIS chemins servis (FICHE / OUTIL / WEB) ou à un
+# refus honnête. Une seule table, testable, source de vérité de « d'où sort une réponse ».
+#   FICHE — une parcelle/commune NOMMÉE : résumé déterministe + porte (lot 1).
+#   OUTIL — une analyse (chercher, comparer, calculer, vérifier, surveiller, créer) : passerelle vers
+#           l'outil pré-rempli, jamais de résultat produit par le Copilote (lot 2).
+#   WEB   — une connaissance (loi, dispositif, notion) : recherche web + sources (lot 3).
+#   REFUS — hors des trois : le Copilote le dit et propose le chemin le plus proche.
+# COPILOTE-2 lot 7 — LE JOURNAL D'INSTRUCTION, LISIBLE. Le journal SSE brut (#seq kind {payload}) est
+# retiré (lot 4) ; à sa place, UNE ligne humaine par tour qui dit ce que le Copilote a FAIT — « J'ai lu
+# la fiche… », « J'ai ouvert Faisabilité… », « J'ai cherché sur le web : 3 sources ». Déterministe, lue
+# de la réponse (jamais un payload technique — celui-ci reste en admin, télémétrie). Rend None si rien.
+_PORTE_LABEL = {
+    "communes": "Communes", "permis": "Permis", "promesses": "Permis (dormants)", "plu": "PLU",
+    "risques": "Pièges et risques", "programme": "Faisabilité", "comparer": "le Comparateur",
+    "assemblage": "l'Assemblage", "taxe-amenagement": "Taxe d'aménagement", "temps": "Remonter le temps",
+    "calculette-fonciere": "la Calculette foncière", "scoreur-adresse": "Étudier un bien",
+    "courriers": "Courrier au propriétaire", "etude-zone": "Étude de zone", "renouvellement": "Densifier l'existant",
+}
+
+
+def journal_ligne(rep: dict) -> str | None:
+    """La ligne de journal d'un tour — ce que le Copilote a fait, en clair. Lue des champs de la réponse."""
+    if rep.get("web") or rep.get("refus") == "web_rien_trouve":
+        n = len(rep.get("sources") or [])
+        return f"J'ai cherché sur le web : {n} source{'s' if n > 1 else ''}." if n else "J'ai cherché sur le web."
+    if rep.get("resume_commune"):
+        return f"J'ai lu la fiche de la commune {rep['resume_commune'].get('commune', '')}.".replace("  ", " ")
+    idu_fiche = (rep.get("resume_fiche") or {}).get("idu") or (
+        rep.get("voie", {}).get("idu") if rep.get("tool") == "fiche_parcelle" else None)
+    if rep.get("tool") == "fiche_parcelle" and idu_fiche:
+        return f"J'ai lu la fiche de la parcelle {idu_fiche}."
+    if rep.get("porte"):
+        lbl = _PORTE_LABEL.get(rep["porte"], "l'outil demandé")
+        return f"J'ai ouvert {lbl}" + (f" pour la parcelle {rep['prefill_idu']}" if rep.get("prefill_idu") else "") + "."
+    if rep.get("carte_filtre"):
+        return "J'ai filtré la carte sur vos critères."
+    if rep.get("tool") and rep["tool"] not in ("general",):
+        return f"J'ai interrogé l'outil {rep['tool']}."
+    return None
+
+
+def chemin_pour(intent: str, *, a_idu: bool = False, a_commune: bool = False) -> str:
+    """Le chemin servi pour une intention du routeur (+ signaux de lieu). Déterministe, testable."""
+    if intent == "EXPLIQUER":
+        return "WEB"
+    if intent == "QUESTION":
+        return "FICHE" if (a_idu or a_commune) else "OUTIL"
+    if intent in ("OUTIL", "RECHERCHE", "VERIFICATION", "VEILLE", "PROJET", "PREPARER"):
+        return "OUTIL"
+    if intent == "HORS_SUJET":
+        return "REFUS"
+    return "OUTIL"   # défaut prudent : une passerelle, jamais une invention
+
+
 # ───────────────────────── Réponses fixes (issues 5, 3, 4) ─────────────────────────
 HORS_SUJET = ("Je suis le copilote foncier de LABUSE — je réponds sur l'immobilier et le foncier de "
               "La Réunion.")
@@ -558,6 +613,19 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
             rep = _reply(clarif, "QUESTION", clarification=True)
             rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
             return rep
+    # COPILOTE-2 lot 1 — LE CHEMIN FICHE, DÉTERMINISTE ET SANS MODÈLE : une parcelle NOMMÉE (IDU dans
+    # le message ou le contexte embarqué) avec une demande de résumé ou de champ précis est servie AVANT
+    # le routeur — le résumé se construit sans appel modèle (preuve du mandat, mode dégradé compris).
+    if not scenario:
+        idu_fiche = (contexte or {}).get("idu") or _idu_dans(message)
+        if idu_fiche:
+            m = _fold_py(message.lower())
+            if any(k in m for k in _RESUME_FICHE_KW) or (not any(k in m for k in _ACTION_KW)
+                                                         and _quel_champ_fiche(message)):
+                rep = _chemin_fiche(db, message, {"idu": idu_fiche}, contexte)
+                if rep is not None:
+                    rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_fiche}, "voie": prior_voie}
+                    return rep
     route = classify(db, message, history=history, contexte=contexte, prior_params=prior_params)
     if scenario and scenario in SCENARIOS and not route.degraded:
         # le chip lève l'ambiguïté d'INTENTION : intent forcé, clarification d'intention retirée. La
@@ -776,27 +844,32 @@ def garde_generale_sans_chiffre(txt: str) -> tuple[str, int]:
 
 
 def _general(db: Session, message: str, history: list[dict] | None = None) -> dict:
-    """VOIE B (COPILOTE-REFONTE) — connaissance générale foncier/fiscalité/urbanisme/vocabulaire.
-    Portée dans le FIL (l'historique résout l'anaphore « elle »). Réponse COURTE, honnête sur l'état
-    du droit, badgée `voie="generale"` (le front l'annonce « Réponse générale — hors données LABUSE »).
-    Hors-domaine (cuisine/météo) → refus d'UNE phrase. JAMAIS un chiffre LABUSE inventé —
-    garde formelle `garde_generale_sans_chiffre` (CIRCUIT-1 lot 2.6) appliquée à toute réponse."""
+    """LE CHEMIN WEB (COPILOTE-2 lot 3) — une question de CONNAISSANCE (notion, loi, dispositif,
+    vocabulaire) passe DÉSORMAIS par une RECHERCHE WEB OBLIGATOIRE, JAMAIS par la mémoire du modèle.
+    Chaque affirmation porte sa source ; le contexte DOM (Pinel outre-mer, TVA 8,5 %, ZFANG) est injecté
+    (outils.WEB_CONNAISSANCE_SYSTEM). Sans source fiable → « je n'ai pas trouvé de source fiable » (jamais
+    une réponse de mémoire). Badge `general=True` (surface IA mauve, « hors données LABUSE ») + `web=True`
+    + « Source : web · domaine · consulté le … ». Portée dans le FIL (l'historique résout l'anaphore)."""
+    from datetime import date as _date
+
     hist = [{"role": str(m.get("role", "user")), "content": str(m.get("content", ""))[:600]}
             for m in (history or [])[-4:]]
-    out = core.complete(db, kind="copilote-general", model=core.model_for("copilote-general"), max_tokens=300,
-                        system=GENERAL_SYSTEM, history=hist, context={"question": message})
-    if out.degraded:
-        return _reply(erreur_infra(), "EXPLIQUER", degraded=True)
-    txt = (out.text or "").strip()
-    if not txt or txt.upper().startswith("HORS_DOMAINE"):
-        telemetrie.refus(db, "hors_domaine", message, "EXPLIQUER")
-        return _reply(HORS_SUJET, "HORS_SUJET", refus="hors_sujet")
-    # CIRCUIT-1 lot 2.6 — garde formelle : aucun chiffre précis hors outil ne sort de la voie B.
-    txt, _n_retires = garde_generale_sans_chiffre(txt)
-    # `general=True` = le discriminant servi au front (badge « Réponse générale — hors données LABUSE »
-    # + surface IA assumée) ; `tool="general"` reste pour la télémétrie. La promesse « sourcée/datée » de
-    # l'en-tête ne vaut QUE pour la voie a. NB : distinct du champ `voie` (objet de NAVIGATION des refus).
-    return _reply(txt, "EXPLIQUER", general=True, tool="general")
+    res = OUTILS["recherche_web"](db, question=message, history=hist, mode="connaissance")
+    if not res.ok:
+        # clé absente / recherche échouée → erreur infra honnête (pas de mémoire). Rien trouvé → refus honnête.
+        if (res.refus or "").startswith(("recherche web indispon", "recherche web échou")):
+            return _reply(erreur_infra(), "EXPLIQUER", degraded=True)
+        telemetrie.refus(db, "web_rien_trouve", message, "EXPLIQUER")
+        return _reply("Je n'ai pas trouvé de source fiable sur le web pour cette question — je ne "
+                      "réponds pas de mémoire. Reformulez-la, ou posez-la sur les données LABUSE.",
+                      "EXPLIQUER", refus="web_rien_trouve", general=True)
+    telemetrie.web(db, message, res.data.get("domaines", []))
+    d = res.data
+    # garde formelle 2.6 : même sur une réponse web, aucun chiffre-donnée hors fourchette non sourcé.
+    txt, _n = garde_generale_sans_chiffre(d["reponse"])
+    marque = f"Source : web · {d['domaines'][0]} · consulté le {d['date']}"
+    return _reply(f"{txt}\n\n{marque}", "EXPLIQUER", general=True, web=True, tool="general",
+                  sources=d["domaines"])
 
 
 # COPILOTE-REFONTE — helpers de conversation (continuité de voie + tenue de position).
@@ -1227,48 +1300,38 @@ def _recap_recherche(params: dict) -> str:
 
 
 def _mission_recherche(db: Session, message: str, params: dict) -> dict:
-    """RECHERCHE → récap-péage (needs_confirmation) ; le front lancera le run lourd. Le moteur cherche
-    commune par commune : sans commune, on DEMANDE (clarification-récap), jamais un run à vide."""
-    if not params.get("commune"):
-        return _reply("Sur quelle commune dois-je chercher ? J'instruis commune par commune.",
-                      "RECHERCHE", needs_confirmation=True, brief_effectif=message,
-                      clarification_recap={"question": "Sur quelle commune dois-je chercher les terrains ?",
-                                           "options": [], "champ": "commune"})
-    recap = _recap_recherche(params)
-    return _reply(recap, "RECHERCHE", needs_confirmation=True, recap=recap,
-                  brief_effectif=_brief_effectif_recherche(message, params))
+    """COPILOTE-2 lot 4 — RECHERCHE (chercher des parcelles par critères) devient une PASSERELLE vers
+    l'outil « Trouver » (le moteur run-scopé v1 est retiré). Le Copilote extrait les critères, ouvre
+    l'outil pré-rempli, et le DIT — il ne produit aucune shortlist lui-même."""
+    crit = [x for x in (
+        f"à {params['commune']}" if params.get("commune") else None,
+        f"≥ {int(params['surface_min'])} m²" if params.get("surface_min") else None,
+        f"≤ {int(params['surface_max'])} m²" if params.get("surface_max") else None,
+        f"pour {int(params['programme_logements'])} logements" if params.get("programme_logements") else None,
+        f"sous {int(params['budget_eur'])} €" if params.get("budget_eur") else None,
+    ) if x]
+    filtres = _criteres_vers_filtres(params)
+    libelle = "les parcelles" + (" " + ", ".join(crit) if crit else "")
+    txt = ("Je vous ouvre la carte filtrée sur vos critères" + (" (" + ", ".join(crit) + ")" if crit else "")
+           + " — la facette liste et classe les parcelles ; je ne produis pas la sélection moi-même.")
+    return _reply(txt, "OUTIL",
+                  carte_filtre={"commune": params.get("commune"), "filtres": filtres, "libelle": libelle})
 
 
 def _mission_verification(db: Session, message: str, params: dict, contexte: dict | None,
                           confirme: bool) -> dict:
-    """VERIFICATION → récap-péage, puis (confirme=True) AVIS instruit face au prix (missions_lourdes :
-    marché DVF, réserve de méthode, verrou anti-invention). Sans IDU résoluble, on DEMANDE l'IDU."""
+    """COPILOTE-2 lot 4 — VERIFICATION (évaluer une parcelle face à un prix) devient une PASSERELLE vers
+    « Étudier un bien » (le run/avis lourd est retiré). Sans IDU, on demande l'IDU (précision, pas un run)."""
     idu = (params.get("idu") or (contexte or {}).get("idu")
            or _resoudre_idu_court(db, message, params.get("commune")))
-    if idu:
-        params["idu"] = idu
-    if confirme:
-        from . import missions_lourdes
-        av = missions_lourdes.verification(db, params)
-        if av.get("clarification"):
-            return _reply(av["text"], "VERIFICATION", clarification=True)
-        if av.get("refus"):
-            return _reply(av["text"], "VERIFICATION", refus=av["refus"],
-                          voie={"cible": "fiche", "libelle": "Ouvrir la fiche", **({"idu": idu} if idu else {})})
-        return _reply(av["text"], "VERIFICATION", tool=av.get("tool"), idu=av.get("idu"),
-                      sources=av.get("sources"), actions=av.get("actions"))
     if not idu:
-        return _reply("Quelle parcelle dois-je vérifier ?", "VERIFICATION", needs_confirmation=True,
-                      brief_effectif=message,
-                      clarification_recap={"question": "Donnez-moi l'IDU (14 caractères) de la parcelle "
-                                                       "à vérifier — et son prix demandé si vous l'avez.",
-                                           "options": [], "champ": "idu"})
+        return _reply("Quelle parcelle dois-je évaluer ? Donnez-moi l'IDU (14 caractères) — j'ouvre "
+                      "Étudier un bien pour la comparer au marché.", "OUTIL", clarification=True)
     prix = params.get("prix_eur") or params.get("budget_eur")
-    recap = (f"J'ai compris : vérifier la parcelle {idu}"
-             + (f" face à un prix de {int(prix)} €" if prix else " (donnez-moi le prix demandé pour l'avis complet)")
-             + ".")
-    brief_eff = f"Vérifie la parcelle {idu}" + (f" proposée à {int(prix)} €" if prix else "")
-    return _reply(recap, "VERIFICATION", needs_confirmation=True, recap=recap, brief_effectif=brief_eff)
+    txt = (f"Je vous ouvre Étudier un bien avec la parcelle {idu}"
+           + (f" pour la situer face au prix de {int(prix)} €" if prix else " pour l'évaluer face au marché")
+           + " — l'outil sert l'avis, je ne le calcule pas ici.")
+    return _reply(txt, "OUTIL", porte="scoreur-adresse", prefill="calcPrefill", prefill_idu=idu)
 
 
 def _answer_with_route(db: Session, message: str, route, contexte: dict | None = None,
@@ -1358,6 +1421,13 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         return _reply(HORS_SUJET, intent, refus="hors_sujet")
 
     if intent == "QUESTION":
+        # COPILOTE-2 lot 1 — LE CHEMIN FICHE d'abord : une parcelle/commune nommée reçoit un résumé
+        # déterministe (ou la valeur d'un champ précis, ligne déclarée + id) AVANT toute sélection
+        # d'outil. Le résumé se construit sans modèle (preuve du mandat, mode dégradé compris).
+        fiche_rep = _chemin_fiche(db, message, params, contexte)
+        if fiche_rep is not None:
+            fiche_rep["_faits_tour"] = None
+            return fiche_rep
         sel = _select_tool(db, message, params)
         refus = sel.get("refus")
         if refus == "proprietaire_pp":
@@ -1423,13 +1493,17 @@ _OUTIL_MAP = [
     (("charge fonci", "combien payer", "combien je peux payer", "marge", "prix d'achat max"),
      ("calculette-fonciere", "Calculette foncière", "calcPrefill")),
     (("courrier", "ecrire au proprietaire", "ecrire au proprio"), ("courriers", "Courrier au propriétaire", "idu")),
-    (("comparer", "cote a cote", "cote-a-cote"), ("comparer", "Comparateur de parcelles", "selection")),
-    (("reglement", "annuaire plu"), ("plu-annuaire", "Annuaire PLU", "pluPrefill")),
-    (("lettre de zonage", "verification de zonage"), ("lettre-zonage", "Lettre de vérification de zonage", "idu")),
-    (("procedure plu", "revision plu", "sursis a statuer", "nouveau plu", "plu disponible", "plu a jour",
-      "plu en cours", "nouveau document d'urbanisme"), ("verif-procedure", "Vérif procédure PLU", "idu")),
-    (("due diligence", "controle avant achat", "avant d'acheter"), ("duediligence", "Contrôle avant achat", "idu")),
-    (("servitude",), ("o5-servitudes", "Servitudes invisibles", "idu")),
+    (("comparer", "compare ", "comparez", "cote a cote", "cote-a-cote"), ("comparer", "Comparateur de parcelles", "selection")),
+    # COPILOTE-2 lot 2 — INTÉGRITÉ DE ROUTAGE : les 3 outils PLU (annuaire, procédure, changement) et les
+    # 2 « avant-achat » (due diligence, servitudes) ont été FONDUS dans les hubs `plu` et `risques`
+    # (M137-P/T). Les anciennes clés (plu-annuaire, lettre-zonage, verif-procedure, duediligence,
+    # o5-servitudes, simulplu) N'EXISTENT PLUS au registre front → c'étaient des LIENS MORTS (constat
+    # COPILOTE-AUDIT-1). On route désormais vers les hubs LIVE. Le test verrouille : aucune porte morte.
+    (("reglement", "annuaire plu", "lettre de zonage", "verification de zonage", "procedure plu",
+      "revision plu", "sursis a statuer", "nouveau plu", "plu disponible", "plu a jour", "plu en cours",
+      "nouveau document d'urbanisme", "changement de plu"), ("plu", "PLU (règlement, procédure)", "pluPrefill")),
+    (("due diligence", "controle avant achat", "avant d'acheter", "servitude"),
+     ("risques", "Pièges et risques (avant-achat)", "idu")),
     (("remonter le temps", "evolution dans le temps", "en 1950", "historique du site"),
      ("temps", "Remonter le temps", "idu")),
 ]
@@ -1476,10 +1550,12 @@ _CONCEPT_MAP = [
     (("potentiel de renouvellement", "renouvellement du territoire", "outil renouvellement",
       "vue renouvellement du", "densifier", "densification de l'existant", "densification de l existant",
       "construire plus", "surelever", "surélever"), ("renouvellement", "Densifier l'existant")),
+    # COPILOTE-2 lot 2 — « simulplu » (Changement PLU) fondu dans le hub `plu` (M137) : route LIVE, plus
+    # un lien mort. Le hub PLU porte la prospective de zonage.
     (("changement de plu", "si cette zone passait", "zone passait constructible",
       "si cette zone devenait constructible", "zone devenait constructible",
       "prospective de territoire", "simuler un plu", "simuler un changement de zonage"),
-     ("simulplu", "Changement PLU")),
+     ("plu", "PLU (prospective de zonage)")),
     # Retiré du produit le 21/08/2026 (DORMANT) : outil « Quoi de neuf » (o10-bascules). Sa concept-route
     # est SUPPRIMÉE — router vers un module absent = lien mort (piège attrapé sur « Foncier fantôme »).
     # Ces demandes retombent sur le traitement normal du Copilote. Le flux d'événements reste servi
@@ -1591,6 +1667,70 @@ def _match_concept(message: str):
     return None
 
 
+# COPILOTE-2 lot 1 — LE CHEMIN FICHE. Une parcelle (ou commune) NOMMÉE : résumé DÉTERMINISTE
+# (mêmes déclarations/ids que la fiche et le Dossier — `resume_fiche`) + la porte vers la fiche.
+# « Dis-moi tout sur X » → le résumé complet ; « qui est le propriétaire / quel taux de TA » → la
+# LIGNE DÉCLARÉE et son id (plus de champ jeté par l'outil, COPILOTE-AUDIT-1). Le modèle ne calcule
+# ni ne choisit aucun chiffre ; en mode dégradé le résumé se sert SANS lui.
+_RESUME_FICHE_KW = ("dis-moi tout", "dis moi tout", "dis moi ce que", "tout sur", "tout ce que tu sais",
+              "resume", "résumé", "synthese", "synthèse", "parle-moi", "parle moi", "presente",
+              "présente", "que sais-tu", "que sais tu", "analyse cette", "analyse la parcelle",
+              "fiche de", "fiche complete", "fais le point", "donne-moi la fiche", "brief")
+# un verbe d'ACTION / de destination ne doit pas être happé comme une question de champ (il a sa voie).
+_ACTION_KW = ("ouvrir", "implanter", "restaurant", "commerce", "hotel", "hôtel", "bureau", "entrepot",
+              "usine", "peut-on", "peut on", "puis-je", "puis je", "autorise", "construire un",
+              "vaut", "vaut-elle", "prix demande", "divis", "decoup", "lotir", "compare", "assembl")
+
+
+_IDU_RE = re.compile(r"\b(\d{5}[0-9A-Za-z]{9})\b")
+
+
+def _idu_dans(message: str) -> str | None:
+    """Un IDU (14 car., 5 chiffres INSEE + 9) présent dans le message — extraction déterministe."""
+    m = _IDU_RE.search(message or "")
+    return m.group(1) if m else None
+
+
+def _quel_champ_fiche(message: str):
+    from . import resume_fiche as RF
+    return RF._quel_champ(message)
+
+
+def _chemin_fiche(db: Session, message: str, params: dict, contexte: dict | None) -> dict | None:
+    """Le chemin FICHE : un résumé déterministe d'une parcelle/commune nommée, ou la valeur d'un
+    champ précis (ligne déclarée + id). Rend un reply, ou None si la demande n'est pas de ce chemin."""
+    from . import resume_fiche as RF
+    idu = params.get("idu") or (contexte or {}).get("idu")
+    m = _fold_py(message.lower())
+    veut_resume = any(k in m for k in _RESUME_FICHE_KW)
+    action = any(k in m for k in _ACTION_KW)
+    if idu:
+        # (1) une question de champ précis (propriétaire, taxe, zone, risques, pente…) — sauf action.
+        if not action and not veut_resume:
+            ch = RF.champ_precis(db, idu, message)
+            if ch is not None:
+                return _reply(ch["texte"], "QUESTION", tool="fiche_parcelle", sources=[ch["source"]],
+                              champ_id=ch.get("champ_id"),
+                              voie={"cible": "fiche", "libelle": "Voir la fiche parcelle complète", "idu": idu})
+        # (2) « dis-moi tout » → le résumé complet + la porte fiche.
+        if veut_resume:
+            r = RF.resume_parcelle(db, idu)
+            if r is not None:
+                return _reply(RF.phrase(r), "QUESTION", tool="fiche_parcelle",
+                              sources=[r["source"]], resume_fiche=r,
+                              voie={"cible": "fiche", "libelle": "Voir la fiche parcelle complète", "idu": idu})
+        return None
+    # (3) une COMMUNE nommée + demande de résumé → le résumé commune + la porte Communes.
+    commune = params.get("commune")
+    if commune and veut_resume:
+        r = RF.resume_commune(db, commune)
+        if r is not None:
+            return _reply(RF.phrase_commune(r), "QUESTION", tool="stats_commune",
+                          sources=[r["source"]], resume_commune=r,
+                          porte="communes", prefill="communePrefill", prefill_commune=r["commune"])
+    return None
+
+
 def _substance(db: Session, idu: str | None) -> str:
     """Ce que LABUSE SAIT déjà sur une parcelle citée (fond), sans outil. RETOURS-8 (R12) — enrichi du
     VERDICT servi (même source que la fiche, `_q_v2_fiche`) pour un résumé plus riche que « surface·zone »."""
@@ -1688,10 +1828,16 @@ def _outil(db: Session, message: str, params: dict) -> dict:
         return _reply("Dites-moi ce que vous voulez faire, ou choisissez parmi les outils d'analyse.",
                       "OUTIL", outils_liste=True)
     module, label, prefill = cible
-    txt = f"Je peux ouvrir l'outil {label}"
+    txt = f"Je vous ouvre l'outil {label}"
     if idu and prefill in ("parcelPrefill", "calcPrefill", "idu", "pluPrefill"):
         txt += f", pré-rempli avec la parcelle {idu}."
     else:
         txt += "."
-    return _reply(txt, "OUTIL", porte=module, prefill=prefill,
-                  prefill_idu=idu if prefill in ("parcelPrefill", "calcPrefill", "idu") else None)
+    # COPILOTE-2 lot 2 — le hub PLU consomme `prefill_plu {insee, zone}` (jamais prefill_idu) : on le
+    # sert correctement (l'ancien pluPrefill posait prefill_idu, ignoré par Plu.tsx).
+    extra: dict = {}
+    if prefill == "pluPrefill":
+        extra["prefill_plu"] = {"insee": idu[:5], "zone": None} if idu else None
+    elif prefill in ("parcelPrefill", "calcPrefill", "idu"):
+        extra["prefill_idu"] = idu
+    return _reply(txt, "OUTIL", porte=module, prefill=prefill, **extra)

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getCommuneAcquisitions, getCommunes, getRadarMarche } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
@@ -199,7 +199,14 @@ export function Communes() {
   const setCommunesTableOpen = useApp((s) => s.setCommunesTableOpen)
   const setEvolutionTableOpen = useApp((s) => s.setEvolutionTableOpen)
   const setRadarTableOpen = useApp((s) => s.setRadarTableOpen)
+  const communePrefill = useApp((s) => s.communePrefill)
+  const setCommunePrefill = useApp((s) => s.setCommunePrefill)
   const [vue, setVue] = useState<'accueil' | 'acquisitions'>('accueil')
+  // COPILOTE-2 lot 1 — le chemin FICHE commune : le Copilote pose `communePrefill` puis ouvre l'outil ;
+  // on ouvre directement le tableau comparatif des 24 communes (la surface commune), puis on consomme.
+  useEffect(() => {
+    if (communePrefill) { setCommunesTableOpen(true); setCommunePrefill(null) }
+  }, [communePrefill, setCommunesTableOpen, setCommunePrefill])
   if (vue === 'accueil') {
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">

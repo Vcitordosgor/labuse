@@ -152,7 +152,8 @@ async def _lifespan(app: FastAPI):
         # données client). M26-A — Copilote : après comptes (FK agent_runs.compte_id).
         from ..comptes import ensure_tables as _comptes_ens
         from .tenant import ensure_scoping as _scoping_ens
-        from ..copilote.tables import ensure_tables as _copilote_ens
+        # COPILOTE-2 lot 4 — le moteur de missions lourdes v1 (copilote/, tables agent_*) est RETIRÉ :
+        # RECHERCHE/VERIFICATION sont des passerelles vers les outils (answering._mission_*), plus un run.
         # DASHBOARD-V1 · D1 — capteurs de la Tour de contrôle
         from .dashboard import ensure_tables as _dashboard_ens
         # RADAR (pige) · P0 — schéma isolé pige_* (domaine transactionnel, hors runs)
@@ -194,7 +195,6 @@ async def _lifespan(app: FastAPI):
             ("comptes+scoping", _heal_comptes_scoping),
             ("crm_columns", lambda: _crm_columns_ens(_engine())),
             ("veilles", lambda: _veilles_ens(_engine())),
-            ("copilote", lambda: _copilote_ens(_engine())),
             ("copilote_v2", lambda: (_copv2_hist_ens(_engine()), _copv2_tel_ens(_engine()))),
             # DASHBOARD-V1 · D1 — capteurs (usage_events, retours, ia_log.compte_id, quota
             # Copilote par licence). Après « comptes+scoping » (ALTER comptes.copilote_quota_jour).
@@ -7401,7 +7401,6 @@ from .couches_tuyau import router as _couches_tuyau_router  # noqa: E402  (COUCH
 from .score_v2 import router as _score_v2_router  # noqa: E402  (M5, additif)
 from .fiche_ask import router as _fiche_ask_router  # noqa: E402  (M11 surface A — barre de fiche)
 from .crm_columns import router as _crm_columns_router  # noqa: E402  (M12 LOT H — CRM personnalisable)
-from .copilote import router as _copilote_router  # noqa: E402  (SUITE-1 S9 — /api/copilote-v2/runs* : missions lourdes)
 from .copilote_v2 import router as _copilote_v2_router  # noqa: E402  (M78 — Copilote v2 : routeur + outils)
 from .accueil import router as _accueil_router  # noqa: E402  (M55-D stage 9 — chiffres de l'accueil)
 from .dashboard import router as _dashboard_router  # noqa: E402  (DASHBOARD-V1 — Tour de contrôle)
@@ -7410,7 +7409,6 @@ from ..pige.api import router as _radar_router  # noqa: E402  (RADAR P1 — page
 app.include_router(_dashboard_router)
 app.include_router(_radar_router)
 app.include_router(_crm_columns_router)
-app.include_router(_copilote_router)
 app.include_router(_copilote_v2_router)
 app.include_router(_accueil_router)
 app.include_router(_fiche_ask_router)

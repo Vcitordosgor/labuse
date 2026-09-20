@@ -71,13 +71,19 @@ SURFACES: dict[str, dict] = {
     # interprétation du brief par le moteur run-scopé) porte son propre `kind` `copilote_mission`
     # (l'ancienne ligne « Copilote v1 (missions) » disparaît). Modèle : sonnet (raisonnement).
     "copilote_mission":  {"label": "Copilote — missions lourdes (RECHERCHE/VERIFICATION)", "model": MODEL_REASONING},
-    "copilote-route":    {"label": "Copilote v2 — routage",              "model": MODEL_FACTUAL},
-    "copilote-select":   {"label": "Copilote v2 — sélection d'outil",    "model": MODEL_REASONING},
-    "copilote-formule":  {"label": "Copilote v2 — formulation",          "model": MODEL_REASONING},
-    "copilote-general":  {"label": "Copilote v2 — réponse générale",     "model": MODEL_REASONING},
-    "copilote-prepare":  {"label": "Copilote v2 — préparer un script",   "model": MODEL_REASONING},
-    "copilote-web":      {"label": "Copilote v2 — renseigner par le web","model": MODEL_REASONING},
-    "copilote-heros":    {"label": "Copilote v2 — accroche du jour",     "model": MODEL_REASONING},
+    # COPILOTE-2 lot 6 — UN SEUL MODÈLE, le moins cher (Haiku), sur les trois chemins (FICHE/OUTIL/WEB).
+    # Le chemin FICHE ne calcule rien (résumé déterministe, le modèle tourne la phrase) ; OUTIL route +
+    # extrait des paramètres ; WEB cite ses sources. Haiku suffit partout. Le seul doute de qualité est
+    # la synthèse WEB : Haiku PAR DÉFAUT, relevée à Sonnet via `LABUSE_IA_MODELE_COPILOTE_WEB` SI la
+    # mesure l'exige (mandat : « Sonnet seulement si la qualité du chemin WEB l'exige, mesuré » — mesure
+    # différée, clé à créditer). Router inchangé (Haiku).
+    "copilote-route":    {"label": "Copilote v2 — routage (3 chemins)",     "model": MODEL_FACTUAL},
+    "copilote-select":   {"label": "Copilote v2 — chemin OUTIL (sélection)", "model": MODEL_FACTUAL},
+    "copilote-formule":  {"label": "Copilote v2 — chemin FICHE (formulation)", "model": MODEL_FACTUAL},
+    "copilote-general":  {"label": "Copilote v2 — chemin WEB (connaissance)", "model": MODEL_FACTUAL},
+    "copilote-prepare":  {"label": "Copilote v2 — préparer un script",       "model": MODEL_FACTUAL},
+    "copilote-web":      {"label": "Copilote v2 — chemin WEB (recherche)",    "model": MODEL_FACTUAL},
+    "copilote-heros":    {"label": "Copilote v2 — accroche du jour",         "model": MODEL_FACTUAL},
     "traducteur-plu":    {"label": "Traducteur PLU (règlement)",         "model": MODEL_REASONING},
     "synthese-banquier": {"label": "Synthèse banquier",                  "model": MODEL_REASONING},
     "promo_collecte":    {"label": "Parseur programmes promoteur",       "model": MODEL_FACTUAL},

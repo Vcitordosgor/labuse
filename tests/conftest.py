@@ -146,9 +146,7 @@ def engine():
     with _ss() as _s:
         _comptes_ens(_s)
         ensure_scoping(_s)   # migre compte_id + FK cascade + unique (compte_id, idu) — comme au boot
-    # M26-A — Copilote : agent_runs / agent_events / agent_run_parcels (après comptes, comme au boot).
-    from labuse.copilote.tables import ensure_tables as _copilote_ens
-    _copilote_ens(eng)
+    # COPILOTE-2 lot 4 — le moteur v1 (agent_runs/agent_events/agent_run_parcels) est retiré ; plus de DDL.
     # M120 — projets : ALTER ADD COLUMN identite/shortlist_perimee + migration fiche→cadrage (comme au boot).
     from labuse.api.projets import ensure_tables as _projets_ens
     _projets_ens(eng)

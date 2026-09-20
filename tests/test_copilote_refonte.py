@@ -14,6 +14,7 @@ from labuse.copilote_v2.router import Route
 @pytest.fixture(autouse=True)
 def _no_telemetrie(monkeypatch):
     monkeypatch.setattr(answering.telemetrie, "refus", lambda *a, **k: None)
+    monkeypatch.setattr(answering.telemetrie, "web", lambda *a, **k: None)   # lot 3 : voie b web
 
 
 def _force_route(monkeypatch, intent, *, nouveau_sujet=True, **params):
@@ -21,10 +22,20 @@ def _force_route(monkeypatch, intent, *, nouveau_sujet=True, **params):
                         lambda *a, **k: Route(intent, params=params, nouveau_sujet=nouveau_sujet))
 
 
-def _mock_general(monkeypatch, text="Le dispositif X est un mécanisme fiscal outre-mer."):
-    """core.complete renvoie `text` (une seule réponse suffit pour la voie b déterministe)."""
-    monkeypatch.setattr(answering.core, "complete",
-                        lambda *a, **k: SimpleNamespace(text=text, degraded=False, reason=None))
+def _mock_general(monkeypatch, text="Le dispositif X est un mécanisme fiscal outre-mer.",
+                  domaines=("service-public.fr",), ok=True):
+    """COPILOTE-2 lot 3 — le chemin WEB : la voie b passe DÉSORMAIS par la recherche web (jamais la
+    mémoire). On mocke l'OUTIL `recherche_web` (pas core.complete)."""
+    from labuse.copilote_v2.outils import ToolResult
+    from datetime import date
+
+    def _fake(db, *, question, history=None, mode="fait"):
+        if not ok:
+            return ToolResult("recherche_web", ok=False, refus="rien trouvé sur le web")
+        return ToolResult("recherche_web", ok=True, web=True,
+                          data={"reponse": text, "domaines": list(domaines), "date": date.today().isoformat()},
+                          source="web")
+    monkeypatch.setitem(answering.OUTILS, "recherche_web", _fake)
 
 
 # ───────────────────────── LE REPRO GIRARDIN (voie b + continuité) ─────────────────────────
@@ -91,11 +102,13 @@ def test_mise_en_doute_detection():
     assert not answering._est_mise_en_doute("combien de parcelles sûres à Saint-Paul avec un bon potentiel ?")
 
 
-# ───────────────────────── HORS-DOMAINE (1 phrase) ─────────────────────────
-def test_hors_domaine_une_phrase(monkeypatch):
-    """Le modèle répond « HORS_DOMAINE » (cuisine) → refus d'UNE phrase, jamais badgé general."""
-    _mock_general(monkeypatch, "HORS_DOMAINE")
-    r = answering._general(None, "fais-moi une recette de rougail saucisse")
+# ───────────────────────── HORS-DOMAINE (traité en amont par le routeur) ─────────────────────────
+def test_hors_domaine_refus(monkeypatch):
+    """COPILOTE-2 — le hors-domaine (cuisine/météo) est traité par le ROUTEUR (HORS_SUJET), pas par la
+    voie b : refus d'une phrase, jamais un web bancal ni un badge general. « Une question hors des trois :
+    le Copilote le dit »."""
+    _force_route(monkeypatch, "HORS_SUJET")
+    r = answering.answer(None, "fais-moi une recette de rougail saucisse")
     assert r.get("refus") == "hors_sujet" and not r.get("general")
     assert r["text"].count(".") <= 2                     # une phrase
 
@@ -186,15 +199,15 @@ def test_q11_programme_ouvre_la_faisabilite(monkeypatch):
     assert r.get("prefill_programme") == {"batiments": 3, "niveaux": 3, "logements_par_batiment": 8}
 
 
-def test_q13_verification_recap_peage_pas_muette(monkeypatch):
-    """Q13 + SUITE-1 S9 — « BZ1065 elle vaut quoi » n'est plus une voie fiche muette : le v2 l'instruit
-    DANS le chat (récap-péage → avis complet face au prix). Le récap NOMME la parcelle, ne refuse pas."""
+def test_q13_verification_passerelle_etudier(monkeypatch):
+    """Q13 + COPILOTE-2 lot 4 — « BZ1065 elle vaut quoi » : le run/avis v1 est retiré → passerelle vers
+    « Étudier un bien » préremplie de la parcelle (NOMMÉE), jamais une voie fiche muette ni un run."""
     from labuse.copilote_v2.router import Route
     r = answering._answer_with_route(None, "97411000BZ1065 elle vaut quoi",
                                      Route("VERIFICATION", params={"idu": "97411000BZ1065"}))
-    assert r.get("refus") is None and r.get("intent") == "VERIFICATION"
-    assert r.get("needs_confirmation") is True
-    assert "97411000BZ1065" in (r.get("recap") or "")
+    assert r.get("refus") is None
+    assert r.get("porte") == "scoreur-adresse" and r.get("prefill_idu") == "97411000BZ1065"
+    assert "97411000BZ1065" in r["text"]
 
 
 def test_q3_herite_la_commune_du_fil(monkeypatch):

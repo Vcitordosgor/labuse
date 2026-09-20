@@ -1,0 +1,172 @@
+[
+  {
+    "n": 1,
+    "q": "Dans quelle commune se trouve la parcelle 97410000AN0347 ?",
+    "ctx": null,
+    "intent": null,
+    "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+    "voie": null,
+    "ms": 955,
+    "full": {
+      "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+      "intent": null,
+      "degraded": true,
+      "conversation_id": 292,
+      "contexte_ttl_minutes": 10,
+      "_ms": 955
+    }
+  },
+  {
+    "n": 2,
+    "q": "Quelle est la surface de la parcelle 97410000AN0347 ?",
+    "ctx": null,
+    "intent": null,
+    "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+    "voie": null,
+    "ms": 268,
+    "full": {
+      "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+      "intent": null,
+      "degraded": true,
+      "conversation_id": 293,
+      "contexte_ttl_minutes": 10,
+      "_ms": 268
+    }
+  },
+  {
+    "n": 3,
+    "q": "En quelle zone du PLU est la parcelle 97410000AN0347 ?",
+    "ctx": null,
+    "intent": null,
+    "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+    "voie": null,
+    "ms": 212,
+    "full": {
+      "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+      "intent": null,
+      "degraded": true,
+      "conversation_id": 294,
+      "contexte_ttl_minutes": 10,
+      "_ms": 212
+    }
+  },
+  {
+    "n": 4,
+    "q": "Qui est le propriétaire de la parcelle 97410000AN0347 ?",
+    "ctx": null,
+    "intent": null,
+    "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+    "voie": null,
+    "ms": 271,
+    "full": {
+      "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+      "intent": null,
+      "degraded": true,
+      "conversation_id": 295,
+      "contexte_ttl_minutes": 10,
+      "_ms": 271
+    }
+  },
+  {
+    "n": 5,
+    "q": "Quel est le prix ancien médian autour de la parcelle 97410000AN0347 ?",
+    "ctx": null,
+    "intent": null,
+    "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+    "voie": null,
+    "ms": 181,
+    "full": {
+      "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+      "intent": null,
+      "degraded": true,
+      "conversation_id": 296,
+      "contexte_ttl_minutes": 10,
+      "_ms": 181
+    }
+  },
+  {
+    "n": 6,
+    "q": "Quel est le taux de taxe d'aménagement communal applicable à la parcelle 97410000AN0347 ?",
+    "ctx": null,
+    "intent": null,
+    "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+    "voie": null,
+    "ms": 267,
+    "full": {
+      "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+      "intent": null,
+      "degraded": true,
+      "conversation_id": 297,
+      "contexte_ttl_minutes": 10,
+      "_ms": 267
+    }
+  },
+  {
+    "n": 7,
+    "q": "Quels sont les risques naturels sur la parcelle 97410000AN0347 ?",
+    "ctx": null,
+    "intent": null,
+    "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+    "voie": null,
+    "ms": 258,
+    "full": {
+      "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+      "intent": null,
+      "degraded": true,
+      "conversation_id": 298,
+      "contexte_ttl_minutes": 10,
+      "_ms": 258
+    }
+  },
+  {
+    "n": 8,
+    "q": "Quelle est la pente de la parcelle 97410000AN0347 ?",
+    "ctx": null,
+    "intent": null,
+    "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+    "voie": null,
+    "ms": 187,
+    "full": {
+      "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+      "intent": null,
+      "degraded": true,
+      "conversation_id": 299,
+      "contexte_ttl_minutes": 10,
+      "_ms": 187
+    }
+  },
+  {
+    "n": 9,
+    "q": "Quel est le score ou le potentiel de la parcelle 97410000AN0347 ?",
+    "ctx": null,
+    "intent": null,
+    "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+    "voie": null,
+    "ms": 280,
+    "full": {
+      "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+      "intent": null,
+      "degraded": true,
+      "conversation_id": 300,
+      "contexte_ttl_minutes": 10,
+      "_ms": 280
+    }
+  },
+  {
+    "n": 10,
+    "q": "Quelle est la capacité constructible de la parcelle 97410000AN0347 ?",
+    "ctx": null,
+    "intent": null,
+    "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+    "voie": null,
+    "ms": 252,
+    "full": {
+      "text": "Je ne peux pas instruire votre demande : le service d'analyse est indisponible (solde de crédits Anthropic épuisé — l'accès à l'API est suspendu (recharger le compte / facturation)). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer dans l'immédiat ; vos autres outils LABUSE restent disponibles.",
+      "intent": null,
+      "degraded": true,
+      "conversation_id": 301,
+      "contexte_ttl_minutes": 10,
+      "_ms": 252
+    }
+  }
+]

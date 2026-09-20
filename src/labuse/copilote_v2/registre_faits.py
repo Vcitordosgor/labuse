@@ -81,17 +81,21 @@ def enregistrer(db: Session, conversation_id: int | None, faits: list[dict]) -> 
         db.rollback()
 
 
-def du_fil(db: Session, compte_id: int | None, conversation_id: int, ttl_minutes: int) -> list[dict]:
-    """Les faits du fil (mêmes bornes que historique.fil : conversation + compte + TTL).
-    Jamais d'exception sortante (registre illisible = aucune reprise possible, pas un crash)."""
+def du_fil(db: Session, compte_id: int | None, conversation_id: int, ttl_minutes: int,
+           sujet: str | None = None) -> list[dict]:
+    """Les faits du fil (mêmes bornes que historique.fil : conversation + cloison + TTL). Cloison lot 6 :
+    compte connecté par compte_id, anonyme par sujet de session (jamais le NULL partagé — un fait d'un
+    autre visiteur ne peut plus être repris). Jamais d'exception sortante (registre illisible = aucune
+    reprise, pas un crash)."""
     try:
         rows = db.execute(text(
             "SELECT f.outil, f.cle, f.valeur, f.source, f.millesime FROM copilote_faits f "
             "JOIN copilote_conversations c ON c.id = f.conversation_id "
-            "WHERE f.conversation_id = :i AND c.compte_id IS NOT DISTINCT FROM :cp "
+            "WHERE f.conversation_id = :i "
+            "  AND (c.compte_id IS NOT DISTINCT FROM :cp AND (:cp IS NOT NULL OR c.sujet IS NOT DISTINCT FROM :s)) "
             "  AND c.updated_at >= now() - make_interval(mins => :ttl) "
             "ORDER BY f.ts DESC, f.id DESC LIMIT :n"),
-            {"i": conversation_id, "cp": compte_id, "ttl": int(ttl_minutes),
+            {"i": conversation_id, "cp": compte_id, "s": sujet, "ttl": int(ttl_minutes),
              "n": FAITS_MAX}).mappings().all()
         return [dict(r) for r in rows]
     except Exception:

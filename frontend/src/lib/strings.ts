@@ -492,14 +492,8 @@ export const CLIENT = {
     instruire: 'Instruire',
     annuler: 'Annuler l’instruction',
     serment: 'Moteurs déterministes journalisés',
-    // Les 5 missions du Copilote — 2 actives (M26-A/B), 3 « bientôt » (mandats dédiés).
-    missions: [
-      { key: 'instruire', label: 'Instruire un besoin', actif: true },
-      { key: 'shortlist', label: 'Shortlist', actif: true },
-      { key: 'verifier_adresse', label: 'Vérifier des références', actif: false },
-      { key: 'aide_dossier', label: 'Aide sur un dossier', actif: false },
-      { key: 'brief_matin', label: 'Brief du matin', actif: false },
-    ] as ReadonlyArray<{ key: string; label: string; actif: boolean }>,
+    // COPILOTE-2 lot 4 — l'ancienne liste des « 5 missions » du Copilote v1 (instruire/shortlist/
+    // verifier_adresse…) est retirée avec le moteur de run : le Copilote v2 sert trois chemins inline.
     bientot: 'bientôt',
     // états transitoires — AUCUN résultat partiel pendant l'instruction (règle 5)
     interpretationEnCours: 'Interprétation du besoin en cours…',

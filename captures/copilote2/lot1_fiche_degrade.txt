@@ -1,0 +1,45 @@
+=== COPILOTE-2 Lot 1 — chemin FICHE en mode DÉGRADÉ (clé Anthropic épuisée) ===
+Preuve : le résumé et les champs se construisent SANS le modèle (court-circuit déterministe).
+
+### /ia/status (provider dégradé)
+ raison: None
+
+### Q: dis-moi tout sur la parcelle 97410000AN0347
+intent: QUESTION | tool: fiche_parcelle | champ_id: None
+voie: {'cible': 'fiche', 'libelle': 'Voir la fiche parcelle complète', 'idu': '97410000AN0347'}
+Parcelle 97410000AN0347 à Saint-Benoît — Surface 4 501 m² · Zone N · Pente 3,4°.
+• Identité : Personne morale — COMMUNE DE SAINT BENOIT — au fichier 2019–2025.
+• Terrain : Pente 3,4° · 4 164 m² de sol libre.
+• Bâti : 2 bâtiments, 337 m² au sol.
+• Urbanisme : ⚠ Zone N — naturelle, non constructible. Le potentiel de construction est nul par cette règle de zonage.
+• Risques et environnement : ⚠ Exclue : PPR zone rouge (inconstructible) — 100 % de la surface.
+• Réseaux et desserte : Viabilisation probable — le tracé et la capacité exacts des réseaux ne sont pas relevés à cette échelle : à confirmer auprès des gestionnaires par une DT-DICT.
+• Fiscalité et dispositifs : Zonage d'investissement locatif : B1 · 4 dispositifs territoriaux.
+• Marché : Prix ancien médian 1 360 €/m² (30 ventes à moins de 500 m).
+• Quartier : Centre Ville-Rive Droite — 3 384 habitants.
+
+### Q: qui est le proprietaire de la parcelle 97410000AN0347 ?
+intent: QUESTION | tool: fiche_parcelle | champ_id: type_proprietaire
+voie: {'cible': 'fiche', 'libelle': 'Voir la fiche parcelle complète', 'idu': '97410000AN0347'}
+Propriétaire : Personne morale — COMMUNE DE SAINT BENOIT (type_proprietaire).
+
+### Q: quel est le taux de taxe damenagement de la parcelle 97410000AN0347 ?
+intent: QUESTION | tool: fiche_parcelle | champ_id: taxe_amenagement_estimee_eur
+voie: {'cible': 'fiche', 'libelle': 'Voir la fiche parcelle complète', 'idu': '97410000AN0347'}
+Taxe d'aménagement — taux communal 5,0 % (Taux communal en vigueur depuis le 01/01/2022 (délibération communale)) (taxe_amenagement_estimee_eur).
+
+### Q: quels sont les risques sur la parcelle 97410000AN0347 ?
+intent: QUESTION | tool: fiche_parcelle | champ_id: aleas_parcelle_liste
+voie: {'cible': 'fiche', 'libelle': 'Voir la fiche parcelle complète', 'idu': '97410000AN0347'}
+Risques : Exclue : PPR zone rouge (inconstructible) — 100 % de la surface. — rédhibitoire (aleas_parcelle_liste).
+
+### Q: en quelle zone est la parcelle 97410000AN0347 ?
+intent: QUESTION | tool: fiche_parcelle | champ_id: zone_plu_famille
+voie: {'cible': 'fiche', 'libelle': 'Voir la fiche parcelle complète', 'idu': '97410000AN0347'}
+Zone PLU : Zone N (zone_plu_famille).
+
+### Q: quelle est la pente de la parcelle 97410000AN0347 ?
+intent: QUESTION | tool: fiche_parcelle | champ_id: pente_deg
+voie: {'cible': 'fiche', 'libelle': 'Voir la fiche parcelle complète', 'idu': '97410000AN0347'}
+Pente : 3,4° (pente_deg).
+

@@ -1,0 +1,7 @@
+=== COPILOTE-2 Lot 7 — journal d'instruction lisible (degraded FICHE + pytest pour OUTIL/WEB) ===
+FICHE journal: J'ai lu la fiche de la parcelle 97410000AN0347.
+OUTIL/WEB journal lines (unit-tested, journal_ligne):
+  porte programme  -> J'ai ouvert Faisabilité.
+  porte scoreur    -> J'ai ouvert Étudier un bien pour la parcelle …
+  web 2 sources    -> J'ai cherché sur le web : 2 sources.
+  carte_filtre     -> J'ai filtré la carte sur vos critères.

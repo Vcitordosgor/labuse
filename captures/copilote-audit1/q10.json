@@ -1,0 +1,15 @@
+{
+  "tag": "point3_fiche10",
+  "questions": [
+    {"m": "Dans quelle commune se trouve la parcelle 97410000AN0347 ?"},
+    {"m": "Quelle est la surface de la parcelle 97410000AN0347 ?"},
+    {"m": "En quelle zone du PLU est la parcelle 97410000AN0347 ?"},
+    {"m": "Qui est le propriétaire de la parcelle 97410000AN0347 ?"},
+    {"m": "Quel est le prix ancien médian autour de la parcelle 97410000AN0347 ?"},
+    {"m": "Quel est le taux de taxe d'aménagement communal applicable à la parcelle 97410000AN0347 ?"},
+    {"m": "Quels sont les risques naturels sur la parcelle 97410000AN0347 ?"},
+    {"m": "Quelle est la pente de la parcelle 97410000AN0347 ?"},
+    {"m": "Quel est le score ou le potentiel de la parcelle 97410000AN0347 ?"},
+    {"m": "Quelle est la capacité constructible de la parcelle 97410000AN0347 ?"}
+  ]
+}
