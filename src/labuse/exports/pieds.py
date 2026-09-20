@@ -51,11 +51,13 @@ def sources_lues(valeurs: Iterable[Valeur]) -> list[tuple[str, str | None]]:
 
 
 def pied_section(valeurs: Iterable[Valeur]) -> str:
-    """Le fragment HTML du pied d'une section : « Sources : Nom (millésime) · Nom · … »
+    """Le fragment HTML du pied d'une section : « Sources : Nom · Nom · … » — noms seuls.
     Rien (chaîne vide) si aucune source n'est en jeu (bloc purement interne)."""
     sources = sources_lues(valeurs)
     if not sources:
         return ""
-    parts = [f"{nom} ({mill})" if mill else nom for nom, mill in sources]
+    # EXPORTS-REBRANCHEMENT-1 lot 2 — NOMS seuls, aucun millésime ni date côté client
+    # (doctrine PAGE-SOURCES-1 18/09) ; le millésime reste lisible côté admin (Circuit, trace=1).
+    parts = [nom for nom, _mill in sources]
     from .rendu import note
     return note("Sources : " + " · ".join(parts))

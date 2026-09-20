@@ -91,7 +91,8 @@ def test_verdict_zonage_deterministe():
 def test_pied_section_depuis_reservoirs():
     v = _V("surface_parcelle_m2", 742, reservoirs={"cadastre_api_carto": "PCI 2026-08"})
     pied = pieds.pied_section([v])
-    assert "Sources" in pied and "Cadastre" in pied and "PCI 2026-08" in pied
+    # EXPORTS-REBRANCHEMENT-1 lot 2 — le pied dit le NOM de la source, jamais son millésime.
+    assert "Sources" in pied and "Cadastre" in pied and "PCI 2026-08" not in pied
     assert pieds.pied_section([_V("surface_parcelle_m2", 1)]) == ""  # aucun réservoir → pas de pied
 
 
