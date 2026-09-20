@@ -241,6 +241,24 @@ def loyer(db: Session, commune: str) -> dict | None:
             "source": lg.get("etiquette") or lg.get("source") or "DHUP (carte des loyers)"}
 
 
+def parc_social(db: Session, insee: str | None) -> dict | None:
+    """COMMUNE-RANGEMENT-1 (lot 2) — le parc social RPLS de la commune (table `rpls_commune`, SDES),
+    fait 100 % communal. Il était servi UNIQUEMENT au contexte marché de la fiche PARCELLE (mal rangé :
+    une info commune invisible depuis la commune) ; on le sert désormais à la fiche commune (carte
+    Population & logement). `pct_qpv` reste NON servi (non discriminant, RETOURS-11F). None si non ingéré."""
+    if not insee:
+        return None
+    r = db.execute(text(
+        "SELECT nb_logements, construct_median FROM rpls_commune WHERE insee = :i"),
+        {"i": insee}).mappings().first()
+    if not r or r["nb_logements"] is None:
+        return None
+    return {"logements": int(r["nb_logements"]),
+            "construct_median": int(r["construct_median"]) if r["construct_median"] is not None else None,
+            "millesime": "RPLS 01/01/2025",
+            "source": "SDES — Répertoire des logements locatifs sociaux (RPLS)"}
+
+
 def fiscalite(db: Session, insee: str | None) -> dict | None:
     """SOURCES-1 lot 5 — taux fonciers de la commune (REI DGFiP) : TFPB commune + EPCI, TEOM.
     Passe-plat sourcé + daté ; None si non ingéré (jamais un taux inventé).
@@ -352,7 +370,7 @@ log = logging.getLogger("labuse.fiche_commune")
 # le bloc concerné SANS casser la fiche entière (« introuvable = null, jamais un zéro menteur »).
 _FALLBACK = {
     "comparable": None, "marche_annonces": None, "densifiables": None, "loyer": None,
-    "zonage_abc": None, "fiscalite": None, "ort": None, "zfang_frr": None,
+    "zonage_abc": None, "fiscalite": None, "ort": None, "zfang_frr": None, "parc_social": None,
     "risques": {"ppr_pct": None, "mouvement_terrain_pct": None, "catnat_arretes": 0,
                 "catnat_detail": [], "parc_national": False, "azi_tri": None,
                 "source": "Géorisques · GASPAR · BD TOPO"},
@@ -391,6 +409,8 @@ def build(db: Session, commune: str, insee: str | None) -> dict:
         "permis": _safe(db, "permis", lambda: permis_bloc(db, commune)),
         "densifiables": _safe(db, "densifiables", lambda: densifiables(db, commune)),
         "loyer": _safe(db, "loyer", lambda: loyer(db, commune)),
+        # COMMUNE-RANGEMENT-1 lot 2 — parc social RPLS (SDES), fait communal servi à la fiche commune.
+        "parc_social": _safe(db, "parc_social", lambda: parc_social(db, insee)),
         # SOURCES-1 lot 1 — zonage A/B/C (DHUP, arrêté national) : passe-plat sourcé + daté.
         "zonage_abc": _safe(db, "zonage_abc", lambda: zonage_abc(db, insee)),
         # SOURCES-1 lot 5 — taux fonciers (REI) + ACV/PVD/ORT (Denormandie).

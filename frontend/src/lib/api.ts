@@ -273,6 +273,8 @@ export interface ContexteCommune {
   }
   densifiables: { parcelles: number | null; sdp_residuelle_m2: number | null; source: string | null } | null
   loyer: { median_eur_m2: number; type: string | null; source: string } | null
+  // COMMUNE-RANGEMENT-1 lot 2 — parc social RPLS (SDES), fait communal. null = non ingéré.
+  parc_social: { logements: number; construct_median: number | null; millesime: string; source: string } | null
   // SOURCES-1 lot 1 — zonage A/B/C (DHUP, arrêté national) : passe-plat sourcé + daté. null = non ingéré.
   zonage_abc: { zone: string; millesime: string; source: string } | null
   // SOURCES-1 lot 5 — taux fonciers (REI) + ACV/PVD/ORT (Denormandie)

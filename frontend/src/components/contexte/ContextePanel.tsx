@@ -617,6 +617,9 @@ export function ContextePanel() {
                   {d.population.habitants != null && <RowT lbl="Habitants · ménages" val={`${fmt(d.population.habitants)} · ${fmt(d.population.menages)}`} />}
                   {d.population.niveau_vie_moyen_eur != null && <RowT lbl="Niveau de vie moyen" val={`${fmt(d.population.niveau_vie_moyen_eur)} €/an`} />}
                   {d.population.logements != null && <RowT lbl="Logements" val={`${fmt(d.population.logements)}${d.population.vacants != null ? ` · ${fmt(d.population.vacants)} vacants (${fmtDec(d.population.vacance_pct)} %)` : ''}`} />}
+                  {/* COMMUNE-RANGEMENT-1 lot 2 — parc social RPLS (SDES) : fait communal, jusqu'ici visible
+                      seulement depuis la fiche parcelle. Servi ici, à son échelle. */}
+                  {d.parc_social?.logements != null && <RowT lbl="Parc social (RPLS)" val={`${fmt(d.parc_social.logements)} logts${d.parc_social.construct_median != null ? ` · constr. médiane ${d.parc_social.construct_median}` : ''}`} />}
                   {/* SOURCES-1 lot 6 — l'affinage par QUARTIER (IRIS RP2022) : la vacance n'est
                       pas uniforme dans la commune ; maille dite, la vérité communale reste INSEE RP. */}
                   {d.population.quartiers && (
@@ -645,7 +648,7 @@ export function ContextePanel() {
                     ]} />
                   </div>
                 )}
-                <Source nom={d.population.source} />
+                <Source nom={`${d.population.source}${d.parc_social ? ` · ${d.parc_social.source}` : ''}`} />
               </LigneCarte>
 
               {(d.qpv.length > 0 || d.anru.length > 0) && (

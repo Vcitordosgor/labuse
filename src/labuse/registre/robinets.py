@@ -280,7 +280,7 @@ ROBINETS: dict[str, Robinet] = {
     "/communes/{c}/contexte", "json_puis_js", chiffres=("ppr_pct", "catnat_n", "catnat_arretes_liste",)),
  "fiche_commune_population": _r("fiche", "Population & logement", "fiche_commune",
     "/communes/{c}/contexte", "json_puis_js",
-    chiffres=("habitants_n", "vacance_pct", "autres_loges_pct")),
+    chiffres=("habitants_n", "vacance_pct", "autres_loges_pct", "parc_social_rpls_logements")),
  "fiche_commune_qpv": _r("fiche", "Quartiers prioritaires", "fiche_commune",
     "/communes/{c}/contexte", "json_puis_js", chiffres=("qpv_n",)),
  "fiche_commune_mairie": _r("fiche", "Mairie & service urbanisme", "fiche_commune",

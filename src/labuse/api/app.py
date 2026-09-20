@@ -2092,13 +2092,18 @@ def _rafraichir_partages(db: Session, commune: str, payload: dict) -> dict:
         # passe-plats bon marché (une ligne). Le CACHE nocturne les figeait à `null` (il précède
         # SOURCES-1) : un client ne voyait NI le taux foncier NI la zone de tension pourtant en base.
         # On les resservit LIVE (même doctrine O8 que comparable/SRU) → jamais périmés, toujours servis.
-        from .fiche_commune import fiscalite as _fiscalite, zonage_abc as _zonage_abc
+        from .fiche_commune import fiscalite as _fiscalite, zonage_abc as _zonage_abc, parc_social as _parc_social
         fisc = _fiscalite(db, insee)
         if fisc is not None:
             payload["fiscalite"] = fisc
         zab = _zonage_abc(db, insee)
         if zab is not None:
             payload["zonage_abc"] = zab
+        # COMMUNE-RANGEMENT-1 lot 2 — le parc social RPLS est un passe-plat bon marché (une ligne) que le
+        # CACHE nocturne (antérieur au lot) ignore encore : re-servi LIVE (même doctrine O8/RECETTE-4).
+        psoc = _parc_social(db, insee)
+        if psoc is not None:
+            payload["parc_social"] = psoc
     except Exception:  # noqa: BLE001 — le rafraîchissement ne doit jamais casser la fiche
         _FICHE_LOG.exception("fiche commune · rafraîchissement des indicateurs partagés (O8) impossible")
     return payload
@@ -2237,6 +2242,7 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
             "permis_bloc": blocs["permis"],             # C5 — construire ici + permis au point mort
             "densifiables": blocs["densifiables"],      # C5 — gisement de densification
             "loyer": blocs["loyer"],                    # C5 — loyer médian SOURCÉ
+            "parc_social": blocs["parc_social"],        # COMMUNE-RANGEMENT-1 lot 2 — parc social RPLS (SDES)
             "zonage_abc": blocs["zonage_abc"],          # SOURCES-1 lot 1 — zone A/B/C (DHUP)
             "fiscalite": blocs["fiscalite"],            # SOURCES-1 lot 5 — taux TFPB/TEOM (REI)
             "ort": blocs["ort"],                        # SOURCES-1 lot 5 — ACV/PVD/ORT (Denormandie)
