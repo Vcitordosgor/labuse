@@ -525,6 +525,12 @@ ACTIONS_PROPOSEES: dict[str, str] = {
     # (SOURCES-1 : parcel_blocs / parcel_bloc_membres étaient ici en « résidu de branche non
     # mergée » ; OUTILS-MUSCLER-3 étant désormais mergée, elles sont classées en TABLES_FABRIQUEES
     # — ce ne sont plus des orphelines.)
+    # COPILOTE-2 lot 4 — le moteur de missions lourdes v1 est retiré : ses 3 tables (agent_runs /
+    # agent_events / agent_run_parcels) ne sont plus créées ni au registre. Elles deviennent orphelines
+    # dans la base existante, en attente du geste de Vic (purge → schéma poubelle, jamais un DROP).
+    "agent_runs": "purger (moteur Copilote v1 retiré — COPILOTE-2)",
+    "agent_events": "purger (moteur Copilote v1 retiré — COPILOTE-2)",
+    "agent_run_parcels": "purger (moteur Copilote v1 retiré — COPILOTE-2)",
     "_lota_grave_parcels": "purger (photo de travail LOT A)",
     "algo2_prop_features": "purger (features d'essai algo2)",
     "backup_sp_ppr_avant_littoral": "purger (backup PPR avant littoral — Saint-Pierre)",
