@@ -12,6 +12,67 @@ meta:
   structure: silence lu dans la structure de chaque zone et cité (voir notes des zones).
 zones:
   Ua:
+    regles:
+      hauteur:
+        faitage:
+          m: 15.0
+          article: U 10.2
+          page_pdf: 13
+          citation: 'en zones Ua et Ub : - 12 mètres à l''égout du toit ou au sommet de l''acrotère ; - 15
+            mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 12.0
+          article: U 10.2
+          page_pdf: 13
+          citation: 'en zones Ua et Ub : - 12 mètres à l''égout du toit ou au sommet de l''acrotère ; - 15
+            mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: U 9.2
+          page_pdf: 12
+          citation: 'L''emprise au sol maximale des constructions au regard de la superficie du terrain est
+            fixée à : en zone Ua : 80%'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U 12.2
+          page_pdf: 17
+          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
+            sur voie par terrain, pour les lotissements de plus de 5 lots.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 15.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'Le terrain doit être traité en espace libre et perméable comprenant des plantations et
+            devant recevoir un traitement paysager sur au moins : En zone Ua : 15% de la superficie totale
+            de l''unité foncière'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
     silence: autorise
     silence_src: 'Art. U 2.2, p. 8 : « A l''exception du secteur Ub5, sont admises toutes les occupations et utilisations
       du sol non citées à l''article U 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions
@@ -157,6 +218,57 @@ zones:
         citation: « Les constructions à destination d'activités, exceptées celles visées à l'article U 1-2 ci-avant,
           […] à condition qu'elles n'entraînent pour le voisinage ni incommodité et ni aggravation des risques »
   Ub:
+    regles:
+      hauteur:
+        faitage:
+          m: 15.0
+          article: U 10.2
+          page_pdf: 13
+          citation: 'en zones Ua et Ub : - 12 mètres à l''égout du toit ou au sommet de l''acrotère ; - 15
+            mètres au faitage.'
+          statut: valide
+        egout:
+          m: 12.0
+          article: U 10.2
+          page_pdf: 13
+          citation: 'en zones Ua et Ub : - 12 mètres à l''égout du toit ou au sommet de l''acrotère ; - 15
+            mètres au faitage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U 12.2
+          page_pdf: 17
+          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
+            sur voie par terrain, pour les lotissements de plus de 5 lots.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En zones Ub et secteurs Ub1, Ub2 et Ub3 : au minimum 30% de la superficie totale de l''unité
+            foncière doit être traité en espace libre et perméable au minimum 10% de la superficie totale
+            de l''unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir
+            un traitement paysager.'
+          statut: valide
     silence: autorise
     silence_src: 'Art. U 2.2, p. 8 : « A l''exception du secteur Ub5, sont admises toutes les occupations et utilisations
       du sol non citées à l''article U 1.2 » — chapitre commun « ZONES UA, UB, UC et UD » (p. 7-8), liste fermée
@@ -278,22 +390,215 @@ zones:
         citation: « Les constructions à destination d'activités, exceptées celles visées à l'article U 1-2 ci-avant,
           […] à condition qu'elles n'entraînent pour le voisinage ni incommodité et ni aggravation des risques »
   Ub1:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en secteur Ub1 : - 10 mètres à l''égout du toit ou au sommet de l''acrotère ; - 13 mètres
+            au faitage.'
+          statut: valide
+        egout:
+          m: 10.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en secteur Ub1 : - 10 mètres à l''égout du toit ou au sommet de l''acrotère ; - 13 mètres
+            au faitage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U 12.2
+          page_pdf: 17
+          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
+            sur voie par terrain, pour les lotissements de plus de 5 lots.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En zones Ub et secteurs Ub1, Ub2 et Ub3 : au minimum 30% de la superficie totale de l''unité
+            foncière doit être traité en espace libre et perméable au minimum 10% de la superficie totale
+            de l''unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir
+            un traitement paysager.'
+          statut: valide
     renvoi: Ub
     renvoi_src: 'Dispositions générales, Article 3, p. 4 : « la règle générale de la zone s''applique à chacun d''eux
       sauf lorsqu''une disposition particulière est prévue pour l''un de ces secteurs » ; chapitre p. 7 : « Il existe
       5 secteurs Ub1, Ub2, Ub3 dont les hauteurs admises diffèrent » — seule la hauteur diffère (U 10.2, p. 13),
       aucune disposition propre de destinations.'
   Ub2:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en zone Uc et secteur Ub2 : - 8 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 11 mètres au faitage.'
+          statut: valide
+        egout:
+          m: 8.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en zone Uc et secteur Ub2 : - 8 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 11 mètres au faitage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U 12.2
+          page_pdf: 17
+          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
+            sur voie par terrain, pour les lotissements de plus de 5 lots.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En zones Ub et secteurs Ub1, Ub2 et Ub3 : au minimum 30% de la superficie totale de l''unité
+            foncière doit être traité en espace libre et perméable au minimum 10% de la superficie totale
+            de l''unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir
+            un traitement paysager.'
+          statut: valide
     renvoi: Ub
     renvoi_src: 'Dispositions générales, Article 3, p. 4 : règle de zone sauf disposition particulière ; chapitre
       p. 7 : secteurs Ub1/Ub2/Ub3 « dont les hauteurs admises diffèrent » — seule la hauteur diffère (U 10.2, p.
       12), aucune disposition propre de destinations.'
   Ub3:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en zone Ud et secteur Ub3 : - 7 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 10 mètres au faitage.'
+          statut: valide
+        egout:
+          m: 7.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en zone Ud et secteur Ub3 : - 7 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 10 mètres au faitage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U 12.2
+          page_pdf: 17
+          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
+            sur voie par terrain, pour les lotissements de plus de 5 lots.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En zones Ub et secteurs Ub1, Ub2 et Ub3 : au minimum 30% de la superficie totale de l''unité
+            foncière doit être traité en espace libre et perméable au minimum 10% de la superficie totale
+            de l''unité foncière doit être traité en espace vert comprenant des plantations et devant recevoir
+            un traitement paysager.'
+          statut: valide
     renvoi: Ub
     renvoi_src: 'Dispositions générales, Article 3, p. 4 : règle de zone sauf disposition particulière ; chapitre
       p. 7 : secteurs Ub1/Ub2/Ub3 « dont les hauteurs admises diffèrent » — seule la hauteur diffère (U 10.2, p.
       13), aucune disposition propre de destinations.'
   Ub4:
+    regles:
+      hauteur:
+        faitage:
+          m: 8.0
+          article: U 10.2
+          page_pdf: 13
+          citation: 'en secteur Ub4 : 8 mètres en hauteur absolue.'
+          statut: valide
+        egout:
+          m: 8.0
+          article: U 10.2
+          page_pdf: 13
+          citation: 'en secteur Ub4 : 8 mètres en hauteur absolue.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En secteur Ub4 : au minimum 30% de la superficie totale de l''unité foncière doit être
+            traité en espace libre et perméable au minimum 20% de la superficie totale de l''unité foncière
+            doit être traité en espace vert comprenant des plantations et devant recevoir un traitement paysager.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. U 1.2 7., p. 7 : « En secteur Ub4, les constructions, ouvrages et travaux non liés à la réalisation
       d''équipements collectifs d''intérêt général » (sont interdits) — tout ce qui n''est pas lié aux équipements
@@ -355,6 +660,62 @@ zones:
     note: 'Zone non aedificandi (ravines et talweg, chapitre p. 7). Aucune des 23 sous-destinations n''est admise
       : seuls chemins piétons et voies d''accès d''entretien (pas des constructions à destination).'
   Uc:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en zone Uc et secteur Ub2 : - 8 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 11 mètres au faitage.'
+          statut: valide
+        egout:
+          m: 8.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en zone Uc et secteur Ub2 : - 8 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 11 mètres au faitage.'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: U 9.2
+          page_pdf: 12
+          citation: 'L''emprise au sol maximale des constructions au regard de la superficie du terrain est
+            fixée à : en zone Uc : 60%'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U 12.2
+          page_pdf: 17
+          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
+            sur voie par terrain, pour les lotissements de plus de 5 lots.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En zone Uc : 30% de l''unité foncière'
+          statut: valide
     silence: autorise
     silence_src: 'Art. U 2.2, p. 8 : « A l''exception du secteur Ub5, sont admises toutes les occupations et utilisations
       du sol non citées à l''article U 1.2 » — chapitre commun « ZONES UA, UB, UC et UD » (p. 7-8), liste fermée
@@ -477,16 +838,185 @@ zones:
         citation: « Les constructions à destination d'activités, exceptées celles visées à l'article U 1-2 ci-avant,
           […] à condition qu'elles n'entraînent pour le voisinage ni incommodité et ni aggravation des risques »
   Uc1:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 9 mètres au faitage.'
+          statut: valide
+        egout:
+          m: 6.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 9 mètres au faitage.'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: U 9.2
+          page_pdf: 12
+          citation: 'en zone Uc : 60% ... en secteurs Uc3, Ud2 et Ud3 : 40%'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U 12.2
+          page_pdf: 17
+          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
+            sur voie par terrain, pour les lotissements de plus de 5 lots.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En zone Uc : 30% de l''unité foncière'
+          statut: valide
     renvoi: Uc
     renvoi_src: 'Dispositions générales, Article 3, p. 4 : « la règle générale de la zone s''applique à chacun d''eux
       sauf lorsqu''une disposition particulière est prévue pour l''un de ces secteurs » — les dispositions propres
       à Uc1 (hauteur/surélévation interdite U 10.2 p. 12, clôtures U 11.3 p. 15) ne portent pas sur les destinations.'
   Uc3:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 9 mètres au faitage.'
+          statut: valide
+        egout:
+          m: 6.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 9 mètres au faitage.'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: U 9.2
+          page_pdf: 11
+          citation: 'en secteurs Uc3, Ud2 et Ud3 : 40%'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U 12.2
+          page_pdf: 17
+          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
+            sur voie par terrain, pour les lotissements de plus de 5 lots.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l''unité foncière'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
     renvoi: Uc
     renvoi_src: 'Dispositions générales, Article 3, p. 4 : règle de zone sauf disposition particulière — les dispositions
       propres à Uc3 (implantation U 7.2 p. 11, emprise 40 % U 9.2 p. 12, hauteur U 10.2 p. 12, couleurs/clôtures
       U 11 p. 14-15, espaces libres U 13.1 p. 18) ne portent pas sur les destinations.'
   Ud:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en zone Ud et secteur Ub3 : - 7 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 10 mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 7.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en zone Ud et secteur Ub3 : - 7 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 10 mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: U 9.2
+          page_pdf: 11
+          citation: 'en zone Ud : 50%'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U 12.2
+          page_pdf: 17
+          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
+            sur voie par terrain, pour les lotissements de plus de 5 lots.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En zone Ud : 40% de la superficie totale de l''unité foncière'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
     silence: autorise
     silence_src: 'Art. U 2.2, p. 8 : « A l''exception du secteur Ub5, sont admises toutes les occupations et utilisations
       du sol non citées à l''article U 1.2 » — chapitre commun « ZONES UA, UB, UC et UD » (p. 7-8), liste fermée
@@ -608,6 +1138,64 @@ zones:
         citation: « Les constructions à destination d'activités, exceptées celles visées à l'article U 1-2 ci-avant,
           […] à condition qu'elles n'entraînent pour le voisinage ni incommodité et ni aggravation des risques »
   Ud1:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en zone Ud et secteur Ub3 : - 7 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 10 mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 7.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en zone Ud et secteur Ub3 : - 7 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 10 mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: U 9.2
+          page_pdf: 11
+          citation: 'en zone Ud : 50%'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U 12.2
+          page_pdf: 17
+          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
+            sur voie par terrain, pour les lotissements de plus de 5 lots.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En zone Ud : 40% de la superficie totale de l''unité foncière'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
     silence: interdit
     silence_src: 'Art. U 2.2, p. 8 : « En secteur Ud1, les constructions et installations peuvent être autorisées
       à des fins exclusives d''amélioration de l''offre de logement ou d''hébergement et d''implantation de services
@@ -641,6 +1229,56 @@ zones:
         citation: « En secteur Ud1, les constructions et installations peuvent être autorisées à des fins exclusives
           d'amélioration de l'offre de logement ou d'hébergement et d'implantation de services publics »
   Ud2:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 9 mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 6.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 9 mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: U 9.2
+          page_pdf: 11
+          citation: 'en secteurs Uc3, Ud2 et Ud3 : 40%'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l''unité foncière'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
     silence: interdit
     silence_src: 'Art. U 2.2, p. 8 : « En secteur Ud2, seules les constructions destinées à la pratique du tourisme,
       dont l''hébergement touristique, ainsi que l''extension limitée des constructions existantes sont autorisées.
@@ -677,11 +1315,111 @@ zones:
           touristique, ainsi que l'extension limitée des constructions existantes sont autorisées. […] La surface
           de plancher totale admise est de 60 m² par bâtiment sans pouvoir excéder 120 m² par unité foncière. »
   Ud3:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 9 mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 6.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 9 mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: U 9.2
+          page_pdf: 11
+          citation: 'en secteurs Uc3, Ud2 et Ud3 : 40%'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une seule limite
+            séparative ... En cas de retrait, la distance comptée horizontalement et perpendiculairement de
+            tout point de la façade de la construction au point le plus proche de la limite séparative, doit
+            être au minimum de 1,90 mètre.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U 12.2
+          page_pdf: 17
+          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
+            sur voie par terrain, pour les lotissements de plus de 5 lots.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l''unité foncière'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
     renvoi: Ud
     renvoi_src: 'Dispositions générales, Article 3, p. 4 : règle de zone sauf disposition particulière — les dispositions
       propres à Ud3 (implantation U 7.2 p. 11, emprise 40 % U 9.2 p. 12, hauteur U 10.2 p. 12, couleurs/clôtures
       U 11 p. 14-15, espaces libres U 13.1 p. 18) ne portent pas sur les destinations.'
   Ue:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: UE 10.2
+          page_pdf: 22
+          citation: 'La hauteur maximale des constructions est fixée à : 9 mètres à l''égout du toit ou au
+            sommet de l''acrotère ; 13 mètres au faitage.'
+          statut: valide
+        egout:
+          m: 9.0
+          article: UE 10.2
+          page_pdf: 22
+          citation: 'La hauteur maximale des constructions est fixée à : 9 mètres à l''égout du toit ou au
+            sommet de l''acrotère ; 13 mètres au faitage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UE 6.2
+          page_pdf: 21
+          citation: Les constructions doivent être implantées en recul de la voie avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 5.0
+          article: UE 7.2
+          page_pdf: 21
+          citation: En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement
+            de tout point de la façade au point le plus proche de la limite séparative, doit au moins être
+            égale à 5 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: UE 13.1
+          page_pdf: 24
+          citation: Au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace
+            libre et perméable, comprenant des plantations et devant recevoir un traitement paysager.
+          statut: valide
     silence: autorise
     silence_src: 'Art. UE 2.2, p. 19 : « Sont admises toutes les occupations et utilisations du sol respectant les
       conditions suivantes » — structure en liste fermée d''interdictions (UE 1.2, p. 19), tout le reste est admis.'
@@ -860,6 +1598,64 @@ zones:
           […] qu'elles soient soumises ou non au régime des installations classées pour la protection de l'environnement.
           »
   AUa:
+    regles:
+      hauteur:
+        faitage:
+          m: 15.0
+          article: U 10.2
+          page_pdf: 13
+          citation: 'en zones Ua et Ub : - 12 mètres à l''égout du toit ou au sommet de l''acrotère ; - 15
+            mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 12.0
+          article: U 10.2
+          page_pdf: 13
+          citation: 'en zones Ua et Ub : - 12 mètres à l''égout du toit ou au sommet de l''acrotère ; - 15
+            mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: U 9.2
+          page_pdf: 11
+          citation: 'en zone Ua : 80%'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U 12.2
+          page_pdf: 17
+          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
+            sur voie par terrain, pour les lotissements de plus de 5 lots.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 15.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En zone Ua : 15% de la superficie totale de l''unité foncière'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
     renvoi: Ua
     renvoi_src: 'Chapeau AUindicée, p. 26 : « Pour appliquer le présent règlement, il convient de se reporter en
       fonction de l''indice de la zone AU considérée au règlement des zones urbaines correspondantes (zones U) »
@@ -870,6 +1666,63 @@ zones:
       et AUc, 30 logements par hectare » appréciée à l''échelle de la zone, équivalent logement 80 m² de surface
       de plancher pour les projets non habitation (4.).'
   AUc:
+    regles:
+      hauteur:
+        faitage:
+          m: 11.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en zone Uc et secteur Ub2 : - 8 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 11 mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 8.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en zone Uc et secteur Ub2 : - 8 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 11 mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: U 9.2
+          page_pdf: 11
+          citation: 'en zone Uc : 60%'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U 12.2
+          page_pdf: 17
+          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
+            sur voie par terrain, pour les lotissements de plus de 5 lots.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En zone Uc : 30% de l''unité foncière'
+          statut: valide
     renvoi: Uc
     renvoi_src: 'Chapeau AUindicée, p. 26 : « se reporter en fonction de l''indice de la zone AU considérée au règlement
       des zones urbaines correspondantes (zones U) » ; art. AUindicée 1.2, p. 26 : « Se reporter au règlement de
@@ -879,6 +1732,64 @@ zones:
       sinistre) ; densité « en zones AUa et AUc, 30 logements par hectare » (équivalent logement 80 m² de surface
       de plancher).'
   AUd:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en zone Ud et secteur Ub3 : - 7 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 10 mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+        egout:
+          m: 7.0
+          article: U 10.2
+          page_pdf: 12
+          citation: 'en zone Ud et secteur Ub3 : - 7 mètres à l''égout du toit ou au sommet de l''acrotère
+            ; - 10 mètres au faitage.'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: U 9.2
+          page_pdf: 11
+          citation: 'en zone Ud : 50%'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: U 6.2
+          page_pdf: 10
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie, au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 1.9
+          article: U 7.2
+          page_pdf: 11
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 1,90 mètre.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 1.5
+          article: U 12.2
+          page_pdf: 17
+          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
+            sur voie par terrain, pour les lotissements de plus de 5 lots.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 40.0
+          article: U 13.1
+          page_pdf: 18
+          citation: 'En zone Ud : 40% de la superficie totale de l''unité foncière'
+          statut: propose
+          raison: attribution douteuse (citation sous secteur None)
     renvoi: Ud
     renvoi_src: 'Chapeau AUindicée, p. 26 : « se reporter en fonction de l''indice de la zone AU considérée au règlement
       des zones urbaines correspondantes (zones U) » ; art. AUindicée 1.2, p. 26 : « Se reporter au règlement de
@@ -887,6 +1798,48 @@ zones:
     note: 'AUindicée 2.2, p. 26 : admission sous conditions (infrastructures suffisantes, OAP, reconstruction après
       sinistre) ; densité « en zones AUd, 20 logements par hectare » (équivalent logement 80 m² de surface de plancher).'
   AUec:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: AUec 10.2
+          page_pdf: 32
+          citation: 'La hauteur maximale des constructions est fixée à : 9 mètres à l''égout du toit ou au
+            sommet de l''acrotère ; 13 mètres au faitage.'
+          statut: valide
+        egout:
+          m: 9.0
+          article: AUec 10.2
+          page_pdf: 32
+          citation: 'La hauteur maximale des constructions est fixée à : 9 mètres à l''égout du toit ou au
+            sommet de l''acrotère ; 13 mètres au faitage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: AUec 6.2
+          page_pdf: 31
+          citation: Les constructions doivent être implantées en recul de la voie avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 5.0
+          article: AUec 7.2
+          page_pdf: 31
+          citation: Les constructions peuvent être implantées sur deux limites séparatives, sur une seule
+            ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement
+            de tout point de la façade au point le plus proche de la limite séparative, doit au moins être
+            égale à 5 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: AUec 13.1
+          page_pdf: 34
+          citation: Au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace
+            libre et perméable, comprenant des plantations et devant recevoir un traitement paysager.
+          statut: valide
     silence: autorise
     silence_src: 'Art. AUec 2.2, p. 29 : « Sont admises toutes les occupations et utilisations du sol respectant
       les conditions suivantes » — structure en liste fermée d''interdictions (AUec 1.2, p. 29), tout le reste est
@@ -1078,6 +2031,47 @@ zones:
         citation: « Les constructions à destination d'activités, qu'elles soient soumises ou non au régime des installations
           classées pour la protection de l'environnement. »
   AUt:
+    regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: AUt 10.2
+          page_pdf: 38
+          citation: 'La hauteur maximale des constructions est fixée à : 9 mètres à l''égout du toit ou au
+            sommet de l''acrotère ; 12 mètres au faitage.'
+          statut: valide
+        egout:
+          m: 9.0
+          article: AUt 10.2
+          page_pdf: 38
+          citation: 'La hauteur maximale des constructions est fixée à : 9 mètres à l''égout du toit ou au
+            sommet de l''acrotère ; 12 mètres au faitage.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: AUt 6.2
+          page_pdf: 37
+          citation: Les constructions doivent être implantées en recul de la voie avec une distance comptée
+            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
+            voie au moins égale à 4 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: AUt 7.2
+          page_pdf: 37
+          citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
+            point de la façade de la construction au point le plus proche de la limite séparative, doit être
+            au minimum de 3 mètres.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 30.0
+          article: AUt 13.1
+          page_pdf: 40
+          citation: Au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace
+            vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.
+          statut: valide
     silence: interdit
     silence_src: 'Art. AUt 1.2, p. 35 : « Sont interdits toutes les constructions, ouvrages et travaux à l''exception
       de ceux visés à l''article AUT 2. » — zone fermée, seul ce qui est visé à l''article AUt 2 est admis.'

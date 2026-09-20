@@ -1,0 +1,105 @@
+{
+  "UA": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à: - 12,00m à l'égout du toit - 15,00 m au faîtage - 13,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 19, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à: - 12,00m à l'égout du toit - 15,00 m au faîtage - 13,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 19, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "Le pourcentage maximal de l'emprise au sol cumulée de l'ensemble des constructions est fixé à 70%.", "page_confirmee": 18, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.", "page_confirmee": 17, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la marge d'isolement minimale doit être de 3,00m.", "page_confirmee": 17, "marqueur": ""},
+    "stat_logement": {"citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2", "page_confirmee": 22, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au moins 30% de la surface de la parcelle doit être perméable.", "page_confirmee": 21, "marqueur": ""}
+  },
+  "UB": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à : - 9,00m à l'égout du toit - 12,00m au faîtage - 10,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 29, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à : - 9,00m à l'égout du toit - 12,00m au faîtage - 10,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 29, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "Le pourcentage maximal de l'emprise au sol cumulée de l'ensemble des constructions est fixé à 65%.", "page_confirmee": 29, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.", "page_confirmee": 27, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la marge d'isolement minimale doit être de 3 mètres.", "page_confirmee": 27, "marqueur": ""},
+    "stat_logement": {"citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2", "page_confirmee": 33, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au moins 35% de la surface de la parcelle doit être perméable. En secteur UBv, ce seuil est porté 50%.", "page_confirmee": 32, "marqueur": ""}
+  },
+  "UBv": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à : - 9,00m à l'égout du toit - 12,00m au faîtage - 10,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 29, "marqueur": "règle générale UB ; En secteur UBv, la hauteur maximale des constructions est mesurée verticalement par rapport au sol naturel (TN) avant travaux"},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à : - 9,00m à l'égout du toit - 12,00m au faîtage - 10,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 29, "marqueur": "règle générale UB ; En secteur UBv, la hauteur maximale des constructions est mesurée verticalement par rapport au sol naturel (TN) avant travaux"},
+    "emprise_sol_pct": {"citation": "En secteur UBv, ce pourcentage est fixé à 50% maximum.", "page_confirmee": 29, "marqueur": "En secteur UBv"},
+    "recul_voirie_m": {"citation": "Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.", "page_confirmee": 27, "marqueur": "règle générale UB (aucune règle UBv spécifique)"},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la marge d'isolement minimale doit être de 3 mètres.", "page_confirmee": 27, "marqueur": "règle générale UB (article 2.2.1 al.3, hors dispositions mitoyenneté spécifiques UBv)"},
+    "stat_logement": {"citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2", "page_confirmee": 33, "marqueur": "table UB (pas de norme UBv distincte)"},
+    "pleine_terre_pct": {"citation": "Au moins 35% de la surface de la parcelle doit être perméable. En secteur UBv, ce seuil est porté 50%.", "page_confirmee": 32, "marqueur": "En secteur UBv"}
+  },
+  "UC": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à: - 6,00m à l'égout du toit - 9,00m au faîtage - 7,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 39, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à: - 6,00m à l'égout du toit - 9,00m au faîtage - 7,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 39, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "Le pourcentage maximal de l'emprise au sol cumulée de l'ensemble des constructions est fixé à 60%.", "page_confirmee": 38, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.", "page_confirmee": 37, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la marge d'isolement minimale doit être de 3 mètres.", "page_confirmee": 37, "marqueur": ""},
+    "stat_logement": {"citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2", "page_confirmee": 42, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au moins 40% de la surface de la parcelle doit être perméable.", "page_confirmee": 41, "marqueur": ""}
+  },
+  "UD": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à: - 4,00m à l'égout du toit - 7,00m au faîtage - 5,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 48, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à: - 4,00m à l'égout du toit - 7,00m au faîtage - 5,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 48, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "Le pourcentage maximal de l'emprise au sol cumulée de l'ensemble des constructions est fixé à 60%.", "page_confirmee": 47, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.", "page_confirmee": 46, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la marge d'isolement minimale doit être de 3 mètres.", "page_confirmee": 46, "marqueur": ""},
+    "stat_logement": {"citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2", "page_confirmee": 51, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au moins 40% de la surface de la parcelle doit être perméable.", "page_confirmee": 50, "marqueur": ""}
+  },
+  "UE": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à: - 15,00 m à l'égout du toit - 18,00 m au faîtage", "page_confirmee": 57, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à: - 15,00 m à l'égout du toit - 18,00 m au faîtage", "page_confirmee": 57, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "Le pourcentage maximal de l'emprise au sol cumulée de l'ensemble des constructions est fixé à 75%.", "page_confirmee": 57, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.", "page_confirmee": 56, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la marge d'isolement minimale doit être égale à un minimum de 4,00 mètres.", "page_confirmee": 56, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au moins 25% de la surface de la parcelle doit être perméable.", "page_confirmee": 59, "marqueur": ""}
+  },
+  "UT": {
+    "he_m": {"citation": "La hauteur maximale des constructions est limitée à: - 9,00m à l'égout du toit - 12,00m au faîtage - 10,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 66, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions est limitée à: - 9,00m à l'égout du toit - 12,00m au faîtage - 10,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 66, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "Le pourcentage maximale de l'emprise au sol cumulée de l'ensemble des constructions est fixé à 65%.", "page_confirmee": 65, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.", "page_confirmee": 64, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la marge d'isolement minimale doit être de 3 mètres.", "page_confirmee": 64, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au moins 35% de la surface de la parcelle doit être perméable.", "page_confirmee": 68, "marqueur": ""}
+  },
+  "AUa": {
+    "he_m": {"citation": "en zone AUa - 12,00m à l'égout du toit - 15,00m au faîtage - 13,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 80, "marqueur": ""},
+    "hf_m": {"citation": "en zone AUa - 12,00m à l'égout du toit - 15,00m au faîtage - 13,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 80, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "Le pourcentage maximale de l'emprise au sol cumulée de l'ensemble des constructions est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en zone AUt", "page_confirmee": 78, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.", "page_confirmee": 77, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Zones AUa, AUb [...] Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la marge d'isolement minimale doit être de 3,00 mètres.", "page_confirmee": 78, "marqueur": "Zones AUa, AUb"},
+    "stat_logement": {"citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2", "page_confirmee": 83, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au moins 30% (AUa), 35% (AUb), 40% (AUc), 25% (AUe) et 35% (AUt) de la surface de la parcelle doit être perméable.", "page_confirmee": 82, "marqueur": ""}
+  },
+  "AUb": {
+    "he_m": {"citation": "en zone AUb : - 9,00m à l'égout du toit - 12,00m au faîtage - 10,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 80, "marqueur": ""},
+    "hf_m": {"citation": "en zone AUb : - 9,00m à l'égout du toit - 12,00m au faîtage - 10,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 80, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "Le pourcentage maximale de l'emprise au sol cumulée de l'ensemble des constructions est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en zone AUt", "page_confirmee": 78, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.", "page_confirmee": 77, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Zones AUa, AUb [...] Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la marge d'isolement minimale doit être de 3,00 mètres.", "page_confirmee": 78, "marqueur": "Zones AUa, AUb"},
+    "stat_logement": {"citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2", "page_confirmee": 83, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au moins 30% (AUa), 35% (AUb), 40% (AUc), 25% (AUe) et 35% (AUt) de la surface de la parcelle doit être perméable.", "page_confirmee": 82, "marqueur": ""}
+  },
+  "AUc": {
+    "he_m": {"citation": "en zone AUc : - 6,00m à l'égout du toit - 9,00m au faîtage - 7,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 80, "marqueur": ""},
+    "hf_m": {"citation": "en zone AUc : - 6,00m à l'égout du toit - 9,00m au faîtage - 7,00m à l'acrotère en cas de toiture-terrasse.", "page_confirmee": 80, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "Le pourcentage maximale de l'emprise au sol cumulée de l'ensemble des constructions est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en zone AUt", "page_confirmee": 78, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.", "page_confirmee": 77, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Zone AUc [...] Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la marge d'isolement minimale doit être de 3,00 mètres.", "page_confirmee": 78, "marqueur": "Zone AUc"},
+    "stat_logement": {"citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2", "page_confirmee": 83, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Au moins 30% (AUa), 35% (AUb), 40% (AUc), 25% (AUe) et 35% (AUt) de la surface de la parcelle doit être perméable.", "page_confirmee": 82, "marqueur": ""}
+  },
+  "AUe": {
+    "he_m": {"citation": "en zone AUe - 15,00m à l'égout du toit - 18,00m au faîtage", "page_confirmee": 80, "marqueur": ""},
+    "hf_m": {"citation": "en zone AUe - 15,00m à l'égout du toit - 18,00m au faîtage", "page_confirmee": 80, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "Le pourcentage maximale de l'emprise au sol cumulée de l'ensemble des constructions est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en zone AUt", "page_confirmee": 78, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.", "page_confirmee": 77, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Zone AUe [...] Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la marge d'isolement minimale doit être égale à un minimum de 4,00 mètres.", "page_confirmee": 78, "marqueur": "Zone AUe"},
+    "pleine_terre_pct": {"citation": "Au moins 30% (AUa), 35% (AUb), 40% (AUc), 25% (AUe) et 35% (AUt) de la surface de la parcelle doit être perméable.", "page_confirmee": 82, "marqueur": ""}
+  },
+  "AUt": {
+    "hf_m": {"citation": "en zone AUt - 12,00m au faîtage - 5,00m au faîtage pour les constructions de type cabanes arboricoles", "page_confirmee": 80, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "Le pourcentage maximale de l'emprise au sol cumulée de l'ensemble des constructions est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en zone AUt", "page_confirmee": 78, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.", "page_confirmee": 77, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Zone AUt Les constructions doivent s'implanter avec un recul minimum de 3,00m.", "page_confirmee": 78, "marqueur": "Zone AUt"},
+    "pleine_terre_pct": {"citation": "Au moins 30% (AUa), 35% (AUb), 40% (AUc), 25% (AUe) et 35% (AUt) de la surface de la parcelle doit être perméable.", "page_confirmee": 82, "marqueur": ""}
+  }
+}
