@@ -156,6 +156,9 @@ ROBINETS: dict[str, Robinet] = {
     "/communes/{commune} (clé fiscalite)", "json_puis_js", chiffres=("tfpb_taux_pct", "tfpnb_taux_pct",)),
  "fiche_commune_ort": _r("fiche", "ACV / PVD / ORT — Denormandie", "fiche_commune",
     "/communes/{commune} (clé ort)", "json_puis_js", chiffres=("ort_statut",)),
+ # COMMUNE-RANGEMENT-1 lot 4 — la carte ZFANG/FRR de la fiche commune était la seule rendue SANS robinet.
+ "fiche_commune_zfang_frr": _r("fiche", "ZFANG / FRR (dispositifs fiscaux)", "fiche_commune",
+    "/communes/{commune} (clé zfang_frr)", "json_puis_js", chiffres=("zfang_regime_commune", "frr_classement_commune",)),
  "bilan_cout_construction_ref": _r("outil", "Coût de construction (bilan)", None,
     "Hypotheses.charger (bilan/calculette/PDF)", "json_puis_js",
     chiffres=("cout_construction_ref_eur_m2",)),

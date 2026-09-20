@@ -1407,6 +1407,27 @@ DONNEES: dict[str, Donnee] = {
     table="commune_zonage_abc",
     domaine=("Abis", "A", "B1", "B2", "C"),
     domaine_source="arrêté de zonage A/B/C (D. 304-1 CCH, 23/06/2026)"),
+ # ── COMMUNE-RANGEMENT-1 lot 4 — ZFANG / FRR de la commune (carte « ZFANG / FRR » de la fiche commune) :
+ #    passe-plats depuis territoire_fiscal_commune, la SOURCE UNIQUE qui peint aussi la carte (dispositifs.py)
+ #    et filtre les parcelles. Deux classes, jamais recalculées. ──
+ "zfang_regime_commune": C("ZFANG — régime de la commune", "classe", "commune",
+    "régime ZFANG de la commune (standard | renforcé) — passe-plat depuis territoire_fiscal_commune, "
+    "la même source qui peint la carte des dispositifs et filtre les parcelles ; jamais recalculé",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/territoire_fiscal.py:attributs_commune",
+    reservoirs=("zfang",), portee="live", type="classe",
+    table="territoire_fiscal_commune.zfang_regime",
+    domaine=("standard", "renforce"),
+    domaine_source="zonage ZFANG (loi de finances)"),
+ "frr_classement_commune": C("FRR — classement de la commune", "classe", "commune",
+    "classement France Ruralités Revitalisation de la commune (totalité | partie (les Hauts) | hors) — "
+    "passe-plat depuis territoire_fiscal_commune ; jamais recalculé",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/territoire_fiscal.py:attributs_commune",
+    reservoirs=("frr_ex_zrr",), portee="live", type="classe",
+    table="territoire_fiscal_commune.frr_classement",
+    domaine=("totalite", "partie", "hors"),
+    domaine_source="arrêté FRR (ex-ZRR)"),
  # ── SOURCES-1 lot 1 — les couches carte du droit des sols ──
  "er_couche": C("Emplacements réservés (couche)", "couche", "commune",
     "emplacements réservés des PLU (prescriptions GPU typepsc 05) — emprise grevée au profit "
