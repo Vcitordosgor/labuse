@@ -19,7 +19,7 @@ from .blocs import apporteur, financier
 from .registre_fmt import fmt_m2
 from .rendu import Cartouche, esc, esc_noms, page_html, render_pdf
 
-MODELE_VERSION = "2.0"
+MODELE_VERSION = "3.0"   # EXPORTS-REBRANCHEMENT — le Dossier miroir de la fiche (v4)
 
 
 class DocumentNonEtablissable(Exception):
@@ -321,6 +321,28 @@ def _apporteur_voisines(db, idu: str) -> dict:
     return {"n": len(membres), "membres": membres, "surface_totale_m2": total}
 
 
+def _plan_situation_html(db, idu: str) -> str:
+    """EXPORTS-REBRANCHEMENT-2 lot 1 — le plan de situation en fragment HTML `.plan`, MÊME composant
+    que l'Apporteur (ortho IGN + contour + voisines du même propriétaire). Utilisé par le §1 du
+    Dossier. Best-effort : réseau/géométrie absents → cadre neutre légendé (jamais d'erreur)."""
+    from .rendu import esc
+    try:
+        voisines = _apporteur_voisines(db, idu)
+        plan = _apporteur_plan(db, idu, voisines)
+    except Exception:  # noqa: BLE001 — le plan est un plus, jamais un bloqueur du Dossier
+        plan = None
+    if plan and plan.get("img"):
+        cap = esc(plan.get("attribution") or "")
+        legende = ("Plan de situation — la parcelle (contour) et ses voisines"
+                   + (f" · {cap}" if cap else ""))
+        return (f'<div class="plan" data-quoi="parcelle_geometrie">'
+                f'<img src="{plan["img"]}" alt="Plan de situation">'
+                f'<div class="cap">{legende}</div></div>')
+    return ('<div class="plan" data-quoi="parcelle_geometrie"><div class="ph">'
+            'Plan de situation — la parcelle et ses voisines '
+            '(fond cartographique momentanément indisponible)</div></div>')
+
+
 def _apporteur_plan(db, idu: str, voisines: dict) -> dict | None:
     """RECETTE-3 (T1) — plan de situation : ortho IGN + contour de la parcelle (mint) et overlay des
     voisines du même propriétaire. Réutilise `plan_ortho` (point d'appel unique des tuiles). Réseau
@@ -369,12 +391,26 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
     industriel = bool(_icpe and _icpe.get("result") not in (None, "PASS"))
     icpe_detail = _icpe.get("detail") if industriel else None
     voisines = _apporteur_voisines(db, idu)
+    # EXPORTS-REBRANCHEMENT-2 lot 3 — les DRAPEAUX D'OBSERVATION du §6 « Le terrain, vu sur place » :
+    # une question n'est imprimée que si la couche TOUCHE la parcelle (même moteur que le Dossier, la
+    # cascade `lines` + les aléas). L'apporteur observe ce que le foncier signale, jamais une liste vide.
+    _lines = [l for l in (fiche.get("lines") or []) if isinstance(l, dict)]
+    def _releve(layer: str) -> bool:
+        return any(l.get("layer") == layer and l.get("result") not in (None, "PASS") for l in _lines)
+    _aleas = (fiche.get("aleas") or {}).get("liste") or []
+    obs_eau = (_releve("ravine") or _releve("zone_humide") or _releve("tri_zone") or _releve("dpf")
+               or any(isinstance(a, dict) and any(k in (a.get("nature") or a.get("libelle") or "").lower()
+                      for k in ("inond", "submers", "ravine", "humide")) for a in _aleas))
+    obs_pollution = industriel or _releve("sol_pollue") or _releve("casias")
     return {
         "idu": idu, "adresse": fiche.get("adresse") or "", "emetteur": _emetteur(db, compte_id),
         "emission": f"{jour:%d/%m/%Y}", "validite": f"{jour + timedelta(days=90):%d/%m/%Y}",
         "is_bati": bool(lb.get("nb_batiments") or lb.get("emprise_batie_m2")),
         "is_pm": isinstance(pm, dict) and bool(pm),
         "industriel_proche": industriel,
+        # §6 — questions d'observation conditionnelles (imprimées si la couche touche). La ligne
+        # HTA/HTB (< 50 m) n'a pas de couche fiable dans le socle → question omise tant qu'elle manque.
+        "obs_eau": obs_eau, "obs_pollution": obs_pollution, "obs_ligne_ht": False,
         "icpe_detail": icpe_detail,   # RECETTE-11 D7 — description/distance de l'ICPE relevée
         "voisines": voisines,
         "plan": _apporteur_plan(db, idu, voisines),
@@ -397,7 +433,6 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     numero = numeros.numero_rapport(document, idu, j)
     if DOCUMENTS[document] == _MIROIR:
         from . import miroir
-        from .blocs import sources as bloc_sources
         ids = sorted(ids_m for ids_m in miroir.ids_declares() | {"run_label_servi"}
                      if ids_m in EXTRACTEURS)
         valeurs = collecte(db, idu, ids, fiche=f)
@@ -408,9 +443,12 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
             doc_title=f"LABUSE — {label}" + (f" · {adresse}" if adresse else ""),
             doc_ref=f"{idu} · {numero}",
             doc_foot=_FOOT["dossier"].format(au=au))
-        corps = (_cover("dossier", idu, f, numero, j, valeurs)
-                 + miroir.rendu_sections(valeurs, f)
-                 + bloc_sources.rendu(valeurs))
+        # EXPORTS-REBRANCHEMENT-2 lot 1 — le plan de situation de §1 = le MÊME composant que
+        # l'Apporteur (ortho IGN + contour + voisines du même propriétaire). Best-effort : réseau
+        # indisponible / parcelle sans géométrie → cadre neutre, jamais une erreur.
+        plan_html = _plan_situation_html(db, idu)
+        corps = (miroir.cover_dossier(idu, f, numero, j, valeurs, MODELE_VERSION)
+                 + miroir.rendu_sections(valeurs, f, plan_html=plan_html))
         html = page_html(label, cart, corps)
         return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart,
                            contexte={"adresse": adresse})

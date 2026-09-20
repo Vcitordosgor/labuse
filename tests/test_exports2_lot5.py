@@ -35,16 +35,16 @@ def test_bilan_ht_au_centime():
     p = {k: _r2(v["montant"]) for k, v in b["postes"].items()}
     assert p["construction"] == 2024700.0                      # 794 × 2550
     assert p["honoraires_techniques"] == 242964.0              # 12 % × construction
-    assert p["vrd"] == 66780.0                                 # 742 × 90
+    assert p["vrd"] == 71460.0                                 # 794 × 90 (SDP, REBRANCHEMENT-2 lot 2)
     assert p["stationnement"] == 120000.0                      # 8 × 15 000
     assert p["demolition"] == 60000.0 and p["depollution"] == 20000.0
     assert p["aleas"] == 80988.0                               # 4 % × construction
     assert p["taxe_amenagement"] == 39000.0
     assert p["redevance_archeologie"] == 539.92                # 794 × 0,68
-    assert p["portage"] == 151632.3                            # (constr+VRD) × 3 % × 29/12
+    assert p["portage"] == 151971.6                            # (constr+VRD sur SDP) × 3 % × 29/12
     assert p["frais_acquisition"] == 45500.0                   # 7 % × 650 000
     assert _r2(b["marge"]) == 249142.4                         # 9 % × CA HT
-    assert _r2(b["charge"]["centrale"]) == -332997.77          # CA − Σ postes − marge
+    assert _r2(b["charge"]["centrale"]) == -338017.07          # CA − Σ postes − marge (VRD sur SDP)
     assert b["maximum"] is False                               # tout chiffré
 
 

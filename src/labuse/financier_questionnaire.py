@@ -22,21 +22,21 @@ from sqlalchemy import text
 # stationnement (le bilan chiffre un coût par place, jamais le type), le « prix déjà refusé »
 # (purement informatif), la « commission d'apporteur » (aucun poste du bilan ne la porte), et
 # l'« apport » (le document renvoie explicitement le plan de financement à l'établissement prêteur).
+# EXPORTS-REBRANCHEMENT-2 lot 2 — UN SEUL écran (maquette v4). Trois questions en tête
+# (« garder ») : programme visé (logements + typologie), prix demandé (ou laissé vide = inconnu),
+# régime de TVA. Tout le reste est une HYPOTHÈSE AVANCÉE pré-remplie et sourcée (« affiner »), que
+# le front replie sous un accordéon. Le régime de TVA est la seule question vraiment bloquante
+# (OBLIGATOIRES) : prix de sortie et coût sont désormais pré-remplis (DVF / EPTB).
 ECRANS: list[tuple[str, tuple[str, ...]]] = [
-    # RECETTE-10 T2b (recette) — `scenario_saisi` RETIRÉ de la saisie ET du document : le bilan chiffre
-    # TOUJOURS une reconstruction (W3), le champ ne changeait rien et n'était jamais rempli. Plus une
-    # question, plus une ligne imprimée (avant : masqué au front mais toujours servi à l'étape 1 et
-    # imprimé au PDF — un demi-retrait, corrigé ici en retrait franc).
-    ("Votre projet", ("logements_vises_saisi", "typologie_moyenne_saisi",
-                      "part_sociale_saisi_pct")),
-    ("Le foncier", ("prix_demande_saisi_eur", "frais_acquisition_saisi_pct",
-                    "bilan_demolition_eur", "bilan_depollution_eur")),
-    ("Vos coûts", ("cout_construction_saisi_eur_m2", "honoraires_techniques_saisi_pct",
-                   "vrd_saisi_eur_m2", "cout_place_stationnement_saisi_eur", "aleas_saisi_pct",
-                   "taxe_amenagement_saisi_eur")),
-    ("Vos conditions", ("prix_sortie_saisi_eur_m2", "prix_vente_bailleur_saisi_eur_m2",
-                        "marge_visee_saisi_pct", "regime_tva_saisi", "duree_portage_saisi_mois",
-                        "taux_apport_saisi_pct")),
+    ("Votre opération", (
+        # les trois questions en tête
+        "logements_vises_saisi", "typologie_moyenne_saisi", "prix_demande_saisi_eur", "regime_tva_saisi",
+        # les hypothèses avancées (pré-remplies, sourcées) — repliées par le front
+        "prix_sortie_saisi_eur_m2", "cout_construction_saisi_eur_m2", "honoraires_techniques_saisi_pct",
+        "vrd_saisi_eur_m2", "cout_place_stationnement_saisi_eur", "bilan_demolition_eur",
+        "bilan_depollution_eur", "aleas_saisi_pct", "marge_visee_saisi_pct",
+        "frais_acquisition_saisi_pct", "taxe_amenagement_saisi_eur", "duree_portage_saisi_mois",
+        "taux_apport_saisi_pct", "prix_vente_bailleur_saisi_eur_m2", "part_sociale_saisi_pct")),
 ]
 
 # RECETTE-6 (E5) — ÉCRAN 0 « Que voulez-vous chiffrer ? ». Le bilan à rebours (construction neuve)
@@ -109,10 +109,13 @@ CHAMPS: tuple[str, ...] = tuple(dict.fromkeys(
 #    RETIRÉ franchement des écrans ET du document — voir ECRANS et exports/blocs/financier._HYP_CLES.
 #    Le front ignore par prudence tout `tri === 'supprimer'` résiduel.)
 TRI: dict[str, str] = {
+    # EXPORTS-REBRANCHEMENT-2 lot 2 — seules les TROIS questions de tête restent « garder » (visibles) :
+    # programme (logements + typologie), prix demandé, régime de TVA. Prix de sortie, coût, marge…
+    # deviennent des hypothèses AVANCÉES pré-remplies (« affiner »), repliées par le front (maquette v4).
     "logements_vises_saisi": "garder", "typologie_moyenne_saisi": "garder",
-    "prix_demande_saisi_eur": "garder", "cout_construction_saisi_eur_m2": "garder",
-    "prix_sortie_saisi_eur_m2": "garder", "prix_vente_bailleur_saisi_eur_m2": "affiner",
-    "marge_visee_saisi_pct": "garder", "regime_tva_saisi": "garder",
+    "prix_demande_saisi_eur": "garder", "cout_construction_saisi_eur_m2": "affiner",
+    "prix_sortie_saisi_eur_m2": "affiner", "prix_vente_bailleur_saisi_eur_m2": "affiner",
+    "marge_visee_saisi_pct": "affiner", "regime_tva_saisi": "garder",
     "part_sociale_saisi_pct": "affiner", "frais_acquisition_saisi_pct": "affiner",
     "bilan_demolition_eur": "affiner", "bilan_depollution_eur": "affiner",
     "honoraires_techniques_saisi_pct": "affiner", "vrd_saisi_eur_m2": "affiner",
@@ -137,7 +140,11 @@ def tri_champ(fid: str) -> str:
 #:   • regime_tva_saisi — décide si le bilan est HT ou TTC (règle 3).
 #: (Le PROGRAMME constructible — surface vendable — est aussi indispensable mais vient du POTENTIEL de
 #: la parcelle, pas du questionnaire ; son absence est signalée à part par `manques`.)
-OBLIGATOIRES: frozenset[str] = frozenset({"prix_sortie_saisi_eur_m2", "regime_tva_saisi"})
+# EXPORTS-REBRANCHEMENT-2 lot 2 — le prix de sortie est désormais PRÉ-REMPLI (prix ancien DVF du
+# secteur, cf. prefill) : il n'est plus une question bloquante. Reste UNE question irréductible que
+# personne ne peut deviner à la place du porteur : le régime de TVA (décide HT/TTC, règle 3). Le
+# programme (surface vendable) reste indispensable mais vient du potentiel — sinon obligatoires_programme.
+OBLIGATOIRES: frozenset[str] = frozenset({"regime_tva_saisi"})
 
 #: RECETTE-5 (V19) — l'AIDE de chaque champ (le « i ») : ce qu'on attend comme valeur. Servie au front.
 AIDES: dict[str, str] = {
@@ -280,8 +287,17 @@ def prefill(fiche: dict | None) -> dict[str, dict]:
         # rase). RECETTE-10 T2b — le champ « scénario » n'est donc plus ni saisi ni pré-rempli ni
         # imprimé (il ne changeait rien) ; seul le nombre de logements est pré-rempli depuis le potentiel.
         cap = pot.get("capacite_estimee")
-        if cap:
+        if cap and not isinstance(cap, bool):
             out["logements_vises_saisi"] = {"valeur": cap, "source": "fourchette de logements du potentiel LABUSE"}
+    # EXPORTS-REBRANCHEMENT-2 lot 2 — le PRIX DE SORTIE est pré-rempli depuis le prix ancien du
+    # secteur (DVF), que le Dossier §8 nomme déjà « référence de revente … utilisée comme prix de
+    # sortie du programme reconstruit ». Il quitte les champs bloquants (le questionnaire tombe à
+    # UNE question vraiment irréductible, le régime de TVA) ; modifiable, il passe alors en projet.
+    pa = (f.get("prix_ancien") or {}).get("median")
+    if pa:
+        out["prix_sortie_saisi_eur_m2"] = {
+            "valeur": round(float(pa)),
+            "source": "prix ancien médian du secteur (DVF) — référence de revente du neuf reconstruit"}
     # RECETTE-8 W2 — la taxe d'aménagement n'est plus pré-remplie depuis la fiche (elle n'y porte
     # plus aucun montant : pas de projet, pas de taxe). Elle est pré-calculée AU FINANCIER, sur la
     # SDP du projet réellement retenu (`exports.builder._financier_contexte`), où le programme est

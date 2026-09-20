@@ -435,8 +435,78 @@ def _entete_tuiles(sec: dict, valeurs: dict[str, Valeur]) -> str:
     return f'<div class="tiles">{cells}</div>'
 
 
+def _v(valeurs, cid):
+    x = valeurs.get(cid)
+    return x.valeur if x else None
+
+
+def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str, str] | None:
+    """EXPORTS-REBRANCHEMENT-2 lot 1 — le verdict-phrase FACTUEL des sections « gris » (le maquette
+    v4 en veut un en tête de CHAQUE section). Assemblé DÉTERMINISTIQUEMENT de valeurs servies —
+    jamais une prose inventée : chaque nombre est ancré au registre (crible de provenance). Rend
+    (texte, ton, chiffre_id_tampon) ou None si rien de servi (pas de bandeau vide)."""
+    if sec_id == "identite":
+        pm = _v(valeurs, "type_proprietaire")
+        tl = _v(valeurs, "proprietaire_timeline_liste")
+        if not pm:
+            return None
+        bout = ""
+        if isinstance(tl, list) and tl:
+            ans = [str(x.get("millesime")) for x in tl if x.get("millesime")]
+            if ans:
+                bout = f" — au fichier depuis {ans[0]}" if len(set(ans)) == 1 else f" — au fichier {ans[0]}–{ans[-1]}"
+        return (esc(str(pm).split(" (SIREN")[0]) + esc(bout) + ".", "neutral", "type_proprietaire")
+    if sec_id == "terrain":
+        p = _v(valeurs, "pente_deg")
+        libre = _v(valeurs, "surface_libre_sol_m2")
+        bits = []
+        if p is not None:
+            bits.append(f"pente {str(p).replace('.', ',')}°")
+        if libre is not None:
+            bits.append(f"{fmt_m2(libre)} de sol libre")
+        return (esc(" · ".join(bits).capitalize()) + ".", "neutral", "pente_deg") if bits else None
+    if sec_id == "bati":
+        n = _v(valeurs, "n_batiments")
+        emp = _v(valeurs, "emprise_batie_m2")
+        if not n:
+            return ("Parcelle non bâtie (aucun bâtiment cartographié).", "neutral", "n_batiments")
+        t = f"{groupe(n)} bâtiment{'s' if n > 1 else ''}"
+        if emp is not None:
+            t += f", {fmt_m2(emp)} au sol"
+        return (esc(t) + ".", "neutral", "n_batiments")
+    if sec_id == "fiscalite":
+        tf = _v(valeurs, "perimetres_dispositifs_liste")
+        if isinstance(tf, dict):
+            dom = (tf.get("dispositifs_dom") or [{}])[0]
+            z = dom.get("libelle") or ""
+            n_disp = sum(1 for k in ("zfang", "frr") if (tf.get(k) or {}).get("libelle")) \
+                + len(tf.get("perimetres") or [])
+            t = esc(z) if z else "Régime fiscal de droit commun"
+            if n_disp:
+                t += f" · {n_disp} dispositif{'s' if n_disp > 1 else ''} territ{'oriaux' if n_disp > 1 else 'orial'}"
+            return (t + ".", "neutral", "perimetres_dispositifs_liste")
+        return None
+    if sec_id == "marche":
+        pa = _v(valeurs, "prix_sortie_bati_eur_m2")
+        if isinstance(pa, dict) and pa.get("median") is not None:
+            t = f"Prix ancien médian {fmt_eur_m2(pa['median'])}"
+            if pa.get("n"):
+                t += f" ({groupe(pa['n'])} ventes à moins de 500 m)"
+            return (esc(t) + ".", "neutral", "prix_sortie_bati_eur_m2")
+        return None
+    if sec_id == "quartier":
+        iq = _v(valeurs, "iris_quartier")
+        if isinstance(iq, dict) and iq.get("habitants") is not None:
+            nom = iq.get("nom") or "le quartier IRIS"
+            return (esc(f"{nom} — {groupe(iq['habitants'])} habitants") + ".", "neutral", "iris_quartier")
+        return None
+    return None
+
+
 def _bandeau(sec_id: str, valeurs: dict[str, Valeur]) -> str:
-    """Le verdict de tête d'une section, quand la fiche en a un (mêmes moteurs que l'écran)."""
+    """Le verdict-phrase de tête de section. Moteurs réels quand ils existent (urbanisme, potentiel,
+    réseaux, risques) ; sinon une synthèse FACTUELLE déterministe (identité, terrain, bâti, fiscalité,
+    marché, quartier). Rien pour §10 si la fiche ne sert pas de potentiel (pas de bandeau vide)."""
     if sec_id == "urbanisme":
         v = verdict_zonage(valeurs)
         return f'<div data-quoi="zone_plu_famille">{rendu_verdict(v)}</div>' if v else ""
@@ -453,6 +523,13 @@ def _bandeau(sec_id: str, valeurs: dict[str, Valeur]) -> str:
         if rouges:
             return (f'<div data-quoi="aleas_parcelle_liste">'
                     f'{verdict(esc(rouges[0].get("libelle") or ""), ton="warn")}</div>')
+        if av is not None:
+            return f'<div data-quoi="aleas_parcelle_liste">{verdict("Aléas relevés — aucun rédhibitoire.", ton="neutral")}</div>'
+        return ""
+    fx = _verdict_factuel(sec_id, valeurs)
+    if fx:
+        texte, ton, cid = fx
+        return f'<div data-quoi="{esc(cid)}">{verdict(texte, ton=ton)}</div>'
     return ""
 
 
@@ -484,15 +561,76 @@ def _bloc_reglement(valeurs: dict[str, Valeur]) -> str:
     return corps
 
 
-def rendu_sections(valeurs: dict[str, Valeur], fiche: dict) -> str:
-    """Le corps du Dossier : l'en-tête de tuiles + les 11 sections de la fiche, depuis les
-    déclarations. La clôture (sources, limites) est rendue par le builder (bloc dédié)."""
+#: EXPORTS-REBRANCHEMENT-2 lot 1 — les SIX chiffres du bandeau de garde (maquette v4), dans
+#: l'ordre : Surface · Zone · Pente · Exposition · Risques · SDP restante. Le SCORE n'y est pas.
+_COVER_TUILES = [
+    ("surface_parcelle_m2", "Surface", lambda v: fmt_m2(v)),
+    ("zone_plu_famille", "Zone", lambda v: esc(v)),
+    ("pente_deg", "Pente", lambda v: esc(f"{str(v).replace('.', ',')}°")),
+    ("exposition_versant", "Exposition", lambda v: esc(v)),
+    ("n_vigilances", "Risques", lambda v: esc(f"{groupe(v)} relevé{'s' if v and v > 1 else ''}")),
+    ("sdp_residuelle_m2", "SDP restante", lambda v: fmt_m2(v)),
+]
+
+
+def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, Valeur],
+                  modele: str) -> str:
+    """La page de garde du Dossier (maquette v4) : cartouche 4 champs + bandeau des SIX chiffres
+    de la fiche en 3 colonnes + sommaire des sections + légende. Chaque tuile porte data-quoi
+    (verrou V5d) ; une valeur absente s'affiche « — » (jamais un zéro inventé)."""
+    adresse = fiche.get("adresse") or ""
+    commune = fiche.get("commune") or ""
+    tuiles_html = []
+    for cid, lib, fmt in _COVER_TUILES:
+        v = valeurs.get(cid)
+        try:
+            aff = fmt(v.valeur) if v is not None and v.valeur is not None else '<span class="none">—</span>'
+        except (TypeError, ValueError, KeyError):
+            aff = '<span class="none">—</span>'
+        tuiles_html.append(f'<div class="tile" data-quoi="{esc(cid)}"><div class="v">{aff}</div>'
+                           f'<div class="l">{esc(lib)}</div></div>')
+    toc = []
+    n = 0
+    for sec in structure():
+        if sec["id"] == "entete":
+            continue
+        n += 1
+        toc.append(f'<li>{n}. {esc(sec["titre"])}<span>fiche {esc(sec["id"])}</span></li>')
+    toc.append(f'<li>{n + 1}. Limites et sources<span>annexe</span></li>')
+    legende = (
+        '<div class="legend">'
+        '<span class="chip s">sourcé</span> lu dans la source · '
+        '<span class="chip d">dérivé</span> calculé · '
+        '<span class="chip e">estimé</span> hypothèse dite · '
+        '<span class="chip p">projet</span> saisi par vous</div>')
+    return (
+        '<div class="cover">'
+        '<div class="kicker">Dossier parcelle</div>'
+        f'<h1>{esc(idu)}</h1>'
+        + (f'<p class="address">{esc_noms(adresse)}</p>' if adresse else "")
+        + f'<p class="idu">{esc(commune)}</p>'
+        '<div class="gm-meta">'
+        f'<div><b>{esc(numero)}</b>n° de rapport</div>'
+        f'<div><b>{jour:%d/%m/%Y}</b>généré le</div>'
+        f'<div><b>{fmt_m2(valeurs["surface_parcelle_m2"].valeur) if valeurs.get("surface_parcelle_m2") else "—"}</b>contenance</div>'
+        f'<div><b>Modèle {esc(modele)}</b>miroir de la fiche</div>'
+        '</div>'
+        f'<div class="cover-tiles">{"".join(tuiles_html)}</div>'
+        '<p class="note">Le bandeau des six chiffres de la fiche.</p>'
+        f'<ul class="toc">{"".join(toc)}</ul>'
+        + legende +
+        '</div>')
+
+
+def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = "") -> str:
+    """Le corps du Dossier : les 11 sections de la fiche, depuis les déclarations. L'en-tête de
+    tuiles vit désormais dans la page de garde (cover_dossier) ; la clôture §12 (limites + sources)
+    est ajoutée ici. `plan_html` : le plan de situation injecté en §1 (même composant que l'Apporteur)."""
     corps = []
     numero = 0
     for sec in structure():
         if sec["id"] == "entete":
-            corps.append(_entete_tuiles(sec, valeurs))
-            continue
+            continue                                   # rendu dans la page de garde (cover_dossier)
         numero += 1
         titre = f"{numero}. {sec['titre']}" if sec.get("numerote", True) else sec["titre"]
         if sec["id"] == "simulation":
@@ -532,11 +670,18 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict) -> str:
         if rows:
             frags.append('<table class="kv">' + "".join(rows) + "</table>")
         frags += blocs_pleins
+        # §1 — le plan de situation (ortho IGN, contour, voisines du même propriétaire), le MÊME
+        # composant que l'Apporteur, injecté par le builder (qui a la base).
+        if sec["id"] == "identite" and plan_html:
+            frags.append(plan_html)
         if absents:
             lis = "".join(f'<li data-quoi="{esc(q)}">{esc(ph)}</li>' for q, ph in absents)
-            frags.append(f'<div class="sans-objet"><p class="note">Vérifié, sans objet</p>'
-                         f'<ul class="note">{lis}</ul></div>')
+            frags.append(f'<div class="sansobjet"><div class="t">Vérifié, sans objet</div>'
+                         f'<ul>{lis}</ul></div>')
         if vals_lus:
             frags.append(_pied_noms(vals_lus))
         corps.append(section(titre, "".join(x for x in frags if x)))
+    # §12 — ce que ce document ne peut pas dire + les NOMS des sources (bloc dédié, sans millésime).
+    from .blocs import sources as bloc_sources
+    corps.append(section(f"{numero + 1}. Limites et sources", bloc_sources.corps_sources(valeurs)))
     return "".join(corps)

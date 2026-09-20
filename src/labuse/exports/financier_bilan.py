@@ -119,7 +119,12 @@ def _postes(prog: dict, h: dict, cout: float | None, ca: float | None) -> dict:
     logements = _f(prog.get("logements")) or 0.0
     construction = (plancher * cout) if cout is not None else None
     hono = (construction * h["honoraires_pct"] / 100) if (construction is not None and h.get("honoraires_pct") is not None) else None
-    vrd = (terrain * h["vrd_m2"]) if h.get("vrd_m2") is not None else None
+    # EXPORTS-REBRANCHEMENT-2 lot 2 (correction de fond, reco lot 5 de REBRANCHEMENT-1) — l'assiette
+    # VRD est la SURFACE DE PLANCHER DU PROJET, plus le TERRAIN ENTIER : 90 €/m² × contenance cadastrale
+    # donnait des VRD absurdes (405 k€ pour 4 logements sur AN0347, ~101 k€/logement), un biais croissant
+    # avec la taille de parcelle qui pénalisait les grandes parcelles à potentiel. Un ratio d'aménagement
+    # (€/m²) porte sur la surface aménagée/bâtie, pas sur toute la contenance.
+    vrd = (plancher * h["vrd_m2"]) if (h.get("vrd_m2") is not None and plancher) else None
     stat = (logements * h["cout_place"]) if h.get("cout_place") is not None else None
     aleas = (construction * h["aleas_pct"] / 100) if (construction is not None and h.get("aleas_pct") is not None) else None
     rap = plancher * RAP_EUR_M2 if plancher else None

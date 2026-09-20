@@ -117,7 +117,7 @@ def test_flash_est_dossier_identique():
     f = builder.construire(_FakeDB(), "97415000BO0852", "flash", fiche=FICHE, jour=date(2026, 9, 5)).html
     assert f == d
     assert "Renseignez votre opération" in f           # §11 Simulation (renvoi au Financier)
-    assert "Sources, limites et mentions" in f
+    assert "12. Limites et sources" in f   # §12 numéroté (REBRANCHEMENT-2)
     assert "Rapport Flash" not in f
 
 

@@ -234,93 +234,100 @@ def rendu(valeurs, ctx=None) -> str:
         h += ('<div class="emetteur">Émetteur : <b>' + esc(em.get("nom") or "") + '</b>'
               + (" — " + esc(contact) if contact else "")
               + '<br><small>C\'est à cet émetteur que vous renvoyez vos réponses et vos photos.</small></div>')
-    h += "<h3>La parcelle</h3>" + _coup_d_oeil(valeurs, ctx)
-    # RECETTE-3 (T1) — le plan de situation (parcelle + voisines, ortho IGN).
-    h += _plan_situation(ctx)
-    # RECETTE-2 (S7) — la section « Qui vous envoie ce brief » (émetteur/contact) est RETIRÉE.
-    h += note("Voilà ce qui est public. Le reste — qui décide, à quel prix, ce que cachent les "
-              "papiers — ne s'obtient que sur place. C'est ce que les pages suivantes vous demandent.")
+    # ── §1 — La parcelle en un coup d'œil (coup d'œil + plan + note) ──
+    h += '<h3>1. La parcelle en un coup d\'œil</h3>' + _coup_d_oeil(valeurs, ctx)
+    h += _plan_situation(ctx)   # RECETTE-3 (T1) — ortho IGN + contour + voisines du même propriétaire
+    h += note("Absents volontairement : capacité constructible, SDP, charge foncière, score. "
+              "L'apporteur n'a pas à connaître ce que le promoteur compte faire ni combien ça vaut. "
+              "Le reste — qui décide, à quel prix, ce que cachent les papiers — s'obtient sur place.")
 
-    # ── PAGE 2 — Qui décide / La vente ──
-    q = '<div class="pb"></div><h3>Qui décide</h3>'
-    q += _aide("Une parcelle en indivision, ce sont autant de signatures que d'héritiers — c'est la "
-               "première chose qui fait échouer une vente.")
-    # RECETTE-12 E1 — le CONTACT reste le PREMIER champ obligatoire, mais SANS l'étiquette
-    # « L'ESSENTIEL » (trois essentiels seulement : prix, bail, voisines).
-    q += _duo("Nom et coordonnées de la personne à qui vous avez parlé (obligatoire)")
+    dest = esc(em.get("nom")) if em.get("nom") else "l'émetteur (en tête)"
+
+    # ── §2 — Vous (NEW v4 : l'apporteur d'abord — à qui renvoyer, quand, comment il connaît le vendeur) ──
+    q = '<div class="pb"></div><h3>2. Vous</h3>'
+    q += _duo("Votre nom, téléphone, e-mail", cle="EN PREMIER")
+    q += _q("Date de la visite ou du contact")
+    q += _q("Comment vous connaissez le propriétaire", "Voisin, famille, hasard, démarche…", zone=True)
+
+    # ── §3 — Qui décide (décideur réel, indivision, âge/situation, déjà confié à agent/notaire) ──
+    q += "<h3>3. Qui décide</h3>"
+    q += _aide("Une parcelle en indivision, ce sont autant de signatures que d'héritiers — la première "
+               "chose qui fait échouer une vente.")
     if is_pm:
         q += _q("La parcelle est détenue par une société — qui la contrôle, et qui décide de vendre ?",
                 "Gérant, associés, nombre de signataires ?", zone=True)
     else:
         q += _q("Qui détient réellement la parcelle, et qui décide de vendre ?",
-                "Indivision, succession en cours ? Combien de signataires ?", zone=True)
-    q += _boxes("Tous les décideurs sont-ils d'accord pour vendre ?", ["Oui", "Non", "Pas tous", "Ne sait pas"])
-    q += _q("Un notaire est-il déjà saisi ? Lequel ?")
+                "Propriétaire, mandataire, tuteur — nom du décideur réel.", zone=True)
+    q += _boxes("Plusieurs propriétaires ? (indivision, succession en cours, époux)",
+                ["Non", "Oui", "Ne sait pas"])
+    q += _q("Âge approximatif du décideur, situation", "Retraite, éloignement, santé…", zone=True)
+    q += _q("Le bien est-il déjà confié à un agent ou un notaire ? Lequel ?")
 
-    q += "<h3>La vente</h3>"
+    # ── §4 — La vente (l'essentiel : prix ; + voisines déplacées ici ; + dation/échange) ──
+    q += "<h3>4. La vente</h3>"
     q += _aide("Le prix déjà refusé vaut plus qu'un prix annoncé : il dit le plancher réel.")
-    # RECETTE-3 (T1) — le PRIX, deuxième « l'essentiel ».
-    q += _duo("Quel prix attend-il ? Quel prix a-t-il déjà refusé ?", cle="L'ESSENTIEL")
-    q += _q("Est-il vendeur ? Depuis quand, et pourquoi ?",
-            "Succession, départ, besoin de liquidités, lassitude…", zone=True)
-    q += _q("Qui est déjà passé ?", "Agence, promoteur, particulier — offres reçues et montants si connus", zone=True)
-    q += _boxes("Un mandat de vente est-il en cours ?", ["Non", "Simple", "Exclusif"])
-    q += _q("Par quel canal le joindre à nouveau ?", "Téléphone, courrier, sur place, via un tiers ?")
-
-    # ── PAGE 3 — Le bâti (adaptatif) / Le sol / Les papiers ──
-    q += '<div class="pb"></div>'
-    if is_bati:
-        q += "<h3>Le bâti et son occupation</h3>"
-        q += _aide("Un bail commercial en cours peut geler l'opération plusieurs années — notez-le en "
-                   "premier si c'est le cas.")
-        q += _boxes("Les bâtiments sont-ils occupés ? Par qui ?", ["Vides", "Le propriétaire", "Des locataires", "Une activité"])
-        # RECETTE-12 E1 — le BAIL, « l'essentiel ». « Si loué : sous quel bail ? » (conditionnel).
-        q += _q("Si loué : sous quel bail ?", "Fin de bail, loyers perçus.", zone=True, cle="L'ESSENTIEL")
-        q += _q("État général du bâti ; diagnostics disponibles (amiante, plomb) ?", zone=True)
-
-    q += "<h3>Le sol</h3>"
-    hint_sol = "Cuves enterrées, remblais, pollution connue ?"
-    aide_sol = "Un ancien garage, dépôt ou station-service peut ajouter des dizaines de milliers d'euros de dépollution."
-    if industriel:
-        # RECETTE-11 D7 — l'ICPE n'est signalée que si la CASCADE la relève (même moteur que le
-        # Dossier), plus jamais sur un simple « ICPE » du catalogue de sources (faux positif). Sa
-        # distance exacte vit dans l'analyse de risques du Dossier (le nombre imprimé au brief resterait
-        # hors registre — verrou de provenance) : le brief signale la présence, l'apporteur la vérifie.
-        aide_sol = ("Un établissement classé (ICPE) est signalé à proximité par l'analyse de risques "
-                    "(distance et régime au Dossier) ; un ancien garage, dépôt ou station-service sur "
-                    "la parcelle changerait le coût.")
-    q += _aide(aide_sol)
-    q += _q("Quel était l'usage du site avant ?", hint_sol, zone=True)
-
-    q += "<h3>Ce que les papiers diraient</h3>"
-    q += _aide("Ce qui ne se voit ni sur le terrain ni au cadastre, et qui peut tout retarder.")
-    q += _q("Servitudes de passage, litiges de voisinage, bornage récent, empiètements connus ?", zone=True)
-    q += _q("Hypothèques, procédures en cours ?")
-    q += _q("Titre de propriété disponible ?", "Origine : achat, donation, succession — et l'année.")
-
-    # ── PAGE 4 — Le voisinage et la mairie / Les photos / Votre retour ──
-    q += '<div class="pb"></div><h3>Le voisinage et la mairie</h3>'
+    q += _boxes("Envisage-t-il de vendre ? Dans quel délai ?", ["Oui", "Non", "Peut-être", "Ne sait pas"])
+    q += _duo("Prix attendu, ou ordre d'idée · prix déjà refusé", cle="L'ESSENTIEL")
     if voisines.get("n"):
         refs = ", ".join(m["ref"] for m in voisines.get("membres", [])[:4] if m.get("ref"))
-        q += _aide(f"{voisines['n']} parcelle(s) voisine(s) appartiennent au même propriétaire. Savoir "
-                   "s'il les vendrait ensemble change complètement l'opération.")
-        q += _q(f"Vendrait-il aussi {refs} ? D'autres voisines sont-elles à vendre ?"
-                if refs else "Vendrait-il aussi les parcelles voisines ? D'autres sont-elles à vendre ?",
-                zone=True, cle="L'ESSENTIEL")
+        q += _q((f"Vendrait-il aussi {refs} ? (voisines du même propriétaire, listées en §1) "
+                 "D'autres voisines à vendre ?") if refs
+                else "Vendrait-il aussi les parcelles voisines du même propriétaire ? D'autres à vendre ?",
+                zone=True)
     else:
-        q += _aide("Un achat groupé de parcelles voisines change souvent la faisabilité d'une opération.")
-        q += _q("Les parcelles voisines sont-elles à vendre ? Du même propriétaire ?", zone=True, cle="L'ESSENTIEL")
-    q += _q("Que dit la mairie de ce secteur ? Que disent les voisins ?", "Projets connus, oppositions, associations.", zone=True)
+        q += _q("Les parcelles voisines sont-elles à vendre ? Du même propriétaire ?", zone=True)
+    q += _q("Préfère-t-il vendre le terrain, ou participer à l'opération ?", "Dation, échange…", zone=True)
 
-    # RECETTE-12 E1 — les PHOTOS s'envoient à l'ÉMETTEUR nommé en page 1 (plus de « n'imprimez rien »).
-    dest = esc(em.get("nom")) if em.get("nom") else "l'émetteur (page 1)"
-    q += '<h3>Les photos</h3>'
-    q += (f'<p class="aide">Cinq vues : depuis la voie, puis aux quatre coins, en tenant la parcelle '
-          f'au centre. Envoyez-les à {dest} en citant la référence <b>{esc(idu)}</b>.</p>')
+    # ── §5 — Le bâti et son occupation (si bâti ; + activité sur place) ──
+    if is_bati:
+        q += '<div class="pb"></div><h3>5. Le bâti et son occupation</h3>'
+        q += _aide("Un bail commercial en cours peut geler l'opération plusieurs années.")
+        q += _boxes("Occupé ? Par qui ?", ["Vides", "Le propriétaire", "Des locataires", "Une activité"])
+        q += _q("Si loué : sous quel bail ?", "Fin de bail, loyers perçus.", zone=True, cle="L'ESSENTIEL")
+        q += _q("État apparent du bâti ; diagnostics disponibles (amiante, plomb) ?",
+                "Entretenu, dégradé, ruine, travaux récents.", zone=True)
+        q += _q("Activité sur place ?", "Commerce, atelier, élevage, dépôt…", zone=True)
 
-    # RECETTE-12 E1 — « Votre retour » renvoie au MÊME émetteur (nommé en page 1).
-    q += "<h3>Votre retour</h3>"
-    q += _aide(f"À renvoyer à {dest} (coordonnées en page 1).")
-    q += _duo("Date de la visite · vos coordonnées")
-    q += _q("Ce qu'il faut savoir et qu'aucune question ne couvre", zone=True)
+    # ── §6 — Le terrain, vu sur place (questions d'observation, conditionnelles aux couches) ──
+    q += '<div class="pb"></div><h3>6. Le terrain, vu sur place</h3>'
+    q += _aide("Questions générées depuis les couches de la parcelle : seules celles qui s'appliquent "
+               "sont imprimées.")
+    q += _q("Accès : depuis quelle voie, largeur, portail, servitude de passage visible ?", zone=True)
+    q += _q("Pente, talus, murs de soutènement ?", zone=True)
+    if ctx.get("obs_eau"):
+        q += _q("Traces d'eau : inondation, ravine, zone humide, drainage ?",
+                "La parcelle est concernée par un aléa d'eau (inondation / ravine / zone humide).", zone=True)
+    if ctx.get("obs_ligne_ht"):
+        q += _boxes("Ligne électrique, pylône, transformateur sur ou au bord ?", ["Non", "Oui"])
+    if ctx.get("obs_pollution"):
+        q += _q("Remblais, déchets, cuves, dépôt, odeur ?",
+                "Un ancien site industriel ou un sol pollué est signalé à proximité (analyse de risques).",
+                zone=True)
+    q += _q("Arbres remarquables, boisement, clôtures, limites incertaines ?", zone=True)
+
+    # ── §7 — À demander au propriétaire (renommé de « Ce que les papiers diraient ») ──
+    q += "<h3>7. À demander au propriétaire</h3>"
+    q += _aide("L'apporteur ne lit pas les actes : il pose la question.")
+    q += _q("Servitudes privées connues ?", "Passage, vue, canalisation.", zone=True)
+    q += _q("Hypothèque, prêt en cours, litige, procédure ?", zone=True)
+    q += _q("Projet déjà tenté ?", "Permis, promoteur passé, refus de la mairie.", zone=True)
+    q += _q("A-t-il un notaire attitré ?")
+
+    # ── §8 — Le voisinage et la mairie (allégé : les voisines sont passées au §4) ──
+    q += '<div class="pb"></div><h3>8. Le voisinage et la mairie</h3>'
+    q += _q("Voisins : opposants probables, projets en cours, nuisances ?", zone=True)
+    q += _q("Ce que la mairie en dit, si vous l'avez approchée ?", zone=True)
+
+    # ── §9 — Les photos (par message, en citant la référence — jamais collées) ──
+    q += "<h3>9. Les photos</h3>"
+    q += (f'<p class="aide">Cinq vues, aux mêmes points que le pré-dossier de permis (PCMI7-8). '
+          f'Envoyez-les à {dest} par message en citant la référence <b>{esc(idu)}</b> et le numéro '
+          "de vue — pas collées ici.</p>")
+
+    # ── §10 — Votre retour (impression, prochaine étape, chance d'aboutir) ──
+    q += "<h3>10. Votre retour</h3>"
+    q += _q("Votre impression en trois lignes", zone=True)
+    q += _q("Prochaine étape convenue avec le propriétaire", "Rappel, visite, rien…", zone=True)
+    q += _boxes("Chance que ça aboutisse, selon vous", ["Forte", "Moyenne", "Faible"])
     return h + q

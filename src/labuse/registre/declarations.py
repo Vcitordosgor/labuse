@@ -195,9 +195,12 @@ def verifier(inclure_exemples: bool = True) -> tuple[list[str], list[str]]:
         rangs = [l.rang for l in s.donnees]
         if not s.donnees:
             violations.append(f"{s.chemin} : surface spécifique sans aucune donnée")
-        # lot 1 — une surface FICHE porte un `fiche_section` valide ; les surcharges par ligne aussi.
+        # lot 1 — une surface FICHE avec un `fiche_section` le porte VALIDE (∈ sections.yaml) ; les
+        # surcharges par ligne aussi. EXPORTS-REBRANCHEMENT-2 : `fiche_section` est FACULTATIF —
+        # absent = surface d'ÉCRAN SEUL (non miroitée au Dossier, ex. le classement/score, interdit au
+        # Dossier). Le verrou V5d exige quand même la `section` d'écran (autre champ).
         if s.categorie == "fiche" and _sections:
-            if s.fiche_section not in _sections:
+            if s.fiche_section is not None and s.fiche_section not in _sections:
                 violations.append(f"{s.chemin} ({s.surface}) : fiche_section "
                                   f"« {s.fiche_section} » ∉ sections.yaml")
             for l in s.donnees:

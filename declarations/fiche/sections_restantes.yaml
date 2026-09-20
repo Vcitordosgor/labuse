@@ -126,6 +126,15 @@ fiche_section: fiscalite
 # même sujet, un lecteur ne doit pas hésiter entre deux sections. dispositifs_parcelle (ER/EBC/DPU/PEB)
 # rejoint ici (le droit des sols), sous les dispositifs fiscaux/urbains.
 donnees:
+  # EXPORTS-REBRANCHEMENT-2 lot 1 — la taxe foncière (TFPB) prend sa place au §7 Fiscalité (maquette
+  # v4). Elle quitte le bandeau de garde du Dossier (remplacé par « Risques ») ; la tuile d'en-tête
+  # de l'ÉCRAN reste déclarée dans entete_tuiles.yaml.
+  - quoi:  tfpb_taux_pct
+    ou:    { rang: 5, etat: en_tete, section: "Taxes" }
+    comment: { libelle: "Taxe foncière (TFPB)", format: texte, i: "Taux de taxe foncière (part communale, EPCI, TEOM) — fichier REI (DGFiP)." }
+    absence: "Taxe foncière : taux non disponible pour cette commune."
+    absence_type: non_ingeree
+    pourquoi: "La charge annuelle du bien pendant le portage ; en tête de la fiscalité."
   - quoi:  perimetres_dispositifs_liste
     ou:    { rang: 10, etat: en_tete, section: "Dispositifs fiscaux et urbains" }
     comment: { libelle: "Dispositifs (QPV, ANRU, ZFANG, FRR…)", format: liste, i: "Dispositifs territoriaux (fiscaux/urbains) intersectant la parcelle." }

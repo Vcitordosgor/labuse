@@ -12,7 +12,10 @@ from ..rendu import aside, chip_span, esc, ligne_kv, note, section, table_kv, tu
 
 # ids fiche lus (programme + marché) — pour la collecte, le pied et l'archive.
 IDS = ("surface_vendable_m2", "surface_plancher_m2", "capacite_logements", "surface_parcelle_m2",
-       "prix_sortie_bati_eur_m2", "prix_terrain_secteur_eur_m2", "mixite_clause")
+       "prix_sortie_bati_eur_m2", "prix_terrain_secteur_eur_m2", "mixite_clause",
+       # EXPORTS-REBRANCHEMENT-2 lot 2 — le prix d'achat historique (DVF) entre au §6 « Face au prix
+       # demandé » À TITRE D'INFORMATION, hors calcul (maquette v4).
+       "prix_achat_historique_eur")
 
 _POSTE_LABEL = {
     "construction": "Coût de construction", "honoraires_techniques": "Honoraires techniques",
@@ -271,6 +274,15 @@ def _face_prix(bilan: dict, prix_demande, valeurs) -> str:
     tn = val(valeurs, "prix_terrain_secteur_eur_m2")
     if isinstance(tn, dict) and tn.get("valeur_eur"):
         lignes.append(ligne_kv("Terrain nu au prix du marché", f'<span class="num">{fmt_eur(tn["valeur_eur"])}</span>', chip_span("d", "dérivé")))
+    # EXPORTS-REBRANCHEMENT-2 lot 2 — le prix d'achat HISTORIQUE de la parcelle (DVF, dernière
+    # mutation) : information de contexte, HORS calcul (il n'entre dans aucun poste). Absent si la
+    # parcelle n'a jamais muté seule (fréquent). Sourcé (DVF).
+    ph = val(valeurs, "prix_achat_historique_eur")
+    if isinstance(ph, dict) and ph.get("valeur"):
+        quand = (ph.get("date_mutation") or "")[:4]
+        lib = fmt_eur(ph["valeur"]) + (f" (dernière mutation {quand})" if quand else " (dernière mutation)")
+        lignes.append(ligne_kv("Prix d'achat historique — information, hors calcul",
+                               f'<span class="num">{esc(lib)}</span>', chip_span("s", "sourcé")))
     return ("<h2>Face au prix demandé</h2>" + table_kv(lignes)) if lignes else ""
 
 
