@@ -26,7 +26,7 @@ def test_surfaces_table_couvre_chaque_kind_avec_un_modele_actif():
 def test_model_for_defaut_registre():
     # défauts gravés au registre : routage/factuel sur Haiku, raisonnement sur Sonnet
     assert ai_models.model_for("copilote-route") == ai_models.MODEL_FACTUAL
-    assert ai_models.model_for("copilote-select") == ai_models.MODEL_REASONING
+    assert ai_models.model_for("copilote-select") == ai_models.MODEL_FACTUAL  # COPILOTE-2 lot 6 : un seul modèle, Haiku
     assert ai_models.model_for("vision_pige") == ai_models.MODEL_VISION
     # kind inconnu → défaut agent, jamais une exception
     assert ai_models.model_for("kind-inexistant") == ai_models.DEFAULT_AGENT_MODEL
@@ -36,7 +36,7 @@ def test_model_for_override_par_surface(monkeypatch):
     monkeypatch.setenv("LABUSE_IA_MODELE_SYNTHESE", ai_models.MODEL_FACTUAL)
     assert ai_models.model_for("synthese") == ai_models.MODEL_FACTUAL
     # les autres surfaces ne bougent pas
-    assert ai_models.model_for("copilote-select") == ai_models.MODEL_REASONING
+    assert ai_models.model_for("copilote-select") == ai_models.MODEL_FACTUAL  # COPILOTE-2 lot 6 : un seul modèle, Haiku
 
 
 def test_model_for_override_retire_leve(monkeypatch):

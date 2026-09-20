@@ -38,6 +38,13 @@ def _sujet_quota(request: Request) -> str:
     return f"c:{cid}" if cid is not None else sujet_de(request)
 
 
+def _sujet_memoire(request: Request) -> str | None:
+    """COPILOTE-2 lot 6 — le jeton de SESSION qui CLOISONNE la mémoire d'un visiteur anonyme (fini le
+    bucket NULL partagé). None pour un compte connecté (la cloison se fait alors par compte_id). Réutilise
+    le MÊME `sujet_de` que le quota — une seule identité de session, jamais un canal parallèle."""
+    return None if current_compte(request) is not None else sujet_de(request)
+
+
 def get_db():
     from .app import get_db as _g
     yield from _g()
@@ -101,7 +108,8 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
             # (plus bas) : plus de divergence 120 vs 10 (le fil rechargé et l'annonce d'expiration
             # parlaient de fenêtres différentes si le champ venait à manquer).
             ttl = int(getattr(s, "copilote_v2_contexte_ttl_minutes", 10))
-            fil_h, fil_p = historique.fil(db, current_compte(request), body.conversation_id, ttl)
+            suj = _sujet_memoire(request)
+            fil_h, fil_p = historique.fil(db, current_compte(request), body.conversation_id, ttl, sujet=suj)
             if fil_h:
                 history, prior = fil_h, (fil_p or {}).get("params") or None
                 # COPILOTE-REFONTE — le MODE de voie du dernier tour (voie b = connaissance générale) voyage
@@ -109,7 +117,8 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
                 prior_voie = (fil_p or {}).get("voie")
             # M102-B3 — le REGISTRE DE FAITS du fil (mêmes bornes que le fil) : l'oracle des
             # chiffres repris d'un tour antérieur.
-            faits_fil = registre_faits.du_fil(db, current_compte(request), body.conversation_id, ttl)
+            faits_fil = registre_faits.du_fil(db, current_compte(request), body.conversation_id, ttl,
+                                              sujet=_sujet_memoire(request))
         rep = answer(db, body.message, history=history, contexte=body.contexte,
                      confirme=body.confirme, prior_params=prior, faits_fil=faits_fil,
                      scenario=body.scenario, prior_voie=prior_voie)
@@ -126,7 +135,7 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
     faits_tour = rep.pop("_faits_tour", None)         # M102-B3 — faits du tour → registre, jamais servis
     cid = historique.enregistrer(db, compte_id=current_compte(request),
                                  conversation_id=body.conversation_id, message=body.message,
-                                 reponse=rep, payload=payload_tour)
+                                 reponse=rep, payload=payload_tour, sujet=_sujet_memoire(request))
     if faits_tour and cid is not None:
         from ..copilote_v2 import registre_faits
         registre_faits.enregistrer(db, cid, faits_tour)
@@ -189,14 +198,14 @@ def missions(request: Request, db: Session = Depends(get_db)) -> dict:
     """§2b — les missions passées du compte (titre auto, date, statut) pour rouvrir.
     RETOURS-8 (R11) — `retention_jours` accompagne la liste pour le bandeau « conservées N jours »."""
     from .. import reglages
-    return {"missions": historique.lister(db, current_compte(request)),
+    return {"missions": historique.lister(db, current_compte(request), sujet=_sujet_memoire(request)),
             "retention_jours": reglages.copilote_retention_jours()}
 
 
 @router.get("/missions/{conversation_id}")
 def mission(conversation_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
     """§2b — restaure une conversation et ses messages."""
-    conv = historique.charger(db, current_compte(request), conversation_id)
+    conv = historique.charger(db, current_compte(request), conversation_id, sujet=_sujet_memoire(request))
     if conv is None:
         from fastapi import HTTPException
         raise HTTPException(404, "conversation introuvable")
