@@ -5477,7 +5477,8 @@ _KIND2FRONT_INFO = {
 
 @app.get("/map/couches-info")
 def map_couches_info(db: Session = Depends(get_db)) -> dict:
-    """CIRCUIT-2 / COUCHES-REGISTRE-2 lot 2 — le « i » de CHAQUE couche du tuyau (56 kind) affiche
+    """CIRCUIT-2 / COUCHES-REGISTRE-2 lot 2 — le « i » de CHAQUE couche du tuyau (55 kind depuis
+    DONNEES-1 lot 2.1 : piscine_cosia partie en Prospection solaire) affiche
     SOURCE · MILLÉSIME · DATE DU DERNIER CONTRÔLE, tirés du réservoir RÉELLEMENT lu : le
     `data_source_id` porté par les lignes servies (spatial_layers), ou — pour un repère dérivé
     (mvt_parcels/mvt_communes) — le réservoir déclaré. Sans date de contrôle → le front dit « jamais

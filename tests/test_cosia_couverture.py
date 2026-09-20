@@ -53,11 +53,15 @@ def test_bdtopo_4_couches_declarees_et_servies():
         assert KIND_SOURCE[k] == "BD TOPO IGN", k
 
 
-def test_couche_piscine_declaree_et_servie():
-    """SOURCES-4 lot 2 — la couche Piscines (polygones CoSIA) est rattachée au réservoir cosia
-    (V1c) ET servie en carte à popup riche (surface + parcelle au clic)."""
+def test_piscine_hors_tuyau_vit_dans_solaire():
+    """DONNEES-1 lot 2.1 — la couche Piscines (piscine_cosia) A QUITTÉ le panneau Couches / le tuyau
+    (compteur du tuyau 56→55) et vit désormais dans le mode Piscines de Prospection solaire (points
+    GeoJSON du module). Le kind spatial_layers reste rattaché au réservoir cosia (fiche : n_piscines /
+    piscine_m2), mais il n'est plus une couche SERVIE par le tuyau."""
     from labuse.registre import tables
     from labuse.ingestion.cosia_couverture import PISCINE_KIND
-    assert PISCINE_KIND in tables.RESERVOIR_TABLES["cosia"].couches
+    assert PISCINE_KIND in tables.RESERVOIR_TABLES["cosia"].couches   # kind stocké (fiche) : intact
     from labuse.registre.declarations import couches_carte
-    assert PISCINE_KIND in {c["kind"] for c in couches_carte()}   # servie par le tuyau (lot 3)
+    assert PISCINE_KIND not in {c["kind"] for c in couches_carte()}   # plus servie par le tuyau
+    from labuse.api.couches_tuyau import registre
+    assert PISCINE_KIND not in registre()                            # compteur du tuyau ne la compte plus
