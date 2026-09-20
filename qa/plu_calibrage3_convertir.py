@@ -102,13 +102,27 @@ def convertir(insee: str, slug: str, citations_path: str) -> dict:
                 raison = raison or "citation INTROUVABLE à la re-lecture du PDF"
                 citation = citation or None
             else:
-                txt = pdf.load_page(page_c - 1).get_text() if (isinstance(page_c, int) and 1 <= page_c <= pdf.page_count) else ""
-                _e, sc, bi = _extrait_autour(txt, citation)
+                # l'offset page (numéro imprimé vs page PDF) varie d'une commune à l'autre : on
+                # cherche la citation dans une FENÊTRE ±3 autour de la page citée et on retient la
+                # meilleure (page_pdf = page RÉELLE trouvée dans le document courant).
+                best = (0.0, page_c, "", 0)
+                for cand in range(max(1, (page_c or 1) - 3), min(pdf.page_count, (page_c or 1) + 3) + 1):
+                    txt = pdf.load_page(cand - 1).get_text()
+                    _e, sc, bi = _extrait_autour(txt, citation)
+                    if sc > best[0]:
+                        best = (sc, cand, txt, bi)
+                sc, page_c, txt, bi = best
                 _m, att = _attribution(txt, citation, zone, bi)
                 if sc < 0.5:
-                    val_ok, raison = False, f"citation non retrouvée sur p.{page_c} (recouvrement {sc:.0%})"
+                    val_ok, raison = False, f"citation non retrouvée autour de p.{page_c} (recouvrement {sc:.0%})"
                 elif att == "misattribue":
                     val_ok, raison = False, f"attribution douteuse (citation sous secteur {_m})"
+                elif val_ok and v is not None and coerce is float:
+                    # la VALEUR doit se lire DANS la citation (sinon = harmonisation « doctrine »
+                    # de l'ancien système ≠ texte littéral, ex. recul 6 m gravé vs « 5 mètres »).
+                    cands = {str(v), re.sub(r"\.0$", "", str(v)), str(v).replace(".", ",")}
+                    if not any(re.search(re.escape(c).replace(",", "[.,]"), citation) for c in cands):
+                        val_ok, raison = False, f"valeur {v:g} absente de la citation (harmonisation ≠ texte)"
             feuille_d = {cle: v, "article": art, "page_pdf": page_c,
                          "citation": citation or "(à relire)",
                          "statut": "valide" if (val_ok and citation and citation != "INTROUVABLE") else "propose"}

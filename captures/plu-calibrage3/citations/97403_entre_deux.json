@@ -1,0 +1,167 @@
+{
+  "Ua": {
+    "he_m": {
+      "citation": "En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ;",
+      "page_confirmee": 21,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : ... - 11 mètres au faitage.",
+      "page_confirmee": 21,
+      "marqueur": ""
+    },
+    "emprise_sol_pct": {
+      "citation": "En zone Ua, l'emprise maximale des constructions est fixée à 60% de la superficie du terrain.",
+      "page_confirmee": 21,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.",
+      "page_confirmee": 19,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite séparative, doit au moins être égale à 3 mètres.",
+      "page_confirmee": 20,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "Autres logements — 2 places par logement",
+      "page_confirmee": 27,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.",
+      "page_confirmee": 26,
+      "marqueur": ""
+    }
+  },
+  "Ub": {
+    "he_m": {
+      "citation": "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère ;",
+      "page_confirmee": 21,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : ... - 13 mètres au faitage.",
+      "page_confirmee": 21,
+      "marqueur": ""
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.",
+      "page_confirmee": 19,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "En zone Ub, les constructions peuvent être implantées sur une seule limite séparative ou en retrait. ... En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite séparative, doit au moins être égale à 3 mètres.",
+      "page_confirmee": 20,
+      "marqueur": ""
+    },
+    "stat_logement": {
+      "citation": "Autres logements — 2 places par logement",
+      "page_confirmee": 27,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.",
+      "page_confirmee": 26,
+      "marqueur": ""
+    }
+  },
+  "Ub1": {
+    "he_m": {
+      "citation": "En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ;",
+      "page_confirmee": 21,
+      "marqueur": "secteur Ub1 (cité groupé avec zone Ua)"
+    },
+    "hf_m": {
+      "citation": "En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : ... - 11 mètres au faitage.",
+      "page_confirmee": 21,
+      "marqueur": "secteur Ub1 (cité groupé avec zone Ua)"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.",
+      "page_confirmee": 19,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite séparative, doit au moins être égale à 3 mètres.",
+      "page_confirmee": 20,
+      "marqueur": "Ub1 secteur de Ub — pas de règle U4.2 propre au secteur, règle générale zone Ub"
+    },
+    "stat_logement": {
+      "citation": "Autres logements — 2 places par logement",
+      "page_confirmee": 27,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.",
+      "page_confirmee": 26,
+      "marqueur": ""
+    }
+  },
+  "Ub2": {
+    "he_m": {
+      "citation": "En secteur Ub2, la hauteur maximale des constructions est fixée à : - 4,50 mètres à l'égout du toit ou au sommet de l'acrotère ;",
+      "page_confirmee": 21,
+      "marqueur": ""
+    },
+    "hf_m": {
+      "citation": "En secteur Ub2, la hauteur maximale des constructions est fixée à : ... - 7 mètres au faitage.",
+      "page_confirmee": 22,
+      "marqueur": "faîtage 7 m sur p.22 (suite de la phrase commencée p.21)"
+    },
+    "recul_voirie_m": {
+      "citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.",
+      "page_confirmee": 19,
+      "marqueur": ""
+    },
+    "recul_limites_sep_m": {
+      "citation": "En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite séparative, doit au moins être égale à 3 mètres.",
+      "page_confirmee": 20,
+      "marqueur": "Ub2 secteur de Ub — pas de règle U4.2 propre au secteur, règle générale zone Ub"
+    },
+    "stat_logement": {
+      "citation": "Autres logements — 2 places par logement",
+      "page_confirmee": 27,
+      "marqueur": ""
+    },
+    "pleine_terre_pct": {
+      "citation": "Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.",
+      "page_confirmee": 26,
+      "marqueur": ""
+    }
+  },
+  "AUb": {
+    "he_m": {
+      "citation": "INTROUVABLE",
+      "page_confirmee": 29,
+      "marqueur": "renvoi : « Se reporter au règlement de la zone U indiquée en indice » (p.29) ; la valeur 9 m provient de U7.2 zone Ub p.21, pas énoncée sur/±1 p.29"
+    },
+    "hf_m": {
+      "citation": "INTROUVABLE",
+      "page_confirmee": 29,
+      "marqueur": "renvoi : « Se reporter au règlement de la zone U indiquée en indice » (p.29) ; la valeur 13 m provient de U7.2 zone Ub p.21, pas énoncée sur/±1 p.29"
+    },
+    "recul_voirie_m": {
+      "citation": "INTROUVABLE",
+      "page_confirmee": 19,
+      "marqueur": "renvoi AU vers zone U ; valeur 4 m énoncée U3.2 p.19 pour zone U, aucune reprise à la maille AUb"
+    },
+    "recul_limites_sep_m": {
+      "citation": "INTROUVABLE",
+      "page_confirmee": 20,
+      "marqueur": "renvoi AU vers zone U ; valeur 3 m énoncée U4.2 p.20 pour zone U, aucune reprise à la maille AUb"
+    },
+    "stat_logement": {
+      "citation": "Autres logements — 2 places par logement",
+      "page_confirmee": 27,
+      "marqueur": "valeur de U12.2 zone U applicable par renvoi ; norme non répétée dans le chapitre AU"
+    },
+    "pleine_terre_pct": {
+      "citation": "Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.",
+      "page_confirmee": 26,
+      "marqueur": "valeur de U11.1 zone U applicable par renvoi ; norme non répétée dans le chapitre AU"
+    }
+  }
+}

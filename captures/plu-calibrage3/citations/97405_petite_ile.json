@@ -1,0 +1,126 @@
+{
+  "UB": {
+    "he_m": {"citation": "La hauteur d'une construction ne doit pas excéder 10 mètres à l'égout du toit et 13 mètres au faîtage.", "page_confirmee": 28, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur d'une construction ne doit pas excéder 10 mètres à l'égout du toit et 13 mètres au faîtage.", "page_confirmee": 28, "marqueur": ""},
+    "recul_voirie_m": {"citation": "En cas de retrait, elles doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.", "page_confirmee": 26, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres.", "page_confirmee": 27, "marqueur": ""},
+    "stat_logement": {"citation": "pour les constructions à usage d'habitation : 1 place de stationnement par logement ;", "page_confirmee": 31, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Les surfaces libres de toute construction ainsi que les surfaces délaissées des aires de stationnement doivent être conservées en espaces de pleine terre à hauteur de 25 % de l'unité foncière", "page_confirmee": 32, "marqueur": ""}
+  },
+  "UC": {
+    "he_m": {"citation": "La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres au faîtage.", "page_confirmee": 38, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres au faîtage.", "page_confirmee": 38, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière", "page_confirmee": 38, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.", "page_confirmee": 36, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres.", "page_confirmee": 37, "marqueur": ""},
+    "stat_logement": {"citation": "pour les constructions : 1 place de stationnement par logement ;", "page_confirmee": 40, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Les surfaces libres de toute construction ainsi que les surfaces délaissées des aires de stationnement doivent être conservées en espaces de pleine terre à hauteur de 30 % de l'unité foncière", "page_confirmee": 42, "marqueur": ""}
+  },
+  "UCe": {
+    "hf_m": {"citation": "Pour UCe : La hauteur d'une construction ne doit pas excéder 6 mètres au faîtage. Cette hauteur est mesurée à partir du sol existant après travaux.", "page_confirmee": 38, "marqueur": "secteur UCe (règle propre au sous-secteur, sous 'Pour UCe :')"},
+    "emprise_sol_pct": {"citation": "L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière", "page_confirmee": 38, "marqueur": "règle du chapitre UC (pas de règle propre à UCe)"},
+    "recul_voirie_m": {"citation": "Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.", "page_confirmee": 36, "marqueur": "règle du chapitre UC"},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres.", "page_confirmee": 37, "marqueur": "règle du chapitre UC"},
+    "stat_logement": {"citation": "pour les constructions : 1 place de stationnement par logement ;", "page_confirmee": 40, "marqueur": "règle du chapitre UC"},
+    "pleine_terre_pct": {"citation": "Les surfaces libres de toute construction ainsi que les surfaces délaissées des aires de stationnement doivent être conservées en espaces de pleine terre à hauteur de 30 % de l'unité foncière", "page_confirmee": 42, "marqueur": "règle du chapitre UC"}
+  },
+  "UD": {
+    "he_m": {"citation": "La hauteur d'une construction ne doit pas excéder 4 mètres à l'égout du toit et 7 mètres au faîtage.", "page_confirmee": 48, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur d'une construction ne doit pas excéder 4 mètres à l'égout du toit et 7 mètres au faîtage.", "page_confirmee": 48, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 40 % de l'unité foncière.", "page_confirmee": 48, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.", "page_confirmee": 46, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres.", "page_confirmee": 47, "marqueur": ""},
+    "stat_logement": {"citation": "pour les constructions à usage d'habitation : 1 place de stationnement par logement ;", "page_confirmee": 50, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "Les surfaces libres de toute construction ainsi que les surfaces délaissées des aires de stationnement doivent être conservées en espaces de pleine terre à hauteur de 35 % de l'unité foncière", "page_confirmee": 51, "marqueur": ""}
+  },
+  "UDe": {
+    "hf_m": {"citation": "Pour UDe : La hauteur d'une construction ne doit pas excéder 6 mètres au faîtage. Cette hauteur est mesurée à partir du sol existant après travaux.", "page_confirmee": 48, "marqueur": "secteur UDe (règle propre au sous-secteur, sous 'Pour UDe :')"},
+    "emprise_sol_pct": {"citation": "L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 40 % de l'unité foncière.", "page_confirmee": 48, "marqueur": "règle du chapitre UD (pas de règle propre à UDe)"},
+    "recul_voirie_m": {"citation": "Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.", "page_confirmee": 46, "marqueur": "règle du chapitre UD"},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres.", "page_confirmee": 47, "marqueur": "règle du chapitre UD"},
+    "stat_logement": {"citation": "pour les constructions à usage d'habitation : 1 place de stationnement par logement ;", "page_confirmee": 50, "marqueur": "règle du chapitre UD"},
+    "pleine_terre_pct": {"citation": "Les surfaces libres de toute construction ainsi que les surfaces délaissées des aires de stationnement doivent être conservées en espaces de pleine terre à hauteur de 35 % de l'unité foncière", "page_confirmee": 51, "marqueur": "règle du chapitre UD"}
+  },
+  "UE": {
+    "he_m": {"citation": "La hauteur d'une construction ne doit pas excéder 10 mètres à l'égout du toit.", "page_confirmee": 56, "marqueur": "faîtage non précisé (article ne fixe que l'égout)"},
+    "emprise_sol_pct": {"citation": "L'emprise au sol de l'ensemble des bâtiments, annexes comprises, ne pourra pas excéder 70 % de l'unité foncière.", "page_confirmee": 56, "marqueur": ""},
+    "recul_voirie_m": {"citation": "En cas de retrait, elles doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.", "page_confirmee": 55, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Les constructions doivent s'implanter à une distance au moins égale à la demi-hauteur du bâtiment mesurée à l'égout du toit, avec un minimum de 4 mètres.", "page_confirmee": 55, "marqueur": "demi-hauteur, minimum 4 m (limites aboutissant voies) ; limites de fond = 3 m mini"},
+    "pleine_terre_pct": {"citation": "conservées en espaces de pleine terre à hauteur de 10 % de l'unité foncière", "page_confirmee": 58, "marqueur": ""}
+  },
+  "UEa": {
+    "he_m": {"citation": "La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurés à l'égout du toit et 10 mètres au faîtage.", "page_confirmee": 62, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurés à l'égout du toit et 10 mètres au faîtage.", "page_confirmee": 62, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "L'emprise des constructions et leurs annexes ne doit pas excéder 50 % de la superficie du lot.", "page_confirmee": 62, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Pour toutes les autres voies, les constructions doivent respecter un recul minimum de 5 mètres par rapport à l'alignement.", "page_confirmee": 61, "marqueur": "20 m mini de l'axe de la RN2 ; 5 m des autres voies"},
+    "recul_limites_sep_m": {"citation": "Si elles ne sont pas implantées sur la limite séparative, les constructions doivent respecter un recul de 4 mètres.", "page_confirmee": 62, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "conservées en espaces de pleine terre à hauteur de 10 % de l'unité foncière", "page_confirmee": 65, "marqueur": ""}
+  },
+  "UT": {
+    "he_m": {"citation": "La hauteur d'une construction ne doit pas excéder 10 mètres à l'égout du toit et 13 mètres au faîtage.", "page_confirmee": 77, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur d'une construction ne doit pas excéder 10 mètres à l'égout du toit et 13 mètres au faîtage.", "page_confirmee": 77, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "L'emprise au sol de l'ensemble des bâtiments, annexes comprises, ne pourra pas excéder 50 % de l'unité foncière.", "page_confirmee": 77, "marqueur": ""},
+    "recul_voirie_m": {"citation": "En cas de retrait, elles doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.", "page_confirmee": 76, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Les constructions doivent s'implanter à une distance au moins égale à la demi-hauteur du bâtiment mesurée à l'égout du toit, avec un minimum de 4 mètres.", "page_confirmee": 76, "marqueur": "demi-hauteur, minimum 4 m (voies ET fond de propriété)"},
+    "pleine_terre_pct": {"citation": "conservés en espaces de pleine terre à hauteur de 40 % de l'unité foncière", "page_confirmee": 80, "marqueur": ""}
+  },
+  "UZ": {
+    "he_m": {"citation": "La hauteur totale d'une construction ne doit pas excéder 12 mètres.", "page_confirmee": 84, "marqueur": "hauteur TOTALE (non ventilée égout/faîtage)"},
+    "hf_m": {"citation": "La hauteur totale d'une construction ne doit pas excéder 12 mètres.", "page_confirmee": 84, "marqueur": "hauteur TOTALE (non ventilée égout/faîtage)"},
+    "recul_voirie_m": {"citation": "Les constructions pourront être implantées soit à l'alignement soit en retrait des voies publiques.", "page_confirmee": 83, "marqueur": "aucun minimum chiffré (valeur 0 = absence de retrait imposé)"},
+    "recul_limites_sep_m": {"citation": "Les constructions pourront s'implanter soit en limite séparative soit en retrait.", "page_confirmee": 83, "marqueur": "aucun minimum chiffré (valeur 0 = absence de retrait imposé)"},
+    "stat_logement": {"citation": "pour les constructions à usage d'habitation : 1 place de stationnement par logement ;", "page_confirmee": 85, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "conservés en espaces de pleine terre à hauteur de 10 % de l'unité foncière", "page_confirmee": 86, "marqueur": ""}
+  },
+  "1AU": {
+    "he_m": {"citation": "La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres au faîtage.", "page_confirmee": 94, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres au faîtage.", "page_confirmee": 94, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière", "page_confirmee": 93, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.", "page_confirmee": 91, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres.", "page_confirmee": 92, "marqueur": ""},
+    "stat_logement": {"citation": "pour les constructions : 1 place de stationnement par logement ;", "page_confirmee": 96, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "conservés en espaces de pleine terre à hauteur de 30 % de l'unité foncière", "page_confirmee": 97, "marqueur": ""}
+  },
+  "1AUa": {
+    "he_m": {"citation": "La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres au faîtage.", "page_confirmee": 94, "marqueur": "valeur du chapitre 1AU ; le seul secteur nommé à l'art. 1AU.10 est '1AUe' (6 m faîtage), pas 1AUa"},
+    "hf_m": {"citation": "La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres au faîtage.", "page_confirmee": 94, "marqueur": "valeur du chapitre 1AU ; le seul secteur nommé à l'art. 1AU.10 est '1AUe' (6 m faîtage), pas 1AUa"},
+    "emprise_sol_pct": {"citation": "L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière", "page_confirmee": 93, "marqueur": "valeur du chapitre 1AU (pas de règle propre à 1AUa)"},
+    "recul_voirie_m": {"citation": "Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.", "page_confirmee": 91, "marqueur": "valeur du chapitre 1AU"},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres.", "page_confirmee": 92, "marqueur": "valeur du chapitre 1AU"},
+    "stat_logement": {"citation": "pour les constructions : 1 place de stationnement par logement ;", "page_confirmee": 96, "marqueur": "valeur du chapitre 1AU"},
+    "pleine_terre_pct": {"citation": "conservés en espaces de pleine terre à hauteur de 30 % de l'unité foncière", "page_confirmee": 97, "marqueur": "valeur du chapitre 1AU"}
+  },
+  "1AUz": {
+    "he_m": {"citation": "La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres au faîtage.", "page_confirmee": 104, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur d'une construction ne doit pas excéder 7 mètres à l'égout du toit et 10 mètres au faîtage.", "page_confirmee": 104, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière", "page_confirmee": 103, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.", "page_confirmee": 102, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres.", "page_confirmee": 102, "marqueur": ""},
+    "stat_logement": {"citation": "pour les constructions : 1 place de stationnement par logement ;", "page_confirmee": 106, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "conservés en espaces de pleine terre à hauteur de 30 % de l'unité foncière", "page_confirmee": 108, "marqueur": ""}
+  },
+  "AUE": {
+    "he_m": {"citation": "La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurée à l'égout du toit et 10 mètres au faîtage.", "page_confirmee": 112, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurée à l'égout du toit et 10 mètres au faîtage.", "page_confirmee": 112, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "L'emprise des constructions et leurs annexes ne doit pas excéder 50 % de la superficie du lot.", "page_confirmee": 112, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Pour toutes les autres voies, les constructions doivent respecter un recul minimum de 5 mètres par rapport à l'alignement.", "page_confirmee": 111, "marqueur": "20 m mini de l'axe de la RN2 ; 5 m des autres voies"},
+    "recul_limites_sep_m": {"citation": "Si elles ne sont pas implantées sur la limite séparative, les constructions doivent respecter un recul de 4 mètres.", "page_confirmee": 112, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "conservés en espaces de pleine terre à hauteur de 10 % de l'unité foncière", "page_confirmee": 115, "marqueur": ""}
+  },
+  "AUs": {
+    "he_m": {"citation": "Dans le reste de la zone, la hauteur des constructions ne doit pas excéder 10 m à l'égout du toit et 13 m au faîtage.", "page_confirmee": 127, "marqueur": "'reste de la zone' (tranche majoritaire) ; façade RN2 = 6 m égout / 9 m faîtage"},
+    "hf_m": {"citation": "Dans le reste de la zone, la hauteur des constructions ne doit pas excéder 10 m à l'égout du toit et 13 m au faîtage.", "page_confirmee": 127, "marqueur": "'reste de la zone' (tranche majoritaire) ; façade RN2 = 6 m égout / 9 m faîtage"},
+    "emprise_sol_pct": {"citation": "L'emprise au sol des constructions est limitée à 50 % de l'unité foncière.", "page_confirmee": 127, "marqueur": ""},
+    "recul_voirie_m": {"citation": "Les constructions doivent respecter un recul minimal de : - 10 mètres par rapport aux routes départementales - 30 mètres par rapport aux routes nationales - 4 mètres par rapport aux autres voies.", "page_confirmee": 126, "marqueur": "tiroir géographique : RD 10 m / RN 30 m / autres voies 4 m"},
+    "recul_limites_sep_m": {"citation": "Les constructions doivent respecter un recul minimum de 3 mètres par rapport aux limites séparatives.", "page_confirmee": 127, "marqueur": ""},
+    "pleine_terre_pct": {"citation": "conservés en espaces de pleine terre à hauteur de 20 % de l'unité foncière", "page_confirmee": 131, "marqueur": ""}
+  },
+  "AUT": {
+    "he_m": {"citation": "La hauteur d'une construction ne doit pas excéder 10 mètres à l'égout du toit et 13 mètres au faîtage.", "page_confirmee": 136, "marqueur": ""},
+    "hf_m": {"citation": "La hauteur d'une construction ne doit pas excéder 10 mètres à l'égout du toit et 13 mètres au faîtage.", "page_confirmee": 136, "marqueur": ""},
+    "emprise_sol_pct": {"citation": "L'emprise au sol de l'ensemble des bâtiments, annexes comprises, ne pourra pas excéder 50 % de l'unité foncière.", "page_confirmee": 136, "marqueur": ""},
+    "recul_voirie_m": {"citation": "En cas de retrait, elles doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.", "page_confirmee": 135, "marqueur": ""},
+    "recul_limites_sep_m": {"citation": "Les constructions doivent s'implanter à une distance au moins égale à la demi-hauteur du bâtiment mesurée à l'égout du toit, avec un minimum de 4 mètres.", "page_confirmee": 135, "marqueur": "demi-hauteur, minimum 4 m (voies ET fond de propriété)"},
+    "pleine_terre_pct": {"citation": "conservés en espaces de pleine terre à hauteur de 40 % de l'unité foncière", "page_confirmee": 139, "marqueur": ""}
+  }
+}

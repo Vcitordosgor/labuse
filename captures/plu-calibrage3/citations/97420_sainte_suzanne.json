@@ -1,0 +1,94 @@
+{
+  "UA": {
+    "he_m": {"citation": "en zone UA : 13 mètres à l'égout du toit ou au sommet de l'acrotère,", "page_confirmee": 14, "marqueur": "Art. U8.2, zone de base UA"},
+    "hf_m": {"citation": "en zone UA : ... 16 mètres au faîtage.", "page_confirmee": 14, "marqueur": "Art. U8.2, zone de base UA"},
+    "recul_voirie_m": {"citation": "Les constructions peuvent être implantées à l'alignement ou en recul de la voie, avec une distance ... au moins égale à : en zone UA : 2 mètres", "page_confirmee": 12, "marqueur": "Art. U4.2, zone UA"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance ... au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.", "page_confirmee": 13, "marqueur": "Art. U5.2, règle commune UA/UB/UC"},
+    "stat_logement": {"citation": "Logements privés d'une surface de plancher supérieure ou égale à 50m² : 2 places minimum par logement", "page_confirmee": 17, "marqueur": "Art. U15.2 (audit cite U13 — article réel = U15)"},
+    "pleine_terre_pct": {"citation": "La superficie totale de l'unité foncière doit être traité en espace perméable à hauteur minimum de : en zone UA : 20%", "page_confirmee": 16, "marqueur": "Art. U12.1, zone UA"}
+  },
+  "UAv": {
+    "he_m": {"citation": "en secteur UAv : 14 mètres à l'égout du toit ou au sommet de l'acrotère,", "page_confirmee": 14, "marqueur": "Art. U8.2, secteur UAv (En secteur UAv:)"},
+    "hf_m": {"citation": "en secteur UAv : ... 17 mètres au faîtage.", "page_confirmee": 14, "marqueur": "Art. U8.2, secteur UAv (En secteur UAv:)"},
+    "recul_voirie_m": {"citation": "au moins égale à : en zone UA : 2 mètres", "page_confirmee": 12, "marqueur": "Art. U4.2 vise zone UA — pas de règle propre UAv (UAv secteur de UA)"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance ... au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.", "page_confirmee": 13, "marqueur": "Art. U5.2 vise UA/UB/UC — UAv secteur de UA"},
+    "stat_logement": {"citation": "Logements privés d'une surface de plancher supérieure ou égale à 50m² : 2 places minimum par logement", "page_confirmee": 17, "marqueur": "Art. U15.2, norme non zonée (audit cite U13)"},
+    "pleine_terre_pct": {"citation": "traité en espace perméable à hauteur minimum de : en zone UA : 20%", "page_confirmee": 16, "marqueur": "Art. U12.1 vise zone UA — UAv secteur de UA"}
+  },
+  "UAc": {
+    "he_m": {"citation": "en zone UA : 13 mètres à l'égout du toit ou au sommet de l'acrotère,", "page_confirmee": 14, "marqueur": "Art. U8.2 vise zone UA — pas de hauteur propre UAc"},
+    "hf_m": {"citation": "en zone UA : ... 16 mètres au faîtage.", "page_confirmee": 14, "marqueur": "Art. U8.2 vise zone UA — pas de hauteur propre UAc"},
+    "recul_voirie_m": {"citation": "au moins égale à : en zone UA : 2 mètres", "page_confirmee": 12, "marqueur": "Art. U4.2 vise zone UA (UAc secteur de UA)"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance ... doit être au moins égale 3 mètres.", "page_confirmee": 13, "marqueur": "Art. U5.2 vise UA/UB/UC"},
+    "pleine_terre_pct": {"citation": "traité en espace perméable à hauteur minimum de : en zone UA : 20%", "page_confirmee": 16, "marqueur": "Art. U12.1 vise zone UA (UAc secteur de UA)"}
+  },
+  "UB": {
+    "he_m": {"citation": "en zone UB : 9 mètres à l'égout du toit ou au sommet de l'acrotère,", "page_confirmee": 14, "marqueur": "Art. U8.2, zone UB"},
+    "hf_m": {"citation": "en zone UB : ... 12 mètres au faîtage.", "page_confirmee": 14, "marqueur": "Art. U8.2, zone UB"},
+    "recul_voirie_m": {"citation": "au moins égale à : ... en zones UB et UC : 4 mètres", "page_confirmee": 12, "marqueur": "Art. U4.2, zones UB et UC"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance ... doit être au moins égale 3 mètres.", "page_confirmee": 13, "marqueur": "Art. U5.2, règle commune UA/UB/UC"},
+    "stat_logement": {"citation": "Logements privés d'une surface de plancher supérieure ou égale à 50m² : 2 places minimum par logement", "page_confirmee": 17, "marqueur": "Art. U15.2, norme non zonée (audit cite U13)"},
+    "pleine_terre_pct": {"citation": "traité en espace perméable à hauteur minimum de : ... en zone UB : 30%", "page_confirmee": 16, "marqueur": "Art. U12.1, zone UB"}
+  },
+  "UC": {
+    "he_m": {"citation": "en zone UC : 7 mètres à l'égout du toit ou au sommet de l'acrotère,", "page_confirmee": 14, "marqueur": "Art. U8.2, zone UC"},
+    "hf_m": {"citation": "en zone UC : ... 10 mètres au faîtage.", "page_confirmee": 14, "marqueur": "Art. U8.2, zone UC"},
+    "recul_voirie_m": {"citation": "au moins égale à : ... en zones UB et UC : 4 mètres", "page_confirmee": 12, "marqueur": "Art. U4.2, zones UB et UC"},
+    "recul_limites_sep_m": {"citation": "En zone UC, la construction peut être implantée en retrait ou sur une seule limite séparative latérale. En cas de retrait ... doit être au moins égale 3 mètres.", "page_confirmee": 13, "marqueur": "Art. U5.2, zone UC"},
+    "stat_logement": {"citation": "Logements privés d'une surface de plancher supérieure ou égale à 50m² : 2 places minimum par logement", "page_confirmee": 17, "marqueur": "Art. U15.2, norme non zonée (audit cite U13)"},
+    "pleine_terre_pct": {"citation": "traité en espace perméable à hauteur minimum de : ... en zone UC : 40%", "page_confirmee": 16, "marqueur": "Art. U12.1, zone UC"}
+  },
+  "UC1": {
+    "he_m": {"citation": "en zone UC : 7 mètres à l'égout du toit ou au sommet de l'acrotère,", "page_confirmee": 14, "marqueur": "Art. U8.2 vise zone UC — pas de hauteur propre UC1"},
+    "hf_m": {"citation": "en zone UC : ... 10 mètres au faîtage.", "page_confirmee": 14, "marqueur": "Art. U8.2 vise zone UC — pas de hauteur propre UC1"},
+    "recul_voirie_m": {"citation": "au moins égale à : ... en zones UB et UC : 4 mètres", "page_confirmee": 12, "marqueur": "Art. U4.2 vise zone UC (UC1 secteur de UC)"},
+    "recul_limites_sep_m": {"citation": "En zone UC, la construction peut être implantée en retrait ... En cas de retrait ... doit être au moins égale 3 mètres.", "page_confirmee": 13, "marqueur": "Art. U5.2 vise zone UC"},
+    "stat_logement": {"citation": "Logements privés d'une surface de plancher supérieure ou égale à 50m² : 2 places minimum par logement", "page_confirmee": 17, "marqueur": "Art. U15.2, norme non zonée (audit cite U13)"},
+    "pleine_terre_pct": {"citation": "traité en espace perméable à hauteur minimum de : ... en zone UC : 40%", "page_confirmee": 16, "marqueur": "Art. U12.1 vise zone UC (UC1 secteur de UC)"}
+  },
+  "UE": {
+    "hf_m": {"citation": "La hauteur maximale des constructions au faitage est fixée à 12 mètres.", "page_confirmee": 23, "marqueur": "Art. UE8.2"},
+    "emprise_sol_pct": {"citation": "L'emprise maximale des constructions est limitée à 70% de la superficie du terrain.", "page_confirmee": 23, "marqueur": "Art. UE7"},
+    "recul_voirie_m": {"citation": "Les constructions doivent être implantées en recul de la voie, avec une distance ... au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5 mètres.", "page_confirmee": 22, "marqueur": "Art. UE4.2 — verbatim = min 5 m (valeur audit 6 m = harmonisation doctrine b, NON verbatim)"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance ... au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 4 mètres.", "page_confirmee": 22, "marqueur": "Art. UE5.2 — verbatim = min 4 m (valeur audit 6 m = harmonisation doctrine b, NON verbatim)"},
+    "pleine_terre_pct": {"citation": "Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace perméable.", "page_confirmee": 25, "marqueur": "Art. UE12.1"}
+  },
+  "1AUa": {
+    "he_m": {"citation": "en zone UA : 13 mètres à l'égout du toit ou au sommet de l'acrotère,", "page_confirmee": 14, "marqueur": "via renvoi Titre III p.29 (« se reporter au règlement des zones urbaines correspondantes ») → Art. U8.2 zone UA"},
+    "hf_m": {"citation": "en zone UA : ... 16 mètres au faîtage.", "page_confirmee": 14, "marqueur": "via renvoi Titre III p.29 → Art. U8.2 zone UA"},
+    "recul_voirie_m": {"citation": "au moins égale à : en zone UA : 2 mètres", "page_confirmee": 12, "marqueur": "via renvoi Titre III p.29 → Art. U4.2 zone UA"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance ... doit être au moins égale 3 mètres.", "page_confirmee": 13, "marqueur": "via renvoi Titre III p.29 → Art. U5.2"},
+    "stat_logement": {"citation": "Logements privés d'une surface de plancher supérieure ou égale à 50m² : 2 places minimum par logement", "page_confirmee": 17, "marqueur": "via renvoi Titre III p.29 → Art. U15.2 (audit cite U13)"},
+    "pleine_terre_pct": {"citation": "traité en espace perméable à hauteur minimum de : en zone UA : 20%", "page_confirmee": 16, "marqueur": "via renvoi Titre III p.29 → Art. U12.1 zone UA"}
+  },
+  "1AUac": {
+    "he_m": {"citation": "en zone UA : 13 mètres à l'égout du toit ou au sommet de l'acrotère,", "page_confirmee": 14, "marqueur": "via renvoi Titre III p.29 → Art. U8.2 zone UA (secteur UAc, pas de hauteur propre)"},
+    "hf_m": {"citation": "en zone UA : ... 16 mètres au faîtage.", "page_confirmee": 14, "marqueur": "via renvoi Titre III p.29 → Art. U8.2 zone UA"},
+    "recul_voirie_m": {"citation": "au moins égale à : en zone UA : 2 mètres", "page_confirmee": 12, "marqueur": "via renvoi Titre III p.29 → Art. U4.2 zone UA"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance ... doit être au moins égale 3 mètres.", "page_confirmee": 13, "marqueur": "via renvoi Titre III p.29 → Art. U5.2"},
+    "pleine_terre_pct": {"citation": "traité en espace perméable à hauteur minimum de : en zone UA : 20%", "page_confirmee": 16, "marqueur": "via renvoi Titre III p.29 → Art. U12.1 zone UA"}
+  },
+  "1AUb": {
+    "he_m": {"citation": "en zone UB : 9 mètres à l'égout du toit ou au sommet de l'acrotère,", "page_confirmee": 14, "marqueur": "via renvoi Titre III p.29 → Art. U8.2 zone UB"},
+    "hf_m": {"citation": "en zone UB : ... 12 mètres au faîtage.", "page_confirmee": 14, "marqueur": "via renvoi Titre III p.29 → Art. U8.2 zone UB"},
+    "recul_voirie_m": {"citation": "au moins égale à : ... en zones UB et UC : 4 mètres", "page_confirmee": 12, "marqueur": "via renvoi Titre III p.29 → Art. U4.2 zones UB/UC"},
+    "recul_limites_sep_m": {"citation": "En cas de retrait de la construction, la distance ... doit être au moins égale 3 mètres.", "page_confirmee": 13, "marqueur": "via renvoi Titre III p.29 → Art. U5.2"},
+    "stat_logement": {"citation": "Logements privés d'une surface de plancher supérieure ou égale à 50m² : 2 places minimum par logement", "page_confirmee": 17, "marqueur": "via renvoi Titre III p.29 → Art. U15.2 (audit cite U13)"},
+    "pleine_terre_pct": {"citation": "traité en espace perméable à hauteur minimum de : ... en zone UB : 30%", "page_confirmee": 16, "marqueur": "via renvoi Titre III p.29 → Art. U12.1 zone UB"}
+  },
+  "1AUc": {
+    "he_m": {"citation": "en zone UC : 7 mètres à l'égout du toit ou au sommet de l'acrotère,", "page_confirmee": 14, "marqueur": "via renvoi Titre III p.29 → Art. U8.2 zone UC"},
+    "hf_m": {"citation": "en zone UC : ... 10 mètres au faîtage.", "page_confirmee": 14, "marqueur": "via renvoi Titre III p.29 → Art. U8.2 zone UC"},
+    "recul_voirie_m": {"citation": "au moins égale à : ... en zones UB et UC : 4 mètres", "page_confirmee": 12, "marqueur": "via renvoi Titre III p.29 → Art. U4.2 zones UB/UC"},
+    "recul_limites_sep_m": {"citation": "En zone UC, la construction peut être implantée en retrait ... En cas de retrait ... doit être au moins égale 3 mètres.", "page_confirmee": 13, "marqueur": "via renvoi Titre III p.29 → Art. U5.2 zone UC"},
+    "stat_logement": {"citation": "Logements privés d'une surface de plancher supérieure ou égale à 50m² : 2 places minimum par logement", "page_confirmee": 17, "marqueur": "via renvoi Titre III p.29 → Art. U15.2 (audit cite U13)"},
+    "pleine_terre_pct": {"citation": "traité en espace perméable à hauteur minimum de : ... en zone UC : 40%", "page_confirmee": 16, "marqueur": "via renvoi Titre III p.29 → Art. U12.1 zone UC"}
+  },
+  "1AUe": {
+    "hf_m": {"citation": "La hauteur maximale des constructions au faitage est fixée à 12 mètres.", "page_confirmee": 23, "marqueur": "via renvoi Titre III p.29 → Art. UE8.2 zone UE"},
+    "emprise_sol_pct": {"citation": "L'emprise maximale des constructions est limitée à 70% de la superficie du terrain.", "page_confirmee": 23, "marqueur": "via renvoi Titre III p.29 → Art. UE7 zone UE"},
+    "recul_voirie_m": {"citation": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5 mètres.", "page_confirmee": 22, "marqueur": "via renvoi p.29 → Art. UE4.2 — verbatim min 5 m (audit 6 m = doctrine b, NON verbatim)"},
+    "recul_limites_sep_m": {"citation": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 4 mètres.", "page_confirmee": 22, "marqueur": "via renvoi p.29 → Art. UE5.2 — verbatim min 4 m (audit 6 m = doctrine b, NON verbatim)"},
+    "pleine_terre_pct": {"citation": "Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace perméable.", "page_confirmee": 25, "marqueur": "via renvoi Titre III p.29 → Art. UE12.1 zone UE"}
+  }
+}

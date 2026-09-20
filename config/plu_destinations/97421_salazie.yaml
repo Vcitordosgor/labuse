@@ -12,6 +12,48 @@ meta:
   structure: silence lu dans la structure de chaque zone et cité (voir notes des zones).
 zones:
   UA:
+    regles:
+      hauteur:
+        egout:
+          m: 12.0
+          article: U 10.2
+          page_pdf: 15
+          citation: En zones UA et UB, la hauteur maximale des constructions est fixée à 12 mètres à l'égout
+            du toit ou au sommet de l'acrotère.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U 6.2
+          page_pdf: 13
+          citation: En zone UA, les constructions peuvent être implantées à l'alignement ou en recul de la
+            voie. [...] En cas de recul de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la voie, doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U 7.2
+          page_pdf: 13
+          citation: En zone UA, les constructions peuvent être implantées sur deux limites séparatives latérales,
+            sur une seule ou en retrait. [...] En cas de retrait de la construction, la distance comptée horizontalement
+            de tout point de la façade au point le plus proche de la limite séparative latérale est de 3 mètres
+            minimum.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U 12.2
+          page_pdf: 18
+          citation: 'Logements privés (PSLA, PTZ et libres) > à 50 m² de SDP : 2 places minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: U 13.1
+          page_pdf: 18
+          citation: En zone UA, au minimum 10% de la superficie totale de l'unité foncière doit être traité
+            en espace perméable, hors espace concerné par l'assainissement individuel.
+          statut: valide
     silence: autorise
     silence_src: 'Art. U 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste
@@ -48,12 +90,97 @@ zones:
           d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 70% de
           la surface de plancher totale de l'activité. »
   UA1:
+    regles:
+      hauteur:
+        egout:
+          m: 7.0
+          article: U 10.2
+          page_pdf: 15
+          citation: Dans le secteur UA1, la hauteur maximale des constructions est limitée à 7 mètres à l'égout
+            du toit ou au sommet de l'acrotère, sans dépasser R+1.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U 6.2
+          page_pdf: 13
+          citation: En zone UA, les constructions peuvent être implantées à l'alignement ou en recul de la
+            voie. [...] En cas de recul de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la voie, doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U 7.2
+          page_pdf: 13
+          citation: En zone UA, les constructions peuvent être implantées sur deux limites séparatives latérales,
+            sur une seule ou en retrait. [...] En cas de retrait de la construction, la distance comptée horizontalement
+            de tout point de la façade au point le plus proche de la limite séparative latérale est de 3 mètres
+            minimum.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U 12.2
+          page_pdf: 18
+          citation: 'Logements privés (PSLA, PTZ et libres) > à 50 m² de SDP : 2 places minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: U 13.1
+          page_pdf: 18
+          citation: En zone UA, au minimum 10% de la superficie totale de l'unité foncière doit être traité
+            en espace perméable, hors espace concerné par l'assainissement individuel.
+          statut: valide
     renvoi: UA
     renvoi_src: 'Titre I, Article 3, p. 6 : « Dès lors que la zone comprend un ou plusieurs secteurs, la règle générale
       de la zone s''applique à chacun d''eux sauf lorsqu''une disposition particulière est prévue pour l''un de
       ces secteurs » — les articles U 1 et U 2 (p. 10-11) ne prévoient aucune disposition particulière pour le secteur
       UA1 (dispositions propres à UA1 uniquement aux art. U 10.2 hauteur et U 11 aspect, p. 15-17)'
   UB:
+    regles:
+      hauteur:
+        egout:
+          m: 12.0
+          article: U 10.2
+          page_pdf: 15
+          citation: En zones UA et UB, la hauteur maximale des constructions est fixée à 12 mètres à l'égout
+            du toit ou au sommet de l'acrotère.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U 6.2
+          page_pdf: 13
+          citation: En zones UB et UC, les constructions doivent être implantées en recul de la voie. En cas
+            de recul de la construction, la distance comptée horizontalement de tout point de la façade au
+            point le plus proche de la voie, doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U 7.2
+          page_pdf: 13
+          citation: En zones UB et UC, les constructions peuvent être implantées sur deux limites séparatives
+            latérales pour les terrains dont la largeur sur voie est inférieure à 15 mètres. Dans les autres
+            cas, les constructions peuvent être implantées sur une limite séparative latérale maximum ou en
+            retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U 12.2
+          page_pdf: 18
+          citation: 'Logements privés (PSLA, PTZ et libres) > à 50 m² de SDP : 2 places minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: U 13.1
+          page_pdf: 18
+          citation: En zone UB, au minimum 20% de la superficie totale de l'unité foncière doit être traité
+            en espace perméable, hors espace concerné par l'assainissement individuel.
+          statut: valide
     silence: autorise
     silence_src: 'Art. U 2.2, p. 11 (chapitre commun « ZONES UA, UB et UC », p. 10) : « Sont admises toutes les
       occupations et utilisations du sol non citées à l''article U 1.2 … » — liste fermée d''interdictions à l''art.
@@ -86,6 +213,49 @@ zones:
           d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 70% de
           la surface de plancher totale de l'activité. »
   UC:
+    regles:
+      hauteur:
+        egout:
+          m: 9.0
+          article: U 10.2
+          page_pdf: 15
+          citation: En zone UC, la hauteur maximale des constructions est fixée à 9 mètres à l'égout du toit
+            ou au sommet de l'acrotère
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U 6.2
+          page_pdf: 13
+          citation: En zones UB et UC, les constructions doivent être implantées en recul de la voie. En cas
+            de recul de la construction, la distance comptée horizontalement de tout point de la façade au
+            point le plus proche de la voie, doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U 7.2
+          page_pdf: 13
+          citation: En zones UB et UC, les constructions peuvent être implantées sur deux limites séparatives
+            latérales pour les terrains dont la largeur sur voie est inférieure à 15 mètres. Dans les autres
+            cas, les constructions peuvent être implantées sur une limite séparative latérale maximum ou en
+            retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U 12.2
+          page_pdf: 18
+          citation: 'Logements privés (PSLA, PTZ et libres) > à 50 m² de SDP : 2 places minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: U 13.1
+          page_pdf: 18
+          citation: En zone UC, au minimum 25% de la superficie totale de l'unité foncière doit être traité
+            en espace perméable, hors espace concerné par l'assainissement individuel.
+          statut: valide
     silence: autorise
     silence_src: 'Art. U 2.2, p. 11 (chapitre commun « ZONES UA, UB et UC », p. 10) : « Sont admises toutes les
       occupations et utilisations du sol non citées à l''article U 1.2 … » — liste fermée d''interdictions à l''art.
@@ -118,6 +288,39 @@ zones:
           d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 70% de
           la surface de plancher totale de l'activité. »
   UT:
+    regles:
+      hauteur:
+        egout:
+          m: 12.0
+          article: UT 10.2
+          page_pdf: 24
+          citation: La hauteur maximale des constructions est fixée à 12 mètres à l'égout du toit ou au sommet
+            de l'acrotère.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UT 6.2
+          page_pdf: 22
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UT 7.2
+          page_pdf: 23
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: UT 13.1
+          page_pdf: 26
+          citation: Au minimum 25% de la superficie totale de l'unité foncière doit être traité en espace
+            perméable, hors espace concerné par l'assainissement individuel.
+          statut: valide
     silence: interdit
     silence_src: 'Art. UT 1.2, p. 20 : « Sont interdits toutes les constructions, ouvrages et travaux à l''exception
       de ceux visés à l''article UT 2. »'
@@ -173,6 +376,45 @@ zones:
           liées au gardiennage et à la surveillance des installations autorisées dans la zone dans la limite de
           surface de 50 m² d'emprise au sol. »
   AUa1:
+    regles:
+      hauteur:
+        egout:
+          m: 7.0
+          article: U 10.2
+          page_pdf: 15
+          citation: Dans le secteur UA1, la hauteur maximale des constructions est limitée à 7 mètres à l'égout
+            du toit ou au sommet de l'acrotère, sans dépasser R+1.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U 6.2
+          page_pdf: 13
+          citation: En cas de recul de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la voie, doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U 7.2
+          page_pdf: 13
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U 12.2
+          page_pdf: 18
+          citation: 'Logements privés (PSLA, PTZ et libres) > à 50 m² de SDP : 2 places minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 10.0
+          article: U 13.1
+          page_pdf: 18
+          citation: En zone UA, au minimum 10% de la superficie totale de l'unité foncière doit être traité
+            en espace perméable, hors espace concerné par l'assainissement individuel.
+          statut: valide
     renvoi: UA1
     renvoi_src: 'Art. AUindicée 1.2, p. 29 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent » ; chapeau de zone, p. 29 : « il convient
@@ -188,6 +430,49 @@ zones:
     - 'OAP : « tout en étant compatibles avec les Orientations d''Aménagement et de Programmation lorsqu''elles
       existent » (p. 29) — hors document lu.'
   AUb:
+    regles:
+      hauteur:
+        egout:
+          m: 12.0
+          article: U 10.2
+          page_pdf: 15
+          citation: En zones UA et UB, la hauteur maximale des constructions est fixée à 12 mètres à l'égout
+            du toit ou au sommet de l'acrotère.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U 6.2
+          page_pdf: 13
+          citation: En zones UB et UC, les constructions doivent être implantées en recul de la voie. En cas
+            de recul de la construction, la distance comptée horizontalement de tout point de la façade au
+            point le plus proche de la voie, doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U 7.2
+          page_pdf: 13
+          citation: En zones UB et UC, les constructions peuvent être implantées sur deux limites séparatives
+            latérales pour les terrains dont la largeur sur voie est inférieure à 15 mètres. Dans les autres
+            cas, les constructions peuvent être implantées sur une limite séparative latérale maximum ou en
+            retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U 12.2
+          page_pdf: 18
+          citation: 'Logements privés (PSLA, PTZ et libres) > à 50 m² de SDP : 2 places minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: U 13.1
+          page_pdf: 18
+          citation: En zone UB, au minimum 20% de la superficie totale de l'unité foncière doit être traité
+            en espace perméable, hors espace concerné par l'assainissement individuel.
+          statut: valide
     renvoi: UB
     renvoi_src: 'Art. AUindicée 1.2, p. 29 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent »'
@@ -197,6 +482,49 @@ zones:
       appréciée à l''échelle de la zone).'
     - 'OAP : compatibilité requise « lorsqu''elles existent » (p. 29) — hors document lu.'
   AUc:
+    regles:
+      hauteur:
+        egout:
+          m: 9.0
+          article: U 10.2
+          page_pdf: 15
+          citation: En zone UC, la hauteur maximale des constructions est fixée à 9 mètres à l'égout du toit
+            ou au sommet de l'acrotère
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: U 6.2
+          page_pdf: 13
+          citation: En zones UB et UC, les constructions doivent être implantées en recul de la voie. En cas
+            de recul de la construction, la distance comptée horizontalement de tout point de la façade au
+            point le plus proche de la voie, doit être au moins égale à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: U 7.2
+          page_pdf: 13
+          citation: En zones UB et UC, les constructions peuvent être implantées sur deux limites séparatives
+            latérales pour les terrains dont la largeur sur voie est inférieure à 15 mètres. Dans les autres
+            cas, les constructions peuvent être implantées sur une limite séparative latérale maximum ou en
+            retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.
+          statut: valide
+      stationnement:
+        par_logement:
+          places: 2.0
+          article: U 12.2
+          page_pdf: 18
+          citation: 'Logements privés (PSLA, PTZ et libres) > à 50 m² de SDP : 2 places minimum par logement'
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: U 13.1
+          page_pdf: 18
+          citation: En zone UC, au minimum 25% de la superficie totale de l'unité foncière doit être traité
+            en espace perméable, hors espace concerné par l'assainissement individuel.
+          statut: valide
     renvoi: UC
     renvoi_src: 'Art. AUindicée 1.2, p. 29 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent »'
@@ -206,6 +534,39 @@ zones:
       à l''échelle de la zone).'
     - 'OAP : compatibilité requise « lorsqu''elles existent » (p. 29) — hors document lu.'
   AUt:
+    regles:
+      hauteur:
+        egout:
+          m: 12.0
+          article: UT 10.2
+          page_pdf: 24
+          citation: La hauteur maximale des constructions est fixée à 12 mètres à l'égout du toit ou au sommet
+            de l'acrotère.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UT 6.2
+          page_pdf: 22
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UT 7.2
+          page_pdf: 23
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: UT 13.1
+          page_pdf: 26
+          citation: Au minimum 25% de la superficie totale de l'unité foncière doit être traité en espace
+            perméable, hors espace concerné par l'assainissement individuel.
+          statut: valide
     renvoi: UT
     renvoi_src: 'Art. AUindicée 1.2, p. 29 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent » ; chapeau de zone, p. 29 : l''indice
@@ -216,6 +577,40 @@ zones:
     - La clause de densité (AUindicée 2.2, 2., p. 29) ne nomme que AUa, AUb et AUc — AUt n'y est pas citée.
     - 'OAP : compatibilité requise « lorsqu''elles existent » (p. 29) — hors document lu.'
   AUe:
+    regles:
+      hauteur:
+        egout:
+          m: 12.0
+          article: AUe 10.2
+          page_pdf: 36
+          citation: La hauteur maximale des constructions est fixée à 12 mètres à l'égout du toit ou au sommet
+            de l'acrotère.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: AUe 6.2
+          page_pdf: 34
+          citation: Les constructions doivent être implantées en recul de la voie avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie au moins égale à
+            3 mètres.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: AUe 7.2
+          page_pdf: 35
+          citation: Les constructions peuvent être implantées sur deux limites séparatives, sur une seule
+            ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout
+            point de la façade au point le plus proche de la limite séparative latérale est de 3 mètres maximum.
+          statut: valide
+      pleine_terre:
+        pct:
+          pct: 25.0
+          article: AUe 13.1
+          page_pdf: 39
+          citation: Au minimum 25% de la superficie totale de l'unité foncière doit être traité en espace
+            perméable.
+          statut: valide
     silence: autorise
     silence_src: 'Art. AUe 2.2, p. 32 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article AUe 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »
