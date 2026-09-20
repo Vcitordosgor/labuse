@@ -1,0 +1,81 @@
+{
+ "insee": "97414",
+ "decisions": [
+  {
+   "zone": "UC1",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au minimum à la moitié de la hauteur à l'égout du toit (ou au faîtage en l'absence d'égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2",
+   "note": "recul = H/2 avec minimum 3,00 m ; valeur unique 4,5 non soutenue (harmonisation) → formule"
+  },
+  {
+   "zone": "UE",
+   "chemin": "retraits.voie",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres.",
+   "note": "recul = H/2 avec minimum 5 m ; valeur unique 6 non soutenue → formule"
+  },
+  {
+   "zone": "UE",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)",
+   "note": "recul = H/2 avec minimum 4 m (fond 4 m) ; valeur unique 6 non soutenue → formule"
+  },
+  {
+   "zone": "US",
+   "chemin": "retraits.voie",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 5 mètres.",
+   "note": "recul = H/2 avec minimum 5 m ; valeur unique 6 non soutenue → formule"
+  },
+  {
+   "zone": "US",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)",
+   "note": "recul = H/2 avec minimum 4 m (fond 4 m) ; valeur unique 6 non soutenue → formule"
+  },
+  {
+   "zone": "1AUc1",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au minimum à la moitié de la hauteur à l'égout du toit (ou au faîtage en l'absence d'égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2",
+   "note": "renvoi règle UC1 : recul = H/2 min 3,00 m ; valeur unique 4,5 non soutenue → formule"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "hauteur.faitage",
+   "geste": "corriger",
+   "valeur": {
+    "m": 20.0
+   },
+   "preuve": "20 mètres au faîtage",
+   "note": "zone 1AUe (OAP2) : faîtage fixé à 20 m, ≠ 15 m stocké → corriger"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "hauteur.egout",
+   "geste": "corriger",
+   "valeur": {
+    "m": 17.0
+   },
+   "preuve": "17 mètres à l'égout du toit ou au sommet de l'acrotère,",
+   "note": "zone 1AUe (OAP2) : égout fixé à 17 m, ≠ 12 m stocké → corriger"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "retraits.voie",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres.",
+   "note": "renvoi règle UE : recul = H/2 min 5 m ; valeur unique 6 non soutenue → formule"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)",
+   "note": "renvoi règle UE : recul = H/2 min 4 m (fond 4 m) ; valeur unique 6 non soutenue → formule"
+  }
+ ]
+}

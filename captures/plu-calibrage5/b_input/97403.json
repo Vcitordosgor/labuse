@@ -1,0 +1,30 @@
+{
+ "insee": "97403",
+ "commune": "Entre-Deux",
+ "pdf": "97403_reglement_20240924.pdf",
+ "n": 2,
+ "rules": [
+  {
+   "zone": "Ua",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 11.0
+   },
+   "article": "U7.2",
+   "page_pdf": 21,
+   "citation": "En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : ... - 11 mètres au faitage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ua",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 7.0
+   },
+   "article": "U7.2",
+   "page_pdf": 21,
+   "citation": "En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ;",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  }
+ ]
+}

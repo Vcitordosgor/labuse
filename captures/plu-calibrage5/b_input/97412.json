@@ -1,0 +1,748 @@
+{
+ "insee": "97412",
+ "commune": "Saint-Joseph",
+ "pdf": "97412_Reglement_20251210.pdf",
+ "n": 68,
+ "rules": [
+  {
+   "zone": "U1",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 0.0
+   },
+   "article": "U1 6.2",
+   "page_pdf": 18,
+   "citation": "Les constructions doivent être implantées à l’alignement de la voie ou de l’emprise publique.",
+   "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U2",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 5.5
+   },
+   "article": "U2 7.2",
+   "page_pdf": 33,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "raison": "valeur 5.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U2a",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 5.5
+   },
+   "article": "U2 7.2",
+   "page_pdf": 33,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "raison": "valeur 5.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U2a",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 1.0
+   },
+   "article": "U2 12.2",
+   "page_pdf": 39,
+   "citation": "- dans le secteur U2a, ce seuil est porté à 2 places de stationnement minimum par logement",
+   "raison": "valeur 1 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U3",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 5.5
+   },
+   "article": "U3 7.2",
+   "page_pdf": 49,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "raison": "valeur 5.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U3a",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "U3 7.2",
+   "page_pdf": 49,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U3ar",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "U3 7.2",
+   "page_pdf": 49,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U4",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "U4 7.2",
+   "page_pdf": 63,
+   "citation": "En cas de retrait de la construction, la distance (D) comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 1,9 mètre.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U5",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.5
+   },
+   "article": "U5 7.2",
+   "page_pdf": 78,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U5cv",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.5
+   },
+   "article": "U5 7.2",
+   "page_pdf": 78,
+   "citation": "Dans les secteurs U5cv et U5cvd, les constructions peuvent être implantées sur deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U5ma",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.5
+   },
+   "article": "U5 7.2",
+   "page_pdf": 78,
+   "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U6",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 6.0
+   },
+   "article": "U6 7.2",
+   "page_pdf": 93,
+   "citation": "En cas de retrait de la construction, la distance (D) comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "U6c",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 7.5
+   },
+   "article": "U6 7.2",
+   "page_pdf": 93,
+   "citation": "En cas de retrait de la construction, la distance (D) comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+   "raison": "valeur 7.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU3",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 13.0
+   },
+   "article": "U3 10.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 13 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU3",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 11.0
+   },
+   "article": "U3 10.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 11 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU3",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 70.0
+   },
+   "article": "U3 9.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 70 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU3",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "U3 6.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU3",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 5.5
+   },
+   "article": "U3 7.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 5.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU3",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "U3 12.2",
+   "page_pdf": 108,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AU3",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 15.0
+   },
+   "article": "U3 13.1",
+   "page_pdf": 108,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AU3a",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 9.0
+   },
+   "article": "U3 10.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 9 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU3a",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 8.0
+   },
+   "article": "U3 10.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU3a",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 70.0
+   },
+   "article": "U3 9.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 70 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU3a",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "U3 6.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU3a",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "U3 7.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU3a",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "U3 12.2",
+   "page_pdf": 108,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AU3a",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 25.0
+   },
+   "article": "U3 13.1",
+   "page_pdf": 108,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AU5",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 9.0
+   },
+   "article": "U5 10.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 9 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 7.0
+   },
+   "article": "U5 10.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 7 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 50.0
+   },
+   "article": "U5 9.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 50 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "U5 6.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.5
+   },
+   "article": "U5 7.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "U5 12.2",
+   "page_pdf": 108,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AU5",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 35.0
+   },
+   "article": "U5 13.1",
+   "page_pdf": 108,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AU5ru",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 8.0
+   },
+   "article": "U5 10.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5ru",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 6.0
+   },
+   "article": "U5 10.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5ru",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 40.0
+   },
+   "article": "U5 9.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 40 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5ru",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "U5 6.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5ru",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "U5 7.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5ru",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "U5 12.2",
+   "page_pdf": 108,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AU5ru",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 35.0
+   },
+   "article": "U5 13.1",
+   "page_pdf": 108,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AU5vi",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 8.0
+   },
+   "article": "U5 10.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5vi",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 6.0
+   },
+   "article": "U5 10.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5vi",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 40.0
+   },
+   "article": "U5 9.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 40 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5vi",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "U5 6.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5vi",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 3.0
+   },
+   "article": "U5 7.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU5vi",
+   "chemin": "stationnement.par_logement",
+   "valeur_actuelle": {
+    "places": 2.0
+   },
+   "article": "U5 12.2",
+   "page_pdf": 108,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AU5vi",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 35.0
+   },
+   "article": "U5 13.1",
+   "page_pdf": 108,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AU6",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 15.0
+   },
+   "article": "U6 10.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 15 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU6",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 12.0
+   },
+   "article": "U6 10.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 12 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU6",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 50.0
+   },
+   "article": "U6 9.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 50 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU6",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "U6 6.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU6",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 6.0
+   },
+   "article": "U6 7.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU6",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 15.0
+   },
+   "article": "U6 13.1",
+   "page_pdf": 108,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AU6c",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 18.0
+   },
+   "article": "U6 10.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 18 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU6c",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 15.0
+   },
+   "article": "U6 10.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 15 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU6c",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 50.0
+   },
+   "article": "U6 9.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 50 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU6c",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "U6 6.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU6c",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 7.5
+   },
+   "article": "U6 7.2",
+   "page_pdf": 107,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "valeur 7.5 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AU6c",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {
+    "pct": 15.0
+   },
+   "article": "U6 13.1",
+   "page_pdf": 108,
+   "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AUto",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 9.0
+   },
+   "article": "Art. AUindicée 10",
+   "page_pdf": 110,
+   "citation": "Pour les zones AUto, la hauteur maximale des constructions ne peut excéder : - 6 mètres à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AUto",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 6.0
+   },
+   "article": "Art. AUindicée 10",
+   "page_pdf": 110,
+   "citation": "Pour les zones AUto, la hauteur maximale des constructions ne peut excéder : - 6 mètres à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AUto",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "Art. AUindicée 6",
+   "page_pdf": 109,
+   "citation": "Pour les zones AUto, les constructions doivent être implantées en retrait de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "1AUto",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "Art. AUindicée 13",
+   "page_pdf": 108,
+   "citation": "Pour les zones AUto, il convient de se reporter au règlement de la zone U5.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AUtok",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 12.0
+   },
+   "article": "Art. AUindicée 10",
+   "page_pdf": 110,
+   "citation": "En secteur AUtok, la hauteur des constructions de type industrie ne peut excéder : - 9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AUtok",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 9.0
+   },
+   "article": "Art. AUindicée 10",
+   "page_pdf": 110,
+   "citation": "En secteur AUtok, la hauteur des constructions de type industrie ne peut excéder : - 9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "1AUtok",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "Art. AUindicée 6",
+   "page_pdf": 109,
+   "citation": "Pour les zones AUto, les constructions doivent être implantées en retrait de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "1AUtok",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "Art. AUindicée 13",
+   "page_pdf": 108,
+   "citation": "Pour les zones AUto, il convient de se reporter au règlement de la zone U5.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  }
+ ]
+}

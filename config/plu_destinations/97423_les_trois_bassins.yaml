@@ -20,7 +20,7 @@ zones:
           page_pdf: 18
           citation: 'La hauteur maximale des constructions est fixée à : 10 mètres à l’égout du toit ou au
             sommet de l’acrotère, 14 mètres au faîtage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 10.0
@@ -28,7 +28,7 @@ zones:
           page_pdf: 18
           citation: 'La hauteur maximale des constructions est fixée à : 10 mètres à l’égout du toit ou au
             sommet de l’acrotère, 14 mètres au faîtage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -55,7 +55,7 @@ zones:
           citation: En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout
             point de la façade de la construction au point le plus proche de la limite séparative, doit être
             au minimum de 3 mètres.
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       stationnement:
         par_logement:

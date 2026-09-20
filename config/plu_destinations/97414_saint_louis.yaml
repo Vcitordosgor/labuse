@@ -1424,20 +1424,20 @@ zones:
     regles:
       hauteur:
         faitage:
-          m: 15.0
+          m: 20.0
           article: UE 10.2
           page_pdf: 110
           citation: Pour la zone 1AUe se rapportant à l'OAP2 (...) 20 mètres au faîtage, 20 mètres (hauteur
             absolue) pour les toits terrasses végétalisés
-          statut: propose
+          statut: valide
           raison: valeur 15 absente de la citation (harmonisation ≠ texte)
         egout:
-          m: 12.0
+          m: 17.0
           article: UE 10.2
           page_pdf: 110
           citation: 'Pour la zone 1AUe se rapportant à l''OAP2, la hauteur maximale des constructions est
             fixée à : 17 mètres à l''égout du toit ou au sommet de l''acrotère,'
-          statut: propose
+          statut: valide
           raison: valeur 12 absente de la citation (harmonisation ≠ texte)
       emprise_sol:
         ces:

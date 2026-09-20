@@ -260,11 +260,11 @@ zones:
           raison: valeur 5.5 absente de la citation (harmonisation ≠ texte)
       stationnement:
         par_logement:
-          places: 1.0
+          places: 2.0
           article: U2 12.2
           page_pdf: 39
           citation: '- dans le secteur U2a, ce seuil est porté à 2 places de stationnement minimum par logement'
-          statut: propose
+          statut: valide
           raison: valeur 1 absente de la citation (harmonisation ≠ texte)
       pleine_terre:
         pct:
@@ -2058,7 +2058,7 @@ zones:
           page_pdf: 110
           citation: 'Pour les zones AUto, la hauteur maximale des constructions ne peut excéder : - 6 mètres
             à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faîtage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 6.0
@@ -2066,7 +2066,7 @@ zones:
           page_pdf: 110
           citation: 'Pour les zones AUto, la hauteur maximale des constructions ne peut excéder : - 6 mètres
             à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faîtage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -2078,13 +2078,13 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 4.0
           article: Art. AUindicée 6
           page_pdf: 109
           citation: Pour les zones AUto, les constructions doivent être implantées en retrait de la voie,
             avec une distance comptée horizontalement de tout point de la façade au point le plus proche de
             la voie, au moins égale à 4 mètres.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
           min_m: null
@@ -2189,7 +2189,7 @@ zones:
           page_pdf: 110
           citation: 'En secteur AUtok, la hauteur des constructions de type industrie ne peut excéder : -
             9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faîtage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 9.0
@@ -2197,7 +2197,7 @@ zones:
           page_pdf: 110
           citation: 'En secteur AUtok, la hauteur des constructions de type industrie ne peut excéder : -
             9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faîtage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -2209,13 +2209,13 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          min_m: 4.0
           article: Art. AUindicée 6
           page_pdf: 109
           citation: Pour les zones AUto, les constructions doivent être implantées en retrait de la voie,
             avec une distance comptée horizontalement de tout point de la façade au point le plus proche de
             la voie, au moins égale à 4 mètres.
-          statut: propose
+          statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
           min_m: null

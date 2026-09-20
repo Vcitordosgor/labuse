@@ -1,0 +1,52 @@
+{
+ "insee": "97404",
+ "commune": "L'Étang-Salé",
+ "pdf": "97404_reglement_20250917.pdf",
+ "n": 4,
+ "rules": [
+  {
+   "zone": "AUa",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 70.0
+   },
+   "article": "AU 2.4",
+   "page_pdf": 76,
+   "citation": "Le pourcentage maximale de l'emprise au sol cumulée de l'ensemble des constructions est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en zone AUt",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUb",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 65.0
+   },
+   "article": "AU 2.4",
+   "page_pdf": 76,
+   "citation": "Le pourcentage maximale de l'emprise au sol cumulée de l'ensemble des constructions est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en zone AUt",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUc",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 60.0
+   },
+   "article": "AU 2.4",
+   "page_pdf": 76,
+   "citation": "Le pourcentage maximale de l'emprise au sol cumulée de l'ensemble des constructions est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en zone AUt",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUt",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 65.0
+   },
+   "article": "AU 2.4",
+   "page_pdf": 76,
+   "citation": "Le pourcentage maximale de l'emprise au sol cumulée de l'ensemble des constructions est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en zone AUt",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  }
+ ]
+}

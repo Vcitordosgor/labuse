@@ -137,7 +137,7 @@ zones:
           page_pdf: 31
           citation: 'La hauteur maximale des constructions est fixée à : - 8 mètres à l’égout du toit ou au
             sommet de l’acrotère, - 11 mètres au faîtage,'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 8.0
@@ -145,7 +145,7 @@ zones:
           page_pdf: 31
           citation: 'La hauteur maximale des constructions est fixée à : - 8 mètres à l’égout du toit ou au
             sommet de l’acrotère, - 11 mètres au faîtage,'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:
@@ -255,19 +255,15 @@ zones:
           m: 11.0
           article: UB 10.2
           page_pdf: 31
-          citation: A l’exception du secteur Uba, pour les projets d’aménagement dont la superficie du terrain
-            d’assiette est au moins égale à 2 000 m², les constructions peuvent avoir une hauteur maximale
-            de 10 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.
-          statut: propose
+          citation: 11 mètres au faîtage
+          statut: valide
           raison: valeur 11 absente de la citation (harmonisation ≠ texte)
         egout:
           m: 8.0
           article: UB 10.2
           page_pdf: 31
-          citation: A l’exception du secteur Uba, pour les projets d’aménagement dont la superficie du terrain
-            d’assiette est au moins égale à 2 000 m², les constructions peuvent avoir une hauteur maximale
-            de 10 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.
-          statut: propose
+          citation: 8 mètres à l’égout du toit ou au sommet de l’acrotère
+          statut: valide
           raison: valeur 8 absente de la citation (harmonisation ≠ texte)
       emprise_sol:
         ces:
@@ -861,7 +857,7 @@ zones:
           page_pdf: 31
           citation: 'La hauteur maximale des constructions est fixée à : - 8 mètres à l’égout du toit ou au
             sommet de l’acrotère, - 11 mètres au faîtage,'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 8.0
@@ -869,7 +865,7 @@ zones:
           page_pdf: 31
           citation: 'La hauteur maximale des constructions est fixée à : - 8 mètres à l’égout du toit ou au
             sommet de l’acrotère, - 11 mètres au faîtage,'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:

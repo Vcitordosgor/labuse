@@ -26,7 +26,7 @@ zones:
           article: U 5
           page_pdf: 10
           citation: L'emprise au sol des constructions ne peut excéder 80 % du terrain.
-          statut: propose
+          statut: valide
           raison: attribution douteuse (secteur None)
       retraits:
         voie:
@@ -55,7 +55,7 @@ zones:
           page_pdf: 13
           citation: Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie
             totale du terrain, qui doit être traités en surface perméable.
-          statut: propose
+          statut: valide
           raison: attribution douteuse (secteur None)
       stationnement:
         par_logement:
@@ -133,7 +133,7 @@ zones:
           article: U 5
           page_pdf: 10
           citation: L'emprise au sol des constructions ne peut excéder 80 % du terrain.
-          statut: propose
+          statut: valide
           raison: attribution douteuse (secteur None)
       retraits:
         voie:
@@ -161,7 +161,7 @@ zones:
           page_pdf: 13
           citation: Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie
             totale du terrain, qui doit être traités en surface perméable.
-          statut: propose
+          statut: valide
           raison: attribution douteuse (secteur None)
       stationnement:
         par_logement:
@@ -221,7 +221,7 @@ zones:
           article: U 5
           page_pdf: 10
           citation: L'emprise au sol des constructions ne peut excéder 80 % du terrain.
-          statut: propose
+          statut: valide
           raison: attribution douteuse (secteur None)
       retraits:
         voie:
@@ -247,7 +247,7 @@ zones:
           page_pdf: 13
           citation: Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie
             totale du terrain, qui doit être traités en surface perméable.
-          statut: propose
+          statut: valide
           raison: attribution douteuse (secteur None)
       stationnement:
         par_logement:
@@ -310,7 +310,7 @@ zones:
           article: U 5
           page_pdf: 10
           citation: L'emprise au sol des constructions ne peut excéder 80 % du terrain.
-          statut: propose
+          statut: valide
           raison: attribution douteuse (secteur None)
       retraits:
         voie:
@@ -336,7 +336,7 @@ zones:
           page_pdf: 13
           citation: Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie
             totale du terrain, qui doit être traités en surface perméable.
-          statut: propose
+          statut: valide
           raison: attribution douteuse (secteur None)
       stationnement:
         par_logement:
@@ -409,7 +409,7 @@ zones:
           article: U 5
           page_pdf: 10
           citation: L'emprise au sol des constructions ne peut excéder 80 % du terrain.
-          statut: propose
+          statut: valide
           raison: attribution douteuse (secteur None)
       retraits:
         voie:
@@ -435,7 +435,7 @@ zones:
           page_pdf: 13
           citation: Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie
             totale du terrain, qui doit être traités en surface perméable.
-          statut: propose
+          statut: valide
           raison: attribution douteuse (secteur None)
       stationnement:
         par_logement:

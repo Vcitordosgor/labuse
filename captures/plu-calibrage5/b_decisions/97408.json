@@ -1,0 +1,215 @@
+{
+ "insee": "97408",
+ "decisions": [
+  {
+   "zone": "UA",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "UAa",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "UAm",
+   "chemin": "retraits.voie",
+   "geste": "formule",
+   "preuve": "avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à la hauteur du bâtiment. Pour les constructions implantées le long de la RN1E (rue Mahatma Gandhi), la distance de recul par rapport à la voie doit être au moins égale à 10 mètres",
+   "note": "recul = formule (hauteur du bâtiment / 10 m le long de la RN1E), pas un nombre unique"
+  },
+  {
+   "zone": "UAm",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "UAm",
+   "chemin": "pleine_terre.pct",
+   "geste": "corriger",
+   "valeur": { "pct": 25 },
+   "preuve": "Dans le secteur UAm, au minimum 25% de la superficie totale de l’unité foncière doit être traité en espace perméable planté en pleine terre",
+   "note": "valeur_actuelle vide ; 25% pleine terre pour UAm, lu PDF p.22"
+  },
+  {
+   "zone": "UApsfr2",
+   "chemin": "hauteur.faitage",
+   "geste": "corriger",
+   "valeur": { "m": 12 },
+   "preuve": "Dans le secteur UApsfr2, la hauteur maximale des constructions est fixée à 12 mètres",
+   "note": "hauteur générale au faîtage (l'article fixe 16 m au faitage par défaut) ; 12 m pour UApsfr2, lu PDF p.16"
+  },
+  {
+   "zone": "UApsfr2",
+   "chemin": "hauteur.egout",
+   "geste": "absent",
+   "preuve": "A l’exception des secteurs UAa, UApsfr2, UAm et UAv, la hauteur maximale des constructions est fixée à  16 mètres au faitage",
+   "note": "seul le secteur UAm est réglementé à l'égout ; UApsfr2 fixe une hauteur au faîtage, pas d'égout, lu PDF p.16"
+  },
+  {
+   "zone": "UAv",
+   "chemin": "hauteur.faitage",
+   "geste": "formule",
+   "preuve": "Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel de la manière suivante : Ilots 1/3B3 15 mètres ; Ilot 2 12 mètres ; Ilot 3A 9 mètres",
+   "note": "hauteur au faîtage définie par îlot opérationnel (table), pas un nombre unique, lu PDF p.17"
+  },
+  {
+   "zone": "UAv",
+   "chemin": "hauteur.egout",
+   "geste": "absent",
+   "preuve": "Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel",
+   "note": "UAv réglemente le faîtage (par îlot), aucune hauteur à l'égout n'est fixée, lu PDF p.17"
+  },
+  {
+   "zone": "UAv",
+   "chemin": "pleine_terre.pct",
+   "geste": "absent",
+   "preuve": "A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité foncière",
+   "note": "UAv exclu du 35% et aucune règle de pleine terre positive ne lui est fixée en 13.1, lu PDF p.22"
+  },
+  {
+   "zone": "UB",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "UBa",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "UBb",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "UBc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "UBpsfr2",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "UBpszc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "UE",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "UEm",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "UT",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "UTfr2",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "AUBm",
+   "chemin": "hauteur.faitage",
+   "geste": "propose",
+   "note": "hauteur exprimée en niveaux (R+3), aucune valeur en mètres au faîtage ; indéterminable pour la feuille m, lu PDF p.75"
+  },
+  {
+   "zone": "AUBm",
+   "chemin": "hauteur.egout",
+   "geste": "propose",
+   "note": "hauteur exprimée en niveaux (R+3), aucune valeur en mètres à l'égout ; indéterminable pour la feuille m, lu PDF p.75"
+  },
+  {
+   "zone": "AUAv",
+   "chemin": "hauteur.faitage",
+   "geste": "formule",
+   "preuve": "Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel de la manière suivante : Ilots 1/3B3 15 m ; Ilot 2 12 m ; Ilot 3A 9 m",
+   "note": "renvoie à UA 10.2 UAv : hauteur au faîtage par îlot (table), pas un nombre unique"
+  },
+  {
+   "zone": "AUAv",
+   "chemin": "hauteur.egout",
+   "geste": "absent",
+   "preuve": "Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel",
+   "note": "renvoie à UA 10.2 UAv : seul le faîtage est réglementé (par îlot), aucune hauteur à l'égout"
+  },
+  {
+   "zone": "AUAv",
+   "chemin": "pleine_terre.pct",
+   "geste": "absent",
+   "preuve": "A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité foncière",
+   "note": "renvoie à UA 13.1 : UAv exclu du 35% et aucune règle de pleine terre positive fixée, lu PDF p.22"
+  },
+  {
+   "zone": "AUB",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "AUBb",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "AUBpsfr2",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "AUT",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  },
+  {
+   "zone": "AUEm",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "recul = formule H/2 min 3 m, pas un nombre unique"
+  }
+ ]
+}

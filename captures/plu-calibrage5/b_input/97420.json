@@ -1,0 +1,52 @@
+{
+ "insee": "97420",
+ "commune": "Sainte-Suzanne",
+ "pdf": "97420_reglement_20250929.pdf",
+ "n": 4,
+ "rules": [
+  {
+   "zone": "UE",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 6.0
+   },
+   "article": "UE4.2",
+   "page_pdf": 22,
+   "citation": "Les constructions doivent être implantées en recul de la voie, avec une distance ... au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5 mètres.",
+   "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "UE",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 6.0
+   },
+   "article": "UE5.2",
+   "page_pdf": 22,
+   "citation": "En cas de retrait de la construction, la distance ... au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 4 mètres.",
+   "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 6.0
+   },
+   "article": "UE4.2",
+   "page_pdf": 22,
+   "citation": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5 mètres.",
+   "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "1AUe",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {
+    "min_m": 6.0
+   },
+   "article": "UE5.2",
+   "page_pdf": 22,
+   "citation": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 4 mètres.",
+   "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)"
+  }
+ ]
+}

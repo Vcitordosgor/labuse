@@ -1,0 +1,19 @@
+{
+ "insee": "97405",
+ "decisions": [
+  {
+   "zone": "UZ",
+   "chemin": "retraits.voie",
+   "geste": "formule",
+   "preuve": "Les constructions pourront être implantées soit à l’alignement soit en retrait des voies publiques.",
+   "note": "lu PDF p.83 — alternative alignement/retrait, aucun minimum numérique ; recul routes départementales renvoyé à l’annexe 5. 0 n’apparaît pas dans le texte."
+  },
+  {
+   "zone": "UZ",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "Les constructions pourront s’implanter soit en limite séparative soit en retrait.",
+   "note": "lu PDF p.83 — alternative sur limite OU en retrait, aucun minimum numérique fixé. 0 n’apparaît pas dans le texte."
+  }
+ ]
+}

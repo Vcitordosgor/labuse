@@ -1,0 +1,223 @@
+{
+ "insee": "97418",
+ "decisions": [
+  {
+   "zone": "UA",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres",
+   "note": "Recul = formule H/2 min 3 m ; aucune valeur fixe 7.5. Confirmé PDF p.20."
+  },
+  {
+   "zone": "UEa",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres",
+   "note": "Recul = formule H/2 min 4 m ; aucune valeur fixe 12."
+  },
+  {
+   "zone": "UEa",
+   "chemin": "pleine_terre.pct",
+   "geste": "corriger",
+   "valeur": { "pct": 15 },
+   "preuve": "en zones UEa, UEm et UEp : 15% de la surface",
+   "note": "Valeur absente (a_verifier) posée à 15% ; UEa listée dans le trio 15%."
+  },
+  {
+   "zone": "UEc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres",
+   "note": "Recul = formule H/2 min 4 m ; aucune valeur fixe 7."
+  },
+  {
+   "zone": "UEc",
+   "chemin": "pleine_terre.pct",
+   "geste": "corriger",
+   "valeur": { "pct": 25 },
+   "preuve": "en zone UEc : 25% de la surface",
+   "note": "Valeur absente (a_verifier) posée à 25%."
+  },
+  {
+   "zone": "UEm",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres",
+   "note": "Recul = formule H/2 min 4 m ; aucune valeur fixe 8."
+  },
+  {
+   "zone": "UEm",
+   "chemin": "pleine_terre.pct",
+   "geste": "corriger",
+   "valeur": { "pct": 15 },
+   "preuve": "en zones UEa, UEm et UEp : 15% de la surface",
+   "note": "Valeur absente (a_verifier) posée à 15% ; UEm dans le trio 15%."
+  },
+  {
+   "zone": "UEp",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres",
+   "note": "Recul = formule H/2 min 4 m ; aucune valeur fixe 8."
+  },
+  {
+   "zone": "UEp",
+   "chemin": "pleine_terre.pct",
+   "geste": "corriger",
+   "valeur": { "pct": 15 },
+   "preuve": "en zones UEa, UEm et UEp : 15% de la surface",
+   "note": "Valeur absente (a_verifier) posée à 15% ; UEp dans le trio 15%."
+  },
+  {
+   "zone": "UR",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres",
+   "note": "Recul = formule H/2 min 4 m ; aucune valeur fixe 12."
+  },
+  {
+   "zone": "UR",
+   "chemin": "pleine_terre.pct",
+   "geste": "corriger",
+   "valeur": { "pct": 20 },
+   "preuve": "en zone UR : 20 % de de la surface",
+   "note": "Valeur absente (a_verifier) posée à 20%."
+  },
+  {
+   "zone": "UT",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres",
+   "note": "Recul = formule H/2 min 4 m ; aucune valeur fixe 5.5."
+  },
+  {
+   "zone": "UT",
+   "chemin": "pleine_terre.pct",
+   "geste": "corriger",
+   "valeur": { "pct": 55 },
+   "preuve": "en zone UT : 55% de la surface",
+   "note": "Valeur absente (a_verifier) posée à 55%."
+  },
+  {
+   "zone": "UTp",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "preuve": "au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres",
+   "note": "Recul = formule H/2 min 4 m ; aucune valeur fixe 5.5."
+  },
+  {
+   "zone": "UTp",
+   "chemin": "pleine_terre.pct",
+   "geste": "propose",
+   "note": "lu PDF p.38 : la liste 'perméable' cite UT/UEc/UR/UEa/UEm/UEp mais PAS UTp ; citation INTROUVABLE, valeur pour UTp indéterminable."
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "hauteur.faitage",
+   "geste": "propose",
+   "note": "lu PDF p.41-42 : Article AUindicé 8 renvoie 'Se reporter au règlement de la zone U indiquée en indice' ; aucune valeur numérique (15) dans le texte AU."
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "hauteur.egout",
+   "geste": "propose",
+   "note": "lu PDF p.42 : Article AUindicé 8 = renvoi zone U, aucune valeur (12) dans le texte AU."
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "emprise_sol.ces",
+   "geste": "propose",
+   "note": "lu PDF p.42 : Article AUindicé 7 = 'Se reporter au règlement de la zone U indiquée en indice' ; aucune valeur (70) dans le texte AU."
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "retraits.voie",
+   "geste": "propose",
+   "note": "lu PDF p.42 : Article AUindicé 4 = renvoi zone U, aucune valeur (3) dans le texte AU."
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "retraits.limites_separatives",
+   "geste": "propose",
+   "note": "lu PDF p.42 : Article AUindicé 5 = renvoi zone U, aucune valeur (3) dans le texte AU."
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "stationnement.par_logement",
+   "geste": "propose",
+   "note": "lu PDF p.43 : Article AUindicé 13 = renvoi zone U, aucune valeur (1.5) dans le texte AU."
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "pleine_terre.pct",
+   "geste": "propose",
+   "note": "lu PDF p.43 : Article AUindicé 12 = renvoi zone U, aucune valeur (25) dans le texte AU."
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "hauteur.faitage",
+   "geste": "propose",
+   "note": "lu PDF p.42 : Article AUindicé 8 = renvoi zone U, aucune valeur (13) dans le texte AU."
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "hauteur.egout",
+   "geste": "propose",
+   "note": "lu PDF p.42 : Article AUindicé 8 = renvoi zone U, aucune valeur (10) dans le texte AU."
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "emprise_sol.ces",
+   "geste": "propose",
+   "note": "lu PDF p.42 : Article AUindicé 7 = renvoi zone U, aucune valeur (60) dans le texte AU."
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.voie",
+   "geste": "propose",
+   "note": "lu PDF p.42 : Article AUindicé 4 = renvoi zone U, aucune valeur (3) dans le texte AU."
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "propose",
+   "note": "lu PDF p.42 : Article AUindicé 5 = renvoi zone U, aucune valeur (3) dans le texte AU."
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "stationnement.par_logement",
+   "geste": "propose",
+   "note": "lu PDF p.43 : Article AUindicé 13 = renvoi zone U, aucune valeur (1.5) dans le texte AU."
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "pleine_terre.pct",
+   "geste": "propose",
+   "note": "lu PDF p.43 : Article AUindicé 12 = renvoi zone U, aucune valeur (30) dans le texte AU."
+  },
+  {
+   "zone": "1AUep",
+   "chemin": "hauteur.faitage",
+   "geste": "propose",
+   "note": "lu PDF p.42 : Article AUindicé 8 = renvoi zone U, aucune valeur (16) dans le texte AU."
+  },
+  {
+   "zone": "1AUep",
+   "chemin": "emprise_sol.ces",
+   "geste": "propose",
+   "note": "lu PDF p.42 : Article AUindicé 7 = renvoi zone U, aucune valeur (75) dans le texte AU."
+  },
+  {
+   "zone": "1AUep",
+   "chemin": "retraits.voie",
+   "geste": "propose",
+   "note": "lu PDF p.42 : Article AUindicé 4 = renvoi zone U, aucune valeur (3) dans le texte AU."
+  },
+  {
+   "zone": "1AUep",
+   "chemin": "retraits.limites_separatives",
+   "geste": "propose",
+   "note": "lu PDF p.42 : Article AUindicé 5 = renvoi zone U, aucune valeur (8) dans le texte AU."
+  }
+ ]
+}

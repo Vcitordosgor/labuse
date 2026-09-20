@@ -1,0 +1,197 @@
+{
+ "insee": "97401",
+ "decisions": [
+  {
+   "zone": "Ua",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 15.0 },
+   "preuve": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.",
+   "note": "Ua listée dans le groupe Ua/Ub, faitage 15 m (art. U 10.2)."
+  },
+  {
+   "zone": "Ua",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 12.0 },
+   "preuve": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.",
+   "note": "Ua dans le groupe Ua/Ub, égout 12 m (art. U 10.2)."
+  },
+  {
+   "zone": "Ua",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": { "pct": 15.0 },
+   "preuve": "En zone Ua : 15% de la superficie totale de l'unité foncière",
+   "note": "Espaces libres/perméables, zone Ua 15% (art. U 13.1)."
+  },
+  {
+   "zone": "Uc3",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": { "pct": 40.0 },
+   "preuve": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière",
+   "note": "Uc3 explicitement listé dans le groupe à 40% (art. U 13.1)."
+  },
+  {
+   "zone": "Ud",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 10.0 },
+   "preuve": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+   "note": "Zone Ud, faitage 10 m (art. U 10.2)."
+  },
+  {
+   "zone": "Ud",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 7.0 },
+   "preuve": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+   "note": "Zone Ud, égout 7 m (art. U 10.2)."
+  },
+  {
+   "zone": "Ud",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": { "pct": 40.0 },
+   "preuve": "En zone Ud : 40% de la superficie totale de l'unité foncière",
+   "note": "Zone Ud 40% (art. U 13.1)."
+  },
+  {
+   "zone": "Ud1",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 10.0 },
+   "preuve": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+   "note": "lu PDF p.12 : Ud1 non listé parmi les secteurs à hauteur dérogatoire (Uc1/Uc3/Ud2/Ud3), suit donc la zone Ud = 10 m faitage."
+  },
+  {
+   "zone": "Ud1",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 7.0 },
+   "preuve": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+   "note": "lu PDF p.12 : Ud1 non secteur dérogatoire, suit la zone Ud = 7 m égout."
+  },
+  {
+   "zone": "Ud1",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": { "pct": 40.0 },
+   "preuve": "En zone Ud : 40% de la superficie totale de l'unité foncière",
+   "note": "lu PDF p.18 : Ud1 non listé au groupe secteurs (Uc3/Ud2/Ud3), suit la zone Ud = 40%."
+  },
+  {
+   "zone": "Ud2",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 9.0 },
+   "preuve": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.",
+   "note": "Ud2 dans le groupe secteurs, faitage 9 m (art. U 10.2)."
+  },
+  {
+   "zone": "Ud2",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 6.0 },
+   "preuve": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.",
+   "note": "Ud2 dans le groupe secteurs, égout 6 m (art. U 10.2)."
+  },
+  {
+   "zone": "Ud2",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": { "pct": 40.0 },
+   "preuve": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière",
+   "note": "Ud2 dans le groupe secteurs à 40% (art. U 13.1)."
+  },
+  {
+   "zone": "Ud3",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 9.0 },
+   "preuve": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.",
+   "note": "Ud3 dans le groupe secteurs, faitage 9 m (art. U 10.2)."
+  },
+  {
+   "zone": "Ud3",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 6.0 },
+   "preuve": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.",
+   "note": "Ud3 dans le groupe secteurs, égout 6 m (art. U 10.2)."
+  },
+  {
+   "zone": "Ud3",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": { "pct": 40.0 },
+   "preuve": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière",
+   "note": "Ud3 dans le groupe secteurs à 40% (art. U 13.1)."
+  },
+  {
+   "zone": "AUa",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 15.0 },
+   "preuve": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.",
+   "note": "lu PDF p.26 : AU indicée renvoie « au règlement des zones urbaines correspondantes (zones U) », AUa -> Ua = 15 m faitage."
+  },
+  {
+   "zone": "AUa",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 12.0 },
+   "preuve": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.",
+   "note": "lu PDF p.26 : AUa renvoie à Ua = 12 m égout."
+  },
+  {
+   "zone": "AUa",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": { "pct": 15.0 },
+   "preuve": "En zone Ua : 15% de la superficie totale de l'unité foncière",
+   "note": "lu PDF p.26 : AUa renvoie au règlement Ua = 15% (art. U 13.1)."
+  },
+  {
+   "zone": "AUc",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 11.0 },
+   "preuve": "en zone Uc et secteur Ub2 : - 8 mètres à l'égout du toit ou au sommet de l'acrotère ; - 11 mètres au faitage.",
+   "note": "lu PDF p.26 : AUc renvoie au règlement Uc = 11 m faitage."
+  },
+  {
+   "zone": "AUc",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 8.0 },
+   "preuve": "en zone Uc et secteur Ub2 : - 8 mètres à l'égout du toit ou au sommet de l'acrotère ; - 11 mètres au faitage.",
+   "note": "lu PDF p.26 : AUc renvoie au règlement Uc = 8 m égout."
+  },
+  {
+   "zone": "AUd",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 10.0 },
+   "preuve": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+   "note": "lu PDF p.26 : AUd renvoie au règlement Ud = 10 m faitage."
+  },
+  {
+   "zone": "AUd",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 7.0 },
+   "preuve": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+   "note": "lu PDF p.26 : AUd renvoie au règlement Ud = 7 m égout."
+  },
+  {
+   "zone": "AUd",
+   "chemin": "pleine_terre.pct",
+   "geste": "valider",
+   "valeur": { "pct": 40.0 },
+   "preuve": "En zone Ud : 40% de la superficie totale de l'unité foncière",
+   "note": "lu PDF p.26 : AUd renvoie au règlement Ud = 40% (art. U 13.1)."
+  }
+ ]
+}

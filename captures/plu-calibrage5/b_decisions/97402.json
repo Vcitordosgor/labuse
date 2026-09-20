@@ -1,0 +1,125 @@
+{
+ "insee": "97402",
+ "decisions": [
+  {
+   "zone": "Ua",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "note": "recul H/2 min 3 m : formule, pas de nombre fixe pour 5"
+  },
+  {
+   "zone": "Ub",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 11.0 },
+   "preuve": "11 mètres au faîtage",
+   "note": "UB 10.2 règle générale, faîtage"
+  },
+  {
+   "zone": "Ub",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 8.0 },
+   "preuve": "8 mètres à l’égout du toit ou au sommet de l’acrotère",
+   "note": "UB 10.2 règle générale, égout"
+  },
+  {
+   "zone": "Ub",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "note": "recul H/2 min 3 m : formule, pas de nombre fixe pour 4"
+  },
+  {
+   "zone": "Uba",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 11.0 },
+   "preuve": "11 mètres au faîtage",
+   "note": "lu PDF p.31 : Uba EXCLU de la dérogation 10/13 (« A l’exception du secteur Uba… 13 mètres au faîtage »), garde la règle générale UB 10.2 = 11 mètres au faîtage"
+  },
+  {
+   "zone": "Uba",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 8.0 },
+   "preuve": "8 mètres à l’égout du toit ou au sommet de l’acrotère",
+   "note": "lu PDF p.31 : Uba EXCLU de la dérogation 10/13, garde la règle générale UB 10.2 = 8 mètres à l’égout"
+  },
+  {
+   "zone": "Uba",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "note": "« sur une seule limite latérale ou en retrait » : formule (sur limite OU recul), pas de nombre fixe pour 4"
+  },
+  {
+   "zone": "Uc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "note": "recul H/2 min 3 m : formule, pas de nombre fixe pour 4"
+  },
+  {
+   "zone": "Ud",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "note": "recul H/2 min 3 m : formule, pas de nombre fixe pour 3.5"
+  },
+  {
+   "zone": "Udu",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "note": "recul H/2 min 3 m : formule, pas de nombre fixe pour 3.5"
+  },
+  {
+   "zone": "1AUa",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "note": "recul H/2 min 3 m : formule, pas de nombre fixe pour 5"
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "hauteur.faitage",
+   "geste": "valider",
+   "valeur": { "m": 11.0 },
+   "preuve": "11 mètres au faîtage",
+   "note": "UB 10.2 règle générale (1AUb renvoie à UB), faîtage"
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "hauteur.egout",
+   "geste": "valider",
+   "valeur": { "m": 8.0 },
+   "preuve": "8 mètres à l’égout du toit ou au sommet de l’acrotère",
+   "note": "UB 10.2 règle générale (1AUb renvoie à UB), égout"
+  },
+  {
+   "zone": "1AUb",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "note": "recul H/2 min 3 m : formule, pas de nombre fixe pour 4"
+  },
+  {
+   "zone": "1AUc",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "note": "recul H/2 min 3 m : formule, pas de nombre fixe pour 4"
+  },
+  {
+   "zone": "1AUd",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "note": "recul H/2 min 3 m : formule, pas de nombre fixe pour 3.5"
+  },
+  {
+   "zone": "1AUec",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "note": "recul H/2 min 3 m : formule, pas de nombre fixe pour 9"
+  },
+  {
+   "zone": "1AUt",
+   "chemin": "retraits.limites_separatives",
+   "geste": "formule",
+   "note": "recul H/2 min 3 m : formule, pas de nombre fixe pour 5"
+  }
+ ]
+}

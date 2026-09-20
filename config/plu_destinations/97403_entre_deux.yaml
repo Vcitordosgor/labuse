@@ -20,7 +20,7 @@ zones:
           page_pdf: 21
           citation: 'En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : ...
             - 11 mètres au faitage.'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 7.0
@@ -28,7 +28,7 @@ zones:
           page_pdf: 21
           citation: 'En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : - 7
             mètres à l''égout du toit ou au sommet de l''acrotère ;'
-          statut: propose
+          statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
         ces:

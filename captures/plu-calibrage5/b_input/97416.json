@@ -1,0 +1,403 @@
+{
+ "insee": "97416",
+ "commune": "Saint-Pierre",
+ "pdf": "97416_reglement_20240625.pdf",
+ "n": 37,
+ "rules": [
+  {
+   "zone": "Ucv",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 0.0
+   },
+   "article": "Ucv3.1",
+   "page_pdf": 63,
+   "citation": "Les constructions nouvelles en premier rideau doivent être implantées à l’alignement.",
+   "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "AUdma",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {},
+   "article": "Ud3",
+   "page_pdf": 80,
+   "citation": "En zone AUdma : non règlementé pour l’ensemble de l’article",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUdma",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {},
+   "article": "Ud3",
+   "page_pdf": 80,
+   "citation": "En zone AUdma : non règlementé pour l’ensemble de l’article",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUdma",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {},
+   "article": "Ud3",
+   "page_pdf": 80,
+   "citation": "En zone AUdma : non règlementé pour l’ensemble de l’article",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUdma",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {},
+   "article": "Ud3",
+   "page_pdf": 80,
+   "citation": "En zone AUdma : non règlementé pour l’ensemble de l’article",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUdma",
+   "chemin": "retraits.limites_separatives",
+   "valeur_actuelle": {},
+   "article": "Ud3",
+   "page_pdf": 80,
+   "citation": "En zone AUdma : non règlementé pour l’ensemble de l’article",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUdma",
+   "chemin": "pleine_terre.pct",
+   "valeur_actuelle": {},
+   "article": "Ud5",
+   "page_pdf": 91,
+   "citation": "En zone AUdma : non règlementé pour l’ensemble de l’article",
+   "raison": "valeur non numérique ('a_verifier')"
+  },
+  {
+   "zone": "AUf",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 11.0
+   },
+   "article": "Uf3.5",
+   "page_pdf": 119,
+   "citation": "La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 11 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUf",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 6.0
+   },
+   "article": "Uf3.5",
+   "page_pdf": 119,
+   "citation": "La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 11 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Up",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 0.0
+   },
+   "article": "Up3.1",
+   "page_pdf": 146,
+   "citation": "Les constructions nouvelles peuvent être implantées à l’alignement ou en retrait libre.",
+   "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "Uazp",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 21.0
+   },
+   "article": "Ua3.5",
+   "page_pdf": 178,
+   "citation": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uazp",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 16.0
+   },
+   "article": "Ua3.5",
+   "page_pdf": 178,
+   "citation": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uazp",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 0.0
+   },
+   "article": "Ua3.1",
+   "page_pdf": 176,
+   "citation": "Dans les secteurs Uazp et Uazpc les constructions nouvelles peuvent être implantées à l’alignement des voies sauf en aval de la RN 1 ou le recul minimum est fixé à 40 m dans la partie Nord et à 50 m dans la partie Sud, l’axe du giratoire avec la RD 26 faisant la séparation entre ces deux zones de reculs.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uazpc",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 21.0
+   },
+   "article": "Ua3.5",
+   "page_pdf": 178,
+   "citation": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uazpc",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 16.0
+   },
+   "article": "Ua3.5",
+   "page_pdf": 178,
+   "citation": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uazpc",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 0.0
+   },
+   "article": "Ua3.1",
+   "page_pdf": 176,
+   "citation": "Dans les secteurs Uazp et Uazpc les constructions nouvelles peuvent être implantées à l’alignement des voies sauf en aval de la RN 1 ou le recul minimum est fixé à 40 m dans la partie Nord et à 50 m dans la partie Sud, l’axe du giratoire avec la RD 26 faisant la séparation entre ces deux zones de reculs.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uaza",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 21.0
+   },
+   "article": "Ua3.5",
+   "page_pdf": 178,
+   "citation": "Dans le secteur Uaza, la hauteur maximale des constructions est fixée à 14 m au faîtage.",
+   "raison": "valeur 21 absente de la citation (harmonisation ≠ texte)"
+  },
+  {
+   "zone": "Uaza",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 16.0
+   },
+   "article": "Ua3.5",
+   "page_pdf": 177,
+   "citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uaza",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "Ua3.1",
+   "page_pdf": 176,
+   "citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uazc",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 18.0
+   },
+   "article": "Ua3.5",
+   "page_pdf": 177,
+   "citation": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uazc",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 13.0
+   },
+   "article": "Ua3.5",
+   "page_pdf": 177,
+   "citation": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUazc",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 18.0
+   },
+   "article": "Ua3.5",
+   "page_pdf": 177,
+   "citation": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUazc",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 13.0
+   },
+   "article": "Ua3.5",
+   "page_pdf": 177,
+   "citation": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUazc",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "Ua3.1",
+   "page_pdf": 176,
+   "citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uazi",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 21.0
+   },
+   "article": "Ua3.5",
+   "page_pdf": 177,
+   "citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uazi",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 16.0
+   },
+   "article": "Ua3.5",
+   "page_pdf": 177,
+   "citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uazi",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "Ua3.1",
+   "page_pdf": 176,
+   "citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUazi",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 21.0
+   },
+   "article": "Ua3.5",
+   "page_pdf": 177,
+   "citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUazi",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 16.0
+   },
+   "article": "Ua3.5",
+   "page_pdf": 177,
+   "citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "AUazi",
+   "chemin": "retraits.voie",
+   "valeur_actuelle": {
+    "min_m": 4.0
+   },
+   "article": "Ua3.1",
+   "page_pdf": 176,
+   "citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ue",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 21.0
+   },
+   "article": "Ue3.5",
+   "page_pdf": 193,
+   "citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Ue",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 16.0
+   },
+   "article": "Ue3.5",
+   "page_pdf": 193,
+   "citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uemi",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 21.0
+   },
+   "article": "Ue3.5",
+   "page_pdf": 193,
+   "citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uemi",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 16.0
+   },
+   "article": "Ue3.5",
+   "page_pdf": 193,
+   "citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uep",
+   "chemin": "hauteur.faitage",
+   "valeur_actuelle": {
+    "m": 21.0
+   },
+   "article": "Ue3.5",
+   "page_pdf": 193,
+   "citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uep",
+   "chemin": "hauteur.egout",
+   "valeur_actuelle": {
+    "m": 16.0
+   },
+   "article": "Ue3.5",
+   "page_pdf": 193,
+   "citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+   "raison": "attribution douteuse (citation sous secteur None)"
+  },
+  {
+   "zone": "Uep",
+   "chemin": "emprise_sol.ces",
+   "valeur_actuelle": {
+    "pct": 0.2
+   },
+   "article": "Ue3.4",
+   "page_pdf": 192,
+   "citation": "En zone Uep, l’emprise au sol est limitée au maximum à 20 m² par ha (calculée au prorata de la superficie de l’unité foncière).",
+   "raison": "valeur 0.2 absente de la citation (harmonisation ≠ texte)"
+  }
+ ]
+}
