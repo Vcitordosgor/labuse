@@ -60,8 +60,11 @@ export const inDefaultPerimetre = (p: ParcelProps): boolean =>
 export function matchScope(p: ParcelProps, f: Filters, zone: LngLat[] | null): boolean {
   // FIX-SCOREMIN : le filtre scoreMin (sur q_score, matrice morte M129-B, jamais servi →
   // p.q_score toujours absent) est RETIRÉ — il ne filtrait rien côté client non plus.
-  if (f.surfaceMin != null && (p.surface_m2 ?? 0) < f.surfaceMin) return false
-  if (f.surfaceMax != null && (p.surface_m2 ?? Infinity) > f.surfaceMax) return false
+  // FILTRES-FIX-1 (lot 2) : on compare la surface ARRONDIE — la même valeur que la fiche affiche
+  // (fmtM2→fmtInt=Math.round) et que le SQL (round(::numeric)) ; régler la borne sur le nombre lu
+  // sur la fiche fait donc ressortir la parcelle (avant : 4 500,50 affiché « 4 501 » mais < 4501).
+  if (f.surfaceMin != null && Math.round(p.surface_m2 ?? 0) < f.surfaceMin) return false
+  if (f.surfaceMax != null && Math.round(p.surface_m2 ?? Infinity) > f.surfaceMax) return false
   if (f.sdpMin != null && (p.sdp_residuelle_m2 ?? -1) < f.sdpMin) return false
   if (f.evenement && p.evenement !== 'rouge') return false
   if (f.veille && !p.veille) return false

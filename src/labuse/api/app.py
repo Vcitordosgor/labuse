@@ -1381,11 +1381,17 @@ def _q_v2_where(run_label: str,
     # NULL sur 100 % du run servi) et aucune fiche n'affiche de score 0-100 → il n'existait aucun
     # « score du run servi » sur lequel filtrer. Le vestige est purgé de bout en bout (endpoint,
     # interface front, Copilote, veille, deep-link) plutôt que de rester silencieusement ignoré.
+    # FILTRES-FIX-1 (lot 2) — la fiche AFFICHE la surface arrondie à l'entier (fmtM2 → fmtInt =
+    # Math.round) ; le filtre compare donc la MÊME valeur arrondie. round(::numeric) arrondit au
+    # plus proche, moitié à l'écart de zéro (comme Math.round sur des surfaces > 0). Sans ça, régler
+    # la borne sur le nombre lu sur la fiche pouvait écarter la parcelle (ex. 4 500,50 m² affiché
+    # « 4 501 » mais `>= 4501` faux). Une seule valeur, la même des deux côtés (front matchScope idem).
+    # Pas d'index sur surface_m2 (aucune régression de plan) ; le miroir client vit dans matchScope.
     if surface_min is not None:
-        conds.append("p.surface_m2 >= :f_smin")
+        conds.append("round(p.surface_m2::numeric) >= :f_smin")
         params["f_smin"] = surface_min
     if surface_max is not None:
-        conds.append("p.surface_m2 <= :f_smax")
+        conds.append("round(p.surface_m2::numeric) <= :f_smax")
         params["f_smax"] = surface_max
     if sdp_min is not None:
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel r0 WHERE r0.parcel_id = p.id"
