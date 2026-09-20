@@ -31,6 +31,7 @@ def test_prefill_terrain_identique_sur_13406_et_13409():
 
 def test_millesime_check_non_fatal(monkeypatch):
     # réseau coupé (urlopen lève) → (False, None) : on NE bloque JAMAIS sur notre incapacité à vérifier.
+    pd._MILLESIME_CACHE.clear()
     import urllib.request
     def _boom(*a, **k):
         raise OSError("réseau coupé")
@@ -46,6 +47,7 @@ def test_millesime_perime_bloque_la_piece(monkeypatch):
         def read(self, *a): return b"CERFA 13409*18 ... fiche signaletique"
         def __enter__(self): return self
         def __exit__(self, *a): return False
+    pd._MILLESIME_CACHE.clear()
     import urllib.request
     monkeypatch.setattr(urllib.request, "urlopen", lambda *a, **k: _Resp())
     perime, courant = pd.cerfa_millesime_perime("13409", "13409*17")

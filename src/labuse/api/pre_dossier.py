@@ -79,6 +79,18 @@ def cerfa_millesime_perime(num_cerfa: str, version_locale: str) -> tuple[bool, s
     millesime_courant = f"{num_cerfa}*{courant:02d}"
     return (courant > local, millesime_courant)
 
+
+_MILLESIME_CACHE: dict[str, tuple[bool, str | None]] = {}
+
+
+def _millesime_perime_cache(num_cerfa: str, version_locale: str) -> tuple[bool, str | None]:
+    """Cache PAR PROCESS du contrôle de millésime (une lecture réseau au plus par CERFA) — évite le
+    clignotement d'une génération à l'autre. La fonction pure `cerfa_millesime_perime` reste testable."""
+    key = f"{num_cerfa}:{version_locale}"
+    if key not in _MILLESIME_CACHE:
+        _MILLESIME_CACHE[key] = cerfa_millesime_perime(num_cerfa, version_locale)
+    return _MILLESIME_CACHE[key]
+
 LIBELLE = ("Document préparatoire établi à partir de données publiques — ne constitue "
            "pas un dossier de demande de permis. À compléter et vérifier par le "
            "pétitionnaire ou son architecte.")
@@ -177,8 +189,11 @@ def _cerfa_prerempli(parcelle: dict, adresse: dict | None, cerfa_num: str = "134
         # fichier absent (13409 non encore vendorisé, p. ex.) → INDISPONIBLE explicite, pack sans
         # formulaire ; jamais un CERFA douteux servi en silence, jamais tout le pack cassé.
         return None
-    # millésime périmé (contrôle en ligne, best-effort, non fatal) → INDISPENIBLE + dit au LISEZMOI.
-    perime, _courant = cerfa_millesime_perime(meta["num"], meta["version"])
+    # millésime périmé (contrôle en ligne, best-effort, non fatal) → INDISPONIBLE + dit au LISEZMOI.
+    # Le résultat est MIS EN CACHE par process (une lecture au plus par numéro de CERFA) : le contrôle
+    # ne peut plus « clignoter » d'une génération à l'autre au gré du réseau (crainte de l'ancien
+    # « contrôle écarté » de Vic) ; il reste non fatal (réseau coupé → servi).
+    perime, _courant = _millesime_perime_cache(meta["num"], meta["version"])
     if perime:
         return None
     reader = PdfReader(str(chemin))
