@@ -1,0 +1,5666 @@
+[
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ua",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 13,
+  "article": "U 10.2",
+  "citation": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.",
+  "valeur": {
+   "m": 15.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ua",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 13,
+  "article": "U 10.2",
+  "citation": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.",
+  "valeur": {
+   "m": 12.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ua",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 18,
+  "article": "U 13.1",
+  "citation": "Le terrain doit être traité en espace libre et perméable comprenant des plantations et devant recevoir un traitement paysager sur au moins : En zone Ua : 15% de la superficie totale de l'unité foncière",
+  "valeur": {
+   "pct": 15.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Uc3",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 18,
+  "article": "U 13.1",
+  "citation": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière",
+  "valeur": {
+   "pct": 40.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ud",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 12,
+  "article": "U 10.2",
+  "citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+  "valeur": {
+   "m": 10.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ud",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 12,
+  "article": "U 10.2",
+  "citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+  "valeur": {
+   "m": 7.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ud",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 18,
+  "article": "U 13.1",
+  "citation": "En zone Ud : 40% de la superficie totale de l'unité foncière",
+  "valeur": {
+   "pct": 40.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ud1",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 12,
+  "article": "U 10.2",
+  "citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+  "valeur": {
+   "m": 10.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ud1",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 12,
+  "article": "U 10.2",
+  "citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+  "valeur": {
+   "m": 7.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ud1",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 18,
+  "article": "U 13.1",
+  "citation": "En zone Ud : 40% de la superficie totale de l'unité foncière",
+  "valeur": {
+   "pct": 40.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ud2",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 12,
+  "article": "U 10.2",
+  "citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.",
+  "valeur": {
+   "m": 9.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ud2",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 12,
+  "article": "U 10.2",
+  "citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.",
+  "valeur": {
+   "m": 6.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ud2",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 18,
+  "article": "U 13.1",
+  "citation": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière",
+  "valeur": {
+   "pct": 40.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ud3",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 12,
+  "article": "U 10.2",
+  "citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.",
+  "valeur": {
+   "m": 9.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ud3",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 12,
+  "article": "U 10.2",
+  "citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage.",
+  "valeur": {
+   "m": 6.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "Ud3",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 18,
+  "article": "U 13.1",
+  "citation": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière",
+  "valeur": {
+   "pct": 40.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "AUa",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 13,
+  "article": "U 10.2",
+  "citation": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.",
+  "valeur": {
+   "m": 15.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "AUa",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 13,
+  "article": "U 10.2",
+  "citation": "en zones Ua et Ub : - 12 mètres à l'égout du toit ou au sommet de l'acrotère ; - 15 mètres au faitage.",
+  "valeur": {
+   "m": 12.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "AUa",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 18,
+  "article": "U 13.1",
+  "citation": "En zone Ua : 15% de la superficie totale de l'unité foncière",
+  "valeur": {
+   "pct": 15.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "AUc",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 12,
+  "article": "U 10.2",
+  "citation": "en zone Uc et secteur Ub2 : - 8 mètres à l'égout du toit ou au sommet de l'acrotère ; - 11 mètres au faitage.",
+  "valeur": {
+   "m": 11.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "AUc",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 12,
+  "article": "U 10.2",
+  "citation": "en zone Uc et secteur Ub2 : - 8 mètres à l'égout du toit ou au sommet de l'acrotère ; - 11 mètres au faitage.",
+  "valeur": {
+   "m": 8.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "AUd",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 12,
+  "article": "U 10.2",
+  "citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+  "valeur": {
+   "m": 10.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "AUd",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 12,
+  "article": "U 10.2",
+  "citation": "en zone Ud et secteur Ub3 : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ; - 10 mètres au faitage.",
+  "valeur": {
+   "m": 7.0
+  }
+ },
+ {
+  "insee": "97401",
+  "fichier": "97401_les_avirons.yaml",
+  "zone": "AUd",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 18,
+  "article": "U 13.1",
+  "citation": "En zone Ud : 40% de la superficie totale de l'unité foncière",
+  "valeur": {
+   "pct": 40.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "Ua",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 17,
+  "article": "UA 7.2-7.3",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 5.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "Ub",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 31,
+  "article": "UB 10.2",
+  "citation": "La hauteur maximale des constructions est fixée à : - 8 mètres à l’égout du toit ou au sommet de l’acrotère, - 11 mètres au faîtage,",
+  "valeur": {
+   "m": 11.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "Ub",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 31,
+  "article": "UB 10.2",
+  "citation": "La hauteur maximale des constructions est fixée à : - 8 mètres à l’égout du toit ou au sommet de l’acrotère, - 11 mètres au faîtage,",
+  "valeur": {
+   "m": 8.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "Ub",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 30,
+  "article": "UB 7.2-7.3",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "Uba",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 11 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 31,
+  "article": "UB 10.2",
+  "citation": "A l’exception du secteur Uba, pour les projets d’aménagement dont la superficie du terrain d’assiette est au moins égale à 2 000 m², les constructions peuvent avoir une hauteur maximale de 10 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.",
+  "valeur": {
+   "m": 11.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "Uba",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 31,
+  "article": "UB 10.2",
+  "citation": "A l’exception du secteur Uba, pour les projets d’aménagement dont la superficie du terrain d’assiette est au moins égale à 2 000 m², les constructions peuvent avoir une hauteur maximale de 10 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.",
+  "valeur": {
+   "m": 8.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "Uba",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 30,
+  "article": "UB 7.2",
+  "citation": "En secteur Uba, les constructions peuvent être implantées sur une seule limite latérale ou en retrait.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "Uc",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 44,
+  "article": "UC 7.2-7.3",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "Ud",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 57,
+  "article": "UD 7.2-7.3",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 3.5
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "Udu",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 57,
+  "article": "UD 7.2-7.3",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 3.5
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "1AUa",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 17,
+  "article": "UA 7.2-7.3",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 5.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "1AUb",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 31,
+  "article": "UB 10.2",
+  "citation": "La hauteur maximale des constructions est fixée à : - 8 mètres à l’égout du toit ou au sommet de l’acrotère, - 11 mètres au faîtage,",
+  "valeur": {
+   "m": 11.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "1AUb",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 31,
+  "article": "UB 10.2",
+  "citation": "La hauteur maximale des constructions est fixée à : - 8 mètres à l’égout du toit ou au sommet de l’acrotère, - 11 mètres au faîtage,",
+  "valeur": {
+   "m": 8.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "1AUb",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 30,
+  "article": "UB 7.2-7.3",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "1AUc",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 44,
+  "article": "UC 7.2-7.3",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "1AUd",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 57,
+  "article": "UD 7.2-7.3",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 3.5
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "1AUec",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 9 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 17,
+  "article": "UA 7.2-7.3",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 9.0
+  }
+ },
+ {
+  "insee": "97402",
+  "fichier": "97402_bras_panon.yaml",
+  "zone": "1AUt",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 17,
+  "article": "UA 7.2-7.3",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 5.0
+  }
+ },
+ {
+  "insee": "97403",
+  "fichier": "97403_entre_deux.yaml",
+  "zone": "Ua",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 21,
+  "article": "U7.2",
+  "citation": "En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : ... - 11 mètres au faitage.",
+  "valeur": {
+   "m": 11.0
+  }
+ },
+ {
+  "insee": "97403",
+  "fichier": "97403_entre_deux.yaml",
+  "zone": "Ua",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 21,
+  "article": "U7.2",
+  "citation": "En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère ;",
+  "valeur": {
+   "m": 7.0
+  }
+ },
+ {
+  "insee": "97403",
+  "fichier": "97403_entre_deux.yaml",
+  "zone": "AUb",
+  "chemin": "hauteur.faitage",
+  "famille": "C",
+  "raison": "citation INTROUVABLE à la re-lecture du PDF",
+  "page_pdf": 29,
+  "article": "U7.2",
+  "citation": "INTROUVABLE",
+  "valeur": {
+   "m": 13.0
+  }
+ },
+ {
+  "insee": "97403",
+  "fichier": "97403_entre_deux.yaml",
+  "zone": "AUb",
+  "chemin": "hauteur.egout",
+  "famille": "C",
+  "raison": "citation INTROUVABLE à la re-lecture du PDF",
+  "page_pdf": 29,
+  "article": "U7.2",
+  "citation": "INTROUVABLE",
+  "valeur": {
+   "m": 9.0
+  }
+ },
+ {
+  "insee": "97403",
+  "fichier": "97403_entre_deux.yaml",
+  "zone": "AUb",
+  "chemin": "retraits.voie",
+  "famille": "C",
+  "raison": "citation INTROUVABLE à la re-lecture du PDF",
+  "page_pdf": 19,
+  "article": "U3.2",
+  "citation": "INTROUVABLE",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97403",
+  "fichier": "97403_entre_deux.yaml",
+  "zone": "AUb",
+  "chemin": "retraits.limites_separatives",
+  "famille": "C",
+  "raison": "citation INTROUVABLE à la re-lecture du PDF",
+  "page_pdf": 20,
+  "article": "U4.2",
+  "citation": "INTROUVABLE",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97404",
+  "fichier": "97404_l_etang_sale.yaml",
+  "zone": "UA",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 22,
+  "article": "UA 2.7.3",
+  "citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2",
+  "valeur": {}
+ },
+ {
+  "insee": "97404",
+  "fichier": "97404_l_etang_sale.yaml",
+  "zone": "UB",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 33,
+  "article": "UB 2.7.3",
+  "citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2",
+  "valeur": {}
+ },
+ {
+  "insee": "97404",
+  "fichier": "97404_l_etang_sale.yaml",
+  "zone": "UBv",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 33,
+  "article": "UB 2.7.3",
+  "citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2",
+  "valeur": {}
+ },
+ {
+  "insee": "97404",
+  "fichier": "97404_l_etang_sale.yaml",
+  "zone": "UC",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 42,
+  "article": "UC 2.7.3",
+  "citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2",
+  "valeur": {}
+ },
+ {
+  "insee": "97404",
+  "fichier": "97404_l_etang_sale.yaml",
+  "zone": "UD",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 51,
+  "article": "UD 2.7.3",
+  "citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2",
+  "valeur": {}
+ },
+ {
+  "insee": "97404",
+  "fichier": "97404_l_etang_sale.yaml",
+  "zone": "AUa",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 76,
+  "article": "AU 2.4",
+  "citation": "Le pourcentage maximale de l'emprise au sol cumulée de l'ensemble des constructions est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en zone AUt",
+  "valeur": {
+   "pct": 70.0
+  }
+ },
+ {
+  "insee": "97404",
+  "fichier": "97404_l_etang_sale.yaml",
+  "zone": "AUa",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 84,
+  "article": "AU 2.7",
+  "citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2",
+  "valeur": {}
+ },
+ {
+  "insee": "97404",
+  "fichier": "97404_l_etang_sale.yaml",
+  "zone": "AUb",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 76,
+  "article": "AU 2.4",
+  "citation": "Le pourcentage maximale de l'emprise au sol cumulée de l'ensemble des constructions est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en zone AUt",
+  "valeur": {
+   "pct": 65.0
+  }
+ },
+ {
+  "insee": "97404",
+  "fichier": "97404_l_etang_sale.yaml",
+  "zone": "AUb",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 84,
+  "article": "AU 2.7",
+  "citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2",
+  "valeur": {}
+ },
+ {
+  "insee": "97404",
+  "fichier": "97404_l_etang_sale.yaml",
+  "zone": "AUc",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 76,
+  "article": "AU 2.4",
+  "citation": "Le pourcentage maximale de l'emprise au sol cumulée de l'ensemble des constructions est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en zone AUt",
+  "valeur": {
+   "pct": 60.0
+  }
+ },
+ {
+  "insee": "97404",
+  "fichier": "97404_l_etang_sale.yaml",
+  "zone": "AUc",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 84,
+  "article": "AU 2.7",
+  "citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2",
+  "valeur": {}
+ },
+ {
+  "insee": "97404",
+  "fichier": "97404_l_etang_sale.yaml",
+  "zone": "AUt",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 76,
+  "article": "AU 2.4",
+  "citation": "Le pourcentage maximale de l'emprise au sol cumulée de l'ensemble des constructions est fixé à : - 70% en zone AUa - 65% en zone AUb - 60% en zone AUc - 75% en zone AUe - 65% en zone AUt",
+  "valeur": {
+   "pct": 65.0
+  }
+ },
+ {
+  "insee": "97405",
+  "fichier": "97405_petite_ile.yaml",
+  "zone": "UZ",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 83,
+  "article": "UZ.6",
+  "citation": "Les constructions pourront être implantées soit à l'alignement soit en retrait des voies publiques.",
+  "valeur": {
+   "min_m": 0.0
+  }
+ },
+ {
+  "insee": "97405",
+  "fichier": "97405_petite_ile.yaml",
+  "zone": "UZ",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 83,
+  "article": "UZ.7",
+  "citation": "Les constructions pourront s'implanter soit en limite séparative soit en retrait.",
+  "valeur": {
+   "min_m": 0.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "Ua",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur 15 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 27,
+  "article": "Ua 11.1",
+  "citation": "Dans le cadre de tout projet, au minimum 30% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).",
+  "valeur": {
+   "pct": 15.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "Uc",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur 10 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 58,
+  "article": "Uc 11.1",
+  "citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).",
+  "valeur": {
+   "pct": 10.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "Uca",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur 10 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 58,
+  "article": "Uc 11.1",
+  "citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).",
+  "valeur": {
+   "pct": 10.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "Ud",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 68,
+  "article": "Ud 5",
+  "citation": "Les constructions doivent être implantées en limite séparative et/ou suivant l’alignement des constructions limitrophes existantes.",
+  "valeur": {
+   "min_m": 0.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "Us",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur 10 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 125,
+  "article": "Us 11.1",
+  "citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).",
+  "valeur": {
+   "pct": 10.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUa",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 9 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Ua 8",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "m": 9.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUa",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 9 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Ua 8",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "m": 9.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUa",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 60 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Ua 7",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "pct": 60.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUa",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 146,
+  "article": "Ua 4",
+  "citation": "En zone 1AUa : un retrait minimal de 45 mètres doit être observé par rapport à l'axe de la RN4a ;",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUa",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Ua 5",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUa",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur 15 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Ua 11.1",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "pct": 15.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUc",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 16 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Uc 8",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "m": 16.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUc",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 16 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Uc 8",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "m": 16.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUc",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 80 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Uc 7",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "pct": 80.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUc",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Uc 4",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUc",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Uc 5",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUc",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur 10 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Uc 11.1",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "pct": 10.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUem",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 18 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Ue 8",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "m": 18.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUem",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 60 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Ue 7",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "pct": 60.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUem",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Ue 4",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "min_m": 5.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUem",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Ue 5",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "min_m": 5.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUem",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur 20 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Ue 11.1",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "pct": 20.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUm",
+  "chemin": "retraits.voie",
+  "famille": "A",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 146,
+  "article": "1AU 4",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent. [Aucun recul général propre à 1AUm ; 1AUmut = 5 m, 1AUs = 25 m/RN7, 1AUa = 45 m/RN4a]",
+  "valeur": {}
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUm",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur 10 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 150,
+  "article": "1AU 11.1",
+  "citation": "Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine terre plantées avec 3 strates (couvrante, arbustive et arborée).",
+  "valeur": {
+   "pct": 10.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUs",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 18 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Us 8",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "m": 18.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUs",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 60 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Us 7",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "pct": 60.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUs",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Us 5",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "min_m": 5.0
+  }
+ },
+ {
+  "insee": "97407",
+  "fichier": "97407_le_port.yaml",
+  "zone": "1AUs",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur 10 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 145,
+  "article": "Us 11.1",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement et de Programmation lorsqu’elles existent.",
+  "valeur": {
+   "pct": 10.0
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UA",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 15,
+  "article": "UA 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 8.0
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UAa",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 4.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 15,
+  "article": "UA 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 4.5
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UAm",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 14,
+  "article": "UA 6.2",
+  "citation": "Dans le secteur UAm, les constructions peuvent être implantées à l’alignement ou en recul de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à la hauteur du bâtiment. Pour les constructions implantées le long de la RN1E (rue Mahatma Gandhi), la distance de recul par rapport à la voie doit être au moins égale à 10 mètres.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UAm",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 15,
+  "article": "UA 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UAm",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 22,
+  "article": "UA 13.1",
+  "citation": "Dans le secteur UAm, au minimum 25% de la superficie totale de l’unité foncière doit être traité en espace perméable planté en pleine terre comprenant au minimum trois strates, arborescente, arbustive et herbacée.",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UApsfr2",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 16,
+  "article": "UA 10.2",
+  "citation": "Dans le secteur UApsfr2, la hauteur maximale des constructions est fixée à 12 mètres.",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UApsfr2",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 16,
+  "article": "UA 10.2",
+  "citation": "Dans le secteur UApsfr2, la hauteur maximale des constructions est fixée à 12 mètres.",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UApsfr2",
+  "chemin": "retraits.limites_separatives",
+  "famille": "A",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 15,
+  "article": "UA 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UAv",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 17,
+  "article": "UA 10.2",
+  "citation": "Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel de la manière suivante : Ilots 1/3B3 15 m ; Ilot 2 12 m ; Ilot 3A 9 m ; Ilots 3B1/3B2 9 m ; Ilot 9 25 m ; Ilot 10A 19 m ; Ilot 10B 16 m ; Ilots 10C/11D 10 m ; Ilot 11A 22 m ; Ilot 11B 10 m ; Ilot 11C 13 m.",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UAv",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 17,
+  "article": "UA 10.2",
+  "citation": "Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel de la manière suivante : Ilot / Hauteur maximale autorisée [...] Ilots 1/3B3 15 mètres ; Ilot 2 12 mètres ; Ilot 3A 9 mètres ; Ilots 3B1/3B2 9 mètres ; Ilot 9 25 mètres ; Ilot 10A 19 mètres ; Ilot 10B 16 mètres ; Ilots 10C/11D 10 mètres ; Ilot 11A 22 mètres ; Ilot 11B 10 mètres ; Ilot 11C 13 mètres.",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UAv",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 21,
+  "article": "UA 12.2",
+  "citation": "Dans le secteur UAv, en plus des places de stationnement obligatoires pour les personnes à mobilité réduite [...] les normes de stationnement sont les suivantes : [...] Autres logements > à 50 m² de SDP | 2 places minimum par logement",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UAv",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 22,
+  "article": "UA 13.1",
+  "citation": "A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité foncière...",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UB",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 4.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 30,
+  "article": "UB 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 4.5
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UBa",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 30,
+  "article": "UB 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 3.5
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UBb",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 30,
+  "article": "UB 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 3.5
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UBc",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 30,
+  "article": "UB 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 3.5
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UBpsfr2",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 4.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 30,
+  "article": "UB 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 4.5
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UBpszc",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 30,
+  "article": "UB 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 3.5
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UE",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "UE 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UE",
+  "chemin": "pleine_terre.pct",
+  "famille": "A",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 45,
+  "article": "UE 13",
+  "citation": "Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace libre dont au moins la moitié en espace perméable.",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UEm",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 50,
+  "article": "UEm 7",
+  "citation": "Les constructions doivent être implantées en retrait des limites séparatives avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UEm",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 54,
+  "article": "UEm 12",
+  "citation": "Logements > à 50 m² de SDP | 2 places minimum par logement",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UT",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 60,
+  "article": "UT 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 5.0
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "UTfr2",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 60,
+  "article": "UT 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 5.0
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "AUBm",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 75,
+  "article": "AUBm 10.2",
+  "citation": "La hauteur maximale des constructions est fixée à R+3.",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "AUBm",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 75,
+  "article": "AUBm 10.2",
+  "citation": "La hauteur maximale des constructions est fixée à R+3.",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "AUAv",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 17,
+  "article": "UA 10.2",
+  "citation": "Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel de la manière suivante : Ilots 1/3B3 15 m ; Ilot 2 12 m ; Ilot 3A 9 m ; Ilots 3B1/3B2 9 m ; Ilot 9 25 m ; Ilot 10A 19 m ; Ilot 10B 16 m ; Ilots 10C/11D 10 m ; Ilot 11A 22 m ; Ilot 11B 10 m ; Ilot 11C 13 m.",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "AUAv",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 17,
+  "article": "UA 10.2",
+  "citation": "Dans le secteur UAv, la hauteur maximale autorisée au faitage est définie par îlot opérationnel de la manière suivante : Ilots 1/3B3 15 m ; Ilot 2 12 m ; Ilot 3A 9 m ; Ilots 3B1/3B2 9 m ; Ilot 9 25 m ; Ilot 10A 19 m ; Ilot 10B 16 m ; Ilots 10C/11D 10 m ; Ilot 11A 22 m ; Ilot 11B 10 m ; Ilot 11C 13 m.",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "AUAv",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 21,
+  "article": "UA 12.2",
+  "citation": "Dans le secteur UAv, [...] les normes de stationnement sont les suivantes : [...] Autres logements > à 50 m² de SDP | 2 places minimum par logement",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "AUAv",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 22,
+  "article": "UA 13.1",
+  "citation": "A l’exception des secteurs UAm et UAv, au minimum 35% de la superficie totale de l’unité foncière...",
+  "valeur": {}
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "AUB",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 4.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 30,
+  "article": "UB 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 4.5
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "AUBb",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 30,
+  "article": "UB 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 3.5
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "AUBpsfr2",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 4.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 30,
+  "article": "UB 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 4.5
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "AUT",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 60,
+  "article": "UT 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur au faitage de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 5.0
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "AUEm",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 50,
+  "article": "UEm 7",
+  "citation": "Les constructions doivent être implantées en retrait des limites séparatives avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97408",
+  "fichier": "97408_la_possession.yaml",
+  "zone": "AUEm",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 54,
+  "article": "UEm 12",
+  "citation": "Logements > à 50 m² de SDP | 2 places minimum par logement",
+  "valeur": {}
+ },
+ {
+  "insee": "97409",
+  "fichier": "97409_saint_andre.yaml",
+  "zone": "UA",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable (\"1 place min par logement (locatif aide, <50m2, ou <500m d'une gare routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)\")",
+  "page_pdf": 20,
+  "article": "UA 12.2",
+  "citation": "1 place de stationnement minimum par logement locatifs finances par un pret aide de l'Etat ; 1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ; 1 place de stationnement minimum par logement situe a moins de 500m d'une gare routiere ; 1,5 places de stationnement minimum par logement d'une surface de plancher superieure ou egale a 50m2, arrondi a l'entier inferieur.",
+  "valeur": {}
+ },
+ {
+  "insee": "97409",
+  "fichier": "97409_saint_andre.yaml",
+  "zone": "UB",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable (\"1 place min par logement (locatif aide, <50m2, ou <500m d'une gare routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)\")",
+  "page_pdf": 31,
+  "article": "UB 12.2",
+  "citation": "1 place de stationnement minimum par logement locatifs finances par un pret aide de l'Etat ; 1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ; 1 place de stationnement minimum par logement situe a moins de 500m d'une gare routiere ; 1,5 places de stationnement minimum par logement d'une surface de plancher superieure ou egale a 50m2, arrondi a l'entier inferieur.",
+  "valeur": {}
+ },
+ {
+  "insee": "97409",
+  "fichier": "97409_saint_andre.yaml",
+  "zone": "UC",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable (\"1 place min par logement (locatif aide, <50m2, ou <500m d'une gare routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)\")",
+  "page_pdf": 42,
+  "article": "UC 12.2",
+  "citation": "1 place de stationnement minimum par logement locatifs finances par un pret aide de l'Etat ; 1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ; 1 place de stationnement minimum par logement situe a moins de 500m d'une gare routiere ; 1,5 places de stationnement minimum par logement d'une surface de plancher superieure ou egale a 50m2, arrondi a l'entier inferieur.",
+  "valeur": {}
+ },
+ {
+  "insee": "97409",
+  "fichier": "97409_saint_andre.yaml",
+  "zone": "UD",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable (\"1 place min par logement (locatif aide, <50m2, ou <500m d'une gare routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)\")",
+  "page_pdf": 53,
+  "article": "UD 12.2",
+  "citation": "1 place de stationnement minimum par logement locatifs finances par un pret aide de l'Etat ; 1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ; 1 place de stationnement minimum par logement situe a moins de 500m d'une gare routiere ; 1,5 places de stationnement minimum par logement d'une surface de plancher superieure ou egale a 50m2, arrondi a l'entier inferieur.",
+  "valeur": {}
+ },
+ {
+  "insee": "97409",
+  "fichier": "97409_saint_andre.yaml",
+  "zone": "UE",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable (\"Non reglemente pour l'habitation (normes UE 12.2 = commerces/bureaux, artisanat/industrie, entrepots, equipements ; pas de norme logement)\")",
+  "page_pdf": 65,
+  "article": "UE 12.2",
+  "citation": "1. Pour les constructions a destination de commerces et bureaux : ... 2. Pour les constructions a destination d'activites artisanales ou industrielles : ... 3. Pour les constructions a usage d'entrepot sans activite commerciale : 1 place de stationnement minimum pour 2 emplois. 4. Pour les constructions et installations d'interet collectif : ...",
+  "valeur": {}
+ },
+ {
+  "insee": "97409",
+  "fichier": "97409_saint_andre.yaml",
+  "zone": "US",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable ('1 place min par logement')",
+  "page_pdf": 76,
+  "article": "US 12.2",
+  "citation": "1. Pour les constructions a destination d'habitation autorisees dans la zone : 1 place de stationnement minimum par logement.",
+  "valeur": {}
+ },
+ {
+  "insee": "97409",
+  "fichier": "97409_saint_andre.yaml",
+  "zone": "UT",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable ('1 place min par logement')",
+  "page_pdf": 85,
+  "article": "UT 12.2",
+  "citation": "1. Pour les constructions a destination d'habitation autorisees dans la zone : 1 place de stationnement minimum par logement.",
+  "valeur": {}
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ua",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "attribution douteuse (secteur None)",
+  "page_pdf": 10,
+  "article": "U 5",
+  "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+  "valeur": {
+   "pct": 80.0
+  }
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ua",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "attribution douteuse (secteur None)",
+  "page_pdf": 10,
+  "article": "U 6",
+  "citation": "L'implantation par rapport aux voies publiques ou privées n'est pas réglementée, sauf dans les cas suivants : 1° Les constructions nouvelles doivent être implantées avec un recul minimum de : - 7 mètres par rapport à l'axe de la rue George Pompidou ; - 5 mètres par rapport à l'axe des rues Monfleury et Louis Brunet. [...] 2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+  "valeur": {}
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ua",
+  "chemin": "retraits.limites_separatives",
+  "famille": "A",
+  "raison": "valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')",
+  "page_pdf": 11,
+  "article": "U 7",
+  "citation": "Les bâtiments doivent être implantés : 1° Soit sur l'une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d'un mètre au moins.",
+  "valeur": {}
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ua",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (secteur None)",
+  "page_pdf": 13,
+  "article": "U 9",
+  "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+  "valeur": {
+   "pct": 20.0
+  }
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ub",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "attribution douteuse (secteur None)",
+  "page_pdf": 10,
+  "article": "U 5",
+  "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+  "valeur": {
+   "pct": 80.0
+  }
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ub",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('75 m axe RN hors agglomération (rues Pompidou/Montfleury/Brunet non concernées en Ub)')",
+  "page_pdf": 11,
+  "article": "U 6",
+  "citation": "L'implantation par rapport aux voies publiques ou privées n'est pas réglementée, sauf dans les cas suivants : [...] 2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+  "valeur": {}
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ub",
+  "chemin": "retraits.limites_separatives",
+  "famille": "A",
+  "raison": "valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')",
+  "page_pdf": 11,
+  "article": "U 7",
+  "citation": "Les bâtiments doivent être implantés : 1° Soit sur l'une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d'un mètre au moins.",
+  "valeur": {}
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ub",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (secteur None)",
+  "page_pdf": 13,
+  "article": "U 9",
+  "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+  "valeur": {
+   "pct": 20.0
+  }
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ue",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "attribution douteuse (secteur None)",
+  "page_pdf": 10,
+  "article": "U 5",
+  "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+  "valeur": {
+   "pct": 80.0
+  }
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ue",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('75 m axe RN hors agglomération')",
+  "page_pdf": 11,
+  "article": "U 6",
+  "citation": "2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+  "valeur": {}
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ue",
+  "chemin": "retraits.limites_separatives",
+  "famille": "A",
+  "raison": "valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')",
+  "page_pdf": 11,
+  "article": "U 7",
+  "citation": "Les bâtiments doivent être implantés : 1° Soit sur l'une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d'un mètre au moins.",
+  "valeur": {}
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ue",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (secteur None)",
+  "page_pdf": 13,
+  "article": "U 9",
+  "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+  "valeur": {
+   "pct": 20.0
+  }
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Up",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "attribution douteuse (secteur None)",
+  "page_pdf": 10,
+  "article": "U 5",
+  "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+  "valeur": {
+   "pct": 80.0
+  }
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Up",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('75 m axe RN hors agglomération')",
+  "page_pdf": 11,
+  "article": "U 6",
+  "citation": "2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+  "valeur": {}
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Up",
+  "chemin": "retraits.limites_separatives",
+  "famille": "A",
+  "raison": "valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')",
+  "page_pdf": 11,
+  "article": "U 7",
+  "citation": "Les bâtiments doivent être implantés : 1° Soit sur l'une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d'un mètre au moins.",
+  "valeur": {}
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Up",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (secteur None)",
+  "page_pdf": 13,
+  "article": "U 9",
+  "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+  "valeur": {
+   "pct": 20.0
+  }
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ut",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "attribution douteuse (secteur None)",
+  "page_pdf": 10,
+  "article": "U 5",
+  "citation": "L'emprise au sol des constructions ne peut excéder 80 % du terrain.",
+  "valeur": {
+   "pct": 80.0
+  }
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ut",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('75 m axe RN hors agglomération')",
+  "page_pdf": 11,
+  "article": "U 6",
+  "citation": "2° Hors agglomération, les constructions doivent être implantées avec un recul minimum de 75 mètres par rapport à l'axe des routes nationales.",
+  "valeur": {}
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ut",
+  "chemin": "retraits.limites_separatives",
+  "famille": "A",
+  "raison": "valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')",
+  "page_pdf": 11,
+  "article": "U 7",
+  "citation": "Les bâtiments doivent être implantés : 1° Soit sur l'une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d'un mètre au moins.",
+  "valeur": {}
+ },
+ {
+  "insee": "97410",
+  "fichier": "97410_saint_benoit.yaml",
+  "zone": "Ut",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (secteur None)",
+  "page_pdf": 13,
+  "article": "U 9",
+  "citation": "Le pourcentage d'espaces libres doit correspondre à un minimum de 20% de la superficie totale du terrain, qui doit être traités en surface perméable.",
+  "valeur": {
+   "pct": 20.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "U1",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 18,
+  "article": "U1 6.2",
+  "citation": "Les constructions doivent être implantées à l’alignement de la voie ou de l’emprise publique.",
+  "valeur": {
+   "min_m": 0.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "U2",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 33,
+  "article": "U2 7.2",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+  "valeur": {
+   "min_m": 5.5
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "U2a",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 33,
+  "article": "U2 7.2",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+  "valeur": {
+   "min_m": 5.5
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "U2a",
+  "chemin": "stationnement.par_logement",
+  "famille": "B",
+  "raison": "valeur 1 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 39,
+  "article": "U2 12.2",
+  "citation": "- dans le secteur U2a, ce seuil est porté à 2 places de stationnement minimum par logement",
+  "valeur": {
+   "places": 1.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "U3",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 49,
+  "article": "U3 7.2",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+  "valeur": {
+   "min_m": 5.5
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "U3a",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 49,
+  "article": "U3 7.2",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "U3ar",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 49,
+  "article": "U3 7.2",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "U4",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 63,
+  "article": "U4 7.2",
+  "citation": "En cas de retrait de la construction, la distance (D) comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 1,9 mètre.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "U5",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 78,
+  "article": "U5 7.2",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+  "valeur": {
+   "min_m": 3.5
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "U5cv",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 78,
+  "article": "U5 7.2",
+  "citation": "Dans les secteurs U5cv et U5cvd, les constructions peuvent être implantées sur deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+  "valeur": {
+   "min_m": 3.5
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "U5ma",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 78,
+  "article": "U5 7.2",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+  "valeur": {
+   "min_m": 3.5
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "U6",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 93,
+  "article": "U6 7.2",
+  "citation": "En cas de retrait de la construction, la distance (D) comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "U6c",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 7.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 93,
+  "article": "U6 7.2",
+  "citation": "En cas de retrait de la construction, la distance (D) comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+  "valeur": {
+   "min_m": 7.5
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU3",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 13 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U3 10.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "m": 13.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU3",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 11 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U3 10.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "m": 11.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU3",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 70 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U3 9.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "pct": 70.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU3",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U3 6.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU3",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U3 7.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "min_m": 5.5
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU3",
+  "chemin": "stationnement.par_logement",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 108,
+  "article": "U3 12.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU3",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 108,
+  "article": "U3 13.1",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "pct": 15.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU3a",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 9 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U3 10.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "m": 9.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU3a",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U3 10.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "m": 8.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU3a",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 70 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U3 9.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "pct": 70.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU3a",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U3 6.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU3a",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U3 7.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU3a",
+  "chemin": "stationnement.par_logement",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 108,
+  "article": "U3 12.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU3a",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 108,
+  "article": "U3 13.1",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "pct": 25.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 9 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 10.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "m": 9.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 7 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 10.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "m": 7.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 50 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 9.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "pct": 50.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 6.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 7.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "min_m": 3.5
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5",
+  "chemin": "stationnement.par_logement",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 108,
+  "article": "U5 12.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 108,
+  "article": "U5 13.1",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "pct": 35.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5ru",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 10.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "m": 8.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5ru",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 10.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "m": 6.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5ru",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 40 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 9.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "pct": 40.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5ru",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 6.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5ru",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 7.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5ru",
+  "chemin": "stationnement.par_logement",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 108,
+  "article": "U5 12.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5ru",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 108,
+  "article": "U5 13.1",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "pct": 35.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5vi",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 10.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "m": 8.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5vi",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 10.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "m": 6.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5vi",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 40 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 9.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "pct": 40.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5vi",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 6.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5vi",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U5 7.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5vi",
+  "chemin": "stationnement.par_logement",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 108,
+  "article": "U5 12.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU5vi",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 108,
+  "article": "U5 13.1",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "pct": 35.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU6",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 15 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U6 10.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "m": 15.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU6",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 12 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U6 10.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "m": 12.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU6",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 50 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U6 9.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "pct": 50.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU6",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U6 6.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU6",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U6 7.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU6",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 108,
+  "article": "U6 13.1",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "pct": 15.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU6c",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 18 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U6 10.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "m": 18.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU6c",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 15 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U6 10.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "m": 15.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU6c",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 50 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U6 9.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "pct": 50.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU6c",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U6 6.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU6c",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 7.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 107,
+  "article": "U6 7.2",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "min_m": 7.5
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AU6c",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 108,
+  "article": "U6 13.1",
+  "citation": "Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation.",
+  "valeur": {
+   "pct": 15.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AUto",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 110,
+  "article": "Art. AUindicée 10",
+  "citation": "Pour les zones AUto, la hauteur maximale des constructions ne peut excéder : - 6 mètres à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faîtage.",
+  "valeur": {
+   "m": 9.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AUto",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 110,
+  "article": "Art. AUindicée 10",
+  "citation": "Pour les zones AUto, la hauteur maximale des constructions ne peut excéder : - 6 mètres à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faîtage.",
+  "valeur": {
+   "m": 6.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AUto",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 109,
+  "article": "Art. AUindicée 6",
+  "citation": "Pour les zones AUto, les constructions doivent être implantées en retrait de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.",
+  "valeur": {}
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AUto",
+  "chemin": "retraits.limites_separatives",
+  "famille": "A",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 109,
+  "article": "Art. AUindicée 7",
+  "citation": "Pour les zones AUto, les constructions doivent être implantées en retrait avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+  "valeur": {}
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AUto",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 108,
+  "article": "Art. AUindicée 13",
+  "citation": "Pour les zones AUto, il convient de se reporter au règlement de la zone U5.",
+  "valeur": {}
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AUtok",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 110,
+  "article": "Art. AUindicée 10",
+  "citation": "En secteur AUtok, la hauteur des constructions de type industrie ne peut excéder : - 9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faîtage.",
+  "valeur": {
+   "m": 12.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AUtok",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 110,
+  "article": "Art. AUindicée 10",
+  "citation": "En secteur AUtok, la hauteur des constructions de type industrie ne peut excéder : - 9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faîtage.",
+  "valeur": {
+   "m": 9.0
+  }
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AUtok",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 109,
+  "article": "Art. AUindicée 6",
+  "citation": "Pour les zones AUto, les constructions doivent être implantées en retrait de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.",
+  "valeur": {}
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AUtok",
+  "chemin": "retraits.limites_separatives",
+  "famille": "A",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 109,
+  "article": "Art. AUindicée 7",
+  "citation": "Pour les zones AUto, les constructions doivent être implantées en retrait avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.",
+  "valeur": {}
+ },
+ {
+  "insee": "97412",
+  "fichier": "97412_saint_joseph.yaml",
+  "zone": "1AUtok",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 108,
+  "article": "Art. AUindicée 13",
+  "citation": "Pour les zones AUto, il convient de se reporter au règlement de la zone U5.",
+  "valeur": {}
+ },
+ {
+  "insee": "97413",
+  "fichier": "97413_saint_leu.yaml",
+  "zone": "UA",
+  "chemin": "stationnement.par_logement",
+  "famille": "C",
+  "raison": "citation non retrouvée (recouvrement 44%)",
+  "page_pdf": 13,
+  "article": "UA 12 renvoi Art. 11 dispositions générales",
+  "citation": "12.2 - Normes de stationnement Cf. dispositions générales du présent règlement. [Art.11] HABITAT COLLECTIF - chambre individuelle 0,5 place par chambre, - studio et 2 pièces 1 place par logement, - 3 et 5 pièces 1,5 place par logement, - 6 pièces et plus 2 places par logement. HABITAT INDIVIDUEL 2 places par logement",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97413",
+  "fichier": "97413_saint_leu.yaml",
+  "zone": "UB",
+  "chemin": "stationnement.par_logement",
+  "famille": "C",
+  "raison": "citation non retrouvée (recouvrement 33%)",
+  "page_pdf": 10,
+  "article": "UB 12 renvoi Art. 11 dispositions générales",
+  "citation": "12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97413",
+  "fichier": "97413_saint_leu.yaml",
+  "zone": "UC",
+  "chemin": "stationnement.par_logement",
+  "famille": "C",
+  "raison": "citation non retrouvée (recouvrement 33%)",
+  "page_pdf": 10,
+  "article": "UC 12 renvoi Art. 11 dispositions générales",
+  "citation": "12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97413",
+  "fichier": "97413_saint_leu.yaml",
+  "zone": "UD",
+  "chemin": "stationnement.par_logement",
+  "famille": "C",
+  "raison": "citation non retrouvée (recouvrement 33%)",
+  "page_pdf": 10,
+  "article": "UD 12 renvoi Art. 11 dispositions générales",
+  "citation": "12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97413",
+  "fichier": "97413_saint_leu.yaml",
+  "zone": "UE",
+  "chemin": "stationnement.par_logement",
+  "famille": "C",
+  "raison": "citation non retrouvée (recouvrement 33%)",
+  "page_pdf": 10,
+  "article": "UE 12 renvoi Art. 11 dispositions générales",
+  "citation": "12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97413",
+  "fichier": "97413_saint_leu.yaml",
+  "zone": "UF",
+  "chemin": "stationnement.par_logement",
+  "famille": "C",
+  "raison": "citation non retrouvée (recouvrement 33%)",
+  "page_pdf": 10,
+  "article": "UF 12 renvoi Art. 11 dispositions générales",
+  "citation": "12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97413",
+  "fichier": "97413_saint_leu.yaml",
+  "zone": "UP",
+  "chemin": "stationnement.par_logement",
+  "famille": "C",
+  "raison": "citation non retrouvée (recouvrement 33%)",
+  "page_pdf": 10,
+  "article": "UP 12 renvoi Art. 11 dispositions générales",
+  "citation": "12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "UA1",
+  "chemin": "hauteur.faitage",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.17 (recouvrement 29%)",
+  "page_pdf": 17,
+  "article": "UA 10.2",
+  "citation": "(...) 19 mètres au faîtage [zone UA, aucune règle propre au secteur UA1]",
+  "valeur": {
+   "m": 19.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "UC1",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 4.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 46,
+  "article": "UC 7.2/7.3",
+  "citation": "Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum à la moitié de la hauteur à l'égout du toit (ou au faîtage en l'absence d'égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2",
+  "valeur": {
+   "min_m": 4.5
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "UD1",
+  "chemin": "hauteur.faitage",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.59 (recouvrement 43%)",
+  "page_pdf": 59,
+  "article": "UD 10.2",
+  "citation": "(...) 10 mètres au faîtage [règle UD, aucune règle propre au secteur UD1]",
+  "valeur": {
+   "m": 10.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "UD1",
+  "chemin": "hauteur.egout",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.60 (recouvrement 44%)",
+  "page_pdf": 60,
+  "article": "UD 10.2",
+  "citation": "La hauteur maximale (...) 6 mètres à l'égout [règle UD, aucune règle propre au secteur UD1]",
+  "valeur": {
+   "m": 6.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "UE",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 73,
+  "article": "UE 6.2",
+  "citation": "Les constructions doivent être implantées en retrait de la voie, avec distance (D) (...) au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres.",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "UE",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 73,
+  "article": "UE 7.2",
+  "citation": "En cas de retrait de la construction, la distance (D) (...) au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "US",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 85,
+  "article": "US 6.2",
+  "citation": "Les constructions doivent être implantées en retrait de la voie, avec distance (D) (...) au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 5 mètres.",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "US",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 85,
+  "article": "US 7.2",
+  "citation": "En cas de retrait de la construction, la distance (D) (...) au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUa",
+  "chemin": "hauteur.faitage",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.19 (recouvrement 31%)",
+  "page_pdf": 19,
+  "article": "UA 10.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : La hauteur maximale des constructions est fixée à : (...) 19 mètres au faîtage,",
+  "valeur": {
+   "m": 19.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUa",
+  "chemin": "hauteur.egout",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.20 (recouvrement 47%)",
+  "page_pdf": 20,
+  "article": "UA 10.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : La hauteur maximale des constructions est fixée à : 15 mètres à l'égout du toit ou au sommet de l'acrotère,",
+  "valeur": {
+   "m": 15.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUa",
+  "chemin": "stationnement.par_logement",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.23 (recouvrement 41%)",
+  "page_pdf": 23,
+  "article": "UA 12.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UA : Habitations — Pour les autres constructions : 2 places de stationnement par logement",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUc",
+  "chemin": "hauteur.faitage",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.46 (recouvrement 25%)",
+  "page_pdf": 46,
+  "article": "UC 10.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : (...) 11 mètres au faîtage,",
+  "valeur": {
+   "m": 11.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUc",
+  "chemin": "hauteur.egout",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.49 (recouvrement 47%)",
+  "page_pdf": 49,
+  "article": "UC 10.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : La hauteur maximale des constructions est fixée à : 7 mètres à l'égout du toit ou au sommet de l'acrotère,",
+  "valeur": {
+   "m": 7.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUc",
+  "chemin": "retraits.limites_separatives",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.44 (recouvrement 44%)",
+  "page_pdf": 44,
+  "article": "UC 7.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUc",
+  "chemin": "stationnement.par_logement",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.52 (recouvrement 41%)",
+  "page_pdf": 52,
+  "article": "UC 12.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC : Habitations — Pour les autres constructions : 2 places de stationnement par logement",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUc1",
+  "chemin": "hauteur.faitage",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.49 (recouvrement 35%)",
+  "page_pdf": 49,
+  "article": "UC 10.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC1 : En secteur UC1, la hauteur maximale des constructions est fixée à (...) 13 mètres au faîtage,",
+  "valeur": {
+   "m": 13.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUc1",
+  "chemin": "emprise_sol.ces",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.48 (recouvrement 31%)",
+  "page_pdf": 48,
+  "article": "UC 9.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC1 : L'emprise au sol des constructions ne doit pas excéder 60% (...) [seul UC2 abaissé à 50%]",
+  "valeur": {
+   "pct": 60.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUc1",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 4.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 46,
+  "article": "UC 7.2/7.3",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC1 : Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum à la moitié de la hauteur à l'égout du toit (ou au faîtage en l'absence d'égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2",
+  "valeur": {
+   "min_m": 4.5
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUc1",
+  "chemin": "stationnement.par_logement",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.52 (recouvrement 41%)",
+  "page_pdf": 52,
+  "article": "UC 12.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC1 : Pour les autres constructions : 2 places de stationnement par logement [règle UC]",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUc1",
+  "chemin": "pleine_terre.pct",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.53 (recouvrement 25%)",
+  "page_pdf": 53,
+  "article": "UC 13.1",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC1 : Au minimum 25% de la superficie totale de l'unité foncière (...) [règle UC, aucune disposition propre au secteur]",
+  "valeur": {
+   "pct": 25.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUc2",
+  "chemin": "hauteur.faitage",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.49 (recouvrement 35%)",
+  "page_pdf": 49,
+  "article": "UC 10.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC2 : En secteur UC2, la hauteur maximale des constructions est fixée à (...) 10 mètres au faîtage.",
+  "valeur": {
+   "m": 10.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUc2",
+  "chemin": "emprise_sol.ces",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.48 (recouvrement 36%)",
+  "page_pdf": 48,
+  "article": "UC 9.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC2 : Dans le secteur UC2 ce seuil est limité à 50%.",
+  "valeur": {
+   "pct": 50.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUc2",
+  "chemin": "retraits.limites_separatives",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.44 (recouvrement 40%)",
+  "page_pdf": 44,
+  "article": "UC 7.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC2 : En cas de retrait de la construction, la distance (...) au moins égale 3 mètres. [règle UC ; secteur UC1 seul dérogé]",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUc2",
+  "chemin": "stationnement.par_logement",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.52 (recouvrement 41%)",
+  "page_pdf": 52,
+  "article": "UC 12.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC2 : Pour les autres constructions : 2 places de stationnement par logement [règle UC]",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUc2",
+  "chemin": "pleine_terre.pct",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.53 (recouvrement 31%)",
+  "page_pdf": 53,
+  "article": "UC 13.1",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UC2 : Au minimum 25% de la superficie totale de l'unité foncière (...) [règle UC]",
+  "valeur": {
+   "pct": 25.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUd",
+  "chemin": "hauteur.faitage",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.59 (recouvrement 25%)",
+  "page_pdf": 59,
+  "article": "UD 10.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD : (...) 10 mètres au faîtage.",
+  "valeur": {
+   "m": 10.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUd",
+  "chemin": "hauteur.egout",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.62 (recouvrement 47%)",
+  "page_pdf": 62,
+  "article": "UD 10.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD : La hauteur maximale des constructions est fixée à : 6 mètres à l'égout du toit ou au sommet de l'acrotère,",
+  "valeur": {
+   "m": 6.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUd",
+  "chemin": "stationnement.par_logement",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.66 (recouvrement 41%)",
+  "page_pdf": 66,
+  "article": "UD 12.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD : Habitations — Pour les autres constructions : 2 places de stationnement par logement",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUd1",
+  "chemin": "hauteur.faitage",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.59 (recouvrement 29%)",
+  "page_pdf": 59,
+  "article": "UD 10.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD1 : (...) 10 mètres au faîtage [règle UD, aucune règle propre au secteur UD1]",
+  "valeur": {
+   "m": 10.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUd1",
+  "chemin": "hauteur.egout",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.60 (recouvrement 32%)",
+  "page_pdf": 60,
+  "article": "UD 10.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD1 : La hauteur maximale (...) 6 mètres à l'égout [règle UD, aucune règle propre au secteur UD1]",
+  "valeur": {
+   "m": 6.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUd1",
+  "chemin": "emprise_sol.ces",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.62 (recouvrement 36%)",
+  "page_pdf": 62,
+  "article": "UD 9.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD1 : Dans le secteur UD1, ce seuil est limité à 40%.",
+  "valeur": {
+   "pct": 40.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUd1",
+  "chemin": "retraits.limites_separatives",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.60 (recouvrement 47%)",
+  "page_pdf": 60,
+  "article": "UD 7.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD1 : En cas de retrait (...) au moins égale 3 mètres. [règle UD]",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUd1",
+  "chemin": "stationnement.par_logement",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.66 (recouvrement 41%)",
+  "page_pdf": 66,
+  "article": "UD 12.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD1 : Pour les autres constructions : 2 places de stationnement par logement [règle UD]",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUd1",
+  "chemin": "pleine_terre.pct",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.67 (recouvrement 33%)",
+  "page_pdf": 67,
+  "article": "UD 13.1",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UD1 : Dans le secteur UD1, ce seuil est porté à 35% minimum.",
+  "valeur": {
+   "pct": 35.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUe",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 15 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 110,
+  "article": "UE 10.2",
+  "citation": "Pour la zone 1AUe se rapportant à l'OAP2 (...) 20 mètres au faîtage, 20 mètres (hauteur absolue) pour les toits terrasses végétalisés",
+  "valeur": {
+   "m": 15.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUe",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 12 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 110,
+  "article": "UE 10.2",
+  "citation": "Pour la zone 1AUe se rapportant à l'OAP2, la hauteur maximale des constructions est fixée à : 17 mètres à l'égout du toit ou au sommet de l'acrotère,",
+  "valeur": {
+   "m": 12.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUe",
+  "chemin": "emprise_sol.ces",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.76 (recouvrement 47%)",
+  "page_pdf": 76,
+  "article": "UE 9.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UE : L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité foncière.",
+  "valeur": {
+   "pct": 70.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUe",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 73,
+  "article": "UE 6.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UE : Les constructions doivent être implantées en retrait de la voie, avec distance (D) (...) au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 5 mètres.",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97414",
+  "fichier": "97414_saint_louis.yaml",
+  "zone": "1AUe",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 73,
+  "article": "UE 7.2",
+  "citation": "[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se reporter en fon => règle UE : En cas de retrait de la construction, la distance (D) (...) au moins égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1a",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 18,
+  "article": "6",
+  "citation": "en zone U1a — Cas général : Les constructions s'implanteront à l'alignement de la voie ou de l'emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1b",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 19,
+  "article": "6",
+  "citation": "en zone U1b — Cas général : Les constructions devront être implantées en retrait de 3 m minimum de la voie ou de l'emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1c",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 19,
+  "article": "6",
+  "citation": "en zone U1c — Cas général : Les constructions peuvent être implantées à l'alignement ou en retrait de 3 m minimum de la voie ou de l'emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1d",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 19,
+  "article": "6",
+  "citation": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1d",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 35,
+  "article": "13.1",
+  "citation": "en zone U1d — Il n'est pas fixé de règle.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1f",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 19,
+  "article": "6",
+  "citation": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1g",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 19,
+  "article": "6",
+  "citation": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1pru",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 19,
+  "article": "6",
+  "citation": "en zone U1pru — Cas général : Les constructions pourront s'implanter à l'alignement. En cas de retrait, celui-ci ne pourra excéder 6 mètres.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1pru",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('exempté : aucune place imposée')",
+  "page_pdf": 30,
+  "article": "Art. 12 : « il doit être réalisé",
+  "citation": "Lors de toute opération de construction, il doit être réalisé, sauf en zone U1pru, des places de stationnement",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1pru",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 35,
+  "article": "13",
+  "citation": "en zone U1pru — Il n'est pas fixé de règle.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1pso",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 19,
+  "article": "6",
+  "citation": "en zones U1d, U1f, U1g et U1pso — Les constructions s'implanteront en retrait de 3 m minimum de l'emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1pso",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 30,
+  "article": "12.2",
+  "citation": "INTROUVABLE",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1e",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 41,
+  "article": "6",
+  "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1e",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 48,
+  "article": "12",
+  "citation": "Habitations autorisées dans la zone — 1 place par logement",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1e",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 51,
+  "article": "13",
+  "citation": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1l",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 41,
+  "article": "6",
+  "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1l",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 48,
+  "article": "12",
+  "citation": "Habitations autorisées dans la zone — 1 place par logement",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U1l",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 51,
+  "article": "13",
+  "citation": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U2b",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 70,
+  "article": "6",
+  "citation": "Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U2c",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 70,
+  "article": "6",
+  "citation": "Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U2c",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 72,
+  "article": "7.2",
+  "citation": "En cas de retrait, un recul de 4 mètres minimum est obligatoire.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U2d",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 70,
+  "article": "6",
+  "citation": "Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U2d",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 72,
+  "article": "7.2",
+  "citation": "Un recul de 4 mètres minimum est obligatoire.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U2h",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 72,
+  "article": "7.2",
+  "citation": "En cas de retrait, un recul de 4 mètres minimum est obligatoire.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U2h",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 76,
+  "article": "12.2",
+  "citation": "INTROUVABLE",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U2e",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 91,
+  "article": null,
+  "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l’emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U2e",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 97,
+  "article": null,
+  "citation": "Habitations autorisées dans la zone — 1 place par logement",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U2e",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 100,
+  "article": "13",
+  "citation": "Le pourcentage minimal d’espaces libres perméables sera de 20% de la surface totale du terrain d’assiette du projet.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U3a",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 110,
+  "article": "6",
+  "citation": "Les constructions devront être implantées à l'alignement.",
+  "valeur": {
+   "min_m": 0.0
+  }
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "Usdu",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 133,
+  "article": "9",
+  "citation": "INTROUVABLE",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U3e",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 148,
+  "article": null,
+  "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U3e",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 154,
+  "article": null,
+  "citation": "1 place par logement",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U3e",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 156,
+  "article": "13",
+  "citation": "Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du terrain d'assiette du projet.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U4a",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 172,
+  "article": "6",
+  "citation": "en zone U4a Les constructions devront être implantées à l'alignement.",
+  "valeur": {
+   "min_m": 0.0
+  }
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U5a",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 218,
+  "article": "6",
+  "citation": "en zone U5a Les constructions devront être implantées à l'alignement.",
+  "valeur": {
+   "min_m": 0.0
+  }
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "AU5e",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 259,
+  "article": null,
+  "citation": "INTROUVABLE",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "AU5e",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 257,
+  "article": null,
+  "citation": "Les constructions doivent être implantées en retrait de 6 m minimum de la voie ou de l'emprise publique.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "AU5e",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 263,
+  "article": null,
+  "citation": "Habitations autorisées dans la zone : 1 place par logement",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "AU5e",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 265,
+  "article": null,
+  "citation": "Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du terrain d'assiette du projet.",
+  "valeur": {}
+ },
+ {
+  "insee": "97415",
+  "fichier": "97415_saint_paul.yaml",
+  "zone": "U6a",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 278,
+  "article": "6",
+  "citation": "en zone U6a Les constructions devront être implantées à l'alignement.",
+  "valeur": {
+   "min_m": 0.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Ucv",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 63,
+  "article": "Ucv3.1",
+  "citation": "Les constructions nouvelles en premier rideau doivent être implantées à l’alignement.",
+  "valeur": {
+   "min_m": 0.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Ucv",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('1 place par tranche de 75 m² de surface de plancher')",
+  "page_pdf": 72,
+  "article": "Ucv6",
+  "citation": "1 place de stationnement par tranche de 75 m² de surface de plancher.",
+  "valeur": {}
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Ud",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('1 place par tranche de 75 m² de surface de plancher')",
+  "page_pdf": 93,
+  "article": "Ud6",
+  "citation": "1 place de stationnement par tranche de 75 m² de surface de plancher.",
+  "valeur": {}
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Udl",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('1 place par tranche de 75 m² de surface de plancher')",
+  "page_pdf": 93,
+  "article": "Ud6",
+  "citation": "1 place de stationnement par tranche de 75 m² de surface de plancher.",
+  "valeur": {}
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "UdBO",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('1 place par tranche de 75 m² de surface de plancher')",
+  "page_pdf": 93,
+  "article": "Ud6",
+  "citation": "1 place de stationnement par tranche de 75 m² de surface de plancher.",
+  "valeur": {}
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUdma",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 80,
+  "article": "Ud3",
+  "citation": "En zone AUdma : non règlementé pour l’ensemble de l’article",
+  "valeur": {}
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUdma",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 80,
+  "article": "Ud3",
+  "citation": "En zone AUdma : non règlementé pour l’ensemble de l’article",
+  "valeur": {}
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUdma",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 80,
+  "article": "Ud3",
+  "citation": "En zone AUdma : non règlementé pour l’ensemble de l’article",
+  "valeur": {}
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUdma",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 80,
+  "article": "Ud3",
+  "citation": "En zone AUdma : non règlementé pour l’ensemble de l’article",
+  "valeur": {}
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUdma",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 80,
+  "article": "Ud3",
+  "citation": "En zone AUdma : non règlementé pour l’ensemble de l’article",
+  "valeur": {}
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUdma",
+  "chemin": "stationnement.par_logement",
+  "famille": "A",
+  "raison": "stationnement non chiffrable par logement ('a_verifier')",
+  "page_pdf": 91,
+  "article": "Ud6",
+  "citation": "En zone AUdma : non règlementé pour l’ensemble de l’article",
+  "valeur": {}
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUdma",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 91,
+  "article": "Ud5",
+  "citation": "En zone AUdma : non règlementé pour l’ensemble de l’article",
+  "valeur": {}
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUf",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 119,
+  "article": "Uf3.5",
+  "citation": "La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 11 m au faîtage.",
+  "valeur": {
+   "m": 11.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUf",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 119,
+  "article": "Uf3.5",
+  "citation": "La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 11 m au faîtage.",
+  "valeur": {
+   "m": 6.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Up",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 0 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 146,
+  "article": "Up3.1",
+  "citation": "Les constructions nouvelles peuvent être implantées à l’alignement ou en retrait libre.",
+  "valeur": {
+   "min_m": 0.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uazp",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 178,
+  "article": "Ua3.5",
+  "citation": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage.",
+  "valeur": {
+   "m": 21.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uazp",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 178,
+  "article": "Ua3.5",
+  "citation": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage.",
+  "valeur": {
+   "m": 16.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uazp",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 176,
+  "article": "Ua3.1",
+  "citation": "Dans les secteurs Uazp et Uazpc les constructions nouvelles peuvent être implantées à l’alignement des voies sauf en aval de la RN 1 ou le recul minimum est fixé à 40 m dans la partie Nord et à 50 m dans la partie Sud, l’axe du giratoire avec la RD 26 faisant la séparation entre ces deux zones de reculs.",
+  "valeur": {
+   "min_m": 0.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uazpc",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 178,
+  "article": "Ua3.5",
+  "citation": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage.",
+  "valeur": {
+   "m": 21.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uazpc",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 178,
+  "article": "Ua3.5",
+  "citation": "Dans les secteurs Uazp et Uazpc, la hauteur maximale de toute construction ne pourra dépasser 15,5 m à l’égout et 20 m au faîtage.",
+  "valeur": {
+   "m": 16.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uazpc",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 176,
+  "article": "Ua3.1",
+  "citation": "Dans les secteurs Uazp et Uazpc les constructions nouvelles peuvent être implantées à l’alignement des voies sauf en aval de la RN 1 ou le recul minimum est fixé à 40 m dans la partie Nord et à 50 m dans la partie Sud, l’axe du giratoire avec la RD 26 faisant la séparation entre ces deux zones de reculs.",
+  "valeur": {
+   "min_m": 0.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uaza",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 21 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 178,
+  "article": "Ua3.5",
+  "citation": "Dans le secteur Uaza, la hauteur maximale des constructions est fixée à 14 m au faîtage.",
+  "valeur": {
+   "m": 21.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uaza",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 177,
+  "article": "Ua3.5",
+  "citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+  "valeur": {
+   "m": 16.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uaza",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 176,
+  "article": "Ua3.1",
+  "citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uazc",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 177,
+  "article": "Ua3.5",
+  "citation": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :",
+  "valeur": {
+   "m": 18.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uazc",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 177,
+  "article": "Ua3.5",
+  "citation": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :",
+  "valeur": {
+   "m": 13.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUazc",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 177,
+  "article": "Ua3.5",
+  "citation": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :",
+  "valeur": {
+   "m": 18.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUazc",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 177,
+  "article": "Ua3.5",
+  "citation": "Dans les secteurs Uazc et AUazc, la hauteur maximale des constructions est fixée à 13 m à l’égout du toit ou au sommet de l’acrotère et à 18 m au faîtage, sauf :",
+  "valeur": {
+   "m": 13.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUazc",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 176,
+  "article": "Ua3.1",
+  "citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uazi",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 177,
+  "article": "Ua3.5",
+  "citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+  "valeur": {
+   "m": 21.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uazi",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 177,
+  "article": "Ua3.5",
+  "citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+  "valeur": {
+   "m": 16.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uazi",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 176,
+  "article": "Ua3.1",
+  "citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUazi",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 177,
+  "article": "Ua3.5",
+  "citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+  "valeur": {
+   "m": 21.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUazi",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 177,
+  "article": "Ua3.5",
+  "citation": "La hauteur maximale des constructions nouvelles est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+  "valeur": {
+   "m": 16.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "AUazi",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 176,
+  "article": "Ua3.1",
+  "citation": "Les constructions nouvelles (sauf clôtures) doivent être implantées à 4 m minimum de l’emprise des voies.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Ue",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 193,
+  "article": "Ue3.5",
+  "citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+  "valeur": {
+   "m": 21.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Ue",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 193,
+  "article": "Ue3.5",
+  "citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+  "valeur": {
+   "m": 16.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uemi",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 193,
+  "article": "Ue3.5",
+  "citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+  "valeur": {
+   "m": 21.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uemi",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 193,
+  "article": "Ue3.5",
+  "citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+  "valeur": {
+   "m": 16.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uep",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 193,
+  "article": "Ue3.5",
+  "citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+  "valeur": {
+   "m": 21.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uep",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 193,
+  "article": "Ue3.5",
+  "citation": "La hauteur maximale des constructions nouvelle est fixée à 16 m à l’égout du toit ou au sommet de l’acrotère et à 21 m au faîtage.",
+  "valeur": {
+   "m": 16.0
+  }
+ },
+ {
+  "insee": "97416",
+  "fichier": "97416_saint_pierre.yaml",
+  "zone": "Uep",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 0.2 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 192,
+  "article": "Ue3.4",
+  "citation": "En zone Uep, l’emprise au sol est limitée au maximum à 20 m² par ha (calculée au prorata de la superficie de l’unité foncière).",
+  "valeur": {
+   "pct": 0.2
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UA",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 7.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 20,
+  "article": "Art. U5.2 « résidentielles »",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.",
+  "valeur": {
+   "min_m": 7.5
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UEa",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 12 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 33,
+  "article": "Art. U5.2 « activités »",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+  "valeur": {
+   "min_m": 12.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UEa",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 38,
+  "article": "Art. U12 « activités »",
+  "citation": "La parcelle doit être perméable sur au moins :\n• en zones UEa, UEm et UEp : 15% de la surface",
+  "valeur": {}
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UEc",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 7 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 33,
+  "article": "Art. U5.2 « activités »",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+  "valeur": {
+   "min_m": 7.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UEc",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 38,
+  "article": "Art. U12 « activités »",
+  "citation": "La parcelle doit être perméable sur au moins :\n• en zone UEc : 25% de la surface",
+  "valeur": {}
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UEm",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 33,
+  "article": "Art. U5.2 « activités »",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+  "valeur": {
+   "min_m": 8.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UEm",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 38,
+  "article": "Art. U12 « activités »",
+  "citation": "La parcelle doit être perméable sur au moins :\n• en zones UEa, UEm et UEp : 15% de la surface",
+  "valeur": {}
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UEp",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 33,
+  "article": "Art. U5.2 « activités »",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+  "valeur": {
+   "min_m": 8.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UEp",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 38,
+  "article": "Art. U12 « activités »",
+  "citation": "La parcelle doit être perméable sur au moins :\n• en zones UEa, UEm et UEp : 15% de la surface",
+  "valeur": {}
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UR",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 12 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 33,
+  "article": "Art. U5.2 « activités »",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+  "valeur": {
+   "min_m": 12.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UR",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 38,
+  "article": "Art. U12 « activités »",
+  "citation": "La parcelle doit être perméable sur au moins :\n• en zone UR : 20 % de de la surface",
+  "valeur": {}
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UT",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 33,
+  "article": "Art. U5.2 « activités »",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+  "valeur": {
+   "min_m": 5.5
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UT",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 38,
+  "article": "Art. U12 « activités »",
+  "citation": "La parcelle doit être perméable sur au moins :\n• en zone UT : 55% de la surface",
+  "valeur": {}
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UTp",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 33,
+  "article": "Art. U5.2 « activités »",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 4 mètres.",
+  "valeur": {
+   "min_m": 5.5
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "UTp",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 38,
+  "article": "Art. U12 « activités »",
+  "citation": "INTROUVABLE",
+  "valeur": {}
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUb",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 15 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "Art. U8.2 « résidentielles »",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "m": 15.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUb",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 12 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "Art. U8.2 « résidentielles »",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "m": 12.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUb",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 70 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "U7.2",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "pct": 70.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUb",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "U4.2",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUb",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "U5.2",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUb",
+  "chemin": "stationnement.par_logement",
+  "famille": "B",
+  "raison": "valeur 1.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "U13.2",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "places": 1.5
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUb",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur 25 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "U12",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "pct": 25.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUc",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 13 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "U8.2",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "m": 13.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUc",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 10 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "U8.2",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "m": 10.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUc",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 60 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "U7.2",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "pct": 60.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUc",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "U4.2",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUc",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "U5.2",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUc",
+  "chemin": "stationnement.par_logement",
+  "famille": "B",
+  "raison": "valeur 1.5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "U13.2",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "places": 1.5
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUc",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur 30 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "U12",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "pct": 30.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUep",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 16 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "Art. U8.2 « activités »",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "m": 16.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUep",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 75 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "Art. U7.2 « activités »",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "pct": 75.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUep",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "Art. U4.2 « activités »",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUep",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 8 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 41,
+  "article": "Art. U5.2 « activités »",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {
+   "min_m": 8.0
+  }
+ },
+ {
+  "insee": "97418",
+  "fichier": "97418_sainte_marie.yaml",
+  "zone": "1AUep",
+  "chemin": "pleine_terre.pct",
+  "famille": "A",
+  "raison": "valeur non numérique ('a_verifier')",
+  "page_pdf": 41,
+  "article": "Art. U12 « activités »",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes",
+  "valeur": {}
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "Ua",
+  "chemin": "stationnement.par_logement",
+  "famille": "B",
+  "raison": "valeur 2 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 17,
+  "article": "UA 12",
+  "citation": "Pour les constructions à destination d’habitation : - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "Ub",
+  "chemin": "stationnement.par_logement",
+  "famille": "B",
+  "raison": "valeur 2 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 26,
+  "article": "UB 12",
+  "citation": "Pour les constructions à destination d’habitation : - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "Uc",
+  "chemin": "stationnement.par_logement",
+  "famille": "B",
+  "raison": "valeur 2 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 35,
+  "article": "UC 12",
+  "citation": "Pour les constructions à destination d’habitation : - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "Ud",
+  "chemin": "stationnement.par_logement",
+  "famille": "B",
+  "raison": "valeur 2 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 43,
+  "article": "UD 12",
+  "citation": "Pour les constructions à destination d’habitation : - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "Ue",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 49,
+  "article": "UE 7",
+  "citation": "En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 5 mètres.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUa",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 12 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UA 10",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "m": 12.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUa",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 9 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UA 10",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "m": 9.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUa",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 70 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UA 9",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "pct": 70.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUa",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UA 6",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUa",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UA 7",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUa",
+  "chemin": "stationnement.par_logement",
+  "famille": "B",
+  "raison": "valeur 2 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UA 12",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUa",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur 25 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UA 13",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "pct": 25.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUc",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 9 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UC 10",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "m": 9.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUc",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UC 10",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "m": 6.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUc",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 50 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UC 9",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "pct": 50.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUc",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UC 6",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUc",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UC 7",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUc",
+  "chemin": "stationnement.par_logement",
+  "famille": "B",
+  "raison": "valeur 2 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UC 12",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "places": 2.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUc",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur 30 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UC 13",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "pct": 30.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUe",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "valeur 14 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UE 10",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "m": 14.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUe",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "valeur 11 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UE 10",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "m": 11.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUe",
+  "chemin": "emprise_sol.ces",
+  "famille": "B",
+  "raison": "valeur 70 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UE 9",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "pct": 70.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUe",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 4 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UE 6",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "min_m": 4.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUe",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 3 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UE 7",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97419",
+  "fichier": "97419_sainte_rose.yaml",
+  "zone": "1AUe",
+  "chemin": "pleine_terre.pct",
+  "famille": "B",
+  "raison": "valeur 25 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 55,
+  "article": "UE 13",
+  "citation": "Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes.",
+  "valeur": {
+   "pct": 25.0
+  }
+ },
+ {
+  "insee": "97420",
+  "fichier": "97420_sainte_suzanne.yaml",
+  "zone": "UE",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 22,
+  "article": "UE4.2",
+  "citation": "Les constructions doivent être implantées en recul de la voie, avec une distance ... au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5 mètres.",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97420",
+  "fichier": "97420_sainte_suzanne.yaml",
+  "zone": "UE",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 22,
+  "article": "UE5.2",
+  "citation": "En cas de retrait de la construction, la distance ... au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 4 mètres.",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97420",
+  "fichier": "97420_sainte_suzanne.yaml",
+  "zone": "1AUe",
+  "chemin": "retraits.voie",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 22,
+  "article": "UE4.2",
+  "citation": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 5 mètres.",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97420",
+  "fichier": "97420_sainte_suzanne.yaml",
+  "zone": "1AUe",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 6 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 22,
+  "article": "UE5.2",
+  "citation": "au moins égale à la moitié de la hauteur de la façade concernée, avec un minimum de 4 mètres.",
+  "valeur": {
+   "min_m": 6.0
+  }
+ },
+ {
+  "insee": "97423",
+  "fichier": "97423_les_trois_bassins.yaml",
+  "zone": "Ua",
+  "chemin": "hauteur.faitage",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 18,
+  "article": "Ua 10.2",
+  "citation": "La hauteur maximale des constructions est fixée à : 10 mètres à l’égout du toit ou au sommet de l’acrotère, 14 mètres au faîtage.",
+  "valeur": {
+   "m": 14.0
+  }
+ },
+ {
+  "insee": "97423",
+  "fichier": "97423_les_trois_bassins.yaml",
+  "zone": "Ua",
+  "chemin": "hauteur.egout",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 18,
+  "article": "Ua 10.2",
+  "citation": "La hauteur maximale des constructions est fixée à : 10 mètres à l’égout du toit ou au sommet de l’acrotère, 14 mètres au faîtage.",
+  "valeur": {
+   "m": 10.0
+  }
+ },
+ {
+  "insee": "97423",
+  "fichier": "97423_les_trois_bassins.yaml",
+  "zone": "Ua",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "attribution douteuse (citation sous secteur None)",
+  "page_pdf": 15,
+  "article": "Ua 7.2-7.3",
+  "citation": "En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.",
+  "valeur": {
+   "min_m": 3.0
+  }
+ },
+ {
+  "insee": "97423",
+  "fichier": "97423_les_trois_bassins.yaml",
+  "zone": "Ue",
+  "chemin": "retraits.limites_separatives",
+  "famille": "B",
+  "raison": "valeur 5 absente de la citation (harmonisation ≠ texte)",
+  "page_pdf": 57,
+  "article": "Ue 7.2-7.3",
+  "citation": "En cas de retrait, la distance (D) comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au moins égale à D=H/2 (H étant la hauteur à l’égout du toit ou au sommet de l’acrotère), sans être inférieure à 4,00 mètres.",
+  "valeur": {
+   "min_m": 5.0
+  }
+ },
+ {
+  "insee": "97423",
+  "fichier": "97423_les_trois_bassins.yaml",
+  "zone": "1AUt",
+  "chemin": "pleine_terre.pct",
+  "famille": "C",
+  "raison": "citation non retrouvée autour de p.69 (recouvrement 41%)",
+  "page_pdf": 69,
+  "article": "Ub 13.1",
+  "citation": "Pour la zone AUt, se reporter au règlement de la zone Ub. [renvoi -> Ub 13.1 p.38 : « Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace vert et perméable... »]",
+  "valeur": {
+   "pct": 30.0
+  }
+ }
+]
