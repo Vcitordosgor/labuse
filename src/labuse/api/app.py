@@ -2107,6 +2107,11 @@ def _rafraichir_partages(db: Session, commune: str, payload: dict) -> dict:
         psoc = _parc_social(db, insee)
         if psoc is not None:
             payload["parc_social"] = psoc
+        # COMMUNE-RANGEMENT-2 lot 2 — le neuf observé (commune) est un passe-plat bon marché absent du
+        # cache nocturne antérieur : re-servi live (même doctrine O8).
+        from .fiche_commune import prix_neuf_observe as _pno
+        pno = _pno(db, insee)
+        payload["prix_neuf_observe"] = pno   # None inclus (le front affiche « — » sinon absent)
     except Exception:  # noqa: BLE001 — le rafraîchissement ne doit jamais casser la fiche
         _FICHE_LOG.exception("fiche commune · rafraîchissement des indicateurs partagés (O8) impossible")
     return payload
@@ -2243,6 +2248,7 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
             "densifiables": blocs["densifiables"],      # C5 — gisement de densification
             "loyer": blocs["loyer"],                    # C5 — loyer médian SOURCÉ
             "parc_social": blocs["parc_social"],        # COMMUNE-RANGEMENT-1 lot 2 — parc social RPLS (SDES)
+            "prix_neuf_observe": blocs["prix_neuf_observe"],  # COMMUNE-RANGEMENT-2 lot 2 — neuf observé (commune)
             "zonage_abc": blocs["zonage_abc"],          # SOURCES-1 lot 1 — zone A/B/C (DHUP)
             "fiscalite": blocs["fiscalite"],            # SOURCES-1 lot 5 — taux TFPB/TEOM (REI)
             "ort": blocs["ort"],                        # SOURCES-1 lot 5 — ACV/PVD/ORT (Denormandie)

@@ -47,3 +47,31 @@ autres champs du comparateur absents de la fiche sont **exclus par la maquette**
 
 **Corrections à la source : aucune** (les moteurs sont déjà uniques). Seule action : surfacer la conso
 ENAF déjà transportée. Front seul, `tsc -b` vert.
+
+---
+
+## Lot 2 — les 13 données commune absentes
+
+Les 13 données à la maille commune du registre qui n'apparaissaient dans aucune carte (calcul :
+`registre/donnees.py` niveau=commune, non citées par un robinet `fiche_commune_*`, hors couches carte).
+**Chacune placée ou motivée — zéro « on ne sait pas ».**
+
+| Donnée | Décision | Carte maquette / motif |
+|---|---|---|
+| `prix_neuf_observe_eur_m2` | **PLACÉE** | **Prix** — « Neuf observé (ventes récentes) », notion scindée du VEFA à l'acte (la maquette Prix demande « observé · VEFA à l'acte »). Nouveau builder `fiche_commune.prix_neuf_observe(insee)` (niveau commune), servi live. |
+| `pression_zan_ha` | **PLACÉE** (lot 1) | **Foncier et rareté** — « Consommation NAF (budget ZAN consommé) », même source Cerema ENAF que la pression ZAN du comparateur (via `motRarete.pct_budget_consomme`). |
+| `acquisitions_pm_n` | motivée | doublon/coût — servie par l'**outil Communes** (endpoint dédié `/communes/{c}/acquisitions-pm`) ; RANGEMENT-1 lot 3 l'a sortie du payload pour son coût. La carte Activité y mène par **porte**, pas par recalcul. |
+| `comparateur_composite` | motivée | **exclue par la maquette** (« Pas de rang comparatif », décision du 20/09). |
+| `couverture_commune_pct` | motivée | **interne** — métrique qualité/admin (page Sources), pas un contexte promoteur. |
+| `delai_vente_median_j` | motivée | **doublon Radar** — la carte Activité porte déjà le signal Radar (biens/écart) ; le délai de vente est un détail de l'outil Radar. |
+| `n_extraits_plu` | motivée | **interne outil PLU** (compte d'extraits de règlement) ; la carte Urbanisme porte le calibrage (zones/règles validées). |
+| `n_piscines` | motivée | **déjà visible** — compteur de la tuile Solaire (grille d'outils) ; agrégat maille parcelle, pas un fait communal. |
+| `n_procedures_plu` | motivée | **doublon `statut_plu`** — la procédure en cours est servie par la carte Urbanisme (stade / procédure). |
+| `parcelles_par_zone_n` | motivée | **doublon Zonage** — la carte Zonage porte la répartition U/AU/A/N ; le compte par zone est l'outil filtres. |
+| `permis_5a_n` | motivée | **déjà visible** — ligne Permis « N sur 5 ans » (id vit sous le robinet comparateur). |
+| `simulplu_resultat` | motivée | **interne** — résultat d'une simulation interactive de l'outil PLU. |
+| `tranche_prix_vefa` | motivée | **doublon couche VEFA** — le neuf VEFA à l'acte est déjà sur la carte Prix ; `tranche_prix_vefa` est la couche carte (mêmes données en tranches). |
+
+**Bilan : 2 placées (`prix_neuf_observe`, `pression_zan`), 11 motivées** (5 doublons · 3 internes · 1
+exclue maquette · 1 coût/porte · 1 déjà visible via tuile). Le robinet de `prix_neuf_observe_eur_m2`
+sur la fiche commune est déclaré au lot 5.
