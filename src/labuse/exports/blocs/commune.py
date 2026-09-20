@@ -49,7 +49,12 @@ def rendu(valeurs) -> str:
             lignes.append(ligne_kv("FRR (ex-ZRR)", esc(fisc["frr"]["libelle"]), chip_span("s", "sourcé")))
         per = (fisc.get("perimetres") or [{}])[0]
         if per.get("libelle"):
-            lignes.append(ligne_kv("Périmètre fiscal", esc(per["libelle"]), chip_span("d", "dérivé")))
+            # EXPORTS-REBRANCHEMENT-1 lot 0 — la nature vient du drapeau `derive` du producteur
+            # (_territoire_fiscal_block) : ANRU/QPV sont des périmètres SOURCÉS (DEAL/ANCT), seule
+            # une dérivation LABUSE (piscine CoSIA) est « dérivé ». Fini le chip en dur.
+            lignes.append(ligne_kv("Périmètre fiscal", esc(per["libelle"]),
+                                   chip_span("d", "dérivé") if per.get("derive")
+                                   else chip_span("s", "sourcé")))
     if a(valeurs, "parc_social_rpls_logements"):
         lignes.append(ligne_kv("Parc social (commune)",
                       esc(f"{groupe(val(valeurs, 'parc_social_rpls_logements'))} logements sociaux (RPLS)"),

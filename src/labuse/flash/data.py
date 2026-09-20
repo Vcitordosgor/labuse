@@ -166,8 +166,13 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
             from ..faisabilite.zone_servie import zone_dominante
             _pid_z = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
             _zs = zone_dominante(db, _pid_z) if _pid_z else None
+            # EXPORTS-REBRANCHEMENT-1 lot 0 — même seuil que le bloc règlement de la fiche
+            # (_reglement_plu_block, 2 %) : un liseré de bord (Nerl 0,2 % → « 0 % ») ne fait plus
+            # une ligne du tableau de zonage ; la dominante est toujours gardée.
             out["zones"] = ([{"classe": p["fam"], "libelle": p["zone"], "idurba": None,
-                              "pct": round(p["pct"])} for p in _zs.parts]
+                              "pct": round(p["pct"])}
+                             for i, p in enumerate(_zs.parts)
+                             if i == 0 or float(p["pct"]) >= 2.0]
                             if _zs and _zs.parts else [])
             if _zs and _zs.a_cheval:
                 out["zones_a_cheval"] = True

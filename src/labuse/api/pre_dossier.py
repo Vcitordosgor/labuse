@@ -211,8 +211,8 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
     regles = ""
     if ident["regles"]:
         r = ident["regles"]
-        if r.get("emprise_max_m2"):
-            regles += f"<tr><td>Emprise au sol maximale (calibrée)</td><td>{r['emprise_max_m2']} m²</td></tr>"
+        # EXPORTS-REBRANCHEMENT-1 lot 0 — `emprise_max_m2` retiré : plus AUCUN producteur ne le
+        # remplit (lecture parcel_residuel_bati supprimée en EXPORTS-1 lot 3) — la ligne était morte.
         # M129-2 A/A.3 : hauteur du PLU CALIBRÉ (source unique collect_report_data → resolve_zone),
         # égout et faîtage nommés distinctement ; plus de « hauteur max » générique (9 m). D : plus de
         # « Confiance du calibrage » (indice interne) sur un exportable.
