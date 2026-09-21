@@ -4,7 +4,10 @@
 Rien de servi n'a changé (`q_v11_m137` reste servi). Aucun code de production, aucun run, aucune ingestion, aucun entraînement.
 Méthode : les rapports du §2 du mandat sont cités (chemin + section) et jamais redémontrés ; les seules mesures nouvelles sont des SELECT reproductibles (annexe A) sur la base `labuse` au 21/09/2026.
 
-**Écarts constatés au brief** (à connaître avant lecture) :
+> **Décisions actées par Vic (21/09/2026 — SCORING-5-RETOUR)** — cadre gelé du présent rapport :
+> architecture **GO** (Score LABUSE principal + Signal de mutation secondaire) · combinaison **V3 lexicographique** (V2 bonus écartée) · Signal = **recette q_v14**, grain annuel + re-score mensuel · plafond « sans bloc propriétaire personne physique » = **borne assumée**, pas un défaut · assemblage = **information seule en V1** · ordre : **`residuel-serve` recalculé post-calibrage → ablations → q_v15 → bascule** · **bandes et barèmes non fixés sur le papier — ils sortent des parcelles témoins** (`reports/scoring-5/TEMOINS.csv`).
+
+**Écarts constatés au brief** (une ligne chacun — ils corrigent les acquis du §2 du mandat, le rapport cite partout les emplacements réels) :
 1. `SOURCES-LABUSE-tableau.md` n'existe pas ; le tableau des sources réel est `docs/audit-2026-09/SOURCES/SOURCES-AUDIT.md` + `.csv` (121 sources, 63 colonnes). Il n'y a **pas de colonne littérale « déclenche un run ? »** — ce rôle est tenu par `viz_scoring` (18 sources) et `moteurs` (38 sources), confirmées par le code en §8.
 2. Les « 10 `a_faire` » du brief ont en base le statut **`partenariat_requis`** (`SELECT status, count(*) FROM data_sources GROUP BY 1` → connecte 89 · partenariat_requis 14 · alias 6 · retiree 5 · hub 4 · manuel 2 · interne 1).
 3. **`feat/paliers-1` est mergée dans main** (merge `b6aec2bd` dans l'historique) : `statuts.assign_paliers` v2 et `config/scoring_client.yaml → paliers` sont dans le worktree, branchés pour la seule recette q_v14 (`p_v2/pipeline.py:487-489`).
@@ -28,38 +31,39 @@ La contrainte d'exploitation (§12 du mandat) est **résolue par l'architecture*
 
 ## 2. Score LABUSE V1 — la spec
 
-**Question à laquelle il répond** : « à quel point cette parcelle mérite-t-elle d'être étudiée comme opportunité foncière ? » Intérêt foncier intrinsèque, orienté production de logement (le produit LABUSE). Ce n'est **pas** une probabilité de vente : aucune feature de marché n'y entre autrement que plafonnée (axe Contexte), aucune feature propriétaire n'y entre du tout.
+**Question à laquelle il répond** : « à quel point cette parcelle mérite-t-elle d'être étudiée comme opportunité foncière ? » Intérêt foncier intrinsèque, orienté production de logement (le produit LABUSE). Ce n'est **pas** une probabilité de vente : aucune feature de marché n'entre dans le chiffre (le marché est information fiche et matière du Signal), aucune feature propriétaire n'y entre du tout.
 
 **Identité** : `score_labuse` ∈ [0, 100] ou `non_calculable(motif)` · version `SL-1.x` + hash du barème (YAML dans `config/`, même mécanique que `config/scoring_client.yaml` et `config/plu_zonage.yaml`) · déterministe : fonction pure de caches par parcelle, aucun rang, aucun percentile, aucun quota — le contrat du §11 du mandat est satisfait par construction.
 
-### 2.1 Méthode de calcul — quatre temps
+### 2.1 Méthode de calcul — trois temps et une information
 
 ```
-score = clip( barème_capacité(SDP_résiduelle_sur_assiette) × coef_faisabilité + contexte , 0, 100 )
+score = clip( barème_capacité(SDP_résiduelle_sur_assiette) × coef_faisabilité , 0, 100 )
 ```
 
 **Temps 1 — l'assiette exploitable (m²).** Surface de la parcelle moins les emprises sous contrainte **géométrique certaine** : portions A/N (le clipping existe déjà : `cascade/layers/phase1.py:312-324` clippe l'emprise en zone mixte), emplacements réservés, EBC, PPR rouge, PEB A/B, bande littorale, marchepied DPF. Principe gravé du §9 : une contrainte partielle **réduit l'assiette**, elle n'exclut jamais. Assiette nulle après contraintes certaines → c'est la cascade (classe A, §5) qui écarte, pas le Score.
 
 **Temps 2 — la capacité (0-70 pts).** SDP résiduelle calculée par `faisabilite/zonage.py` **post-calibrage** sur l'assiette (colonnes de `parcel_residuel_runs` : `sdp_residuelle_m2`, `taux_emprise_pct`, `sous_densite`, `capacite_estimee`, `cause` — `faisabilite/residuel.py:80-149`). Barème par paliers **métier** en logements-équivalents, pas en points de fausse précision : ~80 m² SDP ≈ un logement produit vendable, ~400 m² ≈ petit collectif, ~2 000 m² ≈ opération. Les bornes exactes des paliers sont une décision Vic (§17 du mandat) ; la structure (paliers saturants, pas de linéarité infinie) est la proposition. Justification métier : la SDP résiduelle **est** ce que le client achète — c'est déjà la logique du `residuel_socle` de la cascade (`etage0_ext.py:162-190`), qui sort de la cascade et devient le cœur du Score. Zone AU fermée / au statut inconnu : capacité **différée** — barème plafonné (proposition : ≤ 50 % du barème ouvert), pas exclue ; renvois AU→U déjà portés par `zonage.py:205-213`.
-Parcelle bâtie : **aucune pénalité « bâtie »** — le résiduel est déjà net du bâti (croisement BD TOPO + CoSIA révélé, `residuel.py:44-50, 110-117`) ; « déjà bâtie » devient une information d'état, et le bâti densifiable est capté par `sous_densite`. C'est l'entérinement de la mesure PALIERS-1 (déclassées gardées = tête ×2,4 à précision constante — PALIERS-1.md, Lot A).
+Parcelle bâtie : la **capacité** reste nette du bâti (le résiduel croise BD TOPO + CoSIA révélé, `residuel.py:44-50, 110-117` ; le densifiable est capté par `sous_densite`) — mais le bâti n'est pas gratuit pour autant : il entre dans le **coefficient de faisabilité** (temps 3, correction Vic), jamais dans l'assiette. L'entérinement de PALIERS-1 tient toujours : « déjà bâtie » ne redevient jamais une exclusion ni un déclassement (déclassées gardées = tête ×2,4 à précision constante — PALIERS-1.md, Lot A).
 
 **Temps 3 — le coefficient de faisabilité (0,4-1,0).** Produit de facteurs gradués, **plancher global 0,4** : une difficulté ne devient jamais une exclusion silencieuse (§9 du mandat).
 - pente (RGE ALTI, 98,1 % couverte — SCORING-RAPPORT §B.1) : ≤15 % → 1,0 ; 15-30 % → intermédiaire ; >30 % → fort malus (seuils actuels de la couche `pente`, `phase1.py:860-907`, comme point de départ) ;
 - forme (allongement/largeur — seuils existants `config/seuils_geometrie.yaml`, section `etage0_ext`) ;
 - accès à la voie (BD TOPO, couche `acces` `phase1.py:1027-1050`) : voie ≤10 m → 1,0 ; non identifié → malus + libellé « accès à la voie non identifié » (pas un couperet : la donnée BD TOPO peut manquer) ;
 - risques partiels non déjà déduits de l'assiette (PPR bleu, aléas moyens — gradations existantes `phase1.py:641-727`) ;
-- servitudes fortes non géométriques (SUP t5/ac2/as1 — sévérités existantes `etage1.py:118-133`).
+- servitudes fortes non géométriques (SUP t5/ac2/as1 — sévérités existantes `etage1.py:118-133`) ;
+- **bâti existant (correction Vic, SCORING-5-RETOUR)** : un promoteur paie la démolition (coût ∝ volume ≈ emprise × hauteur), l'éviction ou le relogement éventuel, et le délai qui va avec — la capacité nette du bâti ne suffit donc pas. Facteur gradué par emprise bâtie (`taux_emprise_pct` du résiduel) et hauteur LiDAR (`batiment_hauteur_lidar`, 70,3 %) : nu → 1,0 · emprise ≤ 20 % de l'assiette → 0,9 (démolition légère) · 20-50 % → 0,8 · > 50 % ou ≥ R+2 → 0,65 (opération de démolition-reconstruction). Valeurs provisoires — **calées sur les témoins**, comme tous les crans ; hauteur manquante → cran par l'emprise seule, la couverture baisse.
 
-**Temps 4 — le contexte (±8 pts, plafonné).** Dynamisme du secteur : permis Sitadel 24 m dans le secteur + rotation DVF secteur (moteurs existants : `sector_price`, `rot_*` — `ext_sql.py:178-283`). Plafond dur ±8/100 : jamais écraseur (§5.5 du mandat). Justification métier : à capacité égale, un secteur où l'on construit et où le marché tourne rend l'opportunité plus actionnable — mais il ne crée pas de droits.
+**Temps 4 — le contexte : information seule en V1 (correction Vic, SCORING-5-RETOUR).** Le « ±8 plafonné » initialement proposé n'avait pas de justification métier défendable (pourquoi 8 et pas 5 ou 15 ?) — règle du mandat : aucun chiffre sans justification. Et le dynamisme de marché vit déjà dans le Signal (`rot_*`, `med_pm2_*`, voisinage) : l'additionner au Score serait un double compte. En V1, permis du secteur et rotation DVF s'affichent en **information fiche** (« secteur actif : 14 permis en 2 ans ») sans entrer dans le chiffre. Ré-examen possible en V1.1, sur témoins, si un cas montre qu'un contexte scoré sépare réellement mieux.
 
 ### 2.2 Axes instruits — retenus / écartés
 
-- **5.1 Capacité réglementaire : RETENU, c'est le cœur** (temps 1+2). Données : `zonage.py` + 1 832 feuilles `valide` (les 150 `propose` ne branchent jamais le calcul — `zonage.py:303-311`), GPU, prescriptions, PPR, PEB, DPF, 50 pas, assainissement (zonage GPU 4/24 communes, 278 685 objets — source id 63). **Point de branchement Gabarit** : le futur moteur remplacera le couple (assiette × `zonage.py`) par sa sortie par parcelle, même contrat de sortie (SDP résiduelle sur assiette) — rien ne l'attend.
+- **5.1 Capacité réglementaire : RETENU, c'est le cœur** (temps 1+2). Données : `zonage.py` + 1 832 feuilles `valide`. ⚠ Nuance mesurée (RESIDUEL-1 lot 1, `SCORING-5-RETOUR.md` §2) : seul l'**overlay** est validées-only (`zonage.py:303-311`) ; la **base** des ZoneRules lit la valeur numérique de toute feuille (`_val`, `zonage.py:105-116`) et **95 feuilles `propose` numériques (hauteurs, CES, retraits, pleine terre, stationnement) branchent le calcul de SDP** — à trancher avant le run résiduel (valider ces 95 feuilles, ou acter le comportement). GPU, prescriptions, PPR, PEB, DPF, 50 pas, assainissement (zonage GPU 4/24 communes, 278 685 objets — source id 63). **Point de branchement Gabarit** : le futur moteur remplacera le couple (assiette × `zonage.py`) par sa sortie par parcelle, même contrat de sortie (SDP résiduelle sur assiette) — rien ne l'attend.
 - **5.2 Capacité foncière : RETENU** (temps 2 + état). Emprise bâtie BD TOPO + CoSIA (couverture CoSIA : 1 947 019 lignes `parcel_cosia_couverture`, annexe A.5), hauteur LiDAR 303 452 parcelles (70,3 %), OCS GE : `parcel_ocsge` couvre **100 % des 431 663 parcelles** (annexe A.5) — utilisée comme **contrôle qualité** de l'emprise et information « artificialisé officiel », pas comme axe séparé (redondant avec l'emprise bâtie). **RNB vs BD TOPO** : le RNB (414 081 bâtiments actifs, 817 506 liens `rnb_rattachement_bdtopo`) n'apporte ni géométrie nouvelle ni hauteur ; son apport est la **clé stable inter-millésimes** et la fraîcheur en flux continu → croisement/contrôle, pas une feature. Nu/bâti : pour le Score affiché, l'état **courant** est le bon (l'as-of ne sert qu'au backtest du Signal — le Score n'est pas backtesté contre des ventes, §13 du mandat).
 - **5.3 Faisabilité physique : RETENU** (temps 3). Le MNH LiDAR 50 cm (~5 406 parcelles, périmé) : rien n'est bâti dessus, conformément au mandat.
 - **5.4 Assemblage : PAS ENCORE comme composante scorée.** Verdict motivé : le « même propriétaire » n'est observable que pour les personnes morales (millésimes DGFiP 2019-2024, 81 161 liens en 2024 — annexe A.5) ; un axe d'assemblage scoré avantagerait mécaniquement ~19 % du parc sans justification métier, sur une donnée périmée de 2 ans. En revanche : **DFI filiation est mûre comme information et comme candidate Signal** — 409 623 liens, 471 129 IDU, `date_validation` continue 1989→2025 (~6-16 k/an ; annexe A.4) : l'as-of est propre, ce que SCORING-4 (« En passant ») identifiait déjà comme meilleur candidat suivant. En V1 : affichage fiche (divisions récentes, voisines même PM, contiguïté) + point de branchement défini (axe A additif ≤10 pts, activé seulement après mesure sur témoins).
-- **5.5 Contexte : RETENU plafonné** (temps 4). ZAC : **aucune table en base** (annexe A.7) → hors V1. ORT (19 communes) / PLH (5 EPCI) / ENAF (24 communes) : maille communale, information fiche, pas des composantes du score parcellaire.
-- **5.6 Hors axes** : rien de mieux trouvé qui ne soit déjà couvert. Écartés explicitement du Score (corrélé ≠ intérêt foncier) : Filosofi, QPV, socio-démographie, NDVI/canopée (mortes — SCORING-RAPPORT §B.2), piscines, Cartofriches (0,15 % informatif), accessibilité OSM, prix locaux (hors le contexte plafonné), ZFANG, zonage ABC (fiscalité de l'acquéreur = information fiche, pas intérêt foncier).
+- **5.5 Contexte : INFORMATION seule en V1** (temps 4 — correction Vic). ZAC : **aucune table en base** (annexe A.7) → hors V1. ORT (19 communes) / PLH (5 EPCI) / ENAF (24 communes) : maille communale, information fiche, pas des composantes du score parcellaire.
+- **5.6 Hors axes** : rien de mieux trouvé qui ne soit déjà couvert. Écartés explicitement du Score (corrélé ≠ intérêt foncier) : Filosofi, QPV, socio-démographie, NDVI/canopée (mortes — SCORING-RAPPORT §B.2), piscines, Cartofriches (0,15 % informatif), accessibilité OSM, prix locaux (information fiche), ZFANG, zonage ABC (fiscalité de l'acquéreur = information fiche, pas intérêt foncier).
 
 ### 2.3 Manquants, couverture, confiance — les trois volets
 
@@ -69,7 +73,7 @@ Parcelle bâtie : **aucune pénalité « bâtie »** — le résiduel est déjà
 
 ### 2.4 Explicabilité
 
-Chaque composante porte un libellé FR client (leçon PALIERS-1, Lot A0 : « état bâti/nu reconstruit à la date » est illisible) : « 480 m² de droits à construire restants », « 30 % de la parcelle en zone A, déduits », « pente forte (32 %) », « accès à la voie non identifié », « secteur actif : 14 permis en 2 ans ». Le détail +/− est la décomposition littérale du calcul — pas un SHAP.
+Chaque composante porte un libellé FR client (leçon PALIERS-1, Lot A0 : « état bâti/nu reconstruit à la date » est illisible) : « 480 m² de droits à construire restants », « 30 % de la parcelle en zone A, déduits », « pente forte (32 %) », « bâti existant sur 40 % de la parcelle — démolition à prévoir », « accès à la voie non identifié ». Le détail +/− est la décomposition littérale du calcul — pas un SHAP ; le contexte (« secteur actif : 14 permis en 2 ans ») s'affiche à part, hors calcul.
 
 ### 2.5 Validation sans label (§13 du mandat)
 
@@ -122,8 +126,9 @@ Couvertures : annexe A.5 sauf mention. Dénominateur parcelles = 431 663 (`parce
 | hauteur bâti | saturation | LiDAR HD | `batiment_hauteur_lidar` | 303 452 = 70,3 % | 2023-2024 | GO (manquant → couverture) |
 | OCS GE artificialisation | contrôle qualité | IGN OCS GE 2.0 | `parcel_ocsge` | **100 %** | 2017 + 2022 | GO (contrôle, pas axe) |
 | RNB | clé stable bâti | RNB flux | `rnb_batiments` (414 081), `rnb_rattachement_bdtopo` (817 506) | — | flux continu | GO (croisement, pas feature) |
-| DVF secteur (rotation, prix) | contexte ±8 | DVF | `dvf_secteur_medianes`, `p_model_ext_dvf` | 94-100 % | latence ~6 mois | GO plafonné |
-| Sitadel secteur 24 m | contexte ±8 | Sitadel | `sitadel_permits` (50 545) | île | mensuel, garde fraîcheur bloquante | GO plafonné |
+| DVF secteur (rotation, prix) | information fiche (hors calcul V1) | DVF | `dvf_secteur_medianes`, `p_model_ext_dvf` | 94-100 % | latence ~6 mois | GO (information) |
+| Sitadel secteur 24 m | information fiche (hors calcul V1) | Sitadel | `sitadel_permits` (50 545) | île | mensuel, garde fraîcheur bloquante | GO (information) |
+| emprise bâtie × hauteur (facteur bâti) | faisabilité | BD TOPO + CoSIA + LiDAR | `parcel_residuel_runs.taux_emprise_pct`, `batiment_hauteur_lidar` | ~100 % / 70,3 % | CoSIA 2025, LiDAR 2023-24 | GO (hauteur manquante → cran par l'emprise) |
 | DFI filiation / contiguïté / voisines PM | information + branchement | DGFiP | `dfi_filiation` (409 623 liens) | 471 129 IDU | datée 1989→2025 | **ATTENTION** : info V1, axe scoré = plus tard |
 | ZAC, OPAH, ZAE, ENS, ZPPA… | — | `partenariat_requis`, tables vides | — | 0 | — | **NO-GO** (« plus tard, si ingérées ») |
 | Fichiers fonciers / DV3F / LOVAC | — | Cerema, convention non instruite | **aucune table** (annexe A.3) | 0 | — | **NO-GO** |
@@ -140,7 +145,7 @@ Couvertures : annexe A.5 sauf mention. Dénominateur parcelles = 431 663 (`parce
 | voisinage spatio-temporel (11 features K4bis) | Z | construits as-of | île | test de fuite dédié VERT (K4bis) | GO |
 | `anciennete_plu_annees` | Z | `sudocuh_procedures.approbation_opp` | 99 % | datée | GO — **sudocuh gardée** (statuer §6 du mandat : oui) |
 | `ventes_pm_secteur_36m` | Z | `pm_proprietaires_millesimes` (2019-2024) | île | as-of propre mais **millésime figé 2024** | ATTENTION (re-mesurer au millésime 2025) |
-| `filo_snv_pp`, `filo_pct_pauv`, `filo_pct_prop` | Z | `filosofi_carreaux_200m` | 89,3 % | 2021, statique | ATTENTION (vivantes au K0 ; à re-challenger au re-freeze) |
+| `filo_snv_pp`, `filo_pct_pauv`, `filo_pct_prop` | Z | `filosofi_carreaux_200m` | 89,3 % | 2021, statique | GO — re-challengées (ablation B, `SCORING-5-RETOUR.md` §4) : retrait = AUC −0,003, lift −0,034, gain nul |
 | `zone_plu` (état courant) | Z | GPU | 99 % | **as-of irreconstructible** — biais documenté : 22,9 % des labels appris sous PLU postérieur, décroissant 51 %→7 % (DONNEES-1, lot A1) | GO avec biais assumé |
 | `surface_m2`, `pente_moy_deg`, copro (RNIC) | D/Z | `parcels`, `parcel_terrain`, `rnic_coproprietes` | 98-100 % | immuable / vivant | GO |
 | **candidate** `division_dfi_36m` | D | `dfi_filiation.date_validation` | ~6-16 k liens/an | as-of propre | à tester (protocole §9) |
@@ -187,11 +192,11 @@ Classement : **A** hard exclude (certain) · **B** pénalité (assiette ou coeff
 | `abf` (`phase1.py:910`) | UNKNOWN complétude | 0 | **C** | correct |
 | `residuel_socle` (`etage0_ext.py:162`) | barème SDP −25…+30 | 0 | **B → cœur du Score** | sort de la cascade, devient le temps 2 du Score |
 | étage 1 (`sup`, `sol_pollue`, `icpe`, `bruit`, `cinquante_pas`, `cavite`/`mvt`) | flags gradués | 0 | **B/C** | SUP fortes (t5/ac2/as1) → coefficient ; le reste information |
-| phase 2 `dvf`/`sitadel` (POSITIVE) | | — | **D (déplacement)** | le « positif marché » appartient au Signal et au contexte plafonné, plus à la cascade |
+| phase 2 `dvf`/`sitadel` (POSITIVE) | | — | **D (déplacement)** | le « positif marché » appartient au Signal et à l'information fiche, plus à la cascade |
 | phase 2 `potentiel_foncier_region` | | — | **C** | benchmark externe (§13), jamais feature |
 | phase 2 `proprietaire` (Fichiers fonciers `manuel`) | quasi toujours UNKNOWN | — | **D** | aucune table — tuyau mort |
 | étage 2 `age_dirigeant`, `bodacc` | info ×0 + bypass | — | **D (déplacement)** | événements → Signal, plus dans la cascade |
-| déclassements (`pipeline.py:392-453`) : bâti saturé 122 198 · non constructible 6 171 · bâti révélé 5 333 · zone fermée 2 765 · AU 1 115 (SCORING-4) | gardes de tête | — | **B/C entériné** | PALIERS-1 en a déjà fait des motifs ; dans le nouveau moteur : bâti saturé = état (le résiduel net du bâti le porte), zone/AU fermée = capacité différée, bâti révélé = qualité de donnée |
+| déclassements (`pipeline.py:392-453`) : bâti saturé 122 198 · non constructible 6 171 · bâti révélé 5 333 · zone fermée 2 765 · AU 1 115 (SCORING-4) | gardes de tête | — | **B/C entériné** | PALIERS-1 en a déjà fait des motifs ; dans le nouveau moteur : bâti saturé = capacité nette + facteur bâti du coefficient (temps 3), zone/AU fermée = capacité différée, bâti révélé = qualité de donnée |
 
 **Effet net attendu** : les règles reclassées B réintroduisent au plus ~3 112 (zonage 90-99 %) + 6 612 (safer) + parts partielles de PPR/ER/EBC/PEB dans l'univers scoré, avec pénalité d'assiette — borne haute ~70 k avant recouvrements, effectif net à mesurer à l'implémentation (requête : parcelles exclues UNIQUEMENT par des règles reclassées B). Principe gravé respecté : la mesure « déclassées gardées = tête ×2,4 à précision constante » (PALIERS-1) est le précédent, pas à redémontrer.
 
@@ -229,7 +234,7 @@ Un seul point d'attention produit (pas un blocage) : avec des bandes + Signal, l
 **8.1 Qui déclenche réellement quoi.** Confirmé par le code (builders `p_model/sql.py`, `ext_sql.py`, `qv14.py` ; couches `config/cascade_rules.yaml`) et le tableau des sources (`SOURCES-AUDIT.csv`) :
 - **Signal** : DVF, Sitadel (garde de fraîcheur bloquante P1-6, `p_v2/pipeline.py:94-117`), BD TOPO/CoSIA (bâti), Filosofi, RGE ALTI, GPU (zone), résiduel, RNIC (copro), sudocuh, millésimes PM, BODACC (événements).
 - **Cascade** : `spatial_layers` tous kinds câblés (43 couches) + caches déclassement.
-- **Score déterministe** : résiduel post-calibrage + géométrie + couches clippées + pente + accès + DVF/Sitadel secteur (contexte).
+- **Score déterministe** : résiduel post-calibrage + géométrie + couches clippées + pente + accès + emprise bâtie/hauteur.
 - **Affichage seul** : 56 sources connectées sans moteur ; **DPE et SIRENE ne nourrissent ni feature ni couche cascade**.
 - **Aucune ingestion ne déclenche de recalcul automatique** : le run est un geste manuel (`labuse flux-run`, `cli.py:643-716` ; aucun run dans le registre cron `jobs.py:287-380`) ; chaque run photographie ses millésimes (`snapshot_source_millesimes`, `pipeline.py:554-558`). Les ~95 sources hebdomadaires n'obligent donc à RIEN recalculer — c'est déjà vrai aujourd'hui ; le problème réel est le coût du geste quand on veut rafraîchir.
 
@@ -237,7 +242,7 @@ Un seul point d'attention produit (pas un blocage) : avec des bandes + Signal, l
 
 **8.3 Recalcul incrémental : OUI, la structure le permet déjà.** `evaluate_parcels(parcel_ids)` accepte un ensemble arbitraire, le dry-run est idempotent par (run_label, parcel_id) et reprenable (`cascade/pipeline.py:56-64, 213-223` ; `flux-run --resume`). Preuve vivante : des parcelles du label servi ont été ré-évaluées entre le 27/08 et le 18/09 (min/max `created_at`, annexe A.9). Le delta cascade = parcelles intersectant les objets `spatial_layers` modifiés depuis le dernier calcul (jointure spatiale par kind/bbox) + parcelles aux caches déclassement changés. **Manque un journal des deltas d'ingestion** (quel objet de couche a changé quand) — c'est LA pièce à construire au mandat suivant ; en attendant, le delta se fait par kind ingéré (rejouer les seules communes/bbox touchées).
 
-**8.4 Le Score LABUSE se recalcule à la volée : OUI par construction.** Fonction pure de caches par parcelle (résiduel, géométrie, clips, pente, accès, agrégats secteur figés) — pas de rang, pas de percentile, pas d'état global. Matérialisation : nightly en delta (parcelles dont une entrée a bougé), et calcul à la demande pour l'Analyse d'une sélection. **Il n'y a plus de « run » pour le Score.**
+**8.4 Le Score LABUSE se recalcule à la volée : OUI par construction.** Fonction pure de caches par parcelle (résiduel, géométrie, clips, pente, accès, emprise bâtie/hauteur) — pas de rang, pas de percentile, pas d'état global. Matérialisation : nightly en delta (parcelles dont une entrée a bougé), et calcul à la demande pour l'Analyse d'une sélection. **Il n'y a plus de « run » pour le Score.**
 
 **8.5 Features globales qui limitaient l'incrémental — levées.** Les pièces globales du servi étaient : rangs/percentiles île (`pipeline.py:346-366`), calibrage d'effectifs N_e 1150 (`:469-480`), quantiles de réserve. **`assign_paliers` v2 les supprime** (fonction pure de p, seuils absolus). Restent locales-mais-propagées : agrégats secteur (une mutation DVF change son secteur) et voisinage ≤400 m (`qv12.py:280-291`) — propagation bornée, et de toute façon le re-score complet coûte 8 min : l'incrémental fin du Signal est inutile, seul celui de la **cascade** compte.
 
@@ -247,7 +252,9 @@ Un seul point d'attention produit (pas un blocage) : avec des bandes + Signal, l
 
 ---
 
-## 9. Protocole d'ablations — pour le mandat suivant (spécifié, pas exécuté)
+## 9. Protocole d'ablations — spécifié ici, EXÉCUTÉ par SCORING-5-RETOUR §4
+
+> **Résultat (21/09, `SCORING-5-RETOUR.md` §4)** : A cité · B et C mesurés au banc K0 (reproduction contrôlée : réf q_v14 re-fitée = acquis). Verdict : **recette q_v14 complète pour q_v15** (au plus sans `piscine`/`pv_candidat`), filo gardées (retrait = perte petite mais cohérente pour gain nul) ; **C réfute « les statiques sont du lest »** (AUC 0,5995, churn 66,8 %) — le foncier statique est indispensable au Signal. Le protocole ci-dessous reste la référence de méthode.
 
 Banc K0 (train ≤2023 · calib 2024 · test 2025) + walk-forward 6 plis, règle de verdict pré-enregistrée avant toute mesure (méthode DONNEES-1, lot G), métriques du §3.
 - **A — servi m36-l2f** : baseline de contrôle (chiffres déjà connus, ne pas re-mesurer : AUC 0,613, Priorité 13,7 %).
@@ -261,7 +268,7 @@ Pour le **Score** (pas de label — §13) : banc de monotonicité + liste de té
 ## 10. Tests automatisés à prévoir
 
 1. **Déterminisme** : même entrée → même score, hash du barème dans la sortie ; refus de servir si version/hash absents.
-2. **Monotonicité** : SDP↑ à contraintes égales ⇒ score ≥ ; assiette↓ ⇒ score ≤ ; contexte borné ±8 vérifié aux limites.
+2. **Monotonicité** : SDP↑ à contraintes égales ⇒ score ≥ ; assiette↓ ⇒ score ≤ ; emprise bâtie↑ ou hauteur↑ à capacité égale ⇒ score ≤.
 3. **Manquants** : entrée critique absente → `non_calculable` + motif FR (jamais 0) ; entrée non critique absente → couverture baisse, composante neutre.
 4. **Pénalité jamais exclusion** : ∀ parcelle avec assiette > 0 et zone résolue ⇒ score calculé > 0.
 5. **Fuite temporelle** (Signal) : généraliser l'assert bloquant de K4bis (`k4bis_test_fuite.csv` : features reconstruites source-tronquée == livrées) à TOUTE feature nouvelle ; test de non-postériorité des dates max.
@@ -276,14 +283,14 @@ Pour le **Score** (pas de label — §13) : banc de monotonicité + liste de té
 ## 11. Risques et incertitudes
 
 1. **Plafond « sans bloc propriétaire personne physique » — inscrit explicitement** : 81 % du parc sans donnée de cycle de vie (SCORING-RAPPORT §B.5) ; aucun candidat au-dessus d'AUC ~0,63 sans lui (COMPTE-RENDU-SCORING-2). Le Signal restera modeste tant que la convention Cerema (FF/DV3F/LOVAC, `partenariat_requis`, **0 table en base** — annexe A.3) n'existe pas. C'est le plafond connu du moteur, pas un défaut corrigeable par l'ingénierie.
-2. **Le Score dépend à 100 % du résiduel post-calibrage** — qui n'existe pas encore (servi = pré-calibrage, annexe A.6). Tout le §2 se spécifie dessus ; si le recalcul révèle des causes M125 massives inattendues, les barèmes sont à re-proposer.
+2. **Le Score dépend à 100 % du résiduel post-calibrage** — qui n'existe pas encore (servi = pré-calibrage, annexe A.6). Tout le §2 se spécifie dessus ; si le recalcul révèle des causes M125 massives inattendues, les barèmes sont à re-proposer. Prérequis mesurés avant le run (RESIDUEL-1 lot 1, `SCORING-5-RETOUR.md` §2) : trancher les **95 feuilles `propose` numériques** qui branchent la base du calcul, et lancer dans un **process frais** (`_calibrage_overlay`/`_zonage_doc` en `lru_cache` à vie du process — `zonage.py:78,288`).
 3. **Zone PLU as-of irreconstructible** (DONNEES-1, lot A2) : 22,9 % des labels 2017-2024 appris sous un PLU postérieur à la vente (51 %→7 % décroissant). Biais résiduel du backtest Signal : assumé et documenté, pas corrigeable.
 4. **Millésimes PM arrêtés à 2024** : toute feature propriétaire PM périmée de 2 ans ; `ventes_pm_secteur_36m` gardée sous garde-fou mais à re-mesurer au premier millésime frais.
 5. **Ventilations non mesurées** : PPR rouge 100 % vs partiel (le `detail` ne porte pas le %), ER/EBC à 100 % — nécessaires pour les frontières A/B exactes ; requêtes à ajouter au dry-run à l'implémentation.
 6. **Churn annuel ~79 %** du Signal (PALIERS-1) : réalité as-of, à assumer commercialement (le Score, lui, est stable — c'est l'argument produit).
 7. **SAR** : source `partenariat_requis` mais 2 453 objets déjà dans `spatial_layers` et un moteur `cascade` déclaré — la règle est informative (DÉCISION 2, `phase1.py:153-219`), mais clarifier la licence avant d'appuyer quoi que ce soit de nouveau dessus.
 8. **Pas de vérité terrain pour le Score** : validation par monotonicité + témoins seulement ; le retour terrain (0 étiquette aujourd'hui, `parcel_feedback` vide) mettra 6-12 mois à exister — poser le geste maintenant (sélecteur 7 états SCORING-3), n'en rien attendre avant.
-9. **Seuils et barèmes** : toutes les bornes chiffrées de ce rapport (paliers de capacité, plancher 0,4, plafond ±8, bandes) sont des **structures proposées** — les valeurs sont des décisions Vic (§17) à caler sur témoins, pas des chiffres à fausse précision.
+9. **Seuils et barèmes** : toutes les bornes chiffrées de ce rapport (paliers de capacité, plancher 0,4, crans du facteur bâti, bandes) sont des **structures proposées** — les valeurs sortent des parcelles témoins (décision Vic actée) puis restent des décisions Vic (§17), pas des chiffres à fausse précision.
 10. **À abandonner** (déjà réfuté, ne pas y revenir sans fait nouveau) : fits séparés par segment (K4), GBM (K5), snapshots infra-annuels tant que DVF a 6 mois de latence, DPE (0,26 %), Radar comme feature, BDNB/MOBPRO (retirées), toute variable < 5 % de couverture.
 
 ---
