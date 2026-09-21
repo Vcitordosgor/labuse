@@ -1173,6 +1173,10 @@ export type SourceRattachements = {
   radar: SourceRattLigne[]
 }
 export const getSourcesRattachements = () => j<Record<string, SourceRattachements>>('/sources/rattachements')
+// DASHBOARD-4b lot 2 — sens inverse : chaque élément (couche/section/carte commune/outil/document/
+// copilote/radar) avec la liste de ses sources (réservoirs), pour la recherche de la page Données.
+export type SourceElement = { id: string; nom: string; categorie: string; sources: string[] }
+export const getSourcesParElement = () => j<{ elements: SourceElement[] }>('/sources/par-element')
 // PLU-CALIBRAGE-1 lot 2 — par nom de source (réservoir GPU), ses lecteurs calibrage : un par
 // commune dotée d'un PLU, avec l'état repris de destinations.etat_commune.
 export type SourceCalibrage = {

@@ -5640,6 +5640,53 @@ def sources_rattachements() -> dict:
     return out
 
 
+@app.get("/sources/par-element")
+def sources_par_element() -> dict:
+    """DASHBOARD-4b lot 2 — LE SENS INVERSE : pour chaque ÉLÉMENT (une couche · une section de fiche ·
+    une carte commune · un outil · un document · une fonction Copilote · une veille Radar), la liste de
+    ses SOURCES (réservoirs vitrine), cliquables vers leur détail. Chemin inverse de
+    /sources/rattachements + /sources/couches. Sert la recherche « sens inverse » de la page Données
+    (décision 18/09 : ce sens vit ICI, rien côté client). Retour {elements: [{id, nom, categorie,
+    sources[]}]} trié. `id` = rid du robinet, ou « couche:<kind> » pour une couche."""
+    from ..registre.donnees import DONNEES
+    from ..registre.robinets import ROBINETS
+    from ..circuit_etats import NOM_VERS_SLUG
+    slug2nom = {slug: nom for nom, slug in NOM_VERS_SLUG.items() if slug}
+    CAT_BLOC = {"outil": "outils", "pdf": "documents", "copilote": "copilote", "veille": "radar"}
+    elements: list[dict] = []
+    for rid, r in ROBINETS.items():
+        if r.categorie == "fiche":
+            bloc = "fiche_commune" if r.parent == "fiche_commune" else "fiche_parcelle"
+        else:
+            bloc = CAT_BLOC.get(r.categorie)
+        if bloc is None:
+            continue  # couche/fond (traité via l'inverse couches) ou surface interne (hors 7 blocs)
+        sources: list[str] = []
+        vus: set = set()
+        for cid in r.chiffres:
+            d = DONNEES.get(cid)
+            if d is None:
+                continue
+            for slug in d.reservoirs:
+                nom = slug2nom.get(slug)
+                if nom and nom not in vus:
+                    vus.add(nom)
+                    sources.append(nom)
+        elements.append({"id": rid, "nom": r.nom, "categorie": bloc, "sources": sorted(sources)})
+    # couches : inverse de sources_couches (source → couches) → couche → sources.
+    couche_sources: dict[str, dict] = {}
+    for name, couches in sources_couches().items():
+        for c in couches:
+            e = couche_sources.setdefault(c["kind"], {"id": f"couche:{c['kind']}", "nom": c["nom"],
+                                                       "categorie": "couche", "_src": set()})
+            e["_src"].add(name)
+    for e in couche_sources.values():
+        elements.append({"id": e["id"], "nom": e["nom"], "categorie": "couche",
+                         "sources": sorted(e["_src"])})
+    elements.sort(key=lambda e: (e["categorie"], e["nom"].lower()))
+    return {"elements": elements}
+
+
 @app.get("/sources/calibrages")
 def sources_calibrages() -> dict:
     """PLU-CALIBRAGE-1 lot 2 — pour le réservoir GPU (clé = data_sources.name), la liste de ses
