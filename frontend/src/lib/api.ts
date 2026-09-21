@@ -1160,11 +1160,17 @@ export const getSourcesCouverture = () => j<SourcesCouverture>('/sources/couvert
 // COUCHES-REGISTRE-2 lot 3 — le sens inverse : par nom de source, les couches carte qu'elle alimente.
 export type SourceCouche = { kind: string; nom: string }
 export const getSourcesCouches = () => j<Record<string, SourceCouche[]>>('/sources/couches')
-// CIRCUIT-SOURCES-1 lot 3 — par nom de source, les 2 autres blocs du détail réservoir :
-// lignes de la fiche parcelle (quelle ligne, quelle section) + ailleurs (commune/outils/Radar/exports).
+// CIRCUIT-SOURCES-1 lot 3 · DASHBOARD-4b lot 1 — par nom de source, SIX blocs distincts (le 7e,
+// couches carte, = getSourcesCouches). Chaque ligne porte `rid` (id du robinet-élément) pour ouvrir
+// son détail (sens inverse, lot 2). `rid` peut être null pour une section déclarée sans robinet dédié.
+export type SourceRattLigne = { ligne: string; cible: string; rid: string | null }
 export type SourceRattachements = {
-  lignes_fiche: { ligne: string; section: string }[]
-  ailleurs: { quoi: string; ou: string }[]
+  fiche_parcelle: SourceRattLigne[]
+  fiche_commune: SourceRattLigne[]
+  outils: SourceRattLigne[]
+  documents: SourceRattLigne[]
+  copilote: SourceRattLigne[]
+  radar: SourceRattLigne[]
 }
 export const getSourcesRattachements = () => j<Record<string, SourceRattachements>>('/sources/rattachements')
 // PLU-CALIBRAGE-1 lot 2 — par nom de source (réservoir GPU), ses lecteurs calibrage : un par

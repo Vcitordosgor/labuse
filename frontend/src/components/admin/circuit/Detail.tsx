@@ -13,6 +13,7 @@ import {
   getAdminCircuitReservoir, getAdminCircuitRobinet, getSourcesCalibrages, getSourcesCouches, getSourcesRattachements,
   postAdminCircuitAgents, postAdminCircuitFiltreRevenir, postAdminCircuitFiltreServir,
   postAdminCircuitRevenir, postAdminFluxBascule, postAdminFluxLancerRun, postAdminSourceVeilleInjecter,
+  type SourceRattLigne,
 } from '../../../lib/api'
 import { useApp } from '../../../store/useApp'
 
@@ -219,18 +220,27 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
               <li key={ch.id}><span>{ch.libelle}</span><span className="muted">{ch.robinets} robinet{ch.robinets > 1 ? 's' : ''}</span></li>
             )) : <li className="muted">aucun</li>}</ul>
           </div>
-          {/* CIRCUIT-SOURCES-1 (lot 3) — « tout ce que la source touche », 3 blocs TOUJOURS présents
-              (vides mais jamais absents) : Couches carte (pastilles cliquables, arrivées de PAGES-
-              RANGEMENT-1) · Lignes de la fiche parcelle (quelle ligne, quelle section) · Ailleurs. */}
+          {/* CIRCUIT-SOURCES-1 (lot 3) · DASHBOARD-4b (lot 1) — « tout ce que la source nourrit », SEPT
+              blocs DISTINCTS toujours présents (vides → « aucun »), jamais un fourre-tout « Ailleurs » :
+              Couches carte · Sections de la fiche parcelle (V5d) · Cartes de la fiche commune (V5e) ·
+              Outils (V5f) · Documents (Dossier · Financier · Apporteur · Pré-dossier) · Copilote · Radar.
+              Chaque ligne (hors couche) est cliquable vers l'ÉLÉMENT (détail robinet = ses sources). */}
           {(() => {
             const couches = couchesParSource?.[r.nom] ?? []
             const rat = rattachements?.[r.nom]
-            const lignes = rat?.lignes_fiche ?? []
-            const ailleurs = rat?.ailleurs ?? []
             const calibrages = calibragesParSource?.[r.nom] ?? []
+            const Bloc = ({ titre, lignes, vide }: { titre: string; lignes: SourceRattLigne[]; vide: string }) => (
+              <div className="card"><h3>{titre} · {lignes.length}</h3>
+                {lignes.length ? <ul className="list">{lignes.map((x, i) => (
+                  <li key={i} className={x.rid ? 'lien' : ''} style={x.rid ? { cursor: 'pointer' } : undefined}
+                    onClick={x.rid ? () => onOpen('robinet', x.rid!) : undefined}
+                    title={x.rid ? `Voir « ${x.cible} » et ses sources` : undefined}>
+                    <span>{x.ligne}</span><span className="muted">{x.cible}{x.rid ? ' ↗' : ''}</span></li>
+                ))}</ul> : <span className="muted">{vide}</span>}
+              </div>
+            )
             return (<>
-              {/* PLU-CALIBRAGE-1 (lot 2) — les calibrages PLU, lecteurs du réservoir GPU : une pastille
-                  par commune, ambre quand une nouvelle version du PLU est servie (« à revérifier »). */}
+              {/* PLU-CALIBRAGE-1 (lot 2) — les calibrages PLU, lecteurs du réservoir GPU. */}
               {calibrages.length > 0 && (
                 <div className="card"><h3>Calibrages PLU · {calibrages.length} lecteurs</h3>
                   <div>{calibrages.map((cb) => (
@@ -249,16 +259,12 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
                     onClick={() => versCouche(c.kind)}>{c.nom} ↗</span>
                 ))}</div> : <span className="muted">aucune couche carte</span>}
               </div>
-              <div className="card"><h3>Lignes de la fiche parcelle · {lignes.length}</h3>
-                {lignes.length ? <ul className="list">{lignes.map((x, i) => (
-                  <li key={i}><span>{x.ligne}</span><span className="muted">{x.section}</span></li>
-                ))}</ul> : <span className="muted">aucune ligne de la fiche parcelle</span>}
-              </div>
-              <div className="card"><h3>Ailleurs · {ailleurs.length}</h3>
-                {ailleurs.length ? <ul className="list">{ailleurs.map((x, i) => (
-                  <li key={i}><span>{x.quoi}</span><span className="muted">{x.ou}</span></li>
-                ))}</ul> : <span className="muted">ni fiche commune, ni outil, ni Radar, ni export</span>}
-              </div>
+              <Bloc titre="Sections de la fiche parcelle" lignes={rat?.fiche_parcelle ?? []} vide="aucune section de la fiche parcelle" />
+              <Bloc titre="Cartes de la fiche commune" lignes={rat?.fiche_commune ?? []} vide="aucune carte de la fiche commune" />
+              <Bloc titre="Outils" lignes={rat?.outils ?? []} vide="aucun outil" />
+              <Bloc titre="Documents" lignes={rat?.documents ?? []} vide="aucun document" />
+              <Bloc titre="Copilote" lignes={rat?.copilote ?? []} vide="aucune fonction du Copilote" />
+              <Bloc titre="Radar" lignes={rat?.radar ?? []} vide="aucune veille Radar" />
             </>)
           })()}
         </div>
