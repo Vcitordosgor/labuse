@@ -65,6 +65,10 @@ def _cause_indisponible(session: Session, parcel_id: int, f=None) -> tuple[str, 
             return (f"zone_non_constructible:{zone}" if zone else "zone_non_constructible"), 0
         if code == "habitat_interdit":
             return (f"habitat_interdit:{zone}" if zone else "habitat_interdit"), 0
+        # PLU-CALIBRAGE-6 — règle PLU non validée (feuille SDP `propose`) : non calculable, SDP 0
+        # (0 = « le moteur ne sait pas », pas un droit ; la zone est portée pour la fiche/M127).
+        if code == "regle_plu_non_validee":
+            return (f"regle_plu_non_validee:{zone}" if zone else "regle_plu_non_validee"), 0
         return code, 0          # terrain_exigu / redhibitoire / hauteur_indispo / capacite_nulle
     # parcel_faisabilite → None : distinguer « aucune zone » (hors PLU) d'une zone sans règle.
     from .db import parcel_context

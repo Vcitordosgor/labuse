@@ -54,15 +54,12 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 1.5
           article: UA 12
           page_pdf: 17
-          citation: 'Pour les constructions à destination d’habitation : - 1 place de stationnement minimum
-            par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par
-            logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par
-            logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.'
-          statut: propose
-          raison: valeur 2 absente de la citation (harmonisation ≠ texte)
+          citation: 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure
+            ou égale à 50m², arrondi à l’entier inférieur.
+          statut: valide
       pleine_terre:
         pct:
           pct: 25.0
@@ -164,15 +161,12 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 1.5
           article: UB 12
           page_pdf: 26
-          citation: 'Pour les constructions à destination d’habitation : - 1 place de stationnement minimum
-            par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par
-            logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par
-            logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.'
-          statut: propose
-          raison: valeur 2 absente de la citation (harmonisation ≠ texte)
+          citation: 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure
+            ou égale à 50m², arrondi à l’entier inférieur.
+          statut: valide
       pleine_terre:
         pct:
           pct: 30.0
@@ -267,15 +261,12 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 1.5
           article: UC 12
           page_pdf: 35
-          citation: 'Pour les constructions à destination d’habitation : - 1 place de stationnement minimum
-            par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par
-            logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par
-            logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.'
-          statut: propose
-          raison: valeur 2 absente de la citation (harmonisation ≠ texte)
+          citation: 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure
+            ou égale à 50m², arrondi à l’entier inférieur.
+          statut: valide
       pleine_terre:
         pct:
           pct: 30.0
@@ -368,15 +359,12 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 1.5
           article: UD 12
           page_pdf: 43
-          citation: 'Pour les constructions à destination d’habitation : - 1 place de stationnement minimum
-            par logement locatifs financés par un prêt aidé de l’État - 1 place de stationnement minimum par
-            logement d’une surface de plancher inférieure à 50m² - 1,5 places de stationnement minimum par
-            logement d’une surface de plancher supérieure ou égale à 50m², arrondi à l’entier inférieur.'
-          statut: propose
-          raison: valeur 2 absente de la citation (harmonisation ≠ texte)
+          citation: 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure
+            ou égale à 50m², arrondi à l’entier inférieur.
+          statut: valide
       pleine_terre:
         pct:
           pct: 40.0
@@ -644,13 +632,12 @@ zones:
           formule: H/2, minimum 3 m
       stationnement:
         par_logement:
-          places: 2.0
-          article: UA 12
-          page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
-          raison: valeur 2 absente de la citation (harmonisation ≠ texte)
+          places: 1.5
+          article: AUINDICEE 12 (renvoi UA 12)
+          page_pdf: 17
+          citation: 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure
+            ou égale à 50m², arrondi à l’entier inférieur.
+          statut: valide
       pleine_terre:
         pct:
           pct: 25.0
@@ -717,13 +704,12 @@ zones:
           formule: H/2, minimum 3 m
       stationnement:
         par_logement:
-          places: 2.0
-          article: UC 12
-          page_pdf: 55
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes.
-          statut: propose
-          raison: valeur 2 absente de la citation (harmonisation ≠ texte)
+          places: 1.5
+          article: AUINDICEE 12 (renvoi UC 12)
+          page_pdf: 35
+          citation: 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure
+            ou égale à 50m², arrondi à l’entier inférieur.
+          statut: valide
       pleine_terre:
         pct:
           pct: 30.0

@@ -46,7 +46,9 @@ def test_zone_basse_moins_de_niveaux():
 
 
 def test_pleine_terre_reduit_emprise():
-    f = estimate_capacity(resolve_zone("U3a"), 1000)
+    # PLU-CALIBRAGE-6 : U3a est désormais NON calculable (son recul de voie « à l'alignement »
+    # reste `propose`) → on teste la contrainte pleine terre sur U1c (PT 30 % validée, calculable).
+    f = estimate_capacity(resolve_zone("U1c"), 1000)
     assert any("pleine terre" in s.label.lower() for s in f.steps)
 
 
@@ -84,8 +86,10 @@ def test_modulation_alea_fort_annule():
 
 
 def test_modulation_pente_forte_reduit():
-    base = estimate_capacity(resolve_zone("U6a"), 1500)
-    pentu = estimate_capacity(resolve_zone("U6a"), 1500, Contraintes(pente_pct=35))
+    # PLU-CALIBRAGE-6 : U6a est désormais NON calculable (recul de voie « à l'alignement » resté
+    # `propose`) → la modulation de pente se teste sur U1c (zone calibrée calculable).
+    base = estimate_capacity(resolve_zone("U1c"), 1500)
+    pentu = estimate_capacity(resolve_zone("U1c"), 1500, Contraintes(pente_pct=35))
     assert pentu.fourchette["logements_au_sol"][1] <= base.fourchette["logements_au_sol"][1]
     assert any("pente forte" in m.lower() for m in pentu.modulation)
 

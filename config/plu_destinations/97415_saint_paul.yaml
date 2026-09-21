@@ -1329,12 +1329,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 0.0
-          article: '6'
+          article: '6.2'
           page_pdf: 110
-          citation: Les constructions devront être implantées à l'alignement.
-          statut: propose
-          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+          citation: Les constructions devront être implantées à l’alignement.
+          statut: valide
+          min_m: 0
+          forme: alignement
         limites_separatives:
           min_m: 3.0
           article: '7.2'
@@ -1797,12 +1797,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 0.0
-          article: '6'
+          article: '6.2'
           page_pdf: 172
-          citation: en zone U4a Les constructions devront être implantées à l'alignement.
-          statut: propose
-          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+          citation: Les constructions devront être implantées à l’alignement.
+          statut: valide
+          min_m: 0
+          forme: alignement
         limites_separatives:
           min_m: 3.0
           article: '7.2'
@@ -2003,12 +2003,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 0.0
-          article: '6'
+          article: '6.2'
           page_pdf: 218
-          citation: en zone U5a Les constructions devront être implantées à l'alignement.
-          statut: propose
-          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+          citation: Les constructions devront être implantées à l’alignement.
+          statut: valide
+          min_m: 0
+          forme: alignement
         limites_separatives:
           min_m: 3.0
           article: '7.2'
@@ -2388,12 +2388,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 0.0
-          article: '6'
+          article: '6.2'
           page_pdf: 278
-          citation: en zone U6a Les constructions devront être implantées à l'alignement.
-          statut: propose
-          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+          citation: Les constructions devront être implantées à l’alignement.
+          statut: valide
+          min_m: 0
+          forme: alignement
         limites_separatives:
           min_m: 3.0
           article: '7.2'

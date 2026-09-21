@@ -920,20 +920,20 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 0.0
           article: UZ.6
           page_pdf: 83
-          citation: Les constructions pourront être implantées soit à l'alignement soit en retrait des voies
+          citation: Les constructions pourront être implantées soit à l’alignement soit en retrait des voies
             publiques.
-          statut: propose
-          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+          statut: valide
+          min_m: 0
+          forme: alignement
         limites_separatives:
-          min_m: 0.0
           article: UZ.7
           page_pdf: 83
-          citation: Les constructions pourront s'implanter soit en limite séparative soit en retrait.
-          statut: propose
-          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+          citation: Les constructions pourront s’implanter soit en limite séparative soit en retrait.
+          statut: valide
+          min_m: 0
+          forme: alignement
       stationnement:
         par_logement:
           places: 1.0

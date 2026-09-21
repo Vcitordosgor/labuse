@@ -215,7 +215,6 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 3.0
           article: UA 6.2
           page_pdf: 14
           citation: Dans le secteur UAm, les constructions peuvent être implantées à l’alignement ou en recul
@@ -223,8 +222,9 @@ zones:
             proche de la voie, au moins égale à la hauteur du bâtiment. Pour les constructions implantées
             le long de la RN1E (rue Mahatma Gandhi), la distance de recul par rapport à la voie doit être
             au moins égale à 10 mètres.
-          statut: propose
-          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          statut: valide
+          min_m: 0
+          forme: alignement
         limites_separatives:
           min_m: 3
           article: UA 7
