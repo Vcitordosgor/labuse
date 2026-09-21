@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import {
-  getCadrageCompteur, getParcoursEtat, getProjet, patchProjet, projetPdfUrl, setStatutParcelle,
+  getCadrageCompteur, getParcoursEtat, getProjet, patchProjet, setStatutParcelle,
   type Cadrage, type ParcoursEtat, type ParcoursItem, type StatutParcelle,
 } from '../../lib/api'
 import { AlgoExplainer, ScoringExplainer } from '../panel/LeftPanel'
@@ -294,7 +294,8 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
           {projet && <span data-kanban-perimetre className="rounded border border-line-2 px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-wider text-txt-mut">{perimetreLabel(projet.cadrage)}</span>}
           {projet?.identite?.budget_eur ? <span data-kanban-budget className="rounded border border-line-2 px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-wider text-txt-dim">{fmtEurCompact(projet.identite.budget_eur)} indic.</span> : null}
           <div className="ml-auto flex flex-wrap items-center gap-1.5">
-            <a data-kanban-pdf href={projetPdfUrl(pid)} target="_blank" rel="noreferrer" className={btn} title="Dossier PDF — extrait figé">PDF</a>
+            {/* PROJETS-CRM-FIX-1 (lot 2) — bouton « PDF » retiré : /projets/{id}/export.pdf est un
+                endpoint retiré (410, remplacé par le document « Financier »). Plus de lien mort. */}
             <button data-kanban-renommer onClick={() => { setNomInput(projet?.nom ?? nom); setEditing(true) }} className={btn}>Renommer</button>
             <button data-kanban-archiver onClick={() => { patch.mutate({ statut: 'archive' }); setOpenProjet(null) }} className={btn}>Archiver</button>
             <button data-kanban-ajouter-header onClick={ouvrirCarte}
