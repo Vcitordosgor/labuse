@@ -568,6 +568,9 @@ export interface LeBien {
   // REPARATIONS-1 lot 5 — occupation du sol / artificialisation d'après OCS GE (donnée d'îlot).
   ocsge?: { part_artif_pct: number | null; cs_dominant: string | null; us_dominant: string | null
     millesime: string | null; source: string } | null
+  // DONNEES-2 — couverture du sol CoSIA (20 cm), 3 parts, en complément d'OCS GE. null = hors couverture.
+  cosia_couverture?: { part_impermeabilisee_pct: number | null; part_vegetalisee_boisee_pct: number | null
+    part_sol_nu_pct: number | null; source: string } | null
 }
 
 // M125-2 — copropriété immatriculée (RNIC) rattachée à la parcelle. Information, jamais un verdict.

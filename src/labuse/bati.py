@@ -143,6 +143,50 @@ def fiche_block(session: Session, parcel_id: int, surface_m2: float | None) -> d
             "plus_grand_m2": round(max_m2) if max_m2 else 0}
 
 
+# DONNEES-2 — les 15 classes CoSIA (IGN 20 cm) regroupées en 3 parts pour la fiche §2 Terrain.
+# Imperméabilisé = surfaces qui SCELLENT le sol (bâti, revêtement imperméable, piscine, serre) ;
+# végétalisé/boisé = végétation vivante (feuillu/conifère boisés + broussaille/pelouse/culture/vigne) ;
+# sol nu = terre nue. Hors des 3 (ni imperméable, ni végétal, ni terre) : « Zone perméable » (minéral
+# perméable), « Surface eau », « Neige » — les trois parts ne somment donc pas 100 % (résidu dit honnête).
+_COSIA_IMPERMEABLE = frozenset({"Bâtiment", "Zone imperméable", "Piscine", "Serre"})
+_COSIA_VEGETAL = frozenset({"Feuillu", "Conifère", "Broussaille", "Pelouse", "Culture", "Vigne"})
+_COSIA_SOL_NU = frozenset({"Sol nu", "Terre labourée"})
+
+
+def _cosia_couverture(session: Session, idu: str, surface: float | None) -> dict | None:
+    """DONNEES-2 — couverture du sol CoSIA agrégée par parcelle : part imperméabilisée / végétalisée-
+    boisée / sol nu = Σ(surface de classe CoSIA) / contenance cadastrale. COMPLÈTE OCS GE (donnée
+    d'îlot, part artificialisée) sans la recouper : CoSIA mesure la parcelle elle-même à 20 cm, et
+    « imperméabilisé » n'est pas « artificialisé ». Table absente ou parcelle hors couverture → None."""
+    if not surface or surface <= 0:
+        return None
+    try:
+        if not session.execute(text("SELECT to_regclass('parcel_cosia_couverture')")).scalar():
+            return None
+        rows = session.execute(text(
+            "SELECT classe, m2 FROM parcel_cosia_couverture WHERE idu = :i"), {"i": idu}).mappings().all()
+    except Exception:  # noqa: BLE001 — CoSIA ne casse jamais le tiroir « Le bien »
+        session.rollback()
+        return None
+    if not rows:
+        return None
+    imper = veg = nu = 0.0
+    for r in rows:
+        c, m2 = r["classe"], float(r["m2"] or 0.0)
+        if c in _COSIA_IMPERMEABLE:
+            imper += m2
+        elif c in _COSIA_VEGETAL:
+            veg += m2
+        elif c in _COSIA_SOL_NU:
+            nu += m2
+    return {
+        "part_impermeabilisee_pct": round(100.0 * imper / surface, 1),
+        "part_vegetalisee_boisee_pct": round(100.0 * veg / surface, 1),
+        "part_sol_nu_pct": round(100.0 * nu / surface, 1),
+        "source": "CoSIA (IGN, détection par IA, 20 cm)",
+    }
+
+
 def le_bien_block(session: Session, idu: str) -> dict | None:
     """FICHE-1 lot 1 — bloc « Le bien » : le bâtiment EXISTANT de la parcelle, une fois pour la
     fiche (le tiroir consomme ce producteur unique, aucun calcul au front).
@@ -254,6 +298,11 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
     except Exception:  # noqa: BLE001
         session.rollback()
         ocsge = None
+    # DONNEES-2 — CoSIA COMPLÈTE OCS GE : la couverture du sol de la PARCELLE mesurée à 20 cm
+    # (parcel_cosia_couverture), agrégée en 3 parts — imperméabilisée / végétalisée-boisée / sol nu.
+    # Ni remplacement ni doublon d'OCS GE (donnée d'ÎLOT, part ARTIFICIALISÉE) : imperméabilisé n'est
+    # pas artificialisé, et la maille est la parcelle elle-même. Table absente → None.
+    cosia_couverture = _cosia_couverture(session, idu, surface)
     return {
         "disponible": True,
         "code": bloc.get("code"), "occupation_label": bloc.get("label"),
@@ -276,5 +325,8 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
         "rnb": rnb,
         # REPARATIONS-1 lot 5 — occupation du sol / artificialisation d'après OCS GE (îlot).
         "ocsge": ocsge,
+        # DONNEES-2 — couverture du sol CoSIA 20 cm (imperméabilisée / végétalisée-boisée / sol nu), en
+        # complément d'OCS GE ; None si table absente ou parcelle hors couverture CoSIA.
+        "cosia_couverture": cosia_couverture,
         "source_bati": "BD TOPO® V3 (IGN) + CoSIA 2025",
     }
