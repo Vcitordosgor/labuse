@@ -130,6 +130,15 @@ def normaliser_statut(s: str | None) -> str | None:
 # ─────────────────────────── COURRIER-2 Lot 1 — OPPOSITION ───────────────────────────
 #: motif unique renvoyé quand un dépôt est refusé pour cause d'opposition (source de vérité UI).
 MOTIF_OPPOSITION = "Opposition enregistrée"
+#: COURRIER-2 Lot 3 — motif de refus d'un corps contenant un gabarit {…} non substitué.
+MOTIF_PLACEHOLDER = "Courrier incomplet : un champ de gabarit n'a pas été renseigné"
+_RE_PLACEHOLDER = re.compile(r"\{[a-zA-Zà-ÿ_]+\}")
+
+
+def corps_a_placeholders(corps: str | None) -> bool:
+    """True si le corps contient un gabarit {…} non substitué (ex. « {parcelle} »). Un tel corps ne
+    doit JAMAIS être déposé (il imprimerait les accolades — cf. COURRIER-AUDIT-1 §B2)."""
+    return bool(corps) and bool(_RE_PLACEHOLDER.search(corps))
 
 
 def normaliser_adresse(s: str | None) -> str | None:
@@ -362,12 +371,15 @@ def set_statut_demande(db, demande_id: int, statut: str, *, compte_id: int | Non
     permis = STATUTS_RETOUR if reserve_retour else STATUTS_DEMANDE
     if statut not in permis:
         raise ValueError(f"statut invalide : {statut} (attendu {', '.join(permis)})")
-    # COURRIER-2 Lot 1 — GARDE DE DÉPÔT : on ne dépose jamais un pli vers une adresse/parcelle opposée.
+    # COURRIER-2 — GARDES DE DÉPÔT : jamais un pli opposé (Lot 1), jamais un corps à gabarit {…} (Lot 3).
     if statut == "depose":
-        parcelles = db.execute(text("SELECT parcelles FROM courrier_demandes WHERE id = :id"),
-                               {"id": demande_id}).scalar()
+        row = db.execute(text("SELECT parcelles, corps FROM courrier_demandes WHERE id = :id"),
+                         {"id": demande_id}).mappings().first()
+        parcelles = row["parcelles"] if row else None
         if isinstance(parcelles, str):
             parcelles = json.loads(parcelles or "[]")
+        if row and corps_a_placeholders(row["corps"]):
+            raise ValueError(MOTIF_PLACEHOLDER)
         motif = demande_opposee(db, parcelles or [])
         if motif:
             raise ValueError(motif)
@@ -394,13 +406,15 @@ def marquer_deposes(db) -> list[dict]:
     # COURRIER-2 Lot 1 — les demandes À DÉPOSER dont une parcelle est opposée sont EXCLUES du dépôt en
     # bloc (jamais déposées en douce) ; on ne touche que les candidates non opposées.
     candidates = db.execute(text(
-        "SELECT id, parcelles FROM courrier_demandes WHERE corps IS NOT NULL AND statut = ANY(:src)"),
+        "SELECT id, parcelles, corps FROM courrier_demandes WHERE corps IS NOT NULL AND statut = ANY(:src)"),
         {"src": ["demande", *legacy]}).mappings().all()
     ids_ok = []
     for c in candidates:
         parc = c["parcelles"]
         if isinstance(parc, str):
             parc = json.loads(parc or "[]")
+        if corps_a_placeholders(c["corps"]):
+            continue                       # Lot 3 — jamais déposer un corps à gabarit {…}
         if not demande_opposee(db, parc or []):
             ids_ok.append(c["id"])
     if not ids_ok:

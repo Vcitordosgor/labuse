@@ -351,10 +351,39 @@ def courrier_adressage(body: AdressageIn, db: Session = Depends(get_db)) -> dict
     return {"resolutions": ca.resoudre_plusieurs(db, body.idus)}
 
 
+class ComposerIn(BaseModel):
+    idu: str
+
+
+@router.post("/composer")
+def courrier_composer(body: ComposerIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """COURRIER-2 Lot 3 — compose le courrier (recto + verso) pour l'aperçu front : MÊME source que le
+    PDF, donc aperçu = PDF. Renvoie {recto, verso, ouverture, reference, destinataire, adresse_envoi,
+    bloque, motif}."""
+    from .. import courrier_adressage as ca, courrier_compose as cc
+    res = ca.resoudre_destinataire(db, body.idu)
+    comp = cc.composer(db, body.idu, resolution=res, marque=_marque_du_compte(db, request))
+    return {"recto": comp["recto"], "verso": comp["verso"], "ouverture": comp["ouverture"],
+            "reference": comp["reference"], "destinataire": res.get("destinataire"),
+            "adresse_envoi": res.get("adresse_envoi"), "bloque": res["bloque"], "motif": res.get("motif")}
+
+
 class PdfIn(BaseModel):
+    # COURRIER-2 Lot 3 — le PDF est COMPOSÉ serveur (recto A→E + verso) à partir de l'IDU : le front
+    # et l'admin appellent le MÊME endpoint → le même PDF. `texte`/`motif` LEGACY : ignorés si `idu`.
     idu: str | None = None
     motif: str = "standard"
-    texte: str = Field(min_length=10, max_length=8000)
+    texte: str | None = Field(default=None, max_length=8000)
+
+
+def _marque_du_compte(db: Session, request: Request) -> dict | None:
+    """Marque blanche du compte courant (raison sociale, coordonnées) — pour la signature du courrier."""
+    from .tenant import current_compte
+    cid = current_compte(request)
+    if cid is None:
+        return None
+    m = db.execute(text("SELECT marque FROM comptes WHERE id = :c"), {"c": cid}).scalar()
+    return m if isinstance(m, dict) else None
 
 
 # RECETTE-1 R41 — palette DA LABUSE portée au PRINT (fonds blancs) : le mint d'écran (#4ADE80) est
@@ -371,36 +400,8 @@ def _pdf_safe(s: str) -> str:
     return s.translate(_LATIN1_PUNCT).encode("latin-1", "replace").decode("latin-1")
 
 
-@router.post("/pdf")
-def courrier_pdf(body: PdfIn) -> Response:
-    """M82 : rend le courrier généré en PDF TÉLÉCHARGEABLE — le client l'imprime/l'envoie lui-même
-    (utile même sans traitement automatique). Adressage générique, aucune identité de propriétaire.
-    RECETTE-1 R41 : mise en page à la DA LABUSE (en-tête wordmark + filet vert, pied mentionné), plus un
-    texte brut sur page blanche. Le FOND du texte (`body.texte`) est INCHANGÉ — seule la présentation change."""
-    from fpdf import FPDF
+def _pdf_header(pdf) -> None:
     from fpdf.enums import XPos, YPos
-
-    class _Courrier(FPDF):
-        def footer(self) -> None:
-            # pied de page à la DA : filet fin + mention légale, sur CHAQUE page.
-            self.set_y(-18)
-            self.set_draw_color(222, 226, 223)
-            self.set_line_width(0.3)
-            self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
-            self.ln(1.5)
-            self.set_text_color(*_DA_GRIS)
-            self.set_font("Helvetica", "", 7.5)
-            self.multi_cell(self.epw, 3.6, _pdf_safe(
-                "Courrier préparé avec LABUSE — à partir de données publiques (cadastre, PLU, DVF…). "
-                "Ni conseil juridique ni offre d'achat."),
-                new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
-
-    pdf = _Courrier(format="A4")
-    pdf.set_auto_page_break(True, margin=24)   # laisse la place au pied
-    pdf.set_margins(22, 20, 22)
-    pdf.add_page()
-
-    # ── EN-TÊTE / letterhead DA ──
     pdf.set_text_color(*_DA_VERT)
     pdf.set_font("Helvetica", "B", 24)
     pdf.cell(0, 11, "LABUSE", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
@@ -408,26 +409,114 @@ def courrier_pdf(body: PdfIn) -> Response:
     pdf.set_font("Helvetica", "", 9)
     pdf.cell(0, 5, _pdf_safe("Intelligence foncière — La Réunion"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(2.5)
-    # filet vert d'accent sous l'en-tête
     pdf.set_draw_color(*_DA_VERT_FILET)
     pdf.set_line_width(0.7)
     y = pdf.get_y()
     pdf.line(pdf.l_margin, y, pdf.w - pdf.r_margin, y)
-    pdf.ln(8)
+    pdf.ln(7)
 
-    # ── CORPS (texte INCHANGÉ) ──
-    # F4 (OUTILS-3) — positionnement EXPLICITE (new_x/new_y) : sinon selon la version de fpdf2 le
-    # curseur ne descend pas et les lignes s'écrasent. En forçant LMARGIN/NEXT, CHAQUE ligne descend.
+
+@router.post("/pdf")
+def courrier_pdf(body: PdfIn, request: Request, db: Session = Depends(get_db)) -> Response:
+    """COURRIER-2 Lot 3 — PDF COMPOSÉ serveur : RECTO (en-tête destinataire résolu + objet + phrase
+    d'entrée « à l'occupant » le cas échéant + corps avec l'ouverture A→E choisie sur les faits +
+    signature du compte) et VERSO (synthèse factuelle). Aucune valeur du terrain, aucun placeholder
+    {…}, jamais un particulier nommé. Le front et l'admin appellent CE endpoint → le même PDF.
+
+    Repli LEGACY : sans `idu`, on rend `texte` tel quel (ancien flux)."""
+    from fpdf import FPDF
+    from fpdf.enums import XPos, YPos
+    from .. import courrier_adressage as ca, courrier_compose as cc
+
+    idu = (body.idu or "").strip() or None
+    ref_pied = idu or "—"
+    if idu:
+        res = ca.resoudre_destinataire(db, idu)
+        comp = cc.composer(db, idu, resolution=res, marque=_marque_du_compte(db, request))
+        ref_pied = comp["reference"]
+
+    class _Courrier(FPDF):
+        def footer(self) -> None:
+            self.set_y(-24)
+            self.set_draw_color(222, 226, 223)
+            self.set_line_width(0.3)
+            self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
+            self.ln(1.5)
+            self.set_text_color(*_DA_GRIS)
+            self.set_font("Helvetica", "", 7)
+            if idu:
+                self.multi_cell(self.epw, 3.3, _pdf_safe(
+                    cc._PIED.format(societe=comp["expediteur"]["societe"])), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="L")
+                self.multi_cell(self.epw, 3.3, _pdf_safe(
+                    cc._PIED_STOP.format(reference=ref_pied)), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="L")
+            else:
+                self.multi_cell(self.epw, 3.3, _pdf_safe(
+                    "Courrier préparé avec LABUSE — à partir de données publiques (cadastre, PLU, DVF…). "
+                    "Ni conseil juridique ni offre d'achat."), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
+
+    pdf = _Courrier(format="A4")
+    pdf.set_auto_page_break(True, margin=28)
+    pdf.set_margins(22, 20, 22)
+    pdf.add_page()
+    _pdf_header(pdf)
+
+    if not idu:                                   # ── repli LEGACY : texte brut ──
+        pdf.set_text_color(*_DA_ENCRE)
+        pdf.set_font("Helvetica", "", 11)
+        for ligne in (body.texte or "").split("\n"):
+            safe = _pdf_safe(ligne)
+            if safe.strip() == "":
+                pdf.ln(3)
+            else:
+                pdf.multi_cell(pdf.epw, 6, safe, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        data = bytes(pdf.output())
+        return Response(content=data, media_type="application/pdf",
+                        headers={"Content-Disposition": 'attachment; filename="courrier.pdf"'})
+
+    # ── EN-TÊTE DESTINATAIRE (bloc adresse) ──
     pdf.set_text_color(*_DA_ENCRE)
+    pdf.set_font("Helvetica", "", 10)
+    if res["bloque"]:
+        pdf.set_text_color(*_DA_GRIS)
+        pdf.multi_cell(pdf.epw, 5, _pdf_safe(f"[Aperçu — pli non déposable : {res['motif']}]"),
+                       new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_text_color(*_DA_ENCRE)
+    dest = res.get("destinataire") or "À l'occupant"
+    adr = res.get("adresse_envoi") or (res["bien"].get("adresse") or "")
+    for ligne in (dest, *(adr.split(", ") if adr else [])):
+        pdf.multi_cell(pdf.epw, 5, _pdf_safe(ligne), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="R")
+    pdf.ln(6)
+
+    # ── CORPS (recto composé) ──
     pdf.set_font("Helvetica", "", 11)
-    for ligne in body.texte.split("\n"):
+    for ligne in comp["recto"].split("\n"):
         safe = _pdf_safe(ligne)
         if safe.strip() == "":
-            pdf.ln(3)   # respiration entre paragraphes (ligne vide = \n\n)
+            pdf.ln(3)
+        elif safe.startswith("Objet :"):
+            pdf.set_font("Helvetica", "B", 11)
+            pdf.multi_cell(pdf.epw, 6, safe, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.set_font("Helvetica", "", 11)
         else:
             pdf.multi_cell(pdf.epw, 6, safe, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    # ── VERSO (page 2) : synthèse factuelle ──
+    pdf.add_page()
+    _pdf_header(pdf)
+    verso = comp["verso"]
+    pdf.set_text_color(*_DA_VERT)
+    pdf.set_font("Helvetica", "B", 13)
+    pdf.multi_cell(pdf.epw, 7, _pdf_safe(verso[0] if verso else "Synthèse de la parcelle"),
+                   new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.ln(2)
+    pdf.set_text_color(*_DA_ENCRE)
+    pdf.set_font("Helvetica", "", 10.5)
+    for ligne in verso[1:]:
+        pdf.multi_cell(pdf.epw, 5.6, _pdf_safe(ligne), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.ln(0.8)
+
     data = bytes(pdf.output())
-    nom = (body.idu or "parcelle").replace("/", "-")
+    nom = idu.replace("/", "-")
     return Response(content=data, media_type="application/pdf",
                     headers={"Content-Disposition": f'attachment; filename="courrier-{nom}.pdf"'})
 

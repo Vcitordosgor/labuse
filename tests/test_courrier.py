@@ -64,24 +64,30 @@ def test_envoi_stub_et_plafond(client, monkeypatch, engine):
     suivi = client.get("/courrier/envois").json()
     assert suivi["n"] == 2 and suivi["envois"][0]["modele"] == "renovation"
 
-def test_courrier_pdf_ne_leve_pas_sur_les_3_modeles(client):
-    """Patron test_m136_exports_ne_crashent_pas : POST /courrier/pdf rend un PDF VALIDE (jamais de
-    FPDFException) sur les 3 modèles réels ; contenu fidèle au texte affiché (ponctuation → pas de
-    « ? », lignes vides des \\n\\n gérées). Le bug d'origine : multi_cell(w=0) sur une ligne vide."""
+def test_courrier_pdf_compose_recto_verso_sans_placeholder(client, engine):
+    """COURRIER-2 Lot 3 — POST /courrier/pdf {idu} COMPOSE un PDF recto+verso VALIDE : contient la
+    référence cadastrale, AUCUN placeholder {…}, AUCUNE ponctuation dégradée « ? », AUCUN mot
+    d'estimation (potentiel/valorisation/valeur). Le back sert le même contenu que /courrier/composer."""
     import io
-    from labuse.api.modules import _COURRIER
+    idu = "97499000ZP0001"
+    with engine.begin() as db:
+        _seed_parcel(db, idu, commune="Saint-Paul", section="ZP", numero="0001", surface=800,
+                     batie=True, ban=("5 Rue Test", "97460", "Saint-Paul"))
     pypdf = pytest.importorskip("pypdf")
-    assert set(_COURRIER) == {"standard", "indivision", "succession"}   # les 3, pas un seul
-    for motif, tpl in _COURRIER.items():
-        texte = tpl.format(ref="BV 912", commune="Saint-Paul", surface=3948,
-                           signature="LABUSE — prospection foncière")
-        r = client.post("/courrier/pdf", json={"idu": "97415000BV0912", "motif": motif, "texte": texte})
-        assert r.status_code == 200, f"{motif}: HTTP {r.status_code}"
-        assert r.headers["content-type"] == "application/pdf"
-        assert r.content[:5] == b"%PDF-", f"{motif}: pas un PDF"
-        txt = "\n".join((p.extract_text() or "") for p in pypdf.PdfReader(io.BytesIO(r.content)).pages).replace("\n", " ")
-        assert "Saint-Paul" in txt and "BV 912" in txt, f"{motif}: contenu absent du PDF"
-        assert "?" not in txt, f"{motif}: ponctuation dégradée en « ? »"
+    r = client.post("/courrier/pdf", json={"idu": idu})
+    assert r.status_code == 200 and r.content[:5] == b"%PDF-"
+    reader = pypdf.PdfReader(io.BytesIO(r.content))
+    assert len(reader.pages) == 2, "recto + verso attendus"
+    txt = " ".join((p.extract_text() or "") for p in reader.pages)
+    assert "ZP 0001" in txt
+    assert "{" not in txt and "}" not in txt, "placeholder {…} imprimé"
+    assert "?" not in txt, "ponctuation dégradée"
+    low = txt.lower()
+    assert "potentiel" not in low and "valorisation" not in low and "valeur" not in low
+    assert "stop@labuse.immo" in txt   # ligne d'opposition au pied
+    # aperçu front (/composer) = même recto
+    comp = client.post("/courrier/composer", json={"idu": idu}).json()
+    assert "ZP 0001" in comp["recto"] and comp["ouverture"] in ("A", "B", "C", "D", "E")
 
 
 # ── FIX-GB-013 — idempotence de POST /courrier/demande (dédup douce + ceinture concurrence) ──
@@ -210,11 +216,26 @@ def test_opposition_deposer_tout_exclut_les_opposees(client, engine):
 def _ensure_adressage_tables(db):
     """labuse_test n'a qu'un schéma partiel : on crée (IF NOT EXISTS) les tables lues par le
     résolveur d'adressage, avec le minimum de colonnes utilisées. No-op si déjà présentes."""
-    db.execute(text("CREATE TABLE IF NOT EXISTS parcel_filtre_bati (parcel_id int, idu varchar(14), "
-                    "ratio_pct double precision, emprise_max_m2 double precision, etage smallint, annee_etiquette varchar(8))"))
+    # ⚠ Schéma IDENTIQUE à la prod : ces tables sont créées « IF NOT EXISTS » par PLUSIEURS suites de
+    # test sur la MÊME base labuse_test ; la première qui gagne fixe le schéma. Une colonne manquante
+    # ici casserait les autres tests (ex. parcel_filtre_bati.passoire attendu par test_verdict_servi).
+    # DDL CANONIQUE (src/labuse/faisabilite/filtre_bati.py) — superset attendu par les autres suites
+    # (decision, motif, divisible, passoire…). Ne PAS créer une variante réduite : elle gagnerait la
+    # course « IF NOT EXISTS » sur labuse_test et casserait test_verdict_servi / test_mode_b / verrous.
+    db.execute(text("""CREATE TABLE IF NOT EXISTS parcel_filtre_bati (
+          parcel_id integer PRIMARY KEY REFERENCES parcels(id),
+          idu varchar(14) NOT NULL, ratio_pct double precision NOT NULL,
+          emprise_max_m2 double precision NOT NULL, etage smallint NOT NULL,
+          annee_construction int, annee_etiquette varchar(8) NOT NULL,
+          passoire boolean NOT NULL DEFAULT false, divisible boolean,
+          decision varchar(12) NOT NULL, motif text NOT NULL,
+          computed_at timestamptz NOT NULL DEFAULT now())"""))
     db.execute(text("CREATE TABLE IF NOT EXISTS parcel_adresse (idu varchar(14) PRIMARY KEY, ban_voie text, ban_cp varchar(5), ban_commune varchar(80))"))
-    db.execute(text("CREATE TABLE IF NOT EXISTS parcelle_personne_morale (idu varchar(14), denomination varchar(200), siren varchar(20))"))
-    db.execute(text("CREATE TABLE IF NOT EXISTS owner_enrichment (siren varchar(9) PRIMARY KEY, payload jsonb NOT NULL, fetched_at timestamptz NOT NULL DEFAULT now())"))
+    db.execute(text("CREATE TABLE IF NOT EXISTS parcelle_personne_morale (idu varchar(14), groupe smallint, "
+                    "groupe_label varchar(80), forme_juridique varchar(20), denomination varchar(200), siren varchar(20), "
+                    "millesime varchar(8), source varchar(120), url_source text, date_import timestamptz NOT NULL DEFAULT now())"))
+    db.execute(text("CREATE TABLE IF NOT EXISTS owner_enrichment (siren varchar(9) PRIMARY KEY, denomination text, "
+                    "source varchar(32), payload jsonb NOT NULL, fetched_at timestamptz NOT NULL DEFAULT now())"))
 
 
 def _seed_parcel(db, idu, *, commune="Saint-Paul", section="AB", numero="0001", surface=800,
@@ -226,8 +247,9 @@ def _seed_parcel(db, idu, *, commune="Saint-Paul", section="AB", numero="0001", 
         "ON CONFLICT (idu) DO UPDATE SET commune=EXCLUDED.commune RETURNING id"),
         {"i": idu, "c": commune, "s": section, "n": numero, "su": surface}).scalar()
     if batie:
-        db.execute(text("INSERT INTO parcel_filtre_bati (parcel_id, idu, ratio_pct, emprise_max_m2, etage, annee_etiquette) "
-                        "VALUES (:p,:i,40,100,1,'2020') ON CONFLICT DO NOTHING"), {"p": pid, "i": idu})
+        db.execute(text("INSERT INTO parcel_filtre_bati (parcel_id, idu, ratio_pct, emprise_max_m2, etage, "
+                        "annee_etiquette, decision, motif) VALUES (:p,:i,40,100,1,'Absent','servie','test') "
+                        "ON CONFLICT DO NOTHING"), {"p": pid, "i": idu})
     if ban:
         db.execute(text("INSERT INTO parcel_adresse (idu, ban_voie, ban_cp, ban_commune) VALUES (:i,:v,:cp,:co) "
                         "ON CONFLICT (idu) DO UPDATE SET ban_voie=EXCLUDED.ban_voie"),
@@ -287,3 +309,51 @@ def test_adressage_occupant_nu_siege_et_opposition(client, engine):
             db.execute(text("DELETE FROM parcel_filtre_bati WHERE idu=:i"), {"i": i})
             db.execute(text("DELETE FROM parcel_adresse WHERE idu=:i"), {"i": i})
             db.execute(text("DELETE FROM parcelle_personne_morale WHERE idu=:i"), {"i": i})
+
+
+# ─────────────────────── COURRIER-2 Lot 3 — CONTENU FIABLE ───────────────────────
+def test_garde_corps_placeholder_bloque_le_depot(client, engine):
+    """Un corps contenant un gabarit {…} non substitué ne se dépose JAMAIS (il imprimerait les
+    accolades — défaut COURRIER-AUDIT-1 §B2)."""
+    from labuse import courrier
+    with engine.begin() as db:
+        cid = db.execute(text("INSERT INTO comptes (nom, plan, statut) VALUES ('PH','integral','actif') RETURNING id")).scalar()
+        d = courrier.creer_demande(db, compte_id=cid, parcelles=["97411000BZ1065"], communes="SD",
+                                   modele="std", corps="Objet : votre parcelle {parcelle}, à {commune}. Bonjour.")
+    with engine.begin() as db:
+        with pytest.raises(ValueError, match=courrier.MOTIF_PLACEHOLDER):
+            courrier.set_statut_demande(db, d["id"], "depose")
+    r = client.post(f"/courrier/admin/demandes/{d['id']}/statut", json={"statut": "depose"})
+    assert r.status_code == 422 and courrier.MOTIF_PLACEHOLDER in r.json()["detail"]
+    assert courrier.corps_a_placeholders("x {surface} y") is True
+    assert courrier.corps_a_placeholders("aucun gabarit ici") is False
+    with engine.begin() as db:
+        db.execute(text("DELETE FROM courrier_demandes WHERE id=:i"), {"i": d["id"]})
+
+
+def test_ouverture_A_E_selection_ordre():
+    """Sélection A→E, première applicable, sur les faits (règles Vic). Aucune affirmation d'estimation."""
+    from labuse import courrier_compose as cc
+    base = dict(reference="AB 12", adresse="1 rue X", commune="Saint-Paul", surface=800)
+    # A — PM non bâti + zone
+    a = cc.choisir_ouverture({**base, "pm": True, "batie": False, "zone": "AUb", "zone_calibree": False, "n_mutations": 0})
+    assert a[0] == "A" and "non bâtie" in a[1] and "AUb" in a[1]
+    # B — bâtie + zone calibrée (prioritaire sur C/D)
+    b = cc.choisir_ouverture({**base, "pm": False, "batie": True, "zone": "U", "zone_calibree": True, "n_mutations": 99})
+    assert b[0] == "B" and "déjà bâtie" in b[1]
+    # C — secteur actif (N>=8), non calibré
+    c = cc.choisir_ouverture({**base, "pm": False, "batie": True, "zone": "U", "zone_calibree": False, "n_mutations": 8})
+    assert c[0] == "C" and "8 mutations" in c[1]
+    # D — zone présente, rien d'autre
+    dd = cc.choisir_ouverture({**base, "pm": False, "batie": False, "zone": "N", "zone_calibree": False, "n_mutations": 2})
+    assert dd[0] == "D" and "zone N" in dd[1]
+    # E — sans zone
+    e = cc.choisir_ouverture({**base, "pm": False, "batie": False, "zone": None, "zone_calibree": False, "n_mutations": 0})
+    assert e[0] == "E"
+    # aucune ouverture n'affirme potentiel/valorisation/valeur
+    for _code, txt in (a, b, c, dd, e):
+        low = txt.lower()
+        assert "potentiel" not in low and "valorisation" not in low and "valeur" not in low
+    # [adresse] manquante → « La parcelle [référence] »
+    f = cc.choisir_ouverture({**base, "adresse": None, "pm": False, "batie": False, "zone": None, "n_mutations": 0})
+    assert "AB 12" in f[1]

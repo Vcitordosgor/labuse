@@ -1260,6 +1260,14 @@ export interface CourrierResolution {
 export const postCourrierAdressage = (idus: string[]) =>
   j<{ resolutions: CourrierResolution[] }>('/courrier/adressage', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus }) })
+// COURRIER-2 Lot 3 — aperçu COMPOSÉ (recto + verso), même source que le PDF (« ne pas reformuler »).
+export interface CourrierApercu {
+  recto: string; verso: string[]; ouverture: string; reference: string
+  destinataire: string | null; adresse_envoi: string | null; bloque: boolean; motif: string | null
+}
+export const postCourrierComposer = (idu: string) =>
+  j<CourrierApercu>('/courrier/composer', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idu }) })
 // CONNEXIONS-2 Lot 4 (KO-6) — la cliente saisit le RETOUR de sa demande (répondu / sans réponse).
 export const postCourrierClientStatut = (id: number, statut: 'repondu' | 'sans_reponse') =>
   j<{ ok: boolean; statut: string }>(`/courrier/demandes/${id}/statut`, {

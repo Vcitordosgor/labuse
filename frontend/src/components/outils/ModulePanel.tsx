@@ -5,6 +5,7 @@ import {
   courrierPdf, getCommunes, getCourrierDemandes, getCourrierStatut, getFiche, modBailleur,
   modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPatrimoineSearch, modPermis, modPermisCount,
   modPermisFiche, modPromesses, modPromessesCount, modVelocite, postCourrierDemande, postCourrierAdressage,
+  postCourrierComposer,
 } from '../../lib/api'
 import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
@@ -1206,32 +1207,10 @@ export function M08() {
 //      y compris s'il ne vend pas ;
 //   4. COMMENT RÉPONDRE — par mail à victor@labuse.immo, expert LABUSE.
 // Ton : posé, respectueux, jamais commercial agressif. La mise en page reste celle de la DA.
-const _QUI = 'LABUSE est l’outil d’intelligence foncière de La Réunion : à partir des seules données '
-  + 'publiques du territoire (cadastre, urbanisme, marché), nous éclairons ce qu’une parcelle permet — '
-  + 'avec sérieux, et sans démarchage.'
-const _PROPOSE = 'Nous vous proposons simplement d’en parler, ou — si vous le souhaitez — une étude '
-  + 'gratuite de votre parcelle. Sans aucun engagement de votre part, y compris si vous n’avez pas '
-  + 'l’intention de vendre.'
-const _REPONDRE = 'Si le sujet vous intéresse, un mot suffit : écrivez à Victor, expert LABUSE, à '
-  + 'victor@labuse.immo.\n\nAvec nos salutations respectueuses,'
-const _entete = 'Objet : votre parcelle {parcelle}, à {commune}\n\nMadame, Monsieur,\n\n'
-const TEMPLATES: { key: string; label: string; corps: string }[] = [
-  { key: 'standard', label: 'Approche standard',
-    corps: _entete + _QUI + '\n\n'
-      + 'Si nous vous écrivons au sujet de votre parcelle {parcelle} ({surface}), à {commune}, c’est '
-      + 'qu’elle conserve, au regard du règlement d’urbanisme, un potentiel de construction encore '
-      + 'ouvert.\n\n' + _PROPOSE + '\n\n' + _REPONDRE },
-  { key: 'dormance', label: 'Dormance / succession',
-    corps: _entete + _QUI + '\n\n'
-      + 'Votre parcelle {parcelle} ({surface}), à {commune}, paraît aujourd’hui peu mobilisée dans un '
-      + 'secteur qui, lui, évolue. Si elle relève d’une succession ou d’une indivision, sa valorisation '
-      + 'soulève souvent des questions.\n\n' + _PROPOSE + '\n\n' + _REPONDRE },
-  { key: 'voisin', label: 'Voisin direct',
-    corps: _entete + _QUI + '\n\n'
-      + 'Un projet est à l’étude à proximité immédiate de votre parcelle {parcelle} ({surface}), à '
-      + '{commune} ; votre bien s’y intégrerait naturellement.\n\n' + _PROPOSE + '\n\n' + _REPONDRE },
-  { key: 'libre', label: 'Libre', corps: '' },
-]
+// COURRIER-2 Lot 3 — les anciens gabarits ({parcelle}, « potentiel »/« valorisation ») sont RETIRÉS :
+// la lettre est composée serveur (ouverture A→E sur les faits), même texte que le PDF. « Ne pas
+// reformuler » (Vic). `remplirGabaritCourrier` (substitution pure, sans champ vide) reste exportée
+// pour ses tests, mais n'est plus branchée dans le flux M09.
 type Dest = { idu: string; commune: string; surface: number | null }
 
 // RECETTE-2 (S8) — substitution PURE d'un gabarit de courrier, exportée pour être verrouillée par test.
@@ -1278,8 +1257,8 @@ export function M09() {
   const [dest, setDest] = useState<Dest[]>([])
   // CONNEXIONS-2 Lot 4 (KO-6) — rattachement de la demande à la piste d'origine (courrier depuis le CRM).
   const [rattach, setRattach] = useState<{ pipeline_entry_id: number; projet_id: number | null } | null>(null)
-  const [modele, setModele] = useState('standard')
-  const [corps, setCorps] = useState(TEMPLATES[0].corps)
+  const [modele, setModele] = useState('auto')
+  const [corps, setCorps] = useState('')
   const [demande, setDemande] = useState<{ id: number; rang_compte?: number; statut: string; n: number; communes: string | null } | null>(null)
   const [pdfBusy, setPdfBusy] = useState(false)
   const [pdfErr, setPdfErr] = useState<string | null>(null)
@@ -1316,13 +1295,6 @@ export function M09() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const choisirModele = (k: string) => {
-    setModele(k)
-    setCorps(TEMPLATES.find((t) => t.key === k)?.corps ?? '')
-  }
-  // RECETTE-2 (S8) — substitution par la fonction pure (jamais de champ vide imprimé).
-  const remplir = (tpl: string, d: Dest) =>
-    remplirGabaritCourrier(tpl, iduCourt(d.idu), d.commune, d.surface != null ? `${fmtInt(d.surface)} m²` : '')
   const recapCommunes = () => {
     const c: Record<string, number> = {}
     dest.forEach((d) => { const k = d.commune || '—'; c[k] = (c[k] || 0) + 1 })
@@ -1333,6 +1305,13 @@ export function M09() {
   // sont lus À L'OUVERTURE, affichés avant toute saisie — plus seulement découverts au moment d'envoyer.
   const statut = useQuery({ queryKey: ['courrier-statut'], queryFn: getCourrierStatut, staleTime: 60_000 })
   const demandes = useQuery({ queryKey: ['courrier-demandes'], queryFn: getCourrierDemandes, enabled: step === 3 })
+  // COURRIER-2 Lot 3 — le courrier est COMPOSÉ serveur (ouverture A→E sur les faits) ; l'étape ② est un
+  // APERÇU (lecture seule) du 1ᵉʳ destinataire — même texte que le PDF. « Ne pas reformuler » (Vic).
+  const apercu = useQuery({ queryKey: ['courrier-apercu', dest[0]?.idu], enabled: step === 2 && !!dest[0],
+    queryFn: () => postCourrierComposer(dest[0].idu) })
+  useEffect(() => {
+    if (apercu.data) { setCorps(apercu.data.recto); setModele(`auto-${apercu.data.ouverture}`) }
+  }, [apercu.data])
   // COURRIER-2 Lot 2 — adressage résolu (destinataire + adresse d'envoi + bien + motif de blocage).
   const iduKey = dest.map((d) => d.idu).join(',')
   const adressage = useQuery({ queryKey: ['courrier-adressage', iduKey], enabled: step === 3 && dest.length > 0,
@@ -1347,7 +1326,7 @@ export function M09() {
   const apercuPdf = async () => {
     const first = dest[0]; if (!first) return
     setPdfBusy(true); setPdfErr(null)
-    try { await courrierPdf(first.idu, modele, remplir(corps, first)) }
+    try { await courrierPdf(first.idu, modele, corps || '(aperçu)') }
     catch { setPdfErr('Le téléchargement du PDF a échoué. Réessayez.') }
     finally { setPdfBusy(false) }
   }
@@ -1412,21 +1391,27 @@ export function M09() {
 
       {step === 2 && (
         <div className="flex min-h-0 flex-1 flex-col gap-2">
-          <div className="flex flex-wrap gap-1">
-            {TEMPLATES.map((t) => (
-              <button key={t.key} data-courrier-modele={t.key} onClick={() => choisirModele(t.key)}
-                className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors duration-quick ${modele === t.key ? 'border-mint bg-mint/[0.12] text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <textarea data-courrier-texte value={corps} onChange={(e) => setCorps(e.target.value)}
-            placeholder="Votre courrier… (variables {parcelle} {commune} {surface})"
-            className="min-h-[160px] flex-1 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[11px] leading-snug text-txt focus:border-mint focus:outline-none" />
-          <p className="text-[9.5px] text-txt-dim"><b className="text-txt-mut">{'{parcelle} {commune} {surface}'}</b> — remplacés par courrier (un courrier généré par destinataire).</p>
+          <p className="text-[10.5px] text-txt-mut">
+            Lettre <b className="text-txt">générée automatiquement</b> à partir des données réelles de la
+            parcelle — un courrier par destinataire, adapté à ses faits. Aperçu du 1ᵉʳ destinataire :
+          </p>
+          {apercu.isLoading && <p className="text-[11px] text-txt-dim">Composition de l’aperçu…</p>}
+          {apercu.data && (
+            <>
+              <div data-courrier-apercu className="min-h-[160px] flex-1 overflow-auto whitespace-pre-wrap rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-[11px] leading-snug text-txt">
+                {apercu.data.recto}
+              </div>
+              {apercu.data.verso.length > 0 && (
+                <details className="rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[10.5px] text-txt-mut">
+                  <summary className="cursor-pointer text-txt-dim">Au dos — synthèse de la parcelle</summary>
+                  <div className="mt-1 whitespace-pre-wrap">{apercu.data.verso.join('\n')}</div>
+                </details>
+              )}
+            </>
+          )}
           <div className="flex gap-2">
             <button onClick={() => setStep(1)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Retour</button>
-            <button data-courrier-next onClick={() => setStep(3)} disabled={corps.trim().length < 10}
+            <button data-courrier-next onClick={() => setStep(3)} disabled={!apercu.data || corps.trim().length < 10}
               className="flex-1 rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">Vérifier l'envoi ›</button>
           </div>
         </div>
