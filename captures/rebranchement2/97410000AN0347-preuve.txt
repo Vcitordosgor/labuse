@@ -32,8 +32,8 @@
   emprise_batie_m2                   IDENTIQUE
   hauteur_bati_m                     IDENTIQUE
   cosia_detecte_m2                   ABSENTE DITE (phrase déclarée au PDF)
-  pente_toit_deg                     ABSENTE DITE (phrase déclarée au PDF)
-  nature_toit                        ABSENTE DITE (phrase déclarée au PDF)
+  pente_toit_deg                     IDENTIQUE
+  nature_toit                        IDENTIQUE
   dpe_connu                          MASQUÉE (absente, masquée par déclaration — écran et PDF)
   rnb_batiments_liste                IDENTIQUE
   ban_plus_adresses_bati             IDENTIQUE
@@ -99,4 +99,4 @@
   verdict_icd                        NON CÂBLÉE (omise, dite au rapport)
   charge_fonciere_eur                NON CÂBLÉE (omise, dite au rapport)
 
-TOTAL 97410000AN0347 : 39 identiques · 32 absentes dites · 5 non câblées · 0 ÉCARTS
+TOTAL 97410000AN0347 : 41 identiques · 30 absentes dites · 5 non câblées · 0 ÉCARTS

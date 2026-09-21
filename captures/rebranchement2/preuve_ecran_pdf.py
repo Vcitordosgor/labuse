@@ -14,6 +14,7 @@ from pathlib import Path
 
 from labuse.db import session_scope
 from labuse.exports import builder, miroir
+from labuse.exports import oracle_dossier as oracle   # DONNEES-4 — oracle indépendant
 from labuse.exports.robinet_fiche import EXTRACTEURS
 
 IDU = sys.argv[1] if len(sys.argv) > 1 else "97410000AN0347"
@@ -47,6 +48,15 @@ for sec in miroir.structure():
             continue
         v = res.valeurs.get(l.quoi)
         if v is None:
+            # DONNEES-4 — ORACLE INDÉPENDANT : le payload porte-t-il une valeur LÀ OÙ LA FICHE RÉACT
+            # la lit (oracle_dossier.ORACLE) ? Si oui alors que l'extracteur renvoie None, c'est un
+            # « extracteur muet » — l'écart que la comparaison extracteur↔PDF ne pouvait pas voir (les
+            # deux colonnes dérivent du même extracteur). C'est ce qui avait caché le bug OCS GE.
+            ov = oracle.valeur_oracle(fiche, l.quoi)
+            if oracle.present(ov):
+                n_ecart += 1
+                lignes_out.append((sec["titre"], l.quoi, f"ÉCART : extracteur MUET (oracle={ov!r:.40})"))
+                continue
             # l'EN-TÊTE est une grille de tuiles : une tuile absente ne s'imprime pas (pas de
             # phrase d'absence dans une grille) — dit, pas un écart.
             if sec["id"] == "entete":

@@ -1,0 +1,14 @@
+===== AVANT (extracteurs d'origine) =====
+Oracle indépendant · 63 lignes contrôlées · 10 hors-payload déclarées
+Parcelles : 97410000AN0347, 97422000BO0765, 97415000BO0852, 97411000AB0346
+
+EXTRACTEURS MUETS (l'oracle a une valeur, l'extracteur renvoie None) :
+  nature_toit                      ["AN0347='non déterminée — pans non net"]
+  pente_toit_deg                   ['AN0347=11.6']
+
+TOTAL : 2 extracteur(s) muet(s).
+===== APRÈS (extracteurs corrigés) =====
+Oracle indépendant · 63 lignes contrôlées · 10 hors-payload déclarées
+Parcelles : 97410000AN0347, 97422000BO0765, 97415000BO0852, 97411000AB0346
+
+EXTRACTEURS MUETS : 0 — aucune ligne où le payload a une valeur et l'extracteur renvoie None.
