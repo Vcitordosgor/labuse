@@ -1,0 +1,102 @@
+
+== En-tête
+  surface_parcelle_m2                IDENTIQUE
+  zone_plu_famille                   IDENTIQUE
+  pente_deg                          IDENTIQUE
+  exposition_versant                 TUILE ABSENTE (l'en-tête n'imprime pas d'absence)
+  tfpb_taux_pct                      IDENTIQUE
+  sdp_residuelle_m2                  TUILE ABSENTE (l'en-tête n'imprime pas d'absence)
+
+== Identité
+  divisible_classe                   NON CÂBLÉE (omise, dite au rapport)
+  adresse_ban                        ABSENTE DITE (phrase déclarée au PDF)
+  type_proprietaire                  ABSENTE DITE (phrase déclarée au PDF)
+  coproprietes_liste                 ABSENTE DITE (phrase déclarée au PDF)
+  filiation_parcelle                 ABSENTE DITE (phrase déclarée au PDF)
+  prix_achat_historique_eur          ABSENTE DITE (phrase déclarée au PDF)
+  parcelle_geometrie                 NON CÂBLÉE (omise, dite au rapport)
+  historique_permis_liste            IDENTIQUE
+  proprietaire_timeline_liste        ABSENTE DITE (phrase déclarée au PDF)
+
+== Terrain
+  surface_libre_sol_m2               IDENTIQUE
+  part_artificialisee_pct            IDENTIQUE
+  usage_sol_dominant                 IDENTIQUE
+  part_impermeabilisee_cosia_pct     IDENTIQUE
+  part_vegetalisee_cosia_pct         IDENTIQUE
+  part_sol_nu_cosia_pct              IDENTIQUE
+  piscine_m2                         ABSENTE DITE (phrase déclarée au PDF)
+
+== Bâti
+  n_batiments                        IDENTIQUE
+  emprise_batie_m2                   IDENTIQUE
+  hauteur_bati_m                     IDENTIQUE
+  cosia_detecte_m2                   ABSENTE DITE (phrase déclarée au PDF)
+  pente_toit_deg                     ABSENTE DITE (phrase déclarée au PDF)
+  nature_toit                        ABSENTE DITE (phrase déclarée au PDF)
+  dpe_connu                          MASQUÉE (absente, masquée par déclaration — écran et PDF)
+  rnb_batiments_liste                IDENTIQUE
+  ban_plus_adresses_bati             ABSENTE DITE (phrase déclarée au PDF)
+
+== Urbanisme
+  reglement_plu_bloc                 IDENTIQUE
+  rtaa_exigences                     ABSENTE DITE (phrase déclarée au PDF)
+  dispositifs_parcelle               IDENTIQUE
+  statut_plu                         IDENTIQUE
+  er_emplacement_reserve             ABSENTE DITE (phrase déclarée au PDF)
+  ebc_classe                         IDENTIQUE
+  dpu_perimetre                      ABSENTE DITE (phrase déclarée au PDF)
+  peb_zone                           ABSENTE DITE (phrase déclarée au PDF)
+  mixite_clause                      ABSENTE DITE (phrase déclarée au PDF)
+  sar_divergence                     ABSENTE DITE (phrase déclarée au PDF)
+
+== Risques et environnement
+  n_vigilances                       IDENTIQUE
+  aleas_parcelle_liste               IDENTIQUE
+  sis_classe                         ABSENTE DITE (phrase déclarée au PDF)
+  endiguement_zone_protegee          ABSENTE DITE (phrase déclarée au PDF)
+  casias_statut                      ABSENTE DITE (phrase déclarée au PDF)
+  sols_parcelle                      ABSENTE DITE (phrase déclarée au PDF)
+
+== Réseaux et desserte
+  fibre_parcelle                     IDENTIQUE
+  viabilisation_verdict              IDENTIQUE
+  distance_arret_m                   IDENTIQUE
+  part_logements_egout_pct           IDENTIQUE
+  tcsp_stationnement_allege          ABSENTE DITE (phrase déclarée au PDF)
+  prod_spec_kwh_kwc                  ABSENTE DITE (phrase déclarée au PDF)
+
+== Fiscalité et dispositifs
+  tfpb_taux_pct                      IDENTIQUE
+  perimetres_dispositifs_liste       IDENTIQUE
+  taxe_amenagement_estimee_eur       IDENTIQUE
+
+== Marché
+  prix_terrain_secteur_eur_m2        ABSENTE DITE (phrase déclarée au PDF)
+  prix_sortie_bati_eur_m2            IDENTIQUE
+  ventes_retenues_n                  IDENTIQUE
+  prix_neuf_vefa_acte_eur_m2         ABSENTE DITE (phrase déclarée au PDF)
+  ventes_ecartees_n                  IDENTIQUE
+  dvf_parcelle_liste                 IDENTIQUE
+  radar_annonces_liste               ABSENTE DITE (phrase déclarée au PDF)
+  ventes_100m_n                      IDENTIQUE
+
+== Quartier
+  iris_quartier                      IDENTIQUE
+  population_zone                    NON CÂBLÉE (omise, dite au rapport)
+  voisinage_100m_liste               IDENTIQUE
+  n_permis_proximite                 IDENTIQUE
+  equipements_proximite_liste        IDENTIQUE
+
+== Potentiel
+  potentiel_verdict                  ABSENTE DITE (phrase déclarée au PDF)
+  capacite_logements                 ABSENTE DITE (phrase déclarée au PDF)
+  surface_plancher_m2                ABSENTE DITE (phrase déclarée au PDF)
+  surface_vendable_m2                ABSENTE DITE (phrase déclarée au PDF)
+  marge_surelevation_m               ABSENTE DITE (phrase déclarée au PDF)
+
+== Simulation
+  verdict_icd                        NON CÂBLÉE (omise, dite au rapport)
+  charge_fonciere_eur                NON CÂBLÉE (omise, dite au rapport)
+
+TOTAL 97401000AM0112 : 37 identiques · 34 absentes dites · 5 non câblées · 0 ÉCARTS

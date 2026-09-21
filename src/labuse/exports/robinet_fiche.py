@@ -110,8 +110,12 @@ def _c_filiation(db, idu, f):
 
 @extracteur("historique_permis_liste")
 def _c_permis_parcelle(db, idu, f):
-    d = f.get("depots") or {}
-    return _nz(d.get("parcelle"))
+    # DONNEES-5 — MÊME SOURCE que l'écran : la fiche React (HistoriqueSiteBlock) et le producteur
+    # déclaré (app.py:_historique_site) lisent f.historique_site.permis (permis rattachés à l'IDU,
+    # sitadel_permits.idu_codes ? idu). Le Dossier lisait f.depots.parcelle (autre chemin) → listes
+    # divergentes. Aligné pour que le Dossier montre EXACTEMENT les permis de l'écran.
+    h = f.get("historique_site") or {}
+    return _nz(h.get("permis") if isinstance(h, dict) else None)
 
 
 # ══ Urbanisme ══════════════════════════════════════════════════════════════════════════════

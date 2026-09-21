@@ -108,8 +108,18 @@ def _r_timeline(v):
 
 
 def _r_permis_liste(v):
-    n = len(v) if isinstance(v, list) else 0
-    return f"{n} permis sur la parcelle (Sitadel)" if n else ""
+    # DONNEES-5 — la MÊME liste que l'écran (HistoriqueSiteBlock) : chaque permis daté (type,
+    # dépôt, autorisation), 6 max comme la fiche, plus le reste compté. Même source (historique_site).
+    if not isinstance(v, list) or not v:
+        return ""
+    lignes = []
+    for pm in v[:6]:
+        t = esc(pm.get("type") or "permis")
+        dep = esc(pm.get("date_depot") or pm.get("date_autorisation") or "?")
+        auto = f", autorisé {esc(pm['date_autorisation'])}" if pm.get("date_autorisation") else ""
+        lignes.append(f"{t} — déposé {dep}{auto}")
+    reste = f" (+{len(v) - 6} autres)" if len(v) > 6 else ""
+    return f"{len(v)} permis sur la parcelle (Sitadel) — " + " ; ".join(lignes) + reste
 
 
 def _r_er_ebc(v):
