@@ -7,7 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getAdminCircuit, getAdminLicences, getAdminPilotage, getMoi, postAdminDegeler, type AdminPilotage } from '../../lib/api'
 import { useApp } from '../../store/useApp'
-import { LicencesSection, prochaineAction } from './Licences'
+import { LicencesSection, estAToucher } from './Licences'
 import { IaSection } from './Ia'
 import { DonneesSection } from './Donnees'
 import { ProduitSection } from './Produit'
@@ -244,7 +244,8 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
   const verrousCasses = data.verrous && data.verrous.ok != null && data.verrous.sur != null ? data.verrous.sur - data.verrous.ok : 0
   const circuitRouge = verrousCasses > 0 || (resume?.groupes ?? []).some((g) => (g.lignes ?? []).some((l) => l.couleur === 'rouge'))
 
-  const aToucher = (licencesQ.data?.licences ?? []).filter((l) => !l.est_test && prochaineAction(l) != null).length
+  // DASHBOARD-4 (K3) — MÊME fonction que le segment « À toucher » de Comptes (une seule définition).
+  const aToucher = (licencesQ.data?.licences ?? []).filter((l) => estAToucher(l)).length
 
   // ── cinq tuiles pleines et opaques, dans l'ordre de la maquette (P1) ──
   const tuiles: { cle: string; valeur: React.ReactNode; unite?: string; label: string; sous?: string; tone: TuileTone; cible: AdminSection }[] = [
