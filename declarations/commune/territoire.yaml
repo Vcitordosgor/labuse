@@ -43,6 +43,12 @@ donnees:
     absence: "Parc social (logements RPLS) : donnée non disponible sur cette commune."
     absence_type: absente_ici
     pourquoi: "Le parc social existant (RPLS) — le débouché LLS et son ampleur."
+  - quoi:  parc_ancien_pct
+    ou:    { rang: 65, etat: replie, section: "Population et logement" }
+    comment: { libelle: "Parc construit avant 1991", format: pourcent, i: "part (%) du parc de logements achevé avant 1991 (RP2022, distribution ACHL) — stock ancien, indicatif du potentiel de rénovation ; le type maison/appartement, la tenure et la vacance sont déjà servis (commune_insee_logement / IRIS / RPLS)" }
+    absence: "Parc construit avant 1991 : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "DONNEES-1 lot 2.4 — l'âge du parc (RP2022) : la seule variable logement de rp_logement_commune qui n'était pas déjà servie ; les autres sont doublon."
   - quoi:  taux_lls_pct
     ou:    { rang: 70, etat: replie, section: "Population et logement" }
     comment: { libelle: "Taux LLS", format: pourcent, i: "taux LLS de l'inventaire SRU" }

@@ -515,6 +515,11 @@ SONDE_COUVRE: dict[str, tuple[str, ...]] = {
 #: raison (un couple silencieux = verrou V5c cassé, jamais un « non couvert »). Raison par
 #: chiffre (elle vaut pour tous ses couples non couverts).
 NON_SONDES: dict[str, str] = {
+    # DONNEES-1 lot 2.3 — dernier_depot_comptes servi à DEUX robinets (Scan patrimoine + Successions)
+    # par le MÊME passe-plat modules.py:_depots_par_siren (une lecture bodacc_depots, aucun recalcul) :
+    # même valeur des deux côtés, comparaison robinet à robinet sans objet ; fait public factuel.
+    "dernier_depot_comptes": "Scan patrimoine + Successions lisent le MÊME passe-plat "
+                             "modules.py:_depots_par_siren (bodacc_depots) — un seul chemin machine, aucun recalcul",
     # FICHE-RANGEMENT-1 Lot 2 — rtaa_exigences servi à DEUX robinets (fiche Constructibilité +
     # outil Faisabilité) par le MÊME passe-plat load_yaml_config('rtaa_dom') : un seul chemin
     # machine (config/rtaa_dom.yaml versionné), aucun recalcul — comparaison robinet à robinet

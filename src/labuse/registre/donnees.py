@@ -551,7 +551,7 @@ DONNEES: dict[str, Donnee] = {
     "est déjà servi via commune_insee_logement / IRIS / RPLS (doublon)",
     moteur=None, calcul="passe_plat",
     fonction="src/labuse/api/fiche_commune.py:_parc_ancien_pct",
-    reservoirs=("insee_rp2022_egoul",), portee="live"),
+    reservoirs=("insee_rp2022_egoul",), portee="live", table="rp_logement_commune"),
  "qpv_n": C("QPV", "nombre", "commune",
     "count QPV intersectant la commune",
     moteur="commune_compteurs", calcul="moteur",
