@@ -11,6 +11,7 @@
  */
 import type { Fiche } from '../../lib/types'
 import { fmtInt } from '../../lib/format'
+import { permisIncoherenceNote } from '../../lib/permis'
 import { BlocIndisponible } from './BlocIndisponible'
 import { MarcheSecteurBlock } from './MarcheSecteurBlock'
 import { PermitsProximityBlock } from './PermitsProximityBlock'
@@ -30,9 +31,17 @@ export function HistoriqueSiteBlock({ f }: { f: Fiche }) {
     <div data-historique-site>
       <GroupLabel>🏗️ {h.titre}</GroupLabel>
       <ul className="mt-1 list-disc pl-4 text-[11px] leading-snug text-txt-mut">
-        {h.permis.slice(0, 6).map((pm, i) => (
-          <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}</li>
-        ))}
+        {h.permis.slice(0, 6).map((pm, i) => {
+          // DONNEES-6/7 — JAMAIS réordonner les dates : si l'autorisation précède le dépôt (incohérence
+          // du producteur SDES/Dido), on montre les deux dates telles quelles et on qualifie l'écart
+          // (au-delà d'1 mois = modificatif/transféré probable ; sous 1 mois = incohérence). Voir permis.ts.
+          const note = permisIncoherenceNote(pm.date_depot, pm.date_autorisation)
+          return (
+            <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}
+              {note && <span className="text-st-ecartee"> · {note}</span>}
+            </li>
+          )
+        })}
         {h.caducite && (
           <li className="text-st-ecartee">PC {h.caducite.pc_annee ?? ''} — {h.caducite.libelle_court ?? 'caduc'}</li>
         )}

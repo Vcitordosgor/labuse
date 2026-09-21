@@ -107,6 +107,24 @@ def _r_timeline(v):
     return esc(f"{d} ({per})" if d else per)
 
 
+def permis_incoherence_note(dep, aut) -> str:
+    """DONNEES-6/7 — dépôt enregistré APRÈS l'autorisation (incohérence du producteur SDES/Dido).
+    On ne réordonne JAMAIS les dates ; on qualifie l'écart : au-delà d'1 MOIS, c'est le plus souvent
+    un permis modificatif ou transféré (nouveau dépôt postérieur sur l'autorisation d'origine — le
+    flux open data ne porte pas le n° de modificatif, on le DIT comme tendance) ; sous 1 mois, on ne
+    présume rien (« dates incohérentes chez le producteur »). Rend "" si les dates sont cohérentes."""
+    from datetime import date as _date
+    if not (dep and aut) or str(aut) >= str(dep):
+        return ""
+    try:
+        gap = (_date.fromisoformat(str(dep)[:10]) - _date.fromisoformat(str(aut)[:10])).days
+    except (ValueError, TypeError):
+        gap = 0          # dates non parsables mais aut<dep : on reste sur la mention prudente
+    if gap > 31:
+        return "Dépôt enregistré après l'autorisation — souvent un permis modificatif ou transféré"
+    return "dates incohérentes chez le producteur"
+
+
 def _r_permis_liste(v):
     # DONNEES-5 — la MÊME liste que l'écran (HistoriqueSiteBlock) : chaque permis daté (type,
     # dépôt, autorisation), 6 max comme la fiche, plus le reste compté. Même source (historique_site).
@@ -115,9 +133,12 @@ def _r_permis_liste(v):
     lignes = []
     for pm in v[:6]:
         t = esc(pm.get("type") or "permis")
-        dep = esc(pm.get("date_depot") or pm.get("date_autorisation") or "?")
-        auto = f", autorisé {esc(pm['date_autorisation'])}" if pm.get("date_autorisation") else ""
-        lignes.append(f"{t} — déposé {dep}{auto}")
+        dep = pm.get("date_depot")
+        aut = pm.get("date_autorisation")
+        dep_txt = esc(dep or aut or "?")
+        auto = f", autorisé {esc(aut)}" if aut else ""
+        note = permis_incoherence_note(dep, aut)   # littéral de confiance (2 valeurs fixes) — pas d'esc
+        lignes.append(f"{t} — déposé {dep_txt}{auto}" + (f" · {note}" if note else ""))
     reste = f" (+{len(v) - 6} autres)" if len(v) > 6 else ""
     return f"{len(v)} permis sur la parcelle (Sitadel) — " + " ; ".join(lignes) + reste
 
