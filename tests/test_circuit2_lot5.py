@@ -26,7 +26,8 @@ def test_couches_info_sert_source_et_fabrication(db_session):
     client = TestClient(app)
     d = client.get("/map/couches-info").json()
     # SOURCES-CORRECTION-2 lot 3 — REMIS SUR LA VALEUR RÉELLE : le « i » couvre CHAQUE couche du tuyau
-    # (56 kind, cf. couches_tuyau.registre), pas le pont COUCHE_PAR_CLE_FRONT (hérité, partiel — 38 clés
+    # (55 kind depuis DONNEES-1 lot 2.1 — piscine partie en Solaire, cf. couches_tuyau.registre), pas
+    # le pont COUCHE_PAR_CLE_FRONT (hérité, partiel — 38 clés
     # aux anciens noms V1). Chaque couche a source ET fabrication (défaut tuyau vectoriel si pas de cid).
     assert set(d) == set(tuyau_registre())
     for cle, meta in d.items():

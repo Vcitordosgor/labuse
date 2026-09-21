@@ -1,6 +1,7 @@
 """FICHE-COUCHES-2 — couches manquantes branchées à la fiche (intersection parcelle × couche).
 
-Suite de l'inventaire FICHE-COUCHES-1 : le tuyau sert 56 couches, la fiche n'en croisait que
+Suite de l'inventaire FICHE-COUCHES-1 : le tuyau sert 55 couches (56 avant DONNEES-1 lot 2.1 —
+piscine partie en Prospection solaire), la fiche n'en croisait que
 40. Ce module ajoute des couches de cascade (dry-run, onglet servi) pour les couches dont le
 THÈME était déjà croisé mais pas la couche elle-même (lot 1), puis deux couches à enjeu foncier
 (lot 2). Même patron que etage1 : intersection via `ctx.intersections`, verdict tracé

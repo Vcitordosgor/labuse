@@ -257,6 +257,8 @@ export interface ContexteCommune {
   population: {
     habitants: number | null; menages: number | null; niveau_vie_moyen_eur: number | null
     logements: number | null; vacants: number | null; vacance_pct: number | null; source: string
+    // DONNEES-1 lot 2.4 — part du parc construit avant 1991 (RP2022 ACHL). null = non ingéré.
+    parc_ancien_pct?: number | null
     // SOURCES-1 lot 6 — l'affinage par quartier (IRIS RP2022), maille dite
     quartiers?: { n_iris: number; vacance_min_pct: number; vacance_max_pct: number
       vacance_mediane_pct: number; source: string } | null
@@ -924,6 +926,8 @@ export interface SuccessionItem {
   idu: string; commune: string; surface_m2: number | null; zone: string | null
   sdp_residuelle_m2: number | null   // Estimé — moteur de la fiche (p_model_ext_dataset)
   dirigeant_age: number | null; sci_dormante: boolean
+  // DONNEES-1 lot 2.3 — dernier dépôt de comptes BODACC du propriétaire PM (null = aucun publié).
+  depot_comptes: { annee: number | null; depuis_ans: number | null } | null
   proprio: SolaireProprio
 }
 export interface SuccessionsResp {

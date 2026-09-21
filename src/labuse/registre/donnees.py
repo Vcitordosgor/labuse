@@ -541,6 +541,17 @@ DONNEES: dict[str, Donnee] = {
     moteur="commune_compteurs", calcul="moteur",
     fonction="src/labuse/registre/moteurs/commune.py:vacance_pct",
     reservoirs=("insee_rp_logement",), portee="live"),
+ # DONNEES-1 lot 2.4 — âge du parc (RP2022, table rp_logement_commune jusqu'ici ingérée mais montrée
+ # nulle part) : part construit avant 1991 (stock ancien = potentiel rénovation/démolition-recons-
+ # truction). Les autres variables logement de rp_logement_commune (type, tenure, vacance, social)
+ # sont DÉJÀ servies via commune_insee_logement / IRIS / RPLS — doublon, non rebranchées.
+ "parc_ancien_pct": C("Parc construit avant 1991", "%", "commune",
+    "part (%) du parc de logements achevé avant 1991 (RP2022, distribution ACHL : A/B = ancien) — "
+    "stock ancien, indicatif du potentiel de rénovation ; le reste des variables logement RP2022 "
+    "est déjà servi via commune_insee_logement / IRIS / RPLS (doublon)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/fiche_commune.py:_parc_ancien_pct",
+    reservoirs=("insee_rp2022_egoul",), portee="live", table="rp_logement_commune"),
  "qpv_n": C("QPV", "nombre", "commune",
     "count QPV intersectant la commune",
     moteur="commune_compteurs", calcul="moteur",
@@ -1026,7 +1037,9 @@ DONNEES: dict[str, Donnee] = {
  # plus affiché) : dernier DPE du BÂTIMENT rattaché + nombre. Info fiche SEULE (M71 B1).
  "dpe_connu": C("DPE connu (étiquette, année)", "texte", "parcelle",
     "dernier DPE connu du bâtiment rattaché (étiquette énergie/GES, date, type de bâtiment) + "
-    "nombre de DPE — info fiche SEULE, jamais un signal scoring (M71 B1 : DPE neuf en DROM)",
+    "nombre de DPE — info fiche SEULE, jamais un signal scoring ni un ciblage (M71 B1 : DPE neuf "
+    "en DROM) ; DONNEES-1 lot 2 : la ligne ne s'affiche QUE si un DPE existe (non obligatoire en "
+    "DROM, ~0,3 % de couverture — aucune ligne « non déterminé »)",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:_dpe_connu_block",
     reservoirs=("dpe_ademe",), portee="live", type="texte", table="dpe_records"),
  "copilote_texte_web": C("Réponse web (Copilote, dernier recours)", "texte", "global",
@@ -1109,6 +1122,16 @@ DONNEES: dict[str, Donnee] = {
     moteur=None, calcul="passe_plat",
     fonction="src/labuse/api/modules.py (Scan patrimoine — inpi_sans_dirigeant / dirigeant_inactif)",
     reservoirs=("inpi_rne",), portee="live", type="texte", table="pm_dirigeants"),
+ # DONNEES-1 lot 2.3 — les dépôts de comptes BODACC (table bodacc_depots, 14 k, jusqu'ici ingérée
+ # et surveillée mais montrée nulle part) entrent au registre comme SIGNAL d'approche sur le
+ # propriétaire moral : Scan patrimoine + Successions. Factuel, jamais un scoring.
+ "dernier_depot_comptes": C("Dépôt de comptes (dernier / silence)", "texte", "proprietaire",
+    "année du dernier dépôt de comptes annuels d'une société propriétaire (BODACC) et années "
+    "écoulées depuis — un silence prolongé = société en sommeil (signal d'approche foncière), "
+    "jamais un scoring ; None si aucun dépôt publié",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/modules.py:_dernier_depot_comptes (Scan patrimoine + Successions)",
+    reservoirs=("bodacc",), portee="live", type="texte", table="bodacc_depots"),
  "proprietaire_timeline_liste": C("Historique propriétaire (millésimes PM)", "liste", "proprietaire",
     "timeline unifiée versionné∪servi du fichier PM (2019→2025), diff CONSTAT — servi jamais écrasé",
     moteur="proprietaire_historique", calcul="moteur",

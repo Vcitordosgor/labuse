@@ -218,6 +218,8 @@
 | | | *100 − locataires_pct − proprietaires_pct (INSEE RP), arrondi 0,1, plancher 0 — calculé au SERVEUR (lot 2.4, avant : ContextePanel.tsx:526)* | | | | | |
 | `parc_social_rpls_logements` | nombre | Parc social (logements RPLS) | rpls_sdes | passe-plat · src/labuse/api/app.py (marche_secteur — rpls_commune) — table lue : rpls_commune (nb_logements, construct_median) | live | servie · non couverte (n sous seuil, dit) · non calculée | fiche « Marché et secteur » |
 | | | *nombre de logements locatifs sociaux de la commune (RPLS SDES, millésime 01/01/2025) — contexte marché de la fiche commune, du Flash et du PDF, jamais un signal scoring* | | | | | |
+| `parc_ancien_pct` | nombre | Parc construit avant 1991 | insee_rp2022_egoul | passe-plat · src/labuse/api/fiche_commune.py:_parc_ancien_pct — table lue : rp_logement_commune | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *part (%) du parc de logements achevé avant 1991 (RP2022, distribution ACHL : A/B = ancien) — DONNEES-1 lot 2.4* | | | | | |
 
 ## Quartiers prioritaires
 

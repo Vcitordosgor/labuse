@@ -366,6 +366,8 @@ export function ContextePanel() {
                   {d.population.habitants != null && <RowT lbl="Habitants · ménages" val={`${fmt(d.population.habitants)} · ${fmt(d.population.menages)}`} />}
                   {d.population.niveau_vie_moyen_eur != null && <RowT lbl="Niveau de vie moyen" val={`${fmt(d.population.niveau_vie_moyen_eur)} €/an`} />}
                   {d.population.logements != null && <RowT lbl="Logements" val={`${fmt(d.population.logements)}${d.population.vacants != null ? ` · ${fmt(d.population.vacants)} vacants (${fmtDec(d.population.vacance_pct)} %)` : ''}`} />}
+                  {/* DONNEES-1 lot 2.4 — âge du parc (RP2022) : part construit avant 1991 = stock ancien. */}
+                  {d.population.parc_ancien_pct != null && <RowT lbl="Parc construit avant 1991" val={`${fmtDec(d.population.parc_ancien_pct)} %`} />}
                   {d.parc_social?.logements != null && <RowT lbl="Parc social (RPLS)" val={`${fmt(d.parc_social.logements)} logts${d.parc_social.construct_median != null ? ` · constr. médiane ${d.parc_social.construct_median}` : ''}`} />}
                 </div>
                 {d.marche && (

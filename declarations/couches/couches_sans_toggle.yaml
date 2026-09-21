@@ -1,37 +1,13 @@
 # ── PRODUCTION (lot 3) : LES COUCHES CLIENT SANS TOGGLE — style + FAMILLE portés par la déclaration ──
 # « Une couche invisible est une donnée perdue » (Vic). Style, légende, rang, zoom ET famille viennent
-# d'ICI (bloc `carte`). Un seul panneau range les couches par famille. Piscines = le cas exigeant :
-# une couche, 3 niveaux. étape 2 : famille posée sur toutes ; safer×rpg fusionnés ; sar nom unifié ;
-# construction_* (latents SOURCES-4) sortis du cul-de-sac.
+# d'ICI (bloc `carte`). Un seul panneau range les couches par famille. étape 2 : famille posée sur
+# toutes ; safer×rpg fusionnés ; sar nom unifié ; construction_* (latents SOURCES-4) sortis du cul-de-sac.
 
-surface:   couche_piscine
-nom:       "Piscines (3 niveaux de confiance)"
-categorie: couche
-parent:    null
-route:     "/map/tiles/piscine_cosia/{z}/{x}/{y}.pbf"
-rendu:     carte
-donnees:
-  - quoi:  piscine_couche
-    ou:    { rang: 10, etat: en_tete, section: "Piscines" }
-    comment: { libelle: "Piscines", format: liste, i: "Trois niveaux de confiance. Aucune n'est fiscale (signal « piscine non déclarée » fermé sans fichiers fonciers DGFiP)." }
-    carte:
-      kind: piscine_cosia
-      famille: foncier
-      panneau_general: false     # recette Vic : hors panneau carte général → outil Prospection solaire
-      geometrie: point
-      zoom_min: 15
-      rang_carte: 80
-      # COUCHES-RECETTE-1 A3 : 3 niveaux en teintes distinctes (plus le camaïeu bleu→gris). Confiance
-      # décroissante portée par la TEINTE (bleu vif → turquoise → ocre) autant que par le rayon/opacité.
-      niveaux:
-        - { id: confirmee, propriete: niveau, valeur: confirmee, couleur: "#2E90FF", rayon: 5, opacite: 0.95, legende: "Confirmée — les deux détections d'accord (BD ORTHO ∩ CoSIA)" }
-        - { id: probable,  propriete: niveau, valeur: probable,  couleur: "#2FC6B0", rayon: 4, opacite: 0.80, legende: "Probable — CoSIA seule (1 sur 4 = faux positif : toit, bâche, route)" }
-        - { id: rare,      propriete: niveau, valeur: rare,      couleur: "#D99A2B", rayon: 3, opacite: 0.70, legende: "Rare — détection interne seule" }
-    absence: "Piscines : aucune piscine détectée dans l'emprise visible."
-    absence_type: absente_ici
-    pourquoi: "Une seule couche, 3 niveaux de confiance (arbitrage G1) — la fiche parcelle porte le même niveau."
-# POURRAIT offrir : la surface m² par piscine en infobulle.
----
+# DONNEES-1 lot 2.1 — la couche « Piscines » (piscine_cosia) A QUITTÉ le panneau Couches et le tuyau :
+# elle vit désormais UNIQUEMENT dans le mode Piscines de Prospection solaire (points GeoJSON du module,
+# getPiscinesPoints/setModuleMap — même donnée CoSIA, propre filtre de confiance et « Voir sur la carte »).
+# Le compteur du tuyau passe de 56 à 55. La donnée piscine_couche et le robinet couche_piscine sont retirés
+# du registre ; n_piscines / piscine_m2 (fiche + outil) et le kind spatial_layers piscine_cosia restent.
 surface:   couche_icpe
 nom:       "Installations classées (ICPE)"
 categorie: couche

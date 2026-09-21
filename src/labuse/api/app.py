@@ -4330,8 +4330,9 @@ def _dpe_connu_block(db: Session, idu: str) -> dict | None:
 
     Sert le PLUS RÉCENT (classe énergétique, classe GES, date, type de bâtiment) et le NOMBRE de
     DPE connus. C'est le dernier DPE du BÂTIMENT (rattachement adresse/BAN → parcelle), pas de la
-    parcelle. None si aucun DPE ne se rattache (le front dit « non déterminée »). M71 B1 : info de
-    fiche uniquement, jamais un signal de classement (l'amont DPE est neuf en DROM)."""
+    parcelle. None si aucun DPE ne se rattache — DONNEES-1 lot 2 : le front et le Dossier
+    n'affichent alors AUCUNE ligne (plus de « non déterminée » : DPE non obligatoire en DROM,
+    ~0,3 % de couverture). M71 B1 : info de fiche uniquement, jamais un signal de classement."""
     rows = db.execute(text(
         "SELECT etiquette_dpe, etiquette_ges, date_etablissement, type_batiment "
         "FROM dpe_records WHERE parcelle_idu = :i AND etiquette_dpe IS NOT NULL "
@@ -5465,7 +5466,8 @@ _KIND2FRONT_INFO = {
 
 @app.get("/map/couches-info")
 def map_couches_info(db: Session = Depends(get_db)) -> dict:
-    """CIRCUIT-2 / COUCHES-REGISTRE-2 lot 2 — le « i » de CHAQUE couche du tuyau (56 kind) affiche
+    """CIRCUIT-2 / COUCHES-REGISTRE-2 lot 2 — le « i » de CHAQUE couche du tuyau (55 kind depuis
+    DONNEES-1 lot 2.1 : piscine_cosia partie en Prospection solaire) affiche
     SOURCE · MILLÉSIME · DATE DU DERNIER CONTRÔLE, tirés du réservoir RÉELLEMENT lu : le
     `data_source_id` porté par les lignes servies (spatial_layers), ou — pour un repère dérivé
     (mvt_parcels/mvt_communes) — le réservoir déclaré. Sans date de contrôle → le front dit « jamais

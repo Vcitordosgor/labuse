@@ -61,6 +61,11 @@ class Ligne:
     comment: dict = field(default_factory=dict)
     absence: str = ""
     absence_type: str = ""
+    #: DONNEES-1 lot 2 — la ligne DISPARAÎT quand la donnée est absente (aucune phrase « non
+    #: déterminé »/« sans objet »). Réservé aux cas où l'absence n'apprend rien au client et où
+    #: la dire nuirait (arbitrage Vic écrit dans `pourquoi`). `absence` reste renseignée (schéma)
+    #: mais n'est PAS rendue. Cf. DPE : non obligatoire en DROM, ~0,3 % de couverture.
+    masquer_si_absent: bool = False
     statut_juridique: str | None = None    # opposable · en_projet · informatif (sections réglementaires)
     #: RACCORDEMENT-1 lot 3 — LE STYLE CARTE, porté par la DÉCLARATION (Vic : « une couche nouvelle
     #: s'affiche en ajoutant un fichier, sans toucher au front »). `carte` = {kind, geometrie
@@ -139,6 +144,7 @@ def charger(inclure_exemples: bool = False) -> tuple[list[Surface], list[Generiq
                       comment=x.get("comment") or {},
                       absence=str(x.get("absence", "")),
                       absence_type=str(x.get("absence_type", "")),
+                      masquer_si_absent=bool(x.get("masquer_si_absent", False)),
                       statut_juridique=x.get("statut_juridique"),
                       carte=x.get("carte") or {},
                       pourquoi=str(x.get("pourquoi", "")),
