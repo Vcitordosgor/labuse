@@ -90,3 +90,17 @@ install -d -o labuse -g labuse -m 755 /opt/labuse/state/jobs /var/log/labuse
 echo "  ✓ logrotate (30 j) · /opt/labuse/state/jobs · /var/log/labuse"
 
 echo "✓ Exploitation planifiée posée depuis le registre. Vérifier : labuse jobs list · tail -f /var/log/labuse/*.log"
+
+# ── Marqueur du dernier deploy (DASHBOARD-4 P3) ─────────────────────────────────────────────
+# Le Pilotage lit ce marqueur pour dire de combien de commits `main` est en avance sur la prod
+# (« Déployer », rouge tant que > 0). On l'écrit ICI, après un déploiement réussi : le sha servi
+# EST le sha du checkout courant. Aucun autre rédacteur (labuse.deploiement ne fait que lire).
+echo "→ Marqueur de déploiement (config/deploiement.json)…"
+sha="$(cd "$REPO" && git rev-parse HEAD 2>/dev/null || echo '')"
+iso="$(cd "$REPO" && git show -s --format=%cI HEAD 2>/dev/null || echo '')"
+if [ -n "$sha" ]; then
+  printf '{\n "sha": "%s",\n "iso": "%s",\n "par": "deploy.sh"\n}\n' "$sha" "$iso" > "$REPO/config/deploiement.json"
+  echo "  ✓ dernier deploy = $sha"
+else
+  echo "  ⚠ git indisponible — marqueur inchangé (le Pilotage dira « déploiement inconnu »)"
+fi

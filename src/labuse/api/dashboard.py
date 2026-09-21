@@ -360,6 +360,10 @@ def admin_pilotage(request: Request) -> dict:
             for rk in rows_k:
                 courrier_kpi[_courrier.STATUT_BUCKET.get(
                     _courrier.normaliser_statut(rk["statut"]), "en_cours")] += int(rk["n"])
+            # DASHBOARD-4 (P1) — « déposables » = demandes qui PEUVENT réellement partir (MÊME logique
+            # que le dépôt en bloc : corps sans gabarit, aucune opposition). C'est le chiffre de la tuile
+            # (≠ a_deposer qui compte toutes les demandes) + l'ancienneté ouvrée du plus vieux (seuil 5 j).
+            courrier_kpi.update(_courrier.deposables(c))
         # SCORING-3 (L5.3) — étiquettes de retour terrain POSÉES (journal, jamais agrégé par
         # compte ni par parcelle ici : des COMPTES GLOBAUX seulement). Quand le cumul dépassera
         # 200, TERRAIN-1 aura de la matière.
@@ -454,6 +458,23 @@ def admin_pilotage(request: Request) -> dict:
     except Exception:  # noqa: BLE001 — la tuile Santé ne casse jamais la page
         pass
 
+    # DASHBOARD-4 (P3) — « Sondes muettes en prod » : le NOMBRE de sources vitrine sans contrôle récent
+    # (G8, lecture seule de source_veille), et l'état des horloges. La cause vraie d'une sonde muette est
+    # qu'AUCUNE horloge n'est posée (crons pas déployés) : le Pilotage en fait UNE ligne (pas N), qui
+    # renvoie à « Déployer ». Chiffre LU par le même G8 que le Circuit — jamais recompté à part.
+    sondes_muettes = {"n": None}
+    try:
+        from .. import circuit_garanties as _cg
+        with _ss() as _s:
+            sondes_muettes = {"n": len(_cg.sources_sans_controle(_s, 7))}
+    except Exception:  # noqa: BLE001 — la ligne dit « — », jamais un 500
+        sondes_muettes = {"n": None}
+
+    # DASHBOARD-4 (P3) — « Déployer » : avance de `main` sur la prod (git + dernier deploy connu). Rouge
+    # tant que l'avance > 0. Lecture pure (deploiement.py n'écrit jamais ; deploy.sh pose le marqueur).
+    from .. import deploiement as _dep
+    deploi = _dep.etat()
+
     # DASHBOARD-2 (Lot 2) — échecs d'envoi du jour (mail_queue) pour la jauge Système. La fonction est
     # fournie par COMPTE-2 (mailfile.echecs_du_jour) : une seule source. Zéro échec = 0 (rien de plus).
     mail_echecs_jour = 0
@@ -480,7 +501,12 @@ def admin_pilotage(request: Request) -> dict:
         "horloge": _horloge(),
         "verrous": _verrous(),
         "sante": sante,
-        "courrier": courrier_kpi,   # CONNEXIONS-2 Lot 4 — {a_deposer, en_cours, clos}
+        # CONNEXIONS-2 Lot 4 — {a_deposer, en_cours, clos} ; DASHBOARD-4 P1 — + {deposables, bloquees,
+        # incomplets, plus_ancien_ouvre_j} pour la tuile « Courriers déposables » et son seuil rouge.
+        "courrier": courrier_kpi,
+        # DASHBOARD-4 (P3) — l'avance de la prod et les sondes muettes, LUES pour la liste « À faire ».
+        "deploiement": deploi,
+        "sondes_muettes": sondes_muettes,
         # SCORING-3 (L5.3) — étiquettes de retour terrain posées (7 j + cumul, seuil TERRAIN-1 : 200)
         "etiquettes_terrain": etiquettes,
         "run": {"label": run_label, "carte_le": carte_le.isoformat() if carte_le else None},

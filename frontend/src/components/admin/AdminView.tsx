@@ -5,7 +5,7 @@
 // (Indian/Reunion), jamais l'heure serveur brute (dette fuseau connue, mandat D3).
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { getAdminCircuit, getAdminLicences, getAdminPilotage, getMoi, getOffres, getRadarCheck, postAdminDegeler, type AdminPilotage } from '../../lib/api'
+import { getAdminCircuit, getAdminLicences, getAdminPilotage, getMoi, postAdminDegeler, type AdminPilotage } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { LicencesSection, prochaineAction } from './Licences'
 import { IaSection } from './Ia'
@@ -91,39 +91,42 @@ export function H2({ children }: { children: React.ReactNode }) {
   )
 }
 
-// ═══ DASHBOARD-2 (Lot 1) — briques du poste de pilotage ═══
-// UNE jauge = un grand nombre + une étiquette + un liseré (vert/ambre/rouge), cliquable vers sa page.
-// « rien d'autre » (le détail vit sur la page). Le chiffre est LU de la fonction serveur de sa page.
-type JaugeTone = 'ok' | 'warn' | 'err' | 'off'
-function Jauge({ valeur, label, tone, onClick, title }: {
-  valeur: React.ReactNode; label: string; tone: JaugeTone; onClick?: () => void; title?: string
+// ═══ DASHBOARD-4 (Lot 1) — briques du poste de pilotage (maquette v5) ═══
+// UNE tuile = un grand nombre PLEIN ET OPAQUE + une étiquette, cliquable vers sa page. La charte (P2) :
+// vert = normal · mauve = IA (famille, pas état) · rouge = EN RETARD ou À VÉRIFIER. Un compteur élevé
+// n'est jamais rouge. Le chiffre est LU de la fonction serveur de sa page (jamais recompté ici).
+type TuileTone = 'ok' | 'ia' | 'retard'
+function Tuile({ valeur, unite, label, sous, tone, onClick }: {
+  valeur: React.ReactNode; unite?: string; label: string; sous?: string; tone: TuileTone; onClick: () => void
 }) {
-  const bord = { ok: 'border-l-mint', warn: 'border-l-amber', err: 'border-l-coral', off: 'border-l-line-3' }[tone]
-  const encre = { ok: 'text-txt-hi', warn: 'text-amber', err: 'text-coral', off: 'text-txt-mut' }[tone]
+  const fond = { ok: 'bg-mint text-[#08150C]', ia: 'bg-cp-ia text-[#140F26]', retard: 'bg-coral text-[#2A0D0D]' }[tone]
   return (
-    <button type="button" onClick={onClick} disabled={!onClick} title={title}
-      className={`flex flex-col items-start rounded-xl border border-line border-l-[3px] ${bord} bg-surface-2 px-4 py-3.5 text-left transition-colors duration-quick ${onClick ? 'hover:border-line-2' : 'cursor-default'}`}>
-      <div className={`font-display text-[26px] font-semibold leading-none ${encre}`}>{valeur}</div>
-      <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-txt-dim">{label}</div>
+    <button type="button" onClick={onClick} data-tuile={label}
+      className={`flex flex-col items-start rounded-xl px-[18px] pb-4 pt-[17px] text-left transition-[filter] duration-quick hover:brightness-[1.08] ${fond}`}>
+      <div className="font-display text-[30px] font-bold leading-[1.05] tracking-[-0.03em]">
+        {valeur}{unite && <span className="ml-0.5 text-[15px] font-medium opacity-[0.62]">{unite}</span>}
+      </div>
+      <div className="mt-2 text-[13px] font-semibold opacity-80">{label}</div>
+      {sous && <div className="mt-0.5 text-[11px] font-medium opacity-[0.72]">{sous}</div>}
     </button>
   )
 }
 
-// « À faire, dans l'ordre » — une ligne = chiffre · phrase · verbe. `tone` r (ce qui cloche, rouge),
-// a (à faire, ambre), ok (rien, grisé). Le tri (poids) place ce qui cloche d'abord (Pilotage).
-type Todo = { cle: string; n: number | string; titre: string; phrase?: string; verbe: string; cible: AdminSection; tone: 'r' | 'a' | 'ok'; poids: number }
+// « À faire, dans l'ordre » — une ligne = pastille · titre · phrase · verbe (maquette v5). `tone` r
+// (ce qui cloche, pastille rouge), a (à faire, pastille verte), ok (rien). Le tri (poids) place ce
+// qui cloche d'abord. La liste est CALCULÉE (jamais codée en dur) : deploiement + jobs + comptes.
+type Todo = { cle: string; titre: string; phrase?: string; verbe: string; cible: AdminSection; tone: 'r' | 'a'; poids: number }
 function TodoLigne({ t, go }: { t: Todo; go: (s: AdminSection) => void }) {
-  const kcol = t.tone === 'r' ? 'text-coral' : t.tone === 'ok' ? 'text-txt-dim' : 'text-amber'
-  const bord = t.tone === 'r' ? 'border-coral/40' : 'border-line'
+  const past = t.tone === 'r' ? 'bg-coral' : 'bg-mint'
   return (
-    <button type="button" data-todo={t.cle} onClick={() => go(t.cible)}
-      className={`grid w-full grid-cols-[44px_1fr_auto] items-center gap-3.5 rounded-lg border ${bord} bg-surface-2 px-3.5 py-2.5 text-left transition-colors duration-quick hover:border-line-2`}>
-      <div className={`text-right font-mono text-[20px] font-medium ${kcol}`}>{t.n}</div>
-      <div className="min-w-0 text-[13.5px] text-txt">
+    <div data-todo={t.cle} data-tone={t.tone}
+      className="flex items-center gap-3.5 border-t border-line px-4 py-3 first:border-t-0">
+      <span className={`h-[9px] w-[9px] flex-none rounded-full ${past}`} />
+      <div className="min-w-0 flex-1 text-[13.5px] text-txt">
         {t.titre}{t.phrase && <small className="block text-[12px] text-txt-mut">{t.phrase}</small>}
       </div>
-      <span className={`whitespace-nowrap text-[13px] font-medium ${t.tone === 'ok' ? 'text-txt-dim' : 'text-mint'}`}>{t.verbe} →</span>
-    </button>
+      <ActBtn tone="mint" onClick={() => go(t.cible)}>{t.verbe}</ActBtn>
+    </div>
   )
 }
 
@@ -204,16 +207,18 @@ function Journal({ items, degel, degeler, go }: {
   )
 }
 
+// DASHBOARD-4 (P4) — un compte de TEST ne doit apparaître nulle part dans le Journal.
+const estCompteTest = (s?: string | null): boolean => {
+  const t = (s ?? '').toLowerCase()
+  return t.includes('[ct-test]') || t.includes('@labuse.test') || t.includes('@test.com') || t.includes('ton-email@test')
+}
+
 function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined; go: (s: AdminSection) => void; majAt?: number }) {
   const qc = useQueryClient()
   const [degel, setDegel] = useState<string | null>(null)
-  // compteur unique : le Pilotage lit les MÊMES endpoints que les pages Données (Circuit) et Radar.
+  // compteur unique : la tuile « Tâches » lit le MÊME endpoint que la page Données (le Circuit).
   const circuit = useQuery({ queryKey: ['admin-circuit'], queryFn: getAdminCircuit, refetchInterval: 120_000 })
-  const radarChk = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck, refetchInterval: 120_000 })
-  // Argent = MRR (récurrent contractuel = licences × prix intégral) ; l'encaissé du mois passe en légende.
-  const offres = useQuery({ queryKey: ['offres'], queryFn: getOffres, staleTime: 3_600_000 })
-  // Lot 2 §1 — la jauge Clients affiche « à toucher » : le MÊME endpoint que la page Comptes, lu avec
-  // la MÊME fonction (prochaineAction) que son segment par défaut → même nombre, une seule fonction.
+  // « à toucher » = MÊME endpoint + MÊME fonction (prochaineAction) que le segment par défaut de Comptes.
   const licencesQ = useQuery({ queryKey: ['admin-licences'], queryFn: getAdminLicences, refetchInterval: 120_000 })
   const degeler = async (sujet: string) => {
     setDegel(sujet)
@@ -221,115 +226,118 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
   }
   if (!data) return <div className="py-10 text-center text-xs text-txt-mut">Chargement…</div>
   const st = data.stripe
-  const caEntries = Object.entries(st.ca_mois ?? {})
-  const caCourant = caEntries.at(-1)?.[1] ?? 0
-  const echecs = st.paiements_en_echec ?? 0
-  const clientEchec = st.abonnements?.find((a) => a.statut === 'past_due')
+  const caCourant = Object.entries(st.ca_mois ?? {}).at(-1)?.[1] ?? 0
 
-  // ── les 8 chiffres, chacun LU de sa page ──
-  const circuitTotal = (circuit.data?.resume?.total as number | undefined) ?? null
-  const enVie = radarChk.data?.annonces_en_vie ?? null
-  const reverifDues = radarChk.data?.reverif_dues ?? 0
-  const aDeposer = data.courrier?.a_deposer ?? 0
-  const retoursTot = Object.values(data.retours_par_type ?? {}).reduce((a, b) => a + b, 0)
-  // Produit = file unique des retours (signalements fiche/annonce + « Signaler ») ouverts — cf. Lot 5.
-  const produitOuverts = (data.a_faire?.signalements_ouverts ?? 0) + retoursTot
-  const iaMois = data.ia_mois?.cout_eur ?? 0
-  // « à toucher » = clients (hors test) ayant une action en attente — même filtre + même fonction que
-  // le segment « À toucher » (défaut) de la page Comptes (COMPTE-2). licences_actives reste le compteur
-  // unique (comptes.licences_actives), lu par le rail et l'Argent.
+  // ── les cinq chiffres des tuiles, chacun LU de la fonction serveur de sa page (jamais recompté ici) ──
   const licencesActives = data.licences_actives
-  const aToucher = (licencesQ.data?.licences ?? []).filter((l) => !l.est_test && prochaineAction(l) != null).length
-  const mailEchecs = data.mail_echecs_jour ?? 0
-  const horlogeManquant = (data.horloge?.attendus ?? 0) - (data.horloge?.poses ?? 0)
+  const iaMois = data.ia_mois?.cout_eur ?? 0
+  // Courriers DÉPOSABLES (P1) : ce qui peut réellement partir (≠ a_deposer), + ancienneté du plus vieux.
+  const cr = data.courrier ?? { a_deposer: 0, en_cours: 0, clos: 0 }
+  const deposables = cr.deposables ?? cr.a_deposer ?? 0
+  const plusAncienJ = cr.plus_ancien_ouvre_j ?? null
+  const SEUIL_COURRIER_J = 5   // P2 — rouge seulement si le plus ancien attend > 5 jours OUVRÉS.
+  const courrierRouge = plusAncienJ != null && plusAncienJ > SEUIL_COURRIER_J
+  // Tâches du circuit (P1) = le total du Résumé de la page Données. Rouge = « à corriger » (une ligne
+  // rouge du Résumé) ou un verrou cassé — jamais rouge juste parce que le compteur est élevé (P2).
+  const resume = circuit.data?.resume as { total?: number; groupes?: { lignes?: { couleur?: string }[] }[] } | undefined
+  const circuitTotal = resume?.total ?? null
   const verrousCasses = data.verrous && data.verrous.ok != null && data.verrous.sur != null ? data.verrous.sur - data.verrous.ok : 0
-  const moisNom = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date())
-  // Argent = MRR récurrent = licences actives × prix intégral (le vrai « par mois », pas l'encaissé
-  // qui reste à 0 tant que Stripe n'encaisse rien) ; repli sur le MRR Stripe si le prix est indisponible.
-  const prixIntegral = offres.data?.integral?.eur_mois ?? null
-  const mrr = prixIntegral != null ? data.licences_actives * prixIntegral : (data.traction?.mrr_eur ?? null)
+  const circuitRouge = verrousCasses > 0 || (resume?.groupes ?? []).some((g) => (g.lignes ?? []).some((l) => l.couleur === 'rouge'))
 
-  // ── « À faire, dans l'ordre » : ce qui CLOCHE (rouge) d'abord — c'est AUSSI la source de la jauge
-  //    Système (un seul calcul) — puis les tâches par urgence. Les lignes à ZÉRO ne sont pas des tâches. ──
-  const rouges: Todo[] = []
-  if (horlogeManquant > 0) rouges.push({ cle: 'horloge', n: horlogeManquant, titre: 'Poser les horloges sur le VPS',
-    phrase: `${data.horloge?.poses ?? 0} posées / ${data.horloge?.attendus ?? 0} attendues — le wrapper des crons n'a jamais été déployé`, verbe: "Voir l'horloge", cible: 'cron', tone: 'r', poids: 100 })
-  if (verrousCasses > 0) rouges.push({ cle: 'verrous', n: verrousCasses, titre: 'Réparer les verrous de cohérence',
-    phrase: 'le Circuit ne dit plus la même chose partout', verbe: 'Ouvrir Données', cible: 'donnees', tone: 'r', poids: 95 })
-  if (echecs > 0) rouges.push({ cle: 'paiement', n: echecs, titre: `Régler ${echecs} paiement${echecs > 1 ? 's' : ''} en échec`,
-    phrase: clientEchec ? (clientEchec.nom_stripe ?? clientEchec.email ?? clientEchec.customer_id ?? undefined) : undefined, verbe: 'Voir la licence', cible: 'licences', tone: 'r', poids: 90 })
-  if (['rouge', 'absent', 'non_configure'].includes(data.backup?.etat)) rouges.push({ cle: 'backup', n: '!',
-    titre: data.backup.etat === 'non_configure' ? 'Configurer la sauvegarde' : data.backup.etat === 'absent' ? 'Configurer la sauvegarde' : 'Rattraper la sauvegarde en retard',
-    phrase: data.backup.etat === 'rouge' ? undefined : 'aucun dump connu — la base n\'est pas sauvegardée', verbe: "Voir l'horloge", cible: 'cron', tone: 'r', poids: 85 })
-  // Lot 2 §2 — les échecs d'envoi du jour (mail_queue) sont une alerte système (rejouables d'un clic).
-  if (mailEchecs > 0) rouges.push({ cle: 'mail', n: mailEchecs, titre: `Rejouer ${mailEchecs} échec${mailEchecs > 1 ? 's' : ''} d'envoi de mail`,
-    phrase: 'file mail_queue — la raison est lisible, rejouable d\'un clic', verbe: 'Ouvrir Comptes', cible: 'licences', tone: 'r', poids: 88 })
-  // alertes système ouvertes = les lignes rouges (même calcul, jamais un chiffre à part) : ce qui cloche
-  // sur le serveur + les échecs d'envoi du jour.
-  const nSysteme = rouges.length
+  const aToucher = (licencesQ.data?.licences ?? []).filter((l) => !l.est_test && prochaineAction(l) != null).length
 
-  const taches: Todo[] = []
-  if (aToucher > 0) taches.push({ cle: 'comptes', n: aToucher, titre: 'Toucher les clients',
-    phrase: 'client(s) avec une action en attente', verbe: 'Ouvrir Comptes', cible: 'licences', tone: 'a', poids: 80 })
-  if ((circuitTotal ?? 0) > 0) taches.push({ cle: 'circuit', n: circuitTotal as number, titre: 'Regarder le circuit', verbe: 'Ouvrir Données', cible: 'donnees', tone: 'a', poids: 70 })
-  if (aDeposer > 0) taches.push({ cle: 'courrier', n: aDeposer, titre: 'Déposer les courriers', verbe: 'Ouvrir Courrier', cible: 'courrier', tone: 'a', poids: 60 })
-  if (produitOuverts > 0) taches.push({ cle: 'produit', n: produitOuverts, titre: 'Traiter les retours clients', verbe: 'Ouvrir Produit', cible: 'produit', tone: 'a', poids: 50 })
-  if (reverifDues > 0) taches.push({ cle: 'radar', n: reverifDues, titre: 'Re-vérifier des annonces', verbe: 'Ouvrir Radar', cible: 'radar', tone: 'a', poids: 40 })
-  const aFaire = [...rouges, ...taches].sort((a, b) => b.poids - a.poids)
-
-  const jauges: { valeur: React.ReactNode; label: string; tone: JaugeTone; cible?: AdminSection; title?: string }[] = [
-    // Argent : MRR en grand, encaissé du mois en légende (une jauge à 0 permanent ne sert à rien).
-    { valeur: mrr != null ? <>{fmtEur(mrr)} <span className="text-base font-medium text-txt-mut">€</span></> : '—',
-      label: `Argent · par mois · ${st.configure ? fmtEur(caCourant) + ' € encaissé en ' + moisNom : 'Stripe non configuré'}`, tone: 'ok',
-      cible: 'licences', title: prixIntegral != null ? `MRR = ${data.licences_actives} licences × ${fmtEur(prixIntegral)} €/mois` : undefined },
-    // Clients : Lot 2 §1 — la jauge affiche le « à toucher » (segment par défaut de la page Comptes),
-    // pas le nombre de licences ; le compteur de licences vit sur le rail, la page et l'Argent.
-    { valeur: aToucher, label: `Clients · à toucher · ${licencesActives} active${licencesActives > 1 ? 's' : ''}`,
-      tone: aToucher > 0 ? 'warn' : 'ok', cible: 'licences' },
-    { valeur: circuitTotal ?? '—', label: 'Circuit · à regarder', tone: circuitTotal == null ? 'off' : circuitTotal > 0 ? 'warn' : 'ok', cible: 'donnees' },
-    { valeur: aDeposer, label: 'Courrier · à déposer', tone: aDeposer > 0 ? 'warn' : 'ok', cible: 'courrier' },
-    { valeur: enVie ?? '—', label: 'Radar · annonces en vie', tone: enVie == null ? 'off' : 'ok', cible: 'radar' },
-    { valeur: produitOuverts, label: 'Produit · retours ouverts', tone: produitOuverts > 0 ? 'warn' : 'ok', cible: 'produit' },
-    { valeur: <>{fmtEur(iaMois, 2)} <span className="text-base font-medium text-txt-mut">€</span></>, label: 'IA · conso du mois', tone: 'ok', cible: 'ia' },
-    // Système : le NOMBRE d'alertes ouvertes réelles (= lignes rouges), rouge dès qu'il y en a.
-    { valeur: nSysteme, label: 'Système · alertes ouvertes', tone: nSysteme > 0 ? 'err' : 'ok', cible: 'cron' },
+  // ── cinq tuiles pleines et opaques, dans l'ordre de la maquette (P1) ──
+  const tuiles: { cle: string; valeur: React.ReactNode; unite?: string; label: string; sous?: string; tone: TuileTone; cible: AdminSection }[] = [
+    { cle: 'ca', valeur: st.configure ? fmtEur(caCourant) : '—', unite: st.configure ? '€' : undefined,
+      label: "Chiffre d'affaires du mois", tone: 'ok', cible: 'licences' },
+    { cle: 'licences', valeur: licencesActives, label: `Licence${licencesActives > 1 ? 's' : ''} active${licencesActives > 1 ? 's' : ''}`, tone: 'ok', cible: 'licences' },
+    { cle: 'ia', valeur: fmtEur(iaMois, 2), unite: '€', label: 'Coût IA du mois', tone: 'ia', cible: 'ia' },
+    { cle: 'courrier', valeur: deposables, label: `Courrier${deposables > 1 ? 's' : ''} à déposer`,
+      sous: plusAncienJ != null ? `le plus ancien attend ${plusAncienJ} j ouvré${plusAncienJ > 1 ? 's' : ''} · seuil ${SEUIL_COURRIER_J} j` : undefined,
+      tone: courrierRouge ? 'retard' : 'ok', cible: 'courrier' },
+    { cle: 'taches', valeur: circuitTotal ?? '…', label: 'Tâches à effectuer', tone: circuitTotal != null && circuitRouge ? 'retard' : 'ok', cible: 'donnees' },
   ]
-  // Jauges triées par URGENCE : rouge, puis ambre, puis vert ; à état égal, l'ordre de la maquette.
-  const tonePrio: Record<JaugeTone, number> = { err: 0, warn: 1, ok: 2, off: 2 }
-  const jaugesTriees = jauges.map((g, i) => ({ g, i })).sort((a, b) => (tonePrio[a.g.tone] - tonePrio[b.g.tone]) || (a.i - b.i)).map((x) => x.g)
 
-  // ── journal : gels (sécurité) + fil (event_log système), fusionnés, triés récents d'abord ──
+  // ── « À faire, dans l'ordre » : UNE liste CALCULÉE (deploiement + jobs + comptes), jamais codée en
+  //    dur. Chaque ligne = pastille · titre · phrase · verbe. Triée par poids (ce qui cloche d'abord). ──
+  const dep = data.deploiement
+  const avance = dep?.avance ?? null
+  const sondesN = data.sondes_muettes?.n ?? null
+  const horlogeManquant = (data.horloge?.attendus ?? 0) - (data.horloge?.poses ?? 0)
+  const depDate = dep?.depuis ? fmtReu(dep.depuis, false) : null
+  const aFaire: Todo[] = []
+  // Déployer : main en avance sur la prod de N commits — rouge tant que N > 0 (P3).
+  if (avance != null && avance > 0) aFaire.push({ cle: 'deployer', tone: 'r', poids: 100,
+    titre: `Déployer — ${avance} commit${avance > 1 ? 's' : ''} d'avance sur la prod`,
+    phrase: `main est en avance sur la production${depDate ? `, dernier déploiement le ${depDate}` : ''} — lancer deploy.sh sur le VPS`,
+    verbe: 'Voir', cible: 'cron' })
+  // Sondes muettes : G8 les compte ; la CAUSE vraie est que les horloges ne sont pas posées en prod →
+  // UNE ligne (pas N), qui renvoie à Déployer (P3).
+  if (sondesN != null && sondesN > 0 && horlogeManquant > 0) aFaire.push({ cle: 'sondes', tone: 'r', poids: 96,
+    titre: `Sondes muettes en prod — ${sondesN} source${sondesN > 1 ? 's' : ''} sans contrôle`,
+    phrase: 'les horloges ne sont pas posées en prod : rien ne se met à jour seul — déployer les pose',
+    verbe: 'Voir', cible: 'cron' })
+  // Sauvegarde : rouge si > 24 h (ou absente / non configurée) (P3).
+  const bk = data.backup
+  const bkRetard = bk?.etat === 'rouge' || bk?.etat === 'ambre' || bk?.etat === 'absent' || bk?.etat === 'non_configure' || (bk?.age_jours != null && bk.age_jours > 1)
+  if (bkRetard) aFaire.push({ cle: 'backup', tone: 'r', poids: 92,
+    titre: 'Sauvegarder la base',
+    phrase: bk.etat === 'non_configure' ? 'aucun répertoire de sauvegarde configuré'
+      : bk.etat === 'absent' ? 'aucun dump connu — la base n\'est pas sauvegardée'
+        : `dernière sauvegarde il y a ${bk.age_jours != null ? Math.floor(bk.age_jours) : '?'} j — seuil 24 h`,
+    verbe: 'Voir', cible: 'cron' })
+  // Courriers déposables : rouge seulement au-delà du seuil ouvré, sinon simple tâche (P1/P2).
+  if (deposables > 0) aFaire.push({ cle: 'courrier', tone: courrierRouge ? 'r' : 'a', poids: courrierRouge ? 84 : 60,
+    titre: `Déposer ${deposables} courrier${deposables > 1 ? 's' : ''}`,
+    phrase: plusAncienJ != null ? `le plus ancien attend ${plusAncienJ} j ouvré${plusAncienJ > 1 ? 's' : ''}${courrierRouge ? ` (seuil ${SEUIL_COURRIER_J} j dépassé)` : ''}` : undefined,
+    verbe: 'Déposer', cible: 'courrier' })
+  // Sources signalées par les agents (une version plus récente publiée) (P3).
+  const srcSignalees = data.a_faire?.sources_nouvelle_version ?? 0
+  if (srcSignalees > 0) aFaire.push({ cle: 'sources', tone: 'a', poids: 55,
+    titre: `Relire ${srcSignalees} source${srcSignalees > 1 ? 's' : ''} signalée${srcSignalees > 1 ? 's' : ''} par les agents`,
+    phrase: 'une version plus récente a été publiée', verbe: 'Voir', cible: 'donnees' })
+  // Comptes à toucher (P3) — même fonction que le segment « À toucher » de Comptes.
+  if (aToucher > 0) aFaire.push({ cle: 'comptes', tone: 'a', poids: 50,
+    titre: `Toucher ${aToucher} client${aToucher > 1 ? 's' : ''}`,
+    phrase: 'invitation, essai qui se termine ou carte à relancer', verbe: 'Ouvrir', cible: 'licences' })
+  aFaire.sort((a, b) => b.poids - a.poids)
+
+  // ── journal : gels (sécurité) + fil (event_log système). Les 3 derniers jours, comptes de test
+  //    masqués (P4). Fusionnés, triés récents d'abord. ──
+  const il3jours = Date.now() - 3 * 86_400_000
   const items: JournalItem[] = [
     ...data.gels.map((g) => ({ key: `g${g.sujet}`, ts: g.ts, famille: 'Système', source: 'Sécurité',
       titre: `Gel anti-burst sur ${g.sujet}${g.motif ? ` — ${g.motif}` : ''}`, action: 'degel' as const, sujet: g.sujet })),
     ...data.fil.map((e) => ({ key: `f${e.id}`, ts: e.ts, famille: familleDe(e.source, e.kind), source: e.source,
       titre: e.titre, detail: e.detail, action: e.source === 'Courrier' ? 'courrier' as const : e.source === 'Retour' ? 'produit' as const : undefined })),
-  ].sort((a, b) => (b.ts ?? '').localeCompare(a.ts ?? ''))
+  ]
+    .filter((e) => e.ts != null && new Date(e.ts).getTime() >= il3jours)          // P4 — les 3 derniers jours
+    .filter((e) => !estCompteTest(e.titre) && !estCompteTest((e as { detail?: string | null }).detail) && !estCompteTest((e as { sujet?: string }).sujet))   // P4 — tests masqués
+    .sort((a, b) => (b.ts ?? '').localeCompare(a.ts ?? ''))
 
   return (
     <>
-      {/* 8 jauges — un grand nombre + une étiquette. Triées par urgence : rouge, ambre, vert. */}
-      <div className="grid grid-cols-4 gap-3 max-[1100px]:grid-cols-2">
-        {jaugesTriees.map((g) => (
-          <Jauge key={g.label} valeur={g.valeur} label={g.label} tone={g.tone} title={g.title}
-            onClick={g.cible ? () => go(g.cible!) : undefined} />
+      {/* cinq tuiles pleines et opaques (maquette v5) — un grand nombre + une étiquette, cliquables. */}
+      <div className="grid grid-cols-5 gap-3.5 max-[1100px]:grid-cols-2">
+        {tuiles.map((t) => (
+          <Tuile key={t.cle} valeur={t.valeur} unite={t.unite} label={t.label} sous={t.sous} tone={t.tone} onClick={() => go(t.cible)} />
         ))}
       </div>
 
       <H2>À faire, dans l'ordre</H2>
-      <div className="grid gap-1.5">
+      <Panel>
         {aFaire.length
           ? aFaire.map((t) => <TodoLigne key={t.cle} t={t} go={go} />)
-          : <div className="rounded-lg border border-line bg-surface-2 px-3.5 py-3 text-[13px] text-txt-mut">Rien à faire aujourd'hui — tout est à jour.</div>}
-      </div>
-      <p className="mt-2 text-[10.5px] text-txt-dim">Les lignes à zéro ne s'affichent pas — une ligne à zéro n'est pas une tâche.</p>
+          : <div className="px-4 py-4 text-[13px] text-txt-mut">Rien à faire aujourd'hui — tout est à jour.</div>}
+      </Panel>
+      <p className="mt-1.5 text-[10.5px] text-txt-dim">Liste calculée en direct (déploiement, jobs, comptes) — les lignes à zéro ne s'affichent pas.</p>
 
       <H2>Journal</H2>
       <Journal items={items} degel={degel} degeler={degeler} go={go} />
       <p className="mt-2 text-[10.5px] text-txt-dim">
-        {/* Lot 1 §24 — fraîcheur honnête : le Pilotage est relu en direct de la base (pas de cache). */}
-        Chiffres relevés en direct{majAt ? ` · dernier relevé à ${fmtReu(new Date(majAt).toISOString())}` : ''}.
-        Chaque jauge lit la fonction serveur de sa page — ouvrir la page donne le même nombre.
+        {/* P4 — les trois derniers jours, comptes de test masqués. Chiffres relus en direct de la base. */}
+        Les trois derniers jours, comptes de test masqués. Chiffres relevés en direct{majAt ? ` · dernier relevé à ${fmtReu(new Date(majAt).toISOString())}` : ''}.
+        Chaque tuile lit la fonction serveur de sa page — ouvrir la page donne le même nombre.
       </p>
     </>
   )
@@ -474,15 +482,8 @@ export function AdminView() {
           <header className="mb-6 flex flex-wrap items-baseline gap-3.5">
             <h1 className="font-display text-2xl font-semibold tracking-tight text-txt-hi">{SECTIONS.find((s) => s.key === section)?.label ?? (section === 'cron' ? 'Horloge' : '')}</h1>
             <span className="text-[13px] text-txt-dim">{SOUS_TITRES[section]}</span>
-            <span className="ml-auto flex items-center gap-2">
-              {/* DASHBOARD-2 recette §5 — les chiffres du Pilotage sont en direct ; SEUL Stripe est
-                  daté d'un cache. On affiche la vraie date du cache en heure Réunion (fmtReu). */}
-              {section === 'pilotage' && d?.stripe.maj && (
-                <Chip tone={Date.now() - new Date(d.stripe.maj).getTime() > 3_600_000 ? 'warn' : 'off'}>
-                  chiffres à l'instant · Stripe daté du {fmtReu(d.stripe.maj)}
-                </Chip>
-              )}
-            </span>
+            {/* DASHBOARD-4 (P3) — l'horodatage Stripe du haut disparaît : la fraîcheur est dite en pied
+                du Pilotage (« Chiffres relevés en direct »), pas en bandeau d'en-tête. */}
           </header>
           {section === 'ia' && (
             <div className="mb-4 rounded-r-xl border-l-[3px] border-cp-ia bg-gradient-to-r from-cp-ia-bg/60 to-transparent px-4 py-2.5 font-mono text-[11px] tracking-[0.1em] text-cp-ia">
