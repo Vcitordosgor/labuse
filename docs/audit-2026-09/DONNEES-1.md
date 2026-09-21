@@ -539,3 +539,46 @@ Aucune n'est « du travail pour rien » : ce sont des rouages assumés. Résumé
 - **Le registre est propre** : 259/261 données affichées, 2 en attente déclarées, 0 fuite, 0 donnée orpheline à l'écran. Les 47 « hors mandat » sont correctement placées.
 - **Le gisement de « travail pour rien » est au niveau des tables** : sur 89 tables de réservoir, **4 DARK vivantes** et **2 RETIRE**. Les DARK utiles (`bodacc_depots`, `rp_logement_commune`) sont branchées au **Lot 2** ; les 2 autres DARK (`parcel_cosia_couverture`, `vegetation_zonal_acc`) sont des artefacts internes dont la raison de non-affichage est gravée ici.
 - **Hors périmètre** (mandat séparé, décision de Vic) : le branchement éventuel des autres tables — notamment `annuaire_services` (436 services DILA, aujourd'hui page admin Contacts seule) vers la fiche commune, et l'arbitrage purge/archive des 2 précalcs CoSIA/végétation.
+
+---
+
+# DONNEES-1 — Lot 2 : les quatre décisions déjà prises
+
+Un commit par décision (2.1 → 2.4). Base : `feat/donnees-1` sur main `373a8833`.
+
+## 2.1 — Piscines : la couche quitte le tuyau, vit dans Solaire
+- **Fait** : la couche `piscine_cosia` (surface `couche_piscine`, `declarations/couches/couches_sans_toggle.yaml`) est retirée du tuyau. Le mode Piscines de Prospection solaire affichait **déjà** les piscines sur la carte par ses propres points GeoJSON (`getPiscinesPoints` → `setModuleMap`, `ProspectionSolaire.tsx:ModePiscines`) — la couche du panneau était redondante.
+- **Preuve — compteur du tuyau 56 → 55** : `registre()` = **55** (était 56) ; `couches_carte()` = 52 ; `piscine_cosia` ∉ `registre()`. Le panneau Couches (`NouvellesCouches`, data-driven via `/map/tuyau/couches`) ne la liste plus, aucun changement front nécessaire.
+- **Preuve — piscines toujours dans Solaire** : `ProspectionSolaire.tsx` inchangé, points servis par `/prospection-piscines/points` ; vitest `ProspectionSolaire.test.tsx` **9/9 vert**.
+- **V7a rejoué** : `verrou_tuiles` est dynamique (`couches_carte()`), il ne contrôle plus les tuiles piscine. `n_piscines` / `piscine_m2` (fiche + outil) et le kind spatial_layers `piscine_cosia` restent intacts.
+- Test mis à jour : `test_piscine_hors_tuyau_vit_dans_solaire` ✓.
+
+## 2.2 — DPE : la ligne s'affiche seulement si un DPE existe
+- **Fait** : plus de ligne « non déterminée — aucun DPE rattaché ». Le DPE n'est pas obligatoire dans les DROM (~0,3 % de couverture) et ne sert aucun outil ni ciblage — le dire sur 99,7 % des parcelles est un bruit trompeur.
+- **Fiche parcelle** (`leBien.tsx`) : la ligne DPE n'est rendue que si `dpe` existe (`{dpe && …}`), fin de la branche « non déterminée ».
+- **Dossier** : nouveau drapeau déclaratif `masquer_si_absent` (`declarations.py` + `miroir.py`) ; `le_bien.yaml` `dpe_connu` le porte. L'absence n'est plus rendue ; justification gravée dans `pourquoi`. `absence` reste renseignée (le schéma l'exige, verifier() = 0 violation).
+- **Preuve** : back `_dpe_connu_block` renvoie déjà `None` sans DPE → aucune ligne ; `charger()` confirme `dpe_connu.masquer_si_absent = True`. tsc vert.
+
+## 2.3 — bodacc_depots : signal « dépôt de comptes » sur le propriétaire PM
+- **Fait** : la table `bodacc_depots` (14 078 dépôts de comptes annuels, 1 938 SIREN, flux BODACC continu — **DARK** au Lot 1) devient un signal factuel d'approche : « dernier exercice déposé : AAAA » / « aucun dépôt depuis N ans » (société en sommeil probable).
+- **Back** : `modules.py:_depots_par_siren` (batch, garde `to_regclass`) → Scan patrimoine (`depot_comptes`) et Successions (par item).
+- **Registre** : donnée `dernier_depot_comptes` (proprietaire, réservoir bodacc), **servie par les robinets Scan patrimoine + Successions** ; lecture fine `bodacc_depots → api/modules.py` déclarée (G6 : dette 0).
+- **Front** : encart Scan patrimoine (`ModulePanel.tsx`) + motif Successions (`Successions.tsx`).
+- **Preuve fonctionnelle** (base réelle) : siren `841694490` → `{annee: 2025, depuis_ans: 0}` ; siren inconnu → `{}` (aucun dépôt). Tests `test_patrimoine.py` + `test_outils_muscler1.py::test_successions_liste` **11/11 vert** ; vitest `ScanRetraits.test.tsx` vert.
+
+## 2.4 — rp_logement_commune : âge du parc (le reste = doublon, dit)
+- **Constat de doublon** : la carte « Population et logement » sert **déjà** le type maison/appartement et la tenure (`commune_insee_logement.maisons_pct` via `d.marche`), la vacance (commune + IRIS), le parc social (RPLS). Ces variables de `rp_logement_commune` sont donc **doublon — non rebranchées**.
+- **Ce qui n'y était pas** : l'**âge du parc**. Ajout de `parc_ancien_pct` = part construit avant 1991 (RP2022, distribution ACHL, codes A/B = ancien), `fiche_commune.py:_parc_ancien_pct` (garde table-absente).
+- **Registre** : donnée `parc_ancien_pct` (commune, réservoir `insee_rp2022_egoul`), servie par le robinet Population & logement ; lecture fine déclarée. Au passage, la lecture `rpls_commune ← fiche_commune.py` (parc social, non déclarée depuis COMMUNE-RANGEMENT-1) est **enfin déclarée → dette G6 à 0, graphe exact dans les deux sens** (le test `test_graphe_exact_dans_les_deux_sens`, rouge sur main, repasse vert).
+- **Front** : ligne « Parc construit avant 1991 » dans la carte Population et logement (`ContextePanel.tsx`).
+- **Preuve fonctionnelle** (base réelle) : Saint-Denis (97411) → `population.parc_ancien_pct = 45.4` ; 97416 → 35,3 ; 97409 → 34,7. Tests `test_fiche_commune2_c1_cache.py` 3/3 ✓.
+
+## Captures écran
+Preuves fonctionnelles ci-dessus (payload servi, sorties de moteurs, tests DOM/vitest). Les captures pixel des écrans (panneau Couches, mode Piscines, fiche avec/sans DPE, Dossier, Scan patrimoine, carte Population) sont laissées à l'œil de Vic sur l'app live (ports :8095 / :5295) — même contrainte de capture WebGL/live que les sessions précédentes.
+
+## Portes de recette (gates)
+
+- **tsc -b** : vert.
+- **vitest** (composants touchés) : `ProspectionSolaire` + `ScanRetraits` 9/9 verts.
+- **pytest tests/ complet** : 3133 passés. Échecs = **pré-existants** (rouges à la base `373a8833`, vérifié en isolant les 8) : `test_chaque_passe_plat_declare_sa_table` (donnée `exposition_versant` hors périmètre, sans `table=` à la base), `test_traçage_des_classes_pose` (balise Trace `zone_plu_famille`), `test_retours11f4` (×2, découpe module / socio-éco). `test_verrous_lot1_passent_sur_la_base_reelle` PASSE en isolation (rouge seulement en suite complète = pollution d'ordre de la base réelle, pré-existant). **0 échec nouveau** : les 3 tests que mes ajouts auraient cassés (`test_documents_commites_a_jour`, `V5e`, `V5c`) sont corrigés et repassent verts.
+- **circuit verrous -w G8** : voir le rapport joint — V7a à **55 couches**, V5c / V5d / V5e / V5f verts.
