@@ -225,8 +225,11 @@ def etat_commune(commune: str) -> dict:
         d_servi = re.search(r"(\d{8})", idurba_servi)
         d_lu = re.search(r"(\d{8})", idurba_lu)
         if d_servi and d_lu and d_servi.group(1) <= d_lu.group(1):
-            note_catalogue = (f"catalogue millésimes en retard ({idurba_servi}) sur le document "
-                              f"GPU lu ({idurba_lu})")
+            # DASHBOARD-4 (D6) — l'étiquette dit la VÉRITÉ DU DOCUMENT LU, pas « catalogue en retard » :
+            # la calibration a été lue sur un document GPU plus récent que le millésime au catalogue,
+            # donc elle est À JOUR (c'est le catalogue qui n'a pas encore suivi — factuel, pas alarmant).
+            note_catalogue = (f"calibrée sur un document GPU plus récent ({idurba_lu}) que le millésime "
+                              f"au catalogue ({idurba_servi}) — calibration à jour")
         else:
             etat = "a_relire"
     return {"etat": etat, "insee": meta.get("insee") or insee,

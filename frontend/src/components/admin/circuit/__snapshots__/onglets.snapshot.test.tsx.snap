@@ -169,6 +169,30 @@ exports[`snapshots des onglets > Résumé 1`] = `
      à regarder
   </h1>
   <div
+    class="verrous-bloc"
+  >
+    <div
+      class="verrous-tete"
+    >
+      <h2>
+        Verrous & garanties
+      </h2>
+      <button
+        class="btn mint"
+      >
+        Rejouer les verrous
+      </button>
+    </div>
+    <div
+      class="sub"
+      style="margin-top: 4px;"
+    >
+      Aperçu des garanties ci-dessus — « Rejouer les verrous » joue aussi les 
+      22
+       verrous (30 lignes).
+    </div>
+  </div>
+  <div
     class="sub"
   >
     Tout le reste est branché sur le moteur, sert la dernière version et dit la même chose partout.

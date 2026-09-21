@@ -12,14 +12,16 @@ import { DestinationsDetail } from './Destinations'
 export function DonneesSection() {
   const [vue, setVue] = useState<'circuit' | 'destinations'>('circuit')
   if (vue === 'destinations') return <DestinationsDetail onBack={() => setVue('circuit')} />
+  // DASHBOARD-4 (D6) — « Destinations PLU » : entrée EN BAS du Circuit (détail du réservoir
+  // plu_destinations), pas en tête. La donnée destination coule dans le Circuit comme les autres.
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-[13px]">
+      <CircuitSection />
+      <div className="mt-1 border-t border-line pt-3 text-[13px]">
         <button onClick={() => setVue('destinations')} className="text-mint hover:underline">
-          Calibration des destinations — le détail du réservoir <span className="font-mono">plu_destinations</span> →
+          Destinations PLU — le détail du réservoir <span className="font-mono">plu_destinations</span> (calibrage par commune) →
         </button>
       </div>
-      <CircuitSection />
     </div>
   )
 }

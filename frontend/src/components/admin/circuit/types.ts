@@ -31,7 +31,19 @@ export type CircuitData = {
   aretes: { reservoir_vers_chiffre: [string, string][]; chiffre_vers_robinet: [string, string][] }
   fuites: any[]; eau_ancienne: any[]; dernier_controle: any | null
   journal: any[]; runs: any[]; residuel: any; compteurs: Record<string, number>
+  // DASHBOARD-4 D1 — les compteurs tels que les verrous les comptent (source unique).
+  compteurs_coherence?: { sources_vitrine: number | null; couches: number | null; donnees: number | null; verrous: number; garanties: number | null }
+  // DASHBOARD-4 D7 — plafond des agents (0 = aucun agent ne tourne) + crédit API (non exposé → lien).
+  agents?: { plafond_eur: number; actif: boolean; cle_env: string; credit_eur: number | null; credit_url: string }
+  garanties?: { id: string; phrase: string; verdict: string; preuve: string; details: string[] }[] | null
 }
+
+// DASHBOARD-4 D2 — une tâche « verrous » détachée : progression + résultat persistant (30 lignes).
+export type VerrouLigne = { id: string; phrase: string; verdict: string; preuve: string; details: string[]; avertissement?: boolean }
+export type VerrousTache = {
+  etat: 'en_cours' | 'termine' | 'echec'; fait?: number; total?: number; message?: string; maj?: string; par?: string
+  resultat?: { lignes: VerrouLigne[]; casses: string[]; bloquants: string[]; joues: number; verrous: number; garanties: number }
+} | null
 
 // La cible d'une ligne du résumé, portée vers l'onglet Circuit : ouvrir un détail (une seule cible)
 // ou déplier le circuit sur des ids (plusieurs).

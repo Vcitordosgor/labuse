@@ -9,7 +9,8 @@ vi.mock('../../lib/api', () => ({
   getAdminCircuit: () => new Promise(() => {}),       // reste en « chargement » (rendu déterministe)
   postAdminCircuitVerifier: vi.fn(),
   postAdminCircuitAgents: vi.fn(),
-  getAdminCircuitTaches: () => Promise.resolve({ verifier: null, agents: null }),
+  getAdminCircuitTaches: () => Promise.resolve({ verifier: null, agents: null, verrous: null }),
+  postAdminCircuitVerrous: vi.fn(),   // DASHBOARD-4 (D2)
   getAdminCircuitJournal: vi.fn(),
 }))
 
@@ -27,8 +28,9 @@ describe('CIRCUIT-P2 lot 1 — la page Données EST le Circuit', () => {
     // le conteneur du Circuit est présent (rien n'a remplacé le Circuit)
     expect(container.querySelector('.cxp')).toBeTruthy()
     const txt = container.textContent || ''
-    // DASHBOARD-2 Lot 7 — le lien vers le détail du réservoir plu_destinations
-    expect(txt).toContain('Calibration des destinations')
+    // DASHBOARD-2 Lot 7 · DASHBOARD-4 D6 — le lien vers le détail du réservoir plu_destinations
+    // (renommé « Destinations PLU », déplacé en bas du Circuit).
+    expect(txt).toContain('Destinations PLU')
     // plus d'enrobage legacy
     expect(txt).not.toContain('Mes données sont-elles à jour')
     expect(txt).not.toContain('Qui fait quoi')

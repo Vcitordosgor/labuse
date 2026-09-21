@@ -2262,10 +2262,41 @@ def admin_circuit(request: Request) -> dict:
             _doublons = _garanties_mod.detecter_doublons(_c3)
     except Exception:  # noqa: BLE001 — page jamais bloquée par les garanties
         _garanties, _catalogue, _doublons = None, None, None
+    # ── DASHBOARD-4 (D1) — les compteurs de la page = ceux des verrous, chacun LU de SA fonction
+    #    (jamais un compte propre au front) : 91 sources vitrine (V2a lit catalogue.vitrine), 55 couches
+    #    (V7a lit couches_tuyau.registre), 266 données (registre.donnees), 22 verrous, 8 garanties. ──
+    try:
+        from ..api import couches_tuyau as _tuyau
+        from ..registre.donnees import DONNEES as _DONNEES
+        _n_couches = len(_tuyau.registre())
+        _n_donnees = len(_DONNEES)
+    except Exception:  # noqa: BLE001 — la page ne casse jamais sur ce décompte
+        _n_couches = _n_donnees = None
+    compteurs_coherence = {
+        "sources_vitrine": (_catalogue or {}).get("vitrine") if _catalogue else None,
+        "couches": _n_couches,
+        "donnees": _n_donnees,
+        "verrous": len(_verrous_mod.VERROUS),
+        "garanties": len(_garanties) if _garanties is not None else None,
+    }
+    # ── DASHBOARD-4 (D7) — plafond des agents (LABUSE_AGENT_PLAFOND_EUR, défaut 0 = aucun agent ne
+    #    tourne) et crédit API. À 0, c'est DIT (jamais grisé sans raison). Le crédit Anthropic n'est
+    #    pas exposé par l'API du fournisseur : il se lit sur la console (lien), on l'annonce ainsi. ──
+    import os as _os
+    _plafond = float(_os.environ.get("LABUSE_AGENT_PLAFOND_EUR", "0") or 0)
+    agents_info = {
+        "plafond_eur": _plafond,
+        "actif": _plafond > 0,
+        "cle_env": "LABUSE_AGENT_PLAFOND_EUR",
+        "credit_eur": None,   # non exposé par l'API fournisseur — vérifiable sur la console
+        "credit_url": "https://console.anthropic.com/settings/billing",
+    }
     return {
         "run_servi": runs.current(), "candidat": _candidat, "manifeste": m,
         "verrous": _verrous,
         "garanties": _garanties, "catalogue": _catalogue, "doublons": _doublons,
+        # DASHBOARD-4 D1 (compteurs = verrous) · D7 (agents : plafond + crédit)
+        "compteurs_coherence": compteurs_coherence, "agents": agents_info,
         "reservoirs": reservoirs, "robinets": robinets, "chiffres": chiffres,
         "familles": familles, "categories": categories, "resume": resume,
         "aretes": aretes, "fuites": fuites, "eau_ancienne": eau,
@@ -2315,6 +2346,63 @@ def admin_circuit_verifier(request: Request) -> dict:
         return {"ok": True, "lance": False, "deja": True, "tache": circuit_taches.lire("verifier")}
     circuit_taches.demarrer("verifier", total=5, par=str(qui), message="Contrôle en cours…")
     threading.Thread(target=_executer_controle, args=(str(qui),), daemon=True).start()
+    return {"ok": True, "lance": True}
+
+
+# ── DASHBOARD-4 (D2) — les verrous JOUÉS à la demande depuis le Résumé (tâche détachée) ──
+def _executer_verrous(par: str) -> dict:
+    """Joue les 22 verrous PUIS les 8 garanties (MÊME séquence que `labuse circuit verrous` et que
+    deploy.sh), en écrivant la progression au fil (30 lignes), et persiste le résultat complet :
+    chaque ligne = {id, phrase, verdict, preuve, details}. Un verrou cassé (hors avertissement G8)
+    est une ligne « à corriger » du Résumé. Le résultat survit au changement d'onglet (fichier tâche)."""
+    from .. import circuit_garanties, circuit_journal, circuit_taches, circuit_verrous
+    from ..db import session_scope
+    AVERTISSEMENT = {"G8"}   # non bloquant (fraîcheur de veille), comme deploy.sh -w G8
+    try:
+        with session_scope() as s:
+            lignes: list[dict] = []
+            total = len(circuit_verrous.VERROUS) + 8
+            for v in circuit_verrous.VERROUS:
+                r = v.jouer(s)
+                lignes.append({"id": r.id, "phrase": r.phrase, "verdict": r.verdict,
+                               "preuve": r.preuve, "details": list(r.details or [])[:20]})
+                circuit_taches.avancer("verrous", fait=len(lignes), message=f"{r.id} — {len(lignes)} / {total}")
+            for r in circuit_garanties.jouer_garanties(s):
+                lignes.append({"id": r.id, "phrase": r.phrase, "verdict": r.verdict,
+                               "preuve": r.preuve, "details": list(r.details or [])[:20],
+                               "avertissement": r.id in AVERTISSEMENT})
+                circuit_taches.avancer("verrous", fait=len(lignes), message=f"{r.id} — {len(lignes)} / {total}")
+            casses = [x["id"] for x in lignes if x["verdict"] == "casse"]
+            bloquants = [i for i in casses if i not in AVERTISSEMENT]
+            resultat = {"lignes": lignes, "casses": casses, "bloquants": bloquants,
+                        "joues": len(lignes), "verrous": len(circuit_verrous.VERROUS), "garanties": 8}
+            circuit_journal.journaliser(s, "controle", "verrous", par, "echec" if bloquants else "ok",
+                                        {"joues": len(lignes), "casses": casses})
+            s.commit()
+        msg = ("Tout va bien — 30 verrous joués, aucun bloquant."
+               if not bloquants else f"À corriger : {', '.join(bloquants)} cassé(s).")
+        circuit_taches.terminer("verrous", message=msg, resultat=resultat)
+        return resultat
+    except Exception as exc:  # noqa: BLE001 — la tâche note son échec, jamais un crash muet
+        circuit_taches.echouer("verrous", message=f"Verrous interrompus ({type(exc).__name__}).")
+        raise
+
+
+@router.post("/admin/circuit/verrous")
+def admin_circuit_verrous(request: Request) -> dict:
+    """DASHBOARD-4 (D2) — le bouton « Rejouer les verrous » du Résumé : lance `labuse circuit verrous`
+    en TÂCHE détachée (progression suivie, résultat persistant lu via /admin/circuit/taches). Rend la
+    main tout de suite ; les 30 lignes (phrase + état + preuve) arrivent à la fin."""
+    import threading
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import circuit_taches, circuit_verrous
+    qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
+    if circuit_taches.en_cours("verrous"):
+        return {"ok": True, "lance": False, "deja": True, "tache": circuit_taches.lire("verrous")}
+    circuit_taches.demarrer("verrous", total=len(circuit_verrous.VERROUS) + 8, par=str(qui),
+                            message="Verrous en cours…")
+    threading.Thread(target=_executer_verrous, args=(str(qui),), daemon=True).start()
     return {"ok": True, "lance": True}
 
 

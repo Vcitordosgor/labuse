@@ -2232,6 +2232,8 @@ export const postAdminCircuitVerifier = () => j<any>('/admin/circuit/verifier', 
 // CIRCUIT-P2 (lot 3.2/3.3) — tâches longues : lancer les agents (ou un seul), suivre la progression.
 export const postAdminCircuitAgents = (sourceId?: number) =>
   j<any>(`/admin/circuit/agents${sourceId != null ? `?source_id=${sourceId}` : ''}`, { method: 'POST' })
+// DASHBOARD-4 (D2) — rejouer « labuse circuit verrous » à la demande depuis le Résumé (tâche détachée).
+export const postAdminCircuitVerrous = () => j<any>('/admin/circuit/verrous', { method: 'POST' })
 export const getAdminCircuitTaches = () => j<any>('/admin/circuit/taches')
 export const postAdminCircuitPurger = () => j<any>('/admin/circuit/purger-runs', { method: 'POST' })
 export const postAdminCircuitRevenir = () => j<any>('/admin/circuit/revenir', { method: 'POST' })

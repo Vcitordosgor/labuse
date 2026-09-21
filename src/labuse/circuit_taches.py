@@ -107,5 +107,7 @@ def reservoirs_en_route() -> set:
 
 
 def etats() -> dict:
-    """Les deux tâches de la page, pour l'endpoint /admin/circuit/taches (null si jamais lancée)."""
-    return {"verifier": lire("verifier"), "agents": lire("agents")}
+    """Les tâches de la page, pour l'endpoint /admin/circuit/taches (null si jamais lancée).
+    DASHBOARD-4 (D2) — + « verrous » : `labuse circuit verrous` joué à la demande depuis le Résumé,
+    dont le RÉSULTAT persiste (les 30 lignes) pour être relu après un changement d'onglet/rechargement."""
+    return {"verifier": lire("verifier"), "agents": lire("agents"), "verrous": lire("verrous")}
