@@ -22,15 +22,24 @@ def test_delai_negatif_est_invalide_exclu_du_calcul():
     assert _months(date(2017, 1, 1), date(2017, 7, 1)) >= 0
 
 
-def test_dossier_dit_l_incoherence_sans_reordonner():
-    """Le Dossier montre les DEUX dates telles que le producteur les donne (dépôt puis
-    autorisation, jamais échangées) et signale l'incohérence — pas de « modifié » (le flux
-    open data ne porte pas le n° de modificatif)."""
-    permis = [{"type": "PC", "date_depot": "2018-10-15", "date_autorisation": "2017-08-25"}]
+def test_dossier_ecart_plus_d_un_mois_dit_modificatif_ou_transfere():
+    """DONNEES-7 — au-delà d'1 mois d'écart (dépôt bien après l'autorisation), le Dossier montre les
+    deux dates telles quelles (jamais échangées) et qualifie : « souvent un permis modificatif ou
+    transféré ». Toujours pas de « modifié, dernier dépôt le… » (pas de n° de modificatif au flux)."""
+    permis = [{"type": "PC", "date_depot": "2018-10-15", "date_autorisation": "2017-08-25"}]  # ~14 mois
     out = _r_permis_liste(permis)
-    assert "déposé 2018-10-15, autorisé 2017-08-25" in out       # ordre des LABELS conservé
+    assert "déposé 2018-10-15, autorisé 2017-08-25" in out            # ordre des LABELS conservé
+    assert "Dépôt enregistré après l'autorisation — souvent un permis modificatif ou transféré" in out
+    assert "dates incohérentes chez le producteur" not in out
+
+
+def test_dossier_ecart_sous_un_mois_reste_incoherence():
+    """DONNEES-7 — sous 1 mois d'écart, on ne présume rien : « dates incohérentes chez le producteur »."""
+    permis = [{"type": "PC", "date_depot": "2017-08-25", "date_autorisation": "2017-08-10"}]  # 15 jours
+    out = _r_permis_liste(permis)
+    assert "déposé 2017-08-25, autorisé 2017-08-10" in out
     assert "dates incohérentes chez le producteur" in out
-    assert "modifié" not in out
+    assert "modificatif" not in out
 
 
 def test_dossier_permis_coherent_sans_mention():

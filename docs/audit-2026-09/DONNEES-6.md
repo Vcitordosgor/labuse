@@ -40,25 +40,29 @@ erreurs de saisie amont. **Aucune certitude par permis.**
 ## La correction (un commit)
 1. **Délai** : les inversés restent exclus de tout calcul (déjà le cas via `valide`) — verrouillé par
    `tests/test_permis_dates_incoherentes.py` (autorisation avant dépôt → `_months < 0` → jamais `>= 0`).
-2. **Affichage — on ne réordonne JAMAIS les dates.** Le flux n'ayant pas le n° de modificatif, on ne
-   peut pas écrire « modifié, dernier dépôt le… » : chaque permis inversé montre **les deux dates telles
-   que le producteur les donne** + la mention **« dates incohérentes chez le producteur »**. Trois
-   surfaces alignées :
+2. **Affichage — on ne réordonne JAMAIS les dates.** Chaque permis inversé montre **les deux dates
+   telles que le producteur les donne** + une mention **qualifiée par l'écart** (DONNEES-7) :
+   - écart **> 1 mois** → « **Dépôt enregistré après l'autorisation — souvent un permis modificatif ou
+     transféré** » (le cas dominant : 46 % > 1 an ; on le dit comme TENDANCE, faute du n° de modificatif
+     au flux — jamais « modifié, dernier dépôt le… » affirmé) ;
+   - écart **≤ 1 mois** → « **dates incohérentes chez le producteur** » (on ne présume rien).
+   Seuil et libellés partagés : `miroir.permis_incoherence_note` (Python) ↔ `lib/permis.ts` (React).
+   Trois surfaces alignées :
    - Dossier (`miroir.py:_r_permis_liste`) ;
    - fiche React « Sur cette parcelle » (`autour.tsx:HistoriqueSiteBlock`) ;
-   - outil Permis, fiche d'un permis (`ModulePanel.tsx`) — dates montrées telles quelles, mention + le
-     délai d'instruction reste non servi.
+   - outil Permis, fiche d'un permis (`ModulePanel.tsx`) — dates telles quelles + mention + délai
+     d'instruction non servi.
 
-## Preuve — Dossier AM0112 (4 PC, 2 inversés) · `DONNEES-6-preuve.txt`
+## Preuve — Dossier AM0112 (4 PC, 2 inversés > 1 mois) · `DONNEES-6-preuve.txt`
 ```
 Sur cette parcelle (permis) — 4 permis sur la parcelle (Sitadel) —
-  PC — déposé 2018-10-15, autorisé 2017-08-25 — dates incohérentes chez le producteur ;
-  PC — déposé 2017-12-28, autorisé 2017-03-09 — dates incohérentes chez le producteur ;
+  PC — déposé 2018-10-15, autorisé 2017-08-25 · Dépôt enregistré après l'autorisation — souvent un permis modificatif ou transféré ;
+  PC — déposé 2017-12-28, autorisé 2017-03-09 · Dépôt enregistré après l'autorisation — souvent un permis modificatif ou transféré ;
   PC — déposé 2016-01-01, autorisé 2016-07-01 ;      ← cohérent, pas de mention
   PC — déposé 2015-01-01, autorisé 2015-07-30
 ```
 Les dates ne sont jamais échangées (label « déposé » puis « autorisé », valeurs brutes) ; seuls les
-deux permis réellement inversés portent la mention.
+deux permis réellement inversés (écart > 1 mois) portent la mention modificatif/transféré.
 
 ## Portes de recette
 - **tsc -b** vert · **circuit verrous -w G8** vert · **pytest** 0 échec nouveau (voir commit).
