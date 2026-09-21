@@ -1,0 +1,222 @@
+[
+ {
+  "commune": "La Possession",
+  "zone": "UAm",
+  "champ": "retraits.voie",
+  "forme": "1 · alignement (recul 0)",
+  "valeur": "min_m=0 forme=alignement",
+  "article": "UA 6.2",
+  "page": 14,
+  "n_parcelles": 215
+ },
+ {
+  "commune": "Le Port",
+  "zone": "Ud",
+  "champ": "retraits.limites_separatives",
+  "forme": "1 · alignement (recul 0)",
+  "valeur": "min_m=0 forme=alignement",
+  "article": "Ud 5",
+  "page": 68,
+  "n_parcelles": 386
+ },
+ {
+  "commune": "Petite-Île",
+  "zone": "UZ",
+  "champ": "retraits.limites_separatives",
+  "forme": "1 · alignement (recul 0)",
+  "valeur": "min_m=0 forme=alignement",
+  "article": "UZ.7",
+  "page": 83,
+  "n_parcelles": 131
+ },
+ {
+  "commune": "Petite-Île",
+  "zone": "UZ",
+  "champ": "retraits.voie",
+  "forme": "1 · alignement (recul 0)",
+  "valeur": "min_m=0 forme=alignement",
+  "article": "UZ.6",
+  "page": 83,
+  "n_parcelles": 131
+ },
+ {
+  "commune": "Saint-Joseph",
+  "zone": "U1",
+  "champ": "retraits.voie",
+  "forme": "1 · alignement (recul 0)",
+  "valeur": "min_m=0 forme=alignement",
+  "article": "U1 6.2",
+  "page": 18,
+  "n_parcelles": 98
+ },
+ {
+  "commune": "Saint-Paul",
+  "zone": "U3a",
+  "champ": "retraits.voie",
+  "forme": "1 · alignement (recul 0)",
+  "valeur": "min_m=0 forme=alignement",
+  "article": "6.2",
+  "page": 110,
+  "n_parcelles": 400
+ },
+ {
+  "commune": "Saint-Paul",
+  "zone": "U4a",
+  "champ": "retraits.voie",
+  "forme": "1 · alignement (recul 0)",
+  "valeur": "min_m=0 forme=alignement",
+  "article": "6.2",
+  "page": 172,
+  "n_parcelles": 508
+ },
+ {
+  "commune": "Saint-Paul",
+  "zone": "U5a",
+  "champ": "retraits.voie",
+  "forme": "1 · alignement (recul 0)",
+  "valeur": "min_m=0 forme=alignement",
+  "article": "6.2",
+  "page": 218,
+  "n_parcelles": 234
+ },
+ {
+  "commune": "Saint-Paul",
+  "zone": "U6a",
+  "champ": "retraits.voie",
+  "forme": "1 · alignement (recul 0)",
+  "valeur": "min_m=0 forme=alignement",
+  "article": "6.2",
+  "page": 278,
+  "n_parcelles": 214
+ },
+ {
+  "commune": "Saint-Pierre",
+  "zone": "Uazp",
+  "champ": "retraits.voie",
+  "forme": "1 · alignement (recul 0)",
+  "valeur": "min_m=0 forme=alignement",
+  "article": "Ua3.1",
+  "page": 176,
+  "n_parcelles": 369
+ },
+ {
+  "commune": "Saint-Pierre",
+  "zone": "Uazpc",
+  "champ": "retraits.voie",
+  "forme": "1 · alignement (recul 0)",
+  "valeur": "min_m=0 forme=alignement",
+  "article": "Ua3.1",
+  "page": 176,
+  "n_parcelles": 10
+ },
+ {
+  "commune": "Saint-Pierre",
+  "zone": "Ucv",
+  "champ": "retraits.voie",
+  "forme": "1 · alignement (recul 0)",
+  "valeur": "min_m=0 forme=alignement",
+  "article": "Ucv3.1",
+  "page": 63,
+  "n_parcelles": 906
+ },
+ {
+  "commune": "Saint-Pierre",
+  "zone": "Up",
+  "champ": "retraits.voie",
+  "forme": "1 · alignement (recul 0)",
+  "valeur": "min_m=0 forme=alignement",
+  "article": "Up3.1",
+  "page": 146,
+  "n_parcelles": 1461
+ },
+ {
+  "commune": "Sainte-Marie",
+  "zone": "1AUb",
+  "champ": "retraits.voie",
+  "forme": "1 · alignement (recul 0)",
+  "valeur": "min_m=0 forme=alignement",
+  "article": "U4 4.2",
+  "page": 19,
+  "n_parcelles": 26
+ },
+ {
+  "commune": "Le Port",
+  "zone": "1AUa",
+  "champ": "pleine_terre.pct",
+  "forme": "2 · pleine terre composée",
+  "valeur": "30%x50% -> 15.0%",
+  "article": "Ua 11.1 (via renvoi 1AU 11.1)",
+  "page": 27,
+  "n_parcelles": 70
+ },
+ {
+  "commune": "Le Port",
+  "zone": "1AUc",
+  "champ": "pleine_terre.pct",
+  "forme": "2 · pleine terre composée",
+  "valeur": "20%x50% -> 10.0%",
+  "article": "Uc 11.1 (via renvoi 1AU 11.1)",
+  "page": 58,
+  "n_parcelles": 6
+ },
+ {
+  "commune": "Le Port",
+  "zone": "1AUm",
+  "champ": "pleine_terre.pct",
+  "forme": "2 · pleine terre composée",
+  "valeur": "20%x50% -> 10.0%",
+  "article": "1AUm 11.1",
+  "page": 150,
+  "n_parcelles": 13
+ },
+ {
+  "commune": "Le Port",
+  "zone": "1AUs",
+  "champ": "pleine_terre.pct",
+  "forme": "2 · pleine terre composée",
+  "valeur": "20%x50% -> 10.0%",
+  "article": "Us 11.1 (via renvoi 1AU 11.1)",
+  "page": 125,
+  "n_parcelles": 3
+ },
+ {
+  "commune": "Le Port",
+  "zone": "Ua",
+  "champ": "pleine_terre.pct",
+  "forme": "2 · pleine terre composée",
+  "valeur": "30%x50% -> 15.0%",
+  "article": "Ua 11.1",
+  "page": 27,
+  "n_parcelles": 1932
+ },
+ {
+  "commune": "Le Port",
+  "zone": "Uc",
+  "champ": "pleine_terre.pct",
+  "forme": "2 · pleine terre composée",
+  "valeur": "20%x50% -> 10.0%",
+  "article": "Uc 11.1",
+  "page": 58,
+  "n_parcelles": 5524
+ },
+ {
+  "commune": "Le Port",
+  "zone": "Uca",
+  "champ": "pleine_terre.pct",
+  "forme": "2 · pleine terre composée",
+  "valeur": "20%x50% -> 10.0%",
+  "article": "Uc 11.1",
+  "page": 58,
+  "n_parcelles": 117
+ },
+ {
+  "commune": "Le Port",
+  "zone": "Us",
+  "champ": "pleine_terre.pct",
+  "forme": "2 · pleine terre composée",
+  "valeur": "20%x50% -> 10.0%",
+  "article": "Us 11.1",
+  "page": 125,
+  "n_parcelles": 61
+ }
+]

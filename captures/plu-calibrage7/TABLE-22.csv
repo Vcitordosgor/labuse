@@ -1,0 +1,23 @@
+commune,zone,champ,forme,valeur,article,page,n_parcelles
+La Possession,UAm,retraits.voie,1 · alignement (recul 0),min_m=0 forme=alignement,UA 6.2,14,215
+Le Port,Ud,retraits.limites_separatives,1 · alignement (recul 0),min_m=0 forme=alignement,Ud 5,68,386
+Petite-Île,UZ,retraits.limites_separatives,1 · alignement (recul 0),min_m=0 forme=alignement,UZ.7,83,131
+Petite-Île,UZ,retraits.voie,1 · alignement (recul 0),min_m=0 forme=alignement,UZ.6,83,131
+Saint-Joseph,U1,retraits.voie,1 · alignement (recul 0),min_m=0 forme=alignement,U1 6.2,18,98
+Saint-Paul,U3a,retraits.voie,1 · alignement (recul 0),min_m=0 forme=alignement,6.2,110,400
+Saint-Paul,U4a,retraits.voie,1 · alignement (recul 0),min_m=0 forme=alignement,6.2,172,508
+Saint-Paul,U5a,retraits.voie,1 · alignement (recul 0),min_m=0 forme=alignement,6.2,218,234
+Saint-Paul,U6a,retraits.voie,1 · alignement (recul 0),min_m=0 forme=alignement,6.2,278,214
+Saint-Pierre,Uazp,retraits.voie,1 · alignement (recul 0),min_m=0 forme=alignement,Ua3.1,176,369
+Saint-Pierre,Uazpc,retraits.voie,1 · alignement (recul 0),min_m=0 forme=alignement,Ua3.1,176,10
+Saint-Pierre,Ucv,retraits.voie,1 · alignement (recul 0),min_m=0 forme=alignement,Ucv3.1,63,906
+Saint-Pierre,Up,retraits.voie,1 · alignement (recul 0),min_m=0 forme=alignement,Up3.1,146,1461
+Sainte-Marie,1AUb,retraits.voie,1 · alignement (recul 0),min_m=0 forme=alignement,U4 4.2,19,26
+Le Port,1AUa,pleine_terre.pct,2 · pleine terre composée,30%x50% -> 15.0%,Ua 11.1 (via renvoi 1AU 11.1),27,70
+Le Port,1AUc,pleine_terre.pct,2 · pleine terre composée,20%x50% -> 10.0%,Uc 11.1 (via renvoi 1AU 11.1),58,6
+Le Port,1AUm,pleine_terre.pct,2 · pleine terre composée,20%x50% -> 10.0%,1AUm 11.1,150,13
+Le Port,1AUs,pleine_terre.pct,2 · pleine terre composée,20%x50% -> 10.0%,Us 11.1 (via renvoi 1AU 11.1),125,3
+Le Port,Ua,pleine_terre.pct,2 · pleine terre composée,30%x50% -> 15.0%,Ua 11.1,27,1932
+Le Port,Uc,pleine_terre.pct,2 · pleine terre composée,20%x50% -> 10.0%,Uc 11.1,58,5524
+Le Port,Uca,pleine_terre.pct,2 · pleine terre composée,20%x50% -> 10.0%,Uc 11.1,58,117
+Le Port,Us,pleine_terre.pct,2 · pleine terre composée,20%x50% -> 10.0%,Us 11.1,125,61

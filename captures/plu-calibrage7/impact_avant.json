@@ -1,0 +1,33 @@
+{
+ "tag": "avant",
+ "n": 710,
+ "par_commune": {
+  "La Possession": {
+   "regle_plu_non_validee": 40
+  },
+  "Le Port": {
+   "regle_plu_non_validee": 262
+  },
+  "Petite-Île": {
+   "regle_plu_non_validee": 40
+  },
+  "Saint-Joseph": {
+   "regle_plu_non_validee": 40
+  },
+  "Saint-Paul": {
+   "regle_plu_non_validee": 160
+  },
+  "Saint-Pierre": {
+   "regle_plu_non_validee": 142
+  },
+  "Sainte-Marie": {
+   "regle_plu_non_validee": 26
+  }
+ },
+ "total": {
+  "regle_plu_non_validee": 710
+ },
+ "extrapolation": {
+  "regle_plu_non_validee": 12696
+ }
+}

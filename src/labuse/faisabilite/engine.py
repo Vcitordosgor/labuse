@@ -273,13 +273,20 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
 
     # reculs (avec hypothèse prudente si non calibrés) — EXPORTS-1 (3.4) : reculs NOMMÉS,
     # plus jamais le jargon interne « à_vérifier » dans un texte servi.
-    if _is_num(rules.recul_voirie_m):
+    # PLU-CALIBRAGE-7 forme 1 : « à l'alignement » (recul 0 EXPLICITE, sourcé) — prime sur le défaut.
+    if rules.recul_voirie_alignement:
+        recul_v, rv_src = 0.0, rules.sources.get("recul_voirie", "Art. 6")
+        hypotheses.append(f"Recul sur voie : implantation à l'alignement (recul 0 m, sourcé) — {rv_src}.")
+    elif _is_num(rules.recul_voirie_m):
         recul_v, rv_src = float(rules.recul_voirie_m), rules.sources.get("recul_voirie", "Art. 6")
     else:
         recul_v, rv_src = hyp.recul_voirie_defaut_m, "Art. 6 (non calibré → hypothèse prudente)"
         avert.append(f"Recul voirie non calibré pour la zone {rules.code} → "
                      f"hypothèse prudente {recul_v:g} m.")
-    if _is_num(rules.recul_limites_sep_m):
+    if rules.recul_limites_alignement:
+        recul_l, rl_src = 0.0, rules.sources.get("recul_limites", "Art. 7")
+        hypotheses.append(f"Recul limites séparatives : implantation en limite (recul 0 m, sourcé) — {rl_src}.")
+    elif _is_num(rules.recul_limites_sep_m):
         recul_l, rl_src = float(rules.recul_limites_sep_m), rules.sources.get("recul_limites", "Art. 7")
     else:
         recul_l, rl_src = hyp.recul_limites_defaut_m, "Art. 7 (non calibré → hypothèse prudente)"
@@ -345,8 +352,15 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         cap_pt = surface_m2 * (1 - pt / 100)
         if cap_pt < emprise:
             emprise = cap_pt
-        steps.append(Step("Contrainte pleine terre",
-                          f"emprise ≤ {surface_m2:.0f}×(1−{pt:g}%) = {cap_pt:.0f} m²",
+        # PLU-CALIBRAGE-7 forme 2 : pleine terre COMPOSÉE — l'étape montre les 2 chiffres sourcés.
+        if rules.pleine_terre_compose:
+            ev = rules.pleine_terre_compose["espaces_verts_pct"]
+            part = rules.pleine_terre_compose["part_pct"]
+            _formule = (f"espaces verts {ev:g} % dont {part:g} % de pleine terre = {pt:g} % ; "
+                        f"emprise ≤ {surface_m2:.0f}×(1−{pt:g}%) = {cap_pt:.0f} m²")
+        else:
+            _formule = f"emprise ≤ {surface_m2:.0f}×(1−{pt:g}%) = {cap_pt:.0f} m²"
+        steps.append(Step("Contrainte pleine terre", _formule,
                           f"~{emprise:.0f} m² retenu", rules.sources.get("pleine_terre", "Art. 13")))
     else:
         avert.append(f"% pleine terre non calibré pour la zone {rules.code} → non appliqué (Art. 13).")

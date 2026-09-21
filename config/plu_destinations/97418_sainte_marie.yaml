@@ -1689,13 +1689,13 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 3.0
-          article: U4.2
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          article: U4 4.2
+          page_pdf: 19
+          citation: En zones UA et UB, les constructions peuvent s’implanter soit à l’alignement soit avec
+            un recul.
+          statut: valide
+          min_m: 0
+          forme: alignement
         limites_separatives:
           min_m: 3
           article: Article U5 - Implantation par rapport aux limites séparatives (5.2)

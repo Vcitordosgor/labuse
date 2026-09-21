@@ -1,0 +1,134 @@
+[
+ {
+  "insee": "97405",
+  "zone": "UZ",
+  "champ": "retraits.limites_separatives",
+  "decision": "validee_alignement"
+ },
+ {
+  "insee": "97405",
+  "zone": "UZ",
+  "champ": "retraits.voie",
+  "decision": "validee_alignement"
+ },
+ {
+  "insee": "97407",
+  "zone": "Ud",
+  "champ": "retraits.limites_separatives",
+  "decision": "validee_alignement"
+ },
+ {
+  "insee": "97407",
+  "zone": "1AUa",
+  "champ": "pleine_terre.pct",
+  "decision": "validee_composee"
+ },
+ {
+  "insee": "97407",
+  "zone": "1AUc",
+  "champ": "pleine_terre.pct",
+  "decision": "validee_composee"
+ },
+ {
+  "insee": "97407",
+  "zone": "1AUm",
+  "champ": "pleine_terre.pct",
+  "decision": "validee_composee"
+ },
+ {
+  "insee": "97407",
+  "zone": "1AUs",
+  "champ": "pleine_terre.pct",
+  "decision": "validee_composee"
+ },
+ {
+  "insee": "97407",
+  "zone": "Ua",
+  "champ": "pleine_terre.pct",
+  "decision": "validee_composee"
+ },
+ {
+  "insee": "97407",
+  "zone": "Uc",
+  "champ": "pleine_terre.pct",
+  "decision": "validee_composee"
+ },
+ {
+  "insee": "97407",
+  "zone": "Uca",
+  "champ": "pleine_terre.pct",
+  "decision": "validee_composee"
+ },
+ {
+  "insee": "97407",
+  "zone": "Us",
+  "champ": "pleine_terre.pct",
+  "decision": "validee_composee"
+ },
+ {
+  "insee": "97408",
+  "zone": "UAm",
+  "champ": "retraits.voie",
+  "decision": "validee_alignement"
+ },
+ {
+  "insee": "97412",
+  "zone": "U1",
+  "champ": "retraits.voie",
+  "decision": "validee_alignement"
+ },
+ {
+  "insee": "97415",
+  "zone": "U3a",
+  "champ": "retraits.voie",
+  "decision": "validee_alignement"
+ },
+ {
+  "insee": "97415",
+  "zone": "U4a",
+  "champ": "retraits.voie",
+  "decision": "validee_alignement"
+ },
+ {
+  "insee": "97415",
+  "zone": "U5a",
+  "champ": "retraits.voie",
+  "decision": "validee_alignement"
+ },
+ {
+  "insee": "97415",
+  "zone": "U6a",
+  "champ": "retraits.voie",
+  "decision": "validee_alignement"
+ },
+ {
+  "insee": "97416",
+  "zone": "Uazp",
+  "champ": "retraits.voie",
+  "decision": "validee_alignement"
+ },
+ {
+  "insee": "97416",
+  "zone": "Uazpc",
+  "champ": "retraits.voie",
+  "decision": "validee_alignement"
+ },
+ {
+  "insee": "97416",
+  "zone": "Ucv",
+  "champ": "retraits.voie",
+  "decision": "validee_alignement"
+ },
+ {
+  "insee": "97416",
+  "zone": "Up",
+  "champ": "retraits.voie",
+  "decision": "validee_alignement"
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUb",
+  "champ": "retraits.voie",
+  "decision": "validee_alignement"
+ }
+]

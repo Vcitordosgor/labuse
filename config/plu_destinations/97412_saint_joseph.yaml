@@ -44,12 +44,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 0.0
           article: U1 6.2
           page_pdf: 18
           citation: Les constructions doivent être implantées à l’alignement de la voie ou de l’emprise publique.
-          statut: propose
-          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+          statut: valide
+          min_m: 0
+          forme: alignement
         limites_separatives:
           min_m: 3.0
           article: U1 7.2
