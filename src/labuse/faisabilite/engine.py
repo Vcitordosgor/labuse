@@ -234,6 +234,16 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                            steps, hypotheses, avert, modul, fourchette, _BANDEAU,
                            calibree=rules.calibree, cause=cause)
 
+    # PLU-CALIBRAGE-6 — GARDE : une règle SDP encore `propose` (non validée) rend la capacité NON
+    # CALCULABLE, jamais une valeur par défaut. On sort AVANT tout calcul (donc avant les reculs
+    # `hypothèse prudente`, la hauteur générique, etc.) : aucun chiffre non sourcé n'entre dans la SDP.
+    if rules.regle_non_validee:
+        return fini(False, f"Capacité non calculable — règle(s) PLU non validée(s) en zone "
+                    f"{rules.code} : {rules.regle_non_validee} (feuille « propose », sans citation "
+                    "retenue au règlement). Aucune valeur par défaut appliquée.",
+                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                    cause="regle_plu_non_validee")
+
     if rules.via_renvoi:
         steps.append(Step("Zone (renvoi AU→U)", rules.via_renvoi, rules.code, "Règlement, caractère de zone"))
 

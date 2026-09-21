@@ -1515,65 +1515,60 @@ zones:
     regles:
       hauteur:
         faitage:
-          m: 13.0
+          m: 13
           article: U3 10.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 13 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 51
+          citation: 'Dans le cas d’une construction principale implantée au-delà d’une profondeur de 12 mètres
+            comptés depuis la limite de l’alignement de la voie ou de l’emprise publique, la hauteur maximale
+            ne peut excéder : - 11 mètres à l’égout du toit ou au sommet de l’acrotère, - 13 mètres au faîtage.'
+          statut: valide
         egout:
-          m: 11.0
+          m: 11
           article: U3 10.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 11 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 51
+          citation: 'Dans le cas d’une construction principale implantée au-delà d’une profondeur de 12 mètres
+            comptés depuis la limite de l’alignement de la voie ou de l’emprise publique, la hauteur maximale
+            ne peut excéder : - 11 mètres à l’égout du toit ou au sommet de l’acrotère,'
+          statut: valide
       emprise_sol:
         ces:
-          pct: 70.0
+          pct: 70
           article: U3 9.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 70 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 50
+          citation: L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité
+            foncière.
+          statut: valide
       retraits:
         voie:
-          min_m: 3.0
+          min_m: 3
           article: U3 6.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 48
+          citation: la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la voie, doit être au minimum égale à 3 mètres.
+          statut: valide
         limites_separatives:
-          min_m: 5.5
+          min_m: 3
           article: U3 7.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 5.5 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 49
+          citation: la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée,
+            avec un minimum de 3 mètres.
+          statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 2
           article: U3 12.2
-          page_pdf: 108
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: attribution douteuse (citation sous secteur None)
+          page_pdf: 55
+          citation: 2 places de stationnement minimum par logement.
+          statut: valide
       pleine_terre:
         pct:
-          pct: 15.0
+          pct: 15
           article: U3 13.1
-          page_pdf: 108
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: attribution douteuse (citation sous secteur None)
+          page_pdf: 56
+          citation: Au minimum 15% de la superficie totale de l’unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations
+          statut: valide
     renvoi: U3
     renvoi_src: Chapeau ZONE AUindicée, p. 106 (« se reporter en fonction de l'indice […] au règlement des zones
       urbaines correspondantes ») ; art. AUindicée 1.2, p. 107 ; art. AUindicée 2.2, p. 107
@@ -1585,65 +1580,60 @@ zones:
     regles:
       hauteur:
         faitage:
-          m: 9.0
+          m: 9
           article: U3 10.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 9 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 51
+          citation: 'Dans le secteur U3a, quelle que soit la distance d’implantation de la construction par
+            rapport à l’alignement, la hauteur maximale ne peut excéder : - 8 mètres à l’égout du toit ou
+            au sommet de l’acrotère, - 9 mètres au faîtage.'
+          statut: valide
         egout:
-          m: 8.0
+          m: 8
           article: U3 10.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 8 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 51
+          citation: 'Dans le secteur U3a, quelle que soit la distance d’implantation de la construction par
+            rapport à l’alignement, la hauteur maximale ne peut excéder : - 8 mètres à l’égout du toit ou
+            au sommet de l’acrotère,'
+          statut: valide
       emprise_sol:
         ces:
-          pct: 70.0
+          pct: 70
           article: U3 9.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 70 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 50
+          citation: L'emprise au sol des constructions ne doit pas excéder 70% de la superficie de l'unité
+            foncière.
+          statut: valide
       retraits:
         voie:
-          min_m: 3.0
+          min_m: 3
           article: U3 6.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 48
+          citation: Dans le secteur U3a, les constructions doivent être implantées en retrait de la voie,
+            avec une distance comptée horizontalement de tout point de la façade au point le plus proche de
+            la voie, au moins égale à 3 mètres.
+          statut: valide
         limites_separatives:
-          min_m: 4.0
+          min_m: 3
           article: U3 7.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 49
+          citation: la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée,
+            avec un minimum de 3 mètres.
+          statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 2
           article: U3 12.2
-          page_pdf: 108
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: attribution douteuse (citation sous secteur None)
+          page_pdf: 55
+          citation: 2 places de stationnement minimum par logement.
+          statut: valide
       pleine_terre:
         pct:
-          pct: 25.0
+          pct: 25
           article: U3 13.1
-          page_pdf: 108
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: attribution douteuse (citation sous secteur None)
+          page_pdf: 56
+          citation: En secteur U3a, ce seuil est porté à 25% minimum.
+          statut: valide
     renvoi: U3a
     renvoi_src: Chapeau ZONE AUindicée, p. 106 ; art. AUindicée 1.2 et 2.2, p. 107 (« la zone U indiquée en indice
       ») — le secteur U3a est écrit au règlement (DG, p. 6)
@@ -1653,65 +1643,59 @@ zones:
     regles:
       hauteur:
         faitage:
-          m: 9.0
+          m: 9
           article: U5 10.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 9 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 80
+          citation: 'En zone U5 et dans le secteur U5ma, la hauteur maximale des constructions ne peut excéder
+            : - 7 mètres à l’égout du toit ou au sommet de l’acrotère, - 9 mètres au faîtage.'
+          statut: valide
         egout:
-          m: 7.0
+          m: 7
           article: U5 10.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 7 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 80
+          citation: 'En zone U5 et dans le secteur U5ma, la hauteur maximale des constructions ne peut excéder
+            : - 7 mètres à l’égout du toit ou au sommet de l’acrotère,'
+          statut: valide
       emprise_sol:
         ces:
-          pct: 50.0
+          pct: 50
           article: U5 9.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 50 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 80
+          citation: L'emprise au sol des constructions ne doit pas excéder 50% de la superficie de l'unité
+            foncière.
+          statut: valide
       retraits:
         voie:
-          min_m: 4.0
+          min_m: 4
           article: U5 6.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 77
+          citation: Les constructions doivent être implantées en retrait de la voie, avec une distance comptée
+            horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
+            à 4 mètres.
+          statut: valide
         limites_separatives:
-          min_m: 3.5
+          min_m: 3
           article: U5 7.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 78
+          citation: la distance comptée horizontalement de tout point de la façade au point le plus proche
+            de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée,
+            avec un minimum de 3 mètres.
+          statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 2
           article: U5 12.2
-          page_pdf: 108
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: attribution douteuse (citation sous secteur None)
+          page_pdf: 84
+          citation: 2 places de stationnement minimum par logement.
+          statut: valide
       pleine_terre:
         pct:
-          pct: 35.0
+          pct: 35
           article: U5 13.1
-          page_pdf: 108
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: attribution douteuse (citation sous secteur None)
+          page_pdf: 86
+          citation: Au minimum 35% de la superficie totale de l’unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations
+          statut: valide
     renvoi: U5
     renvoi_src: Chapeau ZONE AUindicée, p. 106 ; art. AUindicée 1.2 et 2.2, p. 107
     note: 'Renvoi conditionné (art. AUindicée 2.2, p. 107-108) ; densité minimale écrite « en zones AU5 et AU5ma
@@ -1720,65 +1704,55 @@ zones:
     regles:
       hauteur:
         faitage:
-          m: 8.0
+          m: 8
           article: U5 10.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 8 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 80
+          citation: 'Dans les secteurs U5ru et U5vi, la hauteur maximale des constructions ne peut excéder
+            : - 6 mètres à l’égout du toit ou au sommet de l’acrotère, - 8 mètres au faîtage.'
+          statut: valide
         egout:
-          m: 6.0
+          m: 6
           article: U5 10.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 80
+          citation: 'Dans les secteurs U5ru et U5vi, la hauteur maximale des constructions ne peut excéder
+            : - 6 mètres à l’égout du toit ou au sommet de l’acrotère,'
+          statut: valide
       emprise_sol:
         ces:
-          pct: 40.0
+          pct: 40
           article: U5 9.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 40 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 80
+          citation: dans les secteurs U5ma, U5ru et U5vi ce seuil est limité à 40%.
+          statut: valide
       retraits:
         voie:
-          min_m: 4.0
+          min_m: 4
           article: U5 6.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 77
+          citation: au point le plus proche de la voie, au moins égale à 4 mètres
+          statut: valide
         limites_separatives:
-          min_m: 3.0
+          min_m: 3
           article: U5 7.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 78
+          citation: doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un
+            minimum de 3 mètres
+          statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 2
           article: U5 12.2
-          page_pdf: 108
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: attribution douteuse (citation sous secteur None)
+          page_pdf: 84
+          citation: '- 2 places de stationnement minimum par logement.'
+          statut: valide
       pleine_terre:
         pct:
-          pct: 35.0
+          pct: 35
           article: U5 13.1
-          page_pdf: 108
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: attribution douteuse (citation sous secteur None)
+          page_pdf: 86
+          citation: Au minimum 35% de la superficie totale de l’unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations
+          statut: valide
     renvoi: U5ru
     renvoi_src: Chapeau ZONE AUindicée, p. 106 ; art. AUindicée 1.2 et 2.2, p. 107 — le secteur U5ru est écrit au
       règlement (DG, p. 6)
@@ -1788,65 +1762,61 @@ zones:
     regles:
       hauteur:
         faitage:
-          m: 8.0
+          m: 8
           article: U5 10.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 8 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 80
+          citation: 'Dans les secteurs U5ru et U5vi, la hauteur maximale des constructions ne peut excéder
+            :
+
+            - 6 mètres à l’égout du toit ou au sommet de l’acrotère,
+
+            - 8 mètres au faîtage.'
+          statut: valide
         egout:
-          m: 6.0
+          m: 6
           article: U5 10.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 80
+          citation: 'Dans les secteurs U5ru et U5vi, la hauteur maximale des constructions ne peut excéder
+            :
+
+            - 6 mètres à l’égout du toit ou au sommet de l’acrotère,'
+          statut: valide
       emprise_sol:
         ces:
-          pct: 40.0
+          pct: 40
           article: U5 9.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 40 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 80
+          citation: dans les secteurs U5ma, U5ru et U5vi ce seuil est limité à 40%
+          statut: valide
       retraits:
         voie:
-          min_m: 4.0
+          min_m: 4
           article: U5 6.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 77
+          citation: au point le plus proche de la voie, au moins égale à 4 mètres
+          statut: valide
         limites_separatives:
-          min_m: 3.0
+          min_m: 3
           article: U5 7.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 78
+          citation: doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un
+            minimum de 3 mètres
+          statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          places: 2
           article: U5 12.2
-          page_pdf: 108
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: attribution douteuse (citation sous secteur None)
+          page_pdf: 84
+          citation: '- 2 places de stationnement minimum par logement.'
+          statut: valide
       pleine_terre:
         pct:
-          pct: 35.0
+          pct: 35
           article: U5 13.1
-          page_pdf: 108
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: attribution douteuse (citation sous secteur None)
+          page_pdf: 86
+          citation: Au minimum 35% de la superficie totale de l’unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations
+          statut: valide
     renvoi: U5vi
     renvoi_src: Chapeau ZONE AUindicée, p. 106 ; art. AUindicée 1.2 et 2.2, p. 107 — le secteur U5vi est écrit au
       règlement (DG, p. 6)
@@ -1856,56 +1826,53 @@ zones:
     regles:
       hauteur:
         faitage:
-          m: 15.0
+          m: 15
           article: U6 10.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 15 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 95
+          citation: 'La hauteur maximale des constructions est fixée à :
+
+            - 12 mètres à l’égout du toit,
+
+            - 15 mètres au faîtage ou au sommet de l’acrotère.'
+          statut: valide
         egout:
-          m: 12.0
+          m: 12
           article: U6 10.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 12 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 95
+          citation: 'La hauteur maximale des constructions est fixée à :
+
+            - 12 mètres à l’égout du toit,'
+          statut: valide
       emprise_sol:
         ces:
-          pct: 50.0
+          pct: 50
           article: U6 9.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 50 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 95
+          citation: L'emprise au sol des constructions ne doit pas excéder 50% de la superficie de l'unité
+            foncière.
+          statut: valide
       retraits:
         voie:
-          min_m: 4.0
+          min_m: 4
           article: U6 6.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 92
+          citation: au point le plus proche de la voie, au moins égale à 4 mètres
+          statut: valide
         limites_separatives:
-          min_m: 6.0
+          min_m: 3
           article: U6 7.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 6 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 92
+          citation: doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un
+            minimum de 3 mètres
+          statut: valide
       pleine_terre:
         pct:
-          pct: 15.0
+          pct: 15
           article: U6 13.1
-          page_pdf: 108
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: attribution douteuse (citation sous secteur None)
+          page_pdf: 99
+          citation: Au minimum 15% de la superficie totale de l’unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations
+          statut: valide
     renvoi: U6
     renvoi_src: Chapeau ZONE AUindicée, p. 106 ; art. AUindicée 1.2 et 2.2, p. 107
     note: Renvoi conditionné (art. AUindicée 2.2, p. 107-108) ; aucune densité minimale n'est écrite pour l'indice
@@ -1914,56 +1881,53 @@ zones:
     regles:
       hauteur:
         faitage:
-          m: 18.0
+          m: 18
           article: U6 10.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 18 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 95
+          citation: 'Dans le secteur U6c, ces seuils sont portés à :
+
+            - 15 mètres à l’égout du toit,
+
+            - 18 mètres au faîtage ou au sommet de l’acrotère.'
+          statut: valide
         egout:
-          m: 15.0
+          m: 15
           article: U6 10.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 15 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 95
+          citation: 'Dans le secteur U6c, ces seuils sont portés à :
+
+            - 15 mètres à l’égout du toit,'
+          statut: valide
       emprise_sol:
         ces:
-          pct: 50.0
+          pct: 50
           article: U6 9.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 50 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 95
+          citation: L'emprise au sol des constructions ne doit pas excéder 50% de la superficie de l'unité
+            foncière.
+          statut: valide
       retraits:
         voie:
-          min_m: 4.0
+          min_m: 4
           article: U6 6.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 92
+          citation: au point le plus proche de la voie, au moins égale à 4 mètres
+          statut: valide
         limites_separatives:
-          min_m: 7.5
+          min_m: 3
           article: U6 7.2
-          page_pdf: 107
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: valeur 7.5 absente de la citation (harmonisation ≠ texte)
+          page_pdf: 92
+          citation: doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un
+            minimum de 3 mètres
+          statut: valide
       pleine_terre:
         pct:
-          pct: 15.0
+          pct: 15
           article: U6 13.1
-          page_pdf: 108
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement
-            et de programmation.
-          statut: propose
-          raison: attribution douteuse (citation sous secteur None)
+          page_pdf: 99
+          citation: Au minimum 15% de la superficie totale de l’unité foncière doit être traité en espace
+            vert et perméable comprenant des plantations
+          statut: valide
     renvoi: U6c
     renvoi_src: Chapeau ZONE AUindicée, p. 106 ; art. AUindicée 1.2 et 2.2, p. 107 — le secteur U6c est écrit au
       règlement (DG, p. 6)

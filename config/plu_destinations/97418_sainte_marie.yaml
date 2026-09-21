@@ -1669,30 +1669,24 @@ zones:
     regles:
       hauteur:
         faitage:
-          m: 15.0
-          article: Art. U8.2 « résidentielles »
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 15 absente de la citation (harmonisation ≠ texte)
+          m: 15
+          article: Article U8 - Hauteur des constructions (8.2)
+          page_pdf: 22
+          citation: 15,00 mètres au faîtage
+          statut: valide
         egout:
-          m: 12.0
-          article: Art. U8.2 « résidentielles »
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 12 absente de la citation (harmonisation ≠ texte)
+          m: 12
+          article: Article U8 - Hauteur des constructions (8.2)
+          page_pdf: 22
+          citation: 12,00 mètres à l’égout du toit
+          statut: valide
       emprise_sol:
         ces:
-          pct: 70.0
-          article: U7.2
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 70 absente de la citation (harmonisation ≠ texte)
+          pct: 70
+          article: Article U7 - Emprise au sol des constructions (7.2)
+          page_pdf: 21
+          citation: 'UB : 70 % de l’unité foncière'
+          statut: valide
       retraits:
         voie:
           min_m: 3.0
@@ -1703,31 +1697,26 @@ zones:
           statut: propose
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
         limites_separatives:
-          min_m: 3.0
-          article: U5.2
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          min_m: 3
+          article: Article U5 - Implantation par rapport aux limites séparatives (5.2)
+          page_pdf: 20
+          citation: au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir
+            être inférieure à 3 mètres
+          statut: valide
       stationnement:
         par_logement:
           places: 1.5
-          article: U13.2
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 1.5 absente de la citation (harmonisation ≠ texte)
+          article: Article U13 - Obligation de réalisation d’aires de stationnement (13.2)
+          page_pdf: 26
+          citation: 1,5 place minimum par logement
+          statut: valide
       pleine_terre:
         pct:
-          pct: 25.0
-          article: U12
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 25 absente de la citation (harmonisation ≠ texte)
+          pct: 25
+          article: Article U12 - Espaces libres et espaces perméables (12.1)
+          page_pdf: 25
+          citation: 'en zone UB : 25% de la surface'
+          statut: valide
     renvoi: UB
     renvoi_src: 'Art. AUindicée 1.2, p. 41 : « Se reporter au règlement de la zone U indiquée en indice » (indice
       b → zone UB) + chapeau p. 41'
@@ -1740,65 +1729,54 @@ zones:
     regles:
       hauteur:
         faitage:
-          m: 13.0
-          article: U8.2
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 13 absente de la citation (harmonisation ≠ texte)
+          m: 13
+          article: Article U8 - Hauteur des constructions (8.2)
+          page_pdf: 22
+          citation: 13,00 mètres au faîtage
+          statut: valide
         egout:
-          m: 10.0
-          article: U8.2
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 10 absente de la citation (harmonisation ≠ texte)
+          m: 10
+          article: Article U8 - Hauteur des constructions (8.2)
+          page_pdf: 22
+          citation: 10,00 mètres à l’égout du toit
+          statut: valide
       emprise_sol:
         ces:
-          pct: 60.0
-          article: U7.2
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 60 absente de la citation (harmonisation ≠ texte)
+          pct: 60
+          article: Article U7 - Emprise au sol des constructions (7.2)
+          page_pdf: 21
+          citation: 'UC (y compris UC1 et UC2) : 60 % de l’unité foncière'
+          statut: valide
       retraits:
         voie:
-          min_m: 3.0
-          article: U4.2
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          min_m: 3
+          article: Article U4 - Implantation par rapport aux voies et emprises publiques (4.2)
+          page_pdf: 19
+          citation: En zones UC (y compris UC1 et UC2) et UD (y compris UD1), les constructions doivent s’implanter
+            avec un recul. En cas de recul, les constructions doivent s’implanter avec un minimum de 3,00
+            mètres par rapport à l’alignement.
+          statut: valide
         limites_separatives:
-          min_m: 3.0
-          article: U5.2
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          min_m: 3
+          article: Article U5 - Implantation par rapport aux limites séparatives (5.2)
+          page_pdf: 20
+          citation: au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir
+            être inférieure à 3 mètres
+          statut: valide
       stationnement:
         par_logement:
           places: 1.5
-          article: U13.2
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 1.5 absente de la citation (harmonisation ≠ texte)
+          article: Article U13 - Obligation de réalisation d’aires de stationnement (13.2)
+          page_pdf: 26
+          citation: 1,5 place minimum par logement
+          statut: valide
       pleine_terre:
         pct:
-          pct: 30.0
-          article: U12
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 30 absente de la citation (harmonisation ≠ texte)
+          pct: 30
+          article: Article U12 - Espaces libres et espaces perméables (12.1)
+          page_pdf: 25
+          citation: 'en zones UC (y compris UC1 et UC2) et UD (y compris UD1) : 30% de la surface'
+          statut: valide
     renvoi: UC
     renvoi_src: 'Art. AUindicée 1.2, p. 41 : « Se reporter au règlement de la zone U indiquée en indice » (indice
       c → zone UC)'
@@ -1809,39 +1787,32 @@ zones:
     regles:
       hauteur:
         faitage:
-          m: 16.0
-          article: Art. U8.2 « activités »
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 16 absente de la citation (harmonisation ≠ texte)
+          m: 16
+          article: Article U8 « activités » - Hauteur des constructions (8.2)
+          page_pdf: 34
+          citation: 'Zones UEm et UEp : 16 m'
+          statut: valide
       emprise_sol:
         ces:
-          pct: 75.0
-          article: Art. U7.2 « activités »
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 75 absente de la citation (harmonisation ≠ texte)
+          pct: 75
+          article: Article U7 « activités » - Emprise au sol des constructions (7.2)
+          page_pdf: 34
+          citation: 'UEm et UEp : 75% de l’unité foncière'
+          statut: valide
       retraits:
         voie:
-          min_m: 3.0
-          article: Art. U4.2 « activités »
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          min_m: 3
+          article: Article U4 « activités » - Implantation par rapport aux voies et emprises publiques (4.2)
+          page_pdf: 32
+          citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
+          statut: valide
         limites_separatives:
-          min_m: 8.0
-          article: Art. U5.2 « activités »
-          page_pdf: 41
-          citation: Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice
-            de la zone AU considérée au règlement des zones urbaines correspondantes
-          statut: propose
-          raison: valeur 8 absente de la citation (harmonisation ≠ texte)
+          min_m: 4
+          article: Article U5 « activités » - Implantation par rapport aux limites séparatives (5.2)
+          page_pdf: 33
+          citation: au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir
+            être inférieure à 4 mètres
+          statut: valide
       pleine_terre:
         pct:
           pct: null

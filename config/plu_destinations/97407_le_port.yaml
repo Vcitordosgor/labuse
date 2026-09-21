@@ -1413,13 +1413,12 @@ zones:
           formule: sur limite, sinon retrait minimum 5 m
       pleine_terre:
         pct:
-          pct: 20.0
-          article: Ue 11.1
+          article: 1AU 11.1 (renvoi Ue 11.1)
           page_pdf: 145
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
-            et de Programmation lorsqu’elles existent.
-          statut: propose
-          raison: valeur 20 absente de la citation (harmonisation ≠ texte)
+          citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
+            devront être des surfaces non imperméabilisées ou éco-aménageables.
+          statut: valide
+          absent: true
     renvoi: Uem
     renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent. » — l''indice « em » désigne le secteur

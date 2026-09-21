@@ -1,0 +1,506 @@
+[
+ {
+  "insee": "97402",
+  "zone": "Uba",
+  "champ": "retraits.limites_separatives",
+  "decision": "corriger",
+  "valeur_retenue": 3
+ },
+ {
+  "insee": "97407",
+  "zone": "1AUem",
+  "champ": "pleine_terre.pct",
+  "decision": "absent",
+  "valeur_retenue": null
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU3",
+  "champ": "emprise_sol.ces",
+  "decision": "validee",
+  "valeur_retenue": 70
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU3",
+  "champ": "hauteur.egout",
+  "decision": "validee",
+  "valeur_retenue": 11
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU3",
+  "champ": "hauteur.faitage",
+  "decision": "validee",
+  "valeur_retenue": 13
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU3",
+  "champ": "pleine_terre.pct",
+  "decision": "validee",
+  "valeur_retenue": 15
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU3",
+  "champ": "retraits.limites_separatives",
+  "decision": "corriger",
+  "valeur_retenue": 3
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU3",
+  "champ": "retraits.voie",
+  "decision": "validee",
+  "valeur_retenue": 3
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU3",
+  "champ": "stationnement.par_logement",
+  "decision": "validee",
+  "valeur_retenue": 2
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU3a",
+  "champ": "emprise_sol.ces",
+  "decision": "validee",
+  "valeur_retenue": 70
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU3a",
+  "champ": "hauteur.egout",
+  "decision": "validee",
+  "valeur_retenue": 8
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU3a",
+  "champ": "hauteur.faitage",
+  "decision": "validee",
+  "valeur_retenue": 9
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU3a",
+  "champ": "pleine_terre.pct",
+  "decision": "validee",
+  "valeur_retenue": 25
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU3a",
+  "champ": "retraits.limites_separatives",
+  "decision": "corriger",
+  "valeur_retenue": 3
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU3a",
+  "champ": "retraits.voie",
+  "decision": "validee",
+  "valeur_retenue": 3
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU3a",
+  "champ": "stationnement.par_logement",
+  "decision": "validee",
+  "valeur_retenue": 2
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5",
+  "champ": "emprise_sol.ces",
+  "decision": "validee",
+  "valeur_retenue": 50
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5",
+  "champ": "hauteur.egout",
+  "decision": "validee",
+  "valeur_retenue": 7
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5",
+  "champ": "hauteur.faitage",
+  "decision": "validee",
+  "valeur_retenue": 9
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5",
+  "champ": "pleine_terre.pct",
+  "decision": "validee",
+  "valeur_retenue": 35
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5",
+  "champ": "retraits.limites_separatives",
+  "decision": "corriger",
+  "valeur_retenue": 3
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5",
+  "champ": "retraits.voie",
+  "decision": "validee",
+  "valeur_retenue": 4
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5",
+  "champ": "stationnement.par_logement",
+  "decision": "validee",
+  "valeur_retenue": 2
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5ru",
+  "champ": "emprise_sol.ces",
+  "decision": "validee",
+  "valeur_retenue": 40
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5ru",
+  "champ": "hauteur.egout",
+  "decision": "validee",
+  "valeur_retenue": 6
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5ru",
+  "champ": "hauteur.faitage",
+  "decision": "validee",
+  "valeur_retenue": 8
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5ru",
+  "champ": "pleine_terre.pct",
+  "decision": "validee",
+  "valeur_retenue": 35
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5ru",
+  "champ": "retraits.limites_separatives",
+  "decision": "validee",
+  "valeur_retenue": 3
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5ru",
+  "champ": "retraits.voie",
+  "decision": "validee",
+  "valeur_retenue": 4
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5ru",
+  "champ": "stationnement.par_logement",
+  "decision": "validee",
+  "valeur_retenue": 2
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5vi",
+  "champ": "emprise_sol.ces",
+  "decision": "validee",
+  "valeur_retenue": 40
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5vi",
+  "champ": "hauteur.egout",
+  "decision": "validee",
+  "valeur_retenue": 6
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5vi",
+  "champ": "hauteur.faitage",
+  "decision": "validee",
+  "valeur_retenue": 8
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5vi",
+  "champ": "pleine_terre.pct",
+  "decision": "validee",
+  "valeur_retenue": 35
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5vi",
+  "champ": "retraits.limites_separatives",
+  "decision": "validee",
+  "valeur_retenue": 3
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5vi",
+  "champ": "retraits.voie",
+  "decision": "validee",
+  "valeur_retenue": 4
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU5vi",
+  "champ": "stationnement.par_logement",
+  "decision": "validee",
+  "valeur_retenue": 2
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU6",
+  "champ": "emprise_sol.ces",
+  "decision": "validee",
+  "valeur_retenue": 50
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU6",
+  "champ": "hauteur.egout",
+  "decision": "validee",
+  "valeur_retenue": 12
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU6",
+  "champ": "hauteur.faitage",
+  "decision": "validee",
+  "valeur_retenue": 15
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU6",
+  "champ": "pleine_terre.pct",
+  "decision": "validee",
+  "valeur_retenue": 15
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU6",
+  "champ": "retraits.limites_separatives",
+  "decision": "corriger",
+  "valeur_retenue": 3
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU6",
+  "champ": "retraits.voie",
+  "decision": "validee",
+  "valeur_retenue": 4
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU6c",
+  "champ": "emprise_sol.ces",
+  "decision": "validee",
+  "valeur_retenue": 50
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU6c",
+  "champ": "hauteur.egout",
+  "decision": "validee",
+  "valeur_retenue": 15
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU6c",
+  "champ": "hauteur.faitage",
+  "decision": "validee",
+  "valeur_retenue": 18
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU6c",
+  "champ": "pleine_terre.pct",
+  "decision": "validee",
+  "valeur_retenue": 15
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU6c",
+  "champ": "retraits.limites_separatives",
+  "decision": "corriger",
+  "valeur_retenue": 3
+ },
+ {
+  "insee": "97412",
+  "zone": "1AU6c",
+  "champ": "retraits.voie",
+  "decision": "validee",
+  "valeur_retenue": 4
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUb",
+  "champ": "emprise_sol.ces",
+  "decision": "validee",
+  "valeur_retenue": 70
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUb",
+  "champ": "hauteur.egout",
+  "decision": "validee",
+  "valeur_retenue": 12
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUb",
+  "champ": "hauteur.faitage",
+  "decision": "validee",
+  "valeur_retenue": 15
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUb",
+  "champ": "pleine_terre.pct",
+  "decision": "validee",
+  "valeur_retenue": 25
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUb",
+  "champ": "retraits.limites_separatives",
+  "decision": "validee",
+  "valeur_retenue": 3
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUb",
+  "champ": "stationnement.par_logement",
+  "decision": "validee",
+  "valeur_retenue": 1.5
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUc",
+  "champ": "emprise_sol.ces",
+  "decision": "validee",
+  "valeur_retenue": 60
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUc",
+  "champ": "hauteur.egout",
+  "decision": "validee",
+  "valeur_retenue": 10
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUc",
+  "champ": "hauteur.faitage",
+  "decision": "validee",
+  "valeur_retenue": 13
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUc",
+  "champ": "pleine_terre.pct",
+  "decision": "validee",
+  "valeur_retenue": 30
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUc",
+  "champ": "retraits.limites_separatives",
+  "decision": "validee",
+  "valeur_retenue": 3
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUc",
+  "champ": "retraits.voie",
+  "decision": "validee",
+  "valeur_retenue": 3
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUc",
+  "champ": "stationnement.par_logement",
+  "decision": "validee",
+  "valeur_retenue": 1.5
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUep",
+  "champ": "emprise_sol.ces",
+  "decision": "validee",
+  "valeur_retenue": 75
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUep",
+  "champ": "hauteur.faitage",
+  "decision": "validee",
+  "valeur_retenue": 16
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUep",
+  "champ": "retraits.limites_separatives",
+  "decision": "corriger",
+  "valeur_retenue": 4
+ },
+ {
+  "insee": "97418",
+  "zone": "1AUep",
+  "champ": "retraits.voie",
+  "decision": "validee",
+  "valeur_retenue": 3
+ },
+ {
+  "insee": "97419",
+  "zone": "1AUa",
+  "champ": "stationnement.par_logement",
+  "decision": "corriger",
+  "valeur_retenue": 1.5
+ },
+ {
+  "insee": "97419",
+  "zone": "1AUc",
+  "champ": "stationnement.par_logement",
+  "decision": "corriger",
+  "valeur_retenue": 1.5
+ },
+ {
+  "insee": "97419",
+  "zone": "Ua",
+  "champ": "stationnement.par_logement",
+  "decision": "corriger",
+  "valeur_retenue": 1.5
+ },
+ {
+  "insee": "97419",
+  "zone": "Ub",
+  "champ": "stationnement.par_logement",
+  "decision": "corriger",
+  "valeur_retenue": 1.5
+ },
+ {
+  "insee": "97419",
+  "zone": "Uc",
+  "champ": "stationnement.par_logement",
+  "decision": "corriger",
+  "valeur_retenue": 1.5
+ },
+ {
+  "insee": "97419",
+  "zone": "Ud",
+  "champ": "stationnement.par_logement",
+  "decision": "corriger",
+  "valeur_retenue": 1.5
+ }
+]
