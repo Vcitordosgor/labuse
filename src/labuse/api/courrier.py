@@ -51,7 +51,9 @@ def courrier_statut(request: Request, db: Session = Depends(get_db)) -> dict:
         envoyes = courrier.envois_du_jour(db, sujet_de(request))
     except Exception:  # noqa: BLE001 — le plafond est informatif, jamais un 500
         envoyes = 0
-    return {"disponible": prov != "stub", "provider": prov, "tarif": courrier.tarif(),
+    # COURRIER-2 Lot 5 — AUCUN prix servi au client : le tarif est donné au rappel (modèle service).
+    # `tarif` retiré du payload (il fuitait le prix). Ne reste que l'état du service + le plafond.
+    return {"disponible": prov != "stub", "provider": prov,
             "raison": None if prov != "stub" else
             "L'envoi postal n'est pas encore disponible — la demande est enregistrée.",
             "plafond_jour": plafond, "envoyes_jour": envoyes, "reste_jour": max(0, plafond - envoyes)}
@@ -334,6 +336,47 @@ def courrier_admin_opposition_suppr(opp_id: int, request: Request,
     if not ok:
         raise HTTPException(404, "opposition introuvable")
     return {"ok": True}
+
+
+# ─────────────────── COURRIER-2 Lot 5 — PRIX (coût admin daté + prix saisi par Vic) ───────────────────
+class CoutIn(BaseModel):
+    cout_lettre_eur: float = Field(ge=0)
+
+
+@router.get("/admin/config")
+def courrier_admin_config(request: Request, db: Session = Depends(get_db)) -> dict:
+    from . import auth
+    auth.exiger_admin(request)
+    return courrier.config_courrier(db)
+
+
+@router.put("/admin/config")
+def courrier_admin_config_set(body: CoutIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Vic modifie le coût prestataire (paramètre daté). Ne calcule aucun prix client."""
+    from . import auth
+    info = auth.exiger_admin(request)
+    par = (info.get("email") or info.get("role") or "admin")[:60]
+    cfg = courrier.set_cout_lettre(db, body.cout_lettre_eur, par=par)
+    db.commit()
+    return {"ok": True, **cfg}
+
+
+class PrixIn(BaseModel):
+    prix_eur: float | None = None
+
+
+@router.post("/admin/demandes/{demande_id}/prix")
+def courrier_admin_prix(demande_id: int, body: PrixIn, request: Request,
+                        db: Session = Depends(get_db)) -> dict:
+    """Vic SAISIT le prix facturé d'une demande (facturation manuelle fin de mois) ; jamais calculé."""
+    from . import auth
+    auth.exiger_admin(request)
+    try:
+        r = courrier.set_prix_demande(db, demande_id, body.prix_eur)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+    db.commit()
+    return {"ok": True, **r}
 
 
 # ─────────────────── COURRIER-2 Lot 2 — ADRESSAGE (écran avant dépôt) ───────────────────

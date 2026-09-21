@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   getAdminCourrierDemandes, postAdminCourrierDeposerTout, postAdminCourrierStatut,
   getAdminOppositions, postAdminOpposition, deleteAdminOpposition,
+  getCourrierConfig, putCourrierConfig, postAdminCourrierPrix,
   urlCourrierPdf, ApiError, type AdminDemandeCourrier,
 } from '../../lib/api'
 import { ActBtn, Chip, Panel } from './AdminView'
@@ -91,6 +92,7 @@ export function CourrierSection() {
           {erreur}
         </div>
       )}
+      <CoutEditor />
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <Chip tone={statut === 'tous' ? 'ok' : 'off'} onClick={() => setStatut('tous')}>Tous {visibles.length}</Chip>
         {ORDRE.map((s) => (
@@ -117,8 +119,8 @@ export function CourrierSection() {
         <table className="w-full text-[13px]">
           <thead>
             <tr>
-              {['Client', 'Parcelle', 'Propriétaire', 'Demandé le', 'Piste CRM', 'Statut', 'Gestes'].map((h, i) => (
-                <th key={h} className={`border-b border-line px-4 py-2.5 font-mono text-[9.5px] font-medium uppercase tracking-[0.12em] text-txt-dim ${i === 6 ? 'text-right' : 'text-left'}`}>{h}</th>
+              {['Client', 'Parcelle', 'Propriétaire', 'Demandé le', 'Piste CRM', 'Statut', 'Prix (saisi)', 'Gestes'].map((h, i) => (
+                <th key={h} className={`border-b border-line px-4 py-2.5 font-mono text-[9.5px] font-medium uppercase tracking-[0.12em] text-txt-dim ${i >= 6 ? 'text-right' : 'text-left'}`}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -147,6 +149,7 @@ export function CourrierSection() {
                         ? <Chip tone="ok">{lib(s)} {fmtReu(d.updated_at, false)}</Chip>
                         : <Chip tone={s === 'demande' ? 'warn' : 'ok'}>{lib(s)}</Chip>}
                   </td>
+                  <td className="px-4 py-2.5 text-right"><PrixCell d={d} /></td>
                   <td className="px-4 py-2.5 text-right">
                     <span className="inline-flex items-center gap-1.5">
                       <ActBtn tone="ghost" onClick={() => voirPdf(d)}>aperçu</ActBtn>
@@ -168,7 +171,7 @@ export function CourrierSection() {
                 </tr>
               )
             })}
-            {!lignes.length && <tr><td colSpan={7} className="px-4 py-6 text-center text-xs text-txt-mut">Aucune demande pour ce filtre.</td></tr>}
+            {!lignes.length && <tr><td colSpan={8} className="px-4 py-6 text-center text-xs text-txt-mut">Aucune demande pour ce filtre.</td></tr>}
           </tbody>
         </table>
         <div className="border-t border-line bg-surface-1 px-4 py-2.5 text-xs text-txt-mut">
@@ -180,6 +183,51 @@ export function CourrierSection() {
 
       <OppositionPanel />
     </>
+  )
+}
+
+// COURRIER-2 Lot 5 — PRIX SAISI par Vic (facturation manuelle) ; jamais calculé. Édition inline.
+function PrixCell({ d }: { d: AdminDemandeCourrier }) {
+  const qc = useQueryClient()
+  const [val, setVal] = useState(d.prix_eur != null ? String(d.prix_eur) : '')
+  const m = useMutation({
+    mutationFn: (v: number | null) => postAdminCourrierPrix(d.id, v),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-courrier'] }),
+  })
+  const save = () => { const v = val.trim() === '' ? null : Number(val); if (v === null || !Number.isNaN(v)) m.mutate(v) }
+  return (
+    <span className="inline-flex items-center gap-1">
+      <input data-courrier-prix={d.id} value={val} onChange={(e) => setVal(e.target.value)}
+        onBlur={save} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+        inputMode="decimal" placeholder="—"
+        className="w-16 rounded border border-line bg-surface-1 px-1.5 py-0.5 text-right font-mono text-xs text-txt" />
+      <span className="text-txt-dim">€</span>
+    </span>
+  )
+}
+
+// COURRIER-2 Lot 5 — COÛT PRESTATAIRE : paramètre admin daté (jamais servi au client).
+function CoutEditor() {
+  const qc = useQueryClient()
+  const q = useQuery({ queryKey: ['courrier-config'], queryFn: getCourrierConfig })
+  const [val, setVal] = useState('')
+  const m = useMutation({
+    mutationFn: (v: number) => putCourrierConfig(v),
+    onSuccess: () => { setVal(''); qc.invalidateQueries({ queryKey: ['courrier-config'] }) },
+  })
+  const cfg = q.data
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-line bg-surface-1 px-4 py-2 text-[12px] text-txt-mut">
+      <span>Coût prestataire (lettre) :</span>
+      <b data-courrier-cout className="tnum text-txt">{cfg ? cfg.cout_lettre_eur.toFixed(2) : '…'} €</b>
+      {cfg?.maj_at && <span className="text-txt-dim">màj {fmtReu(cfg.maj_at, false)}{cfg.maj_par ? ` · ${cfg.maj_par}` : ''}</span>}
+      <span className="ml-2 flex items-center gap-1">
+        <input data-courrier-cout-input value={val} onChange={(e) => setVal(e.target.value)} inputMode="decimal"
+          placeholder="nouveau" className="w-20 rounded border border-line bg-surface-2 px-1.5 py-0.5 text-right font-mono text-xs text-txt" />
+        <ActBtn onClick={() => { const v = Number(val); if (val.trim() && !Number.isNaN(v)) m.mutate(v) }} disabled={m.isPending || !val.trim()}>Modifier</ActBtn>
+      </span>
+      <span className="text-txt-dim">— non affiché au client (tarif donné au rappel).</span>
+    </div>
   )
 }
 

@@ -103,6 +103,18 @@ DDL_STATEMENTS = (
     )""",
     "CREATE INDEX IF NOT EXISTS courrier_opposition_idu_idx ON courrier_opposition (idu)",
     "CREATE INDEX IF NOT EXISTS courrier_opposition_adr_idx ON courrier_opposition (adresse_norm)",
+    # COURRIER-2 Lot 5 — le COÛT PRESTATAIRE sort du code : paramètre ADMIN unique (1 ligne), modifiable
+    # et DATÉ (maj_at/maj_par). Lu par tarif() ; plus de constante gelée servie.
+    """CREATE TABLE IF NOT EXISTS courrier_config (
+        id boolean PRIMARY KEY DEFAULT true,
+        cout_lettre_eur numeric(6,2) NOT NULL,
+        maj_at timestamptz NOT NULL DEFAULT now(),
+        maj_par varchar(60),
+        CONSTRAINT courrier_config_unique CHECK (id)
+    )""",
+    # COURRIER-2 Lot 5 — le PRIX facturé au client est SAISI par Vic au dashboard (facturation manuelle
+    # de fin de mois), JAMAIS calculé. Nullable tant que Vic ne l'a pas posé.
+    "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS prix_eur numeric(6,2)",
 )
 
 # CONNEXIONS-2 Lot 4 (KO-6) — VOCABULAIRE DE STATUT UNIQUE de la boucle commerciale :
@@ -346,7 +358,7 @@ def demandes_admin(db, statut: str | None = None) -> list[dict]:
     ) if pm_ok else ", 0 AS n_pm"
     rows = db.execute(text(
         f"SELECT d.id, d.ts, d.compte_id, d.n, d.communes, d.modele, d.corps, d.statut,"
-        f"       d.updated_at, d.parcelles, d.pipeline_entry_id, d.projet_id, k.nom AS client,"
+        f"       d.updated_at, d.parcelles, d.pipeline_entry_id, d.projet_id, d.prix_eur, k.nom AS client,"
         f"       k.plan AS compte_plan{pm_sub}"
         f" FROM courrier_demandes d LEFT JOIN comptes k ON k.id = d.compte_id"
         f" {where} ORDER BY d.ts DESC LIMIT 300"),
@@ -486,10 +498,54 @@ def provider_actif() -> str:
     return "stub"
 
 
-def tarif() -> dict:
-    """Prix affiché au client = coût prestataire × marge (config, défaut × 1,5)."""
+def cout_lettre_eur(db) -> float:
+    """COURRIER-2 Lot 5 — coût prestataire courant : paramètre ADMIN daté (`courrier_config`), avec
+    repli sur le défaut de config au 1ᵉʳ appel (aucune ligne encore posée)."""
+    v = db.execute(text("SELECT cout_lettre_eur FROM courrier_config WHERE id")).scalar()
+    return float(v) if v is not None else float(get_settings().courrier_cout_lettre_eur)
+
+
+def config_courrier(db) -> dict:
+    """Paramètre coût + date de mise à jour, pour l'éditeur admin."""
+    r = db.execute(text("SELECT cout_lettre_eur, maj_at, maj_par FROM courrier_config WHERE id")).mappings().first()
+    if r:
+        return {"cout_lettre_eur": float(r["cout_lettre_eur"]), "maj_at": r["maj_at"], "maj_par": r["maj_par"],
+                "marge": float(get_settings().courrier_marge)}
+    return {"cout_lettre_eur": float(get_settings().courrier_cout_lettre_eur), "maj_at": None,
+            "maj_par": None, "marge": float(get_settings().courrier_marge)}
+
+
+def set_cout_lettre(db, valeur: float, *, par: str | None = None) -> dict:
+    """Vic modifie le coût prestataire (daté). Upsert sur la ligne unique."""
+    if valeur is None or float(valeur) < 0:
+        raise ValueError("Coût invalide.")
+    db.execute(text(
+        "INSERT INTO courrier_config (id, cout_lettre_eur, maj_at, maj_par) VALUES (true, :v, now(), :p) "
+        "ON CONFLICT (id) DO UPDATE SET cout_lettre_eur = EXCLUDED.cout_lettre_eur, "
+        "maj_at = now(), maj_par = EXCLUDED.maj_par"), {"v": round(float(valeur), 2), "p": par})
+    return config_courrier(db)
+
+
+def set_prix_demande(db, demande_id: int, prix: float | None) -> dict:
+    """COURRIER-2 Lot 5 — Vic SAISIT le prix facturé d'une demande (facturation manuelle) ; jamais
+    calculé. `None` efface. Retourne la ligne mise à jour."""
+    if prix is not None and float(prix) < 0:
+        raise ValueError("Prix invalide.")
+    r = db.execute(text(
+        "UPDATE courrier_demandes SET prix_eur = :p, updated_at = now() WHERE id = :id "
+        "RETURNING id, prix_eur"), {"p": (round(float(prix), 2) if prix is not None else None), "id": demande_id}
+    ).mappings().first()
+    if not r:
+        raise ValueError("demande introuvable")
+    return {"id": r["id"], "prix_eur": float(r["prix_eur"]) if r["prix_eur"] is not None else None}
+
+
+def tarif(db=None) -> dict:
+    """Coût prestataire × marge. COURRIER-2 Lot 5 : le coût vient du paramètre admin (DB) quand `db`
+    est fourni, sinon du défaut de config (chemin envoi stub hérité). Sert la mécanique d'envoi ;
+    n'est PLUS exposé au client (retiré de /courrier/statut)."""
     s = get_settings()
-    cout = float(s.courrier_cout_lettre_eur)
+    cout = cout_lettre_eur(db) if db is not None else float(s.courrier_cout_lettre_eur)
     return {"cout_prestataire_eur": round(cout, 2),
             "marge": float(s.courrier_marge),
             "prix_client_eur": round(cout * float(s.courrier_marge), 2),
@@ -542,7 +598,7 @@ def envoyer(db, sujet: str, destinataires: list[dict], *, modele: str | None,
         raise ValueError(f"Plafond d'envois atteint ({s.courrier_max_jour}/jour) : "
                          f"{deja} déjà envoyés aujourd'hui.")
     prov = provider_actif()
-    t = tarif()
+    t = tarif(db)
     crees = []
     for d in destinataires:
         if prov == "mercifacteur":

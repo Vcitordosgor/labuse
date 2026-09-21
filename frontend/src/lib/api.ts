@@ -1725,7 +1725,16 @@ export interface AdminDemandeCourrier {
   // DASHBOARD-2 (Lot 3) — propriétaire = nombre de personnes morales (jamais un particulier) ;
   // compte_plan = 'interne' pour les comptes de test/pilote (masqués par défaut).
   proprietaire?: string | null; compte_plan?: string | null
+  // COURRIER-2 Lot 5 — prix facturé SAISI par Vic (facturation manuelle), jamais calculé. Nullable.
+  prix_eur?: number | null
 }
+// COURRIER-2 Lot 5 — coût prestataire : paramètre admin daté + saisie du prix par demande.
+export interface CourrierConfig { cout_lettre_eur: number; marge: number; maj_at: string | null; maj_par: string | null }
+export const getCourrierConfig = () => j<CourrierConfig>('/courrier/admin/config')
+export const putCourrierConfig = (cout_lettre_eur: number) =>
+  j<{ ok: boolean } & CourrierConfig>('/courrier/admin/config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cout_lettre_eur }) })
+export const postAdminCourrierPrix = (id: number, prix_eur: number | null) =>
+  j<{ ok: boolean; prix_eur: number | null }>(`/courrier/admin/demandes/${id}/prix`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prix_eur }) })
 export const getAdminCourrierDemandes = () =>
   j<{ demandes: AdminDemandeCourrier[]; statuts: string[]; statut_libelles: Record<string, string> }>('/courrier/admin/demandes')
 export const postAdminCourrierStatut = (id: number, statut: string) =>

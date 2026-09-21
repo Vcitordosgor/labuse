@@ -27,8 +27,8 @@ def test_statut_stub_sans_compte(client):
     # M82 #fuite : la raison est SERVIE au client — jamais le prestataire ni les variables d'env.
     assert r["raison"] and "Merci Facteur" not in r["raison"] and "MERCIFACTEUR" not in r["raison"]
     assert "envoi postal" in r["raison"].lower()
-    # tarif = coût prestataire × marge (défauts : 2,69 × 1,5)
-    assert r["tarif"]["prix_client_eur"] == round(2.69 * 1.5, 2)
+    # COURRIER-2 Lot 5 — AUCUN prix servi au client : `tarif` retiré du payload /courrier/statut.
+    assert "tarif" not in r
 
 
 def test_envoi_exige_responsabilite(client):
@@ -374,3 +374,31 @@ def test_vocabulaire_statut_unique_pas_de_legacy_visible():
     assert courrier.normaliser_statut("tarif_confirme") == "demande"
     # 'demande' se dit « À déposer » (plus jamais « Demandé »)
     assert courrier.STATUT_LIBELLES["demande"] == "À déposer"
+
+
+# ─────────────────────── COURRIER-2 Lot 5 — PRIX (coût admin daté, prix saisi) ───────────────────────
+def test_prix_non_servi_cout_admin_et_prix_saisi(client, engine):
+    """Aucun prix avant dépôt (tarif retiré de /statut). Le coût prestataire est un PARAMÈTRE admin
+    daté ; le prix facturé est SAISI par Vic (jamais calculé)."""
+    from labuse import courrier
+    # /statut ne sert plus le tarif
+    assert "tarif" not in client.get("/courrier/statut").json()
+    # coût admin : lecture (repli défaut) puis modification datée
+    cfg = client.get("/courrier/admin/config").json()
+    assert "cout_lettre_eur" in cfg
+    up = client.put("/courrier/admin/config", json={"cout_lettre_eur": 3.10}).json()
+    assert up["ok"] and up["cout_lettre_eur"] == 3.10 and up["maj_at"]
+    with engine.begin() as db:
+        assert abs(courrier.cout_lettre_eur(db) - 3.10) < 1e-6
+    # prix saisi sur une demande (facturation manuelle) — jamais calculé
+    with engine.begin() as db:
+        cid = db.execute(text("INSERT INTO comptes (nom, plan, statut) VALUES ('PrixC','integral','actif') RETURNING id")).scalar()
+        d = courrier.creer_demande(db, compte_id=cid, parcelles=["97411000BZ1065"], communes="SD",
+                                   modele="B", corps="prix-test")
+    r = client.post(f"/courrier/admin/demandes/{d['id']}/prix", json={"prix_eur": 12.50}).json()
+    assert r["ok"] and r["prix_eur"] == 12.50
+    # visible au dashboard admin (liste)
+    ligne = next(x for x in client.get("/courrier/admin/demandes").json()["demandes"] if x["id"] == d["id"])
+    assert float(ligne["prix_eur"]) == 12.50
+    with engine.begin() as db:
+        db.execute(text("DELETE FROM courrier_demandes WHERE id=:i"), {"i": d["id"]})
