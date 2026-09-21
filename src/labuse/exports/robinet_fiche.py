@@ -226,14 +226,18 @@ def _c_cosia(db, idu, f):
 
 @extracteur("part_artificialisee_pct")
 def _c_artif(db, idu, f):
+    # DONNEES-3 — clés RÉELLES du bloc le_bien.ocsge (bati.py) : `part_artif_pct` (et non
+    # `artif_pct`, qui renvoyait toujours None → la ligne OCS GE tombait « hors couverture » au
+    # Dossier alors que la fiche React, elle, lit la bonne clé et l'affiche).
     o = (f.get("le_bien") or {}).get("ocsge") or {}
-    return _nz(o.get("artif_pct") if isinstance(o, dict) else None)
+    return _nz(o.get("part_artif_pct") if isinstance(o, dict) else None)
 
 
 @extracteur("usage_sol_dominant")
 def _c_usage_sol(db, idu, f):
+    # DONNEES-3 — clé RÉELLE `us_dominant` (et non `usage_libelle`/`usage`, absentes du payload).
     o = (f.get("le_bien") or {}).get("ocsge") or {}
-    return _nz((o.get("usage_libelle") or o.get("usage")) if isinstance(o, dict) else None)
+    return _nz(o.get("us_dominant") if isinstance(o, dict) else None)
 
 
 # DONNEES-2 — les 3 parts CoSIA de couverture du sol (§2 Terrain, miroir Dossier), lues du bloc

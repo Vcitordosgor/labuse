@@ -1,0 +1,14 @@
+   2. Terrain
+  4 164 m² de sol libre.
+Ce qu'il reste à bâtir
+Surface au sol libre                              4 164 m²                                    sourcé
+Couverture du sol
+Part artificialisée (OCS GE)                      12,6 %                                      sourcé
+Usage du sol dominant (OCS GE)                    US6.3                                       sourcé
+Part imperméabilisée (CoSIA)                      8,2 %                                       sourcé
+Part végétalisée/boisée (CoSIA)                   89,6 %                                      sourcé
+Part sol nu (CoSIA)                               0,0 %                                       sourcé
+                                                                                                 2/5
+  VÉRIFIÉ, SANS OBJET
+     • Piscine détectée : aucune piscine repérée sur la parcelle.
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Cadastre (API Carto PCI) · ocsge

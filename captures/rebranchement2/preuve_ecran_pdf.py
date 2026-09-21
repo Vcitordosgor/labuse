@@ -53,6 +53,13 @@ for sec in miroir.structure():
                 n_abs += 1
                 lignes_out.append((sec["titre"], l.quoi, "TUILE ABSENTE (l'en-tête n'imprime pas d'absence)"))
                 continue
+            # DONNEES-1 lot 2.2 — une ligne `masquer_si_absent` (ex. DPE) DISPARAÎT quand la donnée
+            # est absente : le Dossier n'imprime NI valeur NI phrase d'absence. C'est la déclaration
+            # tenue, jamais un écart. (Écran = fiche React : la même ligne y disparaît aussi.)
+            if getattr(l, "masquer_si_absent", False):
+                n_abs += 1
+                lignes_out.append((sec["titre"], l.quoi, "MASQUÉE (absente, masquée par déclaration — écran et PDF)"))
+                continue
             # absente : la phrase déclarée doit être imprimée
             if etat_pdf and any(_norm(l.absence)[:40] in t for t in etat_pdf):
                 n_abs += 1
