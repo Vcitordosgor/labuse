@@ -78,15 +78,20 @@ def _cause_indisponible(session: Session, parcel_id: int, f=None) -> tuple[str, 
 
 
 def compute_residuel(session: Session, parcel_id: int,
-                     faisa: tuple | None = None) -> dict:
+                     faisa: tuple | None = None,
+                     assiette_clippee: bool = False) -> dict:
     """Bloc « potentiel résiduel » d'une parcelle. `faisa` = (ctx, Faisabilite) déjà calculé
     (réutilisé par la fiche pour ne pas relancer le moteur). `disponible=False` quand la
     parcelle n'est pas constructible ou que le bâti n'est pas mesurable — M125 : chaque
-    indisponible porte alors sa CAUSE structurée + la SDP à écrire (0 vrai / NULL inconnu)."""
+    indisponible porte alors sa CAUSE structurée + la SDP à écrire (0 vrai / NULL inconnu).
+
+    SCORING-6 lot A — `assiette_clippee=True` : la capacité est calculée sur l'assiette clippée
+    (portion U/AU moins contraintes géométriques certaines) au lieu du tout-ou-rien. OPT-IN :
+    inutile pour le servi, requis pour le run résiduel q_v15 (geste de Vic)."""
     if not bati_mod.layer_available(session):
         return {"disponible": False, "raison": "Couche bâtiments (BD TOPO) non ingérée.",
                 "cause": "bati_non_ingere", "sdp_ecrite": None}
-    res = faisa or parcel_faisabilite(session, parcel_id)
+    res = faisa or parcel_faisabilite(session, parcel_id, assiette_clippee=assiette_clippee)
     if res is None:
         cause, sdp = _cause_indisponible(session, parcel_id)
         return {"disponible": False, "raison": "Zone hors PLU outillé — capacité non calculable.",
@@ -163,7 +168,7 @@ _UPSERT = text(
 
 
 def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int,
-                           log=None) -> dict:
+                           log=None, assiette_clippee: bool = False) -> dict:
     """Calcule et CACHE le résiduel dans le RUN `run_seq` (parcel_residuel_runs) pour alimenter
     le filtre carte ET le dataset M127.
 
@@ -184,7 +189,7 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int
     res = {"calcules": 0, "causes": {}, "erreurs": 0, "erreurs_detail": []}
     for pid in parcel_ids:
         try:
-            r = compute_residuel(session, pid)
+            r = compute_residuel(session, pid, assiette_clippee=assiette_clippee)
         except Exception as exc:  # noqa: BLE001 - une parcelle ne casse pas le lot, mais SE DIT
             res["erreurs"] += 1
             if len(res["erreurs_detail"]) < 20:

@@ -1927,6 +1927,10 @@ def compute_residuel_cmd(
     chunk: int = typer.Option(500, help="Taille des lots (commit par lot)."),
     new_run: str = typer.Option(None, "--new-run", help="Crée un run NEUF (libellé) et y écrit."),
     into_run: int = typer.Option(None, "--into-run", help="Écrit dans un run existant NON servi."),
+    assiette_clippee: bool = typer.Option(
+        False, "--assiette-clippee",
+        help="SCORING-6 lot A : capacité sur assiette clippée (portion U/AU − contraintes "
+             "certaines) au lieu du tout-ou-rien. Requis pour le run q_v15."),
 ) -> None:
     """Calcule et cache le POTENTIEL RÉSIDUEL (Lot B) dans un RUN désigné — M135. Écrit dans
     --new-run <label> OU --into-run <seq> ; JAMAIS le run servi (garde-fou : erreur)."""
@@ -1965,7 +1969,8 @@ def compute_residuel_cmd(
     erreurs = 0
     for k in range(0, len(ids), chunk):
         with session_scope() as s:
-            r = compute_residuel_batch(s, ids[k:k + chunk], run_seq, log=typer.echo)
+            r = compute_residuel_batch(s, ids[k:k + chunk], run_seq, log=typer.echo,
+                                       assiette_clippee=assiette_clippee)
         total += r["calcules"]
         erreurs += r["erreurs"]
         for cz, n in r["causes"].items():

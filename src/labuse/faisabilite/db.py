@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session
 from .. import config
 from .engine import Contraintes, Faisabilite, estimate_capacity
 from .zonage import resolve_zone
+from .zone_servie import FAMILLES_CONSTRUCTIBLES
 
 _CTX = text("""
 SELECT p.idu, p.commune,
@@ -201,7 +202,87 @@ def _prospect_hauteur(largeur_m: float | None) -> float:
     return max(float(largeur_m or 0.0), 10.0)
 
 
-def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext, Faisabilite] | None:
+# SCORING-6 lot A — assiette clippée. Union des CONTRAINTES GÉOMÉTRIQUES CERTAINES (au-delà des
+# ER/EBC déjà soustraits par `_EMPRISE`) grevant la portion U/AU insetée : PPR zone rouge
+# (INTERDICTION), PEB A/B (L112-10 interdit l'habitat neuf), marchepied DPF (3,25 m), abord de
+# ravine (buffer), 50 pas géométriques. Les seuils viennent de la MÊME source que la cascade
+# (cascade_rules.yaml) — jamais un nombre en double. La greve est intersectée avec la portion
+# U/AU (assiette réelle) pour ne jamais soustraire hors de l'emprise constructible.
+_GREVE_CERTAINE = text("""
+WITH p AS (SELECT commune, ST_Buffer(geom_2975, -:d) AS b FROM parcels WHERE id = :pid),
+uau AS (SELECT ST_Union(ST_MakeValid(z.geom_2975)) AS u
+        FROM spatial_layers z, p
+        WHERE z.kind = :zkind AND z.commune = p.commune
+          AND z.name ILIKE ANY(:uau_pats) AND ST_Intersects(z.geom_2975, p.b)),
+assiette AS (SELECT CASE WHEN uau.u IS NULL THEN p.b
+                         ELSE ST_Intersection(p.b, uau.u) END AS a
+             FROM p LEFT JOIN uau ON TRUE),
+greves AS (
+    SELECT ST_MakeValid(g.geom_2975) AS geom FROM spatial_layers g, p
+      WHERE g.kind = 'ppr' AND g.commune = p.commune
+        AND g.subtype = ANY(:ppr_red) AND ST_Intersects(g.geom_2975, p.b)
+  UNION ALL
+    SELECT ST_MakeValid(g.geom_2975) FROM spatial_layers g, p
+      WHERE g.kind = 'peb' AND lower(g.subtype) = ANY(:peb_ab)
+        AND ST_Intersects(g.geom_2975, p.b)
+  UNION ALL
+    SELECT ST_Buffer(ST_MakeValid(g.geom_2975), :dpf_m) FROM spatial_layers g, p
+      WHERE g.kind = 'dpf' AND g.commune = p.commune AND ST_DWithin(g.geom_2975, p.b, :dpf_m)
+  UNION ALL
+    SELECT ST_Buffer(ST_MakeValid(g.geom_2975), :rav_m) FROM spatial_layers g, p
+      WHERE g.kind = 'ravine' AND g.commune = p.commune AND ST_DWithin(g.geom_2975, p.b, :rav_m)
+  UNION ALL
+    SELECT ST_MakeValid(g.geom_2975) FROM spatial_layers g, p
+      WHERE g.kind = 'cinquante_pas' AND g.commune = p.commune AND ST_Intersects(g.geom_2975, p.b)
+)
+SELECT COALESCE(ST_Area(ST_Intersection(a.a, gg.u)), 0.0) AS greve_m2
+FROM assiette a LEFT JOIN (SELECT ST_Union(geom) AS u FROM greves) gg ON TRUE
+""")
+
+
+def _greve_certaine_m2(session: Session, parcel_id: int, recul: float, commune: str | None) -> float:
+    """Surface (m²) des contraintes géométriques certaines grevant la portion U/AU insetée
+    (SCORING-6 lot A). Seuils lus de cascade_rules.yaml (source unique)."""
+    zonage = _layer_params("zonage_plu_gpu")
+    risq = _layer_params("risques")
+    dpfp = _layer_params("dpf")
+    ravp = _layer_params("ravine")
+    pebp = _layer_params("peb")
+    row = session.execute(_GREVE_CERTAINE, {
+        "pid": parcel_id, "d": recul,
+        "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
+        "uau_pats": [f"{p}%" for p in zonage.get("positive_prefixes", ["U", "AU"])],
+        "ppr_red": [str(s) for s in risq.get("ppr_red_subtypes", ["INTERDICTION"])],
+        "peb_ab": [str(z).lower() for z in pebp.get("hard_zones", ["a", "b"])],
+        "dpf_m": float(dpfp.get("marchepied_m", 3.25)),
+        "rav_m": float(ravp.get("buffer_m", 10)),
+    }).scalar()
+    return float(row or 0.0)
+
+
+def _sous_zone_constructible(ctx: ParcelContext):
+    """SCORING-6 lot A — assiette clippée : quand la zone DOMINANTE n'est pas constructible
+    (A/N, habitat interdit) mais qu'une portion U/AU subsiste, résout les règles de la plus
+    grande sous-zone U/AU. Renvoie les ZoneRules de cette portion (capacité calculée sur la
+    portion, au lieu du tout-ou-rien) ou None si aucune portion constructible ne se résout."""
+    parts = [p for p in (ctx.zone_parts or []) if p.get("fam") in FAMILLES_CONSTRUCTIBLES]
+    for p in sorted(parts, key=lambda x: -float(x.get("pct") or 0)):
+        r = resolve_zone(p.get("zone"), ctx.commune)
+        if r is not None and r.constructible_neuf and r.habitat != "interdit":
+            return r
+    return None
+
+
+def _pct_constructible(ctx: ParcelContext) -> float | None:
+    """Part U/AU (%) de la surface — None si la parcelle n'est pas à cheval (une seule zone)."""
+    if not ctx.zone_parts:
+        return None
+    return sum(float(p.get("pct") or 0) for p in ctx.zone_parts
+               if p.get("fam") in FAMILLES_CONSTRUCTIBLES)
+
+
+def parcel_faisabilite(session: Session, parcel_id: int,
+                       assiette_clippee: bool = False) -> tuple[ParcelContext, Faisabilite] | None:
     """Contexte + pré-faisabilité d'une parcelle, EMPRISE SUR GÉOMÉTRIE RÉELLE
     (ST_Buffer du contour cadastral par le recul séparatif, EPSG:2975), clippée à la
     portion U/AU si zonage mixte (Décision 1) et amputée des emplacements réservés
@@ -212,6 +293,17 @@ def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext,
     if ctx is None or not ctx.zone:
         return None
     rules = resolve_zone(ctx.zone, ctx.commune)
+    # SCORING-6 lot A — assiette clippée : si la zone DOMINANTE n'est pas constructible mais
+    # qu'une portion U/AU subsiste, on résout la sous-zone U/AU et on calcule la capacité sur
+    # cette portion (fini le tout-ou-rien). Chemin OPT-IN — servi inchangé quand désactivé.
+    if assiette_clippee and (rules is None or not rules.constructible_neuf
+                             or rules.habitat == "interdit"):
+        alt = _sous_zone_constructible(ctx)
+        if alt is not None:
+            rules = alt
+            ctx.contraintes.libelles.append(
+                f"Zone dominante « {ctx.zone} » non constructible — capacité calculée sur la "
+                f"portion U/AU (sous-zone « {alt.code} »), assiette clippée.")
     if rules is None:
         return None
     # PROSPECT (Ud/Uu) : hauteur PAR PARCELLE = L≥H, L = max(largeur voie desservante, 10 m).
@@ -270,6 +362,21 @@ def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext,
             "(Art. L113-1 CU, aucune construction sur l'emprise boisée).")
     emprise = max(0.0, base - greve_a)
 
+    # SCORING-6 lot A — assiette clippée : soustraire les contraintes géométriques certaines
+    # (PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) et ramener la surface au sol servant
+    # aux plafonds CES/pleine terre à la seule portion U/AU. OPT-IN — servi inchangé sinon.
+    surface_assiette = ctx.surface_m2
+    if assiette_clippee:
+        greve_cert = _greve_certaine_m2(session, parcel_id, recul, ctx.commune)
+        if greve_cert > 0.5:
+            emprise = max(0.0, emprise - greve_cert)
+            ctx.contraintes.libelles.append(
+                f"Assiette clippée : {greve_cert:.0f} m² de contraintes géométriques certaines "
+                "(PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) soustraits de l'emprise.")
+        pct_c = _pct_constructible(ctx)
+        if pct_c is not None and 0 < pct_c < 100:
+            surface_assiette = ctx.surface_m2 * pct_c / 100.0
+
     # ZONE-1 : sur parcelle à cheval, le bilan LE DIT — parts servies (modulation + contexte éco).
     if ctx.a_cheval and ctx.zone_parts:
         from .zone_servie import libelle_a_cheval
@@ -289,7 +396,7 @@ def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext,
                 eco["pluvial"], eco["pluvial_libelle"] = True, r.libelle
     ctx.prescriptions_eco = eco
 
-    return ctx, estimate_capacity(rules, ctx.surface_m2, ctx.contraintes, hyp=hyp,
+    return ctx, estimate_capacity(rules, surface_assiette, ctx.contraintes, hyp=hyp,
                                   emprise_geo=(emprise, recul))
 
 
