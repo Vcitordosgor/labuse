@@ -479,6 +479,11 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
             {d['geoloc_note'] && <p className="mt-1 text-[10px] leading-snug text-txt-dim">Position : {String(d['geoloc_note'])}.</p>}
             <F label="Date de dépôt" value={d['date_depot']} />
             <F label="Date d'autorisation" value={d['date_autorisation']} />
+            {/* DONNEES-6 — dates JAMAIS réordonnées : autorisation avant dépôt = incohérence du
+                producteur SDES/Dido, dite telle quelle (le délai d'instruction n'est pas servi). */}
+            {!!(d['date_depot'] && d['date_autorisation'] && String(d['date_autorisation']) < String(d['date_depot'])) && (
+              <p className="mt-1 text-[10px] leading-snug text-st-ecartee">Dates incohérentes chez le producteur (autorisation avant dépôt) — délai d'instruction non calculé.</p>
+            )}
             <F label="Achèvement (DAACT)" value={d['date_achevement']} />
             {d['delai_instruction'] && (
               <F label="Délai d'instruction" value={<span className="font-semibold text-mint">{d['delai_instruction']['libelle']}</span>} />

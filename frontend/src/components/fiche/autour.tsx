@@ -30,9 +30,17 @@ export function HistoriqueSiteBlock({ f }: { f: Fiche }) {
     <div data-historique-site>
       <GroupLabel>🏗️ {h.titre}</GroupLabel>
       <ul className="mt-1 list-disc pl-4 text-[11px] leading-snug text-txt-mut">
-        {h.permis.slice(0, 6).map((pm, i) => (
-          <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}</li>
-        ))}
+        {h.permis.slice(0, 6).map((pm, i) => {
+          // DONNEES-6 — JAMAIS réordonner les dates : si l'autorisation précède le dépôt (incohérence
+          // du producteur SDES/Dido), on affiche les deux dates telles quelles et on LE DIT (le flux
+          // open data ne porte pas le n° de modificatif, donc pas de « modifié, dernier dépôt le… »).
+          const incoherent = !!(pm.date_depot && pm.date_autorisation && pm.date_autorisation < pm.date_depot)
+          return (
+            <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}
+              {incoherent && <span className="text-st-ecartee"> — dates incohérentes chez le producteur</span>}
+            </li>
+          )
+        })}
         {h.caducite && (
           <li className="text-st-ecartee">PC {h.caducite.pc_annee ?? ''} — {h.caducite.libelle_court ?? 'caduc'}</li>
         )}

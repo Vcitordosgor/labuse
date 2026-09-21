@@ -115,9 +115,16 @@ def _r_permis_liste(v):
     lignes = []
     for pm in v[:6]:
         t = esc(pm.get("type") or "permis")
-        dep = esc(pm.get("date_depot") or pm.get("date_autorisation") or "?")
-        auto = f", autorisé {esc(pm['date_autorisation'])}" if pm.get("date_autorisation") else ""
-        lignes.append(f"{t} — déposé {dep}{auto}")
+        dep = pm.get("date_depot")
+        aut = pm.get("date_autorisation")
+        dep_txt = esc(dep or aut or "?")
+        auto = f", autorisé {esc(aut)}" if aut else ""
+        # DONNEES-6 — JAMAIS réordonner les dates : si l'autorisation précède le dépôt (incohérence
+        # du producteur SDES/Dido, ~15 % des permis), on affiche les deux dates telles quelles et on
+        # LE DIT. Le flux open data ne porte pas le n° de modificatif → on ne peut pas écrire « modifié ».
+        incoherent = bool(dep and aut and str(aut) < str(dep))
+        note = " — dates incohérentes chez le producteur" if incoherent else ""
+        lignes.append(f"{t} — déposé {dep_txt}{auto}{note}")
     reste = f" (+{len(v) - 6} autres)" if len(v) > 6 else ""
     return f"{len(v)} permis sur la parcelle (Sitadel) — " + " ; ".join(lignes) + reste
 
