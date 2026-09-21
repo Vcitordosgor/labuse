@@ -483,6 +483,21 @@ LECTURES: tuple[Lecture, ...] = (
       "/modules/parcelle-permis : permis autorisés < 200 m (c100/c200, distance, cliquables) — la preuve derrière les compteurs viabilisation, même table que M-VIA."),
     L("via_permits_geo", "faisabilite/viabilisation_build.py", "n_permis_proximite", "fiche_parcelle_autour",
       "Lit via_permits_geo (ST_DWithin 100/200 m, récents, achevés état='6') pour calculer c100/c200 et le score/band de viabilisation par parcelle."),
+    # ── TESTS-0 — service Courrier (COURRIER-2, merge b4b82a74) : machinerie, aucun chiffre de
+    #    registre servi (le courrier est un document composé, pas une donnée de fiche). Ces arêtes
+    #    manquaient au graphe fin depuis les Lots 2 (courrier_adressage.py) et 3 (courrier_compose.py).
+    L("parcels", "courrier_adressage.py", None, None,
+      "resoudre_destinataire lit section/numero/commune/surface_m2 (+ bâti/PM joints) pour composer le bloc destinataire et le « bien concerné » du pli — machinerie du service Courrier (COURRIER-2 Lot 2)."),
+    L("parcels", "courrier_compose.py", None, None,
+      "_synthese lit section/numero/commune/surface_m2 et geom_2975 (comptage DVF au périmètre) pour la synthèse du courrier (recto A→E + verso) — machinerie Courrier (COURRIER-2 Lot 3)."),
+    L("parcelle_personne_morale", "courrier_adressage.py", None, None,
+      "resoudre_destinataire lit denomination/siren pour l'adressage NOMINATIF d'une personne morale (au siège) — machinerie Courrier (COURRIER-2 Lot 2)."),
+    L("parcelle_personne_morale", "courrier_compose.py", None, None,
+      "_synthese lit l'existence PM pour choisir l'ouverture A (terrain non bâti d'une personne morale) — machinerie Courrier (COURRIER-2 Lot 3)."),
+    L("owner_enrichment", "courrier_adressage.py", None, None,
+      "resoudre_destinataire lit payload->siege (adresse SIRENE) pour le pli nominatif « au siège social déclaré » d'une PM — machinerie Courrier (COURRIER-2 Lot 2)."),
+    L("dvf_mutations_parcelle", "courrier_compose.py", None, None,
+      "_synthese compte les mutations DVF au périmètre (500 m / 3 ans) pour l'ouverture C « secteur actif » et le repère immobilier du verso — machinerie Courrier (COURRIER-2 Lot 3)."),
 )
 
 
