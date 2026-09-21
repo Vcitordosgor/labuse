@@ -357,3 +357,20 @@ def test_ouverture_A_E_selection_ordre():
     # [adresse] manquante → « La parcelle [référence] »
     f = cc.choisir_ouverture({**base, "adresse": None, "pm": False, "batie": False, "zone": None, "n_mutations": 0})
     assert "AB 12" in f[1]
+
+
+# ─────────────────────── COURRIER-2 Lot 4 — VOCABULAIRE UNIQUE (anti-dérive) ───────────────────────
+def test_vocabulaire_statut_unique_pas_de_legacy_visible():
+    """Un SEUL vocabulaire servi partout : « À déposer · Déposé · Envoyé · Répondu · Sans réponse ».
+    Aucun libellé legacy (« Demandé »/« Tarif confirmé »/« Imprimé »/« Posté ») ne doit fuir ; les
+    alias legacy se NORMALISENT vers le canonique."""
+    from labuse import courrier
+    assert set(courrier.STATUT_LIBELLES.values()) == {"À déposer", "Déposé", "Envoyé", "Répondu", "Sans réponse"}
+    for interdit in ("Demandé", "Tarif confirmé", "Imprimé", "Posté"):
+        assert interdit not in courrier.STATUT_LIBELLES.values()
+    # legacy → canonique
+    assert courrier.normaliser_statut("imprime") == "depose"
+    assert courrier.normaliser_statut("poste") == "envoye"
+    assert courrier.normaliser_statut("tarif_confirme") == "demande"
+    # 'demande' se dit « À déposer » (plus jamais « Demandé »)
+    assert courrier.STATUT_LIBELLES["demande"] == "À déposer"

@@ -112,8 +112,9 @@ STATUTS_DEMANDE = ("demande", "depose", "envoye", "repondu", "sans_reponse")
 #: alias LEGACY → canonique (anciennes lignes, anciens clics de la Tour de contrôle). On NE casse rien :
 #: `tarif_confirme`/`imprime` sont assimilés à « en préparation », `poste` à « envoyé ».
 STATUT_ALIAS = {"tarif_confirme": "demande", "imprime": "depose", "poste": "envoye"}
-#: libellés client uniques (servis partout).
-STATUT_LIBELLES = {"demande": "Demandé", "depose": "Déposé", "envoye": "Envoyé",
+#: COURRIER-2 Lot 4 — UN SEUL vocabulaire, servi PARTOUT (fiche, liste, journal, dashboard, mails) :
+#: « À déposer » (plus jamais « Demandé » côté client vs « À déposer » côté admin — un seul mot).
+STATUT_LIBELLES = {"demande": "À déposer", "depose": "Déposé", "envoye": "Envoyé",
                    "repondu": "Répondu", "sans_reponse": "Sans réponse"}
 #: correspondance statut → BUCKET dashboard (Courrier.tsx) — table unique, plus de sets disjoints.
 STATUT_BUCKET = {"demande": "a_deposer", "depose": "en_cours", "envoye": "en_cours",

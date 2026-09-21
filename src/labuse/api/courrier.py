@@ -116,7 +116,7 @@ class DemandeIn(BaseModel):
 
 @router.post("/demande")
 def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(get_db)) -> dict:
-    """Le client DEMANDE l'envoi de N courriers. Enregistre la demande (statut « Demandé »), puis
+    """Le client DEMANDE l'envoi de N courriers. Enregistre la demande (statut « À déposer »), puis
     notifie Vic sur les canaux EXISTANTS (cloche + Brevo). La notif ne peut jamais faire échouer la
     demande (elle est déjà enregistrée)."""
     from .tenant import current_compte
@@ -158,7 +158,7 @@ def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(ge
             corps_mail = (f"{titre}\n\nParcelles ({d['n']}) : {', '.join(parcelles)}\n\n"
                           f"Corps du courrier :\n{body.corps}\n\n"
                           f"→ Vue admin /courrier/admin : rappeler le client, confirmer le tarif, "
-                          f"puis faire avancer le statut (Demandé → Tarif confirmé → Envoyé).")
+                          f"puis faire avancer le statut (À déposer → Déposé → Envoyé).")
             send_email_async(dest, f"[LABUSE] {titre}", corps_mail, contexte="Courrier")
     except Exception:
         pass
@@ -167,7 +167,7 @@ def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(ge
 
 @router.get("/demandes")
 def courrier_demandes(request: Request, db: Session = Depends(get_db)) -> dict:
-    """Les demandes DU client courant — timeline de statut (Demandé → Tarif confirmé → Envoyé)."""
+    """Les demandes DU client courant — timeline de statut (À déposer → Déposé → Envoyé)."""
     from .tenant import current_compte
     return {"demandes": courrier.demandes_de(db, current_compte(request))}
 
@@ -221,7 +221,7 @@ def courrier_client_statut(demande_id: int, body: StatutIn, request: Request,
 @router.post("/admin/demandes/{demande_id}/statut")
 def courrier_admin_statut(demande_id: int, body: StatutIn, request: Request,
                           db: Session = Depends(get_db)) -> dict:
-    """Vic fait avancer le statut d'une demande (Tour de contrôle : Demandé → Imprimé → Posté).
+    """Vic fait avancer le statut d'une demande (Tour de contrôle : À déposer → Déposé → Envoyé).
     Le client le voit via /courrier/demandes (sa timeline) ; DASHBOARD-V1 · D8 : chaque
     transition est JOURNALISÉE (event_log admin) + notifiée au client (cloche)."""
     from . import auth

@@ -30,7 +30,8 @@ const canon = (s: string): string =>
   s === 'imprime' ? 'depose' : s === 'poste' ? 'envoye' : s === 'tarif_confirme' || s === 'a_traiter' ? 'demande' : s
 const ORDRE = ['demande', 'depose', 'envoye', 'repondu', 'sans_reponse'] as const
 const CLOS = new Set(['repondu', 'sans_reponse'])
-const CHIP_LABEL: Record<string, string> = { demande: 'À déposer' }   // le reste = statut_libelles servi
+// COURRIER-2 Lot 4 — plus d'override : le libellé vient de STATUT_LIBELLES servi (source unique).
+const CHIP_LABEL: Record<string, string> = {}
 
 function voirPdf(d: AdminDemandeCourrier) {
   fetch(urlCourrierPdf, {
