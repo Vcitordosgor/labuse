@@ -64,7 +64,10 @@ def test_decoupe_un_module_par_section():
     for f in ("primitives.tsx", "constructibilite.tsx", "risques.tsx", "marche.tsx", "reseaux.tsx", "autour.tsx"):
         assert (FICHE_DIR / f).exists(), f
     fiche = _read("Fiche.tsx")
-    for comp in ("ConstructibiliteSection", "RisquesSection", "MarcheSection", "ReseauxSection", "AutourSection"):
+    # TESTS-0 : FICHE-RANGEMENT-2 Lot 1 (355ac3ff) — LE BASCULEMENT en 11 sections PAR NATURE a
+    # DISSOUS les sections « fourre-tout » ConstructibiliteSection / LeBienSection (leurs blocs sont
+    # recomposés inline). Restent les 4 sections mono-nature réutilisées : Risques/Marché/Réseaux/Quartier.
+    for comp in ("RisquesSection", "MarcheSection", "ReseauxSection", "AutourSection"):
         assert f"<{comp} " in fiche, comp
     # Fiche ré-exporte les 2 symboles publics (EtudierBien / M22Programme / test les importent).
     assert "export { Calculette, FaisabiliteTab } from './constructibilite'" in fiche
