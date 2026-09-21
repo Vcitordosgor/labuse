@@ -137,9 +137,13 @@ export function CourrierSection() {
                   {/* propriétaire : NOMBRE de personnes morales (jamais une identité de particulier). */}
                   <td className="px-4 py-2.5 text-xs text-txt-mut">{d.proprietaire ?? <span className="text-txt-dim">—</span>}</td>
                   <td className="px-4 py-2.5 font-mono text-xs text-txt-dim">{fmtReu(d.ts)}</td>
+                  {/* DASHBOARD-4 (C1) — le n° de piste CRM était un id GLOBAL (« piste #12 ») : il fuyait
+                      le volume plateforme (même défaut que « Demande n° 44 », RECETTE-3) et la piste CRM
+                      est cloisonnée côté client (aucun usage admin de ce numéro). On garde la PROVENANCE
+                      (« issue du CRM »), sans le numéro global. */}
                   <td className="px-4 py-2.5 text-xs">
                     {d.pipeline_entry_id != null
-                      ? <span className="whitespace-nowrap font-mono text-amber" title={`Née de la piste CRM n°${d.pipeline_entry_id} (côté client, cloisonnée) — son statut suit celui-ci`}>piste #{d.pipeline_entry_id} ↗</span>
+                      ? <span className="whitespace-nowrap font-mono text-amber" title="Née d'une piste CRM (côté client, cloisonnée) — son statut suit celui-ci">issue du CRM</span>
                       : <span className="text-txt-dim">—</span>}
                   </td>
                   <td className="px-4 py-2.5">
