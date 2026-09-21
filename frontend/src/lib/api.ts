@@ -1246,6 +1246,20 @@ export const postCourrierDemande = (parcelles: string[], corps: string, modele: 
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ parcelles, corps, modele, communes, ...(rattach ?? {}) }) })
 export const getCourrierDemandes = () => j<{ demandes: CourrierDemande[] }>('/courrier/demandes')
+// COURRIER-2 Lot 2 — adressage (écran avant dépôt) : destinataire + adresse d'envoi + bien + motif de blocage.
+export interface CourrierResolution {
+  idu: string
+  type: 'occupant' | 'siege' | null
+  destinataire: string | null
+  adresse_envoi: string | null
+  mention: string | null
+  bloque: boolean
+  motif: string | null
+  bien: { reference: string; adresse: string | null; commune: string | null }
+}
+export const postCourrierAdressage = (idus: string[]) =>
+  j<{ resolutions: CourrierResolution[] }>('/courrier/adressage', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus }) })
 // CONNEXIONS-2 Lot 4 (KO-6) — la cliente saisit le RETOUR de sa demande (répondu / sans réponse).
 export const postCourrierClientStatut = (id: number, statut: 'repondu' | 'sans_reponse') =>
   j<{ ok: boolean; statut: string }>(`/courrier/demandes/${id}/statut`, {

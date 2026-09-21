@@ -336,6 +336,21 @@ def courrier_admin_opposition_suppr(opp_id: int, request: Request,
     return {"ok": True}
 
 
+# ─────────────────── COURRIER-2 Lot 2 — ADRESSAGE (écran avant dépôt) ───────────────────
+class AdressageIn(BaseModel):
+    idus: list[str] = Field(min_length=1, max_length=500)
+
+
+@router.post("/adressage")
+def courrier_adressage(body: AdressageIn, db: Session = Depends(get_db)) -> dict:
+    """Résout, par parcelle, le destinataire + l'adresse d'envoi + le bien concerné, et le MOTIF de
+    blocage éventuel (nu/sans adresse/opposition). Sert l'écran avant dépôt : bouton désactivé si
+    une parcelle est bloquée. N'expose jamais un particulier (PP = « À l'occupant » ; PM = raison
+    sociale, donnée publique)."""
+    from .. import courrier_adressage as ca
+    return {"resolutions": ca.resoudre_plusieurs(db, body.idus)}
+
+
 class PdfIn(BaseModel):
     idu: str | None = None
     motif: str = "standard"
