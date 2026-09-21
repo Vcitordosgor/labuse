@@ -8,8 +8,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import {
   getAdminLicences, getAdminMailApercu, getAdminMails, getOffres, postAdminLicenceCreer,
-  postAdminLicenceCreerEssai, postAdminLicenceMail, postAdminRetablir, postAdminSuspendre,
-  postAdminDeconnecter, type AdminLicence, type AdminLicences, type MailLigne,
+  postAdminLicenceCreerEssai, postAdminLicenceConvertir, postAdminLicenceMail, postAdminRetablir,
+  postAdminSuspendre, postAdminDeconnecter, type AdminLicence, type AdminLicences, type MailLigne,
 } from '../../lib/api'
 import { ActBtn } from './AdminView'
 
@@ -114,15 +114,76 @@ function verbe(act: Action | null): string {
   return 'Envoyer'
 }
 
-// chip de plan / état servi dans la ligne.
-function PlanChip({ l }: { l: AdminLicence }) {
-  const p = pastille(l)
-  if (p === 'carte') return <span className="rounded-full bg-coral/10 px-2 py-0.5 text-[11px] font-medium text-coral">Carte refusée</span>
-  if (p === 'essai') return <span className="rounded-full bg-amber/10 px-2 py-0.5 text-[11px] font-medium text-amber">Essai{essaiHeuresRestantes(l) != null && essaiHeuresRestantes(l)! <= 0 ? ' expiré' : ''}</span>
-  if (p === 'invite') return <span className="rounded-full bg-white/5 px-2 py-0.5 text-[11px] font-medium text-txt-dim">Invité</span>
-  if (p === 'susp') return <span className="rounded-full bg-coral/10 px-2 py-0.5 text-[11px] font-medium text-coral">Suspendu</span>
-  return <span className="rounded-full bg-mint/10 px-2 py-0.5 text-[11px] font-medium text-mint">Intégral</span>
+// ── DASHBOARD-4 (K3) — CINQ statuts (Invité · Invitation envoyée · Actif · Suspendu · Expiré) ;
+//    « payant / essai » est une COLONNE À PART, lue de Stripe (jamais mélangée au statut). ──
+type Statut5 = 'invite' | 'invitation_envoyee' | 'actif' | 'suspendu' | 'expire'
+function statut5(l: AdminLicence): Statut5 {
+  const h = essaiHeuresRestantes(l)
+  const essaiExpire = l.essai_expire_at != null && h != null && h <= 0
+  if (l.statut === 'suspendu') return essaiExpire ? 'expire' : 'suspendu'
+  if (essaiExpire) return 'expire'
+  if (l.statut === 'invite') {
+    const invitationEnvoyee = l.mails['souscription']?.statut === 'envoye' || l.mails['onboarding1']?.statut === 'envoye'
+    return invitationEnvoyee ? 'invitation_envoyee' : 'invite'
+  }
+  return 'actif'
 }
+const STATUT5_LABEL: Record<Statut5, string> = {
+  invite: 'Invité', invitation_envoyee: 'Invitation envoyée', actif: 'Actif', suspendu: 'Suspendu', expire: 'Expiré',
+}
+const STATUT5_DOT: Record<Statut5, string> = {
+  invite: 'bg-txt-dim', invitation_envoyee: 'bg-amber', actif: 'bg-mint', suspendu: 'bg-coral', expire: 'bg-coral',
+}
+function StatutChip({ l }: { l: AdminLicence }) {
+  const s = statut5(l)
+  return <span className="inline-flex items-center gap-1.5 text-[12.5px] text-txt"><span className={`h-[8px] w-[8px] rounded-full ${STATUT5_DOT[s]}`} />{STATUT5_LABEL[s]}</span>
+}
+// « payant / essai » — colonne à part, lue de Stripe (carte refusée = état de paiement, pas un statut).
+function abonnement(l: AdminLicence): { label: string; cls: string } {
+  if (carteRefusee(l)) return { label: 'Carte refusée', cls: 'text-coral' }
+  if (l.stripe?.statut === 'active' || l.stripe?.statut === 'trialing') return { label: 'Payant', cls: 'text-mint' }
+  const h = essaiHeuresRestantes(l)
+  if (l.essai_expire_at != null && h != null && h > 0) return { label: `Essai · ${h} h`, cls: 'text-amber' }
+  if (l.essai_expire_at != null) return { label: 'Essai expiré', cls: 'text-coral' }
+  return { label: '—', cls: 'text-txt-dim' }
+}
+
+// DASHBOARD-4 (K3) — « À toucher » (segment par défaut ET jauge Pilotage, une seule fonction) :
+// invitation sans réponse > 7 j · essai qui se termine (< 6 h) · carte refusée.
+export function estAToucher(l: AdminLicence): boolean {
+  if (l.est_test) return false
+  if (carteRefusee(l)) return true
+  const abonne = l.stripe?.statut === 'active' || l.stripe?.statut === 'trialing'
+  const h = essaiHeuresRestantes(l)
+  if (l.essai_expire_at != null && !abonne && h != null && h > 0 && h < 6) return true   // essai < 6 h
+  if (l.statut === 'invite' && !l.kpi.derniere_connexion && l.created_at) {              // invitation sans réponse > 7 j
+    const ageJ = (Date.now() - new Date(l.created_at).getTime()) / 86_400_000
+    if (ageJ > 7) return true
+  }
+  return false
+}
+
+// DASHBOARD-4 (K5) — phrase CALCULÉE sous les faits (« paie depuis 7 jours, connecté 4 fois » /
+// « n'est jamais entré dans l'app »).
+function phraseCalculee(l: AdminLicence): string {
+  if (!l.kpi.derniere_connexion) return "Ce client n'est jamais entré dans l'app."
+  const parts: string[] = []
+  const abonne = l.stripe?.statut === 'active' || l.stripe?.statut === 'trialing'
+  if (abonne && l.stripe?.depuis) {
+    const j = Math.max(0, Math.floor((Date.now() / 1000 - l.stripe.depuis) / 86_400))
+    parts.push(`paie depuis ${j} jour${j > 1 ? 's' : ''}`)
+  } else if (l.essai_expire_at) {
+    const h = essaiHeuresRestantes(l)
+    parts.push(h != null && h > 0 ? `en essai (encore ${h} h)` : 'essai terminé')
+  }
+  const min = l.kpi.usage_7j_min
+  if (min > 0) parts.push(`actif ${fmtDuree(min)} sur 7 jours`)
+  else parts.push('connecté au moins une fois')
+  return parts.length ? parts.join(', ').replace(/^./, (c) => c.toUpperCase()) + '.' : 'Compte actif.'
+}
+
+// DASHBOARD-4 (K3) — l'ancien PlanChip (plan/état mélangés) est remplacé par StatutChip (5 statuts)
+// + la colonne Abonnement séparée (abonnement()), lue de Stripe.
 
 // ── panneau APERÇU : template Brevo rendu avec les variables du compte, ou raison honnête ──
 function ApercuOverlay({ compteId, mk, onClose }: { compteId: number; mk: string; onClose: () => void }) {
@@ -155,39 +216,61 @@ function ApercuOverlay({ compteId, mk, onClose }: { compteId: number; mk: string
   )
 }
 
-// ── barre de création (Créer NE POSTE AUCUN MAIL) — repliée derrière « + Client » / « + Essai 48 h » ──
-function NewBar({ mode, onDone }: { mode: 'client' | 'essai'; onDone: () => void }) {
+// ── DASHBOARD-4 (K1/K2) — VRAIE PAGE de création (plus d'accordéon, plus de lien brut affiché).
+//    E-mail + prénom + nom. Deux gestes : « Créer et envoyer l'invitation » (principal, envoi Brevo
+//    4/5 par la file — dry-run en local, mail_log) · « créer sans envoyer » (lien). LES DEUX arrivent
+//    sur la FICHE du client créé (onCree). ──
+function CreerPage({ mode, onBack, onCree }: {
+  mode: 'client' | 'essai'; onBack: () => void; onCree: (compteId: number) => void
+}) {
   const qc = useQueryClient()
   const [email, setEmail] = useState('')
+  const [prenom, setPrenom] = useState('')
   const [nom, setNom] = useState('')
-  const [lien, setLien] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
-  const ok = (r: { lien: string }) => { setLien(r.lien); setErr(null); setEmail(''); setNom(''); qc.invalidateQueries({ queryKey: ['admin-licences'] }) }
-  const ko = (e: unknown) => setErr(e instanceof Error ? e.message : 'Création impossible.')
-  const creer = useMutation({ mutationFn: () => postAdminLicenceCreer({ email: email.trim(), nom: nom.trim() || undefined }), onSuccess: ok, onError: ko })
-  const essai = useMutation({ mutationFn: () => postAdminLicenceCreerEssai({ email: email.trim(), nom: nom.trim() || undefined, heures: 48 }), onSuccess: ok, onError: ko })
-  const run = () => (mode === 'client' ? creer : essai).mutate()
-  const inp = 'rounded-md border border-line-2 bg-bg px-2.5 py-2 text-[13px] text-txt outline-none focus:border-mint'
+  const [busy, setBusy] = useState(false)
+  // le template d'invitation : souscription (Brevo 5) pour un client, essai (Brevo 4) pour un essai.
+  const mailKey = mode === 'client' ? 'souscription' : 'essai'
+  const nomComplet = [prenom.trim(), nom.trim()].filter(Boolean).join(' ') || undefined
+  const lancer = async (envoyer: boolean) => {
+    setBusy(true); setErr(null)
+    try {
+      const r = mode === 'client'
+        ? await postAdminLicenceCreer({ email: email.trim(), nom: nomComplet })
+        : await postAdminLicenceCreerEssai({ email: email.trim(), nom: nomComplet, heures: 48 })
+      if (envoyer) { try { await postAdminLicenceMail(r.compte_id, mailKey) } catch { /* la file dira l'échec sur la fiche */ } }
+      qc.invalidateQueries({ queryKey: ['admin-licences'] })
+      onCree(r.compte_id)   // K2 — les deux gestes arrivent sur la fiche
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Création impossible.')
+    } finally { setBusy(false) }
+  }
+  const inp = 'w-full rounded-md border border-line-2 bg-bg px-3 py-2.5 text-[13.5px] text-txt outline-none focus:border-mint'
+  const titre = mode === 'client' ? 'Créer un client' : 'Ouvrir un essai 48 h'
   return (
-    <div className="mb-4 rounded-xl border border-line bg-surface-2 px-3 py-2.5">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[12.5px] text-txt-dim">{mode === 'client' ? 'Nouveau client :' : 'Nouvel essai 48 h :'}</span>
-        <input autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@client.re" className={`${inp} w-56`} />
-        <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom (option)" className={`${inp} w-40`} />
-        <ActBtn onClick={run} disabled={!email.includes('@') || creer.isPending || essai.isPending}>
-          {mode === 'client' ? "Créer & préparer l'invitation →" : "Créer l'essai 48 h →"}
-        </ActBtn>
-        <ActBtn tone="ghost" onClick={onDone}>Fermer</ActBtn>
-        <span className="text-[11.5px] text-txt-off">l'invitation ne part jamais seule — tu l'envoies depuis la fiche</span>
-      </div>
-      {lien && (
-        <div className="mt-2 flex items-center gap-2">
-          <span className="text-[11px] text-mint">Compte créé.</span>
-          <code className="max-w-[440px] truncate rounded bg-surface-1 px-2 py-1 font-mono text-[10.5px] text-mint">{lien}</code>
-          <ActBtn tone="ghost" onClick={() => navigator.clipboard?.writeText(lien)}>Copier le lien</ActBtn>
+    <div>
+      <button onClick={onBack} className="mb-3 text-[12.5px] text-txt-mut hover:text-txt">← Comptes</button>
+      <h1 className="mb-4 font-display text-xl font-semibold text-txt-hi">{titre}</h1>
+      <div className="max-w-[460px] rounded-xl border border-line bg-surface-2 p-6">
+        <label className="mb-1.5 block text-[12px] text-txt-dim">E-mail</label>
+        <input autoFocus type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="prenom@societe.re" className={inp} />
+        <label className="mb-1.5 mt-3.5 block text-[12px] text-txt-dim">Prénom</label>
+        <input value={prenom} onChange={(e) => setPrenom(e.target.value)} className={inp} />
+        <label className="mb-1.5 mt-3.5 block text-[12px] text-txt-dim">Nom</label>
+        <input value={nom} onChange={(e) => setNom(e.target.value)} className={inp} />
+        <div className="mt-5 flex items-center gap-4">
+          <ActBtn onClick={() => lancer(true)} disabled={!email.includes('@') || busy}>
+            {mode === 'client' ? "Créer et envoyer l'invitation" : "Créer l'essai et envoyer l'invitation"}
+          </ActBtn>
+          <button onClick={() => lancer(false)} disabled={!email.includes('@') || busy}
+            className="text-[13px] text-txt-mut underline underline-offset-2 hover:text-txt disabled:opacity-40">créer sans envoyer</button>
         </div>
-      )}
-      {err && <div className="mt-1 text-[11px] text-coral">{err}</div>}
+        {err && <div className="mt-3 text-[12px] text-coral">{err}</div>}
+        <div className="mt-4 text-[11px] text-txt-off">
+          En local (Brevo non configuré), l'envoi est un <b>dry-run</b> : l'invitation entre dans la file
+          (mail_log) sans partir — visible sur la fiche, onglet Activité.
+        </div>
+      </div>
     </div>
   )
 }
@@ -260,6 +343,8 @@ function FichePage({ l, libelles, stripeConfigure, onBack }: {
   })
   const susp = useMutation({ mutationFn: () => postAdminSuspendre(l.id), onSuccess: refresh })
   const retab = useMutation({ mutationFn: () => postAdminRetablir(l.id), onSuccess: refresh })
+  // DASHBOARD-4 (K4) — « Transformer en client » : lève l'essai, le compte paie par le parcours officiel.
+  const transformer = useMutation({ mutationFn: () => postAdminLicenceConvertir(l.id), onSuccess: (r) => { setMsg(r.detail); refresh() } })
   const deco = useMutation({
     mutationFn: () => postAdminDeconnecter(l.id),
     onSuccess: (r) => { setDecoMsg(`${r.sessions_fermees} session${r.sessions_fermees > 1 ? 's' : ''} fermée${r.sessions_fermees > 1 ? 's' : ''}`); refresh() },
@@ -277,19 +362,43 @@ function FichePage({ l, libelles, stripeConfigure, onBack }: {
   return (
     <div>
       {apercu && <ApercuOverlay compteId={l.id} mk={apercu} onClose={() => setApercu(null)} />}
-      <button onClick={onBack} className="mb-3 text-[12.5px] text-txt-mut hover:text-txt">← Comptes</button>
+      {/* DASHBOARD-4 (K5) — fil d'Ariane + gestes EN HAUT À DROITE (tous les gestes partent d'ici). */}
+      <div className="mb-2 text-[12.5px] text-txt-dim"><button onClick={onBack} className="hover:text-txt">Comptes</button> › {l.nom}</div>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className={`grid h-10 w-10 place-items-center rounded-full text-[13px] font-semibold ${AV_CLS[pastille(l)]}`}>{initiales(l)}</span>
           <div>
             <h2 className="font-display text-lg font-semibold text-txt-hi">{l.nom}</h2>
-            <div className="text-[12.5px] text-txt-dim">{l.email} · créé le {fmtReu(l.created_at)}
-              {l.essai_expire_at && l.statut === 'actif' && <span className="ml-2 rounded-full bg-amber/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber">ESSAI — {h != null && h > 0 ? `expire dans ${h} h` : 'expiré'}</span>}
+            <div className="flex items-center gap-2 text-[12.5px] text-txt-dim"><StatutChip l={l} /> · créé le {fmtReu(l.created_at)}
+              {l.essai_expire_at && l.statut === 'actif' && <span className="rounded-full bg-amber/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber">ESSAI — {h != null && h > 0 ? `expire dans ${h} h` : 'expiré'}</span>}
             </div>
           </div>
         </div>
-        <PlanChip l={l} />
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {/* Renvoyer l'invitation (souscription) — utile tant que le client n'est pas entré. */}
+          {!l.kpi.derniere_connexion && (
+            <ActBtn tone="ghost" onClick={() => mail.mutate('souscription')} disabled={mail.isPending}>Renvoyer l'invitation</ActBtn>
+          )}
+          {/* Transformer en client (K4) — pour un essai en cours. */}
+          {l.essai_expire_at != null && l.statut === 'actif' && (
+            <ActBtn onClick={() => transformer.mutate()} disabled={transformer.isPending}>Transformer en client</ActBtn>
+          )}
+          {suspendu
+            ? <ActBtn onClick={() => retab.mutate()} disabled={retab.isPending}>Rétablir</ActBtn>
+            : <button onClick={suspendre} disabled={susp.isPending} className="rounded-lg border border-coral/40 px-3 py-1.5 text-xs font-medium text-coral disabled:opacity-40">Suspendre</button>}
+        </div>
       </div>
+
+      {/* DASHBOARD-4 (K5) — faits + phrase CALCULÉE sous les faits. */}
+      <div className="mt-3 grid gap-4 rounded-xl border border-line bg-surface-1 px-4 py-3 sm:grid-cols-[1fr_auto]">
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-[12.5px]">
+          <div><dt className="text-txt-dim">E-mail</dt><dd className="font-mono text-txt">{l.email}</dd></div>
+          <div><dt className="text-txt-dim">Abonnement</dt><dd className={abonnement(l).cls}>{abonnement(l).label}</dd></div>
+          <div><dt className="text-txt-dim">Dernière connexion</dt><dd className="text-txt">{fmtReu(l.kpi.derniere_connexion, true)}</dd></div>
+          <div><dt className="text-txt-dim">Usage 7 j</dt><dd className="text-txt">{fmtDuree(l.kpi.usage_7j_min)}</dd></div>
+        </dl>
+      </div>
+      <p className="mt-2 border-t border-line pt-2 text-[13px] text-txt">{phraseCalculee(l)}</p>
 
       <div className="mt-4 mb-4 flex gap-1 border-b border-line">
         {TABS.map(([k, label]) => (
@@ -336,22 +445,10 @@ function FichePage({ l, libelles, stripeConfigure, onBack }: {
             when={abonne ? 'actif' : (stripeConfigure ? 'à souscrire' : 'Stripe non configuré')}
             mk={abonne ? undefined : 'souscription'} onApercu={setApercu} onSend={mail.mutate} sending={mail.isPending} />
 
-          <div className="mt-5 grid grid-cols-2 gap-2">
-            <div className="rounded-lg border border-line bg-surface-1 px-3 py-2">
-              <div className="font-display text-base font-bold text-txt-hi">{fmtDuree(l.kpi.usage_7j_min)}</div>
-              <div className="text-[10.5px] text-txt-dim">usage sur 7 j</div>
-            </div>
-            <div className="rounded-lg border border-line bg-surface-1 px-3 py-2">
-              <div className="font-display text-base font-bold text-txt-hi">{fmtReu(l.kpi.derniere_connexion, true)}</div>
-              <div className="text-[10.5px] text-txt-dim">dernière connexion</div>
-            </div>
-          </div>
-
+          {/* DASHBOARD-4 (K5) — suspension/transformation vivent EN HAUT À DROITE ; ici on garde le
+              rappel « manuelle » + la déconnexion à distance (geste rare, jamais dans le bandeau). */}
           <div className="mt-5 flex items-center justify-between gap-3 rounded-lg border border-line px-3 py-2.5 text-[12px] text-txt-dim">
-            <span>La suspension est toujours <b className="text-coral">manuelle</b> — jamais automatique sur un échec de carte.</span>
-            {suspendu
-              ? <ActBtn onClick={() => retab.mutate()} disabled={retab.isPending}>Rétablir l'accès</ActBtn>
-              : <button onClick={suspendre} disabled={susp.isPending} className="shrink-0 rounded-md border border-coral/40 px-2.5 py-1 text-[12px] text-coral disabled:opacity-40">Suspendre le compte</button>}
+            <span>La suspension est toujours <b className="text-coral">manuelle</b> — jamais automatique sur un échec de carte (le geste est en haut de la fiche).</span>
           </div>
           <div className="mt-2.5 flex items-center justify-between gap-3 rounded-lg border border-line px-3 py-2.5 text-[12px] text-txt-dim">
             <span>Déconnexion à distance — ferme toutes les sessions ouvertes du client (il pourra se reconnecter).{decoMsg && <b className="ml-2 text-mint">{decoMsg}</b>}</span>
@@ -446,9 +543,13 @@ export function LicencesSection() {
   const d: AdminLicences | undefined = q.data
 
   const clientes = useMemo(() => (d?.licences ?? []).filter((l) => !l.est_test), [d])
-  const aToucher = useMemo(() => clientes.filter((l) => prochaineAction(l) != null), [clientes])
+  // DASHBOARD-4 (K3) — « À toucher » = estAToucher (invitation sans réponse > 7 j · essai < 6 h · carte refusée).
+  const aToucher = useMemo(() => clientes.filter((l) => estAToucher(l)), [clientes])
 
   if (!d) return <div className="py-10 text-center text-xs text-txt-mut">Chargement…</div>
+
+  // DASHBOARD-4 (K1) — « Créer un client » / « Ouvrir un essai 48 h » sont de VRAIES pages.
+  if (creer) return <CreerPage mode={creer} onBack={() => setCreer(null)} onCree={(id) => { setCreer(null); setSel(id) }} />
   const prixIntegral = offres.data?.integral.eur_mois
   const libelles = d.mail_libelles ?? {}
   const masques = d.compteurs?.masques ?? d.licences.filter((l) => l.est_test).length
@@ -483,13 +584,12 @@ export function LicencesSection() {
           <h1 className="font-display text-xl font-semibold text-txt-hi">Comptes</h1>
           <span className="text-[13px] text-txt-mut">{actives} licence{actives > 1 ? 's' : ''} active{actives > 1 ? 's' : ''}{mrr > 0 && ` · ${mrr.toLocaleString('fr-FR')} € par mois`}</span>
         </div>
+        {/* DASHBOARD-4 (K1) — deux entrées en haut à droite, vraies pages (plus d'accordéon). */}
         <div className="flex gap-2">
-          <ActBtn tone="ghost" onClick={() => setCreer(creer === 'essai' ? null : 'essai')}>+ Essai 48 h</ActBtn>
-          <ActBtn onClick={() => setCreer(creer === 'client' ? null : 'client')}>+ Client</ActBtn>
+          <ActBtn tone="ghost" onClick={() => setCreer('essai')}>Ouvrir un essai 48 h</ActBtn>
+          <ActBtn onClick={() => setCreer('client')}>Créer un client</ActBtn>
         </div>
       </div>
-
-      {creer && <NewBar mode={creer} onDone={() => setCreer(null)} />}
 
       {!d.brevo.api && (
         <div className="mb-3.5 rounded-lg border border-amber/30 bg-amber/5 px-4 py-2.5 text-xs text-amber">
@@ -512,23 +612,25 @@ export function LicencesSection() {
       </div>
 
       <div className="overflow-hidden rounded-xl border border-line bg-surface-2">
-        <div className="grid grid-cols-[38px_1.7fr_0.8fr_0.9fr_0.6fr_1fr_auto] items-center gap-3 border-b border-line px-4 py-2 text-[11px] uppercase tracking-wide text-txt-dim">
-          <span /><span>Client</span><span>Plan</span><span>Dernière visite</span><span className="text-right">MRR</span><span>À faire</span><span />
+        {/* DASHBOARD-4 (K3) — colonne STATUT (5 statuts) + colonne ABONNEMENT séparée (payant/essai, Stripe). */}
+        <div className="grid grid-cols-[38px_1.7fr_1fr_0.9fr_0.9fr_1fr_auto] items-center gap-3 border-b border-line px-4 py-2 text-[11px] uppercase tracking-wide text-txt-dim">
+          <span /><span>Client</span><span>Statut</span><span>Dernière visite</span><span>Abonnement</span><span>À faire</span><span />
         </div>
         {lignes.map((l) => {
           const act = prochaineAction(l)
           const p = pastille(l)
+          const abo = abonnement(l)
           return (
             <button key={l.id} data-licence={l.id} onClick={() => setSel(l.id)}
-              className="grid w-full grid-cols-[38px_1.7fr_0.8fr_0.9fr_0.6fr_1fr_auto] items-center gap-3 border-b border-line px-4 py-2.5 text-left text-[13.5px] transition-colors duration-quick last:border-b-0 hover:bg-surface-1">
+              className="grid w-full grid-cols-[38px_1.7fr_1fr_0.9fr_0.9fr_1fr_auto] items-center gap-3 border-b border-line px-4 py-2.5 text-left text-[13.5px] transition-colors duration-quick last:border-b-0 hover:bg-surface-1">
               <span className={`grid h-[30px] w-[30px] place-items-center rounded-full text-[11.5px] font-semibold ${AV_CLS[p]}`}>{initiales(l)}</span>
               <span className="min-w-0">
                 <span className="block truncate font-medium text-txt-hi">{l.nom}</span>
-                <span className="block truncate text-[12px] text-txt-mut">{l.statut === 'invite' ? `invité — jamais activé` : l.email}</span>
+                <span className="block truncate text-[12px] text-txt-mut">{l.email}</span>
               </span>
-              <span><PlanChip l={l} /></span>
+              <span><StatutChip l={l} /></span>
               <span className={l.kpi.derniere_connexion ? 'text-txt-mut' : 'text-txt-dim'}>{fmtVisite(l.kpi.derniere_connexion)}</span>
-              <span className="text-right font-mono text-[12.5px] text-txt-mut">{l.stripe?.montant_eur_mois ? `${l.stripe.montant_eur_mois} €` : <span className="text-txt-dim">—</span>}</span>
+              <span className={`text-[12.5px] ${abo.cls}`}>{abo.label}</span>
               <span className={act ? (p === 'carte' ? 'text-coral' : 'text-amber') : 'text-txt-dim'}>{act ? act.court : '—'}</span>
               <span>{act ? <span className="rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1 text-[12px] text-mint">{verbe(act)}</span> : ''}</span>
             </button>
@@ -546,6 +648,11 @@ export function LicencesSection() {
       </div>
       <div className="mt-2.5 text-[11.5px] text-txt-off">
         Les comptes <span className="font-mono">[CT-TEST]</span>, <span className="font-mono">@labuse.test</span> et les comptes admin ne comptent dans aucun chiffre.{prixIntegral ? '' : ''}
+        {/* DASHBOARD-4 (K6) — ton-email@test.com est masqué comme les autres tests ; on le SIGNALE
+            (compte réel de démo) et on n'y touche jamais. */}
+        {(d.licences ?? []).some((l) => (l.email ?? '').toLowerCase().includes('ton-email@test.com')) && (
+          <span className="ml-1 text-jaune"> <span className="font-mono">ton-email@test.com</span> est présent et masqué — ne pas y toucher (compte de démo signalé).</span>
+        )}
       </div>
     </>
   )

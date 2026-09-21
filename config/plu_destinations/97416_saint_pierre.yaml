@@ -46,12 +46,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 0.0
           article: Ucv3.1
           page_pdf: 63
           citation: Les constructions nouvelles en premier rideau doivent être implantées à l’alignement.
-          statut: propose
-          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+          statut: valide
+          min_m: 0
+          forme: alignement
         limites_separatives:
           min_m: 3.0
           article: Ucv3.2
@@ -1664,12 +1664,12 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 0.0
           article: Up3.1
           page_pdf: 146
           citation: Les constructions nouvelles peuvent être implantées à l’alignement ou en retrait libre.
-          statut: propose
-          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+          statut: valide
+          min_m: 0
+          forme: alignement
         limites_separatives:
           min_m: 1.9
           article: Up3.2
@@ -2376,15 +2376,15 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 0.0
           article: Ua3.1
           page_pdf: 176
           citation: Dans les secteurs Uazp et Uazpc les constructions nouvelles peuvent être implantées à
             l’alignement des voies sauf en aval de la RN 1 ou le recul minimum est fixé à 40 m dans la partie
             Nord et à 50 m dans la partie Sud, l’axe du giratoire avec la RD 26 faisant la séparation entre
             ces deux zones de reculs.
-          statut: propose
-          raison: attribution douteuse (citation sous secteur None)
+          statut: valide
+          min_m: 0
+          forme: alignement
         limites_separatives:
           min_m: 5.0
           article: Ua3.2
@@ -2563,15 +2563,15 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: 0.0
           article: Ua3.1
           page_pdf: 176
           citation: Dans les secteurs Uazp et Uazpc les constructions nouvelles peuvent être implantées à
             l’alignement des voies sauf en aval de la RN 1 ou le recul minimum est fixé à 40 m dans la partie
             Nord et à 50 m dans la partie Sud, l’axe du giratoire avec la RD 26 faisant la séparation entre
             ces deux zones de reculs.
-          statut: propose
-          raison: attribution douteuse (citation sous secteur None)
+          statut: valide
+          min_m: 0
+          forme: alignement
         limites_separatives:
           min_m: 5.0
           article: Ua3.2

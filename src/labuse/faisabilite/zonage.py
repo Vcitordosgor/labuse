@@ -54,6 +54,12 @@ class ZoneRules:
     niveaux_max: int | None = None           # R+n LU au règlement (validé) → niveaux imposés
     hauteur_plage: dict | None = None         # hauteur variant par secteur (base) → plage
     emprise_plage: dict | None = None         # idem emprise au sol
+    regle_non_validee: str | None = None      # PLU-CALIBRAGE-6 : liste des feuilles SDP `propose`
+    #  (règle PLU non validée) qui BRANCHERAIENT la SDP → capacité non calculable, jamais un défaut
+    recul_voirie_alignement: bool = False     # PLU-CALIBRAGE-7 forme 1 : recul 0 = « à l'alignement »
+    recul_limites_alignement: bool = False    #  (idem « en limite séparative ») — 0 EXPLICITE, ≠ absent
+    pleine_terre_compose: dict | None = None  # PLU-CALIBRAGE-7 forme 2 : {espaces_verts_pct, part_pct}
+    #  pleine_terre_pct = espaces_verts_pct × part_pct / 100 (calculé, JAMAIS stocké — les 2 chiffres sourcés)
     notes: list[str] = field(default_factory=list)
     sources: dict[str, str] = field(default_factory=dict)
     raw: dict = field(default_factory=dict)
@@ -105,15 +111,112 @@ def _zonage_commune(commune: str | None) -> dict | None:
 # ── valeurs chiffrées reconstruites depuis les regles (TOUTES les feuilles, quel que soit le
 #    statut : la conversion PLU-CALIBRAGE-3 a préservé les valeurs de l'ancien système) ──────────
 def _val(reg: dict, rub: str, feuille: str, cle: str):
-    """Valeur d'une feuille (valide OU propose) ; None → 'a_verifier' (l'ancien système écrivait
-    'a_verifier' quand la valeur n'était pas exploitable — même effet non-numérique au moteur)."""
+    """Valeur d'une feuille VALIDÉE seulement.
+
+    PLU-CALIBRAGE-6 (garde) : la base est désormais VALIDÉES-ONLY, comme l'overlay
+    (`_calibrage_overlay`). Avant, `_val` lisait la valeur numérique quel que soit le statut —
+    c'est le trou de SCORING-5-RETOUR §2 : les 95 feuilles `propose` numériques branchaient la
+    SDP (« un résiduel calculé sur du non-validé casse la règle "chaque chiffre est sourcé" »).
+    Désormais un `propose` renvoie `a_verifier` (non numérique → n'entre PAS dans la SDP) ; la
+    présence d'une telle feuille rend la zone non calculable (cf. `_regles_sdp_non_validees` /
+    `_zone_regle_non_validee`), jamais une valeur par défaut."""
     leaf = (reg.get(rub) or {}).get(feuille) if rub in reg else None
     if not isinstance(leaf, dict) or leaf.get("absent") or leaf.get("plage"):
         return None
+    if leaf.get("statut") != "valide":
+        return A_VERIFIER if leaf.get("statut") == "propose" else None
     v = leaf.get(cle)
     if v is None:
-        return A_VERIFIER if leaf.get("statut") == "propose" else None
+        return None
     return float(v) if isinstance(v, (int, float)) else v
+
+
+# ── garde PLU-CALIBRAGE-6 : les feuilles SDP-déterminantes NON validées rendent la capacité non
+#    calculable (jamais une valeur par défaut). Le stationnement en est EXCLU : il ne détermine pas
+#    la SDP (il borne le scénario « logements au sol », pas `surface_plancher_m2`). ────────────────
+_FEUILLES_SDP_CAPACITE = (
+    ("hauteur", "faitage", "m"), ("hauteur", "egout", "m"), ("hauteur", "niveaux", "r_plus"),
+    ("emprise_sol", "ces", "pct"),
+    ("retraits", "voie", "min_m"), ("retraits", "limites_separatives", "min_m"),
+    ("pleine_terre", "pct", "pct"),
+)
+
+
+def _feuille_sdp_porte_valeur(rub: str, cle: str, leaf: dict) -> bool:
+    """La feuille porterait-elle une valeur dans la SDP ? (numérique standard, ou PLU-CALIBRAGE-7 :
+    recul « forme: alignement » = 0 explicite, ou pleine terre composée `espaces_verts_pct`)."""
+    if isinstance(leaf.get(cle), (int, float)):
+        return True
+    if rub == "retraits" and leaf.get("forme") == "alignement":
+        return True                                      # forme 1 : recul 0 explicite
+    if rub == "pleine_terre" and isinstance(leaf.get("espaces_verts_pct"), (int, float)):
+        return True                                      # forme 2 : composée
+    return False
+
+
+def _regles_sdp_non_validees(reg: dict) -> list[str]:
+    """Feuilles SDP-déterminantes en statut `propose` PORTANT une valeur (elles brancheraient la
+    SDP). Leur présence = capacité non calculable (« règle PLU non validée »). Vide = la zone se
+    calcule sur ses seules feuilles validées."""
+    out: list[str] = []
+    for rub, feuille, cle in _FEUILLES_SDP_CAPACITE:
+        sous = reg.get(rub)
+        leaf = sous.get(feuille) if isinstance(sous, dict) else None
+        if not isinstance(leaf, dict):
+            continue
+        if (leaf.get("statut") == "propose" and not leaf.get("absent") and not leaf.get("plage")
+                and _feuille_sdp_porte_valeur(rub, cle, leaf)):
+            out.append(f"{rub}.{feuille}")
+    return out
+
+
+# ── PLU-CALIBRAGE-7 — lecture des deux formes de règle ajoutées au schéma ─────────────────────────
+def _recul_alignement(reg: dict, feuille: str) -> bool:
+    """Forme 1 : la feuille recul (`retraits.<feuille>`) est-elle VALIDÉE en « forme: alignement »
+    (recul 0 explicite — « à l'alignement » / « en limite séparative ») ? ≠ absent."""
+    leaf = (reg.get("retraits") or {}).get(feuille)
+    return (isinstance(leaf, dict) and leaf.get("statut") == "valide"
+            and leaf.get("forme") == "alignement")
+
+
+def _pleine_terre_val(reg: dict):
+    """Valeur de pleine terre d'une feuille VALIDÉE — directe (`pct`) ou COMPOSÉE (forme 2 :
+    `espaces_verts_pct` × `pleine_terre_part` / 100). `propose` → a_verifier (ne branche pas)."""
+    leaf = (reg.get("pleine_terre") or {}).get("pct")
+    if not isinstance(leaf, dict) or leaf.get("absent") or leaf.get("plage"):
+        return None
+    if leaf.get("statut") != "valide":
+        return A_VERIFIER if leaf.get("statut") == "propose" else None
+    if isinstance(leaf.get("pct"), (int, float)):
+        return float(leaf["pct"])
+    ev, part = leaf.get("espaces_verts_pct"), leaf.get("pleine_terre_part")
+    if isinstance(ev, (int, float)) and isinstance(part, (int, float)):
+        return round(float(ev) * float(part) / 100.0, 2)      # forme 2 : le moteur calcule
+    return None
+
+
+def _pleine_terre_compose(reg: dict) -> dict | None:
+    """Forme 2 : les deux chiffres sourcés {espaces_verts_pct, part_pct} d'une feuille pleine terre
+    composée VALIDÉE (pour l'affichage de l'étape). None si feuille directe / non validée."""
+    leaf = (reg.get("pleine_terre") or {}).get("pct")
+    if (isinstance(leaf, dict) and leaf.get("statut") == "valide"
+            and isinstance(leaf.get("espaces_verts_pct"), (int, float))
+            and isinstance(leaf.get("pleine_terre_part"), (int, float))):
+        return {"espaces_verts_pct": float(leaf["espaces_verts_pct"]),
+                "part_pct": float(leaf["pleine_terre_part"])}
+    return None
+
+
+def _zone_regle_non_validee(code: str, feuilles: list[str]) -> ZoneRules:
+    """ZoneRules « non calculable — règle PLU non validée » : la zone est calibrée mais une (ou
+    plusieurs) de ses feuilles SDP restent `propose`. On NE retombe PAS sur l'estimation générique
+    (ce serait une valeur par défaut) : la capacité est déclarée non calculable, motif porté."""
+    liste = ", ".join(sorted(set(feuilles)))
+    return ZoneRules(
+        code=code, calibree=True, regle_non_validee=liste,
+        notes=[f"Capacité non calculable — règle(s) PLU non validée(s) : {liste} "
+               "(feuille `propose`, sans citation retenue). Aucune valeur par défaut appliquée."],
+        sources={"zone": "règle PLU non validée (feuille propose)"})
 
 
 def _stat_from_regles(reg: dict):
@@ -121,7 +224,10 @@ def _stat_from_regles(reg: dict):
     if not isinstance(leaf, dict) or leaf.get("absent"):
         return None
     p = leaf.get("places")
-    if isinstance(p, (int, float)):
+    # PLU-CALIBRAGE-6 : la VALEUR numérique ne branche que si la feuille est validée (validées-only,
+    # comme l'overlay). L'exemption (non numérique, cf. ci-dessous) reste reconnue quel que soit le
+    # statut : c'est un silence de règle, pas un chiffre injecté dans le calcul.
+    if isinstance(p, (int, float)) and leaf.get("statut") == "valide":
         p = int(p) if float(p).is_integer() else p
         return f"{p} place / logement" if p == 1 else f"{p} places / logement"
     # exemption explicite (ex. Saint-Paul U1pru, Art. 12 « sauf en zone… ») : la RAISON de la
@@ -146,8 +252,11 @@ def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> Zone
         emprise_sol_pct=_val(reg, "emprise_sol", "ces", "pct"),
         recul_voirie_m=_val(reg, "retraits", "voie", "min_m"),
         recul_limites_sep_m=_val(reg, "retraits", "limites_separatives", "min_m"),
+        recul_voirie_alignement=_recul_alignement(reg, "voie"),
+        recul_limites_alignement=_recul_alignement(reg, "limites_separatives"),
         stat_logement=_stat_from_regles(reg),
-        pleine_terre_pct=_val(reg, "pleine_terre", "pct", "pct"),
+        pleine_terre_pct=_pleine_terre_val(reg),
+        pleine_terre_compose=_pleine_terre_compose(reg),
         hauteur_mode=zm.get("hauteur_mode"),
         habitat=zm.get("habitat"),
         constructible_neuf=zm.get("constructible_neuf", True),
@@ -184,6 +293,9 @@ def _resolve_zone_base(code: str, commune: str | None = None) -> ZoneRules | Non
         # 1) correspondance directe (normalisée)
         hit = norm.get(normalize_key(code))
         if hit is not None:
+            nv = _regles_sdp_non_validees(D.regles_zone(ins, hit)) if ins else []
+            if nv:
+                return _zone_regle_non_validee(code, nv)   # règle PLU non validée → non calculable
             r = _zone_rules_from_regles(commune, hit, zc)
             r.code = code
             if strict or _has_usable_height(r):
@@ -207,6 +319,9 @@ def _resolve_zone_base(code: str, commune: str | None = None) -> ZoneRules | Non
             u_code = "U" + m.group(1)
             hit_u = norm.get(normalize_key(u_code))
             if hit_u is not None:
+                nv = _regles_sdp_non_validees(D.regles_zone(ins, hit_u)) if ins else []
+                if nv:
+                    return _zone_regle_non_validee(code, nv)   # renvoi vers zone U à règle non validée
                 r = _zone_rules_from_regles(commune, hit_u, zc)
                 r.code = code
                 r.via_renvoi = (f"{code} → règles de {hit_u} (renvoi du règlement, "
@@ -338,17 +453,37 @@ def _calibrage_overlay(code: str, commune: str | None):
     elif ces and ces.get("absent"):
         src["emprise"] = _src_absente(ces)         # l'étape « % réglementé » le dira
 
-    # retraits : voie, limites séparatives (min_m — la formule est évaluée telle quelle par le moteur)
+    # retraits : voie, limites séparatives (min_m — la formule est évaluée telle quelle par le moteur ;
+    # PLU-CALIBRAGE-7 forme 1 : « forme: alignement » = recul 0 EXPLICITE, ≠ absent)
     voie = _feuille("retraits", "voie")
     lim = _feuille("retraits", "limites_separatives")
-    if voie and not voie.get("absent") and isinstance(voie.get("min_m"), (int, float)):
+    if voie and voie.get("forme") == "alignement":
+        champs["recul_voirie_m"] = 0.0; champs["recul_voirie_alignement"] = True
+        src["recul_voirie"] = _src_validee(voie)
+    elif voie and not voie.get("absent") and isinstance(voie.get("min_m"), (int, float)):
         champs["recul_voirie_m"] = float(voie["min_m"]); src["recul_voirie"] = _src_validee(voie)
     elif voie and voie.get("absent"):
         src["recul_voirie"] = _src_absente(voie)
-    if lim and not lim.get("absent") and isinstance(lim.get("min_m"), (int, float)):
+    if lim and lim.get("forme") == "alignement":
+        champs["recul_limites_sep_m"] = 0.0; champs["recul_limites_alignement"] = True
+        src["recul_limites"] = _src_validee(lim)
+    elif lim and not lim.get("absent") and isinstance(lim.get("min_m"), (int, float)):
         champs["recul_limites_sep_m"] = float(lim["min_m"]); src["recul_limites"] = _src_validee(lim)
     elif lim and lim.get("absent"):
         src["recul_limites"] = _src_absente(lim)
+
+    # pleine terre (PLU-CALIBRAGE-7 forme 2 : composée `espaces_verts_pct × pleine_terre_part`) —
+    # sourcée ici (l'ancienne lecture base-only ne portait pas d'article) ; valeur = _pleine_terre_val.
+    pt = _feuille("pleine_terre", "pct")
+    if pt and not pt.get("absent"):
+        _ptv = _pleine_terre_val(reg)
+        if isinstance(_ptv, (int, float)):
+            champs["pleine_terre_pct"] = float(_ptv); src["pleine_terre"] = _src_validee(pt)
+            _cmp = _pleine_terre_compose(reg)
+            if _cmp:
+                champs["pleine_terre_compose"] = _cmp
+    elif pt and pt.get("absent"):
+        src["pleine_terre"] = _src_absente(pt)
 
     # stationnement (par logement)
     st = _feuille("stationnement", "par_logement")

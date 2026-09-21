@@ -380,7 +380,11 @@ DONNEES: dict[str, Donnee] = {
     # FICHE-RANGEMENT-1 Lot 3 — passe-plat SERVI : la valeur n'est pas stockée, elle est produite
     # à la demande par exposition_parcelle (aucun moteur.csv / aucune fiche-règle : donnée
     # informative secondaire, RGE ALTI), servie telle quelle à la tuile. sql_propre interdit (V5b).
+    # TESTS-0 : `table=` était omise à l'ajout (FICHE-RANGEMENT-1 Lot 3) — seule passe-plat servie
+    # sans table déclarée sur 119 (cf. test_circuit2_lot16). Lecture réelle : parcels (centroïde 2975)
+    # puis calcul LIVE sur le MNT RGE ALTI (gdaldem aspect, WMS GetMap) ; aucune valeur stockée.
     moteur=None, calcul="passe_plat",
+    table="parcels (centroïde) → MNT RGE ALTI (gdaldem aspect, WMS GetMap) — calcul live, aucune valeur stockée",
     fonction="src/labuse/faisabilite/exposition.py:exposition_parcelle",
     reservoirs=("rge_alti",), portee="live", type="classe",
     domaine=("Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest", "plat"),

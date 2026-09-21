@@ -70,14 +70,14 @@ zones:
           statut: valide
       pleine_terre:
         pct:
-          pct: 15.0
           article: Ua 11.1
           page_pdf: 27
           citation: Dans le cadre de tout projet, au minimum 30% de la superficie totale de l’unité foncière
             devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine
             terre plantées avec 3 strates (couvrante, arbustive et arborée).
-          statut: propose
-          raison: valeur 15 absente de la citation (harmonisation ≠ texte)
+          statut: valide
+          espaces_verts_pct: 30
+          pleine_terre_part: 50
     silence: autorise
     silence_src: 'Art. Ua 2, p. 22 : « Sont admises toutes les occupations et utilisations du sol non cochées à
       l''article Ua 1 susceptibles de s''insérer dans le tissu urbain sous réserve qu''il n''en résulte pas pour
@@ -319,14 +319,14 @@ zones:
           statut: valide
       pleine_terre:
         pct:
-          pct: 10.0
           article: Uc 11.1
           page_pdf: 58
           citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
             devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine
             terre plantées avec 3 strates (couvrante, arbustive et arborée).
-          statut: propose
-          raison: valeur 10 absente de la citation (harmonisation ≠ texte)
+          statut: valide
+          espaces_verts_pct: 20
+          pleine_terre_part: 50
     silence: autorise
     silence_src: 'Art. Uc 2, p. 51 : « Sont admises toutes les occupations et utilisations du sol non cochées à
       l''article Uc 1 susceptibles de s''insérer dans le tissu urbain sous réserve qu''il n''en résulte pas pour
@@ -423,14 +423,14 @@ zones:
           statut: valide
       pleine_terre:
         pct:
-          pct: 10.0
           article: Uc 11.1
           page_pdf: 58
           citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
             devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine
             terre plantées avec 3 strates (couvrante, arbustive et arborée).
-          statut: propose
-          raison: valeur 10 absente de la citation (harmonisation ≠ texte)
+          statut: valide
+          espaces_verts_pct: 20
+          pleine_terre_part: 50
     renvoi: Uc
     renvoi_src: 'Caractère de la zone Uc, p. 50 : « Il existe un secteur spécifique : Le secteur Uca correspond
       aux poches d''habitations individuelles, commerces et services de proximité comprises entre le triangle agricole
@@ -473,13 +473,13 @@ zones:
             de 3 mètres.
           statut: valide
         limites_separatives:
-          min_m: 0.0
           article: Ud 5
           page_pdf: 68
           citation: Les constructions doivent être implantées en limite séparative et/ou suivant l’alignement
             des constructions limitrophes existantes.
-          statut: propose
-          raison: valeur 0 absente de la citation (harmonisation ≠ texte)
+          statut: valide
+          min_m: 0
+          forme: alignement
       stationnement:
         par_logement:
           places: 0.3
@@ -1055,14 +1055,14 @@ zones:
           statut: valide
       pleine_terre:
         pct:
-          pct: 10.0
           article: Us 11.1
           page_pdf: 125
           citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
             devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine
             terre plantées avec 3 strates (couvrante, arbustive et arborée).
-          statut: propose
-          raison: valeur 10 absente de la citation (harmonisation ≠ texte)
+          statut: valide
+          espaces_verts_pct: 20
+          pleine_terre_part: 50
     silence: autorise
     silence_src: 'Art. Us 2, p. 120 : « Sont admises toutes les occupations et utilisations du sol non cochées à
       l''article Us 1 dès lors qu''elles respectent les conditions suivantes » (art. Us 1, p. 119 : liste fermée
@@ -1284,13 +1284,14 @@ zones:
           statut: valide
       pleine_terre:
         pct:
-          pct: 15.0
-          article: Ua 11.1
-          page_pdf: 145
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
-            et de Programmation lorsqu’elles existent.
-          statut: propose
-          raison: valeur 15 absente de la citation (harmonisation ≠ texte)
+          article: Ua 11.1 (via renvoi 1AU 11.1)
+          page_pdf: 27
+          citation: Dans le cadre de tout projet, au minimum 30% de la superficie totale de l’unité foncière
+            devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine
+            terre plantées avec 3 strates (couvrante, arbustive et arborée).
+          statut: valide
+          espaces_verts_pct: 30
+          pleine_terre_part: 50
     renvoi: Ua
     renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent. » ; caractère de la zone, p. 142 :
@@ -1355,13 +1356,14 @@ zones:
           statut: valide
       pleine_terre:
         pct:
-          pct: 10.0
-          article: Uc 11.1
-          page_pdf: 145
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
-            et de Programmation lorsqu’elles existent.
-          statut: propose
-          raison: valeur 10 absente de la citation (harmonisation ≠ texte)
+          article: Uc 11.1 (via renvoi 1AU 11.1)
+          page_pdf: 58
+          citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
+            devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine
+            terre plantées avec 3 strates (couvrante, arbustive et arborée).
+          statut: valide
+          espaces_verts_pct: 20
+          pleine_terre_part: 50
     renvoi: Uc
     renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
@@ -1413,13 +1415,12 @@ zones:
           formule: sur limite, sinon retrait minimum 5 m
       pleine_terre:
         pct:
-          pct: 20.0
-          article: Ue 11.1
+          article: 1AU 11.1 (renvoi Ue 11.1)
           page_pdf: 145
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
-            et de Programmation lorsqu’elles existent.
-          statut: propose
-          raison: valeur 20 absente de la citation (harmonisation ≠ texte)
+          citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
+            devront être des surfaces non imperméabilisées ou éco-aménageables.
+          statut: valide
+          absent: true
     renvoi: Uem
     renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent. » — l''indice « em » désigne le secteur
@@ -1472,14 +1473,14 @@ zones:
           statut: valide
       pleine_terre:
         pct:
-          pct: 10.0
-          article: 1AU 11.1
+          article: 1AUm 11.1
           page_pdf: 150
           citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
             devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine
             terre plantées avec 3 strates (couvrante, arbustive et arborée).
-          statut: propose
-          raison: valeur 10 absente de la citation (harmonisation ≠ texte)
+          statut: valide
+          espaces_verts_pct: 20
+          pleine_terre_part: 50
     silence: autorise
     silence_src: 'Art. 1AUindicée 1, p. 143 : « Dans la zone 1AUm sont interdits les éléments cochés ci-dessous
       » — tableau à cocher en nomenclature complète des destinations : liste fermée d''interdictions ; les lignes
@@ -1616,13 +1617,14 @@ zones:
           formule: sur limite, sinon retrait minimum 5 m
       pleine_terre:
         pct:
-          pct: 10.0
-          article: Us 11.1
-          page_pdf: 145
-          citation: Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux Orientations d’Aménagement
-            et de Programmation lorsqu’elles existent.
-          statut: propose
-          raison: valeur 10 absente de la citation (harmonisation ≠ texte)
+          article: Us 11.1 (via renvoi 1AU 11.1)
+          page_pdf: 125
+          citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
+            devront être des surfaces non imperméabilisées ou éco-aménageables dont au moins 50% de pleine
+            terre plantées avec 3 strates (couvrante, arbustive et arborée).
+          statut: valide
+          espaces_verts_pct: 20
+          pleine_terre_part: 50
     renvoi: Us
     renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'

@@ -133,6 +133,16 @@ export const CIRCUIT_CSS = `
 .cxp .jl .lienc{color:var(--text);text-decoration:underline;text-decoration-color:var(--line-3);text-underline-offset:2px} .cxp .jl .lienc:hover{text-decoration-color:var(--mint)}
 .cxp .jpage{display:flex;gap:10px;align-items:center;margin-top:12px;color:var(--muted);font-size:12.5px}
 .cxp .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--mint);padding:10px 14px;border-radius:6px;z-index:30;max-width:90vw}
+/* DASHBOARD-4 D1 — bande des compteurs (= ceux des verrous) */
+.cxp .cc-strip{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;margin:10px 0 16px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--muted);font-size:13px}
+.cxp .cc-strip b{color:var(--text);font-weight:650;font-variant-numeric:tabular-nums} .cxp .cc-strip .cc-sep{color:var(--faint)} .cxp .cc-strip .cc-plus{color:var(--faint)}
+/* DASHBOARD-4 D2 — bloc verrous joués à la demande */
+.cxp .verrous-bloc{margin:8px 0 20px} .cxp .verrous-tete{display:flex;align-items:center;gap:12px;margin:0 0 10px} .cxp .verrous-tete h2{font-size:15px;font-weight:600;flex:1}
+.cxp details.item{display:block;grid-template-columns:none} .cxp details.item>summary{cursor:pointer} .cxp details.item[open]>summary{margin-bottom:8px}
+.cxp .verrous-details{margin:0 0 2px 40px;padding:0 0 0 16px;list-style:disc;color:var(--muted);font-size:12px} .cxp .verrous-details li{margin:2px 0}
+/* DASHBOARD-4 D7 — plafond agents + crédit, dans l'onglet Circuit */
+.cxp .agents-info{margin:2px 0 14px;padding:9px 12px;border:1px solid var(--line);border-left:3px solid var(--mauve);border-radius:8px;background:var(--panel);color:var(--muted);font-size:13px}
+.cxp .agents-info.off{border-left-color:var(--faint)} .cxp .agents-info b{color:var(--text)} .cxp .agents-info a{color:var(--mint)}
 .cxp :focus-visible{outline:2px solid var(--jaune);outline-offset:2px}
 @media (max-width:1100px){ .cxp .diagram{grid-template-columns:1fr;column-gap:0} .cxp .diagram svg{display:none} .cxp .pump{position:static;margin:12px 0} .cxp .dg{grid-template-columns:1fr} .cxp .kpis{grid-template-columns:1fr 1fr} .cxp .jl{grid-template-columns:1fr 1fr} }
 `

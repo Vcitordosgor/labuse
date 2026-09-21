@@ -1,0 +1,53 @@
+{
+ "tag": "apres",
+ "n": 710,
+ "par_commune": {
+  "La Possession": {
+   "calculable": 32,
+   "terrain_exigu": 8
+  },
+  "Le Port": {
+   "calculable": 152,
+   "terrain_exigu": 65,
+   "habitat_interdit": 43,
+   "redhibitoire": 2
+  },
+  "Petite-Île": {
+   "calculable": 36,
+   "redhibitoire": 4
+  },
+  "Saint-Joseph": {
+   "calculable": 34,
+   "terrain_exigu": 6
+  },
+  "Saint-Paul": {
+   "calculable": 126,
+   "terrain_exigu": 34
+  },
+  "Saint-Pierre": {
+   "habitat_interdit": 50,
+   "calculable": 70,
+   "terrain_exigu": 10,
+   "regle_plu_non_validee": 12
+  },
+  "Sainte-Marie": {
+   "calculable": 14,
+   "terrain_exigu": 7,
+   "redhibitoire": 5
+  }
+ },
+ "total": {
+  "calculable": 464,
+  "terrain_exigu": 130,
+  "habitat_interdit": 93,
+  "redhibitoire": 11,
+  "regle_plu_non_validee": 12
+ },
+ "extrapolation": {
+  "calculable": 8471,
+  "terrain_exigu": 3746,
+  "habitat_interdit": 443,
+  "redhibitoire": 24,
+  "regle_plu_non_validee": 12
+ }
+}

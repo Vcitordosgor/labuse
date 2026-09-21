@@ -64,7 +64,10 @@ def test_decoupe_un_module_par_section():
     for f in ("primitives.tsx", "constructibilite.tsx", "risques.tsx", "marche.tsx", "reseaux.tsx", "autour.tsx"):
         assert (FICHE_DIR / f).exists(), f
     fiche = _read("Fiche.tsx")
-    for comp in ("ConstructibiliteSection", "RisquesSection", "MarcheSection", "ReseauxSection", "AutourSection"):
+    # TESTS-0 : FICHE-RANGEMENT-2 Lot 1 (355ac3ff) — LE BASCULEMENT en 11 sections PAR NATURE a
+    # DISSOUS les sections « fourre-tout » ConstructibiliteSection / LeBienSection (leurs blocs sont
+    # recomposés inline). Restent les 4 sections mono-nature réutilisées : Risques/Marché/Réseaux/Quartier.
+    for comp in ("RisquesSection", "MarcheSection", "ReseauxSection", "AutourSection"):
         assert f"<{comp} " in fiche, comp
     # Fiche ré-exporte les 2 symboles publics (EtudierBien / M22Programme / test les importent).
     assert "export { Calculette, FaisabiliteTab } from './constructibilite'" in fiche
@@ -90,8 +93,15 @@ def test_f6_vigilances_dabord_sans_objet_replies():
 # ── F7 Marché : socio-éco parti (plus de MarcheSecteurBlock ici) ─────────────────────────────────
 def test_f7_marche_ne_porte_plus_le_socio_eco():
     m = _read("marche.tsx")
-    assert "MarcheSecteurBlock" not in m          # déménagé vers Autour
-    assert "PermitsProximityBlock" not in m       # permis → Autour
+    # TESTS-0 : on vérifie l'absence de RENDU (JSX) et d'IMPORT, pas le simple mot — FICHE-RANGEMENT-3
+    # Lot 1 (647eef6c) a ajouté un COMMENTAIRE citant PermitsProximityBlock/DepotsBlock pour dire qu'ils
+    # vivent en §9 Quartier (retirés du §8 Marché). Le composant n'y est ni rendu ni importé.
+    def ni_rendu_ni_importe(nom: str, src: str) -> bool:
+        rendu = f"<{nom}" in src
+        importe = any(nom in l and l.lstrip().startswith("import") for l in src.splitlines())
+        return not rendu and not importe
+    assert ni_rendu_ni_importe("MarcheSecteurBlock", m)   # déménagé vers Autour
+    assert ni_rendu_ni_importe("PermitsProximityBlock", m)  # permis rendus en §9 Quartier (Autour)
 
 
 # ── F8 Réseaux : 4 blocs, permis partis, un verdict d'accès ───────────────────────────────────────

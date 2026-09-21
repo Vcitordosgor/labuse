@@ -1,0 +1,6 @@
+{
+ "sha": "8564b1e7381db9aa10d51a44a306d113aba3349e",
+ "iso": "2026-09-21T14:45:13+02:00",
+ "par": "baseline DASHBOARD-4 (dernier deploy connu — écrasé par deploy.sh au prochain déploiement)",
+ "note": "merge feat/donnees-7"
+}

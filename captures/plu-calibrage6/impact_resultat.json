@@ -1,0 +1,105 @@
+{
+ "n_total": 923,
+ "par_zone": 40,
+ "par_commune": {
+  "Bras-Panon": {
+   "inchangée (calculée)": 36,
+   "déjà non calculable (autre cause)": 4
+  },
+  "La Possession": {
+   "A_calc → C_non_calculable (règle non validée)": 32,
+   "déjà non calculable (autre cause)": 8
+  },
+  "Le Port": {
+   "A_calc → C_non_calculable (règle non validée)": 152,
+   "déjà non calculable (autre cause)": 110
+  },
+  "Petite-Île": {
+   "A_calc → C_non_calculable (règle non validée)": 36,
+   "déjà non calculable (autre cause)": 4
+  },
+  "Saint-Joseph": {
+   "inchangée (calculée)": 34,
+   "déjà non calculable (autre cause)": 118,
+   "A_calc → C_non_calculable (règle non validée)": 34
+  },
+  "Saint-Paul": {
+   "A_calc → C_non_calculable (règle non validée)": 126,
+   "déjà non calculable (autre cause)": 34
+  },
+  "Saint-Pierre": {
+   "déjà non calculable (autre cause)": 72,
+   "A_calc → C_non_calculable (règle non validée)": 70
+  },
+  "Sainte-Marie": {
+   "A_calc → C_non_calculable (règle non validée)": 14,
+   "déjà non calculable (autre cause)": 39
+  }
+ },
+ "total": {
+  "inchangée (calculée)": 70,
+  "déjà non calculable (autre cause)": 389,
+  "A_calc → C_non_calculable (règle non validée)": 464
+ },
+ "transitions_nc": {
+  "terrain_exigu → terrain_exigu": 36,
+  "terrain_exigu → regle_plu_non_validee:UAm": 8,
+  "terrain_exigu → regle_plu_non_validee:1AUa": 20,
+  "terrain_exigu → regle_plu_non_validee:1AUc": 2,
+  "terrain_exigu → regle_plu_non_validee:1AUm": 8,
+  "habitat_interdit:1AUs → regle_plu_non_validee:1AUs": 3,
+  "terrain_exigu → regle_plu_non_validee:Ua": 8,
+  "terrain_exigu → regle_plu_non_validee:Uc": 19,
+  "terrain_exigu → regle_plu_non_validee:Uca": 6,
+  "redhibitoire → regle_plu_non_validee:Uca": 2,
+  "terrain_exigu → regle_plu_non_validee:Ud": 2,
+  "habitat_interdit:Us → regle_plu_non_validee:Us": 40,
+  "redhibitoire → regle_plu_non_validee:UZ": 4,
+  "habitat_interdit:1AU6 → habitat_interdit:1AU6": 40,
+  "habitat_interdit:1AU6c → habitat_interdit:1AU6c": 40,
+  "terrain_exigu → regle_plu_non_validee:U1": 6,
+  "terrain_exigu → regle_plu_non_validee:U3a": 11,
+  "terrain_exigu → regle_plu_non_validee:U4a": 4,
+  "terrain_exigu → regle_plu_non_validee:U5a": 7,
+  "terrain_exigu → regle_plu_non_validee:U6a": 12,
+  "habitat_interdit:Uazp → regle_plu_non_validee:Uazp": 40,
+  "habitat_interdit:Uazpc → regle_plu_non_validee:Uazpc": 10,
+  "terrain_exigu → regle_plu_non_validee:Ucv": 3,
+  "habitat_interdit:Uep → regle_plu_non_validee:Uep": 12,
+  "terrain_exigu → regle_plu_non_validee:Up": 7,
+  "terrain_exigu → regle_plu_non_validee:1AUb": 7,
+  "redhibitoire → regle_plu_non_validee:1AUb": 5,
+  "habitat_interdit:1AUep → habitat_interdit:1AUep": 27
+ },
+ "extrapolation": {
+  "La Possession": {
+   "newly_nc_est": 172,
+   "total_zone": 215
+  },
+  "Le Port": {
+   "newly_nc_est": 4950,
+   "total_zone": 8112
+  },
+  "Petite-Île": {
+   "newly_nc_est": 118,
+   "total_zone": 131
+  },
+  "Saint-Joseph": {
+   "newly_nc_est": 83,
+   "total_zone": 98
+  },
+  "Saint-Paul": {
+   "newly_nc_est": 1090,
+   "total_zone": 1356
+  },
+  "Saint-Pierre": {
+   "newly_nc_est": 2043,
+   "total_zone": 2758
+  },
+  "Sainte-Marie": {
+   "newly_nc_est": 14,
+   "total_zone": 26
+  }
+ },
+ "extrapolation_total": 8471
+}

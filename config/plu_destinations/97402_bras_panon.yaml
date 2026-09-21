@@ -285,13 +285,13 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
-          min_m: 4.0
+          min_m: 3
           article: UB 7.2
           page_pdf: 30
-          citation: En secteur Uba, les constructions peuvent être implantées sur une seule limite latérale
-            ou en retrait.
-          statut: propose
-          raison: valeur 4 absente de la citation (harmonisation ≠ texte)
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
+            de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié
+            de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
+          statut: valide
       stationnement:
         par_logement:
           places: 1.0
