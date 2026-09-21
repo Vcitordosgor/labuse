@@ -236,6 +236,28 @@ def _c_usage_sol(db, idu, f):
     return _nz((o.get("usage_libelle") or o.get("usage")) if isinstance(o, dict) else None)
 
 
+# DONNEES-2 — les 3 parts CoSIA de couverture du sol (§2 Terrain, miroir Dossier), lues du bloc
+# le_bien.cosia_couverture bâti par bati.py:_cosia_couverture.
+def _cosia_cov(f):
+    cc = (f.get("le_bien") or {}).get("cosia_couverture") or {}
+    return cc if isinstance(cc, dict) else {}
+
+
+@extracteur("part_impermeabilisee_cosia_pct")
+def _c_cosia_imper(db, idu, f):
+    return _nz(_cosia_cov(f).get("part_impermeabilisee_pct"))
+
+
+@extracteur("part_vegetalisee_cosia_pct")
+def _c_cosia_veg(db, idu, f):
+    return _nz(_cosia_cov(f).get("part_vegetalisee_boisee_pct"))
+
+
+@extracteur("part_sol_nu_cosia_pct")
+def _c_cosia_sol_nu(db, idu, f):
+    return _nz(_cosia_cov(f).get("part_sol_nu_pct"))
+
+
 @extracteur("pente_toit_deg")
 def _c_pente_toit(db, idu, f):
     t = (f.get("le_bien") or {}).get("toit") or {}

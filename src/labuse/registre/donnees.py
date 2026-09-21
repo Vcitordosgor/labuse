@@ -1359,6 +1359,30 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/bati.py:le_bien_block (parcel_ocsge — précalcul ingestion/ocsge.py)",
     reservoirs=("ocsge",), portee="live",
     domaine=None, domaine_source="nomenclature OCS GE (IGN)"),
+ # DONNEES-2 — CoSIA (IGN, 20 cm) COMPLÈTE OCS GE : la couverture du sol de la PARCELLE elle-même,
+ # en 3 parts (Σ surface de classe CoSIA / contenance). Ni doublon ni remplacement d'OCS GE (donnée
+ # d'îlot, part ARTIFICIALISÉE) : « imperméabilisé » ≠ « artificialisé », et la maille est la parcelle
+ # à 20 cm. Aucune ne recoupe exactement une ligne OCS GE affichée. N'entrent pas dans le score.
+ "part_impermeabilisee_cosia_pct": C("Part imperméabilisée (CoSIA)", "%", "parcelle",
+    "part de la parcelle scellée (bâti + revêtement imperméable + piscine + serre) mesurée par "
+    "CoSIA à 20 cm, Σ surface de ces classes / contenance — complète l'artificialisation OCS GE "
+    "d'îlot (≠ imperméabilisé), ne recoupe aucune ligne OCS GE affichée ; hors score",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/bati.py:le_bien_block (_cosia_couverture — part_impermeabilisee_pct)",
+    reservoirs=("cosia",), portee="live", table="parcel_cosia_couverture"),
+ "part_vegetalisee_cosia_pct": C("Part végétalisée/boisée (CoSIA)", "%", "parcelle",
+    "part de la parcelle en végétation vivante (feuillu, conifère, broussaille, pelouse, culture, "
+    "vigne) mesurée par CoSIA à 20 cm, Σ surface de ces classes / contenance — donnée de parcelle, "
+    "aucune ligne OCS GE affichée ne la donne ; hors score",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/bati.py:le_bien_block (_cosia_couverture — part_vegetalisee_boisee_pct)",
+    reservoirs=("cosia",), portee="live", table="parcel_cosia_couverture"),
+ "part_sol_nu_cosia_pct": C("Part sol nu (CoSIA)", "%", "parcelle",
+    "part de la parcelle en terre nue (sol nu, terre labourée) mesurée par CoSIA à 20 cm, Σ surface "
+    "de ces classes / contenance — donnée de parcelle, aucune ligne OCS GE affichée ne la donne ; hors score",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/bati.py:le_bien_block (_cosia_couverture — part_sol_nu_pct)",
+    reservoirs=("cosia",), portee="live", table="parcel_cosia_couverture"),
  "zan_evolution_commune": C("Artificialisation 2017→2022 (OCS GE)", "m²", "commune",
     "surface artificialisée entre les millésimes OCS GE 2017 et 2022, par commune — produit "
     "différentiel OFFICIEL IGN (flags artif du portail de l'artificialisation) ; la pression "

@@ -130,6 +130,24 @@ export function TerrainDuBienBlock({ f }: { f: Fiche }) {
         <FactRow label="Sol artificialisé" value={<>{b.ocsge.part_artif_pct.toLocaleString('fr-FR')}<small> % — d'après OCS GE {b.ocsge.millesime}</small></>}
           src={b.ocsge.source} />
       )}
+      {/* DONNEES-2 — CoSIA COMPLÈTE OCS GE : couverture du sol de la parcelle à 20 cm, 3 parts en
+          complément (ni doublon ni remplacement : imperméabilisé ≠ artificialisé, maille = parcelle). */}
+      {b.cosia_couverture && (
+        <>
+          {b.cosia_couverture.part_impermeabilisee_pct != null && (
+            <FactRow label="Part imperméabilisée" value={<>{b.cosia_couverture.part_impermeabilisee_pct.toLocaleString('fr-FR')}<small> %</small></>}
+              src={b.cosia_couverture.source} />
+          )}
+          {b.cosia_couverture.part_vegetalisee_boisee_pct != null && (
+            <FactRow label="Part végétalisée / boisée" value={<>{b.cosia_couverture.part_vegetalisee_boisee_pct.toLocaleString('fr-FR')}<small> %</small></>}
+              src={b.cosia_couverture.source} />
+          )}
+          {b.cosia_couverture.part_sol_nu_pct != null && (
+            <FactRow label="Part sol nu" value={<>{b.cosia_couverture.part_sol_nu_pct.toLocaleString('fr-FR')}<small> %</small></>}
+              src={b.cosia_couverture.source} />
+          )}
+        </>
+      )}
     </div>
   )
 }

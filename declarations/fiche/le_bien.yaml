@@ -56,6 +56,28 @@ donnees:
     absence_type: absente_ici
     pourquoi: "Nature dominante de l'occupation ; contexte, replié."
 
+  # ── DONNEES-2 — CoSIA COMPLÈTE OCS GE : couverture du sol de la PARCELLE à 20 cm, 3 parts en
+  #    complément des lignes OCS GE ci-dessus (donnée d'îlot). Aucune ne recoupe exactement une
+  #    ligne OCS GE : imperméabilisé ≠ artificialisé, et OCS GE ne donne ni part végétale ni sol nu.
+  - quoi:  part_impermeabilisee_cosia_pct
+    ou:    { rang: 62, etat: replie, section: "Couverture du sol" , fiche_section: terrain }
+    comment: { libelle: "Part imperméabilisée (CoSIA)", unite: "%", format: pourcent, i: "Part de la parcelle scellée (bâti, revêtement imperméable, piscine, serre) mesurée par CoSIA à 20 cm — complète l'artificialisation OCS GE d'îlot ; « imperméabilisé » n'est pas « artificialisé »." }
+    absence: "Part imperméabilisée (CoSIA) : parcelle hors couverture CoSIA."
+    absence_type: absente_ici
+    pourquoi: "Ce que CoSIA scelle sur la parcelle même (20 cm), en complément de l'îlot OCS GE — replié."
+  - quoi:  part_vegetalisee_cosia_pct
+    ou:    { rang: 64, etat: replie, section: "Couverture du sol" , fiche_section: terrain }
+    comment: { libelle: "Part végétalisée/boisée (CoSIA)", unite: "%", format: pourcent, i: "Part de la parcelle en végétation vivante (feuillu, conifère, broussaille, pelouse, culture, vigne) mesurée par CoSIA à 20 cm — aucune ligne OCS GE affichée ne la donne." }
+    absence: "Part végétalisée/boisée (CoSIA) : parcelle hors couverture CoSIA."
+    absence_type: absente_ici
+    pourquoi: "La végétation réelle de la parcelle (20 cm) — nouvelle, non couverte par OCS GE d'îlot ; replié."
+  - quoi:  part_sol_nu_cosia_pct
+    ou:    { rang: 66, etat: replie, section: "Couverture du sol" , fiche_section: terrain }
+    comment: { libelle: "Part sol nu (CoSIA)", unite: "%", format: pourcent, i: "Part de la parcelle en terre nue (sol nu, terre labourée) mesurée par CoSIA à 20 cm — aucune ligne OCS GE affichée ne la donne." }
+    absence: "Part sol nu (CoSIA) : parcelle hors couverture CoSIA."
+    absence_type: absente_ici
+    pourquoi: "Le sol nu réel de la parcelle (20 cm) — nouveau, non couvert par OCS GE d'îlot ; replié."
+
   - quoi:  cosia_detecte_m2
     ou:    { rang: 70, etat: replie, section: "Couverture du sol" }
     comment: { libelle: "Bâti détecté CoSIA (hors BD TOPO)", unite: "m²", format: entier_m2, i: "Surface bâtie que CoSIA 2025 détecte sur la parcelle mais que l'empreinte BD TOPO n'a pas — signale un bâti récent ou non cartographié." }
