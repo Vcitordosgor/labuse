@@ -1990,6 +1990,87 @@ def compute_residuel_cmd(
         typer.echo(f"    cause {cz}: {n}")
 
 
+@app.command("score-labuse")
+def score_labuse_cmd(
+    run: str = typer.Option(..., "--run", help="Libellé du run candidat (run_label) — versionne la sortie."),
+    communes: str = typer.Option(None, "--communes",
+                                 help="Communes (noms/INSEE, séparées par des virgules). Défaut : île."),
+    parcelles: str = typer.Option(None, "--parcelles",
+                                  help="IDU de parcelles (virgules) — sous-ensemble ciblé."),
+    cascade_label: str = typer.Option("q_v13_sources1", "--cascade-label",
+                                      help="Run cascade dont on lit accès + verdicts (reclassement v2)."),
+    signal_run: str = typer.Option(None, "--signal-run",
+                                   help="run_id p_score_v2 pour le Signal (défaut : Score seul)."),
+    signal_recette: str = typer.Option("q_v15", "--signal-recette", help="Recette du Signal (traçabilité)."),
+    persist: bool = typer.Option(True, "--persist/--no-persist", help="Écrire dans score_labuse."),
+    chunk: int = typer.Option(2000, help="Taille des lots."),
+) -> None:
+    """SCORING-6 — calcule le Score LABUSE (+ Signal + cascade v2) sur un SOUS-ENSEMBLE, SANS
+    cascade ni run complet (le Score est déterministe, à la volée), et l'écrit dans `score_labuse`
+    (versionné par run_label). q_v11_m137 reste servi — c'est un run CANDIDAT."""
+    import time
+
+    from .scoring.score_labuse_combine import (combiner, ensure_schema,
+                                               persister)
+
+    with session_scope() as s:
+        if parcelles:
+            idus = [x.strip() for x in parcelles.split(",") if x.strip()]
+            ids = [r[0] for r in s.execute(
+                select(models.Parcel.id).where(models.Parcel.idu.in_(idus))
+                .order_by(models.Parcel.idu))]
+        elif communes:
+            ids = []
+            for c in communes.split(","):
+                ids += _parcel_ids(s, _resolve_commune(c.strip()))
+        else:
+            ids = _parcel_ids(s, None)
+    if not ids:
+        typer.echo("Aucune parcelle ciblée.")
+        raise typer.Exit(1)
+
+    with engine().begin() as c:
+        ensure_schema(c)
+    t0 = time.time()
+    total = 0
+    for k in range(0, len(ids), chunk):
+        with session_scope() as s:
+            lignes = combiner(s, ids[k:k + chunk], run, cascade_label=cascade_label,
+                              signal_run_id=signal_run, signal_recette=signal_recette)
+            total += (persister(s, run, lignes, cascade_label=cascade_label,
+                                signal_run_id=signal_run, communes=communes)
+                      if persist else len(lignes))
+        typer.echo(f"    {min(k + chunk, len(ids))}/{len(ids)} parcelles…")
+    typer.echo(f"✓ run « {run} » : {total} parcelles scorées · {int(time.time() - t0)}s "
+               f"({'écrit' if persist else 'à blanc'})")
+    if persist:
+        with session_scope() as s:
+            for b, n in s.execute(text(
+                    "SELECT bande, count(*) FROM score_labuse WHERE run_label=:r GROUP BY 1 "
+                    "ORDER BY 1"), {"r": run}):
+                typer.echo(f"    bande {b}: {n}")
+
+
+@app.command("ingestion-delta")
+def ingestion_delta_cmd(
+    lister: bool = typer.Option(False, "--list", help="Liste les deltas récents."),
+    source: str = typer.Option(None, "--source", help="Enregistre un delta pour cette source."),
+    note: str = typer.Option(None, "--note"),
+) -> None:
+    """SCORING-6 lot F — journal des deltas d'ingestion (source, date, parcelles touchées),
+    pour préparer un recalcul Score/cascade EN DELTA (SCORING-5-RAPPORT §8.3)."""
+    from .scoring.ingestion_journal import (deltas_depuis, ensure_schema,
+                                            record_delta)
+    with engine().begin() as c:
+        ensure_schema(c)
+        if source:
+            record_delta(c, source, note=note)
+            typer.echo(f"delta enregistré : source={source}")
+        if lister or not source:
+            for d in deltas_depuis(c)[:30]:
+                typer.echo(f"  {d.survenu_le}  {d.source:<24} n={d.n_parcelles}  {d.note or ''}")
+
+
 @app.command("residuel-migrate")
 def residuel_migrate_cmd() -> None:
     """M135 — migration one-time : parcel_residuel (table) → run 1 « legacy » + VUE (idempotent)."""
