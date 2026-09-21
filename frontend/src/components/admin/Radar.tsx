@@ -235,20 +235,8 @@ function AFaire({ n, titre, phrase, ouvert, onToggle, children }: {
   )
 }
 
-// ── bandeau descriptif repliable (mémoire locale) ──
-function Bandeau() {
-  const [lu, setLu] = useState(() => { try { return localStorage.getItem('radar-bandeau-lu') === '1' } catch { return false } })
-  if (lu) return <button onClick={() => setLu(false)} className="self-start text-[11px] text-txt-dim hover:text-txt">ⓘ à propos du Radar</button>
-  const replier = () => { try { localStorage.setItem('radar-bandeau-lu', '1') } catch { /* indispo */ } ; setLu(true) }
-  return (
-    <div className="rounded-xl border border-line-2 bg-surface-2/50 px-4 py-3 text-[12.5px] leading-relaxed text-txt-mut">
-      <p>Faits extraits d’annonces publiques + lien vers la source. Aucune photo ni texte d’annonce n’est
-        stocké ni affiché. Le chemin par captures d’écran est retiré (répertoire /srv en lecture seule) —
-        remplacé par le dépôt HTML.</p>
-      <button onClick={replier} className="mt-2 text-[11px] text-mint hover:underline">J’ai lu — replier</button>
-    </div>
-  )
-}
+// DASHBOARD-4 (R1) — le bandeau descriptif « Faits extraits d'annonces publiques… » et son bouton
+// « J'ai lu — replier » ont été retirés (bruit d'exploitation, jamais une action).
 
 export function RadarSection() {
   const qc = useQueryClient()
@@ -280,8 +268,6 @@ export function RadarSection() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Bandeau />
-
       {/* Section 1 — dépôt du jour + bilan du dernier dépôt */}
       <div className="grid grid-cols-2 gap-3.5 max-[1100px]:grid-cols-1">
         <DepotHtml onDepose={onDepose} />

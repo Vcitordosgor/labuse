@@ -457,6 +457,58 @@ def bloquees_a_deposer(db) -> int:
     return n
 
 
+def deposables(db) -> dict:
+    """DASHBOARD-4 (P1) — les demandes qui PEUVENT partir, MÊME logique que `marquer_deposes` (le geste
+    de dépôt en bloc) : statut 'demande' (alias legacy inclus), corps sans gabarit {…}, aucune parcelle
+    opposée. « à déposer » (kpi_dashboard) compte TOUTES les demandes ; « déposables » ne compte que
+    celles que le geste ferait réellement partir — c'est le chiffre de la tuile Pilotage.
+    Retourne {deposables, bloquees, incomplets, plus_ancien_ouvre_j} : le nombre déposable, le nombre
+    retenu par une opposition, le nombre retenu par un gabarit, et l'ancienneté (jours OUVRÉS) de la
+    plus vieille demande déposable (None si aucune) — au-delà de 5 j ouvrés, la tuile passe au rouge."""
+    legacy = [k for k, v in STATUT_ALIAS.items() if v == "demande"]
+    rows = db.execute(text(
+        "SELECT id, ts, corps, parcelles FROM courrier_demandes"
+        " WHERE corps IS NOT NULL AND statut = ANY(:src)"),
+        {"src": ["demande", *legacy]}).mappings().all()
+    n_ok = n_bloq = n_incomplet = 0
+    plus_ancienne = None
+    for r in rows:
+        parc = r["parcelles"]
+        if isinstance(parc, str):
+            parc = json.loads(parc or "[]")
+        if corps_a_placeholders(r["corps"]):
+            n_incomplet += 1
+            continue
+        if demande_opposee(db, parc or []):
+            n_bloq += 1
+            continue
+        n_ok += 1
+        if r["ts"] and (plus_ancienne is None or r["ts"] < plus_ancienne):
+            plus_ancienne = r["ts"]
+    return {"deposables": n_ok, "bloquees": n_bloq, "incomplets": n_incomplet,
+            "plus_ancien_ouvre_j": jours_ouvres_depuis(plus_ancienne)}
+
+
+def jours_ouvres_depuis(depuis) -> int | None:
+    """Nombre de jours OUVRÉS (lun-ven, hors week-end) écoulés depuis `depuis` (aware) jusqu'à
+    maintenant. None si `depuis` est absent. Sert au seuil « rouge si > 5 j ouvrés » (P2)."""
+    if depuis is None:
+        return None
+    from datetime import datetime, timezone
+    fin = datetime.now(timezone.utc)
+    debut = depuis if depuis.tzinfo else depuis.replace(tzinfo=timezone.utc)
+    if fin <= debut:
+        return 0
+    n = 0
+    jour = debut.date()
+    dernier = fin.date()
+    while jour < dernier:
+        jour = jour.fromordinal(jour.toordinal() + 1)
+        if jour.weekday() < 5:   # 0-4 = lundi-vendredi
+            n += 1
+    return n
+
+
 def kpi_dashboard(db) -> dict:
     """CONNEXIONS-2 Lot 4 (KPI dashboard) — agrégat des demandes par BUCKET (à déposer / en cours / clos),
     à partir du vocabulaire unique. « à déposer » = ce que LABUSE doit encore déposer (statut 'demande')."""

@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import {
   getAdminCircuit, getAdminCircuitTaches, postAdminCircuitAgents, postAdminCircuitVerifier,
+  postAdminCircuitVerrous,
 } from '../../../lib/api'
 
 import { CircuitDiagram } from './CircuitDiagram'
@@ -37,14 +38,20 @@ export function CircuitSection() {
     queryKey: ['circuit-taches'], queryFn: getAdminCircuitTaches,
     refetchInterval: (query) => {
       const d = query.state.data as any
-      return d && (d.verifier?.etat === 'en_cours' || d.agents?.etat === 'en_cours') ? 1500 : false
+      return d && (d.verifier?.etat === 'en_cours' || d.agents?.etat === 'en_cours' || d.verrous?.etat === 'en_cours') ? 1500 : false
     },
   })
   const tv = taches.data?.verifier as any
   const ta = taches.data?.agents as any
+  const tverr = taches.data?.verrous as any   // DASHBOARD-4 D2 — la tâche « verrous » (Résumé)
 
   const verifier = useMutation({
     mutationFn: postAdminCircuitVerifier,
+    onSuccess: () => { setMsgLocal(null); setFerme(null); taches.refetch() },
+  })
+  // DASHBOARD-4 (D2) — rejouer les verrous (tâche détachée) depuis le Résumé.
+  const verrous = useMutation({
+    mutationFn: postAdminCircuitVerrous,
     onSuccess: () => { setMsgLocal(null); setFerme(null); taches.refetch() },
   })
   const agents = useMutation({
@@ -57,15 +64,16 @@ export function CircuitSection() {
   })
 
   // à la fin d'une tâche (en_cours → autre), le Résumé se rafraîchit seul.
-  const prevEtat = useRef<{ v?: string; a?: string }>({})
+  const prevEtat = useRef<{ v?: string; a?: string; w?: string }>({})
   useEffect(() => {
-    const v = tv?.etat, a = ta?.etat
+    const v = tv?.etat, a = ta?.etat, w = tverr?.etat
     if ((prevEtat.current.v === 'en_cours' && v !== 'en_cours') ||
-        (prevEtat.current.a === 'en_cours' && a !== 'en_cours')) {
+        (prevEtat.current.a === 'en_cours' && a !== 'en_cours') ||
+        (prevEtat.current.w === 'en_cours' && w !== 'en_cours')) {
       qc.invalidateQueries({ queryKey: ['admin-circuit'] })
     }
-    prevEtat.current = { v, a }
-  }, [tv?.etat, ta?.etat, qc])
+    prevEtat.current = { v, a, w }
+  }, [tv?.etat, ta?.etat, tverr?.etat, qc])
 
   const d = q.data as CircuitData | undefined
 
@@ -100,8 +108,8 @@ export function CircuitSection() {
   if (!d) return <div className="cxp"><style>{CIRCUIT_CSS}</style><div className="muted">Circuit indisponible.</div></div>
 
   // ── la ligne de progression / message, sous les onglets (visible quel que soit l'onglet) ──
-  const enCours = tv?.etat === 'en_cours' ? tv : ta?.etat === 'en_cours' ? ta : null
-  const finie = [tv, ta].filter((t: any) => t && (t.etat === 'termine' || t.etat === 'echec'))
+  const enCours = tv?.etat === 'en_cours' ? tv : ta?.etat === 'en_cours' ? ta : tverr?.etat === 'en_cours' ? tverr : null
+  const finie = [tv, ta, tverr].filter((t: any) => t && (t.etat === 'termine' || t.etat === 'echec'))
     .sort((a: any, b: any) => (a.maj < b.maj ? 1 : -1))[0]
   let barre: { ton: string; txt: string; pct?: number; fermable?: boolean } | null = null
   if (msgLocal) barre = { ton: 'info', txt: msgLocal, fermable: true }
@@ -122,16 +130,20 @@ export function CircuitSection() {
         <button className={onglet === 'journal' ? 'on' : ''} onClick={() => setOnglet('journal')}>
           Journal{nJour ? <span className="n">{nJour}</span> : ''}
         </button>
-        <div className="actions">
-          <button className="btn mauve" disabled={agents.isPending || ta?.etat === 'en_cours'}
-            onClick={() => { agents.mutate(); setOnglet('circuit') }}>
-            {ta?.etat === 'en_cours' ? `${ta.fait} / ${ta.total} agents…` : 'Envoyer les agents sur tout'}
-          </button>
-          <button className="btn mint" disabled={verifier.isPending || tv?.etat === 'en_cours'}
-            onClick={() => { verifier.mutate(); setOnglet('circuit') }}>
-            {tv?.etat === 'en_cours' ? 'Contrôle en cours…' : 'Vérifier que tout coule'}
-          </button>
-        </div>
+        {/* DASHBOARD-4 (D5) — « Envoyer les agents » / « Vérifier que tout coule » vivent dans l'onglet
+            Circuit SEULEMENT (jamais sur le Résumé, qui ne fait que dire ce qui cloche). */}
+        {onglet === 'circuit' && (
+          <div className="actions">
+            <button className="btn mauve" disabled={agents.isPending || ta?.etat === 'en_cours'}
+              onClick={() => { agents.mutate() }}>
+              {ta?.etat === 'en_cours' ? `${ta.fait} / ${ta.total} agents…` : 'Envoyer les agents sur tout'}
+            </button>
+            <button className="btn mint" disabled={verifier.isPending || tv?.etat === 'en_cours'}
+              onClick={() => { verifier.mutate() }}>
+              {tv?.etat === 'en_cours' ? 'Contrôle en cours…' : 'Vérifier que tout coule'}
+            </button>
+          </div>
+        )}
       </div>
 
       {barre && (
@@ -143,10 +155,20 @@ export function CircuitSection() {
       )}
 
       <section className={`tab ${onglet === 'resume' ? 'on' : ''}`}>
-        <Resume data={d} onCible={allerVersCircuit} />
+        <Resume data={d} onCible={allerVersCircuit}
+          verrousTache={tverr} onRejouerVerrous={() => verrous.mutate()} rejouerEnCours={verrous.isPending} />
       </section>
 
       <section className={`tab ${onglet === 'circuit' ? 'on' : ''}`}>
+        {/* DASHBOARD-4 (D7) — plafond des agents + crédit API, lisibles ICI (à côté du bouton agents). */}
+        {d.agents && !detail && (
+          <div className={`agents-info ${d.agents.actif ? '' : 'off'}`}>
+            {d.agents.actif
+              ? <>Agents : plafond <b>{d.agents.plafond_eur.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</b> / passage ({d.agents.cle_env}).</>
+              : <>Agents : plafond à <b>0 €</b> — <b>aucun agent ne tourne</b> (fixer {d.agents.cle_env} pour les activer).</>}
+            {' '}Crédit API : non exposé par le fournisseur — <a href={d.agents.credit_url} target="_blank" rel="noreferrer">voir la console ↗</a>.
+          </div>
+        )}
         {detail
           ? <DetailPage type={detail.type} id={detail.id} data={d} onClose={fermerDetail} onOpen={ouvrirDetail} />
           : <CircuitDiagram data={d} groupe={groupe} onOpen={ouvrirDetail} />}

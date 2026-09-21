@@ -1390,7 +1390,13 @@ export interface AdminPilotage {
   verrous?: { ok: number | null; sur: number | null }
   // CONNEXIONS-2 Lot 7.2 (N3) — `endpoints`/`endpoints_ok` = sonde RUNTIME métier (avec DB), en plus du heal boot.
   sante: { ok: boolean | null; total: number | null; en_echec: string[]; endpoints_ok?: boolean | null; endpoints?: Array<{ endpoint: string; ok: boolean; detail: string | null }> }
-  courrier: { a_deposer: number; en_cours: number; clos: number }   // CONNEXIONS-2 Lot 4 — KPI courriers
+  // CONNEXIONS-2 Lot 4 — KPI courriers ; DASHBOARD-4 P1 — `deposables` (ce qui peut réellement partir,
+  // ≠ a_deposer), `bloquees`/`incomplets` (retenus), `plus_ancien_ouvre_j` (seuil rouge = 5 j ouvrés).
+  courrier: { a_deposer: number; en_cours: number; clos: number; deposables?: number; bloquees?: number; incomplets?: number; plus_ancien_ouvre_j?: number | null }
+  // DASHBOARD-4 P3 — avance de main sur la prod (git + dernier deploy connu) ; rouge tant que avance > 0.
+  deploiement?: { marqueur_present: boolean; sha: string | null; depuis: string | null; avance: number | null; branche: string }
+  // DASHBOARD-4 P3 — sources vitrine sans contrôle récent (G8) ; la cause vraie = horloges non posées.
+  sondes_muettes?: { n: number | null }
   // SCORING-3 (L5.3) — étiquettes de retour terrain posées (7 j + cumul ; seuil TERRAIN-1 : 200)
   etiquettes_terrain?: { semaine: number; total: number }
   radar?: { compteurs: RadarCompteurs; ecart: FluxRadarEcart[] } | null   // FLUX-1 F3.5 — tuile « la donnée qui s'accumule »
@@ -2226,6 +2232,8 @@ export const postAdminCircuitVerifier = () => j<any>('/admin/circuit/verifier', 
 // CIRCUIT-P2 (lot 3.2/3.3) — tâches longues : lancer les agents (ou un seul), suivre la progression.
 export const postAdminCircuitAgents = (sourceId?: number) =>
   j<any>(`/admin/circuit/agents${sourceId != null ? `?source_id=${sourceId}` : ''}`, { method: 'POST' })
+// DASHBOARD-4 (D2) — rejouer « labuse circuit verrous » à la demande depuis le Résumé (tâche détachée).
+export const postAdminCircuitVerrous = () => j<any>('/admin/circuit/verrous', { method: 'POST' })
 export const getAdminCircuitTaches = () => j<any>('/admin/circuit/taches')
 export const postAdminCircuitPurger = () => j<any>('/admin/circuit/purger-runs', { method: 'POST' })
 export const postAdminCircuitRevenir = () => j<any>('/admin/circuit/revenir', { method: 'POST' })

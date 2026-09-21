@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LABUSE — maquette dashboard v5</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fond:#08110B; --panneau:#0E1A12; --ligne:#1C2E22; --encre:#E6EFE8; --pale:#8FA396;
+  --mint:#4ADE80; --mint-sombre:#12301D; --mauve:#A78BFA; --rouge:#F26D6D;
+  --r:12px; --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--fond);color:var(--encre);font:15px/1.5 Inter,system-ui,sans-serif;display:flex;min-height:100vh}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+
+/* rail */
+.rail{width:200px;flex:none;border-right:1px solid var(--ligne);padding:22px 14px}
+.logo{font-weight:700;letter-spacing:.02em;color:var(--mint);font-size:18px;margin:0 8px 26px}
+.rail button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--pale);
+  padding:9px 10px;border-radius:8px;margin-bottom:2px}
+.rail button:hover{color:var(--encre)}
+.rail button.on{color:var(--mint);background:var(--mint-sombre)}
+
+main{flex:1;padding:30px 38px;max-width:1180px}
+.ecran{display:none}.ecran.on{display:block}
+.tete{display:flex;align-items:baseline;gap:14px;margin-bottom:24px;flex-wrap:wrap}
+h1{font-size:26px;font-weight:600;letter-spacing:-.02em}
+.tete p{color:var(--pale)}
+.tete .gestes{margin-left:auto;display:flex;gap:10px;align-items:center}
+h2{font-size:15px;font-weight:600;margin:32px 0 12px}
+
+/* boutons */
+.b1{background:var(--mint);color:#08150C;border:0;border-radius:8px;padding:9px 16px;font-weight:600}
+.b2{background:none;color:var(--mint);border:1px solid rgba(74,222,128,.4);border-radius:8px;padding:8px 15px}
+.lien{background:none;border:0;color:var(--pale);text-decoration:underline;padding:0}
+.b-rouge{background:none;color:var(--rouge);border:1px solid rgba(242,109,109,.4);border-radius:8px;padding:8px 15px}
+
+/* tuiles opaques */
+.tuiles{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.t{border:0;border-radius:var(--r);background:var(--mint);color:#08150C;padding:17px 18px 16px;text-align:left}
+.t:hover{filter:brightness(1.08)}
+.t .n{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.05}
+.t .u{font-size:15px;font-weight:500;margin-left:2px;opacity:.62}
+.t .l{font-size:13px;margin-top:8px;font-weight:600;opacity:.8}
+.t.ia{background:var(--mauve);color:#140F26}
+.t.retard{background:var(--rouge);color:#2A0D0D}
+
+/* listes */
+.liste{border:1px solid var(--ligne);border-radius:var(--r);overflow:hidden}
+.ligne{display:flex;align-items:center;gap:14px;padding:13px 16px;border-top:1px solid var(--ligne)}
+.ligne:first-child{border-top:0}
+.pastille{width:9px;height:9px;border-radius:50%;background:var(--mint);flex:none}
+.pastille.r{background:var(--rouge)}.pastille.m{background:var(--mauve)}
+.ligne .quoi{flex:1}
+.ligne .quoi small{display:block;color:var(--pale);font-size:13px}
+.ligne .quand{color:var(--pale);font-family:var(--mono);font-size:13px}
+
+/* segments */
+.barre{display:flex;align-items:center;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.seg{background:none;border:0;color:var(--pale);padding:7px 12px;border-radius:8px}
+.seg.on{color:var(--mint);background:var(--mint-sombre);box-shadow:inset 0 -2px 0 var(--mint)}
+.seg b{font-family:var(--mono);font-weight:500;margin-left:5px;opacity:.7}
+.recherche{margin-left:auto;background:var(--panneau);border:1px solid var(--ligne);color:var(--encre);
+  border-radius:8px;padding:8px 12px;width:240px;font:inherit}
+
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-weight:500;color:var(--pale);font-size:13px;padding:10px 16px;border-bottom:1px solid var(--ligne)}
+td{padding:13px 16px;border-bottom:1px solid var(--ligne)}
+tr:last-child td{border-bottom:0}
+tbody tr{cursor:pointer}tbody tr:hover{background:var(--panneau)}
+.statut{display:inline-flex;align-items:center;gap:7px}
+.mono{font-family:var(--mono);font-size:13px}
+.pale{color:var(--pale)}
+
+/* formulaire */
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:var(--r);padding:26px;max-width:460px}
+label{display:block;color:var(--pale);font-size:13px;margin:14px 0 6px}
+label:first-child{margin-top:0}
+input{width:100%;background:var(--fond);border:1px solid var(--ligne);color:var(--encre);border-radius:8px;padding:10px 12px;font:inherit}
+.actions{display:flex;align-items:center;gap:18px;margin-top:22px}
+
+/* fiche */
+.ariane{color:var(--pale);font-size:13px;margin-bottom:8px}
+.ariane a{color:var(--pale)}
+.onglets{display:flex;gap:4px;border-bottom:1px solid var(--ligne);margin-bottom:24px}
+.onglet{background:none;border:0;color:var(--pale);padding:10px 14px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.onglet.on{color:var(--mint);border-bottom-color:var(--mint)}
+.deux{display:grid;grid-template-columns:340px 1fr;gap:34px}
+.faits dt{color:var(--pale);font-size:13px;margin-top:14px}
+.faits dt:first-child{margin-top:0}
+.faits dd{margin-top:2px}
+.phrase{margin-top:22px;padding-top:16px;border-top:1px solid var(--ligne);color:var(--encre)}
+.fil .ligne{padding:11px 0;border-color:var(--ligne)}
+
+@media (max-width:900px){
+  body{flex-direction:column}.rail{width:auto;display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--ligne)}
+  .logo{margin:8px 14px 0 0}.rail button{width:auto;white-space:nowrap}
+  main{padding:22px 18px}.tuiles{grid-template-columns:repeat(2,1fr)}.deux{grid-template-columns:1fr}
+  .recherche{width:100%;margin-left:0}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Dashboard">
+  <div class="logo">LABUSE</div>
+  <button class="on" data-e="pilotage">Pilotage</button>
+  <button data-e="comptes">Comptes</button>
+  <button data-e="creer">Créer un client</button>
+  <button data-e="fiche">Fiche client</button>
+  <button disabled>Courrier</button>
+  <button disabled>Radar</button>
+  <button disabled>Produit</button>
+  <button disabled>IA</button>
+  <button disabled>Données</button>
+</nav>
+
+<main>
+
+<!-- PILOTAGE -->
+<section class="ecran on" id="pilotage">
+  <div class="tete"><h1>Pilotage</h1><p>où en est LABUSE, maintenant</p></div>
+
+  <div class="tuiles">
+    <button class="t" data-e="comptes"><div class="n">349<span class="u">€</span></div><div class="l">Chiffre d'affaires du mois</div></button>
+    <button class="t" data-e="comptes"><div class="n">1</div><div class="l">Licences actives</div></button>
+    <button class="t ia"><div class="n">3,40<span class="u">€</span></div><div class="l">Coût IA du mois</div></button>
+    <button class="t"><div class="n">26</div><div class="l">Courriers à déposer</div></button>
+    <button class="t retard"><div class="n">4</div><div class="l">Tâches à effectuer</div></button>
+  </div>
+
+  <h2>À faire, dans l'ordre</h2>
+  <div class="liste">
+    <div class="ligne"><span class="pastille r"></span><div class="quoi">Poser les horloges sur le serveur<small>23 horloges jamais posées : rien ne se met à jour seul en production</small></div><button class="b2">Voir</button></div>
+    <div class="ligne"><span class="pastille r"></span><div class="quoi">Vérifier la sauvegarde de la base<small>Dernière sauvegarde confirmée il y a 3 jours</small></div><button class="b2">Voir</button></div>
+    <div class="ligne"><span class="pastille"></span><div class="quoi">Déposer 26 courriers<small>Le plus ancien attend depuis 2 jours</small></div><button class="b2">Déposer</button></div>
+    <div class="ligne"><span class="pastille"></span><div class="quoi">Relire 2 sources signalées par les agents<small>Sitadel et DPE ont publié une version plus récente</small></div><button class="b2">Voir</button></div>
+  </div>
+
+  <h2>Journal</h2>
+  <div class="liste">
+    <div class="ligne"><span class="pastille"></span><div class="quoi">Kampus Réunion s'est connecté</div><span class="quand">21:02</span></div>
+    <div class="ligne"><span class="pastille m"></span><div class="quoi">12 questions posées au Copilote</div><span class="quand">18:40</span></div>
+    <div class="ligne"><span class="pastille"></span><div class="quoi">Paiement Stripe reçu · 349 €</div><span class="quand">09:15</span></div>
+  </div>
+</section>
+
+<!-- COMPTES -->
+<section class="ecran" id="comptes">
+  <div class="tete"><h1>Comptes</h1>
+    <div class="gestes"><button class="b2">Ouvrir un essai 48 h</button><button class="b1" data-e="creer">Créer un client</button></div>
+  </div>
+
+  <div class="barre">
+    <button class="seg on">À toucher<b>2</b></button>
+    <button class="seg">Actifs<b>1</b></button>
+    <button class="seg">Essais<b>1</b></button>
+    <button class="seg">Invités<b>1</b></button>
+    <button class="seg">Suspendus<b>0</b></button>
+    <button class="seg">Tous<b>3</b></button>
+    <input class="recherche" placeholder="Rechercher un client" aria-label="Rechercher un client">
+  </div>
+
+  <div class="liste">
+    <table>
+      <thead><tr><th>Client</th><th>Statut</th><th>Dernière connexion</th><th>Abonnement</th></tr></thead>
+      <tbody>
+        <tr data-e="fiche"><td>Kampus Réunion<br><span class="pale mono">kampusreunion@gmail.com</span></td><td><span class="statut"><span class="pastille"></span>Actif</span></td><td class="mono">aujourd'hui 21:02</td><td>Payant</td></tr>
+        <tr><td>Stéphanie D.<br><span class="pale mono">essai en cours</span></td><td><span class="statut"><span class="pastille"></span>Actif</span></td><td class="mono">hier 17:30</td><td>Essai · 31 h restantes</td></tr>
+        <tr><td>Promo Est<br><span class="pale mono">contact@promo-est.re</span></td><td><span class="statut"><span class="pastille r"></span>Invitation envoyée</span></td><td class="pale">jamais</td><td class="pale">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- CRÉER UN CLIENT -->
+<section class="ecran" id="creer">
+  <div class="ariane"><a href="#" data-e="comptes">Comptes</a> › Créer un client</div>
+  <div class="tete"><h1>Créer un client</h1></div>
+  <div class="carte">
+    <label for="m">E-mail</label><input id="m" type="email" placeholder="prenom@societe.re">
+    <label for="p">Prénom</label><input id="p">
+    <label for="n">Nom</label><input id="n">
+    <div class="actions">
+      <button class="b1" data-e="fiche">Créer et envoyer l'invitation</button>
+      <button class="lien" data-e="fiche">créer sans envoyer</button>
+    </div>
+  </div>
+</section>
+
+<!-- FICHE CLIENT -->
+<section class="ecran" id="fiche">
+  <div class="ariane"><a href="#" data-e="comptes">Comptes</a> › Kampus Réunion</div>
+  <div class="tete"><h1>Kampus Réunion</h1><span class="statut"><span class="pastille"></span>Actif</span>
+    <div class="gestes"><button class="b2">Renvoyer l'invitation</button><button class="b-rouge">Suspendre</button></div>
+  </div>
+
+  <div class="onglets">
+    <button class="onglet on">Aperçu</button><button class="onglet">Activité</button>
+    <button class="onglet">Facturation</button><button class="onglet">IA</button>
+  </div>
+
+  <div class="deux">
+    <div>
+      <dl class="faits">
+        <dt>E-mail</dt><dd class="mono">kampusreunion@gmail.com</dd>
+        <dt>Client depuis</dt><dd>14/09/2026</dd>
+        <dt>Abonnement</dt><dd>349 € / mois · payant</dd>
+        <dt>Dernière connexion</dt><dd>aujourd'hui à 21:02</dd>
+        <dt>Coût IA du mois</dt><dd style="color:var(--mauve)">1,20 € sur 2 € par jour</dd>
+      </dl>
+      <p class="phrase">Ce client paie depuis sept jours et s'est connecté quatre fois.</p>
+    </div>
+    <div class="fil">
+      <div class="ligne"><span class="pastille"></span><div class="quoi">Connexion</div><span class="quand">21/09 21:02</span></div>
+      <div class="ligne"><span class="pastille m"></span><div class="quoi">5 questions au Copilote</div><span class="quand">20/09 16:10</span></div>
+      <div class="ligne"><span class="pastille"></span><div class="quoi">Dossier parcelle exporté</div><span class="quand">18/09 10:44</span></div>
+      <div class="ligne"><span class="pastille"></span><div class="quoi">Paiement reçu · 349 €</div><span class="quand">14/09 09:15</span></div>
+      <div class="ligne"><span class="pastille"></span><div class="quoi">Invitation acceptée</div><span class="quand">14/09 08:52</span></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+function aller(id){
+  document.querySelectorAll('.ecran').forEach(e=>e.classList.toggle('on',e.id===id));
+  document.querySelectorAll('.rail button').forEach(b=>b.classList.toggle('on',b.dataset.e===id));
+  window.scrollTo(0,0);
+}
+document.addEventListener('click',e=>{
+  const c=e.target.closest('[data-e]'); if(!c) return;
+  e.preventDefault(); aller(c.dataset.e);
+});
+document.querySelectorAll('.seg').forEach(s=>s.addEventListener('click',()=>{
+  document.querySelectorAll('.seg').forEach(x=>x.classList.remove('on')); s.classList.add('on');
+}));
+document.querySelectorAll('.onglet').forEach(s=>s.addEventListener('click',()=>{
+  document.querySelectorAll('.onglet').forEach(x=>x.classList.remove('on')); s.classList.add('on');
+}));
+</script>
+</body>
+</html>
