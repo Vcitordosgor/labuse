@@ -41,15 +41,27 @@ def test_healthz_public():
 
 
 @pytest.mark.db
-def test_jamais_vu_honnete_et_ok_detecte(db_session):
+def test_jamais_vu_honnete_et_ok_detecte(db_session, monkeypatch, tmp_path):
+    # TESTS-0 — HERMÉTIQUE. Le test dépendait de l'état AMBIANT et échouait selon la machine : un run
+    # sitadel « ok » DÉJÀ committé dans labuse_test (par une autre suite) OU un fichier d'état
+    # `<jobs_state_dir>/backup-postgres.json` présent (backups réels du poste dev) donnaient « en_retard »
+    # — un statut honnête mais hors de ("jamais_vu","ok"). On repart d'un état VIERGE : répertoire d'états
+    # de jobs vide (tmp) + aucune trace sitadel. jamais_vu redevient déterministe et prouvable honnête.
+    from labuse import config
     s = db_session
-    # base de test : sitadel jamais tourné → jamais_vu (pas un faux OK)
-    r = ops.healthz_crons(s)
-    assert r["crons"]["ingest-sitadel"]["statut"] in ("jamais_vu", "ok")
-    # seed d'un run OK récent → passe à ok avec âge
-    s.execute(text("INSERT INTO ingestion_runs (commune, status, started_at, finished_at) "
-                   "VALUES ('974 (SDES Sitadel3 — refresh)', 'ok', now(), now())"))
-    r = ops.healthz_crons(s)
-    assert r["crons"]["ingest-sitadel"]["statut"] == "ok" and r["crons"]["ingest-sitadel"]["age_jours"] < 1
-    # jobs sans trace DB : l'état JSON du wrapper fait foi — absent = jamais_vu, jamais un faux OK
-    assert r["crons"]["backup-postgres"]["statut"] in ("jamais_vu", "ok")
+    monkeypatch.setenv("LABUSE_JOBS_STATE_DIR", str(tmp_path))   # aucun état JSON de job
+    config.get_settings.cache_clear()
+    s.execute(text("DELETE FROM ingestion_runs WHERE commune LIKE '974 (SDES Sitadel3%'"))
+    try:
+        # sitadel jamais tourné → jamais_vu (pas un faux OK)
+        r = ops.healthz_crons(s)
+        assert r["crons"]["ingest-sitadel"]["statut"] == "jamais_vu"
+        # seed d'un run OK récent → passe à ok avec âge < 1
+        s.execute(text("INSERT INTO ingestion_runs (commune, status, started_at, finished_at) "
+                       "VALUES ('974 (SDES Sitadel3 — refresh)', 'ok', now(), now())"))
+        r = ops.healthz_crons(s)
+        assert r["crons"]["ingest-sitadel"]["statut"] == "ok" and r["crons"]["ingest-sitadel"]["age_jours"] < 1
+        # job sans trace DB : l'état JSON du wrapper fait foi — absent (tmp vide) = jamais_vu, jamais un faux OK
+        assert r["crons"]["backup-postgres"]["statut"] == "jamais_vu"
+    finally:
+        config.get_settings.cache_clear()

@@ -75,7 +75,11 @@ def test_traçage_des_classes_pose():
     niveau source (le rendu identité éteint est verrouillé par le snapshot vitest de trace)."""
     from pathlib import Path
     racine = Path(__file__).resolve().parents[1]
-    fiche = (racine / "frontend/src/components/fiche/Fiche.tsx").read_text()
-    assert '<Trace id="zone_plu_famille">' in fiche
+    # TESTS-0 : la découpe FICHE-RANGEMENT-2 Lot 1 (355ac3ff) a extrait le bloc Règlement PLU de
+    # Fiche.tsx vers blocks.tsx (ReglementPluBlock). L'étiquette Trace de la lettre de zone y vit
+    # désormais — le test lisait encore Fiche.tsx. Même migration déjà prise en compte pour les aléas
+    # (risques.tsx, ci-dessous).
+    blocks = (racine / "frontend/src/components/fiche/blocks.tsx").read_text()
+    assert '<Trace id="zone_plu_famille">' in blocks
     risques = (racine / "frontend/src/components/fiche/risques.tsx").read_text()
     assert "alea_inondation_couche" in risques and "alea_mvt_couche" in risques
