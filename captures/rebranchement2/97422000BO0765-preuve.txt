@@ -20,8 +20,11 @@
 
 == Terrain
   surface_libre_sol_m2               IDENTIQUE
-  part_artificialisee_pct            ABSENTE DITE (phrase déclarée au PDF)
-  usage_sol_dominant                 ABSENTE DITE (phrase déclarée au PDF)
+  part_artificialisee_pct            IDENTIQUE
+  usage_sol_dominant                 IDENTIQUE
+  part_impermeabilisee_cosia_pct     IDENTIQUE
+  part_vegetalisee_cosia_pct         IDENTIQUE
+  part_sol_nu_cosia_pct              IDENTIQUE
   piscine_m2                         ABSENTE DITE (phrase déclarée au PDF)
 
 == Bâti
@@ -31,7 +34,7 @@
   cosia_detecte_m2                   ABSENTE DITE (phrase déclarée au PDF)
   pente_toit_deg                     ABSENTE DITE (phrase déclarée au PDF)
   nature_toit                        ABSENTE DITE (phrase déclarée au PDF)
-  dpe_connu                          ABSENTE DITE (phrase déclarée au PDF)
+  dpe_connu                          MASQUÉE (absente, masquée par déclaration — écran et PDF)
   rnb_batiments_liste                IDENTIQUE
   ban_plus_adresses_bati             IDENTIQUE
 
@@ -96,4 +99,4 @@
   verdict_icd                        NON CÂBLÉE (omise, dite au rapport)
   charge_fonciere_eur                NON CÂBLÉE (omise, dite au rapport)
 
-TOTAL 97422000BO0765 : 37 identiques · 31 absentes dites · 5 non câblées · 0 ÉCARTS
+TOTAL 97422000BO0765 : 42 identiques · 29 absentes dites · 5 non câblées · 0 ÉCARTS
