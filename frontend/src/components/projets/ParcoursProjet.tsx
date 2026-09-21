@@ -110,10 +110,18 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
         <p style={{ fontSize: 16, color: '#ECF5EF', margin: '0 0 8px' }}>
           Projet créé : <b>{cree.nom}</b>{cree.existing ? ' (il existait déjà)' : ''}.
         </p>
-        {/* OUTILS-5 (P1) — plus de « shortlist figée » : le projet contient le VIVIER ENTIER, classé. */}
-        <p data-cree-vivier style={{ fontSize: 13, color: '#8FA69A', margin: '0 0 16px' }}>
-          Le vivier entier est dans le projet, classé par probabilité de mutation — rien n'est retiré, tout est ordonné.
-        </p>
+        {/* OUTILS-5 (P1) — plus de « shortlist figée » : le projet contient le VIVIER ENTIER, classé.
+            PROJETS-CRM-FIX-1 (lot 3) — un projet « de zéro » naît VIDE : texte dédié (le message du
+            vivier ne s'applique qu'à la porte « vivier »). */}
+        {porte === 'zero' ? (
+          <p data-cree-zero style={{ fontSize: 13, color: '#8FA69A', margin: '0 0 16px' }}>
+            Dossier vide créé. Ajoutez vos parcelles une à une depuis leurs fiches (bouton « Projet ») — elles arrivent dans Retenues.
+          </p>
+        ) : (
+          <p data-cree-vivier style={{ fontSize: 13, color: '#8FA69A', margin: '0 0 16px' }}>
+            Le vivier entier est dans le projet, classé par probabilité de mutation — rien n'est retiré, tout est ordonné.
+          </p>
+        )}
         <div style={{ display: 'flex', gap: 12 }}>
           <button data-projet-voir onClick={() => onVoir({ id: cree.id, nom: cree.nom })}
             style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer' }}>Voir le projet →</button>

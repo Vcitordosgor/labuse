@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { createProjet, getPrefsCarte, postPrefsCarte, projetPdfUrl } from './lib/api'
+import { createProjet, getPrefsCarte, postPrefsCarte } from './lib/api'
 import { AvisIA } from './components/AvisIA'
 import { Fiche } from './components/fiche/Fiche'
 import { SourceDrawer } from './components/fiche/SourceDrawer'
@@ -221,10 +221,8 @@ function IaRestitution() {
                 title="Ouvrir le projet (kanban : à trier / retenues / écartées)">
                 Ouvrir le projet →
               </button>
-              <a data-projet-pdf href={projetPdfUrl(projetId)} target="_blank" rel="noreferrer"
-                className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt hover:border-mint hover:text-txt-hi">
-                PDF
-              </a>
+              {/* PROJETS-CRM-FIX-1 (lot 2) — bouton « PDF » retiré (2ᵉ instance, strip post-création) :
+                  /projets/{id}/export.pdf est retiré (410). Plus de lien mort. */}
               <button onClick={() => { setOpenProjet(null); setIaRestitution(null) }}
                 className="ml-auto text-[11px] text-txt-mut hover:text-txt-hi" title="Voir mes projets">
                 Mes projets →

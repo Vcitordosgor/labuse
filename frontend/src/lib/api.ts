@@ -1826,7 +1826,8 @@ export const createProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?
   j<{ ok: boolean; existing?: boolean; projet: Projet; shortlist?: ShortlistDiff }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export interface ApercuTop { idu: string; commune: string; statut: string | null; pourquoi: string[] }  // M139 bricole : q_score retiré (toujours None, non rendu)
 export interface Apercu { nom: string; n: number; total: number; cap: number; sdp_besoin_m2: number | null; source: string; top: ApercuTop[] }
-export const projetPdfUrl = (id: number) => `/projets/${id}/export.pdf`
+// PROJETS-CRM-FIX-1 (lot 2) — `projetPdfUrl` supprimé : /projets/{id}/export.pdf est retiré (410,
+// remplacé par le document « Financier »). Plus aucun bouton n'y renvoie (export.csv reste, projetCsvUrl).
 export const patchProjet = (id: number, body: { nom?: string; statut?: string; cadrage?: Cadrage; identite?: Identite }) =>
   j<{ ok: boolean; projet: Projet }>(`/projets/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 // M120 — rejouer À LA DEMANDE : rend le diff (entrées / sorties / tris conservés).

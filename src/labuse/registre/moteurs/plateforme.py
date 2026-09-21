@@ -103,9 +103,14 @@ def notifications_non_lues(db, cid: int | None, *, cloche_filter_sql: str = "") 
 
 def cartes_par_colonne(db, cid: int | None) -> dict[str, int]:
     """crm_cartes_n · pipeline_entrees_n — count des entrées du pipeline (retour terrain) par
-    statut/colonne, périmètre du compte. Extraction de api/crm_columns.py:list_columns."""
+    statut/colonne, périmètre du compte. Extraction de api/crm_columns.py:list_columns.
+    PROJETS-CRM-FIX-1 (lot 1) — `archived_at IS NULL` : ne compte QUE les cartes actives, comme
+    l'écran (le tableau CRM recompte les entrées actives côté client). Sans ce filtre, une carte
+    archivée gonflait le compteur de colonne (registre `crm_cartes_n`, champ API `cards`,
+    et la garde « colonne peuplée » du bouton Supprimer) au-dessus du réel affiché."""
     return {r[0]: r[1] for r in db.execute(text(
-        "SELECT status, count(*) FROM pipeline_entries WHERE compte_id IS NOT DISTINCT FROM :cid"
+        "SELECT status, count(*) FROM pipeline_entries"
+        " WHERE compte_id IS NOT DISTINCT FROM :cid AND archived_at IS NULL"
         " GROUP BY status"), {"cid": cid})}
 
 

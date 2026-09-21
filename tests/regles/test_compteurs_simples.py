@@ -188,11 +188,19 @@ def test_cartes_par_colonne(engine):
                             {"i": f"C4CRM000000{i}"}).scalar()
             c.execute(text("INSERT INTO pipeline_entries (parcel_id, status, priority, notes,"
                            " compte_id) VALUES (:p, :s, 0, 'c4-temoin', NULL)"), {"p": pid, "s": st})
+        # PROJETS-CRM-FIX-1 (lot 1) — une carte ARCHIVÉE ne doit PAS être comptée (statut unique
+        # 'c4arch' pour asserter l'absence exacte, insensible aux autres entrées NULL en base).
+        c.execute(text("INSERT INTO parcels (idu, commune, surface_m2, geom) VALUES "
+                       "('C4CRM0000ARCH', 'TemoinCrm-C4', 10, ST_GeomFromText('POINT(55.5 -21.1)', 4326))"))
+        apid = c.execute(text("SELECT id FROM parcels WHERE idu = 'C4CRM0000ARCH'")).scalar()
+        c.execute(text("INSERT INTO pipeline_entries (parcel_id, status, priority, notes, compte_id,"
+                       " archived_at) VALUES (:p, 'c4arch', 0, 'c4-temoin', NULL, now())"), {"p": apid})
     with session_scope() as s:
         out = cartes_par_colonne(s, None)
         s.execute(text("DELETE FROM pipeline_entries WHERE notes = 'c4-temoin'"))
         s.commit()
     assert out.get("a_voir", 0) >= 2 and out.get("vu", 0) >= 1
+    assert out.get("c4arch", 0) == 0  # PROJETS-CRM-FIX-1 lot 1 — carte archivée exclue du compteur
 
 
 @pytest.mark.db
