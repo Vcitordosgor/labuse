@@ -264,14 +264,18 @@ def _c_cosia_sol_nu(db, idu, f):
 
 @extracteur("pente_toit_deg")
 def _c_pente_toit(db, idu, f):
+    # DONNEES-4 — clé RÉELLE `pente_mediane_deg` (et non `pente_deg`, absente du payload toit) : la
+    # fiche React lit le_bien.toit.pente_mediane_deg (extracteur muet trouvé par l'oracle indépendant).
     t = (f.get("le_bien") or {}).get("toit") or {}
-    return _nz(t.get("pente_deg") if isinstance(t, dict) else None)
+    return _nz(t.get("pente_mediane_deg") if isinstance(t, dict) else None)
 
 
 @extracteur("nature_toit")
 def _c_nature_toit(db, idu, f):
+    # DONNEES-4 — clé RÉELLE `libelle` (et non `forme_libelle`/`forme`, absentes du payload toit) : la
+    # fiche React lit le_bien.toit.libelle (extracteur muet trouvé par l'oracle indépendant).
     t = (f.get("le_bien") or {}).get("toit") or {}
-    return _nz((t.get("forme_libelle") or t.get("forme")) if isinstance(t, dict) else None)
+    return _nz((t.get("libelle") or t.get("libelle_court")) if isinstance(t, dict) else None)
 
 
 @extracteur("dpe_connu")
