@@ -260,8 +260,9 @@ def courrier_admin_deposer_tout(request: Request, db: Session = Depends(get_db))
     auth.exiger_admin(request)
     touchees = courrier.marquer_deposes(db)
     db.commit()
+    bloquees = courrier.bloquees_a_deposer(db)   # COURRIER-2 Lot 1 — opposées, laissées en l'état
     if not touchees:
-        return {"ok": True, "deposes": 0}
+        return {"ok": True, "deposes": 0, "bloquees_opposition": bloquees}
     try:
         from .events import creer_notification
         creer_notification(db, kind="systeme", compte_id=None, source="Courrier",
@@ -276,7 +277,63 @@ def courrier_admin_deposer_tout(request: Request, db: Session = Depends(get_db))
         db.commit()
     except Exception:  # noqa: BLE001 — la trace est best-effort, le dépôt est déjà fait
         db.rollback()
-    return {"ok": True, "deposes": len(touchees)}
+    return {"ok": True, "deposes": len(touchees), "bloquees_opposition": bloquees}
+
+
+# ─────────────────── COURRIER-2 Lot 1 — REGISTRE D'OPPOSITION (stop@labuse.immo) ───────────────────
+class OppositionIn(BaseModel):
+    adresse: str | None = None
+    idu: str | None = None
+    reference: str | None = None
+    origine: str = "stop@"
+    note: str | None = None
+
+
+@router.get("/admin/oppositions")
+def courrier_admin_oppositions(request: Request, db: Session = Depends(get_db)) -> dict:
+    """Liste du registre d'opposition (Vic). GLOBAL, aucun scope compte."""
+    from . import auth
+    auth.exiger_admin(request)
+    return {"oppositions": courrier.lister_oppositions(db)}
+
+
+@router.post("/admin/oppositions")
+def courrier_admin_opposition_ajout(body: OppositionIn, request: Request,
+                                    db: Session = Depends(get_db)) -> dict:
+    """Vic saisit une opposition reçue sur stop@labuse.immo : adresse et/ou IDU + référence citée."""
+    from . import auth
+    info = auth.exiger_admin(request)
+    par = (info.get("email") or info.get("nom") or info.get("role") or "admin")[:60]
+    try:
+        opp = courrier.ajouter_opposition(db, adresse=body.adresse, idu=body.idu,
+                                          reference=body.reference, origine=body.origine,
+                                          note=body.note, par=par)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+    db.commit()
+    try:
+        from .events import creer_notification
+        cible = opp.get("idu") or opp.get("adresse_norm") or "—"
+        creer_notification(db, kind="systeme", compte_id=None, source="Courrier",
+                           titre=f"Opposition enregistrée ({opp.get('origine')}) : {cible}",
+                           detail=opp.get("reference"), dedup=f"courrier:opposition:{opp['id']}")
+        db.commit()
+    except Exception:  # noqa: BLE001 — best-effort
+        db.rollback()
+    return {"ok": True, "opposition": opp}
+
+
+@router.delete("/admin/oppositions/{opp_id}")
+def courrier_admin_opposition_suppr(opp_id: int, request: Request,
+                                    db: Session = Depends(get_db)) -> dict:
+    """Lève une opposition (erreur de saisie / rétractation écrite)."""
+    from . import auth
+    auth.exiger_admin(request)
+    ok = courrier.supprimer_opposition(db, opp_id)
+    db.commit()
+    if not ok:
+        raise HTTPException(404, "opposition introuvable")
+    return {"ok": True}
 
 
 class PdfIn(BaseModel):

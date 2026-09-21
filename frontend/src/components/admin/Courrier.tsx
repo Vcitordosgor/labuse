@@ -10,7 +10,8 @@ import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   getAdminCourrierDemandes, postAdminCourrierDeposerTout, postAdminCourrierStatut,
-  urlCourrierPdf, type AdminDemandeCourrier,
+  getAdminOppositions, postAdminOpposition, deleteAdminOpposition,
+  urlCourrierPdf, ApiError, type AdminDemandeCourrier,
 } from '../../lib/api'
 import { ActBtn, Chip, Panel } from './AdminView'
 
@@ -50,13 +51,21 @@ const estTest = (d: AdminDemandeCourrier) => d.compte_plan === 'interne'
 export function CourrierSection() {
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['admin-courrier'], queryFn: getAdminCourrierDemandes, refetchInterval: 60_000 })
+  // COURRIER-2 Lot 1 — le dépôt peut être REFUSÉ (opposition) : on sert le motif servi par le back.
+  const [erreur, setErreur] = useState<string | null>(null)
+  const motifDe = (e: unknown) => (e instanceof ApiError && e.detail) ? e.detail : 'Action refusée.'
   const avancer = useMutation({
     mutationFn: ({ id, statut }: { id: number; statut: string }) => postAdminCourrierStatut(id, statut),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-courrier'] }); qc.invalidateQueries({ queryKey: ['admin-pilotage'] }) },
+    onSuccess: () => { setErreur(null); qc.invalidateQueries({ queryKey: ['admin-courrier'] }); qc.invalidateQueries({ queryKey: ['admin-pilotage'] }) },
+    onError: (e) => setErreur(motifDe(e)),
   })
   const deposerTout = useMutation({
     mutationFn: postAdminCourrierDeposerTout,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-courrier'] }); qc.invalidateQueries({ queryKey: ['admin-pilotage'] }) },
+    onSuccess: (r) => {
+      setErreur(r.bloquees_opposition ? `${r.deposes} déposé(s) · ${r.bloquees_opposition} laissée(s) : ${'Opposition enregistrée'}.` : null)
+      qc.invalidateQueries({ queryKey: ['admin-courrier'] }); qc.invalidateQueries({ queryKey: ['admin-pilotage'] })
+    },
+    onError: (e) => setErreur(motifDe(e)),
   })
   const [statut, setStatut] = useState<string>('demande')   // « À déposer » par défaut
   const [voirTests, setVoirTests] = useState(false)
@@ -76,6 +85,11 @@ export function CourrierSection() {
 
   return (
     <>
+      {erreur && (
+        <div data-courrier-erreur className="mb-3 rounded-md border border-amber/40 bg-amber/10 px-4 py-2 text-[13px] text-amber">
+          {erreur}
+        </div>
+      )}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <Chip tone={statut === 'tous' ? 'ok' : 'off'} onClick={() => setStatut('tous')}>Tous {visibles.length}</Chip>
         {ORDRE.map((s) => (
@@ -162,6 +176,74 @@ export function CourrierSection() {
           adressage générique SPF/CERFA — <b className="text-txt">aucune identité de particulier</b>.
         </div>
       </Panel>
+
+      <OppositionPanel />
     </>
+  )
+}
+
+// COURRIER-2 Lot 1 — REGISTRE D'OPPOSITION : Vic saisit à la main ce qui arrive sur stop@labuse.immo.
+// Une adresse OU une parcelle opposée bloque tout dépôt d'un pli, pour TOUS les comptes.
+function OppositionPanel() {
+  const qc = useQueryClient()
+  const q = useQuery({ queryKey: ['admin-oppositions'], queryFn: getAdminOppositions })
+  const [adresse, setAdresse] = useState('')
+  const [idu, setIdu] = useState('')
+  const [reference, setReference] = useState('')
+  const [err, setErr] = useState<string | null>(null)
+  const ajout = useMutation({
+    mutationFn: () => postAdminOpposition({ adresse: adresse || undefined, idu: idu || undefined, reference: reference || undefined }),
+    onSuccess: () => { setAdresse(''); setIdu(''); setReference(''); setErr(null); qc.invalidateQueries({ queryKey: ['admin-oppositions'] }); qc.invalidateQueries({ queryKey: ['admin-courrier'] }) },
+    onError: (e) => setErr(e instanceof ApiError && e.detail ? e.detail : 'Saisie refusée.'),
+  })
+  const suppr = useMutation({
+    mutationFn: (id: number) => deleteAdminOpposition(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-oppositions'] }),
+  })
+  const opps = q.data?.oppositions ?? []
+  return (
+    <Panel>
+      <div className="border-b border-line px-4 py-2.5 text-xs text-txt-mut">
+        <b className="text-txt">Opposition (stop@labuse.immo)</b> — saisissez ici toute demande d’arrêt reçue.
+        Une adresse ou une parcelle opposée <b className="text-txt">bloque tout dépôt</b>, pour tous les comptes.
+      </div>
+      <div className="flex flex-wrap items-end gap-2 px-4 py-3">
+        <label className="flex flex-col gap-1 text-[11px] text-txt-dim">Adresse postale
+          <input data-opp-adresse value={adresse} onChange={(e) => setAdresse(e.target.value)} placeholder="12 rue du Port, 97420 Le Port"
+            className="w-64 rounded border border-line bg-surface-1 px-2 py-1 text-[13px] text-txt" />
+        </label>
+        <label className="flex flex-col gap-1 text-[11px] text-txt-dim">IDU parcelle
+          <input data-opp-idu value={idu} onChange={(e) => setIdu(e.target.value)} placeholder="97411000BZ1065"
+            className="w-40 rounded border border-line bg-surface-1 px-2 py-1 font-mono text-[13px] text-txt" />
+        </label>
+        <label className="flex flex-col gap-1 text-[11px] text-txt-dim">Référence citée
+          <input data-opp-ref value={reference} onChange={(e) => setReference(e.target.value)} placeholder="BZ 1065"
+            className="w-32 rounded border border-line bg-surface-1 px-2 py-1 text-[13px] text-txt" />
+        </label>
+        <ActBtn onClick={() => ajout.mutate()} disabled={ajout.isPending || (!adresse && !idu)}>
+          {ajout.isPending ? 'Enregistrement…' : 'Enregistrer l’opposition'}
+        </ActBtn>
+        {err && <span data-opp-erreur className="text-[12px] text-amber">{err}</span>}
+      </div>
+      {opps.length > 0 && (
+        <table className="w-full text-[13px]">
+          <thead><tr>{['Adresse', 'Parcelle', 'Référence', 'Origine', 'Enregistrée le', ''].map((h, i) => (
+            <th key={h} className={`border-b border-line px-4 py-2 font-mono text-[9.5px] font-medium uppercase tracking-[0.12em] text-txt-dim ${i === 5 ? 'text-right' : 'text-left'}`}>{h}</th>
+          ))}</tr></thead>
+          <tbody>
+            {opps.map((o) => (
+              <tr key={o.id} className="border-b border-line last:border-b-0" data-opposition={o.id}>
+                <td className="px-4 py-2 text-xs text-txt-mut">{o.adresse_norm ?? <span className="text-txt-dim">—</span>}</td>
+                <td className="px-4 py-2 font-mono text-xs text-txt-mut">{o.idu ?? <span className="text-txt-dim">—</span>}</td>
+                <td className="px-4 py-2 text-xs text-txt-mut">{o.reference ?? <span className="text-txt-dim">—</span>}</td>
+                <td className="px-4 py-2 text-xs text-txt-dim">{o.origine}</td>
+                <td className="px-4 py-2 font-mono text-xs text-txt-dim">{fmtReu(o.cree_at)}</td>
+                <td className="px-4 py-2 text-right"><ActBtn tone="ghost" onClick={() => suppr.mutate(o.id)} disabled={suppr.isPending}>lever</ActBtn></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </Panel>
   )
 }

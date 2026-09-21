@@ -1710,8 +1710,20 @@ export const postAdminCourrierStatut = (id: number, statut: string) =>
   j<{ ok: boolean }>(`/courrier/admin/demandes/${id}/statut`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
 // DASHBOARD-2 (Lot 3) — « Marquer les N déposés » en bloc.
 export const postAdminCourrierDeposerTout = () =>
-  j<{ ok: boolean; deposes: number }>('/courrier/admin/demandes/deposer-tout', { method: 'POST' })
+  j<{ ok: boolean; deposes: number; bloquees_opposition?: number }>('/courrier/admin/demandes/deposer-tout', { method: 'POST' })
 export const urlCourrierPdf = '/courrier/pdf'
+
+// COURRIER-2 Lot 1 — REGISTRE D'OPPOSITION (stop@labuse.immo). Saisie manuelle par Vic ; global.
+export interface AdminOpposition {
+  id: number; adresse_norm: string | null; idu: string | null; reference: string | null
+  origine: string; note: string | null; cree_par: string | null; cree_at: string
+}
+export const getAdminOppositions = () =>
+  j<{ oppositions: AdminOpposition[] }>('/courrier/admin/oppositions')
+export const postAdminOpposition = (body: { adresse?: string; idu?: string; reference?: string; note?: string }) =>
+  j<{ ok: boolean; opposition: AdminOpposition }>('/courrier/admin/oppositions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const deleteAdminOpposition = (id: number) =>
+  j<{ ok: boolean }>(`/courrier/admin/oppositions/${id}`, { method: 'DELETE' })
 
 // ── Moteurs (Vague 4) ──
 // M137-Q — le périmètre du simulateur PLU est désormais un choix EXPLICITE dans l'outil (plus

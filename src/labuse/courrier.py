@@ -20,6 +20,8 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
+import unicodedata
 
 from sqlalchemy import text
 
@@ -84,6 +86,23 @@ DDL_STATEMENTS = (
             ALTER TABLE courrier_demandes ALTER COLUMN texte DROP NOT NULL;
         END IF;
     END $$""",
+    # COURRIER-2 Lot 1 — REGISTRE D'OPPOSITION (stop@labuse.immo). Clé = adresse postale normalisée
+    # ET/OU IDU. GLOBAL (aucun compte_id) : une opposition vaut pour TOUS les comptes. Saisi à la main
+    # au dashboard par Vic à partir de la boîte stop@. Une ligne bloque tout dépôt d'un pli vers cette
+    # adresse ou cette parcelle. `reference` = la référence cadastrale que la personne cite (traçabilité).
+    """CREATE TABLE IF NOT EXISTS courrier_opposition (
+        id serial PRIMARY KEY,
+        adresse_norm text,
+        idu varchar(14),
+        reference text,
+        origine varchar(24) NOT NULL DEFAULT 'stop@',
+        note text,
+        cree_par varchar(60),
+        cree_at timestamptz NOT NULL DEFAULT now(),
+        CONSTRAINT courrier_opposition_cle CHECK (adresse_norm IS NOT NULL OR idu IS NOT NULL)
+    )""",
+    "CREATE INDEX IF NOT EXISTS courrier_opposition_idu_idx ON courrier_opposition (idu)",
+    "CREATE INDEX IF NOT EXISTS courrier_opposition_adr_idx ON courrier_opposition (adresse_norm)",
 )
 
 # CONNEXIONS-2 Lot 4 (KO-6) — VOCABULAIRE DE STATUT UNIQUE de la boucle commerciale :
@@ -106,6 +125,85 @@ STATUTS_RETOUR = ("repondu", "sans_reponse")
 def normaliser_statut(s: str | None) -> str | None:
     """Ramène un statut (éventuellement legacy) à sa forme canonique unique."""
     return STATUT_ALIAS.get(s, s) if s is not None else None
+
+
+# ─────────────────────────── COURRIER-2 Lot 1 — OPPOSITION ───────────────────────────
+#: motif unique renvoyé quand un dépôt est refusé pour cause d'opposition (source de vérité UI).
+MOTIF_OPPOSITION = "Opposition enregistrée"
+
+
+def normaliser_adresse(s: str | None) -> str | None:
+    """Forme canonique d'une adresse postale pour l'appariement d'opposition : MAJUSCULES, sans
+    accents, sans ponctuation, espaces normalisés. La MÊME normalisation sert à l'écriture (saisie
+    stop@) et à la lecture (adresse d'envoi résolue) — sinon un « 12, Rue du Port » opposé ne
+    matcherait pas le « 12 RUE DU PORT » servi. Renvoie None si l'entrée est vide."""
+    if not s or not s.strip():
+        return None
+    txt = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
+    txt = re.sub(r"[^A-Za-z0-9 ]+", " ", txt).upper()
+    txt = re.sub(r"\s+", " ", txt).strip()
+    return txt or None
+
+
+def adresse_ban_parcelle(db, idu: str) -> str | None:
+    """Adresse BAN d'une parcelle (voie + CP + commune), telle que servie au pli « à l'occupant ».
+    Source unique `parcel_adresse` (COURRIER-AUDIT-1 §A3). None si la parcelle n'a pas d'adresse."""
+    r = db.execute(text(
+        "SELECT ban_voie, ban_cp, ban_commune FROM parcel_adresse WHERE idu = :i AND ban_voie IS NOT NULL"),
+        {"i": idu}).mappings().first()
+    if not r:
+        return None
+    return ", ".join(p for p in (r["ban_voie"], " ".join(x for x in (r["ban_cp"], r["ban_commune"]) if x)) if p)
+
+
+def ajouter_opposition(db, *, adresse: str | None, idu: str | None, reference: str | None,
+                       origine: str = "stop@", note: str | None = None, par: str | None = None) -> dict:
+    """Enregistre une opposition (Vic, depuis le dashboard). Au moins une clé (adresse OU idu) requise."""
+    adresse_norm = normaliser_adresse(adresse)
+    idu = (idu or "").strip() or None
+    if not adresse_norm and not idu:
+        raise ValueError("Opposition sans clé : renseignez une adresse et/ou un IDU.")
+    r = db.execute(text(
+        "INSERT INTO courrier_opposition (adresse_norm, idu, reference, origine, note, cree_par) "
+        "VALUES (:a, :i, :r, :o, :n, :p) RETURNING id, adresse_norm, idu, reference, origine, note, cree_at"),
+        {"a": adresse_norm, "i": idu, "r": (reference or None), "o": origine[:24],
+         "n": (note or None), "p": (par or None)}).mappings().one()
+    return dict(r)
+
+
+def lister_oppositions(db, limit: int = 500) -> list[dict]:
+    return [dict(r) for r in db.execute(text(
+        "SELECT id, adresse_norm, idu, reference, origine, note, cree_par, cree_at "
+        "FROM courrier_opposition ORDER BY cree_at DESC LIMIT :l"), {"l": limit}).mappings()]
+
+
+def supprimer_opposition(db, opp_id: int) -> bool:
+    return bool(db.execute(text("DELETE FROM courrier_opposition WHERE id = :i"),
+                           {"i": opp_id}).rowcount)
+
+
+def opposition_motif(db, *, idu: str | None = None, adresse_norm: str | None = None) -> str | None:
+    """MOTIF_OPPOSITION si la parcelle (idu) OU l'adresse normalisée est opposée, sinon None. GLOBAL
+    (aucun scope compte) — une opposition posée par n'importe quel canal bloque TOUS les comptes."""
+    if not idu and not adresse_norm:
+        return None
+    hit = db.execute(text(
+        "SELECT 1 FROM courrier_opposition "
+        "WHERE (CAST(:i AS varchar) IS NOT NULL AND idu = CAST(:i AS varchar)) "
+        "   OR (CAST(:a AS text) IS NOT NULL AND adresse_norm = CAST(:a AS text)) LIMIT 1"),
+        {"i": idu, "a": adresse_norm}).scalar()
+    return MOTIF_OPPOSITION if hit else None
+
+
+def demande_opposee(db, parcelles: list[str] | None) -> str | None:
+    """MOTIF_OPPOSITION si UNE des parcelles de la demande (par IDU ou par son adresse BAN) est
+    opposée. Sert de garde de dépôt (set_statut_demande→depose, marquer_deposes) et de garde de
+    soumission (creer_demande) — le même verrou aux deux bouts."""
+    for idu in (parcelles or []):
+        motif = opposition_motif(db, idu=idu, adresse_norm=normaliser_adresse(adresse_ban_parcelle(db, idu)))
+        if motif:
+            return motif
+    return None
 
 
 def ensure_tables(engine) -> None:
@@ -264,6 +362,15 @@ def set_statut_demande(db, demande_id: int, statut: str, *, compte_id: int | Non
     permis = STATUTS_RETOUR if reserve_retour else STATUTS_DEMANDE
     if statut not in permis:
         raise ValueError(f"statut invalide : {statut} (attendu {', '.join(permis)})")
+    # COURRIER-2 Lot 1 — GARDE DE DÉPÔT : on ne dépose jamais un pli vers une adresse/parcelle opposée.
+    if statut == "depose":
+        parcelles = db.execute(text("SELECT parcelles FROM courrier_demandes WHERE id = :id"),
+                               {"id": demande_id}).scalar()
+        if isinstance(parcelles, str):
+            parcelles = json.loads(parcelles or "[]")
+        motif = demande_opposee(db, parcelles or [])
+        if motif:
+            raise ValueError(motif)
     scope = " AND compte_id IS NOT DISTINCT FROM :cid" if compte_id is not None else ""
     params = {"s": statut, "id": demande_id}
     if compte_id is not None:
@@ -284,12 +391,43 @@ def marquer_deposes(db) -> list[dict]:
     (id, compte_id, n, communes) pour journaliser + prévenir chaque client. Idempotent : rien à déposer
     → liste vide."""
     legacy = [k for k, v in STATUT_ALIAS.items() if v == "demande"]
+    # COURRIER-2 Lot 1 — les demandes À DÉPOSER dont une parcelle est opposée sont EXCLUES du dépôt en
+    # bloc (jamais déposées en douce) ; on ne touche que les candidates non opposées.
+    candidates = db.execute(text(
+        "SELECT id, parcelles FROM courrier_demandes WHERE corps IS NOT NULL AND statut = ANY(:src)"),
+        {"src": ["demande", *legacy]}).mappings().all()
+    ids_ok = []
+    for c in candidates:
+        parc = c["parcelles"]
+        if isinstance(parc, str):
+            parc = json.loads(parc or "[]")
+        if not demande_opposee(db, parc or []):
+            ids_ok.append(c["id"])
+    if not ids_ok:
+        return []
     rows = db.execute(text(
         "UPDATE courrier_demandes SET statut = 'depose', updated_at = now() "
-        "WHERE corps IS NOT NULL AND statut = ANY(:src) "
+        "WHERE id = ANY(:ids) "
         "RETURNING id, compte_id, n, communes"),
-        {"src": ["demande", *legacy]}).mappings().all()
+        {"ids": ids_ok}).mappings().all()
     return [dict(r) for r in rows]
+
+
+def bloquees_a_deposer(db) -> int:
+    """Nombre de demandes ENCORE à déposer bloquées par une opposition (à afficher au dashboard :
+    « N déposées, M bloquées »). Le dépôt en bloc les laisse en l'état."""
+    legacy = [k for k, v in STATUT_ALIAS.items() if v == "demande"]
+    rows = db.execute(text(
+        "SELECT parcelles FROM courrier_demandes WHERE corps IS NOT NULL AND statut = ANY(:src)"),
+        {"src": ["demande", *legacy]}).mappings().all()
+    n = 0
+    for r in rows:
+        parc = r["parcelles"]
+        if isinstance(parc, str):
+            parc = json.loads(parc or "[]")
+        if demande_opposee(db, parc or []):
+            n += 1
+    return n
 
 
 def kpi_dashboard(db) -> dict:

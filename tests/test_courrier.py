@@ -141,3 +141,66 @@ def test_gb013_demande_idempotente_concurrente(engine):
     assert n == 1, f"double POST concurrent : attendu 1 ligne, eu {n}"
     assert sum(1 for d in out if not d.get("existing")) == 1
     assert sum(1 for d in out if d.get("existing")) == 1
+
+
+# ─────────────────────── COURRIER-2 Lot 1 — OPPOSITION (stop@labuse.immo) ───────────────────────
+def test_opposition_bloque_le_depot_tous_comptes(client, engine):
+    """Une opposition (par IDU) bloque le DÉPÔT d'un pli vers cette parcelle, POUR TOUS LES COMPTES.
+    Preuve : deux comptes distincts préparent un pli sur la même parcelle ; après opposition, aucun
+    des deux ne peut être déposé (garde globale, sans scope compte)."""
+    from labuse import courrier
+    idu = "97411000BZ1065"
+    with engine.begin() as db:
+        db.execute(text("DELETE FROM courrier_opposition"))
+        db.execute(text("DELETE FROM courrier_demandes WHERE corps IN ('cA-opp','cB-opp')"))
+        cA = db.execute(text("INSERT INTO comptes (nom, plan, statut) VALUES ('OppA','integral','actif') RETURNING id")).scalar()
+        cB = db.execute(text("INSERT INTO comptes (nom, plan, statut) VALUES ('OppB','integral','actif') RETURNING id")).scalar()
+        dA = courrier.creer_demande(db, compte_id=cA, parcelles=[idu], communes="Saint-Denis ×1",
+                                    modele="B", corps="cA-opp")
+        dB = courrier.creer_demande(db, compte_id=cB, parcelles=[idu], communes="Saint-Denis ×1",
+                                    modele="B", corps="cB-opp")
+    # avant opposition : le dépôt fonctionne (compte A)
+    with engine.begin() as db:
+        assert courrier.set_statut_demande(db, dA["id"], "depose")["statut"] == "depose"
+    # Vic enregistre l'opposition (par IDU) — globale
+    with engine.begin() as db:
+        opp = courrier.ajouter_opposition(db, adresse=None, idu=idu, reference="BZ 1065", par="test")
+        assert opp["idu"] == idu
+    # dépôt du compte B (AUTRE compte) refusé avec le motif unique
+    with engine.begin() as db:
+        with pytest.raises(ValueError, match=courrier.MOTIF_OPPOSITION):
+            courrier.set_statut_demande(db, dB["id"], "depose")
+    # même refus au travers de l'API admin (422, motif servi)
+    r = client.post(f"/courrier/admin/demandes/{dB['id']}/statut", json={"statut": "depose"})
+    assert r.status_code == 422 and courrier.MOTIF_OPPOSITION in r.json()["detail"]
+    # le registre est lisible au dashboard
+    assert any(o["idu"] == idu for o in client.get("/courrier/admin/oppositions").json()["oppositions"])
+    with engine.begin() as db:
+        db.execute(text("DELETE FROM courrier_opposition"))
+        db.execute(text("DELETE FROM courrier_demandes WHERE corps IN ('cA-opp','cB-opp')"))
+
+
+def test_opposition_deposer_tout_exclut_les_opposees(client, engine):
+    """« Marquer les N déposés » n'emporte JAMAIS une demande opposée : elle reste à déposer et est
+    comptée comme bloquée."""
+    from labuse import courrier
+    idu_opp, idu_ok = "97411000BZ1065", "97411000BZ9999"
+    with engine.begin() as db:
+        db.execute(text("DELETE FROM courrier_opposition"))
+        db.execute(text("DELETE FROM courrier_demandes WHERE corps IN ('dt-opp','dt-ok')"))
+        cid = db.execute(text("INSERT INTO comptes (nom, plan, statut) VALUES ('OppDT','integral','actif') RETURNING id")).scalar()
+        d_opp = courrier.creer_demande(db, compte_id=cid, parcelles=[idu_opp], communes="SD",
+                                       modele="B", corps="dt-opp")
+        d_ok = courrier.creer_demande(db, compte_id=cid, parcelles=[idu_ok], communes="SD",
+                                      modele="B", corps="dt-ok")
+        courrier.ajouter_opposition(db, adresse=None, idu=idu_opp, reference=None, par="test")
+    with engine.begin() as db:
+        touchees = courrier.marquer_deposes(db)
+        assert d_ok["id"] in [t["id"] for t in touchees]
+        assert d_opp["id"] not in [t["id"] for t in touchees]
+    with engine.begin() as db:
+        assert courrier.bloquees_a_deposer(db) >= 1
+        assert db.execute(text("SELECT statut FROM courrier_demandes WHERE id=:i"),
+                          {"i": d_opp["id"]}).scalar() == "demande"
+        db.execute(text("DELETE FROM courrier_opposition"))
+        db.execute(text("DELETE FROM courrier_demandes WHERE corps IN ('dt-opp','dt-ok')"))
