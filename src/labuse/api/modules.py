@@ -1472,50 +1472,31 @@ def bailleur(commune: str = Query(..., min_length=1), db: Session = Depends(get_
 
 class CourriersIn(BaseModel):
     idus: list[str]
-    contexte: str = "standard"   # standard | indivision | succession
-
-
-_COURRIER = {
-    "standard": ("Objet : votre parcelle cadastrée {ref} à {commune}\n\n"
-                 "Madame, Monsieur,\n\n"
-                 "Votre parcelle cadastrée {ref} ({surface} m²), située à {commune}, présente à notre "
-                 "analyse un réel potentiel. Nous accompagnons des porteurs de projets locaux et serions "
-                 "heureux d'échanger avec vous, sans aucun engagement, sur les possibilités qu'offre "
-                 "votre bien — y compris si vous n'envisagez pas de vendre à court terme.\n\n"
-                 "Nous nous tenons à votre disposition.\n\nCordialement,\n{signature}"),
-    "indivision": ("Objet : votre parcelle cadastrée {ref} à {commune} — situation d'indivision\n\n"
-                   "Madame, Monsieur,\n\n"
-                   "Votre parcelle cadastrée {ref} ({surface} m²) à {commune} semble détenue en "
-                   "indivision. Ces situations rendent souvent la gestion du bien complexe (entretien, "
-                   "fiscalité, décisions partagées). Nous pouvons étudier avec vous et vos co-indivisaires "
-                   "des solutions équitables — rachat de quote-part, sortie amiable d'indivision — avec "
-                   "l'appui de notaires locaux.\n\nCordialement,\n{signature}"),
-    "succession": ("Objet : votre parcelle cadastrée {ref} à {commune}\n\n"
-                   "Madame, Monsieur,\n\n"
-                   "Dans le cadre d'une succession, la parcelle cadastrée {ref} ({surface} m²) à {commune} "
-                   "peut représenter une charge autant qu'un patrimoine. Si vous envisagez d'en céder tout "
-                   "ou partie, nous pouvons vous proposer une étude sérieuse et confidentielle de sa "
-                   "valeur, en lien avec votre notaire.\n\nCordialement,\n{signature}"),
-}
+    # COURRIER-2 Lot 3 — `contexte` LEGACY (standard/indivision/succession) : IGNORÉ. L'ouverture (A→E)
+    # est désormais choisie sur les FAITS de la parcelle par le composeur unique (courrier_compose).
+    contexte: str = "standard"
 
 
 @router.post("/courriers")
-def courriers(body: CourriersIn, db: Session = Depends(get_db)) -> dict:
-    if body.contexte not in _COURRIER:
-        raise HTTPException(422, "contexte inconnu")
+def courriers(body: CourriersIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """COURRIER-2 Lot 3 — plus de gabarit `.format()` : chaque courrier est COMPOSÉ par le composeur
+    unique (recto A→E + verso), le même que le PDF et l'aperçu. Aucun placeholder {…}, aucune
+    affirmation de potentiel/valeur, jamais un particulier nommé."""
+    from .. import courrier_adressage as ca, courrier_compose as cc
+    from .courrier import _marque_du_compte
+    marque = _marque_du_compte(db, request)
     out = []
     for idu in body.idus[:100]:
-        r = db.execute(text("SELECT idu, commune, section, numero, round(surface_m2) s FROM parcels WHERE idu = :i"),
-                       {"i": idu}).mappings().first()
-        if not r:
+        res = ca.resoudre_destinataire(db, idu)
+        if res.get("motif") == ca.MOTIF_INCONNUE:
             out.append({"idu": idu, "erreur": "parcelle inconnue"})
             continue
-        ref = f"{r['section']} {r['numero']}"
-        out.append({"idu": idu, "texte": _COURRIER[body.contexte].format(
-            ref=ref, commune=r["commune"], surface=int(r["s"] or 0), signature="LABUSE — prospection foncière")})
-    return {"contexte": body.contexte, "n": len(out), "courriers": out,
-            "rappel_identite": ("Identité du propriétaire : workflow SPF/CERFA existant "
-                                "(fiche → export SPF) — aucune donnée nominative automatisée.")}
+        comp = cc.composer(db, idu, resolution=res, marque=marque)
+        out.append({"idu": idu, "texte": comp["recto"], "verso": comp["verso"],
+                    "ouverture": comp["ouverture"], "bloque": res["bloque"], "motif": res.get("motif")})
+    return {"n": len(out), "courriers": out,
+            "rappel_identite": ("Adressage résolu (à l'occupant / siège social) — aucune donnée nominative "
+                                "de particulier ; PM = raison sociale (donnée publique).")}
 
 
 # ───────────────────────── M10 — DUE DILIGENCE NOTAIRE ─────────────────────────

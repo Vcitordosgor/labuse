@@ -166,9 +166,10 @@ export function ProjetsPanel() {
     mutationFn: ({ id, statut }: { id: number; statut: 'repondu' | 'sans_reponse' }) => postCourrierClientStatut(id, statut),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['courrier-demandes'] }); qc.invalidateQueries({ queryKey: ['pipeline'] }) },
   })
+  // COURRIER-2 Lot 4 — UN SEUL vocabulaire, identique à l'admin (STATUT_LIBELLES back). Legacy remappé.
   const STATUT_COURRIER: Record<string, string> = {
-    demande: 'Demandé', depose: 'Déposé', envoye: 'Envoyé', repondu: 'Répondu', sans_reponse: 'Sans réponse',
-    tarif_confirme: 'Demandé', imprime: 'Déposé', poste: 'Envoyé',
+    demande: 'À déposer', depose: 'Déposé', envoye: 'Envoyé', repondu: 'Répondu', sans_reponse: 'Sans réponse',
+    tarif_confirme: 'À déposer', imprime: 'Déposé', poste: 'Envoyé',
   }
 
   if (openProjet) return <ProjetKanban pid={openProjet.id} nom={openProjet.nom} />

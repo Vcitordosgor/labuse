@@ -1246,6 +1246,28 @@ export const postCourrierDemande = (parcelles: string[], corps: string, modele: 
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ parcelles, corps, modele, communes, ...(rattach ?? {}) }) })
 export const getCourrierDemandes = () => j<{ demandes: CourrierDemande[] }>('/courrier/demandes')
+// COURRIER-2 Lot 2 — adressage (écran avant dépôt) : destinataire + adresse d'envoi + bien + motif de blocage.
+export interface CourrierResolution {
+  idu: string
+  type: 'occupant' | 'siege' | null
+  destinataire: string | null
+  adresse_envoi: string | null
+  mention: string | null
+  bloque: boolean
+  motif: string | null
+  bien: { reference: string; adresse: string | null; commune: string | null }
+}
+export const postCourrierAdressage = (idus: string[]) =>
+  j<{ resolutions: CourrierResolution[] }>('/courrier/adressage', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus }) })
+// COURRIER-2 Lot 3 — aperçu COMPOSÉ (recto + verso), même source que le PDF (« ne pas reformuler »).
+export interface CourrierApercu {
+  recto: string; verso: string[]; ouverture: string; reference: string
+  destinataire: string | null; adresse_envoi: string | null; bloque: boolean; motif: string | null
+}
+export const postCourrierComposer = (idu: string) =>
+  j<CourrierApercu>('/courrier/composer', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idu }) })
 // CONNEXIONS-2 Lot 4 (KO-6) — la cliente saisit le RETOUR de sa demande (répondu / sans réponse).
 export const postCourrierClientStatut = (id: number, statut: 'repondu' | 'sans_reponse') =>
   j<{ ok: boolean; statut: string }>(`/courrier/demandes/${id}/statut`, {
@@ -1703,15 +1725,36 @@ export interface AdminDemandeCourrier {
   // DASHBOARD-2 (Lot 3) — propriétaire = nombre de personnes morales (jamais un particulier) ;
   // compte_plan = 'interne' pour les comptes de test/pilote (masqués par défaut).
   proprietaire?: string | null; compte_plan?: string | null
+  // COURRIER-2 Lot 5 — prix facturé SAISI par Vic (facturation manuelle), jamais calculé. Nullable.
+  prix_eur?: number | null
 }
+// COURRIER-2 Lot 5 — coût prestataire : paramètre admin daté + saisie du prix par demande.
+export interface CourrierConfig { cout_lettre_eur: number; marge: number; maj_at: string | null; maj_par: string | null }
+export const getCourrierConfig = () => j<CourrierConfig>('/courrier/admin/config')
+export const putCourrierConfig = (cout_lettre_eur: number) =>
+  j<{ ok: boolean } & CourrierConfig>('/courrier/admin/config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cout_lettre_eur }) })
+export const postAdminCourrierPrix = (id: number, prix_eur: number | null) =>
+  j<{ ok: boolean; prix_eur: number | null }>(`/courrier/admin/demandes/${id}/prix`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prix_eur }) })
 export const getAdminCourrierDemandes = () =>
   j<{ demandes: AdminDemandeCourrier[]; statuts: string[]; statut_libelles: Record<string, string> }>('/courrier/admin/demandes')
 export const postAdminCourrierStatut = (id: number, statut: string) =>
   j<{ ok: boolean }>(`/courrier/admin/demandes/${id}/statut`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
 // DASHBOARD-2 (Lot 3) — « Marquer les N déposés » en bloc.
 export const postAdminCourrierDeposerTout = () =>
-  j<{ ok: boolean; deposes: number }>('/courrier/admin/demandes/deposer-tout', { method: 'POST' })
+  j<{ ok: boolean; deposes: number; bloquees_opposition?: number }>('/courrier/admin/demandes/deposer-tout', { method: 'POST' })
 export const urlCourrierPdf = '/courrier/pdf'
+
+// COURRIER-2 Lot 1 — REGISTRE D'OPPOSITION (stop@labuse.immo). Saisie manuelle par Vic ; global.
+export interface AdminOpposition {
+  id: number; adresse_norm: string | null; idu: string | null; reference: string | null
+  origine: string; note: string | null; cree_par: string | null; cree_at: string
+}
+export const getAdminOppositions = () =>
+  j<{ oppositions: AdminOpposition[] }>('/courrier/admin/oppositions')
+export const postAdminOpposition = (body: { adresse?: string; idu?: string; reference?: string; note?: string }) =>
+  j<{ ok: boolean; opposition: AdminOpposition }>('/courrier/admin/oppositions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const deleteAdminOpposition = (id: number) =>
+  j<{ ok: boolean }>(`/courrier/admin/oppositions/${id}`, { method: 'DELETE' })
 
 // ── Moteurs (Vague 4) ──
 // M137-Q — le périmètre du simulateur PLU est désormais un choix EXPLICITE dans l'outil (plus

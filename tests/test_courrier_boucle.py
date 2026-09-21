@@ -60,7 +60,8 @@ def test_boucle_piste_courrier_reponse(db_session, engine):
 
     # 3) le statut est RELU PAR PISTE (carte Kanban / Mes courriers)
     m = courrier.statut_par_pipeline_entry(s, 4242, [pe_id])
-    assert m[pe_id]["statut"] == "demande" and m[pe_id]["libelle"] == "Demandé"
+    # COURRIER-2 Lot 4 — vocabulaire unique : 'demande' se dit « À déposer » (plus « Demandé »).
+    assert m[pe_id]["statut"] == "demande" and m[pe_id]["libelle"] == "À déposer"
 
     # 4) LABUSE fait avancer : demande → depose → envoye (vocabulaire unique ; legacy normalisé)
     assert courrier.set_statut_demande(s, did, "depose")["statut"] == "depose"

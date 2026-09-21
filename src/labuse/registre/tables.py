@@ -479,6 +479,8 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "share_links": "liens de partage",
     "courrier_demandes": "courrier — demandes",
     "courrier_envois": "courrier — envois",
+    "courrier_opposition": "courrier — registre d'opposition (stop@labuse.immo)",
+    "courrier_config": "courrier — paramètre coût prestataire (daté)",
     "flash_commandes": "commandes Flash",
     "stripe_events": "paiement Stripe",
     "licence_mails": "licences (mails)",

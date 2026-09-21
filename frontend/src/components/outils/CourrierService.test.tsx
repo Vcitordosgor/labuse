@@ -12,9 +12,19 @@ const FICHE = { commune: 'Saint-Denis', surface_m2: 1625 }
 // qui ne doit PLUS être montrée au client (elle fuitait le volume plateforme).
 const DEMANDE = { ok: true, id: 42, rang_compte: 3, ts: 't', n: 1, communes: 'Saint-Denis ×1', statut: 'demande' }
 
+// COURRIER-2 Lot 2/3 — l'aperçu (composer) et l'adressage sont servis par le back (source unique).
+const APERCU = { recto: 'Objet : Votre parcelle BZ 1065, à Saint-Denis\n\nMadame, Monsieur,\n\nLABUSE est une plateforme…',
+  verso: ['Synthèse de la parcelle', 'Référence cadastrale : BZ 1065'], ouverture: 'D', reference: 'BZ 1065',
+  destinataire: "À l'occupant", adresse_envoi: '12 Rue X, 97400 Saint-Denis', bloque: false, motif: null }
+const RESOLUTION = { idu: '97411000BZ1065', type: 'occupant', destinataire: "À l'occupant",
+  adresse_envoi: '12 Rue X, 97400 Saint-Denis', mention: 'pli à l’occupant, non nominatif', bloque: false,
+  motif: null, bien: { reference: 'BZ 1065', adresse: '12 Rue X, 97400 Saint-Denis', commune: 'Saint-Denis' } }
+
 function mockFetch() {
   global.fetch = vi.fn(async (url: string, init?: RequestInit) => {
     const u = String(url)
+    if (u.includes('/courrier/composer')) return { ok: true, json: async () => APERCU }
+    if (u.includes('/courrier/adressage')) return { ok: true, json: async () => ({ resolutions: [RESOLUTION] }) }
     if (u.includes('/courrier/demande') && init?.method === 'POST') return { ok: true, json: async () => DEMANDE }
     if (u.includes('/courrier/demandes')) return { ok: true, json: async () => ({ demandes: [] }) }
     if (u.includes('/parcels/')) return { ok: true, json: async () => FICHE }
@@ -66,12 +76,13 @@ describe('COURRIER — service d\'envoi (3 étapes)', () => {
     await waitFor(() => expect(document.querySelectorAll('[data-courrier-dest]').length).toBe(1))
     // ① → ②
     fireEvent.click(document.querySelector('[data-courrier-next]')!)
-    // ② modèles présents (dont « Approche standard »), corps par défaut rempli
-    expect(document.querySelector('[data-courrier-modele="standard"]')).toBeTruthy()
-    expect((document.querySelector('[data-courrier-texte]') as HTMLTextAreaElement).value.length).toBeGreaterThan(10)
+    // ② aperçu COMPOSÉ serveur (lecture seule), plus de gabarit éditable
+    await waitFor(() => expect(document.querySelector('[data-courrier-apercu]')).toBeTruthy())
+    expect(document.querySelector('[data-courrier-apercu]')!.textContent!.length).toBeGreaterThan(10)
     // ② → ③
     fireEvent.click(document.querySelector('[data-courrier-next]')!)
-    // ③ demander l'envoi
+    // ③ adressage résolu, non bloqué → demander l'envoi
+    await waitFor(() => expect(document.querySelector('[data-courrier-resolution]')).toBeTruthy())
     fireEvent.click(document.querySelector('[data-courrier-demander]')!)
     await waitFor(() => expect(document.querySelector('[data-courrier-confirm]')).toBeTruthy())
     // RECETTE-1 R13 — la confirmation porte le rang PROPRE AU COMPTE (n° 3), PAS le id PK global (42).
@@ -87,6 +98,7 @@ describe('COURRIER — service d\'envoi (3 étapes)', () => {
     renderTool()
     await waitFor(() => expect(document.querySelectorAll('[data-courrier-dest]').length).toBe(1))
     fireEvent.click(document.querySelector('[data-courrier-next]')!)   // → ②
+    await waitFor(() => expect(document.querySelector('[data-courrier-apercu]')).toBeTruthy())
     fireEvent.click(document.querySelector('[data-courrier-next]')!)   // → ③
     expect(document.querySelector('[data-courrier-pdf]')).toBeTruthy()
   })

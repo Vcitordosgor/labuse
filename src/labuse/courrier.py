@@ -20,6 +20,8 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
+import unicodedata
 
 from sqlalchemy import text
 
@@ -84,6 +86,35 @@ DDL_STATEMENTS = (
             ALTER TABLE courrier_demandes ALTER COLUMN texte DROP NOT NULL;
         END IF;
     END $$""",
+    # COURRIER-2 Lot 1 — REGISTRE D'OPPOSITION (stop@labuse.immo). Clé = adresse postale normalisée
+    # ET/OU IDU. GLOBAL (aucun compte_id) : une opposition vaut pour TOUS les comptes. Saisi à la main
+    # au dashboard par Vic à partir de la boîte stop@. Une ligne bloque tout dépôt d'un pli vers cette
+    # adresse ou cette parcelle. `reference` = la référence cadastrale que la personne cite (traçabilité).
+    """CREATE TABLE IF NOT EXISTS courrier_opposition (
+        id serial PRIMARY KEY,
+        adresse_norm text,
+        idu varchar(14),
+        reference text,
+        origine varchar(24) NOT NULL DEFAULT 'stop@',
+        note text,
+        cree_par varchar(60),
+        cree_at timestamptz NOT NULL DEFAULT now(),
+        CONSTRAINT courrier_opposition_cle CHECK (adresse_norm IS NOT NULL OR idu IS NOT NULL)
+    )""",
+    "CREATE INDEX IF NOT EXISTS courrier_opposition_idu_idx ON courrier_opposition (idu)",
+    "CREATE INDEX IF NOT EXISTS courrier_opposition_adr_idx ON courrier_opposition (adresse_norm)",
+    # COURRIER-2 Lot 5 — le COÛT PRESTATAIRE sort du code : paramètre ADMIN unique (1 ligne), modifiable
+    # et DATÉ (maj_at/maj_par). Lu par tarif() ; plus de constante gelée servie.
+    """CREATE TABLE IF NOT EXISTS courrier_config (
+        id boolean PRIMARY KEY DEFAULT true,
+        cout_lettre_eur numeric(6,2) NOT NULL,
+        maj_at timestamptz NOT NULL DEFAULT now(),
+        maj_par varchar(60),
+        CONSTRAINT courrier_config_unique CHECK (id)
+    )""",
+    # COURRIER-2 Lot 5 — le PRIX facturé au client est SAISI par Vic au dashboard (facturation manuelle
+    # de fin de mois), JAMAIS calculé. Nullable tant que Vic ne l'a pas posé.
+    "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS prix_eur numeric(6,2)",
 )
 
 # CONNEXIONS-2 Lot 4 (KO-6) — VOCABULAIRE DE STATUT UNIQUE de la boucle commerciale :
@@ -93,8 +124,9 @@ STATUTS_DEMANDE = ("demande", "depose", "envoye", "repondu", "sans_reponse")
 #: alias LEGACY → canonique (anciennes lignes, anciens clics de la Tour de contrôle). On NE casse rien :
 #: `tarif_confirme`/`imprime` sont assimilés à « en préparation », `poste` à « envoyé ».
 STATUT_ALIAS = {"tarif_confirme": "demande", "imprime": "depose", "poste": "envoye"}
-#: libellés client uniques (servis partout).
-STATUT_LIBELLES = {"demande": "Demandé", "depose": "Déposé", "envoye": "Envoyé",
+#: COURRIER-2 Lot 4 — UN SEUL vocabulaire, servi PARTOUT (fiche, liste, journal, dashboard, mails) :
+#: « À déposer » (plus jamais « Demandé » côté client vs « À déposer » côté admin — un seul mot).
+STATUT_LIBELLES = {"demande": "À déposer", "depose": "Déposé", "envoye": "Envoyé",
                    "repondu": "Répondu", "sans_reponse": "Sans réponse"}
 #: correspondance statut → BUCKET dashboard (Courrier.tsx) — table unique, plus de sets disjoints.
 STATUT_BUCKET = {"demande": "a_deposer", "depose": "en_cours", "envoye": "en_cours",
@@ -106,6 +138,94 @@ STATUTS_RETOUR = ("repondu", "sans_reponse")
 def normaliser_statut(s: str | None) -> str | None:
     """Ramène un statut (éventuellement legacy) à sa forme canonique unique."""
     return STATUT_ALIAS.get(s, s) if s is not None else None
+
+
+# ─────────────────────────── COURRIER-2 Lot 1 — OPPOSITION ───────────────────────────
+#: motif unique renvoyé quand un dépôt est refusé pour cause d'opposition (source de vérité UI).
+MOTIF_OPPOSITION = "Opposition enregistrée"
+#: COURRIER-2 Lot 3 — motif de refus d'un corps contenant un gabarit {…} non substitué.
+MOTIF_PLACEHOLDER = "Courrier incomplet : un champ de gabarit n'a pas été renseigné"
+_RE_PLACEHOLDER = re.compile(r"\{[a-zA-Zà-ÿ_]+\}")
+
+
+def corps_a_placeholders(corps: str | None) -> bool:
+    """True si le corps contient un gabarit {…} non substitué (ex. « {parcelle} »). Un tel corps ne
+    doit JAMAIS être déposé (il imprimerait les accolades — cf. COURRIER-AUDIT-1 §B2)."""
+    return bool(corps) and bool(_RE_PLACEHOLDER.search(corps))
+
+
+def normaliser_adresse(s: str | None) -> str | None:
+    """Forme canonique d'une adresse postale pour l'appariement d'opposition : MAJUSCULES, sans
+    accents, sans ponctuation, espaces normalisés. La MÊME normalisation sert à l'écriture (saisie
+    stop@) et à la lecture (adresse d'envoi résolue) — sinon un « 12, Rue du Port » opposé ne
+    matcherait pas le « 12 RUE DU PORT » servi. Renvoie None si l'entrée est vide."""
+    if not s or not s.strip():
+        return None
+    txt = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
+    txt = re.sub(r"[^A-Za-z0-9 ]+", " ", txt).upper()
+    txt = re.sub(r"\s+", " ", txt).strip()
+    return txt or None
+
+
+def adresse_ban_parcelle(db, idu: str) -> str | None:
+    """Adresse BAN d'une parcelle (voie + CP + commune), telle que servie au pli « à l'occupant ».
+    Source unique `parcel_adresse` (COURRIER-AUDIT-1 §A3). None si la parcelle n'a pas d'adresse."""
+    r = db.execute(text(
+        "SELECT ban_voie, ban_cp, ban_commune FROM parcel_adresse WHERE idu = :i AND ban_voie IS NOT NULL"),
+        {"i": idu}).mappings().first()
+    if not r:
+        return None
+    return ", ".join(p for p in (r["ban_voie"], " ".join(x for x in (r["ban_cp"], r["ban_commune"]) if x)) if p)
+
+
+def ajouter_opposition(db, *, adresse: str | None, idu: str | None, reference: str | None,
+                       origine: str = "stop@", note: str | None = None, par: str | None = None) -> dict:
+    """Enregistre une opposition (Vic, depuis le dashboard). Au moins une clé (adresse OU idu) requise."""
+    adresse_norm = normaliser_adresse(adresse)
+    idu = (idu or "").strip() or None
+    if not adresse_norm and not idu:
+        raise ValueError("Opposition sans clé : renseignez une adresse et/ou un IDU.")
+    r = db.execute(text(
+        "INSERT INTO courrier_opposition (adresse_norm, idu, reference, origine, note, cree_par) "
+        "VALUES (:a, :i, :r, :o, :n, :p) RETURNING id, adresse_norm, idu, reference, origine, note, cree_at"),
+        {"a": adresse_norm, "i": idu, "r": (reference or None), "o": origine[:24],
+         "n": (note or None), "p": (par or None)}).mappings().one()
+    return dict(r)
+
+
+def lister_oppositions(db, limit: int = 500) -> list[dict]:
+    return [dict(r) for r in db.execute(text(
+        "SELECT id, adresse_norm, idu, reference, origine, note, cree_par, cree_at "
+        "FROM courrier_opposition ORDER BY cree_at DESC LIMIT :l"), {"l": limit}).mappings()]
+
+
+def supprimer_opposition(db, opp_id: int) -> bool:
+    return bool(db.execute(text("DELETE FROM courrier_opposition WHERE id = :i"),
+                           {"i": opp_id}).rowcount)
+
+
+def opposition_motif(db, *, idu: str | None = None, adresse_norm: str | None = None) -> str | None:
+    """MOTIF_OPPOSITION si la parcelle (idu) OU l'adresse normalisée est opposée, sinon None. GLOBAL
+    (aucun scope compte) — une opposition posée par n'importe quel canal bloque TOUS les comptes."""
+    if not idu and not adresse_norm:
+        return None
+    hit = db.execute(text(
+        "SELECT 1 FROM courrier_opposition "
+        "WHERE (CAST(:i AS varchar) IS NOT NULL AND idu = CAST(:i AS varchar)) "
+        "   OR (CAST(:a AS text) IS NOT NULL AND adresse_norm = CAST(:a AS text)) LIMIT 1"),
+        {"i": idu, "a": adresse_norm}).scalar()
+    return MOTIF_OPPOSITION if hit else None
+
+
+def demande_opposee(db, parcelles: list[str] | None) -> str | None:
+    """MOTIF_OPPOSITION si UNE des parcelles de la demande (par IDU ou par son adresse BAN) est
+    opposée. Sert de garde de dépôt (set_statut_demande→depose, marquer_deposes) et de garde de
+    soumission (creer_demande) — le même verrou aux deux bouts."""
+    for idu in (parcelles or []):
+        motif = opposition_motif(db, idu=idu, adresse_norm=normaliser_adresse(adresse_ban_parcelle(db, idu)))
+        if motif:
+            return motif
+    return None
 
 
 def ensure_tables(engine) -> None:
@@ -238,7 +358,7 @@ def demandes_admin(db, statut: str | None = None) -> list[dict]:
     ) if pm_ok else ", 0 AS n_pm"
     rows = db.execute(text(
         f"SELECT d.id, d.ts, d.compte_id, d.n, d.communes, d.modele, d.corps, d.statut,"
-        f"       d.updated_at, d.parcelles, d.pipeline_entry_id, d.projet_id, k.nom AS client,"
+        f"       d.updated_at, d.parcelles, d.pipeline_entry_id, d.projet_id, d.prix_eur, k.nom AS client,"
         f"       k.plan AS compte_plan{pm_sub}"
         f" FROM courrier_demandes d LEFT JOIN comptes k ON k.id = d.compte_id"
         f" {where} ORDER BY d.ts DESC LIMIT 300"),
@@ -264,6 +384,18 @@ def set_statut_demande(db, demande_id: int, statut: str, *, compte_id: int | Non
     permis = STATUTS_RETOUR if reserve_retour else STATUTS_DEMANDE
     if statut not in permis:
         raise ValueError(f"statut invalide : {statut} (attendu {', '.join(permis)})")
+    # COURRIER-2 — GARDES DE DÉPÔT : jamais un pli opposé (Lot 1), jamais un corps à gabarit {…} (Lot 3).
+    if statut == "depose":
+        row = db.execute(text("SELECT parcelles, corps FROM courrier_demandes WHERE id = :id"),
+                         {"id": demande_id}).mappings().first()
+        parcelles = row["parcelles"] if row else None
+        if isinstance(parcelles, str):
+            parcelles = json.loads(parcelles or "[]")
+        if row and corps_a_placeholders(row["corps"]):
+            raise ValueError(MOTIF_PLACEHOLDER)
+        motif = demande_opposee(db, parcelles or [])
+        if motif:
+            raise ValueError(motif)
     scope = " AND compte_id IS NOT DISTINCT FROM :cid" if compte_id is not None else ""
     params = {"s": statut, "id": demande_id}
     if compte_id is not None:
@@ -284,12 +416,45 @@ def marquer_deposes(db) -> list[dict]:
     (id, compte_id, n, communes) pour journaliser + prévenir chaque client. Idempotent : rien à déposer
     → liste vide."""
     legacy = [k for k, v in STATUT_ALIAS.items() if v == "demande"]
+    # COURRIER-2 Lot 1 — les demandes À DÉPOSER dont une parcelle est opposée sont EXCLUES du dépôt en
+    # bloc (jamais déposées en douce) ; on ne touche que les candidates non opposées.
+    candidates = db.execute(text(
+        "SELECT id, parcelles, corps FROM courrier_demandes WHERE corps IS NOT NULL AND statut = ANY(:src)"),
+        {"src": ["demande", *legacy]}).mappings().all()
+    ids_ok = []
+    for c in candidates:
+        parc = c["parcelles"]
+        if isinstance(parc, str):
+            parc = json.loads(parc or "[]")
+        if corps_a_placeholders(c["corps"]):
+            continue                       # Lot 3 — jamais déposer un corps à gabarit {…}
+        if not demande_opposee(db, parc or []):
+            ids_ok.append(c["id"])
+    if not ids_ok:
+        return []
     rows = db.execute(text(
         "UPDATE courrier_demandes SET statut = 'depose', updated_at = now() "
-        "WHERE corps IS NOT NULL AND statut = ANY(:src) "
+        "WHERE id = ANY(:ids) "
         "RETURNING id, compte_id, n, communes"),
-        {"src": ["demande", *legacy]}).mappings().all()
+        {"ids": ids_ok}).mappings().all()
     return [dict(r) for r in rows]
+
+
+def bloquees_a_deposer(db) -> int:
+    """Nombre de demandes ENCORE à déposer bloquées par une opposition (à afficher au dashboard :
+    « N déposées, M bloquées »). Le dépôt en bloc les laisse en l'état."""
+    legacy = [k for k, v in STATUT_ALIAS.items() if v == "demande"]
+    rows = db.execute(text(
+        "SELECT parcelles FROM courrier_demandes WHERE corps IS NOT NULL AND statut = ANY(:src)"),
+        {"src": ["demande", *legacy]}).mappings().all()
+    n = 0
+    for r in rows:
+        parc = r["parcelles"]
+        if isinstance(parc, str):
+            parc = json.loads(parc or "[]")
+        if demande_opposee(db, parc or []):
+            n += 1
+    return n
 
 
 def kpi_dashboard(db) -> dict:
@@ -333,10 +498,54 @@ def provider_actif() -> str:
     return "stub"
 
 
-def tarif() -> dict:
-    """Prix affiché au client = coût prestataire × marge (config, défaut × 1,5)."""
+def cout_lettre_eur(db) -> float:
+    """COURRIER-2 Lot 5 — coût prestataire courant : paramètre ADMIN daté (`courrier_config`), avec
+    repli sur le défaut de config au 1ᵉʳ appel (aucune ligne encore posée)."""
+    v = db.execute(text("SELECT cout_lettre_eur FROM courrier_config WHERE id")).scalar()
+    return float(v) if v is not None else float(get_settings().courrier_cout_lettre_eur)
+
+
+def config_courrier(db) -> dict:
+    """Paramètre coût + date de mise à jour, pour l'éditeur admin."""
+    r = db.execute(text("SELECT cout_lettre_eur, maj_at, maj_par FROM courrier_config WHERE id")).mappings().first()
+    if r:
+        return {"cout_lettre_eur": float(r["cout_lettre_eur"]), "maj_at": r["maj_at"], "maj_par": r["maj_par"],
+                "marge": float(get_settings().courrier_marge)}
+    return {"cout_lettre_eur": float(get_settings().courrier_cout_lettre_eur), "maj_at": None,
+            "maj_par": None, "marge": float(get_settings().courrier_marge)}
+
+
+def set_cout_lettre(db, valeur: float, *, par: str | None = None) -> dict:
+    """Vic modifie le coût prestataire (daté). Upsert sur la ligne unique."""
+    if valeur is None or float(valeur) < 0:
+        raise ValueError("Coût invalide.")
+    db.execute(text(
+        "INSERT INTO courrier_config (id, cout_lettre_eur, maj_at, maj_par) VALUES (true, :v, now(), :p) "
+        "ON CONFLICT (id) DO UPDATE SET cout_lettre_eur = EXCLUDED.cout_lettre_eur, "
+        "maj_at = now(), maj_par = EXCLUDED.maj_par"), {"v": round(float(valeur), 2), "p": par})
+    return config_courrier(db)
+
+
+def set_prix_demande(db, demande_id: int, prix: float | None) -> dict:
+    """COURRIER-2 Lot 5 — Vic SAISIT le prix facturé d'une demande (facturation manuelle) ; jamais
+    calculé. `None` efface. Retourne la ligne mise à jour."""
+    if prix is not None and float(prix) < 0:
+        raise ValueError("Prix invalide.")
+    r = db.execute(text(
+        "UPDATE courrier_demandes SET prix_eur = :p, updated_at = now() WHERE id = :id "
+        "RETURNING id, prix_eur"), {"p": (round(float(prix), 2) if prix is not None else None), "id": demande_id}
+    ).mappings().first()
+    if not r:
+        raise ValueError("demande introuvable")
+    return {"id": r["id"], "prix_eur": float(r["prix_eur"]) if r["prix_eur"] is not None else None}
+
+
+def tarif(db=None) -> dict:
+    """Coût prestataire × marge. COURRIER-2 Lot 5 : le coût vient du paramètre admin (DB) quand `db`
+    est fourni, sinon du défaut de config (chemin envoi stub hérité). Sert la mécanique d'envoi ;
+    n'est PLUS exposé au client (retiré de /courrier/statut)."""
     s = get_settings()
-    cout = float(s.courrier_cout_lettre_eur)
+    cout = cout_lettre_eur(db) if db is not None else float(s.courrier_cout_lettre_eur)
     return {"cout_prestataire_eur": round(cout, 2),
             "marge": float(s.courrier_marge),
             "prix_client_eur": round(cout * float(s.courrier_marge), 2),
@@ -389,7 +598,7 @@ def envoyer(db, sujet: str, destinataires: list[dict], *, modele: str | None,
         raise ValueError(f"Plafond d'envois atteint ({s.courrier_max_jour}/jour) : "
                          f"{deja} déjà envoyés aujourd'hui.")
     prov = provider_actif()
-    t = tarif()
+    t = tarif(db)
     crees = []
     for d in destinataires:
         if prov == "mercifacteur":

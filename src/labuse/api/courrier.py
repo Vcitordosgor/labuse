@@ -51,7 +51,9 @@ def courrier_statut(request: Request, db: Session = Depends(get_db)) -> dict:
         envoyes = courrier.envois_du_jour(db, sujet_de(request))
     except Exception:  # noqa: BLE001 — le plafond est informatif, jamais un 500
         envoyes = 0
-    return {"disponible": prov != "stub", "provider": prov, "tarif": courrier.tarif(),
+    # COURRIER-2 Lot 5 — AUCUN prix servi au client : le tarif est donné au rappel (modèle service).
+    # `tarif` retiré du payload (il fuitait le prix). Ne reste que l'état du service + le plafond.
+    return {"disponible": prov != "stub", "provider": prov,
             "raison": None if prov != "stub" else
             "L'envoi postal n'est pas encore disponible — la demande est enregistrée.",
             "plafond_jour": plafond, "envoyes_jour": envoyes, "reste_jour": max(0, plafond - envoyes)}
@@ -116,7 +118,7 @@ class DemandeIn(BaseModel):
 
 @router.post("/demande")
 def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(get_db)) -> dict:
-    """Le client DEMANDE l'envoi de N courriers. Enregistre la demande (statut « Demandé »), puis
+    """Le client DEMANDE l'envoi de N courriers. Enregistre la demande (statut « À déposer »), puis
     notifie Vic sur les canaux EXISTANTS (cloche + Brevo). La notif ne peut jamais faire échouer la
     demande (elle est déjà enregistrée)."""
     from .tenant import current_compte
@@ -158,7 +160,7 @@ def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(ge
             corps_mail = (f"{titre}\n\nParcelles ({d['n']}) : {', '.join(parcelles)}\n\n"
                           f"Corps du courrier :\n{body.corps}\n\n"
                           f"→ Vue admin /courrier/admin : rappeler le client, confirmer le tarif, "
-                          f"puis faire avancer le statut (Demandé → Tarif confirmé → Envoyé).")
+                          f"puis faire avancer le statut (À déposer → Déposé → Envoyé).")
             send_email_async(dest, f"[LABUSE] {titre}", corps_mail, contexte="Courrier")
     except Exception:
         pass
@@ -167,7 +169,7 @@ def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(ge
 
 @router.get("/demandes")
 def courrier_demandes(request: Request, db: Session = Depends(get_db)) -> dict:
-    """Les demandes DU client courant — timeline de statut (Demandé → Tarif confirmé → Envoyé)."""
+    """Les demandes DU client courant — timeline de statut (À déposer → Déposé → Envoyé)."""
     from .tenant import current_compte
     return {"demandes": courrier.demandes_de(db, current_compte(request))}
 
@@ -221,7 +223,7 @@ def courrier_client_statut(demande_id: int, body: StatutIn, request: Request,
 @router.post("/admin/demandes/{demande_id}/statut")
 def courrier_admin_statut(demande_id: int, body: StatutIn, request: Request,
                           db: Session = Depends(get_db)) -> dict:
-    """Vic fait avancer le statut d'une demande (Tour de contrôle : Demandé → Imprimé → Posté).
+    """Vic fait avancer le statut d'une demande (Tour de contrôle : À déposer → Déposé → Envoyé).
     Le client le voit via /courrier/demandes (sa timeline) ; DASHBOARD-V1 · D8 : chaque
     transition est JOURNALISÉE (event_log admin) + notifiée au client (cloche)."""
     from . import auth
@@ -260,8 +262,9 @@ def courrier_admin_deposer_tout(request: Request, db: Session = Depends(get_db))
     auth.exiger_admin(request)
     touchees = courrier.marquer_deposes(db)
     db.commit()
+    bloquees = courrier.bloquees_a_deposer(db)   # COURRIER-2 Lot 1 — opposées, laissées en l'état
     if not touchees:
-        return {"ok": True, "deposes": 0}
+        return {"ok": True, "deposes": 0, "bloquees_opposition": bloquees}
     try:
         from .events import creer_notification
         creer_notification(db, kind="systeme", compte_id=None, source="Courrier",
@@ -276,13 +279,154 @@ def courrier_admin_deposer_tout(request: Request, db: Session = Depends(get_db))
         db.commit()
     except Exception:  # noqa: BLE001 — la trace est best-effort, le dépôt est déjà fait
         db.rollback()
-    return {"ok": True, "deposes": len(touchees)}
+    return {"ok": True, "deposes": len(touchees), "bloquees_opposition": bloquees}
+
+
+# ─────────────────── COURRIER-2 Lot 1 — REGISTRE D'OPPOSITION (stop@labuse.immo) ───────────────────
+class OppositionIn(BaseModel):
+    adresse: str | None = None
+    idu: str | None = None
+    reference: str | None = None
+    origine: str = "stop@"
+    note: str | None = None
+
+
+@router.get("/admin/oppositions")
+def courrier_admin_oppositions(request: Request, db: Session = Depends(get_db)) -> dict:
+    """Liste du registre d'opposition (Vic). GLOBAL, aucun scope compte."""
+    from . import auth
+    auth.exiger_admin(request)
+    return {"oppositions": courrier.lister_oppositions(db)}
+
+
+@router.post("/admin/oppositions")
+def courrier_admin_opposition_ajout(body: OppositionIn, request: Request,
+                                    db: Session = Depends(get_db)) -> dict:
+    """Vic saisit une opposition reçue sur stop@labuse.immo : adresse et/ou IDU + référence citée."""
+    from . import auth
+    info = auth.exiger_admin(request)
+    par = (info.get("email") or info.get("nom") or info.get("role") or "admin")[:60]
+    try:
+        opp = courrier.ajouter_opposition(db, adresse=body.adresse, idu=body.idu,
+                                          reference=body.reference, origine=body.origine,
+                                          note=body.note, par=par)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+    db.commit()
+    try:
+        from .events import creer_notification
+        cible = opp.get("idu") or opp.get("adresse_norm") or "—"
+        creer_notification(db, kind="systeme", compte_id=None, source="Courrier",
+                           titre=f"Opposition enregistrée ({opp.get('origine')}) : {cible}",
+                           detail=opp.get("reference"), dedup=f"courrier:opposition:{opp['id']}")
+        db.commit()
+    except Exception:  # noqa: BLE001 — best-effort
+        db.rollback()
+    return {"ok": True, "opposition": opp}
+
+
+@router.delete("/admin/oppositions/{opp_id}")
+def courrier_admin_opposition_suppr(opp_id: int, request: Request,
+                                    db: Session = Depends(get_db)) -> dict:
+    """Lève une opposition (erreur de saisie / rétractation écrite)."""
+    from . import auth
+    auth.exiger_admin(request)
+    ok = courrier.supprimer_opposition(db, opp_id)
+    db.commit()
+    if not ok:
+        raise HTTPException(404, "opposition introuvable")
+    return {"ok": True}
+
+
+# ─────────────────── COURRIER-2 Lot 5 — PRIX (coût admin daté + prix saisi par Vic) ───────────────────
+class CoutIn(BaseModel):
+    cout_lettre_eur: float = Field(ge=0)
+
+
+@router.get("/admin/config")
+def courrier_admin_config(request: Request, db: Session = Depends(get_db)) -> dict:
+    from . import auth
+    auth.exiger_admin(request)
+    return courrier.config_courrier(db)
+
+
+@router.put("/admin/config")
+def courrier_admin_config_set(body: CoutIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Vic modifie le coût prestataire (paramètre daté). Ne calcule aucun prix client."""
+    from . import auth
+    info = auth.exiger_admin(request)
+    par = (info.get("email") or info.get("role") or "admin")[:60]
+    cfg = courrier.set_cout_lettre(db, body.cout_lettre_eur, par=par)
+    db.commit()
+    return {"ok": True, **cfg}
+
+
+class PrixIn(BaseModel):
+    prix_eur: float | None = None
+
+
+@router.post("/admin/demandes/{demande_id}/prix")
+def courrier_admin_prix(demande_id: int, body: PrixIn, request: Request,
+                        db: Session = Depends(get_db)) -> dict:
+    """Vic SAISIT le prix facturé d'une demande (facturation manuelle fin de mois) ; jamais calculé."""
+    from . import auth
+    auth.exiger_admin(request)
+    try:
+        r = courrier.set_prix_demande(db, demande_id, body.prix_eur)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+    db.commit()
+    return {"ok": True, **r}
+
+
+# ─────────────────── COURRIER-2 Lot 2 — ADRESSAGE (écran avant dépôt) ───────────────────
+class AdressageIn(BaseModel):
+    idus: list[str] = Field(min_length=1, max_length=500)
+
+
+@router.post("/adressage")
+def courrier_adressage(body: AdressageIn, db: Session = Depends(get_db)) -> dict:
+    """Résout, par parcelle, le destinataire + l'adresse d'envoi + le bien concerné, et le MOTIF de
+    blocage éventuel (nu/sans adresse/opposition). Sert l'écran avant dépôt : bouton désactivé si
+    une parcelle est bloquée. N'expose jamais un particulier (PP = « À l'occupant » ; PM = raison
+    sociale, donnée publique)."""
+    from .. import courrier_adressage as ca
+    return {"resolutions": ca.resoudre_plusieurs(db, body.idus)}
+
+
+class ComposerIn(BaseModel):
+    idu: str
+
+
+@router.post("/composer")
+def courrier_composer(body: ComposerIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """COURRIER-2 Lot 3 — compose le courrier (recto + verso) pour l'aperçu front : MÊME source que le
+    PDF, donc aperçu = PDF. Renvoie {recto, verso, ouverture, reference, destinataire, adresse_envoi,
+    bloque, motif}."""
+    from .. import courrier_adressage as ca, courrier_compose as cc
+    res = ca.resoudre_destinataire(db, body.idu)
+    comp = cc.composer(db, body.idu, resolution=res, marque=_marque_du_compte(db, request))
+    return {"recto": comp["recto"], "verso": comp["verso"], "ouverture": comp["ouverture"],
+            "reference": comp["reference"], "destinataire": res.get("destinataire"),
+            "adresse_envoi": res.get("adresse_envoi"), "bloque": res["bloque"], "motif": res.get("motif")}
 
 
 class PdfIn(BaseModel):
+    # COURRIER-2 Lot 3 — le PDF est COMPOSÉ serveur (recto A→E + verso) à partir de l'IDU : le front
+    # et l'admin appellent le MÊME endpoint → le même PDF. `texte`/`motif` LEGACY : ignorés si `idu`.
     idu: str | None = None
     motif: str = "standard"
-    texte: str = Field(min_length=10, max_length=8000)
+    texte: str | None = Field(default=None, max_length=8000)
+
+
+def _marque_du_compte(db: Session, request: Request) -> dict | None:
+    """Marque blanche du compte courant (raison sociale, coordonnées) — pour la signature du courrier."""
+    from .tenant import current_compte
+    cid = current_compte(request)
+    if cid is None:
+        return None
+    m = db.execute(text("SELECT marque FROM comptes WHERE id = :c"), {"c": cid}).scalar()
+    return m if isinstance(m, dict) else None
 
 
 # RECETTE-1 R41 — palette DA LABUSE portée au PRINT (fonds blancs) : le mint d'écran (#4ADE80) est
@@ -299,36 +443,8 @@ def _pdf_safe(s: str) -> str:
     return s.translate(_LATIN1_PUNCT).encode("latin-1", "replace").decode("latin-1")
 
 
-@router.post("/pdf")
-def courrier_pdf(body: PdfIn) -> Response:
-    """M82 : rend le courrier généré en PDF TÉLÉCHARGEABLE — le client l'imprime/l'envoie lui-même
-    (utile même sans traitement automatique). Adressage générique, aucune identité de propriétaire.
-    RECETTE-1 R41 : mise en page à la DA LABUSE (en-tête wordmark + filet vert, pied mentionné), plus un
-    texte brut sur page blanche. Le FOND du texte (`body.texte`) est INCHANGÉ — seule la présentation change."""
-    from fpdf import FPDF
+def _pdf_header(pdf) -> None:
     from fpdf.enums import XPos, YPos
-
-    class _Courrier(FPDF):
-        def footer(self) -> None:
-            # pied de page à la DA : filet fin + mention légale, sur CHAQUE page.
-            self.set_y(-18)
-            self.set_draw_color(222, 226, 223)
-            self.set_line_width(0.3)
-            self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
-            self.ln(1.5)
-            self.set_text_color(*_DA_GRIS)
-            self.set_font("Helvetica", "", 7.5)
-            self.multi_cell(self.epw, 3.6, _pdf_safe(
-                "Courrier préparé avec LABUSE — à partir de données publiques (cadastre, PLU, DVF…). "
-                "Ni conseil juridique ni offre d'achat."),
-                new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
-
-    pdf = _Courrier(format="A4")
-    pdf.set_auto_page_break(True, margin=24)   # laisse la place au pied
-    pdf.set_margins(22, 20, 22)
-    pdf.add_page()
-
-    # ── EN-TÊTE / letterhead DA ──
     pdf.set_text_color(*_DA_VERT)
     pdf.set_font("Helvetica", "B", 24)
     pdf.cell(0, 11, "LABUSE", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
@@ -336,26 +452,114 @@ def courrier_pdf(body: PdfIn) -> Response:
     pdf.set_font("Helvetica", "", 9)
     pdf.cell(0, 5, _pdf_safe("Intelligence foncière — La Réunion"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(2.5)
-    # filet vert d'accent sous l'en-tête
     pdf.set_draw_color(*_DA_VERT_FILET)
     pdf.set_line_width(0.7)
     y = pdf.get_y()
     pdf.line(pdf.l_margin, y, pdf.w - pdf.r_margin, y)
-    pdf.ln(8)
+    pdf.ln(7)
 
-    # ── CORPS (texte INCHANGÉ) ──
-    # F4 (OUTILS-3) — positionnement EXPLICITE (new_x/new_y) : sinon selon la version de fpdf2 le
-    # curseur ne descend pas et les lignes s'écrasent. En forçant LMARGIN/NEXT, CHAQUE ligne descend.
+
+@router.post("/pdf")
+def courrier_pdf(body: PdfIn, request: Request, db: Session = Depends(get_db)) -> Response:
+    """COURRIER-2 Lot 3 — PDF COMPOSÉ serveur : RECTO (en-tête destinataire résolu + objet + phrase
+    d'entrée « à l'occupant » le cas échéant + corps avec l'ouverture A→E choisie sur les faits +
+    signature du compte) et VERSO (synthèse factuelle). Aucune valeur du terrain, aucun placeholder
+    {…}, jamais un particulier nommé. Le front et l'admin appellent CE endpoint → le même PDF.
+
+    Repli LEGACY : sans `idu`, on rend `texte` tel quel (ancien flux)."""
+    from fpdf import FPDF
+    from fpdf.enums import XPos, YPos
+    from .. import courrier_adressage as ca, courrier_compose as cc
+
+    idu = (body.idu or "").strip() or None
+    ref_pied = idu or "—"
+    if idu:
+        res = ca.resoudre_destinataire(db, idu)
+        comp = cc.composer(db, idu, resolution=res, marque=_marque_du_compte(db, request))
+        ref_pied = comp["reference"]
+
+    class _Courrier(FPDF):
+        def footer(self) -> None:
+            self.set_y(-24)
+            self.set_draw_color(222, 226, 223)
+            self.set_line_width(0.3)
+            self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
+            self.ln(1.5)
+            self.set_text_color(*_DA_GRIS)
+            self.set_font("Helvetica", "", 7)
+            if idu:
+                self.multi_cell(self.epw, 3.3, _pdf_safe(
+                    cc._PIED.format(societe=comp["expediteur"]["societe"])), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="L")
+                self.multi_cell(self.epw, 3.3, _pdf_safe(
+                    cc._PIED_STOP.format(reference=ref_pied)), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="L")
+            else:
+                self.multi_cell(self.epw, 3.3, _pdf_safe(
+                    "Courrier préparé avec LABUSE — à partir de données publiques (cadastre, PLU, DVF…). "
+                    "Ni conseil juridique ni offre d'achat."), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
+
+    pdf = _Courrier(format="A4")
+    pdf.set_auto_page_break(True, margin=28)
+    pdf.set_margins(22, 20, 22)
+    pdf.add_page()
+    _pdf_header(pdf)
+
+    if not idu:                                   # ── repli LEGACY : texte brut ──
+        pdf.set_text_color(*_DA_ENCRE)
+        pdf.set_font("Helvetica", "", 11)
+        for ligne in (body.texte or "").split("\n"):
+            safe = _pdf_safe(ligne)
+            if safe.strip() == "":
+                pdf.ln(3)
+            else:
+                pdf.multi_cell(pdf.epw, 6, safe, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        data = bytes(pdf.output())
+        return Response(content=data, media_type="application/pdf",
+                        headers={"Content-Disposition": 'attachment; filename="courrier.pdf"'})
+
+    # ── EN-TÊTE DESTINATAIRE (bloc adresse) ──
     pdf.set_text_color(*_DA_ENCRE)
+    pdf.set_font("Helvetica", "", 10)
+    if res["bloque"]:
+        pdf.set_text_color(*_DA_GRIS)
+        pdf.multi_cell(pdf.epw, 5, _pdf_safe(f"[Aperçu — pli non déposable : {res['motif']}]"),
+                       new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_text_color(*_DA_ENCRE)
+    dest = res.get("destinataire") or "À l'occupant"
+    adr = res.get("adresse_envoi") or (res["bien"].get("adresse") or "")
+    for ligne in (dest, *(adr.split(", ") if adr else [])):
+        pdf.multi_cell(pdf.epw, 5, _pdf_safe(ligne), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="R")
+    pdf.ln(6)
+
+    # ── CORPS (recto composé) ──
     pdf.set_font("Helvetica", "", 11)
-    for ligne in body.texte.split("\n"):
+    for ligne in comp["recto"].split("\n"):
         safe = _pdf_safe(ligne)
         if safe.strip() == "":
-            pdf.ln(3)   # respiration entre paragraphes (ligne vide = \n\n)
+            pdf.ln(3)
+        elif safe.startswith("Objet :"):
+            pdf.set_font("Helvetica", "B", 11)
+            pdf.multi_cell(pdf.epw, 6, safe, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.set_font("Helvetica", "", 11)
         else:
             pdf.multi_cell(pdf.epw, 6, safe, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    # ── VERSO (page 2) : synthèse factuelle ──
+    pdf.add_page()
+    _pdf_header(pdf)
+    verso = comp["verso"]
+    pdf.set_text_color(*_DA_VERT)
+    pdf.set_font("Helvetica", "B", 13)
+    pdf.multi_cell(pdf.epw, 7, _pdf_safe(verso[0] if verso else "Synthèse de la parcelle"),
+                   new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.ln(2)
+    pdf.set_text_color(*_DA_ENCRE)
+    pdf.set_font("Helvetica", "", 10.5)
+    for ligne in verso[1:]:
+        pdf.multi_cell(pdf.epw, 5.6, _pdf_safe(ligne), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.ln(0.8)
+
     data = bytes(pdf.output())
-    nom = (body.idu or "parcelle").replace("/", "-")
+    nom = idu.replace("/", "-")
     return Response(content=data, media_type="application/pdf",
                     headers={"Content-Disposition": f'attachment; filename="courrier-{nom}.pdf"'})
 
