@@ -226,6 +226,59 @@ def verifier_temoin(idu: str, d: Path, fiche: dict) -> None:
         ko(f"{idu}/fiche : médiane secteur « — » sans étiquette de couverture")
 
 
+# GABARIT-5 — témoins du §10 « Gabarit réglementaire » (tiroir déclaré, miroir Dossier).
+# servi complet · plafond « Non réglementé » · hauteur « Non chiffrée » · bloqué (motif seul).
+GABARIT_TEMOINS = ["97411000IE0153", "97422000AY0953", "97411000BE0476", "97407000AM1059"]
+
+
+def verifier_gabarit_temoins(outdir: Path) -> None:
+    """GABARIT-5 lot C — le §10 du Dossier PDF = le tiroir Gabarit de l'écran (/outils/gabarit/{idu}).
+    Pour chaque témoin : la zone d'implantation, le plafond (valeur ou « Non réglementé »), la hauteur
+    (valeur ou « Non chiffrée »), et — parcelle bloquée — le motif seul, sans chiffres."""
+    from fastapi.testclient import TestClient
+
+    from labuse.api.app import app
+    c = TestClient(app)
+    for idu in GABARIT_TEMOINS:
+        print(f"== gabarit {idu}")
+        g = c.get(f"/outils/gabarit/{idu}").json()      # LE TIROIR ÉCRAN (source de vérité)
+        r = c.get(f"/dossier/{idu}.pdf?carte=false")
+        if r.status_code != 200:
+            ko(f"gabarit {idu} : Dossier HTTP {r.status_code}"); continue
+        d = outdir / idu
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "dossier.pdf").write_bytes(r.content)
+        subprocess.run(["pdftotext", "-layout", str(d / "dossier.pdf"), str(d / "dossier.txt")], check=True)
+        t = (d / "dossier.txt").read_text(encoding="utf-8", errors="replace")
+        if g.get("status") != "ok":
+            # bloqué : le §10 imprime le motif métier et AUCUN chiffre de gabarit
+            if "Gabarit — calcul incomplet" not in t:
+                ko(f"gabarit {idu} : bloqué mais motif absent du §10 Dossier")
+            elif re.search(r"Zone d'implantation\s+\d", t):
+                ko(f"gabarit {idu} : bloqué mais un chiffre de zone d'implantation s'imprime")
+            else:
+                ok(f"gabarit {idu} : bloqué → motif seul au §10 (écran = Dossier)")
+            continue
+        # servi : la zone d'implantation écran == Dossier
+        zi = g.get("zoneImplantationM2")
+        if zi is not None and not re.search(rf"Zone d'implantation\s+{round(zi)}\s*m²", t):
+            ko(f"gabarit {idu} : zone d'implantation écran {round(zi)} m² ≠ §10 Dossier")
+        else:
+            ok(f"gabarit {idu} : zone d'implantation {round(zi)} m² (écran = Dossier)")
+        # plafond : « Non réglementé » (silence) ou la valeur
+        if g.get("plafondEmpriseStatus") == "absent":
+            if "Plafond d'emprise" in t and "Non réglementé" not in t:
+                ko(f"gabarit {idu} : plafond doit imprimer « Non réglementé »")
+            else:
+                ok(f"gabarit {idu} : plafond « Non réglementé » (écran = Dossier)")
+        # hauteur : « Non chiffrée » (prospect) ou la valeur
+        if g.get("hauteurStatus") == "not_integrated":
+            if not re.search(r"Hauteur réglementaire\s+Non chiffrée", t):
+                ko(f"gabarit {idu} : hauteur doit imprimer « Non chiffrée »")
+            else:
+                ok(f"gabarit {idu} : hauteur « Non chiffrée » (écran = Dossier)")
+
+
 def main() -> int:
     outdir = Path(sys.argv[sys.argv.index("--dir") + 1]) if "--dir" in sys.argv \
         else Path(tempfile.mkdtemp(prefix="recette-exports1-"))
@@ -234,6 +287,7 @@ def main() -> int:
         print(f"== {idu}")
         fiche = generer(idu, outdir)
         verifier_temoin(idu, outdir / idu, fiche)
+    verifier_gabarit_temoins(outdir)
     print(f"\n{'ÉCHEC — ' + str(len(ERREURS)) + ' divergence(s)' if ERREURS else 'RECETTE VERTE'}")
     # 0-bis — sortie machine pour la sonde (cas nocturne coherence-robinets) : divergences et
     # mots interdits SÉPARÉS (deux contrôles distincts du verdict).
