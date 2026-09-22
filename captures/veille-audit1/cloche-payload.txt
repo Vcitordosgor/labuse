@@ -1,0 +1,20 @@
+===== CLOCHE compte 70 — non-lues=1254 =====
+  [NON-LU] veille_zone     | Secteur · [AUDIT-TEST] Secteur A | Permis déposé dans « [AUDIT-TEST] Secteur A » | /socle/#surveillance=secteurs
+  [NON-LU] veille_zone     | Secteur · [AUDIT-TEST] Secteur A | Vente DVF dans « [AUDIT-TEST] Secteur A » | /socle/#surveillance=secteurs
+  [NON-LU] veille_zone     | Secteur · [AUDIT-TEST] Secteur A | Vente DVF dans « [AUDIT-TEST] Secteur A » | /socle/#surveillance=secteurs
+  [NON-LU] veille_zone     | Secteur · [AUDIT-TEST] Secteur A | Vente DVF dans « [AUDIT-TEST] Secteur A » | /socle/#surveillance=secteurs
+  [NON-LU] parcelle_suivie | Mutation                 | Vente : votre parcelle CY0018 a changé de mains | /socle/#parcelle=97415000CY0018
+  [NON-LU] bascule         | (marché)                 | ▲ EH0140 : Neutre → À suivre | 
+  [NON-LU] bascule         | (marché)                 | ▲ CA0242 : Neutre → À suivre | 
+  [NON-LU] bascule         | (marché)                 | ▲ DY0219 : Neutre → À suivre | 
+
+===== CLOCHE compte 71 — non-lues=1251 =====
+  [NON-LU] parcelle_suivie | Permis                   | Nouveau permis sur votre parcelle BN2939 | /socle/#parcelle=97422000BN2939
+  [NON-LU] parcelle_suivie | Mutation                 | Vente : votre parcelle BN2939 a changé de mains | /socle/#parcelle=97422000BN2939
+  [NON-LU] bascule         | (marché)                 | ▲ EH0140 : Neutre → À suivre | 
+  [NON-LU] bascule         | (marché)                 | ▲ CA0242 : Neutre → À suivre | 
+  [NON-LU] bascule         | (marché)                 | ▲ DY0219 : Neutre → À suivre | 
+  [NON-LU] bascule         | (marché)                 | ▲ AO0971 : Neutre → À suivre | 
+  [NON-LU] bascule         | (marché)                 | ▲ BT1345 : Neutre → À suivre | 
+  [NON-LU] bascule         | (marché)                 | ▼ AL0466 : À suivre → Neutre | 
+
