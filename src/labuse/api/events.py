@@ -689,10 +689,17 @@ def _seen(alias: str = "e") -> str:
     """Fragment SQL : l'event est-il LU pour le compte courant ? (M-V V2)
     - event du compte (perso, ou pilote sur ses lignes NULL) → colonne partagée `lu`.
     - event de MARCHÉ vu par un compte réel → présence dans `event_seen` (jamais la colonne
-      partagée, qui appartient au bucket pilote). `:cid` lié par l'appelant."""
+      partagée, qui appartient au bucket pilote). `:cid` lié par l'appelant.
+
+    VEILLE-FIX-1 (lot 4) — un événement de MARCHÉ (broadcast : bascule/BODACC/match) ANTÉRIEUR à la
+    création du compte est compté LU d'office : un compte NEUF ouvre la cloche à 0, il n'hérite pas des
+    milliers de bascules diffusées avant son inscription. Le bucket pilote (compte_id NULL) n'est pas
+    concerné (ses events tombent dans la branche `lu`, jamais dans le ELSE)."""
     p = f"{alias}." if alias else ""
     return (f"(CASE WHEN {p}compte_id IS NOT DISTINCT FROM :cid THEN {p}lu "
-            f"ELSE EXISTS (SELECT 1 FROM event_seen s WHERE s.event_id = {p}id AND s.compte_id = :cid) END)")
+            f"ELSE (EXISTS (SELECT 1 FROM event_seen s WHERE s.event_id = {p}id AND s.compte_id = :cid) "
+            f"OR {p}ts < COALESCE((SELECT c.created_at FROM comptes c WHERE c.id = :cid), "
+            f"'-infinity'::timestamptz)) END)")
 
 
 @router.get("")

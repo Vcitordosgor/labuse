@@ -66,3 +66,41 @@ def test_v8a_casse_si_un_job_est_retire(monkeypatch):
     r = verrou_veille_a_un_job(None)
     assert r.verdict == "casse", "V8a aurait dû casser sans le job digest"
     assert any("digest" in d for d in r.details)
+
+
+# ─────────────────────── LOT 4 — la cloche d'un compte neuf ───────────────────────
+
+def test_cloche_compte_neuf_a_zero():
+    """VEILLE-FIX-1 (lot 4) — un compte NEUF ouvre la cloche à 0 : les événements de marché diffusés
+    AVANT sa création ne comptent pas en non-lus ; un événement de marché postérieur, si."""
+    from sqlalchemy import text
+    from labuse.db import session_scope, engine
+    from labuse.api.events import ensure_tables
+    from labuse.registre.moteurs.plateforme import notifications_non_lues
+    ensure_tables(engine())
+    ids = []
+    try:
+        with session_scope() as db:
+            cid = db.execute(text("INSERT INTO comptes (nom, plan, founding, statut, sieges) "
+                                  "VALUES ('RT-neuf','integral',false,'actif',1) RETURNING id")).scalar()
+            db.commit()
+            # 3 bascules de MARCHÉ (compte_id NULL) ANTÉRIEURES à la création du compte
+            for i in range(3):
+                db.execute(text("INSERT INTO event_log (kind, idu, titre, compte_id, ts) "
+                                "VALUES ('bascule', :idu, :t, NULL, now() - interval '2 days')"),
+                           {"idu": f"RTNEUF{i:08d}", "t": f"▲ ancienne bascule {i}"})
+                ids.append(db.execute(text("SELECT max(id) FROM event_log")).scalar())
+            db.commit()
+            avant = notifications_non_lues(db, cid)
+            assert avant == 0, f"compte neuf devrait ouvrir la cloche à 0, pas {avant}"
+            # une bascule de marché POSTÉRIEURE à la création → elle, compte
+            db.execute(text("INSERT INTO event_log (kind, idu, titre, compte_id, ts) "
+                            "VALUES ('bascule', 'RTNEUF99999999', '▲ nouvelle bascule', NULL, now())"))
+            ids.append(db.execute(text("SELECT max(id) FROM event_log")).scalar())
+            db.commit()
+            apres = notifications_non_lues(db, cid)
+            assert apres == 1, f"une bascule postérieure doit compter (attendu 1, obtenu {apres})"
+    finally:
+        with session_scope() as s:
+            s.execute(text("DELETE FROM event_log WHERE idu LIKE 'RTNEUF%'"))
+            s.execute(text("DELETE FROM comptes WHERE nom='RT-neuf'"))
