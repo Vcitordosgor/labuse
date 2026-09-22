@@ -12,13 +12,12 @@ from labuse.jobs import JOBS
 
 # ─────────────────────────── LOT 1 — le registre ───────────────────────────
 
-def test_les_quatre_jobs_veille_existent():
-    """Les quatre fonctions que le registre ne portait pas ont chacune un job, à leur créneau matinal,
+def test_les_jobs_veille_existent():
+    """VEILLE-2 (Lot 4) — les jobs de veille du matin (evaluer-secteurs RETIRÉ) ont chacun leur créneau,
     et leur impl appelle vraiment la fonction d'évaluation/envoi."""
     from labuse import jobs_impl
     attendu = {
         "evaluer-suivis":  ("2 3 * * *",  "evaluer_suivis",        "evaluer_suivis"),
-        "evaluer-secteurs":("3 3 * * *",  "evaluer_secteurs",      "evaluer_tous_secteurs"),
         "detect-events":   ("4 3 * * *",  "detect_events",         "detect_events"),
         "digest":          ("15 3 * * *", "digest",                "envoyer_digests"),
     }
@@ -30,22 +29,24 @@ def test_les_quatre_jobs_veille_existent():
         fn = getattr(jobs_impl, impl, None)
         assert fn is not None, f"impl jobs_impl.{impl} absente"
         assert fonction in inspect.getsource(fn), f"jobs_impl.{impl} n'appelle pas {fonction}"
+    # evaluer-secteurs RETIRÉ (secteurs archivés — page Veille = PARCELLE + RADAR)
+    assert "evaluer-secteurs" not in JOBS
 
 
 def test_digest_envoie_mail_les_evaluateurs_non():
-    """Le digest est le seul des quatre qui envoie un mail (règle dry-run) ; les trois évaluateurs non."""
+    """Le digest est le seul à envoyer un mail (règle dry-run) ; les évaluateurs non."""
     assert JOBS["digest"].envoie_mail is True
-    for nom in ("evaluer-suivis", "evaluer-secteurs", "detect-events"):
+    for nom in ("evaluer-suivis", "detect-events"):
         assert JOBS[nom].envoie_mail is False
 
 
-def test_les_quatre_jobs_au_crontab_genere():
-    """Le crontab GÉNÉRÉ depuis le registre porte une ligne pour chacun des quatre jobs (sinon retirer
-    le legacy éteindrait la fonction sans équivalent posé)."""
+def test_les_jobs_veille_au_crontab_genere():
+    """Le crontab GÉNÉRÉ porte une ligne pour chaque job de veille restant ; plus evaluer-secteurs."""
     from labuse.cli import _crontab_du_registre
     crontab = _crontab_du_registre("reunion")
-    for nom in ("evaluer-suivis", "evaluer-secteurs", "detect-events", "digest"):
+    for nom in ("evaluer-suivis", "detect-events", "digest"):
         assert f"jobs run {nom}'" in crontab, f"{nom} absent du crontab généré"
+    assert "jobs run evaluer-secteurs'" not in crontab
 
 
 # ─────────────────────────── LOT 1 — verrou V8a ───────────────────────────

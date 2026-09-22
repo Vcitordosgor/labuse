@@ -2842,23 +2842,9 @@ def evaluer_veilles_cmd() -> None:
     typer.echo(f"✓ Veilles évaluées : {out['veilles_evaluees']}, notifications créées : {out['notifications_creees']}.")
 
 
-@app.command("evaluer-secteurs")
-def evaluer_secteurs_cmd() -> None:
-    """M104 — évalue les SECTEURS (zones dessinées) de tous les comptes : ventes DVF, permis,
-    BODACC, zonage → alertes + notifications event_log (raccordement du double tuyau).
-    À appeler après l'ingestion (cron J+1), comme evaluer-suivis / evaluer-veilles."""
-    from sqlalchemy.orm import Session
-
-    from .alertes import evaluer_tous_secteurs
-    from .api.events import ensure_tables
-    from .db import engine
-
-    ensure_tables(engine())
-    with Session(engine()) as s:
-        out = evaluer_tous_secteurs(s)
-        s.commit()
-    typer.echo(f"✓ Secteurs évalués : {out['scopes']} scope(s), {out['alertes']} alerte(s), "
-               f"{out['notifications']} notification(s) event_log.")
+# VEILLE-2 (Lot 4) — la commande `evaluer-secteurs` est RETIRÉE : les secteurs (zones dessinées) sont
+# archivés, plus jamais évalués (la page Veille n'a que PARCELLE et RADAR). Le job du registre et le
+# verrou V8a ne portent plus cette fonction.
 
 
 @app.command("notif-test")

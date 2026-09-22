@@ -526,9 +526,10 @@ def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False,
              "from": run_from, "to": run_to, "demo": demo, "es": _es}).rowcount
         inserted["bodacc"] += n
 
-    # 2 bis. VEILLES : une bascule vers un statut « montant » qui MATCHE une recherche sauvegardée
-    # → notification nominative (M11 : « une recherche filtrée nommée = une veille »).
-    _veilles_match(db, run_to, demo, rattrapage=rattrapage)
+    # 2 bis. VEILLE-2 (Lot 4) — l'évaluation des RECHERCHES SAUVEGARDÉES est RETIRÉE du modèle (la page
+    # Veille n'a plus que PARCELLE et RADAR). detect-events ne garde que les bascules du MARCHÉ (blocs 1
+    # et 2 ci-dessus) et la bascule du score sur une parcelle SUIVIE (bloc 3 ci-dessous). Les recherches
+    # sauvegardées existantes sont archivées (plus aucun producteur ne les lit).
 
     # 3. M85-B — BASCULE DE TIER sur une parcelle SUIVIE = NOTRE VERDICT qui change (jamais un fait du
     # monde réel). Seulement les bascules SIGNIFICATIVES (vers/depuis 'chaude', le tier prioritaire).
@@ -601,60 +602,9 @@ def traiter_reprises(db: Session) -> int:
     return n
 
 
-def _veilles_match(db: Session, run_to: str, demo: bool, rattrapage: bool = False) -> int:
-    # Batch : on parcourt TOUTES les veilles (tous comptes), et chaque événement produit est
-    # attribué au COMPTE propriétaire de la veille (v["compte_id"]) — jamais partagé.
-    veilles = db.execute(text("SELECT id, nom, hash, compte_id FROM saved_searches")).mappings().all()
-    if not veilles:
-        return 0
-    # bascules « montantes » de CE diff (déjà en event_log, kind=bascule, run_to)
-    # M137-M : le statut servi lu ici = parcel_p_score_v2.tier au run_to (plus matrice_statut morte).
-    # q_score retiré (matrice morte) : le critère de veille `q` (seuil de score matrice) n'existe plus
-    # côté front (scoreMin retiré) → f["q"] est toujours None ; on ne lit ni ne filtre plus dessus.
-    rows = db.execute(text("""
-        SELECT e.idu, p.commune, p.surface_m2, s2.tier, r.sdp_residuelle_m2,
-               EXISTS (SELECT 1 FROM dryrun_cascade_results cr WHERE cr.run_label = :to
-                       AND cr.parcel_id = p.id AND cr.evenement = 'rouge') AS a_evenement
-        FROM event_log e
-        JOIN parcels p ON p.idu = e.idu
-        JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :to
-        LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        WHERE e.kind = 'bascule' AND e.run_to = :to AND e.titre LIKE '▲%'"""),
-        {"to": run_to}).mappings().all()
-    # CONNEXIONS-2 Lot 5 (KO-7) — parité filtre ↔ veille : on évalue TOUTES les dimensions du filtre
-    # avec le MÊME moteur que la carte (`parcelles_matchant_hash` → `_q_v2_list`), plus les 5 dimensions
-    # hard-codées d'avant. Le TIER reste évalué au run_to (run-sensible) depuis `rows` ; le reste (commune,
-    # zonage, signaux, état-sol, propriétaire, marché, charge, événement…) passe par le moteur partagé.
-    from .app import filtre_from_hash, parcelles_matchant_hash
-    by_idu = {r["idu"]: r for r in rows}
-    tier_by_idu = {r["idu"]: r["tier"] for r in rows}
-    n = 0
-    for v in veilles:
-        c = filtre_from_hash(v["hash"])
-        # tier au run_to (les candidats `rows` portent le tier du run en cours de bascule)
-        tset = [t.strip() for t in (c.tiers or "").split(",") if t.strip()]
-        cand = [idu for idu, tier in tier_by_idu.items() if (not tset or tier in tset)]
-        # les AUTRES dimensions, via le moteur partagé (carte == veille). Si la veille n'a QUE le tier
-        # (aucune autre dimension), on évite l'appel (et sa dépendance à dryrun_parcel_evaluations).
-        c_reste = filtre_from_hash(v["hash"])
-        c_reste.tiers = None
-        where_reste, _ = c_reste.where()
-        matched = set(cand) if not where_reste.strip() \
-            else parcelles_matchant_hash(db, v["hash"], run_to, cand, sans_tiers=True)
-        for idu in matched:
-            r = by_idu[idu]
-            n += db.execute(text("""
-                INSERT INTO event_log (kind, idu, titre, detail, run_to, demo, compte_id, envoi_statut)
-                SELECT 'veille', CAST(:idu AS varchar), CAST(:titre AS varchar), CAST(:detail AS text),
-                       CAST(:to AS varchar), CAST(:demo AS boolean), :cid, CAST(:es AS varchar)
-                WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE kind='veille' AND idu=:idu AND titre=:titre
-                                  AND compte_id IS NOT DISTINCT FROM :cid)"""),
-                {"idu": r["idu"], "titre": f"🔭 Veille « {v['nom']} » : {r['idu'][8:]} correspond",
-                 "detail": f"Passée en « {_tier_court(r['tier'])} » — correspond à votre veille."
-                           + (" (rattrapage)" if rattrapage else ""),
-                 "to": run_to, "demo": demo, "cid": v["compte_id"],
-                 "es": ("rattrapage" if rattrapage else "na")}).rowcount
-    return n
+# VEILLE-2 (Lot 4) — `_veilles_match` (évaluation des RECHERCHES SAUVEGARDÉES contre les bascules) a été
+# RETIRÉ : le modèle Veille n'a plus que PARCELLE et RADAR. detect-events ne produit plus d'événement
+# `veille`. La table `saved_searches` existante est archivée (plus aucun producteur ne la lit).
 
 
 def seed_demo(db: Session) -> dict:

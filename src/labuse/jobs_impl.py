@@ -186,23 +186,16 @@ def evaluer_suivis(ctx: JobContext) -> None:
     ctx.compte(total=sum(r.values()), **r)
 
 
-def evaluer_secteurs(ctx: JobContext) -> None:
-    """VEILLE-FIX-1 (lot 1) — évalue les SECTEURS (zones dessinées) de tous les comptes : ventes DVF,
-    permis, BODACC, zonage dans la zone → table `alertes` + notifications event_log kind=veille_zone
-    (seuls les faits postérieurs à la création de la zone notifient). Idempotent (index d'unicité)."""
-    from .alertes import evaluer_tous_secteurs
-    from .api.events import ensure_tables
-    from .db import engine
-    ensure_tables(engine())
-    r = evaluer_tous_secteurs(ctx.db)
-    ctx.compte(**r)
+# VEILLE-2 (Lot 4) — `evaluer_secteurs` RETIRÉ : les secteurs (zones dessinées) sont archivés, plus
+# jamais évalués (la page Veille n'a que PARCELLE et RADAR). `alertes.evaluer_tous_secteurs` n'a plus de
+# job (retiré du registre et du verrou V8a).
 
 
 def detect_events(ctx: JobContext) -> None:
-    """VEILLE-FIX-1 (lot 1) — RECHERCHES SAUVEGARDÉES + bascules : diffe le run servi et son précédent
-    (table des runs, jamais une constante) → événements `bascule`/`bodacc` + notifications de veille
-    (`_veilles_match`). Idempotent par (kind, idu, run_from, run_to) : rejeu = 0. Aucun run précédent
-    (première install) → rien à diffuser, exit 0."""
+    """VEILLE-2 (Lot 4) — BASCULES DU MARCHÉ : diffe le run servi et son précédent (table des runs, jamais
+    une constante) → événements `bascule`/`bodacc` + bascule du score sur les parcelles suivies. (L'ancienne
+    évaluation des recherches sauvegardées est retirée.) Idempotent par (kind, idu, run_from, run_to) :
+    rejeu = 0. Aucun run précédent (première install) → rien à diffuser, exit 0."""
     from sqlalchemy import text as _text
 
     from . import runs

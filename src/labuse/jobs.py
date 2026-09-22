@@ -382,23 +382,20 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "(vente, permis, procédure, zonage). Reprend le legacy du matin ; sans ce job, retirer les "
               "crons legacy éteint la veille de suivi. Zéro modèle, dédup par fait (rejeu = 0).",
        test="tests/test_veille_fix1.py::test_les_quatre_jobs_veille_existent"),
-    _j("evaluer-secteurs", "Veille — secteurs (zones dessinées) : DVF/permis/BODACC/zonage dans la zone",
-       "quotidien", "3 3 * * *", "07:03", touche="exploitation", timeout_s=900,
-       raison="Les SECTEURS dessinés par un client (zones de veille) doivent le prévenir des faits qui "
-              "tombent dedans, pour les faits POSTÉRIEURS à la création de la zone (repart du présent). "
-              "Reprend le legacy du matin ; sans ce job, la veille de secteur ne tourne jamais en fond.",
-       test="tests/test_veille_fix1.py::test_les_quatre_jobs_veille_existent"),
-    _j("detect-events", "Veille — recherches sauvegardées + bascules (diff du run servi et du précédent)",
+    # VEILLE-2 (Lot 4) — le job `evaluer-secteurs` est RETIRÉ : la page Veille n'a plus que PARCELLE et
+    # RADAR (secteurs et recherches sauvegardées archivés, plus évalués). `detect-events` reste (bascules
+    # du marché + bascule du score sur parcelle suivie), sans l'évaluation des recherches.
+    _j("detect-events", "Veille — bascules du marché (diff du run servi et du précédent)",
        "quotidien", "4 3 * * *", "07:04", touche="exploitation", timeout_s=900,
-       raison="Une parcelle qui MONTE en classement et matche une recherche sauvegardée doit prévenir son "
-              "auteur (et le marché voit les bascules). Diffe le run servi et son précédent ; idempotent "
-              "par (kind, idu, run_from, run_to). Sans ce job, les recherches sauvegardées ne notifient jamais.",
+       raison="Le marché voit les bascules de classement (diff du run servi et de son précédent), et une "
+              "parcelle SUIVIE qui bascule prévient son suiveur. Idempotent par (kind, idu, run_from, "
+              "run_to). Sans ce job, les bascules du run ne se propagent jamais.",
        test="tests/test_veille_fix1.py::test_les_quatre_jobs_veille_existent"),
-    _j("digest", "Veille — DIGEST du matin (un mail par compte : suivis + secteurs + recherches)",
+    _j("digest", "Veille — DIGEST du matin (un mail par compte : suivis de parcelle + bascules)",
        "quotidien", "15 3 * * *", "07:15", touche="exploitation", timeout_s=900, envoie_mail=True,
-       raison="Les notifications de veille (chaînes 1+2) sont e-mailées en UN digest quotidien par compte, "
-              "filtré par préférence, jamais vide, un par jour. Passe par mail_queue. Reprend le legacy du "
-              "matin ; sans ce job, aucune notification cloche ne serait jamais e-mailée (dry-run si SMTP absent).",
+       raison="Les notifications de veille (parcelles suivies) sont e-mailées en UN digest quotidien par "
+              "compte, filtré par préférence, jamais vide, un par jour. Passe par mail_queue. Sans ce job, "
+              "aucune notification cloche ne serait jamais e-mailée (dry-run si SMTP absent).",
        test="tests/test_veille_fix1.py::test_les_quatre_jobs_veille_existent"),
     _j("restore-test", "Restaure le dernier dump dans une base jetable et vérifie (puis DROP)",
        "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", touche="exploitation", timeout_s=3600,

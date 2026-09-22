@@ -8,11 +8,11 @@
  * Le compteur est SQL-exact (endpoint unifié /filtre) — jamais un calcul client. Chaque facette
  * porte son étiquette (Sourcé/Estimé) et sa limite. Aucune facette du cadrage ANTI-FILTRES ici.
  */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
-import { getFiltre, getFiltreCount, getSearchApercu, getZonageZones, saveSearch } from '../../lib/api'
-import { countActiveFilters, filtersToHash, resumeCriteres } from '../../lib/filters'
+import { getFiltre, getFiltreCount, getZonageZones } from '../../lib/api'
+import { countActiveFilters, resumeCriteres } from '../../lib/filters'
 import { tierChipLabel } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
@@ -297,26 +297,11 @@ export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: stri
 // du store/back (_q_v2_where) et leurs tests restent intacts — réversible en remontant le composant
 // (historique git : commit KF1, fichier à ce chemin).
 
+// VEILLE-2 (Lot 4) — la CRÉATION d'une veille de recherche depuis les filtres est RETIRÉE (plus de bouton
+// « Créer une veille ») ; `enVeille` ne sert plus qu'à masquer le rituel « regard LABUSE » là où ce même
+// panneau serait monté hors carte. La page Veille n'a plus que PARCELLE et RADAR.
 export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; enVeille?: boolean } = {}) {
-  const { filters, setFilter, setFilters, setVerdict, commune, setCommunesFilter, setAnalyseRecap,
-          zone, setToast, openSurveillance } = useApp()
-  const qc = useQueryClient()
-  // #1 (fix veille-notifs) — LE GESTE MANQUANT : créer une veille de critères DEPUIS les filtres posés.
-  // Enregistre la recherche courante (même chemin que Veille › Critères : saveSearch + filtersToHash),
-  // puis ouvre le volet Critères pour la montrer (au même niveau que Parcelles/Secteurs).
-  const creerVeille = useMutation({
-    mutationFn: () => saveSearch(
-      (resumeCriteres(filters, CLIENT.signaux.labels, 6) || 'Ma veille').slice(0, 80),
-      filtersToHash(filters, zone) || '#f=1'),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['searches'] })
-      setToast('Veille créée — retrouvez-la dans Veille › Critères.')
-      openSurveillance('criteres')
-    },
-  })
-  // CONNEXIONS-2 Lot 5 (KO-7) — aperçu des dimensions surveillées par la veille (moteur partagé carte↔veille).
-  const veilleHash = filtersToHash(filters, zone) || '#f=1'
-  const apercuVeille = useQuery({ queryKey: ['veille-apercu', veilleHash], queryFn: () => getSearchApercu(veilleHash) })
+  const { filters, setFilter, setFilters, setVerdict, commune, setCommunesFilter, setAnalyseRecap } = useApp()
   const analyseOn = filters.analyseLabuse
   // M55-D stage 4 : interrupteur UNIFIÉ — analyseLabuse (persisté, URL) ⟺ verdict (carte). Éteint
   // par défaut : plus jamais « analyse active » quand l'utilisateur n'a rien allumé (bug mesuré).
@@ -587,28 +572,8 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
             : <><b className="text-txt">{nf.format(live)}</b> parcelles correspondent à vos critères</>}
         </p>
       )}
-      {/* RETOURS-7 Z10 — la CRÉATION de veille de recherche NE VIT PLUS dans le panneau Filtres
-          (décision Vic) : elle se crée depuis l'écran Veille › Critères, qui monte ce même FiltreLabuse
-          avec `enVeille`. Le bloc (aperçu « cette veille surveille : … » + bouton) ne s'affiche donc
-          QU'EN mode veille — il se DÉPLACE, il ne se perd pas. */}
-      {enVeille && nActifs > 0 && (
-        <>
-          {/* CONNEXIONS-2 Lot 5 (KO-7) — TRANSPARENCE : « cette veille surveille : … » (dimensions
-              réellement évaluées, moteur partagé avec la carte) + ce qui n'est PAS retenu, s'il y a lieu. */}
-          {apercuVeille.data && (
-            <p data-veille-apercu className="mt-2 rounded-lg border border-line-2 bg-surface-2/60 px-2.5 py-1.5 text-[10.5px] leading-snug text-txt-mut">
-              <b className="text-txt">Cette veille surveille :</b> {apercuVeille.data.surveille.join(' · ') || '—'}
-              {apercuVeille.data.non_retenu.length > 0 && (
-                <span className="mt-0.5 block text-amber">Non retenu (non évaluable) : {apercuVeille.data.non_retenu.join(', ')}</span>
-              )}
-            </p>
-          )}
-          <button data-creer-veille onClick={() => creerVeille.mutate()} disabled={creerVeille.isPending}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-mint/50 bg-mint/[0.08] py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15 disabled:opacity-40">
-            {creerVeille.isPending ? 'Création…' : '🔔 Créer une veille sur cette recherche'}
-          </button>
-        </>
-      )}
+      {/* VEILLE-2 (Lot 4) — la CRÉATION d'une veille de recherche est RETIRÉE (plus de bouton « Créer une
+          veille » depuis les filtres) : la page Veille n'a plus que PARCELLE et RADAR. */}
       </>
       )}
 

@@ -840,7 +840,9 @@ def verrou_regles_citations(db=None) -> ResultatVerrou:
 #: job au registre (donc au crontab généré), et l'impl du job l'appelle vraiment.
 _VEILLE_ENVOI: tuple[tuple[str, str, str, str], ...] = (
     ("evaluer_suivis",        "labuse.api.events",          "evaluer-suivis",   "evaluer_suivis"),
-    ("evaluer_tous_secteurs", "labuse.alertes",             "evaluer-secteurs", "evaluer_secteurs"),
+    # VEILLE-2 (Lot 4) — `evaluer_tous_secteurs` (secteurs) RETIRÉ du contrat : plus de job, secteurs
+    # archivés. detect-events reste (bascules du marché) ; l'évaluation des recherches sauvegardées est
+    # retirée de detect_events mais la fonction garde son job (bascules).
     ("detect_events",         "labuse.api.events",          "detect-events",    "detect_events"),
     ("envoyer_digests",       "labuse.api.events",          "digest",           "digest"),
     ("envoyer",               "labuse.pige.digests",        "radar-digests",    "radar_digests"),
