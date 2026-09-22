@@ -1,0 +1,26 @@
+{
+ "taxe": {
+  "found": true,
+  "snippet": "celle du projet : i … ou cliquez une parcelle sur la carte : l'outil la reprend automatiquement. Le formulaire s'ouvrira quand une parcelle sera choisie — LABUSE préremplit alors la surface taxable avec la SDP constructible au gabarit (modifiable). + − Sombre 3D Cliquez une parcelle pour ouvrir sa fiche Cadastre © DGFiP"
+ },
+ "scan": {
+  "found": true,
+  "snippet": " Ce qu'un propriétaire possède, et ce qu'il construit. Chercher Une société, une parcelle, une adresse — LABUSE remonte au propriétaire. EXEMPLES nom CBO TERRITORIA SIREN 310 863 592 IDU 97415000CM1799 adresse 27 chemin Vidot, Saint-Denis + − Sombre 3D Cliquez une parcelle pour ouvrir sa fiche Cadastre © DGFiP"
+ },
+ "pieges": {
+  "found": true,
+  "catnat": false,
+  "snippet": "celle Un lot Ce qui peut bloquer un projet sans se voir sur la carte : servitudes, sols, bruit, assainissement. Chaque servitude est nommée, datée et sourcée. Saisissez un IDU complet (14 caractères) ou cliquez une parcelle. + − Sombre 3D Cliquez une parcelle pour ouvrir sa fiche Cadastre © DGFiP"
+ },
+ "communes": {
+  "found": true,
+  "catnat": false,
+  "taxefonc": false,
+  "snippet": "s Le tableau comparatif des 24 communes, en grand — indicateurs sourcés, tri par colonne. Évolution du marché — ventes actées et permis DVF ancien bâti, DVF terrain nu et permis Sitadel — une ligne par trimestre sur 8 trimestres. Marché des annonces (Radar) Les biens en vente collectés par le Radar, par commune — compteur affiché dans le tableau. Acquisitions récentes Changements de propriétaire moral par commune (constat DGFiP, hors scoring). + − Sombre 3D Cliquez une parcelle pour ouvrir sa fi"
+ },
+ "faisa": {
+  "found": true,
+  "rtaa": false,
+  "snippet": "arcelle Périmètre Toute l'île Saint-Paul Le Tampon La Possession Saint-Pierre Saint-Denis Saint-Leu Saint-Louis Saint-Joseph Saint-André Sainte-Marie Le Port La Plaine-des-Palmistes Saint-Benoît L'Étang-Salé Les Avirons Petite-Île Entre-Deux Sainte-Suzanne Les Trois-Bassins Cilaos Salazie Sainte-Rose Bras-Panon Saint-Philippe choisi ici — pas hérité du filtre global i BÂTIMENTS R+N UNITÉS/BÂT M²/U"
+ }
+}
