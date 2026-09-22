@@ -1,0 +1,25 @@
+commune,insee,statut_config,millesime_servi,date_servie,millesime_gpu_en_vigueur,date_gpu,note_gpu,verdict,ecart_jours
+Les Avirons,97401,a_jour,97401_PLU_20241206,2024-12-06,97401_PLU_20241206,2024-12-06,,à jour,0
+Bras-Panon,97402,a_jour,97402_PLU_20260428,2026-04-28,97402_PLU_20260428,2026-04-28,,à jour,0
+Entre-Deux,97403,a_jour,97403_PLU_20240924,2024-09-24,97403_PLU_20240924,2024-09-24,,à jour,0
+L'Étang-Salé,97404,a_jour,97404_PLU_20250917,2025-09-17,97404_PLU_20250917,2025-09-17,,à jour,0
+Petite-Île,97405,a_jour,97405_PLU_20230609,2023-06-09,97405_PLU_20230609,2023-06-09,,à jour,0
+La Plaine-des-Palmistes,97406,a_jour,97406_PLU_20230527,2023-05-27,97406_PLU_20230527,2023-05-27,,à jour,0
+Le Port,97407,annule_partiel,97407_PLU_20241209,2024-12-09,97407_PLU_20241209,2024-12-09,,à jour,0
+La Possession,97408,a_jour,97408_PLU_20251217,2025-12-17,97408_PLU_20251217,2025-12-17,,à jour,0
+Saint-André,97409,opposabilite_en_attente,pack live GPU (gpu_vide),,—,,gpu_vide,"non comparable (révision, GPU vide → repli mairie)",
+Saint-Benoît,97410,a_jour,97410_PLU_20200206,2020-02-06,97410_PLU_20200206,2020-02-06,,à jour,0
+Saint-Denis,97411,a_jour,97411_PLU_20260423,2026-04-23,97411_PLU_20260805,2026-08-05,,EN RETARD de 104 j,104
+Saint-Joseph,97412,a_jour,97412_PLU_20251210,2025-12-10,97412_PLU_20251210,2025-12-10,,à jour,0
+Saint-Leu,97413,opposabilite_en_attente,pack live GPU (gpu_vide),,—,,gpu_vide,"non comparable (révision, GPU vide → repli mairie)",
+Saint-Louis,97414,a_jour,97414_PLU_20251218,2025-12-18,97414_PLU_20251218,2025-12-18,,à jour,0
+Saint-Paul,97415,a_jour,97415_PLU_20251217,2025-12-17,97415_PLU_20251217,2025-12-17,,à jour,0
+Saint-Pierre,97416,a_jour,97416_PLU_20240625,2024-06-25,97416_PLU_20240625,2024-06-25,,à jour,0
+Saint-Philippe,97417,rnu,"— (RNU, aucun PLU)",,—,,gpu_vide,non comparable (RNU),
+Sainte-Marie,97418,a_jour,97418_PLU_20251126,2025-11-26,97418_PLU_20251126,2025-11-26,,à jour,0
+Sainte-Rose,97419,a_jour,97419_PLU_20190504,2019-05-04,97419_PLU_20190504,2019-05-04,,à jour,0
+Sainte-Suzanne,97420,a_jour,97420_PLU_20250929,2025-09-29,97420_PLU_20250929,2025-09-29,,à jour,0
+Salazie,97421,a_jour,97421_PLU_20220524,2022-05-24,97421_PLU_20220524,2022-05-24,,à jour,0
+Le Tampon,97422,a_jour,97422_PLU_20230811,2023-08-11,97422_PLU_20230811,2023-08-11,,à jour,0
+Les Trois-Bassins,97423,a_jour,97423_PLU_20220602,2022-06-02,97423_PLU_20220602,2022-06-02,,à jour,0
+Cilaos,97424,a_jour,97424_PLU_20240213,2024-02-13,97424_PLU_20240213,2024-02-13,,à jour,0
