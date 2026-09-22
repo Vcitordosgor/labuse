@@ -1,0 +1,76 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Cascade v2 — classification A/B/C/D des règles (SCORING-6 lot C, source : SCORING-5-RAPPORT §5).
+#
+#   A = SEULE exclusion dure (assiette nulle certaine).
+#   B = pénalité d'assiette ou de faisabilité (jamais une exclusion). Pour PPR/ER/EBC/PEB + A/N,
+#       VENTILÉE : A si recouvrement 100 %, B si partiel (une portion exploitable subsiste).
+#   C = motif informatif, filtrable (jamais une exclusion, jamais un malus de score).
+#   D = supprimée / déplacée (le proxy meurt, ou le signal part au Signal de mutation / à l'info fiche).
+#
+# La classe est appliquée PAR VERDICT (HARD_EXCLUDE ⇒ lecture de la classe ; SOFT_FLAG ⇒ info sauf
+# les couches de pénalité). Rien de servi ne change : la reclassification alimente le NOUVEAU moteur
+# (Score LABUSE), les motifs sont conservés en base pour les filtres.
+# ─────────────────────────────────────────────────────────────────────────────
+cascade_v2:
+  seuil_ventile_100_pct: 99      # recouvrement ≥ ce seuil ⇒ A (100 % de fait) ; sinon B
+
+  # Familles VENTILÉES (A si 100 %, B si partiel) — exigence explicite du mandat §5.1.
+  ventilees: [zonage_plu_gpu, prescription_plu, risques, peb]
+
+  classes:
+    # ── A : exclusions dures certaines ───────────────────────────────────────
+    eau: A
+    parc_national: A
+    foret_publique: A
+    dpf: A                       # marchepied L2131-2 CGPPP
+    ens: A
+    surface: A                   # micro-parcelle < 40 m²
+    emprise_lineaire: A          # délaissé linéaire
+    emprise_routiere: A          # emprise voirie
+    pente: A                     # > 100 % (falaise) ; 30-100 % = coefficient du Score
+    osm_faux_positif: A
+    trait_de_cote: A
+    # ventilées (déclarées ci-dessus) — A à 100 %, B en partiel :
+    zonage_plu_gpu: A            # A/N 100 % → A ; 90-99 % → B (portion U exploitable, lot A)
+    prescription_plu: A          # ER ≥50 % / EBC ≥80 % / veto → A si 100 %, sinon B
+    risques: A                   # PPR rouge → A si 100 %, sinon B (assiette clippée)
+    peb: A                       # zones A/B L112-10 → A si quasi-total, sinon B
+
+    # ── B : pénalité d'assiette ou de faisabilité (jamais une exclusion) ──────
+    ravine: B                    # proximité → coefficient
+    residuel_socle: B            # sort de la cascade, devient le cœur du Score (temps 2)
+
+    # ── C : motif informatif, filtrable ──────────────────────────────────────
+    dpu: C
+    zone_humide: C
+    bati: C
+    foncier_public: C
+    abf: C
+    sup: C                       # SUP fortes (t5/ac2/as1) nourrissent le coefficient — signalées
+    sol_pollue: C
+    icpe: C
+    mvt: C
+    cavite: C
+    bruit_route: C
+    bruit_carte: C
+    cinquante_pas: C             # bande géométrique soustraite par l'assiette (lot A) ; motif conservé
+    znieff: C
+    tri_zone: C
+    endiguement: C
+    bassin_versant: C
+    zone_activite: C
+    cimetiere: C
+    vefa_neuf: C
+    amenites: C
+    friche: C
+    potentiel_foncier_region: C  # benchmark externe (§13) — jamais une feature
+    abf_merimee: C
+
+    # ── D : supprimée / déplacée ─────────────────────────────────────────────
+    safer: D                     # redondante avec l'assiette zone A ; RPG devient information
+    ocs_ge: D                    # proxy BDCARTO mort → remplacé par la vraie OCS GE (parcel_ocsge)
+    proprietaire: D              # Fichiers fonciers `manuel` — aucune table, tuyau mort
+    dvf: D                       # « positif marché » → Signal + info fiche
+    sitadel: D                   # idem
+    age_dirigeant: D             # événements → Signal
+    bodacc: D                    # événements → Signal

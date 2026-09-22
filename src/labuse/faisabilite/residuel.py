@@ -50,6 +50,41 @@ def _emprise_revelee(session: Session, parcel_id: int) -> float | None:
     return float(rev) if rev is not None else None
 
 
+# SCORING-6 lot A — emprise bâtie SUR LA PORTION U/AU du contour cadastral. La capacité max
+# (`sdp_max`) est clippée sur la seule portion U/AU quand la zone dominante est A/N à cheval
+# (parcel_faisabilite, assiette_clippee) ; le bâti RETRANCHÉ doit l'être sur LA MÊME portion,
+# sinon on soustrait le bâti debout sur la portion A/N inconstructible d'un plafond calculé sur
+# la seule portion U/AU → résiduel faussement nul sur toute parcelle A/N bâtie (le tout-ou-rien
+# déguisé, cause du run 4 ≡ run 3). Union U/AU lue de la MÊME source que la cascade.
+_BATI_ASSIETTE = text("""
+WITH p AS (SELECT commune, geom_2975 AS g FROM parcels WHERE id = :pid),
+uau AS (SELECT ST_Union(ST_MakeValid(z.geom_2975)) AS u
+        FROM spatial_layers z, p
+        WHERE z.kind = :zkind AND z.commune = p.commune
+          AND z.name ILIKE ANY(:uau_pats) AND ST_Intersects(z.geom_2975, p.g)),
+assiette AS (SELECT CASE WHEN uau.u IS NULL THEN p.g
+                         ELSE ST_Intersection(p.g, uau.u) END AS a
+             FROM p LEFT JOIN uau ON TRUE)
+SELECT COALESCE(SUM(ST_Area(ST_Intersection(ST_MakeValid(b.geom_2975), a.a))), 0.0)
+FROM spatial_layers b, assiette a
+WHERE b.kind = 'batiment' AND ST_Intersects(b.geom_2975, a.a)
+""")
+
+
+def _emprise_batie_assiette(session: Session, parcel_id: int) -> float:
+    """Emprise bâtie (m²) sur la SEULE portion U/AU du contour cadastral — pour rester cohérent
+    avec la capacité max clippée sur cette même portion (assiette_clippee). Isolée/stubbable
+    comme `_niveaux_existants`/`_emprise_revelee`. Union U/AU lue de cascade_rules (zonage_plu_gpu)."""
+    from .db import _layer_params
+    zonage = _layer_params("zonage_plu_gpu")
+    v = session.execute(_BATI_ASSIETTE, {
+        "pid": parcel_id,
+        "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
+        "uau_pats": [f"{p}%" for p in zonage.get("positive_prefixes", ["U", "AU"])],
+    }).scalar()
+    return float(v or 0.0)
+
+
 def _cause_indisponible(session: Session, parcel_id: int, f=None) -> tuple[str, int | None]:
     """M125 — cause STRUCTURÉE d'un résiduel non disponible + la valeur de SDP à écrire
     (arbitrage Vic, Option 1 : le 0 n'est pas un doute, c'est la réponse du moteur ;
@@ -82,15 +117,20 @@ def _cause_indisponible(session: Session, parcel_id: int, f=None) -> tuple[str, 
 
 
 def compute_residuel(session: Session, parcel_id: int,
-                     faisa: tuple | None = None) -> dict:
+                     faisa: tuple | None = None,
+                     assiette_clippee: bool = False) -> dict:
     """Bloc « potentiel résiduel » d'une parcelle. `faisa` = (ctx, Faisabilite) déjà calculé
     (réutilisé par la fiche pour ne pas relancer le moteur). `disponible=False` quand la
     parcelle n'est pas constructible ou que le bâti n'est pas mesurable — M125 : chaque
-    indisponible porte alors sa CAUSE structurée + la SDP à écrire (0 vrai / NULL inconnu)."""
+    indisponible porte alors sa CAUSE structurée + la SDP à écrire (0 vrai / NULL inconnu).
+
+    SCORING-6 lot A — `assiette_clippee=True` : la capacité est calculée sur l'assiette clippée
+    (portion U/AU moins contraintes géométriques certaines) au lieu du tout-ou-rien. OPT-IN :
+    inutile pour le servi, requis pour le run résiduel q_v15 (geste de Vic)."""
     if not bati_mod.layer_available(session):
         return {"disponible": False, "raison": "Couche bâtiments (BD TOPO) non ingérée.",
                 "cause": "bati_non_ingere", "sdp_ecrite": None}
-    res = faisa or parcel_faisabilite(session, parcel_id)
+    res = faisa or parcel_faisabilite(session, parcel_id, assiette_clippee=assiette_clippee)
     if res is None:
         cause, sdp = _cause_indisponible(session, parcel_id)
         return {"disponible": False, "raison": "Zone hors PLU outillé — capacité non calculable.",
@@ -109,16 +149,25 @@ def compute_residuel(session: Session, parcel_id: int,
                 "cause": "capacite_nulle", "sdp_ecrite": 0}
 
     hyp = Hypotheses.charger(getattr(ctx, "commune", None))   # M-N P1-13 : hypothèses de la commune
-    st = bati_mod.stats_batch(session, [parcel_id]).get(parcel_id, {})
     surface = float(ctx.surface_m2 or 0.0)
-    emprise_batie = float(st.get("bati_ratio", 0.0)) * surface           # emprise au sol bâtie (BD TOPO)
-    # Bâti RÉVÉLÉ (M32) : CoSIA voit l'emprise que BD TOPO rate. On retient la mesure la plus
-    # grande pour que ces parcelles cessent de s'afficher « terrain nu ». Ces parcelles sont
-    # déjà déclassées (declasse_bati_revele) → le résiduel ne les fait pas entrer en tête ; ce
-    # correctif est un affichage de fiche (résiduel = cache isolé du scoring, cf. en-tête).
-    rev = _emprise_revelee(session, parcel_id)
-    if rev and rev > emprise_batie:
-        emprise_batie = rev
+    # SCORING-6 lot A — sur une parcelle A/N à cheval clippée, le bâti retranché se mesure sur LA
+    # MÊME portion U/AU que la capacité (sinon on soustrait le bâti de la portion A/N d'un plafond
+    # U/AU → résiduel toujours 0). OPT-IN : hors assiette_clippee (servi) ou parcelle mono-zone,
+    # rien ne change — bâti du contour entier + révélé CoSIA.
+    from .db import _pct_constructible
+    pct_c = _pct_constructible(ctx) if assiette_clippee else None
+    if pct_c is not None and 0 < pct_c < 100:
+        emprise_batie = _emprise_batie_assiette(session, parcel_id)   # bâti sur la portion U/AU
+    else:
+        st = bati_mod.stats_batch(session, [parcel_id]).get(parcel_id, {})
+        emprise_batie = float(st.get("bati_ratio", 0.0)) * surface       # emprise au sol bâtie (BD TOPO)
+        # Bâti RÉVÉLÉ (M32) : CoSIA voit l'emprise que BD TOPO rate. On retient la mesure la plus
+        # grande pour que ces parcelles cessent de s'afficher « terrain nu ». Ces parcelles sont
+        # déjà déclassées (declasse_bati_revele) → le résiduel ne les fait pas entrer en tête ; ce
+        # correctif est un affichage de fiche (résiduel = cache isolé du scoring, cf. en-tête).
+        rev = _emprise_revelee(session, parcel_id)
+        if rev and rev > emprise_batie:
+            emprise_batie = rev
 
     niveaux_exist, niveaux_reels = _niveaux_existants(session, parcel_id, hyp.niveaux_bati_existant_defaut)
     sdp_existante = emprise_batie * niveaux_exist
@@ -167,7 +216,7 @@ _UPSERT = text(
 
 
 def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int,
-                           log=None) -> dict:
+                           log=None, assiette_clippee: bool = False) -> dict:
     """Calcule et CACHE le résiduel dans le RUN `run_seq` (parcel_residuel_runs) pour alimenter
     le filtre carte ET le dataset M127.
 
@@ -188,7 +237,7 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int
     res = {"calcules": 0, "causes": {}, "erreurs": 0, "erreurs_detail": []}
     for pid in parcel_ids:
         try:
-            r = compute_residuel(session, pid)
+            r = compute_residuel(session, pid, assiette_clippee=assiette_clippee)
         except Exception as exc:  # noqa: BLE001 - une parcelle ne casse pas le lot, mais SE DIT
             res["erreurs"] += 1
             if len(res["erreurs_detail"]) < 20:
