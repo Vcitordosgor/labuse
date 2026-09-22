@@ -3592,10 +3592,11 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
         vb = {r["bande"]: int(r["n"]) for r in bandes}
     out["bandes"] = {k: vb.get(k, 0) for k in ("A", "B", "C", "D", "0", "NC")}
     out["bande_total"] = sum(out["bandes"].values())
-    # ANALYSE-2 — le CROISEMENT bande × Signal de mutation sur les bandes de QUALITÉ (A-D), pour un
-    # compteur filtré COHÉRENT (« X / Y » avec Y = le vrai total du couple Classement+Signal choisi) et
-    # la preuve des 20 combinaisons (5 Classement × 4 Signal). Somme des 4 bandes = total ; Fort+Moyen+
-    # Faible = Tous, par construction (un seul GROUP BY). Comptes bruts, mêmes filtres globaux.
+    # ANALYSE-2/3 — le CROISEMENT bande × Signal de mutation sur TOUTES les bandes (A-D + Non retenue 0
+    # + NC), pour un compteur filtré COHÉRENT (« X / Y » = le vrai total du couple Classement+Signal) ET
+    # le cross-filtrage des 5 pastilles de l'encart par le Signal (ANALYSE-3 : les compteurs sont revenus
+    # dans l'encart). Somme des bandes = total ; Fort+Moyen+Faible = Tous, par construction (un seul
+    # GROUP BY). Comptes bruts, mêmes filtres globaux.
     xtab: dict = {}
     if _score_labuse_ready(db):
         cr = db.execute(text(
@@ -3605,14 +3606,13 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
             {join_v2}
             JOIN score_labuse sl ON sl.parcel_id = p.id AND sl.run_label = :sl_run
             WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
-              AND sl.bande IN ('A','B','C','D')
               {extra_where} {sliver}
             GROUP BY sl.bande, sl.signal_niveau
             """), {**params, "sl_run": SCORE_LABUSE_RUN}).mappings().all()
         for r in cr:
             xtab.setdefault(r["bande"], {})[r["signal"] or "faible"] = int(r["n"])
     out["bandes_signal"] = {b: {s: xtab.get(b, {}).get(s, 0) for s in ("fort", "moyen", "faible")}
-                            for b in ("A", "B", "C", "D")}
+                            for b in ("A", "B", "C", "D", "0", "NC")}
     if legacy:  # M129-B : la matrice est MORTE — la ventilation legacy est retirée, DIT.
         out["legacy"] = {"mort": "matrice retirée (M129) — statut cascade + tier v2 la remplacent"}
     return out

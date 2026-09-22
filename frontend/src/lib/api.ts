@@ -155,8 +155,9 @@ export interface FiltreReponse {
   // Sans potentiel 0 / Analyse incomplète NC), comptes bruts du moteur (aucun quota/rang/percentile).
   bandes?: Record<'A' | 'B' | 'C' | 'D' | '0' | 'NC', number>
   bande_total?: number
-  // ANALYSE-2 — croisement bande × Signal sur les bandes de qualité (compteur filtré + preuve 20 combos).
-  bandes_signal?: Record<'A' | 'B' | 'C' | 'D', Record<'fort' | 'moyen' | 'faible', number>>
+  // ANALYSE-2/3 — croisement bande × Signal sur TOUTES les bandes (compteur filtré + preuve 20 combos
+  // + cross-filtrage des 5 pastilles de l'encart par le Signal).
+  bandes_signal?: Record<'A' | 'B' | 'C' | 'D' | '0' | 'NC', Record<'fort' | 'moyen' | 'faible', number>>
   opportunites: number
   opportunites_evenement: number
   dossiers_opportunites: number

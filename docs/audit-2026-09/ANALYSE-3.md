@@ -2,6 +2,8 @@
 
 Branche `feat/analyse-1` (à la suite de `f0caef87`, worktree `labuse-analyse`, ports 8145/5345). Non mergé. Aucun changement de moteur, de score ni de données.
 
+> **RÉVISION (22/09, retour Vic)** — les compteurs sont **sortis des puces** et **remis dans l'encart de synthèse** (phrase + les 5 pastilles chiffrées + barre). Les puces ne portent plus que **le mot entier** (Excellente · Bonne · À étudier · Faible · Tous / Fort · Moyen · Faible · Tous), **sur une seule ligne, sans troncature, sans info réservée au survol**. Le **cross-filtrage** est conservé (les 5 pastilles + la barre réagissent au Signal). Détails et mesure révisée : voir la section **RÉVISION** en bas. Les sections ci-dessous décrivent l'état initial d'ANALYSE-3 ; la révision les met à jour pour §2 et §3.
+
 Objectif unique : **le même écran, beaucoup moins haut** (colonne qui bouffait trop d'espace avant la première carte). Règle de preuve : un point n'est corrigé qu'après constat à l'écran. Captures : `captures/analyse3/`.
 
 ## 0. Étape 0 — VERTE
@@ -67,3 +69,27 @@ Le contenu du panneau « Comprendre » · le moteur, les bandes, les compteurs e
 ## Reste à trancher Vic
 1. **Rendu des puces à 2 lignes** vs « Excellente 615 » inline (impossible à 307 px sans troncature) — cf. §2. Choisir : 2 lignes (actuel), libellés courts, ou colonne élargie.
 2. Troncature des libellés de bande aux colonnes étroites — acceptée (compteur + couleur + survol), à confirmer.
+
+---
+
+# RÉVISION (22/09) — compteurs dans l'encart, puces = mot entier
+
+## Mesure révisée (viewport 1280×900 → colonne 307 px, identique)
+| | Hauteur en-tête→1re carte |
+|---|---:|
+| **AVANT** (état ANALYSE-2, `00-avant.png`) | **473 px** |
+| **APRÈS révision** (`04-apres-revision.png`) | **265 px** |
+| **Gagné** | **208 px** ✓ (≥ 200) |
+
+(Intermédiaire ANALYSE-3 « compteurs dans les puces » = 254 px ; la révision remet les pastilles dans l'encart → +11 px, toujours ≥ 200 gagnés.)
+
+## §2 révisé — les puces ne portent que le mot entier (`04-apres-revision.png`)
+Deux lignes de puces : **Excellente · Bonne · À étudier · Faible · Tous** puis **Fort · Moyen · Faible · Tous**. **Mot entier, une seule ligne, aucune troncature, aucune info seulement au survol.** « Tous » en dernier ; actif = vert opaque. Vérifié : `pillLabels = ["Excellente","Bonne","À étudier","Faible","Tous"]`, non wrappé, **27 px de marge** (pas de débordement, pas de barre horizontale).
+- **Contrainte physique** : à 307 px de colonne, 5 mots entiers + un **libellé inline « Classement »/« Signal »** ne tiennent pas sur une ligne (débordement mesuré de 69 px, « Tous » coupé). Le libellé inline a donc été **retiré** ; les deux rangées restent distinctes par leur contenu (bandes de qualité en haut, Fort/Moyen/Faible en bas). C'est le seul écart au texte initial d'ANALYSE-3 (qui prévoyait le libellé à gauche). **À trancher Vic** : accepter (actuel), ou réintroduire le libellé sous forme de petite légende au-dessus de chaque rangée (coûte ~2 lignes de hauteur), ou l'accepter tronqué (exclu par la règle DA).
+
+## §3 révisé — l'encart porte les compteurs (`04-apres-revision.png`, `05-encart-crossfiltre-fort.png`)
+L'encart : **phrase** + **5 pastilles chiffrées** (615 Excellente · 4 366 Bonne · 6 404 À étudier · 11 245 Faible · 17 918 Non retenue, Saint-Paul) + **barre colorée**. Les pastilles **et** la barre sont **cross-filtrées par le Signal** : Signal = Fort → 2 · 1 · 4 · 2 · **15 Non retenue** (le crosstab a été étendu à toutes les bandes, dont Non retenue, pour que le cross-filtrage soit complet et cohérent). La phrase « analysé N » reste le total (fait). La ligne « **N parcelles correspondent à vos filtres** » (cross-filtrée Classement × Signal) est conservée.
+
+## Portes (révision)
+- `tsc -b` vert ; `vitest` 177 passés (3 admin PRÉ-EXISTANTS) ; `pytest` filtre/stats 14 passés (crosstab étendu guardé).
+- Back : le crosstab `bandes_signal` couvre désormais **toutes** les bandes (retrait du `AND sl.bande IN ('A','B','C','D')`) ; `filtreCount`/filtre Classement restent sur A-D.

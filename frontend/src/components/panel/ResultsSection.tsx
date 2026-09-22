@@ -558,19 +558,13 @@ export function ResultsSection() {
     const ss: SignalNiveauKey[] = signalFiltre === 'tous' ? ['fort', 'moyen', 'faible'] : [signalFiltre]
     return bs.reduce((a, b) => a + ss.reduce((x, s) => x + (xtab[b]?.[s] ?? 0), 0), 0)
   }, [xtab, classementFiltre, signalFiltre])
-  // ANALYSE-3 (§2) — le compteur AFFICHÉ DANS chaque puce (« Excellente 615 »), lu sur le MÊME crosstab.
-  // Cross-filtré : une puce Classement compte pour le Signal courant ; une puce Signal compte pour le
-  // Classement courant. Sur l'état par défaut (Tous/Tous) → puce Classement = total de la bande (les
-  // « chiffres d'aujourd'hui » de l'encart, déplacés), puce Signal = total de la colonne du crosstab.
-  const bandePuceCount = (b: QualiteKey) => {
+  // ANALYSE-3 — le compteur de chaque BANDE affiché dans l'ENCART (les 5 pastilles), CROSS-FILTRÉ par le
+  // Signal courant : Signal = Tous → total de la bande (le chiffre « d'aujourd'hui ») ; Signal = Fort →
+  // le nombre de cette bande à signal Fort. Lu sur le crosstab (toutes bandes, y compris Non retenue).
+  const bandeSignalCount = (b: Bande) => {
     if (!xtab) return bandes[b] ?? 0
     const ss: SignalNiveauKey[] = signalFiltre === 'tous' ? ['fort', 'moyen', 'faible'] : [signalFiltre]
     return ss.reduce((a, s) => a + (xtab[b]?.[s] ?? 0), 0)
-  }
-  const signalPuceCount = (s: SignalNiveauKey) => {
-    if (!xtab) return 0
-    const bs: QualiteKey[] = classementFiltre === 'tous' ? ['A', 'B', 'C', 'D'] : [classementFiltre]
-    return bs.reduce((a, b) => a + (xtab[b]?.[s] ?? 0), 0)
   }
   // total « analysé » de l'encart = les 5 catégories montrées (4 bandes + Non retenue) ; « Analyse
   // incomplète » (NC) est à part (l'analyse n'a PAS pu conclure), surfacée dans son groupe de fin.
@@ -684,74 +678,72 @@ export function ResultsSection() {
           analyse » (VerdictHero) dit le mode. */}
       {analyse && (
         <>
-          {/* ANALYSE-3 (§3) — l'ENCART ALLÉGÉ : la phrase + la barre colorée SEULEMENT. Les 5 pastilles
-              chiffrées sont passées DANS les puces du filtre Classement (ci-dessous), plus dans l'encart. */}
-          <div data-encart className="mt-2 shrink-0 rounded-lg border border-line-2 bg-surface-2/50 px-3 py-2">
+          {/* ANALYSE-3 (révision) — l'ENCART DE SYNTHÈSE porte les compteurs : la phrase + les 5 pastilles
+              chiffrées (4 bandes + Non retenue) + la barre colorée. Les pastilles ET la barre sont
+              CROSS-FILTRÉES par le Signal courant (Signal = Tous → totaux ; Signal = Fort → le sous-total
+              Fort de chaque bande) — lu sur le crosstab. La phrase « analysé N » reste le total (fait). */}
+          <div data-encart className="mt-2 shrink-0 rounded-lg border border-line-2 bg-surface-2/50 px-3 py-1.5">
             <p className="text-[11.5px] leading-snug text-txt-mut">
               <b className="text-txt">LABUSE</b> a analysé les <b className="tabular-nums text-txt">{fmt(encartTotal)}</b> parcelles{zone ? ' de la zone' : commune ? ` de ${commune}` : ' de votre sélection'}.
             </p>
+            <div data-ventilation-bande className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] leading-snug">
+              {BANDE_ENCART.map((b) => (
+                <span key={b} className="inline-flex items-center gap-1">
+                  <span className="inline-flex h-2 w-2 rounded-full" style={{ background: BANDE_META[b].color }} />
+                  <b className="tabular-nums" style={{ color: BANDE_META[b].color }}>{fmt(bandeSignalCount(b))}</b>
+                  <span className="text-txt-dim">{BANDE_META[b].label}</span>
+                </span>
+              ))}
+            </div>
             {(() => {
-              const tot = Math.max(1, encartTotal)
+              const vals = BANDE_ENCART.map((b) => bandeSignalCount(b))
+              const tot = Math.max(1, vals.reduce((a, v) => a + v, 0))
               return (
-                <div data-ventilation-bande className="mt-1.5 flex h-1.5 overflow-hidden rounded-full bg-line">
-                  {BANDE_ENCART.map((b) => (bandes[b] ?? 0) > 0 && (
-                    <Tip key={b} side="top" tip={`${BANDE_META[b].label} — ${fmt(bandes[b] ?? 0)}`}>
-                      <span className="block h-full" style={{ background: BANDE_META[b].color, width: `${((bandes[b] ?? 0) / tot) * 100}%` }} />
-                    </Tip>
+                <div className="mt-1 flex h-1.5 overflow-hidden rounded-full bg-line">
+                  {BANDE_ENCART.map((b, i) => vals[i] > 0 && (
+                    <span key={b} style={{ background: BANDE_META[b].color, width: `${(vals[i] / tot) * 100}%` }} />
                   ))}
                 </div>
               )
             })()}
           </div>
 
-          {/* ANALYSE-3 (§2) — les DEUX filtres dans UN bloc, deux lignes SERRÉES. Libellé à gauche (largeur
-              fixe), puces de largeur ÉGALE (flex-1), « Tous » plus étroite et TOUJOURS EN DERNIER, une
-              seule ligne par groupe (jamais de retour à la ligne). Le compteur ENTRE dans la puce
-              (« Excellente 615 »), lu sur le crosstab. Actif = vert opaque. Titres en capitales retirés. */}
-          <div data-filtres className="mt-2.5 flex shrink-0 flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-2/50 px-2.5 py-2">
-            <div className="flex items-center gap-2">
-              <span className="w-[52px] shrink-0 text-[11px] text-txt-dim">Classement</span>
-              <div className="flex min-w-0 flex-1 items-stretch gap-1">
-                {CLASSEMENT_FILTRE.map((c) => {
-                  const actif = classementFiltre === c.key
-                  const tous = c.key === 'tous'
-                  // ANALYSE-3 (§2) — puce de largeur égale (flex-1), le libellé PUIS le compteur EN DESSOUS
-                  // (« Excellente » / « 615 ») : une seule ligne PAR GROUPE (la rangée ne wrappe jamais),
-                  // le compteur reste lisible à toute largeur de colonne. « Tous » : étroite, sans compteur.
-                  return (
-                    <button key={c.key} data-classement-pill={c.key} onClick={() => setClassementFiltre(c.key)}
-                      title={tous ? 'Toutes les bandes' : BANDE_META[c.key as Bande].long}
-                      className={`flex min-w-0 flex-col items-center justify-center rounded-md px-1 py-0.5 leading-tight transition-colors duration-quick ${tous ? 'shrink-0 px-2' : 'flex-1'} ${
-                        actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
-                      <span className="w-full truncate text-center text-[10px]">{c.label}</span>
-                      {!tous && <span className="tabular-nums text-[11px] font-semibold">{fmt(bandePuceCount(c.key as QualiteKey))}</span>}
-                    </button>
-                  )
-                })}
-              </div>
+          {/* ANALYSE-3 (révision) — les DEUX filtres, deux lignes. La puce ne porte QUE le MOT ENTIER, sur
+              UNE ligne, JAMAIS tronqué, JAMAIS d'info réservée au survol. « Tous » en dernier. Actif = vert
+              opaque. Le compteur est revenu dans l'encart. Les libellés « Classement »/« Signal » inline
+              ont été retirés : à la largeur de colonne, 5 mots entiers + libellé ne tiennent pas sur une
+              ligne — les deux rangées restent distinctes par leur contenu (bandes de qualité vs Fort/
+              Moyen/Faible). Rangée 1 = le classement (bande), rangée 2 = le signal de mutation. */}
+          <div data-filtres className="mt-2 flex shrink-0 flex-col gap-1 rounded-lg border border-line-2 bg-surface-2/50 px-2 py-1.5">
+            <div data-classement-filtre className="flex min-w-0 flex-nowrap items-center gap-0.5">
+              {CLASSEMENT_FILTRE.map((c) => {
+                const actif = classementFiltre === c.key
+                return (
+                  <button key={c.key} data-classement-pill={c.key} onClick={() => setClassementFiltre(c.key)}
+                    className={`whitespace-nowrap rounded-md px-1 py-1 text-[10px] leading-none transition-colors duration-quick ${
+                      actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
+                    {c.label}
+                  </button>
+                )
+              })}
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-[52px] shrink-0 text-[11px] text-txt-dim">Signal</span>
-              <div className="flex min-w-0 flex-1 items-stretch gap-1">
-                {SIGNALS_FILTRE.map((s) => {
-                  const actif = signalFiltre === s.key
-                  const tous = s.key === 'tous'
-                  return (
-                    <button key={s.key} data-signal-pill={s.key} onClick={() => setSignalFiltre(s.key)}
-                      className={`flex min-w-0 flex-col items-center justify-center rounded-md px-1 py-0.5 leading-tight transition-colors duration-quick ${tous ? 'shrink-0 px-2' : 'flex-1'} ${
-                        actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
-                      <span className="w-full truncate text-center text-[10px]">{s.label}</span>
-                      {!tous && <span className="tabular-nums text-[11px] font-semibold">{fmt(signalPuceCount(s.key as SignalNiveauKey))}</span>}
-                    </button>
-                  )
-                })}
-              </div>
+            <div data-signal-filtre className="flex min-w-0 flex-nowrap items-center gap-0.5">
+              {SIGNALS_FILTRE.map((s) => {
+                const actif = signalFiltre === s.key
+                return (
+                  <button key={s.key} data-signal-pill={s.key} onClick={() => setSignalFiltre(s.key)}
+                    className={`whitespace-nowrap rounded-md px-1 py-1 text-[10px] leading-none transition-colors duration-quick ${
+                      actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
+                    {s.label}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
           {/* ANALYSE-3 (§4) — la ligne de résultats : « N parcelles correspondent à vos filtres » SEULE,
               sur une seule ligne. « Trier par potentiel » retiré (l'ordre est fixe, le libellé débordait). */}
-          <div data-filtre-resume className="mt-2.5 shrink-0 truncate border-t border-line pt-2 text-[11px] text-txt-mut">
+          <div data-filtre-resume className="mt-2 shrink-0 truncate border-t border-line pt-1.5 text-[11px] text-txt-mut">
             <b className="tabular-nums text-txt">{fmt(filtreCount)}</b> parcelle{filtreCount > 1 ? 's' : ''} correspondent à vos filtres
           </div>
         </>
