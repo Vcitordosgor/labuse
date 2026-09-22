@@ -1,0 +1,10 @@
+VEILLE-FIX-1 · Lot 2 — Radar selon les critères (dry-run, transport neutralisé)
+compte 72 = veille Radar « terrain Saint-Paul » ; compte 73 = suivi mais AUCUNE veille Radar
+n_biens_du_jour: 1
+types d'envoi (compte, type):
+  compte=72 type=alerte n=1 statut=simule
+
+VERDICT :
+  digest broadcast (template 12) émis ? NON — retiré ✓
+  compte 72 (veille matche) reçoit une alerte ? True
+  compte 73 (aucune veille) reçoit quelque chose ? False

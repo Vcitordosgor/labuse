@@ -47,14 +47,68 @@ def seed(engine):
         s.execute(text("DELETE FROM event_log WHERE kind IN ('pige.digest_envoye','systeme') AND source='Radar'"))
 
 
-def test_deux_envois_distincts_dry_run(seed):
+def test_radar_cible_seulement_les_veilles_qui_matchent(seed):
+    """VEILLE-FIX-1 (lot 2) — RADAR SELON LES CRITÈRES : plus de digest « à tous les actifs ». SEUL le
+    compte dont une veille matche reçoit un mail (alerte de veille), avec seulement ses annonces ; le
+    compte SANS veille ne reçoit RIEN."""
     with session_scope() as db:
         r = digests.envoyer(db, base_url="https://app.labuse.immo", dry_run=True)
     types = [(d["compte_id"], d["type_envoi"]) for d in r["details"]]
-    assert (seed["match"], "digest") in types and (seed["plain"], "digest") in types
-    assert (seed["match"], "alerte") in types
-    assert (seed["plain"], "alerte") not in types
-    assert r["simules"] >= 3
+    assert not any(t == "digest" for _, t in types), "le digest broadcast (template 12) est retiré"
+    assert (seed["match"], "alerte") in types, "le compte dont la veille matche reçoit l'alerte"
+    assert all(cid != seed["plain"] for cid, _ in types), "le compte sans veille ne reçoit rien"
+    assert r["simules"] == 1
+
+
+def test_radar_trois_comptes_deux_veilles_un_sans(engine):
+    """VEILLE-FIX-1 (lot 2) — PREUVE : 3 comptes, 2 veilles différentes (une chacun), 1 sans veille.
+    Deux biens du jour, un par veille → 2 mails au BON contenu, 0 au troisième."""
+    tag = uuid.uuid4().hex[:5]
+    ids: dict[str, int] = {}
+    biens: list[int] = []
+    try:
+        with session_scope() as s:
+            for k in ("a", "b", "sans"):
+                cid = s.execute(text("INSERT INTO comptes (nom, plan, founding, statut, sieges) "
+                                     "VALUES (:n,'integral',false,'actif',1) RETURNING id"),
+                                {"n": f"RT3 {tag} {k}"}).scalar()
+                s.execute(text("INSERT INTO utilisateurs (compte_id, email, role, statut, echecs_login) "
+                               "VALUES (:c,:e,'titulaire','actif',0)"), {"c": cid, "e": f"{k}-{tag}@rt3.test"})
+                ids[k] = cid
+            # veille A = terrains Saint-Benoît ; veille B = terrains Le Tampon (communes distinctes).
+            veille.creer(s, compte_id=ids["a"], criteria={"commune": "Saint-Benoît", "type_bien": "terrain"})
+            veille.creer(s, compte_id=ids["b"], criteria={"commune": "Le Tampon", "type_bien": "terrain"})
+            for commune in ("Saint-Benoît", "Le Tampon"):
+                bid = s.execute(text(
+                    "INSERT INTO pige_biens (commune,type_bien,est_copro,rattachement_niveau,statut) "
+                    "VALUES (:co,'terrain',false,'absent','active') RETURNING bien_id"), {"co": commune}).scalar()
+                s.execute(text("INSERT INTO pige_annonces (bien_id,portail,url_sortante) VALUES (:b,'leboncoin',:u)"),
+                          {"b": bid, "u": f"https://www.leboncoin.fr/rt3-{tag}-{bid}"})
+                s.execute(text("INSERT INTO pige_faits (bien_id,prix,type_bien,surface_terrain,particulier_pro,valide_at)"
+                               " VALUES (:b,150000,'terrain',900,'particulier',now())"), {"b": bid})
+                biens.append(bid)
+        with session_scope() as db:
+            r = digests.envoyer(db, base_url="https://app.labuse.immo", dry_run=True)
+        # on NE regarde QUE nos trois comptes (la base partagée peut porter d'autres veilles).
+        miens = [d for d in r["details"] if d["compte_id"] in ids.values()]
+        recus = {d["compte_id"] for d in miens if d["type_envoi"] == "alerte"}
+        assert ids["a"] in recus and ids["b"] in recus, "les 2 comptes à veille reçoivent une alerte"
+        assert ids["sans"] not in recus, "le compte sans veille ne reçoit RIEN"
+        assert len([d for d in miens if d["compte_id"] == ids["sans"]]) == 0
+        # bon contenu : l'alerte de A ne porte QUE l'annonce Saint-Benoît, celle de B QUE Le Tampon.
+        n_par_compte = {d["compte_id"]: d["n"] for d in miens if d["type_envoi"] == "alerte"}
+        assert n_par_compte.get(ids["a"]) == 1 and n_par_compte.get(ids["b"]) == 1
+    finally:
+        with session_scope() as s:
+            for bid in biens:
+                s.execute(text("DELETE FROM pige_annonces WHERE bien_id=:b"), {"b": bid})
+                s.execute(text("DELETE FROM pige_faits WHERE bien_id=:b"), {"b": bid})
+                s.execute(text("DELETE FROM pige_biens WHERE bien_id=:b"), {"b": bid})
+            if ids:
+                cids = list(ids.values())
+                s.execute(text("DELETE FROM veilles WHERE compte_id = ANY(:c)"), {"c": cids})
+                s.execute(text("DELETE FROM utilisateurs WHERE compte_id = ANY(:c)"), {"c": cids})
+                s.execute(text("DELETE FROM comptes WHERE id = ANY(:c)"), {"c": cids})
 
 
 def test_jamais_de_mail_vide(seed):
@@ -128,8 +182,8 @@ def test_idempotence_par_jour(seed, monkeypatch):
         r1 = digests.envoyer(db, base_url="https://app.labuse.immo", dry_run=False)
     with session_scope() as db:
         r2 = digests.envoyer(db, base_url="https://app.labuse.immo", dry_run=False)
-    assert r1["envoyes"] >= 2                     # digest+alerte partis au 1er passage
-    assert r2["envoyes"] == 0 and r2["deja"] >= 2, "2e passage : rien de renvoyé (idempotent)"
+    assert r1["envoyes"] >= 1                     # l'alerte de veille part au 1er passage
+    assert r2["envoyes"] == 0 and r2["deja"] >= 1, "2e passage : rien de renvoyé (idempotent)"
 
 
 def test_cle_brevo_lue_depuis_l_environnement(monkeypatch):
