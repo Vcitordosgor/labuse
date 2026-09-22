@@ -5,13 +5,13 @@ import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 
-// GABARIT-1 — outil « Gabarit réglementaire ». Traduit graphiquement et mathématiquement des règles
-// SOURCÉES : SOURCE → VALIDATION → CALCUL → AFFICHAGE. Jamais d'estimation (logements/étages/SDP/coût/
-// valeur/potentiel). Le front n'affiche que ce que le moteur pur sert (zéro recalcul).
-// DA LABUSE : fond sombre, accent vert mint ; le mauve reste réservé à l'IA. Aucun redesign.
-// ⚠ GABARIT-1 : la classification des limites est différée (GABARIT-2) → sur une parcelle réelle le
-// moteur renvoie honnêtement « Calcul incomplet ». La démonstration (données fictives, CDC §9) montre
-// le calcul complet.
+// Outil « Gabarit réglementaire ». Traduit graphiquement et mathématiquement des règles SOURCÉES :
+// SOURCE → VALIDATION → CALCUL → AFFICHAGE. Jamais d'estimation (logements/étages/SDP/coût/valeur/
+// potentiel). Le front n'affiche que ce que le moteur pur sert (zéro recalcul). DA LABUSE : fond
+// sombre, accent vert mint ; le mauve reste réservé à l'IA. Aucun redesign.
+// GABARIT-2 : classification des limites (voie/séparative) servie sur le réel (adjacence cadastre +
+// BD TOPO). Sur une parcelle sans façade ou à limite non qualifiée, le moteur renvoie honnêtement
+// « Calcul incomplet » + le motif.
 
 const C_ZONE = '#36c99a'      // zone d'implantation — vert franc, distinct du fond (pas de camaïeu)
 const C_RETRAIT = '#e0a44a'   // bandes de recul — ambre
@@ -109,14 +109,13 @@ export function Gabarit() {
   const selectedIdu = useApp((s) => s.selectedIdu)
   const terrain3d = useApp((s) => s.terrain3d)
   const [idu, setIdu] = useState<string | null>(selectedIdu)
-  const [demo, setDemo] = useState(false)
 
   useEffect(() => {
-    if (selectedIdu && selectedIdu !== idu) { setIdu(selectedIdu); setDemo(false) }
+    if (selectedIdu && selectedIdu !== idu) setIdu(selectedIdu)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIdu])
 
-  const target = demo ? 'demo' : idu
+  const target = idu
   const q = useQuery({
     queryKey: ['gabarit', target],
     queryFn: () => getGabarit(target!),
@@ -139,7 +138,7 @@ export function Gabarit() {
   const appliedOther = useMemo(
     () => (res?.appliedRules ?? []).filter((r) => r.category !== 'setback'), [res])
 
-  const reset = () => { setIdu(null); setDemo(false) }
+  const reset = () => setIdu(null)
 
   return (
     <div data-gabarit-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
@@ -149,18 +148,13 @@ export function Gabarit() {
       </p>
 
       <ParcelInput dataAttr="gabarit-parcelle" withCarte={false}
-        onPick={(i: string) => { setIdu(i); setDemo(false) }}
+        onPick={(i: string) => setIdu(i)}
         placeholder="Adresse, IDU ou référence (ex. BZ1065)" />
       <p className="text-[10px] text-txt-dim">… ou cliquez une parcelle sur la carte.</p>
 
-      <button data-gabarit-demo onClick={() => setDemo(true)}
-        className="self-start rounded-md border border-line-2 bg-surface-3 px-2.5 py-1 text-[10.5px] text-txt-mut hover:border-mint hover:text-mint">
-        Voir la démonstration (données fictives)
-      </button>
-
       {!target && (
         <p className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">
-          Choisissez une parcelle, ou ouvrez la démonstration.
+          Choisissez une parcelle (barre ci-dessus ou clic sur la carte).
         </p>
       )}
 
@@ -179,14 +173,9 @@ export function Gabarit() {
         </div>
       )}
 
-      {/* RÉSULTAT COMPLET (démonstration en GABARIT-1) */}
+      {/* RÉSULTAT COMPLET */}
       {res && res.status === 'ok' && (
         <>
-          {demo && (
-            <p data-gabarit-fictif className="rounded-md border border-line-2 bg-surface-3/60 px-2.5 py-1 text-[10px] text-txt-dim">
-              Démonstration — données fictives (CDC §9). Sources marquées « fictif ».
-            </p>
-          )}
           <div data-gabarit-chiffres className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border border-line-2 bg-surface-2 p-3">
             <Num label="Surface parcelle" value={res.surfaceParcelleM2} unit="m²" />
             <Num label="Zone d'implantation" value={res.zoneImplantationM2} unit="m²" accent />
@@ -243,12 +232,17 @@ export function Gabarit() {
             </div>
           </details>
 
-          {/* CARTE / 3D */}
+          {/* CARTE / 3D — légende des couches réglementaires */}
           <div data-gabarit-carte className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-dim">
-            <p><span className="mr-1 inline-block h-2 w-2 rounded-sm align-middle" style={{ background: C_ZONE }} /> Zone d'implantation réglementaire sur la carte.</p>
+            <p className="label-caps mb-1 text-[9px] text-txt-dim">Sur la carte</p>
+            <ul className="flex flex-col gap-0.5">
+              <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_ZONE }} /> Zone d'implantation réglementaire</li>
+              <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_RETRAIT }} /> Retrait réglementaire</li>
+              {res.exclusionsGeoJSON && <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_EXCL }} /> Exclusion (PPR)</li>}
+            </ul>
             {terrain3d
-              ? <p className="mt-1 text-txt-mut">3D active — <b className="text-txt">Enveloppe réglementaire selon les règles intégrées</b> (hauteur sourcée {res.hauteurReglementaireM} m).</p>
-              : <p className="mt-1">Bascule 2D / 3D : bouton <b className="text-txt">3D</b> de la carte.</p>}
+              ? <p className="mt-1.5 text-txt-mut">3D active — <b className="text-txt">Enveloppe réglementaire selon les règles intégrées</b> (hauteur sourcée {res.hauteurReglementaireM} m).</p>
+              : <p className="mt-1.5">Bascule 2D / 3D : bouton <b className="text-txt">3D</b> de la carte.</p>}
           </div>
 
           <button data-gabarit-reset onClick={reset}

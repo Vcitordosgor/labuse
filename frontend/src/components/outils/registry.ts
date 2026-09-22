@@ -109,10 +109,10 @@ export const MODULES: ModuleDef[] = [
   { key: 'programme', num: 'M22', group: 'instruire', phare: true,
     label: 'Faisabilité', desc: 'Ce que le PLU laisse construire sur la parcelle.' },
 
-  // GABARIT-1 — outil « Gabarit réglementaire » (moteur pur, sourcé). `hidden` = flag admin : la
-  // classification des limites échoue le seuil de mesure (cf. docs/GABARIT/A0-RAPPORT.md) → l'outil
-  // s'ouvre sur fixtures (démo CDC §9) ; réel per-parcelle = GABARIT-2. Clé résolvante, pas de carte.
-  { key: 'gabarit', num: 'M24', group: 'instruire', hidden: true,
+  // Gabarit réglementaire — M24 : où et jusqu'où implanter, selon les règles sourcées (PLU + PPR +
+  // classification des limites voie/séparative = adjacence cadastre + BD TOPO, mesurée 0 faux/70).
+  // GABARIT-2 : servi sur le réel → carte VISIBLE au menu (le `hidden` de GABARIT-1 est retiré).
+  { key: 'gabarit', num: 'M24', group: 'instruire',
     label: 'Gabarit réglementaire', desc: 'Où et jusqu’où implanter, selon les règles sourcées.' },
 
   // 12. Taxe d'aménagement — K3 : assiette, part communale/départementale, barème servi par le back.
