@@ -1,0 +1,41 @@
+sens,idu,commune,p_servi,signal_p_q_v15,delta,ancien_palier,bande_q_v15,niveau_q_v15,cause
+montée,97411000AL0497,Saint-Denis,0.1108,0.7143,0.6035,À suivre,D,fort,hausse: 146 m² de droits à construire restants · baisse: bâti existant sur 48 % de la parcelle — démolition à prévoir
+montée,97408000BL0332,La Possession,0.0914,0.6,0.5086,Sans signal,0,fort,baisse: aucune SDP résiduelle exploitable · baisse: bâti existant sur 68 % de la parcelle — démolition à prévoir
+montée,97416000CV0474,Saint-Pierre,0.0785,0.5714,0.4929,Écartée,0,fort,baisse: aucune SDP résiduelle exploitable
+montée,97416000ET2242,Saint-Pierre,0.2044,0.6969,0.4925,Priorité,C,fort,hausse: 132 m² de droits à construire restants · baisse: pente forte (24 %)
+montée,97416000ET2243,Saint-Pierre,0.2044,0.689,0.4846,Priorité,D,fort,hausse: 117 m² de droits à construire restants · baisse: pente forte (40 %)
+montée,97416000ET1152,Saint-Pierre,0.0914,0.4934,0.402,À suivre,D,fort,hausse: 55 m² de droits à construire restants · baisse: pente forte (29 %) · baisse: parcelle en lame — géométrie contraignante
+montée,97422000BS1761,Le Tampon,0.0534,0.3889,0.3355,Sans signal,0,fort,baisse: aucune SDP résiduelle exploitable · baisse: pente forte (26 %) · baisse: parcelle en lame — géométrie contraignante
+montée,97416000HN1803,Saint-Pierre,0.0696,0.3889,0.3193,À suivre,B,fort,hausse: 210 m² de droits à construire restants
+montée,97412000BC0823,Saint-Joseph,0.0696,0.3889,0.3193,À suivre,C,fort,hausse: 201 m² de droits à construire restants · baisse: pente forte (16 %)
+montée,97416000HY1705,Saint-Pierre,0.0785,0.3889,0.3104,À suivre,D,fort,hausse: 190 m² de droits à construire restants · baisse: pente forte (31 %)
+montée,97415000EL0495,Saint-Paul,0.0785,0.3889,0.3104,À suivre,C,fort,hausse: 128 m² de droits à construire restants · baisse: accès à la voie non identifié
+montée,97401000AP0928,Les Avirons,0.0785,0.3889,0.3104,À suivre,C,fort,hausse: 366 m² de droits à construire restants · baisse: pente forte (27 %)
+montée,97418000AT2289,Sainte-Marie,0.0914,0.3889,0.2975,Sans signal,0,fort,baisse: aucune SDP résiduelle exploitable · baisse: accès à la voie non identifié
+montée,97416000CW1434,Saint-Pierre,0.0914,0.3889,0.2975,À suivre,C,fort,hausse: 102 m² de droits à construire restants
+montée,97416000CW1433,Saint-Pierre,0.0914,0.3889,0.2975,À suivre,C,fort,hausse: 91 m² de droits à construire restants
+montée,97411000HM0289,Saint-Denis,0.1,0.3889,0.2889,À suivre,D,fort,hausse: 37 m² de droits à construire restants
+montée,97411000KA0312,Saint-Denis,0.1108,0.3889,0.2781,À suivre,D,fort,hausse: 68 m² de droits à construire restants · baisse: pente forte (17 %)
+montée,97411000AL0496,Saint-Denis,0.1108,0.3889,0.2781,À suivre,D,fort,hausse: 107 m² de droits à construire restants · baisse: parcelle en lame — géométrie contraignante
+montée,97415000AB0840,Saint-Paul,0.0785,0.3333,0.2548,Écartée,0,fort,baisse: aucune SDP résiduelle exploitable · baisse: accès à la voie non identifié
+montée,97418000AT2541,Sainte-Marie,0.2663,0.5117,0.2453,À suivre,B,fort,hausse: 305 m² de droits à construire restants
+descente,97408000AP1609,La Possession,1.0,0.3333,-0.6667,Priorité,C,fort,hausse: 230 m² de droits à construire restants · baisse: pente forte (21 %)
+descente,97408000AP1610,La Possession,1.0,0.3333,-0.6667,À suivre,C,fort,hausse: 284 m² de droits à construire restants · baisse: pente forte (21 %)
+descente,97408000AP1647,La Possession,1.0,0.3889,-0.6111,Priorité,B,fort,hausse: 234 m² de droits à construire restants
+descente,97411000HM0273,Saint-Denis,0.3438,0.0648,-0.279,Écartée,D,faible,hausse: 47 m² de droits à construire restants · baisse: pente forte (39 %) · baisse: bâti existant sur 18 % de la parcelle — démolition à prévoir
+descente,97415000EV0692,Saint-Paul,0.3438,0.0909,-0.2528,Sans signal,0,faible,baisse: aucune SDP résiduelle exploitable · baisse: pente forte (16 %) · baisse: bâti existant sur 61 % de la parcelle — démolition à prévoir
+descente,97411000KA0296,Saint-Denis,0.3438,0.0926,-0.2512,Priorité,C,faible,hausse: 167 m² de droits à construire restants · baisse: pente forte (21 %)
+descente,97422000AD1237,Le Tampon,0.3438,0.0986,-0.2451,Sans signal,0,faible,baisse: aucune SDP résiduelle exploitable · baisse: zone AU fermée — capacité différée · baisse: accès à la voie non identifié
+descente,97410000AS1425,Saint-Benoît,0.3438,0.1683,-0.1754,Sans signal,C,moyen,hausse: 173 m² de droits à construire restants
+descente,97415000DK1044,Saint-Paul,0.3438,0.1683,-0.1754,À suivre,C,moyen,hausse: 284 m² de droits à construire restants · baisse: pente forte (39 %)
+descente,97418000AT2317,Sainte-Marie,0.3438,0.1683,-0.1754,Priorité,C,moyen,hausse: 168 m² de droits à construire restants
+descente,97418000AT2379,Sainte-Marie,0.3438,0.1683,-0.1754,Priorité,C,moyen,hausse: 146 m² de droits à construire restants · baisse: bâti existant sur 7 % de la parcelle — démolition à prévoir
+descente,97411000CR0648,Saint-Denis,0.2044,0.0351,-0.1692,Sans signal,0,faible,baisse: aucune SDP résiduelle exploitable · baisse: pente forte (33 %) · baisse: parcelle en lame — géométrie contraignante
+descente,97415000CY1177,Saint-Paul,0.2044,0.0397,-0.1647,À suivre,C,faible,hausse: 269 m² de droits à construire restants · baisse: pente forte (19 %) · baisse: bâti existant sur 33 % de la parcelle — démolition à prévoir
+descente,97412000BK1097,Saint-Joseph,0.2044,0.0485,-0.1558,Écartée,0,faible,baisse: aucune SDP résiduelle exploitable · baisse: pente forte (70 %) · baisse: parcelle en lame — géométrie contraignante
+descente,97413000AV2297,Saint-Leu,0.2044,0.0485,-0.1558,Priorité,D,faible,hausse: 30 m² de droits à construire restants · baisse: pente forte (17 %) · baisse: bâti existant sur 22 % de la parcelle — démolition à prévoir
+descente,97413000CX1803,Saint-Leu,0.2044,0.0485,-0.1558,Sans signal,D,faible,hausse: 115 m² de droits à construire restants · baisse: zone AU fermée — capacité différée · baisse: parcelle en lame — géométrie contraignante
+descente,97418000AT2542,Sainte-Marie,0.3438,0.1957,-0.1481,À suivre,C,moyen,hausse: 247 m² de droits à construire restants · baisse: accès à la voie non identifié
+descente,97407000AS0109,Le Port,0.3438,0.2,-0.1437,Sans signal,A,fort,hausse: 22031 m² de droits à construire restants · baisse: bâti existant sur 39 % de la parcelle — démolition à prévoir
+descente,97411000HV0057,Saint-Denis,0.3438,0.2,-0.1437,Sans signal,C,fort,hausse: 429 m² de droits à construire restants · baisse: bâti existant sur 110 % de la parcelle — démolition à prévoir
+descente,97411000HV0207,Saint-Denis,0.3438,0.2,-0.1437,Sans signal,0,fort,baisse: aucune SDP résiduelle exploitable · baisse: bâti existant sur 101 % de la parcelle — démolition à prévoir

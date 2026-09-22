@@ -47,7 +47,17 @@ def test_signal_version():
     assert signal_version("q_v15_20261015") == "signal_v2+q_v15_20261015"
 
 
-def test_verify_artifacts_absent_echoue_proprement():
-    # Le fit/gel est un geste de Vic : sans artefact, refus explicite (jamais un modèle deviné).
-    with pytest.raises(RuntimeError, match="q_v15|arène|Vic"):
-        qv15.verify_artifacts()
+def test_verify_artifacts_charge_ou_refuse_proprement():
+    # SCORING-7 §2 : le modèle q_v15 a été fité/gelé (banc K0). verify_artifacts() charge les
+    # artefacts ET refuse tout mismatch sha256 (le gel seul fait foi). Sans artefact (env vierge)
+    # → RuntimeError explicite (jamais un modèle deviné). On accepte les deux issues.
+    if qv15.QV15_FREEZE.is_file():
+        import hashlib
+        import json
+        m12, m24, freeze = qv15.verify_artifacts()
+        assert m12 is not None and m24 is not None
+        assert hashlib.sha256(qv15.QV15_ARTIFACT_12M.read_bytes()).hexdigest() == freeze["sha256_12m"]
+        assert freeze["candidat"] == "q_v15"
+    else:
+        with pytest.raises(RuntimeError, match="q_v15|arène|Vic"):
+            qv15.verify_artifacts()
