@@ -97,11 +97,19 @@ def enfiler(engine, *, key: str, to: str, params: dict | None = None,
             prevu_at: datetime | None = None, dedup: str | None = None,
             fenetre_doublon_s: int = FENETRE_DOUBLON_S) -> dict:
     """Pose une entrée `en_attente` dans la file (sans l'envoyer). Anti-doublon : si `dedup` (ou, à
-    défaut, compte:key:hash(params)) a déjà une entrée NON-échec dans la fenêtre, on renvoie celle-là."""
-    t = brevo.template(key)
-    if not t:
-        raise ValueError(f"template inconnu « {key} »")
+    défaut, compte:key:hash(params)) a déjà une entrée NON-échec dans la fenêtre, on renvoie celle-là.
+
+    VEILLE-FIX-1 (lot 5) — mail BRUT (digest de veille) : une `key` HORS registre Brevo est acceptée
+    SI `params['__raw']` porte le mail construit côté code (`sujet`, `texte`, `html`, `nom`) ; le départ
+    part alors par `mail.send_email` (SMTP), pas par un template Brevo. `template_id` reste NULL — c'est
+    le marqueur « brut » lu par `_tenter_depart`. Ainsi les mails de veille passent par mail_queue comme
+    les autres (même table, mêmes états, même trace)."""
     params = params or {}
+    t = brevo.template(key)
+    raw = params.get("__raw") if isinstance(params, dict) else None
+    if not t and not raw:
+        raise ValueError(f"template inconnu « {key} » (ni template Brevo, ni mail brut `__raw`)")
+    tnom = (t.nom if t else (raw.get("nom") if isinstance(raw, dict) else None) or key)[:48]
     dd = dedup or f"{compte_id}:{key}:{_params_hash(params)}"
     with engine.begin() as c:
         # anti-doublon : même dedup, état non-échec, créé dans la fenêtre → on rend l'existant.
@@ -115,7 +123,8 @@ def enfiler(engine, *, key: str, to: str, params: dict | None = None,
             "INSERT INTO mail_queue (compte_id, mail_key, template_id, template_nom, destinataire,"
             " params, demandeur, dedup, prevu_at) VALUES"
             " (:cid, :key, :tid, :tn, :to, CAST(:p AS jsonb), :who, :dd, :prevu) RETURNING *"),
-            {"cid": compte_id, "key": key, "tid": brevo.template_id(key), "tn": t.nom, "to": to,
+            {"cid": compte_id, "key": key, "tid": (brevo.template_id(key) if t else None),
+             "tn": tnom, "to": to,
              "p": json.dumps(params, ensure_ascii=False), "who": demandeur[:64], "dd": dd,
              "prevu": prevu_at}).mappings().first()
     _journal(engine, row["id"], "en_attente", demandeur, compte_id,
@@ -134,18 +143,26 @@ def _tenter_depart(engine, mail_id: int) -> dict:
         if row["etat"] in ("recu", "annule"):
             return _ligne(row)
         key, to, params = row["mail_key"], row["destinataire"], row["params"] or {}
-        demandeur, compte_id = row["demandeur"], row["compte_id"]
-    # GARDE fail-closed (mandat Lot 2) : une variable attendue et non fournie sortirait en
-    # « {{ params.X }} » brut chez le client (🔴). On REFUSE de partir : tentative ratée, raison
-    # lisible, l'entrée reste visible dans la file (rejouable une fois le param fourni).
-    manquants = [p for p in brevo.params_attendus(key) if p not in params]
-    if manquants:
-        res = {"envoye": False, "raison": "paramètres manquants : " + ", ".join(manquants)}
-    else:
-        # appel transport HORS transaction (I/O réseau), PAR LA FAÇADE `mail` (transport unique :
-        # brevo.envoyer_template n'est appelé QUE depuis mail.py — garde test_transport_mail_unique).
+        demandeur, compte_id, template_id = row["demandeur"], row["compte_id"], row["template_id"]
+    raw = params.get("__raw") if isinstance(params, dict) else None
+    if template_id is None and isinstance(raw, dict):
+        # VEILLE-FIX-1 (lot 5) — mail BRUT : départ par SMTP (send_email), construit côté code.
         from . import mail
-        res = mail.envoyer_template(to, key, params)
+        r = mail.send_email(to, raw.get("sujet") or "", raw.get("texte") or "",
+                            body_html=raw.get("html"), headers=raw.get("headers"))
+        res = {"envoye": bool(r.ok), "raison": None if r.ok else (r.detail or "SMTP non configuré")}
+    else:
+        # GARDE fail-closed (mandat Lot 2) : une variable attendue et non fournie sortirait en
+        # « {{ params.X }} » brut chez le client (🔴). On REFUSE de partir : tentative ratée, raison
+        # lisible, l'entrée reste visible dans la file (rejouable une fois le param fourni).
+        manquants = [p for p in brevo.params_attendus(key) if p not in params]
+        if manquants:
+            res = {"envoye": False, "raison": "paramètres manquants : " + ", ".join(manquants)}
+        else:
+            # appel transport HORS transaction (I/O réseau), PAR LA FAÇADE `mail` (transport unique :
+            # brevo.envoyer_template n'est appelé QUE depuis mail.py — garde test_transport_mail_unique).
+            from . import mail
+            res = mail.envoyer_template(to, key, params)
     now = _now()
     if res.get("envoye"):
         with engine.begin() as c:
@@ -172,15 +189,19 @@ def _tenter_depart(engine, mail_id: int) -> dict:
 def envoyer_mail(engine, *, key: str, to: str, params: dict | None = None,
                  compte_id: int | None = None, demandeur: str = "systeme",
                  prevu_at: datetime | None = None, dedup: str | None = None,
-                 fenetre_doublon_s: int = FENETRE_DOUBLON_S) -> dict:
+                 fenetre_doublon_s: int = FENETRE_DOUBLON_S, dry_run: bool = False) -> dict:
     """POINT D'ENVOI UNIQUE (façade `mail.envoyer_mail`) : enfile, puis — si l'envoi est immédiat
     (`prevu_at` absent ou déjà passé) — déclenche le départ tout de suite. Un programmé (J+3, J+10,
     digest) reste `en_attente` avec sa date prévue ; un worker/clic le fera partir. Renvoie la ligne.
-    `fenetre_doublon_s` : fenêtre anti-doublon (ex. relance carte = plusieurs jours, Stripe rejoue)."""
+    `fenetre_doublon_s` : fenêtre anti-doublon (ex. relance carte = plusieurs jours, Stripe rejoue).
+
+    VEILLE-FIX-1 (lot 5) — `dry_run` : on ÉCRIT la ligne (trace) mais on NE DÉCLENCHE PAS le départ.
+    La ligne reste `en_attente` SANS `prevu_at` → le worker `depart_des_programmes` (qui ne prend que
+    les programmés) ne la fera jamais partir. « Dry-run = une ligne écrite, rien envoyé »."""
     ligne = enfiler(engine, key=key, to=to, params=params, compte_id=compte_id,
                     demandeur=demandeur, prevu_at=prevu_at, dedup=dedup,
                     fenetre_doublon_s=fenetre_doublon_s)
-    if ligne.get("doublon"):
+    if ligne.get("doublon") or dry_run:
         return ligne
     immediate = prevu_at is None or prevu_at <= _now()
     if immediate and ligne["etat"] == "en_attente":
