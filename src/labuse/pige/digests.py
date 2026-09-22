@@ -30,7 +30,6 @@ from .. import mail   # CONNEXIONS-2 Lot 9.1 (KO-12) — façade unique (mail.en
 from ..api.events import creer_notification
 from ..tz import today_reunion
 from . import portails, veille as veille_mod
-from .tables import EV_DIGEST, journaliser
 
 log = logging.getLogger("labuse.pige.digests")
 
@@ -227,39 +226,38 @@ def _libelle_veille(v: dict) -> str:
 
 # ── envoi (idempotent, bruyant) ─────────────────────────────────────────────────────────
 
-def _deja_envoye(db: Session, dedup: str) -> bool:
-    """Idempotence : cet envoi (dedup du jour) a-t-il déjà été journalisé ? Évite le double-envoi
-    quand le cron est rejoué le même jour."""
-    return db.execute(text("SELECT 1 FROM event_log WHERE dedup = :d LIMIT 1"), {"d": dedup}).first() is not None
-
-
 def _envoyer(db: Session, *, compte_id, email: str, template_key: str, dedup: str,
              params: dict, n_biens: int, cartes_html_str: str, type_envoi: str,
              dry_run: bool, dry_dir: Path | None, rapport: list) -> str:
-    """UN envoi (digest ou alerte). Idempotent (dedup), jamais vide (garanti par l'appelant), échec
-    BRUYANT. Retourne 'simule' | 'envoye' | 'deja' | 'echec'."""
-    if not dry_run and _deja_envoye(db, dedup):
-        rapport.append({"compte_id": compte_id, "type_envoi": type_envoi, "n": n_biens, "statut": "deja"})
-        return "deja"
+    """UN envoi (alerte de veille). VEILLE-FIX-1 (lot 5) — passe par mail_queue COMME LES AUTRES mails
+    (template Brevo 13). Idempotent (dedup mail_queue par jour), jamais vide (garanti par l'appelant),
+    échec BRUYANT. Dry-run : une ligne écrite `en_attente`, RIEN envoyé. Retourne
+    'simule' | 'envoye' | 'deja' | 'echec'."""
+    from ..db import engine as _eng
+    from ..mailfile import ensure_tables as _mq_ens, envoyer_mail as _q_envoyer
+    _mq_ens(_eng())
+    if dry_run and dry_dir is not None:
+        dry_dir.mkdir(parents=True, exist_ok=True)
+        (dry_dir / f"{type_envoi}_compte{compte_id}.html").write_text(cartes_html_str, encoding="utf-8")
+    ligne = _q_envoyer(_eng(), key=template_key, to=email, params=params, compte_id=compte_id,
+                       demandeur="job:radar-digests", dedup=dedup, fenetre_doublon_s=20 * 3600,
+                       dry_run=dry_run)
     if dry_run:
-        if dry_dir is not None:
-            dry_dir.mkdir(parents=True, exist_ok=True)
-            (dry_dir / f"{type_envoi}_compte{compte_id}.html").write_text(cartes_html_str, encoding="utf-8")
         rapport.append({"compte_id": compte_id, "type_envoi": type_envoi, "n": n_biens, "statut": "simule"})
         return "simule"
-    res = mail.envoyer_template(email, template_key, params)
-    if res.get("envoye"):
-        journaliser(db, EV_DIGEST, f"Radar — {type_envoi} envoyé ({n_biens})",
-                    detail=f"{type_envoi} · {n_biens} bien(s)", compte_id=compte_id, dedup=dedup)
+    if ligne.get("doublon"):
+        rapport.append({"compte_id": compte_id, "type_envoi": type_envoi, "n": n_biens, "statut": "deja"})
+        return "deja"
+    if ligne.get("etat") in ("recu", "parti"):
         rapport.append({"compte_id": compte_id, "type_envoi": type_envoi, "n": n_biens, "statut": "envoye"})
         return "envoye"
     # ÉCHEC BRUYANT (RV-013) — jamais silencieux : log.error + event système visible au dashboard.
-    raison = res.get("raison", "inconnue")
+    raison = ligne.get("erreur") or ligne.get("etat") or "inconnue"
     log.error("RADAR %s NON ENVOYÉ à compte=%s : %s", type_envoi, compte_id, raison)
     try:
         creer_notification(db, kind="systeme", compte_id=None, source="Radar",
                            titre=f"Échec envoi Radar ({type_envoi})",
-                           detail=f"Compte {compte_id} : {raison}. Templates Brevo 12 et 13 montés ?",
+                           detail=f"Compte {compte_id} : {raison}. Template Brevo 13 monté ?",
                            dedup=f"pige:digest-echec:{type_envoi}:{today_reunion().isoformat()}")
     except Exception:  # noqa: BLE001 — la trace ne doit pas masquer l'échec d'origine
         pass

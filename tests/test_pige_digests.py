@@ -42,6 +42,7 @@ def seed(engine):
     with session_scope() as s:
         s.execute(text("DELETE FROM pige_biens WHERE commune='Saint-Benoît' AND bien_id=:b"), {"b": st["bien"]})
         s.execute(text("DELETE FROM veilles WHERE compte_id = ANY(:c)"), {"c": [st["match"], st["plain"]]})
+        s.execute(text("DELETE FROM mail_queue WHERE compte_id = ANY(:c)"), {"c": [st["match"], st["plain"]]})
         s.execute(text("DELETE FROM utilisateurs WHERE compte_id = ANY(:c)"), {"c": [st["match"], st["plain"]]})
         s.execute(text("DELETE FROM comptes WHERE id = ANY(:c)"), {"c": [st["match"], st["plain"]]})
         s.execute(text("DELETE FROM event_log WHERE kind IN ('pige.digest_envoye','systeme') AND source='Radar'"))
@@ -106,6 +107,7 @@ def test_radar_trois_comptes_deux_veilles_un_sans(engine):
                 s.execute(text("DELETE FROM pige_biens WHERE bien_id=:b"), {"b": bid})
             if ids:
                 cids = list(ids.values())
+                s.execute(text("DELETE FROM mail_queue WHERE compte_id = ANY(:c)"), {"c": cids})
                 s.execute(text("DELETE FROM veilles WHERE compte_id = ANY(:c)"), {"c": cids})
                 s.execute(text("DELETE FROM utilisateurs WHERE compte_id = ANY(:c)"), {"c": cids})
                 s.execute(text("DELETE FROM comptes WHERE id = ANY(:c)"), {"c": cids})
@@ -146,9 +148,28 @@ def test_essai_expire_exclu_de_tout_envoi():
                 s.execute(text("DELETE FROM pige_biens WHERE bien_id=:b"), {"b": bid})
             if ids:
                 cids = list(ids.values())
+                s.execute(text("DELETE FROM mail_queue WHERE compte_id = ANY(:c)"), {"c": cids})
                 s.execute(text("DELETE FROM veilles WHERE compte_id = ANY(:c)"), {"c": cids})
                 s.execute(text("DELETE FROM utilisateurs WHERE compte_id = ANY(:c)"), {"c": cids})
                 s.execute(text("DELETE FROM comptes WHERE id = ANY(:c)"), {"c": cids})
+
+
+def test_lot5_dry_run_ecrit_une_ligne_mail_queue_rien_envoye(seed, monkeypatch):
+    """VEILLE-FIX-1 (lot 5) — le mail de veille passe par mail_queue COMME LES AUTRES : en dry-run, une
+    ligne `radar_alerte` est ÉCRITE (en_attente), et le transport n'est JAMAIS appelé (rien envoyé)."""
+    appels = []
+    monkeypatch.setattr(digests.mail, "envoyer_template",
+                        lambda to, key, params: appels.append(key) or {"envoye": True})
+    with session_scope() as db:
+        digests.envoyer(db, base_url="https://app.labuse.immo", dry_run=True)
+        row = db.execute(text(
+            "SELECT etat, template_id, demandeur FROM mail_queue "
+            "WHERE compte_id=:c AND mail_key='radar_alerte' ORDER BY id DESC LIMIT 1"),
+            {"c": seed["match"]}).mappings().first()
+    assert row is not None, "une ligne mail_queue doit être écrite (trace)"
+    assert row["etat"] == "en_attente" and row["template_id"] == 13
+    assert row["demandeur"] == "job:radar-digests"
+    assert appels == [], "dry-run : le transport ne doit JAMAIS être appelé (rien envoyé)"
 
 
 def test_jamais_de_mail_vide(seed):
