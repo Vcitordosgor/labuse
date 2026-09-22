@@ -10,7 +10,8 @@ from pathlib import Path
 import pytest
 
 from labuse.scoring.score_labuse import (ScoreEntrees, bande_de_score,
-                                         charger_bareme, score_parcelle)
+                                         charger_bareme, libelle_client_bande,
+                                         score_parcelle)
 
 BAREME, VERSION = charger_bareme()
 
@@ -105,11 +106,37 @@ def test_versionnement_obligatoire_et_lie_au_hash():
 
 
 def test_bandes():
-    assert bande_de_score(85, BAREME) == "A"
-    assert bande_de_score(60, BAREME) == "B"
-    assert bande_de_score(40, BAREME) == "C"
-    assert bande_de_score(10, BAREME) == "D"
+    assert bande_de_score(85, BAREME) == "A"      # 80-100
+    assert bande_de_score(60, BAREME) == "B"      # 50-79
+    assert bande_de_score(40, BAREME) == "C"      # 30-49
+    assert bande_de_score(10, BAREME) == "D"      # 1-29
+    assert bande_de_score(0, BAREME) == "0"       # 0 exact = bande à part
     assert bande_de_score(None, BAREME) == "NC"
+
+
+def test_gravé_zero_jamais_D_ni_nc_jamais_zero():
+    """SCORING-7 §1 (décisions Vic gravées) — un score 0 n'est JAMAIS en D ; NC n'est JAMAIS 0."""
+    # 0 exact → bande « 0 », pas « D » ; le premier score > 0 (1) → « D ».
+    assert bande_de_score(0, BAREME) == "0" != "D"
+    assert bande_de_score(1, BAREME) == "D"
+    # un vrai 0 CALCULÉ (terrain exigu) : bande « 0 », non NC, score 0 (jamais None).
+    z = _s(sdp_residuelle_m2=0.0, cause="terrain_exigu", pente_moy_deg=40.0)
+    assert z.score == 0 and z.bande == "0" and not z.non_calculable
+    # NC : score None (jamais 0), bande NC.
+    nc = _s(residuel_present=False)
+    assert nc.non_calculable and nc.score is None and nc.bande == "NC"
+
+
+def test_vocabulaire_client_gravé():
+    """SCORING-7 §1 — mot client par bande (présentation) ; NC porte sa cause lisible."""
+    assert libelle_client_bande("A", BAREME) == "Excellente"
+    assert libelle_client_bande("B", BAREME) == "Bonne"
+    assert libelle_client_bande("C", BAREME) == "À étudier"
+    assert libelle_client_bande("D", BAREME) == "Faible"
+    assert libelle_client_bande("0", BAREME) == "Sans potentiel constructible"
+    assert libelle_client_bande("NC", BAREME) == "Analyse incomplète"
+    assert libelle_client_bande("NC", BAREME, cause="zone non résolue") == \
+        "Analyse incomplète — zone non résolue"
 
 
 def test_contributions_lisibles():

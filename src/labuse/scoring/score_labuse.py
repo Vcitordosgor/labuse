@@ -172,12 +172,28 @@ def _cause_nc(e: ScoreEntrees) -> str | None:
 
 
 def bande_de_score(score: int | None, bareme: dict) -> str:
+    """Bande ABSOLUE (décisions Vic, SCORING-7 §1). score None → NC ; score 0 → bande « 0 »
+    (à part, jamais D) ; sinon seuils A/B/C puis D (1-29). Un vrai 0 n'est JAMAIS NC (cf.
+    `_cause_nc`, qui met NC uniquement quand le score n'est pas calculable) et JAMAIS D."""
+    b = bareme.get("bandes", {})
     if score is None:
         return "NC"
-    for seuil, lib in bareme.get("bandes", {}).get("seuils", []):
+    if score == 0:
+        return str(b.get("zero", "0"))
+    for seuil, lib in b.get("seuils", []):
         if score >= int(seuil):
             return str(lib)
-    return str(bareme.get("bandes", {}).get("au_dessous", "D"))
+    return str(b.get("au_dessous", "D"))
+
+
+def libelle_client_bande(bande: str, bareme: dict, cause: str | None = None) -> str:
+    """Mot CLIENT d'une bande (décisions Vic, présentation seule). NC porte sa cause lisible
+    (« Analyse incomplète — zone non résolue »). Repli sur le code de bande si non gravé."""
+    voc = bareme.get("bandes", {}).get("vocabulaire_client", {})
+    lib = str(voc.get(bande, bande))
+    if bande == "NC" and cause:
+        lib = f"{lib} — {cause}"
+    return lib
 
 
 def score_parcelle(e: ScoreEntrees, bareme: dict, version: str, run_label: str) -> ScoreLabuse:

@@ -47,10 +47,21 @@ score_labuse:
         - [50, [0.8, 0.65]]
       au_dela: [0.65, 0.65]       # emprise > 50 % → démolition-reconstruction
 
-  # Lot E — bornes de bande (score → bande). PROVISOIRES (SCORING-5-RETOUR §3), à re-caler.
+  # Lot E / SCORING-7 §1 — bandes ABSOLUES (décisions Vic, gravées). Seuils inchangés ;
+  # le 0 est une bande À PART (jamais D), NC n'est jamais 0 (garanti par _cause_nc / score None).
   bandes:
     seuils:                       # score ≥ seuil → libellé (ordre décroissant)
-      - [80, "A"]
-      - [50, "B"]
-      - [30, "C"]
-    au_dessous: "D"               # score < 30
+      - [80, "A"]                 # A : 80-100
+      - [50, "B"]                 # B : 50-79
+      - [30, "C"]                 # C : 30-49
+    au_dessous: "D"               # D : 1-29 (score > 0 sous 30)
+    zero: "0"                     # 0 : score == 0 exactement → bande à part « sans potentiel »
+    # Vocabulaire CLIENT par bande (décisions Vic, présentation seule — aucun calcul). NC porte
+    # en plus sa cause lisible (_cause_nc : « zone non résolue » / « donnée critique absente »…).
+    vocabulaire_client:
+      A: "Excellente"
+      B: "Bonne"
+      C: "À étudier"
+      D: "Faible"
+      "0": "Sans potentiel constructible"
+      NC: "Analyse incomplète"

@@ -26,7 +26,9 @@ from .score_labuse import charger_bareme, score_batch
 from .signal_mutation import signal_niveau, signal_version
 
 # Ordre des bandes pour le classement lexicographique (le Signal départage à l'intérieur).
-BANDE_RANG = {"A": 0, "B": 1, "C": 2, "D": 3, "NC": 4}
+# SCORING-7 §1 : « 0 » (sans potentiel constructible) se classe SOUS D et AU-DESSUS de NC
+# (un vrai 0 est une réponse, NC est une analyse incomplète) — ordre Vic A·B·C·D·0·NC.
+BANDE_RANG = {"A": 0, "B": 1, "C": 2, "D": 3, "0": 4, "NC": 5}
 
 
 @dataclass
