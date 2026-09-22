@@ -552,8 +552,10 @@ export interface GabaritResult {
   surfaceParcelleM2?: number | null
   zoneImplantationM2?: number | null
   plafondEmpriseM2?: number | null
+  plafondEmpriseStatus?: string | null   // 'absent' → « Non réglementé »
   hauteurReglementaireM?: number | null
   hauteurSource?: GabRegSource | null
+  hauteurStatus?: string | null          // 'not_integrated' → « Non chiffrée » (prospect)
   coverage?: GabCoverage | null
   appliedRules: GabAppliedRule[]
   nonIntegratedRules: GabNonIntegratedRule[]

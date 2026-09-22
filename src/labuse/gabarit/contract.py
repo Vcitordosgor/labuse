@@ -51,6 +51,7 @@ class MaxFootprint(BaseModel):
     model_config = ConfigDict(extra="forbid")
     ruleId: Optional[str] = None
     percent: Optional[float] = None
+    status: Optional[Literal["integrated", "absent"]] = None   # 'absent' = silence prouvé du règlement
     source: Optional[RegulatorySource] = None
 
 
@@ -58,6 +59,7 @@ class MaxHeight(BaseModel):
     model_config = ConfigDict(extra="forbid")
     ruleId: Optional[str] = None
     meters: Optional[float] = None
+    status: Optional[Literal["integrated", "not_integrated"]] = None   # 'not_integrated' = forme non chiffrée (prospect)
     source: Optional[RegulatorySource] = None
 
 
@@ -145,8 +147,10 @@ class GabaritResult(BaseModel):
     surfaceParcelleM2: Optional[float] = None
     zoneImplantationM2: Optional[float] = None
     plafondEmpriseM2: Optional[float] = None
+    plafondEmpriseStatus: Optional[str] = None   # 'absent' → « Non réglementé » (silence prouvé)
     hauteurReglementaireM: Optional[float] = None
     hauteurSource: Optional[RegulatorySource] = None
+    hauteurStatus: Optional[str] = None          # 'not_integrated' → « Non chiffrée » (prospect)
 
     coverage: Optional[Coverage] = None
     appliedRules: list[AppliedRule] = Field(default_factory=list)

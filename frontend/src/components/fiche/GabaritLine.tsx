@@ -97,8 +97,12 @@ export function GabaritLine({ idu }: { idu: string }) {
             <div className="flex min-w-0 flex-1 flex-col">
               <FactRow label="Surface parcelle" value={`${fmtInt(r.surfaceParcelleM2)} m²`} />
               <FactRow label="Zone d'implantation" value={`${fmtInt(r.zoneImplantationM2)} m²`} />
-              <FactRow label="Plafond d'emprise" value={`${fmtInt(r.plafondEmpriseM2)} m²`} />
-              <FactRow label="Hauteur réglementaire" value={`${fmtInt(r.hauteurReglementaireM)} m`} src="§4 Urbanisme" />
+              <FactRow label="Plafond d'emprise"
+                value={r.plafondEmpriseStatus === 'absent' ? 'Non réglementé' : `${fmtInt(r.plafondEmpriseM2)} m²`}
+                tone={r.plafondEmpriseStatus === 'absent' ? 'mute' : undefined} />
+              <FactRow label="Hauteur réglementaire"
+                value={r.hauteurStatus === 'not_integrated' ? 'Non chiffrée (prospect)' : `${fmtInt(r.hauteurReglementaireM)} m`}
+                tone={r.hauteurStatus === 'not_integrated' ? 'mute' : undefined} src="§4 Urbanisme" />
             </div>
             <MiniPlan contour={r.contourGeoJSON} zone={r.zoneImplantationGeoJSON}
               retrait={r.retraitsGeoJSON} excl={r.exclusionsGeoJSON} />

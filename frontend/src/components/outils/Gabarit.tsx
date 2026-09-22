@@ -92,15 +92,19 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean) {
   }, [res, terrain3d])
 }
 
-function Num({ label, value, unit, accent }: {
+function Num({ label, value, unit, accent, statusLabel, sub }: {
   label: string; value: number | null | undefined; unit: string; accent?: boolean
+  statusLabel?: string | null; sub?: string | null
 }) {
   return (
     <div className="flex flex-col gap-0.5">
       <span className="label-caps text-[9.5px] leading-tight text-txt-dim">{label}</span>
-      <span className={`font-mono text-[15px] tabular-nums ${accent ? 'text-mint' : 'text-txt-hi'}`}>
-        {value != null ? `${fmtInt(value)} ${unit}` : '—'}
-      </span>
+      {statusLabel
+        ? <span className="text-[12px] font-medium text-txt-mut">{statusLabel}</span>
+        : <span className={`font-mono text-[15px] tabular-nums ${accent ? 'text-mint' : 'text-txt-hi'}`}>
+            {value != null ? `${fmtInt(value)} ${unit}` : '—'}
+          </span>}
+      {sub && <span className="text-[9px] leading-tight text-txt-dim">{sub}</span>}
     </div>
   )
 }
@@ -127,8 +131,10 @@ export function Gabarit() {
   const familles = res?.coverage
     ? [
         { k: 'reculs', ok: res.coverage.reculs, label: 'Reculs vérifiés' },
-        { k: 'hauteur', ok: res.coverage.hauteur, label: 'Hauteur vérifiée' },
-        { k: 'emprise', ok: res.coverage.emprise, label: 'Emprise vérifiée' },
+        { k: 'hauteur', ok: res.coverage.hauteur,
+          label: res.hauteurStatus === 'not_integrated' ? 'Hauteur non intégrée (prospect L ≥ H)' : 'Hauteur vérifiée' },
+        { k: 'emprise', ok: res.coverage.emprise,
+          label: res.plafondEmpriseStatus === 'absent' ? 'Emprise vérifiée — sans plafond' : 'Emprise vérifiée' },
         { k: 'risques', ok: res.coverage.risques, label: 'Risques intégrés' },
       ]
     : []
@@ -179,8 +185,12 @@ export function Gabarit() {
           <div data-gabarit-chiffres className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border border-line-2 bg-surface-2 p-3">
             <Num label="Surface parcelle" value={res.surfaceParcelleM2} unit="m²" />
             <Num label="Zone d'implantation" value={res.zoneImplantationM2} unit="m²" accent />
-            <Num label="Plafond d'emprise" value={res.plafondEmpriseM2} unit="m²" />
-            <Num label="Hauteur réglementaire" value={res.hauteurReglementaireM} unit="m" />
+            <Num label="Plafond d'emprise" value={res.plafondEmpriseM2} unit="m²"
+              statusLabel={res.plafondEmpriseStatus === 'absent' ? 'Non réglementé' : null}
+              sub={res.plafondEmpriseStatus === 'absent' ? 'pas de règle d’emprise au sol' : null} />
+            <Num label="Hauteur réglementaire" value={res.hauteurReglementaireM} unit="m"
+              statusLabel={res.hauteurStatus === 'not_integrated' ? 'Non chiffrée' : null}
+              sub={res.hauteurStatus === 'not_integrated' ? 'prospect L ≥ H (non intégré)' : null} />
           </div>
 
           {/* COUVERTURE — les 4 familles (ni segments ni articles) */}
@@ -194,7 +204,7 @@ export function Gabarit() {
             <ul className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[10.5px]">
               {familles.map((f) => (
                 <li key={f.k} className={f.ok ? 'text-txt-mut' : 'text-txt-dim'}>
-                  {f.ok ? '✓' : '·'} {f.label}
+                  {f.ok ? '✓' : '⚠'} {f.label}
                 </li>
               ))}
             </ul>
@@ -211,7 +221,9 @@ export function Gabarit() {
                 <div key={i} data-gabarit-regle className="border-b border-line pb-1.5 last:border-0">
                   <div className="flex items-baseline justify-between gap-2">
                     <span className="text-[11px] text-txt">✓ {r.label}</span>
-                    {r.value != null && <span className="font-mono text-[11px] tabular-nums text-mint">{r.value}{r.unit ? ` ${r.unit}` : ''}</span>}
+                    {r.value != null
+                      ? <span className="font-mono text-[11px] tabular-nums text-mint">{r.value}{r.unit ? ` ${r.unit}` : ''}</span>
+                      : r.detail && <span className="text-[10px] italic text-txt-dim">{r.detail}</span>}
                   </div>
                   <span className="block text-[9.5px] leading-snug text-txt-dim">
                     {[r.source.document, r.source.zone, r.source.article].filter(Boolean).join(' — ')}
@@ -240,9 +252,11 @@ export function Gabarit() {
               <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_RETRAIT }} /> Retrait réglementaire</li>
               {res.exclusionsGeoJSON && <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_EXCL }} /> Exclusion (PPR)</li>}
             </ul>
-            {terrain3d
-              ? <p className="mt-1.5 text-txt-mut">3D active — <b className="text-txt">Enveloppe réglementaire selon les règles intégrées</b> (hauteur sourcée {res.hauteurReglementaireM} m).</p>
-              : <p className="mt-1.5">Bascule 2D / 3D : bouton <b className="text-txt">3D</b> de la carte.</p>}
+            {res.hauteurReglementaireM == null
+              ? <p className="mt-1.5 text-st-creuser">3D indisponible — hauteur non chiffrée (prospect).</p>
+              : terrain3d
+                ? <p className="mt-1.5 text-txt-mut">3D active — <b className="text-txt">Enveloppe réglementaire selon les règles intégrées</b> (hauteur sourcée {res.hauteurReglementaireM} m).</p>
+                : <p className="mt-1.5">Bascule 2D / 3D : bouton <b className="text-txt">3D</b> de la carte.</p>}
           </div>
 
           <button data-gabarit-reset onClick={reset}

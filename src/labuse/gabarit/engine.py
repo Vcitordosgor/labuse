@@ -97,28 +97,38 @@ def compute_gabarit(inp: GabaritInput) -> GabaritResult:
     excl_in_parcel_m = _as_polygonal(parcel_m.intersection(excl_union)) if excl_union is not None else None
 
     # --- métriques ------------------------------------------------------------
+    mf, mh = inp.maxFootprint, inp.maxHeight
+    footprint_absent = mf.status == "absent"
+    hauteur_non_integree = mh.status == "not_integrated"
+
     surface_parcelle = float(inp.parcel.areaM2)          # valeur cadastrale sourcée
     zone_m2 = float(zone_m.area)
-    plafond_m2 = surface_parcelle * inp.maxFootprint.percent / 100.0  # À PART, jamais min()
-    hauteur = float(inp.maxHeight.meters)
+    # plafond calculé À PART (jamais min()) ; None si le règlement ne fixe pas de CES (silence prouvé)
+    plafond_m2 = None if footprint_absent else surface_parcelle * mf.percent / 100.0
+    hauteur = None if hauteur_non_integree else float(mh.meters)
 
-    # --- couverture réglementaire (4 familles vérifiées) ---------------------
+    # --- couverture réglementaire ---------------------
+    # emprise absente = « vérifiée — sans plafond » (le silence est une donnée) ; hauteur prospect = non intégrée.
     risk_ok = any(ar.category == "exclusion" and ar.source and ar.source.document
                   for ar in inp.applicableRules)
-    coverage = Coverage(reculs=bool(inp.setbacks), hauteur=True, emprise=True, risques=risk_ok)
+    coverage = Coverage(reculs=bool(inp.setbacks), hauteur=not hauteur_non_integree,
+                        emprise=True, risques=risk_ok)
 
     # --- règles appliquées + non intégrées -----------------------------------
     applied: list[AppliedRule] = _grouped_setbacks(inp)
-    mf, mh = inp.maxFootprint, inp.maxHeight
     rules_by_id = {ar.id: ar for ar in inp.applicableRules if ar.id}
+    _mfr = rules_by_id.get(mf.ruleId)
     applied.append(AppliedRule(
         ruleId=mf.ruleId or "", category="maxFootprint",
-        label=(rules_by_id.get(mf.ruleId).label if rules_by_id.get(mf.ruleId) else "Emprise maximale"),
-        value=mf.percent, unit="%", source=mf.source))
-    applied.append(AppliedRule(
-        ruleId=mh.ruleId or "", category="maxHeight",
-        label=(rules_by_id.get(mh.ruleId).label if rules_by_id.get(mh.ruleId) else "Hauteur maximale"),
-        value=mh.meters, unit="m", source=mh.source))
+        label=(_mfr.label if _mfr and _mfr.label else ("Emprise au sol" if footprint_absent else "Emprise maximale")),
+        value=None if footprint_absent else mf.percent, unit=None if footprint_absent else "%",
+        detail=(_mfr.detail if footprint_absent and _mfr else None), source=mf.source))
+    # la hauteur en prospect n'est PAS une règle appliquée : elle va dans « non intégrées » (ci-dessous)
+    if not hauteur_non_integree:
+        applied.append(AppliedRule(
+            ruleId=mh.ruleId or "", category="maxHeight",
+            label=(rules_by_id.get(mh.ruleId).label if rules_by_id.get(mh.ruleId) else "Hauteur maximale"),
+            value=mh.meters, unit="m", source=mh.source))
     for ex in inp.exclusions:
         ar = rules_by_id.get(ex.ruleId)
         applied.append(AppliedRule(
@@ -139,9 +149,11 @@ def compute_gabarit(inp: GabaritInput) -> GabaritResult:
         status="ok",
         surfaceParcelleM2=_round(surface_parcelle),
         zoneImplantationM2=_round(zone_m2),
-        plafondEmpriseM2=_round(plafond_m2),
-        hauteurReglementaireM=_round(hauteur),
+        plafondEmpriseM2=None if plafond_m2 is None else _round(plafond_m2),
+        plafondEmpriseStatus=mf.status,
+        hauteurReglementaireM=None if hauteur is None else _round(hauteur),
         hauteurSource=mh.source,
+        hauteurStatus=mh.status,
         coverage=coverage,
         appliedRules=applied,
         nonIntegratedRules=non_integ,

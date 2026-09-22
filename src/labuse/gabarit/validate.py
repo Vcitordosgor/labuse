@@ -122,15 +122,21 @@ def validate_input(inp: GabaritInput) -> list[str]:  # noqa: C901 — check-list
                         f"({ratio * 100:.0f} % < {COVER_MIN_RATIO * 100:.0f} %)")
 
     # --- plafond d'emprise ----------------------------------------------------
+    # status 'absent' = silence prouvé du règlement (comme un zéro explicite, CDC §3) : sourcé, servi.
     mf = inp.maxFootprint
-    if mf is None or mf.percent is None or mf.percent < 0:
+    if mf is not None and mf.status == "absent":
+        _check_value_source(mf.source, "plafond d'emprise (non réglementé)")
+    elif mf is None or mf.percent is None or mf.percent < 0:
         errs.append("plafond d'emprise : valeur manquante")
     else:
         _check_value_source(mf.source, "plafond d'emprise")
 
     # --- hauteur --------------------------------------------------------------
+    # status 'not_integrated' = forme validée non chiffrée (prospect L ≥ H) : sourcée, 2D servie, 3D non.
     mh = inp.maxHeight
-    if mh is None or mh.meters is None or mh.meters < 0:
+    if mh is not None and mh.status == "not_integrated":
+        _check_value_source(mh.source, "hauteur réglementaire (non chiffrée)")
+    elif mh is None or mh.meters is None or mh.meters < 0:
         errs.append("hauteur réglementaire : valeur manquante")
     else:
         _check_value_source(mh.source, "hauteur réglementaire")

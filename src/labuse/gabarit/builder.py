@@ -64,6 +64,30 @@ def _bdtopo_millesime(session: Session) -> str:
     return (row[0] if row and row[0] else "millésime non enregistré")
 
 
+def _feuille_absente(commune: str, zone: str, rubrique: str, feuille: str) -> bool:
+    """La feuille de règle est-elle ABSENTE du règlement de la zone (silence prouvé) ? False si la
+    zone n'a pas de règles propres (renvoi — traité à part) pour ne pas confondre silence et renvoi."""
+    reg = regles_zone(commune, zone) or {}
+    if not reg:
+        return False
+    leaf = (reg.get(rubrique) or {}).get(feuille)
+    return not leaf or leaf.get("absent") is True
+
+
+def _feuille_forme_hors_schema(commune: str, zone: str, rubrique: str, feuille: str, valuekey: str) -> bool:
+    """Feuille VALIDÉE mais de forme non chiffrée (ex. hauteur en prospect L ≥ H : statut valide,
+    pas de valeur numérique)."""
+    reg = regles_zone(commune, zone) or {}
+    leaf = (reg.get(rubrique) or {}).get(feuille) or {}
+    return str(leaf.get("statut")) == "valide" and not isinstance(leaf.get(valuekey), (int, float))
+
+
+def _feuille_citation(commune: str, zone: str, rubrique: str, feuille: str) -> str:
+    reg = regles_zone(commune, zone) or {}
+    leaf = (reg.get(rubrique) or {}).get(feuille) or {}
+    return " ".join(f"{leaf.get('citation', '')} {leaf.get('formule', '')}".split())[:220]
+
+
 def _voie_citation_flags(commune: str, zone: str) -> tuple[bool, bool, str, str]:
     """Lit la citation validée `retraits.voie` de la (commune, zone) et dit si elle vise « voies
     ET emprises publiques » (→ arête domaine public = voie) et/ou les « voies privées ». Renvoie
@@ -161,10 +185,21 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             racc["plu"] = {"emprise_pct": emp, "hauteur_faitage_m": haut, "hauteur_egout_m": egout,
                            "recul_voie_m": recul_voie, "recul_sep_m": recul_sep, "source": plu_zone_src.document}
             if emp is not None:
-                max_footprint = MaxFootprint(ruleId=f"{zs.zone}-emprise", percent=emp, source=plu_zone_src)
+                max_footprint = MaxFootprint(ruleId=f"{zs.zone}-emprise", percent=emp,
+                                             status="integrated", source=plu_zone_src)
                 applicable.append(ApplicableRule(id=f"{zs.zone}-emprise", label="Emprise maximale",
                                                  category="maxFootprint", integrationStatus="integrated",
                                                  detail=f"{emp:g} %", source=plu_zone_src))
+            elif _feuille_absente(commune, zs.zone, "emprise_sol", "ces"):
+                # silence prouvé du règlement : servi « non réglementé » (donnée sourcée, CDC §3)
+                max_footprint = MaxFootprint(ruleId=f"{zs.zone}-emprise", percent=None,
+                                             status="absent", source=plu_zone_src)
+                applicable.append(ApplicableRule(
+                    id=f"{zs.zone}-emprise", label="Emprise au sol", category="maxFootprint",
+                    integrationStatus="integrated",
+                    detail=f"non réglementée — PLU {commune} zone {zs.zone} : silence du règlement",
+                    source=plu_zone_src))
+                racc.setdefault("silences", []).append("emprise_sol.ces")
             else:
                 blocking.append("emprise (CES) non réglementée / non validée")
             if haut is not None:
