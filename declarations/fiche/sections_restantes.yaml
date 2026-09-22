@@ -207,3 +207,65 @@ donnees:
     absence: "PLU : document d'urbanisme non résolu pour cette commune."
     absence_type: non_publiee
     pourquoi: "Dire de quel document viennent les règles ; replié sous le règlement."
+---
+# GABARIT-5 lot B — le tiroir §10 « Gabarit réglementaire » (codé au rendu dans GabaritLine.tsx)
+# devient une surface DÉCLARÉE : chaque chiffre servi sur la fiche est déclaré avec sa section,
+# donc mirroré au Dossier (V5d). La surface parcelle est déjà déclarée en en-tête — non doublée.
+# La hauteur PLU vit au §4 Urbanisme : le tiroir la CITE (i), ne la redéclare pas. Toutes les
+# lignes sont `masquer_si_absent` : parcelle bloquée → seul le motif s'imprime, rien d'autre.
+surface:   fiche_parcelle_gabarit
+nom:       "Gabarit réglementaire"
+categorie: fiche
+parent:    fiche_parcelle
+route:     "/outils/gabarit/{idu}"
+rendu:     sections
+fiche_section: potentiel
+donnees:
+  - quoi:  gabarit_implantation_m2
+    ou:    { rang: 60, etat: en_tete, section: "Gabarit réglementaire" }
+    comment: { libelle: "Zone d'implantation", unite: "m²", format: entier_m2, i: "Surface où une construction peut s'implanter = parcelle − reculs (voie / séparatives) − exclusions (PPR rouge). Calcul géospatial pur, jamais estimé." }
+    absence: "Zone d'implantation : gabarit non calculable (voir le motif)."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    statut_juridique: informatif
+    pourquoi: "L'enveloppe constructible au sol ; en tête du gabarit."
+  - quoi:  gabarit_plan_2d
+    ou:    { rang: 62, etat: en_tete, section: "Gabarit réglementaire" }
+    comment: { libelle: "Plan 2D", format: figure, i: "Schéma des géométries servies (contour, zone d'implantation, retraits, exclusions) — figure de la ligne « zone d'implantation ». Pas une carte ni un plan de masse." }
+    absence: "Plan 2D : non tracé (gabarit non calculable)."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    statut_juridique: informatif
+    pourquoi: "Le dessin de la zone d'implantation ; figure attachée à la ligne « zone d'implantation »."
+  - quoi:  gabarit_emprise_plafond_m2
+    ou:    { rang: 64, etat: en_tete, section: "Gabarit réglementaire" }
+    comment: { libelle: "Plafond d'emprise", unite: "m²", format: entier_m2, i: "Plafond réglementaire d'emprise au sol = surface × CES / 100, calculé À PART de la zone d'implantation. « Non réglementé » quand le PLU ne fixe pas de CES (silence prouvé)." }
+    absence: "Plafond d'emprise : gabarit non calculable (voir le motif)."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    statut_juridique: informatif
+    pourquoi: "La surface bâtissable au sol plafonnée par le CES ; en tête."
+  - quoi:  gabarit_hauteur_m
+    ou:    { rang: 66, etat: en_tete, section: "Gabarit réglementaire" }
+    comment: { libelle: "Hauteur réglementaire", unite: "m", format: metre, i: "Hauteur réglementaire citée du §4 Urbanisme (elle y vit ; le tiroir ne la redéclare pas). « Non chiffrée » quand la règle est en prospect (L ≥ H) : forme validée, non numérique." }
+    absence: "Hauteur réglementaire : gabarit non calculable (voir le motif)."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    statut_juridique: informatif
+    pourquoi: "La hauteur admissible, citée du §4 ; en tête."
+  - quoi:  gabarit_couverture_verdict
+    ou:    { rang: 68, etat: replie, section: "Gabarit réglementaire" }
+    comment: { libelle: "Couverture réglementaire", format: verdict, i: "Familles réglementaires vérifiées (reculs, hauteur, emprise, risques) sur 4, et les règles connues mais non intégrées (hauteur en prospect, stationnement…)." }
+    absence: "Couverture réglementaire : non évaluée (gabarit non calculable)."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    statut_juridique: informatif
+    pourquoi: "Ce que le gabarit a réellement pris en compte ; replié sous les chiffres."
+  - quoi:  gabarit_motif_blocage
+    ou:    { rang: 70, etat: en_tete, section: "Gabarit réglementaire" }
+    comment: { libelle: "Gabarit — calcul incomplet", format: texte, i: "Motif métier quand le gabarit n'est pas calculable (limite non qualifiée, voie privée sans recul réglé, zone non calibrée, ≥ 2 zones constructibles…). Silence sourcé, jamais estimatif." }
+    absence: "Gabarit : calculé (aucun motif de blocage)."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    statut_juridique: informatif
+    pourquoi: "Quand le gabarit ne peut pas se calculer, dire pourquoi — et rien d'autre."

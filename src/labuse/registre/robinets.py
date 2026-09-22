@@ -173,7 +173,8 @@ ROBINETS: dict[str, Robinet] = {
  # des limites n'est pas certifiée). Servi sur fixtures ; réel per-parcelle = GABARIT-2.
  "outil_gabarit": _r("outil", "Gabarit réglementaire", None,
     "/outils/gabarit/{idu}", "json_puis_js",
-    chiffres=("gabarit_implantation_m2", "gabarit_emprise_plafond_m2", "gabarit_couverture_verdict",)),
+    chiffres=("gabarit_implantation_m2", "gabarit_emprise_plafond_m2", "gabarit_couverture_verdict",
+              "gabarit_hauteur_m", "gabarit_motif_blocage", "gabarit_plan_2d",)),
  "outil_pieges": _r("outil", "Pièges et risques", None,
     "/modules/risques", "json_puis_js", chiffres=("n_vigilances",)),
  "outil_plu": _r("outil", "PLU", None,

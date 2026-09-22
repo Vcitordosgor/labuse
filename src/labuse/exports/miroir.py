@@ -404,9 +404,18 @@ _RENDEURS: dict[str, Any] = {
     "taxe_amenagement_estimee_eur": _r_taxe, "rang_tier": _r_rang,
     "filiation_parcelle": _r_filiation,
 }
+def _r_gabarit_plan(brute, val=None):
+    """Le plan 2D du gabarit (SVG) — fragment pleine largeur, figure de la ligne « zone
+    d'implantation ». `brute` est le SVG déjà sûr (généré serveur, mêmes couleurs que l'écran)."""
+    svg = brute if isinstance(brute, str) else ""
+    return (f'<div class="gabarit-plan" data-quoi="gabarit_plan_2d" '
+            f'style="margin:6px 0;text-align:center">{svg}</div>')
+
+
 _RENDEURS_BLOC: dict[str, Any] = {
     "aleas_parcelle_liste": _r_aleas, "dvf_parcelle_liste": _r_dvf_liste,
     "iris_quartier": _r_iris, "perimetres_dispositifs_liste": _r_territoire,
+    "gabarit_plan_2d": _r_gabarit_plan,
 }
 #: le règlement PLU (extraits) garde son rendu de bloc historique (blocs/zonage._regles) — réutilisé.
 #: `simulation` : lignes remplacées par l'encart de renvoi (lot 2) — dit dans le rendu.

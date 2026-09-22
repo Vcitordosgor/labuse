@@ -112,6 +112,25 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/gabarit/engine.py:compute_gabarit",
     reservoirs=("gpu_plu_api_carto", "deal_ppr",), portee="live",
     domaine=("0", "1", "2", "3", "4"), domaine_source="4 familles de couverture (CDC §6)"),
+ "gabarit_hauteur_m": C("Hauteur réglementaire (gabarit)", "m", "parcelle",
+    "hauteur réglementaire servie au gabarit — la valeur PLU vit au §4 Urbanisme, le tiroir la "
+    "CITE (jamais redéclarée). « Non chiffrée » quand la règle est en prospect (L ≥ H) : forme "
+    "validée mais non numérique (non intégrée), 2D servie, 3D indisponible.",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/engine.py:compute_gabarit",
+    reservoirs=("gpu_plu_api_carto",), portee="live"),
+ "gabarit_motif_blocage": C("Gabarit — motif de calcul incomplet", "texte", "parcelle",
+    "motif métier quand le gabarit n'est pas calculable (limite non qualifiée, voie privée sans "
+    "recul réglé, zone non calibrée, ≥ 2 zones constructibles…). Silence sourcé, jamais estimatif.",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/builder.py:build_gabarit_input", portee="live", type="texte"),
+ "gabarit_plan_2d": C("Gabarit — plan 2D (zone d'implantation)", "texte", "parcelle",
+    "figure 2D du gabarit : contour cadastral, zone d'implantation, bandes de retrait et "
+    "exclusions (PPR rouge). Schéma des géométries servies (SVG), pas une carte ni un plan de "
+    "masse. Déclaré comme figure de la ligne « zone d'implantation ».",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/plan_svg.py:gabarit_svg",
+    reservoirs=("cadastre_api_carto", "gpu_plu_api_carto",), portee="live", type="texte"),
  "capacite_logements": C("Capacité (logements)", "logements", "parcelle",
     "logements estimés du scénario table rase (après plafond de densité et stationnement) — "
     "bloc potentiel (EXPORTS-1 lot 3)",

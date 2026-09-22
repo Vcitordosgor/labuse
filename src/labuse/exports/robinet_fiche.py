@@ -11,6 +11,7 @@ Règles : les extracteurs lisent la FICHE (payload), jamais la base — sauf `n_
 from __future__ import annotations
 
 from typing import Any, Callable
+from weakref import WeakKeyDictionary
 
 from ..registre.valeur import Valeur, valeurs_pour
 
@@ -545,6 +546,96 @@ def _c_rang(db, idu, f):
     if sv.get("rang") is None:
         return None
     return {"rang": sv.get("rang"), "total": sv.get("rang_total")}
+
+
+# ══ Gabarit réglementaire (§10 Potentiel) ════════════════════════════════════════════════
+# Le gabarit n'est pas porté par le payload fiche (outil séparé /outils/gabarit/{idu}). Comme
+# `n_permis_proximite`, ces extracteurs lisent la BASE et appellent le MÊME moteur que l'écran
+# (build_gabarit_input + compute_gabarit) → écran = Dossier. Mémoïsé par session (WeakKeyDictionary)
+# pour ne construire le gabarit qu'UNE fois par document (≈ une douzaine de requêtes PostGIS).
+_GAB_MEMO: "WeakKeyDictionary" = WeakKeyDictionary()
+
+
+def _gabarit(db, idu: str) -> dict:
+    per = _GAB_MEMO.get(db)
+    if per is None:
+        per = {}
+        _GAB_MEMO[db] = per
+    if idu in per:
+        return per[idu]
+    out: dict = {"served": False, "motif": None}
+    try:
+        from ..gabarit.builder import build_gabarit_input
+        from ..gabarit.engine import compute_gabarit
+        from ..gabarit.plan_svg import gabarit_svg
+        build = build_gabarit_input(db, idu)
+        if build is None:
+            per[idu] = out
+            return out
+        if build.blocking:
+            out["motif"] = build.blocking[0]
+            per[idu] = out
+            return out
+        res = compute_gabarit(build.input)
+        if res.status != "ok":
+            errs = res.validationErrors or ([res.message] if res.message else [])
+            out["motif"] = errs[0] if errs else None
+            per[idu] = out
+            return out
+        cov = res.coverage
+        fam = [nom for ok, nom in ((cov and cov.reculs, "reculs"), (cov and cov.emprise, "emprise"),
+                                   (cov and cov.hauteur, "hauteur"), (cov and cov.risques, "risques")) if ok]
+        txt = (f"{len(fam)} famille{'s' if len(fam) > 1 else ''} vérifiée{'s' if len(fam) > 1 else ''} "
+               f"sur 4 ({', '.join(fam)})") if fam else "aucune famille vérifiée"
+        # « PPR — analyse » est not_integrated quand il n'y a pas de zone rouge : la famille risques est
+        # déjà comptée « vérifiée » → ne pas la relister comme non intégrée (lecture contradictoire).
+        non_int = [r.label for r in (res.nonIntegratedRules or []) if r.label and r.id != "PPR"]
+        if non_int:
+            txt += " — non intégrée(s) : " + ", ".join(non_int)
+        out.update(served=True, zone_m2=res.zoneImplantationM2, couverture=txt,
+                   plafond=("Non réglementé" if res.plafondEmpriseStatus == "absent" else res.plafondEmpriseM2),
+                   hauteur=("Non chiffrée (prospect)" if res.hauteurStatus == "not_integrated"
+                            else res.hauteurReglementaireM),
+                   svg=gabarit_svg(res))
+    except Exception:  # noqa: BLE001 — jamais un 500 sur un document ; la donnée est simplement omise
+        pass
+    per[idu] = out
+    return out
+
+
+@extracteur("gabarit_implantation_m2")
+def _c_gab_zone(db, idu, f):
+    g = _gabarit(db, idu)
+    return g.get("zone_m2") if g["served"] else None
+
+
+@extracteur("gabarit_emprise_plafond_m2")
+def _c_gab_plafond(db, idu, f):
+    g = _gabarit(db, idu)
+    return g.get("plafond") if g["served"] else None
+
+
+@extracteur("gabarit_hauteur_m")
+def _c_gab_hauteur(db, idu, f):
+    g = _gabarit(db, idu)
+    return g.get("hauteur") if g["served"] else None
+
+
+@extracteur("gabarit_couverture_verdict")
+def _c_gab_couverture(db, idu, f):
+    g = _gabarit(db, idu)
+    return g.get("couverture") if g["served"] else None
+
+
+@extracteur("gabarit_motif_blocage")
+def _c_gab_motif(db, idu, f):
+    return _nz(_gabarit(db, idu).get("motif"))
+
+
+@extracteur("gabarit_plan_2d")
+def _c_gab_plan(db, idu, f):
+    g = _gabarit(db, idu)
+    return _nz(g.get("svg")) if g["served"] else None
 
 
 # ══ Sources (section de clôture, hors miroir) ═════════════════════════════════════════════
