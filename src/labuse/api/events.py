@@ -362,19 +362,26 @@ def _brief_filter_sql(prefs: dict, alias: str = "e", cid_param: str = "c") -> st
 
 
 # ─────────────── M85-B · le SUIVI DE PARCELLE (producteur unique, SQL, ZÉRO modèle) ───────────────
-# La règle du mandant : « ma parcelle a changé » dit MA parcelle (maille stricte, jamais le secteur —
-# le secteur, c'est les veilles de zone). Cinq changements, avec une HIÉRARCHIE :
-#   · MUTATION (vente) = l'événement MAJEUR → libellé distinct, en tête ;
-#   · BASCULE DE TIER = NOTRE verdict qui change (pas un fait du monde) → formulé comme tel, et
-#     seulement les bascules significatives (vers/depuis chaude|brûlante) [traitée dans detect_events] ;
-#   · PERMIS, MUTATION, BODACC détectés ICI à chaque ingestion ; ZONAGE par comparaison d'empreinte.
+# La règle du mandant (VEILLE-2, décision Vic 22/09) : « ma parcelle a changé » dit MA parcelle (maille
+# stricte, jamais le secteur). CINQ déclencheurs, écrits noir sur blanc — et RIEN d'autre :
+#   · VENTE (DVF)                = mutation sur la parcelle → l'événement MAJEUR, libellé « Vente » ;
+#   · PERMIS (Sitadel)           = permis déposé SUR la parcelle (idu_codes), jamais la proximité ;
+#   · PROCÉDURE (BODACC)         = procédure sur le propriétaire personne morale de la parcelle ;
+#   · CHANGEMENT DE PROPRIÉTAIRE PM = la société propriétaire change (empreinte SIREN) ;
+#   · BASCULE DU SCORE           = NOTRE verdict qui change (traité dans detect_events, kind
+#                                  `parcelle_suivie` sur les seules parcelles suivies).
+# (Le ZONAGE n'est plus un déclencheur de suivi — retiré du modèle VEILLE-2.)
 # Dédup par ÉVÉNEMENT (un permis/mutation donné notifie une fois) ; fenêtre = après la pose du suivi
-# (pas de backfill). Type de registre : `parcelle_suivie`.
+# (pas de backfill — l'empreinte propriétaire se pose au premier passage, sans alerter). Registre :
+# `parcelle_suivie`.
 SUIVIS_MAX = 50   # plafond de parcelles suivies par compte (config M85-B)
 
 
 def _ensure_suivi_cols(db: Session) -> None:
+    # zone_snap : conservée (ancienne empreinte zonage) mais plus lue ; pm_snap : empreinte du
+    # propriétaire personne morale (SIREN) pour détecter un CHANGEMENT DE PROPRIÉTAIRE (VEILLE-2 Lot 1).
     db.execute(text("ALTER TABLE watched_parcels ADD COLUMN IF NOT EXISTS zone_snap varchar(64)"))
+    db.execute(text("ALTER TABLE watched_parcels ADD COLUMN IF NOT EXISTS pm_snap varchar(20)"))
 
 
 def evaluer_suivis(db: Session) -> dict:
@@ -384,8 +391,8 @@ def evaluer_suivis(db: Session) -> dict:
     _ensure_suivi_cols(db)
     court = lambda idu: idu[8:] if idu and len(idu) > 8 else idu   # noqa: E731 — libellé court
     suivis = db.execute(text(
-        "SELECT idu, compte_id, created_at, zone_snap FROM watched_parcels WHERE idu IS NOT NULL")).mappings().all()
-    out = {"mutation": 0, "permis": 0, "bodacc": 0, "zonage": 0}
+        "SELECT idu, compte_id, created_at, pm_snap FROM watched_parcels WHERE idu IS NOT NULL")).mappings().all()
+    out = {"mutation": 0, "permis": 0, "bodacc": 0, "proprietaire": 0}
     for s in suivis:
         idu, cid, depuis = s["idu"], s["compte_id"], s["created_at"]
         # 1) MUTATION (vente) — l'événement majeur, libellé distinct « Vente ».
@@ -422,19 +429,23 @@ def evaluer_suivis(db: Session) -> dict:
                 titre=f"Procédure sur le propriétaire de {court(idu)}",
                 detail=f"{b['type_procedure']} publiée le {b['date_annonce']} — {b['denomination'] or 'propriétaire'}.",
                 lien=f"/socle/#parcelle={idu}", dedup=f"suivi:bodacc:{idu}:{b['annonce_id']}") else 0
-        # 4) ZONAGE — comparaison d'empreinte (le zonage n'a pas de date ; on compare au dernier vu).
-        zone = db.execute(text("SELECT zone_lib FROM parcel_zone_plu WHERE idu = :idu"),
-                          {"idu": idu}).scalar()
-        snap = s["zone_snap"]
-        if zone is not None and snap is not None and zone != snap:
-            out["zonage"] += 1 if creer_notification(
-                db, kind="parcelle_suivie", compte_id=cid, source="Zonage", idu=idu,
-                titre=f"Changement de zonage sur votre parcelle {court(idu)}",
-                detail=f"Le zonage PLU est passé de « {snap} » à « {zone} ».",
-                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:zone:{idu}:{zone}") else 0
-        if zone is not None and zone != snap:                # mémorise l'empreinte courante
-            db.execute(text("UPDATE watched_parcels SET zone_snap = :z WHERE idu = :idu AND compte_id IS NOT DISTINCT FROM :c"),
-                       {"z": zone, "idu": idu, "c": cid})
+        # 4) CHANGEMENT DE PROPRIÉTAIRE PM — comparaison d'empreinte (le propriétaire n'a pas de date
+        #    fiable ; on compare au dernier SIREN vu). Un SIREN différent = la parcelle a changé de mains
+        #    morales. Snapshot posé au premier passage → jamais d'alerte de rattrapage sur la pose du suivi.
+        pm = db.execute(text(
+            "SELECT siren, denomination FROM parcelle_personne_morale WHERE idu = :idu AND siren IS NOT NULL"),
+            {"idu": idu}).mappings().first()
+        siren = pm["siren"] if pm else None
+        snap = s["pm_snap"]
+        if siren is not None and snap is not None and siren != snap:
+            out["proprietaire"] += 1 if creer_notification(
+                db, kind="parcelle_suivie", compte_id=cid, source="Propriétaire", idu=idu,
+                titre=f"Changement de propriétaire sur votre parcelle {court(idu)}",
+                detail=f"La société propriétaire a changé — désormais {pm['denomination'] or siren} ({siren}).",
+                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:pm:{idu}:{siren}") else 0
+        if siren is not None and siren != snap:              # mémorise l'empreinte propriétaire courante
+            db.execute(text("UPDATE watched_parcels SET pm_snap = :p WHERE idu = :idu AND compte_id IS NOT DISTINCT FROM :c"),
+                       {"p": siren, "idu": idu, "c": cid})
     return out
 
 
@@ -843,9 +854,22 @@ def reprise_veille(idu: str, payload: dict, request: Request, db: Session = Depe
 @router.post("/watch/{idu}")
 def watch_toggle(idu: str, request: Request, db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
+    from ..communes import commune_known
+    idu = (idu or "").strip().upper()
+    # VEILLE-2 (Lot 1) — la barre IDU (et la cloche de fiche) REFUSENT AVEC MOTIF, jamais un 404 muet.
+    # On valide AVANT toute résolution de compte/base (rejet au plus tôt d'une entrée malformée) :
+    #   · IDU malformé (≠ 14 car. / code commune non numérique) → « IDU invalide » ;
+    #   · IDU d'une commune hors des 24 du périmètre Réunion    → « hors des 24 communes » ;
+    #   · IDU bien formé et dans le périmètre mais absent du cadastre servi → « Parcelle inconnue ».
+    if len(idu) != 14 or not idu[:5].isdigit():
+        raise HTTPException(422, "IDU invalide — 14 caractères attendus "
+                                 "(5 chiffres de code commune INSEE, puis section et numéro).")
+    if not commune_known(insee=idu[:5]):
+        raise HTTPException(422, "Parcelle hors des 24 communes de La Réunion — "
+                                 "le suivi ne couvre que ce périmètre.")
     cid = current_compte(request)   # CLOISON : le suivi est privé au compte (A et B peuvent suivre la même parcelle)
     if not db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar():
-        raise HTTPException(404, "Parcelle inconnue")
+        raise HTTPException(404, "Parcelle inconnue — cet IDU n'existe pas dans le cadastre servi.")
     if db.execute(text("SELECT 1 FROM watched_parcels WHERE idu = :i AND compte_id IS NOT DISTINCT FROM :cid"),
                   {"i": idu, "cid": cid}).scalar():
         db.execute(text("DELETE FROM watched_parcels WHERE idu = :i AND compte_id IS NOT DISTINCT FROM :cid"),

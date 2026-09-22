@@ -4,7 +4,7 @@
 // (l'entrée n'a plus d'objet) ; l'entrée IA de la création de veille aussi (décision Vic). Back intact.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { creerRadarVeille, deleteSearch, getRadarVeilles, getSavedSearches, getSuivis, renommerRadarVeille, supprimerRadarVeille, toggleWatch, type RadarVeille } from '../../lib/api'
+import { ApiError, creerRadarVeille, deleteSearch, getRadarVeilles, getSavedSearches, getSuivis, renommerRadarVeille, supprimerRadarVeille, toggleWatch, type RadarVeille } from '../../lib/api'
 import { CP_COMMUNES, FiltreLabuse } from '../panel/FiltreLabuse'
 import { trierCommunes } from '../../lib/communes'
 import { useApp } from '../../store/useApp'
@@ -111,7 +111,9 @@ function VoletParcelles() {
     mutationFn: (idu: string) => toggleWatch(idu),
     // RETOURS-11F M10 — sens Veille → fiche : retirer ici éteint la cloche de la fiche (clé ['watch']).
     onSuccess: (r) => { qc.invalidateQueries({ queryKey: ['suivis'] }); qc.invalidateQueries({ queryKey: ['watch'] }); setMsg(r.watched ? '✓ Parcelle ajoutée au suivi.' : 'Parcelle retirée du suivi.') },
-    onError: () => setMsg('Impossible de suivre cette parcelle (plafond atteint ?).'),
+    // VEILLE-2 (Lot 1) — le REFUS de la barre IDU se dit avec son MOTIF (IDU invalide, hors des 24
+    // communes, parcelle inconnue, plafond) : on remonte le détail serveur, jamais un message générique.
+    onError: (err) => setMsg(err instanceof ApiError && err.detail ? err.detail : 'Impossible de suivre cette parcelle.'),
   })
   return (
     <div data-volet-parcelles className="flex flex-col gap-2">

@@ -175,9 +175,10 @@ def radar_digests(ctx: JobContext) -> None:
 
 
 def evaluer_suivis(ctx: JobContext) -> None:
-    """VEILLE-FIX-1 (lot 1) — évalue les PARCELLES SUIVIES : mutation / permis / BODACC / zonage SUR la
-    parcelle → notifications event_log kind=parcelle_suivie. Reprend le legacy du matin (07:00). Zéro
-    modèle, dédup par fait → un rejeu ne recrée rien (idempotent)."""
+    """VEILLE-2 (Lot 1) — évalue les PARCELLES SUIVIES : vente (DVF) / permis (Sitadel) / procédure
+    (BODACC) / changement de propriétaire PM SUR la parcelle → notifications event_log
+    kind=parcelle_suivie (la bascule du score est produite par detect-events). Reprend le legacy du matin
+    (07:00). Zéro modèle, dédup par fait → un rejeu ne recrée rien (idempotent)."""
     from .api.events import ensure_tables, evaluer_suivis as _eval
     from .db import engine
     ensure_tables(engine())
