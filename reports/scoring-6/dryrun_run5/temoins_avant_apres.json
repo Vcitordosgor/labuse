@@ -1,0 +1,302 @@
+[
+  {
+    "idu": "97402000AH1389",
+    "cat": "bonne",
+    "av_score": 90,
+    "av_bande": "A",
+    "ap_score": 90,
+    "ap_bande": "A",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97404000AX0047",
+    "cat": "bonne",
+    "av_score": 85,
+    "av_bande": "A",
+    "ap_score": 85,
+    "ap_bande": "A",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97406000AM0928",
+    "cat": "bonne",
+    "av_score": 90,
+    "av_bande": "A",
+    "ap_score": 90,
+    "ap_bande": "A",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97408000BL0170",
+    "cat": "bonne",
+    "av_score": 90,
+    "av_bande": "A",
+    "ap_score": 90,
+    "ap_bande": "A",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97407000BC0579",
+    "cat": "bonne",
+    "av_score": 100,
+    "av_bande": "A",
+    "ap_score": 100,
+    "ap_bande": "A",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97422000BW2390",
+    "cat": "bonne",
+    "av_score": 100,
+    "av_bande": "A",
+    "ap_score": 100,
+    "ap_bande": "A",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97409000AY0786",
+    "cat": "bonne",
+    "av_score": 90,
+    "av_bande": "A",
+    "ap_score": 80,
+    "ap_bande": "A",
+    "signal": "faible",
+    "change": true
+  },
+  {
+    "idu": "97410000AS1202",
+    "cat": "bonne",
+    "av_score": 90,
+    "av_bande": "A",
+    "ap_score": 90,
+    "ap_bande": "A",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97411000AB0798",
+    "cat": "bonne",
+    "av_score": 64,
+    "av_bande": "B",
+    "ap_score": 64,
+    "ap_bande": "B",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97423000AI0116",
+    "cat": "bonne",
+    "av_score": 90,
+    "av_bande": "A",
+    "ap_score": 90,
+    "ap_bande": "A",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97420000AD0103",
+    "cat": "mauvaise",
+    "av_score": 0,
+    "av_bande": "D",
+    "ap_score": 0,
+    "ap_bande": "D",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97413000CU0703",
+    "cat": "mauvaise",
+    "av_score": 0,
+    "av_bande": "D",
+    "ap_score": 0,
+    "ap_bande": "D",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97411000BN0496",
+    "cat": "mauvaise",
+    "av_score": 0,
+    "av_bande": "D",
+    "ap_score": 0,
+    "ap_bande": "D",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97415000CX0664",
+    "cat": "mauvaise",
+    "av_score": 9,
+    "av_bande": "D",
+    "ap_score": 9,
+    "ap_bande": "D",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97411000CP0427",
+    "cat": "mauvaise",
+    "av_score": 45,
+    "av_bande": "C",
+    "ap_score": 45,
+    "ap_bande": "C",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97413000CR0421",
+    "cat": "mauvaise",
+    "av_score": 8,
+    "av_bande": "D",
+    "ap_score": 8,
+    "ap_bande": "D",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97401000AL0852",
+    "cat": "mauvaise",
+    "av_score": 10,
+    "av_bande": "D",
+    "ap_score": 10,
+    "ap_bande": "D",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97415000AD0389",
+    "cat": "mauvaise",
+    "av_score": 25,
+    "av_bande": "D",
+    "ap_score": 25,
+    "ap_bande": "D",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97401000AL0505",
+    "cat": "mauvaise",
+    "av_score": 0,
+    "av_bande": "D",
+    "ap_score": 0,
+    "ap_bande": "D",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97401000AO0067",
+    "cat": "mauvaise",
+    "av_score": 0,
+    "av_bande": "D",
+    "ap_score": 0,
+    "ap_bande": "D",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97402000AL0088",
+    "cat": "limite",
+    "av_score": 0,
+    "av_bande": "D",
+    "ap_score": 0,
+    "ap_bande": "D",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97402000AB1117",
+    "cat": "limite",
+    "av_score": 0,
+    "av_bande": "D",
+    "ap_score": 35,
+    "ap_bande": "C",
+    "signal": "faible",
+    "change": true
+  },
+  {
+    "idu": "97406000AM0664",
+    "cat": "limite",
+    "av_score": 36,
+    "av_bande": "C",
+    "ap_score": 10,
+    "ap_bande": "D",
+    "signal": "faible",
+    "change": true
+  },
+  {
+    "idu": "97401000AI0166",
+    "cat": "limite",
+    "av_score": 72,
+    "av_bande": "B",
+    "ap_score": 72,
+    "ap_bande": "B",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97401000AM0140",
+    "cat": "limite",
+    "av_score": 50,
+    "av_bande": "B",
+    "ap_score": 50,
+    "ap_bande": "B",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97401000AD0110",
+    "cat": "limite",
+    "av_score": 68,
+    "av_bande": "B",
+    "ap_score": 68,
+    "ap_bande": "B",
+    "signal": "faible",
+    "change": false
+  },
+  {
+    "idu": "97415000AC0070",
+    "cat": "limite",
+    "av_score": null,
+    "av_bande": "NC",
+    "ap_score": 68,
+    "ap_bande": "B",
+    "signal": "faible",
+    "change": true
+  },
+  {
+    "idu": "97415000AC0109",
+    "cat": "limite",
+    "av_score": null,
+    "av_bande": "NC",
+    "ap_score": 15,
+    "ap_bande": "D",
+    "signal": "faible",
+    "change": true
+  },
+  {
+    "idu": "97406000AV0888",
+    "cat": "limite",
+    "av_score": 0,
+    "av_bande": "D",
+    "ap_score": 14,
+    "ap_bande": "D",
+    "signal": "faible",
+    "change": true
+  },
+  {
+    "idu": "97411000IR0091",
+    "cat": "limite",
+    "av_score": 40,
+    "av_bande": "C",
+    "ap_score": 40,
+    "ap_bande": "C",
+    "signal": "faible",
+    "change": false
+  }
+]
