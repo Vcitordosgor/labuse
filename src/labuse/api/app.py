@@ -5576,13 +5576,19 @@ def sources_couches() -> dict:
 
 @app.get("/sources/rattachements")
 def sources_rattachements() -> dict:
-    """CIRCUIT-SOURCES-1 lot 3 — pour chaque source (clé = data_sources.name), TOUT ce qu'elle touche,
-    en deux blocs dérivés du registre (le 3e bloc « Couches carte » vient de /sources/couches) :
-      - lignes_fiche : les lignes de la FICHE PARCELLE qu'elle alimente [{ligne, section}] ;
-      - ailleurs     : fiche commune, outils, Radar, exports, page client, copilote… [{quoi, ou}].
-    Chemin : NOM_VERS_SLUG → donnees.py (réservoirs) → robinets.py (catégorie+parent) + déclarations
-    fiche parcelle. Les couches restent dans leur bloc dédié (/sources/couches) — pas de doublon ici.
-    Le détail Circuit tient chaque bloc TOUJOURS présent, vide si la source n'y touche rien."""
+    """CIRCUIT-SOURCES-1 lot 3 · DASHBOARD-4b lot 1 — pour chaque source (clé = data_sources.name), TOUT
+    ce qu'elle nourrit, en SIX blocs DISTINCTS lus du registre (le 7e, « Couches carte », vient de
+    /sources/couches) — plus jamais un fourre-tout « Ailleurs » :
+      - fiche_parcelle : sections de la fiche parcelle (V5d)   [{ligne, cible, rid}]
+      - fiche_commune  : cartes de la fiche commune (V5e)      [{ligne, cible, rid}]
+      - outils         : outils du menu (V5f)                  [{ligne, cible, rid}]
+      - documents      : Dossier · Financier · Apporteur · Pré-dossier … (exports/miroir) [{ligne, cible, rid}]
+      - copilote       : fonctions du Copilote                 [{ligne, cible, rid}]
+      - radar          : veilles / Radar                       [{ligne, cible, rid}]
+    Chemin : NOM_VERS_SLUG → donnees.py (réservoirs) → robinets.py (catégorie+parent+id) + déclarations
+    fiche parcelle (sections). `rid` = l'id du robinet-élément, pour ouvrir son détail (sens inverse,
+    lot 2). Chaque bloc est TOUJOURS présent (vide → « aucun »). Les surfaces internes/admin
+    (page_client, projets, crm, notification, admin) ne sont pas des surfaces client : hors des 7 blocs."""
     from ..registre.donnees import DONNEES
     from ..registre.robinets import ROBINETS
     from ..registre import declarations as DEC
@@ -5592,52 +5598,93 @@ def sources_rattachements() -> dict:
         for s in d.reservoirs:
             slug2don.setdefault(s, []).append(cid)
     don2rob: dict[str, list[tuple]] = {}
-    for _rid, r in ROBINETS.items():
+    for rid, r in ROBINETS.items():
         for cid in r.chiffres:
-            don2rob.setdefault(cid, []).append((r.categorie, r.parent, r.nom))
+            don2rob.setdefault(cid, []).append((r.categorie, r.parent, r.nom, rid))
+    # donnée → section(s) de la fiche parcelle, DÉCLARÉES (V5d) : complète les robinets fiche_parcelle.
     quoi2sec: dict[str, set] = {}
     for s in DEC.charger()[0]:
         if s.categorie == "fiche":
             for ligne in s.donnees:
                 if ligne.section:
                     quoi2sec.setdefault(ligne.quoi, set()).add(ligne.section)
-    AILLEURS_LABEL = {"outil": "Outil", "pdf": "Exports", "page_client": "Page client",
-                      "veille": "Radar", "copilote": "Copilote", "projets": "Projets", "crm": "CRM",
-                      "notification": "Notification", "admin": "Admin"}
+    # catégorie de robinet → bloc des 7 (couche/fond = bloc Couches, servi ailleurs).
+    def _bloc(cat: str, parent: str | None) -> str | None:
+        if cat == "fiche":
+            return "fiche_commune" if parent == "fiche_commune" else "fiche_parcelle"
+        return {"outil": "outils", "pdf": "documents", "copilote": "copilote", "veille": "radar"}.get(cat)
+    BLOCS = ("fiche_parcelle", "fiche_commune", "outils", "documents", "copilote", "radar")
     out: dict[str, dict] = {}
     for name, slug in NOM_VERS_SLUG.items():
         donnees = sorted(set(slug2don.get(slug, []))) if slug else []
-        lignes: list[dict] = []
-        ailleurs: list[dict] = []
-        vus_l: set = set()
-        vus_a: set = set()
+        blocs: dict[str, list] = {b: [] for b in BLOCS}
+        vus: dict[str, set] = {b: set() for b in BLOCS}
         for cid in donnees:
             d = DONNEES.get(cid)
             if d is None:
                 continue
-            for cat, par, nom in don2rob.get(cid, []):
-                if cat == "fiche" and par == "fiche_parcelle":
-                    key = (d.libelle, nom)
-                    if key not in vus_l:
-                        vus_l.add(key)
-                        lignes.append({"ligne": d.libelle, "section": nom})
-                elif cat in ("couche", "fond"):
-                    continue  # déjà couvert par le bloc « Couches carte »
-                else:
-                    ou = ("Fiche commune · " + nom) if (cat == "fiche" and par == "fiche_commune") \
-                        else ("Radar · " + nom) if cat == "fiche" \
-                        else (AILLEURS_LABEL.get(cat, cat) + " · " + nom)
-                    key = (d.libelle, ou)
-                    if key not in vus_a:
-                        vus_a.add(key)
-                        ailleurs.append({"quoi": d.libelle, "ou": ou})
-            for sec in quoi2sec.get(cid, ()):  # donnée DÉCLARÉE sur la fiche parcelle
+            for cat, par, nom, rid in don2rob.get(cid, []):
+                b = _bloc(cat, par)
+                if b is None:
+                    continue  # couche/fond (bloc dédié) ou surface interne (hors 7 blocs client)
+                key = (d.libelle, nom)
+                if key not in vus[b]:
+                    vus[b].add(key)
+                    blocs[b].append({"ligne": d.libelle, "cible": nom, "rid": rid})
+            for sec in quoi2sec.get(cid, ()):  # section DÉCLARÉE (V5d) sans robinet fiche_parcelle explicite
                 key = (d.libelle, sec)
-                if key not in vus_l:
-                    vus_l.add(key)
-                    lignes.append({"ligne": d.libelle, "section": sec})
-        out[name] = {"lignes_fiche": lignes, "ailleurs": ailleurs}
+                if key not in vus["fiche_parcelle"]:
+                    vus["fiche_parcelle"].add(key)
+                    blocs["fiche_parcelle"].append({"ligne": d.libelle, "cible": sec, "rid": None})
+        out[name] = blocs
     return out
+
+
+@app.get("/sources/par-element")
+def sources_par_element() -> dict:
+    """DASHBOARD-4b lot 2 — LE SENS INVERSE : pour chaque ÉLÉMENT (une couche · une section de fiche ·
+    une carte commune · un outil · un document · une fonction Copilote · une veille Radar), la liste de
+    ses SOURCES (réservoirs vitrine), cliquables vers leur détail. Chemin inverse de
+    /sources/rattachements + /sources/couches. Sert la recherche « sens inverse » de la page Données
+    (décision 18/09 : ce sens vit ICI, rien côté client). Retour {elements: [{id, nom, categorie,
+    sources[]}]} trié. `id` = rid du robinet, ou « couche:<kind> » pour une couche."""
+    from ..registre.donnees import DONNEES
+    from ..registre.robinets import ROBINETS
+    from ..circuit_etats import NOM_VERS_SLUG
+    slug2nom = {slug: nom for nom, slug in NOM_VERS_SLUG.items() if slug}
+    CAT_BLOC = {"outil": "outils", "pdf": "documents", "copilote": "copilote", "veille": "radar"}
+    elements: list[dict] = []
+    for rid, r in ROBINETS.items():
+        if r.categorie == "fiche":
+            bloc = "fiche_commune" if r.parent == "fiche_commune" else "fiche_parcelle"
+        else:
+            bloc = CAT_BLOC.get(r.categorie)
+        if bloc is None:
+            continue  # couche/fond (traité via l'inverse couches) ou surface interne (hors 7 blocs)
+        sources: list[str] = []
+        vus: set = set()
+        for cid in r.chiffres:
+            d = DONNEES.get(cid)
+            if d is None:
+                continue
+            for slug in d.reservoirs:
+                nom = slug2nom.get(slug)
+                if nom and nom not in vus:
+                    vus.add(nom)
+                    sources.append(nom)
+        elements.append({"id": rid, "nom": r.nom, "categorie": bloc, "sources": sorted(sources)})
+    # couches : inverse de sources_couches (source → couches) → couche → sources.
+    couche_sources: dict[str, dict] = {}
+    for name, couches in sources_couches().items():
+        for c in couches:
+            e = couche_sources.setdefault(c["kind"], {"id": f"couche:{c['kind']}", "nom": c["nom"],
+                                                       "categorie": "couche", "_src": set()})
+            e["_src"].add(name)
+    for e in couche_sources.values():
+        elements.append({"id": e["id"], "nom": e["nom"], "categorie": "couche",
+                         "sources": sorted(e["_src"])})
+    elements.sort(key=lambda e: (e["categorie"], e["nom"].lower()))
+    return {"elements": elements}
 
 
 @app.get("/sources/calibrages")

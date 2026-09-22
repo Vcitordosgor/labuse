@@ -16,6 +16,7 @@ import { Detail as DetailPage } from './Detail'
 import { ecrireCx, parseCx } from './hash'
 import { Journal } from './Journal'
 import { Resume } from './Resume'
+import { SensInverse } from './SensInverse'
 import { CIRCUIT_CSS } from './style'
 import { focusDeCible, type Cible, type CircuitData } from './types'
 
@@ -169,6 +170,9 @@ export function CircuitSection() {
             {' '}Crédit API : non exposé par le fournisseur — <a href={d.agents.credit_url} target="_blank" rel="noreferrer">voir la console ↗</a>.
           </div>
         )}
+        {/* DASHBOARD-4b (lot 2) — le sens inverse, accessible par recherche (pas seulement par lien
+            profond) : un élément → ses sources, cliquables vers leur détail. */}
+        {!detail && <SensInverse data={d} onOpenSource={(id) => ouvrirDetail('reservoir', id)} />}
         {detail
           ? <DetailPage type={detail.type} id={detail.id} data={d} onClose={fermerDetail} onOpen={ouvrirDetail} />
           : <CircuitDiagram data={d} groupe={groupe} onOpen={ouvrirDetail} />}

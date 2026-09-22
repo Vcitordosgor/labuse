@@ -143,6 +143,13 @@ export const CIRCUIT_CSS = `
 /* DASHBOARD-4 D7 — plafond agents + crédit, dans l'onglet Circuit */
 .cxp .agents-info{margin:2px 0 14px;padding:9px 12px;border:1px solid var(--line);border-left:3px solid var(--mauve);border-radius:8px;background:var(--panel);color:var(--muted);font-size:13px}
 .cxp .agents-info.off{border-left-color:var(--faint)} .cxp .agents-info b{color:var(--text)} .cxp .agents-info a{color:var(--mint)}
+/* DASHBOARD-4b lot 2 — panneau « sens inverse » (élément → sources) */
+.cxp .sens-inverse{margin-bottom:14px}
+.cxp .si-input{width:100%;margin-top:8px;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel-2);color:var(--text);font-size:13.5px}
+.cxp .si-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.cxp .si-list li{border-top:1px solid var(--line);padding-top:10px} .cxp .si-list li:first-child{border-top:0;padding-top:0}
+.cxp .si-el{font-size:13.5px;margin-bottom:5px} .cxp .si-el b{font-weight:650}
+.cxp .si-src{display:flex;flex-wrap:wrap;gap:6px}
 .cxp :focus-visible{outline:2px solid var(--jaune);outline-offset:2px}
 @media (max-width:1100px){ .cxp .diagram{grid-template-columns:1fr;column-gap:0} .cxp .diagram svg{display:none} .cxp .pump{position:static;margin:12px 0} .cxp .dg{grid-template-columns:1fr} .cxp .kpis{grid-template-columns:1fr 1fr} .cxp .jl{grid-template-columns:1fr 1fr} }
 `
