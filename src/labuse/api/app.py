@@ -7460,6 +7460,8 @@ from .promo import router as _promo_router   # PROMO-1 — collecte + rattacheme
 app.include_router(_promo_router)
 from .vefa import router as _vefa_router   # SECTEUR-2b (U1) — panneau de détail VEFA d'une commune
 app.include_router(_vefa_router)
+from .gabarit import router as _gabarit_router   # GABARIT-1 — outil « Gabarit réglementaire »
+app.include_router(_gabarit_router)
 app.include_router(_courrier_router)
 app.include_router(_dossier_router)
 app.include_router(_pre_dossier_router)

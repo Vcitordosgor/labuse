@@ -89,6 +89,29 @@ DONNEES: dict[str, Donnee] = {
     "surface cadastrale parcels.surface_m2",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/scoreur.py:scoreur_adresse",
     reservoirs=("cadastre_api_carto",), portee="live", table="parcels.surface_m2"),
+ # GABARIT-1 — outil « Gabarit réglementaire » (moteur pur, sourcé). Servi sur fixtures
+ # (démo CDC §9) ; réel per-parcelle dès que la classification des limites arrive (GABARIT-2).
+ "gabarit_implantation_m2": C("Zone d'implantation réglementaire", "m²", "parcelle",
+    "surface de la zone où une construction peut s'implanter = parcelle − reculs (voie/"
+    "séparatives) − exclusions réglementaires (PPR rouge). Calcul géospatial pur, jamais "
+    "estimé. Servi sur fixtures (démo CDC §9) ; réel per-parcelle dès la classification des "
+    "limites par arête (GABARIT-2).",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/engine.py:compute_gabarit",
+    reservoirs=("cadastre_api_carto", "gpu_plu_api_carto",), portee="live"),
+ "gabarit_emprise_plafond_m2": C("Plafond d'emprise", "m²", "parcelle",
+    "plafond réglementaire d'emprise au sol = surface parcelle × CES / 100. Calculé À PART "
+    "de la zone d'implantation (jamais min()).",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/engine.py:compute_gabarit",
+    reservoirs=("cadastre_api_carto", "gpu_plu_api_carto",), portee="live"),
+ "gabarit_couverture_verdict": C("Couverture réglementaire", "verdict", "parcelle",
+    "nombre de familles réglementaires vérifiées (reculs, hauteur, emprise, risques) — "
+    "au plus 4 ; ne compte ni les segments ni les articles PLU.",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/engine.py:compute_gabarit",
+    reservoirs=("gpu_plu_api_carto", "deal_ppr",), portee="live",
+    domaine=("0", "1", "2", "3", "4"), domaine_source="4 familles de couverture (CDC §6)"),
  "capacite_logements": C("Capacité (logements)", "logements", "parcelle",
     "logements estimés du scénario table rase (après plafond de densité et stationnement) — "
     "bloc potentiel (EXPORTS-1 lot 3)",
