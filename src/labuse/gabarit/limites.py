@@ -51,6 +51,7 @@ class Edge:
     type: str                 # 'voie' | 'side' | 'rear' | 'nonclass'
     length_m: float
     motif: Optional[str] = None
+    source_kind: Optional[str] = None   # pour 'voie' : 'bdtopo' | 'emprise_publique'
 
 
 @dataclass
@@ -93,6 +94,7 @@ def classify_edges(
     simplify: float = SIMPLIFY_M,
     chunk: float = CHUNK_M,
     min_edge: float = MIN_EDGE_M,
+    emprises_publiques: bool = False,
 ) -> list[Edge]:
     """Cœur PUR. Classe CHAQUE segment brut du contour (route d'abord), puis fusionne les
     segments CONSÉCUTIFS de même type en arêtes logiques. Une même « face » cadastrale peut
@@ -102,7 +104,7 @@ def classify_edges(
         (g.exterior for g in poly.geoms), key=lambda r: r.length)
     coords = list(ext.coords)
 
-    seg_types: list[tuple[LineString, str, Optional[str]]] = []
+    seg_types: list[tuple[LineString, str, Optional[str], Optional[str]]] = []
     for seg in _chunks(coords, chunk):
         L = seg.length
         mid = seg.interpolate(0.5, normalized=True)   # milieu : évite l'artefact de coin
@@ -130,46 +132,51 @@ def classify_edges(
             # near_road / road_on priment sur un voisin réel ; road_near ne s'applique qu'à une
             # arête ouverte (near_real y est déjà écarté car near_road/road_on auraient gagné).
             if near_real and not (near_road or road_on):
-                seg_types.append((seg, "sep", None))       # voisin réel + route seulement à portée façade → séparative
+                seg_types.append((seg, "sep", None, None))   # voisin réel + route à portée façade → séparative
             else:
-                seg_types.append((seg, "voie", None))
+                seg_types.append((seg, "voie", None, "bdtopo"))
         elif near_real:
-            seg_types.append((seg, "sep", None))           # side/rear tranché plus bas
+            seg_types.append((seg, "sep", None, None))       # side/rear tranché plus bas
+        elif emprises_publiques and L >= min_edge:
+            # arête OUVERTE (ni voisin cadastré ni route) = domaine public non cadastré : si la citation
+            # PLU vise « voies ET emprises publiques », l'arête est une voie (recul voie s'applique).
+            seg_types.append((seg, "voie", None, "emprise_publique"))
         else:
             motif = MOTIF_ARETE_COURTE if L < min_edge else MOTIF_NON_QUALIFIEE
-            seg_types.append((seg, "nonclass", motif))
+            seg_types.append((seg, "nonclass", motif, None))
 
     # side / rear : rear = séparative ne partageant aucun sommet avec un segment voie
     voie_pts: set[tuple] = set()
-    for seg, t, _m in seg_types:
+    for seg, t, _m, _sk in seg_types:
         if t == "voie":
             for c in seg.coords:
                 voie_pts.add(_key(c))
-    resolved: list[tuple[LineString, str, Optional[str]]] = []
-    for seg, t, m in seg_types:
+    resolved: list[tuple[LineString, str, Optional[str], Optional[str]]] = []
+    for seg, t, m, sk in seg_types:
         if t == "sep":
             touche = any(_key(c) in voie_pts for c in seg.coords)
-            resolved.append((seg, "side" if touche else "rear", None))
+            resolved.append((seg, "side" if touche else "rear", None, None))
         else:
-            resolved.append((seg, t, m))
+            resolved.append((seg, t, m, sk))
 
-    # fusion des segments consécutifs de même type en arêtes logiques
+    # fusion des segments consécutifs de même (type, source_kind) en arêtes logiques
     edges: list[Edge] = []
     run_pts: list = []
     run_type: Optional[str] = None
     run_motif: Optional[str] = None
+    run_sk: Optional[str] = None
 
     def _flush():
-        nonlocal run_pts, run_type, run_motif
+        nonlocal run_pts, run_type, run_motif, run_sk
         if run_type and len(run_pts) >= 2:
             line = LineString(run_pts)
-            edges.append(Edge(line, run_type, line.length, run_motif))
-        run_pts, run_type, run_motif = [], None, None
+            edges.append(Edge(line, run_type, line.length, run_motif, run_sk))
+        run_pts, run_type, run_motif, run_sk = [], None, None, None
 
-    for seg, t, m in resolved:
-        if t != run_type:
+    for seg, t, m, sk in resolved:
+        if t != run_type or sk != run_sk:
             _flush()
-            run_type, run_motif = t, m
+            run_type, run_motif, run_sk = t, m, sk
             run_pts = list(seg.coords)
         else:
             run_pts.append(seg.coords[-1])
@@ -210,7 +217,7 @@ def summarize_edges(edges: list[Edge]) -> LimitesResult:
     return LimitesResult(edges=edges, has_voie=has_voie, non_classees=non_cl, blocking=blocking)
 
 
-def classify_parcel_limits(session, parcel_id: int) -> Optional[LimitesResult]:
+def classify_parcel_limits(session, parcel_id: int, *, emprises_publiques: bool = False) -> Optional[LimitesResult]:
     """Requêtes PostGIS (2975) puis cœur pur. Renvoie None si parcelle introuvable."""
     from shapely import wkt as shp_wkt
     from sqlalchemy import text
@@ -249,4 +256,4 @@ def classify_parcel_limits(session, parcel_id: int) -> Optional[LimitesResult]:
     ), {"pid": parcel_id}).fetchall()
     roads = [Road(shp_wkt.loads(r[0]), r[1]) for r in rd_rows if r[0]]
 
-    return summarize_edges(classify_edges(parcel, neighbors, roads))
+    return summarize_edges(classify_edges(parcel, neighbors, roads, emprises_publiques=emprises_publiques))

@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 
 from ..faisabilite.zonage import resolve_zone
 from ..faisabilite.zone_servie import zone_dominante
+from ..plu.destinations import regles_zone
 from ._geom import geojson_from_shape, to_wgs
 from .contract import (
     ApplicableRule,
@@ -61,6 +62,28 @@ def _bdtopo_millesime(session: Session) -> str:
         "AND data_source_id IS NOT NULL LIMIT 1)"
     )).first()
     return (row[0] if row and row[0] else "millésime non enregistré")
+
+
+def _voie_citation_flags(commune: str, zone: str) -> tuple[bool, bool, str, str]:
+    """Lit la citation validée `retraits.voie` de la (commune, zone) et dit si elle vise « voies
+    ET emprises publiques » (→ arête domaine public = voie) et/ou les « voies privées ». Renvoie
+    (emprises_publiques, voies_privees, article, citation). Aucune règle inventée : tout vient du texte."""
+    voie = ((regles_zone(commune, zone) or {}).get("retraits") or {}).get("voie") or {}
+    if str(voie.get("statut", "")) != "valide":
+        return (False, False, "", "")
+    txt = f"{voie.get('formule', '')} {voie.get('citation', '')}".lower()
+    ep = "emprise" in txt and "publiqu" in txt
+    vp = ("voie" in txt or "voies" in txt) and ("priv" in txt)
+    return (ep, vp, str(voie.get("article", "") or ""), " ".join(f"{voie.get('formule', '')} "
+            f"{voie.get('citation', '')}".split())[:200])
+
+
+def _touche_ravine(session: Session, parcel_id: int) -> bool:
+    """La parcelle longe-t-elle une ravine BD TOPO ou le trait de côte (≤ 8 m) ?"""
+    return bool(session.execute(text(
+        "SELECT EXISTS(SELECT 1 FROM spatial_layers g WHERE g.kind IN ('ravine','trait_de_cote') "
+        "AND ST_DWithin(g.geom_2975, (SELECT geom_2975 FROM parcels WHERE id=:pid), 8))"
+    ), {"pid": parcel_id}).scalar())
 
 
 def _has_chemin_neighbor(session: Session, parcel_id: int) -> bool:
@@ -187,25 +210,35 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 exclusions.append(Exclusion(id="ppr-rouge", ruleId="PPR", type="ppr_rouge",
                                             label="PPR zone rouge exclue", geometry=geo, source=ppr_src))
 
+    # --- citation PLU retraits.voie : couvre-t-elle « voies ET emprises publiques » / voies privées ?
+    emprises_publiques = voies_privees = False
+    voie_article = voie_citation = ""
+    if zs.zone and not blocking:
+        emprises_publiques, voies_privees, voie_article, voie_citation = _voie_citation_flags(commune, zs.zone)
+        racc["citation_voie"] = {"emprises_publiques": emprises_publiques, "voies_privees": voies_privees,
+                                 "article": voie_article, "citation": voie_citation}
+
     # --- classification des limites (SERVIE) --------------------------------
     setbacks: list[Setback] = []
-    voies_privees = False   # citation PLU « voies privées » (câblé au lot C)
     if not blocking:  # n'y toucher que si le PLU est complet et unique
-        lim = classify_parcel_limits(session, pid)
+        lim = classify_parcel_limits(session, pid, emprises_publiques=emprises_publiques)
         mill = _bdtopo_millesime(session)
         bdtopo_src = RegulatorySource(
             document="BD TOPO® — troncon_de_route (voirie) + cadastre",
             versionDate=mill, provider=f"LABUSE — adjacence cadastre + BD TOPO {mill}")
+        # arête sur domaine public non cadastré, classée voie par la citation « voies et emprises publiques »
+        empub_src = RegulatorySource(
+            document=f"Domaine public non cadastré — PLU {commune} {zs.zone} {voie_article}".strip(),
+            article=voie_article or None,
+            provider=f"LABUSE — cadastre (non cadastré = domaine public) + citation PLU {voie_article}".strip())
 
-        def _rule_voie(detail):
-            return ApplicableRule(id="limite-voie", label="Recul voie", category="setback",
-                                  integrationStatus="integrated", detail=detail, source=bdtopo_src)
+        def _src_for(e):
+            return empub_src if (e.type == "voie" and e.source_kind == "emprise_publique") else bdtopo_src
 
-        def _rule_sep():
-            return ApplicableRule(id="limite-sep", label="Limites séparatives", category="setback",
-                                  integrationStatus="integrated",
-                                  detail=f"Recul séparatif {recul_sep:g} m — PLU {commune} {zs.zone} (validé)",
-                                  source=bdtopo_src)
+        def _ruleid_for(e):
+            if e.type in ("side", "rear"):
+                return "limite-sep"
+            return "limite-emprise-publique" if e.source_kind == "emprise_publique" else "limite-voie"
 
         def _setbacks_for(edges, include_voie):
             for i, e in enumerate(edges):
@@ -214,9 +247,26 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                                             geometry=geojson_from_shape(to_wgs(e.geom)),
                                             setbackM=recul_sep, source=bdtopo_src))
                 elif include_voie and e.type == "voie":
-                    setbacks.append(Setback(id=f"lim-{i}", ruleId="limite-voie", type="road",
+                    setbacks.append(Setback(id=f"lim-{i}", ruleId=_ruleid_for(e), type="road",
                                             geometry=geojson_from_shape(to_wgs(e.geom)),
-                                            setbackM=recul_voie, source=bdtopo_src))
+                                            setbackM=recul_voie, source=_src_for(e)))
+
+        def _rules_present(edges, include_voie):
+            """Déclare une règle applicable par (type, source) réellement servi (V5f / validate)."""
+            if recul_sep is not None and any(e.type in ("side", "rear") for e in edges):
+                applicable.append(ApplicableRule(id="limite-sep", label="Limites séparatives",
+                    category="setback", integrationStatus="integrated",
+                    detail=f"Recul séparatif {recul_sep:g} m — PLU {commune} {zs.zone} (validé)", source=bdtopo_src))
+            if include_voie and any(e.type == "voie" and e.source_kind == "bdtopo" for e in edges):
+                applicable.append(ApplicableRule(id="limite-voie", label="Recul voie", category="setback",
+                    integrationStatus="integrated",
+                    detail=f"Recul voie {recul_voie:g} m — PLU {commune} {zs.zone} (validé)", source=bdtopo_src))
+            if include_voie and any(e.type == "voie" and e.source_kind == "emprise_publique" for e in edges):
+                applicable.append(ApplicableRule(id="limite-emprise-publique", label="Recul voie (emprise publique)",
+                    category="setback", integrationStatus="integrated",
+                    detail=f"Recul voie {recul_voie:g} m appliqué au domaine public — « voies et emprises "
+                           f"publiques », PLU {commune} {zs.zone} {voie_article}".strip(), source=empub_src))
+                sources.append(empub_src)
 
         if lim is None:
             blocking.append("géométrie de parcelle indisponible")
@@ -226,7 +276,16 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             racc["classification"] = {"provider": bdtopo_src.provider, "voie": n_voie, "side":
                                       sum(1 for e in lim.edges if e.type == "side"),
                                       "rear": sum(1 for e in lim.edges if e.type == "rear"),
+                                      "emprise_publique": sum(1 for e in lim.edges
+                                                              if e.type == "voie" and e.source_kind == "emprise_publique"),
                                       "non_classees": lim.non_classees}
+            # ravine / littoral longé par une arête emprise publique → recul ravine non chiffré (not_integrated)
+            if any(e.source_kind == "emprise_publique" for e in lim.edges) and _touche_ravine(session, pid):
+                applicable.append(ApplicableRule(id="ravine", label="Recul ravine / littoral", category="other",
+                    integrationStatus="not_integrated",
+                    detail="Recul propre aux ravines / au littoral non chiffré dans LABUSE — arête traitée "
+                           "comme emprise publique", source=RegulatorySource(
+                               document="Géorisques / BD TOPO — ravine / trait de côte", provider="LABUSE")))
             if lim.non_classees:
                 blocking.append("Limites de la parcelle non qualifiées (voie / limite séparative) — "
                                 + " ; ".join(lim.non_classees))
@@ -240,7 +299,7 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                     blocking.append("recul sur limite séparative non réglementé / non validé")
                 else:
                     sources.append(bdtopo_src)
-                    applicable.append(_rule_sep())
+                    _rules_present(lim.edges, include_voie=False)
                     applicable.append(ApplicableRule(
                         id="limite-voie-sansobjet", label="Recul voie", category="setback",
                         integrationStatus="integrated",
@@ -254,8 +313,7 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                     blocking.append("recul sur limite séparative non réglementé / non validé")
                 if not blocking:
                     sources.append(bdtopo_src)
-                    applicable.append(_rule_voie(f"Recul voie {recul_voie:g} m — PLU {commune} {zs.zone} (validé)"))
-                    applicable.append(_rule_sep())
+                    _rules_present(lim.edges, include_voie=True)
                     _setbacks_for(lim.edges, include_voie=True)
 
     inp = GabaritInput(
