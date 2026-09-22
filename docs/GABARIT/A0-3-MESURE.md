@@ -41,4 +41,17 @@ Détail (idu → cause) :
 - **E2 (1)** → reste bloquée « accès par voie privée non qualifiée », sauf citation visant les voies
   privées (Saint-Benoît Ua/Ub). Lot B.
 
+## Lot D — route à la marge (P2, 6 parcelles)
+
+Surface de route BD TOPO **absente de la base** (voirie = axe LineString seulement) → fallback
+`largeur/2 + marge`. Examen des 6 : 4 bloquent désormais sur le PLU (CES/zone non calibrée) en amont
+des limites ; 2 atteignent l'étape limites (DL0527 Saint-Denis, AE0256 Le Port). Géométrie des arêtes
+non classées vs axe carrossable : AE0256 = frontage parallèle constant à ~5,6 m ; DL0527 = route qui
+s'éloigne en courbe (5→12 m, pas une façade franche).
+
+**Décision** : marge portée de **3,5 → 4,0 m** — capte les frontages légèrement en retrait (AE0256),
+**audité 0 faux-voie** sur les 70 d'A0-2 ET sur 100 parcelles tirées au sort. Pas d'élargissement
+au-delà : DL0527 (route à 8–12 m au milieu) reste bloquée honnêtement (retrait réel, pas une façade) ;
+seule la surface de route BD TOPO trancherait sans marge → recommandé pour GABARIT-4.
+
 <!-- LOT-E -->

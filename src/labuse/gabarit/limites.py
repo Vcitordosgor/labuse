@@ -29,10 +29,11 @@ from shapely.geometry.base import BaseGeometry
 ROAD_NATURES_EXCLUES = {"Sentier", "Escalier"}
 
 SEP_TOL_M = 0.5        # voisin cadastré collé à l'arête
-# marge au-delà de la demi-chaussée (axe BD TOPO → bord de parcelle). Le mandat prescrit 1,5 m ;
-# la mesure GABARIT-2 (A0-2) montre que l'axe est souvent à demi-chaussée + trottoir/accotement
-# (~4-5 m sur frontage réel) → calibré à 3,5 m (arbitrage CC, cf. A0-2-MESURE.md). Reste un knob mesuré.
-ROAD_EXTRA_M = 3.5
+# marge au-delà de la demi-chaussée (axe BD TOPO → bord de parcelle). Mandat GABARIT-2 : 1,5 m ;
+# A0-2 : calibré 3,5 m (axe à demi-chaussée + trottoir). GABARIT-3 lot D : 4,0 m — capte les frontages
+# légèrement en retrait (~5,6 m de l'axe, ex. AE0256) ; audité 0 faux-voie sur les 70 (A0-3-MESURE.md).
+# La surface de route BD TOPO (qui trancherait sans marge) n'est pas en base → GABARIT-4.
+ROAD_EXTRA_M = 4.0
 DEFAULT_WIDTH_M = 4.0  # largeur de tronçon par défaut si l'attribut manque
 SIMPLIFY_M = 0.05      # ne retire que le bruit GPS sub-décimétrique (jamais un vrai chanfrein)
 CHUNK_M = 3.0          # densification : on classe des tronçons ≤ 3 m par leur MILIEU (évite l'artefact
