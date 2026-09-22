@@ -223,6 +223,44 @@ def test_20_aucun_champ_estimatif():
         assert interdit not in blob, f"champ estimatif interdit présent : {interdit}"
 
 
+def test_ces_absent_servi_non_reglemente():
+    # CES absent (silence prouvé) : servi, plafond None, emprise vérifiée « sans plafond »
+    inp = _valid()
+    inp.maxFootprint.percent = None
+    inp.maxFootprint.status = "absent"
+    r = compute_gabarit(inp)
+    assert r.status == "ok"
+    assert r.plafondEmpriseM2 is None and r.plafondEmpriseStatus == "absent"
+    assert r.coverage.emprise is True
+    assert r.zoneImplantationM2 and r.zoneImplantationM2 > 0
+
+
+def test_ces_manquant_sans_status_refuse():
+    # percent None SANS status='absent' = donnée manquante → incomplet (pas un silence sourcé)
+    inp = _valid()
+    inp.maxFootprint.percent = None
+    r = compute_gabarit(inp)
+    assert r.status == "incomplete"
+    assert any("plafond" in e for e in r.validationErrors)
+
+
+def test_hauteur_prospect_non_integree_2d_servie():
+    # hauteur prospect : 2D servie, hauteur None (3D indispo), listée en non intégrées, couverture hauteur=False
+    inp = _valid()
+    inp.maxHeight.meters = None
+    inp.maxHeight.status = "not_integrated"
+    for ar in inp.applicableRules:
+        if ar.id == "UC10":
+            ar.integrationStatus = "not_integrated"
+            ar.detail = "prospect L ≥ H"
+    r = compute_gabarit(inp)
+    assert r.status == "ok"
+    assert r.hauteurReglementaireM is None and r.hauteurStatus == "not_integrated"
+    assert r.coverage.hauteur is False
+    assert r.zoneImplantationM2 and r.plafondEmpriseM2   # 2D servie
+    assert any(n.id == "UC10" for n in r.nonIntegratedRules)
+
+
 @pytest.mark.parametrize("mut", [
     lambda i: setattr(i, "parcel", None),
     lambda i: setattr(i, "sources", []),
