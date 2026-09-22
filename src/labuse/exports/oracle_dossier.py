@@ -98,6 +98,14 @@ HORS_PAYLOAD: dict[str, str] = {
     "n_vigilances": "compté de f.lines (onglet risques) côté React ; extracteur = f.flags",
     "run_label_servi": "non rendu en fiche (annexe sources / admin)",
     "rtaa_exigences": "React getFaisabilite(idu).rtaa — hors payload /parcels",
+    # GABARIT-5 — le tiroir §10 est servi par getGabarit(idu) = /outils/gabarit/{idu} (moteur pur),
+    # PAS par le payload /parcels ; les extracteurs recalculent en direct (build + compute_gabarit).
+    "gabarit_implantation_m2": "React getGabarit(idu).zoneImplantationM2 — outil, hors payload /parcels",
+    "gabarit_emprise_plafond_m2": "React getGabarit(idu).plafondEmpriseM2/Status — outil, hors payload",
+    "gabarit_hauteur_m": "React getGabarit(idu).hauteurReglementaireM/Status — outil, hors payload",
+    "gabarit_couverture_verdict": "React getGabarit(idu).coverage — outil, hors payload /parcels",
+    "gabarit_motif_blocage": "React getGabarit(idu).validationErrors (status incomplete) — outil, hors payload",
+    "gabarit_plan_2d": "React getGabarit(idu) géométries (MiniPlan) — outil, hors payload /parcels",
 }
 
 
