@@ -522,7 +522,7 @@ layers:
       #   liquidité : n ventes du secteur / liquidity_ref, plafonné à 1
       #   prix      : médiane €/m² de TERRAIN, normalisée sur [price_lo, price_hi]
       #               ÉCHELLE RECALÉE sur la distribution TERRAIN île entière (676 secteurs n≥3,
-      #               p25=158 / p75=323 → 150/325 ; règle d'origine p25/p75, cf. PRE_VOL_ILE.md).
+      #               p25=158 / p75=323 → 150/325 ; règle d'origine p25/p75, cf. docs/communes/PRE_VOL_ILE.md).
       liquidity_ref: 8
       price_lo_eur_m2: 150
       price_hi_eur_m2: 325

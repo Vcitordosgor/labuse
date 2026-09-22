@@ -1563,7 +1563,7 @@ idu,date_vente,vente_groupee,premier_envoi,n_simule,premiere_piste,exclue_client
 97416000CX1372,2025-03-20,True,,,,False
 97413000CQ0502,2025-12-19,True,,,,False
 97415000AC0003,2025-08-28,True,,,,False
-97411000BK0220,2025-12-23,True,,,,False
+97411000BK0220,2025-12-23,True,,,2026-09-19 13:09:58.674443+00:00,False
 97415000BX0219,2025-05-07,True,,,,False
 97410000AS1459,2025-05-28,False,,,,False
 97422000DI0461,2025-10-27,True,,,,False

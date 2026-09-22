@@ -1,0 +1,324 @@
+{
+  "candidat": "q_v15",
+  "gel": "2026-09-22 16:31:02",
+  "doctrine": "calculé par le pipeline réel, jamais basculé — q_v11_m137 reste servi",
+  "recette": "q_v14 MOINS piscine/pv_candidat (aucune variable nouvelle)",
+  "retirees_vs_q_v14": [
+    "piscine",
+    "pv_candidat"
+  ],
+  "ventes_pm_secteur_36m_retenue": true,
+  "garde_fou_ece": {
+    "seuil": 0.01,
+    "ece_pm_q_v12": 0.0049091029510367,
+    "ece_pm_avec_ventespm": 0.004620051043684937,
+    "delta_ece_pm_avec_ventespm": -0.0003,
+    "segments_degrades_final": {}
+  },
+  "protocole_12m": {
+    "train": "2017-2023",
+    "calibration": 2024,
+    "test": 2025
+  },
+  "protocole_24m": {
+    "train": "2017-2022",
+    "calibration": 2023,
+    "test": 2024
+  },
+  "segments": {
+    "bati_individuel": 2516560,
+    "terrain_nu": 954420,
+    "personne_morale": 811410,
+    "copropriete": 34240
+  },
+  "n_features": 33,
+  "features": [
+    "rot_nu",
+    "rot_bati",
+    "med_pm2_terrain_36m",
+    "med_pm2_bati_36m",
+    "tendance_pm2_bati",
+    "dens_bati_secteur",
+    "pct_bati_secteur_asof",
+    "filo_snv_pp",
+    "filo_pct_pauv",
+    "filo_pct_prop",
+    "pente_moy_deg",
+    "zone_plu",
+    "surface_m2",
+    "permis_bin",
+    "tenure_bin_v2",
+    "sdp_residuelle_v2_m2",
+    "sous_densite_v2",
+    "residuel_famille",
+    "nu_constructible_asof",
+    "ventes_150m_12m",
+    "ventes_150m_24m",
+    "ventes_400m_12m",
+    "ventes_400m_24m",
+    "ventes_400m_delta",
+    "permis_100m_24m",
+    "operations_pa_400m_24m",
+    "volume_commune_a1",
+    "med_pm2_commune_a1",
+    "tendance_volume_3ans",
+    "pm_vendeur_actif",
+    "pc_pm_sur_parcelle_pp_36m",
+    "anciennete_plu_annees",
+    "ventes_pm_secteur_36m"
+  ],
+  "interactions": [
+    [
+      "tenure_bin_v2",
+      "permis_bin"
+    ],
+    [
+      "tenure_bin_v2",
+      "surface_m2"
+    ],
+    [
+      "tenure_bin_v2",
+      "rot_nu"
+    ],
+    [
+      "surface_m2",
+      "permis_bin"
+    ]
+  ],
+  "features_couverture_2026": [
+    {
+      "feature": "rot_nu",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "rot_bati",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "med_pm2_terrain_36m",
+      "pct_non_null": 94.28
+    },
+    {
+      "feature": "med_pm2_bati_36m",
+      "pct_non_null": 96.11
+    },
+    {
+      "feature": "tendance_pm2_bati",
+      "pct_non_null": 88.23
+    },
+    {
+      "feature": "dens_bati_secteur",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "pct_bati_secteur_asof",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "filo_snv_pp",
+      "pct_non_null": 89.28
+    },
+    {
+      "feature": "filo_pct_pauv",
+      "pct_non_null": 89.28
+    },
+    {
+      "feature": "filo_pct_prop",
+      "pct_non_null": 89.28
+    },
+    {
+      "feature": "pente_moy_deg",
+      "pct_non_null": 98.1
+    },
+    {
+      "feature": "zone_plu",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "surface_m2",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "permis_bin",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "tenure_bin_v2",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "sdp_residuelle_v2_m2",
+      "pct_non_null": 99.02
+    },
+    {
+      "feature": "sous_densite_v2",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "residuel_famille",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "nu_constructible_asof",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_150m_12m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_150m_24m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_400m_12m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_400m_24m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_400m_delta",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "permis_100m_24m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "operations_pa_400m_24m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "volume_commune_a1",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "med_pm2_commune_a1",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "tendance_volume_3ans",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "pm_vendeur_actif",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "pc_pm_sur_parcelle_pp_36m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "anciennete_plu_annees",
+      "pct_non_null": 99.04
+    },
+    {
+      "feature": "ventes_pm_secteur_36m",
+      "pct_non_null": 95.48
+    }
+  ],
+  "test_fuite": {
+    "annee_testee": 2025,
+    "voisinage_egal_source_tronquee": true,
+    "pc_pm_stable_ajout_annee_future": true,
+    "ventes_pm_secteur_stable_ajout_annee_future": true,
+    "nu_asof_note": "reconstruit l'état physique bâti/nu (permis/mutations datées), jamais la cible L2-F — aucune colonne de label lue",
+    "fuite_detectee": false
+  },
+  "metriques_k0_2025": {
+    "candidat": "q_v15",
+    "n_eval": 431663,
+    "n_exclues_client": 0,
+    "prec@100_commune_mediane": 0.09,
+    "n_communes": 24,
+    "n_priorite": 0,
+    "prec_priorite": null,
+    "n_a_suivre": 848,
+    "prec_a_suivre": 0.11910377358490566,
+    "lift_decile_sup": 2.2629822290977217,
+    "auc_global": 0.6234458887820011,
+    "auc_bati_individuel": 0.5864255387008783,
+    "auc_terrain_nu": 0.66568191758882,
+    "auc_personne_morale": 0.6631208176355158,
+    "auc_copropriete": 0.6018246374324209,
+    "ece_global": 0.0022099817545421863,
+    "ece_bati_individuel": 0.001772889969711718,
+    "ece_terrain_nu": 0.005769676181941744,
+    "ece_personne_morale": 0.004620051043684937,
+    "ece_copropriete": 0.011496610039086072,
+    "churn_top1158_vs_servi": 0.5094991364421416
+  },
+  "metriques_extra_k0_2025": {
+    "q_v15": {
+      "brier": 0.01481639363480144,
+      "n": 428239,
+      "n_positifs": 6487,
+      "prec@100": 0.38,
+      "mutations_captees@100": 0.005857869585324495,
+      "prec@500": 0.19,
+      "mutations_captees@500": 0.014644673963311238,
+      "prec@1000": 0.138,
+      "mutations_captees@1000": 0.02127331586249422,
+      "prec@2000": 0.1085,
+      "mutations_captees@2000": 0.0334515184214583,
+      "n_fort": 105,
+      "prec_fort": 0.38095238095238093,
+      "rappel_fort": 0.006166178510867889,
+      "n_moyen": 411,
+      "prec_moyen": 0.1411192214111922,
+      "rappel_moyen": 0.00894095884075844,
+      "n_faible": 427723,
+      "prec_faible": 0.014937237417674522,
+      "rappel_faible": 0.9848928626483737
+    },
+    "q_v14_refit": {
+      "brier": 0.014826513165674108,
+      "n": 428239,
+      "n_positifs": 6487,
+      "prec@100": 0.39,
+      "mutations_captees@100": 0.006012024048096192,
+      "prec@500": 0.194,
+      "mutations_captees@500": 0.014952982888854632,
+      "prec@1000": 0.134,
+      "mutations_captees@1000": 0.02065669801140743,
+      "prec@2000": 0.1015,
+      "mutations_captees@2000": 0.03129335594265454,
+      "n_fort": 129,
+      "prec_fort": 0.3488372093023256,
+      "rappel_fort": 0.006936950824726376,
+      "n_moyen": 544,
+      "prec_moyen": 0.12683823529411764,
+      "rappel_moyen": 0.01063665793124711,
+      "n_faible": 427566,
+      "prec_faible": 0.014905301169877866,
+      "rappel_faible": 0.9824263912440265
+    }
+  },
+  "metriques_24m_test2024": {
+    "candidat": "q_v15_24m_test2024",
+    "n_eval": 431663,
+    "n_exclues_client": 0,
+    "prec@100_commune_mediane": 0.14500000000000002,
+    "n_communes": 24,
+    "n_priorite": 0,
+    "prec_priorite": null,
+    "n_a_suivre": 721,
+    "prec_a_suivre": 0.1539528432732316,
+    "lift_decile_sup": 2.432877559546234,
+    "auc_global": 0.6416121950867573,
+    "auc_bati_individuel": 0.5965630681316121,
+    "auc_terrain_nu": 0.6543003877187168,
+    "auc_personne_morale": 0.6622360571466733,
+    "auc_copropriete": 0.6261361187831775,
+    "ece_global": 0.0025471221786501465,
+    "ece_bati_individuel": 0.002373095201941363,
+    "ece_terrain_nu": 0.004837009298815082,
+    "ece_personne_morale": 0.0053980417979137725,
+    "ece_copropriete": 0.01904455388708235,
+    "churn_top1158_vs_servi": 0.6260794473229707
+  },
+  "sha256_12m": "d8520abaf2e0edfae044b002762cdcf93e753f1adfeda07213b5a2052cd8027b",
+  "sha256_24m": "cbe1029e32a5bbb9cfa90a54775f81a6edb1db4f279b9e1cafa4bbb25b74f11d"
+}

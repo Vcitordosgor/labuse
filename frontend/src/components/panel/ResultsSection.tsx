@@ -1,10 +1,10 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
-import { getCommunes, getFiltre, getParcelsGeojson, getResults, getScoringBacktest, type SortKey } from '../../lib/api'
-import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
+import { Fragment, useEffect, useMemo, useState } from 'react'
+import { getAnalyse, getAnalyseStats, getCommunes, getFiltre, getParcelsGeojson, getResults, type BandeGroupe, type QualiteKey, type SignalNiveauKey, type SortKey } from '../../lib/api'
+import { hasScopeFilters, matchAll, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
-import { ALL_TIER_META, effectiveTier, etatBienMeta, PALIER_META, verdictMeta } from '../../lib/status'
+import { ALL_TIER_META, BANDE_META, bandeMeta, etatBienMeta, signalMeta, type Bande, verdictMeta } from '../../lib/status'
 import { raisonDominante } from '../../lib/raison'
 import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
@@ -249,19 +249,11 @@ export function sortRows<T extends SortableRow>(rows: T[], sort: SortKey, groupe
 // la majorité des parcelles « permis pro » sont « Sans signal » de vente : ce n'est PAS une
 // contradiction. Le libellé et l'info-bulle disent donc EXACTEMENT ce que le segment regroupe, et ne
 // prétendent plus qu'il s'agit du « signal le plus fort du modèle » (le modèle prédit la vente).
+// ANALYSE-1 — la SEGMENTATION par nature du bien (permis pro / terrain nu / bâti densifier / reste) a
+// QUITTÉ l'écran Analyse : le nouveau moteur rend UNE liste unique classée par bande de Score puis
+// Signal de mutation. `SegKey`/`segmentOf`/`SegmentList` restent (exportés, tests + usages tiers) ;
+// la constante SEGMENTS et le composant AnalyseSegment (rendu de segment) sont retirés (morts ici).
 type SegKey = 'permis_pro' | 'terrain_nu' | 'bati_densifier' | 'reste'
-const SEGMENTS: { key: SegKey; label: string; hint: string }[] = [
-  { key: 'permis_pro', label: 'Un professionnel a obtenu un permis ici',
-    hint: 'Parcelle de particulier où un promoteur ou une société a OBTENU un permis de construire dans les 36 mois (Sitadel, en direct). C’est un signal d’AMÉNAGEMENT en cours — pas une prédiction de vente : le palier (Priorité / À suivre / Sans signal) mesure la probabilité de VENTE sous 12 mois. Une parcelle qui se construit peut donc être « Sans signal » de vente sans contradiction.' },
-  { key: 'terrain_nu', label: 'Terrain nu constructible',
-    hint: 'Rien de bâti (emprise < 5 %) et de la surface de plancher à bâtir.' },
-  // RECETTE-5 (V16, décision Vic) — « Bâti à densifier » ne disait rien au client → libellé qui dit
-  // CE QUE C'EST : une parcelle déjà construite où le PLU autorise encore du plancher.
-  { key: 'bati_densifier', label: 'Déjà construit, le PLU autorise encore du plancher',
-    hint: 'Parcelle déjà occupée par du bâti, mais dont le PLU permet encore de construire de la surface de plancher (surélévation, extension, seconde construction).' },
-  { key: 'reste', label: 'Le reste',
-    hint: 'Bâti au maximum ou sans potentiel résiduel identifié.' },
-]
 export function segmentOf(p: Pick<ParcelProps, 'permis_pro' | 'etat_bien'>): SegKey {
   if (p.permis_pro) return 'permis_pro'
   if (p.etat_bien === 'nu') return 'terrain_nu'
@@ -342,51 +334,138 @@ export function SegmentList({ segKey, rows, serverTotal, commune, serverHasMore,
   )
 }
 
-// RECETTE-12 B2 — UN segment de l'Analyse : en mode ÎLE il charge SES PROPRES lignes (200/page,
-// param serveur `segment`) dès l'ouverture — fin du « 9 sur 72 » (la fenêtre globale triée par rang
-// ne laissait que quelques lignes d'un petit segment). En mode COMMUNE, le GeoJSON complet est en
-// mémoire → on filtre côté client (liste entière, aucune troncature).
-function AnalyseSegment({ seg, open, onToggle, filters, sort, ile, commune, serverTotal, communeRows }: {
-  seg: { key: SegKey; label: string; hint: string }
-  open: boolean; onToggle: () => void
-  filters: Filters; sort: SortKey; ile: boolean; commune: string; serverTotal: number
-  communeRows: (ParcelProps & { commune?: string })[]
-}) {
-  const q = useInfiniteQuery({
-    queryKey: ['segment', seg.key, commune, filters, sort],
-    queryFn: ({ pageParam }) => getResults(filters, RESULTS_PAGE, sort, pageParam as number, false, seg.key),
-    initialPageParam: 0,
-    getNextPageParam: (last: unknown[], pages) => (last.length === RESULTS_PAGE ? pages.length * RESULTS_PAGE : undefined),
-    enabled: ile && open,
-  })
-  const serverRows = useMemo(
-    () => (q.data?.pages ?? []).flat() as unknown as (ParcelProps & { commune?: string })[], [q.data])
-  const rows = ile ? serverRows : communeRows
+// ══════════════════ ANALYSE-1 — LE NOUVEAU MOTEUR À L'ÉCRAN ══════════════════
+// Filtre PROPRE à l'Analyse (mandat §1.4) : le Signal de mutation (Fort / Moyen / Faible). « Tous »
+// toujours EN DERNIER (règle DA). Le filtre narrreowit la liste ; il ne re-classe rien.
+const SIGNALS_FILTRE: { key: SignalNiveauKey | 'tous'; label: string }[] = [
+  { key: 'fort', label: 'Fort' }, { key: 'moyen', label: 'Moyen' },
+  { key: 'faible', label: 'Faible' }, { key: 'tous', label: 'Tous' },
+]
+// ANALYSE-2 — le filtre CLASSEMENT : les 4 bandes de qualité (libellés gravés) + « Tous » en DERNIER.
+// « Non retenue » et « Analyse incomplète » ne sont PAS des choix de classement (catégories à part) —
+// elles restent accessibles par leurs groupes de fin de liste.
+const CLASSEMENT_FILTRE: { key: QualiteKey | 'tous'; label: string }[] = [
+  { key: 'A', label: BANDE_META.A.label }, { key: 'B', label: BANDE_META.B.label },
+  { key: 'C', label: BANDE_META.C.label }, { key: 'D', label: BANDE_META.D.label },
+  { key: 'tous', label: 'Tous' },
+]
+//: les 5 catégories de l'ENCART (4 bandes + Non retenue) — « Analyse incomplète » (NC) est à part.
+const BANDE_ENCART: Bande[] = ['A', 'B', 'C', 'D', '0']
+
+// Les 2-3 contributions FR les plus fortes, telles que le moteur les produit — ce qui MONTE (▲) et ce
+// qui BAISSE (▼) le Score. Aucun chiffre de score : juste la phrase du moteur.
+function ContributionsRow({ contributions }: { contributions?: ParcelProps['contributions'] }) {
+  const list = (contributions ?? []).slice(0, 3)
+  if (!list.length) return null
   return (
-    <div className="shrink-0">
-      <button data-segment={seg.key} onClick={onToggle}
-        className="flex w-full items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left hover:border-mint/50">
-        <span className="flex min-w-0 items-center gap-2">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"
-            className={`shrink-0 text-txt-dim transition-transform ${open ? 'rotate-90' : ''}`}><path d="m9 18 6-6-6-6" /></svg>
-          <Tip tip={seg.hint} className="min-w-0"><span className="truncate text-[12px] font-medium text-txt">{seg.label}</span></Tip>
-        </span>
-        <span className="shrink-0 tnum text-[11px] text-txt-dim">{fmt(serverTotal)}</span>
-      </button>
-      {open && (ile && q.isLoading && serverRows.length === 0
-        ? <p className="mt-2 px-3 py-1.5 text-[10.5px] text-txt-dim">Chargement…</p>
-        : <SegmentList segKey={seg.key} rows={rows} serverTotal={serverTotal} commune={commune}
-            serverPaged={ile} serverHasMore={ile && (q.hasNextPage ?? false)} serverLoading={q.isFetchingNextPage}
-            onServerMore={() => q.hasNextPage && q.fetchNextPage()} />)}
+    <div data-contributions className="mt-1 flex flex-col gap-0.5">
+      {list.map((c, i) => {
+        const up = c.sens === 'hausse'
+        return (
+          <span key={i} className="inline-flex items-start gap-1 text-[10px] leading-snug" style={{ color: up ? '#5CE6A1' : '#C08A6E' }}>
+            <span aria-hidden className="mt-[1px] shrink-0 text-[8px] font-bold">{up ? '▲' : '▼'}</span>
+            <span className="text-txt-dim">{c.libelle}</span>
+          </span>
+        )
+      })}
     </div>
   )
 }
 
-// Compteurs par tier — clés = codes du run servi (anciens codes aujourd'hui ; les 4 paliers
-// après bascule q_v14). Record<string> tolère les deux ; l'affichage résout les libellés.
-const TIER_ZERO: Record<string, number> = {
-  all: 0, brulante: 0, chaude: 0, reserve_fonciere: 0, a_creuser: 0, ecartee: 0,
-  priorite: 0, a_suivre: 0, sans_signal: 0,
+// LA LIGNE d'analyse : référence + commune · BANDE (mot + couleur, dominante) · badge Signal
+// (SECONDAIRE) · surface · zone · 2-3 contributions. « Analyse incomplète » (NC) montre sa CAUSE et
+// n'affiche ni signal ni contributions (elle n'est pas une parcelle « mauvaise », juste incomplète).
+function AnalyseCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }; communeLabel: string }) {
+  const { selectedIdu, select } = useApp()
+  const bm = bandeMeta(p.bande)
+  const sm = signalMeta(p.signal_niveau)
+  const on = selectedIdu === p.idu
+  const nc = p.bande === 'NC'
+  return (
+    <button onClick={() => select(p.idu)}
+      className={`hover-fill relative flex w-full shrink-0 items-start overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 pl-4 pr-3 text-left ${on ? 'border-mint' : 'border-line-2'}`}>
+      {bm && <span className="absolute left-0 top-0 h-full w-[3px]" style={{ background: bm.color }} />}
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="shrink-0 whitespace-nowrap font-mono text-[11.5px] font-medium tracking-tight text-txt-hi">{p.idu}</span>
+          {bm && (
+            <Tip tip={bm.long} className="shrink-0">
+              <span data-bande={p.bande} className="rounded-full px-2 py-0.5 text-[9.5px] font-bold" style={{ background: `${bm.color}26`, color: bm.color }}>{bm.label}</span>
+            </Tip>
+          )}
+          {sm && !nc && (
+            <Tip tip={sm.long} className="shrink-0">
+              <span data-signal={p.signal_niveau} className="rounded-full border px-1.5 py-0.5 text-[8.5px] font-medium" style={{ borderColor: `${sm.color}66`, color: sm.color }}>{sm.label}</span>
+            </Tip>
+          )}
+          {p.zone_fam && (
+            <span data-zone className="shrink-0 rounded-full border border-line-2 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim">zone {p.zone_fam}</span>
+          )}
+        </div>
+        <div data-card-adresse className={`truncate text-[10.5px] text-txt-dim ${p.adresse ? '' : 'opacity-60'}`}>{p.adresse ?? 'Adresse non disponible'}</div>
+        <div className="truncate text-[11px] text-txt-mut tnum">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
+        {nc && p.cause && <div data-cause className="mt-1 text-[10px] leading-snug" style={{ color: BANDE_META.NC.color }}>Analyse incomplète — {p.cause}.</div>}
+        {!nc && <ContributionsRow contributions={p.contributions} />}
+      </div>
+    </button>
+  )
+}
+
+// UN groupe de fin de liste (« Analyse incomplète » NC, puis « Sans potentiel constructible » 0) :
+// repliable, son COMPTE dans l'en-tête, lignes chargées à l'ouverture (jamais masqué — mandat §5).
+function AnalyseBandeGroup({ groupe, label, color, total, filters, commune, signal }: {
+  groupe: BandeGroupe; label: string; color: string; total: number
+  filters: Filters; commune: string; signal?: SignalNiveauKey
+}) {
+  const [open, setOpen] = useState(false)
+  const q = useInfiniteQuery({
+    queryKey: ['analyse-groupe', groupe, filters, signal],
+    queryFn: ({ pageParam }) => getAnalyse(filters, groupe, { limit: RESULTS_PAGE, offset: pageParam as number, signal }),
+    initialPageParam: 0,
+    getNextPageParam: (last: unknown[], pages) => (last.length === RESULTS_PAGE ? pages.length * RESULTS_PAGE : undefined),
+    enabled: open,
+  })
+  const rows = useMemo(() => (q.data?.pages ?? []).flat() as unknown as (ParcelProps & { commune?: string })[], [q.data])
+  return (
+    <div className="shrink-0">
+      <button data-bande-groupe={groupe} onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left hover:border-mint/50">
+        <span className="flex min-w-0 items-center gap-2">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"
+            className={`shrink-0 text-txt-dim transition-transform ${open ? 'rotate-90' : ''}`}><path d="m9 18 6-6-6-6" /></svg>
+          <span className="inline-flex h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
+          <span className="truncate text-[12px] font-medium text-txt">{label}</span>
+        </span>
+        <span className="shrink-0 tnum text-[11px] text-txt-dim">{fmt(total)}</span>
+      </button>
+      {open && (
+        <div className="mt-2 flex flex-col gap-2">
+          {q.isLoading && rows.length === 0 && <p className="px-3 py-1.5 text-[10.5px] text-txt-dim">Chargement…</p>}
+          {rows.map((p) => <AnalyseCard key={p.idu} p={p} communeLabel={commune} />)}
+          {(q.hasNextPage ?? false) && (
+            <div data-pagination className="flex flex-wrap items-center gap-3 border-t border-line pt-2 text-[11px] text-txt-mut">
+              <span><b className="text-txt">{fmt(rows.length)} sur {fmt(total)}</b> affichées</span>
+              <button onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage} className="text-mint hover:underline disabled:opacity-60">
+                {q.isFetchingNextPage ? 'Chargement…' : `Voir ${fmt(Math.min(RESULTS_PAGE, total - rows.length))} de plus`}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// En-tête de bande dans la liste unique de qualité (A → B → C → D) : inséré quand la bande change
+// (le serveur ordonne déjà par bande). Une pastille couleur + le mot ; jamais un chiffre de score.
+function BandeHeader({ bande }: { bande: Bande }) {
+  const bm = BANDE_META[bande]
+  return (
+    <div data-bande-header={bande} className="mt-1 flex shrink-0 items-center gap-2 px-1 pt-1">
+      <span className="inline-flex h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: bm.color }} />
+      <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: bm.color }}>{bm.label}</span>
+    </div>
+  )
 }
 
 export function ResultsSection() {
@@ -402,10 +481,6 @@ export function ResultsSection() {
   const [sort, setSort] = useState<SortKey>(analyse ? 'rang' : 'adresse')
   const sorts = analyse ? SORTS : FACTUAL_SORTS
   useEffect(() => { setSort(analyse ? 'rang' : 'adresse') }, [analyse])
-  // RECETTE-6 (B2, décision Vic) — les QUATRE segments sont FERMÉS par défaut (flèche vers la droite).
-  // [RECETTE-3 (T4) ouvrait les trois premiers.]
-  const [openSeg, setOpenSeg] = useState<Record<SegKey, boolean>>({
-    permis_pro: false, terrain_nu: false, bati_densifier: false, reste: false })
   // M69 A — GROUPEMENT PAR TIER : appliqué UNIQUEMENT pour le tri par défaut « Probabilité de
   // vente » (rang) en mode analyse (M55-H p5). Un tri de COLONNE (Surface) doit produire un ordre
   // GLOBAL monotone → on lève le groupement. Ce booléen pilote client ET serveur (un seul point).
@@ -415,14 +490,12 @@ export function ResultsSection() {
   // (communes, terrain, signaux, tiers, interrupteur), mêmes nombres, fini les trois récits.
   // Retiré : getStats(scopeOnly) [tiers retirés] et getStats(undefined) [mode commune = aucun
   // filtre → l'origine du « 431 663 → 98 » décorrélé, mesuré 10/08].
+  // ANALYSE-1 — `uni` sert désormais le mode FACTUEL (total du périmètre). En analyse, la ventilation
+  // et le total viennent de `bandesQ` (getAnalyseStats, ventilation par bande du nouveau moteur).
   const uni = useQuery({
     queryKey: ['results-unifie', commune, filters],
     queryFn: () => getFiltre(filters, 0),
-  })
-  const trameQ = useQuery({
-    queryKey: ['filtre', filters, false],
-    queryFn: () => getFiltre({ ...filters, analyseLabuse: false }, 0),
-    enabled: analyse,
+    enabled: !analyse,
   })
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
   // E3 (M12) : la liste île n'est plus plafonnée à 500. Pagination par offset (le back la
@@ -435,12 +508,71 @@ export function ResultsSection() {
     queryFn: ({ pageParam }) => getResults(filters, RESULTS_PAGE, sort, pageParam, groupes),
     initialPageParam: 0,
     getNextPageParam: (last: unknown[], pages) => (last.length === RESULTS_PAGE ? pages.length * RESULTS_PAGE : undefined),
-    enabled: ile,
+    enabled: ile && !analyse,   // ANALYSE-1 : en analyse, la liste vient de `analyseList` (getAnalyse)
   })
   const serverRows = useMemo(
     () => (serverList.data?.pages ?? []).flat() as unknown as (ParcelProps & { commune?: string })[],
     [serverList.data],
   )
+
+  // ── ANALYSE-1 — le NOUVEAU moteur (Score LABUSE + Signal de mutation), lu sur le run candidat ──
+  // Filtre PROPRE à l'Analyse : le Signal de mutation (Fort / Moyen / Faible / Tous). Il narreowit la
+  // liste, il ne re-classe rien (la bande vient du moteur telle quelle).
+  // ANALYSE-2 — DEUX filtres INDÉPENDANTS et combinables (ET) : le CLASSEMENT (bande de qualité, ou
+  // Tous) et le SIGNAL de mutation (ou Tous). « Tous » toujours en DERNIER (règle DA). Ils narrowissent
+  // la liste, ils ne re-classent rien (la bande vient du moteur telle quelle).
+  const [classementFiltre, setClassementFiltre] = useState<QualiteKey | 'tous'>('tous')
+  const [signalFiltre, setSignalFiltre] = useState<SignalNiveauKey | 'tous'>('tous')
+  const signalParam = signalFiltre === 'tous' ? undefined : signalFiltre
+  // param serveur `bande` : une bande PRÉCISE (A/B/C/D) ou `qualite` (les 4) quand Classement = Tous.
+  const bandeParam: BandeGroupe = classementFiltre === 'tous' ? 'qualite' : classementFiltre
+  useEffect(() => { if (!analyse) { setSignalFiltre('tous'); setClassementFiltre('tous') } }, [analyse])
+  // la LISTE UNIQUE (bandes ordonnées par bande puis Signal côté serveur), servie par /filtre en mode
+  // `labuse` — TOUJOURS côté serveur (le geojson commune ne porte pas la bande). Filtrée par les DEUX.
+  const analyseList = useInfiniteQuery({
+    queryKey: ['analyse-qualite', commune, filters, bandeParam, signalParam],
+    queryFn: ({ pageParam }) => getAnalyse(filters, bandeParam, { limit: RESULTS_PAGE, offset: pageParam as number, signal: signalParam }),
+    initialPageParam: 0,
+    getNextPageParam: (last: unknown[], pages) => (last.length === RESULTS_PAGE ? pages.length * RESULTS_PAGE : undefined),
+    enabled: analyse,
+  })
+  const analyseRows = useMemo(
+    () => (analyseList.data?.pages ?? []).flat() as unknown as (ParcelProps & { commune?: string })[],
+    [analyseList.data],
+  )
+  // ventilation par BANDE + croisement bande × Signal du périmètre (récapitulatif) — filtres globaux
+  // SANS tier ni bande. Le crosstab donne le compteur FILTRÉ cohérent (« N correspondent à vos filtres »).
+  const bandesQ = useQuery({
+    queryKey: ['analyse-bandes', commune, filters],
+    queryFn: () => getAnalyseStats(filters),
+    enabled: analyse,
+  })
+  const bandes = bandesQ.data?.bandes ?? { A: 0, B: 0, C: 0, D: 0, '0': 0, NC: 0 }
+  const xtab = bandesQ.data?.bandes_signal
+  // ANALYSE-2 — N parcelles pour le couple (Classement, Signal) courant, dérivé du SEUL crosstab :
+  // somme sur les bandes sélectionnées × les signaux sélectionnés. Par construction, somme des 4 bandes
+  // = total, et Fort+Moyen+Faible = Tous (le compteur ne peut pas mentir, il vient d'un unique GROUP BY).
+  const filtreCount = useMemo(() => {
+    if (!xtab) return 0
+    const bs: QualiteKey[] = classementFiltre === 'tous' ? ['A', 'B', 'C', 'D'] : [classementFiltre]
+    const ss: SignalNiveauKey[] = signalFiltre === 'tous' ? ['fort', 'moyen', 'faible'] : [signalFiltre]
+    return bs.reduce((a, b) => a + ss.reduce((x, s) => x + (xtab[b]?.[s] ?? 0), 0), 0)
+  }, [xtab, classementFiltre, signalFiltre])
+  // ANALYSE-3 — le compteur de chaque BANDE affiché dans l'ENCART (les 5 pastilles), CROSS-FILTRÉ par le
+  // Signal courant : Signal = Tous → total de la bande (le chiffre « d'aujourd'hui ») ; Signal = Fort →
+  // le nombre de cette bande à signal Fort. Lu sur le crosstab (toutes bandes, y compris Non retenue).
+  const bandeSignalCount = (b: Bande) => {
+    if (!xtab) return bandes[b] ?? 0
+    const ss: SignalNiveauKey[] = signalFiltre === 'tous' ? ['fort', 'moyen', 'faible'] : [signalFiltre]
+    return ss.reduce((a, s) => a + (xtab[b]?.[s] ?? 0), 0)
+  }
+  // total « analysé » de l'encart = les 5 catégories montrées (4 bandes + Non retenue) ; « Analyse
+  // incomplète » (NC) est à part (l'analyse n'a PAS pu conclure), surfacée dans son groupe de fin.
+  const encartTotal = bandes.A + bandes.B + bandes.C + bandes.D + bandes['0']
+  const bandeTotal = bandesQ.data?.bande_total ?? 0
+  // groupes de fin (Non retenue / Analyse incomplète) : montrés seulement quand Classement = Tous
+  // (sinon on a demandé une bande précise, ces catégories n'en font pas partie).
+  const showEndGroups = classementFiltre === 'tous'
 
   // props + centroïde (calculé UNE fois — sert au filtre de zone) — mode commune uniquement
   const props = useMemo(
@@ -454,27 +586,6 @@ export function ResultsSection() {
 
   const scoped = hasScopeFilters(filters, zone)
   const qNorm = query.trim().toUpperCase().replace(/\s+/g, '')
-
-  // Compteurs : SANS filtre de périmètre → /stats (SQL-exact). AVEC → île : /stats FILTRÉ
-  // (SQL-exact aussi) ; commune : recalcul client marqué *.
-  const counts = useMemo(() => {
-    if (uni.data) {
-      const t = uni.data.tiers
-      return { all: t.brulante + t.chaude + t.reserve_fonciere + t.a_creuser,
-               brulante: t.brulante, chaude: t.chaude, reserve_fonciere: t.reserve_fonciere,
-               a_creuser: t.a_creuser, ecartee: t.ecartee }
-    }
-    // fallback client (mode commune, réponse serveur pas encore là) — jamais un vide
-    const c: Record<string, number> = { ...TIER_ZERO }
-    for (const p of props) {
-      if (!matchScope(p, filters, zone)) continue
-      const t = effectiveTier(p.tier_v2, p.etage0)
-      if (!t) continue
-      if (t !== 'ecartee') c.all += 1
-      c[t] += 1
-    }
-    return c
-  }, [props, filters, zone, uni.data])
 
   const list = useMemo(() => {
     if (ile) {
@@ -495,27 +606,15 @@ export function ResultsSection() {
   const pg = usePagination(list.length)
   const shown = ile ? list : list.slice(0, pg.shown)
 
-  const loading = ile ? serverList.isLoading : geo.isLoading
-  const error = ile ? serverList.isError : geo.isError
-  const refetch = () => (ile ? serverList.refetch() : geo.refetch())
+  const loading = analyse ? analyseList.isLoading : ile ? serverList.isLoading : geo.isLoading
+  const error = analyse ? analyseList.isError : ile ? serverList.isError : geo.isError
+  const refetch = () => (analyse ? analyseList.refetch() : ile ? serverList.refetch() : geo.refetch())
   // Total analysé du périmètre courant (point unique) — retenues + écartées ; fallback client.
   const total = uni.data?.total ?? props.length
 
   // bandeau honnête par commune (ex. Saint-Philippe = RNU) — porté par /communes
   const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
-  // RECETTE-10 T11 — ce que le score APPORTE, mesuré et daté (taux de mutation 12 mois du palier « À
-  // suivre » vs la moyenne et vs un filtre simple). Une phrase chiffrée à côté des paliers, jamais un
-  // score nu. Servi seulement quand le modèle bat nettement le hasard (phrase_client sinon null).
-  const backtestQ = useQuery({ queryKey: ['scoring-backtest'], queryFn: getScoringBacktest, staleTime: 3_600_000, enabled: analyse })
   const communeNote = commune ? communesQ.data?.find((c) => c.commune === commune)?.note : null
-  // M55-K point 1 : `nFilters` et la var locale `opportunites` sont retirés avec la ligne de
-  // synthèse (0-caller). Le tooltip de la ventilation lit toujours `uni.data.opportunites`.
-  // M55-H point 10 — l'arithmétique de la Révélation, ICI AUSSI (source unique getFiltre) :
-  // potentiel épuisé = retenues − 4 tiers vivants ; écartées = trame analysée − retenues.
-  // trameQ partage la queryKey de FiltreLabuse (['filtre', filters, false]) → cache commun.
-  const vent4 = counts.brulante + counts.chaude + counts.reserve_fonciere + counts.a_creuser
-  const epuise = uni.data ? Math.max(0, uni.data.compte - vent4) : 0
-  const ecartees = uni.data && trameQ.data ? Math.max(0, trameQ.data.compte - uni.data.compte) : null
 
   return (
     // FIX (rendu liste) : la section elle-même défile si le volet est court (laptop) — sinon
@@ -527,14 +626,18 @@ export function ResultsSection() {
       {/* Fix cosmétique (point 3) : ligne de tri LISIBLE et alignée (contrôle segmenté), au lieu
           des options qui flottaient collées à droite sans hiérarchie. Fonction inchangée. */}
       <div className="shrink-0">
-        <p className="font-mono text-[11px] tracking-widest text-txt-dim">RÉSULTATS</p>
+        {/* ANALYSE-3 (§1) — le titre « RÉSULTATS » est retiré en mode analyse (l'encart qui suit dit
+            déjà ce que c'est) ; il reste en mode factuel, au-dessus de la barre de tri. */}
+        {!analyse && <p className="font-mono text-[11px] tracking-widest text-txt-dim">RÉSULTATS</p>}
         {/* QA-46 (M13-C) : la barre de tri S'EMPILE (flex-wrap) au lieu de déborder — les 4 options
             de tri ne tiennent pas sur la largeur du volet (~300 px) et étaient rognées. Le libellé
             « Trier » et le contrôle segmenté passent à la ligne, le pilule wrappe ses boutons. */}
         {/* M55-G point 3 — segmented control PRO : pills nettes (rayon suivi conteneur/bouton),
             padding constant px-3/py-1, état actif FRANC (rempli mint, texte encre — plus le
             mint/15 flottant), « i » aligné sur la ligne de base du libellé TRIER. */}
-        <div data-tri-bar className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+        {/* ANALYSE-1 — la barre de tri ne s'affiche QU'EN mode factuel : l'Analyse a UN ordre fixe
+            (bande de Score puis Signal de mutation, lexicographique), jamais un tri chiffré au choix. */}
+        {!analyse && <div data-tri-bar className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <span className="flex h-[15px] shrink-0 items-center gap-1.5 text-[10px] uppercase tracking-wide text-txt-dim">Trier
             {/* M55-F point 6 : le « i » des deux lunettes (opportunité globale vs probabilité seule) */}
             <Tip garder side="top" tip={CLIENT.tri.lunettes}>
@@ -561,7 +664,7 @@ export function ResultsSection() {
           </div>
           {/* RECETTE-1 R25 — la ligne « Liste groupée par priorité d'action … · trier par Surface »
               est RETIRÉE (demande Vic). Le groupement reste actif ; on ne l'explique plus par ce texte. */}
-        </div>
+        </div>}
       </div>
 
       {communeNote && (
@@ -575,82 +678,74 @@ export function ResultsSection() {
           analyse » (VerdictHero) dit le mode. */}
       {analyse && (
         <>
-          {/* M55-H point 10 : la ventilation ENTIÈRE — 4 tiers + potentiel épuisé + écartées,
-              MÊMES nombres que la phrase de Révélation (source unique getFiltre :
-              épuisé = retenues − 4 tiers ; écartées = trame analysée − retenues). Le « i »
-              raconte les trois familles. */}
-          <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs leading-relaxed text-txt-mut"
-            title={uni.data ? `${fmt(uni.data.opportunites)} opportunités (À suivre) dont ${fmt(uni.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
-            {/* RECETTE-6 (B3) — la bande de résumé suivait les 6 tiers BRUTS, dont deux (reserve_fonciere
-                et a_creuser) portent le MÊME palier « Sans signal » → « 0 sans signal · 0 sans signal »,
-                et « potentiel épuisé » s'affichait en dur « faible » (mot hors vocabulaire PALIERS-1).
-                On rend désormais les QUATRE PALIERS servis : Priorité · À suivre · Sans signal (= réserve
-                + à creuser + potentiel épuisé) · Écartées. Labels/couleurs = PALIER_META (jamais en dur). */}
-            {/* REPARATIONS-1 lot 2b — « Priorité » n'est plus servi comme palier (décision Vic,
-                réversible) : la tête classée ENTIÈRE (brulante + chaude) porte « À suivre ».
-                Compteur fusionné, aucun rescoring — les tiers stockés ne bougent pas. */}
-            <span className="font-medium" style={{ color: PALIER_META.a_suivre.color }}>{fmt(counts.brulante + counts.chaude)}</span> {PALIER_META.a_suivre.label.toLowerCase()} ·{' '}
-            <span className="font-medium" style={{ color: PALIER_META.sans_signal.color }}>{fmt(counts.reserve_fonciere + counts.a_creuser + epuise)}</span> {PALIER_META.sans_signal.label.toLowerCase()}
-            {/* RECETTE-7 (A2) — le « potentiel épuisé » (bâti saturé) n'est PAS « sans signal » : c'est
-                un état CONNU. On le SURFACE distinctement (dérivé, sans créer de palier de scoring → pas
-                de rescoring, cf. rapport). Le mot « faible » de RECETTE-6 était hors registre PALIERS-1 ;
-                « potentiel épuisé » est le vrai concept (declasse_bati_sature). */}
-            {epuise > 0 && (
-              <span className="text-txt-dim"> (dont <span className="font-medium" style={{ color: PALIER_META.sans_signal.color }}>{fmt(epuise)}</span> à potentiel épuisé)</span>
-            )}
-            {ecartees != null && (
-              <> · <span className="font-medium" style={{ color: PALIER_META.ecartee.color }}>{fmt(ecartees)}</span> {PALIER_META.ecartee.label.toLowerCase()}</>
-            )}
-            {/* M55-K point 1 : « (filtres actifs) » retiré (la ventilation EST déjà filtrée —
-                mention redondante). « (dans la zone) » conservé : un polygone dessiné n'est
-                pas visible autrement dans le panneau, c'est un signal distinct, non redondant. */}
-            {zone && <span className="text-txt-dim"> (dans la zone)</span>}
-            <Tip garder side="top" tip={CLIENT.ventilation.familles} className="ml-1.5 inline-flex align-middle">
-              <span data-ventilation-info role="button" tabIndex={0} aria-label="Comprendre les trois familles"
-                className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
-            </Tip>
-          </p>
-          {/* RECETTE-10 T11 — ce que le palier VAUT, mesuré et daté : preuve chiffrée à côté des
-              paliers (pas un score nu). Affichée seulement si le modèle bat nettement le filtre. */}
-          {backtestQ.data?.phrase_client && (
-            <p data-score-backtest className="mt-1.5 shrink-0 rounded-lg border border-mint/30 bg-mint/5 px-2.5 py-1.5 text-[11px] leading-snug text-txt-mut">
-              {backtestQ.data.phrase_client}
+          {/* ANALYSE-3 (révision) — l'ENCART DE SYNTHÈSE porte les compteurs : la phrase + les 5 pastilles
+              chiffrées (4 bandes + Non retenue) + la barre colorée. Les pastilles ET la barre sont
+              CROSS-FILTRÉES par le Signal courant (Signal = Tous → totaux ; Signal = Fort → le sous-total
+              Fort de chaque bande) — lu sur le crosstab. La phrase « analysé N » reste le total (fait). */}
+          <div data-encart className="mt-2 shrink-0 rounded-lg border border-line-2 bg-surface-2/50 px-3 py-1.5">
+            <p className="text-[11.5px] leading-snug text-txt-mut">
+              <b className="text-txt">LABUSE</b> a analysé les <b className="tabular-nums text-txt">{fmt(encartTotal)}</b> parcelles{zone ? ' de la zone' : commune ? ` de ${commune}` : ' de votre sélection'}.
             </p>
-          )}
-          {/* RECETTE-10 T12 — une commune sans aucune parcelle prioritaire (Priorité à zéro) mérite une
-              phrase qui l'explique — sinon le client conclut que l'outil ne trouve rien. Vérifié :
-              ces communes sont majoritairement en zone A/N ou hors PLU servi (RNU, ex. Saint-Philippe
-              n'a AUCUNE parcelle en zone U/AU) ; le zéro est JUSTE, ce n'est pas une panne. On le dit,
-              avec la note de commune si elle existe. Le libellé s'adapte quand « À suivre » est aussi nul. */}
-          {/* REPARATIONS-1 lot 2b — « Priorité » retiré : la phrase parle de la tête classée
-              entière (À suivre = brulante + chaude fusionnées). */}
-          {!ile && commune && counts.brulante + counts.chaude === 0 && (uni.data?.compte ?? 0) > 0 && (
-            <p data-zero-priorite className="mt-1.5 shrink-0 rounded-lg border border-st-creuser/40 bg-[#211a10] px-2.5 py-1.5 text-[11px] leading-snug text-st-creuser">
-              Aucune parcelle en <b>À suivre</b> sur {commune} — ce n'est pas une
-              absence de données.{communeNote ? ` ${communeNote}` : ' Le foncier de cette commune est très majoritairement en zone agricole, naturelle ou hors d’un PLU servi'} :
-              le modèle n'y détecte pas de foncier mutable à court terme. Les {fmt(counts.reserve_fonciere + counts.a_creuser + epuise)} parcelles « Sans signal » restent consultables.
-            </p>
-          )}
-          {/* M55-G point 5 (décision Vic) : la ligne « soit N parcelles avec dossier propriétaire ·
-              N personnes physiques » a QUITTÉ la zone résultats — l'info vit en fiche (tiroir
-              Propriétaire), rien n'est perdu. Champs API (opportunites_avec_dossier…) inchangés. */}
-          {/* RECETTE-7 (A3) — la barre reprend les COULEURS DES PALIERS (rouge priorité · orange à
-              suivre · pâle sans signal · sombre écartées), proportionnelle au TOTAL analysé — plus
-              une barre uniforme et pâle. Elle suit EXACTEMENT la ventilation ci-dessus (même
-              groupement : sans signal = réserve + à creuser + potentiel épuisé) ; couleurs PALIER_META. */}
-          {(() => {
-            const sansSignal = counts.reserve_fonciere + counts.a_creuser + epuise
-            const tot = Math.max(1, counts.brulante + counts.chaude + sansSignal + (ecartees ?? 0))
-            const seg = (n: number, color: string) => <span style={{ background: color, width: `${(n / tot) * 100}%` }} />
-            return (
-              <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">
-                {/* lot 2b — la barre suit la ventilation : tête fusionnée sous À suivre */}
-                {seg(counts.brulante + counts.chaude, PALIER_META.a_suivre.color)}
-                {seg(sansSignal, PALIER_META.sans_signal.color)}
-                {seg(ecartees ?? 0, PALIER_META.ecartee.color)}
-              </div>
-            )
-          })()}
+            <div data-ventilation-bande className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] leading-snug">
+              {BANDE_ENCART.map((b) => (
+                <span key={b} className="inline-flex items-center gap-1">
+                  <span className="inline-flex h-2 w-2 rounded-full" style={{ background: BANDE_META[b].color }} />
+                  <b className="tabular-nums" style={{ color: BANDE_META[b].color }}>{fmt(bandeSignalCount(b))}</b>
+                  <span className="text-txt-dim">{BANDE_META[b].label}</span>
+                </span>
+              ))}
+            </div>
+            {(() => {
+              const vals = BANDE_ENCART.map((b) => bandeSignalCount(b))
+              const tot = Math.max(1, vals.reduce((a, v) => a + v, 0))
+              return (
+                <div className="mt-1 flex h-1.5 overflow-hidden rounded-full bg-line">
+                  {BANDE_ENCART.map((b, i) => vals[i] > 0 && (
+                    <span key={b} style={{ background: BANDE_META[b].color, width: `${(vals[i] / tot) * 100}%` }} />
+                  ))}
+                </div>
+              )
+            })()}
+          </div>
+
+          {/* ANALYSE-3 (révision) — les DEUX filtres, deux lignes. La puce ne porte QUE le MOT ENTIER, sur
+              UNE ligne, JAMAIS tronqué, JAMAIS d'info réservée au survol. « Tous » en dernier. Actif = vert
+              opaque. Le compteur est revenu dans l'encart. Les libellés « Classement »/« Signal » inline
+              ont été retirés : à la largeur de colonne, 5 mots entiers + libellé ne tiennent pas sur une
+              ligne — les deux rangées restent distinctes par leur contenu (bandes de qualité vs Fort/
+              Moyen/Faible). Rangée 1 = le classement (bande), rangée 2 = le signal de mutation. */}
+          <div data-filtres className="mt-2 flex shrink-0 flex-col gap-1 rounded-lg border border-line-2 bg-surface-2/50 px-2 py-1.5">
+            <div data-classement-filtre className="flex min-w-0 flex-nowrap items-center gap-0.5">
+              {CLASSEMENT_FILTRE.map((c) => {
+                const actif = classementFiltre === c.key
+                return (
+                  <button key={c.key} data-classement-pill={c.key} onClick={() => setClassementFiltre(c.key)}
+                    className={`whitespace-nowrap rounded-md px-1 py-1 text-[10px] leading-none transition-colors duration-quick ${
+                      actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
+                    {c.label}
+                  </button>
+                )
+              })}
+            </div>
+            <div data-signal-filtre className="flex min-w-0 flex-nowrap items-center gap-0.5">
+              {SIGNALS_FILTRE.map((s) => {
+                const actif = signalFiltre === s.key
+                return (
+                  <button key={s.key} data-signal-pill={s.key} onClick={() => setSignalFiltre(s.key)}
+                    className={`whitespace-nowrap rounded-md px-1 py-1 text-[10px] leading-none transition-colors duration-quick ${
+                      actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
+                    {s.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* ANALYSE-3 (§4) — la ligne de résultats : « N parcelles correspondent à vos filtres » SEULE,
+              sur une seule ligne. « Trier par potentiel » retiré (l'ordre est fixe, le libellé débordait). */}
+          <div data-filtre-resume className="mt-2 shrink-0 truncate border-t border-line pt-1.5 text-[11px] text-txt-mut">
+            <b className="tabular-nums text-txt">{fmt(filtreCount)}</b> parcelle{filtreCount > 1 ? 's' : ''} correspondent à vos filtres
+          </div>
         </>
       )}
 
@@ -674,7 +769,7 @@ export function ResultsSection() {
             <button onClick={refetch} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer</button>
           </div>
         )}
-        {!loading && !error && shown.length === 0 && (
+        {!loading && !error && (analyse ? bandeTotal === 0 : shown.length === 0) && (
           /* Item 4 (UX V1) : état vide EXPLICITE — dit où on est et comment en sortir
              (élargir à l'île / réinitialiser), aligné sur le #map-empty historique. */
           <div data-liste-vide>
@@ -700,63 +795,69 @@ export function ResultsSection() {
               } />
           </div>
         )}
-        {/* RECETTE-3 (T4) — mode ANALYSE : la liste est organisée en 4 SEGMENTS repliables (ordre
-            fixe), le compte de chacun servi par /filtre (segments, exact hors étage 0). Chaque carte
-            garde son palier. Mode FACTUEL : liste plate (neutre).
-            RECETTE-7 (A4) — la case « Voir tout » flottante est REMPLACÉE par une carte « Tout » en
-            DERNIÈRE position de la liste des segments (même forme, même traitement, son compte à
-            droite) : la cliquer ouvre/referme les quatre segments. */}
-        {!loading && !error && (analyse ? (
+        {/* ANALYSE-1 — mode ANALYSE : UNE liste unique, classée par bande de Score puis par Signal de
+            mutation (serveur, lexicographique). Un en-tête de bande est inséré à chaque changement de
+            bande. Puis, EN FIN de liste et jamais masqués, deux groupes repliables avec leur compte :
+            « Analyse incomplète » (au-dessus, jamais reléguée comme mauvaise) et « Sans potentiel
+            constructible » (tout en bas). Mode FACTUEL : liste plate (neutre). */}
+        {!loading && !error && analyse && bandeTotal > 0 && (
           <>
-          {SEGMENTS.map((seg) => {
-            // RECETTE-12 B2 — le segment charge SES PROPRES lignes (île : 200/page côté serveur via
-            // le param `segment` ; commune : filtre de la liste complète en mémoire). Fin du « 9 sur
-            // 72 » où la fenêtre globale triée par rang ne laissait qu'une poignée d'un petit segment.
-            const communeRows = ile ? [] : list.filter((p) => segmentOf(p) === seg.key)
-            const total = uni.data?.segments?.[seg.key] ?? communeRows.length
-            return (
-              <AnalyseSegment key={seg.key} seg={seg} open={!!openSeg[seg.key]}
-                onToggle={() => setOpenSeg((s) => ({ ...s, [seg.key]: !s[seg.key] }))}
-                filters={filters} sort={sort} ile={ile} commune={commune ?? ''}
-                serverTotal={total} communeRows={communeRows} />
-            )
-          })}
-          {/* RECETTE-7 (A4) — la carte « Tout » en dernière position (même forme que les 4 segments,
-              son compte à droite) : la cliquer ouvre/referme les quatre segments. Remplace la case
-              « Voir tout » flottante. */}
-          {(() => {
-            const allOpen = SEGMENTS.every((s) => openSeg[s.key])
-            const toutTotal = SEGMENTS.reduce((a, s) => a + (uni.data?.segments?.[s.key] ?? 0), 0) || shown.length
-            return (
-              <button data-segment="tout"
-                onClick={() => setOpenSeg(Object.fromEntries(SEGMENTS.map((s) => [s.key, !allOpen])) as Record<SegKey, boolean>)}
-                className="flex w-full shrink-0 items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left hover:border-mint/50">
-                <span className="flex min-w-0 items-center gap-2">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"
-                    className={`shrink-0 text-txt-dim transition-transform ${allOpen ? 'rotate-90' : ''}`}><path d="m9 18 6-6-6-6" /></svg>
-                  <span className="truncate text-[12px] font-medium text-txt">Tout</span>
-                </span>
-                <span className="shrink-0 tnum text-[11px] text-txt-dim">{fmt(toutTotal)}</span>
-              </button>
-            )
-          })()}
+          {analyseRows.map((p, i) => (
+            <Fragment key={p.idu}>
+              {(i === 0 || p.bande !== analyseRows[i - 1].bande) && p.bande && <BandeHeader bande={p.bande as Bande} />}
+              <AnalyseCard p={p} communeLabel={commune ?? ''} />
+            </Fragment>
+          ))}
+          {analyseList.isLoading && analyseRows.length === 0 && (
+            <p className="px-3 py-1.5 text-[10.5px] text-txt-dim">Chargement…</p>
+          )}
+          {/* ANALYSE-2 — vide HONNÊTE : quand le couple (Classement, Signal) ne matche AUCUNE parcelle,
+              on le DIT clairement (ce n'est pas une panne), en nommant le filtre — plus jamais un
+              « 0 / 2 216 » muet. Les groupes de fin restent accessibles (si Classement = Tous). */}
+          {!analyseList.isLoading && analyseRows.length === 0 && filtreCount === 0 && (
+            <p data-filtre-vide className="px-3 py-2 text-[11px] leading-snug text-txt-dim">
+              Aucune parcelle {classementFiltre !== 'tous'
+                ? <>« <b style={{ color: BANDE_META[classementFiltre].color }}>{BANDE_META[classementFiltre].label}</b> »</>
+                : 'constructible'}{signalParam ? <> à signal <b>{signalParam}</b></> : ''} dans cette sélection.
+              {showEndGroups ? ' Les parcelles Non retenue et Analyse incomplète restent consultables ci-dessous.' : ''}
+            </p>
+          )}
+          {/* ANALYSE-2 — groupes de fin montrés seulement quand Classement = Tous (une bande précise
+              demandée n'inclut pas ces catégories à part). Jamais masqués sinon. */}
+          {showEndGroups && (bandes.NC ?? 0) > 0 && (
+            <AnalyseBandeGroup groupe="nc" label={BANDE_META.NC.label} color={BANDE_META.NC.color}
+              total={bandes.NC ?? 0} filters={filters} commune={commune ?? ''} />
+          )}
+          {showEndGroups && (bandes['0'] ?? 0) > 0 && (
+            <AnalyseBandeGroup groupe="zero" label={BANDE_META['0'].label} color={BANDE_META['0'].color}
+              total={bandes['0'] ?? 0} filters={filters} commune={commune ?? ''} />
+          )}
           </>
-        ) : (
+        )}
+        {!loading && !error && !analyse && (
           shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} factual={true} />)
-        ))}
+        )}
       </div>
 
       <div className="flex shrink-0 items-center justify-between gap-2 border-t border-line py-3">
-        {/* RETOURS-7 Z11 — compteur SUR UNE SEULE LIGNE : « 200 / 430 813 » (affichées / total). */}
+        {/* RETOURS-7 Z11 — compteur SUR UNE SEULE LIGNE. ANALYSE-1 : en analyse, le compteur porte les
+            parcelles CONSTRUCTIBLES affichées / total (les groupes NC et Sans potentiel ont leur propre
+            compte dans leur en-tête). */}
         <span className="min-w-0 text-[11px] text-txt-dim tnum">
-          {fmt(shown.length)}{total > 0 || !ile ? ` / ${fmt(ile ? total : (list.length || total))}` : ''}
+          {analyse
+            ? `${fmt(analyseRows.length)} / ${fmt(filtreCount)} constructibles`
+            : `${fmt(shown.length)}${total > 0 || !ile ? ` / ${fmt(ile ? total : (list.length || total))}` : ''}`}
         </span>
         <span className="flex shrink-0 items-center gap-2">
-          {/* RETOURS-7 Z11 — export CSV RETIRÉ de la liste (décision Vic). SUITE-1 S7 : l'endpoint
-              /parcels/export.csv et `csvExportUrl` ont été supprimés (code mort sans appelant). */}
-          {/* RETOURS-10 (T3) — UN SEUL geste « Voir 200 de plus » (jamais « Tout voir ») : île → page
-              serveur suivante ; commune → fenêtre client +200. Jamais de chargement massif. */}
-          {ile ? (
+          {/* RETOURS-10 (T3) — UN SEUL geste « Voir 200 de plus » (jamais « Tout voir »). */}
+          {analyse ? (
+            (analyseList.hasNextPage ?? false) && (
+              <button data-results-more onClick={() => analyseList.fetchNextPage()} disabled={analyseList.isFetchingNextPage}
+                className="text-xs text-mint hover:underline disabled:opacity-50">
+                {analyseList.isFetchingNextPage ? 'Chargement…' : `Voir ${fmt(RESULTS_PAGE)} de plus →`}
+              </button>
+            )
+          ) : ile ? (
             serverList.hasNextPage && (
               <button data-results-more onClick={() => serverList.fetchNextPage()} disabled={serverList.isFetchingNextPage}
                 className="text-xs text-mint hover:underline disabled:opacity-50">

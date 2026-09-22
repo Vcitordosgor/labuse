@@ -165,13 +165,73 @@ def radar_cycle(ctx: JobContext) -> None:
     ctx.compte(**(r if isinstance(r, dict) else {"resultat": str(r)}))
 
 
-def radar_digests(ctx: JobContext) -> None:
-    """Regroupe TOUS les événements de veille en attente par client, envoie UN mail par client (Brevo
-    template 13 + digest 12), marque envoyé. Idempotent (dedup event_log) : relancé deux fois, n'envoie
-    pas deux fois. En dry-run (sans SMTP), calcule et logue tout, n'envoie rien."""
+def radar_cloche(ctx: JobContext) -> None:
+    """VEILLE-2 (Lot 5) — POSE à la cloche (kind `radar`, compte-scopé) chaque annonce du jour qui matche
+    une veille d'un client → clic vers l'annonce. AUCUN mail : le digest du matin (07:15) l'e-maile avec
+    le reste (plus d'alerte Radar séparée). Idempotent (dédup compte+bien+jour)."""
     from .pige import digests
-    r = digests.envoyer(ctx.db, dry_run=ctx.dry_run)
-    ctx.compte(**{k: r.get(k) for k in ("n_biens_du_jour", "envoyes", "echecs", "simules", "deja")})
+    from .api.events import ensure_tables
+    from .db import engine
+    ensure_tables(engine())
+    r = digests.evaluer_radar_cloche(ctx.db)
+    ctx.compte(**r)
+
+
+def evaluer_suivis(ctx: JobContext) -> None:
+    """VEILLE-2 (Lot 1) — évalue les PARCELLES SUIVIES : vente (DVF) / permis (Sitadel) / procédure
+    (BODACC) / changement de propriétaire PM SUR la parcelle → notifications event_log
+    kind=parcelle_suivie (la bascule du score est produite par detect-events). Reprend le legacy du matin
+    (07:00). Zéro modèle, dédup par fait → un rejeu ne recrée rien (idempotent)."""
+    from .api.events import ensure_tables, evaluer_suivis as _eval
+    from .db import engine
+    ensure_tables(engine())
+    r = _eval(ctx.db)
+    ctx.compte(total=sum(r.values()), **r)
+
+
+# VEILLE-2 (Lot 4) — `evaluer_secteurs` RETIRÉ : les secteurs (zones dessinées) sont archivés, plus
+# jamais évalués (la page Veille n'a que PARCELLE et RADAR). `alertes.evaluer_tous_secteurs` n'a plus de
+# job (retiré du registre et du verrou V8a).
+
+
+def detect_events(ctx: JobContext) -> None:
+    """VEILLE-2 (Lot 4) — BASCULES DU MARCHÉ : diffe le run servi et son précédent (table des runs, jamais
+    une constante) → événements `bascule`/`bodacc` + bascule du score sur les parcelles suivies. (L'ancienne
+    évaluation des recherches sauvegardées est retirée.) Idempotent par (kind, idu, run_from, run_to) :
+    rejeu = 0. Aucun run précédent (première install) → rien à diffuser, exit 0."""
+    from sqlalchemy import text as _text
+
+    from . import runs
+    from .api.events import detect_events as _detect, ensure_tables
+    from .db import engine
+    ensure_tables(engine())
+    run_to = runs.current()
+    # Le VRAI précédent du run SERVI = le run calculé JUSTE AVANT lui (computed_at < servi), jamais le
+    # « dernier autre run » (qui peut être un CANDIDAT calculé APRÈS le servi et non promu → un diff à
+    # l'envers qui fabrique des bascules fantômes). run_precedent_servi ne filtre pas sur computed_at ;
+    # ici on prend le prédécesseur chronologique réel. Aucun prédécesseur → rien à diffuser (exit 0).
+    prev = ctx.db.execute(_text(
+        "SELECT run_id FROM p_score_v2_runs "
+        "WHERE computed_at < (SELECT computed_at FROM p_score_v2_runs WHERE run_id = :s) "
+        "ORDER BY computed_at DESC LIMIT 1"), {"s": run_to}).scalar()
+    if not prev:
+        ctx.compte(inserted=0, note="aucun run antérieur au servi — rien à diffuser")
+        return
+    out = _detect(ctx.db, prev, run_to, demo=False)
+    ctx.compte(run_from=prev, run_to=run_to, **out)
+
+
+def digest(ctx: JobContext) -> None:
+    """VEILLE-FIX-1 (lot 1) — DIGEST DU MATIN (chaînes 1+2 : suivis de parcelle + secteurs + recherches)
+    aux comptes actifs, filtré par préférence e-mail et par type. Passe par mail_queue (une ligne par
+    envoi). Anti-double-envoi (last_digest_at + intervalle) ; digest vide ne part pas. En dry-run (sans
+    SMTP) : calcule, ÉCRIT la ligne mail_queue, n'envoie RIEN."""
+    from .api.events import ensure_tables, envoyer_digests
+    from .db import engine
+    ensure_tables(engine())
+    base = get_settings().public_base_url or ""
+    r = envoyer_digests(ctx.db, base_url=base, freq="quotidien", dry_run=ctx.dry_run)
+    ctx.compte(**{k: r.get(k) for k in ("envoyes", "ignores", "echecs", "simules")})
 
 
 def copilote_purge(ctx: JobContext) -> None:

@@ -1527,7 +1527,7 @@ idu,date_vente,vente_groupee,premier_envoi,n_simule,premiere_piste,exclue_client
 97415000CY1163,2025-03-31,True,,,,False
 97413000DG0764,2024-08-28,True,,,,False
 97410000AT0079,2024-12-27,False,,,,False
-97411000BK0220,2024-04-02,True,,,,False
+97411000BK0220,2024-04-02,True,,,2026-09-19 13:09:58.674443+00:00,False
 97415000BX0219,2024-09-16,True,,,,False
 97403000AR0064,2024-01-17,True,,,,False
 97410000AS1459,2025-05-28,False,,,,False
@@ -2377,7 +2377,7 @@ idu,date_vente,vente_groupee,premier_envoi,n_simule,premiere_piste,exclue_client
 97422000EK0004,2024-03-18,False,,,,False
 97406000AI0619,2024-10-31,False,,,,False
 97409000AE0243,2024-09-16,False,,,,False
-97411000EI0245,2024-06-20,True,,,,False
+97411000EI0245,2024-06-20,True,,,2026-09-19 13:09:58.341894+00:00,False
 97404000AE1157,2024-09-30,False,,,,False
 97422000BL0737,2025-06-10,True,,,,False
 97404000AD1552,2024-06-27,True,,,,False
@@ -5875,7 +5875,7 @@ idu,date_vente,vente_groupee,premier_envoi,n_simule,premiere_piste,exclue_client
 97413000CR1176,2025-02-24,True,,,,False
 97413000BM0600,2024-12-19,True,,,,False
 97413000CG0877,2024-02-23,True,,,,False
-97411000IY0004,2024-02-21,False,,,,False
+97411000IY0004,2024-02-21,False,,,2026-09-19 13:09:58.794361+00:00,False
 97416000CS1603,2024-08-23,False,,,,False
 97414000DE1162,2025-08-14,False,,,,False
 97415000DE0455,2025-05-27,False,,,,False
@@ -6843,7 +6843,7 @@ idu,date_vente,vente_groupee,premier_envoi,n_simule,premiere_piste,exclue_client
 97416000EX1839,2024-11-27,False,,,,False
 97418000BI0370,2024-09-18,True,,,,False
 97423000AE0754,2025-05-22,True,,,,False
-97411000AE0058,2024-12-27,True,,,,False
+97411000AE0058,2024-12-27,True,,,2026-09-19 13:09:58.177117+00:00,False
 97405000AT0046,2024-11-07,True,,,,False
 97411000ET0113,2024-12-24,False,,,,False
 97419000AI0499,2024-09-24,True,,,,False
@@ -9232,7 +9232,7 @@ idu,date_vente,vente_groupee,premier_envoi,n_simule,premiere_piste,exclue_client
 97408000AS0464,2024-04-23,False,,,,False
 97402000AM0012,2025-05-26,True,,,,False
 97407000BE0304,2025-10-23,False,,,,False
-97411000DK0456,2024-12-02,True,,,,False
+97411000DK0456,2024-12-02,True,,,2026-09-04 17:32:08.102478+00:00,False
 97407000AO0417,2025-12-29,False,,,,False
 97412000BE0300,2024-09-27,False,,,,False
 97422000AP0960,2025-11-14,False,,,,False
@@ -12717,7 +12717,7 @@ idu,date_vente,vente_groupee,premier_envoi,n_simule,premiere_piste,exclue_client
 97412000BX1856,2025-05-14,True,,,,False
 97409000BL0209,2024-06-25,True,,,,False
 97422000DN0281,2024-06-26,False,,,,False
-97411000DK0210,2024-12-02,True,,,,False
+97411000DK0210,2024-12-02,True,,,2026-09-04 17:32:10.001925+00:00,False
 97415000DR0470,2024-03-13,True,,,,False
 97406000AI0951,2025-07-25,False,,,,False
 97415000CT2977,2024-04-05,False,,,,False

@@ -34,7 +34,7 @@ class DvfLayer(Layer):
         # (dvf_secteur_medianes type='terrain'), JAMAIS un ratio bâti/foncier ni un rayon.
         # L'ancien €/m² « rayon, tous biens » comptait du bâti au m² de terrain (facteur ~2) —
         # supprimé (RAPPORT_M79). Échelle recalée sur la distribution TERRAIN île entière
-        # (676 secteurs n≥3, p25=158/p75=323 → plo/phi = 150/325 ; PRE_VOL_ILE.md).
+        # (676 secteurs n≥3, p25=158/p75=323 → plo/phi = 150/325 ; docs/communes/PRE_VOL_ILE.md).
         liq_ref = float(params.get("liquidity_ref", 8))
         plo = float(params.get("price_lo_eur_m2", 150))
         phi = float(params.get("price_hi_eur_m2", 325))

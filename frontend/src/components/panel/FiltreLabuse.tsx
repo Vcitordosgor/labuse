@@ -8,21 +8,19 @@
  * Le compteur est SQL-exact (endpoint unifié /filtre) — jamais un calcul client. Chaque facette
  * porte son étiquette (Sourcé/Estimé) et sa limite. Aucune facette du cadrage ANTI-FILTRES ici.
  */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
-import { getFiltre, getFiltreCount, getSearchApercu, getZonageZones, saveSearch } from '../../lib/api'
-import { countActiveFilters, filtersToHash, resumeCriteres } from '../../lib/filters'
-import { tierChipLabel } from '../../lib/status'
+import { getFiltre, getFiltreCount, getZonageZones } from '../../lib/api'
+import { countActiveFilters, resumeCriteres } from '../../lib/filters'
+import { BANDE_META, BANDE_ORDER } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Tip } from '../Tip'
 import { useFiltre } from './filtreContext'   // M120 — binding partagé (carte OU cadrage projet)
 
-// M137 — le tooltip d'un palier de la bande de résumé s'ouvre sur SON CHIP (le mot visible dans
-// la bande : « priorité », « à suivre »…), PUIS l'explication (libellé long : sens). Le client
-// relie le chip qu'il lit à sa définition ; un seul vocabulaire, celui des chips.
-const defTip = (key: string) => `${tierChipLabel(key)} — ${CLIENT.revelation.defTiers[key]}`
+// ANALYSE-1 — le récapitulatif de la Révélation parle le NOUVEAU moteur (bandes de Score) ; l'ancien
+// helper `defTip` (tooltip des paliers Priorité/À suivre…) est retiré avec la ventilation par tier.
 
 // M55-G suite point 3 : CONSTRUCTIBILITE et les chips de verdict/motif ont quitté l'état
 // post-analyse (0-caller) — les champs de filtre restent dans le store + l'URL.
@@ -297,26 +295,11 @@ export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: stri
 // du store/back (_q_v2_where) et leurs tests restent intacts — réversible en remontant le composant
 // (historique git : commit KF1, fichier à ce chemin).
 
+// VEILLE-2 (Lot 4) — la CRÉATION d'une veille de recherche depuis les filtres est RETIRÉE (plus de bouton
+// « Créer une veille ») ; `enVeille` ne sert plus qu'à masquer le rituel « regard LABUSE » là où ce même
+// panneau serait monté hors carte. La page Veille n'a plus que PARCELLE et RADAR.
 export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; enVeille?: boolean } = {}) {
-  const { filters, setFilter, setFilters, setVerdict, commune, setCommunesFilter, setAnalyseRecap,
-          zone, setToast, openSurveillance } = useApp()
-  const qc = useQueryClient()
-  // #1 (fix veille-notifs) — LE GESTE MANQUANT : créer une veille de critères DEPUIS les filtres posés.
-  // Enregistre la recherche courante (même chemin que Veille › Critères : saveSearch + filtersToHash),
-  // puis ouvre le volet Critères pour la montrer (au même niveau que Parcelles/Secteurs).
-  const creerVeille = useMutation({
-    mutationFn: () => saveSearch(
-      (resumeCriteres(filters, CLIENT.signaux.labels, 6) || 'Ma veille').slice(0, 80),
-      filtersToHash(filters, zone) || '#f=1'),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['searches'] })
-      setToast('Veille créée — retrouvez-la dans Veille › Critères.')
-      openSurveillance('criteres')
-    },
-  })
-  // CONNEXIONS-2 Lot 5 (KO-7) — aperçu des dimensions surveillées par la veille (moteur partagé carte↔veille).
-  const veilleHash = filtersToHash(filters, zone) || '#f=1'
-  const apercuVeille = useQuery({ queryKey: ['veille-apercu', veilleHash], queryFn: () => getSearchApercu(veilleHash) })
+  const { filters, setFilter, setFilters, setVerdict, commune, setCommunesFilter, setAnalyseRecap } = useApp()
   const analyseOn = filters.analyseLabuse
   // M55-D stage 4 : interrupteur UNIFIÉ — analyseLabuse (persisté, URL) ⟺ verdict (carte). Éteint
   // par défaut : plus jamais « analyse active » quand l'utilisateur n'a rien allumé (bug mesuré).
@@ -324,10 +307,9 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
   // Reset : les DEUX étages + éteint l'interrupteur (retour à l'état vierge). M55-J : coupe
   // aussi le rituel (phase/snapshot) — jamais une carte-phrase orpheline après un reset.
   const resetTout = () => { setFilters(EMPTY_FILTERS); setVerdict(false); setPhase('idle'); setSnapFilters(null); setAnalyseRecap(null) }
-  // Compteurs : parc FACTUEL (analyse coupée) et RETENUES (analyse). La transition raconte l'effet.
-  const on = useQuery({ queryKey: ['filtre', filters, true], queryFn: () => getFiltre({ ...filters, analyseLabuse: true }, 0) })
-  // M55-F point 2 : la TRAME (analyse coupée) — total analysé du périmètre. écartées (étage 0) =
-  // trame − retenues ; l'arithmétique de la phrase boucle (analysé = retenues + écartées).
+  // ANALYSE-1 — la TRAME entière (analyse coupée = tous les tiers) porte la ventilation par BANDE du
+  // nouveau moteur (`bandes` dans la réponse /filtre). C'est la seule source du récapitulatif ; la
+  // requête « retenues » (tier) a été retirée (le nouveau moteur ne parle plus de tiers).
   const trameQ = useQuery({ queryKey: ['filtre', filters, false], queryFn: () => getFiltre({ ...filters, analyseLabuse: false }, 0) })
 
   // ═══ M55-D stage 7 · COMPTEUR VIVANT — « N parcelles correspondent », mis à jour à chaque
@@ -363,7 +345,8 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
   // provient du SNAPSHOT pris au lancement — pas des filtres live. Trois pièces figées à
   // `lancer()` : `fresh` (retenues + ventilation), `freshTrame` (effectif analysé = trame),
   // `snapFilters` (les critères du run, pour le récap/périmètre + le filet d'invalidation). ═══
-  const [fresh, setFresh] = useState<Awaited<ReturnType<typeof getFiltre>> | null>(null)
+  // ANALYSE-1 — le snapshot du run pour le récapitulatif = `freshTrame` (trame entière, avec la
+  // ventilation par bande). L'ancien `fresh` (retenues/tier) a été retiré.
   const [freshTrame, setFreshTrame] = useState<Awaited<ReturnType<typeof getFiltre>> | null>(null)
   const [snapFilters, setSnapFilters] = useState<Filters | null>(null)
   const timerRef = useRef<number | null>(null)
@@ -374,7 +357,7 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
   const RITUEL_MS = reduced ? 400 : 3000
   const lancer = () => {
-    setPhase('counting'); setCountVal(0); setFresh(null); setFreshTrame(null)
+    setPhase('counting'); setCountVal(0); setFreshTrame(null)
     // M55-J point 1 : SNAPSHOT du run — on fige les critères et on tire LES DEUX effectifs
     // (retenues + trame analysée) sur CES critères-là. La carte ne lira plus jamais les filtres
     // live : elle décrit ce run, un point c'est tout.
@@ -385,9 +368,11 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
     // « ✓ Analyse LABUSE » portera — jamais l'état courant des filtres (même invariant M55-J p1).
     setAnalyseRecap(resumeCriteres(snap, CLIENT.signaux.labels, Infinity))
     // la VRAIE requête part MAINTENANT (appel direct, SANS retry : un échec interrompt le rituel
-    // au lieu d'être masqué par les retries react-query au-delà des 3 s)
+    // au lieu d'être masqué par les retries react-query au-delà des 3 s). ANALYSE-1 : son résultat
+    // n'est plus stocké (le récapitulatif lit la trame `freshTrame`), mais l'appel reste — c'est LUI
+    // qui DÉTECTE un échec réseau du run et bascule proprement en `error` (jamais un faux succès).
     getFiltre({ ...snap, analyseLabuse: true }, 0)
-      .then((r) => setFresh(r))
+      .then(() => { /* succès : la révélation se fait à la fin du décompte */ })
       .catch(() => {
         if (phaseRef.current !== 'counting') return
         if (timerRef.current) window.clearTimeout(timerRef.current)
@@ -408,13 +393,8 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
     }
     timerRef.current = window.setTimeout(() => setPhase((ph) => (ph === 'counting' ? 'revealed' : ph)), RITUEL_MS)
   }
-  useEffect(() => {   // échec réseau pendant le décompte → état d'erreur honnête
-    if (phase === 'counting' && on.isError) {
-      if (timerRef.current) window.clearTimeout(timerRef.current)
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-      setPhase('error')
-    }
-  }, [phase, on.isError])
+  // ANALYSE-1 : l'échec réseau du run est détecté par le `.catch` de l'appel direct dans `lancer()`
+  // (ci-dessus) ; l'ancien useEffect sur `on.isError` (requête retirée) n'a plus lieu d'être.
   useEffect(() => () => {   // démontage : aucun timer orphelin
     if (timerRef.current) window.clearTimeout(timerRef.current)
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
@@ -442,21 +422,12 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
   const nCom = cardFilters.communes.length
   const perimetre = nCom === 1 ? cardFilters.communes[0] : nCom > 1 ? `${nCom} communes` : (commune ?? 'La Réunion')
   const recap = resumeCriteres(cardFilters, CLIENT.signaux.labels)
-  // la phrase révèle les nombres du RITUEL (réponse fraîche du snapshot) ; hors rituel, le live
-  const src = phase === 'revealed' && fresh ? fresh : on.data
-  const phraseRetenues = src?.compte
-  const t = src?.tiers
-  // (l'helper de pluriel `pl` est parti avec le chip « Priorité » — REPARATIONS-1 lot 2b)
-  // M55-J point 1 — l'arithmétique de la carte vient d'UN SEUL run (le snapshot) :
-  //  · analysé (trame)     = freshTrame.compte  (snapshot, PAS trameQ live)
-  //  · retenues            = fresh.compte  (snapshot ; = ventilation 4 tiers + potentiel épuisé)
-  //  · potentiel épuisé    = retenues − (brûlante+chaude+réserve+à creuser)
-  //  · écartées (étage 0)  = analysé − retenues                               (exclusions dures)
-  // En phase revealed, on lit le snapshot (freshTrame) ; ailleurs (pas de phrase), le live.
+  // ANALYSE-1 — le récapitulatif décrit le SNAPSHOT (freshTrame), pas les filtres live. `analyseTotal`
+  // = total de la trame analysée ; `bandesReveal` = ventilation par BANDE du nouveau moteur (comptes
+  // bruts, aucun quota/rang/percentile). En phase revealed/counting on lit le snapshot ; ailleurs le live.
   const analyseTotal = (phase === 'revealed' || phase === 'counting') ? freshTrame?.compte : trameQ.data?.compte
-  const vent4 = t ? t.brulante + t.chaude + t.reserve_fonciere + t.a_creuser : 0
-  const declassees = phraseRetenues != null ? phraseRetenues - vent4 : 0
-  const ecartees = (analyseTotal != null && phraseRetenues != null) ? analyseTotal - phraseRetenues : null
+  const bandesReveal = ((phase === 'revealed' || phase === 'counting') ? freshTrame?.bandes : trameQ.data?.bandes) ?? null
+  const bandeTotalReveal = bandesReveal ? BANDE_ORDER.reduce((a, b) => a + (bandesReveal[b] ?? 0), 0) : null
   // M55-J point 1 · FILET DE SÉCURITÉ : si un chemin EXTERNE (sélecteur commune du header, URL,
   // retour arrière) déplace les filtres live pendant que le rituel décrit un run, la carte
   // s'INVALIDE (état neutre invitant à relancer) plutôt que d'afficher un chiffre périmé.
@@ -587,28 +558,8 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
             : <><b className="text-txt">{nf.format(live)}</b> parcelles correspondent à vos critères</>}
         </p>
       )}
-      {/* RETOURS-7 Z10 — la CRÉATION de veille de recherche NE VIT PLUS dans le panneau Filtres
-          (décision Vic) : elle se crée depuis l'écran Veille › Critères, qui monte ce même FiltreLabuse
-          avec `enVeille`. Le bloc (aperçu « cette veille surveille : … » + bouton) ne s'affiche donc
-          QU'EN mode veille — il se DÉPLACE, il ne se perd pas. */}
-      {enVeille && nActifs > 0 && (
-        <>
-          {/* CONNEXIONS-2 Lot 5 (KO-7) — TRANSPARENCE : « cette veille surveille : … » (dimensions
-              réellement évaluées, moteur partagé avec la carte) + ce qui n'est PAS retenu, s'il y a lieu. */}
-          {apercuVeille.data && (
-            <p data-veille-apercu className="mt-2 rounded-lg border border-line-2 bg-surface-2/60 px-2.5 py-1.5 text-[10.5px] leading-snug text-txt-mut">
-              <b className="text-txt">Cette veille surveille :</b> {apercuVeille.data.surveille.join(' · ') || '—'}
-              {apercuVeille.data.non_retenu.length > 0 && (
-                <span className="mt-0.5 block text-amber">Non retenu (non évaluable) : {apercuVeille.data.non_retenu.join(', ')}</span>
-              )}
-            </p>
-          )}
-          <button data-creer-veille onClick={() => creerVeille.mutate()} disabled={creerVeille.isPending}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-mint/50 bg-mint/[0.08] py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15 disabled:opacity-40">
-            {creerVeille.isPending ? 'Création…' : '🔔 Créer une veille sur cette recherche'}
-          </button>
-        </>
-      )}
+      {/* VEILLE-2 (Lot 4) — la CRÉATION d'une veille de recherche est RETIRÉE (plus de bouton « Créer une
+          veille » depuis les filtres) : la page Veille n'a plus que PARCELLE et RADAR. */}
       </>
       )}
 
@@ -668,40 +619,24 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
               {analyseTotal != null && <>{CLIENT.revelation.phraseIntro(analyseTotal, perimetre)}{' '}</>}
               {CLIENT.revelation.phraseSelon(recap)}
             </p>
-            {phraseRetenues === 0 ? (
+            {bandeTotalReveal === 0 ? (
               <p data-phrase-zero className="mt-1 text-[12.5px] font-medium leading-snug text-st-creuser">{CLIENT.revelation.phraseZero}</p>
-            ) : (
-              /* PALIERS-1 — ventilation sur LE vocabulaire unique : Priorité / À suivre / Sans
-                 signal (réserve foncière, à-creuser et déclassées fondus — plus « Long terme /
-                 Neutre / Faible »). Puis écartées (étage 0). retenues + écartées = analysé. */
-              <p className="mt-1 text-[13px] leading-relaxed text-txt">
-                <b className="text-[16px] text-mint tabular-nums">{phraseRetenues == null ? '…' : nf.format(phraseRetenues)}</b> retenues
-                {/* RECETTE-8 W10 (A5) — le « i » qui explique les comptes par commune : pourquoi
-                    l'immense majorité d'une commune n'a aucun signal. Déclencheur fonctionnel
-                    icône-seule → garder (S10). */}
-                <Tip garder side="top" tip="Sur une commune, l'immense majorité des parcelles est « sans signal » ou « écartée » — c'est normal : elles sont déjà bâties à leur densité autorisée, en zone non constructible (agricole/naturelle), ou sans signal de vente à court terme. Le foncier réellement mutable est rare ; le palier « À suivre » isole justement ces quelques parcelles-là.">
-                  <span role="button" tabIndex={0} aria-label="Pourquoi si peu de signaux par commune"
-                    className="ml-1 inline-flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 align-middle text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
-                </Tip>
-                {t && phraseRetenues != null && (
-                  <> — dont{' '}
-                    {/* le tooltip s'ouvre sur le chip visible (defTip, codes canoniques).
-                        REPARATIONS-1 lot 2b — la tête classée fusionnée sous « À suivre ». */}
-                    <Tip side="top" tip={defTip('a_suivre')}>
-                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.brulante + t.chaude)} à suivre</b></Tip>,{' '}
-                    <Tip side="top" tip={defTip('sans_signal')}>
-                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.reserve_fonciere + t.a_creuser + Math.max(0, declassees))} sans signal</b></Tip>
-                  </>
-                )}
-                {ecartees != null && ecartees > 0 && (
-                  <> — et <b className="tabular-nums text-txt-mut">{CLIENT.revelation.ecarteesLbl(ecartees)}</b>{' '}
-                    <span className="text-txt-dim">({CLIENT.revelation.ecarteesMotifs})</span>{' '}
-                    <Tip side="top" tip={CLIENT.revelation.ecarteesTip}>
-                      <span data-voir-pourquoi role="button" tabIndex={0}
-                        className="cursor-help text-mint underline decoration-dotted underline-offset-2">{CLIENT.revelation.voirPourquoi}</span></Tip>
-                  </>
-                )}.
-              </p>
+            ) : bandesReveal && (
+              /* ANALYSE-1 — la ventilation par BANDE du nouveau moteur : Excellente / Bonne / À étudier /
+                 Faible / Sans potentiel constructible / Analyse incomplète. Comptes bruts (aucun quota),
+                 couleurs franches (BANDE_META), jamais un chiffre de score. « Sans potentiel » et
+                 « Analyse incomplète » ne sont jamais masqués. */
+              <div data-phrase-bandes className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[12px] leading-snug">
+                {BANDE_ORDER.map((b) => (bandesReveal[b] ?? 0) > 0 && (
+                  <Tip key={b} side="top" tip={BANDE_META[b].long}>
+                    <span className="inline-flex items-center gap-1">
+                      <span className="inline-flex h-2 w-2 rounded-full" style={{ background: BANDE_META[b].color }} />
+                      <b className="tabular-nums" style={{ color: BANDE_META[b].color }}>{nf.format(bandesReveal[b] ?? 0)}</b>
+                      <span className="text-txt-dim">{BANDE_META[b].label}</span>
+                    </span>
+                  </Tip>
+                ))}
+              </div>
             )}
             {phase === 'revealed' && (
               /* ── 4. LE GESTE FINAL — l'analyse s'allume, la section se rétracte ── */

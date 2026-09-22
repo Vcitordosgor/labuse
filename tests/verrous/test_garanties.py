@@ -326,14 +326,14 @@ def test_fuite2_lidar_plus_quasi_vide():
 # ── la commande unique : 24, toujours tous ─────────────────────────────────────────────
 @pytest.mark.local
 def test_les_24_se_jouent_toujours_tous():
-    """La composition de « labuse circuit verrous » : 22 verrous + 8 garanties = 30, TOUJOURS
+    """La composition de « labuse circuit verrous » : 23 verrous + 8 garanties = 31, TOUJOURS
     tous — même quand un verrou casse en route (le vécu : l'arrêt-au-premier sur V3a masquait
     les suivants, la commande n'en montrait que 7). SOURCES-3 lot 4 : V4e (garde-fou 974) ajouté ;
     COUCHES-TUYAU-1 : V7a (verrou des tuiles) ajouté ; SOURCES-CORRECTION-2 lot 3 : + G8 (sources
     sans contrôle, ajouté par CRON-1 lot 2) ; FICHE-RANGEMENT-2 : + V5d (fiche par déclaration) ;
     PLU-CALIBRAGE-1 : + V6a (règles chiffrées validées) ; COMMUNE-RANGEMENT-2 : + V5e (fiche
     commune par déclaration) ; OUTILS-FIX-5 lot 7 : + V5f (tout chiffre d'un outil porte un id du
-    registre) — REMIS SUR LA VALEUR RÉELLE."""
+    registre) ; VEILLE-FIX-1 lot 1 : + V8a (toute veille/envoi a un job) — REMIS SUR LA VALEUR RÉELLE."""
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
     from labuse import circuit_verrous
@@ -343,6 +343,7 @@ def test_les_24_se_jouent_toujours_tous():
     ids = [r.id for r in resultats]
     assert ids == ["V1a", "V1b", "V1c", "V1d", "V2a", "V2b", "V3a", "V3b", "V3c",
                    "V4a", "V4b", "V4c", "V4d", "V4e", "V5a", "V5b", "V5c", "V5d", "V5e", "V5f", "V6a", "V7a",
+                   "V8a",   # VEILLE-FIX-1 lot 1 — toute veille/envoi a un job du registre
                    "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8"], ids
 
 

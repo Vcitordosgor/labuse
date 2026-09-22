@@ -3,7 +3,7 @@ import { Tip } from '../Tip'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
-import { verdictMeta } from '../../lib/status'
+import { BANDE_META, SIGNAL_META, verdictMeta } from '../../lib/status'
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
@@ -859,8 +859,53 @@ export function Fiche({ idu }: { idu: string }) {
                 le bouton se suffit (P2). `demanderAnalyseSous` (strings.ts) devient 0-caller. */}
           </>
         )}
-        {/* CARTE VERDICT — teintée selon le tier (verdict.color) ; la référence montre le cas Chaude. */}
-        {f && verdict && verdictRevele && (
+        {/* ══════ ANALYSE-1 — CARTE « ANALYSE LABUSE » (nouveau moteur : Score LABUSE + Signal) ══════
+            À la demande (verdictRevele). La BANDE en toutes lettres (mot + couleur franche, dominante),
+            le Signal de mutation en BADGE SECONDAIRE, et les contributions FR EN ENTIER (ce qui monte /
+            ce qui baisse). Aucun chiffre brut de score ni de probabilité. « Analyse incomplète » montre
+            sa cause. Le score ne s'affiche QUE sur la fiche et dans l'Analyse (mandat §4). */}
+        {f?.analyse_labuse?.bande && verdictRevele && (() => {
+          const a = f.analyse_labuse!
+          const bm = BANDE_META[a.bande as keyof typeof BANDE_META]
+          const sm = a.signal_niveau ? SIGNAL_META[a.signal_niveau as keyof typeof SIGNAL_META] : null
+          const nc = a.bande === 'NC'
+          if (!bm) return null
+          return (
+            <div data-analyse-labuse-card style={{ marginTop: 8, background: `${bm.color}12`, border: `1px solid ${bm.color}59`, borderRadius: 13, padding: '13px 16px' }}>
+              <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.4, color: 'var(--lab)', textTransform: 'uppercase' }}>Analyse LABUSE</p>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
+                <span data-fiche-bande={a.bande} title={bm.long} style={{ fontSize: 22, fontWeight: 600, color: bm.color, lineHeight: 1 }}>{bm.label}</span>
+                {sm && !nc && (
+                  <span data-fiche-signal={a.signal_niveau} title={sm.long}
+                    style={{ fontSize: 11, fontWeight: 500, color: sm.color, border: `1px solid ${sm.color}66`, borderRadius: 999, padding: '2px 8px' }}>{sm.label}</span>
+                )}
+              </div>
+              {nc && a.cause && (
+                <p data-fiche-cause style={{ margin: '9px 0 0', fontSize: 12, color: BANDE_META.NC.color }}>Analyse incomplète — {a.cause}.</p>
+              )}
+              {!nc && a.contributions && a.contributions.length > 0 && (
+                <div data-fiche-contributions style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <p style={{ margin: 0, fontSize: 10, letterSpacing: 1, color: 'var(--txt-off)', textTransform: 'uppercase' }}>Ce qui compte</p>
+                  {a.contributions.map((c, i) => {
+                    const up = c.sens === 'hausse'
+                    return (
+                      <span key={i} style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 6, fontSize: 12, color: up ? '#5CE6A1' : '#C08A6E' }}>
+                        <span aria-hidden style={{ fontSize: 9, fontWeight: 700, marginTop: 2 }}>{up ? '▲' : '▼'}</span>
+                        <span style={{ color: 'var(--txt-dim)' }}>{c.libelle}</span>
+                      </span>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })()}
+        {/* CARTE VERDICT (ancien moteur, run servi) — teintée selon le tier. ANALYSE-1 : MASQUÉE dès que
+            le nouveau moteur porte un verdict (`analyse_labuse`), pour qu'aucun ancien mot (Priorité / À
+            suivre / Sans signal / Écartée) n'apparaisse sur la fiche. La réglette « ×N vs moyenne » et la
+            fréquence par tier (ancien moteur) tombent avec elle — à re-brancher sur le nouveau moteur si
+            Vic le souhaite (hors mandat ANALYSE-1). */}
+        {f && verdict && verdictRevele && !f.analyse_labuse && (
           // M61 P2 — le bloc Analyse est un TIROIR : en-tête cliquable (Analyse LABUSE + verdict au
           // repli + chevron), corps repliable. État par parcelle (analyseReplie), déplié par défaut,
           // INDÉPENDANT de l'accordéon exclusif des 7 tiroirs (aucun autre tiroir ne se ferme).

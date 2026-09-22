@@ -371,6 +371,9 @@ LECTURES: tuple[Lecture, ...] = (
       "aper_note : sert la note d'obligation APER (ombrières PV, tiroir Urbanisme fiche + PDF flash) — donnée servie mais hors chiffre candidat (le faisceau viabilisation_verdict ne lit pas cette table)."),
     L("pige_annonces", "pige/api.py", "n_depots_a_verifier", "admin_radar",
       "Lit a.portail/a.url_sortante (files extraction/reverif/a-instruire) et max(date_saisie) pour l'écran admin Radar (/admin/radar/*) — les compteurs et files du rituel de vérification."),
+    L("pige_annonces", "pige/cycle.py", None, None,
+      "VEILLE-2 (Lot 2) — marquer_expirees : JOIN pige_annonces pour retirer un bien dont l'annonce a "
+      "expiré (expiration_date passée) — machinerie du cycle de vie, aucun robinet."),
     L("pige_annonces", "pige/depot_agence.py", None, None,
       "INSERT seul (publier : portail/url/list_id de l'annonce déposée par l'agence) — écriture d'ingestion, aucune lecture servie."),
     L("pige_annonces", "pige/html_ingest.py", None, None,

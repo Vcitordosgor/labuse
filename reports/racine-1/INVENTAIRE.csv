@@ -1,0 +1,213 @@
+nom,type,categorie,preuve,taille_octets,dernier_commit,versionne
+.DS_Store,FILE,D,"junk macOS, NON versionné (gitignore:162), régénéré par le Finder",10244,(none),NON
+.claude,DIR,A,dossier code/config/infra ou chemin par défaut lu par le code,8192,2026-06-10 bfec8ac6,oui
+.dockerignore,FILE,A,infra image,172,2026-06-11 cc26e55b,oui
+.env.example,FILE,A,gabarit env (docker-compose.pilot.yml:4 `cp .env.example .env`),4699,2026-07-25 451a728c,oui
+.env.pilot.example,FILE,A,gabarit env pilote,2176,2026-06-11 23f765c7,oui
+.gitignore,FILE,A,infra VCS,4893,2026-09-13 54ed8c9f,oui
+AMELIORATIONS-UX.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5485,2026-07-12 f626c01d,oui
+ANNEXE_REVUE_AN_ER.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,8626,2026-06-12 c3e28857,oui
+ANNONCES_RECON.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,8377,2026-06-08 4a5c20f9,oui
+AUDIT-FICHE-PDF.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,10422,2026-08-21 68d15d0f,oui
+AUDIT-FRAICHEUR.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,9196,2026-08-21 a7750edc,oui
+AUDIT.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,10375,2026-06-07 8c737c34,oui
+AUDIT_27_OUTILS.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7056,2026-07-07 846afb8c,oui
+AUDIT_COMPLET.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,24024,2026-06-12 98330e4e,oui
+AUDIT_R1_BATI_CORRECTION.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,10814,2026-06-12 2c257469,oui
+BILAN_ILE.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,16633,2026-07-08 5c585759,oui
+BUGS.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,9607,2026-08-12 2089f22c,oui
+CHAMPS-MORTS.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5500,2026-08-21 a7750edc,oui
+CLIENT_DEMO_CHECKLIST.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,2739,2026-06-12 201d06fb,oui
+COHERENCE-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7764,2026-09-18 7fce0c0c,oui
+COMMANDES.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,6183,2026-07-20 d8cae79e,oui
+COMMUNE-AUDIT-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,29631,2026-09-20 7b411d7b,oui
+COMMUNE-RANGEMENT-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5425,2026-09-20 4df8cd31,oui
+COMMUNE-RANGEMENT-2.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,14669,2026-09-20 4eb99f44,oui
+COPILOTE-AUDIT-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,25875,2026-09-20 6798a22e,oui
+COUCHES-PARITE-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,8696,2026-09-18 604f6dcb,oui
+COUCHES-RECETTE-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,22518,2026-09-17 b3719d04,oui
+COUCHES-RECETTE-2.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,8944,2026-09-17 5c0194d4,oui
+COUCHES-REGISTRE-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,20774,2026-09-18 cbc2af87,oui
+COUCHES-TUYAU-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,16908,2026-09-17 6f637e66,oui
+CRON-1-LOT0.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5727,2026-09-18 f455d1b0,oui
+CRON-1-LOT1-SONDE.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7189,2026-09-18 1bc60144,oui
+CRON-1-LOT1.md,FILE,B,src/labuse/jobs.py:411 + tests/test_circuit4_lot5.py:73 (commentaire/test — raison de retrait registre),6849,2026-09-18 1bc60144,oui
+CRON-1-LOT2.md,FILE,B,tests/test_cron1_g8.py:4 (docstring: «preuve RED … dans CRON-1-LOT2.md»),4279,2026-09-18 2d1eeb0d,oui
+CRON-1-LOT3.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3554,2026-09-18 015703f6,oui
+DEMO_ONE_PAGER.html,FILE,D,démo HTML — seule occurrence = .dockerignore:15 (EXCLUE de l'image) ; servie nulle part,5800,2026-06-12 201d06fb,oui
+DEMO_PACK.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,13445,2026-06-12 201d06fb,oui
+DEMO_PACK_PRINT.html,FILE,D,démo HTML — seule occurrence = .dockerignore:14 (EXCLUE de l'image) ; servie nulle part,18560,2026-06-12 201d06fb,oui
+DEMO_SETUP.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5233,2026-06-12 201d06fb,oui
+DEPLOY_RUNBOOK.md,FILE,D,"DOUBLON divergent de docs/DEPLOY_RUNBOOK.md (root 223 l. vs docs 89 l., docs plus récent 2026-08-27)",10475,2026-07-28 fedf2802,oui
+DESIGN_SYSTEM.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,4998,2026-06-15 ee775d9d,oui
+DIAGNOSTIC.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,11120,2026-06-08 6f79dba8,oui
+Dockerfile,FILE,A,image conteneur,1248,2026-06-11 cc26e55b,oui
+ETAT_DES_LIEUX_DONE.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7012,2026-06-12 c10c1203,oui
+FICHE-AUDIT-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,29068,2026-09-19 d0262fa7,oui
+FICHE-COUCHES-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,11931,2026-09-18 ae2bea31,oui
+FICHE-COUCHES-3.md,FILE,D,sortie RÉGÉNÉRABLE par qa/fiche_couches3_report.py (qui écrit vers un AUTRE worktree),12891,2026-09-18 fa705ebd,oui
+FICHE-SOURCES-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,17610,2026-09-20 07c5cac7,oui
+FILTRES-AUDIT-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,15105,2026-09-21 154b176c,oui
+LISEZMOI_MATIN.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5409,2026-07-07 8a973eba,oui
+MANDAT_FABLE_HABITAT_SOLAIRE.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,15727,2026-07-11 0c201ba9,oui
+MANDAT_FABLE_MODULE_FLASH.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,9623,2026-07-10 8c4b41b6,oui
+MANDAT_FABLE_MOTEUR_SEGMENTS_HABITAT.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,10080,2026-07-11 76999094,oui
+MANDAT_FABLE_WAVE_ADRESSES_COURRIER_IA.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,9090,2026-07-10 328101e1,oui
+MANDAT_FABLE_WAVE_ANC_VEGETATION.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,9635,2026-07-11 05faa02b,oui
+MANDAT_FABLE_WAVE_COPRO_TERTIAIRE_FLUX.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,9367,2026-07-11 c6d02ddd,oui
+MANDAT_FABLE_WAVE_DETECTION_ORTHO.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,12554,2026-07-11 e2cc491f,oui
+NETTOYAGE-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3904,2026-09-18 7fce0c0c,oui
+NOTES_BODACC.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,6599,2026-07-05 837170fd,oui
+NOTES_CARTOFRICHES.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,4194,2026-07-05 a61a21e6,oui
+NOTES_DPE.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,4872,2026-07-05 d7dc4a03,oui
+NOTES_ETAGE_0.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7672,2026-07-05 4869bbb4,oui
+NOTES_GEORISQUES.md,FILE,B,src/labuse/ingestion/georisques_layers.py:13 (commentaire justificatif),5780,2026-07-05 3f389bb5,oui
+NOTES_INPI.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,10220,2026-07-05 0e99985c,oui
+NOTES_SITADEL3.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,4214,2026-07-10 2c5355ff,oui
+NOTES_SOCLE_V1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5246,2026-07-07 8a973eba,oui
+NOTES_VAGUE_B_CLOTURE.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5019,2026-07-05 1735f451,oui
+NOTES_VAGUE_C_BONUS.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,4713,2026-07-05 83af4ca2,oui
+NOTES_WAVE_ACI.md,FILE,B,src/labuse/courrier.py:3 et :674 (source étude DOM citée),4166,2026-07-10 e1dafec3,oui
+PAGE-SOURCES-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,24753,2026-09-18 a41c18fb,oui
+PAGES-AUDIT-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,11624,2026-09-18 41bda631,oui
+PILOT_DEPLOYMENT.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,6835,2026-06-12 201d06fb,oui
+PILOT_SECURITY_DEPLOYMENT.md,FILE,B,"Dockerfile:29 (commentaire, cf. `labuse doctor`)",7152,2026-06-11 ebab4e12,oui
+PLU-CALIBRAGE-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,6095,2026-09-20 1f0b05f4,oui
+PLU-CALIBRAGE-2.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,4585,2026-09-20 24e23cad,oui
+PRE_VOL_ILE.md,FILE,B,src/labuse/cascade/layers/phase2.py:37 + config/cascade_rules.yaml:525 (commentaire) — DOUBLON divergent de docs/communes/PRE_VOL_ILE.md,3908,2026-08-15 ef02646f,oui
+PROMPT-FABLE-DATA-GAP.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,10352,2026-07-10 da5c393d,oui
+PROPRIETAIRES_NIVEAU_2.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7927,2026-06-11 258cdbde,oui
+PROXYS-SOURCES.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,8351,2026-08-21 8554a3c0,oui
+RAPPORT-DATA-GAP.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,21705,2026-07-10 4837f43f,oui
+RAPPORT_3A.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,2944,2026-06-14 10627f47,oui
+RAPPORT_3C.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,2835,2026-06-14 6dea3127,oui
+RAPPORT_3D.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,2847,2026-06-14 9530e897,oui
+RAPPORT_AUDIT_UI.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7004,2026-07-12 f626c01d,oui
+RAPPORT_CALIBRATION_WEB.md,FILE,B,"src/labuse/faisabilite/bilan_calibration.py:1,9,42 (docstring: «Ne pas modifier une valeur ici sans mettre à jour le rapport») + models.py:1465",11193,2026-07-28 49968462,oui
+RAPPORT_CASCADE_JUGES.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,4492,2026-07-11 a0f5180a,oui
+RAPPORT_CERCLE_1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,2945,2026-06-14 0e261b0f,oui
+RAPPORT_CERCLE_2.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3194,2026-06-14 b25f672b,oui
+RAPPORT_CERCLE_3.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3795,2026-06-14 46edc077,oui
+RAPPORT_CREDIBILITE.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5977,2026-07-12 1244d186,oui
+RAPPORT_DECISIONS_1_4.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7763,2026-06-12 07e9130e,oui
+RAPPORT_DISPO_1A.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,2686,2026-06-14 b987e5ec,oui
+RAPPORT_DISPO_1B.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,1957,2026-06-14 dfc5e5d5,oui
+RAPPORT_DISPO_2B.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,2124,2026-06-14 57ea1f2c,oui
+RAPPORT_DISPO_2D.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,2077,2026-06-14 e63a5bc3,oui
+RAPPORT_DISPO_2E.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3085,2026-06-14 b25f672b,oui
+RAPPORT_DISPO_3B.md,FILE,B,src/labuse/api/enrichment.py:53 (commentaire vérif),2799,2026-06-14 ce98ebc6,oui
+RAPPORT_EXPERT_UX.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5437,2026-07-07 f6e406eb,oui
+RAPPORT_HABITAT_SOLAIRE.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,10541,2026-07-11 c7c98612,oui
+RAPPORT_INSPECTION.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5795,2026-07-07 70604efb,oui
+RAPPORT_LOT_AB.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7545,2026-06-12 b9cb1ff9,oui
+RAPPORT_LOT_C.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7442,2026-06-12 553adf84,oui
+RAPPORT_LOT_D.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,2723,2026-06-14 69fdc903,oui
+RAPPORT_M55A_COUCHES.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,18332,2026-08-10 64085676,oui
+RAPPORT_M55B.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7541,2026-08-10 abaad821,oui
+RAPPORT_M55C.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,10712,2026-08-10 a1173c7f,oui
+RAPPORT_M55D_PHASE1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,11985,2026-08-10 7ebe74ac,oui
+RAPPORT_M55D_PHASE2.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3993,2026-08-10 593b0839,oui
+RAPPORT_M55D_STAGE2.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3027,2026-08-10 8ad15e52,oui
+RAPPORT_M55D_STAGE3.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,2524,2026-08-10 27036b80,oui
+RAPPORT_M55D_STAGE4.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3022,2026-08-10 1bc696c4,oui
+RAPPORT_M55D_STAGE5.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3489,2026-08-10 b1c3160f,oui
+RAPPORT_M55D_STAGE6_PHASE1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,6766,2026-08-10 fb076e9f,oui
+RAPPORT_M55D_STAGE6_PHASE2.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,4234,2026-08-10 aca66579,oui
+RAPPORT_M55D_STAGE7.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,2431,2026-08-10 58fab72f,oui
+RAPPORT_M55D_STAGE8.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3089,2026-08-10 da1e8664,oui
+RAPPORT_M55D_STAGE9_BLOCS34.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3199,2026-08-10 6d014301,oui
+RAPPORT_M55D_STAGE9_PHASE1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5268,2026-08-10 55d30c61,oui
+RAPPORT_M55D_STAGE9_PHASE2.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,2821,2026-08-10 b161de1c,oui
+RAPPORT_M55D_STAGE9_TER.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3424,2026-08-10 53b76eb2,oui
+RAPPORT_M55F.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,4440,2026-08-10 75dc4c4d,oui
+RAPPORT_M55G.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,17046,2026-08-11 ae52dd98,oui
+RAPPORT_M55H.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,8798,2026-08-11 b91bfac2,oui
+RAPPORT_M55I.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,6709,2026-08-11 2391f943,oui
+RAPPORT_M55J.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,11549,2026-08-11 4746c9d1,oui
+RAPPORT_M55K.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7428,2026-08-11 2f11d9ec,oui
+RAPPORT_M55L.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,15752,2026-08-11 639f3f65,oui
+RAPPORT_M55M.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,9661,2026-08-11 af835628,oui
+RAPPORT_M55N.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,9871,2026-08-11 3291741f,oui
+RAPPORT_M55O.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,14735,2026-08-11 9c1fdf60,oui
+RAPPORT_M56.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,23915,2026-08-12 fd3613d6,oui
+RAPPORT_M56B6.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,4124,2026-08-12 b0bd28ef,oui
+RAPPORT_M57.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,11909,2026-08-12 2089f22c,oui
+RAPPORT_M58.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,15910,2026-08-12 f6a7d78c,oui
+RAPPORT_M59.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,15718,2026-08-12 5a357354,oui
+RAPPORT_M60.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,11376,2026-08-12 f76693c5,oui
+RAPPORT_M61.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5830,2026-08-12 8686b531,oui
+RAPPORT_M62.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,14519,2026-08-12 ff216eea,oui
+RAPPORT_M63.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,9373,2026-08-12 90fc0344,oui
+RAPPORT_M64.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,4224,2026-08-12 99460eec,oui
+RAPPORT_M65.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7957,2026-08-12 61dde68b,oui
+RAPPORT_M68.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7926,2026-08-12 751f09be,oui
+RAPPORT_M69.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,10975,2026-08-12 34cd7b7e,oui
+RAPPORT_M70.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,26423,2026-08-13 4f96668a,oui
+RAPPORT_M71.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,16841,2026-08-13 d5f20eec,oui
+RAPPORT_M73.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,24819,2026-08-13 91520a65,oui
+RAPPORT_M74.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,11665,2026-08-13 2452c0df,oui
+RAPPORT_M75.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,12128,2026-08-13 fa9d7d20,oui
+RAPPORT_M76.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,6460,2026-08-13 18de449d,oui
+RAPPORT_M78.md,FILE,B,src/labuse/copilote_v2/__init__.py:3 + router.py:5 (docstring doctrine),19187,2026-08-13 3a469f90,oui
+RAPPORT_M78bis.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5344,2026-08-13 63fd28f2,oui
+RAPPORT_M78quater.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5593,2026-08-14 0b496a2e,oui
+RAPPORT_M78ter.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3004,2026-08-13 96ec207c,oui
+RAPPORT_M79.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,18270,2026-08-13 118aa2d1,oui
+RAPPORT_M80.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,11483,2026-08-13 323f1ee1,oui
+RAPPORT_M81.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,12874,2026-08-13 bd27cff2,oui
+RAPPORT_M82.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,21859,2026-08-14 ec98bad3,oui
+RAPPORT_M83.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,9907,2026-08-14 bb30ac7a,oui
+RAPPORT_M84.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,16467,2026-08-14 1a52a8ec,oui
+RAPPORT_M85.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,24990,2026-08-14 d967f808,oui
+RAPPORT_M85B.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,9482,2026-08-14 95b68766,oui
+RAPPORT_M_V_DPE.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5792,2026-08-09 75fd4b5c,oui
+RAPPORT_M_V_EVENTS.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,2674,2026-08-09 098aeb87,oui
+RAPPORT_M_V_MAPLIBRE.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,2077,2026-08-09 db125288,oui
+RAPPORT_M_W_CARTE.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,4606,2026-08-09 4290d9d8,oui
+RAPPORT_M_W_CARTE_NOIRE.md,FILE,B,frontend/src/components/map/MapView.tsx:1440 (commentaire),4752,2026-08-09 a1f2a5f4,oui
+RAPPORT_M_W_VITE8.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5035,2026-08-09 1a16d9f5,oui
+RAPPORT_O12_ILE.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,16691,2026-07-27 7980e2c2,oui
+RAPPORT_PHASE1A_GPU.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,10522,2026-06-12 d557b49e,oui
+RAPPORT_PHASE1B.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7030,2026-06-12 370cf103,oui
+RAPPORT_PLU_REF.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,6923,2026-08-14 1ed1e9b2,oui
+RAPPORT_QA.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7182,2026-06-15 94538780,oui
+RAPPORT_SEGMENTS_HABITAT.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,10016,2026-07-10 c81cd1da,oui
+RAPPORT_SOURCES.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,13645,2026-08-13 cab243f3,oui
+RAPPORT_UX_V1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,7312,2026-07-12 50f52766,oui
+RAPPORT_VUES_POLISH.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,4811,2026-07-12 0ac23ee9,oui
+RAPPORT_WAVE_ACI.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,9533,2026-07-11 358b8548,oui
+RAPPORT_WAVE_ANC_VEGETATION.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,11891,2026-07-11 287ef60c,oui
+RAPPORT_WAVE_COPRO_DATA.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5046,2026-07-11 c6d02ddd,oui
+RAPPORT_WAVE_ORTHO.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,6348,2026-07-11 5f1fe4fe,oui
+RAPPORT_WAVE_ORTHO_ETAPE1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5280,2026-07-11 977a4928,oui
+README.md,FILE,A,README principal du dépôt,6999,2026-09-08 19672a43,oui
+README_DEV.md,FILE,A,guide dev,1880,2026-07-22 7933a487,oui
+RESEAUX_RECON.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3546,2026-06-09 5dd98d67,oui
+RESTORE_DRILL.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,3376,2026-06-11 23f765c7,oui
+SOURCES-AUDIT-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,28185,2026-09-19 0f8b2240,oui
+SOURCES-CORRECTION-1.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,10796,2026-09-19 c478d2e2,oui
+SOURCES-CORRECTION-2.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,9393,2026-09-19 0a507473,oui
+STATUS.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,5191,2026-07-06 a7f13052,oui
+TERMINAL_DESIGN.md,FILE,C,rapport/note/mandat de chantier terminé — non référencé par code/test/CI/verrou/registre,4697,2026-06-14 f41bdf4e,oui
+audit_shots,DIR,C,"archive (captures/notes de chantier terminé, non lu par le code)",28889088,2026-07-12 0ac23ee9,oui
+captures,DIR,A,dossier code/config/infra ou chemin par défaut lu par le code,250699776,2026-09-22 2efb749d,oui
+commercial,DIR,C,"archive (captures/notes de chantier terminé, non lu par le code)",61440,2026-06-12 1bb2a54c,oui
+config,DIR,A,dossier code/config/infra ou chemin par défaut lu par le code,4689920,2026-09-22 f0caef87,oui
+data,DIR,A,dossier code/config/infra ou chemin par défaut lu par le code,3178496,2026-09-20 b5c6326e,oui
+declarations,DIR,A,dossier code/config/infra ou chemin par défaut lu par le code,217088,2026-09-21 24209cad,oui
+deploy,DIR,A,dossier code/config/infra ou chemin par défaut lu par le code,106496,2026-09-22 36cd4216,oui
+deploy.sh,FILE,A,script de déploiement (lu par tests/test_cron1_lot3.py:48),6712,2026-09-21 72a7486f,oui
+docker-compose.caddy.yml,FILE,A,orchestration reverse-proxy,1019,2026-06-11 23f765c7,oui
+docker-compose.pilot.yml,FILE,A,orchestration pilote,2334,2026-06-11 23f765c7,oui
+docker-compose.yml,FILE,A,orchestration,546,2026-06-07 ddad86d9,oui
+docs,DIR,A,dossier code/config/infra ou chemin par défaut lu par le code,1265119232,2026-09-22 a272d4a5,oui
+frontend,DIR,A,dossier code/config/infra ou chemin par défaut lu par le code,9121792,2026-09-22 2efb749d,oui
+outputs,DIR,A,dossier code/config/infra ou chemin par défaut lu par le code,114688,2026-07-07 2ccef03c,oui
+pyproject.toml,FILE,A,packaging/deps Python,5303,2026-09-06 9457363e,oui
+qa,DIR,A,dossier code/config/infra ou chemin par défaut lu par le code,757194752,2026-09-22 f9387e4c,oui
+reports,DIR,A,dossier code/config/infra ou chemin par défaut lu par le code,182484992,2026-09-22 a272d4a5,oui
+requirements-ml.txt,FILE,A,deps ML,190,2026-07-23 9c2a786a,oui
+requirements.txt,FILE,A,deps Python,340,2026-07-23 9c2a786a,oui
+scripts,DIR,A,dossier code/config/infra ou chemin par défaut lu par le code,1556480,2026-09-22 ac725343,oui
+src,DIR,A,dossier code/config/infra ou chemin par défaut lu par le code,9977856,2026-09-22 2efb749d,oui
+tests,DIR,A,dossier code/config/infra ou chemin par défaut lu par le code,3538944,2026-09-22 36cd4216,oui

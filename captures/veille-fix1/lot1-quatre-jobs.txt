@@ -1,0 +1,47 @@
+VEILLE-FIX-1 · Lot 1 — les quatre jobs exécutés via la commande EXACTE du crontab généré
+commande crontab : sh -c '. /etc/labuse/labuse.env; exec labuse jobs run <id>'  (transport neutralisé)
+cas [AUDIT-TEST] : comptes 72 (A) / 73 (B), parcelle suivie CY0018, secteur A, veille Radar, annonce du jour
+=======================================================================================
+
+>>> RUN 1 : labuse jobs run evaluer-suivis
+    exit=0
+    statut= ok  compteurs= {"total": 0, "mutation": 0, "permis": 0, "bodacc": 0, "zonage": 0}
+>>> RUN 2 (idempotence immédiate) : labuse jobs run evaluer-suivis
+    exit=0
+    statut= ok  compteurs= {"total": 0, "mutation": 0, "permis": 0, "bodacc": 0, "zonage": 0}
+
+>>> RUN 1 : labuse jobs run evaluer-secteurs
+    exit=0
+    statut= ok  compteurs= {"scopes": 3, "alertes": 0, "notifications": 0}
+>>> RUN 2 (idempotence immédiate) : labuse jobs run evaluer-secteurs
+    exit=0
+    statut= ok  compteurs= {"scopes": 3, "alertes": 0, "notifications": 0}
+
+>>> RUN 1 : labuse jobs run detect-events
+    exit=0
+    statut= ok  compteurs= {"run_from": "q_v10_m129", "run_to": "q_v11_m137", "bascule": 169, "bodacc": 0, "permis": 0, "reprises": 0}
+>>> RUN 2 (idempotence immédiate) : labuse jobs run detect-events
+    exit=0
+    statut= ok  compteurs= {"run_from": "q_v10_m129", "run_to": "q_v11_m137", "bascule": 0, "bodacc": 0, "permis": 0, "reprises": 0}
+
+>>> RUN 1 : labuse jobs run digest
+    exit=0
+    statut= dry-run  compteurs= {"envoyes": 0, "ignores": 13, "echecs": 0, "simules": 3}
+>>> RUN 2 (idempotence immédiate) : labuse jobs run digest
+    exit=0
+    statut= dry-run  compteurs= {"envoyes": 0, "ignores": 13, "echecs": 0, "simules": 3}
+
+=== EFFET EN BASE (cas AUDIT-TEST) ===
+-- event_log comptes 72/73 (événement + cloche) :
+72|parcelle_suivie|Vente : votre parcelle CY0018 a changé de mains
+72|veille_zone|Vente DVF dans « [AUDIT-TEST] Secteur A »
+72|veille_zone|Vente DVF dans « [AUDIT-TEST] Secteur A »
+72|veille_zone|Vente DVF dans « [AUDIT-TEST] Secteur A »
+72|veille_zone|Permis déposé dans « [AUDIT-TEST] Secteur A »
+72|parcelle_suivie|Le classement de votre parcelle CY0018 a évolué
+73|parcelle_suivie|Vente : votre parcelle BN2939 a changé de mains
+73|parcelle_suivie|Nouveau permis sur votre parcelle BN2939
+-- mail_queue (digest, dry-run = ligne écrite / rien envoyé) :
+4|72|digest_quotidien|en_attente|job:digest
+5|73|digest_quotidien|en_attente|job:digest
+6|31|digest_quotidien|en_attente|job:digest

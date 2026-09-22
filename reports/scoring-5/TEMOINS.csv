@@ -1,0 +1,31 @@
+idu,commune,categorie,raison,sdp_residuelle_m2,bareme_capacite,f_pente,f_forme,f_acces,f_bati,coef,score,non_calculable
+97402000AH1389,Bras-Panon,bonne,"Grande parcelle U quasi nue (emprise 4 %), ~4 900 m² de SDP résiduelle, pente 6 %.",4932,100.0,1.0,1.0,1.0,0.9,0.9000,90,non
+97404000AX0047,L'Étang-Salé,bonne,"Parcelle U nue de L'Étang-Salé, ~2 700 m² de SDP résiduelle, pente 8 %.",2694,100.0,1.0,1.0,0.85,1.0,0.85000,85,non
+97406000AM0928,La Plaine-des-Palmistes,bonne,"Parcelle U quasi nue de la Plaine-des-Palmistes, ~4 450 m² de SDP, terrain plat (3 %).",4451,100.0,1.0,1.0,1.0,0.9,0.9000,90,non
+97408000BL0170,La Possession,bonne,"Parcelle U de La Possession, ~4 860 m² de SDP, emprise bâtie 10 %, plat.",4858,100.0,1.0,1.0,1.0,0.9,0.9000,90,non
+97407000BC0579,Le Port,bonne,"Parcelle U nue du Port, ~5 000 m² de SDP résiduelle, pente 6 %.",4979,100.0,1.0,1.0,1.0,1.0,1.0000,100,non
+97422000BW2390,Le Tampon,bonne,"Parcelle U nue du Tampon, ~5 000 m² de SDP résiduelle, pente 9 %.",4961,100.0,1.0,1.0,1.0,1.0,1.0000,100,non
+97409000AY0786,Saint-André,bonne,"Parcelle U de Saint-André, ~5 000 m² de SDP, emprise 12 %, terrain plat.",4988,100.0,1.0,1.0,1.0,0.9,0.9000,90,non
+97410000AS1202,Saint-Benoît,bonne,"Parcelle U quasi nue de Saint-Benoît, ~5 000 m² de SDP, pente 6 %.",4952,100.0,1.0,1.0,1.0,0.9,0.9000,90,non
+97411000AB0798,Saint-Denis,bonne,"Parcelle U de Saint-Denis, ~5 000 m² de SDP, emprise 5 %, pente 6 %.",4953,100.0,1.0,0.8,1.0,0.8,0.6400,64,non
+97423000AI0116,Les Trois-Bassins,bonne,"Parcelle U nue des Trois-Bassins, ~1 340 m² de SDP, pente 9 %.",1340,90.0,1.0,1.0,1.0,1.0,1.0000,90,non
+97420000AD0103,Sainte-Suzanne,mauvaise,Terrain exigu (SDP 0) en pente extrême (94 %) avec bâti haut : rien à construire.,0,0.0,0.6,0.8,1.0,1.0,0.4800,0,non
+97413000CU0703,Saint-Leu,mauvaise,"Terrain exigu de Saint-Leu, SDP 0, pente 82 %.",0,0.0,0.6,0.8,0.85,1.0,0.40800,0,non
+97411000BN0496,Saint-Denis,mauvaise,"Terrain exigu de Saint-Denis, SDP 0, pente 80 %.",0,0.0,0.6,0.8,1.0,1.0,0.4800,0,non
+97415000CX0664,Saint-Paul,mauvaise,SDP résiduelle famélique (36 m²) sur pente de 83 % à Saint-Paul.,36,15.0,0.6,1.0,1.0,1.0,0.6000,9,non
+97411000CP0427,Saint-Denis,mauvaise,SDP 82 m² sur pente de 80 % : un logement théorique sur une rampe.,82,35.0,0.6,1.0,1.0,1.0,0.6000,21,non
+97413000CR0421,Saint-Leu,mauvaise,SDP 102 m² sur pente de 76 % à Saint-Leu.,102,35.0,0.6,1.0,0.85,1.0,0.51000,18,non
+97401000AL0852,Les Avirons,mauvaise,"Parcelle en lame (largeur < 8 m, allongement > 8) déjà bâtie, SDP 40 m².",40,15.0,1.0,0.8,1.0,0.8,0.6400,10,non
+97415000AD0389,Saint-Paul,mauvaise,"Parcelle en lame de Saint-Paul, SDP 98 m² : géométrie inexploitable.",98,35.0,1.0,0.8,1.0,0.9,0.7200,25,non
+97401000AL0505,Les Avirons,mauvaise,"Bâtie saturée (emprise 167 %, faîtage 10,3 m), SDP résiduelle 0.",0,0.0,0.85,1.0,1.0,0.65,0.552500,0,non
+97401000AO0067,Les Avirons,mauvaise,"Bâtie saturée (emprise 192 %, faîtage 9,3 m), SDP résiduelle 0.",0,0.0,0.85,1.0,1.0,0.65,0.552500,0,non
+97402000AL0088,Bras-Panon,limite,"Zone A à 96 % : écartée aujourd'hui, pénalité d'assiette demain (4 % restent U) — le résiduel servi lui donne SDP 0.",0,0.0,0.6,1.0,1.0,1.0,0.6000,0,non
+97402000AB1117,Bras-Panon,limite,Zone N à 96 % : même cas de reclassement B — portion U résiduelle non valorisée par le résiduel servi.,0,0.0,1.0,1.0,1.0,1.0,1.0000,0,non
+97406000AM0664,La Plaine-des-Palmistes,limite,PPR partiel (aléa fort en drapeau) sur parcelle bâtie (emprise 68 %) avec 376 m² de SDP restants.,376,55.0,1.0,1.0,1.0,0.65,0.65000,36,non
+97401000AI0166,Les Avirons,limite,PPR partiel en drapeau fort mais 1 794 m² de SDP résiduelle : bonne capacité sous risque partiel.,1794,90.0,1.0,1.0,1.0,0.8,0.8000,72,non
+97401000AM0140,Les Avirons,limite,"Bâtie sous-utilisée (emprise 14 %, sous-densité), 268 m² de SDP restants.",268,55.0,1.0,1.0,1.0,0.9,0.9000,50,non
+97401000AD0110,Les Avirons,limite,"Bâtie sous-utilisée (emprise 11 %), 434 m² de SDP restants.",434,75.0,1.0,1.0,1.0,0.9,0.9000,68,non
+97415000AC0070,Saint-Paul,limite,"Zone PLU non résolue : analyse non calculable, dite telle quelle.",0,0.0,1.0,1.0,1.0,1.0,1.0000,,oui
+97415000AC0109,Saint-Paul,limite,"Zone PLU non résolue : analyse non calculable, dite telle quelle.",0,0.0,1.0,1.0,1.0,1.0,1.0000,,oui
+97406000AV0888,La Plaine-des-Palmistes,limite,"Zone AU fermée : 526 m² de SDP mais capacité différée (barème ×0,5).",526,37.5,1.0,1.0,1.0,0.8,0.8000,30,non
+97411000IR0091,Saint-Denis,limite,"Zone AU fermée de Saint-Denis : 4 720 m² de SDP différés (barème ×0,5).",4720,50.0,1.0,1.0,1.0,0.8,0.8000,40,non

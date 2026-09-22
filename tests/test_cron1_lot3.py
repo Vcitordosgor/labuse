@@ -6,7 +6,8 @@ from labuse.jobs import JOBS
 def test_crontab_genere_une_ligne_par_job():
     c = _crontab_du_registre("utc")
     lignes_job = [l for l in c.splitlines() if "jobs run" in l]
-    assert len(lignes_job) == len(JOBS) == 16, "une ligne par job du registre, ni plus ni moins"
+    # VEILLE-FIX-1 → 20 jobs ; VEILLE-2 (Lot 4) retire evaluer-secteurs (secteurs archivés) → 19.
+    assert len(lignes_job) == len(JOBS) == 19, "une ligne par job du registre, ni plus ni moins"
     for nom in JOBS:
         assert f"jobs run {nom}'" in c, f"{nom} absent du crontab généré"
     # jamais écrit à la main : en-tête d'avertissement + shell/mailto

@@ -84,6 +84,45 @@ def test_couche_bati_absente(monkeypatch):
     assert r["disponible"] is False and "bâtiments" in r["raison"].lower()
 
 
+def test_assiette_clippee_bati_mesure_sur_la_portion_uau(monkeypatch):
+    """SCORING-6 lot A — sur une parcelle A/N à cheval clippée, le bâti retranché est celui de
+    la SEULE portion U/AU, pas du contour entier : sinon le bâti debout sur la portion A/N
+    inconstructible grève un plafond calculé sur la seule portion U/AU → résiduel toujours 0
+    (le tout-ou-rien déguisé, cause du run 4 ≡ run 3)."""
+    from labuse.faisabilite.db import ParcelContext
+    from labuse.faisabilite.engine import Contraintes
+    # stats_batch (contour entier) verrait 600 m² de bâti → ne DOIT PAS être utilisé sous clip.
+    _ratio(monkeypatch, 0.60)   # 0.60 × 1000 = 600 m² sur toute la parcelle
+    monkeypatch.setattr("labuse.faisabilite.residuel._emprise_batie_assiette",
+                        lambda s, pid: 20.0)   # 20 m² seulement sur la portion U/AU
+    ctx = ParcelContext(1, "x", "Bras-Panon", 1000.0, "N", Contraintes(),
+                        zone_parts=[{"zone": "N", "fam": "N", "pct": 95.0},
+                                    {"zone": "Uc", "fam": "U", "pct": 5.0}])
+    faisa = _faisa(emprise=90, sdp_max=81, niveaux_max=1)
+    faisa = (ctx, faisa[1])
+    r = residuel.compute_residuel(None, 1, faisa=faisa, assiette_clippee=True)
+    # bâti retenu = 20 m² (portion U/AU), niveaux 1 → SDP existante 20 → résiduelle 81 − 20 = 61.
+    # (avec le bâti du contour entier : 81 − 600 = 0 → faux tout-ou-rien.)
+    assert r["disponible"] and r["emprise_batie_m2"] == 20
+    assert r["sdp_residuelle_m2"] == 61
+
+
+def test_assiette_clippee_ignoree_hors_a_cheval(monkeypatch):
+    """Parcelle mono-zone (parts vides) : le clip ne s'applique pas — bâti du contour entier,
+    comportement servi identique même quand --assiette-clippee est demandé."""
+    from labuse.faisabilite.db import ParcelContext
+    from labuse.faisabilite.engine import Contraintes
+    _ratio(monkeypatch, 0.20)
+    called = {"n": 0}
+    monkeypatch.setattr("labuse.faisabilite.residuel._emprise_batie_assiette",
+                        lambda s, pid: called.__setitem__("n", called["n"] + 1) or 999.0)
+    ctx = ParcelContext(1, "x", "Bras-Panon", 1000.0, "U", Contraintes(), zone_parts=[])
+    r = residuel.compute_residuel(None, 1, faisa=(ctx, _faisa(emprise=500, sdp_max=1000)[1]),
+                                  assiette_clippee=True)
+    # parts vides → _pct_constructible None → clip ignoré → bâti = 0.20×1000 = 200, résiduelle 800.
+    assert called["n"] == 0 and r["emprise_batie_m2"] == 200 and r["sdp_residuelle_m2"] == 800
+
+
 def test_seuil_sous_densite_borne(monkeypatch):
     """Au seuil exact (emprise bâtie/emprise max = 40 %), pas sous-densité (strictement <)."""
     _ratio(monkeypatch, 0.20)   # 0.20×1000 = 200 m² bâtis / 500 m² max = 40 % → pas < 40

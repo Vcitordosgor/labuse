@@ -120,8 +120,30 @@ def qualifier_retiree_sans_vente(db: Session) -> int:
     return len(rows)
 
 
+def marquer_expirees(db: Session) -> int:
+    """VEILLE-2 (Lot 2) — une annonce EXPIRÉE (expiration_date passée côté portail) est RETIRÉE : le bien
+    passe `retiree` et SORT des biens du jour comme des veilles (`_biens_du_jour` ne sert que
+    active/en_vente_longue). Jamais `vendue` ni `retiree_sans_vente` (l'expiration ne prouve aucune
+    vente) — une simple sortie de ligne. Une republication ultérieure (même list_id) la ré-active à
+    l'ingestion. Idempotent (dédup du statut_change, WHERE statut <> 'retiree')."""
+    rows = db.execute(text(
+        f"SELECT DISTINCT b.bien_id, b.commune FROM pige_biens b "
+        f"JOIN pige_annonces a ON a.bien_id = b.bien_id "
+        f"WHERE b.statut IN ('active','en_vente_longue','a_reverifier') "
+        f"  AND a.expiration_date IS NOT NULL "
+        f"  AND (a.expiration_date AT TIME ZONE 'Indian/Reunion')::date < {_AUJ_REU}")).mappings().all()
+    for r in rows:
+        db.execute(text("UPDATE pige_biens SET statut = 'retiree', retiree_le = now() "
+                        "WHERE bien_id = :b AND statut <> 'retiree'"), {"b": r["bien_id"]})
+        journaliser(db, EV_STATUT_CHANGE, f"Statut → retiree — bien #{r['bien_id']} ({r['commune']})",
+                    detail="annonce expirée sur le portail", dedup=f"pige:statut:{r['bien_id']}:retiree")
+    db.commit()
+    return len(rows)
+
+
 def run_quotidien(db: Session) -> dict:
-    return {"en_vente_longue": marquer_en_vente_longue(db), "a_reverifier": marquer_a_reverifier(db)}
+    return {"expirees": marquer_expirees(db),
+            "en_vente_longue": marquer_en_vente_longue(db), "a_reverifier": marquer_a_reverifier(db)}
 
 
 def run_dvf(db: Session) -> dict:

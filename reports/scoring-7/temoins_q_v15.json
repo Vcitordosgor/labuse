@@ -1,0 +1,272 @@
+[
+  {
+    "idu": "97402000AH1389",
+    "cat": "bonne",
+    "bande": "A",
+    "score": 90,
+    "signal_p": 0.008261,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 4932 m² de droits à construire restants · baisse: bâti existant sur 4 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97404000AX0047",
+    "cat": "bonne",
+    "bande": "A",
+    "score": 85,
+    "signal_p": 0.040477,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 2694 m² de droits à construire restants · baisse: accès à la voie non identifié"
+  },
+  {
+    "idu": "97406000AM0928",
+    "cat": "bonne",
+    "bande": "A",
+    "score": 90,
+    "signal_p": 0.017317,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 4451 m² de droits à construire restants · baisse: bâti existant sur 4 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97408000BL0170",
+    "cat": "bonne",
+    "bande": "A",
+    "score": 90,
+    "signal_p": 0.017317,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 5672 m² de droits à construire restants · baisse: bâti existant sur 9 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97407000BC0579",
+    "cat": "bonne",
+    "bande": "A",
+    "score": 100,
+    "signal_p": 0.022595,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 4979 m² de droits à construire restants"
+  },
+  {
+    "idu": "97422000BW2390",
+    "cat": "bonne",
+    "bande": "A",
+    "score": 100,
+    "signal_p": 0.010667,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 4961 m² de droits à construire restants"
+  },
+  {
+    "idu": "97409000AY0786",
+    "cat": "bonne",
+    "bande": "A",
+    "score": 80,
+    "signal_p": 0.006957,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 2243 m² de droits à construire restants · baisse: bâti existant sur 24 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97410000AS1202",
+    "cat": "bonne",
+    "bande": "A",
+    "score": 90,
+    "signal_p": 0.006957,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 4952 m² de droits à construire restants · baisse: bâti existant sur 2 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97411000AB0798",
+    "cat": "bonne",
+    "bande": "B",
+    "score": 64,
+    "signal_p": 0.017317,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 4953 m² de droits à construire restants · baisse: parcelle en lame — géométrie contraignante · baisse: bâti existant sur 5 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97423000AI0116",
+    "cat": "bonne",
+    "bande": "A",
+    "score": 90,
+    "signal_p": 0.011637,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 1340 m² de droits à construire restants"
+  },
+  {
+    "idu": "97420000AD0103",
+    "cat": "mauvaise",
+    "bande": "0",
+    "score": 0,
+    "signal_p": 0.032547,
+    "signal_niveau": "faible",
+    "contributions": "baisse: aucune SDP résiduelle exploitable · baisse: pente forte (94 %) · baisse: parcelle en lame — géométrie contraignante"
+  },
+  {
+    "idu": "97413000CU0703",
+    "cat": "mauvaise",
+    "bande": "0",
+    "score": 0,
+    "signal_p": 0.017317,
+    "signal_niveau": "faible",
+    "contributions": "baisse: aucune SDP résiduelle exploitable · baisse: pente forte (82 %) · baisse: parcelle en lame — géométrie contraignante"
+  },
+  {
+    "idu": "97411000BN0496",
+    "cat": "mauvaise",
+    "bande": "0",
+    "score": 0,
+    "signal_p": 0.013188,
+    "signal_niveau": "faible",
+    "contributions": "baisse: aucune SDP résiduelle exploitable · baisse: pente forte (80 %) · baisse: parcelle en lame — géométrie contraignante"
+  },
+  {
+    "idu": "97415000CX0664",
+    "cat": "mauvaise",
+    "bande": "D",
+    "score": 9,
+    "signal_p": 0.053042,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 15 m² de droits à construire restants · baisse: pente forte (83 %)"
+  },
+  {
+    "idu": "97411000CP0427",
+    "cat": "mauvaise",
+    "bande": "C",
+    "score": 45,
+    "signal_p": 0.012579,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 413 m² de droits à construire restants · baisse: pente forte (80 %)"
+  },
+  {
+    "idu": "97413000CR0421",
+    "cat": "mauvaise",
+    "bande": "D",
+    "score": 8,
+    "signal_p": 0.011637,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 21 m² de droits à construire restants · baisse: pente forte (76 %) · baisse: accès à la voie non identifié"
+  },
+  {
+    "idu": "97401000AL0852",
+    "cat": "mauvaise",
+    "bande": "D",
+    "score": 10,
+    "signal_p": 0.014606,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 40 m² de droits à construire restants · baisse: parcelle en lame — géométrie contraignante · baisse: bâti existant sur 37 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97415000AD0389",
+    "cat": "mauvaise",
+    "bande": "D",
+    "score": 25,
+    "signal_p": 0.011666,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 98 m² de droits à construire restants · baisse: parcelle en lame — géométrie contraignante · baisse: bâti existant sur 19 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97401000AL0505",
+    "cat": "mauvaise",
+    "bande": "0",
+    "score": 0,
+    "signal_p": 0.014606,
+    "signal_niveau": "faible",
+    "contributions": "baisse: aucune SDP résiduelle exploitable · baisse: pente forte (27 %) · baisse: bâti existant sur 167 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97401000AO0067",
+    "cat": "mauvaise",
+    "bande": "0",
+    "score": 0,
+    "signal_p": 0.018543,
+    "signal_niveau": "faible",
+    "contributions": "baisse: aucune SDP résiduelle exploitable · baisse: pente forte (16 %) · baisse: bâti existant sur 192 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97402000AL0088",
+    "cat": "limite",
+    "bande": "0",
+    "score": 0,
+    "signal_p": 0.013895,
+    "signal_niveau": "faible",
+    "contributions": "baisse: aucune SDP résiduelle exploitable · baisse: pente forte (37 %) · baisse: bâti existant sur 237 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97402000AB1117",
+    "cat": "limite",
+    "bande": "C",
+    "score": 35,
+    "signal_p": 0.00607,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 81 m² de droits à construire restants"
+  },
+  {
+    "idu": "97406000AM0664",
+    "cat": "limite",
+    "bande": "D",
+    "score": 10,
+    "signal_p": 0.048538,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 23 m² de droits à construire restants · baisse: bâti existant sur 88 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97401000AI0166",
+    "cat": "limite",
+    "bande": "B",
+    "score": 72,
+    "signal_p": 0.011666,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 1794 m² de droits à construire restants · baisse: bâti existant sur 21 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97401000AM0140",
+    "cat": "limite",
+    "bande": "B",
+    "score": 50,
+    "signal_p": 0.009887,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 268 m² de droits à construire restants · baisse: bâti existant sur 14 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97401000AD0110",
+    "cat": "limite",
+    "bande": "B",
+    "score": 68,
+    "signal_p": 0.017317,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 434 m² de droits à construire restants · baisse: bâti existant sur 11 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97415000AC0070",
+    "cat": "limite",
+    "bande": "B",
+    "score": 68,
+    "signal_p": 0.017317,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 719 m² de droits à construire restants · baisse: bâti existant sur 6 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97415000AC0109",
+    "cat": "limite",
+    "bande": "D",
+    "score": 15,
+    "signal_p": 0.011637,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 6 m² de droits à construire restants"
+  },
+  {
+    "idu": "97406000AV0888",
+    "cat": "limite",
+    "bande": "D",
+    "score": 14,
+    "signal_p": 0.019026,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 102 m² de droits à construire restants · baisse: zone AU fermée — capacité différée · baisse: bâti existant sur 42 % de la parcelle — démolition à prévoir"
+  },
+  {
+    "idu": "97411000IR0091",
+    "cat": "limite",
+    "bande": "C",
+    "score": 40,
+    "signal_p": 0.006957,
+    "signal_niveau": "faible",
+    "contributions": "hausse: 4720 m² de droits à construire restants · baisse: zone AU fermée — capacité différée · baisse: bâti existant sur 24 % de la parcelle — démolition à prévoir"
+  }
+]

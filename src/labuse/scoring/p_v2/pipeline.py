@@ -249,15 +249,19 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     t0 = time.time()
     freeze_qv12: dict = {}
     _rec = None                      # module recette candidate (qv12 | qv14), sinon None
-    if recette in ("q_v12", "q_v14"):
+    if recette in ("q_v12", "q_v14", "q_v15"):
         # SCORING-4 — q_v14 reprend TOUTE la mécanique q_v12 (fit global + iso par
         # segment) ; seule sa liste de features change (variables as-of en plus).
+        # SCORING-6 lot D — q_v15 = q_v14 MOINS piscine/pv_candidat (Signal de mutation V2).
         if recette == "q_v12":
             from . import qv12 as _rec
             model_version = _rec.QV12_VERSION
-        else:
+        elif recette == "q_v14":
             from . import qv14 as _rec
             model_version = _rec.QV14_VERSION
+        else:
+            from . import qv15 as _rec
+            model_version = _rec.QV15_VERSION
         m12_qv12, m24_qv12, freeze_qv12 = _rec.verify_artifacts()
         sha = freeze_qv12["sha256_12m"]
         model = m12_qv12.base       # encoder/coefs de la recette (top 5 lisibles)
@@ -265,7 +269,7 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
         model, sha = verify_artifact()
         model_version = MODEL_VERSION
     else:
-        raise RuntimeError(f"recette inconnue : {recette!r} (attendu m36 | q_v12 | q_v14)")
+        raise RuntimeError(f"recette inconnue : {recette!r} (attendu m36 | q_v12 | q_v14 | q_v15)")
     annee = annee or date.today().year
     run_id = run_id or f"{model_version}-{date.today().isoformat()}"
 
@@ -293,7 +297,7 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     df["copro"] = df["copro"].fillna(False).astype(bool)
 
     p24 = None
-    if recette in ("q_v12", "q_v14"):
+    if recette in ("q_v12", "q_v14", "q_v15"):
         # SCORING-3/4 — features candidates de la recette (censoring + résiduel lu
         # à 100 % + voisinage as-of ; q_v14 : + variables as-of SCORING-DONNÉES-1),
         # calculées par le MÊME code que l'arène (_rec.enrichir). Pas de recalage
@@ -484,12 +488,12 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     # motifs (statuts.motifs_parcelle), réserve → drapeau (statuts.reserve_fonciere).
     # p_raw INTACT ; rang/contributions conservés (tri, ×N). Le servi (m36) et q_v12 gardent
     # le tier par rang — golden intact. Anti-churn hors ligne (recompute) ; ici entrée stricte.
-    if recette == "q_v14":
+    if recette in ("q_v14", "q_v15"):
         from .statuts import assign_paliers
         tier = assign_paliers(work, None, None)
 
     libelles = None
-    if recette in ("q_v12", "q_v14"):
+    if recette in ("q_v12", "q_v14", "q_v15"):
         lib_extra = _rec.LIBELLES_QV12 if recette == "q_v12" else _rec.LIBELLES_QV14
         libelles = {**LIBELLES, **lib_extra}
     top5 = top5_lisibles(model, contrib, df, libelles=libelles)
@@ -560,7 +564,7 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     # métriques K0 (2025) et SA NOTE DE VERSION (composée depuis les chiffres,
     # lue depuis Données › Circuit › Basculer). Le manifeste de gel fait foi.
     extra_recette: dict = {}
-    if recette in ("q_v12", "q_v14"):
+    if recette in ("q_v12", "q_v14", "q_v15"):
         extra_recette = {
             "recette": recette,
             "protocole": freeze_qv12.get("protocole_12m"),
@@ -617,7 +621,7 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     # doctrine que l'ICD : best-effort SIGNALÉ, jamais avalé.
     potentiel_stats: dict | None = None
     potentiel_error: str | None = None
-    if recette in ("q_v12", "q_v14"):
+    if recette in ("q_v12", "q_v14", "q_v15"):
         try:
             from .potentiel import backfill_run as _potentiel_backfill
             potentiel_stats = _potentiel_backfill(session, run_id)

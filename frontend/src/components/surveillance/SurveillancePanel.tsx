@@ -3,9 +3,9 @@
 // (parcelles suivies + critères) et « Les annonces » (veilles Radar). L'outil « Secteur » a été retiré
 // (l'entrée n'a plus d'objet) ; l'entrée IA de la création de veille aussi (décision Vic). Back intact.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { creerRadarVeille, deleteSearch, getRadarVeilles, getSavedSearches, getSuivis, renommerRadarVeille, supprimerRadarVeille, toggleWatch, type RadarVeille } from '../../lib/api'
-import { CP_COMMUNES, FiltreLabuse } from '../panel/FiltreLabuse'
+import { lazy, Suspense, useState } from 'react'
+import { ApiError, creerRadarVeille, getRadarVeilles, getSuivis, renommerRadarVeille, supprimerRadarVeille, toggleWatch, type RadarVeille } from '../../lib/api'
+import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { trierCommunes } from '../../lib/communes'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
@@ -13,12 +13,6 @@ import { iduCourt } from '../../lib/format'
 
 // RV2-V3 — la carte est montée par la vue Veille (patron Radar) ; lazy comme dans App.
 const MapView = lazy(() => import('../map/MapView').then((m) => ({ default: m.MapView })))
-
-// RV2-V3 — volets du Foncier : Parcelles + Critères (« Secteurs » RETIRÉ — l'outil secteur n'existe plus).
-const VOLETS = [
-  { key: 'parcelles', label: 'Parcelles' },
-  { key: 'criteres', label: 'Critères' },
-] as const
 
 export function SurveillancePanel() {
   const { surveillancePorte, setSurveillancePorte } = useApp()
@@ -57,8 +51,9 @@ function DeuxPortes({ onChoisir }: { onChoisir: (p: 'interne' | 'externe') => vo
       <button data-veille-porte="interne" onClick={() => onChoisir('interne')}
         className="door door-hot hover-fill w-full text-left">
         {/* RECETTE-1 R30 — survol vert opaque, comme les autres portes de l'app */}
+        {/* VEILLE-2 (Lot 4) — le chemin PARCELLE : uniquement les parcelles suivies (critères retirés). */}
         <div className="text-[13px] font-medium text-txt">Le foncier</div>
-        <div className="mt-0.5 text-[11px] leading-snug text-txt-dim">Parcelles suivies et critères enregistrés — vente, permis, procédure, zonage, classement.</div>
+        <div className="mt-0.5 text-[11px] leading-snug text-txt-dim">Vos parcelles suivies — vente, permis, procédure, changement de propriétaire, bascule du score.</div>
       </button>
       <button data-veille-porte="externe" onClick={() => onChoisir('externe')}
         className="door door-hot hover-fill w-full text-left">
@@ -70,27 +65,17 @@ function DeuxPortes({ onChoisir }: { onChoisir: (p: 'interne' | 'externe') => vo
   )
 }
 
-// ── Veille interne — le foncier : Parcelles + Critères (Secteurs retiré). ──
+// ── Veille interne — le CHEMIN PARCELLE : uniquement les parcelles suivies (VEILLE-2 Lot 4 : le volet
+//    « Critères » / recherche sauvegardée est retiré ; la page Veille n'a plus que PARCELLE et RADAR). ──
 function VeilleInterne() {
-  const { surveillanceVolet, openSurveillance } = useApp()
-  const volet = surveillanceVolet === 'criteres' ? 'criteres' : 'parcelles'
   return (
     <>
       <p data-surveillance-boucle className="border-b border-line bg-surface-2 px-4 py-2 text-[10.5px] leading-snug text-txt-mut">
-        Ce que vous surveillez ici produit des alertes — elles arrivent <b className="text-txt">à la cloche</b>,
-        au <b className="text-txt">brief du matin</b> et par <b className="text-txt">e-mail au compte</b>.
+        Ce que vous suivez ici arrive <b className="text-txt">à la cloche</b> et dans le
+        <b className="text-txt"> mail du matin</b> — un seul par jour.
       </p>
-      <div className="flex shrink-0 gap-1 border-b border-line px-3 py-2">
-        {VOLETS.map((v) => (
-          <button key={v.key} data-volet={v.key} onClick={() => openSurveillance(v.key)}
-            className={`rounded-full px-3 py-1 text-[11px] transition-colors duration-quick ${
-              volet === v.key ? 'bg-mint/15 text-mint' : 'text-txt-mut hover:text-txt'}`}>
-            {v.label}
-          </button>
-        ))}
-      </div>
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3 text-[12px]">
-        {volet === 'parcelles' ? <VoletParcelles /> : <VoletCriteres />}
+        <VoletParcelles />
       </div>
     </>
   )
@@ -111,7 +96,9 @@ function VoletParcelles() {
     mutationFn: (idu: string) => toggleWatch(idu),
     // RETOURS-11F M10 — sens Veille → fiche : retirer ici éteint la cloche de la fiche (clé ['watch']).
     onSuccess: (r) => { qc.invalidateQueries({ queryKey: ['suivis'] }); qc.invalidateQueries({ queryKey: ['watch'] }); setMsg(r.watched ? '✓ Parcelle ajoutée au suivi.' : 'Parcelle retirée du suivi.') },
-    onError: () => setMsg('Impossible de suivre cette parcelle (plafond atteint ?).'),
+    // VEILLE-2 (Lot 1) — le REFUS de la barre IDU se dit avec son MOTIF (IDU invalide, hors des 24
+    // communes, parcelle inconnue, plafond) : on remonte le détail serveur, jamais un message générique.
+    onError: (err) => setMsg(err instanceof ApiError && err.detail ? err.detail : 'Impossible de suivre cette parcelle.'),
   })
   return (
     <div data-volet-parcelles className="flex flex-col gap-2">
@@ -149,62 +136,9 @@ function VoletParcelles() {
   )
 }
 
-// ── Volet CRITÈRES : les MÊMES filtres que la carte (FiltreLabuse) + critères enregistrés. Sans IA. ──
-function VoletCriteres() {
-  const qc = useQueryClient()
-  const criteres = useQuery({ queryKey: ['searches'], queryFn: getSavedSearches })
-  const del = useMutation({ mutationFn: deleteSearch, onSuccess: () => qc.invalidateQueries({ queryKey: ['searches'] }) })
-  // FICHE-COMMUNE-2 (C4) — même modèle que la veille annonces (RADAR-VEILLE-1) : à l'ouverture, le
-  // bouton « Créer une veille » + « Vos critères enregistrés » ; les filtres n'apparaissent qu'APRÈS
-  // clic (avant, ils étaient dépliés d'emblée). Après une création réussie (la liste grandit), on
-  // revient à la liste.
-  const [creating, setCreating] = useState(false)
-  const liste = criteres.data ?? []
-  const prevN = useRef(liste.length)
-  useEffect(() => {
-    if (creating && liste.length > prevN.current) setCreating(false)
-    prevN.current = liste.length
-  }, [liste.length, creating])
-  return (
-    <div data-volet-criteres className="flex flex-col gap-3">
-      {!creating ? (
-        <>
-          <button data-veille-fonc-creer-ouvrir onClick={() => setCreating(true)}
-            className="rounded-md bg-mint py-2 text-[12.5px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110">
-            + Créer une veille
-          </button>
-          <p className="text-[10.5px] leading-snug text-txt-mut">Une veille foncière vous <b className="text-txt">alerte dès qu'une parcelle bascule</b> et correspond à vos critères (les mêmes que la recherche carte).</p>
-          <div className="flex flex-col gap-1.5">
-            <p className="label-caps">Vos critères enregistrés <span className="text-txt-dim">· {liste.length}</span></p>
-            {criteres.isLoading && <p className="text-[10.5px] text-txt-dim">Chargement…</p>}
-            {!criteres.isLoading && liste.length === 0 && (
-              <p className="rounded-lg border border-dashed border-line-2 p-3 text-[10.5px] leading-snug text-txt-dim">Aucun critère enregistré. Créez-en un avec le bouton ci-dessus.</p>
-            )}
-            {liste.map((v) => (
-              <div key={v.id} data-critere className="hover-fill flex items-center gap-2 rounded-lg border border-line-2 px-3 py-2 text-[11px]">
-                <a href={'/socle/' + v.hash} className="min-w-0 flex-1 truncate text-txt" title={v.hash}>{v.nom}</a>
-                <button onClick={() => del.mutate(v.id)} aria-label="Supprimer le critère"
-                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-st-ecartee">×</button>
-              </div>
-            ))}
-          </div>
-        </>
-      ) : (
-        // C4 — le formulaire de création : les filtres (FiltreLabuse) n'apparaissent qu'ICI, après clic.
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <p className="label-caps">Nouvelle veille</p>
-            <button data-veille-fonc-annuler onClick={() => setCreating(false)} className="text-[11px] text-txt-mut hover:text-txt">annuler</button>
-          </div>
-          <p className="text-[10.5px] leading-snug text-txt-dim">Réglez les filtres (les mêmes que la recherche carte), puis « Créer une veille » en bas.</p>
-          {/* RV2-V3 — le VRAI panneau de filtres de la carte (pas un jeu réduit) ; son bouton
-              « Créer une veille » enregistre la recherche. L'entrée IA (traduction NL) est RETIRÉE. */}
-          <FiltreLabuse enVeille />
-        </div>
-      )}
-    </div>
-  )
-}
+// VEILLE-2 (Lot 4) — le volet CRITÈRES (recherche sauvegardée) est RETIRÉ : la page Veille n'a plus que
+// PARCELLE (parcelles suivies) et RADAR (annonces). Plus aucun bouton « Créer une veille » depuis les
+// filtres carte (FiltreLabuse) ni depuis les projets.
 
 // ── Veille externe — les annonces Radar : créer + gérer ses veilles (back type 'radar' réutilisé). ──
 // RETOURS-11 T6 — tri sans tenir compte de l'article (« Le Port » se range à P).
@@ -214,10 +148,15 @@ const V_TYPES = [['', 'Tous types'], ['maison', 'Maison'], ['appartement', 'Appa
 function resumeVeille(v: RadarVeille): string {
   const c = v.criteria as Record<string, unknown>
   const bouts: string[] = []
-  if (v.commune) bouts.push(String(v.commune))
+  // VEILLE-2 (Lot 2) — commune(s) : liste `communes` (jointes par « ou ») sinon la commune unique.
+  const communes = Array.isArray(c.communes) ? (c.communes as string[]) : []
+  if (communes.length) bouts.push(communes.join(' ou '))
+  else if (v.commune) bouts.push(String(v.commune))
   if (c.type_bien) bouts.push(String(c.type_bien))
   if (c.prix_min || c.prix_max) bouts.push(`${c.prix_min ? Number(c.prix_min).toLocaleString('fr-FR') : '0'}–${c.prix_max ? Number(c.prix_max).toLocaleString('fr-FR') + ' €' : '∞'}`)
-  if (c.surface_terrain_min) bouts.push(`terrain ≥ ${c.surface_terrain_min} m²`)
+  // surface min/max (modèle VEILLE-2) — + rétro-compat de l'ancien surface_terrain_min.
+  if (c.surface_min || c.surface_max) bouts.push(`${c.surface_min ? Number(c.surface_min) : 0}–${c.surface_max ? Number(c.surface_max) + ' m²' : '∞'}`)
+  else if (c.surface_terrain_min) bouts.push(`terrain ≥ ${c.surface_terrain_min} m²`)
   if (c.particulier_only) bouts.push('particulier')
   return bouts.length ? bouts.join(' · ') : 'Tous les biens'
 }
@@ -229,20 +168,22 @@ function VeilleExterne() {
   // V2 — même ergonomie que la veille parcelle : on ouvre sur ce que le client a DÉJÀ créé ; les filtres
   // n'apparaissent qu'après « Créer une veille ».
   const [creating, setCreating] = useState(false)
-  const [commune, setCommune] = useState('')
+  // VEILLE-2 (Lot 2) — critères du modèle : commune(s), type de bien, surface min/max, prix max.
+  const [communes, setCommunes] = useState<string[]>([])
   const [type, setType] = useState('')
   const [prixMin, setPrixMin] = useState('')
   const [prixMax, setPrixMax] = useState('')
   const [surfMin, setSurfMin] = useState('')
+  const [surfMax, setSurfMax] = useState('')
   const [particulier, setParticulier] = useState(false)
   const inval = () => qc.invalidateQueries({ queryKey: ['radar-veilles'] })
-  const reset = () => { setCommune(''); setType(''); setPrixMin(''); setPrixMax(''); setSurfMin(''); setParticulier(false) }
+  const reset = () => { setCommunes([]); setType(''); setPrixMin(''); setPrixMax(''); setSurfMin(''); setSurfMax(''); setParticulier(false) }
   const creer = useMutation({
     // V3 — plus de filtres d'événement : une veille notifie sur TOUT événement d'un bien correspondant.
     mutationFn: () => creerRadarVeille({
-      commune: commune || undefined, type_bien: type || undefined,
+      communes: communes.length ? communes : undefined, type_bien: type || undefined,
       prix_min: prixMin ? Number(prixMin) : undefined, prix_max: prixMax ? Number(prixMax) : undefined,
-      surface_terrain_min: surfMin ? Number(surfMin) : undefined,
+      surface_min: surfMin ? Number(surfMin) : undefined, surface_max: surfMax ? Number(surfMax) : undefined,
       particulier_only: particulier || undefined,
     }),
     onSuccess: () => { inval(); reset(); setCreating(false) },
@@ -315,17 +256,21 @@ function VeilleExterne() {
             <p className="label-caps">Nouvelle veille</p>
             <button data-veille-ext-annuler onClick={() => setCreating(false)} className="text-[11px] text-txt-mut hover:text-txt">annuler</button>
           </div>
+          {/* VEILLE-2 (Lot 2) — commune(s) : sélection MULTIPLE (aucune = toute l'île). */}
+          <select data-veille-ext-communes multiple value={communes} size={4}
+            onChange={(e) => setCommunes(Array.from(e.target.selectedOptions, (o) => o.value))}
+            className="rounded-md border border-line-2 bg-surface-1 px-2 py-1 text-[11.5px] text-txt">
+            {V_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <p className="-mt-1 text-[10px] text-txt-dim">Commune(s) — aucune sélection = toute l’île. Ctrl/Cmd pour plusieurs.</p>
           <div className="grid grid-cols-2 gap-1.5">
-            <select data-veille-ext-commune value={commune} onChange={(e) => setCommune(e.target.value)} className={sel}>
-              <option value="">Toute l’île</option>
-              {V_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select value={type} onChange={(e) => setType(e.target.value)} className={sel}>
+            <select value={type} onChange={(e) => setType(e.target.value)} className={`col-span-2 ${sel}`}>
               {V_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
             <input type="number" min={0} placeholder="prix min" value={prixMin} onChange={(e) => setPrixMin(e.target.value)} className={`min-w-0 ${sel}`} />
             <input type="number" min={0} placeholder="prix max" value={prixMax} onChange={(e) => setPrixMax(e.target.value)} className={`min-w-0 ${sel}`} />
-            <input type="number" min={0} placeholder="surface terrain min" value={surfMin} onChange={(e) => setSurfMin(e.target.value)} className={`col-span-2 min-w-0 ${sel}`} />
+            <input type="number" min={0} placeholder="surface min (m²)" value={surfMin} onChange={(e) => setSurfMin(e.target.value)} className={`min-w-0 ${sel}`} />
+            <input type="number" min={0} placeholder="surface max (m²)" value={surfMax} onChange={(e) => setSurfMax(e.target.value)} className={`min-w-0 ${sel}`} />
           </div>
           <label className="flex items-center gap-2 text-[11.5px] text-txt-mut">
             <input type="checkbox" checked={particulier} onChange={(e) => setParticulier(e.target.checked)} className="h-3.5 w-3.5 accent-mint" />

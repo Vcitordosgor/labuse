@@ -1,0 +1,7 @@
+VEILLE-2 — gravure Étape 0
+HEAD: c83c14a32aa80e97b869407b321966201f0a4923
+served_run: # config/served_run.txt — VUE DÉRIVÉE du run servi (le point de vérité est config/served_manifest.json).
+# Bascule : `bascule_flux.basculer()` (page Circuit / bouton admin, ou l'alias `labuse golden promote <run>`).
+# Une seule valeur active. Écrit par la bascule seule — ne pas éditer à la main.
+q_v11_m137
+date: 2026-09-22
