@@ -225,45 +225,37 @@ function VerdictHero() {
   // M55-F point 3 : deux entrées possibles dans les résultats — l'analyse LABUSE (opinion) OU le
   // tri factuel (« je cherche moi-même »). Le bandeau DIT laquelle est affichée (honnête).
   const analyse = useApp((s) => s.filters.analyseLabuse)
-  // M55-M point 3 : le bandeau porte les CRITÈRES DU RUN (figés au lancement, jamais les filtres
-  // courants) — le bloc « ANALYSE EN COURS » a disparu du panneau Filtres.
-  const analyseRecap = useApp((s) => s.analyseRecap)
+  // ANALYSE-3 (§1) — le récap des critères (analyseRecap) a QUITTÉ le bandeau (le nom de commune y
+  // faisait doublon avec les filtres globaux et les cartes) : l'en-tête tient sur une ligne.
   // M55-J point 5 : DEUX modales distinctes (classement / scoring), état partagé au store.
   const algoModale = useApp((s) => s.algoModale)
   const setAlgoModale = useApp((s) => s.setAlgoModale)
+  // ANALYSE-3 (§1) — l'en-tête tient sur UNE ligne (~50 px) : « ✓ Analyse LABUSE » à gauche, le bouton
+  // « Comprendre » (icône i) et « Retour » à droite. Le nom de commune (analyseRecap) et le mot
+  // « affichée » sont retirés (doublon filtres globaux + cartes) ; le bouton pleine largeur devient une
+  // pastille en ligne. Le titre « RÉSULTATS » disparaît (ResultsSection).
   if (verdict) {
     return (
-      <div className={`mx-5 mb-1 flex shrink-0 flex-col gap-1.5 rounded-lg px-3 py-2 shadow-elev-1 ${analyse ? 'bg-mint/[0.08]' : 'bg-surface-2'}`}>
+      <div className={`mx-5 mb-1 flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 shadow-elev-1 ${analyse ? 'bg-mint/[0.08]' : 'bg-surface-2'}`}>
         {algoModale === 'classement' && <AlgoExplainer onClose={() => setAlgoModale(null)} />}
         {algoModale === 'scoring' && <ScoringExplainer onClose={() => setAlgoModale(null)} />}
         {algoModale === 'comprendre' && <ComprendreAnalyse onClose={() => setAlgoModale(null)} />}
-        <div className="flex items-center justify-between gap-2">
-          <span className={`min-w-0 truncate text-[11px] font-medium ${analyse ? 'text-mint' : 'text-txt-mut'}`}>
-            {analyse ? '✓ Analyse LABUSE affichée' : 'Tri factuel — sans analyse'}</span>
-          {/* M55-J point 7 : « Masquer » → « Retour » — destination UNIQUE (store.retourFiltres) :
-              sortir de la vue verdict et atterrir sur Filtres ouvert, jamais sur Couches. */}
-          <button data-verdict-off onClick={retourFiltres}
-            className="shrink-0 rounded-ctl border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt"
-            title="Retour — revenir aux filtres">
-            Retour
-          </button>
-        </div>
-        {/* M55-M point 3 : la phrase de critères DU RUN, juste sous le titre. Compacte : tronquée
-            proprement (truncate CSS) avec le détail complet au survol (title = récap complet, sans
-            « … ») — jamais de débordement qui casse le bandeau. Vient de store.analyseRecap (snapshot
-            du lancement), pas des filtres courants. Absente en tri factuel (pas de run décrit). */}
-        {analyse && analyseRecap && (
-          <p data-analyse-criteres className="truncate text-[10px] leading-snug text-txt-mut" title={analyseRecap}>{analyseRecap}</p>
-        )}
-        {/* ANALYSE-2 — UN SEUL bouton « Comprendre l'analyse », pleine largeur sous le bandeau (remplace
-            « Info classement » / « Info scoring »). Ouvre le panneau unique (classement → signal → logique). */}
+        <span className={`min-w-0 flex-1 truncate text-[11.5px] font-medium ${analyse ? 'text-mint' : 'text-txt-mut'}`}>
+          {analyse ? '✓ Analyse LABUSE' : 'Tri factuel — sans analyse'}</span>
         {analyse && (
           <button data-comprendre-open onClick={() => setAlgoModale('comprendre')}
-            className="w-full whitespace-nowrap rounded-ctl border border-mint/40 px-2 py-1 text-[11px] font-medium text-mint hover:bg-mint/10"
+            className="inline-flex shrink-0 items-center gap-1 rounded-ctl border border-mint/40 px-2 py-0.5 text-[11px] font-medium text-mint hover:bg-mint/10"
             title="Le classement (la bande), le signal de mutation, et la logique de l'analyse">
-            {CLIENT.comprendre.titre}
+            <span className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-mint/50 text-[9px] font-bold leading-none">i</span>
+            Comprendre
           </button>
         )}
+        {/* M55-J point 7 : « Retour » — destination UNIQUE (store.retourFiltres). */}
+        <button data-verdict-off onClick={retourFiltres}
+          className="shrink-0 rounded-ctl border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt"
+          title="Retour — revenir aux filtres">
+          Retour
+        </button>
       </div>
     )
   }
