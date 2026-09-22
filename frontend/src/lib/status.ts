@@ -106,6 +106,40 @@ export function tierChipLabel(key: string): string {
   return code ? PALIER_META[code].label : key
 }
 
+// ══════════ ANALYSE-1 — LE NOUVEAU MOTEUR (Score LABUSE + Signal de mutation) ══════════
+// VOCABULAIRE CLIENT GRAVÉ (mandat §2, ne pas réinventer) : la BANDE de Score en toutes lettres +
+// couleur FRANCHE (jamais de camaïeu entre bandes), et le Signal de mutation en BADGE SECONDAIRE
+// (jamais au même niveau visuel que la bande). Aucun chiffre brut de score ni de probabilité au client.
+// La bande vient du moteur TELLE QUELLE (aucun quota, rang ni percentile côté écran) ; « Sans potentiel
+// constructible » (score 0) est une catégorie À PART, jamais confondue avec « Faible ».
+export type Bande = 'A' | 'B' | 'C' | 'D' | '0' | 'NC'
+export const BANDE_META: Record<Bande, { label: string; long: string; color: string }> = {
+  A: { label: 'Excellente', long: 'Excellente — le meilleur potentiel constructible', color: '#5CE6A1' }, // menthe vive
+  B: { label: 'Bonne', long: 'Bonne — potentiel constructible solide', color: '#46A0E0' },                // bleu franc
+  C: { label: 'À étudier', long: 'À étudier — potentiel réel sous conditions', color: '#E8B23A' },          // or / ambre
+  D: { label: 'Faible', long: 'Faible — potentiel constructible limité', color: '#C4653C' },               // terracotta
+  '0': { label: 'Sans potentiel constructible', long: 'Sans potentiel constructible — aucun droit à bâtir résiduel', color: '#5C7268' }, // gris-vert neutre (catégorie à part)
+  NC: { label: 'Analyse incomplète', long: 'Analyse incomplète — une donnée manque pour conclure', color: '#8A8FA0' },                   // gris-bleu neutre
+}
+// ordre lexicographique d'affichage (identique au moteur) : bandes de qualité, incomplète, sans potentiel.
+export const BANDE_ORDER: Bande[] = ['A', 'B', 'C', 'D', 'NC', '0']
+export const BANDE_QUALITE: Bande[] = ['A', 'B', 'C', 'D']
+export function bandeMeta(b: string | null | undefined) {
+  return (b && BANDE_META[b as Bande]) || null
+}
+
+// Signal de mutation — badge SECONDAIRE (Fort / Moyen / Faible). Teinte braise (le signal « chauffe »),
+// distincte de l'échelle des bandes ; jamais au même poids visuel que la bande (mandat §2/§4).
+export type SignalNiveau = 'fort' | 'moyen' | 'faible'
+export const SIGNAL_META: Record<SignalNiveau, { label: string; long: string; color: string }> = {
+  fort: { label: 'Signal fort', long: 'Signal de mutation fort', color: '#FF8A50' },
+  moyen: { label: 'Signal moyen', long: 'Signal de mutation moyen', color: '#E0A845' },
+  faible: { label: 'Signal faible', long: 'Signal de mutation faible', color: '#7E9488' },
+}
+export function signalMeta(s: string | null | undefined) {
+  return (s && SIGNAL_META[s as SignalNiveau]) || null
+}
+
 // Correctif M5 (verdict d'en-tête) — règle UNIQUE, partout où un verdict s'affiche :
 // 1. exclusion dure étage 0 (run servi) → « Écartée » legacy, motifs sourcés (l'étage 0 prime) ;
 // 2. sinon, un run v2 existe → le TIER v2 est le verdict (avec rang/×N côté appelant) ;

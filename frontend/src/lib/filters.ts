@@ -35,6 +35,14 @@ export interface ParcelProps {
   fraction?: string | null    // M135 P2 : « 1/5 » ou null (« — »)
   raison?: string | null      // M135 P3 : chip raison dominante (liste île, servi)
   top5?: unknown[] | null      // M135 P3 : contributions (geojson → raison au front)
+  // ── ANALYSE-1 — le NOUVEAU moteur (run candidat, table score_labuse) : servi tel quel par /filtre ──
+  bande?: string | null            // A | B | C | D | 0 | NC (BANDE_META)
+  signal_niveau?: string | null    // fort | moyen | faible (SIGNAL_META)
+  contributions?: { sens: 'hausse' | 'baisse'; libelle: string }[] | null   // ce qui monte / ce qui baisse (FR, moteur)
+  cause?: string | null            // cause d'« Analyse incomplète » (NC), en français lisible
+  non_calculable?: boolean | null
+  zone_fam?: string | null         // U | AU | A | N (zone PLU dominante — affichage ligne)
+  zone_lib?: string | null
 }
 
 //: flags métier proposés au filtre (couches à drapeau) — libellés humains.

@@ -1214,6 +1214,14 @@ def _zone_plu_ready(db: Session) -> bool:
         "SELECT to_regclass('parcel_zone_plu') IS NOT NULL")).scalar()))
 
 
+def _score_labuse_ready(db: Session) -> bool:
+    """ANALYSE-1 — table `score_labuse` (run candidat du nouveau moteur) présente ? Mémorisé 60 s.
+    Absente (base de test nue, sans run candidat) → l'Analyse sert bande/Signal/contributions NULL
+    (le front replie proprement) et jamais une 500 : les JOINs sont OMIS quand elle manque."""
+    return _mem_cached(("score-labuse-ready",), 60.0, lambda: bool(db.execute(text(
+        "SELECT to_regclass('score_labuse') IS NOT NULL")).scalar()))
+
+
 def _adresse_ready(db: Session) -> bool:
     """Cache matérialisé `parcel_adresse` (M6.2 — meilleure adresse BAN) FIABLE ?
 
@@ -2485,10 +2493,13 @@ def zonage_zones(communes: str | None = Query(None), db: Session = Depends(get_d
 @app.get("/filtre")
 def filtre(c: FiltreCriteres = Depends(),
            limit: int = Query(20, ge=0, le=200), offset: int = Query(0, ge=0),
-           sort: str | None = Query(None, pattern="^(rang|mult|surface|surface_asc|commune|potentiel|adresse)$"),
+           sort: str | None = Query(None, pattern="^(rang|mult|surface|surface_asc|commune|potentiel|adresse|labuse)$"),
            idus: int = Query(0, ge=0, le=1),
            groupes: int = Query(0, ge=0, le=1),
            segment: str | None = Query(None, pattern="^(permis_pro|terrain_nu|bati_densifier|reste)$"),
+           # ANALYSE-1 — filtres PROPRES à l'Analyse (run candidat) : Signal de mutation + groupe de bande.
+           signal: str | None = Query(None, pattern="^(fort|moyen|faible)$"),
+           bande: str | None = Query(None, pattern="^(qualite|nc|zero)$"),
            db: Session = Depends(get_db)) -> dict:
     """Filtrage UNIFIÉ (M45 P1) — le « théâtre » : compteur EXACT + ventilation par tier + page
     d'aperçu en UN appel (une requête par ajustement de filtre). Critères composables via
@@ -2512,7 +2523,8 @@ def filtre(c: FiltreCriteres = Depends(),
         exclure_slivers=True))   # FIX-FILTRES F2 : compteur = liste (slivers < 2 m² masqués des deux)
     page = _q_v2_list(db, c.commune, limit, offset, run_label=c.source,
                       extra_where=extra, extra_params=extra_params, sort=sort,
-                      groupes=bool(groupes), segment=segment) if limit else []
+                      groupes=bool(groupes), segment=segment,
+                      signal_niveau=signal, bande_groupe=bande) if limit else []
     out = {
         **stats,                                     # total, tiers, opportunites, opportunites_evenement,
                                                      # dossiers_* — la LISTE et les cartouches lisent LE MÊME
@@ -3039,9 +3051,29 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
 #: tris de la liste (M5.1 lot 1.3) — rang P par défaut ; ×N, surface, commune en options ;
 #: 'v' (vendabilité) accepté mais deprecated (disparu du sélecteur). Deux formes : sur les
 #: alias de la requête de page (p/d/s2/ev/vs) et sur la page matérialisée (pg).
+# ── ANALYSE-1 — le NOUVEAU moteur (Score LABUSE + Signal de mutation) lu par l'écran Analyse ──
+# Le scoring SERVI reste q_v11_m137 (carte, run servi) ; l'Analyse lit la table `score_labuse` du run
+# CANDIDAT — bande (Excellente/Bonne/À étudier/Faible/Sans potentiel/Analyse incomplète), Signal de
+# mutation (fort/moyen/faible) et contributions FR, telles quelles (aucun quota/rang/percentile côté écran).
+SCORE_LABUSE_RUN = os.environ.get("LABUSE_SCORE_RUN", "q_v15")
+# Le CLASSEMENT LEXICOGRAPHIQUE (décision Vic, V3) : bande de Score d'abord (A>B>C>D), puis « Analyse
+# incomplète » (NC) — JAMAIS tout en bas comme si elle était mauvaise —, puis « Sans potentiel
+# constructible » (bande 0) en toute fin. Le Signal départage DANS la bande (signal_p décroissant).
+_BANDE_RANG_SQL = ("CASE sl.bande WHEN 'A' THEN 0 WHEN 'B' THEN 1 WHEN 'C' THEN 2 "
+                   "WHEN 'D' THEN 3 WHEN 'NC' THEN 4 WHEN '0' THEN 5 ELSE 6 END")
+_BANDE_RANG_PAGE_SQL = ("CASE pg.bande WHEN 'A' THEN 0 WHEN 'B' THEN 1 WHEN 'C' THEN 2 "
+                        "WHEN 'D' THEN 3 WHEN 'NC' THEN 4 WHEN '0' THEN 5 ELSE 6 END")
+#: familles de bande pour le filtre serveur de l'Analyse (groupes de fin de liste, décision Vic)
+_BANDE_GROUPES_SQL = {"qualite": "sl.bande IN ('A','B','C','D')",
+                      "nc": "sl.bande = 'NC'", "zero": "sl.bande = '0'"}
+
 _Q_V2_ORDERS = {
     "rang": "s2.rang ASC NULLS LAST, s2.mult_base DESC NULLS LAST, "
             "(ev.parcel_id IS NOT NULL) DESC, d.opportunity_score DESC",  # M129-B
+    # ANALYSE-1 — le tri du nouveau moteur : bande LEXICOGRAPHIQUE puis Signal de mutation (signal_p
+    # décroissant), puis SDP résiduelle, puis IDU (ordre TOTAL, déterministe). `sl` = score_labuse joint.
+    "labuse": (f"{_BANDE_RANG_SQL} ASC, sl.signal_p DESC NULLS LAST, "
+               "COALESCE(sl.sdp_residuelle_m2,0) DESC, p.idu ASC"),
     "mult": "s2.mult_base DESC NULLS LAST, s2.rang ASC NULLS LAST",
     "surface": "p.surface_m2 DESC NULLS LAST, s2.rang ASC NULLS LAST",
     # M55-H point 4 : le tri Surface gagne son sens INVERSE (re-clic sur la pill) —
@@ -3064,6 +3096,9 @@ _Q_V2_ORDERS = {
 _Q_V2_ORDERS_PAGE = {
     "rang": "pg.rang_v2 ASC NULLS LAST, pg.mult_v2 DESC NULLS LAST, "
             "pg.evenement_rouge DESC, pg.opportunity_score DESC",  # M129-B
+    # ANALYSE-1 — même ordre lexicographique au niveau page (bande via pg.bande, signal via pg.signal_p).
+    "labuse": (f"{_BANDE_RANG_PAGE_SQL} ASC, pg.signal_p DESC NULLS LAST, "
+               "COALESCE(pg.sdp_residuelle_m2,0) DESC, pg.idu ASC"),
     "mult": "pg.mult_v2 DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "surface": "pg.surface_m2 DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "surface_asc": "pg.surface_m2 ASC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
@@ -3104,7 +3139,8 @@ _ETAT_BIEN_SQL = (
 
 def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_label: str | None = None,
                extra_where: str = "", extra_params: dict | None = None,
-               sort: str | None = None, groupes: bool = False, segment: str | None = None) -> list[dict]:
+               sort: str | None = None, groupes: bool = False, segment: str | None = None,
+               signal_niveau: str | None = None, bande_groupe: str | None = None) -> list[dict]:
     """Liste pilotée par le scoring v2 (M5.1) : tri par défaut = RANG P (croissant, copros
     en queue), périmètre par défaut = univers v2 HORS étage 0 du run servi — une brûlante
     v2 « écartée matrice » APPARAÎT. Un filtre `tiers` explicite (extra_where) remplace ce
@@ -3122,6 +3158,31 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     base = "" if ("f_tiers" in xp
                   or "s2.tier" in extra_where or _ETAGE0_SQL in extra_where) \
         else f"AND NOT {_ETAGE0_SQL}"
+    # ANALYSE-1 — filtres PROPRES à l'Analyse, lus sur le run candidat (score_labuse `sl`) : le Signal
+    # de mutation (fort/moyen/faible) et le groupe de bande (qualité A-D / incomplète NC / sans potentiel
+    # 0). Un groupe de bande demandé pilote SEUL le périmètre (« Sans potentiel » n'est jamais masqué) :
+    # il LÈVE l'exclusion étage 0 du run servi, sinon les 145 k écartées disparaîtraient de l'Analyse.
+    _sl_ready = _score_labuse_ready(db)
+    _zpl_ready = _zone_plu_ready(db)
+    # colonnes/jointures CONDITIONNELLES : NULL typé si la table manque (base de test nue) → jamais une 500.
+    _sl_cols = ("""sl.bande AS bande, sl.signal_niveau AS signal_niveau, sl.signal_p AS signal_p,
+                   sl.contributions AS contributions, sl.cause AS cause,
+                   sl.non_calculable AS non_calculable, sl.sdp_residuelle_m2 AS sdp_residuelle_m2"""
+                if _sl_ready else
+                """NULL::text AS bande, NULL::text AS signal_niveau, NULL::double precision AS signal_p,
+                   NULL::jsonb AS contributions, NULL::text AS cause,
+                   NULL::boolean AS non_calculable, NULL::integer AS sdp_residuelle_m2""")
+    _zpl_cols = ("zpl.zone_fam AS zone_fam, zpl.zone_lib AS zone_lib" if _zpl_ready
+                 else "NULL::text AS zone_fam, NULL::text AS zone_lib")
+    _sl_join = "LEFT JOIN score_labuse sl ON sl.parcel_id = p.id AND sl.run_label = :sl_run" if _sl_ready else ""
+    _zpl_join = "LEFT JOIN parcel_zone_plu zpl ON zpl.idu = p.idu" if _zpl_ready else ""
+    sl_conds = []
+    if _sl_ready and signal_niveau in ("fort", "moyen", "faible"):
+        sl_conds.append("sl.signal_niveau = :sig")
+    if _sl_ready and bande_groupe in _BANDE_GROUPES_SQL:
+        sl_conds.append(_BANDE_GROUPES_SQL[bande_groupe])
+        base = ""
+    sl_where = ("AND " + " AND ".join(sl_conds)) if sl_conds else ""
     # M31 PC4 (arbitrage M30) : ALIGNER la LISTE sur la CARTE — les slivers cadastraux < 2 m²
     # (MIN_DISPLAY_SURFACE_M2), masqués de la carte/geojson depuis toujours, l'étaient PAS de la
     # liste (asymétrie relevée à l'inventaire M30). Même plancher d'AFFICHAGE ici : les slivers
@@ -3181,14 +3242,19 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     # rejoue l'ordre historique + un tiebreaker p.idu explicite qui rend TOTAL un ordre
     # que l'ancien plan laissait flotter sur les égalités de queue (constaté au garde-fou
     # avant/après). Les autres tris (mult/surface/commune/v) gardent la requête historique.
-    _page_cols = """p.id, p.idu, p.commune, p.surface_m2, p.section,
+    _page_cols = f"""p.id, p.idu, p.commune, p.surface_m2, p.section,
                    d.status AS status, d.opportunity_score,  -- M129-B : matrice morte → statut cascade
                    d.completeness_score,
                    s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2, s2.p_raw AS p_raw,
                    s2.top5_contributions AS top5,   -- M135 P3 : la raison dominante (affichage)
                    s2.copro AS copro_v2, s2.event_date,
                    (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
-                   (ev.parcel_id IS NOT NULL) AS evenement_rouge"""
+                   (ev.parcel_id IS NOT NULL) AS evenement_rouge,
+                   -- ANALYSE-1 : le NOUVEAU moteur (run candidat) — bande, Signal, contributions FR, cause NC.
+                   -- Colonnes conditionnelles : NULL typé quand la table `score_labuse`/`parcel_zone_plu`
+                   -- manque (base de test), pour ne jamais casser la liste servie sur une base nue.
+                   {_sl_cols},
+                   {_zpl_cols}"""
     v2run = _score_v2_run_id(db)
     # chemin rapide seulement si un run v2 existe : sans lui, le LEFT JOIN historique
     # sert le repli legacy (colonnes v2 NULL) — le chemin s2-driven renverrait vide.
@@ -3200,11 +3266,14 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
             JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
             LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                        WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
+            {_sl_join}   -- ANALYSE-1 (run candidat, conditionnel)
+            {_zpl_join}  -- ANALYSE-1 (zone ligne, conditionnel)
             WHERE s2.run_id = :v2run
               AND (CAST(:c AS text) IS NULL OR p.commune = :c)
               {_sliver}
               {base}
-              {extra_where}"""
+              {extra_where}
+              {sl_where}"""
         page_sql = f"""
         page AS (
             SELECT * FROM (
@@ -3231,6 +3300,8 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
             LEFT JOIN parcel_v_score vs ON vs.parcelle_id = p.idu
             LEFT JOIN parcel_residuel rp ON rp.parcel_id = p.id
             LEFT JOIN parcel_adresse pa ON pa.idu = p.idu
+            {_sl_join}   -- ANALYSE-1 (run candidat, conditionnel)
+            {_zpl_join}  -- ANALYSE-1 (zone ligne, conditionnel)
             {seg_join}
             LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                        WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
@@ -3239,6 +3310,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
               {base}
               {extra_where}
               {seg_where}
+              {sl_where}
             ORDER BY {order}
             LIMIT :lim OFFSET :off
         )"""
@@ -3280,7 +3352,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         ORDER BY {(_TIER_GROUPE_PAGE_SQL + ', ') if groupes else ''}{_Q_V2_ORDERS_PAGE[sort_key or "rang"]}
         """), {"c": commune, "run": run_label, "lim": limit, "off": offset,
                "need": limit + offset, "minsurf": MIN_DISPLAY_SURFACE_M2,
-               "v2run": v2run, **xp}
+               "v2run": v2run, "sl_run": SCORE_LABUSE_RUN, "sig": signal_niveau, **xp}
     ).mappings().all()
     return [{
         "idu": r["idu"], "commune": r["commune"], "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
@@ -3303,6 +3375,14 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         "etage0": bool(r["etage0"]),
         "etat_bien": r["etat_bien"],   # M131 P3 : nu | bati_encore | bati_max (affichage)
         "permis_pro": bool(r["permis_pro"]),   # RECETTE-3 (T4) : segment « un pro a déposé un permis »
+        # ANALYSE-1 — le NOUVEAU moteur (run candidat) : bande, Signal de mutation, contributions FR,
+        # cause d'incomplétude. Servis TELS QUELS (le moteur produit déjà le vocabulaire ; l'écran ne
+        # recalcule ni ne re-classe rien). zone_fam/zone_lib = la zone PLU dominante pour la ligne.
+        "bande": r["bande"], "signal_niveau": r["signal_niveau"],
+        "contributions": r["contributions"], "cause": r["cause"],
+        "non_calculable": bool(r["non_calculable"]) if r["non_calculable"] is not None else None,
+        "sdp_residuelle_m2": int(r["sdp_residuelle_m2"]) if r["sdp_residuelle_m2"] is not None else None,
+        "zone_fam": r["zone_fam"], "zone_lib": r["zone_lib"],
     } for r in rows]
 
 
@@ -3489,6 +3569,26 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
         """), params).mappings().one()
     out["segments"] = {"permis_pro": int(seg["s_permis_pro"] or 0), "terrain_nu": int(seg["s_nu"] or 0),
                        "bati_densifier": int(seg["s_densif"] or 0), "reste": int(seg["s_reste"] or 0)}
+    # ANALYSE-1 — la ventilation par BANDE du run candidat (score_labuse) : Excellente (A) / Bonne (B) /
+    # À étudier (C) / Faible (D) / Sans potentiel constructible (0) / Analyse incomplète (NC). Sur MÊME
+    # périmètre (mêmes filtres globaux) mais SANS l'exclusion étage 0 du run servi — le récapitulatif
+    # « LABUSE a analysé les N parcelles » compte TOUTE la trame du candidat (rien n'est masqué). Comptes
+    # bruts du moteur, aucun quota/rang/percentile ; recouvrement 1:1 vérifié (431 663 parcelles).
+    vb: dict = {}
+    if _score_labuse_ready(db):   # base de test nue (sans run candidat) → ventilation à zéro, jamais une 500
+        bandes = db.execute(text(
+            f"""
+            SELECT sl.bande AS bande, count(*) AS n
+            FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
+            {join_v2}
+            JOIN score_labuse sl ON sl.parcel_id = p.id AND sl.run_label = :sl_run
+            WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+              {extra_where} {sliver}
+            GROUP BY sl.bande
+            """), {**params, "sl_run": SCORE_LABUSE_RUN}).mappings().all()
+        vb = {r["bande"]: int(r["n"]) for r in bandes}
+    out["bandes"] = {k: vb.get(k, 0) for k in ("A", "B", "C", "D", "0", "NC")}
+    out["bande_total"] = sum(out["bandes"].values())
     if legacy:  # M129-B : la matrice est MORTE — la ventilation legacy est retirée, DIT.
         out["legacy"] = {"mort": "matrice retirée (M129) — statut cascade + tier v2 la remplacent"}
     return out
@@ -5163,6 +5263,14 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
     idu = _check_idu(idu)   # garde O5 (octet nul / IDU malformé) → 404 propre AVANT tout accès DB
     run = source if (source and source.startswith("q_v")) else runs.current()
     payload = _q_v2_fiche(db, idu, run_label=run)
+    # ANALYSE-1 — le verdict du NOUVEAU moteur (Score LABUSE + Signal de mutation, run candidat) attaché
+    # à la fiche : bande, Signal, contributions FR EN ENTIER, cause d'incomplétude. Servi TEL QUEL (le
+    # moteur produit le vocabulaire ; le score ne s'affiche QUE sur la fiche et dans l'Analyse, mandat §4).
+    sl = db.execute(text(
+        """SELECT bande, signal_niveau, contributions, cause, non_calculable, sdp_residuelle_m2
+           FROM score_labuse WHERE run_label = :r AND idu = :idu"""),
+        {"r": SCORE_LABUSE_RUN, "idu": idu}).mappings().first() if (db is not None and _score_labuse_ready(db)) else None
+    payload["analyse_labuse"] = dict(sl) if sl else None
     if trace:
         # CIRCUIT-1 lot 1.4 — MODE TRAÇAGE (admin seulement, 403 sinon) : le tampon de chaque
         # chiffre déclaré pour les sections de la fiche parcelle (registre.robinets fiche_parcelle_*).

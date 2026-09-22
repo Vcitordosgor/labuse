@@ -272,6 +272,14 @@ export interface QualiteCommune {
 export interface Fiche {
   idu: string
   commune: string
+  // ── ANALYSE-1 — le verdict du NOUVEAU moteur (Score LABUSE + Signal de mutation, run candidat) ──
+  // Servi tel quel : bande (BANDE_META), Signal de mutation (SIGNAL_META), contributions FR EN ENTIER,
+  // cause d'incomplétude. null = parcelle absente du run candidat.
+  analyse_labuse?: {
+    bande: string | null; signal_niveau: string | null
+    contributions: { sens: 'hausse' | 'baisse'; libelle: string }[] | null
+    cause: string | null; non_calculable: boolean | null; sdp_residuelle_m2: number | null
+  } | null
   adresse?: string | null   // M6 2a (§1.8) : meilleure adresse postale BAN — null si aucune
   proprietaire_moral: {
     denomination: string | null; siren: string | null; groupe_label: string | null
