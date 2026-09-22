@@ -1,0 +1,20 @@
+endroit,source_plu_lue,test_saint_denis,depend_de
+Outil PLU — bouton « Télécharger le PLU intégral (.zip) »,plu_reglement_extrait.source_url (pack GPU) via corpus_status,ANCIEN (20260423),lecture directe (à jour dès ré-ingestion du règlement)
+Outil PLU — recherche verbatim,plu_reglement_extrait (tsv / texte_verbatim / page_pdf),ANCIEN (20260423),lecture directe (idem)
+Outil PLU — millésime affiché « PLU du … »,plu_reglement_extrait.millesime via corpus_status (max),ANCIEN (20260423),lecture directe
+Outil PLU — pack « en vigueur » des communes en révision,pack live GPU grid=insee (modules/plu-annuaire/pack),à jour par nature (live) — non concerné (Saint-Denis servable),lecture directe (live GPU)
+Couche carte « Limites officielles du PLU » (zonage brut),spatial_layers kind=plu_gpu_zone (MVT tuiles),À JOUR (20260805),lecture directe (ré-ingéré 14/09)
+Couche « Zonage PLU par parcelle »,parcel_zone_plu (matérialisé depuis plu_gpu_zone),À JOUR,recalcul build-mvt (déjà rebâti)
+Filtre Zonage (famille U/AU/A/N),parcel_zone_plu.zone_fam (+ moteur registre zonage),À JOUR,recalcul build-mvt
+Filtre Zone exacte,parcel_zone_plu.zone_filtre,À JOUR,recalcul build-mvt
+Fiche parcelle — zone PLU (libellé + idurba),spatial_layers plu_gpu_zone en direct (app.py:_reglement_plu_block ST_Intersection),À JOUR (20260805),lecture directe
+Fiche parcelle — règlement chiffré (hauteur/emprise/reculs/destinations),calibrage config/plu_destinations/97411_saint_denis.yaml + plu_zonage.yaml (zonage.py),À JOUR (document_gpu 20260805 lu le 03/09),calibrage
+Fiche parcelle — lien + millésime du règlement,reglement_source → destinations meta (url/document/millesime),À JOUR (20260805),calibrage
+Fiche parcelle — §capacité constructible / potentiel,parcel_residuel (computed 21-22/09) + parcel_faisabilite,À JOUR,recalcul résiduel (déjà recalculé après le zonage neuf)
+Fiche commune — statut PLU (révision/RNU),config/veille_plu.yaml + config/plu_millesimes.yaml,statut à jour (axe procédure — pas le millésime du texte),config
+Export Dossier / Flash — zonage + règles + capacité,payload fiche (plu_gpu_zone live + calibrage destinations + parcel_residuel),À JOUR,lecture directe + calibrage + recalcul (tous neufs)
+Export Pré-dossier PC — règles + pages du règlement + zone,calibrage destinations (page_pdf/pages du document 20260805) + payload fiche,À JOUR,calibrage
+Export Financier / Apporteur — zone + capacité + dispositifs,payload fiche (reglement_plu + potentiel_transformation),À JOUR,recalcul + calibrage + lecture
+Copilote — contexte zone + règlement (fiche_ask),payload fiche (zone_plu + reglement_plu),À JOUR,lecture directe (dérive de la fiche)
+Catalogue millésimes PLU,config/plu_millesimes.yaml (idurba 97411_PLU_20260423),ANCIEN (20260423),config (édition manuelle — pas une ingestion)
+Dashboard état calibrage (X5.2 etat_commune),compare catalogue idurba vs calibrage document_gpu,"signale « catalogue en retard, calibration à jour » (factuel)",config
