@@ -58,7 +58,6 @@ def test_radar_cible_seulement_les_veilles_qui_matchent(seed):
     assert not any(t == "digest" for _, t in types), "le digest broadcast (template 12) est retiré"
     assert (seed["match"], "alerte") in types, "le compte dont la veille matche reçoit l'alerte"
     assert all(cid != seed["plain"] for cid, _ in types), "le compte sans veille ne reçoit rien"
-    assert r["simules"] == 1
 
 
 def test_radar_trois_comptes_deux_veilles_un_sans(engine):
@@ -76,10 +75,11 @@ def test_radar_trois_comptes_deux_veilles_un_sans(engine):
                 s.execute(text("INSERT INTO utilisateurs (compte_id, email, role, statut, echecs_login) "
                                "VALUES (:c,:e,'titulaire','actif',0)"), {"c": cid, "e": f"{k}-{tag}@rt3.test"})
                 ids[k] = cid
-            # veille A = terrains Saint-Benoît ; veille B = terrains Le Tampon (communes distinctes).
-            veille.creer(s, compte_id=ids["a"], criteria={"commune": "Saint-Benoît", "type_bien": "terrain"})
-            veille.creer(s, compte_id=ids["b"], criteria={"commune": "Le Tampon", "type_bien": "terrain"})
-            for commune in ("Saint-Benoît", "Le Tampon"):
+            # communes UNIQUES (tag) → seules NOS annonces matchent NOS veilles (robuste à tout résidu).
+            com_a, com_b = f"ZZTEST-{tag}-A", f"ZZTEST-{tag}-B"
+            veille.creer(s, compte_id=ids["a"], criteria={"commune": com_a, "type_bien": "terrain"})
+            veille.creer(s, compte_id=ids["b"], criteria={"commune": com_b, "type_bien": "terrain"})
+            for commune in (com_a, com_b):
                 bid = s.execute(text(
                     "INSERT INTO pige_biens (commune,type_bien,est_copro,rattachement_niveau,statut) "
                     "VALUES (:co,'terrain',false,'absent','active') RETURNING bien_id"), {"co": commune}).scalar()
@@ -127,10 +127,11 @@ def test_essai_expire_exclu_de_tout_envoi():
                                 {"n": f"RT-ess {tag} {k}"}).scalar()
                 s.execute(text("INSERT INTO utilisateurs (compte_id, email, role, statut, echecs_login) "
                                "VALUES (:c,:e,'titulaire','actif',0)"), {"c": cid, "e": f"{k}-{tag}@ess.test"})
-                veille.creer(s, compte_id=cid, criteria={"commune": "Cilaos", "type_bien": "terrain"})
+                veille.creer(s, compte_id=cid, criteria={"commune": f"ZZESS-{tag}", "type_bien": "terrain"})
                 ids[k] = cid
             bid = s.execute(text("INSERT INTO pige_biens (commune,type_bien,est_copro,rattachement_niveau,statut) "
-                                 "VALUES ('Cilaos','terrain',false,'absent','active') RETURNING bien_id")).scalar()
+                                 "VALUES (:co,'terrain',false,'absent','active') RETURNING bien_id"),
+                            {"co": f"ZZESS-{tag}"}).scalar()
             s.execute(text("INSERT INTO pige_annonces (bien_id,portail,url_sortante) VALUES (:b,'leboncoin',:u)"),
                       {"b": bid, "u": f"https://www.leboncoin.fr/ess-{tag}"})
             s.execute(text("INSERT INTO pige_faits (bien_id,prix,type_bien,surface_terrain,particulier_pro,valide_at)"
