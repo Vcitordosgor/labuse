@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getGabarit, type GabaritResult, type GabGeom } from '../../lib/api'
-import { fmtM2 } from '../../lib/format'
+import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 
@@ -99,7 +99,7 @@ function Num({ label, value, unit, accent }: {
     <div className="flex flex-col gap-0.5">
       <span className="label-caps text-[9.5px] leading-tight text-txt-dim">{label}</span>
       <span className={`font-mono text-[15px] tabular-nums ${accent ? 'text-mint' : 'text-txt-hi'}`}>
-        {value != null ? `${fmtM2(value).replace(' m²', '')} ${unit}` : '—'}
+        {value != null ? `${fmtInt(value)} ${unit}` : '—'}
       </span>
     </div>
   )
