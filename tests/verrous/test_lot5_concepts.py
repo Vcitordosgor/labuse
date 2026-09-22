@@ -152,11 +152,13 @@ def test_v5f_prouve_casse_sur_une_lecture_directe(monkeypatch):
     assert any("chiffre_lu_en_direct_hors_registre" in d for d in r.details)
 
 
-def test_v5f_vert_sur_les_17_outils():
-    """Sur l'état réel : les 17 outils du menu (registry.ts, cartes visibles) ont tous leur
-    robinet, et chaque chiffre servi est un id du registre — aucune lecture directe."""
+def test_v5f_vert_sur_les_18_outils():
+    """Sur l'état réel : les 18 outils du menu (registry.ts) ont tous leur robinet, et chaque
+    chiffre servi est un id du registre — aucune lecture directe. Le Gabarit réglementaire est le
+    18e outil (depuis GABARIT-2) : masqué en attendant la certification de la classification des
+    limites (flag admin), il RESTE au menu registry.ts et porte son robinet — donc compté ici."""
     cles = CV._cles_outils_menu()
-    assert len(cles) == 17, f"attendu 17 outils au menu, vu {len(cles)} : {sorted(cles)}"
+    assert len(cles) == 18, f"attendu 18 outils au menu, vu {len(cles)} : {sorted(cles)}"
     r = CV.verrou_outils_registre()
     assert r.verdict == "ok", r.details[:5]
-    assert "17 outils du menu" in r.preuve
+    assert "18 outils du menu" in r.preuve
