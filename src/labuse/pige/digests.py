@@ -289,6 +289,31 @@ def _clients_actifs(db: Session) -> list[dict]:
         "GROUP BY c.id, c.nom ORDER BY c.id")).mappings()]
 
 
+def evaluer_radar_cloche(db: Session) -> dict:
+    """VEILLE-2 (Lot 3) — pose à la CLOCHE du haut (compte-scopé, kind `radar`) chaque annonce du jour
+    qui matche une veille du client → clic vers l'ANNONCE (pas la fiche : `idu=None`, `lien=url`). C'est
+    le producteur des événements Radar que le digest du matin (Lot 5) reprend. Zéro mail ici. Idempotent
+    (dédup compte+bien+jour). Un ESSAI EXPIRÉ ne reçoit rien (`_clients_actifs` filtre déjà)."""
+    from ..api.events import creer_notification
+    jour = today_reunion()
+    biens = _biens_du_jour(db)
+    n = 0
+    for c in _clients_actifs(db):
+        for v in veille_mod.lister(db, c["compte_id"]):
+            cr = v.get("criteria") or {}
+            for b in (x for x in biens if veille_mod.matche(cr, x)):
+                type_label = (b.get("type_bien") or "bien").capitalize()
+                prix = _fmt_prix(b["faits"].get("prix")) or "—"
+                n += 1 if creer_notification(
+                    db, kind="radar", compte_id=c["compte_id"], source="Radar", idu=None,
+                    titre=f"Nouvelle annonce pour votre veille — {type_label} à {b['commune']}",
+                    detail=f"{prix} · {_libelle_veille(v)}",
+                    lien=b.get("url_sortante") or _lien_radar(""),
+                    dedup=f"radar:{c['compte_id']}:{b['bien_id']}:{jour.isoformat()}") else 0
+    db.commit()
+    return {"radar": n}
+
+
 def envoyer(db: Session, *, base_url: str = "", dry_run: bool = False,
             dry_dir: str | None = None) -> dict:
     """Les DEUX envois de fin de journée (template 12 digest + 13 alerte). Idempotent, jamais vide.

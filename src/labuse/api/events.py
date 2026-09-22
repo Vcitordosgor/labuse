@@ -253,6 +253,17 @@ def notifier_fraicheur(db: Session) -> int:
     return crees
 
 
+def annoncer_nouveaute(db: Session, titre: str, detail: str | None = None,
+                       *, source: str | None = None) -> int:
+    """VEILLE-2 (Lot 3) — NOUVEAUTÉ DE L'APP (typiquement une NOUVELLE SOURCE de données) diffusée à
+    TOUS les comptes (broadcast, compte_id NULL) à la cloche du haut, cliquable vers la page Sources.
+    JAMAIS de millésime ni de date de donnée dans le texte (le mandat l'interdit) — juste « c'est arrivé
+    dans LABUSE ». Dédup PERMANENTE par titre : une même nouveauté ne s'annonce qu'une fois."""
+    return creer_notification(db, kind="nouveaute", compte_id=None, source=source or "LABUSE",
+                              titre=titre, detail=detail, lien="/sources",
+                              dedup=f"nouveaute:{titre}", permanent=True)
+
+
 def purge_notifications(db: Session, jours: int = NOTIF_RETENTION_JOURS) -> int:
     """Rétention (config) : supprime les notifications de plus de `jours` (défaut 90). `event_seen`
     part en cascade (FK). À appeler par le cron quotidien."""
@@ -271,7 +282,7 @@ DIGEST_HEURE_REUNION = 7                     # 7h00 heure Réunion (config)
 _KINDS_PAR_PREF = {   # type de registre → kinds event_log (perso) qu'il gouverne à la cloche
     "veille_zone": ("veille", "match", "veille_zone"),
     "parcelle_suivie": ("permis", "bascule", "bodacc", "parcelle_suivie"),
-    "annonce_produit": ("annonce_produit",),
+    "annonce_produit": ("annonce_produit", "radar"),   # VEILLE-2 — le Radar suit la pref « Annonces »
     "maintenance": ("maintenance",),
 }
 
@@ -687,6 +698,25 @@ _MARKET_KINDS = ("bascule", "bodacc", "match")
 # 3), hors digest ; systeme_pilote = cloche seule.
 _PERSO_KINDS = ("permis", "veille", "parcelle_suivie", "veille_zone")
 
+# VEILLE-2 (Lot 3) — LA CLOCHE DU HAUT porte une LISTE FERMÉE de types, en QUATRE catégories, chacune
+# avec son texte et son clic. Tout autre kind d'event_log n'apparaît PAS à la cloche du CLIENT (le
+# bucket pilote, compte NULL, garde sa vue de diagnostic complète) :
+#   · parcelle suivie (kind `parcelle_suivie`, compte-scopé)   → la fiche parcelle ;
+#   · Radar          (kind `radar`, compte-scopé, un match)    → l'annonce ;
+#   · marché         (bascule/bodacc/match, broadcast NULL)    → la fiche parcelle ;
+#   · nouveauté app  (kind `nouveaute`, broadcast NULL)        → la page Sources (jamais un millésime).
+_NOUVEAUTE_KINDS = ("nouveaute",)
+# BROADCAST = compte NULL VISIBLE DE TOUS les comptes (marché + nouveautés de l'app). Un compte neuf
+# ouvre à 0 (un broadcast antérieur à sa création est lu d'office — cf. _seen).
+_BROADCAST_KINDS = _MARKET_KINDS + _NOUVEAUTE_KINDS
+_CLOCHE_KINDS = ("parcelle_suivie", "radar") + _MARKET_KINDS + _NOUVEAUTE_KINDS
+
+
+def _cloche_closed_sql(cid: int | None, alias: str = "e") -> str:
+    """Fragment WHERE bornant la cloche du CLIENT à la LISTE FERMÉE (`:cloche`). Le bucket pilote
+    (cid None) n'est PAS borné : il garde sa vue complète de diagnostic."""
+    return f" AND {alias}.kind = ANY(:cloche)" if cid is not None else ""
+
 
 def _visible(alias: str = "e") -> str:
     """Fragment SQL de visibilité d'un event_log : SES lignes (cloison) ∪ le marché public
@@ -719,11 +749,12 @@ def list_events(request: Request, unread_only: bool = False,
                 db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
     cid = current_compte(request)
-    mk = list(_MARKET_KINDS)
+    mk = list(_BROADCAST_KINDS)   # VEILLE-2 : marché + nouveautés de l'app, broadcast à tous
     # M85 — non-lues D'ABORD (cloche), puis récentes ; paginé (offset). source/lien/ts exposés pour
     # que la cloche affiche « dit sa source et sa date » + le lien direct vers l'objet. Le FILTRE cloche
     # (préférences par type) borne la liste ET le compteur : un type coupé ne s'affiche ni ne compte.
-    cf = _cloche_filter_sql(prefs_compte(db, cid))
+    # VEILLE-2 (Lot 3) — plus la LISTE FERMÉE (`:cloche`) pour un CLIENT : tout autre kind n'apparaît pas.
+    cf = _cloche_filter_sql(prefs_compte(db, cid)) + _cloche_closed_sql(cid)
     rows = db.execute(text(f"""
         SELECT e.id, e.ts::date::text AS date, e.ts::text AS ts, e.kind, e.idu, e.titre, e.detail,
                e.demo, e.source, e.lien, p.commune AS commune,
@@ -734,7 +765,8 @@ def list_events(request: Request, unread_only: bool = False,
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         WHERE {_visible('e')} {f"AND NOT {_seen('e')}" if unread_only else ""}{cf}
         ORDER BY {_seen('e')} ASC, e.ts DESC, e.id DESC LIMIT :lim OFFSET :off"""),
-        {"lim": limit, "off": max(0, offset), "run": runs.cascade(), "cid": cid, "market": mk}).mappings().all()  # C1
+        {"lim": limit, "off": max(0, offset), "run": runs.cascade(), "cid": cid, "market": mk,
+         "cloche": list(_CLOCHE_KINDS)}).mappings().all()  # C1
     # CIRCUIT-2 lot 1.6 — le compteur de non-lues est calculé par le moteur nommé
     # `plateforme_compteurs` (id registre n_notifications) : ce robinet ne calcule plus, il appelle.
     from ..registre.moteurs.plateforme import notifications_non_lues
@@ -746,13 +778,13 @@ def list_events(request: Request, unread_only: bool = False,
 def events_count(request: Request, db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
     cid = current_compte(request)
-    mk = list(_MARKET_KINDS)
+    mk = list(_BROADCAST_KINDS)
     # CIRCUIT-2 lot 1.6 — même moteur `plateforme_compteurs` que list_events (n_notifications).
     from ..registre.moteurs.plateforme import notifications_non_lues
     n = notifications_non_lues(db, cid)
     per = db.execute(text(f"SELECT idu, count(*) FROM event_log e WHERE idu IS NOT NULL"
-                          f" AND {_visible('e')} AND NOT {_seen('e')} GROUP BY idu"),
-                     {"cid": cid, "market": mk}).all()
+                          f" AND {_visible('e')} AND NOT {_seen('e')}{_cloche_closed_sql(cid)} GROUP BY idu"),
+                     {"cid": cid, "market": mk, "cloche": list(_CLOCHE_KINDS)}).all()
     return {"unread": n, "par_parcelle": {r[0]: r[1] for r in per}}
 
 
@@ -774,7 +806,7 @@ def mark_read(event_id: int, request: Request, db: Session = Depends(get_db)) ->
             "SELECT :cid, e.id FROM event_log e "
             "WHERE e.id = :i AND e.compte_id IS NULL AND e.kind = ANY(:market) "
             "ON CONFLICT (compte_id, event_id) DO NOTHING"),
-            {"cid": cid, "i": event_id, "market": list(_MARKET_KINDS)})
+            {"cid": cid, "i": event_id, "market": list(_BROADCAST_KINDS)})
     return {"ok": True}
 
 
@@ -793,7 +825,7 @@ def mark_all_read(request: Request, db: Session = Depends(get_db)) -> dict:
             "WHERE e.compte_id IS NULL AND e.kind = ANY(:market) "
             "  AND NOT EXISTS (SELECT 1 FROM event_seen s WHERE s.event_id = e.id AND s.compte_id = :cid) "
             "ON CONFLICT (compte_id, event_id) DO NOTHING"),
-            {"cid": cid, "market": list(_MARKET_KINDS)}).rowcount
+            {"cid": cid, "market": list(_BROADCAST_KINDS)}).rowcount
     return {"ok": True, "marques": n}
 
 

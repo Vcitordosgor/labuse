@@ -6,14 +6,14 @@ import { estIdu, estSectionNumero, iduComplet, normSectionNumero } from '../../l
 // M87 P5.1 — REGROUPER les notifications : une ligne par commune quand plusieurs événements de même
 // nature s'y produisent (« 8 nouveaux permis à Saint-Louis » + « Voir les 8 → »), au lieu de N lignes
 // qui noient la cloche. Les événements sans commune (veilles de zone, système) restent en ligne propre.
+// VEILLE-2 (Lot 3) — LA CLOCHE DU HAUT porte une LISTE FERMÉE de quatre catégories, chacune son
+// libellé et son clic : parcelle suivie (→ fiche), Radar (→ annonce), marché (→ fiche), nouveauté de
+// l'app (→ page Sources). Tout autre kind d'event_log n'apparaît pas côté client (filtré au back).
 const _NOM_KIND: Record<string, string> = {
-  permis: 'permis', bascule: 'basculements de statut', bodacc: 'procédures BODACC',
-  veille: 'alertes de vos secteurs et critères', parcelle_suivie: 'changements', veille_zone: 'alertes de vos secteurs et critères',
-  // RETOURS-11 A5 — les événements Radar (pige) portaient une clé brute (`pige.statut_change`) et un
-  // libellé technique ; on les regroupe sous des noms humains.
-  'pige.statut_change': 'changements d’annonce', 'pige.vendue_dvf': 'ventes constatées',
-  'pige.baisse_prix': 'baisses de prix', 'pige.nouvelle': 'nouvelles annonces',
-  'pige.signalement_client': 'signalements', match: 'correspondances de veille',
+  parcelle_suivie: 'changements sur vos parcelles suivies',   // → fiche
+  radar: 'nouvelles annonces de vos veilles',                 // → annonce
+  bascule: 'basculements de statut', bodacc: 'procédures BODACC', match: 'correspondances de marché', // → fiche
+  nouveaute: 'nouveautés de LABUSE',                          // → page Sources
 }
 
 // RETOURS-11 A5 — HUMANISATION des libellés bruts servis à la cloche. Deux sources de « clés brutes » :
@@ -393,6 +393,8 @@ function NotifBell() {
         <button onClick={() => {
             if (e.idu) { setView('cartes'); select(e.idu) }
             else if (e.lien?.startsWith('/sources')) openSources()
+            // VEILLE-2 (Lot 3) — Radar : le lien est l'ANNONCE (http) → ouvrir dans un onglet.
+            else if (/^https?:\/\//.test(e.lien ?? '')) window.open(e.lien!, '_blank', 'noopener')
             else if (e.lien?.startsWith('/copilote')) setView('copilote')
             // GB-026 — notif de SECTEUR (veille_zone) : lien « …#surveillance=secteurs » ouvre le
             // bon volet de la Surveillance (avant : handler absent → le clic ne menait nulle part).

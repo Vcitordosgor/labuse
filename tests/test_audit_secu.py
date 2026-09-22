@@ -298,7 +298,7 @@ def test_idor_event_log_cloison(app_client):
         with session_scope() as s:
             eid = s.execute(text(
                 "INSERT INTO event_log (kind, idu, titre, compte_id) "
-                "VALUES ('veille', '974EVT00000001', 'évt privé de A', :cid) RETURNING id"),
+                "VALUES ('parcelle_suivie', '974EVT00000001', 'évt privé de A', :cid) RETURNING id"),
                 {"cid": cid_a}).scalar()
             s.commit()
         # A le voit (non lu) ; B ne le voit pas et son compteur l'ignore
@@ -329,7 +329,7 @@ def test_broadcast_marche_visible_de_tous_mais_perso_cloisonne(app_client):
                 "VALUES ('bascule', '974MKT00000001', '▲ bascule marché', NULL) RETURNING id")).scalar()
             pid = s.execute(text(
                 "INSERT INTO event_log (kind, idu, titre, compte_id) "
-                "VALUES ('veille', '974PRV00000001', 'veille privée de A', :c) RETURNING id"),
+                "VALUES ('parcelle_suivie', '974PRV00000001', 'évt privé de A', :c) RETURNING id"),
                 {"c": cid_a}).scalar()
             s.commit()
         a_items = ca.get("/events").json()["items"]
@@ -360,7 +360,7 @@ def test_seen_marche_par_compte(app_client):
                 "VALUES ('bascule', '974SEEN0000001', '▲ bascule marché', NULL) RETURNING id")).scalar()
             pid_a = s.execute(text(
                 "INSERT INTO event_log (kind, idu, titre, compte_id) "
-                "VALUES ('veille', '974SEEN0000002', 'veille privée de A', :c) RETURNING id"),
+                "VALUES ('parcelle_suivie', '974SEEN0000002', 'évt privé de A', :c) RETURNING id"),
                 {"c": cid_a}).scalar()
             s.commit()
         a0 = ca.get("/events/count").json()["unread"]
@@ -408,7 +408,7 @@ def test_idor_watched_parcels_cloison(app_client):
     ne défait pas le suivi de A."""
     ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
     _compte_actif(ea); _compte_actif(eb)
-    idu = f"974990WA{uuid.uuid4().hex[:6].upper()}"
+    idu = f"97411ZZ{uuid.uuid4().hex[:7].upper()}"   # VEILLE-2 : insee 97411 (commune réelle des 24)
     try:
         ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
         cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)

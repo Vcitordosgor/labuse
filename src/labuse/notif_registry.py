@@ -66,6 +66,9 @@ _KIND_VERS_TYPE = {
     "veille": "veille_zone",                                  # veilles Copilote + recherches
     "permis": "parcelle_suivie", "bascule": "parcelle_suivie", "bodacc": "parcelle_suivie",
     "match": "veille_zone",
+    # VEILLE-2 — le Radar (un match de veille annonce) et les nouveautés de l'app (nouvelle source)
+    # partagent la préférence « Annonces LABUSE (nouveautés, sources) ».
+    "radar": "annonce_produit", "nouveaute": "annonce_produit",
 }
 
 

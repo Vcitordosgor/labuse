@@ -95,10 +95,13 @@ def notifications_non_lues(db, cid: int | None, *, cloche_filter_sql: str = "") 
     """n_notifications — count event_log non lus du compte (fragments _visible/_seen d'events.py,
     la SÉMANTIQUE de visibilité/lecture reste chez events). Extraction de api/events.py
     (list_events + events_count, même requête des deux côtés)."""
-    from ...api.events import _MARKET_KINDS, _seen, _visible
+    from ...api.events import _BROADCAST_KINDS, _CLOCHE_KINDS, _cloche_closed_sql, _seen, _visible
+    # VEILLE-2 (Lot 3) — même LISTE FERMÉE que list_events pour un client (le compteur compte ce que la
+    # cloche affiche) ; marché + nouveautés de l'app broadcast (`_BROADCAST_KINDS`).
     return int(db.execute(text(
-        f"SELECT count(*) FROM event_log e WHERE {_visible('e')} AND NOT {_seen('e')}{cloche_filter_sql}"),
-        {"cid": cid, "market": list(_MARKET_KINDS)}).scalar() or 0)
+        f"SELECT count(*) FROM event_log e WHERE {_visible('e')} AND NOT {_seen('e')}"
+        f"{cloche_filter_sql}{_cloche_closed_sql(cid)}"),
+        {"cid": cid, "market": list(_BROADCAST_KINDS), "cloche": list(_CLOCHE_KINDS)}).scalar() or 0)
 
 
 def cartes_par_colonne(db, cid: int | None) -> dict[str, int]:
