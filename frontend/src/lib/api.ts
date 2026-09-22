@@ -151,6 +151,13 @@ export interface FiltreReponse {
   tiers: { brulante: number; chaude: number; reserve_fonciere: number; a_creuser: number; ecartee: number }
   // RECETTE-3 (T4) — comptes des 4 segments du listing d'analyse (hors étage 0, ordre fixe).
   segments?: { permis_pro: number; terrain_nu: number; bati_densifier: number; reste: number }
+  // ANALYSE-1 — ventilation par BANDE du run candidat (Excellente A / Bonne B / À étudier C / Faible D /
+  // Sans potentiel 0 / Analyse incomplète NC), comptes bruts du moteur (aucun quota/rang/percentile).
+  bandes?: Record<'A' | 'B' | 'C' | 'D' | '0' | 'NC', number>
+  bande_total?: number
+  // ANALYSE-2/3 — croisement bande × Signal sur TOUTES les bandes (compteur filtré + preuve 20 combos
+  // + cross-filtrage des 5 pastilles de l'encart par le Signal).
+  bandes_signal?: Record<'A' | 'B' | 'C' | 'D' | '0' | 'NC', Record<'fort' | 'moyen' | 'faible', number>>
   opportunites: number
   opportunites_evenement: number
   dossiers_opportunites: number
@@ -192,7 +199,13 @@ export const getZonageZones = (communes: string[]) =>
 // RECETTE-3 (T3) : 'potentiel' = ancien tri du listing FACTUEL (adressées, puis SDP résiduelle).
 // RECETTE-5 (V2) : le tri factuel devient 'adresse' (adressées d'abord, puis surface décroissante) —
 // que du fait ; 'potentiel' (SDP résiduelle = calcul LABUSE) ne sert plus qu'en analyse, nulle part ailleurs.
-export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune' | 'potentiel' | 'adresse'
+// ANALYSE-1 : 'labuse' = le classement du NOUVEAU moteur (bande lexicographique puis Signal de mutation).
+export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune' | 'potentiel' | 'adresse' | 'labuse'
+// ANALYSE-1/2 — le param serveur `bande` : `qualite` (les 4 bandes de qualité), une bande PRÉCISE
+// (A/B/C/D — filtre Classement), ou un groupe de fin de liste (`nc`, `zero`).
+export type BandeGroupe = 'qualite' | 'nc' | 'zero' | 'A' | 'B' | 'C' | 'D'
+export type SignalNiveauKey = 'fort' | 'moyen' | 'faible'
+export type QualiteKey = 'A' | 'B' | 'C' | 'D'
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')
@@ -335,6 +348,28 @@ export const getStats = (f?: Filters) => getFiltre(f ?? EMPTY_FILTERS, 0).then((
 // terrain_nu / bati_densifier / reste), dès le 1er appel. Sans segment : la page globale (inchangé).
 export const getResults = (f?: Filters, limit = 200, sort: SortKey = 'rang', offset = 0, groupes = false, segment?: string) =>
   getFiltre(f ?? EMPTY_FILTERS, limit, sort, offset, groupes, segment).then((r) => r.page)
+
+// ── ANALYSE-1 — l'écran ANALYSE lit le NOUVEAU moteur (table score_labuse du run candidat) ──────────
+// Une SEULE liste, classée par bande de Score puis par Signal de mutation (sort=labuse, lexicographique).
+// Le périmètre = les FILTRES GLOBAUX (commune, surface, zonage, nu/bâti, signaux) — MAIS PAS le filtre
+// « tiers » de l'ancien classement (le nouveau moteur porte son propre verdict, la bande) : d'où le
+// dépouillement de `tiers` ici. `bande` scope le groupe (qualité A-D / incomplète / sans potentiel),
+// `signal` filtre le Signal (propre à l'Analyse, mandat §1.4).
+export const getAnalyse = (
+  f: Filters, bande: BandeGroupe, opts: { limit?: number; offset?: number; signal?: SignalNiveauKey } = {},
+) => {
+  const { tiers: _t, ...rest } = filterParams(f)   // filtres globaux SANS le tier de l'ancien classement
+  const { limit = 200, offset = 0, signal } = opts
+  return j<FiltreReponse>(`/filtre?${qf({
+    limit, offset, sort: 'labuse', bande, ...(signal ? { signal } : {}), ...rest,
+  })}`).then((r) => r.page)
+}
+// ANALYSE-1 — la ventilation par bande du périmètre courant (récapitulatif « LABUSE a analysé N »),
+// en UN appel limit=0 (comme le compteur vivant) : mêmes filtres globaux, sans tier ni bande.
+export const getAnalyseStats = (f: Filters) => {
+  const { tiers: _t, ...rest } = filterParams(f)
+  return j<FiltreReponse>(`/filtre?${qf({ limit: 0, ...rest })}`)
+}
 // SUITE-1 S7 — `csvExportUrl` + l'endpoint `/parcels/export.csv` SUPPRIMÉS (sans appelant depuis
 // RETOURS-7 Z11, décision Vic). L'export CSV du projet (`projetCsvUrl`) est distinct et conservé.
 export const getParcelsGeojson = () =>

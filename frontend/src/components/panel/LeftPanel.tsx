@@ -8,7 +8,7 @@ import { ChevronSection, CroixEntete } from './ChevronSection'
 import { ResultsSection } from './ResultsSection'
 import { FiltreLabuse } from './FiltreLabuse'
 import { CLIENT } from '../../lib/strings'
-import { LEGEND_V2_ORDER, TIER_V2_META, tierChipLabel } from '../../lib/status'
+import { BANDE_META, LEGEND_V2_ORDER, SIGNAL_META, TIER_V2_META, tierChipLabel } from '../../lib/status'
 
 // M55-J point 5 : COQUILLE de modale partagée (overlay + Échap + croix) — deux contenus
 // distincts s'y logent : « classement » (la méthode) et « scoring » (le sens des paliers).
@@ -60,6 +60,58 @@ export function AlgoExplainer({ onClose }: { onClose: () => void }) {
 const SCORING_PALIERS: { key: string; color: string }[] = LEGEND_V2_ORDER.map((key) => ({
   key, color: TIER_V2_META[key].color,
 }))
+// ANALYSE-2 — LE PANNEAU UNIQUE « Comprendre l'analyse » (remplace Info classement / Info scoring).
+// Trois sections en français client, dans l'ordre : le classement (bande + les 6 catégories, colorées
+// depuis BANDE_META), le signal de mutation, la logique. Aucun mot de l'ancien moteur, aucune proba.
+const _COMPRENDRE_BANDE_COLOR: Record<string, string> = {
+  Excellente: BANDE_META.A.color, Bonne: BANDE_META.B.color, 'À étudier': BANDE_META.C.color,
+  Faible: BANDE_META.D.color, 'Non retenue': BANDE_META['0'].color, 'Analyse incomplète': BANDE_META.NC.color,
+}
+export function ComprendreAnalyse({ onClose }: { onClose: () => void }) {
+  const c = CLIENT.comprendre
+  return (
+    <Modale id="comprendre" titre={c.titre} onClose={onClose}>
+      <div className="mt-3 flex flex-col gap-4">
+        {/* 1 · le classement */}
+        <div>
+          <p className="label-caps text-[9.5px]">{c.classement.h}</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-txt-mut">{c.classement.p}</p>
+          <div className="mt-2 flex flex-col gap-1.5">
+            {c.classement.bandes.map((b) => (
+              <div key={b.label} className="flex items-start gap-2">
+                <span className="mt-[5px] h-2 w-2 shrink-0 rounded-full" style={{ background: _COMPRENDRE_BANDE_COLOR[b.label] }} />
+                <p className="text-[12px] leading-relaxed text-txt-mut">
+                  <b className="font-semibold" style={{ color: _COMPRENDRE_BANDE_COLOR[b.label] }}>{b.label}</b>{' — '}{b.d}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-[11.5px] leading-relaxed text-txt-dim">{c.classement.monte}</p>
+          <p className="mt-1 text-[11.5px] leading-relaxed text-txt-dim">{c.classement.descend}</p>
+        </div>
+        {/* 2 · le signal */}
+        <div>
+          <p className="label-caps text-[9.5px]">{c.signal.h}</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-txt-mut">{c.signal.p}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {(['fort', 'moyen', 'faible'] as const).map((s) => (
+              <span key={s} className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-medium"
+                style={{ borderColor: `${SIGNAL_META[s].color}66`, color: SIGNAL_META[s].color }}>
+                {SIGNAL_META[s].label}
+              </span>
+            ))}
+          </div>
+        </div>
+        {/* 3 · la logique */}
+        <div>
+          <p className="label-caps text-[9.5px]">{c.logique.h}</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-txt-mut">{c.logique.p}</p>
+        </div>
+      </div>
+    </Modale>
+  )
+}
+
 export function ScoringExplainer({ onClose }: { onClose: () => void }) {
   return (
     <Modale id="scoring" titre={CLIENT.algo.scoringTitre} onClose={onClose}>
@@ -173,54 +225,37 @@ function VerdictHero() {
   // M55-F point 3 : deux entrées possibles dans les résultats — l'analyse LABUSE (opinion) OU le
   // tri factuel (« je cherche moi-même »). Le bandeau DIT laquelle est affichée (honnête).
   const analyse = useApp((s) => s.filters.analyseLabuse)
-  // M55-M point 3 : le bandeau porte les CRITÈRES DU RUN (figés au lancement, jamais les filtres
-  // courants) — le bloc « ANALYSE EN COURS » a disparu du panneau Filtres.
-  const analyseRecap = useApp((s) => s.analyseRecap)
+  // ANALYSE-3 (§1) — le récap des critères (analyseRecap) a QUITTÉ le bandeau (le nom de commune y
+  // faisait doublon avec les filtres globaux et les cartes) : l'en-tête tient sur une ligne.
   // M55-J point 5 : DEUX modales distinctes (classement / scoring), état partagé au store.
   const algoModale = useApp((s) => s.algoModale)
   const setAlgoModale = useApp((s) => s.setAlgoModale)
+  // ANALYSE-3 (§1) — l'en-tête tient sur UNE ligne (~50 px) : « ✓ Analyse LABUSE » à gauche, le bouton
+  // « Comprendre » (icône i) et « Retour » à droite. Le nom de commune (analyseRecap) et le mot
+  // « affichée » sont retirés (doublon filtres globaux + cartes) ; le bouton pleine largeur devient une
+  // pastille en ligne. Le titre « RÉSULTATS » disparaît (ResultsSection).
   if (verdict) {
     return (
-      <div className={`mx-5 mb-1 flex shrink-0 flex-col gap-1.5 rounded-lg px-3 py-2 shadow-elev-1 ${analyse ? 'bg-mint/[0.08]' : 'bg-surface-2'}`}>
+      <div className={`mx-5 mb-1 flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 shadow-elev-1 ${analyse ? 'bg-mint/[0.08]' : 'bg-surface-2'}`}>
         {algoModale === 'classement' && <AlgoExplainer onClose={() => setAlgoModale(null)} />}
         {algoModale === 'scoring' && <ScoringExplainer onClose={() => setAlgoModale(null)} />}
-        <div className="flex items-center justify-between gap-2">
-          <span className={`min-w-0 truncate text-[11px] font-medium ${analyse ? 'text-mint' : 'text-txt-mut'}`}>
-            {analyse ? '✓ Analyse LABUSE affichée' : 'Tri factuel — sans analyse'}</span>
-          {/* M55-J point 7 : « Masquer » → « Retour » — destination UNIQUE (store.retourFiltres) :
-              sortir de la vue verdict et atterrir sur Filtres ouvert, jamais sur Couches. */}
-          <button data-verdict-off onClick={retourFiltres}
-            className="shrink-0 rounded-ctl border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt"
-            title="Retour — revenir aux filtres">
-            Retour
-          </button>
-        </div>
-        {/* M55-M point 3 : la phrase de critères DU RUN, juste sous le titre. Compacte : tronquée
-            proprement (truncate CSS) avec le détail complet au survol (title = récap complet, sans
-            « … ») — jamais de débordement qui casse le bandeau. Vient de store.analyseRecap (snapshot
-            du lancement), pas des filtres courants. Absente en tri factuel (pas de run décrit). */}
-        {analyse && analyseRecap && (
-          <p data-analyse-criteres className="truncate text-[10px] leading-snug text-txt-mut" title={analyseRecap}>{analyseRecap}</p>
-        )}
-        {/* M55-J point 5 : DEUX entrées JUMELLES, côte à côte, même traitement — deux questions
-            distinctes, deux modales. Seulement en mode analyse (hors-sujet en tri factuel). */}
-        {/* M55-K point 2 : text-[10px] + px-1.5 + whitespace-nowrap — « Info classement » /
-            « Info scoring » tiennent côte à côte sur UNE ligne même au panneau le plus étroit
-            (240 px). flex-1 = deux moitiés égales, texte centré, jamais coupé. */}
+        {algoModale === 'comprendre' && <ComprendreAnalyse onClose={() => setAlgoModale(null)} />}
+        <span className={`min-w-0 flex-1 truncate text-[11.5px] font-medium ${analyse ? 'text-mint' : 'text-txt-mut'}`}>
+          {analyse ? '✓ Analyse LABUSE' : 'Tri factuel — sans analyse'}</span>
         {analyse && (
-          <div className="flex gap-1.5">
-            <button data-algo-open onClick={() => setAlgoModale('classement')}
-              className="flex-1 whitespace-nowrap rounded-ctl border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
-              title="La méthode : le tri, la fraction « 1/5 sous 1 an », la validation">
-              {CLIENT.algo.bouton}
-            </button>
-            <button data-scoring-open onClick={() => setAlgoModale('scoring')}
-              className="flex-1 whitespace-nowrap rounded-ctl border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
-              title="Le sens des paliers : À suivre, Sans signal, Écartée">
-              {CLIENT.algo.boutonScoring}
-            </button>
-          </div>
+          <button data-comprendre-open onClick={() => setAlgoModale('comprendre')}
+            className="inline-flex shrink-0 items-center gap-1 rounded-ctl border border-mint/40 px-2 py-0.5 text-[11px] font-medium text-mint hover:bg-mint/10"
+            title="Le classement (la bande), le signal de mutation, et la logique de l'analyse">
+            <span className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-mint/50 text-[9px] font-bold leading-none">i</span>
+            Comprendre
+          </button>
         )}
+        {/* M55-J point 7 : « Retour » — destination UNIQUE (store.retourFiltres). */}
+        <button data-verdict-off onClick={retourFiltres}
+          className="shrink-0 rounded-ctl border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt"
+          title="Retour — revenir aux filtres">
+          Retour
+        </button>
       </div>
     )
   }

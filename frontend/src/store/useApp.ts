@@ -265,8 +265,9 @@ interface AppState {
   setToast: (t: string | null) => void
   // M55-J point 5 : DEUX modales distinctes, une seule ouverte à la fois — « classement » (la
   // méthode : tri, ×N, validation) et « scoring » (le sens des paliers). null = fermée.
-  algoModale: 'classement' | 'scoring' | null
-  setAlgoModale: (v: 'classement' | 'scoring' | null) => void
+  // ANALYSE-2 : « comprendre » = le panneau UNIQUE « Comprendre l'analyse » (nouveau moteur).
+  algoModale: 'classement' | 'scoring' | 'comprendre' | null
+  setAlgoModale: (v: 'classement' | 'scoring' | 'comprendre' | null) => void
   // M55-M point 3 : le RÉCAP des critères DU RUN d'analyse (« 2 communes, zone U, terrain nu, … »),
   // FIGÉ au lancement depuis le SNAPSHOT (jamais l'état courant des filtres — même invariant que la
   // carte d'analyse M55-J p1). Écrit par FiltreLabuse.lancer(), lu par le bandeau (VerdictHero) qui

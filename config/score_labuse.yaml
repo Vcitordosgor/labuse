@@ -63,5 +63,5 @@ score_labuse:
       B: "Bonne"
       C: "À étudier"
       D: "Faible"
-      "0": "Sans potentiel constructible"
+      "0": "Non retenue"                    # ANALYSE-2 (décision Vic) : ex « Sans potentiel constructible » (clé technique 0 inchangée)
       NC: "Analyse incomplète"

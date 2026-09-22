@@ -75,10 +75,9 @@ export const CLIENT = {
     // (contexte/contexteSous) est SUPPRIMÉ — la date du classement vit dans la modale
     // « comprendre le classement » (algo.dateRun).
     bouton: 'Analyser les parcelles',
-    // M55-G suite point 6 (renommage Vic, remplace « Révéler les opportunités → » du point 2) :
-    // « Demander à LABUSE → » — on demande un AVIS pré-calculé (run servi versionné), le mot
-    // reste vrai. (boutonParc retiré : 0-caller depuis le stage 8.)
-    boutonFaire: 'Demander à LABUSE →',
+    // ANALYSE-1 (mandat §1.2) — le bouton qui lance l'analyse du nouveau moteur : « Analyser avec
+    // LABUSE ». (Ex-« Demander à LABUSE → », M55-G suite point 6.)
+    boutonFaire: 'Analyser avec LABUSE →',
     // M55-F point 3 : choix sobre — voir la liste + carte en TRI FACTUEL, sans l'opinion LABUSE.
     voirN: (n: number) => `Voir les ${n.toLocaleString('fr-FR')} parcelles`,
     decompte: (n: number) => `application de vos critères aux ${n.toLocaleString('fr-FR')} parcelles`,
@@ -112,8 +111,9 @@ export const CLIENT = {
     reessayer: 'Réessayer',
     // M55-J point 1 · FILET : les critères ont bougé sous l'analyse (chemin externe) → la carte
     // s'invalide plutôt que d'afficher un chiffre périmé.
-    perime: 'Vos critères ont changé depuis cette analyse — les chiffres affichés ne les décrivent plus.',
-    relancerCta: 'Relancer sur les nouveaux critères',
+    // ANALYSE-1 (mandat §1.5) — la sélection a changé après l'analyse : la liste est obsolète.
+    perime: 'Votre sélection a changé. Relancez l’Analyse LABUSE.',
+    relancerCta: 'Relancer l’Analyse LABUSE',
     // définitions d'une ligne des tiers — la pédagogie au survol, au moment où elle sert
     // M137 — le « i » des paliers montre LE CHIP D'ABORD (le mot servi partout : chips, bande,
     // cartes, fiche, PDF), PUIS son explication. `defTiers[key]` = l'explication (« libellé long :
@@ -296,6 +296,35 @@ export const CLIENT = {
       methode:
         'Zonages SPANC + EGOUL RP à l’IRIS — signal de priorisation, pas un diagnostic. ' +
         'Conservé car utilisé aussi par le diagnostic FLASH.',
+    },
+  },
+
+  // ── ANALYSE-2 · « Comprendre l'analyse » — le panneau UNIQUE (remplace Info classement / Info
+  //    scoring). Français client, dans l'ordre : le classement (bande) → le signal de mutation →
+  //    la logique. AUCUN mot de l'ancien moteur (probabilité, palier, ×N), aucune formule. ──
+  comprendre: {
+    titre: 'Comprendre l’analyse',
+    classement: {
+      h: '1 · Le classement LABUSE',
+      p: 'La bande dit le potentiel constructible RÉEL de la parcelle : ce que le PLU autorise encore à bâtir, une fois retirées les contraintes (zonage, risques, accès, terrain) et vérifiée la faisabilité.',
+      bandes: [
+        { label: 'Excellente', d: 'le meilleur potentiel constructible' },
+        { label: 'Bonne', d: 'un potentiel solide' },
+        { label: 'À étudier', d: 'un potentiel réel, sous conditions' },
+        { label: 'Faible', d: 'un potentiel limité' },
+        { label: 'Non retenue', d: 'aucun droit à bâtir résiduel identifié' },
+        { label: 'Analyse incomplète', d: 'une donnée manque pour conclure — la cause est indiquée sur la parcelle' },
+      ],
+      monte: 'Ce qui fait monter : des droits à construire restants importants, un terrain praticable, un accès identifié.',
+      descend: 'Ce qui fait descendre : une pente forte, un bâti déjà proche du maximum, un accès non identifié.',
+    },
+    signal: {
+      h: '2 · Le signal de mutation',
+      p: 'Des signes que la parcelle pourrait bouger dans les 12 mois (mise en vente, succession, société en difficulté…), résumés en Fort, Moyen ou Faible. C’est un indice, pas une promesse — et il ne change JAMAIS la bande : une parcelle Excellente à signal Faible reste Excellente. Il sert seulement à départager les parcelles d’une même bande.',
+    },
+    logique: {
+      h: '3 · La logique de l’analyse',
+      p: 'Vous posez vos filtres, puis « Analyser avec LABUSE ». LABUSE rend une liste unique, classée par bande (Excellente d’abord), et par signal à l’intérieur de chaque bande. Si vous changez votre sélection, relancez l’analyse pour la remettre à jour.',
     },
   },
 
