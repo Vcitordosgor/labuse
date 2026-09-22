@@ -1,0 +1,29 @@
+# event_log — comptes [AUDIT-TEST] 70 (A) et 71 (B)
+  id  | compte_id |      kind       |              source              |                      titre                      |              lien               | lu 
+------+-----------+-----------------+----------------------------------+-------------------------------------------------+---------------------------------+----
+ 5377 |        70 | parcelle_suivie | Mutation                         | Vente : votre parcelle CY0018 a changé de mains | /socle/#parcelle=97415000CY0018 | f
+ 5380 |        70 | veille_zone     | Secteur · [AUDIT-TEST] Secteur A | Vente DVF dans « [AUDIT-TEST] Secteur A »       | /socle/#surveillance=secteurs   | f
+ 5381 |        70 | veille_zone     | Secteur · [AUDIT-TEST] Secteur A | Vente DVF dans « [AUDIT-TEST] Secteur A »       | /socle/#surveillance=secteurs   | f
+ 5382 |        70 | veille_zone     | Secteur · [AUDIT-TEST] Secteur A | Vente DVF dans « [AUDIT-TEST] Secteur A »       | /socle/#surveillance=secteurs   | f
+ 5383 |        70 | veille_zone     | Secteur · [AUDIT-TEST] Secteur A | Permis déposé dans « [AUDIT-TEST] Secteur A »   | /socle/#surveillance=secteurs   | f
+ 5378 |        71 | parcelle_suivie | Mutation                         | Vente : votre parcelle BN2939 a changé de mains | /socle/#parcelle=97422000BN2939 | f
+ 5379 |        71 | parcelle_suivie | Permis                           | Nouveau permis sur votre parcelle BN2939        | /socle/#parcelle=97422000BN2939 | f
+(7 rows)
+
+
+# alertes table — zone [AUDIT-TEST] Secteur A (491 lignes, 4 notifiées)
+      kind      | count 
+----------------+-------
+ dvf_in_zone    |    10
+ permis_in_zone |    10
+(2 rows)
+
+
+# mail_queue (aucune ligne veille/radar/digest — bypass)
+   mail_key   | count 
+--------------+-------
+ onboarding1  |     1
+ onboarding2  |     1
+ souscription |     1
+(3 rows)
+

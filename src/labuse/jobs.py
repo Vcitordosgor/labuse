@@ -371,6 +371,35 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        raison="Les clients paient la veille : chaque jour, un mail par client avec les biens qui matchent "
               "ses critères (Brevo). Sans dépôt Radar récent, il n'y a rien à envoyer (dry-run si SMTP absent).",
        test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+
+    # ── VEILLE-FIX-1 (lot 1) — les quatre fonctions du LEGACY du matin que le registre ne portait pas.
+    # Sans elles, retirer les crons legacy éteignait la veille (suivis/secteurs/recherches) et le digest.
+    # Créneau matinal du legacy (07:00 Réunion), APRÈS l'ingestion (ingest-bodacc 06:40) ; les trois
+    # évaluateurs D'ABORD, le digest APRÈS (07:15) pour qu'il e-maile les événements du jour. Verrou V8a.
+    _j("evaluer-suivis", "Veille — parcelles suivies (mutation/permis/BODACC/zonage SUR la parcelle)",
+       "quotidien", "2 3 * * *", "07:02", touche="exploitation", timeout_s=600,
+       raison="Les parcelles SUIVIES par un client doivent le prévenir quand un fait tombe SUR elles "
+              "(vente, permis, procédure, zonage). Reprend le legacy du matin ; sans ce job, retirer les "
+              "crons legacy éteint la veille de suivi. Zéro modèle, dédup par fait (rejeu = 0).",
+       test="tests/test_veille_fix1.py::test_les_quatre_jobs_veille_existent"),
+    _j("evaluer-secteurs", "Veille — secteurs (zones dessinées) : DVF/permis/BODACC/zonage dans la zone",
+       "quotidien", "3 3 * * *", "07:03", touche="exploitation", timeout_s=900,
+       raison="Les SECTEURS dessinés par un client (zones de veille) doivent le prévenir des faits qui "
+              "tombent dedans, pour les faits POSTÉRIEURS à la création de la zone (repart du présent). "
+              "Reprend le legacy du matin ; sans ce job, la veille de secteur ne tourne jamais en fond.",
+       test="tests/test_veille_fix1.py::test_les_quatre_jobs_veille_existent"),
+    _j("detect-events", "Veille — recherches sauvegardées + bascules (diff du run servi et du précédent)",
+       "quotidien", "4 3 * * *", "07:04", touche="exploitation", timeout_s=900,
+       raison="Une parcelle qui MONTE en classement et matche une recherche sauvegardée doit prévenir son "
+              "auteur (et le marché voit les bascules). Diffe le run servi et son précédent ; idempotent "
+              "par (kind, idu, run_from, run_to). Sans ce job, les recherches sauvegardées ne notifient jamais.",
+       test="tests/test_veille_fix1.py::test_les_quatre_jobs_veille_existent"),
+    _j("digest", "Veille — DIGEST du matin (un mail par compte : suivis + secteurs + recherches)",
+       "quotidien", "15 3 * * *", "07:15", touche="exploitation", timeout_s=900, envoie_mail=True,
+       raison="Les notifications de veille (chaînes 1+2) sont e-mailées en UN digest quotidien par compte, "
+              "filtré par préférence, jamais vide, un par jour. Passe par mail_queue. Reprend le legacy du "
+              "matin ; sans ce job, aucune notification cloche ne serait jamais e-mailée (dry-run si SMTP absent).",
+       test="tests/test_veille_fix1.py::test_les_quatre_jobs_veille_existent"),
     _j("restore-test", "Restaure le dernier dump dans une base jetable et vérifie (puis DROP)",
        "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", touche="exploitation", timeout_s=3600,
        envoie_mail=True, besoin_db=False,

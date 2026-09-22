@@ -174,6 +174,69 @@ def radar_digests(ctx: JobContext) -> None:
     ctx.compte(**{k: r.get(k) for k in ("n_biens_du_jour", "envoyes", "echecs", "simules", "deja")})
 
 
+def evaluer_suivis(ctx: JobContext) -> None:
+    """VEILLE-FIX-1 (lot 1) — évalue les PARCELLES SUIVIES : mutation / permis / BODACC / zonage SUR la
+    parcelle → notifications event_log kind=parcelle_suivie. Reprend le legacy du matin (07:00). Zéro
+    modèle, dédup par fait → un rejeu ne recrée rien (idempotent)."""
+    from .api.events import ensure_tables, evaluer_suivis as _eval
+    from .db import engine
+    ensure_tables(engine())
+    r = _eval(ctx.db)
+    ctx.compte(total=sum(r.values()), **r)
+
+
+def evaluer_secteurs(ctx: JobContext) -> None:
+    """VEILLE-FIX-1 (lot 1) — évalue les SECTEURS (zones dessinées) de tous les comptes : ventes DVF,
+    permis, BODACC, zonage dans la zone → table `alertes` + notifications event_log kind=veille_zone
+    (seuls les faits postérieurs à la création de la zone notifient). Idempotent (index d'unicité)."""
+    from .alertes import evaluer_tous_secteurs
+    from .api.events import ensure_tables
+    from .db import engine
+    ensure_tables(engine())
+    r = evaluer_tous_secteurs(ctx.db)
+    ctx.compte(**r)
+
+
+def detect_events(ctx: JobContext) -> None:
+    """VEILLE-FIX-1 (lot 1) — RECHERCHES SAUVEGARDÉES + bascules : diffe le run servi et son précédent
+    (table des runs, jamais une constante) → événements `bascule`/`bodacc` + notifications de veille
+    (`_veilles_match`). Idempotent par (kind, idu, run_from, run_to) : rejeu = 0. Aucun run précédent
+    (première install) → rien à diffuser, exit 0."""
+    from sqlalchemy import text as _text
+
+    from . import runs
+    from .api.events import detect_events as _detect, ensure_tables
+    from .db import engine
+    ensure_tables(engine())
+    run_to = runs.current()
+    # Le VRAI précédent du run SERVI = le run calculé JUSTE AVANT lui (computed_at < servi), jamais le
+    # « dernier autre run » (qui peut être un CANDIDAT calculé APRÈS le servi et non promu → un diff à
+    # l'envers qui fabrique des bascules fantômes). run_precedent_servi ne filtre pas sur computed_at ;
+    # ici on prend le prédécesseur chronologique réel. Aucun prédécesseur → rien à diffuser (exit 0).
+    prev = ctx.db.execute(_text(
+        "SELECT run_id FROM p_score_v2_runs "
+        "WHERE computed_at < (SELECT computed_at FROM p_score_v2_runs WHERE run_id = :s) "
+        "ORDER BY computed_at DESC LIMIT 1"), {"s": run_to}).scalar()
+    if not prev:
+        ctx.compte(inserted=0, note="aucun run antérieur au servi — rien à diffuser")
+        return
+    out = _detect(ctx.db, prev, run_to, demo=False)
+    ctx.compte(run_from=prev, run_to=run_to, **out)
+
+
+def digest(ctx: JobContext) -> None:
+    """VEILLE-FIX-1 (lot 1) — DIGEST DU MATIN (chaînes 1+2 : suivis de parcelle + secteurs + recherches)
+    aux comptes actifs, filtré par préférence e-mail et par type. Passe par mail_queue (une ligne par
+    envoi). Anti-double-envoi (last_digest_at + intervalle) ; digest vide ne part pas. En dry-run (sans
+    SMTP) : calcule, ÉCRIT la ligne mail_queue, n'envoie RIEN."""
+    from .api.events import ensure_tables, envoyer_digests
+    from .db import engine
+    ensure_tables(engine())
+    base = get_settings().public_base_url or ""
+    r = envoyer_digests(ctx.db, base_url=base, freq="quotidien", dry_run=ctx.dry_run)
+    ctx.compte(**{k: r.get(k) for k in ("envoyes", "ignores", "echecs", "simules")})
+
+
 def copilote_purge(ctx: JobContext) -> None:
     """RETOURS-8 (R11) — purge quotidienne des conversations Copilote au-delà de la rétention (réglage
     admin `copilote_retention_jours`, défaut 7 j). Les messages tombent par CASCADE. Compte-rendu :

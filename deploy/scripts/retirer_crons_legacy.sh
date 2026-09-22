@@ -2,6 +2,10 @@
 # CIRCUIT-1 (lot 8.1) — RETRAIT des crons legacy /etc/cron.d/labuse-* (geste EXPLICITE, jamais
 # automatique). Le wrapper (deploy.sh → /etc/cron.d/labuse) reprend TOUT : bodacc quotidien,
 # dpe/dvf aux cadences du registre, sitadel mensuel + candidat, sentinelle, sonde du circuit…
+# VEILLE-FIX-1 (lot 1) : le registre reprend AUSSI la veille du matin que le legacy portait —
+# evaluer-suivis, evaluer-secteurs, detect-events (recherches sauvegardées), digest. Le verrou V8a
+# (`labuse circuit verrous`) garantit qu'aucune fonction d'évaluation/envoi n'est éteinte par ce
+# retrait : deploy.sh joue les verrous AVANT de poser — ne retirer le legacy qu'après un V8a vert.
 # Chaque fichier retiré est listé ; une SAUVEGARDE part dans /root/crons-legacy-<date>/.
 set -eu
 [ "$(id -u)" -eq 0 ] || { echo "✗ à lancer en root" >&2; exit 1; }

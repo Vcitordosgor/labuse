@@ -833,6 +833,68 @@ def verrou_regles_citations(db=None) -> ResultatVerrou:
                           f"{n_valides} règle(s) chiffrée(s) validée(s), toutes avec article + page + citation")
 
 
+# ── LOT 8 — VEILLE-FIX-1 : toute veille et tout envoi a un job du registre ───────────────
+
+#: (fonction critique de veille/envoi, module où elle vit, job du registre, impl qui l'appelle).
+#: LE contrat : retirer les crons legacy ne doit éteindre AUCUNE de ces fonctions — chacune a son
+#: job au registre (donc au crontab généré), et l'impl du job l'appelle vraiment.
+_VEILLE_ENVOI: tuple[tuple[str, str, str, str], ...] = (
+    ("evaluer_suivis",        "labuse.api.events",          "evaluer-suivis",   "evaluer_suivis"),
+    ("evaluer_tous_secteurs", "labuse.alertes",             "evaluer-secteurs", "evaluer_secteurs"),
+    ("detect_events",         "labuse.api.events",          "detect-events",    "detect_events"),
+    ("envoyer_digests",       "labuse.api.events",          "digest",           "digest"),
+    ("envoyer",               "labuse.pige.digests",        "radar-digests",    "radar_digests"),
+    ("evaluer_toutes",        "labuse.copilote_v2.veilles", "ingest-sitadel",   "ingest_sitadel"),
+    ("passer",                "labuse.sentinelle",          "sonde-sources",    "sonde_sources"),
+)
+
+
+def verrou_veille_a_un_job(db=None) -> ResultatVerrou:
+    """V8a — chaque fonction d'ÉVALUATION de veille et chaque fonction d'ENVOI a un job du registre,
+    et l'implémentation de ce job l'appelle vraiment. Casse si une fonction n'a pas de job (le crontab
+    généré ne la porterait pas → retirer les crons legacy l'éteindrait), ou si l'impl ne l'appelle pas."""
+    import importlib
+    import inspect
+
+    from . import jobs_impl
+    from .jobs import JOBS
+    problemes: list[str] = []
+    for fonction, module, job, impl in _VEILLE_ENVOI:
+        if job not in JOBS:
+            problemes.append(f"{fonction} : AUCUN job « {job} » au registre (crontab généré ne le porte pas)")
+            continue
+        fn = getattr(jobs_impl, impl, None)
+        if fn is None:
+            problemes.append(f"{job} : impl jobs_impl.{impl} absente")
+            continue
+
+        def _src(f) -> str:
+            try:
+                return inspect.getsource(f)
+            except (OSError, TypeError):
+                return ""
+
+        # source de l'impl PLUS celle des impls qu'elle délègue (1 niveau — ex. sonde_sources →
+        # sentinelle_sources → sentinelle.passer). Suffit à prouver que le job appelle la fonction.
+        src = _src(fn)
+        for autre, af in vars(jobs_impl).items():
+            if callable(af) and autre != impl and autre in src:
+                src += "\n" + _src(af)
+        if fonction not in src:
+            problemes.append(f"{job} : jobs_impl.{impl} n'appelle pas {fonction}")
+        try:
+            if not hasattr(importlib.import_module(module), fonction):
+                problemes.append(f"{module}.{fonction} introuvable")
+        except Exception as e:  # noqa: BLE001
+            problemes.append(f"{module} injouable : {e.__class__.__name__}")
+    if problemes:
+        return ResultatVerrou("V8a", PHRASES["V8a"], "casse",
+                              f"{len(problemes)} fonction(s) de veille/envoi sans job du registre", problemes)
+    return ResultatVerrou("V8a", PHRASES["V8a"], "ok",
+                          f"{len(_VEILLE_ENVOI)} fonctions de veille/envoi, chacune portée par un job du "
+                          "registre qui l'appelle")
+
+
 # ── le registre des verrous (complété lot par lot) ──────────────────────────────────────
 
 PHRASES: dict[str, str] = {
@@ -858,6 +920,7 @@ PHRASES: dict[str, str] = {
     "V5f": "Tout chiffre affiché par un outil porte un id du registre : chaque outil du menu a son robinet, et ce robinet ne sert que des chiffres déclarés — aucun outil ne lit la base hors registre.",
     "V6a": "Aucune règle chiffrée VALIDÉE sans sa source : article + page + citation, toujours — une valeur validée sans preuve n'existe pas.",
     "V7a": "Chaque tuile servie reproduit la brute : même nombre d'objets, aucune partie perdue (GeometryCollections comprises), contour < 1 px, position exacte — décodage de la tuile RÉELLEMENT servie, aux zooms 10/13/16.",
+    "V8a": "Toute veille et tout envoi a un job du registre : chaque fonction d'évaluation (suivis, secteurs, recherches, veilles, sentinelle) et d'envoi (digest, Radar) est portée par un job du crontab généré, qui l'appelle — retirer les crons legacy n'éteint plus rien.",
 }
 
 from .circuit_tuiles import verrou_tuiles  # noqa: E402  (COUCHES-TUYAU-1 lot 3 — V7a)
@@ -885,6 +948,7 @@ VERROUS: tuple[Verrou, ...] = (
     Verrou("V5f", 5, PHRASES["V5f"], verrou_outils_registre),   # OUTILS-FIX-5 lot 7
     Verrou("V6a", 6, PHRASES["V6a"], verrou_regles_citations),   # PLU-CALIBRAGE-1 lot 4
     Verrou("V7a", 7, PHRASES["V7a"], verrou_tuiles),   # COUCHES-TUYAU-1 lot 3
+    Verrou("V8a", 8, PHRASES["V8a"], verrou_veille_a_un_job),   # VEILLE-FIX-1 lot 1
 )
 
 

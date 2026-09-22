@@ -1,0 +1,4 @@
+VEILLE-FIX-1 · Lot 5 — les mails de veille passent par mail_queue (dry-run = ligne écrite, rien envoyé)
+mail_queue avant=6 après=7
+radar_alerte lines (compte 72) :
+   {'id': 7, 'compte_id': 72, 'mail_key': 'radar_alerte', 'etat': 'en_attente', 'template_id': 13, 'demandeur': 'job:radar-digests'}

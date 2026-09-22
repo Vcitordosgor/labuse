@@ -689,10 +689,17 @@ def _seen(alias: str = "e") -> str:
     """Fragment SQL : l'event est-il LU pour le compte courant ? (M-V V2)
     - event du compte (perso, ou pilote sur ses lignes NULL) → colonne partagée `lu`.
     - event de MARCHÉ vu par un compte réel → présence dans `event_seen` (jamais la colonne
-      partagée, qui appartient au bucket pilote). `:cid` lié par l'appelant."""
+      partagée, qui appartient au bucket pilote). `:cid` lié par l'appelant.
+
+    VEILLE-FIX-1 (lot 4) — un événement de MARCHÉ (broadcast : bascule/BODACC/match) ANTÉRIEUR à la
+    création du compte est compté LU d'office : un compte NEUF ouvre la cloche à 0, il n'hérite pas des
+    milliers de bascules diffusées avant son inscription. Le bucket pilote (compte_id NULL) n'est pas
+    concerné (ses events tombent dans la branche `lu`, jamais dans le ELSE)."""
     p = f"{alias}." if alias else ""
     return (f"(CASE WHEN {p}compte_id IS NOT DISTINCT FROM :cid THEN {p}lu "
-            f"ELSE EXISTS (SELECT 1 FROM event_seen s WHERE s.event_id = {p}id AND s.compte_id = :cid) END)")
+            f"ELSE (EXISTS (SELECT 1 FROM event_seen s WHERE s.event_id = {p}id AND s.compte_id = :cid) "
+            f"OR {p}ts < COALESCE((SELECT c.created_at FROM comptes c WHERE c.id = :cid), "
+            f"'-infinity'::timestamptz)) END)")
 
 
 @router.get("")
@@ -1226,7 +1233,9 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
     préférences dans chaque e-mail (légal), statut d'envoi tracé (jamais silencieux — motif M84).
     Fuseau explicite UTC+4 pour la fenêtre quotidienne (jamais hérité de la machine)."""
     from ..emails import digest_html_email, digest_notifications
-    from ..mail import send_email
+    from ..mailfile import ensure_tables as _mq_ensure
+    from ..db import engine as _mq_engine
+    _mq_ensure(_mq_engine())   # VEILLE-FIX-1 (lot 5) — mail_queue disponible (idempotent)
 
     interval_h = 20 if freq == "quotidien" else 24 * 6   # quotidien ≈ 20 h ; hebdo ≈ 6 j
     fenetre_jours = 1 if freq == "quotidien" else 7      # M85-B — J-1 pour le digest du matin
@@ -1235,10 +1244,13 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
     # LEFT JOIN (pas INNER) : un compte actif SANS utilisateur titulaire n'est plus SILENCIEUSEMENT
     # exclu — il apparaît avec email=NULL et un motif « pas d'adresse ». Le silence est le défaut qu'on
     # ferme partout : chaque compte reçoit un STATUT + un MOTIF explicites (Vic, M85).
+    # VEILLE-FIX-1 (lot 3) — un ESSAI EXPIRÉ (`essai_expire_at` passé) est exclu de tout envoi, même
+    # resté `actif` : la coupure ne dépend plus d'une bascule de statut par la facturation.
     recipients = db.execute(text(
         "SELECT c.id AS cid, min(u.email) FILTER (WHERE u.role='titulaire') AS email "
         "FROM comptes c LEFT JOIN utilisateurs u ON u.compte_id = c.id "
-        "WHERE c.statut = 'actif' GROUP BY c.id ORDER BY c.id")).mappings().all()
+        "WHERE c.statut = 'actif' AND (c.essai_expire_at IS NULL OR c.essai_expire_at > now()) "
+        "GROUP BY c.id ORDER BY c.id")).mappings().all()
     envoyes = ignores = echecs = simules = 0
     details: list[dict] = []
 
@@ -1300,27 +1312,39 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
         # RFC 8058 — désinscription EN UN CLIC (mieux traitée par Gmail qu'un simple lien) : l'URL
         # accepte le POST `List-Unsubscribe=One-Click`. AUCUN en-tête de campagne (X-Campaign, List-ID
         # marketing…) : ce mail est TRANSACTIONNEL, pas une newsletter.
+        # VEILLE-FIX-1 (lot 5) — le digest passe par mail_queue COMME LES AUTRES mails : une ligne
+        # écrite (trace), départ SMTP par la file. Mail BRUT (`__raw`) : pas de template Brevo (le
+        # digest est un HTML construit côté code). Dédup par (compte, jour) → un seul par jour. Dry-run :
+        # la ligne est écrite `en_attente`, RIEN n'est envoyé (garde `dry_run` de la file).
+        from ..db import engine as _engine
+        from ..mailfile import envoyer_mail as _q_envoyer
+        raw = {"sujet": sujet, "texte": corps, "html": html, "nom": "Digest quotidien",
+               "headers": {"List-Unsubscribe": f"<{lien_desabo}>",
+                           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"}}
+        ligne = _q_envoyer(_engine(), key="digest_quotidien", to=email, params={"__raw": raw},
+                           compte_id=cid, demandeur="job:digest",
+                           dedup=f"digest:{cid}:{now.date().isoformat()}",
+                           fenetre_doublon_s=20 * 3600, dry_run=dry_run)
         if dry_run:
-            # #2 — DRY-RUN : rend ce qui SERAIT envoyé (destinataire, sujet, corps) SANS appeler Brevo
-            # ni avancer last_digest_at. C'est la brique de recette VPS (tester ≠ envoyer).
+            # #2 — DRY-RUN : la ligne mail_queue est écrite (trace), RIEN n'est envoyé, last_digest_at
+            # inchangé. C'est la brique de recette VPS (tester ≠ envoyer).
             simules += 1
-            _note(cid, email, "simulé", f"{len(evs)} événement(s) — sujet « {sujet} »", corps=corps)
+            _note(cid, email, "simulé",
+                  f"{len(evs)} événement(s) — sujet « {sujet} » — mail_queue #{ligne.get('id')}", corps=corps)
             continue
-        res = send_email(email, sujet, corps, body_html=html,
-                         headers={"List-Unsubscribe": f"<{lien_desabo}>",
-                                  "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"})
-        if res.ok:
+        if ligne.get("etat") in ("recu", "parti"):
             envoyes += 1
-            _note(cid, email, "envoyé", f"{len(evs)} événement(s)" + (f" + {marche['total']} marché" if marche.get("total") else ""))
-            # #5 — last_digest_at n'avance QUE si l'envoi a RÉUSSI : un échec Brevo ne se déguise plus en
+            _note(cid, email, "envoyé", f"{len(evs)} événement(s) — mail_queue #{ligne.get('id')}"
+                  + (f" + {marche['total']} marché" if marche.get("total") else ""))
+            # #5 — last_digest_at n'avance QUE si l'envoi a RÉUSSI : un échec ne se déguise plus en
             # « déjà envoyé » (l'anti-double-envoi laisse donc le prochain cron réessayer).
             db.execute(text("INSERT INTO notif_prefs (compte_id, last_digest_at) VALUES (:c,:n) "
                             "ON CONFLICT (compte_id) DO UPDATE SET last_digest_at=:n"), {"c": cid, "n": now})
         else:                                                  # #5 — échec VISIBLE : loggé en clair + compté, jamais avalé
             echecs += 1
-            _note(cid, email, "échec", f"envoi refusé : {res.detail}")
+            _note(cid, email, "échec", f"envoi refusé : {ligne.get('erreur') or ligne.get('etat')}")
             log.error("DIGEST ÉCHEC ENVOI — compte=%s email=%s cause=%s (last_digest_at NON avancé → réessai)",
-                      cid, email, res.detail)
+                      cid, email, ligne.get("erreur"))
     db.commit()
     return {"envoyes": envoyes, "ignores": ignores, "echecs": echecs, "simules": simules,
             "dry_run": dry_run, "details": details}

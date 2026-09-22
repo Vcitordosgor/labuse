@@ -1,8 +1,10 @@
-"""RADAR-DIGESTS — les DEUX digests de fin de journée (heure Réunion), sur DEUX templates Brevo distincts.
+"""RADAR-DIGESTS — l'alerte de veille de fin de journée (heure Réunion), template Brevo `radar_alerte`.
 
-(12) DIGEST quotidien  → tous les clients actifs, les nouveautés du jour (clé Brevo `radar_digest`).
-(13) ALERTE de veille  → un mail PAR VEILLE déclenchée, aux clients dont une veille matche (`radar_alerte`).
-Un client concerné reçoit LES DEUX (décision Vic) — envois distincts, jamais groupés, jamais dédupliqués.
+VEILLE-FIX-1 (lot 2) — RADAR SELON LES CRITÈRES : un client ne reçoit un mail QUE si une de ses veilles
+Radar matche au moins une annonce du jour, avec SEULEMENT ces annonces-là. Aucune veille qui matche →
+aucun mail. Le digest « à tous les comptes actifs » (ancien template 12 `radar_digest`) est RETIRÉ.
+
+(13) ALERTE de veille → un mail PAR VEILLE déclenchée, aux clients dont une veille matche (`radar_alerte`).
 
 CONTRAINTES BREVO (constatées en test réel) :
  1. AUCUNE boucle {% for %} dans un template — l'éditeur Brevo casse les balises Jinja qui enjambent des
@@ -28,7 +30,6 @@ from .. import mail   # CONNEXIONS-2 Lot 9.1 (KO-12) — façade unique (mail.en
 from ..api.events import creer_notification
 from ..tz import today_reunion
 from . import portails, veille as veille_mod
-from .tables import EV_DIGEST, journaliser
 
 log = logging.getLogger("labuse.pige.digests")
 
@@ -225,39 +226,38 @@ def _libelle_veille(v: dict) -> str:
 
 # ── envoi (idempotent, bruyant) ─────────────────────────────────────────────────────────
 
-def _deja_envoye(db: Session, dedup: str) -> bool:
-    """Idempotence : cet envoi (dedup du jour) a-t-il déjà été journalisé ? Évite le double-envoi
-    quand le cron est rejoué le même jour."""
-    return db.execute(text("SELECT 1 FROM event_log WHERE dedup = :d LIMIT 1"), {"d": dedup}).first() is not None
-
-
 def _envoyer(db: Session, *, compte_id, email: str, template_key: str, dedup: str,
              params: dict, n_biens: int, cartes_html_str: str, type_envoi: str,
              dry_run: bool, dry_dir: Path | None, rapport: list) -> str:
-    """UN envoi (digest ou alerte). Idempotent (dedup), jamais vide (garanti par l'appelant), échec
-    BRUYANT. Retourne 'simule' | 'envoye' | 'deja' | 'echec'."""
-    if not dry_run and _deja_envoye(db, dedup):
-        rapport.append({"compte_id": compte_id, "type_envoi": type_envoi, "n": n_biens, "statut": "deja"})
-        return "deja"
+    """UN envoi (alerte de veille). VEILLE-FIX-1 (lot 5) — passe par mail_queue COMME LES AUTRES mails
+    (template Brevo 13). Idempotent (dedup mail_queue par jour), jamais vide (garanti par l'appelant),
+    échec BRUYANT. Dry-run : une ligne écrite `en_attente`, RIEN envoyé. Retourne
+    'simule' | 'envoye' | 'deja' | 'echec'."""
+    from ..db import engine as _eng
+    from ..mailfile import ensure_tables as _mq_ens, envoyer_mail as _q_envoyer
+    _mq_ens(_eng())
+    if dry_run and dry_dir is not None:
+        dry_dir.mkdir(parents=True, exist_ok=True)
+        (dry_dir / f"{type_envoi}_compte{compte_id}.html").write_text(cartes_html_str, encoding="utf-8")
+    ligne = _q_envoyer(_eng(), key=template_key, to=email, params=params, compte_id=compte_id,
+                       demandeur="job:radar-digests", dedup=dedup, fenetre_doublon_s=20 * 3600,
+                       dry_run=dry_run)
     if dry_run:
-        if dry_dir is not None:
-            dry_dir.mkdir(parents=True, exist_ok=True)
-            (dry_dir / f"{type_envoi}_compte{compte_id}.html").write_text(cartes_html_str, encoding="utf-8")
         rapport.append({"compte_id": compte_id, "type_envoi": type_envoi, "n": n_biens, "statut": "simule"})
         return "simule"
-    res = mail.envoyer_template(email, template_key, params)
-    if res.get("envoye"):
-        journaliser(db, EV_DIGEST, f"Radar — {type_envoi} envoyé ({n_biens})",
-                    detail=f"{type_envoi} · {n_biens} bien(s)", compte_id=compte_id, dedup=dedup)
+    if ligne.get("doublon"):
+        rapport.append({"compte_id": compte_id, "type_envoi": type_envoi, "n": n_biens, "statut": "deja"})
+        return "deja"
+    if ligne.get("etat") in ("recu", "parti"):
         rapport.append({"compte_id": compte_id, "type_envoi": type_envoi, "n": n_biens, "statut": "envoye"})
         return "envoye"
     # ÉCHEC BRUYANT (RV-013) — jamais silencieux : log.error + event système visible au dashboard.
-    raison = res.get("raison", "inconnue")
+    raison = ligne.get("erreur") or ligne.get("etat") or "inconnue"
     log.error("RADAR %s NON ENVOYÉ à compte=%s : %s", type_envoi, compte_id, raison)
     try:
         creer_notification(db, kind="systeme", compte_id=None, source="Radar",
                            titre=f"Échec envoi Radar ({type_envoi})",
-                           detail=f"Compte {compte_id} : {raison}. Templates Brevo 12 et 13 montés ?",
+                           detail=f"Compte {compte_id} : {raison}. Template Brevo 13 monté ?",
                            dedup=f"pige:digest-echec:{type_envoi}:{today_reunion().isoformat()}")
     except Exception:  # noqa: BLE001 — la trace ne doit pas masquer l'échec d'origine
         pass
@@ -267,12 +267,15 @@ def _envoyer(db: Session, *, compte_id, email: str, template_key: str, dedup: st
 
 
 def _clients_actifs(db: Session) -> list[dict]:
-    """Comptes ACTIFS + e-mail/prénom du titulaire. (RD-503 : `comptes.prenoms` n'existe pas → `c.nom`.)"""
+    """Comptes ACTIFS + e-mail/prénom du titulaire. (RD-503 : `comptes.prenoms` n'existe pas → `c.nom`.)
+    VEILLE-FIX-1 (lot 3) — un ESSAI EXPIRÉ (`essai_expire_at` passé) ne reçoit plus rien, même resté
+    `actif` (la coupure ne dépend plus d'une bascule de statut par la facturation)."""
     return [dict(r) for r in db.execute(text(
         "SELECT c.id AS compte_id, c.nom AS prenom, "
         " min(u.email) FILTER (WHERE u.role='titulaire') AS email "
         "FROM comptes c LEFT JOIN utilisateurs u ON u.compte_id = c.id "
-        "WHERE c.statut = 'actif' GROUP BY c.id, c.nom ORDER BY c.id")).mappings()]
+        "WHERE c.statut = 'actif' AND (c.essai_expire_at IS NULL OR c.essai_expire_at > now()) "
+        "GROUP BY c.id, c.nom ORDER BY c.id")).mappings()]
 
 
 def envoyer(db: Session, *, base_url: str = "", dry_run: bool = False,
@@ -280,27 +283,18 @@ def envoyer(db: Session, *, base_url: str = "", dry_run: bool = False,
     """Les DEUX envois de fin de journée (template 12 digest + 13 alerte). Idempotent, jamais vide.
     Retourne le rapport (envoyes/echecs/simules/deja par type)."""
     jour = today_reunion()
-    date_fr = _fmt_date_fr(jour)
     lien_radar = _lien_radar(base_url)
     ddir = Path(dry_dir) if dry_dir else None
     biens = _biens_du_jour(db)
     clients = _clients_actifs(db)
     rapport: list = []
 
-    # (a) DIGEST quotidien (template 12) — tous les clients actifs, SI des nouveautés (jamais vide).
-    if biens:
-        cartes = cartes_html(biens, base_url)
-        for c in clients:
-            if not c.get("email"):
-                continue
-            params = {"PRENOM": c.get("prenom") or "", "DATE": date_fr, "NB_BIENS": len(biens),
-                      "LIEN_RADAR": lien_radar, "CARTES": cartes}
-            _envoyer(db, compte_id=c["compte_id"], email=c["email"], template_key="radar_digest",
-                     dedup=f"pige:digest:{c['compte_id']}:{jour.isoformat()}", params=params,
-                     n_biens=len(biens), cartes_html_str=cartes, type_envoi="digest",
-                     dry_run=dry_run, dry_dir=ddir, rapport=rapport)
+    # VEILLE-FIX-1 (lot 2) — RADAR SELON LES CRITÈRES. Le digest « à tous les comptes actifs » (ancien
+    # bloc a, template 12) est RETIRÉ : un client ne reçoit un mail QUE si une de ses veilles Radar
+    # matche au moins une annonce du jour, et avec SEULEMENT ces annonces-là. Aucune veille qui matche
+    # → aucun mail. Ne reste que l'ALERTE de veille (template 13), déjà filtrée par veille.
 
-    # (b) ALERTE de veille (template 13) — UN MAIL PAR VEILLE déclenchée (jamais groupé, jamais vide).
+    # ALERTE de veille (template 13) — UN MAIL PAR VEILLE déclenchée (jamais groupé, jamais vide).
     for c in clients:
         if not c.get("email"):
             continue
