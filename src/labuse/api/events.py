@@ -253,6 +253,17 @@ def notifier_fraicheur(db: Session) -> int:
     return crees
 
 
+def annoncer_nouveaute(db: Session, titre: str, detail: str | None = None,
+                       *, source: str | None = None) -> int:
+    """VEILLE-2 (Lot 3) — NOUVEAUTÉ DE L'APP (typiquement une NOUVELLE SOURCE de données) diffusée à
+    TOUS les comptes (broadcast, compte_id NULL) à la cloche du haut, cliquable vers la page Sources.
+    JAMAIS de millésime ni de date de donnée dans le texte (le mandat l'interdit) — juste « c'est arrivé
+    dans LABUSE ». Dédup PERMANENTE par titre : une même nouveauté ne s'annonce qu'une fois."""
+    return creer_notification(db, kind="nouveaute", compte_id=None, source=source or "LABUSE",
+                              titre=titre, detail=detail, lien="/sources",
+                              dedup=f"nouveaute:{titre}", permanent=True)
+
+
 def purge_notifications(db: Session, jours: int = NOTIF_RETENTION_JOURS) -> int:
     """Rétention (config) : supprime les notifications de plus de `jours` (défaut 90). `event_seen`
     part en cascade (FK). À appeler par le cron quotidien."""
@@ -271,7 +282,7 @@ DIGEST_HEURE_REUNION = 7                     # 7h00 heure Réunion (config)
 _KINDS_PAR_PREF = {   # type de registre → kinds event_log (perso) qu'il gouverne à la cloche
     "veille_zone": ("veille", "match", "veille_zone"),
     "parcelle_suivie": ("permis", "bascule", "bodacc", "parcelle_suivie"),
-    "annonce_produit": ("annonce_produit",),
+    "annonce_produit": ("annonce_produit", "radar"),   # VEILLE-2 — le Radar suit la pref « Annonces »
     "maintenance": ("maintenance",),
 }
 
@@ -362,19 +373,26 @@ def _brief_filter_sql(prefs: dict, alias: str = "e", cid_param: str = "c") -> st
 
 
 # ─────────────── M85-B · le SUIVI DE PARCELLE (producteur unique, SQL, ZÉRO modèle) ───────────────
-# La règle du mandant : « ma parcelle a changé » dit MA parcelle (maille stricte, jamais le secteur —
-# le secteur, c'est les veilles de zone). Cinq changements, avec une HIÉRARCHIE :
-#   · MUTATION (vente) = l'événement MAJEUR → libellé distinct, en tête ;
-#   · BASCULE DE TIER = NOTRE verdict qui change (pas un fait du monde) → formulé comme tel, et
-#     seulement les bascules significatives (vers/depuis chaude|brûlante) [traitée dans detect_events] ;
-#   · PERMIS, MUTATION, BODACC détectés ICI à chaque ingestion ; ZONAGE par comparaison d'empreinte.
+# La règle du mandant (VEILLE-2, décision Vic 22/09) : « ma parcelle a changé » dit MA parcelle (maille
+# stricte, jamais le secteur). CINQ déclencheurs, écrits noir sur blanc — et RIEN d'autre :
+#   · VENTE (DVF)                = mutation sur la parcelle → l'événement MAJEUR, libellé « Vente » ;
+#   · PERMIS (Sitadel)           = permis déposé SUR la parcelle (idu_codes), jamais la proximité ;
+#   · PROCÉDURE (BODACC)         = procédure sur le propriétaire personne morale de la parcelle ;
+#   · CHANGEMENT DE PROPRIÉTAIRE PM = la société propriétaire change (empreinte SIREN) ;
+#   · BASCULE DU SCORE           = NOTRE verdict qui change (traité dans detect_events, kind
+#                                  `parcelle_suivie` sur les seules parcelles suivies).
+# (Le ZONAGE n'est plus un déclencheur de suivi — retiré du modèle VEILLE-2.)
 # Dédup par ÉVÉNEMENT (un permis/mutation donné notifie une fois) ; fenêtre = après la pose du suivi
-# (pas de backfill). Type de registre : `parcelle_suivie`.
+# (pas de backfill — l'empreinte propriétaire se pose au premier passage, sans alerter). Registre :
+# `parcelle_suivie`.
 SUIVIS_MAX = 50   # plafond de parcelles suivies par compte (config M85-B)
 
 
 def _ensure_suivi_cols(db: Session) -> None:
+    # zone_snap : conservée (ancienne empreinte zonage) mais plus lue ; pm_snap : empreinte du
+    # propriétaire personne morale (SIREN) pour détecter un CHANGEMENT DE PROPRIÉTAIRE (VEILLE-2 Lot 1).
     db.execute(text("ALTER TABLE watched_parcels ADD COLUMN IF NOT EXISTS zone_snap varchar(64)"))
+    db.execute(text("ALTER TABLE watched_parcels ADD COLUMN IF NOT EXISTS pm_snap varchar(20)"))
 
 
 def evaluer_suivis(db: Session) -> dict:
@@ -384,8 +402,8 @@ def evaluer_suivis(db: Session) -> dict:
     _ensure_suivi_cols(db)
     court = lambda idu: idu[8:] if idu and len(idu) > 8 else idu   # noqa: E731 — libellé court
     suivis = db.execute(text(
-        "SELECT idu, compte_id, created_at, zone_snap FROM watched_parcels WHERE idu IS NOT NULL")).mappings().all()
-    out = {"mutation": 0, "permis": 0, "bodacc": 0, "zonage": 0}
+        "SELECT idu, compte_id, created_at, pm_snap FROM watched_parcels WHERE idu IS NOT NULL")).mappings().all()
+    out = {"mutation": 0, "permis": 0, "bodacc": 0, "proprietaire": 0}
     for s in suivis:
         idu, cid, depuis = s["idu"], s["compte_id"], s["created_at"]
         # 1) MUTATION (vente) — l'événement majeur, libellé distinct « Vente ».
@@ -422,19 +440,23 @@ def evaluer_suivis(db: Session) -> dict:
                 titre=f"Procédure sur le propriétaire de {court(idu)}",
                 detail=f"{b['type_procedure']} publiée le {b['date_annonce']} — {b['denomination'] or 'propriétaire'}.",
                 lien=f"/socle/#parcelle={idu}", dedup=f"suivi:bodacc:{idu}:{b['annonce_id']}") else 0
-        # 4) ZONAGE — comparaison d'empreinte (le zonage n'a pas de date ; on compare au dernier vu).
-        zone = db.execute(text("SELECT zone_lib FROM parcel_zone_plu WHERE idu = :idu"),
-                          {"idu": idu}).scalar()
-        snap = s["zone_snap"]
-        if zone is not None and snap is not None and zone != snap:
-            out["zonage"] += 1 if creer_notification(
-                db, kind="parcelle_suivie", compte_id=cid, source="Zonage", idu=idu,
-                titre=f"Changement de zonage sur votre parcelle {court(idu)}",
-                detail=f"Le zonage PLU est passé de « {snap} » à « {zone} ».",
-                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:zone:{idu}:{zone}") else 0
-        if zone is not None and zone != snap:                # mémorise l'empreinte courante
-            db.execute(text("UPDATE watched_parcels SET zone_snap = :z WHERE idu = :idu AND compte_id IS NOT DISTINCT FROM :c"),
-                       {"z": zone, "idu": idu, "c": cid})
+        # 4) CHANGEMENT DE PROPRIÉTAIRE PM — comparaison d'empreinte (le propriétaire n'a pas de date
+        #    fiable ; on compare au dernier SIREN vu). Un SIREN différent = la parcelle a changé de mains
+        #    morales. Snapshot posé au premier passage → jamais d'alerte de rattrapage sur la pose du suivi.
+        pm = db.execute(text(
+            "SELECT siren, denomination FROM parcelle_personne_morale WHERE idu = :idu AND siren IS NOT NULL"),
+            {"idu": idu}).mappings().first()
+        siren = pm["siren"] if pm else None
+        snap = s["pm_snap"]
+        if siren is not None and snap is not None and siren != snap:
+            out["proprietaire"] += 1 if creer_notification(
+                db, kind="parcelle_suivie", compte_id=cid, source="Propriétaire", idu=idu,
+                titre=f"Changement de propriétaire sur votre parcelle {court(idu)}",
+                detail=f"La société propriétaire a changé — désormais {pm['denomination'] or siren} ({siren}).",
+                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:pm:{idu}:{siren}") else 0
+        if siren is not None and siren != snap:              # mémorise l'empreinte propriétaire courante
+            db.execute(text("UPDATE watched_parcels SET pm_snap = :p WHERE idu = :idu AND compte_id IS NOT DISTINCT FROM :c"),
+                       {"p": siren, "idu": idu, "c": cid})
     return out
 
 
@@ -504,9 +526,10 @@ def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False,
              "from": run_from, "to": run_to, "demo": demo, "es": _es}).rowcount
         inserted["bodacc"] += n
 
-    # 2 bis. VEILLES : une bascule vers un statut « montant » qui MATCHE une recherche sauvegardée
-    # → notification nominative (M11 : « une recherche filtrée nommée = une veille »).
-    _veilles_match(db, run_to, demo, rattrapage=rattrapage)
+    # 2 bis. VEILLE-2 (Lot 4) — l'évaluation des RECHERCHES SAUVEGARDÉES est RETIRÉE du modèle (la page
+    # Veille n'a plus que PARCELLE et RADAR). detect-events ne garde que les bascules du MARCHÉ (blocs 1
+    # et 2 ci-dessus) et la bascule du score sur une parcelle SUIVIE (bloc 3 ci-dessous). Les recherches
+    # sauvegardées existantes sont archivées (plus aucun producteur ne les lit).
 
     # 3. M85-B — BASCULE DE TIER sur une parcelle SUIVIE = NOTRE VERDICT qui change (jamais un fait du
     # monde réel). Seulement les bascules SIGNIFICATIVES (vers/depuis 'chaude', le tier prioritaire).
@@ -579,60 +602,9 @@ def traiter_reprises(db: Session) -> int:
     return n
 
 
-def _veilles_match(db: Session, run_to: str, demo: bool, rattrapage: bool = False) -> int:
-    # Batch : on parcourt TOUTES les veilles (tous comptes), et chaque événement produit est
-    # attribué au COMPTE propriétaire de la veille (v["compte_id"]) — jamais partagé.
-    veilles = db.execute(text("SELECT id, nom, hash, compte_id FROM saved_searches")).mappings().all()
-    if not veilles:
-        return 0
-    # bascules « montantes » de CE diff (déjà en event_log, kind=bascule, run_to)
-    # M137-M : le statut servi lu ici = parcel_p_score_v2.tier au run_to (plus matrice_statut morte).
-    # q_score retiré (matrice morte) : le critère de veille `q` (seuil de score matrice) n'existe plus
-    # côté front (scoreMin retiré) → f["q"] est toujours None ; on ne lit ni ne filtre plus dessus.
-    rows = db.execute(text("""
-        SELECT e.idu, p.commune, p.surface_m2, s2.tier, r.sdp_residuelle_m2,
-               EXISTS (SELECT 1 FROM dryrun_cascade_results cr WHERE cr.run_label = :to
-                       AND cr.parcel_id = p.id AND cr.evenement = 'rouge') AS a_evenement
-        FROM event_log e
-        JOIN parcels p ON p.idu = e.idu
-        JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :to
-        LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        WHERE e.kind = 'bascule' AND e.run_to = :to AND e.titre LIKE '▲%'"""),
-        {"to": run_to}).mappings().all()
-    # CONNEXIONS-2 Lot 5 (KO-7) — parité filtre ↔ veille : on évalue TOUTES les dimensions du filtre
-    # avec le MÊME moteur que la carte (`parcelles_matchant_hash` → `_q_v2_list`), plus les 5 dimensions
-    # hard-codées d'avant. Le TIER reste évalué au run_to (run-sensible) depuis `rows` ; le reste (commune,
-    # zonage, signaux, état-sol, propriétaire, marché, charge, événement…) passe par le moteur partagé.
-    from .app import filtre_from_hash, parcelles_matchant_hash
-    by_idu = {r["idu"]: r for r in rows}
-    tier_by_idu = {r["idu"]: r["tier"] for r in rows}
-    n = 0
-    for v in veilles:
-        c = filtre_from_hash(v["hash"])
-        # tier au run_to (les candidats `rows` portent le tier du run en cours de bascule)
-        tset = [t.strip() for t in (c.tiers or "").split(",") if t.strip()]
-        cand = [idu for idu, tier in tier_by_idu.items() if (not tset or tier in tset)]
-        # les AUTRES dimensions, via le moteur partagé (carte == veille). Si la veille n'a QUE le tier
-        # (aucune autre dimension), on évite l'appel (et sa dépendance à dryrun_parcel_evaluations).
-        c_reste = filtre_from_hash(v["hash"])
-        c_reste.tiers = None
-        where_reste, _ = c_reste.where()
-        matched = set(cand) if not where_reste.strip() \
-            else parcelles_matchant_hash(db, v["hash"], run_to, cand, sans_tiers=True)
-        for idu in matched:
-            r = by_idu[idu]
-            n += db.execute(text("""
-                INSERT INTO event_log (kind, idu, titre, detail, run_to, demo, compte_id, envoi_statut)
-                SELECT 'veille', CAST(:idu AS varchar), CAST(:titre AS varchar), CAST(:detail AS text),
-                       CAST(:to AS varchar), CAST(:demo AS boolean), :cid, CAST(:es AS varchar)
-                WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE kind='veille' AND idu=:idu AND titre=:titre
-                                  AND compte_id IS NOT DISTINCT FROM :cid)"""),
-                {"idu": r["idu"], "titre": f"🔭 Veille « {v['nom']} » : {r['idu'][8:]} correspond",
-                 "detail": f"Passée en « {_tier_court(r['tier'])} » — correspond à votre veille."
-                           + (" (rattrapage)" if rattrapage else ""),
-                 "to": run_to, "demo": demo, "cid": v["compte_id"],
-                 "es": ("rattrapage" if rattrapage else "na")}).rowcount
-    return n
+# VEILLE-2 (Lot 4) — `_veilles_match` (évaluation des RECHERCHES SAUVEGARDÉES contre les bascules) a été
+# RETIRÉ : le modèle Veille n'a plus que PARCELLE et RADAR. detect-events ne produit plus d'événement
+# `veille`. La table `saved_searches` existante est archivée (plus aucun producteur ne la lit).
 
 
 def seed_demo(db: Session) -> dict:
@@ -675,6 +647,29 @@ _MARKET_KINDS = ("bascule", "bodacc", "match")
 # (historiques permis/veille + nouveaux types de registre). annonce/maintenance sont IMMÉDIATS (chaîne
 # 3), hors digest ; systeme_pilote = cloche seule.
 _PERSO_KINDS = ("permis", "veille", "parcelle_suivie", "veille_zone")
+# VEILLE-2 (Lot 5) — le DIGEST DU MATIN porte TOUT ce qui change pour le compte : parcelles suivies +
+# Radar (kinds compte-scopés ci-dessous) + nouveautés de l'app (kind `nouveaute`, broadcast, traité à
+# part). Le marché reste HORS du mail (flux cloche seulement). Un seul mail par jour.
+_DIGEST_KINDS = ("parcelle_suivie", "radar")
+
+# VEILLE-2 (Lot 3) — LA CLOCHE DU HAUT porte une LISTE FERMÉE de types, en QUATRE catégories, chacune
+# avec son texte et son clic. Tout autre kind d'event_log n'apparaît PAS à la cloche du CLIENT (le
+# bucket pilote, compte NULL, garde sa vue de diagnostic complète) :
+#   · parcelle suivie (kind `parcelle_suivie`, compte-scopé)   → la fiche parcelle ;
+#   · Radar          (kind `radar`, compte-scopé, un match)    → l'annonce ;
+#   · marché         (bascule/bodacc/match, broadcast NULL)    → la fiche parcelle ;
+#   · nouveauté app  (kind `nouveaute`, broadcast NULL)        → la page Sources (jamais un millésime).
+_NOUVEAUTE_KINDS = ("nouveaute",)
+# BROADCAST = compte NULL VISIBLE DE TOUS les comptes (marché + nouveautés de l'app). Un compte neuf
+# ouvre à 0 (un broadcast antérieur à sa création est lu d'office — cf. _seen).
+_BROADCAST_KINDS = _MARKET_KINDS + _NOUVEAUTE_KINDS
+_CLOCHE_KINDS = ("parcelle_suivie", "radar") + _MARKET_KINDS + _NOUVEAUTE_KINDS
+
+
+def _cloche_closed_sql(cid: int | None, alias: str = "e") -> str:
+    """Fragment WHERE bornant la cloche du CLIENT à la LISTE FERMÉE (`:cloche`). Le bucket pilote
+    (cid None) n'est PAS borné : il garde sa vue complète de diagnostic."""
+    return f" AND {alias}.kind = ANY(:cloche)" if cid is not None else ""
 
 
 def _visible(alias: str = "e") -> str:
@@ -708,11 +703,12 @@ def list_events(request: Request, unread_only: bool = False,
                 db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
     cid = current_compte(request)
-    mk = list(_MARKET_KINDS)
+    mk = list(_BROADCAST_KINDS)   # VEILLE-2 : marché + nouveautés de l'app, broadcast à tous
     # M85 — non-lues D'ABORD (cloche), puis récentes ; paginé (offset). source/lien/ts exposés pour
     # que la cloche affiche « dit sa source et sa date » + le lien direct vers l'objet. Le FILTRE cloche
     # (préférences par type) borne la liste ET le compteur : un type coupé ne s'affiche ni ne compte.
-    cf = _cloche_filter_sql(prefs_compte(db, cid))
+    # VEILLE-2 (Lot 3) — plus la LISTE FERMÉE (`:cloche`) pour un CLIENT : tout autre kind n'apparaît pas.
+    cf = _cloche_filter_sql(prefs_compte(db, cid)) + _cloche_closed_sql(cid)
     rows = db.execute(text(f"""
         SELECT e.id, e.ts::date::text AS date, e.ts::text AS ts, e.kind, e.idu, e.titre, e.detail,
                e.demo, e.source, e.lien, p.commune AS commune,
@@ -723,7 +719,8 @@ def list_events(request: Request, unread_only: bool = False,
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         WHERE {_visible('e')} {f"AND NOT {_seen('e')}" if unread_only else ""}{cf}
         ORDER BY {_seen('e')} ASC, e.ts DESC, e.id DESC LIMIT :lim OFFSET :off"""),
-        {"lim": limit, "off": max(0, offset), "run": runs.cascade(), "cid": cid, "market": mk}).mappings().all()  # C1
+        {"lim": limit, "off": max(0, offset), "run": runs.cascade(), "cid": cid, "market": mk,
+         "cloche": list(_CLOCHE_KINDS)}).mappings().all()  # C1
     # CIRCUIT-2 lot 1.6 — le compteur de non-lues est calculé par le moteur nommé
     # `plateforme_compteurs` (id registre n_notifications) : ce robinet ne calcule plus, il appelle.
     from ..registre.moteurs.plateforme import notifications_non_lues
@@ -735,13 +732,13 @@ def list_events(request: Request, unread_only: bool = False,
 def events_count(request: Request, db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
     cid = current_compte(request)
-    mk = list(_MARKET_KINDS)
+    mk = list(_BROADCAST_KINDS)
     # CIRCUIT-2 lot 1.6 — même moteur `plateforme_compteurs` que list_events (n_notifications).
     from ..registre.moteurs.plateforme import notifications_non_lues
     n = notifications_non_lues(db, cid)
     per = db.execute(text(f"SELECT idu, count(*) FROM event_log e WHERE idu IS NOT NULL"
-                          f" AND {_visible('e')} AND NOT {_seen('e')} GROUP BY idu"),
-                     {"cid": cid, "market": mk}).all()
+                          f" AND {_visible('e')} AND NOT {_seen('e')}{_cloche_closed_sql(cid)} GROUP BY idu"),
+                     {"cid": cid, "market": mk, "cloche": list(_CLOCHE_KINDS)}).all()
     return {"unread": n, "par_parcelle": {r[0]: r[1] for r in per}}
 
 
@@ -763,7 +760,7 @@ def mark_read(event_id: int, request: Request, db: Session = Depends(get_db)) ->
             "SELECT :cid, e.id FROM event_log e "
             "WHERE e.id = :i AND e.compte_id IS NULL AND e.kind = ANY(:market) "
             "ON CONFLICT (compte_id, event_id) DO NOTHING"),
-            {"cid": cid, "i": event_id, "market": list(_MARKET_KINDS)})
+            {"cid": cid, "i": event_id, "market": list(_BROADCAST_KINDS)})
     return {"ok": True}
 
 
@@ -782,7 +779,7 @@ def mark_all_read(request: Request, db: Session = Depends(get_db)) -> dict:
             "WHERE e.compte_id IS NULL AND e.kind = ANY(:market) "
             "  AND NOT EXISTS (SELECT 1 FROM event_seen s WHERE s.event_id = e.id AND s.compte_id = :cid) "
             "ON CONFLICT (compte_id, event_id) DO NOTHING"),
-            {"cid": cid, "market": list(_MARKET_KINDS)}).rowcount
+            {"cid": cid, "market": list(_BROADCAST_KINDS)}).rowcount
     return {"ok": True, "marques": n}
 
 
@@ -843,9 +840,22 @@ def reprise_veille(idu: str, payload: dict, request: Request, db: Session = Depe
 @router.post("/watch/{idu}")
 def watch_toggle(idu: str, request: Request, db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
+    from ..communes import commune_known
+    idu = (idu or "").strip().upper()
+    # VEILLE-2 (Lot 1) — la barre IDU (et la cloche de fiche) REFUSENT AVEC MOTIF, jamais un 404 muet.
+    # On valide AVANT toute résolution de compte/base (rejet au plus tôt d'une entrée malformée) :
+    #   · IDU malformé (≠ 14 car. / code commune non numérique) → « IDU invalide » ;
+    #   · IDU d'une commune hors des 24 du périmètre Réunion    → « hors des 24 communes » ;
+    #   · IDU bien formé et dans le périmètre mais absent du cadastre servi → « Parcelle inconnue ».
+    if len(idu) != 14 or not idu[:5].isdigit():
+        raise HTTPException(422, "IDU invalide — 14 caractères attendus "
+                                 "(5 chiffres de code commune INSEE, puis section et numéro).")
+    if not commune_known(insee=idu[:5]):
+        raise HTTPException(422, "Parcelle hors des 24 communes de La Réunion — "
+                                 "le suivi ne couvre que ce périmètre.")
     cid = current_compte(request)   # CLOISON : le suivi est privé au compte (A et B peuvent suivre la même parcelle)
     if not db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar():
-        raise HTTPException(404, "Parcelle inconnue")
+        raise HTTPException(404, "Parcelle inconnue — cet IDU n'existe pas dans le cadastre servi.")
     if db.execute(text("SELECT 1 FROM watched_parcels WHERE idu = :i AND compte_id IS NOT DISTINCT FROM :cid"),
                   {"i": idu, "cid": cid}).scalar():
         db.execute(text("DELETE FROM watched_parcels WHERE idu = :i AND compte_id IS NOT DISTINCT FROM :cid"),
@@ -1055,17 +1065,21 @@ def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
     # PERSONNEL : listé en détail, CLOISON STRICTE (le marché n'apparaît PAS ici). M85-B : fenêtre
     # paramétrable (J-1 pour le digest quotidien du matin). ORDRE (hiérarchie du mandant) : la MUTATION
     # d'abord (événement majeur), puis les autres changements de parcelle SUIVIE, puis les veilles de zone.
+    # VEILLE-2 (Lot 5) — un seul mail : parcelles suivies + Radar (compte-scopés) + nouveautés de l'app
+    # (broadcast `nouveaute`, comptées seulement si POSTÉRIEURES à la création du compte — comme la cloche).
     events = db.execute(text("""
         SELECT e.kind, e.idu, e.titre, e.detail, e.demo, e.source, d.q_score, d.a_score, d.matrice_statut
         FROM event_log e
         LEFT JOIN parcels p ON p.idu = e.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         WHERE e.ts >= now() - make_interval(days => :jours)
-          AND e.compte_id IS NOT DISTINCT FROM :cid AND e.kind = ANY(:perso)
           AND e.envoi_statut IS DISTINCT FROM 'rattrapage'   -- M137-M : le rattrapage vit à la cloche, jamais au digest/mail
+          AND ( (e.compte_id IS NOT DISTINCT FROM :cid AND e.kind = ANY(:digest))
+                OR (e.compte_id IS NULL AND e.kind = 'nouveaute'
+                    AND e.ts >= COALESCE((SELECT c.created_at FROM comptes c WHERE c.id = :cid), '-infinity'::timestamptz)) )
         ORDER BY (e.source = 'Mutation') DESC, (e.kind = 'parcelle_suivie') DESC,
                  e.ts DESC NULLS LAST LIMIT 20"""),
-        {"run": runs.cascade(), "cid": cid, "perso": list(_PERSO_KINDS), "jours": jours}).mappings().all()  # C1 cascade
+        {"run": runs.cascade(), "cid": cid, "digest": list(_DIGEST_KINDS), "jours": jours}).mappings().all()  # C1 cascade
     # MARCHÉ : RÉSUMÉ BORNÉ (jamais la liste). « N au total, dont M dans vos communes » ; si le
     # compte n'a pas de parcelles suivies (communes vides) → total seul (`dans_vos_communes=None`).
     communes = _mes_communes(db, cid)
@@ -1292,15 +1306,12 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
                if not e.get("demo") and prefs.get(_pref_type(e["kind"]), {}).get("email")]
         # M85-B — le marché SORT du digest (règle mandant : « rien d'autre »). Flux cloche seulement.
         marche = {"total": 0}
-        # M85 P3 — enrichissement « depuis hier sur vos secteurs » (permis dans vos communes suivies,
-        # même point de calcul que M83). Ligne présente SEULEMENT si non-nulle (honnêteté : pas de
-        # remplissage — cf. le retard d'ingestion qui la garde souvent vide).
-        sect = brief_matin(db, cid)["secteurs"]
-        secteurs_ligne = (f"Depuis hier sur vos secteurs : {sect['permis_depuis_hier']} nouveau(x) permis "
-                          f"dans {', '.join(sect['communes'][:5])}." if sect["permis_depuis_hier"] else "")
-        if not evs and not marche.get("total") and not secteurs_ligne:
+        # VEILLE-2 (Lot 5) — le mail ne porte QUE parcelles suivies + Radar + nouveautés (plus la ligne
+        # « secteurs » : les secteurs sont archivés). Un compte SANS événement la veille = PAS de mail.
+        secteurs_ligne = ""
+        if not evs:
             ignores += 1
-            _note(cid, email, "ignoré", "aucune notification en attente (rien d'e-mail-activé sur 7 j + marché + secteurs vides)")
+            _note(cid, email, "ignoré", "aucun événement la veille (parcelles suivies / Radar / nouveautés) — pas de mail")
             continue
         tok = _notif_token(db, cid)
         lien_desabo = f"{base_url}/events/desabonner?c={cid}&t={tok}"

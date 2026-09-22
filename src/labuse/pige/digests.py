@@ -194,13 +194,24 @@ def cartes_html(items: list[dict], base_url: str) -> str:
 def _criteres_texte(criteria: dict) -> str:
     """Reconstruit un texte lisible depuis les critères RÉELLEMENT enregistrés (jamais un résumé
     approximatif). Un critère qui ne sait pas se dire est affiché tel quel plutôt qu'omis."""
-    connus = {"commune", "type_bien", "prix_min", "prix_max", "surface_terrain_min",
-              "surface_hab_min", "particulier_only", "nom"}
+    connus = {"commune", "communes", "type_bien", "prix_min", "prix_max", "surface_min", "surface_max",
+              "surface_terrain_min", "surface_hab_min", "particulier_only", "nom"}
     bits: list[str] = []
     if criteria.get("type_bien"):
         bits.append(str(criteria["type_bien"]).capitalize())
-    if criteria.get("commune"):
+    # VEILLE-2 (Lot 2) — commune(s) : liste `communes` (jointes par « ou ») ou `commune` seule.
+    if criteria.get("communes"):
+        bits.append(" ou ".join(str(c) for c in criteria["communes"]))
+    elif criteria.get("commune"):
         bits.append(str(criteria["commune"]))
+    # surface min/max (modèle VEILLE-2) — sur la surface pertinente du bien.
+    smin, smax = criteria.get("surface_min"), criteria.get("surface_max")
+    if smin and smax:
+        bits.append(f"de {_fmt_prix(int(smin), 'm²')} à {_fmt_prix(int(smax), 'm²')}")
+    elif smin:
+        bits.append(f"plus de {_fmt_prix(int(smin), 'm²')}")
+    elif smax:
+        bits.append(f"moins de {_fmt_prix(int(smax), 'm²')}")
     if criteria.get("surface_terrain_min"):
         bits.append(f"plus de {_fmt_prix(int(criteria['surface_terrain_min']), 'm²')} de terrain")
     if criteria.get("surface_hab_min"):
@@ -276,6 +287,31 @@ def _clients_actifs(db: Session) -> list[dict]:
         "FROM comptes c LEFT JOIN utilisateurs u ON u.compte_id = c.id "
         "WHERE c.statut = 'actif' AND (c.essai_expire_at IS NULL OR c.essai_expire_at > now()) "
         "GROUP BY c.id, c.nom ORDER BY c.id")).mappings()]
+
+
+def evaluer_radar_cloche(db: Session) -> dict:
+    """VEILLE-2 (Lot 3) — pose à la CLOCHE du haut (compte-scopé, kind `radar`) chaque annonce du jour
+    qui matche une veille du client → clic vers l'ANNONCE (pas la fiche : `idu=None`, `lien=url`). C'est
+    le producteur des événements Radar que le digest du matin (Lot 5) reprend. Zéro mail ici. Idempotent
+    (dédup compte+bien+jour). Un ESSAI EXPIRÉ ne reçoit rien (`_clients_actifs` filtre déjà)."""
+    from ..api.events import creer_notification
+    jour = today_reunion()
+    biens = _biens_du_jour(db)
+    n = 0
+    for c in _clients_actifs(db):
+        for v in veille_mod.lister(db, c["compte_id"]):
+            cr = v.get("criteria") or {}
+            for b in (x for x in biens if veille_mod.matche(cr, x)):
+                type_label = (b.get("type_bien") or "bien").capitalize()
+                prix = _fmt_prix(b["faits"].get("prix")) or "—"
+                n += 1 if creer_notification(
+                    db, kind="radar", compte_id=c["compte_id"], source="Radar", idu=None,
+                    titre=f"Nouvelle annonce pour votre veille — {type_label} à {b['commune']}",
+                    detail=f"{prix} · {_libelle_veille(v)}",
+                    lien=b.get("url_sortante") or _lien_radar(""),
+                    dedup=f"radar:{c['compte_id']}:{b['bien_id']}:{jour.isoformat()}") else 0
+    db.commit()
+    return {"radar": n}
 
 
 def envoyer(db: Session, *, base_url: str = "", dry_run: bool = False,

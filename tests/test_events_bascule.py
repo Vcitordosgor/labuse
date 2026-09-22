@@ -52,19 +52,23 @@ def test_bascule_tier_declenche_alerte_parcelle_suivie(db_session):
     assert n >= 1, "une parcelle SUIVIE qui monte de tier doit déclencher une alerte"
 
 
-def test_veille_saved_search_matche_la_bascule(db_session):
-    """Une veille (recherche sauvegardée) filtrée sur le tier 'chaude' matche la bascule ▲ vers chaude."""
+def test_recherche_sauvegardee_archivee_ne_matche_plus(db_session):
+    """VEILLE-2 (Lot 4) — l'évaluation des RECHERCHES SAUVEGARDÉES est retirée : detect_events ne produit
+    PLUS d'événement `veille`, même quand une recherche sauvegardée matcherait la bascule. La bascule du
+    MARCHÉ (kind `bascule`), elle, reste produite."""
     s = db_session
-    idu = "97499000ZZ0002"
+    idu = "97411000ZZ0002"
     _parcel(s, idu)
     _score(s, "run_from", idu, "a_creuser")
     _score(s, "run_to", idu, "chaude")
-    # hash front (filtersToHash) : tv=chaude → veille sur le tier 'chaude'
     s.execute(text("INSERT INTO saved_searches (nom, hash, compte_id) VALUES ('Chaudes','#f=1&tv=chaude', NULL)"))
     s.flush()
 
     ev.detect_events(s, "run_from", "run_to", demo=False)
 
-    n = s.execute(text("SELECT count(*) FROM event_log WHERE kind='veille' AND idu=:i"),
-                  {"i": idu}).scalar()
-    assert n >= 1, "la veille sur le tier 'chaude' doit matcher la bascule ▲ vers chaude"
+    n_veille = s.execute(text("SELECT count(*) FROM event_log WHERE kind='veille' AND idu=:i"),
+                         {"i": idu}).scalar()
+    assert n_veille == 0                                   # recherche sauvegardée archivée = plus évaluée
+    n_bascule = s.execute(text("SELECT count(*) FROM event_log WHERE kind='bascule' AND idu=:i"),
+                          {"i": idu}).scalar()
+    assert n_bascule >= 1                                  # la bascule du marché reste produite

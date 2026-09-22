@@ -165,19 +165,23 @@ def radar_cycle(ctx: JobContext) -> None:
     ctx.compte(**(r if isinstance(r, dict) else {"resultat": str(r)}))
 
 
-def radar_digests(ctx: JobContext) -> None:
-    """Regroupe TOUS les événements de veille en attente par client, envoie UN mail par client (Brevo
-    template 13 + digest 12), marque envoyé. Idempotent (dedup event_log) : relancé deux fois, n'envoie
-    pas deux fois. En dry-run (sans SMTP), calcule et logue tout, n'envoie rien."""
+def radar_cloche(ctx: JobContext) -> None:
+    """VEILLE-2 (Lot 5) — POSE à la cloche (kind `radar`, compte-scopé) chaque annonce du jour qui matche
+    une veille d'un client → clic vers l'annonce. AUCUN mail : le digest du matin (07:15) l'e-maile avec
+    le reste (plus d'alerte Radar séparée). Idempotent (dédup compte+bien+jour)."""
     from .pige import digests
-    r = digests.envoyer(ctx.db, dry_run=ctx.dry_run)
-    ctx.compte(**{k: r.get(k) for k in ("n_biens_du_jour", "envoyes", "echecs", "simules", "deja")})
+    from .api.events import ensure_tables
+    from .db import engine
+    ensure_tables(engine())
+    r = digests.evaluer_radar_cloche(ctx.db)
+    ctx.compte(**r)
 
 
 def evaluer_suivis(ctx: JobContext) -> None:
-    """VEILLE-FIX-1 (lot 1) — évalue les PARCELLES SUIVIES : mutation / permis / BODACC / zonage SUR la
-    parcelle → notifications event_log kind=parcelle_suivie. Reprend le legacy du matin (07:00). Zéro
-    modèle, dédup par fait → un rejeu ne recrée rien (idempotent)."""
+    """VEILLE-2 (Lot 1) — évalue les PARCELLES SUIVIES : vente (DVF) / permis (Sitadel) / procédure
+    (BODACC) / changement de propriétaire PM SUR la parcelle → notifications event_log
+    kind=parcelle_suivie (la bascule du score est produite par detect-events). Reprend le legacy du matin
+    (07:00). Zéro modèle, dédup par fait → un rejeu ne recrée rien (idempotent)."""
     from .api.events import ensure_tables, evaluer_suivis as _eval
     from .db import engine
     ensure_tables(engine())
@@ -185,23 +189,16 @@ def evaluer_suivis(ctx: JobContext) -> None:
     ctx.compte(total=sum(r.values()), **r)
 
 
-def evaluer_secteurs(ctx: JobContext) -> None:
-    """VEILLE-FIX-1 (lot 1) — évalue les SECTEURS (zones dessinées) de tous les comptes : ventes DVF,
-    permis, BODACC, zonage dans la zone → table `alertes` + notifications event_log kind=veille_zone
-    (seuls les faits postérieurs à la création de la zone notifient). Idempotent (index d'unicité)."""
-    from .alertes import evaluer_tous_secteurs
-    from .api.events import ensure_tables
-    from .db import engine
-    ensure_tables(engine())
-    r = evaluer_tous_secteurs(ctx.db)
-    ctx.compte(**r)
+# VEILLE-2 (Lot 4) — `evaluer_secteurs` RETIRÉ : les secteurs (zones dessinées) sont archivés, plus
+# jamais évalués (la page Veille n'a que PARCELLE et RADAR). `alertes.evaluer_tous_secteurs` n'a plus de
+# job (retiré du registre et du verrou V8a).
 
 
 def detect_events(ctx: JobContext) -> None:
-    """VEILLE-FIX-1 (lot 1) — RECHERCHES SAUVEGARDÉES + bascules : diffe le run servi et son précédent
-    (table des runs, jamais une constante) → événements `bascule`/`bodacc` + notifications de veille
-    (`_veilles_match`). Idempotent par (kind, idu, run_from, run_to) : rejeu = 0. Aucun run précédent
-    (première install) → rien à diffuser, exit 0."""
+    """VEILLE-2 (Lot 4) — BASCULES DU MARCHÉ : diffe le run servi et son précédent (table des runs, jamais
+    une constante) → événements `bascule`/`bodacc` + bascule du score sur les parcelles suivies. (L'ancienne
+    évaluation des recherches sauvegardées est retirée.) Idempotent par (kind, idu, run_from, run_to) :
+    rejeu = 0. Aucun run précédent (première install) → rien à diffuser, exit 0."""
     from sqlalchemy import text as _text
 
     from . import runs
