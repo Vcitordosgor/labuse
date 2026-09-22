@@ -299,6 +299,35 @@ export const CLIENT = {
     },
   },
 
+  // ── ANALYSE-2 · « Comprendre l'analyse » — le panneau UNIQUE (remplace Info classement / Info
+  //    scoring). Français client, dans l'ordre : le classement (bande) → le signal de mutation →
+  //    la logique. AUCUN mot de l'ancien moteur (probabilité, palier, ×N), aucune formule. ──
+  comprendre: {
+    titre: 'Comprendre l’analyse',
+    classement: {
+      h: '1 · Le classement LABUSE',
+      p: 'La bande dit le potentiel constructible RÉEL de la parcelle : ce que le PLU autorise encore à bâtir, une fois retirées les contraintes (zonage, risques, accès, terrain) et vérifiée la faisabilité.',
+      bandes: [
+        { label: 'Excellente', d: 'le meilleur potentiel constructible' },
+        { label: 'Bonne', d: 'un potentiel solide' },
+        { label: 'À étudier', d: 'un potentiel réel, sous conditions' },
+        { label: 'Faible', d: 'un potentiel limité' },
+        { label: 'Non retenue', d: 'aucun droit à bâtir résiduel identifié' },
+        { label: 'Analyse incomplète', d: 'une donnée manque pour conclure — la cause est indiquée sur la parcelle' },
+      ],
+      monte: 'Ce qui fait monter : des droits à construire restants importants, un terrain praticable, un accès identifié.',
+      descend: 'Ce qui fait descendre : une pente forte, un bâti déjà proche du maximum, un accès non identifié.',
+    },
+    signal: {
+      h: '2 · Le signal de mutation',
+      p: 'Des signes que la parcelle pourrait bouger dans les 12 mois (mise en vente, succession, société en difficulté…), résumés en Fort, Moyen ou Faible. C’est un indice, pas une promesse — et il ne change JAMAIS la bande : une parcelle Excellente à signal Faible reste Excellente. Il sert seulement à départager les parcelles d’une même bande.',
+    },
+    logique: {
+      h: '3 · La logique de l’analyse',
+      p: 'Vous posez vos filtres, puis « Analyser avec LABUSE ». LABUSE rend une liste unique, classée par bande (Excellente d’abord), et par signal à l’intérieur de chaque bande. Si vous changez votre sélection, relancez l’analyse pour la remettre à jour.',
+    },
+  },
+
   // ── B8 · « Comprendre l'algorithme » ──────────────────────────────────────
   algo: {
     // libellé RETENU (les 2 alternatives sont consignées au rapport final)

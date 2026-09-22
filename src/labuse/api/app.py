@@ -2499,7 +2499,7 @@ def filtre(c: FiltreCriteres = Depends(),
            segment: str | None = Query(None, pattern="^(permis_pro|terrain_nu|bati_densifier|reste)$"),
            # ANALYSE-1 — filtres PROPRES à l'Analyse (run candidat) : Signal de mutation + groupe de bande.
            signal: str | None = Query(None, pattern="^(fort|moyen|faible)$"),
-           bande: str | None = Query(None, pattern="^(qualite|nc|zero)$"),
+           bande: str | None = Query(None, pattern="^(qualite|nc|zero|A|B|C|D)$"),
            db: Session = Depends(get_db)) -> dict:
     """Filtrage UNIFIÉ (M45 P1) — le « théâtre » : compteur EXACT + ventilation par tier + page
     d'aperçu en UN appel (une requête par ajustement de filtre). Critères composables via
@@ -3063,8 +3063,11 @@ _BANDE_RANG_SQL = ("CASE sl.bande WHEN 'A' THEN 0 WHEN 'B' THEN 1 WHEN 'C' THEN 
                    "WHEN 'D' THEN 3 WHEN 'NC' THEN 4 WHEN '0' THEN 5 ELSE 6 END")
 _BANDE_RANG_PAGE_SQL = ("CASE pg.bande WHEN 'A' THEN 0 WHEN 'B' THEN 1 WHEN 'C' THEN 2 "
                         "WHEN 'D' THEN 3 WHEN 'NC' THEN 4 WHEN '0' THEN 5 ELSE 6 END")
-#: familles de bande pour le filtre serveur de l'Analyse (groupes de fin de liste, décision Vic)
+#: familles de bande pour le filtre serveur de l'Analyse. `qualite` = les 4 bandes de qualité ;
+#: A/B/C/D = une bande PRÉCISE (filtre CLASSEMENT, ANALYSE-2) ; nc/zero = les groupes de fin de liste.
 _BANDE_GROUPES_SQL = {"qualite": "sl.bande IN ('A','B','C','D')",
+                      "A": "sl.bande = 'A'", "B": "sl.bande = 'B'",
+                      "C": "sl.bande = 'C'", "D": "sl.bande = 'D'",
                       "nc": "sl.bande = 'NC'", "zero": "sl.bande = '0'"}
 
 _Q_V2_ORDERS = {
@@ -3589,6 +3592,27 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
         vb = {r["bande"]: int(r["n"]) for r in bandes}
     out["bandes"] = {k: vb.get(k, 0) for k in ("A", "B", "C", "D", "0", "NC")}
     out["bande_total"] = sum(out["bandes"].values())
+    # ANALYSE-2 — le CROISEMENT bande × Signal de mutation sur les bandes de QUALITÉ (A-D), pour un
+    # compteur filtré COHÉRENT (« X / Y » avec Y = le vrai total du couple Classement+Signal choisi) et
+    # la preuve des 20 combinaisons (5 Classement × 4 Signal). Somme des 4 bandes = total ; Fort+Moyen+
+    # Faible = Tous, par construction (un seul GROUP BY). Comptes bruts, mêmes filtres globaux.
+    xtab: dict = {}
+    if _score_labuse_ready(db):
+        cr = db.execute(text(
+            f"""
+            SELECT sl.bande AS bande, sl.signal_niveau AS signal, count(*) AS n
+            FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
+            {join_v2}
+            JOIN score_labuse sl ON sl.parcel_id = p.id AND sl.run_label = :sl_run
+            WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+              AND sl.bande IN ('A','B','C','D')
+              {extra_where} {sliver}
+            GROUP BY sl.bande, sl.signal_niveau
+            """), {**params, "sl_run": SCORE_LABUSE_RUN}).mappings().all()
+        for r in cr:
+            xtab.setdefault(r["bande"], {})[r["signal"] or "faible"] = int(r["n"])
+    out["bandes_signal"] = {b: {s: xtab.get(b, {}).get(s, 0) for s in ("fort", "moyen", "faible")}
+                            for b in ("A", "B", "C", "D")}
     if legacy:  # M129-B : la matrice est MORTE — la ventilation legacy est retirée, DIT.
         out["legacy"] = {"mort": "matrice retirée (M129) — statut cascade + tier v2 la remplacent"}
     return out

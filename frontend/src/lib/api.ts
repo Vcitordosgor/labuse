@@ -155,6 +155,8 @@ export interface FiltreReponse {
   // Sans potentiel 0 / Analyse incomplète NC), comptes bruts du moteur (aucun quota/rang/percentile).
   bandes?: Record<'A' | 'B' | 'C' | 'D' | '0' | 'NC', number>
   bande_total?: number
+  // ANALYSE-2 — croisement bande × Signal sur les bandes de qualité (compteur filtré + preuve 20 combos).
+  bandes_signal?: Record<'A' | 'B' | 'C' | 'D', Record<'fort' | 'moyen' | 'faible', number>>
   opportunites: number
   opportunites_evenement: number
   dossiers_opportunites: number
@@ -198,9 +200,11 @@ export const getZonageZones = (communes: string[]) =>
 // que du fait ; 'potentiel' (SDP résiduelle = calcul LABUSE) ne sert plus qu'en analyse, nulle part ailleurs.
 // ANALYSE-1 : 'labuse' = le classement du NOUVEAU moteur (bande lexicographique puis Signal de mutation).
 export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune' | 'potentiel' | 'adresse' | 'labuse'
-// ANALYSE-1 — les groupes de bande côté serveur (familles de fin de liste) et les niveaux de Signal.
-export type BandeGroupe = 'qualite' | 'nc' | 'zero'
+// ANALYSE-1/2 — le param serveur `bande` : `qualite` (les 4 bandes de qualité), une bande PRÉCISE
+// (A/B/C/D — filtre Classement), ou un groupe de fin de liste (`nc`, `zero`).
+export type BandeGroupe = 'qualite' | 'nc' | 'zero' | 'A' | 'B' | 'C' | 'D'
 export type SignalNiveauKey = 'fort' | 'moyen' | 'faible'
+export type QualiteKey = 'A' | 'B' | 'C' | 'D'
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')

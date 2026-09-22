@@ -118,7 +118,7 @@ export const BANDE_META: Record<Bande, { label: string; long: string; color: str
   B: { label: 'Bonne', long: 'Bonne — potentiel constructible solide', color: '#46A0E0' },                // bleu franc
   C: { label: 'À étudier', long: 'À étudier — potentiel réel sous conditions', color: '#E8B23A' },          // or / ambre
   D: { label: 'Faible', long: 'Faible — potentiel constructible limité', color: '#C4653C' },               // terracotta
-  '0': { label: 'Sans potentiel constructible', long: 'Sans potentiel constructible — aucun droit à bâtir résiduel', color: '#5C7268' }, // gris-vert neutre (catégorie à part)
+  '0': { label: 'Non retenue', long: 'Non retenue — aucun droit à bâtir résiduel identifié', color: '#5C7268' }, // gris-vert neutre (catégorie à part) — ANALYSE-2 : ex « Sans potentiel constructible »
   NC: { label: 'Analyse incomplète', long: 'Analyse incomplète — une donnée manque pour conclure', color: '#8A8FA0' },                   // gris-bleu neutre
 }
 // ordre lexicographique d'affichage (identique au moteur) : bandes de qualité, incomplète, sans potentiel.

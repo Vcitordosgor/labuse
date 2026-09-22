@@ -1,10 +1,10 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { getAnalyse, getAnalyseStats, getCommunes, getFiltre, getParcelsGeojson, getResults, type BandeGroupe, type SignalNiveauKey, type SortKey } from '../../lib/api'
+import { getAnalyse, getAnalyseStats, getCommunes, getFiltre, getParcelsGeojson, getResults, type BandeGroupe, type QualiteKey, type SignalNiveauKey, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
-import { ALL_TIER_META, BANDE_META, BANDE_ORDER, bandeMeta, etatBienMeta, signalMeta, type Bande, verdictMeta } from '../../lib/status'
+import { ALL_TIER_META, BANDE_META, bandeMeta, etatBienMeta, signalMeta, type Bande, verdictMeta } from '../../lib/status'
 import { raisonDominante } from '../../lib/raison'
 import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
@@ -341,6 +341,16 @@ const SIGNALS_FILTRE: { key: SignalNiveauKey | 'tous'; label: string }[] = [
   { key: 'fort', label: 'Fort' }, { key: 'moyen', label: 'Moyen' },
   { key: 'faible', label: 'Faible' }, { key: 'tous', label: 'Tous' },
 ]
+// ANALYSE-2 — le filtre CLASSEMENT : les 4 bandes de qualité (libellés gravés) + « Tous » en DERNIER.
+// « Non retenue » et « Analyse incomplète » ne sont PAS des choix de classement (catégories à part) —
+// elles restent accessibles par leurs groupes de fin de liste.
+const CLASSEMENT_FILTRE: { key: QualiteKey | 'tous'; label: string }[] = [
+  { key: 'A', label: BANDE_META.A.label }, { key: 'B', label: BANDE_META.B.label },
+  { key: 'C', label: BANDE_META.C.label }, { key: 'D', label: BANDE_META.D.label },
+  { key: 'tous', label: 'Tous' },
+]
+//: les 5 catégories de l'ENCART (4 bandes + Non retenue) — « Analyse incomplète » (NC) est à part.
+const BANDE_ENCART: Bande[] = ['A', 'B', 'C', 'D', '0']
 
 // Les 2-3 contributions FR les plus fortes, telles que le moteur les produit — ce qui MONTE (▲) et ce
 // qui BAISSE (▼) le Score. Aucun chiffre de score : juste la phrase du moteur.
@@ -508,14 +518,20 @@ export function ResultsSection() {
   // ── ANALYSE-1 — le NOUVEAU moteur (Score LABUSE + Signal de mutation), lu sur le run candidat ──
   // Filtre PROPRE à l'Analyse : le Signal de mutation (Fort / Moyen / Faible / Tous). Il narreowit la
   // liste, il ne re-classe rien (la bande vient du moteur telle quelle).
+  // ANALYSE-2 — DEUX filtres INDÉPENDANTS et combinables (ET) : le CLASSEMENT (bande de qualité, ou
+  // Tous) et le SIGNAL de mutation (ou Tous). « Tous » toujours en DERNIER (règle DA). Ils narrowissent
+  // la liste, ils ne re-classent rien (la bande vient du moteur telle quelle).
+  const [classementFiltre, setClassementFiltre] = useState<QualiteKey | 'tous'>('tous')
   const [signalFiltre, setSignalFiltre] = useState<SignalNiveauKey | 'tous'>('tous')
   const signalParam = signalFiltre === 'tous' ? undefined : signalFiltre
-  useEffect(() => { if (!analyse) setSignalFiltre('tous') }, [analyse])
-  // la LISTE UNIQUE de qualité (bandes A→D, ordonnée par bande puis Signal côté serveur), servie par
-  // /filtre en mode `labuse` — TOUJOURS côté serveur (le geojson commune ne porte pas la bande).
+  // param serveur `bande` : une bande PRÉCISE (A/B/C/D) ou `qualite` (les 4) quand Classement = Tous.
+  const bandeParam: BandeGroupe = classementFiltre === 'tous' ? 'qualite' : classementFiltre
+  useEffect(() => { if (!analyse) { setSignalFiltre('tous'); setClassementFiltre('tous') } }, [analyse])
+  // la LISTE UNIQUE (bandes ordonnées par bande puis Signal côté serveur), servie par /filtre en mode
+  // `labuse` — TOUJOURS côté serveur (le geojson commune ne porte pas la bande). Filtrée par les DEUX.
   const analyseList = useInfiniteQuery({
-    queryKey: ['analyse-qualite', commune, filters, signalParam],
-    queryFn: ({ pageParam }) => getAnalyse(filters, 'qualite', { limit: RESULTS_PAGE, offset: pageParam as number, signal: signalParam }),
+    queryKey: ['analyse-qualite', commune, filters, bandeParam, signalParam],
+    queryFn: ({ pageParam }) => getAnalyse(filters, bandeParam, { limit: RESULTS_PAGE, offset: pageParam as number, signal: signalParam }),
     initialPageParam: 0,
     getNextPageParam: (last: unknown[], pages) => (last.length === RESULTS_PAGE ? pages.length * RESULTS_PAGE : undefined),
     enabled: analyse,
@@ -524,14 +540,31 @@ export function ResultsSection() {
     () => (analyseList.data?.pages ?? []).flat() as unknown as (ParcelProps & { commune?: string })[],
     [analyseList.data],
   )
-  // ventilation par BANDE du périmètre (récapitulatif) — filtres globaux SANS tier ni bande.
+  // ventilation par BANDE + croisement bande × Signal du périmètre (récapitulatif) — filtres globaux
+  // SANS tier ni bande. Le crosstab donne le compteur FILTRÉ cohérent (« N correspondent à vos filtres »).
   const bandesQ = useQuery({
     queryKey: ['analyse-bandes', commune, filters],
     queryFn: () => getAnalyseStats(filters),
     enabled: analyse,
   })
   const bandes = bandesQ.data?.bandes ?? { A: 0, B: 0, C: 0, D: 0, '0': 0, NC: 0 }
+  const xtab = bandesQ.data?.bandes_signal
+  // ANALYSE-2 — N parcelles pour le couple (Classement, Signal) courant, dérivé du SEUL crosstab :
+  // somme sur les bandes sélectionnées × les signaux sélectionnés. Par construction, somme des 4 bandes
+  // = total, et Fort+Moyen+Faible = Tous (le compteur ne peut pas mentir, il vient d'un unique GROUP BY).
+  const filtreCount = useMemo(() => {
+    if (!xtab) return 0
+    const bs: QualiteKey[] = classementFiltre === 'tous' ? ['A', 'B', 'C', 'D'] : [classementFiltre]
+    const ss: SignalNiveauKey[] = signalFiltre === 'tous' ? ['fort', 'moyen', 'faible'] : [signalFiltre]
+    return bs.reduce((a, b) => a + ss.reduce((x, s) => x + (xtab[b]?.[s] ?? 0), 0), 0)
+  }, [xtab, classementFiltre, signalFiltre])
+  // total « analysé » de l'encart = les 5 catégories montrées (4 bandes + Non retenue) ; « Analyse
+  // incomplète » (NC) est à part (l'analyse n'a PAS pu conclure), surfacée dans son groupe de fin.
+  const encartTotal = bandes.A + bandes.B + bandes.C + bandes.D + bandes['0']
   const bandeTotal = bandesQ.data?.bande_total ?? 0
+  // groupes de fin (Non retenue / Analyse incomplète) : montrés seulement quand Classement = Tous
+  // (sinon on a demandé une bande précise, ces catégories n'en font pas partie).
+  const showEndGroups = classementFiltre === 'tous'
 
   // props + centroïde (calculé UNE fois — sert au filtre de zone) — mode commune uniquement
   const props = useMemo(
@@ -635,52 +668,78 @@ export function ResultsSection() {
           analyse » (VerdictHero) dit le mode. */}
       {analyse && (
         <>
-          {/* ANALYSE-1 — le RÉCAPITULATIF (écran 1 conservé, décision Vic 08/09) : « LABUSE a analysé
-              les N parcelles » + la ventilation par BANDE du nouveau moteur. Comptes bruts du moteur
-              (aucun quota/rang/percentile) ; « Sans potentiel » et « Analyse incomplète » ne sont
-              JAMAIS masqués. Vocabulaire GRAVÉ (BANDE_META), couleurs franches, jamais de chiffre de score. */}
-          <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-[11.5px] leading-relaxed text-txt-mut">
-            <b className="text-txt">LABUSE</b> a analysé les <b className="tabular-nums text-txt">{fmt(bandeTotal || total)}</b> parcelles{zone ? ' de la zone' : commune ? ` de ${commune}` : ' de votre sélection'}.
-          </p>
-          <div data-ventilation-bande className="mt-1.5 flex shrink-0 flex-wrap gap-x-3 gap-y-1 text-[11px] leading-snug">
-            {BANDE_ORDER.map((b) => (bandes[b] ?? 0) > 0 && (
-              <Tip key={b} side="top" tip={BANDE_META[b].long} className="inline-flex">
-                <span className="inline-flex items-center gap-1">
-                  <span className="inline-flex h-2 w-2 rounded-full" style={{ background: BANDE_META[b].color }} />
-                  <b className="tabular-nums" style={{ color: BANDE_META[b].color }}>{fmt(bandes[b] ?? 0)}</b>
-                  <span className="text-txt-dim">{BANDE_META[b].label}</span>
-                </span>
-              </Tip>
-            ))}
+          {/* ANALYSE-2 — L'ENCART (écran 1 conservé) : « LABUSE a analysé les N parcelles de votre
+              sélection » + les 5 compteurs (4 bandes + Non retenue) et la barre colorée. Comptes bruts
+              du moteur (aucun quota/rang/percentile) ; couleurs franches (BANDE_META), jamais un chiffre
+              de score. « Analyse incomplète » (NC) n'est PAS un compteur (l'analyse n'a pas conclu) :
+              elle vit dans son groupe de fin de liste. */}
+          <div data-encart className="mt-3 shrink-0 rounded-lg border border-line-2 bg-surface-2/50 px-3 py-2.5">
+            <p className="text-[11.5px] leading-relaxed text-txt-mut">
+              <b className="text-txt">LABUSE</b> a analysé les <b className="tabular-nums text-txt">{fmt(encartTotal)}</b> parcelles{zone ? ' de la zone' : commune ? ` de ${commune}` : ' de votre sélection'}.
+            </p>
+            <div data-ventilation-bande className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-snug">
+              {BANDE_ENCART.map((b) => (
+                <Tip key={b} side="top" tip={BANDE_META[b].long} className="inline-flex">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="inline-flex h-2 w-2 rounded-full" style={{ background: BANDE_META[b].color }} />
+                    <b className="tabular-nums" style={{ color: BANDE_META[b].color }}>{fmt(bandes[b] ?? 0)}</b>
+                    <span className="text-txt-dim">{BANDE_META[b].label}</span>
+                  </span>
+                </Tip>
+              ))}
+            </div>
+            {(() => {
+              const tot = Math.max(1, encartTotal)
+              return (
+                <div className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-line">
+                  {BANDE_ENCART.map((b) => (bandes[b] ?? 0) > 0 && (
+                    <span key={b} style={{ background: BANDE_META[b].color, width: `${((bandes[b] ?? 0) / tot) * 100}%` }} />
+                  ))}
+                </div>
+              )
+            })()}
           </div>
-          {/* la barre reprend les couleurs des bandes, proportionnelle au total analysé (franc, jamais un camaïeu) */}
-          {(() => {
-            const tot = Math.max(1, bandeTotal || BANDE_ORDER.reduce((a, b) => a + (bandes[b] ?? 0), 0))
-            return (
-              <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">
-                {BANDE_ORDER.map((b) => (bandes[b] ?? 0) > 0 && (
-                  <span key={b} style={{ background: BANDE_META[b].color, width: `${((bandes[b] ?? 0) / tot) * 100}%` }} />
-                ))}
-              </div>
-            )
-          })()}
-          {/* FILTRE PROPRE à l'Analyse — le Signal de mutation. « Tous » en dernier (règle DA). Actif =
-              vert opaque, survol = opaque de sa couleur (hover-fill géré par les classes utilitaires). */}
-          <div data-signal-filtre className="mt-3 flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5">
+
+          {/* ANALYSE-2 — DEUX filtres INDÉPENDANTS et combinables (ET). « Tous » toujours en DERNIER,
+              actif = vert opaque. Le CLASSEMENT (bande de qualité) puis le SIGNAL de mutation. */}
+          <div data-classement-filtre className="mt-3 flex shrink-0 flex-col gap-1">
+            <span className="text-[10px] uppercase tracking-wide text-txt-dim">Classement LABUSE</span>
+            <div className="inline-flex flex-wrap items-center gap-0.5 self-start rounded-lg border border-line-2 bg-surface-2 p-0.5">
+              {CLASSEMENT_FILTRE.map((c) => {
+                const actif = classementFiltre === c.key
+                return (
+                  <button key={c.key} data-classement-pill={c.key}
+                    onClick={() => setClassementFiltre(c.key)}
+                    className={`rounded-md px-2.5 py-1 text-[11px] transition-colors duration-quick ${
+                      actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
+                    {c.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <div data-signal-filtre className="mt-2.5 flex shrink-0 flex-col gap-1">
             <span className="text-[10px] uppercase tracking-wide text-txt-dim">Signal de mutation</span>
-            <div className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-line-2 bg-surface-2 p-0.5">
+            <div className="inline-flex flex-wrap items-center gap-0.5 self-start rounded-lg border border-line-2 bg-surface-2 p-0.5">
               {SIGNALS_FILTRE.map((s) => {
                 const actif = signalFiltre === s.key
                 return (
                   <button key={s.key} data-signal-pill={s.key}
                     onClick={() => setSignalFiltre(s.key)}
-                    className={`rounded-md px-3 py-1 text-[11px] transition-colors duration-quick ${
+                    className={`rounded-md px-2.5 py-1 text-[11px] transition-colors duration-quick ${
                       actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
                     {s.label}
                   </button>
                 )
               })}
             </div>
+          </div>
+
+          {/* ANALYSE-2 — ligne « N parcelles correspondent à vos filtres » (compteur FILTRÉ, dérivé du
+              crosstab → jamais un « 0 / 2 216 » incohérent) + le tri (fixe : par potentiel = la bande). */}
+          <div data-filtre-resume className="mt-3 flex shrink-0 items-baseline justify-between gap-2 border-t border-line pt-2 text-[11px]">
+            <span className="text-txt-mut"><b className="tabular-nums text-txt">{fmt(filtreCount)}</b> parcelle{filtreCount > 1 ? 's' : ''} correspondent à vos filtres</span>
+            <span className="shrink-0 text-txt-dim">Trier par potentiel</span>
           </div>
         </>
       )}
@@ -747,16 +806,24 @@ export function ResultsSection() {
           {analyseList.isLoading && analyseRows.length === 0 && (
             <p className="px-3 py-1.5 text-[10.5px] text-txt-dim">Chargement…</p>
           )}
-          {!analyseList.isLoading && analyseRows.length === 0 && (bandes.A + bandes.B + bandes.C + bandes.D) === 0 && (
-            <p className="px-3 py-1.5 text-[11px] leading-snug text-txt-dim">
-              Aucune parcelle constructible dans cette sélection{signalParam ? ' pour ce Signal' : ''} — voir les groupes ci-dessous.
+          {/* ANALYSE-2 — vide HONNÊTE : quand le couple (Classement, Signal) ne matche AUCUNE parcelle,
+              on le DIT clairement (ce n'est pas une panne), en nommant le filtre — plus jamais un
+              « 0 / 2 216 » muet. Les groupes de fin restent accessibles (si Classement = Tous). */}
+          {!analyseList.isLoading && analyseRows.length === 0 && filtreCount === 0 && (
+            <p data-filtre-vide className="px-3 py-2 text-[11px] leading-snug text-txt-dim">
+              Aucune parcelle {classementFiltre !== 'tous'
+                ? <>« <b style={{ color: BANDE_META[classementFiltre].color }}>{BANDE_META[classementFiltre].label}</b> »</>
+                : 'constructible'}{signalParam ? <> à signal <b>{signalParam}</b></> : ''} dans cette sélection.
+              {showEndGroups ? ' Les parcelles Non retenue et Analyse incomplète restent consultables ci-dessous.' : ''}
             </p>
           )}
-          {(bandes.NC ?? 0) > 0 && (
+          {/* ANALYSE-2 — groupes de fin montrés seulement quand Classement = Tous (une bande précise
+              demandée n'inclut pas ces catégories à part). Jamais masqués sinon. */}
+          {showEndGroups && (bandes.NC ?? 0) > 0 && (
             <AnalyseBandeGroup groupe="nc" label={BANDE_META.NC.label} color={BANDE_META.NC.color}
               total={bandes.NC ?? 0} filters={filters} commune={commune ?? ''} />
           )}
-          {(bandes['0'] ?? 0) > 0 && (
+          {showEndGroups && (bandes['0'] ?? 0) > 0 && (
             <AnalyseBandeGroup groupe="zero" label={BANDE_META['0'].label} color={BANDE_META['0'].color}
               total={bandes['0'] ?? 0} filters={filters} commune={commune ?? ''} />
           )}
@@ -773,7 +840,7 @@ export function ResultsSection() {
             compte dans leur en-tête). */}
         <span className="min-w-0 text-[11px] text-txt-dim tnum">
           {analyse
-            ? `${fmt(analyseRows.length)} / ${fmt(bandes.A + bandes.B + bandes.C + bandes.D)} constructibles`
+            ? `${fmt(analyseRows.length)} / ${fmt(filtreCount)} constructibles`
             : `${fmt(shown.length)}${total > 0 || !ile ? ` / ${fmt(ile ? total : (list.length || total))}` : ''}`}
         </span>
         <span className="flex shrink-0 items-center gap-2">
