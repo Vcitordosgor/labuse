@@ -171,7 +171,12 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         elif not getattr(zr, "calibree", False):
             blocking.append(f"PLU non calibré pour la zone {zs.zone} (estimation générique)")
         else:
-            plu_zone_src = RegulatorySource(document=f"PLU — {commune}", zone=zs.zone, provider=PLU_PROVIDER)
+            # renvoi de zone (AU→U) : zonage.py résout et cite la zone de rattachement (via_renvoi)
+            via_renvoi = getattr(zr, "via_renvoi", None)
+            racc["zone"]["via_renvoi"] = via_renvoi
+            plu_zone_src = RegulatorySource(
+                document=f"PLU — {commune}", zone=zs.zone,
+                provider=PLU_PROVIDER + (f" · {via_renvoi}" if via_renvoi else ""))
             sources.append(plu_zone_src)
             emp = _num(getattr(zr, "emprise_sol_pct", None))
             haut = _num(getattr(zr, "hf_m", None))  # faîtage : sert l'extrusion 3D
@@ -184,37 +189,47 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 recul_sep = 0.0
             racc["plu"] = {"emprise_pct": emp, "hauteur_faitage_m": haut, "hauteur_egout_m": egout,
                            "recul_voie_m": recul_voie, "recul_sep_m": recul_sep, "source": plu_zone_src.document}
-            if emp is not None:
-                max_footprint = MaxFootprint(ruleId=f"{zs.zone}-emprise", percent=emp,
-                                             status="integrated", source=plu_zone_src)
-                applicable.append(ApplicableRule(id=f"{zs.zone}-emprise", label="Emprise maximale",
-                                                 category="maxFootprint", integrationStatus="integrated",
-                                                 detail=f"{emp:g} %", source=plu_zone_src))
-            elif _feuille_absente(commune, zs.zone, "emprise_sol", "ces"):
-                # silence prouvé du règlement : servi « non réglementé » (donnée sourcée, CDC §3)
-                max_footprint = MaxFootprint(ruleId=f"{zs.zone}-emprise", percent=None,
-                                             status="absent", source=plu_zone_src)
-                applicable.append(ApplicableRule(
-                    id=f"{zs.zone}-emprise", label="Emprise au sol", category="maxFootprint",
-                    integrationStatus="integrated",
-                    detail=f"non réglementée — PLU {commune} zone {zs.zone} : silence du règlement",
-                    source=plu_zone_src))
-                racc.setdefault("silences", []).append("emprise_sol.ces")
+            silence_total = (not regles_zone(commune, zs.zone) and not via_renvoi
+                             and emp is None and haut is None and recul_voie is None and recul_sep is None)
+            if silence_total:
+                # zone SANS règles d'implantation propres et sans renvoi résolu (ex. Le Port Uv —
+                # destinations réglées, forme bâtie non réglée). Pas de recul → gabarit incalculable :
+                # bloc honnête, distinct de « CES non validée ».
+                blocking.append(f"zone {zs.zone} sans règles d'implantation propres : le règlement ne "
+                                "fixe ni recul, ni hauteur, ni emprise (renvoi non résolu ou silence total)")
             else:
-                blocking.append("emprise (CES) non réglementée / non validée")
-            if haut is not None:
-                max_height = MaxHeight(ruleId=f"{zs.zone}-hauteur", meters=haut, source=plu_zone_src)
-                applicable.append(ApplicableRule(id=f"{zs.zone}-hauteur", label="Hauteur maximale",
-                                                 category="maxHeight", integrationStatus="integrated",
-                                                 detail=f"{haut:g} m", source=plu_zone_src))
-            else:
-                blocking.append("hauteur réglementaire non validée")
-            applicable.append(ApplicableRule(id="STAT", label="Stationnement", category="other",
-                                             integrationStatus="not_integrated",
-                                             detail="Règle connue, non chiffrée", source=plu_zone_src))
-            applicable.append(ApplicableRule(id="ESP", label="Espaces libres", category="other",
-                                             integrationStatus="not_integrated",
-                                             detail="Règle connue, non chiffrée", source=plu_zone_src))
+                if emp is not None:
+                    max_footprint = MaxFootprint(ruleId=f"{zs.zone}-emprise", percent=emp,
+                                                 status="integrated", source=plu_zone_src)
+                    applicable.append(ApplicableRule(id=f"{zs.zone}-emprise", label="Emprise maximale",
+                                                     category="maxFootprint", integrationStatus="integrated",
+                                                     detail=f"{emp:g} %", source=plu_zone_src))
+                elif _feuille_absente(commune, zs.zone, "emprise_sol", "ces"):
+                    # silence prouvé du règlement : servi « non réglementé » (donnée sourcée, CDC §3)
+                    max_footprint = MaxFootprint(ruleId=f"{zs.zone}-emprise", percent=None,
+                                                 status="absent", source=plu_zone_src)
+                    applicable.append(ApplicableRule(
+                        id=f"{zs.zone}-emprise", label="Emprise au sol", category="maxFootprint",
+                        integrationStatus="integrated",
+                        detail=f"non réglementée — PLU {commune} zone {zs.zone} : silence du règlement",
+                        source=plu_zone_src))
+                    racc.setdefault("silences", []).append("emprise_sol.ces")
+                else:
+                    blocking.append("emprise (CES) non réglementée / non validée")
+                if haut is not None:
+                    max_height = MaxHeight(ruleId=f"{zs.zone}-hauteur", meters=haut,
+                                           status="integrated", source=plu_zone_src)
+                    applicable.append(ApplicableRule(id=f"{zs.zone}-hauteur", label="Hauteur maximale",
+                                                     category="maxHeight", integrationStatus="integrated",
+                                                     detail=f"{haut:g} m", source=plu_zone_src))
+                else:
+                    blocking.append("hauteur réglementaire non validée")
+                applicable.append(ApplicableRule(id="STAT", label="Stationnement", category="other",
+                                                 integrationStatus="not_integrated",
+                                                 detail="Règle connue, non chiffrée", source=plu_zone_src))
+                applicable.append(ApplicableRule(id="ESP", label="Espaces libres", category="other",
+                                                 integrationStatus="not_integrated",
+                                                 detail="Règle connue, non chiffrée", source=plu_zone_src))
 
     # --- risques : PPR zone rouge (réglementaire, per-parcelle) ---------------
     ppr = session.execute(text(
