@@ -531,6 +531,40 @@ export const getTaxeAmenagement = (p: TaxeParams) => {
   return j<TaxeResult>(`/outils/taxe-amenagement?${params.toString()}`)
 }
 
+// GABARIT-1 — outil « Gabarit réglementaire ». Le front N'AFFICHE que ce que sert le moteur pur
+// (doctrine LABUSE : zéro recalcul au front). Aucun champ estimatif. GeoJSON en 4326.
+export interface GabRegSource {
+  document?: string | null; zone?: string | null; article?: string | null
+  versionDate?: string | null; provider?: string | null
+}
+export interface GabAppliedRule {
+  ruleId: string; category: string; label: string
+  value?: number | null; unit?: string | null; detail?: string | null; source: GabRegSource
+}
+export interface GabNonIntegratedRule { id?: string | null; label: string; source: GabRegSource }
+export interface GabCoverage { reculs: boolean; hauteur: boolean; emprise: boolean; risques: boolean }
+export type GabGeom = { type: string; coordinates: unknown } | null
+export interface GabaritResult {
+  status: 'ok' | 'incomplete'
+  message?: string | null
+  validationErrors: string[]
+  raccordement?: Record<string, unknown> | null
+  surfaceParcelleM2?: number | null
+  zoneImplantationM2?: number | null
+  plafondEmpriseM2?: number | null
+  hauteurReglementaireM?: number | null
+  hauteurSource?: GabRegSource | null
+  coverage?: GabCoverage | null
+  appliedRules: GabAppliedRule[]
+  nonIntegratedRules: GabNonIntegratedRule[]
+  contourGeoJSON?: GabGeom
+  zoneImplantationGeoJSON?: GabGeom
+  retraitsGeoJSON?: GabGeom
+  exclusionsGeoJSON?: GabGeom
+}
+export const getGabarit = (idu: string) =>
+  j<GabaritResult>(`/outils/gabarit/${encodeURIComponent(idu)}`)
+
 // SECTEUR-1 (S1) — outil « Mon secteur » : prix du secteur autour d'une parcelle (médiane locale par
 // type + tendance 12 mois + annonces Radar dans le rayon). Chaque chiffre porte son n/millésime.
 export interface DistribRepere { n: number; min: number | null; p25: number | null; median: number | null; p75: number | null; max: number | null }
