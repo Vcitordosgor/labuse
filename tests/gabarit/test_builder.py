@@ -61,7 +61,7 @@ def _rules(**kw):
     return SimpleNamespace(**base)
 
 
-def _fake_limites(has_voie=True, non_classees=None, enclave=False, empub=False):
+def _fake_limites(has_voie=True, non_classees=None, enclave=False, empub=False, voiepriv=False):
     """LimitesResult factice sans DB, pour tester le branchement builder."""
     from shapely.geometry import LineString
 
@@ -70,6 +70,9 @@ def _fake_limites(has_voie=True, non_classees=None, enclave=False, empub=False):
         edges = [Edge(LineString([(0, 0), (10, 0)]), "rear", 10.0),
                  Edge(LineString([(10, 0), (10, 10)]), "rear", 10.0)]
         has_voie = False
+    elif voiepriv:
+        edges = [Edge(LineString([(0, 0), (10, 0)]), "voie", 10.0, source_kind="voie_privee"),
+                 Edge(LineString([(10, 0), (10, 10)]), "side", 10.0)]
     elif empub:
         edges = [Edge(LineString([(0, 0), (10, 0)]), "voie", 10.0, source_kind="emprise_publique"),
                  Edge(LineString([(10, 0), (10, 10)]), "side", 10.0)]
@@ -170,7 +173,6 @@ def test_enclave_E1_servie_separatives(monkeypatch):
     monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
     monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
     monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid, **kw: _fake_limites(enclave=True))
-    monkeypatch.setattr(B, "_has_chemin_neighbor", lambda s, pid: False)
     b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
     assert b.blocking == []
     assert b.raccordement["enclave"].startswith("E1")
@@ -178,15 +180,38 @@ def test_enclave_E1_servie_separatives(monkeypatch):
     assert any(ar.id == "limite-voie-sansobjet" for ar in b.input.applicableRules)
 
 
-def test_enclave_E2_chemin_prive_bloque(monkeypatch):
-    """E2 (enclave desservie par chemin privé) → bloquée (pas de citation voies privées)."""
+def test_enclave_E2_voie_privee_non_couverte_bloque(monkeypatch):
+    """E2 (voie privée cadastrée) sans citation « voies privées » → le cœur marque la façade non
+    qualifiée (motif voie privée) : la parcelle bloque, rien de servi."""
     monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
     monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
-    monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid, **kw: _fake_limites(enclave=True))
-    monkeypatch.setattr(B, "_has_chemin_neighbor", lambda s, pid: True)
+    monkeypatch.setattr(B, "_voie_citation_flags", lambda com, z: (False, False, "", ""))
+    monkeypatch.setattr(B, "classify_parcel_limits",
+                        lambda s, pid, **kw: _fake_limites(non_classees=[
+                            "desservie par une voie privée : le règlement ne précise pas le recul"]))
     b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
     assert any("voie privée" in x for x in b.blocking)
     assert b.input.setbacks == []
+
+
+def test_enclave_E2_voie_privee_servie_par_citation(monkeypatch):
+    """E2 : citation « voies privées » → l'arête collée à la voie privée cadastrée est servie en
+    voie, source dédiée parcelle de voie privée + citation PLU, recul voie appliqué."""
+    monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
+    monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
+    monkeypatch.setattr(B, "_voie_citation_flags",
+                        lambda com, z: (False, True, "Art. 6", "voies publiques ou privées"))
+    monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid, **kw: _fake_limites(voiepriv=True))
+    b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
+    assert b.blocking == []
+    assert b.raccordement["citation_voie"]["voies_privees"] is True
+    assert b.raccordement["classification"]["voie_privee"] == 1
+    assert b.raccordement["enclave"].startswith("E2")
+    vp = [ar for ar in b.input.applicableRules if ar.id == "limite-voie-privee"]
+    assert vp and "voie privée" in (vp[0].source.provider or "")
+    vp_sb = [sb for sb in b.input.setbacks
+             if sb.type == "road" and "voie privée" in (sb.source.provider or "")]
+    assert vp_sb and vp_sb[0].setbackM == 5.0
 
 
 def test_P1_emprise_publique_servie_par_citation(monkeypatch):

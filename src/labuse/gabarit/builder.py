@@ -142,24 +142,6 @@ def _touche_ravine(session: Session, parcel_id: int) -> bool:
     ), {"pid": parcel_id}).scalar())
 
 
-def _has_chemin_neighbor(session: Session, parcel_id: int) -> bool:
-    """Voisin cadastré collé de type CHEMIN privé : élancé (compacité < 3), sans bâti, non
-    traversé par un axe carrossable BD TOPO (sinon ce serait une parcelle-voirie). Signale une
-    enclave desservie par voie privée (E2)."""
-    return bool(session.execute(text(
-        """SELECT EXISTS(
-             SELECT 1 FROM parcels o
-             WHERE o.id <> :pid
-               AND ST_DWithin(o.geom_2975, (SELECT geom_2975 FROM parcels WHERE id=:pid), 0.5)
-               AND (ST_Area(o.geom_2975) / NULLIF(ST_Perimeter(o.geom_2975), 0)) < 3.0
-               AND NOT EXISTS(SELECT 1 FROM spatial_layers b WHERE b.kind='batiment'
-                              AND ST_Intersects(b.geom_2975, o.geom_2975))
-               AND NOT EXISTS(SELECT 1 FROM spatial_layers v WHERE v.kind='voirie'
-                              AND v.subtype NOT IN ('Sentier','Escalier')
-                              AND ST_Intersects(v.geom_2975, o.geom_2975)))"""
-    ), {"pid": parcel_id}).scalar())
-
-
 def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     """Assemble l'entrée réelle. Renvoie None si la parcelle est inconnue.
     `BuildResult.blocking` liste les données réglementaires nécessaires manquantes."""
@@ -341,6 +323,7 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     setbacks: list[Setback] = []
     if not blocking:  # n'y toucher que si le PLU est complet et unique
         lim = classify_parcel_limits(session, pid, emprises_publiques=emprises_publiques,
+                                     voies_privees=voies_privees,
                                      sub_geom_wkt=mz_sub_geom_wkt,
                                      extra_neighbors_wkt=mz_extra_neighbors or None)
         mill = _bdtopo_millesime(session)
@@ -352,14 +335,27 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             document=f"Domaine public non cadastré — PLU {commune} {work_zone} {voie_article}".strip(),
             article=voie_article or None,
             provider=f"LABUSE — cadastre (non cadastré = domaine public) + citation PLU {voie_article}".strip())
+        # arête collée à une parcelle de voie privée cadastrée (E2), servie par citation « voies privées »
+        voiepriv_src = RegulatorySource(
+            document=f"Parcelle de voie privée (cadastre) — PLU {commune} {work_zone} {voie_article}".strip(),
+            article=voie_article or None,
+            provider=f"LABUSE — parcelle de voie privée (cadastre) + citation PLU {voie_article}".strip())
 
         def _src_for(e):
-            return empub_src if (e.type == "voie" and e.source_kind == "emprise_publique") else bdtopo_src
+            if e.type == "voie" and e.source_kind == "emprise_publique":
+                return empub_src
+            if e.type == "voie" and e.source_kind == "voie_privee":
+                return voiepriv_src
+            return bdtopo_src
 
         def _ruleid_for(e):
             if e.type in ("side", "rear"):
                 return "limite-sep"
-            return "limite-emprise-publique" if e.source_kind == "emprise_publique" else "limite-voie"
+            if e.source_kind == "emprise_publique":
+                return "limite-emprise-publique"
+            if e.source_kind == "voie_privee":
+                return "limite-voie-privee"
+            return "limite-voie"
 
         def _setbacks_for(edges, include_voie):
             for i, e in enumerate(edges):
@@ -388,6 +384,12 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                     detail=f"Recul voie {recul_voie:g} m appliqué au domaine public — « voies et emprises "
                            f"publiques », PLU {commune} {work_zone} {voie_article}".strip(), source=empub_src))
                 sources.append(empub_src)
+            if include_voie and any(e.type == "voie" and e.source_kind == "voie_privee" for e in edges):
+                applicable.append(ApplicableRule(id="limite-voie-privee", label="Recul voie (voie privée)",
+                    category="setback", integrationStatus="integrated",
+                    detail=f"Recul voie {recul_voie:g} m appliqué à la voie privée cadastrée — « voies "
+                           f"privées », PLU {commune} {work_zone} {voie_article}".strip(), source=voiepriv_src))
+                sources.append(voiepriv_src)
 
         if lim is None:
             blocking.append("géométrie de parcelle indisponible")
@@ -399,7 +401,11 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                                       "rear": sum(1 for e in lim.edges if e.type == "rear"),
                                       "emprise_publique": sum(1 for e in lim.edges
                                                               if e.type == "voie" and e.source_kind == "emprise_publique"),
+                                      "voie_privee": sum(1 for e in lim.edges
+                                                         if e.type == "voie" and e.source_kind == "voie_privee"),
                                       "non_classees": lim.non_classees}
+            if any(e.source_kind == "voie_privee" for e in lim.edges):
+                racc["enclave"] = "E2 (voie privée cadastrée servie — citation « voies privées »)"
             # ravine / littoral longé par une arête emprise publique → recul ravine non chiffré (not_integrated)
             if any(e.source_kind == "emprise_publique" for e in lim.edges) and _touche_ravine(session, pid):
                 applicable.append(ApplicableRule(id="ravine", label="Recul ravine / littoral", category="other",
@@ -411,11 +417,14 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 blocking.append("Limites de la parcelle non qualifiées (voie / limite séparative) — "
                                 + " ; ".join(lim.non_classees))
             elif not lim.has_voie:
-                # ENCLAVE : E1 servie en séparatives seules (recul voie « sans objet ») ;
-                # E2 (chemin privé cadastré) bloquée sauf citation visant les voies privées.
-                if _has_chemin_neighbor(session, pid) and not voies_privees:
-                    blocking.append("parcelle sans façade sur voie : accès par voie privée non qualifiée")
-                    racc["enclave"] = "E2 (chemin privé)"
+                # ENCLAVE. E2 (voie privée cadastrée détectée) sans citation « voies privées » → bloc
+                # honnête : le recul sur la voie privée d'accès n'est pas réglé (GABARIT-3/4 conservé,
+                # même verdict que si l'arête d'accès était captée en « non qualifiée »). E1 (aucune voie
+                # privée détectée) → servie en séparatives seules, recul voie « sans objet ».
+                if lim.private_road and not voies_privees:
+                    blocking.append("parcelle sans façade sur voie : desservie par une voie privée "
+                                    "cadastrée — le règlement ne précise pas le recul sur voie privée")
+                    racc["enclave"] = "E2 (voie privée cadastrée — citation absente, bloc)"
                 elif recul_sep is None:
                     blocking.append("recul sur limite séparative non réglementé / non validé")
                 else:

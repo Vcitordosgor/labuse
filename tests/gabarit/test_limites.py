@@ -9,7 +9,13 @@ from collections import Counter
 
 from shapely.geometry import LineString, Polygon
 
-from labuse.gabarit.limites import Road, classify_edges, summarize_edges
+from labuse.gabarit.limites import (
+    Road,
+    classify_edges,
+    elongation_from_obb,
+    is_private_road_parcel,
+    summarize_edges,
+)
 
 # parcelle carrée 20 × 20 m ; arêtes : bas y=0, droite x=20, haut y=20, gauche x=0
 SQUARE = Polygon([(0, 0), (20, 0), (20, 20), (0, 20)])
@@ -133,3 +139,58 @@ def test_entree_non_mutee():
     before = SQUARE.wkt
     classify_edges(SQUARE, [], [Road(LineString([(-5, -3), (25, -3)]), None)])
     assert SQUARE.wkt == before
+
+
+# --------------------------------------------------------------- voie privée (GABARIT-5, E2)
+
+def test_elongation_rectangle_allonge():
+    # rectangle 100 × 10 : périmètre 220, aire 1000 → L/l = 10
+    assert round(elongation_from_obb(220.0, 1000.0), 1) == 10.0
+    # carré 10 × 10 : périmètre 40, aire 100 → L/l = 1
+    assert round(elongation_from_obb(40.0, 100.0), 1) == 1.0
+    assert elongation_from_obb(0, 0) is None
+
+
+def test_private_road_trois_criteres_chacun_insuffisant_seul():
+    ok = dict(has_bati=False, elongation=8.0, width_m=3.0, touches_road=True, axis_len_inside_m=0.0)
+    assert is_private_road_parcel(**ok)                             # tous réunis → voie privée
+    assert not is_private_road_parcel(**{**ok, "has_bati": True})   # bâti → non
+    assert not is_private_road_parcel(**{**ok, "elongation": 3.0})  # trapue (L/l < 5) → non
+    assert not is_private_road_parcel(**{**ok, "width_m": 10.0})    # large (lot, pas un chemin) → non
+    assert not is_private_road_parcel(**{**ok, "touches_road": False})   # non raccordée au réseau → non
+    assert not is_private_road_parcel(**{**ok, "axis_len_inside_m": 20.0})  # axe la traverse → voirie, non
+    assert not is_private_road_parcel(**{**ok, "elongation": None})       # allongement inconnu → non
+    assert not is_private_road_parcel(**{**ok, "width_m": None})          # largeur inconnue → non
+
+
+def test_voie_privee_servie_si_citation():
+    # une parcelle de voie privée collée au bas (hors neighbors/roads BD TOPO) → voie SI citation
+    priv = Polygon([(0, -8), (20, -8), (20, 0), (0, 0)])
+    off = classify_edges(SQUARE, [], [], private_roads=[priv], voies_privees=False)
+    assert not any(e.type == "voie" for e in off)
+    assert any(e.type == "nonclass" and "voie privée" in (e.motif or "") for e in off)
+    on = classify_edges(SQUARE, [], [], private_roads=[priv], voies_privees=True)
+    bas = [e for e in on if e.geom.centroid.y < 1]
+    assert bas and all(e.type == "voie" and e.source_kind == "voie_privee" for e in bas)
+
+
+def test_voie_privee_non_couverte_bloque():
+    # frontage privé non couvert par la citation → non qualifié → summarize bloque avec le motif
+    priv = Polygon([(0, -8), (20, -8), (20, 0), (0, 0)])
+    res = summarize_edges(classify_edges(SQUARE, [], [], private_roads=[priv], voies_privees=False))
+    assert res.blocking and "voie privée" in res.blocking
+
+
+def test_voie_privee_ignoree_si_facade_publique():
+    # parcelle DESSERVIE par une vraie voie (bas), voisin réel à gauche + fond, et un chemin privé à
+    # droite : le chemin n'est qu'une limite séparative (pas de bloc, pas de régression sur le desservi).
+    road = Road(LineString([(-5, -3), (25, -3)]), None)
+    gauche = (Polygon([(-8, 0), (0, 0), (0, 20), (-8, 20)]), False)
+    haut = (Polygon([(0, 20), (20, 20), (20, 28), (0, 28)]), False)
+    priv = Polygon([(20, 0), (28, 0), (28, 20), (20, 20)])   # chemin privé collé au côté droit
+    edges = classify_edges(SQUARE, [gauche, haut], [road], private_roads=[priv], voies_privees=False)
+    res = summarize_edges(edges)
+    assert res.has_voie and res.blocking is None
+    assert not any(e.type == "nonclass" for e in edges)
+    droite = [e for e in edges if e.geom.centroid.x > 19]
+    assert droite and all(e.type in ("side", "rear") for e in droite)
