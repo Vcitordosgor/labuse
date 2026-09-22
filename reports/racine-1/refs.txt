@@ -1,0 +1,202 @@
+=== .dockerignore ===
+scripts/racine1_scan.sh:24:      requirements.txt requirements-ml.txt .dockerignore .gitignore .env.example .env.pilot.example \
+
+=== .env.example ===
+scripts/racine1_scan.sh:24:      requirements.txt requirements-ml.txt .dockerignore .gitignore .env.example .env.pilot.example \
+deploy/env/labuse.env.example:4:#   install -o root -g labuse -m 640 deploy/env/labuse.env.example /etc/labuse/labuse.env
+qa/m31/M31_RAPPORT.md:93:| **SECRET_KEY** | `config.py:50` défaut `None` ; `auth.exiger_secret_prod()` (appelée au boot) **refuse de démarrer** hors local sans clé (fail-closed). `.env.example` = placeholders. | ✓ Correct |
+qa/pdf/RAPPORT_M149.md:58:**les deux exemples de déploiement (`.env.pilot.example:28`, `deploy/env/labuse.env.example:27`) posent
+docker-compose.pilot.yml:4:#   cp .env.example .env   puis définir AU MINIMUM :
+.gitignore:15:# seuls les gabarits *.env.example sont versionnés.
+.gitignore:17:!deploy/env/*.env.example
+
+=== .env.pilot.example ===
+scripts/racine1_scan.sh:24:      requirements.txt requirements-ml.txt .dockerignore .gitignore .env.example .env.pilot.example \
+qa/pdf/RAPPORT_M149.md:58:**les deux exemples de déploiement (`.env.pilot.example:28`, `deploy/env/labuse.env.example:27`) posent
+
+=== .git ===
+src/labuse/filtres/echantillons/flair.json:8:  "producteur_url": "https://ignf.github.io/FLAIR/",
+src/labuse/deploiement.py:25:    Jamais d'exception : le Pilotage ne casse pas si git manque (ex. archive sans .git)."""
+scripts/racine1_scan.sh:16:# search haystack: everything EXCEPT root-level *.md/*.html themselves and .git
+scripts/racine1_scan.sh:22:      src tests config scripts deploy frontend/src qa .github \
+scripts/racine1_scan.sh:24:      requirements.txt requirements-ml.txt .dockerignore .gitignore .env.example .env.pilot.example \
+deploy/scripts/deploy_vps.sh:35:[ -d "$APP/.git" ] || { echo "✗ $APP n'est pas un clone git"; exit 2; }
+deploy/scripts/deploy_app.sh:6:# (l'état de la branche déployée), sans .git ni artefacts. Relançable à volonté.
+deploy/scripts/deploy_app.sh:15:  --exclude .git --exclude .venv --exclude node_modules --exclude frontend/dist \
+qa/projets/AUDIT_M138.md:4:depuis M137 = un `.gitignore`, hors périmètre). Chaque constat porte sa `fichier:ligne`
+qa/projets/RAPPORT_M139.md:3:Branché sur `origin/main` @ `81daf718` (avance depuis M137 = un `.gitignore` ; branches M138
+qa/projets/RAPPORT_M138_P1.md:4:commit `.gitignore`** (hors périmètre projets), signalé. CC ne merge jamais.
+qa/m130/RAPPORT_M130-10.md:109:## E — .gitignore
+qa/m130/RAPPORT_M130-10.md:111:`qa/m130/*.pdf` ajouté au `.gitignore` ; les 4 PDF suivis désindexés
+.dockerignore:1:.git
+
+=== .gitignore ===
+scripts/racine1_scan.sh:24:      requirements.txt requirements-ml.txt .dockerignore .gitignore .env.example .env.pilot.example \
+qa/projets/AUDIT_M138.md:4:depuis M137 = un `.gitignore`, hors périmètre). Chaque constat porte sa `fichier:ligne`
+qa/projets/RAPPORT_M139.md:3:Branché sur `origin/main` @ `81daf718` (avance depuis M137 = un `.gitignore` ; branches M138
+qa/projets/RAPPORT_M138_P1.md:4:commit `.gitignore`** (hors périmètre projets), signalé. CC ne merge jamais.
+qa/m130/RAPPORT_M130-10.md:109:## E — .gitignore
+qa/m130/RAPPORT_M130-10.md:111:`qa/m130/*.pdf` ajouté au `.gitignore` ; les 4 PDF suivis désindexés
+
+=== AUDIT.md ===
+src/labuse/ingestion/layers_ingest.py:652:    non identifié », cf. docs/VOIRIE_CAP_5000_AUDIT.md). Augmenter `count`/`max_features` NE SUFFIT PAS
+tests/test_saint_paul_quality.py:13:docs/SAINT_PAUL_QUALITY_AUDIT.md.
+
+=== CRON-1-LOT1.md ===
+src/labuse/jobs.py:411:    # ── NON REPRIS (retirés du registre par CRON-1 lot 1, avec la raison — cf. CRON-1-LOT1.md) ──
+tests/test_circuit4_lot5.py:73:    # cf. CRON-1-LOT1.md). Le CLI `labuse jobs run regles-references` n'existe plus au registre ; l'agent
+
+=== CRON-1-LOT2.md ===
+tests/test_cron1_g8.py:4:CRON-1-LOT2.md (15 sources nommées)."""
+
+=== DEMO_ONE_PAGER.html ===
+.dockerignore:15:DEMO_ONE_PAGER.html
+
+=== DEMO_PACK_PRINT.html ===
+.dockerignore:14:DEMO_PACK_PRINT.html
+
+=== Dockerfile ===
+scripts/racine1_scan.sh:23:      deploy.sh pyproject.toml Dockerfile docker-compose.yml docker-compose.pilot.yml docker-compose.caddy.yml \
+
+=== FICHE-COUCHES-3.md ===
+qa/fiche_couches3_report.py:1:"""Génère FICHE-COUCHES-3.md depuis /tmp/fc3_final.json (audit par la preuve)."""
+qa/fiche_couches3_report.py:77:open('/Users/openclaw/Desktop/labuse-couches-tuyau/FICHE-COUCHES-3.md', 'w').write('\n'.join(out))
+qa/fiche_couches3_report.py:78:print(f'FICHE-COUCHES-3.md écrit — VISIBLE={len(V)}/53 dont PDF={len(M)} ; INVISIBLE={len(inv)} ; ABSENTE={len(absente)}')
+
+=== NOTES_GEORISQUES.md ===
+src/labuse/ingestion/georisques_layers.py:13:~inexistant à La Réunion (île volcanique) — documenté dans NOTES_GEORISQUES.md.
+
+=== NOTES_WAVE_ACI.md ===
+src/labuse/courrier.py:3:Étude DOM (10/07/2026, sourcée dans NOTES_WAVE_ACI.md) : La Réunion est du courrier
+src/labuse/courrier.py:674:            "facturation": "facture séparée mensuelle (voir NOTES_WAVE_ACI.md)"}
+
+=== PILOT_SECURITY_DEPLOYMENT.md ===
+Dockerfile:29:# se vérifie avec /readyz et `labuse doctor` (cf. PILOT_SECURITY_DEPLOYMENT.md).
+
+=== PRE_VOL_ILE.md ===
+src/labuse/cascade/layers/phase2.py:37:        # (676 secteurs n≥3, p25=158/p75=323 → plo/phi = 150/325 ; PRE_VOL_ILE.md).
+config/cascade_rules.yaml:525:      #               p25=158 / p75=323 → 150/325 ; règle d'origine p25/p75, cf. PRE_VOL_ILE.md).
+
+=== RAPPORT_CALIBRATION_WEB.md ===
+src/labuse/models.py:1465:        # RAPPORT_CALIBRATION_WEB.md « MISE À JOUR 28/07/2026 »). CIBLÉE : la valeur exacte du
+src/labuse/faisabilite/bilan_calibration.py:1:"""Calibration WEB du bilan promoteur — socle de démarrage SOURCÉ (cf RAPPORT_CALIBRATION_WEB.md).
+src/labuse/faisabilite/bilan_calibration.py:9:`RAPPORT_CALIBRATION_WEB.md`. Ne pas modifier une valeur ici sans mettre à jour le rapport.
+src/labuse/faisabilite/bilan_calibration.py:42:# prix_m2_neuf VENTILÉ par BASSIN PLU existant (le découpage de l'app, cf RAPPORT_CALIBRATION_WEB.md).
+
+=== RAPPORT_DISPO_3B.md ===
+src/labuse/api/enrichment.py:53:# nationaux qui COUVRENT La Réunion (vérifié, cf. RAPPORT_DISPO_3B.md) → la comparaison s'ouvre
+
+=== RAPPORT_M78.md ===
+src/labuse/copilote_v2/__init__.py:3:Voir RAPPORT_M78.md."""
+src/labuse/copilote_v2/router.py:5:erreur honnête. Le modèle ROUTE, il ne répond JAMAIS une donnée (doctrine RAPPORT_M78.md).
+
+=== RAPPORT_M_W_CARTE_NOIRE.md ===
+frontend/src/components/map/MapView.tsx:1440:          explicites survivent quel que soit le `position` gagnant. Cf. RAPPORT_M_W_CARTE_NOIRE.md. */}
+
+=== RAPPORT_QA.md ===
+qa/README.md:31:`../RAPPORT_QA.md`. Atlas des surfaces : `qa/atlas.mjs`.
+
+=== RAPPORT_WAVE_ORTHO.md ===
+qa/m39/M39_P0_CONSTAT.md:29:  (source `RAPPORT_WAVE_ORTHO.md`, échantillon interne indépendant — libellé produit « détectée »,
+
+=== README.md ===
+pyproject.toml:10:readme = "README.md"
+Dockerfile:14:COPY pyproject.toml README.md ./
+.dockerignore:17:!README.md
+
+=== RESEAUX_RECON.md ===
+src/labuse/api/enrichment.py:486:                  "aucun tracé réseau exploitable par parcelle (cf. RESEAUX_RECON.md). "
+
+=== STATUS.md ===
+qa/m48/M48_BILAN.md:77:- `M48_P0_PROTOCOLE.md` · `M48_P1_RAPPORT.md` · `M48_RESCORE_INVESTIGATION.md` · `M48_P2_STATUS.md`
+
+=== deploy.sh ===
+src/labuse/suite_verte.py:5:ou dont l'échéance est passée, fait sortir en erreur — deploy.sh refuse alors de
+src/labuse/circuit_verrous.py:7:`deploy.sh` avant tout déploiement (règle 2).
+src/labuse/jobs.py:346:              "remplacement SANS TROU (le nouveau tourne au même instant que l'ancien ; deploy.sh pose "
+src/labuse/deploiement.py:4:`deploy.sh` à chaque déploiement réussi : `config/deploiement.json` = {sha, iso, par}. L'avance est
+src/labuse/deploiement.py:9:le seul rédacteur du marqueur est `deploy.sh` (voir sa dernière étape).
+src/labuse/cli.py:4370:        f"#   deploy.sh régénère et refuse tout écart. Heures en {'Réunion' if tz == 'reunion' else 'UTC'}.",
+src/labuse/cli.py:4398:                       "Régénérer via deploy.sh — jamais éditer le crontab à la main.", err=True)
+src/labuse/cli.py:4759:             "CRON-1 lot 3 : deploy.sh passe `-w G8` (G8 mesure la fraîcheur de la veille, pas la santé "
+src/labuse/cli.py:4766:    Jouée par pytest (marque `verrous`), par la sonde de nuit, et par deploy.sh (même commande,
+src/labuse/cli.py:4814:    deploy.sh refuse alors, même commande, même verdict. Suite injouable = refus aussi
+src/labuse/circuit_candidat.py:13:tout autre écart de génération reste rouge. deploy.sh passe par la même porte (le code retour
+src/labuse/api/dashboard.py:474:    # tant que l'avance > 0. Lecture pure (deploiement.py n'écrit jamais ; deploy.sh pose le marqueur).
+src/labuse/api/dashboard.py:2355:    deploy.sh), en écrivant la progression au fil (30 lignes), et persiste le résultat complet :
+src/labuse/api/dashboard.py:2360:    AVERTISSEMENT = {"G8"}   # non bloquant (fraîcheur de veille), comme deploy.sh -w G8
+src/labuse/jobs_impl.py:627:    # `labuse circuit verrous` et que la porte de deploy.sh. La sonde vient de tourner : V1b
+src/labuse/jobs_impl.py:632:    # porte de deploy.sh) ; lot 2 : le remplissage COMPLET (couches carte incluses, ~1 min)
+tests/test_cron1_registre.py:22:    l'ancien ⇒ le remplacement (deploy.sh, lot 3 : pose AVANT retrait) ne laisse jamais une nuit sans dump."""
+tests/test_cron1_lot3.py:1:"""CRON-1 lot 3 — le crontab GÉNÉRÉ du registre + la garde deploy.sh. Sans DB (registre pur)."""
+tests/test_cron1_lot3.py:43:    """G8 existe comme garantie ; deploy.sh la passe en avertissement (-w G8) — testé au niveau CLI."""
+tests/test_cron1_lot3.py:46:    # deploy.sh contient bien le flag non bloquant.
+tests/test_cron1_lot3.py:48:    deploy = Path(__file__).resolve().parents[1] / "deploy.sh"
+tests/test_ops_healthz.py:32:    sont SUPPRIMÉS. La garde deploy.sh (génère le crontab du registre, retire tout legacy
+tests/test_ops_healthz.py:35:    pytest.skip("CRON-1 lot 0 : artefacts crontab supprimés ; garde deploy.sh reconstruite au lot 3")
+tests/test_circuit1_lot8.py:20:    SUPPRIMÉS ; l'invariant « crontab == registre » est reconstruit au lot 3 (deploy.sh génère le
+tests/test_circuit1_lot8.py:23:    pytest.skip("CRON-1 lot 0 : artefact crontab supprimé ; invariant re-porté au registre/deploy.sh (lot 3)")
+tests/verrous/test_lot6_porte.py:72:    """`deploy.sh` joue `labuse circuit verrous` AVANT toute pose, et refuse : binaire
+tests/verrous/test_lot6_porte.py:74:    s = (RACINE / "deploy.sh").read_text(encoding="utf-8")
+tests/verrous/test_lot6_porte.py:79:    # SOURCES-CORRECTION-2 lot 3 — CRON-1 lot 3 a réécrit deploy.sh : le refus vise un verrou BLOQUANT
+config/deploiement.json:4: "par": "baseline DASHBOARD-4 (dernier deploy connu — écrasé par deploy.sh au prochain déploiement)",
+scripts/racine1_scan.sh:23:      deploy.sh pyproject.toml Dockerfile docker-compose.yml docker-compose.pilot.yml docker-compose.caddy.yml \
+deploy/scripts/deploy_vps.sh:5:# S'exécute SUR LE VPS (avec sudo) : /opt/labuse/deploy.sh
+deploy/scripts/deploy_vps.sh:6:# Pose :  install -o root -g root -m 755 deploy/scripts/deploy_vps.sh /opt/labuse/deploy.sh
+deploy/scripts/deploy_vps.sh:47:    echo "  résous à la main sur le VPS (git -C $APP stash | checkout -- .), puis relance /opt/labuse/deploy.sh." >&2
+deploy/scripts/deploy_vps.sh:117:echo "  rollback : sudo -u labuse git -C $APP reset --hard $AVANT && sudo /opt/labuse/deploy.sh" >&2
+deploy/scripts/retirer_crons_legacy.sh:3:# automatique). Le wrapper (deploy.sh → /etc/cron.d/labuse) reprend TOUT : bodacc quotidien,
+deploy/scripts/retirer_crons_legacy.sh:8:# retrait : deploy.sh joue les verrous AVANT de poser — ne retirer le legacy qu'après un V8a vert.
+deploy/scripts/retirer_crons_legacy.sh:25:echo "✓ legacy retiré ($(echo "$fichiers" | wc -w | tr -d ' ') fichiers). Poser le wrapper :  sudo sh deploy.sh"
+deploy/logrotate.d/labuse-jobs:2:# 30 jours d'historique, compressés. Posé par deploy.sh.
+frontend/src/components/admin/AdminView.tsx:273:    phrase: `main est en avance sur la production${depDate ? `, dernier déploiement le ${depDate}` : ''} — lancer deploy.sh sur le VPS`,
+deploy.sh:102:  printf '{\n "sha": "%s",\n "iso": "%s",\n "par": "deploy.sh"\n}\n' "$sha" "$iso" > "$REPO/config/deploiement.json"
+
+=== docker-compose.caddy.yml ===
+scripts/racine1_scan.sh:23:      deploy.sh pyproject.toml Dockerfile docker-compose.yml docker-compose.pilot.yml docker-compose.caddy.yml \
+docker-compose.pilot.yml:49:      # c'est le reverse proxy HTTPS (cf. docker-compose.caddy.yml) qui expose 80/443.
+docker-compose.caddy.yml:4:#   docker compose -f docker-compose.pilot.yml -f docker-compose.caddy.yml up -d --build
+
+=== docker-compose.pilot.yml ===
+scripts/racine1_scan.sh:23:      deploy.sh pyproject.toml Dockerfile docker-compose.yml docker-compose.pilot.yml docker-compose.caddy.yml \
+scripts/backup_daily.sh:25:     && docker compose -f docker-compose.pilot.yml ps --status running app >/dev/null 2>&1 \
+scripts/backup_daily.sh:26:     && [ -n "$(docker compose -f docker-compose.pilot.yml ps --status running -q app 2>/dev/null)" ]; then
+scripts/backup_daily.sh:27:    docker compose -f docker-compose.pilot.yml exec -T app labuse backup-db --dir backups
+docker-compose.pilot.yml:9:#   docker compose -f docker-compose.pilot.yml up -d --build
+docker-compose.pilot.yml:10:#   docker compose -f docker-compose.pilot.yml exec app labuse prepare-pilot   # ≈5 min la 1ʳᵉ fois
+docker-compose.pilot.yml:11:#   docker compose -f docker-compose.pilot.yml exec app labuse doctor
+docker-compose.caddy.yml:4:#   docker compose -f docker-compose.pilot.yml -f docker-compose.caddy.yml up -d --build
+
+=== docker-compose.yml ===
+scripts/racine1_scan.sh:23:      deploy.sh pyproject.toml Dockerfile docker-compose.yml docker-compose.pilot.yml docker-compose.caddy.yml \
+Dockerfile:2:# tout passe par les variables d'environnement (cf. docker-compose.yml / .env).
+docker-compose.pilot.yml:2:# (docker-compose.yml reste l'aide DEV — base seule, identifiants de dev.)
+
+=== pyproject.toml ===
+tests/test_deps_declared.py:4:pyproject.toml (anthropic, certifi, argon2-cffi) : le serveur ne « marchait » qu'à la
+tests/test_deps_declared.py:9:distribution déclarée dans pyproject.toml (cœur OU groupe optionnel : ai / ml / dev).
+tests/test_deps_declared.py:43:    pp = tomllib.loads((_ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+tests/test_deps_declared.py:94:        "Imports tiers NON déclarés dans pyproject.toml (cœur ou groupe optionnel) :\n"
+tests/test_anthropic_pin.py:8:  1. le pin dans pyproject.toml [ai] doit être EXACT (`anthropic==X.Y.Z`, jamais `>=`/plage) — sinon
+tests/test_anthropic_pin.py:23:_PYPROJECT = _ROOT / "pyproject.toml"
+tests/test_anthropic_pin.py:27:    """La spec d'anthropic déclarée dans pyproject.toml [ai] (ex. 'anthropic==0.116.0')."""
+tests/test_anthropic_pin.py:31:    assert specs, "anthropic doit être déclaré dans pyproject.toml [project.optional-dependencies].ai"
+tests/test_anthropic_pin.py:44:        f"anthropic doit être figé à une version EXACTE dans pyproject.toml [ai], trouvé « {spec} ». "
+tests/verrous/test_lot6_porte.py:95:    s = (RACINE / "pyproject.toml").read_text(encoding="utf-8")
+scripts/racine1_scan.sh:23:      deploy.sh pyproject.toml Dockerfile docker-compose.yml docker-compose.pilot.yml docker-compose.caddy.yml \
+deploy/scripts/deploy_vps.sh:16:#   3. pip install -e .[ai] dans le venv (dépendances suivent pyproject.toml) + VÉRIF de la version
+deploy/scripts/deploy_vps.sh:81:# pyproject.toml [ai]. C'est ici que le venv du VPS avait dérivé (1.1.0) → Copilote dégradé SILENCIEUX.
+deploy/scripts/deploy_vps.sh:82:PIN_ANTHROPIC="$(sudo -u $RUN_AS "$VENV/bin/python" -c "import tomllib,pathlib; d=tomllib.loads(pathlib.Path('$APP/pyproject.toml').read_text()); print(next(s.split('==')[1] for s in d['project']['optional-dependencies']['ai'] if s.startswith('anthropic') and '==' in s))" 2>/dev/null || true)"
+deploy/scripts/deploy_vps.sh:85:    echo "✗ anthropic n'est pas figé (==) dans pyproject.toml [ai] — on ARRÊTE (le pin est le garde-fou)." >&2
+Dockerfile:14:COPY pyproject.toml README.md ./
+requirements.txt:2:# SOURCE DE VÉRITÉ = pyproject.toml [project.dependencies]. Ce fichier installe le paquet en
+requirements-ml.txt:2:# SOURCE DE VÉRITÉ = pyproject.toml [project.optional-dependencies].ml
+
+=== requirements-ml.txt ===
+scripts/racine1_scan.sh:24:      requirements.txt requirements-ml.txt .dockerignore .gitignore .env.example .env.pilot.example \
+pyproject.toml:14:# SOURCE DE VÉRITÉ des dépendances (requirements.txt = `-e .`, requirements-ml.txt = `-e .[ml]`).
+
+=== requirements.txt ===
+scripts/racine1_scan.sh:24:      requirements.txt requirements-ml.txt .dockerignore .gitignore .env.example .env.pilot.example \
+pyproject.toml:14:# SOURCE DE VÉRITÉ des dépendances (requirements.txt = `-e .`, requirements-ml.txt = `-e .[ml]`).
+
