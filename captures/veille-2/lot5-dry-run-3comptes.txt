@@ -1,0 +1,8 @@
+VEILLE-2 · Lot 5 — Un mail par jour (dry-run, 3 comptes)
+
+- compte A (suivi + Radar) : statut=simulé — 2 événement(s) — sujet « LABUSE — 2 changements sur vos suivis » — mail_queue #2839
+- compte B (suivi seul) : statut=simulé — 1 événement(s) — sujet « LABUSE — 1 changement sur vos suivis » — mail_queue #2840
+- compte C (rien) : statut=ignoré — aucun événement la veille (parcelles suivies / Radar / nouveautés) — pas de mail
+
+mail_queue (digest_quotidien) — A=1 · B=1 · C=0  (0 pour le compte sans événement)
+après rejeu le même jour (dédup) — A=1 · B=1 · C=0  (un mail max par jour)

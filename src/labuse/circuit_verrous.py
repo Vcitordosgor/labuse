@@ -845,7 +845,9 @@ _VEILLE_ENVOI: tuple[tuple[str, str, str, str], ...] = (
     # retirée de detect_events mais la fonction garde son job (bascules).
     ("detect_events",         "labuse.api.events",          "detect-events",    "detect_events"),
     ("envoyer_digests",       "labuse.api.events",          "digest",           "digest"),
-    ("envoyer",               "labuse.pige.digests",        "radar-digests",    "radar_digests"),
+    # VEILLE-2 (Lot 5) — plus d'alerte Radar séparée : le Radar pose ses événements à la cloche
+    # (`evaluer_radar_cloche`, job radar-cloche), et le digest du matin les e-maile avec le reste.
+    ("evaluer_radar_cloche",  "labuse.pige.digests",        "radar-cloche",     "radar_cloche"),
     ("evaluer_toutes",        "labuse.copilote_v2.veilles", "ingest-sitadel",   "ingest_sitadel"),
     ("passer",                "labuse.sentinelle",          "sonde-sources",    "sonde_sources"),
 )

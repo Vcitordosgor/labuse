@@ -647,6 +647,10 @@ _MARKET_KINDS = ("bascule", "bodacc", "match")
 # (historiques permis/veille + nouveaux types de registre). annonce/maintenance sont IMMÉDIATS (chaîne
 # 3), hors digest ; systeme_pilote = cloche seule.
 _PERSO_KINDS = ("permis", "veille", "parcelle_suivie", "veille_zone")
+# VEILLE-2 (Lot 5) — le DIGEST DU MATIN porte TOUT ce qui change pour le compte : parcelles suivies +
+# Radar (kinds compte-scopés ci-dessous) + nouveautés de l'app (kind `nouveaute`, broadcast, traité à
+# part). Le marché reste HORS du mail (flux cloche seulement). Un seul mail par jour.
+_DIGEST_KINDS = ("parcelle_suivie", "radar")
 
 # VEILLE-2 (Lot 3) — LA CLOCHE DU HAUT porte une LISTE FERMÉE de types, en QUATRE catégories, chacune
 # avec son texte et son clic. Tout autre kind d'event_log n'apparaît PAS à la cloche du CLIENT (le
@@ -1061,17 +1065,21 @@ def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
     # PERSONNEL : listé en détail, CLOISON STRICTE (le marché n'apparaît PAS ici). M85-B : fenêtre
     # paramétrable (J-1 pour le digest quotidien du matin). ORDRE (hiérarchie du mandant) : la MUTATION
     # d'abord (événement majeur), puis les autres changements de parcelle SUIVIE, puis les veilles de zone.
+    # VEILLE-2 (Lot 5) — un seul mail : parcelles suivies + Radar (compte-scopés) + nouveautés de l'app
+    # (broadcast `nouveaute`, comptées seulement si POSTÉRIEURES à la création du compte — comme la cloche).
     events = db.execute(text("""
         SELECT e.kind, e.idu, e.titre, e.detail, e.demo, e.source, d.q_score, d.a_score, d.matrice_statut
         FROM event_log e
         LEFT JOIN parcels p ON p.idu = e.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         WHERE e.ts >= now() - make_interval(days => :jours)
-          AND e.compte_id IS NOT DISTINCT FROM :cid AND e.kind = ANY(:perso)
           AND e.envoi_statut IS DISTINCT FROM 'rattrapage'   -- M137-M : le rattrapage vit à la cloche, jamais au digest/mail
+          AND ( (e.compte_id IS NOT DISTINCT FROM :cid AND e.kind = ANY(:digest))
+                OR (e.compte_id IS NULL AND e.kind = 'nouveaute'
+                    AND e.ts >= COALESCE((SELECT c.created_at FROM comptes c WHERE c.id = :cid), '-infinity'::timestamptz)) )
         ORDER BY (e.source = 'Mutation') DESC, (e.kind = 'parcelle_suivie') DESC,
                  e.ts DESC NULLS LAST LIMIT 20"""),
-        {"run": runs.cascade(), "cid": cid, "perso": list(_PERSO_KINDS), "jours": jours}).mappings().all()  # C1 cascade
+        {"run": runs.cascade(), "cid": cid, "digest": list(_DIGEST_KINDS), "jours": jours}).mappings().all()  # C1 cascade
     # MARCHÉ : RÉSUMÉ BORNÉ (jamais la liste). « N au total, dont M dans vos communes » ; si le
     # compte n'a pas de parcelles suivies (communes vides) → total seul (`dans_vos_communes=None`).
     communes = _mes_communes(db, cid)
@@ -1298,15 +1306,12 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
                if not e.get("demo") and prefs.get(_pref_type(e["kind"]), {}).get("email")]
         # M85-B — le marché SORT du digest (règle mandant : « rien d'autre »). Flux cloche seulement.
         marche = {"total": 0}
-        # M85 P3 — enrichissement « depuis hier sur vos secteurs » (permis dans vos communes suivies,
-        # même point de calcul que M83). Ligne présente SEULEMENT si non-nulle (honnêteté : pas de
-        # remplissage — cf. le retard d'ingestion qui la garde souvent vide).
-        sect = brief_matin(db, cid)["secteurs"]
-        secteurs_ligne = (f"Depuis hier sur vos secteurs : {sect['permis_depuis_hier']} nouveau(x) permis "
-                          f"dans {', '.join(sect['communes'][:5])}." if sect["permis_depuis_hier"] else "")
-        if not evs and not marche.get("total") and not secteurs_ligne:
+        # VEILLE-2 (Lot 5) — le mail ne porte QUE parcelles suivies + Radar + nouveautés (plus la ligne
+        # « secteurs » : les secteurs sont archivés). Un compte SANS événement la veille = PAS de mail.
+        secteurs_ligne = ""
+        if not evs:
             ignores += 1
-            _note(cid, email, "ignoré", "aucune notification en attente (rien d'e-mail-activé sur 7 j + marché + secteurs vides)")
+            _note(cid, email, "ignoré", "aucun événement la veille (parcelles suivies / Radar / nouveautés) — pas de mail")
             continue
         tok = _notif_token(db, cid)
         lien_desabo = f"{base_url}/events/desabonner?c={cid}&t={tok}"

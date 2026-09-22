@@ -165,13 +165,16 @@ def radar_cycle(ctx: JobContext) -> None:
     ctx.compte(**(r if isinstance(r, dict) else {"resultat": str(r)}))
 
 
-def radar_digests(ctx: JobContext) -> None:
-    """Regroupe TOUS les événements de veille en attente par client, envoie UN mail par client (Brevo
-    template 13 + digest 12), marque envoyé. Idempotent (dedup event_log) : relancé deux fois, n'envoie
-    pas deux fois. En dry-run (sans SMTP), calcule et logue tout, n'envoie rien."""
+def radar_cloche(ctx: JobContext) -> None:
+    """VEILLE-2 (Lot 5) — POSE à la cloche (kind `radar`, compte-scopé) chaque annonce du jour qui matche
+    une veille d'un client → clic vers l'annonce. AUCUN mail : le digest du matin (07:15) l'e-maile avec
+    le reste (plus d'alerte Radar séparée). Idempotent (dédup compte+bien+jour)."""
     from .pige import digests
-    r = digests.envoyer(ctx.db, dry_run=ctx.dry_run)
-    ctx.compte(**{k: r.get(k) for k in ("n_biens_du_jour", "envoyes", "echecs", "simules", "deja")})
+    from .api.events import ensure_tables
+    from .db import engine
+    ensure_tables(engine())
+    r = digests.evaluer_radar_cloche(ctx.db)
+    ctx.compte(**r)
 
 
 def evaluer_suivis(ctx: JobContext) -> None:
