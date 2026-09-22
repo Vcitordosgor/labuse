@@ -54,4 +54,42 @@ s'éloigne en courbe (5→12 m, pas une façade franche).
 au-delà : DL0527 (route à 8–12 m au milieu) reste bloquée honnêtement (retrait réel, pas une façade) ;
 seule la surface de route BD TOPO trancherait sans marge → recommandé pour GABARIT-4.
 
-<!-- LOT-E -->
+## Lot E — mesure finale de couverture (170 parcelles = 100 tirées + 70 d'A0-2)
+
+Mesurée via le **builder complet** (`scripts/gabarit_a0_3_mesure.py` : PLU + limites + citations + PPR),
+pas la classification seule. C'est la vraie couverture servie.
+
+| | n | % |
+|---|---|---|
+| **Servies** | **80** | **47 %** |
+| Bloquées | 90 | 53 % |
+| **FAUX servis (voie/séparative)** | **0** | audit largeur-aware + parcelle-voirie |
+
+Causes de blocage :
+
+| Cause | n | Périmètre |
+|---|---|---|
+| PLU : CES (emprise) non validée | 51 | **hors GABARIT-3** (calibrage PLU) |
+| PLU : zone non calibrée | 10 | hors GABARIT-3 |
+| PLU : hauteur non validée | 7 | hors GABARIT-3 |
+| multi-zone (règle non unique) | 7 | hors GABARIT-3 |
+| enclave / voie privée (E2) | 8 | limites |
+| limite non qualifiée (emprise non couverte) | 6 | limites |
+| recul non validé | 1 | PLU |
+
+### Verdict : **seuil ≥ 90 % NON ATTEINT · 0 faux OUI** → STOP + rapport
+
+Le blocage global n'est **pas** les limites : **75/170 (44 %) bloquent sur la complétude du PLU**
+(CES/hauteur non validées, zone non calibrée, multi-zone) — **hors du périmètre GABARIT-3**
+(enclaves / emprises / limites). Parmi les **95 parcelles qui atteignent l'étape limites** (PLU
+complet, zone unique), **80 servies = 84 %** — c'est ce que le travail limites (lots B/C/D) atteint,
+avec **0 faux**. Le plafond de ce mandat est donc ~56 % (la part PLU-complète), pas 90 %.
+
+**Cause restante chiffrée n°1 = la validation PLU du CES (emprise au sol) : 51/170 (30 %).** Puis
+hauteur (7) et calibrage de zones (10). Le levier des ~44 % restants est un mandat **PLU-calibrage**
+(valider CES + hauteur par citation), pas la classification des limites. Recommandé aussi : ingérer la
+**surface de route BD TOPO** (tranche P2 sans marge) et le **découpage multi-zone** (7).
+
+Ce que GABARIT-3 a débloqué (0 faux) : les **enclaves E1** (servies en séparatives seules) et les
+**arêtes sur emprise publique** (servies par la citation « voies et emprises publiques ») — soit la
+quasi-totalité des cas limites solubles sans toucher au PLU.
