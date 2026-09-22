@@ -192,7 +192,9 @@ def validate_input(inp: GabaritInput) -> list[str]:  # noqa: C901 — check-list
         _check_rule_link(sb.ruleId, sb.source, f"recul[{sb.id or i}]")
     if mf is not None:
         _check_rule_link(mf.ruleId, mf.source, "plafond d'emprise")
-    if mh is not None:
+    # la hauteur en prospect est DÉCLARÉE non intégrée (pas « utilisée ») : on vérifie le lien de source
+    # mais pas le drapeau « utilisée mais non intégrée » (qui n'a de sens que pour une valeur appliquée).
+    if mh is not None and mh.status != "not_integrated":
         _check_rule_link(mh.ruleId, mh.source, "hauteur réglementaire")
     for i, ex in enumerate(inp.exclusions):
         _check_rule_link(ex.ruleId, ex.source, f"exclusion[{ex.id or i}]")

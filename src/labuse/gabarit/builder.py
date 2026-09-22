@@ -222,6 +222,18 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                     applicable.append(ApplicableRule(id=f"{zs.zone}-hauteur", label="Hauteur maximale",
                                                      category="maxHeight", integrationStatus="integrated",
                                                      detail=f"{haut:g} m", source=plu_zone_src))
+                elif _feuille_forme_hors_schema(commune, zs.zone, "hauteur", "faitage", "m"):
+                    # hauteur en PROSPECT (L ≥ H) : validée mais non chiffrée → non intégrée. 2D servie,
+                    # 3D indisponible. Aucun calcul de H depuis L (hors mandat).
+                    cit = _feuille_citation(commune, zs.zone, "hauteur", "faitage")
+                    max_height = MaxHeight(ruleId=f"{zs.zone}-hauteur", meters=None,
+                                           status="not_integrated", source=plu_zone_src)
+                    applicable.append(ApplicableRule(
+                        id=f"{zs.zone}-hauteur", label="Hauteur réglementaire (prospect L ≥ H)",
+                        category="maxHeight", integrationStatus="not_integrated",
+                        detail=f"non chiffrée — {cit}" if cit else "non chiffrée (prospect L ≥ H)",
+                        source=plu_zone_src))
+                    racc.setdefault("non_integrees", []).append("hauteur (prospect)")
                 else:
                     blocking.append("hauteur réglementaire non validée")
                 applicable.append(ApplicableRule(id="STAT", label="Stationnement", category="other",
