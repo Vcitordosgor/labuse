@@ -56,6 +56,32 @@ def _parcel_ids(session, commune: str | None) -> list[int]:
     return [r[0] for r in session.execute(stmt).all()]
 
 
+def _parcel_ids_from_file(session, path: str) -> list[int]:
+    """SCORING-6 — liste de parcelles pour un recalcul EN DELTA (une par ligne : parcel_id
+    entier OU idu de parcelle ; lignes vides et `#` commentaires ignorées). Résout les idu → id,
+    dédoublonne en préservant l'ordre. Échec BRUYANT si un idu est introuvable — jamais un delta
+    silencieusement tronqué (même règle que `_fail_zero_parcel`)."""
+    import os
+    if not os.path.isfile(path):
+        raise typer.BadParameter(f"Fichier de parcelles introuvable : {path}")
+    with open(path, encoding="utf-8") as fh:
+        lignes = [ln.strip() for ln in fh]
+    lignes = [ln for ln in lignes if ln and not ln.startswith("#")]
+    ids: list[int] = [int(ln) for ln in lignes if ln.isdigit()]
+    idus: list[str] = [ln for ln in lignes if not ln.isdigit()]
+    if idus:
+        rows = session.execute(
+            select(models.Parcel.id, models.Parcel.idu).where(models.Parcel.idu.in_(idus))).all()
+        trouve = {idu: pid for pid, idu in rows}
+        manquants = [i for i in idus if i not in trouve]
+        if manquants:
+            raise typer.BadParameter(
+                f"{len(manquants)} idu introuvable(s) en base (ex. {manquants[:3]}).")
+        ids += [trouve[i] for i in idus]
+    vus: set[int] = set()
+    return [i for i in ids if not (i in vus or vus.add(i))]
+
+
 def _fail_zero_parcel(session, raw: str | None, resolved: str | None) -> None:
     """Échec BRUYANT quand une commune résout à 0 parcelle — JAMAIS un succès vide silencieux.
 
@@ -1931,6 +1957,10 @@ def compute_residuel_cmd(
         False, "--assiette-clippee",
         help="SCORING-6 lot A : capacité sur assiette clippée (portion U/AU − contraintes "
              "certaines) au lieu du tout-ou-rien. Requis pour le run q_v15."),
+    parcelles_fichier: str = typer.Option(
+        None, "--parcelles-fichier",
+        help="SCORING-6 : recalcule EN DELTA la seule liste de parcelles du fichier (une par "
+             "ligne : parcel_id OU idu). Ignore --commune/--ile. À utiliser avec --into-run."),
 ) -> None:
     """Calcule et cache le POTENTIEL RÉSIDUEL (Lot B) dans un RUN désigné — M135. Écrit dans
     --new-run <label> OU --into-run <seq> ; JAMAIS le run servi (garde-fou : erreur)."""
@@ -1943,10 +1973,17 @@ def compute_residuel_cmd(
     if (new_run is None) == (into_run is None):
         typer.echo("Désigner UN run cible : --new-run <label> OU --into-run <seq> (jamais le servi).")
         raise typer.Exit(2)
-    resolved = None if ile else _resolve_commune(commune)
     models.ensure_residuel_cache(engine())   # assure aussi le schéma de versionnement
-    with session_scope() as session:
-        ids = _parcel_ids(session, resolved)
+    if parcelles_fichier:
+        resolved = None
+        source = f"fichier {parcelles_fichier}"
+        with session_scope() as session:
+            ids = _parcel_ids_from_file(session, parcelles_fichier)
+    else:
+        resolved = None if ile else _resolve_commune(commune)
+        source = "île" if ile else resolved
+        with session_scope() as session:
+            ids = _parcel_ids(session, resolved)
     if not ids:
         typer.echo("Aucune parcelle ingérée.")
         raise typer.Exit(1)
