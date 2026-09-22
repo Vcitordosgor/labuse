@@ -21,6 +21,10 @@ class _Res:
     def first(self):
         return self._row
 
+    def scalar(self):
+        r = self._row
+        return r[0] if isinstance(r, (tuple, list)) else r
+
 
 class FakeSession:
     def __init__(self, parcel_row, ppr_row):
@@ -34,6 +38,8 @@ class FakeSession:
             return _Res(("BD TOPO test v3",))          # _bdtopo_millesime
         if "INTERDICTION" in sql:
             return _Res((None,))                         # géométrie d'exclusion PPR : aucune → ignorée
+        if "ravine" in sql or "trait_de_cote" in sql:
+            return _Res((False,))                        # _touche_ravine
         return _Res(self._parcel)
 
 
@@ -55,7 +61,7 @@ def _rules(**kw):
     return SimpleNamespace(**base)
 
 
-def _fake_limites(has_voie=True, non_classees=None, enclave=False):
+def _fake_limites(has_voie=True, non_classees=None, enclave=False, empub=False):
     """LimitesResult factice sans DB, pour tester le branchement builder."""
     from shapely.geometry import LineString
 
@@ -64,8 +70,11 @@ def _fake_limites(has_voie=True, non_classees=None, enclave=False):
         edges = [Edge(LineString([(0, 0), (10, 0)]), "rear", 10.0),
                  Edge(LineString([(10, 0), (10, 10)]), "rear", 10.0)]
         has_voie = False
+    elif empub:
+        edges = [Edge(LineString([(0, 0), (10, 0)]), "voie", 10.0, source_kind="emprise_publique"),
+                 Edge(LineString([(10, 0), (10, 10)]), "side", 10.0)]
     else:
-        edges = [Edge(LineString([(0, 0), (10, 0)]), "voie", 10.0),
+        edges = [Edge(LineString([(0, 0), (10, 0)]), "voie", 10.0, source_kind="bdtopo"),
                  Edge(LineString([(10, 0), (10, 10)]), "side", 10.0)]
     return LimitesResult(edges=edges, has_voie=has_voie, non_classees=non_classees or [], blocking=None)
 
@@ -151,6 +160,34 @@ def test_enclave_E2_chemin_prive_bloque(monkeypatch):
     b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
     assert any("voie privée" in x for x in b.blocking)
     assert b.input.setbacks == []
+
+
+def test_P1_emprise_publique_servie_par_citation(monkeypatch):
+    """P1 : citation « voies ET emprises publiques » → l'arête ouverte est servie en voie,
+    source dédiée domaine public + citation PLU."""
+    monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
+    monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
+    monkeypatch.setattr(B, "_voie_citation_flags", lambda com, z: (True, False, "Art. 6", "voies et emprises publiques"))
+    monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid, **kw: _fake_limites(empub=True))
+    b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
+    assert b.blocking == []
+    assert b.raccordement["citation_voie"]["emprises_publiques"] is True
+    assert b.raccordement["classification"]["emprise_publique"] == 1
+    ep = [ar for ar in b.input.applicableRules if ar.id == "limite-emprise-publique"]
+    assert ep and "domaine public" in (ep[0].source.provider or "")
+    empub_sb = [sb for sb in b.input.setbacks if sb.type == "road" and "domaine public" in (sb.source.provider or "")]
+    assert empub_sb and empub_sb[0].setbackM == 5.0
+
+
+def test_P1_emprise_publique_non_couverte_bloque(monkeypatch):
+    """P1 sans citation « emprises publiques » → l'arête ouverte reste non qualifiée (bloc)."""
+    monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
+    monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
+    monkeypatch.setattr(B, "_voie_citation_flags", lambda com, z: (False, False, "", ""))
+    monkeypatch.setattr(B, "classify_parcel_limits",
+                        lambda s, pid, **kw: _fake_limites(non_classees=["arête sans voie ni voisin"]))
+    b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
+    assert any("non qualifiées" in x for x in b.blocking)
 
 
 def test_ppr_analyse_toujours_presente(monkeypatch):

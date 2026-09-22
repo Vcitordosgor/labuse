@@ -112,6 +112,23 @@ def test_parcelle_complete_servie():
     assert not res.non_classees
 
 
+def test_emprise_publique_arete_ouverte():
+    # arête ouverte (ni voisin ni route) : nonclass par défaut, VOIE (emprise publique) si la citation couvre
+    edges_off = classify_edges(SQUARE, [], [])
+    assert all(e.type == "nonclass" for e in edges_off)
+    edges_on = classify_edges(SQUARE, [], [], emprises_publiques=True)
+    assert edges_on and all(e.type == "voie" for e in edges_on)
+    assert all(e.source_kind == "emprise_publique" for e in edges_on if e.type == "voie")
+
+
+def test_marge_p2_frontage_en_retrait():
+    # route parallèle au bas : à 5,6 m (≤ 4/2 + 4 = 6) → voie ; à 7 m → hors portée
+    proche = Road(LineString([(-5, -5.6), (25, -5.6)]), None)
+    loin = Road(LineString([(-5, -7.0), (25, -7.0)]), None)
+    assert any(e.type == "voie" and e.source_kind == "bdtopo" for e in classify_edges(SQUARE, [], [proche]))
+    assert not any(e.type == "voie" for e in classify_edges(SQUARE, [], [loin]))   # 7 m > 6 m → hors portée
+
+
 def test_entree_non_mutee():
     before = SQUARE.wkt
     classify_edges(SQUARE, [], [Road(LineString([(-5, -3), (25, -3)]), None)])
