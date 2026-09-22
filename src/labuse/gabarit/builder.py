@@ -63,6 +63,24 @@ def _bdtopo_millesime(session: Session) -> str:
     return (row[0] if row and row[0] else "millésime non enregistré")
 
 
+def _has_chemin_neighbor(session: Session, parcel_id: int) -> bool:
+    """Voisin cadastré collé de type CHEMIN privé : élancé (compacité < 3), sans bâti, non
+    traversé par un axe carrossable BD TOPO (sinon ce serait une parcelle-voirie). Signale une
+    enclave desservie par voie privée (E2)."""
+    return bool(session.execute(text(
+        """SELECT EXISTS(
+             SELECT 1 FROM parcels o
+             WHERE o.id <> :pid
+               AND ST_DWithin(o.geom_2975, (SELECT geom_2975 FROM parcels WHERE id=:pid), 0.5)
+               AND (ST_Area(o.geom_2975) / NULLIF(ST_Perimeter(o.geom_2975), 0)) < 3.0
+               AND NOT EXISTS(SELECT 1 FROM spatial_layers b WHERE b.kind='batiment'
+                              AND ST_Intersects(b.geom_2975, o.geom_2975))
+               AND NOT EXISTS(SELECT 1 FROM spatial_layers v WHERE v.kind='voirie'
+                              AND v.subtype NOT IN ('Sentier','Escalier')
+                              AND ST_Intersects(v.geom_2975, o.geom_2975)))"""
+    ), {"pid": parcel_id}).scalar())
+
+
 def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     """Assemble l'entrée réelle. Renvoie None si la parcelle est inconnue.
     `BuildResult.blocking` liste les données réglementaires nécessaires manquantes."""
@@ -169,47 +187,76 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 exclusions.append(Exclusion(id="ppr-rouge", ruleId="PPR", type="ppr_rouge",
                                             label="PPR zone rouge exclue", geometry=geo, source=ppr_src))
 
-    # --- classification des limites (SERVIE en GABARIT-2) --------------------
+    # --- classification des limites (SERVIE) --------------------------------
     setbacks: list[Setback] = []
+    voies_privees = False   # citation PLU « voies privées » (câblé au lot C)
     if not blocking:  # n'y toucher que si le PLU est complet et unique
         lim = classify_parcel_limits(session, pid)
+        mill = _bdtopo_millesime(session)
+        bdtopo_src = RegulatorySource(
+            document="BD TOPO® — troncon_de_route (voirie) + cadastre",
+            versionDate=mill, provider=f"LABUSE — adjacence cadastre + BD TOPO {mill}")
+
+        def _rule_voie(detail):
+            return ApplicableRule(id="limite-voie", label="Recul voie", category="setback",
+                                  integrationStatus="integrated", detail=detail, source=bdtopo_src)
+
+        def _rule_sep():
+            return ApplicableRule(id="limite-sep", label="Limites séparatives", category="setback",
+                                  integrationStatus="integrated",
+                                  detail=f"Recul séparatif {recul_sep:g} m — PLU {commune} {zs.zone} (validé)",
+                                  source=bdtopo_src)
+
+        def _setbacks_for(edges, include_voie):
+            for i, e in enumerate(edges):
+                if e.type in ("side", "rear"):
+                    setbacks.append(Setback(id=f"lim-{i}", ruleId="limite-sep", type=e.type,
+                                            geometry=geojson_from_shape(to_wgs(e.geom)),
+                                            setbackM=recul_sep, source=bdtopo_src))
+                elif include_voie and e.type == "voie":
+                    setbacks.append(Setback(id=f"lim-{i}", ruleId="limite-voie", type="road",
+                                            geometry=geojson_from_shape(to_wgs(e.geom)),
+                                            setbackM=recul_voie, source=bdtopo_src))
+
         if lim is None:
             blocking.append("géométrie de parcelle indisponible")
-        elif lim.blocking:
-            blocking.append(lim.blocking)
         else:
-            mill = _bdtopo_millesime(session)
-            bdtopo_src = RegulatorySource(
-                document="BD TOPO® — troncon_de_route (voirie) + cadastre",
-                versionDate=mill, provider=f"LABUSE — adjacence cadastre + BD TOPO {mill}")
-            racc["classification"] = {"provider": bdtopo_src.provider,
-                                      "voie": sum(1 for e in lim.edges if e.type == "voie"),
-                                      "side": sum(1 for e in lim.edges if e.type == "side"),
-                                      "rear": sum(1 for e in lim.edges if e.type == "rear")}
-            need_voie = any(e.type == "voie" for e in lim.edges)
-            need_sep = any(e.type in ("side", "rear") for e in lim.edges)
-            if need_voie and recul_voie is None:
-                blocking.append("recul sur voie non réglementé / non validé")
-            if need_sep and recul_sep is None:
-                blocking.append("recul sur limite séparative non réglementé / non validé")
-            if not blocking:
-                sources.append(bdtopo_src)
-                art_voie = f"Recul voie {recul_voie:g} m — PLU {commune} {zs.zone} (validé)"
-                art_sep = f"Recul séparatif {recul_sep:g} m — PLU {commune} {zs.zone} (validé)"
-                applicable.append(ApplicableRule(id="limite-voie", label="Recul voie", category="setback",
-                                                 integrationStatus="integrated", detail=art_voie, source=bdtopo_src))
-                applicable.append(ApplicableRule(id="limite-sep", label="Limites séparatives",
-                                                 category="setback", integrationStatus="integrated",
-                                                 detail=art_sep, source=bdtopo_src))
-                for i, e in enumerate(lim.edges):
-                    if e.type == "nonclass":
-                        continue
-                    is_voie = e.type == "voie"
-                    setbacks.append(Setback(
-                        id=f"lim-{i}", ruleId="limite-voie" if is_voie else "limite-sep",
-                        type="road" if is_voie else e.type,
-                        geometry=geojson_from_shape(to_wgs(e.geom)),
-                        setbackM=recul_voie if is_voie else recul_sep, source=bdtopo_src))
+            n_voie = sum(1 for e in lim.edges if e.type == "voie")
+            n_sep = sum(1 for e in lim.edges if e.type in ("side", "rear"))
+            racc["classification"] = {"provider": bdtopo_src.provider, "voie": n_voie, "side":
+                                      sum(1 for e in lim.edges if e.type == "side"),
+                                      "rear": sum(1 for e in lim.edges if e.type == "rear"),
+                                      "non_classees": lim.non_classees}
+            if lim.non_classees:
+                blocking.append("Limites de la parcelle non qualifiées (voie / limite séparative) — "
+                                + " ; ".join(lim.non_classees))
+            elif not lim.has_voie:
+                # ENCLAVE : E1 servie en séparatives seules (recul voie « sans objet ») ;
+                # E2 (chemin privé cadastré) bloquée sauf citation visant les voies privées.
+                if _has_chemin_neighbor(session, pid) and not voies_privees:
+                    blocking.append("parcelle sans façade sur voie : accès par voie privée non qualifiée")
+                    racc["enclave"] = "E2 (chemin privé)"
+                elif recul_sep is None:
+                    blocking.append("recul sur limite séparative non réglementé / non validé")
+                else:
+                    sources.append(bdtopo_src)
+                    applicable.append(_rule_sep())
+                    applicable.append(ApplicableRule(
+                        id="limite-voie-sansobjet", label="Recul voie", category="setback",
+                        integrationStatus="integrated",
+                        detail="parcelle sans façade sur voie — recul voie sans objet", source=bdtopo_src))
+                    _setbacks_for(lim.edges, include_voie=False)
+                    racc["enclave"] = "E1 (séparatives seules)"
+            else:
+                if recul_voie is None:
+                    blocking.append("recul sur voie non réglementé / non validé")
+                if n_sep and recul_sep is None:
+                    blocking.append("recul sur limite séparative non réglementé / non validé")
+                if not blocking:
+                    sources.append(bdtopo_src)
+                    applicable.append(_rule_voie(f"Recul voie {recul_voie:g} m — PLU {commune} {zs.zone} (validé)"))
+                    applicable.append(_rule_sep())
+                    _setbacks_for(lim.edges, include_voie=True)
 
     inp = GabaritInput(
         parcel=ParcelInput(id=idu, geometry=geom, areaM2=round(surface, 1) if surface else None,

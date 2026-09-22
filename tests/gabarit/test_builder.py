@@ -55,14 +55,19 @@ def _rules(**kw):
     return SimpleNamespace(**base)
 
 
-def _fake_limites(blocking=None):
-    """LimitesResult factice (voie + séparative) sans DB, pour tester le branchement builder."""
+def _fake_limites(has_voie=True, non_classees=None, enclave=False):
+    """LimitesResult factice sans DB, pour tester le branchement builder."""
     from shapely.geometry import LineString
 
     from labuse.gabarit.limites import Edge, LimitesResult
-    edges = [Edge(LineString([(0, 0), (10, 0)]), "voie", 10.0),
-             Edge(LineString([(10, 0), (10, 10)]), "side", 10.0)]
-    return LimitesResult(edges=edges, has_voie=True, non_classees=[], blocking=blocking)
+    if enclave:
+        edges = [Edge(LineString([(0, 0), (10, 0)]), "rear", 10.0),
+                 Edge(LineString([(10, 0), (10, 10)]), "rear", 10.0)]
+        has_voie = False
+    else:
+        edges = [Edge(LineString([(0, 0), (10, 0)]), "voie", 10.0),
+                 Edge(LineString([(10, 0), (10, 10)]), "side", 10.0)]
+    return LimitesResult(edges=edges, has_voie=has_voie, non_classees=non_classees or [], blocking=None)
 
 
 def test_parcelle_inconnue(monkeypatch):
@@ -118,10 +123,34 @@ def test_limites_non_qualifiees_bloque(monkeypatch):
     monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
     monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
     monkeypatch.setattr(B, "classify_parcel_limits",
-                        lambda s, pid: _fake_limites(blocking="parcelle sans façade sur voie"))
+                        lambda s, pid: _fake_limites(non_classees=["emprise publique non routière"]))
     b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
-    assert any("sans façade" in x for x in b.blocking)
+    assert any("non qualifiées" in x for x in b.blocking)
     assert b.input.setbacks == []                 # rien servi si limites non qualifiées
+
+
+def test_enclave_E1_servie_separatives(monkeypatch):
+    """E1 (enclave sans chemin) → servie en séparatives seules, recul voie « sans objet »."""
+    monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
+    monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
+    monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid: _fake_limites(enclave=True))
+    monkeypatch.setattr(B, "_has_chemin_neighbor", lambda s, pid: False)
+    b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
+    assert b.blocking == []
+    assert b.raccordement["enclave"].startswith("E1")
+    assert b.input.setbacks and all(sb.type in ("side", "rear") for sb in b.input.setbacks)
+    assert any(ar.id == "limite-voie-sansobjet" for ar in b.input.applicableRules)
+
+
+def test_enclave_E2_chemin_prive_bloque(monkeypatch):
+    """E2 (enclave desservie par chemin privé) → bloquée (pas de citation voies privées)."""
+    monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
+    monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
+    monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid: _fake_limites(enclave=True))
+    monkeypatch.setattr(B, "_has_chemin_neighbor", lambda s, pid: True)
+    b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
+    assert any("voie privée" in x for x in b.blocking)
+    assert b.input.setbacks == []
 
 
 def test_ppr_analyse_toujours_presente(monkeypatch):
