@@ -195,6 +195,21 @@ class LimitesResult:
     blocking: Optional[str]           # motif de blocage parcelle, sinon None
 
 
+def summarize_edges(edges: list[Edge]) -> LimitesResult:
+    """PUR — verdict parcelle : façade présente ? arêtes non qualifiées ? blocage motivé ?"""
+    has_voie = any(e.type == "voie" for e in edges)
+    non_cl: list[str] = []
+    for e in edges:
+        if e.type == "nonclass" and e.motif and e.motif not in non_cl:
+            non_cl.append(e.motif)
+    blocking: Optional[str] = None
+    if non_cl:
+        blocking = "Limites de la parcelle non qualifiées (voie / limite séparative) — " + " ; ".join(non_cl)
+    elif not has_voie:
+        blocking = MOTIF_SANS_FACADE
+    return LimitesResult(edges=edges, has_voie=has_voie, non_classees=non_cl, blocking=blocking)
+
+
 def classify_parcel_limits(session, parcel_id: int) -> Optional[LimitesResult]:
     """Requêtes PostGIS (2975) puis cœur pur. Renvoie None si parcelle introuvable."""
     from shapely import wkt as shp_wkt
@@ -234,15 +249,4 @@ def classify_parcel_limits(session, parcel_id: int) -> Optional[LimitesResult]:
     ), {"pid": parcel_id}).fetchall()
     roads = [Road(shp_wkt.loads(r[0]), r[1]) for r in rd_rows if r[0]]
 
-    edges = classify_edges(parcel, neighbors, roads)
-    has_voie = any(e.type == "voie" for e in edges)
-    non_cl = []
-    for e in edges:
-        if e.type == "nonclass" and e.motif and e.motif not in non_cl:
-            non_cl.append(e.motif)
-    blocking = None
-    if non_cl:
-        blocking = "Limites de la parcelle non qualifiées (voie / limite séparative) — " + " ; ".join(non_cl)
-    elif not has_voie:
-        blocking = MOTIF_SANS_FACADE
-    return LimitesResult(edges=edges, has_voie=has_voie, non_classees=non_cl, blocking=blocking)
+    return summarize_edges(classify_edges(parcel, neighbors, roads))

@@ -5,8 +5,6 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-import pytest
-
 from labuse.gabarit import builder as B
 
 _GEOJSON = ('{"type":"Polygon","coordinates":[[[55.29,-21.03],[55.2905,-21.03],'
@@ -32,6 +30,10 @@ class FakeSession:
         sql = str(stmt)
         if "cascade_results" in sql:
             return _Res(self._ppr)
+        if "data_sources" in sql:
+            return _Res(("BD TOPO test v3",))          # _bdtopo_millesime
+        if "INTERDICTION" in sql:
+            return _Res((None,))                         # géométrie d'exclusion PPR : aucune → ignorée
         return _Res(self._parcel)
 
 
@@ -47,9 +49,20 @@ def _zone(zone="U2", fam="U", cheval=False):
 
 def _rules(**kw):
     base = dict(regle_non_validee=None, calibree=True, emprise_sol_pct=40.0,
-                hf_m=10.0, he_m=7.0, recul_voirie_m=5.0, recul_limites_sep_m=3.0)
+                hf_m=10.0, he_m=7.0, recul_voirie_m=5.0, recul_limites_sep_m=3.0,
+                recul_voirie_alignement=False, recul_limites_alignement=False)
     base.update(kw)
     return SimpleNamespace(**base)
+
+
+def _fake_limites(blocking=None):
+    """LimitesResult factice (voie + séparative) sans DB, pour tester le branchement builder."""
+    from shapely.geometry import LineString
+
+    from labuse.gabarit.limites import Edge, LimitesResult
+    edges = [Edge(LineString([(0, 0), (10, 0)]), "voie", 10.0),
+             Edge(LineString([(10, 0), (10, 10)]), "side", 10.0)]
+    return LimitesResult(edges=edges, has_voie=True, non_classees=[], blocking=blocking)
 
 
 def test_parcelle_inconnue(monkeypatch):
@@ -80,26 +93,41 @@ def test_non_calibre_bloque(monkeypatch):
 
 
 def test_reel_calibre_mais_classification_differee(monkeypatch):
-    """PLU pleinement réel : seule la classification des limites bloque (GABARIT-2)."""
+    """PLU calibré + limites classées → parcelle SERVIE (GABARIT-2, aucun blocage)."""
     monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
     monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
+    monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid: _fake_limites())
     b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_ROUGE), "x")
-    # le seul blocage est la classification
-    assert b.blocking == ["classification des limites non servie — voie/séparative par arête "
-                          "(différé à GABARIT-2, cf. A0-RAPPORT.md)"]
+    assert b.blocking == []                       # tout est réuni → servie
     assert b.raccordement["plu"]["emprise_pct"] == 40.0
-    assert b.raccordement["plu"]["hauteur_faitage_m"] == 10.0
     assert b.raccordement["ppr"]["rouge"] is True
-    # les valeurs réelles sont branchées dans l'entrée du moteur
+    assert b.raccordement["classification"]["voie"] == 1
     assert b.input.maxFootprint.percent == 40.0
     assert b.input.maxHeight.meters == 10.0
-    # analyse des risques présente et sourcée (jamais déduite d'un tableau vide)
+    # setbacks servis : recul voie sur la voie, recul séparatif sur la latérale
+    setbacks = b.input.setbacks
+    assert len(setbacks) == 2
+    voie = [s for s in setbacks if s.type == "road"]
+    assert voie and voie[0].setbackM == 5.0
+    assert all("BD TOPO" in (s.source.provider or "") for s in setbacks)
+    # analyse des risques présente et sourcée
     assert any(ar.category == "exclusion" for ar in b.input.applicableRules)
+
+
+def test_limites_non_qualifiees_bloque(monkeypatch):
+    monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
+    monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
+    monkeypatch.setattr(B, "classify_parcel_limits",
+                        lambda s, pid: _fake_limites(blocking="parcelle sans façade sur voie"))
+    b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
+    assert any("sans façade" in x for x in b.blocking)
+    assert b.input.setbacks == []                 # rien servi si limites non qualifiées
 
 
 def test_ppr_analyse_toujours_presente(monkeypatch):
     monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
     monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
+    monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid: _fake_limites())
     b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
     ppr = [ar for ar in b.input.applicableRules if ar.id == "PPR"]
     assert len(ppr) == 1 and ppr[0].integrationStatus == "not_integrated"

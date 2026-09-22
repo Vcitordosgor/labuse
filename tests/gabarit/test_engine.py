@@ -10,7 +10,7 @@ import pytest
 from shapely.geometry import Polygon
 
 from labuse.gabarit._geom import geojson_from_shape, to_metric, to_wgs
-from labuse.gabarit.contract import Exclusion, GabaritInput, RegulatorySource
+from labuse.gabarit.contract import GabaritInput, RegulatorySource
 from labuse.gabarit.engine import INCOMPLETE_MESSAGE, compute_gabarit
 from labuse.gabarit.fixtures import demo_gabarit_input
 
