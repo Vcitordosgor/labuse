@@ -111,6 +111,46 @@ def test_radar_trois_comptes_deux_veilles_un_sans(engine):
                 s.execute(text("DELETE FROM comptes WHERE id = ANY(:c)"), {"c": cids})
 
 
+def test_essai_expire_exclu_de_tout_envoi():
+    """VEILLE-FIX-1 (lot 3) — un compte ACTIF dont l'essai est EXPIRÉ (essai_expire_at passé) ne reçoit
+    plus rien (Radar/alerte), quel que soit son statut ; un essai encore valide, oui."""
+    tag = uuid.uuid4().hex[:5]
+    ids: dict[str, int] = {}
+    bid = None
+    try:
+        with session_scope() as s:
+            for k, expire in (("expire", "now() - interval '1 day'"), ("valide", "now() + interval '30 days'")):
+                cid = s.execute(text(f"INSERT INTO comptes (nom, plan, founding, statut, sieges, essai_expire_at) "
+                                     f"VALUES (:n,'integral',false,'actif',1,{expire}) RETURNING id"),
+                                {"n": f"RT-ess {tag} {k}"}).scalar()
+                s.execute(text("INSERT INTO utilisateurs (compte_id, email, role, statut, echecs_login) "
+                               "VALUES (:c,:e,'titulaire','actif',0)"), {"c": cid, "e": f"{k}-{tag}@ess.test"})
+                veille.creer(s, compte_id=cid, criteria={"commune": "Cilaos", "type_bien": "terrain"})
+                ids[k] = cid
+            bid = s.execute(text("INSERT INTO pige_biens (commune,type_bien,est_copro,rattachement_niveau,statut) "
+                                 "VALUES ('Cilaos','terrain',false,'absent','active') RETURNING bien_id")).scalar()
+            s.execute(text("INSERT INTO pige_annonces (bien_id,portail,url_sortante) VALUES (:b,'leboncoin',:u)"),
+                      {"b": bid, "u": f"https://www.leboncoin.fr/ess-{tag}"})
+            s.execute(text("INSERT INTO pige_faits (bien_id,prix,type_bien,surface_terrain,particulier_pro,valide_at)"
+                           " VALUES (:b,120000,'terrain',900,'particulier',now())"), {"b": bid})
+        with session_scope() as db:
+            r = digests.envoyer(db, base_url="https://app.labuse.immo", dry_run=True)
+        recus = {d["compte_id"] for d in r["details"]}
+        assert ids["valide"] in recus, "l'essai encore valide reçoit son alerte"
+        assert ids["expire"] not in recus, "l'essai EXPIRÉ (bien qu'actif) ne reçoit RIEN"
+    finally:
+        with session_scope() as s:
+            if bid is not None:
+                s.execute(text("DELETE FROM pige_annonces WHERE bien_id=:b"), {"b": bid})
+                s.execute(text("DELETE FROM pige_faits WHERE bien_id=:b"), {"b": bid})
+                s.execute(text("DELETE FROM pige_biens WHERE bien_id=:b"), {"b": bid})
+            if ids:
+                cids = list(ids.values())
+                s.execute(text("DELETE FROM veilles WHERE compte_id = ANY(:c)"), {"c": cids})
+                s.execute(text("DELETE FROM utilisateurs WHERE compte_id = ANY(:c)"), {"c": cids})
+                s.execute(text("DELETE FROM comptes WHERE id = ANY(:c)"), {"c": cids})
+
+
 def test_jamais_de_mail_vide(seed):
     with session_scope() as db:
         db.execute(text("UPDATE pige_faits SET valide_at=NULL WHERE bien_id=:b"), {"b": seed["bien"]})

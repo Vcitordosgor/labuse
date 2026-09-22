@@ -269,12 +269,15 @@ def _envoyer(db: Session, *, compte_id, email: str, template_key: str, dedup: st
 
 
 def _clients_actifs(db: Session) -> list[dict]:
-    """Comptes ACTIFS + e-mail/prénom du titulaire. (RD-503 : `comptes.prenoms` n'existe pas → `c.nom`.)"""
+    """Comptes ACTIFS + e-mail/prénom du titulaire. (RD-503 : `comptes.prenoms` n'existe pas → `c.nom`.)
+    VEILLE-FIX-1 (lot 3) — un ESSAI EXPIRÉ (`essai_expire_at` passé) ne reçoit plus rien, même resté
+    `actif` (la coupure ne dépend plus d'une bascule de statut par la facturation)."""
     return [dict(r) for r in db.execute(text(
         "SELECT c.id AS compte_id, c.nom AS prenom, "
         " min(u.email) FILTER (WHERE u.role='titulaire') AS email "
         "FROM comptes c LEFT JOIN utilisateurs u ON u.compte_id = c.id "
-        "WHERE c.statut = 'actif' GROUP BY c.id, c.nom ORDER BY c.id")).mappings()]
+        "WHERE c.statut = 'actif' AND (c.essai_expire_at IS NULL OR c.essai_expire_at > now()) "
+        "GROUP BY c.id, c.nom ORDER BY c.id")).mappings()]
 
 
 def envoyer(db: Session, *, base_url: str = "", dry_run: bool = False,

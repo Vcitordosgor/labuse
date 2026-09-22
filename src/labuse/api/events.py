@@ -1237,10 +1237,13 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
     # LEFT JOIN (pas INNER) : un compte actif SANS utilisateur titulaire n'est plus SILENCIEUSEMENT
     # exclu — il apparaît avec email=NULL et un motif « pas d'adresse ». Le silence est le défaut qu'on
     # ferme partout : chaque compte reçoit un STATUT + un MOTIF explicites (Vic, M85).
+    # VEILLE-FIX-1 (lot 3) — un ESSAI EXPIRÉ (`essai_expire_at` passé) est exclu de tout envoi, même
+    # resté `actif` : la coupure ne dépend plus d'une bascule de statut par la facturation.
     recipients = db.execute(text(
         "SELECT c.id AS cid, min(u.email) FILTER (WHERE u.role='titulaire') AS email "
         "FROM comptes c LEFT JOIN utilisateurs u ON u.compte_id = c.id "
-        "WHERE c.statut = 'actif' GROUP BY c.id ORDER BY c.id")).mappings().all()
+        "WHERE c.statut = 'actif' AND (c.essai_expire_at IS NULL OR c.essai_expire_at > now()) "
+        "GROUP BY c.id ORDER BY c.id")).mappings().all()
     envoyes = ignores = echecs = simules = 0
     details: list[dict] = []
 
