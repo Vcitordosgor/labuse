@@ -216,10 +216,15 @@ const V_TYPES = [['', 'Tous types'], ['maison', 'Maison'], ['appartement', 'Appa
 function resumeVeille(v: RadarVeille): string {
   const c = v.criteria as Record<string, unknown>
   const bouts: string[] = []
-  if (v.commune) bouts.push(String(v.commune))
+  // VEILLE-2 (Lot 2) — commune(s) : liste `communes` (jointes par « ou ») sinon la commune unique.
+  const communes = Array.isArray(c.communes) ? (c.communes as string[]) : []
+  if (communes.length) bouts.push(communes.join(' ou '))
+  else if (v.commune) bouts.push(String(v.commune))
   if (c.type_bien) bouts.push(String(c.type_bien))
   if (c.prix_min || c.prix_max) bouts.push(`${c.prix_min ? Number(c.prix_min).toLocaleString('fr-FR') : '0'}–${c.prix_max ? Number(c.prix_max).toLocaleString('fr-FR') + ' €' : '∞'}`)
-  if (c.surface_terrain_min) bouts.push(`terrain ≥ ${c.surface_terrain_min} m²`)
+  // surface min/max (modèle VEILLE-2) — + rétro-compat de l'ancien surface_terrain_min.
+  if (c.surface_min || c.surface_max) bouts.push(`${c.surface_min ? Number(c.surface_min) : 0}–${c.surface_max ? Number(c.surface_max) + ' m²' : '∞'}`)
+  else if (c.surface_terrain_min) bouts.push(`terrain ≥ ${c.surface_terrain_min} m²`)
   if (c.particulier_only) bouts.push('particulier')
   return bouts.length ? bouts.join(' · ') : 'Tous les biens'
 }
@@ -231,20 +236,22 @@ function VeilleExterne() {
   // V2 — même ergonomie que la veille parcelle : on ouvre sur ce que le client a DÉJÀ créé ; les filtres
   // n'apparaissent qu'après « Créer une veille ».
   const [creating, setCreating] = useState(false)
-  const [commune, setCommune] = useState('')
+  // VEILLE-2 (Lot 2) — critères du modèle : commune(s), type de bien, surface min/max, prix max.
+  const [communes, setCommunes] = useState<string[]>([])
   const [type, setType] = useState('')
   const [prixMin, setPrixMin] = useState('')
   const [prixMax, setPrixMax] = useState('')
   const [surfMin, setSurfMin] = useState('')
+  const [surfMax, setSurfMax] = useState('')
   const [particulier, setParticulier] = useState(false)
   const inval = () => qc.invalidateQueries({ queryKey: ['radar-veilles'] })
-  const reset = () => { setCommune(''); setType(''); setPrixMin(''); setPrixMax(''); setSurfMin(''); setParticulier(false) }
+  const reset = () => { setCommunes([]); setType(''); setPrixMin(''); setPrixMax(''); setSurfMin(''); setSurfMax(''); setParticulier(false) }
   const creer = useMutation({
     // V3 — plus de filtres d'événement : une veille notifie sur TOUT événement d'un bien correspondant.
     mutationFn: () => creerRadarVeille({
-      commune: commune || undefined, type_bien: type || undefined,
+      communes: communes.length ? communes : undefined, type_bien: type || undefined,
       prix_min: prixMin ? Number(prixMin) : undefined, prix_max: prixMax ? Number(prixMax) : undefined,
-      surface_terrain_min: surfMin ? Number(surfMin) : undefined,
+      surface_min: surfMin ? Number(surfMin) : undefined, surface_max: surfMax ? Number(surfMax) : undefined,
       particulier_only: particulier || undefined,
     }),
     onSuccess: () => { inval(); reset(); setCreating(false) },
@@ -317,17 +324,21 @@ function VeilleExterne() {
             <p className="label-caps">Nouvelle veille</p>
             <button data-veille-ext-annuler onClick={() => setCreating(false)} className="text-[11px] text-txt-mut hover:text-txt">annuler</button>
           </div>
+          {/* VEILLE-2 (Lot 2) — commune(s) : sélection MULTIPLE (aucune = toute l'île). */}
+          <select data-veille-ext-communes multiple value={communes} size={4}
+            onChange={(e) => setCommunes(Array.from(e.target.selectedOptions, (o) => o.value))}
+            className="rounded-md border border-line-2 bg-surface-1 px-2 py-1 text-[11.5px] text-txt">
+            {V_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <p className="-mt-1 text-[10px] text-txt-dim">Commune(s) — aucune sélection = toute l’île. Ctrl/Cmd pour plusieurs.</p>
           <div className="grid grid-cols-2 gap-1.5">
-            <select data-veille-ext-commune value={commune} onChange={(e) => setCommune(e.target.value)} className={sel}>
-              <option value="">Toute l’île</option>
-              {V_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select value={type} onChange={(e) => setType(e.target.value)} className={sel}>
+            <select value={type} onChange={(e) => setType(e.target.value)} className={`col-span-2 ${sel}`}>
               {V_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
             <input type="number" min={0} placeholder="prix min" value={prixMin} onChange={(e) => setPrixMin(e.target.value)} className={`min-w-0 ${sel}`} />
             <input type="number" min={0} placeholder="prix max" value={prixMax} onChange={(e) => setPrixMax(e.target.value)} className={`min-w-0 ${sel}`} />
-            <input type="number" min={0} placeholder="surface terrain min" value={surfMin} onChange={(e) => setSurfMin(e.target.value)} className={`col-span-2 min-w-0 ${sel}`} />
+            <input type="number" min={0} placeholder="surface min (m²)" value={surfMin} onChange={(e) => setSurfMin(e.target.value)} className={`min-w-0 ${sel}`} />
+            <input type="number" min={0} placeholder="surface max (m²)" value={surfMax} onChange={(e) => setSurfMax(e.target.value)} className={`min-w-0 ${sel}`} />
           </div>
           <label className="flex items-center gap-2 text-[11.5px] text-txt-mut">
             <input type="checkbox" checked={particulier} onChange={(e) => setParticulier(e.target.checked)} className="h-3.5 w-3.5 accent-mint" />

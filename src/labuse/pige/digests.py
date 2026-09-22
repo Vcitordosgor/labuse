@@ -194,13 +194,24 @@ def cartes_html(items: list[dict], base_url: str) -> str:
 def _criteres_texte(criteria: dict) -> str:
     """Reconstruit un texte lisible depuis les critères RÉELLEMENT enregistrés (jamais un résumé
     approximatif). Un critère qui ne sait pas se dire est affiché tel quel plutôt qu'omis."""
-    connus = {"commune", "type_bien", "prix_min", "prix_max", "surface_terrain_min",
-              "surface_hab_min", "particulier_only", "nom"}
+    connus = {"commune", "communes", "type_bien", "prix_min", "prix_max", "surface_min", "surface_max",
+              "surface_terrain_min", "surface_hab_min", "particulier_only", "nom"}
     bits: list[str] = []
     if criteria.get("type_bien"):
         bits.append(str(criteria["type_bien"]).capitalize())
-    if criteria.get("commune"):
+    # VEILLE-2 (Lot 2) — commune(s) : liste `communes` (jointes par « ou ») ou `commune` seule.
+    if criteria.get("communes"):
+        bits.append(" ou ".join(str(c) for c in criteria["communes"]))
+    elif criteria.get("commune"):
         bits.append(str(criteria["commune"]))
+    # surface min/max (modèle VEILLE-2) — sur la surface pertinente du bien.
+    smin, smax = criteria.get("surface_min"), criteria.get("surface_max")
+    if smin and smax:
+        bits.append(f"de {_fmt_prix(int(smin), 'm²')} à {_fmt_prix(int(smax), 'm²')}")
+    elif smin:
+        bits.append(f"plus de {_fmt_prix(int(smin), 'm²')}")
+    elif smax:
+        bits.append(f"moins de {_fmt_prix(int(smax), 'm²')}")
     if criteria.get("surface_terrain_min"):
         bits.append(f"plus de {_fmt_prix(int(criteria['surface_terrain_min']), 'm²')} de terrain")
     if criteria.get("surface_hab_min"):

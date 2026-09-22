@@ -18,9 +18,14 @@ EVENEMENTS_VEILLE = ("nouvelle", "baisse", "retour")
 
 
 def creer(db: Session, *, compte_id: int | None, criteria: dict) -> int:
-    """Crée une veille Radar. `criteria` = {commune?, type_bien?, surface_terrain_min?, surface_hab_min?,
-    particulier_only?, evenements:[nouvelle|baisse|retour]}. Retourne l'id."""
+    """Crée une veille Radar. `criteria` (modèle VEILLE-2) = {communes?:[...], type_bien?, surface_min?,
+    surface_max?, prix_max?, particulier_only?}. Rétro-compat : commune (seule), prix_min. Retourne l'id.
+    La colonne `commune` (affichage/index) reflète une commune UNIQUE ; une liste multi laisse la colonne
+    vide (la vérité vit dans criteria.communes)."""
     commune = criteria.get("commune")
+    communes = criteria.get("communes") or []
+    if communes and not commune:
+        commune = communes[0] if len(communes) == 1 else None
     return db.execute(text(
         "INSERT INTO veilles (compte_id, type, commune, criteria, actif) "
         "VALUES (:c, :t, :comm, CAST(:cr AS jsonb), true) RETURNING id"),
@@ -56,24 +61,51 @@ def renommer(db: Session, compte_id: int | None, veille_id: int, nom: str) -> bo
     return bool(n)
 
 
+def _surface_pertinente(bien: dict):
+    """La surface qui QUALIFIE le bien : terrain pour un terrain, habitable sinon (à défaut, la seule
+    renseignée). Un critère de surface (min/max) s'applique à CELLE-LÀ — pas à un champ absent."""
+    faits = bien.get("faits", {})
+    if bien.get("type_bien") == "terrain":
+        return faits.get("surface_terrain")
+    if faits.get("surface_hab") is not None:
+        return faits.get("surface_hab")
+    return faits.get("surface_terrain")
+
+
 def matche(criteria: dict, bien: dict) -> bool:
     """Un bien (dict servi par client.lister) correspond-il aux critères d'une veille ? CONSTAT strict :
-    un critère absent n'exclut pas ; un critère présent doit être satisfait."""
+    un critère absent n'exclut pas ; un critère présent doit être satisfait.
+
+    VEILLE-2 (Lot 2) — critères du modèle : commune(s), type de bien, surface min/max, prix max.
+    Rétro-compatible avec les veilles existantes (commune seule, surface_terrain_min/surface_hab_min)."""
     if not criteria:
         return True
-    if criteria.get("commune") and bien.get("commune") != criteria["commune"]:
+    # COMMUNE(S) — nouveau : liste `communes` (le bien doit être dans l'une d'elles) ; rétro-compat :
+    # `commune` seule. Une liste vide = aucun filtre commune (comme absente).
+    communes = criteria.get("communes") or None
+    if communes:
+        if bien.get("commune") not in communes:
+            return False
+    elif criteria.get("commune") and bien.get("commune") != criteria["commune"]:
         return False
     if criteria.get("type_bien") and bien.get("type_bien") != criteria["type_bien"]:
         return False
     faits = bien.get("faits", {})
-    # RADAR-CATÉGORIE (T4) — le prix rejoint les critères de veille (demandé par le mandat ; les
-    # veilles existantes sans prix restent valides, un critère absent n'exclut pas).
+    # PRIX MAX (et prix_min conservé pour les veilles existantes).
     prix = faits.get("prix")
     pmin, pmax = criteria.get("prix_min"), criteria.get("prix_max")
     if pmin is not None and (prix is None or prix < pmin):
         return False
     if pmax is not None and (prix is None or prix > pmax):
         return False
+    # SURFACE MIN/MAX — sur la surface pertinente du bien (terrain/habitable).
+    surf = _surface_pertinente(bien)
+    smin, smax = criteria.get("surface_min"), criteria.get("surface_max")
+    if smin is not None and (surf is None or surf < smin):
+        return False
+    if smax is not None and (surf is None or surf > smax):
+        return False
+    # rétro-compat : anciens critères de surface minimale par nature.
     st_min = criteria.get("surface_terrain_min")
     if st_min is not None and (faits.get("surface_terrain") is None or faits["surface_terrain"] < st_min):
         return False
