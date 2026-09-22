@@ -3,10 +3,11 @@
 Le front n'affiche que ce que l'API sert (doctrine LABUSE : zéro recalcul au front).
 Le calcul est porté par le moteur pur `labuse.gabarit.engine`.
 
-- `/outils/gabarit/demo`  → démonstration sur la parcelle FICTIVE (CDC §9), calcul complet.
-- `/outils/gabarit/{idu}` → raccordement réel. En GABARIT-1 la classification des limites
-  est différée (GABARIT-2) → réponse honnête « Calcul incomplet » + provenance du réel
-  déjà branché (raccordement).
+- `/outils/gabarit/demo`  → démonstration sur la parcelle FICTIVE (CDC §9), calcul complet
+  (conservée pour les tests ; le bouton de démo est retiré du front en GABARIT-2).
+- `/outils/gabarit/{idu}` → raccordement RÉEL (GABARIT-2) : cadastre + PLU + classification
+  des limites (BD TOPO) + PPR rouge. Calcul complet si tout est réuni ; sinon « Calcul
+  incomplet » + motif métier (parcelle sans façade, limite non qualifiée, PLU non validé…).
 """
 from __future__ import annotations
 

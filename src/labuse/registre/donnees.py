@@ -94,8 +94,8 @@ DONNEES: dict[str, Donnee] = {
  "gabarit_implantation_m2": C("Zone d'implantation réglementaire", "m²", "parcelle",
     "surface de la zone où une construction peut s'implanter = parcelle − reculs (voie/"
     "séparatives) − exclusions réglementaires (PPR rouge). Calcul géospatial pur, jamais "
-    "estimé. Servi sur fixtures (démo CDC §9) ; réel per-parcelle dès la classification des "
-    "limites par arête (GABARIT-2).",
+    "estimé. Servi per-parcelle (GABARIT-2 : classification des limites voie/séparative par "
+    "arête = adjacence cadastre + BD TOPO, mesurée 0 faux/70).",
     moteur="gabarit", calcul="moteur",
     fonction="src/labuse/gabarit/engine.py:compute_gabarit",
     reservoirs=("cadastre_api_carto", "gpu_plu_api_carto",), portee="live"),
