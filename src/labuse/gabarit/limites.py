@@ -1,0 +1,248 @@
+"""Classification des limites de parcelle v2 (GABARIT-2).
+
+GABARIT-1 a mesuré que « voisin cadastré à 0,5 m = séparative » se trompe en centre-ville,
+où les rues sont elles-mêmes des parcelles cadastrées : la façade sur rue était classée
+« séparative ». v2 inverse l'ordre — **la route d'abord** :
+
+  1. VOIE si un tronçon BD TOPO carrossable passe à ≤ largeur/2 + 1,5 m de l'arête
+     (attribut `largeur` ; à défaut 4 m). Priorité absolue.
+  2. VOIE si le voisin cadastré collé à l'arête est une **parcelle de voirie**
+     (traversée par un axe BD TOPO ET sans bâti).
+  3. SÉPARATIVE si voisin cadastré ≤ 0,5 m et rien de ce qui précède.
+  4. NON CLASSÉE (bloquant, motif nommé) : ni voie ni voisin (ravine, littoral, domaine
+     public non routier), ou arête résiduelle < 1 m.
+  5. side / rear : rear = séparative sans point commun avec une arête voie ;
+     parcelle sans aucune arête voie (enclave / drapeau) → bloquant.
+
+Le cœur `classify_edges` est PUR (géométries en entrée, EPSG:2975, aucune DB) et testable ;
+`classify_parcel_limits` fait les requêtes PostGIS puis appelle le cœur.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Optional
+
+from shapely.geometry import LineString
+from shapely.geometry.base import BaseGeometry
+
+# natures BD TOPO carrossables qui qualifient une « voie » (recul voie). Sentier/Escalier exclus.
+ROAD_NATURES_EXCLUES = {"Sentier", "Escalier"}
+
+SEP_TOL_M = 0.5        # voisin cadastré collé à l'arête
+# marge au-delà de la demi-chaussée (axe BD TOPO → bord de parcelle). Le mandat prescrit 1,5 m ;
+# la mesure GABARIT-2 (A0-2) montre que l'axe est souvent à demi-chaussée + trottoir/accotement
+# (~4-5 m sur frontage réel) → calibré à 3,5 m (arbitrage CC, cf. A0-2-MESURE.md). Reste un knob mesuré.
+ROAD_EXTRA_M = 3.5
+DEFAULT_WIDTH_M = 4.0  # largeur de tronçon par défaut si l'attribut manque
+SIMPLIFY_M = 0.05      # ne retire que le bruit GPS sub-décimétrique (jamais un vrai chanfrein)
+CHUNK_M = 3.0          # densification : on classe des tronçons ≤ 3 m par leur MILIEU (évite l'artefact
+                       # de coin où un segment ne touche un voisin qu'à son sommet)
+MIN_EDGE_M = 1.0       # run non classé sous ce cumul = négligeable (n'affiche ni ne bloque)
+
+MOTIF_NON_QUALIFIEE = "arête sans voie ni voisin cadastré (ravine, littoral ou domaine public non routier)"
+MOTIF_ARETE_COURTE = "arête résiduelle < 1 m, non classable"
+MOTIF_SANS_FACADE = "parcelle sans façade sur voie (enclave ou accès en drapeau)"
+
+
+@dataclass
+class Edge:
+    """Une arête classée du contour (géométrie en 2975)."""
+    geom: LineString
+    type: str                 # 'voie' | 'side' | 'rear' | 'nonclass'
+    length_m: float
+    motif: Optional[str] = None
+
+
+@dataclass
+class Road:
+    line: LineString          # axe BD TOPO (2975)
+    largeur_m: Optional[float]
+
+
+def _segments(ring_coords) -> list[LineString]:
+    return [LineString([ring_coords[i], ring_coords[i + 1]]) for i in range(len(ring_coords) - 1)]
+
+
+def _chunks(ring_coords, chunk: float) -> list[LineString]:
+    """Densifie le contour en tronçons ≤ `chunk` m (pour classer par le milieu)."""
+    out: list[LineString] = []
+    for seg in _segments(ring_coords):
+        L = seg.length
+        if L <= chunk:
+            out.append(seg)
+            continue
+        n = int(L // chunk) + 1
+        pts = [seg.interpolate(i / n, normalized=True) for i in range(n + 1)]
+        for i in range(n):
+            out.append(LineString([pts[i], pts[i + 1]]))
+    return out
+
+
+def _key(pt) -> tuple:
+    return (round(pt[0], 3), round(pt[1], 3))
+
+
+def classify_edges(
+    parcel_2975: BaseGeometry,
+    neighbors: list[tuple[BaseGeometry, bool]],   # (geom, is_road_parcel)
+    roads: list[Road],
+    *,
+    sep_tol: float = SEP_TOL_M,
+    road_extra: float = ROAD_EXTRA_M,
+    default_width: float = DEFAULT_WIDTH_M,
+    simplify: float = SIMPLIFY_M,
+    chunk: float = CHUNK_M,
+    min_edge: float = MIN_EDGE_M,
+) -> list[Edge]:
+    """Cœur PUR. Classe CHAQUE segment brut du contour (route d'abord), puis fusionne les
+    segments CONSÉCUTIFS de même type en arêtes logiques. Une même « face » cadastrale peut
+    être en partie sur voie, en partie sur voisin (segments distincts) — on ne les mélange pas."""
+    poly = parcel_2975.simplify(simplify, preserve_topology=True)  # bruit GPS seulement
+    ext = poly.exterior if poly.geom_type == "Polygon" else max(
+        (g.exterior for g in poly.geoms), key=lambda r: r.length)
+    coords = list(ext.coords)
+
+    seg_types: list[tuple[LineString, str, Optional[str]]] = []
+    for seg in _chunks(coords, chunk):
+        L = seg.length
+        mid = seg.interpolate(0.5, normalized=True)   # milieu : évite l'artefact de coin
+        near = [(g, is_road) for (g, is_road) in neighbors if mid.distance(g) <= sep_tol]
+        near_road = any(is_road for (_g, is_road) in near)
+        near_real = any(not is_road for (_g, is_road) in near)
+        # deux portées de route : sur la chaussée (l'arête est DANS l'emprise, ≤ largeur/2) vs à
+        # portée de façade (largeur/2 + marge trottoir/accotement).
+        road_on = road_near = False
+        for r in roads:
+            w = r.largeur_m if r.largeur_m and r.largeur_m > 0 else default_width
+            d = mid.distance(r.line)
+            if d <= w / 2.0:
+                road_on = road_near = True
+                break
+            if d <= w / 2.0 + road_extra:
+                road_near = True
+        # Priorité (correction GABARIT-1→2) :
+        # 1. voisin collé = parcelle de voirie → voie (centre-ville, rue cadastrée « propre »)
+        # 2. axe carrossable DANS l'emprise de l'arête → voie, même avec voisin collé (la rue longe
+        #    la limite cadastrale — cas IE0601 : axe à 0 m sur une limite partagée)
+        # 3. voisin cadastré réel collé → séparative (une route DERRIÈRE un voisin ne fait pas façade)
+        # 4. arête ouverte à portée de façade → voie
+        if near_road or road_on or road_near:
+            # near_road / road_on priment sur un voisin réel ; road_near ne s'applique qu'à une
+            # arête ouverte (near_real y est déjà écarté car near_road/road_on auraient gagné).
+            if near_real and not (near_road or road_on):
+                seg_types.append((seg, "sep", None))       # voisin réel + route seulement à portée façade → séparative
+            else:
+                seg_types.append((seg, "voie", None))
+        elif near_real:
+            seg_types.append((seg, "sep", None))           # side/rear tranché plus bas
+        else:
+            motif = MOTIF_ARETE_COURTE if L < min_edge else MOTIF_NON_QUALIFIEE
+            seg_types.append((seg, "nonclass", motif))
+
+    # side / rear : rear = séparative ne partageant aucun sommet avec un segment voie
+    voie_pts: set[tuple] = set()
+    for seg, t, _m in seg_types:
+        if t == "voie":
+            for c in seg.coords:
+                voie_pts.add(_key(c))
+    resolved: list[tuple[LineString, str, Optional[str]]] = []
+    for seg, t, m in seg_types:
+        if t == "sep":
+            touche = any(_key(c) in voie_pts for c in seg.coords)
+            resolved.append((seg, "side" if touche else "rear", None))
+        else:
+            resolved.append((seg, t, m))
+
+    # fusion des segments consécutifs de même type en arêtes logiques
+    edges: list[Edge] = []
+    run_pts: list = []
+    run_type: Optional[str] = None
+    run_motif: Optional[str] = None
+
+    def _flush():
+        nonlocal run_pts, run_type, run_motif
+        if run_type and len(run_pts) >= 2:
+            line = LineString(run_pts)
+            edges.append(Edge(line, run_type, line.length, run_motif))
+        run_pts, run_type, run_motif = [], None, None
+
+    for seg, t, m in resolved:
+        if t != run_type:
+            _flush()
+            run_type, run_motif = t, m
+            run_pts = list(seg.coords)
+        else:
+            run_pts.append(seg.coords[-1])
+            run_motif = run_motif or m
+    _flush()
+
+    # un run « non classé » cumulé < min_edge est négligeable → absorbé (reclassé selon le contexte
+    # le plus proche : voie si un voisin voie, sinon side) pour ne pas bloquer sur du bruit résiduel
+    for e in edges:
+        if e.type == "nonclass" and e.length_m < min_edge:
+            e.type = "side"
+            e.motif = None
+    return edges
+
+
+# --------------------------------------------------------------------------- couche DB
+
+@dataclass
+class LimitesResult:
+    edges: list[Edge]                 # arêtes classées (géométrie 2975)
+    has_voie: bool
+    non_classees: list[str]           # motifs des arêtes non classées (dédupliqués)
+    blocking: Optional[str]           # motif de blocage parcelle, sinon None
+
+
+def classify_parcel_limits(session, parcel_id: int) -> Optional[LimitesResult]:
+    """Requêtes PostGIS (2975) puis cœur pur. Renvoie None si parcelle introuvable."""
+    from shapely import wkt as shp_wkt
+    from sqlalchemy import text
+
+    row = session.execute(text(
+        "SELECT ST_AsText(geom_2975) g FROM parcels WHERE id = :pid"
+    ), {"pid": parcel_id}).first()
+    if not row or not row[0]:
+        return None
+    parcel = shp_wkt.loads(row[0])
+
+    # voisins cadastrés à ≤ 0,5 m, avec drapeau « parcelle de voirie » (axe voirie traversant
+    # ET aucun bâtiment) — calculé en SQL, borné aux quelques voisins réels.
+    nb_rows = session.execute(text(
+        """
+        SELECT ST_AsText(o.geom_2975) AS g,
+               EXISTS(SELECT 1 FROM spatial_layers v WHERE v.kind='voirie'
+                        AND v.subtype NOT IN ('Sentier','Escalier')
+                        AND ST_Intersects(v.geom_2975, o.geom_2975))
+               AND NOT EXISTS(SELECT 1 FROM spatial_layers b WHERE b.kind='batiment'
+                        AND ST_Intersects(b.geom_2975, o.geom_2975)) AS is_road_parcel
+        FROM parcels o
+        WHERE o.id <> :pid AND ST_DWithin(o.geom_2975, (SELECT geom_2975 FROM parcels WHERE id=:pid), 0.5)
+        """
+    ), {"pid": parcel_id}).fetchall()
+    neighbors = [(shp_wkt.loads(r[0]), bool(r[1])) for r in nb_rows if r[0]]
+
+    # tronçons carrossables proches (rayon = max demi-chaussée + marge)
+    rd_rows = session.execute(text(
+        """
+        SELECT ST_AsText(v.geom_2975) AS g, (v.attrs->>'largeur')::float AS largeur
+        FROM spatial_layers v
+        WHERE v.kind='voirie' AND v.subtype NOT IN ('Sentier','Escalier')
+          AND ST_DWithin(v.geom_2975, (SELECT geom_2975 FROM parcels WHERE id=:pid), 12)
+        """
+    ), {"pid": parcel_id}).fetchall()
+    roads = [Road(shp_wkt.loads(r[0]), r[1]) for r in rd_rows if r[0]]
+
+    edges = classify_edges(parcel, neighbors, roads)
+    has_voie = any(e.type == "voie" for e in edges)
+    non_cl = []
+    for e in edges:
+        if e.type == "nonclass" and e.motif and e.motif not in non_cl:
+            non_cl.append(e.motif)
+    blocking = None
+    if non_cl:
+        blocking = "Limites de la parcelle non qualifiées (voie / limite séparative) — " + " ; ".join(non_cl)
+    elif not has_voie:
+        blocking = MOTIF_SANS_FACADE
+    return LimitesResult(edges=edges, has_voie=has_voie, non_classees=non_cl, blocking=blocking)
