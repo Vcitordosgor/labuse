@@ -92,11 +92,38 @@ def test_propose_bloque(monkeypatch):
     assert any("propose" in x for x in b.blocking)
 
 
-def test_multizone_bloque(monkeypatch):
+def _rec(code, pct, tz_cons=True):
+    return {"code": code, "pct": pct, "area": 500.0,
+            "gj": {"type": "Polygon", "coordinates": [[[55.29, -21.03], [55.2903, -21.03],
+                   [55.2903, -21.0303], [55.29, -21.0303], [55.29, -21.03]]]},
+            "wkt": "POLYGON((0 0,10 0,10 10,0 10,0 0))"}
+
+
+def test_multizone_2_constructibles_bloque(monkeypatch):
     monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone(cheval=True))
-    monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
+    monkeypatch.setattr(B, "_multizone_split", lambda s, pid: ([_rec("U1", 50), _rec("U2", 45)], [], []))
     b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
-    assert any("cheval" in x for x in b.blocking)
+    assert any("2 zones constructibles" in x for x in b.blocking)
+
+
+def test_multizone_tout_non_constructible_bloque(monkeypatch):
+    monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone(cheval=True))
+    monkeypatch.setattr(B, "_multizone_split", lambda s, pid: ([], [_rec("N", 60), _rec("A", 40)], []))
+    b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
+    assert any("non constructible" in x for x in b.blocking)
+
+
+def test_multizone_1_constructible_servie(monkeypatch):
+    """Une seule zone constructible (le reste A/N) → servie sur ce morceau ; bande < 5 % signalée."""
+    monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone(cheval=True))
+    monkeypatch.setattr(B, "_multizone_split",
+                        lambda s, pid: ([_rec("Uc", 80)], [_rec("N", 17)], [("Nr", 3.0)]))
+    monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
+    monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid, **kw: _fake_limites())
+    b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
+    assert b.blocking == []
+    assert b.raccordement["multizone"]["servie_sur"].startswith("Uc")
+    assert any("Nr non retenue" in x for x in b.raccordement.get("bandes_ignorees", []))
 
 
 def test_non_calibre_bloque(monkeypatch):

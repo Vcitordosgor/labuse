@@ -101,83 +101,77 @@ def classify_edges(
     segments CONSÉCUTIFS de même type en arêtes logiques. Une même « face » cadastrale peut
     être en partie sur voie, en partie sur voisin (segments distincts) — on ne les mélange pas."""
     poly = parcel_2975.simplify(simplify, preserve_topology=True)  # bruit GPS seulement
-    ext = poly.exterior if poly.geom_type == "Polygon" else max(
-        (g.exterior for g in poly.geoms), key=lambda r: r.length)
-    coords = list(ext.coords)
+    # tous les anneaux extérieurs (un morceau constructible à cheval peut être un MultiPolygon)
+    polys = list(poly.geoms) if poly.geom_type == "MultiPolygon" else [poly]
+    rings = [list(g.exterior.coords) for g in polys if g.geom_type == "Polygon" and not g.is_empty]
 
-    seg_types: list[tuple[LineString, str, Optional[str], Optional[str]]] = []
-    for seg in _chunks(coords, chunk):
-        L = seg.length
-        mid = seg.interpolate(0.5, normalized=True)   # milieu : évite l'artefact de coin
-        near = [(g, is_road) for (g, is_road) in neighbors if mid.distance(g) <= sep_tol]
-        near_road = any(is_road for (_g, is_road) in near)
-        near_real = any(not is_road for (_g, is_road) in near)
-        # deux portées de route : sur la chaussée (l'arête est DANS l'emprise, ≤ largeur/2) vs à
-        # portée de façade (largeur/2 + marge trottoir/accotement).
-        road_on = road_near = False
-        for r in roads:
-            w = r.largeur_m if r.largeur_m and r.largeur_m > 0 else default_width
-            d = mid.distance(r.line)
-            if d <= w / 2.0:
-                road_on = road_near = True
-                break
-            if d <= w / 2.0 + road_extra:
-                road_near = True
-        # Priorité (correction GABARIT-1→2) :
-        # 1. voisin collé = parcelle de voirie → voie (centre-ville, rue cadastrée « propre »)
-        # 2. axe carrossable DANS l'emprise de l'arête → voie, même avec voisin collé (la rue longe
-        #    la limite cadastrale — cas IE0601 : axe à 0 m sur une limite partagée)
-        # 3. voisin cadastré réel collé → séparative (une route DERRIÈRE un voisin ne fait pas façade)
-        # 4. arête ouverte à portée de façade → voie
-        if near_road or road_on or road_near:
-            # near_road / road_on priment sur un voisin réel ; road_near ne s'applique qu'à une
-            # arête ouverte (near_real y est déjà écarté car near_road/road_on auraient gagné).
-            if near_real and not (near_road or road_on):
-                seg_types.append((seg, "sep", None, None))   # voisin réel + route à portée façade → séparative
+    # (ring_idx, seg, type, motif, source_kind)
+    seg_types: list[tuple[int, LineString, str, Optional[str], Optional[str]]] = []
+    for ri, coords in enumerate(rings):
+        for seg in _chunks(coords, chunk):
+            L = seg.length
+            mid = seg.interpolate(0.5, normalized=True)   # milieu : évite l'artefact de coin
+            near = [(g, is_road) for (g, is_road) in neighbors if mid.distance(g) <= sep_tol]
+            near_road = any(is_road for (_g, is_road) in near)
+            near_real = any(not is_road for (_g, is_road) in near)
+            # deux portées de route : sur la chaussée (≤ largeur/2) vs à portée de façade (+ marge).
+            road_on = road_near = False
+            for r in roads:
+                w = r.largeur_m if r.largeur_m and r.largeur_m > 0 else default_width
+                d = mid.distance(r.line)
+                if d <= w / 2.0:
+                    road_on = road_near = True
+                    break
+                if d <= w / 2.0 + road_extra:
+                    road_near = True
+            # Priorité : voisin-voirie / axe dans l'emprise → voie (même avec voisin réel) ; voisin réel
+            # → séparative ; arête ouverte à portée façade → voie ; arête ouverte + emprises publiques → voie.
+            if near_road or road_on or road_near:
+                if near_real and not (near_road or road_on):
+                    seg_types.append((ri, seg, "sep", None, None))
+                else:
+                    seg_types.append((ri, seg, "voie", None, "bdtopo"))
+            elif near_real:
+                seg_types.append((ri, seg, "sep", None, None))
+            elif emprises_publiques and L >= min_edge:
+                seg_types.append((ri, seg, "voie", None, "emprise_publique"))
             else:
-                seg_types.append((seg, "voie", None, "bdtopo"))
-        elif near_real:
-            seg_types.append((seg, "sep", None, None))       # side/rear tranché plus bas
-        elif emprises_publiques and L >= min_edge:
-            # arête OUVERTE (ni voisin cadastré ni route) = domaine public non cadastré : si la citation
-            # PLU vise « voies ET emprises publiques », l'arête est une voie (recul voie s'applique).
-            seg_types.append((seg, "voie", None, "emprise_publique"))
-        else:
-            motif = MOTIF_ARETE_COURTE if L < min_edge else MOTIF_NON_QUALIFIEE
-            seg_types.append((seg, "nonclass", motif, None))
+                motif = MOTIF_ARETE_COURTE if L < min_edge else MOTIF_NON_QUALIFIEE
+                seg_types.append((ri, seg, "nonclass", motif, None))
 
     # side / rear : rear = séparative ne partageant aucun sommet avec un segment voie
     voie_pts: set[tuple] = set()
-    for seg, t, _m, _sk in seg_types:
+    for _ri, seg, t, _m, _sk in seg_types:
         if t == "voie":
             for c in seg.coords:
                 voie_pts.add(_key(c))
-    resolved: list[tuple[LineString, str, Optional[str], Optional[str]]] = []
-    for seg, t, m, sk in seg_types:
+    resolved: list[tuple[int, LineString, str, Optional[str], Optional[str]]] = []
+    for ri, seg, t, m, sk in seg_types:
         if t == "sep":
             touche = any(_key(c) in voie_pts for c in seg.coords)
-            resolved.append((seg, "side" if touche else "rear", None, None))
+            resolved.append((ri, seg, "side" if touche else "rear", None, None))
         else:
-            resolved.append((seg, t, m, sk))
+            resolved.append((ri, seg, t, m, sk))
 
-    # fusion des segments consécutifs de même (type, source_kind) en arêtes logiques
+    # fusion des segments consécutifs de même (anneau, type, source_kind) en arêtes logiques
     edges: list[Edge] = []
     run_pts: list = []
     run_type: Optional[str] = None
     run_motif: Optional[str] = None
     run_sk: Optional[str] = None
+    run_ring: Optional[int] = None
 
     def _flush():
-        nonlocal run_pts, run_type, run_motif, run_sk
+        nonlocal run_pts, run_type, run_motif, run_sk, run_ring
         if run_type and len(run_pts) >= 2:
             line = LineString(run_pts)
             edges.append(Edge(line, run_type, line.length, run_motif, run_sk))
-        run_pts, run_type, run_motif, run_sk = [], None, None, None
+        run_pts, run_type, run_motif, run_sk, run_ring = [], None, None, None, None
 
-    for seg, t, m, sk in resolved:
-        if t != run_type or sk != run_sk:
+    for ri, seg, t, m, sk in resolved:
+        if t != run_type or sk != run_sk or ri != run_ring:
             _flush()
-            run_type, run_motif, run_sk = t, m, sk
+            run_type, run_motif, run_sk, run_ring = t, m, sk, ri
             run_pts = list(seg.coords)
         else:
             run_pts.append(seg.coords[-1])
@@ -218,22 +212,33 @@ def summarize_edges(edges: list[Edge]) -> LimitesResult:
     return LimitesResult(edges=edges, has_voie=has_voie, non_classees=non_cl, blocking=blocking)
 
 
-def classify_parcel_limits(session, parcel_id: int, *, emprises_publiques: bool = False) -> Optional[LimitesResult]:
-    """Requêtes PostGIS (2975) puis cœur pur. Renvoie None si parcelle introuvable."""
+def classify_parcel_limits(session, parcel_id: int, *, emprises_publiques: bool = False,
+                           sub_geom_wkt: Optional[str] = None,
+                           extra_neighbors_wkt: Optional[list[str]] = None) -> Optional[LimitesResult]:
+    """Requêtes PostGIS (2975) puis cœur pur. Renvoie None si parcelle introuvable.
+
+    `sub_geom_wkt` : classe cette géométrie (morceau constructible d'une parcelle à cheval) au lieu de
+    la parcelle entière. `extra_neighbors_wkt` : voisins additionnels non-voirie (ex. la partie A/N
+    complémentaire) → la coupure interne entre zones devient une séparative, pas une arête non classée."""
     from shapely import wkt as shp_wkt
     from sqlalchemy import text
 
-    row = session.execute(text(
-        "SELECT ST_AsText(geom_2975) g FROM parcels WHERE id = :pid"
-    ), {"pid": parcel_id}).first()
-    if not row or not row[0]:
-        return None
-    parcel = shp_wkt.loads(row[0])
+    if sub_geom_wkt is not None:
+        parcel = shp_wkt.loads(sub_geom_wkt)
+        geom_expr = "ST_GeomFromText(:g, 2975)"
+        geom_param = {"g": sub_geom_wkt}
+    else:
+        row = session.execute(text("SELECT ST_AsText(geom_2975) g FROM parcels WHERE id = :pid"),
+                              {"pid": parcel_id}).first()
+        if not row or not row[0]:
+            return None
+        parcel = shp_wkt.loads(row[0])
+        geom_expr = "(SELECT geom_2975 FROM parcels WHERE id=:pid)"
+        geom_param = {}
 
-    # voisins cadastrés à ≤ 0,5 m, avec drapeau « parcelle de voirie » (axe voirie traversant
-    # ET aucun bâtiment) — calculé en SQL, borné aux quelques voisins réels.
+    # voisins cadastrés à ≤ 0,5 m, avec drapeau « parcelle de voirie » (axe voirie + aucun bâti).
     nb_rows = session.execute(text(
-        """
+        f"""
         SELECT ST_AsText(o.geom_2975) AS g,
                EXISTS(SELECT 1 FROM spatial_layers v WHERE v.kind='voirie'
                         AND v.subtype NOT IN ('Sentier','Escalier')
@@ -241,20 +246,22 @@ def classify_parcel_limits(session, parcel_id: int, *, emprises_publiques: bool 
                AND NOT EXISTS(SELECT 1 FROM spatial_layers b WHERE b.kind='batiment'
                         AND ST_Intersects(b.geom_2975, o.geom_2975)) AS is_road_parcel
         FROM parcels o
-        WHERE o.id <> :pid AND ST_DWithin(o.geom_2975, (SELECT geom_2975 FROM parcels WHERE id=:pid), 0.5)
+        WHERE o.id <> :pid AND ST_DWithin(o.geom_2975, {geom_expr}, 0.5)
         """
-    ), {"pid": parcel_id}).fetchall()
+    ), {"pid": parcel_id, **geom_param}).fetchall()
     neighbors = [(shp_wkt.loads(r[0]), bool(r[1])) for r in nb_rows if r[0]]
+    for wkt_n in (extra_neighbors_wkt or []):   # parties A/N complémentaires : voisins non-voirie
+        neighbors.append((shp_wkt.loads(wkt_n), False))
 
     # tronçons carrossables proches (rayon = max demi-chaussée + marge)
     rd_rows = session.execute(text(
-        """
+        f"""
         SELECT ST_AsText(v.geom_2975) AS g, (v.attrs->>'largeur')::float AS largeur
         FROM spatial_layers v
         WHERE v.kind='voirie' AND v.subtype NOT IN ('Sentier','Escalier')
-          AND ST_DWithin(v.geom_2975, (SELECT geom_2975 FROM parcels WHERE id=:pid), 12)
+          AND ST_DWithin(v.geom_2975, {geom_expr}, 12)
         """
-    ), {"pid": parcel_id}).fetchall()
+    ), {"pid": parcel_id, **geom_param}).fetchall()
     roads = [Road(shp_wkt.loads(r[0]), r[1]) for r in rd_rows if r[0]]
 
     return summarize_edges(classify_edges(parcel, neighbors, roads, emprises_publiques=emprises_publiques))

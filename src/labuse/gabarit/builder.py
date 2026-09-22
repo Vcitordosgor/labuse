@@ -102,6 +102,38 @@ def _voie_citation_flags(commune: str, zone: str) -> tuple[bool, bool, str, str]
             f"{voie.get('citation', '')}".split())[:200])
 
 
+def _multizone_split(session: Session, parcel_id: int):
+    """Découpe une parcelle à cheval par zone PLU (plu_gpu_zone, morceaux ≥ 5 %). Retourne
+    (zones_constructibles [(code, pct)], exclusions_non_constructibles [(code, pct, geojson4326)],
+    bandes_ignorees [(code, pct)]). Une zone A/N est non constructible → exclue (0 implantation),
+    jamais bloquante. Le découpage multi-CES (≥ 2 zones constructibles) est hors GABARIT-4."""
+    rows = session.execute(text(
+        """
+        SELECT z.attrs->>'libelle' AS code, z.attrs->>'typezone' AS tz,
+               ST_Area(ST_Intersection(z.geom_2975, p.geom_2975)) AS area_m2,
+               ST_Area(ST_Intersection(z.geom_2975, p.geom_2975)) / NULLIF(ST_Area(p.geom_2975), 0) AS pct,
+               ST_AsGeoJSON(ST_CollectionExtract(ST_Transform(
+                   ST_Intersection(z.geom_2975, p.geom_2975), 4326), 3)) AS gj,
+               ST_AsText(ST_CollectionExtract(ST_Intersection(z.geom_2975, p.geom_2975), 3)) AS g2975
+        FROM spatial_layers z, parcels p
+        WHERE p.id = :pid AND z.kind = 'plu_gpu_zone' AND ST_Intersects(z.geom_2975, p.geom_2975)
+        """
+    ), {"pid": parcel_id}).mappings().all()
+    cons, noncons, bandes = [], [], []
+    for r in rows:
+        pct = float(r["pct"] or 0)
+        if pct < 0.05:
+            if pct > 0:
+                bandes.append((r["code"], round(pct * 100, 1)))
+            continue
+        geo = json.loads(r["gj"]) if r["gj"] else None
+        geo = geo if geo and geo.get("coordinates") else None
+        rec = {"code": r["code"], "pct": round(pct * 100, 1), "area": float(r["area_m2"] or 0),
+               "gj": geo, "wkt": r["g2975"]}
+        (noncons if str(r["tz"]) in ("A", "N") else cons).append(rec)
+    return cons, noncons, bandes
+
+
 def _touche_ravine(session: Session, parcel_id: int) -> bool:
     """La parcelle longe-t-elle une ravine BD TOPO ou le trait de côte (≤ 8 m) ?"""
     return bool(session.execute(text(
@@ -153,29 +185,54 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     recul_voie = recul_sep = None
     plu_zone_src: Optional[RegulatorySource] = None
 
-    # --- zone dominante + multi-zones ----------------------------------------
+    # --- zone dominante + multi-zones (découpage) ----------------------------
     zs = zone_dominante(session, pid)
     racc["zone"] = {"code": zs.zone, "famille": zs.zone_fam, "a_cheval": zs.a_cheval}
+    work_zone = zs.zone            # zone dont on lit les règles (réassignée si découpage)
+    mz_sub_geom_wkt: Optional[str] = None      # morceau constructible (2975) à classer
+    mz_extra_neighbors: list[str] = []         # parties A/N (2975) = voisins de la coupure interne
     if zs.a_cheval:
-        blocking.append("parcelle à cheval sur ≥ 2 zones PLU (règle non unique)")
-    if not zs.zone:
+        cons, noncons, bandes = _multizone_split(session, pid)
+        racc["multizone"] = {"constructibles": [(c["code"], c["pct"]) for c in cons],
+                             "non_constructibles": [(c["code"], c["pct"]) for c in noncons],
+                             "bandes_ignorees": bandes}
+        if not cons:
+            blocking.append("parcelle entièrement en zone non constructible (A/N)")
+        elif len(cons) >= 2:
+            # ≥ 2 zones constructibles distinctes = découpage multi-CES → hors GABARIT-4
+            blocking.append("parcelle sur ≥ 2 zones constructibles distinctes ("
+                            + ", ".join(c["code"] for c in cons) + ") : découpage multi-CES non servi")
+        elif not cons[0]["gj"] or not cons[0]["wkt"]:
+            blocking.append("découpage multi-zones : géométrie du morceau constructible indisponible")
+        else:
+            # une seule zone constructible : le gabarit est calculé sur CE morceau (la/les partie(s)
+            # A/N non constructibles sont hors du morceau et deviennent des voisins de la coupure).
+            work_zone = cons[0]["code"]
+            mz_sub_geom_wkt = cons[0]["wkt"]
+            geom = cons[0]["gj"]                 # contour = partie constructible
+            surface = cons[0]["area"]            # surface + plafond calculés sur le morceau
+            mz_extra_neighbors = [c["wkt"] for c in noncons if c["wkt"]]
+            racc["multizone"]["servie_sur"] = f"{work_zone} ({cons[0]['pct']:g} %)"
+            for c in bandes:
+                racc.setdefault("bandes_ignorees", []).append(f"zone {c[0]} non retenue, {c[1]:g} %")
+    if not work_zone:
         blocking.append("zone PLU indéterminée")
 
     # --- règles PLU via zonage.py (validées-only ; propose = bloquant) --------
-    if zs.zone:
-        zr = resolve_zone(zs.zone, commune)
+    if work_zone:
+        zr = resolve_zone(work_zone, commune)
         if zr is None:
-            blocking.append(f"zone {zs.zone} hors calibrage PLU")
+            blocking.append(f"zone {work_zone} hors calibrage PLU")
         elif getattr(zr, "regle_non_validee", None):
             blocking.append(f"règle PLU non validée (propose) : {zr.regle_non_validee}")
         elif not getattr(zr, "calibree", False):
-            blocking.append(f"PLU non calibré pour la zone {zs.zone} (estimation générique)")
+            blocking.append(f"PLU non calibré pour la zone {work_zone} (estimation générique)")
         else:
             # renvoi de zone (AU→U) : zonage.py résout et cite la zone de rattachement (via_renvoi)
             via_renvoi = getattr(zr, "via_renvoi", None)
             racc["zone"]["via_renvoi"] = via_renvoi
             plu_zone_src = RegulatorySource(
-                document=f"PLU — {commune}", zone=zs.zone,
+                document=f"PLU — {commune}", zone=work_zone,
                 provider=PLU_PROVIDER + (f" · {via_renvoi}" if via_renvoi else ""))
             sources.append(plu_zone_src)
             emp = _num(getattr(zr, "emprise_sol_pct", None))
@@ -189,47 +246,47 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 recul_sep = 0.0
             racc["plu"] = {"emprise_pct": emp, "hauteur_faitage_m": haut, "hauteur_egout_m": egout,
                            "recul_voie_m": recul_voie, "recul_sep_m": recul_sep, "source": plu_zone_src.document}
-            silence_total = (not regles_zone(commune, zs.zone) and not via_renvoi
+            silence_total = (not regles_zone(commune, work_zone) and not via_renvoi
                              and emp is None and haut is None and recul_voie is None and recul_sep is None)
             if silence_total:
                 # zone SANS règles d'implantation propres et sans renvoi résolu (ex. Le Port Uv —
                 # destinations réglées, forme bâtie non réglée). Pas de recul → gabarit incalculable :
                 # bloc honnête, distinct de « CES non validée ».
-                blocking.append(f"zone {zs.zone} sans règles d'implantation propres : le règlement ne "
+                blocking.append(f"zone {work_zone} sans règles d'implantation propres : le règlement ne "
                                 "fixe ni recul, ni hauteur, ni emprise (renvoi non résolu ou silence total)")
             else:
                 if emp is not None:
-                    max_footprint = MaxFootprint(ruleId=f"{zs.zone}-emprise", percent=emp,
+                    max_footprint = MaxFootprint(ruleId=f"{work_zone}-emprise", percent=emp,
                                                  status="integrated", source=plu_zone_src)
-                    applicable.append(ApplicableRule(id=f"{zs.zone}-emprise", label="Emprise maximale",
+                    applicable.append(ApplicableRule(id=f"{work_zone}-emprise", label="Emprise maximale",
                                                      category="maxFootprint", integrationStatus="integrated",
                                                      detail=f"{emp:g} %", source=plu_zone_src))
-                elif _feuille_absente(commune, zs.zone, "emprise_sol", "ces"):
+                elif _feuille_absente(commune, work_zone, "emprise_sol", "ces"):
                     # silence prouvé du règlement : servi « non réglementé » (donnée sourcée, CDC §3)
-                    max_footprint = MaxFootprint(ruleId=f"{zs.zone}-emprise", percent=None,
+                    max_footprint = MaxFootprint(ruleId=f"{work_zone}-emprise", percent=None,
                                                  status="absent", source=plu_zone_src)
                     applicable.append(ApplicableRule(
-                        id=f"{zs.zone}-emprise", label="Emprise au sol", category="maxFootprint",
+                        id=f"{work_zone}-emprise", label="Emprise au sol", category="maxFootprint",
                         integrationStatus="integrated",
-                        detail=f"non réglementée — PLU {commune} zone {zs.zone} : silence du règlement",
+                        detail=f"non réglementée — PLU {commune} zone {work_zone} : silence du règlement",
                         source=plu_zone_src))
                     racc.setdefault("silences", []).append("emprise_sol.ces")
                 else:
                     blocking.append("emprise (CES) non réglementée / non validée")
                 if haut is not None:
-                    max_height = MaxHeight(ruleId=f"{zs.zone}-hauteur", meters=haut,
+                    max_height = MaxHeight(ruleId=f"{work_zone}-hauteur", meters=haut,
                                            status="integrated", source=plu_zone_src)
-                    applicable.append(ApplicableRule(id=f"{zs.zone}-hauteur", label="Hauteur maximale",
+                    applicable.append(ApplicableRule(id=f"{work_zone}-hauteur", label="Hauteur maximale",
                                                      category="maxHeight", integrationStatus="integrated",
                                                      detail=f"{haut:g} m", source=plu_zone_src))
-                elif _feuille_forme_hors_schema(commune, zs.zone, "hauteur", "faitage", "m"):
+                elif _feuille_forme_hors_schema(commune, work_zone, "hauteur", "faitage", "m"):
                     # hauteur en PROSPECT (L ≥ H) : validée mais non chiffrée → non intégrée. 2D servie,
                     # 3D indisponible. Aucun calcul de H depuis L (hors mandat).
-                    cit = _feuille_citation(commune, zs.zone, "hauteur", "faitage")
-                    max_height = MaxHeight(ruleId=f"{zs.zone}-hauteur", meters=None,
+                    cit = _feuille_citation(commune, work_zone, "hauteur", "faitage")
+                    max_height = MaxHeight(ruleId=f"{work_zone}-hauteur", meters=None,
                                            status="not_integrated", source=plu_zone_src)
                     applicable.append(ApplicableRule(
-                        id=f"{zs.zone}-hauteur", label="Hauteur réglementaire (prospect L ≥ H)",
+                        id=f"{work_zone}-hauteur", label="Hauteur réglementaire (prospect L ≥ H)",
                         category="maxHeight", integrationStatus="not_integrated",
                         detail=f"non chiffrée — {cit}" if cit else "non chiffrée (prospect L ≥ H)",
                         source=plu_zone_src))
@@ -275,22 +332,24 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     # --- citation PLU retraits.voie : couvre-t-elle « voies ET emprises publiques » / voies privées ?
     emprises_publiques = voies_privees = False
     voie_article = voie_citation = ""
-    if zs.zone and not blocking:
-        emprises_publiques, voies_privees, voie_article, voie_citation = _voie_citation_flags(commune, zs.zone)
+    if work_zone and not blocking:
+        emprises_publiques, voies_privees, voie_article, voie_citation = _voie_citation_flags(commune, work_zone)
         racc["citation_voie"] = {"emprises_publiques": emprises_publiques, "voies_privees": voies_privees,
                                  "article": voie_article, "citation": voie_citation}
 
     # --- classification des limites (SERVIE) --------------------------------
     setbacks: list[Setback] = []
     if not blocking:  # n'y toucher que si le PLU est complet et unique
-        lim = classify_parcel_limits(session, pid, emprises_publiques=emprises_publiques)
+        lim = classify_parcel_limits(session, pid, emprises_publiques=emprises_publiques,
+                                     sub_geom_wkt=mz_sub_geom_wkt,
+                                     extra_neighbors_wkt=mz_extra_neighbors or None)
         mill = _bdtopo_millesime(session)
         bdtopo_src = RegulatorySource(
             document="BD TOPO® — troncon_de_route (voirie) + cadastre",
             versionDate=mill, provider=f"LABUSE — adjacence cadastre + BD TOPO {mill}")
         # arête sur domaine public non cadastré, classée voie par la citation « voies et emprises publiques »
         empub_src = RegulatorySource(
-            document=f"Domaine public non cadastré — PLU {commune} {zs.zone} {voie_article}".strip(),
+            document=f"Domaine public non cadastré — PLU {commune} {work_zone} {voie_article}".strip(),
             article=voie_article or None,
             provider=f"LABUSE — cadastre (non cadastré = domaine public) + citation PLU {voie_article}".strip())
 
@@ -318,16 +377,16 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             if recul_sep is not None and any(e.type in ("side", "rear") for e in edges):
                 applicable.append(ApplicableRule(id="limite-sep", label="Limites séparatives",
                     category="setback", integrationStatus="integrated",
-                    detail=f"Recul séparatif {recul_sep:g} m — PLU {commune} {zs.zone} (validé)", source=bdtopo_src))
+                    detail=f"Recul séparatif {recul_sep:g} m — PLU {commune} {work_zone} (validé)", source=bdtopo_src))
             if include_voie and any(e.type == "voie" and e.source_kind == "bdtopo" for e in edges):
                 applicable.append(ApplicableRule(id="limite-voie", label="Recul voie", category="setback",
                     integrationStatus="integrated",
-                    detail=f"Recul voie {recul_voie:g} m — PLU {commune} {zs.zone} (validé)", source=bdtopo_src))
+                    detail=f"Recul voie {recul_voie:g} m — PLU {commune} {work_zone} (validé)", source=bdtopo_src))
             if include_voie and any(e.type == "voie" and e.source_kind == "emprise_publique" for e in edges):
                 applicable.append(ApplicableRule(id="limite-emprise-publique", label="Recul voie (emprise publique)",
                     category="setback", integrationStatus="integrated",
                     detail=f"Recul voie {recul_voie:g} m appliqué au domaine public — « voies et emprises "
-                           f"publiques », PLU {commune} {zs.zone} {voie_article}".strip(), source=empub_src))
+                           f"publiques », PLU {commune} {work_zone} {voie_article}".strip(), source=empub_src))
                 sources.append(empub_src)
 
         if lim is None:
