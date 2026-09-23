@@ -40,6 +40,11 @@ SIMPLIFY_M = 0.05      # ne retire que le bruit GPS sub-décimétrique (jamais u
 CHUNK_M = 3.0          # densification : on classe des tronçons ≤ 3 m par leur MILIEU (évite l'artefact
                        # de coin où un segment ne touche un voisin qu'à son sommet)
 MIN_EDGE_M = 1.0       # run non classé sous ce cumul = négligeable (n'affiche ni ne bloque)
+# GABARIT-6 lot A : une arête « non classée » qui est un simple artefact de numérisation (< MIN_EDGE_M
+# ET < RESIDUAL_MAX_PERIM_FRAC du périmètre de la parcelle) est rattachée à l'arête adjacente la plus
+# longue (héritage type + source), tracée, et cesse de bloquer. Au-delà de 2 % du périmètre (parcelle
+# minuscule), une arête < 1 m reste significative → bloque comme avant.
+RESIDUAL_MAX_PERIM_FRAC = 0.02
 
 MOTIF_NON_QUALIFIEE = "arête sans voie ni voisin cadastré (ravine, littoral ou domaine public non routier)"
 MOTIF_ARETE_COURTE = "arête résiduelle < 1 m, non classable"
@@ -104,6 +109,8 @@ class Edge:
     length_m: float
     motif: Optional[str] = None
     source_kind: Optional[str] = None   # pour 'voie' : 'bdtopo' | 'emprise_publique'
+    ring: Optional[int] = None          # index de l'anneau extérieur (adjacence cyclique par anneau)
+    attached: bool = False              # GABARIT-6 : micro-arête résiduelle rattachée à sa voisine
 
 
 @dataclass
@@ -241,7 +248,7 @@ def classify_edges(
         nonlocal run_pts, run_type, run_motif, run_sk, run_ring
         if run_type and len(run_pts) >= 2:
             line = LineString(run_pts)
-            edges.append(Edge(line, run_type, line.length, run_motif, run_sk))
+            edges.append(Edge(line, run_type, line.length, run_motif, run_sk, ring=run_ring))
         run_pts, run_type, run_motif, run_sk, run_ring = [], None, None, None, None
 
     for ri, seg, t, m, sk in resolved:
@@ -254,13 +261,46 @@ def classify_edges(
             run_motif = run_motif or m
     _flush()
 
-    # un run « non classé » cumulé < min_edge est négligeable → absorbé (reclassé selon le contexte
-    # le plus proche : voie si un voisin voie, sinon side) pour ne pas bloquer sur du bruit résiduel
-    for e in edges:
-        if e.type == "nonclass" and e.length_m < min_edge:
-            e.type = "side"
-            e.motif = None
+    # GABARIT-6 lot A — rattachement des micro-arêtes résiduelles (artefacts de numérisation).
+    _attach_residual_microedges(edges, rings, min_edge=min_edge)
     return edges
+
+
+def _attach_residual_microedges(edges: list[Edge], rings: list, *, min_edge: float,
+                                max_perim_frac: float = RESIDUAL_MAX_PERIM_FRAC) -> int:
+    """Rattache chaque arête « non classée » qui n'est qu'un artefact de numérisation à l'arête
+    ADJACENTE la plus longue du MÊME anneau (adjacence cyclique) : l'arête en hérite le type ET la
+    source, `attached=True` la trace, et elle cesse de bloquer.
+
+    Rattachée SI ET SEULEMENT SI : type == 'nonclass' ET longueur < `min_edge` ET longueur
+    < `max_perim_frac` du périmètre de la parcelle. Une arête < min_edge mais ≥ 2 % du périmètre
+    (parcelle minuscule, l'arête pèse) reste bloquante ; une arête longue non qualifiable aussi.
+    Renvoie le nombre d'arêtes rattachées."""
+    perim = sum(LineString(coords).length for coords in rings) if rings else 0.0
+    if perim <= 0:
+        return 0
+    thr = max_perim_frac * perim
+    by_ring: dict[Optional[int], list[int]] = {}
+    for i, e in enumerate(edges):
+        by_ring.setdefault(e.ring, []).append(i)
+    n_attached = 0
+    for _ring, idxs in by_ring.items():
+        n = len(idxs)
+        if n < 2:               # anneau à une seule arête : rien à quoi rattacher (et length == perim)
+            continue
+        for pos, i in enumerate(idxs):
+            e = edges[i]
+            if e.type != "nonclass" or e.length_m >= min_edge or e.length_m >= thr:
+                continue
+            prev_e = edges[idxs[(pos - 1) % n]]
+            next_e = edges[idxs[(pos + 1) % n]]
+            donor = prev_e if prev_e.length_m >= next_e.length_m else next_e
+            e.type = donor.type
+            e.source_kind = donor.source_kind
+            e.motif = None
+            e.attached = True
+            n_attached += 1
+    return n_attached
 
 
 # --------------------------------------------------------------------------- couche DB
@@ -272,6 +312,7 @@ class LimitesResult:
     non_classees: list[str]           # motifs des arêtes non classées (dédupliqués)
     blocking: Optional[str]           # motif de blocage parcelle, sinon None
     private_road: bool = False        # une parcelle de voie privée collée a été détectée (E2)
+    residual_attached: int = 0        # GABARIT-6 : nb de micro-arêtes résiduelles rattachées
 
 
 def summarize_edges(edges: list[Edge]) -> LimitesResult:
@@ -286,7 +327,8 @@ def summarize_edges(edges: list[Edge]) -> LimitesResult:
         blocking = "Limites de la parcelle non qualifiées (voie / limite séparative) — " + " ; ".join(non_cl)
     elif not has_voie:
         blocking = MOTIF_SANS_FACADE
-    return LimitesResult(edges=edges, has_voie=has_voie, non_classees=non_cl, blocking=blocking)
+    return LimitesResult(edges=edges, has_voie=has_voie, non_classees=non_cl, blocking=blocking,
+                         residual_attached=sum(1 for e in edges if e.attached))
 
 
 def classify_parcel_limits(session, parcel_id: int, *, emprises_publiques: bool = False,

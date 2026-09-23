@@ -10,7 +10,10 @@ from collections import Counter
 from shapely.geometry import LineString, Polygon
 
 from labuse.gabarit.limites import (
+    MIN_EDGE_M,
+    Edge,
     Road,
+    _attach_residual_microedges,
     classify_edges,
     elongation_from_obb,
     is_private_road_parcel,
@@ -179,6 +182,77 @@ def test_voie_privee_non_couverte_bloque():
     priv = Polygon([(0, -8), (20, -8), (20, 0), (0, 0)])
     res = summarize_edges(classify_edges(SQUARE, [], [], private_roads=[priv], voies_privees=False))
     assert res.blocking and "voie privée" in res.blocking
+
+
+# --------------------------------------------------------------- micro-arêtes résiduelles (GABARIT-6)
+
+def _seg(a, b) -> LineString:
+    return LineString([a, b])
+
+
+def test_microarete_helper_rattachee_si_courte_et_sous_2pct():
+    # anneau ~161 m de périmètre (2 % ≈ 3,2 m) ; une arête nonclass de 0,6 m, flanquée d'un côté (10 m)
+    # et d'une voie (40 m) → rattachée à la plus longue voisine (la voie), héritage type + source.
+    rings = [[(0, 0), (40, 0), (40, 40), (0, 40)]]  # périmètre 160
+    edges = [
+        Edge(_seg((0, 0), (40, 0)), "voie", 40.0, None, "bdtopo", ring=0),
+        Edge(_seg((40, 0), (40, 0.6)), "nonclass", 0.6, "arête résiduelle < 1 m, non classable", None, ring=0),
+        Edge(_seg((40, 0.6), (40, 10.6)), "side", 10.0, None, None, ring=0),
+        Edge(_seg((40, 10.6), (0, 40)), "rear", 50.0, None, None, ring=0),
+    ]
+    n = _attach_residual_microedges(edges, rings, min_edge=MIN_EDGE_M)
+    assert n == 1
+    micro = edges[1]
+    assert micro.attached is True and micro.motif is None
+    assert micro.type == "voie" and micro.source_kind == "bdtopo"  # voisine la plus longue = la voie 40 m
+
+
+def test_microarete_helper_bloquante_si_sous_1m_mais_2pct_ou_plus():
+    # parcelle minuscule : périmètre 40 m (2 % = 0,8 m). Une arête de 0,9 m est < 1 m MAIS ≥ 2 % → reste
+    # bloquante (elle pèse sur une petite parcelle), pas un artefact négligeable.
+    rings = [[(0, 0), (10, 0), (10, 10), (0, 10)]]  # périmètre 40
+    edges = [
+        Edge(_seg((0, 0), (10, 0)), "voie", 10.0, None, "bdtopo", ring=0),
+        Edge(_seg((10, 0), (10, 0.9)), "nonclass", 0.9, "arête résiduelle < 1 m, non classable", None, ring=0),
+        Edge(_seg((10, 0.9), (0, 10)), "rear", 20.0, None, None, ring=0),
+    ]
+    n = _attach_residual_microedges(edges, rings, min_edge=MIN_EDGE_M)
+    assert n == 0
+    assert edges[1].type == "nonclass" and edges[1].attached is False
+
+
+def test_microarete_helper_longue_non_qualifiable_toujours_bloquante():
+    # une arête non classée de 10 m (bien > 1 m) n'est pas un artefact → jamais rattachée, bloque.
+    rings = [[(0, 0), (60, 0), (60, 60), (0, 60)]]  # périmètre 240
+    edges = [
+        Edge(_seg((0, 0), (60, 0)), "voie", 60.0, None, "bdtopo", ring=0),
+        Edge(_seg((60, 0), (60, 10)), "nonclass", 10.0, "arête sans voie ni voisin cadastré", None, ring=0),
+        Edge(_seg((60, 10), (0, 60)), "rear", 80.0, None, None, ring=0),
+    ]
+    n = _attach_residual_microedges(edges, rings, min_edge=MIN_EDGE_M)
+    assert n == 0
+    assert edges[1].type == "nonclass" and edges[1].attached is False
+
+
+def test_microarete_bout_en_bout_ne_bloque_plus():
+    # parcelle 40×40 desservie (route en bas), voisins réels à gauche/droite/haut. Un « mordu » de
+    # numérisation de 0,6 m sur le côté droit crée une arête nonclass isolée entre deux séparatives :
+    # AVANT (absorption) comme APRÈS elle ne doit pas bloquer, et APRÈS elle est TRACÉE (attached).
+    parcel = Polygon([(0, 0), (40, 0),
+                      (40, 19.7), (39.4, 19.7), (39.4, 20.3), (40, 20.3),   # mordu vers l'intérieur
+                      (40, 40), (0, 40)])
+    road = Road(LineString([(-5, -3), (45, -3)]), None)   # voie en bas
+    nbrs = [
+        (Polygon([(40, 0), (48, 0), (48, 40), (40, 40)]), False),      # droite (le mordu s'en écarte)
+        (Polygon([(-8, 0), (0, 0), (0, 40), (-8, 40)]), False),        # gauche
+        (Polygon([(0, 40), (40, 40), (40, 48), (0, 48)]), False),      # haut
+    ]
+    edges = classify_edges(parcel, nbrs, [road])
+    res = summarize_edges(edges)
+    assert res.blocking is None                     # servie : la micro-arête ne bloque pas
+    assert res.residual_attached >= 1               # tracée, pas silencieuse
+    assert not any(e.type == "nonclass" for e in edges)
+    assert any(e.attached for e in edges)
 
 
 def test_voie_privee_ignoree_si_facade_publique():
