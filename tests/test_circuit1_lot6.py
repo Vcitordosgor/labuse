@@ -51,6 +51,56 @@ def test_66_verdict_nouvelle_avec_preuve_datee(db_session, source_test):
     assert n == 1
 
 
+def test_p5_json_apres_prose_avec_accolade():
+    """CIRCUIT-P5 — la prose du modèle contient une accolade ({siren}) AVANT le vrai bloc JSON :
+    le parseur robuste retrouve l'objet à `verdict` (fini le « JSON invalide » alors que l'agent
+    AVAIT trouvé la réponse — le cas réel d'INPI RNE)."""
+    brut = ("Voici mon analyse. L'endpoint /api/companies/{siren} est en open data.\n"
+            '```json\n{"verdict": "a_jour", "version_trouvee": "2.0", "date_publication": "2024-01",'
+            ' "preuve": {"url": "https://inpi.fr", "extrait": "Documentation API 2.0 publiée le 15 janvier 2024"}}\n```')
+    rapport, raison = agent_source._valider(brut)
+    assert rapport["verdict"] == "a_jour" and raison is None
+    assert rapport["version_trouvee"] == "2.0"
+
+
+def test_p5_a_jour_enregistre_le_controle(db_session, source_test):
+    """CIRCUIT-P5 — un verdict `a_jour` (avec preuve datée) ENREGISTRE le contrôle : la veille porte
+    dernier_passage_at (la date du contrôle) + dernier_statut='ok' → la source passe « à jour »."""
+    db_session.execute(text("UPDATE source_veille SET dernier_passage_at = NULL WHERE source_id = :i"),
+                       {"i": source_test})
+    r = agent_source.lancer_agent(db_session, source_test, par="test", appel=_fixture({
+        "verdict": "a_jour", "version_trouvee": "2026-07", "date_publication": "2026-07-01",
+        "preuve": {"url": "https://prod.example",
+                   "extrait": "Dernier millésime : 2026-07, publié le 1er juillet 2026."},
+        "cherche": ["page des millésimes"], "sonde_proposee": None, "page_js": "non"}))
+    assert r["verdict"] == "a_jour" and r["raison_forcage"] is None
+    v = db_session.execute(text(
+        "SELECT dernier_statut, dernier_passage_at FROM source_veille WHERE source_id = :i"),
+        {"i": source_test}).mappings().first()
+    assert v["dernier_statut"] == "ok" and v["dernier_passage_at"] is not None
+
+
+def test_p5_a_jour_cree_la_veille_pour_source_sans_sonde(db_session):
+    """CIRCUIT-P5 — une source SANS ligne de veille (jamais sondée) : l'agent CRÉE la ligne
+    (methode 'agent') pour rendre son contrôle visible → « à jour »."""
+    sid = db_session.execute(text(
+        "INSERT INTO data_sources (name, status, provider, source_millesime) "
+        "VALUES (:n, 'connecte', 'Test SA', '2025') RETURNING id"),
+        {"n": f"Source sans veille {uuid.uuid4().hex[:6]}"}).scalar()
+    assert db_session.execute(text(
+        "SELECT count(*) FROM source_veille WHERE source_id = :i"), {"i": sid}).scalar() == 0
+    r = agent_source.lancer_agent(db_session, sid, par="test", appel=_fixture({
+        "verdict": "a_jour", "version_trouvee": "2025", "date_publication": "2025-01-01",
+        "preuve": {"url": "https://prod.example",
+                   "extrait": "Version 2025 publiée le 1er janvier 2025."},
+        "cherche": ["catalogue"], "sonde_proposee": None, "page_js": "non"}))
+    assert r["verdict"] == "a_jour"
+    v = db_session.execute(text(
+        "SELECT methode, dernier_statut, dernier_passage_at FROM source_veille WHERE source_id = :i"),
+        {"i": sid}).mappings().first()
+    assert v and v["methode"] == "agent" and v["dernier_statut"] == "ok" and v["dernier_passage_at"] is not None
+
+
 def test_66_page_sans_date_force_introuvable(db_session, source_test):
     """LA règle 6.2 : `a_jour` sans extrait daté → verdict FORCÉ à introuvable, raison écrite."""
     r = agent_source.lancer_agent(db_session, source_test, par="test", appel=_fixture({
