@@ -153,6 +153,56 @@ def ingest_reglement(session: Session, *, insee: str, commune: str, idurba: str,
             "doutes": n_doute, "pagination_ambigue": ambigu}
 
 
+def purge_commune_extraits(session: Session, insee: str, *, commit: bool = False,
+                           log=lambda *_: None) -> int:
+    """Purge TOUS les extraits d'une commune, par INSEE (quel que soit le nom du document).
+
+    Corrige l'orphelinage au bump de millésime : le nom du document est daté (`..._YYYYMMDD.pdf`),
+    donc il CHANGE d'un millésime à l'autre. Purger par (insee, document) — ce que fait
+    `ingest_reglement` — laissait alors l'ancien millésime en base (orphelins). On purge ici par le
+    seul INSEE, stable. GARDE-FOU 974 : refuse tout INSEE hors Réunion pour qu'une erreur d'appel ne
+    puisse jamais déclencher un DELETE de masse. Ne committe pas par défaut (appelé dans une
+    transaction unique par `ingest_commune_reglements`)."""
+    if not insee or not str(insee).startswith("974"):
+        raise ValueError(f"purge_commune_extraits : INSEE hors 974 refusé ({insee!r}) — garde-fou")
+    ensure_ddl(session)
+    res = session.execute(text("DELETE FROM plu_reglement_extrait WHERE insee = :i"), {"i": insee})
+    n = res.rowcount or 0
+    if commit:
+        session.commit()
+    log(f"  ✓ purge {insee} : {n} extrait(s) supprimé(s)")
+    return n
+
+
+def ingest_commune_reglements(session: Session, *, insee: str, commune: str, idurba: str,
+                              millesime: str | None, documents: list[dict], source_url: str,
+                              fetched_at: str | None, commit: bool = True,
+                              log=lambda *_: None) -> dict:
+    """Ré-ingère TOUS les documents (multi-volume) d'une commune en UNE transaction.
+
+    Purge par INSEE UNE seule fois (cf. `purge_commune_extraits` : ferme l'orphelinage au bump de
+    millésime), PUIS insère chaque volume dans l'ordre fourni. `documents` = liste de
+    `{"name": <nom du document>, "path": <chemin PDF>}`. Chaque insertion réutilise `ingest_reglement`
+    (parseur unique) avec `commit=False` : sa purge (insee, document) interne devient un no-op (tout a
+    déjà été purgé par INSEE) et tout est validé d'un bloc à la fin. Ainsi le bump de millésime ne
+    laisse jamais d'ancien document derrière lui, et l'ingestion multi-volume est conservée."""
+    ensure_ddl(session)
+    purge_commune_extraits(session, insee, commit=False, log=log)
+    resultats = []
+    for d in documents:
+        r = ingest_reglement(
+            session, insee=insee, commune=commune, idurba=idurba, millesime=millesime,
+            document=d["name"], pdf_path=d["path"], source_url=source_url,
+            fetched_at=fetched_at, commit=False, log=log)
+        resultats.append(r)
+    if commit:
+        session.commit()
+    total = sum(r["extraits"] for r in resultats)
+    log(f"  ✓ {insee} {commune} : {len(documents)} document(s), {total} extrait(s) (1 transaction)")
+    return {"insee": insee, "commune": commune, "documents": len(documents),
+            "extraits": total, "detail": resultats}
+
+
 def search_reglement(session: Session, q: str, insee: str | None = None, limit: int = 25,
                      zone: str | None = None) -> list[dict]:
     """Recherche full-text (french) qui rend le VERBATIM SOURCÉ complet + la référence + le lien.
