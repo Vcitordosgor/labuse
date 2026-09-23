@@ -165,7 +165,9 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
   // les 6 tuiles → l'outil réel, pré-rempli avec la parcelle rattachée (mappings vérifiés, cf. rapport)
   const outil = (fn: () => void) => { if (idu) fn() }
   const tuiles = idu ? [
-    { label: 'Étudier le bien', ico: <IcoEtude />, go: () => { const s = st(); s.setCalcPrefill(idu); s.setModule('scoreur-adresse') } },
+    // ETUDIER-BIEN-2 (Lot C) — « Étudier un bien » supprimé : l'étude complète = la FICHE parcelle
+    // (l'entrée par adresse/parcelle passe désormais par elle). On ouvre donc la fiche sur la parcelle.
+    { label: 'Étudier le bien', ico: <IcoEtude />, go: () => { const s = st(); s.setView('cartes'); s.select(idu) } },
     { label: 'Remonter le temps', ico: <IcoTemps />, go: () => { const s = st(); if (b.coords) s.setFlyTo({ center: b.coords as [number, number], zoom: 16 }); s.setParcelPrefill(idu); s.setModule('temps') } },
     { label: 'Calculette foncière', ico: <IcoCalc />, go: () => { const s = st(); s.setCalcPrefill(idu); s.setModule('calculette-fonciere') } },
     { label: 'Taxe d\'aménagement', ico: <IcoTaxe />, go: () => { const s = st(); s.select(idu); s.setModule('taxe-amenagement') } },

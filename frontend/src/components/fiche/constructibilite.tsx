@@ -3,7 +3,7 @@
  * La section « Constructibilité » + toute sa machinerie (capacité, calcul tracé, bilan, Mode B,
  * RTAA, calculette de charge foncière, potentiel de transformation). Extrait de Fiche.tsx.
  * Cycle-free : n'importe QUE des primitives + blocs feuilles, jamais Fiche.tsx.
- * Fiche.tsx ré-exporte Calculette + FaisabiliteTab (consommés par EtudierBien / M22Programme / test).
+ * Fiche.tsx ré-exporte Calculette + FaisabiliteTab (consommés par CalculetteFonciere / M22Programme).
  */
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'

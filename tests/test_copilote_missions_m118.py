@@ -47,11 +47,12 @@ def test_recherche_sans_commune_ouvre_la_carte_ile(monkeypatch):
 
 
 def test_verification_devient_passerelle_etudier(monkeypatch):
-    # COPILOTE-2 lot 4 — VERIFICATION → passerelle « Étudier un bien » préremplie, plus un run/avis.
+    # COPILOTE-2 lot 4 + ETUDIER-BIEN-2 Lot C — VERIFICATION → passerelle vers la Calculette foncière
+    # (« Étudier un bien » supprimé), préremplie, plus un run/avis.
     _force(monkeypatch, "VERIFICATION", idu="97415000AC0016")
     r = answering.answer(None, "cette parcelle vaut-elle 320000 € ?")
     assert r.get("refus") is None
-    assert r.get("porte") == "scoreur-adresse" and r.get("prefill_idu") == "97415000AC0016"
+    assert r.get("porte") == "calculette-fonciere" and r.get("prefill_idu") == "97415000AC0016"
 
 
 def test_outil_courrier_voie_courriers(monkeypatch):

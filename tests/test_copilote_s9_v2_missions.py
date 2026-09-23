@@ -30,14 +30,15 @@ def test_recherche_ouvre_la_carte_filtree(monkeypatch):
     assert "je ne produis pas la sélection" in r["text"].lower()
 
 
-# ── VERIFICATION : passerelle vers « Étudier un bien » préremplie de l'IDU, jamais un avis calculé ──
+# ── VERIFICATION : passerelle vers la Calculette foncière préremplie de l'IDU (ETUDIER-BIEN-2 Lot C :
+# « Étudier un bien » supprimé → l'évaluation face au prix = la Calculette foncière) ──
 def test_verification_ouvre_etudier_un_bien(monkeypatch):
     _force(monkeypatch, "VERIFICATION", idu="97415000AC0016", prix_eur=320000)
     r = answering.answer(None, "vérifie 97415000AC0016 à 320000 €", confirme=True)
     assert r.get("refus") is None
-    assert r.get("porte") == "scoreur-adresse"
+    assert r.get("porte") == "calculette-fonciere"
     assert r.get("prefill_idu") == "97415000AC0016"
-    assert "je ne le calcule pas" in r["text"].lower()
+    assert "calculette foncière" in r["text"].lower()
     assert not r.get("sources")                        # aucune donnée servie : c'est une porte
 
 

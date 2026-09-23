@@ -200,13 +200,14 @@ def test_q11_programme_ouvre_la_faisabilite(monkeypatch):
 
 
 def test_q13_verification_passerelle_etudier(monkeypatch):
-    """Q13 + COPILOTE-2 lot 4 — « BZ1065 elle vaut quoi » : le run/avis v1 est retiré → passerelle vers
-    « Étudier un bien » préremplie de la parcelle (NOMMÉE), jamais une voie fiche muette ni un run."""
+    """Q13 + COPILOTE-2 lot 4 + ETUDIER-BIEN-2 Lot C — « BZ1065 elle vaut quoi » : le run/avis v1 est
+    retiré → passerelle vers la Calculette foncière (« Étudier un bien » supprimé) préremplie de la
+    parcelle (NOMMÉE), jamais une voie fiche muette ni un run."""
     from labuse.copilote_v2.router import Route
     r = answering._answer_with_route(None, "97411000BZ1065 elle vaut quoi",
                                      Route("VERIFICATION", params={"idu": "97411000BZ1065"}))
     assert r.get("refus") is None
-    assert r.get("porte") == "scoreur-adresse" and r.get("prefill_idu") == "97411000BZ1065"
+    assert r.get("porte") == "calculette-fonciere" and r.get("prefill_idu") == "97411000BZ1065"
     assert "97411000BZ1065" in r["text"]
 
 

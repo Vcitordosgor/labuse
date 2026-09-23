@@ -24,8 +24,9 @@ def test_journal_commune():
 def test_journal_outil():
     rep = {"porte": "programme"}
     assert journal_ligne(rep) == "J'ai ouvert Faisabilité."
-    rep2 = {"porte": "scoreur-adresse", "prefill_idu": "97415000AC0016"}
-    assert journal_ligne(rep2) == "J'ai ouvert Étudier un bien pour la parcelle 97415000AC0016."
+    # ETUDIER-BIEN-2 Lot C — « Étudier un bien » supprimé ; l'évaluation ouvre la Calculette foncière.
+    rep2 = {"porte": "calculette-fonciere", "prefill_idu": "97415000AC0016"}
+    assert journal_ligne(rep2) == "J'ai ouvert la Calculette foncière pour la parcelle 97415000AC0016."
 
 
 def test_journal_web():

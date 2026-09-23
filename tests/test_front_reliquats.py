@@ -153,9 +153,11 @@ def test_r3_marqueur_commune_etiquette_vraie():
 # ───────────── R5 — UI des outils O2 (scoreur d'adresse) et O3 (anti-fiche) ─────────────
 
 HEADER = (ROOT / "frontend/src/components/header/Header.tsx").read_text(encoding="utf-8")
-# FUSION (Vic 21/08/2026) — scoreur d'adresse + calculette = « Étudier un bien ». Les anciens composants
-# ScoreurAdresse.tsx / CalculetteFonciere.tsx sont SUPPRIMÉS ; la logique vit dans EtudierBien.tsx.
-ETUDIER = (ROOT / "frontend/src/components/outils/EtudierBien.tsx").read_text(encoding="utf-8")
+# ETUDIER-BIEN-2 (Lot C) — la FUSION « Étudier un bien » (scoreur-adresse + calculette) est DÉFAITE :
+# EtudierBien.tsx est SUPPRIMÉ, ses 3 faits de marché uniques passent dans la §Marché de la fiche
+# (Lot A) et la Calculette foncière (M23) est restaurée en hôte minimal du <Calculette> partagé.
+CALCFONC = (ROOT / "frontend/src/components/outils/CalculetteFonciere.tsx").read_text(encoding="utf-8")
+MARCHE = (ROOT / "frontend/src/components/fiche/marche.tsx").read_text(encoding="utf-8")
 MODULEPANEL = (ROOT / "frontend/src/components/outils/ModulePanel.tsx").read_text(encoding="utf-8")
 FICHE_TSX = FICHE   # RETOURS-11F4 — tout le dossier fiche (découpe en modules par section)
 ANSWERING = (ROOT / "src/labuse/copilote_v2/answering.py").read_text(encoding="utf-8")
@@ -164,69 +166,38 @@ API = (ROOT / "frontend/src/lib/api.ts").read_text(encoding="utf-8")
 REGISTRY = (ROOT / "frontend/src/components/outils/registry.ts").read_text(encoding="utf-8")
 
 
-def test_r5_etudier_trouvable_depuis_les_outils():
-    # Le créneau PHARE O2 est conservé (clé 'scoreur-adresse' inchangée), relabellisé « Étudier un bien ».
-    assert "'scoreur-adresse'" in REGISTRY and "Étudier un bien" in REGISTRY
-    assert "phare: true" in REGISTRY.split("scoreur-adresse")[1][:200]
+def test_etudier_un_bien_supprime_du_menu():
+    # ETUDIER-BIEN-2 (Lot C) — plus d'entrée visible 'scoreur-adresse' au menu, composant supprimé.
+    assert "key: 'scoreur-adresse'" not in REGISTRY                     # plus d'entrée registry (menu)
+    assert not (ROOT / "frontend/src/components/outils/EtudierBien.tsx").exists()
+    assert "': EtudierBien" not in MODULEPANEL                          # plus mappé
+    assert "from './EtudierBien'" not in MODULEPANEL                    # plus importé
 
 
-def test_r5_etudier_champs_et_prix_manuel():
-    # PATRON OMNIBOX (M137) : UN SEUL champ (ParcelInput) accepte adresse OU IDU — plus de 2e champ
-    # IDU séparé. Prix saisi à la main (jamais scrapé). Résultat + porte fiche présents.
-    assert "ParcelInput" in ETUDIER and 'dataAttr="etudier-adresse"' in ETUDIER   # rendu data-etudier-adresse
-    assert "data-etudier-idu" not in ETUDIER                            # champ IDU séparé RETIRÉ (unifié)
-    assert "data-etudier-prix" in ETUDIER and "jamais scrapé" in ETUDIER
-    assert "data-etudier-resultat" in ETUDIER and "data-etudier-fiche" in ETUDIER
-
-
-def test_r5_etudier_constat_nu_sans_verdict_marche():
-    # M128-6-§1.3 TIENT après la fusion : le constat est chiffré NU — AUCUN badge/verdict de marché.
-    # Le badge « repère marché » M137-S reste NON embarqué (ne pas juger à la place du client).
-    assert "data-etudier-constat" in ETUDIER                            # le bloc constat existe
-    # AUCUN badge-verdict de marché — ne doit pas réapparaître (ni ancien nom scoreur, ni nouveau)
-    for v in ("sous_marche", "dans_marche", "sur_marche", "data-scoreur-prix-verdict",
-              "data-etudier-prix-verdict"):
-        assert v not in ETUDIER
-
-
-def test_r5_etudier_referentiel_marche_unique():
-    # Arbitrage fusion : LE référentiel marché = prix terrain nu de zone (data-etudier-terrain-zone).
-    # `score_e.prix_probable` reste vivant côté serveur mais N'EST PLUS AFFICHÉ dans l'outil fusionné.
-    assert "data-etudier-terrain-zone" in ETUDIER
-    assert "prix_probable" not in ETUDIER                               # score_e retiré de la surface UI
-
-
-def test_r5_etudier_deux_marges_chacune_dit_son_referentiel():
-    # REVUE · R9 — MISE À JOUR : le bloc-verdict a été refondu en BASCULE unique
-    # [Calibrées LABUSE | Vos hypothèses] (fini les deux bandeaux empilés + anciens attributs
-    # data-etudier-charge-calibree/marge-calibree). Les deux référentiels sont TOUJOURS dits — seule
-    # la structure a évolué (présentation pure, aucun moteur touché, cf. R3). On vérifie l'état ACTUEL.
-    # TESTS-1 lot 2 (B) — la phrase « la charge calibrée » a disparu du .tsx avec la refonte du
-    # verdict unique (RETOURS-12 O2 9c9c27cb puis RECETTE-1 0848ebf9) : le référentiel est dit
-    # PAR MODE, au-dessus de la charge affichée (« Hypothèses calibrées LABUSE » / « Selon vos
-    # hypothèses », EtudierBien.tsx:238). Même garantie, libellés actuels.
-    assert "Calibrées LABUSE" in ETUDIER and "Vos hypothèses" in ETUDIER       # la bascule des 2 référentiels
-    assert "Hypothèses calibrées LABUSE" in ETUDIER and "Selon vos hypothèses" in ETUDIER   # chacun DIT son référentiel
-    assert "data-etudier-bascule" in ETUDIER and "charge_calibree" in ETUDIER
-    assert "vos hypothèses" in FICHE_TSX                                       # la calculette réglable (Fiche)
-
-
-def test_r5_etudier_hors_base_honnete():
-    # ok:false → le message honnête de l'API est affiché, jamais un verdict inventé
-    assert "!d.ok" in ETUDIER and "d.message" in ETUDIER
-
-
-def test_fusion_deux_cles_resolvent_jamais_404():
-    # PIÈGE DES RETRAITS : les DEUX clés doivent résoudre le composant fusionné (aucun 404 sur une
-    # porte / un deep-link / le copilote). Créneau phare O2 conservé, clé M23 ALIASÉE (hidden).
-    assert "'scoreur-adresse': EtudierBien" in MODULEPANEL
-    assert "'calculette-fonciere': EtudierBien" in MODULEPANEL
-    # registre : M23 aliasée = hidden (résout l'en-tête, pas de carte en double)
+def test_calculette_fonciere_restauree_et_resolvante():
+    # La clé 'calculette-fonciere' reste VIVANTE (hidden), hôte minimal du <Calculette> partagé —
+    # ouverte par la fiche §11 / RadarView / copilote via calcPrefill (jamais un 404).
+    assert "'calculette-fonciere': CalculetteFonciere" in MODULEPANEL
     assert "hidden: true" in REGISTRY.split("calculette-fonciere")[1][:200]
-    # la porte fiche ouvre toujours l'outil pré-rempli via la clé M23 (alias) — jamais un 404
+    assert "Calculette" in CALCFONC and "ParcelInput" in CALCFONC and "calcPrefill" in CALCFONC
     assert "setModule('calculette-fonciere')" in FICHE_TSX and "setCalcPrefill(idu)" in FICHE_TSX
-    # le copilote route toujours les deux intentions (charge foncière → calculette-fonciere ; scorer → scoreur-adresse)
-    assert "\"calculette-fonciere\"" in ANSWERING and "\"scoreur-adresse\"" in ANSWERING
+
+
+def test_copilote_retargette_vers_calculette_fonciere():
+    # ETUDIER-BIEN-2 (Lot C) — le copilote route « évaluer/scorer » vers calculette-fonciere (module
+    # vivant), plus vers scoreur-adresse (module retiré = lien mort proscrit, cf. doctrine answering).
+    assert '"calculette-fonciere"' in ANSWERING
+    assert 'porte="scoreur-adresse"' not in ANSWERING
+
+
+def test_marche_fiche_porte_les_3_faits_uniques():
+    # Lot A — les 3 faits uniques de l'ex-outil vivent dans la §Marché de la fiche (via /outils/mon-secteur).
+    assert "getMonSecteur" in MARCHE and "'mon-secteur'" in MARCHE
+    assert "data-secteur-ecart-commune" in MARCHE                       # écart secteur ↔ commune
+    assert "data-secteur-par-type" in MARCHE                            # médiane par type
+    assert "data-secteur-radar-rayon" in MARCHE                         # annonces Radar dans le rayon
+    # Radar : les deux libellés RESTENT distincts (Lot B) — « cette parcelle » vs « autour (rayon) »
+    assert "Annonces Radar — cette parcelle" in MARCHE and "Annonces Radar — autour" in MARCHE
 
 
 def test_omnibox_parcelinput_chemin_unique():
@@ -249,7 +220,7 @@ def test_omnibox_parcelinput_chemin_unique():
     # 2) ParcelInput = AddressAutocomplete + aiguillage estIdu sur Entrée — le composant unique
     assert "AddressAutocomplete" in PI and "estIdu" in PI and "onEnterRaw" in PI
     # 3) chaque outil à saisie de parcelle passe par ParcelInput (plus de champ IDU séparé / onglet)
-    assert "ParcelInput" in ETUDIER                       # Étudier un bien
+    assert "ParcelInput" in CALCFONC                      # Calculette foncière (ex-« Étudier un bien »)
     assert "ParcelInput" in PP and "<input" not in PP     # ParcelPicker (→ Faisabilité M22) : plus d'input brut
     assert 'dataAttr="o5-idu"' in O5 and "<input data-o5-idu" not in O5   # Risques « une parcelle »
     assert 'dataAttr="courrier-idu"' in MODULEPANEL and 'dataAttr="temps-idu"' in MODULEPANEL  # Courrier + Remonter le temps
@@ -271,7 +242,9 @@ def test_r5_pourquoi_pas_hierarchise_et_source():
 
 
 def test_r5_api_helpers():
-    assert "scoreurAdresse" in API and "/scoreur-adresse" in API and "prix_demande_eur" in API
+    # ETUDIER-BIEN-2 (Lot C) — le binding front `scoreurAdresse` (+ type ScoreurResult) est RETIRÉ
+    # avec l'outil ; l'endpoint POST /scoreur-adresse reste dormant côté serveur (aucun appelant front).
+    assert "export const scoreurAdresse" not in API and "export interface ScoreurResult" not in API
     assert "getAntiFiche" in API and "/anti-fiche/" in API
 
 

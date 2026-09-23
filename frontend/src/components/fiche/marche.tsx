@@ -10,7 +10,7 @@
  * Auto-suffisante : re-dérive dvfSecteur + marcheLines depuis `f` ; bilan via queryKey ['bilan',idu].
  */
 import { useQuery } from '@tanstack/react-query'
-import { getFaisabilite, radarClic } from '../../lib/api'
+import { getFaisabilite, getMonSecteur, radarClic, type LocalMed } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import type { Fiche } from '../../lib/types'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
@@ -59,6 +59,20 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
   const marcheLines = f.lines.filter((l) => l.onglet === 'marche' && l.layer !== 'amenites' && l.layer !== 'sitadel')
   const mb = faisa.data?.marche
   const horizon = mb?.fraicheur?.horizon_libelle || mb?.dvf_couverture?.libelle
+  // ETUDIER-BIEN-2 Lot A — les 3 faits UNIQUES de l'outil « Étudier un bien » (supprimé, cf.
+  // ETUDIER-BIEN-1) rapatriés ICI, servis par le MÊME endpoint /outils/mon-secteur (rendu, pas
+  // nouveau calcul) : écart secteur ↔ commune entière, médiane par type au rayon, annonces Radar
+  // dans le rayon. Le terrain nu par type reste la médiane de SECTION (`dvfSecteur`, valeur foi de
+  // la fiche) — jamais le rayon (ETUDIER-BIEN-2 Lot B tranche la divergence terrain nu).
+  const secteurQ = useQuery({ queryKey: ['mon-secteur', idu], queryFn: () => getMonSecteur(idu), enabled: !!idu })
+  const ms = secteurQ.data
+  const ec = ms?.secteur_bati?.ecart_commune
+  // médiane locale par type : sous le seuil (n < 5) → « — », jamais un chiffre inventé.
+  const lm = (m: LocalMed | null): LocalMed | null => (m && m.n != null && m.n >= 5) ? m : null
+  const parTypeMaison = lm(ms?.par_type?.maison ?? null)
+  const parTypeAppart = lm(ms?.par_type?.appartement ?? null)
+  const parTypeTerrain = (dvfSecteur && dvfSecteur.n_ventes != null && dvfSecteur.n_ventes >= 5 && dvfSecteur.mediane_prix_m2 != null) ? dvfSecteur : null
+  const annoncesRayon = ms?.annonces_radar ?? []
   const contexte = (dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} vente${dvfSecteur.n_ventes > 1 ? 's' : ''} secteur` : 'comparables DVF') + (horizon ? ` · DVF — ${horizon}` : '')
   return (
     <RefDrawer id="marche" icon={IC.marche} name="Marché"
@@ -78,6 +92,17 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
         <div data-prix-sortie>
           <FactRow label="Prix de sortie — bâti secteur" value={<>{fmtInt(Number(mb.median))} <small>€/m²</small></>} />
           <FactNote>{mb.type_prix}, {mb.n} ventes ≤ {Math.round(mb.radius_m)} m (rayon adaptatif) · fiabilité {mb.fiabilite}{mb.tendance ? ` · tendance ${mb.tendance}` : ''}{horizon ? ` · DVF — ${horizon}` : ''}</FactNote>
+        </div>
+      )}
+      {/* ETUDIER-BIEN-2 Lot A (1/3) — ÉCART secteur ↔ commune entière : le secteur (rayon serré)
+          n'est pas la commune. Fait unique de l'ex-outil, servi par /outils/mon-secteur (même moteur
+          `sector_price`). Absent si l'échantillon secteur ne tient pas le seuil. */}
+      {ec && (
+        <div data-secteur-ecart-commune>
+          <FactRow label="Secteur vs commune entière"
+            value={ec.ecart_pct != null ? <>{ec.ecart_pct > 0 ? '+' : ''}{ec.ecart_pct} <small>%</small></> : '—'}
+            tone={ec.ecart_pct != null ? undefined : 'mute'} />
+          <FactNote>{ec.phrase}{ec.ecart_pct != null ? ` — le secteur est ${ec.ecart_pct < 0 ? 'sous' : 'au-dessus de'} la commune` : ''}.</FactNote>
         </div>
       )}
       {/* RECETTE-6 (C2) — « Valeur au prix du secteur » RAPATRIÉE ici depuis « Le reste des faits »
@@ -102,6 +127,28 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
             <FactNote>{nv.grandeur} · {nv.reserve}</FactNote>
           </div>
         ) : null })()}
+      {/* ETUDIER-BIEN-2 Lot A (2/3) — MÉDIANE PAR TYPE (secteur) : maison / appartement au RAYON
+          adaptatif (médiane locale mono-type, fait unique de l'ex-outil, via /outils/mon-secteur) ;
+          terrain nu = médiane de la SECTION cadastrale (`dvfSecteur`, la valeur foi de la fiche —
+          jamais le rayon, cf. Lot B). Sous 5 ventes → « — ». */}
+      {(parTypeMaison || parTypeAppart || parTypeTerrain) && (
+        <div data-secteur-par-type>
+          <GroupLabel>Médiane par type — secteur</GroupLabel>
+          <FactRow label="Maison"
+            value={parTypeMaison ? <>{fmtInt(parTypeMaison.eur_m2)} <small>€/m²</small></> : '—'}
+            tone={parTypeMaison ? undefined : 'mute'}
+            src={parTypeMaison ? <>{parTypeMaison.n} ventes{parTypeMaison.rayon_m != null ? ` · ${fmtInt(parTypeMaison.rayon_m)} m` : ''}{parTypeMaison.millesime ? ` · ${parTypeMaison.millesime}` : ''}</> : 'échantillon < 5'} />
+          <FactRow label="Appartement"
+            value={parTypeAppart ? <>{fmtInt(parTypeAppart.eur_m2)} <small>€/m²</small></> : '—'}
+            tone={parTypeAppart ? undefined : 'mute'}
+            src={parTypeAppart ? <>{parTypeAppart.n} ventes{parTypeAppart.rayon_m != null ? ` · ${fmtInt(parTypeAppart.rayon_m)} m` : ''}{parTypeAppart.millesime ? ` · ${parTypeAppart.millesime}` : ''}</> : 'échantillon < 5'} />
+          <FactRow label="Terrain nu"
+            value={parTypeTerrain ? <>{fmtInt(parTypeTerrain.mediane_prix_m2!)} <small>€/m²</small></> : '—'}
+            tone={parTypeTerrain ? undefined : 'mute'}
+            src={parTypeTerrain ? <>{parTypeTerrain.n_ventes} ventes{parTypeTerrain.fenetre ? ` · ${parTypeTerrain.fenetre}` : ''} · section</> : 'échantillon < 5'} />
+          <FactNote>Maison / appartement : médiane locale par type au rayon adaptatif (DVF). Terrain nu : médiane de la section cadastrale — même source que la valeur du secteur ci-dessus.</FactNote>
+        </div>
+      )}
       {/* signal de marché condensé (DVF actes + Sitadel) — jamais un mot nu. */}
       {(() => { const sig = (f as unknown as { market_signal?: Record<string, any> }).market_signal
         return sig?.disponible ? (
@@ -132,7 +179,7 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           lien vers la fiche annonce (interne). Écart demandé/acté pour une annonce en cours + DVF. */}
       {annonces.length > 0 && (
         <div data-radar-annonces>
-          <GroupLabel>Annonces Radar ({annonces.length})</GroupLabel>
+          <GroupLabel>Annonces Radar — cette parcelle ({annonces.length})</GroupLabel>
           <div className="flex flex-col gap-1.5">
             {annonces.map((a) => (
               <div key={a.bien_id} className="text-[12px]">
@@ -164,6 +211,24 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
             ))}
           </div>
           <FactNote>Annonces rattachées à cette parcelle (Radar). Prix demandés — jamais un prix LABUSE.</FactNote>
+        </div>
+      )}
+      {/* ETUDIER-BIEN-2 Lot A (3/3) — ANNONCES RADAR DANS LE RAYON : les annonces actives AUTOUR de
+          la parcelle (rayon 1,5 km), fait unique de l'ex-outil, via /outils/mon-secteur. Libellé
+          DISTINCT du bloc « cette parcelle » ci-dessus (Lot B : jamais confondre les deux portées). */}
+      {annoncesRayon.length > 0 && (
+        <div data-secteur-radar-rayon>
+          <GroupLabel>Annonces Radar — autour (rayon 1,5 km)</GroupLabel>
+          <div className="flex flex-col gap-1">
+            {annoncesRayon.slice(0, 8).map((a, i) => (
+              <div key={i} className="flex items-center gap-2 text-[12px]">
+                <span className="flex-1 truncate text-txt">{a.type_bien} · {a.commune}{a.distance_m != null ? ` · ${a.distance_m} m` : ''}</span>
+                <span className="whitespace-nowrap font-mono text-[11.5px] text-txt-mut">{a.prix != null ? `${fmtInt(a.prix)} €` : '—'}{a.prix_m2_affiche != null ? ` · ${fmtInt(a.prix_m2_affiche)} €/m²` : ''}</span>
+                {a.ecart_pct != null && <span className={`whitespace-nowrap font-mono text-[11.5px] ${a.ecart_pct < 0 ? 'text-mint' : 'text-st-ecartee'}`}>{a.ecart_pct > 0 ? '+' : ''}{a.ecart_pct} %</span>}
+              </div>
+            ))}
+          </div>
+          <FactNote>Annonces actives dans un rayon de 1,5 km autour de la parcelle (Radar) — distinctes des annonces rattachées à cette parcelle ci-dessus. Prix demandés.</FactNote>
         </div>
       )}
       {/* PORTES — Voir marché commune, Taxe, secteur opportunités, Comparer, Remonter le temps. */}

@@ -740,7 +740,8 @@ def verrou_fiche_commune_cartes(db=None) -> ResultatVerrou:
 #: hidden (promesses, barometre, calculette-fonciere, mon-secteur, veille-promoteurs) résolvent vers
 #: l'outil parent — pas de carte propre, donc pas de ligne ici.
 OUTIL_ROBINET_MENU: dict[str, str] = {
-    "scoreur-adresse": "outil_etudier_bien",
+    # ETUDIER-BIEN-2 (Lot C) — « scoreur-adresse » (Étudier un bien) retiré du menu : plus d'entrée
+    # ici (le robinet outil_etudier_bien documente encore l'endpoint dormant /scoreur-adresse).
     "gabarit": "outil_gabarit",   # GABARIT-1 — outil interne (registry hidden:true, flag admin)
     "programme": "outil_faisabilite",
     "taxe-amenagement": "outil_taxe_amenagement",
