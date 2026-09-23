@@ -321,6 +321,23 @@ def get_settings() -> Settings:
     return Settings()
 
 
+def base_url_probleme(url: str | None = None) -> str | None:
+    """COMPTE-3 (Lot 2) — SOURCE UNIQUE de la garde sur l'URL de base des liens de mails.
+
+    Renvoie un message d'avertissement (français, prêt à afficher) si l'URL de base est inutilisable
+    pour un destinataire DISTANT — absente, vide, ou pointant sur la machine locale (`localhost`,
+    `127.0.0.1`, `0.0.0.0`) — sinon `None`. Un envoi depuis un environnement mal configuré (Vic teste
+    en local) n'est JAMAIS bloqué, mais l'écran ne peut pas le cacher : la page Comptes, la fiche,
+    `/readyz` et chaque entrée `mail_queue` lisent tous cette même fonction."""
+    u = ((url if url is not None else get_settings().public_base_url) or "").strip()
+    if not u:
+        return "Aucune URL de base n'est configurée (LABUSE_PUBLIC_BASE_URL) — les liens des mails seront vides."
+    bas = u.lower()
+    if "localhost" in bas or "127.0.0.1" in bas or "0.0.0.0" in bas:
+        return f"Les liens des mails pointent sur {u} — aucun client ne pourra cliquer."
+    return None
+
+
 @lru_cache(maxsize=None)
 def load_yaml_config(name: str) -> dict[str, Any]:
     """Charge un fichier de config YAML par nom (sans extension), avec cache.

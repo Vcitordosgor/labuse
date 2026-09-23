@@ -663,7 +663,12 @@ def admin_licences(request: Request) -> dict:
     with engine().begin() as c:
         actives = _licences_actives(c)            # compteur UNIQUE (même source que le rail/Pilotage)
     n_masques = sum(1 for l in out if l["est_test"])
+    # COMPTE-3 (Lot 2) — garde sur l'URL de base des liens de mails (source unique config.base_url_probleme) :
+    # le front pose un bandeau rouge si les liens ne sont pas cliquables par un client distant.
+    _base = config.get_settings().public_base_url
+    _avert = config.base_url_probleme()
     return {"licences": out, "stripe_configure": bool(stripe.get("configure")),
+            "mail_liens": {"base_url": _base, "ok": _avert is None, "avert": _avert},
             "rapprochement": stripe.get("rapprochement"), "brevo": etat_configuration(),
             # ADMIN-1 (AD4) — libellés servis des mails (fini « Mail 1/2/3 »), source unique = brevo.LIBELLES.
             "mail_libelles": dict(_MAIL_LIBELLES),
@@ -773,6 +778,44 @@ def admin_licence_convertir(compte_id: int, request: Request) -> dict:
     if not n:
         raise HTTPException(404, "Compte introuvable.")
     return {"ok": True, "detail": "Essai levé — le compte paiera via le parcours officiel (login → Checkout)."}
+
+
+class ProlongerIn(BaseModel):
+    # COMPTE-3 (Lot 1) — mêmes bornes que la création d'essai (`EssaiIn.heures`) : 1 h à 30 j.
+    heures: int = Field(ge=1, le=24 * 30)
+
+
+@router.post("/admin/licences/{compte_id}/prolonger")
+def admin_licence_prolonger(compte_id: int, body: ProlongerIn, request: Request) -> dict:
+    """COMPTE-3 (Lot 1) — PROLONGER un essai au-delà de 48 h. La modale expose une date de fin ;
+    le front la convertit en `heures` (1–720, bornes de la création). L'échéance est repoussée à
+    `now() + heures` et le compte repasse ACTIF (un essai expiré/suspendu redevient Actif). Trois
+    preuves : `essai_expire_at` mis à jour, statut recalculé, une ligne de journal « prolongé
+    jusqu'au … par Vic ». Un `heures` hors bornes est refusé en 422 par la validation du corps."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    qui = getattr(request.state, "admin_email", "") or "Vic"
+    with engine().begin() as c:
+        # GARDE : on ne PROLONGE qu'un compte qui a DÉJÀ un essai (essai_expire_at non NULL) et non
+        # résilié — jamais transformer un client payant / un invité en essai par erreur.
+        row = c.execute(text(
+            "UPDATE comptes SET essai_expire_at = now() + (:h || ' hours')::interval,"
+            " statut = 'actif', updated_at = now()"
+            " WHERE id = :c AND statut <> 'resilie' AND essai_expire_at IS NOT NULL"
+            " RETURNING essai_expire_at"),
+            {"h": body.heures, "c": compte_id}).mappings().first()
+        if not row:
+            raise HTTPException(404, "Aucun essai à prolonger (compte introuvable, résilié, ou sans essai).")
+        expire = row["essai_expire_at"]
+        # journal (evenements_compte) : QUI a prolongé et jusqu'à QUAND (heure Réunion).
+        quand = (_fmt_reunion(expire) or "").removeprefix("le ")
+        c.execute(text(
+            "INSERT INTO evenements_compte (type, compte_id, detail) VALUES (:t, :c, :d)"),
+            {"t": "essai_prolonge", "c": compte_id, "d": f"prolongé jusqu'au {quand} par {qui}"})
+    return {"ok": True, "essai_expire_at": expire.isoformat(), "heures": body.heures,
+            "detail": f"Essai prolongé jusqu'au {(_fmt_reunion(expire) or '').removeprefix('le ')}."}
 
 
 class SuspendreIn(BaseModel):
