@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getCommuneAcquisitions, getCommunes, getRadarMarche } from '../../lib/api'
-import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
-import { O6Comparateur } from './blocB'
+import { CommunesLegende, O6Comparateur } from './blocB'
 import { M18 } from './moteurs'
 import { RadarMarche } from './RadarMarche'
 
@@ -19,6 +18,19 @@ import { RadarMarche } from './RadarMarche'
 // droite (setContexteCommune) ; les blocs propres à l'ex-fiche-outil (Marché local, Rareté &
 // ZAN, Vélocité) sont TRANSFÉRÉS dans ContextePanel — aucune donnée perdue, aucun doublon.
 
+// COMMUNE-124 Lot C2 — chevron d'accordéon (même glyphe SVG que ChevronSection, cohérent avec l'app) :
+// FERMÉ pointe à DROITE (▸, rotation −90° du chevron bas), OUVERT pointe en BAS (▾, sans rotation).
+function AcqChevron({ ouvert }: { ouvert: boolean }) {
+  return (
+    <span aria-hidden="true" className="flex h-4 w-4 shrink-0 items-center justify-center text-txt-dim group-hover:text-mint-ink">
+      <svg viewBox="0 0 12 12" className={`h-3 w-3 transition-transform duration-soft ease-cockpit ${ouvert ? '' : '-rotate-90'}`}>
+        <polyline points="2.75,4.25 6,7.75 9.25,4.25" fill="none" stroke="currentColor"
+          strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  )
+}
+
 // ── Vue « Acquisitions récentes » (R3.3) — sélecteur de commune + listing, clic → parcelle ──
 // RETOURS-11 O16 (Vic) : (c) le clic ouvre la fiche parcelle EN SUPERPOSITION (on ne quitte plus
 // l'outil) ; (b) filtre par millésime d'arrivée (2023/2024/2025) sur les lignes chargées ; (d)
@@ -32,6 +44,9 @@ function AcquisitionsRecentes() {
   // « Voir plus — N / M chargés » par 200 (le plafond de 50 en dur est levé côté serveur).
   const [millesimes, setMillesimes] = useState<number[]>([])
   const [limite, setLimite] = useState(200)
+  // COMMUNE-124 Lot C2 — accordéons par personne morale, REPLIÉS par défaut (clé = SIREN ou '∅').
+  const [ouverts, setOuverts] = useState<Set<string>>(new Set())
+  const toggleGroupe = (cle: string) => setOuverts((s) => { const n = new Set(s); n.has(cle) ? n.delete(cle) : n.add(cle); return n })
   const q = useQuery({
     queryKey: ['commune-acquisitions', commune, limite],
     queryFn: () => getCommuneAcquisitions(commune!, limite),
@@ -80,19 +95,28 @@ function AcquisitionsRecentes() {
           sont pas publiées.
         </p>
       )}
-      {/* O16(b) — filtre par millésime d'arrivée (seulement les années effectivement présentes). */}
+      {/* O16(b) — filtre par millésime d'arrivée (seulement les années effectivement présentes).
+          COMMUNE-124 Lot C1 — même grammaire de puces que l'outil Permis (bloc « Filtrer par état ») :
+          actif = aplat vert opaque (`bg-mint text-mint-ink`), survol = aplat vert opaque
+          (`hover:bg-mint hover:text-mint-ink`), et la puce « Toutes » (le neutre) TOUJOURS en DERNIER
+          (règle d'ordre RETOURS-15 U3, comme « Tout » dans Permis). */}
       {commune && anneesDispo.length > 1 && (
         <div data-acq-millesimes className="flex shrink-0 flex-wrap items-center gap-1.5 text-[11px]">
-          <button data-acq-millesime="" onClick={() => setMillesimes([])}
-            className={`rounded-full px-2 py-0.5 ${millesimes.length === 0 ? 'bg-mint-bg text-mint' : 'text-txt-mut hover:text-txt'}`}>
+          {anneesDispo.map((an) => {
+            const actif = millesimes.includes(an)
+            return (
+              <button key={an} data-acq-millesime={an} onClick={() => toggleMillesime(an)} aria-pressed={actif}
+                className={`rounded-md px-2 py-0.5 font-mono transition-colors duration-quick ${
+                  actif ? 'bg-mint text-mint-ink' : 'border border-line-2 text-txt hover:bg-mint hover:text-mint-ink'}`}>
+                {an - 1}→{an}
+              </button>
+            )
+          })}
+          <button data-acq-millesime="" onClick={() => setMillesimes([])} aria-pressed={millesimes.length === 0}
+            className={`rounded-md px-2 py-0.5 transition-colors duration-quick ${
+              millesimes.length === 0 ? 'bg-mint text-mint-ink' : 'border border-line-2 text-txt hover:bg-mint hover:text-mint-ink'}`}>
             Toutes
           </button>
-          {anneesDispo.map((an) => (
-            <button key={an} data-acq-millesime={an} onClick={() => toggleMillesime(an)}
-              className={`rounded-full px-2 py-0.5 font-mono ${millesimes.includes(an) ? 'bg-mint-bg text-mint' : 'text-txt-mut hover:text-txt'}`}>
-              {an - 1}→{an}
-            </button>
-          ))}
         </div>
       )}
       {!commune ? (
@@ -112,37 +136,49 @@ function AcquisitionsRecentes() {
             {millesimes.length ? ` (années filtrées)` : ''} · {groupes.length} acquéreur{groupes.length > 1 ? 's' : ''}
             {d.tronquee ? ` — ${d.n} / ${d.n_total} chargés depuis ${d.depuis_millesime}` : ` depuis ${d.depuis_millesime}`}.
           </p>
-          {groupes.map((g) => (
-            <div key={g.siren ?? '∅'} data-acq-groupe={g.siren ?? ''}
-              className="rounded-md border border-line-2 bg-surface-2 px-2.5 py-1.5">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="min-w-0 truncate text-[11px] font-medium text-txt-hi">
-                  {g.denomination ?? 'Acquéreur non identifié'}
-                  <span className="ml-1 text-[10px] font-normal text-txt-dim">· {g.items.length} parcelle{g.items.length > 1 ? 's' : ''}</span>
-                </span>
-                {g.siren && (
-                  <button data-acq-scan={g.siren} onClick={() => ouvrirScanPatrimoine(g.siren!)}
-                    className="hover-jaune shrink-0 px-1.5 py-0.5 text-[11px]">Scan patrimoine →</button>
+          {/* COMMUNE-124 Lot C2 — une LIGNE par personne morale (« SOCIÉTÉ · N parcelles » + chevron),
+              accordéon REPLIÉ par défaut ; déplier montre la liste de ses parcelles. Chevron : fermé
+              pointe à DROITE (▸), ouvert pointe en BAS (▾). */}
+          {groupes.map((g) => {
+            const cle = g.siren ?? '∅'
+            const ouvert = ouverts.has(cle)
+            return (
+              <div key={cle} data-acq-groupe={g.siren ?? ''}
+                className="rounded-md border border-line-2 bg-surface-2">
+                {/* En-tête cliquable = toute la ligne (bascule l'accordéon). */}
+                <button data-acq-groupe-tete onClick={() => toggleGroupe(cle)} aria-expanded={ouvert}
+                  className="hover-fill group flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors duration-quick">
+                  <AcqChevron ouvert={ouvert} />
+                  <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-txt-hi group-hover:text-mint-ink">
+                    {g.denomination ?? 'Acquéreur non identifié'}
+                    <span className="ml-1 text-[10px] font-normal text-txt-dim group-hover:text-mint-ink/70">· {g.items.length} parcelle{g.items.length > 1 ? 's' : ''}</span>
+                  </span>
+                </button>
+                {ouvert && (
+                  <div className="flex flex-col gap-1 px-2.5 pb-1.5">
+                    {g.siren && (
+                      <button data-acq-scan={g.siren} onClick={() => ouvrirScanPatrimoine(g.siren!)}
+                        className="hover-jaune self-start px-1.5 py-0.5 text-[11px]">Scan patrimoine →</button>
+                    )}
+                    {g.items.map((a) => (
+                      <button key={`${a.idu}-${a.a_millesime}`} data-acq-ligne
+                        onClick={() => ouvrirParcelle(a.idu)}
+                        /* RETOURS-12 T5/O11 — infobulle « Ouvrir la parcelle {idu} » RETIRÉE : le lien
+                           « parcelle {idu} → » est déjà affiché sous la ligne (rien de non-affiché à ajouter). */
+                        className="hover-fill rounded border border-line-2 bg-surface-3 px-2 py-1 text-left text-[11px] leading-snug text-txt transition-colors duration-quick">
+                        {/* RETOURS-12 T6 — .chip chip-mint : le millésime reste lisible (fond sombre, texte mint) quand la ligne passe en vert plein au survol. */}
+                        <span className="chip chip-mint mr-1.5 bg-mint-bg px-1.5 py-0.5 font-mono text-[10px] text-mint">{a.de_millesime}→{a.a_millesime}</span>
+                        <span className="text-txt-mut">{a.denomination_avant ?? '—'}</span>
+                        <span className="mx-1 text-txt-dim">→</span>
+                        <span className="font-medium text-txt-hi">{a.denomination_apres ?? '—'}</span>
+                        <span className="mt-0.5 block font-mono text-[9.5px] text-txt-dim">parcelle {a.idu} →</span>
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
-              <div className="mt-1 flex flex-col gap-1">
-                {g.items.map((a) => (
-                  <button key={`${a.idu}-${a.a_millesime}`} data-acq-ligne
-                    onClick={() => ouvrirParcelle(a.idu)}
-                    /* RETOURS-12 T5/O11 — infobulle « Ouvrir la parcelle {idu} » RETIRÉE : le lien
-                       « parcelle {idu} → » est déjà affiché sous la ligne (rien de non-affiché à ajouter). */
-                    className="hover-fill rounded border border-line-2 bg-surface-3 px-2 py-1 text-left text-[11px] leading-snug text-txt transition-colors duration-quick">
-                    {/* RETOURS-12 T6 — .chip chip-mint : le millésime reste lisible (fond sombre, texte mint) quand la ligne passe en vert plein au survol. */}
-                    <span className="chip chip-mint mr-1.5 bg-mint-bg px-1.5 py-0.5 font-mono text-[10px] text-mint">{a.de_millesime}→{a.a_millesime}</span>
-                    <span className="text-txt-mut">{a.denomination_avant ?? '—'}</span>
-                    <span className="mx-1 text-txt-dim">→</span>
-                    <span className="font-medium text-txt-hi">{a.denomination_apres ?? '—'}</span>
-                    <span className="mt-0.5 block font-mono text-[9.5px] text-txt-dim">parcelle {a.idu} →</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+            )
+          })}
           {/* R14 — « Voir plus — N / M chargés », par 200 (règle des listes longues). */}
           {d.tronquee && (
             <button data-acq-voir-plus onClick={() => setLimite((l) => l + 200)}
@@ -157,31 +193,9 @@ function AcquisitionsRecentes() {
   )
 }
 
-// ── Renvoi « Marché des annonces (Radar) » sous la table comparative ──
-// RETOURS-11 O15(b) (Vic) : le détail PAR COMMUNE (actives / nouveautés / retirées, prix demandé)
-// appartient au RADAR, pas à Communes. Ce bloc ne re-rend donc PLUS les lignes par commune : c'est
-// un simple RENVOI vers le Radar (avec, pour contexte honnête, le volume total du corpus collecté).
-function MarcheAnnoncesRadar() {
-  const setView = useApp((s) => s.setView)
-  const { data: d } = useQuery({ queryKey: ['radar-marche'], queryFn: getRadarMarche, staleTime: 60_000 })
-  if (!d) return null   // bloc non critique : silencieux si la donnée n'est pas là
-  return (
-    <div data-communes-marche-radar className="mt-2 shrink-0 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[12px]">
-      {/* RETOURS-13 R12 — le lien s'aligne sur la LIGNE DE BASE du libellé (items-baseline),
-          plus en haut du bloc pendant que le texte flotte au milieu. */}
-      <div className="flex items-baseline justify-between gap-2">
-        <b className="label-caps text-[10px] tracking-[0.14em] text-txt-dim">Marché des annonces</b>
-        <button data-marche-radar-lien onClick={() => setView('radar')} className="shrink-0 text-[11px] text-mint hover:underline">
-          Ouvrir le Radar →
-        </button>
-      </div>
-      <p className="mt-1 leading-snug text-txt-mut">
-        Le détail par commune (biens en vente, nouveautés, retraits, prix demandés) vit dans le
-        <b className="text-txt"> Radar</b> — <b className="text-txt">{fmtInt(d.corpus_actif)} bien{d.corpus_actif > 1 ? 's' : ''} collecté{d.corpus_actif > 1 ? 's' : ''}</b> à ce jour.
-      </p>
-    </div>
-  )
-}
+// COMMUNE-124 Lot A1 — l'encart « Marché des annonces (Radar) — N biens collectés à ce jour » qui
+// s'affichait sous la table comparative est RETIRÉ : le Radar a déjà SA porte dédiée sur l'écran
+// d'entrée (« Marché des annonces (Radar) »), ce renvoi doublonnait et alourdissait le bas du panneau.
 
 // ── Porte de l'écran d'entrée (gabarit door-hot du tiroir Outils) ──
 function Porte({ dataAttr, titre, sous, onClick }: { dataAttr: string; titre: string; sous: string; onClick: () => void }) {
@@ -215,7 +229,7 @@ export function Communes() {
         {/* RETOURS-14 S1 — DEUX tableaux, DEUX noms (les sources ne se confondent plus) :
             l'évolution = ventes ACTÉES (DVF) + permis, par trimestre ; le Radar = les annonces
             collectées, nommé avec son compteur (la minceur s'explique par la source). */}
-        <Porte dataAttr="evolution" titre="Évolution du marché — ventes actées et permis"
+        <Porte dataAttr="evolution" titre="Évolution du marché : ventes et permis"
           sous="DVF ancien bâti, DVF terrain nu et permis Sitadel — une ligne par trimestre sur 8 trimestres."
           onClick={() => setEvolutionTableOpen(true)} />
         <Porte dataAttr="radar-marche" titre="Marché des annonces (Radar)"
@@ -250,6 +264,9 @@ export function CommunesTablePanel() {
   const setCommunesTableOpen = useApp((s) => s.setCommunesTableOpen)
   const setContexteCommune = useApp((s) => s.setContexteCommune)
   const contexteCommune = useApp((s) => s.contexteCommune)
+  // COMMUNE-124 Lot A2 — la légende (ex-pied permanent) est repliée sous le bouton « Légende » du
+  // coin haut-droit du panneau ; cliquer l'ouvre/le referme (défaut : replié).
+  const [legendeOuverte, setLegendeOuverte] = useState(false)
   if (module !== 'communes' || !communesTableOpen) return null
   // Fiche ouverte : on MASQUE l'overlay (sans démonter O6Comparateur, pour garder son tri) afin que
   // la fiche z-30 soit visible par-dessus la carte. Fermer la fiche la ramène intacte.
@@ -261,12 +278,27 @@ export function CommunesTablePanel() {
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <div>
             <h2 className="text-sm font-medium text-txt-hi">Les 24 communes</h2>
-            <p className="text-[10.5px] text-txt-dim">Comparez-les, puis cliquez pour ouvrir la fiche commune.</p>
+            {/* COMMUNE-124 Lot A3 — accroche UNIQUE (ex-sous-titre + ex-Banner d'O6Comparateur fusionnés). */}
+            <p className="text-[10.5px] text-txt-dim">Comparez les communes, ouvrez leur fiche, triez en cliquant sur leur en-tête.</p>
           </div>
-          <button onClick={() => setCommunesTableOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
+          {/* COMMUNE-124 Lot A2 — « Légende » (haut à droite) : ouvre/referme le bloc légende replié. */}
+          <div className="flex shrink-0 items-center gap-3">
+            <button data-communes-legende-toggle onClick={() => setLegendeOuverte((v) => !v)} aria-expanded={legendeOuverte}
+              className={`rounded-md border px-2 py-1 text-[11px] transition-colors duration-quick ${
+                legendeOuverte ? 'border-mint bg-mint-bg text-mint' : 'border-line-2 text-txt-mut hover:border-mint hover:text-txt'}`}>
+              Légende {legendeOuverte ? '▾' : '▸'}
+            </button>
+            <button onClick={() => setCommunesTableOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
+          </div>
         </div>
-        {/* flex column bornée : O6Comparateur gère son propre scroll interne (rangs) + légende permanente.
-            Pas d'overflow ICI (sinon double scroll + légende poussée hors écran). */}
+        {/* Légende repliable : rendue sous l'en-tête quand ouverte (plus de bloc légende permanent en bas). */}
+        {legendeOuverte && (
+          <div data-communes-legende className="shrink-0 border-b border-line-2 bg-surface-2 px-6 py-2">
+            <CommunesLegende />
+          </div>
+        )}
+        {/* flex column bornée : O6Comparateur gère son propre scroll interne (rangs).
+            Pas d'overflow ICI (sinon double scroll). */}
         {/* RETOURS-13 R11 — marges internes gauche/droite élargies (la ligne survolée ne colle
             plus aux bords de la modale) ; largeur portée à 1240 px. */}
         <div className="flex min-h-0 flex-1 flex-col px-6 py-3">
@@ -274,8 +306,6 @@ export function CommunesTablePanel() {
               en SUPERPOSITION : la table reste montée dessous (on ne la referme plus). Fermer la
               fiche fait donc RÉAPPARAÎTRE le tableau comparatif, sans le reconstruire ni perdre le tri. */}
           <O6Comparateur onSelect={(c) => setContexteCommune(c)} />
-          {/* O2-3 — le marché des annonces (Radar) sous la table, seuil géré côté backend. */}
-          <MarcheAnnoncesRadar />
         </div>
       </div>
     </div>
@@ -329,8 +359,8 @@ export function EvolutionTablePanel() {
       <div className="floating flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <div>
-            {/* RETOURS-14 S1 — le nom dit la SOURCE : ventes actées (DVF) + permis (Sitadel). */}
-            <h2 className="text-sm font-medium text-txt-hi">Évolution du marché — ventes actées et permis</h2>
+            {/* COMMUNE-124 Lot B1 — titre resserré ; la source (DVF + Sitadel) est dite dans le sous-titre. */}
+            <h2 className="text-sm font-medium text-txt-hi">Évolution du marché : ventes et permis</h2>
             <p className="text-[10.5px] text-txt-dim">DVF ancien bâti · DVF terrain nu · permis Sitadel — une ligne par trimestre sur 8 trimestres. Un trimestre sans vente reste « — ».</p>
           </div>
           <button onClick={() => setEvolutionTableOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>

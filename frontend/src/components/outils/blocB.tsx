@@ -169,12 +169,11 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
     return m
   }, [q.data])
   const arrow = (k: string) => (tri.k === k ? (tri.dir === 'desc' ? ' ↓' : ' ↑') : '')
-  // Colonne FLEX : bannière (haut) + rangs qui défilent (milieu, scroll unique) + légende PERMANENTE
-  // (bas, jamais poussée hors écran). Le parent (CommunesTablePanel) donne la hauteur bornée.
+  // COMMUNE-124 Lot A — l'accroche (ex-Banner) est fusionnée dans le sous-titre du panneau ; la légende
+  // (ex-pied permanent) est repliée sous le bouton « Légende » du panneau (CommunesLegende). Ce moteur
+  // ne rend plus QUE le tableau (en-tête collant + rangs qui défilent). Le parent borne la hauteur.
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <Banner>Où investir : les <b>24 communes</b>, tous les indicateurs sourcés d’un coup. Cliquez un
-        <b> en-tête</b> pour trier, une <b>ligne</b> pour ouvrir sa fiche.</Banner>
       {q.isLoading && <Loading accent="mint" label="Chargement des communes…" />}
       {q.isError && <ErrorState className="py-6" message="Comparateur indisponible." retry={() => q.refetch()} />}
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -223,19 +222,26 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
           )
         })}
       </div>
-      {/* LÉGENDE PERMANENTE en pied — plus d'en-tête à deviner. */}
-      <div data-o6-legende className="shrink-0 border-t border-line-2 pt-2 text-[10px] leading-relaxed text-txt-dim">
-        <b className="text-txt-mut">Légende :</b>{' '}
-        <b>Parcelles à potentiel</b> = parcelles promues par LABUSE (palier À suivre) ·{' '}
-        <b>Instruction</b> = délai médian dépôt→autorisation (mois) ·{' '}
-        <b>Permis 5 ans</b> = permis SITADEL cumulés sur 5 ans ·{' '}
-        <b>Déficit SRU</b> = objectif légal − taux de logement social (points) ·{' '}
-        <b>€/m² ancien</b> = médiane DVF commune entière (ventes strictes) ·{' '}
-        <b>€/m² neuf</b> = prix de sortie du neuf ·{' '}
-        <b>€/m² terrain nu</b> = médiane DVF terrain nu par zone PLU (U sinon AU) — le chiffre du promoteur.
-        <span className="mt-0.5 block">Meilleure valeur en <span className="font-semibold text-mint">vert</span> (foncier / rapidité d’instruction).
-          Une donnée absente reste « — », jamais un zéro inventé.</span>
-      </div>
+    </div>
+  )
+}
+
+/** COMMUNE-124 Lot A2 — la légende du tableau des 24 communes, EXTRAITE du pied permanent d'O6Comparateur
+ *  pour vivre sous le bouton « Légende » (haut à droite du panneau CommunesTablePanel), repliée par défaut.
+ *  Même contenu, mêmes clés — seule la localisation change (plus de bloc légende permanent en bas). */
+export function CommunesLegende() {
+  return (
+    <div data-o6-legende className="text-[10px] leading-relaxed text-txt-dim">
+      <b className="text-txt-mut">Légende :</b>{' '}
+      <b>Parcelles à potentiel</b> = parcelles promues par LABUSE (palier À suivre) ·{' '}
+      <b>Instruction</b> = délai médian dépôt→autorisation (mois) ·{' '}
+      <b>Permis 5 ans</b> = permis SITADEL cumulés sur 5 ans ·{' '}
+      <b>Déficit SRU</b> = objectif légal − taux de logement social (points) ·{' '}
+      <b>€/m² ancien</b> = médiane DVF commune entière (ventes strictes) ·{' '}
+      <b>€/m² neuf</b> = prix de sortie du neuf ·{' '}
+      <b>€/m² terrain nu</b> = médiane DVF terrain nu par zone PLU (U sinon AU) — le chiffre du promoteur.
+      <span className="mt-0.5 block">Meilleure valeur en <span className="font-semibold text-mint">vert</span> (foncier / rapidité d’instruction).
+        Une donnée absente reste « — », jamais un zéro inventé.</span>
     </div>
   )
 }

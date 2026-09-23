@@ -3,7 +3,7 @@ import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable P
 import { useEffect, useState } from 'react'
 import { ListPaginationFooter } from '../ListPagination'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-MUSCLER-1 B1 — entrée par parcelle (omnibox)
-import { addProfile, getAssemblageVoisines, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
+import { addProfile, getAssemblageVoisines, getCommunes, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
@@ -602,12 +602,17 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
   )
 }
 
-// RETOURS-11F M13 (O15) — communes triées (article ignoré), option « Île entière » en tête.
-const M18_COMMUNES = trierCommunes(CP_COMMUNES as [string, string][], ([, nom]) => nom)
-
 export function M18() {
   // sélecteur de commune : '' = île entière (défaut, comportement historique).
   const [insee, setInsee] = useState('')
+  // COMMUNE-124 Lot B2 — le sélecteur se source désormais sur `/communes` (INSEE CADASTRAL faisant
+  // autorité, la MÊME clé que le comparateur), et NON plus sur CP_COMMUNES (codes POSTAUX). L'endpoint
+  // baromètre résout le nom par `left(idu,5)=:insee` sur le cadastre : un CP (97440 Saint-André) n'y
+  // matche jamais → le filtre commune devenait inerte et le back servait l'ÎLE ENTIÈRE sous le libellé
+  // de la commune (constat : Saint-André montrait 2 738 €/m² île au lieu de 1 600, terrain vide).
+  // Les 24 INSEE de `/communes` résolvent 24/24 (vérifié) → chaque commune sert enfin SES chiffres.
+  const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
+  const communesTriees = trierCommunes(communes.data ?? [], (c) => c.commune)
   const q = useQuery({ queryKey: ['m18', insee || 'ile'], queryFn: () => motBarometre(insee || null) })
   const d = q.data as Record<string, any> | undefined
   const nr = d?.neuf_reference as Record<string, any> | undefined
@@ -620,7 +625,7 @@ export function M18() {
         <select value={insee} onChange={(e) => setInsee(e.target.value)}
           className="min-h-7 rounded border border-line-2 bg-bg-2 px-2 py-1 text-[11px] text-txt transition-colors duration-quick hover:border-mint/60">
           <option value="">Île entière (24 communes)</option>
-          {M18_COMMUNES.map(([code, nom]) => <option key={code} value={code}>{nom}</option>)}
+          {communesTriees.map((c) => <option key={c.insee} value={c.insee}>{c.commune}</option>)}
         </select>
         <span className="text-[10px] text-txt-dim">{d?.perimetre ?? ''} — 8 derniers trimestres.</span>
       </div>
