@@ -565,6 +565,7 @@ export function M03() {
   const setPermitToOpen = useApp((s) => s.setPermitToOpen)
   const setFlyTo = useApp((s) => s.setFlyTo)
   const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-12 O12.2 — zoom+surbrillance commun (O1)
+  const select = useApp((s) => s.select)   // PERMIS-CHECK-2 pt 2 — lever une fiche stale avant de focus
   useEffect(() => { if (permitToOpen) { setOpen(permitToOpen); setPermitToOpen(null) } }, [permitToOpen, setPermitToOpen])
   // la clé d'ouverture (radar `permis` vs filtre `promesses`) fixe le MODE d'entrée + la fenêtre par
   // défaut ; ensuite le toggle local est maître (un deep-link vers l'autre clé re-cale l'écran).
@@ -673,13 +674,28 @@ export function M03() {
     : (String(i['date'] ?? '') >= cut24 ? 'recent' : 'autre')
   const _feat = (i: Record<string, any>, etat: PermisEtatCarte) => ({ type: 'Feature' as const, geometry: i['geom'],
     properties: { kind: 'permis', etat, permit_id: i['permit_id'], label: `${i['type']} ${i['date']}` } })
+  // PERMIS-CHECK-2 pt 1 — parcelle CIBLÉE : la carte montre EXACTEMENT les permis de la parcelle
+  // (/modules/parcelle-permis, ≤ 200 m, géolocalisés), INDÉPENDAMMENT du filtre d'état — sinon la
+  // phrase « X permis » comptait la proximité (tous états) mais la carte ne peignait que le radar filtré
+  // (constat BZ1065 : 11 permis annoncés, 0 point car tous > 24 mois et « Récent » actif). Couleur =
+  // récence PROPRE du permis (récent ≤ 24 m vert, sinon gris), jamais le segment. Ces permis portent
+  // `nature` (pas `type`) → feature dédiée. Hors ciblage, la carte garde le radar/point mort habituel.
+  const parcelPermisItems = (parcelIdu
+    ? (((qParcelPermis.data as Record<string, any> | undefined)?.['items'] ?? []) as Record<string, any>[])
+    : []).filter((i) => i['geom'])
+  const featParcelle = (i: Record<string, any>) => ({ type: 'Feature' as const, geometry: i['geom'],
+    properties: { kind: 'permis', etat: (String(i['date'] ?? '') >= cut24 ? 'recent' : 'gris') as PermisEtatCarte,
+      permit_id: i['permit_id'], label: `${i['nature'] ?? ''} ${i['date']}`.trim() } })
   useModuleMap([],
     // W3 — `etat` (recent|dormant|gris) voyage dans les properties ; la carte peint depuis la MÊME source
     // de couleurs que les pastilles (lib/permisEtats). En « Tous », le corail dormant est posé APRÈS le
     // gris/vert → il prime visuellement (un PC dormant reste corail même sous un point gris).
-    featureCollection([...carteRadar.map((i) => _feat(i, carteEtat(radarEtat(i)))), ...cartePm.map((i) => _feat(i, 'dormant'))]),
+    featureCollection(parcelIdu
+      ? parcelPermisItems.map(featParcelle)
+      : [...carteRadar.map((i) => _feat(i, carteEtat(radarEtat(i)))), ...cartePm.map((i) => _feat(i, 'dormant'))]),
     // O17 (i) — `geoFiltre` en dép. : le filtre géocodage resynchronise la carte avec la liste.
-    [seg, pointMort, tous, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone, geoFiltre])
+    // pt 1 — `parcelIdu`/données en dép. : cibler une parcelle bascule la carte sur ses permis.
+    [seg, pointMort, tous, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone, geoFiltre, parcelIdu, qParcelPermis.dataUpdatedAt])
   const total = pointMort ? qPmCount.data?.total : ((head?.['total'] as number) ?? 0)
   const loaded = pages.flatMap((p) => (p['items'] ?? []) as unknown[]).length
 
@@ -723,12 +739,17 @@ export function M03() {
           // PERMIS-CHECK-1 P2 — choisir une adresse/parcelle dans le suggest CIBLE la parcelle (zoom +
           // délimitation) ET déclenche la recherche de ses permis → phrase de résultat (0 / X), comme un
           // IDU saisi. Avant, un choix de suggestion recadrait la carte SANS jamais dire s'il y a un permis.
-          onSelect={(sel) => { if (sel.idu) { const c = iduComplet(sel.idu); focusParcelle(c); setParcelIdu(c) } else setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }}
+          // PERMIS-CHECK-2 pt 2 — `select(null)` AVANT focusParcelle : la carte cible `selectedIdu ?? focusIdu`
+          // (MapView) ; si une fiche est restée ouverte sur une parcelle A (clic carte/liste), elle MASQUAIT
+          // le focus B demandé ici → la carte ne bougeait pas (constat Vic). On lève la sélection stale pour
+          // que la barre RECENTRE TOUJOURS sur la parcelle choisie, qu'une fiche soit ouverte ou non.
+          onSelect={(sel) => { if (sel.idu) { const c = iduComplet(sel.idu); select(null); focusParcelle(c); setParcelIdu(c) } else setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }}
           onEnterRaw={(t) => {
             const v = iduComplet(t)
             // RETOURS-12 O12.2 — IDU cadastral complet (14 car.) → la carte ZOOME et DÉLIMITE la parcelle
             // (focusParcelle, même geste que O1/J1) EN PLUS de chercher ses permis (O17 g).
-            if (v.length === 14 && estIdu(v)) { focusParcelle(v); setParcelIdu(v); return }
+            // pt 2 — `select(null)` d'abord : le focus barre prime sur une fiche stale (cf. onSelect).
+            if (v.length === 14 && estIdu(v)) { select(null); focusParcelle(v); setParcelIdu(v); return }
             // sinon une référence Sitadel compacte → fiche permis
             if (/^[0-9][0-9a-z]{6,}$/i.test(v)) setOpen(v)
           }} />
@@ -737,15 +758,26 @@ export function M03() {
             non fenêtré → N = profondeur MAX de l'outil (max(MONTHS_RADAR) = 240 m = toute la profondeur
             Sitadel servie). 0 → phrase honnête datée ; ≥ 1 → le compte, puis le client clique les points. */}
         {parcelIdu && qParcelPermis.data && (() => {
-          const n = (((qParcelPermis.data as Record<string, any>)['items'] ?? []) as unknown[]).length
-          const vide = n === 0
+          // PERMIS-CHECK-2 pt 1 — le compte affiché = les permis DESSINABLES (avec géom), pour que la
+          // phrase et la carte ne se contredisent jamais : « X permis » ⇒ X points cliquables à l'écran.
+          // La source ne renvoie que du géolocalisé ≤ 200 m ; `nonLoc` (rare) est dit à part. Le libellé
+          // dit « à moins de 200 m » (et non « sur cette parcelle ») : ce sont les permis du voisinage
+          // ≤ 200 m — la même assiette que le signal viabilisation (constat BZ1065 : 0 permis LITTÉRALEMENT
+          // sur la parcelle, 11 dans les 200 m).
+          const items = (((qParcelPermis.data as Record<string, any>)['items'] ?? []) as Record<string, any>[])
+          const loc = items.filter((i) => i['geom']).length
+          const nonLoc = items.length - loc
+          const nonLocTxt = nonLoc > 0 ? ` (${fmt(nonLoc)} non localisé${nonLoc > 1 ? 's' : ''}, sans point sur la carte)` : ''
+          const vide = items.length === 0
           return (
-            <p data-permis-parcelle-resultat {...(vide ? { 'data-permis-parcelle-vide': '1' } : {})}
-              className={`mt-1 rounded-lg border px-3 py-2 text-[11px] leading-snug ${vide
+            <p data-permis-parcelle-resultat {...(loc === 0 ? { 'data-permis-parcelle-vide': '1' } : {})}
+              className={`mt-1 rounded-lg border px-3 py-2 text-[11px] leading-snug ${loc === 0
                 ? 'border-st-creuser/40 bg-st-creuser/10 text-st-creuser' : 'border-mint/50 bg-mint/10 text-mint'}`}>
               {vide
-                ? <>Aucun permis sur cette parcelle <span className="font-mono">{iduCourt(parcelIdu)}</span> sur les {Math.max(...MONTHS_RADAR)} derniers mois{donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ''}.</>
-                : <><b className="tnum">{fmt(n)}</b> permis sur cette parcelle <span className="font-mono">{iduCourt(parcelIdu)}</span> — cliquez les points sur la carte.</>}
+                ? <>Aucun permis à moins de 200 m de cette parcelle <span className="font-mono">{iduCourt(parcelIdu)}</span> sur les {Math.max(...MONTHS_RADAR)} derniers mois{donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ''}.</>
+                : loc === 0
+                  ? <><b className="tnum">{fmt(nonLoc)}</b> permis à moins de 200 m de cette parcelle <span className="font-mono">{iduCourt(parcelIdu)}</span>, non localisés — aucun point à afficher.</>
+                  : <><b className="tnum">{fmt(loc)}</b> permis à moins de 200 m de cette parcelle <span className="font-mono">{iduCourt(parcelIdu)}</span> — cliquez les points sur la carte{nonLocTxt}.</>}
               <button onClick={() => setParcelIdu(null)} className="ml-2 underline">effacer</button>
             </p>
           )

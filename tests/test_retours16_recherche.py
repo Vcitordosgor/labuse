@@ -32,7 +32,9 @@ def client(engine):
             VALUES ('97411000ZX0042', 'Saint-Denis', 'ZX', '42', 1234,
                     ST_SetSRID(ST_GeomFromText('POLYGON((55.45 -20.88,55.4501 -20.88,55.4501 -20.8801,55.45 -20.8801,55.45 -20.88))'), 4326), now(), now()),
                    ('97415000ZX0042', 'Saint-Paul', 'ZX', '42', 5678,
-                    ST_SetSRID(ST_GeomFromText('POLYGON((55.27 -21.01,55.2701 -21.01,55.2701 -21.0101,55.27 -21.0101,55.27 -21.01))'), 4326), now(), now())
+                    ST_SetSRID(ST_GeomFromText('POLYGON((55.27 -21.01,55.2701 -21.01,55.2701 -21.0101,55.27 -21.0101,55.27 -21.01))'), 4326), now(), now()),
+                   ('97411000ZX0043', 'Saint-Denis', 'ZX', '43', 1234,
+                    ST_SetSRID(ST_GeomFromText('POLYGON((55.45 -20.881,55.4501 -20.881,55.4501 -20.8811,55.45 -20.8811,55.45 -20.881))'), 4326), now(), now())
             ON CONFLICT (idu) DO NOTHING"""))
         c.execute(text("""
             INSERT INTO adresses (id_ban, numero, voie, commune, code_postal, idu, geom)
@@ -46,6 +48,14 @@ def client(engine):
             VALUES ('r16-ban-2', '1', 'bis', 'Chemin de la Citerne Test', 'Saint-Denis', '97417',
                     '97411000ZX0042', ST_SetSRID(ST_MakePoint(55.45, -20.88), 4326))
             ON CONFLICT DO NOTHING"""))
+        # PERMIS-CHECK-2 pt 3 — le VOISIN « 1 » (sans rep), parcelle DISTINCTE : « 1 bis » ne doit
+        # PAS renvoyer cette parcelle, et le libellé doit AFFICHER le rep (sinon « 1 » et « 1 bis »
+        # se ressemblent → confusion « 1 bis corrigé en 1 »).
+        c.execute(text("""
+            INSERT INTO adresses (id_ban, numero, voie, commune, code_postal, idu, geom)
+            VALUES ('r16-ban-3', '1', 'Chemin de la Citerne Test', 'Saint-Denis', '97417',
+                    '97411000ZX0043', ST_SetSRID(ST_MakePoint(55.45, -20.881), 4326))
+            ON CONFLICT DO NOTHING"""))
         c.execute(text("""
             INSERT INTO parcelle_personne_morale (idu, denomination, siren)
             VALUES ('97411000ZX0042', 'SCI ZOREIL FONCIER', '512345678')
@@ -58,9 +68,9 @@ def client(engine):
     finally:
         with engine.begin() as c:
             c.execute(text("DELETE FROM projets WHERE nom = 'Zoreil lotissement'"))
-            c.execute(text("DELETE FROM adresses WHERE id_ban IN ('r16-ban-1', 'r16-ban-2')"))
+            c.execute(text("DELETE FROM adresses WHERE id_ban IN ('r16-ban-1', 'r16-ban-2', 'r16-ban-3')"))
             c.execute(text("DELETE FROM parcelle_personne_morale WHERE idu LIKE '974%ZX0042'"))
-            c.execute(text("DELETE FROM parcels WHERE idu LIKE '974%ZX0042'"))
+            c.execute(text("DELETE FROM parcels WHERE idu LIKE '974%ZX004%'"))
 
 
 def _groupes(client, q: str) -> dict:
@@ -118,11 +128,19 @@ def test_adresse_collee_depuis_fiche_retrouve_parcelle(client):
                    params={"q": "1 bis Chemin de la Citerne Test, 97417 Saint-Denis"})
     assert r.status_code == 200, r.text[:300]
     adr = {g["type"]: g["items"] for g in r.json()["groupes"]}.get("adresse", [])
-    assert any(i["idu"] == "97411000ZX0042" for i in adr), adr
+    # PERMIS-CHECK-2 pt 3 — la BONNE parcelle (le « 1 bis » = ZX0042), JAMAIS le voisin « 1 » (ZX0043)
+    bis = next((i for i in adr if i["idu"] == "97411000ZX0042"), None)
+    assert bis is not None, adr
+    assert not any(i["idu"] == "97411000ZX0043" for i in adr), adr   # le rep discrimine : pas le « 1 »
+    # le libellé PORTE le rep (sinon « 1 » et « 1 bis » se ressemblent → « 1 bis corrigé en 1 »)
+    assert bis["label"] == "1 bis Chemin de la Citerne Test", bis
     # le suffixe CP+commune ne suffit PAS seul à casser la recherche : la voie partielle marche toujours
     r2 = client.get("/api/recherche/suggest", params={"q": "chemin de la citerne test"})
     adr2 = {g["type"]: g["items"] for g in r2.json()["groupes"]}.get("adresse", [])
     assert any(i["idu"] == "97411000ZX0042" for i in adr2), adr2
+    # les DEUX (« 1 » et « 1 bis ») apparaissent et sont DISTINGUABLES par leur libellé
+    labels2 = {i["label"] for i in adr2}
+    assert {"1 Chemin de la Citerne Test", "1 bis Chemin de la Citerne Test"} <= labels2, labels2
 
 
 def test_zero_resultat_parlant(client):
