@@ -593,6 +593,13 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
                          "annee_features": annee, "recale_intercept_sur": last_labeled,
                          "seed_ties": SEED,   # 3.3 (train 5) : la graine du départage, tant qu'elle existe
                          "taux_base": taux_base, "prev_run": prev_run,
+                         # COHÉRENCE-RUN-1 — le run EMPRUNTEUR (LABUSE_ETAGE0_RUN ≠ lui-même)
+                         # persiste explicitement l'étage 0 réutilisé. `resoudre_cascade_run`
+                         # le lit AVANT `prev_run` (bascule_flux.py:122) : sans cela l'emprunt
+                         # ne survivait que par coïncidence d'ordre (prev_run = dernier run
+                         # calculé). q_v15 pointait ainsi sur q_v14 (sans cascade) et retombait
+                         # « incomplet ». On grave donc le pointeur voulu, pas celui du hasard.
+                         "etage0_run": etage0_run,
                          "source_millesimes": source_millesimes}),   # FLUX-1 F2.2
         "n": len(rows), "d": int(time.time() - t0), "l": snapshot_label})
 

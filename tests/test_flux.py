@@ -246,6 +246,54 @@ def test_run_emprunteur_de_cascade_est_accepté_et_résolu(db_session):
     assert ok is True and source in motif2
 
 
+def test_etage0_run_prime_sur_un_prev_run_sans_cascade(db_session):
+    """COHÉRENCE-RUN-1 — le scénario q_v15. Un run EMPRUNTEUR dont `prev_run` pointe un run
+    SANS cascade (q_v14), mais dont `etage0_run` pointe un run AVEC cascade (q_v13_sources1).
+    `resoudre_cascade_run` lit `etage0_run` AVANT `prev_run` (bascule_flux.py:122) : le run est
+    résolu et accepté. Sans l'`etage0_run` gravé (ancien comportement : seul `prev_run`), le même
+    run retombait « sans étage 0 réutilisable » → refusé. C'est exactement le trou qui empêchait
+    la pompe de proposer q_v15 (son prev_run = q_v14, lui-même sans cascade)."""
+    import json
+    avec_cascade = "run_etage0_ok_" + uuid.uuid4().hex[:6]      # ~ q_v13_sources1
+    prev_sans_cascade = "run_prev_ko_" + uuid.uuid4().hex[:6]   # ~ q_v14 (pas de cascade propre)
+    emprunteur = "run_qv15_like_" + uuid.uuid4().hex[:6]        # ~ q_v15
+    for r in (avec_cascade, prev_sans_cascade):
+        db_session.execute(text(
+            "INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256) VALUES (:r, 'test', 'x')"),
+            {"r": r})
+    # l'emprunteur grave les DEUX pointeurs : prev_run CASSÉ, etage0_run VALIDE.
+    db_session.execute(text(
+        "INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256, params) "
+        "VALUES (:r, 'test', 'x', CAST(:p AS jsonb))"),
+        {"r": emprunteur, "p": json.dumps(
+            {"prev_run": prev_sans_cascade, "etage0_run": avec_cascade})})
+    # seul `avec_cascade` a une ligne de cascade réelle.
+    pid = db_session.execute(text(
+        "INSERT INTO parcels (idu, commune, geom) "
+        "VALUES (:i, '97415', ST_GeomFromText('POINT(55.5 -21.0)', 4326)) RETURNING id"),
+        {"i": "TEST" + uuid.uuid4().hex[:10]}).scalar()
+    db_session.execute(text(
+        "INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, completeness_score, "
+        "opportunity_score, status) VALUES (:r, :p, 0, 0, 'exclue')"), {"r": avec_cascade, "p": pid})
+
+    # etage0_run l'emporte : la cascade résolue est celle de `avec_cascade`, pas celle (absente) de prev_run.
+    cascade_run, motif = bascule_flux.resoudre_cascade_run(db_session, emprunteur)
+    assert cascade_run == avec_cascade, "etage0_run doit primer sur un prev_run sans cascade"
+    assert "empruntée" in motif.lower()
+    ok, motif2 = bascule_flux._run_complet(db_session, emprunteur)
+    assert ok is True and avec_cascade in motif2
+
+    # contrôle : SANS l'etage0_run gravé (seul le prev_run cassé), le même run serait REFUSÉ —
+    # c'est l'ancien comportement, la preuve que c'est bien `etage0_run` qui débloque.
+    temoin = "run_sans_etage0_" + uuid.uuid4().hex[:6]
+    db_session.execute(text(
+        "INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256, params) "
+        "VALUES (:r, 'test', 'x', CAST(:p AS jsonb))"),
+        {"r": temoin, "p": json.dumps({"prev_run": prev_sans_cascade})})
+    cascade_temoin, motif_temoin = bascule_flux.resoudre_cascade_run(db_session, temoin)
+    assert cascade_temoin is None, "sans etage0_run, un prev_run sans cascade doit rester refusé"
+
+
 def test_journal_bascule_ensure_et_vide(engine, db_session):
     bascule_flux.ensure_tables(engine)
     assert bascule_flux.derniere_bascule(db_session) is None   # aucune bascule encore
