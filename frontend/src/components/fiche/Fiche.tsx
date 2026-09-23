@@ -33,7 +33,7 @@ import { RisquesSection } from './risques'
 import { MarcheSection, DerniereVenteBlock } from './marche'
 import { ReseauxSection, EquipementsBadges } from './reseaux'
 import { AutourSection, HistoriqueSiteBlock } from './autour'
-import { ReglementPluBlock, TraducteurBloc } from './blocks'   // FICHE-RANGEMENT-2 Lot 1 — extraits (cycle-free)
+import { ReglementPluBlock } from './blocks'   // FICHE-RANGEMENT-2 Lot 1 — extraits (cycle-free)
 export { Calculette, FaisabiliteTab } from './constructibilite'
 export type { CalcResult } from './constructibilite'
 
@@ -682,7 +682,11 @@ export function Fiche({ idu }: { idu: string }) {
           dessous). Elle défile désormais AVEC le reste — un seul corps qui défile du haut au pied.
           M56-B6 · DA-FICHE-v6 — EN-TÊTE en CARTE .head (identité + chiffres). */}
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
-      <div style={{ paddingTop: 10 }}>
+      {/* FINITIONS-1 (P12) — l'EN-TÊTE (PARCELLE · COMMUNE, référence, adresse, boutons) reste STICKY au
+          défilement. `position: sticky` (et non `flex-shrink:0` fixe, cause de l'ancien recouvrement
+          RECETTE-8 W12) : la tête reste dans le flux, se colle en haut du corps défilant, fond opaque
+          pour masquer le contenu qui passe dessous. */}
+      <div className="sticky top-0 z-20" style={{ paddingTop: 10, background: 'var(--bg-0)' }}>
         <div className="head">
           <div className="head-top">
             {/* RETOURS-11 R3 — la colonne gauche pousse (flex:1) pour donner sa largeur à l'adresse,
@@ -1503,7 +1507,7 @@ export function Fiche({ idu }: { idu: string }) {
                     non discriminante en M55-N (82,5 % à la base neutre 50). Seule « Confiance données »
                     (ICD, tiroir Données) reste. Le champ back q_score n'est PAS touché (consommé
                     ailleurs : App, Kanban, MapView, filtres…) — seul l'affichage fiche disparaît. */}
-                <TraducteurBloc idu={idu} />
+                {/* FINITIONS-1 (P13) — l'encart « Demander à l'IA de traduire le PLU » est RETIRÉ. */}
                 {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
                 {/* M55-O phase 2.1c : le potentiel de transformation (SDP consommée/résiduelle/
                     surélévation) DÉMÉNAGE vers « Constructibilité » — il relève de la capacité, pas

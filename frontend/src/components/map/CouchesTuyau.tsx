@@ -7,6 +7,7 @@ import maplibregl from 'maplibre-gl'
 import { useQuery } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
 import { LayerRowUI } from '../panel/LayerRowUI'   // COUCHES-RECETTE-2 B2 : composant de ligne partagé
+import { ChevronSection } from '../panel/ChevronSection'   // FINITIONS-1 (P7) — flèche repli/dépli partagée
 
 // ── types du plan servi par /map/tuyau/couches (dérivé de la déclaration) ──
 export interface TuyauNiveau {
@@ -502,6 +503,9 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
     [plan, tuyauActives])
   // suit la DERNIÈRE couche allumée (elle devient l'accordéon déplié) ; clic pour changer.
   const [ouvert, setOuvert] = useState<string | null>(null)
+  // FINITIONS-1 (P7) — la légende des couches se replie/déplie par une petite flèche (accordéon DA :
+  // ouverte = pointe en bas, repliée = pointe à droite). Dépliée par défaut.
+  const [replie, setReplie] = useState(false)
   const prev = useRef<Record<string, boolean>>({})
   useEffect(() => {
     const nouv = Object.keys(tuyauActives).find((k) => tuyauActives[k] && !prev.current[k])
@@ -519,8 +523,14 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
   return (
     <div data-tuyau-legend
       className="floating absolute bottom-10 right-4 hidden max-h-[52vh] w-[244px] overflow-y-auto rounded-xl bg-surface-2/95 p-3 text-txt shadow-elev-2 sm:block">
-      <p className="label-caps mb-2">Légende</p>
-      <div className="flex flex-col gap-1">
+      {/* FINITIONS-1 (P7) — en-tête cliquable avec la flèche de repli/dépli (ChevronSection, DA). */}
+      <button data-tuyau-legend-toggle onClick={() => setReplie((r) => !r)} aria-expanded={!replie}
+        className="flex w-full items-center gap-2 text-left">
+        <span className="label-caps flex-1">Légende</span>
+        <ChevronSection open={!replie} />
+      </button>
+      {!replie && (
+      <div className="mt-2 flex flex-col gap-1">
         {entrees.map((e) => {
           const isOpen = e.cle === deplie
           const sw = pastillesLegende(e)
@@ -574,6 +584,7 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
           )
         })}
       </div>
+      )}
     </div>
   )
 }

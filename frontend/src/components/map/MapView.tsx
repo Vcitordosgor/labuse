@@ -262,6 +262,13 @@ function applyBasemapStyle(m: maplibregl.Map, basemap: string) {
   // traits achromatiques (#ECF5EF) invisibles sur terre claire → foncés en Clair (bascule M64).
   const selLine = '#ECF5EF'
   for (const id of ['parcels-sel', 'ile-sel', 'parcels-ping', 'ile-ping']) set(id, 'line-color', selLine)
+  // FINITIONS-1 (P8) — sous la Vue ORTHO, le contour PERSISTANT de la parcelle sélectionnée (2 px,
+  // quasi-blanc) se noyait dans la photo une fois le pulse d'arrivée estompé (~3 s) : il SEMBLAIT
+  // disparaître. On l'ÉPAISSIT en ortho pour qu'il RESTE nettement lisible tant que la parcelle est
+  // sélectionnée (le voile sombre 0,3 de l'ortho assure le contraste, même sur les toits clairs).
+  // Largeur d'origine (2) restaurée sur les autres fonds — le ternaire suit chaque changement de fond.
+  const selWidth = basemap === 'ortho' ? 3.5 : 2
+  for (const id of ['parcels-sel', 'ile-sel']) set(id, 'line-width', selWidth)
   // RETOURS-11 C4 — text-halo-width réappliqué à sa valeur de création (1.3) hors fond photo, pour
   // que le retour en Clair/Sombre efface l'épaississement du variant photo (témoins intacts).
   for (const id of ['parcels-zone-label', 'ile-zone-label']) { set(id, 'text-color', '#ECF5EF'); set(id, 'text-halo-color', '#06130C'); set(id, 'text-halo-width', 1.3) }
@@ -322,7 +329,7 @@ function BoutonCarte({ onClick, title, children }: { onClick: () => void; title:
     timer.current = window.setTimeout(() => setFlash(false), 180)
   }
   return (
-    <button onClick={press} title={title}
+    <button onClick={press} aria-label={title}
       /* M65 P5 : dimensions réduites à 70 % de l'état M62-P1 (60→42 px, glyphe 24→17 px,
          rayon 12→8 px). Le gap entre les deux boutons est réduit au prorata côté conteneur. */
       className={`flex h-[42px] w-[42px] items-center justify-center rounded-[8px] border text-[17px] leading-none shadow-elev-1 transition-colors duration-quick ${
@@ -1462,7 +1469,7 @@ export function MapView() {
           {/* COUCHES-2 point 2 — priorité au message le plus précis : parcelles > couche > carte. */}
           {/* COUCHES-RECETTE-1 A7 : ce qui reste incompressible pour la précision est ASSUMÉ — message
               qui l'explique au lieu d'un « Chargement… » sec. */}
-          <Loading big label={geo.isFetching ? 'Chargement des parcelles' : layersFetching > 0 ? 'Chargement de la couche…' : 'Votre carte se charge pour vous donner l’information la plus précise possible'} />
+          <Loading big label={geo.isFetching ? 'Chargement des parcelles' : layersFetching > 0 ? 'Chargement de la couche…' : 'Chargement de la carte…'} />
         </div>
       )}
       {/* P3 : rappel de ce que signifie le violet pendant une recherche active */}
@@ -1492,17 +1499,8 @@ export function MapView() {
             : 'Cliquez une parcelle pour ouvrir sa fiche'}
         </div>
       )}
-      {/* RETOURS-1 R8 (Vic) : la pastille « Carte à jour au JJ/MM/AAAA » est RETIRÉE. Seul
-          l'avertissement de retard subsiste (doctrine fraîcheur, FIX-CARTE T1 : des tuiles plus
-          vieilles que le run servi ne s'affichent jamais en silence). */}
-      {tilesMeta.data?.carte_le && tilesMeta.data.perime && (
-        <div data-carte-fraicheur
-          className="pointer-events-none absolute bottom-2 left-3 rounded-full border bg-surface-2/90 px-2.5 py-1 text-[10.5px] shadow-elev-1"
-          style={{ color: '#E8B44C', borderColor: '#E8B44C' }}
-          title="Les données de la carte (SDP, densité…) sont plus anciennes que le dernier calcul du run servi. Un rebuild des tuiles (labuse build-mvt) est en attente.">
-          {'⚠ Carte au ' + tilesMeta.data.carte_le.slice(0, 10).split('-').reverse().join('/') + ' — mise à jour en attente'}
-        </div>
-      )}
+      {/* FINITIONS-1 (P10) — la pastille « Carte au JJ/MM/AAAA — mise à jour en attente » (bas-gauche)
+          est RETIRÉE. */}
       <div className="absolute bottom-2 right-3 font-sans text-[11px] text-st-none">
         {attribution}
       </div>

@@ -75,7 +75,12 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
 }
 
 export function SourcesPage() {
-  const { data, isLoading, isError } = useQuery({ queryKey: ['sources'], queryFn: getSources })
+  // FINITIONS-1 (P5) — le temps de chargement vient de l'endpoint /sources, qui recalcule côté serveur
+  // la fraîcheur/radar LIVE de chaque source (1–5 s) ; cette page ne l'affiche plus (seule l'année DVF,
+  // via derniere_donnee, en est lue) mais on ne peut pas retirer ce calcul sans risque (derniere_donnee
+  // en dépend, endpoint partagé). Correctif sans risque : on CACHE le résultat (staleTime) → la page se
+  // recharge instantanément aux visites suivantes au lieu de re-tourner le calcul à chaque ouverture.
+  const { data, isLoading, isError } = useQuery({ queryKey: ['sources'], queryFn: getSources, staleTime: 5 * 60_000 })
   // RETOURS-9 (Q11.5) — les chiffres de couverture qui parlent au client, lus des données réelles.
   const couverture = useQuery({ queryKey: ['sources-couverture'], queryFn: getSourcesCouverture, staleTime: 5 * 60_000 }).data
   const sourcesFocus = useApp((s) => s.sourcesFocus)
@@ -231,13 +236,8 @@ export function SourcesPage() {
           </div>
         ))}
 
-        {/* légende — PAGES-RANGEMENT-1 (lot 1) : les entrées de fraîcheur (« à jour » / « mise à jour en
-            cours ») sont retirées ; reste la seule nature de donnée qui parle au client (proxy). */}
-        {data && (
-          <div className="mt-9 flex flex-wrap gap-x-6 gap-y-2.5 border-t border-line pt-4 text-[12px] text-txt-dim">
-            <span className="flex items-center gap-2"><Badge kind="dashed">proxy</Badge> donnée approchée, jamais servie comme source</span>
-          </div>
-        )}
+        {/* FINITIONS-1 (P6) — l'encart de bas de page « proxy — donnée approchée, jamais servie comme
+            source » est RETIRÉ. */}
 
       </div>
     </div>

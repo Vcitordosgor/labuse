@@ -12,17 +12,19 @@ const BASEMAPS: { key: Basemap; label: string }[] = [
   { key: 'ortho', label: 'Ortho IGN' },
 ]
 // Millésimes VÉRIFIÉS sur le 974 : ORTHO_YEARS (basemaps.ts) = Actuelle + les 6 de TEMPS_MILLESIMES.
-const TOOLS: { key: MapTool; label: string; icon: JSX.Element; hint: string }[] = [
+// FINITIONS-1 (P1) — les 3 outils de mesure gardent leur infobulle AU SURVOL (seule exception de l'app),
+// avec un libellé SIMPLIFIÉ (le verbe, pas la notice de saisie qui vit déjà dans le bandeau du bas).
+const TOOLS: { key: MapTool; label: string; icon: JSX.Element; tip: string }[] = [
   {
-    key: 'distance', label: 'Distance', hint: 'Cliquez pour placer les points · Entrée pour valider · Échap pour annuler',
+    key: 'distance', label: 'Distance', tip: 'Calculer une distance',
     icon: <path d="M3 17 L17 3 M5.5 14.5 l1.6 1.6 M8.5 11.5 l1.6 1.6 M11.5 8.5 l1.6 1.6" stroke="currentColor" strokeWidth="1.4" fill="none" />,
   },
   {
-    key: 'surface', label: 'Surface', hint: 'Cliquez pour placer les points · Entrée pour valider · Échap pour annuler',
+    key: 'surface', label: 'Surface', tip: 'Calculer un périmètre',
     icon: <path d="M4 6 L14 3.5 L16.5 13 L7 16.5 Z" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinejoin="round" />,
   },
   {
-    key: 'alti', label: 'Altitude', hint: 'Clic = altitude au point (RGE ALTI)',
+    key: 'alti', label: 'Altitude', tip: 'Connaître l\'altitude',
     icon: <path d="M3 16 L8 7 L11 12 L13.5 8.5 L17 16 Z" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinejoin="round" />,
   },
   // RETOURS-1 R8 (Vic) : le bouton « Zone — Dessinez un polygone » quitte la barre. Le filtre de
@@ -53,10 +55,12 @@ export function MapToolbar() {
         <button
           onClick={() => setBmOpen((o) => !o)}
           /* RETOURS-19 Y1 — menu ouvert = ÉTAT ACTIF : vert opaque, contenu inversé sombre (avant : simple
-             contour vert sur fond sombre). */
+             contour vert sur fond sombre). FINITIONS-1 (P3) — au SURVOL (état inactif), le bouton « Vue »
+             (fond de plan) reçoit la MÊME animation verte que partout ailleurs (`hover-fill` : fond vert
+             opaque, contenu inversé sombre) au lieu du simple éclaircissement du texte. */
           className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
-            bmOpen ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}
-          title="Fond de plan"
+            bmOpen ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-2 text-txt hover-fill'}`}
+          aria-label="Fond de plan"
         >
           <svg viewBox="0 0 20 20" className="h-4 w-4">
             <polygon points="10,3 17,7 10,11 3,7" fill="none" stroke="currentColor" strokeWidth="1.4" />
@@ -79,7 +83,7 @@ export function MapToolbar() {
                   </button>
                 ))}
               </div>
-              <p className="label-caps mt-3" title="Orthophotos historiques IGN — données libres">Remonter le temps</p>
+              <p className="label-caps mt-3">Remonter le temps</p>
               {/* FIX-FONDS B5 (contrainte Vic) — les 7 millésimes en LISTE VERTICALE compacte (pas 6
                   boutons en ligne qui étireraient la cellule) : même gabarit que la liste des fonds
                   ci-dessus, visible seulement quand le menu est déplié. */}
@@ -103,8 +107,8 @@ export function MapToolbar() {
         /* RETOURS-9 (Q9) — contour 3D actif = plein vert, encre sombre (pas un liseré). */
         className={`flex h-9 items-center rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
           terrain3d ? 'border-mint bg-mint text-mint-ink font-medium' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}
-        /* RECETTE-7 (F3) — le « i » du 3D dit ce que la vue vaut et ne vaut pas, en une phrase. */
-        title="Relief 3D (MNT) + bâti extrudé à sa hauteur BD TOPO — hauteurs APPROXIMATIVES, sans forme de toit ni faîtage/égout distingués, et les constructions très récentes peuvent manquer (mesure précise à venir via LiDAR HD). Maintenir Ctrl + glisser pour incliner la vue."
+        /* FINITIONS-1 (P1) — infobulle au survol retirée (le libellé « 3D » du bouton porte le sens). */
+        aria-label="Relief 3D"
       >
         3D
       </button>
@@ -114,9 +118,9 @@ export function MapToolbar() {
       <div className="flex flex-col overflow-hidden rounded-lg border border-line-2 bg-surface-2 shadow-elev-1">
         {TOOLS.map((t) => (
           <div key={t.key} className="relative">
-            {/* M62-P1 (c) : infobulle DA (Tip) à ~150 ms au survol, IMMÉDIATE au focus/clic —
-                remplace le `title` natif (délai navigateur ~500 ms, jugé trop long). */}
-            <Tip garder side="top" hoverDelayMs={150} tip={`${t.label} — ${t.hint}`}>
+            {/* M62-P1 (c) / FINITIONS-1 (P1) : infobulle DA (Tip) à ~150 ms au survol — SEULE exception au
+                retrait des infobulles au survol (`survol`). Libellé simplifié au verbe. */}
+            <Tip garder survol side="top" hoverDelayMs={150} tip={t.tip}>
               <button
                 onClick={() => setTool(tool === t.key ? null : t.key)}
                 /* RETOURS-9 (Q9) — outil de carte actif = plein vert, encre sombre. */
@@ -135,7 +139,7 @@ export function MapToolbar() {
         <button
           onClick={() => setZone(null)}
           className="flex h-8 items-center gap-2 rounded-full border border-mint bg-surface-2 px-3 text-[11px] text-mint shadow-elev-1 transition-colors duration-quick hover:bg-mint/10"
-          title="Retirer le filtre de zone"
+          aria-label="Retirer le filtre de zone"
         >
           Zone active <span className="text-txt-dim">×</span>
         </button>

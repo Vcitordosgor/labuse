@@ -7,7 +7,6 @@
  * N'importe QUE des primitives + blocs feuilles (cycle-free, comme les autres sous-composants).
  */
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { Trace } from '../../lib/trace'
 import { fmtInt } from '../../lib/format'
 import type { FicheZoneDestinations, ReglementPlu } from '../../lib/types'
@@ -124,60 +123,5 @@ export function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
   )
 }
 
-// ── M76 — Traducteur PLU (IA traduit les règles de la zone ; garde optionnelle FICHE-COUCHES-4) ──
-export function TraducteurBloc({ idu }: { idu: string }) {
-  const [open, setOpen] = useState(false)
-  const q = useQuery({
-    queryKey: ['traducteur', idu],
-    queryFn: async () => {
-      const r = await fetch(`/traducteur-plu/${idu}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
-      if (!r.ok) throw new Error(`traducteur ${r.status}`)
-      return r.json() as Promise<{
-        ok: boolean; zone: string | null; zone_calibree?: boolean
-        // FICHE-COUCHES-4 lot 1 : `ok:false` (zone non calibrée, ex. Ncor) OMET `regles_appliquees`
-        // et `reglement` — le champ est donc OPTIONNEL, jamais supposé présent.
-        regles_appliquees?: { regle: string; valeur: string; source: string }[]
-        reglement?: { url: string | null; note: string | null }
-      }>
-    },
-    enabled: true, staleTime: 300_000,
-  })
-  const d = q.data
-  // M76 pt4 — tant qu'on ne sait pas OU rien à traduire → aucun bloc (jamais « Aucune règle traduite »).
-  // FICHE-COUCHES-4 lot 1 : `regles_appliquees` peut être ABSENT (ok:false) → garde optionnelle `?.`
-  // (sans elle, TOUTE la fiche plantait « Cannot read properties of undefined (reading 'length') »).
-  if (!d || !d.regles_appliquees?.length) return null
-  return (
-    <div data-traducteur className="mb-3 rounded-lg border border-violet/30 bg-violet/[0.06] px-3 py-2">
-      <button data-traducteur-toggle onClick={() => setOpen((o) => !o)}
-        className="flex min-h-7 w-full items-center justify-between gap-2 text-left">
-        <span className="text-[11px] font-medium tracking-normal normal-case text-violet">✦ Demander à l'IA de traduire le PLU</span>
-        <span className="text-[11px] text-txt-dim">{open ? 'replier ▴' : 'déplier ▾'}</span>
-      </button>
-      {open && (
-        <div className="mt-2">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {d.zone && <span className="rounded-full border border-violet/50 px-2 py-0.5 text-[10px] font-semibold text-violet">zone {d.zone}</span>}
-            {!d.zone_calibree && (
-              <span className="rounded-full border border-st-creuser/40 bg-st-creuser/10 px-2 py-0.5 text-[10px] text-st-creuser">
-                zone non calibrée — valeurs génériques (Estimé)</span>
-            )}
-          </div>
-          <div className="mt-1.5 space-y-1">
-            {d.regles_appliquees.map((r, i) => (
-              <div key={i} className="flex items-baseline gap-2 text-[11.5px]">
-                <span className="min-w-0 flex-1 text-txt">{r.regle}</span>
-                <b className="tnum text-txt-hi">{r.valeur}</b>
-                <span className="shrink-0 rounded-full border border-st-creuser/40 bg-st-creuser/10 px-1.5 text-[8.5px] font-medium text-st-creuser"
-                  title={r.source}>{d.zone_calibree ? 'Sourcé' : 'Estimé'}</span>
-              </div>
-            ))}
-          </div>
-          <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">
-            La référence opposable reste le règlement écrit{d.reglement?.url ? <> — <a className="text-mint hover:underline" href={d.reglement.url} target="_blank" rel="noreferrer">l'ouvrir ↗</a></> : ''}.
-          </p>
-        </div>
-      )}
-    </div>
-  )
-}
+// FINITIONS-1 (P13) — le bloc « Demander à l'IA de traduire le PLU » (composant TraducteurBloc) est
+// SUPPRIMÉ. La règle de zone reste servie par ReglementPluBlock (règlement écrit opposable).
