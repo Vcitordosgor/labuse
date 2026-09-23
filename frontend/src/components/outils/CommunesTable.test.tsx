@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { O6Comparateur } from './blocB'
+import { CommunesLegende, O6Comparateur } from './blocB'
 
 // Mandat COMMUNES — le tableau des 24 communes : en-têtes lisibles (fin de « VÉLO »), étiquettes
 // HONNÊTES (permis = 5 ans, pas « 12 m »), légende permanente, réconciliation € ancien, affordance
@@ -38,9 +38,12 @@ describe('COMMUNES — O6Comparateur (table des 24 communes)', () => {
     expect(screen.getByText(/Déficit SRU \(pts\)/)).toBeTruthy()   // en-tête (la légende dit « Déficit SRU » sans unité)
   })
 
-  it('légende permanente + réconciliation € ancien (commune entière)', async () => {
-    renderO6()
-    await screen.findByText('Saint-Paul')
+  // COMMUNE-124 Lot A2 — la légende n'est plus un pied PERMANENT d'O6Comparateur : elle est extraite
+  // dans <CommunesLegende/>, repliée sous le bouton « Légende » du panneau. Le CONTENU reste le contrat
+  // (permis 5 ans, réconciliation € ancien commune entière) ; seule sa localisation a changé.
+  it('légende (CommunesLegende) + réconciliation € ancien (commune entière)', () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={qc}><CommunesLegende /></QueryClientProvider>)
     const leg = screen.getByText('Légende :').closest('[data-o6-legende]') as HTMLElement
     expect(leg).toBeTruthy()
     expect(leg.textContent).toContain('Permis 5 ans')

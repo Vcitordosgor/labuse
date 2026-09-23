@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getCommuneAcquisitions, getCommunes, getRadarMarche } from '../../lib/api'
-import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
-import { O6Comparateur } from './blocB'
+import { CommunesLegende, O6Comparateur } from './blocB'
 import { M18 } from './moteurs'
 import { RadarMarche } from './RadarMarche'
 
@@ -157,31 +156,9 @@ function AcquisitionsRecentes() {
   )
 }
 
-// ── Renvoi « Marché des annonces (Radar) » sous la table comparative ──
-// RETOURS-11 O15(b) (Vic) : le détail PAR COMMUNE (actives / nouveautés / retirées, prix demandé)
-// appartient au RADAR, pas à Communes. Ce bloc ne re-rend donc PLUS les lignes par commune : c'est
-// un simple RENVOI vers le Radar (avec, pour contexte honnête, le volume total du corpus collecté).
-function MarcheAnnoncesRadar() {
-  const setView = useApp((s) => s.setView)
-  const { data: d } = useQuery({ queryKey: ['radar-marche'], queryFn: getRadarMarche, staleTime: 60_000 })
-  if (!d) return null   // bloc non critique : silencieux si la donnée n'est pas là
-  return (
-    <div data-communes-marche-radar className="mt-2 shrink-0 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[12px]">
-      {/* RETOURS-13 R12 — le lien s'aligne sur la LIGNE DE BASE du libellé (items-baseline),
-          plus en haut du bloc pendant que le texte flotte au milieu. */}
-      <div className="flex items-baseline justify-between gap-2">
-        <b className="label-caps text-[10px] tracking-[0.14em] text-txt-dim">Marché des annonces</b>
-        <button data-marche-radar-lien onClick={() => setView('radar')} className="shrink-0 text-[11px] text-mint hover:underline">
-          Ouvrir le Radar →
-        </button>
-      </div>
-      <p className="mt-1 leading-snug text-txt-mut">
-        Le détail par commune (biens en vente, nouveautés, retraits, prix demandés) vit dans le
-        <b className="text-txt"> Radar</b> — <b className="text-txt">{fmtInt(d.corpus_actif)} bien{d.corpus_actif > 1 ? 's' : ''} collecté{d.corpus_actif > 1 ? 's' : ''}</b> à ce jour.
-      </p>
-    </div>
-  )
-}
+// COMMUNE-124 Lot A1 — l'encart « Marché des annonces (Radar) — N biens collectés à ce jour » qui
+// s'affichait sous la table comparative est RETIRÉ : le Radar a déjà SA porte dédiée sur l'écran
+// d'entrée (« Marché des annonces (Radar) »), ce renvoi doublonnait et alourdissait le bas du panneau.
 
 // ── Porte de l'écran d'entrée (gabarit door-hot du tiroir Outils) ──
 function Porte({ dataAttr, titre, sous, onClick }: { dataAttr: string; titre: string; sous: string; onClick: () => void }) {
@@ -250,6 +227,9 @@ export function CommunesTablePanel() {
   const setCommunesTableOpen = useApp((s) => s.setCommunesTableOpen)
   const setContexteCommune = useApp((s) => s.setContexteCommune)
   const contexteCommune = useApp((s) => s.contexteCommune)
+  // COMMUNE-124 Lot A2 — la légende (ex-pied permanent) est repliée sous le bouton « Légende » du
+  // coin haut-droit du panneau ; cliquer l'ouvre/le referme (défaut : replié).
+  const [legendeOuverte, setLegendeOuverte] = useState(false)
   if (module !== 'communes' || !communesTableOpen) return null
   // Fiche ouverte : on MASQUE l'overlay (sans démonter O6Comparateur, pour garder son tri) afin que
   // la fiche z-30 soit visible par-dessus la carte. Fermer la fiche la ramène intacte.
@@ -261,12 +241,27 @@ export function CommunesTablePanel() {
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <div>
             <h2 className="text-sm font-medium text-txt-hi">Les 24 communes</h2>
-            <p className="text-[10.5px] text-txt-dim">Comparez-les, puis cliquez pour ouvrir la fiche commune.</p>
+            {/* COMMUNE-124 Lot A3 — accroche UNIQUE (ex-sous-titre + ex-Banner d'O6Comparateur fusionnés). */}
+            <p className="text-[10.5px] text-txt-dim">Comparez les communes, ouvrez leur fiche, triez en cliquant sur leur en-tête.</p>
           </div>
-          <button onClick={() => setCommunesTableOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
+          {/* COMMUNE-124 Lot A2 — « Légende » (haut à droite) : ouvre/referme le bloc légende replié. */}
+          <div className="flex shrink-0 items-center gap-3">
+            <button data-communes-legende-toggle onClick={() => setLegendeOuverte((v) => !v)} aria-expanded={legendeOuverte}
+              className={`rounded-md border px-2 py-1 text-[11px] transition-colors duration-quick ${
+                legendeOuverte ? 'border-mint bg-mint-bg text-mint' : 'border-line-2 text-txt-mut hover:border-mint hover:text-txt'}`}>
+              Légende {legendeOuverte ? '▾' : '▸'}
+            </button>
+            <button onClick={() => setCommunesTableOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
+          </div>
         </div>
-        {/* flex column bornée : O6Comparateur gère son propre scroll interne (rangs) + légende permanente.
-            Pas d'overflow ICI (sinon double scroll + légende poussée hors écran). */}
+        {/* Légende repliable : rendue sous l'en-tête quand ouverte (plus de bloc légende permanent en bas). */}
+        {legendeOuverte && (
+          <div data-communes-legende className="shrink-0 border-b border-line-2 bg-surface-2 px-6 py-2">
+            <CommunesLegende />
+          </div>
+        )}
+        {/* flex column bornée : O6Comparateur gère son propre scroll interne (rangs).
+            Pas d'overflow ICI (sinon double scroll). */}
         {/* RETOURS-13 R11 — marges internes gauche/droite élargies (la ligne survolée ne colle
             plus aux bords de la modale) ; largeur portée à 1240 px. */}
         <div className="flex min-h-0 flex-1 flex-col px-6 py-3">
@@ -274,8 +269,6 @@ export function CommunesTablePanel() {
               en SUPERPOSITION : la table reste montée dessous (on ne la referme plus). Fermer la
               fiche fait donc RÉAPPARAÎTRE le tableau comparatif, sans le reconstruire ni perdre le tri. */}
           <O6Comparateur onSelect={(c) => setContexteCommune(c)} />
-          {/* O2-3 — le marché des annonces (Radar) sous la table, seuil géré côté backend. */}
-          <MarcheAnnoncesRadar />
         </div>
       </div>
     </div>
