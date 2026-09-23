@@ -678,11 +678,10 @@ export function Fiche({ idu }: { idu: string }) {
           dessous). Elle défile désormais AVEC le reste — un seul corps qui défile du haut au pied.
           M56-B6 · DA-FICHE-v6 — EN-TÊTE en CARTE .head (identité + chiffres). */}
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
-      {/* FINITIONS-1 (P12) — l'EN-TÊTE (PARCELLE · COMMUNE, référence, adresse, boutons) reste STICKY au
-          défilement. `position: sticky` (et non `flex-shrink:0` fixe, cause de l'ancien recouvrement
-          RECETTE-8 W12) : la tête reste dans le flux, se colle en haut du corps défilant, fond opaque
-          pour masquer le contenu qui passe dessous. */}
-      <div className="sticky top-0 z-20" style={{ paddingTop: 10, background: 'var(--bg-0)' }}>
+      {/* FINITIONS-2 (retour Vic) — le STICKY de l'en-tête (introduit en FINITIONS-1 P12, affiné P3) est
+          ANNULÉ : retour EXACT au comportement d'origine — l'en-tête défile avec le reste (un seul corps
+          `overflow-y-auto`), la carte `.head` contient identité + adresse + les 6 tuiles, sans collage. */}
+      <div style={{ paddingTop: 10 }}>
         <div className="head">
           <div className="head-top">
             {/* RETOURS-11 R3 — la colonne gauche pousse (flex:1) pour donner sa largeur à l'adresse,
@@ -754,10 +753,6 @@ export function Fiche({ idu }: { idu: string }) {
               </Tip>
             )}
           </div>
-        </div>{/* /.head — FINITIONS-2 (P3) : la carte d'en-tête ne contient PLUS que l'identité
-            (PARCELLE·COMMUNE, référence, adresse, boutons). SEULE elle est sticky. */}
-      </div>{/* FINITIONS-2 (P3) — fin du wrapper STICKY : seul le bandeau d'identité colle ; les 6 tuiles
-          et tout le reste (ci-dessous) défilent normalement. */}
 
         {/* RETOURS-11 F1 — les trois accès (Cadastre · Pages Jaunes · Google Maps) ont MONTÉ dans
             l'en-tête à côté de la cloche, en boutons-logos (voir .hbtns ci-dessus). Les anciennes
@@ -809,9 +804,7 @@ export function Fiche({ idu }: { idu: string }) {
               vide: !(reglesSdp != null && reglesSdp > 0),
               i: 'Surface de plancher que le PLU autorise ENCORE sur la parcelle (potentiel résiduel). « — » : zone non constructible ou plus de potentiel.' },
           ]
-          // FINITIONS-2 (P3) — le bandeau de 6 chiffres dans sa PROPRE carte, HORS du sticky → il défile.
           return (
-            <div className="head">
             <div className="stats" data-bandeau-chiffres>
               {tuiles.map((c) => (
                 <div className="stat" key={c.l}>
@@ -829,9 +822,10 @@ export function Fiche({ idu }: { idu: string }) {
                 </div>
               ))}
             </div>
-            </div>
           )
         })()}
+        </div>{/* /.head — carte d'en-tête (identité + adresse + bandeau de 6 chiffres), NON sticky (origine) */}
+      </div>{/* fin du wrapper d'en-tête (non sticky) — l'en-tête défile avec le reste, comme à l'origine */}
         {/* RETOURS-9 (Q8.1) — ONGLETS Analyse · Autour · Actions RETIRÉS : retour à la fiche UNIQUE qui
             défile. « Autour » est un tiroir de la fiche (et existe dans les outils) ; « Actions » (CRM/
             Projet/exports) vit déjà en pied de fiche. Plus rien à choisir : tout défile d'un seul tenant. */}
