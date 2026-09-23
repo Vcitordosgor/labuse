@@ -33,8 +33,8 @@ function Groupe({ titre, note, open, onToggle, children }: {
 }) {
   return (
     <div data-legend-groupe className="border-t border-line py-1.5 first:border-t-0 first:pt-0">
-      <button onClick={onToggle} aria-expanded={open}
-        className="flex w-full items-center gap-1.5 text-left" title={open ? 'Replier' : 'Déplier'}>
+      <button onClick={onToggle} aria-expanded={open} aria-label={open ? 'Replier' : 'Déplier'}
+        className="flex w-full items-center gap-1.5 text-left">
         <span className="label-caps flex-1">{titre}</span>
         {note && (
           <Tip garder side="top" tip={note}>
@@ -114,7 +114,8 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   return (
     <div data-legend className={`${shell} w-[240px]`}>
       <button data-legend-toggle onClick={() => set({ ...leg, open: !leg.open })} aria-expanded={leg.open}
-        className="flex w-full items-center gap-2 px-3.5 py-2 text-left" title={leg.open ? 'Replier la légende' : 'Déplier la légende'}>
+        aria-label={leg.open ? 'Replier la légende' : 'Déplier la légende'}
+        className="flex w-full items-center gap-2 px-3.5 py-2 text-left">
         {/* NETTOYAGE-1 — le compteur « · N couches » (store layers V1 mort) est retiré : plus que « Légende ». */}
         <span className="label-caps flex-1">Légende</span>
         <ChevronSection open={leg.open} />

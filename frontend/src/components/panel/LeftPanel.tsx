@@ -381,12 +381,14 @@ export function LeftPanel() {
   // signal déjà existant) qui prime tant qu'il est affiché. Le quitter (Commencer/openFiltres, ou
   // rouvrir une section à la main → setAccueilVu) lève l'override → la section reprend (défaut Couches).
   const enAccueil = !accueilVu && !verdict
-  // RECETTE-5 (V11, décision Vic) — plus de GRAND VIDE NOIR quand aucun accordéon n'est ouvert. L'état
-  // 'listing' (les deux sections rétractées) n'est LÉGITIME que lorsqu'un vrai listing l'occupe, càd
-  // sous `verdict`. Hors accueil ET sans verdict, on retombe sur Couches OUVERTE par défaut : une
-  // section est toujours ouverte au démarrage (et après avoir retiré l'analyse), jamais le vide.
-  const listingVide = panneauSection === 'listing' && !verdict
-  const couchesOpen = !enAccueil && (panneauSection === 'couches' || listingVide)
+  // FINITIONS-1 (P2, décision Vic) — « cliquer referme » : cliquer la section OUVERTE la referme
+  // VRAIMENT (état 'listing' = les deux rétractées), même sans verdict. On lève donc la coercion
+  // RECETTE-5 (V11) qui rouvrait Couches dès qu'aucune section n'était ouverte — elle EMPÊCHAIT la
+  // fermeture. Les chemins automatiques posent la section EXPLICITEMENT (démarrage = 'couches' au store ;
+  // « retirer l'analyse » = 'filtres' via retourFiltres ; verdict = 'listing' avec un vrai listing) :
+  // aucun ne dépend de cette coercion, donc rien ne régresse. Quand les deux sont fermées sans verdict,
+  // le VerdictHero occupe la place (jamais un vide noir).
+  const couchesOpen = !enAccueil && panneauSection === 'couches'
   const filtresOpen = !enAccueil && panneauSection === 'filtres'
   // GB-031 — Échap ferme le panneau Filtres (retour à Couches, section par défaut), comme le patron
   // overlay (Modale, ModulePanel). Gardes : on ne ferme pas si l'utilisateur tape dans un champ, ni

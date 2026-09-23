@@ -23,13 +23,18 @@ type TipProps = {
                                         // le focus clavier et le tap/clic restent IMMÉDIATS (jamais retardés).
   garder?: boolean                      // RECETTE-2 (S10) : n'affiche la bulle QUE si `garder` (contrôle
                                         // carte OU déclencheur fonctionnel icône-seule « i »).
+  survol?: boolean                      // FINITIONS-1 (P1) : la bulle s'ouvre AU SURVOL. Réservé aux 3
+                                        // outils de mesure de la carte — SEULE exception au retrait des
+                                        // infobulles au survol. Sans `survol`, la bulle ne s'ouvre plus
+                                        // qu'au clic/tap ou au focus clavier (les « i » restent lisibles).
 }
 
-/** RECETTE-2 (S10, R28 tranché par Vic) — les infobulles au survol sont RETIRÉES PARTOUT, sauf deux
- *  cas qui passent `garder` : (a) les contrôles de la carte (couches, légende, outils carte) ; (b) les
- *  déclencheurs FONCTIONNELS icône-seule sans libellé (pastilles « i », pastille d'état) — la bulle EST
- *  leur seul contenu. Sans `garder`, le composant ne rend que ses enfants (le wrapper `block`/`className`
- *  est conservé pour ne rien déplacer), aucune bulle. La bulle complète vit dans TipBulle. */
+/** RECETTE-2 (S10) puis FINITIONS-1 (P1, tranché par Vic) — les infobulles AU SURVOL sont RETIRÉES
+ *  PARTOUT dans l'app. SEULE exception : les 3 outils de mesure de la carte, qui passent `survol`.
+ *  `garder` monte encore la bulle (déclencheurs icône-seule « i », pastille d'état) mais SANS survol :
+ *  elle ne s'ouvre plus qu'au CLIC/TAP ou au FOCUS clavier (l'info reste accessible, plus de bulle qui
+ *  jaillit à la souris). Sans `garder`, le composant ne rend que ses enfants (le wrapper `block`/
+ *  `className` est conservé pour ne rien déplacer), aucune bulle. La bulle complète vit dans TipBulle. */
 export function Tip(props: TipProps) {
   if (!props.garder) {
     return <span className={`${props.block ? 'flex' : 'inline-flex'} ${props.className ?? ''}`}>{props.children}</span>
@@ -37,7 +42,7 @@ export function Tip(props: TipProps) {
   return <TipBulle {...props} />
 }
 
-function TipBulle({ tip, children, side = 'top', className = '', block = false, hoverDelayMs = 0 }: TipProps) {
+function TipBulle({ tip, children, side = 'top', className = '', block = false, hoverDelayMs = 0, survol = false }: TipProps) {
   const [open, setOpen] = useState(false)
   const hoverTimer = useRef<number | null>(null)
   const clearHover = () => { if (hoverTimer.current) { window.clearTimeout(hoverTimer.current); hoverTimer.current = null } }
@@ -94,10 +99,11 @@ function TipBulle({ tip, children, side = 'top', className = '', block = false, 
   return (
     <span ref={ref}
       className={`${block ? 'flex' : 'inline-flex'} ${className}`}
-      // M62-P1 (c) : survol = délai `hoverDelayMs` (0 par défaut → inchangé pour tous les usages
-      // existants) ; focus clavier et clic/tap = IMMÉDIATS (on annule tout délai en cours).
-      onPointerEnter={(e) => { if (e.pointerType === 'touch') return; if (hoverDelayMs > 0) { clearHover(); hoverTimer.current = window.setTimeout(() => setOpen(true), hoverDelayMs) } else setOpen(true) }}
-      onPointerLeave={(e) => { if (e.pointerType !== 'touch') { clearHover(); setOpen(false) } }}
+      // FINITIONS-1 (P1) : le SURVOL n'ouvre la bulle que pour `survol` (les 3 outils de mesure) ; ailleurs
+      // le pointeur ne déclenche plus rien (clic/tap et focus clavier restent, ci-dessous). M62-P1 (c) :
+      // quand survol est actif, délai `hoverDelayMs` (0 par défaut) ; focus/clic = IMMÉDIATS.
+      onPointerEnter={(e) => { if (!survol || e.pointerType === 'touch') return; if (hoverDelayMs > 0) { clearHover(); hoverTimer.current = window.setTimeout(() => setOpen(true), hoverDelayMs) } else setOpen(true) }}
+      onPointerLeave={(e) => { if (survol && e.pointerType !== 'touch') { clearHover(); setOpen(false) } }}
       onFocus={() => { clearHover(); setOpen(true) }}
       onBlur={() => { clearHover(); setOpen(false) }}
       onClick={(e) => { e.stopPropagation(); clearHover(); setOpen((o) => !o) }}>
