@@ -6980,6 +6980,7 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
     ids = [x.strip() for x in idus.split(",") if x.strip()][:3]
     from ..faisabilite.db import fiche_payload
     from ..faisabilite.marche_commune import build_marche_commune
+    from ..faisabilite.zonage import resolve_zone
     out: list[dict] = []
     marche_cache: dict[str, dict] = {}
     for idu in ids:
@@ -7007,6 +7008,18 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
                     if pz and pz.get("calculable"):
                         row["terrain_zone_eur_m2"] = pz.get("median_eur_m2")
                     break
+        # COMPARER-2 §1 — CES (emprise au sol MAX) : la VRAIE règle PLU, seulement si une valeur
+        # numérique est VALIDÉE dans plu_destinations (resolve_zone la superpose). Sinon None → le
+        # front affiche « non réglementée ». Le taux d'occupation du gabarit (residuel.taux_emprise_pct)
+        # reste servi à part, badge Estimé — plus jamais un dérivé sous le titre « max PLU ».
+        try:
+            zr = resolve_zone(zone, commune) if (zone and commune) else None
+        except Exception:  # noqa: BLE001
+            zr = None
+        ces = getattr(zr, "emprise_sol_pct", None) if zr else None
+        row["emprise_ces_pct"] = float(ces) if isinstance(ces, (int, float)) else None
+        row["emprise_ces_source"] = ((zr.sources or {}).get("emprise")
+                                     if zr and row["emprise_ces_pct"] is not None else None)
         out.append(row)
     return {"count": len(out), "parcels": out}
 

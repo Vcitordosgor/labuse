@@ -37,7 +37,12 @@ const ROWS: Row[] = [
   // terrain libéré, la « résiduelle » suppose le bâti conservé — sinon les deux se contredisent à l'œil.
   { label: `SDP max estimée · ${PERIM_POTENTIEL_COURT}`, prov: 'estime', val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—', num: (r) => r.sdp_max_m2 ?? null, best: 'hi' },
   { label: `SDP résiduelle · ${PERIM_RESIDUEL_COURT}`, prov: 'estime', val: (r) => r.sdp_residuelle_m2 != null ? `${fmtInt(r.sdp_residuelle_m2)} m²` : '—', num: (r) => r.sdp_residuelle_m2 ?? null, best: 'hi' },
-  { label: 'Emprise au sol max', prov: 'source', val: (r) => r.taux_emprise_pct != null ? `${fmtInt(r.taux_emprise_pct)} %` : '—', num: (r) => r.taux_emprise_pct ?? null, best: 'hi', title: 'Part maximale du terrain que le PLU autorise à couvrir au sol.' },
+  // COMPARER-2 §1 — la VRAIE CES du PLU (validée dans plu_destinations), badge Sourcé + citation au survol.
+  // « non réglementée » quand la zone n'en fixe pas (ex. U3c/AU3c Saint-Paul) — jamais un dérivé sous ce titre.
+  { label: 'Emprise au sol max (PLU)', prov: 'source', val: (r) => r.emprise_ces_pct != null ? `${fmtInt(r.emprise_ces_pct)} %` : 'non réglementée', num: (r) => r.emprise_ces_pct ?? null, best: 'hi', title: 'Emprise au sol maximale fixée par le règlement de la zone (CES) — « non réglementée » si le PLU n\'en fixe pas.' },
+  // COMPARER-2 §1 — l'ancienne ligne « Emprise au sol max » servait CE ratio (bâti ÷ emprise constructible),
+  // pas une règle PLU → renommée « Taux d'occupation du gabarit », badge Estimé (un dérivé, pas un fait).
+  { label: 'Taux d\'occupation du gabarit', prov: 'estime', val: (r) => r.taux_emprise_pct != null ? `${fmtInt(r.taux_emprise_pct)} %` : '—', num: (r) => r.taux_emprise_pct ?? null, best: 'lo', title: 'Bâti existant ÷ emprise constructible : part du gabarit déjà occupée (plus bas = plus de marge à bâtir).' },
   { label: 'Sous-densité', prov: 'estime', val: (r) => r.sous_densite == null ? '—' : r.sous_densite ? 'oui' : 'non', title: 'Le bâti existant est nettement en-dessous de ce que le PLU permet : il reste un potentiel à construire.' },
   { label: 'Charge foncière /m²', prov: 'estime', val: (r) => r.charge_fonciere_m2 != null ? `${fmtEurCompact(r.charge_fonciere_m2)}/m²` : '—', num: (r) => r.charge_fonciere_m2 ?? null, best: 'lo', title: 'Coût du foncier ramené au m² de surface de plancher constructible — plus bas = plus intéressant.' },
   { label: 'Prix terrain nu zone', prov: 'source', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—', num: (r) => r.terrain_zone_eur_m2 ?? null, best: 'lo', title: 'Prix moyen du terrain nu observé dans la zone — plus bas = plus intéressant.' },
