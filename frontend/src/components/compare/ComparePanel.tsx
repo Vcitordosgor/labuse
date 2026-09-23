@@ -46,9 +46,10 @@ const ROWS: Row[] = [
   { label: 'Sous-densité', prov: 'estime', val: (r) => r.sous_densite == null ? '—' : r.sous_densite ? 'oui' : 'non', title: 'Le bâti existant est nettement en-dessous de ce que le PLU permet : il reste un potentiel à construire.' },
   // COMPARER-2 §2 — la valeur est par m² de TERRAIN (charge_fonciere.par_m2_terrain), pas de plancher.
   { label: 'Charge foncière /m² terrain', prov: 'estime', val: (r) => r.charge_fonciere_m2 != null ? `${fmtEurCompact(r.charge_fonciere_m2)}/m²` : '—', num: (r) => r.charge_fonciere_m2 ?? null, best: 'hi', title: 'Charge foncière supportable ramenée au m² de terrain — plus haut = plus intéressant (négatif = l\'opération ne dégage rien pour le foncier).' },
-  { label: 'Prix terrain nu zone', prov: 'source', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—', num: (r) => r.terrain_zone_eur_m2 ?? null, best: 'lo', title: 'Prix moyen du terrain nu observé dans la zone — plus bas = plus intéressant.' },
+  // COMPARER-2 §3 — une MÉDIANE DVF est un calcul sur des ventes, pas un fait cadastral → badge Estimé.
+  { label: 'Prix terrain nu zone', prov: 'estime', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—', num: (r) => r.terrain_zone_eur_m2 ?? null, best: 'lo', title: 'Médiane DVF du terrain nu dans la zone (calcul, pas un fait) — plus bas = plus intéressant.' },
   // RETOURS-11F M13 (O9) — lignes utiles ajoutées, toutes de la fiche servie (aucun second moteur).
-  { label: 'Prix bâti secteur', prov: 'source', val: (r) => r.prix_secteur_bati_m2 != null ? `${fmtInt(r.prix_secteur_bati_m2)} €/m²` : '—', num: (r) => r.prix_secteur_bati_m2 ?? null, title: 'Médiane DVF du bâti (maison/appartement) dans le secteur — même source que la fiche Marché.' },
+  { label: 'Prix bâti secteur', prov: 'estime', val: (r) => r.prix_secteur_bati_m2 != null ? `${fmtInt(r.prix_secteur_bati_m2)} €/m²` : '—', num: (r) => r.prix_secteur_bati_m2 ?? null, title: 'Médiane DVF du bâti (maison/appartement) dans le secteur (calcul) — même source que la fiche Marché.' },
   // OUTILS-FIX-2 D3 — la fourchette de logements affiche ses DEUX bornes (avant : borne haute seule).
   { label: 'Logements possibles', prov: 'estime',
     val: (r) => { const hi = r.logements_possibles, lo = r.logements_min
@@ -57,7 +58,9 @@ const ROWS: Row[] = [
   { label: 'Bâti existant', prov: 'source', val: (r) => r.bati_existant_pct != null ? `${fmtInt(r.bati_existant_pct)} % du terrain` : '—', num: (r) => r.bati_existant_pct ?? null, best: 'lo', title: 'Part du terrain déjà couverte par le bâti (emprise au sol / surface) — plus bas = plus de place à bâtir.' },
   { label: 'Gabarit max', prov: 'source', val: (r) => r.gabarit_niveaux_max != null ? `R+${Math.max(0, r.gabarit_niveaux_max - 1)}` : '—', num: (r) => r.gabarit_niveaux_max ?? null, best: 'hi', title: 'Nombre de niveaux maximum autorisé (gabarit PLU).' },
   { label: 'Accès & réseaux', prov: 'source', val: (r) => r.acces_reseaux ?? '—', title: 'Un seul verdict de viabilisation (accès voirie + réseaux) — le même que la fiche Réseaux et accès.' },
-  { label: 'Assainissement', prov: 'source', val: (r) => r.assainissement ?? '—' },
+  // COMPARER-2 §3 — le verdict d'assainissement est souvent une STATISTIQUE de secteur (« 59 % non
+  // raccordés »), pas un raccordement constaté à la parcelle → badge Estimé.
+  { label: 'Assainissement', prov: 'estime', val: (r) => r.assainissement ?? '—', title: 'Desserte d\'assainissement — souvent un constat de secteur (statistique), pas un raccordement vérifié à la parcelle.' },
   { label: 'Propriétaire', prov: 'source', val: (r) => r.proprietaire === 'morale' ? 'personne morale' : r.proprietaire === 'particulier' ? 'particulier' : '—', title: 'Personne morale (société) ou particulier — issu du fichier DGFiP.' },
   { label: 'Contrainte majeure', prov: 'source', val: (r) => r.contrainte_majeure ?? (r.n_contraintes ? `${r.n_contraintes} signalée(s)` : 'aucune') },
 ]
