@@ -111,21 +111,52 @@ def _appel_reel(db, fiche: dict) -> str:
     return texte
 
 
+def _extraire_json(brut: str) -> dict | None:
+    """CIRCUIT-P5 — extraction ROBUSTE de l'objet JSON de réponse. Le `\\{.*\\}` glouton d'avant
+    échouait dès que la PROSE du modèle contenait une accolade (« l'endpoint …/api/companies/{siren} »)
+    AVANT le vrai bloc JSON : il avalait de la prose et json.loads plantait (« JSON invalide »),
+    alors que l'agent AVAIT trouvé la réponse. On collecte tous les objets à accolades ÉQUILIBRÉES
+    (plus un éventuel bloc ```json```) et on garde le DERNIER qui parse ET porte une clé `verdict`
+    (la réponse finale du modèle vient en dernier)."""
+    candidats: list[str] = []
+    fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", brut, re.S)
+    if fence:
+        candidats.append(fence.group(1))
+    depth, start = 0, None
+    for i, ch in enumerate(brut):
+        if ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}" and depth > 0:
+            depth -= 1
+            if depth == 0 and start is not None:
+                candidats.append(brut[start:i + 1])
+    for c in reversed(candidats):
+        try:
+            d = json.loads(c)
+        except Exception:  # noqa: BLE001
+            continue
+        if isinstance(d, dict) and "verdict" in d:
+            return d
+    m = re.search(r"\{.*\}", brut, re.S)   # repli : le glouton historique
+    if m:
+        try:
+            return json.loads(m.group(0))
+        except Exception:  # noqa: BLE001
+            return None
+    return None
+
+
 def _valider(brut: str) -> tuple[dict, str | None]:
     """Parse + ANTI-INVENTION : rend (rapport, raison_forçage|None). Un verdict positif sans
     preuve datée est FORCÉ à `introuvable` (la raison le dit)."""
-    m = re.search(r"\{.*\}", brut, re.S)
-    if not m:
+    d = _extraire_json(brut)
+    if d is None:
         return ({"verdict": "introuvable", "cherche": [],
                  "preuve": None, "sonde_proposee": None, "page_js": "inconnu",
                  "version_trouvee": None, "date_publication": None},
-                "sortie non-JSON (aucun objet trouvé)")
-    try:
-        d = json.loads(m.group(0))
-    except Exception:  # noqa: BLE001
-        return ({"verdict": "introuvable", "cherche": [], "preuve": None,
-                 "sonde_proposee": None, "page_js": "inconnu",
-                 "version_trouvee": None, "date_publication": None}, "JSON invalide")
+                "sortie non-JSON (aucun objet exploitable)")
     d.setdefault("preuve", None)
     d.setdefault("cherche", [])
     d.setdefault("sonde_proposee", None)
@@ -166,13 +197,24 @@ def lancer_agent(db, source_id: int, *, par: str = "cli", appel=None) -> dict:
          "ch": json.dumps(rapport.get("cherche"), ensure_ascii=False),
          "sp": json.dumps(rapport.get("sonde_proposee"), ensure_ascii=False),
          "js": rapport.get("page_js"), "ra": raison, "par": par[:120]})
-    if rapport["verdict"] == "nouvelle":
-        # la vanne apparaît : la veille porte le millésime VU (jamais servi tel quel — doctrine)
-        db.execute(text(
-            "UPDATE source_veille SET dernier_vu = :vu, dernier_statut = 'nouvelle_version',"
-            " updated_at = now() WHERE source_id = :i"),
-            {"vu": str(rapport.get("version_trouvee") or rapport.get("date_publication") or "")[:64],
-             "i": source_id})
+    # CIRCUIT-P5 — un agent qui ATTEINT le producteur EST un contrôle : on enregistre la DATE du
+    # contrôle (dernier_passage_at) et le statut. Une source « jamais vérifiée » passe alors
+    # « à jour » (verdict a_jour → statut 'ok') ou « nouvelle version » (verdict nouvelle). Pas de
+    # contrainte unique sur source_id → UPDATE puis INSERT ; une source SANS ligne de veille (pas de
+    # sonde) est créée en methode 'agent' (jamais sondée par la sentinelle — 'agent' ∉ api/page/
+    # entete/temoin —, mais son contrôle par l'agent est désormais visible sur la page).
+    if rapport["verdict"] in ("a_jour", "nouvelle"):
+        statut = "nouvelle_version" if rapport["verdict"] == "nouvelle" else "ok"
+        vu = str(rapport.get("version_trouvee") or rapport.get("date_publication") or "")[:64] or None
+        touche = db.execute(text(
+            "UPDATE source_veille SET dernier_statut = :st, dernier_passage_at = now(),"
+            " dernier_vu = COALESCE(:vu, dernier_vu), updated_at = now() WHERE source_id = :i"),
+            {"st": statut, "vu": vu, "i": source_id}).rowcount
+        if not touche:
+            db.execute(text(
+                "INSERT INTO source_veille (source_id, methode, dernier_statut, dernier_vu,"
+                " dernier_passage_at) VALUES (:i, 'agent', :st, :vu, now())"),
+                {"i": source_id, "st": statut, "vu": vu})
     circuit_journal.journaliser(db, "agent", fiche["source"], par, rapport["verdict"],
                                 {"raison": raison, "page_js": rapport.get("page_js")})
     return {"ok": True, "source": fiche["source"], **rapport, "raison_forcage": raison}

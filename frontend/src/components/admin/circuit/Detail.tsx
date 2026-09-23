@@ -27,7 +27,7 @@ const versCouche = (kind: string) => {
   app.setView('cartes')
 }
 
-type Ouvrir = (type: 'reservoir' | 'robinet' | 'pompe' | 'compteur', id: number | string) => void
+type Ouvrir = (type: 'reservoir' | 'robinet' | 'pompe' | 'compteur' | 'destinations', id: number | string) => void
 type Props = { type: 'reservoir' | 'robinet' | 'pompe' | 'compteur'; id: number | string; data: CircuitData; onClose: () => void; onOpen: Ouvrir }
 
 const dateFr = (s: string | null | undefined) =>
@@ -239,13 +239,20 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
               </div>
             )
             return (<>
-              {/* PLU-CALIBRAGE-1 (lot 2) — les calibrages PLU, lecteurs du réservoir GPU. */}
+              {/* PLU-CALIBRAGE-1 (lot 2) — les calibrages PLU, lecteurs du réservoir GPU.
+                  CIRCUIT-P5 — le détail complet (Destinations : commune × état + règlement) vit ICI,
+                  ouvert par le lien ci-dessous (plus par un lien en bas de la page Données). */}
               {calibrages.length > 0 && (
-                <div className="card"><h3>Calibrages PLU · {calibrages.length} lecteurs</h3>
+                <div className="card">
+                  <h3>Calibrages PLU · {calibrages.length} lecteurs</h3>
                   <div>{calibrages.map((cb) => (
                     <span key={cb.insee} className={`chip ${cb.a_reverifier ? 'ambre' : ''}`}>
                       {cb.commune} · {cb.etat_label}{cb.n_regles ? ` (${cb.n_regles})` : ''}</span>
                   ))}</div>
+                  <button className="lien" style={{ marginTop: 8 }}
+                    onClick={() => onOpen('destinations', 'plu_destinations')}>
+                    Voir le calibrage complet par commune (Destinations PLU) →
+                  </button>
                 </div>
               )}
               <div className="card"><h3>Couches carte alimentées · {couches.length}</h3>
