@@ -132,10 +132,16 @@ def _sugg_adresse(db: Session, q: str, n: int) -> list[dict]:
     # retrouve sa parcelle — avant, le rep (bis/ter) et le suffixe CP+commune la faisaient échouer.
     # Expression LITTÉRALE côté colonne (celle de l'index GIN trigram ÉTENDU, ensure_index) + aiguille
     # normalisée en Python (plie_suggest) : même dessin des deux côtés (doctrine M99-B).
+    # PERMIS-CHECK-2 pt 3 — le LIBELLÉ affiché PORTE le rep (bis/ter/quater), comme la fiche
+    # (`_ban_adresse` : concat_ws numéro+rep+voie). Avant, il valait `numéro + voie` SEUL : « 1 bis »
+    # et « 1 » (deux PARCELLES distinctes, BZ1288 vs BZ1287) s'affichaient tous deux « 1 Chemin de la
+    # Citerne », et le pick recopiait ce libellé rep-less dans la barre → « 1 bis corrigé en 1 » (constat
+    # Vic). La RÉSOLUTION était déjà juste (idu par ligne) ; c'est l'AFFICHAGE qui perdait le rep.
     from ..constants import ADRESSE_SUGGEST_EXPR, plie_suggest, sql_plie_lit_suggest
     col = sql_plie_lit_suggest(ADRESSE_SUGGEST_EXPR)
     rows = db.execute(text(
-        f"""SELECT trim(coalesce(numero,'') || ' ' || voie) AS label, commune, code_postal, idu,
+        f"""SELECT trim(concat_ws(' ', nullif(numero,''), nullif(rep,''), voie)) AS label,
+                   commune, code_postal, idu,
                    ST_X(geom) lon, ST_Y(geom) lat
             FROM adresses
             WHERE idu IS NOT NULL AND geom IS NOT NULL AND {col} LIKE '%' || :qp || '%'

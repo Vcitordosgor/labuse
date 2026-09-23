@@ -667,7 +667,11 @@ def parcelle_permis(idu: str, db: Session = Depends(get_db)) -> dict:
         SELECT w.permit_id, s.type, s.date::date::text AS date, s.commune,
                s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt,
                s.raw->>'petitioner_name' AS porteur,
-               round(ST_Distance(p.g, w.g))::int AS dist_m
+               round(ST_Distance(p.g, w.g))::int AS dist_m,
+               -- PERMIS-CHECK-2 pt 1 — la GÉOM (4326, comme le radar) voyage : le front dessine ces
+               -- permis EN POINTS CLIQUABLES (la phrase « X permis » = X points à l'écran, jamais un
+               -- compte sans support visible). Même colonne `geom` que /permis (carte).
+               CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
         FROM p JOIN via_permits_geo w ON ST_DWithin(p.g, w.g, 200)
                JOIN sitadel_permits s ON s.permit_id = w.permit_id
         ORDER BY dist_m ASC LIMIT 100"""), {"idu": idu}).mappings().all()
@@ -675,11 +679,16 @@ def parcelle_permis(idu: str, db: Session = Depends(get_db)) -> dict:
               "nature_libelle": _NATURE_LABELS.get(r["type"], r["type"]),
               "date": r["date"], "etat": r["etat"], "nb_lgt": r["nb_lgt"],
               "porteur": r["porteur"], "distance_m": r["dist_m"],
-              "rayon": "100m" if r["dist_m"] <= 100 else "200m"} for r in rows]
+              "rayon": "100m" if r["dist_m"] <= 100 else "200m",
+              "geom": json.loads(r["g"]) if r["g"] else None} for r in rows]
     return {
         "idu": idu,
         "c100": sum(1 for i in items if i["distance_m"] <= 100),
         "c200": len(items),
+        # PERMIS-CHECK-2 pt 1 — la source ne renvoie que des permis GÉOLOCALISÉS (via_permits_geo) :
+        # `localises` = ceux avec une géom dessinable ; `non_localises` = le reste (rare, s.geom nul).
+        "localises": sum(1 for i in items if i["geom"]),
+        "non_localises": sum(1 for i in items if not i["geom"]),
         "note": "Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA).",
         "items": items,
     }
