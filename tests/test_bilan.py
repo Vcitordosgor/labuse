@@ -99,6 +99,23 @@ def test_surface_vendable_nulle():
     assert b.fiable is False
 
 
+def test_vrd_sur_emprise_amenagee_grande_parcelle():
+    # COMPARER-2 §2 — sur une GRANDE parcelle sous-densifiée, la VRD ne se facture plus sur le terrain
+    # brut mais sur l'emprise réellement AMÉNAGÉE (empreinte au sol + stationnement + voirie), plafonnée
+    # au terrain. Un scénario RENTABLE (prix de sortie > coût + marge) ne bascule donc plus en charge
+    # foncière négative par le seul effet du terrain non aménagé.
+    eco = {"niveaux_max": 3, "logements_estimes": 10, "places_par_logt": 2.0, "pente_pct": 0.0}
+    bp = {"cout_vrd_base": 90.0}                       # VRD active ; majorations pente/assain nulles
+    b = compute_bilan(1000, 5000, _prix(4530, 4530, 4530), H, contexte_eco=eco, bilan_params=bp)
+    assert b.fiable
+    # scénario rentable + VRD sur emprise aménagée → charge foncière médiane NON négative
+    assert b.charge_fonciere["central"] >= 0
+    vrd = next(s for s in b.steps if s.label == "VRD / viabilisation")
+    # la VRD porte sur l'emprise AMÉNAGÉE (bien plus petite que les 5000 m² de terrain), pas le terrain brut
+    assert "emprise aménagée" in vrd.formule
+    assert "aménagement plafonné" not in vrd.formule
+
+
 def test_prix_fragile_arrondi_et_simulation_indicative():
     # un prix « fragile » est chiffré mais arrondi (pas de fausse précision) et signalé.
     b = compute_bilan(1000, 1000, _prix(2980, 3030, 3080, fiabilite="fragile",
