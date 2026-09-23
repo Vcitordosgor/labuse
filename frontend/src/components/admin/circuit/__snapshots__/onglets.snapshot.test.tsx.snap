@@ -8,18 +8,6 @@ exports[`snapshots des onglets > Circuit (diagramme) 1`] = `
     placeholder="Chercher un réservoir, un robinet, un chiffre…"
     value=""
   />
-  <button
-    class="sw on"
-  >
-    <span>
-      Ne montrer que ce qui cloche
-    </span>
-    <span
-      class="tr"
-    >
-      <i />
-    </span>
-  </button>
   <div
     class="legend"
   >
@@ -33,7 +21,7 @@ exports[`snapshots des onglets > Circuit (diagramme) 1`] = `
       <i
         style="background: var(--ambre);"
       />
-      à regarder
+      à voir
     </span>
     <span>
       <i

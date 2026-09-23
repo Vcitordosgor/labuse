@@ -67,15 +67,19 @@ def _coherence(circ: dict) -> list[str]:
         rb = next(x for x in circ["robinets"] if x["id"] == rid)
         if rb["etat"][1] not in ("choix à confirmer", "écart à la règle") and rid not in ids_resume_rob:
             pbs.append(f"Circuit dit le robinet {rid!r} à regarder ({rb['etat'][1]}) sans ligne au Résumé")
-    # ── réservoirs ──
-    ko_res = {r["id"] for r in circ["reservoirs"] if _ko_res(r)}
-    ids_resume_res = set()
-    for g in circ["resume"]["groupes"]:
-        for li in g["lignes"]:
-            if li["cible"]["type"] == "reservoir" and li["couleur"] in ("rouge", "ambre", "mauve"):
-                ids_resume_res |= set(li["cible"]["ids"])
-    if ko_res != ids_resume_res:
-        pbs.append(f"réservoirs : Circuit {sorted(ko_res)} ≠ Résumé {sorted(ids_resume_res)}")
+    # ── réservoirs (CIRCUIT-P4) — les GESTES réservoir vivent désormais dans « À faire », pas dans
+    #    un résumé : chaque source ACTIONNABLE (nouvelle version → Injecter, échue → Déposer) a
+    #    exactement une ligne À faire, et réciproquement. « sonde en panne » (signal technique) et
+    #    « jamais vérifiée » (gris) ne portent pas de geste : hors de cette réciprocité. ──
+    _ = {r["id"] for r in circ["reservoirs"] if _ko_res(r)}   # (compat : ko toujours calculable)
+    actionnables = {r["id"] for r in circ["reservoirs"] if r["etat"][1] in ("nouvelle version", "échue")}
+    ids_af_res = set()
+    for li in circ.get("a_faire", {}).get("lignes", []):
+        cible = li.get("cible") or {}
+        if cible.get("type") == "reservoir" and li["type"] in ("injecter", "deposer"):
+            ids_af_res |= set(cible["ids"])
+    if actionnables != ids_af_res:
+        pbs.append(f"réservoirs : actionnables {sorted(actionnables)} ≠ À faire {sorted(ids_af_res)}")
     return pbs
 
 

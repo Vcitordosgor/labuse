@@ -277,7 +277,7 @@ def composer_a_faire(reservoirs: list[dict], *, residuel: dict | None, candidat:
             lignes.append(_ligne_af(
                 "deposer", "ambre", f"Déposer {r['nom']}",
                 (f"Source manuelle échue{f' — cadence {cad} j' if cad else ''} : dernier dépôt "
-                 f"{r.get('dernier_controle', '')[:10] or 'jamais'}. Ne touche ni le résiduel ni le score."),
+                 f"{(r.get('dernier_controle') or '')[:10] or 'jamais'}. Ne touche ni le résiduel ni le score."),
                 {"label": "Déposer un fichier", "action": "deposer", "source": r["id"]},
                 cible={"type": "reservoir", "ids": [r["id"]]}))
 

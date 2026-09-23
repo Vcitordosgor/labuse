@@ -118,28 +118,24 @@ def test_detail_robinet_coherent_avec_liste(client, engine):
 
 @pytest.mark.db
 def test_reservoirs_a_regarder_sans_doublon(client, engine):
-    """2.3 — « n à regarder » à gauche = les ids de réservoirs des lignes du Résumé, SANS doublon
-    (un réservoir dans deux lignes ne compte qu'une fois)."""
+    """CIRCUIT-P4 (lot 2) — les GESTES réservoir vivent dans « À faire » : chaque source actionnable
+    (nouvelle version → Injecter, échue → Déposer) a EXACTEMENT une ligne À faire, sans doublon, et
+    réciproquement. Le nombre de l'onglet = le nombre de lignes (compteur = lignes)."""
     from labuse.ingestion.seed_sources import appliquer_modes_cadences
     with engine.begin() as c:
         appliquer_modes_cadences(c)
     circ = client.get("/admin/circuit").json()
 
-    # les lignes « à regarder » = celles qui portent une couleur ko (rouge/ambre/mauve) sur des
-    # réservoirs. Les lignes grises « À décider » (cadences, choix) NE sont PAS « à regarder ».
-    ids_ko = []
-    for g in circ["resume"]["groupes"]:
-        for li in g["lignes"]:
-            if li["cible"]["type"] == "reservoir" and li["couleur"] in ("rouge", "ambre", "mauve"):
-                ids_ko.extend(li["cible"]["ids"])
-    distincts = set(ids_ko)
-    # « n à regarder » à gauche = les réservoirs distincts des lignes ko du Résumé (2.3)
-    assert circ["compteurs"]["a_regarder"] == len(distincts)
-    # sans doublon : un réservoir = un état = une seule ligne ko
-    assert len(ids_ko) == len(distincts)
-    # cohérence : ces ids sont bien « à regarder » (ko) dans le rendu du Circuit, et réciproquement
-    etat_par_id = {r["id"]: r["etat"] for r in circ["reservoirs"]}
-    for rid in distincts:
-        assert E.ko_reservoir(*etat_par_id[rid])
-    tous_ko = {r["id"] for r in circ["reservoirs"] if E.ko_reservoir(*r["etat"])}
-    assert distincts == tous_ko          # aucun réservoir à regarder sans ligne (réciprocité)
+    ids = []
+    for li in circ["a_faire"]["lignes"]:
+        cible = li.get("cible") or {}
+        if cible.get("type") == "reservoir" and li["type"] in ("injecter", "deposer"):
+            ids.extend(cible["ids"])
+    distincts = set(ids)
+    # sans doublon : un réservoir actionnable = un état = une seule ligne
+    assert len(ids) == len(distincts)
+    # le compteur de l'onglet = le nombre de lignes
+    assert circ["a_faire"]["total"] == len(circ["a_faire"]["lignes"])
+    # réciprocité : ces ids sont exactement les sources en « nouvelle version » ou « échue »
+    actionnables = {r["id"] for r in circ["reservoirs"] if r["etat"][1] in ("nouvelle version", "échue")}
+    assert distincts == actionnables
