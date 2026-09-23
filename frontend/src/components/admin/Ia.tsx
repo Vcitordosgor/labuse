@@ -99,7 +99,7 @@ export function IaSection() {
           <div className="p-4">
             <div className="flex h-16 items-end gap-[3px]" aria-hidden="true">
               {d.jours.map((x) => (
-                <i key={x.jour} title={`${x.jour} · ${eur(x.cout)} · ${x.appels} appels`}
+                <i key={x.jour} aria-label={`${x.jour} · ${eur(x.cout)} · ${x.appels} appels`}
                   className="min-w-[4px] flex-1 rounded-t-sm bg-gradient-to-b from-cp-ia to-cp-ia-border opacity-85"
                   style={{ height: `${Math.max(4, (x.cout / maxJour) * 100)}%` }} />
               ))}

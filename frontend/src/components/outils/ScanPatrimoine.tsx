@@ -183,7 +183,7 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
                     Il est DONC plus grand que le « N opérations » affiché dans l'onglet (qui ne compte que
                     les opérations regroupées) : la parenthèse le dit pour que les deux ne se contredisent pas. */}
                 {label}{k === 'construit' && nConstruit != null && (
-                  <span className="ml-1 text-txt-dim" title="Opérations Sitadel regroupées + programmes publiés sur son site (total). L'onglet détaille les opérations séparément.">({nConstruit})</span>
+                  <span className="ml-1 text-txt-dim">({nConstruit})</span>
                 )}
               </button>
             ))}

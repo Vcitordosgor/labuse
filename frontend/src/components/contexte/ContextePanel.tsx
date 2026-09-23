@@ -257,7 +257,7 @@ export function ContextePanel() {
             <p className="mt-0.5 text-[10.5px] text-txt-dim">{fmt(d.foncier.surface_ha)} ha · {fmt(d.foncier.n_parcelles)} parcelles</p>
           )}
         </div>
-        <button onClick={() => setContexteCommune(null)} className="shrink-0 text-txt-dim hover:text-txt-hi" title="Fermer (Échap)" aria-label="Fermer">✕</button>
+        <button onClick={() => setContexteCommune(null)} className="shrink-0 text-txt-dim hover:text-txt-hi" aria-label="Fermer">✕</button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">

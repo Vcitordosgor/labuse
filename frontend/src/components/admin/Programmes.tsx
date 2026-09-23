@@ -63,7 +63,7 @@ export function CollecteProgrammes({ sirenFixe, nomFixe, onValide }: {
         <p className="text-[11px] text-txt-mut">Coller l'URL de la page « nos programmes » du site du promoteur. L'IA propose la liste ; vous corrigez et validez ligne à ligne. Aucun texte ni photo n'est conservé — seulement le nom, la commune et le lien.</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {verrou ? (
-            <span data-prog-siren-fixe className="inline-flex h-8 items-center rounded-md border border-line-2 bg-surface-1 px-2 font-mono text-[11px] text-txt-dim" title="SIREN du propriétaire courant">SIREN {sirenFixe}</span>
+            <span data-prog-siren-fixe className="inline-flex h-8 items-center rounded-md border border-line-2 bg-surface-1 px-2 font-mono text-[11px] text-txt-dim">SIREN {sirenFixe}</span>
           ) : (
             <>
               <input data-prog-siren value={siren} onChange={(e) => setSiren(e.target.value)} placeholder="SIREN (si connu)" className={`w-40 ${inp}`} />
@@ -91,7 +91,7 @@ export function CollecteProgrammes({ sirenFixe, nomFixe, onValide }: {
           <div className="flex flex-col gap-1.5">
             {lignes.map((l, i) => (
               <div key={i} data-prog-ligne className="grid grid-cols-[auto_1.6fr_1fr_2fr_auto] items-center gap-2">
-                <input type="checkbox" checked={l.garder} onChange={(e) => maj(i, { garder: e.target.checked })} title="garder cette ligne" />
+                <input type="checkbox" checked={l.garder} onChange={(e) => maj(i, { garder: e.target.checked })} aria-label="garder cette ligne" />
                 <input value={l.nom} onChange={(e) => maj(i, { nom: e.target.value })} placeholder="nom du programme" className={inp} />
                 <input value={l.commune ?? ''} onChange={(e) => maj(i, { commune: e.target.value || null })} placeholder="commune" className={inp} />
                 <input value={l.url ?? ''} onChange={(e) => maj(i, { url: e.target.value || null })} placeholder="URL (lien)" className={`font-mono text-[10.5px] ${inp}`} />
@@ -129,8 +129,8 @@ export function ProgrammesSection() {
           </div>
           {(progs.data?.programmes ?? []).map((p) => (
             <div key={p.id} data-prog-row className="grid grid-cols-[1.4fr_1.6fr_1fr_auto_auto] items-center border-t border-line-2 px-3 py-1.5 text-[11.5px]">
-              <span className="truncate text-txt-mut" title={p.promoteur_nom}>{p.promoteur_nom}</span>
-              <span className="truncate text-txt-hi" title={p.nom}>{p.url ? <a href={p.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">{p.nom}</a> : p.nom}</span>
+              <span className="truncate text-txt-mut">{p.promoteur_nom}</span>
+              <span className="truncate text-txt-hi">{p.url ? <a href={p.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">{p.nom}</a> : p.nom}</span>
               <span className="text-txt-dim">{p.commune ?? '—'}{p.annee ? ` · ${p.annee}` : ''}</span>
               <span className="text-[10.5px]">{p.rattachement_mode
                 ? <span className="text-mint">{p.rattachement_mode}{p.rattachement_confiance != null ? ` (${p.rattachement_confiance})` : ''} → {p.op_commune} {p.op_annee ?? ''}</span>

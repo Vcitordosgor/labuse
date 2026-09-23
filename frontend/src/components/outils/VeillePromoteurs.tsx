@@ -223,7 +223,7 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
               <option value="">Toutes catégories</option>
               {(d?.categories ?? []).map((c) => <option key={c.cle} value={c.cle}>{c.label}</option>)}
             </select>
-            <input data-vp-depuis type="date" value={depuis} onChange={(e) => setDepuis(e.target.value)} className={sel} title="Déposées depuis…" />
+            <input data-vp-depuis type="date" value={depuis} onChange={(e) => setDepuis(e.target.value)} className={sel} aria-label="Déposées depuis…" />
           </div>
         </>
       )}
@@ -250,7 +250,7 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
                 sont listées dessous ; ses programmes publiés une seule fois ; sa frise une seule fois. */}
             {promoteurs.map((g, i) => (
               <div key={g.siren ?? i} data-vp-promoteur data-vp-siren={g.siren ?? ''} className="flex flex-col gap-1 rounded-lg border border-line-2 bg-surface-2 p-2.5">
-                <b className="truncate text-[12.5px] text-txt-hi" title={g.denomination ?? undefined}>{g.denomination ?? '(propriétaire non nommé)'}</b>
+                <b className="truncate text-[12.5px] text-txt-hi">{g.denomination ?? '(propriétaire non nommé)'}</b>
                 <span className="text-[11px] text-txt-mut">{CAT_LABEL[g.categorie] ?? g.categorie} · <b className="text-txt">{g.ops.length}</b> opération{g.ops.length > 1 ? 's' : ''} · <b className="text-txt">{g.n_permis}</b> permis · <b className="text-txt">{g.nb_logements}</b> logement{g.nb_logements > 1 ? 's' : ''}</span>
                 {g.siren && <span className="truncate font-mono text-[10px] text-txt-off">SIREN <Siren value={g.siren} className="font-mono text-txt-off" /></span>}
                 {g.radar && <span data-vp-radar-cite className="w-fit rounded bg-mint/12 px-1.5 py-px text-[9.5px] font-medium text-mint">annonce neuve Radar rattachée</span>}
@@ -274,14 +274,14 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
                 {/* PROMO-1 (P4) — programmes rattachés (dédoublonnés) : FAIT (nom) + LIEN, jamais un visuel. */}
                 {g.programmes.map((p, k) => (
                   <div key={k} data-vp-programme className="mt-0.5 rounded-md border border-mint/25 bg-mint/[0.05] px-2 py-1 text-[11px]">
-                    <b className="block truncate text-txt-hi" title={p.nom}>{p.nom}</b>
+                    <b className="block truncate text-txt-hi">{p.nom}</b>
                     {p.url && <a data-vp-programme-lien href={p.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">voir sur le site de {p.promoteur_nom ?? 'ce promoteur'} →</a>}
                   </div>
                 ))}
 
                 {g.siren && (
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line/60 pt-1.5 text-[10.5px]">
-                    <button data-vp-patrimoine onClick={() => voirPatrimoine(g.siren!)} className="whitespace-nowrap text-mint hover:underline" title="Tout son foncier — Scan patrimoine">voir son patrimoine →</button>
+                    <button data-vp-patrimoine onClick={() => voirPatrimoine(g.siren!)} className="whitespace-nowrap text-mint hover:underline">voir son patrimoine →</button>
                     <button data-vp-frise onClick={() => setOpenSiren((s) => (s === g.siren ? null : g.siren))} className="whitespace-nowrap text-mint hover:underline">{openSiren === g.siren ? 'masquer sa frise' : 'sa frise ▾'}</button>
                   </div>
                 )}

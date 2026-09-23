@@ -99,7 +99,6 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
           <div className="flex flex-col gap-1">
             {items.map((i) => (
               <button key={i.idu} data-m15-item onClick={() => select(i.idu)}
-                title="Ouvrir la parcelle"
                 className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60">
                 <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
                 <span className="text-txt-dim">{fmt(i.surface_m2)} m²</span>
@@ -190,8 +189,7 @@ export function M16() {
       <div className="flex flex-wrap gap-1">
         {msel.map((i) => (
           <button key={i} onClick={() => setMsel(msel.filter((x) => x !== i))}
-            className="min-h-7 rounded-full border border-mint/60 px-2 py-0.5 font-mono text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10"
-            title="Retirer de la sélection">
+            className="min-h-7 rounded-full border border-mint/60 px-2 py-0.5 font-mono text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">
             {i.slice(8)} ×
           </button>
         ))}
@@ -243,10 +241,9 @@ export function M16() {
                           onChange={() => setMsel(coche ? msel.filter((x) => x !== v.idu) : [...msel, v.idu])} />
                         <span className="font-mono text-[11px] text-txt-hi">{v.idu.slice(8)}</span>
                         {v.meme_proprietaire && (
-                          <span className="rounded-full bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint"
-                            title={`Même propriétaire que ${ring.slice(8)} (même SIREN — fichiers PM DGFiP)`}>même propriétaire</span>
+                          <span className="rounded-full bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint">même propriétaire</span>
                         )}
-                        <span className="ml-auto tnum text-[11px] text-txt" title="SDP résiduelle — Estimé, moteur de la fiche">{v.sdp_residuelle_m2 == null ? '—' : `${fmt(v.sdp_residuelle_m2)} m²`}</span>
+                        <span className="ml-auto tnum text-[11px] text-txt">{v.sdp_residuelle_m2 == null ? '—' : `${fmt(v.sdp_residuelle_m2)} m²`}</span>
                         <span className="rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">Estimé</span>
                       </div>
                       <div className="mt-0.5 flex items-center gap-1.5 text-[10.5px]">
@@ -255,20 +252,18 @@ export function M16() {
                         <span className="text-txt-dim">·</span>
                         <span className="min-w-0 flex-1 truncate">
                           {pr.type === 'personne_morale'
-                            ? <span className="text-txt" title={pr.siren ? `SIREN ${pr.siren}` : undefined}>{pr.denomination}</span>
+                            ? <span className="text-txt">{pr.denomination}</span>
                             : <span className="italic text-txt-dim">particulier — non nommé</span>}
                         </span>
                         {/* B4 — sur une voisine COCHÉE : étendre la proposition d'un anneau depuis elle */}
                         {coche && (
                           <button data-asm-ses-voisines onClick={() => etendreRing(v.idu)}
-                            title="Proposer aussi les voisines contiguës de cette parcelle (anneau suivant)"
                             className="shrink-0 text-[10px] font-medium text-mint hover:underline">ses voisines →</button>
                         )}
                         {/* B5 — pont Scan patrimoine sur une voisine PM (le retour restaure la sélection) */}
                         {pr.type === 'personne_morale' && pr.siren && (
                           <button data-asm-voisine-scan
                             onClick={() => { setM02Prefill(pr.siren!); setModule('patrimoine'); pushOutilRetour({ module: 'assemblage', label: 'Assemblage', restore: { mselPrefill: [...msel] } }) }}
-                            title="Ouvrir le Scan patrimoine de ce propriétaire (personne morale)"
                             className="shrink-0 text-[10px] font-medium text-mint hover:underline">Scan patrimoine →</button>
                         )}
                       </div>
@@ -338,8 +333,7 @@ export function M16() {
                   {/* FIX-INTEGRATION I1 — « SDP estimée » (par analogie DVF, cf. ratio ci-dessus) cumulée
                       sur l'assiette. ≠ « SDP gabarit » de la Faisabilité (capacité PLU) ≠ « SHAB vendable »
                       (× rendement 0,8). Le titre le dit pour éviter toute comparaison entre outils. */}
-                  <div data-asm-kpi="sdp" className="rounded-md bg-surface-3 px-2 py-1.5"
-                    title="SDP ESTIMÉE par analogie (parcelles comparables), cumulée sur l'assiette — pas la SDP au gabarit PLU de la Faisabilité, ni la SHAB vendable">
+                  <div data-asm-kpi="sdp" className="rounded-md bg-surface-3 px-2 py-1.5">
                     <div className="text-[9px] text-txt-dim">SDP estimée cumulée</div>
                     <div className="tnum text-[14px] font-semibold text-mint">{fmt(d.sdp_combinee_m2)} m²</div>
                   </div>
@@ -384,7 +378,7 @@ export function M16() {
               <span className="text-txt-mut">{d.n_personnes_morales} personne(s) morale(s) · <b className="text-st-creuser">{d.n_particuliers} particulier(s)</b> (approche plus lourde)</span>
             )}
             {(d.proprietaires_pm as string[]).length > 0 && (
-              <div className="mt-0.5 truncate text-txt-dim" title={(d.proprietaires_pm as string[]).join(' · ')}>PM : {(d.proprietaires_pm as string[]).join(' · ')}</div>
+              <div className="mt-0.5 truncate text-txt-dim">PM : {(d.proprietaires_pm as string[]).join(' · ')}</div>
             )}
           </div>
 
@@ -400,7 +394,7 @@ export function M16() {
                 </div>
                 <div className="mt-0.5 flex items-center gap-2">
                   {/* PRIVACY : PM = dénomination + SIREN (public) ; particulier = jamais nommé */}
-                  <div className="min-w-0 flex-1 truncate text-[11px] text-txt-dim" title={pr.type === 'personne_morale' ? `SIREN ${pr.siren ?? '—'}${pr.groupe ? ' · ' + pr.groupe : ''}` : 'personne physique — non communiqué'}>
+                  <div className="min-w-0 flex-1 truncate text-[11px] text-txt-dim">
                     {pr.type === 'personne_morale'
                       ? <><span className="text-txt">{pr.denomination}</span>{pr.siren ? <span> · SIREN <Siren value={pr.siren} className="font-mono text-txt-dim" /></span> : null}</>
                       : <span className="italic">propriétaire particulier — non communiqué</span>}
@@ -526,8 +520,7 @@ export function M17() {
       <div className="flex max-h-48 shrink-0 flex-col overflow-y-auto">
         {((d?.indicateurs ?? []) as Record<string, any>[]).map((c) => (
           <button key={c.commune} onClick={() => setIdu('')}
-            className="flex items-center gap-2 border-b border-line py-1 text-left text-[11px]"
-            title={`${c.commune} : ${c.pct_consomme} % du budget estimé consommé (${c.conso_2021_2024_ha} sur ${c.budget_2021_2031_ha} ha) — estimation, pas un droit`}>
+            className="flex items-center gap-2 border-b border-line py-1 text-left text-[11px]">
             <span className="min-w-0 flex-1 truncate text-txt">{c.commune}</span>
             <span className={`w-12 text-right font-mono tnum ${c.depasse ? 'text-st-ecartee' : 'text-st-creuser'}`}>{c.pct_consomme != null ? `${c.pct_consomme} %` : '—'}</span>
             <span className="w-[86px] text-right font-mono text-[10px] text-txt-dim">{c.conso_2021_2024_ha}/{c.budget_2021_2031_ha} ha</span>
@@ -853,7 +846,7 @@ export function M19() {
           className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
         <input value={smin} onChange={(e) => setSmin(e.target.value)} placeholder="surf. min" type="number"
           className="w-20 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
-        <button onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim()} title="Ajouter le profil" aria-label="Ajouter le profil"
+        <button onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim()} aria-label="Ajouter le profil"
           className="rounded bg-mint px-2 text-[11px] font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">+</button>
       </div>
 
@@ -878,7 +871,7 @@ function PromoteursActifs({ commune }: { commune: string | null }) {
       <p className="text-[9.5px] leading-snug text-txt-dim">{actifs.data.source}</p>
       {promos.map((p, k) => (
         <div key={k} className="rounded-lg border border-mint/25 bg-mint/[0.04] px-3 py-1.5 text-[11px]">
-          <div className="truncate text-txt" title={`SIREN ${p.siren}`}>{p.nom}</div>
+          <div className="truncate text-txt">{p.nom}</div>
           <div className="text-[10.5px] text-txt-dim">SIREN <Siren value={p.siren} className="font-mono text-txt-dim" /> · <b className="text-txt-mut">{p.n_permis}</b> permis (5 ans){p.logements ? ` · ${p.logements} logements` : ''}</div>
         </div>
       ))}

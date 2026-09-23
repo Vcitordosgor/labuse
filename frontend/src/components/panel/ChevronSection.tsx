@@ -41,7 +41,7 @@ export function ChevronSection({ open }: { open: boolean }) {
 export function CroixEntete({ onClick, title, dataAttr }: { onClick: () => void; title: string; dataAttr?: string }) {
   const extra = dataAttr ? { [dataAttr]: true } : {}
   return (
-    <button {...extra} onClick={onClick} title={title} aria-label={title}
+    <button {...extra} onClick={onClick} aria-label={title}
       className={`${BOITE} hover:bg-surface-3 hover:text-txt-hi`}>
       <span className="text-[12px] leading-none">✕</span>
     </button>

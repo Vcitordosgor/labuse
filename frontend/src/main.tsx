@@ -3,7 +3,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { is429, SOURCE } from './lib/api'
+import { getSources, getSourcesCouverture, is429, SOURCE } from './lib/api'
 import './styles/index.css'
 
 // M-Q P2-70 — GARDE DE DÉMARRAGE : le run servi (SOURCE) est injecté au build depuis
@@ -46,6 +46,17 @@ const qc = new QueryClient({
     },
   },
 })
+
+// FINITIONS-2 (P4) — PRÉ-CACHE de la page Sources. /sources recalcule la fraîcheur LIVE côté serveur
+// (1–5 s) ; on lance sa requête (et celle de la couverture) DÈS le boot, en tâche de fond, avec la
+// MÊME clé + staleTime que SourcesPage. Quand l'utilisateur ouvre « Sources » (nav secondaire, après
+// avoir exploré la carte), la donnée est déjà en cache → la page s'affiche d'un coup, sans spinner ni
+// saut. Échec silencieux : si le pré-cache n'a pas abouti à temps, SourcesPage retombe sur son
+// isLoading/isError normal.
+if (SOURCE) {
+  qc.prefetchQuery({ queryKey: ['sources'], queryFn: getSources, staleTime: 5 * 60_000 }).catch(() => {})
+  qc.prefetchQuery({ queryKey: ['sources-couverture'], queryFn: getSourcesCouverture, staleTime: 5 * 60_000 }).catch(() => {})
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

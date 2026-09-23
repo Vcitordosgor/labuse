@@ -258,8 +258,8 @@ export function RadarSection() {
   const reverifJour = d?.reverif_du_jour ?? 0
   const actifAgence = agence.data?.actif
 
-  const KpiFlux = ({ n, sub, tone, onClick, title }: { n: React.ReactNode; sub: string; tone?: 'g'; onClick?: () => void; title?: string }) => (
-    <button type="button" onClick={onClick} disabled={!onClick} title={title}
+  const KpiFlux = ({ n, sub, tone, onClick }: { n: React.ReactNode; sub: string; tone?: 'g'; onClick?: () => void; title?: string }) => (
+    <button type="button" onClick={onClick} disabled={!onClick}
       className={`flex flex-col items-start rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-left ${onClick ? 'hover:border-line-2' : 'cursor-default'}`}>
       <div className={`text-[19px] font-bold ${tone === 'g' ? 'text-mint' : 'text-txt-hi'}`}>{n}</div>
       <div className="mt-0.5 text-[10.5px] text-txt-mut">{sub}</div>

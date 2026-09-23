@@ -143,7 +143,7 @@ export function CourrierSection() {
                       (« issue du CRM »), sans le numéro global. */}
                   <td className="px-4 py-2.5 text-xs">
                     {d.pipeline_entry_id != null
-                      ? <span className="whitespace-nowrap font-mono text-amber" title="Née d'une piste CRM (côté client, cloisonnée) — son statut suit celui-ci">issue du CRM</span>
+                      ? <span className="whitespace-nowrap font-mono text-amber">issue du CRM</span>
                       : <span className="text-txt-dim">—</span>}
                   </td>
                   <td className="px-4 py-2.5">

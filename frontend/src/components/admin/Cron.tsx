@@ -26,7 +26,7 @@ function JobRow({ j, onRun, ouvrirLog }: { j: CronJob; onRun: () => void; ouvrir
         <div className="flex flex-wrap items-center gap-2">
           <b className="text-[13px] font-semibold text-txt-hi">{j.nom}</b>
           <span className={`rounded px-1.5 py-0.5 font-mono text-[9.5px] ${t.c}`}>{t.l}</span>
-          {j.envoie_mail && j.dernier.dry_run && <span className="rounded bg-viz-cyan/12 px-1.5 py-0.5 font-mono text-[9px] text-viz-cyan" title="SMTP non branché : le mail est calculé et logué, jamais envoyé">dry-run</span>}
+          {j.envoie_mail && j.dernier.dry_run && <span className="rounded bg-viz-cyan/12 px-1.5 py-0.5 font-mono text-[9px] text-viz-cyan">dry-run</span>}
         </div>
         <p className="mt-0.5 text-[11.5px] leading-snug text-txt-mut">{j.titre}</p>
         <p className="mt-1 flex flex-wrap gap-x-3 text-[10.5px] text-txt-dim">
@@ -34,7 +34,7 @@ function JobRow({ j, onRun, ouvrirLog }: { j: CronJob; onRun: () => void; ouvrir
           <span>◀ dernière : {fmtDate(j.dernier.fin)}{j.dernier.duree_s != null ? ` · ${j.dernier.duree_s}s` : ''}</span>
           <span>▶ prochaine : {j.prochaine_reunion ?? '—'}</span>
         </p>
-        <p className="mt-0.5 truncate font-mono text-[10px] text-txt-dim" title={compteursCourts(j.dernier.compteurs)}>
+        <p className="mt-0.5 truncate font-mono text-[10px] text-txt-dim">
           {j.dernier.erreur ? <span className="text-st-ecartee">{j.dernier.erreur}</span> : compteursCourts(j.dernier.compteurs)}
         </p>
       </div>

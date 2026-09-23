@@ -192,7 +192,7 @@ export function TaxeAmenagement() {
           <div data-taxe-repere className="-mt-0.5 flex items-center gap-2 text-[10.5px] leading-snug text-txt-dim">
             <span>SDP {prefill.data.deja_batie ? 'restante au gabarit (parcelle déjà bâtie)' : 'au gabarit'} : <b className="text-mint">{fmtM2(prefill.data.sdp_gabarit_m2)}</b></span>
             <button data-taxe-reprendre onClick={() => setSurface(prefill.data!.sdp_gabarit_m2!)}
-              className="shrink-0 text-mint hover:underline" title="Copier la SDP restante au gabarit dans la surface taxable">reprendre</button>
+              className="shrink-0 text-mint hover:underline">reprendre</button>
           </div>
         )}
 

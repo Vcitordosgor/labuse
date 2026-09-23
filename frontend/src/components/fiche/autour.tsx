@@ -62,7 +62,7 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
       {/* RECETTE-6 (C3) — le TRANSPORT (« Bus ») vit dans « Réseaux » (arrêt nommé + réseau + distance,
           plus riche). On le RETIRE d'ici pour qu'un fait vive dans une seule section — les autres y renvoient. */}
       {(() => { const items = (eq?.items ?? []).filter((e) => !/^bus$|transport/i.test(e.cat)); return items.length > 0 && (
-        <div data-proximites-equip title={eq?.source ?? undefined}>
+        <div data-proximites-equip>
           <GroupLabel>À proximité</GroupLabel>
           <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[11.5px] text-txt-mut">
             {items.map((e, i) => (

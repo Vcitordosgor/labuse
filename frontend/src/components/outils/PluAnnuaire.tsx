@@ -90,8 +90,8 @@ export function PluAnnuaire() {
                           (prescription, règlement non servi) vit dans le title + la note ambre. */}
                       <span className="flex shrink-0 items-center gap-1 whitespace-nowrap">
                         {c.procedure_active
-                          ? <span data-plu-procedure={c.insee} className="whitespace-nowrap rounded bg-cp-amber/15 px-1 font-mono text-[8px] text-cp-amber" title={`${c.procedure_active} en cours${c.procedure_date ? ` (prescrite le ${new Date(c.procedure_date).toLocaleDateString('fr-FR')})` : ''} — le PLU actuel reste en vigueur${!ok ? ' ; règlement non servi par le GPU, à consulter en mairie' : ''}`}>{(c.procedure_active || '').split(' ')[0]}</span>
-                          : !ok && <span className="whitespace-nowrap font-mono text-[8px] text-cp-amber" title={c.message ?? ''}>
+                          ? <span data-plu-procedure={c.insee} className="whitespace-nowrap rounded bg-cp-amber/15 px-1 font-mono text-[8px] text-cp-amber">{(c.procedure_active || '').split(' ')[0]}</span>
+                          : !ok && <span className="whitespace-nowrap font-mono text-[8px] text-cp-amber">
                               {c.statut === 'rnu' ? 'RNU' : 'non servi'}</span>}
                       </span>
                     </button>

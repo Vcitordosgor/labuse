@@ -58,7 +58,6 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
         onEdit()
       }}
       className="group cursor-pointer rounded-lg bg-surface-3 p-3 shadow-elev-1 ring-1 ring-transparent transition-shadow duration-quick active:cursor-grabbing hover:ring-mint/30 focus:outline-none focus:ring-2 focus:ring-mint/50"
-      title="Éditer la carte (note, priorité, relance) · glisser pour changer d'étape"
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
@@ -73,7 +72,6 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
           <button
             onClick={() => { setView('cartes'); select(e.idu) }}
             className="truncate font-mono text-xs font-medium text-txt-hi transition-colors duration-quick hover:text-mint"
-            title="Ouvrir la fiche sur la carte"
           >
             {e.idu}
           </button>
@@ -88,7 +86,6 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
         <button
           onClick={onArchive}
           className="-m-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-txt-dim opacity-40 transition-opacity duration-quick hover:text-st-ecartee group-hover:opacity-100"
-          title="Archiver (réversible — restaurable dans « Archivées »)"
           aria-label="Archiver la carte"
         >
           ✕
@@ -99,7 +96,7 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
       </div>
       {/* Phase 2 : d'où vient la piste (projet) */}
       {e.projet && (
-        <div className="mt-1 truncate text-[10.5px] text-mint" title={`Piste du projet « ${e.projet.nom} »`}>
+        <div className="mt-1 truncate text-[10.5px] text-mint">
           ▸ {e.projet.nom}
         </div>
       )}
@@ -107,11 +104,11 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
       {e.proprietaire_public && (
         e.proprietaire_public.type === 'personne_morale' ? (
           // DA §8 — carte CRM sans SIREN (nom du tiers en casse normale, texte neutre).
-          <div className="mt-1 truncate text-[10.5px] text-txt-mut" title="Personne morale (registre public DGFiP)">
+          <div className="mt-1 truncate text-[10.5px] text-txt-mut">
             <span className="text-txt">{e.proprietaire_public.denomination}</span>
           </div>
         ) : (
-          <div className="mt-1 truncate text-[10.5px] italic text-txt-dim" title="Propriétaire personne physique — jamais nommé (privacy)">
+          <div className="mt-1 truncate text-[10.5px] italic text-txt-dim">
             Propriétaire particulier — non communiqué
           </div>
         )
@@ -121,14 +118,12 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
       <div className="mt-1.5 flex items-center justify-between gap-2">
         {e.courrier ? (
           <span data-piste-courrier-statut
-            className={`rounded-[5px] border px-1.5 py-px text-[10px] ${clos ? 'border-mint/40 text-mint' : 'border-amber/40 text-amber'}`}
-            title={`Courrier n°${e.courrier.demande_id} · ${e.courrier.libelle}`}>
+            className={`rounded-[5px] border px-1.5 py-px text-[10px] ${clos ? 'border-mint/40 text-mint' : 'border-amber/40 text-amber'}`}>
             ✉ {e.courrier.libelle}
           </span>
         ) : <span />}
         <button data-piste-courrier onClick={ouvrirCourrier}
-          className="rounded-md border border-line-2 px-1.5 py-px text-[10px] text-txt-mut opacity-0 transition-opacity duration-quick hover:border-mint hover:text-mint group-hover:opacity-100"
-          title="Préparer un courrier pour cette piste (pré-rempli)">
+          className="rounded-md border border-line-2 px-1.5 py-px text-[10px] text-txt-mut opacity-0 transition-opacity duration-quick hover:border-mint hover:text-mint group-hover:opacity-100">
           {e.courrier ? 'Relancer' : '✉ Courrier'}
         </button>
       </div>
@@ -139,7 +134,7 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
           data-contact-etiquette
           value={e.contact_etiquette ?? ''}
           onChange={(ev) => onEtiquette(ev.target.value)}
-          title={e.contact_etiquette_at
+          aria-label={e.contact_etiquette_at
             ? `Retour terrain posé le ${e.contact_etiquette_at.slice(8, 10)}/${e.contact_etiquette_at.slice(5, 7)} — modifiable`
             : 'Retour terrain : que s’est-il passé après le contact ?'}
           className={`w-full cursor-pointer rounded-md border bg-surface-2 px-1.5 py-1 text-[10.5px] focus:outline-none focus:ring-1 focus:ring-mint/50 ${e.contact_etiquette ? 'border-mint/40 text-txt' : 'border-line-2 text-txt-dim'}`}
@@ -226,7 +221,7 @@ function CardEditPanel({ e, meta, onCancel, onSave, onMove, saving }: {
         onClick={(ev) => ev.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line-2 px-5 py-3">
           <button onClick={() => { setView('cartes'); select(e.idu) }}
-            className="font-mono text-xs font-medium text-txt-hi hover:text-mint" title="Ouvrir la fiche">{e.idu}</button>
+            className="font-mono text-xs font-medium text-txt-hi hover:text-mint">{e.idu}</button>
           <button onClick={onCancel} className="text-txt-dim hover:text-txt" aria-label="Fermer">✕</button>
         </div>
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
@@ -480,7 +475,7 @@ export function Kanban() {
                 onClick={() => setWinStart((s) => Math.max(0, Math.min(s, maxStart) - 1))}
                 disabled={start === 0}
                 className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-txt-dim hover:border-mint hover:text-mint disabled:opacity-25"
-                title="Colonnes précédentes" aria-label="Colonnes précédentes">‹</button>
+                aria-label="Colonnes précédentes">‹</button>
               <span className="whitespace-nowrap font-mono text-[10.5px] text-txt-mut">
                 {start + 1}–{Math.min(start + COLS_PAR_VUE, cols.length)} / {cols.length}
               </span>
@@ -488,7 +483,7 @@ export function Kanban() {
                 onClick={() => setWinStart((s) => Math.min(maxStart, Math.min(s, maxStart) + 1))}
                 disabled={start >= maxStart}
                 className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-txt-dim hover:border-mint hover:text-mint disabled:opacity-25"
-                title="Colonnes suivantes" aria-label="Colonnes suivantes">›</button>
+                aria-label="Colonnes suivantes">›</button>
             </span>
           )}
           {editMode && (
@@ -509,19 +504,19 @@ export function Kanban() {
                   />
                   <button onClick={commitAdd} disabled={!newColLabel.trim() || addCol.isPending}
                     className="rounded-md bg-mint px-2 py-1 text-[11px] font-medium text-mint-ink hover:brightness-110 disabled:opacity-40"
-                    title="Ajouter">{addCol.isPending ? '…' : 'Ajouter'}</button>
+                    >{addCol.isPending ? '…' : 'Ajouter'}</button>
                   <button onClick={() => { setAdding(false); setNewColLabel('') }}
-                    className="rounded-md px-2 py-1 text-[11px] text-txt-dim hover:text-txt" title="Annuler">Annuler</button>
+                    className="rounded-md px-2 py-1 text-[11px] text-txt-dim hover:text-txt">Annuler</button>
                 </span>
               ) : (
                 <button onClick={doAdd}
                   className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:border-mint hover:text-mint"
-                  title="Ajouter une colonne">+ Colonne</button>
+                  >+ Colonne</button>
               )}
               <button
                 onClick={() => setConfirmReset(true)}
                 className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt-dim hover:border-st-ecartee hover:text-st-ecartee"
-                title="Restaurer le kanban LABUSE par défaut">Réinitialiser</button>
+                >Réinitialiser</button>
             </>
           )}
           {/* M137 — accès aux cartes archivées (consulter / restaurer). */}
@@ -529,13 +524,12 @@ export function Kanban() {
             <button
               onClick={() => setShowArchived(true)}
               className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt-dim hover:border-mint hover:text-mint"
-              title="Voir les cartes archivées (restaurables)">Archivées</button>
+              >Archivées</button>
           )}
           <button
             onClick={() => { setEditMode((v) => !v); setEditingId(null) }}
             className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors duration-quick ${
               editMode ? 'bg-mint/15 text-mint' : 'border border-line-2 text-txt-dim hover:text-txt'}`}
-            title="Personnaliser les colonnes du kanban"
           >{editMode ? 'Terminé' : 'Personnaliser'}</button>
         </div>
       </div>
@@ -580,7 +574,6 @@ export function Kanban() {
                     disabled={!editMode}
                     onClick={() => editMode && startEdit(c)}
                     className={`min-w-0 flex-1 truncate text-left text-[11px] font-medium text-txt ${editMode ? 'cursor-text hover:text-mint' : 'cursor-default'}`}
-                    title={editMode ? 'Cliquer pour renommer' : c.label}
                   >{c.label}</button>
                 )}
                 {!editMode && <span className="ml-auto font-mono text-[11px] text-txt-dim">{items.length}</span>}
@@ -588,15 +581,14 @@ export function Kanban() {
                   <span className="ml-auto flex shrink-0 items-center gap-0.5">
                     <button onClick={() => moveCol(idx, -1)} disabled={idx === 0}
                       className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-txt disabled:opacity-25"
-                      title="Déplacer à gauche" aria-label="Déplacer la colonne à gauche">←</button>
+                      aria-label="Déplacer la colonne à gauche">←</button>
                     <button onClick={() => moveCol(idx, 1)} disabled={idx === cols.length - 1}
                       className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-txt disabled:opacity-25"
-                      title="Déplacer à droite" aria-label="Déplacer la colonne à droite">→</button>
+                      aria-label="Déplacer la colonne à droite">→</button>
                     <button
                       onClick={() => setPendingDelete(withCounts[idx])}
                       disabled={cols.length <= 1}
                       className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-st-ecartee disabled:opacity-25"
-                      title={cols.length <= 1 ? 'La dernière colonne ne peut pas être supprimée' : 'Supprimer la colonne'}
                       aria-label="Supprimer la colonne">✕</button>
                   </span>
                 )}

@@ -107,7 +107,7 @@ export function M22() {
   }, [mode, results.dataUpdatedAt, picked, inclureAgriNat])
 
   const F = (k: keyof typeof form, label: string, opts?: { min?: number; title?: string }) => (
-    <label title={opts?.title} className="min-w-0 flex-1 text-[11px] tracking-wide text-txt-dim">{label}
+    <label className="min-w-0 flex-1 text-[11px] tracking-wide text-txt-dim">{label}
       <input type="number" min={opts?.min ?? 1} value={form[k] as number}
         onChange={(e) => setForm({ ...form, [k]: Number(e.target.value) })}
         className="mt-0.5 w-full rounded border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none" />
@@ -167,7 +167,7 @@ export function M22() {
                     estimée » de l'Assemblage (par analogie DVF) ni avec la « SHAB vendable » de la
                     Faisabilité (SDP × rendement 0,8) : trois grandeurs distinctes, jamais comparables. */}
                 <p className="text-[12px] leading-snug text-txt">
-                  <b className="num-key text-mint">{fmtInt(total)}</b> parcelle{total > 1 ? 's' : ''} · <b className="text-txt">{meta.criteres.unites}</b> unités → <span title="Capacité constructible au gabarit PLU (R+N, hauteur), coef circulations appliqué — pas la SDP estimée de l'Assemblage ni la SHAB vendable de la Faisabilité">SDP gabarit</span> ≥ <b className="tnum text-mint">{fmtInt(meta.criteres.sdp_min_m2)} m²</b>
+                  <b className="num-key text-mint">{fmtInt(total)}</b> parcelle{total > 1 ? 's' : ''} · <b className="text-txt">{meta.criteres.unites}</b> unités → <span>SDP gabarit</span> ≥ <b className="tnum text-mint">{fmtInt(meta.criteres.sdp_min_m2)} m²</b>
                   <span className="text-txt-dim">{commune ? ` · ${commune}` : ' · toute l’île'}</span>
                 </p>
                 {/* B2 — compte et liste sur le MÊME ensemble : le tri « adéquation » est désormais fait
@@ -182,8 +182,7 @@ export function M22() {
                 </label>
                 {/* DESTINATIONS-1 (X4.3) — l'écart est DIT : combien de parcelles la destination a écartées. */}
                 {meta.criteres.destination && (
-                  <p data-prog-dest-ecartees className="mt-0.5 text-[9.5px] leading-snug text-txt-mut"
-                    title={meta.criteres.destination_regle ?? undefined}>
+                  <p data-prog-dest-ecartees className="mt-0.5 text-[9.5px] leading-snug text-txt-mut">
                     Destination « {destLabel(meta.criteres.destination)} » —{' '}
                     <b className="text-txt">{fmtInt(meta.criteres.destination_ecartees ?? 0)}</b>{' '}
                     parcelle{(meta.criteres.destination_ecartees ?? 0) > 1 ? 's' : ''} écartée{(meta.criteres.destination_ecartees ?? 0) > 1 ? 's' : ''} : destination interdite dans leur zone.
@@ -213,12 +212,11 @@ export function M22() {
                         {!commune && i.commune && <span className="ml-1.5 font-sans text-[11px] text-txt-dim">{i.commune}</span>}
                       </div>
                       <div className="truncate text-[10.5px] text-txt-mut">
-                        <span title="Capacité constructible au gabarit PLU — ≠ SDP estimée (Assemblage) ≠ SHAB vendable (Faisabilité)">SDP gabarit</span> {fmtInt(i.sdp)} m² · zone {i.zone ?? '—'} {i.hauteur_verifiee ? `(h ${i.hauteur_plu_m} m ✓)` : '(hauteur à instruire)'}
-                        {i.capacite_estimee && <span className="ml-1 rounded bg-amber-500/15 px-1 text-[9.5px] text-amber-500"
-                          title="Capacité ESTIMÉE — zone non calibrée finement (hypothèses génériques)">estimée</span>}
+                        <span>SDP gabarit</span> {fmtInt(i.sdp)} m² · zone {i.zone ?? '—'} {i.hauteur_verifiee ? `(h ${i.hauteur_plu_m} m ✓)` : '(hauteur à instruire)'}
+                        {i.capacite_estimee && <span className="ml-1 rounded bg-amber-500/15 px-1 text-[9.5px] text-amber-500">estimée</span>}
                         {/* DESTINATIONS-1 (X4.3) — verdict destination annoté (phrase sourcée au survol). */}
                         {i.destination_verdict && i.destination_verdict.etat !== 'autorise' && (
-                          <span className="ml-1 inline-flex align-middle" title={i.destination_verdict.phrase ?? undefined}>
+                          <span className="ml-1 inline-flex align-middle" aria-label={i.destination_verdict.phrase ?? undefined}>
                             <DestinationBadge etat={i.destination_verdict.etat} />
                           </span>
                         )}

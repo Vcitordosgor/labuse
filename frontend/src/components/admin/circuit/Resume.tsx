@@ -26,7 +26,7 @@ export function Resume({ data, onCible, verrousTache, onRejouerVerrous, rejouerE
 
       {/* DASHBOARD-4 (D1) — les compteurs, tels que les verrous les comptent (source unique). */}
       {cc && (
-        <div className="cc-strip" title="Chaque nombre est lu de la fonction que les verrous lisent — jamais un compte propre à la page.">
+        <div className="cc-strip">
           <span>Les compteurs, tels que les verrous les comptent :</span>
           <b>{cc.sources_vitrine ?? '—'}</b> sources vitrine <span className="cc-sep">·</span>
           <b>{cc.couches ?? '—'}</b> couches <span className="cc-sep">·</span>
@@ -81,8 +81,7 @@ export function Resume({ data, onCible, verrousTache, onRejouerVerrous, rejouerE
 
       <div className="kpis">
         {/* CIRCUIT-P2 (lot 2.2) — le repère « N / 68 » ouvre au clic la page de détail du compteur. */}
-        <button className="kpi lien" onClick={() => onCible({ type: 'compteur', ids: [] })}
-          title="Voir les réservoirs par état, et les lignes en base non servies">
+        <button className="kpi lien" onClick={() => onCible({ type: 'compteur', ids: [] })}>
           <div className="v">{k0.valeur}<small>/ {k0.sur}</small></div><div className="l">{k0.libelle} →</div></button>
         <div className="kpi"><div className="v">{k1.valeur}<small>/ {k1.sur}</small></div><div className="l">{k1.libelle}</div></div>
         <div className="kpi"><div className="v">{k2.valeur}</div><div className="l">{k2.libelle}</div></div>

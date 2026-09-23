@@ -185,8 +185,7 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
             if (f.coords) st.setFlyTo({ center: f.coords, zoom: 16 })
             st.setView('cartes'); select(null)
           }}
-          className="porte-outil"
-          title={`Voir les ${f.secteur_opportunites.n} parcelles À suivre de la section ${f.secteur_opportunites.section} sur la carte`}>
+          className="porte-outil">
           <span className="po-ico">◈</span>
           <span style={{ minWidth: 0 }}>
             <span className="po-t block">

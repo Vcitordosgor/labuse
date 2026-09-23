@@ -441,7 +441,7 @@ function Concurrents({ res }: { res: EtudeZoneResult }) {
       <SectionTitle>{`Concurrents déclarés au registre${cov === 'servie' ? ` — ${c!.n}` : ''}`}{cov === 'servie' && res.habitants_par_concurrent != null && <span className="ml-1 font-normal normal-case tracking-normal text-txt-mut">· {nb(res.habitants_par_concurrent)} hab./concurrent</span>}</SectionTitle>
       {/* F1 (OUTILS-3) — activité LISIBLE (le code NAF passe en second plan / survol). */}
       {cov === 'servie' && (c!.naf_label || c!.naf) && (
-        <p className="mt-0.5 text-[10.5px] text-txt-mut" title={`code NAF ${c!.naf}`}>{c!.naf_label ?? c!.naf} <span className="font-mono text-[9px] text-txt-dim">{c!.naf}</span></p>
+        <p className="mt-0.5 text-[10.5px] text-txt-mut">{c!.naf_label ?? c!.naf} <span className="font-mono text-[9px] text-txt-dim">{c!.naf}</span></p>
       )}
       {/* F8 — légende courte des pastilles carte (cliquables). */}
       {cov === 'servie' && c!.items.length > 0 && (
@@ -579,7 +579,7 @@ function DestinationsBloc({ d }: { d: EtudeZoneDestinations }) {
                 {z.commune && <span className="truncate text-txt-mut">{z.commune}</span>}
                 <DestinationBadge etat={z.etat} />
                 {z.cdac && (
-                  <span title={z.cdac.source}
+                  <span
                     className="inline-flex shrink-0 items-center rounded-full border border-amber/40 px-1.5 py-px font-mono text-[9px] uppercase tracking-wide text-amber">CDAC</span>
                 )}
                 {z.part_pct != null && <span className="ml-auto shrink-0 font-mono text-[11px] text-txt-hi">{z.part_pct}%</span>}

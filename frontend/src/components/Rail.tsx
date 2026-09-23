@@ -113,7 +113,7 @@ function OutilCard({ m, open }: { m: (typeof MODULES)[number]; open: (k: string)
       {/* RETOURS-7 Z3 — une SEULE ligne : nowrap + ellipse (truncate). Les descriptions trop longues
           pour la largeur du panneau (mesuré) portent `descSmall` → police réduite d'un point plutôt
           qu'une ellipse. `title` garde le texte intégral au survol. */}
-      <div title={m.desc}
+      <div
         className={`mt-0.5 truncate leading-snug text-txt-dim ${m.descSmall ? 'text-[9.5px]' : 'text-[10.5px]'}`}>
         {m.desc}
       </div>
@@ -132,7 +132,7 @@ function AdminRailEntry() {
   const on = view === 'admin' && !outilsOpen
   return (
     <button data-rail-admin data-rail="admin" onClick={() => setView('admin')} aria-current={on ? 'page' : undefined}
-      className={`rail-item ${on ? 'active' : ''}`} title="Tour de contrôle — pilotage de LABUSE (admin)">
+      className={`rail-item ${on ? 'active' : ''}`}>
       {/* jauge/compteur — le pilotage */}
       <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M3.5 13.5 a6.5 6.5 0 1 1 13 0" strokeLinecap="round" />
@@ -208,8 +208,7 @@ export function Rail() {
           <AdminRailEntry />
           <button data-rail="sources" onClick={() => openSources()}
             aria-current={view === 'sources' && !outilsOpen ? 'page' : undefined}
-            className={`rail-item ${view === 'sources' && !outilsOpen ? 'active' : ''}`}
-            title={RAIL_TITLE.sources}>
+            className={`rail-item ${view === 'sources' && !outilsOpen ? 'active' : ''}`}>
             <svg viewBox="0 0 20 20" className="h-5 w-5">{ICONS.sources}</svg>
             <span className="rail-label">Sources</span>
           </button>

@@ -77,8 +77,9 @@ export function MapToolbar() {
               <div className="mt-2 flex flex-col gap-1">
                 {BASEMAPS.map((b) => (
                   <button key={b.key} onClick={() => setBasemap(b.key)}
-                    /* RETOURS-19 Y1 — entrée ACTIVE = vert opaque, contenu inversé sombre. */
-                    className={`rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-quick ${basemap === b.key ? 'bg-mint font-medium text-mint-ink' : 'text-txt hover:bg-surface-3'}`}>
+                    /* RETOURS-19 Y1 — entrée ACTIVE = vert opaque, contenu inversé sombre. FINITIONS-2 (P2) —
+                       au SURVOL d'une ligne non active, la même animation verte que partout (`hover-fill`). */
+                    className={`rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-quick ${basemap === b.key ? 'bg-mint font-medium text-mint-ink' : 'text-txt hover-fill'}`}>
                     {b.label}
                   </button>
                 ))}
@@ -90,8 +91,9 @@ export function MapToolbar() {
               <div className="mt-1.5 flex flex-col gap-0.5">
                 {ORTHO_YEARS.map((y) => (
                   <button key={y.an} onClick={() => setOrthoYear(y.an)}
+                    /* FINITIONS-2 (P2) — tranches « Remonter le temps » : survol vert (`hover-fill`) hors ligne active. */
                     className={`rounded-md px-2 py-1 text-left text-[11px] transition-colors duration-quick ${
-                      basemap === 'ortho' && orthoYear === y.an ? 'bg-mint font-medium text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
+                      basemap === 'ortho' && orthoYear === y.an ? 'bg-mint font-medium text-mint-ink' : 'text-txt-mut hover-fill'}`}>
                     {y.label}
                   </button>
                 ))}

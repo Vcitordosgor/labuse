@@ -36,7 +36,7 @@ function PanneauCommune({ m }: { m: Mairie }) {
         <b className="font-display text-[15px] text-txt-hi">{m.commune}</b>
         {m.insee
           ? <ActBtn onClick={() => { setAjout((a) => !a); setEdit(null) }}>+ Ajouter</ActBtn>
-          : <span className="text-[10.5px] text-txt-dim" title="INSEE manquant pour cette commune">INSEE inconnu</span>}
+          : <span className="text-[10.5px] text-txt-dim">INSEE inconnu</span>}
       </div>
 
       {/* standard officiel (Mairie & service urbanisme) — lecture seule */}

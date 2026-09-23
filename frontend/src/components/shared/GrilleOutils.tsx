@@ -21,14 +21,14 @@ function Inner({ ic, nom, chiffre }: { ic: ReactNode; nom: string; chiffre?: Rea
 }
 
 /** Une CASE d'outil : bouton (onClick), lien (href, ouvre un onglet), ou désactivée (grisée). */
-export function OutilCase({ ic, nom, chiffre, onClick, href, disabled, title, ...rest }: {
+export function OutilCase({ ic, nom, chiffre, onClick, href, disabled, title: _title, ...rest }: {
   ic: ReactNode; nom: string; chiffre?: ReactNode; onClick?: () => void; href?: string
   disabled?: boolean; title?: string
 } & Record<`data-${string}`, string | undefined>) {
   const inner = <Inner ic={ic} nom={nom} chiffre={chiffre} />
-  if (disabled) return <span data-outil-case={nom} aria-disabled className={`${CASE_BASE} cursor-not-allowed opacity-40`} title={title} {...rest}>{inner}</span>
-  if (href) return <a data-outil-case={nom} href={href} target="_blank" rel="noreferrer" className={CASE} title={title} {...rest}>{inner}</a>
-  return <button data-outil-case={nom} onClick={onClick} className={CASE} title={title} {...rest}>{inner}</button>
+  if (disabled) return <span data-outil-case={nom} aria-disabled className={`${CASE_BASE} cursor-not-allowed opacity-40`} {...rest}>{inner}</span>
+  if (href) return <a data-outil-case={nom} href={href} target="_blank" rel="noreferrer" className={CASE} {...rest}>{inner}</a>
+  return <button data-outil-case={nom} onClick={onClick} className={CASE} {...rest}>{inner}</button>
 }
 
 /** La GRILLE qui contient les cases. 4 colonnes par défaut ; RETOURS-9 (Q8.3) — la fiche parcelle

@@ -302,7 +302,7 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
             <div data-financier-etapes style={{ display: 'flex', gap: 5, marginBottom: 22 }}>
               {ecrans.map((e, i) => (
                 <button key={i} type="button" data-etape={i} aria-current={i === etape}
-                  title={`Étape ${i + 1} — ${e.titre}`} onClick={() => { setErreur(null); setEtape(i) }}
+                  aria-label={`Étape ${i + 1} — ${e.titre}`} onClick={() => { setErreur(null); setEtape(i) }}
                   style={{ flex: 1, height: 6, padding: 0, border: 0, borderRadius: 3, cursor: 'pointer',
                     background: i === etape ? MINT : i < etape ? '#2F6B45' : '#1E2A23' }} />
               ))}
@@ -460,7 +460,7 @@ function ChampRow({ c, valeur, touche, tvaExplication, onChange, onReset, surlig
         {c.aide && !aideSousChamp && (
           <span style={{ position: 'relative', display: 'inline-flex' }}
             onMouseEnter={() => setAideOpen(true)} onMouseLeave={() => setAideOpen(false)}>
-            <span data-champ-aide title={c.aide}
+            <span data-champ-aide aria-label={c.aide}
               style={{ display: 'inline-flex', width: 14, height: 14, borderRadius: 999, border: '1px solid #4A5A52',
                 color: '#8FA69A', fontSize: 9, fontWeight: 700, alignItems: 'center', justifyContent: 'center', cursor: 'help', flex: 'none' }}>i</span>
             {aideOpen && (

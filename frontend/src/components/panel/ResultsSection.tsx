@@ -655,8 +655,7 @@ export function ResultsSection() {
                 <button key={s.key} data-sort={s.key}
                   onClick={() => setSort(s.key === 'surface' && sort === 'surface' ? 'surface_asc' : s.key)}
                   className={`rounded-md px-3 py-1 text-[11px] transition-colors duration-quick ${
-                    actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}
-                  title={s.key === 'surface' && actif ? `${s.tip} — re-cliquer pour inverser le sens` : s.tip}>
+                    actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
                   {s.label}{fleche}
                 </button>
               )

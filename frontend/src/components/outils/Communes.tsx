@@ -122,7 +122,6 @@ function AcquisitionsRecentes() {
                 </span>
                 {g.siren && (
                   <button data-acq-scan={g.siren} onClick={() => ouvrirScanPatrimoine(g.siren!)}
-                    title={`Scan patrimoine de ${g.denomination ?? g.siren}`}
                     className="hover-jaune shrink-0 px-1.5 py-0.5 text-[11px]">Scan patrimoine →</button>
                 )}
               </div>

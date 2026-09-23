@@ -86,7 +86,7 @@ function ProjetRow({ p }: { p: Projet }) {
         <div style={{ fontSize: 11.5, color: '#6F8578' }}>{barLabel}</div>
       </div>
       {/* droite : le compteur RETENUES */}
-      <div data-projet-retenues style={{ textAlign: 'right', whiteSpace: 'nowrap' }} title="Parcelles retenues — l'avancement réel du projet">
+      <div data-projet-retenues style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
         <div style={{ fontFamily: MONO, fontSize: 22, color: '#4ADE80', fontWeight: 700, lineHeight: 1 }}>{c.retenue}</div>
         <div style={{ fontFamily: MONO, fontSize: 9, color: '#6F8578', marginTop: 3, letterSpacing: '.16em' }}>RETENUES</div>
       </div>

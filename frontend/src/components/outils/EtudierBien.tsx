@@ -265,7 +265,7 @@ export function EtudierBien() {
                           Prix demandé du terrain
                           <input data-etudier-prix type="number" min={0} value={prix ?? ''} placeholder="si connu"
                             onChange={(e) => setPrix(e.target.value === '' ? null : Number(e.target.value))}
-                            title="Le prix affiché/demandé, saisi à la main — jamais scrapé."
+                            aria-label="Le prix affiché/demandé, saisi à la main — jamais scrapé."
                             className="mt-0.5 w-full rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
                         </label>
                       </div>

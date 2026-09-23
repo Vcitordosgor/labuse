@@ -135,7 +135,7 @@ export function Successions() {
                     onChange={() => setSel((s) => { const n = new Set(s); n.has(it.idu) ? n.delete(it.idu) : n.add(it.idu); return n })} />
                   <span className="font-mono text-[11px] text-txt-hi">{it.idu}</span>
                   <span className="ml-auto tnum text-[11px] text-txt">{fmtM2(it.sdp_residuelle_m2)}</span>
-                  <span className="rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500" title="SDP résiduelle — Estimé, moteur de la fiche (enveloppe, pas une expertise)">Estimé</span>
+                  <span className="rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">Estimé</span>
                 </div>
                 <div className="mt-0.5 flex items-center gap-1.5 text-[10.5px]">
                   <span className="shrink-0 text-txt-mut">{it.commune}</span>
@@ -147,7 +147,7 @@ export function Successions() {
                   {/* PM nommée par construction (SIREN confirmé exigé) ; le repli particulier reste en ceinture */}
                   <span className="min-w-0 flex-1 truncate">
                     {it.proprio.type === 'personne_morale'
-                      ? <span className="text-txt" title={it.proprio.siren ? `SIREN ${it.proprio.siren}` : undefined}>
+                      ? <span className="text-txt">
                           {it.proprio.denomination}{it.proprio.siren ? <> · <Siren value={it.proprio.siren} className="font-mono text-[10px] text-txt-dim" /></> : null}
                         </span>
                       : <span className="italic text-txt-dim">particulier — non nommé</span>}
