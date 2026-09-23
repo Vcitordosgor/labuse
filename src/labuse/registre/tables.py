@@ -331,6 +331,11 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "parcel_evaluations": "évaluation (run servi)",
     "parcel_p_score_v2": "scoring P v2",
     "p_score_v2_runs": "scoring P v2 (registre des runs)",
+    # SCORING-6 lot E — la combinaison V3 (Score LABUSE + Signal + reclassification cascade v2)
+    # écrite dans UNE table versionnée par run_label (score_labuse_combine.py) + la métadonnée
+    # de run : produits du calcul, changés au run, comme dryrun_cascade_results / parcel_residuel_runs.
+    "score_labuse": "score LABUSE combiné V3 (scoring/score_labuse_combine.py)",
+    "score_labuse_runs": "score LABUSE combiné V3 (registre des runs)",
     "parcel_flags": "build-mvt (drapeaux servis)",
     "score_e": "score É (ingestion/score_e.py)",
     "score_snapshot_parcelles": "score V (photos)",
@@ -421,10 +426,16 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "data_sources": "catalogue des sources",
     "communes_referentiel": "référentiel des 24 communes (cible des clés étrangères, CIRCUIT-5 lot 4)",
     "ingestion_runs": "journal d'ingestion",
+    # SCORING-6 lot F — journal append-only des deltas d'ingestion (source, date, parcelles
+    # touchées) : trace de la VANNE pour préparer un recalcul ciblé (scoring/ingestion_journal.py).
+    "ingestion_delta": "journal des deltas d'ingestion (la vanne)",
     "mnt_tiles": "tuilage + point de reprise de l'ingestion RGE ALTI MNT (RECETTE-7 lot D)",
     "source_veille": "sentinelle des sources",
     "source_checks": "contrôles de sources",
     "source_radar": "radar de sources",
+    # CIRCUIT-1 lot 6 — rapports des agents de source (verdict + preuve datée par passage) ;
+    # l'agent n'écrit QUE cette table (+ source_veille sur `nouvelle`) — exploitation (agent_source.py).
+    "source_agent_rapports": "rapports des agents de source",
     "registre_chiffres": "miroir du registre (données)",
     "registre_robinets": "miroir du registre (robinets)",
     "registre_aretes": "miroir du registre (arêtes)",
