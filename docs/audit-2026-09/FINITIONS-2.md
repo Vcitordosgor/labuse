@@ -21,5 +21,12 @@ Balayage de tout `frontend/src/components/` (hors `*.test.tsx`, hors chaînes de
 
 Nettoyages `tsc` induits (bindings devenus inutilisés après retrait du `title` interne, `noUnusedLocals`) : `ActBtn`/`KpiFlux` — `title` retiré du destructuring (le champ reste optionnel dans le type, les appelants compilent) ; `LayersSection`/`FiltresSection` — `closable` retiré (son seul usage était le texte du `title` supprimé).
 
+## Recette point 3 (retour Vic) — capture en cours de défilement
+Constat mesuré au **défilement de 300 px** de la fiche (parcelle `97411000AB0006`), fond de carte masqué pour la capture :
+- **Avant (F-1, `:5365`)** — `fin2-p3-midscroll-before.png` : **1 seule carte** ; l'identité **ET les 6 tuiles** (Surface 1,49 ha · Zone Uavap · Pente 4,1° · Exposition Nord-Est · Risques · SDP restante) restent collées en haut (tuiles `top` = **163**, inchangé). C'est ce que la recette a vu.
+- **Après (F-2, `:5375`)** — `fin2-p3-midscroll-after.png` : **2 cartes** ; seule l'identité (PARCELLE · SAINT-DENIS, référence, adresse, boutons) reste collée (`top` = 70) ; les **6 tuiles défilent** (`top` = **-124**, hors écran) et le corps (Bâti, Urbanisme, Risques…) passe dessous.
+
+⚠ Les deux serveurs de dev ne diffèrent que d'un chiffre : **`:5365` = AVANT (F-1, tuiles collées)**, **`:5375` = APRÈS (F-2, corrigé)**. Le correctif est déjà dans le commit `bb7d9281` ; un rechargement dur de `:5375` (ou la branche `fix/finitions-2`) montre l'identité seule collée.
+
 ## Fichiers touchés
 `frontend/src/main.tsx` (P4) · `frontend/src/components/map/MapToolbar.tsx` (P2) · `frontend/src/components/fiche/Fiche.tsx` (P3 + P1) · + le balayage P1 dans ~63 fichiers de `components/` · `admin/circuit/__snapshots__/onglets.snapshot.test.tsx.snap` (régénéré).
