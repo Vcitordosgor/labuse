@@ -1,0 +1,25 @@
+commune,insee,fichier_zip_servi,zip_ok_ecart,recherche_bornee_ok_ecart,statut_procedure_affiche,source_du_statut,statut_ok_ecart
+Les Avirons,97401,97401_PLU_20241206.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh aucune, confiance SOURCE)",OK
+Bras-Panon,97402,97402_PLU_20260428.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh aucune, confiance SOURCE)",OK
+Entre-Deux,97403,97403_PLU_20240924.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh aucune, confiance SOURCE)",OK
+L'Étang-Salé,97404,97404_PLU_20250917.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh cloturee, confiance DEDUIT)",OK
+Petite-Île,97405,97405_PLU_20230609.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh aucune, confiance SOURCE)",OK
+La Plaine-des-Palmistes,97406,97406_PLU_20230527.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh cloturee, confiance DEDUIT)",OK
+Le Port,97407,97407_PLU_20241209.zip,OK,OK,en vigueur (annulation partielle),"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh aucune, confiance SOURCE)",OK
+La Possession,97408,97408_PLU_20251217.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh aucune, confiance SOURCE)",OK
+Saint-André,97409,pack GPU en vigueur (live) — GPU vide → repli mairie de la commune,OK,"OK (message honnête : révision, règlement non servi)",révision (règlement non servi) · procédure : révision générale en cours,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh revision_plu, confiance SOURCE)",OK
+Saint-Benoît,97410,97410_PLU_20200206.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh aucune, confiance SOURCE)",OK
+Saint-Denis,97411,97411_PLU_20260423.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh cloturee, confiance DEDUIT)",OK
+Saint-Joseph,97412,97412_PLU_20251210.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh aucune, confiance SOURCE)",OK
+Saint-Leu,97413,pack GPU en vigueur (live) — GPU vide → repli mairie de la commune,OK,"OK (message honnête : révision, règlement non servi)",révision (règlement non servi) · procédure : révision générale en cours,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh revision_plu, confiance SOURCE)",OK
+Saint-Louis,97414,97414_PLU_20251218.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh cloturee, confiance DEDUIT)",OK
+Saint-Paul,97415,97415_PLU_20251217.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh cloturee, confiance DEDUIT)",OK
+Saint-Pierre,97416,97416_PLU_20240625.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh aucune, confiance SOURCE)",OK
+Saint-Philippe,97417,aucun (RNU — lien Légifrance R111-1 s.),OK,"OK (message honnête : RNU, rien à interroger)",RNU,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh elaboration_plu, confiance SOURCE)",OK
+Sainte-Marie,97418,97418_PLU_20251126.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh cloturee, confiance DEDUIT)",OK
+Sainte-Rose,97419,97419_PLU_20190504.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh aucune, confiance SOURCE)",OK
+Sainte-Suzanne,97420,97420_PLU_20250929.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh cloturee, confiance DEDUIT)",OK
+Salazie,97421,97421_PLU_20220524.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh aucune, confiance SOURCE)",OK
+Le Tampon,97422,97422_PLU_20230811.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh aucune, confiance SOURCE)",OK
+Les Trois-Bassins,97423,97423_PLU_20220602.zip,OK,OK,en vigueur · procédure : révision générale en cours,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh revision_plu, confiance SOURCE)",OK
+Cilaos,97424,97424_PLU_20240213.zip,OK,OK,en vigueur,"config/plu_millesimes.yaml (statut GPU/mairie, M40) + config/veille_plu.yaml (procédure Sudocuh aucune, confiance SOURCE)",OK
