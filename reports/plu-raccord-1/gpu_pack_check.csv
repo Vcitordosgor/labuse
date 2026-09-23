@@ -1,0 +1,25 @@
+insee,commune,statut_config,idurba_config,idurba_servi_gpu,statut_gpu,n_docs_gpu,zip_appartient_commune,concorde_config,zip_taille,zip_url
+97401,Les Avirons,a_jour,97401_PLU_20241206,97401_PLU_20241206,EN_VIGUEUR,4,True,True,282419282,https://www.geoportail-urbanisme.gouv.fr/api/document/4ef0d90f5bb1ac3348e71f22bb260a84/download/97401_PLU_20241206.zip
+97402,Bras-Panon,a_jour,97402_PLU_20260428,97402_PLU_20260428,EN_VIGUEUR,4,True,True,145165995,https://www.geoportail-urbanisme.gouv.fr/api/document/66ba6a474f15ca68cd0ed773752b5d0a/download/97402_PLU_20260428.zip
+97403,Entre-Deux,a_jour,97403_plu_20240924,97403_PLU_20240924,EN_VIGUEUR,1,True,True,315492514,https://www.geoportail-urbanisme.gouv.fr/api/document/b6ba5771ca53558bd57148f7382b9346/download/97403_PLU_20240924.zip
+97404,L'Étang-Salé,a_jour,97404_PLU_20250917,97404_PLU_20250917,EN_VIGUEUR,5,True,True,301185287,https://www.geoportail-urbanisme.gouv.fr/api/document/7058f72863540b49692dd4e3c37085f8/download/97404_PLU_20250917.zip
+97405,Petite-Île,a_jour,97405_PLU_20230609,97405_PLU_20230609,EN_VIGUEUR,2,True,True,902930253,https://www.geoportail-urbanisme.gouv.fr/api/document/0b91a0d63909c727a863784113009109/download/97405_PLU_20230609.zip
+97406,La Plaine-des-Palmistes,a_jour,97406_PLU_20230527,97406_PLU_20230527,EN_VIGUEUR,1,True,True,191318248,https://www.geoportail-urbanisme.gouv.fr/api/document/a6a3fe0a985c5e102ed1810b8130788e/download/97406_PLU_20230527.zip
+97407,Le Port,annule_partiel,97407_PLU_20241209,97407_PLU_20241209,EN_VIGUEUR,7,True,True,536747189,https://www.geoportail-urbanisme.gouv.fr/api/document/8cdd92497a52e883eddd7330b3836873/download/97407_PLU_20241209.zip
+97408,La Possession,a_jour,97408_PLU_20251217,97408_PLU_20251217,EN_VIGUEUR,7,True,True,260747866,https://www.geoportail-urbanisme.gouv.fr/api/document/3fa1dbaa347af47ed5b743696ea098f6/download/97408_PLU_20251217.zip
+97409,Saint-André,opposabilite_en_attente,97409_20190228,VIDE,,,,,,
+97410,Saint-Benoît,a_jour,97410_PLU_20200206,97410_PLU_20200206,EN_VIGUEUR,1,True,True,716755118,https://www.geoportail-urbanisme.gouv.fr/api/document/77260522306e0350ed054b54d35a35fa/download/97410_PLU_20200206.zip
+97411,Saint-Denis,a_jour,97411_PLU_20260423,97411_PLU_20260805,EN_VIGUEUR,7,True,False,212217502,https://www.geoportail-urbanisme.gouv.fr/api/document/eee143f619882c020cfb0fbd52e178b7/download/97411_PLU_20260805.zip
+97412,Saint-Joseph,a_jour,97412_PLU_20251210,97412_PLU_20251210,EN_VIGUEUR,3,True,True,181508652,https://www.geoportail-urbanisme.gouv.fr/api/document/ce1a1274209313eeaf6c85f947d03a13/download/97412_PLU_20251210.zip
+97413,Saint-Leu,opposabilite_en_attente,97413_20070226,VIDE,,,,,,
+97414,Saint-Louis,a_jour,97414_PLU_20251218,97414_PLU_20251218,EN_VIGUEUR,5,True,True,159218217,https://www.geoportail-urbanisme.gouv.fr/api/document/74e23183063d4dc8af009e9f0a826ca6/download/97414_PLU_20251218.zip
+97415,Saint-Paul,a_jour,97415_PLU_20251217,97415_PLU_20251217,EN_VIGUEUR,8,True,True,538148091,https://www.geoportail-urbanisme.gouv.fr/api/document/0f717dab1a17e973d81fe6b5ea79fe22/download/97415_PLU_20251217.zip
+97416,Saint-Pierre,a_jour,97416_PLU_20240625,97416_PLU_20240625,EN_VIGUEUR,2,True,True,1034964978,https://www.geoportail-urbanisme.gouv.fr/api/document/6c6320c68195297390a319acb951dc4b/download/97416_PLU_20240625.zip
+97417,Saint-Philippe,rnu,,VIDE,,,,,,
+97418,Sainte-Marie,a_jour,97418_plu_20251126,97418_PLU_20251126,EN_VIGUEUR,4,True,True,226853452,https://www.geoportail-urbanisme.gouv.fr/api/document/3fe3fd7e85c27ce210c60b6058cabd0d/download/97418_PLU_20251126.zip
+97419,Sainte-Rose,a_jour,97419_PLU_20190504,97419_PLU_20190504,EN_VIGUEUR,1,True,True,95712462,https://www.geoportail-urbanisme.gouv.fr/api/document/b85322d6fbeee20a8a96ec7ffe04d218/download/97419_PLU_20190504.zip
+97420,Sainte-Suzanne,a_jour,97420_plu_20250929,97420_PLU_20250929,EN_VIGUEUR,1,True,True,306051802,https://www.geoportail-urbanisme.gouv.fr/api/document/9ced5f687357ee837e1ecfe079f0ced1/download/97420_PLU_20250929.zip
+97421,Salazie,a_jour,97421_PLU_20220524,97421_PLU_20220524,EN_VIGUEUR,1,True,True,179019101,https://www.geoportail-urbanisme.gouv.fr/api/document/ef46ea93a9a4d26d8e7783aa62ac0bec/download/97421_PLU_20220524.zip
+97422,Le Tampon,a_jour,97422_PLU_20230811,97422_PLU_20230811,EN_VIGUEUR,3,True,True,362406782,https://www.geoportail-urbanisme.gouv.fr/api/document/3bd1b9d43addd334e64405c82343c405/download/97422_PLU_20230811.zip
+97423,Les Trois-Bassins,a_jour,97423_PLU_20220602,97423_PLU_20220602,EN_VIGUEUR,2,True,True,81148079,https://www.geoportail-urbanisme.gouv.fr/api/document/cf21c184c89988947c077c0500749264/download/97423_PLU_20220602.zip
+97424,Cilaos,a_jour,97424_plu_20240213,97424_PLU_20240213,EN_VIGUEUR,1,True,True,94546566,https://www.geoportail-urbanisme.gouv.fr/api/document/cf474c28b88a6b7e76e3d02f64f885cc/download/97424_PLU_20240213.zip
