@@ -190,3 +190,111 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
         "reste": {"reservoirs": n_res, "robinets": n_rob,
                   "chiffres": compteurs.get("chiffres", 0)},
     }
+
+
+# ══════════════════════ CIRCUIT-P4 (lot 2) — L'ONGLET « À FAIRE » ══════════════════════
+# Une LISTE ordonnée, calculée ICI (le front ne recalcule rien), vide si rien à faire. CINQ types
+# de lignes SEULEMENT, chacune avec un verbe et UN bouton d'action (plus, parfois, un lien discret
+# « voir »/« lire ») :
+#   · Injecter — une source en « nouvelle version » (la vanne existe).
+#   · Déposer  — une manuelle « échue » (le dépôt de fichier existe).
+#   · Calculer — des sources injectées OU des règles PLU changées depuis le run servi (lot 4 enrichit
+#                la liste « ce que ça touche »).
+#   · Basculer — un candidat prêt ; bouton GRISÉ avec la raison tant qu'un Calculer le précède
+#                (ou que la note de version n'est pas lue).
+#   · Décider  — un verrou cassé, lien vers son détail.
+# Le nombre de l'onglet = le nombre de lignes. Ordre : le flux de la donnée (injecter → calculer →
+# basculer), puis le manuel (déposer), puis la décision (décider) — arbitrage écrit au rapport.
+
+def _ligne_af(type_, couleur, titre, phrase, bouton, *, ghost=None, cible=None):
+    ligne = {"type": type_, "couleur": couleur, "titre": titre, "phrase": phrase, "bouton": bouton}
+    if ghost:
+        ligne["ghost"] = ghost
+    if cible:
+        ligne["cible"] = cible
+    return ligne
+
+
+def composer_a_faire(reservoirs: list[dict], *, residuel: dict | None, candidat: str | None,
+                     run_servi: str, verrous: dict | None = None,
+                     etats_compte: dict | None = None, contexte: str | None = None,
+                     derniere_bascule: str | None = None,
+                     calculer: dict | None = None) -> dict:
+    """Compose l'onglet « À faire » (lot 2). `calculer` (lot 4) porte le détail dérivé du registre :
+    {actif: bool, titre, phrase, touche: [..], changements: [..]} — s'il est absent, on retombe sur
+    le seul signal résiduel (`residuel.changees`)."""
+    def lib(r):
+        return (r.get("etat") or ["", ""])[1]
+
+    lignes: list[dict] = []
+
+    # (1) INJECTER — une ligne par source en nouvelle version (chacune a sa vanne).
+    for r in reservoirs:
+        if lib(r) == "nouvelle version":
+            vanne = r.get("vanne") or {}
+            vu = (r.get("veille") or {}).get("vu")
+            lignes.append(_ligne_af(
+                "injecter", "ambre", f"Injecter {r['nom']}",
+                (f"Le producteur a publié {('« ' + str(vu) + ' »') if vu else 'plus récent'} que "
+                 f"ce que sert l'app ({r.get('millesime') or 'version inconnue'})."),
+                {"label": "Injecter", "action": "injecter", "source": r["id"],
+                 "vanne": vanne.get("label")},
+                cible={"type": "reservoir", "ids": [r["id"]]}))
+
+    # (2) CALCULER — sources injectées OU règles PLU changées depuis le run servi (lot 4 enrichit).
+    calc = calculer if (calculer and calculer.get("actif")) else None
+    if calc:
+        lignes.append(_ligne_af(
+            "calculer", "ambre", calc.get("titre") or "Calculer le résiduel",
+            calc.get("phrase") or "Des entrées ont changé depuis le run servi.",
+            {"label": "Calculer", "action": "calculer"},
+            ghost={"label": "voir les changements", "action": "voir_changements"}))
+        calc_present = True
+    elif residuel and residuel.get("changees"):
+        lignes.append(_ligne_af(
+            "calculer", "ambre", "Calculer le résiduel",
+            f"{residuel.get('detail', 'Des entrées ont changé')} — à recalculer, puis à basculer.",
+            {"label": "Calculer", "action": "calculer"},
+            ghost={"label": "voir les changements", "action": "voir_changements"}))
+        calc_present = True
+    else:
+        calc_present = False
+
+    # (3) BASCULER — candidat prêt ; grisé tant qu'un Calculer le précède (le score lit la capacité).
+    if candidat:
+        raison = "après le calcul du résiduel" if calc_present else None
+        lignes.append(_ligne_af(
+            "basculer", "ambre", f"Basculer sur {candidat}",
+            (f"Candidat prêt. {'À faire après le calcul ci-dessus — le score lit la capacité.' if calc_present else 'Lis la note de version, puis bascule.'}"),
+            {"label": "Basculer", "action": "basculer", "candidat": candidat,
+             "disabled": bool(raison), "raison": raison},
+            ghost={"label": "Lire la note", "action": "note_version", "candidat": candidat}))
+
+    # (4) DÉPOSER — une ligne par manuelle échue (le dépôt de fichier existe).
+    for r in reservoirs:
+        if lib(r) == "échue":
+            cad = r.get("cadence_jours")
+            lignes.append(_ligne_af(
+                "deposer", "ambre", f"Déposer {r['nom']}",
+                (f"Source manuelle échue{f' — cadence {cad} j' if cad else ''} : dernier dépôt "
+                 f"{(r.get('dernier_controle') or '')[:10] or 'jamais'}. Ne touche ni le résiduel ni le score."),
+                {"label": "Déposer un fichier", "action": "deposer", "source": r["id"]},
+                cible={"type": "reservoir", "ids": [r["id"]]}))
+
+    # (5) DÉCIDER — une ligne par verrou cassé (lien vers son détail).
+    for verrou in (verrous or {}).get("casses", []):
+        lignes.append(_ligne_af(
+            "decider", "rouge", f"Décider — verrou {verrou}",
+            f"Le dernier passage de « labuse circuit verrous » a cassé sur {verrou}. Le déploiement "
+            "refuse tant que ça tient ; chaque verrou a sa phrase dans VERROUS.md.",
+            {"label": "Décider", "action": "decider", "verrou": verrou},
+            cible={"type": "compteur", "ids": []}))
+
+    ec = etats_compte or {}
+    calme = {
+        "nouvelles": ec.get("nouvelle version", 0),
+        "pannes": ec.get("sonde en panne", 0),
+        "vitrine": ec.get("total", len(reservoirs)),
+        "derniere_bascule": derniere_bascule,
+    }
+    return {"total": len(lignes), "lignes": lignes, "contexte": contexte, "calme": calme}

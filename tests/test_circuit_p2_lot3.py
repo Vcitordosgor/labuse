@@ -105,5 +105,9 @@ def test_agent_en_route_peint_mauve(client, seed, engine, tmp_path, monkeypatch)
     T.avancer("agents", fait=0, en_route=[cible], message="0 / 1 agents revenus")
     circ2 = client.get("/admin/circuit").json()
     r = next(x for x in circ2["reservoirs"] if x["id"] == cible)
-    assert r["etat"] == ["mauve", "agent en route"]
+    # CIRCUIT-P4 (lot 1) — un agent en route ne « repeint » PLUS la source : un échec/visite de
+    # contrôle n'est pas un état de FRAÎCHEUR. La source garde son état parmi les cinq (jamais mauve).
+    from labuse import circuit_etats as E
+    assert r["etat"][1] in E.ETATS_SOURCE and r["etat"][1] != "agent en route"
+    assert r["etat"][0] != "mauve"
     T.terminer("agents", message="fini")

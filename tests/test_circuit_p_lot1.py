@@ -12,27 +12,10 @@ from labuse import circuit_etats as E
 from labuse import circuit_resume as R
 
 
-# ── 1.4 — l'état d'un réservoir : un cas par branche de la maquette ──────────────────────────
-@pytest.mark.parametrize("r,attendu", [
-    ({"filtre": {"verdict": "quarantaine"}}, ("rouge", "en quarantaine")),
-    ({"horloge_ment": True}, ("rouge", "horloge qui ment")),
-    ({"mode": "absente"}, ("gris", "vide")),
-    ({"veille": {"statut": "nouvelle_version"}}, ("ambre", "nouvelle version à injecter")),
-    ({"veille": {"statut": "ok"}, "agent_en_cours": True}, ("mauve", "agent en route")),
-    ({"veille": {"statut": "ok"}, "filtre": {"verdict": "avertissements"}},
-     ("ambre", "filtre avec des KO")),
-    # CIRCUIT-6 lot 5 (G5) : jamais vérifié = ROUGE (plus jamais ambre).
-    ({}, ("rouge", "jamais vérifié")),
-    ({"veille": {"statut": "ok"}, "a_verifier": True}, ("ambre", "à vérifier")),
-    ({"veille": {"statut": "injoignable"}}, ("ambre", "producteur injoignable")),
-    # CIRCUIT-6 lot 5 (G5) : un dépôt jamais alimenté (aucune date) le DIT.
-    ({"veille": {"statut": "ok"}, "mode": "depot_manuel"}, ("gris", "dépôt manuel — jamais alimenté")),
-    ({"veille": {"statut": "ok"}, "mode": "depot_manuel", "dernier_controle": "2026-09-01"},
-     ("gris", "dépôt manuel")),
-    ({"veille": {"statut": "ok"}}, ("mint", "à jour")),
-])
-def test_etat_reservoir(r, attendu):
-    assert E.etat_reservoir(r) == attendu
+# ── 1.4 — l'état d'un RÉSERVOIR : CIRCUIT-P4 (lot 1) a ramené la fonction à trois états + un
+#    signal technique (à jour · nouvelle version · échue · jamais vérifiée · sonde en panne). Les
+#    cas exhaustifs vivent désormais dans tests/test_circuit_p4_etats.py (la maquette v9 fait foi).
+#    On garde ici l'état d'un ROBINET (inchangé par ce mandat). ──
 
 
 # ── 1.4 — l'état d'un robinet ────────────────────────────────────────────────────────────────

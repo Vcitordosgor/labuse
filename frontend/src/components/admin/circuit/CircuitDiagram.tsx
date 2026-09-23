@@ -18,7 +18,6 @@ export function CircuitDiagram({ data, groupe, onOpen }:
   const maps = useMemo(() => construireMaps(data), [data])
   const [openFam, setOpenFam] = useState<string | null>(null)
   const [openCat, setOpenCat] = useState<string | null>(null)
-  const [koOnly, setKoOnly] = useState(true)
   const [query, setQuery] = useState('')
   const [hover, setHover] = useState<Hover>(null)
   const [tick, setTick] = useState(0)
@@ -40,15 +39,17 @@ export function CircuitDiagram({ data, groupe, onOpen }:
   const lit = useMemo(() => cheminsAllumes(hover, maps), [hover, maps])
 
   // ── visibilité d'une ligne : recherche > groupe > « que ce qui cloche » ──
+  // CIRCUIT-P4 (lot 5) — le dessin montre TOUT (« à regarder » a disparu, lot 1) ; il ne reste que
+  // le filtre de recherche et le déplié d'un groupe. Aucun bouton : un clic ouvre le détail.
   const tankVisible = (t: Reservoir) => {
     if (q) return (t.nom + ' ' + (t.producteur || '')).toLowerCase().includes(q)
     if (enGroupe) return idsGroupe.has(String(t.id))
-    return koOnly ? t.ko : true
+    return true
   }
   const tapVisible = (t: Robinet) => {
     if (q) return (t.nom + ' ' + t.id + ' ' + (t.chiffres || []).join(' ')).toLowerCase().includes(q)
     if (enGroupe) return idsGroupe.has(String(t.id))
-    return koOnly ? t.ko : true
+    return true
   }
 
   // ── tuyaux SVG (au niveau des blocs) : stubs + collecteur→pompe + distributeur→pompe ──
@@ -105,7 +106,7 @@ export function CircuitDiagram({ data, groupe, onOpen }:
       }
     }
     setPipes(out)
-  }, [data, maps, openFam, openCat, koOnly, q, enGroupe, lit, tick])
+  }, [data, maps, openFam, openCat, q, enGroupe, lit, tick])
 
   // redessin sur redimensionnement + défilement
   useEffect(() => {
@@ -134,12 +135,9 @@ export function CircuitDiagram({ data, groupe, onOpen }:
       <div className="cbar">
         <input placeholder="Chercher un réservoir, un robinet, un chiffre…" value={query}
           onChange={(e) => setQuery(e.target.value)} />
-        <button className={`sw ${koOnly ? 'on' : ''}`} onClick={() => setKoOnly((v) => !v)}>
-          <span>Ne montrer que ce qui cloche</span><span className="tr"><i /></span>
-        </button>
         <div className="legend">
           <span><i style={{ background: 'var(--mint)' }} />ça coule</span>
-          <span><i style={{ background: 'var(--ambre)' }} />à regarder</span>
+          <span><i style={{ background: 'var(--ambre)' }} />à voir</span>
           <span><i style={{ background: 'var(--rouge)' }} />bloqué ou fuite</span>
           <span><i style={{ background: 'var(--gris)' }} />vide, manuel</span>
           <span><i style={{ background: 'var(--mauve)' }} />agent</span>
@@ -152,7 +150,7 @@ export function CircuitDiagram({ data, groupe, onOpen }:
         {/* réservoirs */}
         <div>
           <div className="colh"><b>Réservoirs</b>
-            <span>{data.compteurs.reservoirs}, {data.compteurs.a_regarder} à regarder</span></div>
+            <span>{data.compteurs.reservoirs}, {data.compteurs.a_regarder} à voir</span></div>
           <div ref={tanksRef}>
             {data.familles.map((f) => {
               const tanks = f.ids.map((id) => maps.reservoirById.get(id)).filter(Boolean) as Reservoir[]
@@ -166,7 +164,7 @@ export function CircuitDiagram({ data, groupe, onOpen }:
                     <span><span className="t">{f.nom}</span>
                       <span className="dots">{tanks.map((t) => <i key={t.id} className={t.etat[0] === 'mint' ? '' : t.etat[0]} />)}</span></span>
                     <span><span className="c">{tanks.length} réservoir{tanks.length > 1 ? 's' : ''}</span><br />
-                      <span className={`av ${ko ? '' : 'ok'}`}>{ko ? `${ko} à regarder` : 'tout va bien'}</span></span>
+                      <span className={`av ${ko ? '' : 'ok'}`}>{ko ? `${ko} à voir` : 'tout va bien'}</span></span>
                   </button>
                   <div className="rows">{visibles.map((t) => (
                     <button key={t.id} className="row" onMouseEnter={() => setHover({ type: 'reservoir', id: t.id })}
@@ -216,7 +214,7 @@ export function CircuitDiagram({ data, groupe, onOpen }:
                     <span><span className="t">{c.nom}</span>
                       <span className="dots">{taps.map((t) => <i key={t.id} className={t.etat[0] === 'mint' ? '' : t.etat[0]} />)}</span></span>
                     <span><span className="c">{taps.length} robinet{taps.length > 1 ? 's' : ''}</span><br />
-                      <span className={`av ${ko ? '' : 'ok'}`}>{ko ? `${ko} à regarder` : 'tout va bien'}</span></span>
+                      <span className={`av ${ko ? '' : 'ok'}`}>{ko ? `${ko} à voir` : 'tout va bien'}</span></span>
                   </button>
                   <div className="rows">{visibles.map((t) => (
                     <button key={t.id} className="row" onMouseEnter={() => setHover({ type: 'robinet', id: t.id })}
