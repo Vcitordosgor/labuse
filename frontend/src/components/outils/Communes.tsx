@@ -290,7 +290,7 @@ export function RadarTablePanel() {
   const module = useApp((s) => s.module)
   const radarTableOpen = useApp((s) => s.radarTableOpen)
   const setRadarTableOpen = useApp((s) => s.setRadarTableOpen)
-  const { data: rm } = useQuery({ queryKey: ['radar-marche'], queryFn: getRadarMarche, staleTime: 60_000, enabled: radarTableOpen })
+  useQuery({ queryKey: ['radar-marche'], queryFn: getRadarMarche, staleTime: 60_000, enabled: radarTableOpen })
   if (module !== 'communes' || !radarTableOpen) return null
   return (
     <div data-radar-table-panel
@@ -300,7 +300,7 @@ export function RadarTablePanel() {
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <div>
             <h2 className="text-sm font-medium text-txt-hi">
-              Marché des annonces (Radar){rm ? ` — ${fmtInt(rm.corpus_actif)} bien${rm.corpus_actif > 1 ? 's' : ''} collecté${rm.corpus_actif > 1 ? 's' : ''} à ce jour` : ''}
+              Marché des annonces (Radar)
             </h2>
             <p className="text-[10.5px] text-txt-dim">Les biens en vente repérés par le Radar (collecte humaine), agrégés par commune. Une médiane ou un taux n'est servi qu'à partir de 5 biens — jamais de fausse précision.</p>
           </div>
