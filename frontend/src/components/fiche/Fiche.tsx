@@ -10,6 +10,7 @@ import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
 import { AskBar, renderRich } from './AskBar'
 import { FinancierQuestionnaire } from './FinancierQuestionnaire'
+import { GabaritLine } from './GabaritLine'
 import { cadastreGeoportailUrl, googleMapsUrl, pagesJaunes } from './liensExternes'
 import { LogoCadastre, LogoPagesJaunes, LogoGoogleMaps } from './logosServices'
 import { PourquoiPasTab } from './PourquoiPas'
@@ -1663,6 +1664,9 @@ export function Fiche({ idu }: { idu: string }) {
                     onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setCommunesFilter([f.commune!]); st.setModule('renouvellement') }} />
                 )}
                 <FaisabiliteTab idu={idu} />
+                {/* GABARIT-2 — ligne « Gabarit réglementaire » : zone d'implantation / plafond /
+                    hauteur (citée de §4) + mini-plan 2D, ou « Calcul incomplet » + motif. */}
+                <GabaritLine idu={idu} />
               </div>
             </RefDrawer>
 

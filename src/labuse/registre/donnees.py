@@ -89,6 +89,48 @@ DONNEES: dict[str, Donnee] = {
     "surface cadastrale parcels.surface_m2",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/scoreur.py:scoreur_adresse",
     reservoirs=("cadastre_api_carto",), portee="live", table="parcels.surface_m2"),
+ # GABARIT-1 — outil « Gabarit réglementaire » (moteur pur, sourcé). Servi sur fixtures
+ # (démo CDC §9) ; réel per-parcelle dès que la classification des limites arrive (GABARIT-2).
+ "gabarit_implantation_m2": C("Zone d'implantation réglementaire", "m²", "parcelle",
+    "surface de la zone où une construction peut s'implanter = parcelle − reculs (voie/"
+    "séparatives) − exclusions réglementaires (PPR rouge). Calcul géospatial pur, jamais "
+    "estimé. Servi per-parcelle (GABARIT-2 : classification des limites voie/séparative par "
+    "arête = adjacence cadastre + BD TOPO, mesurée 0 faux/70).",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/engine.py:compute_gabarit",
+    reservoirs=("cadastre_api_carto", "gpu_plu_api_carto",), portee="live"),
+ "gabarit_emprise_plafond_m2": C("Plafond d'emprise", "m²", "parcelle",
+    "plafond réglementaire d'emprise au sol = surface parcelle × CES / 100. Calculé À PART "
+    "de la zone d'implantation (jamais min()).",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/engine.py:compute_gabarit",
+    reservoirs=("cadastre_api_carto", "gpu_plu_api_carto",), portee="live"),
+ "gabarit_couverture_verdict": C("Couverture réglementaire", "verdict", "parcelle",
+    "nombre de familles réglementaires vérifiées (reculs, hauteur, emprise, risques) — "
+    "au plus 4 ; ne compte ni les segments ni les articles PLU.",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/engine.py:compute_gabarit",
+    reservoirs=("gpu_plu_api_carto", "deal_ppr",), portee="live",
+    domaine=("0", "1", "2", "3", "4"), domaine_source="4 familles de couverture (CDC §6)"),
+ "gabarit_hauteur_m": C("Hauteur réglementaire (gabarit)", "m", "parcelle",
+    "hauteur réglementaire servie au gabarit — la valeur PLU vit au §4 Urbanisme, le tiroir la "
+    "CITE (jamais redéclarée). « Non chiffrée » quand la règle est en prospect (L ≥ H) : forme "
+    "validée mais non numérique (non intégrée), 2D servie, 3D indisponible.",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/engine.py:compute_gabarit",
+    reservoirs=("gpu_plu_api_carto",), portee="live"),
+ "gabarit_motif_blocage": C("Gabarit — motif de calcul incomplet", "texte", "parcelle",
+    "motif métier quand le gabarit n'est pas calculable (limite non qualifiée, voie privée sans "
+    "recul réglé, zone non calibrée, ≥ 2 zones constructibles…). Silence sourcé, jamais estimatif.",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/builder.py:build_gabarit_input", portee="live", type="texte"),
+ "gabarit_plan_2d": C("Gabarit — plan 2D (zone d'implantation)", "texte", "parcelle",
+    "figure 2D du gabarit : contour cadastral, zone d'implantation, bandes de retrait et "
+    "exclusions (PPR rouge). Schéma des géométries servies (SVG), pas une carte ni un plan de "
+    "masse. Déclaré comme figure de la ligne « zone d'implantation ».",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/plan_svg.py:gabarit_svg",
+    reservoirs=("cadastre_api_carto", "gpu_plu_api_carto",), portee="live", type="texte"),
  "capacite_logements": C("Capacité (logements)", "logements", "parcelle",
     "logements estimés du scénario table rase (après plafond de densité et stationnement) — "
     "bloc potentiel (EXPORTS-1 lot 3)",

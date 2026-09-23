@@ -30,7 +30,7 @@ DECLARATIONS = _RACINE / "declarations"
 CATEGORIES = ("fiche", "fiche_commune", "outil", "couche", "radar", "document", "score", "cascade")
 ETATS = ("en_tete", "replie", "sur_demande")
 FORMATS = ("entier", "entier_m2", "metre", "pourcent", "euro", "euro_m2", "degre",
-           "classe", "texte", "liste", "date", "verdict")
+           "classe", "texte", "liste", "date", "verdict", "figure")
 #: RACCORDEMENT-1 (ajustement Vic) — le CLIENT n'entend pas la même phrase selon la CAUSE de
 #: l'absence. Trois causes distinctes (les deux demandées + `non_ingeree`, imposée par des cas
 #: réels comme la TFPB « taux non ingéré » : la source publie, LABUSE n'a pas encore ingéré) :

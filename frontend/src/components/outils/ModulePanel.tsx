@@ -43,6 +43,7 @@ import { RenouvellementModule } from './Renouvellement'
 import { ProspectionSolaire } from './ProspectionSolaire'
 import { EtudeZone } from './EtudeZone'
 import { TaxeAmenagement } from './TaxeAmenagement'
+import { Gabarit } from './Gabarit'   // GABARIT-1 — outil interne (registry hidden:true, flag admin)
 import { MonSecteur } from './MonSecteur'   // SECTEUR-1 (S1) — outil « Mon secteur »
 import { ScanPatrimoine } from './ScanPatrimoine'   // RETOURS-4 S7 — fusion Scan patrimoine (possède + construit)
 import { Successions } from './Successions'   // OUTILS-MUSCLER-1 Lot A — radar patrimonial servi en outil
@@ -1783,6 +1784,7 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // K3 (rattrapage KelFoncier) — calculette « Taxe d'aménagement ». Marche à vide ; s'ouvre aussi
   // depuis une parcelle sélectionnée (getTaxePrefill : commune + zone en référence, surface saisie).
   'taxe-amenagement': TaxeAmenagement,
+  gabarit: Gabarit,   // GABARIT-1 — résout la clé (carte masquée) ; s'ouvre sur fixtures / deep-link admin
   // RETOURS-3 R5 — « Mon secteur » est hidden au menu (fusionné dans « Étudier un bien »), mais la clé
   // reste RÉSOLVANTE ici : deep-link/copilote historique ouvrent toujours l'outil autonome (redirection conservée).
   'mon-secteur': MonSecteur,   // SECTEUR-1 (S1)

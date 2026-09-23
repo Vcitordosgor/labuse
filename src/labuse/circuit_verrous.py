@@ -741,6 +741,7 @@ def verrou_fiche_commune_cartes(db=None) -> ResultatVerrou:
 #: l'outil parent — pas de carte propre, donc pas de ligne ici.
 OUTIL_ROBINET_MENU: dict[str, str] = {
     "scoreur-adresse": "outil_etudier_bien",
+    "gabarit": "outil_gabarit",   # GABARIT-1 — outil interne (registry hidden:true, flag admin)
     "programme": "outil_faisabilite",
     "taxe-amenagement": "outil_taxe_amenagement",
     "risques": "outil_pieges",

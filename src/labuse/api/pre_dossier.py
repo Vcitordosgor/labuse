@@ -379,6 +379,56 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
     return _html_pdf(body, f"Règles du zonage — parcelle {idu}")
 
 
+def _enveloppe_reglementaire(db: Session, idu: str) -> bytes | None:
+    """GABARIT-5 lot D — page « Enveloppe réglementaire selon les règles intégrées » : le MÊME plan 2D
+    (SVG) que la fiche + les 4 chiffres + les règles appliquées / non intégrées + les sources. AIDE À
+    LA LECTURE du règlement, PAS un plan de masse (le titre et la phrase le disent). Si le gabarit est
+    bloqué (calcul incomplet), la page N'EST PAS produite → None (et le sommaire ne la cite pas)."""
+    from ..gabarit.builder import build_gabarit_input
+    from ..gabarit.engine import compute_gabarit
+    from ..gabarit.plan_svg import gabarit_svg
+
+    build = build_gabarit_input(db, idu)
+    if build is None or build.blocking:
+        return None
+    res = compute_gabarit(build.input)
+    if res.status != "ok":
+        return None
+    svg = gabarit_svg(res, width=460, height=340) or ""
+
+    def _m2(v):
+        return "Non réglementé" if v is None else f"{round(v):g} m²"
+    plafond = "Non réglementé" if res.plafondEmpriseStatus == "absent" else _m2(res.plafondEmpriseM2)
+    hauteur = ("Non chiffrée (prospect L ≥ H)" if res.hauteurStatus == "not_integrated"
+               else f"{res.hauteurReglementaireM:g} m")
+    chiffres = (
+        f"<tr><td>Surface de la parcelle</td><td>{_m2(res.surfaceParcelleM2)}</td></tr>"
+        f"<tr><td>Zone d'implantation réglementaire</td><td>{_m2(res.zoneImplantationM2)}</td></tr>"
+        f"<tr><td>Plafond d'emprise au sol</td><td>{plafond}</td></tr>"
+        f"<tr><td>Hauteur réglementaire</td><td>{hauteur}</td></tr>")
+    appl = "".join(f"<li>{r.label}{(' — ' + r.detail) if r.detail else ''}</li>"
+                   for r in res.appliedRules if getattr(r, 'label', None))
+    non_int = "".join(f"<li>{r.label}</li>" for r in (res.nonIntegratedRules or []) if r.label)
+    # les sources vivent sur chaque règle servie (le contrat de SORTIE n'a pas de catalogue global)
+    seen, src_items = set(), []
+    for r in list(res.appliedRules) + list(res.nonIntegratedRules or []):
+        s = getattr(r, "source", None)
+        if s and s.document and s.document not in seen:
+            seen.add(s.document)
+            src_items.append(f"<li>{s.document}{(' — ' + s.provider) if s.provider else ''}</li>")
+    srcs = "".join(src_items)
+    body = (
+        "<p class='note'>Aide à la lecture du règlement — <strong>ce n'est pas un plan de masse</strong>. "
+        "La « zone d'implantation » est l'enveloppe où une construction pourrait prendre place selon les "
+        "seules règles intégrées ci-dessous (reculs, exclusions) ; elle ne préjuge d'aucun projet.</p>"
+        f"<div style='text-align:center;margin:8px 0'>{svg}</div>"
+        f"<h2>Chiffres du gabarit</h2><table>{chiffres}</table>"
+        + (f"<h2>Règles appliquées</h2><ul>{appl}</ul>" if appl else "")
+        + (f"<h2>Règles connues, non intégrées</h2><ul>{non_int}</ul>" if non_int else "")
+        + (f"<h2>Sources</h2><ul>{srcs}</ul>" if srcs else ""))
+    return _html_pdf(body, f"Enveloppe réglementaire selon les règles intégrées — parcelle {idu}")
+
+
 # ─────────────────────────── pièces graphiques fpdf2 (Nord + échelle) ───────────────────────────
 # Réutilisent le générateur de plan du premium (plan_ortho → ortho IGN + contour) et son tracé
 # Nord + échelle (repris de pdf_premium._bloc_plan) — jamais réécrit, jamais un fournisseur de tuiles
@@ -980,30 +1030,42 @@ def pre_dossier_zip(idu: str, request: Request, db: Session = Depends(get_db)) -
     # dit au LISEZMOI). Le nom de fichier porte le VRAI numéro/millésime servi.
     cerfa_meta = _CERFA_FICHIERS.get(scen.get("cerfa", "13406")) or _CERFA_FICHIERS["13406"]
     cerfa = _cerfa_prerempli(parcelle, adr, scen.get("cerfa", "13406"))   # None si INDISPONIBLE
+    # GABARIT-5 lot D — la page « Enveloppe réglementaire » n'est produite QUE si le gabarit est
+    # calculable ; bloqué → None (la pièce et sa ligne du LISEZMOI sont omises).
+    try:
+        enveloppe = _enveloppe_reglementaire(db, idu)
+    except Exception as exc:  # noqa: BLE001 — une pièce en échec ne casse jamais le pack
+        enveloppe = None
+        log.warning("pré-dossier %s : enveloppe réglementaire en échec (%s)", idu, exc)
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
         if cerfa is not None:
             z.writestr(f"{pfx}-CERFA-{cerfa_meta['version'].replace('*', '-')}-prerempli.pdf", cerfa)
-        for nom, gen in (
+        pieces_gen = [
             (f"{pfx}-PCMI1-plan-situation.pdf", lambda: _pcmi1(parcelle)),
             (f"{pfx}-PCMI2-plan-masse-existant.pdf", lambda: _pcmi2(db, parcelle, fiche)),
             (f"{pfx}-PCMI4-notice-terrain.pdf", lambda: _pcmi4(db, idu, parcelle, adr, fiche)),
             (f"{pfx}-PCMI7-8-prises-de-vue.pdf", lambda: _pcmi78(db, parcelle)),
             (f"{pfx}-regles-zonage.pdf", lambda: _regles_et_pieces(db, idu, scen)),
-        ):
+        ]
+        if enveloppe is not None:
+            pieces_gen.append((f"{pfx}-enveloppe-reglementaire.pdf", lambda: enveloppe))
+        for nom, gen in pieces_gen:
             try:
                 z.writestr(nom, gen())
             except Exception as exc:  # noqa: BLE001 — une pièce en échec ne casse jamais le pack
                 log.warning("pré-dossier %s : pièce %s en échec (%s)", idu, nom, exc)
         z.writestr(zipfile.ZipInfo(f"{pfx}-LISEZMOI.txt"),
-                   _lisezmoi(idu, parcelle["commune"], adresse is not None, cerfa is not None, scen),
+                   _lisezmoi(idu, parcelle["commune"], adresse is not None, cerfa is not None, scen,
+                            enveloppe is not None),
                    compress_type=zipfile.ZIP_STORED)   # non compressé : libellé vérifiable tel quel
     log.info("pré-dossier PC %s généré", idu)
     return Response(buf.getvalue(), media_type="application/zip",
                     headers={"Content-Disposition": f'attachment; filename="{pfx}-predossier-pc.zip"'})
 
 
-def _lisezmoi(idu: str, commune: str, adresse_ok: bool, cerfa_ok: bool, scen: dict | None = None) -> str:
+def _lisezmoi(idu: str, commune: str, adresse_ok: bool, cerfa_ok: bool, scen: dict | None = None,
+              enveloppe_ok: bool = False) -> str:
     """M129 E — LISEZMOI fusionné : libellé préparatoire, millésime CERFA daté (§2), superficie non
     servie (§1), qualification adresse BAN (§3), checklist PCMI cohérente avec le pack réel, nommage."""
     cerfa_ligne = (f"CERFA {CERFA_VERSION} — version vérifiée le {CERFA_VERIFIE_LE} sur "
@@ -1045,5 +1107,8 @@ def _lisezmoi(idu: str, commune: str, adresse_ok: bool, cerfa_ok: bool, scen: di
         f"aucune n'est garantie déposable en l'état.\n\n"
         f"PIÈCE D'INFORMATION (hors bordereau PCMI)\n----------------------------------------\n"
         f"  [X] Règles du zonage — fiche récapitulative (zonage, hauteurs PLU calibrées, servitudes "
-        f"connues) : {idu}-labuse-regles-zonage.pdf. Aide à la préparation, pas une pièce du dossier.\n\n"
-        f"NOMMAGE\n-------\nToutes les pièces suivent la doctrine {{IDU}}-labuse : « {idu}-labuse-<pièce>.pdf ».\n")
+        f"connues) : {idu}-labuse-regles-zonage.pdf. Aide à la préparation, pas une pièce du dossier.\n"
+        + (f"  [X] Enveloppe réglementaire selon les règles intégrées — plan 2D + chiffres du gabarit : "
+           f"{idu}-labuse-enveloppe-reglementaire.pdf. Aide à la lecture du règlement, PAS un plan de "
+           f"masse.\n" if enveloppe_ok else "")
+        + f"\nNOMMAGE\n-------\nToutes les pièces suivent la doctrine {{IDU}}-labuse : « {idu}-labuse-<pièce>.pdf ».\n")

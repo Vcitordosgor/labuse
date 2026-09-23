@@ -1,0 +1,71 @@
+idu,voie,side,rear,nonclass,has_voie,blocking
+97411000HD0281,1,2,2,0,True,
+97411000CH0196,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97411000HK0106,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97411000IE0153,2,4,2,0,True,
+97411000HP0606,0,0,1,2,False,Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni vois
+97411000AS0200,1,2,1,0,True,
+97411000HO0161,1,2,2,0,True,
+97411000IZ0416,2,3,1,0,True,
+97411000DL0527,5,1,1,4,True,Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni vois
+97411000CD1318,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97416000CW1762,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97416000CZ0589,3,4,2,0,True,
+97416000EV1463,1,2,2,0,True,
+97416000HY1431,2,2,1,0,True,
+97416000CW2415,1,2,2,0,True,
+97416000EW1074,1,2,2,0,True,
+97416000DM0548,1,2,1,0,True,
+97416000IE0601,2,2,1,0,True,
+97416000ID0187,1,2,2,0,True,
+97416000CY0068,2,4,3,0,True,
+97415000AW2362,2,2,1,0,True,
+97415000DX0049,2,3,2,0,True,
+97415000EX0029,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97415000BV0816,3,6,3,0,True,
+97415000CP1097,2,3,3,1,True,Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni vois
+97415000DM0238,1,2,2,0,True,
+97415000DI0646,1,2,2,0,True,
+97415000DR1199,1,2,2,0,True,
+97415000ES0927,3,4,2,0,True,
+97415000CK0896,2,4,3,0,True,
+97410000AN0347,0,0,2,1,False,Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni vois
+97407000AE0256,0,0,2,1,False,Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni vois
+97411000IE0026,0,0,2,1,False,Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni vois
+97411000IS0522,2,3,1,0,True,
+97411000AH0137,1,1,2,1,True,Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni vois
+97411000CT1329,1,2,1,0,True,
+97411000AO0753,1,2,2,0,True,
+97411000AT0595,1,2,2,1,True,Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni vois
+97411000CD1385,3,3,1,0,True,
+97407000AE0719,1,2,2,0,True,
+97407000AL0484,2,0,0,1,True,Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni vois
+97411000DS0472,1,2,2,0,True,
+97411000AS0314,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97411000AO0307,1,2,1,0,True,
+97411000DH0088,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97407000AI0443,2,4,3,0,True,
+97411000AZ0027,0,0,2,1,False,Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni vois
+97411000BE0689,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97411000DP0305,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97411000HO0180,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97407000AS0592,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97409000AC0746,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97411000CD1504,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97407000AM1059,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97416000IA1665,1,2,2,0,True,
+97422000BD2720,3,4,2,0,True,
+97423000AK1699,2,4,1,0,True,
+97416000CR0364,1,2,2,0,True,
+97409000AT0621,2,2,1,0,True,
+97411000IT0415,0,0,1,0,False,parcelle sans façade sur voie (enclave ou accès en drapeau)
+97418000AR1376,2,2,1,0,True,
+97422000AD0793,1,2,2,0,True,
+97409000BE1439,2,2,1,0,True,
+97409000AH0235,3,3,2,1,True,Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni vois
+97422000BS1974,2,2,1,0,True,
+97422000BT0342,1,2,2,0,True,
+97409000AE0290,1,1,2,1,True,Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni vois
+97422000AY0684,2,4,2,0,True,
+97422000BW1189,1,2,2,1,True,Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni vois
+97409000AC0089,1,2,2,0,True,
