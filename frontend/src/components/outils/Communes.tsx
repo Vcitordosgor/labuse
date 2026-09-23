@@ -18,6 +18,19 @@ import { RadarMarche } from './RadarMarche'
 // droite (setContexteCommune) ; les blocs propres à l'ex-fiche-outil (Marché local, Rareté &
 // ZAN, Vélocité) sont TRANSFÉRÉS dans ContextePanel — aucune donnée perdue, aucun doublon.
 
+// COMMUNE-124 Lot C2 — chevron d'accordéon (même glyphe SVG que ChevronSection, cohérent avec l'app) :
+// FERMÉ pointe à DROITE (▸, rotation −90° du chevron bas), OUVERT pointe en BAS (▾, sans rotation).
+function AcqChevron({ ouvert }: { ouvert: boolean }) {
+  return (
+    <span aria-hidden="true" className="flex h-4 w-4 shrink-0 items-center justify-center text-txt-dim group-hover:text-mint-ink">
+      <svg viewBox="0 0 12 12" className={`h-3 w-3 transition-transform duration-soft ease-cockpit ${ouvert ? '' : '-rotate-90'}`}>
+        <polyline points="2.75,4.25 6,7.75 9.25,4.25" fill="none" stroke="currentColor"
+          strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  )
+}
+
 // ── Vue « Acquisitions récentes » (R3.3) — sélecteur de commune + listing, clic → parcelle ──
 // RETOURS-11 O16 (Vic) : (c) le clic ouvre la fiche parcelle EN SUPERPOSITION (on ne quitte plus
 // l'outil) ; (b) filtre par millésime d'arrivée (2023/2024/2025) sur les lignes chargées ; (d)
@@ -31,6 +44,9 @@ function AcquisitionsRecentes() {
   // « Voir plus — N / M chargés » par 200 (le plafond de 50 en dur est levé côté serveur).
   const [millesimes, setMillesimes] = useState<number[]>([])
   const [limite, setLimite] = useState(200)
+  // COMMUNE-124 Lot C2 — accordéons par personne morale, REPLIÉS par défaut (clé = SIREN ou '∅').
+  const [ouverts, setOuverts] = useState<Set<string>>(new Set())
+  const toggleGroupe = (cle: string) => setOuverts((s) => { const n = new Set(s); n.has(cle) ? n.delete(cle) : n.add(cle); return n })
   const q = useQuery({
     queryKey: ['commune-acquisitions', commune, limite],
     queryFn: () => getCommuneAcquisitions(commune!, limite),
@@ -79,19 +95,28 @@ function AcquisitionsRecentes() {
           sont pas publiées.
         </p>
       )}
-      {/* O16(b) — filtre par millésime d'arrivée (seulement les années effectivement présentes). */}
+      {/* O16(b) — filtre par millésime d'arrivée (seulement les années effectivement présentes).
+          COMMUNE-124 Lot C1 — même grammaire de puces que l'outil Permis (bloc « Filtrer par état ») :
+          actif = aplat vert opaque (`bg-mint text-mint-ink`), survol = aplat vert opaque
+          (`hover:bg-mint hover:text-mint-ink`), et la puce « Toutes » (le neutre) TOUJOURS en DERNIER
+          (règle d'ordre RETOURS-15 U3, comme « Tout » dans Permis). */}
       {commune && anneesDispo.length > 1 && (
         <div data-acq-millesimes className="flex shrink-0 flex-wrap items-center gap-1.5 text-[11px]">
-          <button data-acq-millesime="" onClick={() => setMillesimes([])}
-            className={`rounded-full px-2 py-0.5 ${millesimes.length === 0 ? 'bg-mint-bg text-mint' : 'text-txt-mut hover:text-txt'}`}>
+          {anneesDispo.map((an) => {
+            const actif = millesimes.includes(an)
+            return (
+              <button key={an} data-acq-millesime={an} onClick={() => toggleMillesime(an)} aria-pressed={actif}
+                className={`rounded-md px-2 py-0.5 font-mono transition-colors duration-quick ${
+                  actif ? 'bg-mint text-mint-ink' : 'border border-line-2 text-txt hover:bg-mint hover:text-mint-ink'}`}>
+                {an - 1}→{an}
+              </button>
+            )
+          })}
+          <button data-acq-millesime="" onClick={() => setMillesimes([])} aria-pressed={millesimes.length === 0}
+            className={`rounded-md px-2 py-0.5 transition-colors duration-quick ${
+              millesimes.length === 0 ? 'bg-mint text-mint-ink' : 'border border-line-2 text-txt hover:bg-mint hover:text-mint-ink'}`}>
             Toutes
           </button>
-          {anneesDispo.map((an) => (
-            <button key={an} data-acq-millesime={an} onClick={() => toggleMillesime(an)}
-              className={`rounded-full px-2 py-0.5 font-mono ${millesimes.includes(an) ? 'bg-mint-bg text-mint' : 'text-txt-mut hover:text-txt'}`}>
-              {an - 1}→{an}
-            </button>
-          ))}
         </div>
       )}
       {!commune ? (
@@ -111,37 +136,49 @@ function AcquisitionsRecentes() {
             {millesimes.length ? ` (années filtrées)` : ''} · {groupes.length} acquéreur{groupes.length > 1 ? 's' : ''}
             {d.tronquee ? ` — ${d.n} / ${d.n_total} chargés depuis ${d.depuis_millesime}` : ` depuis ${d.depuis_millesime}`}.
           </p>
-          {groupes.map((g) => (
-            <div key={g.siren ?? '∅'} data-acq-groupe={g.siren ?? ''}
-              className="rounded-md border border-line-2 bg-surface-2 px-2.5 py-1.5">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="min-w-0 truncate text-[11px] font-medium text-txt-hi">
-                  {g.denomination ?? 'Acquéreur non identifié'}
-                  <span className="ml-1 text-[10px] font-normal text-txt-dim">· {g.items.length} parcelle{g.items.length > 1 ? 's' : ''}</span>
-                </span>
-                {g.siren && (
-                  <button data-acq-scan={g.siren} onClick={() => ouvrirScanPatrimoine(g.siren!)}
-                    className="hover-jaune shrink-0 px-1.5 py-0.5 text-[11px]">Scan patrimoine →</button>
+          {/* COMMUNE-124 Lot C2 — une LIGNE par personne morale (« SOCIÉTÉ · N parcelles » + chevron),
+              accordéon REPLIÉ par défaut ; déplier montre la liste de ses parcelles. Chevron : fermé
+              pointe à DROITE (▸), ouvert pointe en BAS (▾). */}
+          {groupes.map((g) => {
+            const cle = g.siren ?? '∅'
+            const ouvert = ouverts.has(cle)
+            return (
+              <div key={cle} data-acq-groupe={g.siren ?? ''}
+                className="rounded-md border border-line-2 bg-surface-2">
+                {/* En-tête cliquable = toute la ligne (bascule l'accordéon). */}
+                <button data-acq-groupe-tete onClick={() => toggleGroupe(cle)} aria-expanded={ouvert}
+                  className="hover-fill group flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors duration-quick">
+                  <AcqChevron ouvert={ouvert} />
+                  <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-txt-hi group-hover:text-mint-ink">
+                    {g.denomination ?? 'Acquéreur non identifié'}
+                    <span className="ml-1 text-[10px] font-normal text-txt-dim group-hover:text-mint-ink/70">· {g.items.length} parcelle{g.items.length > 1 ? 's' : ''}</span>
+                  </span>
+                </button>
+                {ouvert && (
+                  <div className="flex flex-col gap-1 px-2.5 pb-1.5">
+                    {g.siren && (
+                      <button data-acq-scan={g.siren} onClick={() => ouvrirScanPatrimoine(g.siren!)}
+                        className="hover-jaune self-start px-1.5 py-0.5 text-[11px]">Scan patrimoine →</button>
+                    )}
+                    {g.items.map((a) => (
+                      <button key={`${a.idu}-${a.a_millesime}`} data-acq-ligne
+                        onClick={() => ouvrirParcelle(a.idu)}
+                        /* RETOURS-12 T5/O11 — infobulle « Ouvrir la parcelle {idu} » RETIRÉE : le lien
+                           « parcelle {idu} → » est déjà affiché sous la ligne (rien de non-affiché à ajouter). */
+                        className="hover-fill rounded border border-line-2 bg-surface-3 px-2 py-1 text-left text-[11px] leading-snug text-txt transition-colors duration-quick">
+                        {/* RETOURS-12 T6 — .chip chip-mint : le millésime reste lisible (fond sombre, texte mint) quand la ligne passe en vert plein au survol. */}
+                        <span className="chip chip-mint mr-1.5 bg-mint-bg px-1.5 py-0.5 font-mono text-[10px] text-mint">{a.de_millesime}→{a.a_millesime}</span>
+                        <span className="text-txt-mut">{a.denomination_avant ?? '—'}</span>
+                        <span className="mx-1 text-txt-dim">→</span>
+                        <span className="font-medium text-txt-hi">{a.denomination_apres ?? '—'}</span>
+                        <span className="mt-0.5 block font-mono text-[9.5px] text-txt-dim">parcelle {a.idu} →</span>
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
-              <div className="mt-1 flex flex-col gap-1">
-                {g.items.map((a) => (
-                  <button key={`${a.idu}-${a.a_millesime}`} data-acq-ligne
-                    onClick={() => ouvrirParcelle(a.idu)}
-                    /* RETOURS-12 T5/O11 — infobulle « Ouvrir la parcelle {idu} » RETIRÉE : le lien
-                       « parcelle {idu} → » est déjà affiché sous la ligne (rien de non-affiché à ajouter). */
-                    className="hover-fill rounded border border-line-2 bg-surface-3 px-2 py-1 text-left text-[11px] leading-snug text-txt transition-colors duration-quick">
-                    {/* RETOURS-12 T6 — .chip chip-mint : le millésime reste lisible (fond sombre, texte mint) quand la ligne passe en vert plein au survol. */}
-                    <span className="chip chip-mint mr-1.5 bg-mint-bg px-1.5 py-0.5 font-mono text-[10px] text-mint">{a.de_millesime}→{a.a_millesime}</span>
-                    <span className="text-txt-mut">{a.denomination_avant ?? '—'}</span>
-                    <span className="mx-1 text-txt-dim">→</span>
-                    <span className="font-medium text-txt-hi">{a.denomination_apres ?? '—'}</span>
-                    <span className="mt-0.5 block font-mono text-[9.5px] text-txt-dim">parcelle {a.idu} →</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+            )
+          })}
           {/* R14 — « Voir plus — N / M chargés », par 200 (règle des listes longues). */}
           {d.tronquee && (
             <button data-acq-voir-plus onClick={() => setLimite((l) => l + 200)}
