@@ -10,6 +10,8 @@ import {
   getAdminCircuit, getAdminCircuitTaches, postAdminCircuitAgents, postAdminCircuitVerifier,
 } from '../../../lib/api'
 
+import { DestinationsDetail } from '../Destinations'
+
 import { AFaire } from './AFaire'
 import { CircuitDiagram } from './CircuitDiagram'
 import { Detail as DetailPage } from './Detail'
@@ -21,7 +23,9 @@ import { CIRCUIT_CSS } from './style'
 import { focusDeCible, type AFaireLigne, type Cible, type CircuitData } from './types'
 
 type Onglet = 'todo' | 'sources' | 'circuit' | 'journal'
-type DetailType = 'reservoir' | 'robinet' | 'pompe' | 'compteur'
+// CIRCUIT-P5 — « destinations » : le détail du calibrage PLU par commune (composant Destinations),
+// atteint depuis la page de détail de la source GPU (plus par un lien en bas de la page).
+type DetailType = 'reservoir' | 'robinet' | 'pompe' | 'compteur' | 'destinations'
 type Detail = { type: DetailType; id: number | string } | null
 
 export function CircuitSection() {
@@ -82,8 +86,8 @@ export function CircuitSection() {
   }, [])
   // reflète le détail ouvert dans le hash (fusion, sans écraser les autres paramètres).
   useEffect(() => {
-    // le compteur n'est pas deep-linké (page transitoire d'agrégat) : il ne s'écrit pas au hash.
-    const cx = detail && detail.type !== 'compteur'
+    // le compteur et les destinations ne sont pas deep-linkés (pages transitoires) : hors du hash.
+    const cx = detail && detail.type !== 'compteur' && detail.type !== 'destinations'
       ? (detail as { type: 'reservoir' | 'robinet' | 'pompe'; id: number | string }) : null
     const suivant = ecrireCx(window.location.hash, cx)
     if (suivant !== window.location.hash) window.history.replaceState(null, '', suivant || window.location.pathname + window.location.search)
@@ -185,7 +189,9 @@ export function CircuitSection() {
             profond) : un élément → ses sources, cliquables vers leur détail. */}
         {!detail && <SensInverse data={d} onOpenSource={(id) => ouvrirDetail('reservoir', id)} />}
         {detail
-          ? <DetailPage type={detail.type} id={detail.id} data={d} onClose={fermerDetail} onOpen={ouvrirDetail} />
+          ? (detail.type === 'destinations'
+            ? <DestinationsDetail onBack={fermerDetail} />
+            : <DetailPage type={detail.type} id={detail.id} data={d} onClose={fermerDetail} onOpen={ouvrirDetail} />)
           : <CircuitDiagram data={d} groupe={groupe} onOpen={ouvrirDetail} />}
       </section>
 

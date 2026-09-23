@@ -23,14 +23,14 @@ describe('CIRCUIT-P2 lot 1 — la page Données EST le Circuit', () => {
     return render(<QueryClientProvider client={qc}><DonneesSection /></QueryClientProvider>)
   }
 
-  it('le Circuit (.cxp) + le lien Destinations, sans enrobage legacy', () => {
+  it('le Circuit (.cxp), SANS lien Destinations en bas (CIRCUIT-P5), sans enrobage legacy', () => {
     const { container } = wrap()
     // le conteneur du Circuit est présent (rien n'a remplacé le Circuit)
     expect(container.querySelector('.cxp')).toBeTruthy()
     const txt = container.textContent || ''
-    // DASHBOARD-2 Lot 7 · DASHBOARD-4 D6 — le lien vers le détail du réservoir plu_destinations
-    // (renommé « Destinations PLU », déplacé en bas du Circuit).
-    expect(txt).toContain('Destinations PLU')
+    // CIRCUIT-P5 — le lien « Destinations PLU » en bas de page a DISPARU : le calibrage
+    // plu_destinations s'ouvre désormais depuis la page de détail de la source GPU.
+    expect(txt).not.toContain('Destinations PLU')
     // plus d'enrobage legacy
     expect(txt).not.toContain('Mes données sont-elles à jour')
     expect(txt).not.toContain('Qui fait quoi')
