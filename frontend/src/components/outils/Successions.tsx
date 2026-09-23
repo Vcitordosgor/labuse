@@ -23,6 +23,7 @@ import { ErrorState } from '../States'
 import { Siren } from '../shared/Siren'
 import { Tip } from '../Tip'
 import { CommuneScope } from './ModulePanel'
+import { Bouton } from '../ui/Bouton'
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
 
@@ -181,11 +182,11 @@ export function Successions() {
           {meta?.source && <p className="text-[9.5px]">{meta.source}</p>}
         </div>
       </details>
-        <button data-successions-courrier disabled={sel.size === 0}
+        <Bouton niveau="secondaire" ton="vert" data-successions-courrier disabled={sel.size === 0}
           onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers'); pushOutilRetour(RETOUR_SUCCESSIONS) }}
-          className="mt-1.5 shrink-0 rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+          className="mt-1.5 shrink-0">
           ✉ Préparer les courriers ({sel.size}) →
-        </button>
+        </Bouton>
       </div>
     </div>
   )

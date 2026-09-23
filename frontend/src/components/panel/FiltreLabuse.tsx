@@ -17,6 +17,7 @@ import { BANDE_META, BANDE_ORDER } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Tip } from '../Tip'
+import { Bouton } from '../ui/Bouton'
 import { useFiltre } from './filtreContext'   // M120 — binding partagé (carte OU cadrage projet)
 
 // ANALYSE-1 — le récapitulatif de la Révélation parle le NOUVEAU moteur (bandes de Score) ; l'ancien
@@ -640,10 +641,9 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
             )}
             {phase === 'revealed' && (
               /* ── 4. LE GESTE FINAL — l'analyse s'allume, la section se rétracte ── */
-              <button data-voir-parcelles onClick={voirParcelles}
-                className="mt-3 w-full rounded-lg bg-mint py-2 font-display text-[13px] font-bold text-mint-ink transition-[filter] duration-quick hover:brightness-110">
+              <Bouton data-voir-parcelles niveau="primaire" ton="vert" onClick={voirParcelles} className="mt-3 w-full">
                 {CLIENT.revelation.voir}
-              </button>
+              </Bouton>
             )}
           </div>
         ) : !analyseOn ? (
@@ -656,19 +656,20 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
                 ils sont actionnables quel que soit le compteur en cours de calcul (le débounce 400 ms +
                 l'aller-retour donnaient l'illusion d'un bouton « éteint » qui s'allume après coup). L'état
                 « en cours » n'est plus signalé que sur le NOMBRE (compteur), pas sur les boutons. */}
-            <button data-voir-factuel onClick={voirFactuel}
-              className="w-full rounded-lg border border-line-2 bg-surface-3/60 py-2.5 text-[12.5px] font-medium text-txt transition-colors duration-quick hover:border-txt-dim/50 hover:bg-surface-3 hover:text-txt-hi">
+            {/* DA-FIX-1 Lot 4 (DA-021) — un seul primaire par écran : « Voir les N parcelles » = primaire
+                vert (le geste dominant) ; « Analyser avec LABUSE » = secondaire vert (moteur statistique,
+                pas l'IA → jamais mauve). */}
+            <Bouton data-voir-factuel niveau="primaire" ton="vert" onClick={voirFactuel} className="w-full">
               {CLIENT.revelation.voirN(live ?? 431_663)}
-            </button>
-            <button data-analyser-btn onClick={lancer}
-              className="group flex w-full items-center justify-center gap-2 rounded-lg bg-mint py-3 font-display text-[13.5px] font-bold text-mint-ink transition-[filter,transform] duration-soft hover:brightness-105 active:translate-y-[1px] active:brightness-95">
+            </Bouton>
+            <Bouton data-analyser-btn niveau="secondaire" ton="vert" onClick={lancer} className="group w-full">
               <span>{CLIENT.revelation.boutonFaire.replace(/\s*→\s*$/, '')}</span>
               <svg viewBox="0 0 16 16" aria-hidden="true"
                 className="h-[13px] w-[13px] transition-transform duration-quick group-hover:translate-x-0.5">
                 <path d="M2.5 8 H13 M9.5 3.5 L14 8 L9.5 12.5" fill="none" stroke="currentColor"
                   strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </button>
+            </Bouton>
             {/* FILTRE-NETTOYAGE #5 — « Réinitialiser » remonte DANS le bloc d'actions (avec « Voir » et
                 « Analyser »), plus isolé en bas. Reste secondaire (action de recul) : lien discret centré,
                 teinte danger au survol — lisible, jamais un bouton de poids égal. */}

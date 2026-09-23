@@ -9,6 +9,7 @@ import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 import { Tip } from '../Tip'
 import { Loading } from '../Loading'
+import { Bouton } from '../ui/Bouton'
 
 // K3 (rattrapage KelFoncier) — outil « Taxe d'aménagement » (calculette). 100 % piloté par le backend :
 // le barème (valeur forfaitaire, abattement, forfaits) et les taux (plafonds/défauts) viennent de
@@ -191,8 +192,8 @@ export function TaxeAmenagement() {
         {prefill.data?.sdp_gabarit_m2 != null && (
           <div data-taxe-repere className="-mt-0.5 flex items-center gap-2 text-[10.5px] leading-snug text-txt-dim">
             <span>SDP {prefill.data.deja_batie ? 'restante au gabarit (parcelle déjà bâtie)' : 'au gabarit'} : <b className="text-mint">{fmtM2(prefill.data.sdp_gabarit_m2)}</b></span>
-            <button data-taxe-reprendre onClick={() => setSurface(prefill.data!.sdp_gabarit_m2!)}
-              className="shrink-0 text-mint hover:underline">reprendre</button>
+            <Bouton niveau="lien" data-taxe-reprendre onClick={() => setSurface(prefill.data!.sdp_gabarit_m2!)}
+              className="shrink-0">reprendre</Bouton>
           </div>
         )}
 

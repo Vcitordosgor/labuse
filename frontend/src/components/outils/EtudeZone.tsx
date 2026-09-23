@@ -25,6 +25,7 @@ import type { EtudeZoneDestinations, EtudeZoneResult, NafFamille, NafOption, Zon
 import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { DestinationBadge, DestinationSelect } from './DestinationSelect'
+import { Bouton } from '../ui/Bouton'
 
 const TEMPS = [5, 10, 15]
 
@@ -199,7 +200,7 @@ export function EtudeZone() {
       {/* O13.1 — en-tête de la porte choisie + « changer » (revient à l'accueil). */}
       <div className="flex items-center justify-between">
         <span data-etude-porte-active={porteZone} className="text-[10px] uppercase tracking-[.08em] text-mint">{porteZone === 'chalandise' ? 'Zone de chalandise' : 'Zone particulière'}</span>
-        <button data-etude-changer-porte onClick={nouvelleEtude} className="text-[10.5px] text-mint hover:underline">changer</button>
+        <Bouton niveau="lien" data-etude-changer-porte onClick={nouvelleEtude}>changer</Bouton>
       </div>
       {/* ÉTAPE 1 — DÉFINIR LA ZONE */}
       <StepHead n={1} titre="Définir la zone" sous="autour d’un point (temps + mode) ou zone dessinée" />
@@ -232,10 +233,9 @@ export function EtudeZone() {
         </>
       ) : (
         <>
-          <button onClick={() => setTool('zone')}
-            className="w-full rounded-lg border border-mint/40 bg-mint/10 px-3 py-2 text-[12px] font-medium text-mint hover:bg-mint/15">
+          <Bouton niveau="secondaire" ton="vert" onClick={() => setTool('zone')} className="w-full">
             Dessiner la zone
-          </button>
+          </Bouton>
           <div className="text-[10.5px] text-txt-mut">
             {geomFromDrawn ? `Polygone dessiné (${drawnZone!.length} sommets)` : 'Aucune zone tracée — cliquez « Dessiner la zone », posez les sommets, Entrée pour valider.'}
           </div>
@@ -252,10 +252,9 @@ export function EtudeZone() {
 
       {/* RETOURS-13 R28 — bouton d'ACTION PRINCIPALE : VERT OPAQUE, texte sombre (comme les autres
           boutons principaux) — plus le fond terne bg-mint/20 qui le faisait passer pour inactif. */}
-      <button onClick={() => mut.mutate()} disabled={!pretA || mut.isPending}
-        className={`rounded-lg px-3 py-2 text-[12px] font-medium transition-[filter] duration-quick ${pretA && !mut.isPending ? 'bg-mint text-bg hover:brightness-110' : 'bg-surface-2 text-txt-dim'}`}>
+      <Bouton niveau="primaire" ton="vert" onClick={() => mut.mutate()} disabled={!pretA || mut.isPending}>
         {mut.isPending ? 'Calcul de la zone…' : 'Lire la zone'}
-      </button>
+      </Bouton>
 
       {/* RÉSULTATS */}
       {res && !res.zone_disponible && (
@@ -391,7 +390,7 @@ export function EtudeZone() {
           </div>}
 
           {/* RECETTE-2 LOT C1 : le bouton « Exporter le PDF » est retiré. */}
-          <button onClick={nouvelleEtude} className="w-full rounded-lg border border-line-2 px-3 py-1.5 text-[11.5px] font-medium text-txt-mut hover:border-mint/40 hover:text-txt">Nouvelle étude</button>
+          <Bouton niveau="secondaire" ton="vert" onClick={nouvelleEtude} className="w-full">Nouvelle étude</Bouton>
           {res.note && <p className="text-[9.5px] leading-snug text-txt-dim">{res.note}</p>}
         </div>
       )}
@@ -660,10 +659,9 @@ function ActiviteLens({
           </div>
         )}
       </div>
-      <button onClick={() => setParcourir((v) => !v)}
-        className="mt-1 text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">
+      <Bouton niveau="lien" onClick={() => setParcourir((v) => !v)} className="mt-1">
         {parcourir ? 'masquer les familles' : 'parcourir par famille d’activité'}
-      </button>
+      </Bouton>
       {parcourir && (
         <div className="mt-1 max-h-64 overflow-y-auto rounded-lg border border-line-2 bg-surface-1">
           {familles == null ? (
@@ -692,10 +690,9 @@ function ActiviteLens({
       {/* APPLIQUER — la lentille s'ajoute à la lecture ; visible seulement quand une activité est choisie. */}
       {naf && (
         <>
-          <button onClick={onAppliquer} disabled={enCours}
-            className={`mt-2 w-full rounded-lg px-3 py-1.5 text-[11.5px] font-medium ${enCours ? 'bg-surface-2 text-txt-dim' : 'bg-mint/20 text-txt-hi hover:bg-mint/30'}`}>
+          <Bouton niveau="secondaire" ton="vert" onClick={onAppliquer} disabled={enCours} className="mt-2 w-full">
             {enCours ? 'Application de l’activité…' : dejaApplique ? 'Mettre à jour l’activité' : 'Ajouter cette activité à la lecture'}
-          </button>
+          </Bouton>
           <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">La lecture de la zone est relue à travers cette activité — les résultats ci-dessus restent, les concurrents s’ajoutent.</p>
         </>
       )}

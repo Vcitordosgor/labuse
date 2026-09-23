@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { createProjet, getPrefsCarte, postPrefsCarte } from './lib/api'
 import { AvisIA } from './components/AvisIA'
+import { Bouton } from './components/ui/Bouton'
 import { Fiche } from './components/fiche/Fiche'
 import { SourceDrawer } from './components/fiche/SourceDrawer'
 import { Header } from './components/header/Header'
@@ -206,10 +207,9 @@ function IaRestitution() {
       {projet && (
         <div className="mt-3 flex items-center gap-2 border-t border-line-2 pt-2.5">
           {projetId == null ? (
-            <button data-projet-enregistrer onClick={() => enregistrer.mutate()} disabled={enregistrer.isPending}
-              className="rounded-lg bg-mint px-3 py-1.5 text-[11px] font-semibold text-mint-ink hover:brightness-110">
+            <Bouton niveau="primaire" ton="vert" data-projet-enregistrer onClick={() => enregistrer.mutate()} disabled={enregistrer.isPending}>
               {enregistrer.isPending ? 'Enregistrement…' : `Enregistrer « ${projet.nom} »`}
-            </button>
+            </Bouton>
           ) : (
             <>
               <span data-projet-enregistre className="rounded-lg bg-[#12241a] px-3 py-1.5 text-[11px] font-medium text-mint"
@@ -232,12 +232,11 @@ function IaRestitution() {
         </div>
       )}
       {projet?.programme && (
-        <button data-projet-m22
+        <Bouton niveau="secondaire" ton="ia" data-projet-m22 className="mt-2 w-full"
           onClick={() => { setView('cartes'); setM22Prefill(projet.programme as Record<string, unknown>); setModule('programme') }}
-          className="mt-2 w-full rounded-lg border border-violet/40 py-1.5 text-[11px] text-violet hover:border-violet"
           title="Ouvrir le formulaire M22 pré-rempli — la vérité reste le formulaire (éditable)">
           Affiner la capacité dans M22 (formulaire pré-rempli)
-        </button>
+        </Bouton>
       )}
     </div>
   )

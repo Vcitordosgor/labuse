@@ -11,6 +11,7 @@ import { createProjet, getCadrageCompteur, getProjetTypes, type Cadrage, type Id
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { FiltreFacettes } from '../panel/FiltreFacettes'
 import { FiltreProvider } from '../panel/filtreContext'
+import { Bouton } from '../ui/Bouton'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, monospace'
@@ -123,9 +124,8 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
           </p>
         )}
         <div style={{ display: 'flex', gap: 12 }}>
-          <button data-projet-voir onClick={() => onVoir({ id: cree.id, nom: cree.nom })}
-            style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 6, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer' }}>Voir le projet →</button>
-          <button onClick={onFermer} style={{ padding: '9px 18px', background: 'none', border: '.5px solid #1E2A23', color: '#8FA69A', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Fermer</button>
+          <Bouton data-projet-voir niveau="primaire" ton={accent === 'ia' ? 'ia' : 'vert'} onClick={() => onVoir({ id: cree.id, nom: cree.nom })}>Voir le projet →</Bouton>
+          <Bouton niveau="lien" onClick={onFermer}>Fermer</Bouton>
         </div>
       </div>
     )
@@ -172,8 +172,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
         {erreur && <p style={{ fontSize: 12, color: '#E0B341', margin: '12px 0 0' }}>{erreur}</p>}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 18, marginTop: 18, borderTop: '.5px solid #1E2A23' }}>
           <button onClick={() => setPorte(null)} style={{ fontSize: 13, color: '#6F8578', background: 'none', border: 0, cursor: 'pointer' }}>← Retour</button>
-          <button data-projet-creer-zero disabled={envoi} onClick={() => void creer(true)}
-            style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 6, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: envoi ? 0.4 : 1 }}>{envoi ? 'Création…' : 'Créer le projet vide'}</button>
+          <Bouton data-projet-creer-zero niveau="primaire" ton={accent === 'ia' ? 'ia' : 'vert'} disabled={envoi} onClick={() => void creer(true)}>{envoi ? 'Création…' : 'Créer le projet vide'}</Bouton>
         </div>
       </div>
     )
@@ -288,12 +287,10 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
         <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
           <span style={{ fontFamily: MONO, fontSize: 12, color: '#4A5C52' }}>↵ POUR CONTINUER</span>
           {etape < N - 1 ? (
-            <button data-projet-suivant onClick={avancer}
-              style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 6, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer' }}>Continuer →</button>
+            <Bouton data-projet-suivant niveau="primaire" ton={accent === 'ia' ? 'ia' : 'vert'} onClick={avancer}>Continuer →</Bouton>
           ) : (
-            <button data-projet-creer disabled={envoi} onClick={() => void creer()}
-              style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 6, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: envoi ? 0.4 : 1 }}>
-              {envoi ? 'Création…' : 'Créer le projet'}</button>
+            <Bouton data-projet-creer niveau="primaire" ton={accent === 'ia' ? 'ia' : 'vert'} disabled={envoi} onClick={() => void creer()}>
+              {envoi ? 'Création…' : 'Créer le projet'}</Bouton>
           )}
         </div>
       </div>

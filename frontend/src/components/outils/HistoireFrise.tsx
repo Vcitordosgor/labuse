@@ -16,6 +16,7 @@ import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Siren } from '../shared/Siren'
 import { TEMPS_MILLESIMES } from '../map/basemaps'
+import { Bouton } from '../ui/Bouton'
 
 // Axe linéaire : 1950 (premier millésime d'ortho) → année des données les plus récentes. Les
 // bornes sont FIXES (l'axe des orthos), un fait antérieur se cale au bord gauche (dit au détail).
@@ -89,21 +90,18 @@ function FaitDetail({ f, idu, onClose }: { f: HistoireFait; idu: string; onClose
       {/* ponts C4 — mêmes mécanismes que le reste de l'app (permitToOpen / ficheTiroir / m02Prefill) */}
       <div className="flex flex-wrap gap-2">
         {f.famille === 'permis' && f.permit_id && (
-          <button data-histoire-pont-permis
-            onClick={() => { setPermitToOpen(f.permit_id!); setModule('permis'); pushOutilRetour(RETOUR) }}
-            className="text-[10.5px] font-medium text-mint hover:underline">Voir dans Permis →</button>
+          <Bouton niveau="lien" data-histoire-pont-permis
+            onClick={() => { setPermitToOpen(f.permit_id!); setModule('permis'); pushOutilRetour(RETOUR) }}>Voir dans Permis →</Bouton>
         )}
         {f.famille === 'vente' && (
           /* pas de fil de retour ici : la fiche est un OVERLAY au-dessus de l'outil temps resté
              ouvert (la fermer y ramène) — le fil FIX-3 est réservé aux ponts outil→outil. */
-          <button data-histoire-pont-vente
-            onClick={() => { setFicheTiroir(idu, 'marche'); select(idu) }}
-            className="text-[10.5px] font-medium text-mint hover:underline">Voir la fiche — ventes →</button>
+          <Bouton niveau="lien" data-histoire-pont-vente
+            onClick={() => { setFicheTiroir(idu, 'marche'); select(idu) }}>Voir la fiche — ventes →</Bouton>
         )}
         {f.famille === 'proprietaire' && f.apres?.siren && (
-          <button data-histoire-pont-scan
-            onClick={() => { setM02Prefill(f.apres!.siren!.replace(/\D/g, '').slice(0, 9)); setModule('patrimoine'); pushOutilRetour(RETOUR) }}
-            className="text-[10.5px] font-medium text-mint hover:underline">Scan patrimoine →</button>
+          <Bouton niveau="lien" data-histoire-pont-scan
+            onClick={() => { setM02Prefill(f.apres!.siren!.replace(/\D/g, '').slice(0, 9)); setModule('patrimoine'); pushOutilRetour(RETOUR) }}>Scan patrimoine →</Bouton>
         )}
       </div>
     </div>

@@ -13,6 +13,7 @@ import { Loading } from '../Loading'
 import { iduComplet, fmtDateSitadel } from '../../lib/format'
 import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R4.2 — recherche adresse/IDU commune
 import { CollecteProgrammes } from '../admin/Programmes'   // LOT S1 — geste admin discret réutilisant la collecte
+import { Bouton } from '../ui/Bouton'
 
 const CAT_LABEL: Record<string, string> = { promoteur: 'Promoteur', bailleur: 'Bailleur social', sem: 'SEM' }
 
@@ -230,7 +231,7 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
       {/* mode STRICT actif → lien vers l'exploration générale ; mode exploration (depuis un proprio) → retour. */}
       {embedded && focusSiren && (
         strict
-          ? <button data-vp-explorer onClick={() => setExplorer(true)} className="w-fit text-[11.5px] text-mint underline underline-offset-2 hover:text-mint/80">Explorer toutes les opérations de l'île →</button>
+          ? <Bouton niveau="lien" data-vp-explorer onClick={() => setExplorer(true)} className="w-fit">Explorer toutes les opérations de l'île →</Bouton>
           : <button data-vp-retour-proprio onClick={() => setExplorer(false)} className="w-fit text-[11.5px] text-mint underline underline-offset-2 hover:text-mint/80">← revenir à ce propriétaire</button>
       )}
 
@@ -281,8 +282,8 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
 
                 {g.siren && (
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line/60 pt-1.5 text-[10.5px]">
-                    <button data-vp-patrimoine onClick={() => voirPatrimoine(g.siren!)} className="whitespace-nowrap text-mint hover:underline">voir son patrimoine →</button>
-                    <button data-vp-frise onClick={() => setOpenSiren((s) => (s === g.siren ? null : g.siren))} className="whitespace-nowrap text-mint hover:underline">{openSiren === g.siren ? 'masquer sa frise' : 'sa frise ▾'}</button>
+                    <Bouton niveau="lien" data-vp-patrimoine onClick={() => voirPatrimoine(g.siren!)} className="whitespace-nowrap">voir son patrimoine →</Bouton>
+                    <Bouton niveau="lien" data-vp-frise onClick={() => setOpenSiren((s) => (s === g.siren ? null : g.siren))} className="whitespace-nowrap">{openSiren === g.siren ? 'masquer sa frise' : 'sa frise ▾'}</Bouton>
                   </div>
                 )}
                 {openSiren === g.siren && g.siren && <Frise siren={g.siren} />}

@@ -5,6 +5,7 @@ import { useApp } from '../../store/useApp'
 import { CommunesLegende, O6Comparateur } from './blocB'
 import { M18 } from './moteurs'
 import { RadarMarche } from './RadarMarche'
+import { Bouton } from '../ui/Bouton'
 
 // RETOURS-1 R3/R4 (Vic) — OUTIL « COMMUNES » RESTRUCTURÉ : un écran d'entrée à TROIS portes :
 //   1. Comparaison communes — le tableau comparatif (overlay plein écran, patron §4) ;
@@ -181,10 +182,10 @@ function AcquisitionsRecentes() {
           })}
           {/* R14 — « Voir plus — N / M chargés », par 200 (règle des listes longues). */}
           {d.tronquee && (
-            <button data-acq-voir-plus onClick={() => setLimite((l) => l + 200)}
-              className="shrink-0 self-start rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-mint transition-colors duration-quick hover:border-mint">
+            <Bouton niveau="lien" data-acq-voir-plus onClick={() => setLimite((l) => l + 200)}
+              className="shrink-0 self-start">
               Voir plus — {d.n} / {d.n_total} chargés
-            </button>
+            </Bouton>
           )}
           <p className="shrink-0 pb-1 text-[10px] leading-snug text-txt-dim italic">{d.note}</p>
         </div>

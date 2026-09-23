@@ -21,6 +21,7 @@ import { ErrorState } from '../States'
 import { Siren } from '../shared/Siren'
 import { Tip } from '../Tip'
 import { CommuneScope, useModuleMap } from './ModulePanel'
+import { Bouton } from '../ui/Bouton'
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
 
@@ -70,10 +71,10 @@ function BlocDetail({ blocId }: { blocId: number }) {
         </div>
       ))}
       {/* Assembler → : l'outil Assemblage pré-rempli avec les IDU du bloc (fil de retour). */}
-      <button data-bloc-assembler className="mt-1 self-start rounded-lg border border-mint/40 bg-mint/10 px-2 py-0.5 text-[10.5px] font-medium text-mint hover:bg-mint/20"
+      <Bouton niveau="secondaire" ton="vert" data-bloc-assembler className="mt-1 self-start"
         onClick={() => { setMselPrefill(membres.map((m) => m.idu)); setModule('assemblage'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}>
         ⛶ Assembler ce bloc →
-      </button>
+      </Bouton>
     </div>
   )
 }
@@ -109,10 +110,10 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
           </span>
         )}
         {/* Scan patrimoine → : tout ce que ce SIREN possède et construit. */}
-        <button data-bloc-scan className="ml-auto shrink-0 rounded border border-line-2 px-1 text-[9.5px] text-txt-mut hover:border-mint hover:text-mint"
+        <Bouton niveau="secondaire" ton="vert" data-bloc-scan className="ml-auto shrink-0"
           onClick={(e) => { e.stopPropagation(); setM02Prefill(it.siren); setModule('patrimoine'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}>
           Scan patrimoine →
-        </button>
+        </Bouton>
       </div>
       {ouvert && <BlocDetail blocId={it.bloc_id} />}
     </div>
@@ -209,10 +210,9 @@ export function Blocs() {
 
       {/* RECETTE-1 R21 — le geste explicite : ouvrir le listing (et replier les filtres). */}
       {!montre && (
-        <button data-blocs-voir onClick={voir}
-          className="shrink-0 rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
+        <Bouton niveau="primaire" ton="vert" data-blocs-voir onClick={voir} className="shrink-0">
           Voir les parcelles
-        </button>
+        </Bouton>
       )}
 
       {q.isLoading && <Loading label="Blocs…" />}
@@ -285,11 +285,11 @@ export function Blocs() {
             {meta?.source && <p className="text-[9.5px]">{meta.source}</p>}
           </div>
         </details>
-        <button data-blocs-courrier disabled={idusCourrier.length === 0}
+        <Bouton niveau="secondaire" ton="vert" data-blocs-courrier disabled={idusCourrier.length === 0}
           onClick={() => { setCourrierPrefillIdus(idusCourrier); setModule('courriers'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}
-          className="mt-1.5 shrink-0 rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+          className="mt-1.5 shrink-0">
           ✉ Préparer les courriers ({idusCourrier.length}) →
-        </button>
+        </Bouton>
       </div>
     </div>
   )

@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { pluAnnuaireSearch, pluAnnuaireCommunes, pluAnnuairePack, type PluExtrait } from '../../lib/api'
 import { useApp } from '../../store/useApp'
+import { Bouton } from '../ui/Bouton'
 
 // M51 / M82 puis M137-P (fusion outil PLU) — ANNUAIRE PLU en DEUX ÉTAPES : (1) les 24 communes, on
 // clique celle dont on veut le PLU ; (2) deux voies — le PLU INTÉGRAL (pack officiel GPU .zip, à
@@ -168,10 +169,10 @@ export function PluAnnuaire() {
                 onKeyDown={(e) => { if (e.key === 'Enter') run() }}
                 placeholder={`dans ${nomInsee(insee)} — ex. hauteur de clôture`}
                 className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none" />
-              <button onClick={run} disabled={q.trim().length < 2 || m.isPending}
-                className="shrink-0 whitespace-nowrap rounded-md border border-mint/50 bg-mint/15 px-3.5 py-1.5 text-[12px] font-medium text-mint">
+              <Bouton niveau="secondaire" ton="vert" onClick={run} disabled={q.trim().length < 2 || m.isPending}
+                className="shrink-0 whitespace-nowrap">
                 {m.isPending ? '…' : 'Chercher'}
-              </button>
+              </Bouton>
             </div>
             {zone && (
               <div className="flex items-center gap-1.5 text-[10.5px] text-txt-mut">
@@ -238,10 +239,9 @@ function PluExtraitCard({ r }: { r: PluExtrait }) {
       </div>
       <pre className="mt-1 whitespace-pre-wrap break-words font-sans text-[11px] leading-snug text-txt">{apercu}</pre>
       {long && (
-        <button onClick={() => setOuvert((o) => !o)}
-          className="mt-0.5 text-[10.5px] text-mint hover:underline">
+        <Bouton niveau="lien" onClick={() => setOuvert((o) => !o)} className="mt-0.5">
           {ouvert ? '‹ replier l’article' : 'voir l’article entier →'}
-        </button>
+        </Bouton>
       )}
       <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[10px] text-txt-dim">
         <span>{r.document}{r.millesime ? ` · ${r.millesime}` : ''}</span>

@@ -6,6 +6,7 @@ import { Trace } from '../../lib/trace'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { CONTACT_VIDE, ContactEdit, trimContact, type ContactForm } from '../shared/ContactEdit'  // RETOURS-8 (R6)
+import { Bouton } from '../ui/Bouton'
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
 const fmtV = (v: unknown, s = '') => (v == null ? '—' : `${Number(v).toLocaleString('fr-FR')}${s}`)
@@ -284,12 +285,12 @@ export function ContextePanel() {
                 ))}
               </div>
               {/* Action principale conservée (DA) : voir les parcelles de la commune. */}
-              <button data-communes-parcelles onClick={() => {
+              <Bouton niveau="primaire" ton="vert" data-communes-parcelles className="mt-3 w-full" onClick={() => {
                 const s = useApp.getState()
                 s.setView('cartes'); s.setCommune(commune); s.setCommunesFilter([commune])
                 s.setFilter('analyseLabuse', true); s.setVerdict(true)
                 s.openListing()
-              }} className="mt-3 w-full rounded-md border border-mint bg-mint px-2.5 py-2 text-[12.5px] font-semibold text-mint-ink transition-[filter] duration-quick hover:brightness-110">Voir ses parcelles →</button>
+              }}>Voir ses parcelles →</Bouton>
               {/* Trois raccourcis : PLU · Communes · Étude de zone — commune déjà en contexte. */}
               <div data-raccourcis className="mt-2 grid grid-cols-3 gap-2">
                 <button data-raccourci-plu onClick={() => ouvrirOutil(commune, insee, 'plu')}

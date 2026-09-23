@@ -12,6 +12,7 @@ import { Loading } from '../Loading'
 import { Tip } from '../Tip'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
 import { trierCommunes } from '../../lib/communes'
+import { Bouton } from '../ui/Bouton'
 
 const fmt = fmtInt
 
@@ -80,7 +81,7 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
         <div data-m15-loading className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <p className="text-[11px] text-txt-mut">Recalcul à blanc en cours…</p>
-            <button data-m15-annuler onClick={annuler} className="text-[11px] text-txt-mut hover:text-st-ecartee">Annuler</button>
+            <Bouton niveau="lien" data-m15-annuler onClick={annuler}>Annuler</Bouton>
           </div>
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-8 animate-pulse rounded-lg bg-surface-3" style={{ opacity: 1 - i * 0.12 }} />
@@ -196,12 +197,12 @@ export function M16() {
         {msel.length === 0 && <span className="text-[11px] text-txt-dim">aucune parcelle sélectionnée</span>}
       </div>
       <div className="flex gap-2">
-        <button onClick={() => msel.length >= 2 && run.mutate()} disabled={msel.length < 2 || run.isPending}
-          className="flex-1 rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
+        <Bouton niveau="primaire" ton="vert" onClick={() => msel.length >= 2 && run.mutate()} disabled={msel.length < 2 || run.isPending}
+          className="flex-1">
           Analyser l'assiette ({msel.length})
-        </button>
+        </Bouton>
         {msel.length > 0 && (
-          <button onClick={() => setMsel([])} className="rounded-lg border border-line-2 px-2 text-[11px] text-txt-dim hover:text-txt">vider</button>
+          <Bouton niveau="lien" onClick={() => setMsel([])}>vider</Bouton>
         )}
       </div>
       {/* OUTILS-MUSCLER-1 B2/B3/B4/B5 — VOISINES PROPOSÉES, en cartes empilées, même propriétaire
@@ -257,14 +258,14 @@ export function M16() {
                         </span>
                         {/* B4 — sur une voisine COCHÉE : étendre la proposition d'un anneau depuis elle */}
                         {coche && (
-                          <button data-asm-ses-voisines onClick={() => etendreRing(v.idu)}
-                            className="shrink-0 text-[10px] font-medium text-mint hover:underline">ses voisines →</button>
+                          <Bouton niveau="lien" data-asm-ses-voisines onClick={() => etendreRing(v.idu)}
+                            className="shrink-0">ses voisines →</Bouton>
                         )}
                         {/* B5 — pont Scan patrimoine sur une voisine PM (le retour restaure la sélection) */}
                         {pr.type === 'personne_morale' && pr.siren && (
-                          <button data-asm-voisine-scan
+                          <Bouton niveau="lien" data-asm-voisine-scan
                             onClick={() => { setM02Prefill(pr.siren!); setModule('patrimoine'); pushOutilRetour({ module: 'assemblage', label: 'Assemblage', restore: { mselPrefill: [...msel] } }) }}
-                            className="shrink-0 text-[10px] font-medium text-mint hover:underline">Scan patrimoine →</button>
+                            className="shrink-0">Scan patrimoine →</Bouton>
                         )}
                       </div>
                     </div>
@@ -407,10 +408,9 @@ export function M16() {
           {/* point 4 — PONT COURRIER : un seul geste ouvre l'outil Courrier prérempli avec TOUTES les
               parcelles de l'assemblage (patron courrierPrefillIdus, comme l'import Assemblage côté Courrier). */}
           {(d.items as Record<string, any>[]).length > 0 && (
-            <button data-asm-courrier onClick={() => { setCourrierPrefillIdus((d.items as Record<string, any>[]).map((i) => i.idu as string)); setModule('courriers') }}
-              className="rounded-lg border border-mint/50 bg-mint/10 py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+            <Bouton niveau="secondaire" ton="vert" data-asm-courrier onClick={() => { setCourrierPrefillIdus((d.items as Record<string, any>[]).map((i) => i.idu as string)); setModule('courriers') }}>
               ✉ Préparer les courriers ({(d.items as Record<string, any>[]).length}) → Courrier propriétaire
-            </button>
+            </Bouton>
           )}
           {/* C — indivision non détectable en base (honnête, pas fabriqué) */}
           <p className="shrink-0 text-[10px] leading-snug text-txt-dim">Indivision : non détectable en open data (aucune structure de propriété physique publiée) — signal non affiché plutôt qu'inventé.</p>
@@ -851,8 +851,7 @@ export function M19() {
           className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
         <input value={smin} onChange={(e) => setSmin(e.target.value)} placeholder="surf. min" type="number"
           className="w-20 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
-        <button onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim()} aria-label="Ajouter le profil"
-          className="rounded bg-mint px-2 text-[11px] font-medium text-bg transition-[filter] duration-quick hover:brightness-110">+</button>
+        <Bouton niveau="primaire" ton="vert" icone onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim()} aria-label="Ajouter le profil">+</Bouton>
       </div>
 
       {/* ── RÉEL — promoteurs actifs SITADEL (commune du profil actif) ── */}

@@ -69,6 +69,7 @@ import { useApp } from '../../store/useApp'
 import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
+import { Bouton } from '../ui/Bouton'
 
 // RETOURS-1 R2 (Vic) — le retrait du CP par M65 P7 est ANNULÉ : le sélecteur de communes
 // ré-affiche le code postal (source unique CP_COMMUNES, table mesurée du panneau).
@@ -596,10 +597,9 @@ function MarqueForm() {
       <input className={field} placeholder="Raison sociale" value={vRs} onChange={(e) => setRs(e.target.value)} />
       <input className={field} placeholder="Coordonnées (tél, email…)" value={vCo} onChange={(e) => setCo(e.target.value)} />
       <input className={field} placeholder="Mention libre (bas de page)" value={vMe} onChange={(e) => setMe(e.target.value)} />
-      <button data-marque-save disabled={save.isPending} onClick={() => save.mutate()}
-        className="mt-0.5 rounded-md bg-mint py-1.5 text-[12px] font-medium text-mint-ink hover:brightness-110">
+      <Bouton niveau="primaire" ton="vert" data-marque-save className="mt-0.5 w-full" disabled={save.isPending} onClick={() => save.mutate()}>
         {save.isSuccess && rs === null ? '✓ Enregistré' : save.isPending ? 'Enregistrement…' : 'Enregistrer'}
-      </button>
+      </Bouton>
       <p className="text-[10px] leading-snug text-txt-dim">Apparaît sur vos documents brandés (Dossier, briques PDF). Champs vides = rien ne s’imprime.</p>
     </div>
   )

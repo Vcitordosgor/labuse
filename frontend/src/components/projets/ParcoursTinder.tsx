@@ -10,6 +10,7 @@ import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { Oiseau } from '../States'
 import { TierBadge } from '../outils/TierBadge'
+import { Bouton } from '../ui/Bouton'
 
 /** Parcours de sélection (Tinder) — la carte est en fond (pilotée par le store : moduleMap surligne
  *  les proposées, flyTo centre la courante), une carte de décision flotte par-dessus. Écarter est
@@ -102,9 +103,9 @@ export function ParcoursTinder() {
               <Oiseau className="mx-auto mb-2 h-5 w-auto" dim={false} />
               <p className="font-display text-sm font-bold text-txt-hi">Tri terminé</p>
               <p className="tnum mt-1 text-xs text-txt-mut">{c?.retenue ?? 0} retenues · {c?.ecartee ?? 0} écartées.</p>
-              <button onClick={() => setSectionsOpen(true)} className="mt-3 min-h-7 text-xs font-medium text-mint hover:underline">
+              <Bouton niveau="lien" onClick={() => setSectionsOpen(true)} className="mt-3">
                 Revoir les retenues et les écartées →
-              </button>
+              </Bouton>
             </div>
           )}
           {current && <DecisionCard pid={pid} item={current}
@@ -194,9 +195,9 @@ function DecisionCard({ pid, item, onDecide, onFiche }: {
       )}
       {carteQ.isLoading && <Loading className="mt-3" label="Points clés…" />}
 
-      <button data-decision-fiche onClick={onFiche} className="mt-3 min-h-7 text-[11px] font-medium text-mint hover:underline">
+      <Bouton niveau="lien" data-decision-fiche onClick={onFiche} className="mt-3">
         Voir la fiche complète →
-      </button>
+      </Bouton>
 
       {/* R2 (PJ2) — LES TROIS décisions en boutons francs, chacune à la couleur de sa colonne
           d'arrivée du Kanban M2 (écartée st-ecartee · à analyser st-creuser · retenue mint). Retenir

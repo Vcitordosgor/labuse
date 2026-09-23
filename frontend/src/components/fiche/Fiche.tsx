@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
+import { Bouton } from '../ui/Bouton'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
@@ -850,9 +851,9 @@ export function Fiche({ idu }: { idu: string }) {
         {f && verdict && !verdictRevele && (
           // M56-B6 · DA-FICHE-v6 — bouton d'analyse pleine largeur (.cta, 40px) + légende dessous.
           <>
-            <button data-demander-analyse className="cta" onClick={() => revelerVerdict(idu)}>
+            <Bouton data-demander-analyse niveau="primaire" ton="vert" className="w-full" onClick={() => revelerVerdict(idu)}>
               {CLIENT.fiche.demanderAnalyse} →
-            </button>
+            </Bouton>
             {/* M62-P1 (i) : sous-titre « Le verdict, le score et "pourquoi" — à la demande » RETIRÉ,
                 le bouton se suffit (P2). `demanderAnalyseSous` (strings.ts) devient 0-caller. */}
           </>
@@ -1241,16 +1242,16 @@ export function Fiche({ idu }: { idu: string }) {
             <div data-ia-tete>
               {iaOuvert === 'aucun' && (
                 <div className="ia">
-                  <button onClick={() => setIaOuvert('question')} data-askbar-open className="ia-btn">
+                  <Bouton onClick={() => setIaOuvert('question')} data-askbar-open niveau="secondaire" ton="ia" className="flex-1">
                     <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 4H4v13h5l3 3 3-3h2z" /></svg>
                     Poser une question
-                  </button>
+                  </Bouton>
                   {/* RETOURS-11 T9 (03/09) — explication au survol retirée (plus de title). */}
-                  <button onClick={() => { setIaOuvert('synthese'); if (!syntheseM.data && !syntheseM.isPending) syntheseM.mutate() }}
-                    data-synthese-ia className="ia-btn">
+                  <Bouton onClick={() => { setIaOuvert('synthese'); if (!syntheseM.data && !syntheseM.isPending) syntheseM.mutate() }}
+                    data-synthese-ia niveau="secondaire" ton="ia" className="flex-1">
                     <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /></svg>
                     Synthèse IA
-                  </button>
+                  </Bouton>
                 </div>
               )}
               {iaOuvert === 'question' && <AskBar idu={idu} zone={null} startOpen onClose={() => setIaOuvert('aucun')} />}

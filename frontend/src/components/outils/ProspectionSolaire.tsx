@@ -26,6 +26,7 @@ import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { ListPaginationFooter, usePagination } from '../ListPagination'
 import { Siren } from '../shared/Siren'
+import { Bouton } from '../ui/Bouton'
 
 // A1 — plus de date « gelée » en dur : le millésime affiché à l'écran est celui SERVI par l'endpoint
 // (parcel_solar.source_millesime). Un seul millésime par écran, jamais deux dates contradictoires.
@@ -216,7 +217,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
             <div className="mt-2 flex flex-col gap-0.5">
               {agg.data.communes.slice(0, 8).map((c) => (
                 <div key={c.commune} className="flex items-baseline justify-between gap-2 text-[11px]">
-                  <button onClick={() => setCommune(c.commune)} className="text-txt-mut hover:text-mint">{c.commune}</button>
+                  <Bouton niveau="lien" onClick={() => setCommune(c.commune)}>{c.commune}</Bouton>
                   <span className="tnum text-txt">{fmtInt(c.n)}</span>
                 </div>
               ))}
@@ -228,10 +229,10 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
       {/* RECETTE-5 (V3) — le bouton « Voir les parcelles » SOUS la fiche de synthèse. Au clic, la
           synthèse SE REPLIE (une ligne, dépliable) et le listing prend la place. */}
       {agg.data && !montre && (
-        <button data-piscines-voir onClick={() => { setMontre(true); setComptageReplie(true) }}
-          className="shrink-0 rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
+        <Bouton niveau="primaire" ton="vert" data-piscines-voir onClick={() => { setMontre(true); setComptageReplie(true) }}
+          className="shrink-0">
           Voir les parcelles
-        </button>
+        </Bouton>
       )}
 
       {/* R22 — la carte n'apparaît qu'avec les résultats (après « Voir les parcelles »). */}
@@ -282,8 +283,8 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
                   <span className="min-w-0 flex-1 truncate"><ProprioCell p={it.proprio} /></span>
                   {/* RETOURS-11F M12 — « pas une piscine » : signal humain, retire du service (compteur/carte). */}
                   {retiree ? <span className="shrink-0 text-[9.5px] text-txt-dim">retirée</span> : (
-                    <button data-piscines-pas onClick={(e) => { e.stopPropagation(); void signalerPasPiscine(it.idu) }}
-                      className="shrink-0 text-[9.5px] text-txt-dim hover:text-mint">pas une piscine</button>
+                    <Bouton niveau="lien" data-piscines-pas onClick={(e) => { e.stopPropagation(); void signalerPasPiscine(it.idu) }}
+                      className="shrink-0">pas une piscine</Bouton>
                   )}
                 </div>
               </div>
@@ -455,7 +456,7 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
       <p className="mt-1 text-[9px] leading-snug text-txt-dim">
         En clair : le potentiel est calculé sur un carré d’environ 400 m de côté (une même valeur pour toutes les parcelles du carré), pour des panneaux exposés plein nord{f.inclinaison_deg != null ? ` et inclinés à ${f.inclinaison_deg}°` : ''} — le paramétrage du modèle PVGIS pour La Réunion.
       </p>
-      <button data-solaire-fiche-ouvrir onClick={onOpen} className="mt-1 text-[11px] font-medium text-mint hover:underline">Ouvrir la fiche complète →</button>
+      <Bouton niveau="lien" data-solaire-fiche-ouvrir onClick={onOpen} className="mt-1">Ouvrir la fiche complète →</Bouton>
     </div>
   )
 }

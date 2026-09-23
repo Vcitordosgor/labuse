@@ -266,12 +266,11 @@
   .p-mint { color:var(--mint); background:var(--mint-bg); font-size:12px; }
   .p-amber { color:var(--amber); background:var(--amber-bg); font-size:12px; }
   .p-off { color:#97A39B; border:0.5px solid var(--line-3); }
-  .p-on { color:var(--mint-on); background:var(--mint); padding:5px 12px; }
 
-  /* boutons */
+  /* boutons — DA-FIX-1 Lot 4 : le composant partagé <Bouton> (components/ui/Bouton.tsx) remplace
+     .p-on / .b-pri / .b-sec / .cta / .ia-btn (retirées, orphelines). `.btn` reste : elle ne sert
+     plus qu'au dashboard admin/circuit (hors périmètre DA). */
   .btn { border-radius:var(--r-ctl); padding:12px; text-align:center; font-size:14px; font-weight:500; }
-  .b-pri { background:var(--mint); color:var(--mint-on); }
-  .b-sec { border:0.5px solid var(--line-btn); color:var(--txt); font-weight:400; font-size:13px; padding:10px; }
   .b-iris { border:0.5px solid var(--iris-line); background:var(--iris-bg); color:var(--iris-2); font-weight:400; font-size:13px; padding:10px; }
   .b-danger { font-size:12.5px; color:var(--danger); border-bottom:0.5px solid var(--danger-line); }
 
@@ -475,8 +474,6 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .sl .v.vide { color:var(--txt-faint); font-weight:400; }
 
 /* bouton d'analyse + légende */
-.fiche-v6 .cta { background:var(--mint); border:none; border-radius:6px; min-height:40px; width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; font-size:13.5px; font-weight:500; color:var(--mint-on); cursor:pointer; padding:6px 15px; }
-.fiche-v6 .cta-sub { font-size:10.5px; color:var(--txt-off); text-align:center; margin-top:6px; }
 
 /* M60 P1c — LA PORTE D'OUTIL — recopiée TEL QUEL de docs/DA-FICHE-v6.html (« LA PORTE D'OUTIL »),
    scopée .fiche-v6 ; seule adaptation : var(--bg-header)→var(--bg-2) (même valeur #111614, le token
@@ -493,9 +490,8 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 
 /* M65 P1 — bandeau d'attention .band (« Marché peu actif à … ») supprimé (voir Fiche.tsx). */
 
-/* boutons IA */
+/* conteneur des 2 boutons IA de la fiche (les boutons eux-mêmes = <Bouton ton="ia"> depuis DA-FIX-1 Lot 4) */
 .fiche-v6 .ia { display:flex; gap:7px; margin-top:10px; }
-.fiche-v6 .ia-btn { flex:1; min-height:34px; border:0.5px solid var(--iris-line); background:var(--iris-bg); border-radius:6px; display:flex; align-items:center; justify-content:center; gap:7px; font-size:12px; color:var(--iris-2); cursor:pointer; padding:0 10px; }
 
 /* libellé de groupe : texte + filet, sans conteneur */
 .fiche-v6 .sec { display:flex; align-items:center; gap:9px; margin:20px 0 9px; }

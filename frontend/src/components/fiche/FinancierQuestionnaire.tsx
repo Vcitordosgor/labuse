@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getFinancierQuestionnaire, putFinancierQuestionnaire, validerFinancierQuestionnaire,
          type QChamp, type QHorsMarche } from '../../lib/api'
+import { Bouton } from '../ui/Bouton'
 
 const MINT = '#4ADE80'
 const CARD = '#0C1410'
@@ -230,11 +231,10 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
                 « enregistré » sans jamais ouvrir le PDF (route /financier/{idu}.pdf pourtant servie).
                 Action primaire = ouvrir le document ; « Fermer » devient secondaire. */}
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <button data-financier-doc onClick={() => void ouvrirDoc()}
-                 style={{ ...btnMint, display: 'inline-block' }}>
+              <Bouton data-financier-doc niveau="primaire" ton="vert" onClick={() => void ouvrirDoc()}>
                 Ouvrir le Dossier financier
-              </button>
-              <button onClick={onClose} style={btnPlain}>Fermer</button>
+              </Bouton>
+              <Bouton niveau="lien" onClick={onClose}>Fermer</Bouton>
             </div>
             {/* RECETTE-5 (V18b) — le document ne s'est pas généré : on dit lesquels des éléments manquent. */}
             {docErr && (
@@ -288,7 +288,7 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
               ))}
             </div>
             <div style={{ paddingTop: 18, marginTop: 18, borderTop: '.5px solid #1E2A23' }}>
-              <button onClick={onClose} style={btnPlain}>Annuler</button>
+              <Bouton niveau="lien" onClick={onClose}>Annuler</Bouton>
             </div>
           </>
         )}
@@ -391,17 +391,13 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
                   marché ; « Enregistrer » désactivé dès qu'UNE valeur (n'importe quel écran) est hors
                   marché — on ne peut ni atteindre l'écran final ni ouvrir le Financier. */}
               {etape < N - 1
-                ? <button disabled={!!hm && hm.ecran === etape}
-                    onClick={() => void continuer()}
-                    style={{ ...btnMint, opacity: (!!hm && hm.ecran === etape) ? 0.4 : 1,
-                             cursor: (!!hm && hm.ecran === etape) ? 'not-allowed' : 'pointer' }}>
+                ? <Bouton niveau="primaire" ton="vert" disabled={!!hm && hm.ecran === etape}
+                    onClick={() => void continuer()}>
                     Continuer →
-                  </button>
-                : <button disabled={envoi || !!hm} onClick={() => void enregistrer()}
-                    style={{ ...btnMint, opacity: (envoi || !!hm) ? 0.4 : 1,
-                             cursor: (envoi || !!hm) ? 'not-allowed' : 'pointer' }}>
+                  </Bouton>
+                : <Bouton niveau="primaire" ton="vert" disabled={envoi || !!hm} onClick={() => void enregistrer()}>
                     {envoi ? 'Enregistrement…' : 'Enregistrer'}
-                  </button>}
+                  </Bouton>}
             </div>
           </>
         )}
@@ -410,10 +406,6 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
   )
 }
 
-const btnMint: React.CSSProperties = {
-  padding: '9px 18px', background: MINT, color: '#05140B', borderRadius: 6, fontSize: 14,
-  fontWeight: 500, border: 0, cursor: 'pointer',
-}
 const btnPlain: React.CSSProperties = {
   fontSize: 13, color: '#6F8578', background: 'none', border: 0, cursor: 'pointer',
 }

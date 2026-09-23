@@ -12,6 +12,7 @@ import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { getMoi, parcelAt, radarDepotAgencePublier, type DepotRec } from '../../lib/api'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
+import { Bouton } from '../ui/Bouton'
 
 const TYPES = [['', 'Type…'], ['maison', 'Maison'], ['appartement', 'Appartement'], ['terrain', 'Terrain']] as const
 
@@ -92,8 +93,7 @@ export function DepotAgence({ onClose }: { onClose?: () => void }) {
           </div>
 
           {pubMsg && <p className="text-[11px] text-st-ecartee">{pubMsg}</p>}
-          <button data-depot-publier disabled={!pret || publier.isPending} onClick={() => publier.mutate()}
-            className="w-full rounded-md bg-mint py-2 text-[13px] font-semibold text-mint-ink">{publier.isPending ? 'Publication…' : 'Publier'}</button>
+          <Bouton niveau="primaire" ton="vert" data-depot-publier className="w-full" disabled={!pret || publier.isPending} onClick={() => publier.mutate()}>{publier.isPending ? 'Publication…' : 'Publier'}</Bouton>
         </div>
       )}
     </div>

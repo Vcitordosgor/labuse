@@ -22,6 +22,7 @@ import { ParcelInput } from '../ParcelInput'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { Tip } from '../Tip'
+import { Bouton } from '../ui/Bouton'
 
 const SORTS = [
   { key: 'score', label: 'Score' },
@@ -278,8 +279,8 @@ export function DensifierTablePanel() {
                     <td className="px-2 py-1.5 text-right text-txt-mut">{it.rang_commune}</td>
                     {/* A2 — pont Faisabilité par parcelle (ouvre M22 mode « par parcelle » pré-rempli). */}
                     <td className="px-2 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
-                      <button data-densifier-faisabilite onClick={() => { setParcelPrefill(it.idu); setModule('programme'); setOpen(false); pushOutilRetour(RETOUR_DENSIFIER) }}
-                        className="whitespace-nowrap text-[10px] font-medium text-mint hover:underline">Faisabilité →</button>
+                      <Bouton niveau="lien" data-densifier-faisabilite onClick={() => { setParcelPrefill(it.idu); setModule('programme'); setOpen(false); pushOutilRetour(RETOUR_DENSIFIER) }}
+                        className="whitespace-nowrap">Faisabilité →</Bouton>
                     </td>
                   </tr>
                 ))}
@@ -293,18 +294,17 @@ export function DensifierTablePanel() {
           {/* A5 — pont Comparer sur la sélection (limite 3 côté Comparer). */}
           {sel.size > 0 && (
             <div className="mb-1.5">
-              <button data-densifier-comparer
-                onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour(RETOUR_DENSIFIER) }}
-                className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+              <Bouton niveau="secondaire" ton="vert" data-densifier-comparer
+                onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour(RETOUR_DENSIFIER) }}>
                 Comparer ({Math.min(sel.size, 3)}) →
-              </button>
+              </Bouton>
               {sel.size > 3 && <span className="ml-2 text-[10px] text-txt-dim">Comparer se limite à 3 parcelles.</span>}
             </div>
           )}
           {(nHidden > 0 || inclure) && (
             <div className="mb-1.5 flex items-center gap-2 text-[10px] text-txt-dim">
               <span>{inclure ? 'écartées incluses' : `${fmtInt(nHidden)} écartée${nHidden > 1 ? 's' : ''} masquée${nHidden > 1 ? 's' : ''}`}</span>
-              <button data-densifier-ecartees onClick={() => setInclure((v) => !v)} className="text-mint hover:underline">{inclure ? 'les masquer' : 'les inclure'}</button>
+              <Bouton niveau="lien" data-densifier-ecartees onClick={() => setInclure((v) => !v)}>{inclure ? 'les masquer' : 'les inclure'}</Bouton>
             </div>
           )}
           <ListPaginationFooter

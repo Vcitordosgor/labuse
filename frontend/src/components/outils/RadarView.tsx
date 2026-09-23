@@ -14,6 +14,7 @@ import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique de
 import { trierCommunes } from '../../lib/communes'
 import { Declaratif } from './RadarDeclaratif'         // D2 — bloc déclaratif partagé (fiche + admin)
 import { useApp } from '../../store/useApp'
+import { Bouton } from '../ui/Bouton'
 
 // T6 — la carte est montée par RadarView (pour piloter le responsive) ; lazy comme dans App.
 const MapView = lazy(() => import('../map/MapView').then((m) => ({ default: m.MapView })))
@@ -130,7 +131,7 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
     : 'absolute bottom-3.5 right-3.5 top-3.5 z-30 flex w-[398px] flex-col overflow-hidden rounded-2xl border border-line-2 bg-surface-1 shadow-elev-3'
   if (isError) return (
     <div className={`${cadre} p-4 text-[12px] text-txt-mut`}>
-      Fiche indisponible — le serveur n’a pas répondu. <button onClick={onClose} className="text-mint hover:underline">fermer</button>
+      Fiche indisponible — le serveur n’a pas répondu. <Bouton niveau="lien" onClick={onClose}>fermer</Bouton>
     </div>
   )
   if (!b || !b.bien_id) return (
@@ -238,10 +239,10 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
             {b.adresse_exacte && <p className="text-[11.5px] text-txt"><span className="text-txt-mut">Adresse (abonnés)</span> · {b.adresse_exacte}</p>}
             {b.description && <p className="mt-1 text-[11px] leading-snug text-txt-mut">{b.description}</p>}
             {b.photos.length > 0 && <p className="mt-1 text-[10.5px] text-txt-dim">{b.photos.length} photo(s) confiée(s) par l’agence</p>}
-            <button data-radar-interesse disabled={interesse} onClick={() => radarInteresse(b.bien_id).then(() => setInteresse(true)).catch(() => {})}
-              className="mt-2 w-full rounded-lg bg-mint py-2 text-[12.5px] font-semibold text-mint-on hover:brightness-110">
+            <Bouton niveau="primaire" ton="vert" data-radar-interesse disabled={interesse} onClick={() => radarInteresse(b.bien_id).then(() => setInteresse(true)).catch(() => {})}
+              className="mt-2 w-full">
               {interesse ? '✓ L’agence a vos coordonnées' : 'Intéressé — être mis en relation'}
-            </button>
+            </Bouton>
           </div>
         )}
         {/* RADAR-RECETTE-1 D1c — bien À QUALIFIER : champs contradictoires. Visible mais marqué, motifs
@@ -285,8 +286,8 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
               </div>
               <div className="grid grid-cols-[1fr_auto] items-center gap-x-2.5 rounded-xl border border-mint/30 bg-mint/[0.05] px-3 py-2.5">
                 <span className="font-mono text-[12.5px] text-mint">{idu}</span>
-                <button data-radar-parcelle onClick={() => { const s = st(); if (b.coords) s.setFlyTo({ center: b.coords as [number, number], zoom: 17 }); s.setView('cartes'); s.select(idu) }}
-                  className="whitespace-nowrap rounded-lg border border-line-2 px-2.5 py-1.5 text-[11.5px] text-txt-mut hover:text-txt">Ouvrir la fiche parcelle →</button>
+                <Bouton niveau="secondaire" ton="vert" data-radar-parcelle onClick={() => { const s = st(); if (b.coords) s.setFlyTo({ center: b.coords as [number, number], zoom: 17 }); s.setView('cartes'); s.select(idu) }}
+                  className="whitespace-nowrap">Ouvrir la fiche parcelle →</Bouton>
               </div>
               {/* RATTACHEMENT-V2 — POURQUOI cette parcelle tient : les critères indépendants qui ont convergé. */}
               {b.rattachement_criteres && b.rattachement_criteres.length > 0 && (
@@ -322,10 +323,10 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
         )}
         {/* 7. Signaler + note de doctrine */}
         <div className="flex flex-col gap-2 pt-0.5">
-          <button disabled={signale} onClick={() => radarSignaler(bienId, 'annonce retirée / erreur').then(() => setSignale(true))}
-            className="text-center text-[11.5px] text-txt-mut underline decoration-dotted hover:text-txt">
+          <Bouton niveau="lien" disabled={signale} onClick={() => radarSignaler(bienId, 'annonce retirée / erreur').then(() => setSignale(true))}
+            className="text-center">
             {signale ? 'Signalé — merci, Victor va vérifier' : 'Signaler — annonce retirée ou erreur'}
-          </button>
+          </Bouton>
           <p className="text-center text-[10px] leading-relaxed text-txt-dim">{b.depose_par_agence
             ? 'Annonce déposée par l’agence — elle en confie l’affichage (photos, texte, adresse aux abonnés).'
             : 'Faits extraits de l’annonce publique. Aucune photo ni texte d’annonce n’est conservé ou affiché.'}</p>
@@ -450,10 +451,9 @@ export function RadarView() {
                 de l'app). Admin toujours ; clients seulement drapeau ouvert. Le clic déroule les 4 étapes
                 DANS l'app (plus de saut vers la Tour de contrôle). */}
             {boutonVisible && (
-              <button data-radar-publier onClick={() => setDepotPanneau((v) => !v)}
-                className="shrink-0 rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11.5px] font-medium text-mint transition-colors hover:bg-mint/20">
+              <Bouton niveau="secondaire" ton="vert" data-radar-publier onClick={() => setDepotPanneau((v) => !v)} className="shrink-0">
                 {depotPanneau ? '× Fermer le dépôt' : '+ Publier une annonce'}
-              </button>
+              </Bouton>
             )}
           </div>
           <h3 className="mt-1.5 text-[20px] font-semibold text-txt-hi">Les biens en vente</h3>
@@ -496,7 +496,7 @@ export function RadarView() {
                   className="inline-flex items-center gap-1.5 rounded-full border border-mint/40 bg-mint/[0.10] px-2.5 py-0.5 text-[11.5px] text-mint transition-colors duration-quick hover:bg-mint/20">
                   {a.label}<span className="text-mint/70">✕</span></button>
               ))}
-              <button onClick={effacerFiltres} className="ml-0.5 text-[11.5px] text-txt-dim underline hover:text-txt">tout effacer</button>
+              <Bouton niveau="lien" onClick={effacerFiltres} className="ml-0.5">tout effacer</Bouton>
             </div>
           )}
 
@@ -530,8 +530,8 @@ export function RadarView() {
                   options={[['oui', 'Sous le marché'], ['', 'Tous les prix']]} data="radar-seg-sm" />
               </div>
               <div className="flex justify-end gap-2 border-t border-line-2 pt-2.5">
-                <button onClick={effacerFiltres} className="rounded-lg border border-line-2 px-3 py-1.5 text-[12px] text-txt-mut hover:text-txt">Tout effacer</button>
-                <button onClick={() => setDrawerOpen(false)} className="rounded-lg bg-mint px-3.5 py-1.5 text-[12px] font-semibold text-mint-on hover:brightness-110">Voir les biens</button>
+                <Bouton niveau="secondaire" ton="vert" onClick={effacerFiltres}>Tout effacer</Bouton>
+                <Bouton niveau="primaire" ton="vert" onClick={() => setDrawerOpen(false)}>Voir les biens</Bouton>
               </div>
             </div>
           )}

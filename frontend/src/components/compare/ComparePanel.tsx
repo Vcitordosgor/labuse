@@ -9,6 +9,7 @@ import { fmtEurCompact, fmtInt, iduCourt } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-FIX-2 D1 — saisie clavier (IDU/adresse/réf courte)
+import { Bouton } from '../ui/Bouton'
 
 // OUTILS-FIX-3 C1 — le verdict de scoring (verdictMeta) n'est plus affiché dans Comparer (badge « Faible »
 // retiré : on n'impose pas l'Analyse LABUSE sur cet écran). Import + helper `verdict` supprimés.
@@ -128,10 +129,10 @@ export function CompareModule() {
             {/* O9(e) — ajouter la parcelle courante (fiche ouverte) sans avoir à la re-cliquer sur la carte.
                 Visible seulement s'il y a une parcelle courante, qu'elle n'est pas déjà dans la liste, et qu'il reste une place. */}
             {selectedIdu && !compareIdus.includes(selectedIdu) && n < 3 && (
-              <button data-compare-ajouter-courante onClick={() => addToCompare(selectedIdu)}
-                className="hover-fill mt-1.5 block rounded-lg border border-mint/50 px-2 py-1 text-[10.5px] text-mint transition-colors duration-quick">
+              <Bouton niveau="secondaire" ton="vert" data-compare-ajouter-courante onClick={() => addToCompare(selectedIdu)}
+                className="mt-1.5 flex w-full">
                 + Ajouter la parcelle courante ({iduCourt(selectedIdu)})
-              </button>
+              </Bouton>
             )}
             {n > 0 && <button data-compare-vider onClick={clearCompare} className="mt-1.5 text-[10px] text-txt-dim hover:text-txt">tout vider</button>}
           </div>
@@ -144,10 +145,10 @@ export function CompareModule() {
           <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-mint text-[9px] font-medium text-mint">2</span>
           <p className="text-[11px] font-medium text-txt">Ouvrez le tableau</p>
         </div>
-        <button data-compare-ouvrir onClick={() => setCompareOpen(true)} disabled={n < 1}
-          className="mt-1.5 w-full rounded-lg bg-mint py-1.5 text-xs font-medium text-mint-on transition-[filter] duration-quick hover:brightness-110">
+        <Bouton niveau="primaire" ton="vert" data-compare-ouvrir onClick={() => setCompareOpen(true)} disabled={n < 1}
+          className="mt-1.5 w-full">
           Comparer ({n}/3)
-        </button>
+        </Bouton>
       </div>
 
       {/* ③ revenez à la carte */}

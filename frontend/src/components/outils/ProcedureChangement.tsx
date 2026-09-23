@@ -6,6 +6,7 @@ import { Loading } from '../Loading'
 import { CommuneScope } from './ModulePanel'
 import { M15 } from './moteurs'
 import { VerifProcedure } from './VerifProcedure'
+import { Bouton } from '../ui/Bouton'
 
 // M137-Q — VOIE UNIFIÉE « Procédure & changement PLU ». Relie les deux écrans qui s'ignoraient :
 //   1. en tête, les communes RÉELLEMENT en procédure (radar Sudocuh, point de calcul unique) ;
@@ -107,10 +108,10 @@ export function ProcedureChangement() {
                   Prescrite le {c.date_acte} · sourcé {c.source} · constaté le {c.date_constat}
                   {c.source_url && <> · <a href={c.source_url} target="_blank" rel="noreferrer" className="text-mint hover:underline">source ↗</a></>}
                 </div>
-                <button data-procchg-simuler onClick={() => choisir(c.commune)}
-                  className="mt-0.5 self-start rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25">
+                <Bouton niveau="secondaire" ton="vert" data-procchg-simuler onClick={() => choisir(c.commune)}
+                  className="mt-0.5 self-start">
                   Simuler ce que ça changerait →
-                </button>
+                </Bouton>
               </div>
             ))}
           </>

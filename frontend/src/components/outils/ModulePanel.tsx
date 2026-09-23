@@ -50,6 +50,7 @@ import { Successions } from './Successions'   // OUTILS-MUSCLER-1 Lot A — rada
 import { Blocs } from './Blocs'   // OUTILS-MUSCLER-3 — assiettes contiguës d'un même propriétaire PM
 import { TierBadge } from './TierBadge'
 import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
+import { Bouton } from '../ui/Bouton'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
 
@@ -132,10 +133,10 @@ function BlocAccordeon({ id, titre, resume, open, onOpen, onClose, grow, childre
 function MoreButton({ q, loaded, total }: { q: { hasNextPage: boolean; isFetchingNextPage: boolean; fetchNextPage: () => void }; loaded: number; total?: number }) {
   if (!q.hasNextPage) return null
   return (
-    <button data-more onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage}
-      className="mt-1 min-h-8 shrink-0 rounded-lg border border-mint/40 py-1.5 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">
+    <Bouton niveau="secondaire" ton="vert" data-more onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage}
+      className="mt-1 min-h-8 shrink-0">
       {q.isFetchingNextPage ? 'Chargement…' : total != null ? `Voir plus — ${fmt(loaded)} / ${fmt(total)} chargés` : `Voir plus — ${fmt(loaded)} chargés`}
-    </button>
+    </Bouton>
   )
 }
 
@@ -327,15 +328,14 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               seul), le pont historique « Voir ses opérations → » vers Veille promoteurs est conservé. */}
           {d['siren'] != null && (embedded ? (
             !bandeauReplie && (
-              <button data-scan-voir-parcelles onClick={() => setBandeauReplie(true)}
-                className="hover-fill w-full rounded-lg border border-mint/35 py-2 text-center text-[12.5px] text-mint">
-                Voir ses parcelles →</button>
+              <Bouton niveau="secondaire" ton="vert" data-scan-voir-parcelles onClick={() => setBandeauReplie(true)} className="w-full">
+                Voir ses parcelles →</Bouton>
             )
           ) : (
-            <button data-m02-operations
+            <Bouton niveau="secondaire" ton="vert" data-m02-operations
               onClick={() => { const s = String(d['siren']); setVeilleFocusSiren(s); setModule('veille-promoteurs') }}
-              className="hover-fill w-full rounded-lg border border-mint/35 py-2 text-center text-[12.5px] text-mint">
-              Voir ses opérations →</button>
+              className="w-full">
+              Voir ses opérations →</Bouton>
           ))}
           {/* liste — RETOURS-5 T4.5 : lignes en survol plein (hoverFull).
               RETOURS-13 R18 — en fusion, UN SEUL ÉTAT à la fois : au chargement la liste est
@@ -347,14 +347,12 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
             <div className="flex flex-wrap items-center gap-2">
               {/* OUTILS-FIX-3 Lot D — fil de retour : le Courrier/Comparer cible affiche « ← Scan patrimoine »,
                   qui rouvre ce propriétaire (m02Prefill = SIREN résolu). */}
-              <button data-scan-courrier onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers'); pushOutilRetour({ module: 'patrimoine', label: 'Scan patrimoine', restore: { m02Prefill: String(d['siren']) } }) }}
-                className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+              <Bouton niveau="secondaire" ton="vert" data-scan-courrier onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers'); pushOutilRetour({ module: 'patrimoine', label: 'Scan patrimoine', restore: { m02Prefill: String(d['siren']) } }) }}>
                 ✉ Préparer les courriers ({sel.size})
-              </button>
-              <button data-scan-comparer onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour({ module: 'patrimoine', label: 'Scan patrimoine', restore: { m02Prefill: String(d['siren']) } }) }}
-                className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+              </Bouton>
+              <Bouton niveau="secondaire" ton="vert" data-scan-comparer onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour({ module: 'patrimoine', label: 'Scan patrimoine', restore: { m02Prefill: String(d['siren']) } }) }}>
                 Comparer ({Math.min(sel.size, 3)}) →
-              </button>
+              </Bouton>
               {sel.size > 3 && <span className="text-[10px] text-txt-dim">Comparer se limite à 3.</span>}
             </div>
           )}
@@ -469,10 +467,10 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
                 (zéro muet). `porteur_siren` est déjà un SIREN aujourd'hui — la garde couvre le jour où la
                 source SITADEL n'exposerait qu'un SIRET. */}
             {d['porteur_siren'] && (
-              <button data-permis-scan-patrimoine
+              <Bouton niveau="secondaire" ton="vert" data-permis-scan-patrimoine
                 onClick={() => { setM02Prefill(String(d['porteur_siren']).replace(/\D/g, '').slice(0, 9)); setModule('patrimoine'); onClose(); pushOutilRetour({ module: 'permis', label: 'Permis', restore: { permitToOpen: permitId } }) }}
-                className="hover-fill mt-1.5 w-full rounded-lg border border-mint/35 py-1.5 text-center text-[11px] text-mint">
-                Scan patrimoine du porteur →</button>
+                className="mt-1.5 w-full">
+                Scan patrimoine du porteur →</Bouton>
             )}
             <F label="Nombre de lots" value={d['nb_lots']} />
             <F label="Surface habitable" value={d['surface_hab_m2'] != null ? `${fmt(d['surface_hab_m2'])} m²` : null} />
@@ -494,10 +492,9 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
             {/* Fix LOT 2 : localiser la parcelle sur la carte (géocodé) ou message clair (non géocodé) —
                 jamais un clic mort. La géom d'un permis = centroïde de la parcelle rattachée. */}
             {geom?.coordinates ? (
-              <button data-permis-localiser onClick={localiser}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-mint/40 bg-mint/[0.08] py-2 text-[12px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15">
+              <Bouton niveau="secondaire" ton="vert" data-permis-localiser onClick={localiser} className="mt-3 w-full">
                 ◎ Voir la parcelle sur la carte
-              </button>
+              </Bouton>
             ) : (
               <div data-permis-nongeocode className="mt-3 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] leading-snug text-st-creuser">
                 <b>Permis non géocodé</b> — son adresse n'a pas pu être rattachée à une parcelle du
@@ -778,7 +775,7 @@ export function M03() {
                 : loc === 0
                   ? <><b className="tnum">{fmt(nonLoc)}</b> permis à moins de 200 m de cette parcelle <span className="font-mono">{iduCourt(parcelIdu)}</span>, non localisés — aucun point à afficher.</>
                   : <><b className="tnum">{fmt(loc)}</b> permis à moins de 200 m de cette parcelle <span className="font-mono">{iduCourt(parcelIdu)}</span> — cliquez les points sur la carte{nonLocTxt}.</>}
-              <button onClick={() => setParcelIdu(null)} className="ml-2 underline">effacer</button>
+              <Bouton niveau="lien" onClick={() => setParcelIdu(null)} className="ml-2">effacer</Bouton>
             </p>
           )
         })()}
@@ -1179,7 +1176,7 @@ export function M08() {
     <>
       <div className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
         <span className="font-mono text-[12px] text-txt">{idu}</span>
-        <button onClick={() => { setTempsPinIdu(null); setIdu('') }} className="ml-auto text-[10.5px] text-mint hover:underline">changer</button>
+        <Bouton niveau="lien" onClick={() => { setTempsPinIdu(null); setIdu('') }} className="ml-auto">changer</Bouton>
       </div>
       <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
         <p className="label-caps text-[9.5px]">L'année à revoir (avant)</p>
@@ -1213,8 +1210,7 @@ export function M08() {
           <span className="text-txt-dim"> vs </span>Aujourd'hui{/* F7 (OUTILS-3) — mention « 🔒 après fixe » retirée : sans sens pour le client. */}
         </p>
         <p className="mt-2 text-[10.5px] text-txt-dim">Glissez la poignée au centre de la carte pour révéler l'un ou l'autre.</p>
-        <button onClick={() => { setTempsPinIdu(null); setModule(null) }}
-          className="mt-2 w-full rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt">✕ Quitter</button>
+        <Bouton niveau="secondaire" ton="vert" onClick={() => { setTempsPinIdu(null); setModule(null) }} className="mt-2 w-full">✕ Quitter</Bouton>
       </div>
     </>
   )
@@ -1416,8 +1412,8 @@ export function M09() {
             </div>
           )}
           <p className="text-[10px] text-txt-dim">{dest.length} destinataire{dest.length > 1 ? 's' : ''} — un courrier par parcelle.</p>
-          <button data-courrier-next onClick={() => dest.length && setStep(2)} disabled={dest.length === 0}
-            className="mt-auto rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">Rédiger ›</button>
+          <Bouton niveau="primaire" ton="vert" data-courrier-next onClick={() => dest.length && setStep(2)} disabled={dest.length === 0}
+            className="mt-auto">Rédiger ›</Bouton>
         </div>
       )}
 
@@ -1443,8 +1439,8 @@ export function M09() {
           )}
           <div className="flex gap-2">
             <button onClick={() => setStep(1)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Retour</button>
-            <button data-courrier-next onClick={() => setStep(3)} disabled={!apercu.data || corps.trim().length < 10}
-              className="flex-1 rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">Vérifier l'envoi ›</button>
+            <Bouton niveau="primaire" ton="vert" data-courrier-next onClick={() => setStep(3)} disabled={!apercu.data || corps.trim().length < 10}
+              className="flex-1">Vérifier l'envoi ›</Bouton>
           </div>
         </div>
       )}
@@ -1487,9 +1483,8 @@ export function M09() {
           </div>
 
           {!demande ? (
-            <button data-courrier-demander onClick={() => envoyer.mutate()} disabled={envoyer.isPending || depotBloque || adressage.isLoading}
-              className="rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
-              {envoyer.isPending ? 'Envoi de la demande…' : depotBloque ? 'Dépôt bloqué — voir les motifs' : "Demander l'envoi à LABUSE"}</button>
+            <Bouton niveau="primaire" ton="vert" data-courrier-demander onClick={() => envoyer.mutate()} disabled={envoyer.isPending || depotBloque || adressage.isLoading}>
+              {envoyer.isPending ? 'Envoi de la demande…' : depotBloque ? 'Dépôt bloqué — voir les motifs' : "Demander l'envoi à LABUSE"}</Bouton>
           ) : (
             // OUTILS-1 A4/B6 — la confirmation porte le N° DE DEMANDE et renvoie vers le suivi. AUCUN
             // état interne (imprimé/posté) côté client : décision Vic — moins de surface, moins de bugs.
@@ -1504,9 +1499,8 @@ export function M09() {
           {envoyer.isError && <p className="text-[10.5px] text-st-ecartee">La demande n'a pas pu être transmise — réessayez.</p>}
 
           {/* aperçu PDF de RELECTURE (secondaire) — corps rempli pour le 1er destinataire */}
-          <button data-courrier-pdf onClick={apercuPdf} disabled={pdfBusy || dest.length === 0}
-            className="self-start text-[11px] text-txt-mut hover:text-mint">
-            {pdfBusy ? 'Génération…' : '⬇ Télécharger l’aperçu PDF (relecture)'}</button>
+          <Bouton niveau="lien" data-courrier-pdf onClick={apercuPdf} disabled={pdfBusy || dest.length === 0} className="self-start">
+            {pdfBusy ? 'Génération…' : '⬇ Télécharger l’aperçu PDF (relecture)'}</Bouton>
           {pdfErr && <p data-courrier-pdf-err className="text-[10.5px] text-st-ecartee">{pdfErr}</p>}
 
           {/* OUTILS-1 A4 — récap des demandes du client : N° + volume + communes, SANS état interne
@@ -1582,8 +1576,7 @@ export function M10() {
             <textarea data-diligence-paste value={paste} onChange={(e) => setPaste(e.target.value)} rows={3}
               placeholder={'97415000AC0253\nAC0254\nBK 63…'}
               className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[10.5px] text-txt focus:border-mint focus:outline-none" />
-            <button data-diligence-add onClick={ajouterListe} disabled={!paste.trim()}
-              className="self-start rounded border border-mint/40 px-2 py-1 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">+ Ajouter la liste</button>
+            <Bouton niveau="secondaire" ton="vert" data-diligence-add onClick={ajouterListe} disabled={!paste.trim()} className="self-start">+ Ajouter la liste</Bouton>
           </div>
         </details>
       </div>
@@ -1601,10 +1594,9 @@ export function M10() {
       )}
       <p className="text-[10px] text-txt-dim">{lot.length} référence{lot.length > 1 ? 's' : ''} dans le lot.</p>
 
-      <button data-diligence-analyser onClick={() => lot.length && run.mutate()} disabled={lot.length === 0 || run.isPending}
-        className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
+      <Bouton niveau="primaire" ton="vert" data-diligence-analyser onClick={() => lot.length && run.mutate()} disabled={lot.length === 0 || run.isPending}>
         {run.isPending ? 'Analyse…' : `Analyser le lot (${lot.length})`}
-      </button>
+      </Bouton>
       {run.data && (
         <>
           {/* O6(d) — compteur COHÉRENT : dérivé des items réellement renvoyés (trouvées = items avec IDU,
@@ -1720,11 +1712,10 @@ export function M10() {
           {/* PONT COURRIER (mandat COURRIER, addendum) : le lot analysé s'exporte vers l'outil Courrier
               pré-rempli — même canal que l'import Assemblage (courrierPrefillIdus). */}
           {iduxResolus.length > 0 && (
-            <button data-diligence-courrier
-              onClick={() => { setCourrierPrefillIdus(iduxResolus); setModule('courriers') }}
-              className="rounded-lg border border-mint/50 bg-mint/10 py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+            <Bouton niveau="secondaire" ton="vert" data-diligence-courrier
+              onClick={() => { setCourrierPrefillIdus(iduxResolus); setModule('courriers') }}>
               ✉ Préparer les courriers ({iduxResolus.length})
-            </button>
+            </Bouton>
           )}
         </>
       )}

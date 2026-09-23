@@ -9,6 +9,7 @@ import { fusionnerProjets, getCourrierDemandes, getProjets, postCourrierClientSt
 import { fmtEurCompact } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Skeleton } from '../Loading'
+import { Bouton } from '../ui/Bouton'
 import { ProjetKanban } from './ProjetKanban'
 import { ParcoursProjet } from './ParcoursProjet'
 
@@ -142,8 +143,6 @@ function parTravail(a: Projet, b: Projet): number {
   return act(b) - act(a)
 }
 
-const btnPlein = { padding: '9px 18px', background: '#4ADE80', color: '#05140B', borderRadius: 6, fontSize: 14, fontWeight: 500, cursor: 'pointer', border: 0 } as const
-
 /** Vue PROJETS — liste « Vos projets », ou (si un projet est ouvert) sa vue kanban, ou (si le
  *  parcours de création est ouvert) le parcours SEUL. */
 export function ProjetsPanel() {
@@ -211,7 +210,7 @@ export function ProjetsPanel() {
           {/* M118 — « Décrire au copilote » RETIRÉ : la création de projet quitte le Copilote, elle se
               fait ici, par le parcours guidé. Un seul point d'entrée. */}
           <div className="flex items-center gap-[18px]" style={{ whiteSpace: 'nowrap' }}>
-            <button data-projet-nouveau onClick={() => { setFormOuvert(true) }} style={btnPlein}>Nouveau projet</button>
+            <Bouton data-projet-nouveau niveau="primaire" ton="vert" onClick={() => { setFormOuvert(true) }}>Nouveau projet</Bouton>
           </div>
         </div>
 
@@ -222,7 +221,7 @@ export function ProjetsPanel() {
           <div data-projets-vide style={{ marginTop: 8, padding: 32, border: '.5px dashed #1E2A23', borderRadius: 6, textAlign: 'center' }}>
             <h3 style={{ fontSize: 15, color: '#8FA69A', fontWeight: 400, margin: '0 0 6px' }}>Aucun projet pour l'instant</h3>
             <p style={{ fontSize: 13, color: '#5F7267', margin: '0 0 16px' }}>Un projet garde votre cadrage et vos parcelles retenues.</p>
-            <button data-projet-nouveau-vide onClick={() => setFormOuvert(true)} style={{ ...btnPlein, display: 'inline-block' }}>Créer votre premier projet</button>
+            <Bouton data-projet-nouveau-vide niveau="primaire" ton="vert" onClick={() => setFormOuvert(true)}>Créer votre premier projet</Bouton>
           </div>
         ) : !projetsQ.isLoading && (
           <>
@@ -239,9 +238,8 @@ export function ProjetsPanel() {
               /* OUTILS-1 A4/B6 — MES COURRIERS : n°, date, communes, volume. Aucun état interne. */
               <div data-mes-courriers>
                 {/* F5 (OUTILS-3) — accès à l'outil Courrier propriétaire (étape 1) depuis Projets. */}
-                <button data-mes-courriers-nouveau
-                  onClick={() => { const s = useApp.getState(); s.setView('cartes'); s.setModule('courriers') }}
-                  style={{ ...btnPlein, display: 'inline-block', marginBottom: 16 }}>Nouveau courrier →</button>
+                <Bouton data-mes-courriers-nouveau niveau="primaire" ton="vert" className="mb-4"
+                  onClick={() => { const s = useApp.getState(); s.setView('cartes'); s.setModule('courriers') }}>Nouveau courrier →</Bouton>
                 {courriers.length === 0 && (
                   <p style={{ fontSize: 13, color: '#5F7267', padding: '16px 0' }}>Aucune demande de courrier pour l'instant.</p>
                 )}

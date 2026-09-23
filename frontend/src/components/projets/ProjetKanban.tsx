@@ -11,6 +11,7 @@ import { fmtDate, fmtEurCompact, fmtInt, fmtM2, iduCourt } from '../../lib/forma
 import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Loading } from '../Loading'
+import { Bouton } from '../ui/Bouton'
 
 const PAGE = 200   // RECETTE-10 T6 (règle de Vic) — 200 par page (était 50) · page X/Y
 
@@ -173,9 +174,8 @@ function FiltreDrawer({ cadrageProjet, initial, onApply, onClear, onClose }: {
       <div className="mt-3 flex gap-2">
         <button data-drawer-clear onClick={() => { setFacettes({ ...EMPTY_FILTERS, ...cadrageProjet }); onClear() }}
           className="flex-1 rounded-md border border-line-2 py-1.5 text-center text-[11.5px] text-txt-mut transition-colors duration-quick hover:text-txt">Tout effacer</button>
-        <button data-drawer-apply onClick={() => onApply(sfOut)}
-          className="flex-1 rounded-md border border-mint bg-mint py-1.5 text-center text-[11.5px] font-semibold text-mint-ink transition-[filter] duration-quick hover:brightness-110">
-          Voir {cnt.data ? cnt.data.vivier.toLocaleString('fr-FR') : '…'} parcelles</button>
+        <Bouton niveau="primaire" ton="vert" data-drawer-apply onClick={() => onApply(sfOut)} className="flex-1">
+          Voir {cnt.data ? cnt.data.vivier.toLocaleString('fr-FR') : '…'} parcelles</Bouton>
       </div>
     </div>
   )
@@ -337,8 +337,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 {etat?.valeurs_run?.date ? <span>{`valeurs au ${fmtDate(etat.valeurs_run.date)}`}</span> : ''}
                 {(() => { const m = (etat?.proposees ?? []).find((it) => it.marche_eur_m2 != null)?.marche_eur_m2; return m != null && projet && (projet.cadrage.communes?.length === 1) ? ` · marché ancien ${projet.cadrage.communes[0]} ~${fmtInt(m)} €/m²` : '' })()}
               </p>
-              <button data-kanban-scoring onClick={() => setAlgoModale('scoring')}
-                className="mt-1.5 text-[11px] text-mint transition-colors duration-quick hover:underline">Comprendre le classement →</button>
+              <Bouton niveau="lien" data-kanban-scoring onClick={() => setAlgoModale('scoring')} className="mt-1.5">Comprendre le classement →</Bouton>
             </div>
           )}
         </div>
@@ -462,13 +461,13 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 )}
                 {col.key === 'retenue' && (etat?.counts?.retenue ?? 0) > 0 && (
                   <div data-kanban-retenues-actions className="flex shrink-0 gap-2 border-t border-line-2 bg-surface-2 px-3.5 py-2.5">
-                    <button data-kanban-crm onClick={() => { const s = useApp.getState(); s.setOpenProjet(null); s.setView('crm') }}
-                      className="flex-1 rounded-md border border-mint/40 py-1.5 text-center text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/10">→ CRM</button>
-                    <button data-kanban-courrier onClick={() => {
+                    <Bouton niveau="secondaire" ton="vert" data-kanban-crm onClick={() => { const s = useApp.getState(); s.setOpenProjet(null); s.setView('crm') }}
+                      className="flex-1">→ CRM</Bouton>
+                    <Bouton niveau="secondaire" ton="vert" data-kanban-courrier onClick={() => {
                       const idus = (etat?.retenues ?? []).map((r) => r.idu)
                       const s = useApp.getState(); s.setCourrierPrefillIdus(idus); s.setOpenProjet(null); s.setView('cartes'); s.setModule('courriers')
                     }}
-                      className="flex-1 rounded-md border border-mint/40 py-1.5 text-center text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/10">✉ Courrier ({etat?.counts?.retenue ?? 0})</button>
+                      className="flex-1">✉ Courrier ({etat?.counts?.retenue ?? 0})</Bouton>
                   </div>
                 )}
               </div>

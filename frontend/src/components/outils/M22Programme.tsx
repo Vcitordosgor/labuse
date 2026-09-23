@@ -9,6 +9,7 @@ import { CommuneScope } from './ModulePanel'
 import { Tip } from '../Tip'
 import { DestinationBadge, DestinationSelect, useDestinationsRef } from './DestinationSelect'
 import { ParcelPicker } from './ParcelPicker'
+import { Bouton } from '../ui/Bouton'
 
 /** M22 · FAISABILITÉ — 2 entrées (M15-C) :
  *  · « Par critères » (SENS 2) : on décrit un programme, LABUSE propose les parcelles qui matchent.
@@ -152,10 +153,9 @@ export function M22() {
           {/* DESTINATIONS-1 (X4.3) — la destination AGIT : zone « interdit » écartée (et comptée),
               « sous condition » / « calibration en cours » annotées sur chaque parcelle. */}
           <DestinationSelect dataAttr="programme" value={dest} onChange={setDest} />
-          <button onClick={() => lancer()} disabled={results.isLoading}
-            className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
+          <Bouton niveau="primaire" ton="vert" onClick={() => lancer()} disabled={results.isLoading}>
             {results.isLoading ? 'Calcul…' : 'Trouver les parcelles'}
-          </button>
+          </Bouton>
           {results.isError && <p className="text-[11px] text-st-ecartee">Recherche indisponible — réessayez.</p>}
           {meta && (
             <>
@@ -192,10 +192,9 @@ export function M22() {
               {/* A5 — pont Comparer sur la sélection (même geste/compteur que Courrier). */}
               {selCmp.size > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
-                  <button data-prog-comparer onClick={() => { [...selCmp].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour({ module: 'programme', label: 'Faisabilité' }) }}
-                    className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+                  <Bouton niveau="secondaire" ton="vert" data-prog-comparer onClick={() => { [...selCmp].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour({ module: 'programme', label: 'Faisabilité' }) }}>
                     Comparer ({Math.min(selCmp.size, 3)}) →
-                  </button>
+                  </Bouton>
                   {selCmp.size > 3 && <span className="text-[10px] text-txt-dim">Comparer se limite à 3.</span>}
                 </div>
               )}
@@ -255,8 +254,7 @@ export function M22() {
             <>
               <div className="flex items-center gap-2 text-[11px] text-txt-mut">
                 <span>Parcelle <b className="font-mono text-txt">{picked.slice(8, 10)} {picked.slice(10)}</b></span>
-                <button data-faisa-changer onClick={() => setPicked(null)}
-                  className="ml-auto rounded border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-dim transition-colors duration-quick hover:text-txt">changer</button>
+                <Bouton niveau="lien" data-faisa-changer onClick={() => setPicked(null)} className="ml-auto">changer</Bouton>
               </div>
               {/* OUTILS-FIX-3 A1 — le bloc « Capacité constructible » (et tout FaisabiliteTab) sortait de la
                   DA quand on l'ouvrait par le pont Densifier : son titre (GroupLabel → `.sec`) et ses filets

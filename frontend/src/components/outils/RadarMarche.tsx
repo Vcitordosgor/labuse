@@ -4,6 +4,7 @@
 // on explique que le corpus se constitue, pas un tableau de tirets qui fait peur. Couleurs source unique.
 import { useQuery } from '@tanstack/react-query'
 import { getRadarMarche, type RadarMarcheLigne, type RadarMesure } from '../../lib/api'
+import { Bouton } from '../ui/Bouton'
 
 const fmt = (v: number) => v.toLocaleString('fr-FR')
 
@@ -41,9 +42,9 @@ export function RadarMarche() {
   if (isError || !data) return (
     <div className="flex flex-col items-start gap-2 p-4 text-[12px] text-txt-mut">
       <p>Le marché du Radar n’a pas pu être chargé — le serveur n’a pas répondu.</p>
-      <button onClick={() => refetch()} className="rounded-md border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint hover:bg-mint/20">
+      <Bouton niveau="secondaire" ton="vert" onClick={() => refetch()}>
         Réessayer
-      </button>
+      </Bouton>
     </div>
   )
   const jeune = data.corpus_total < 40

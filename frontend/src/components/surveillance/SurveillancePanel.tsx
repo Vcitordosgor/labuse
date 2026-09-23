@@ -10,6 +10,7 @@ import { trierCommunes } from '../../lib/communes'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 import { iduCourt } from '../../lib/format'
+import { Bouton } from '../ui/Bouton'
 
 // RV2-V3 — la carte est montée par la vue Veille (patron Radar) ; lazy comme dans App.
 const MapView = lazy(() => import('../map/MapView').then((m) => ({ default: m.MapView })))
@@ -204,10 +205,9 @@ function VeilleExterne() {
       {!creating ? (
         <>
           {/* V2 — en tête, le bouton de création ; en dessous, les critères déjà enregistrés. */}
-          <button data-veille-ext-creer-ouvrir onClick={() => setCreating(true)}
-            className="rounded-md bg-mint py-2 text-[12.5px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110">
+          <Bouton niveau="primaire" ton="vert" data-veille-ext-creer-ouvrir className="w-full" onClick={() => setCreating(true)}>
             + Créer une veille
-          </button>
+          </Bouton>
           <p className="text-[10.5px] leading-snug text-txt-mut">
             Une veille sur les annonces produit une <b className="text-txt">alerte de fin de journée</b> dès qu'un bien
             correspond à vos critères — nouvelle mise en vente, baisse de prix ou retour en ligne. Des faits et un lien,
@@ -230,8 +230,7 @@ function VeilleExterne() {
                     placeholder="Nom de la veille" maxLength={120}
                     className="h-8 rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt" />
                   <div className="flex items-center gap-2">
-                    <button data-veille-ext-renom-ok disabled={renommer.isPending} onClick={() => renommer.mutate({ id: v.id, nom: renomVal })}
-                      className="rounded-md bg-mint px-3 py-1 text-[11px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110">Renommer</button>
+                    <Bouton niveau="primaire" ton="vert" data-veille-ext-renom-ok disabled={renommer.isPending} onClick={() => renommer.mutate({ id: v.id, nom: renomVal })}>Renommer</Bouton>
                     <button onClick={() => setRenomId(null)} className="text-[11px] text-txt-mut hover:text-txt">annuler</button>
                   </div>
                 </div>
@@ -277,10 +276,9 @@ function VeilleExterne() {
             Particuliers seulement
           </label>
           <p className="text-[10px] leading-snug text-txt-dim">Cette veille vous alertera sur <b className="text-txt-mut">tout événement</b> d'un bien correspondant — le mail dit lequel (nouvelle annonce, baisse, retour).</p>
-          <button data-veille-ext-creer disabled={creer.isPending} onClick={() => creer.mutate()}
-            className="rounded-md bg-mint py-1.5 text-[12px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110">
+          <Bouton niveau="primaire" ton="vert" data-veille-ext-creer className="w-full" disabled={creer.isPending} onClick={() => creer.mutate()}>
             {creer.isPending ? 'Création…' : 'Créer la veille'}
-          </button>
+          </Bouton>
         </div>
       )}
     </div>

@@ -10,6 +10,7 @@ import { Tip } from '../Tip'
 import { ErrorState } from '../States'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
+import { Bouton } from '../ui/Bouton'
 
 /* accents de colonnes = tokens (txt-dim / st-creuser / mint / st-ecartee) en valeur
    hex car servis via style= (pas de classe dynamique). */
@@ -179,8 +180,7 @@ function DeleteColumnDialog({ col, others, onCancel, onConfirm }: {
           <p className="mt-2 text-[12px] text-txt-mut">Cette colonne est vide — suppression immédiate.</p>
         )}
         <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onCancel}
-            className="rounded-md px-3 py-1.5 text-[12px] text-txt-dim hover:text-txt">Annuler</button>
+          <Bouton niveau="lien" onClick={onCancel}>Annuler</Bouton>
           <button
             onClick={() => onConfirm(populated > 0 ? (target === '' ? null : target) : null)}
             disabled={populated > 0 && target === ''}
@@ -269,10 +269,9 @@ function CardEditPanel({ e, meta, onCancel, onSave, onMove, saving }: {
           </p>
         </div>
         <div className="flex justify-end gap-2 border-t border-line-2 px-5 py-3">
-          <button onClick={onCancel} className="rounded-md px-3 py-1.5 text-[12px] text-txt-dim hover:text-txt">Annuler</button>
-          <button onClick={submit} disabled={saving}
-            className="rounded-md bg-mint px-3 py-1.5 text-[12px] font-medium text-mint-ink hover:brightness-110">
-            {saving ? '…' : 'Enregistrer'}</button>
+          <Bouton niveau="lien" onClick={onCancel}>Annuler</Bouton>
+          <Bouton niveau="primaire" ton="vert" onClick={submit} disabled={saving}>
+            {saving ? '…' : 'Enregistrer'}</Bouton>
         </div>
       </div>
     </div>
@@ -502,11 +501,9 @@ export function Kanban() {
                     className="w-40 rounded-md border border-mint/50 bg-surface-2 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none"
                     aria-label="Nom de la nouvelle colonne"
                   />
-                  <button onClick={commitAdd} disabled={!newColLabel.trim() || addCol.isPending}
-                    className="rounded-md bg-mint px-2 py-1 text-[11px] font-medium text-mint-ink hover:brightness-110"
-                    >{addCol.isPending ? '…' : 'Ajouter'}</button>
-                  <button onClick={() => { setAdding(false); setNewColLabel('') }}
-                    className="rounded-md px-2 py-1 text-[11px] text-txt-dim hover:text-txt">Annuler</button>
+                  <Bouton niveau="primaire" ton="vert" onClick={commitAdd} disabled={!newColLabel.trim() || addCol.isPending}
+                    >{addCol.isPending ? '…' : 'Ajouter'}</Bouton>
+                  <Bouton niveau="lien" onClick={() => { setAdding(false); setNewColLabel('') }}>Annuler</Bouton>
                 </span>
               ) : (
                 <button onClick={doAdd}
@@ -633,8 +630,7 @@ export function Kanban() {
               première colonne — aucune n'est perdue.
             </p>
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setConfirmReset(false)}
-                className="rounded-md px-3 py-1.5 text-[12px] text-txt-dim hover:text-txt">Annuler</button>
+              <Bouton niveau="lien" onClick={() => setConfirmReset(false)}>Annuler</Bouton>
               <button onClick={() => resetCols.mutate()} disabled={resetCols.isPending}
                 className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee">
                 {resetCols.isPending ? '…' : 'Réinitialiser'}</button>
@@ -665,8 +661,7 @@ export function Kanban() {
               restaurables depuis « Archivées ».
             </p>
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setPendingArchive(null)}
-                className="rounded-md px-3 py-1.5 text-[12px] text-txt-dim hover:text-txt">Annuler</button>
+              <Bouton niveau="lien" onClick={() => setPendingArchive(null)}>Annuler</Bouton>
               <button onClick={() => archive.mutate(pendingArchive.id)} disabled={archive.isPending}
                 className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee">
                 {archive.isPending ? '…' : 'Archiver'}</button>

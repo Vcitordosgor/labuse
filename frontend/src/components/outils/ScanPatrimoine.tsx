@@ -18,6 +18,7 @@ import { estIdu, iduComplet } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { M02 } from './ModulePanel'
 import { VeillePromoteurs } from './VeillePromoteurs'
+import { Bouton } from '../ui/Bouton'
 
 type Tab = 'possede' | 'construit'
 
@@ -137,8 +138,8 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
               onSelect={(sel) => resoudre(sel.idu ?? sel.label)}
               onEnterRaw={(t) => resoudre(t)}
               className={inp} />
-            <button data-scan-chercher onClick={() => resoudre()} disabled={q.trim().length < 2 || busy}
-              className="shrink-0 rounded-md bg-mint px-3 py-1.5 text-[12px] font-medium text-mint-ink">{busy ? '…' : 'Chercher'}</button>
+            <Bouton niveau="primaire" ton="vert" data-scan-chercher onClick={() => resoudre()} disabled={q.trim().length < 2 || busy}
+              className="shrink-0">{busy ? '…' : 'Chercher'}</Bouton>
           </div>
           {/* U1.3 — ligne d'aide sous le champ. */}
           <p className="text-[11px] leading-snug text-txt-off">Une société, une parcelle, une adresse — LABUSE remonte au propriétaire.</p>
@@ -168,7 +169,7 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
               <div className="truncate text-[13.5px] font-semibold text-txt-hi">{ownerNom ?? '…'}</div>
               <div className="mt-0.5 font-mono text-[10.5px] text-txt-dim">SIREN <Siren value={owner} className="font-mono text-txt-dim" /></div>
             </div>
-            <button data-scan-changer onClick={changer} className="shrink-0 text-[11.5px] text-mint underline underline-offset-2 hover:text-mint/80">changer</button>
+            <Bouton niveau="lien" data-scan-changer onClick={changer} className="shrink-0">changer</Bouton>
           </div>
 
           {/* U1.6 — onglets SOULIGNÉS (pas des boutons pleins) ; le propriétaire est partagé (aucune relance).

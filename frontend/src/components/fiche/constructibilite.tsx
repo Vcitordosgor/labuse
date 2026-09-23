@@ -18,6 +18,7 @@ import { BlocIndisponible } from './BlocIndisponible'
 import type { Fiche, PotentielTransformation } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroTriple, PorteOutil, StepProv, HypInput, GroupLabel, FactRow, FactNote, RefLink, Vigilance } from './primitives'
+import { Bouton } from '../ui/Bouton'
 
 const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280' }
 export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
@@ -460,11 +461,10 @@ export function FaisabiliteTab({ idu, embedded }: { idu: string; embedded?: bool
       {!embedded && cap && steps.length > 0 && (
         <div data-faisa-explain>
           {!ex && !explain.isPending && (
-            <button onClick={() => explain.mutate()} data-faisa-explain-btn
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-violet/50 bg-violet/[0.07] py-2 text-[12px] font-medium text-violet hover:bg-violet/10">
+            <Bouton niveau="secondaire" ton="ia" onClick={() => explain.mutate()} data-faisa-explain-btn className="w-full">
               <svg viewBox="0 0 20 20" className="h-3.5 w-3.5"><path d="M10 3.5 L11.6 8.4 L16.5 10 L11.6 11.6 L10 16.5 L8.4 11.6 L3.5 10 L8.4 8.4 Z" fill="currentColor" /></svg>
               Expliquer ce calcul en clair
-            </button>
+            </Bouton>
           )}
           {explain.isPending && <p className="flex items-center gap-2 py-2 text-[11px] text-violet"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-violet" /> L'IA lit les étapes du calcul…</p>}
           {explain.isError && <p className="py-1 text-[11px] text-st-ecartee">Explication indisponible — réessayez.</p>}

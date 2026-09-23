@@ -4,6 +4,7 @@ import { getGabarit, type GabaritResult, type GabGeom } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
+import { Bouton } from '../ui/Bouton'
 
 // Outil « Gabarit réglementaire ». Traduit graphiquement et mathématiquement des règles SOURCÉES :
 // SOURCE → VALIDATION → CALCUL → AFFICHAGE. Jamais d'estimation (logements/étages/SDP/coût/valeur/
@@ -283,10 +284,9 @@ export function Gabarit() {
                 : <p className="mt-1.5">Bascule 2D / 3D : bouton <b className="text-txt">3D</b> de la carte.</p>}
           </div>
 
-          <button data-gabarit-reset onClick={reset}
-            className="self-start rounded-md border border-line-2 bg-surface-3 px-2.5 py-1 text-[10.5px] text-txt-mut hover:border-mint hover:text-mint">
+          <Bouton niveau="secondaire" ton="vert" data-gabarit-reset onClick={reset} className="self-start">
             Réinitialiser
-          </button>
+          </Bouton>
         </>
       )}
     </div>
