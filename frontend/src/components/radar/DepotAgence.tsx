@@ -93,7 +93,7 @@ export function DepotAgence({ onClose }: { onClose?: () => void }) {
 
           {pubMsg && <p className="text-[11px] text-st-ecartee">{pubMsg}</p>}
           <button data-depot-publier disabled={!pret || publier.isPending} onClick={() => publier.mutate()}
-            className="w-full rounded-md bg-mint py-2 text-[13px] font-semibold text-mint-ink disabled:opacity-40">{publier.isPending ? 'Publication…' : 'Publier'}</button>
+            className="w-full rounded-md bg-mint py-2 text-[13px] font-semibold text-mint-ink">{publier.isPending ? 'Publication…' : 'Publier'}</button>
         </div>
       )}
     </div>

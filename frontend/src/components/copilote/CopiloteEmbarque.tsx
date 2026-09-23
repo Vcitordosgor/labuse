@@ -54,7 +54,7 @@ export function CopiloteEmbarque({ contexte, placeholder, exemples, ton = 'mint'
             className={`min-w-0 flex-1 rounded-lg border bg-transparent px-3 py-1.5 text-[12.5px] text-txt outline-none placeholder:text-txt-faint ${
               ton === 'violet' ? 'border-violet/30 focus:border-violet' : 'border-cp-ia/30 focus:border-cp-ia'}`} />
           <button data-embarque-repondre disabled={!reponse.trim()} onClick={() => void envoyer(reponse)}
-            className={`shrink-0 text-[11.5px] font-medium hover:underline disabled:opacity-30 ${
+            className={`shrink-0 text-[11.5px] font-medium hover:underline ${
               ton === 'violet' ? 'text-violet' : 'text-cp-ia'}`}>
             Répondre
           </button>
@@ -78,7 +78,7 @@ export function CopiloteEmbarque({ contexte, placeholder, exemples, ton = 'mint'
             placeholder={placeholder ?? 'Demander au Copilote…'}
             className="min-w-0 flex-1 bg-transparent text-[12.5px] text-txt outline-none placeholder:text-txt-faint" />
           <button data-embarque-envoyer onClick={() => void soumettre()} disabled={!q.trim() || busy}
-            className="shrink-0 text-[11px] font-medium text-violet transition-opacity duration-quick hover:underline disabled:opacity-30">
+            className="shrink-0 text-[11px] font-medium text-violet transition-opacity duration-quick hover:underline">
             {busy ? '…' : 'demander →'}
           </button>
         </div>
@@ -97,7 +97,7 @@ export function CopiloteEmbarque({ contexte, placeholder, exemples, ton = 'mint'
           placeholder={placeholder ?? 'Demander au Copilote…'}
           className="min-w-0 flex-1 bg-transparent text-[13px] text-txt outline-none placeholder:text-txt-faint" />
         <button data-embarque-envoyer onClick={() => void soumettre()} disabled={!q.trim() || busy}
-          className="shrink-0 rounded-lg bg-cp-ia px-3.5 py-1.5 text-[12px] font-medium text-cp-ia-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+          className="shrink-0 rounded-lg bg-cp-ia px-3.5 py-1.5 text-[12px] font-medium text-cp-ia-on transition-[filter] duration-quick hover:brightness-110">
           {busy ? '…' : 'Demander'}
         </button>
       </div>

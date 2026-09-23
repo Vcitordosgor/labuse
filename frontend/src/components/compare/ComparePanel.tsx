@@ -145,7 +145,7 @@ export function CompareModule() {
           <p className="text-[11px] font-medium text-txt">Ouvrez le tableau</p>
         </div>
         <button data-compare-ouvrir onClick={() => setCompareOpen(true)} disabled={n < 1}
-          className="mt-1.5 w-full rounded-lg bg-mint py-1.5 text-xs font-medium text-mint-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+          className="mt-1.5 w-full rounded-lg bg-mint py-1.5 text-xs font-medium text-mint-on transition-[filter] duration-quick hover:brightness-110">
           Comparer ({n}/3)
         </button>
       </div>

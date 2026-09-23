@@ -197,7 +197,7 @@ export function M16() {
       </div>
       <div className="flex gap-2">
         <button onClick={() => msel.length >= 2 && run.mutate()} disabled={msel.length < 2 || run.isPending}
-          className="flex-1 rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+          className="flex-1 rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
           Analyser l'assiette ({msel.length})
         </button>
         {msel.length > 0 && (
@@ -852,7 +852,7 @@ export function M19() {
         <input value={smin} onChange={(e) => setSmin(e.target.value)} placeholder="surf. min" type="number"
           className="w-20 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
         <button onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim()} aria-label="Ajouter le profil"
-          className="rounded bg-mint px-2 text-[11px] font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">+</button>
+          className="rounded bg-mint px-2 text-[11px] font-medium text-bg transition-[filter] duration-quick hover:brightness-110">+</button>
       </div>
 
       {/* ── RÉEL — promoteurs actifs SITADEL (commune du profil actif) ── */}

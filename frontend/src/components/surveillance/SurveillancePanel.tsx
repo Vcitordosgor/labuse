@@ -231,7 +231,7 @@ function VeilleExterne() {
                     className="h-8 rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt" />
                   <div className="flex items-center gap-2">
                     <button data-veille-ext-renom-ok disabled={renommer.isPending} onClick={() => renommer.mutate({ id: v.id, nom: renomVal })}
-                      className="rounded-md bg-mint px-3 py-1 text-[11px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">Renommer</button>
+                      className="rounded-md bg-mint px-3 py-1 text-[11px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110">Renommer</button>
                     <button onClick={() => setRenomId(null)} className="text-[11px] text-txt-mut hover:text-txt">annuler</button>
                   </div>
                 </div>
@@ -278,7 +278,7 @@ function VeilleExterne() {
           </label>
           <p className="text-[10px] leading-snug text-txt-dim">Cette veille vous alertera sur <b className="text-txt-mut">tout événement</b> d'un bien correspondant — le mail dit lequel (nouvelle annonce, baisse, retour).</p>
           <button data-veille-ext-creer disabled={creer.isPending} onClick={() => creer.mutate()}
-            className="rounded-md bg-mint py-1.5 text-[12px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+            className="rounded-md bg-mint py-1.5 text-[12px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110">
             {creer.isPending ? 'Création…' : 'Créer la veille'}
           </button>
         </div>

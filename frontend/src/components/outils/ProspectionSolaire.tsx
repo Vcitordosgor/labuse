@@ -237,7 +237,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
       {/* R22 — la carte n'apparaît qu'avec les résultats (après « Voir les parcelles »). */}
       {agg.data && montre && (
         <button data-solaire-carte data-carte-affichee={carteAffichee ? '1' : '0'} onClick={voirCarte} disabled={carteBusy}
-          className="rounded-lg border py-1.5 text-center text-[11px] font-medium transition-colors duration-quick hover:brightness-110 disabled:opacity-50"
+          className="rounded-lg border py-1.5 text-center text-[11px] font-medium transition-colors duration-quick hover:brightness-110"
           style={carteAffichee
             ? { borderColor: `${TOKENS.mint}66`, color: 'var(--txt-mut)', background: 'transparent' }
             : { borderColor: `${TOKENS.mint}66`, color: TOKENS.mint, background: `${TOKENS.mint}12` }}>

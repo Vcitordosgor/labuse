@@ -183,7 +183,7 @@ export function Successions() {
       </details>
         <button data-successions-courrier disabled={sel.size === 0}
           onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers'); pushOutilRetour(RETOUR_SUCCESSIONS) }}
-          className="mt-1.5 shrink-0 rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-40">
+          className="mt-1.5 shrink-0 rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
           ✉ Préparer les courriers ({sel.size}) →
         </button>
       </div>

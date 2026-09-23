@@ -169,7 +169,7 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
           placeholder={meta?.placeholder ?? 'Écrivez ce dont vous avez besoin…'}
           className="max-h-24 min-h-[24px] flex-1 resize-none bg-transparent py-1.5 text-[14px] leading-normal text-cp-txt outline-none focus-visible:outline-none placeholder:text-cp-faint" />
         <button data-accueil-envoyer onClick={() => value.trim() && onSubmit()} disabled={!value.trim() || occupe}
-          className="shrink-0 rounded-lg bg-cp-ia px-5 py-2.5 text-[13px] font-medium text-cp-ia-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+          className="shrink-0 rounded-lg bg-cp-ia px-5 py-2.5 text-[13px] font-medium text-cp-ia-on transition-[filter] duration-quick hover:brightness-110">
           {occupe ? '…' : 'Envoyer'}
         </button>
       </div>

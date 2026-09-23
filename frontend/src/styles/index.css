@@ -48,6 +48,15 @@
   --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
 }
 
+/* DA-FIX-1 Lot 2 (DA-017, DA-018) — DÉSACTIVÉ : une seule valeur d'opacité (0.4) et le curseur
+   not-allowed, partout. Pas de pointer-events:none (le curseur doit s'afficher). Aucun style de
+   survol sur un désactivé. Les classes `disabled:opacity-*` des .tsx sont retirées (elles
+   contrediraient cette règle globale). */
+@layer base {
+  :disabled, [aria-disabled="true"] { opacity: .4; cursor: not-allowed; }
+  :disabled:hover, [aria-disabled="true"]:hover { opacity: .4; }
+}
+
 /* ═══ LOI-0 (conservé) — labels/chiffres. Repointés sur les tokens DA. ═══ */
 @layer components {
   .label-caps { @apply text-[11px] font-medium uppercase tracking-[0.12em] text-lab; }

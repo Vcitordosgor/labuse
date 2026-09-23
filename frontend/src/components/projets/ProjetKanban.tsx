@@ -454,10 +454,10 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 {isProp && totalProp > PAGE && (
                   <div data-kanban-pagination className="flex shrink-0 items-center justify-center gap-3 border-t border-line-2 px-3.5 py-2 text-[11.5px] text-txt-dim">
                     <button disabled={page === 0 || etatQ.isFetching} onClick={() => setPage((p) => Math.max(0, p - 1))}
-                      className="text-txt-mut transition-colors duration-quick hover:text-txt disabled:opacity-30">← précéd.</button>
+                      className="text-txt-mut transition-colors duration-quick hover:text-txt">← précéd.</button>
                     <span>{PAGE} par page · page {page + 1} / {pages.toLocaleString('fr-FR')}</span>
                     <button data-kanban-suivante disabled={page + 1 >= pages || etatQ.isFetching} onClick={() => setPage((p) => p + 1)}
-                      className="text-mint transition-colors duration-quick hover:text-txt-hi disabled:opacity-30">suivante →</button>
+                      className="text-mint transition-colors duration-quick hover:text-txt-hi">suivante →</button>
                   </div>
                 )}
                 {col.key === 'retenue' && (etat?.counts?.retenue ?? 0) > 0 && (

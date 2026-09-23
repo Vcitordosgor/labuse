@@ -153,7 +153,7 @@ export function M22() {
               « sous condition » / « calibration en cours » annotées sur chaque parcelle. */}
           <DestinationSelect dataAttr="programme" value={dest} onChange={setDest} />
           <button onClick={() => lancer()} disabled={results.isLoading}
-            className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+            className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
             {results.isLoading ? 'Calcul…' : 'Trouver les parcelles'}
           </button>
           {results.isError && <p className="text-[11px] text-st-ecartee">Recherche indisponible — réessayez.</p>}

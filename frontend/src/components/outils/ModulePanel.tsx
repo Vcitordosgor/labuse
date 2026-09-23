@@ -133,7 +133,7 @@ function MoreButton({ q, loaded, total }: { q: { hasNextPage: boolean; isFetchin
   if (!q.hasNextPage) return null
   return (
     <button data-more onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage}
-      className="mt-1 min-h-8 shrink-0 rounded-lg border border-mint/40 py-1.5 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-40">
+      className="mt-1 min-h-8 shrink-0 rounded-lg border border-mint/40 py-1.5 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">
       {q.isFetchingNextPage ? 'Chargement…' : total != null ? `Voir plus — ${fmt(loaded)} / ${fmt(total)} chargés` : `Voir plus — ${fmt(loaded)} chargés`}
     </button>
   )
@@ -1417,7 +1417,7 @@ export function M09() {
           )}
           <p className="text-[10px] text-txt-dim">{dest.length} destinataire{dest.length > 1 ? 's' : ''} — un courrier par parcelle.</p>
           <button data-courrier-next onClick={() => dest.length && setStep(2)} disabled={dest.length === 0}
-            className="mt-auto rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">Rédiger ›</button>
+            className="mt-auto rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">Rédiger ›</button>
         </div>
       )}
 
@@ -1444,7 +1444,7 @@ export function M09() {
           <div className="flex gap-2">
             <button onClick={() => setStep(1)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Retour</button>
             <button data-courrier-next onClick={() => setStep(3)} disabled={!apercu.data || corps.trim().length < 10}
-              className="flex-1 rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">Vérifier l'envoi ›</button>
+              className="flex-1 rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">Vérifier l'envoi ›</button>
           </div>
         </div>
       )}
@@ -1488,7 +1488,7 @@ export function M09() {
 
           {!demande ? (
             <button data-courrier-demander onClick={() => envoyer.mutate()} disabled={envoyer.isPending || depotBloque || adressage.isLoading}
-              className="rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+              className="rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
               {envoyer.isPending ? 'Envoi de la demande…' : depotBloque ? 'Dépôt bloqué — voir les motifs' : "Demander l'envoi à LABUSE"}</button>
           ) : (
             // OUTILS-1 A4/B6 — la confirmation porte le N° DE DEMANDE et renvoie vers le suivi. AUCUN
@@ -1505,7 +1505,7 @@ export function M09() {
 
           {/* aperçu PDF de RELECTURE (secondaire) — corps rempli pour le 1er destinataire */}
           <button data-courrier-pdf onClick={apercuPdf} disabled={pdfBusy || dest.length === 0}
-            className="self-start text-[11px] text-txt-mut hover:text-mint disabled:opacity-40">
+            className="self-start text-[11px] text-txt-mut hover:text-mint">
             {pdfBusy ? 'Génération…' : '⬇ Télécharger l’aperçu PDF (relecture)'}</button>
           {pdfErr && <p data-courrier-pdf-err className="text-[10.5px] text-st-ecartee">{pdfErr}</p>}
 
@@ -1583,7 +1583,7 @@ export function M10() {
               placeholder={'97415000AC0253\nAC0254\nBK 63…'}
               className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[10.5px] text-txt focus:border-mint focus:outline-none" />
             <button data-diligence-add onClick={ajouterListe} disabled={!paste.trim()}
-              className="self-start rounded border border-mint/40 px-2 py-1 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-40">+ Ajouter la liste</button>
+              className="self-start rounded border border-mint/40 px-2 py-1 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">+ Ajouter la liste</button>
           </div>
         </details>
       </div>
@@ -1602,7 +1602,7 @@ export function M10() {
       <p className="text-[10px] text-txt-dim">{lot.length} référence{lot.length > 1 ? 's' : ''} dans le lot.</p>
 
       <button data-diligence-analyser onClick={() => lot.length && run.mutate()} disabled={lot.length === 0 || run.isPending}
-        className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+        className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
         {run.isPending ? 'Analyse…' : `Analyser le lot (${lot.length})`}
       </button>
       {run.data && (

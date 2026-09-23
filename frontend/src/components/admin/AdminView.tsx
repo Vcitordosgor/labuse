@@ -78,7 +78,7 @@ export function ActBtn({ children, onClick, tone = 'mint', disabled }: {
   }
   return (
     <button onClick={onClick} disabled={disabled}
-      className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors duration-quick disabled:opacity-40 ${tones[tone]}`}>
+      className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors duration-quick ${tones[tone]}`}>
       {children}
     </button>
   )

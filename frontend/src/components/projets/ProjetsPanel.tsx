@@ -117,7 +117,7 @@ function DedupBanner({ groupe }: { groupe: Projet[] }) {
         </div>
         {!res && (
           <button data-dedup-fusionner onClick={() => fusion.mutate()} disabled={fusion.isPending}
-            className="min-h-7 shrink-0 rounded-lg border border-mint px-3 py-1.5 text-[11px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-50">
+            className="min-h-7 shrink-0 rounded-lg border border-mint px-3 py-1.5 text-[11px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/10">
             {fusion.isPending ? 'Fusion…' : `Fusionner les ${groupe.length} →`}</button>
         )}
       </div>

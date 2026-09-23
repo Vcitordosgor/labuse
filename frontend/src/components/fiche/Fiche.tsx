@@ -111,7 +111,7 @@ function SignalerErreur({ idu, section }: { idu: string; section?: string | null
       </label>
       <div className="mt-2 flex items-center gap-2">
         <button data-signalement-submit onClick={() => m.mutate()} disabled={m.isPending}
-          className="rounded-md bg-mint px-3 py-1 text-xs font-medium text-mint-ink disabled:opacity-50">
+          className="rounded-md bg-mint px-3 py-1 text-xs font-medium text-mint-ink">
           {m.isPending ? 'Envoi…' : 'Envoyer'}
         </button>
         <button onClick={() => setOpen(false)} className="text-[11px] text-txt-mut hover:text-txt">Annuler</button>
@@ -358,7 +358,7 @@ function ProjetButton({ idu }: { idu: string }) {
           </div>
           <div className="my-1.5 h-px bg-line/40" />
           <button data-projet-fiche-nouveau disabled={nouveau.isPending} onClick={() => nouveau.mutate()}
-            className="hover-fill-amber flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-mint transition-colors duration-quick disabled:opacity-50"
+            className="hover-fill-amber flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-mint transition-colors duration-quick"
             >
             <span aria-hidden>＋</span><span className="flex-1">{nouveau.isPending ? 'Création…' : 'Nouveau projet avec cette parcelle'}</span>
           </button>

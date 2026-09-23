@@ -126,7 +126,7 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
           placeholder="Expliquez un point, un acronyme, ou trouvez une donnée…"
           className="min-w-0 flex-1 rounded-lg border border-violet/40 bg-surface-1 px-3 py-1.5 text-[12px] text-txt placeholder:text-txt-dim focus:border-violet focus:outline-none" />
         <button onClick={() => run(q)} disabled={ask.isPending || !q.trim()}
-          className="shrink-0 rounded-lg bg-violet px-3 py-1.5 text-[12px] font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+          className="shrink-0 rounded-lg bg-violet px-3 py-1.5 text-[12px] font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
           {ask.isPending ? '…' : 'Demander'}
         </button>
       </div>

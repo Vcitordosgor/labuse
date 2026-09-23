@@ -169,7 +169,7 @@ export function PluAnnuaire() {
                 placeholder={`dans ${nomInsee(insee)} — ex. hauteur de clôture`}
                 className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none" />
               <button onClick={run} disabled={q.trim().length < 2 || m.isPending}
-                className="shrink-0 whitespace-nowrap rounded-md border border-mint/50 bg-mint/15 px-3.5 py-1.5 text-[12px] font-medium text-mint disabled:opacity-40">
+                className="shrink-0 whitespace-nowrap rounded-md border border-mint/50 bg-mint/15 px-3.5 py-1.5 text-[12px] font-medium text-mint">
                 {m.isPending ? '…' : 'Chercher'}
               </button>
             </div>

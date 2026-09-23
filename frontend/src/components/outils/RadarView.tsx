@@ -239,7 +239,7 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
             {b.description && <p className="mt-1 text-[11px] leading-snug text-txt-mut">{b.description}</p>}
             {b.photos.length > 0 && <p className="mt-1 text-[10.5px] text-txt-dim">{b.photos.length} photo(s) confiée(s) par l’agence</p>}
             <button data-radar-interesse disabled={interesse} onClick={() => radarInteresse(b.bien_id).then(() => setInteresse(true)).catch(() => {})}
-              className="mt-2 w-full rounded-lg bg-mint py-2 text-[12.5px] font-semibold text-mint-on hover:brightness-110 disabled:opacity-60">
+              className="mt-2 w-full rounded-lg bg-mint py-2 text-[12.5px] font-semibold text-mint-on hover:brightness-110">
               {interesse ? '✓ L’agence a vos coordonnées' : 'Intéressé — être mis en relation'}
             </button>
           </div>
@@ -323,7 +323,7 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
         {/* 7. Signaler + note de doctrine */}
         <div className="flex flex-col gap-2 pt-0.5">
           <button disabled={signale} onClick={() => radarSignaler(bienId, 'annonce retirée / erreur').then(() => setSignale(true))}
-            className="text-center text-[11.5px] text-txt-mut underline decoration-dotted hover:text-txt disabled:opacity-60">
+            className="text-center text-[11.5px] text-txt-mut underline decoration-dotted hover:text-txt">
             {signale ? 'Signalé — merci, Victor va vérifier' : 'Signaler — annonce retirée ou erreur'}
           </button>
           <p className="text-center text-[10px] leading-relaxed text-txt-dim">{b.depose_par_agence

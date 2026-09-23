@@ -207,7 +207,7 @@ function IaRestitution() {
         <div className="mt-3 flex items-center gap-2 border-t border-line-2 pt-2.5">
           {projetId == null ? (
             <button data-projet-enregistrer onClick={() => enregistrer.mutate()} disabled={enregistrer.isPending}
-              className="rounded-lg bg-mint px-3 py-1.5 text-[11px] font-semibold text-mint-ink hover:brightness-110 disabled:opacity-50">
+              className="rounded-lg bg-mint px-3 py-1.5 text-[11px] font-semibold text-mint-ink hover:brightness-110">
               {enregistrer.isPending ? 'Enregistrement…' : `Enregistrer « ${projet.nom} »`}
             </button>
           ) : (

@@ -287,7 +287,7 @@ export function Blocs() {
         </details>
         <button data-blocs-courrier disabled={idusCourrier.length === 0}
           onClick={() => { setCourrierPrefillIdus(idusCourrier); setModule('courriers'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}
-          className="mt-1.5 shrink-0 rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-40">
+          className="mt-1.5 shrink-0 rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
           ✉ Préparer les courriers ({idusCourrier.length}) →
         </button>
       </div>

@@ -486,11 +486,11 @@ function NotifBell() {
                       {/* BRIEF — canal du matin, applicable aux chaînes 1+2 seulement (chaîne 3 = immédiat → grisé). */}
                       <input type="checkbox" checked={t.brief && !t.brief_na} disabled={t.brief_na} aria-label={`${t.label} — brief`} data-pref={`${t.key}-brief`}
                         onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: t.cloche, email: t.email, brief: e.target.checked })}
-                        className="mx-auto h-3.5 w-3.5 accent-mint disabled:opacity-30" />
+                        className="mx-auto h-3.5 w-3.5 accent-mint" />
                       {/* M85-B — maintenance : e-mail VERROUILLÉ (non désactivable, conséquences réelles). */}
                       <input type="checkbox" checked={t.email} disabled={t.verrou} aria-label={`${t.label} — e-mail`} data-pref={`${t.key}-email`}
                         onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: t.cloche, email: e.target.checked, brief: t.brief })}
-                        className="mx-auto h-3.5 w-3.5 accent-mint disabled:opacity-40" />
+                        className="mx-auto h-3.5 w-3.5 accent-mint" />
                     </Fragment>
                   ))}
                 </div>
@@ -597,7 +597,7 @@ function MarqueForm() {
       <input className={field} placeholder="Coordonnées (tél, email…)" value={vCo} onChange={(e) => setCo(e.target.value)} />
       <input className={field} placeholder="Mention libre (bas de page)" value={vMe} onChange={(e) => setMe(e.target.value)} />
       <button data-marque-save disabled={save.isPending} onClick={() => save.mutate()}
-        className="mt-0.5 rounded-md bg-mint py-1.5 text-[12px] font-medium text-mint-ink hover:brightness-110 disabled:opacity-50">
+        className="mt-0.5 rounded-md bg-mint py-1.5 text-[12px] font-medium text-mint-ink hover:brightness-110">
         {save.isSuccess && rs === null ? '✓ Enregistré' : save.isPending ? 'Enregistrement…' : 'Enregistrer'}
       </button>
       <p className="text-[10px] leading-snug text-txt-dim">Apparaît sur vos documents brandés (Dossier, briques PDF). Champs vides = rien ne s’imprime.</p>
@@ -787,7 +787,7 @@ function SignalerButton() {
             <div className="mt-2 flex items-center justify-between">
               <span className="text-[10px] text-txt-mut">Transmis avec votre licence — jamais anonyme.</span>
               <button data-retour-envoyer onClick={envoyer} disabled={msg.trim().length < 3 || busy}
-                className="rounded-md border border-mint/40 bg-mint/10 px-3 py-1.5 text-xs text-mint transition-colors duration-quick disabled:opacity-40">
+                className="rounded-md border border-mint/40 bg-mint/10 px-3 py-1.5 text-xs text-mint transition-colors duration-quick">
                 {busy ? 'Envoi…' : 'Envoyer'}
               </button>
             </div>

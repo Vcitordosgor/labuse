@@ -72,7 +72,7 @@ export function CollecteProgrammes({ sirenFixe, nomFixe, onValide }: {
           )}
           <input data-prog-url value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…/nos-programmes" className={`min-w-[240px] flex-1 ${inp}`} />
           <button data-prog-collecter onClick={() => { setBilan(null); setMotif(null); collecte.mutate() }} disabled={!url || collecte.isPending}
-            className="h-8 rounded-md border border-mint/40 bg-mint/10 px-3 text-[12px] font-medium text-mint disabled:opacity-40">
+            className="h-8 rounded-md border border-mint/40 bg-mint/10 px-3 text-[12px] font-medium text-mint">
             {collecte.isPending ? 'Lecture…' : 'Collecter'}
           </button>
         </div>
@@ -100,7 +100,7 @@ export function CollecteProgrammes({ sirenFixe, nomFixe, onValide }: {
             ))}
           </div>
           <button data-prog-valider onClick={() => validation.mutate()} disabled={validation.isPending || !lignes.some((l) => l.garder && l.nom.trim())}
-            className="mt-3 h-8 rounded-md border border-mint/40 bg-mint/15 px-3 text-[12px] font-semibold text-mint disabled:opacity-40">
+            className="mt-3 h-8 rounded-md border border-mint/40 bg-mint/15 px-3 text-[12px] font-semibold text-mint">
             {validation.isPending ? 'Enregistrement…' : `Valider ${lignes.filter((l) => l.garder && l.nom.trim()).length} programme(s)`}
           </button>
         </section>

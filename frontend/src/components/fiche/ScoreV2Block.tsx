@@ -74,7 +74,7 @@ export function ScoreV2Block({ idu }: { idu: string }) {
           Score momentanément indisponible — le reste de la fiche n'est pas affecté.
         </p>
         <button onClick={() => refetch()} disabled={isFetching}
-          className="mt-2 rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:border-mint hover:text-txt-hi disabled:opacity-40">
+          className="mt-2 rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:border-mint hover:text-txt-hi">
           {isFetching ? 'Nouvel essai…' : 'Réessayer'}
         </button>
       </div>

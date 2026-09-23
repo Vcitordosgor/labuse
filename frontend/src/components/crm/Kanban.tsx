@@ -184,7 +184,7 @@ function DeleteColumnDialog({ col, others, onCancel, onConfirm }: {
           <button
             onClick={() => onConfirm(populated > 0 ? (target === '' ? null : target) : null)}
             disabled={populated > 0 && target === ''}
-            className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee disabled:opacity-40"
+            className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee"
           >Supprimer</button>
         </div>
       </div>
@@ -271,7 +271,7 @@ function CardEditPanel({ e, meta, onCancel, onSave, onMove, saving }: {
         <div className="flex justify-end gap-2 border-t border-line-2 px-5 py-3">
           <button onClick={onCancel} className="rounded-md px-3 py-1.5 text-[12px] text-txt-dim hover:text-txt">Annuler</button>
           <button onClick={submit} disabled={saving}
-            className="rounded-md bg-mint px-3 py-1.5 text-[12px] font-medium text-mint-ink hover:brightness-110 disabled:opacity-40">
+            className="rounded-md bg-mint px-3 py-1.5 text-[12px] font-medium text-mint-ink hover:brightness-110">
             {saving ? '…' : 'Enregistrer'}</button>
         </div>
       </div>
@@ -474,7 +474,7 @@ export function Kanban() {
               <button
                 onClick={() => setWinStart((s) => Math.max(0, Math.min(s, maxStart) - 1))}
                 disabled={start === 0}
-                className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-txt-dim hover:border-mint hover:text-mint disabled:opacity-25"
+                className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-txt-dim hover:border-mint hover:text-mint"
                 aria-label="Colonnes précédentes">‹</button>
               <span className="whitespace-nowrap font-mono text-[10.5px] text-txt-mut">
                 {start + 1}–{Math.min(start + COLS_PAR_VUE, cols.length)} / {cols.length}
@@ -482,7 +482,7 @@ export function Kanban() {
               <button
                 onClick={() => setWinStart((s) => Math.min(maxStart, Math.min(s, maxStart) + 1))}
                 disabled={start >= maxStart}
-                className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-txt-dim hover:border-mint hover:text-mint disabled:opacity-25"
+                className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-txt-dim hover:border-mint hover:text-mint"
                 aria-label="Colonnes suivantes">›</button>
             </span>
           )}
@@ -503,7 +503,7 @@ export function Kanban() {
                     aria-label="Nom de la nouvelle colonne"
                   />
                   <button onClick={commitAdd} disabled={!newColLabel.trim() || addCol.isPending}
-                    className="rounded-md bg-mint px-2 py-1 text-[11px] font-medium text-mint-ink hover:brightness-110 disabled:opacity-40"
+                    className="rounded-md bg-mint px-2 py-1 text-[11px] font-medium text-mint-ink hover:brightness-110"
                     >{addCol.isPending ? '…' : 'Ajouter'}</button>
                   <button onClick={() => { setAdding(false); setNewColLabel('') }}
                     className="rounded-md px-2 py-1 text-[11px] text-txt-dim hover:text-txt">Annuler</button>
@@ -580,15 +580,15 @@ export function Kanban() {
                 {editMode && (
                   <span className="ml-auto flex shrink-0 items-center gap-0.5">
                     <button onClick={() => moveCol(idx, -1)} disabled={idx === 0}
-                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-txt disabled:opacity-25"
+                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-txt"
                       aria-label="Déplacer la colonne à gauche">←</button>
                     <button onClick={() => moveCol(idx, 1)} disabled={idx === cols.length - 1}
-                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-txt disabled:opacity-25"
+                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-txt"
                       aria-label="Déplacer la colonne à droite">→</button>
                     <button
                       onClick={() => setPendingDelete(withCounts[idx])}
                       disabled={cols.length <= 1}
-                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-st-ecartee disabled:opacity-25"
+                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-st-ecartee"
                       aria-label="Supprimer la colonne">✕</button>
                   </span>
                 )}
@@ -636,7 +636,7 @@ export function Kanban() {
               <button onClick={() => setConfirmReset(false)}
                 className="rounded-md px-3 py-1.5 text-[12px] text-txt-dim hover:text-txt">Annuler</button>
               <button onClick={() => resetCols.mutate()} disabled={resetCols.isPending}
-                className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee disabled:opacity-40">
+                className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee">
                 {resetCols.isPending ? '…' : 'Réinitialiser'}</button>
             </div>
           </div>
@@ -668,7 +668,7 @@ export function Kanban() {
               <button onClick={() => setPendingArchive(null)}
                 className="rounded-md px-3 py-1.5 text-[12px] text-txt-dim hover:text-txt">Annuler</button>
               <button onClick={() => archive.mutate(pendingArchive.id)} disabled={archive.isPending}
-                className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee disabled:opacity-40">
+                className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee">
                 {archive.isPending ? '…' : 'Archiver'}</button>
             </div>
           </div>
@@ -693,7 +693,7 @@ export function Kanban() {
                     <div className="truncate text-[10.5px] text-txt-mut">{e.parcel.commune}</div>
                   </div>
                   <button onClick={() => restore.mutate(e.id)} disabled={restore.isPending}
-                    className="shrink-0 rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt hover:border-mint hover:text-mint disabled:opacity-40">
+                    className="shrink-0 rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt hover:border-mint hover:text-mint">
                     Restaurer</button>
                 </div>
               ))}

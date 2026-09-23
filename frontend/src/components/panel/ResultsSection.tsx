@@ -292,7 +292,7 @@ export function SegmentList({ segKey, rows, serverTotal, commune, serverHasMore,
         </p>
         {serverTotal > 0 && serverHasMore && (
           <button data-segment-more={segKey} onClick={onServerMore} disabled={serverLoading}
-            className="px-3 py-1.5 text-left text-[10.5px] text-txt-dim hover:text-mint disabled:opacity-60">
+            className="px-3 py-1.5 text-left text-[10.5px] text-txt-dim hover:text-mint">
             0 sur {fmt(serverTotal)} affichées — charger plus de résultats →
           </button>
         )}
@@ -309,7 +309,7 @@ export function SegmentList({ segKey, rows, serverTotal, commune, serverHasMore,
           <span data-pagination-count><b className="text-txt">{fmt(rows.length)} sur {fmt(serverTotal)}</b> affichées</span>
           {serverHasMore && (
             <button data-segment-more={segKey} onClick={onServerMore} disabled={serverLoading}
-              className="text-mint hover:underline disabled:opacity-60">
+              className="text-mint hover:underline">
               {serverLoading ? 'Chargement…' : `Voir ${fmt(Math.min(RESULTS_PAGE, serverTotal - rows.length))} de plus`}
             </button>
           )}
@@ -326,7 +326,7 @@ export function SegmentList({ segKey, rows, serverTotal, commune, serverHasMore,
       {/* mode île : la fenêtre client est épuisée mais le serveur a d'autres pages du segment */}
       {segmentOffreChargerPlus(pg.shown, rows.length, serverTotal, serverHasMore) && (
         <button data-segment-more={segKey} onClick={onServerMore} disabled={serverLoading}
-          className="px-3 py-1.5 text-left text-[10.5px] text-txt-dim hover:text-mint disabled:opacity-60">
+          className="px-3 py-1.5 text-left text-[10.5px] text-txt-dim hover:text-mint">
           {fmt(rows.length)} sur {fmt(serverTotal)} affichées — charger plus de résultats →
         </button>
       )}
@@ -445,7 +445,7 @@ function AnalyseBandeGroup({ groupe, label, color, total, filters, commune, sign
           {(q.hasNextPage ?? false) && (
             <div data-pagination className="flex flex-wrap items-center gap-3 border-t border-line pt-2 text-[11px] text-txt-mut">
               <span><b className="text-txt">{fmt(rows.length)} sur {fmt(total)}</b> affichées</span>
-              <button onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage} className="text-mint hover:underline disabled:opacity-60">
+              <button onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage} className="text-mint hover:underline">
                 {q.isFetchingNextPage ? 'Chargement…' : `Voir ${fmt(Math.min(RESULTS_PAGE, total - rows.length))} de plus`}
               </button>
             </div>
@@ -852,14 +852,14 @@ export function ResultsSection() {
           {analyse ? (
             (analyseList.hasNextPage ?? false) && (
               <button data-results-more onClick={() => analyseList.fetchNextPage()} disabled={analyseList.isFetchingNextPage}
-                className="text-xs text-mint hover:underline disabled:opacity-50">
+                className="text-xs text-mint hover:underline">
                 {analyseList.isFetchingNextPage ? 'Chargement…' : `Voir ${fmt(RESULTS_PAGE)} de plus →`}
               </button>
             )
           ) : ile ? (
             serverList.hasNextPage && (
               <button data-results-more onClick={() => serverList.fetchNextPage()} disabled={serverList.isFetchingNextPage}
-                className="text-xs text-mint hover:underline disabled:opacity-50">
+                className="text-xs text-mint hover:underline">
                 {serverList.isFetchingNextPage ? 'Chargement…' : `Voir ${fmt(RESULTS_PAGE)} de plus →`}
               </button>
             )
