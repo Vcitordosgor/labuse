@@ -318,10 +318,10 @@ zones:
     - 'UC 2.2, 1° (p. 28) : régime restrictif propre aux cinquante pas géométriques (mêmes termes qu''en UA).'
     - 'UC 2.2, 2° (p. 29) : activités admises sous réserve d''absence d''incommodité/aggravation des risques pour
       le voisinage.'
-  UC:
-    renvoi: Uc
-    renvoi_src: Le règlement ne connaît qu'une seule zone UC (sommaire p. 3, « ZONE UC …26 » ; corps p. 28) ; le
-      doublon UC/Uc est une variation de casse des codes GPU, pas une zone distincte du règlement.
+    - "PLU-CALIBRAGE-8 : le doublon de casse UC/Uc du GPU désigne une seule et même zone (sommaire p. 3, « ZONE
+      UC …26 » ; corps p. 28). L'ancien bloc `UC: renvoi: Uc` a été retiré : les clés de zone étant normalisées
+      sans casse, ce renvoi masquait les règles de `Uc` et se renvoyait à lui-même → zone `Uc` (1 565 parcelles)
+      rendue non calibrée. `Uc` porte désormais seule ses règles."
   Ud:
     regles:
       hauteur:
