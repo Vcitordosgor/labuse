@@ -67,6 +67,9 @@ def ensure_tables(engine) -> None:
                 cree_at      timestamptz NOT NULL DEFAULT now(),
                 parti_at     timestamptz             -- date de DÉPART réel (2xx)
             )"""))
+        # COMPTE-3 (Lot 2) — avertissement figé à l'enfilage si l'URL de base des liens n'est pas
+        # cliquable par un client distant (localhost). Colonne ajoutée en place (table existante).
+        c.execute(text("ALTER TABLE mail_queue ADD COLUMN IF NOT EXISTS avert text"))
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_mail_queue_etat_cree ON mail_queue(etat, cree_at DESC)"))
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_mail_queue_compte ON mail_queue(compte_id, cree_at DESC)"))
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_mail_queue_dedup ON mail_queue(dedup, cree_at DESC)"))
@@ -111,6 +114,11 @@ def enfiler(engine, *, key: str, to: str, params: dict | None = None,
         raise ValueError(f"template inconnu « {key} » (ni template Brevo, ni mail brut `__raw`)")
     tnom = (t.nom if t else (raw.get("nom") if isinstance(raw, dict) else None) or key)[:48]
     dd = dedup or f"{compte_id}:{key}:{_params_hash(params)}"
+    # COMPTE-3 (Lot 2) — on FIGE ici l'état de l'URL de base : si les liens ne sont pas cliquables par
+    # un destinataire distant (localhost / URL absente), l'entrée porte l'avertissement — visible dans
+    # l'onglet Mails. L'envoi n'est jamais bloqué (Vic teste en local), mais la file ne peut pas le cacher.
+    from . import config as _config
+    avert = _config.base_url_probleme()
     with engine.begin() as c:
         # anti-doublon : même dedup, état non-échec, créé dans la fenêtre → on rend l'existant.
         recent = c.execute(text(
@@ -121,12 +129,12 @@ def enfiler(engine, *, key: str, to: str, params: dict | None = None,
             return {**_ligne(recent), "doublon": True}
         row = c.execute(text(
             "INSERT INTO mail_queue (compte_id, mail_key, template_id, template_nom, destinataire,"
-            " params, demandeur, dedup, prevu_at) VALUES"
-            " (:cid, :key, :tid, :tn, :to, CAST(:p AS jsonb), :who, :dd, :prevu) RETURNING *"),
+            " params, demandeur, dedup, prevu_at, avert) VALUES"
+            " (:cid, :key, :tid, :tn, :to, CAST(:p AS jsonb), :who, :dd, :prevu, :avert) RETURNING *"),
             {"cid": compte_id, "key": key, "tid": (brevo.template_id(key) if t else None),
              "tn": tnom, "to": to,
              "p": json.dumps(params, ensure_ascii=False), "who": demandeur[:64], "dd": dd,
-             "prevu": prevu_at}).mappings().first()
+             "prevu": prevu_at, "avert": avert}).mappings().first()
     _journal(engine, row["id"], "en_attente", demandeur, compte_id,
              detail=f"{key} → {to}" + (f" (prévu {prevu_at.isoformat()})" if prevu_at else ""))
     return {**_ligne(row), "doublon": False}

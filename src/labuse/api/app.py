@@ -744,8 +744,20 @@ def readyz(request: Request, commune: str | None = None):
         _sch["heal_failed"] = [f.get("module") for f in heal.get("failures", [])]
         st["schema"] = _sch
         st["heal"] = {"ok": False, "failures": heal.get("failures", [])}
+    # COMPTE-3 (Lot 2) — expose l'URL de base des liens de mails et son verdict (garde localhost).
+    # Détail complet quand la session est ouverte (ou local) ; NOM D'HÔTE SEUL pour une sonde externe
+    # en prod (on ne divulgue pas l'URL complète à un anonyme).
+    _base = config.get_settings().public_base_url or ""
+    _liens_ok = config.base_url_probleme() is None
     if auth.enabled() and not auth.token_ok(request.cookies.get(auth.COOKIE)):
-        st = {"ready": st["ready"], "checked_at": st["checked_at"]}
+        from urllib.parse import urlparse
+        host = urlparse(_base).hostname or _base
+        st = {"ready": st["ready"], "checked_at": st["checked_at"],
+              "mail_liens": {"host": host, "ok": _liens_ok}}
+    else:
+        st = dict(st)
+        st["mail_liens"] = {"base_url": _base, "ok": _liens_ok,
+                            "avert": config.base_url_probleme()}
     return JSONResponse(status_code=200 if st.get("ready") else 503, content=st)
 
 

@@ -1533,6 +1533,8 @@ export interface AdminLicences {
   // COMPTE-2 (Lot 3) — compteurs SERVIS par le backend (source unique) : licences actives + masqués.
   compteurs?: { licences_actives: number; masques: number; visibles: number }
   partage_seuil: number
+  // COMPTE-3 (Lot 2) — garde sur l'URL de base des liens de mails : bandeau rouge si non cliquable.
+  mail_liens?: { base_url: string | null; ok: boolean; avert: string | null }
 }
 // ADMIN-1 (AD4) — aperçu du mail réel (template Brevo rendu avec les variables du compte) avant Envoyer.
 export interface MailApercu {
@@ -1577,6 +1579,9 @@ export const postAdminLicenceCreerEssai = (body: { email: string; nom?: string; 
   j<{ ok: boolean; lien: string; compte_id: number; heures: number; essai_expire_at: string }>('/admin/licences/creer-essai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const postAdminLicenceConvertir = (compteId: number) =>
   j<{ ok: boolean; detail: string }>(`/admin/licences/${compteId}/convertir`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+// COMPTE-3 (Lot 1) — prolonger un essai : la modale convertit la date de fin choisie en `heures` (1–720).
+export const postAdminLicenceProlonger = (compteId: number, heures: number) =>
+  j<{ ok: boolean; essai_expire_at: string; heures: number; detail: string }>(`/admin/licences/${compteId}/prolonger`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ heures }) })
 export const postAdminSuspendre = (compteId: number) =>
   j<{ ok: boolean }>(`/admin/licences/${compteId}/suspendre`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const postAdminRetablir = (compteId: number) =>
@@ -1592,6 +1597,8 @@ export interface MailLigne {
   etat: string; etat_libelle: string; demandeur: string; tentatives: number
   message_id: string | null; erreur: string | null; cree_at: string | null; parti_at: string | null
   params: Record<string, unknown>
+  // COMPTE-3 (Lot 2) — avertissement figé à l'enfilage (URL de base des liens non cliquable).
+  avert?: string | null
 }
 export const getAdminMails = (compteId: number) =>
   j<{ lignes: MailLigne[]; compteurs: unknown }>(`/admin/mails?compte_id=${compteId}`)
