@@ -106,7 +106,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
   // ── projet créé ──
   if (cree) {
     return (
-      <div data-parcours-projet-cree style={{ background: '#0C1410', border: `.5px solid ${A.c}`, borderRadius: 12, padding: 24 }}>
+      <div data-parcours-projet-cree style={{ background: '#0C1410', border: `.5px solid ${A.c}`, borderRadius: 6, padding: 24 }}>
         <p style={{ fontSize: 16, color: '#ECF5EF', margin: '0 0 8px' }}>
           Projet créé : <b>{cree.nom}</b>{cree.existing ? ' (il existait déjà)' : ''}.
         </p>
@@ -124,8 +124,8 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
         )}
         <div style={{ display: 'flex', gap: 12 }}>
           <button data-projet-voir onClick={() => onVoir({ id: cree.id, nom: cree.nom })}
-            style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer' }}>Voir le projet →</button>
-          <button onClick={onFermer} style={{ padding: '9px 18px', background: 'none', border: '.5px solid #1E2A23', color: '#8FA69A', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>Fermer</button>
+            style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 6, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer' }}>Voir le projet →</button>
+          <button onClick={onFermer} style={{ padding: '9px 18px', background: 'none', border: '.5px solid #1E2A23', color: '#8FA69A', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Fermer</button>
         </div>
       </div>
     )
@@ -135,14 +135,14 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
   if (porte === null) {
     const Porte = ({ k, titre, desc, on }: { k: 'vivier' | 'zero'; titre: string; desc: string; on: boolean }) => (
       <button data-projet-porte={k} onClick={() => { setPorte(k); setEtape(0) }}
-        style={{ textAlign: 'left', borderRadius: 12, padding: 18, cursor: 'pointer',
+        style={{ textAlign: 'left', borderRadius: 6, padding: 18, cursor: 'pointer',
           border: on ? `.5px solid ${A.c}` : '.5px solid #2A3A31', background: on ? A.bg : 'transparent' }}>
         <b style={{ fontSize: 15, color: '#ECF5EF' }}>{titre}</b>
         <p style={{ fontSize: 12.5, color: '#8FA69A', marginTop: 4 }}>{desc}</p>
       </button>
     )
     return (
-      <div data-parcours-projet-porte style={{ background: '#0C1410', border: `.5px solid ${A.c}`, borderRadius: 12, padding: 24 }}>
+      <div data-parcours-projet-porte style={{ background: '#0C1410', border: `.5px solid ${A.c}`, borderRadius: 6, padding: 24 }}>
         <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.12em', color: A.c, marginBottom: 6 }}>NOUVEAU PROJET</div>
         <h2 style={{ fontSize: 22, fontWeight: 500, color: '#ECF5EF', margin: '0 0 16px' }}>Comment démarrer ?</h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -161,25 +161,25 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
   // ── PORTE « de zéro » : formulaire minimal (nom + contexte) → projet vide ──
   if (porte === 'zero') {
     return (
-      <div data-parcours-projet-zero style={{ background: '#0C1410', border: `.5px solid ${A.c}`, borderRadius: 12, padding: 24 }}>
+      <div data-parcours-projet-zero style={{ background: '#0C1410', border: `.5px solid ${A.c}`, borderRadius: 6, padding: 24 }}>
         <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.12em', color: A.c, marginBottom: 6 }}>PROJET DE ZÉRO</div>
         <h2 style={{ fontSize: 22, fontWeight: 500, color: '#ECF5EF', margin: '0 0 4px' }}>Un dossier vide.</h2>
         <p style={{ fontSize: 13.5, color: '#8FA69A', margin: '0 0 18px' }}>Nommez-le ; ajoutez vos parcelles depuis leurs fiches (bouton « Projet ») — elles arrivent dans <b style={{ color: '#C9DCD1' }}>Retenues</b>.</p>
         <input data-projet-nom autoFocus value={nom} onChange={(e) => setNom(e.target.value)} placeholder={`Ex. ${nomEffectif}`}
-          style={{ width: '100%', height: 48, background: '#060A08', border: '.5px solid #2A3A31', borderRadius: 8, padding: '0 14px', fontSize: 18, color: '#ECF5EF', outline: 'none', marginBottom: 12 }} />
+          style={{ width: '100%', height: 48, background: '#060A08', border: '.5px solid #2A3A31', borderRadius: 6, padding: '0 14px', fontSize: 18, color: '#ECF5EF', outline: 'none', marginBottom: 12 }} />
         <input data-projet-budget type="number" min="0" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="Budget foncier en € (facultatif, indicatif)"
-          style={{ width: '100%', height: 44, background: '#060A08', border: '.5px solid #2A3A31', borderRadius: 8, padding: '0 14px', fontSize: 15, color: '#ECF5EF', outline: 'none' }} />
+          style={{ width: '100%', height: 44, background: '#060A08', border: '.5px solid #2A3A31', borderRadius: 6, padding: '0 14px', fontSize: 15, color: '#ECF5EF', outline: 'none' }} />
         {erreur && <p style={{ fontSize: 12, color: '#E0B341', margin: '12px 0 0' }}>{erreur}</p>}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 18, marginTop: 18, borderTop: '.5px solid #1E2A23' }}>
           <button onClick={() => setPorte(null)} style={{ fontSize: 13, color: '#6F8578', background: 'none', border: 0, cursor: 'pointer' }}>← Retour</button>
           <button data-projet-creer-zero disabled={envoi} onClick={() => void creer(true)}
-            style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: envoi ? 0.4 : 1 }}>{envoi ? 'Création…' : 'Créer le projet vide'}</button>
+            style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 6, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: envoi ? 0.4 : 1 }}>{envoi ? 'Création…' : 'Créer le projet vide'}</button>
         </div>
       </div>
     )
   }
 
-  const champ = { width: '100%', height: 52, background: '#060A08', border: '.5px solid #2A3A31', borderRadius: 8, padding: '0 16px', fontSize: 22, color: '#ECF5EF', outline: 'none' } as const
+  const champ = { width: '100%', height: 52, background: '#060A08', border: '.5px solid #2A3A31', borderRadius: 6, padding: '0 16px', fontSize: 22, color: '#ECF5EF', outline: 'none' } as const
   const QUESTIONS = [
     ['Quel nom pour ce projet ?', 'Facultatif — un nom vous aide à le retrouver.'],
     ['Sur quel périmètre ?', 'Une ou plusieurs communes, ou toute l’île.'],
@@ -200,7 +200,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
 
   return (
     <div data-parcours-projet ref={rootRef} tabIndex={-1} onKeyDown={onKey}
-      style={{ background: '#0C1410', border: `.5px solid ${A.c}`, borderRadius: 12, padding: 24, outline: 'none' }}>
+      style={{ background: '#0C1410', border: `.5px solid ${A.c}`, borderRadius: 6, padding: 24, outline: 'none' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.12em', color: A.c }}>NOUVEAU PROJET</div>
         <div data-parcours-step style={{ fontFamily: MONO, fontSize: 12, color: '#5F7267' }}>{etape + 1} / {N} · {ETAPES[etape]}</div>
@@ -222,9 +222,9 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
         <div style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
             <button data-projet-ile onClick={() => setIle(true)}
-              style={{ padding: '9px 18px', borderRadius: 8, fontSize: 14, cursor: 'pointer', border: ile ? `.5px solid ${A.c}` : '.5px solid #1E2A23', background: ile ? A.bg : 'transparent', color: ile ? A.c : '#8FA69A' }}>Toute l’île</button>
+              style={{ padding: '9px 18px', borderRadius: 6, fontSize: 14, cursor: 'pointer', border: ile ? `.5px solid ${A.c}` : '.5px solid #1E2A23', background: ile ? A.bg : 'transparent', color: ile ? A.c : '#8FA69A' }}>Toute l’île</button>
             <button data-projet-communes-mode onClick={() => setIle(false)}
-              style={{ padding: '9px 18px', borderRadius: 8, fontSize: 14, cursor: 'pointer', border: !ile ? `.5px solid ${A.c}` : '.5px solid #1E2A23', background: !ile ? A.bg : 'transparent', color: !ile ? A.c : '#8FA69A' }}>Communes précises</button>
+              style={{ padding: '9px 18px', borderRadius: 6, fontSize: 14, cursor: 'pointer', border: !ile ? `.5px solid ${A.c}` : '.5px solid #1E2A23', background: !ile ? A.bg : 'transparent', color: !ile ? A.c : '#8FA69A' }}>Communes précises</button>
           </div>
           {!ile && (
             <div data-projet-communes style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 220, overflowY: 'auto' }}>
@@ -232,7 +232,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
                 const on = communes.includes(nomC)
                 return (
                   <button key={cp} onClick={() => setCommunes(on ? communes.filter((x) => x !== nomC) : [...communes, nomC])}
-                    style={{ padding: '6px 12px', borderRadius: 999, fontSize: 12, cursor: 'pointer', border: on ? `.5px solid ${A.c}` : '.5px solid #1E2A23', background: on ? A.bg : '#080D0A', color: on ? A.c : '#8FA69A' }}>{nomC}</button>
+                    style={{ padding: '6px 12px', borderRadius: 9999, fontSize: 12, cursor: 'pointer', border: on ? `.5px solid ${A.c}` : '.5px solid #1E2A23', background: on ? A.bg : '#080D0A', color: on ? A.c : '#8FA69A' }}>{nomC}</button>
                 )
               })}
             </div>
@@ -249,7 +249,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
               const on = type === t.cle
               return (
                 <button key={t.cle} onClick={() => setType(on ? '' : t.cle)}
-                  style={{ padding: '9px 16px', borderRadius: 8, fontSize: 14, cursor: 'pointer', border: on ? `.5px solid ${A.c}` : '.5px solid #1E2A23', background: on ? A.bg : 'transparent', color: on ? A.c : '#8FA69A' }}>{t.libelle}</button>
+                  style={{ padding: '9px 16px', borderRadius: 6, fontSize: 14, cursor: 'pointer', border: on ? `.5px solid ${A.c}` : '.5px solid #1E2A23', background: on ? A.bg : 'transparent', color: on ? A.c : '#8FA69A' }}>{t.libelle}</button>
               )
             })}
           </div>
@@ -265,7 +265,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
         </div>
       )}
       {etape === 4 && (
-        <div data-projet-recap style={{ marginBottom: 28, border: '.5px solid #1E2A23', background: '#080D0A', borderRadius: 8, padding: '16px 18px' }}>
+        <div data-projet-recap style={{ marginBottom: 28, border: '.5px solid #1E2A23', background: '#080D0A', borderRadius: 6, padding: '16px 18px' }}>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#ECF5EF' }}>
             <li><span style={{ color: '#6F8578' }}>Périmètre : </span>{perimetreLabel}</li>
             {/* OUTILS-5 (P3) — le VRAI chiffre du vivier, classé (plus « N facettes ») + « pourquoi ? ». */}
@@ -289,10 +289,10 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
           <span style={{ fontFamily: MONO, fontSize: 12, color: '#4A5C52' }}>↵ POUR CONTINUER</span>
           {etape < N - 1 ? (
             <button data-projet-suivant onClick={avancer}
-              style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer' }}>Continuer →</button>
+              style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 6, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer' }}>Continuer →</button>
           ) : (
             <button data-projet-creer disabled={envoi} onClick={() => void creer()}
-              style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 8, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: envoi ? 0.4 : 1 }}>
+              style={{ padding: '9px 18px', background: A.c, color: A.on, borderRadius: 6, fontSize: 14, fontWeight: 500, border: 0, cursor: 'pointer', opacity: envoi ? 0.4 : 1 }}>
               {envoi ? 'Création…' : 'Créer le projet'}</button>
           )}
         </div>

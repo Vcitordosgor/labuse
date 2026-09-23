@@ -191,7 +191,7 @@ const FactNote = ({ children }: { children: ReactNode }) => <p className="f-note
 const MicroJauge = ({ pct, label, tip }: { pct: number; label: string; tip?: string }) => {
   const body = (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <div style={{ flex: 1, height: 4, background: REF.barTrack, borderRadius: 2, overflow: 'hidden' }}>
+      <div style={{ flex: 1, height: 4, background: REF.barTrack, borderRadius: 4, overflow: 'hidden' }}>
         <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: 4, background: REF.barFill }} />
       </div>
       <span style={{ fontSize: 11, color: REF.dim, whiteSpace: 'nowrap', ...(tip ? { cursor: 'help', borderBottom: '1px dotted #5f7568' } : {}) }}>{label}</span>
@@ -203,7 +203,7 @@ const MicroSegments = ({ n, label }: { n: number; label: string }) => (
   <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
     <span style={{ fontSize: 11, color: REF.dim, marginRight: 2, whiteSpace: 'nowrap' }}>{label}</span>
     {Array.from({ length: Math.max(1, Math.min(12, n)) }).map((_, i) => (
-      <span key={i} style={{ flex: 1, height: 4, background: REF.seg, borderRadius: 2 }} />
+      <span key={i} style={{ flex: 1, height: 4, background: REF.seg, borderRadius: 4 }} />
     ))}
   </div>
 )

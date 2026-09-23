@@ -80,7 +80,7 @@ function ProjetRow({ p }: { p: Projet }) {
       </div>
       {/* centre : la barre + son libellé sous elle */}
       <div>
-        <div data-projet-barre style={{ height: 6, background: '#161C18', borderRadius: 3, overflow: 'hidden', marginBottom: 5 }}>
+        <div data-projet-barre style={{ height: 6, background: '#161C18', borderRadius: 4, overflow: 'hidden', marginBottom: 5 }}>
           {pct > 0 && <div style={{ height: '100%', width: `${pct}%`, background: '#4ADE80' }} />}
         </div>
         <div style={{ fontSize: 11.5, color: '#6F8578' }}>{barLabel}</div>
@@ -142,7 +142,7 @@ function parTravail(a: Projet, b: Projet): number {
   return act(b) - act(a)
 }
 
-const btnPlein = { padding: '9px 18px', background: '#4ADE80', color: '#05140B', borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: 'pointer', border: 0 } as const
+const btnPlein = { padding: '9px 18px', background: '#4ADE80', color: '#05140B', borderRadius: 6, fontSize: 14, fontWeight: 500, cursor: 'pointer', border: 0 } as const
 
 /** Vue PROJETS — liste « Vos projets », ou (si un projet est ouvert) sa vue kanban, ou (si le
  *  parcours de création est ouvert) le parcours SEUL. */
@@ -219,7 +219,7 @@ export function ProjetsPanel() {
 
         {!projetsQ.isLoading && all.length === 0 && courriers.length === 0 ? (
           /* 3 · ÉTAT VIDE — il doit inviter, pas constater. */
-          <div data-projets-vide style={{ marginTop: 8, padding: 32, border: '.5px dashed #1E2A23', borderRadius: 12, textAlign: 'center' }}>
+          <div data-projets-vide style={{ marginTop: 8, padding: 32, border: '.5px dashed #1E2A23', borderRadius: 6, textAlign: 'center' }}>
             <h3 style={{ fontSize: 15, color: '#8FA69A', fontWeight: 400, margin: '0 0 6px' }}>Aucun projet pour l'instant</h3>
             <p style={{ fontSize: 13, color: '#5F7267', margin: '0 0 16px' }}>Un projet garde votre cadrage et vos parcelles retenues.</p>
             <button data-projet-nouveau-vide onClick={() => setFormOuvert(true)} style={{ ...btnPlein, display: 'inline-block' }}>Créer votre premier projet</button>
@@ -229,7 +229,7 @@ export function ProjetsPanel() {
             {/* 2 · ONGLETS — deux seulement. */}
             {/* RETOURS-4 S3 — onglets : survol PLEIN (mint + encre sombre) sur l'onglet INACTIF, via .proj-tab
                 (index.css) ; l'onglet actif (.proj-tab-on) reste plein et ne re-survole pas. */}
-            <div style={{ display: 'inline-flex', gap: 4, background: '#0C1410', borderRadius: 9, padding: 4, marginBottom: 20 }}>
+            <div style={{ display: 'inline-flex', gap: 4, background: '#0C1410', borderRadius: 6, padding: 4, marginBottom: 20 }}>
               <button data-tab-actifs className={`proj-tab${!showArchived && !showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowArchived(false); setShowCourriers(false); setMontre(4) }} style={tab(!showArchived && !showCourriers)}>Actifs {actifs.length}</button>
               <button data-tab-archives className={`proj-tab${showArchived && !showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowArchived(true); setShowCourriers(false); setMontre(4) }} style={tab(showArchived && !showCourriers)}>Archivés {archives.length}</button>
               <button data-tab-courriers className={`proj-tab${showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowCourriers(true); setMontre(4) }} style={tab(showCourriers)}>Mes courriers {courriers.length}</button>
@@ -292,7 +292,7 @@ export function ProjetsPanel() {
                   )}
                   {/* PROJETS-V4 (V4) — les projets en LIGNES dans un cadre unique. */}
                   {affichees.length > 0 && (
-                    <div data-projets-cadre style={{ border: '1px solid #1E2A23', borderRadius: 12, overflow: 'hidden', background: '#0A0F0C' }}>
+                    <div data-projets-cadre style={{ border: '1px solid #1E2A23', borderRadius: 6, overflow: 'hidden', background: '#0A0F0C' }}>
                       {affichees.map((p) => <ProjetRow key={p.id} p={p} />)}
                     </div>
                   )}

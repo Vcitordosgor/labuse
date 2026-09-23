@@ -32,8 +32,8 @@
   --lien:#7FA88F;
   /* M61 P5 — jaune « Pages Jaunes » : autorisé UNIQUEMENT sur le lien « Voir sur Pages Jaunes ». */
   --pj-jaune:#F5C518;
-  /* rayons */
-  --r-card:12px; --r-g:11px; --r-ctl:10px; --r-sm:8px; --r-pill:20px;
+  /* rayons — DA-FIX-1 Lot 1 (DA-024) : ramenés aux 3 rayons de la charte (4 / 6 / 9999) */
+  --r-card:6px; --r-g:6px; --r-ctl:6px; --r-sm:6px; --r-pill:9999px;
   /* espacement */
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
   /* mouvement */
@@ -90,9 +90,9 @@
      inversé suffit à la faire ressortir), exactement comme les catégories du rail. */
   /* RETOURS-4 S8 (maquette v5) — cartes SANS liseré gauche : bord fin complet. Survol = dégradé profond. */
   .acc-entry { position:relative; display:flex; align-items:center; gap:12px; width:100%; text-align:left; cursor:pointer;
-    background:var(--bg-2); border:1px solid var(--line-2); border-radius:12px; padding:12px;
+    background:var(--bg-2); border:1px solid var(--line-2); border-radius:6px; padding:12px;
     color:var(--txt); transition:background .15s, border-color .15s, color .15s; }
-  .acc-entry .acc-tile { width:34px; height:34px; flex:none; border-radius:9px; display:flex;
+  .acc-entry .acc-tile { width:34px; height:34px; flex:none; border-radius:6px; display:flex;
     align-items:center; justify-content:center; border:1px solid transparent;
     transition:background .15s, color .15s, border-color .15s; }
   .acc-entry .acc-tile svg { width:17px; height:17px; }
@@ -126,7 +126,7 @@
      et le survol est borné à un vrai pointeur (`@media hover`) pour qu'un curseur sorti de la fenêtre
      ne laisse pas l'état allumé. Focus décoratif en :focus-visible seulement (clavier), jamais au clic. */
   .rail-item { display:flex; flex-direction:column; align-items:center; gap:4px; width:100%;
-    padding:8px 4px; border-radius:10px; color:var(--txt-mut); cursor:pointer; border:none; background:none;
+    padding:8px 4px; border-radius:6px; color:var(--txt-mut); cursor:pointer; border:none; background:none;
     transition:background .12s, color .12s; }
   .rail-item .rail-label { font-size:10.5px; }
   /* RETOURS-19 Y1 — ÉTAT ACTIF = VERT OPAQUE, contenu inversé sombre (avant : fond teinté `mint-bg` +
@@ -197,7 +197,7 @@
      (`.hover-fill` / `.hover-fill-ia`), l'icône suit la règle « fond opaque de sa couleur, contour et glyphe
      en sombre » : la tuile laisse le vert (mauve) de la carte, contour + glyphe passent en encre. Annule le
      FOND SOMBRE de T2 (03/09) — même geste que le chevron (Y1) et les tuiles d'accueil (acc-tile). */
-  .itile { width:34px; height:34px; flex:none; border-radius:9px; display:flex; align-items:center;
+  .itile { width:34px; height:34px; flex:none; border-radius:6px; display:flex; align-items:center;
     justify-content:center; border:1px solid rgba(74,222,128,.38); background:rgba(74,222,128,.14);
     color:var(--mint); transition:background .15s, color .15s, border-color .15s; }
   .itile svg { width:17px; height:17px; }
@@ -285,7 +285,7 @@
   .legal { font-size:var(--fs-legal); color:var(--txt-faint); line-height:1.5; }
 
   /* cases */
-  .cbx { width:17px; height:17px; border-radius:5px; flex-shrink:0; }
+  .cbx { width:17px; height:17px; border-radius:4px; flex-shrink:0; }
   .cbx-on { background:var(--mint); color:var(--mint-on); display:flex; align-items:center; justify-content:center; font-size:12px; }
   .cbx-off { border:1px solid var(--line-3); }
 
@@ -293,8 +293,8 @@
   .sk { background:var(--bg-2); border-radius:6px; }
 
   /* segmenté */
-  .seg { display:inline-flex; background:var(--bg-2); border:0.5px solid var(--line-2); border-radius:10px; padding:3px; gap:3px; }
-  .seg > span, .seg > button { font-size:12.5px; padding:5px 13px; border-radius:8px; color:#97A39B; cursor:pointer; border:none; background:none; }
+  .seg { display:inline-flex; background:var(--bg-2); border:0.5px solid var(--line-2); border-radius:6px; padding:3px; gap:3px; }
+  .seg > span, .seg > button { font-size:12.5px; padding:5px 13px; border-radius:6px; color:#97A39B; cursor:pointer; border:none; background:none; }
   .seg > span.on, .seg > button.on { background:var(--mint); color:var(--mint-on); }
 
   /* icône SVG (tracé fin) */
@@ -304,7 +304,7 @@
   .tag { font-size:11px; color:#97A39B; border:0.5px solid var(--line-2); padding:3px 9px; border-radius:var(--r-pill); }
 
   /* barre d'avancement */
-  .bar { height:5px; border-radius:3px; overflow:hidden; display:flex; background:var(--line); }
+  .bar { height:5px; border-radius:4px; overflow:hidden; display:flex; background:var(--line); }
 }
 
 /* ═══ §2 — états et lisibilité ═══ */
@@ -333,7 +333,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .labuse-popup .maplibregl-popup-content {
   background: transparent;
   padding: 0;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
 }
 .labuse-popup .maplibregl-popup-tip {
@@ -397,7 +397,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 { background:var(--bg-0); }
 
 /* en-tête en carte */
-.fiche-v6 .head { background:var(--bg-2); border:0.5px solid var(--f-linehead); border-radius:11px; overflow:hidden; }
+.fiche-v6 .head { background:var(--bg-2); border:0.5px solid var(--f-linehead); border-radius:6px; overflow:hidden; }
 .fiche-v6 .head-top { padding:13px 14px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
 .fiche-v6 .eyebrow { font-size:9.5px; letter-spacing:.11em; color:var(--txt-off); }
 .fiche-v6 .ref { font-size:17px; font-weight:500; font-family:var(--mono); letter-spacing:-.02em; margin-top:5px; display:flex; align-items:center; gap:6px; }
@@ -432,7 +432,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .addr-link { font-size:11px; color:var(--pj-jaune); margin-top:3px; text-decoration:none; display:inline-block; cursor:pointer; }
 .fiche-v6 .addr-link:hover { text-decoration:underline; }
 .fiche-v6 .hbtns { display:flex; gap:4px; flex-shrink:0; }
-.fiche-v6 .hbtn { width:26px; height:26px; border-radius:7px; border:0.5px solid var(--line-btn); display:flex; align-items:center; justify-content:center; color:var(--lab); font-size:12px; background:none; cursor:pointer; flex-shrink:0; }
+.fiche-v6 .hbtn { width:26px; height:26px; border-radius:6px; border:0.5px solid var(--line-btn); display:flex; align-items:center; justify-content:center; color:var(--lab); font-size:12px; background:none; cursor:pointer; flex-shrink:0; }
 /* RECETTE-5 (V4) — EN-TÊTE À 8 TUILES (maquette-entete-fiche-v2). Grille 4×2 : les lignes fines
    viennent du fond de grille (gap + background:--line), les tuiles portent le fond --bg-2. Chaque
    tuile a une valeur, un sous-titre (.stat-s = la provenance courte) et un « i » qui dit la source. */
@@ -451,7 +451,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 /* RECETTE-5 (V5) — les ÉTIQUETTES passent SOUS la grille (contraintes / type de propriétaire /
    voisines du même propriétaire), plus dans le bloc d'identité. */
 .fiche-v6 .head-badges { display:flex; flex-wrap:wrap; gap:6px; padding:11px 14px; border-top:0.5px solid var(--line); }
-.fiche-v6 .pill-neutre { font-size:11.5px; color:var(--txt-dim); background:transparent; border:0.5px solid var(--line-2); padding:3px 8px; border-radius:20px; white-space:nowrap; }
+.fiche-v6 .pill-neutre { font-size:11.5px; color:var(--txt-dim); background:transparent; border:0.5px solid var(--line-2); padding:3px 8px; border-radius:9999px; white-space:nowrap; }
 /* RECETTE-5 (V6) — accordéon « Le reste des faits » dans l'en-tête (details/summary natif). */
 .fiche-v6 .plus { border-top:0.5px solid var(--line); padding:10px 14px 11px; }
 .fiche-v6 .plus > summary { list-style:none; cursor:pointer; font-size:12px; color:var(--txt-dim); display:flex; align-items:center; gap:7px; }
@@ -466,15 +466,15 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .sl .v.vide { color:var(--txt-faint); font-weight:400; }
 
 /* bouton d'analyse + légende */
-.fiche-v6 .cta { background:var(--mint); border:none; border-radius:10px; min-height:40px; width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; font-size:13.5px; font-weight:500; color:var(--mint-on); cursor:pointer; padding:6px 15px; }
+.fiche-v6 .cta { background:var(--mint); border:none; border-radius:6px; min-height:40px; width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; font-size:13.5px; font-weight:500; color:var(--mint-on); cursor:pointer; padding:6px 15px; }
 .fiche-v6 .cta-sub { font-size:10.5px; color:var(--txt-off); text-align:center; margin-top:6px; }
 
 /* M60 P1c — LA PORTE D'OUTIL — recopiée TEL QUEL de docs/DA-FICHE-v6.html (« LA PORTE D'OUTIL »),
    scopée .fiche-v6 ; seule adaptation : var(--bg-header)→var(--bg-2) (même valeur #111614, le token
    --bg-header n'existe pas dans l'app). Ajouts pour l'usage <button> : width/text-align/cursor/hover. */
-.fiche-v6 .porte-outil { background:var(--bg-2); border:0.5px solid #212A25; border-left:2px solid var(--mint); border-radius:0 10px 10px 0; padding:11px 13px; display:flex; align-items:center; gap:11px; margin-top:7px; width:100%; text-align:left; cursor:pointer; }
+.fiche-v6 .porte-outil { background:var(--bg-2); border:0.5px solid #212A25; border-left:2px solid var(--mint); border-radius:0 6px 6px 0; padding:11px 13px; display:flex; align-items:center; gap:11px; margin-top:7px; width:100%; text-align:left; cursor:pointer; }
 .fiche-v6 .porte-outil:hover { border-color:#2C3630; }
-.fiche-v6 .po-ico { width:30px; height:30px; border-radius:8px; background:#12291D; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--mint); font-size:15px; }
+.fiche-v6 .po-ico { width:30px; height:30px; border-radius:6px; background:#12291D; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--mint); font-size:15px; }
 .fiche-v6 .po-t { font-size:13px; color:var(--txt-hi); }
 .fiche-v6 .po-s { font-size:11px; color:var(--txt-mut); margin-top:1px; }
 .fiche-v6 .po-arrow { font-size:14px; color:var(--mint); flex-shrink:0; margin-left:auto; }
@@ -486,7 +486,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 
 /* boutons IA */
 .fiche-v6 .ia { display:flex; gap:7px; margin-top:10px; }
-.fiche-v6 .ia-btn { flex:1; min-height:34px; border:0.5px solid var(--iris-line); background:var(--iris-bg); border-radius:9px; display:flex; align-items:center; justify-content:center; gap:7px; font-size:12px; color:var(--iris-2); cursor:pointer; padding:0 10px; }
+.fiche-v6 .ia-btn { flex:1; min-height:34px; border:0.5px solid var(--iris-line); background:var(--iris-bg); border-radius:6px; display:flex; align-items:center; justify-content:center; gap:7px; font-size:12px; color:var(--iris-2); cursor:pointer; padding:0 10px; }
 
 /* libellé de groupe : texte + filet, sans conteneur */
 .fiche-v6 .sec { display:flex; align-items:center; gap:9px; margin:20px 0 9px; }
@@ -495,7 +495,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 
 /* tiroir = carte autonome. Fermé : carte + rangée à plat. Ouvert : la carte
    s'ouvre (coins bas carrés) et son corps (.t-open) prolonge la carte. */
-.fiche-v6 .tiroir { width:100%; text-align:left; background:var(--f-card); border:0.5px solid var(--f-linecard); border-radius:12px; padding:12px 13px; display:flex; align-items:center; gap:12px; margin-bottom:9px; cursor:pointer; transition:background var(--dur-fast) var(--ease); }
+.fiche-v6 .tiroir { width:100%; text-align:left; background:var(--f-card); border:0.5px solid var(--f-linecard); border-radius:6px; padding:12px 13px; display:flex; align-items:center; gap:12px; margin-bottom:9px; cursor:pointer; transition:background var(--dur-fast) var(--ease); }
 .fiche-v6 .tiroir.is-open { margin-bottom:0; border-bottom:none; border-bottom-left-radius:0; border-bottom-right-radius:0; }
 /* RETOURS-4 S3 — survol PLEIN sur les cartes de SECTION cliquables (Urbanisme, Constructibilité, Risques…) :
    aplat mint, contenu inversé en encre sombre, tuile d'icône en fond transparent + contour sombre (jamais
@@ -513,15 +513,15 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .chev { color:var(--ink) !important; }
 }
 .fiche-v6 .t-open { background:var(--f-card); border:0.5px solid var(--f-linecard); border-top:none; border-bottom-left-radius:12px; border-bottom-right-radius:12px; margin-bottom:9px; padding:2px 13px 13px; }
-.fiche-v6 .t-ico { width:32px; height:32px; border-radius:9px; background:var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--f-icotxt); }
+.fiche-v6 .t-ico { width:32px; height:32px; border-radius:6px; background:var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--f-icotxt); }
 .fiche-v6 .t-body { flex:1; min-width:0; }
 .fiche-v6 .t-title { font-size:14px; color:var(--txt-hi); }
 .fiche-v6 .t-sub { font-size:11px; color:var(--txt-mut); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .fiche-v6 .t-right { display:flex; align-items:center; gap:9px; flex-shrink:0; min-width:0; }
 .fiche-v6 .t-val { font-size:12.5px; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
 .fiche-v6 .t-val.absent { color:var(--txt-faint); }
-.fiche-v6 .pill-amber { font-size:11.5px; color:var(--amber); background:var(--amber-bg); padding:3px 8px; border-radius:20px; white-space:nowrap; }
-.fiche-v6 .pill-mint { font-size:11.5px; color:var(--mint); background:var(--mint-bg); padding:3px 8px; border-radius:20px; white-space:nowrap; }
+.fiche-v6 .pill-amber { font-size:11.5px; color:var(--amber); background:var(--amber-bg); padding:3px 8px; border-radius:9999px; white-space:nowrap; }
+.fiche-v6 .pill-mint { font-size:11.5px; color:var(--mint); background:var(--mint-bg); padding:3px 8px; border-radius:9999px; white-space:nowrap; }
 
 /* ════════ RETOURS-20 Z1 — grammaire partagée des accordéons (maquette-fiche-parcelle-accordeons.html).
    Structure/espacements de la maquette ; couleurs & police = tokens de l'app (aucun hex recopié). ════════ */
@@ -561,7 +561,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .f-vig { margin-top:10px; padding:2px 0 2px 12px; border-left:2px solid var(--amber); }
 .fiche-v6 .f-vig > .t { font-size:13px; font-weight:500; color:var(--txt-hi); }
 .fiche-v6 .f-vig > .p { margin-top:2px; font-size:12.5px; line-height:1.55; color:var(--txt); }
-.fiche-v6 .f-rappel { margin-top:10px; padding:10px 12px; border-radius:10px; background:var(--bg-3); font-size:12.5px; line-height:1.55; color:var(--txt); }
+.fiche-v6 .f-rappel { margin-top:10px; padding:10px 12px; border-radius:6px; background:var(--bg-3); font-size:12.5px; line-height:1.55; color:var(--txt); }
 .fiche-v6 .f-rappel b { color:var(--txt-hi); font-weight:500; }
 .fiche-v6 .f-rappel > .src { display:block; margin-top:6px; font-size:11.5px; color:var(--txt-mut); }
 .fiche-v6 .f-note { margin-top:8px; font-size:11.5px; line-height:1.5; color:var(--txt-mut); }
@@ -571,7 +571,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 
 /* actions de pied */
 .fiche-v6 .actions { display:flex; gap:7px; margin-top:20px; }
-.fiche-v6 .act { flex:1; min-height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:12.5px; cursor:pointer; }
+.fiche-v6 .act { flex:1; min-height:36px; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:12.5px; cursor:pointer; }
 /* ADMIN-1 AD1 — « + CRM » = VERT (contour --mint, survol plein vert via .hover-fill), « + Projet » =
    JAUNE (contour + texte --amber, même famille que la chip « Fiche commune », survol plein ambre via
    .hover-fill-amber). DEUX boutons de largeur égale (flex:1 sur .act). Aucun mauve (réservé à l'IA).
@@ -586,7 +586,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .act-cmp { border:0.5px solid var(--mint); background:var(--mint); color:var(--mint-on); font-weight:600; }
 
 /* exports en carte : grille 4 colonnes + bandeau large */
-.fiche-v6 .exports { background:var(--f-card); border:0.5px solid var(--f-linecard); border-radius:12px; overflow:hidden; }
+.fiche-v6 .exports { background:var(--f-card); border:0.5px solid var(--f-linecard); border-radius:6px; overflow:hidden; }
 .fiche-v6 .exp-grid { display:grid; grid-template-columns:repeat(4,1fr); }
 .fiche-v6 .exp { min-height:54px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border-right:0.5px solid var(--line); border-bottom:0.5px solid var(--line); color:var(--f-icotxt); cursor:pointer; text-decoration:none; }
 .fiche-v6 .exp:nth-child(4n) { border-right:none; }
@@ -595,7 +595,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 
 /* FICHE-RANGEMENT-2 Lot 3 — surlignage de la recherche intra-fiche (API Custom Highlight :
    aucune mutation du DOM géré par React). Ambre LABUSE sur encre sombre, lisible sur tous fonds. */
-::highlight(fiche-search) { background: var(--amber); color: var(--ink); border-radius: 2px; }
+::highlight(fiche-search) { background: var(--amber); color: var(--ink); border-radius: 4px; }
 /* FICHE-RECHERCHE-1 — la correspondance CLIQUÉE dans la liste est surlignée plus fort (soulignée). */
 ::highlight(fiche-search-focus) { background: var(--amber); color: var(--ink); text-decoration: underline; text-decoration-thickness: 2px; }
 

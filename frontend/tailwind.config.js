@@ -6,6 +6,14 @@ const brand = createRequire(import.meta.url)('../config/brand_colors.json')
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
+    // DA-FIX-1 Lot 1 (DA-024) — theme.borderRadius est REMPLACÉ (pas `extend`) pour que TOUTE
+    // l'échelle Tailwind tombe sur les 3 rayons de la charte : 4 px (<20 px), 6 px (le reste),
+    // 9999 px (pilule). Les ~355 `rounded-lg` et ~60 `rounded-xl` passent ainsi à 6 sans toucher
+    // un seul .tsx. `full`/`pill` = pilule ; `50%` (pastilles rondes) reste géré en CSS local.
+    borderRadius: {
+      none: '0', sm: '4px', DEFAULT: '4px', md: '6px', lg: '6px', xl: '6px',
+      '2xl': '6px', '3xl': '6px', ctl: '6px', g: '6px', pill: '9999px', full: '9999px',
+    },
     extend: {
       colors: {
         // ═══ DA v3 (docs/DA-LABUSE.html §1) — SOURCE des couleurs. Miroir exact en
@@ -96,8 +104,7 @@ export default {
         // DA v3 §1/§2 (règle « ni halo ni lueur ») — réservée aux surfaces qui flottent
         flottante: '0 8px 24px rgba(0,0,0,.45)',
       },
-      // DA v3 §1 — rayons (carte 12=rounded-xl défaut ; groupe/porte 11 ; contrôle 10 ; pastille 20)
-      borderRadius: { g: '11px', ctl: '10px', pill: '20px' },
+      // DA v3 §1 — rayons : voir theme.borderRadius (remplacé au Lot 1 DA-FIX-1, plus dans `extend`).
       // DA v3 §1 — ombre flottante (la SEULE ombre autorisée : menus, notifs, infobulles)
       // + durées/courbe DA (survol 120ms, base 180ms, accordéon 200ms ; ease sans rebond)
       // LOI-0 · motion : deux durées, une courbe — 150 ms (feedback), 200 ms (entrées).
