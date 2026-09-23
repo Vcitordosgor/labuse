@@ -2083,6 +2083,50 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
     return reservoirs
 
 
+#: CIRCUIT-P4 (lot 3) — statut technique → libellé français du segment « Hors vitrine ».
+_STATUT_HORS_VITRINE = {
+    "alias": "alias", "retiree": "retirée", "hub": "hub", "interne": "interne",
+    "partenariat_requis": "à obtenir",
+}
+
+
+def _sources_hors_vitrine(c) -> list[dict]:
+    """CIRCUIT-P4 (lot 3) — les sources du catalogue qui ne sont PAS en vitrine (alias, retirées,
+    internes, hubs, à obtenir/demander), chacune avec son statut, SA RAISON en français et la date
+    de la décision — rien n'y est masqué (mandat)."""
+    from ..sources_catalog import WHERE_AFFICHEES, masquees_param
+    noms = {r[0]: r[1] for r in c.execute(text("SELECT id, name FROM data_sources")).all()}
+    rows = c.execute(text(
+        "SELECT id, name, category, status, alias_de, retiree_raison, technical_notes, updated_at"
+        f" FROM data_sources WHERE NOT ({WHERE_AFFICHEES}) AND lower(status) <> 'interne'"
+        " ORDER BY status, name"), {"masquees": masquees_param()}).mappings().all()
+
+    def raison(r: dict) -> str:
+        st = (r["status"] or "").lower()
+        if st == "alias":
+            cible = noms.get(r["alias_de"])
+            return (f"même donnée que « {cible} », qui fait foi" if cible
+                    else "doublon d'une source en vitrine")
+        if st == "retiree":
+            return (r["retiree_raison"] or (r["technical_notes"] or "retirée")[:140]).strip()
+        if st == "hub":
+            return "canal d'accès (hub) — pas une donnée propre"
+        if st == "partenariat_requis":
+            return (r["technical_notes"] or "donnée sous convention / demande à instruire")[:140].strip()
+        return (r["technical_notes"] or st)[:140].strip()
+
+    out = []
+    for r in rows:
+        out.append({
+            "id": r["id"], "nom": r["name"], "famille": r["category"] or "aucune",
+            "statut": (r["status"] or "").lower(),
+            "statut_label": _STATUT_HORS_VITRINE.get((r["status"] or "").lower(), r["status"]),
+            "raison": raison(dict(r)),
+            "depuis": r["updated_at"].isoformat() if r["updated_at"] else None,
+        })
+    return out
+
+
 @router.get("/admin/circuit")
 def admin_circuit(request: Request) -> dict:
     """CIRCUIT-1 (lot 5.1) — LA structure de la page Circuit, calculée EN DIRECT et en UN appel :
@@ -2099,6 +2143,11 @@ def admin_circuit(request: Request) -> dict:
     with engine().begin() as c:
         # ── réservoirs : catalogue affiché + veille + mode/cadence + vanne + filtre (helper) ──
         reservoirs = _assembler_reservoirs(c)
+        # ── CIRCUIT-P4 (lot 3) — le segment « Hors vitrine » de l'onglet Sources (raison en clair) ──
+        try:
+            hors_vitrine = _sources_hors_vitrine(c)
+        except Exception:  # noqa: BLE001 — la page ne casse jamais sur le hors-vitrine
+            hors_vitrine = []
         # ── fuites ouvertes + eau ancienne + dernier contrôle (lot 4) ──
         try:
             fuites = [dict(x) for x in c.execute(text(
@@ -2331,6 +2380,7 @@ def admin_circuit(request: Request) -> dict:
         "familles": familles, "categories": categories, "resume": resume,
         "a_faire": a_faire,   # CIRCUIT-P4 lot 2 — l'onglet « À faire » (liste ordonnée des gestes)
         "etats_sources": _etats_compte,   # lot 1 — compte par état (pastilles de l'onglet Sources)
+        "hors_vitrine": hors_vitrine,   # lot 3 — le segment « Hors vitrine » de l'onglet Sources
         "aretes": aretes, "fuites": fuites, "eau_ancienne": eau,
         "dernier_controle": dict(controle) if controle else None,
         "journal": journal, "runs": runs_list, "residuel": residuel,

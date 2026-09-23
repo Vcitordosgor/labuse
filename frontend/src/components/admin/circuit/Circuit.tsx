@@ -16,10 +16,11 @@ import { Detail as DetailPage } from './Detail'
 import { ecrireCx, parseCx } from './hash'
 import { Journal } from './Journal'
 import { SensInverse } from './SensInverse'
+import { Sources } from './Sources'
 import { CIRCUIT_CSS } from './style'
 import { focusDeCible, type AFaireLigne, type Cible, type CircuitData } from './types'
 
-type Onglet = 'todo' | 'circuit' | 'journal'
+type Onglet = 'todo' | 'sources' | 'circuit' | 'journal'
 type DetailType = 'reservoir' | 'robinet' | 'pompe' | 'compteur'
 type Detail = { type: DetailType; id: number | string } | null
 
@@ -133,6 +134,9 @@ export function CircuitSection() {
         <button className={onglet === 'todo' ? 'on' : ''} onClick={() => setOnglet('todo')}>
           À faire{d.a_faire?.total ? <span className="n">{d.a_faire.total}</span> : ''}
         </button>
+        <button className={onglet === 'sources' ? 'on' : ''} onClick={() => setOnglet('sources')}>
+          Sources{d.etats_sources?.total ? <span className="n">{d.etats_sources.total}</span> : ''}
+        </button>
         <button className={onglet === 'circuit' ? 'on' : ''} onClick={() => setOnglet('circuit')}>Circuit</button>
         <button className={onglet === 'journal' ? 'on' : ''} onClick={() => setOnglet('journal')}>
           Journal{nJour ? <span className="n">{nJour}</span> : ''}
@@ -161,6 +165,10 @@ export function CircuitSection() {
 
       <section className={`tab ${onglet === 'todo' ? 'on' : ''}`}>
         <AFaire data={d} onGeste={gesteAFaire} />
+      </section>
+
+      <section className={`tab ${onglet === 'sources' ? 'on' : ''}`}>
+        <Sources data={d} onOpen={(id) => ouvrirDetail('reservoir', id)} />
       </section>
 
       <section className={`tab ${onglet === 'circuit' ? 'on' : ''}`}>

@@ -43,12 +43,18 @@ export type EtatsSources = {
   'à jour': number; 'nouvelle version': number; 'échue': number
   'jamais vérifiée': number; 'sonde en panne': number; total: number
 }
+// CIRCUIT-P4 (lot 3) — une source HORS vitrine, avec sa raison en clair et la date de la décision.
+export type HorsVitrine = {
+  id: number; nom: string; famille: string; statut: string; statut_label: string
+  raison: string; depuis: string | null
+}
 
 export type CircuitData = {
   run_servi: string; candidat: string | null; manifeste: any
   reservoirs: Reservoir[]; robinets: Robinet[]; chiffres: Record<string, any>
   familles: Famille[]; categories: Categorie[]; resume: Resume
   a_faire?: AFaire; etats_sources?: EtatsSources   // CIRCUIT-P4 (lots 1-2)
+  hors_vitrine?: HorsVitrine[]   // CIRCUIT-P4 (lot 3)
   aretes: { reservoir_vers_chiffre: [string, string][]; chiffre_vers_robinet: [string, string][] }
   fuites: any[]; eau_ancienne: any[]; dernier_controle: any | null
   journal: any[]; runs: any[]; residuel: any; compteurs: Record<string, number>
