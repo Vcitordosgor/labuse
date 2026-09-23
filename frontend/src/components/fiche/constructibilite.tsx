@@ -199,7 +199,7 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
             {!hideSource && (
               <p className="text-[11px] text-txt-dim">
                 LABUSE (sourcé) : SHAB vendable <b className="tnum text-txt">{fmtInt(Number(d.shab_vendable_m2))} m²</b> <span className="text-txt-dim">({PERIM_POTENTIEL_COURT})</span> ·
-                <span title="Prix de commercialisation du NEUF, à l'échelle du secteur (avec repli commune/île) — pas le prix du bâti ancien de la commune"> prix de sortie neuf</span> <b className="tnum text-txt">{fmtInt(Number(d.prix_sortie_median))} €/m²</b> ·
+                <span> prix de sortie neuf</span> <b className="tnum text-txt">{fmtInt(Number(d.prix_sortie_median))} €/m²</b> ·
                 terrain <b className="tnum text-txt">{fmtInt(Number(d.terrain_m2))} m²</b>
               </p>
             )}

@@ -232,7 +232,6 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
                 const on = communes.includes(nomC)
                 return (
                   <button key={cp} onClick={() => setCommunes(on ? communes.filter((x) => x !== nomC) : [...communes, nomC])}
-                    title={nomC}
                     style={{ padding: '6px 12px', borderRadius: 999, fontSize: 12, cursor: 'pointer', border: on ? `.5px solid ${A.c}` : '.5px solid #1E2A23', background: on ? A.bg : '#080D0A', color: on ? A.c : '#8FA69A' }}>{nomC}</button>
                 )
               })}

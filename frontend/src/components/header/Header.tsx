@@ -195,7 +195,7 @@ export function Omnibox() {
           const el = document.querySelector<HTMLInputElement>('[data-omnibox]')
           if (el) onEnterRaw(el.value.trim())
         }}
-        title="Lancer la recherche" aria-label="Lancer la recherche" aria-busy={searching}
+        aria-label="Lancer la recherche" aria-busy={searching}
         className="flex h-5 w-5 shrink-0 items-center justify-center text-txt-faint transition-colors duration-quick hover:text-mint disabled:cursor-wait">
         {searching ? (
           <svg viewBox="0 0 20 20" className="h-[15px] w-[15px] animate-spin" aria-hidden>
@@ -250,7 +250,6 @@ function CommuneSelect() {
   if (n >= 2) {
     return (
       <button onClick={openFiltres} data-commune-select
-        title="Plusieurs communes filtrées — se règle dans Filtres › Communes (ouvre le panneau)"
         className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt transition-colors duration-quick hover:border-mint/40">
         <span className="h-1.5 w-1.5 rounded-full bg-mint" />
         {label}
@@ -263,7 +262,6 @@ function CommuneSelect() {
       {/* RETOURS-19 Y1 — ÉTAT ACTIF (menu ouvert OU un périmètre choisi) = vert opaque, contenu inversé
           sombre (avant : simple contour vert au survol). */}
       <button onClick={() => setOpen((o) => !o)} data-commune-select
-        title="Périmètre — zoome la carte et pré-coche la commune dans le filtre (vous gardez la main)"
         className={`flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs transition-colors duration-quick ${
           open || n > 0 ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-3 text-txt hover:border-mint/40'}`}>
         {/* RECETTE-7 (A6) — la pastille ronde avant « Toute l'île » est RETIRÉE (demande Vic) : le
@@ -304,7 +302,6 @@ function CommuneSelect() {
                   {c.commune} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
                 </button>
                 <button data-fiche-commune onClick={(e) => { e.stopPropagation(); setContexteCommune(c.commune); setOpen(false) }}
-                  title="SRU, ANRU, PLH, marché logement (n'affecte pas le périmètre)"
                   className="hover-jaune shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11px]">
                   voir la fiche →
                 </button>
@@ -326,8 +323,7 @@ function ContexteButton() {
   if (!commune) return null
   return (
     <button onClick={() => focusCommune(commune)} data-contexte-btn
-      className="flex h-[26px] shrink-0 items-center gap-1 rounded-full border border-amber/40 bg-amber/[0.08] px-2.5 text-[11px] text-amber transition-colors duration-quick hover:border-amber"
-      title="Fiche commune — SRU, ANRU, PLH, marché logement (sources officielles)">
+      className="flex h-[26px] shrink-0 items-center gap-1 rounded-full border border-amber/40 bg-amber/[0.08] px-2.5 text-[11px] text-amber transition-colors duration-quick hover:border-amber">
       ⓘ Fiche commune
     </button>
   )
@@ -389,7 +385,7 @@ function NotifBell() {
       {/* DA §15 — non-lue en PORTE (fond bg-2) + pastille AMBRE ; lues estompées à 55 %. */}
       <div className="flex items-center gap-2">
         <span className="dot shrink-0" style={{ background: e.lu ? 'var(--line-3)' : 'var(--amber)' }} />
-        {e.demo && <span className="rounded-full bg-surface-3 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim" title="Événement de démonstration (run q_v2_demo)">DÉMO</span>}
+        {e.demo && <span className="rounded-full bg-surface-3 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim">DÉMO</span>}
         <button onClick={() => {
             if (e.idu) { setView('cartes'); select(e.idu) }
             else if (e.lien?.startsWith('/sources')) openSources()
@@ -405,12 +401,12 @@ function NotifBell() {
             setOpen(false)
           }}
           className="min-w-0 flex-1 truncate text-left text-xs text-txt hover:text-txt-hi">{titreHumain(e)}</button>
-        {!e.lu && <button onClick={() => readOne.mutate(e.id)} className="shrink-0 text-[11px] text-txt-dim hover:text-mint" title="Marquer lu" aria-label="Marquer comme lu">✓</button>}
+        {!e.lu && <button onClick={() => readOne.mutate(e.id)} className="shrink-0 text-[11px] text-txt-dim hover:text-mint" aria-label="Marquer comme lu">✓</button>}
       </div>
       {e.detail && <p className="mt-0.5 whitespace-pre-line text-[11px] leading-snug text-txt-dim">{_detechnifier(e.detail)}</p>}
       <p className="mt-0.5 flex items-center gap-1.5 text-[9px] text-txt-dim">
         {e.source && <><span className="font-medium text-txt-mut">{e.source}</span><span>·</span></>}
-        <span className="font-mono" title={e.date}>{tempsRelatif(e.ts ?? e.date)}</span>
+        <span className="font-mono">{tempsRelatif(e.ts ?? e.date)}</span>
       </p>
     </div>
   )
@@ -438,7 +434,7 @@ function NotifBell() {
   return (
     <div className="relative">
       {/* RETOURS-9 (Q9) — la cloche OUVERTE devient pleine de sa couleur (vert, encre sombre), pas un liseré. */}
-      <button onClick={() => setOpen((o) => !o)} title="Notifications" aria-label="Notifications" aria-pressed={open}
+      <button onClick={() => setOpen((o) => !o)} aria-label="Notifications" aria-pressed={open}
         className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-quick ${
           open ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-3 text-txt-mut hover:text-txt'}`}>
         <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">
@@ -467,7 +463,7 @@ function NotifBell() {
                     Retrait de surface : la page /events/digest.html (aperçu du digest) et les envois Brevo
                     restent INTACTS (atteignables par e-mail / URL directe) — plus aucun lien in-app n'y mène. */}
                 {/* M85 — préférences par type et par canal (l'écran minimal in-app) */}
-                <button data-notif-prefs-toggle onClick={() => setPrefsOpen((o) => !o)} className="text-[11px] text-txt-mut hover:text-txt" title="Préférences de notification">{prefsOpen ? 'fermer' : 'préférences'}</button>
+                <button data-notif-prefs-toggle onClick={() => setPrefsOpen((o) => !o)} className="text-[11px] text-txt-mut hover:text-txt">{prefsOpen ? 'fermer' : 'préférences'}</button>
                 {unread > 0 && <button onClick={() => readAll.mutate()} className="text-[11px] text-txt-mut hover:text-txt">tout lire</button>}
               </div>
             </header>
@@ -479,7 +475,7 @@ function NotifBell() {
                 <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4 gap-y-2 text-[11px]">
                   <span className="text-txt-dim">Type</span>
                   <span className="text-center text-txt-dim">Cloche</span>
-                  <span className="text-center text-txt-dim" title="Le résumé du matin (Copilote)">Brief</span>
+                  <span className="text-center text-txt-dim">Brief</span>
                   <span className="text-center text-txt-dim">E-mail</span>
                   {(notifPrefs.data?.types ?? []).map((t) => (
                     <Fragment key={t.key}>
@@ -489,12 +485,10 @@ function NotifBell() {
                         className="mx-auto h-3.5 w-3.5 accent-mint" />
                       {/* BRIEF — canal du matin, applicable aux chaînes 1+2 seulement (chaîne 3 = immédiat → grisé). */}
                       <input type="checkbox" checked={t.brief && !t.brief_na} disabled={t.brief_na} aria-label={`${t.label} — brief`} data-pref={`${t.key}-brief`}
-                        title={t.brief_na ? 'Envoi immédiat — pas un brief du matin' : 'Apparaît dans le brief du matin'}
                         onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: t.cloche, email: t.email, brief: e.target.checked })}
                         className="mx-auto h-3.5 w-3.5 accent-mint disabled:opacity-30" />
                       {/* M85-B — maintenance : e-mail VERROUILLÉ (non désactivable, conséquences réelles). */}
                       <input type="checkbox" checked={t.email} disabled={t.verrou} aria-label={`${t.label} — e-mail`} data-pref={`${t.key}-email`}
-                        title={t.verrou ? 'Non désactivable — conséquences réelles (maintenance, compte)' : undefined}
                         onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: t.cloche, email: e.target.checked, brief: t.brief })}
                         className="mx-auto h-3.5 w-3.5 accent-mint disabled:opacity-40" />
                     </Fragment>
@@ -623,7 +617,7 @@ function AccountMenu() {
   const close = () => { setOpen(false); setMarqueOpen(false) }
   return (
     <div className="relative">
-      <button data-account-btn onClick={() => setOpen((o) => !o)} title="Mon compte" aria-label="Mon compte"
+      <button data-account-btn onClick={() => setOpen((o) => !o)} aria-label="Mon compte"
         className="flex h-8 w-8 items-center justify-center rounded-full border border-line-2 bg-surface-3 font-mono text-[11px] text-mint transition-colors duration-quick hover:border-mint/50">VL</button>
       {open && (
         <>
@@ -644,8 +638,8 @@ function AccountMenu() {
                   <p className="text-[10px] uppercase tracking-wide text-txt-dim">Compte</p>
                   {d?.mode === 'compte' ? (
                     <>
-                      {d.email && <p className="mt-0.5 truncate text-txt" title={d.email}>{d.email}</p>}
-                      {d.nom && d.nom !== d.email && <p className="mt-0.5 truncate text-[11px] text-txt-mut" title={d.nom}>{d.nom}</p>}
+                      {d.email && <p className="mt-0.5 truncate text-txt">{d.email}</p>}
+                      {d.nom && d.nom !== d.email && <p className="mt-0.5 truncate text-[11px] text-txt-mut">{d.nom}</p>}
                     </>
                   ) : d ? (
                     <p className="mt-0.5 text-txt-dim">Session locale (dev) — aucun compte connecté.</p>
@@ -769,7 +763,6 @@ function SignalerButton() {
       {/* RETOURS-10 (T6) — bouton ACTIF = PLEIN vert, encre sombre (règle DA RETOURS-9), comme la
           cloche : plus de simple liseré quand le panneau est ouvert. */}
       <button data-signaler onClick={() => setOpen((o) => !o)} aria-pressed={open}
-        title="Signaler un bug, proposer une idée, poser une question"
         className={`rounded-lg border px-3 py-1.5 text-xs transition-colors duration-quick ${
           open ? 'border-mint bg-mint font-medium text-mint-ink' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
         Signaler
@@ -812,7 +805,7 @@ export function Header() {
       {/* RETOURS-4 S6 — l'OISEAU part au sommet du rail ; le MOT-SYMBOLE reste ici, seul, AGRANDI (~29 px,
           gras) pour occuper l'espace libéré, et BICOLORE : « LA » blanc, « BUSE » vert. Un seul bloc de
           texte, aucun espace entre les deux moitiés. */}
-      <div className="flex shrink-0 items-center pr-1" title="LABUSE — Radar foncier, La Réunion">
+      <div className="flex shrink-0 items-center pr-1">
         <span data-logo className="font-display text-[29px] font-extrabold leading-none tracking-[.04em]">
           <span className="text-white">LA</span><span className="text-mint">BUSE</span>
         </span>

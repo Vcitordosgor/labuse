@@ -35,7 +35,6 @@ export function Siren({ value, fallback = '—', className = 'font-mono text-[10
   const href = `https://www.pappers.fr/entreprise/${siren9}`
   return (
     <a href={href} target="_blank" rel="noopener noreferrer"
-      title={`Voir ${estSiret ? "l'établissement" : "l'entreprise"} sur Pappers (${siren9})`}
       className={`${className} lien-siren`}>
       {affiche}
     </a>

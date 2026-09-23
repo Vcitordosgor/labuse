@@ -95,7 +95,7 @@ function CarteBien({ b, sel, onClick }: { b: RadarBienClient; sel: boolean; onCl
         {b.sous_le_marche?.sous_le_marche && (
           // F9 (OUTILS-3) — l'écart porte TOUJOURS sa référence (perimetre + €/m² + millésime DVF), au
           // survol de la pastille compacte comme en clair dans le détail. Jamais un « −19 % » orphelin.
-          <span title={`réf. ${b.sous_le_marche.perimetre ?? 'zone'} ${b.sous_le_marche.referentiel_eur_m2} €/m²${b.sous_le_marche.millesime_dvf ? ` · ${b.sous_le_marche.millesime_dvf}` : ''} · annonce vs DVF`}
+          <span
             className="shrink-0 rounded-md bg-mint/15 px-2 py-0.5 font-mono text-[10.5px] font-medium text-mint">Sous le marché · −{Math.abs(b.sous_le_marche.ecart_pct ?? 0)} %</span>
         )}
         {b.statut === 'en_vente_longue' && <span className="shrink-0 rounded-md bg-amber/12 px-2 py-0.5 font-mono text-[10.5px] text-amber">Vente longue</span>}
@@ -449,8 +449,7 @@ export function RadarView() {
                 DANS l'app (plus de saut vers la Tour de contrôle). */}
             {boutonVisible && (
               <button data-radar-publier onClick={() => setDepotPanneau((v) => !v)}
-                className="shrink-0 rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11.5px] font-medium text-mint transition-colors hover:bg-mint/20"
-                title={estAdmin ? "Déposer une page d'annonces" : 'Publier votre annonce'}>
+                className="shrink-0 rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11.5px] font-medium text-mint transition-colors hover:bg-mint/20">
                 {depotPanneau ? '× Fermer le dépôt' : '+ Publier une annonce'}
               </button>
             )}

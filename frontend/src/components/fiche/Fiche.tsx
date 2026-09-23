@@ -145,7 +145,7 @@ function WatchButton({ idu }: { idu: string }) {
   return (
     <button onClick={() => t.mutate()} className="hbtn"
       style={on ? { background: 'var(--mint-bg)', borderColor: 'var(--mint)', color: 'var(--mint)' } : undefined}
-      title={on ? CLIENT.fiche.suivreActif : CLIENT.fiche.suivre}>
+      aria-label={on ? CLIENT.fiche.suivreActif : CLIENT.fiche.suivre}>
       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" /></svg>
     </button>
   )
@@ -154,7 +154,7 @@ function WatchButton({ idu }: { idu: string }) {
 // EXPRESS-01 · bouton « copier l'IDU » — copie la chaîne BRUTE 14 car. (sans espace),
 // celle qu'on colle dans GPU/DVF/SIG. Style référence (bouton 31×31, retour visuel vert).
 // M61 P5 — bouton « copier » discret, réutilisable (IDU + adresse). Libellés paramétrables.
-function CopyIdu({ value, aria = 'Copier l’IDU', titre = 'Copier l’IDU (14 caractères, sans espace)', okTitre = 'IDU copié', dataAttr = 'idu' }: {
+function CopyIdu({ value, aria = 'Copier l’IDU', dataAttr = 'idu' }: {
   value: string; aria?: string; titre?: string; okTitre?: string; dataAttr?: string
 }) {
   const [ok, setOk] = useState(false)
@@ -167,8 +167,7 @@ function CopyIdu({ value, aria = 'Copier l’IDU', titre = 'Copier l’IDU (14 c
   }
   return (
     <button onClick={copier} data-fiche-copy={dataAttr} aria-label={aria}
-      style={{ border: 'none', background: 'none', padding: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: ok ? 'var(--mint)' : 'var(--txt-ghost)', cursor: 'pointer', flexShrink: 0 }}
-      title={ok ? okTitre : titre}>
+      style={{ border: 'none', background: 'none', padding: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: ok ? 'var(--mint)' : 'var(--txt-ghost)', cursor: 'pointer', flexShrink: 0 }}>
       {ok
         ? <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 5 5 9-11" /></svg>
         : <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h9" /></svg>}
@@ -248,7 +247,6 @@ function PipelineButton({ idu }: { idu: string }) {
           value={state.data.entry.contact_etiquette ?? ''}
           onChange={(ev) => etiqueter.mutate(ev.target.value)}
           disabled={etiqueter.isPending}
-          title="Retour terrain : que s’est-il passé après le contact ? (par compte, modifiable)"
           className={`mt-1.5 w-full cursor-pointer rounded-md border bg-surface-2 px-1.5 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-mint/50 ${state.data.entry.contact_etiquette ? 'border-mint/40 text-txt' : 'border-line-2 text-txt-dim'}`}
         >
           <option value="">— retour terrain ?</option>
@@ -326,9 +324,7 @@ function ProjetButton({ idu }: { idu: string }) {
            survol plein ambre via .hover-fill-amber ; rattaché = accent ambre (.act-amber-on). Aucun mauve.
            RETOURS-11 T3 — bouton OPAQUE (act-amber-on) tant que le menu est ouvert. */
         className={`act w-full whitespace-nowrap ${inProjet || open ? 'act-amber-on' : 'act-amber hover-fill-amber'}`}
-        title={inProjet
-          ? `Dans ${attaches.length > 1 ? `${attaches.length} projets` : `le projet « ${attaches[0].nom} »`} — rattacher à un autre`
-          : 'Ajouter cette parcelle à un projet'}>
+        >
         {inProjet ? (attaches.length > 1 ? `✓ ${attaches.length} projets` : `✓ ${attaches[0].nom}`) : '+ Projet'}
       </button>
 
@@ -352,7 +348,7 @@ function ProjetButton({ idu }: { idu: string }) {
                 <button key={p.id} data-projet-fiche-cible={p.id} disabled={add.isPending}
                   onClick={() => (deja ? (setOpenProjet({ id: p.id, nom: p.nom }), setOpen(false)) : add.mutate(p.id))}
                   className="hover-fill-amber flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick"
-                  title={deja ? `Déjà dans « ${p.nom} » — ouvrir` : `Ajouter à « ${p.nom} » (→ Retenues)`}>
+                  >
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />
                   <span className="min-w-0 flex-1 truncate">{p.nom}</span>
                   <span className="shrink-0 font-mono text-[10px] text-txt-dim">{deja ? 'déjà ↗' : vivier(p).toLocaleString('fr-FR')}</span>
@@ -363,7 +359,7 @@ function ProjetButton({ idu }: { idu: string }) {
           <div className="my-1.5 h-px bg-line/40" />
           <button data-projet-fiche-nouveau disabled={nouveau.isPending} onClick={() => nouveau.mutate()}
             className="hover-fill-amber flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-mint transition-colors duration-quick disabled:opacity-50"
-            title="Créer un projet et y ajouter cette parcelle">
+            >
             <span aria-hidden>＋</span><span className="flex-1">{nouveau.isPending ? 'Création…' : 'Nouveau projet avec cette parcelle'}</span>
           </button>
         </div>
@@ -682,11 +678,10 @@ export function Fiche({ idu }: { idu: string }) {
           dessous). Elle défile désormais AVEC le reste — un seul corps qui défile du haut au pied.
           M56-B6 · DA-FICHE-v6 — EN-TÊTE en CARTE .head (identité + chiffres). */}
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
-      {/* FINITIONS-1 (P12) — l'EN-TÊTE (PARCELLE · COMMUNE, référence, adresse, boutons) reste STICKY au
-          défilement. `position: sticky` (et non `flex-shrink:0` fixe, cause de l'ancien recouvrement
-          RECETTE-8 W12) : la tête reste dans le flux, se colle en haut du corps défilant, fond opaque
-          pour masquer le contenu qui passe dessous. */}
-      <div className="sticky top-0 z-20" style={{ paddingTop: 10, background: 'var(--bg-0)' }}>
+      {/* FINITIONS-2 (retour Vic) — le STICKY de l'en-tête (introduit en FINITIONS-1 P12, affiné P3) est
+          ANNULÉ : retour EXACT au comportement d'origine — l'en-tête défile avec le reste (un seul corps
+          `overflow-y-auto`), la carte `.head` contient identité + adresse + les 6 tuiles, sans collage. */}
+      <div style={{ paddingTop: 10 }}>
         <div className="head">
           <div className="head-top">
             {/* RETOURS-11 R3 — la colonne gauche pousse (flex:1) pour donner sa largeur à l'adresse,
@@ -712,20 +707,20 @@ export function Fiche({ idu }: { idu: string }) {
                   <>
                     {f.coords && (
                       <a data-cadastre-link className="hbtn" target="_blank" rel="noreferrer noopener"
-                        href={cadastreGeoportailUrl(f.coords)} title="Cadastre Géoportail">
+                        href={cadastreGeoportailUrl(f.coords)} aria-label="Cadastre Géoportail">
                         <LogoCadastre />
                       </a>
                     )}
                     {pj.url && (
                       <a data-fiche-pj data-pj-commune-seule={pj.commune_seule || undefined} className="hbtn"
                         target="_blank" rel="noreferrer noopener" href={pj.url}
-                        title={pj.commune_seule ? 'Pages Jaunes — commune' : 'Pages Jaunes'}>
+                        aria-label={pj.commune_seule ? 'Pages Jaunes — commune' : 'Pages Jaunes'}>
                         <LogoPagesJaunes />
                       </a>
                     )}
                     {f.coords && (
                       <a data-maps-link className="hbtn" target="_blank" rel="noreferrer noopener"
-                        href={googleMapsUrl(f.coords)} title="Google Maps (épingle sur la parcelle)">
+                        href={googleMapsUrl(f.coords)} aria-label="Google Maps (épingle sur la parcelle)">
                         <LogoGoogleMaps />
                       </a>
                     )}
@@ -735,10 +730,10 @@ export function Fiche({ idu }: { idu: string }) {
               <WatchButton idu={idu} />
               <button className="hbtn" onClick={() => setFicheSearchOpen((o) => { if (o) setFicheQuery(''); return !o })}
                 style={ficheSearchOpen ? { borderColor: 'var(--mint)', color: 'var(--mint)' } : undefined}
-                title="Rechercher dans cette fiche">
+                aria-label="Rechercher dans cette fiche">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="11" cy="11" r="6" /><path d="m20 20-3.5-3.5" /></svg>
               </button>
-              <button className="hbtn" onClick={() => select(null)} title="Fermer la fiche">
+              <button className="hbtn" onClick={() => select(null)} aria-label="Fermer la fiche">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
               </button>
             </div>
@@ -748,7 +743,7 @@ export function Fiche({ idu }: { idu: string }) {
               tant que ça tient, ellipse avec l'adresse complète au survol (title) sinon. Elle ne
               partage plus sa largeur avec les logos/cloche. M61 P5 — copiable (user-select). */}
           <div className="addr addr-row" data-fiche-adresse>
-            <span style={{ userSelect: 'text', minWidth: 0 }} title={f?.adresse ?? undefined}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</span>
+            <span style={{ userSelect: 'text', minWidth: 0 }}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</span>
             {f?.adresse && <CopyIdu value={f.adresse} aria="Copier l’adresse" titre="Copier l’adresse" okTitre="Adresse copiée" dataAttr="adresse" />}
             {!f?.adresse && (
               // RECETTE-8 W11 — « i » fonctionnel icône-seule → `garder` (sinon bulle muette, S10).
@@ -829,11 +824,11 @@ export function Fiche({ idu }: { idu: string }) {
             </div>
           )
         })()}
-        </div>{/* /.head — la carte d'en-tête (identité + bandeau de six chiffres, sommaire). */}
+        </div>{/* /.head — carte d'en-tête (identité + adresse + bandeau de 6 chiffres), NON sticky (origine) */}
+      </div>{/* fin du wrapper d'en-tête (non sticky) — l'en-tête défile avec le reste, comme à l'origine */}
         {/* RETOURS-9 (Q8.1) — ONGLETS Analyse · Autour · Actions RETIRÉS : retour à la fiche UNIQUE qui
             défile. « Autour » est un tiroir de la fiche (et existe dans les outils) ; « Actions » (CRM/
             Projet/exports) vit déjà en pied de fiche. Plus rien à choisir : tout défile d'un seul tenant. */}
-      </div>{/* M68 P1a — fin du wrapper FIXE (en-tête seul) : tout le reste défile. */}
 
       {/* M68 P1a — DÉFILEMENT UNIQUE : le bloc Analyse (CTA + carte verdict), la bannière RNU, les
           signaux, puis les tiroirs / actions / exports / mention légale vivent tous DANS ce conteneur
@@ -855,8 +850,7 @@ export function Fiche({ idu }: { idu: string }) {
         {f && verdict && !verdictRevele && (
           // M56-B6 · DA-FICHE-v6 — bouton d'analyse pleine largeur (.cta, 40px) + légende dessous.
           <>
-            <button data-demander-analyse className="cta" onClick={() => revelerVerdict(idu)}
-              title="Déployer le verdict, le score et « pourquoi »">
+            <button data-demander-analyse className="cta" onClick={() => revelerVerdict(idu)}>
               {CLIENT.fiche.demanderAnalyse} →
             </button>
             {/* M62-P1 (i) : sous-titre « Le verdict, le score et "pourquoi" — à la demande » RETIRÉ,
@@ -878,9 +872,9 @@ export function Fiche({ idu }: { idu: string }) {
             <div data-analyse-labuse-card style={{ marginTop: 8, background: `${bm.color}12`, border: `1px solid ${bm.color}59`, borderRadius: 13, padding: '13px 16px' }}>
               <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.4, color: 'var(--lab)', textTransform: 'uppercase' }}>Analyse LABUSE</p>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
-                <span data-fiche-bande={a.bande} title={bm.long} style={{ fontSize: 22, fontWeight: 600, color: bm.color, lineHeight: 1 }}>{bm.label}</span>
+                <span data-fiche-bande={a.bande} style={{ fontSize: 22, fontWeight: 600, color: bm.color, lineHeight: 1 }}>{bm.label}</span>
                 {sm && !nc && (
-                  <span data-fiche-signal={a.signal_niveau} title={sm.long}
+                  <span data-fiche-signal={a.signal_niveau}
                     style={{ fontSize: 11, fontWeight: 500, color: sm.color, border: `1px solid ${sm.color}66`, borderRadius: 999, padding: '2px 8px' }}>{sm.label}</span>
                 )}
               </div>
@@ -934,7 +928,7 @@ export function Fiche({ idu }: { idu: string }) {
                   )}
                   {verdictEcartee && (
                     <span data-ecartee-motif style={{ fontSize: 12, color: 'var(--lab)' }}>
-                      · {ecarteeMotif} <button onClick={() => document.querySelector('[data-analyse-motifs]')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} style={{ background: 'none', border: 0, padding: 0, color: '#E8695A', textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }} title={CLIENT.fiche.ecarteeVoirTip}>{CLIENT.fiche.ecarteeVoir}</button>
+                      · {ecarteeMotif} <button onClick={() => document.querySelector('[data-analyse-motifs]')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} style={{ background: 'none', border: 0, padding: 0, color: '#E8695A', textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>{CLIENT.fiche.ecarteeVoir}</button>
                     </span>
                   )}
                 </div>
@@ -977,7 +971,7 @@ export function Fiche({ idu }: { idu: string }) {
                 {signalEcarte && (
                   <p data-signal-ecarte style={{ margin: '9px 0 0', fontSize: 11, color: '#b9a898', borderLeft: '3px solid #8C7468', paddingLeft: 8 }}>
                     La parcelle porte {(multBase ?? 0) >= 4 ? 'un signal fort' : 'un signal au-dessus de la moyenne'}{f.score_v2.fraction ? <> ({f.score_v2.fraction} sous 1 an)</> : null} <b>mais elle est écartée</b>{motifEcart ? <> : {motifEcart.toLowerCase()}</> : null} — l’écartement prime. La fréquence par tier ne s’affiche pas.
-                    <span title="Le signal est réel ; l’écartement (étage 0) prime sur le signal (doctrine M5). On montre le signal ET la raison de l’écart." style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
+                    <span aria-label="Le signal est réel ; l’écartement (étage 0) prime sur le signal (doctrine M5). On montre le signal ET la raison de l’écart." style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
                   </p>
                 )}
                 {f.score_v2.verbal?.frequence && (
@@ -985,7 +979,7 @@ export function Fiche({ idu }: { idu: string }) {
                     {f.score_v2.verbal.frequence.sous_moyenne
                       ? <>Fréquence de vente en dessous de la moyenne de l’île (à horizon plus lointain).</>
                       : <>Parmi les parcelles de ce niveau, environ <b>{f.score_v2.verbal.frequence.sur_100} sur 100</b> ont été vendues en {f.score_v2.verbal.frequence.fenetre}, contre ~{f.score_v2.verbal.frequence.base_sur_100} sur 100 en moyenne.</>}
-                    <span title={f.score_v2.verbal.frequence.source_dite} style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
+                    <span aria-label={f.score_v2.verbal.frequence.source_dite} style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
                   </p>
                 )}
                 {/* FICHE-RANGEMENT-1 Lot 1 (doublon #6) — « Pourquoi ce score » vivait DEUX fois dans la
@@ -1798,7 +1792,7 @@ function SyntheseIAPanel({ data: d, pending, error, onReplier }: {
           {CLIENT.fiche.ia.synthese}
           {stub && <span data-synthese-stub style={{ fontSize: 9.5, fontWeight: 500, color: '#b7a3e6', border: '1px solid #47386e', borderRadius: 5, padding: '1px 5px' }}>repli</span>}
         </p>
-        <button data-synthese-replier onClick={onReplier} title="Replier — revenir aux boutons"
+        <button data-synthese-replier onClick={onReplier}
           style={{ background: 'none', border: '1px solid #372c58', borderRadius: 7, color: '#b7a3e6', fontSize: 11, padding: '2px 9px', cursor: 'pointer', flexShrink: 0 }}>Replier</button>
       </div>
       {pending ? (

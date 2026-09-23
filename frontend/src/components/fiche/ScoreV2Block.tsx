@@ -142,7 +142,7 @@ export function ScoreV2Block({ idu }: { idu: string }) {
 
       {/* RETOURS-7 Z12.2 — UN SEUL libellé de version lisible (date, dérivé du run courant), identique
           partout ; l'identifiant technique du modèle reste au survol (et au dashboard admin). */}
-      <p className="mt-2 text-[10.5px] leading-snug text-txt-dim" title={`modèle ${data.model_version}`}>
+      <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">
         {data.version_label ?? 'Analyse LABUSE'} — {data.avertissement}
       </p>
     </div>

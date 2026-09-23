@@ -162,9 +162,9 @@ function FactRow({ label, value, tone, src }: {
 }
 
 // Z1·04 — renvoi d'article : lien mono ↗ (href) ou texte mono discret (sans url → pas de flèche).
-function RefLink({ href, children, title }: { href?: string | null; children: ReactNode; title?: string }) {
-  if (!href) return <span className="font-mono text-[11.5px] text-txt-mut" title={title}>{children}</span>
-  return <a className="f-ref" href={href} target="_blank" rel="noreferrer" title={title}>{children}</a>
+function RefLink({ href, children }: { href?: string | null; children: ReactNode; title?: string }) {
+  if (!href) return <span className="font-mono text-[11.5px] text-txt-mut">{children}</span>
+  return <a className="f-ref" href={href} target="_blank" rel="noreferrer">{children}</a>
 }
 
 // Z1·01 — ligne de STATUT (puce + phrase), jamais une boîte (maquette .status).
@@ -262,8 +262,7 @@ function SourceRef({ line, hideDate }: { line: FicheLine; hideDate?: boolean }) 
   return (
     <div className="mt-0.5 flex items-center gap-2 text-[11px] text-txt-dim">
       {line.source && (
-        <button onClick={() => openSourceDrawer(line)} className="shrink-0 truncate text-txt-dim transition-colors duration-quick hover:text-mint hover:underline"
-          title="Voir la source (drawer)">
+        <button onClick={() => openSourceDrawer(line)} className="shrink-0 truncate text-txt-dim transition-colors duration-quick hover:text-mint hover:underline">
           {line.source}
         </button>
       )}
@@ -271,7 +270,7 @@ function SourceRef({ line, hideDate }: { line: FicheLine; hideDate?: boolean }) 
           affiché INLINE, discret et tronqué : la traçabilité se lit sans ouvrir un tiroir. Le full
           au survol. La date de run (line.date) reste masquée (hideDate) car uniforme/trompeuse. */}
       {line.millesime_amont && (
-        <span className="min-w-0 truncate text-[10px] text-txt-dim" title={line.millesime_amont}>· {line.millesime_amont}</span>
+        <span className="min-w-0 truncate text-[10px] text-txt-dim">· {line.millesime_amont}</span>
       )}
       {!hideDate && line.date && <span className="ml-auto shrink-0 font-mono tnum">{fmtDateNum(line.date)}</span>}
     </div>
@@ -343,7 +342,7 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
           CHEVAUCHE plus « Marge & frais » / « VRD & aménagements ». */}
       <label className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[11px] text-txt-dim">
         {label}
-        {hint && <span className="rounded bg-st-creuser/10 px-1 text-[8.5px] text-st-creuser" title="Hypothèse — à ajuster selon votre opération">hyp. — ajustez</span>}
+        {hint && <span className="rounded bg-st-creuser/10 px-1 text-[8.5px] text-st-creuser">hyp. — ajustez</span>}
       </label>
       {/* CIRCUIT-2 lot 1.7 — portée `projet` (DA v3) : une valeur SAISIE par le client s'affiche
           en AMBRE (bord + texte) — on voit d'un coup d'œil ce qui vient de lui, pas de LABUSE.

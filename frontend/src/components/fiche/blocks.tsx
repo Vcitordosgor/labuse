@@ -106,7 +106,7 @@ export function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
             <ul className="mt-1 flex flex-col gap-0.5">
               {z.articles.slice(0, 6).map((a, j) => (
                 <li key={j} className="text-[11.5px]">
-                  <a className="f-ref" href={a.url ?? z.url ?? '#'} target="_blank" rel="noreferrer" title={a.reference}>{a.reference}</a>
+                  <a className="f-ref" href={a.url ?? z.url ?? '#'} target="_blank" rel="noreferrer">{a.reference}</a>
                 </li>
               ))}
             </ul>

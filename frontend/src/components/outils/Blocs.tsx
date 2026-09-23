@@ -38,8 +38,7 @@ const N_MIN = [
 ]
 
 const Estime = () => (
-  <span className="rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500"
-    title="SDP résiduelle agrégée — Estimé, moteur de la fiche (enveloppe : capacité PLU moins bâti existant), sommée sur le bloc">Estimé</span>
+  <span className="rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">Estimé</span>
 )
 
 // Détail d'un bloc (ouvert au clic) — les IDU, chacun avec surface + zone + « Voir la fiche »,
@@ -63,7 +62,6 @@ function BlocDetail({ blocId }: { blocId: number }) {
         <div key={m.idu} data-bloc-membre data-bloc-fiche role="button" tabIndex={0}
           onClick={() => select(m.idu)}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(m.idu) } }}
-          title="Ouvrir la fiche de la parcelle"
           className="flex cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 text-[10.5px] hover-fill">
           <span className="font-mono text-txt-hi">{m.idu}</span>
           <span className="text-txt-dim">{fmtM2(m.surface_m2)}</span>
@@ -86,10 +84,9 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
   const pushOutilRetour = useApp((s) => s.pushOutilRetour)
   return (
     <div className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5">
-      <div data-bloc-row className="flex cursor-pointer items-center gap-2" onClick={onToggle}
-        title={ouvert ? 'Replier' : 'Voir les parcelles du bloc'}>
+      <div data-bloc-row className="flex cursor-pointer items-center gap-2" onClick={onToggle}>
         <span className="text-[9px] text-txt-dim">{ouvert ? '▾' : '▸'}</span>
-        <span className="min-w-0 flex-1 truncate text-[11px] text-txt" title={it.denomination ?? undefined}>
+        <span className="min-w-0 flex-1 truncate text-[11px] text-txt">
           {it.denomination ?? '—'}
         </span>
         <span className="ml-auto tnum text-[11px] text-txt">{fmtM2(it.sdp_residuelle_m2)}</span>
@@ -102,12 +99,12 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
         <span className="text-txt-dim">·</span>
         <span className="shrink-0 truncate">{it.communes.join(', ')}</span>
         {it.zonages.length > 0 && <><span className="text-txt-dim">·</span>
-          <span className="shrink-0 truncate text-txt-dim" title={it.zonages.join(', ')}>{it.zonages.slice(0, 4).join(' ')}</span></>}
+          <span className="shrink-0 truncate text-txt-dim">{it.zonages.slice(0, 4).join(' ')}</span></>}
       </div>
       <div className="mt-0.5 flex items-center gap-1.5 pl-4 text-[10px]">
         {it.siren && <Siren value={it.siren} className="font-mono text-[10px] text-txt-dim" />}
         {it.sdp_couverture < it.n_parcelles && (
-          <span className="text-txt-dim" title="Certaines parcelles sont hors PLU : leur SDP résiduelle est inconnaissable, non comptée dans la somme">
+          <span className="text-txt-dim">
             résiduel sur {it.sdp_couverture}/{it.n_parcelles}
           </span>
         )}

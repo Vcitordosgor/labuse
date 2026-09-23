@@ -59,8 +59,8 @@ const ROWS: Row[] = [
 // OUTILS-FIX-2 D2 — petit badge de provenance (mêmes couleurs que partout : Sourcé = mint, Estimé = ambre).
 function ProvBadge({ prov }: { prov: 'source' | 'estime' }) {
   return prov === 'source'
-    ? <span className="ml-1 rounded bg-mint/15 px-1 text-[8.5px] font-medium normal-case text-mint" title="Donnée observée (cadastre, PLU, DVF, DGFiP, aléas)">Sourcé</span>
-    : <span className="ml-1 rounded bg-amber-500/15 px-1 text-[8.5px] font-medium normal-case text-amber-500" title="Valeur dérivée / estimée (même moteur que la fiche)">Estimé</span>
+    ? <span className="ml-1 rounded bg-mint/15 px-1 text-[8.5px] font-medium normal-case text-mint">Sourcé</span>
+    : <span className="ml-1 rounded bg-amber-500/15 px-1 text-[8.5px] font-medium normal-case text-amber-500">Estimé</span>
 }
 
 // O9(d) — indices des cellules gagnantes d'une ligne (peut être plusieurs en cas d'égalité).
@@ -212,7 +212,7 @@ export function ComparePanel() {
                       <th key={r.idu} data-compare-col className="border-l border-line p-2 align-top">
                         <div className="flex items-center justify-between gap-2">
                           <button onClick={() => select(r.idu)} className="font-mono text-[11px] tracking-tight text-txt-hi hover:underline">{r.idu}</button>
-                          <button onClick={() => removeFromCompare(r.idu)} title="Retirer" className="text-[11px] text-txt-dim hover:text-st-ecartee">✕</button>
+                          <button onClick={() => removeFromCompare(r.idu)} aria-label="Retirer" className="text-[11px] text-txt-dim hover:text-st-ecartee">✕</button>
                         </div>
                         {/* OUTILS-FIX-3 C1 — la puce de scoring (tier « Faible / Neutre / Priorité »… dérivée de
                             tier_v2) est RETIRÉE : l'Analyse LABUSE n'a pas été demandée sur cet écran, on ne
@@ -240,7 +240,7 @@ export function ComparePanel() {
                     <tr key={row.label} className="border-t border-line">
                       <td className="p-2 text-[10.5px] uppercase tracking-wide text-txt-dim">
                         {row.title
-                          ? <span title={row.title} className="cursor-help border-b border-dotted border-line-2">{row.label}</span>
+                          ? <span className="cursor-help border-b border-dotted border-line-2">{row.label}</span>
                           : row.label}
                         <ProvBadge prov={row.prov} />
                       </td>

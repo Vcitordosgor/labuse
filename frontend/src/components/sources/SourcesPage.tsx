@@ -21,10 +21,10 @@ import { Loading } from '../Loading'
 // CONNEXIONS-2 Lot 6.2 (KO-14) — variante `error` (rouge) : un échec d'ingestion est VISIBLE.
 function Badge({ kind, children, title }: { kind: 'auto' | 'late' | 'dashed' | 'error'; children: ReactNode; title?: string }) {
   const base = 'shrink-0 rounded-[3px] px-1.5 py-px font-mono text-[9.5px] uppercase tracking-[.09em]'
-  if (kind === 'auto') return <span title={title} className={`${base} border border-mint/40 bg-mint/10 text-mint`}>{children}</span>
-  if (kind === 'late') return <span title={title} className={base} style={{ border: `1px solid ${TOKENS.warn}`, color: TOKENS.warn, background: TOKENS.warnBg }}>{children}</span>
-  if (kind === 'error') return <span title={title} className={base} style={{ border: '1px solid #E05252', color: '#E05252', background: 'rgba(224,82,82,.10)' }}>{children}</span>
-  return <span title={title} className={`${base} border border-dashed border-line-2 text-txt-dim`}>{children}</span>
+  if (kind === 'auto') return <span aria-label={title} className={`${base} border border-mint/40 bg-mint/10 text-mint`}>{children}</span>
+  if (kind === 'late') return <span aria-label={title} className={base} style={{ border: `1px solid ${TOKENS.warn}`, color: TOKENS.warn, background: TOKENS.warnBg }}>{children}</span>
+  if (kind === 'error') return <span aria-label={title} className={base} style={{ border: '1px solid #E05252', color: '#E05252', background: 'rgba(224,82,82,.10)' }}>{children}</span>
+  return <span aria-label={title} className={`${base} border border-dashed border-line-2 text-txt-dim`}>{children}</span>
 }
 
 function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
@@ -70,7 +70,7 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   const cls = `group flex items-start justify-between gap-3 border-b border-line px-4 py-3 text-left last:border-b-0 hover-fill ${focused ? 'bg-mint/[0.06]' : ''}`
   return s.documentation_url
     ? <a ref={setRef} data-source-row href={s.documentation_url} target="_blank" rel="noreferrer"
-        title="Ouvrir la page du producteur" className={cls}>{contenu}</a>
+        className={cls}>{contenu}</a>
     : <div ref={setRef} data-source-row className={cls}>{contenu}</div>
 }
 

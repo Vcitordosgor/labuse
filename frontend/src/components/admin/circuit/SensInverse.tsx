@@ -31,7 +31,7 @@ export function SensInverse({ data, onOpenSource }: { data: CircuitData; onOpenS
               <div className="si-src">
                 {e.sources.length ? e.sources.map((s) => {
                   const id = nom2id.get(s)
-                  return <span key={s} className="chip" title={id != null ? `Voir la source « ${s} »` : s}
+                  return <span key={s} className="chip"
                     onClick={id != null ? () => onOpenSource(id) : undefined}>{s}{id != null ? ' ↗' : ''}</span>
                 }) : <span className="muted">aucune source</span>}
               </div>

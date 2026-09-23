@@ -183,7 +183,7 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
           <span className="label-caps text-[10px] text-txt-mut">Commune</span>
           {O6_COLS.map((c) => (
             <span key={c.k} className="flex items-center justify-end gap-1">
-              <button data-o6-tri={c.k} onClick={() => clicTri(c.k)} title={c.tip ?? c.title}
+              <button data-o6-tri={c.k} onClick={() => clicTri(c.k)}
                 className={`text-right text-[10px] font-medium uppercase leading-tight tracking-tight ${
                   tri.k === c.k ? 'text-mint' : 'text-txt-dim hover:text-txt-mut'}`}>
                 {c.head}{arrow(c.k)}</button>

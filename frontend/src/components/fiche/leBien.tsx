@@ -98,7 +98,7 @@ export function BatiBlock({ f }: { f: Fiche }) {
             <FactRow key={r.rnb_id} label="RNB"
               value={<a href={r.lien} target="_blank" rel="noreferrer"
                 className="font-mono text-[12px] hover:underline"
-                title="Fiche officielle du bâtiment (rnb.beta.gouv.fr)">{r.rnb_id} ↗</a>}
+                >{r.rnb_id} ↗</a>}
               src="RNB — Référentiel National des Bâtiments" />
           ))}
         </div>

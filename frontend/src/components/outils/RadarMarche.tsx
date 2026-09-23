@@ -12,7 +12,7 @@ function EcartLigne({ label, e }: { label: string; e: RadarEcart }) {
   // RETOURS-11 O15c (décision Vic) — n'affiche l'écart QUE si n ≥ 5 des DEUX côtés (annonces ET actes) :
   // en deçà, ce n'est pas une mesure. Sinon « échantillon insuffisant » (jamais un chiffre fragile servi).
   if (!e.calculable || (e.n_demande ?? 0) < 5 || (e.n_acte ?? 0) < 5) {
-    return <div className="flex items-center justify-between py-1 text-[11px] text-txt-dim"><span>{label}</span><span title={e.motif}>— (échantillon insuffisant)</span></div>
+    return <div className="flex items-center justify-between py-1 text-[11px] text-txt-dim"><span>{label}</span><span>— (échantillon insuffisant)</span></div>
   }
   const baisse = (e.ecart_pct ?? 0) > 0
   return (
@@ -60,7 +60,7 @@ const fmt = (v: number) => v.toLocaleString('fr-FR')
 // une MESURE : valeur + unité si n≥seuil, sinon « — » (et le n est toujours dit, discrètement).
 function Mesure({ m, unit }: { m: RadarMesure; unit: string }) {
   if (m.insuffisant) {
-    return <span className="text-txt-dim" title={`échantillon insuffisant (n=${m.n})`}>—</span>
+    return <span className="text-txt-dim" aria-label={`échantillon insuffisant (n=${m.n})`}>—</span>
   }
   return <span className="text-txt">{fmt(m.valeur!)}<span className="text-[9px] text-txt-dim">{unit} · n{m.n}</span></span>
 }

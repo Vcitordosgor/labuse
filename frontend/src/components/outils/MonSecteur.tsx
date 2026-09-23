@@ -28,7 +28,7 @@ function Cell({ l, v, sub }: { l: string; v: string; sub?: string }) {
     <div className="stat min-w-0">
       <div className="stat-l">{l.toUpperCase()}</div>
       <div className={`stat-v tnum whitespace-nowrap${v === '—' ? ' vide' : ''}`}>{v}</div>
-      {sub && <div className="mt-0.5 truncate text-[9.5px] text-txt-dim" title={sub}>{sub}</div>}
+      {sub && <div className="mt-0.5 truncate text-[9.5px] text-txt-dim">{sub}</div>}
     </div>
   )
 }

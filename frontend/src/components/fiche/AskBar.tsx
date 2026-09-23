@@ -68,7 +68,7 @@ function ProvChip({ src, prov, href }: { src: string; prov?: Provenance; href?: 
   const body = <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] ${style}`}>
     <b className="font-semibold">{tag}</b> · {label}{href ? ' ↗' : ''}
   </span>
-  return href ? <a href={href} target="_blank" rel="noreferrer" title="Voir la source">{body}</a> : body
+  return href ? <a href={href} target="_blank" rel="noreferrer">{body}</a> : body
 }
 
 export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string | null; startOpen?: boolean; onClose?: () => void }) {
@@ -117,7 +117,7 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
         <span className="label-caps text-[10px] text-violet">✦ Demander à l'IA</span>
         <button data-askbar-close onClick={close}
           className="ml-auto min-h-7 rounded px-1.5 py-0.5 text-[11px] text-txt-dim transition-colors duration-quick hover:bg-violet/15 hover:text-txt"
-          title="Replier — afficher toute la fiche">✕ fermer</button>
+          >✕ fermer</button>
       </div>
       <div className="mt-2 flex items-center gap-2">
         <input
@@ -183,8 +183,7 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
           « ✦ Demander à l'IA » la ré-affiche (cache inchangé, aucun nouvel appel). */}
       {d && !ask.isPending && (
         <button data-askbar-voir-fiche onClick={close}
-          className="mt-2 flex min-h-7 w-full items-center justify-center gap-1 rounded-lg border border-violet/30 bg-violet/[0.06] py-1.5 text-[11px] font-medium text-violet transition-colors duration-quick hover:border-violet/60 hover:bg-violet/10"
-          title="Replier l'IA et afficher toute la fiche — la réponse reste gardée (rouvrir pour la revoir)">
+          className="mt-2 flex min-h-7 w-full items-center justify-center gap-1 rounded-lg border border-violet/30 bg-violet/[0.06] py-1.5 text-[11px] font-medium text-violet transition-colors duration-quick hover:border-violet/60 hover:bg-violet/10">
           Voir l'entièreté de la fiche →
         </button>
       )}

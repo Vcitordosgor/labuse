@@ -93,8 +93,7 @@ function LigneParcelle({ it, onDragStart, onRetenir, onEcarter, onFiche, onVoir 
   return (
     <div draggable onDragStart={onDragStart} data-tri-ligne={it.idu}
       onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
-      className="grid cursor-pointer grid-cols-[14px_1fr_170px_76px_96px] items-center gap-3 border-b border-line/50 px-3.5 py-2 transition-colors duration-quick hover:bg-surface-2"
-      title="Ouvrir la fiche · glisser pour décider">
+      className="grid cursor-pointer grid-cols-[14px_1fr_170px_76px_96px] items-center gap-3 border-b border-line/50 px-3.5 py-2 transition-colors duration-quick hover:bg-surface-2">
       <span className="h-[7px] w-[7px] rounded-full" style={{ background: tierDot(it.tier) }} />
       <AdresseLigne it={it} mono={etatLabel(it.etat_bien)} />
       <SignauxLigne signaux={it.signaux} />
@@ -102,15 +101,15 @@ function LigneParcelle({ it, onDragStart, onRetenir, onEcarter, onFiche, onVoir 
       <div className="flex justify-end gap-1.5">
         {/* RETOURS-12 J1 — ŒIL AMBRE (couleur Projet) : voir la parcelle sur la carte EN ORTHO, délimitée,
             sans quitter le projet ni perdre l'état de la liste (focusParcelle, même geste que O1/O12). */}
-        <button data-tri-voir onClick={onVoir} title="Voir sur la carte (vue aérienne)"
+        <button data-tri-voir onClick={onVoir} aria-label="Voir sur la carte (vue aérienne)"
           className="flex h-6 w-[26px] items-center justify-center rounded-md border border-cp-amber/40 text-cp-amber transition-colors duration-quick hover:bg-cp-amber/10">
           <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.6">
             <path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z" /><circle cx="10" cy="10" r="2.2" />
           </svg>
         </button>
-        <button data-tri-retenir onClick={onRetenir} title="Retenir"
+        <button data-tri-retenir onClick={onRetenir} aria-label="Retenir"
           className="flex h-6 w-[26px] items-center justify-center rounded-md border border-mint/40 text-[12px] text-mint transition-colors duration-quick hover:bg-mint/15">✓</button>
-        <button data-tri-ecarter onClick={onEcarter} title="Écarter"
+        <button data-tri-ecarter onClick={onEcarter} aria-label="Écarter"
           className="flex h-6 w-[26px] items-center justify-center rounded-md border border-st-ecartee/40 text-[12px] text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10">✕</button>
       </div>
     </div>
@@ -126,8 +125,7 @@ function MiniLigne({ it, col, onDragStart, onRetour, onFiche }: {
   return (
     <div draggable onDragStart={onDragStart} data-mini-ligne={it.idu}
       onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
-      className="grid cursor-pointer grid-cols-[14px_1fr_26px] items-center gap-2 border-b border-line/50 px-3.5 py-2 transition-colors duration-quick hover:bg-surface-2"
-      title="Ouvrir la fiche">
+      className="grid cursor-pointer grid-cols-[14px_1fr_26px] items-center gap-2 border-b border-line/50 px-3.5 py-2 transition-colors duration-quick hover:bg-surface-2">
       <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: tierDot(it.tier) }} />
       <div className="min-w-0">
         {it.adresse
@@ -135,7 +133,7 @@ function MiniLigne({ it, col, onDragStart, onRetour, onFiche }: {
           : <b className="block truncate text-[12.5px] font-normal italic text-txt-dim">sans adresse — {it.commune}</b>}
         <span className="block truncate font-mono text-[10px] text-txt-dim">{iduCourt(it.idu)}</span>
       </div>
-      <button data-mini-retour onClick={onRetour} title={ecartee ? 'Récupérer (→ à trier)' : 'Remettre à trier'}
+      <button data-mini-retour onClick={onRetour} aria-label={ecartee ? 'Récupérer (→ à trier)' : 'Remettre à trier'}
         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-[12px] transition-colors duration-quick ${ecartee ? 'border-mint/40 text-mint hover:bg-mint/15' : 'border-line-2 text-txt-mut hover:border-mint hover:text-mint'}`}>↩</button>
     </div>
   )
@@ -277,8 +275,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
     <div data-projet-kanban className="flex min-w-0 flex-1 flex-col gap-3.5 overflow-hidden bg-bg p-4 sm:p-5">
       {/* ÉTAGE 1 — IDENTITÉ */}
       <div className={`shrink-0 ${carte} px-4 py-3`}>
-        <button onClick={() => setOpenProjet(null)} className="min-h-6 text-[11px] text-txt-dim transition-colors duration-quick hover:text-txt-hi"
-          title="Revenir à la liste des projets">← Mes projets</button>
+        <button onClick={() => setOpenProjet(null)} className="min-h-6 text-[11px] text-txt-dim transition-colors duration-quick hover:text-txt-hi">← Mes projets</button>
         <div className="mt-1 flex flex-wrap items-center gap-2.5">
           {editing ? (
             <input data-kanban-nom-input autoFocus value={nomInput} onChange={(e) => setNomInput(e.target.value)}
@@ -289,7 +286,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               onBlur={() => { if (nomInput.trim() && nomInput !== nom) patch.mutate({ nom: nomInput.trim() }); setEditing(false) }}
               className="rounded-md border border-mint/40 bg-surface-3 px-2 py-1 font-display text-lg font-bold text-txt-hi outline-none focus:border-mint" />
           ) : (
-            <h1 data-kanban-nom className="font-display text-xl font-bold text-txt-hi" title={projet?.nom ?? nom}>{projet?.nom ?? nom}</h1>
+            <h1 data-kanban-nom className="font-display text-xl font-bold text-txt-hi">{projet?.nom ?? nom}</h1>
           )}
           {projet && <span data-kanban-perimetre className="rounded border border-line-2 px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-wider text-txt-mut">{perimetreLabel(projet.cadrage)}</span>}
           {projet?.identite?.budget_eur ? <span data-kanban-budget className="rounded border border-line-2 px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-wider text-txt-dim">{fmtEurCompact(projet.identite.budget_eur)} indic.</span> : null}
@@ -337,7 +334,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 })()}
                 {/* RETOURS-7 Z12.2 — libellé lisible = la DATE ; l'identifiant technique du run
                     (valeurs_run.label) reste au survol et au dashboard, plus servi au client. */}
-                {etat?.valeurs_run?.date ? <span title={`run ${etat.valeurs_run.label}`}>{`valeurs au ${fmtDate(etat.valeurs_run.date)}`}</span> : ''}
+                {etat?.valeurs_run?.date ? <span>{`valeurs au ${fmtDate(etat.valeurs_run.date)}`}</span> : ''}
                 {(() => { const m = (etat?.proposees ?? []).find((it) => it.marche_eur_m2 != null)?.marche_eur_m2; return m != null && projet && (projet.cadrage.communes?.length === 1) ? ` · marché ancien ${projet.cadrage.communes[0]} ~${fmtInt(m)} €/m²` : '' })()}
               </p>
               <button data-kanban-scoring onClick={() => setAlgoModale('scoring')}

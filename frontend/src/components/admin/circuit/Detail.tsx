@@ -72,7 +72,7 @@ function DetailCompteur({ back, onOpen }: { back: JSX.Element; onOpen: Ouvrir })
         <div key={g.cle} className="card"><h3>{g.titre} · {g.reservoirs.length}</h3>
           {g.reservoirs.length ? <div>{g.reservoirs.map((r: any) => (
             <span key={r.id} className={`chip ${['mint', 'gris'].includes(r.etat[0]) ? '' : r.etat[0]}`}
-              title={`${r.producteur || ''} — ${r.etat[1]}`} onClick={() => onOpen('reservoir', r.id)}>{r.nom}</span>
+              onClick={() => onOpen('reservoir', r.id)}>{r.nom}</span>
           ))}</div> : <div className="muted">aucun</div>}
         </div>
       ))}
@@ -233,8 +233,7 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
               <div className="card"><h3>{titre} · {lignes.length}</h3>
                 {lignes.length ? <ul className="list">{lignes.map((x, i) => (
                   <li key={i} className={x.rid ? 'lien' : ''} style={x.rid ? { cursor: 'pointer' } : undefined}
-                    onClick={x.rid ? () => onOpen('robinet', x.rid!) : undefined}
-                    title={x.rid ? `Voir « ${x.cible} » et ses sources` : undefined}>
+                    onClick={x.rid ? () => onOpen('robinet', x.rid!) : undefined}>
                     <span>{x.ligne}</span><span className="muted">{x.cible}{x.rid ? ' ↗' : ''}</span></li>
                 ))}</ul> : <span className="muted">{vide}</span>}
               </div>
@@ -244,18 +243,14 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
               {calibrages.length > 0 && (
                 <div className="card"><h3>Calibrages PLU · {calibrages.length} lecteurs</h3>
                   <div>{calibrages.map((cb) => (
-                    <span key={cb.insee} className={`chip ${cb.a_reverifier ? 'ambre' : ''}`}
-                      title={`${cb.commune} — ${cb.etat_label}`
-                        + (cb.document_gpu ? ` · calibré sur ${cb.document_gpu}` : '')
-                        + (cb.a_reverifier && cb.document_gpu_servi ? ` · servi ${cb.document_gpu_servi}` : '')
-                        + (cb.n_regles ? ` · ${cb.n_regles} règles` : '')}>
+                    <span key={cb.insee} className={`chip ${cb.a_reverifier ? 'ambre' : ''}`}>
                       {cb.commune} · {cb.etat_label}{cb.n_regles ? ` (${cb.n_regles})` : ''}</span>
                   ))}</div>
                 </div>
               )}
               <div className="card"><h3>Couches carte alimentées · {couches.length}</h3>
                 {couches.length ? <div>{couches.map((c) => (
-                  <span key={c.kind} className="chip" title={`Ouvrir « ${c.nom} » sur la carte`}
+                  <span key={c.kind} className="chip"
                     onClick={() => versCouche(c.kind)}>{c.nom} ↗</span>
                 ))}</div> : <span className="muted">aucune couche carte</span>}
               </div>
@@ -316,7 +311,7 @@ function DetailRobinet({ id, data, back, onOpen }:
               const label = prefixe === 'moteur' ? 'moteur' : ch.hors_moteur ? 'hors moteur'
                 : prefixe === 'passe_plat' ? 'passe-plat' : prefixe
               return (
-                <li key={ch.id}><span title={ch.definition}>{ch.libelle}</span>
+                <li key={ch.id}><span>{ch.libelle}</span>
                   <span>
                     <span className={`tag ${prefixe === 'moteur' ? 'mint' : ch.hors_moteur ? 'ambre' : ''}`}>{label}</span>
                     {ch.portee === 'run' ? <span className="tag">run</span> : null}
@@ -342,14 +337,12 @@ function DetailRobinet({ id, data, back, onOpen }:
                 const ref = rg.reference
                 return (
                   <li key={ch.id}>
-                    <span title={rg.choix || rg.ecart || ''}>{ch.libelle}</span>
+                    <span>{ch.libelle}</span>
                     <span>
-                      <span className={`tag ${badge[0] === 'mint' ? 'mint' : badge[0]}`}
-                        title={(rg.ecart || rg.choix || '') + (ref ? `\n— ${ref.titre}, ${ref.article} (${ref.version})` : '')}>
+                      <span className={`tag ${badge[0] === 'mint' ? 'mint' : badge[0]}`}>
                         {badge[1]}</span>
                       {ref?.url?.startsWith('http') && (
-                        <a className="tag" href={ref.url} target="_blank" rel="noreferrer"
-                          title={`${ref.titre} — ${ref.article} · ${ref.version}\n« ${(ref.extrait || '').slice(0, 300)}… »`}>
+                        <a className="tag" href={ref.url} target="_blank" rel="noreferrer">
                           référence ↗</a>
                       )}
                     </span>
@@ -413,7 +406,7 @@ function DetailPompe({ back, rafraichir }: { back: JSX.Element; rafraichir: () =
             <div className="actions">
               <button className="btn mint" disabled={lancer.isPending || (!p.residuel?.changees && !candidat)} onClick={() => lancer.mutate()}>Faire tourner la pompe</button>
               {candidat && <button className="btn ambre" onClick={async () => { setNote(await getAdminCircuitNoteVersion(candidat)); setNoteLue(candidat) }}>Note de version</button>}
-              {candidat && <button className="btn ambre" disabled={noteLue !== candidat} title={noteLue !== candidat ? 'Ouvrez la note de version d\'abord.' : ''} onClick={() => basculer.mutate(candidat)}>Basculer sur {candidat}</button>}
+              {candidat && <button className="btn ambre" disabled={noteLue !== candidat} onClick={() => basculer.mutate(candidat)}>Basculer sur {candidat}</button>}
               {precedent && <button className="btn" disabled={revenir.isPending} onClick={() => revenir.mutate()}>Revenir à {precedent}</button>}
             </div>
             <div className="muted" style={{ marginTop: 10 }}>Calculer produit un candidat, jamais servi tout seul. Basculer déplace tous les pointeurs d'un geste.</div>

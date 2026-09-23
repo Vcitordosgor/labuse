@@ -129,7 +129,7 @@ function VoletParcelles() {
                 : 'Aucun changement détecté depuis le suivi.'}
             </span>
           </button>
-          <button data-suivi-retirer onClick={() => suivre.mutate(s.idu)} title="Ne plus suivre" className="shrink-0 text-[11px] text-txt-dim hover:text-st-ecartee">retirer</button>
+          <button data-suivi-retirer onClick={() => suivre.mutate(s.idu)} className="shrink-0 text-[11px] text-txt-dim hover:text-st-ecartee">retirer</button>
         </div>
       ))}
     </div>
@@ -242,7 +242,7 @@ function VeilleExterne() {
                     {/* Le nom donné coiffe le résumé des critères ; sans nom, seul « Tous les événements ». */}
                     <div className="mt-0.5 truncate text-[10px] text-txt-dim">{v.nom ? resumeVeille(v) : 'Tous les événements'}</div>
                   </div>
-                  <button data-veille-ext-renom onClick={() => ouvrirRenom(v)} title="Renommer cette veille" className="shrink-0 text-[11px] text-txt-mut hover:text-txt">renommer</button>
+                  <button data-veille-ext-renom onClick={() => ouvrirRenom(v)} className="shrink-0 text-[11px] text-txt-mut hover:text-txt">renommer</button>
                   <button onClick={() => suppr.mutate(v.id)} className="shrink-0 text-[11px] text-txt-mut hover:text-st-ecartee">supprimer</button>
                 </div>
               )

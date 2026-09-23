@@ -146,7 +146,7 @@ export function ScoringExplainer({ onClose }: { onClose: () => void }) {
 // (pas de plafond max-h) → plus de gros gap vide sous le contenu, le fond reste continu jusqu'en
 // bas. Sinon (accueil/résultats présents = eux flex-1), comportement plafonné inchangé.
 
-function LayersSection({ open, onToggle, fill, closable }: {
+function LayersSection({ open, onToggle, fill }: {
   open: boolean
   onToggle: () => void
   fill?: boolean
@@ -159,7 +159,6 @@ function LayersSection({ open, onToggle, fill, closable }: {
         onClick={onToggle}
         aria-expanded={open}
         className="group flex w-full items-center justify-between gap-2 text-left"
-        title={open ? (closable ? 'Refermer — rendre la place au listing' : 'Section ouverte (une section reste toujours ouverte)') : 'Ouvrir les couches — replie Filtres'}
       >
         <span className="label-caps">Couches</span>
         <ChevronSection open={open} />
@@ -188,14 +187,13 @@ function LayersSection({ open, onToggle, fill, closable }: {
 // (Verdict / Surface / SDP, mêmes champs du store) + « Tous les filtres → » qui déplie le panneau
 // EXPERT complet (FiltreLabuse, contenu du stage 2 inchangé). Accroche HONNÊTE : les filtres trient,
 // ils ne recalculent pas (mesuré en phase 1). Le bouton header « Filtres (N) » a disparu.
-function FiltresSection({ open, onToggle, onRetract, fill, closable }: { open: boolean; onToggle: () => void; onRetract?: () => void; fill?: boolean; closable?: boolean }) {
+function FiltresSection({ open, onToggle, onRetract, fill }: { open: boolean; onToggle: () => void; onRetract?: () => void; fill?: boolean; closable?: boolean }) {
   const { filters } = useApp()
   const n = countActiveFilters(filters)
   return (
     <div className={`px-5 pt-4 ${open && fill ? 'flex min-h-0 flex-1 flex-col' : 'shrink-0'}`}>
       <button data-filtres-toggle onClick={onToggle} aria-expanded={open}
-        className="group flex w-full items-center justify-between gap-2 text-left"
-        title={open ? (closable ? 'Refermer — rendre la place au listing' : 'Section ouverte (une section reste toujours ouverte)') : 'Ouvrir les filtres — replie Couches'}>
+        className="group flex w-full items-center justify-between gap-2 text-left">
         <span className="label-caps">Filtres</span>
         <span className="flex items-center gap-3">
           {n > 0 && (
@@ -244,16 +242,14 @@ function VerdictHero() {
           {analyse ? '✓ Analyse LABUSE' : 'Tri factuel — sans analyse'}</span>
         {analyse && (
           <button data-comprendre-open onClick={() => setAlgoModale('comprendre')}
-            className="inline-flex shrink-0 items-center gap-1 rounded-ctl border border-mint/40 px-2 py-0.5 text-[11px] font-medium text-mint hover:bg-mint/10"
-            title="Le classement (la bande), le signal de mutation, et la logique de l'analyse">
+            className="inline-flex shrink-0 items-center gap-1 rounded-ctl border border-mint/40 px-2 py-0.5 text-[11px] font-medium text-mint hover:bg-mint/10">
             <span className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-mint/50 text-[9px] font-bold leading-none">i</span>
             Comprendre
           </button>
         )}
         {/* M55-J point 7 : « Retour » — destination UNIQUE (store.retourFiltres). */}
         <button data-verdict-off onClick={retourFiltres}
-          className="shrink-0 rounded-ctl border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt"
-          title="Retour — revenir aux filtres">
+          className="shrink-0 rounded-ctl border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt">
           Retour
         </button>
       </div>
@@ -439,7 +435,7 @@ export function LeftPanel() {
         <button
           onClick={togglePanel}
           className="hidden h-full w-8 shrink-0 items-start justify-center border-r border-line bg-surface-1 pt-5 text-txt-dim hover:text-txt sm:flex"
-          title="Déplier le panneau"
+          aria-label="Déplier le panneau"
         >
           ›
         </button>
@@ -468,7 +464,6 @@ export function LeftPanel() {
           data-couches-mobile
           onClick={() => setMobileOpen(true)}
           className="absolute bottom-16 left-4 z-30 flex items-center gap-2 rounded-full border border-line-2 bg-surface-2 px-4 py-2 text-xs font-medium text-txt shadow-elev-2 sm:hidden"
-          title="Couches, analyse et résultats"
         >
           <svg viewBox="0 0 20 20" className="h-4 w-4 text-mint">
             <path d="M10 3.5 L17 7 L10 10.5 L3 7 Z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />

@@ -328,13 +328,13 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
           {d['siren'] != null && (embedded ? (
             !bandeauReplie && (
               <button data-scan-voir-parcelles onClick={() => setBandeauReplie(true)}
-                className="hover-fill w-full rounded-lg border border-mint/35 py-2 text-center text-[12.5px] text-mint" title="Replier le bandeau et voir la liste des parcelles">
+                className="hover-fill w-full rounded-lg border border-mint/35 py-2 text-center text-[12.5px] text-mint">
                 Voir ses parcelles →</button>
             )
           ) : (
             <button data-m02-operations
               onClick={() => { const s = String(d['siren']); setVeilleFocusSiren(s); setModule('veille-promoteurs') }}
-              className="hover-fill w-full rounded-lg border border-mint/35 py-2 text-center text-[12.5px] text-mint" title="Ce qu'il construit — ses opérations">
+              className="hover-fill w-full rounded-lg border border-mint/35 py-2 text-center text-[12.5px] text-mint">
               Voir ses opérations →</button>
           ))}
           {/* liste — RETOURS-5 T4.5 : lignes en survol plein (hoverFull).
@@ -474,7 +474,7 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
             {d['porteur_siren'] && (
               <button data-permis-scan-patrimoine
                 onClick={() => { setM02Prefill(String(d['porteur_siren']).replace(/\D/g, '').slice(0, 9)); setModule('patrimoine'); onClose(); pushOutilRetour({ module: 'permis', label: 'Permis', restore: { permitToOpen: permitId } }) }}
-                className="hover-fill mt-1.5 w-full rounded-lg border border-mint/35 py-1.5 text-center text-[11px] text-mint" title="Voir tout ce que ce porteur possède">
+                className="hover-fill mt-1.5 w-full rounded-lg border border-mint/35 py-1.5 text-center text-[11px] text-mint">
                 Scan patrimoine du porteur →</button>
             )}
             <F label="Nombre de lots" value={d['nb_lots']} />
@@ -763,8 +763,7 @@ export function M03() {
       {/* RETOURS-18 X1 — bandeau Sitadel PERMANENT. RETOURS-19 Y5 — tient sur UNE ligne (phrase resserrée
           + `whitespace-nowrap`) ; `overflow-hidden`/ellipse en garde-fou : la section ne défile JAMAIS
           latéralement (l'infobulle porte la phrase entière si jamais elle était tronquée). */}
-      <p title="Sitadel (974) ne publie que les permis autorisés — l'instruction déposée n'y figure pas."
-        className="shrink-0 -mt-0.5 truncate px-0.5 text-[9.5px] leading-snug text-txt-dim">
+      <p className="shrink-0 -mt-0.5 truncate px-0.5 text-[9.5px] leading-snug text-txt-dim">
         Sitadel : les permis <b className="text-txt-mut">autorisés</b>, pas l'instruction en cours.
       </p>
 
@@ -851,7 +850,7 @@ export function M03() {
           <p data-permis-pied className="shrink-0 px-2 pt-2 text-[11px] text-txt-dim">
             {pointMort
               ? <>{fmt(cartePm.length)} dormants sur la carte{total != null && loaded < total
-                  ? <> · <span data-permis-plafond title="Les dormants peuvent compter des milliers de PC : on charge d'abord les plus anciens (les plus dormants) ; affinez en zoomant/filtrant.">les {fmt(loaded)} plus anciens chargés — zoomez pour affiner</span></> : ''}</>
+                  ? <> · <span data-permis-plafond>les {fmt(loaded)} plus anciens chargés — zoomez pour affiner</span></> : ''}</>
               : <>{fmt(carteRadar.length)} sur la carte
                   {total != null && loaded < total ? <> · {fmt(loaded)} / {fmt(total)} chargés</> : null}</>}
             {zone && <span className="text-mint/70"> · {items.length} dans la zone dessinée</span>}
@@ -888,12 +887,12 @@ export function M03() {
                 lgt/surface · commune (tronquée) à gauche, badge d'état (Autorisé / Sans DAACT / non géocodé)
                 aligné À DROITE de la MÊME ligne (avant : le badge décrochait sur une 2ᵉ ligne). */}
             {/* RETOURS-17 W3 — pastille = couleur d'état (source unique) ; sa définition tient dans l'infobulle. */}
-            <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: etatColor(et) }} title={etTitre} />
+            <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: etatColor(et) }} aria-label={etTitre} />
             {/* RETOURS-16 V2.3 — chip type masqué en mode Dormant : l'endpoint ne sert QUE des PC
                 (WHERE type='PC'), la valeur ne varie jamais — une constante n'est pas une information. */}
             {!pointMort && <span className="shrink-0 rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>}
             {/* O17 (h) — DATE = date réelle d'autorisation du permis (par ligne), PAS la date du fichier. */}
-            <span className="shrink-0 font-mono text-txt-mut" title="Date d'autorisation du permis">{i['date'] as string}</span>
+            <span className="shrink-0 font-mono text-txt-mut">{i['date'] as string}</span>
             {i['nb_lgt'] != null && <b className="shrink-0 tnum text-txt">{String(i['nb_lgt'])} lgt{Number(i['nb_lgt']) > 1 ? 's' : ''}</b>}
             {pointMort && i['surface_m2'] != null && <span className="shrink-0 tnum text-txt-dim">{fmt(i['surface_m2'] as number)} m²</span>}
             {/* commune / parcelle en clair — tronquée pour laisser la place au badge. */}
@@ -905,13 +904,11 @@ export function M03() {
             <span className={`flex shrink-0 items-center gap-1.5 ${gaucheL2 ? '' : 'ml-auto'}`}>
               {/* RETOURS-14 S5.1 — un permis à parcelle incertaine ne pose JAMAIS de point : la
                   liste le dit. RETOURS-15 U4 — libellé COURT, le complet vit dans l'infobulle. */}
-              {!i['geom'] && <span data-permis-badge-nongeo className="whitespace-nowrap rounded-full bg-st-creuser/15 px-1.5 py-0.5 text-[9px] font-medium text-st-creuser"
-                title={String(i['geoloc'] ? `Localisation approximative (adresse) — ${i['geoloc']}` : "Parcelle d'origine disparue du cadastre et adresse non rattachable — non localisable sur la carte.")}>
+              {!i['geom'] && <span data-permis-badge-nongeo className="whitespace-nowrap rounded-full bg-st-creuser/15 px-1.5 py-0.5 text-[9px] font-medium text-st-creuser">
                 {i['geoloc'] ? 'approx. (adresse)' : 'non localisé'}</span>}
-              {!pointMort && i['delai_mois'] != null && <span style={{ color: VIOLET }} title="Délai d'instruction">{String(i['delai_mois'])} m</span>}
+              {!pointMort && i['delai_mois'] != null && <span style={{ color: VIOLET }}>{String(i['delai_mois'])} m</span>}
               {pointMort
-                ? <span data-permis-badge-mort className="whitespace-nowrap rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
-                    title="Aucune déclaration d'achèvement (DAACT) au fichier Sitadel — le commencement n'est pas tracé, ce n'est PAS une preuve de non-réalisation.">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>
+                ? <span data-permis-badge-mort className="whitespace-nowrap rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>
                 : i['etat_label'] && <span data-permis-etat className="whitespace-nowrap rounded-full bg-surface-2 px-1.5 py-0.5 text-[9px] font-medium text-txt-mut">{i['etat_label'] as string}</span>}
             </span>
           </button>
@@ -988,12 +985,11 @@ export function M05() {
           const tIcon = tend === 'accelere' ? '↓' : tend === 'ralentit' ? '↑' : tend === 'stable' ? '→' : ''
           const tColor = tend === 'accelere' ? TOKENS.mint : tend === 'ralentit' ? TOKENS.stEcartee : TOKENS.txtDim
           return (
-            <div key={c['commune'] as string} className="grid grid-cols-[1fr_64px_60px] gap-1 border-b border-line py-1.5 text-[11px]"
-              title={`${c['commune']} : rang ${rang ?? '—'}/24 par vélocité · délai médian ${natLabel} = ${c['delai_median_mois']} mois (IQR ${c['delai_p25_mois']}–${c['delai_p75_mois']}), sur ${c['n_mur']} dossiers mûrs. Tendance : ${tend ?? 'indéterminée (cohortes insuffisantes)'}.`}>
+            <div key={c['commune'] as string} className="grid grid-cols-[1fr_64px_60px] gap-1 border-b border-line py-1.5 text-[11px]">
               <span className="flex min-w-0 items-center gap-1.5 truncate text-txt">
                 {rang != null && <span className="shrink-0 font-mono text-[9px]" style={{ color: rgColor }}>#{rang}</span>}
                 <span className="truncate">{c['commune'] as string}</span>
-                {tIcon && <span className="shrink-0" style={{ color: tColor }} title={`Tendance ${tend}`}>{tIcon}</span>}
+                {tIcon && <span className="shrink-0" style={{ color: tColor }} aria-label={`Tendance ${tend}`}>{tIcon}</span>}
               </span>
               <span className="text-right font-mono" style={{ color: rgColor }}>{c['delai_median_mois'] == null ? '—' : `${c['delai_median_mois']} m`}</span>
               <span className="text-right font-mono text-txt-mut">{fmt(c['n_mur'] as number)}</span>
@@ -1161,7 +1157,7 @@ export function M08() {
               const on = cmpLeft === m.key
               return (
                 <button key={m.key} data-cmp-left={m.key} onClick={() => setCmpLeft(m.key)}
-                  title={m.label} aria-pressed={on}
+                  aria-pressed={on}
                   className="group flex flex-1 flex-col items-center gap-1 pt-0.5">
                   <span className={`font-mono text-[10px] leading-none ${on ? 'text-mint' : 'text-txt-dim group-hover:text-txt'}`}>{m.an}</span>
                   <span className={`h-2.5 w-2.5 rounded-full border ${on ? 'border-mint bg-mint' : 'border-line-2 bg-transparent group-hover:border-txt-mut'}`} />
@@ -1169,7 +1165,7 @@ export function M08() {
               )
             })}
             {/* borne « après » = aujourd'hui, verrouillée */}
-            <div className="flex flex-1 flex-col items-center gap-1 pt-0.5" title="Après — ortho actuelle (verrouillé)">
+            <div className="flex flex-1 flex-col items-center gap-1 pt-0.5">
               <span className="font-mono text-[10px] leading-none text-txt-dim">Auj.</span>
               <span className="h-2.5 w-2.5 rounded-full border border-dashed border-txt-dim bg-transparent" />
             </div>
@@ -1646,7 +1642,7 @@ export function M10() {
                 {/* Point 42 : score de risque consolidé (déterministe) */}
                 <div className="mt-1.5 flex items-center gap-2 text-[11px]">
                   <span data-diligence-risque className="rounded-full px-2 py-0.5 font-medium" style={{ background: `${rColor}22`, color: rColor }}>risque {rLabel} · {risque}/100</span>
-                  <span className="truncate text-txt-dim" title={proprio['type'] === 'personne_morale' ? `SIREN ${proprio['siren'] ?? '—'}` : 'propriétaire personne physique — non communiqué'}>
+                  <span className="truncate text-txt-dim">
                     {proprio['type'] === 'personne_morale' ? proprio['denomination'] : 'propriétaire particulier'}
                   </span>
                 </div>
@@ -1802,7 +1798,7 @@ function RetourOutil() {
   if (!stack.length) return null
   const top = stack[stack.length - 1]
   return (
-    <button data-outil-retour onClick={retourOutil} title={`Revenir à ${top.label}`}
+    <button data-outil-retour onClick={retourOutil}
       className="hover-fill flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick">
       ← {top.label}
     </button>
@@ -1852,8 +1848,7 @@ export function ModulePanel() {
             <span className="truncate text-txt-mut">{def.label.toUpperCase()}</span>
           </nav>
           <button onClick={() => setModule(null)} aria-label="Fermer le module"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-txt-mut transition-colors duration-quick hover:bg-mint/10 hover:text-txt-hi"
-            title="Fermer le module (Échap)">✕</button>
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-txt-mut transition-colors duration-quick hover:bg-mint/10 hover:text-txt-hi">✕</button>
         </div>
         <div className="mt-1">
           {/* P3 (revue Vic n°3) : plus de code M à l'écran — l'intitulé métier + le bénéfice */}

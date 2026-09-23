@@ -69,7 +69,7 @@ export function Panel({ children, className = '' }: { children: React.ReactNode;
 export function PHead({ children }: { children: React.ReactNode }) {
   return <div className="flex items-center gap-2.5 border-b border-line px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-txt-dim">{children}</div>
 }
-export function ActBtn({ children, onClick, tone = 'mint', disabled, title }: {
+export function ActBtn({ children, onClick, tone = 'mint', disabled }: {
   children: React.ReactNode; onClick?: () => void; tone?: 'mint' | 'ghost' | 'danger' | 'ia'; disabled?: boolean; title?: string
 }) {
   const tones = {
@@ -77,7 +77,7 @@ export function ActBtn({ children, onClick, tone = 'mint', disabled, title }: {
     danger: 'border-coral/40 bg-coral/5 text-coral', ia: 'border-cp-ia-border bg-cp-ia-bg/50 text-cp-ia',
   }
   return (
-    <button onClick={onClick} disabled={disabled} title={title}
+    <button onClick={onClick} disabled={disabled}
       className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors duration-quick disabled:opacity-40 ${tones[tone]}`}>
       {children}
     </button>
@@ -182,7 +182,7 @@ function Journal({ items, degel, degeler, go }: {
                 <div className="flex items-center gap-3.5 border-b border-line px-4 py-2.5 text-[13px] last:border-b-0">
                   <span className="min-w-[64px] font-mono text-[10.5px] text-txt-dim">{fmtReu(e.ts)?.slice(-5)}</span>
                   <Chip tone={feedTone(e.source)}>{e.famille.toLowerCase()}</Chip>
-                  <span className="min-w-0 flex-1 truncate" title={e.detail ?? undefined}>{e.titre}</span>
+                  <span className="min-w-0 flex-1 truncate">{e.titre}</span>
                   {e.action === 'courrier' && <ActBtn tone="ghost" onClick={() => go('courrier')}>Traiter</ActBtn>}
                   {e.action === 'produit' && <ActBtn tone="ghost" onClick={() => go('produit')}>Voir</ActBtn>}
                   {e.action === 'degel' && (

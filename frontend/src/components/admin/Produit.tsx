@@ -208,7 +208,7 @@ export function ProduitSection() {
         <div className="grid gap-2.5 p-4">
           {usageVues.map((u) => (
             <div key={u.label} className="grid grid-cols-[160px_1fr_70px] items-center gap-3 text-xs">
-              <b className="truncate font-medium text-txt-mut" title={u.label}>{u.label}</b>
+              <b className="truncate font-medium text-txt-mut">{u.label}</b>
               <div className="h-3.5 overflow-hidden rounded border border-line bg-bg">
                 <div className="h-full rounded-sm bg-gradient-to-r from-mint-sub to-mint" style={{ width: `${Math.max(2, (u.n / max) * 100)}%` }} />
               </div>

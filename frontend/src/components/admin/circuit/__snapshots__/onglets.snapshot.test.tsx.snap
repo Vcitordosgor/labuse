@@ -203,7 +203,6 @@ exports[`snapshots des onglets > Résumé 1`] = `
   >
     <button
       class="kpi lien"
-      title="Voir les réservoirs par état, et les lignes en base non servies"
     >
       <div
         class="v"

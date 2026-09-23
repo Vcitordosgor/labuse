@@ -673,7 +673,6 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
                 « Analyser »), plus isolé en bas. Reste secondaire (action de recul) : lien discret centré,
                 teinte danger au survol — lisible, jamais un bouton de poids égal. */}
             <button data-reinitialiser onClick={resetTout}
-              title="Efface les DEUX étages et éteint l'interrupteur — retour à l'état vierge."
               className="mx-auto min-h-7 px-1 py-0.5 text-[11px] text-txt-dim underline decoration-txt-dim/30 underline-offset-2 transition-colors duration-quick hover:text-danger hover:decoration-danger-line">
               Réinitialiser les filtres
             </button>

@@ -159,7 +159,7 @@ export function HistoireFrise({ idu }: { idu: string }) {
                 // barre en tirets entre les deux 1ᵉʳ janvier : un écart, pas une date
                 const l = pct(f.de_millesime), w = Math.max(1.2, pct(f.a_millesime) - l)
                 return (
-                  <button key={key} data-histoire-fait={f.famille} title={title} aria-pressed={on}
+                  <button key={key} data-histoire-fait={f.famille} aria-label={title} aria-pressed={on}
                     onClick={() => setSel(on ? null : i)}
                     className="absolute h-2 rounded-sm border border-dashed"
                     style={{ left: `${l}%`, width: `${w}%`, bottom, borderColor: FAM[f.famille].c,
@@ -170,7 +170,7 @@ export function HistoireFrise({ idu }: { idu: string }) {
                 // année seule : anneau LARGE (toute l'année) — visiblement moins précis qu'un point
                 const l = pct(f.annee ?? AXE_MIN), w = Math.max(1.2, pct((f.annee ?? AXE_MIN) + 1) - l)
                 return (
-                  <button key={key} data-histoire-fait={f.famille} title={title} aria-pressed={on}
+                  <button key={key} data-histoire-fait={f.famille} aria-label={title} aria-pressed={on}
                     onClick={() => setSel(on ? null : i)}
                     className="absolute h-2.5 rounded-full border-2 bg-transparent"
                     style={{ left: `${l}%`, width: `${w}%`, bottom, borderColor: FAM[f.famille].c,
@@ -180,7 +180,7 @@ export function HistoireFrise({ idu }: { idu: string }) {
               const dayFrac = f.date && /^\d{4}-(\d{2})-(\d{2})/.test(f.date)
                 ? (new Date(f.date).getMonth() + 0.5) / 12 : 0.5
               return (
-                <button key={key} data-histoire-fait={f.famille} title={title} aria-pressed={on}
+                <button key={key} data-histoire-fait={f.famille} aria-label={title} aria-pressed={on}
                   onClick={() => setSel(on ? null : i)}
                   className="absolute h-2.5 w-2.5 -translate-x-1/2 rounded-full"
                   style={{ left: `${pct((f.annee ?? AXE_MIN) + dayFrac)}%`, bottom,

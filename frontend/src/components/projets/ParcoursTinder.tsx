@@ -88,8 +88,7 @@ export function ParcoursTinder() {
         </button>
         {/* sortie : la plus sobre, sans concurrencer les actions */}
         <button data-parcours-quitter onClick={retourProjet}
-          className="min-h-7 rounded-md border border-line-2 px-3 py-1.5 text-[11.5px] text-txt-mut transition-colors duration-quick hover:border-st-ecartee/50 hover:text-txt"
-          title="Revenir au projet (l'état est gardé)">✕ Quitter</button>
+          className="min-h-7 rounded-md border border-line-2 px-3 py-1.5 text-[11.5px] text-txt-mut transition-colors duration-quick hover:border-st-ecartee/50 hover:text-txt">✕ Quitter</button>
       </div>
 
       <div className="flex min-h-0 flex-1">
@@ -205,18 +204,15 @@ function DecisionCard({ pid, item, onDecide, onFiche }: {
           Pas de raccourcis clavier : il n'en existe pas — on n'en invente pas dans ce lot. */}
       <div className="mt-4 flex gap-2">
         <button data-decision-ecarter onClick={() => onDecide('ecartee')}
-          className="flex-1 rounded-xl border border-st-ecartee/50 py-2.5 text-sm font-medium text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10"
-          title="Écarter — réversible (pile Écartées)">
+          className="flex-1 rounded-xl border border-st-ecartee/50 py-2.5 text-sm font-medium text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10">
           ✕ Écarter
         </button>
         <button data-decision-analyser onClick={() => onDecide('a_analyser')}
-          className="flex-1 rounded-xl border border-st-creuser/50 py-2.5 text-sm font-medium text-st-creuser transition-colors duration-quick hover:bg-st-creuser/10"
-          title="Mettre de côté pour analyse — remonte en tête du Kanban avec le badge « à analyser »">
+          className="flex-1 rounded-xl border border-st-creuser/50 py-2.5 text-sm font-medium text-st-creuser transition-colors duration-quick hover:bg-st-creuser/10">
           ? À analyser
         </button>
         <button data-decision-retenir onClick={() => onDecide('retenue')}
-          className="flex-1 rounded-xl bg-mint py-2.5 text-sm font-bold text-mint-ink transition-[filter] duration-quick hover:brightness-110"
-          title="Retenir — passe en colonne Retenues (et au CRM)">
+          className="flex-1 rounded-xl bg-mint py-2.5 text-sm font-bold text-mint-ink transition-[filter] duration-quick hover:brightness-110">
           ✓ Retenir
         </button>
       </div>
@@ -256,7 +252,7 @@ function SectionsDrawer({ etat, onClose, onFiche, onStatut }: {
             <div data-section-retenues className="space-y-1.5">
               {etat.retenues.map((p) => <Row key={p.idu} p={p} actions={
                 <button onClick={() => onStatut(p.idu, 'proposee')}
-                  className="min-h-7 text-[10px] text-txt-mut transition-colors duration-quick hover:text-txt" title="Remettre à trier">retirer</button>
+                  className="min-h-7 text-[10px] text-txt-mut transition-colors duration-quick hover:text-txt">retirer</button>
               } />)}
             </div>
           </div>
@@ -266,7 +262,7 @@ function SectionsDrawer({ etat, onClose, onFiche, onStatut }: {
             <div data-section-ecartees className="space-y-1.5">
               {etat.ecartees.map((p) => <Row key={p.idu} p={p} actions={
                 <button data-recuperer onClick={() => onStatut(p.idu, 'proposee')}
-                  className="min-h-7 rounded border border-mint/50 px-1.5 py-0.5 text-[10px] text-mint transition-colors duration-quick hover:bg-mint/10" title="Récupérer (repasse à trier)">↩ récupérer</button>
+                  className="min-h-7 rounded border border-mint/50 px-1.5 py-0.5 text-[10px] text-mint transition-colors duration-quick hover:bg-mint/10">↩ récupérer</button>
               } />)}
             </div>
           </div>

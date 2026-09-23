@@ -236,14 +236,14 @@ export function DensifierTablePanel() {
                   </th>
                   {/* RETOURS-11F M9 — capacité NETTE des contraintes (PPR rouge, pente > 30 %, ravine) :
                       c'est ELLE qui pilote le score de densification. La SDP brute est en infobulle. */}
-                  <th className="px-2 py-1.5 text-right" title="SDP résiduelle NETTE des contraintes physiques (PPR zone rouge, pente > 30 %, ravine). C'est la capacité réellement mobilisable — et ce qui classe la parcelle.">SDP nette</th>
+                  <th className="px-2 py-1.5 text-right">SDP nette</th>
                   <th className="px-2 py-1.5 text-right">Surface</th>
                   <th className="px-2 py-1.5">Bâti existant</th>
                   {/* OUTILS-FIX-1 C1 — colonne « Surélévation » retirée : le batch servait une valeur
                       périmée (débranchée depuis EXPORTS-1). Le signal vivant vit dans l'onglet Faisabilité. */}
                   <th className="px-2 py-1.5">Zone</th>
                   {/* LOT12c — rang DANS la commune par score de densification (1 = meilleure de la commune) */}
-                  <th className="px-2 py-1.5 text-right" title="Rang de la parcelle dans sa commune par score de densification (1 = la meilleure de la commune).">Rang commune</th>
+                  <th className="px-2 py-1.5 text-right">Rang commune</th>
                   {/* A2 — pont par ligne vers Faisabilité */}
                   <th className="px-2 py-1.5" />
                 </tr>
@@ -262,7 +262,7 @@ export function DensifierTablePanel() {
                     {/* RECETTE-1 R8 — cellule « Classement » (pastille de palier) retirée (cf. en-tête). */}
                     <td className="px-2 py-1.5 text-right font-medium" style={{ color: TOKENS.renouv }}>{it.renouv_score}</td>
                     {/* SDP NETTE + puce « −N % » quand une contrainte a été déduite (brute en infobulle) */}
-                    <td className="px-2 py-1.5 text-right text-txt-mut" title={it.contrainte_pct ? `SDP brute ${fmtM2(it.sdp_residuelle_m2)} — ${it.contrainte_pct} % déduits (PPR rouge, pente > 30 %, ravine)` : undefined}>
+                    <td className="px-2 py-1.5 text-right text-txt-mut">
                       {fmtM2(it.sdp_nette_m2 ?? it.sdp_residuelle_m2)}
                       {it.contrainte_pct != null && it.contrainte_pct > 0 && (
                         <span className="ml-1 rounded bg-st-amber/15 px-1 text-[9px] text-st-amber">−{it.contrainte_pct} %</span>
@@ -279,7 +279,7 @@ export function DensifierTablePanel() {
                     {/* A2 — pont Faisabilité par parcelle (ouvre M22 mode « par parcelle » pré-rempli). */}
                     <td className="px-2 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
                       <button data-densifier-faisabilite onClick={() => { setParcelPrefill(it.idu); setModule('programme'); setOpen(false); pushOutilRetour(RETOUR_DENSIFIER) }}
-                        className="whitespace-nowrap text-[10px] font-medium text-mint hover:underline" title="Ouvrir la faisabilité détaillée de cette parcelle">Faisabilité →</button>
+                        className="whitespace-nowrap text-[10px] font-medium text-mint hover:underline">Faisabilité →</button>
                     </td>
                   </tr>
                 ))}

@@ -88,7 +88,7 @@ function BackBar({ onBack, titre }: { onBack: () => void; titre: string }) {
 function ProprioCell({ p }: { p: SolaireItem['proprio'] }) {
   if (p.type === 'personne_morale')
     return (
-      <span className="text-txt" title={p.siren ? `SIREN ${p.siren}` : undefined}>
+      <span className="text-txt">
         {p.denomination}{p.siren ? <> · <Siren value={p.siren} className="font-mono text-[10px] text-txt-dim" /></> : null}
       </span>
     )
@@ -283,7 +283,6 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
                   {/* RETOURS-11F M12 — « pas une piscine » : signal humain, retire du service (compteur/carte). */}
                   {retiree ? <span className="shrink-0 text-[9.5px] text-txt-dim">retirée</span> : (
                     <button data-piscines-pas onClick={(e) => { e.stopPropagation(); void signalerPasPiscine(it.idu) }}
-                      title="Signaler que cette parcelle n'a pas de piscine — la retire du compteur et de la carte"
                       className="shrink-0 text-[9.5px] text-txt-dim hover:text-mint">pas une piscine</button>
                   )}
                 </div>
@@ -438,7 +437,7 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
           <p className="mt-2 text-[9px] text-txt-dim">Profil mensuel (kWh/kWc · maille PVGIS){f.mois_optimal ? ` · pic en ${MOIS[f.mois_optimal - 1]}` : ''}</p>
           <div className="mt-0.5 flex h-14 items-end gap-0.5">
             {pm.map((v, i) => (
-              <div key={i} data-solaire-bar className="flex-1 rounded-t" title={`${MOIS[i]} : ${fmtInt(v)} kWh/kWc`}
+              <div key={i} data-solaire-bar className="flex-1 rounded-t" aria-label={`${MOIS[i]} : ${fmtInt(v)} kWh/kWc`}
                 style={{ height: `${Math.max(4, Math.round((v / max) * 100))}%`, background: i + 1 === f.mois_optimal ? TOKENS.mint : `${TOKENS.mint}55` }} />
             ))}
           </div>

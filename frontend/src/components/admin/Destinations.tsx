@@ -83,9 +83,8 @@ export function DestinationsDetail({ onBack }: { onBack?: () => void }) {
                   <td className="px-4 py-2.5 font-mono text-[11px] text-txt-mut">{c.millesime ?? '—'}</td>
                   <td className="px-4 py-2.5">
                     {c.url
-                      ? <a href={c.url} target="_blank" rel="noreferrer" className="text-[11.5px] text-mint hover:underline"
-                          title={c.document ?? undefined}>règlement ↗</a>
-                      : <span className="text-[11px] text-txt-dim" title={c.document ?? undefined}>{c.document ? 'document lu (sans lien)' : '—'}</span>}
+                      ? <a href={c.url} target="_blank" rel="noreferrer" className="text-[11.5px] text-mint hover:underline">règlement ↗</a>
+                      : <span className="text-[11px] text-txt-dim">{c.document ? 'document lu (sans lien)' : '—'}</span>}
                   </td>
                 </tr>
               )
