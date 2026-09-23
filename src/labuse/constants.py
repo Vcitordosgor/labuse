@@ -1,6 +1,8 @@
 """Constantes partagées."""
 from __future__ import annotations
 
+import re
+
 #: User-Agent applicatif — requis par certaines API (Overpass renvoie 406 sinon).
 USER_AGENT = "LA-BUSE/0.1 (+pre-qualification fonciere)"
 
@@ -50,3 +52,30 @@ def plie(s: str) -> str:
     for a, b in (("œ", "oe"), ("Œ", "OE"), ("æ", "ae"), ("Æ", "AE")):
         s = s.replace(a, b)
     return s.translate(str.maketrans(*RECHERCHE_ACCENTS)).lower()
+
+
+# ── PERMIS-CHECK-1 P3 — adresse COLLÉE depuis une fiche ─────────────────────────────────────────
+# La barre de recherche ne matchait que « numéro voie » : une adresse recopiée depuis une fiche
+# (« 1 bis Chemin de la Citerne, 97417 Saint-Denis ») échouait car le REP (bis/ter) et le suffixe
+# CP+commune n'étaient pas dans la colonne cherchée. On élargit le texte cherché à
+# numéro+rep+voie+CP+commune (MÊME ORDRE que le libellé de fiche `_fmt_ban`) et on réduit les
+# SÉPARATEURS (espaces multiples nés d'un rep vide, virgule, tiret) à une espace simple des DEUX
+# côtés — l'adresse collée redevient un sous-texte de la colonne. Fold + réduction = un seul dessin.
+ADRESSE_SUGGEST_EXPR = (
+    "coalesce(numero,'') || ' ' || coalesce(rep,'') || ' ' || voie || ' ' || "
+    "coalesce(code_postal,'') || ' ' || coalesce(commune,'')")
+
+_SEPARATEURS = re.compile(r"[\s,\-]+")
+
+
+def sql_plie_lit_suggest(expr: str) -> str:
+    """`sql_plie_lit` + réduction des séparateurs [espace, virgule, tiret]+ → une espace, trimé.
+    Expression LITTÉRALE : sert À L'IDENTIQUE à l'index GIN trigram étendu ET à la requête suggest
+    (le planneur ne matche l'index d'expression que si les deux sont mot pour mot identiques)."""
+    return f"btrim(regexp_replace({sql_plie_lit(expr)}, '[[:space:],-]+', ' ', 'g'))"
+
+
+def plie_suggest(s: str) -> str:
+    """Miroir PYTHON de `sql_plie_lit_suggest` pour l'aiguille : `plie` + séparateurs [espace,
+    virgule, tiret]+ réduits à une espace, trimé — même dessin que la colonne étendue normalisée."""
+    return _SEPARATEURS.sub(" ", plie(s)).strip()

@@ -47,17 +47,20 @@ def ensure_index(engine) -> None:
 
     · (section, numéro) : la référence courte se résout en equality/préfixe (799 ms seq-scan
       mesuré sur 431k parcelles → < 5 ms) ; varchar_pattern_ops → « BZ 10 » (préfixe) indexé.
-    · GIN trigram sur l'adresse PLIÉE (expression LITTÉRALE sql_plie_lit, la même que la
-      requête — un bind casserait le match du planneur) : le LIKE '%…%' plié passait par un
-      seq-scan de 340k adresses (~290 ms mesurés SUR CHAQUE frappe texte) → indexé."""
-    from ..constants import sql_plie_lit
-    expr = sql_plie_lit("coalesce(numero,'') || ' ' || voie")
+    · GIN trigram sur l'adresse PLIÉE (expression LITTÉRALE, la même que la requête — un bind
+      casserait le match du planneur) : le LIKE '%…%' plié passait par un seq-scan de 340k
+      adresses (~290 ms mesurés SUR CHAQUE frappe texte) → indexé.
+    · PERMIS-CHECK-1 P3 — index ÉTENDU sur numéro+rep+voie+CP+commune NORMALISÉ (sql_plie_lit_suggest,
+      la même expression que `_sugg_adresse`) pour qu'une adresse collée depuis une fiche
+      (« 1 bis … , 97417 Saint-Denis ») retrouve sa parcelle sans repasser en seq-scan."""
+    from ..constants import ADRESSE_SUGGEST_EXPR, sql_plie_lit_suggest
+    expr_full = sql_plie_lit_suggest(ADRESSE_SUGGEST_EXPR)
     with engine.begin() as c:
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_parcels_section_numero "
                        "ON parcels (section, numero varchar_pattern_ops)"))
         c.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
-        c.execute(text(f"CREATE INDEX IF NOT EXISTS ix_adresses_suggest_trgm ON adresses "
-                       f"USING gin (({expr}) gin_trgm_ops) "
+        c.execute(text(f"CREATE INDEX IF NOT EXISTS ix_adresses_suggest_full_trgm ON adresses "
+                       f"USING gin (({expr_full}) gin_trgm_ops) "
                        f"WHERE idu IS NOT NULL AND geom IS NOT NULL"))
 
 
@@ -124,17 +127,20 @@ def _sugg_cadastre(db: Session, q: str, n: int) -> list[dict]:
 
 
 def _sugg_adresse(db: Session, q: str, n: int) -> list[dict]:
-    # Même PLIAGE que /adresses/autocomplete, en variante indexable : expression LITTÉRALE côté
-    # colonne (celle de l'index GIN trigram, ensure_index) + aiguille pliée en Python (plie()).
-    from ..constants import plie, sql_plie_lit
-    col = sql_plie_lit("coalesce(numero,'') || ' ' || voie")
+    # PERMIS-CHECK-1 P3 — texte cherché ÉTENDU (numéro+rep+voie+CP+commune) et NORMALISÉ (séparateurs
+    # réduits) : une adresse recopiée depuis une fiche (« 1 bis Chemin de la Citerne, 97417 Saint-Denis »)
+    # retrouve sa parcelle — avant, le rep (bis/ter) et le suffixe CP+commune la faisaient échouer.
+    # Expression LITTÉRALE côté colonne (celle de l'index GIN trigram ÉTENDU, ensure_index) + aiguille
+    # normalisée en Python (plie_suggest) : même dessin des deux côtés (doctrine M99-B).
+    from ..constants import ADRESSE_SUGGEST_EXPR, plie_suggest, sql_plie_lit_suggest
+    col = sql_plie_lit_suggest(ADRESSE_SUGGEST_EXPR)
     rows = db.execute(text(
         f"""SELECT trim(coalesce(numero,'') || ' ' || voie) AS label, commune, code_postal, idu,
                    ST_X(geom) lon, ST_Y(geom) lat
             FROM adresses
             WHERE idu IS NOT NULL AND geom IS NOT NULL AND {col} LIKE '%' || :qp || '%'
             ORDER BY ({col} LIKE :qp || '%') DESC, length(voie), voie, numero
-            LIMIT :lim"""), {"qp": plie(q), "lim": n}).mappings().all()
+            LIMIT :lim"""), {"qp": plie_suggest(q), "lim": n}).mappings().all()
     return [{"label": r["label"], "sub": f"{r['code_postal'] or ''} {r['commune'] or ''}".strip(),
              "idu": r["idu"], "lon": r["lon"], "lat": r["lat"]} for r in rows]
 

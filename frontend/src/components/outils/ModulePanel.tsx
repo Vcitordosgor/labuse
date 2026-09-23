@@ -404,9 +404,6 @@ const minus24m = (iso?: string): string => {
   const [y, m, d] = iso.split('-')
   return `${Number(y) - 2}-${m}-${d}`
 }
-// 'AAAA-MM-JJ' → 'JJ.MM.AAAA' (format daté du bloc total, W2).
-const frDate = (iso?: string): string => (iso ? iso.split('-').reverse().join('.') : '')
-
 /** Tiroir « fiche permis » (M10 lot 1.1) — s'ouvre au clic sur un permis, partagé radar/fiche. */
 export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose: () => void }) {
   const q = useQuery({ queryKey: ['permis-fiche', permitId], queryFn: () => modPermisFiche(permitId) })
@@ -630,27 +627,23 @@ export function M03() {
   // fait TOUJOURS le total (partition exacte), sans payer le COUNT « autre » (≈ 560 ms) à chaque montage.
   const autreEntryTotal = (tousEntryTotal != null && radarEntryTotal != null && pmEntryTotal != null && acheveEntryTotal != null)
     ? Math.max(0, tousEntryTotal - radarEntryTotal - pmEntryTotal - acheveEntryTotal) : undefined
-  // base : localisés + date du millésime (bloc total en tête), lus du compteur « Tous ».
-  const baseLocalises = qTousEntry.data?.geocodes
+  // base : date du millésime, lue du compteur « Tous » (PERMIS-CHECK-1 P4 : la ligne « … localisés »
+  // du bloc total est retirée ; `baseJusquAu` sert encore la coupure 24 mois `cut24`).
   const baseJusquAu = qTousEntry.data?.donnees_jusqu_au
   const setPermitHover = useApp((s) => s.setPermitHover)
   useEffect(() => () => setPermitHover(null), [setPermitHover])   // nettoyage au démontage
 
-  // O17 (g) — RECHERCHE PAR PARCELLE : un IDU complet (14 car.) saisi dans la barre interroge
-  // /modules/parcelle-permis ; s'il n'a AUCUN permis rattaché, on le dit clairement (« Aucun permis
-  // rattaché à cette parcelle »), sinon on ouvre le 1er permis. On distingue un IDU (14 car.) d'un n°
-  // de permis Sitadel (chaîne alphanumérique plus courte) sur la longueur — un seul champ, deux sens.
+  // O17 (g) — RECHERCHE PAR PARCELLE : un IDU complet (14 car.) saisi dans la barre, OU une adresse/
+  // parcelle choisie dans le suggest, interroge /modules/parcelle-permis. On distingue un IDU (14 car.)
+  // d'un n° de permis Sitadel (chaîne alphanumérique plus courte) sur la longueur — un seul champ, deux sens.
+  // PERMIS-CHECK-1 P2 — avant, une parcelle SANS permis ne montrait rien d'utile et une parcelle AVEC
+  // permis ouvrait d'office le 1er permis (l'utilisateur ne voyait pas le compte). Désormais on affiche
+  // TOUJOURS une phrase de résultat (0 / X permis) et on laisse le client cliquer les points sur la carte.
   const [parcelIdu, setParcelIdu] = useState<string | null>(null)
   const qParcelPermis = useQuery({ queryKey: ['parcelle-permis-search', parcelIdu],
     queryFn: () => modParcellePermis(parcelIdu!), enabled: !!parcelIdu })
   // date du millésime Sitadel servi — lue du compteur radar (fenêtre 24 m, TOUJOURS actif).
   const donneesJusquAu = (qRadarEntry.data as Record<string, any> | undefined)?.['donnees_jusqu_au'] as string | undefined
-  useEffect(() => {
-    if (!parcelIdu) return
-    const d = qParcelPermis.data as Record<string, any> | undefined
-    const found = (d?.['items'] ?? []) as Record<string, any>[]
-    if (d && found.length > 0) { setOpen(found[0]['permit_id'] as string); setParcelIdu(null) }
-  }, [parcelIdu, qParcelPermis.data])
 
   const q = pointMort ? qPm : qRadar
   const pages = (q.data?.pages ?? []) as Record<string, any>[]
@@ -727,7 +720,10 @@ export function M03() {
           // unifié propose les trois à la frappe ; choisir une commune pose le filtre commune.
           grammaires={['adresse', 'cadastre', 'commune']}
           onPick={(it) => { if (it.type === 'commune' && it.commune) setCommune(it.commune) }}
-          onSelect={(sel) => { if (sel.idu) focusParcelle(iduComplet(sel.idu)); else setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }}
+          // PERMIS-CHECK-1 P2 — choisir une adresse/parcelle dans le suggest CIBLE la parcelle (zoom +
+          // délimitation) ET déclenche la recherche de ses permis → phrase de résultat (0 / X), comme un
+          // IDU saisi. Avant, un choix de suggestion recadrait la carte SANS jamais dire s'il y a un permis.
+          onSelect={(sel) => { if (sel.idu) { const c = iduComplet(sel.idu); focusParcelle(c); setParcelIdu(c) } else setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }}
           onEnterRaw={(t) => {
             const v = iduComplet(t)
             // RETOURS-12 O12.2 — IDU cadastral complet (14 car.) → la carte ZOOME et DÉLIMITE la parcelle
@@ -736,28 +732,35 @@ export function M03() {
             // sinon une référence Sitadel compacte → fiche permis
             if (/^[0-9][0-9a-z]{6,}$/i.test(v)) setOpen(v)
           }} />
-        {/* O17 (g) — parcelle SANS permis rattaché : message honnête daté du millésime Sitadel servi. */}
-        {parcelIdu && qParcelPermis.data && ((qParcelPermis.data as Record<string, any>)['items'] ?? []).length === 0 && (
-          <p data-permis-parcelle-vide className="mt-1 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] leading-snug text-st-creuser">
-            Aucun permis rattaché à cette parcelle <span className="font-mono">{iduCourt(parcelIdu)}</span>
-            {donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ' (Sitadel)'}.
-            <button onClick={() => setParcelIdu(null)} className="ml-2 underline">effacer</button>
-          </p>
-        )}
+        {/* PERMIS-CHECK-1 P2 — parcelle CIBLÉE : phrase de résultat, TOUJOURS affichée. Le compte vient de
+            /modules/parcelle-permis (permis autorisés géolocalisés ≤ 200 m, source du signal viabilisation),
+            non fenêtré → N = profondeur MAX de l'outil (max(MONTHS_RADAR) = 240 m = toute la profondeur
+            Sitadel servie). 0 → phrase honnête datée ; ≥ 1 → le compte, puis le client clique les points. */}
+        {parcelIdu && qParcelPermis.data && (() => {
+          const n = (((qParcelPermis.data as Record<string, any>)['items'] ?? []) as unknown[]).length
+          const vide = n === 0
+          return (
+            <p data-permis-parcelle-resultat {...(vide ? { 'data-permis-parcelle-vide': '1' } : {})}
+              className={`mt-1 rounded-lg border px-3 py-2 text-[11px] leading-snug ${vide
+                ? 'border-st-creuser/40 bg-st-creuser/10 text-st-creuser' : 'border-mint/50 bg-mint/10 text-mint'}`}>
+              {vide
+                ? <>Aucun permis sur cette parcelle <span className="font-mono">{iduCourt(parcelIdu)}</span> sur les {Math.max(...MONTHS_RADAR)} derniers mois{donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ''}.</>
+                : <><b className="tnum">{fmt(n)}</b> permis sur cette parcelle <span className="font-mono">{iduCourt(parcelIdu)}</span> — cliquez les points sur la carte.</>}
+              <button onClick={() => setParcelIdu(null)} className="ml-2 underline">effacer</button>
+            </p>
+          )
+        })()}
       </div>
 
       {/* RETOURS-17 W2 — BLOC TOTAL en tête : le total sort des chips (constat Vic 05/09 : « 50k » lu
-          comme une part alors que c'est le total). Nombre 24px + « permis autorisés en base » ; dessous,
-          les localisés + la profondeur + la date du millésime servi. */}
+          comme une part alors que c'est le total). Nombre 24px + « permis autorisés en base ».
+          PERMIS-CHECK-1 P4 — la 2e ligne (« … localisés sur la carte · toute la profondeur Sitadel,
+          jusqu'au … ») est RETIRÉE (constat Vic) : le total et la mention Sitadel ci-dessous suffisent. */}
       <div data-permis-total className="shrink-0 rounded-lg border border-line-2 bg-surface-1 px-3 py-2">
         <div className="flex items-baseline gap-2">
           <span className="tnum text-[24px] font-semibold leading-none text-txt-hi">{tousEntryTotal != null ? fmt(tousEntryTotal) : '…'}</span>
           <span className="text-[12px] text-txt-mut">permis autorisés en base</span>
         </div>
-        <p className="mt-1 text-[12px] leading-snug text-txt-dim">
-          {baseLocalises != null ? `${fmt(baseLocalises)} localisés sur la carte` : 'localisation en cours'}
-          {' · toute la profondeur Sitadel'}{baseJusquAu ? `, jusqu'au ${frDate(baseJusquAu)}` : ''}
-        </p>
       </div>
 
       {/* RETOURS-18 X1 — bandeau Sitadel PERMANENT. RETOURS-19 Y5 — tient sur UNE ligne (phrase resserrée
