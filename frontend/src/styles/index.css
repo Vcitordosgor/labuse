@@ -37,7 +37,7 @@
   /* espacement */
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
   /* mouvement */
-  --dur-fast:120ms; --dur-base:180ms; --ease:cubic-bezier(.2,0,0,1);
+  --dur-fast:100ms; --dur-base:180ms; --ease:cubic-bezier(.2,0,0,1);
   --focus:0 0 0 2px rgba(74,222,128,.45); --ombre-flottante:0 8px 24px rgba(0,0,0,.45);
   /* tailles typographiques */
   --fs-h1:19px; --fs-row:14px; --fs-meta:12px; --fs-sub:11.5px; --fs-micro:10px; --fs-legal:9px;
@@ -100,13 +100,13 @@
   /* RETOURS-4 S8 (maquette v5) — cartes SANS liseré gauche : bord fin complet. Survol = dégradé profond. */
   .acc-entry { position:relative; display:flex; align-items:center; gap:12px; width:100%; text-align:left; cursor:pointer;
     background:var(--bg-2); border:1px solid var(--line-2); border-radius:6px; padding:12px;
-    color:var(--txt); transition:background .15s, border-color .15s, color .15s; }
+    color:var(--txt); transition:background .1s, border-color .1s, color .1s; }
   .acc-entry .acc-tile { width:34px; height:34px; flex:none; border-radius:6px; display:flex;
     align-items:center; justify-content:center; border:1px solid transparent;
-    transition:background .15s, color .15s, border-color .15s; }
+    transition:background .1s, color .1s, border-color .1s; }
   .acc-entry .acc-tile svg { width:17px; height:17px; }
-  .acc-entry .acc-desc { transition:color .15s; }
-  .acc-entry .acc-arrow { flex:none; font-size:14px; color:var(--txt-dim); transition:color .15s, transform .15s; }
+  .acc-entry .acc-desc { transition:color .1s; }
+  .acc-entry .acc-arrow { flex:none; font-size:14px; color:var(--txt-dim); transition:color .1s, transform .1s; }
   /* — vert (Explorer / Radar / Outils) — */
   .acc-entry.mint .acc-tile { background:rgba(74,222,128,.14); border-color:rgba(74,222,128,.38); color:var(--mint); }
   .acc-entry.mint .acc-arrow { color:var(--mint); }
@@ -136,7 +136,7 @@
      ne laisse pas l'état allumé. Focus décoratif en :focus-visible seulement (clavier), jamais au clic. */
   .rail-item { display:flex; flex-direction:column; align-items:center; gap:4px; width:100%;
     padding:8px 4px; border-radius:6px; color:var(--txt-mut); cursor:pointer; border:none; background:none;
-    transition:background .12s, color .12s; }
+    transition:background .1s, color .1s; }
   .rail-item .rail-label { font-size:10.5px; }
   /* RETOURS-19 Y1 — ÉTAT ACTIF = VERT OPAQUE, contenu inversé sombre (avant : fond teinté `mint-bg` +
      texte vert, MOINS marqué que le survol plein → l'actif « s'éteignait »). L'entrée Outils allumée quand
@@ -153,7 +153,7 @@
 
   /* RETOURS-4 S8 — classe de SURVOL PLEIN réutilisable (surfaces en Tailwind : cartes du tiroir Outils,
      tuiles d'export/passerelles). Dégradé vert profond + inversion des enfants en encre presque noire. */
-  .hover-fill { transition:background .15s, color .15s, border-color .15s; }
+  .hover-fill { transition:background .1s, color .1s, border-color .1s; }
   @media (hover:hover) and (pointer:fine) {
     .hover-fill:hover { background:var(--fill-mint); border-color:#2FBE66; color:var(--ink); }
     .hover-fill:hover * { color:var(--ink) !important; }
@@ -178,13 +178,13 @@
     }
   }
   /* variante IA (mauve profond) — surfaces IA à aplat plein (ex. « Reprendre » du Copilote). */
-  .hover-fill-ia { transition:background .15s, color .15s; }
+  .hover-fill-ia { transition:background .1s, color .1s; }
   @media (hover:hover) and (pointer:fine) {
     .hover-fill-ia:hover { background:var(--fill-mauve); color:var(--mauve-ink); }
     .hover-fill-ia:hover * { color:var(--mauve-ink) !important; }
   }
   /* ADMIN-1 AD1 — variante AMBRE (« + Projet » de la fiche) : aplat ambre profond, encre presque noire. */
-  .hover-fill-amber { transition:background .15s, color .15s, border-color .15s; }
+  .hover-fill-amber { transition:background .1s, color .1s, border-color .1s; }
   @media (hover:hover) and (pointer:fine) {
     .hover-fill-amber:hover { background:var(--fill-amber); border-color:#D99A2E; color:var(--ink); }
     .hover-fill-amber:hover * { color:var(--ink) !important; }
@@ -208,7 +208,7 @@
      FOND SOMBRE de T2 (03/09) — même geste que le chevron (Y1) et les tuiles d'accueil (acc-tile). */
   .itile { width:34px; height:34px; flex:none; border-radius:6px; display:flex; align-items:center;
     justify-content:center; border:1px solid rgba(74,222,128,.38); background:rgba(74,222,128,.14);
-    color:var(--mint); transition:background .15s, color .15s, border-color .15s; }
+    color:var(--mint); transition:background .1s, color .1s, border-color .1s; }
   .itile svg { width:17px; height:17px; }
   .itile.ia { border-color:rgba(180,151,240,.42); background:rgba(180,151,240,.16); color:var(--violet); }
   @media (hover:hover) and (pointer:fine) {
@@ -246,12 +246,12 @@
      pour battre les couleurs inline des enfants. Borné à un vrai pointeur (@media hover), jamais sur l'onglet
      déjà actif (`.proj-tab-on`). */
   @media (hover:hover) and (pointer:fine) {
-    [data-projet-row] { transition:background .15s; }
+    [data-projet-row] { transition:background .1s; }
     [data-projet-row]:hover { background:var(--fill-mint) !important; }
     [data-projet-row]:hover * { color:var(--ink) !important; }
     [data-projet-row]:hover [data-projet-barre] { background:rgba(7,16,9,.20) !important; }
     [data-projet-row]:hover [data-projet-barre] > div { background:var(--ink) !important; }
-    .proj-tab { transition:background .15s, color .15s; }
+    .proj-tab { transition:background .1s, color .1s; }
     .proj-tab:not(.proj-tab-on):hover { background:var(--fill-mint) !important; color:var(--ink) !important; }
   }
 
@@ -353,7 +353,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 /* RETOURS-19 Y4 — barre de défilement : style UNIQUE défini ici pour toute l'app (panneau Cartes, listes
    déroulantes, panneau d'outil, page Sources…). Le pouce passe en VERT OPAQUE au survol, transition douce. */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; transition: background .15s; }
+::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; transition: background .1s; }
 ::-webkit-scrollbar-thumb:hover { background: var(--mint); }
 ::-webkit-scrollbar-track { background: transparent; }
 /* Firefox (pas de :hover sur le pouce) : pouce discret par défaut, cohérent avec le repos WebKit. */
@@ -429,7 +429,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
    JAUNE OPAQUE au survol (fond plein, texte sombre). Sur une LIGNE survolée en vert, le lien
    GARDE son jaune (la règle générique `.hover-fill:hover *` forcerait l'encre). Règle gravée
    au composant : poser `.hover-jaune`, ne jamais re-styler au cas par cas. */
-.hover-jaune { color:var(--pj-jaune); transition:background .15s, color .15s; border-radius:6px; }
+.hover-jaune { color:var(--pj-jaune); transition:background .1s, color .1s; border-radius:6px; }
 @media (hover:hover) and (pointer:fine) {
   .hover-fill:hover .hover-jaune { color:var(--pj-jaune) !important; }
   .hover-jaune:hover, .hover-fill:hover .hover-jaune:hover {

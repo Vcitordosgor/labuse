@@ -107,8 +107,9 @@ export default {
       // DA v3 §1 — rayons : voir theme.borderRadius (remplacé au Lot 1 DA-FIX-1, plus dans `extend`).
       // DA v3 §1 — ombre flottante (la SEULE ombre autorisée : menus, notifs, infobulles)
       // + durées/courbe DA (survol 120ms, base 180ms, accordéon 200ms ; ease sans rebond)
-      // LOI-0 · motion : deux durées, une courbe — 150 ms (feedback), 200 ms (entrées).
-      transitionDuration: { quick: '150ms', soft: '200ms', fast: '120ms', base: '180ms' },
+      // DA-FIX-1 Lot 3 (DA-033) — survol = 100 ms partout : `quick` 150→100, `soft` 200→100.
+      // (`base` 180 ms réservé aux entrées/apparition, hors périmètre DA-FIX-1.)
+      transitionDuration: { quick: '100ms', soft: '100ms', fast: '100ms', base: '180ms' },
       transitionTimingFunction: { cockpit: 'cubic-bezier(.2,.7,.2,1)', da: 'cubic-bezier(.2,0,0,1)' },
     },
   },
