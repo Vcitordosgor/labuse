@@ -179,7 +179,7 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           lien vers la fiche annonce (interne). Écart demandé/acté pour une annonce en cours + DVF. */}
       {annonces.length > 0 && (
         <div data-radar-annonces>
-          <GroupLabel>Annonces Radar ({annonces.length})</GroupLabel>
+          <GroupLabel>Annonces Radar — cette parcelle ({annonces.length})</GroupLabel>
           <div className="flex flex-col gap-1.5">
             {annonces.map((a) => (
               <div key={a.bien_id} className="text-[12px]">

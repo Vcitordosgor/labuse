@@ -22,32 +22,23 @@ def get_db():
     yield from _g()
 
 
-def _terrain_local(db: Session, idu: str) -> dict | None:
-    """Médiane locale du TERRAIN NU autour de la parcelle (ventes DVF sans bâti), rayon adaptatif
-    500→1500 m. Miroir de `_ref_local` (bâti) : MÊME méthode SECTEUR-2 T1 (exclusion des 5 %
-    extrêmes, rayon effectif affiché, distribution avant/après). None sous le seuil (jamais inventé)."""
-    import statistics
-    from ..faisabilite.bilan import RAYONS_SECTEUR_M, trim_extremes_5pct, distribution_secteur
-    for rayon in RAYONS_SECTEUR_M:
-        rows = db.execute(text(
-            "SELECT valeur_fonciere / NULLIF(surface_terrain,0) AS pm, "
-            "  to_char(max(date_mutation) OVER (), 'YYYY') AS millesime "
-            "FROM dvf_mutations "
-            "WHERE (surface_reelle_bati IS NULL OR surface_reelle_bati = 0) AND surface_terrain > 0 "
-            "  AND valeur_fonciere > 0 AND valeur_fonciere / surface_terrain BETWEEN 20 AND 3000 "
-            "  AND nature_mutation ILIKE '%vente%' "
-            "  AND ST_DWithin(geom::geography, "
-            "      (SELECT centroid::geography FROM parcels WHERE idu = :idu), :rad)"),
-            {"idu": idu, "rad": rayon}).mappings().all()
-        prices = [float(r["pm"]) for r in rows if r["pm"] is not None]
-        kept, _lo, _hi = trim_extremes_5pct(prices)
-        if len(kept) >= SEUIL_N and kept:
-            return {"eur_m2": round(statistics.median(kept)), "n": len(kept),
-                    "millesime": rows[0]["millesime"] if rows else None, "rayon_m": int(rayon),
-                    "perimetre": f"terrain nu · {int(rayon)} m autour de la parcelle",
-                    "distribution": {"avant": distribution_secteur(prices), "apres": distribution_secteur(kept),
-                                     "n_exclus_extremes": len(prices) - len(kept), "n_min_vise": SEUIL_N}}
-    return None
+def _terrain_section(db: Session, idu: str) -> dict | None:
+    """Médiane du TERRAIN NU du secteur = celle de la SECTION cadastrale (table pré-agrégée
+    `dvf_secteur_medianes`, clé `left(idu,10)`), la MÊME que la valeur foi de la fiche parcelle
+    (§Marché, `app.py` `_q_v2_fiche`). ETUDIER-BIEN-2 Lot B : UNE seule méthode « terrain nu
+    secteur » partout — on abandonne le rayon géographique de l'ancien `_terrain_local` (qui
+    divergeait de la fiche, cf. ETUDIER-BIEN-1 §c). None sous le seuil (jamais inventé)."""
+    row = db.execute(text(
+        "SELECT mediane_prix_m2, n_ventes, fenetre FROM dvf_secteur_medianes "
+        "WHERE secteur = substring(:idu FROM 1 FOR 10) "
+        "  AND type_bien IN ('terrain', 'terrain à bâtir') "
+        "ORDER BY n_ventes DESC NULLS LAST LIMIT 1"),
+        {"idu": idu}).mappings().first()
+    if not row or row["mediane_prix_m2"] is None or (row["n_ventes"] or 0) < SEUIL_N:
+        return None
+    return {"eur_m2": round(float(row["mediane_prix_m2"])), "n": row["n_ventes"],
+            "millesime": row["fenetre"], "rayon_m": None,
+            "perimetre": "terrain nu · section cadastrale", "distribution": None}
 
 
 def _clean_local(r: dict | None) -> dict | None:
@@ -107,7 +98,7 @@ def mon_secteur(idu: str = Query(..., description="IDU de la parcelle (résolu d
     par_type = {
         "maison": _clean_local(_ref_local(db, idu, "maison")),
         "appartement": _clean_local(_ref_local(db, idu, "appartement")),
-        "terrain_nu": _terrain_local(db, idu),
+        "terrain_nu": _terrain_section(db, idu),
     }
 
     # RADAR — les annonces actives RATTACHÉES dans le rayon 1500 m, avec l'écart demandé/acté du même
@@ -143,7 +134,8 @@ def mon_secteur(idu: str = Query(..., description="IDU de la parcelle (résolu d
     return {
         "idu": idu, "commune": commune, "adresse": adresse,
         "secteur_bati": secteur_bati, "par_type": par_type, "annonces_radar": annonces_radar,
-        "sources": ["DVF (ventes actées) — médiane locale par type, rayon adaptatif 500→1500 m",
+        "sources": ["DVF (ventes actées) — bâti maison/appartement : médiane locale au rayon adaptatif "
+                    "500→1500 m ; terrain nu : médiane de la section cadastrale (même méthode que la fiche)",
                     "Radar LABUSE — annonces actives rattachées dans le rayon (dépôts humains)"],
         "note": "Chaque chiffre porte son n et son millésime ; sous 5 ventes, il est ABSENT (jamais "
                 "inventé). Les annonces Radar s'ajoutent au fil des dépôts.",
