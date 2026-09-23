@@ -51,6 +51,13 @@ MOTIF_ARETE_COURTE = "arête résiduelle < 1 m, non classable"
 MOTIF_SANS_FACADE = "parcelle sans façade sur voie (enclave ou accès en drapeau)"
 MOTIF_VOIE_PRIVEE = "desservie par une voie privée : le règlement ne précise pas le recul"
 
+
+def _nonclass_motif(length_m: float, min_edge: float = MIN_EDGE_M) -> str:
+    """Motif d'une arête « non classée » ouverte (ni voie, ni voisin, ni citation) selon sa VRAIE
+    longueur. GABARIT-6 (a) : ce motif est fixé sur la longueur de l'ARÊTE FUSIONNÉE — jamais hérité
+    du premier chunk. Une arête ≥ 1 m est « limite non qualifiée », jamais « résiduelle < 1 m »."""
+    return MOTIF_ARETE_COURTE if length_m < min_edge else MOTIF_NON_QUALIFIEE
+
 # --- parcelle de voie privée (GABARIT-5, E2) : trois critères OBLIGATOIRES, aucun seul ne suffit.
 PRIVATE_ROAD_MIN_ELONGATION = 5.0   # allongement L/l de l'enveloppe orientée (chemin, pas un lot)
 PRIVATE_ROAD_MAX_WIDTH_M = 6.0      # largeur (petit côté OBB) d'une voie privée : au-delà = lot, pas un chemin
@@ -111,6 +118,7 @@ class Edge:
     source_kind: Optional[str] = None   # pour 'voie' : 'bdtopo' | 'emprise_publique'
     ring: Optional[int] = None          # index de l'anneau extérieur (adjacence cyclique par anneau)
     attached: bool = False              # GABARIT-6 : micro-arête résiduelle rattachée à sa voisine
+    all_short: bool = False             # GABARIT-6 (b) : run nonclass dont TOUS les chunks font < 1 m
 
 
 @dataclass
@@ -201,8 +209,7 @@ def classify_edges(
             elif emprises_publiques and L >= min_edge:
                 seg_types.append((ri, seg, "voie", None, "emprise_publique"))
             else:
-                motif = MOTIF_ARETE_COURTE if L < min_edge else MOTIF_NON_QUALIFIEE
-                seg_types.append((ri, seg, "nonclass", motif, None))
+                seg_types.append((ri, seg, "nonclass", _nonclass_motif(L, min_edge), None))
 
     # résolution des arêtes « priv » (collées à une voie privée cadastrée). Portée aux ENCLAVES seules :
     # si la parcelle a une façade sur voie PUBLIQUE (bdtopo / emprise publique), le chemin privé n'est
@@ -243,39 +250,62 @@ def classify_edges(
     run_motif: Optional[str] = None
     run_sk: Optional[str] = None
     run_ring: Optional[int] = None
+    run_all_short: bool = True   # (b) : tous les chunks du run nonclass font-ils < min_edge ?
 
     def _flush():
-        nonlocal run_pts, run_type, run_motif, run_sk, run_ring
+        nonlocal run_pts, run_type, run_motif, run_sk, run_ring, run_all_short
         if run_type and len(run_pts) >= 2:
             line = LineString(run_pts)
-            edges.append(Edge(line, run_type, line.length, run_motif, run_sk, ring=run_ring))
-        run_pts, run_type, run_motif, run_sk, run_ring = [], None, None, None, None
+            motif, all_short = run_motif, False
+            # (a) une arête nonclass « ouverte » (motif longueur-dépendant) porte le motif de sa VRAIE
+            # longueur fusionnée, jamais celui du premier chunk ; (b) on retient si tous ses chunks < 1 m.
+            if run_type == "nonclass" and run_motif in (MOTIF_ARETE_COURTE, MOTIF_NON_QUALIFIEE):
+                motif = _nonclass_motif(line.length, min_edge)
+                all_short = run_all_short
+            edges.append(Edge(line, run_type, line.length, motif, run_sk, ring=run_ring, all_short=all_short))
+        run_pts, run_type, run_motif, run_sk, run_ring, run_all_short = [], None, None, None, None, True
 
     for ri, seg, t, m, sk in resolved:
         if t != run_type or sk != run_sk or ri != run_ring:
             _flush()
             run_type, run_motif, run_sk, run_ring = t, m, sk, ri
             run_pts = list(seg.coords)
+            run_all_short = (m == MOTIF_ARETE_COURTE)
         else:
             run_pts.append(seg.coords[-1])
             run_motif = run_motif or m
+            run_all_short = run_all_short and (m == MOTIF_ARETE_COURTE)
     _flush()
 
     # GABARIT-6 lot A — rattachement des micro-arêtes résiduelles (artefacts de numérisation).
-    _attach_residual_microedges(edges, rings, min_edge=min_edge)
+    def _road_near(geom: BaseGeometry) -> bool:
+        for r in roads:
+            w = r.largeur_m if r.largeur_m and r.largeur_m > 0 else default_width
+            if geom.distance(r.line) <= w / 2.0 + road_extra:
+                return True
+        return False
+    _attach_residual_microedges(edges, rings, road_near=_road_near)
     return edges
 
 
-def _attach_residual_microedges(edges: list[Edge], rings: list, *, min_edge: float,
+def _attach_residual_microedges(edges: list[Edge], rings: list, *,
+                                road_near=None,
                                 max_perim_frac: float = RESIDUAL_MAX_PERIM_FRAC) -> int:
     """Rattache chaque arête « non classée » qui n'est qu'un artefact de numérisation à l'arête
     ADJACENTE la plus longue du MÊME anneau (adjacence cyclique) : l'arête en hérite le type ET la
     source, `attached=True` la trace, et elle cesse de bloquer.
 
-    Rattachée SI ET SEULEMENT SI : type == 'nonclass' ET longueur < `min_edge` ET longueur
-    < `max_perim_frac` du périmètre de la parcelle. Une arête < min_edge mais ≥ 2 % du périmètre
-    (parcelle minuscule, l'arête pèse) reste bloquante ; une arête longue non qualifiable aussi.
-    Renvoie le nombre d'arêtes rattachées."""
+    GABARIT-6 (b) — le test d'artefact porte sur le RUN ENTIER, pas sur la seule longueur fusionnée :
+    rattachée SI ET SEULEMENT SI type == 'nonclass' ET `all_short` (TOUS ses chunks < `min_edge` — une
+    ré-entrance finement numérisée, jamais une face droite) ET longueur < `max_perim_frac` du périmètre.
+    Ainsi une ré-entrance de N micro-segments (ex. 4 × 0,6 m = 2,26 m) est captée, tandis qu'une face
+    droite non qualifiée (chunks ≥ 1 m) reste bloquante, comme une ré-entrance qui pèse ≥ 2 % du périmètre.
+
+    GARDE 0 FAUX : un artefact est nonclass PARCE QUE rien n'est à portée. Hériter « voie BD TOPO » d'une
+    voisine fabriquerait une façade sur voie inexistante (recul voie sur un renfoncement à > portée de la
+    chaussée). Donc, quand la donneuse est une voie BD TOPO et que l'artefact n'est PAS lui-même à portée
+    d'une route (`road_near`), on le rattache en SÉPARATIVE (`side`) — la voie citée (emprise publique /
+    voie privée) et les donneuses séparatives sont héritées telles quelles. Renvoie le nombre rattaché."""
     perim = sum(LineString(coords).length for coords in rings) if rings else 0.0
     if perim <= 0:
         return 0
@@ -290,13 +320,17 @@ def _attach_residual_microedges(edges: list[Edge], rings: list, *, min_edge: flo
             continue
         for pos, i in enumerate(idxs):
             e = edges[i]
-            if e.type != "nonclass" or e.length_m >= min_edge or e.length_m >= thr:
+            if e.type != "nonclass" or not e.all_short or e.length_m >= thr:
                 continue
             prev_e = edges[idxs[(pos - 1) % n]]
             next_e = edges[idxs[(pos + 1) % n]]
             donor = prev_e if prev_e.length_m >= next_e.length_m else next_e
-            e.type = donor.type
-            e.source_kind = donor.source_kind
+            if (donor.type == "voie" and donor.source_kind == "bdtopo"
+                    and road_near is not None and not road_near(e.geom)):
+                # garde 0 faux : ne pas fabriquer une façade sur voie là où aucune route n'est à portée
+                e.type, e.source_kind = "side", None
+            else:
+                e.type, e.source_kind = donor.type, donor.source_kind
             e.motif = None
             e.attached = True
             n_attached += 1

@@ -9,11 +9,11 @@ const TAG = process.argv[2] || 'apres'
 const ONLY = process.argv[3] ? process.argv[3].split(',') : null   // filtre optionnel par nom
 
 const SPECS_ALL = [
+  ['citerne-bz1065',       '97411000BZ1065'],   // 3 Chemin de la Citerne, Saint-Denis — LA vraie parcelle
   ['servie-irreguliere-1', '97411000CV0740'],   // contour très irrégulier (52 sommets), servie
   ['servie-irreguliere-2', '97415000CT2639'],   // contour irrégulier, servie
   ['servie-irreguliere-3', '97409000AV0323'],   // contour irrégulier, servie
-  ['microarete-rattachee', '97411000EV0332'],   // 1 arête résiduelle rattachée (tracée), bloc autre limite
-  ['bloquee-autre-cause',  '97417000BH0267'],   // 3 Chemin de la 2e Citerne, Saint-Philippe (RNU) — VISIBLE
+  ['bloquee-autre-cause',  '97411000EV0332'],   // Saint-Denis : 1 arête rattachée MAIS bloc autre limite (ravine)
 ]
 const SPECS = ONLY ? SPECS_ALL.filter(([n]) => ONLY.includes(n)) : SPECS_ALL
 

@@ -408,7 +408,7 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             if lim.residual_attached:
                 racc["classification"]["note_residuelles"] = (
                     f"{lim.residual_attached} arête(s) résiduelle(s) rattachée(s) "
-                    "(artefact de numérisation < 1 m, < 2 % du périmètre)")
+                    "(artefact de numérisation : segments tous < 1 m, run < 2 % du périmètre)")
             if any(e.source_kind == "voie_privee" for e in lim.edges):
                 racc["enclave"] = "E2 (voie privée cadastrée servie — citation « voies privées »)"
             # ravine / littoral longé par une arête emprise publique → recul ravine non chiffré (not_integrated)

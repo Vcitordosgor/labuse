@@ -2,148 +2,132 @@
 
 Date : 23/09/2026 · Branche `feat/gabarit-6` (worktree `~/Desktop/labuse-gabarit6`, base main `b88b66d5`).
 API 8135 · Vite 5336 (le 5335 mandaté était occupé par un autre worktree, `labuse-dash4b`).
-Commits : `ae62f62e` (Lot A) · `3f0f5b28` (Lot B) · Lot C (ce rapport + recette).
+Commits : `ae62f62e` (Lot A) · `3f0f5b28` (Lot B) · Lot C + correctifs (a)/(b) (ce rapport + recette).
+
+> **Correctif de prémisse (23/09).** « 97417 » du mandat est le **code postal** de La Montagne
+> (quartier de **Saint-Denis**, INSEE **97411**), PAS l'INSEE 97417 (Saint-Philippe). La vraie parcelle
+> « 3 Chemin de la Citerne » est **`97411000BZ1065`** (Saint-Denis, PLU calibré). Le premier jet de
+> GABARIT-6 avait résolu 97417 comme INSEE (collision : 97417 est aussi l'INSEE de Saint-Philippe) et
+> conclu à tort « RNU, hors mandat ». L'application, elle, ne confond pas (l'autocomplétion d'adresse
+> résout « 3 chemin de la citerne » → `97411000BZ1065`) ; l'erreur était dans l'enquête. Détail :
+> `docs/GABARIT/GABARIT-6-PREMISSE-97417.md`.
 
 ---
 
-## Lot A — une micro-arête ne bloque plus
+## Lot A + correctifs (a)/(b) — une micro-arête ne bloque plus
 
-### Règle implémentée (`src/labuse/gabarit/limites.py`)
+### Le vrai cas : `97411000BZ1065` (3 Chemin de la Citerne, Saint-Denis)
 
-Une arête classée « non classée » (artefact de numérisation) est **rattachée à l'arête adjacente la
-plus longue du même anneau** (adjacence cyclique) dont elle **hérite le type ET la source**, et cesse
-de bloquer — **si et seulement si** elle fait **< 1 m ET < 2 % du périmètre** de la parcelle
-(`RESIDUAL_MAX_PERIM_FRAC = 0.02`). Sinon elle bloque comme avant :
+La parcelle bloquait sur `Limites non qualifiées — arête résiduelle < 1 m`. Diagnostic : l'arête
+« non classée » mesure en fait **2,26 m**, composée de **4 micro-chunks** de numérisation
+(0,33 + 0,64 + 0,63 + 0,66 m), tous < 1 m, dans une ré-entrance de la façade sur voie. Deux défauts :
 
-- arête < 1 m **mais ≥ 2 %** du périmètre (parcelle minuscule, l'arête pèse) → **bloquante** ;
-- arête **longue** non qualifiable (> 1 m) → **bloquante**.
+- **(a) motif faux à la fusion** : `run_motif = run_motif or m` héritait le motif du PREMIER chunk
+  (0,33 m → « < 1 m »). L'arête fusionnée fait 2,26 m — c'est ce libellé « < 1 m » qui a inspiré la
+  règle initiale « < 1 m ».
+- **(b) garde trop étroite** : le Lot A initial ne rattachait qu'une arête dont la **longueur fusionnée**
+  < 1 m → il ratait la ré-entrance de 2,26 m.
 
-Le rattachement est **tracé, pas silencieux** : `Edge.attached`, `LimitesResult.residual_attached`,
-et côté builder `raccordement.classification.aretes_residuelles_rattachees` +
-`note_residuelles` = « N arête(s) résiduelle(s) rattachée(s) ».
+### Règles implémentées (`src/labuse/gabarit/limites.py`)
 
-Cette règle **remplace** l'absorption grossière pré-existante (`nonclass < 1 m → side`
-inconditionnel, silencieux, sans garde de périmètre).
+- **(a)** `_nonclass_motif(longueur)` fixe le motif sur la **vraie longueur fusionnée** : une arête ≥ 1 m
+  est « limite non qualifiée », jamais « résiduelle < 1 m ». Appliqué à la fusion (`_flush`).
+- **(b)** le test d'artefact porte sur le **run entier** : une arête nonclass est rattachée à l'arête
+  **adjacente la plus longue** du même anneau (héritage type + source) **si et seulement si** `all_short`
+  (TOUS ses chunks < 1 m — une ré-entrance finement numérisée, jamais une face droite) **ET** longueur
+  < **2 %** du périmètre (`RESIDUAL_MAX_PERIM_FRAC = 0.02`). `Edge.all_short` est calculé à la fusion.
+- **Garde 0 faux** : un artefact est nonclass *parce que rien n'est à portée*. Hériter « voie BD TOPO »
+  fabriquerait une **fausse façade sur voie** (recul voie sur un renfoncement à > portée de la chaussée —
+  observé sur BZ1065 à 5,68 m et BE0429 à 6,09 m, portée ~5,5–6 m). Donc, quand la donneuse est une voie
+  BD TOPO et que l'artefact n'est **pas** lui-même à portée d'une route, il est rattaché en **séparative**
+  (`side`). Les voies citées (emprise publique / voie privée) et les donneuses séparatives sont héritées
+  telles quelles.
+
+Restent bloquantes : arête < 1 m **mais ≥ 2 %** du périmètre (parcelle minuscule) ; face droite non
+qualifiée (chunks ≥ 1 m, `all_short=False`) ; ré-entrance all_short **mais ≥ 2 %**.
+
+Traçage (inchangé) : `Edge.attached`, `LimitesResult.residual_attached`,
+`raccordement.classification.aretes_residuelles_rattachees` + `note_residuelles`.
+
+**Résultat sur BZ1065** : `status=ok`, surface 1 625 m², zone d'implantation 927 m², plafond 488 m²,
+hauteur 7 m. La ré-entrance de 2,26 m est rattachée en **séparative** (`side` : 2 → 3), **0 fausse voie**.
 
 ### Mesure 170 (builder complet, base réelle) — `scripts/gabarit_a0_6_mesure.py`
 
-| | Servies | Faux | Flips per-idu | Arêtes rattachées |
-|---|---|---|---|---|
-| AVANT (main `b88b66d5`) | **143 / 170 (84 %)** | **0** | — | 0 |
-| APRÈS (Lot A) | **143 / 170 (84 %)** | **0** | **0** | 0 (sur la cohorte) |
+| | Servies | Faux | Flips per-idu |
+|---|---|---|---|
+| AVANT (main `b88b66d5`) | **143 / 170 (84 %)** | 0 | — |
+| APRÈS (a)+(b)+garde | **143 / 170 (84 %)** | **0** | **0** |
 
-- **0 régression** : comparaison per-idu servie(avant) vs servie(après) = **0 flip** sur les 170.
-- **0 faux** : audit des arêtes « road » servies (route BD TOPO à portée / parcelle-voirie /
-  voie privée détectée) = 0, avant comme après.
-- **Nombre de parcelles débloquées : 0** sur cette cohorte. Le mécanisme y est **inerte** : aucune
-  micro-arête < 1 m n'y bloquait déjà (l'absorption pré-existante les gérait). Un **scan complet de
-  Saint-Philippe (97417, 4 162 parcelles)** confirme **0 micro-arête < 1 m bloquante** — les blocages
-  « limite non qualifiée » y sont de **grandes** arêtes rurales (ravines, centaines de mètres),
-  légitimement bloquantes.
-- La prémisse « une arête < 1 m bloque aujourd'hui, constaté sur 3 Chemin de la Citerne » **ne se
-  reproduit pas** sur la base actuelle (voir *Recette*). Le mécanisme principiel est néanmoins livré,
-  plus correct (héritage de la vraie voisine vs `side` forcé), plus honnête (garde 2 % : une arête de
-  1 m sur une parcelle minuscule bloque bien) et **tracé**.
-- **Preuve que le mécanisme fonctionne sur le réel** : 4 parcelles de Saint-Denis (97411) où le
-  rattachement **s'active** — `EV0332`, `HN0401`, `BP0947`, `HE0078` : chacune
-  `aretes_residuelles_rattachees = 1` + note ; elles restent bloquées sur une **autre** limite non
-  qualifiée (> 1 m), ce qui est correct.
+- **0 régression** : 0 flip per-idu vs main ET vs le Lot A intermédiaire.
+- La cohorte figée (GABARIT-3) **n'exerce pas** (b) (0 rattachement) — BZ1065 n'en fait pas partie ; le
+  mécanisme se prouve donc hors cohorte (ci-dessous).
+- **Audit 0 faux ciblé** sur les parcelles où (b) s'active réellement (échantillon 3 000, communes
+  calibrées 97411/09/15/05) : **4 rattachées, 3 servies, 0 faux**. La garde route élimine le seul mode
+  de faux (fausse voie) : re-vérifié sur `BE0429` (faux AVANT garde → 0 APRÈS), `AO0524`, `BZ1065`.
 
-### Tests (`tests/gabarit/test_limites.py`)
+### Tests (`tests/gabarit/test_limites.py`, 78 verts)
 
-- `test_microarete_helper_rattachee_si_courte_et_sous_2pct` — < 1 m et < 2 % → rattachée, hérite du
-  type + source de la voisine la plus longue.
-- `test_microarete_helper_bloquante_si_sous_1m_mais_2pct_ou_plus` — < 1 m mais ≥ 2 % → bloquante.
-- `test_microarete_helper_longue_non_qualifiable_toujours_bloquante` — arête longue → bloquante.
-- `test_microarete_bout_en_bout_ne_bloque_plus` — bout-en-bout (`classify_edges`) : un « mordu » de
-  0,6 m entre deux séparatives ne bloque pas et est tracé (`attached`).
+- `test_nonclass_motif_selon_longueur_fusionnee` — (a) : 0,6 → « < 1 m » ; 2,26 et 1,0 → « non qualifiée ».
+- `test_microarete_helper_run_multichunk_rattache` — (b) : run 2,26 m all_short < 2 % → rattaché (cas BZ1065).
+- `test_microarete_helper_garde_zero_faux_voie_hors_portee` — donneuse voie hors portée → séparative ;
+  à portée → voie légitime.
+- `test_microarete_helper_run_court_mais_2pct_bloque` · `test_microarete_helper_face_droite_non_qualifiee_bloque`
+  — ré-entrance ≥ 2 % et face droite (chunks ≥ 1 m) → bloquantes.
+- `test_microarete_bout_en_bout_run_multimarches_ne_bloque_plus` — escalier de 5 marches de 0,6 m →
+  rattaché, servie ; `..._pese_bloque` — même escalier sur petite parcelle (≥ 2 %) → bloque, motif
+  « non qualifiée ».
+- `test_microarete_bout_en_bout_mordu_court` — mordu 0,6 m entre séparatives → rattaché.
 
 ---
 
-## Lot B — parcelle visible même bloquée
+## Lot B — parcelle visible même bloquée (inchangé)
 
-Avant : sur un calcul incomplet ouvert depuis l'**outil** (saisie IDU, sans fiche), l'écran restait
-vide — carte sur l'île entière, parcelle **invisible**, ni référence ni commune
-(`bug-parcelle-invisible.png`).
-
-Après :
-
-- **API** (`src/labuse/api/gabarit.py`) : le résultat `incomplete` porte désormais le **contour
-  cadastral** (`contourGeoJSON`) + la surface ; la référence et la commune viennent de
-  `raccordement.parcelle` (déjà présent).
-- **Front** (`frontend/src/components/outils/Gabarit.tsx`) : (1) `useMapLayers` trace le **contour** et
-  **centre** la carte sur la parcelle même en incomplet — les couches réglementaires (zone/retrait/3D)
-  restant réservées au calcul complet ; (2) le panneau affiche **« Parcelle <idu> · <commune> »
-  au-dessus du motif** de blocage.
-
-`tsc -b` vert · `vite build` vert.
+Sur un calcul incomplet, l'API sert le contour cadastral + surface (réf/commune via
+`raccordement.parcelle`) ; le front trace le contour, centre la carte, et affiche
+« Parcelle <idu> · <commune> » au-dessus du motif. `tsc -b` + `vite build` verts.
 
 ---
 
-## Lot C — tests et portes
+## Lot C — portes et recette
 
 | Porte | Résultat |
 |---|---|
-| `pytest tests/gabarit/` | **73 passés** |
-| `pytest tests/ -q` (suite complète) | **6 échecs / 3256 passés / 63 ignorés** (1260 s) — **0 nouveau**, tous pré-existants et hors gabarit (voir ci-dessous) |
-| `tsc -b` | vert |
-| `vite build` | vert |
-| `registre.verifier()` | **0 violation** |
-
-Les **6 échecs sont pré-existants et sans lien avec GABARIT-6** (aucun n'importe `gabarit/`,
-`api/gabarit.py` ni le front Gabarit) :
-`test_deps_declared` (dépendance `matplotlib` non déclarée dans pyproject) ·
-`test_front_reliquats::test_m135_echelle_action` · `test_plu_destinations::test_module_unique` ·
-`test_reparations1_lot2::test_graphe_exact` · `test_scoring6::test_vocabulaire_client_gravé` ·
-`verrous/test_lot1_tables` (base réelle absente de labuse_test). Les **73 tests gabarit passent**.
+| `pytest tests/gabarit/` | **78 passés** |
+| `pytest tests/ -q` (suite complète) | 6 échecs / 3256 passés / 63 ignorés — **0 nouveau** (6 pré-existants hors gabarit) |
+| `tsc -b` · `vite build` | verts |
+| `registre.verifier()` | 0 violation |
+| `ruff check` (fichiers modifiés) | clean |
 
 ### Recette navigateur (`scripts/gabarit6_recette.mjs`, headless, flux OUTIL pur)
 
-Captures dans `docs/GABARIT/captures/gabarit-6/` :
+Captures `docs/GABARIT/captures/gabarit-6/` (Saint-Denis, la BONNE commune) :
 
-- **3 Chemin de la (2e) Citerne, 97417** (`BH0267`, Saint-Philippe) — `recette-bloquee-autre-cause-{avant,apres}.png`.
-  Saint-Philippe est en **RNU** (sans PLU) : la parcelle bloque sur « zone PLU indéterminée »
-  (**hors mandat**, pas une limite). Elle n'est donc **pas servable** ; mais **Lot B** la rend
-  visible (contour + « Parcelle BH0267 · Saint-Philippe » au-dessus du motif). Sert aussi de
-  « parcelle bloquée pour une autre cause, contour et référence visibles ».
+- **3 Chemin de la Citerne, `97411000BZ1065` (Saint-Denis)** — `recette-citerne-bz1065-{avant,apres}.png` :
+  AVANT bloquée « arête résiduelle < 1 m » (parcelle visible grâce au Lot B), APRÈS **servie** (zone
+  d'implantation + retrait + chiffres). C'est le cas cœur du mandat.
 - **3 parcelles à contour irrégulier servies** — `recette-servie-irreguliere-{1,2,3}-apres.png` :
-  `97411000CV0740` (52 sommets), `97415000CT2639`, `97409000AV0323` (status `ok`, zone + retrait tracés).
-- **Micro-arête rattachée** — `recette-microarete-rattachee-{avant,apres}.png` : `97411000EV0332`
-  (Saint-Denis), `aretes_residuelles_rattachees = 1` + note ; bloc sur une autre limite (ravine).
-- **`bug-parcelle-invisible.png`** (= avant du bloc RNU) : carte sur l'île entière, parcelle invisible.
+  `97411000CV0740` (52 sommets), `97415000CT2639`, `97409000AV0323`.
+- **1 parcelle bloquée pour une AUTRE cause, visible** — `recette-bloquee-autre-cause-apres.png` :
+  `97411000EV0332` (Saint-Denis) — 1 arête résiduelle rattachée MAIS bloc sur une **autre** limite non
+  qualifiée (> 1 m, ravine) ; contour + référence visibles.
 
-Limite de la recette : **WebGL headless** rend correctement la carte 2D ; la 3D n'est pas capturée
-(cohérent avec les recettes GABARIT antérieures).
+WebGL headless rend la carte 2D ; 3D non capturée (comme les recettes GABARIT antérieures).
+
+> Les anciennes captures portant sur Saint-Philippe (`97417000BH0267`) ont été supprimées (mauvaise
+> commune). `bug-parcelle-invisible.png` (démonstration Lot B « écran vide ») est conservé.
 
 ---
 
 ## Fichiers
 
-- `src/labuse/gabarit/limites.py` — `RESIDUAL_MAX_PERIM_FRAC`, `Edge.ring/attached`,
-  `_attach_residual_microedges`, `LimitesResult.residual_attached`, `summarize_edges`.
-- `src/labuse/gabarit/builder.py` — trace `aretes_residuelles_rattachees` + `note_residuelles`.
-- `src/labuse/api/gabarit.py` — contour + surface sur le résultat `incomplete`.
-- `frontend/src/components/outils/Gabarit.tsx` — contour + centrage en incomplet, réf + commune.
-- `tests/gabarit/test_limites.py` — 4 tests micro-arêtes.
-- `scripts/gabarit_a0_6_mesure.py` — mesure 170 avant/après (0 faux, per-idu).
-- `scripts/gabarit6_recette.mjs` — recette navigateur.
-- `docs/GABARIT/captures/gabarit-6/` — CSV mesure + 8 captures.
+- `src/labuse/gabarit/limites.py` — `_nonclass_motif` (a) ; `Edge.all_short` + fusion (b) ;
+  `_attach_residual_microedges` (test run + garde route 0 faux).
+- `src/labuse/gabarit/builder.py` — note résiduelle mise à jour.
+- `tests/gabarit/test_limites.py` — 8 tests micro-arêtes (a)/(b)/garde.
+- `scripts/gabarit_a0_6_mesure.py` · `scripts/gabarit6_recette.mjs`.
+- `docs/GABARIT/GABARIT-6-PREMISSE-97417.md` (enquête postal/INSEE).
 
-## Commandes clés
-
-```
-# mesure 170 (avant : sur main ; après : sur Lot A)
-PYTHONPATH=src DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib .venv/bin/python \
-  scripts/gabarit_a0_6_mesure.py <sortie.csv>
-
-# tests
-PYTHONPATH=src LABUSE_TEST_DATABASE_URL=postgresql+psycopg://openclaw@localhost:5432/labuse_test \
-  .venv/bin/python -m pytest tests/gabarit/ -q
-
-# recette (API 8135 + vite 5336 lancés)
-node scripts/gabarit6_recette.mjs apres
-```
-
-## Hors mandat (non traité, conforme)
+## Hors mandat (conforme)
 
 Zones non calibrées · hauteur prospect · exports · merge · `residuel-serve`.
