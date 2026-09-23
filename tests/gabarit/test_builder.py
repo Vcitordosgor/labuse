@@ -250,3 +250,28 @@ def test_ppr_analyse_toujours_presente(monkeypatch):
     ppr = [ar for ar in b.input.applicableRules if ar.id == "PPR"]
     assert len(ppr) == 1 and ppr[0].integrationStatus == "not_integrated"
     assert ppr[0].source and ppr[0].source.document
+
+
+def test_hauteur_egout_sans_faitage_servie(monkeypatch):
+    """PLU-CALIBRAGE-8 : hauteur fixée À L'ÉGOUT, sans faîtage réglementé (ex. Salazie U 10)
+    → servie sur l'égout. L'écran dit « à l'égout » (jamais un faîtage implicite)."""
+    monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
+    monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules(hf_m=None, he_m=12.0))
+    monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid, **kw: _fake_limites())
+    b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
+    assert b.blocking == []                              # l'égout suffit à servir
+    assert b.input.maxHeight.meters == 12.0             # hauteur = égout, telle quelle
+    mh = [r for r in b.input.applicableRules if r.category == "maxHeight"][0]
+    assert "égout" in (mh.label or "")                  # jamais un faîtage implicite
+    assert "12" in (mh.detail or "") and "égout" in (mh.detail or "")
+
+
+def test_hauteur_faitage_prioritaire_sur_egout(monkeypatch):
+    """Quand le faîtage EST réglementé, il prime (pas de bascule vers l'égout)."""
+    monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
+    monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules(hf_m=10.0, he_m=7.0))
+    monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid, **kw: _fake_limites())
+    b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
+    assert b.input.maxHeight.meters == 10.0
+    mh = [r for r in b.input.applicableRules if r.category == "maxHeight"][0]
+    assert "égout" not in (mh.label or "")
