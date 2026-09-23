@@ -231,6 +231,23 @@ zones:
           citation: 'En secteur Upi : L''emprise au sol des constructions ne devra pas excéder 80 % de la
             superficie de l''unité foncière. Elle pourra être portée à 100 %, uniquement en rez-de-chaussée.'
           statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: Up.6
+          page_pdf: 32
+          citation: 'Les constructions peuvent être implantées : - soit à l''alignement de la voie, - soit avec
+            un recul : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique, de 4 m minimum
+            pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à l''alignement.'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: Up.7
+          page_pdf: 33
+          citation: 'Les constructions seront implantées : - soit sur une ou plusieurs limites séparatives, - soit
+            avec un recul : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique, de 4 m minimum
+            pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à la limite séparative.'
+          statut: valide
     renvoi: Up
     renvoi_src: « La zone comprend un secteur Upi et un secteur Upr. » (caractère de la zone Up, p. 30). Les articles
       Up.1 et Up.2 (p. 30-31) ne prévoient aucune règle de destination propre au secteur Upi (les seules règles
@@ -266,6 +283,25 @@ zones:
           citation: 'En secteur Upr : L''emprise au sol des constructions ne devra pas excéder 70 % de la
             superficie de l''unité foncière. Elle pourra être de 80 % pour les parcelles dont la superficie
             est inférieure à 200 m2.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Up.6
+          page_pdf: 32
+          citation: 'Les constructions peuvent être implantées : - soit à l''alignement de la voie, - soit avec
+            un recul : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique, de 4 m minimum
+            pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à l''alignement. (Upr = RDC+3 →
+            4 m.)'
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: Up.7
+          page_pdf: 33
+          citation: 'Les constructions seront implantées : - soit sur une ou plusieurs limites séparatives, - soit
+            avec un recul : de 3 m minimum pour les bâtiments ≤ RDC+1, de 4 m minimum pour les bâtiments > RDC+1
+            par rapport à la limite séparative. Dans le secteur Upr : … les constructions seront implantées avec
+            un recul de 6 m par rapport au pied de la falaise repérée sur le plan N°3 annexé.'
           statut: valide
     renvoi: Up
     renvoi_src: « La zone comprend un secteur Upi et un secteur Upr. » (caractère de la zone Up, p. 30). Les articles
@@ -403,6 +439,24 @@ zones:
           citation: 'En secteur Udop : Hauteur maximale R+5, soit 18m, au faîtage ou à l''acrotère, généralisé
             (R+8 sur Bld Lancastel/rue L. Rambaud, R+3 sur ruelle Sanisal/rue Mérancienne).'
           statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          formule: 'En secteur Udop : voies et emprises publiques ≥ 12 m → 6 m de l''alignement ; < 12 m → 4 m minimum.'
+          article: Ud.6
+          page_pdf: 41
+          citation: 'En secteur Udop : … Pour toutes les voies et emprise publique de 12 m ou plus, les constructions
+            seront implantées à 6 m de l''alignement. Voies et emprises publiques de moins de 12 m : Les constructions
+            seront implantées à 4 m minimum de l''alignement.'
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: Ud.7
+          page_pdf: 43
+          citation: 'En secteur Udp, Udop : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives …
+            Les constructions … ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L …
+            avec un minimum de 4 m : 4 m ≤ L ≥ h/2.'
+          statut: valide
       emprise_sol:
         ces:
           pct: 70
@@ -473,6 +527,24 @@ zones:
           article: Ud.10
           page_pdf: 44
           citation: 'En secteur Udp : Hauteur maximale R+5, soit 18 m, au faîtage ou à l''acrotère, généralisé.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          formule: 'En secteur Udp : alignement (rue M. Leclerc, av. Jean Jaurès) ; Bd Lancastel 6–10 m ; autres voies
+            ≥ 12 m → 6 m (rue Saint Jacques 4 m) ; voies < 12 m → 4 m minimum.'
+          article: Ud.6
+          page_pdf: 42
+          citation: 'En secteur Udp : … Pour toutes les autres voies et emprise publique de 12 m ou plus, les constructions
+            seront implantées à 6 m de l''alignement, sauf la rue Saint Jacques, 4m. Voies et emprises publiques de moins
+            de 12 m : Les constructions seront implantées à 4 m minimum de l''alignement.'
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: Ud.7
+          page_pdf: 43
+          citation: 'En secteur Udp, Udop : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives …
+            avec un minimum de 4 m : 4 m ≤ L ≥ h/2.'
           statut: valide
       emprise_sol:
         ces:
@@ -1240,6 +1312,21 @@ zones:
           page_pdf: 84
           citation: 'En secteur Uva : La hauteur maximale H des constructions ne doit pas excéder 4 m.'
           statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Uv.6
+          page_pdf: 83
+          citation: Toute construction ou installation sera implantée avec un recul de 4 m minimum par rapport à
+            l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: Uv.7
+          page_pdf: 83
+          citation: 'Toute construction ou installation pourra être implantée : - soit sur une ou plusieurs limites
+            séparatives, - soit avec un recul de 4 m minimum.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. Uv.1 (p. 81), applicable à toute la zone : « Sont interdites : toutes les constructions ou
       installations autres que celles prévues à l''article 2. »'
@@ -1333,6 +1420,21 @@ zones:
           article: Uv.10
           page_pdf: 84
           citation: 'En secteur Uvac : … ne doit pas excéder 10m'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Uv.6
+          page_pdf: 83
+          citation: Toute construction ou installation sera implantée avec un recul de 4 m minimum par rapport à
+            l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: Uv.7
+          page_pdf: 83
+          citation: 'Toute construction ou installation pourra être implantée : - soit sur une ou plusieurs limites
+            séparatives, - soit avec un recul de 4 m minimum.'
           statut: valide
     silence: interdit
     silence_src: 'Art. Uv.1 (p. 81), applicable à toute la zone : « Sont interdites : toutes les constructions ou
@@ -1439,6 +1541,21 @@ zones:
           article: Uv.10
           page_pdf: 84
           citation: 'En secteur Uvl : … ne doit pas excéder 10m.'
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: Uv.6
+          page_pdf: 83
+          citation: Toute construction ou installation sera implantée avec un recul de 4 m minimum par rapport à
+            l'alignement.
+          statut: valide
+        limites_separatives:
+          min_m: 4.0
+          article: Uv.7
+          page_pdf: 83
+          citation: 'Toute construction ou installation pourra être implantée : - soit sur une ou plusieurs limites
+            séparatives, - soit avec un recul de 4 m minimum.'
           statut: valide
     silence: interdit
     silence_src: 'Art. Uv.1 (p. 81), applicable à toute la zone : « Sont interdites : toutes les constructions ou

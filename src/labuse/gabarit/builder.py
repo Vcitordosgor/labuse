@@ -15,6 +15,7 @@ détail de la règle. Une parcelle sans façade / à limite non qualifiée → �
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -86,6 +87,14 @@ def _feuille_citation(commune: str, zone: str, rubrique: str, feuille: str) -> s
     reg = regles_zone(commune, zone) or {}
     leaf = (reg.get(rubrique) or {}).get(feuille) or {}
     return " ".join(f"{leaf.get('citation', '')} {leaf.get('formule', '')}".split())[:220]
+
+
+def _feuille_article(commune: str, zone: str, rubrique: str, feuille: str) -> str:
+    """« Art. U 10.2 » de la feuille (article tel qu'écrit au YAML) — pour citer la source à l'écran."""
+    reg = regles_zone(commune, zone) or {}
+    leaf = (reg.get(rubrique) or {}).get(feuille) or {}
+    a = re.sub(r"^\s*articles?\s+", "", str(leaf.get("article") or "").strip(), flags=re.I)
+    return f"Art. {a}" if a else ""
 
 
 def _voie_citation_flags(commune: str, zone: str) -> tuple[bool, bool, str, str]:
@@ -261,6 +270,22 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                     applicable.append(ApplicableRule(id=f"{work_zone}-hauteur", label="Hauteur maximale",
                                                      category="maxHeight", integrationStatus="integrated",
                                                      detail=f"{haut:g} m", source=plu_zone_src))
+                elif egout is not None:
+                    # PLU-CALIBRAGE-8 — le règlement borne la hauteur À L'ÉGOUT sans fixer de faîtage
+                    # (ex. Salazie U 10, La Possession, Le Tampon). On sert cette valeur telle quelle :
+                    # l'écran dit « à l'égout » (jamais un faîtage implicite) et la source cite l'article.
+                    art = _feuille_article(commune, work_zone, "hauteur", "egout")
+                    cit = _feuille_citation(commune, work_zone, "hauteur", "egout")
+                    egout_src = RegulatorySource(document=f"PLU — {commune}", zone=work_zone,
+                                                 article=art or None, provider=PLU_PROVIDER)
+                    max_height = MaxHeight(ruleId=f"{work_zone}-hauteur", meters=egout,
+                                           status="integrated", source=egout_src)
+                    applicable.append(ApplicableRule(
+                        id=f"{work_zone}-hauteur", label="Hauteur réglementaire — à l'égout",
+                        category="maxHeight", integrationStatus="integrated",
+                        detail=f"{egout:g} m à l'égout" + (f" — {cit}" if cit else ""),
+                        source=egout_src))
+                    racc.setdefault("hauteur_egout", {"m": egout, "article": art})
                 elif _feuille_forme_hors_schema(commune, work_zone, "hauteur", "faitage", "m"):
                     # hauteur en PROSPECT (L ≥ H) : validée mais non chiffrée → non intégrée. 2D servie,
                     # 3D indisponible. Aucun calcul de H depuis L (hors mandat).
