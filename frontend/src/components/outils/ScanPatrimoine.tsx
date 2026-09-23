@@ -41,6 +41,10 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
   const [nConstruit, setNConstruit] = useState<number | null>(null)
   const [q, setQ] = useState('')
   const [msg, setMsg] = useState<string | null>(null)
+  // SCAN-PATRIMOINE-1 (écart 1) — quand la recherche par NOM matche PLUSIEURS sociétés, on ne
+  // tranche plus au plus gros en silence : on affiche la liste (nom · SIREN · nb parcelles) et on
+  // laisse choisir (même geste que le Copilote). Vidée dès qu'un propriétaire est retenu ou re-saisi.
+  const [candidats, setCandidats] = useState<{ siren: string; nom: string; n: number }[]>([])
   const [busy, setBusy] = useState(false)
   const qc = useQueryClient()
 
@@ -62,8 +66,8 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
 
   // RETOURS-16 V5 — la query de suggestions maison (`sug`, par nom) est retirée : le composant
   // de barre partagé porte désormais la suggestion (propriétaire/SIREN/parcelle/adresse, typée).
-  const choisir = (siren: string, nom?: string) => { setOwner(siren); setOwnerLabel(nom ?? null); setMsg(null) }
-  const changer = () => { setOwner(null); setOwnerLabel(null); setQ(''); setMsg(null) }
+  const choisir = (siren: string, nom?: string) => { setOwner(siren); setOwnerLabel(nom ?? null); setMsg(null); setCandidats([]) }
+  const changer = () => { setOwner(null); setOwnerLabel(null); setQ(''); setMsg(null); setCandidats([]) }
   // résout l'IDU → propriétaire moral de la fiche ; null si particulier / non renseigné.
   // OUTILS-FIX-5 L1 — on lit le MÊME id que la fiche §1 (`proprietaire_moral.siren`, app.py:3839,
   // id registre `type_proprietaire`). L'ancienne lecture `f.owner_siren` visait un champ RACINE
@@ -84,6 +88,7 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
     const val = (raw ?? q).trim()
     if (raw != null) setQ(raw)
     setMsg(null)
+    setCandidats([])   // SCAN-PATRIMOINE-1 — toute nouvelle résolution repart d'une liste vide
     if (val.length < 2) return
     setBusy(true)
     try {
@@ -95,9 +100,12 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
         return
       }
       // NOM d'entreprise — le cas d'usage principal (recherche sur les dénominations des fichiers fonciers).
+      // SCAN-PATRIMOINE-1 (écart 1) — UN seul résultat : on le retient. PLUSIEURS : on affiche la liste
+      // (nom · SIREN · nb parcelles) et on laisse choisir — plus d'auto-sélection du plus gros en silence.
       const results = await qc.fetchQuery({ queryKey: ['scan-search', val], queryFn: () => modPatrimoineSearch(val) })
-      const first = (results as { siren: string; nom: string }[] | undefined)?.[0]
-      if (first) { choisir(first.siren, first.nom); return }
+      const list = (results as { siren: string; nom: string; n: number }[] | undefined) ?? []
+      if (list.length === 1) { choisir(list[0].siren, list[0].nom); return }
+      if (list.length > 1) { setCandidats(list); return }
       // REPLI ADRESSE : une adresse ne matche aucune dénomination → on la géocode (BAN, publique) et on
       // remonte à la parcelle puis au propriétaire.
       const feats = await banAutocomplete(val)
@@ -132,7 +140,7 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
           <div className="flex items-center gap-1.5">
             <AddressAutocomplete data-scan-search placeholder="Nom, SIREN, IDU ou adresse"
               grammaires={['proprietaire', 'siren', 'cadastre', 'adresse']}
-              onTextChange={setQ}
+              onTextChange={(t) => { setQ(t); if (candidats.length) setCandidats([]) }}
               onPick={(it) => { if (it.siren) choisir(it.siren, it.type === 'proprietaire' ? it.label : undefined) }}
               onSelect={(sel) => resoudre(sel.idu ?? sel.label)}
               onEnterRaw={(t) => resoudre(t)}
@@ -143,8 +151,25 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
           {/* U1.3 — ligne d'aide sous le champ. */}
           <p className="text-[11px] leading-snug text-txt-off">Une société, une parcelle, une adresse — LABUSE remonte au propriétaire.</p>
           {msg && <p data-scan-msg className="text-[11px] leading-snug text-st-creuser">{msg}</p>}
+          {/* SCAN-PATRIMOINE-1 (écart 1) — CHOIX quand plusieurs sociétés matchent le nom : la liste,
+              nom · SIREN · nb parcelles, on laisse trancher (comme le Copilote). Plus d'auto-sélection. */}
+          {candidats.length > 0 && (
+            <div data-scan-candidats className="flex flex-col gap-1.5">
+              <p className="text-[11px] leading-snug text-txt">Plusieurs sociétés correspondent — laquelle&nbsp;?</p>
+              {candidats.map((c) => (
+                <button key={c.siren} data-scan-candidat={c.siren} onClick={() => choisir(c.siren, c.nom)} disabled={busy}
+                  className="hover-fill flex items-center justify-between gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left disabled:opacity-40">
+                  <span className="min-w-0">
+                    <span className="block truncate text-[12.5px] text-txt">{c.nom}</span>
+                    <span className="mt-0.5 block font-mono text-[10.5px] text-txt-dim">SIREN {c.siren}</span>
+                  </span>
+                  <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-txt-dim">{c.n} parcelles</span>
+                </button>
+              ))}
+            </div>
+          )}
           {/* U1.4 — bloc EXEMPLES : à vide seulement (remplace le message d'attente ; montre ce que le champ accepte). */}
-          {q.trim().length < 2 && (
+          {q.trim().length < 2 && candidats.length === 0 && (
             <div className="flex flex-col gap-1.5">
               <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-txt-dim">Exemples</div>
               {EXEMPLES.map((e) => (
