@@ -2263,7 +2263,20 @@ def admin_circuit(request: Request) -> dict:
     _derniere_sonde = max(_passages) if _passages else None
     _contexte_af = (f"dernière sonde {_derniere_sonde[:16].replace('T', ' ')}"
                     if _derniere_sonde else "aucune sonde passée encore")
-    _calculer_af = None   # CIRCUIT-P4 lot 4 : dépendance injection→recalcul dérivée du registre
+    # ── CIRCUIT-P4 (lot 4) — la règle injection → recalcul, dérivée du registre (moteurs.csv) :
+    #    une source qui nourrit le résiduel/scoring injectée depuis le run servi, ou un commit qui
+    #    change les règles PLU, fait apparaître la ligne « Calculer » (avec ce que ça touche). ──
+    from .. import circuit_dependance as _dep
+    try:
+        with session_scope() as _sd:
+            _run_date = _sd.execute(text(
+                "SELECT computed_at_max FROM residuel_runs WHERE is_served LIMIT 1")).scalar()
+        _run_date = _run_date.isoformat() if _run_date else None
+    except Exception:  # noqa: BLE001 — chaîne résiduel absente (base de test) : pas de date de run
+        _run_date = None
+    _plu_chg = _dep.plu_regles_changees(_run_date)
+    _calculer_af = _dep.calculer_ligne(reservoirs, run_servi_date=_run_date,
+                                       plu_changees=_plu_chg, residuel=residuel)
     a_faire = _resume.composer_a_faire(
         reservoirs, residuel=residuel, candidat=_candidat, run_servi=runs.current(),
         verrous=_verrous, etats_compte=_etats_compte, contexte=_contexte_af,
