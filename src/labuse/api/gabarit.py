@@ -40,8 +40,14 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
         raise HTTPException(404, f"Parcelle inconnue : {idu}")
 
     if build.blocking:
+        # GABARIT-6 lot B : calcul incomplet, mais la parcelle reste VISIBLE. On sert le contour
+        # cadastral + la référence/commune (via raccordement.parcelle) pour que la carte centre sur
+        # la parcelle et que le panneau l'identifie AU-DESSUS du motif — jamais un écran vide.
+        parcel = build.input.parcel if build.input else None
         return GabaritResult(status="incomplete", message=INCOMPLETE_MESSAGE,
-                             validationErrors=build.blocking, raccordement=build.raccordement)
+                             validationErrors=build.blocking, raccordement=build.raccordement,
+                             contourGeoJSON=parcel.geometry if parcel else None,
+                             surfaceParcelleM2=parcel.areaM2 if parcel else None)
 
     res = compute_gabarit(build.input)
     res.raccordement = build.raccordement
