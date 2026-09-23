@@ -20,6 +20,26 @@ meta:
 zones:
   Ua:
     regles:
+      hauteur:
+        egout:
+          plage: true
+          plage_m:
+          - 4
+          - 7
+          - 10
+          - 13
+          - 15
+          regle_base: hauteur à l'égout définie SECTEUR PAR SECTEUR au document graphique (table de 5 valeurs) —
+            non résoluble depuis le seul code de zone
+          article: U 4
+          page_pdf: 9
+          citation: 'La hauteur maximale autorisée des constructions est, selon les secteurs repérés sur le document
+            graphique, de : 15 mètres (R+4+combles), 13 mètres (R+3+combles), 10 mètres (R+2+combles), 7 mètres
+            (R+1+combles), 4 mètres (R+ combles). Il s''agit de hauteurs maximales à l''égout du toit ou au sommet
+            de l''acrotère.'
+          statut: propose
+          raison: 'PLU-CALIBRAGE-8 : hauteur portée par une TABLE GRAPHIQUE par secteur (5 valeurs 4–15 m à l''égout,
+            Art. U-4) — forme « tableau » non portée par le schéma, laissée propose (aucune valeur unique par zone).'
       emprise_sol:
         ces:
           pct: 80.0
@@ -30,7 +50,7 @@ zones:
           raison: attribution douteuse (secteur None)
       retraits:
         voie:
-          min_m: null
+          absent: true
           article: U 6
           page_pdf: 10
           citation: 'L''implantation par rapport aux voies publiques ou privées n''est pas réglementée, sauf
@@ -38,16 +58,20 @@ zones:
             de : - 7 mètres par rapport à l''axe de la rue George Pompidou ; - 5 mètres par rapport à l''axe
             des rues Monfleury et Louis Brunet. [...] 2° Hors agglomération, les constructions doivent être
             implantées avec un recul minimum de 75 mètres par rapport à l''axe des routes nationales.'
-          statut: propose
-          raison: attribution douteuse (secteur None)
+          statut: valide
+          raison: 'PLU-CALIBRAGE-8 : recul sur voie NON RÉGLEMENTÉ pour la zone (silence prouvé) ; les seules
+            exceptions sont géographiques (axes rue G. Pompidou 7 m, Monfleury/L. Brunet 5 m ; 75 m des RN hors
+            agglomération) et ne se rattachent pas au code de zone.'
         limites_separatives:
-          min_m: null
+          forme: alignement
           article: U 7
           page_pdf: 11
           citation: 'Les bâtiments doivent être implantés : 1° Soit sur l''une ou sur les deux limites séparatives
             latérales, 2° Soit avec un recul d''un mètre au moins.'
-          statut: propose
-          raison: valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')
+          statut: valide
+          raison: 'PLU-CALIBRAGE-8 : implantation admise SUR la (les) limite(s) séparative(s) latérale(s) — recul
+            0 explicite, forme alignement — OU en retrait d''au moins 1 m ; fond de parcelle libre (Art. U-7). Le
+            recul minimal opposable est donc 0.'
       pleine_terre:
         pct:
           pct: 20.0
@@ -127,6 +151,26 @@ zones:
       Les fiches annexes n°60 à 82 (pp. 97 sq.) sont des fiches d''immeubles patrimoniales : aucune règle de destination.'
   Ub:
     regles:
+      hauteur:
+        egout:
+          plage: true
+          plage_m:
+          - 4
+          - 7
+          - 10
+          - 13
+          - 15
+          regle_base: hauteur à l'égout définie SECTEUR PAR SECTEUR au document graphique (table de 5 valeurs) —
+            non résoluble depuis le seul code de zone
+          article: U 4
+          page_pdf: 9
+          citation: 'La hauteur maximale autorisée des constructions est, selon les secteurs repérés sur le document
+            graphique, de : 15 mètres (R+4+combles), 13 mètres (R+3+combles), 10 mètres (R+2+combles), 7 mètres
+            (R+1+combles), 4 mètres (R+ combles). Il s''agit de hauteurs maximales à l''égout du toit ou au sommet
+            de l''acrotère.'
+          statut: propose
+          raison: 'PLU-CALIBRAGE-8 : hauteur portée par une TABLE GRAPHIQUE par secteur (5 valeurs 4–15 m à l''égout,
+            Art. U-4) — forme « tableau » non portée par le schéma, laissée propose (aucune valeur unique par zone).'
       emprise_sol:
         ces:
           pct: 80.0
@@ -137,23 +181,26 @@ zones:
           raison: attribution douteuse (secteur None)
       retraits:
         voie:
-          min_m: null
+          absent: true
           article: U 6
           page_pdf: 11
           citation: 'L''implantation par rapport aux voies publiques ou privées n''est pas réglementée, sauf
             dans les cas suivants : [...] 2° Hors agglomération, les constructions doivent être implantées
             avec un recul minimum de 75 mètres par rapport à l''axe des routes nationales.'
-          statut: propose
-          raison: valeur non numérique ('75 m axe RN hors agglomération (rues Pompidou/Montfleury/Brunet non
-            concernées en Ub)')
+          statut: valide
+          raison: 'PLU-CALIBRAGE-8 : recul sur voie NON RÉGLEMENTÉ en zone Ub (silence prouvé, Art. U-6) ; seule
+            exception, le recul de 75 m des RN hors agglomération (les rues Pompidou/Montfleury/Brunet ne concernent
+            pas Ub). Exception géographique, non rattachée au code de zone.'
         limites_separatives:
-          min_m: null
+          forme: alignement
           article: U 7
           page_pdf: 11
           citation: 'Les bâtiments doivent être implantés : 1° Soit sur l''une ou sur les deux limites séparatives
             latérales, 2° Soit avec un recul d''un mètre au moins.'
-          statut: propose
-          raison: valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')
+          statut: valide
+          raison: 'PLU-CALIBRAGE-8 : implantation admise SUR la (les) limite(s) séparative(s) latérale(s) — recul
+            0 explicite, forme alignement — OU en retrait d''au moins 1 m ; fond de parcelle libre (Art. U-7). Le
+            recul minimal opposable est donc 0.'
       pleine_terre:
         pct:
           pct: 20.0
@@ -215,6 +262,26 @@ zones:
       toute construction est interdite. » (Art. U-2 7°, p. 7).'
   Ue:
     regles:
+      hauteur:
+        egout:
+          plage: true
+          plage_m:
+          - 4
+          - 7
+          - 10
+          - 13
+          - 15
+          regle_base: hauteur à l'égout définie SECTEUR PAR SECTEUR au document graphique (table de 5 valeurs) —
+            non résoluble depuis le seul code de zone
+          article: U 4
+          page_pdf: 9
+          citation: 'La hauteur maximale autorisée des constructions est, selon les secteurs repérés sur le document
+            graphique, de : 15 mètres (R+4+combles), 13 mètres (R+3+combles), 10 mètres (R+2+combles), 7 mètres
+            (R+1+combles), 4 mètres (R+ combles). Il s''agit de hauteurs maximales à l''égout du toit ou au sommet
+            de l''acrotère.'
+          statut: propose
+          raison: 'PLU-CALIBRAGE-8 : hauteur portée par une TABLE GRAPHIQUE par secteur (5 valeurs 4–15 m à l''égout,
+            Art. U-4) — forme « tableau » non portée par le schéma, laissée propose (aucune valeur unique par zone).'
       emprise_sol:
         ces:
           pct: 80.0
@@ -225,21 +292,25 @@ zones:
           raison: attribution douteuse (secteur None)
       retraits:
         voie:
-          min_m: null
+          absent: true
           article: U 6
           page_pdf: 11
           citation: 2° Hors agglomération, les constructions doivent être implantées avec un recul minimum
             de 75 mètres par rapport à l'axe des routes nationales.
-          statut: propose
-          raison: valeur non numérique ('75 m axe RN hors agglomération')
+          statut: valide
+          raison: 'PLU-CALIBRAGE-8 : recul sur voie NON RÉGLEMENTÉ en zone urbaine (silence prouvé, Art. U-6) ;
+            la seule contrainte est le recul de 75 m des RN hors agglomération, exception géographique non
+            rattachée au code de zone.'
         limites_separatives:
-          min_m: null
+          forme: alignement
           article: U 7
           page_pdf: 11
           citation: 'Les bâtiments doivent être implantés : 1° Soit sur l''une ou sur les deux limites séparatives
             latérales, 2° Soit avec un recul d''un mètre au moins.'
-          statut: propose
-          raison: valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')
+          statut: valide
+          raison: 'PLU-CALIBRAGE-8 : implantation admise SUR la (les) limite(s) séparative(s) latérale(s) — recul
+            0 explicite, forme alignement — OU en retrait d''au moins 1 m ; fond de parcelle libre (Art. U-7). Le
+            recul minimal opposable est donc 0.'
       pleine_terre:
         pct:
           pct: 20.0
@@ -304,6 +375,26 @@ zones:
       mais aucune règle opposable de destination « industrie » n''est écrite pour Ue → non mentionnée (silence).'
   Up:
     regles:
+      hauteur:
+        egout:
+          plage: true
+          plage_m:
+          - 4
+          - 7
+          - 10
+          - 13
+          - 15
+          regle_base: hauteur à l'égout définie SECTEUR PAR SECTEUR au document graphique (table de 5 valeurs) —
+            non résoluble depuis le seul code de zone
+          article: U 4
+          page_pdf: 9
+          citation: 'La hauteur maximale autorisée des constructions est, selon les secteurs repérés sur le document
+            graphique, de : 15 mètres (R+4+combles), 13 mètres (R+3+combles), 10 mètres (R+2+combles), 7 mètres
+            (R+1+combles), 4 mètres (R+ combles). Il s''agit de hauteurs maximales à l''égout du toit ou au sommet
+            de l''acrotère.'
+          statut: propose
+          raison: 'PLU-CALIBRAGE-8 : hauteur portée par une TABLE GRAPHIQUE par secteur (5 valeurs 4–15 m à l''égout,
+            Art. U-4) — forme « tableau » non portée par le schéma, laissée propose (aucune valeur unique par zone).'
       emprise_sol:
         ces:
           pct: 80.0
@@ -314,21 +405,25 @@ zones:
           raison: attribution douteuse (secteur None)
       retraits:
         voie:
-          min_m: null
+          absent: true
           article: U 6
           page_pdf: 11
           citation: 2° Hors agglomération, les constructions doivent être implantées avec un recul minimum
             de 75 mètres par rapport à l'axe des routes nationales.
-          statut: propose
-          raison: valeur non numérique ('75 m axe RN hors agglomération')
+          statut: valide
+          raison: 'PLU-CALIBRAGE-8 : recul sur voie NON RÉGLEMENTÉ en zone urbaine (silence prouvé, Art. U-6) ;
+            la seule contrainte est le recul de 75 m des RN hors agglomération, exception géographique non
+            rattachée au code de zone.'
         limites_separatives:
-          min_m: null
+          forme: alignement
           article: U 7
           page_pdf: 11
           citation: 'Les bâtiments doivent être implantés : 1° Soit sur l''une ou sur les deux limites séparatives
             latérales, 2° Soit avec un recul d''un mètre au moins.'
-          statut: propose
-          raison: valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')
+          statut: valide
+          raison: 'PLU-CALIBRAGE-8 : implantation admise SUR la (les) limite(s) séparative(s) latérale(s) — recul
+            0 explicite, forme alignement — OU en retrait d''au moins 1 m ; fond de parcelle libre (Art. U-7). Le
+            recul minimal opposable est donc 0.'
       pleine_terre:
         pct:
           pct: 20.0
@@ -403,6 +498,26 @@ zones:
       part et d''autre de la ravine la Sourdine), toute construction est interdite. » (Art. U-2 7°, p. 7).'
   Ut:
     regles:
+      hauteur:
+        egout:
+          plage: true
+          plage_m:
+          - 4
+          - 7
+          - 10
+          - 13
+          - 15
+          regle_base: hauteur à l'égout définie SECTEUR PAR SECTEUR au document graphique (table de 5 valeurs) —
+            non résoluble depuis le seul code de zone
+          article: U 4
+          page_pdf: 9
+          citation: 'La hauteur maximale autorisée des constructions est, selon les secteurs repérés sur le document
+            graphique, de : 15 mètres (R+4+combles), 13 mètres (R+3+combles), 10 mètres (R+2+combles), 7 mètres
+            (R+1+combles), 4 mètres (R+ combles). Il s''agit de hauteurs maximales à l''égout du toit ou au sommet
+            de l''acrotère.'
+          statut: propose
+          raison: 'PLU-CALIBRAGE-8 : hauteur portée par une TABLE GRAPHIQUE par secteur (5 valeurs 4–15 m à l''égout,
+            Art. U-4) — forme « tableau » non portée par le schéma, laissée propose (aucune valeur unique par zone).'
       emprise_sol:
         ces:
           pct: 80.0
@@ -413,21 +528,25 @@ zones:
           raison: attribution douteuse (secteur None)
       retraits:
         voie:
-          min_m: null
+          absent: true
           article: U 6
           page_pdf: 11
           citation: 2° Hors agglomération, les constructions doivent être implantées avec un recul minimum
             de 75 mètres par rapport à l'axe des routes nationales.
-          statut: propose
-          raison: valeur non numérique ('75 m axe RN hors agglomération')
+          statut: valide
+          raison: 'PLU-CALIBRAGE-8 : recul sur voie NON RÉGLEMENTÉ en zone urbaine (silence prouvé, Art. U-6) ;
+            la seule contrainte est le recul de 75 m des RN hors agglomération, exception géographique non
+            rattachée au code de zone.'
         limites_separatives:
-          min_m: null
+          forme: alignement
           article: U 7
           page_pdf: 11
           citation: 'Les bâtiments doivent être implantés : 1° Soit sur l''une ou sur les deux limites séparatives
             latérales, 2° Soit avec un recul d''un mètre au moins.'
-          statut: propose
-          raison: valeur non numérique ('sur limite(s) séparative(s) latérale(s) OU recul ≥ 1 m')
+          statut: valide
+          raison: 'PLU-CALIBRAGE-8 : implantation admise SUR la (les) limite(s) séparative(s) latérale(s) — recul
+            0 explicite, forme alignement — OU en retrait d''au moins 1 m ; fond de parcelle libre (Art. U-7). Le
+            recul minimal opposable est donc 0.'
       pleine_terre:
         pct:
           pct: 20.0
