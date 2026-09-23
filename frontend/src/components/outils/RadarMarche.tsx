@@ -2,58 +2,8 @@
 // HONNÊTETÉ STATISTIQUE : chaque mesure porte son n ; sous le seuil (n<5) → « échantillon insuffisant »,
 // AUCUN chiffre. Les comptes (actives, nouvelles…) sont des faits bruts. État de démarrage = digne :
 // on explique que le corpus se constitue, pas un tableau de tirets qui fait peur. Couleurs source unique.
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getRadarMarche, getRadarSignaux, type RadarEcart, type RadarMarcheLigne, type RadarMesure } from '../../lib/api'
-
-// RADAR-HTML (Lot 4) — « écart demandé/acté » d'une commune : médiane Radar (demandé) vs médiane DVF
-// (acté). C'est la marge de négociation du moment. Écart CONSTATÉ entre deux sources datées, aucun verdict.
-function EcartLigne({ label, e }: { label: string; e: RadarEcart }) {
-  // RETOURS-11 O15c (décision Vic) — n'affiche l'écart QUE si n ≥ 5 des DEUX côtés (annonces ET actes) :
-  // en deçà, ce n'est pas une mesure. Sinon « échantillon insuffisant » (jamais un chiffre fragile servi).
-  if (!e.calculable || (e.n_demande ?? 0) < 5 || (e.n_acte ?? 0) < 5) {
-    return <div className="flex items-center justify-between py-1 text-[11px] text-txt-dim"><span>{label}</span><span>— (échantillon insuffisant)</span></div>
-  }
-  const baisse = (e.ecart_pct ?? 0) > 0
-  return (
-    <div className="flex items-center justify-between py-1 text-[11.5px]">
-      <span className="text-txt-mut">{label}</span>
-      <span className="tabular-nums text-txt">
-        {e.demande_eur_m2!.toLocaleString('fr-FR')}<span className="text-[9px] text-txt-dim"> €/m² dem. · n{e.n_demande}</span>
-        {' → '}{e.acte_eur_m2!.toLocaleString('fr-FR')}<span className="text-[9px] text-txt-dim"> acté · n{e.n_acte}</span>
-        <span className={`ml-1.5 rounded px-1 py-0.5 text-[10px] ${baisse ? 'bg-amber/12 text-amber' : 'bg-mint/12 text-mint'}`}>{(e.ecart_pct! > 0 ? '+' : '')}{e.ecart_pct}%</span>
-      </span>
-    </div>
-  )
-}
-
-function SignauxCommune({ communes }: { communes: string[] }) {
-  const [commune, setCommune] = useState('')
-  const { data } = useQuery({ queryKey: ['radar-signaux', commune], queryFn: () => getRadarSignaux(commune), enabled: !!commune })
-  return (
-    <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
-      <div className="mb-1.5 flex items-center gap-2">
-        {/* RETOURS-11 O15c (décision Vic) — renommé : un écart affiché/acté n'est pas une « marge ». */}
-        <span className="font-mono text-[10px] uppercase tracking-wider text-txt-dim">Prix affichés vs prix actés</span>
-        <select value={commune} onChange={(e) => setCommune(e.target.value)}
-          className="ml-auto rounded border border-line-2 bg-surface-1 px-1.5 py-0.5 text-[11px] text-txt">
-          <option value="">choisir une commune…</option>
-          {communes.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-      </div>
-      {commune && data && (
-        <div className="flex flex-col divide-y divide-line-2">
-          {/* RADAR-DEPOT-2 D5 — chaque famille DIT son périmètre : un chiffre sans périmètre n'est pas
-              un fait. Le bâti recouvre maisons + appartements (copros embasées, comptées ici). */}
-          <EcartLigne label={`Terrain${data.ecart_demande_acte.perimetre_terrain ? ` (${data.ecart_demande_acte.perimetre_terrain})` : ''}`} e={data.ecart_demande_acte.terrain} />
-          <EcartLigne label={`Bâti${data.ecart_demande_acte.perimetre_bati ? ` (${data.ecart_demande_acte.perimetre_bati})` : ''}`} e={data.ecart_demande_acte.bati} />
-          <p className="pt-1.5 text-[10px] text-txt-dim">Prix affiché du Radar (Sourcé portail) contre médiane DVF actée. Écart constaté, jamais une estimation ni une prévision.</p>
-        </div>
-      )}
-      {!commune && <p className="text-[11px] text-txt-dim">Choisir une commune pour voir l’écart entre prix demandés (annonces) et prix actés (DVF).</p>}
-    </div>
-  )
-}
+import { getRadarMarche, type RadarMarcheLigne, type RadarMesure } from '../../lib/api'
 
 const fmt = (v: number) => v.toLocaleString('fr-FR')
 
@@ -65,16 +15,10 @@ function Mesure({ m, unit }: { m: RadarMesure; unit: string }) {
   return <span className="text-txt">{fmt(m.valeur!)}<span className="text-[9px] text-txt-dim">{unit} · n{m.n}</span></span>
 }
 
-// mini-heatmap : intensité d'activité par commune (opacité du vert de marque selon les annonces actives).
-function Chaleur({ n, max }: { n: number; max: number }) {
-  const op = max > 0 ? Math.min(1, 0.12 + 0.88 * (n / max)) : 0
-  return <span className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: n ? `rgba(74,222,128,${op})` : 'transparent', outline: n ? 'none' : '1px solid var(--line-2)' }} />
-}
-
-function Ligne({ l, max, fort = false }: { l: RadarMarcheLigne; max: number; fort?: boolean }) {
+function Ligne({ l, fort = false }: { l: RadarMarcheLigne; fort?: boolean }) {
   return (
     <tr className={`border-b border-line-2 ${fort ? 'font-medium text-txt-hi' : 'text-txt'}`}>
-      <td className="flex items-center gap-1.5 py-1 pr-2">{!fort && <Chaleur n={l.actives} max={max} />}{l.commune}</td>
+      <td className="py-1 pr-2">{l.commune}</td>
       <td className="text-right tabular-nums">{l.actives}</td>
       <td className="text-right tabular-nums text-txt-mut">{l.nouvelles_30j}</td>
       <td className="text-right tabular-nums text-txt-mut">{l.retirees_30j}</td>
@@ -102,7 +46,6 @@ export function RadarMarche() {
       </button>
     </div>
   )
-  const max = Math.max(1, ...data.communes.map((c) => c.actives))
   const jeune = data.corpus_total < 40
 
   return (
@@ -126,13 +69,11 @@ export function RadarMarche() {
             </tr>
           </thead>
           <tbody>
-            <Ligne l={data.ile} max={max} fort />
-            {data.communes.map((l) => <Ligne key={l.commune} l={l} max={max} />)}
+            <Ligne l={data.ile} fort />
+            {data.communes.map((l) => <Ligne key={l.commune} l={l} />)}
           </tbody>
         </table>
       </div>
-      <SignauxCommune communes={data.communes.map((c) => c.commune)} />
-      <p className="text-[10px] text-txt-dim">« — » = échantillon insuffisant (moins de {data.seuil_n} biens). Hors scoring. Données issues de la collecte manuelle.</p>
     </div>
   )
 }
