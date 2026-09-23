@@ -17,6 +17,29 @@ Trois verdicts : **vert** (la phrase est vraie), **cassé** (la commande sort en
 déploiement refuse, la ligne rouge apparaît au Résumé), **à décider** (rien de cassé — une
 question t'attend, sans urgence, jamais bloquante).
 
+## Note d'exploitation — le faisceau de CA de la sonde (CIRCUIT-P4, lot 0)
+
+*23/09/2026.* Sur le Mac de dev (Python de Homebrew), le contexte TLS par défaut d'`urllib`
+n'est **branché sur aucune autorité de certification** : les 84 sondes de la sentinelle
+tombaient toutes en `CERTIFICATE_VERIFY_FAILED` et la page Données **mentait en local** —
+« producteur injoignable » partout, alors que les producteurs répondent. Ce n'est pas un état
+des sources, c'est l'environnement TLS.
+
+Le geste : `sentinelle._http` fournit désormais un **faisceau de CA explicite** (un seul point
+de sortie réseau). L'ordre de préférence :
+
+1. `SSL_CERT_FILE` s'il est posé dans l'environnement (ou `.env`) — on l'honore tel quel ;
+2. sinon le bundle **`certifi`** (toujours packagé dans le venv) ;
+3. sinon (certifi absent) le trousseau système, avec un `WARNING` au log — jamais muet.
+
+En prod Linux le contexte par défaut marche déjà ; le faisceau ne fait que le rendre
+**déterministe**. Aucune donnée n'est téléchargée ni injectée : la sentinelle prévient, Vic
+décide (doctrine SENTINELLE-1).
+
+Preuve locale (réseau seul, sans base — pour ne pas toucher le run résiduel en cours) :
+échantillon de 8 URLs `https` du `SEED` appelées via `sentinelle._http` → **8/8 `HTTP 200`,
+0 `CERTIFICATE_VERIFY_FAILED`** (avant le geste : 8/8 en échec SSL).
+
 ## Lot 1 — les tables
 
 | | La phrase | Ce qui le garantit | Où ça se lit |
