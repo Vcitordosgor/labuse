@@ -19,7 +19,7 @@ import { carteEtat, etatColor, type PermisEtat, type PermisEtatCarte } from '../
 import { ChevronSection } from '../panel/ChevronSection'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
-import { EtudierBien } from './EtudierBien'
+import { CalculetteFonciere } from './CalculetteFonciere'
 import { CompareModule } from '../compare/ComparePanel'
 import { M22 } from './M22Programme'
 // O10Bascules (Quoi de neuf) retiré du produit le 21/08/2026 (DORMANT) — plus importé ici ; le
@@ -1802,16 +1802,18 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   'blocs-fonciers': Blocs,
   // ÉTUDE DE ZONE Z4 — l'outil de chalandise (isochrones IGN + INSEE/SIRENE/BPE).
   'etude-zone': EtudeZone,
-  // FUSION « Étudier un bien » (Vic 21/08/2026) : les DEUX clés résolvent le MÊME composant fusionné
-  // — 'scoreur-adresse' (créneau phare O2, carte au menu) ET 'calculette-fonciere' (M23 aliasée, hidden :
-  // ouverte par la porte fiche/copilote via calcPrefill, jamais un 404). Anciens composants
-  // ScoreurAdresse + CalculetteFonciere supprimés (logique absorbée ; endpoint /scoreur-adresse vivant).
-  'scoreur-adresse': EtudierBien,
+  // ETUDIER-BIEN-2 (Lot C) — l'outil « Étudier un bien » (clé 'scoreur-adresse', EtudierBien) est
+  // SUPPRIMÉ : ses 3 faits de marché uniques vivent dans la §Marché de la fiche (Lot A), l'entrée par
+  // adresse dans la barre de recherche → fiche. Ne reste que la CALCULETTE FONCIÈRE (M23), restaurée
+  // en hôte minimal du <Calculette> partagé (CalculetteFonciere) — clé résolvante, ouverte par la fiche
+  // §11 / Constructibilité / RadarView / copilote via calcPrefill (jamais un 404). Le composant
+  // EtudierBien et le binding front scoreurAdresse sont retirés ; l'endpoint /scoreur-adresse (dormant,
+  // partage `_geocode`) reste au dépôt.
   // Retiré du produit le 21/08/2026 (DORMANT) : 'o7-carnet' (Suivi de secteur) — le vrai suivi = la
   // Veille. Composant O7Carnet conservé au dépôt ; endpoints /carnet-secteur vivants.
   // Retiré du produit le 21/08/2026 (DORMANT) : 'o10-bascules' (Quoi de neuf) — plus monté. Composant
   // O10Bascules conservé au dépôt (exporté) ; son endpoint /events reste vivant (cloche de notifications).
-  'calculette-fonciere': EtudierBien,
+  'calculette-fonciere': CalculetteFonciere,
   // K3 (rattrapage KelFoncier) — calculette « Taxe d'aménagement ». Marche à vide ; s'ouvre aussi
   // depuis une parcelle sélectionnée (getTaxePrefill : commune + zone en référence, surface saisie).
   'taxe-amenagement': TaxeAmenagement,

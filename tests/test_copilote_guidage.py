@@ -34,7 +34,7 @@ from labuse.copilote_v2.answering import (
     ("densifier", "renouvellement"),
     ("construire plus", "renouvellement"),
     ("si cette zone passait constructible", "plu"),   # COPILOTE-2 lot 2 : simulplu fondu dans le hub plu (lien mort réparé)
-    ("scorer une adresse", "scoreur-adresse"),
+    ("scorer une adresse", "calculette-fonciere"),   # ETUDIER-BIEN-2 Lot C : « Étudier un bien » supprimé
     # M137-N : « fantome » et « bailleur » retirés du produit → plus de concept-route (cf. ci-dessous).
     # 21/08/2026 : « quoi de neuf » (o10-bascules) et « suivi de secteur » (o7-carnet) retirés (cf. ci-dessous).
 ])

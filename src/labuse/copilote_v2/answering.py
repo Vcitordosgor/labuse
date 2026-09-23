@@ -44,7 +44,7 @@ _PORTE_LABEL = {
     "communes": "Communes", "permis": "Permis", "promesses": "Permis (dormants)", "plu": "PLU",
     "risques": "Pièges et risques", "programme": "Faisabilité", "comparer": "le Comparateur",
     "assemblage": "l'Assemblage", "taxe-amenagement": "Taxe d'aménagement", "temps": "Remonter le temps",
-    "calculette-fonciere": "la Calculette foncière", "scoreur-adresse": "Étudier un bien",
+    "calculette-fonciere": "la Calculette foncière",
     "courriers": "Courrier au propriétaire", "etude-zone": "Étude de zone", "renouvellement": "Densifier l'existant",
 }
 
@@ -1320,18 +1320,20 @@ def _mission_recherche(db: Session, message: str, params: dict) -> dict:
 
 def _mission_verification(db: Session, message: str, params: dict, contexte: dict | None,
                           confirme: bool) -> dict:
-    """COPILOTE-2 lot 4 — VERIFICATION (évaluer une parcelle face à un prix) devient une PASSERELLE vers
-    « Étudier un bien » (le run/avis lourd est retiré). Sans IDU, on demande l'IDU (précision, pas un run)."""
+    """COPILOTE-2 lot 4 — VERIFICATION (évaluer une parcelle face à un prix) devient une PASSERELLE.
+    ETUDIER-BIEN-2 (Lot C) — « Étudier un bien » est supprimé ; l'évaluation face à un prix = la
+    CALCULETTE FONCIÈRE (charge supportable, bilan à rebours), le marché du secteur = la §Marché de la
+    fiche. On ouvre donc la Calculette foncière. Sans IDU, on demande l'IDU (précision, pas un run)."""
     idu = (params.get("idu") or (contexte or {}).get("idu")
            or _resoudre_idu_court(db, message, params.get("commune")))
     if not idu:
         return _reply("Quelle parcelle dois-je évaluer ? Donnez-moi l'IDU (14 caractères) — j'ouvre "
-                      "Étudier un bien pour la comparer au marché.", "OUTIL", clarification=True)
+                      "la Calculette foncière pour la comparer au prix.", "OUTIL", clarification=True)
     prix = params.get("prix_eur") or params.get("budget_eur")
-    txt = (f"Je vous ouvre Étudier un bien avec la parcelle {idu}"
-           + (f" pour la situer face au prix de {int(prix)} €" if prix else " pour l'évaluer face au marché")
-           + " — l'outil sert l'avis, je ne le calcule pas ici.")
-    return _reply(txt, "OUTIL", porte="scoreur-adresse", prefill="calcPrefill", prefill_idu=idu)
+    txt = (f"Je vous ouvre la Calculette foncière avec la parcelle {idu}"
+           + (f" pour la situer face au prix de {int(prix)} €" if prix else " pour évaluer sa charge foncière supportable")
+           + " — le marché du secteur est dans la §Marché de sa fiche.")
+    return _reply(txt, "OUTIL", porte="calculette-fonciere", prefill="calcPrefill", prefill_idu=idu)
 
 
 def _answer_with_route(db: Session, message: str, route, contexte: dict | None = None,
@@ -1563,8 +1565,10 @@ _CONCEPT_MAP = [
     # 21/08/2026 — outil « Suivi de secteur » (o7-carnet) retiré (DORMANT) : concept-route SUPPRIMÉE
     # (router vers un module absent = lien mort, piège Foncier fantôme). Le VRAI suivi = la Veille ;
     # ces demandes retombent sur le traitement normal du Copilote (mission VEILLE / surveillance).
+    # ETUDIER-BIEN-2 (Lot C) — « Étudier un bien » (scoreur-adresse) supprimé : ces demandes ouvrent la
+    # Calculette foncière (la charge supportable face au prix) ; le marché du secteur est dans la fiche.
     (("scorer une adresse", "scorer un bien", "seconde opinion avant d'offrir", "avis sur cette adresse",
-      "noter une adresse"), ("scoreur-adresse", "Scorer une adresse")),
+      "noter une adresse"), ("calculette-fonciere", "Calculette foncière")),
 ]
 
 # M112 P2.3 — les 4 DOCUMENTS du registre (porte vers l'export, IDU résolu). « banquier » avant

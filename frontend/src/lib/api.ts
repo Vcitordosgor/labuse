@@ -464,41 +464,10 @@ export const getModeB = (idu: string, travauxM2?: number) =>
   j<import('./types').ModeB>(`/parcels/${idu}/mode-b${travauxM2 != null ? `?travaux_m2=${travauxM2}` : ''}`)
 
 // ── R5 (reliquats front) — UI des outils O2/O3 ────────────────────────────────────────────
-// O2 · scoreur d'adresse inversé : adresse → parcelle déjà scorée → verdict compact ;
-// prix demandé SAISI À LA MAIN (jamais scrapé), confronté à la charge foncière (Score É V2).
-export interface ScoreurResult {
-  ok: boolean
-  adresse: string
-  message?: string
-  idu?: string
-  commune?: string
-  surface_m2?: number
-  verdict?: { tier: string | null; libelle: string; rang: number | null; percentile: number | null }
-  // M128-6-§1 : plus de bloc `score_e` (marge barème sectoriel divergente, retirée aux tiers) ; le
-  // bloc `prix` est un CONSTAT chiffré nu (aucun verdict), charge issue de la méthode documents.
-  prix?: { prix_saisi_eur: number; prix_saisi_m2_terrain?: number
-           prix_probable_foncier_eur?: number; ecart_vs_prix_probable_pct?: number | null
-           charge_fonciere_supportable_eur?: number; marge_a_ce_prix_eur?: number
-           methode?: string; message?: string; avertissement: string }
-  // FUSION « Étudier un bien » — le CONSTAT servi (with_constat=true) : charge CALIBRÉE (méthode
-  // documents, « aux hypothèses calibrées ») + faits sourcés + prix terrain nu de zone (réf. unique).
-  constat?: {
-    charge_calibree: { central: number; par_m2_terrain: number; ca_central: number | null } | null
-    sourced: { shab_vendable_m2: number | null; sdp_plancher_m2: number | null; coef_rendement: number
-               terrain_m2: number | null; prix_sortie_median: number | null; prix_neuf_label: string | null } | null
-    terrain_zone: { eur_m2: number; fiabilite: string; n: number } | null
-    motif: string | null
-    // OUTILS-FIX-4 B3 — l'historique DVF de LA parcelle (ventes actées portant son idu), 6 plus récentes.
-    dernieres_ventes?: { date: string | null; prix: number | null; surface_bati_m2: number | null
-                         surface_terrain_m2: number | null; type: string | null; nature: string | null }[]
-  }
-}
-export const scoreurAdresse = (adresse: string, prixDemandeEur: number | null, idu?: string | null,
-                               withConstat = false) =>
-  j<ScoreurResult>('/scoreur-adresse', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ q: adresse, prix_demande_eur: prixDemandeEur, idu: idu ?? null, with_constat: withConstat }),
-  })
+// ETUDIER-BIEN-2 (Lot C) — `ScoreurResult` + `scoreurAdresse` (binding front de l'outil « Étudier un
+// bien », O2) RETIRÉS : l'outil est supprimé, ses faits de marché sont dans la §Marché de la fiche et
+// l'entrée par adresse dans la barre de recherche → fiche. L'endpoint POST /scoreur-adresse reste au
+// dépôt (dormant, partage `_geocode`) — plus aucun appelant front.
 
 // K3 (rattrapage KelFoncier) · calculette « Taxe d'aménagement ». Backend maître : aucun montant/taux
 // écrit en dur côté front — la config (valeurs forfaitaires, abattement, forfaits, taux plafonds/défauts)

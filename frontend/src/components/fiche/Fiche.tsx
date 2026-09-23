@@ -26,7 +26,7 @@ import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, Group
 // chacune un RefDrawer inline qui COMPOSE les blocs feuilles (extraits aux étapes 3a-3c). Les
 // sections « fourre-tout » ConstructibiliteSection / LeBienSection sont dissoutes ; les quatre
 // sections encore mono-nature (Risques, Réseaux, Marché, Quartier) restent des composants réutilisés.
-// Fiche ré-exporte Calculette + FaisabiliteTab (consommés par EtudierBien / M22Programme / le test).
+// Fiche ré-exporte Calculette + FaisabiliteTab (consommés par CalculetteFonciere / M22Programme).
 import { TransformationBlock, FaisabiliteTab, BilanTab, TaxeAmenagementBlock, FiscalLeviersBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
 import { BatiBlock, TerrainDuBienBlock, FiliationBlock } from './leBien'
 import { RisquesSection } from './risques'

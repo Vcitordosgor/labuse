@@ -70,14 +70,15 @@ export const MODULES: ModuleDef[] = [
   { key: 'barometre', num: 'M18', group: 'marche', hidden: true,
     label: 'Communes', desc: 'L’évolution du marché et le Rapport PDF sont dans l’onglet « Évolution » de Communes' },
 
-  // 4. Étudier un bien — FUSION scoreur d'adresse (O2) + calculette foncière (M23) + Mon secteur (S1).
-  // Les clés M23/S1 sont ALIASÉES (hidden : résolvent porte/deep-link/copilote, sans carte en double).
-  { key: 'scoreur-adresse', num: 'O2', group: 'instruire', phare: true,
-    label: 'Étudier un bien', desc: 'Le secteur, puis l’étude complète du bien.' },
+  // 4. Calculette foncière (M23) — ETUDIER-BIEN-2 : l'outil « Étudier un bien » (scoreur-adresse O2)
+  // est SUPPRIMÉ ; son marché de secteur vit désormais dans la §Marché de la FICHE, l'entrée par
+  // adresse dans la barre de recherche → fiche. Restent (hidden, résolvants) la Calculette foncière
+  // (M23, ouverte par la fiche §11 / Constructibilité / RadarView / copilote via calcPrefill) et
+  // « Mon secteur » (S1, deep-link/copilote historiques).
   { key: 'calculette-fonciere', num: 'M23', group: 'instruire', hidden: true,
-    label: 'Étudier un bien', desc: 'Le secteur, puis l’étude complète du bien.' },
+    label: 'Calculette foncière', desc: 'La charge foncière supportable d’une parcelle (bilan à rebours).' },
   { key: 'mon-secteur', num: 'S1', group: 'marche', hidden: true,
-    label: 'Mon secteur', desc: 'Les prix du secteur sont désormais dans « Étudier un bien » (dès l’adresse).' },
+    label: 'Mon secteur', desc: 'Les prix du secteur sont désormais dans la fiche parcelle (§ Marché).' },
 
   // 5. Scan patrimoine — RETOURS-4 S7 : absorbe « Veille promoteurs » (S3 aliasé, onglet « Ce qu'ils construisent »).
   { key: 'patrimoine', num: 'M02', group: 'agir', phare: true,
