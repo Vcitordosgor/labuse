@@ -192,7 +192,7 @@ export function Communes() {
         {/* RETOURS-14 S1 — DEUX tableaux, DEUX noms (les sources ne se confondent plus) :
             l'évolution = ventes ACTÉES (DVF) + permis, par trimestre ; le Radar = les annonces
             collectées, nommé avec son compteur (la minceur s'explique par la source). */}
-        <Porte dataAttr="evolution" titre="Évolution du marché — ventes actées et permis"
+        <Porte dataAttr="evolution" titre="Évolution du marché : ventes et permis"
           sous="DVF ancien bâti, DVF terrain nu et permis Sitadel — une ligne par trimestre sur 8 trimestres."
           onClick={() => setEvolutionTableOpen(true)} />
         <Porte dataAttr="radar-marche" titre="Marché des annonces (Radar)"
@@ -322,8 +322,8 @@ export function EvolutionTablePanel() {
       <div className="floating flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <div>
-            {/* RETOURS-14 S1 — le nom dit la SOURCE : ventes actées (DVF) + permis (Sitadel). */}
-            <h2 className="text-sm font-medium text-txt-hi">Évolution du marché — ventes actées et permis</h2>
+            {/* COMMUNE-124 Lot B1 — titre resserré ; la source (DVF + Sitadel) est dite dans le sous-titre. */}
+            <h2 className="text-sm font-medium text-txt-hi">Évolution du marché : ventes et permis</h2>
             <p className="text-[10.5px] text-txt-dim">DVF ancien bâti · DVF terrain nu · permis Sitadel — une ligne par trimestre sur 8 trimestres. Un trimestre sans vente reste « — ».</p>
           </div>
           <button onClick={() => setEvolutionTableOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
