@@ -1999,6 +1999,7 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
         "SELECT d.id, d.name, d.provider, d.category, d.source_millesime, d.last_sync_at,"
         "       d.mode_remplissage, d.cadence_attendue_jours, d.cadence_statut,"
         "       v.methode, v.dernier_statut, v.dernier_passage_at, v.dernier_vu, v.actif,"
+        "       v.echecs_consecutifs, v.dernier_message,"
         "       v.cadence_attendue_jours AS rappel_jours"
         f" FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id"
         f" WHERE {where} ORDER BY COALESCE(d.category,'zzz'), d.name"), params).mappings().all()
@@ -2046,6 +2047,8 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
             "veille": ({"methode": r["methode"], "statut": r["dernier_statut"],
                         "passage": r["dernier_passage_at"].isoformat() if r["dernier_passage_at"] else None,
                         "vu": r["dernier_vu"], "actif": r["actif"],
+                        "echecs_consecutifs": r["echecs_consecutifs"],
+                        "dernier_message": r["dernier_message"],
                         "rappel_jours": r["rappel_jours"]} if r["methode"] else None),
             "filtre": _filtre_du(r["name"]),
         })
