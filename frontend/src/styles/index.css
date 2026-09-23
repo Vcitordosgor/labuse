@@ -180,15 +180,16 @@
     .hover-fill-amber:hover { background:var(--fill-amber); border-color:#D99A2E; color:var(--ink); }
     .hover-fill-amber:hover * { color:var(--ink) !important; }
   }
-  /* RETOURS-19 — CHEVRON (ChevronSection) sur une barre survolée à FOND PLEIN : la boîte passe SANS fond
-     ni bordure sur l'aplat (vert / mauve / ambre) — seul le glyphe reste, déjà inversé en encre sombre par
-     les règles `* { color: … }` ci-dessus, exactement comme le texte de la barre. Avant, l'utilitaire
-     Tailwind `group-hover:bg-surface-3` peignait un carré sombre par-dessus le vert. Le `!important` bat cet
-     utilitaire. Hors barre à fond plein, le survol du chevron reste inchangé (fond `surface-3`). */
+  /* RETOURS-19 → PERMIS-CHECK-1 P1 — CHEVRON (ChevronSection) sur une barre survolée à FOND PLEIN : la boîte
+     passe SANS FOND sur l'aplat (vert / mauve / ambre) — le `group-hover:bg-surface-3` de Tailwind peindrait
+     sinon un carré sombre par-dessus le vert. MAIS elle GARDE un CONTOUR en encre sombre (au lieu de
+     transparent) : sur l'aplat vert la bordure `--line-2` foncée disparaissait, le chevron n'avait plus de
+     boîte visible (constat Vic : contour visible seulement sur fond noir). Même geste que `.itile` (Y2) :
+     contour ré-encré en sombre, contrasté sur l'aplat. Le glyphe reste inversé par les règles `* { color }`. */
   @media (hover:hover) and (pointer:fine) {
     .hover-fill:hover .chev-boite,
-    .hover-fill-ia:hover .chev-boite,
-    .hover-fill-amber:hover .chev-boite { background:transparent !important; border-color:transparent !important; }
+    .hover-fill-amber:hover .chev-boite { background:transparent !important; border-color:rgba(7,16,9,.34) !important; }
+    .hover-fill-ia:hover .chev-boite { background:transparent !important; border-color:rgba(20,14,34,.38) !important; }
   }
 
   /* RETOURS-11 T2 → RETOURS-19 Y2 — tuile d'icône RÉUTILISABLE (composant IconTile, une seule copie). Au
