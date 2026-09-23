@@ -63,24 +63,34 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean) {
       try { if (m.getSource(SRC)) m.removeSource(SRC) } catch { /* noop */ }
     }
     clear()
-    if (!res || res.status !== 'ok' || !res.zoneImplantationGeoJSON) return
-    const features = [
-      feat(res.retraitsGeoJSON ?? null, 'retrait'),
-      feat(res.exclusionsGeoJSON ?? null, 'excl'),
-      feat(res.zoneImplantationGeoJSON ?? null, 'zone'),
-      feat(res.contourGeoJSON ?? null, 'contour'),
-    ].filter(Boolean)
+    if (!res) return
+    const ok = res.status === 'ok' && !!res.zoneImplantationGeoJSON
+    // GABARIT-6 lot B : même quand le calcul est incomplet, on centre sur la parcelle et on trace son
+    // contour cadastral (jamais d'écran vide). Les couches réglementaires (zone/retrait/3D) restent
+    // réservées au calcul complet.
+    const contourOnly = !ok && res.status === 'incomplete' && !!res.contourGeoJSON
+    if (!ok && !contourOnly) return
+    const features = (ok
+      ? [
+          feat(res.retraitsGeoJSON ?? null, 'retrait'),
+          feat(res.exclusionsGeoJSON ?? null, 'excl'),
+          feat(res.zoneImplantationGeoJSON ?? null, 'zone'),
+          feat(res.contourGeoJSON ?? null, 'contour'),
+        ]
+      : [feat(res.contourGeoJSON ?? null, 'contour')]).filter(Boolean)
     m.addSource(SRC, { type: 'geojson', data: { type: 'FeatureCollection', features } })
-    m.addLayer({ id: 'gabarit-retrait', type: 'fill', source: SRC, filter: ['==', 'kind', 'retrait'],
-      paint: { 'fill-color': C_RETRAIT, 'fill-opacity': 0.3 } })
-    m.addLayer({ id: 'gabarit-excl', type: 'fill', source: SRC, filter: ['==', 'kind', 'excl'],
-      paint: { 'fill-color': C_EXCL, 'fill-opacity': 0.45 } })
-    m.addLayer({ id: 'gabarit-zone', type: 'fill', source: SRC, filter: ['==', 'kind', 'zone'],
-      paint: { 'fill-color': C_ZONE, 'fill-opacity': 0.5 } })
+    if (ok) {
+      m.addLayer({ id: 'gabarit-retrait', type: 'fill', source: SRC, filter: ['==', 'kind', 'retrait'],
+        paint: { 'fill-color': C_RETRAIT, 'fill-opacity': 0.3 } })
+      m.addLayer({ id: 'gabarit-excl', type: 'fill', source: SRC, filter: ['==', 'kind', 'excl'],
+        paint: { 'fill-color': C_EXCL, 'fill-opacity': 0.45 } })
+      m.addLayer({ id: 'gabarit-zone', type: 'fill', source: SRC, filter: ['==', 'kind', 'zone'],
+        paint: { 'fill-color': C_ZONE, 'fill-opacity': 0.5 } })
+    }
     m.addLayer({ id: 'gabarit-contour', type: 'line', source: SRC, filter: ['==', 'kind', 'contour'],
       paint: { 'line-color': C_CONTOUR, 'line-width': 1.5, 'line-dasharray': [2, 1] } })
     // 3D : extrusion de la SEULE zone calculée, à la hauteur SOURCÉE (aucun fallback) ; jamais un bâtiment réel.
-    if (terrain3d && res.hauteurReglementaireM != null) {
+    if (ok && terrain3d && res.hauteurReglementaireM != null) {
       m.addLayer({ id: 'gabarit-zone-3d', type: 'fill-extrusion', source: SRC,
         filter: ['==', 'kind', 'zone'],
         paint: { 'fill-extrusion-color': C_ZONE, 'fill-extrusion-opacity': 0.6,
@@ -143,6 +153,10 @@ export function Gabarit() {
     () => (res?.appliedRules ?? []).filter((r) => r.category === 'setback'), [res])
   const appliedOther = useMemo(
     () => (res?.appliedRules ?? []).filter((r) => r.category !== 'setback'), [res])
+  // GABARIT-6 lot B : référence + commune de la parcelle (servies par raccordement.parcelle), affichées
+  // même quand le calcul est incomplet, au-dessus du motif.
+  const parcelle = (res?.raccordement?.parcelle ?? null) as
+    { idu?: string; commune?: string } | null
 
   const reset = () => setIdu(null)
 
@@ -167,15 +181,25 @@ export function Gabarit() {
       {q.isLoading && <p className="text-[11px] text-txt-mut">Calcul…</p>}
       {q.isError && <p className="text-[11px] text-st-ecartee">Parcelle inconnue ou service indisponible.</p>}
 
-      {/* CALCUL INCOMPLET — message EXACT, aucune zone / métrique / 3D (CDC §3). */}
+      {/* CALCUL INCOMPLET — la parcelle reste VISIBLE (contour tracé, réf + commune au-dessus du motif).
+          Aucune zone / métrique / 3D réglementaire (CDC §3). */}
       {res && res.status === 'incomplete' && (
         <div data-gabarit-incomplet className="flex flex-col gap-1.5 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2.5">
+          {(parcelle?.idu || parcelle?.commune) && (
+            <p data-gabarit-parcelle-ref className="text-[11px] font-medium text-txt">
+              Parcelle {parcelle?.idu ?? '—'}{parcelle?.commune ? ` · ${parcelle.commune}` : ''}
+            </p>
+          )}
           <p className="text-[12px] font-medium text-st-creuser">{res.message}</p>
           {res.validationErrors?.length > 0 && (
             <ul className="ml-3 list-disc text-[10.5px] leading-snug text-txt-mut">
               {res.validationErrors.map((e, i) => <li key={i}>{e}</li>)}
             </ul>
           )}
+          <p className="text-[10px] leading-snug text-txt-dim">
+            Contour de la parcelle tracé sur la carte. Le calcul du gabarit reprendra dès que la donnée
+            manquante sera disponible.
+          </p>
         </div>
       )}
 
