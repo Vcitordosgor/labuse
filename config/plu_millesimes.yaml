@@ -27,7 +27,7 @@ communes:
             note: "PLU 2019 opposable, SERVI et présent au GPU (idurba 97409_20190228, 142 zones ingérées — vérifié M40) : il fait foi à ce jour. Révision en cours, NON approuvée → non opposable, non servie. [M40 : la mention M32 « aucun document GPU » était fausse sur pièces.]"}
   "97410": {commune: "Saint-Benoît", idurba: "97410_PLU_20200206", date_mairie: "2020-02-06", statut: a_jour,
             note: "PLU 2020 opposable servi et présent au GPU (idurba 97410_PLU_20200206). D'éventuelles modifications approuvées postérieurement (n°2/n°3 évoquées) ne seraient PAS intégrées au GPU — à confirmer en mairie (hors open-data). [M40 : modifs non vérifiables sur pièces — incertitude consignée, non fabriquée.]"}
-  "97411": {commune: "Saint-Denis", idurba: "97411_PLU_20260423", date_mairie: "2026-04-23", statut: a_jour}
+  "97411": {commune: "Saint-Denis", idurba: "97411_PLU_20260805", date_mairie: "2026-08-05", statut: a_jour}
   "97412": {commune: "Saint-Joseph", idurba: "97412_PLU_20251210", date_mairie: "2025-12-10", statut: a_jour}
   "97413": {commune: "Saint-Leu", idurba: "97413_20070226", date_mairie: "2007-02-26", statut: opposabilite_en_attente,
             note: "PLU 2007 opposable, SERVI et présent au GPU (idurba 97413_20070226, 368 zones ingérées — vérifié M40) : il fait foi à ce jour. Révision en cours (approbation visée S2 2026), NON approuvée → non opposable, non servie. [M40 : la mention M32 « aucun document GPU » était fausse sur pièces.]"}
