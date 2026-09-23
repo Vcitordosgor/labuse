@@ -2254,6 +2254,20 @@ def admin_circuit(request: Request) -> dict:
                               regles_ecart=sorted(_verdicts_rob["ecart"]),
                               regles_choix=sorted(_verdicts_rob["choix"]),
                               verrous=_verrous, sources_sans_controle=_sans_controle)
+    # ── CIRCUIT-P4 (lot 2) — l'onglet « À FAIRE » : la liste ordonnée des cinq gestes possibles.
+    #    Le compte par état (lot 1) alimente la ligne « Rien d'autre » ; le contexte (dernière sonde)
+    #    et la dépendance injection→recalcul (lot 4, `_calculer_af`) enrichissent la ligne Calculer. ──
+    _etats_compte = _etats.compter_etats(reservoirs)
+    _passages = [r["veille"]["passage"] for r in reservoirs
+                 if r.get("veille") and r["veille"].get("passage")]
+    _derniere_sonde = max(_passages) if _passages else None
+    _contexte_af = (f"dernière sonde {_derniere_sonde[:16].replace('T', ' ')}"
+                    if _derniere_sonde else "aucune sonde passée encore")
+    _calculer_af = None   # CIRCUIT-P4 lot 4 : dépendance injection→recalcul dérivée du registre
+    a_faire = _resume.composer_a_faire(
+        reservoirs, residuel=residuel, candidat=_candidat, run_servi=runs.current(),
+        verrous=_verrous, etats_compte=_etats_compte, contexte=_contexte_af,
+        calculer=_calculer_af)
     # ── CIRCUIT-6 — les sept garanties, jouées côté serveur (le front les REND, lot 8) +
     # le catalogue calculé (G1 : 116 en base / 95 en vitrine, jamais gravé) + les doublons.
     from dataclasses import asdict as _asdict
@@ -2302,6 +2316,8 @@ def admin_circuit(request: Request) -> dict:
         "compteurs_coherence": compteurs_coherence, "agents": agents_info,
         "reservoirs": reservoirs, "robinets": robinets, "chiffres": chiffres,
         "familles": familles, "categories": categories, "resume": resume,
+        "a_faire": a_faire,   # CIRCUIT-P4 lot 2 — l'onglet « À faire » (liste ordonnée des gestes)
+        "etats_sources": _etats_compte,   # lot 1 — compte par état (pastilles de l'onglet Sources)
         "aretes": aretes, "fuites": fuites, "eau_ancienne": eau,
         "dernier_controle": dict(controle) if controle else None,
         "journal": journal, "runs": runs_list, "residuel": residuel,
