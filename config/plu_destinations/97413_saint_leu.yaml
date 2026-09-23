@@ -122,6 +122,49 @@ zones:
       de loisirs (UA1-9), affouillements/exhaussements (UA2 2.1), travaux sur bâtiments protégés L.123-1 7° (UA2
       2.2-4). Anomalie : la numérotation de UA1 saute de 11 à 14, et le 14 répète le 4 (agricole).'
   UAt:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: UA 10.2
+          page_pdf: 24
+          citation: 'La hauteur maximale des constructions ne doit pas dépasser : - 9,00m à l''égout du toit - 12,00m
+            au faîtage ou 13,00m pour les constructions comportant un rez-de-chaussée commercial et pour le secteur
+            UAt - R+2+combles'
+          statut: valide
+        egout:
+          m: 9.0
+          article: UA 10.2
+          page_pdf: 24
+          citation: 'La hauteur maximale des constructions ne doit pas dépasser : - 9,00m à l''égout du toit - 12,00m
+            au faîtage ou 13,00m pour les constructions comportant un rez-de-chaussée commercial et pour le secteur
+            UAt - R+2+combles'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 70.0
+          article: UA 9
+          page_pdf: 23
+          citation: L'emprise au sol maximale autorisée de l'ensemble des constructions ne doit pas excéder 80% de
+            l'unité foncière (70% en secteur UAt).
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UA 6
+          page_pdf: 22
+          citation: 'Les constructions peuvent s''implanter : - sur la rue du Gal Lambert, soit à l''alignement, soit
+            avec un recul minimum de 2,00m par rapport à l''alignement. - sur les rues perpendiculaires à la rue du
+            Gal Lambert, avec un recul minimum de 4,00m - sur les autres rues, soit à l''alignement, soit avec un
+            recul minimum de 4,00m par rapport à l''alignement.'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UA 7
+          page_pdf: 22
+          citation: Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la
+            marge d'isolement minimale doit être de 3 mètres.
+          statut: valide
     silence: autorise
     silence_src: 'Secteur régi par le même chapitre : art. UA1 (liste limitative des interdictions, dont un alinéa
       10 propre au secteur UAt, p. 18) et art. UA2 (conditions, dont un alinéa 3 propre au secteur UAt, p. 19) ;
@@ -193,6 +236,47 @@ zones:
       : UA1-10 renvoie à « l''article UA2 II », subdivision qui n''existe pas (UA2 est structuré en 2.1/2.2). Autres
       occupations non rattachables : cf. note UA.'
   UAa:
+    regles:
+      hauteur:
+        faitage:
+          m: 15.0
+          article: UA 10.3
+          page_pdf: 24
+          citation: 'Dans le secteur UAa, la hauteur maximale est limitée à : - 12,00m à l''égout du toit, ou 13,00m
+            pour les constructions comportant un rez-de-chaussée commercial - 15,00m au faîtage - R+3+combles'
+          statut: valide
+        egout:
+          m: 12.0
+          article: UA 10.3
+          page_pdf: 24
+          citation: 'Dans le secteur UAa, la hauteur maximale est limitée à : - 12,00m à l''égout du toit, ou 13,00m
+            pour les constructions comportant un rez-de-chaussée commercial - 15,00m au faîtage - R+3+combles'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: UA 9
+          page_pdf: 23
+          citation: L'emprise au sol maximale autorisée de l'ensemble des constructions ne doit pas excéder 80% de
+            l'unité foncière (70% en secteur UAt).
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: UA 6
+          page_pdf: 22
+          citation: 'Les constructions peuvent s''implanter : - sur la rue du Gal Lambert, soit à l''alignement, soit
+            avec un recul minimum de 2,00m par rapport à l''alignement. - sur les rues perpendiculaires à la rue du
+            Gal Lambert, avec un recul minimum de 4,00m - sur les autres rues, soit à l''alignement, soit avec un
+            recul minimum de 4,00m par rapport à l''alignement.'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UA 7
+          page_pdf: 22
+          citation: Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la
+            marge d'isolement minimale doit être de 3 mètres.
+          statut: valide
     silence: autorise
     silence_src: 'Secteur régi par le même chapitre UA (le chapeau p. 18 ne lui donne que des hauteurs plus importantes,
       art. UA10-3 p. 24) : art. UA1 (liste limitative, p. 18) et UA2 (conditions, p. 19-20) s''appliquent ; ce qui
@@ -445,6 +529,47 @@ zones:
       aires naturelles (UC1-4), dépôts/décharges (UC1-5), carrières (UC1-6), affouillements (UC2 2.1), bâtiments
       protégés (UC2 2.2-3). Anomalie : la numérotation de UC2 2.2 saute de 3 à 5 (pas d''alinéa 4).'
   UCa:
+    regles:
+      hauteur:
+        faitage:
+          m: 9.0
+          article: UC 10.2
+          page_pdf: 44
+          citation: 'La hauteur maximale des constructions, mesurée verticalement par rapport au sol naturel avant
+            travaux, est limitée à : - 6,00m à l''égout du toit - 9,00m au faîtage - R+1+combles'
+          statut: valide
+        egout:
+          m: 6.0
+          article: UC 10.2
+          page_pdf: 44
+          citation: 'La hauteur maximale des constructions, mesurée verticalement par rapport au sol naturel avant
+            travaux, est limitée à : - 6,00m à l''égout du toit - 9,00m au faîtage - R+1+combles'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UC 9
+          page_pdf: 43
+          citation: L'emprise au sol de l'ensemble des bâtiments ne doit pas excéder 50% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UC 6.2
+          page_pdf: 41
+          citation: Les constructions doivent s'implanter avec un recul minimum de 3,00m par rapport à l'alignement,
+            sauf indication contraire portée au règlement graphique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UC 7
+          page_pdf: 42
+          citation: 'Les constructions peuvent être implantées sur une limite séparative (ou les deux limites, si
+            celles-ci sont distantes de moins de 18 mètres l''une de l''autre)… Si une construction est implantée
+            en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de
+            3,00m.'
+          statut: valide
     silence: autorise
     silence_src: 'Secteur régi par le même chapitre UC : art. UC1 (liste limitative, p. 38) et UC2 (conditions,
       p. 38-39) ; ce qui n''y figure pas n''est ni interdit ni conditionné.'
@@ -487,6 +612,47 @@ zones:
           dans l'opération »
     note: 'Occupations non rattachables : cf. note UC.'
   UCc:
+    regles:
+      hauteur:
+        faitage:
+          m: 6.0
+          article: UC 10.3
+          page_pdf: 44
+          citation: 'En secteur UCc, la hauteur maximale des constructions, mesurée verticalement par rapport au
+            sol naturel avant travaux, est limitée à : - 4,00m à l''égout du toit - 6,00m au faîtage - R+combles'
+          statut: valide
+        egout:
+          m: 4.0
+          article: UC 10.3
+          page_pdf: 44
+          citation: 'En secteur UCc, la hauteur maximale des constructions, mesurée verticalement par rapport au
+            sol naturel avant travaux, est limitée à : - 4,00m à l''égout du toit - 6,00m au faîtage - R+combles'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: UC 9
+          page_pdf: 43
+          citation: L'emprise au sol de l'ensemble des bâtiments ne doit pas excéder 50% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UC 6.2
+          page_pdf: 41
+          citation: Les constructions doivent s'implanter avec un recul minimum de 3,00m par rapport à l'alignement,
+            sauf indication contraire portée au règlement graphique.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UC 7
+          page_pdf: 42
+          citation: 'Les constructions peuvent être implantées sur une limite séparative (ou les deux limites, si
+            celles-ci sont distantes de moins de 18 mètres l''une de l''autre)… Si une construction est implantée
+            en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de
+            3,00m.'
+          statut: valide
     silence: autorise
     silence_src: 'Secteur régi par le même chapitre UC (le chapeau p. 38 ne lui donne que des hauteurs limitées
       « à rez-de-chaussée plus combles », règle portée par UC10-3 p. 44) : art. UC1 (liste limitative, p. 38) et
@@ -623,6 +789,46 @@ zones:
       (UD1-2), aires naturelles (UD1-4), dépôts/décharges (UD1-5), carrières (UD1-6), affouillements (UD2 2.1),
       bâtiments protégés (UD2 2.2-3).'
   UDp:
+    regles:
+      hauteur:
+        faitage:
+          m: 6.0
+          article: UD 10.2
+          page_pdf: 54
+          citation: 'La hauteur maximale des constructions, mesurée verticalement par rapport au sol naturel avant
+            travaux, est limitée à : - 4,00m à l''égout du toit - 6,00m au faîtage - R+combles'
+          statut: valide
+        egout:
+          m: 4.0
+          article: UD 10.2
+          page_pdf: 54
+          citation: 'La hauteur maximale des constructions, mesurée verticalement par rapport au sol naturel avant
+            travaux, est limitée à : - 4,00m à l''égout du toit - 6,00m au faîtage - R+combles'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: UD 9
+          page_pdf: 53
+          citation: L'emprise au sol de l'ensemble des bâtiments ne doit pas excéder 40% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          forme: alignement
+          article: UD 6.2
+          page_pdf: 52
+          citation: Dans le secteur UDp, les constructions peuvent s'implanter à l'alignement ou en retrait libre.
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UD 7
+          page_pdf: 52
+          citation: 'Les constructions peuvent être implantées sur une limite séparative (ou les deux limites, si
+            celles-ci sont distantes de moins de 18 mètres l''une de l''autre)… Si une construction est implantée
+            en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de
+            3,00m.'
+          statut: valide
     silence: autorise
     silence_src: 'Secteur régi par le même chapitre UD (chapeau p. 48 : habitat précaire et insalubre du littoral
       de Bois Blanc ; ses seules règles propres portent sur l''implantation, UD6-2 p. 52 et UD7-2 p. 53) : art.
@@ -660,6 +866,48 @@ zones:
     note: 'Aucune règle de destination propre au secteur UDp (implantation seulement). Occupations non rattachables
       : cf. note UD.'
   UDb:
+    regles:
+      hauteur:
+        faitage:
+          m: 6.0
+          article: UD 10.2
+          page_pdf: 54
+          citation: 'La hauteur maximale des constructions, mesurée verticalement par rapport au sol naturel avant
+            travaux, est limitée à : - 4,00m à l''égout du toit - 6,00m au faîtage - R+combles'
+          statut: valide
+        egout:
+          m: 4.0
+          article: UD 10.2
+          page_pdf: 54
+          citation: 'La hauteur maximale des constructions, mesurée verticalement par rapport au sol naturel avant
+            travaux, est limitée à : - 4,00m à l''égout du toit - 6,00m au faîtage - R+combles'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: UD 9
+          page_pdf: 53
+          citation: L'emprise au sol de l'ensemble des bâtiments ne doit pas excéder 40% de la superficie de l'unité
+            foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 3.0
+          article: UD 6.2
+          page_pdf: 51
+          citation: 'Les constructions doivent s''implanter avec un recul minimum de 3,00m par rapport à l''alignement,
+            sauf indication contraire portée au règlement graphique. (Secteur UDb — Quatre Robinets : recul spécifique
+            de 45 m par rapport à l''axe de la Route des Tamarins, UD 6.5 p. 52, contrainte géographique.)'
+          statut: valide
+        limites_separatives:
+          min_m: 3.0
+          article: UD 7
+          page_pdf: 52
+          citation: 'Les constructions peuvent être implantées sur une limite séparative (ou les deux limites, si
+            celles-ci sont distantes de moins de 18 mètres l''une de l''autre)… Si une construction est implantée
+            en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de
+            3,00m.'
+          statut: valide
     silence: autorise
     silence_src: 'Secteur régi par le même chapitre UD (chapeau p. 48 : « secteur UDb correspondant à la zone UD
       de Stella – Quatre Robinets concernée par un recul spécifique de 45 m par rapport à la Route des Tamarins
