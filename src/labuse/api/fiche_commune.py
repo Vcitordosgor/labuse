@@ -41,20 +41,30 @@ def marche_annonces(db: Session, commune: str) -> dict | None:
     demandé/acté — le signal exclusif LABUSE — est calculé entre le prix demandé (annonces, bâti) et le
     prix acté commune entière (baromètre DVF, cf. `comparable`). None si Radar ne couvre pas la commune."""
     from ..pige.marche import SEUIL_N, stats
+    # COMMUNE-FIX-1 (A2) — le seuil Radar (30) : un prix demandé médian (et donc l'écart demandé/acté)
+    # calculé sur moins de 30 biens n'est pas statistiquement robuste (le même seuil que la référence
+    # de type du Radar). Sous ce seuil, on ne sert NI le médian NI le pourcentage — la fiche dira
+    # « sous le seuil (N biens) », jamais un −31 % tiré de 5 annonces.
+    from ..pige.signaux import SEUIL_REF_TYPE
     row = next((c for c in stats(db).get("communes", []) if c.get("commune") == commune), None)
     if not row:
         return None
     demande = (row.get("prix_m2_bati") or {}).get("valeur")
+    demande_n = (row.get("prix_m2_bati") or {}).get("n")
     cmp = comparable(db, commune) or {}
     acte = cmp.get("ancien_median_eur_m2")
-    ecart = round(100.0 * (demande - acte) / acte, 1) if (demande and acte) else None
     biens = int(row.get("actives") or 0)
+    robuste = demande is not None and demande_n is not None and demande_n >= SEUIL_REF_TYPE
+    ecart = round(100.0 * (demande - acte) / acte, 1) if (robuste and acte) else None
     return {
         "biens": biens,
         "seuil_n": SEUIL_N,
         "sous_seuil": biens < SEUIL_N,
-        "prix_demande_median_eur_m2": demande,
-        "prix_demande_n": (row.get("prix_m2_bati") or {}).get("n"),
+        # COMMUNE-FIX-1 (A2) — seuil de robustesse du prix demandé médian / de l'écart (Radar, 30 biens).
+        "demande_seuil_n": SEUIL_REF_TYPE,
+        "demande_sous_seuil": demande is not None and not robuste,
+        "prix_demande_median_eur_m2": demande if robuste else None,
+        "prix_demande_n": demande_n,
         "ecart_demande_acte_pct": ecart,
         "prix_acte_eur_m2": acte,
         "source": "Radar LABUSE (annonces relevées) · écart mesuré contre le baromètre DVF commune entière.",
@@ -117,26 +127,36 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
 
 # ───────────────────────────── C5 — population & revenu (Étude de zone / Filosofi) ─────────────────────────────
 def population(db: Session, commune: str, insee: str | None) -> dict:
-    """Habitants, ménages et niveau de vie moyen — agrégat des carreaux Filosofi 200 m dont le centroïde
-    tombe sur une parcelle de la commune (même donnée que l'Étude de zone). Mémoïsé 1 h (Filosofi est
-    statique ; l'agrégat spatial est coûteux) — la fiche reste en LECTURE seule. Complété par le stock de
-    logements (`commune_insee_logement`, déjà servi). `ind_snv/ind` est un niveau de vie MOYEN, pas une
-    médiane : on le nomme comme tel."""
+    """Habitants, ménages et niveau de vie moyen. COMMUNE-FIX-1 (A1) — les HABITANTS sont désormais la
+    POPULATION LÉGALE INSEE (population municipale du recensement, `sudocuh_procedures.pop_mun`), plus
+    l'agrégat Filosofi (carreaux fiscaux) qui SOUS-ESTIMAIT la population (Saint-Paul 96 786 Filosofi vs
+    105 240 légaux) et qu'on présentait à tort comme « INSEE ». Filosofi ne sert plus QUE le NIVEAU DE VIE
+    (revenu, sa vocation). Les ménages viennent des résidences principales du RP (`commune_insee_logement`,
+    base cohérente avec la population légale), plus des ménages fiscaux Filosofi. `ind_snv/ind` reste un
+    niveau de vie MOYEN, pas une médiane. Mémoïsé 1 h (l'agrégat spatial Filosofi est coûteux)."""
     from .app import _mem_cached
 
     def _c():
         r = db.execute(text(
-            "SELECT round(sum(f.ind)) hab, round(sum(f.men)) men, "
-            "       round(sum(f.ind_snv) / NULLIF(sum(f.ind), 0)) niveau_vie_moyen "
+            "SELECT round(sum(f.ind_snv) / NULLIF(sum(f.ind), 0)) niveau_vie_moyen "
             "FROM filosofi_carreaux_200m f WHERE EXISTS ("
             "  SELECT 1 FROM parcels p WHERE p.commune = :c "
             "  AND ST_Intersects(p.geom_2975, ST_Centroid(f.geom)))"), {"c": commune}).mappings().first()
         return dict(r) if r else {}
     demo = _mem_cached(("fiche-pop", commune), 3600.0, _c)
-    log = db.execute(text("SELECT logements, vacants FROM commune_insee_logement WHERE insee = :i"),
-                     {"i": insee}).mappings().first() if insee else None
+    # COMMUNE-FIX-1 (A1) — population LÉGALE INSEE (population municipale du recensement), servie par
+    # Sudocuh (fichier DGALN qui reporte les populations légales INSEE). pop_tot = population totale.
+    poplegale = db.execute(text(
+        "SELECT pop_mun, pop_tot, to_char(millesime_date, 'DD/MM/YYYY') AS millesime "
+        "FROM sudocuh_procedures WHERE insee = :i"), {"i": insee}).mappings().first() if insee else None
+    habitants = int(poplegale["pop_mun"]) if poplegale and poplegale["pop_mun"] is not None else None
+    log = db.execute(text("SELECT logements, vacants, res_principales, millesime FROM commune_insee_logement "
+                          "WHERE insee = :i"), {"i": insee}).mappings().first() if insee else None
     logements = int(log["logements"]) if log and log["logements"] is not None else None
     vacants = int(log["vacants"]) if log and log["vacants"] is not None else None
+    # COMMUNE-FIX-1 (A1) — ménages = résidences principales du RP (base légale), et non les ménages
+    # FISCAUX Filosofi (qui sous-comptent), pour ne garder Filosofi QUE sur le niveau de vie.
+    menages = int(log["res_principales"]) if log and log.get("res_principales") is not None else None
     # CIRCUIT-2 lot 1.6 — le taux de vacance est calculé par le moteur nommé `commune_compteurs`
     # (id registre vacance_pct) : même arithmétique, un seul chemin.
     from ..registre.moteurs.commune import vacance_pct
@@ -149,8 +169,11 @@ def population(db: Session, commune: str, insee: str | None) -> dict:
         quartiers = quartiers_commune(db, insee)
     return {
         "quartiers": quartiers,
-        "habitants": int(demo["hab"]) if demo.get("hab") is not None else None,
-        "menages": int(demo["men"]) if demo.get("men") is not None else None,
+        "habitants": habitants,                       # COMMUNE-FIX-1 (A1) — population LÉGALE (municipale) INSEE
+        "habitants_pop_totale": int(poplegale["pop_tot"]) if poplegale and poplegale["pop_tot"] is not None else None,
+        "habitants_millesime": poplegale["millesime"] if poplegale else None,
+        "menages": menages,                           # COMMUNE-FIX-1 (A1) — résidences principales (RP), base légale
+        "menages_millesime": (log or {}).get("millesime"),
         "niveau_vie_moyen_eur": int(demo["niveau_vie_moyen"]) if demo.get("niveau_vie_moyen") is not None else None,
         "logements": logements,
         "vacants": vacants,
@@ -162,7 +185,8 @@ def population(db: Session, commune: str, insee: str | None) -> dict:
         # commune_insee_logement / IRIS / RPLS — donc DOUBLON, non rebranché. L'âge du parc, lui,
         # n'était nulle part (seul le millésime médian du parc SOCIAL l'était via RPLS).
         "parc_ancien_pct": _parc_ancien_pct(db, insee),
-        "source": "INSEE Filosofi 2021 (carreaux 200 m, agrégat commune) · INSEE RP (logements).",
+        "source": "INSEE — population municipale légale (recensement, via Sudocuh) · INSEE RP "
+                  "(ménages, logements) · INSEE Filosofi (niveau de vie).",
     }
 
 
@@ -418,9 +442,11 @@ _FALLBACK = {
     "risques": {"ppr_pct": None, "mouvement_terrain_pct": None, "catnat_arretes": 0,
                 "catnat_detail": [], "parc_national": False, "azi_tri": None,
                 "source": "Géorisques · GASPAR · BD TOPO"},
-    "population": {"habitants": None, "menages": None, "niveau_vie_moyen_eur": None,
-                   "logements": None, "vacants": None, "vacance_pct": None,
-                   "source": "INSEE Filosofi · INSEE RP"},
+    "population": {"habitants": None, "habitants_pop_totale": None, "habitants_millesime": None,
+                   "menages": None, "menages_millesime": None, "niveau_vie_moyen_eur": None,
+                   "logements": None, "vacants": None, "vacance_pct": None, "quartiers": None,
+                   "parc_ancien_pct": None,
+                   "source": "INSEE — population municipale légale · INSEE RP · INSEE Filosofi (niveau de vie)"},
     "plu_statut": {"statut": "document local", "libelle": None, "procedure": None,
                    "date_reglement": None, "confiance": None, "recherche_verbatim": True, "source": None},
     "permis": {"permis_12m": 0, "permis_5a": None, "logements_12m": None,

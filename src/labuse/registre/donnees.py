@@ -578,10 +578,12 @@ DONNEES: dict[str, Donnee] = {
     reservoirs=("catnat_gaspar",), portee="live", type="liste",
     table="catnat_arretes (détail par insee) + raw (code_national_catnat, date_publication_jo)"),
  "habitants_n": C("Habitants", "nombre", "commune",
-    "population INSEE/Filosofi commune",
-    moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py:123 (population)",
-    reservoirs=("filosofi_carreaux", "insee_rp_logement",), portee="live",
-    table="filosofi_carreaux_200m (Σ ind des carreaux de la commune)"),
+    "population municipale LÉGALE INSEE (recensement), servie via Sudocuh (pop_mun) — COMMUNE-FIX-1 (A1) : "
+    "l'agrégat Filosofi (carreaux fiscaux) sous-estimait la population et n'est plus servi ici (il ne "
+    "sert plus que le niveau de vie)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py (population)",
+    reservoirs=("sudocuh", "insee_rp_logement",), portee="live",
+    table="sudocuh_procedures.pop_mun (population municipale légale INSEE)"),
  "vacance_pct": C("Vacance", "%", "commune",
     "100 × vacants / logements (RP)",
     moteur="commune_compteurs", calcul="moteur",
