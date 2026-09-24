@@ -149,9 +149,8 @@ export function TaxeAmenagement() {
         </Tip>
       </div>
       {/* barre UNIQUE (adresse / IDU / référence courte — moteur ParcelInput, comme Étudier un bien) */}
-      <ParcelInput dataAttr="taxe-parcelle" withCarte={false} onPick={(i: string) => setPrefillIdu(i)}
+      <ParcelInput dataAttr="taxe-parcelle" onPick={(i: string) => setPrefillIdu(i)}
         placeholder="Adresse, IDU ou référence (ex. BZ1065)" />
-      <p className="text-[10px] text-txt-dim">… ou cliquez une parcelle sur la carte : l'outil la reprend automatiquement.</p>
       {!prefillIdu && (
         <p data-taxe-attente className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">
           Le formulaire s'ouvrira quand une parcelle sera choisie — LABUSE préremplit alors la

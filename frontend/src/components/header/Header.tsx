@@ -187,7 +187,7 @@ export function Omnibox() {
   }
 
   return (
-    <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 transition-colors duration-quick focus-within:border-mint">
+    <div className="flex h-10 w-[360px] items-center gap-2 rounded-md border border-line-2 bg-surface-3 px-3 transition-colors duration-quick focus-within:border-mint">
       {/* DA §10 — LA LOUPE EST DANS LE CHAMP (leading). Elle reste cliquable (lance la recherche
           sur le texte courant) ; pendant la résolution elle devient un spinner sobre (M55-B). */}
       <button

@@ -25,7 +25,9 @@ export function M22() {
   const openCompare = useApp((s) => s.openCompare)
   const pushOutilRetour = useApp((s) => s.pushOutilRetour)   // OUTILS-FIX-3 Lot D — fil de retour
   const [selCmp, setSelCmp] = useState<Set<string>>(new Set())
-  const [mode, setMode] = useState<'criteres' | 'parcelle'>('criteres')
+  // DA-FIX-2 Lot 2 (DA-005) — outil à PARCELLE : ouverture par défaut sur « Par parcelle » (l'omnibox).
+  // Le copilote (m22Prefill) force « critères » et la porte fiche (parcelPrefill) force « parcelle ».
+  const [mode, setMode] = useState<'criteres' | 'parcelle'>('parcelle')
   const [commune, setCommune] = useState<string | null>(null)   // RG1 : périmètre saisi dans l'outil
   const [picked, setPicked] = useState<string | null>(null)     // mode « par parcelle »
   const [form, setForm] = useState({ batiments: 1, niveaux: 2, logements_par_batiment: 8, surface_unite_m2: 60, circulation_pct: 20 })
@@ -248,25 +250,17 @@ export function M22() {
             Désignez une parcelle : sa <b>faisabilité complète</b> (capacité, calcul tracé, charge
             foncière) — le même calcul que l'onglet Faisabilité de la fiche.
           </div>
-          {!picked ? (
-            <ParcelPicker onPick={setPicked} picked={picked} />
-          ) : (
-            <>
-              <div className="flex items-center gap-2 text-[11px] text-txt-mut">
-                <span>Parcelle <b className="font-mono text-txt">{picked.slice(8, 10)} {picked.slice(10)}</b></span>
-                <Bouton niveau="lien" data-faisa-changer onClick={() => setPicked(null)} className="ml-auto">changer</Bouton>
-              </div>
-              {/* OUTILS-FIX-3 A1 — le bloc « Capacité constructible » (et tout FaisabiliteTab) sortait de la
-                  DA quand on l'ouvrait par le pont Densifier : son titre (GroupLabel → `.sec`) et ses filets
-                  sont stylés SOUS `.fiche-v6` (`.fiche-v6 .sec > span { font-size:10px … }`) — hors de ce
-                  conteneur (ici, dans l'outil) la classe retombait au défaut navigateur (~16 px), « nettement
-                  plus gros ». On rend donc FaisabiliteTab dans le MÊME contexte `.fiche-v6` que la fiche : mêmes
-                  classes, même typographie, contenu identique (A2 : cause = classes CSS scopées `.fiche-v6`). */}
-              <div data-faisa-parcelle className="fiche-v6 pr-0.5">
-                {/* OUTILS-FIX-3 Lot F — `embedded` cantonne l'IA (explication du calcul) à la fiche parcelle. */}
-                <FaisabiliteTab idu={picked} embedded />
-              </div>
-            </>
+          {/* DA-FIX-2 Lot 2 (DA-016) — OMNIBOX PERMANENTE : le sélecteur de parcelle reste EN TÊTE ;
+              la faisabilité s'affiche DESSOUS dès qu'une parcelle est désignée (plus de bandeau
+              « changer » qui masquait l'omnibox). Retaper une parcelle = en changer. */}
+          <ParcelPicker onPick={setPicked} picked={picked} />
+          {picked && (
+            /* OUTILS-FIX-3 A1 — FaisabiliteTab rendu dans le MÊME contexte `.fiche-v6` que la fiche
+               (ses titres/filets sont scopés `.fiche-v6`), pour la même typographie. */
+            <div data-faisa-parcelle className="fiche-v6 pr-0.5">
+              {/* OUTILS-FIX-3 Lot F — `embedded` cantonne l'IA (explication du calcul) à la fiche parcelle. */}
+              <FaisabiliteTab idu={picked} embedded />
+            </div>
           )}
         </>
       )}

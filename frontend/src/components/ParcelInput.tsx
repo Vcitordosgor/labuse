@@ -4,6 +4,7 @@ import { fmtM2 } from '../lib/format'
 import { searchParcels } from '../lib/api'
 import { useApp } from '../store/useApp'
 import { AddressAutocomplete } from './AddressAutocomplete'
+import { Bouton } from './ui/Bouton'
 
 // PATRON OMNIBOX (M137) — UN SEUL champ pour désigner une parcelle : adresse (autocomplétion BAN)
 // ET IDU cadastral (reconnu par `estIdu` → on n'interroge pas la BAN dessus), comme l'omnibox de la
@@ -104,11 +105,19 @@ export function ParcelInput({ onPick, onAddress, placeholder, autoFocus, withCar
           ))}
         </div>
       )}
-      {withCarte && selectedIdu && (
-        <button data-parcelinput-carte onClick={() => { setMsg(null); setCandidats(null); onPick(selectedIdu) }}
-          className="self-start text-[10.5px] text-mint hover:underline">
-          utiliser la parcelle sélectionnée sur la carte ({selectedIdu.slice(8)})
-        </button>
+      {/* DA-FIX-2 Lot 2 (DA-002) — LE clic-carte, un seul rendu partout : séparateur « ou » +
+          Bouton secondaire. Toujours offert (les deux gestes). Une parcelle déjà cliquée sur la
+          carte s'utilise d'un clic ; sinon le libellé invite au geste. Plus de phrase texte. */}
+      {withCarte && (
+        <>
+          <div className="flex items-center gap-2 text-[10px] text-txt-dim" aria-hidden="true">
+            <span className="h-px flex-1 bg-line-2" />ou<span className="h-px flex-1 bg-line-2" />
+          </div>
+          <Bouton data-parcelinput-carte niveau="secondaire" ton="vert" className="w-full"
+            onClick={() => { if (selectedIdu) { setMsg(null); setCandidats(null); onPick(selectedIdu) } }}>
+            {selectedIdu ? `Utiliser la parcelle sélectionnée (${selectedIdu.slice(8)})` : 'Cliquez une parcelle sur la carte'}
+          </Bouton>
+        </>
       )}
     </div>
   )

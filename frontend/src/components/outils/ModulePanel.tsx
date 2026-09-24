@@ -1157,8 +1157,10 @@ export function M08() {
   }, [parcelPrefill])   // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => setTempsPinIdu(null), [])   // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── ÉTAPE 1 — désigner la parcelle ──
-  if (!idu) return (
+  // DA-FIX-2 Lot 2 (DA-004) — OMNIBOX PERMANENTE : le champ « désigner la parcelle » reste EN TÊTE,
+  // même une fois la parcelle choisie (plus de bandeau + « changer » qui la masquaient). La frise des
+  // millésimes apparaît DESSOUS dès qu'une parcelle est désignée ; changer de parcelle = retaper.
+  return (
     <>
       <Banner>La <b>parcelle d'abord</b> : son IDU, une adresse, ou <b>cliquez-la sur la carte</b>. Puis
         choisissez l'année à revoir — l'« après » est toujours aujourd'hui.</Banner>
@@ -1168,17 +1170,9 @@ export function M08() {
         <ParcelInput dataAttr="temps-idu" placeholder="Adresse ou IDU — 97415000CW0658"
           onPick={(id) => void designer(id)} />
       </div>
-      <p className="text-[11px] text-txt-mut">Accès direct depuis toute fiche : bouton « 1950 ».</p>
-    </>
-  )
-
-  // ── ÉTAPE 2 — année ancienne (un seul choix) ; après = aujourd'hui, verrouillé ──
-  return (
-    <>
-      <div className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
-        <span className="font-mono text-[12px] text-txt">{idu}</span>
-        <Bouton niveau="lien" onClick={() => { setTempsPinIdu(null); setIdu('') }} className="ml-auto">changer</Bouton>
-      </div>
+      {!idu ? (
+        <p className="text-[11px] text-txt-mut">Accès direct depuis toute fiche : bouton « 1950 ».</p>
+      ) : (
       <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
         <p className="label-caps text-[9.5px]">L'année à revoir (avant)</p>
         {/* FRISE des millésimes — l'« avant » se choisit le long d'une frise chronologique ; l'« après »
@@ -1211,11 +1205,8 @@ export function M08() {
           <span className="text-txt-dim"> vs </span>Aujourd'hui{/* F7 (OUTILS-3) — mention « 🔒 après fixe » retirée : sans sens pour le client. */}
         </p>
         <p className="mt-2 text-[10.5px] text-txt-dim">Glissez la poignée au centre de la carte pour révéler l'un ou l'autre.</p>
-        {/* DA-FIX-2 Lot 1 (DA-014) : l'ancienne croix « ✕ Quitter » (qui FERMAIT le panneau depuis
-            l'étape 2) devient un RETOUR vers l'étape 1 (désigner la parcelle). La croix ✕ de l'en-tête
-            reste le seul geste de fermeture. */}
-        <Retour label="Désigner la parcelle" onClick={() => { setTempsPinIdu(null); setIdu('') }} className="mt-2" />
       </div>
+      )}
     </>
   )
 }
@@ -1398,7 +1389,7 @@ export function M09() {
       {step === 1 && (
         <div className="flex min-h-0 flex-1 flex-col gap-2">
           <p className="text-[11px] text-txt-mut">Les parcelles à démarcher — <b>une barre</b> (adresse ou IDU), autant que voulu :</p>
-          <ParcelInput dataAttr="courrier-idu" withCarte={false} placeholder="Adresse ou IDU — puis Entrée"
+          <ParcelInput dataAttr="courrier-idu" placeholder="Adresse ou IDU — puis Entrée"
             onPick={ajouter} />
           {/* LOT7 — l'import Assemblage passe UNIQUEMENT par le pont one-shot « Préparer les courriers (n) »
               (Assemblage → courrierPrefillIdus, consommé au montage ci-dessus). L'ancien bouton lisait le

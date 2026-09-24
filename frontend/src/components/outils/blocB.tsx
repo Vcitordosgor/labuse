@@ -50,7 +50,7 @@ export function O5Servitudes() {
         assainissement. Chaque servitude est nommée, datée et sourcée.</Banner>
       {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). Le clic
           carte est déjà capté par l'effet selectedIdu ci-dessus → withCarte inutile ici. */}
-      <ParcelInput dataAttr="o5-idu" withCarte={false} placeholder="Adresse ou IDU (ou clic carte)" onPick={(id) => setIdu(id)} />
+      <ParcelInput dataAttr="o5-idu" placeholder="Adresse ou IDU" onPick={(id) => setIdu(id)} />
       {q.isLoading && <Loading accent="mint" label="Recherche des servitudes…" />}
       {q.isError && <ErrorState className="py-6" message="Servitudes indisponibles." retry={() => q.refetch()} />}
       {d && (

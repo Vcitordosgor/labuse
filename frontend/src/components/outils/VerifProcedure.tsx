@@ -26,7 +26,7 @@ export function VerifProcedure() {
         {/* RETOURS-13 R24 — la barre passe sur le MOTEUR UNIQUE (ParcelInput) : IDU 14, référence
             cadastrale courte (« BZ1065 », désambiguïsation par commune), adresse. Le champ maison qui
             n'acceptait que l'IDU brut est retiré (promesse T1 tenue sur TOUTES les barres). */}
-        <ParcelInput dataAttr="verif-idu" withCarte={false} onPick={(i) => lancer(i)}
+        <ParcelInput dataAttr="verif-idu" onPick={(i) => lancer(i)}
           placeholder="IDU, référence (ex. BZ1065) ou adresse" />
       </div>
 

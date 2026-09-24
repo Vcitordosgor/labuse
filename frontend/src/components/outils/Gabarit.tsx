@@ -168,10 +168,9 @@ export function Gabarit() {
         <b className="text-txt"> intégrées et sourcées</b> dans LABUSE.
       </p>
 
-      <ParcelInput dataAttr="gabarit-parcelle" withCarte={false}
+      <ParcelInput dataAttr="gabarit-parcelle"
         onPick={(i: string) => setIdu(i)}
         placeholder="Adresse, IDU ou référence (ex. BZ1065)" />
-      <p className="text-[10px] text-txt-dim">… ou cliquez une parcelle sur la carte.</p>
 
       {!target && (
         <p className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">
