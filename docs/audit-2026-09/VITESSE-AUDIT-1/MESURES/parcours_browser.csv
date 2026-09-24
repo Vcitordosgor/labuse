@@ -1,0 +1,7 @@
+parcours,phase,run,ttfb_ms,fcp_ms,lcp_ms,dom_ms,load_ms,longtasks_n,longtasks_ms,req_n,req_bytes
+1_boot_accueil,cold,0,109,592,592,436,655,14,2139,30,3425079
+1_boot_accueil,warm,1,1010,1728,1728,1554,1791,14,1530,30,3923673
+1_boot_accueil,warm,2,47,676,676,541,721,11,1654,30,3923673
+6_fiche_temoin,cold,0,331,776,776,627,821,13,2169,36,9696731
+6_fiche_temoin,warm,1,16,660,660,534,714,13,1719,36,9541743
+6_fiche_temoin,warm,2,884,1196,1196,1103,1245,9,1884,39,14013905

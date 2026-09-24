@@ -1,0 +1,104 @@
+VITESSE-AUDIT-1 — EXPLAIN (ANALYZE, BUFFERS) — fenêtre calme (run résiduel idle), PG18.4, MacBook Air M1
+NB: temps absolus indicatifs (machine mono-worker chargée) ; la STRUCTURE du plan est le fait dur.
+
+===================================================================
+[VIT-001] FICHE — SELECT sl.kind ... ST_Area(ST_Intersection(parcelle, couche))  (dpu/peb/sup/prescription)
+===================================================================
+SET
+SET
+                                                                                QUERY PLAN                                                                                 
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=38.93..76.23 rows=1 width=31) (actual time=1312.731..12535.333 rows=14.00 loops=1)
+   Buffers: shared hit=3804 read=4775
+   ->  Index Scan using ix_parcels_idu_commune on parcels p  (cost=0.42..8.44 rows=1 width=329) (actual time=1.118..2.585 rows=1.00 loops=1)
+         Index Cond: ((idu)::text = '97410000AN0347'::text)
+         Index Searches: 1
+         Buffers: shared hit=1 read=3
+   ->  Bitmap Heap Scan on spatial_layers sl  (cost=38.50..55.02 rows=1 width=608) (actual time=176.356..382.389 rows=14.00 loops=1)
+         Recheck Cond: (((kind)::text = ANY ('{dpu,peb,sup}'::text[])) OR (((kind)::text = 'plu_gpu_prescription'::text) AND ((subtype)::text = ANY ('{01,05}'::text[]))))
+         Filter: st_intersects(p.geom_2975, geom_2975)
+         Rows Removed by Filter: 25
+         Heap Blocks: exact=35
+         Buffers: shared hit=276 read=4772
+         ->  BitmapAnd  (cost=38.50..38.50 rows=1 width=0) (actual time=40.446..40.448 rows=0.00 loops=1)
+               Buffers: shared hit=164 read=126
+               ->  Bitmap Index Scan on idx_spatial_layers_geom_2975  (cost=0.00..9.86 rows=193 width=0) (actual time=38.391..38.391 rows=184.00 loops=1)
+                     Index Cond: (geom_2975 && p.geom_2975)
+                     Index Searches: 1
+                     Buffers: shared hit=143 read=122
+               ->  BitmapOr  (cost=28.39..28.39 rows=775 width=0) (actual time=2.039..2.040 rows=0.00 loops=1)
+                     Buffers: shared hit=21 read=4
+                     ->  Bitmap Index Scan on ix_spatial_kind_subtype  (cost=0.00..18.93 rows=753 width=0) (actual time=1.285..1.285 rows=1412.00 loops=1)
+                           Index Cond: ((kind)::text = ANY ('{dpu,peb,sup}'::text[]))
+                           Index Searches: 3
+                           Buffers: shared hit=8 read=3
+                     ->  Bitmap Index Scan on ix_spatial_kind_subtype  (cost=0.00..9.08 rows=22 width=0) (actual time=0.753..0.753 rows=4032.00 loops=1)
+                           Index Cond: (((kind)::text = 'plu_gpu_prescription'::text) AND ((subtype)::text = ANY ('{01,05}'::text[])))
+                           Index Searches: 2
+                           Buffers: shared hit=13 read=1
+ Planning:
+   Buffers: shared hit=447 read=63
+ Planning Time: 29.679 ms
+ Execution Time: 12537.948 ms
+(32 rows)
+
+
+===================================================================
+[VIT-004] FILTRE listing — sous-CTE pro_pc (permis) ISOLÉE : 84 ms, PAS le coût
+===================================================================
+SET
+SET
+                                                                                 QUERY PLAN                                                                                  
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=7014.23..7103.20 rows=8897 width=15) (actual time=82.780..83.096 rows=2339.00 loops=1)
+   Group Key: pp.idu
+   Batches: 1  Memory Usage: 409kB
+   Buffers: shared hit=5 read=5151
+   ->  Hash Join  (cost=948.73..6991.48 rows=9098 width=15) (actual time=14.819..81.684 rows=2441.00 loops=1)
+         Hash Cond: ((s.permit_id)::text = (pp.permit_id)::text)
+         Buffers: shared hit=5 read=5151
+         ->  Seq Scan on sitadel_permits s  (cost=0.00..5763.18 rows=50292 width=14) (actual time=0.389..69.524 rows=9240.00 loops=1)
+               Filter: (COALESCE((raw ->> 'petitioner_siren'::text), ''::text) <> ''::text)
+               Rows Removed by Filter: 41305
+               Buffers: shared hit=2 read=5003
+         ->  Hash  (cost=834.43..834.43 rows=9144 width=29) (actual time=8.739..8.740 rows=8653.00 loops=1)
+               Buckets: 16384  Batches: 1  Memory Usage: 644kB
+               Buffers: shared hit=3 read=148
+               ->  Bitmap Heap Scan on p_model_permits pp  (cost=121.81..834.43 rows=9144 width=29) (actual time=2.448..6.668 rows=8653.00 loops=1)
+                     Recheck Cond: (date_autorisation >= (CURRENT_DATE - '3 years'::interval))
+                     Filter: ((type)::text = 'PC'::text)
+                     Rows Removed by Filter: 1393
+                     Heap Blocks: exact=136
+                     Buffers: shared hit=3 read=148
+                     ->  Bitmap Index Scan on p_model_permits_date_autorisation_idx  (cost=0.00..119.53 rows=10031 width=0) (actual time=2.071..2.071 rows=10046.00 loops=1)
+                           Index Cond: (date_autorisation >= (CURRENT_DATE - '3 years'::interval))
+                           Index Searches: 1
+                           Buffers: shared hit=3 read=12
+ Planning:
+   Buffers: shared hit=248 read=31
+ Planning Time: 8.635 ms
+ Execution Time: 83.330 ms
+(28 rows)
+
+
+===================================================================
+[NON-DEFAUT] Tile cache version — max(created_at) spatial_layers : 0.3 ms indexée (les 3,2 s vus = charge résiduel, PAS un défaut)
+===================================================================
+SET
+                                                                                      QUERY PLAN                                                                                       
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Result  (cost=0.50..0.51 rows=1 width=4) (actual time=1.302..1.303 rows=1.00 loops=1)
+   Buffers: shared read=5
+   InitPlan 1
+     ->  Limit  (cost=0.43..0.50 rows=1 width=8) (actual time=1.286..1.287 rows=1.00 loops=1)
+           Buffers: shared read=5
+           ->  Index Only Scan Backward using ix_spatial_layers_created_at on spatial_layers  (cost=0.43..137776.19 rows=1925095 width=8) (actual time=1.285..1.286 rows=1.00 loops=1)
+                 Heap Fetches: 1
+                 Index Searches: 1
+                 Buffers: shared read=5
+ Planning:
+   Buffers: shared hit=202 read=1
+ Planning Time: 1.933 ms
+ Execution Time: 1.348 ms
+(13 rows)
+
