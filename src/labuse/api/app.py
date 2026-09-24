@@ -5255,10 +5255,9 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
         return _bloc_indisponible("potentiel_transformation")   # M125 — panne ≠ absence
     if not row or (row["pct_potentiel"] is None and (sur or {}).get("possible") is None):
         return None
-    from ..faisabilite.zone_servie import garde_sdp_residuelle
-    sdp_servie, _cause_zone = garde_sdp_residuelle(
-        float(row["sdp_residuelle_m2"]) if row["sdp_residuelle_m2"] is not None else None,
-        row["zone_fam"], row["zone_lib"])
+    # FAISABILITE-clip (Vic 24/09/2026) — garde « dominante A/N → 0 » RETIRÉE : parcel_residuel lu
+    # TEL QUEL (l'assiette clippée du run servi porte déjà la portion U/AU des parcelles à cheval).
+    sdp_servie = float(row["sdp_residuelle_m2"]) if row["sdp_residuelle_m2"] is not None else None
     pct = row["pct_potentiel"]
     if pct is None:
         niveau, libelle = "indetermine", "Marge SDP non calculée"

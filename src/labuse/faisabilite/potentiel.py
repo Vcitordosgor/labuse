@@ -127,15 +127,17 @@ def surelevation_mesuree(he_regle, hf_regle, egout_mesure, faitage_mesure) -> di
 def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
     """LE bloc Potentiel à trois lignes + verdict (3.5) — servi tel quel à tous les documents.
 
-    - au_sol   : SDP résiduelle du run SERVI (`parcel_residuel`), passée par la garde de
-      lecture ZONE-1 (dominante A/N → 0, cause dite) ;
+    - au_sol   : SDP résiduelle du run SERVI (`parcel_residuel`), lue TELLE QUELLE ;
     - en_hauteur : surélévation au moteur commun (égout — 3.2) ;
     - table_rase : le scénario du moteur commun (vendable, logements APRÈS plafond de
       densité et stationnement — 3.3).
-    None si la parcelle est inconnue."""
+    None si la parcelle est inconnue.
+
+    FAISABILITE-clip (Vic 24/09/2026) — la garde de lecture « zone dominante A/N → 0 »
+    (`garde_sdp_residuelle`) est RETIRÉE : elle appliquait l'ancien tout-ou-rien, contredit par
+    l'assiette clippée (le run servi porte déjà la portion U/AU des parcelles à cheval)."""
     from .db import parcel_faisabilite
     from .zonage import resolve_zone
-    from .zone_servie import garde_sdp_residuelle
     fz = fz or parcel_faisabilite(session, parcel_id)
     ctx = fz[0] if fz else None
     if ctx is None:
@@ -143,15 +145,15 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
         ctx = parcel_context(session, parcel_id)
         if ctx is None:
             return None
-    # au sol — le chiffre du run servi, sous garde de lecture
+    # au sol — le chiffre du run servi, LU TEL QUEL (assiette clippée : la portion U/AU est déjà
+    # dans parcel_residuel ; plus de garde « dominante A/N → 0 »).
     row = session.execute(text(
         "SELECT sdp_residuelle_m2, cause FROM parcel_residuel WHERE parcel_id = :p"),
         {"p": parcel_id}).mappings().first()
-    sdp_brute = float(row["sdp_residuelle_m2"]) if row and row["sdp_residuelle_m2"] is not None else None
-    sdp_servie, garde_cause = garde_sdp_residuelle(sdp_brute, ctx.zone_fam, ctx.zone)
+    sdp_servie = float(row["sdp_residuelle_m2"]) if row and row["sdp_residuelle_m2"] is not None else None
     au_sol = {"sdp_residuelle_m2": sdp_servie,
-              "cause": garde_cause or (row["cause"] if row else None),
-              "source": "run résiduel servi (garde de lecture zone dominante)"}
+              "cause": row["cause"] if row else None,
+              "source": "run résiduel servi (assiette clippée)"}
     # en hauteur — moteur commun (égout)
     rules = resolve_zone(ctx.zone, ctx.commune) if ctx.zone else None
     en_hauteur = surelevation(session, parcel_id, rules=rules, ctx=ctx)
@@ -168,8 +170,6 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
     if sdp_servie is not None:
         morceaux.append("au sol : rien à construire" if sdp_servie <= 0
                         else f"au sol : ~{round(sdp_servie)} m² de SDP résiduelle")
-        if garde_cause:
-            morceaux[-1] += f" ({garde_cause})"
     # RECETTE-11 A6 — plus de verdict de faisabilité (« possible »/« pas de marge ») : on énonce la
     # marge mesurée sous la règle de hauteur et la contrainte, le lecteur conclut.
     if en_hauteur.get("marge_m") is not None and en_hauteur.get("base"):
