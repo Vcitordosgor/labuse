@@ -723,13 +723,12 @@ export function ContextePanel() {
 
             {/* FICHE-COMMUNE-2 (C1) — pied : les compteurs sont PRÉCALCULÉS chaque nuit et servis tels quels
                 (ouverture < 500 ms). La date du calcul est dite. `cache_calcule_le === null` = calcul en direct. */}
-            {/* COMMUNE-FIX-1 (A4) — le pied disait « rafraîchis chaque nuit », FAUX : le job nocturne
-                fiche-commune-cache n'est pas enregistré (retiré du registre CRON comme « non essentiel »).
-                On dit la VRAIE date du dernier précalcul, sans promettre une cadence qui n'existe pas ;
-                les indicateurs de marché partagés avec le comparateur sont, eux, recalculés en direct. */}
+            {/* COMMUNE-FIX-1 (A4) — le job nocturne fiche-commune-cache est RÉINSCRIT au registre CRON
+                (précalcul quotidien réel, wrapper run-job.sh) : le pied affiche la VRAIE date du dernier
+                précalcul et peut de nouveau dire « rafraîchis chaque nuit » sans mentir. */}
             <p data-fiche-pied className="px-5 py-3 text-[10.5px] leading-relaxed text-txt-dim">
               {d.cache_calcule_le
-                ? `Compteurs précalculés le ${fmtDateFr(d.cache_calcule_le)} ; indicateurs de marché recalculés en direct.`
+                ? `Compteurs précalculés le ${fmtDateFr(d.cache_calcule_le)} (rafraîchis chaque nuit).`
                 : 'Compteurs calculés en direct.'}
               {' '}Données de contexte — aucune n'entre dans le scoring.
             </p>

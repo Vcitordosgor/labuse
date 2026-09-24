@@ -47,6 +47,18 @@ def test_a1_population_confine_filosofi_au_niveau_de_vie():
     assert "round(sum(f.ind)) hab" not in bloc
 
 
+# ───────────────────────────── A4 — job nocturne réinscrit ─────────────────────────────
+def test_a4_job_cache_nocturne_enregistre():
+    """Le pied de la fiche promet « rafraîchis chaque nuit » : la tâche `fiche-commune-cache` DOIT
+    exister au registre CRON, quotidienne, et sortir au crontab généré (wrapper run-job.sh)."""
+    from labuse.jobs import JOBS
+    from labuse.cli import _crontab_du_registre
+    j = JOBS.get("fiche-commune-cache")
+    assert j is not None, "fiche-commune-cache absent du registre — le pied mentirait"
+    assert j.cadence == "quotidien"
+    assert "jobs run fiche-commune-cache'" in _crontab_du_registre("utc")   # une ligne au crontab (wrapper)
+
+
 # ───────────────────────────── A2 — seuil Radar (30) ─────────────────────────────
 def test_a2_seuil_radar_30_sur_ecart_demande_acte():
     """Le seuil Radar (30) garde le prix demandé médian et l'écart demandé/acté."""

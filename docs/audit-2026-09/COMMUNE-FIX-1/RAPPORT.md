@@ -37,12 +37,19 @@ La ligne SRU nomme désormais **« 7 499 logements sociaux (LLS) — stock au de
 principales retenues pour la SRU (≈ 40 900)** — base **différente** des ménages affichés plus haut. Cohérence vérifiée
 (7 499 / 0,1833 ≈ 40 900). *Fichier* : carte Population (`ContextePanel.tsx`).
 
-### A4 — « rafraîchis chaque nuit » : faux
-**Cause** : le job nocturne `fiche-commune-cache` a été **retiré du registre CRON** (`jobs.py:424`, « réchauffeur
-non essentiel ») → aucune tâche ne rafraîchit le cache ; le pied mentait (« rafraîchis chaque nuit »). La **date**
-affichée, elle, était vraie. On retire la fausse cadence : le pied dit désormais *« Compteurs précalculés le {date} ;
-indicateurs de marché recalculés en direct. »* Le cache des 24 communes a été **recalculé** (date réelle = 25/09/2026).
-*Fichier* : pied (`ContextePanel.tsx`) ; recalcul via `rafraichir_contexte_cache`.
+### A4 — « rafraîchis chaque nuit » : faux → la cadence est rendue VRAIE
+**Cause** : le job nocturne `fiche-commune-cache` avait été **retiré du registre CRON** (« réchauffeur non
+essentiel ») → aucune tâche ne rafraîchissait le cache ; le pied promettait « rafraîchis chaque nuit » alors
+que plus rien ne le garantissait. La **date** affichée, elle, était vraie.
+**Correctif** : plutôt que de mentir en creux (softener le pied), on **réinscrit le job au registre** pour que
+la promesse redevienne exacte. `fiche-commune-cache` est de nouveau déclaré (`jobs.py`, quotidien `0 23 * * *`
+UTC = 03:00 Réunion, timeout 1800 s), son implémentation existait déjà (`jobs_impl.fiche_commune_cache` :
+précalcul isolé des 24 communes dans `commune_contexte_cache`, une ratée n'arrête pas le lot). Le crontab
+généré depuis le registre le porte donc automatiquement (wrapper `run-job.sh` + verrou flock). Le pied peut à
+nouveau dire *« Compteurs précalculés le {date} (rafraîchis chaque nuit). »* sans mentir. Le cache des 24
+communes a par ailleurs été **recalculé** (date réelle = 25/09/2026).
+*Test* : `test_commune_fix1.py::test_a4_job_cache_nocturne_enregistre` (job présent, quotidien, sort au crontab)
++ `test_cron1_lot3.py` (une ligne par job du registre : 19 → 20). *Fichiers* : `jobs.py`, pied (`ContextePanel.tsx`).
 
 ## B · Cassé
 

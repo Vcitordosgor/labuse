@@ -408,6 +408,16 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "part en UN digest quotidien, filtré par préférence, jamais vide, un par jour (dédup mail_queue). "
               "Passe par mail_queue. Sans événement la veille : pas de mail (dry-run si SMTP absent).",
        test="tests/test_veille_fix1.py::test_les_jobs_veille_existent"),
+    # COMMUNE-FIX-1 — RÉINSCRIT (le pied de la fiche commune promet « rafraîchis chaque nuit » : il faut
+    # que la tâche existe VRAIMENT). Précalcule le contexte des 24 communes chaque nuit → ouverture < 500 ms
+    # et date de précalcul honnête. Wrapper run-job.sh + verrou flock comme les autres (crontab dérivé du registre).
+    _j("fiche-commune-cache", "Fiche commune — précalcul nocturne du contexte (24 communes)",
+       "quotidien", "0 23 * * *", "03:00", touche="exploitation", timeout_s=1800,
+       raison="Le contexte commune coûte 20–27 s à assembler (comparateur, Radar, Filosofi spatial, "
+              "PPR…). Précalculé chaque nuit dans commune_contexte_cache, la fiche ouvre en < 500 ms et "
+              "affiche une VRAIE date de calcul. Chaque commune est isolée (une ratée n'arrête pas le lot). "
+              "Sans ce job, le cache fige et le pied « rafraîchis chaque nuit » ment.",
+       test="tests/test_commune_fix1.py::test_a4_job_cache_nocturne_enregistre"),
     _j("restore-test", "Restaure le dernier dump dans une base jetable et vérifie (puis DROP)",
        "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", touche="exploitation", timeout_s=3600,
        envoie_mail=True, besoin_db=False,
@@ -421,7 +431,6 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
     #   radar-releves : retirés.
     # sources-fraicheur : le verdict de fraîcheur est calculé À LA LECTURE (etats_sources) + la sonde
     #   des sources (sonde-sources) porte la veille amont ; un job nocturne de plus faisait doublon.
-    # fiche-commune-cache : réchauffeur de cache non essentiel (la fiche commune se calcule à la demande).
     # coherence-run : le mandat ne reprend QUE filtres-sources + coherence-robinets ; la cohérence de run
     #   est couverte par ces deux + les verrous (labuse circuit verrous).
     # rapport-admin : redondant avec la Tour de contrôle (Pilotage), qui montre l'exploitation en direct.
