@@ -10,6 +10,7 @@ import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetre
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-FIX-2 D1 — saisie clavier (IDU/adresse/réf courte)
 import { Bouton } from '../ui/Bouton'
+import { Badge } from '../ui/Badge'
 
 // OUTILS-FIX-3 C1 — le verdict de scoring (verdictMeta) n'est plus affiché dans Comparer (badge « Faible »
 // retiré : on n'impose pas l'Analyse LABUSE sur cet écran). Import + helper `verdict` supprimés.
@@ -57,11 +58,9 @@ const ROWS: Row[] = [
   { label: 'Contrainte majeure', prov: 'source', val: (r) => r.contrainte_majeure ?? (r.n_contraintes ? `${r.n_contraintes} signalée(s)` : 'aucune') },
 ]
 
-// OUTILS-FIX-2 D2 — petit badge de provenance (mêmes couleurs que partout : Sourcé = mint, Estimé = ambre).
+// OUTILS-FIX-2 D2 — DA-034 : badge de provenance via le Badge partagé. Sourcé = vert, Estimé = ambre.
 function ProvBadge({ prov }: { prov: 'source' | 'estime' }) {
-  return prov === 'source'
-    ? <span className="ml-1 rounded bg-mint/15 px-1 text-[8.5px] font-medium normal-case text-mint">Sourcé</span>
-    : <span className="ml-1 rounded bg-amber-500/15 px-1 text-[8.5px] font-medium normal-case text-amber-500">Estimé</span>
+  return <Badge className="ml-1" ton={prov === 'source' ? 'vert' : 'ambre'}>{prov === 'source' ? 'Sourcé' : 'Estimé'}</Badge>
 }
 
 // O9(d) — indices des cellules gagnantes d'une ligne (peut être plusieurs en cas d'égalité).

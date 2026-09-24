@@ -12,6 +12,7 @@
 import type { Fiche } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroSegments, Line, PorteOutil, GroupLabel, Rappel } from './primitives'
+import { Badge } from '../ui/Badge'
 import { Trace } from '../../lib/trace'
 
 export function RisquesSection({ f }: { f: Fiche; idu: string }) {
@@ -32,8 +33,8 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
     <RefDrawer id="risques" icon={IC.risques} name="Risques et environnement"
       context={`${evaluees} couche${evaluees > 1 ? 's' : ''} évaluée${evaluees > 1 ? 's' : ''}`}
       value={vigilances.length === 0
-        ? <span className="pill-mint">rien à signaler</span>
-        : <span className="pill-amber">{vigilances.length} vigilance{vigilances.length > 1 ? 's' : ''}</span>}
+        ? <Badge ton="vert">rien à signaler</Badge>
+        : <Badge ton="ambre">{vigilances.length} vigilance{vigilances.length > 1 ? 's' : ''}</Badge>}
       micro={<MicroSegments n={evaluees} label={`${evaluees} couches`} />}>
       <div className="flex flex-col gap-3">
         {/* FICHE-1 lot 3 — ALÉAS EN DÉTAIL : nature · niveau · part de la parcelle · référence PPR.
@@ -50,7 +51,7 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
                       <span className="font-semibold">{a.nature}</span>
                       {a.niveau && <span className="text-txt-mut"> — niveau {a.niveau}</span>}
                       {a.part_pct != null && <span className="text-txt-mut"> · {a.part_pct} % de la parcelle</span>}
-                      {a.redhibitoire && <span className="pill-amber ml-1.5">rédhibitoire</span>}
+                      {a.redhibitoire && <Badge ton="ambre" className="ml-1.5">rédhibitoire</Badge>}
                     </div>
                     {a.ppr && a.ppr.length > 0 && (
                       <div className="text-[11.5px] text-txt-mut">

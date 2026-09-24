@@ -26,6 +26,7 @@ import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { DestinationBadge, DestinationSelect } from './DestinationSelect'
 import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
 
 const TEMPS = [5, 10, 15]
 
@@ -508,7 +509,7 @@ function ToutesEntreprises({ total, open, setOpen, data, loading, error }: {
       <button data-zone-entreprises-toggle onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left text-[12px] transition-colors duration-quick hover:border-mint/40">
         <span className="text-txt">Toutes les entreprises de la zone <b className="text-txt-hi">({nb(total)})</b></span>
-        <span className="text-mint">{open ? '▾' : '▸'}</span>
+        <Chevron open={open} />
       </button>
       {open && (
         <div className="mt-1.5 flex flex-col gap-1">
@@ -519,7 +520,7 @@ function ToutesEntreprises({ total, open, setOpen, data, loading, error }: {
               <button data-zone-famille={f.section} onClick={() => toggleFam(f.section)}
                 className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[11.5px] hover:bg-surface-2">
                 <span className="min-w-0 truncate text-txt">{f.nom}</span>
-                <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(f.n)} <span className="text-txt-dim">{ouvertes.has(f.section) ? '▾' : '▸'}</span></span>
+                <span className="shrink-0 inline-flex items-center gap-1 font-mono text-[11px] text-txt-hi">{nb(f.n)} <Chevron open={ouvertes.has(f.section)} /></span>
               </button>
               {ouvertes.has(f.section) && <FamilleEtabs f={f} ouvrirParcelle={ouvrirParcelle} />}
             </div>

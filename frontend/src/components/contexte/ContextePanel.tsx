@@ -7,6 +7,7 @@ import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { CONTACT_VIDE, ContactEdit, trimContact, type ContactForm } from '../shared/ContactEdit'  // RETOURS-8 (R6)
 import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
 const fmtV = (v: unknown, s = '') => (v == null ? '—' : `${Number(v).toLocaleString('fr-FR')}${s}`)
@@ -193,7 +194,7 @@ function LigneCarte({ id, ic, titre, sous, val, ton, badge, defaultOpen, chiffre
             : <span className="shrink-0 text-[12.5px] font-semibold" style={col ? { color: col } : undefined}>{val}</span>
           return chiffre ? <Trace id={chiffre}>{rendu}</Trace> : rendu
         })()}
-        <span className="shrink-0 text-[15px] text-txt-dim transition-transform group-open:rotate-90">›</span>
+        <Chevron open={open} className="shrink-0" />
       </summary>
       <div className="mb-1 mt-1.5 rounded-lg border border-line-2 bg-surface-1 px-3 py-2.5">{children}</div>
     </details>

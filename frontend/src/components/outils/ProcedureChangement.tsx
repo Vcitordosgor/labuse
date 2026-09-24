@@ -7,6 +7,7 @@ import { CommuneScope } from './ModulePanel'
 import { M15 } from './moteurs'
 import { VerifProcedure } from './VerifProcedure'
 import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
 
 // M137-Q — VOIE UNIFIÉE « Procédure & changement PLU ». Relie les deux écrans qui s'ignoraient :
 //   1. en tête, les communes RÉELLEMENT en procédure (radar Sudocuh, point de calcul unique) ;
@@ -33,6 +34,7 @@ export function ProcedureChangement() {
   // périmètre explicite de l'outil — amorcé sur le filtre global, puis piloté ICI.
   const [commune, setCommune] = useState<string | null>(globalCommune)
   const [openProc, setOpenProc] = useState(false)   // §5 — bandeau replié par défaut (compact)
+  const [openAttention, setOpenAttention] = useState(false)   // DA-031 — accordéon « Attention »
   // OUTILS-FIX-2 C1 — deux onglets (même patron que Scan patrimoine) : « Par parcelle » (VerifProcedure)
   // et « Simuler l'ouverture » (radar procédures + simulation AU→U). Contenu de chaque onglet inchangé.
   const [tab, setTab] = useState<'parcelle' | 'simuler'>('parcelle')
@@ -94,7 +96,7 @@ export function ProcedureChangement() {
               <span className="truncate whitespace-nowrap text-[12px] font-medium text-txt-hi">
                 {communes.length} commune{communes.length > 1 ? 's' : ''} en procédure PLU
               </span>
-              <span className="ml-auto shrink-0 whitespace-nowrap text-[11px] text-st-creuser">{openProc ? 'Replier ▾' : 'Détail ▸'}</span>
+              <span className="ml-auto flex shrink-0 items-center gap-1 whitespace-nowrap text-[11px] text-st-creuser">{openProc ? 'Replier' : 'Détail'} <Chevron open={openProc} /></span>
             </button>
             {openProc && communes.map((c) => (
               <div key={c.insee} data-procchg-commune={c.commune}
@@ -150,9 +152,11 @@ export function ProcedureChangement() {
             La simulation montre ce que la bascule AU→U y changerait.
           </div>
         )}
-        <details data-procchg-attention className="rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px] text-txt-mut">
-          <summary className="cursor-pointer list-none py-0.5 font-medium text-txt marker:hidden">
-            Attention ({commune && enProcedure ? 1 : 2}) ▾</summary>
+        <details data-procchg-attention open={openAttention}
+          onToggle={(e) => setOpenAttention((e.target as HTMLDetailsElement).open)}
+          className="rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px] text-txt-mut">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 py-0.5 font-medium text-txt marker:hidden">
+            <Chevron open={openAttention} />Attention ({commune && enProcedure ? 1 : 2})</summary>
           {!(commune && enProcedure) && (commune ? (
             <p data-procchg-statut="hypothetique" className="mt-1">
               <b className="text-txt">Aucune procédure PLU en cours</b> à {commune} au radar —

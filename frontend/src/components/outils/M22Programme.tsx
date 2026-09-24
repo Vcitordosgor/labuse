@@ -10,6 +10,7 @@ import { Tip } from '../Tip'
 import { DestinationBadge, DestinationSelect, useDestinationsRef } from './DestinationSelect'
 import { ParcelPicker } from './ParcelPicker'
 import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
 
 /** M22 · FAISABILITÉ — 2 entrées (M15-C) :
  *  · « Par critères » (SENS 2) : on décrit un programme, LABUSE propose les parcelles qui matchent.
@@ -176,12 +177,10 @@ export function M22() {
                     côté serveur avant la troncature, donc « les mieux ajustées d'abord » est vrai. */}
                 <p className="mt-0.5 text-[9.5px] leading-snug text-txt-dim">{meta.criteres.hauteur_regle} · <b className="text-txt-mut">{fmtInt(items.length)}</b> affichée{items.length > 1 ? 's' : ''} sur {fmtInt(total)}, les mieux ajustées au programme d’abord.</p>
                 {/* RETOURS-11 (O2c) — le zonage agricole/naturel est masqué par défaut ; case pour le réafficher. */}
-                <label className="mt-1 flex cursor-pointer items-center gap-1.5 text-[9.5px] text-txt-dim hover-fill rounded px-1 py-0.5">
-                  <input type="checkbox" checked={inclureAgriNat} onChange={(e) => setInclureAgriNat(e.target.checked)}
-                    className="h-3 w-3 accent-mint" />
-                  Inclure les zones agricoles (A) et naturelles (N)
-                  {masquees > 0 && !inclureAgriNat && <span className="text-txt-mut">· {fmtInt(masquees)} masquée{masquees > 1 ? 's' : ''}</span>}
-                </label>
+                <Case className="mt-1 hover-fill rounded px-1 py-0.5"
+                  checked={inclureAgriNat} onChange={(e) => setInclureAgriNat(e.target.checked)}
+                  label={<span className="text-[9.5px] text-txt-dim">Inclure les zones agricoles (A) et naturelles (N)
+                    {masquees > 0 && !inclureAgriNat && <span className="text-txt-mut"> · {fmtInt(masquees)} masquée{masquees > 1 ? 's' : ''}</span>}</span>} />
                 {/* DESTINATIONS-1 (X4.3) — l'écart est DIT : combien de parcelles la destination a écartées. */}
                 {meta.criteres.destination && (
                   <p data-prog-dest-ecartees className="mt-0.5 text-[9.5px] leading-snug text-txt-mut">
@@ -205,7 +204,7 @@ export function M22() {
                   <div key={i.idu} data-prog-item
                     className="flex w-full items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-2.5 py-2 transition-colors duration-quick hover:border-mint/50">
                     {/* A5 — case de sélection (Comparer), n'ouvre pas la fiche */}
-                    <input type="checkbox" data-prog-sel className="h-3 w-3 shrink-0 accent-mint" checked={selCmp.has(i.idu)}
+                    <Case data-prog-sel className="shrink-0" checked={selCmp.has(i.idu)}
                       onChange={() => setSelCmp((s) => { const n = new Set(s); n.has(i.idu) ? n.delete(i.idu) : n.add(i.idu); return n })} />
                     <button onClick={() => select(i.idu)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
                     <div className="min-w-0 flex-1">

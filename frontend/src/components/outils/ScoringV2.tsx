@@ -15,6 +15,7 @@ import { useState } from 'react'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
+import { Case } from '../ui/Case'
 
 type Item = {
   parcelle_id: string; mult_base: number; fraction?: string | null; percentile: number | null; rang: number | null
@@ -79,10 +80,8 @@ export function ScoringV2Module() {
         </p>
       )}
       {tab === 'top' && (
-        <label className="flex items-center gap-2 text-[11px] text-txt">
-          <input type="checkbox" checked={copro} onChange={(e) => setCopro(e.target.checked)} />
-          inclure les copropriétés (hors classement foncier par défaut)
-        </label>
+        <Case className="text-[11px] text-txt" checked={copro} onChange={(e) => setCopro(e.target.checked)}
+          label="inclure les copropriétés (hors classement foncier par défaut)" />
       )}
 
       {isLoading && <Loading label="Chargement du scoring" className="text-[11px]" />}

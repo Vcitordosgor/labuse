@@ -14,6 +14,7 @@ import { iduComplet, fmtDateSitadel } from '../../lib/format'
 import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R4.2 — recherche adresse/IDU commune
 import { CollecteProgrammes } from '../admin/Programmes'   // LOT S1 — geste admin discret réutilisant la collecte
 import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
 
 const CAT_LABEL: Record<string, string> = { promoteur: 'Promoteur', bailleur: 'Bailleur social', sem: 'SEM' }
 
@@ -196,7 +197,7 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
           <button data-vp-collecte-toggle onClick={() => setCollecteOuverte((v) => !v)}
             className="flex w-full items-center justify-between px-2.5 py-1.5 text-left text-[10.5px] text-txt-dim transition-colors hover:text-txt-mut">
             <span className="font-mono uppercase tracking-[0.14em]">Admin · collecter ses programmes depuis son site</span>
-            <span className="text-txt-off">{collecteOuverte ? '▾' : '▸'}</span>
+            <Chevron open={collecteOuverte} />
           </button>
           {collecteOuverte && (
             <div className="border-t border-line-2 p-2.5">

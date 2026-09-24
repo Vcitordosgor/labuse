@@ -102,16 +102,13 @@ function LigneParcelle({ it, onDragStart, onRetenir, onEcarter, onFiche, onVoir 
       <div className="flex justify-end gap-1.5">
         {/* RETOURS-12 J1 — ŒIL AMBRE (couleur Projet) : voir la parcelle sur la carte EN ORTHO, délimitée,
             sans quitter le projet ni perdre l'état de la liste (focusParcelle, même geste que O1/O12). */}
-        <button data-tri-voir onClick={onVoir} aria-label="Voir sur la carte (vue aérienne)"
-          className="flex h-6 w-[26px] items-center justify-center rounded-md border border-cp-amber/40 text-cp-amber transition-colors duration-quick hover:bg-cp-amber/10">
+        <Bouton icone niveau="secondaire" ton="vert" data-tri-voir onClick={onVoir} aria-label="Voir sur la carte (vue aérienne)">
           <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.6">
             <path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z" /><circle cx="10" cy="10" r="2.2" />
           </svg>
-        </button>
-        <button data-tri-retenir onClick={onRetenir} aria-label="Retenir"
-          className="flex h-6 w-[26px] items-center justify-center rounded-md border border-mint/40 text-[12px] text-mint transition-colors duration-quick hover:bg-mint/15">✓</button>
-        <button data-tri-ecarter onClick={onEcarter} aria-label="Écarter"
-          className="flex h-6 w-[26px] items-center justify-center rounded-md border border-st-ecartee/40 text-[12px] text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10">✕</button>
+        </Bouton>
+        <Bouton icone niveau="secondaire" ton="vert" data-tri-retenir onClick={onRetenir} aria-label="Retenir">✓</Bouton>
+        <Bouton icone niveau="secondaire" ton="danger" data-tri-ecarter onClick={onEcarter} aria-label="Écarter">✕</Bouton>
       </div>
     </div>
   )

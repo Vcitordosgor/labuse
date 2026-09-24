@@ -22,6 +22,8 @@ import { Siren } from '../shared/Siren'
 import { Tip } from '../Tip'
 import { CommuneScope, useModuleMap } from './ModulePanel'
 import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
+import { Chevron } from '../ui/Chevron'
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
 
@@ -86,7 +88,7 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
   return (
     <div className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5">
       <div data-bloc-row className="flex cursor-pointer items-center gap-2" onClick={onToggle}>
-        <span className="text-[9px] text-txt-dim">{ouvert ? '▾' : '▸'}</span>
+        <Chevron open={ouvert} />
         <span className="min-w-0 flex-1 truncate text-[11px] text-txt">
           {it.denomination ?? '—'}
         </span>
@@ -136,6 +138,7 @@ export function Blocs() {
   // le listing s'ouvre et le bloc de filtres se replie en accordéon. `montre` gouverne les deux.
   const [montre, setMontre] = useState(false)
   const [filtresOuverts, setFiltresOuverts] = useState(true)
+  const [methodeOuverte, setMethodeOuverte] = useState(false)   // DA-031 — tiroir « Détail et méthode »
   const voir = () => { setMontre(true); setFiltresOuverts(false) }
 
   const reset = () => { setSel(new Set()); setOpenId(null) }
@@ -170,8 +173,8 @@ export function Blocs() {
       <details data-blocs-filtres open={filtresOuverts}
         onToggle={(e) => setFiltresOuverts((e.target as HTMLDetailsElement).open)}
         className="flex flex-col gap-2">
-      <summary className="cursor-pointer list-none py-0.5 text-[11px] font-medium text-txt-dim marker:hidden hover:text-mint">
-        {filtresOuverts ? 'Filtres ▾' : 'Filtres ▸'}
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 py-0.5 text-[11px] font-medium text-txt-dim marker:hidden hover:text-mint">
+        <Chevron open={filtresOuverts} />Filtres
       </summary>
       <div className="mt-1 flex flex-col gap-2">
       <CommuneScope commune={commune} noteFiltre={false} onChange={(c) => { setCommune(c); reset() }} />
@@ -197,14 +200,14 @@ export function Blocs() {
       </div>
       {/* Propriétaires publics (commune, État, collectivité, EP, SEM — catégorie juridique de la
           source) écartés par défaut ; la case les rétablit. */}
-      <label className="flex items-center gap-2 text-[11px] text-txt-mut">
-        <input type="checkbox" data-blocs-inclure-publics className="h-3 w-3 accent-mint"
-          checked={inclurePublics} onChange={(e) => { setInclurePublics(e.target.checked); reset() }} />
-        Inclure les propriétaires publics
+      <div className="flex items-center gap-2 text-[11px] text-txt-mut">
+        <Case data-blocs-inclure-publics
+          checked={inclurePublics} onChange={(e) => { setInclurePublics(e.target.checked); reset() }}
+          label="Inclure les propriétaires publics" />
         <Tip garder tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
           <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>
-      </label>
+      </div>
       </div>
       </details>
 
@@ -242,7 +245,7 @@ export function Blocs() {
           </div>
 
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-txt-dim">
-            <input type="checkbox" aria-label="Tout sélectionner" className="h-3 w-3 accent-mint"
+            <Case aria-label="Tout sélectionner"
               checked={items.length > 0 && items.every((i) => sel.has(i.bloc_id))}
               onChange={(e) => setSel(e.target.checked ? new Set(items.map((i) => i.bloc_id)) : new Set())} />
             <span>Tout sélectionner</span>
@@ -250,7 +253,7 @@ export function Blocs() {
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
             {items.map((it) => (
               <div key={it.bloc_id} className="flex items-start gap-1.5">
-                <input type="checkbox" data-blocs-sel className="mt-2 h-3 w-3 shrink-0 accent-mint"
+                <Case data-blocs-sel className="mt-2"
                   checked={sel.has(it.bloc_id)}
                   onChange={() => setSel((s) => { const n = new Set(s); n.has(it.bloc_id) ? n.delete(it.bloc_id) : n.add(it.bloc_id); return n })} />
                 <div className="min-w-0 flex-1">
@@ -268,8 +271,10 @@ export function Blocs() {
 
       {/* pied : tiroir « Détail et méthode » (gauche) et pont Courrier (droite) */}
       <div className="flex shrink-0 items-start justify-between gap-2">
-        <details data-blocs-methode className="min-w-0 flex-1 text-xs">
-          <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
+        <details data-blocs-methode open={methodeOuverte}
+          onToggle={(e) => setMethodeOuverte((e.target as HTMLDetailsElement).open)}
+          className="min-w-0 flex-1 text-xs">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint"><Chevron open={methodeOuverte} />Détail et méthode</summary>
           <div className="flex flex-col gap-1 text-[10.5px] leading-snug text-txt-dim">
             <p><b className="text-txt-mut">Le regroupement.</b> Un bloc réunit les parcelles cadastrales en
               contact (à 0,5 m près) appartenant au MÊME propriétaire personne morale (SIREN confirmé, fichiers

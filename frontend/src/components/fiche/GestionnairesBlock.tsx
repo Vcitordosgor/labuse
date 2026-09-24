@@ -10,14 +10,15 @@
 import { BlocIndisponible } from './BlocIndisponible'
 import type { Gestionnaires, GestOperateur } from '../../lib/types'
 import { GroupLabel, FactNote } from './primitives'
+import { Badge } from '../ui/Badge'
 
 // RETOURS-20 Z2 — la confiance devient une pastille standard (tokens) : confirmé = mint,
 // à confirmer / incertain = ambre. Plus de couleur composée à la main (TOKENS.viab* + alpha).
 function Conf({ c }: { c?: GestOperateur['confidence'] }) {
   if (!c) return null
-  const meta = { high: { t: 'confirmé', cls: 'pill-mint' }, med: { t: 'à confirmer', cls: 'pill-amber' },
-                 low: { t: 'incertain', cls: 'pill-amber' } }[c]
-  return <span className={`ml-1.5 ${meta.cls}`}>{meta.t}</span>
+  const meta = { high: { t: 'confirmé', ton: 'vert' as const }, med: { t: 'à confirmer', ton: 'ambre' as const },
+                 low: { t: 'incertain', ton: 'ambre' as const } }[c]
+  return <Badge ton={meta.ton} className="ml-1.5">{meta.t}</Badge>
 }
 
 function Row({ icon, label, op, extra }: { icon: string; label: string; op: GestOperateur | null; extra?: string | null }) {

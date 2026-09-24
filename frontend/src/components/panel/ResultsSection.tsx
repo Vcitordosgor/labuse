@@ -8,6 +8,8 @@ import { ALL_TIER_META, BANDE_META, bandeMeta, etatBienMeta, signalMeta, type Ba
 import { raisonDominante } from '../../lib/raison'
 import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
+import { Chevron } from '../ui/Chevron'
+import { Tri } from '../ui/Tri'
 import { EmptyState } from '../States'
 import { useApp, type Filters } from '../../store/useApp'
 import { usePagination, ListPaginationFooter } from '../ListPagination'
@@ -431,8 +433,8 @@ function AnalyseBandeGroup({ groupe, label, color, total, filters, commune, sign
       <button data-bande-groupe={groupe} onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left hover:border-mint/50">
         <span className="flex min-w-0 items-center gap-2">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"
-            className={`shrink-0 text-txt-dim transition-transform ${open ? 'rotate-90' : ''}`}><path d="m9 18 6-6-6-6" /></svg>
+          {/* DA-FIX-3 Lot 5 (DA-031) — chevron d'accordéon partagé (fermé ▶ / ouvert ▼). */}
+          <Chevron open={open} />
           <span className="inline-flex h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
           <span className="truncate text-[12px] font-medium text-txt">{label}</span>
         </span>
@@ -645,22 +647,19 @@ export function ResultsSection() {
                 className="flex h-[15px] w-[15px] items-center justify-center rounded-full border border-line-2 text-[9px] font-bold normal-case leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
             </Tip>
           </span>
-          <div className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-line-2 bg-surface-2 p-0.5">
-            {sorts.map((s) => {
-              // M55-H point 4 : la pill Surface couvre ses DEUX sens — re-clic = inversion
+          {/* DA-FIX-3 Lot 3 (DA-027) — barre de tri extraite vers le Tri partagé. Le sens (inversion
+              Surface ↓/↑, flèche `dir`) reste calculé ici : `suffix` porte la flèche quand la pill est
+              active, `isActive` et `onSelect` gardent EXACTEMENT le comportement d'avant. */}
+          <Tri
+            options={sorts.map((s) => {
               const actif = sort === s.key || (s.key === 'surface' && sort === 'surface_asc')
-              const fleche = s.key === 'surface' && actif ? (sort === 'surface' ? ' ↓' : ' ↑')
+              const suffix = s.key === 'surface' && actif ? (sort === 'surface' ? ' ↓' : ' ↑')
                 : actif && s.dir ? ` ${s.dir}` : ''
-              return (
-                <button key={s.key} data-sort={s.key}
-                  onClick={() => setSort(s.key === 'surface' && sort === 'surface' ? 'surface_asc' : s.key)}
-                  className={`rounded-md px-3 py-1 text-[11px] transition-colors duration-quick ${
-                    actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
-                  {s.label}{fleche}
-                </button>
-              )
+              return { key: s.key, label: s.label, suffix }
             })}
-          </div>
+            isActive={(k) => sort === k || (k === 'surface' && sort === 'surface_asc')}
+            onSelect={(k) => setSort(k === 'surface' && sort === 'surface' ? 'surface_asc' : (k as SortKey))}
+          />
           {/* RECETTE-1 R25 — la ligne « Liste groupée par priorité d'action … · trier par Surface »
               est RETIRÉE (demande Vic). Le groupement reste actif ; on ne l'explique plus par ce texte. */}
         </div>}

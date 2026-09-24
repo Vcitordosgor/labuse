@@ -196,8 +196,9 @@ function FiltresSection({ open, onToggle, onRetract, fill }: { open: boolean; on
         className="group flex w-full items-center justify-between gap-2 text-left">
         <span className="label-caps">Filtres</span>
         <span className="flex items-center gap-3">
+          {/* DA-029 — pastille VERTE (aplat opaque `bg-mint text-mint-on`) du nombre de filtres actifs. */}
           {n > 0 && (
-            <span className="rounded-full bg-mint/15 px-1.5 py-0.5 text-[9.5px] font-medium text-mint">{n} actif{n > 1 ? 's' : ''}</span>
+            <span className="rounded-full bg-mint px-1.5 py-0.5 text-[10px] font-medium text-mint-on">{n} actif{n > 1 ? 's' : ''}</span>
           )}
           <ChevronSection open={open} />
         </span>
@@ -354,6 +355,8 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
 
 export function LeftPanel() {
   const { panelOpen, togglePanel, verdict } = useApp()
+  // DA-029 — nombre de filtres actifs, visible sur la languette même panneau FERMÉ.
+  const nFiltresActifs = countActiveFilters(useApp((st) => st.filters))
   // Item 1 (UX V1, mobile) : sous 640 px le panneau occupait 100 % de l'écran — la carte
   // n'existait pas. Désormais la CARTE est l'écran d'accueil mobile ; COUCHES + légende
   // VERDICT vivent dans un tiroir escamotable (bouton « Couches » flottant).
@@ -434,10 +437,14 @@ export function LeftPanel() {
       {!panelOpen ? (
         <button
           onClick={togglePanel}
-          className="hidden h-full w-8 shrink-0 items-start justify-center border-r border-line bg-surface-1 pt-5 text-txt-dim hover:text-txt sm:flex"
+          className="hidden h-full w-8 shrink-0 flex-col items-center justify-start gap-1.5 border-r border-line bg-surface-1 pt-5 text-txt-dim hover:text-txt sm:flex"
           aria-label="Déplier le panneau"
         >
           ›
+          {/* DA-029 — pastille VERTE du nombre de filtres actifs, visible panneau fermé. */}
+          {nFiltresActifs > 0 && (
+            <span className="rounded-full bg-mint px-1 py-0.5 text-[10px] font-medium leading-none text-mint-on">{nFiltresActifs}</span>
+          )}
         </button>
       ) : (
         <aside className="hidden h-full w-[clamp(240px,24vw,340px)] shrink-0 flex-col border-r border-line bg-surface-1 sm:flex">

@@ -13,6 +13,7 @@ import { Tip } from '../Tip'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
 import { trierCommunes } from '../../lib/communes'
 import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
 
 const fmt = fmtInt
 
@@ -238,7 +239,7 @@ export function M16() {
                     <div key={v.idu} data-asm-voisine={v.idu} className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5">
                       <div className="flex items-center gap-2">
                         {/* B3 — cocher = entrer dans l'assemblage (recalcul au geste « Analyser », comme aujourd'hui) */}
-                        <input type="checkbox" data-asm-voisine-sel className="h-3 w-3 shrink-0 accent-mint" checked={coche}
+                        <Case data-asm-voisine-sel checked={coche}
                           onChange={() => setMsel(coche ? msel.filter((x) => x !== v.idu) : [...msel, v.idu])} />
                         <span className="font-mono text-[11px] text-txt-hi">{v.idu.slice(8)}</span>
                         {v.meme_proprietaire && (

@@ -18,6 +18,8 @@ import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
+import { Chip } from '../ui/Chip'
 import { useFiltre } from './filtreContext'   // M120 — binding partagé (carte OU cadrage projet)
 
 // ANALYSE-1 — le récapitulatif de la Révélation parle le NOUVEAU moteur (bandes de Score) ; l'ancien
@@ -86,19 +88,8 @@ export const SIGNAUX_KEYS = ['pm_privee', 'procedure', 'permis_actif', 'permis_c
 
 const nf = new Intl.NumberFormat('fr-FR')
 
-// M55-D stage 4 : différenciation SÉLECTIONNÉ / disponible plus lisible que le tout-gris —
-// disponible = fond léger + survol menthe (ça s'active) ; sélectionné = rempli menthe, texte franc.
-function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button onClick={onClick} aria-pressed={on}
-      /* RETOURS-9 (Q9) — chip de filtre sélectionnée = pleine de sa couleur, encre sombre (pas un liseré). */
-      className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-colors duration-quick ${
-        on ? 'border-mint bg-mint font-medium text-mint-ink'
-          : 'border-line-2 bg-surface-3 text-txt-mut hover:border-mint/50 hover:text-txt'}`}>
-      {children}
-    </button>
-  )
-}
+// DA-FIX-3 Lot 1 (DA-025) — le Chip LOCAL est remplacé par le Chip partagé (`../ui/Chip`),
+// ton par défaut `vert`. Les usages (ChipGroup, SignalChip) mappent on→on, onClick→onClick.
 
 export function ChipGroup({ field, options }: { field: keyof Filters; options: { k: string; l: string }[] }) {
   const { filters, setFilter } = useFiltre()
@@ -195,11 +186,8 @@ export function ZoneSelector() {
                 {zq.data ? `${nf.format(f.n)} parcelles · ${f.zones.length} zones` : '…'}
                 {zonesSelFam > 0 && <span className="text-mint"> · {zonesSelFam} choisie{zonesSelFam > 1 ? 's' : ''}</span>}
               </span>
-              {/* RECETTE-2 (S17) — fermé → droite (▸, -90°) ; ouvert → bas (▾, sans rotation). */}
-              <svg viewBox="0 0 12 12" aria-hidden="true"
-                className={`h-3 w-3 shrink-0 text-txt-dim transition-transform duration-quick ${ouverte ? '' : '-rotate-90'}`}>
-                <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {/* DA-FIX-3 Lot 5 (DA-031) — chevron d'accordéon partagé (fermé ▶ / ouvert ▼). */}
+              <Chevron open={ouverte} />
             </button>
             {ouverte && (
               <div className="flex max-h-44 flex-col gap-0.5 overflow-y-auto border-t border-line-2 px-2 py-1.5">

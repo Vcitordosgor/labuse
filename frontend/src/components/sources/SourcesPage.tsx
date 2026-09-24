@@ -5,6 +5,7 @@ import { TOKENS } from '../../lib/tokens'
 import type { SourceInfo } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
+import { Badge as UiBadge, type BadgeTon } from '../ui/Badge'
 
 // PAGE-SOURCES-1 (lot 2) — la LICENCE (« licence ouverte »…) est retirée de la vitrine cliente : le
 // client voit la source et son producteur, pas la mention de licence (elle reste en base, lue ailleurs).
@@ -15,16 +16,14 @@ import { Loading } from '../Loading'
 // est retiré ici : ce détail vit au dashboard admin (Données / le Circuit). Les pastilles de couches
 // par source (COUCHES-REGISTRE-2 lot 3) ont elles aussi migré vers la fiche du réservoir (Données).
 
-// ── Badge (classe .badge de la maquette) : mono, majuscule, 3 variantes. `auto` = mint (le producteur
-// expose une date interrogeable), `late` = warn (#D9873D, en retard sur sa cadence), `dashed` = pointillé
-// (proxy / servi par proxys / curée manuellement — donnée approchée, jamais servie comme source).
-// CONNEXIONS-2 Lot 6.2 (KO-14) — variante `error` (rouge) : un échec d'ingestion est VISIBLE.
+// ── Badge — DA-034 : délègue au Badge partagé (3 tons). `auto` = producteur interrogeable (→ vert),
+// `late` = en retard sur sa cadence (→ ambre), `error` = échec d'ingestion VISIBLE (→ ambre), `dashed`
+// = proxy / curée manuellement — donnée approchée (→ neutre).
+const BADGE_TON: Record<'auto' | 'late' | 'dashed' | 'error', BadgeTon> = {
+  auto: 'vert', late: 'ambre', error: 'ambre', dashed: 'neutre',
+}
 function Badge({ kind, children, title }: { kind: 'auto' | 'late' | 'dashed' | 'error'; children: ReactNode; title?: string }) {
-  const base = 'shrink-0 rounded-[3px] px-1.5 py-px font-mono text-[9.5px] uppercase tracking-[.09em]'
-  if (kind === 'auto') return <span aria-label={title} className={`${base} border border-mint/40 bg-mint/10 text-mint`}>{children}</span>
-  if (kind === 'late') return <span aria-label={title} className={base} style={{ border: `1px solid ${TOKENS.warn}`, color: TOKENS.warn, background: TOKENS.warnBg }}>{children}</span>
-  if (kind === 'error') return <span aria-label={title} className={base} style={{ border: '1px solid #E05252', color: '#E05252', background: 'rgba(224,82,82,.10)' }}>{children}</span>
-  return <span aria-label={title} className={`${base} border border-dashed border-line-2 text-txt-dim`}>{children}</span>
+  return <UiBadge aria-label={title} ton={BADGE_TON[kind]}>{children}</UiBadge>
 }
 
 function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {

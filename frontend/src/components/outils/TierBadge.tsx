@@ -1,5 +1,17 @@
 import { STATUT_META, TIER_DECLASSE_META, TIER_V2_META, effectiveTier, type TierDeclasse } from '../../lib/status'
 import type { Statut } from '../../lib/types'
+import { Badge, type BadgeTon } from '../ui/Badge'
+
+// DA-034 — la couleur meta du tier (voir lib/status) est mappée vers les 3 tons du Badge :
+//   vert   = tiers hauts / positifs (verts vifs #5CE6A1 / #4ADE96) ;
+//   ambre  = intermédiaire / alerte (ambres #E8B44C / #E8B23A ET le corail d'alerte #E8695A) ;
+//   neutre = faible / gris-vert (#8FA69A / #6B7A72 / #8A8FA0 / #4A5A52 / #5C7268 …).
+function tonDeCouleur(color: string): BadgeTon {
+  const c = color.toUpperCase()
+  if (c === '#5CE6A1' || c === '#4ADE96') return 'vert'
+  if (c === '#E8B44C' || c === '#E8B23A' || c === '#E8695A') return 'ambre'
+  return 'neutre'
+}
 
 /** M5.1 lot 3.1 — badge de verdict des modules Outils : le TIER v2 effectif (étage 0 du run
  *  servi prime) est le label. Sans run v2 ni statut → « hors run » (repli honnête).
@@ -16,10 +28,5 @@ export function TierBadge({ tier, etage0, statut }: {
     ?? (tier ? TIER_DECLASSE_META[tier as TierDeclasse] : null)
     ?? (statut ? STATUT_META[statut as Statut] : null)
   if (!meta) return <span className="text-[11px] text-txt-dim">hors run</span>
-  return (
-    <span className="inline-flex items-center gap-1 whitespace-nowrap text-[11px]" style={{ color: meta.color }}>
-      <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: meta.color }} />
-      {meta.label}
-    </span>
-  )
+  return <Badge point ton={tonDeCouleur(meta.color)}>{meta.label}</Badge>
 }

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
+import { Badge } from '../ui/Badge'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
@@ -1413,8 +1414,8 @@ export function Fiche({ idu }: { idu: string }) {
               <RefDrawer id="bati" icon={IC.faisa} name="Bâti"
                 context={f.le_bien.occupation_label || 'bâti existant'}
                 value={f.le_bien.nb_batiments != null && f.le_bien.nb_batiments > 0
-                  ? <span className="pill-mint">{f.le_bien.nb_batiments} bâtiment{f.le_bien.nb_batiments > 1 ? 's' : ''}</span>
-                  : <span className="pill-mint">terrain nu</span>}>
+                  ? <Badge ton="vert">{f.le_bien.nb_batiments} bâtiment{f.le_bien.nb_batiments > 1 ? 's' : ''}</Badge>
+                  : <Badge ton="vert">terrain nu</Badge>}>
                 <BatiBlock f={f} />
               </RefDrawer>
             )}
@@ -1579,7 +1580,7 @@ export function Fiche({ idu }: { idu: string }) {
             {/* FICHE-RANGEMENT-3 Lot 4 — la commune (sous-titre) est retirée : déjà dans l'en-tête. */}
             <RefDrawer id="fiscalite" icon={IC.fiscal} name="Fiscalité et dispositifs"
               value={f.territoire_fiscal?.zfang?.regime === 'renforce'
-                ? <span className="pill-mint">ZFANG renforcé</span>
+                ? <Badge ton="vert">ZFANG renforcé</Badge>
                 : tfpb != null ? `${nf(tfpb)} %` : undefined}>
               <div className="flex flex-col gap-3">
                 <ChiffreDissous l="Taxe foncière" t={tuileTaxe} />
@@ -1674,7 +1675,7 @@ export function Fiche({ idu }: { idu: string }) {
                 Calculette, Assemblage). 11 tiroirs au total. */}
             <RefDrawer id="simulation" icon={IC.confiance} name="Simulation"
               context="charge foncière · réhabilitation · outils projet"
-              value={<span className="pill-mint">bilan</span>}>
+              value={<Badge ton="vert">bilan</Badge>}>
               <div className="flex flex-col gap-3">
                 <BilanTab idu={idu} />
                 {/* Réhabilitation (Mode B) — bloc inline (ModeBBody), plus un tiroir séparé. */}

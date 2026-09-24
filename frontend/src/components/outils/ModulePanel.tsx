@@ -51,6 +51,7 @@ import { Blocs } from './Blocs'   // OUTILS-MUSCLER-3 — assiettes contiguës d
 import { TierBadge } from './TierBadge'
 import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
 import { Retour } from '../ui/Retour'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
@@ -362,7 +363,7 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               const idu = i['idu'] as string
               return (
               <div key={idu} className="flex min-w-0 items-center gap-2">
-                <input type="checkbox" data-scan-parc-sel className="h-3 w-3 shrink-0 accent-mint" checked={sel.has(idu)}
+                <Case data-scan-parc-sel checked={sel.has(idu)}
                   onChange={() => setSel((s) => { const n = new Set(s); n.has(idu) ? n.delete(idu) : n.add(idu); return n })} />
                 <div className="min-w-0 flex-1">
                 {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée du Scan patrimoine. */}

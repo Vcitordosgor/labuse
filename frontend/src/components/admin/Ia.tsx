@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { getAdminIa, postAdminLicenceQuota, type AdminIa } from '../../lib/api'
 import { ActBtn, Chip, Lbl, Panel, PHead } from './AdminView'
+import { Chevron } from '../ui/Chevron'
 
 const eur = (v?: number | null, dec = 2) =>
   v == null ? '—' : `${v.toLocaleString('fr-FR', { minimumFractionDigits: dec, maximumFractionDigits: dec })} €`
@@ -192,8 +193,8 @@ export function IaSection() {
               .map(([m, n]) => <span key={m}> · <span className="font-mono text-cp-ia">{m}</span> ×{n}</span>)}
             {' '}· source unique <span className="font-mono">ai_models.py</span>
           </div>
-          <button onClick={() => setVoirModeles((v) => !v)} className="whitespace-nowrap text-[12.5px] text-cp-ia hover:underline">
-            {voirModeles ? 'replier' : '▸ voir la liste'}
+          <button onClick={() => setVoirModeles((v) => !v)} className="inline-flex items-center gap-1 whitespace-nowrap text-[12.5px] text-cp-ia hover:underline">
+            <Chevron open={voirModeles} />{voirModeles ? 'replier' : 'voir la liste'}
           </button>
         </div>
         {voirModeles && (

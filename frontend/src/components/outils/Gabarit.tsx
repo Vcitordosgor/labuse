@@ -5,6 +5,7 @@ import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
 
 // Outil « Gabarit réglementaire ». Traduit graphiquement et mathématiquement des règles SOURCÉES :
 // SOURCE → VALIDATION → CALCUL → AFFICHAGE. Jamais d'estimation (logements/étages/SDP/coût/valeur/
@@ -124,6 +125,7 @@ export function Gabarit() {
   const selectedIdu = useApp((s) => s.selectedIdu)
   const terrain3d = useApp((s) => s.terrain3d)
   const [idu, setIdu] = useState<string | null>(selectedIdu)
+  const [reglesOuvertes, setReglesOuvertes] = useState(false)   // DA-031 — accordéon « Voir les règles appliquées »
 
   useEffect(() => {
     if (selectedIdu && selectedIdu !== idu) setIdu(selectedIdu)
@@ -235,9 +237,11 @@ export function Gabarit() {
           </div>
 
           {/* RÈGLES APPLIQUÉES — générées depuis le moteur, aucune valeur en dur */}
-          <details data-gabarit-regles className="group rounded-lg border border-line-2 bg-surface-2">
+          <details data-gabarit-regles open={reglesOuvertes}
+            onToggle={(e) => setReglesOuvertes((e.target as HTMLDetailsElement).open)}
+            className="group rounded-lg border border-line-2 bg-surface-2">
             <summary className="hover-fill flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-3 py-2 text-[11px] text-txt">
-              <span aria-hidden className="text-txt-dim transition-transform duration-quick group-open:rotate-90">›</span>
+              <Chevron open={reglesOuvertes} />
               <b>Voir les règles appliquées</b>
             </summary>
             <div className="flex flex-col gap-2 px-3 pb-3">

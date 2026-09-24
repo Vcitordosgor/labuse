@@ -14,6 +14,7 @@
 import type { Fiche } from '../../lib/types'
 import { fmtInt } from '../../lib/format'
 import { IC, RefDrawer, FactRow, FactNote } from './primitives'
+import { Badge } from '../ui/Badge'
 
 // verdicts de forme réellement SERVIS (les autres = états « non déterminée » / « non calculée »).
 const TOIT_SERVI = new Set(['plat', 'monopente', 'double_pente', 'croupe_complexe'])
@@ -192,8 +193,8 @@ export function LeBienSection({ f }: { f: Fiche; idu: string }) {
     <RefDrawer id="le_bien" icon={IC.faisa} name="Le bien"
       context={contexteBien}
       value={nb != null && nb > 0
-        ? <span className="pill-mint">{nb} bâtiment{nb > 1 ? 's' : ''}</span>
-        : <span className="pill-mint">terrain nu</span>}>
+        ? <Badge ton="vert">{nb} bâtiment{nb > 1 ? 's' : ''}</Badge>
+        : <Badge ton="vert">terrain nu</Badge>}>
       <div className="flex flex-col gap-3">
         <BatiBlock f={f} />
         <TerrainDuBienBlock f={f} />

@@ -4,6 +4,7 @@ import { pluAnnuaireSearch, pluAnnuaireCommunes, pluAnnuairePack, type PluExtrai
 import { useApp } from '../../store/useApp'
 import { Bouton } from '../ui/Bouton'
 import { Retour } from '../ui/Retour'
+import { Chevron } from '../ui/Chevron'
 
 // M51 / M82 puis M137-P (fusion outil PLU) — ANNUAIRE PLU en DEUX ÉTAPES : (1) les 24 communes, on
 // clique celle dont on veut le PLU ; (2) deux voies — le PLU INTÉGRAL (pack officiel GPU .zip, à
@@ -239,8 +240,8 @@ function PluExtraitCard({ r }: { r: PluExtrait }) {
       </div>
       <pre className="mt-1 whitespace-pre-wrap break-words font-sans text-[11px] leading-snug text-txt">{apercu}</pre>
       {long && (
-        <Bouton niveau="lien" onClick={() => setOuvert((o) => !o)} className="mt-0.5">
-          {ouvert ? '‹ replier l’article' : 'voir l’article entier →'}
+        <Bouton niveau="lien" onClick={() => setOuvert((o) => !o)} className="mt-0.5 inline-flex items-center gap-1">
+          <Chevron open={ouvert} />{ouvert ? 'replier l’article' : 'voir l’article entier'}
         </Bouton>
       )}
       <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[10px] text-txt-dim">

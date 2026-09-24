@@ -19,6 +19,7 @@ import type { Fiche, PotentielTransformation } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroTriple, PorteOutil, StepProv, HypInput, GroupLabel, FactRow, FactNote, RefLink, Vigilance } from './primitives'
 import { Bouton } from '../ui/Bouton'
+import { Badge } from '../ui/Badge'
 
 const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280' }
 export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
@@ -565,7 +566,7 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
   // M59-P1 (Q4) — sous le seuil de SHAB : la section ne montre PAS le calcul, elle DIT pourquoi.
   if (mb.trop_petit) return (
     <div data-mode-b-section>
-      <GroupLabel right={<span className="pill-amber">non pertinent</span>}>Réhabilitation (Mode B)</GroupLabel>
+      <GroupLabel right={<Badge ton="ambre">non pertinent</Badge>}>Réhabilitation (Mode B)</GroupLabel>
       <p data-mode-b-trop-petit style={{ margin: '4px 0 0', fontSize: 11.5, lineHeight: 1.5, color: '#8FA69A' }}>
         {mb.motif ?? `Bâti trop petit (SHAB ~${mb.shab_rehabilitable_m2 ?? '—'} m²) pour une thèse de réhabilitation.`}
       </p>
@@ -578,7 +579,7 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
   return (
     <div data-mode-b-section>
       <GroupLabel right={mb.negatif
-        ? <span className="pill-amber">bilan négatif</span>
+        ? <Badge ton="ambre">bilan négatif</Badge>
         : <span className="text-[10.5px] text-txt-dim">Estimé · ~{mb.achat_max_libelle ?? ''}</span>}>Réhabilitation (Mode B)</GroupLabel>
       <div data-mode-b style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6 }}>
         {/* M101 A2 — la PORTE du mode B en tête : pourquoi cette parcelle est « bâtie »,
@@ -825,8 +826,8 @@ function DispositifsDrawer({ d }: { d: NonNullable<Fiche['dispositifs']> }) {
     <RefDrawer id="dispositifs" icon={IC.faisa} name="Dispositifs et périmètres"
       context="ER · EBC · DPU · PEB · SUP"
       value={nEls > 0
-        ? <span className="pill-amber">{nEls} périmètre{nEls > 1 ? 's' : ''}</span>
-        : <span className="pill-mint">rien à signaler</span>}>
+        ? <Badge ton="ambre">{nEls} périmètre{nEls > 1 ? 's' : ''}</Badge>
+        : <Badge ton="vert">rien à signaler</Badge>}>
       <DispositifsBody d={d} />
     </RefDrawer>
   )

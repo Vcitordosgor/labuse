@@ -11,6 +11,7 @@ import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 import { iduCourt } from '../../lib/format'
 import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
 
 // RV2-V3 — la carte est montée par la vue Veille (patron Radar) ; lazy comme dans App.
 const MapView = lazy(() => import('../map/MapView').then((m) => ({ default: m.MapView })))
@@ -271,10 +272,7 @@ function VeilleExterne() {
             <input type="number" min={0} placeholder="surface min (m²)" value={surfMin} onChange={(e) => setSurfMin(e.target.value)} className={`min-w-0 ${sel}`} />
             <input type="number" min={0} placeholder="surface max (m²)" value={surfMax} onChange={(e) => setSurfMax(e.target.value)} className={`min-w-0 ${sel}`} />
           </div>
-          <label className="flex items-center gap-2 text-[11.5px] text-txt-mut">
-            <input type="checkbox" checked={particulier} onChange={(e) => setParticulier(e.target.checked)} className="h-3.5 w-3.5 accent-mint" />
-            Particuliers seulement
-          </label>
+          <Case checked={particulier} onChange={(e) => setParticulier(e.target.checked)} label="Particuliers seulement" />
           <p className="text-[10px] leading-snug text-txt-dim">Cette veille vous alertera sur <b className="text-txt-mut">tout événement</b> d'un bien correspondant — le mail dit lequel (nouvelle annonce, baisse, retour).</p>
           <Bouton niveau="primaire" ton="vert" data-veille-ext-creer className="w-full" disabled={creer.isPending} onClick={() => creer.mutate()}>
             {creer.isPending ? 'Création…' : 'Créer la veille'}

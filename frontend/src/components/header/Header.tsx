@@ -70,6 +70,7 @@ import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
 
 // RETOURS-1 R2 (Vic) — le retrait du CP par M65 P7 est ANNULÉ : le sélecteur de communes
 // ré-affiche le code postal (source unique CP_COMMUNES, table mesurée du panneau).
@@ -481,17 +482,17 @@ function NotifBell() {
                   {(notifPrefs.data?.types ?? []).map((t) => (
                     <Fragment key={t.key}>
                       <span className="text-txt">{t.label}{t.verrou && <span className="text-txt-dim"> · toujours actif</span>}</span>
-                      <input type="checkbox" checked={t.cloche} aria-label={`${t.label} — cloche`} data-pref={`${t.key}-cloche`}
+                      <Case checked={t.cloche} aria-label={`${t.label} — cloche`} data-pref={`${t.key}-cloche`}
                         onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: e.target.checked, email: t.email, brief: t.brief })}
-                        className="mx-auto h-3.5 w-3.5 accent-mint" />
+                        className="mx-auto" />
                       {/* BRIEF — canal du matin, applicable aux chaînes 1+2 seulement (chaîne 3 = immédiat → grisé). */}
-                      <input type="checkbox" checked={t.brief && !t.brief_na} disabled={t.brief_na} aria-label={`${t.label} — brief`} data-pref={`${t.key}-brief`}
+                      <Case checked={t.brief && !t.brief_na} disabled={t.brief_na} aria-label={`${t.label} — brief`} data-pref={`${t.key}-brief`}
                         onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: t.cloche, email: t.email, brief: e.target.checked })}
-                        className="mx-auto h-3.5 w-3.5 accent-mint" />
+                        className="mx-auto" />
                       {/* M85-B — maintenance : e-mail VERROUILLÉ (non désactivable, conséquences réelles). */}
-                      <input type="checkbox" checked={t.email} disabled={t.verrou} aria-label={`${t.label} — e-mail`} data-pref={`${t.key}-email`}
+                      <Case checked={t.email} disabled={t.verrou} aria-label={`${t.label} — e-mail`} data-pref={`${t.key}-email`}
                         onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: t.cloche, email: e.target.checked, brief: t.brief })}
-                        className="mx-auto h-3.5 w-3.5 accent-mint" />
+                        className="mx-auto" />
                     </Fragment>
                   ))}
                 </div>

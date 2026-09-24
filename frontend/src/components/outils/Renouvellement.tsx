@@ -23,6 +23,8 @@ import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
+import { Tri } from '../ui/Tri'
 
 const SORTS = [
   { key: 'score', label: 'Score' },
@@ -196,13 +198,10 @@ export function DensifierTablePanel() {
           </div>
           <div className="flex items-center gap-1">
             <span className="mr-1 text-[10px] text-txt-dim">Trier :</span>
-            {SORTS.map((s) => (
-              <button key={s.key} data-densifier-tri={s.key} onClick={() => setSort(s.key)}
-                className={`whitespace-nowrap rounded px-2 py-1 text-[11px] transition-colors duration-quick ${sort === s.key ? 'border bg-surface-3 font-medium' : 'text-txt-mut hover:text-txt'}`}
-                style={sort === s.key ? { borderColor: `${TOKENS.renouv}66`, color: TOKENS.renouv } : undefined}>
-                {s.label}{sort === s.key ? ' ↓' : ''}
-              </button>
-            ))}
+            <Tri
+              options={SORTS.map((s) => ({ key: s.key, label: s.label, suffix: sort === s.key ? ' ↓' : '' }))}
+              isActive={(k) => sort === k}
+              onSelect={(k) => setSort(k as (typeof SORTS)[number]['key'])} />
           </div>
           <button onClick={() => setOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
         </div>
@@ -218,7 +217,7 @@ export function DensifierTablePanel() {
                 <tr>
                   {/* A5 — case de sélection (Comparer) */}
                   <th className="w-6 px-2 py-1.5">
-                    <input type="checkbox" aria-label="Tout sélectionner" className="h-3 w-3 accent-mint"
+                    <Case aria-label="Tout sélectionner"
                       checked={visibles.length > 0 && visibles.every((i) => sel.has(i.idu))}
                       onChange={(e) => setSel(e.target.checked ? new Set(visibles.map((i) => i.idu)) : new Set())} />
                   </th>
@@ -255,7 +254,7 @@ export function DensifierTablePanel() {
                     onClick={() => { select(it.idu); setOpen(false) }}>
                     {/* A5 — sélection (Comparer), n'ouvre pas la fiche */}
                     <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
-                      <input type="checkbox" data-densifier-sel className="h-3 w-3 accent-mint"
+                      <Case data-densifier-sel
                         checked={sel.has(it.idu)}
                         onChange={() => setSel((s) => { const n = new Set(s); n.has(it.idu) ? n.delete(it.idu) : n.add(it.idu); return n })} />
                     </td>

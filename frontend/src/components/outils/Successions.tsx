@@ -24,6 +24,7 @@ import { Siren } from '../shared/Siren'
 import { Tip } from '../Tip'
 import { CommuneScope } from './ModulePanel'
 import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
 
@@ -120,7 +121,7 @@ export function Successions() {
           {/* case « tout sélectionner » — la sélection sert le pont Courrier déplacé en pied (1B pt 6).
               Le tri serveur reste résiduel SDP décroissant ; seule l'étiquette du tri est retirée (1B pt 4). */}
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-txt-dim">
-            <input type="checkbox" aria-label="Tout sélectionner" className="h-3 w-3 accent-mint"
+            <Case aria-label="Tout sélectionner"
               checked={items.length > 0 && items.every((i) => sel.has(i.idu))}
               onChange={(e) => setSel(e.target.checked ? new Set(items.map((i) => i.idu)) : new Set())} />
             <span>Tout sélectionner</span>
@@ -131,7 +132,7 @@ export function Successions() {
                 className="hover-fill cursor-pointer rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5"
                 onClick={() => select(it.idu)}>{/* RECETTE-1 R28 — infobulle « Ouvrir la fiche » retirée */}
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" data-successions-sel className="h-3 w-3 shrink-0 accent-mint"
+                  <Case data-successions-sel className="shrink-0"
                     checked={sel.has(it.idu)} onClick={(e) => e.stopPropagation()}
                     onChange={() => setSel((s) => { const n = new Set(s); n.has(it.idu) ? n.delete(it.idu) : n.add(it.idu); return n })} />
                   <span className="font-mono text-[11px] text-txt-hi">{it.idu}</span>
