@@ -704,9 +704,11 @@ export function MapView() {
                        'gris', PERMIS_ETAT_COLOR.gris,
                        PERMIS_ETAT_COLOR.recent],
                    ['==', ['get', 'kind'], 'radar'],
+                   /* DA-FIX-4 Lot 3 (DA-039) — plus de bleu d'interface : « à revérifier » passe en ambre,
+                      l'état par défaut en neutre. (La symbologie carte police/BPE, elle, n'est pas touchée.) */
                    ['match', ['get', 'statut'],
-                     'active', '#4ADE80', 'en_vente_longue', '#E0A94F', 'a_reverifier', '#8FB4F0',
-                     'vendue', '#E2726A', '#8FB4F0'],
+                     'active', '#4ADE80', 'en_vente_longue', '#E0A94F', 'a_reverifier', '#E0A94F',
+                     'vendue', '#E2726A', '#8A968F'],
                    '#4ADE80'],
                  'circle-opacity': 0.8,
                  'circle-stroke-color': '#0b0f14', 'circle-stroke-width': 1.5 } })

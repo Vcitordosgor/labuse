@@ -8,6 +8,7 @@ import { ALL_TIER_META, BANDE_META, bandeMeta, etatBienMeta, signalMeta, type Ba
 import { raisonDominante } from '../../lib/raison'
 import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
+import { Badge } from '../ui/Badge'
 import { Chevron } from '../ui/Chevron'
 import { Tri } from '../ui/Tri'
 import { EmptyState, ErrorState } from '../States'
@@ -106,9 +107,8 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
           {(p.cluster ?? 0) > 1 && (
             <Tip tip={`Même propriétaire que ${(p.cluster ?? 0) - 1} autre(s) opportunité(s)${p.proprio ? ` — ${p.proprio}` : ''} : 1 dossier, pas ${p.cluster} lignes`}
               className="shrink-0">
-              <span className="rounded-full bg-[#1a2340] px-1.5 py-0.5 text-[9px] font-medium text-[#8FB4F0]">
-                même proprio ×{p.cluster}
-              </span>
+              {/* DA-FIX-4 Lot 3 (DA-039) — plus de bleu dans l'interface : badge neutre. */}
+              <Badge ton="neutre">même proprio ×{p.cluster}</Badge>
             </Tip>
           )}
           {p.veille && (

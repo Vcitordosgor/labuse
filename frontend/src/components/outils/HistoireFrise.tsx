@@ -30,7 +30,8 @@ const pct = (annee: number) => Math.min(100, Math.max(0, ((annee - AXE_MIN) / (A
 const FAM = {
   vente: { c: TOKENS.amber, label: 'Vente' },
   permis: { c: TOKENS.mint, label: 'Permis' },
-  proprietaire: { c: TOKENS.blue, label: 'Propriétaire' },
+  // DA-FIX-4 Lot 3 (DA-039) — plus de bleu d'interface : la catégorie « Propriétaire » passe au gris neutre DA.
+  proprietaire: { c: TOKENS.stExclue, label: 'Propriétaire' },
   decoupe: { c: TOKENS.violet, label: 'Découpe' },
 } as const
 
