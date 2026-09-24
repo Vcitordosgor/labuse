@@ -1534,12 +1534,12 @@ export function M09() {
 
 // Exporté pour test (le flux « Un lot » est le cœur du mandat PIEGES).
 export function M10() {
-  // PIEGES (refonte) : BARRE UNIQUE (SOCLE ParcelInput) + « + Ajouter » → chips du LOT (la liste du bas).
-  // Le collage en masse reste offert (SECTION+NUMÉRO, une par ligne). Plus d'export PDF (retiré).
+  // PIEGES-RISQUES-2 (Lot A) — « un lot » = l'UNION des contraintes des parcelles, lues par la MÊME
+  // fonction que « une parcelle » (couches en direct). Plus de score de risque ni de checklist cascade :
+  // l'outil ne dépend plus de l'ancien scoring. Chaque contrainte porte « N parcelles sur M ».
   const [lot, setLot] = useState<string[]>([])
   const [paste, setPaste] = useState('')
   const [msg, setMsg] = useState<string | null>(null)
-  const [showSeuils, setShowSeuils] = useState(false)   // OUTILS-FIX-4 C1 — tiroir « Comment ce score est calculé »
   const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
   const setModule = useApp((s) => s.setModule)
   // PIEGES-RISQUES-1 pt2 — ajouter une parcelle au lot AMÈNE la carte dessus (zoom + surbrillance de la
@@ -1547,9 +1547,7 @@ export function M10() {
   const select = useApp((s) => s.select)
   const focusParcelle = useApp((s) => s.focusParcelle)
   // O6(b) — n'ajoute QUE des références cadastrales résolues (IDU complet ou SECTION+NUMÉRO).
-  // Une adresse brute non rattachée à une parcelle NE DOIT JAMAIS entrer dans le lot comme chip :
-  // ParcelInput ne câble pas onAddress → l'adresse résolue arrive par onPick, l'adresse non résolue
-  // affiche son propre message (« aucune parcelle rattachée »). Le collage garde le même garde-fou.
+  // Une adresse brute non rattachée à une parcelle NE DOIT JAMAIS entrer dans le lot comme chip.
   const ajouter = (v: string) => {
     const t = iduComplet(v).toUpperCase(); if (!t) return
     if (!estIdu(t)) return   // pas une référence cadastrale (ex. adresse brute) → ignorée
@@ -1563,20 +1561,16 @@ export function M10() {
   }
   const retirer = (t: string) => setLot((l) => l.filter((x) => x !== t))
   const run = useMutation({ mutationFn: () => modDueDiligence(lot.join('\n')) })
-  const items = (run.data?.items ?? []) as Record<string, any>[]
-  const iduxResolus = items.filter((i) => 'idu' in i).map((i) => i['idu'] as string)
+  const d = run.data
+  const iduxResolus = (d?.parcelles ?? []).map((p) => p.idu)
   return (
-    // O6(c) — le PANNEAU ENTIER scrolle : le wrapper d'outil (ModulePanel) est overflow-hidden, donc
-    // M10 porte lui-même un unique conteneur défilant (flex-1 min-h-0 overflow-y-auto). Avant, seule la
-    // liste des items scrollait et le bouton « Préparer les courriers » + le bas étaient coupés.
+    // O6(c) — le PANNEAU ENTIER scrolle (le wrapper d'outil est overflow-hidden).
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <Banner>Passez plusieurs parcelles au crible d'un coup : risques, points de vigilance,
-        propriétaire — parcelle par parcelle. Ajoutez-les en tapant une adresse ou un IDU dans la
-        barre, ou en cliquant les parcelles sur la carte.</Banner>
+      <Banner>Passez plusieurs parcelles au crible d'un coup : la même lecture des couches que « Une
+        parcelle », mais réunie — chaque contrainte est listée une fois, avec le nombre de parcelles du
+        lot qu'elle touche. Ajoutez-les en tapant une adresse ou un IDU, ou en cliquant la carte.</Banner>
       {/* BARRE UNIQUE (SOCLE) + « + Ajouter » → chips du lot */}
       <div className="flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
-        {/* O6(b) — onPick ajoute l'IDU RÉSOLU ; onAddress (adresse sans parcelle rattachée) ne pousse
-            JAMAIS la chaîne brute dans le lot : il affiche un message. Fin du chip « ELACITERNE,… ». */}
         <ParcelInput dataAttr="diligence-idu" placeholder="IDU, SECTION+NUMÉRO ou adresse — puis Entrée"
           onPick={ajouter}
           onAddress={() => setMsg("Cette adresse n'a pas de parcelle rattachée — saisissez un IDU ou cliquez la parcelle sur la carte.")} />
@@ -1610,120 +1604,49 @@ export function M10() {
         className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
         {run.isPending ? 'Analyse…' : `Analyser le lot (${lot.length})`}
       </button>
-      {run.data && (
+      {d && (
         <>
-          {/* O6(d) — compteur COHÉRENT : dérivé des items réellement renvoyés (trouvées = items avec IDU,
-              demandées = nombre de lignes du résultat), plus des champs n_trouvees/n_demandes qui pouvaient
-              diverger du lot affiché. « 5/7 » contre « 6 références » disparaît. */}
-          <p className="text-[11px] text-txt-dim">{iduxResolus.length}/{items.length} référence{items.length > 1 ? 's' : ''} trouvée{iduxResolus.length > 1 ? 's' : ''}</p>
-          {/* OUTILS-FIX-4 C1 — TIROIR « Comment ce score est calculé » : les seuils qui font le résultat
-              (barème 70/50/30, emprise PPR 2 %/50 %, distances 50 m) étaient invisibles. On les EXPOSE,
-              repliés par défaut, VALEURS LUES DE LA CONFIG (run.data.seuils) — jamais réécrites en dur au
-              front. Même geste de tiroir que « Le calcul, étape par étape » de Faisabilité. */}
-          {run.data.seuils && (
-            <div>
-              <button data-diligence-seuils-toggle onClick={() => setShowSeuils((s) => !s)}
-                className="mb-1 flex w-full items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-mint transition-colors duration-quick hover:text-txt-hi">
-                <span>▾ Comment ce score est calculé</span>
-                <span>{showSeuils ? '−' : '+'}</span>
-              </button>
-              {showSeuils && (() => {
-                const s = run.data.seuils!
-                const b = s.bareme_risque
-                const icpe = s.proximite_m.icpe
-                return (
-                  <div data-diligence-seuils className="flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
-                    <div>
-                      <p className="font-medium text-txt">Barème du risque (0–100)</p>
-                      <p>Le score = la plus forte vigilance de la parcelle : contrainte bloquante <b className="text-txt">{b.bloquant}</b> · fort <b className="text-txt">{b.fort}</b> · moyen <b className="text-txt">{b.moyen}</b> · faible <b className="text-txt">{b.faible}</b> · informatif <b className="text-txt">{b.info}</b>. Propriétaire particulier : <b className="text-txt">+{b.bonus_particulier}</b> (accès via SPF, démarche en plus).</p>
-                    </div>
-                    <div>
-                      <p className="font-medium text-txt">PPR (part de surface en zone rouge)</p>
-                      <p>Liseré marginal &lt; <b className="text-txt">{s.ppr_pct.marginal}</b> % : information · au-delà : vigilance forte · ≥ <b className="text-txt">{s.ppr_pct.exclusion}</b> % : écartée. Couverture minimale d’un périmètre pour compter : <b className="text-txt">{s.ppr_pct.couverture_min}</b> %.</p>
-                    </div>
-                    <div>
-                      <p className="font-medium text-txt">Distances de proximité</p>
-                      <p>Cavité ≤ <b className="text-txt">{s.proximite_m.cavite}</b> m · mouvement de terrain ≤ <b className="text-txt">{s.proximite_m.mouvement_terrain}</b> m{icpe ? <> · ICPE ≤ <b className="text-txt">{icpe.fort}</b> m fort / <b className="text-txt">{icpe.moyen}</b> m moyen / <b className="text-txt">{icpe.faible}</b> m faible</> : ''}.</p>
-                    </div>
-                    <p className="text-[9.5px] text-txt-dim">Valeurs lues de {s.source}.</p>
-                  </div>
-                )
-              })()}
+          <p className="text-[11px] text-txt-dim">
+            <b className="text-txt-hi">{d.n_trouvees}</b> parcelle{d.n_trouvees > 1 ? 's' : ''} sur {d.n_demandes} · {' '}
+            <b className="text-txt-hi">{d.contraintes.length}</b> contrainte{d.contraintes.length > 1 ? 's' : ''} distincte{d.contraintes.length > 1 ? 's' : ''}
+          </p>
+          {/* références non résolues — dites, jamais avalées */}
+          {d.erreurs.length > 0 && (
+            <div data-diligence-erreurs className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[10.5px] text-st-ecartee">
+              {d.erreurs.length} référence{d.erreurs.length > 1 ? 's' : ''} introuvable{d.erreurs.length > 1 ? 's' : ''} : {d.erreurs.join(', ')}
             </div>
           )}
-          {/* M137-T — NON COUVERT reporté sur le LOT : un lot sans flag cascade ne doit jamais être un
-              « RAS » muet. Le bloc dit ce que la base ne couvre pas, à l'échelle des 60 parcelles. */}
-          {(run.data.non_couvert ?? []).length > 0 && (
+          {/* NON COUVERT reporté sur le LOT (source unique servitudes.NON_COUVERT) — jamais un « RAS » muet. */}
+          {(d.non_couvert ?? []).length > 0 && (
             <div data-diligence-noncouvert className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
               <p className="label-caps text-[9.5px]">Non couvert par la base — à vérifier ailleurs (vaut pour tout le lot)</p>
               <div className="mt-1 space-y-0.5">
-                {(run.data.non_couvert as string[]).map((n, i) => <p key={i} className="text-[10.5px] leading-snug text-txt-mut">○ {n}</p>)}
+                {d.non_couvert.map((n, i) => <p key={i} className="text-[10.5px] leading-snug text-txt-mut">○ {n}</p>)}
               </div>
             </div>
           )}
+          {/* UNION PAR CONTRAINTE — même carte que « Une parcelle » (catégorie · Sourcé · source·date · effet),
+              + badge « N parcelles sur M ». Les libellés/source/date sont ceux du mode parcelle, à l'identique. */}
           <div className="flex flex-col gap-1.5">
-            {items.map((i, k) => 'idu' in i ? (() => {
-              const risque = i['risque'] as number
-              const rColor = risque >= 100 ? TOKENS.stEcartee : risque >= 60 ? TOKENS.stEcartee : risque >= 30 ? TOKENS.stCreuser : TOKENS.mint
-              const rLabel = risque >= 100 ? 'bloquant' : risque >= 60 ? 'élevé' : risque >= 30 ? 'modéré' : 'faible'
-              const proprio = i['proprio'] as Record<string, any>
-              const isPM = proprio['type'] === 'personne_morale'
-              // PIEGES point 4 : la règle « age_dirigeant » (PM sans dirigeant physique daté) n'a de sens
-              // que pour une PERSONNE MORALE — sur un particulier, la cascade émet un UNKNOWN hors sujet
-              // (run précalculé, non rejouable ici) ; on le MASQUE à l'affichage. Fix côté présentation.
-              const checklist = ((i['checklist'] ?? []) as Record<string, any>[])
-                .filter((c) => isPM || c['layer'] !== 'age_dirigeant')
-              return (
-              <div key={k} data-diligence-item className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
-                <div className="flex items-center gap-2">
-                  {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée de Pièges & risques. */}
-                  <Row idu={i['idu'] as string} sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m²`} />
-                </div>
-                {/* Point 42 : score de risque consolidé (déterministe) */}
-                <div className="mt-1.5 flex items-center gap-2 text-[11px]">
-                  <span data-diligence-risque className="rounded-full px-2 py-0.5 font-medium" style={{ background: `${rColor}22`, color: rColor }}>risque {rLabel} · {risque}/100</span>
-                  <span className="truncate text-txt-dim">
-                    {proprio['type'] === 'personne_morale' ? proprio['denomination'] : 'propriétaire particulier'}
+            {d.contraintes.map((c, k) => (
+              <div key={k} data-diligence-contrainte className="rounded-lg bg-surface-3 px-3 py-2 shadow-elev-1">
+                <div className="flex flex-wrap items-baseline gap-1.5">
+                  <b className="text-[11.5px] text-txt-hi">{c.categorie}</b>
+                  <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 text-[8.5px] font-medium text-mint">Sourcé</span>
+                  <span className="text-[9.5px] text-txt-dim">{c.source}{c.date ? ` · ${c.date}` : ''}</span>
+                  <span data-diligence-part className="ml-auto rounded-full bg-surface-2 px-1.5 py-0.5 text-[9.5px] text-txt-mut">
+                    {c.n_parcelles} parcelle{c.n_parcelles > 1 ? 's' : ''} sur {d.n_parcelles}
                   </span>
                 </div>
-                {/* OUTILS-FIX-4 C2 — CATNAT (arrêtés de catastrophe naturelle, GASPAR/Géorisques) : lu par la
-                    fiche, désormais aussi par le crible. Grain COMMUNE (un arrêté couvre la commune) : nombre
-                    + le plus récent (date + péril). Sourcé, vigilance jamais verdict. */}
-                {(() => {
-                  const cat = i['catnat'] as { n: number; dernier: string | null; dernier_peril: string | null } | undefined
-                  if (!cat) return null
-                  return (
-                    <p data-diligence-catnat className="mt-1 text-[10.5px] leading-snug text-txt-mut">
-                      <span className="text-txt-dim">CATNAT (commune)</span> · {cat.n > 0 ? (
-                        <><b className="text-txt">{cat.n}</b> arrêté{cat.n > 1 ? 's' : ''} de catastrophe naturelle{cat.dernier ? <> · dernier {new Date(cat.dernier).toLocaleDateString('fr-FR')}{cat.dernier_peril ? ` (${cat.dernier_peril})` : ''}</> : ''} <span className="text-txt-off">· Sourcé</span></>
-                      ) : <span className="text-txt-dim">aucun arrêté recensé</span>}
-                    </p>
-                  )
-                })()}
-                {/* checklist — points à vérifier avant achat (facteurs cascade existants) */}
-                {checklist.length > 0 && (
-                  <div className="mt-1.5 flex flex-col gap-0.5">
-                    {checklist.slice(0, 5).map((c, ci) => (
-                      <div key={ci} className="flex gap-1.5 text-[10.5px] leading-snug">
-                        <span style={{ color: c['result'] === 'HARD_EXCLUDE' ? TOKENS.stEcartee : c['severity'] === 'fort' ? TOKENS.stCreuser : TOKENS.txtMut }}>
-                          {c['result'] === 'HARD_EXCLUDE' ? '✕' : '☐'}</span>
-                        <span className="text-txt-mut"><b className="text-txt">{c['layer']}</b> — {c['detail']}</span>
-                      </div>
-                    ))}
-                    {checklist.length === 0 && <span className="text-[10.5px] text-mint">✓ aucun point de vigilance</span>}
-                  </div>
-                )}
-                {checklist.length === 0 && <p className="mt-1.5 text-[10.5px] text-mint">✓ aucun point de vigilance cascade</p>}
-                {/* PIEGES point 3 : export PDF RETIRÉ (ni par parcelle, ni pour le lot) — l'analyse se lit ici. */}
-              </div>
-              )})() : (
-              <div key={k} className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">
-                {i['ref'] as string} — {i['erreur'] as string}
+                <p className="mt-1 text-[11px] leading-snug text-txt">{c.effet}</p>
               </div>
             ))}
+            {d.n_trouvees > 0 && d.contraintes.length === 0 && (
+              <p className="rounded-lg bg-surface-2/60 px-3 py-2 text-[11px] text-txt-mut">
+                Aucune contrainte dormante détectée sur les {d.n_trouvees} parcelle{d.n_trouvees > 1 ? 's' : ''} du lot (couches ingérées).</p>
+            )}
           </div>
-          {/* PONT COURRIER (mandat COURRIER, addendum) : le lot analysé s'exporte vers l'outil Courrier
-              pré-rempli — même canal que l'import Assemblage (courrierPrefillIdus). */}
+          {/* PONT COURRIER — le lot s'exporte vers l'outil Courrier pré-rempli (courrierPrefillIdus). */}
           {iduxResolus.length > 0 && (
             <button data-diligence-courrier
               onClick={() => { setCourrierPrefillIdus(iduxResolus); setModule('courriers') }}

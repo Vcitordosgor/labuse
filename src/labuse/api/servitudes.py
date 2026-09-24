@@ -152,15 +152,18 @@ def _detail(kind: str, subtype: str | None, name: str | None, attrs: dict | None
     return name or subtype or "parcelle concernée"
 
 
-@router.get("/{idu}")
-def servitudes_invisibles(idu: str, db: Session = Depends(get_db)) -> dict:
-    """IDU → synthèse des servitudes/contraintes dormantes intersectant la parcelle, chacune sourcée + datée."""
-    if db.execute(text("SELECT to_regclass('spatial_layers')")).scalar() is None:
-        raise HTTPException(503, "Couche spatial_layers absente.")
-    exists = db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).first()
-    if not exists:
-        raise HTTPException(404, "Parcelle inconnue")
+AVERTISSEMENT = ("Lecture des couches déjà ingérées — sourcée et datée. L'absence d'une servitude ici "
+                 "ne vaut pas absence réelle (couches non exhaustives) ; vérifiez le certificat d'urbanisme.")
 
+
+def contraintes_parcelle(db: Session, idu: str) -> list[dict]:
+    """PIEGES-RISQUES-2 (Lot A) — FONCTION PARTAGÉE, point de vérité unique des contraintes dormantes
+    d'UNE parcelle, lues EN DIRECT dans `spatial_layers`. Utilisée par les trois surfaces :
+    l'endpoint « une parcelle » (`servitudes_invisibles`), l'outil « un lot » (`/modules/duediligence`,
+    qui en fait l'UNION) et la fiche parcelle §Pièges & risques. Même source, même filtrage
+    (assainissement → ANC seul ; prescriptions GPU → pièges fonciers seuls), mêmes libellés (`_detail`),
+    même millésime par contrainte. Retourne `[{categorie, effet, source, date}]` trié par catégorie
+    (`[]` si aucune). Ne vérifie PAS l'existence de la parcelle — l'appelant s'en charge."""
     rows = db.execute(text(
         """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
            SELECT sl.kind, sl.subtype, sl.name, sl.attrs,
@@ -178,7 +181,7 @@ def servitudes_invisibles(idu: str, db: Session = Depends(get_db)) -> dict:
         # 67 208 parcelles avant ce filtre). L'assainissement complet vit dans le bloc `anc` de la fiche.
         if r["kind"] == "zonage_assainissement" and (r["subtype"] or "").lower() != "anc":
             continue
-        # RECETTE-3 (T5) — plu_gpu_prescription : seuls ER (05) et EBC (01) sont des pièges fonciers.
+        # RECETTE-3 (T5) — plu_gpu_prescription : seuls les typepsc « pièges fonciers » sont surfacés.
         if r["kind"] == "plu_gpu_prescription" and (r["subtype"] or "") not in _PRESCRIPTION_PIEGE:
             continue
         detail = _detail(r["kind"], r["subtype"], r["name"], r["attrs"])
@@ -189,10 +192,20 @@ def servitudes_invisibles(idu: str, db: Session = Depends(get_db)) -> dict:
         items.append({"categorie": _KINDS.get(r["kind"], r["kind"]), "effet": detail,
                       "source": r["source"] or "spatial_layers", "date": str(r["date_source"]) if r["date_source"] else None})
     items.sort(key=lambda x: x["categorie"])
+    return items
 
+
+@router.get("/{idu}")
+def servitudes_invisibles(idu: str, db: Session = Depends(get_db)) -> dict:
+    """IDU → synthèse des servitudes/contraintes dormantes intersectant la parcelle, chacune sourcée + datée."""
+    if db.execute(text("SELECT to_regclass('spatial_layers')")).scalar() is None:
+        raise HTTPException(503, "Couche spatial_layers absente.")
+    exists = db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).first()
+    if not exists:
+        raise HTTPException(404, "Parcelle inconnue")
+    items = contraintes_parcelle(db, idu)
     return {"idu": idu, "n": len(items), "servitudes": items,
             "synthese": (f"{len(items)} servitude(s)/contrainte(s) dormante(s) intersecte(nt) cette parcelle."
                          if items else "Aucune servitude dormante détectée dans les couches ingérées."),
             "non_couvert": _NON_COUVERT,
-            "avertissement": ("Lecture des couches déjà ingérées — sourcée et datée. L'absence d'une servitude ici "
-                              "ne vaut pas absence réelle (couches non exhaustives) ; vérifiez le certificat d'urbanisme.")}
+            "avertissement": AVERTISSEMENT}
