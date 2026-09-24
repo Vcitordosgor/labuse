@@ -203,4 +203,8 @@ def test_front_un_seul_composant_plus_d_autocompletion_maison():
     header = (ROOT / "frontend/src/components/header/Header.tsx").read_text(encoding="utf-8")
     assert "'adresse', 'cadastre', 'proprietaire', 'siren'" in header
     mp = (ROOT / "frontend/src/components/outils/ModulePanel.tsx").read_text(encoding="utf-8")
-    assert "grammaires={['adresse', 'cadastre', 'commune']}" in mp
+    # RECHERCHE-2 Lot 2 — la barre permis accepte AUSSI propriétaire + SIREN (+ le sous-panneau partagé
+    # OwnerParcelles) ; le champ interne mort de M02 (doublon de Scan patrimoine) a été retiré.
+    assert "grammaires={['adresse', 'cadastre', 'commune', 'proprietaire', 'siren']}" in mp
+    assert "OwnerParcelles" in mp
+    assert 'placeholder="SIREN ou nom (ex. CBO, SCI…)"' not in mp   # doublon M02 supprimé

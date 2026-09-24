@@ -62,7 +62,7 @@ describe('RECHERCHE-2 Lot 1 — ParcelInput, 4 familles par défaut', () => {
     fireEvent.mouseDown(opt)
     // le sous-panneau liste ses parcelles
     const parcelles = await waitFor(() => {
-      const els = document.querySelectorAll('[data-parcelinput-owner-parcelle]')
+      const els = document.querySelectorAll('[data-owner-parcelle]')
       expect(els.length).toBe(2)
       return els
     })
@@ -84,7 +84,7 @@ describe('RECHERCHE-2 Lot 1 — ParcelInput, 4 familles par défaut', () => {
     fireEvent.mouseDown(opt)
     await waitFor(() => expect(owners).toEqual(['452038805']))
     // pas de sous-panneau parcelle, pas d'appel patrimoine
-    expect(document.querySelector('[data-parcelinput-owner]')).toBeFalsy()
+    expect(document.querySelector('[data-owner-parcelles]')).toBeFalsy()
     expect(calls.some((u) => u.includes('/modules/patrimoine'))).toBe(false)
   })
 })

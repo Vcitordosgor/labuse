@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { estIdu, estSectionNumero, iduComplet, iduCourt, normSectionNumero } from '../lib/format'
 import { fmtM2 } from '../lib/format'
-import { modPatrimoine, searchParcels, type SuggestItem, type SuggestType } from '../lib/api'
+import { searchParcels, type SuggestItem, type SuggestType } from '../lib/api'
 import { useApp } from '../store/useApp'
 import { AddressAutocomplete } from './AddressAutocomplete'
+import { OwnerParcelles } from './OwnerParcelles'
 import { Bouton } from './ui/Bouton'
 
 // PATRON OMNIBOX (M137) — UN SEUL champ pour désigner une parcelle : adresse (autocomplétion BAN)
@@ -33,11 +34,9 @@ import { Bouton } from './ui/Bouton'
 //   • onProprietaire(siren) : un outil qui part du PROPRIÉTAIRE (Scan patrimoine) le fournit → le
 //     pick propriétaire lui est remonté DIRECTEMENT (pas de sous-panneau parcelle). Absent → sous-panneau.
 type Candidate = { idu: string; commune: string; surface_m2: number | null }
-type OwnerParcelle = { idu: string; commune: string; surface_m2: number | null }
 
 // Les 4 grammaires du mandat, en CONSTANTE de module (référence stable → pas de relance d'effet).
 const GRAMMAIRES_DEFAUT: SuggestType[] = ['adresse', 'cadastre', 'proprietaire', 'siren']
-const OWNER_PAGE = 200   // même pagination que la liste patrimoine (M02) : « voir N de plus » au-delà.
 
 export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, autoFocus, withCarte = true, dataAttr, grammaires = GRAMMAIRES_DEFAUT }: {
   onPick: (idu: string) => void
@@ -56,15 +55,11 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
   const [msg, setMsg] = useState<string | null>(null)
   const [candidats, setCandidats] = useState<Candidate[] | null>(null)
   const [ref, setRef] = useState<string>('')      // la référence courte cherchée (pour le message)
-  // RECHERCHE-2 Lot 1 — sous-panneau propriétaire : ses parcelles, paginées, avec « voir N de plus ».
+  // RECHERCHE-2 Lot 1 — un pick propriétaire ouvre le sous-panneau PARTAGÉ « ses parcelles » (OwnerParcelles).
   const [owner, setOwner] = useState<{ siren: string; nom: string } | null>(null)
-  const [ownerParcelles, setOwnerParcelles] = useState<OwnerParcelle[]>([])
-  const [ownerTotal, setOwnerTotal] = useState(0)
-  const [ownerBusy, setOwnerBusy] = useState(false)
-  const [ownerErr, setOwnerErr] = useState<string | null>(null)
   const attr = dataAttr ? { [`data-${dataAttr}`]: '' } : {}
 
-  const clearRepliques = () => { setMsg(null); setCandidats(null); setOwner(null); setOwnerParcelles([]); setOwnerErr(null) }
+  const clearRepliques = () => { setMsg(null); setCandidats(null); setOwner(null) }
 
   // Résout une référence courte (section+numéro) via /parcels/search. Présélectionne la commune
   // du contexte en tête. 0 → message honnête ; 1 → onPick direct ; N → liste de désambiguïsation.
@@ -90,26 +85,6 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
     }
   }
 
-  // RECHERCHE-2 Lot 1 — un propriétaire est choisi dans les suggestions : on liste SES parcelles
-  // (mêmes données que Scan patrimoine, /modules/patrimoine, paginées par 200) et on laisse choisir.
-  // offset > 0 : « voir N de plus » (on APPEND, on ne rejoue pas la page 0).
-  const chargerProprietaire = async (siren: string, nom: string, offset = 0) => {
-    if (offset === 0) { setMsg(null); setCandidats(null); setOwner({ siren, nom }); setOwnerParcelles([]); setOwnerTotal(0) }
-    setOwnerErr(null); setOwnerBusy(true)
-    try {
-      const p = await modPatrimoine(siren, OWNER_PAGE, offset) as { nom?: string; n_parcelles?: number; items?: OwnerParcelle[] }
-      const items = (p.items ?? []).map((i) => ({ idu: String(i.idu), commune: String(i.commune ?? ''), surface_m2: i.surface_m2 ?? null }))
-      setOwnerTotal(p.n_parcelles ?? items.length)
-      setOwnerParcelles((prev) => (offset === 0 ? items : [...prev, ...items]))
-      if (p.nom) setOwner({ siren, nom: p.nom })
-      if (offset === 0 && (p.n_parcelles ?? 0) === 0) {
-        setOwnerErr(`${nom || 'Ce propriétaire'} ne détient aucune parcelle à La Réunion dans les fichiers fonciers (DGFiP).`)
-      }
-    } catch {
-      setOwnerErr('Patrimoine indisponible pour le moment — réessayez.')
-    } finally { setOwnerBusy(false) }
-  }
-
   return (
     <div className="flex flex-col gap-1.5">
       <AddressAutocomplete
@@ -124,7 +99,7 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
           if ((it.type === 'proprietaire' || it.type === 'siren') && it.siren) {
             setMsg(null); setCandidats(null)
             if (onProprietaire) onProprietaire(it.siren, it.label)
-            else void chargerProprietaire(it.siren, it.label)
+            else setOwner({ siren: it.siren, nom: it.label })
           }
         }}
         onSelect={(sel) => {
@@ -162,38 +137,12 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
           ))}
         </div>
       )}
-      {/* RECHERCHE-2 Lot 1 — SOUS-PANNEAU propriétaire : ses parcelles, on en choisit une (→ onPick,
-          comme un clic carte). « voir N de plus » au-delà de 200 ; « changer » ferme le panneau. */}
+      {/* RECHERCHE-2 Lot 1/2 — SOUS-PANNEAU propriétaire PARTAGÉ : ses parcelles, on en choisit une
+          (→ onPick, comme un clic carte) ; « voir N de plus » au-delà de 200 ; « changer » ferme. */}
       {owner && (
-        <div data-parcelinput-owner className="flex flex-col gap-0.5 rounded-md border border-line-2 bg-surface-2 p-1.5">
-          <div className="flex items-baseline justify-between gap-2 px-1 pb-0.5">
-            <p className="min-w-0 truncate text-[10px] text-txt-dim">
-              <span className="font-medium text-txt-hi">{owner.nom}</span>
-              {ownerTotal > 0 && <> — {ownerTotal} parcelle{ownerTotal > 1 ? 's' : ''} — choisissez :</>}
-            </p>
-            <button data-parcelinput-owner-changer onClick={clearRepliques}
-              className="shrink-0 text-[10px] text-mint underline underline-offset-2 hover:text-mint/80">changer</button>
-          </div>
-          {ownerErr && <p data-parcelinput-owner-msg className="px-1 text-[10.5px] text-st-creuser">{ownerErr}</p>}
-          {ownerParcelles.map((p) => (
-            <button key={p.idu} data-parcelinput-owner-parcelle
-              onClick={() => { const idu = p.idu; clearRepliques(); onPick(idu) }}
-              className="hover-fill flex items-baseline justify-between gap-2 rounded px-2 py-1 text-left text-[11px] text-txt transition-colors duration-quick">
-              <span className="font-medium text-txt-hi">{p.commune}</span>
-              <span className="flex items-baseline gap-2 text-[10px] text-txt-dim">
-                <span>{fmtM2(p.surface_m2)}</span>
-                <span className="font-mono">{iduCourt(p.idu)}</span>
-              </span>
-            </button>
-          ))}
-          {ownerBusy && <p className="px-2 py-1 text-[10px] text-txt-dim" aria-hidden>…</p>}
-          {!ownerBusy && ownerParcelles.length < ownerTotal && (
-            <button data-parcelinput-owner-plus onClick={() => void chargerProprietaire(owner.siren, owner.nom, ownerParcelles.length)}
-              className="rounded px-2 py-1 text-left text-[10.5px] text-mint hover:underline">
-              voir {ownerTotal - ownerParcelles.length} de plus
-            </button>
-          )}
-        </div>
+        <OwnerParcelles siren={owner.siren} nom={owner.nom}
+          onPick={(idu) => { clearRepliques(); onPick(idu) }}
+          onChanger={clearRepliques} />
       )}
       {/* DA-FIX-2 Lot 2 (DA-002) — LE clic-carte, un seul rendu partout : séparateur « ou » +
           Bouton secondaire. Toujours offert (les deux gestes). Une parcelle déjà cliquée sur la
