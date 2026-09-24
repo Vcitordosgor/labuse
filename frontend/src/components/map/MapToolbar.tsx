@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useApp, type Basemap, type MapTool } from '../../store/useApp'
 import { ORTHO_YEARS } from './basemaps'   // FIX-FONDS B5 — millésimes partagés avec l'outil TEMPS
 import { Tip } from '../Tip'   // M62-P1 (c) : infobulles à 150 ms (survol) / immédiat (focus/clic)
+import { Chip } from '../ui/Chip'   // RETOURS-13 P4 — chip « Bâtiments » (bâti 3D optionnel)
 
 // M105 P4.2 — SOMBRE EN PREMIER (défaut au boot : readBasemap = 'dark', vérifié).
 // COUCHES-STYLE-6 : le fond « Clair » est RETIRÉ du sélecteur (bouton + option). Restent Sombre,
@@ -33,7 +34,7 @@ const TOOLS: { key: MapTool; label: string; icon: JSX.Element; tip: string }[] =
 ]
 
 export function MapToolbar() {
-  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone, selectedIdu, view, contexteCommune } = useApp()
+  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, batiVisible, setBatiVisible, tool, setTool, zone, setZone, selectedIdu, view, contexteCommune } = useApp()
   // M58-P1 (point carte) : quand la fiche (aside 400px, à droite) est ouverte, elle recouvrait ces
   // contrôles. On les décale vers la gauche de la largeur de la fiche (+16px de marge), transition
   // 180ms, retour à la fermeture. Aucun contrôle inaccessible.
@@ -114,6 +115,15 @@ export function MapToolbar() {
       >
         3D
       </button>
+      {/* RETOURS-13 P4 — chip « Bâtiments » (bâti extrudé) VISIBLE UNIQUEMENT en 3D. On par défaut :
+          off → relief seul (bâti à plat). État de session (store), pas en base. S'applique à la carte
+          principale ET à l'outil Gabarit (bâti existant GABARIT-6, même chip). */}
+      {terrain3d && (
+        <Chip data-chip-batiments on={batiVisible} ton="vert" onClick={() => setBatiVisible(!batiVisible)}
+          className="shadow-elev-1" aria-label="Afficher les bâtiments en 3D">
+          Bâtiments
+        </Chip>
+      )}
       </div>
 
       {/* outils de mesure */}

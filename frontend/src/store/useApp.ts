@@ -194,7 +194,9 @@ const readBasemap = (): Basemap => 'dark'
 // FIX-FONDS B5 — les 7 millésimes d'ortho (Actuelle + les 6 de TEMPS_MILLESIMES) : le sélecteur de
 // fonds et l'outil TEMPS partagent le même jeu (cf. basemaps.ORTHO_YEARS).
 export type OrthoYear = 'now' | '1950' | '2000' | '2006' | '2011' | '2016' | '2021'
-export type MapTool = 'distance' | 'surface' | 'alti' | 'zone'
+// RETOURS-13 P6 — 'profil' : tracer une ligne sur la carte → coupe altimétrique (bouton « Tracer un
+// autre profil » du tiroir Terrain). Réutilise la machine à mesurer (points cliqués + Entrée valide).
+export type MapTool = 'distance' | 'surface' | 'alti' | 'zone' | 'profil'
 
 // OUTILS-FIX-3 Lot D — FIL DE RETOUR ENTRE OUTILS. Une pile (`outilRetour`) empilée par les ponts
 // FIX-2 (Scan→Courrier, Densifier→Faisabilité, Étudier→Faisabilité/Assemblage, Permis→Scan,
@@ -444,8 +446,17 @@ interface AppState {
   setOrthoYear: (y: OrthoYear) => void
   terrain3d: boolean
   toggleTerrain: () => void
+  // RETOURS-13 P4 — le bâti extrudé est OPTIONNEL en 3D (chip « Bâtiments »). État de SESSION
+  // (pas en base). On par défaut : passer en 3D montre relief + bâti comme avant. Off → relief seul
+  // (le bâti reste à plat : l'empreinte 2D grise du Gabarit demeure ; carte principale = pas d'extrusion).
+  batiVisible: boolean
+  setBatiVisible: (v: boolean) => void
   tool: MapTool | null
   setTool: (t: MapTool | null) => void
+  // RETOURS-13 P6 — ligne dessinée pour la coupe altimétrique (sommets [lon, lat]) ; posée par la
+  // machine à mesurer (MapView, tool 'profil', validée par Entrée), lue par le tiroir Terrain.
+  profilLigne: [number, number][] | null
+  setProfilLigne: (l: [number, number][] | null) => void
   zone: [number, number][] | null // polygone [lng,lat] dessiné → filtre les résultats
   setZone: (z: [number, number][] | null) => void
   // ── Modules outils (filtres savants, accent violet) ──
@@ -870,8 +881,12 @@ export const useApp = create<AppState>((set, get) => ({
   setOrthoYear: (orthoYear) => set({ orthoYear, basemap: 'ortho' }),
   terrain3d: false,
   toggleTerrain: () => set((s) => ({ terrain3d: !s.terrain3d })),
+  batiVisible: true,   // RETOURS-13 P4 — bâti extrudé visible par défaut en 3D
+  setBatiVisible: (v) => set({ batiVisible: v }),
   tool: null,
   setTool: (tool) => set({ tool }),
+  profilLigne: null,   // RETOURS-13 P6
+  setProfilLigne: (profilLigne) => set({ profilLigne }),
   zone: null,
   setZone: (zone) => set({ zone }),
   module: null,

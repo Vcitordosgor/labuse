@@ -7,18 +7,15 @@
  */
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { faisabiliteExplain, getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, patchPipeline, postChargeFonciere, postFaisabiliteRecalcul, type CalculetteDefaults } from '../../lib/api'
+import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, patchPipeline, postChargeFonciere, postFaisabiliteRecalcul, type CalculetteDefaults } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
-import { AvisIA } from '../AvisIA'
-import { renderRich } from './AskBar'
 import { BlocIndisponible } from './BlocIndisponible'
 import type { Fiche, PotentielTransformation } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroTriple, PorteOutil, StepProv, HypInput, GroupLabel, FactRow, FactNote, RefLink, Vigilance } from './primitives'
-import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 
 const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280' }
@@ -365,16 +362,16 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
 // Badges ÉQUIPEMENTS (mandat wave-ortho Lot 6) : piscine / PV / CES / pente — dans la
 // synthèse, sourcés « ortho IGN 2025, fiabilité statistique, non contractuelle ».
 
-// OUTILS-FIX-3 Lot F — `embedded` : FaisabiliteTab est partagé entre la FICHE (garde l'IA) et l'OUTIL
-// Faisabilité (M22, mode « par parcelle »). Hors fiche, on cantonne l'IA : le bouton « Expliquer ce
-// calcul en clair » (faisabiliteExplain) et l'encart AvisIA ne s'affichent QUE dans la fiche. Le calcul
-// tracé, la capacité et la charge foncière restent — l'outil ne perd pas son contenu utile (F3).
-export function FaisabiliteTab({ idu, embedded }: { idu: string; embedded?: boolean }) {
+// OUTILS-FIX-3 Lot F / RETOURS-13 P2 — `embedded` : FaisabiliteTab est partagé entre la FICHE et
+// l'OUTIL Faisabilité (M22, mode « par parcelle »). Le bouton IA « Expliquer ce calcul en clair »
+// (faisabiliteExplain) a été RETIRÉ des deux (RETOURS-13 P2 : un bloc, un rendu ; le Copilote reste
+// par « Poser une question »). `embedded` ne cantonne plus d'IA ici ; le calcul tracé, la capacité
+// et la charge foncière restent identiques en fiche comme dans l'outil.
+export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
   // §1e — le calcul étape par étape est OUVERT par défaut (on passait à côté quand il était replié) ;
   // mis en valeur dans un encadré dédié « Le calcul, étape par étape » plutôt qu'un accordéon discret.
   const [showSteps, setShowSteps] = useState(true)
-  const explain = useMutation({ mutationFn: () => faisabiliteExplain(idu) })
   // FAISABILITE-1 (lot D) — HYPOTHÈSES MODIFIABLES : les lignes Estimé/Dérivé sont éditables → recalcul
   // immédiat de TOUT ce qui suit par le MOTEUR (endpoint /recalcul, aucune reimplémentation). Les valeurs
   // se GARDENT DANS LE PROJET (prospection.faisa_overrides de l'entrée pipeline — jamais en base hors
@@ -427,7 +424,6 @@ export function FaisabiliteTab({ idu, embedded }: { idu: string; embedded?: bool
         prov: 'derive',   // LOT2 — la clé StepProv est 'derive' (sans accent) ; 'dérivé' retombait sur « — »
       }]
     : steps
-  const ex = explain.data
   // M58-P1 (c) : « un zéro n'est pas une absence ». Capacité réelle = fourchette logements > 0.
   const logAuSol = Array.isArray(fo.logements_au_sol) ? fo.logements_au_sol : null
   const logMax = logAuSol ? Math.max(logAuSol[0] ?? 0, logAuSol[1] ?? 0) : null
@@ -529,32 +525,10 @@ export function FaisabiliteTab({ idu, embedded }: { idu: string; embedded?: bool
         </div>
       )}
 
-      {/* ── EXPLIQUER CE CALCUL EN CLAIR (IA, sur clic) — M58-P1 (e) : SEULEMENT s'il y a un
-          calcul à expliquer (steps > 0). Sur une parcelle non calculable (0 step), pas de bouton.
-          OUTILS-FIX-3 Lot F — l'IA est cantonnée à la fiche parcelle et au Copilote : `!embedded`
-          (l'outil Faisabilité, qui embarque ce composant, n'affiche donc pas ce point d'entrée IA). ── */}
-      {!embedded && cap && steps.length > 0 && (
-        <div data-faisa-explain>
-          {!ex && !explain.isPending && (
-            <Bouton niveau="secondaire" ton="ia" onClick={() => explain.mutate()} data-faisa-explain-btn className="w-full">
-              <svg viewBox="0 0 20 20" className="h-3.5 w-3.5"><path d="M10 3.5 L11.6 8.4 L16.5 10 L11.6 11.6 L10 16.5 L8.4 11.6 L3.5 10 L8.4 8.4 Z" fill="currentColor" /></svg>
-              Expliquer ce calcul en clair
-            </Bouton>
-          )}
-          {explain.isPending && <p className="flex items-center gap-2 py-2 text-[11px] text-violet"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-violet" /> L'IA lit les étapes du calcul…</p>}
-          {explain.isError && <p className="py-1 text-[11px] text-st-ecartee">Explication indisponible — réessayez.</p>}
-          {ex && ex.disponible === false && <p className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">{ex.message}</p>}
-          {ex && ex.disponible && ex.rejected && <p className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] text-st-creuser">{ex.texte}</p>}
-          {ex && ex.disponible && !ex.rejected && (
-            <div className="rounded-lg border border-violet/40 bg-violet/[0.07] px-3 py-2.5">
-              <AvisIA className="mb-2 border-violet/25 bg-violet/[0.05] text-txt-mut" />
-              <p className="mb-1 font-mono text-[10px] tracking-widest text-violet">✦ EXPLICATION IA — À PARTIR DES ÉTAPES</p>
-              <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-txt">{renderRich(ex.texte ?? '')}</p>
-              <p className="mt-1.5 text-[9px] leading-snug text-txt-dim">L'IA narre les étapes ci-dessus (elle ne recalcule rien) ; chaque chiffre est ancré sur une étape. Estimation indicative, ne vaut pas conseil.</p>
-            </div>
-          )}
-        </div>
-      )}
+      {/* RETOURS-13 P2 — le bouton violet « Expliquer ce calcul en clair » (faisabiliteExplain) et
+          son encart AvisIA sont RETIRÉS du tiroir Potentiel. Bloc partagé fiche + outil Faisabilité :
+          un bloc, un rendu → il part des deux. Le Copilote reste accessible par « Poser une question »
+          (en-tête de fiche). Le calcul étape par étape, la capacité et la charge foncière restent. */}
 
       {/* M60 P1a — la CALCULETTE interactive a quitté la fiche : elle vit dans l'outil « Calculette
           foncière » (moteur unique). La fiche garde le bilan en LECTURE (capacité/gabarit/SDP ci-dessus)

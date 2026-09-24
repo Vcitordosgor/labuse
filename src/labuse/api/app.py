@@ -5474,6 +5474,44 @@ def parcel_hauteur_lidar(idu: str, db: Session = Depends(get_db)) -> dict:
     return {"idu": idu, **res}
 
 
+class ProfilLigneIn(BaseModel):
+    # RETOURS-13 P6 — ligne dessinée sur la carte, sommets [[lon, lat], …] en WGS84.
+    ligne: list[list[float]]
+
+
+@app.get("/parcels/{idu}/profil-altimetrique")
+def parcel_profil_altimetrique(idu: str, db: Session = Depends(get_db)) -> dict:
+    """RETOURS-13 P6 — PROFIL ALTIMÉTRIQUE le long du plus grand axe de la parcelle, lu LIVE dans le
+    RGE ALTI (raster 5 m en base, complété au service IGN là où la tuile manque). Rien en base.
+    Vocabulaire cartes.gouv (distance, dénivelés +/-, pente moyenne, plus forte pente)."""
+    idu = _check_idu(idu)
+    pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    if pid is None:
+        raise HTTPException(404, "parcelle inconnue")
+    try:
+        from ..faisabilite.profil_altimetrique import profil_parcelle
+        res = profil_parcelle(db, idu)
+    except Exception as exc:  # noqa: BLE001 — jamais un 500 sur la fiche
+        log.warning("profil-altimetrique %s : %s", idu, exc)
+        return {"idu": idu, "disponible": False, "points": [], "motif": "relief indisponible"}
+    if res is None:
+        raise HTTPException(404, "parcelle inconnue")
+    return {"idu": idu, **res}
+
+
+@app.post("/parcels/profil-altimetrique")
+def parcel_profil_ligne(inp: ProfilLigneIn, db: Session = Depends(get_db)) -> dict:
+    """RETOURS-13 P6 — même coupe, le long d'une LIGNE dessinée (« Tracer un autre profil »)."""
+    if len(inp.ligne) < 2:
+        raise HTTPException(400, "au moins deux points")
+    try:
+        from ..faisabilite.profil_altimetrique import profil_ligne
+        return profil_ligne(db, inp.ligne)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("profil-altimetrique (ligne) : %s", exc)
+        return {"disponible": False, "points": [], "motif": "relief indisponible"}
+
+
 @app.get("/parcels/{idu}/zone")
 def parcel_zone(idu: str, mode: str = "pied", minutes: int = Query(15, ge=1, le=60),
                 db: Session = Depends(get_db)) -> dict:
