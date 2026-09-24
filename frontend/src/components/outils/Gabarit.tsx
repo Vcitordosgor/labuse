@@ -161,7 +161,14 @@ export function Gabarit() {
   // GABARIT-6 lot B : référence + commune de la parcelle (servies par raccordement.parcelle), affichées
   // même quand le calcul est incomplet, au-dessus du motif.
   const parcelle = (res?.raccordement?.parcelle ?? null) as
-    { idu?: string; commune?: string } | null
+    { idu?: string; commune?: string; surface_m2?: number | null } | null
+  // GABARIT-6 P2 — parcelle à cheval : l'outil sert le gabarit sur la portion de la zone constructible
+  // dominante. On affiche le CADASTRE ENTIER (= la fiche) puis la portion servie en sous-ligne (cf.
+  // GABARIT-AUDIT-1 : « Surface parcelle 7 465 m² » masquait qu'il s'agissait d'un morceau, pas de la parcelle).
+  const raccZone = (res?.raccordement?.zone ?? null) as { code?: string; a_cheval?: boolean } | null
+  const cadastreM2 = parcelle?.surface_m2 ?? null
+  const aCheval = !!raccZone?.a_cheval && cadastreM2 != null && res?.surfaceParcelleM2 != null
+  const pctPortion = aCheval ? Math.round((res!.surfaceParcelleM2! / cadastreM2!) * 100) : null
 
   const reset = () => setIdu(null)
 
@@ -211,7 +218,10 @@ export function Gabarit() {
       {res && res.status === 'ok' && (
         <>
           <div data-gabarit-chiffres className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-            <Num label="Surface parcelle" value={res.surfaceParcelleM2} unit="m²" />
+            {aCheval
+              ? <Num label="Surface parcelle" value={cadastreM2} unit="m²"
+                  sub={`dont ${fmtInt(res.surfaceParcelleM2)} m² en ${raccZone?.code ?? 'zone U'} (${pctPortion} %)`} />
+              : <Num label="Surface parcelle" value={res.surfaceParcelleM2} unit="m²" />}
             <Num label="Zone d'implantation" value={res.zoneImplantationM2} unit="m²" accent />
             <Num label="Plafond d'emprise" value={res.plafondEmpriseM2} unit="m²"
               statusLabel={res.plafondEmpriseStatus === 'absent' ? 'Non réglementé' : null}
