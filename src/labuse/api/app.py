@@ -2704,8 +2704,10 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
     # l'outil n'envoyait jamais `insee` et faisait recopier à la main un taux que LABUSE connaît
     # (24/24 communes en base) : total_eur restait null tant que l'utilisateur ne saisissait rien.
     # On sert donc l'insee (clé de la table) + le taux public daté, pour un affichage identique.
+    # TAXE-FIX-1 point 3 — résolution PAR PARCELLE : secteur à taux majoré s'il existe, sinon taux
+    # communal général (taux_parcelle). `secteur_majore` dit lequel. Même id que la fiche §7.
     from .. import taxe_amenagement as _tax
-    pub = _tax.taux_communal_public(db, idu[:5])
+    pub = _tax.taux_parcelle(db, idu)
     return {"idu": idu, "commune": row["commune"], "insee": idu[:5],
             "surface_terrain_m2": row["surface_terrain_m2"],
             "zone_plu": row["zone_libelle"] or row["zone_fam"],
@@ -2714,7 +2716,8 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
             "taux_communal_pct": (pub["part_communale_pct"] if pub else None),
             "taux_communal_source": ("public" if pub else None),
             "taux_communal_millesime": (pub["millesime"] if pub else None),
-            "taux_communal_perime": (pub["perime"] if pub else None)}
+            "taux_communal_perime": (pub["perime"] if pub else None),
+            "secteur_majore": bool(pub and pub.get("secteur_majore"))}
 
 
 @app.get("/outils/taxe-amenagement")
@@ -2724,14 +2727,17 @@ def taxe_amenagement(
     piscine_m2: float = 0.0, pv_sol_m2: float = 0.0, stationnement_ext_places: int = 0,
     eoliennes_mats: int = 0, taux_communal_pct: float | None = None,
     taux_departemental_pct: float | None = None, insee: str | None = None,
+    idu: str | None = None,
     db: Session = Depends(get_db)) -> dict:
     """Estimation INDICATIVE, détaillée ligne par ligne. CIRCUIT-3 lot 6.2 : si un taux communal
     PUBLIC existe pour la commune (`insee`), la calculette l'utilise et N'EXIGE PLUS un taux saisi ;
     saisi + public présents → l'écart est exposé. Sans aucun des deux, le total n'est pas calculé.
     TAXE-FIX-1 point 1 — `surface_exoneree_m2` + `motif_exoneration` portent une exonération de
-    plein droit (CGI 1635 quater D) : cette surface ne produit aucune part."""
-    from ..taxe_amenagement import calculer, taux_communal_public
-    pub = taux_communal_public(db, insee) if insee else None
+    plein droit (CGI 1635 quater D) : cette surface ne produit aucune part. TAXE-FIX-1 point 3 —
+    `idu` fourni → le taux résolu PAR PARCELLE (secteur à taux majoré prioritaire) ; sinon `insee`
+    → taux communal général."""
+    from ..taxe_amenagement import calculer, taux_communal_public, taux_parcelle
+    pub = taux_parcelle(db, idu) if idu else (taux_communal_public(db, insee) if insee else None)
     return calculer(
         surface_taxable_m2=surface_taxable_m2, residence_principale=residence_principale,
         logement_aide=logement_aide, surface_exoneree_m2=surface_exoneree_m2,
@@ -2742,7 +2748,8 @@ def taxe_amenagement(
         taux_communal_public_source=(pub or {}).get("source"),
         taux_communal_public_millesime=(pub or {}).get("millesime"),
         taux_communal_public_delib_date=(pub or {}).get("delib_date"),
-        taux_communal_public_perime=(pub or {}).get("perime"))
+        taux_communal_public_perime=(pub or {}).get("perime"),
+        taux_communal_secteur_majore=bool((pub or {}).get("secteur_majore")))
 
 
 @app.get("/map/parcels.geojson")
@@ -4444,7 +4451,8 @@ def _taxe_amenagement_block(db: Session, idu: str, parcel_id: int) -> dict | Non
     if not idu or len(idu) < 5:
         return None
     from .. import taxe_amenagement as _tax
-    pub = _tax.taux_communal_public(db, idu[:5])
+    # TAXE-FIX-1 point 3 — résolution PAR PARCELLE (secteur à taux majoré prioritaire).
+    pub = _tax.taux_parcelle(db, idu)
     # calculer(surface=0) ne chiffre aucune part surface : on n'en lit QUE les taux + le message.
     res = _tax.calculer(
         surface_taxable_m2=0.0,
@@ -4453,6 +4461,7 @@ def _taxe_amenagement_block(db: Session, idu: str, parcel_id: int) -> dict | Non
         taux_communal_public_millesime=(pub["millesime"] if pub else None),
         taux_communal_public_delib_date=(pub["delib_date"] if pub else None),
         taux_communal_public_perime=(pub["perime"] if pub else None),
+        taux_communal_secteur_majore=bool(pub and pub.get("secteur_majore")),
     )
     return {
         # projet_saisi=False : ce bloc ne porte JAMAIS de montant sur la fiche/le Dossier.
@@ -4463,6 +4472,8 @@ def _taxe_amenagement_block(db: Session, idu: str, parcel_id: int) -> dict | Non
         # TAXE-AMÉNAGEMENT-1 lot C — millésime + fraîcheur du taux public.
         "taux_communal_millesime": res["taux_communal_millesime"],
         "taux_communal_perime": res["taux_communal_perime"],
+        # TAXE-FIX-1 point 3 — le taux servi vient-il d'un secteur à taux majoré ?
+        "taux_communal_secteur_majore": res["taux_communal_secteur_majore"],
         "taux_departemental_pct": res["taux_departemental_pct"],
         "taux_departemental_confirme": res["part_departementale_confirmee"],
         "taux_communal_manquant": res["taux_communal_manquant"],

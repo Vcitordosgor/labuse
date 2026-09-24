@@ -513,6 +513,8 @@ export interface TaxeResult {
   taux_communal_millesime?: string | null
   taux_communal_delib_date?: string | null
   taux_communal_perime?: boolean | null
+  // TAXE-FIX-1 point 3 — le taux servi vient-il d'un secteur à taux majoré ?
+  taux_communal_secteur_majore?: boolean | null
 }
 export interface TaxeParams {
   surface_taxable_m2: number
@@ -529,6 +531,7 @@ export interface TaxeParams {
   taux_communal_pct?: number | null
   taux_departemental_pct?: number | null
   insee?: string | null   // OUTILS-FIX-5 L2 — clé de la table des taux : le back sert le taux public de la commune
+  idu?: string | null      // TAXE-FIX-1 point 3 — résolution PAR PARCELLE (secteur à taux majoré prioritaire)
 }
 export const getTaxeAmenagement = (p: TaxeParams) => {
   const params = new URLSearchParams({ surface_taxable_m2: String(p.surface_taxable_m2) })
@@ -543,6 +546,7 @@ export const getTaxeAmenagement = (p: TaxeParams) => {
   if (p.taux_communal_pct != null) params.set('taux_communal_pct', String(p.taux_communal_pct))
   if (p.taux_departemental_pct != null) params.set('taux_departemental_pct', String(p.taux_departemental_pct))
   if (p.insee) params.set('insee', p.insee)
+  if (p.idu) params.set('idu', p.idu)
   return j<TaxeResult>(`/outils/taxe-amenagement?${params.toString()}`)
 }
 
@@ -677,6 +681,8 @@ export interface TaxePrefill {
   taux_communal_source: 'public' | null
   taux_communal_millesime: string | null
   taux_communal_perime: boolean | null
+  // TAXE-FIX-1 point 3 — la parcelle est-elle dans un secteur à taux majoré voté par la commune ?
+  secteur_majore?: boolean
 }
 export const getTaxePrefill = (idu: string) => j<TaxePrefill>(`/outils/taxe-amenagement/prefill?idu=${encodeURIComponent(idu)}`)
 

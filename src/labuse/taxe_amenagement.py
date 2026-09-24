@@ -58,6 +58,31 @@ def ensure_taux_table(engine) -> None:
         c.execute(text(_TAUX_DDL))
 
 
+# TAXE-FIX-1 point 3 — SECTEURS À TAUX MAJORÉ. La commune peut voter, sur des SECTEURS délimités, un
+# taux supérieur au taux général (jusqu'à 20 % — CGI art. 1635 quater E/F). DELTA porte ces secteurs
+# au grain PARCELLE (colonnes prefixe/section/parcelle) : le « secteur » est une LISTE de parcelles.
+# On les stocke par IDU (la « géométrie » = l'identité cadastrale exacte, jointure sûre, pas une
+# intersection approchée). 6 communes du 974 en ont (Saint-Paul 10 %, Saint-Leu 14 %, Trois-Bassins
+# 20 %, Les Avirons 10 %, Entre-Deux 8,5 %, Le Port 5 % — relevé DELTA 24/09/2026).
+_SECTEUR_DDL = """
+CREATE TABLE IF NOT EXISTS taxe_amenagement_secteur (
+  idu varchar(14) PRIMARY KEY,
+  insee varchar(5) NOT NULL,
+  part_communale_pct double precision NOT NULL,
+  source text,
+  delib_date date,
+  maj_at timestamptz NOT NULL DEFAULT now()
+)
+"""
+
+
+def ensure_secteur_table(engine) -> None:
+    with engine.begin() as c:
+        c.execute(text(_SECTEUR_DDL))
+        c.execute(text("CREATE INDEX IF NOT EXISTS ix_ta_secteur_insee "
+                       "ON taxe_amenagement_secteur(insee)"))
+
+
 def taux_communal_public(db, insee: str | None, *, today: date | None = None) -> dict | None:
     """Le taux communal PUBLIC d'une commune, ou None si inconnu.
 
@@ -90,7 +115,48 @@ def taux_communal_public(db, insee: str | None, *, today: date | None = None) ->
     return {"part_communale_pct": float(row[0]), "source": row[1],
             "delib_date": delib.isoformat() if delib else None,
             "maj_at": maj_d.isoformat() if maj_d else None,
-            "millesime": millesime, "perime": perime}
+            "millesime": millesime, "perime": perime, "secteur_majore": False}
+
+
+def taux_secteur(db, idu: str | None, *, today: date | None = None) -> dict | None:
+    """TAXE-FIX-1 point 3 — le taux du SECTEUR À TAUX MAJORÉ voté pour CETTE parcelle (délibération
+    portée par DELTA au grain parcelle), ou None si la parcelle n'est dans aucun secteur. Même
+    forme que taux_communal_public, avec `secteur_majore=True` et un millésime qui le dit."""
+    if not idu:
+        return None
+    try:
+        row = db.execute(text(
+            "SELECT part_communale_pct, source, delib_date, maj_at FROM taxe_amenagement_secteur "
+            "WHERE idu = :i"), {"i": str(idu)[:14]}).first()
+    except Exception:  # table absente en environnement partiel
+        return None
+    if not row:
+        return None
+    delib, maj = row[2], row[3]
+    maj_d = maj.date() if isinstance(maj, datetime) else maj
+    ref = today or date.today()
+    perime = bool(maj_d is not None and (ref - maj_d).days > _PERIME_JOURS)
+    depuis = _fr_date(delib)
+    millesime = "Secteur à taux majoré"
+    if depuis:
+        millesime += f" en vigueur depuis le {depuis} (délibération communale)"
+    return {"part_communale_pct": float(row[0]), "source": row[1],
+            "delib_date": delib.isoformat() if delib else None,
+            "maj_at": maj_d.isoformat() if maj_d else None,
+            "millesime": millesime, "perime": perime, "secteur_majore": True}
+
+
+def taux_parcelle(db, idu: str | None, *, today: date | None = None) -> dict | None:
+    """TAXE-FIX-1 point 3 — LE taux communal applicable à une PARCELLE : le secteur à taux majoré
+    s'il en existe un pour cette parcelle, SINON le taux communal général. `secteur_majore` dit
+    lequel a servi. C'est le point de résolution unique quand on connaît l'IDU (outil, fiche,
+    Dossier) — `taux_communal_public(insee)` reste le taux GÉNÉRAL de la commune."""
+    if not idu or len(str(idu)) < 5:
+        return None
+    sec = taux_secteur(db, idu, today=today)
+    if sec:
+        return sec
+    return taux_communal_public(db, str(idu)[:5], today=today)
 
 
 def config() -> dict:
@@ -146,6 +212,7 @@ def calculer(
     taux_communal_public_millesime: str | None = None,
     taux_communal_public_delib_date: str | None = None,
     taux_communal_public_perime: bool | None = None,
+    taux_communal_secteur_majore: bool = False,
 ) -> dict:
     """Renvoie le détail LIGNE PAR LIGNE + total (None si le taux communal manque)."""
     cfg = config()
@@ -266,6 +333,9 @@ def calculer(
                                      if taux_source == "public" else None),
         "taux_communal_perime": (bool(taux_communal_public_perime)
                                  if taux_source == "public" else None),
+        # TAXE-FIX-1 point 3 — le taux servi vient-il d'un secteur à taux majoré ? (public seulement)
+        "taux_communal_secteur_majore": (bool(taux_communal_secteur_majore)
+                                         if taux_source == "public" else None),
         "ecart_saisi_public_pct": ecart_saisi_public,    # contrôle de qualité (lot 6.2)
         "message_taux_communal": (None if not taux_manquant else
             "Taux communal non renseigné pour cette commune — saisissez-le "

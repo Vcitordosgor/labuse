@@ -118,3 +118,59 @@ def test_part_departementale_confirmee_par_delta():
     assert c["taux"]["part_departementale_confirmee_974"] is True
     res = calculer(surface_taxable_m2=100, taux_communal_pct=3.0)
     assert res["part_departementale_confirmee"] is True
+
+
+# ─────────────────── TAXE-FIX-1 point 3 — secteurs à taux majoré (grain parcelle) ───────────────────
+def test_idu_from_delta_reconstruit_l_idu():
+    """L'IDU cadastral (14 car.) reconstruit d'une ligne DELTA — pur, sans DB ni réseau."""
+    from labuse.ingestion.taxe_amenagement_delta import _idu_from_delta
+    assert _idu_from_delta({"departement": "974", "commune": "15", "prefixe": "000",
+                            "section": "CT", "parcelle": "2268"}) == "97415000CT2268"
+    # zéro-complétion défensive (préfixe 3, section 2, parcelle 4)
+    assert _idu_from_delta({"departement": "974", "commune": "01", "prefixe": "0",
+                            "section": "B", "parcelle": "5"}) == "974010000B0005"
+    # incomplet ou hors 974 → None (jamais un IDU partiel)
+    assert _idu_from_delta({"departement": "974", "commune": "15", "section": "",
+                            "parcelle": "2268"}) is None
+    assert _idu_from_delta({"departement": "973", "commune": "15", "section": "CT",
+                            "parcelle": "2268"}) is None
+
+
+def _sec(commune, section, parcelle, taux, prefixe="000", effet="2022-01-01"):
+    return {"departement": "974", "commune": commune, "prefixe": prefixe, "section": section,
+            "parcelle": parcelle, "taux": taux, "date_effet": effet, "date_fin": None,
+            "def_prov": "DEFINITIF", "zone_application": "Communale", "libelle_commune": "SAINT-PAUL"}
+
+
+def test_secteur_majore_ingere_et_resolu_par_parcelle(db_session):
+    from labuse.taxe_amenagement import taux_parcelle, taux_secteur
+    res = ta.ingest_taxe_amenagement(
+        db_session,
+        records_communaux=[_rec("15", 5.0, libelle="SAINT-PAUL")],
+        records_secteurs=[_sec("15", "CT", "2268", 10.0), _sec("15", "DK", "1053", 10.0),
+                          _sec("15", "ZZ", "9999", 99.0)])   # 99 % = sentinelle → écartée
+    assert res["secteurs"] == 2
+    assert res["secteurs_communes"] == ["97415"]
+    assert any("=99" in h for h in res["secteurs_hors_bornes"])
+    # parcelle DANS un secteur → 10 % majoré ; hors secteur → 5 % général (même commune)
+    sec = taux_parcelle(db_session, "97415000CT2268")
+    assert sec["part_communale_pct"] == 10.0 and sec["secteur_majore"] is True
+    assert "Secteur à taux majoré" in sec["millesime"]
+    gen = taux_parcelle(db_session, "97415000AB0001")
+    assert gen["part_communale_pct"] == 5.0 and gen["secteur_majore"] is False
+    assert taux_secteur(db_session, "97415000AB0001") is None
+
+
+def test_calculer_prend_le_taux_du_secteur(db_session):
+    """calculer() reçoit le taux résolu (secteur) via l'endpoint → total au taux majoré."""
+    from labuse.taxe_amenagement import calculer as _calc, taux_parcelle
+    ta.ingest_taxe_amenagement(db_session, records_communaux=[_rec("15", 5.0, libelle="SAINT-PAUL")],
+                               records_secteurs=[_sec("15", "CT", "2268", 10.0)])
+    pub = taux_parcelle(db_session, "97415000CT2268")
+    out = _calc(surface_taxable_m2=100, taux_departemental_pct=2.5,
+                taux_communal_public_pct=pub["part_communale_pct"],
+                taux_communal_public_source=pub["source"],
+                taux_communal_secteur_majore=pub["secteur_majore"])
+    assert out["taux_communal_pct"] == 10.0
+    assert out["taux_communal_secteur_majore"] is True
+    assert out["part_communale_eur"] == round(100 * 892 * 0.10, 2)

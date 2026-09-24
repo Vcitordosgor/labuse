@@ -214,14 +214,16 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
     # taxe est chiffrée : sur une SDP de projet, jamais sur un scénario de fiche (W1/W2).
     if program.get("surface_plancher"):
         from .. import taxe_amenagement as _tax
-        _pub = _tax.taux_communal_public(db, (idu or "")[:5])
+        # TAXE-FIX-1 point 3 — résolution PAR PARCELLE (secteur à taux majoré prioritaire).
+        _pub = _tax.taux_parcelle(db, idu) if idu else None
         _res = _tax.calculer(
             surface_taxable_m2=float(program["surface_plancher"]),
             taux_communal_public_pct=(_pub["part_communale_pct"] if _pub else None),
             taux_communal_public_source=(_pub["source"] if _pub else None),
             taux_communal_public_millesime=(_pub["millesime"] if _pub else None),
             taux_communal_public_delib_date=(_pub["delib_date"] if _pub else None),
-            taux_communal_public_perime=(_pub["perime"] if _pub else None))
+            taux_communal_public_perime=(_pub["perime"] if _pub else None),
+            taux_communal_secteur_majore=bool(_pub and _pub.get("secteur_majore")))
         # TAXE-FIX-1 point 2 — la RAP (0,40 % de l'assiette TA) accompagne la taxe : toujours chiffrée
         # dès qu'il y a une SDP, MÊME quand le porteur a saisi la taxe d'aménagement à la main.
         hyp["rap"] = _res["rap_eur"]

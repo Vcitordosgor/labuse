@@ -136,8 +136,10 @@ export function TaxeAmenagement() {
       taux_communal_pct: tauxCommunal,
       taux_departemental_pct: tauxDepEffectif,
       insee: insee ?? undefined,
+      // TAXE-FIX-1 point 3 — l'IDU permet au back de servir le taux du SECTEUR à taux majoré s'il y en a un.
+      idu: prefillIdu ?? undefined,
     }
-  }, [surface, motifExo, residencePrincipale, logementAide, piscine, pvSol, stationnement, eoliennes, tauxCommunal, tauxDepEffectif, insee])
+  }, [surface, motifExo, residencePrincipale, logementAide, piscine, pvSol, stationnement, eoliennes, tauxCommunal, tauxDepEffectif, insee, prefillIdu])
 
   const calc = useQuery({
     queryKey: ['taxe-calc', params],
@@ -267,10 +269,15 @@ export function TaxeAmenagement() {
               <span className="label-caps flex min-h-[2.1em] items-start text-[9.5px] leading-tight text-txt-dim">Taux communal</span>
               <span className="flex items-center gap-1.5 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5">
                 <span className="min-w-0 flex-1 font-mono text-xs tabular-nums text-mint">{tauxCommunalPublic} %</span>
-                <span className="shrink-0 text-[9px] uppercase tracking-[.06em] text-txt-dim">public</span>
+                {/* TAXE-FIX-1 point 3 — secteur à taux majoré : on le DIT, le taux n'est pas le taux général. */}
+                <span className={`shrink-0 text-[9px] uppercase tracking-[.06em] ${prefill.data?.secteur_majore ? 'font-semibold text-st-creuser' : 'text-txt-dim'}`}>
+                  {prefill.data?.secteur_majore ? 'secteur majoré' : 'public'}
+                </span>
               </span>
               <span className="text-[10px] leading-snug text-txt-dim">
-                Voté par la commune — {prefill.data?.taux_communal_millesime ?? 'délibération communale'}.
+                {prefill.data?.secteur_majore
+                  ? 'Secteur à taux majoré voté par la commune pour cette parcelle'
+                  : 'Voté par la commune'} — {prefill.data?.taux_communal_millesime ?? 'délibération communale'}.
                 {prefill.data?.taux_communal_perime && (
                   <span data-taxe-taux-perime className="ml-1 font-medium text-st-creuser">⚠ non rafraîchi depuis plus d'un an.</span>
                 )}

@@ -1114,6 +1114,7 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     _filtres_cadre.ensure_tables(engine)
     from . import taxe_amenagement as _ta          # CIRCUIT-3 lot 6.2 : table des taux communaux publics
     _ta.ensure_taux_table(engine)
+    _ta.ensure_secteur_table(engine)               # TAXE-FIX-1 point 3 : secteurs à taux majoré (parcelle)
     ensure_promesses_index(engine)          # index partiel /promesses
     ensure_flags_probe_index(engine)        # M45 (P1)
     ensure_parcel_flags(engine)             # M45 (P2)

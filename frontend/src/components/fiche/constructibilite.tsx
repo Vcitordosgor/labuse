@@ -68,8 +68,12 @@ export function TaxeAmenagementBlock({ t }: { t: NonNullable<Fiche['taxe_amenage
       {t.taux_communal_manquant ? (
         <FactRow label="Taux communal" tone="mute" value="non renseigné — à saisir" />
       ) : (
-        <FactRow label="Taux communal" value={<>{t.taux_communal_pct} <small>%</small></>}
-          src={t.taux_communal_source === 'public' ? 'délibération communale (public)' : undefined} />
+        // TAXE-FIX-1 point 3 — dire quand le taux vient d'un SECTEUR à taux majoré (≠ taux général).
+        <FactRow label={t.taux_communal_secteur_majore ? 'Taux communal (secteur majoré)' : 'Taux communal'}
+          value={<>{t.taux_communal_pct} <small>%</small></>}
+          src={t.taux_communal_source === 'public'
+            ? (t.taux_communal_secteur_majore ? 'secteur à taux majoré (délibération)' : 'délibération communale (public)')
+            : undefined} />
       )}
       {/* TAXE-AMÉNAGEMENT-1 lot C — millésime du taux public + alerte fraîcheur (> 1 an). */}
       {t.taux_communal_source === 'public' && t.taux_communal_millesime && (
