@@ -27,6 +27,7 @@ Règle générale : chaque règle vit dans UN composant partagé (`primitives.ts
 - [?] Même hauteur (32 px), même rayon, même padding, même police pour les trois niveaux. Icône seule = carré de 32.
 - [?] **Trois rayons dans toute l'app, pas un de plus** : 4 px pour ce qui fait moins de 20 px (cases, chevrons, pastilles de compte) · 6 px pour tout le reste (boutons, champs, lignes, cartes, tuiles, panneaux, tiroirs) · pilule (999 px) pour les chips de filtre, les badges et les barres de défilement. Tout contrôle interactif fait 32 px de haut (bouton, chip, champ court) ; l'omnibox seule fait 40.
 - [A] Aucun bouton CSV, aucun point d'entrée IA hors fiche/Copilote.
+- [?] Ton `danger` (rouge) réservé aux actions destructrices (Supprimer, Écarter, `st-ecartee`). *(DA-FIX-2 Lot 0, Vic 24/09/2026)*
 
 ## 3. Retour
 

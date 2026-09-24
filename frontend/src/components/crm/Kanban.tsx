@@ -123,10 +123,10 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
             ✉ {e.courrier.libelle}
           </span>
         ) : <span />}
-        <button data-piste-courrier onClick={ouvrirCourrier}
-          className="rounded-md border border-line-2 px-1.5 py-px text-[10px] text-txt-mut opacity-0 transition-opacity duration-quick hover:border-mint hover:text-mint group-hover:opacity-100">
+        <Bouton niveau="secondaire" ton="vert" data-piste-courrier onClick={ouvrirCourrier}
+          className="opacity-0 transition-opacity group-hover:opacity-100">
           {e.courrier ? 'Relancer' : '✉ Courrier'}
-        </button>
+        </Bouton>
       </div>
       {/* SCORING-3 (L5) — RETOUR TERRAIN : après un contact, UN clic pose l'état réel
           (contacté / refus / négo / vendu…). Par compte, horodaté, réversible (« — » efface). */}
@@ -181,11 +181,10 @@ function DeleteColumnDialog({ col, others, onCancel, onConfirm }: {
         )}
         <div className="mt-4 flex justify-end gap-2">
           <Bouton niveau="lien" onClick={onCancel}>Annuler</Bouton>
-          <button
+          <Bouton niveau="primaire" ton="danger"
             onClick={() => onConfirm(populated > 0 ? (target === '' ? null : target) : null)}
             disabled={populated > 0 && target === ''}
-            className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee"
-          >Supprimer</button>
+          >Supprimer</Bouton>
         </div>
       </div>
     </div>
@@ -506,28 +505,18 @@ export function Kanban() {
                   <Bouton niveau="lien" onClick={() => { setAdding(false); setNewColLabel('') }}>Annuler</Bouton>
                 </span>
               ) : (
-                <button onClick={doAdd}
-                  className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:border-mint hover:text-mint"
-                  >+ Colonne</button>
+                <Bouton niveau="secondaire" ton="vert" onClick={doAdd}>+ Colonne</Bouton>
               )}
-              <button
-                onClick={() => setConfirmReset(true)}
-                className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt-dim hover:border-st-ecartee hover:text-st-ecartee"
-                >Réinitialiser</button>
+              <Bouton niveau="secondaire" ton="danger" onClick={() => setConfirmReset(true)}>Réinitialiser</Bouton>
             </>
           )}
           {/* M137 — accès aux cartes archivées (consulter / restaurer). */}
           {!editMode && (
-            <button
-              onClick={() => setShowArchived(true)}
-              className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt-dim hover:border-mint hover:text-mint"
-              >Archivées</button>
+            <Bouton niveau="secondaire" ton="vert" onClick={() => setShowArchived(true)}>Archivées</Bouton>
           )}
-          <button
+          <Bouton niveau="secondaire" ton="vert"
             onClick={() => { setEditMode((v) => !v); setEditingId(null) }}
-            className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors duration-quick ${
-              editMode ? 'bg-mint/15 text-mint' : 'border border-line-2 text-txt-dim hover:text-txt'}`}
-          >{editMode ? 'Terminé' : 'Personnaliser'}</button>
+          >{editMode ? 'Terminé' : 'Personnaliser'}</Bouton>
         </div>
       </div>
       <div className="relative mt-4 min-h-0 flex-1">
@@ -631,9 +620,8 @@ export function Kanban() {
             </p>
             <div className="mt-4 flex justify-end gap-2">
               <Bouton niveau="lien" onClick={() => setConfirmReset(false)}>Annuler</Bouton>
-              <button onClick={() => resetCols.mutate()} disabled={resetCols.isPending}
-                className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee">
-                {resetCols.isPending ? '…' : 'Réinitialiser'}</button>
+              <Bouton niveau="primaire" ton="danger" onClick={() => resetCols.mutate()} disabled={resetCols.isPending}>
+                {resetCols.isPending ? '…' : 'Réinitialiser'}</Bouton>
             </div>
           </div>
         </div>
@@ -662,9 +650,8 @@ export function Kanban() {
             </p>
             <div className="mt-4 flex justify-end gap-2">
               <Bouton niveau="lien" onClick={() => setPendingArchive(null)}>Annuler</Bouton>
-              <button onClick={() => archive.mutate(pendingArchive.id)} disabled={archive.isPending}
-                className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee">
-                {archive.isPending ? '…' : 'Archiver'}</button>
+              <Bouton niveau="primaire" ton="danger" onClick={() => archive.mutate(pendingArchive.id)} disabled={archive.isPending}>
+                {archive.isPending ? '…' : 'Archiver'}</Bouton>
             </div>
           </div>
         </div>
@@ -687,9 +674,9 @@ export function Kanban() {
                     <div className="truncate font-mono text-xs text-txt-hi">{e.idu.slice(8)}</div>
                     <div className="truncate text-[10.5px] text-txt-mut">{e.parcel.commune}</div>
                   </div>
-                  <button onClick={() => restore.mutate(e.id)} disabled={restore.isPending}
-                    className="shrink-0 rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt hover:border-mint hover:text-mint">
-                    Restaurer</button>
+                  <Bouton niveau="secondaire" ton="vert" onClick={() => restore.mutate(e.id)} disabled={restore.isPending}
+                    className="shrink-0">
+                    Restaurer</Bouton>
                 </div>
               ))}
             </div>

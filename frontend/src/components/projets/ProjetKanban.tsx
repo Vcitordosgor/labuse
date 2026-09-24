@@ -172,8 +172,8 @@ function FiltreDrawer({ cadrageProjet, initial, onApply, onClear, onClose }: {
       </div>
       <FiltreProvider value={binding}><FiltreFacettes compteurScope={{ communes }} /></FiltreProvider>
       <div className="mt-3 flex gap-2">
-        <button data-drawer-clear onClick={() => { setFacettes({ ...EMPTY_FILTERS, ...cadrageProjet }); onClear() }}
-          className="flex-1 rounded-md border border-line-2 py-1.5 text-center text-[11.5px] text-txt-mut transition-colors duration-quick hover:text-txt">Tout effacer</button>
+        <Bouton niveau="secondaire" ton="vert" data-drawer-clear onClick={() => { setFacettes({ ...EMPTY_FILTERS, ...cadrageProjet }); onClear() }}
+          className="flex-1">Tout effacer</Bouton>
         <Bouton niveau="primaire" ton="vert" data-drawer-apply onClick={() => onApply(sfOut)} className="flex-1">
           Voir {cnt.data ? cnt.data.vivier.toLocaleString('fr-FR') : '…'} parcelles</Bouton>
       </div>
@@ -269,7 +269,6 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   }
 
   const carte = 'rounded-xl border border-line-2 bg-surface-1'
-  const btn = 'min-h-7 rounded-md border border-line-2 px-2.5 py-1 text-[11.5px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi'
 
   return (
     <div data-projet-kanban className="flex min-w-0 flex-1 flex-col gap-3.5 overflow-hidden bg-bg p-4 sm:p-5">
@@ -293,8 +292,8 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
           <div className="ml-auto flex flex-wrap items-center gap-1.5">
             {/* PROJETS-CRM-FIX-1 (lot 2) — bouton « PDF » retiré : /projets/{id}/export.pdf est un
                 endpoint retiré (410, remplacé par le document « Financier »). Plus de lien mort. */}
-            <button data-kanban-renommer onClick={() => { setNomInput(projet?.nom ?? nom); setEditing(true) }} className={btn}>Renommer</button>
-            <button data-kanban-archiver onClick={() => { patch.mutate({ statut: 'archive' }); setOpenProjet(null) }} className={btn}>Archiver</button>
+            <Bouton niveau="secondaire" ton="vert" data-kanban-renommer onClick={() => { setNomInput(projet?.nom ?? nom); setEditing(true) }}>Renommer</Bouton>
+            <Bouton niveau="secondaire" ton="vert" data-kanban-archiver onClick={() => { patch.mutate({ statut: 'archive' }); setOpenProjet(null) }}>Archiver</Bouton>
             <button data-kanban-ajouter-header onClick={ouvrirCarte}
               className="min-h-7 rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1 text-[11.5px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/25">+ Ajouter des parcelles</button>
           </div>
@@ -414,7 +413,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                           <button key={String(p.key)} onClick={() => retirerFacette(p.key)}
                             className="rounded border border-mint/35 px-2 py-px text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">{p.label} ×</button>
                         ))}
-                        <button onClick={() => setSousFiltre(null)} className="rounded border border-line-2 px-2 py-px text-[11px] text-txt-dim hover:text-txt">tout effacer</button>
+                        <Bouton niveau="lien" onClick={() => setSousFiltre(null)}>tout effacer</Bouton>
                       </div>
                     )}
                     {/* en-tête de colonnes */}

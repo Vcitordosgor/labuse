@@ -134,7 +134,7 @@ export function CompareModule() {
                 + Ajouter la parcelle courante ({iduCourt(selectedIdu)})
               </Bouton>
             )}
-            {n > 0 && <button data-compare-vider onClick={clearCompare} className="mt-1.5 text-[10px] text-txt-dim hover:text-txt">tout vider</button>}
+            {n > 0 && <Bouton niveau="lien" data-compare-vider onClick={clearCompare} className="mt-1.5">tout vider</Bouton>}
           </div>
         </div>
       </div>
@@ -190,8 +190,8 @@ export function ComparePanel() {
           <div className="flex items-center gap-3 text-[11px]">
             {/* OUTILS-FIX-3 Lot E — bouton ⬇ CSV retiré (aucun export CSV dans l'app pour l'instant). */}
             {/* retour à la carte pour continuer le picking (le panneau + la sélection restent) */}
-            <button data-compare-carte onClick={() => setCompareOpen(false)} className="text-mint hover:underline">◉ Retour à la carte</button>
-            <button onClick={clearCompare} className="text-txt-mut hover:text-txt">Tout vider</button>
+            <Bouton niveau="lien" data-compare-carte onClick={() => setCompareOpen(false)}>◉ Retour à la carte</Bouton>
+            <Bouton niveau="lien" onClick={clearCompare}>Tout vider</Bouton>
             <button onClick={() => setCompareOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
           </div>
         </div>
@@ -199,7 +199,7 @@ export function ComparePanel() {
           {compareIdus.length === 0 && (
             <div data-compare-vide className="p-4 text-center text-xs text-txt-dim">
               Aucune parcelle à comparer.
-              <button onClick={() => setCompareOpen(false)} className="ml-1 text-mint hover:underline">Cliquez-en sur la carte</button> ou ouvrez une fiche → Comparer.
+              <Bouton niveau="lien" onClick={() => setCompareOpen(false)} className="ml-1">Cliquez-en sur la carte</Bouton> ou ouvrez une fiche → Comparer.
             </div>
           )}
           {compareIdus.length > 0 && q.isPending && <p className="p-4 text-xs text-txt-dim">Chargement…</p>}

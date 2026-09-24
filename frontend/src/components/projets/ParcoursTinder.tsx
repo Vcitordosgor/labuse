@@ -88,8 +88,7 @@ export function ParcoursTinder() {
           Retenues (<span className="text-mint">{c?.retenue ?? 0}</span>) · Écartées (<span className="text-st-ecartee">{c?.ecartee ?? 0}</span>)
         </button>
         {/* sortie : la plus sobre, sans concurrencer les actions */}
-        <button data-parcours-quitter onClick={retourProjet}
-          className="min-h-7 rounded-md border border-line-2 px-3 py-1.5 text-[11.5px] text-txt-mut transition-colors duration-quick hover:border-st-ecartee/50 hover:text-txt">✕ Quitter</button>
+        <Bouton niveau="lien" data-parcours-quitter onClick={retourProjet}>✕ Quitter</Bouton>
       </div>
 
       <div className="flex min-h-0 flex-1">
@@ -204,18 +203,15 @@ function DecisionCard({ pid, item, onDecide, onFiche }: {
           reste le plus fort (plein) ; la sortie (✕ Quitter, barre haute) ne leur ressemble pas.
           Pas de raccourcis clavier : il n'en existe pas — on n'en invente pas dans ce lot. */}
       <div className="mt-4 flex gap-2">
-        <button data-decision-ecarter onClick={() => onDecide('ecartee')}
-          className="flex-1 rounded-xl border border-st-ecartee/50 py-2.5 text-sm font-medium text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10">
+        <Bouton niveau="primaire" ton="danger" data-decision-ecarter onClick={() => onDecide('ecartee')} className="flex-1">
           ✕ Écarter
-        </button>
-        <button data-decision-analyser onClick={() => onDecide('a_analyser')}
-          className="flex-1 rounded-xl border border-st-creuser/50 py-2.5 text-sm font-medium text-st-creuser transition-colors duration-quick hover:bg-st-creuser/10">
+        </Bouton>
+        <Bouton niveau="secondaire" ton="vert" data-decision-analyser onClick={() => onDecide('a_analyser')} className="flex-1">
           ? À analyser
-        </button>
-        <button data-decision-retenir onClick={() => onDecide('retenue')}
-          className="flex-1 rounded-xl bg-mint py-2.5 text-sm font-bold text-mint-ink transition-[filter] duration-quick hover:brightness-110">
+        </Bouton>
+        <Bouton niveau="primaire" ton="vert" data-decision-retenir onClick={() => onDecide('retenue')} className="flex-1">
           ✓ Retenir
-        </button>
+        </Bouton>
       </div>
       <p className="mt-1.5 text-center text-[10px] text-txt-dim">Écarter est réversible — récupérable dans la pile Écartées.</p>
     </div>
@@ -233,8 +229,7 @@ function SectionsDrawer({ etat, onClose, onFiche, onStatut }: {
           <span className="ml-1.5 font-mono text-[9.5px] text-txt-dim">{iduComplet(p.idu)}</span></div>
         <div className="tnum text-[10px] text-txt-mut">{p.commune} · {p.tier ?? '—'}{p.surface_m2 != null ? ` · ${fmtM2(p.surface_m2)}` : ''}</div>
       </div>
-      <button onClick={() => onFiche(p.idu)}
-        className="min-h-7 text-[10px] text-txt-mut transition-colors duration-quick hover:text-txt">fiche</button>
+      <Bouton niveau="lien" onClick={() => onFiche(p.idu)}>fiche</Bouton>
       {actions}
     </div>
   )
@@ -252,8 +247,7 @@ function SectionsDrawer({ etat, onClose, onFiche, onStatut }: {
             {etat.retenues.length === 0 && <p className="text-[11px] text-txt-dim">Aucune retenue pour l'instant.</p>}
             <div data-section-retenues className="space-y-1.5">
               {etat.retenues.map((p) => <Row key={p.idu} p={p} actions={
-                <button onClick={() => onStatut(p.idu, 'proposee')}
-                  className="min-h-7 text-[10px] text-txt-mut transition-colors duration-quick hover:text-txt">retirer</button>
+                <Bouton niveau="lien" onClick={() => onStatut(p.idu, 'proposee')}>retirer</Bouton>
               } />)}
             </div>
           </div>
@@ -262,8 +256,7 @@ function SectionsDrawer({ etat, onClose, onFiche, onStatut }: {
             {etat.ecartees.length === 0 && <p className="text-[11px] text-txt-dim">Aucune écartée.</p>}
             <div data-section-ecartees className="space-y-1.5">
               {etat.ecartees.map((p) => <Row key={p.idu} p={p} actions={
-                <button data-recuperer onClick={() => onStatut(p.idu, 'proposee')}
-                  className="min-h-7 rounded border border-mint/50 px-1.5 py-0.5 text-[10px] text-mint transition-colors duration-quick hover:bg-mint/10">↩ récupérer</button>
+                <Bouton niveau="lien" data-recuperer onClick={() => onStatut(p.idu, 'proposee')}>↩ récupérer</Bouton>
               } />)}
             </div>
           </div>

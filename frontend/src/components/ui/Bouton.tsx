@@ -10,7 +10,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 export type BoutonNiveau = 'primaire' | 'secondaire' | 'lien'
-export type BoutonTon = 'vert' | 'ambre' | 'ia'
+export type BoutonTon = 'vert' | 'ambre' | 'ia' | 'danger'
 
 export interface BoutonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   niveau?: BoutonNiveau
@@ -21,11 +21,14 @@ export interface BoutonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 // Par ton : aplat (fond opaque + encre sombre), et contour (bord + texte de la couleur).
-// L'encre sombre du ton vert = token --mint-on ; ambre/ia = encres sombres dédiées (miroir --mauve-ink).
+// L'encre sombre du ton vert = token --mint-on ; ambre/ia/danger = encres sombres dédiées.
+// DA-FIX-2 Lot 0 (décision Vic 24/09) — ton `danger` (corail/rouge de l'app) RÉSERVÉ aux actions
+// destructrices : Supprimer, Écarter, et les boutons st-ecartee. Jamais pour une action neutre.
 const TON = {
-  vert:  { fill: 'bg-mint text-mint-on',            line: 'border-mint text-mint',      hover: 'hover:bg-mint hover:text-mint-on focus-visible:bg-mint focus-visible:text-mint-on' },
-  ambre: { fill: 'bg-amber text-[#241a06]',         line: 'border-amber text-amber',    hover: 'hover:bg-amber hover:text-[#241a06] focus-visible:bg-amber focus-visible:text-[#241a06]' },
-  ia:    { fill: 'bg-violet text-[#14091f]',        line: 'border-violet text-violet',  hover: 'hover:bg-violet hover:text-[#14091f] focus-visible:bg-violet focus-visible:text-[#14091f]' },
+  vert:   { fill: 'bg-mint text-mint-on',       line: 'border-mint text-mint',        hover: 'hover:bg-mint hover:text-mint-on focus-visible:bg-mint focus-visible:text-mint-on' },
+  ambre:  { fill: 'bg-amber text-[#241a06]',    line: 'border-amber text-amber',      hover: 'hover:bg-amber hover:text-[#241a06] focus-visible:bg-amber focus-visible:text-[#241a06]' },
+  ia:     { fill: 'bg-violet text-[#14091f]',   line: 'border-violet text-violet',    hover: 'hover:bg-violet hover:text-[#14091f] focus-visible:bg-violet focus-visible:text-[#14091f]' },
+  danger: { fill: 'bg-coral text-[#2b1512]',    line: 'border-coral text-coral',      hover: 'hover:bg-coral hover:text-[#2b1512] focus-visible:bg-coral focus-visible:text-[#2b1512]' },
 } as const
 
 const BASE =

@@ -308,10 +308,10 @@ export function M16() {
             return (
               <div data-asm-sans-droits className="flex flex-col gap-1.5 rounded-lg border border-st-creuser/50 bg-st-creuser/[0.09] px-3 py-2 text-[11px] leading-snug text-st-creuser">
                 <span><b>{n} parcelle{n > 1 ? 's' : ''} sans droits à bâtir estimés</b> <span className="text-txt-dim">n'apporte{n > 1 ? 'nt' : ''} rien au bilan (aucune surface de plancher estimée — souvent des terrains non constructibles). Les retirer ?</span></span>
-                <button data-asm-retirer-vides onClick={() => { const rm = new Set(vides.map((i) => i.idu as string)); setMsel(msel.filter((x) => !rm.has(x))) }}
-                  className="hover-fill self-start rounded-lg border border-st-creuser/50 px-2 py-0.5 text-[10.5px] text-st-creuser transition-colors duration-quick">
+                <Bouton niveau="secondaire" ton="vert" data-asm-retirer-vides onClick={() => { const rm = new Set(vides.map((i) => i.idu as string)); setMsel(msel.filter((x) => !rm.has(x))) }}
+                  className="self-start">
                   Retirer {n > 1 ? `ces ${n} parcelles` : 'cette parcelle'}
-                </button>
+                </Bouton>
               </div>
             )
           })()}
