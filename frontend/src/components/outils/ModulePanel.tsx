@@ -3,7 +3,7 @@ import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable P
 import { useEffect, useMemo, useState } from 'react'
 import {
   courrierPdf, getCommunes, getCourrierDemandes, getCourrierStatut, getFiche, modBailleur,
-  modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPatrimoineSearch, modPermis, modPermisCount,
+  modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPermis, modPermisCount,
   modPermisFiche, modPromesses, modPromessesCount, modVelocite, postCourrierDemande, postCourrierAdressage,
   postCourrierComposer,
 } from '../../lib/api'
@@ -47,6 +47,7 @@ import { TaxeAmenagement } from './TaxeAmenagement'
 import { Gabarit } from './Gabarit'   // GABARIT-1 — outil interne (registry hidden:true, flag admin)
 import { MonSecteur } from './MonSecteur'   // SECTEUR-1 (S1) — outil « Mon secteur »
 import { ScanPatrimoine } from './ScanPatrimoine'   // RETOURS-4 S7 — fusion Scan patrimoine (possède + construit)
+import { OwnerParcelles } from '../OwnerParcelles'   // RECHERCHE-2 Lot 2 — sous-panneau propriétaire → ses parcelles
 import { Successions } from './Successions'   // OUTILS-MUSCLER-1 Lot A — radar patrimonial servi en outil
 import { Blocs } from './Blocs'   // OUTILS-MUSCLER-3 — assiettes contiguës d'un même propriétaire PM
 import { TierBadge } from './TierBadge'
@@ -181,7 +182,6 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
   const openCompare = useApp((s) => s.openCompare)
   const pushOutilRetour = useApp((s) => s.pushOutilRetour)   // OUTILS-FIX-3 Lot D — fil de retour
   const [sel, setSel] = useState<Set<string>>(new Set())
-  const [q, setQ] = useState('')
   const [sirenState, setSiren] = useState<string | null>(null)
   // RETOURS-12 O5 — le bandeau (nom + 3 chiffres + détail) est REPLIABLE en accordéon pour laisser
   // toute la place à la liste des parcelles (bug : la liste ne s'ouvrait pas, noyée sous le bandeau).
@@ -193,7 +193,6 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
     if (!embedded && m02Prefill) { setSiren(m02Prefill); setM02Prefill(null) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [m02Prefill, embedded])
-  const sug = useQuery({ queryKey: ['m02s', q], queryFn: () => modPatrimoineSearch(q), enabled: q.length >= 2 && !siren })
   // RETOURS-11 (T4) — la LISTE du patrimoine est paginée par 200 (« Voir plus »), plus jamais tronquée
   // muettement. L'endpoint sert des pages (limit/offset) : la page 0 porte aussi les agrégats (`d`).
   const M02_PAGE = 200
@@ -211,30 +210,12 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
   useModuleMap(items.map((i) => i['idu'] as string), null, [pat.dataUpdatedAt])
   return (
     <>
-      {/* RETOURS-4 S7 — la barre de recherche interne n'existe QUE hors fusion (embedded → recherche unique en tête). */}
-      {!embedded && <input value={q} onChange={(e) => { setQ(e.target.value); setSiren(null) }}
-        placeholder="SIREN ou nom (ex. CBO, SCI…)"
-        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-xs text-txt focus:border-mint focus:outline-none" />}
-      {!embedded && !siren && (sug.data ?? []).map((s) => (
-        <button key={s.siren} onClick={() => setSiren(s.siren)}
-          className="flex items-center justify-between rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-xs text-txt transition-colors duration-quick hover:border-mint/50">
-          <span className="truncate">{s.nom}</span><span className="font-mono text-[11px] text-txt-dim">{s.n} parc.</span>
-        </button>
-      ))}
-      {/* garde : le typeahead plafonne à 12 — on le DIT (jamais une coupe muette). */}
-      {!embedded && !siren && (sug.data?.length ?? 0) >= 12 && (
-        <p className="text-[10.5px] text-txt-dim">12 premiers résultats — affinez le nom ou le SIREN.</p>
-      )}
-      {/* Fix pré-lancement : distinguer un « 0 résultat LÉGITIME » d'une panne — sans ça, une boîte
-          absente des fichiers fonciers (ex. VISHOR MATERIAUX) donne un écran muet lu comme « cassé ». */}
-      {!embedded && !siren && q.length >= 2 && !sug.isFetching && (sug.data?.length ?? 0) === 0 && (
-        <div data-m02-vide className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-mut">
-          « <b className="text-txt">{q}</b> » n'a pas de foncier connu dans les fichiers fonciers (DGFiP),
-          ou n'y figure pas. Ces fichiers ne recensent que les <b>personnes morales</b> détentrices de
-          foncier à La Réunion — une personne physique ou une société sans bien détecté n'apparaît pas.
-        </div>
-      )}
-      {embedded && !siren && <p className="text-[11px] leading-snug text-txt-dim">Cherchez un propriétaire (nom, SIREN/SIRET, IDU ou adresse) dans la barre du haut pour voir ce qu'il possède.</p>}
+      {/* RECHERCHE-2 Lot 2 (décision Vic) — la barre de recherche INTERNE de M02 (SIREN/nom, avec son
+          typeahead maison) est RETIRÉE : c'était un doublon de l'outil Scan patrimoine (ParcelInput,
+          4 familles) et elle était MORTE en production (le menu « patrimoine » rend ScanPatrimoine, qui
+          embarque M02 SANS cette barre). M02 ne se pilote plus que par SIREN (fusion embarquée, ou pont
+          m02Prefill). Sans SIREN → le message d'invite ci-dessous (la recherche vit dans la barre du haut). */}
+      {!siren && <p className="text-[11px] leading-snug text-txt-dim">Cherchez un propriétaire (nom, SIREN/SIRET, IDU ou adresse) dans la barre du haut pour voir ce qu'il possède.</p>}
       {/* OUTILS-FIX-3 B2 — donnée réellement vide : on le DIT, au lieu d'aligner trois zéros (0 parcelle ·
           0 actionnable · 0 m² SDP) doublés d'un encart d'interprétation. Le SIREN est bien résolu (le
           pont/la recherche a rendu un résultat), l'entreprise ne détient simplement rien à La Réunion —
@@ -641,6 +622,8 @@ export function M03() {
   // permis ouvrait d'office le 1er permis (l'utilisateur ne voyait pas le compte). Désormais on affiche
   // TOUJOURS une phrase de résultat (0 / X permis) et on laisse le client cliquer les points sur la carte.
   const [parcelIdu, setParcelIdu] = useState<string | null>(null)
+  // RECHERCHE-2 Lot 2 — propriétaire choisi dans la barre permis → sous-panneau de ses parcelles.
+  const [permisOwner, setPermisOwner] = useState<{ siren: string; nom: string } | null>(null)
   const qParcelPermis = useQuery({ queryKey: ['parcelle-permis-search', parcelIdu],
     queryFn: () => modParcellePermis(parcelIdu!), enabled: !!parcelIdu })
   // date du millésime Sitadel servi — lue du compteur radar (fenêtre 24 m, TOUJOURS actif).
@@ -735,8 +718,13 @@ export function M03() {
         <AddressAutocomplete data-testid="permis-recherche" placeholder="Adresse, commune, n° de permis ou parcelle…"
           // RETOURS-16 V5 — la barre permis accepte adresse + parcelle + COMMUNE : le suggest
           // unifié propose les trois à la frappe ; choisir une commune pose le filtre commune.
-          grammaires={['adresse', 'cadastre', 'commune']}
-          onPick={(it) => { if (it.type === 'commune' && it.commune) setCommune(it.commune) }}
+          // RECHERCHE-2 Lot 2 — + PROPRIÉTAIRE / SIREN : un pick propriétaire déroule ses parcelles
+          // (sous-panneau partagé) ; en choisir une CIBLE la parcelle et cherche ses permis (comme un IDU).
+          grammaires={['adresse', 'cadastre', 'commune', 'proprietaire', 'siren']}
+          onPick={(it) => {
+            if (it.type === 'commune' && it.commune) setCommune(it.commune)
+            else if ((it.type === 'proprietaire' || it.type === 'siren') && it.siren) setPermisOwner({ siren: it.siren, nom: it.label })
+          }}
           // PERMIS-CHECK-1 P2 — choisir une adresse/parcelle dans le suggest CIBLE la parcelle (zoom +
           // délimitation) ET déclenche la recherche de ses permis → phrase de résultat (0 / X), comme un
           // IDU saisi. Avant, un choix de suggestion recadrait la carte SANS jamais dire s'il y a un permis.
@@ -754,6 +742,15 @@ export function M03() {
             // sinon une référence Sitadel compacte → fiche permis
             if (/^[0-9][0-9a-z]{6,}$/i.test(v)) setOpen(v)
           }} />
+        {/* RECHERCHE-2 Lot 2 — propriétaire → ses parcelles ; en choisir une cible la parcelle (zoom +
+            délimitation) et cherche ses permis, exactement comme un IDU saisi. */}
+        {permisOwner && (
+          <div className="mt-1.5">
+            <OwnerParcelles siren={permisOwner.siren} nom={permisOwner.nom}
+              onPick={(idu) => { const c = iduComplet(idu); select(null); focusParcelle(c); setParcelIdu(c); setPermisOwner(null) }}
+              onChanger={() => setPermisOwner(null)} />
+          </div>
+        )}
         {/* PERMIS-CHECK-1 P2 — parcelle CIBLÉE : phrase de résultat, TOUJOURS affichée. Le compte vient de
             /modules/parcelle-permis (permis autorisés géolocalisés ≤ 200 m, source du signal viabilisation),
             non fenêtré → N = profondeur MAX de l'outil (max(MONTHS_RADAR) = 240 m = toute la profondeur

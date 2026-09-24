@@ -10,6 +10,7 @@ import { getMoi, getRadarBienDetail, getRadarBiens, getRadarDepotOuvert, radarCl
 import { DepotAgence } from '../radar/DepotAgence'
 import { usePagination, ListPaginationFooter } from '../ListPagination'
 import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R13 — recherche adresse/IDU commune
+import { OwnerParcelles } from '../OwnerParcelles'   // RECHERCHE-2 Lot 2 — propriétaire → ses parcelles
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique des 24 communes
 import { trierCommunes } from '../../lib/communes'
 import { Declaratif } from './RadarDeclaratif'         // D2 — bloc déclaratif partagé (fiche + admin)
@@ -356,6 +357,8 @@ export function RadarView() {
   const [mobileVue, setMobileVue] = useState<'liste' | 'carte'>('liste')
   const setModuleMap = useApp((s) => s.setModuleMap)
   const setFlyTo = useApp((s) => s.setFlyTo)
+  // RECHERCHE-2 Lot 2 — propriétaire choisi dans la barre Radar → sous-panneau de ses parcelles.
+  const [radarOwner, setRadarOwner] = useState<{ siren: string; nom: string } | null>(null)
   const radarToOpen = useApp((s) => s.radarToOpen)
   const setRadarToOpen = useApp((s) => s.setRadarToOpen)
 
@@ -474,8 +477,12 @@ export function RadarView() {
         <div className="grid shrink-0 gap-2 border-b border-line-2 px-5 py-3.5">
           <div className="flex flex-wrap items-center gap-2">
             {/* recherche adresse/commune/IDU — positionne la carte sur l'adresse choisie (BAN + IDU) */}
-            <AddressAutocomplete placeholder="Adresse, commune, IDU…"
+            {/* RECHERCHE-2 Lot 2 — 4 familles : un pick propriétaire déroule ses parcelles ; en choisir
+                une recentre la carte sur son emprise. Adresse/parcelle → recadrage direct (inchangé). */}
+            <AddressAutocomplete placeholder="Propriétaire, adresse, IDU…"
               className="h-[35px] w-full min-w-0 flex-1 rounded-lg border border-line-2 bg-surface-1 px-2.5 text-[12.5px] text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none"
+              grammaires={['adresse', 'cadastre', 'proprietaire', 'siren']}
+              onPick={(it) => { if ((it.type === 'proprietaire' || it.type === 'siren') && it.siren) setRadarOwner({ siren: it.siren, nom: it.label }) }}
               onSelect={(sel) => { if (sel.lon != null && sel.lat != null) setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }} />
             <select data-radar-commune value={f.commune ?? ''} onChange={(e) => setF((p) => ({ ...p, commune: e.target.value || undefined }))} className={selInput}>
               <option value="">Toute l’île</option>
@@ -490,6 +497,13 @@ export function RadarView() {
               Filtrer{nActifs > 0 && <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-mint px-1 text-[10.5px] font-bold text-mint-on">{nActifs}</span>}
             </button>
           </div>
+
+          {/* RECHERCHE-2 Lot 2 — propriétaire choisi → ses parcelles ; en choisir une recentre la carte. */}
+          {radarOwner && (
+            <OwnerParcelles siren={radarOwner.siren} nom={radarOwner.nom}
+              onPick={(_idu, centre) => { if (centre) setFlyTo({ center: [centre.lon, centre.lat], zoom: 16 }); setRadarOwner(null) }}
+              onChanger={() => setRadarOwner(null)} />
+          )}
 
           {/* pastilles de filtres actifs (tiroir), chacune retirable + « tout effacer » */}
           {nActifs > 0 && (

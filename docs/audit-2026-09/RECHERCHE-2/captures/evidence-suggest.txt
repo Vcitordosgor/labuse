@@ -1,0 +1,113 @@
+# Preuve live /api/recherche/suggest — branche fix/recherche-2 (127.0.0.1:8145)
+# 2026-09-24 15:48
+
+## q = « CBO »  (types=adresse,cadastre,proprietaire,siren)
+{
+    "q": "CBO",
+    "groupes": [
+        {
+            "type": "proprietaire",
+            "items": [
+                {
+                    "label": "CBO TERRITORIA",
+                    "sub": "1871 parcelles",
+                    "siren": "452038805"
+                },
+                {
+                    "label": "CBO DEVELOPPEMENT",
+                    "sub": "34 parcelles",
+                    "siren": "524758885"
+                },
+                {
+                    "label": "CBO PROPERTY",
+                    "sub": "27 parcelles",
+                    "siren": "479422008"
+                }
+            ]
+        }
+    ],
+    "total": 3,
+    "ms": 34.1,
+    "formats": "adresse, IDU, r\u00e9f\u00e9rence courte (BZ1065), SIREN, nom de propri\u00e9taire, commune, projet"
+}
+
+## q = « 421032555 »  (types=adresse,cadastre,proprietaire,siren)
+{
+    "q": "421032555",
+    "groupes": [
+        {
+            "type": "siren",
+            "items": [
+                {
+                    "label": "SIREN 421032555 inconnu des fichiers fonciers 2025",
+                    "sub": "aucun foncier d\u00e9tenu \u00e0 La R\u00e9union",
+                    "note": true
+                }
+            ]
+        }
+    ],
+    "total": 1,
+    "ms": 4022.1,
+    "formats": "adresse, IDU, r\u00e9f\u00e9rence courte (BZ1065), SIREN, nom de propri\u00e9taire, commune, projet"
+}
+
+## q = « BW0917 »  (types=adresse,cadastre,proprietaire,siren)
+{
+    "q": "BW0917",
+    "groupes": [],
+    "total": 0,
+    "ms": 4002.1,
+    "formats": "adresse, IDU, r\u00e9f\u00e9rence courte (BZ1065), SIREN, nom de propri\u00e9taire, commune, projet"
+}
+
+## q = « 27 chemin Vidot Saint-Denis »  (types=adresse,cadastre,proprietaire,siren)
+{
+    "q": "27 chemin Vidot Saint-Denis",
+    "groupes": [],
+    "total": 0,
+    "ms": 35.7,
+    "formats": "adresse, IDU, r\u00e9f\u00e9rence courte (BZ1065), SIREN, nom de propri\u00e9taire, commune, projet"
+}
+
+## q = « 1 chemin Vidot Saint-Benoit »  (types=adresse,cadastre,proprietaire,siren)
+{
+    "q": "1 chemin Vidot Saint-Benoit",
+    "groupes": [
+        {
+            "type": "adresse",
+            "items": [
+                {
+                    "label": "1 Chemin Vidot",
+                    "sub": "97470 Saint-Beno\u00eet",
+                    "idu": "97410000AX0057",
+                    "lon": 55.670035,
+                    "lat": -21.03446
+                },
+                {
+                    "label": "11 bis Chemin Vidot",
+                    "sub": "97470 Saint-Beno\u00eet",
+                    "idu": "97410000AX1005",
+                    "lon": 55.66975,
+                    "lat": -21.033926
+                },
+                {
+                    "label": "11 Chemin Vidot",
+                    "sub": "97470 Saint-Beno\u00eet",
+                    "idu": "97410000AX0619",
+                    "lon": 55.669809,
+                    "lat": -21.034037
+                },
+                {
+                    "label": "13 Chemin Vidot",
+                    "sub": "97470 Saint-Beno\u00eet",
+                    "idu": "97410000AX0702",
+                    "lon": 55.669492,
+                    "lat": -21.033907
+                }
+            ]
+        }
+    ],
+    "total": 4,
+    "ms": 36.3,
+    "formats": "adresse, IDU, r\u00e9f\u00e9rence courte (BZ1065), SIREN, nom de propri\u00e9taire, commune, projet"
+}

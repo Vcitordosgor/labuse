@@ -133,11 +133,13 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
         <>
           {/* DA-FIX-4 verif (task 1) — ENTRÉE CANONIQUE : ParcelInput (omnibox 40 px + séparateur « ou »
               + Bouton « Cliquez une parcelle sur la carte »). Le clic-carte et l'IDU/adresse résolvent le
-              PROPRIÉTAIRE de la parcelle (onPick → resoudre → ownerDeIdu) ; un nom de société / SIREN passe
+              PROPRIÉTAIRE de la parcelle (onPick → resoudre → ownerDeIdu). RECHERCHE-2 Lot 1 — une
+              suggestion propriétaire/SIREN (les 4 grammaires sont par défaut) remonte par onProprietaire →
+              choisir (owner posé direct, PAS le sous-panneau parcelle) ; un nom tapé sans suggestion part
               par onAddress → resoudre (recherche dénomination, liste candidats si plusieurs). */}
           <ParcelInput dataAttr="scan-search" placeholder="Nom de société, SIREN, adresse ou IDU"
-            grammaireProprietaire
             onPick={(v) => { setQ(v); void resoudre(v) }}
+            onProprietaire={(siren, nom) => { setQ(nom ?? siren); choisir(siren, nom) }}
             onAddress={(v) => { setQ(v); void resoudre(v) }} />
           {/* U1.3 — ligne d'aide sous le champ. */}
           <p className="text-[11px] leading-snug text-txt-off">Une société, une parcelle, une adresse — LABUSE remonte au propriétaire.</p>

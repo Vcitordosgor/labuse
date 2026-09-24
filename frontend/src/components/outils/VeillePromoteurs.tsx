@@ -13,6 +13,7 @@ import { Squelette } from '../Loading'
 import { EmptyState } from '../States'
 import { iduComplet, fmtDateSitadel } from '../../lib/format'
 import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R4.2 — recherche adresse/IDU commune
+import { OwnerParcelles } from '../OwnerParcelles'   // RECHERCHE-2 Lot 2 — propriétaire → ses parcelles
 import { CollecteProgrammes } from '../admin/Programmes'   // LOT S1 — geste admin discret réutilisant la collecte
 import { Bouton } from '../ui/Bouton'
 import { Retour } from '../ui/Retour'   // DA-FIX-5 P6 — retour unique
@@ -92,6 +93,8 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
   const [categorie, setCategorie] = useState('')
   const [depuis, setDepuis] = useState('')
   const [openSiren, setOpenSiren] = useState<string | null>(null)
+  // RECHERCHE-2 Lot 2 — propriétaire choisi dans la barre « se positionner » → ses parcelles.
+  const [veilleOwner, setVeilleOwner] = useState<{ siren: string; nom: string } | null>(null)
   // ADMIN-1 (AD3) — MODE STRICT : quand un propriétaire est choisi (Scan patrimoine embarqué + focusSiren),
   // on ne montre QUE ses opérations — aucun filtre commune/catégorie, aucun total de l'île, pas de champ
   // « se positionner ». L'exploration générale reste accessible via « Explorer toutes les opérations → ».
@@ -214,10 +217,19 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
           L'exploration générale est à un clic (« Explorer toutes les opérations → »). */}
       {!strict && (
         <>
-          {/* RETOURS-3 R4.2 — barre de recherche adresse/IDU (se positionner sur la carte). */}
-          <AddressAutocomplete placeholder="Adresse, IDU… (se positionner sur la carte)"
+          {/* RETOURS-3 R4.2 — barre de recherche adresse/IDU (se positionner sur la carte).
+              RECHERCHE-2 Lot 2 — + propriétaire/SIREN : un pick propriétaire déroule ses parcelles ;
+              en choisir une recentre la carte et la sélectionne. */}
+          <AddressAutocomplete placeholder="Propriétaire, adresse, IDU… (se positionner sur la carte)"
             className="h-8 w-full rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none"
+            grammaires={['adresse', 'cadastre', 'proprietaire', 'siren']}
+            onPick={(it) => { if ((it.type === 'proprietaire' || it.type === 'siren') && it.siren) setVeilleOwner({ siren: it.siren, nom: it.label }) }}
             onSelect={(s2) => { if (s2.lon != null && s2.lat != null) setFlyTo({ center: [s2.lon, s2.lat], zoom: 16 }); if (s2.idu) select(s2.idu) }} />
+          {veilleOwner && (
+            <OwnerParcelles siren={veilleOwner.siren} nom={veilleOwner.nom}
+              onPick={(idu, centre) => { if (centre) setFlyTo({ center: [centre.lon, centre.lat], zoom: 16 }); select(idu); setVeilleOwner(null) }}
+              onChanger={() => setVeilleOwner(null)} />
+          )}
           <div className="flex flex-wrap gap-2">
             <select data-vp-commune value={commune} onChange={(e) => setCommune(e.target.value)} className={sel}>
               <option value="">Toutes les communes</option>

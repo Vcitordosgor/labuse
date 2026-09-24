@@ -37,6 +37,9 @@ router = APIRouter(prefix="/api/recherche", tags=["recherche"])
 log = logging.getLogger("labuse")
 
 MAX_TOTAL = 8   # propositions maximum, tous types confondus (mandat V5.3)
+# RECHERCHE-2 Lot 3 (b) — millésime des fichiers fonciers PM servis (parcelle_personne_morale,
+# situation DGFiP) : porté par la note « SIREN inconnu » pour être honnête sur la fraîcheur.
+MAJIC_MILLESIME = "2025"
 
 _RE_SECTION_NUMERO = re.compile(r"^([A-Za-z]{1,2})[\s-]?(\d{1,4})$")   # miroir estSectionNumero
 _RE_IDU_PARTIEL = re.compile(r"^\d{5}[0-9A-Za-z]{0,9}$")               # IDU en cours de frappe
@@ -139,14 +142,28 @@ def _sugg_adresse(db: Session, q: str, n: int) -> list[dict]:
     # Vic). La RÉSOLUTION était déjà juste (idu par ligne) ; c'est l'AFFICHAGE qui perdait le rep.
     from ..constants import ADRESSE_SUGGEST_EXPR, plie_suggest, sql_plie_lit_suggest
     col = sql_plie_lit_suggest(ADRESSE_SUGGEST_EXPR)
+    # RECHERCHE-2 Lot 3 (a) — MATCH PAR JETONS EN ET. Avant, un `col LIKE '%saisie%'` en sous-chaîne
+    # CONTIGUË ratait « n° + voie + commune » SANS code postal : la colonne stocke numéro+rep+voie+CP+
+    # commune, donc « 27 chemin vidot saint denis » n'est PAS un sous-texte de « 27 chemin vidot 97490
+    # saint denis » (le CP 97490 est intercalé) → 0 (constat Vic). Désormais chaque MOT de la saisie
+    # doit apparaître dans la colonne (ordre libre) : l'adresse « n°+voie+commune » ressort. L'index GIN
+    # trigram sert chaque jeton ; le classement garde en tête le cas idéal (préfixe contigu).
+    plied = plie_suggest(q)
+    tokens = [t for t in plied.split(" ") if t]
+    if not tokens:
+        return []
+    conds = " AND ".join(f"{col} LIKE '%' || :t{i} || '%'" for i in range(len(tokens)))
+    params = {f"t{i}": t for i, t in enumerate(tokens)}
+    params["qp"] = plied
+    params["lim"] = n
     rows = db.execute(text(
         f"""SELECT trim(concat_ws(' ', nullif(numero,''), nullif(rep,''), voie)) AS label,
                    commune, code_postal, idu,
                    ST_X(geom) lon, ST_Y(geom) lat
             FROM adresses
-            WHERE idu IS NOT NULL AND geom IS NOT NULL AND {col} LIKE '%' || :qp || '%'
+            WHERE idu IS NOT NULL AND geom IS NOT NULL AND {conds}
             ORDER BY ({col} LIKE :qp || '%') DESC, length(voie), voie, numero
-            LIMIT :lim"""), {"qp": plie_suggest(q), "lim": n}).mappings().all()
+            LIMIT :lim"""), params).mappings().all()
     return [{"label": r["label"], "sub": f"{r['code_postal'] or ''} {r['commune'] or ''}".strip(),
              "idu": r["idu"], "lon": r["lon"], "lat": r["lat"]} for r in rows]
 
@@ -165,7 +182,17 @@ def _sugg_siren(db: Session, q: str, n: int) -> list[dict]:
         """SELECT denomination, siren, count(*) n FROM parcelle_personne_morale
            WHERE siren LIKE :p GROUP BY 1, 2 ORDER BY n DESC LIMIT :lim"""),
         {"p": f"{dg}%", "lim": n}).all()
-    return [{"label": d, "sub": f"SIREN {s}", "siren": s} for d, s, _n in rows]
+    if rows:
+        return [{"label": d, "sub": f"SIREN {s}", "siren": s} for d, s, _n in rows]
+    # RECHERCHE-2 Lot 3 (b) — un SIREN BIEN FORMÉ (9 chiffres) mais ABSENT des fichiers fonciers ne
+    # doit plus tomber dans le « 0 muet » générique (« format accepté ? ») : c'est le bon format, la
+    # société n'a simplement aucun foncier PM à La Réunion. On rend une note HONNÊTE, non cliquable
+    # (pas de `siren` → rien à ouvrir). Heuristique : on n'émet pas la note quand les chiffres
+    # ressemblent à un IDU réunionnais en cours de frappe (préfixe INSEE 974…) — le cadastre répond.
+    if len(dg) == 9 and not dg.startswith("974"):
+        return [{"label": f"SIREN {dg} inconnu des fichiers fonciers {MAJIC_MILLESIME}",
+                 "sub": "aucun foncier détenu à La Réunion", "note": True}]
+    return []
 
 
 def _sugg_commune(q: str, n: int) -> list[dict]:
