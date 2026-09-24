@@ -1,0 +1,9 @@
+parcelles testées : 55 · touchant du PPR INTERDICTION : 10
+écart d'aire max            : 9.950e-09 m²
+géométries WKB différentes  : 5
+  - 97415000BW0102: WKB≠ symdiff=1.587e-08 m²
+  - 97411000AH0022: WKB≠ symdiff=4.409e-10 m²
+  - 97411000DZ0053: WKB≠ symdiff=1.192e-10 m²
+  - 97411000HD0281: WKB≠ symdiff=7.934e-10 m²
+  - 97406000AV1267: WKB≠ symdiff=6.910e-10 m²
+VERDICT : IDENTIQUE au m² près ✅

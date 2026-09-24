@@ -108,6 +108,10 @@ def _ctx():
 def _run_hook(monkeypatch, hauteur_mode):
     """Exécute parcel_faisabilite avec ctx + règle mockés ; renvoie (Faisabilite, appels_facade)."""
     calls = []
+    # GEOMETRIE-1 lot B — l'assiette vient du moteur gabarit quand il sert la parcelle ; ce stub
+    # ne sait pas servir les requêtes du builder. Le test porte sur le hook PROSPECT, pas sur
+    # l'assiette → gabarit débranché explicitement (chemin legacy, comme avant le lot B).
+    monkeypatch.setattr(_fdb, "_assiette_gabarit", lambda s, i: None)
     monkeypatch.setattr(_fdb, "parcel_context", lambda s, pid: _ctx())
     monkeypatch.setattr(_fdb, "resolve_zone", lambda z, c: ZoneRules(
         code="Ud", emprise_sol_pct=80.0, recul_limites_sep_m=4, hauteur_mode=hauteur_mode,

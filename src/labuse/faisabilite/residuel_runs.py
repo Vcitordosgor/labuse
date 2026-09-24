@@ -19,8 +19,10 @@ from sqlalchemy import text
 # Colonnes de données exposées par la vue, dans l'ordre EXACT de la table historique
 # (computed_at AVANT capacite_estimee — cette dernière ajoutée par ALTER en fin de table ;
 # aucun lecteur ne fait SELECT *, mais on expose noms + types + ORDRE à l'identique).
+# GEOMETRIE-1 : assiette_source ajoutée EN FIN (CREATE OR REPLACE VIEW n'accepte que ça).
 _VIEW_COLS = ("parcel_id", "taux_emprise_pct", "pct_potentiel", "sous_densite",
-              "sdp_residuelle_m2", "computed_at", "capacite_estimee", "cause")
+              "sdp_residuelle_m2", "computed_at", "capacite_estimee", "cause",
+              "assiette_source")
 
 
 class ServedRunWriteError(RuntimeError):
@@ -37,6 +39,11 @@ def ensure_runs_schema(conn) -> None:
           sdp_residuelle_m2 integer, capacite_estimee boolean, cause text,
           computed_at timestamptz NOT NULL DEFAULT now(),
           PRIMARY KEY (run_seq, parcel_id))"""))
+    # GEOMETRIE-1 lot B — provenance de l'assiette : 'gabarit' (zone d'implantation, reculs par
+    # côté + PPR rouge découpé) ou 'residuel_legacy' (inset uniforme ∩ U/AU — parcelles que le
+    # gabarit ne sert pas). NULL = run antérieur au lot. Pas de trou, pas de mensonge.
+    conn.execute(text("ALTER TABLE parcel_residuel_runs "
+                      "ADD COLUMN IF NOT EXISTS assiette_source text"))
     # index lecteurs-par-parcelle (les EXISTS/JOIN sur parcel_id) : (parcel_id, run_seq)
     conn.execute(text("CREATE INDEX IF NOT EXISTS parcel_residuel_runs_pid "
                       "ON parcel_residuel_runs (parcel_id, run_seq)"))
@@ -53,6 +60,16 @@ def ensure_runs_schema(conn) -> None:
     # AU PLUS UN run servi (index partiel unique) — garantit l'unicité du pointeur.
     conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS residuel_runs_one_served "
                       "ON residuel_runs (is_served) WHERE is_served"))
+    # GEOMETRIE-1 — si la vue existe déjà sans assiette_source, la remettre au niveau
+    # (OR REPLACE n'accepte qu'un ajout en fin de liste — c'est le cas). Idempotent.
+    relkind = conn.execute(text(
+        "SELECT relkind FROM pg_class WHERE relname='parcel_residuel'")).scalar()
+    if relkind == "v":
+        cols = {r[0] for r in conn.execute(text(
+            "SELECT attname FROM pg_attribute WHERE attrelid='parcel_residuel'::regclass "
+            "AND attnum > 0 AND NOT attisdropped"))}
+        if "assiette_source" not in cols:
+            conn.execute(text(_view_sql(or_replace=True)))
 
 
 def served_run_seq(conn) -> int:
@@ -63,9 +80,10 @@ def served_run_seq(conn) -> int:
     return int(r)
 
 
-def _view_sql() -> str:
+def _view_sql(or_replace: bool = False) -> str:
     cols = ", ".join(_VIEW_COLS)
-    return (f"CREATE VIEW parcel_residuel AS SELECT {cols} FROM parcel_residuel_runs "
+    verb = "CREATE OR REPLACE VIEW" if or_replace else "CREATE VIEW"
+    return (f"{verb} parcel_residuel AS SELECT {cols} FROM parcel_residuel_runs "
             "WHERE run_seq = (SELECT run_seq FROM residuel_runs WHERE is_served)")
 
 

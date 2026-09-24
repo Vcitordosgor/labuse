@@ -1,0 +1,36 @@
+échantillon : 1000 parcelles (seed=0.42)
+
+==================================================================
+DÉBIT — build_gabarit_input (builder.py, lecture seule)
+==================================================================
+parcelles chronométrées : 1000   (servies 603 · bloquées 397 · à cheval 103 · PPR rouge 76 · erreurs 0)
+temps total (wall)      : 19.25 s
+DÉBIT                   : 51.9 parcelles/seconde
+latence /parcelle       : moy 18.00 ms · médiane 10.87 · p95 52.13 · max 206.38 ms
+froid→chaud             : 1re moitié 49.8 p/s · 2e moitié 62.7 p/s
+
+EXTRAPOLATION à 431,663 parcelles (mono-thread) :
+  8312 s  =  138.5 min  =  2.31 h
+
+==================================================================
+CE QUI COÛTE — temps DB par catégorie (via wrapper session.execute)
+==================================================================
+catégorie                                     ms/parc   % DB  appels/parc
+RECULS par côté (classify_parcel_limits)        2.917  22.0%         2.68
+PPR-rouge GÉOMÉTRIE (ST_Intersection, rare)     5.983  45.0%         0.24
+PPR cascade (lookup /parcelle, indexé)          0.259   1.9%         1.00
+ZONE / CES (résolution zone dominante)          0.344   2.6%         2.10
+MULTIZONE (découpe à-cheval)                    3.373  25.4%         1.39
+ENTÊTE parcelle (surface+géom)                  0.248   1.9%         1.00
+BD TOPO millésime                               0.129   1.0%         0.68
+AUTRE (non classé)                              0.034   0.3%
+    - autre:select exists(select 1 from spatial_layers g where  0.034 ms
+------------------------------------------------------------------
+TOTAL DB /parcelle                             13.286 100.0%
+DB /parcelle                                   13.286 ms   (69% du wall)
+Python + fetch /parcelle (reste)                5.968 ms   (31% du wall)
+
+CES (valeur) : résolue en MÉMOIRE (YAML plu_destinations), ~0 DB — le coût 'zone' ci-dessus = résolution de la zone dominante qui la précède.
+
+POUR RÉFÉRENCE — compute_gabarit (engine.py, géométrie/buffers) : 2.07 ms/parcelle servie (603 parcelles).
+  build+compute bout-en-bout ≈ 20.50 ms/parc (servies seules ont un compute).

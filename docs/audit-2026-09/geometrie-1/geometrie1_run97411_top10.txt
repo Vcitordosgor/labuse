@@ -1,0 +1,50 @@
+==============================================================================
+97411000AK0196  sdp run8=8344  run9=9837  (delta +1493)
+  legacy frais : assiette étape1=6225 m² · sdp_max=11205 · emprise_constructible=6225
+  gabarit frais: assiette étape1=7054 m² · sdp_max=12698 · emprise_constructible=7054
+  gabarit: zoneImpl=11348.7 m² · PPR rouge découpé=True · morceau multizone=Upr (69 %) · recul_voie=4.0 m · recul_sep=4.0 m
+==============================================================================
+97411000BL0524  sdp run8=2537  run9=1654  (delta -883)
+  legacy frais : assiette étape1=1279 m² · sdp_max=2878 · emprise_constructible=1279
+  gabarit frais: assiette étape1=886 m² · sdp_max=1995 · emprise_constructible=886
+  gabarit: zoneImpl=886.5 m² · PPR rouge découpé=False · morceau multizone=— · recul_voie=4.0 m · recul_sep=2.0 m
+==============================================================================
+97411000BZ0157  sdp run8=318  run9=1117  (delta +799)
+  legacy frais : assiette étape1=418 m² · sdp_max=565 · emprise_constructible=418
+  gabarit frais: assiette étape1=1010 m² · sdp_max=1364 · emprise_constructible=1010
+  gabarit: zoneImpl=1010.9 m² · PPR rouge découpé=True · morceau multizone=— · recul_voie=3.0 m · recul_sep=4.0 m
+==============================================================================
+97411000BL0112  sdp run8=1907  run9=1220  (delta -687)
+  legacy frais : assiette étape1=871 m² · sdp_max=1960 · emprise_constructible=871
+  gabarit frais: assiette étape1=566 m² · sdp_max=1273 · emprise_constructible=566
+  gabarit: zoneImpl=570.3 m² · PPR rouge découpé=False · morceau multizone=— · recul_voie=4.0 m · recul_sep=2.0 m
+==============================================================================
+97411000HZ0285  sdp run8=5  run9=650  (delta +645)
+  legacy frais : assiette étape1=6 m² · sdp_max=5 · emprise_constructible=6
+  gabarit frais: assiette étape1=722 m² · sdp_max=650 · emprise_constructible=722
+  gabarit: zoneImpl=1519.1 m² · PPR rouge découpé=True · morceau multizone=— · recul_voie=3.0 m · recul_sep=4.0 m
+==============================================================================
+97411000AH0030  sdp run8=1370  run9=782  (delta -588)
+  legacy frais : assiette étape1=2541 m² · sdp_max=5718 · emprise_constructible=2541
+  gabarit frais: assiette étape1=2280 m² · sdp_max=5130 · emprise_constructible=2280
+  gabarit: zoneImpl=2280.0 m² · PPR rouge découpé=True · morceau multizone=— · recul_voie=4.0 m · recul_sep=2.0 m
+==============================================================================
+97411000CE0016  sdp run8=601  run9=1152  (delta +551)
+  legacy frais : assiette étape1=3216 m² · sdp_max=2894 · emprise_constructible=3216
+  gabarit frais: assiette étape1=4439 m² · sdp_max=3445 · emprise_constructible=3828
+  gabarit: zoneImpl=4439.5 m² · PPR rouge découpé=True · morceau multizone=Um (43.4 %) · recul_voie=3.0 m · recul_sep=4.0 m
+==============================================================================
+97411000HX0075  sdp run8=4748  run9=5221  (delta +473)
+  legacy frais : assiette étape1=2320 m² · sdp_max=5219 · emprise_constructible=2320
+  gabarit frais: assiette étape1=2588 m² · sdp_max=5692 · emprise_constructible=2530
+  gabarit: zoneImpl=2900.0 m² · PPR rouge découpé=False · morceau multizone=— · recul_voie=3.0 m · recul_sep=4.0 m
+==============================================================================
+97411000BP0647  sdp run8=942  run9=581  (delta -361)
+  legacy frais : assiette étape1=419 m² · sdp_max=942 · emprise_constructible=419
+  gabarit frais: assiette étape1=258 m² · sdp_max=581 · emprise_constructible=258
+  gabarit: zoneImpl=258.1 m² · PPR rouge découpé=False · morceau multizone=— · recul_voie=4.0 m · recul_sep=2.0 m
+==============================================================================
+97411000CR0343  sdp run8=169  run9=526  (delta +357)
+  legacy frais : assiette étape1=188 m² · sdp_max=169 · emprise_constructible=188
+  gabarit frais: assiette étape1=585 m² · sdp_max=526 · emprise_constructible=585
+  gabarit: zoneImpl=585.3 m² · PPR rouge découpé=True · morceau multizone=— · recul_voie=3.0 m · recul_sep=4.0 m

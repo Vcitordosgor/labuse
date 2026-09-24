@@ -345,9 +345,14 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         detail=(ppr["detail"] if ppr else "Aucune zone rouge PPR sur la parcelle"), source=ppr_src))
     exclusions: list[Exclusion] = []
     if ppr_rouge:
+        # GEOMETRIE-1 lot A — ST_ClipByBox2D avant l'intersection fine (même optimisation que
+        # _greve_certaine_m2, cf. faisabilite/db.py). Les polygones PPR INTERDICTION montent à
+        # 320 k sommets ; les rogner d'abord à la bbox de la parcelle rend l'intersection O(petit).
+        # Résultat STRICTEMENT identique : parcelle ⊆ sa bbox, donc rien de ce qui est coupé
+        # ne pouvait intersecter la parcelle. ST_MakeValid par sécurité sur le morceau clippé.
         gj = session.execute(text(
             "SELECT ST_AsGeoJSON(ST_CollectionExtract(ST_Transform(ST_Intersection("
-            "  ST_Union(sl.geom_2975), p.geom_2975), 4326), 3)) "
+            "  ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))), p.geom_2975), 4326), 3)) "
             "FROM spatial_layers sl, parcels p WHERE p.id = :pid AND sl.kind='ppr' "
             "AND sl.subtype='INTERDICTION' AND ST_Intersects(sl.geom_2975, p.geom_2975) "
             "GROUP BY p.geom_2975"

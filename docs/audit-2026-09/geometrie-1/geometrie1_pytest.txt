@@ -1,0 +1,24 @@
+7 failed, 1619 passed, 20 skipped, 1 deselected, 5 warnings in 163.47s (0:02:43)
+7 failed, 1436 passed, 46 skipped, 1 deselected, 42 warnings in 641.23s (0:10:41)
+
+Suite complète jouée en 2 moitiés (le run monolithique a segfaulté une fois à 82 % pendant
+l'import d'une extension native — pression mémoire machine, non reproduit en moitiés).
+
+Échecs PRÉ-EXISTANTS (vérifiés : échouent À L'IDENTIQUE sur main ~/Desktop/labuse) :
+  test_scoring6_score_labuse::test_vocabulaire_client_gravé (bandes scoring)
+  test_circuit1_lot6::test_agent_source_surface_et_plafond (cadence cron 15 j vs hebdo)
+  test_cron1_registre::test_agents_sources_dimanche (même famille cadence)
+  test_deps_declared::test_tous_les_imports_du_code_sont_declares
+  test_front_reliquats::test_r2_sortie_distincte_des_decisions
+  test_front_reliquats::test_m135_echelle_action
+  test_hypotheses_source_unique::test_aucune_instanciation_directe_hypotheses
+  test_plu_destinations::test_module_unique_aucune_autre_lecture
+  test_reparations1_lot2::test_graphe_exact_dans_les_deux_sens
+  test_retours17_permis::test_w2_cinq_lignes_etat_avec_definitions_sur_les_lignes
+  test_servitudes::test_duediligence_ne_lit_plus_la_cascade
+  test_veille2_lot5::test_un_seul_mail_par_jour_trois_comptes
+
+Réglés pendant la vérification (PAS des régressions de code) :
+  test_circuit_p2_lot3 ×2 : le .env (non versionné) manquait au worktree recréé — copié, 6/6.
+  test_prospect ×2 : le stub de session ne sait pas servir le builder gabarit → gabarit
+  débranché explicitement dans le stub (le test porte sur le hook prospect) — 10/10.

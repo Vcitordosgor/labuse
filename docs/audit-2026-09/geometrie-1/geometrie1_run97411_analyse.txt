@@ -1,0 +1,58 @@
+=== 1. volumes et provenance de l'assiette ===
+ parcelles | calculees | src_gabarit | src_legacy | avec_cause 
+-----------+-----------+-------------+------------+------------
+     38138 |     26826 |       18806 |       8020 |      11312
+(1 ligne)
+
+=== 2. appariement avec le run 8 (mêmes parcelles, sdp non nulles comparables) ===
+ communes_aux_2_runs | sdp_identiques | sdp_differentes | flips_sous_densite 
+---------------------+----------------+-----------------+--------------------
+               38138 |          34788 |            3350 |                272
+(1 ligne)
+
+=== 3. histogramme des deltas relatifs de SDP (parcelles sdp_old>0) ===
+      bande       |  n   | pct  
+------------------+------+------
+ a. ≤ −50 %       |  100 |  1.1
+ b. −50 à −10 %   |  128 |  1.4
+ c. −10 à 0 %     |  210 |  2.3
+ d. 0 (identique) | 6115 | 66.5
+ e. 0 à +10 %     | 1082 | 11.8
+ f. +10 à +50 %   | 1091 | 11.9
+ g. ≥ +50 %       |  471 |  5.1
+(7 lignes)
+
+=== 3bis. combien bougent de plus de 10 % ===
+ comparables | bougent_plus_10pct | pct  
+-------------+--------------------+------
+        9197 |               1779 | 19.3
+(1 ligne)
+
+=== 4. les 10 plus gros écarts absolus de SDP (à expliquer un à un) ===
+      idu       | sdp_run8 | sdp_new | delta | assiette_source | cause_new | cause_run8 
+----------------+----------+---------+-------+-----------------+-----------+------------
+ 97411000AK0196 |     8344 |    9837 |  1493 | gabarit         |           | 
+ 97411000BL0524 |     2537 |    1654 |  -883 | gabarit         |           | 
+ 97411000BZ0157 |      318 |    1117 |   799 | gabarit         |           | 
+ 97411000BL0112 |     1907 |    1220 |  -687 | gabarit         |           | 
+ 97411000HZ0285 |        5 |     650 |   645 | gabarit         |           | 
+ 97411000AH0030 |     1370 |     782 |  -588 | gabarit         |           | 
+ 97411000CE0016 |      601 |    1152 |   551 | gabarit         |           | 
+ 97411000HX0075 |     4748 |    5221 |   473 | gabarit         |           | 
+ 97411000BP0647 |      942 |     581 |  -361 | gabarit         |           | 
+ 97411000CR0343 |      169 |     526 |   357 | gabarit         |           | 
+(10 lignes)
+
+=== 5. causes (nouveau run) ===
+           cause            | count 
+----------------------------+-------
+ terrain_exigu              |  9523
+ zone_non_constructible:N   |   575
+ zone_non_constructible:A   |   554
+ zone_non_constructible:Npf |   314
+ zone_non_constructible:Ac  |   120
+ redhibitoire               |   116
+ zone_non_constructible:Ntc |    97
+ zone_non_constructible:Ntn |    13
+(8 lignes)
+

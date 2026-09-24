@@ -363,19 +363,35 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     _prov_recul = "estimee" if "non calibré" in (rl_src or "") else "sourcee"
 
     # ---- Emprise constructible au sol ----
+    # GEOMETRIE-1 lot B — quand l'assiette vient du MOTEUR GABARIT (reculs par côté, PPR rouge
+    # découpé), l'étape le DIT et sa source est le gabarit réglementaire — même fonction, même
+    # chiffre que l'outil Gabarit et le tiroir de fiche.
+    _asrc = (extras or {}).get("assiette_source")
     if emprise_geo is not None:
         emprise, recul_used = emprise_geo
+        if _asrc == "gabarit":
+            _step1_label = "Emprise au sol — zone d'implantation réglementaire"
+            _step1_formule = ("zone d'implantation réglementaire — reculs par côté "
+                              "(voie/limites séparatives), PPR zone rouge déduit")
+            _step1_source = "Moteur gabarit — reculs par côté sourcés PLU"
+            _step1_prov = "sourcee"
+        else:
+            _step1_label = "Emprise au sol — reculs (géométrie réelle)"
+            _step1_formule = (f"contour cadastral réel inseté du recul limites "
+                              f"séparatives ({recul_used:g} m)")
+            _step1_source = f"{rl_src} (séparatif) ; recul voirie en sus"
+            _step1_prov = _prov_recul
         if emprise < SEUIL_EXIGU_M2:
-            steps.append(Step("Emprise au sol — reculs (géométrie réelle)",
-                              f"contour cadastral réel inseté du recul limites séparatives ({recul_used:g} m)",
-                              "≈ 0 m² (contour vidé)", f"{rl_src}", prov=_prov_recul))
+            steps.append(Step(_step1_label, _step1_formule,
+                              "≈ 0 m² (contour vidé)",
+                              _step1_source if _asrc == "gabarit" else f"{rl_src}",
+                              prov=_step1_prov))
             return fini(False, f"Terrain trop exigu compte tenu des reculs ({recul_used:g} m) — "
                         "non constructible en l'état (le contour inseté se vide).",
                         {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
                         cause="terrain_exigu")
-        steps.append(Step("Emprise au sol — reculs (géométrie réelle)",
-                          f"contour cadastral réel inseté du recul limites séparatives ({recul_used:g} m)",
-                          f"~{emprise:.0f} m²", f"{rl_src} (séparatif) ; recul voirie en sus", prov=_prov_recul))
+        steps.append(Step(_step1_label, _step1_formule,
+                          f"~{emprise:.0f} m²", _step1_source, prov=_step1_prov))
         # FAISABILITE-1 (lot D) — ligne « Espaces inconstructibles déduits » (ER/EBC/greve certaine
         # déjà soustraits de l'emprise en amont, cf. db.py) : dit CE QUI a été retiré, sourcé PLU.
         _dedu = round(float(extras.get("total_deduit_m2", 0)))
@@ -388,12 +404,22 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                               (" · ".join(_parts) + " retirés de l'assiette avant plafonds") if _parts
                               else "retirés de l'assiette avant plafonds",
                               f"−{_dedu:.0f} m²",
-                              "Emplacements réservés / EBC (L113-1 CU) / PPR-PEB — sourcés PLU", prov="sourcee"))
-        hypotheses.append("Emprise = contour cadastral réel inseté du recul limites séparatives "
-                          "(géométrie réelle, projection métrique).")
-        if _is_num(rules.recul_voirie_m) and rules.recul_voirie_m > recul_used:
-            avert.append(f"Recul voirie {rules.recul_voirie_m:g} m s'applique en sus sur la façade sur "
-                         "rue (bord rue non identifiable au cadastre → non déduit géométriquement).")
+                              ("Emplacements réservés / EBC (L113-1 CU) / PEB-DPF-ravine-50 pas — "
+                               "PPR rouge déjà découpé de l'assiette (moteur gabarit)")
+                              if _asrc == "gabarit" else
+                              "Emplacements réservés / EBC (L113-1 CU) / PPR-PEB — sourcés PLU",
+                              prov="sourcee"))
+        if _asrc == "gabarit":
+            # reculs par côté : le recul voirie est appliqué GÉOMÉTRIQUEMENT sur la façade sur
+            # rue — l'avertissement « en sus » du chemin inseté serait un mensonge ici.
+            hypotheses.append("Emprise = zone d'implantation du gabarit réglementaire (reculs par "
+                              "côté voie/limites, PPR zone rouge découpé, projection métrique).")
+        else:
+            hypotheses.append("Emprise = contour cadastral réel inseté du recul limites séparatives "
+                              "(géométrie réelle, projection métrique).")
+            if _is_num(rules.recul_voirie_m) and rules.recul_voirie_m > recul_used:
+                avert.append(f"Recul voirie {rules.recul_voirie_m:g} m s'applique en sus sur la façade sur "
+                             "rue (bord rue non identifiable au cadastre → non déduit géométriquement).")
     else:
         cote = math.sqrt(max(0.0, surface_m2))
         larg = max(0.0, cote - recul_v - recul_l)
@@ -686,7 +712,10 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
               "shab_vendable_silo_m2": round(sous_central * logt_moyen),
               "logements_au_sol": _rng(sol_lo, sol_hi),
               "logements_sous_sol": _rng(sous_lo, sous_hi),
-              "stationnement_regime": regime}
+              "stationnement_regime": regime,
+              # GEOMETRIE-1 lot B — provenance de l'assiette ('gabarit' / 'residuel_legacy' ;
+              # None hors parcel_faisabilite, ex. tests purs sur modèle carré).
+              "assiette_source": _asrc}
 
     if facteur == 0.0:
         return fini(False, f"Non constructible en l'état malgré le zonage ({rp} théorique) — "
