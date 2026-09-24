@@ -1542,6 +1542,10 @@ export function M10() {
   const [showSeuils, setShowSeuils] = useState(false)   // OUTILS-FIX-4 C1 — tiroir « Comment ce score est calculé »
   const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
   const setModule = useApp((s) => s.setModule)
+  // PIEGES-RISQUES-1 pt2 — ajouter une parcelle au lot AMÈNE la carte dessus (zoom + surbrillance de la
+  // DERNIÈRE ajoutée), même geste que la barre « une parcelle » (select(null) avant focusParcelle, O1/Permis).
+  const select = useApp((s) => s.select)
+  const focusParcelle = useApp((s) => s.focusParcelle)
   // O6(b) — n'ajoute QUE des références cadastrales résolues (IDU complet ou SECTION+NUMÉRO).
   // Une adresse brute non rattachée à une parcelle NE DOIT JAMAIS entrer dans le lot comme chip :
   // ParcelInput ne câble pas onAddress → l'adresse résolue arrive par onPick, l'adresse non résolue
@@ -1551,6 +1555,7 @@ export function M10() {
     if (!estIdu(t)) return   // pas une référence cadastrale (ex. adresse brute) → ignorée
     setMsg(null)
     setLot((l) => l.includes(t) ? l : [...l, t])
+    select(null); focusParcelle(t)   // PIEGES-RISQUES-1 pt2 — zoom sur la dernière ajoutée
   }
   const ajouterListe = () => {
     paste.split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean).forEach(ajouter)
