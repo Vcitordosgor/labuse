@@ -76,6 +76,13 @@ function FaitDetail({ f, idu, onClose }: { f: HistoireFait; idu: string; onClose
         <div className="min-w-0 flex-1">
           <p className="text-[11.5px] font-medium leading-snug text-txt-hi">{f.libelle}</p>
           <p className="text-[10.5px] text-txt-mut">{dateAffichee(f)}</p>
+          {/* E2 — vente ré-attribuée : sa date précède la découpe DFI de cette parcelle → elle portait
+              sur la parcelle mère. On garde la date vraie, on le dit (pas un ordre chronologique faux). */}
+          {f.sur_parcelle_mere && (
+            <p data-histoire-sur-mere className="mt-0.5 text-[10px] leading-snug text-cp-amber">
+              sur la parcelle mère (avant la découpe de cette parcelle)
+            </p>
+          )}
         </div>
         <button onClick={onClose} aria-label="Fermer le détail" className="shrink-0 text-txt-mut hover:text-txt-hi">✕</button>
       </div>
@@ -184,7 +191,7 @@ export function HistoireFrise({ idu }: { idu: string }) {
               const on = sel === i
               const bottom = 22 + lanes[i] * 14
               const key = `${f.famille}-${i}`
-              const title = `${f.libelle} — ${dateAffichee(f)}`
+              const title = `${f.libelle} — ${dateAffichee(f)}${f.sur_parcelle_mere ? ' · sur la parcelle mère' : ''}`
               if (f.maille === 'millesime' && f.de_millesime && f.a_millesime) {
                 // barre en tirets entre les deux 1ᵉʳ janvier : un écart, pas une date
                 const l = pct(f.de_millesime), w = Math.max(1.2, pct(f.a_millesime) - l)

@@ -1042,10 +1042,13 @@ export interface HistoireFait {
   source: string
   // famille permis — pont « Permis sur ce permis »
   permit_id?: string; type_permis?: string
+  // famille vente — E2 : la mutation portait sur la parcelle MÈRE (date antérieure à la découpe DFI)
+  sur_parcelle_mere?: boolean
   // famille proprietaire — PM nommées (jamais un particulier), pont Scan patrimoine
   de_millesime?: number; a_millesime?: number
   avant?: { siren: string | null; denomination: string | null }
   apres?: { siren: string | null; denomination: string | null }
+  non_identifiable?: boolean          // E3 : au moins un pseudo-siren « U… » → aucun changement affirmé
   // famille decoupe — liste bornée au cap (total toujours dit)
   parcelles_liees?: string[]; n_parcelles_liees?: number
 }

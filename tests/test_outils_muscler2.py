@@ -134,3 +134,47 @@ def test_histoire_parcelle_inconnue_404(db_session):
     with pytest.raises(HTTPException) as e:
         histoire_parcelle("ZZ00000000", db_session)
     assert e.value.status_code == 404
+
+
+def test_histoire_e3_pseudo_siren_aucun_changement(db_session):
+    """REMONTER-TEMPS-2 E3 — un changement de propriétaire détecté entre deux PSEUDO-sirens « U… »
+    (LABUSE-dérivés, ~13 % DGFiP) n'est PAS affirmé : aucun « Changement de propriétaire », juste un
+    tiret neutre « propriétaire PM non identifiable ». Aucun changement inventé."""
+    from labuse.api.moteurs import histoire_parcelle
+    _p(db_session, "HIST0040")
+    _pm_millesime(db_session, "HIST0040", 2020, "U14603299", "ETAT OFFICE NATIONAL DES FORETS")
+    _pm_millesime(db_session, "HIST0040", 2021, "U23691569", "ETAT PAR DIRECTION IMMOBILIER")
+    out = histoire_parcelle("HIST0040", db_session)
+    prop = [f for f in out["faits"] if f["famille"] == "proprietaire"]
+    # aucun ÉVÉNEMENT de changement affirmé (ni libellé « Changement », ni avant/après siren)
+    assert not any(f["libelle"].startswith("Changement") for f in prop)
+    assert all(not f.get("avant") and not f.get("apres") for f in prop)
+    # à la place, un tiret neutre « non identifiable »
+    assert prop and prop[0].get("non_identifiable") is True
+    assert "non identifiable" in prop[0]["libelle"].lower()
+
+
+def test_histoire_e3_vrais_sirens_changement_conserve(db_session):
+    """E3 (contrôle) — deux VRAIS sirens (9 chiffres) : le changement reste affirmé, avec avant/après."""
+    from labuse.api.moteurs import histoire_parcelle
+    _p(db_session, "HIST0041")
+    _pm_millesime(db_session, "HIST0041", 2022, "111222333", "SCI AVANT")
+    _pm_millesime(db_session, "HIST0041", 2023, "444555666", "SCI APRES")
+    out = histoire_parcelle("HIST0041", db_session)
+    prop = [f for f in out["faits"] if f["famille"] == "proprietaire"]
+    assert prop and prop[0]["libelle"].startswith("Changement")
+    assert prop[0]["avant"]["siren"] == "111222333" and prop[0]["apres"]["siren"] == "444555666"
+
+
+def test_histoire_e2_vente_avant_decoupe_porte_mention_mere(db_session):
+    """REMONTER-TEMPS-2 E2 — une vente datée AVANT la naissance DFI de la parcelle (ré-attribuée par
+    DVF depuis la mère) porte `sur_parcelle_mere` ; une vente postérieure ne la porte pas."""
+    from labuse.api.moteurs import histoire_parcelle
+    _p(db_session, "HIST0050")
+    _dfi(db_session, "97499000MM0001", "HIST0050", "2025-06-09")   # naissance de la parcelle
+    _vente(db_session, "HIST0050", "M-AV", "2025-03-24", 900000)   # AVANT la découpe → sur la mère
+    _vente(db_session, "HIST0050", "M-AP", "2025-08-01", 250000)   # APRÈS → sur la parcelle elle-même
+    out = histoire_parcelle("HIST0050", db_session)
+    ventes = {f["date"]: f for f in out["faits"] if f["famille"] == "vente"}
+    assert ventes["2025-03-24"]["sur_parcelle_mere"] is True
+    assert ventes["2025-08-01"]["sur_parcelle_mere"] is False
