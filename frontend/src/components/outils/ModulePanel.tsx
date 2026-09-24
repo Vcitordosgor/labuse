@@ -700,12 +700,13 @@ export function M03() {
   const loaded = pages.flatMap((p) => (p['items'] ?? []) as unknown[]).length
 
   // RETOURS-18 X1 — les cinq états (Tous + 4 partition), source unique du rendu ET des résumés d'accordéon.
+  // DA-FIX-4 verif (task 1) — « Tous » TOUJOURS en dernier à droite (charte 5.2 / RETOURS-15 U3).
   const ETATS = [
-    ['tous', 'Tous', null, tousEntryTotal, 'toute la base'],
     ['cours', 'Récent', 'recent', radarEntryTotal, 'autorisé ≤ 24 mois'],
     ['mort', 'Dormant', 'dormant', pmEntryTotal, 'ancien PC sans achèvement'],
     ['acheve', 'Achevés', 'acheve', acheveEntryTotal, 'travaux déclarés (DAACT)'],
     ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni dormant, ni achevé'],
+    ['tous', 'Tous', null, tousEntryTotal, 'toute la base'],
   ] as const
   const actE = ETATS.find((e) => e[0] === seg) ?? ETATS[0]
   // résumé « Filtrer par état » replié : l'état actif + son compte (« Tous — 50 544 »).
@@ -1169,7 +1170,7 @@ export function M08() {
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
         <p className="label-caps text-[9.5px]">Quelle parcelle voir évoluer ?</p>
         {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ, via ParcelInput partagé */}
-        <ParcelInput dataAttr="temps-idu" placeholder="Adresse ou IDU — 97415000CW0658"
+        <ParcelInput dataAttr="temps-idu" placeholder="Adresse, IDU ou référence (BW0917)"
           onPick={(id) => void designer(id)} />
       </div>
       {!idu ? (
@@ -1391,7 +1392,7 @@ export function M09() {
       {step === 1 && (
         <div className="flex min-h-0 flex-1 flex-col gap-2">
           <p className="text-[11px] text-txt-mut">Les parcelles à démarcher — <b>une barre</b> (adresse ou IDU), autant que voulu :</p>
-          <ParcelInput dataAttr="courrier-idu" placeholder="Adresse ou IDU — puis Entrée"
+          <ParcelInput dataAttr="courrier-idu" placeholder="Adresse, IDU ou référence (BW0917)"
             onPick={ajouter} />
           {/* LOT7 — l'import Assemblage passe UNIQUEMENT par le pont one-shot « Préparer les courriers (n) »
               (Assemblage → courrierPrefillIdus, consommé au montage ci-dessus). L'ancien bouton lisait le
@@ -1562,7 +1563,7 @@ export function M10() {
         lot qu'elle touche. Ajoutez-les en tapant une adresse ou un IDU, ou en cliquant la carte.</Banner>
       {/* BARRE UNIQUE (SOCLE) + « + Ajouter » → chips du lot */}
       <div className="flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
-        <ParcelInput dataAttr="diligence-idu" placeholder="IDU, SECTION+NUMÉRO ou adresse — puis Entrée"
+        <ParcelInput dataAttr="diligence-idu" placeholder="Adresse, IDU ou référence (BW0917)"
           onPick={ajouter}
           onAddress={() => setMsg("Cette adresse n'a pas de parcelle rattachée — saisissez un IDU ou cliquez la parcelle sur la carte.")} />
         {msg && <p data-diligence-msg className="text-[10.5px] leading-snug text-st-creuser">{msg}</p>}

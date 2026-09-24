@@ -140,7 +140,7 @@ export function MonSecteur() {
         <h2 className="font-display text-base font-bold text-txt-hi">Mon secteur</h2>
         <p className="mt-0.5 text-[11.5px] text-txt-mut">Les prix DU SECTEUR autour d'une parcelle — médiane locale DVF par type (5 % extrêmes exclus, rayon adaptatif), tendance 12 mois, annonces Radar dans le rayon. La même méthode que « Marché et secteur » de la fiche.</p>
       </div>
-      <ParcelInput onPick={(i) => setIdu(i)} placeholder="Adresse ou IDU…" dataAttr="mon-secteur-input" />
+      <ParcelInput onPick={(i) => setIdu(i)} placeholder="Adresse, IDU ou référence (BW0917)" dataAttr="mon-secteur-input" />
       {idu && <SecteurResultats idu={idu} />}
     </div>
   )

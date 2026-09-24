@@ -322,7 +322,7 @@ function ModeEnsoleillement({ onBack, prefillIdu }: { onBack: () => void; prefil
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <BackBar onBack={onBack} titre="☀️ Ensoleillement" />
       {/* BARRE UNIQUE (SOCLE) → FICHE SOLEIL */}
-      <ParcelInput dataAttr="solaire-idu" placeholder="Adresse ou IDU — la fiche soleil de la parcelle" onPick={setFicheIdu} />
+      <ParcelInput dataAttr="solaire-idu" placeholder="Adresse, IDU ou référence (BW0917)" onPick={setFicheIdu} />
       {ficheIdu && fiche.isLoading && <Squelette lignes={4} />}
       {ficheIdu && fiche.isError && <ErrorState message="Parcelle introuvable — vérifiez l’IDU." retry={() => fiche.refetch()} />}
       {ficheIdu && fiche.data && <FicheSoleil f={fiche.data} onOpen={() => select(ficheIdu)} />}

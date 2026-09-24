@@ -174,7 +174,7 @@ export function Gabarit() {
 
       <ParcelInput dataAttr="gabarit-parcelle"
         onPick={(i: string) => setIdu(i)}
-        placeholder="Adresse, IDU ou référence (ex. BZ1065)" />
+        placeholder="Adresse, IDU ou référence (BW0917)" />
 
       {!target && (
         <p className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">

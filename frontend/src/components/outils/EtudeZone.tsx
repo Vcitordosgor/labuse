@@ -218,7 +218,7 @@ export function EtudeZone() {
 
       {entree === 'point' ? (
         <>
-          <ParcelInput dataAttr="zone-point" placeholder="Adresse ou IDU (ex. 12 rue…, ou 97415…)"
+          <ParcelInput dataAttr="zone-point" placeholder="Adresse, IDU ou référence (BW0917)"
             withCarte onPick={(idu) => setCible({ idu, label: iduCourt(idu) })} />
           {cible && <div className="text-[10.5px] text-txt-mut">Point : {cible.label}</div>}
           {/* TEMPS + MODE (n'ont de sens QUE sur un point) */}

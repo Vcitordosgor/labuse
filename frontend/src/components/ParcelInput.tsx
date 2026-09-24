@@ -72,7 +72,7 @@ export function ParcelInput({ onPick, onAddress, placeholder, autoFocus, withCar
       <AddressAutocomplete
         {...attr}
         autoFocus={autoFocus}
-        placeholder={placeholder ?? 'Adresse, IDU ou référence cadastrale (BW0917)…'}
+        placeholder={placeholder ?? 'Adresse, IDU ou référence (BW0917)'}
         onClear={() => { setMsg(null); setCandidats(null) }}
         {...(grammaireProprietaire ? {
           // Scan patrimoine : les suggestions NOM/SIREN vivent dans la MÊME liste que adresse/IDU.

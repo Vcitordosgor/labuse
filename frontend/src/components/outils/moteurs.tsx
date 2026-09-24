@@ -188,7 +188,7 @@ export function M16() {
       <Banner>Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charge foncière. Zoomez, cliquez les parcelles (re-cliquez pour retirer) — ou désignez une parcelle de départ : ses voisines contiguës vous sont proposées.</Banner>
       {/* OUTILS-MUSCLER-1 B1 — entrée PAR PARCELLE (omnibox SOCLE : IDU · adresse · référence
           courte), en plus du clic-carte. La parcelle désignée devient la parcelle de DÉPART. */}
-      <ParcelInput dataAttr="asm-depart" placeholder="Adresse, IDU ou référence — la parcelle de départ" onPick={addDepart} />
+      <ParcelInput dataAttr="asm-depart" placeholder="Adresse, IDU ou référence (BW0917)" onPick={addDepart} />
       <div className="flex flex-wrap gap-1">
         {msel.map((i) => (
           <button key={i} onClick={() => setMsel(msel.filter((x) => x !== i))}

@@ -107,7 +107,7 @@ function VoletParcelles() {
   return (
     <div data-volet-parcelles className="flex flex-col gap-2">
       {/* RV2-V3 — barre IDU + adresse (composant partagé, comme l'outil Étudier un bien). */}
-      <ParcelInput dataAttr="veille-parcelle" placeholder="Adresse ou IDU — la parcelle à surveiller"
+      <ParcelInput dataAttr="veille-parcelle" placeholder="Adresse, IDU ou référence (BW0917)"
         onPick={(idu) => suivre.mutate(idu)}
         onAddress={() => setMsg("Cette adresse n'a pas de parcelle rattachée — précisez un IDU pour la suivre.")} />
       {msg && <p className="text-[10.5px] text-txt-mut">{msg}</p>}

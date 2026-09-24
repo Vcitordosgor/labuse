@@ -75,7 +75,7 @@ export function RenouvellementModule() {
 
       {/* BARRE UNIQUE (SOCLE) — « et la mienne ? » sans scroller 67 214 lignes */}
       <div className="rounded-lg border border-line-2 bg-surface-2 p-2.5">
-        <ParcelInput dataAttr="renouv-idu" placeholder="Adresse ou IDU — votre parcelle densifie-t-elle ?" onPick={setLookupIdu} />
+        <ParcelInput dataAttr="renouv-idu" placeholder="Adresse, IDU ou référence (BW0917)" onPick={setLookupIdu} />
         {lookupIdu && lookup.isLoading && <Squelette lignes={2} className="mt-1.5" />}
         {lookupIdu && lookup.isError && <ErrorState message="Parcelle introuvable — vérifiez l’IDU." retry={() => lookup.refetch()} />}
         {lookupIdu && lookup.data && (
@@ -126,12 +126,10 @@ export function RenouvellementModule() {
             ))}
           </div>
 
-          {/* OUVRIR LE GRAND TABLEAU (overlay plein écran) */}
-          <button data-renouv-ouvrir onClick={openDensifier}
-            className="mt-1 rounded-lg py-2 text-center text-xs font-medium transition-[filter] duration-quick hover:brightness-110"
-            style={{ background: TOKENS.renouv, color: '#0b0b0d' }}>
+          {/* OUVRIR LE GRAND TABLEAU (overlay plein écran) — DA-FIX-4 verif (task 2) : Bouton primaire vert. */}
+          <Bouton data-renouv-ouvrir niveau="primaire" ton="vert" onClick={openDensifier} className="mt-1 w-full">
             ⛶ Ouvrir le tableau complet ({fmtInt(data.total)})
-          </button>
+          </Bouton>
         </>
       )}
     </div>

@@ -23,7 +23,7 @@ export function CalculetteFonciere() {
         <h2 className="font-display text-base font-bold text-txt-hi">Calculette foncière</h2>
         <p className="mt-0.5 text-[11.5px] text-txt-mut">La charge foncière supportable d'une parcelle, par bilan à rebours — mêmes hypothèses que le document financier.</p>
       </div>
-      <ParcelInput onPick={(i) => setIdu(i)} placeholder="Adresse ou IDU…" dataAttr="calculette-input" />
+      <ParcelInput onPick={(i) => setIdu(i)} placeholder="Adresse, IDU ou référence (BW0917)" dataAttr="calculette-input" />
       {idu && <Calculette idu={idu} />}
     </div>
   )

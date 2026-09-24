@@ -95,7 +95,7 @@ export function Successions() {
         Résiduel minimum
         <select data-successions-sdp-min value={sdpMin}
           onChange={(e) => { setSdpMin(Number(e.target.value)); setSel(new Set()) }}
-          className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-txt focus:border-mint focus:outline-none">
+          className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
           {SDP_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
         </select>
         <span className="text-[10px] text-txt-dim">m² SDP</span>

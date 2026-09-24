@@ -140,7 +140,7 @@ export function CompareModule() {
             {n < 3 && (
               <div className="mt-1.5">
                 <ParcelInput dataAttr="compare-idu" withCarte={false}
-                  placeholder="… ou tapez un IDU, une adresse, une référence (BZ1065)"
+                  placeholder="Adresse, IDU ou référence (BW0917)"
                   onPick={(idu) => { if (!compareIdus.includes(idu)) addToCompare(idu) }} />
               </div>
             )}

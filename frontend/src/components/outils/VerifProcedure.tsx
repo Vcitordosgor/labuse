@@ -28,7 +28,7 @@ export function VerifProcedure() {
             cadastrale courte (« BZ1065 », désambiguïsation par commune), adresse. Le champ maison qui
             n'acceptait que l'IDU brut est retiré (promesse T1 tenue sur TOUTES les barres). */}
         <ParcelInput dataAttr="verif-idu" onPick={(i) => lancer(i)}
-          placeholder="IDU, référence (ex. BZ1065) ou adresse" />
+          placeholder="Adresse, IDU ou référence (BW0917)" />
       </div>
 
       {m.isError && <ErrorState message="Parcelle inconnue ou erreur." retry={m.variables ? () => m.mutate(m.variables!) : undefined} />}
