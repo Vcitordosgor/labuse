@@ -2325,9 +2325,18 @@ export const postAdminCronRun = (nom: string) =>
 // ── CIRCUIT-1 lot 5 — la page Circuit (un appel) + ses gestes ──────────────────────────────
 export const getAdminCircuit = () => j<any>('/admin/circuit')
 export const postAdminCircuitVerifier = () => j<any>('/admin/circuit/verifier', { method: 'POST' })
-// CIRCUIT-P2 (lot 3.2/3.3) — tâches longues : lancer les agents (ou un seul), suivre la progression.
-export const postAdminCircuitAgents = (sourceId?: number) =>
-  j<any>(`/admin/circuit/agents${sourceId != null ? `?source_id=${sourceId}` : ''}`, { method: 'POST' })
+// CIRCUIT-P2 (lot 3.2/3.3) / CIRCUIT-P7 (lot 1) — tâches longues : lancer les agents (une source via
+// `sourceId`, ou une portée « jamais » / « g8 » / « tous » depuis le menu de la carte Agents).
+export const postAdminCircuitAgents = (opts?: { sourceId?: number; portee?: 'jamais' | 'g8' | 'tous' }) => {
+  const p = new URLSearchParams()
+  if (opts?.sourceId != null) p.set('source_id', String(opts.sourceId))
+  if (opts?.portee) p.set('portee', opts.portee)
+  const s = p.toString()
+  return j<any>(`/admin/circuit/agents${s ? '?' + s : ''}`, { method: 'POST' })
+}
+// CIRCUIT-P7 (lot 1) — « Sonder maintenant » : un passage de la sentinelle (toutes les sources, ou une).
+export const postAdminCircuitSonder = (sourceId?: number) =>
+  j<any>(`/admin/circuit/sonder${sourceId != null ? `?source_id=${sourceId}` : ''}`, { method: 'POST' })
 // DASHBOARD-4 (D2) — rejouer « labuse circuit verrous » à la demande depuis le Résumé (tâche détachée).
 export const postAdminCircuitVerrous = () => j<any>('/admin/circuit/verrous', { method: 'POST' })
 export const getAdminCircuitTaches = () => j<any>('/admin/circuit/taches')

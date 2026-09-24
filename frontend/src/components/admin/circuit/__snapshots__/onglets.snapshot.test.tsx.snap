@@ -5,43 +5,9 @@ exports[`snapshots des onglets > Circuit (diagramme) 1`] = `
   class="cbar"
 >
   <input
-    placeholder="Chercher un réservoir, un robinet, un chiffre…"
+    placeholder="Un réservoir, un robinet, un chiffre — ou un élément de l'app (couche, section, outil) pour remonter à ses sources"
     value=""
   />
-  <div
-    class="legend"
-  >
-    <span>
-      <i
-        style="background: var(--mint);"
-      />
-      ça coule
-    </span>
-    <span>
-      <i
-        style="background: var(--ambre);"
-      />
-      à voir
-    </span>
-    <span>
-      <i
-        style="background: var(--rouge);"
-      />
-      bloqué ou fuite
-    </span>
-    <span>
-      <i
-        style="background: var(--gris);"
-      />
-      vide, manuel
-    </span>
-    <span>
-      <i
-        style="background: var(--mauve);"
-      />
-      agent
-    </span>
-  </div>
 </div>
 `;
 
@@ -51,11 +17,6 @@ exports[`snapshots des onglets > Journal 1`] = `
     class="jf"
   >
     <button
-      class="on"
-    >
-      tous
-    </button>
-    <button
       class=""
     >
       vanne
@@ -64,6 +25,11 @@ exports[`snapshots des onglets > Journal 1`] = `
       class=""
     >
       cron
+    </button>
+    <button
+      class="on"
+    >
+      tous
     </button>
   </div>
   <div

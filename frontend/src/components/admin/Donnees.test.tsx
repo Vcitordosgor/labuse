@@ -9,9 +9,11 @@ vi.mock('../../lib/api', () => ({
   getAdminCircuit: () => new Promise(() => {}),       // reste en « chargement » (rendu déterministe)
   postAdminCircuitVerifier: vi.fn(),
   postAdminCircuitAgents: vi.fn(),
-  getAdminCircuitTaches: () => Promise.resolve({ verifier: null, agents: null, verrous: null }),
+  postAdminCircuitSonder: vi.fn(),   // CIRCUIT-P7 (lot 1)
+  getAdminCircuitTaches: () => Promise.resolve({ verifier: null, agents: null, verrous: null, sonde: null }),
   postAdminCircuitVerrous: vi.fn(),   // DASHBOARD-4 (D2)
   getAdminCircuitJournal: vi.fn(),
+  getSourcesParElement: () => Promise.resolve({ elements: [] }),   // CIRCUIT-P7 (lot 3) — recherche unique
 }))
 
 // eslint-disable-next-line import/first
