@@ -5,21 +5,10 @@ import { useApp } from '../../store/useApp'
 import { M22 } from './M22Programme'
 import { FaisabiliteTab } from '../fiche/Fiche'
 
-// Mandat FAISABILITE — pagination SOCLE (par critères) + programme épinglé + étape 12 (SHAB vendable
-// retenue) dans la trace par parcelle.
-const CAP = 2, N = 5
-function progPage(offset: number) {
-  const n = Math.min(CAP, N - offset)
-  return {
-    criteres: { unites: 24, sdp_min_m2: 1728, calcul: '24 × 60 × 1,2', hauteur_min_m: 9, hauteur_regle: 'R+2 → gabarit' },
-    bandeau: 'Estimation.', n: N, cap: CAP, offset,
-    items: Array.from({ length: Math.max(0, n) }, (_, k) => ({
-      idu: `97415000DK${String(1000 + offset + k)}`, commune: 'Saint-Paul', sdp: 281159 - offset - k, zone: 'AU2h',
-      hauteur_verifiee: true, hauteur_plu_m: 13, capacite_estimee: false, marge_capacite: 162.7 - offset - k,
-      statut: 'neutre', tier_v2: 'neutre', etage0: false, geom: null,
-    })),
-  }
-}
+// Mandat FAISABILITE-1 (lot C) — l'outil a UN SEUL mode (par parcelle) ; « Par critères » est retiré
+// (remplacé par le groupe Capacité du panneau Filtre). On vérifie : l'ouverture directe sur la saisie
+// de parcelle, le sous-titre, le lien discret vers le filtre Capacité, et (blocs suivants) l'étape 12
+// (SHAB vendable) + le cantonnement de l'IA dans la trace par parcelle.
 const BILAN = {
   idu: '97411000BZ1065',
   capacite: {
@@ -34,38 +23,37 @@ const BILAN = {
 }
 
 function mockFetch() {
-  global.fetch = vi.fn(async (url: string, init?: RequestInit) => {
+  global.fetch = vi.fn(async (url: string) => {
     const u = String(url)
     if (u.includes('/modules/faisabilite/')) return { ok: true, json: async () => BILAN }
-    if (u.includes('/modules/programme')) { const off = JSON.parse(String(init?.body ?? '{}')).offset ?? 0; return { ok: true, json: async () => progPage(off) } }
-    if (u.includes('/communes')) return { ok: true, json: async () => [] }   // CommuneScope
+    if (u.includes('/communes')) return { ok: true, json: async () => [] }
     return { ok: true, json: async () => ({}) }
   }) as unknown as typeof fetch
 }
 const qc = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
-describe('FAISABILITE — pagination + programme épinglé', () => {
-  beforeEach(() => { mockFetch(); useApp.setState({ m22Prefill: null, parcelPrefill: null }) })
+describe('FAISABILITE-1 (lot C) — un seul mode : saisie de parcelle + lien vers le filtre Capacité', () => {
+  beforeEach(() => { mockFetch(); useApp.setState({ parcelPrefill: null }) })
   afterEach(() => vi.restoreAllMocks())
 
-  it('par critères : « Trouver » → recap épinglé (total) + pagination « voir N de plus »', async () => {
+  it('ouvre sur la saisie de parcelle, sous-titre, PAS de sélecteur de mode « Par critères »', () => {
     render(<QueryClientProvider client={qc()}><M22 /></QueryClientProvider>)
-    // DA-FIX-2 Lot 2 (DA-005) : l'outil s'ouvre désormais sur « Par parcelle » ; ce test porte sur
-    // le mode « Par critères », on l'y bascule explicitement.
-    fireEvent.click(screen.getByText('Par critères'))
-    fireEvent.click(screen.getByText('Trouver les parcelles'))
-    await waitFor(() => expect(document.querySelectorAll('[data-prog-item]').length).toBe(CAP))
-    // recap épinglé : le VRAI total (5) + les critères (24 unités)
-    const recap = document.querySelector('[data-prog-count]') as HTMLElement
-    expect(recap.className).toContain('sticky')
-    expect(recap.textContent).toContain('5')
-    expect(recap.textContent).toContain('24')
-    // pagination
-    expect(document.querySelector('[data-pagination-count]')?.textContent).toContain('2 / 5')
-    ;(document.querySelector('[data-pagination-more]') as HTMLElement).click()
-    await waitFor(() => expect(document.querySelectorAll('[data-prog-item]').length).toBe(4))
-    // RETOURS-11 O2(b) — l'export CSV a été RETIRÉ de la faisabilité par critères.
-    expect(document.querySelector('[data-prog-csv]')).toBeFalsy()
+    expect(screen.getByText(/Ce que le PLU laisse construire sur cette parcelle/)).toBeTruthy()
+    // le mode « Par critères » a disparu (plus de sélecteur de mode)
+    expect(document.querySelector('[data-faisa-mode]')).toBeFalsy()
+    expect(screen.queryByText('Par critères')).toBeFalsy()
+    expect(document.querySelector('[data-prog-item]')).toBeFalsy()
+  })
+
+  it('le lien « Chercher des parcelles par capacité → » ouvre la carte sur le panneau Filtre', () => {
+    render(<QueryClientProvider client={qc()}><M22 /></QueryClientProvider>)
+    const lien = document.querySelector('[data-chercher-capacite]') as HTMLElement
+    expect(lien).toBeTruthy()
+    fireEvent.click(lien)
+    const st = useApp.getState()
+    expect(st.view).toBe('cartes')
+    expect(st.panneauSection).toBe('filtres')
+    expect(st.module).toBeNull()
   })
 })
 

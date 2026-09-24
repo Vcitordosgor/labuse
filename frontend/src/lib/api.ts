@@ -1901,8 +1901,9 @@ export const postChargeFonciere = (idu: string, body: ChargeIn) =>
   j<Record<string, any>>(`/modules/faisabilite/${idu}/charge`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
   })
-export const postProgramme = (body: Record<string, unknown>) =>
-  j<Record<string, any>>('/modules/programme', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+// FAISABILITE-1 (lot C) — `postProgramme` (POST /modules/programme, ancien « Par critères ») RETIRÉ :
+// « chercher des parcelles par capacité » passe désormais par le groupe Capacité du panneau Filtre
+// (endpoint /filtre, compteur SQL exact). L'endpoint backend est retiré (aucun autre appelant).
 
 // ── Projets (copilote-projet) — l'objet persistant de l'entretien de cadrage ──
 // M120 — le CADRAGE d'un projet EST un jeu de filtres (le même objet que la carte). L'IDENTITÉ
