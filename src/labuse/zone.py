@@ -563,6 +563,337 @@ def zone_demain(session: Session, geom_geojson: dict) -> dict:
             "source": "Sitadel (autorisations) · PLU/GPU (zones AU) — signal daté, pas une projection"}
 
 
+# ============================================================================
+# ETUDE-ZONE-2 Lot B — agrégateurs de zone ADDITIONNELS. Règle transversale (mandat) : chaque
+# fonction RÉUTILISE un point de calcul existant (flash._marche pour DVF, les couches DEAL de
+# spatial_layers pour les risques comme l'outil Pièges & risques, parcelle_personne_morale par
+# SIREN comme Scan patrimoine, BPE de spatial_layers). Aucun recalcul maison — c'est ce qui avait
+# produit le 100 888 €/m² (ETUDE-ZONE-1). % de recouvrement d'une catégorie = ST_Area(ST_Intersection
+# (ST_Union(geom_2975), zone)) / ST_Area(zone) (ST_Union pour ne jamais compter deux fois un
+# chevauchement interne), sur geom_2975. Faits sourcés et datés, jamais une projection.
+# ============================================================================
+
+def _aire_zone(session: Session, geom_geojson: dict) -> float:
+    return float(session.execute(text(f"SELECT ST_Area({_zone2975()})"),
+                                 {"zone": json.dumps(geom_geojson)}).scalar() or 0)
+
+
+def age_structure_zone(session: Session, geom_geojson: dict) -> dict | None:
+    """B1 — structure d'âge de la zone, agrégée sur les IRIS intersectés et PONDÉRÉE par la part de
+    surface de chaque IRIS dans la zone (RP 2022, INSEE). L'ÉVOLUTION 2016→2022 n'est PAS servie :
+    iris_rp ne porte que le millésime RP2022 (aucune population 2016 en base) — on ne l'invente pas."""
+    if session.execute(text("SELECT to_regclass('iris_rp')")).scalar() is None:
+        return None
+    z = _zone2975()
+    r = session.execute(text(
+        f"""WITH w AS (
+              SELECT i.pop, i.pop_0014, i.pop_1529, i.pop_3044, i.pop_4559, i.pop_6074, i.pop_75p,
+                     ST_Area(ST_Intersection(sl.geom_2975, {z})) / NULLIF(ST_Area(sl.geom_2975), 0) AS frac
+              FROM iris_rp i JOIN spatial_layers sl ON sl.kind='iris_insee' AND sl.subtype = i.iris
+              WHERE ST_Intersects(sl.geom_2975, {z}))
+            SELECT count(*) n_iris, round(sum(pop*frac)) pop,
+                   round(sum(pop_0014*frac)) p0014, round(sum(pop_1529*frac)) p1529,
+                   round(sum(pop_3044*frac)) p3044, round(sum(pop_4559*frac)) p4559,
+                   round(sum(pop_6074*frac)) p6074, round(sum(pop_75p*frac)) p75p
+            FROM w"""), {"zone": json.dumps(geom_geojson)}).mappings().first()
+    if not r or not r["n_iris"] or not (r["pop"] or 0):
+        return None
+    pop = float(r["pop"]) or 1.0
+    tr = [("0–14 ans", r["p0014"]), ("15–29 ans", r["p1529"]), ("30–44 ans", r["p3044"]),
+          ("45–59 ans", r["p4559"]), ("60–74 ans", r["p6074"]), ("75 ans et +", r["p75p"])]
+    return {"n_iris": int(r["n_iris"]), "pop_iris": int(r["pop"]),
+            "tranches": [{"label": lbl, "n": int(v or 0), "pct": round(100 * float(v or 0) / pop)}
+                         for lbl, v in tr],
+            "millesime": "RP 2022 (INSEE, par IRIS — pondéré par la part de surface d'IRIS dans la zone)",
+            "evolution_indisponible": "Évolution 2016→2022 non servie : la base ne porte que le millésime RP2022."}
+
+
+def prix_par_type_zone(session: Session, geom_geojson: dict) -> dict:
+    """B3 — prix médian €/m² par TYPE (maison, appartement, terrain nu) dans la zone, 36 mois.
+    RÉUTILISE le point de calcul du bloc Marché de la fiche (flash.data._marche) : table dvf_mutations
+    (maille MUTATION, pas la table éclatée par parcelle → pas d'artefact du 100 888), ventes seules,
+    €/m² BÂTI (surface_reelle_bati≥20) pour maison/appartement, €/m² TERRAIN (surface_terrain≥100 et
+    bâti<20) pour le terrain nu. Sous 5 ventes → médiane « — » (échantillon insuffisant, dit)."""
+    if session.execute(text("SELECT to_regclass('dvf_mutations')")).scalar() is None:
+        return {"types": []}
+    z = _zone2975()
+    defs = [
+        ("maison", "Maison", "dm.type_local = 'Maison'",
+         "dm.valeur_fonciere / NULLIF(dm.surface_reelle_bati, 0)", "dm.surface_reelle_bati >= 20", "bâti"),
+        ("appartement", "Appartement", "dm.type_local = 'Appartement'",
+         "dm.valeur_fonciere / NULLIF(dm.surface_reelle_bati, 0)", "dm.surface_reelle_bati >= 20", "bâti"),
+        ("terrain", "Terrain nu", "dm.type_local IS NULL",
+         "dm.valeur_fonciere / NULLIF(dm.surface_terrain, 0)",
+         "dm.surface_terrain >= 100 AND coalesce(dm.surface_reelle_bati, 0) < 20", "terrain"),
+    ]
+    rows = []
+    for slug, label, typecond, ratio, guard, base in defs:
+        r = session.execute(text(
+            f"""SELECT count(*) n,
+                       round(percentile_cont(0.5) WITHIN GROUP (ORDER BY {ratio})::numeric) med,
+                       to_char(min(dm.date_mutation), 'MM/YYYY') d0,
+                       to_char(max(dm.date_mutation), 'MM/YYYY') d1
+                FROM dvf_mutations dm
+                WHERE dm.geom IS NOT NULL AND dm.nature_mutation ILIKE 'vente%'
+                  AND dm.valeur_fonciere > 0 AND {typecond} AND {guard}
+                  AND dm.date_mutation >= (now() - interval '36 months')
+                  AND ST_Contains({z}, ST_Transform(dm.geom, 2975))"""),
+            {"zone": json.dumps(geom_geojson)}).mappings().first()
+        n = int(r["n"] or 0)
+        rows.append({"type": slug, "label": label, "base": base, "n": n,
+                     "median_eur_m2": int(r["med"]) if (n >= 5 and r["med"] is not None) else None,
+                     "periode": [r["d0"], r["d1"]] if n else None})
+    return {"types": rows, "seuil": 5,
+            "millesime": "DVF (DGFiP/Etalab) — ventes 36 mois, même lecture que le bloc Marché de la fiche"}
+
+
+def permis_par_type_zone(session: Session, geom_geojson: dict) -> dict:
+    """B3 — permis autorisés par TYPE dans la zone, 36 mois (Sitadel `raw.famille`). La famille Sitadel
+    distingue de façon FIABLE les LOGEMENTS des LOCAUX d'activité ; le code destination fin (commerce
+    vs activité) n'est pas décodé en base → on ne le devine pas (dit en note). Logements : nb_lgt cumulé."""
+    if session.execute(text("SELECT to_regclass('sitadel_permits')")).scalar() is None:
+        return {"types": []}
+    z = _zone2975()
+    r = session.execute(text(
+        f"""SELECT
+              count(*) FILTER (WHERE raw->>'famille'='logements')                 AS n_log,
+              coalesce(sum((raw->>'nb_lgt')::int) FILTER (WHERE raw->>'famille'='logements'), 0) AS lgt,
+              count(*) FILTER (WHERE raw->>'famille'='locaux')                     AS n_loc,
+              count(*) FILTER (WHERE raw->>'famille' IN ('pa','pd'))               AS n_amng
+            FROM sitadel_permits
+            WHERE geom IS NOT NULL AND date >= (now() - interval '36 months')
+              AND ST_Contains({z}, ST_Transform(geom, 2975))"""),
+        {"zone": json.dumps(geom_geojson)}).mappings().first()
+    types = [{"type": "logement", "label": "Logement", "n": int(r["n_log"] or 0),
+              "detail": f"{int(r['lgt'] or 0)} logements créés"},
+             {"type": "locaux", "label": "Locaux d'activité", "n": int(r["n_loc"] or 0), "detail": None}]
+    if int(r["n_amng"] or 0):
+        types.append({"type": "amenagement", "label": "Aménager / démolir",
+                      "n": int(r["n_amng"]), "detail": None})
+    return {"types": types,
+            "note": "Type = famille Sitadel (logements / locaux d'activité). Le détail commerce vs "
+                    "activité (code destination SDES) n'est pas décodé en base — non deviné.",
+            "millesime": "Sitadel (SDES) — autorisations 36 mois"}
+
+
+def proprietaires_pm_zone(session: Session, geom_geojson: dict, *, top: int = 5) -> dict:
+    """B4 — top propriétaires PERSONNES MORALES par surface cumulée dans la zone. MÊME source et MÊME
+    jointure que Scan patrimoine : parcelle_personne_morale (DGFiP) jointe aux parcelles par idu,
+    groupée par SIREN, parcelles dont le centroïde est dans la zone. Les particuliers ne sont JAMAIS
+    nommés (table PM uniquement)."""
+    if session.execute(text("SELECT to_regclass('parcelle_personne_morale')")).scalar() is None:
+        return {"proprietaires": []}
+    z = _zone2975()
+    rows = session.execute(text(
+        f"""SELECT pm.siren, max(pm.denomination) denom,
+                   count(*) n_parcelles, round(sum(p.surface_m2)) surface_m2
+            FROM parcelle_personne_morale pm JOIN parcels p ON p.idu = pm.idu
+            WHERE ST_Contains({z}, ST_Transform(p.centroid, 2975))
+            GROUP BY pm.siren
+            ORDER BY surface_m2 DESC NULLS LAST
+            LIMIT :top"""), {"zone": json.dumps(geom_geojson), "top": top}).mappings().all()
+    mill = session.execute(text("SELECT max(millesime) FROM parcelle_personne_morale")).scalar()
+    return {"proprietaires": [{"siren": r["siren"], "denomination": r["denom"],
+                               "n_parcelles": int(r["n_parcelles"]), "surface_m2": int(r["surface_m2"] or 0)}
+                              for r in rows],
+            "millesime": (f"DGFiP — parcelles des personnes morales (millésime {mill})" if mill
+                          else "DGFiP — parcelles des personnes morales")}
+
+
+#: humanisation des types d'aléa (georisque_alea.subtype) et ordre des niveaux (attrs->>'niveau').
+_ALEA_LABEL = {"mouvement_terrain": "Mouvement de terrain", "inondation": "Inondation",
+               "submersion_marine": "Submersion marine", "submersion_marine_cc": "Submersion marine (2100)"}
+_NIVEAU_RANG = {"fort": 3, "moyen": 2, "faible": 1}
+
+
+def risques_zone(session: Session, geom_geojson: dict) -> dict:
+    """B5 — PPR et aléas recouvrant la zone, en % de sa surface. RÉUTILISE les couches DEAL déjà servies
+    par l'outil Pièges & risques (spatial_layers) : `ppr` (INTERDICTION=rouge / PRESCRIPTION=bleu) et
+    `georisque_alea` (niveau fort/moyen/faible par type). % = ST_Area(ST_Intersection(ST_Union(geom_2975),
+    zone)) / aire, par catégorie (ST_Union → jamais de double compte sur un chevauchement interne)."""
+    aire = _aire_zone(session, geom_geojson)
+    if not aire or session.execute(text("SELECT to_regclass('spatial_layers')")).scalar() is None:
+        return {"ppr": [], "aleas": [], "source": "DEAL Réunion — PPR / aléas (Lizmap)"}
+    z = _zone2975()
+    p = {"zone": json.dumps(geom_geojson), "aire": aire}
+    # PERF — on CLIPPE chaque feature contre la zone AVANT de l'unir (les morceaux clippés sont petits →
+    # ST_Union rapide), au lieu d'unir les multipolygones entiers puis d'intersecter (15 s constatés sur
+    # georisque_alea). La zone n'est parsée qu'une fois (CTE `zn`). L'aire d'union est calculée une seule
+    # fois (CTE `agg`) puis filtrée > 0 — plus de double ST_Union en SELECT + HAVING.
+    ppr_rows = session.execute(text(
+        f"""WITH zn AS (SELECT {z} AS g),
+                 clip AS (SELECT sl.subtype, ST_Intersection(sl.geom_2975, zn.g) AS gg
+                          FROM spatial_layers sl, zn
+                          WHERE sl.kind='ppr' AND sl.subtype IN ('INTERDICTION','PRESCRIPTION')
+                            AND ST_Intersects(sl.geom_2975, zn.g)),
+                 agg AS (SELECT subtype, ST_Area(ST_Union(gg)) a FROM clip GROUP BY subtype)
+            SELECT subtype, round(100 * a / :aire) pct FROM agg WHERE a > 0"""), p).mappings().all()
+    _PPR_LBL = {"INTERDICTION": ("interdiction", "Zone rouge (interdiction)"),
+                "PRESCRIPTION": ("prescription", "Zone bleue (prescription)")}
+    ppr = [{"niveau": _PPR_LBL[r["subtype"]][0], "label": _PPR_LBL[r["subtype"]][1], "pct": int(r["pct"])}
+           for r in ppr_rows if r["pct"] and int(r["pct"]) > 0 and r["subtype"] in _PPR_LBL]
+    ppr.sort(key=lambda x: -x["pct"])
+    alea_rows = session.execute(text(
+        f"""WITH zn AS (SELECT {z} AS g),
+                 clip AS (SELECT sl.subtype, sl.attrs->>'niveau' AS niveau,
+                                 ST_Intersection(sl.geom_2975, zn.g) AS gg
+                          FROM spatial_layers sl, zn
+                          WHERE sl.kind='georisque_alea' AND ST_Intersects(sl.geom_2975, zn.g)),
+                 agg AS (SELECT subtype, niveau, ST_Area(ST_Union(gg)) a FROM clip GROUP BY subtype, niveau)
+            SELECT subtype, niveau, round(100 * a / :aire) AS pct FROM agg WHERE a > 0"""),
+        p).mappings().all()
+    aleas = sorted(
+        [{"risque": r["subtype"], "label": _ALEA_LABEL.get(r["subtype"], (r["subtype"] or "").replace("_", " ").capitalize()),
+          "niveau": r["niveau"], "pct": int(r["pct"])} for r in alea_rows],
+        key=lambda a: (-_NIVEAU_RANG.get(a["niveau"], 0), -a["pct"]))
+    return {"ppr": ppr, "aleas": aleas, "source": "DEAL Réunion — PPR / aléas (Lizmap)"}
+
+
+def assainissement_zone(session: Session, geom_geojson: dict) -> dict:
+    """B5 — assainissement de la zone : % en zonage COLLECTIF vs ANC (spatial_layers
+    kind='zonage_assainissement', subtype collectif/anc — SIG GPU). Couverture partielle (communes
+    dotées d'un zonage SIG) : hors couverture, dit « non couvert », jamais un 0 trompeur."""
+    aire = _aire_zone(session, geom_geojson)
+    if not aire or session.execute(text("SELECT to_regclass('spatial_layers')")).scalar() is None:
+        return {"couvert": False}
+    z = _zone2975()
+    p = {"zone": json.dumps(geom_geojson), "aire": aire}
+    out = {}
+    for st in ("collectif", "anc"):
+        out[st] = int(session.execute(text(
+            f"""SELECT coalesce(round(100 * ST_Area(ST_Intersection(ST_Union(geom_2975), {z})) / :aire), 0)
+                FROM spatial_layers WHERE kind='zonage_assainissement' AND subtype=:st
+                  AND ST_Intersects(geom_2975, {z})"""), {**p, "st": st}).scalar() or 0)
+    couvert = (out["collectif"] + out["anc"]) > 0
+    return {"couvert": couvert, "collectif_pct": out["collectif"], "anc_pct": out["anc"],
+            "millesime": "Zonage d'assainissement (GPU) — communes dotées d'un SIG"}
+
+
+#: espaces protégés & zonages fiscaux/prioritaires recouvrant une zone (kind → libellé).
+_ESPACES_KINDS = [("znieff", "ZNIEFF (inventaire)"), ("ens", "Espace naturel protégé (ENS / réserve)"),
+                  ("parc_national", "Parc national"), ("zfang", "ZFANG (zone franche)"),
+                  ("frr", "FRR (ex-ZRR)"), ("qpv", "QPV (quartier prioritaire)")]
+
+
+def espaces_zonages_zone(session: Session, geom_geojson: dict) -> dict:
+    """B5 — espaces protégés (ZNIEFF, ENS, Parc national) et zonages fiscaux/prioritaires (ZFANG, FRR,
+    QPV) recouvrant la zone, en % de surface. Couches spatial_layers, % ST_Union/aire (jamais de double
+    compte). Une catégorie à 0 % n'est pas listée (fait présent seulement)."""
+    aire = _aire_zone(session, geom_geojson)
+    if not aire or session.execute(text("SELECT to_regclass('spatial_layers')")).scalar() is None:
+        return {"items": []}
+    z = _zone2975()
+    p = {"zone": json.dumps(geom_geojson), "aire": aire}
+    items = []
+    for kind, label in _ESPACES_KINDS:
+        pct = session.execute(text(
+            f"""SELECT round(100 * ST_Area(ST_Intersection(ST_Union(geom_2975), {z})) / :aire)
+                FROM spatial_layers WHERE kind=:k AND ST_Intersects(geom_2975, {z})"""),
+            {**p, "k": kind}).scalar()
+        if pct and int(pct) > 0:
+            items.append({"kind": kind, "label": label, "pct": int(pct)})
+    return {"items": items, "source": "INPN / DEAL / ANCT / Légifrance (couches servies)"}
+
+
+#: BPE — domaines A→G COMPLETS (INSEE), au lieu des 5 domaines des « plus proches ». Même source que
+#: `equipements_proches` (spatial_layers kind='amenite_bpe', subtype = lettre de domaine).
+_DOMAINES_BPE = [
+    ("A", "Services aux particuliers"), ("B", "Commerces"), ("C", "Enseignement"),
+    ("D", "Santé et action sociale"), ("E", "Transports et déplacements"),
+    ("F", "Sports, loisirs et culture"), ("G", "Tourisme"),
+]
+
+
+def equipements_bpe_zone(session: Session, geom_geojson: dict, lon0: float, lat0: float, *,
+                         bandes: dict[int, dict]) -> dict:
+    """B6 — équipements BPE de la zone par DOMAINE complet (A→G) : le COMPTE par domaine + les 3 plus
+    proches (avec leur temps de trajet quand les bandes d'isochrone existent). Même couche que
+    `equipements_proches` (spatial_layers kind='amenite_bpe')."""
+    if session.execute(text("SELECT to_regclass('spatial_layers')")).scalar() is None:
+        return {"domaines": []}
+    z = _zone2975()
+    domaines = []
+    for dom, label in _DOMAINES_BPE:
+        rows = session.execute(text(
+            f"""SELECT name, ST_X(geom) AS lon, ST_Y(geom) AS lat
+                FROM spatial_layers
+                WHERE kind='amenite_bpe' AND subtype=:dom AND ST_Contains({z}, ST_Transform(geom, 2975))
+                ORDER BY geom <-> ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)"""),
+            {"zone": json.dumps(geom_geojson), "dom": dom, "lon": lon0, "lat": lat0}).mappings().all()
+        if not rows:
+            continue
+        proches = [{"nom": r["name"], "temps_min": _bande_min(session, r["lon"], r["lat"], bandes)}
+                   for r in rows[:3]]
+        domaines.append({"domaine": dom, "label": label, "n": len(rows), "proches": proches})
+    return {"domaines": domaines, "millesime": "BPE (INSEE) — base permanente des équipements"}
+
+
+def acquisitions_pm_zone(session: Session, geom_geojson: dict, *, top: int = 5) -> dict:
+    """B7 — acquisitions récentes de PERSONNES MORALES dans la zone : parcelles dont un SIREN est
+    propriétaire au DERNIER millésime disponible mais PAS au précédent (pm_proprietaires_millesimes,
+    DGFiP). Signal daté, jamais une projection ; particuliers jamais nommés."""
+    if session.execute(text("SELECT to_regclass('pm_proprietaires_millesimes')")).scalar() is None:
+        return {"acquereurs": [], "n_parcelles": 0}
+    mills = [int(r[0]) for r in session.execute(text(
+        "SELECT DISTINCT millesime FROM pm_proprietaires_millesimes ORDER BY millesime DESC")).all()]
+    if len(mills) < 2:
+        return {"acquereurs": [], "n_parcelles": 0}
+    cur, prev = mills[0], mills[1]
+    z = _zone2975()
+    rows = session.execute(text(
+        f"""WITH cur AS (
+              SELECT DISTINCT pm.siren, pm.idu, pm.denomination
+              FROM pm_proprietaires_millesimes pm JOIN parcels p ON p.idu = pm.idu
+              WHERE pm.millesime = :cur AND ST_Contains({z}, ST_Transform(p.centroid, 2975))),
+            nouv AS (
+              SELECT c.* FROM cur c
+              WHERE NOT EXISTS (SELECT 1 FROM pm_proprietaires_millesimes o
+                                WHERE o.millesime = :prev AND o.idu = c.idu AND o.siren = c.siren))
+            SELECT siren, max(denomination) denom, count(*) n FROM nouv
+            GROUP BY siren ORDER BY n DESC LIMIT :top"""),
+        {"zone": json.dumps(geom_geojson), "cur": cur, "prev": prev, "top": top}).mappings().all()
+    n_total = int(session.execute(text(
+        f"""SELECT count(*) FROM (
+              SELECT DISTINCT pm.siren, pm.idu FROM pm_proprietaires_millesimes pm
+              JOIN parcels p ON p.idu = pm.idu
+              WHERE pm.millesime = :cur AND ST_Contains({z}, ST_Transform(p.centroid, 2975))
+                AND NOT EXISTS (SELECT 1 FROM pm_proprietaires_millesimes o
+                                WHERE o.millesime = :prev AND o.idu = pm.idu AND o.siren = pm.siren)) t"""),
+        {"zone": json.dumps(geom_geojson), "cur": cur, "prev": prev}).scalar() or 0)
+    return {"acquereurs": [{"siren": r["siren"], "denomination": r["denom"], "n_parcelles": int(r["n"])}
+                           for r in rows],
+            "n_parcelles": n_total, "millesime_courant": cur, "millesime_precedent": prev,
+            "source": f"DGFiP — parcelles des personnes morales, {prev} → {cur} (signal daté)"}
+
+
+def commune_contexte_zone(session: Session, geom_geojson: dict) -> dict | None:
+    """B7 — LOYER À L'ÉCHELLE DE LA COMMUNE (dit tel quel, jamais maquillé en zonal) : loyer médian OLL
+    de la commune DOMINANTE de la zone (celle qui porte le plus de parcelles centrées dans la zone). Le
+    loyer OLL est publié à la maille SECTEUR (jamais à la parcelle) — d'où l'échelle commune assumée. La
+    FIBRE, elle, est servie ZONALEMENT par l'endpoint (arcep_immeubles ∩ zone), donc pas répétée ici."""
+    z = _zone2975()
+    row = session.execute(text(
+        f"""SELECT left(p.idu, 5) AS insee, p.commune, count(*) n FROM parcels p
+            WHERE ST_Contains({z}, ST_Transform(p.centroid, 2975))
+            GROUP BY 1, 2 ORDER BY n DESC LIMIT 1"""),
+        {"zone": json.dumps(geom_geojson)}).mappings().first()
+    if not row:
+        return None
+    insee, commune = row["insee"], row["commune"]
+    loyer = None
+    if (session.execute(text("SELECT to_regclass('oll_loyers')")).scalar() is not None
+            and session.execute(text("SELECT to_regclass('oll_zonage')")).scalar() is not None):
+        loyer = session.execute(text(
+            """SELECT l.loyer_median FROM oll_zonage z JOIN oll_loyers l ON l.zone = z.zone AND l.annee = z.annee
+               WHERE z.insee = :insee AND l.type_habitat = 'tous' AND l.pieces = 'tous'
+               ORDER BY z.annee DESC LIMIT 1"""), {"insee": insee}).scalar()
+    if loyer is None:
+        return None
+    return {"commune": commune, "insee": insee, "echelle": "commune",
+            "loyer_median_eur_m2": float(loyer),
+            "millesime": "OLL 2024 — loyer médian €/m² (tous logements, secteur OLL) — à l'échelle de la commune"}
+
+
 def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: str, *,
                   geom_geojson: dict | None = None, naf: str | None = None,
                   sous_destination: str | None = None,
@@ -603,6 +934,17 @@ def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: 
         "zone_demain": zone_demain(session, zone),   # LOT 8 — signal daté (logements autorisés + AU)
         "contraintes_plu": contraintes_plu(session, zone),   # LOT 7 — zones PLU recouvertes (tableau)
         "trafic": trafic_zone(session, zone),        # LOT 5 — trafic RN traversant/bordant la zone
+        # ETUDE-ZONE-2 Lot B — enrichissements par section (faits sourcés et datés, jamais une projection)
+        "age": age_structure_zone(session, zone),                 # B1 · Population — structure d'âge (IRIS)
+        "prix_par_type": prix_par_type_zone(session, zone),       # B3 · Immobilier — €/m² maison/appart/terrain
+        "permis_par_type": permis_par_type_zone(session, zone),   # B3 · Immobilier — permis par famille
+        "proprietaires_pm": proprietaires_pm_zone(session, zone), # B4 · Foncier — top 5 PM par surface
+        "risques": risques_zone(session, zone),                   # B5 · Contraintes — PPR + aléas par niveau
+        "assainissement": assainissement_zone(session, zone),     # B5 · Contraintes — collectif vs ANC
+        "espaces_zonages": espaces_zonages_zone(session, zone),   # B5 · Contraintes — protégés + fiscaux
+        "bpe": equipements_bpe_zone(session, zone, lon, lat, bandes=bandes),  # B6 · Équipements — BPE A→G
+        "acquisitions_pm": acquisitions_pm_zone(session, zone),   # B7 · Dynamique — acquisitions PM récentes
+        "commune_contexte": commune_contexte_zone(session, zone), # B7 · Dynamique — loyer OLL (commune)
     }
     # DESTINATIONS-1 (X4.1) — verdict de la sous-destination choisie sur chaque zone PLU
     # recouverte : autorisé / sous condition / interdit / en cours de calibration. Lecture
