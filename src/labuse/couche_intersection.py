@@ -27,18 +27,23 @@ TABLE = "parcel_couche_intersection"
 _STAGING = TABLE + "_build"
 _META = TABLE + "_meta"
 
-# Filtre des couches matérialisées : servitudes de la fiche (dpu/peb/sup + prescription 01/05) ET
-# zone PLU du Gabarit (plu_gpu_zone). EXACTEMENT les mêmes prédicats que les requêtes au vol remplacées.
-_KIND_FILTER = ("(sl.kind IN ('dpu','peb','sup','plu_gpu_zone') "
+# Deux populations INDÉPENDANTES, à fraîcheur séparée :
+#  - SERVITUDES (fiche) : dpu/peb/sup + prescription 01/05. Peu de parcelles concernées → build léger.
+#    Construites TOUJOURS.
+#  - ZONE PLU (Gabarit) : plu_gpu_zone. Toutes les parcelles la coupent + zones commune-larges →
+#    build TRÈS lourd. Construite UNIQUEMENT sur demande explicite (`with_zone=True`). Par défaut le
+#    Gabarit reste au calcul au vol.
+_FILTER_SERV = ("(sl.kind IN ('dpu','peb','sup') "
                 "OR (sl.kind = 'plu_gpu_prescription' AND sl.subtype IN ('01','05')))")
-# Les kinds « fiche » servent au garde-fou de présence (kinds_presents) et à la version.
-_KINDS_ALL = ("dpu", "peb", "sup", "plu_gpu_prescription", "plu_gpu_zone")
+_FILTER_ZONE = "sl.kind = 'plu_gpu_zone'"
+_KINDS_SERV = ("dpu", "peb", "sup", "plu_gpu_prescription")
+_KEY_SERV = "serv_version"
+_KEY_ZONE = "zone_version"
 
 
-def source_version(db: Session) -> str:
-    """Empreinte des sources : couches concernées (max updated/created + compte) + cadastre (compte +
-    max id parcelle). Change dès qu'une nouvelle version de SUP/servitude/zone OU du cadastre est
-    injectée. Volontairement grossière mais SÛRE (toute divergence force le recalcul au vol)."""
+def _fingerprint(db: Session, kinds: tuple[str, ...]) -> str:
+    """Empreinte des sources d'une population : couches (max created_at + compte) + cadastre (compte +
+    max id). Change à toute nouvelle version de ces couches OU du cadastre → force le recalcul au vol."""
     row = db.execute(text(
         """
         SELECT
@@ -46,28 +51,55 @@ def source_version(db: Session) -> str:
              FROM spatial_layers WHERE kind = ANY(:kinds)) AS couches,
           (SELECT count(*) || ':' || coalesce(max(id), 0) FROM parcels) AS cadastre
         """
-    ), {"kinds": list(_KINDS_ALL)}).mappings().first()
+    ), {"kinds": list(kinds)}).mappings().first()
     return f"c={row['couches']}|p={row['cadastre']}"
 
 
-def fraiche(db: Session) -> bool:
-    """La table matérialisée existe ET sa version colle aux sources courantes."""
+def serv_version(db: Session) -> str:
+    """Version des sources de la population SERVITUDES (fiche)."""
+    return _fingerprint(db, _KINDS_SERV)
+
+
+def zone_version(db: Session) -> str:
+    """Version des sources de la population ZONE PLU (Gabarit)."""
+    return _fingerprint(db, ("plu_gpu_zone",))
+
+
+def _meta_get(db: Session, key: str) -> str | None:
     if not db.execute(text("SELECT to_regclass(:t)"), {"t": TABLE}).scalar():
-        return False
+        return None
     if not db.execute(text("SELECT to_regclass(:t)"), {"t": _META}).scalar():
-        return False
-    stored = db.execute(text(f"SELECT value FROM {_META} WHERE key = 'source_version'")).scalar()
-    return bool(stored) and stored == source_version(db)
+        return None
+    return db.execute(text(f"SELECT value FROM {_META} WHERE key = :k"), {"k": key}).scalar()
 
 
-def build(db: Session, log: Callable[..., None] = lambda *_: None, chunk: int = 4000) -> int:
+def fraiche(db: Session) -> bool:
+    """SERVITUDES (fiche) : table présente ET version servitudes alignée. Sinon → calcul au vol."""
+    stored = _meta_get(db, _KEY_SERV)
+    return bool(stored) and stored == serv_version(db)
+
+
+def fraiche_zone(db: Session) -> bool:
+    """ZONE PLU (Gabarit) : table présente ET population zone CONSTRUITE (version zone posée) ET alignée.
+    Par défaut (build servitudes seulement) → False → le Gabarit reste au calcul au vol."""
+    stored = _meta_get(db, _KEY_ZONE)
+    return bool(stored) and stored == zone_version(db)
+
+
+def build(db: Session, log: Callable[..., None] = lambda *_: None, chunk: int = 4000,
+          with_zone: bool = False) -> int:
     """(Re)construit `parcel_couche_intersection` PAR TRANCHES de parcelles, dans une table de
     STAGING, puis bascule atomiquement (RENAME) — ne tient jamais un verrou long sur la table servie,
     ne bloque pas la base partagée. Idempotent. Renvoie le nombre de lignes.
 
+    Par DÉFAUT : SERVITUDES seulement (fiche) — léger. `with_zone=True` ajoute la population ZONE PLU
+    (Gabarit) — TRÈS lourde (zones commune-larges), à réserver à une fenêtre de maintenance.
+
     `lock_timeout` court : si le cadastre/les couches sont verrouillés par un autre run, la tranche
     échoue vite et le batch est relançable — plutôt que de faire la file d'attente."""
-    version = source_version(db)
+    _kind_filter = f"({_FILTER_SERV} OR {_FILTER_ZONE})" if with_zone else _FILTER_SERV
+    v_serv = serv_version(db)
+    v_zone = zone_version(db) if with_zone else None
     db.execute(text("SET lock_timeout = '5s'"))
     db.execute(text(f"DROP TABLE IF EXISTS {_STAGING}"))
     # Schéma figé (pas de CREATE AS, pour maîtriser types + colonne géométrie).
@@ -101,7 +133,7 @@ def build(db: Session, log: Callable[..., None] = lambda *_: None, chunk: int = 
                    ST_Area(inter.g) AS area_m2, inter.g AS geom_2975
             FROM parcels p
             JOIN spatial_layers sl
-              ON ST_Intersects(p.geom_2975, sl.geom_2975) AND {_KIND_FILTER}
+              ON ST_Intersects(p.geom_2975, sl.geom_2975) AND {_kind_filter}
             CROSS JOIN LATERAL (SELECT CASE
                      WHEN sl.kind = 'plu_gpu_zone'
                        THEN ST_Intersection(sl.geom_2975, p.geom_2975)   -- ordre Gabarit (zone, parcelle)
@@ -128,10 +160,20 @@ def build(db: Session, log: Callable[..., None] = lambda *_: None, chunk: int = 
     db.execute(text(f"""
         CREATE TABLE IF NOT EXISTS {_META} (key varchar PRIMARY KEY, value varchar, updated_at timestamptz)
     """))
+    # Version SERVITUDES toujours posée. Version ZONE posée si construite, SINON RETIRÉE (le Gabarit
+    # doit rester au calcul au vol tant que la population zone n'est pas bâtie).
     db.execute(text(f"""
-        INSERT INTO {_META} (key, value, updated_at) VALUES ('source_version', :v, now())
+        INSERT INTO {_META} (key, value, updated_at) VALUES (:k, :v, now())
         ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = now()
-    """), {"v": version})
+    """), {"k": _KEY_SERV, "v": v_serv})
+    if with_zone:
+        db.execute(text(f"""
+            INSERT INTO {_META} (key, value, updated_at) VALUES (:k, :v, now())
+            ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = now()
+        """), {"k": _KEY_ZONE, "v": v_zone})
+    else:
+        db.execute(text(f"DELETE FROM {_META} WHERE key = :k"), {"k": _KEY_ZONE})
     db.commit()
-    log(f"{TABLE} : {total} intersections matérialisées (version {version}).")
+    log(f"{TABLE} : {total} intersections matérialisées "
+        f"(servitudes{' + zone PLU' if with_zone else ' seulement'}, serv_version {v_serv}).")
     return total

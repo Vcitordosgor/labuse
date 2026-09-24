@@ -120,8 +120,10 @@ def _multizone_split(session: Session, parcel_id: int):
     # (`parcel_couche_intersection`) quand la table est FRAÎCHE : on lit la géométrie brute rangée
     # (sans perte) et on réapplique EXACTEMENT les mêmes expressions aval → sortie identique. Sinon,
     # calcul au vol (repli). `area_m2` rangé = ST_Area(ST_Intersection(p, z)) [commutatif → identique].
-    from ..couche_intersection import fraiche as _inter_fraiche
-    if _inter_fraiche(session):
+    # fraiche_zone : n'est vrai que si la population ZONE PLU a été explicitement construite
+    # (build --with-zone). Par défaut (build servitudes seulement) → False → calcul au vol.
+    from ..couche_intersection import fraiche_zone as _inter_fraiche_zone
+    if _inter_fraiche_zone(session):
         sql = """
         SELECT z.attrs->>'libelle' AS code, z.attrs->>'typezone' AS tz,
                pci.area_m2 AS area_m2,
