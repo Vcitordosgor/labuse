@@ -187,6 +187,14 @@ def _cosia_couverture(session: Session, idu: str, surface: float | None) -> dict
     }
 
 
+# FICHE-FIX-2 P3 — seuil de discordance faîtage LiDAR ↔ hauteur BD TOPO. Au-delà, la mesure LiDAR
+# (p99 du MNS, sensible à la végétation/aux structures voisines captées dans la dalle) est signalée
+# « à vérifier » : 3 m ≈ un niveau bâti entier — en deçà, l'écart LiDAR/BD TOPO relève du bruit de
+# mesure normal (arrondi de la hauteur déclarée BD TOPO, débords de toiture) ; au-delà, il désigne
+# vraisemblablement une captation étrangère (arbre, bâti mitoyen) et non un vrai faîtage.
+SEUIL_ECART_FAITAGE_M = 3.0
+
+
 def le_bien_block(session: Session, idu: str) -> dict | None:
     """FICHE-1 lot 1 — bloc « Le bien » : le bâtiment EXISTANT de la parcelle, une fois pour la
     fiche (le tiroir consomme ce producteur unique, aucun calcul au front).
@@ -318,6 +326,14 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
         # RECETTE-11 A3 — la date de survol servie avec la mesure (jamais une mesure sans date).
         "hauteur_survol": (lid.get("survol") if lid else None),
         "hauteur_source": (lid["source"] if lid else ("BD TOPO® (hauteur déclarée)" if hauteur is not None else None)),
+        # FICHE-FIX-2 P3 — la mesure LiDAR (faîtage p99) peut capter végétation/structure voisine dans
+        # la dalle : la base calcule déjà l'écart avec la hauteur BD TOPO. On le SERT (les deux valeurs
+        # + un drapeau « sources discordantes » au-delà du seuil), sans jamais choisir automatiquement.
+        "hauteur_bdtopo_m": (lid.get("hauteur_bdtopo_m") if lid else None),
+        "ecart_faitage_bdtopo_m": (lid.get("ecart_faitage_bdtopo_m") if lid else None),
+        "hauteur_discordante": bool(
+            lid and lid.get("ecart_faitage_bdtopo_m") is not None
+            and abs(float(lid["ecart_faitage_bdtopo_m"])) > SEUIL_ECART_FAITAGE_M),
         "surface_libre_m2": surface_libre,
         "surface_parcelle_m2": round(surface) if surface is not None else None,
         "toit": toit,          # None = toit non encore relevé (LiDAR non chauffé), sinon 3 états U5

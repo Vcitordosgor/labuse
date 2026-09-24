@@ -814,11 +814,15 @@ export function Fiche({ idu }: { idu: string }) {
               const e = expo.data
               const orient = e?.orientation
               const v = expo.isLoading ? '…' : (orient && orient !== 'plat' ? orient : orient === 'plat' ? 'Plat' : '—')
-              const s = orient && orient !== 'plat' && e?.pente_moyenne_deg != null ? `pente ${nf(e.pente_moyenne_deg)} °`
-                : orient === 'plat' ? 'terrain quasi plat'
-                : expo.isLoading ? 'calcul en cours' : 'relief non disponible'
+              // FICHE-FIX-2 P6 — la PENTE vit UNE fois (tuile « Pente », emprise de la parcelle,
+              // 13,8°). L'Exposition ne montre PLUS sa propre pente (fenêtre versant 200 m = 17,4°, un
+              // autre périmètre) : elle ne garde que l'orientation (l'azimut, qui a besoin du contexte
+              // du versant, reste au tiroir Terrain). Fin des deux pentes côte à côte dans l'en-tête (§1.2).
+              const s = orient === 'plat' ? 'terrain quasi plat'
+                : expo.isLoading ? 'calcul en cours'
+                : !orient ? 'relief non disponible' : 'versant (RGE ALTI)'
               return { l: 'Exposition', v, s, vide: !orient,
-                i: 'Orientation du versant de la parcelle (Nord, Sud-Est…) et sa pente moyenne, calculées sur le modèle d’altitude RGE ALTI (IGN), localement — sans ligne de vue. Remplace la « vue mer » (abandonnée). « — » : relief non disponible sur la parcelle.' } as Tuile
+                i: 'Orientation du versant de la parcelle (Nord, Sud-Est…), calculée sur le modèle d’altitude RGE ALTI (IGN) dans une fenêtre autour du centroïde. La PENTE affichée est celle de l’emprise (tuile « Pente ») — l’exposition n’en montre pas une seconde. Remplace la « vue mer » (abandonnée). « — » : relief non disponible sur la parcelle.' } as Tuile
             })(),
             { l: 'Risques', v: vigils.length > 0 ? `${vigils.length}` : '—', s: risqueNiveau, vide: vigils.length === 0,
               i: 'Vigilances évaluées sur la parcelle (aléas, servitudes, sols…) — compteur et niveau, comme le badge de §5. Le détail est dans « Risques et environnement ».' },
@@ -1217,13 +1221,16 @@ export function Fiche({ idu }: { idu: string }) {
           // Exposition → §2 Terrain (orientation du versant + pente, MNT RGE ALTI, sans ligne de vue).
           const expoData = expo.data
           const expoOrient = expoData?.orientation
+          // FICHE-FIX-2 P6 — l'Exposition ne montre plus la pente du versant (fenêtre 200 m ≠ emprise) :
+          // la pente vit UNE fois dans la tuile « Pente » (emprise). L'azimut du versant reste servi
+          // ci-dessous (aspect_deg) car l'orientation, elle, a besoin du contexte du versant.
           const tuileExpo = {
             v: expo.isLoading ? '…' : (expoOrient && expoOrient !== 'plat' ? expoOrient : expoOrient === 'plat' ? 'Plat' : '—'),
-            s: expoOrient && expoOrient !== 'plat' && expoData?.pente_moyenne_deg != null ? `pente ${nf(expoData.pente_moyenne_deg)} °`
-              : expoOrient === 'plat' ? 'terrain quasi plat'
-              : expo.isLoading ? 'calcul en cours' : 'relief non disponible',
+            s: expoOrient === 'plat' ? 'terrain quasi plat'
+              : expo.isLoading ? 'calcul en cours'
+              : !expoOrient ? 'relief non disponible' : 'versant (RGE ALTI, fenêtre 200 m)',
             vide: !expoOrient,
-            i: 'Orientation du versant de la parcelle (Nord, Sud-Est…) et sa pente moyenne, calculées sur le modèle d’altitude RGE ALTI (IGN), localement — sans ligne de vue. Remplace la « vue mer » (abandonnée : 55 h de calcul pour une donnée peu fiable, cf. rapport). « — » : relief non disponible sur la parcelle.' }
+            i: 'Orientation du versant de la parcelle (Nord, Sud-Est…), calculée sur le modèle d’altitude RGE ALTI (IGN) dans une fenêtre de 200 m autour du centroïde. La pente affichée est celle de l’emprise (tuile « Pente ») ; l’exposition n’en affiche pas une seconde. « — » : relief non disponible sur la parcelle.' }
           // Taxe foncière → §7 Fiscalité (TFPB part communale, REI DGFiP).
           const tfpb = f.fiscalite?.tfpb_commune_pct
           const tuileTaxe = { v: tfpb != null ? `${nf(tfpb)} %` : '—', s: tfpb != null ? 'part communale' : 'taux non ingéré', vide: tfpb == null,
@@ -1557,14 +1564,39 @@ export function Fiche({ idu }: { idu: string }) {
                 <RtaaFromBilan idu={idu} />
                 {/* Dispositifs et périmètres (§4) — ER / EBC / doc urba / DPU / PEB / SUP (SOURCES-1 lot 1). */}
                 {f.dispositifs && <DispositifsBody d={f.dispositifs} />}
-                {/* FICHE-RANGEMENT-2 Lot 1 — mixité sociale (SMS) : quota + seuil NON RENSEIGNÉS (non
-                    extraits du règlement de zone GPU à ce jour ; cf. FICHE-RANGEMENT-1 lot 2, data absente). */}
-                <div data-mixite>
-                  <GroupLabel>Mixité sociale (LLS)</GroupLabel>
-                  <FactRow label="Quota de logements sociaux" tone="mute" value="non renseigné" />
-                  <FactRow label="Seuil de déclenchement" tone="mute" value="non renseigné" />
-                  <FactNote>Servitude de mixité sociale — non extraite du règlement de zone GPU à ce jour (en attente).</FactNote>
-                </div>
+                {/* FICHE-FIX-2 P4 — mixité sociale (LLS) branchée sur la règle VALIDÉE de la zone
+                    (reglement_plu.mixite, lue des regles calibrées). Validée → seuil + quota + citation
+                    sourcés ; propose/absente → « non modélisée pour cette zone » (jamais « non
+                    renseigné », jamais un 0 muet). La 11e étape de la capacité porte le nombre résultant. */}
+                {(() => {
+                  const mx = f.reglement_plu?.mixite
+                  const valide = mx?.statut === 'valide' && mx?.quota_pct != null
+                  return (
+                    <div data-mixite>
+                      <GroupLabel right={valide ? <Badge ton="vert">Sourcé</Badge> : <Badge ton="neutre">non modélisée</Badge>}>Mixité sociale (LLS)</GroupLabel>
+                      {valide ? (
+                        <>
+                          <FactRow label="Quota de logements sociaux" value={<>{mx!.quota_pct} <small>%</small></>} />
+                          <FactRow label="Seuil de déclenchement"
+                            value={mx!.seuil_logements != null ? <>{mx!.seuil_logements} <small>logements</small></> : '—'} />
+                          <FactNote>
+                            {mx!.article ? `${mx!.article}${mx!.page_pdf ? ` (p. ${mx!.page_pdf})` : ''} — ` : ''}
+                            {mx!.citation ? `« ${mx!.citation} »` : 'clause de mixité sociale validée au règlement de zone.'}
+                          </FactNote>
+                        </>
+                      ) : (
+                        <>
+                          <FactRow label="Clause de mixité sociale" tone="mute" value="non modélisée pour cette zone" />
+                          <FactNote>
+                            {mx?.statut === 'propose'
+                              ? 'Clause détectée au règlement mais non validée (feuille « propose ») — non modélisée pour cette zone.'
+                              : 'Aucune clause de mixité sociale validée pour cette zone dans le règlement calibré.'}
+                          </FactNote>
+                        </>
+                      )}
+                    </div>
+                  )
+                })()}
                 {/* FICHE-SANS-OBJET-1 — §4 a désormais SON propre repli « N sans objet », calqué EXACT
                     sur §5 Risques (même libellé, même style, replié par défaut). Les lignes PASS de
                     l'onglet `regles` (« Hors forêt publique », « Hors zone humide », « Hors parc

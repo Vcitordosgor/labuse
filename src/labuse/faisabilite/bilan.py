@@ -204,9 +204,16 @@ def _comparables(kept: list[dict], min_n: int, fiabilite: str) -> dict:
             "note": note, "fiabilite_prix": fiabilite}
 
 
-def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
-    """Prix de sortie €/m² HABITABLE, fiabilisé (type prioritaire, rayon adaptatif, aberrants
-    exclus, récence, indice de fiabilité)."""
+# ── FICHE-FIX-2 P2 : échantillon bâti DVF UNIQUE + sélection adaptative COMMUNE ────────────────
+# Le « prix de sortie » (sector_price) et la « médiane par type » (reference_locale) construisaient
+# leur échantillon différemment (dédoublonnage vs pas, fenêtre récente vs 2021-2025) → 2 365 vs 2 403
+# pour le MÊME appartement (§1.4). Les deux tirent désormais du même échantillon et de la même
+# sélection — une fonction, une fenêtre, un dédoublonnage (comme ETUDIER-BIEN-2 pour le terrain nu).
+def _ventes_bati_dedup(db: Session, parcel_id: int) -> tuple[list[dict], int]:
+    """Ventes bâti DVF (appartement/maison, surf ≥ 20 m², valeur > 20 000 €, nature vente) de la
+    commune de la parcelle, DÉDOUBLONNÉES par MUTATION RÉELLE (id_mutation géo-DVF : une mutation =
+    une vente ; on ne fusionne pas deux ventes distinctes au même prix, fréquent en VEFA). Retourne
+    (ventes, n_doublons). Source d'échantillon UNIQUE des chemins prix bâti."""
     rows = db.execute(text(
         "SELECT d.mutation_id AS mid, d.valeur_fonciere AS val, d.surface_reelle_bati AS surf, "
         "  d.valeur_fonciere / d.surface_reelle_bati AS prix, "
@@ -219,11 +226,6 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
         "  AND d.valeur_fonciere > 20000 AND d.nature_mutation ILIKE '%vente%' "
         "  AND d.type_local ILIKE ANY(ARRAY['%APPARTEMENT%','%MAISON%'])"),
         {"pid": parcel_id}).mappings().all()
-
-    # Dédoublonnage par MUTATION RÉELLE (id_mutation DVF). geo-dvf fournit un identifiant
-    # fiable : une mutation = une vente. On ne fusionne donc PAS deux ventes identiques
-    # mais distinctes (fréquent en VEFA : lots jumeaux au même prix) — l'ancien dédoublonnage
-    # (valeur+surface+année), hérité du flux ODS multi-parcelles, les écrasait à tort.
     seen: dict = {}
     sales: list[dict] = []
     for r in rows:
@@ -235,33 +237,42 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
              "dist": float(r["dist"]), "vefa": bool(r["vefa"])}
         seen[key] = d
         sales.append(d)
-    n_dup = len(rows) - len(sales)
-    min_n = MIN_N_SECTEUR   # n minimum visé (constante SECTEUR-2 T1 ; = hyp.dvf_min_ventes = 8)
+    return sales, len(rows) - len(sales)
 
-    # SECTEUR-2 (T1) — segments HOMOGÈNES période × type, rayon adaptatif jusqu'à n min.
-    # Période RÉCENTE (5 ans) préférée ; élargie seulement si l'échantillon récent ne tient pas.
-    # Type : appartement (comparable d'un collectif neuf) → mixte appart+maison → commune entière.
+
+def _selection_secteur(sales: list[dict], base_plans: list[tuple], min_n: int) -> tuple | None:
+    """Sélection adaptative COMMUNE (SECTEUR-2 T1) : période RÉCENTE (5 ans) préférée puis élargie ;
+    au sein d'une période, le premier plan (type × rayon) qui atteint `min_n` après trim des aberrants.
+    Retourne (label, kept, ecartees, radius, commune, sub, periode_seg) ou None si aucun plan ne tient."""
     an_recent = ANNEE_REF - PERIODE_SECTEUR_ANS + 1
-    base_plans = ([("appartement", {"appartement"}, r, False) for r in RAYONS_SECTEUR_M]
-                  + [("mixte (appart+maison)", {"appartement", "maison"}, r, False) for r in RAYONS_SECTEUR_M]
-                  + [("appartement", {"appartement"}, 1500.0, True),
-                     ("mixte (appart+maison)", {"appartement", "maison"}, 1500.0, True)])
-    chosen = None
     for periode_label, an_min in (("récente", an_recent), ("élargie", 0)):
         for label, cats, r, commune in base_plans:
             sub = [s for s in sales if s["cat"] in cats and s["annee"] >= an_min and (commune or s["dist"] <= r)]
             kept, ecartees = _trim_aberrants(sub)
             if len(kept) >= min_n:
-                chosen = (label, kept, ecartees, r, commune, len(sub), periode_label)
-                break
-        if chosen:
-            break
+                return (label, kept, ecartees, r, commune, sub, periode_label)
+    return None
+
+
+def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
+    """Prix de sortie €/m² HABITABLE, fiabilisé (type prioritaire, rayon adaptatif, aberrants
+    exclus, récence, indice de fiabilité)."""
+    sales, n_dup = _ventes_bati_dedup(db, parcel_id)
+    min_n = MIN_N_SECTEUR   # n minimum visé (constante SECTEUR-2 T1 ; = hyp.dvf_min_ventes = 8)
+
+    # SECTEUR-2 (T1) — segments HOMOGÈNES période × type, rayon adaptatif jusqu'à n min.
+    # Type : appartement (comparable d'un collectif neuf) → mixte appart+maison → commune entière.
+    base_plans = ([("appartement", {"appartement"}, r, False) for r in RAYONS_SECTEUR_M]
+                  + [("mixte (appart+maison)", {"appartement", "maison"}, r, False) for r in RAYONS_SECTEUR_M]
+                  + [("appartement", {"appartement"}, 1500.0, True),
+                     ("mixte (appart+maison)", {"appartement", "maison"}, 1500.0, True)])
+    chosen = _selection_secteur(sales, base_plans, min_n)
     if chosen is None:
         sub = sales
         kept, ecartees = _trim_aberrants(sub)
-        chosen = ("mixte (appart+maison)", kept, ecartees, 1500.0, True, len(sub), "élargie")
+        chosen = ("mixte (appart+maison)", kept, ecartees, 1500.0, True, sub, "élargie")
 
-    label, kept, ecartees, radius, commune, n_avant, periode_seg = chosen
+    label, kept, ecartees, radius, commune, sub, periode_seg = chosen
     nex = len(ecartees)
     niveau, raisons = _fiabilite(kept, label, commune, min_n)
     # Distribution AVANT / APRÈS l'exclusion des 5 % extrêmes (transparence de la méthode T1).
@@ -302,30 +313,34 @@ def reference_locale(db: Session, idu: str | None, type_bien: str | None,
     _ref_local` réimplémentait la boucle et la requête → deux chemins pour un même chiffre. Ce point
     de calcul est UNIQUE : `_ref_local` n'est plus qu'un délégué. None si pas d'idu, type non bâti,
     ou n < seuil au plus grand rayon (l'appelant replie alors sur la commune)."""
-    tl = {"maison": "Maison", "appartement": "Appartement", "immeuble": "Maison"}.get(type_bien or "")
+    tl = {"maison": "maison", "appartement": "appartement", "immeuble": "maison"}.get(type_bien or "")
     if not idu or not tl:
         return None
-    from ..api.moteurs import _BAROMETRE_RETENUE   # lazy : évite le cycle bilan ↔ api.moteurs
+    # FICHE-FIX-2 P2 — MÊME échantillon (requête + dédoublonnage par mutation) + MÊME sélection
+    # (fenêtre récente préférée, rayon adaptatif, trim des aberrants) que `sector_price`. Avant, cette
+    # médiane lisait dvf_mutations SANS dédoublonnage et sur 2021-2025 non borné → 2 403 (43 ventes)
+    # là où le prix de sortie servait 2 365 (34) pour le MÊME appartement. Désormais, pour un type
+    # donné, « médiane par type » == « prix de sortie » (§1.4). Pas de repli commune ici : None au
+    # bout du rayon → l'appelant (pige/Radar) replie sur la médiane commune, contrat inchangé.
+    pid = db.execute(text("SELECT id FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
+    if pid is None:
+        return None
     n_min = max(int(seuil), MIN_N_SECTEUR)
-    for rayon in RAYONS_SECTEUR_M:
-        rows = db.execute(text(
-            f"SELECT valeur_fonciere / NULLIF(surface_reelle_bati,0) AS pm, "
-            f"  to_char(max(date_mutation) OVER (), 'YYYY') AS millesime "
-            f"FROM dvf_mutations "
-            f"WHERE type_local = :t AND {_BAROMETRE_RETENUE} "
-            f"  AND ST_DWithin(geom::geography, "
-            f"      (SELECT centroid::geography FROM parcels WHERE idu = :idu), :rad)"),
-            {"t": tl, "idu": idu, "rad": rayon}).mappings().all()
-        prices = [float(r["pm"]) for r in rows if r["pm"] is not None]
-        kept, _lo, _hi = trim_extremes_5pct(prices)
-        if len(kept) >= n_min and kept:
-            millesime = rows[0]["millesime"] if rows else None
-            return {"eur_m2": float(statistics.median(kept)), "n": len(kept), "millesime": millesime,
-                    "perimetre": f"{'maisons' if tl == 'Maison' else 'appartements'} · {int(rayon)} m autour de la parcelle",
-                    "meme_type": True, "locale": True, "rayon_m": int(rayon),
-                    "distribution": {"avant": distribution_secteur(prices), "apres": distribution_secteur(kept),
-                                     "n_exclus_extremes": len(prices) - len(kept), "n_min_vise": n_min}}
-    return None
+    sales, _n_dup = _ventes_bati_dedup(db, int(pid))
+    mono_plans = [(tl, {tl}, r, False) for r in RAYONS_SECTEUR_M]
+    chosen = _selection_secteur(sales, mono_plans, n_min)
+    if chosen is None:
+        return None
+    _label, kept, _ecartees, radius, _commune, sub, _periode = chosen
+    prices = [s["prix"] for s in kept]
+    annees = [s["annee"] for s in kept]
+    return {"eur_m2": float(statistics.median(prices)), "n": len(kept),
+            "millesime": str(max(annees)),
+            "perimetre": f"{'maisons' if tl == 'maison' else 'appartements'} · {int(radius)} m autour de la parcelle",
+            "meme_type": True, "locale": True, "rayon_m": int(radius),
+            "distribution": {"avant": distribution_secteur([s["prix"] for s in sub]),
+                             "apres": distribution_secteur(prices),
+                             "n_exclus_extremes": len(sub) - len(kept), "n_min_vise": n_min}}
 
 
 # ── POINT DE RÉSOLUTION PARTAGÉ du prix de sortie neuf (mandat prix sortie consommateurs) ──────

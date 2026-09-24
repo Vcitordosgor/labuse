@@ -29,21 +29,42 @@ const BAND_META: Record<Viabilisation['band'], { color: string; bg: string }> = 
   lourde:     { color: TOKENS.viabLourde, bg: TOKENS.viabLourdeBg },
 }
 
+// FICHE-FIX-2 P1 — résumé d'assainissement dérivé du zonage SIG (anc), source unique partagée avec
+// l'en-tête (reseaux.tsx). `court` = en-tête, `plein` = tiroir. L'assainissement N'ENTRE PAS dans le
+// score de viabilisation (eau/élec) : c'est un fait distinct, sourcé du zonage. source_secteur = taux
+// INSEE indicatif → pas un verdict parcellaire. Doctrine : un fait, une section.
+export function assainissementResume(anc?: AncStatut | null): { court: string; plein: string; ton: 'vert' | 'ambre' | 'neutre' } {
+  if (!anc || anc.statut === 'absent') return { court: 'non renseigné', plein: 'non renseigné', ton: 'neutre' }
+  if (anc.statut === 'source' || anc.statut === 'source_commune') {
+    return anc.anc
+      ? { court: 'non collectif', plein: 'non collectif — filière autonome à prévoir', ton: 'ambre' }
+      : { court: 'collectif', plein: 'collectif', ton: 'vert' }
+  }
+  return { court: 'non renseigné', plein: 'non renseigné (secteur indicatif)', ton: 'neutre' }
+}
+
+const ASSAIN_TON: Record<'vert' | 'ambre' | 'neutre', string> = {
+  vert: 'text-mint', ambre: 'text-amber', neutre: 'text-txt-hi',
+}
+
 export function ViabilisationBlock({ via, anc }: { via: Viabilisation; anc?: AncStatut | null }) {
   const m = BAND_META[via.band] ?? BAND_META.incertaine
   const ab = anc ? ANC_BADGE[anc.statut] : null
+  // FICHE-FIX-2 P1 — verdict d'assainissement explicite (« collectif » / « non collectif — filière
+  // autonome à prévoir » / « non renseigné »), dérivé du zonage SIG, source unique (en-tête + tiroir).
+  const assain = assainissementResume(anc)
   return (
     // RETOURS-20 Z3 — plus de card-elev : la viabilisation vit à plat sous ses kickers.
     <div data-viabilisation>
-      {/* Z1·02 — en-tête = KICKER « Viabilisation… » + verdict à droite (pastille de bande, tokens
-          viab*). M70 6a : le libellé raccourci reste, le sens aussi. */}
+      {/* FICHE-FIX-2 P1 — le score de viabilisation ne teste QUE eau/élec (permis, voie, bâti, zone) :
+          le titre ne dit plus « assainissement » (il vit dans son propre bloc plus bas). */}
       <GroupLabel right={
         <span data-viab-band={via.band} className="shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
           style={{ backgroundColor: m.bg, color: m.color }}>{via.libelle.replace(/^Viabilisation\s+/i, '')}</span>
-      }>Viabilisation (eau · assainissement · élec)</GroupLabel>
+      }>Viabilisation (eau · élec)</GroupLabel>
 
       {/* M70 décision 5 — plus de score /100 ni de jauge. La phrase de méthode passe en NOTE 11,5 px. */}
-      <FactNote>Probabilité de viabilisation par faisceau de preuves (jamais une certitude).</FactNote>
+      <FactNote>Probabilité de viabilisation eau/élec par faisceau de preuves (jamais une certitude). L'assainissement est traité à part (zonage SIG, ci-dessous).</FactNote>
 
       {/* Z1·02 — sous-titre encadré (label-caps) → kicker. La liste « pourquoi » (faisceau) inchangée. */}
       <GroupLabel>Pourquoi cet indicateur</GroupLabel>
@@ -62,44 +83,51 @@ export function ViabilisationBlock({ via, anc }: { via: Viabilisation; anc?: Anc
         ))}
       </ul>
 
-      {/* Lot 3 — coût de raccordement qualitatif : Z3 la boîte (rounded bg) devient un kicker + texte. */}
-      <GroupLabel>Raccordement (qualitatif)</GroupLabel>
+      {/* Lot 3 — coût de raccordement qualitatif (eau/élec) : la note d'assainissement du raccordement
+          descend dans le bloc Assainissement (un fait, une section). */}
+      <GroupLabel>Raccordement eau/élec (qualitatif)</GroupLabel>
       <p className="mt-1 text-[11.5px] leading-snug text-txt">{via.cout_raccordement.niveau}</p>
-      <FactNote>{via.cout_raccordement.assainissement}</FactNote>
 
-      {/* M88 — état d'ASSAINISSEMENT (ANC / tout-à-l'égout). Z3 la boîte devient un kicker + badge à
-          droite (Sourcé/…); libellé et phrase inchangés. Trois états jamais quatre. */}
+      {/* FICHE-FIX-2 P1 — ÉLECTRICITÉ (réseau S3REnR + solaire PVGIS) sous LEUR PROPRE titre, AVANT le
+          bloc Assainissement : l'ensoleillement ne se lit plus comme une suite de l'assainissement. */}
+      {(via.elec_pv || via.solaire) && (
+        <div data-elec-solaire>
+          <GroupLabel>Électricité — réseau et solaire</GroupLabel>
+          {via.elec_pv && (
+            <p className="mt-1 flex items-start gap-1.5 text-[11px] leading-snug text-txt-mut">
+              <span aria-hidden className="text-st-creuser">↯</span>
+              {via.elec_pv.source
+                ? <Tip tip={via.elec_pv.source}><span>{via.elec_pv.note}</span></Tip>
+                : <span>{via.elec_pv.note}</span>}
+            </p>
+          )}
+          {via.solaire && (
+            <p data-solaire className="mt-1 flex items-start gap-1.5 text-[11px] leading-snug text-txt-mut">
+              <span aria-hidden className="text-amber">☀</span>
+              <span>{via.solaire.note} <span className="text-txt-dim">{via.solaire.etat}.</span></span>
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* FICHE-FIX-2 P1 — ASSAINISSEMENT : bloc distinct, sourcé du zonage SIG (hors score eau/élec).
+          Verdict explicite en tête (collectif / non collectif — filière autonome à prévoir / non
+          renseigné), puis le libellé de zonage brut, la phrase, et la note de raccordement. */}
       {anc && ab && (
         <div data-anc>
           <GroupLabel right={
             <span data-anc-statut={anc.statut} className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase ${ab.cls}`}>{ab.label}</span>
           }>Assainissement (zonage)</GroupLabel>
-          <p className={`mt-1 text-[11.5px] font-medium leading-snug ${anc.statut === 'source' && anc.anc ? 'text-amber' : 'text-txt-hi'}`}>{anc.libelle}</p>
+          <p data-assain-verdict className={`mt-1 text-[11.5px] font-semibold leading-snug ${ASSAIN_TON[assain.ton]}`}>{assain.plein}</p>
+          <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">{anc.libelle}</p>
           <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">{anc.phrase}</p>
+          <FactNote>{via.cout_raccordement.assainissement}</FactNote>
           {anc.statut === 'absent' && anc.couverture && (
             <FactNote>
               Zonage réglementaire disponible sur {anc.couverture.communes_avec_zonage} communes sur {anc.couverture.communes_total} — état documenté, pas un trou de données.
             </FactNote>
           )}
         </div>
-      )}
-
-      {/* Lot 2.5 — note PV S3REnR (niveau île, volet photovoltaïque) */}
-      {via.elec_pv && (
-        <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-snug text-txt-mut">
-          <span aria-hidden className="text-st-creuser">↯</span>
-          {via.elec_pv.source
-            ? <Tip tip={via.elec_pv.source}><span>{via.elec_pv.note}</span></Tip>
-            : <span>{via.elec_pv.note}</span>}
-        </p>
-      )}
-
-      {/* M75 — gisement solaire PVGIS : INFORMATION seule, à côté du S3REnR (soleil vs réseau). */}
-      {via.solaire && (
-        <p data-solaire className="mt-2 flex items-start gap-1.5 text-[11px] leading-snug text-txt-mut">
-          <span aria-hidden className="text-amber">☀</span>
-          <span>{via.solaire.note} <span className="text-txt-dim">{via.solaire.etat}.</span></span>
-        </p>
       )}
 
       <FactNote>{via.disclaimer}</FactNote>

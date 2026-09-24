@@ -16,9 +16,9 @@ import { getOrthoEquipements } from '../../lib/api'
 import { fmtDistance as fmtDistanceM } from '../../lib/geo'
 import type { Fiche } from '../../lib/types'
 import { BlocIndisponible } from './BlocIndisponible'
-import { ViabilisationBlock } from './ViabilisationBlock'
+import { ViabilisationBlock, assainissementResume } from './ViabilisationBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
-import { REF, IC, RefDrawer, Line, GroupLabel, FactRow, FactNote } from './primitives'
+import { IC, RefDrawer, Line, GroupLabel, FactRow, FactNote } from './primitives'
 import { Badge } from '../ui/Badge'
 
 // RETOURS-23 — les caractéristiques du terrain (piscine / pente) vivent SOUS un kicker « Terrain »
@@ -43,21 +43,32 @@ export function EquipementsBadges({ idu }: { idu: string }) {
   )
 }
 
+// FICHE-FIX-2 P1 — le badge d'en-tête ne couvre QUE ce que le score de viabilisation teste :
+// eau/élec (permis proches + voie + bâti + zone PLU). L'assainissement N'ENTRE PAS dans le score
+// (viabilisation.py compute_score) ; il vit à part, sourcé du zonage SIG (anc). Deux faits distincts.
+const VIAB_MOT: Record<string, { mot: string; ton: 'vert' | 'ambre' | 'neutre' }> = {
+  confirmee:  { mot: 'confirmée',    ton: 'vert' },
+  probable:   { mot: 'probable',     ton: 'ambre' },
+  incertaine: { mot: 'à confirmer',  ton: 'neutre' },
+  lourde:     { mot: 'à confirmer',  ton: 'ambre' },
+}
+
 export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
-  const viabValue = f.viabilisation?.libelle?.replace(/^Viabilisation\s+/i, '') ?? (f.gestionnaires ? 'réseaux renseignés' : '—')
-  const viabColor = f.viabilisation?.band === 'confirmee' ? REF.ok : REF.gris
-  const viabConfirmee = f.viabilisation?.band === 'confirmee'
-  // RETOURS-23 — l'en-tête ne répète plus le CORPS : le sous-titre nommait l'opérateur d'eau
-  // (« CISE Réunion (SAUR)… », tronqué) alors que le gestionnaire est détaillé trois lignes plus bas.
-  // On donne la PORTÉE de la section (catégories), pas une valeur re-dite dans les gestionnaires.
-  const viabContext = (f.gestionnaires || f.viabilisation) ? 'eau · assainissement · élec' : null
+  // FICHE-FIX-2 P1 — deux faits distincts dans l'en-tête :
+  //   ① le badge = viabilisation EAU/ÉLEC (le score, rattaché à ce qu'il teste) ;
+  //   ② le sous-titre = ASSAINISSEMENT (zonage SIG sourcé, hors score).
+  const viabMot = f.viabilisation ? (VIAB_MOT[f.viabilisation.band] ?? VIAB_MOT.incertaine) : null
+  const assain = assainissementResume(f.anc)
+  const viabBadge = viabMot ? <Badge ton={viabMot.ton}>eau/élec {viabMot.mot}</Badge>
+    : (f.gestionnaires ? <Badge ton="neutre">réseaux renseignés</Badge> : undefined)
+  const viabContext = (f.gestionnaires || f.viabilisation || f.anc)
+    ? `Assainissement : ${assain.court}` : null
   // ① ACCÈS — le VERDICT vient du moteur `acces` (source unique). Plus de phrase codée en dur.
   const accesLignes = f.lines.filter((l) => l.layer === 'acces')
   const trans = f.proximites
   return (
     <RefDrawer id="reseaux" icon={IC.viab} name="Réseaux et desserte" context={viabContext}
-      value={viabConfirmee ? <Badge ton="vert">confirmée</Badge> : viabValue}
-      valueColor={viabConfirmee ? undefined : viabColor}>
+      value={viabBadge}>
       <div className="flex flex-col gap-3">
         {/* FICHE-RANGEMENT-2 Lot 1 — les caractéristiques du terrain (piscine, EquipementsBadges) sont
             relocalisées en §2 Terrain ; §6 Réseaux et desserte ne porte plus que réseaux/accès/desserte. */}
