@@ -476,6 +476,11 @@ interface AppState {
   setModuleFiche: (f: Record<string, { module: string; lines: [string, string][] }>) => void
   flyTo: { center: [number, number]; zoom: number } | null
   setFlyTo: (f: { center: [number, number]; zoom: number } | null) => void
+  // COMMUNE-FIX-1 (B5) — recadrage FORCÉ sur la commune courante. L'effet de fit ne se déclenche que
+  // sur CHANGEMENT de `commune` ; « Voir ses parcelles » depuis la fiche (où commune est déjà la bonne)
+  // ne bougeait donc pas la carte. Ce compteur force un refit sans changer la valeur de commune.
+  fitCommuneNonce: number
+  refitCommune: () => void
   // radar-permis — clic sur un POINT permis de la carte → ouvre la fiche permis (drawer M03).
   // Consommé-puis-reset par M03 (même idiome que parcelPrefill) : MapView écrit, M03 lit et remet à null.
   permitToOpen: string | null
@@ -925,6 +930,8 @@ export const useApp = create<AppState>((set, get) => ({
   setModuleFiche: (moduleFiche) => set({ moduleFiche }),
   flyTo: null,
   setFlyTo: (flyTo) => set({ flyTo }),
+  fitCommuneNonce: 0,
+  refitCommune: () => set((s) => ({ fitCommuneNonce: (s.fitCommuneNonce ?? 0) + 1 })),
   permitToOpen: null,
   setPermitToOpen: (permitToOpen) => set({ permitToOpen }),
   radarToOpen: null,

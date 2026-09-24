@@ -58,7 +58,7 @@ communes:
     stade: "approuvee_probable"
     date_acte: ABSENT
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (procédure) + M40 plu_millesimes (opposable 2025-09-17)"
+    source: "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable ( 2025-09-17)"
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
     confiance: "DEDUIT"
@@ -79,7 +79,7 @@ communes:
     stade: "approuvee_probable"
     date_acte: ABSENT
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (procédure) + M40 plu_millesimes (opposable 2023-05-27)"
+    source: "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable ( 2023-05-27)"
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
     confiance: "DEDUIT"
@@ -131,7 +131,7 @@ communes:
     stade: "approuvee_probable"
     date_acte: ABSENT
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (procédure) + M40 plu_millesimes (opposable 2026-04-23)"
+    source: "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable ( 2026-04-23)"
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
     confiance: "DEDUIT"
@@ -162,7 +162,7 @@ communes:
     stade: "approuvee_probable"
     date_acte: ABSENT
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (procédure) + M40 plu_millesimes (opposable 2025-12-18)"
+    source: "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable ( 2025-12-18)"
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
     confiance: "DEDUIT"
@@ -173,7 +173,7 @@ communes:
     stade: "approuvee_probable"
     date_acte: ABSENT
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (procédure) + M40 plu_millesimes (opposable 2025-12-17)"
+    source: "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable ( 2025-12-17)"
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
     confiance: "DEDUIT"
@@ -205,7 +205,7 @@ communes:
     stade: "approuvee_probable"
     date_acte: ABSENT
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (procédure) + M40 plu_millesimes (opposable 2025-11-26)"
+    source: "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable ( 2025-11-26)"
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
     confiance: "DEDUIT"
@@ -226,7 +226,7 @@ communes:
     stade: "approuvee_probable"
     date_acte: ABSENT
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (procédure) + M40 plu_millesimes (opposable 2025-09-29)"
+    source: "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable ( 2025-09-29)"
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
     confiance: "DEDUIT"

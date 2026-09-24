@@ -20,3 +20,26 @@ describe('RETOURS-8 R9 — Fiche commune', () => {
     expect(useApp.getState().contexteCommune).toBe('Saint-Paul')
   })
 })
+
+// COMMUNE-FIX-1 (B5) — « Voir ses parcelles » : filtre commune + verdict + listing + recadrage carte.
+// Le zoom passait par l'effet « fit au changement de commune » ; quand la fiche est ouverte via le
+// clic-commune (commune DÉJÀ posée), ce changement n'a pas lieu → le bouton ne bougeait pas la carte.
+// `refitCommune()` incrémente un nonce que l'effet de fit observe : le recadrage est forcé.
+describe('COMMUNE-FIX-1 (B5) — « Voir ses parcelles »', () => {
+  beforeEach(() => useApp.setState({ commune: null, contexteCommune: null, fitCommuneNonce: 0 }))
+
+  it('force le recadrage même quand la commune est déjà la courante (fiche ouverte)', () => {
+    useApp.getState().focusCommune('Saint-Paul')   // fiche ouverte : commune DÉJÀ = Saint-Paul
+    const avant = useApp.getState().fitCommuneNonce
+    const s = useApp.getState()                     // séquence du bouton « Voir ses parcelles »
+    s.setView('cartes'); s.setCommune('Saint-Paul'); s.setCommunesFilter(['Saint-Paul'])
+    s.setFilter('analyseLabuse', true); s.setVerdict(true)
+    s.openListing(); s.refitCommune()
+    const apres = useApp.getState()
+    expect(apres.fitCommuneNonce).toBe(avant + 1)          // recadrage forcé (zoom)
+    expect(apres.filters.communes).toEqual(['Saint-Paul']) // filtre commune
+    expect(apres.filters.analyseLabuse).toBe(true)
+    expect(apres.verdict).toBe(true)
+    expect(apres.panneauSection).toBe('listing')           // listing ouvert
+  })
+})

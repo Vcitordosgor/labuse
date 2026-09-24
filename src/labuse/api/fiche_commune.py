@@ -29,8 +29,8 @@ def comparable(db: Session, commune: str) -> dict | None:
         "permis_5a": r.get("permis"),
         "delai_median_mois": round(float(velo), 1) if velo is not None else None,
         "stock_opportunites_n": r.get("stock"),
-        "source": "DVF (baromètre commune entière) + SITADEL + m10 — même moteur et même run que le "
-                  "comparateur des 24 communes.",
+        "source": "DVF (baromètre commune entière) + SITADEL (autorisations et délais d'instruction) — "
+                  "même moteur que le comparateur des 24 communes.",
     }
 
 
@@ -258,7 +258,7 @@ def permis_bloc(db: Session, commune: str) -> dict:
         "logements_12m": (offre.get("valeurs") or {}).get("logements_12m"),
         "delai_median_mois": cmp.get("delai_median_mois"),
         "point_mort": int(point_mort),
-        "source": "SITADEL (autorisations) · m10 (délais) · permis au point mort (36 mois sans DAACT, run servi).",
+        "source": "SITADEL (autorisations) · SITADEL — délais d'instruction · permis au point mort (36 mois sans DAACT, run servi).",
     }
 
 
@@ -450,7 +450,8 @@ _FALLBACK = {
     "plu_statut": {"statut": "document local", "libelle": None, "procedure": None,
                    "date_reglement": None, "confiance": None, "recherche_verbatim": True, "source": None},
     "permis": {"permis_12m": 0, "permis_5a": None, "logements_12m": None,
-               "delai_median_mois": None, "point_mort": 0, "source": "SITADEL · m10 · PC caducs"},
+               "delai_median_mois": None, "point_mort": 0,
+               "source": "SITADEL (autorisations) · SITADEL — délais d'instruction · permis au point mort"},
     "outils": {"permis_en_cours": 0, "permis_point_mort": 0, "densifiables": 0,
                "radar_biens": 0, "scan_pm": 0, "solaire_piscines": 0},
 }

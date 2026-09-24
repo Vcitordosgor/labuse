@@ -267,7 +267,10 @@ def ligne7_gisement(db: Session, commune: str) -> dict:
                   valeurs={"sdp_residuelle_m2": int(r["sdp"]), "parcelles": r["parcelles"]},
                   source="LABUSE — SDP résiduelle, tiers servables",
                   date_amont=f"run {runs.current()} · {r['maj']}", fiabilite="bonne",
-                  etiquette=f"Sourcé LABUSE · run {runs.current()}")
+                  # COMMUNE-FIX-1 (B6) — l'étiquette (visible client via densifiables.source) ne montre plus
+                  # le libellé brut du run (« q_v11_m137 ») : « run servi » est lisible. Le run technique
+                  # reste dans date_amont (interne).
+                  etiquette="Analyse LABUSE · run servi")
 
 
 def ligne8_pression_dpe(db: Session, commune: str) -> dict:
