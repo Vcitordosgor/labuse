@@ -1060,6 +1060,16 @@ export interface HistoireResp {
 export const getHistoire = (idu: string) =>
   j<HistoireResp>(`/moteurs/histoire/${encodeURIComponent(idu)}`)
 
+// REMONTER-TEMPS-2 Lot B — contour de la/les parcelle(s) MÈRE d'origine (cadastre d'époque),
+// quand elle est captée dans cadastre_historique. `features` vide = pas de parcellaire d'époque.
+export interface ParcellaireEpoque {
+  idu: string; type: 'FeatureCollection'
+  features: { type: 'Feature'; properties: { idu_mere: string; millesime: string }; geometry: unknown }[]
+  millesimes: string[]; millesime: string | null; source: string
+}
+export const getParcellaireEpoque = (idu: string) =>
+  j<ParcellaireEpoque>(`/moteurs/parcellaire-epoque/${encodeURIComponent(idu)}`)
+
 export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null) => {
   const p = new URLSearchParams({ source: SOURCE })
   if (calc) {

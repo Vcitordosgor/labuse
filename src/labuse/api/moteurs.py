@@ -519,6 +519,40 @@ def histoire_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
     }
 
 
+@router.get("/parcellaire-epoque/{idu}")
+def parcellaire_epoque(idu: str, db: Session = Depends(get_db)) -> dict:
+    """REMONTER-TEMPS-2 Lot B — le contour de la/les parcelle(s) MÈRE d'origine de la parcelle
+    courante, quand elle est CAPTÉE dans `cadastre_historique` (RETOURS-14 : cette table ne stocke que
+    les parcelles d'origine DISPARUES du cadastre actuel — les mères de divisions). Sert à faire voir,
+    sous l'ortho ancienne, l'ancienne découpe avant que la parcelle courante n'existe. `features` vide
+    quand la mère n'est pas captée (le front dit alors « pas de parcellaire d'époque pour cette
+    parcelle » — jamais un contour inventé)."""
+    from .app import _check_idu
+    _check_idu(idu)
+    idu = idu.strip().upper()
+    if not db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar():
+        raise HTTPException(404, "Parcelle inconnue")
+    features: list[dict] = []
+    millesimes: set[str] = set()
+    a_cad = bool(db.execute(text("SELECT to_regclass('cadastre_historique') IS NOT NULL")).scalar())
+    a_dfi = bool(db.execute(text("SELECT to_regclass('dfi_filiation') IS NOT NULL")).scalar())
+    if a_cad and a_dfi:
+        for r in db.execute(text("""
+            SELECT DISTINCT ch.idu AS idu_mere, ch.millesime, ST_AsGeoJSON(ch.geom) AS gj
+            FROM cadastre_historique ch
+            JOIN dfi_filiation f ON f.idu_mere = ch.idu
+            WHERE f.idu_fille = :i AND ch.geom IS NOT NULL"""), {"i": idu}).mappings().all():
+            features.append({"type": "Feature",
+                             "properties": {"idu_mere": r["idu_mere"], "millesime": r["millesime"]},
+                             "geometry": json.loads(r["gj"])})
+            if r["millesime"]:
+                millesimes.add(r["millesime"])
+    mils = sorted(millesimes)
+    return {"idu": idu, "type": "FeatureCollection", "features": features,
+            "millesimes": mils, "millesime": mils[-1] if mils else None,
+            "source": "Cadastre d'époque (Etalab/PCI) — parcelle d'origine (DGFiP)"}
+
+
 # ───────────────────────── M17 — SIMULATEUR ZAN ─────────────────────────
 
 # Point 41 — RÈGLE D'OR : distinction Sourcé (observé) / Estimé (dérivé) stricte, caveat systématique.
