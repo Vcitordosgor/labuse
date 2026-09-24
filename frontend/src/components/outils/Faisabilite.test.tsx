@@ -99,14 +99,15 @@ describe('FAISABILITE-1 (lot D) — hypothèses modifiables (bloc partagé fiche
   })
 })
 
-describe('OUTILS-FIX-3 Lot F — l\'IA est cantonnée : hors fiche (embedded), pas de bouton « Expliquer »', () => {
+describe('RETOURS-13 P2 — le bouton « Expliquer ce calcul en clair » est retiré (fiche ET outil)', () => {
   beforeEach(mockFetch)
   afterEach(() => vi.restoreAllMocks())
 
-  it('fiche (non embedded) : le bouton IA « Expliquer ce calcul » est présent', async () => {
+  it('fiche (non embedded) : plus AUCUN bouton IA « Expliquer »', async () => {
     render(<QueryClientProvider client={qc()}><FaisabiliteTab idu="97411000BZ1065" /></QueryClientProvider>)
     await waitFor(() => { if (!document.querySelector('[data-faisa-steps]')) throw new Error('no steps') })
-    expect(document.querySelector('[data-faisa-explain-btn]')).toBeTruthy()
+    expect(document.querySelector('[data-faisa-explain]')).toBeFalsy()
+    expect(document.querySelector('[data-faisa-explain-btn]')).toBeFalsy()
   })
 
   it('outil Faisabilité (embedded) : AUCUN point d\'entrée IA', async () => {
