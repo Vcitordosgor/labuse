@@ -2119,6 +2119,10 @@ def _rafraichir_partages(db: Session, commune: str, payload: dict) -> dict:
         fisc = _fiscalite(db, insee)
         if fisc is not None:
             payload["fiscalite"] = fisc
+        # COMMUNE-FIX-1 (D10) — le taux communal de taxe d'aménagement est un passe-plat bon marché
+        # (une ligne, même source que l'outil Taxe) : re-servi LIVE, jamais périmé (doctrine O8).
+        from .fiche_commune import taxe_amenagement as _taxe_amenagement
+        payload["taxe_amenagement"] = _taxe_amenagement(db, insee)
         zab = _zonage_abc(db, insee)
         if zab is not None:
             payload["zonage_abc"] = zab
@@ -2271,6 +2275,7 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
             "prix_neuf_observe": blocs["prix_neuf_observe"],  # COMMUNE-RANGEMENT-2 lot 2 — neuf observé (commune)
             "zonage_abc": blocs["zonage_abc"],          # SOURCES-1 lot 1 — zone A/B/C (DHUP)
             "fiscalite": blocs["fiscalite"],            # SOURCES-1 lot 5 — taux TFPB/TEOM (REI)
+            "taxe_amenagement": blocs["taxe_amenagement"],  # COMMUNE-FIX-1 (D10) — taux communal taxe d'aménagement
             "ort": blocs["ort"],                        # SOURCES-1 lot 5 — ACV/PVD/ORT (Denormandie)
             "zfang_frr": blocs["zfang_frr"],            # COUCHES-2 point 4 — ZFANG/FRR (source unique territoire_fiscal)
             "outils": blocs["outils"],                  # C6 — compteurs des passerelles

@@ -226,10 +226,22 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
     from .. import veille_plu
     e = veille_plu.entry(insee) or {}
     proc = e.get("procedure")
+    # COMMUNE-FIX-1 (D12) — la PROCÉDURE PLU EN COURS au dernier relevé Sudocuh (révision, modification,
+    # élaboration…), avec son millésime : le fait producteur brut, daté, à côté du statut déduit.
+    procedure_sudocuh = None
+    if insee:
+        row = db.execute(text(
+            "SELECT du_en_cours, etat_detaille, to_char(prescription_proc, 'DD/MM/YYYY') AS prescription, "
+            "       to_char(millesime_date, 'DD/MM/YYYY') AS millesime "
+            "FROM sudocuh_procedures WHERE insee = :i"), {"i": insee}).mappings().first()
+        if row and (row["etat_detaille"] or row["du_en_cours"]):
+            procedure_sudocuh = {"document": row["du_en_cours"], "etat": row["etat_detaille"],
+                                 "prescription": row["prescription"], "millesime": row["millesime"]}
     return {
         "statut": _PLU_STATUT.get(proc, "document local"),
         "libelle": e.get("stade"),
         "procedure": proc,
+        "procedure_sudocuh": procedure_sudocuh,   # COMMUNE-FIX-1 (D12) — révision/modification en cours (Sudocuh)
         "date_reglement": None if e.get("date_acte") in (None, "ABSENT") else e.get("date_acte"),
         "confiance": e.get("confiance"),
         "recherche_verbatim": True,
@@ -346,6 +358,22 @@ def fiscalite(db: Session, insee: str | None) -> dict | None:
             "source": "DGFiP — fichier REI (impositions primitives)"}
 
 
+def taxe_amenagement(db: Session, insee: str | None) -> dict | None:
+    """COMMUNE-FIX-1 (D10) — le taux communal de la taxe d'aménagement, servi sur la carte Fiscalité.
+    MÊME source que l'outil Taxe (`taxe_amenagement.taux_communal_public`, table taxe_amenagement_taux,
+    DGFiP/DELTA). Il n'y a pas de taux SECTORIEL à La Réunion dans la source (aucun inventé). None si non
+    ingéré (le front dit « non déterminé »)."""
+    if not insee:
+        return None
+    from ..taxe_amenagement import taux_communal_public
+    t = taux_communal_public(db, insee)
+    if t is None:
+        return None
+    return {"part_communale_pct": t["part_communale_pct"], "millesime": t.get("millesime"),
+            "delib_date": t.get("delib_date"), "perime": t.get("perime"),
+            "source": "DGFiP — taxe d'aménagement (application DELTA), délibération communale"}
+
+
 def _perime(maj_at_iso: str | None, jours: int = 365) -> bool:
     """RECETTE-4 U1 — True si la donnée date de plus de `jours` (fraîcheur > 1 an). Best-effort :
     une date illisible n'est jamais signalée périmée (on ne crie pas au loup sur un doute)."""
@@ -437,8 +465,8 @@ log = logging.getLogger("labuse.fiche_commune")
 # le bloc concerné SANS casser la fiche entière (« introuvable = null, jamais un zéro menteur »).
 _FALLBACK = {
     "comparable": None, "marche_annonces": None, "densifiables": None, "loyer": None,
-    "zonage_abc": None, "fiscalite": None, "ort": None, "zfang_frr": None, "parc_social": None,
-    "prix_neuf_observe": None,
+    "zonage_abc": None, "fiscalite": None, "taxe_amenagement": None, "ort": None, "zfang_frr": None,
+    "parc_social": None, "prix_neuf_observe": None,
     "risques": {"ppr_pct": None, "mouvement_terrain_pct": None, "catnat_arretes": 0,
                 "catnat_detail": [], "parc_national": False, "azi_tri": None,
                 "source": "Géorisques · GASPAR · BD TOPO"},
@@ -448,6 +476,7 @@ _FALLBACK = {
                    "parc_ancien_pct": None,
                    "source": "INSEE — population municipale légale · INSEE RP · INSEE Filosofi (niveau de vie)"},
     "plu_statut": {"statut": "document local", "libelle": None, "procedure": None,
+                   "procedure_sudocuh": None,
                    "date_reglement": None, "confiance": None, "recherche_verbatim": True, "source": None},
     "permis": {"permis_12m": 0, "permis_5a": None, "logements_12m": None,
                "delai_median_mois": None, "point_mort": 0,
@@ -488,6 +517,8 @@ def build(db: Session, commune: str, insee: str | None) -> dict:
         "zonage_abc": _safe(db, "zonage_abc", lambda: zonage_abc(db, insee)),
         # SOURCES-1 lot 5 — taux fonciers (REI) + ACV/PVD/ORT (Denormandie).
         "fiscalite": _safe(db, "fiscalite", lambda: fiscalite(db, insee)),
+        # COMMUNE-FIX-1 (D10) — taux communal de la taxe d'aménagement (même source que l'outil Taxe).
+        "taxe_amenagement": _safe(db, "taxe_amenagement", lambda: taxe_amenagement(db, insee)),
         "ort": _safe(db, "ort", lambda: ort(db, insee)),
         # COUCHES-2 point 4 — ZFANG / FRR (territoire_fiscal, source unique : carte + fiche + filtre).
         "zfang_frr": _safe(db, "zfang_frr", lambda: zfang_frr(db, insee)),

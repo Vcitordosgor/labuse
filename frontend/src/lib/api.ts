@@ -284,6 +284,8 @@ export interface ContexteCommune {
   plu_statut: {
     statut: string; libelle: string | null; procedure?: string | null; date_reglement: string | null
     confiance?: string | null; recherche_verbatim: boolean; source: string | null
+    // COMMUNE-FIX-1 (D12) — procédure PLU en cours au dernier relevé Sudocuh
+    procedure_sudocuh?: { document: string | null; etat: string | null; prescription: string | null; millesime: string | null } | null
   }
   permis_bloc: {
     permis_12m: number; permis_5a: number | null; logements_12m: number | null
@@ -302,6 +304,9 @@ export interface ContexteCommune {
     tfpnb_commune_pct?: number | null; tfpnb_epci_pct?: number | null
     teom_pct: number | null; millesime: string; source: string
     maj_at?: string | null; perime?: boolean } | null
+  // COMMUNE-FIX-1 (D10) — taux communal de la taxe d'aménagement (même source que l'outil Taxe)
+  taxe_amenagement: { part_communale_pct: number | null; millesime?: string | null
+    delib_date?: string | null; perime?: boolean; source: string } | null
   ort: { statut: 'acv' | 'pvd' | 'autre' | 'hors'; commune?: string
     ort_signee: boolean; date_signature?: string | null
     denormandie: string; millesime?: string; source?: string } | null
