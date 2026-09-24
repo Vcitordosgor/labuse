@@ -703,11 +703,13 @@ export function Fiche({ idu }: { idu: string }) {
           dessous). Elle défile désormais AVEC le reste — un seul corps qui défile du haut au pied.
           M56-B6 · DA-FICHE-v6 — EN-TÊTE en CARTE .head (identité + chiffres). */}
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
-      {/* FINITIONS-2 (retour Vic) — le STICKY de l'en-tête (introduit en FINITIONS-1 P12, affiné P3) est
-          ANNULÉ : retour EXACT au comportement d'origine — l'en-tête défile avec le reste (un seul corps
-          `overflow-y-auto`), la carte `.head` contient identité + adresse + les 6 tuiles, sans collage. */}
-      <div style={{ paddingTop: 10 }}>
-        <div className="head">
+      {/* RETOURS-13 P7 — EN-TÊTE COLLÉ. SEUL le bloc identité (PARCELLE·commune, IDU, adresse, icônes,
+          croix de fermeture) reste collé en haut au défilement — un client ferme la fiche sans remonter.
+          Les 6 tuiles NE collent PAS (carte séparée dessous). Le bloc est un ENFANT DIRECT du conteneur
+          défilant (sinon il décolle avec son parent) et NON dans une carte `overflow:hidden` (qui
+          clipperait le sticky) : fond opaque + ombre pour couvrir ce qui passe dessous. FINITIONS-2 avait
+          annulé un sticky qui embarquait AUSSI les tuiles et recouvrait le contenu ; ici, identité seule. */}
+      <div className="tete-collee" data-fiche-tete-collee>
           <div className="head-top">
             {/* RETOURS-11 R3 — la colonne gauche pousse (flex:1) pour donner sa largeur à l'adresse,
                 qui tient alors sur UNE ligne (tronquée en … si vraiment trop longue, voir .addr). */}
@@ -778,7 +780,11 @@ export function Fiche({ idu }: { idu: string }) {
               </Tip>
             )}
           </div>
+      </div>{/* /.tete-collee — RETOURS-13 P7 : bloc identité COLLÉ (les 6 tuiles ne collent pas) */}
 
+      {/* RETOURS-13 P7 — les 6 tuiles vivent dans leur PROPRE carte, sous l'en-tête collé : elles
+          DÉFILENT (elles ne collent pas). */}
+      <div className="head" data-fiche-tuiles style={{ marginTop: 6 }}>
         {/* RETOURS-11 F1 — les trois accès (Cadastre · Pages Jaunes · Google Maps) ont MONTÉ dans
             l'en-tête à côté de la cloche, en boutons-logos (voir .hbtns ci-dessus). Les anciennes
             pastilles pleines sur deux lignes sont retirées. */}
@@ -853,8 +859,7 @@ export function Fiche({ idu }: { idu: string }) {
             </div>
           )
         })()}
-        </div>{/* /.head — carte d'en-tête (identité + adresse + bandeau de 6 chiffres), NON sticky (origine) */}
-      </div>{/* fin du wrapper d'en-tête (non sticky) — l'en-tête défile avec le reste, comme à l'origine */}
+        </div>{/* /.head — carte des 6 tuiles (défile ; l'en-tête identité au-dessus reste collé, P7) */}
         {/* RETOURS-9 (Q8.1) — ONGLETS Analyse · Autour · Actions RETIRÉS : retour à la fiche UNIQUE qui
             défile. « Autour » est un tiroir de la fiche (et existe dans les outils) ; « Actions » (CRM/
             Projet/exports) vit déjà en pied de fiche. Plus rien à choisir : tout défile d'un seul tenant. */}
