@@ -60,7 +60,7 @@ function bboxOf(geom: GabGeom): number[][] | null {
 }
 
 /** Dessine (ou retire) les couches réglementaires sur la carte, seulement après validation réussie. */
-function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean) {
+function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVisible: boolean) {
   useEffect(() => {
     const m = getMap()
     if (!m) return
@@ -122,7 +122,9 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean) {
         paint: { 'fill-extrusion-color': C_ZONE, 'fill-extrusion-opacity': 0.6,
                  'fill-extrusion-height': res.hauteurReglementaireM, 'fill-extrusion-base': 0 } })
     }
-    if (terrain3d && batiFeats.length) {
+    // RETOURS-13 P4 — le bâti existant s'extrude en 3D UNIQUEMENT si le chip « Bâtiments » est actif.
+    // Chip off → l'empreinte 2D grise (gabarit-bati, plus haut) reste : « bâti à plat », relief seul.
+    if (terrain3d && batiVisible && batiFeats.length) {
       m.addLayer({ id: 'gabarit-bati-3d', type: 'fill-extrusion', source: SRC,
         filter: ['==', 'kind', 'bati'],
         paint: { 'fill-extrusion-color': C_BATI, 'fill-extrusion-opacity': 0.55,
@@ -131,7 +133,7 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean) {
     const bb = bboxOf(res.contourGeoJSON ?? res.zoneImplantationGeoJSON ?? null)
     if (bb) { try { m.fitBounds(bb, { padding: 80, duration: 600, maxZoom: 19 }) } catch { /* noop */ } }
     return clear
-  }, [res, terrain3d])
+  }, [res, terrain3d, batiVisible])
 }
 
 function Num({ label, value, unit, accent, statusLabel, sub }: {
@@ -154,6 +156,7 @@ function Num({ label, value, unit, accent, statusLabel, sub }: {
 export function Gabarit() {
   const selectedIdu = useApp((s) => s.selectedIdu)
   const terrain3d = useApp((s) => s.terrain3d)
+  const batiVisible = useApp((s) => s.batiVisible)   // RETOURS-13 P4 — chip « Bâtiments » (session)
   const [idu, setIdu] = useState<string | null>(selectedIdu)
   const [reglesOuvertes, setReglesOuvertes] = useState(false)   // DA-031 — accordéon « Voir les règles appliquées »
   const [nonIntOuvertes, setNonIntOuvertes] = useState(true)    // GABARIT-6 P3 — liste des règles non intégrées, ouverte par défaut
@@ -170,7 +173,7 @@ export function Gabarit() {
     enabled: !!target, retry: false,
   })
   const res = q.data
-  useMapLayers(res, terrain3d)
+  useMapLayers(res, terrain3d, batiVisible)
 
   const familles = res?.coverage
     ? [
