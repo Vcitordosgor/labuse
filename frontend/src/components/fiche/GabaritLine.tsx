@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getGabarit, type GabGeom } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
-import { FactRow, PorteOutil, Vigilance } from './primitives'
+import { FactRow, PorteOutil, StepProv, Vigilance } from './primitives'
 
 // Tiroir §10 Potentiel — ligne « Gabarit réglementaire » (GABARIT-2). Réutilise les primitives
 // .fiche-v6 (FactRow/PorteOutil/Vigilance), aucun redesign. La hauteur PLU vit en §4 Urbanisme :
@@ -109,7 +109,10 @@ export function GabaritLine({ idu }: { idu: string }) {
                     <span style={{ fontSize: 10, color: 'var(--txt-dim)' }}>dont {fmtInt(r.surfaceParcelleM2)} m² en {rc?.zone?.code} ({pctChev} %)</span>
                   </span>
                 : `${fmtInt(r.surfaceParcelleM2)} m²`} />
-              <FactRow label="Zone d'implantation" value={`${fmtInt(r.zoneImplantationM2)} m²`} />
+              {/* GEOMETRIE-1 lot D — même chiffre, même badge que l'étape 1 de la capacité
+                  (les deux lisent compute_gabarit : zone d'implantation = assiette). */}
+              <FactRow label="Zone d'implantation" value={`${fmtInt(r.zoneImplantationM2)} m²`}
+                src={<StepProv prov="sourcee" />} />
               <FactRow label="Plafond d'emprise"
                 value={r.plafondEmpriseStatus === 'absent' ? 'Non réglementé' : `${fmtInt(r.plafondEmpriseM2)} m²`}
                 tone={r.plafondEmpriseStatus === 'absent' ? 'mute' : undefined} />
