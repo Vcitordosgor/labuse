@@ -424,13 +424,25 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
             f"""SELECT count(*) FROM dvf_mutations_parcelle d JOIN parcels p ON p.idu = d.id_parcelle
                 WHERE d.date_mutation >= (now() - interval '12 months')
                   AND ST_Contains({z}, ST_Transform(p.centroid, 2975))"""), p).scalar()
+        # ETUDE-ZONE-1 A2 — médiane €/m² bâti : MÊME hygiène que le point de calcul UNIQUE du
+        # marché (marche_service._filtre_comparables / dvf_profils.yaml). SANS ce garde-fou, la
+        # médiane explosait (100 888 €/m² constaté) : `dvf_mutations_parcelle` répète la valeur
+        # foncière de TOUTE la mutation sur CHAQUE parcelle (une vente d'immeuble sur 1 008
+        # parcelles porte 10,8 M€ face à 53 m² de bâti → 204 042 €/m², et ces lignes dominent).
+        # On (a) déduplique (id_mutation, id_parcelle) — la table contient des doublons exacts,
+        # (b) ne garde que les VENTES avec ≥ 20 m² de bâti (art. marche_service), (c) borne le
+        # ratio au domaine de bon sens [1 000 ; 12 000] €/m² (filtre_comparables, artefacts DVF).
         prix = session.execute(text(
-            f"""SELECT round(percentile_cont(0.5) WITHIN GROUP (
-                      ORDER BY d.valeur_fonciere / NULLIF(d.surface_reelle_bati, 0))::numeric)
-                FROM dvf_mutations_parcelle d JOIN parcels p ON p.idu = d.id_parcelle
-                WHERE d.date_mutation >= (now() - interval '36 months')
-                  AND d.valeur_fonciere > 0 AND coalesce(d.surface_reelle_bati, 0) > 0
-                  AND ST_Contains({z}, ST_Transform(p.centroid, 2975))"""), p).scalar()
+            f"""WITH v AS (
+                  SELECT DISTINCT d.id_mutation, d.id_parcelle,
+                         (d.valeur_fonciere / NULLIF(d.surface_reelle_bati, 0)) AS ratio
+                  FROM dvf_mutations_parcelle d JOIN parcels p ON p.idu = d.id_parcelle
+                  WHERE d.date_mutation >= (now() - interval '36 months')
+                    AND d.nature_mutation ILIKE 'vente%'
+                    AND d.valeur_fonciere > 0 AND coalesce(d.surface_reelle_bati, 0) >= 20
+                    AND ST_Contains({z}, ST_Transform(p.centroid, 2975)))
+                SELECT round(percentile_cont(0.5) WITHIN GROUP (ORDER BY ratio)::numeric)
+                FROM v WHERE ratio BETWEEN 1000 AND 12000"""), p).scalar()
     if _existe("pige_biens") and _existe("parcels"):
         annonces = session.execute(text(
             f"""SELECT count(*) FROM pige_biens b JOIN parcels p ON p.idu = b.idu
@@ -490,8 +502,16 @@ def contraintes_plu(session: Session, geom_geojson: dict) -> dict:
     if not aire:
         return {"zones": [], "note": "PLU non disponible."}
     p["aire"] = float(aire)
+    # ETUDE-ZONE-1 A2 — LA zone servie est le TOKEN de zone (1er mot du libellé GPU : « Usdu »,
+    # « U2c », « AU3c »…), PAS le `subtype` (typezone générique « U »/« AUc »). C'est l'unique
+    # vérité déjà utilisée par la fiche (app.py `_reglement_plu_block`, EXPORTS-REBRANCHEMENT-1) :
+    # les calibrations de destinations (module plu.destinations) sont clées sur ce token. En lisant
+    # `subtype`, la zone « U » ne matchait aucune calibration → « calibration en cours » à tort sur
+    # Saint-Paul (pourtant calibré/validé). On aligne l'outil sur la fiche : token du libellé, repli name.
     rows = session.execute(text(
-        f"""SELECT coalesce(l.subtype, l.attrs->>'libelle', '?') AS zone,
+        f"""SELECT COALESCE(NULLIF(rtrim(split_part(btrim(l.attrs->>'libelle'), ' ', 1), ':'), ''),
+                            rtrim(split_part(btrim(l.name), ' ', 1), ':'),
+                            l.subtype, '?') AS zone,
                    l.commune, l.attrs->>'idurba' AS document,
                    round(100 * sum(ST_Area(ST_Intersection(ST_Transform(l.geom,2975), {z})))
                          / :aire) AS part_pct
