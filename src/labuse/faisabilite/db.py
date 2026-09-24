@@ -120,6 +120,19 @@ JOIN spatial_layers e ON e.kind = :pkind AND e.commune = p.commune
 WHERE p.id = :pid ORDER BY m2 DESC
 """)
 
+# GEOMETRIE-1 lot B — même listing ER, mesuré sur l'ASSIETTE GABARIT (jamais un m² d'un autre
+# contour que celui réellement déduit).
+_ER_DETAILS_ASSIETTE = text("""
+WITH a AS (SELECT ST_MakeValid(ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326), 2975)) AS g)
+SELECT coalesce(e.attrs->>'txt', e.name)     AS txt,
+       coalesce(e.attrs->>'libelle', e.name) AS libelle,
+       ST_Area(ST_Intersection(a.g, ST_MakeValid(ST_ClipByBox2D(e.geom_2975, a.g)))) AS m2
+FROM parcels p CROSS JOIN a
+JOIN spatial_layers e ON e.kind = :pkind AND e.commune = p.commune
+  AND e.subtype = ANY(:er_types) AND ST_Intersects(e.geom_2975, a.g)
+WHERE p.id = :pid ORDER BY m2 DESC
+""")
+
 _ECO = text("""
 SELECT e.subtype, max(coalesce(e.attrs->>'libelle', e.name)) AS libelle
 FROM parcels p
@@ -271,6 +284,66 @@ def _greve_certaine_m2(session: Session, parcel_id: int, recul: float, commune: 
     return float(row or 0.0)
 
 
+# GEOMETRIE-1 lot B — UN SEUL moteur de géométrie. L'assiette du calcul de capacité devient la
+# ZONE D'IMPLANTATION du gabarit (reculs PAR CÔTÉ voie/séparative, PPR zone rouge DÉCOUPÉE,
+# morceau constructible seul si à cheval) — la même fonction que l'outil Gabarit et le tiroir
+# de fiche, aucune copie. Les contraintes restantes (ER/EBC, PEB A/B, marchepied DPF, ravine,
+# 50 pas) sont soustraites de CETTE assiette — le PPR n'y figure plus (une contrainte, une fois :
+# il est déjà découpé de l'assiette ; `_greve_certaine_m2` n'est plus appelée sur ce chemin).
+# Seuils lus de cascade_rules.yaml (source unique), comme _GREVE_CERTAINE.
+_GREVE_SUR_ASSIETTE = text("""
+WITH a AS (SELECT ST_MakeValid(ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326), 2975)) AS g),
+p AS (SELECT commune FROM parcels WHERE id = :pid),
+er AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(e.geom_2975, a.g))) AS u
+       FROM spatial_layers e, p, a
+       WHERE e.kind = :pkind AND e.commune = p.commune
+         AND e.subtype = ANY(:er_types) AND ST_Intersects(e.geom_2975, a.g)),
+ebc AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(e.geom_2975, a.g))) AS u
+        FROM spatial_layers e, p, a
+        WHERE e.kind = :pkind AND e.commune = p.commune
+          AND e.subtype = ANY(:ebc_types) AND ST_Intersects(e.geom_2975, a.g)),
+cert AS (SELECT ST_Union(geom) AS u FROM (
+    SELECT ST_MakeValid(ST_ClipByBox2D(g2.geom_2975, a.g)) AS geom FROM spatial_layers g2, a
+      WHERE g2.kind = 'peb' AND lower(g2.subtype) = ANY(:peb_ab)
+        AND ST_Intersects(g2.geom_2975, a.g)
+  UNION ALL
+    SELECT ST_Buffer(ST_MakeValid(g2.geom_2975), :dpf_m) FROM spatial_layers g2, p, a
+      WHERE g2.kind = 'dpf' AND g2.commune = p.commune AND ST_DWithin(g2.geom_2975, a.g, :dpf_m)
+  UNION ALL
+    SELECT ST_Buffer(ST_MakeValid(g2.geom_2975), :rav_m) FROM spatial_layers g2, p, a
+      WHERE g2.kind = 'ravine' AND g2.commune = p.commune AND ST_DWithin(g2.geom_2975, a.g, :rav_m)
+  UNION ALL
+    SELECT ST_MakeValid(ST_ClipByBox2D(g2.geom_2975, a.g)) FROM spatial_layers g2, p, a
+      WHERE g2.kind = 'cinquante_pas' AND g2.commune = p.commune
+        AND ST_Intersects(g2.geom_2975, a.g)
+) s)
+SELECT COALESCE(ST_Area(ST_Intersection(a.g, er.u)), 0.0)   AS er_area,
+       COALESCE(ST_Area(ST_Intersection(a.g, ebc.u)), 0.0)  AS ebc_area,
+       COALESCE(ST_Area(ST_Intersection(a.g, cert.u)), 0.0) AS cert_area,
+       COALESCE(ST_Area(ST_Intersection(a.g, ST_Union(ST_Union(
+           COALESCE(er.u,  ST_GeomFromText('GEOMETRYCOLLECTION EMPTY', 2975)),
+           COALESCE(ebc.u, ST_GeomFromText('GEOMETRYCOLLECTION EMPTY', 2975))),
+           COALESCE(cert.u, ST_GeomFromText('GEOMETRYCOLLECTION EMPTY', 2975))))), 0.0) AS greve_total
+FROM a LEFT JOIN er ON TRUE LEFT JOIN ebc ON TRUE LEFT JOIN cert ON TRUE
+""")
+
+
+def _assiette_gabarit(session: Session, idu: str):
+    """GEOMETRIE-1 lot B — zone d'implantation du MOTEUR GABARIT (builder + compute_gabarit),
+    servie comme assiette de la capacité. None quand le gabarit ne sert pas la parcelle
+    (blocking, 5 causes — le lecteur garde alors son chemin legacy et l'écrit :
+    `assiette_source='residuel_legacy'`). Renvoie (BuildResult, GabaritResult)."""
+    from ..gabarit.builder import build_gabarit_input
+    from ..gabarit.engine import compute_gabarit
+    build = build_gabarit_input(session, idu)
+    if build is None or build.blocking:
+        return None
+    res = compute_gabarit(build.input)
+    if res.status != "ok":
+        return None
+    return build, res
+
+
 def _sous_zone_constructible(ctx: ParcelContext):
     """SCORING-6 lot A — assiette clippée : quand la zone DOMINANTE n'est pas constructible
     (A/N, habitat interdit) mais qu'une portion U/AU subsiste, résout les règles de la plus
@@ -353,51 +426,110 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
             "uau_pats": [f"{p}%" for p in zonage.get("positive_prefixes", ["U", "AU"])],
             "pkind": pkind, "er_types": er_types, "ebc_types": ebc_types}
-    row = session.execute(_EMPRISE, args).one()
-    full_a = float(row.full_area or 0.0)
-    uau_a = float(row.uau_area) if row.uau_area is not None else None
-    er_a = float(row.er_area or 0.0)
-    ebc_a = float(row.ebc_area or 0.0)
-    greve_a = float(row.greve_area or 0.0)
-
-    base = full_a if uau_a is None else min(full_a, uau_a)
-    plancher = float(zonage.get("an_mixte_min_pct", 5)) / 100.0
-    if uau_a is not None and full_a > 0 and (full_a - base) / full_a >= plancher:
+    # GEOMETRIE-1 lot B — UN SEUL moteur de géométrie (décision Vic 24/09) : l'assiette est la
+    # ZONE D'IMPLANTATION du gabarit (reculs par côté, PPR rouge découpé, morceau constructible
+    # si à cheval) quand le gabarit sert la parcelle ; sinon chemin legacy inchangé, et la
+    # provenance est ÉCRITE (`assiette_source`) — pas de trou, pas de mensonge.
+    gab = _assiette_gabarit(session, ctx.idu) if assiette_clippee else None
+    assiette_source = "gabarit" if gab is not None else "residuel_legacy"
+    if gab is not None:
+        gbuild, gres = gab
+        emprise_brute = float(gres.zoneImplantationM2 or 0.0)
+        er_a = ebc_a = greve_cert = greve_tot = 0.0
+        gj = gres.zoneImplantationGeoJSON
+        if emprise_brute > 0 and gj:
+            grow = session.execute(_GREVE_SUR_ASSIETTE, {
+                "gj": json.dumps(gj), "pid": parcel_id,
+                "pkind": pkind, "er_types": er_types, "ebc_types": ebc_types,
+                "peb_ab": [str(z).lower() for z in _layer_params("peb").get("hard_zones", ["a", "b"])],
+                "dpf_m": float(_layer_params("dpf").get("marchepied_m", 3.25)),
+                "rav_m": float(_layer_params("ravine").get("buffer_m", 10)),
+            }).one()
+            er_a = float(grow.er_area or 0.0)
+            ebc_a = float(grow.ebc_area or 0.0)
+            greve_cert = float(grow.cert_area or 0.0)
+            greve_tot = float(grow.greve_total or 0.0)
+        emprise = max(0.0, emprise_brute - greve_tot)
+        racc = gbuild.raccordement or {}
+        ppr_rouge = bool((racc.get("ppr") or {}).get("rouge"))
         ctx.contraintes.libelles.append(
-            f"Zonage mixte : emprise constructible clippée à la portion U/AU "
-            f"(~{base:.0f} m² retenus sur ~{full_a:.0f} m² insetés).")
-
-    if er_a >= 0.5:
-        for r in session.execute(_ER_DETAILS, {"pid": parcel_id, "d": recul,
-                                               "pkind": pkind, "er_types": er_types}):
-            m2 = float(r.m2 or 0.0)
-            if m2 < 0.5:
-                continue
-            m = _ER_LIB.match((r.libelle or "").strip())
-            label = f"ER {m.group(1)} : {m.group(2).strip()}" if m else \
-                (f"{r.txt} : {r.libelle}" if r.txt and r.txt != r.libelle else (r.libelle or "ER"))
+            "Assiette = zone d'implantation réglementaire (moteur gabarit) : reculs par côté "
+            "voie/limites" + (", PPR zone rouge découpée" if ppr_rouge else "") + ".")
+        servie_sur = (racc.get("multizone") or {}).get("servie_sur")
+        if servie_sur:
             ctx.contraintes.libelles.append(
-                f"{label} — {m2:.0f} m² déduits de l'emprise constructible.")
-    # SOURCES-1 lot 1 : la part EBC est soustraite de l'assiette (L113-1 CU) — union ER+EBC
-    # (greve_a) pour ne jamais soustraire deux fois un chevauchement.
-    if ebc_a >= 0.5:
-        ctx.contraintes.libelles.append(
-            f"Espace boisé classé — {ebc_a:.0f} m² soustraits de l'assiette constructible "
-            "(Art. L113-1 CU, aucune construction sur l'emprise boisée).")
-    emprise = max(0.0, base - greve_a)
-
-    # SCORING-6 lot A — assiette clippée : soustraire les contraintes géométriques certaines
-    # (PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) et ramener la surface au sol servant
-    # aux plafonds CES/pleine terre à la seule portion U/AU. OPT-IN — servi inchangé sinon.
-    surface_assiette = ctx.surface_m2
-    greve_cert = 0.0
-    if assiette_clippee:
-        greve_cert = _greve_certaine_m2(session, parcel_id, recul, ctx.commune)
+                f"Zonage mixte : assiette calculée sur le seul morceau constructible {servie_sur}.")
+        if er_a >= 0.5 and gj:
+            for r in session.execute(_ER_DETAILS_ASSIETTE, {
+                    "gj": json.dumps(gj), "pid": parcel_id,
+                    "pkind": pkind, "er_types": er_types}):
+                m2 = float(r.m2 or 0.0)
+                if m2 < 0.5:
+                    continue
+                m = _ER_LIB.match((r.libelle or "").strip())
+                label = f"ER {m.group(1)} : {m.group(2).strip()}" if m else \
+                    (f"{r.txt} : {r.libelle}" if r.txt and r.txt != r.libelle else (r.libelle or "ER"))
+                ctx.contraintes.libelles.append(
+                    f"{label} — {m2:.0f} m² déduits de l'emprise constructible.")
+        if ebc_a >= 0.5:
+            ctx.contraintes.libelles.append(
+                f"Espace boisé classé — {ebc_a:.0f} m² soustraits de l'assiette constructible "
+                "(Art. L113-1 CU, aucune construction sur l'emprise boisée).")
         if greve_cert > 0.5:
-            emprise = max(0.0, emprise - greve_cert)
             ctx.contraintes.libelles.append(
-                f"Assiette clippée : {greve_cert:.0f} m² de contraintes géométriques certaines "
-                "(PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) soustraits de l'emprise.")
+                f"Contraintes géométriques certaines — {greve_cert:.0f} m² (PEB A/B, marchepied "
+                "DPF, ravine, 50 pas) soustraits de l'assiette. Le PPR rouge est déjà découpé "
+                "de l'assiette (jamais compté deux fois).")
+        greve_a = greve_tot          # déduction NETTE réellement retranchée (extras)
+    else:
+        row = session.execute(_EMPRISE, args).one()
+        full_a = float(row.full_area or 0.0)
+        uau_a = float(row.uau_area) if row.uau_area is not None else None
+        er_a = float(row.er_area or 0.0)
+        ebc_a = float(row.ebc_area or 0.0)
+        greve_a = float(row.greve_area or 0.0)
+
+        base = full_a if uau_a is None else min(full_a, uau_a)
+        plancher = float(zonage.get("an_mixte_min_pct", 5)) / 100.0
+        if uau_a is not None and full_a > 0 and (full_a - base) / full_a >= plancher:
+            ctx.contraintes.libelles.append(
+                f"Zonage mixte : emprise constructible clippée à la portion U/AU "
+                f"(~{base:.0f} m² retenus sur ~{full_a:.0f} m² insetés).")
+
+        if er_a >= 0.5:
+            for r in session.execute(_ER_DETAILS, {"pid": parcel_id, "d": recul,
+                                                   "pkind": pkind, "er_types": er_types}):
+                m2 = float(r.m2 or 0.0)
+                if m2 < 0.5:
+                    continue
+                m = _ER_LIB.match((r.libelle or "").strip())
+                label = f"ER {m.group(1)} : {m.group(2).strip()}" if m else \
+                    (f"{r.txt} : {r.libelle}" if r.txt and r.txt != r.libelle else (r.libelle or "ER"))
+                ctx.contraintes.libelles.append(
+                    f"{label} — {m2:.0f} m² déduits de l'emprise constructible.")
+        # SOURCES-1 lot 1 : la part EBC est soustraite de l'assiette (L113-1 CU) — union ER+EBC
+        # (greve_a) pour ne jamais soustraire deux fois un chevauchement.
+        if ebc_a >= 0.5:
+            ctx.contraintes.libelles.append(
+                f"Espace boisé classé — {ebc_a:.0f} m² soustraits de l'assiette constructible "
+                "(Art. L113-1 CU, aucune construction sur l'emprise boisée).")
+        emprise = max(0.0, base - greve_a)
+
+        # SCORING-6 lot A — assiette clippée : soustraire les contraintes géométriques certaines
+        # (PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) et ramener la surface au sol servant
+        # aux plafonds CES/pleine terre à la seule portion U/AU. OPT-IN — servi inchangé sinon.
+        greve_cert = 0.0
+        if assiette_clippee:
+            greve_cert = _greve_certaine_m2(session, parcel_id, recul, ctx.commune)
+            if greve_cert > 0.5:
+                emprise = max(0.0, emprise - greve_cert)
+                ctx.contraintes.libelles.append(
+                    f"Assiette clippée : {greve_cert:.0f} m² de contraintes géométriques certaines "
+                    "(PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) soustraits de l'emprise.")
+
+    # Surface au sol servant aux plafonds CES/pleine terre : la seule portion U/AU (à cheval).
+    surface_assiette = ctx.surface_m2
+    if assiette_clippee:
         pct_c = _pct_constructible(ctx)
         if pct_c is not None and 0 < pct_c < 100:
             surface_assiette = ctx.surface_m2 * pct_c / 100.0
@@ -423,12 +555,14 @@ def parcel_faisabilite(session: Session, parcel_id: int,
 
     # FAISABILITE-1 (lot D) — lignes manquantes : ER/EBC/greve déjà soustraits (dits en étape) +
     # mixité détectée (dite « non modélisée »). Informatif : aucune de ces valeurs ne change la fourchette.
-    # total_deduit = déduction NETTE réellement retranchée de l'emprise : greve_a = union ER+EBC
-    # (dédupée par _EMPRISE) + greve_cert (contraintes certaines, mode clippé). er_m2/ebc_m2/greve_cert
-    # ne sont que les CONTRIBUTIONS listées (ils peuvent se chevaucher — le total ne les somme pas).
+    # total_deduit = déduction NETTE réellement retranchée de l'emprise. Chemin gabarit : greve_a
+    # est déjà l'UNION ER∪EBC∪certaines ∩ assiette (_GREVE_SUR_ASSIETTE) — jamais re-sommer.
+    # Chemin legacy : greve_a = union ER+EBC (dédupée par _EMPRISE) + greve_cert. er_m2/ebc_m2/
+    # greve_cert ne sont que les CONTRIBUTIONS listées (elles peuvent se chevaucher).
     extras = {"er_m2": er_a, "ebc_m2": ebc_a, "greve_certaine_m2": greve_cert,
-              "total_deduit_m2": greve_a + greve_cert,
-              "mixite": bool(eco.get("mixite"))}
+              "total_deduit_m2": greve_a if assiette_source == "gabarit" else greve_a + greve_cert,
+              "mixite": bool(eco.get("mixite")),
+              "assiette_source": assiette_source}
     return ctx, estimate_capacity(rules, surface_assiette, ctx.contraintes, hyp=hyp,
                                   emprise_geo=(emprise, recul), extras=extras)
 

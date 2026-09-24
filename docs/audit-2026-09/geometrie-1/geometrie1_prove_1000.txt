@@ -1,0 +1,4 @@
+parcelles testées : 1000 · touchant du PPR INTERDICTION : 248
+écart d'aire max            : 1.729e-08 m²
+géométries WKB différentes  : 82
+VERDICT : IDENTIQUE au m² près ✅
