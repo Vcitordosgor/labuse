@@ -208,6 +208,18 @@ function PipelineButton({ idu }: { idu: string }) {
       qc.invalidateQueries({ queryKey: ['pipeline'] })
     },
   })
+  // DA-FIX-5 P7 — la NOTE libre de la parcelle suivie (colonne `pipeline_entries.notes`), éditable
+  // ici comme sur la carte CRM (« + Note »). Même PATCH `{notes}`, même source — un seul point de
+  // vérité entre le kanban et la fiche.
+  const noter = useMutation({
+    mutationFn: (notes: string) => patchPipeline(state.data!.entry!.id, { notes }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['pipeline-parcel', idu] })
+      qc.invalidateQueries({ queryKey: ['pipeline'] })
+    },
+  })
+  const [noteOpen, setNoteOpen] = useState(false)
+  const [noteDraft, setNoteDraft] = useState('')
   const cols = meta.data?.columns ?? []
   // RETOURS-11 T3 (03/09) — le menu se ferme au clic n'importe où ailleurs et à Échap.
   const wrap = useRef<HTMLDivElement>(null)
@@ -257,6 +269,36 @@ function PipelineButton({ idu }: { idu: string }) {
             <option key={et.key} value={et.key}>{et.label}</option>
           ))}
         </select>
+      )}
+      {/* DA-FIX-5 P7 — NOTE libre de la parcelle suivie : repliée (« + Note »), la même que la carte CRM. */}
+      {inPipe && state.data?.entry && (
+        noteOpen ? (
+          <div className="mt-1.5 space-y-1">
+            <textarea
+              data-crm-note autoFocus value={noteDraft} maxLength={4000} rows={3}
+              onChange={(ev) => setNoteDraft(ev.target.value)}
+              placeholder="Note libre (visible aussi dans le CRM)…"
+              className="w-full resize-none rounded-md border border-mint/40 bg-surface-2 px-2 py-1.5 text-[11px] text-txt focus:border-mint focus:outline-none"
+              aria-label="Note libre sur la parcelle suivie" />
+            <div className="flex justify-end gap-1.5">
+              <button onClick={() => setNoteOpen(false)} className="text-[11px] text-txt-dim hover:text-txt">Annuler</button>
+              <button data-crm-note-save disabled={noter.isPending}
+                onClick={() => { noter.mutate(noteDraft.trim()); setNoteOpen(false) }}
+                className="rounded-md border border-mint px-2 py-0.5 text-[11px] text-mint hover-fill">Enregistrer</button>
+            </div>
+          </div>
+        ) : (
+          (state.data.entry.notes ?? '').trim() ? (
+            <button data-crm-note-edit
+              onClick={() => { setNoteDraft(state.data!.entry!.notes ?? ''); setNoteOpen(true) }}
+              className="mt-1.5 block w-full whitespace-pre-wrap rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-left text-[11px] text-txt-mut hover:border-mint/40 hover:text-txt">
+              {(state.data.entry.notes ?? '').trim()}
+            </button>
+          ) : (
+            <button data-crm-note-add onClick={() => { setNoteDraft(''); setNoteOpen(true) }}
+              className="mt-1.5 text-[11px] text-txt-dim hover:text-mint">+ Note</button>
+          )
+        )
       )}
     </div>
   )
