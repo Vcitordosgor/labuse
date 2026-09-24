@@ -56,6 +56,13 @@ def client(engine):
             VALUES ('r16-ban-3', '1', 'Chemin de la Citerne Test', 'Saint-Denis', '97417',
                     '97411000ZX0043', ST_SetSRID(ST_MakePoint(55.45, -20.881), 4326))
             ON CONFLICT DO NOTHING"""))
+        # RECHERCHE-2 Lot 3 (a) — adresse « n° + voie + CP + commune » : la saisie « 27 chemin Vidot
+        # Saint-Denis » (SANS le CP) doit la retrouver malgré le CP 97490 intercalé (match par jetons).
+        c.execute(text("""
+            INSERT INTO adresses (id_ban, numero, voie, commune, code_postal, idu, geom)
+            VALUES ('r16-ban-4', '27', 'Chemin Vidot', 'Saint-Denis', '97490',
+                    '97411000ZX0042', ST_SetSRID(ST_MakePoint(55.45, -20.88), 4326))
+            ON CONFLICT DO NOTHING"""))
         c.execute(text("""
             INSERT INTO parcelle_personne_morale (idu, denomination, siren)
             VALUES ('97411000ZX0042', 'SCI ZOREIL FONCIER', '512345678')
@@ -68,7 +75,7 @@ def client(engine):
     finally:
         with engine.begin() as c:
             c.execute(text("DELETE FROM projets WHERE nom = 'Zoreil lotissement'"))
-            c.execute(text("DELETE FROM adresses WHERE id_ban IN ('r16-ban-1', 'r16-ban-2', 'r16-ban-3')"))
+            c.execute(text("DELETE FROM adresses WHERE id_ban IN ('r16-ban-1', 'r16-ban-2', 'r16-ban-3', 'r16-ban-4')"))
             c.execute(text("DELETE FROM parcelle_personne_morale WHERE idu LIKE '974%ZX0042'"))
             c.execute(text("DELETE FROM parcels WHERE idu LIKE '974%ZX004%'"))
 
@@ -148,6 +155,38 @@ def test_zero_resultat_parlant(client):
     assert r["total"] == 0 and "référence courte" in r["formats"]
 
 
+def test_adresse_match_par_jetons_sans_code_postal(client):
+    """RECHERCHE-2 Lot 3 (a) — « 27 chemin Vidot Saint-Denis » (n° + voie + commune, SANS le CP)
+    doit sortir. Avant, le match en SOUS-CHAÎNE CONTIGUË échouait car le CP 97490 est stocké ENTRE
+    la voie et la commune → « 27 chemin vidot saint denis » n'était pas un sous-texte (0 muet)."""
+    r = client.get("/api/recherche/suggest", params={"q": "27 chemin Vidot Saint-Denis"})
+    assert r.status_code == 200, r.text[:300]
+    adr = {g["type"]: g["items"] for g in r.json()["groupes"]}.get("adresse", [])
+    hit = next((i for i in adr if i["idu"] == "97411000ZX0042"), None)
+    assert hit is not None, adr
+    assert hit["label"] == "27 Chemin Vidot", hit
+    # le CP inclus fonctionne TOUJOURS (non-régression du collage plein depuis une fiche)
+    r2 = client.get("/api/recherche/suggest", params={"q": "27 Chemin Vidot 97490 Saint-Denis"})
+    adr2 = {g["type"]: g["items"] for g in r2.json()["groupes"]}.get("adresse", [])
+    assert any(i["idu"] == "97411000ZX0042" for i in adr2), adr2
+
+
+def test_siren_valide_absent_note_honnete(client):
+    """RECHERCHE-2 Lot 3 (b) — un SIREN bien formé (9 chiffres) mais ABSENT des fichiers fonciers
+    ne tombe plus dans le « 0 muet » : une note honnête le dit, non cliquable (pas de siren)."""
+    d = client.get("/api/recherche/suggest", params={"q": "421032555"}).json()
+    sir = {g["type"]: g["items"] for g in d["groupes"]}.get("siren", [])
+    note = next((i for i in sir if i.get("note")), None)
+    assert note is not None, d
+    assert "inconnu des fichiers fonciers 2025" in note["label"], note
+    assert not note.get("siren"), note          # rien à ouvrir
+    assert d["total"] >= 1                        # plus jamais muet
+    # un SIREN RÉEL présent (512345678) rend bien un résultat ACTIONNABLE, pas la note.
+    d2 = client.get("/api/recherche/suggest", params={"q": "512345678"}).json()
+    sir2 = {g["type"]: g["items"] for g in d2["groupes"]}.get("siren", [])
+    assert any(i.get("siren") == "512345678" for i in sir2) and not any(i.get("note") for i in sir2), d2
+
+
 def test_front_un_seul_composant_plus_d_autocompletion_maison():
     aa = (ROOT / "frontend/src/components/AddressAutocomplete.tsx").read_text(encoding="utf-8")
     assert "rechercheSuggest" in aa and "data-suggest-input" in aa and "data-suggest-item" in aa
@@ -156,7 +195,11 @@ def test_front_un_seul_composant_plus_d_autocompletion_maison():
     assert "pick(items[0])" not in aa                       # Entrée ne devine JAMAIS la 1re ligne
     assert "Aucune correspondance pour" in aa               # zéro-résultat parlant
     scan = (ROOT / "frontend/src/components/outils/ScanPatrimoine.tsx").read_text(encoding="utf-8")
-    assert "data-scan-sug" not in scan and "AddressAutocomplete" in scan
+    # RECHERCHE-2 — Scan patrimoine passe par le composant PARTAGÉ (ParcelInput → AddressAutocomplete),
+    # jamais une autocomplétion maison ; l'ancienne prop d'exception `grammaireProprietaire` a disparu
+    # (les 4 familles sont par défaut) — un pick propriétaire lui revient par `onProprietaire`.
+    assert "data-scan-sug" not in scan and "ParcelInput" in scan
+    assert "grammaireProprietaire" not in scan and "onProprietaire" in scan
     header = (ROOT / "frontend/src/components/header/Header.tsx").read_text(encoding="utf-8")
     assert "'adresse', 'cadastre', 'proprietaire', 'siren'" in header
     mp = (ROOT / "frontend/src/components/outils/ModulePanel.tsx").read_text(encoding="utf-8")

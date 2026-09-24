@@ -126,6 +126,7 @@ export function AddressAutocomplete({
   }, [open])
 
   const pick = (it: SuggestItem) => {
+    if (it.note) return   // RECHERCHE-2 Lot 3 (b) — ligne d'information : rien à ouvrir, on ne fait rien.
     skipSearchRef.current = true   // le setText ci-dessous ne doit PAS relancer la recherche
     setText(it.label)
     onTextChange?.(it.label)
@@ -213,20 +214,23 @@ export function AddressAutocomplete({
               id={`${listId}-${i}`}
               role="option"
               aria-selected={i === active}
+              aria-disabled={it.note || undefined}
               data-suggest-item={it.type}
+              data-suggest-note={it.note || undefined}
               onMouseDown={(e) => { e.preventDefault(); pick(it) }}
-              onMouseEnter={() => setActive(i)}
-              // survol/actif : la règle de l'app — VERT OPAQUE, contenu inversé (V5.3).
-              className={`flex cursor-pointer items-baseline gap-2 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11.5px] ${
-                i === active ? 'bg-mint text-mint-ink' : 'text-txt'
+              onMouseEnter={() => { if (!it.note) setActive(i) }}
+              // survol/actif : la règle de l'app — VERT OPAQUE, contenu inversé (V5.3). Une ligne
+              // d'information (note) reste grisée, non cliquable (curseur défaut, pas de vert).
+              className={`flex items-baseline gap-2 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11.5px] ${
+                it.note ? 'cursor-default text-txt-dim' : i === active ? 'cursor-pointer bg-mint text-mint-ink' : 'cursor-pointer text-txt'
               }`}
             >
               {/* le TYPE en libellé discret à gauche, l'essentiel en clair (V5.3) */}
-              <span className={`w-[74px] shrink-0 text-[9.5px] uppercase tracking-wide ${i === active ? 'text-mint-ink/70' : 'text-txt-dim'}`}>
+              <span className={`w-[74px] shrink-0 text-[9.5px] uppercase tracking-wide ${!it.note && i === active ? 'text-mint-ink/70' : 'text-txt-dim'}`}>
                 {TYPE_LBL[it.type]}
               </span>
               <span className="min-w-0 truncate">{it.label}</span>
-              {it.sub && <span className={`text-[10px] ${i === active ? 'text-mint-ink/70' : 'text-txt-dim'}`}>{it.sub}</span>}
+              {it.sub && <span className={`text-[10px] ${!it.note && i === active ? 'text-mint-ink/70' : 'text-txt-dim'}`}>{it.sub}</span>}
             </li>
           ))}
         </ul>,

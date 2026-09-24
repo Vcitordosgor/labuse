@@ -688,6 +688,9 @@ export interface SuggestItem {
   type: SuggestType; label: string; sub?: string
   idu?: string | null; lon?: number; lat?: number
   siren?: string; commune?: string; insee?: string; projet_id?: number
+  // RECHERCHE-2 Lot 3 (b) — ligne d'information NON cliquable (ex. « SIREN inconnu des fichiers
+  // fonciers 2025 ») : honnête, mais rien à ouvrir (pas de siren/idu). Rendu grisé, aria-disabled.
+  note?: boolean
 }
 export interface SuggestReponse {
   q: string; groupes: { type: SuggestType; items: Omit<SuggestItem, 'type'>[] }[]
