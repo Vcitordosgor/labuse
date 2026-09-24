@@ -2313,9 +2313,9 @@ export const postAdminCronRun = (nom: string) =>
 // ── CIRCUIT-1 lot 5 — la page Circuit (un appel) + ses gestes ──────────────────────────────
 export const getAdminCircuit = () => j<any>('/admin/circuit')
 export const postAdminCircuitVerifier = () => j<any>('/admin/circuit/verifier', { method: 'POST' })
-// CIRCUIT-P2 (lot 3.2/3.3) / CIRCUIT-P7 (lot 1) — tâches longues : lancer les agents (une source via
-// `sourceId`, ou une portée « jamais » / « g8 » / « tous » depuis le menu de la carte Agents).
-export const postAdminCircuitAgents = (opts?: { sourceId?: number; portee?: 'jamais' | 'g8' | 'tous' }) => {
+// CIRCUIT-P2 (lot 3.2/3.3) / CIRCUIT-P7 — tâches longues : lancer l'agent LLM (une source via
+// `sourceId`, ou une portée « sans_amont » (défaut) / « g8 » / « tous » depuis la carte Agents).
+export const postAdminCircuitAgents = (opts?: { sourceId?: number; portee?: 'sans_amont' | 'g8' | 'tous' }) => {
   const p = new URLSearchParams()
   if (opts?.sourceId != null) p.set('source_id', String(opts.sourceId))
   if (opts?.portee) p.set('portee', opts.portee)

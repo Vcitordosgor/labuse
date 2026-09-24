@@ -113,3 +113,29 @@ nuit), inchangée.
 
 Portes : `tsc` + `vite build` verts · vitest **184** · pytest p7 (portée + plafond) + endpoints
 agents (`test_circuit_p2_lot3`) verts. Commit dédié, **pas de merge**.
+
+---
+
+## Suite 2 (24/09) — portée des agents : sonde vs agents, cadence 15 jours
+
+Partage clair du travail entre la sonde (gratuite) et les agents (LLM, coût) :
+
+- **Sonde de nuit** : inchangée, sur les sources à **amont lisible** (api/page/entête/témoin) —
+  77 aujourd'hui (89 dans la maquette). Chaque nuit, sans coût.
+- **Agents — portée par défaut = « sans amont lisible »** (`circuit_garanties.sources_sans_amont` :
+  ni sonde, ni rappel manuel, ni dépôt/flux/sans-millésime — les pages rendues en JS qu'un LLM doit
+  lire). **5 aujourd'hui** (Communes IGN, DEAL CBS, FRR, INPN, ZFANG). *(La maquette disait « 3 » — les
+  3 jamais-vérifiées ; l'ensemble structurel stable, rechecké chaque quinzaine, en compte 5.)*
+- **Cron du dimanche : une semaine sur deux** (`jobs.semaine_agents` = semaines ISO paires ;
+  `jobs_impl.agents_sources` saute les semaines impaires et ne vise plus QUE la portée sans-amont).
+  Registre `agents-sources` → cadence « tous les 15 j (dim) ».
+- **Bouton « Envoyer les agents »** garde ses portées manuelles avec confirmation + plafond : **sans
+  amont** (défaut) · **verrou G8** · **les 92**, chacune avec son coût estimé.
+- **Carte Agents** : « **tous les 15 jours (dimanche)**, lisent les **N** sources sans amont lisible
+  — coût estimé ≈ X € … prochain passage dimanche JJ/MM » (capture `09-agents-portee-defaut.png`).
+
+**Test sur la portée par défaut (base réelle)** : `POST /admin/circuit/agents` (sans paramètre) →
+`n=5`, agent LLM sur les 5 sans-amont, terminé **« 5 agent(s) · 0,72 € — écrit au journal »**
+(sous le plafond 5 €, `plafond_atteint=False`), 5 lignes journal « par Vic ». `semaine_agents` testé
+(1 sur 2). tsc + vite build verts, vitest 184, pytest p7 (portée + quinzaine) verts. API + navigateur
+arrêtés. Commit dédié **poussé**, pas de merge.

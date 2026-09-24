@@ -665,6 +665,26 @@ def classer_sans_controle(rows, seuil) -> list[dict]:
     return out
 
 
+#: les méthodes de veille dont l'amont est LISIBLE par la sonde de nuit (sinon : un agent LLM).
+_METHODES_AMONT_LISIBLE = ("api", "page", "entete", "temoin")
+
+
+def sources_sans_amont(db: Session) -> list[dict]:
+    """CIRCUIT-P7 (portée des agents) — les sources VITRINE SANS amont lisible par la sonde : ni sonde
+    (api/page/entete/temoin), ni rappel manuel, ni dépôt manuel, ni flux en direct / sans millésime.
+    Ce sont celles qu'un AGENT LLM doit lire (page rendue en JS, aucune version datée en clair). C'est
+    la portée PAR DÉFAUT des agents (le cron du dimanche, tous les 15 jours) ET le menu « sans amont ».
+    Ensemble STABLE (rechecked chaque quinzaine), distinct de « jamais vérifiée » (état ponctuel)."""
+    from .sources_catalog import WHERE_AFFICHEES, masquees_param
+    rows = db.execute(text(
+        "SELECT d.id, d.name FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id"
+        f" WHERE {WHERE_AFFICHEES}"
+        "   AND COALESCE(v.methode, '') NOT IN ('api', 'page', 'entete', 'temoin', 'rappel')"
+        "   AND COALESCE(d.mode_remplissage, '') NOT IN ('en_direct', 'absente', 'sans_millesime', 'depot_manuel')"
+        " ORDER BY d.id"), {"masquees": masquees_param()}).mappings().all()
+    return [dict(r) for r in rows]
+
+
 def sources_sans_controle(db: Session, jours: int = 7) -> list[dict]:
     """Les sources VITRINE que personne ne contrôle (cf. `classer_sans_controle`). Avec l'agent
     (agents-sources) plafonné à 0 €, une source hors sonde n'a plus aucun contrôleur."""

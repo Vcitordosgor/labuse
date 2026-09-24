@@ -67,10 +67,9 @@ function Cartes({ data, tacheSonde, tacheAgents, onSonder, onAgents }: {
   const [pending, setPending] = useState<{ portee: Portee; n: number; cout: number } | null>(null)
   const s: any = data.sonde
   const a: any = data.agents
-  const per = a?.vitrine ? (a.cout_estime_tous || 0) / a.vitrine : 0
   const estime = (p: Portee): { n: number; cout: number } =>
-    p === 'jamais' ? { n: a?.jamais ?? 0, cout: (a?.jamais ?? 0) * per }
-      : p === 'g8' ? { n: a?.g8 ?? 0, cout: (a?.g8 ?? 0) * per }
+    p === 'sans_amont' ? { n: a?.sans_amont ?? 0, cout: a?.cout_estime_sans_amont ?? 0 }
+      : p === 'g8' ? { n: a?.g8 ?? 0, cout: a?.cout_estime_g8 ?? 0 }
         : { n: a?.vitrine ?? 0, cout: a?.cout_estime_tous ?? 0 }
   const choisir = (p: Portee) => { setMenu(false); setPending({ portee: p, ...estime(p) }) }
   const confirmer = () => { if (pending) onAgents(pending.portee); setPending(null) }
@@ -101,10 +100,9 @@ function Cartes({ data, tacheSonde, tacheAgents, onSonder, onAgents }: {
         <div style={{ flex: 1 }}>
           <div className="titre"><i className="past mauve" />Agents</div>
           <div className="desc">
-            {a ? <>Chaque dimanche, vont lire chez les {a.vitrine} producteurs.{' '}
+            {a ? <><b>{a.cadence || 'tous les 15 jours'}</b>, lisent les <b>{a.sans_amont ?? 0}</b> source{(a.sans_amont ?? 0) > 1 ? 's' : ''} sans amont lisible (celles que la sonde ne peut pas lire) — coût estimé ≈ {eur(a.cout_estime_sans_amont)}.{' '}
               {a.dernier_passage
-                ? <>Dernier passage {quandCourt(a.dernier_passage)} : {a.sources} sources,{' '}
-                  {eur(a.cout_eur)}, {a.nouvelles} nouvelle{a.nouvelles > 1 ? 's' : ''} version{a.nouvelles > 1 ? 's' : ''} trouvée{a.nouvelles > 1 ? 's' : ''}.</>
+                ? <>Dernier passage {quandCourt(a.dernier_passage)} : {a.sources} source{(a.sources ?? 0) > 1 ? 's' : ''}, {eur(a.cout_eur)}, {a.nouvelles} nouvelle{a.nouvelles > 1 ? 's' : ''} version{a.nouvelles > 1 ? 's' : ''} trouvée{a.nouvelles > 1 ? 's' : ''}.</>
                 : <>Aucun passage encore.</>}{' '}
               {a.actif
                 ? <>Plafond {eur(a.plafond_eur)} par passage{a.prochain_dimanche ? `, prochain passage dimanche ${jour(a.prochain_dimanche)}` : ''}.</>
@@ -126,12 +124,12 @@ function Cartes({ data, tacheSonde, tacheAgents, onSonder, onAgents }: {
             onClick={() => { setPending(null); setMenu((m) => !m) }}>Envoyer les agents ▾</button>
           {menu && !pending && (
             <div className="menu-liste">
-              <button onClick={() => choisir('tous')}>
-                Sur les {a?.vitrine ?? 0} sources <span className="muted">(≈ {eur(a?.cout_estime_tous)})</span></button>
-              <button onClick={() => choisir('jamais')}>
-                Sur les {a?.jamais ?? 0} jamais vérifiées <span className="muted">(≈ {eur(estime('jamais').cout)})</span></button>
+              <button onClick={() => choisir('sans_amont')}>
+                Sur les {a?.sans_amont ?? 0} sans amont lisible <span className="muted">(≈ {eur(estime('sans_amont').cout)})</span></button>
               <button onClick={() => choisir('g8')}>
                 Sur les {a?.g8 ?? 0} du verrou G8 <span className="muted">(≈ {eur(estime('g8').cout)})</span></button>
+              <button onClick={() => choisir('tous')}>
+                Sur les {a?.vitrine ?? 0} sources <span className="muted">(≈ {eur(a?.cout_estime_tous)})</span></button>
               <div className="sep" />
               <button disabled><span className="muted">Une source… (depuis sa fiche)</span></button>
             </div>

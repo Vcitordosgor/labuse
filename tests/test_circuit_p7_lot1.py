@@ -35,18 +35,21 @@ def test_carte_sonde_amont_desactive_exclu():
     assert D.carte_sonde(reservoirs, nouvelles=0)["interrogeables"] == 0
 
 
-def test_portee_agents_jamais_tous_et_defaut():
+def test_portee_agents_tous():
     reservoirs = [
-        {"nom": "A", "etat": ["gris", "jamais vérifiée"], "mode": "api"},
+        {"nom": "A", "etat": ["mint", "à jour"], "mode": "api"},
         {"nom": "B", "etat": ["mint", "à jour"], "mode": "api"},
-        {"nom": "C", "etat": ["gris", "jamais vérifiée"], "mode": "api"},
         {"nom": "OSM", "etat": ["mint", "à jour"], "mode": "en_direct"},        # flux → exclu de --tous
         {"nom": "INPI", "etat": ["mint", "à jour"], "mode": "sans_millesime"},  # sans millésime → exclu
     ]
-    # « jamais » ne prend QUE les jamais vérifiées (l'agent leur pose un premier contrôle).
-    assert sorted(r["nom"] for r in D._cibles_agents_portee(None, reservoirs, "jamais")) == ["A", "C"]
-    # « tous » (et le DÉFAUT, portee None = le bouton « Envoyer les agents ») = comme --tous : les
-    # réservoirs interrogeables, SANS les flux en direct ni les sans-millésime.
-    for portee in ("tous", None):
-        noms = sorted(r["nom"] for r in D._cibles_agents_portee(None, reservoirs, portee))
-        assert noms == ["A", "B", "C"], portee
+    # « tous » = comme `--tous` : les réservoirs interrogeables, SANS flux en direct ni sans-millésime
+    # (pas de DB nécessaire → c=None).
+    assert sorted(r["nom"] for r in D._cibles_agents_portee(None, reservoirs, "tous")) == ["A", "B"]
+
+
+def test_semaine_agents_une_sur_deux():
+    from datetime import date
+    from labuse.jobs import semaine_agents
+    # semaine ISO paire = « on », impaire = « off » (cadence 15 jours).
+    assert semaine_agents(date(2026, 1, 5)) != semaine_agents(date(2026, 1, 12))   # 2 semaines voisines
+    assert semaine_agents(date(2026, 1, 5)) == semaine_agents(date(2026, 1, 19))   # 2 semaines de même parité

@@ -27,7 +27,7 @@ type Onglet = 'todo' | 'sources' | 'circuit' | 'journal'
 // atteint depuis la page de détail de la source GPU (plus par un lien en bas de la page).
 type DetailType = 'reservoir' | 'robinet' | 'pompe' | 'compteur' | 'destinations'
 type Detail = { type: DetailType; id: number | string } | null
-export type Portee = 'jamais' | 'g8' | 'tous'
+export type Portee = 'sans_amont' | 'g8' | 'tous'
 
 // la date d'un contrôle / passage, lisible (« 24/09 02:05 »).
 const quandCourt = (iso?: string | null) =>

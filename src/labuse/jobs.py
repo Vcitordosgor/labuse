@@ -224,6 +224,12 @@ def _terme_match(val: int, terme: str) -> bool:
         return False
 
 
+def semaine_agents(d) -> bool:
+    """CIRCUIT-P7 — le cron des agents passe UNE SEMAINE SUR DEUX : « on » les semaines ISO paires.
+    Un seul point de vérité, partagé par le cron (jobs_impl) et la carte Agents (prochain passage)."""
+    return d.isocalendar()[1] % 2 == 0
+
+
 def prochaine(cron_utc: str, *, horizon_jours: int = 40) -> datetime | None:
     """CRON-2 (K7) — prochaine exécution (UTC) d'une expression cron « m h dom mon dow ». Pas de
     dépendance : on avance minute par minute jusqu'au premier match (crons simples). None si aucun match
@@ -292,12 +298,13 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "(millésime API/page, GetCapabilities daté, en-tête de fichier). Une version amont plus "
               "récente ⇒ cloche admin. N'ingère rien : la sentinelle prévient, Vic décide.",
        test="tests/test_cron1_registre.py::test_sonde_sources_couvre_le_max"),
-    _j("agents-sources", "Agents de source (veille amont par IA) — le dimanche, plafonné",
-       "hebdo (dim)", "0 19 * * 0", "23:00 dim", touche="eau", timeout_s=3600,
-       raison="Le détective : là où la sonde mécanique ne suffit pas, un agent IA lit la page amont et "
-              "dit s'il y a du neuf (jamais une réponse sans URL réellement consultée). Un passage par "
-              "semaine (dimanche nuit), sous PLAFOND de dépense (LABUSE_AGENT_PLAFOND_EUR, défaut 0 = ne "
-              "dépense rien) qui arrête proprement et signale les sources non traitées.",
+    _j("agents-sources", "Agents de source (veille amont par IA) — le dimanche, 1 semaine sur 2, plafonné",
+       "tous les 15 j (dim)", "0 19 * * 0", "23:00 dim", touche="eau", timeout_s=3600,
+       raison="Le détective : sur les sources SANS amont lisible (que la sonde ne peut pas lire), un "
+              "agent IA lit la page amont et dit s'il y a du neuf (jamais une réponse sans URL "
+              "réellement consultée). Un passage TOUS LES 15 JOURS (dimanche nuit, semaines ISO paires), "
+              "sous PLAFOND de dépense (LABUSE_AGENT_PLAFOND_EUR, défaut 0 = ne dépense rien) qui arrête "
+              "proprement et signale les sources non traitées.",
        test="tests/test_cron1_registre.py::test_agents_sources_dimanche"),
     _j("filtres-sources", "Filtres des sources : rejoue les contrôles qualité sur les versions servies",
        "quotidien", "5 3 * * *", "07:05", touche="eau", timeout_s=1800,
