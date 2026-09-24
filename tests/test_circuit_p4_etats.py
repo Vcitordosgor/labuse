@@ -31,6 +31,10 @@ CAS = [
     ({}, ("gris", "jamais vérifiée")),
     # sonde passée, statut ok → à jour
     ({"veille": {"statut": "ok", "passage": "2026-09-23"}}, ("mint", "à jour")),
+    # CIRCUIT-P6 (tâche 2) — sans millésime par nature (OSM/INPI/Coût) : « à jour par construction »,
+    # JAMAIS « jamais vérifiée », même sans aucune veille ni date de contrôle (rien à vérifier).
+    ({"mode": "sans_millesime"}, ("mint", "à jour")),
+    ({"mode": "sans_millesime", "veille": None, "dernier_controle": None}, ("mint", "à jour")),
 ]
 
 
@@ -60,3 +64,17 @@ def test_à_regarder_a_disparu():
     """Aucun des cinq libellés n'est « à regarder » (le mot a disparu du vocabulaire des états)."""
     assert "à regarder" not in E.ETATS_SOURCE
     assert all(lib != "à regarder" for lib in E.ETATS_SOURCE)
+
+
+def test_sans_millesime_a_jour_par_construction():
+    """CIRCUIT-P6 (tâche 2) — une source SANS MILLÉSIME est « à jour » (mint), jamais « jamais
+    vérifiée » (gris), et sa raison écrite est disponible par le nom du réservoir."""
+    couleur, libelle = E.etat_reservoir({"mode": "sans_millesime"})
+    assert (couleur, libelle) == ("mint", "à jour")
+    assert libelle != "jamais vérifiée"
+    # la raison écrite, par nom → chacun sa raison (OSM flux continu, INPI sans date, Coût interne)
+    assert "flux continu" in E.raison_sans_millesime("OpenStreetMap / Overpass")
+    assert "6.2" in E.raison_sans_millesime("INPI RNE (dirigeants)")
+    assert "interne" in E.raison_sans_millesime("Coût de construction (EPTB SDES + choix LABUSE)")
+    # un nom inconnu retombe sur la raison générique, jamais une erreur
+    assert E.raison_sans_millesime("source inconnue") == E.DEFAUT_SANS_MILLESIME

@@ -163,15 +163,20 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
           <div className="card"><h3>Versions</h3>
             <div className="kv">
               <div>Dans le réservoir</div><div>{r.millesime || '—'}{r.ingere_le ? `, ingéré le ${dateFr(r.ingere_le)}` : ''}</div>
-              <div>Chez le producteur</div><div>{r.veille?.statut === 'nouvelle_version'
+              <div>Chez le producteur</div><div>{r.sans_millesime
+                ? <span style={{ color: 'var(--mint)' }}>sans millésime — {r.sans_millesime}</span>
+                : r.veille?.statut === 'nouvelle_version'
                 ? <span style={{ color: 'var(--ambre)' }}>nouvelle version vue</span>
                 : r.veille?.statut === 'injoignable' ? <span style={{ color: 'var(--ambre)' }}>injoignable à la dernière sonde</span>
                   : r.veille?.statut ? 'la même' : <span style={{ color: 'var(--ambre)' }}>inconnue, personne n'est allé voir</span>}</div>
-              <div>Dernier contrôle</div><div>{r.dernier_controle ? dateFr(r.dernier_controle) : <span style={{ color: 'var(--ambre)' }}>jamais</span>}</div>
+              <div>Dernier contrôle</div><div>{r.sans_millesime
+                ? <span className="muted">sans objet — à jour par construction</span>
+                : r.dernier_controle ? dateFr(r.dernier_controle) : <span style={{ color: 'var(--ambre)' }}>jamais</span>}</div>
             </div>
             <div className="actions">
-              <button className="btn mauve" disabled={agent.isPending}
-                onClick={() => agent.mutate()}>{agent.isPending ? 'Agent en route…' : 'Envoyer un agent'}</button>
+              {/* CIRCUIT-P6 — sans millésime : rien à vérifier chez le producteur, pas d'agent. */}
+              {!r.sans_millesime && <button className="btn mauve" disabled={agent.isPending}
+                onClick={() => agent.mutate()}>{agent.isPending ? 'Agent en route…' : 'Envoyer un agent'}</button>}
               {r.vanne?.type === 'injecter' && <button className="btn ambre" disabled={injecter.isPending}
                 onClick={() => injecter.mutate()}>Ouvrir la vanne, injecter</button>}
               {f.verdict === 'quarantaine' && <>

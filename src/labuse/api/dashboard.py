@@ -2027,6 +2027,7 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
     mode/cadence + vanne + filtre). Extrait pour être partagé par l'endpoint circuit ET les pages
     de détail (un appel focalisé sur une source, `only_id`, reste rapide)."""
     from datetime import datetime as _dt, timezone as _tz
+    from .. import circuit_etats as _cetats
     from .. import filtres as _filtres
     from ..sources_catalog import WHERE_AFFICHEES, masquees_param
     _now = _dt.now(tz=_tz.utc)
@@ -2073,7 +2074,7 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
         _derniers = [d for d in (r["dernier_passage_at"], r["last_sync_at"]) if d is not None]
         _dernier_controle = max(_derniers) if _derniers else None
         _cad = r["cadence_attendue_jours"]
-        a_verifier = bool(_cad) and mode not in ("en_direct", "absente") and (
+        a_verifier = bool(_cad) and mode not in ("en_direct", "absente", "sans_millesime") and (
             _dernier_controle is None or (_now - _dernier_controle).days > int(_cad))
         reservoirs.append({
             "a_verifier": a_verifier,
@@ -2086,6 +2087,9 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
             "vanne": ({"type": "injecter", "label": vanne["label"]} if vanne else
                       {"type": "depot"} if mode == "depot_manuel" else
                       {"type": "aucune", "motif": "interrogée en direct"} if mode == "en_direct" else
+                      # CIRCUIT-P6 (tâche 2) — sans millésime : « à jour par construction » + la raison écrite.
+                      {"type": "aucune", "motif": "à jour par construction — "
+                       + _cetats.raison_sans_millesime(r["name"])} if mode == "sans_millesime" else
                       {"type": "aucune", "motif": "aucun job d'ingestion identifié"}),
             "veille": ({"methode": r["methode"], "statut": r["dernier_statut"],
                         "passage": r["dernier_passage_at"].isoformat() if r["dernier_passage_at"] else None,
@@ -2094,6 +2098,10 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
                         "dernier_message": r["dernier_message"],
                         "rappel_jours": r["rappel_jours"]} if r["methode"] else None),
             "filtre": _filtre_du(r["name"]),
+            # CIRCUIT-P6 (tâche 2) — la RAISON ÉCRITE du « à jour par construction » d'une source sans
+            # millésime, portée à part de la vanne (une source ré-ingérable garde son bouton Injecter).
+            "sans_millesime": (_cetats.raison_sans_millesime(r["name"])
+                               if mode == "sans_millesime" else None),
         })
     # ── CIRCUIT-6 lot 2 (G2) — le REMPLISSAGE mesuré sur les 12 témoins du jour : chaque
     # réservoir porte sa mesure, et une source branchée mais VIDE (signature DPE) porte le

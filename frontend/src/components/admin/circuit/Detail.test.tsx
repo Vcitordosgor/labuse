@@ -20,6 +20,8 @@ vi.mock('../../../lib/api', () => ({
   getSourcesCouches: vi.fn(() => Promise.resolve({})),
   // CIRCUIT-SOURCES-1 (lot 3) — les 2 autres blocs « tout ce que la source touche ».
   getSourcesRattachements: vi.fn(() => Promise.resolve({})),
+  // CIRCUIT-P5 (T1) — les calibrages PLU par commune, lus dans la fiche réservoir GPU.
+  getSourcesCalibrages: vi.fn(() => Promise.resolve({})),
   postAdminSourceVeilleInjecter: vi.fn(), postAdminCircuitFiltreServir: vi.fn(),
   postAdminCircuitFiltreRevenir: vi.fn(), postAdminCircuitRevenir: vi.fn(),
   postAdminFluxBascule: vi.fn(), postAdminFluxLancerRun: vi.fn(),

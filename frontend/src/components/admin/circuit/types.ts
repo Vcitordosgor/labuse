@@ -16,6 +16,7 @@ export type Reservoir = {
   dernier_controle: string | null; etat: Etat; ko: boolean; taps: string[]; chiffres_ids: string[]
   vanne: { type: string; label?: string; motif?: string }
   veille: any | null; filtre: any
+  sans_millesime?: string | null   // CIRCUIT-P6 : la raison écrite du « à jour par construction »
 }
 export type Robinet = {
   id: string; categorie: string; nom: string; parent: string | null; route: string

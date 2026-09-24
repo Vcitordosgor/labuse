@@ -4717,7 +4717,8 @@ def agent_source_cmd(
             from .sources_catalog import WHERE_AFFICHEES, masquees_param
             cibles = [i for (i,) in s.execute(text(
                 f"SELECT id FROM data_sources WHERE {WHERE_AFFICHEES}"
-                " AND COALESCE(mode_remplissage,'') NOT IN ('en_direct','absente') ORDER BY id"),
+                " AND COALESCE(mode_remplissage,'') NOT IN ('en_direct','absente','sans_millesime')"
+                " ORDER BY id"),
                 {"masquees": masquees_param()}).all()]
     elif ids:
         cibles = [int(x) for x in ids.split(",") if x.strip()]
