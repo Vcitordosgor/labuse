@@ -36,6 +36,7 @@ import { BatiBlock, TerrainDuBienBlock, FiliationBlock } from './leBien'
 import { RisquesSection } from './risques'
 import { MarcheSection, DerniereVenteBlock } from './marche'
 import { ReseauxSection, EquipementsBadges } from './reseaux'
+import { ProfilAltimetrique } from './ProfilAltimetrique'   // RETOURS-13 P6
 import { AutourSection, HistoriqueSiteBlock } from './autour'
 import { ReglementPluBlock } from './blocks'   // FICHE-RANGEMENT-2 Lot 1 — extraits (cycle-free)
 export { Calculette, FaisabiliteTab } from './constructibilite'
@@ -1432,6 +1433,9 @@ export function Fiche({ idu }: { idu: string }) {
                 )}
                 <TerrainDuBienBlock f={f} />
                 <EquipementsBadges idu={idu} />
+                {/* RETOURS-13 P6 — coupe altimétrique (repliable) le long du plus grand axe, ou d'une
+                    ligne dessinée. Lue LIVE dans le RGE ALTI (le même relief que la pente ci-dessus). */}
+                <ProfilAltimetrique idu={idu} />
               </div>
             </RefDrawer>
 

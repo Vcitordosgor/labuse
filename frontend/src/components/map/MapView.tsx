@@ -351,7 +351,7 @@ export function MapView() {
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
-  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, batiVisible, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, setPermitToOpen, commune, verdict, iaRestitution, module, comparePicking, view, focusIdu, focusNonce } = useApp()
+  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, batiVisible, tool, setTool, setProfilLigne, zone, setZone, moduleMap, flyTo, setFlyTo, setPermitToOpen, commune, verdict, iaRestitution, module, comparePicking, view, focusIdu, focusNonce } = useApp()
   const bpeDomains = useApp((s) => s.bpeDomains)   // M137-V — filtre par domaine de la couche BPE
   const ile = commune == null
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
@@ -1414,13 +1414,17 @@ export function MapView() {
         if (pts.length >= 3) setMeasure((s) => ({ ...s, done: true }))
       } else if (tool === 'distance') {
         if (pts.length >= 2) setMeasure((s) => ({ ...s, done: true }))
+      } else if (tool === 'profil') {
+        // RETOURS-13 P6 — Entrée valide la ligne de coupe (≥ 2 points) : posée au store, l'outil se
+        // referme, le tiroir Terrain recalcule le profil le long du tracé.
+        if (pts.length >= 2) { setProfilLigne(pts); setTool(null); setMeasure({ pts: [], alti: null }) }
       }
     }
     m.on('click', onClick)
     m.on('dblclick', onDbl)
     window.addEventListener('keydown', onKey)
     return () => { m.off('click', onClick); m.off('dblclick', onDbl); window.removeEventListener('keydown', onKey) }
-  }, [tool, setTool, setZone])
+  }, [tool, setTool, setZone, setProfilLigne])
 
   // changer d'outil = repartir propre
   useEffect(() => {
@@ -1431,6 +1435,7 @@ export function MapView() {
   const readout = tool === 'distance' && measure.pts.length >= 2 ? fmtDistance(pathLength(measure.pts))
     : tool === 'surface' && measure.pts.length >= 3 ? fmtArea(polygonArea(measure.pts))
     : tool === 'alti' && measure.alti ? `${measure.alti.z.toFixed(1)} m NGR`
+    : tool === 'profil' && measure.pts.length >= 2 ? fmtDistance(pathLength(measure.pts))   // RETOURS-13 P6
     : null
 
   // FIX-FONDS B2/B3 — attribution EXACTE du fond actif : celle de BASEMAP_SOURCES (par fond ET par
@@ -1485,6 +1490,7 @@ export function MapView() {
       {tool && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-mint bg-surface-2 px-4 py-1.5 text-xs text-mint shadow-elev-2">
           {readout ?? (tool === 'alti' ? 'Cliquez un point pour lire l’altitude'
+            : tool === 'profil' ? 'Tracez une ligne · Entrée pour le profil · Échap pour annuler'   // RETOURS-13 P6
             /* RETOURS-11 C8 (03/09) — libellé exact : Entrée valide, Échap annule (le double-clic ne valide plus). */
             : 'Cliquez pour placer les points · Entrée pour valider · Échap pour annuler')}
         </div>

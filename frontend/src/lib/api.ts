@@ -390,6 +390,27 @@ export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOUR
 export interface Exposition { idu: string; orientation: string | null; aspect_deg?: number | null; pente_moyenne_deg?: number | null; erreur?: string }
 export const getParcelExposition = (idu: string) =>
   j<Exposition>(`/parcels/${encodeURIComponent(idu)}/exposition`)
+// RETOURS-13 P6 — PROFIL ALTIMÉTRIQUE (coupe le long d'une ligne), lu LIVE dans le RGE ALTI.
+export interface ProfilPoint { dist_m: number; alt_m: number | null }
+export interface ProfilAltimetrique {
+  disponible: boolean
+  axe: 'parcelle' | 'trace'
+  source: string
+  points: ProfilPoint[]
+  motif?: string | null
+  distance_m?: number
+  denivele_positif_m?: number
+  denivele_negatif_m?: number
+  pente_moyenne_pct?: number
+  pente_max_pct?: number
+  altitude_min_m?: number
+  altitude_max_m?: number
+}
+export const getProfilParcelle = (idu: string) =>
+  j<ProfilAltimetrique>(`/parcels/${encodeURIComponent(idu)}/profil-altimetrique`)
+export const postProfilLigne = (ligne: [number, number][]) =>
+  j<ProfilAltimetrique>('/parcels/profil-altimetrique', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ligne }) })
 // ÉTUDE DE ZONE Z3 — le tiroir « Autour de cette parcelle » (isochrone IGN + Filosofi/BPE).
 export const getParcelleZone = (idu: string, mode: 'pied' | 'voiture', minutes: number) =>
   j<ParcelleZone>(`/parcels/${idu}/zone?${q({ mode, minutes })}`)
