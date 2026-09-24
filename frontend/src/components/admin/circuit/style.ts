@@ -53,7 +53,7 @@ export const CIRCUIT_CSS = `
 .cxp .okline i{width:8px;height:8px;border-radius:50%;background:var(--mint);flex:none} .cxp .okline b{color:var(--text);font-weight:600}
 /* circuit */
 .cxp .cbar{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
-.cxp .cbar input{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:7px 11px;border-radius:6px;font:inherit;min-width:300px}
+.cxp .cbar input{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--text);padding:7px 11px;border-radius:6px;font:inherit;min-width:300px}
 .cxp .cbar input::placeholder{color:var(--faint)}
 .cxp .sw{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:12.5px;cursor:pointer;user-select:none}
 .cxp .sw .tr{width:32px;height:18px;border-radius:9px;border:1px solid var(--line-2);position:relative;background:var(--panel-2)}
@@ -234,5 +234,12 @@ export const CIRCUIT_CSS = `
 .cxp .svt-r .cel small{color:var(--faint);font-size:11.5px} .cxp .svt-r .cel.vide{color:var(--faint)}
 .cxp .svt-r .act{text-align:right} .cxp .svt-r .act .btn{padding:5px 10px;font-size:12px}
 .cxp .svt-foot{padding:12px 16px;color:var(--faint);font-size:12px;border-top:1px solid var(--line)}
+/* ══ CIRCUIT-P7 (lot 3) — légende une ligne + interrupteur « ce qui cloche », recherche unique ══ */
+.cxp .clegend{display:flex;gap:16px;align-items:center;margin:0 0 16px;color:var(--faint);font-size:12px;flex-wrap:wrap}
+.cxp .clegend>span{display:inline-flex;align-items:center}
+.cxp .clegend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.cxp .clegend .sw{margin-left:auto}
+.cxp .si-results{margin-bottom:14px}
+.cxp .node.masque{display:none}
 @media (max-width:1100px){ .cxp .diagram{grid-template-columns:1fr;column-gap:0} .cxp .diagram svg{display:none} .cxp .pump{position:static;margin:12px 0} .cxp .dg{grid-template-columns:1fr} .cxp .kpis{grid-template-columns:1fr 1fr} .cxp .jl{grid-template-columns:1fr 1fr} .cxp .controles{grid-template-columns:1fr} }
 `

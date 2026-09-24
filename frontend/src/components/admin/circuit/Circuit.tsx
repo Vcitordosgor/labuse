@@ -7,8 +7,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
 import {
-  getAdminCircuit, getAdminCircuitTaches, postAdminCircuitAgents, postAdminCircuitSonder,
-  postAdminCircuitVerifier,
+  getAdminCircuit, getAdminCircuitTaches, getSourcesParElement, postAdminCircuitAgents,
+  postAdminCircuitSonder, postAdminCircuitVerifier,
 } from '../../../lib/api'
 
 import { DestinationsDetail } from '../Destinations'
@@ -18,7 +18,6 @@ import { CircuitDiagram } from './CircuitDiagram'
 import { Detail as DetailPage } from './Detail'
 import { ecrireCx, parseCx } from './hash'
 import { Journal } from './Journal'
-import { SensInverse } from './SensInverse'
 import { Sources } from './Sources'
 import { CIRCUIT_CSS } from './style'
 import { focusDeCible, type AFaireLigne, type Cible, type CircuitData } from './types'
@@ -58,6 +57,8 @@ export function CircuitSection() {
   const ta = taches.data?.agents as any
   const tso = taches.data?.sonde as any        // CIRCUIT-P7 (lot 1) — la tâche « Sonder maintenant »
   const tverr = taches.data?.verrous as any   // DASHBOARD-4 D2 — la tâche « verrous »
+  // CIRCUIT-P7 (lot 3) — le registre inversé (élément → sources), fourni au dessin pour la recherche unique.
+  const elements = useQuery({ queryKey: ['sources-par-element'], queryFn: getSourcesParElement, staleTime: 5 * 60_000 }).data?.elements ?? []
 
   const verifier = useMutation({
     mutationFn: postAdminCircuitVerifier,
@@ -205,13 +206,12 @@ export function CircuitSection() {
             </div>
           </div>
         )}
-        {/* DASHBOARD-4b (lot 2) — le sens inverse (élément → ses sources), par recherche. */}
-        {!detail && <SensInverse data={d} onOpenSource={(id) => ouvrirDetail('reservoir', id)} />}
+        {/* CIRCUIT-P7 (lot 3) — le sens inverse est fondu dans la recherche unique du dessin. */}
         {detail
           ? (detail.type === 'destinations'
             ? <DestinationsDetail onBack={fermerDetail} />
             : <DetailPage type={detail.type} id={detail.id} data={d} onClose={fermerDetail} onOpen={ouvrirDetail} />)
-          : <CircuitDiagram data={d} groupe={groupe} onOpen={ouvrirDetail} />}
+          : <CircuitDiagram data={d} groupe={groupe} onOpen={ouvrirDetail} elements={elements} />}
       </section>
 
       <section className={`tab ${onglet === 'journal' ? 'on' : ''}`}>
