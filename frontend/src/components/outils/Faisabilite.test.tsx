@@ -18,6 +18,11 @@ const BILAN = {
       { label: 'Surface habitable (rendement)', valeur: '~175 m²', source: 'SDP × 0,8', prov: 'derive' },
       { label: 'Logements retenus au sol', valeur: '~1 à 2', source: 'plafond densité', prov: 'derive' },
     ],
+    // FAISABILITE-1 (lot D) — hypothèses éditables servies (le front rend un champ par entrée).
+    hypotheses_modifiables: [
+      { key: 'coef_occupation', label: 'Occupation du gabarit', valeur: 45, unite: '%', min: 10, max: 100 },
+      { key: 'coef_rendement', label: 'Rendement SDP → habitable', valeur: 80, unite: '%', min: 50, max: 100 },
+    ],
   },
   marche: null, bilan: null, fiscal: null, rtaa: null,
 }
@@ -25,7 +30,9 @@ const BILAN = {
 function mockFetch() {
   global.fetch = vi.fn(async (url: string) => {
     const u = String(url)
+    if (u.includes('/recalcul')) return { ok: true, json: async () => ({ idu: BILAN.idu, capacite: BILAN.capacite, overrides_retenus: { coef_occupation: 60 } }) }
     if (u.includes('/modules/faisabilite/')) return { ok: true, json: async () => BILAN }
+    if (u.includes('/pipeline/parcel/')) return { ok: true, json: async () => ({ in_pipeline: false, entry: null }) }
     if (u.includes('/communes')) return { ok: true, json: async () => [] }
     return { ok: true, json: async () => ({}) }
   }) as unknown as typeof fetch
@@ -69,6 +76,26 @@ describe('FAISABILITE — étape 12 (SHAB vendable retenue)', () => {
     const last = ol.querySelectorAll('li')[2]
     expect(last.textContent).toContain('SHAB vendable retenue')
     expect(last.textContent).toContain('123')
+  })
+})
+
+describe('FAISABILITE-1 (lot D) — hypothèses modifiables (bloc partagé fiche + outil)', () => {
+  beforeEach(mockFetch)
+  afterEach(() => vi.restoreAllMocks())
+
+  it('rend un champ par hypothèse Estimé ; éditer fait apparaître « Revenir aux hypothèses LABUSE »', async () => {
+    render(<QueryClientProvider client={qc()}><FaisabiliteTab idu="97411000BZ1065" /></QueryClientProvider>)
+    const bloc = await waitFor(() => { const b = document.querySelector('[data-faisa-hypotheses]'); if (!b) throw new Error('no hyp'); return b as HTMLElement })
+    const inputs = bloc.querySelectorAll('input[type="number"]')
+    expect(inputs.length).toBe(2)                              // occupation + rendement
+    // pas de reset tant qu'aucune hypothèse n'est modifiée
+    expect(document.querySelector('[data-faisa-hyp-reset]')).toBeFalsy()
+    // édite l'occupation → le bouton « Revenir aux hypothèses LABUSE » apparaît (nOv > 0)
+    fireEvent.change(inputs[0], { target: { value: '60' } })
+    await waitFor(() => expect(document.querySelector('[data-faisa-hyp-reset]')).toBeTruthy())
+    // reset → le bouton disparaît (retour aux hypothèses LABUSE)
+    fireEvent.click(document.querySelector('[data-faisa-hyp-reset]') as HTMLElement)
+    await waitFor(() => expect(document.querySelector('[data-faisa-hyp-reset]')).toBeFalsy())
   })
 })
 

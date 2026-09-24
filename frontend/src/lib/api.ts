@@ -1880,6 +1880,12 @@ export const promoteursActifs = (commune: string) => j<Record<string, any>>(`/pa
 
 // ── M22 + Bilan (faisabilité bidirectionnelle) ──
 export const getFaisabilite = (idu: string) => j<Record<string, any>>(`/modules/faisabilite/${idu}`)
+// FAISABILITE-1 (lot D) — recalcule la capacité (11 étapes + fourchette) avec des hypothèses Estimé
+// surchargées (« et si… »). UN SEUL moteur côté back (parcel_faisabilite) → aucune divergence.
+export const postFaisabiliteRecalcul = (idu: string, overrides: Record<string, number>) =>
+  j<Record<string, any>>(`/modules/faisabilite/${idu}/recalcul`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ overrides }),
+  })
 // M11 Surface C : explication IA de la dérivation du chiffrage (ancrée sur les steps, sur clic).
 export const faisabiliteExplain = (idu: string) =>
   j<{ disponible: boolean; rejected?: boolean; degraded?: boolean; texte?: string; message?: string;

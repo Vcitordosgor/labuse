@@ -1624,6 +1624,12 @@ def _faisa_step_prov(source: str, prov: str) -> str:
     return "estimee"   # défaut prudent : jamais présenter un chiffre non sourcé comme « sourcé »
 
 
+def _hyp_modifiables(commune: str | None) -> list[dict]:
+    """FAISABILITE-1 (lot D) — hypothèses éditables servies (valeurs de la commune, avant override)."""
+    from ..faisabilite.engine import Hypotheses, hypotheses_modifiables
+    return hypotheses_modifiables(Hypotheses.charger(commune))
+
+
 @router.get("/faisabilite/{idu}")
 def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     """SENS 1 (parcelle → programme) : « que peut accueillir ce terrain ? » + bilan économique."""
@@ -1661,6 +1667,9 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
                            "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur,
                                       "source": s.source, "prov": _faisa_step_prov(s.source, s.prov)}
                                      for s in f.steps],
+                           # FAISABILITE-1 (lot D) — hypothèses ÉDITABLES (les seules lignes Estimé) :
+                           # le front rend un champ par entrée ; recalcul via POST …/recalcul.
+                           "hypotheses_modifiables": _hyp_modifiables(_ctx.commune),
                            "avertissements": f.avertissements, "modulation": f.modulation}
     else:
         out["capacite"] = None
@@ -1706,6 +1715,44 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     rtaa = load_yaml_config("rtaa_dom")
     out["rtaa"] = {"meta": rtaa["meta"], "exigences": rtaa["exigences"]}
     return out
+
+
+class RecalculIn(BaseModel):
+    # FAISABILITE-1 (lot D) — surcharges d'hypothèses ESTIMÉES (« et si… »). Clés blanches SEULEMENT
+    # (HYP_EDITABLES) ; toute autre est ignorée. JAMAIS persisté en base : le front les garde dans le
+    # projet (doctrine 09/09), elles ne resservent pas sur une autre parcelle.
+    overrides: dict[str, float] = Field(default_factory=dict)
+
+
+@router.post("/faisabilite/{idu}/recalcul")
+def faisabilite_recalcul(idu: str, body: RecalculIn, db: Session = Depends(get_db)) -> dict:
+    """FAISABILITE-1 (lot D) — recalcule la capacité (11 étapes + fourchette) avec des hypothèses
+    surchargées. UN SEUL moteur : `parcel_faisabilite(hyp_overrides=…)` (aucune reimplémentation),
+    donc « recalcul immédiat de tout ce qui suit » sans divergence. Renvoie le même bloc `capacite`
+    que sens1 + `overrides_retenus` (ce qui a été accepté, bornes appliquées)."""
+    _check_idu(idu)
+    from ..faisabilite.db import parcel_faisabilite
+    from ..faisabilite.engine import Hypotheses, appliquer_overrides_hypotheses, hypotheses_modifiables
+
+    row = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
+    if not row:
+        raise HTTPException(404, "Parcelle inconnue")
+    fz = parcel_faisabilite(db, row["id"], hyp_overrides=body.overrides)
+    if not fz:
+        return {"idu": idu, "capacite": None}
+    ctx, f = fz
+    # les surcharges RETENUES (bornées) — pour que le front reflète les valeurs réellement appliquées.
+    hyp_eff = Hypotheses.charger(ctx.commune)
+    retenus = appliquer_overrides_hypotheses(hyp_eff, body.overrides)
+    return {"idu": idu, "capacite": {
+        "zone": f.zone, "verdict": f.verdict, "calibree": f.calibree,
+        "a_cheval": ctx.a_cheval, "zone_parts": ctx.zone_parts,
+        "fourchette": f.fourchette, "hypotheses": f.hypotheses, "bandeau": f.bandeau,
+        "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur,
+                   "source": s.source, "prov": _faisa_step_prov(s.source, s.prov)} for s in f.steps],
+        "hypotheses_modifiables": hypotheses_modifiables(hyp_eff),
+        "avertissements": f.avertissements, "modulation": f.modulation,
+    }, "overrides_retenus": retenus}
 
 
 class ChargeIn(BaseModel):

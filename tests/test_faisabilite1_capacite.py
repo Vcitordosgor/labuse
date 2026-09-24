@@ -62,3 +62,44 @@ def test_interdit_ignore_les_non_calibrees(monkeypatch):
     monkeypatch.setattr("labuse.plu.destinations.verdict", _fake_verdict)
     keys = _destination_interdit_keys(_DB(), "logement")
     assert keys == ["A||Zi"], "seule la zone calibrée ET interdite est écartée"
+
+
+# ─────────────────────── Lot D — hypothèses modifiables + lignes manquantes ───────────────────────
+
+def test_lignes_manquantes_ajoutees():
+    """Lot D — `extras` ajoute deux LIGNES sans changer le calcul : « Espaces inconstructibles
+    déduits » (ER/EBC/greve) et « Mixité sociale (LLS) » (non modélisée)."""
+    from labuse.faisabilite.engine import estimate_capacity
+    from labuse.faisabilite.zonage import resolve_zone
+    base = estimate_capacity(resolve_zone("U1c"), 2000, emprise_geo=(1200.0, 3.0))
+    avec = estimate_capacity(resolve_zone("U1c"), 2000, emprise_geo=(1200.0, 3.0),
+                             extras={"total_deduit_m2": 120, "er_m2": 120, "mixite": True})
+    labels = [s.label for s in avec.steps]
+    assert "Espaces inconstructibles déduits" in labels
+    assert "Mixité sociale (LLS)" in labels
+    # la fourchette (le calcul) est INCHANGÉE — les lignes sont informatives
+    assert avec.fourchette["logements_au_sol"] == base.fourchette["logements_au_sol"]
+    mix = next(s for s in avec.steps if s.label == "Mixité sociale (LLS)")
+    assert mix.valeur == "non modélisée"
+
+
+def test_overrides_hypotheses_bornes_et_pct():
+    """Lot D — les surcharges d'hypothèses sont clampées aux bornes, converties (% → fraction),
+    et les clés inconnues/hors bornes sont ignorées (jamais un calcul détourné)."""
+    from labuse.faisabilite.engine import Hypotheses, appliquer_overrides_hypotheses
+    h = Hypotheses()
+    ret = appliquer_overrides_hypotheses(h, {"coef_occupation": 60, "logement_m2": 50,
+                                             "coef_rendement": 999, "inconnu": 1})
+    assert ret == {"coef_occupation": 60.0, "logement_m2": 50.0}   # 999 hors borne + inconnu ignorés
+    assert h.coef_occupation == 0.60                               # % → fraction
+    assert h.logement_m2_bas == 50.0 and h.logement_m2_haut == 50.0  # « moyenne » → les deux bornes
+
+
+def test_overrides_gardes_dans_le_projet_pas_ailleurs():
+    """Lot D (doctrine 09/09) — les overrides se GARDENT dans le projet (prospection.faisa_overrides,
+    validés par le moteur) ; une clé inconnue ou hors borne n'y entre pas."""
+    from labuse.prospection import merge_prospection
+    out = merge_prospection({}, {"faisa_overrides": {"coef_occupation": 60, "coef_rendement": 999, "x": 1}})
+    assert out["faisa_overrides"] == {"coef_occupation": 60.0}   # seul le valide/borné est gardé
+    # non-dict ignoré, jamais de stockage arbitraire
+    assert "faisa_overrides" not in merge_prospection({}, {"faisa_overrides": "bidon"})
