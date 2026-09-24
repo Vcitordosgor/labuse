@@ -6983,6 +6983,7 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
     from ..faisabilite.zonage import resolve_zone
     out: list[dict] = []
     marche_cache: dict[str, dict] = {}
+    sl_ready = _score_labuse_ready(db)   # COMPARER-2 §4 — table candidate q_v15 présente ?
     for idu in ids:
         pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
         if pid is None:                       # IDU introuvable → ignoré silencieusement (contrat D2)
@@ -7020,6 +7021,18 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
         row["emprise_ces_pct"] = float(ces) if isinstance(ces, (int, float)) else None
         row["emprise_ces_source"] = ((zr.sources or {}).get("emprise")
                                      if zr and row["emprise_ces_pct"] is not None else None)
+        # COMPARER-2 §4 — Classement LABUSE (bande + Signal de mutation) du run CANDIDAT q_v15, la MÊME
+        # source que l'écran Analyse (score_labuse). Servi tel quel ; NULL tant que q_v15 n'est pas la
+        # table servie — la bascule rendra tout cohérent (cf. rapport). Le score ne s'affiche QUE sur
+        # la fiche, l'Analyse, et cet outil de comparaison — jamais la carte (doctrine M120).
+        if sl_ready:
+            sl = db.execute(text(
+                """SELECT bande, signal_niveau, non_calculable FROM score_labuse
+                   WHERE run_label = :r AND idu = :idu"""),
+                {"r": SCORE_LABUSE_RUN, "idu": idu}).mappings().first()
+            if sl:
+                row["bande"] = ("NC" if sl["non_calculable"] else sl["bande"])
+                row["signal_niveau"] = sl["signal_niveau"]
         out.append(row)
     return {"count": len(out), "parcels": out}
 

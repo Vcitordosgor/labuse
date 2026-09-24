@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getCompare, type CompareRow } from '../../lib/api'
 import { fmtEurCompact, fmtInt, iduCourt } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
+import { bandeMeta, signalMeta } from '../../lib/status'   // COMPARER-2 §4 — bande + Signal (comme l'Analyse)
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-FIX-2 D1 — saisie clavier (IDU/adresse/réf courte)
 
@@ -28,10 +29,28 @@ type Row = {
   // OUTILS-FIX-2 D2 — provenance (comme la fiche) : « source » = donnée observée (cadastre, PLU, DVF,
   // DGFiP, aléas) ; « estime » = valeur dérivée/calculée (SDP, charge foncière, logements, sous-densité).
   prov: 'source' | 'estime'
+  // COMPARER-2 §4 — rendu personnalisé (chip coloré) + ligne sans badge de provenance (verdict, pas donnée).
+  render?: (r: CompareRow) => JSX.Element
+  noBadge?: boolean
 }
 const ROWS: Row[] = [
   { label: 'Surface', prov: 'source', val: (r) => r.surface_m2 != null ? `${fmtInt(r.surface_m2)} m²` : '—', num: (r) => r.surface_m2 ?? null, best: 'hi' },
   { label: 'Zone PLU', prov: 'source', val: (r) => r.zone || '—' },
+  // COMPARER-2 §4 — Classement LABUSE (bande du moteur candidat q_v15) + Signal de mutation en badge,
+  // MÊME source et MÊMES couleurs que l'écran Analyse (score_labuse). 2e ligne, sous la zone PLU.
+  { label: 'Classement LABUSE', prov: 'estime', noBadge: true,
+    val: (r) => bandeMeta(r.bande)?.label ?? '—',
+    render: (r) => {
+      const bm = bandeMeta(r.bande)
+      if (!bm) return <span className="text-txt-dim">—</span>
+      const sm = signalMeta(r.signal_niveau)
+      return (
+        <span className="inline-flex flex-wrap items-center gap-1.5">
+          <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: `${bm.color}22`, color: bm.color }}>{bm.label}</span>
+          {sm && <span className="rounded px-1 py-0.5 text-[9px] font-medium" style={{ backgroundColor: `${sm.color}1F`, color: sm.color }}>{sm.label}</span>}
+        </span>
+      )
+    } },
   { label: 'Constructible', prov: 'source', val: (r) => r.constructible == null ? '—' : r.constructible ? 'oui' : 'non' },
   // O2-5 — chaque capacité porte son périmètre (source unique lib/perimetres) : la « max » suppose le
   // terrain libéré, la « résiduelle » suppose le bâti conservé — sinon les deux se contredisent à l'œil.
@@ -251,13 +270,13 @@ export function ComparePanel() {
                         {row.title
                           ? <span className="cursor-help border-b border-dotted border-line-2">{row.label}</span>
                           : row.label}
-                        <ProvBadge prov={row.prov} />
+                        {!row.noBadge && <ProvBadge prov={row.prov} />}
                       </td>
                       {parcels.map((r, i) => {
                         const win = winners.has(i)   // vert = meilleure valeur (comme la table Communes)
                         return (
                           <td key={r.idu} className={`border-l border-line p-2 ${win ? 'font-semibold text-mint' : 'text-txt'}`}>
-                            {row.val(r)}
+                            {row.render ? row.render(r) : row.val(r)}
                           </td>
                         )
                       })}
