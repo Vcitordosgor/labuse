@@ -4,7 +4,7 @@ import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
 import { BANDE_META, SIGNAL_META, verdictMeta } from '../../lib/status'
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -12,7 +12,7 @@ import { CLIENT } from '../../lib/strings'
 import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
 import { DeplacerMenu } from '../crm/DeplacerMenu'   // DA-FIX-5c — menu « Déplacer vers… » partagé (kanban CRM)
-import { AskBar, renderRich } from './AskBar'
+import { AskBar } from './AskBar'
 import { FinancierQuestionnaire } from './FinancierQuestionnaire'
 import { GabaritLine } from './GabaritLine'
 import { cadastreGeoportailUrl, googleMapsUrl, pagesJaunes } from './liensExternes'
@@ -445,9 +445,10 @@ export function Fiche({ idu }: { idu: string }) {
   // 'synthese' = panneau Synthèse pleine largeur. Le panneau actif REMPLACE la rangée de boutons
   // (ne se pose plus À CÔTÉ). Synthèse : la mutation vit ICI (persiste au repli) → replier puis
   // rouvrir ne relance AUCUN appel IA. Réinitialisée seulement au changement de parcelle.
-  const [iaOuvert, setIaOuvert] = useState<'aucun' | 'question' | 'synthese'>('aucun')
-  const syntheseM = useMutation({ mutationFn: () => getExplain(idu) })
-  useEffect(() => { setIaOuvert('aucun'); syntheseM.reset() }, [idu])  // eslint-disable-line react-hooks/exhaustive-deps
+  // RETOURS-13 P1 — « Synthèse IA » retirée : l'IA en tête se réduit à « Poser une question »
+  // (Copilote / AskBar). Plus de mutation de synthèse (getExplain) portée par la fiche.
+  const [iaOuvert, setIaOuvert] = useState<'aucun' | 'question'>('aucun')
+  useEffect(() => { setIaOuvert('aucun') }, [idu])  // eslint-disable-line react-hooks/exhaustive-deps
   const { data: f, isLoading, isError, error, refetch } = useQuery({ queryKey: ['fiche', idu], queryFn: () => getFiche(idu) })
   // RECETTE-8 W22 — l'exposition (orientation + pente) remplace la vue mer dans la tête de fiche.
   // Calcul lazy (MNT RGE ALTI + gdaldem ~0,5 s) : la tuile affiche « … » puis la valeur.
@@ -874,14 +875,29 @@ export function Fiche({ idu }: { idu: string }) {
             niveau. Au clic, le bloc verdict complet se déploie (mémorisé par parcelle, session).
             Vaut aussi en mode factuel (le bouton apparaît pareillement : rien n'est imposé, tout
             est accessible). Les PDF gardent le verdict sans condition (rail back inchangé). */}
-        {f && verdict && !verdictRevele && (
-          // M56-B6 · DA-FICHE-v6 — bouton d'analyse pleine largeur (.cta, 40px) + légende dessous.
+        {/* RETOURS-13 P1 — EN-TÊTE À DEUX BOUTONS (« Synthèse IA » retirée). Même rangée (.ia = flex),
+            même hauteur (Bouton 32px) : « Demander à LABUSE d'analyser la parcelle → » (principal,
+            plein, vert) + « Poser une question » (secondaire, Copilote). L'analyse RÉVÈLE le verdict
+            SERVI : f.analyse_labuse vient de getFiche(idu) = `/parcels/{idu}?source=${SOURCE}`, où
+            SOURCE = VITE_RUN_LABEL injecté depuis config/served_run.txt (run servi). Aucune version
+            de scoring codée en dur : la bascule q_v11→q_v15 change le run servi, la fiche suit sans
+            toucher au code. « Poser une question » déploie le Copilote (AskBar) juste dessous. */}
+        {f && (
           <>
-            <Bouton data-demander-analyse niveau="primaire" ton="vert" className="w-full" onClick={() => revelerVerdict(idu)}>
-              {CLIENT.fiche.demanderAnalyse} →
-            </Bouton>
-            {/* M62-P1 (i) : sous-titre « Le verdict, le score et "pourquoi" — à la demande » RETIRÉ,
-                le bouton se suffit (P2). `demanderAnalyseSous` (strings.ts) devient 0-caller. */}
+            {iaOuvert !== 'question' && (
+              <div className="ia">
+                {verdict && !verdictRevele && (
+                  <Bouton data-demander-analyse niveau="primaire" ton="vert" className="flex-1" onClick={() => revelerVerdict(idu)}>
+                    {CLIENT.fiche.demanderAnalyse} →
+                  </Bouton>
+                )}
+                <Bouton onClick={() => setIaOuvert('question')} data-askbar-open niveau="secondaire" ton="ia" className="flex-1">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 4H4v13h5l3 3 3-3h2z" /></svg>
+                  Poser une question
+                </Bouton>
+              </div>
+            )}
+            {iaOuvert === 'question' && <AskBar idu={idu} zone={null} startOpen onClose={() => setIaOuvert('aucun')} />}
           </>
         )}
         {/* ══════ ANALYSE-1 — CARTE « ANALYSE LABUSE » (nouveau moteur : Score LABUSE + Signal) ══════
@@ -1266,24 +1282,9 @@ export function Fiche({ idu }: { idu: string }) {
             {/* M61 P1 — le panneau actif (question ou synthèse) REMPLACE la rangée des deux boutons,
                 pleine largeur ; « Replier » y ramène les boutons. Repli/réouverture de la synthèse
                 ne relance aucun appel (mutation portée par la fiche, cf. syntheseM). */}
-            <div data-ia-tete>
-              {iaOuvert === 'aucun' && (
-                <div className="ia">
-                  <Bouton onClick={() => setIaOuvert('question')} data-askbar-open niveau="secondaire" ton="ia" className="flex-1">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 4H4v13h5l3 3 3-3h2z" /></svg>
-                    Poser une question
-                  </Bouton>
-                  {/* RETOURS-11 T9 (03/09) — explication au survol retirée (plus de title). */}
-                  <Bouton onClick={() => { setIaOuvert('synthese'); if (!syntheseM.data && !syntheseM.isPending) syntheseM.mutate() }}
-                    data-synthese-ia niveau="secondaire" ton="ia" className="flex-1">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /></svg>
-                    Synthèse IA
-                  </Bouton>
-                </div>
-              )}
-              {iaOuvert === 'question' && <AskBar idu={idu} zone={null} startOpen onClose={() => setIaOuvert('aucun')} />}
-              {iaOuvert === 'synthese' && <SyntheseIAPanel data={syntheseM.data} pending={syntheseM.isPending} error={syntheseM.isError} onReplier={() => setIaOuvert('aucun')} />}
-            </div>
+            {/* RETOURS-13 P1 — la rangée IA d'en-tête (« Poser une question » + ex-« Synthèse IA »)
+                a REMONTÉ à côté du bouton d'analyse (bloc Analyse, plus haut) : les deux boutons
+                de tête vivent désormais sur UNE rangée. Plus rien à rendre ici. */}
 
             {/* M55-O phase 2.1c : Mode B unifié et rattaché à la Constructibilité (rendu unique plus
                 bas). L'ancien rendu « remonté » pour la déclassée à signal fort est retiré. */}
@@ -1829,40 +1830,10 @@ export function Fiche({ idu }: { idu: string }) {
  *  couche 2 M-T garantit une sortie soit VALIDÉE (available) soit un repli STUB déterministe
  *  (available=false, stub=true) — on affiche le libellé de repli quand c'est un stub. Le quota IA
  *  existant s'applique au niveau du socle IA ; un 429 tombe dans le message d'erreur. */
-// M61 P1 — PANNEAU synthèse (plus un bouton) : pleine largeur, markdown rendu (renderRich), bouton
-// « Replier ». La mutation est portée par la fiche (SyntheseIAPanel ne fait AUCUN appel) → replier
-// puis rouvrir n'exécute rien. Les états en cours / erreur s'affichent aussi pleine largeur.
-function SyntheseIAPanel({ data: d, pending, error, onReplier }: {
-  data?: Awaited<ReturnType<typeof getExplain>>; pending: boolean; error: boolean; onReplier: () => void
-}) {
-  const box = { marginTop: 8, background: '#110d1b', border: '1px solid #372c58', borderRadius: 6, padding: '11px 14px' } as const
-  const stub = d && !d.available
-  const rs = d?.rules_summary
-  return (
-    <div data-synthese-ia-result style={box}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-        <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: '#c9b6f2', display: 'flex', alignItems: 'center', gap: 6 }}>
-          {CLIENT.fiche.ia.synthese}
-          {stub && <span data-synthese-stub style={{ fontSize: 9.5, fontWeight: 500, color: '#b7a3e6', border: '1px solid #47386e', borderRadius: 4, padding: '1px 5px' }}>repli</span>}
-        </p>
-        <button data-synthese-replier onClick={onReplier}
-          style={{ background: 'none', border: '1px solid #372c58', borderRadius: 6, color: '#b7a3e6', fontSize: 11, padding: '2px 9px', cursor: 'pointer', flexShrink: 0 }}>Replier</button>
-      </div>
-      {pending ? (
-        <p style={{ margin: '8px 0 0', color: '#c9b6f2', fontSize: 12 }}><span style={{ display: 'inline-block', width: 6, height: 6, marginRight: 8, borderRadius: 6, background: '#8a6ff0' }} className="animate-pulse" />{CLIENT.fiche.ia.syntheseEnCours}</p>
-      ) : error ? (
-        <p style={{ margin: '8px 0 0', color: '#E8695A', fontSize: 12 }}>{CLIENT.fiche.ia.syntheseErreur}</p>
-      ) : (
-        <>
-          <div style={{ margin: '7px 0 0', fontSize: 12, lineHeight: 1.5, color: '#d8ccf5' }}>{renderRich((d?.available ? d.explanation : d?.message) ?? '')}</div>
-          {stub && Array.isArray(rs) && rs.length > 0 && <ul style={{ margin: '6px 0 0', paddingLeft: 16, fontSize: 11.5, lineHeight: 1.5, color: '#c9b6f2' }}>{rs.map((r, i) => <li key={i}>{r}</li>)}</ul>}
-          {stub && typeof rs === 'string' && rs && <div style={{ margin: '6px 0 0', fontSize: 11.5, lineHeight: 1.5, color: '#c9b6f2' }}>{renderRich(rs)}</div>}
-          {stub && <p style={{ margin: '7px 0 0', fontSize: 10, color: '#8f80b8' }}>{CLIENT.fiche.ia.syntheseStub}</p>}
-        </>
-      )}
-    </div>
-  )
-}
+// RETOURS-13 P1 — « Synthèse IA » retirée de la fiche : le panneau SyntheseIAPanel (mutation
+// getExplain portée par la fiche) est SUPPRIMÉ. Le Copilote reste accessible par « Poser une
+// question » (AskBar). L'endpoint GET /parcels/{idu}/explain n'a plus de point d'entrée front
+// (NON supprimé côté back — peut resservir ; décision Vic).
 
 
 // M55-L point 7 : le widget feedback `FeedbackStrip` (« Ce lead vous est-il utile ? ») est retiré
