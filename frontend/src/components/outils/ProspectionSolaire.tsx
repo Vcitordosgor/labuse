@@ -22,7 +22,7 @@ import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { ListPaginationFooter, usePagination } from '../ListPagination'
 import { Siren } from '../shared/Siren'
@@ -173,8 +173,8 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
 
       {/* RECETTE-5 (V3) — LA FICHE DE SYNTHÈSE D'ABORD (total + par commune), affichée d'emblée ;
           le bouton « Voir les parcelles » vient DESSOUS (cf. plus bas). */}
-      {agg.isLoading && <Loading label="Comptage des piscines…" />}
-      {agg.isError && <ErrorState message="Détection piscines momentanément indisponible." />}
+      {agg.isLoading && <Squelette bloc />}
+      {agg.isError && <ErrorState message="Détection piscines momentanément indisponible." retry={() => agg.refetch()} />}
       {/* R11 — quand la carte est affichée, le comptage se replie en UNE ligne (déplier) pour dévoiler le listing. */}
       {agg.data && comptageReplie && (
         <button data-piscines-comptage-replie onClick={() => setComptageReplie(false)}
@@ -252,7 +252,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
       {/* A2 — liste actionnable : Parcelle · Commune · Potentiel solaire · Type de propriétaire
           (PM nommée / particulier non nommé). Surface piscine volontairement absente (mesure
           aérienne fausse, O12a). A3 export CSV · A5 pont Courrier sur la sélection. */}
-      {list.isLoading && <Loading label="Parcelles…" />}
+      {list.isLoading && <Squelette lignes={6} />}
       {list.data && (
         <>
           {/* RECETTE-1 R23 — « Préparer les courriers » et « Comparer » RETIRÉS de l'outil Piscine
@@ -323,8 +323,8 @@ function ModeEnsoleillement({ onBack, prefillIdu }: { onBack: () => void; prefil
       <BackBar onBack={onBack} titre="☀️ Ensoleillement" />
       {/* BARRE UNIQUE (SOCLE) → FICHE SOLEIL */}
       <ParcelInput dataAttr="solaire-idu" placeholder="Adresse ou IDU — la fiche soleil de la parcelle" onPick={setFicheIdu} />
-      {ficheIdu && fiche.isLoading && <p className="text-[11px] text-txt-mut">Fiche soleil…</p>}
-      {ficheIdu && fiche.isError && <p className="text-[11px] text-st-ecartee">Parcelle introuvable — vérifiez l’IDU.</p>}
+      {ficheIdu && fiche.isLoading && <Squelette lignes={4} />}
+      {ficheIdu && fiche.isError && <ErrorState message="Parcelle introuvable — vérifiez l’IDU." retry={() => fiche.refetch()} />}
       {ficheIdu && fiche.data && <FicheSoleil f={fiche.data} onOpen={() => select(ficheIdu)} />}
       {!ficheIdu && <p className="text-[11px] text-txt-mut">Saisissez une parcelle pour sa fiche soleil (potentiel, toiture, profil mensuel).</p>}
       <p className="mt-auto text-[9.5px] leading-snug text-txt-dim">{SOURCES_PIED}</p>
@@ -372,7 +372,7 @@ function Rosace({ azimut }: { azimut: number | null }) {
 
 // FICHE SOLEIL — potentiel (unité), toiture, orientation, PROFIL MENSUEL (12 barres), limites.
 function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
-  if (!f.ok) return <p className="rounded-lg bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">{f.message ?? 'Aucune donnée solaire pour cette parcelle.'}</p>
+  if (!f.ok) return <ErrorState message={f.message ?? 'Données solaires indisponibles'} />
   const pm = f.prod_mensuel ?? []
   const max = Math.max(...pm, 1)
   // A6 — dimensionnement SERVI PAR LE BACK (plus de calcul métier au front) : puissance installable

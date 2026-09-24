@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { getAntiFiche, type AntiFicheMotif } from '../../lib/api'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 
 // R5 (O3) — ANTI-FICHE « Pourquoi pas ? » : les motifs d'écartement/vigilance de LA parcelle,
@@ -21,7 +21,7 @@ function Motif({ m, hard = false }: { m: AntiFicheMotif; hard?: boolean }) {
 export function PourquoiPasTab({ idu }: { idu: string }) {
   const q = useQuery({ queryKey: ['anti-fiche', idu], queryFn: () => getAntiFiche(idu) })
   const d = q.data
-  if (q.isLoading) return <Loading label="Lecture des motifs" className="text-xs" />
+  if (q.isLoading) return <Squelette lignes={3} />
   if (q.isError || !d) return <ErrorState message="Motifs momentanément indisponibles." retry={() => q.refetch()} />
   return (
     <div data-pourquoi-pas className="flex flex-col gap-3">

@@ -16,7 +16,7 @@ import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { ListPaginationFooter } from '../ListPagination'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Siren } from '../shared/Siren'
 import { Tip } from '../Tip'
@@ -56,7 +56,7 @@ function BlocDetail({ blocId }: { blocId: number }) {
   // Emprise = les parcelles du bloc surlignées sur la carte tant que le détail est ouvert.
   useModuleMap(membres.map((m) => m.idu), null, [q.dataUpdatedAt])
 
-  if (q.isLoading) return <div className="px-2 py-1"><Loading label="Parcelles du bloc…" /></div>
+  if (q.isLoading) return <div className="px-2 py-1"><Squelette lignes={3} /></div>
   if (q.isError || !q.data) return null
   return (
     <div className="mt-1 flex flex-col gap-0.5 border-t border-line-2 pt-1">
@@ -218,7 +218,7 @@ export function Blocs() {
         </Bouton>
       )}
 
-      {q.isLoading && <Loading label="Blocs…" />}
+      {q.isLoading && <Squelette lignes={6} />}
       {q.isError && <ErrorState message="Signal momentanément indisponible — réessayez." retry={() => q.refetch()} />}
       {meta && total === 0 && (
         // ÉTAT VIDE HONNÊTE — jamais de zéros : le périmètre est nommé.

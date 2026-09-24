@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getVefaDetail } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { fmtInt } from '../../lib/format'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
 
 export function VefaDetail() {
   const commune = useApp((s) => s.vefaCommune)
@@ -20,7 +20,7 @@ export function VefaDetail() {
         <span className="label-caps">Neuf VEFA — {commune}</span>
         <button data-vefa-close onClick={close} className="text-txt-dim hover:text-txt-hi" aria-label="Fermer">✕</button>
       </div>
-      {q.isLoading && <Loading label="Détail…" className="mx-auto my-4 text-xs" />}
+      {q.isLoading && <Squelette lignes={4} className="px-3.5 py-3" />}
       {d && (
         <div className="flex flex-col gap-2.5 px-3.5 py-3 text-[12px]">
           {/* médiane €/m² VEFA (36 mois) + n */}

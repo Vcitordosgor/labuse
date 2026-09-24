@@ -4,6 +4,8 @@ import { getGabarit, type GabaritResult, type GabGeom } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
 
@@ -180,8 +182,8 @@ export function Gabarit() {
         </p>
       )}
 
-      {q.isLoading && <p className="text-[11px] text-txt-mut">Calcul…</p>}
-      {q.isError && <p className="text-[11px] text-st-ecartee">Parcelle inconnue ou service indisponible.</p>}
+      {q.isLoading && <Squelette lignes={4} />}
+      {q.isError && <ErrorState message="Parcelle inconnue ou service indisponible." retry={() => q.refetch()} />}
 
       {/* CALCUL INCOMPLET — la parcelle reste VISIBLE (contour tracé, réf + commune au-dessus du motif).
           Aucune zone / métrique / 3D réglementaire (CDC §3). */}

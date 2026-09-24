@@ -25,3 +25,21 @@ export function Loading({ label, className = '', big = false, accent = 'mint' }:
 export function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-surface-3 ${className}`} />
 }
+
+// DA-FIX-4 Lot 2 (DA-036) — LE squelette de chargement unique. `lignes` (listes/panneaux) ou `bloc`
+// (carte, graphiques). Seule animation tolérée hors apparition : la pulsation d'opacité lente du
+// squelette (classe `.sk` = labuse-sk, 1 → 0,6, 1,2 s). Remplace Loading (gros points), les 2 spinners
+// rotatifs (App/Header), MapLoading et les « Chargement… » texte.
+export function Squelette({ lignes = 3, bloc = false, className = '', label }:
+  { lignes?: number; bloc?: boolean; className?: string; label?: string }) {
+  if (bloc) {
+    return <div className={`sk min-h-[80px] w-full flex-1 ${className}`} role="status" aria-busy="true" aria-label={label ?? 'Chargement'} />
+  }
+  return (
+    <div className={`flex w-full flex-col gap-2 ${className}`} role="status" aria-busy="true" aria-label={label ?? 'Chargement'}>
+      {Array.from({ length: lignes }).map((_, i) => (
+        <div key={i} className="sk h-4" style={{ width: i === lignes - 1 ? '62%' : '100%' }} />
+      ))}
+    </div>
+  )
+}

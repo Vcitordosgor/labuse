@@ -4,7 +4,8 @@
 // on explique que le corpus se constitue, pas un tableau de tirets qui fait peur. Couleurs source unique.
 import { useQuery } from '@tanstack/react-query'
 import { getRadarMarche, type RadarMarcheLigne, type RadarMesure } from '../../lib/api'
-import { Bouton } from '../ui/Bouton'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
 
 const fmt = (v: number) => v.toLocaleString('fr-FR')
 
@@ -35,17 +36,12 @@ function Ligne({ l, fort = false }: { l: RadarMarcheLigne; fort?: boolean }) {
 
 export function RadarMarche() {
   const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['radar-marche'], queryFn: getRadarMarche })
-  if (isLoading) return <div className="p-4 text-[12px] text-txt-dim">Chargement…</div>
+  if (isLoading) return <Squelette lignes={6} className="p-4" />
   // RETOURS-1 R9 (Vic) — CAUSE du « Chargement… » infini : `isError` n'était pas lu — une erreur
   // (ici : '/radar' absent du proxy vite dev → 404 HTML) laissait isLoading=false et data=undefined,
   // et l'écran restait sur « Chargement… » pour toujours. Désormais : erreur DITE + réessayer.
   if (isError || !data) return (
-    <div className="flex flex-col items-start gap-2 p-4 text-[12px] text-txt-mut">
-      <p>Le marché du Radar n’a pas pu être chargé — le serveur n’a pas répondu.</p>
-      <Bouton niveau="secondaire" ton="vert" onClick={() => refetch()}>
-        Réessayer
-      </Bouton>
-    </div>
+    <ErrorState message="Le marché du Radar n’a pas pu être chargé — le serveur n’a pas répondu." retry={() => refetch()} />
   )
   const jeune = data.corpus_total < 40
 

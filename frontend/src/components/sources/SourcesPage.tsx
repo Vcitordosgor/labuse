@@ -4,7 +4,8 @@ import { getSources, getSourcesCouverture } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
 import type { SourceInfo } from '../../lib/types'
 import { useApp } from '../../store/useApp'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { EmptyState, ErrorState } from '../States'
 import { Badge as UiBadge, type BadgeTon } from '../ui/Badge'
 
 // PAGE-SOURCES-1 (lot 2) — la LICENCE (« licence ouverte »…) est retirée de la vitrine cliente : le
@@ -79,7 +80,7 @@ export function SourcesPage() {
   // via derniere_donnee, en est lue) mais on ne peut pas retirer ce calcul sans risque (derniere_donnee
   // en dépend, endpoint partagé). Correctif sans risque : on CACHE le résultat (staleTime) → la page se
   // recharge instantanément aux visites suivantes au lieu de re-tourner le calcul à chaque ouverture.
-  const { data, isLoading, isError } = useQuery({ queryKey: ['sources'], queryFn: getSources, staleTime: 5 * 60_000 })
+  const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['sources'], queryFn: getSources, staleTime: 5 * 60_000 })
   // RETOURS-9 (Q11.5) — les chiffres de couverture qui parlent au client, lus des données réelles.
   const couverture = useQuery({ queryKey: ['sources-couverture'], queryFn: getSourcesCouverture, staleTime: 5 * 60_000 }).data
   const sourcesFocus = useApp((s) => s.sourcesFocus)
@@ -216,10 +217,11 @@ export function SourcesPage() {
           </div>
         </div>
 
-        {isLoading && <div className="mt-6"><Loading label="Chargement des sources" className="text-xs" /></div>}
-        {isError && <p className="mt-6 text-xs text-st-ecartee">Sources inaccessibles — vérifiez votre réseau ou réessayez.</p>}
+        {isLoading && <div className="mt-6"><Squelette lignes={5} /></div>}
+        {isError && <ErrorState className="mt-6" message="Sources inaccessibles — vérifiez votre réseau ou réessayez." retry={() => refetch()} />}
         {data && nVisibles === 0 && (
-          <p className="mt-8 text-[13px] text-txt-dim">Aucune source ne correspond{q ? <> à « {q} »</> : null}{theme != null ? <> au thème « {theme} »</> : null}.</p>
+          <EmptyState className="mt-8" title="Aucune source ne correspond"
+            hint={(q || theme != null) ? <>{q ? <>à « {q} »</> : null}{theme != null ? <> au thème « {theme} »</> : null}.</> : undefined} />
         )}
 
         {/* groupes par catégorie */}

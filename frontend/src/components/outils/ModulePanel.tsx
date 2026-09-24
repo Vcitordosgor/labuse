@@ -18,7 +18,8 @@ import { TOKENS } from '../../lib/tokens'
 import { carteEtat, etatColor, type PermisEtat, type PermisEtatCarte } from '../../lib/permisEtats'
 import { ChevronSection } from '../panel/ChevronSection'
 import { useApp } from '../../store/useApp'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { EmptyState, ErrorState } from '../States'
 import { CalculetteFonciere } from './CalculetteFonciere'
 import { CompareModule } from '../compare/ComparePanel'
 import { M22 } from './M22Programme'
@@ -434,7 +435,7 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
     <div data-permis-drawer className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={onClose}>
       <div className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-mint/40 bg-surface-1 p-4 shadow-elev-3 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}>
-        {q.isLoading && <Loading />}
+        {q.isLoading && <Squelette lignes={5} />}
         {/* audit-promesses — un permis INTROUVABLE (404) dit clairement pourquoi (avant : drawer vide). */}
         {q.isError && (
           <div data-permis-introuvable className="flex flex-col gap-2">
@@ -890,7 +891,7 @@ export function M03() {
             {zone && <span className="text-mint/70"> · {items.length} dans la zone dessinée</span>}
           </p>
 
-          {pointMort && qPm.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Analyse en cours…" big /></div>}
+          {pointMort && qPm.isLoading && <Squelette bloc className="py-8" />}
 
           {/* RETOURS-15 U4 — la liste ne déborde JAMAIS en largeur : elle défile verticalement seule. */}
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden px-2 py-2">
@@ -950,10 +951,10 @@ export function M03() {
         })}
         {/* O17 (i) — ÉTAT VIDE : message clair quand aucun permis ne correspond aux filtres. */}
         {!q.isLoading && items.length === 0 && (
-          <p data-permis-vide className="px-1 py-6 text-center text-[11px] text-txt-dim">
-            Aucun permis ne correspond aux filtres{commune ? ` pour ${commune}` : ''}
-            {zone ? ' dans la zone dessinée' : ''}. Élargissez la période ou effacez un filtre.
-          </p>
+          <div data-permis-vide>
+            <EmptyState title={`Aucun permis ne correspond aux filtres${commune ? ` pour ${commune}` : ''}${zone ? ' dans la zone dessinée' : ''}.`}
+              hint="Élargissez la période ou effacez un filtre." />
+          </div>
         )}
         {/* O17 (c) — pagination SOCLE par 200 (ListPaginationFooter) au lieu du bouton « voir plus » ad hoc.
             `shown` = lignes chargées du serveur (loaded, avant filtre client) ; `total` = compteur serveur ;
@@ -1053,7 +1054,7 @@ export function M06() {
     <>
       <Banner>{String(d?.['lecture_lls'] ?? '…')}</Banner>
       <CommuneScope commune={commune} onChange={setCommune} />
-      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Analyse en cours…" big /></div>}
+      {q.isLoading && <Squelette bloc className="py-8" />}
       {/* Point 33 : contexte SRU (déficit logement social) — commune carencée = forte demande LLS */}
       {(d?.['sru'] as Record<string, any> | undefined) && (
         <div data-bailleur-sru className={`rounded-lg border px-3 py-2 text-[11px] ${d!['sru']['statut'] === 'carencee' ? 'border-st-creuser/50 bg-st-creuser/10' : 'border-line-2 bg-surface-2'}`}>
@@ -1419,7 +1420,7 @@ export function M09() {
             Lettre <b className="text-txt">générée automatiquement</b> à partir des données réelles de la
             parcelle — un courrier par destinataire, adapté à ses faits. Aperçu du 1ᵉʳ destinataire :
           </p>
-          {apercu.isLoading && <p className="text-[11px] text-txt-dim">Composition de l’aperçu…</p>}
+          {apercu.isLoading && <Squelette lignes={4} />}
           {apercu.data && (
             <>
               <div data-courrier-apercu className="min-h-[160px] flex-1 overflow-auto whitespace-pre-wrap rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-[11px] leading-snug text-txt">
@@ -1452,7 +1453,7 @@ export function M09() {
           {/* COURRIER-2 Lot 2 — ADRESSAGE par destinataire : Destinataire · Adresse d'envoi · Bien concerné.
               Aucune substitution silencieuse : un blocage (nu / sans adresse / opposition) porte son motif. */}
           <div data-courrier-adressage className="flex flex-col gap-1.5">
-            {adressage.isLoading && <p className="text-[10.5px] text-txt-dim">Résolution des adresses…</p>}
+            {adressage.isLoading && <Squelette lignes={2} />}
             {resolutions.map((r) => (
               <div key={r.idu} data-courrier-resolution={r.idu}
                 className={`rounded-lg border px-3 py-2 text-[11px] ${r.bloque ? 'border-st-ecartee/50 bg-st-ecartee/[0.06]' : 'border-line-2 bg-surface-2'}`}>
@@ -1492,7 +1493,7 @@ export function M09() {
               <span className="mt-1.5 block text-[10.5px] text-txt-dim">Retrouvez vos demandes dans <b className="text-txt-mut">Projets → Mes courriers</b>.</span>
             </div>
           )}
-          {envoyer.isError && <p className="text-[10.5px] text-st-ecartee">La demande n'a pas pu être transmise — réessayez.</p>}
+          {envoyer.isError && <ErrorState message="La demande n'a pas pu être transmise — réessayez." retry={() => envoyer.mutate()} />}
 
           {/* aperçu PDF de RELECTURE (secondaire) — corps rempli pour le 1er destinataire */}
           <Bouton niveau="lien" data-courrier-pdf onClick={apercuPdf} disabled={pdfBusy || dest.length === 0} className="self-start">

@@ -10,7 +10,8 @@ import { FiltreProvider } from '../panel/filtreContext'
 import { fmtDate, fmtEurCompact, fmtInt, fmtM2, iduCourt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { EmptyState } from '../States'
 import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
 
@@ -356,7 +357,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
       {/* ÉTAGE 4 — TRI : 3 colonnes (2,3 / 1 / 1) + tiroir « Filtrer » à droite. */}
       <div className="flex min-h-0 flex-1 gap-3.5">
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-3.5 md:grid-cols-[2.3fr_1fr_1fr]">
-          {etatQ.isLoading && <Loading label="Chargement du projet…" className="col-span-full mx-auto self-center" />}
+          {etatQ.isLoading && <Squelette lignes={5} className="col-span-full self-center" />}
           {COLS.map((col) => {
             const isProp = col.key === 'proposee'
             const list = isProp ? proposeesVues : (col.key === 'retenue' ? etat?.retenues ?? [] : etat?.ecartees ?? [])
@@ -426,10 +427,9 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 {/* liste (défile) */}
                 <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
                   {list.length === 0 && (
-                    <div className="m-3 rounded-lg bg-surface-2/60 py-6 text-center text-[11px] text-txt-dim">
-                      {isProp ? (deZero ? 'Projet de zéro — ajoutez des parcelles depuis leurs fiches.' : (puces.length ? 'Aucune parcelle ne correspond à ce filtre.' : 'Rien à trier pour l’instant.'))
-                        : col.key === 'retenue' ? 'Aucune retenue' : 'Aucune écartée'}
-                    </div>
+                    <EmptyState className="m-3 rounded-lg bg-surface-2/60 px-3 py-6"
+                      title={isProp ? (deZero ? 'Projet de zéro — ajoutez des parcelles depuis leurs fiches.' : (puces.length ? 'Aucune parcelle ne correspond à ce filtre.' : 'Rien à trier pour l’instant.'))
+                        : col.key === 'retenue' ? 'Aucune retenue' : 'Aucune écartée'} />
                   )}
                   {list.map((it) => (isProp ? (
                     <LigneParcelle key={it.idu} it={it}

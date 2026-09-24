@@ -7,7 +7,7 @@ import {
 import { fmtInt, fmtM2, iduComplet } from '../../lib/format'
 import { CLIENT } from '../../lib/strings'
 import { useApp } from '../../store/useApp'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
 import { Oiseau } from '../States'
 import { TierBadge } from '../outils/TierBadge'
 import { Bouton } from '../ui/Bouton'
@@ -96,7 +96,7 @@ export function ParcoursTinder() {
 
         {/* carte de décision (droite) */}
         <div className="pointer-events-auto w-[360px] max-w-[85vw] shrink-0 overflow-y-auto p-4 sm:max-w-[42vw]">
-          {etatQ.isLoading && <Loading label="Chargement du parcours…" />}
+          {etatQ.isLoading && <Squelette lignes={4} />}
           {!etatQ.isLoading && !current && (
             <div data-parcours-fini className="floating p-5 text-center">
               <Oiseau className="mx-auto mb-2 h-5 w-auto" dim={false} />
@@ -192,7 +192,7 @@ function DecisionCard({ pid, item, onDecide, onFiche }: {
           ))}
         </div>
       )}
-      {carteQ.isLoading && <Loading className="mt-3" label="Points clés…" />}
+      {carteQ.isLoading && <Squelette className="mt-3" lignes={3} />}
 
       <Bouton niveau="lien" data-decision-fiche onClick={onFiche} className="mt-3">
         Voir la fiche complète →

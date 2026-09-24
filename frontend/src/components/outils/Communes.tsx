@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getCommuneAcquisitions, getCommunes, getRadarMarche } from '../../lib/api'
 import { useApp } from '../../store/useApp'
+import { Squelette } from '../Loading'
+import { EmptyState, ErrorState } from '../States'
 import { CommunesLegende, O6Comparateur } from './blocB'
 import { M18 } from './moteurs'
 import { RadarMarche } from './RadarMarche'
@@ -125,12 +127,12 @@ function AcquisitionsRecentes() {
         <p className="text-[11px] leading-snug text-txt-dim">Choisissez une commune pour lister les
           changements récents de propriétaire moral (constat DGFiP par millésime).</p>
       ) : q.isLoading ? (
-        <p className="text-[11px] text-txt-dim">Chargement…</p>
+        <Squelette lignes={6} />
       ) : q.isError || !d ? (
-        <p className="text-[11px] text-st-ecartee">Constat indisponible — réessayez.</p>
+        <ErrorState message="Constat indisponible — réessayez." retry={() => q.refetch()} />
       ) : d.n_total === 0 ? (
-        <p className="text-[11px] leading-snug text-txt-dim">Aucun changement de propriétaire moral
-          constaté depuis {d.depuis_millesime} à {commune}.</p>
+        <EmptyState title="Aucun changement de propriétaire moral constaté"
+          hint={`depuis ${d.depuis_millesime} à ${commune}.`} />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
           <p className="shrink-0 text-[11px] text-txt-mut">

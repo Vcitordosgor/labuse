@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { verifProcedure, type VerifProcedure as VP } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
+import { ErrorState } from '../States'
 
 // M41 Phase 2.6 — OUTIL « VÉRIF PROCÉDURE » : un IDU → la commune a-t-elle une procédure PLU en
 // cours ? L'outil LIT le radar (point de calcul unique, mêmes libellés que la fiche) — il ne calcule
@@ -30,7 +31,7 @@ export function VerifProcedure() {
           placeholder="IDU, référence (ex. BZ1065) ou adresse" />
       </div>
 
-      {m.isError && <div className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">Parcelle inconnue ou erreur.</div>}
+      {m.isError && <ErrorState message="Parcelle inconnue ou erreur." retry={m.variables ? () => m.mutate(m.variables!) : undefined} />}
 
       {d && (
         <div data-verif-result className="flex flex-col gap-2">

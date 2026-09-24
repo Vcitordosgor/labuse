@@ -9,6 +9,8 @@ import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { trierCommunes } from '../../lib/communes'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
+import { Squelette } from '../Loading'
+import { EmptyState } from '../States'
 import { iduCourt } from '../../lib/format'
 import { Bouton } from '../ui/Bouton'
 import { Case } from '../ui/Case'
@@ -113,9 +115,9 @@ function VoletParcelles() {
           garde un plafond de sécurité, sans le brandir ici). Simple décompte. */}
       <p className="label-caps mt-1">Parcelles suivies <span className="text-txt-dim">· {suivis.length}</span></p>
       {suivis.length === 0 && (
-        <p className="rounded-lg border border-dashed border-line-2 p-3 text-[11.5px] leading-snug text-txt-dim">
-          Aucune parcelle suivie. Ajoutez-en une ci-dessus, ou ouvrez une fiche et cliquez la <b className="text-txt">cloche « Suivre »</b>.
-        </p>
+        <EmptyState className="rounded-lg border border-dashed border-line-2"
+          title="Aucune parcelle suivie."
+          hint={<>Ajoutez-en une ci-dessus, ou ouvrez une fiche et cliquez la <b className="text-txt">cloche « Suivre »</b>.</>} />
       )}
       {suivis.map((s) => (
         <div key={s.idu} data-suivi className="hover-fill flex items-start gap-2 rounded-lg border border-line-2 px-3 py-2">
@@ -216,9 +218,10 @@ function VeilleExterne() {
           </p>
           <div className="flex flex-col gap-1.5">
             <p className="label-caps">Vos critères enregistrés <span className="text-txt-dim">· {veilles.length}</span></p>
-            {q.isLoading && <p className="text-[11px] text-txt-dim">Chargement…</p>}
+            {q.isLoading && <Squelette lignes={2} />}
             {!q.isLoading && veilles.length === 0 && (
-              <p className="rounded-lg border border-dashed border-line-2 p-3 text-[11px] leading-snug text-txt-dim">Aucune veille annonce. Créez-en une avec le bouton ci-dessus.</p>
+              <EmptyState className="rounded-lg border border-dashed border-line-2"
+                title="Aucune veille annonce." hint="Créez-en une avec le bouton ci-dessus." />
             )}
             {veilles.map((v) => (
               // RETOURS-11 A7 — quand on renomme, la ligne PLEINE reste neutre (formulaire) ; sinon

@@ -200,10 +200,8 @@ export function Omnibox() {
         aria-label="Lancer la recherche" aria-busy={searching}
         className="flex h-5 w-5 shrink-0 items-center justify-center text-txt-faint transition-colors duration-quick hover:text-mint disabled:cursor-wait">
         {searching ? (
-          <svg viewBox="0 0 20 20" className="h-[15px] w-[15px] animate-spin" aria-hidden>
-            <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3" />
-            <path d="M10 3.5 a6.5 6.5 0 0 1 6.5 6.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
+          /* DA — plus de spinner rotatif : pastille menthe pulsante sobre pendant la résolution. */
+          <span className="h-2 w-2 animate-pulse rounded-full bg-mint" aria-hidden />
         ) : (
           <svg viewBox="0 0 20 20" className="h-[15px] w-[15px]">
             <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.7" />

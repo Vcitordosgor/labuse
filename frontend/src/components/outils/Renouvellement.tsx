@@ -19,7 +19,7 @@ import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { ListPaginationFooter } from '../ListPagination'
 import { ParcelInput } from '../ParcelInput'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
@@ -49,7 +49,7 @@ export function RenouvellementModule() {
   const [lookupIdu, setLookupIdu] = useState<string | null>(null)
 
   // note datée + top 5 : page 0, tri score (l'entrée la plus parlante).
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['renouv-top', commune],
     queryFn: () => getRenouvListe('score', commune, 0),
     staleTime: 60_000,
@@ -76,8 +76,8 @@ export function RenouvellementModule() {
       {/* BARRE UNIQUE (SOCLE) — « et la mienne ? » sans scroller 67 214 lignes */}
       <div className="rounded-lg border border-line-2 bg-surface-2 p-2.5">
         <ParcelInput dataAttr="renouv-idu" placeholder="Adresse ou IDU — votre parcelle densifie-t-elle ?" onPick={setLookupIdu} />
-        {lookupIdu && lookup.isLoading && <p className="mt-1.5 text-[11px] text-txt-mut">Recherche…</p>}
-        {lookupIdu && lookup.isError && <p className="mt-1.5 text-[11px] text-st-ecartee">Parcelle introuvable — vérifiez l’IDU.</p>}
+        {lookupIdu && lookup.isLoading && <Squelette lignes={2} className="mt-1.5" />}
+        {lookupIdu && lookup.isError && <ErrorState message="Parcelle introuvable — vérifiez l’IDU." retry={() => lookup.refetch()} />}
         {lookupIdu && lookup.data && (
           r ? (
             <button data-renouv-lookup onClick={() => select(lookupIdu)}
@@ -101,8 +101,8 @@ export function RenouvellementModule() {
         )}
       </div>
 
-      {isLoading && <Loading label="Densifier l'existant…" />}
-      {error && <ErrorState message="Segment momentanément indisponible — réessayez." />}
+      {isLoading && <Squelette lignes={6} />}
+      {error && <ErrorState message="Segment momentanément indisponible — réessayez." retry={() => refetch()} />}
       {data && (
         <>
           {/* note d'analyse DATÉE */}
@@ -208,7 +208,7 @@ export function DensifierTablePanel() {
 
         {/* corps : le grand tableau — toutes colonnes visibles, zéro scroll horizontal */}
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
-          {q.isLoading && <Loading accent="mint" label="Chargement des parcelles…" />}
+          {q.isLoading && <Squelette lignes={6} />}
           {q.isError && <ErrorState className="py-6" message="Segment momentanément indisponible." retry={() => q.refetch()} />}
           {!q.isLoading && !q.isError && (
             <table className="w-full text-[11px]">

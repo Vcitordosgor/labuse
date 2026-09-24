@@ -24,6 +24,8 @@ import { etudeZone, etudeZoneEntreprises, nafFamilles, nafSearch, parcelAt, type
 import type { EtudeZoneDestinations, EtudeZoneResult, NafFamille, NafOption, ZoneEntreprises, ZoneFamille } from '../../lib/types'
 import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
 import { DestinationBadge, DestinationSelect } from './DestinationSelect'
 import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
@@ -513,8 +515,8 @@ function ToutesEntreprises({ total, open, setOpen, data, loading, error }: {
       </button>
       {open && (
         <div className="mt-1.5 flex flex-col gap-1">
-          {loading && <p className="text-[11px] text-txt-mut">Chargement des entreprises…</p>}
-          {error && <p className="text-[11px] text-st-ecartee">Indisponible — réessayez.</p>}
+          {loading && <Squelette lignes={4} />}
+          {error && <ErrorState message="Indisponible — réessayez." />}
           {data?.familles.map((f) => (
             <div key={f.section} className="overflow-hidden rounded-md border border-line-2 bg-surface-1">
               <button data-zone-famille={f.section} onClick={() => toggleFam(f.section)}
@@ -666,7 +668,7 @@ function ActiviteLens({
       {parcourir && (
         <div className="mt-1 max-h-64 overflow-y-auto rounded-lg border border-line-2 bg-surface-1">
           {familles == null ? (
-            <p className="px-2.5 py-2 text-[11px] text-txt-dim">Chargement…</p>
+            <Squelette lignes={4} className="px-2.5 py-2" />
           ) : familles.map((f) => (
             <div key={f.section} className="border-b border-line-2 last:border-b-0">
               <button onClick={() => setFamOuverte((s) => (s === f.section ? null : f.section))}

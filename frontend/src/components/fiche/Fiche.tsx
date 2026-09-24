@@ -9,7 +9,8 @@ import { BANDE_META, SIGNAL_META, verdictMeta } from '../../lib/status'
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { EmptyState, ErrorState } from '../States'
 import { AskBar, renderRich } from './AskBar'
 import { FinancierQuestionnaire } from './FinancierQuestionnaire'
 import { GabaritLine } from './GabaritLine'
@@ -239,7 +240,7 @@ function PipelineButton({ idu }: { idu: string }) {
               <span>{c.label}</span>{i === 0 && <span className="text-[10px] text-txt-dim">défaut</span>}
             </button>
           ))}
-          {!cols.length && <div className="px-2 py-1.5 text-[12px] text-txt-mut">Chargement…</div>}
+          {!cols.length && <Squelette lignes={2} className="px-2 py-1.5" />}
         </div>
       )}
       {/* SCORING-3 (L5) — sélecteur de retour terrain (visible dès que la parcelle est suivie) */}
@@ -339,7 +340,7 @@ function ProjetButton({ idu }: { idu: string }) {
       {open && (
         <div data-projet-fiche-menu className="floating absolute bottom-10 left-0 z-30 w-72 p-2 text-[11px]">
           <p className="label-caps px-1 pb-1 text-txt-dim">Ajouter cette parcelle à…</p>
-          {projetsQ.isLoading && <div className="px-1 py-2 text-txt-dim">Chargement…</div>}
+          {projetsQ.isLoading && <Squelette lignes={2} className="px-1 py-2" />}
           {!projetsQ.isLoading && candidats.length === 0 && (
             <p className="px-1 py-2 leading-snug text-txt-dim">Aucun projet actif — créez-en un ci-dessous.</p>
           )}
@@ -1141,33 +1142,31 @@ export function Fiche({ idu }: { idu: string }) {
         {/* FICHE-RANGEMENT-2 Lot 3 — plus de liste à plat qui remplaçait la fiche : la recherche
             garde la pile, ouvre tous les tiroirs (forceOpen) + les « sans objet », et surligne
             les correspondances en place (effet CSS.highlights). Le compteur est dans la barre. */}
-        {isLoading && (
-          <div className="flex flex-col gap-2">
-            <Loading label="Chargement de la fiche" className="text-xs" />
-            <div className="mt-1 h-16 animate-pulse rounded-lg bg-surface-2" />
-            <div className="h-24 animate-pulse rounded-lg bg-surface-2" />
-          </div>
-        )}
+        {isLoading && <Squelette lignes={6} label="Chargement de la fiche" />}
         {isError && (is429(error) ? (
           <RateLimit429 error={error} refetch={refetch} />
         ) : error instanceof ApiError && error.status === 404 ? (
           /* G1 (M12) : une parcelle absente du run (copro non classée, hors périmètre, ou clic
              sur une trame sans idu) N'EST PAS une panne. Message NEUTRE, sans tonalité d'erreur —
              on invite simplement à re-sélectionner une parcelle. Aucun « serveur injoignable ». */
-          <div data-fiche-hors-run className="rounded-lg border border-line-2 bg-surface-2 p-4 text-xs">
-            <p className="text-txt">Cette parcelle n'est pas dans le périmètre analysé.</p>
-            <p className="mt-1 text-txt-dim">Sélectionnez une parcelle sur la carte pour afficher sa fiche.</p>
-            <button onClick={() => select(null)} className="mt-2 min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Fermer</button>
+          <div data-fiche-hors-run>
+            <EmptyState
+              title="Cette parcelle n'est pas dans le périmètre analysé."
+              hint="Sélectionnez une parcelle sur la carte pour afficher sa fiche."
+              action={
+                <button onClick={() => select(null)} className="min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Fermer</button>
+              } />
           </div>
         ) : (
-          <div data-fiche-erreur className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 p-4 text-xs">
+          <div data-fiche-erreur>
             {/* Item 3 (UX V1) : wording client — plus jamais « relancer labuse api » face à un
-                utilisateur. Le détail technique reste lisible, en ligne discrète. */}
-            <p className="text-st-ecartee">Connexion au serveur impossible — vérifiez votre réseau ou réessayez.</p>
-            {error instanceof Error && error.message && (
-              <p className="mt-1 break-all font-mono text-[10px] text-txt-dim">détail : {error.message}</p>
-            )}
-            <button onClick={() => refetch()} className="mt-2 min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Réessayer</button>
+                utilisateur. Le détail technique reste lisible, en ligne discrète (hint). */}
+            <ErrorState
+              message="Connexion au serveur impossible — vérifiez votre réseau ou réessayez."
+              retry={() => refetch()}
+              hint={error instanceof Error && error.message
+                ? <span className="break-all font-mono text-[10px] text-txt-dim">détail : {error.message}</span>
+                : undefined} />
           </div>
         ))}
         {f && tab === 'synthese' && (() => {

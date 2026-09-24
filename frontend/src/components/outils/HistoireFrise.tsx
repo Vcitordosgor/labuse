@@ -14,6 +14,7 @@ import { getHistoire, type HistoireFait } from '../../lib/api'
 import { fmtDateNum, fmtEur, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
+import { Squelette } from '../Loading'
 import { Siren } from '../shared/Siren'
 import { TEMPS_MILLESIMES } from '../map/basemaps'
 import { Bouton } from '../ui/Bouton'
@@ -137,7 +138,7 @@ export function HistoireFrise({ idu }: { idu: string }) {
           Faits datés — {(q.data?.sources ?? []).filter((s) => s.maj)
             .map((s) => `${s.nom} : ${/^\d{4}-/.test(s.maj!) ? fmtDateNum(s.maj) : s.maj}`).join(' · ') || '…'}
         </p>
-        {q.isLoading && <p className="py-2 text-[10.5px] text-txt-mut">Faits datés…</p>}
+        {q.isLoading && <Squelette lignes={1} className="py-2" />}
         {q.isError && <p className="py-2 text-[10.5px] text-txt-mut">Faits momentanément indisponibles — les orthos restent comparables.</p>}
         {q.data && q.data.n === 0 && (
           /* C5 — état vide honnête : la frise ne bloque rien, les orthos restent comparables */

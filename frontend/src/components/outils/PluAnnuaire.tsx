@@ -2,6 +2,8 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { pluAnnuaireSearch, pluAnnuaireCommunes, pluAnnuairePack, type PluExtrait } from '../../lib/api'
 import { useApp } from '../../store/useApp'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
 import { Retour } from '../ui/Retour'
 import { Chevron } from '../ui/Chevron'
@@ -184,9 +186,7 @@ export function PluAnnuaire() {
           </div>
 
           {m.isError && (
-            <div className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">
-              Erreur de recherche.
-            </div>
+            <ErrorState message="Erreur de recherche." retry={() => run()} />
           )}
 
           {d?.message && (
@@ -260,9 +260,9 @@ function PluExtraitCard({ r }: { r: PluExtrait }) {
 // applicable ») · GPU vide (dit, mairie servie — source K2) · GPU injoignable (dit comme tel).
 function PackVigueur({ insee }: { insee: string }) {
   const pack = useQuery({ queryKey: ['plu-pack', insee], queryFn: () => pluAnnuairePack(insee), staleTime: 300_000 })
-  if (pack.isLoading) return <p className="mt-1.5 text-[10px] text-txt-dim">Recherche du PLU en vigueur sur le GPU…</p>
+  if (pack.isLoading) return <Squelette lignes={2} className="mt-1.5" />
   const p = pack.data
-  if (!p) return <p className="mt-1.5 text-[10px] text-st-creuser">Vérification GPU impossible — réessayez.</p>
+  if (!p) return <ErrorState message="Vérification GPU impossible — réessayez." retry={() => pack.refetch()} />
   if (p.disponible && p.url) {
     return (
       <div className="mt-2">

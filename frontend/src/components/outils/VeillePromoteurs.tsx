@@ -9,7 +9,8 @@ import { useQuery } from '@tanstack/react-query'
 import { getMoi, getProgrammes, getPromoteurFrise, getVeillePromoteurs, type OperationPromoteur } from '../../lib/api'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { useApp } from '../../store/useApp'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { EmptyState } from '../States'
 import { iduComplet, fmtDateSitadel } from '../../lib/format'
 import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R4.2 — recherche adresse/IDU commune
 import { CollecteProgrammes } from '../admin/Programmes'   // LOT S1 — geste admin discret réutilisant la collecte
@@ -20,7 +21,7 @@ const CAT_LABEL: Record<string, string> = { promoteur: 'Promoteur', bailleur: 'B
 
 function Frise({ siren }: { siren: string }) {
   const q = useQuery({ queryKey: ['promoteur-frise', siren], queryFn: () => getPromoteurFrise(siren) })
-  if (q.isLoading) return <Loading label="Frise…" className="text-[10px]" />
+  if (q.isLoading) return <Squelette lignes={3} />
   const f = q.data
   if (!f) return null
   const maxLgt = Math.max(1, ...f.frise.map((a) => a.n_logements))
@@ -236,7 +237,7 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
           : <button data-vp-retour-proprio onClick={() => setExplorer(false)} className="w-fit text-[11.5px] text-mint underline underline-offset-2 hover:text-mint/80">← revenir à ce propriétaire</button>
       )}
 
-      {q.isLoading && <Loading label="Regroupement des opérations…" className="mx-auto mt-4 text-xs" />}
+      {q.isLoading && <Squelette lignes={6} className="mt-4" />}
       {d && (
         <>
           {strict
@@ -246,7 +247,7 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
                 <p className="text-[10px] leading-snug text-txt-dim">{d.regle.phrase}.</p>
               </>}
           <div className="flex flex-col gap-1.5">
-            {promoteurs.length === 0 && <p className="text-[11.5px] text-txt-dim">Aucune opération pour ce filtre.</p>}
+            {promoteurs.length === 0 && <EmptyState title="Aucune opération pour ce filtre." />}
             {/* RETOURS-12 O6 — UNE CARTE PAR PROMOTEUR (regroupée par SIREN). En-tête : nom + total permis
                 + total logements (= somme de ses opérations, même périmètre que la frise). Ses opérations
                 sont listées dessous ; ses programmes publiés une seule fois ; sa frise une seule fois. */}

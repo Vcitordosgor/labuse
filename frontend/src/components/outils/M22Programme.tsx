@@ -6,6 +6,7 @@ import { useApp } from '../../store/useApp'
 import { FaisabiliteTab } from '../fiche/Fiche'
 import { ListPaginationFooter } from '../ListPagination'
 import { CommuneScope } from './ModulePanel'
+import { ErrorState } from '../States'
 import { Tip } from '../Tip'
 import { DestinationBadge, DestinationSelect, useDestinationsRef } from './DestinationSelect'
 import { ParcelPicker } from './ParcelPicker'
@@ -159,7 +160,7 @@ export function M22() {
           <Bouton niveau="primaire" ton="vert" onClick={() => lancer()} disabled={results.isLoading}>
             {results.isLoading ? 'Calcul…' : 'Trouver les parcelles'}
           </Bouton>
-          {results.isError && <p className="text-[11px] text-st-ecartee">Recherche indisponible — réessayez.</p>}
+          {results.isError && <ErrorState message="Recherche indisponible — réessayez." retry={() => results.refetch()} />}
           {meta && (
             <>
               {/* PROGRAMME ÉPINGLÉ (mandat) — le récap reste STICKY en tête pendant le scroll des résultats :

@@ -15,7 +15,7 @@ import { Legend } from './Legend'
 import { CouchesTuyauLayers } from './CouchesTuyau'  // COUCHES-TUYAU-1 lot 2
 import { VefaDetail } from './VefaDetail'
 import { MapToolbar } from './MapToolbar'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
 
 // ── Fonds de plan : registre PARTAGÉ (carte principale + comparateur swipe). Voir ./basemaps.
 
@@ -1465,11 +1465,10 @@ export function MapView() {
       <VefaDetail />{/* SECTEUR-2b (U1) — panneau de détail au clic sur une commune VEFA */}
       {/* B1/P5 : chargement carte DISCRET (données GeoJSON + tuiles MVT) — jamais figé */}
       {(geo.isFetching || tilesLoading || layersFetching > 0) && (
-        <div data-carte-loading className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-mint/30 bg-surface-2 px-4 py-2 shadow-elev-2">
+        <div data-carte-loading className="pointer-events-none absolute left-1/2 top-4 w-40 -translate-x-1/2 rounded-full border border-mint/30 bg-surface-2 px-4 py-2 shadow-elev-2">
           {/* COUCHES-2 point 2 — priorité au message le plus précis : parcelles > couche > carte. */}
-          {/* COUCHES-RECETTE-1 A7 : ce qui reste incompressible pour la précision est ASSUMÉ — message
-              qui l'explique au lieu d'un « Chargement… » sec. */}
-          <Loading big label={geo.isFetching ? 'Chargement des parcelles' : layersFetching > 0 ? 'Chargement de la couche…' : 'Chargement de la carte…'} />
+          {/* DA — squelette unique (plus de gros points Loading) ; le message précis reste en aria. */}
+          <Squelette lignes={1} label={geo.isFetching ? 'Chargement des parcelles' : layersFetching > 0 ? 'Chargement de la couche…' : 'Chargement de la carte…'} />
         </div>
       )}
       {/* P3 : rappel de ce que signifie le violet pendant une recherche active */}

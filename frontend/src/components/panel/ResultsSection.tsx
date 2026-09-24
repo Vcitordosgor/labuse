@@ -10,7 +10,8 @@ import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
 import { Chevron } from '../ui/Chevron'
 import { Tri } from '../ui/Tri'
-import { EmptyState } from '../States'
+import { EmptyState, ErrorState } from '../States'
+import { Squelette } from '../Loading'
 import { useApp, type Filters } from '../../store/useApp'
 import { usePagination, ListPaginationFooter } from '../ListPagination'
 
@@ -442,7 +443,7 @@ function AnalyseBandeGroup({ groupe, label, color, total, filters, commune, sign
       </button>
       {open && (
         <div className="mt-2 flex flex-col gap-2">
-          {q.isLoading && rows.length === 0 && <p className="px-3 py-1.5 text-[10.5px] text-txt-dim">Chargement…</p>}
+          {q.isLoading && rows.length === 0 && <Squelette lignes={3} className="px-3 py-1.5" />}
           {rows.map((p) => <AnalyseCard key={p.idu} p={p} communeLabel={commune} />)}
           {(q.hasNextPage ?? false) && (
             <div data-pagination className="flex flex-wrap items-center gap-3 border-t border-line pt-2 text-[11px] text-txt-mut">
@@ -754,18 +755,9 @@ export function ResultsSection() {
           cliquable (barre + ligne brûlantes/chaudes/réserve). A4 : ces compteurs sont cohérents. */}
 
       <div data-results-scroll className="mt-3 flex min-h-[200px] flex-1 flex-col gap-2 overflow-y-auto overflow-x-clip pb-2">
-        {loading && (
-          <>
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-[52px] shrink-0 animate-pulse rounded-[10px] border border-line-2 bg-surface-3" />
-            ))}
-          </>
-        )}
+        {loading && <Squelette lignes={5} className="gap-2" />}
         {error && (
-          <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-3 text-xs">
-            <p className="text-st-ecartee">Erreur de chargement des parcelles.</p>
-            <button onClick={refetch} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer</button>
-          </div>
+          <ErrorState message="Erreur de chargement des parcelles." retry={() => refetch()} />
         )}
         {!loading && !error && (analyse ? bandeTotal === 0 : shown.length === 0) && (
           /* Item 4 (UX V1) : état vide EXPLICITE — dit où on est et comment en sortir
@@ -807,7 +799,7 @@ export function ResultsSection() {
             </Fragment>
           ))}
           {analyseList.isLoading && analyseRows.length === 0 && (
-            <p className="px-3 py-1.5 text-[10.5px] text-txt-dim">Chargement…</p>
+            <Squelette lignes={3} className="px-3 py-1.5" />
           )}
           {/* ANALYSE-2 — vide HONNÊTE : quand le couple (Classement, Signal) ne matche AUCUNE parcelle,
               on le DIT clairement (ce n'est pas une panne), en nommant le filtre — plus jamais un

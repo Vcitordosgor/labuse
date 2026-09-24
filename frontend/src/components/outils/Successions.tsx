@@ -18,7 +18,7 @@ import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { ListPaginationFooter } from '../ListPagination'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Siren } from '../shared/Siren'
 import { Chevron } from '../ui/Chevron'
@@ -101,7 +101,7 @@ export function Successions() {
         <span className="text-[10px] text-txt-dim">m² SDP</span>
       </label>
 
-      {q.isLoading && <Loading label="Parcelles…" />}
+      {q.isLoading && <Squelette lignes={6} />}
       {q.isError && <ErrorState message="Signal momentanément indisponible — réessayez." retry={() => q.refetch()} />}
       {meta && total === 0 && (
         // ÉTAT VIDE HONNÊTE — jamais trois zéros : le périmètre, le signal et son millésime sont dits.

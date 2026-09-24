@@ -8,7 +8,8 @@ import { fmtEur, fmtInt, fmtM2 } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 import { Tip } from '../Tip'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
 import { Case } from '../ui/Case'
 import { Chevron } from '../ui/Chevron'
@@ -134,9 +135,9 @@ export function TaxeAmenagement() {
   })
   const r: TaxeResult | undefined = calc.data
 
-  if (cfg.isLoading) return <Loading accent="mint" label="Barème…" />
+  if (cfg.isLoading) return <Squelette lignes={4} />
   if (cfg.isError || !cfg.data) return (
-    <p className="text-[11px] text-st-ecartee">Barème indisponible — réessayez plus tard.</p>
+    <ErrorState message="Barème indisponible — réessayez plus tard." retry={() => cfg.refetch()} />
   )
   const c = cfg.data
 
@@ -275,8 +276,8 @@ export function TaxeAmenagement() {
       {prefillIdu && !params && (
         <p className="text-[11px] text-txt-dim">Saisissez une surface taxable pour estimer la taxe.</p>
       )}
-      {calc.isLoading && <p className="text-[11px] text-txt-mut">Calcul…</p>}
-      {calc.isError && <p className="text-[11px] text-st-ecartee">Erreur de calcul — vérifiez les valeurs saisies.</p>}
+      {calc.isLoading && <Squelette lignes={3} />}
+      {calc.isError && <ErrorState message="Erreur de calcul — vérifiez les valeurs saisies." retry={() => calc.refetch()} />}
 
       {r && !calc.isLoading && (
         <div data-taxe-resultat className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-1 p-3">

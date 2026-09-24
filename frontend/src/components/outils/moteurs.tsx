@@ -8,7 +8,8 @@ import { CLIENT } from '../../lib/strings'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { EmptyState, ErrorState } from '../States'
 import { Tip } from '../Tip'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
 import { trierCommunes } from '../../lib/communes'
@@ -89,7 +90,7 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
           ))}
         </div>
       )}
-      {sim.isError && <p className="text-[11px] text-st-ecartee">Recalcul indisponible — réessayez.</p>}
+      {sim.isError && <ErrorState message="Recalcul indisponible — réessayez." retry={() => sim.refetch()} />}
 
       {meta && !sim.isLoading && (
         <>
@@ -215,13 +216,11 @@ export function M16() {
         const rd = rq?.data
         return (
           <div key={ring} data-asm-ring={ring} className="flex flex-col gap-1">
-            {rq?.isLoading && <Loading label="Voisines contiguës…" />}
-            {rq?.isError && <p className="text-[11px] text-st-ecartee">Voisines de {ring.slice(8)} indisponibles — parcelle inconnue ?</p>}
+            {rq?.isLoading && <Squelette lignes={3} />}
+            {rq?.isError && <ErrorState message={`Voisines de ${ring.slice(8)} indisponibles — parcelle inconnue ?`} retry={rq ? () => rq.refetch() : undefined} />}
             {rd && rd.n === 0 && (
-              <p data-asm-ring-vide className="rounded-lg bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
-                Aucune voisine contiguë au cadastre pour <span className="font-mono">{ring.slice(8)}</span> —
-                la voirie et le domaine public (non cadastrés) coupent l'anneau.
-              </p>
+              <EmptyState title={`Aucune voisine contiguë au cadastre pour ${ring.slice(8)}`}
+                hint="la voirie et le domaine public (non cadastrés) coupent l'anneau." />
             )}
             {rd && rd.n > 0 && (
               <>
@@ -277,7 +276,7 @@ export function M16() {
           </div>
         )
       })}
-      {run.isError && <p className="text-[11px] text-st-ecartee">Erreur — au moins 2 parcelles valides ?</p>}
+      {run.isError && <ErrorState message="Erreur — au moins 2 parcelles valides ?" retry={() => run.mutate()} />}
       {d && (
         <>
           {d.tronquee && <p className="text-[10.5px] text-st-creuser">Assiette limitée aux {fmt(d.cap)} premières parcelles.</p>}
@@ -489,7 +488,7 @@ export function M17() {
   return (
     <>
       <Banner>{d?.bandeau ?? '…'}</Banner>
-      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Analyse en cours…" big /></div>}
+      {q.isLoading && <Squelette bloc className="py-8" />}
 
       {/* SIGNAL PAR PARCELLE (mène — robuste, sourcé, indépendant des quotas) */}
       <p className="label-caps">Signal ZAN par parcelle</p>
@@ -738,7 +737,7 @@ export function MarcheCommune({ communeProp }: { communeProp?: string } = {}) {
         className="self-start rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
         {MU_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>)}
-      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Marché…" big /></div>}
+      {q.isLoading && <Squelette bloc className="py-8" />}
       {d && <>
         {/* M137-Z : le signal est HISSÉ dans l'en-tête sticky de la fiche commune (Communes) — on ne le
             re-rend ici que dans l'usage AUTONOME (sans communeProp) pour ne pas le doublonner. */}
@@ -869,7 +868,7 @@ export function M19() {
 function PromoteursActifs({ commune }: { commune: string | null }) {
   const actifs = useQuery({ queryKey: ['m19-actifs', commune], queryFn: () => promoteursActifs(commune!), enabled: !!commune })
   if (!commune) return <p className="text-[10.5px] text-txt-dim">Choisissez un profil ciblant une commune pour voir les promoteurs réellement actifs (SITADEL).</p>
-  if (!actifs.data) return <Loading accent="mint" label="Promoteurs actifs…" />
+  if (!actifs.data) return <Squelette lignes={4} />
   const promos = (actifs.data.promoteurs as Record<string, any>[]) ?? []
   return (
     <div data-m19-actifs className="flex max-h-48 flex-col gap-1 overflow-y-auto">
@@ -880,7 +879,7 @@ function PromoteursActifs({ commune }: { commune: string | null }) {
           <div className="text-[10.5px] text-txt-dim">SIREN <Siren value={p.siren} className="font-mono text-txt-dim" /> · <b className="text-txt-mut">{p.n_permis}</b> permis (5 ans){p.logements ? ` · ${p.logements} logements` : ''}</div>
         </div>
       ))}
-      {promos.length === 0 && <p className="text-[10.5px] text-txt-dim">Aucun promoteur (personne morale) avec ≥ 2 permis récents ici.</p>}
+      {promos.length === 0 && <EmptyState title="Aucun promoteur (personne morale) avec ≥ 2 permis récents ici." />}
     </div>
   )
 }

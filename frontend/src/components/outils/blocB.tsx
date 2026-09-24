@@ -5,8 +5,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
-import { Loading } from '../Loading'
-import { ErrorState } from '../States'
+import { Squelette } from '../Loading'
+import { EmptyState, ErrorState } from '../States'
 import { Tip } from '../Tip'
 
 const jfetch = async <T,>(url: string): Promise<T> => {
@@ -51,7 +51,7 @@ export function O5Servitudes() {
       {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). Le clic
           carte est déjà capté par l'effet selectedIdu ci-dessus → withCarte inutile ici. */}
       <ParcelInput dataAttr="o5-idu" placeholder="Adresse ou IDU" onPick={(id) => setIdu(id)} />
-      {q.isLoading && <Loading accent="mint" label="Recherche des servitudes…" />}
+      {q.isLoading && <Squelette lignes={4} />}
       {q.isError && <ErrorState className="py-6" message="Servitudes indisponibles." retry={() => q.refetch()} />}
       {d && (
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
@@ -72,8 +72,7 @@ export function O5Servitudes() {
             </div>
           ))}
           {d.servitudes.length === 0 && (
-            <p className="rounded-lg bg-surface-2/60 px-3 py-2 text-[11px] text-txt-mut">
-              Aucune servitude détectée dans les couches ingérées à cette parcelle.</p>
+            <EmptyState title="Aucune servitude détectée dans les couches ingérées à cette parcelle." />
           )}
           {/* RETOURS-12 O3 — l'encadré « NON COUVERT PAR LA BASE — À VÉRIFIER AILLEURS » quitte la vue
               client : plus d'aveu d'ignorance en évidence. Ce qui reste (les limites de couverture)
@@ -174,7 +173,7 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
   // ne rend plus QUE le tableau (en-tête collant + rangs qui défilent). Le parent borne la hauteur.
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {q.isLoading && <Loading accent="mint" label="Chargement des communes…" />}
+      {q.isLoading && <Squelette lignes={6} />}
       {q.isError && <ErrorState className="py-6" message="Comparateur indisponible." retry={() => q.refetch()} />}
       <div className="min-h-0 flex-1 overflow-y-auto">
         {/* RETOURS-12 T4 — thead-sticky (z-20, fond opaque) : l'en-tête « 24 communes » ne glisse plus sur les lignes. */}
@@ -323,9 +322,9 @@ export function O7Carnet() {
       <Banner>Votre <b>secteur</b> (section cadastrale) suivi comme un portefeuille — stock
         d'opportunités, prix, permis, signaux, tout sourcé. L'abonnement digest arrivera avec
         les comptes utilisateurs ; le carnet se consulte à la demande.</Banner>
-      {liste.isLoading && <Loading accent="mint" label="Secteurs les plus actifs…" />}
+      {liste.isLoading && <Squelette lignes={6} />}
       {liste.isError && <ErrorState className="py-6" message="Carnet indisponible." retry={() => liste.refetch()} />}
-      {secteur && page.isLoading && <Loading accent="mint" label="Ouverture du secteur…" />}
+      {secteur && page.isLoading && <Squelette lignes={4} />}
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {(liste.data?.secteurs ?? []).map((s) => (
           <button key={s.secteur} data-o7-secteur={s.secteur} onClick={() => setSecteur(s.secteur)}
@@ -356,7 +355,7 @@ export function O9Rarete() {
         (<b>Sourcé</b> Cerema), combien d'années de budget ZAN reste-t-il ? Horizon court =
         foncier qui s'apprécie. <b>Estimé</b> : budget −50 % loi Climat, enveloppes Schéma d'Aménagement Régional (SAR)/SCOT
         non publiées (caveat loi TRACE).</Banner>
-      {q.isLoading && <Loading accent="mint" label="Calcul des horizons…" />}
+      {q.isLoading && <Squelette lignes={6} />}
       {q.isError && <ErrorState className="py-6" message="Pipeline rareté indisponible." retry={() => q.refetch()} />}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <p className="label-caps sticky top-0 bg-surface-1 py-1 text-[9.5px]">Horizon d'épuisement du budget ZAN (estimé)</p>
@@ -417,7 +416,7 @@ export function O10Bascules() {
               kind === v ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>{l}</button>
         ))}
       </div>
-      {q.isLoading && <Loading accent="mint" label="Lecture des événements…" />}
+      {q.isLoading && <Squelette lignes={6} />}
       {q.isError && <ErrorState className="py-6" message="Événements indisponibles." retry={() => q.refetch()} />}
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {items.map((e) => (
@@ -436,11 +435,8 @@ export function O10Bascules() {
           // seul run servi, le flux est vide tant qu'un nouveau run n'a pas été comparé au précédent
           // (ou que la démo n'a pas été semée). Ce n'est pas un bug : l'outil lit le même journal
           // d'événements que la cloche de notifications.
-          <p className="rounded-lg bg-surface-2/60 px-3 py-2 text-[11px] leading-relaxed text-txt-mut">
-            Aucune bascule sur ce filtre. Une bascule apparaît quand une <b>mise à jour des données</b>
-            change l'état d'une parcelle par rapport à la précédente (ou via un événement BODACC daté).
-            Le flux se remplira à la prochaine mise à jour — ce sont les mêmes alertes que la cloche.
-          </p>
+          <EmptyState title="Aucune bascule sur ce filtre."
+            hint={<>Une bascule apparaît quand une <b>mise à jour des données</b> change l'état d'une parcelle par rapport à la précédente (ou via un événement BODACC daté). Le flux se remplira à la prochaine mise à jour — ce sont les mêmes alertes que la cloche.</>} />
         )}
       </div>
     </>

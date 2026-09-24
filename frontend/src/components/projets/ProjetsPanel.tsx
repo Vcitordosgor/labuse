@@ -9,6 +9,7 @@ import { fusionnerProjets, getCourrierDemandes, getProjets, postCourrierClientSt
 import { fmtEurCompact } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Skeleton } from '../Loading'
+import { EmptyState } from '../States'
 import { Bouton } from '../ui/Bouton'
 import { ProjetKanban } from './ProjetKanban'
 import { ParcoursProjet } from './ParcoursProjet'
@@ -218,10 +219,10 @@ export function ProjetsPanel() {
 
         {!projetsQ.isLoading && all.length === 0 && courriers.length === 0 ? (
           /* 3 · ÉTAT VIDE — il doit inviter, pas constater. */
-          <div data-projets-vide style={{ marginTop: 8, padding: 32, border: '.5px dashed #1E2A23', borderRadius: 6, textAlign: 'center' }}>
-            <h3 style={{ fontSize: 15, color: '#8FA69A', fontWeight: 400, margin: '0 0 6px' }}>Aucun projet pour l'instant</h3>
-            <p style={{ fontSize: 13, color: '#5F7267', margin: '0 0 16px' }}>Un projet garde votre cadrage et vos parcelles retenues.</p>
-            <Bouton data-projet-nouveau-vide niveau="primaire" ton="vert" onClick={() => setFormOuvert(true)}>Créer votre premier projet</Bouton>
+          <div data-projets-vide style={{ marginTop: 8, border: '.5px dashed #1E2A23', borderRadius: 6 }}>
+            <EmptyState mint title="Aucun projet pour l'instant"
+              hint="Un projet garde votre cadrage et vos parcelles retenues."
+              action={<Bouton data-projet-nouveau-vide niveau="primaire" ton="vert" onClick={() => setFormOuvert(true)}>Créer votre premier projet</Bouton>} />
           </div>
         ) : !projetsQ.isLoading && (
           <>

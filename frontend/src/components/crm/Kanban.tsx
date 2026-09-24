@@ -7,9 +7,9 @@ import {
 import { fmtM2 } from '../../lib/format'
 import type { PipelineColumn, PipelineEntry, PipelineMeta } from '../../lib/types'
 import { Tip } from '../Tip'
-import { ErrorState } from '../States'
+import { EmptyState, ErrorState } from '../States'
 import { useApp } from '../../store/useApp'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
 import { Bouton } from '../ui/Bouton'
 
 /* accents de colonnes = tokens (txt-dim / st-creuser / mint / st-ecartee) en valeur
@@ -524,7 +524,7 @@ export function Kanban() {
             `flex-1 basis-0 min-w-0` — elles se PARTAGENT la largeur, aucune barre horizontale.
             G6 (M12) : items-start préservé (une colonne vide ne s'étire pas sur toute la hauteur). */}
         <div data-crm-cols className="flex h-full items-start gap-3 overflow-x-clip px-4 pb-5 sm:px-6">
-        {meta.isLoading && <div className="p-2"><Loading label="Chargement du pipeline" className="text-xs" /></div>}
+        {meta.isLoading && <div className="p-2"><Squelette lignes={4} /></div>}
         {visibleCols.map((c) => {
           const idx = cols.indexOf(c)
           const items = byCol(c.key)
@@ -592,7 +592,7 @@ export function Kanban() {
                 ))}
                 {items.length === 0 && (
                   /* DA §8 — colonne vide PARLANTE (dit quoi faire), pas un « vide » muet. */
-                  <div className="empty">Aucune parcelle<div className="mt-1 text-txt-faint">glissez-en une ici</div></div>
+                  <EmptyState className="empty px-2 py-6" title="Aucune parcelle" hint="glissez-en une ici" />
                 )}
               </div>
             </div>
@@ -666,8 +666,8 @@ export function Kanban() {
               <button onClick={() => setShowArchived(false)} className="text-txt-dim hover:text-txt" aria-label="Fermer">✕</button>
             </div>
             <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto">
-              {archived.isLoading && <Loading label="Chargement" className="text-xs" />}
-              {archived.data?.length === 0 && <p className="text-[12px] text-txt-dim">Aucune carte archivée.</p>}
+              {archived.isLoading && <Squelette lignes={3} />}
+              {archived.data?.length === 0 && <EmptyState title="Aucune carte archivée." />}
               {(archived.data ?? []).map((e) => (
                 <div key={e.id} className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
                   <div className="min-w-0 flex-1">

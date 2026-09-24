@@ -14,6 +14,8 @@ import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique de
 import { trierCommunes } from '../../lib/communes'
 import { Declaratif } from './RadarDeclaratif'         // D2 — bloc déclaratif partagé (fiche + admin)
 import { useApp } from '../../store/useApp'
+import { Squelette } from '../Loading'
+import { EmptyState, ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
 
 // T6 — la carte est montée par RadarView (pour piloter le responsive) ; lazy comme dans App.
@@ -130,12 +132,13 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
     ? 'absolute inset-0 z-40 flex flex-col overflow-hidden border-line-2 bg-surface-1'
     : 'absolute bottom-3.5 right-3.5 top-3.5 z-30 flex w-[398px] flex-col overflow-hidden rounded-2xl border border-line-2 bg-surface-1 shadow-elev-3'
   if (isError) return (
-    <div className={`${cadre} p-4 text-[12px] text-txt-mut`}>
-      Fiche indisponible — le serveur n’a pas répondu. <Bouton niveau="lien" onClick={onClose}>fermer</Bouton>
+    <div className={cadre}>
+      <ErrorState message="Fiche indisponible — le serveur n’a pas répondu." />
+      <div className="px-4 pb-4 text-center"><Bouton niveau="lien" onClick={onClose}>fermer</Bouton></div>
     </div>
   )
   if (!b || !b.bien_id) return (
-    <div className={`${cadre} p-4 text-[12px] text-txt-dim`}>Chargement…</div>
+    <div className={`${cadre} p-4`}><Squelette lignes={5} /></div>
   )
   const ratt = b.rattachement.niveau !== 'absent' && b.rattachement.idu != null
   const idu = b.rattachement.idu
@@ -550,7 +553,7 @@ export function RadarView() {
 
         {/* listing OU état vide */}
         <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3.5 py-3">
-          {isLoading && <div className="py-6 text-center text-[12px] text-txt-dim">Chargement…</div>}
+          {isLoading && <Squelette lignes={6} className="py-6" />}
           {!isLoading && biens.length === 0 && aucunFiltre && (
             <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-8 text-center">
               <span className="grid h-[74px] w-[74px] place-items-center rounded-full border border-mint/30 bg-mint/[0.08] text-mint">
@@ -561,7 +564,7 @@ export function RadarView() {
             </div>
           )}
           {!isLoading && biens.length === 0 && !aucunFiltre && (
-            <div className="rounded-xl border border-dashed border-line-2 py-8 text-center text-[12px] text-txt-mut">Aucun bien ne correspond à ces filtres.<br />Élargissez la recherche.</div>
+            <EmptyState title="Aucun bien ne correspond à ces filtres." hint="Élargissez la recherche." />
           )}
           {biens.slice(0, pg.shown).map((b) => <CarteBien key={b.bien_id} b={b} sel={bienOuvert === b.bien_id} onClick={() => ouvrir(b)} />)}
           {/* RETOURS-11 O20 (b) — pied de liste PARTAGÉ (doctrine) : pagination par 200, compteur exact

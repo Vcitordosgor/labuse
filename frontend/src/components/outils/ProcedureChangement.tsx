@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { motSimulPluProcedures, motSimulPluZones, type SimulPluProcedure } from '../../lib/api'
 import { useApp } from '../../store/useApp'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { EmptyState, ErrorState } from '../States'
 import { CommuneScope } from './ModulePanel'
 import { M15 } from './moteurs'
 import { VerifProcedure } from './VerifProcedure'
@@ -75,16 +76,12 @@ export function ProcedureChangement() {
           (type/état, date, source, bouton Simuler). 0 procédure → message factuel, pas de bandeau. */}
       {tab === 'simuler' && (
       <div className="flex flex-col gap-1.5">
-        {proc.isLoading && <div className="py-3"><Loading accent="mint" label="Radar procédures…" /></div>}
+        {proc.isLoading && <div className="py-3"><Squelette lignes={3} /></div>}
         {proc.isError && (
-          <div className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">
-            Radar indisponible.
-          </div>
+          <ErrorState message="Radar indisponible." retry={() => proc.refetch()} />
         )}
         {proc.data && communes.length === 0 && (
-          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
-            Aucune procédure PLU lourde active au radar à ce jour.
-          </div>
+          <EmptyState title="Aucune procédure PLU lourde active au radar à ce jour." />
         )}
         {communes.length > 0 && (
           <>

@@ -5,7 +5,8 @@ import { Fragment, useEffect, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { askParcel, type AskResponse, type Provenance } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
 
 // Rend le Markdown minimal du modèle et GARANTIT qu'aucun marqueur brut ne reste visible côté client
@@ -142,11 +143,9 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
       {/* RETOURS-9 (Q10.1) — encart « L'IA ne juge pas le sentiment… » (AvisIA) retiré de ce panneau. */}
 
       {/* état de chargement HONNÊTE (pas de silent-fail) */}
-      {ask.isPending && <Loading accent="violet" className="mt-3 text-[11px]" label="L'IA lit la fiche…" />}
+      {ask.isPending && <Squelette lignes={3} className="mt-3" label="L'IA lit la fiche…" />}
       {ask.isError && (
-        <p className="mt-3 text-[11px] text-st-ecartee">
-          Erreur — <button onClick={() => run(q)} className="underline transition-colors duration-quick hover:text-txt">réessayer</button>
-        </p>
+        <ErrorState className="py-4" message="L'IA n'a pas pu répondre." retry={() => run(q)} />
       )}
 
       {/* R1 (PJ6) — RÈGLE DURE : la réponse est BORNÉE (36vh, scroll interne) → le panneau IA ne

@@ -9,6 +9,8 @@ import { fmtEurCompact, fmtInt, iduCourt } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-FIX-2 D1 — saisie clavier (IDU/adresse/réf courte)
+import { Squelette } from '../Loading'
+import { EmptyState } from '../States'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 
@@ -196,12 +198,13 @@ export function ComparePanel() {
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-3">
           {compareIdus.length === 0 && (
-            <div data-compare-vide className="p-4 text-center text-xs text-txt-dim">
-              Aucune parcelle à comparer.
-              <Bouton niveau="lien" onClick={() => setCompareOpen(false)} className="ml-1">Cliquez-en sur la carte</Bouton> ou ouvrez une fiche → Comparer.
+            <div data-compare-vide>
+              <EmptyState title="Aucune parcelle à comparer."
+                hint={<>Cliquez-en sur la carte ou ouvrez une fiche → Comparer.</>}
+                action={<Bouton niveau="lien" onClick={() => setCompareOpen(false)}>Cliquez-en sur la carte</Bouton>} />
             </div>
           )}
-          {compareIdus.length > 0 && q.isPending && <p className="p-4 text-xs text-txt-dim">Chargement…</p>}
+          {compareIdus.length > 0 && q.isPending && <div className="p-4"><Squelette lignes={4} /></div>}
           {parcels.length > 0 && (
             <table className="w-full border-collapse text-[12px]">
               <thead>

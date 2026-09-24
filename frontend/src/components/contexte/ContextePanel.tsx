@@ -4,7 +4,8 @@ import { deleteCommuneContact, getCommuneContacts, getContexteCommune, getMoi, m
 import { TOKENS } from '../../lib/tokens'
 import { Trace } from '../../lib/trace'
 import { useApp } from '../../store/useApp'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
 import { CONTACT_VIDE, ContactEdit, trimContact, type ContactForm } from '../shared/ContactEdit'  // RETOURS-8 (R6)
 import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
@@ -263,8 +264,8 @@ export function ContextePanel() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {q.isLoading && <div className="p-5"><Loading label="Chargement de la fiche commune" className="text-xs" /></div>}
-        {q.isError && <p className="p-5 text-xs text-st-ecartee">Erreur de chargement — réessayez.</p>}
+        {q.isLoading && <div className="p-5"><Squelette lignes={5} /></div>}
+        {q.isError && <ErrorState className="p-5" message="Erreur de chargement — réessayez." retry={() => q.refetch()} />}
         {d && (
           <>
             {/* ── EN-TÊTE (maquette v1) — bandeau 6 chiffres en 3×3 + 3 raccourcis. Pas de rang comparatif. ── */}

@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { createProjet, getPrefsCarte, postPrefsCarte } from './lib/api'
 import { AvisIA } from './components/AvisIA'
+import { Squelette } from './components/Loading'
 import { Bouton } from './components/ui/Bouton'
 import { Fiche } from './components/fiche/Fiche'
 import { SourceDrawer } from './components/fiche/SourceDrawer'
@@ -39,13 +40,11 @@ const RadarView = lazy(() => import('./components/outils/RadarView').then((m) =>
 const TimeMachine = lazy(() => import('./components/outils/TimeMachine').then((m) => ({ default: m.TimeMachine })))
 
 // État de chargement de la zone carte pendant que le chunk maplibre arrive (pas d'écran blanc).
+// DA — squelette unique (plus de spinner rotatif), on garde le conteneur flex-1.
 function MapLoading() {
   return (
-    <div className="relative flex min-h-0 flex-1 items-center justify-center bg-bg" aria-busy="true">
-      <div className="flex items-center gap-2 text-xs text-txt-mut">
-        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-line border-t-mint" />
-        Chargement de la carte…
-      </div>
+    <div className="relative flex min-h-0 flex-1 bg-bg">
+      <Squelette bloc label="Chargement de la carte" />
     </div>
   )
 }
