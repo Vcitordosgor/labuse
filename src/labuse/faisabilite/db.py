@@ -208,9 +208,20 @@ def _prospect_hauteur(largeur_m: float | None) -> float:
 # ravine (buffer), 50 pas géométriques. Les seuils viennent de la MÊME source que la cascade
 # (cascade_rules.yaml) — jamais un nombre en double. La greve est intersectée avec la portion
 # U/AU (assiette réelle) pour ne jamais soustraire hors de l'emprise constructible.
+#
+# RESIDUEL-VITESSE — ST_ClipByBox2D avant l'intersection fine. Les couches PPR (jusqu'à 320 k
+# sommets), PEB, 50 pas et les zones PLU (jusqu'à 90 k sommets) sont d'énormes polygones : les
+# intersecter tels quels avec chaque parcelle coûtait ~550 ms/appel (ST_Intersection parcourt
+# TOUS les sommets, même pour ne garder qu'un ruban). ST_ClipByBox2D rogne d'abord le polygone à
+# la bbox de l'assiette insetée p.b (opération O(bbox), pas O(sommets)), puis ST_MakeValid/ST_Union
+# n'opèrent que sur le petit morceau restant. RÉSULTAT STRICTEMENT IDENTIQUE : la bbox de p.b
+# contient p.b, l'assiette ⊆ p.b, donc greve ∩ assiette est inchangée (aire égale au bit près,
+# écart max 5e-10 m² = bruit flottant, très en-dessous de l'arrondi entier de sdp). Toutes les
+# géométries des couches sont VALIDES en base (0 invalide sur l'île) — ST_MakeValid reste par
+# sécurité mais s'applique désormais au morceau clippé. dpf/ravine (petits, +buffer) inchangés.
 _GREVE_CERTAINE = text("""
 WITH p AS (SELECT commune, ST_Buffer(geom_2975, -:d) AS b FROM parcels WHERE id = :pid),
-uau AS (SELECT ST_Union(ST_MakeValid(z.geom_2975)) AS u
+uau AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(z.geom_2975, p.b))) AS u
         FROM spatial_layers z, p
         WHERE z.kind = :zkind AND z.commune = p.commune
           AND z.name ILIKE ANY(:uau_pats) AND ST_Intersects(z.geom_2975, p.b)),
@@ -218,11 +229,11 @@ assiette AS (SELECT CASE WHEN uau.u IS NULL THEN p.b
                          ELSE ST_Intersection(p.b, uau.u) END AS a
              FROM p LEFT JOIN uau ON TRUE),
 greves AS (
-    SELECT ST_MakeValid(g.geom_2975) AS geom FROM spatial_layers g, p
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, p.b)) AS geom FROM spatial_layers g, p
       WHERE g.kind = 'ppr' AND g.commune = p.commune
         AND g.subtype = ANY(:ppr_red) AND ST_Intersects(g.geom_2975, p.b)
   UNION ALL
-    SELECT ST_MakeValid(g.geom_2975) FROM spatial_layers g, p
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, p.b)) FROM spatial_layers g, p
       WHERE g.kind = 'peb' AND lower(g.subtype) = ANY(:peb_ab)
         AND ST_Intersects(g.geom_2975, p.b)
   UNION ALL
@@ -232,7 +243,7 @@ greves AS (
     SELECT ST_Buffer(ST_MakeValid(g.geom_2975), :rav_m) FROM spatial_layers g, p
       WHERE g.kind = 'ravine' AND g.commune = p.commune AND ST_DWithin(g.geom_2975, p.b, :rav_m)
   UNION ALL
-    SELECT ST_MakeValid(g.geom_2975) FROM spatial_layers g, p
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, p.b)) FROM spatial_layers g, p
       WHERE g.kind = 'cinquante_pas' AND g.commune = p.commune AND ST_Intersects(g.geom_2975, p.b)
 )
 SELECT COALESCE(ST_Area(ST_Intersection(a.a, gg.u)), 0.0) AS greve_m2
