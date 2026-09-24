@@ -814,11 +814,15 @@ export function Fiche({ idu }: { idu: string }) {
               const e = expo.data
               const orient = e?.orientation
               const v = expo.isLoading ? '…' : (orient && orient !== 'plat' ? orient : orient === 'plat' ? 'Plat' : '—')
-              const s = orient && orient !== 'plat' && e?.pente_moyenne_deg != null ? `pente ${nf(e.pente_moyenne_deg)} °`
-                : orient === 'plat' ? 'terrain quasi plat'
-                : expo.isLoading ? 'calcul en cours' : 'relief non disponible'
+              // FICHE-FIX-2 P6 — la PENTE vit UNE fois (tuile « Pente », emprise de la parcelle,
+              // 13,8°). L'Exposition ne montre PLUS sa propre pente (fenêtre versant 200 m = 17,4°, un
+              // autre périmètre) : elle ne garde que l'orientation (l'azimut, qui a besoin du contexte
+              // du versant, reste au tiroir Terrain). Fin des deux pentes côte à côte dans l'en-tête (§1.2).
+              const s = orient === 'plat' ? 'terrain quasi plat'
+                : expo.isLoading ? 'calcul en cours'
+                : !orient ? 'relief non disponible' : 'versant (RGE ALTI)'
               return { l: 'Exposition', v, s, vide: !orient,
-                i: 'Orientation du versant de la parcelle (Nord, Sud-Est…) et sa pente moyenne, calculées sur le modèle d’altitude RGE ALTI (IGN), localement — sans ligne de vue. Remplace la « vue mer » (abandonnée). « — » : relief non disponible sur la parcelle.' } as Tuile
+                i: 'Orientation du versant de la parcelle (Nord, Sud-Est…), calculée sur le modèle d’altitude RGE ALTI (IGN) dans une fenêtre autour du centroïde. La PENTE affichée est celle de l’emprise (tuile « Pente ») — l’exposition n’en montre pas une seconde. Remplace la « vue mer » (abandonnée). « — » : relief non disponible sur la parcelle.' } as Tuile
             })(),
             { l: 'Risques', v: vigils.length > 0 ? `${vigils.length}` : '—', s: risqueNiveau, vide: vigils.length === 0,
               i: 'Vigilances évaluées sur la parcelle (aléas, servitudes, sols…) — compteur et niveau, comme le badge de §5. Le détail est dans « Risques et environnement ».' },
@@ -1217,13 +1221,16 @@ export function Fiche({ idu }: { idu: string }) {
           // Exposition → §2 Terrain (orientation du versant + pente, MNT RGE ALTI, sans ligne de vue).
           const expoData = expo.data
           const expoOrient = expoData?.orientation
+          // FICHE-FIX-2 P6 — l'Exposition ne montre plus la pente du versant (fenêtre 200 m ≠ emprise) :
+          // la pente vit UNE fois dans la tuile « Pente » (emprise). L'azimut du versant reste servi
+          // ci-dessous (aspect_deg) car l'orientation, elle, a besoin du contexte du versant.
           const tuileExpo = {
             v: expo.isLoading ? '…' : (expoOrient && expoOrient !== 'plat' ? expoOrient : expoOrient === 'plat' ? 'Plat' : '—'),
-            s: expoOrient && expoOrient !== 'plat' && expoData?.pente_moyenne_deg != null ? `pente ${nf(expoData.pente_moyenne_deg)} °`
-              : expoOrient === 'plat' ? 'terrain quasi plat'
-              : expo.isLoading ? 'calcul en cours' : 'relief non disponible',
+            s: expoOrient === 'plat' ? 'terrain quasi plat'
+              : expo.isLoading ? 'calcul en cours'
+              : !expoOrient ? 'relief non disponible' : 'versant (RGE ALTI, fenêtre 200 m)',
             vide: !expoOrient,
-            i: 'Orientation du versant de la parcelle (Nord, Sud-Est…) et sa pente moyenne, calculées sur le modèle d’altitude RGE ALTI (IGN), localement — sans ligne de vue. Remplace la « vue mer » (abandonnée : 55 h de calcul pour une donnée peu fiable, cf. rapport). « — » : relief non disponible sur la parcelle.' }
+            i: 'Orientation du versant de la parcelle (Nord, Sud-Est…), calculée sur le modèle d’altitude RGE ALTI (IGN) dans une fenêtre de 200 m autour du centroïde. La pente affichée est celle de l’emprise (tuile « Pente ») ; l’exposition n’en affiche pas une seconde. « — » : relief non disponible sur la parcelle.' }
           // Taxe foncière → §7 Fiscalité (TFPB part communale, REI DGFiP).
           const tfpb = f.fiscalite?.tfpb_commune_pct
           const tuileTaxe = { v: tfpb != null ? `${nf(tfpb)} %` : '—', s: tfpb != null ? 'part communale' : 'taux non ingéré', vide: tfpb == null,

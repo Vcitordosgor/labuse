@@ -254,8 +254,10 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           <span className="po-ico">◈</span>
           <span style={{ minWidth: 0 }}>
             <span className="po-t block">
+              {/* FICHE-FIX-2 P6 — le compteur additionne 4 tiers (brûlante/chaude/priorité/à suivre) ;
+                  le libellé n'en nommait qu'un (« À suivre »), sous-évaluant le sens (§1.9). */}
               <b className="tnum text-mint">{f.secteur_opportunites.n}</b> parcelle{f.secteur_opportunites.n > 1 ? 's' : ''}{' '}
-              <b>À suivre</b> dans cette section
+              <b>Priorité ou À suivre</b> dans cette section
               <span className="text-txt-dim"> (n° {f.secteur_opportunites.section.slice(8)})</span></span>
           </span>
           <span className="po-arrow">→</span>
