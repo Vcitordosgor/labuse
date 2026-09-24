@@ -515,6 +515,9 @@ def admin_pilotage(request: Request) -> dict:
         # des retours « Signaler » vit à côté (clé sœur `retours_par_type`, dict), pas dans `a_faire`.
         "a_faire": {"sources_nouvelle_version": af_nouvelle_version, "essais_24h": af_essais_24h,
                     "signalements_ouverts": af_signalements, "manuelles_retard": af_manuelles_retard},
+        # CIRCUIT-P7 (lot 4) — la tuile « tâches à effectuer » = le MÊME compteur que l'onglet « À
+        # faire » du Circuit (lecture via circuit_taches_a_effectuer ; invariant garanti, jamais recompté).
+        "taches_a_effectuer": circuit_taches_a_effectuer(),
         "retours_par_type": retours_par_type,
         # ADMIN-1 (AD5) — rangée « Santé · traction » (vert). mrr_eur = Stripe (lecture), paires = Radar
         # (relevés), veilles_7j = alertes détectées, coherence = dernier passage de la garde.
@@ -2182,6 +2185,41 @@ def _sources_hors_vitrine(c) -> list[dict]:
 _METHODES_SONDE = ("api", "page", "entete", "temoin")
 
 
+def circuit_taches_a_effectuer() -> int | None:
+    """CIRCUIT-P7 (lot 4) — LE MÊME compteur que l'onglet « À faire » du Circuit, pour la tuile
+    « tâches à effectuer » du Pilotage (lecture, jamais un recompte propre). Il assemble les MÊMES
+    ingrédients que /admin/circuit avec les MÊMES fonctions (etat_reservoir, hors_moteur_de, verrous)
+    et délègue le compte à `circuit_resume.total_a_faire` → l'invariant tient par construction."""
+    from .. import bascule_flux, circuit_etats as _etats, circuit_resume as _resume
+    from .. import circuit_verrous as _vm, runs
+    from ..db import engine, session_scope
+    from ..registre import CHIFFRES, ROBINETS
+    try:
+        with engine().begin() as c:
+            reservoirs = _assembler_reservoirs(c)
+            for r in reservoirs:
+                r["etat"] = list(_etats.etat_reservoir(r))
+            n_ecarts = c.execute(text(
+                "SELECT count(*) FROM circuit_ecarts WHERE statut = 'ouvert'")).scalar() or 0
+            try:
+                verrous = _vm.synthese_pour_page(c)
+            except Exception:  # noqa: BLE001 — pas de verrous joués : 0 cassé
+                verrous = {}
+        chiffres = {cid: {"calcul": ch.calcul} for cid, ch in CHIFFRES.items()}
+        fuites_rob = [{"id": rid} for rid, rb in ROBINETS.items()
+                      if _etats.hors_moteur_de({"chiffres": list(rb.chiffres)}, chiffres)]
+        with session_scope() as s:
+            runs_list = bascule_flux.runs_termines(s, limit_ecart=0)
+            residuel = bascule_flux.residuel_entrees_changees(s)
+        candidat = next((rr["label"] for rr in runs_list if rr.get("statut") == "termine"
+                         and rr.get("label") != runs.current()), None)
+        return _resume.total_a_faire(
+            reservoirs, fuites_robinets=fuites_rob, ecarts=[None] * int(n_ecarts),
+            verrous=verrous, candidat=candidat, residuel=residuel)
+    except Exception:  # noqa: BLE001 — la tuile Pilotage ne casse jamais la page (inconnu → None)
+        return None
+
+
 def carte_sonde(reservoirs: list[dict], nouvelles: int) -> dict:
     """CIRCUIT-P7 (lot 1) — LA CARTE « Sonde de nuit » de l'onglet Sources : cadence, dernier passage,
     interrogées / en panne / nouvelles versions vues. Lue des réservoirs DÉJÀ assemblés (veille + état) ;
@@ -2258,7 +2296,7 @@ def admin_circuit(request: Request) -> dict:
         try:
             fuites = [dict(x) for x in c.execute(text(
                 "SELECT chiffre_id, cle, robinet_a, valeur_a, robinet_b, valeur_b, cause, depuis,"
-                "       COALESCE(type, 'nombre') AS type"
+                "       robinet_a_id, robinet_b_id, COALESCE(type, 'nombre') AS type"
                 " FROM circuit_ecarts WHERE statut = 'ouvert' ORDER BY depuis DESC")).mappings()]
             soldes = c.execute(text(
                 "SELECT count(*) FROM circuit_ecarts WHERE statut = 'solde'")).scalar() or 0
@@ -2432,9 +2470,18 @@ def admin_circuit(request: Request) -> dict:
     _plu_chg = _dep.plu_regles_changees(_run_date)
     _calculer_af = _dep.calculer_ligne(reservoirs, run_servi_date=_run_date,
                                        plu_changees=_plu_chg, residuel=residuel)
+    # ── CIRCUIT-P7 (lot 4) — l'INVARIANT : chaque pastille non verte a sa ligne. Les FUITES (robinets
+    #    lisant hors moteur) et les ÉCARTS (circuit_ecarts ouverts, = `fuites`) deviennent des lignes
+    #    « Décider » (c'était le bug). Trois dates sous le titre : sonde · contrôle du circuit · agents.
+    _fuites_rob = [{"id": rb["id"], "nom": rb["nom"]} for rb in robinets if rb.get("hors_moteur")]
+    _iso = lambda v: (v.isoformat() if hasattr(v, "isoformat") else v)  # noqa: E731
+    _controle_ts = _iso(controle["ts"]) if controle else None
+    _agents_ts = next((_iso(j["ts"]) for j in journal if j.get("geste") == "agent"), None)
+    _dates_af = {"sonde": _derniere_sonde, "controle": _controle_ts, "agents": _agents_ts}
     a_faire = _resume.composer_a_faire(
         reservoirs, residuel=residuel, candidat=_candidat, run_servi=runs.current(),
-        verrous=_verrous, etats_compte=_etats_compte, contexte=_contexte_af,
+        verrous=_verrous, fuites_robinets=_fuites_rob, ecarts=fuites,
+        etats_compte=_etats_compte, contexte=_contexte_af, dates=_dates_af,
         calculer=_calculer_af)
     # ── CIRCUIT-6 — les sept garanties, jouées côté serveur (le front les REND, lot 8) +
     # le catalogue calculé (G1 : 116 en base / 95 en vitrine, jamais gravé) + les doublons.

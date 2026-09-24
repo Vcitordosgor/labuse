@@ -215,19 +215,92 @@ def _ligne_af(type_, couleur, titre, phrase, bouton, *, ghost=None, cible=None):
     return ligne
 
 
+#: CIRCUIT-P7 (lot 4) — un calcul unique décide si « Calculer » apparaît (le front ne recompte rien).
+def _calculer_present(calculer: dict | None, residuel: dict | None) -> bool:
+    if calculer and calculer.get("actif"):
+        return True
+    return bool(residuel and residuel.get("changees"))
+
+
+def total_a_faire(reservoirs: list[dict], *, fuites_robinets=(), ecarts=(),
+                  verrous: dict | None = None, candidat: str | None = None,
+                  calculer: dict | None = None, residuel: dict | None = None) -> int:
+    """CIRCUIT-P7 (lot 4) — L'INVARIANT, une fonction : le compteur « À faire » = la somme EXACTE des
+    pastilles non vertes (Sources + Circuit) et des actions en attente. C'est ce que rend la tuile
+    « tâches à effectuer » du Pilotage (lecture) ET la longueur de la liste de `composer_a_faire`.
+      · Sources non vertes qui font une ligne : nouvelle version (Injecter) · échue (Déposer) · sonde
+        en panne (Décider). « jamais vérifiée » (gris) et « à jour » (mint) n'en font pas.
+      · Circuit non vert : chaque robinet qui lit hors moteur (fuite) · chaque écart ouvert · chaque
+        verrou cassé (Décider).
+      · Actions en attente : Calculer (des entrées ont changé) · Basculer (un candidat est prêt)."""
+    def lib(r):
+        return (r.get("etat") or ["", ""])[1]
+    n_src = sum(1 for r in reservoirs if lib(r) in ("nouvelle version", "échue", "sonde en panne"))
+    n_circuit = len(list(fuites_robinets)) + len(list(ecarts)) + len((verrous or {}).get("casses", []))
+    n_actions = (1 if _calculer_present(calculer, residuel) else 0) + (1 if candidat else 0)
+    return n_src + n_circuit + n_actions
+
+
 def composer_a_faire(reservoirs: list[dict], *, residuel: dict | None, candidat: str | None,
                      run_servi: str, verrous: dict | None = None,
+                     fuites_robinets: list[dict] = (), ecarts: list[dict] = (),
                      etats_compte: dict | None = None, contexte: str | None = None,
-                     derniere_bascule: str | None = None,
+                     dates: dict | None = None, derniere_bascule: str | None = None,
                      calculer: dict | None = None) -> dict:
-    """Compose l'onglet « À faire » (lot 2). `calculer` (lot 4) porte le détail dérivé du registre :
-    {actif: bool, titre, phrase, touche: [..], changements: [..]} — s'il est absent, on retombe sur
-    le seul signal résiduel (`residuel.changees`)."""
+    """Compose l'onglet « À faire » (lot 2, invariant CIRCUIT-P7 lot 4). Ordre : ROUGE (verrou cassé →
+    fuite → écart → sonde en panne), puis AMBRE (injecter → calculer → basculer → déposer). Chaque
+    pastille non verte de Sources et du Circuit a SA ligne ici (fuite et écart du contrôle compris —
+    c'était le bug à fermer) ; « jamais vérifiée » n'en fait pas (elle appelle l'agent depuis Sources).
+    `calculer` (lot 4) porte le détail du registre ; sinon on retombe sur le signal résiduel."""
     def lib(r):
         return (r.get("etat") or ["", ""])[1]
 
     lignes: list[dict] = []
 
+    # ── ROUGE d'abord ────────────────────────────────────────────────────────────────────────
+    # (R1) verrous cassés — une ligne par verrou (le déploiement refuse tant que ça tient).
+    for verrou in (verrous or {}).get("casses", []):
+        lignes.append(_ligne_af(
+            "decider", "rouge", f"Décider — verrou {verrou} cassé",
+            f"Le dernier passage de « labuse circuit verrous » a cassé sur {verrou}. Le déploiement "
+            "refuse tant que ça tient ; chaque verrou a sa phrase dans VERROUS.md.",
+            {"label": "Décider", "action": "decider", "verrou": verrou},
+            cible={"type": "compteur", "ids": []}))
+
+    # (R2) FUITE — un robinet lit hors moteur (prend son chiffre ailleurs qu'au moteur). CIRCUIT-P7
+    # lot 4 : cette ligne MANQUAIT (le bug). « voir dans le Circuit » ouvre le robinet.
+    for rb in fuites_robinets:
+        lignes.append(_ligne_af(
+            "decider", "rouge", f"Décider — fuite : « {rb.get('nom') or rb.get('id')} » lit hors moteur",
+            "Ce robinet prend ses chiffres dans une requête propre au lieu du moteur.",
+            {"label": "Décider", "action": "decider", "robinet": rb.get("id")},
+            ghost={"label": "voir dans le Circuit", "action": "voir_circuit"},
+            cible={"type": "robinet", "ids": [rb.get("id")]}))
+
+    # (R3) ÉCART — une donnée diffère entre deux lectures (circuit_ecarts ouvert). Idem : manquait.
+    for e in ecarts:
+        nom = e.get("chiffre_id") or "un chiffre"
+        va, vb = e.get("valeur_a"), e.get("valeur_b")
+        ra, rb = e.get("robinet_a"), e.get("robinet_b")
+        rid = e.get("robinet_a_id")
+        detail = (f"{ra} : {va} · {rb} : {vb}" if rb else f"{ra} : {va}")
+        lignes.append(_ligne_af(
+            "decider", "rouge", f"Décider — écart : « {nom} » diffère entre deux endroits",
+            f"{detail}. Même chiffre, deux lectures.",
+            {"label": "Décider", "action": "decider", "ecart": nom},
+            ghost={"label": "voir dans le Circuit", "action": "voir_circuit"},
+            cible=({"type": "robinet", "ids": [rid]} if rid else {"type": "compteur", "ids": []})))
+
+    # (R4) SONDE EN PANNE — 3 échecs non-SSL : signal technique rouge, à décider.
+    for r in reservoirs:
+        if lib(r) == "sonde en panne":
+            lignes.append(_ligne_af(
+                "decider", "rouge", f"Décider — sonde en panne : {r['nom']}",
+                "Trois passages ratés d'affilée (hors SSL) : la sonde amont ne répond plus.",
+                {"label": "Décider", "action": "decider", "source": r["id"]},
+                cible={"type": "reservoir", "ids": [r["id"]]}))
+
+    # ── AMBRE ensuite : injecter → calculer → basculer → déposer ──────────────────────────────
     # (1) INJECTER — une ligne par source en nouvelle version (chacune a sa vanne).
     for r in reservoirs:
         if lib(r) == "nouvelle version":
@@ -243,22 +316,19 @@ def composer_a_faire(reservoirs: list[dict], *, residuel: dict | None, candidat:
 
     # (2) CALCULER — sources injectées OU règles PLU changées depuis le run servi (lot 4 enrichit).
     calc = calculer if (calculer and calculer.get("actif")) else None
+    calc_present = _calculer_present(calculer, residuel)
     if calc:
         lignes.append(_ligne_af(
             "calculer", "ambre", calc.get("titre") or "Calculer le résiduel",
             calc.get("phrase") or "Des entrées ont changé depuis le run servi.",
             {"label": "Calculer", "action": "calculer"},
             ghost={"label": "voir les changements", "action": "voir_changements"}))
-        calc_present = True
-    elif residuel and residuel.get("changees"):
+    elif calc_present:
         lignes.append(_ligne_af(
             "calculer", "ambre", "Calculer le résiduel",
             f"{residuel.get('detail', 'Des entrées ont changé')} — à recalculer, puis à basculer.",
             {"label": "Calculer", "action": "calculer"},
             ghost={"label": "voir les changements", "action": "voir_changements"}))
-        calc_present = True
-    else:
-        calc_present = False
 
     # (3) BASCULER — candidat prêt ; grisé tant qu'un Calculer le précède (le score lit la capacité).
     if candidat:
@@ -281,20 +351,13 @@ def composer_a_faire(reservoirs: list[dict], *, residuel: dict | None, candidat:
                 {"label": "Déposer un fichier", "action": "deposer", "source": r["id"]},
                 cible={"type": "reservoir", "ids": [r["id"]]}))
 
-    # (5) DÉCIDER — une ligne par verrou cassé (lien vers son détail).
-    for verrou in (verrous or {}).get("casses", []):
-        lignes.append(_ligne_af(
-            "decider", "rouge", f"Décider — verrou {verrou}",
-            f"Le dernier passage de « labuse circuit verrous » a cassé sur {verrou}. Le déploiement "
-            "refuse tant que ça tient ; chaque verrou a sa phrase dans VERROUS.md.",
-            {"label": "Décider", "action": "decider", "verrou": verrou},
-            cible={"type": "compteur", "ids": []}))
-
     ec = etats_compte or {}
     calme = {
         "nouvelles": ec.get("nouvelle version", 0),
         "pannes": ec.get("sonde en panne", 0),
+        "jamais": ec.get("jamais vérifiée", 0),
         "vitrine": ec.get("total", len(reservoirs)),
         "derniere_bascule": derniere_bascule,
     }
-    return {"total": len(lignes), "lignes": lignes, "contexte": contexte, "calme": calme}
+    return {"total": len(lignes), "lignes": lignes, "contexte": contexte,
+            "dates": dates or {}, "calme": calme}

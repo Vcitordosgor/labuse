@@ -177,7 +177,7 @@ export function CircuitSection() {
       )}
 
       <section className={`tab ${onglet === 'todo' ? 'on' : ''}`}>
-        <AFaire data={d} onGeste={gesteAFaire} />
+        <AFaire data={d} onGeste={gesteAFaire} onOuvrirSources={() => setOnglet('sources')} />
       </section>
 
       <section className={`tab ${onglet === 'sources' ? 'on' : ''}`}>

@@ -37,7 +37,9 @@ export type AFaireLigne = {
 }
 export type AFaire = {
   total: number; lignes: AFaireLigne[]; contexte: string | null
-  calme: { nouvelles: number; pannes: number; vitrine: number; derniere_bascule: string | null }
+  // CIRCUIT-P7 (lot 4) — trois dates sous le titre (sonde · contrôle du circuit · agents).
+  dates?: { sonde: string | null; controle: string | null; agents: string | null }
+  calme: { nouvelles: number; pannes: number; jamais?: number; vitrine: number; derniere_bascule: string | null }
 }
 // CIRCUIT-P4 (lot 1) — le compte par état (pastilles de l'onglet Sources).
 export type EtatsSources = {

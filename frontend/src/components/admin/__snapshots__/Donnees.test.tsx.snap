@@ -161,6 +161,8 @@ exports[`CIRCUIT-P2 lot 1 — la page Données EST le Circuit > snapshot 1`] = `
 .cxp .af-head h1{font-size:26px;font-weight:650;letter-spacing:-.02em;margin:0}
 .cxp .af-head h1 b{color:var(--ambre);font-weight:650}
 .cxp .af-head .when{color:var(--muted);font-size:13px}
+.cxp .af-dates{color:var(--muted);font-size:12.5px;margin:0 0 16px} .cxp .af-dates span+span::before{content:"·";margin:0 8px;color:var(--faint)}
+.cxp .af-calm .lienc{color:var(--mint);text-decoration:underline;text-underline-offset:2px}
 .cxp .af-list{display:flex;flex-direction:column;gap:8px}
 .cxp .af-item{display:grid;grid-template-columns:12px 1fr auto;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
 .cxp .af-item.rouge{border-color:rgba(248,113,113,.35)}
