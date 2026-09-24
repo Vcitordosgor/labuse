@@ -4427,33 +4427,31 @@ def _ppr_reference_commune(db: Session, insee: str) -> list[dict] | None:
     return [{"document": r["document"], "approbation": r["approbation"]} for r in rows] or None
 
 
-def _aleas_block(db: Session, idu: str, lines: list[dict]) -> dict | None:
-    """FICHE-1 lot 3 — la LISTE des aléas touchant la parcelle, dérivée des lignes de cascade
-    SERVIES (`layer == 'risques'`, arbitrées) — exactement celles que sert « Pièges et risques ».
-    Aucune relecture de spatial_layers pour DÉCIDER un aléa (M73). Chaque aléa porte : nature,
-    niveau, part de la parcelle concernée (lue sur le libellé arbitré, None si la source ne la
-    dit pas), et pour un PPR la référence de l'arrêté communal. None si aucun aléa."""
-    import re as _re
-    ali = [l for l in lines if l.get("layer") == "risques"
-           and l["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
-    if not ali:
+def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict | None:
+    """PIEGES-RISQUES-2 (Lot C) — la LISTE des aléas de la fiche §Pièges & risques lit désormais la MÊME
+    fonction que l'outil (`servitudes.aleas_parcelle`, couches `spatial_layers` EN DIRECT) au lieu de la
+    cascade servie : l'outil et la fiche ne divergent plus (mêmes libellés, mêmes %, même source/millésime).
+    La PRÉSENTATION est INCHANGÉE (le front consomme toujours `{n, liste:[{nature, niveau, part_pct,
+    libelle, redhibitoire, source, millesime, ppr}]}`). Le paramètre `lines` (cascade) n'est plus lu — il
+    reste dans la signature pour ne pas toucher l'appelant. Le « risque » chiffré éventuel de la cascade
+    reste du scoring, hors de cette liste."""
+    from .servitudes import aleas_parcelle
+    al = aleas_parcelle(db, idu)
+    if not al:
         return None
-    ppr_ref = None
+    ppr_ref = _ppr_reference_commune(db, idu[:5])
     items: list[dict] = []
-    for l in ali:
-        detail = l["detail"] or ""
-        is_ppr = detail.lower().startswith("ppr")
-        m = _re.search(r"(\d+)\s*%", detail)
-        if is_ppr and ppr_ref is None:
-            ppr_ref = _ppr_reference_commune(db, idu[:5])
+    for a in al:
+        is_ppr = a["nature"].startswith("PPR")
         items.append({
-            "nature": _alea_nature(detail),
-            "niveau": l.get("severity"),
-            "libelle": detail,
-            "part_pct": int(m.group(1)) if m else None,   # None = la source ne dit pas la part
-            "redhibitoire": l["result"] == "HARD_EXCLUDE",
-            "source": l.get("source"),
-            "millesime": l.get("millesime_amont"),
+            "nature": a["nature"],
+            # PPR : le rouge/bleu est déjà dans `nature` → pas de « niveau » redondant ; aléas : le niveau.
+            "niveau": None if is_ppr else a["niveau"],
+            "libelle": a["libelle"],
+            "part_pct": a["part_pct"],
+            "redhibitoire": a["redhibitoire"],
+            "source": a["source"],
+            "millesime": a["millesime"],
             "ppr": ppr_ref if is_ppr else None,
         })
     items.sort(key=lambda a: (not a["redhibitoire"],

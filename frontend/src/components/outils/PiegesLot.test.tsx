@@ -4,22 +4,20 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
 import { M10 } from './ModulePanel'
 
-// Mandat PIEGES — « Un lot » : liste de chips, plus d'export PDF, âge_dirigeant masqué sur un
-// particulier, et pont Courrier (« Préparer les courriers (n) » via courrierPrefillIdus).
+// PIEGES-RISQUES-2 (Lot A) — « Un lot » = UNION des contraintes lues par la MÊME source que « Une
+// parcelle » (couches en direct), chaque contrainte portant « N parcelles sur M ». Plus de score de
+// risque ni de checklist cascade. La réponse N'A PLUS de champ `items`/`risque`/`checklist`/`seuils`.
 const DILIGENCE = {
-  n_demandes: 2, n_trouvees: 2, non_couvert: [],
-  items: [
-    { idu: '97411000BZ1065', commune: 'Saint-Denis', surface_m2: 1625, statut: 'neutre', tier_v2: 'neutre',
-      etage0: false, risque: 30, proprio: { type: 'particulier' },
-      checklist: [
-        { layer: 'age_dirigeant', severity: 'faible', result: 'UNKNOWN', detail: 'Âge dirigeant inconnu (PM sans dirigeant physique daté).' },
-        { layer: 'risques', severity: 'moyen', result: 'SOFT_FLAG', detail: 'Zone bleue PPR inondation' },
-      ] },
-    { idu: '97415000CT1837', commune: 'Saint-Paul', surface_m2: 900, statut: 'neutre', tier_v2: 'neutre',
-      etage0: false, risque: 40, proprio: { type: 'personne_morale', denomination: 'SCI X', siren: '123' },
-      checklist: [
-        { layer: 'age_dirigeant', severity: 'faible', result: 'UNKNOWN', detail: 'Âge dirigeant inconnu (PM sans dirigeant physique daté).' },
-      ] },
+  n_demandes: 2, n_trouvees: 2, n_parcelles: 2, erreurs: [], non_couvert: ['Procédures PLU en cours — voir l\'outil PLU'],
+  parcelles: [
+    { idu: '97411000BZ1065', commune: 'Saint-Denis', surface_m2: 1625, n_contraintes: 2 },
+    { idu: '97415000CT1837', commune: 'Saint-Paul', surface_m2: 900, n_contraintes: 1 },
+  ],
+  contraintes: [
+    { categorie: 'Assainissement non collectif (ANC)', effet: 'Dispositif individuel à prévoir (coût à anticiper au budget)',
+      source: 'GPU — zonages d\'assainissement', date: '2026-08-21', n_parcelles: 2, parcelles: ['97411000BZ1065', '97415000CT1837'] },
+    { categorie: 'Droit de préemption (DPU)', effet: 'Droit de préemption urbain — la commune peut se substituer à l\'acquéreur à la vente',
+      source: 'GPU — droit de préemption urbain', date: '2026-09-07', n_parcelles: 1, parcelles: ['97411000BZ1065'] },
   ],
 }
 
@@ -53,13 +51,20 @@ describe('PIEGES — « Un lot »', () => {
     expect(document.querySelectorAll('[data-diligence-chip]')).toHaveLength(2)
   })
 
-  it('âge_dirigeant masqué sur un particulier, gardé sur une PM ; plus aucun PDF', async () => {
+  it('rend l\'UNION par contrainte avec « N parcelles sur M » (même carte que « Une parcelle »)', async () => {
     renderM10()
     batirEtAnalyser()
-    await waitFor(() => expect(document.querySelectorAll('[data-diligence-item]').length).toBe(2))
-    // 2 items ont un age_dirigeant en cascade, mais seul celui de la PM s'affiche
-    expect(screen.getAllByText(/Âge dirigeant inconnu/)).toHaveLength(1)
-    // export PDF retiré
+    await waitFor(() => expect(document.querySelectorAll('[data-diligence-contrainte]').length).toBe(2))
+    // libellés = ceux du mode parcelle
+    expect(screen.getByText('Assainissement non collectif (ANC)')).toBeTruthy()
+    expect(screen.getByText('Droit de préemption (DPU)')).toBeTruthy()
+    // décompte de parcelles touchées par contrainte
+    const parts = Array.from(document.querySelectorAll('[data-diligence-part]')).map((e) => e.textContent?.replace(/\s+/g, ' ').trim())
+    expect(parts).toContain('2 parcelles sur 2')   // ANC : les 2
+    expect(parts).toContain('1 parcelle sur 2')    // DPU : une seule
+    // plus AUCUN vestige de l'ancien crible cascade (score de risque, checklist, PDF)
+    expect(document.querySelector('[data-diligence-risque]')).toBeNull()
+    expect(document.querySelector('[data-diligence-seuils]')).toBeNull()
     expect(screen.queryByText(/⬇ PDF/)).toBeNull()
   })
 

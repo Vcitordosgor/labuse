@@ -1514,147 +1514,46 @@ class DueDiligenceIn(BaseModel):
     refs: str   # texte libre : IDU complets ou « SECTION NUMERO » séparés par lignes/virgules
 
 
-_SEV_RISK = {"fort": 70, "moyen": 50, "faible": 30, "info": 10}
-# OUTILS-FIX-4 C1 — les deux valeurs SPÉCIALES du barème de risque, hissées en constantes (point de vérité
-# unique) pour être SERVIES au tiroir « Comment ce score est calculé » (jamais réécrites en dur au front).
-_RISQUE_HARD = 100              # HARD_EXCLUDE (contrainte bloquante) → risque bloquant
-_RISQUE_BONUS_PARTICULIER = 10  # propriétaire particulier : accès via SPF (démarche +), plafonné à 100
-
-
-def _seuils_crible() -> dict:
-    """OUTILS-FIX-4 C1 — les SEUILS qui font le score du crible, LUS DE LA CONFIG (jamais réécrits au
-    front) : le barème sévérité→risque (`_SEV_RISK` + les deux constantes ci-dessus) et les seuils
-    géométriques de la couche `risques`/proximités (`config/cascade_rules.yaml`, via `cascade_rules()`).
-    Un seul point de lecture ; le front n'affiche que ce qu'il reçoit."""
-    from ..config import cascade_rules
-    layers = {l.get("name"): (l.get("params") or {}) for l in (cascade_rules().get("layers") or [])}
-    risq = layers.get("risques", {})
-    return {
-        "bareme_risque": {
-            "bloquant": _RISQUE_HARD, "fort": _SEV_RISK["fort"], "moyen": _SEV_RISK["moyen"],
-            "faible": _SEV_RISK["faible"], "info": _SEV_RISK["info"],
-            "bonus_particulier": _RISQUE_BONUS_PARTICULIER,
-        },
-        "ppr_pct": {"marginal": risq.get("ppr_red_marginal_pct"), "exclusion": risq.get("ppr_red_exclude_pct"),
-                    "couverture_min": risq.get("min_coverage_pct")},
-        "proximite_m": {"cavite": (layers.get("cavite", {}) or {}).get("proximite_m"),
-                        "mouvement_terrain": (layers.get("mvt", {}) or {}).get("proximite_m"),
-                        "icpe": (layers.get("icpe", {}) or {}).get("bandes_m")},
-        "source": "config/cascade_rules.yaml (couches risques/cavite/icpe/mvt) + barème api/modules.py",
-    }
-
-
-def _diligence_dossier(db: Session, parcel_id: int, idu: str) -> dict:
-    """Point 42 — dossier de diligence DÉTERMINISTE depuis les facteurs EXISTANTS (cascade + proprio) :
-    checklist des points à vérifier avant d'acheter + score de risque consolidé. Aucun re-scoring.
-    PRIVACY : personne morale nommée (public) ; particulier JAMAIS nommé."""
-    concerns = db.execute(text(
-        "SELECT cr.layer_name, cr.severity, cr.result, cr.detail FROM dryrun_cascade_results cr "
-        "WHERE cr.run_label = :run AND cr.parcel_id = :pid "
-        "  AND cr.result IN ('HARD_EXCLUDE', 'SOFT_FLAG', 'UNKNOWN') "
-        "ORDER BY CASE cr.result WHEN 'HARD_EXCLUDE' THEN 0 WHEN 'SOFT_FLAG' THEN 1 ELSE 2 END, "
-        "         CASE cr.severity WHEN 'fort' THEN 0 WHEN 'moyen' THEN 1 WHEN 'faible' THEN 2 ELSE 3 END"),
-        {"run": runs.cascade(), "pid": parcel_id}).mappings().all()
-    checklist = [{"layer": c["layer_name"], "severity": c["severity"], "result": c["result"],
-                  "detail": c["detail"]} for c in concerns]
-    # OUTILS-FIX-4 C3 — DÉDUPLICATION des lignes IDENTIQUES. Vérifié sur 97415000AC0024 : la couche
-    # `risques` émet un SOFT_FLAG par polygone d'aléa intersecté (georisque_alea DEAL, souvent FRAGMENTÉ),
-    # si bien que deux fragments de MÊME niveau produisent deux fois « Aléa mouvement_terrain — niveau
-    # moyen » — même couche, même sévérité, même texte : le MÊME fait, affiché deux fois. Ce n'est PAS
-    # deux risques distincts (le score consolidé prend le MAX, il n'était donc pas gonflé) mais du bruit
-    # de présentation. On replie les lignes strictement identiques (layer+severity+result+detail), en
-    # gardant l'ordre. Deux zonages, un même niveau → une seule ligne. (Correctif au point de LECTURE du
-    # crible ; l'engine de cascade n'est pas touché — le run golden servi reste intact.)
-    _vus: set[tuple] = set()
-    _uniq = []
-    for c in checklist:
-        k = (c["layer"], c["severity"], c["result"], c["detail"])
-        if k in _vus:
-            continue
-        _vus.add(k)
-        _uniq.append(c)
-    checklist = _uniq
-    # OUTILS-FIX-5 L4 — ZNIEFF : l'append géométrique de M137-U (« contrainte HORS CASCADE ») produisait
-    # un DOUBLON depuis que le run servi émet une couche cascade `znieff` (le backfill FICHE-COUCHES-2
-    # remonte la ZNIEFF dans dryrun_cascade_results) : le crible « lot » montrait la MÊME parcelle deux
-    # fois — ligne cascade `znieff` + ligne appendée `ZNIEFF` (la dédup ci-dessus ne les replie pas :
-    # layer et libellé diffèrent). Or ce backfill est PARTIEL (toutes les parcelles n'ont pas encore
-    # leur ligne cascade `znieff`) : on ne peut pas simplement retirer l'append sans perdre la vigilance
-    # ZNIEFF au crible sur ces parcelles. On garde donc l'append en REPLI — seulement si la cascade
-    # servie n'a pas déjà émis de znieff pour la parcelle. Doublon supprimé, zéro régression.
-    if not any(c["layer"] == "znieff" for c in checklist):
-        for z in db.execute(text(
-                "SELECT sl.subtype, sl.name FROM spatial_layers sl JOIN parcels p ON p.id = :pid "
-                "WHERE sl.kind = 'znieff' AND sl.geom_2975 IS NOT NULL "
-                "  AND ST_Intersects(sl.geom_2975, p.geom_2975)"), {"pid": parcel_id}).mappings().all():
-            checklist.append({"layer": "ZNIEFF", "severity": "faible", "result": "SOFT_FLAG",
-                              "detail": f"{z['subtype'] or 'ZNIEFF'} — {z['name']} : contrainte "
-                                        "environnementale (études d'impact, risque de recours), n'interdit pas de construire"})
-    pm = db.execute(text("SELECT denomination, siren FROM parcelle_personne_morale WHERE idu = :i"),
-                    {"i": idu}).mappings().first()
-    proprio = ({"type": "personne_morale", "denomination": pm["denomination"], "siren": pm["siren"]}
-               if pm and pm["denomination"] else {"type": "particulier"})
-    # OUTILS-FIX-4 C2 — CATNAT dans le crible : les arrêtés de catastrophe naturelle (table catnat_arretes,
-    # GASPAR / Géorisques) sont lus par la fiche mais pas par le crible de lot — or c'est exactement ce
-    # qu'on veut cribler avant d'acheter. Comme la fiche (fiche_commune : count par insee), la donnée est
-    # AU GRAIN COMMUNE (un arrêté couvre la commune) : on la sert par commune de la parcelle (idu[:5]) —
-    # nombre d'arrêtés + le plus récent (date + type de péril). Sourcé ; jamais un verdict, une vigilance.
-    catnat = {"n": 0, "dernier": None, "dernier_peril": None}
-    if db.execute(text("SELECT to_regclass('catnat_arretes')")).scalar() is not None:
-        cat = db.execute(text(
-            "SELECT count(*) AS n, to_char(max(date_arrete), 'YYYY-MM-DD') AS dernier, "
-            "  (SELECT type_peril FROM catnat_arretes c2 WHERE c2.insee = :ins "
-            "     ORDER BY date_arrete DESC NULLS LAST LIMIT 1) AS dernier_peril "
-            "FROM catnat_arretes WHERE insee = :ins"), {"ins": idu[:5]}).mappings().first()
-        if cat:
-            catnat = {"n": int(cat["n"] or 0), "dernier": cat["dernier"], "dernier_peril": cat["dernier_peril"]}
-    if any(c["result"] == "HARD_EXCLUDE" for c in checklist):
-        risque = _RISQUE_HARD
-    else:
-        risque = max([_SEV_RISK.get(c["severity"], 20) for c in checklist if c["result"] == "SOFT_FLAG"] or [0])
-    if proprio["type"] == "particulier" and risque < _RISQUE_HARD:   # accès proprio via SPF (démarche +)
-        risque = min(_RISQUE_HARD, risque + _RISQUE_BONUS_PARTICULIER)
-    return {"checklist": checklist, "risque": risque, "proprio": proprio, "catnat": catnat}
-
-
 @router.post("/duediligence")
 def duediligence(body: DueDiligenceIn, db: Session = Depends(get_db)) -> dict:
+    """PIEGES-RISQUES-2 (Lot A) — « un lot » = l'UNION des contraintes des parcelles, lues par la MÊME
+    fonction que « une parcelle » (`servitudes.contraintes_parcelle`, couches `spatial_layers` EN
+    DIRECT). L'outil ne lit PLUS la cascade (`dryrun_cascade_results`) ni le scoring — il ne dépend
+    plus de l'ancien run. Chaque contrainte porte le nombre de parcelles touchées (« … · 3 parcelles
+    sur 4 ») ; les libellés, la source et le millésime sont ceux du mode « une parcelle », à l'identique."""
     import re
+    from .servitudes import NON_COUVERT, contraintes_parcelle
     tokens = [t.strip().upper().replace(" ", "") for t in re.split(r"[\n,;]+", body.refs) if t.strip()]
-    v2run = _v2run(db)
-    items = []
+    parcelles: list[dict] = []
+    erreurs: list[str] = []
+    union: dict[tuple, dict] = {}
     for t in tokens[:60]:
-        row = db.execute(text("""
-            SELECT p.id AS parcel_id, p.idu, p.commune, round(p.surface_m2) AS surface_m2,
-                   s2.tier AS statut, d.completeness_score,
-                   s2.tier AS tier_v2, s2.rang AS rang_v2,
-                   (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
-                   (SELECT count(*) FROM dryrun_cascade_results cr WHERE cr.run_label = :run
-                     AND cr.parcel_id = p.id AND cr.result = 'SOFT_FLAG') AS flags,
-                   (SELECT count(*) FROM dryrun_cascade_results cr WHERE cr.run_label = :run
-                     AND cr.parcel_id = p.id AND cr.result = 'HARD_EXCLUDE') AS exclusions
-            FROM parcels p
-            LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-            LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
-            WHERE p.idu = :t OR (p.section || p.numero) = :t OR (p.section || lpad(p.numero, 4, '0')) = :t
-            LIMIT 1"""), {"t": t, "run": runs.cascade(), "v2run": v2run}).mappings().first()
-        if row:
-            dossier = _diligence_dossier(db, row["parcel_id"], row["idu"])
-            items.append({k: row[k] for k in row.keys() if k != "parcel_id"}
-                         | {"etage0": bool(row["etage0"]), **dossier,
-                            "pdf": f"/parcels/{row['idu']}/export.pdf?source={runs.current()}"})
-        else:
-            items.append({"ref": t, "erreur": "référence introuvable"})
-    ok = [i for i in items if "idu" in i]
-    # M137-T — le bloc NON COUVERT (source unique servitudes.NON_COUVERT) est REPORTÉ sur l'entrée
-    # « un lot » : un lot sans flag cascade ne doit JAMAIS afficher un « RAS » muet — il dit ce que
-    # la base ne couvre pas, à l'échelle des 60 parcelles comme sur une seule.
-    from .servitudes import NON_COUVERT
-    return {"n_demandes": len(tokens), "n_trouvees": len(ok), "items": items,
-            "non_couvert": NON_COUVERT,
-            # OUTILS-FIX-4 C1 — les seuils qui font le score, servis pour le tiroir « Comment ce score est
-            # calculé » (valeurs lues de la config, jamais réécrites au front).
-            "seuils": _seuils_crible()}
+        row = db.execute(text(
+            "SELECT idu, commune, round(surface_m2) AS surface_m2 FROM parcels "
+            "WHERE idu = :t OR (section || numero) = :t OR (section || lpad(numero, 4, '0')) = :t LIMIT 1"),
+            {"t": t}).mappings().first()
+        if not row:
+            erreurs.append(t)
+            continue
+        cs = contraintes_parcelle(db, row["idu"])   # MÊME fonction que /servitudes-invisibles
+        parcelles.append({"idu": row["idu"], "commune": row["commune"],
+                          "surface_m2": row["surface_m2"], "n_contraintes": len(cs)})
+        for c in cs:
+            # union PAR CONTRAINTE (catégorie + effet) — une contrainte est comptée UNE FOIS par parcelle
+            # touchée (contraintes_parcelle a déjà dédupliqué au sein de la parcelle) ; jamais dupliquée
+            # ni perdue entre parcelles.
+            k = (c["categorie"], c["effet"])
+            u = union.get(k)
+            if u is None:
+                u = union[k] = {**c, "n_parcelles": 0, "parcelles": []}
+            u["n_parcelles"] += 1
+            u["parcelles"].append(row["idu"])
+    n = len(parcelles)
+    # tri : les contraintes qui touchent le PLUS de parcelles d'abord, puis par catégorie/effet.
+    contraintes = sorted(union.values(), key=lambda x: (-x["n_parcelles"], x["categorie"], x["effet"]))
+    return {"n_demandes": len(tokens), "n_trouvees": n, "n_parcelles": n,
+            "parcelles": parcelles, "contraintes": contraintes, "erreurs": erreurs,
+            "non_couvert": NON_COUVERT}
 
 
 # ───────────────── M22 + BILAN — ÉTUDE DE FAISABILITÉ BIDIRECTIONNELLE ─────────────────

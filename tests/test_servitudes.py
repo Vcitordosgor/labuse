@@ -73,10 +73,14 @@ def test_recette3_nouveaux_kinds_couverts_et_decodes():
     assert "recul" in sv._detail("dpf", "cours_eau", "Ravine Vincendo", None).lower()
     assert "Zone humide" in sv._detail("zone_humide", "habitats_2011", "bassin", None)
     assert "Espace naturel protégé" in sv._detail("ens", "reserve_naturelle", "Etang de Saint-Paul", None)
-    # plu_gpu_prescription : seuls 01 (EBC) et 05 (ER) sont des pièges ; les autres typepsc filtrés au rendu.
+    # plu_gpu_prescription : 01 (EBC) + 05 (ER) + typepsc élargis (PIEGES-RISQUES-2 Lot B) qui grèvent la
+    # constructibilité ; les typepsc informatifs (07 patrimoine, 16 changement destination…) restent filtrés.
     assert "boisé classé" in sv._detail("plu_gpu_prescription", "01", "Espaces Boisés Classés", None).lower()
     assert "Emplacement réservé" in sv._detail("plu_gpu_prescription", "05", None, {"libelle": "Emplacement réservé"})
-    assert sv._PRESCRIPTION_PIEGE == {"01", "05"}
+    assert sv._PRESCRIPTION_PIEGE == {"01", "05", "08", "15", "17", "18", "19", "22"}
+    assert "07" not in sv._PRESCRIPTION_PIEGE and "16" not in sv._PRESCRIPTION_PIEGE   # informatifs, non surfacés
+    assert "logements sociaux" in sv._detail("plu_gpu_prescription", "17", "Clause logements aidés", None).lower()
+    assert "recul" in sv._detail("plu_gpu_prescription", "15", "Bande de recul", None).lower()
     # PEB décodé par zone (attrs.zone prioritaire sur subtype).
     assert "Zone C" in sv._detail("peb", "c", "PEB Roland Garros", {"zone": "C"})
 
@@ -113,8 +117,8 @@ def test_flux_sup_sourcee_datee_et_dedup(db_session):
 
 @pytest.mark.db
 def test_duediligence_reporte_non_couvert_sur_le_lot(db_session):
-    # M137-T (fusion outil Risques) — le bloc NON COUVERT (source unique servitudes.NON_COUVERT) est
-    # REPORTÉ sur l'entrée « un lot » : jamais un « RAS » muet, même sans flag cascade. + ménage q/a_score.
+    # M137-T — le bloc NON COUVERT (source unique servitudes.NON_COUVERT) est reporté sur « un lot » :
+    # jamais un « RAS » muet. PIEGES-RISQUES-2 (Lot A) : la réponse est désormais l'UNION par contrainte.
     from labuse.api import modules
     s = db_session
     idu = "97499000DD0001"
@@ -125,10 +129,54 @@ def test_duediligence_reporte_non_couvert_sur_le_lot(db_session):
     s.flush()
     out = modules.duediligence(modules.DueDiligenceIn(refs=idu), s)
     assert out["non_couvert"] == sv.NON_COUVERT
-    # RECETTE-3 (T5) — le PEB est désormais servi (kind), le manque témoin devient les canalisations.
     assert any("Canalisations" in x for x in out["non_couvert"])        # manque dit, jamais silencieux
-    it = out["items"][0]
-    assert "q_score" not in it and "a_score" not in it                  # vestige mort retiré du SELECT
+    # PIEGES-RISQUES-2 (Lot A) — nouvelle forme : union par contrainte + décompte parcelles ; plus de crible.
+    assert "items" not in out and "risque" not in out and "seuils" not in out   # ancien crible cascade retiré
+    assert out["n_trouvees"] == 1 and out["n_parcelles"] == 1
+    assert isinstance(out["contraintes"], list) and isinstance(out["parcelles"], list)
+
+
+def test_duediligence_ne_lit_plus_la_cascade():
+    # PIEGES-RISQUES-2 (Lot A) — l'outil « un lot » ne dépend PLUS de l'ancien scoring : sa fonction ne
+    # lit ni dryrun_cascade_results ni parcel_p_score_v2, et délègue à la MÊME source que « une parcelle ».
+    # CASSE si on re-branche la cascade sur cet outil (garde-fou du mandat, « grep prouvé »).
+    import inspect
+    from labuse.api import modules
+    src = inspect.getsource(modules.duediligence)
+    assert "dryrun_cascade_results" not in src
+    assert "parcel_p_score_v2" not in src
+    assert "_diligence_dossier" not in src
+    assert "contraintes_parcelle" in src                                # même source que « une parcelle »
+
+
+@pytest.mark.db
+def test_lotB_ppr_gradue_alea_deux_modes_et_fiche(db_session):
+    # PIEGES-RISQUES-2 (Lot B/C) — PPR zoné (bleu, lu en direct) + aléa par niveau apparaissent dans
+    # `contraintes_parcelle` (donc « une parcelle » ET « un lot »), et la fiche §Pièges & risques
+    # (`_aleas_block` → `aleas_parcelle`) rend EXACTEMENT la même liste de risques (fiche == outil).
+    from labuse.api import app as app_mod
+    s = db_session
+    idu = "97499000PP0001"
+    s.execute(text(
+        "INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2, centroid, bbox) VALUES "
+        "(:i,'X','ZZ','9', ST_GeomFromText(:w,4326), ST_Transform(ST_GeomFromText(:w,4326),2975), 800, "
+        " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326)))"), {"i": idu, "w": _WKT})
+    ds = s.execute(text("INSERT INTO data_sources (name, status, last_sync_at) "
+                        "VALUES ('DEAL test PP0001', 'ok', '2026-09-13') RETURNING id")).scalar()
+    s.execute(text(
+        "INSERT INTO spatial_layers (kind, subtype, name, attrs, data_source_id, geom, geom_2975) VALUES "
+        "('ppr','PRESCRIPTION','PPR test', '{\"risque\":\"INONDATION\"}', :ds, ST_GeomFromText(:w,4326), "
+        " ST_Transform(ST_GeomFromText(:w,4326),2975))"), {"ds": ds, "w": _WKT})
+    s.execute(text(
+        "INSERT INTO spatial_layers (kind, subtype, name, attrs, data_source_id, geom, geom_2975) VALUES "
+        "('georisque_alea','mouvement_terrain','Aléa test', '{\"niveau\":\"fort\"}', :ds, ST_GeomFromText(:w,4326), "
+        " ST_Transform(ST_GeomFromText(:w,4326),2975))"), {"ds": ds, "w": _WKT})
+    s.flush()
+    effs = [c["effet"] for c in sv.contraintes_parcelle(s, idu) if c["categorie"].startswith("Risque")]
+    assert any("Zone bleue PPR inondation" in e for e in effs)              # PPR bleu gradué (Lot B, É2)
+    assert any("Aléa mouvement de terrain" in e and "fort" in e for e in effs)   # aléa par niveau (Lot B)
+    fiche = app_mod._aleas_block(s, idu)                                    # Lot C — fiche == outil
+    assert fiche and sorted(a["libelle"] for a in fiche["liste"]) == sorted(effs)
 
 
 @pytest.mark.db
