@@ -119,6 +119,14 @@ _MOTIFS_EXONERATION = {
                        "CGI art. 1635 quater D, 9°"),
 }
 
+# TAXE-FIX-1 point 2 — redevance (« taxe ») d'archéologie préventive due pour les travaux soumis à
+# AUTORISATION D'URBANISME (permis) : MÊME assiette que la taxe d'aménagement (surface × valeur
+# forfaitaire, abattements ET exonérations inclus — l'assiette exclut déjà les surfaces exonérées),
+# taux 0,40 %. Code du patrimoine art. L524-7 (fait de droit stable). À NE PAS confondre avec le
+# régime au m² (0,69 €/m² en 2026, arrêté du 23/12/2025), réservé aux aménagements SANS permis.
+_RAP_PCT = 0.40
+_RAP_SOURCE = "code du patrimoine art. L524-7 (0,40 % de l'assiette de la taxe d'aménagement)"
+
 
 def calculer(
     *,
@@ -225,6 +233,10 @@ def calculer(
     part_dep = None if taux_departemental_pct is None else _eur(assiette * float(taux_departemental_pct) / 100.0)
     total = None if (part_com is None or part_dep is None) else _eur((part_com or 0) + (part_dep or 0))
 
+    # 4) TAXE-FIX-1 point 2 — redevance d'archéologie préventive : 0,40 % de la MÊME assiette
+    # (art. L524-7 c. patrimoine). Ligne à part, sous le total TA ; ne dépend pas du taux communal.
+    rap_eur = _eur(assiette * _RAP_PCT / 100.0)
+
     return {
         "annee": cfg["meta"]["annee"],
         "source": cfg["meta"]["source"],
@@ -239,6 +251,10 @@ def calculer(
         "part_communale_eur": part_com,
         "part_departementale_eur": part_dep,
         "total_eur": total,
+        # TAXE-FIX-1 point 2 — redevance d'archéologie préventive (0,40 % de l'assiette).
+        "rap_pct": _RAP_PCT,
+        "rap_eur": rap_eur,
+        "rap_source": _RAP_SOURCE,
         "taux_communal_manquant": taux_manquant,
         "taux_communal_source": taux_source,             # 'public' | 'saisi' | None
         "taux_communal_public_pct": taux_communal_public_pct,

@@ -78,3 +78,22 @@ def test_reconstruction_identique_exoneree():
                       taux_communal_pct=3.0, taux_departemental_pct=2.5)
     assert out["total_eur"] == 0.0
     assert any("9°" in l["detail"] for l in out["lignes"])
+
+
+# ── TAXE-FIX-1 point 2 — redevance d'archéologie préventive (0,40 % de l'assiette) ─────────────
+def test_rap_040pct_de_l_assiette():
+    """CO0322 400 m² RP : assiette 312 200 → RAP = 312 200 × 0,40 % = 1 248,80 € (art. L524-7)."""
+    out = ta.calculer(surface_taxable_m2=400, residence_principale=True,
+                      taux_communal_pct=5.0, taux_departemental_pct=2.5)
+    assert out["assiette_eur"] == 312200.0
+    assert out["rap_pct"] == 0.40
+    assert out["rap_eur"] == 1248.80
+    # la RAP suit l'assiette : indépendante des parts communale/départementale.
+    assert out["rap_eur"] == round(out["assiette_eur"] * 0.004, 2)
+
+
+def test_rap_suit_exoneration():
+    """Surface exonérée → assiette 0 → RAP 0 (la TAP partage l'assiette de la TA)."""
+    out = ta.calculer(surface_taxable_m2=0, surface_exoneree_m2=400, motif_exoneration="agricole",
+                      taux_communal_pct=5.0, taux_departemental_pct=2.5)
+    assert out["assiette_eur"] == 0.0 and out["rap_eur"] == 0.0

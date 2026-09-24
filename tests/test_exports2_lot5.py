@@ -21,7 +21,9 @@ PROG = {"surface_vendable": 635, "surface_plancher": 794, "surface_terrain": 742
 HYP = {"prix_sortie": 4730, "cout": 2550, "part_sociale_pct": 0, "marge_pct": 9, "honoraires_pct": 12,
        "vrd_m2": 90, "cout_place": 15000, "aleas_pct": 4, "frais_acq_pct": 7, "prix_demande": 650000,
        "demolition": 60000, "depollution": 20000, "taxe": 39000, "duree_portage": 29,
-       "taux_apport": 3, "taux": 0.085}
+       # TAXE-FIX-1 point 2 — la RAP est désormais chiffrée par calculer() (0,40 % de l'assiette) et
+       # passée en hypothèse comme la taxe : 794 m² × 892 €/m² × 0,40 % = 2 832,99 €.
+       "taux_apport": 3, "taux": 0.085, "rap": 2832.99}
 
 
 def _r2(x):
@@ -40,11 +42,11 @@ def test_bilan_ht_au_centime():
     assert p["demolition"] == 60000.0 and p["depollution"] == 20000.0
     assert p["aleas"] == 80988.0                               # 4 % × construction
     assert p["taxe_amenagement"] == 39000.0
-    assert p["redevance_archeologie"] == 539.92                # 794 × 0,68
+    assert p["redevance_archeologie"] == 2832.99               # RAP 0,40 % de l'assiette (passe-plat, TAXE-FIX-1 pt 2)
     assert p["portage"] == 151971.6                            # (constr+VRD sur SDP) × 3 % × 29/12
     assert p["frais_acquisition"] == 45500.0                   # 7 % × 650 000
     assert _r2(b["marge"]) == 249142.4                         # 9 % × CA HT
-    assert _r2(b["charge"]["centrale"]) == -338017.07          # CA − Σ postes − marge (VRD sur SDP)
+    assert _r2(b["charge"]["centrale"]) == -340310.14          # CA − Σ postes − marge (RAP 0,40 %)
     assert b["maximum"] is False                               # tout chiffré
 
 

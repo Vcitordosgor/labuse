@@ -381,6 +381,17 @@ export function TaxeAmenagement() {
                 </div>
               )
             )}
+            {/* TAXE-FIX-1 point 2 — redevance d'archéologie préventive : taxe DISTINCTE de la TA,
+                0,40 % de la même assiette, souvent due au dépôt du permis. Ligne à part, sous le total. */}
+            {r.rap_eur != null && r.assiette_eur > 0 && (
+              <div data-taxe-rap className="mt-1 flex items-start justify-between gap-2 border-t border-line pt-1.5">
+                <span className="min-w-0 text-txt-mut">
+                  Redevance d’archéologie préventive <span className="text-txt-dim">({r.rap_pct} %)</span>
+                  <span className="mt-0.5 block text-[9.5px] leading-snug text-txt-dim">Taxe distincte, souvent due avec le permis — {r.rap_source}.</span>
+                </span>
+                <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(r.rap_eur)}</span>
+              </div>
+            )}
           </div>
 
           {/* RETOURS-11 O4c : le rappel « estimation indicative » (r.note) est déjà dit dans l'intro

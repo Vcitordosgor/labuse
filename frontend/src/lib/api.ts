@@ -502,6 +502,10 @@ export interface TaxeResult {
   part_communale_eur: number | null
   part_departementale_eur: number | null
   total_eur: number | null
+  // TAXE-FIX-1 point 2 — redevance d'archéologie préventive (0,40 % de la même assiette, art. L524-7).
+  rap_pct?: number
+  rap_eur?: number
+  rap_source?: string
   taux_communal_manquant: boolean
   message_taux_communal: string | null
   // TAXE-AMÉNAGEMENT-1 lot C — millésime + fraîcheur du taux communal public (null si saisi/absent).
