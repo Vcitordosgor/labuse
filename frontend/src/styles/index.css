@@ -274,8 +274,9 @@
   .b-iris { border:0.5px solid var(--iris-line); background:var(--iris-bg); color:var(--iris-2); font-weight:400; font-size:13px; padding:10px; }
   .b-danger { font-size:12.5px; color:var(--danger); border-bottom:0.5px solid var(--danger-line); }
 
-  /* champ */
-  .field { background:var(--bg-2); border:0.5px solid var(--line-2); border-radius:var(--r-sm); padding:9px 12px; font-size:13px; color:var(--txt-off); }
+  /* champ — DA-FIX-3 Lot 4 (DA-019/023) : 32 px, rayon 6, même contour que l'omnibox ; focus = contour vert, PAS d'anneau. */
+  .field { height:32px; background:var(--bg-2); border:0.5px solid var(--line-2); border-radius:var(--r-sm); padding:0 12px; font-size:13px; color:var(--txt-off); }
+  .field:focus, .field:focus-visible { outline:none; border-color:var(--mint); }
 
   /* bandeau de statistiques */
   .stats { display:grid; gap:1px; background:var(--line-2); border:0.5px solid var(--line-2); border-radius:var(--r-ctl); overflow:hidden; }
@@ -292,10 +293,7 @@
   .empty { border:0.5px dashed var(--line-2); border-radius:var(--r-g); padding:22px 12px; text-align:center; font-size:var(--fs-meta); color:var(--txt-off); }
   .legal { font-size:var(--fs-legal); color:var(--txt-faint); line-height:1.5; }
 
-  /* cases */
-  .cbx { width:17px; height:17px; border-radius:4px; flex-shrink:0; }
-  .cbx-on { background:var(--mint); color:var(--mint-on); display:flex; align-items:center; justify-content:center; font-size:12px; }
-  .cbx-off { border:1px solid var(--line-3); }
+  /* cases — DA-FIX-3 Lot 2 (DA-026) : .cbx/.cbx-on/.cbx-off retirées (orphelines), remplacées par components/ui/Case.tsx */
 
   /* squelette */
   .sk { background:var(--bg-2); border-radius:6px; }
@@ -358,11 +356,13 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 /* Firefox (pas de :hover sur le pouce) : pouce discret par défaut, cohérent avec le repos WebKit. */
 * { scrollbar-color: var(--line-2) transparent; }
 
-/* Focus clavier visible (DA §1 : liseré 2px menthe à 45%) — jamais sur clic souris. */
-:focus-visible { outline: 2px solid rgba(74,222,128,.45); outline-offset: 1px; border-radius: 4px; }
-/* M65 P6 — le liseré vert n'apparaît QUE pour un focus clavier. Tout focus reçu au pointeur
-   (clic sur en-tête COUCHES, sections, cases, pastilles « i ») n'affiche aucun contour.
-   :focus-visible reste intact = exigence d'accessibilité clavier. */
+/* DA-FIX-3 Lot 4 (DA-019) — l'ANNEAU global de focus est RETIRÉ : le focus clavier prend le rendu du
+   survol de chaque contrôle (Bouton/Chip/Case/Tri via `focus-visible:` ; champs via contour vert
+   ci-dessous). Plus de liseré 2px superposé. Les contrôles natifs (input/select/textarea) reçoivent le
+   contour vert au focus, sans anneau. */
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none; border-color: var(--mint);
+}
 :focus:not(:focus-visible) { outline: none; }
 
 /* UX V1 — page « Sources & fraîcheur » IMPRIMABLE. */
@@ -459,7 +459,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 /* RECETTE-5 (V5) — les ÉTIQUETTES passent SOUS la grille (contraintes / type de propriétaire /
    voisines du même propriétaire), plus dans le bloc d'identité. */
 .fiche-v6 .head-badges { display:flex; flex-wrap:wrap; gap:6px; padding:11px 14px; border-top:0.5px solid var(--line); }
-.fiche-v6 .pill-neutre { font-size:11.5px; color:var(--txt-dim); background:transparent; border:0.5px solid var(--line-2); padding:3px 8px; border-radius:9999px; white-space:nowrap; }
+/* DA-FIX-3 Lot 6 (DA-034) : .pill-neutre/-amber/-mint retirées (orphelines) → components/ui/Badge.tsx */
 /* RECETTE-5 (V6) — accordéon « Le reste des faits » dans l'en-tête (details/summary natif). */
 .fiche-v6 .plus { border-top:0.5px solid var(--line); padding:10px 14px 11px; }
 .fiche-v6 .plus > summary { list-style:none; cursor:pointer; font-size:12px; color:var(--txt-dim); display:flex; align-items:center; gap:7px; }
@@ -525,8 +525,6 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .t-right { display:flex; align-items:center; gap:9px; flex-shrink:0; min-width:0; }
 .fiche-v6 .t-val { font-size:12.5px; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
 .fiche-v6 .t-val.absent { color:var(--txt-faint); }
-.fiche-v6 .pill-amber { font-size:11.5px; color:var(--amber); background:var(--amber-bg); padding:3px 8px; border-radius:9999px; white-space:nowrap; }
-.fiche-v6 .pill-mint { font-size:11.5px; color:var(--mint); background:var(--mint-bg); padding:3px 8px; border-radius:9999px; white-space:nowrap; }
 
 /* ════════ RETOURS-20 Z1 — grammaire partagée des accordéons (maquette-fiche-parcelle-accordeons.html).
    Structure/espacements de la maquette ; couleurs & police = tokens de l'app (aucun hex recopié). ════════ */
