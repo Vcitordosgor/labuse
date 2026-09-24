@@ -485,15 +485,22 @@ def _cout_agent_source_eur(db) -> float:
 
 
 def agents_sources(ctx: JobContext) -> None:
-    """CRON-1 lot 1 — LE DÉTECTIVE (dimanche) : `agent_source` sur les sources vitrine, 5 en parallèle,
-    SOUS PLAFOND de dépense par passage (env `LABUSE_AGENT_PLAFOND_EUR`, défaut 0 = ne dépense RIEN tant
-    que Vic n'a pas fixé un plafond). On sonde le coût cumulé au ledger ia_log entre chaque source ; dès
-    que la dépense du passage atteint le plafond, on ARRÊTE proprement et on signale les sources NON
-    TRAITÉES (elles repasseront). Un résultat sans URL réellement consultée est rejeté par agent_source."""
+    """CRON-1 lot 1 / CIRCUIT-P7 — LE DÉTECTIVE : `agent_source` sur les sources SANS amont lisible
+    (celles que la sonde de nuit ne peut pas lire — `circuit_garanties.sources_sans_amont`), 5 en
+    parallèle, SOUS PLAFOND de dépense par passage (env `LABUSE_AGENT_PLAFOND_EUR`, défaut 0 = ne
+    dépense RIEN). Cadence : UNE SEMAINE SUR DEUX (semaines ISO paires) — les sources à amont lisible
+    restent sur la sonde quotidienne. Coût cumulé sondé au ledger entre chaque source ; au plafond, on
+    ARRÊTE et on signale les non traitées. Un résultat sans URL réellement consultée est rejeté."""
     import os
-    from sqlalchemy import text
-    from . import agent_source, sources_catalog as _sc
+    from datetime import datetime, timezone
+    from . import agent_source, circuit_garanties as _g
     from .db import session_scope
+    from .jobs import semaine_agents
+
+    # CIRCUIT-P7 — une semaine sur deux : les semaines ISO impaires, le passage est sauté (cadence 15 j).
+    if not semaine_agents(datetime.now(timezone.utc).date()):
+        ctx.compte(traites=0, non_traites=0, note="semaine « off » — cadence 15 jours, passage sauté")
+        return
 
     plafond = 0.0
     try:
@@ -505,9 +512,7 @@ def agents_sources(ctx: JobContext) -> None:
                    note="LABUSE_AGENT_PLAFOND_EUR non fixé (0) — passage sauté, aucune dépense")
         return
 
-    ids = [r[0] for r in ctx.db.execute(
-        text("SELECT d.id FROM data_sources d WHERE " + _sc.WHERE_AFFICHEES + " ORDER BY d.id"),
-        {"masquees": _sc.masquees_param()}).all()]
+    ids = [x["id"] for x in _g.sources_sans_amont(ctx.db)]   # la portée : sources sans amont lisible
     depart = _cout_agent_source_eur(ctx.db)
     traites, neuf, rejetes, non_traites = 0, 0, 0, list(ids)
     for i, sid in enumerate(ids):

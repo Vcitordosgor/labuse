@@ -2240,8 +2240,7 @@ def carte_sonde(reservoirs: list[dict], nouvelles: int) -> dict:
 def carte_agents(c, plafond_eur: float) -> dict:
     """CIRCUIT-P7 (lot 1) — LA CARTE « Agents » : dernier passage (le lot d'agents le plus récent du
     journal), coût du LEDGER (`ia_log`, agent_source, hors web_search), nouvelles versions trouvées,
-    plafond, prochain dimanche. Le coût est celui du ledger sur la fenêtre du passage — jamais estimé."""
-    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+    plafond, cadence 15 j. Le coût est celui du ledger sur la fenêtre du passage — jamais estimé."""
     dernier, n, nouvelles, cout = None, 0, 0, None
     try:
         row = c.execute(text(
@@ -2262,13 +2261,24 @@ def carte_agents(c, plafond_eur: float) -> dict:
                 cout = None
     except Exception:  # noqa: BLE001 — pas de journal : carte vide (jamais un crash)
         pass
-    _now = _dt.now(tz=_tz.utc)
-    _prochain = _now + _td(days=((6 - _now.weekday()) % 7) or 7)   # prochain dimanche (job hebdo)
     return {"dernier_passage": dernier, "sources": n, "cout_eur": cout, "nouvelles": nouvelles,
-            "prochain_dimanche": _prochain.date().isoformat(),
+            "cadence": "tous les 15 jours (dimanche)",   # CIRCUIT-P7 — cron une semaine sur deux
+            "prochain_dimanche": prochain_dimanche_quinzaine(),
             "plafond_eur": plafond_eur, "actif": plafond_eur > 0,
             "cle_env": "LABUSE_AGENT_PLAFOND_EUR",
             "credit_eur": None, "credit_url": "https://console.anthropic.com/settings/billing"}
+
+
+def prochain_dimanche_quinzaine() -> str:
+    """Le prochain dimanche d'un cycle de 15 jours (semaine ISO paire) — ce que la carte Agents annonce."""
+    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+    from ..jobs import semaine_agents
+    base = _dt.now(tz=_tz.utc).date()
+    for k in range(1, 22):
+        d = base + _td(days=k)
+        if d.weekday() == 6 and semaine_agents(d):   # dimanche (6) d'une semaine « on »
+            return d.isoformat()
+    return (base + _td(days=14)).isoformat()
 
 
 @router.get("/admin/circuit")
@@ -2528,15 +2538,23 @@ def admin_circuit(request: Request) -> dict:
             "prochain_dimanche": None, "plafond_eur": _plafond, "actif": _plafond > 0,
             "cle_env": "LABUSE_AGENT_PLAFOND_EUR", "credit_eur": None,
             "credit_url": "https://console.anthropic.com/settings/billing"}
-    # CIRCUIT-P7 (lot 1) — les portées du menu « Envoyer les agents » (comptes lus, jamais recomptés
-    # au front) : jamais vérifiées, sources du verrou G8, toute la vitrine (+ un coût estimé de la
-    # vitrine, basé sur le coût moyen par source du dernier passage, sinon un défaut prudent).
-    _n_jamais = _etats_compte.get("jamais vérifiée", 0)
+    # CIRCUIT-P7 — les portées du bouton « Envoyer les agents » (comptes lus, jamais recomptés au
+    # front) : la PORTÉE PAR DÉFAUT « sans amont lisible » (= le cron du dimanche), le verrou G8, toute
+    # la vitrine. Le coût estimé de chaque portée = son nombre × le coût moyen par source du dernier
+    # passage (sinon un défaut prudent). La sonde de nuit (89 amonts lisibles) reste sans coût.
+    try:
+        from .. import circuit_garanties as _g7
+        with engine().begin() as _cp:
+            _n_sans_amont = len(_g7.sources_sans_amont(_cp))
+    except Exception:  # noqa: BLE001 — indisponible : 0 (la carte ne casse jamais)
+        _n_sans_amont = 0
     _n_g8 = len(_sans_controle)
     _n_vitrine = len(reservoirs)
     _par_src = ((agents_info.get("cout_eur") or 0) / agents_info["sources"]
                 if agents_info.get("cout_eur") and agents_info.get("sources") else 0.04)
-    agents_info.update({"jamais": _n_jamais, "g8": _n_g8, "vitrine": _n_vitrine,
+    agents_info.update({"sans_amont": _n_sans_amont, "g8": _n_g8, "vitrine": _n_vitrine,
+                        "cout_estime_sans_amont": round(_n_sans_amont * _par_src, 2),
+                        "cout_estime_g8": round(_n_g8 * _par_src, 2),
                         "cout_estime_tous": round(_n_vitrine * _par_src, 2)})
     return {
         "run_servi": runs.current(), "candidat": _candidat, "manifeste": m,
@@ -2707,20 +2725,24 @@ def _cibles_agents(reservoirs: list[dict]) -> list[dict]:
 
 
 def _cibles_agents_portee(c, reservoirs: list[dict], portee: str | None) -> list[dict]:
-    """CIRCUIT-P7 (lot 1) — la PORTÉE choisie dans le menu « Envoyer les agents » :
-      · `jamais` → les sources « jamais vérifiée » (l'agent leur pose un premier contrôle) ;
+    """CIRCUIT-P7 (portée des agents) — la PORTÉE du bouton « Envoyer les agents » :
+      · défaut / `sans_amont` → les sources SANS amont lisible (la portée du cron du dimanche,
+                   `circuit_garanties.sources_sans_amont` : celles qu'un agent LLM doit lire) ;
       · `g8`     → les sources vitrine sans contrôle depuis > 7 j (le verrou G8, par NOM) ;
-      · `tous`   → comme `labuse agent source --tous` : les réservoirs affichés dont la donnée a un
-                   amont interrogeable (ni flux en direct, ni sans millésime, ni absente) ;
-      · défaut   → `tous` (le bouton « Envoyer les agents » lance l'agent LLM sur toute la vitrine)."""
-    if portee == "jamais":
-        return [r for r in reservoirs if (r.get("etat") or ["", ""])[1] == "jamais vérifiée"]
-    if portee in (None, "tous"):
+      · `tous`   → comme `labuse agent source --tous` : les réservoirs affichés à amont interrogeable
+                   (ni flux en direct, ni sans millésime, ni absente)."""
+    from .. import circuit_garanties as _g
+    if portee in (None, "sans_amont"):
+        try:
+            ids = {x["id"] for x in _g.sources_sans_amont(c)}
+            return [r for r in reservoirs if r["id"] in ids]
+        except Exception:  # noqa: BLE001 — indisponible : rien plutôt qu'un envoi large non voulu
+            return []
+    if portee == "tous":
         return [r for r in reservoirs
                 if r.get("mode") not in ("en_direct", "absente", "sans_millesime")]
     if portee == "g8":
         try:
-            from .. import circuit_garanties as _g
             noms = {x["name"] for x in _g.sources_sans_controle(c, 7)}
             return [r for r in reservoirs if r["nom"] in noms]
         except Exception:  # noqa: BLE001 — G8 indisponible : rien à cibler plutôt qu'un envoi large
