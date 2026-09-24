@@ -11,6 +11,7 @@ import { EmptyState, ErrorState } from '../States'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { Bouton } from '../ui/Bouton'
+import { DeplacerMenu } from './DeplacerMenu'   // DA-FIX-5c — menu « Déplacer vers… » partagé avec la fiche
 
 /* accents de colonnes = tokens (txt-dim / st-creuser / mint / st-ecartee) en valeur
    hex car servis via style= (pas de classe dynamique). */
@@ -18,21 +19,66 @@ const TONE_ACCENT: Record<string, string> = {
   cold: '#5C7268', warm: '#E8B44C', hot: '#5CE6A1', reject: '#E8695A',
 }
 
-function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiquette }: {
+// DA-FIX-5 P7 — note libre par carte : zone repliée « + Note ». Enregistrée sur la parcelle suivie
+// (colonne `pipeline_entries.notes`, déjà existante — PATCH `{notes}`). DA-FIX-5b : la note ne
+// s'affiche PLUS dans la fiche parcelle (bloc CRM revenu à son état de main). Les événements sont
+// stoppés (stopPropagation) : cliquer/écrire dans la note n'ouvre PAS l'écran d'édition de la carte.
+function CardNote({ e, onNote }: { e: PipelineEntry; onNote: (notes: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState(e.notes ?? '')
+  const note = (e.notes ?? '').trim()
+  const stop = (ev: React.SyntheticEvent) => ev.stopPropagation()
+  if (!open) {
+    return (
+      <div className="mt-1.5" onClick={stop}>
+        {note ? (
+          <button data-crm-note-edit onClick={() => { setDraft(e.notes ?? ''); setOpen(true) }}
+            /* DA-FIX-5b — largeur bornée (w-full) + coupure des chaînes sans espace ([overflow-wrap:anywhere])
+               pour qu'une note « AAAA… » ne déborde plus de la carte. */
+            className="block w-full whitespace-pre-wrap [overflow-wrap:anywhere] rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-left text-[10.5px] text-txt-mut transition-colors duration-quick hover:border-mint/40 hover:text-txt">
+            {note}
+          </button>
+        ) : (
+          <button data-crm-note-add onClick={() => { setDraft(''); setOpen(true) }}
+            className="text-[10.5px] text-txt-dim transition-colors duration-quick hover:text-mint">
+            + Note
+          </button>
+        )}
+      </div>
+    )
+  }
+  return (
+    <div className="mt-1.5 space-y-1" onClick={stop} onKeyDown={stop}>
+      <textarea
+        data-crm-note
+        autoFocus
+        value={draft}
+        maxLength={4000}
+        rows={3}
+        onChange={(ev) => setDraft(ev.target.value)}
+        placeholder="Note libre sur cette parcelle…"
+        className="w-full resize-none rounded-md border border-mint/40 bg-surface-2 px-2 py-1.5 text-[10.5px] text-txt focus:border-mint focus:outline-none"
+        aria-label="Note libre sur la parcelle suivie"
+      />
+      <div className="flex justify-end gap-1.5">
+        <Bouton niveau="lien" onClick={() => setOpen(false)}>Annuler</Bouton>
+        <Bouton niveau="secondaire" ton="vert" data-crm-note-save
+          onClick={() => { onNote(draft.trim()); setOpen(false) }}>Enregistrer</Bouton>
+      </div>
+    </div>
+  )
+}
+
+function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, onNote }: {
   e: PipelineEntry; onDragStart: (ev: React.DragEvent) => void; newEvents: number
   onArchive: () => void; onEdit: () => void
-  // SCORING-3 (L5) — retour terrain : sélecteur d'un clic après contact (8 états, réversible)
-  etiquettes: { key: string; label: string }[]
-  onEtiquette: (key: string) => void
+  // DA-FIX-5 P7 — « Déplacer vers… » = les colonnes du kanban (même source que les colonnes), +
+  // « Retirer du CRM » en ton danger ; note libre par carte.
+  columns: { key: string; label: string }[]
+  onMove: (status: string) => void
+  onNote: (notes: string) => void
 }) {
-  const { select, setView, setCourrierPrefillPiste, setModule } = useApp()
-  // CONNEXIONS-2 Lot 4 (KO-6) — « Courrier » depuis la piste, SANS RESSAISIE : on pose l'IDU + la
-  // piste (pipeline_entry_id/projet) et on ouvre l'outil, qui amorce le destinataire et rattache la
-  // demande. Le statut du courrier remonte ensuite ICI (chip), dans « Mes courriers » et au dashboard.
-  const ouvrirCourrier = () => {
-    setCourrierPrefillPiste({ idu: e.idu, pipeline_entry_id: e.id, projet_id: e.projet?.id ?? null })
-    setView('cartes'); setModule('courriers')
-  }
+  const { select, setView } = useApp()
   const clos = e.courrier?.statut === 'repondu' || e.courrier?.statut === 'sans_reponse'
   // M137 — indicateur de relance CONDITIONNEL : visible seulement si la relance est
   // échue OU due aujourd'hui (reminder_date <= aujourd'hui). Sinon rien. Pas un badge
@@ -48,14 +94,14 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
       tabIndex={0}
       role="button"
       onKeyDown={(ev) => {
-        if ((ev.key === 'Enter' || ev.key === ' ') && !(ev.target as HTMLElement).closest('button, select')) {
+        if ((ev.key === 'Enter' || ev.key === ' ') && !(ev.target as HTMLElement).closest('button, select, textarea, input')) {
           ev.preventDefault(); onEdit()
         }
       }}
       onClick={(ev) => {
         // M137 — le CORPS de la carte ouvre l'ÉCRAN D'ÉDITION (note/priorité/relance/prospection).
-        // Le bouton IDU garde l'ouverture de la fiche. Boutons (✕) et sélecteur d'étiquette inertes ici.
-        if ((ev.target as HTMLElement).closest('button, select')) return
+        // Le bouton IDU garde l'ouverture de la fiche. Menu « Déplacer vers… » et zone de note inertes ici.
+        if ((ev.target as HTMLElement).closest('button, select, textarea, input')) return
         onEdit()
       }}
       className="group cursor-pointer rounded-lg bg-surface-3 p-3 shadow-elev-1 ring-1 ring-transparent transition-shadow duration-quick active:cursor-grabbing hover:ring-mint/30 focus:outline-none focus:ring-2 focus:ring-mint/50"
@@ -84,9 +130,8 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
             </span>
           </Tip>
         )}
-        {/* DA-FIX-4 verif (task 2) — ✕ de carte en Bouton icone danger (dévoilé au survol de la carte). */}
-        <Bouton icone niveau="secondaire" ton="danger" onClick={onArchive}
-          className="shrink-0 opacity-40 group-hover:opacity-100" aria-label="Archiver la carte">✕</Bouton>
+        {/* DA-FIX-5 P8 — la croix rouge de coin est retirée : le retrait passe par « Retirer du CRM »
+            (menu « Déplacer vers… », P7). */}
       </div>
       <div className="tnum mt-1 truncate text-[11px] text-txt-mut">
         {e.parcel.surface_m2 ? `${fmtM2(e.parcel.surface_m2)} · ` : ''}{e.parcel.commune}
@@ -110,36 +155,23 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
           </div>
         )
       )}
-      {/* CONNEXIONS-2 Lot 4 (KO-6) — le courrier de la piste : statut relu (chip) OU action « Courrier »
-          si aucun courrier encore. Un seul geste, aucune ressaisie d'IDU. */}
-      <div className="mt-1.5 flex items-center justify-between gap-2">
-        {e.courrier ? (
+      {/* DA-FIX-5 P9 — le bouton « ✉ Courrier » de la carte est retiré (le pont vers Courrier reste
+          dans la fiche parcelle). On garde le statut relu du courrier de la piste (info, pas un pont). */}
+      {e.courrier && (
+        <div className="mt-1.5">
           <span data-piste-courrier-statut
-            className={`rounded-[5px] border px-1.5 py-px text-[10px] ${clos ? 'border-mint/40 text-mint' : 'border-amber/40 text-amber'}`}>
+            className={`inline-block rounded-[5px] border px-1.5 py-px text-[10px] ${clos ? 'border-mint/40 text-mint' : 'border-amber/40 text-amber'}`}>
             ✉ {e.courrier.libelle}
           </span>
-        ) : <span />}
-        <Bouton niveau="secondaire" ton="vert" data-piste-courrier onClick={ouvrirCourrier}
-          className="opacity-0 transition-opacity group-hover:opacity-100">
-          {e.courrier ? 'Relancer' : '✉ Courrier'}
-        </Bouton>
-      </div>
-      {/* SCORING-3 (L5) — RETOUR TERRAIN : après un contact, UN clic pose l'état réel
-          (contacté / refus / négo / vendu…). Par compte, horodaté, réversible (« — » efface). */}
+        </div>
+      )}
+      {/* DA-FIX-5 P7 / 5c — « Déplacer vers… » : le composant PARTAGÉ (mêmes colonnes, même rendu que
+          le bloc CRM de la fiche) — l'alternative au glisser-déposer. Dernière entrée « Retirer du CRM ». */}
       <div className="mt-1.5">
-        <select
-          data-contact-etiquette
-          value={e.contact_etiquette ?? ''}
-          onChange={(ev) => onEtiquette(ev.target.value)}
-          aria-label={e.contact_etiquette_at
-            ? `Retour terrain posé le ${e.contact_etiquette_at.slice(8, 10)}/${e.contact_etiquette_at.slice(5, 7)} — modifiable`
-            : 'Retour terrain : que s’est-il passé après le contact ?'}
-          className={`w-full cursor-pointer rounded-md border bg-surface-2 px-1.5 py-1 text-[10.5px] focus:outline-none focus:ring-1 focus:ring-mint/50 ${e.contact_etiquette ? 'border-mint/40 text-txt' : 'border-line-2 text-txt-dim'}`}
-        >
-          <option value="">— retour terrain ?</option>
-          {etiquettes.map((et) => <option key={et.key} value={et.key}>{et.label}</option>)}
-        </select>
+        <DeplacerMenu columns={columns} currentStatus={e.status} onMove={onMove} onRetirer={onArchive} />
       </div>
+      {/* DA-FIX-5 P7 — note libre par carte (repliée), enregistrée sur la parcelle suivie. */}
+      <CardNote e={e} onNote={onNote} />
     </div>
   )
 }
@@ -579,8 +611,9 @@ export function Kanban() {
                     newEvents={evCount.data?.par_parcelle[e.idu] ?? 0}
                     onArchive={() => setPendingArchive(e)}
                     onEdit={() => setEditingEntry(e)}
-                    etiquettes={meta.data?.contact_etiquettes ?? []}
-                    onEtiquette={(key) => patch.mutate({ id: e.id, body: { contact_etiquette: key } })} />
+                    columns={meta.data?.columns ?? []}
+                    onMove={(status) => move.mutate({ id: e.id, status })}
+                    onNote={(notes) => patch.mutate({ id: e.id, body: { notes } })} />
                 ))}
                 {items.length === 0 && (
                   /* DA §8 — colonne vide PARLANTE (dit quoi faire), pas un « vide » muet. */

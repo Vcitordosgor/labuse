@@ -112,7 +112,8 @@ const F_NUMS: (keyof Filters)[] = ['surfaceMin', 'surfaceMax', 'sdpMin', 'sdpMax
 const F_BOOLS: (keyof Filters)[] = ['evenement', 'veille', 'horsCopro', 'personneMorale',
   'sousDensite', 'renouvellement', 'npnru', 'adresseAbsente', 'marcheFiable', 'modeBRentable']
 // KF1 — champs texte libres (dénomination, SIREN) : comptés/persistés comme les autres.
-const F_STRS: (keyof Filters)[] = ['pmDenom', 'pmSiren']
+// FAISABILITE-1 (lot B) — `destinationAutorisee` (sous-destination R151-28) compte comme les autres.
+const F_STRS: (keyof Filters)[] = ['pmDenom', 'pmSiren', 'destinationAutorisee']
 
 export function countActiveFilters(f: Filters): number {
   let n = 0
@@ -129,6 +130,9 @@ export function countActiveFilters(f: Filters): number {
 const TERRAIN_FIELDS = new Set<keyof Filters>(['surfaceMin', 'surfaceMax', 'zonagePlu', 'zonePlu',
   'etatSol', 'flags', 'flagsExclus', 'communes',
   'signaux',   // M55-D stage 6 : les Signaux de vie = ÉVÉNEMENTS SOURCÉS, filtrables sans analyse
+  // FAISABILITE-1 (lot B) — la CAPACITÉ (SDP restante, logements, destination) est un FAIT lu au PLU
+  // + parcel_residuel servi, pas une opinion LABUSE → n'allume PAS l'interrupteur d'analyse.
+  'sdpMin', 'sdpMax', 'capaciteMin', 'destinationAutorisee',
   'pmForme', 'pmApe', 'pmDirigMin', 'pmDirigMax',   // KF1 — critères propriétaire = faits (DGFiP), pas une opinion LABUSE
   'zfangRegime', 'frrClassement'])   // FILTRES-FIX-1 (lot 1) — statut fiscal de la commune = un FAIT (territoire_fiscal), pas une opinion
 export function hasOpinion(f: Filters): boolean {
@@ -150,6 +154,10 @@ export function resumeCriteres(f: Filters, signalLabels: Record<string, string> 
   else if (f.surfaceMin != null) parts.push(`> ${f.surfaceMin.toLocaleString('fr-FR')} m²`)
   else if (f.surfaceMax != null) parts.push(`< ${f.surfaceMax.toLocaleString('fr-FR')} m²`)
   if (f.zonagePlu.length) parts.push(`zone ${f.zonagePlu.join('/')}`)
+  // FAISABILITE-1 (lot B) — groupe Capacité : SDP restante, logements, destination.
+  if (f.sdpMin != null) parts.push(`SDP restante ≥ ${f.sdpMin.toLocaleString('fr-FR')} m²`)
+  if (f.capaciteMin != null) parts.push(`≥ ${f.capaciteMin} logt${f.capaciteMin > 1 ? 's' : ''}`)
+  if (f.destinationAutorisee) parts.push('destination autorisée')
   if (f.etatSol.length === 1) parts.push(f.etatSol[0] === 'nu' ? 'terrain nu' : 'bâti')
   for (const sg of f.signaux) parts.push(signalLabels[sg] ?? sg)
   if (f.tiers.length) parts.push(`tiers ${f.tiers.length}`)
@@ -216,7 +224,9 @@ const CSV_KEYS: [keyof Filters, string][] = [
   ['zfangRegime', 'zfa'], ['frrClassement', 'frr'],   // FILTRES-FIX-1 (lot 1) — ZFANG/FRR persistés (URL, Mes vues, veille)
 ]
 // KF1 — clés texte (dénomination, SIREN) : persistées telles quelles dans le hash.
-const STR_KEYS: [keyof Filters, string][] = [['pmDenom', 'pmd'], ['pmSiren', 'pms']]
+// FAISABILITE-1 (lot B) — `dst` porte la sous-destination autorisée (slug R151-28).
+const STR_KEYS: [keyof Filters, string][] = [['pmDenom', 'pmd'], ['pmSiren', 'pms'],
+  ['destinationAutorisee', 'dst']]
 
 export function filtersToHash(f: Filters, zone: LngLat[] | null): string {
   const p = new URLSearchParams()

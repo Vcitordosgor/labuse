@@ -11,6 +11,7 @@ import { useApp } from '../../store/useApp'
 import { Skeleton } from '../Loading'
 import { EmptyState } from '../States'
 import { Bouton } from '../ui/Bouton'
+import { Chip } from '../ui/Chip'   // DA-FIX-5b — Actifs/Archivées/Mes courriers sont des FILTRES → Chip
 import { ProjetKanban } from './ProjetKanban'
 import { ParcoursProjet } from './ParcoursProjet'
 
@@ -194,11 +195,6 @@ export function ProjetsPanel() {
   const affichees = visibles.slice(0, montre)
   const reste = visibles.length - affichees.length
 
-  const tab = (on: boolean) => ({
-    padding: '7px 16px', fontSize: 13, borderRadius: 6, cursor: 'pointer', border: 0,
-    background: on ? '#4ADE80' : 'transparent', color: on ? '#05140B' : '#8FA69A', fontWeight: on ? 500 : 400,
-  }) as const
-
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-y-auto" style={{ background: '#060A08' }}>
       <div className="mx-auto w-full max-w-[900px] px-4 py-10 sm:px-8">
@@ -226,13 +222,12 @@ export function ProjetsPanel() {
           </div>
         ) : !projetsQ.isLoading && (
           <>
-            {/* 2 · ONGLETS — deux seulement. */}
-            {/* RETOURS-4 S3 — onglets : survol PLEIN (mint + encre sombre) sur l'onglet INACTIF, via .proj-tab
-                (index.css) ; l'onglet actif (.proj-tab-on) reste plein et ne re-survole pas. */}
-            <div style={{ display: 'inline-flex', gap: 4, background: '#0C1410', borderRadius: 6, padding: 4, marginBottom: 20 }}>
-              <button data-tab-actifs className={`proj-tab${!showArchived && !showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowArchived(false); setShowCourriers(false); setMontre(4) }} style={tab(!showArchived && !showCourriers)}>Actifs {actifs.length}</button>
-              <button data-tab-archives className={`proj-tab${showArchived && !showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowArchived(true); setShowCourriers(false); setMontre(4) }} style={tab(showArchived && !showCourriers)}>Archivés {archives.length}</button>
-              <button data-tab-courriers className={`proj-tab${showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowCourriers(true); setMontre(4) }} style={tab(showCourriers)}>Mes courriers {courriers.length}</button>
+            {/* 2 · FILTRES — DA-FIX-5b : ce sont des FILTRES (une vue à la fois), pas des actions → Chip
+                (filtre actif = vert plein + coche), plus des Bouton. */}
+            <div className="mb-5 flex flex-wrap gap-2">
+              <Chip data-tab-actifs on={!showArchived && !showCourriers} onClick={() => { setShowArchived(false); setShowCourriers(false); setMontre(4) }}>Actifs {actifs.length}</Chip>
+              <Chip data-tab-archives on={showArchived && !showCourriers} onClick={() => { setShowArchived(true); setShowCourriers(false); setMontre(4) }}>Archivées {archives.length}</Chip>
+              <Chip data-tab-courriers on={showCourriers} onClick={() => { setShowCourriers(true); setMontre(4) }}>Mes courriers {courriers.length}</Chip>
             </div>
 
             {showCourriers ? (

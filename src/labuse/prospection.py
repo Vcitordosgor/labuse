@@ -61,6 +61,16 @@ def merge_prospection(current: dict | None, patch: dict | None) -> dict:
             else:
                 date.fromisoformat(str(v))   # valide (lève ValueError sinon)
                 out[k] = str(v)
+        elif k == "faisa_overrides":
+            # FAISABILITE-1 (lot D) — hypothèses de faisabilité modifiées, GARDÉES DANS LE PROJET
+            # (par parcelle, jamais resservies ailleurs — doctrine 09/09). Validées par le clampeur
+            # du MOTEUR (clés blanches HYP_EDITABLES + bornes) : rien d'arbitraire ne se stocke.
+            if v in (None, {}):
+                out[k] = {}
+            elif isinstance(v, dict):
+                from .faisabilite.engine import Hypotheses, appliquer_overrides_hypotheses
+                out[k] = appliquer_overrides_hypotheses(Hypotheses(), v)   # ne retient que valides/bornés
+            # non-dict → ignoré
         # toute autre clé est ignorée (anti-injection)
     return out
 

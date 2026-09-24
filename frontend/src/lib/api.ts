@@ -84,6 +84,7 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.constructibilite.length ? { constructibilite: f.constructibilite.join(',') } : {}),
   ...(f.etatSol.length ? { etat_sol: f.etatSol.join(',') } : {}),
   ...(f.capaciteMin != null ? { capacite_min: f.capaciteMin } : {}),
+  ...(f.destinationAutorisee ? { destination: f.destinationAutorisee } : {}),   // FAISABILITE-1 lot B
   ...(f.zonePlu.length ? { zone_plu: f.zonePlu.join(',') } : {}),
   // M45 (P2d) — tiroirs éco / mutation / propriété / veille
   ...(f.sousDensite ? { sous_densite: 'true' } : {}),
@@ -1469,7 +1470,7 @@ export interface AdminPilotage {
   deploiement?: { marqueur_present: boolean; sha: string | null; depuis: string | null; avance: number | null; branche: string }
   // DASHBOARD-4 P3 — sources vitrine sans contrôle récent (G8) ; la cause vraie = horloges non posées.
   sondes_muettes?: { n: number | null }
-  // SCORING-3 (L5.3) — étiquettes de retour terrain posées (7 j + cumul ; seuil TERRAIN-1 : 200)
+  // SCORING-3 (L5.3) — étiquettes de contact posées (7 j + cumul ; seuil TERRAIN-1 : 200)
   etiquettes_terrain?: { semaine: number; total: number }
   radar?: { compteurs: RadarCompteurs; ecart: FluxRadarEcart[] } | null   // FLUX-1 F3.5 — tuile « la donnée qui s'accumule »
   run: { label: string | null; carte_le: string | null }
@@ -1882,6 +1883,12 @@ export const promoteursActifs = (commune: string) => j<Record<string, any>>(`/pa
 
 // ── M22 + Bilan (faisabilité bidirectionnelle) ──
 export const getFaisabilite = (idu: string) => j<Record<string, any>>(`/modules/faisabilite/${idu}`)
+// FAISABILITE-1 (lot D) — recalcule la capacité (11 étapes + fourchette) avec des hypothèses Estimé
+// surchargées (« et si… »). UN SEUL moteur côté back (parcel_faisabilite) → aucune divergence.
+export const postFaisabiliteRecalcul = (idu: string, overrides: Record<string, number>) =>
+  j<Record<string, any>>(`/modules/faisabilite/${idu}/recalcul`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ overrides }),
+  })
 // M11 Surface C : explication IA de la dérivation du chiffrage (ancrée sur les steps, sur clic).
 export const faisabiliteExplain = (idu: string) =>
   j<{ disponible: boolean; rejected?: boolean; degraded?: boolean; texte?: string; message?: string;
@@ -1903,8 +1910,9 @@ export const postChargeFonciere = (idu: string, body: ChargeIn) =>
   j<Record<string, any>>(`/modules/faisabilite/${idu}/charge`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
   })
-export const postProgramme = (body: Record<string, unknown>) =>
-  j<Record<string, any>>('/modules/programme', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+// FAISABILITE-1 (lot C) — `postProgramme` (POST /modules/programme, ancien « Par critères ») RETIRÉ :
+// « chercher des parcelles par capacité » passe désormais par le groupe Capacité du panneau Filtre
+// (endpoint /filtre, compteur SQL exact). L'endpoint backend est retiré (aucun autre appelant).
 
 // ── Projets (copilote-projet) — l'objet persistant de l'entretien de cadrage ──
 // M120 — le CADRAGE d'un projet EST un jeu de filtres (le même objet que la carte). L'IDENTITÉ

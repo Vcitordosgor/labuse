@@ -23,9 +23,10 @@ type TipProps = {
                                         // le focus clavier et le tap/clic restent IMMÉDIATS (jamais retardés).
   garder?: boolean                      // RECETTE-2 (S10) : n'affiche la bulle QUE si `garder` (contrôle
                                         // carte OU déclencheur fonctionnel icône-seule « i »).
-  survol?: boolean                      // FINITIONS-1 (P1) : la bulle s'ouvre AU SURVOL. Réservé aux 3
-                                        // outils de mesure de la carte — SEULE exception au retrait des
-                                        // infobulles au survol. Sans `survol`, la bulle ne s'ouvre plus
+  survol?: boolean                      // FINITIONS-1 (P1) : la bulle s'ouvre AU SURVOL. Réservé aux
+                                        // CONTRÔLES DE CARTE — les 3 outils de mesure et le « i » des
+                                        // couches (DA-FIX-5 P3, charte §7.1) — SEULE exception au retrait
+                                        // des infobulles au survol. Sans `survol`, la bulle ne s'ouvre
                                         // qu'au clic/tap ou au focus clavier (les « i » restent lisibles).
 }
 

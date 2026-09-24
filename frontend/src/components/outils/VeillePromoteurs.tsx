@@ -16,6 +16,7 @@ import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R4.2
 import { OwnerParcelles } from '../OwnerParcelles'   // RECHERCHE-2 Lot 2 — propriétaire → ses parcelles
 import { CollecteProgrammes } from '../admin/Programmes'   // LOT S1 — geste admin discret réutilisant la collecte
 import { Bouton } from '../ui/Bouton'
+import { Retour } from '../ui/Retour'   // DA-FIX-5 P6 — retour unique
 import { Chevron } from '../ui/Chevron'
 
 const CAT_LABEL: Record<string, string> = { promoteur: 'Promoteur', bailleur: 'Bailleur social', sem: 'SEM' }
@@ -246,7 +247,7 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
       {embedded && focusSiren && (
         strict
           ? <Bouton niveau="lien" data-vp-explorer onClick={() => setExplorer(true)} className="w-fit">Explorer toutes les opérations de l'île →</Bouton>
-          : <button data-vp-retour-proprio onClick={() => setExplorer(false)} className="w-fit text-[11.5px] text-mint underline underline-offset-2 hover:text-mint/80">← revenir à ce propriétaire</button>
+          : <Retour data-vp-retour-proprio label="revenir à ce propriétaire" onClick={() => setExplorer(false)} />   /* DA-FIX-5 P6 — retour unifié */
       )}
 
       {q.isLoading && <Squelette lignes={6} className="mt-4" />}
