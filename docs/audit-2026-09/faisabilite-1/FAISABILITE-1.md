@@ -157,9 +157,17 @@ SDP brute **219 → 292 m²**, logements retenus **~1-2 → ~3-4**. Overrides ho
 exports · merge. **Écarts profonds laissés à Vic** : run servi clippé vs non-clippé (§2), LiDAR, SUP,
 et `config/served_manifest.json` (indique run 2 alors que la base sert un run clippé — désynchronisé).
 
-## 7. Captures
+## 7. Captures (`captures/`, app réelle : back 8365 + vite 5565, run servi seq 8)
 
-Vérification conduite **programmatiquement** (TestClient + `verif_temoins.py` + vitest) faute d'avoir
-lancé le stack navigateur (run résiduel de fond actif — cf. mandat « ne pas le tuer »). Les preuves
-chiffrées (compteurs filtre, recalcul témoin, recompte SDP=résiduel, badges, nouvelles lignes) sont
-ci-dessus et rejouables via `docs/audit-2026-09/faisabilite-1/verif_temoins.py`.
+| Fichier | Lot | Ce qu'elle prouve |
+|---|---|---|
+| `C-outil-mode-unique.png` | C | Outil ouvert directement sur la saisie de parcelle, sous-titre « Ce que le PLU laisse construire sur cette parcelle. », lien « Chercher des parcelles par capacité → », **aucun sélecteur de mode** ; le panneau Outils affiche « **17 outils** ». |
+| `AD-11etapes-avant.png` | A + D | Les 11 étapes (BZ1065) avec badges **Sourcé / Estimé / Dérivé** + bloc « Hypothèses (modifiables) » (6 champs) — SDP 219 m², logements 1–2. |
+| `AD-11etapes-apres-recalcul.png` | D | Après occupation **45→60 %** : **SDP 219→292 m², logements 1–2 → 2–3**, verdict recalculé, bouton « Revenir aux hypothèses LABUSE » apparu. |
+| `B-capacite-vide.png` | B | Groupe « Capacité » vide : SDP restante, Logements possibles (≥ N, Estimé), Activité (destination, R151-28), « Depuis un programme… ». |
+| `B-capacite-rempli-compteur.png` | B | Rempli (SDP≥960, logts≥3, destination Logement) → compteur SQL vivant **« 13 759 parcelles correspondent »** ; URL `#f=1&sdp=960&cap=3&dst=logement`. |
+| `B-aide-calcul-programme.png` | B | Aide-calcul : 1 bât × 8 unités × 60 m² × 20 % → « 8 logements · SDP nécessaire ~576 m² » + « Filtrer : SDP restante ≥ 576 m² ». |
+
+Preuves chiffrées complémentaires (compteurs, recompte SDP=résiduel) rejouables via `verif_temoins.py`.
+Le stack a été lancé **après** vérification qu'aucun run résiduel ne tournait (mandat) ; un run de fond
+en a promu un nouveau (seq 5 → 8, tous clippés) pendant la session — sans effet sur les preuves.
