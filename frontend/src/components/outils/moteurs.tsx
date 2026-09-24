@@ -564,7 +564,8 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
     <span className={`font-medium ${pct >= 0 ? 'text-mint' : 'text-st-ecartee'}`}>{pct >= 0 ? '+' : ''}{pct} %/an</span>
   return (
     <div className="flex min-h-0 flex-col">
-      <div className="overflow-x-auto">
+      {/* DA-FIX-4 Lot 4 (DA-030) — plein écran (overlay 1240px) + 4 colonnes : aucune barre horizontale. */}
+      <div>
         <table className="w-full border-collapse text-[11px]">
           <thead>
             <tr className="border-b border-line-2">

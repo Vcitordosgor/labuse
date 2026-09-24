@@ -54,7 +54,9 @@ export function RadarMarche() {
           — jamais de fausse précision. Les compteurs, eux, sont exacts dès le premier.
         </div>
       )}
-      <div className="overflow-x-auto">
+      {/* DA-FIX-4 Lot 4 (DA-030) — plein écran (overlay 1240px, cf. Communes) : table conservée mais
+          AUCUNE barre horizontale (overflow-x retiré ; la table tient en pleine largeur). */}
+      <div>
         <table className="w-full border-collapse text-[11px]">
           <thead>
             <tr className="border-b border-line-3 font-mono text-[9px] uppercase tracking-wider text-txt-dim">
