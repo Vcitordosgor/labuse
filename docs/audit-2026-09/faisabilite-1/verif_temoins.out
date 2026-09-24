@@ -1,0 +1,91 @@
+==========================================================================================
+### BZ1065 (Saint-Denis) — parcel_id=336319
+  zone=Uh resolue=None constructible=True calibree=True cause=None
+  verdict: R+0 · au sol ~1-2 / sous-sol ~1-2 logts
+  surface_m2=1625
+  --- STEPS (label | valeur | prov | source) ---
+    · Emprise au sol — reculs (géométrie réelle) | ~840 m² | prov='' | Art. Uh.7 · p.73 (PLU, calibrage validé) (séparatif) ; recul voirie en sus
+    · Emprise au sol — % réglementé | ~487 m² | prov='' | Art. Uh.9 · p.73 (PLU, calibrage validé)
+    · Niveaux constructibles | R+0 | prov='' | Art. Uh.10 · p.73 (PLU, calibrage validé)
+    · Emprise bâtie (occupation du gabarit) | ~219 m² | prov='' | hypothèse occupation
+    · Surface de plancher brute | ~219 m² | prov='' | dérivé occupation×hauteur
+    · Surface habitable (rendement) | ~175 m² | prov='' | hypothèse rendement
+    · Logements — après plafond de densité (≤ 5 logts) | ~2 à 3 | prov='' | hypothèse densité (ex-COS)
+    · Stationnement — scénario au sol | plafond au sol | prov='' | Art. XVII. STATIONNEMENT · p.19 (PLU, calibrage validé)
+    · Stationnement — scénario sous-sol/silo | ~2–3 logts | prov='' | Art. XVII. STATIONNEMENT · p.19 (PLU, calibrage validé)
+    · Logements retenus au sol | ~1 à 2 | prov='' | dérivé
+    fourchette.emprise_constructible_m2 = 487
+    fourchette.emprise_batie_max_m2 = 219
+    fourchette.surface_plancher_m2 = 219
+    fourchette.niveaux_max = 1
+    fourchette.logements_au_sol = (1, 2)
+    fourchette.logements_sous_sol = (1, 2)
+    fourchette.shab_vendable_m2 = 123
+  résiduel LIVE (clippee=False): dispo=True sdp_res=26 sdp_ecrite=None cause=None taux_emprise=40
+  résiduel LIVE (clippee=True):  dispo=True sdp_res=26 sdp_ecrite=None cause=None
+  résiduel SERVI (vue parcel_residuel): {'sdp_residuelle_m2': 26, 'taux_emprise_pct': 40, 'pct_potentiel': 88, 'cause': None, 'capacite_estimee': False}
+==========================================================================================
+### BW0457 (Saint-Paul, bâti) — parcel_id=26887
+  zone=U6c resolue=None constructible=True calibree=True cause=None
+  verdict: R+1 · au sol ~1-3 / sous-sol ~1-3 logts
+  surface_m2=393
+  --- STEPS (label | valeur | prov | source) ---
+    · Emprise au sol — reculs (géométrie réelle) | ~191 m² | prov='' | Art. 7.2 · p.279 (PLU, calibrage validé) (séparatif) ; recul voirie en sus
+    · Emprise au sol — % réglementé | — | prov='' | Art. 9
+    · Contrainte pleine terre | ~191 m² retenu | prov='' | Art. 13.1 · p.292 (PLU, calibrage validé)
+    · Niveaux constructibles | R+1 | prov='' | Art. 10.2 · p.282 (PLU, calibrage validé)
+    · Emprise bâtie (occupation du gabarit) | ~86 m² | prov='' | hypothèse occupation
+    · Surface de plancher brute | ~172 m² | prov='' | dérivé occupation×hauteur
+    · Surface habitable (rendement) | ~138 m² | prov='' | hypothèse rendement
+    · Logements — après plafond de densité (≤ 2 logts) | ~2 à 2 | prov='' | hypothèse densité (ex-COS)
+    · Stationnement — scénario au sol | plafond au sol | prov='' | Art. 12.2 · p.288 (PLU, calibrage validé)
+    · Stationnement — scénario sous-sol/silo | ~2–2 logts | prov='' | Art. 12.2 · p.288 (PLU, calibrage validé)
+    · Logements retenus au sol | ~1 à 3 | prov='' | dérivé
+    fourchette.emprise_constructible_m2 = 191
+    fourchette.emprise_batie_max_m2 = 86
+    fourchette.surface_plancher_m2 = 172
+    fourchette.niveaux_max = 2
+    fourchette.logements_au_sol = (1, 3)
+    fourchette.logements_sous_sol = (1, 3)
+    fourchette.shab_vendable_m2 = 138
+  résiduel LIVE (clippee=False): dispo=True sdp_res=34 sdp_ecrite=None cause=None taux_emprise=72
+  résiduel LIVE (clippee=True):  dispo=True sdp_res=34 sdp_ecrite=None cause=None
+  résiduel SERVI (vue parcel_residuel): {'sdp_residuelle_m2': 34, 'taux_emprise_pct': 72, 'pct_potentiel': 80, 'cause': None, 'capacite_estimee': False}
+==========================================================================================
+### BW0457 (Saint-Benoît, sur-bâti) — parcel_id=297303
+  zone=Ub resolue=None constructible=True calibree=False cause=None
+  verdict: R+2 · au sol ~2-3 / sous-sol ~2-3 logts
+  surface_m2=274
+  --- STEPS (label | valeur | prov | source) ---
+    · Emprise au sol — reculs (géométrie réelle) | ~274 m² | prov='' | Art. U 7 · p.11 (PLU, calibrage validé) (séparatif) ; recul voirie en sus
+    · Emprise au sol — % réglementé | ~219 m² | prov='' | Art. U 5 · p.10 (PLU, calibrage validé)
+    · Contrainte pleine terre | ~219 m² retenu | prov='' | Art. U 9 · p.13 (PLU, calibrage validé)
+    · Niveaux constructibles | R+2 | prov='' | estimation générique (PLU non outillé)
+    · Emprise bâtie (occupation du gabarit) | ~99 m² | prov='' | hypothèse occupation
+    · Surface de plancher brute | ~296 m² | prov='' | dérivé occupation×hauteur
+    · Surface habitable (rendement) | ~237 m² | prov='' | hypothèse rendement
+    · Logements — après plafond de densité (≤ 2 logts) | ~2 à 2 | prov='' | hypothèse densité (ex-COS)
+    · Stationnement — scénario au sol | plafond au sol | prov='' | Art. U 12 · p.17 (PLU, calibrage validé)
+    · Stationnement — scénario sous-sol/silo | ~2–2 logts | prov='' | Art. U 12 · p.17 (PLU, calibrage validé)
+    · Logements retenus au sol | ~2 à 3 | prov='' | dérivé
+    fourchette.emprise_constructible_m2 = 219
+    fourchette.emprise_batie_max_m2 = 99
+    fourchette.surface_plancher_m2 = 296
+    fourchette.niveaux_max = 3
+    fourchette.logements_au_sol = (2, 3)
+    fourchette.logements_sous_sol = (2, 3)
+    fourchette.shab_vendable_m2 = 179
+  résiduel LIVE (clippee=False): dispo=True sdp_res=178 sdp_ecrite=None cause=None taux_emprise=54
+  résiduel LIVE (clippee=True):  dispo=True sdp_res=144 sdp_ecrite=None cause=None
+  résiduel SERVI (vue parcel_residuel): {'sdp_residuelle_m2': 0, 'taux_emprise_pct': 168, 'pct_potentiel': 124, 'cause': None, 'capacite_estimee': True}
+==========================================================================================
+### AB1117 (Bras-Panon, N-96% à cheval) — parcel_id=63195
+  zone=N resolue=None constructible=False calibree=False cause=zone_transition
+  verdict: Construction neuve non autorisée en zone N.
+  surface_m2=4097
+  --- STEPS (label | valeur | prov | source) ---
+    fourchette.logements_au_sol = (0, 0)
+    fourchette.logements_sous_sol = (0, 0)
+  résiduel LIVE (clippee=False): dispo=False sdp_res=None sdp_ecrite=0 cause=zone_non_constructible:N taux_emprise=None
+  résiduel LIVE (clippee=True):  dispo=True sdp_res=81 sdp_ecrite=None cause=None
+  résiduel SERVI (vue parcel_residuel): {'sdp_residuelle_m2': 81, 'taux_emprise_pct': 0, 'pct_potentiel': 0, 'cause': None, 'capacite_estimee': False}
