@@ -6,6 +6,7 @@ import { CommunesLegende, O6Comparateur } from './blocB'
 import { M18 } from './moteurs'
 import { RadarMarche } from './RadarMarche'
 import { Bouton } from '../ui/Bouton'
+import { Retour } from '../ui/Retour'
 
 // RETOURS-1 R3/R4 (Vic) — OUTIL « COMMUNES » RESTRUCTURÉ : un écran d'entrée à TROIS portes :
 //   1. Comparaison communes — le tableau comparatif (overlay plein écran, patron §4) ;
@@ -244,8 +245,7 @@ export function Communes() {
   }
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-      <button data-communes-retour onClick={() => setVue('accueil')}
-        className="shrink-0 self-start text-[11px] text-mint hover:underline">‹ Communes</button>
+      <Retour data-communes-retour label="Communes" onClick={() => setVue('accueil')} />
       <AcquisitionsRecentes />
     </div>
   )

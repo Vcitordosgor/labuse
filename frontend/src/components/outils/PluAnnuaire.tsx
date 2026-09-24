@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { pluAnnuaireSearch, pluAnnuaireCommunes, pluAnnuairePack, type PluExtrait } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { Bouton } from '../ui/Bouton'
+import { Retour } from '../ui/Retour'
 
 // M51 / M82 puis M137-P (fusion outil PLU) — ANNUAIRE PLU en DEUX ÉTAPES : (1) les 24 communes, on
 // clique celle dont on veut le PLU ; (2) deux voies — le PLU INTÉGRAL (pack officiel GPU .zip, à
@@ -107,7 +108,7 @@ export function PluAnnuaire() {
       {/* fil de retour — dans une commune */}
       {insee && (
         <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-txt-mut">
-          <button data-plu-retour onClick={communesVue} className="text-mint hover:underline">‹ Les 24 communes</button>
+          <Retour data-plu-retour label="Les 24 communes" onClick={communesVue} />
           <span>·</span><b className="text-txt">{nomInsee(insee) ?? insee}</b>
           {servable
             ? <span className="font-mono text-[9px] text-mint/70">PLU du {cur?.millesime}</span>
@@ -160,8 +161,7 @@ export function PluAnnuaire() {
                 Cherchez dans le règlement de <b className="text-txt">{nomInsee(insee)}</b> — verbatim
                 sourcé (article, page, lien), jamais un résumé.
               </p>
-              <button onClick={() => { setMode('choix'); setQ(''); m.reset() }}
-                className="shrink-0 text-[10px] text-mint hover:underline">‹ voies</button>
+              <Retour label="Voies" onClick={() => { setMode('choix'); setQ(''); m.reset() }} className="shrink-0" />
             </div>
             <div className="flex gap-2">
               {/* RETOURS-5 T6 — plus d'autoFocus (même correction que « Étudier un bien ») : bord neutre au repos. */}

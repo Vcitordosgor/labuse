@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useApp } from '../../store/useApp'
 import { PluAnnuaire } from './PluAnnuaire'
 import { ProcedureChangement } from './ProcedureChangement'
+import { Retour } from '../ui/Retour'
 
 // M137-P — OUTIL PLU UNIFIÉ. M137-Q : les voies « Procédure » et « Changement » (qui s'ignoraient)
 // fusionnent en UNE — « Procédure & changement » : les communes en procédure en tête, chacune reliée
@@ -48,8 +49,7 @@ export function Plu() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-      <button data-plu-hub-retour onClick={() => setVue('accueil')}
-        className="shrink-0 self-start text-[11px] text-mint hover:underline">‹ Choix PLU</button>
+      <Retour data-plu-hub-retour label="Choix PLU" onClick={() => setVue('accueil')} />
       {vue === 'annuaire' && <PluAnnuaire />}
       {vue === 'procchg' && <ProcedureChangement />}
     </div>

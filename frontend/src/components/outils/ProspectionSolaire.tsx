@@ -27,6 +27,7 @@ import { ErrorState } from '../States'
 import { ListPaginationFooter, usePagination } from '../ListPagination'
 import { Siren } from '../shared/Siren'
 import { Bouton } from '../ui/Bouton'
+import { Retour } from '../ui/Retour'
 
 // A1 — plus de date « gelée » en dur : le millésime affiché à l'écran est celui SERVI par l'endpoint
 // (parcel_solar.source_millesime). Un seul millésime par écran, jamais deux dates contradictoires.
@@ -78,7 +79,7 @@ function BackBar({ onBack, titre }: { onBack: () => void; titre: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
       {/* OUTILS-2 (O2-2) — fil d'Ariane vers l'OUTIL (« Prospection solaire »), pas un concept interne. */}
-      <button data-solaire-retour onClick={onBack} className="text-[11px] text-mint hover:underline">‹ Prospection solaire</button>
+      <Retour data-solaire-retour label="Prospection solaire" onClick={onBack} />
       <span className="text-[12px] font-medium text-txt-hi">{titre}</span>
     </div>
   )
@@ -166,7 +167,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
       <BackBar onBack={onBack} titre="💧 Piscines" />
       {commune && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          <button data-piscines-reset onClick={() => setCommune(null)} className="text-[10.5px] text-mint hover:underline">‹ toute l’île</button>
+          <Retour data-piscines-reset label="Toute l’île" onClick={() => setCommune(null)} />
         </div>
       )}
 

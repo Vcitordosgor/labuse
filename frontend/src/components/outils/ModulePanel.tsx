@@ -51,6 +51,7 @@ import { Blocs } from './Blocs'   // OUTILS-MUSCLER-3 — assiettes contiguës d
 import { TierBadge } from './TierBadge'
 import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 import { Bouton } from '../ui/Bouton'
+import { Retour } from '../ui/Retour'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
 
@@ -1136,7 +1137,7 @@ const TEMPS_KEYS = TEMPS_MILLESIMES.map((m) => m.key) as string[]
 
 // Exporté pour test (TEMPS — la frise des millésimes + l'épingle de la parcelle sont le cœur du mandat).
 export function M08() {
-  const { cmpLeft, setCmpLeft, setCmpRight, setModule, parcelPrefill, setParcelPrefill, setFlyTo, setTempsPinIdu } = useApp()
+  const { cmpLeft, setCmpLeft, setCmpRight, parcelPrefill, setParcelPrefill, setFlyTo, setTempsPinIdu } = useApp()
   const [idu, setIdu] = useState('')
   // « après » = TOUJOURS aujourd'hui (verrouillé) ; « avant » démarre sur 1950 si hors frise.
   useEffect(() => {
@@ -1210,7 +1211,10 @@ export function M08() {
           <span className="text-txt-dim"> vs </span>Aujourd'hui{/* F7 (OUTILS-3) — mention « 🔒 après fixe » retirée : sans sens pour le client. */}
         </p>
         <p className="mt-2 text-[10.5px] text-txt-dim">Glissez la poignée au centre de la carte pour révéler l'un ou l'autre.</p>
-        <Bouton niveau="secondaire" ton="vert" onClick={() => { setTempsPinIdu(null); setModule(null) }} className="mt-2 w-full">✕ Quitter</Bouton>
+        {/* DA-FIX-2 Lot 1 (DA-014) : l'ancienne croix « ✕ Quitter » (qui FERMAIT le panneau depuis
+            l'étape 2) devient un RETOUR vers l'étape 1 (désigner la parcelle). La croix ✕ de l'en-tête
+            reste le seul geste de fermeture. */}
+        <Retour label="Désigner la parcelle" onClick={() => { setTempsPinIdu(null); setIdu('') }} className="mt-2" />
       </div>
     </>
   )
@@ -1438,7 +1442,7 @@ export function M09() {
             </>
           )}
           <div className="flex gap-2">
-            <button onClick={() => setStep(1)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Retour</button>
+            <Retour label="Destinataires" onClick={() => setStep(1)} />
             <Bouton niveau="primaire" ton="vert" data-courrier-next onClick={() => setStep(3)} disabled={!apercu.data || corps.trim().length < 10}
               className="flex-1">Vérifier l'envoi ›</Bouton>
           </div>
@@ -1517,7 +1521,7 @@ export function M09() {
             </div>
           )}
 
-          <button onClick={() => setStep(1)} className="mt-auto self-start text-[11px] text-txt-mut hover:text-txt">‹ Retour aux destinataires</button>
+          <Retour label="Destinataires" onClick={() => setStep(1)} className="mt-auto" />
         </div>
       )}
     </div>
@@ -1817,24 +1821,20 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // (catégorie plein écran, RadarView). Ancien composant RadarClient supprimé.
 }
 
-// OUTILS-FIX-3 Lot D — fil de retour UNIQUE entre outils : rendu en tête de CHAQUE outil (un seul
-// composant, un seul mécanisme = la pile `outilRetour`). N'apparaît QUE si l'outil a été ouvert par un
-// pont FIX-2 (la pile est vidée à toute nav manuelle) ; le clic rouvre l'outil de DÉPART dans son état.
-function RetourOutil() {
+// DA-FIX-2 Lot 1 (DA-011) — LE retour du panneau outil, un seul composant `<Retour/>` en haut à gauche.
+// Après un pont (pile `outilRetour` non vide) il restitue l'outil de DÉPART (« ← [outil de départ] ») ;
+// sinon il ramène au menu Outils (« ← Outils »). Remplace l'ancien fil « ← Outils » ET l'ancien
+// `RetourOutil` post-pont (deux mécanismes fusionnés en un).
+function PanelRetour() {
   const stack = useApp((s) => s.outilRetour)
   const retourOutil = useApp((s) => s.retourOutil)
-  if (!stack.length) return null
-  const top = stack[stack.length - 1]
-  return (
-    <button data-outil-retour onClick={retourOutil}
-      className="hover-fill flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick">
-      ← {top.label}
-    </button>
-  )
+  const toggleOutils = useApp((s) => s.toggleOutils)
+  const top = stack.length ? stack[stack.length - 1] : null
+  return <Retour label={top ? top.label : 'Outils'} onClick={top ? retourOutil : toggleOutils} />
 }
 
 export function ModulePanel() {
-  const { module, setModule, toggleOutils } = useApp()
+  const { module, setModule } = useApp()
   const def = MODULES.find((m) => m.key === module)
   // M6.1 item 3 : Échap ferme le panneau (cohérent fiche/contexte). La fiche et les
   // tiroirs gardent la priorité : si l'un d'eux est ouvert, c'est LUI qu'Échap ferme.
@@ -1845,10 +1845,13 @@ export function ModulePanel() {
     const h = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       const st = useApp.getState()
-      // COMPARAISON : tant que le TABLEAU est ouvert, Échap le ferme (ComparePanel) — on ne ferme pas
-      // l'outil par-dessous. Le 2ᵉ Échap (tableau fermé) fermera l'outil.
+      // COMPARAISON : tant que le TABLEAU est ouvert, Échap le ferme (ComparePanel) — on ne recule pas
+      // l'outil par-dessous. Le 2ᵉ Échap (tableau fermé) reculera l'outil.
       if (st.selectedIdu || st.sourceLine || st.tool || st.compareOpen) return
-      st.setModule(null)
+      // DA-FIX-2 Lot 1 (DA-012) : Échap RECULE, il ne FERME plus. Après un pont → outil de départ
+      // restitué ; sinon → menu Outils. La croix ✕ reste le seul geste de fermeture du panneau.
+      if (st.outilRetour.length) st.retourOutil()
+      else st.toggleOutils()
     }
     window.addEventListener('keydown', h, true)
     return () => window.removeEventListener('keydown', h, true)
@@ -1860,21 +1863,10 @@ export function ModulePanel() {
       <div className="flex shrink-0 flex-col border-b border-mint/20 bg-mint/[0.07] px-4 py-3">
         {/* M6.1 item 3 : retour direct au menu Outils (fil d'Ariane) — plus besoin de
             repasser par le rail pour changer d'outil. */}
+        {/* DA-FIX-2 Lot 1 : le RETOUR unique en haut à gauche (← Outils / ← outil de départ après un
+            pont), la croix ✕ en haut à droite FERME le panneau (elle ne recule jamais). */}
         <div className="flex items-center justify-between gap-2">
-          <nav data-module-breadcrumb className="flex min-w-0 items-center gap-2 font-mono text-[10px] tracking-widest">
-            {/* Fix cosmétique (point 27) : flèche retour PLUS VISIBLE — pastille bordée mauve, plus
-                grosse, zone de clic élargie + libellé « ← Outils » clair (avant : 10 px inline, on la cherchait). */}
-            {/* RETOURS-19 Y5 — infobulle « Revenir au menu Outils » retirée (le libellé le dit déjà).
-                Y1 : l'indicateur « menu Outils ouvert » = l'entrée Outils du rail (vert opaque, `.rail-item.active`) ;
-                ce fil d'Ariane est un RETOUR (jamais affiché quand le menu Outils est ouvert — ouvrir Outils
-                démonte le panneau), gardé en pastille mint bordée. */}
-            <button data-module-retour onClick={toggleOutils}
-              className="flex shrink-0 items-center gap-1 rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-mint transition-colors duration-quick hover:border-mint hover:bg-mint/15">
-              ← Outils
-            </button>
-            <span className="text-txt-dim">›</span>
-            <span className="truncate text-txt-mut">{def.label.toUpperCase()}</span>
-          </nav>
+          <PanelRetour />
           <button onClick={() => setModule(null)} aria-label="Fermer le module"
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-txt-mut transition-colors duration-quick hover:bg-mint/10 hover:text-txt-hi">✕</button>
         </div>
@@ -1885,7 +1877,6 @@ export function ModulePanel() {
         </div>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-4">
-        <RetourOutil />
         <Body />
       </div>
     </aside>
