@@ -36,6 +36,11 @@ SOURCE_NAME = "Taxe d'aménagement — taux communaux (DGFiP / DELTA)"
 DATASET = "delta_deliberation_tam_17_01_23"
 API_BASE = ("https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/"
             f"{DATASET}/records")
+# TAXE-INGEST-EXPORT — l'API /records d'Opendatasoft v2.1 PLAFONNE la pagination à offset < 10 000
+# (au-delà : HTTP 400). Les secteurs du 974 au grain parcelle dépassent ce seuil (~11 636 lignes) →
+# on passe par /exports/json, qui renvoie TOUT le jeu filtré en un tableau JSON, sans pagination.
+EXPORT_BASE = ("https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/"
+               f"{DATASET}/exports/json")
 # Le taux communal GÉNÉRAL : zone communale, sans secteur, en vigueur.
 _WHERE_COMMUNAL = ('departement="974" and zone_application="Communale" '
                    'and parcelle is null and date_fin is null and taux is not null')
@@ -71,7 +76,9 @@ _SOURCE_LABEL = (f"DGFiP — application DELTA, jeu ouvert « {DATASET} » "
 
 
 def _fetch_records(where: str, *, client: httpx.Client) -> list[dict]:
-    """Récupère toutes les lignes de l'API ODS répondant au filtre (paginé, limit 100)."""
+    """Récupère les lignes de l'API ODS répondant au filtre (paginé, limit 100). ⚠ /records
+    plafonne à offset < 10 000 : à réserver aux jeux courts (communal 24, départemental 1).
+    Pour un jeu qui peut dépasser 10 000 lignes (secteurs), utiliser `_fetch_export`."""
     out: list[dict] = []
     offset = 0
     while True:
@@ -83,6 +90,16 @@ def _fetch_records(where: str, *, client: httpx.Client) -> list[dict]:
             break
         offset += 100
     return out
+
+
+def _fetch_export(where: str, *, client: httpx.Client) -> list[dict]:
+    """Récupère TOUTES les lignes répondant au filtre via /exports/json (aucune pagination, aucun
+    plafond 10 000). Renvoie un tableau JSON complet — utilisé pour les secteurs (~11 636 lignes)."""
+    r = client.get(EXPORT_BASE, params={"where": where})
+    r.raise_for_status()
+    data = r.json()
+    # /exports/json renvoie un tableau direct (pas d'enveloppe {"results": …}).
+    return data if isinstance(data, list) else data.get("results", [])
 
 
 def ingest_taxe_amenagement(
@@ -112,8 +129,9 @@ def ingest_taxe_amenagement(
                 dep = _fetch_records(_WHERE_DEPARTEMENTAL, client=c)
                 record_departemental = dep[0] if dep else None
             # TAXE-FIX-1 point 3 — les secteurs à taux majoré (grain parcelle) : réingérés ici même.
+            # TAXE-INGEST-EXPORT — via /exports/json (le jeu dépasse le plafond 10 000 de /records).
             if records_secteurs is None:
-                records_secteurs = _fetch_records(_WHERE_SECTEUR, client=c)
+                records_secteurs = _fetch_export(_WHERE_SECTEUR, client=c)
         finally:
             if own:
                 c.close()

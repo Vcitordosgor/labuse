@@ -174,3 +174,28 @@ def test_calculer_prend_le_taux_du_secteur(db_session):
     assert out["taux_communal_pct"] == 10.0
     assert out["taux_communal_secteur_majore"] is True
     assert out["part_communale_eur"] == round(100 * 892 * 0.10, 2)
+
+
+# ─────────── TAXE-INGEST-EXPORT — les secteurs passent par /exports/json (pas /records) ───────────
+class _FakeResp:
+    def __init__(self, data): self._d = data
+    def raise_for_status(self): pass
+    def json(self): return self._d
+
+
+class _FakeClient:
+    def __init__(self, data): self._d = data; self.calls = []
+    def get(self, url, params=None): self.calls.append((url, params)); return _FakeResp(self._d)
+
+
+def test_fetch_export_lit_un_tableau_direct_sans_pagination():
+    """/exports/json renvoie un TABLEAU JSON direct (pas d'enveloppe {results}), en un seul appel
+    (aucun plafond 10 000, contrairement à /records)."""
+    from labuse.ingestion.taxe_amenagement_delta import _fetch_export
+    cl = _FakeClient([{"departement": "974", "commune": "15", "section": "CT",
+                       "parcelle": "2268", "taux": 10.0}])
+    out = _fetch_export("where-secteur", client=cl)
+    assert len(out) == 1 and out[0]["taux"] == 10.0
+    assert len(cl.calls) == 1                                  # UN seul appel, pas de boucle offset
+    assert "exports/json" in cl.calls[0][0]
+    assert "offset" not in (cl.calls[0][1] or {})
