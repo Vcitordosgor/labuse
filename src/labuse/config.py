@@ -42,6 +42,22 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://labuse:labuse@localhost:5432/labuse"
 
+    # ── Pool de connexions SQLAlchemy (VITESSE-FIX-1 lot A) ──
+    # Défauts = comportement historique EXPLICITÉ (5 + 10 = 15 connexions/worker) : la pression de
+    # connexions est INCHANGÉE vs l'implicite précédent (garde-fou : 5 workers × 15 = 75 < max_connections).
+    # `pool_recycle` (nouveau) évite les connexions mortes après une longue inactivité (aucun effet vitesse
+    # direct, robustesse). `pool_pre_ping` (déjà en place) reste actif.
+    db_pool_size: int = 5
+    db_max_overflow: int = 10
+    db_pool_recycle_s: int = 1800          # 30 min ; -1 = jamais recyclé
+    db_pool_pre_ping: bool = True
+    # `statement_timeout` appliqué UNIQUEMENT aux requêtes de l'API (SET LOCAL par requête via get_db) —
+    # JAMAIS au moteur partagé, car les batchs CLI (ingestion, scoring, résiduel) tournent légitimement
+    # des minutes/heures. 0 = désactivé. 60 s : plafond « anti-emballement » qui ne coupe AUCUNE requête
+    # de service légitime (la fiche pré-lot-B monte à ~15 s, ~23 s sous charge ; après lot B ~1 s → peut
+    # être resserré). Réglable en prod par LABUSE_API_STATEMENT_TIMEOUT_MS.
+    api_statement_timeout_ms: int = 60000
+
     # ── Mode de déploiement : local (démo dev) | pilot (client encadré) | production ──
     # Pilote/production : cookies Secure, CORS restreint, /docs protégés, auth OBLIGATOIRE
     # (sans LABUSE_AUTH_PASSWORD, les routes métier répondent 503 — fail-closed, jamais ouvert).
@@ -319,6 +335,23 @@ class Settings(BaseSettings):
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     return Settings()
+
+
+def base_url_probleme(url: str | None = None) -> str | None:
+    """COMPTE-3 (Lot 2) — SOURCE UNIQUE de la garde sur l'URL de base des liens de mails.
+
+    Renvoie un message d'avertissement (français, prêt à afficher) si l'URL de base est inutilisable
+    pour un destinataire DISTANT — absente, vide, ou pointant sur la machine locale (`localhost`,
+    `127.0.0.1`, `0.0.0.0`) — sinon `None`. Un envoi depuis un environnement mal configuré (Vic teste
+    en local) n'est JAMAIS bloqué, mais l'écran ne peut pas le cacher : la page Comptes, la fiche,
+    `/readyz` et chaque entrée `mail_queue` lisent tous cette même fonction."""
+    u = ((url if url is not None else get_settings().public_base_url) or "").strip()
+    if not u:
+        return "Aucune URL de base n'est configurée (LABUSE_PUBLIC_BASE_URL) — les liens des mails seront vides."
+    bas = u.lower()
+    if "localhost" in bas or "127.0.0.1" in bas or "0.0.0.0" in bas:
+        return f"Les liens des mails pointent sur {u} — aucun client ne pourra cliquer."
+    return None
 
 
 @lru_cache(maxsize=None)

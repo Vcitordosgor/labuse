@@ -151,5 +151,46 @@ export const CIRCUIT_CSS = `
 .cxp .si-el{font-size:13.5px;margin-bottom:5px} .cxp .si-el b{font-weight:650}
 .cxp .si-src{display:flex;flex-wrap:wrap;gap:6px}
 .cxp :focus-visible{outline:2px solid var(--jaune);outline-offset:2px}
+/* ══ CIRCUIT-P4 (lot 2) — onglet « À faire » ══ */
+.cxp .btn.ghost{border-color:transparent;color:var(--muted);font-weight:500}
+.cxp .btn.ghost:hover{background:var(--panel-2);color:var(--text);border-color:transparent}
+.cxp .af-head{display:flex;align-items:baseline;gap:12px;margin:4px 0 14px;flex-wrap:wrap}
+.cxp .af-head h1{font-size:26px;font-weight:650;letter-spacing:-.02em;margin:0}
+.cxp .af-head h1 b{color:var(--ambre);font-weight:650}
+.cxp .af-head .when{color:var(--muted);font-size:13px}
+.cxp .af-list{display:flex;flex-direction:column;gap:8px}
+.cxp .af-item{display:grid;grid-template-columns:12px 1fr auto;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.cxp .af-item.rouge{border-color:rgba(248,113,113,.35)}
+.cxp .af-item .dot{width:10px;height:10px;border-radius:50%;background:var(--ambre)}
+.cxp .af-item.rouge .dot{background:var(--rouge)} .cxp .af-item.mint .dot{background:var(--mint)} .cxp .af-item.gris .dot{background:var(--gris)}
+.cxp .af-item .t{font-weight:600;font-size:14px} .cxp .af-item .d{color:var(--muted);font-size:12.5px;margin-top:3px}
+.cxp .af-acts{display:flex;gap:8px;align-items:center}
+.cxp .af-calm{margin-top:22px;padding:14px 16px;border:1px dashed var(--line-2);border-radius:8px;color:var(--muted);font-size:13px}
+.cxp .af-calm b{color:var(--text);font-weight:600}
+.cxp .af-rules{margin-top:24px;color:var(--faint);font-size:12px}
+/* ══ CIRCUIT-P4 (lot 3) — onglet « Sources » ══ */
+.cxp .src-bar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.cxp .src-bar .search{flex:1;min-width:240px;background:var(--panel);border:1px solid var(--line-2);border-radius:6px;padding:8px 12px;color:var(--text);font:inherit}
+.cxp .src-bar .search::placeholder{color:var(--faint)}
+.cxp .seg{display:flex;border:1px solid var(--line-2);border-radius:6px;overflow:hidden}
+.cxp .seg button{padding:7px 12px;color:var(--muted);font-size:12.5px}
+.cxp .seg button.on{background:var(--mint);color:var(--ink);font-weight:600}
+.cxp .src-chips{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.cxp .src-chips .chip{display:flex;gap:6px;align-items:center;border:1px solid var(--line-2);border-radius:16px;padding:4px 11px;font-size:12.5px;color:var(--muted);background:none}
+.cxp .src-chips .chip.on{color:var(--text)} .cxp .src-chips .chip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.cxp table.src{width:100%;border-collapse:collapse}
+.cxp table.src th{text-align:left;color:var(--faint);font-weight:500;font-size:11.5px;padding:6px 10px;border-bottom:1px solid var(--line)}
+.cxp table.src td{padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.cxp table.src tr.row{cursor:pointer} .cxp table.src tr.row:hover td{background:var(--panel-2)}
+.cxp table.src .nm{font-weight:500} .cxp table.src .fam{color:var(--faint);font-size:12px}
+.cxp table.src td.date{font-family:var(--mono);font-size:12px;white-space:nowrap}
+.cxp table.src td.date small{display:block;color:var(--faint);font-family:inherit;font-size:11.5px}
+.cxp table.src td.act{text-align:right;white-space:nowrap}
+.cxp .clock{color:var(--faint);font-size:11.5px;margin-left:6px}
+.cxp .src-why{color:var(--muted)} .cxp .src-foot{color:var(--faint);font-size:12px;margin-top:12px}
+.cxp .stt{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.cxp .stt i{width:9px;height:9px;border-radius:50%;display:inline-block;background:var(--gris)}
+.cxp .stt.mint i{background:var(--mint)} .cxp .stt.ambre i{background:var(--ambre)} .cxp .stt.rouge i{background:var(--rouge)} .cxp .stt.gris i{background:var(--gris)}
+.cxp .stt.ambre{color:var(--ambre)} .cxp .stt.rouge{color:var(--rouge)} .cxp .stt.gris{color:var(--muted)}
 @media (max-width:1100px){ .cxp .diagram{grid-template-columns:1fr;column-gap:0} .cxp .diagram svg{display:none} .cxp .pump{position:static;margin:12px 0} .cxp .dg{grid-template-columns:1fr} .cxp .kpis{grid-template-columns:1fr 1fr} .cxp .jl{grid-template-columns:1fr 1fr} }
 `

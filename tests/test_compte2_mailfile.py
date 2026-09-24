@@ -173,3 +173,22 @@ def test_filtres_et_compteurs(eng, monkeypatch):
     assert cpt["partis"] >= 1 and cpt["echecs"] >= 1
     assert len(mailfile.lister(eng, filtre="echecs")) >= 1
     assert len(mailfile.lister(eng, filtre="partis")) >= 1
+
+
+def test_avert_liens_localhost_figé_a_l_enfilage(eng, monkeypatch):
+    """COMPTE-3 (Lot 2) — une entrée enfilée alors que l'URL de base pointe sur localhost porte un
+    avertissement FIGÉ (visible dans l'onglet Mails) ; une URL publique valide → aucun avertissement.
+    L'envoi n'est jamais bloqué : la file en garde juste la trace, l'écran ne peut pas le cacher."""
+    # URL locale → l'entrée porte l'avertissement (source unique config.base_url_probleme)
+    monkeypatch.setattr("labuse.config.base_url_probleme",
+                        lambda url=None: "Les liens des mails pointent sur http://127.0.0.1:8000 — aucun client ne pourra cliquer.")
+    r = mailfile.enfiler(eng, key="onboarding1", to="loc@labuse.test", params=_p("onboarding1"),
+                         compte_id=101, demandeur="job:test")
+    assert r["avert"] and "127.0.0.1" in r["avert"]
+    with eng.begin() as c:
+        assert c.execute(text("SELECT avert FROM mail_queue WHERE id = :i"), {"i": r["id"]}).scalar()
+    # URL publique valide → aucun avertissement
+    monkeypatch.setattr("labuse.config.base_url_probleme", lambda url=None: None)
+    r2 = mailfile.enfiler(eng, key="onboarding1", to="pub@labuse.test", params=_p("onboarding1"),
+                          compte_id=102, demandeur="job:test")
+    assert r2["avert"] is None

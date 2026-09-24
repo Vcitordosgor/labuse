@@ -377,6 +377,58 @@ def test_essai_expiration_prouvee(client, engine):
             c.execute(text("DELETE FROM comptes WHERE id = :c"), {"c": cid})
 
 
+def test_garde_url_base_liens_mails(client):
+    """COMPTE-3 (Lot 2) — la garde sur l'URL de base des liens de mails : localhost / vide → message
+    d'avertissement ; URL publique → rien. La page Comptes sert ce verdict (source unique) pour le
+    bandeau rouge."""
+    from labuse import config
+    assert config.base_url_probleme("https://app.labuse.immo") is None
+    assert "cliquer" in (config.base_url_probleme("http://127.0.0.1:8000") or "")
+    assert config.base_url_probleme("http://localhost:5386")
+    assert config.base_url_probleme("")   # absente = vide → message
+    ml = client.get("/admin/licences").json()["mail_liens"]
+    assert set(ml) >= {"base_url", "ok", "avert"}
+    assert (ml["avert"] is None) == (ml["ok"] is True)
+
+
+def test_essai_prolongation_prouvee(client, engine):
+    """COMPTE-3 (Lot 1) — PROLONGER un essai au-delà de 48 h : un essai EXPIRÉ + suspendu, prolongé,
+    REDEVIENT Actif avec une échéance FUTURE, et une ligne de journal « prolongé jusqu'au … par Vic »
+    est posée. Un `heures` hors bornes (0, 721) → 422 propre (validation du corps)."""
+    r = client.post("/admin/licences/creer-essai",
+                    json={"email": "prolong-c3@test.re", "nom": "Prolong C3", "heures": 48})
+    assert r.status_code == 200
+    cid = r.json()["compte_id"]
+    try:
+        # essai FORCÉ échu + suspendu (état d'un essai expiré dont la session a basculé)
+        with engine.begin() as c:
+            c.execute(text("UPDATE comptes SET essai_expire_at = now() - interval '2 days',"
+                           " statut = 'suspendu' WHERE id = :c"), {"c": cid})
+        # bornes : 0 et 721 refusés en 422 (jamais un 500 ni une écriture)
+        assert client.post(f"/admin/licences/{cid}/prolonger", json={"heures": 0}).status_code == 422
+        assert client.post(f"/admin/licences/{cid}/prolonger", json={"heures": 721}).status_code == 422
+        # prolongation valide → 240 h dans le futur
+        pr = client.post(f"/admin/licences/{cid}/prolonger", json={"heures": 240})
+        assert pr.status_code == 200 and pr.json()["heures"] == 240
+        with engine.begin() as c:
+            st, exp = c.execute(text(
+                "SELECT statut, essai_expire_at FROM comptes WHERE id = :c"), {"c": cid}).one()
+            jrn = c.execute(text(
+                "SELECT detail FROM evenements_compte WHERE compte_id = :c"
+                " AND type = 'essai_prolonge' ORDER BY id DESC LIMIT 1"), {"c": cid}).scalar()
+        from datetime import datetime, timezone
+        assert st == "actif"                                    # REDEVIENT Actif
+        assert exp is not None and exp > datetime.now(timezone.utc)   # échéance FUTURE
+        assert jrn and jrn.startswith("prolongé jusqu'au ") and jrn.endswith(" par Vic")
+        # 404 propre sur un compte inconnu
+        assert client.post("/admin/licences/999999/prolonger", json={"heures": 24}).status_code == 404
+    finally:
+        with engine.begin() as c:
+            c.execute(text("DELETE FROM utilisateurs WHERE compte_id = :c"), {"c": cid})
+            c.execute(text("DELETE FROM evenements_compte WHERE compte_id = :c"), {"c": cid})
+            c.execute(text("DELETE FROM comptes WHERE id = :c"), {"c": cid})
+
+
 def test_admin_403_depuis_compte_client(engine, monkeypatch):
     """CRITÈRE DE FIN — 403 admin PROUVÉ depuis un compte CLIENT (role titulaire, session
     réelle, auth active) : tout /admin/* refuse ; l'admin (role admin) passe."""

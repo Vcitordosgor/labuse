@@ -663,7 +663,12 @@ def admin_licences(request: Request) -> dict:
     with engine().begin() as c:
         actives = _licences_actives(c)            # compteur UNIQUE (même source que le rail/Pilotage)
     n_masques = sum(1 for l in out if l["est_test"])
+    # COMPTE-3 (Lot 2) — garde sur l'URL de base des liens de mails (source unique config.base_url_probleme) :
+    # le front pose un bandeau rouge si les liens ne sont pas cliquables par un client distant.
+    _base = config.get_settings().public_base_url
+    _avert = config.base_url_probleme()
     return {"licences": out, "stripe_configure": bool(stripe.get("configure")),
+            "mail_liens": {"base_url": _base, "ok": _avert is None, "avert": _avert},
             "rapprochement": stripe.get("rapprochement"), "brevo": etat_configuration(),
             # ADMIN-1 (AD4) — libellés servis des mails (fini « Mail 1/2/3 »), source unique = brevo.LIBELLES.
             "mail_libelles": dict(_MAIL_LIBELLES),
@@ -773,6 +778,44 @@ def admin_licence_convertir(compte_id: int, request: Request) -> dict:
     if not n:
         raise HTTPException(404, "Compte introuvable.")
     return {"ok": True, "detail": "Essai levé — le compte paiera via le parcours officiel (login → Checkout)."}
+
+
+class ProlongerIn(BaseModel):
+    # COMPTE-3 (Lot 1) — mêmes bornes que la création d'essai (`EssaiIn.heures`) : 1 h à 30 j.
+    heures: int = Field(ge=1, le=24 * 30)
+
+
+@router.post("/admin/licences/{compte_id}/prolonger")
+def admin_licence_prolonger(compte_id: int, body: ProlongerIn, request: Request) -> dict:
+    """COMPTE-3 (Lot 1) — PROLONGER un essai au-delà de 48 h. La modale expose une date de fin ;
+    le front la convertit en `heures` (1–720, bornes de la création). L'échéance est repoussée à
+    `now() + heures` et le compte repasse ACTIF (un essai expiré/suspendu redevient Actif). Trois
+    preuves : `essai_expire_at` mis à jour, statut recalculé, une ligne de journal « prolongé
+    jusqu'au … par Vic ». Un `heures` hors bornes est refusé en 422 par la validation du corps."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    qui = getattr(request.state, "admin_email", "") or "Vic"
+    with engine().begin() as c:
+        # GARDE : on ne PROLONGE qu'un compte qui a DÉJÀ un essai (essai_expire_at non NULL) et non
+        # résilié — jamais transformer un client payant / un invité en essai par erreur.
+        row = c.execute(text(
+            "UPDATE comptes SET essai_expire_at = now() + (:h || ' hours')::interval,"
+            " statut = 'actif', updated_at = now()"
+            " WHERE id = :c AND statut <> 'resilie' AND essai_expire_at IS NOT NULL"
+            " RETURNING essai_expire_at"),
+            {"h": body.heures, "c": compte_id}).mappings().first()
+        if not row:
+            raise HTTPException(404, "Aucun essai à prolonger (compte introuvable, résilié, ou sans essai).")
+        expire = row["essai_expire_at"]
+        # journal (evenements_compte) : QUI a prolongé et jusqu'à QUAND (heure Réunion).
+        quand = (_fmt_reunion(expire) or "").removeprefix("le ")
+        c.execute(text(
+            "INSERT INTO evenements_compte (type, compte_id, detail) VALUES (:t, :c, :d)"),
+            {"t": "essai_prolonge", "c": compte_id, "d": f"prolongé jusqu'au {quand} par {qui}"})
+    return {"ok": True, "essai_expire_at": expire.isoformat(), "heures": body.heures,
+            "detail": f"Essai prolongé jusqu'au {(_fmt_reunion(expire) or '').removeprefix('le ')}."}
 
 
 class SuspendreIn(BaseModel):
@@ -1984,6 +2027,7 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
     mode/cadence + vanne + filtre). Extrait pour être partagé par l'endpoint circuit ET les pages
     de détail (un appel focalisé sur une source, `only_id`, reste rapide)."""
     from datetime import datetime as _dt, timezone as _tz
+    from .. import circuit_etats as _cetats
     from .. import filtres as _filtres
     from ..sources_catalog import WHERE_AFFICHEES, masquees_param
     _now = _dt.now(tz=_tz.utc)
@@ -1999,6 +2043,7 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
         "SELECT d.id, d.name, d.provider, d.category, d.source_millesime, d.last_sync_at,"
         "       d.mode_remplissage, d.cadence_attendue_jours, d.cadence_statut,"
         "       v.methode, v.dernier_statut, v.dernier_passage_at, v.dernier_vu, v.actif,"
+        "       v.echecs_consecutifs, v.dernier_message,"
         "       v.cadence_attendue_jours AS rappel_jours"
         f" FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id"
         f" WHERE {where} ORDER BY COALESCE(d.category,'zzz'), d.name"), params).mappings().all()
@@ -2029,7 +2074,7 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
         _derniers = [d for d in (r["dernier_passage_at"], r["last_sync_at"]) if d is not None]
         _dernier_controle = max(_derniers) if _derniers else None
         _cad = r["cadence_attendue_jours"]
-        a_verifier = bool(_cad) and mode not in ("en_direct", "absente") and (
+        a_verifier = bool(_cad) and mode not in ("en_direct", "absente", "sans_millesime") and (
             _dernier_controle is None or (_now - _dernier_controle).days > int(_cad))
         reservoirs.append({
             "a_verifier": a_verifier,
@@ -2042,12 +2087,21 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
             "vanne": ({"type": "injecter", "label": vanne["label"]} if vanne else
                       {"type": "depot"} if mode == "depot_manuel" else
                       {"type": "aucune", "motif": "interrogée en direct"} if mode == "en_direct" else
+                      # CIRCUIT-P6 (tâche 2) — sans millésime : « à jour par construction » + la raison écrite.
+                      {"type": "aucune", "motif": "à jour par construction — "
+                       + _cetats.raison_sans_millesime(r["name"])} if mode == "sans_millesime" else
                       {"type": "aucune", "motif": "aucun job d'ingestion identifié"}),
             "veille": ({"methode": r["methode"], "statut": r["dernier_statut"],
                         "passage": r["dernier_passage_at"].isoformat() if r["dernier_passage_at"] else None,
                         "vu": r["dernier_vu"], "actif": r["actif"],
+                        "echecs_consecutifs": r["echecs_consecutifs"],
+                        "dernier_message": r["dernier_message"],
                         "rappel_jours": r["rappel_jours"]} if r["methode"] else None),
             "filtre": _filtre_du(r["name"]),
+            # CIRCUIT-P6 (tâche 2) — la RAISON ÉCRITE du « à jour par construction » d'une source sans
+            # millésime, portée à part de la vanne (une source ré-ingérable garde son bouton Injecter).
+            "sans_millesime": (_cetats.raison_sans_millesime(r["name"])
+                               if mode == "sans_millesime" else None),
         })
     # ── CIRCUIT-6 lot 2 (G2) — le REMPLISSAGE mesuré sur les 12 témoins du jour : chaque
     # réservoir porte sa mesure, et une source branchée mais VIDE (signature DPE) porte le
@@ -2080,6 +2134,50 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
     return reservoirs
 
 
+#: CIRCUIT-P4 (lot 3) — statut technique → libellé français du segment « Hors vitrine ».
+_STATUT_HORS_VITRINE = {
+    "alias": "alias", "retiree": "retirée", "hub": "hub", "interne": "interne",
+    "partenariat_requis": "à obtenir",
+}
+
+
+def _sources_hors_vitrine(c) -> list[dict]:
+    """CIRCUIT-P4 (lot 3) — les sources du catalogue qui ne sont PAS en vitrine (alias, retirées,
+    internes, hubs, à obtenir/demander), chacune avec son statut, SA RAISON en français et la date
+    de la décision — rien n'y est masqué (mandat)."""
+    from ..sources_catalog import WHERE_AFFICHEES, masquees_param
+    noms = {r[0]: r[1] for r in c.execute(text("SELECT id, name FROM data_sources")).all()}
+    rows = c.execute(text(
+        "SELECT id, name, category, status, alias_de, retiree_raison, technical_notes, updated_at"
+        f" FROM data_sources WHERE NOT ({WHERE_AFFICHEES}) AND lower(status) <> 'interne'"
+        " ORDER BY status, name"), {"masquees": masquees_param()}).mappings().all()
+
+    def raison(r: dict) -> str:
+        st = (r["status"] or "").lower()
+        if st == "alias":
+            cible = noms.get(r["alias_de"])
+            return (f"même donnée que « {cible} », qui fait foi" if cible
+                    else "doublon d'une source en vitrine")
+        if st == "retiree":
+            return (r["retiree_raison"] or (r["technical_notes"] or "retirée")[:140]).strip()
+        if st == "hub":
+            return "canal d'accès (hub) — pas une donnée propre"
+        if st == "partenariat_requis":
+            return (r["technical_notes"] or "donnée sous convention / demande à instruire")[:140].strip()
+        return (r["technical_notes"] or st)[:140].strip()
+
+    out = []
+    for r in rows:
+        out.append({
+            "id": r["id"], "nom": r["name"], "famille": r["category"] or "aucune",
+            "statut": (r["status"] or "").lower(),
+            "statut_label": _STATUT_HORS_VITRINE.get((r["status"] or "").lower(), r["status"]),
+            "raison": raison(dict(r)),
+            "depuis": r["updated_at"].isoformat() if r["updated_at"] else None,
+        })
+    return out
+
+
 @router.get("/admin/circuit")
 def admin_circuit(request: Request) -> dict:
     """CIRCUIT-1 (lot 5.1) — LA structure de la page Circuit, calculée EN DIRECT et en UN appel :
@@ -2096,6 +2194,11 @@ def admin_circuit(request: Request) -> dict:
     with engine().begin() as c:
         # ── réservoirs : catalogue affiché + veille + mode/cadence + vanne + filtre (helper) ──
         reservoirs = _assembler_reservoirs(c)
+        # ── CIRCUIT-P4 (lot 3) — le segment « Hors vitrine » de l'onglet Sources (raison en clair) ──
+        try:
+            hors_vitrine = _sources_hors_vitrine(c)
+        except Exception:  # noqa: BLE001 — la page ne casse jamais sur le hors-vitrine
+            hors_vitrine = []
         # ── fuites ouvertes + eau ancienne + dernier contrôle (lot 4) ──
         try:
             fuites = [dict(x) for x in c.execute(text(
@@ -2251,6 +2354,33 @@ def admin_circuit(request: Request) -> dict:
                               regles_ecart=sorted(_verdicts_rob["ecart"]),
                               regles_choix=sorted(_verdicts_rob["choix"]),
                               verrous=_verrous, sources_sans_controle=_sans_controle)
+    # ── CIRCUIT-P4 (lot 2) — l'onglet « À FAIRE » : la liste ordonnée des cinq gestes possibles.
+    #    Le compte par état (lot 1) alimente la ligne « Rien d'autre » ; le contexte (dernière sonde)
+    #    et la dépendance injection→recalcul (lot 4, `_calculer_af`) enrichissent la ligne Calculer. ──
+    _etats_compte = _etats.compter_etats(reservoirs)
+    _passages = [r["veille"]["passage"] for r in reservoirs
+                 if r.get("veille") and r["veille"].get("passage")]
+    _derniere_sonde = max(_passages) if _passages else None
+    _contexte_af = (f"dernière sonde {_derniere_sonde[:16].replace('T', ' ')}"
+                    if _derniere_sonde else "aucune sonde passée encore")
+    # ── CIRCUIT-P4 (lot 4) — la règle injection → recalcul, dérivée du registre (moteurs.csv) :
+    #    une source qui nourrit le résiduel/scoring injectée depuis le run servi, ou un commit qui
+    #    change les règles PLU, fait apparaître la ligne « Calculer » (avec ce que ça touche). ──
+    from .. import circuit_dependance as _dep
+    try:
+        with session_scope() as _sd:
+            _run_date = _sd.execute(text(
+                "SELECT computed_at_max FROM residuel_runs WHERE is_served LIMIT 1")).scalar()
+        _run_date = _run_date.isoformat() if _run_date else None
+    except Exception:  # noqa: BLE001 — chaîne résiduel absente (base de test) : pas de date de run
+        _run_date = None
+    _plu_chg = _dep.plu_regles_changees(_run_date)
+    _calculer_af = _dep.calculer_ligne(reservoirs, run_servi_date=_run_date,
+                                       plu_changees=_plu_chg, residuel=residuel)
+    a_faire = _resume.composer_a_faire(
+        reservoirs, residuel=residuel, candidat=_candidat, run_servi=runs.current(),
+        verrous=_verrous, etats_compte=_etats_compte, contexte=_contexte_af,
+        calculer=_calculer_af)
     # ── CIRCUIT-6 — les sept garanties, jouées côté serveur (le front les REND, lot 8) +
     # le catalogue calculé (G1 : 116 en base / 95 en vitrine, jamais gravé) + les doublons.
     from dataclasses import asdict as _asdict
@@ -2299,6 +2429,9 @@ def admin_circuit(request: Request) -> dict:
         "compteurs_coherence": compteurs_coherence, "agents": agents_info,
         "reservoirs": reservoirs, "robinets": robinets, "chiffres": chiffres,
         "familles": familles, "categories": categories, "resume": resume,
+        "a_faire": a_faire,   # CIRCUIT-P4 lot 2 — l'onglet « À faire » (liste ordonnée des gestes)
+        "etats_sources": _etats_compte,   # lot 1 — compte par état (pastilles de l'onglet Sources)
+        "hors_vitrine": hors_vitrine,   # lot 3 — le segment « Hors vitrine » de l'onglet Sources
         "aretes": aretes, "fuites": fuites, "eau_ancienne": eau,
         "dernier_controle": dict(controle) if controle else None,
         "journal": journal, "runs": runs_list, "residuel": residuel,

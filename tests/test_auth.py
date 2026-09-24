@@ -101,10 +101,15 @@ def test_readyz_public_mais_reduit_sans_session(client, pilot):
     r = client.get("/readyz")
     assert r.status_code in (200, 503)                              # public (monitoring)
     js = r.json()
-    assert set(js) == {"ready", "checked_at"}                       # AUCUN détail sensible
+    # COMPTE-3 (Lot 2) — le mode réduit expose AUSSI l'état des liens de mails, mais NOM D'HÔTE SEUL
+    # (jamais l'URL complète, ni schema/data/couches). Rien de sensible ne fuit à une sonde anonyme.
+    assert set(js) == {"ready", "checked_at", "mail_liens"}
+    assert set(js["mail_liens"]) == {"host", "ok"}                  # host + verdict, pas l'URL complète
+    assert "base_url" not in js["mail_liens"] and "avert" not in js["mail_liens"]
     _login(client)
     full = client.get("/readyz").json()
     assert {"schema", "data", "actions"} <= set(full)               # détails avec session
+    assert full["mail_liens"].get("base_url") is not None           # URL complète avec session
 
 
 def test_fail_closed_pilote_sans_mot_de_passe(client, monkeypatch):

@@ -18,7 +18,6 @@ import { estIdu, iduComplet } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { M02 } from './ModulePanel'
 import { VeillePromoteurs } from './VeillePromoteurs'
-import { Bouton } from '../ui/Bouton'
 
 type Tab = 'possede' | 'construit'
 
@@ -42,6 +41,10 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
   const [nConstruit, setNConstruit] = useState<number | null>(null)
   const [q, setQ] = useState('')
   const [msg, setMsg] = useState<string | null>(null)
+  // SCAN-PATRIMOINE-1 (écart 1) — quand la recherche par NOM matche PLUSIEURS sociétés, on ne
+  // tranche plus au plus gros en silence : on affiche la liste (nom · SIREN · nb parcelles) et on
+  // laisse choisir (même geste que le Copilote). Vidée dès qu'un propriétaire est retenu ou re-saisi.
+  const [candidats, setCandidats] = useState<{ siren: string; nom: string; n: number }[]>([])
   const [busy, setBusy] = useState(false)
   const qc = useQueryClient()
 
@@ -63,7 +66,8 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
 
   // RETOURS-16 V5 — la query de suggestions maison (`sug`, par nom) est retirée : le composant
   // de barre partagé porte désormais la suggestion (propriétaire/SIREN/parcelle/adresse, typée).
-  const choisir = (siren: string, nom?: string) => { setOwner(siren); setOwnerLabel(nom ?? null); setMsg(null) }
+  const choisir = (siren: string, nom?: string) => { setOwner(siren); setOwnerLabel(nom ?? null); setMsg(null); setCandidats([]) }
+  const changer = () => { setOwner(null); setOwnerLabel(null); setQ(''); setMsg(null); setCandidats([]) }
   // résout l'IDU → propriétaire moral de la fiche ; null si particulier / non renseigné.
   // OUTILS-FIX-5 L1 — on lit le MÊME id que la fiche §1 (`proprietaire_moral.siren`, app.py:3839,
   // id registre `type_proprietaire`). L'ancienne lecture `f.owner_siren` visait un champ RACINE
@@ -84,6 +88,7 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
     const val = (raw ?? q).trim()
     if (raw != null) setQ(raw)
     setMsg(null)
+    setCandidats([])   // SCAN-PATRIMOINE-1 — toute nouvelle résolution repart d'une liste vide
     if (val.length < 2) return
     setBusy(true)
     try {
@@ -95,9 +100,12 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
         return
       }
       // NOM d'entreprise — le cas d'usage principal (recherche sur les dénominations des fichiers fonciers).
+      // SCAN-PATRIMOINE-1 (écart 1) — UN seul résultat : on le retient. PLUSIEURS : on affiche la liste
+      // (nom · SIREN · nb parcelles) et on laisse choisir — plus d'auto-sélection du plus gros en silence.
       const results = await qc.fetchQuery({ queryKey: ['scan-search', val], queryFn: () => modPatrimoineSearch(val) })
-      const first = (results as { siren: string; nom: string }[] | undefined)?.[0]
-      if (first) { choisir(first.siren, first.nom); return }
+      const list = (results as { siren: string; nom: string; n: number }[] | undefined) ?? []
+      if (list.length === 1) { choisir(list[0].siren, list[0].nom); return }
+      if (list.length > 1) { setCandidats(list); return }
       // REPLI ADRESSE : une adresse ne matche aucune dénomination → on la géocode (BAN, publique) et on
       // remonte à la parcelle puis au propriétaire.
       const feats = await banAutocomplete(val)
@@ -122,44 +130,70 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
         <p className="mt-0.5 text-[11.5px] text-txt-mut">Ce qu'un propriétaire possède, et ce qu'il construit.</p>
       </div>
 
-      {/* DA-FIX-2 Lot 2 (DA-003) — OMNIBOX PERMANENTE : la recherche reste EN TÊTE, même une fois le
-          propriétaire trouvé (plus d'encart « changer » qui la masquait). Retaper = changer de cible. */}
-      <div className="flex items-center gap-1.5">
-        <AddressAutocomplete data-scan-search placeholder="Nom, SIREN, IDU ou adresse"
-          grammaires={['proprietaire', 'siren', 'cadastre', 'adresse']}
-          onTextChange={setQ}
-          onPick={(it) => { if (it.siren) choisir(it.siren, it.type === 'proprietaire' ? it.label : undefined) }}
-          onSelect={(sel) => resoudre(sel.idu ?? sel.label)}
-          onEnterRaw={(t) => resoudre(t)}
-          className={inp} />
-        <Bouton niveau="primaire" ton="vert" data-scan-chercher onClick={() => resoudre()} disabled={q.trim().length < 2 || busy}
-          className="shrink-0">{busy ? '…' : 'Chercher'}</Bouton>
-      </div>
-      <p className="text-[11px] leading-snug text-txt-off">Une société, une parcelle, une adresse — LABUSE remonte au propriétaire.</p>
-      {msg && <p data-scan-msg className="text-[11px] leading-snug text-st-creuser">{msg}</p>}
-
       {!owner ? (
-        /* ───────── ÉTAT 1 — aucun propriétaire : les EXEMPLES (à vide). ───────── */
-        q.trim().length < 2 ? (
-          <div className="flex flex-col gap-1.5">
-            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-txt-dim">Exemples</div>
-            {EXEMPLES.map((e) => (
-              <button key={e.k} data-scan-exemple={e.k} onClick={() => resoudre(e.v)} disabled={busy}
-                className="hover-fill flex items-center gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left">
-                <span className="chip chip-mint shrink-0 rounded bg-mint/10 px-1.5 py-0.5 font-mono text-[10px] text-mint">{e.k}</span>
-                <span className="truncate text-[12.5px] text-txt">{e.v}</span>
-              </button>
-            ))}
-          </div>
-        ) : null
-      ) : (
-        /* ───────── ÉTAT 2 — propriétaire trouvé : encart identité (sans « changer ») + onglets. ───────── */
+        /* ───────── ÉTAT 1 — aucun propriétaire : la recherche SEULE, pas d'onglets. ───────── */
         <>
+          {/* U1.1 — UN seul champ, celui de l'outil ; aucun renvoi vers une autre barre.
+              RETOURS-16 V5 — la suggestion maison (liste `sug` par nom) est REMPLACÉE par le
+              composant partagé (suggest unifié) : propriétaire + SIREN + parcelle + adresse à la
+              frappe, types affichés. La résolution à l'Entrée (`resoudre`) reste celle de l'outil. */}
+          <div className="flex items-center gap-1.5">
+            <AddressAutocomplete data-scan-search placeholder="Nom, SIREN, IDU ou adresse"
+              grammaires={['proprietaire', 'siren', 'cadastre', 'adresse']}
+              onTextChange={(t) => { setQ(t); if (candidats.length) setCandidats([]) }}
+              onPick={(it) => { if (it.siren) choisir(it.siren, it.type === 'proprietaire' ? it.label : undefined) }}
+              onSelect={(sel) => resoudre(sel.idu ?? sel.label)}
+              onEnterRaw={(t) => resoudre(t)}
+              className={inp} />
+            <button data-scan-chercher onClick={() => resoudre()} disabled={q.trim().length < 2 || busy}
+              className="shrink-0 rounded-md bg-mint px-3 py-1.5 text-[12px] font-medium text-mint-ink disabled:opacity-40">{busy ? '…' : 'Chercher'}</button>
+          </div>
+          {/* U1.3 — ligne d'aide sous le champ. */}
+          <p className="text-[11px] leading-snug text-txt-off">Une société, une parcelle, une adresse — LABUSE remonte au propriétaire.</p>
+          {msg && <p data-scan-msg className="text-[11px] leading-snug text-st-creuser">{msg}</p>}
+          {/* SCAN-PATRIMOINE-1 (écart 1) — CHOIX quand plusieurs sociétés matchent le nom : la liste,
+              nom · SIREN · nb parcelles, on laisse trancher (comme le Copilote). Plus d'auto-sélection. */}
+          {candidats.length > 0 && (
+            <div data-scan-candidats className="flex flex-col gap-1.5">
+              <p className="text-[11px] leading-snug text-txt">Plusieurs sociétés correspondent — laquelle&nbsp;?</p>
+              {candidats.map((c) => (
+                <button key={c.siren} data-scan-candidat={c.siren} onClick={() => choisir(c.siren, c.nom)} disabled={busy}
+                  className="hover-fill flex items-center justify-between gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left disabled:opacity-40">
+                  <span className="min-w-0">
+                    <span className="block truncate text-[12.5px] text-txt">{c.nom}</span>
+                    <span className="mt-0.5 block font-mono text-[10.5px] text-txt-dim">SIREN {c.siren}</span>
+                  </span>
+                  <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-txt-dim">{c.n} parcelles</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {/* U1.4 — bloc EXEMPLES : à vide seulement (remplace le message d'attente ; montre ce que le champ accepte). */}
+          {q.trim().length < 2 && candidats.length === 0 && (
+            <div className="flex flex-col gap-1.5">
+              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-txt-dim">Exemples</div>
+              {EXEMPLES.map((e) => (
+                <button key={e.k} data-scan-exemple={e.k} onClick={() => resoudre(e.v)} disabled={busy}
+                  className="hover-fill flex items-center gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left disabled:opacity-40">
+                  {/* RETOURS-13 R16 — mécanique T6 (.chip) : sur la ligne survolée en vert plein,
+                      le libellé de type garde un FOND SOMBRE PLEIN et un texte clair (contraste). */}
+                  <span className="chip chip-mint shrink-0 rounded bg-mint/10 px-1.5 py-0.5 font-mono text-[10px] text-mint">{e.k}</span>
+                  <span className="truncate text-[12.5px] text-txt">{e.v}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        /* ───────── ÉTAT 2 — propriétaire trouvé : encart en tête + onglets soulignés. ───────── */
+        <>
+          {/* U1.5 — encart propriétaire : raison sociale + SIREN + « changer » (retour état 1). */}
           <div data-scan-owner className="flex items-center justify-between gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
             <div className="min-w-0">
               <div className="truncate text-[13.5px] font-semibold text-txt-hi">{ownerNom ?? '…'}</div>
               <div className="mt-0.5 font-mono text-[10.5px] text-txt-dim">SIREN <Siren value={owner} className="font-mono text-txt-dim" /></div>
             </div>
+            <button data-scan-changer onClick={changer} className="shrink-0 text-[11.5px] text-mint underline underline-offset-2 hover:text-mint/80">changer</button>
           </div>
 
           {/* U1.6 — onglets SOULIGNÉS (pas des boutons pleins) ; le propriétaire est partagé (aucune relance).

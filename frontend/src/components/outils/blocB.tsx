@@ -32,9 +32,14 @@ type Servitudes = {
 }
 
 export function O5Servitudes() {
-  const { selectedIdu, select } = useApp()
+  const { selectedIdu, select, focusParcelle } = useApp()
   const [idu, setIdu] = useState(selectedIdu ?? '')
   useEffect(() => { if (selectedIdu) setIdu(selectedIdu) }, [selectedIdu])
+  // PIEGES-RISQUES-1 pt2 — la saisie (adresse/IDU/réf courte) doit AMENER SUR la parcelle : zoom +
+  // surbrillance de son contour, sans ouvrir la fiche (ça fermerait l'outil). Même geste que Permis
+  // (PERMIS-CHECK-2) : `select(null)` AVANT `focusParcelle` — la carte cible `selectedIdu ?? focusIdu`,
+  // une sélection périmée masquerait sinon le focus posé par la barre.
+  const allerA = (id: string) => { select(null); focusParcelle(id); setIdu(id) }
   const q = useQuery({
     queryKey: ['o5', idu],
     queryFn: () => jfetch<Servitudes>(`/servitudes-invisibles/${idu.trim()}`),
@@ -50,16 +55,19 @@ export function O5Servitudes() {
         assainissement. Chaque servitude est nommée, datée et sourcée.</Banner>
       {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). Le clic
           carte est déjà capté par l'effet selectedIdu ci-dessus → withCarte inutile ici. */}
-      <ParcelInput dataAttr="o5-idu" placeholder="Adresse ou IDU" onPick={(id) => setIdu(id)} />
+      <ParcelInput dataAttr="o5-idu" placeholder="Adresse ou IDU" onPick={allerA} />
       {q.isLoading && <Squelette lignes={4} />}
       {q.isError && <ErrorState className="py-6" message="Servitudes indisponibles." retry={() => q.refetch()} />}
       {d && (
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
-            <span className="num-key text-base text-mint">{d.n}</span>{' '}
-            <span className="text-txt-mut">servitude(s)/contrainte(s) sur</span>{' '}
-            <button onClick={() => select(d.idu)} className="font-mono text-txt-hi hover:text-mint hover:underline">
-              {d.idu.slice(8, 10)} {d.idu.slice(10)}</button>
+          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
+            <span className="num-key text-base text-mint">{d.n}</span>
+            <span className="text-txt-mut">servitude(s)/contrainte(s) sur</span>
+            <span className="font-mono text-txt-hi">{d.idu.slice(8, 10)} {d.idu.slice(10)}</span>
+            {/* PIEGES-RISQUES-1 pt2 — lien PERMANENT « Ouvrir la fiche → » (jaune, DA existante) : la fiche
+                ne s'ouvre QUE sur ce clic (l'ouvrir d'office fermerait l'outil). `select` monte la fiche parcelle. */}
+            <button data-o5-fiche onClick={() => select(d.idu)}
+              className="ml-auto text-[10.5px] font-medium text-amber hover:underline">Ouvrir la fiche →</button>
           </div>
           {d.servitudes.map((s, i) => (
             <div key={i} className="rounded-lg bg-surface-3 px-3 py-2 shadow-elev-1">

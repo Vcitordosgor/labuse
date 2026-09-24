@@ -145,12 +145,15 @@ def test_lot7_contraintes_plu_tableau_zones():
     _LON, _LAT = 55.65, -20.96
     zone = {"type": "Polygon", "coordinates": [[[_LON - 0.01, _LAT - 0.01], [_LON + 0.01, _LAT - 0.01],
             [_LON + 0.01, _LAT + 0.01], [_LON - 0.01, _LAT + 0.01], [_LON - 0.01, _LAT - 0.01]]]}
-    # une zone PLU 'UA' qui couvre la moitié EST de la zone d'étude
+    # une zone PLU 'UA' qui couvre la moitié EST de la zone d'étude. ETUDE-ZONE-1 : la zone servie
+    # est le TOKEN du libellé GPU (comme la fiche), pas le `subtype` (typezone générique) — la donnée
+    # GPU réelle porte toujours `attrs->>'libelle'` (« UA », « U2c »…), on le reflète dans la fixture.
     wkt = f"POLYGON(({_LON} {_LAT-0.01},{_LON+0.01} {_LAT-0.01},{_LON+0.01} {_LAT+0.01},{_LON} {_LAT+0.01},{_LON} {_LAT-0.01}))"
     with session_scope() as s:
         s.execute(text(
             "INSERT INTO spatial_layers (kind, subtype, name, commune, geom, attrs) VALUES "
-            "('plu_gpu_zone','UA','PLU test','Saint-André', ST_GeomFromText(:w,4326), '{\"idurba\":\"97409_PLU\"}'::jsonb)"),
+            "('plu_gpu_zone','U','PLU test','Saint-André', ST_GeomFromText(:w,4326), "
+            "'{\"idurba\":\"97409_PLU\",\"libelle\":\"UA\"}'::jsonb)"),
             {"w": wkt})
         c = Z.contraintes_plu(s, zone)
         s.execute(text("DELETE FROM spatial_layers WHERE name='PLU test'"))

@@ -231,47 +231,104 @@ def slug_reservoir(nom: str | None) -> str | None:
     return NOM_VERS_SLUG.get(nom or "")
 
 
-# ── L'ÉTAT D'UN RÉSERVOIR (couleur, libellé) — ordre de la maquette (tankEtat) ──────────────
+# ── CIRCUIT-P6 (tâche 2) — LES SOURCES SANS MILLÉSIME PAR NATURE ─────────────────────────────
+# Trois réservoirs n'ont AUCUN millésime amont à comparer : leur fraîcheur est vraie « par
+# construction », pas parce qu'une sonde vient de passer. Les laisser en « jamais vérifiée » (gris)
+# était un contresens — il n'y a rien à vérifier. Le mode `sans_millesime` (posé sur data_sources,
+# cf. seed_sources.MODE_ET_CADENCE) les sort de ce gris et etat_reservoir les rend « à jour ». La
+# RAISON, écrite, est portée par la vanne du réservoir (« à jour par construction — … »).
+RAISON_SANS_MILLESIME: dict[str, str] = {
+    'osm_overpass': "flux continu (planet hebdomadaire + diffs) : aucune version datée à comparer",
+    'inpi_rne': "API RNE v3.0 sans extrait daté chez le producteur : pas de millésime publié "
+                "(règle anti-invention 6.2)",
+    'cout_construction_sdes': "donnée interne (choix LABUSE) : pas de producteur amont ni de millésime",
+}
+DEFAUT_SANS_MILLESIME = "sans millésime par nature : rien à comparer chez le producteur"
+
+def raison_sans_millesime(nom: str | None) -> str:
+    """La raison ÉCRITE du « à jour par construction » d'un réservoir sans millésime, par son nom."""
+    return RAISON_SANS_MILLESIME.get(NOM_VERS_SLUG.get(nom or "", ""), DEFAUT_SANS_MILLESIME)
+
+
+# ── L'ÉTAT D'UN RÉSERVOIR — CIRCUIT-P4 (lot 1) : TROIS états + un signal technique ──────────
+# La maquette v9 (Sources) ne connaît qu'une palette : À jour · Nouvelle version · Échue
+# (manuelle) · Jamais vérifiée · Sonde en panne. « À regarder » DISPARAÎT. Chaque source servie
+# tombe dans EXACTEMENT une de ces cinq cases (invariant testé : la somme = la vitrine).
+#
+# Ce qui a été RETIRÉ par rapport à CIRCUIT-6, et pourquoi (arbitrages, cf. RAPPORT-CIRCUIT-P4) :
+#   · « producteur injoignable » (ambre) : un échec de sonde n'est PAS un état de la source. La
+#     source garde son dernier état confirmé ; l'échec ne devient visible qu'en « sonde en panne »
+#     après 3 nuits d'échec NON-SSL (le lot 0 a supprimé les faux échecs SSL locaux). C'est la
+#     règle 10 que le mandat vise : elle produisait 80 des 87 « à regarder ».
+#   · « à vérifier » (cadence dépassée) : la sonde tourne chaque nuit ; une cadence un peu en retard
+#     n'est pas un problème de la source. Replié sur « à jour » (le dernier contrôle vaut toujours).
+#   · « INVISIBLE » / « en quarantaine » / « filtre avec des KO » / « agent en route » : ce ne sont
+#     pas des états de FRAÎCHEUR de la source (la question de l'onglet Sources). La mesure de
+#     remplissage et le verdict de filtre restent portés par le réservoir (page de détail) ; ils ne
+#     colorent plus la pastille. Le vocabulaire de la page se limite aux cinq mots ci-dessus.
 def etat_reservoir(r: dict) -> tuple[str, str]:
-    filtre = r.get("filtre") or {}
-    veille = r.get("veille")
+    veille = r.get("veille") or {}
     mode = r.get("mode") or "one_shot"
-    # CIRCUIT-6 lot 2 (G2) — branchée mais VIDE (mesurée sur les 12 témoins : type parcelle,
-    # 0 rempli, table quasi vide — signature DPE). AVANT tout autre état : « à jour » ne peut
-    # plus être vrai sur une source vide.
-    if r.get("invisible"):
-        return ("rouge", "INVISIBLE — branchée mais vide")
-    if filtre.get("verdict") == "quarantaine":
-        return ("rouge", "en quarantaine")
-    if r.get("horloge_ment"):                       # détecteur non branché live (accroche)
-        return ("rouge", "horloge qui ment")
-    if mode == "absente":
-        return ("gris", "vide")
-    if veille and veille.get("statut") == "nouvelle_version":
-        return ("ambre", "nouvelle version à injecter")
-    if r.get("agent_en_cours"):                     # transitoire, non exposé live (accroche)
-        return ("mauve", "agent en route")
-    if filtre.get("verdict") == "avertissements":
-        return ("ambre", "filtre avec des KO")
-    if not veille:
-        # CIRCUIT-6 lot 5 (G5) — jamais vérifié s'affiche en ROUGE, pas en gris/ambre :
-        # une source jamais confrontée à son producteur est un trou de garantie, pas un détail.
-        return ("rouge", "jamais vérifié")
-    if (not veille.get("statut") and not veille.get("passage")
-            and not r.get("dernier_controle")):
-        # G5 — sonde câblée mais JAMAIS passée (ni statut, ni passage), et aucune ingestion
-        # datée : rien n'a jamais été contrôlé — le dire, en rouge (« à jour » mentait).
-        return ("rouge", "jamais vérifié")
-    if r.get("a_verifier"):                          # divergence assumée : cadence dépassée
-        return ("ambre", "à vérifier")
-    if veille.get("statut") == "injoignable":
-        return ("ambre", "producteur injoignable")
+    statut = veille.get("statut")
+    passage = veille.get("passage")
+    echecs = int(veille.get("echecs_consecutifs") or 0)
+    message = veille.get("dernier_message") or ""
+
+    # (0) SANS MILLÉSIME PAR NATURE — CIRCUIT-P6 (tâche 2). Aucun millésime amont à comparer
+    #     (OSM en flux continu, INPI RNE sans extrait daté, Coût de construction interne) : la
+    #     source est « à jour par construction ». Mint, JAMAIS « jamais vérifiée » (il n'y a rien
+    #     à vérifier). La raison écrite est portée par la vanne (raison_sans_millesime).
+    if mode == "sans_millesime":
+        return ("mint", "à jour")
+
+    # (1) NOUVELLE VERSION — le producteur a publié plus récent que le servi → action « Injecter ».
+    if statut == "nouvelle_version":
+        return ("ambre", "nouvelle version")
+
+    # (2) MANUELLE — pas de producteur à sonder : échéance dépassée ⇒ « Échue » (→ Déposer),
+    #     dans l'échéance ⇒ « à jour », jamais alimentée ⇒ « jamais vérifiée ».
     if mode == "depot_manuel":
-        # G5 — un dépôt jamais alimenté le DIT (aucune date de contrôle → pas un blanc).
+        if r.get("a_verifier"):
+            return ("ambre", "échue")
         if not r.get("dernier_controle"):
-            return ("gris", "dépôt manuel — jamais alimenté")
-        return ("gris", "dépôt manuel")
+            return ("gris", "jamais vérifiée")
+        return ("mint", "à jour")
+
+    # (3) SONDE EN PANNE — signal TECHNIQUE (rouge), 3 échecs NON-SSL consécutifs. Pas un état de
+    #     la source : une panne de sonde n'a jamais rendu la donnée fausse. Un échec SSL (env local
+    #     non branché sur un faisceau de CA) n'y entre pas — le lot 0 le rend impossible en prod.
+    if (statut in ("injoignable", "illisible") and echecs >= 3
+            and "CERTIFICATE_VERIFY_FAILED" not in message):
+        return ("rouge", "sonde en panne")
+
+    # (4) JAMAIS VÉRIFIÉE — aucun contrôle amont réussi (sonde jamais passée, ni agent). GRIS,
+    #     jamais jaune : c'est un trou de vérification, pas une action attendue.
+    if not passage:
+        return ("gris", "jamais vérifiée")
+
+    # (5) À JOUR — un contrôle a confirmé la source ; un échec transitoire (<3) garde ce dernier
+    #     état confirmé (la source ne « clignote » pas à la première nuit ratée).
     return ("mint", "à jour")
+
+
+#: CIRCUIT-P4 (lot 1) — les CINQ libellés d'état, dans l'ordre d'affichage des pastilles (Sources).
+ETATS_SOURCE: tuple[str, ...] = (
+    "à jour", "nouvelle version", "échue", "jamais vérifiée", "sonde en panne")
+#: couleur canonique de chaque libellé (pour l'onglet Sources et ses pastilles).
+COULEUR_ETAT: dict[str, str] = {
+    "à jour": "mint", "nouvelle version": "ambre", "échue": "ambre",
+    "jamais vérifiée": "gris", "sonde en panne": "rouge"}
+
+
+def compter_etats(reservoirs: list[dict]) -> dict:
+    """CIRCUIT-P4 (lot 1) — le compte par état, sur la liste passée (la VITRINE au bouton). Chaque
+    réservoir a un `etat` déjà posé ([couleur, libellé]) ; on regroupe par libellé. Invariant :
+    la somme des cinq = le nombre de réservoirs (chaque source tombe dans une seule case)."""
+    from collections import Counter
+    c = Counter((r.get("etat") or ["", ""])[1] for r in reservoirs)
+    compte = {lib: c.get(lib, 0) for lib in ETATS_SOURCE}
+    compte["total"] = len(reservoirs)
+    return compte
 
 
 # ── L'ÉTAT D'UN ROBINET (couleur, libellé) — ordre de la maquette (tapEtat) ──────────────────

@@ -389,6 +389,15 @@ async def _auth_guard(request, call_next):
 
 def get_db() -> Iterator[Session]:
     with session_scope() as s:
+        # VITESSE-FIX-1 lot A — plafond « anti-emballement » posé UNIQUEMENT sur les requêtes de l'API,
+        # par transaction (`SET LOCAL`), jamais sur le moteur partagé : les batchs CLI (ingestion,
+        # scoring, résiduel), qui n'empruntent pas cette dépendance, gardent leurs requêtes longues
+        # légitimes. 0 = désactivé. Réglable par LABUSE_API_STATEMENT_TIMEOUT_MS.
+        _to = config.get_settings().api_statement_timeout_ms
+        if _to and _to > 0:
+            # set_config(…, is_local=true) = SET LOCAL, mais paramétrable proprement (SET n'accepte pas
+            # de placeholder). Valeur en millisecondes (texte) — statement_timeout lit un entier = ms.
+            s.execute(text("SELECT set_config('statement_timeout', :ms, true)"), {"ms": str(int(_to))})
         yield s
 
 
@@ -744,8 +753,20 @@ def readyz(request: Request, commune: str | None = None):
         _sch["heal_failed"] = [f.get("module") for f in heal.get("failures", [])]
         st["schema"] = _sch
         st["heal"] = {"ok": False, "failures": heal.get("failures", [])}
+    # COMPTE-3 (Lot 2) — expose l'URL de base des liens de mails et son verdict (garde localhost).
+    # Détail complet quand la session est ouverte (ou local) ; NOM D'HÔTE SEUL pour une sonde externe
+    # en prod (on ne divulgue pas l'URL complète à un anonyme).
+    _base = config.get_settings().public_base_url or ""
+    _liens_ok = config.base_url_probleme() is None
     if auth.enabled() and not auth.token_ok(request.cookies.get(auth.COOKIE)):
-        st = {"ready": st["ready"], "checked_at": st["checked_at"]}
+        from urllib.parse import urlparse
+        host = urlparse(_base).hostname or _base
+        st = {"ready": st["ready"], "checked_at": st["checked_at"],
+              "mail_liens": {"host": host, "ok": _liens_ok}}
+    else:
+        st = dict(st)
+        st["mail_liens"] = {"base_url": _base, "ok": _liens_ok,
+                            "avert": config.base_url_probleme()}
     return JSONResponse(status_code=200 if st.get("ready") else 503, content=st)
 
 
@@ -4194,6 +4215,8 @@ _PLU_PROCEDURES: dict[str, dict] = {
 }
 
 
+# AU VOL (repli) — expression historique. VITESSE-FIX-1 lot B : conservée telle quelle comme REPLI
+# quand la table matérialisée est absente/périmée (fraîcheur désalignée) → jamais de surface périmée.
 _DISPOSITIFS_SQL = text("""
 SELECT sl.kind, sl.subtype, coalesce(sl.attrs->>'libelle', sl.name) AS libelle,
        sl.attrs->>'nomsuplitt' AS nomsuplitt, sl.attrs->>'zone' AS peb_zone,
@@ -4206,6 +4229,21 @@ JOIN spatial_layers sl
       OR (sl.kind = 'plu_gpu_prescription' AND sl.subtype IN ('01', '05')))
 WHERE p.idu = :idu
 """)
+# MATÉRIALISÉ (VITESSE-FIX-1 lot B) — mêmes colonnes, mêmes valeurs : `area_m2` rangé =
+# `ST_Area(ST_Intersection(p, sl))` (numérateur EXACT), attrs lus FRAIS par PK sur spatial_layers.
+# `part` = area_m2 / ST_Area(parcelle) (parcelle seule, peu coûteux). Prédicat de kind IDENTIQUE.
+_DISPOSITIFS_SQL_MAT = text("""
+SELECT sl.kind, sl.subtype, coalesce(sl.attrs->>'libelle', sl.name) AS libelle,
+       sl.attrs->>'nomsuplitt' AS nomsuplitt, sl.attrs->>'zone' AS peb_zone,
+       pci.area_m2 / NULLIF(ST_Area(p.geom_2975), 0) AS part
+FROM parcels p
+JOIN parcel_couche_intersection pci
+  ON pci.parcel_id = p.id
+ AND (pci.kind IN ('dpu', 'peb', 'sup')
+      OR (pci.kind = 'plu_gpu_prescription' AND pci.subtype IN ('01', '05')))
+JOIN spatial_layers sl ON sl.id = pci.layer_id
+WHERE p.idu = :idu
+""")
 
 
 def _dispositifs_block(db: Session, idu: str) -> dict | None:
@@ -4216,7 +4254,10 @@ def _dispositifs_block(db: Session, idu: str) -> dict | None:
     commune » si la commune n'a rien au GPU), zone PEB (A/B/C/D — couverture partielle dite),
     SUP par catégorie. Intersections LIVE des couches servies (registre `dispositifs_parcelle`),
     mêmes familles/typepsc que la cascade. None si aucune des couches n'est ingérée."""
-    rows = db.execute(_DISPOSITIFS_SQL, {"idu": idu}).mappings().all()
+    # VITESSE-FIX-1 lot B — table matérialisée si FRAÎCHE (version sources alignée), sinon calcul au vol.
+    from ..couche_intersection import fraiche as _inter_fraiche
+    _sql = _DISPOSITIFS_SQL_MAT if _inter_fraiche(db) else _DISPOSITIFS_SQL
+    rows = db.execute(_sql, {"idu": idu}).mappings().all()
     kinds_presents = {k for (k,) in db.execute(text(
         "SELECT DISTINCT kind FROM spatial_layers "
         "WHERE kind IN ('dpu', 'peb', 'sup', 'plu_gpu_prescription')")).all()}
@@ -4415,33 +4456,31 @@ def _ppr_reference_commune(db: Session, insee: str) -> list[dict] | None:
     return [{"document": r["document"], "approbation": r["approbation"]} for r in rows] or None
 
 
-def _aleas_block(db: Session, idu: str, lines: list[dict]) -> dict | None:
-    """FICHE-1 lot 3 — la LISTE des aléas touchant la parcelle, dérivée des lignes de cascade
-    SERVIES (`layer == 'risques'`, arbitrées) — exactement celles que sert « Pièges et risques ».
-    Aucune relecture de spatial_layers pour DÉCIDER un aléa (M73). Chaque aléa porte : nature,
-    niveau, part de la parcelle concernée (lue sur le libellé arbitré, None si la source ne la
-    dit pas), et pour un PPR la référence de l'arrêté communal. None si aucun aléa."""
-    import re as _re
-    ali = [l for l in lines if l.get("layer") == "risques"
-           and l["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
-    if not ali:
+def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict | None:
+    """PIEGES-RISQUES-2 (Lot C) — la LISTE des aléas de la fiche §Pièges & risques lit désormais la MÊME
+    fonction que l'outil (`servitudes.aleas_parcelle`, couches `spatial_layers` EN DIRECT) au lieu de la
+    cascade servie : l'outil et la fiche ne divergent plus (mêmes libellés, mêmes %, même source/millésime).
+    La PRÉSENTATION est INCHANGÉE (le front consomme toujours `{n, liste:[{nature, niveau, part_pct,
+    libelle, redhibitoire, source, millesime, ppr}]}`). Le paramètre `lines` (cascade) n'est plus lu — il
+    reste dans la signature pour ne pas toucher l'appelant. Le « risque » chiffré éventuel de la cascade
+    reste du scoring, hors de cette liste."""
+    from .servitudes import aleas_parcelle
+    al = aleas_parcelle(db, idu)
+    if not al:
         return None
-    ppr_ref = None
+    ppr_ref = _ppr_reference_commune(db, idu[:5])
     items: list[dict] = []
-    for l in ali:
-        detail = l["detail"] or ""
-        is_ppr = detail.lower().startswith("ppr")
-        m = _re.search(r"(\d+)\s*%", detail)
-        if is_ppr and ppr_ref is None:
-            ppr_ref = _ppr_reference_commune(db, idu[:5])
+    for a in al:
+        is_ppr = a["nature"].startswith("PPR")
         items.append({
-            "nature": _alea_nature(detail),
-            "niveau": l.get("severity"),
-            "libelle": detail,
-            "part_pct": int(m.group(1)) if m else None,   # None = la source ne dit pas la part
-            "redhibitoire": l["result"] == "HARD_EXCLUDE",
-            "source": l.get("source"),
-            "millesime": l.get("millesime_amont"),
+            "nature": a["nature"],
+            # PPR : le rouge/bleu est déjà dans `nature` → pas de « niveau » redondant ; aléas : le niveau.
+            "niveau": None if is_ppr else a["niveau"],
+            "libelle": a["libelle"],
+            "part_pct": a["part_pct"],
+            "redhibitoire": a["redhibitoire"],
+            "source": a["source"],
+            "millesime": a["millesime"],
             "ppr": ppr_ref if is_ppr else None,
         })
     items.sort(key=lambda a: (not a["redhibitoire"],
@@ -6968,8 +7007,10 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
     ids = [x.strip() for x in idus.split(",") if x.strip()][:3]
     from ..faisabilite.db import fiche_payload
     from ..faisabilite.marche_commune import build_marche_commune
+    from ..faisabilite.zonage import resolve_zone
     out: list[dict] = []
     marche_cache: dict[str, dict] = {}
+    sl_ready = _score_labuse_ready(db)   # COMPARER-2 §4 — table candidate q_v15 présente ?
     for idu in ids:
         pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
         if pid is None:                       # IDU introuvable → ignoré silencieusement (contrat D2)
@@ -6995,6 +7036,30 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
                     if pz and pz.get("calculable"):
                         row["terrain_zone_eur_m2"] = pz.get("median_eur_m2")
                     break
+        # COMPARER-2 §1 — CES (emprise au sol MAX) : la VRAIE règle PLU, seulement si une valeur
+        # numérique est VALIDÉE dans plu_destinations (resolve_zone la superpose). Sinon None → le
+        # front affiche « non réglementée ». Le taux d'occupation du gabarit (residuel.taux_emprise_pct)
+        # reste servi à part, badge Estimé — plus jamais un dérivé sous le titre « max PLU ».
+        try:
+            zr = resolve_zone(zone, commune) if (zone and commune) else None
+        except Exception:  # noqa: BLE001
+            zr = None
+        ces = getattr(zr, "emprise_sol_pct", None) if zr else None
+        row["emprise_ces_pct"] = float(ces) if isinstance(ces, (int, float)) else None
+        row["emprise_ces_source"] = ((zr.sources or {}).get("emprise")
+                                     if zr and row["emprise_ces_pct"] is not None else None)
+        # COMPARER-2 §4 — Classement LABUSE (bande + Signal de mutation) du run CANDIDAT q_v15, la MÊME
+        # source que l'écran Analyse (score_labuse). Servi tel quel ; NULL tant que q_v15 n'est pas la
+        # table servie — la bascule rendra tout cohérent (cf. rapport). Le score ne s'affiche QUE sur
+        # la fiche, l'Analyse, et cet outil de comparaison — jamais la carte (doctrine M120).
+        if sl_ready:
+            sl = db.execute(text(
+                """SELECT bande, signal_niveau, non_calculable FROM score_labuse
+                   WHERE run_label = :r AND idu = :idu"""),
+                {"r": SCORE_LABUSE_RUN, "idu": idu}).mappings().first()
+            if sl:
+                row["bande"] = ("NC" if sl["non_calculable"] else sl["bande"])
+                row["signal_niveau"] = sl["signal_niveau"]
         out.append(row)
     return {"count": len(out), "parcels": out}
 

@@ -28,6 +28,13 @@ _BANDEAU = ("Estimation économique indicative (DVF public + hypothèses) — "
             "ne remplace pas un bilan promoteur professionnel.")
 ANNEE_REF = date.today().year
 
+# COMPARER-2 §2 — la VRD s'applique à l'emprise réellement AMÉNAGÉE du scénario, pas au terrain brut :
+# emprise_aménagée = (empreinte au sol du programme + stationnement) × (1 + voirie interne), plafonnée
+# au terrain. Sur une grande parcelle sous-densifiée, on ne viabilise plus les m² que le programme ne
+# touche pas (c'est ce qui rendait la charge foncière abusivement négative — COMPARER-1/ASSEMBLAGE-1).
+VRD_VOIRIE_INTERNE_PCT = 40.0   # voirie/réseaux internes au-delà du bâti + stationnement (hypothèse, Estimé)
+VRD_PLACES_PAR_LOGT_DEFAUT = 2.0   # repli quand la zone ne fixe pas de norme de stationnement
+
 
 @dataclass
 class Bilan:
@@ -378,7 +385,10 @@ def compute_bilan_servi(session: Session, parcel_id: int, fz=None) -> tuple["Bil
                         (fr.get("logements_sous_sol") or (0, 0))[1])
     eco = dict(ctx.prescriptions_eco)
     eco.update({"sdp_max_m2": fr.get("surface_plancher_m2"), "logements_estimes": logements_est,
-                "terrain_m2": ctx.surface_m2, "pente_pct": ctx.contraintes.pente_pct})
+                "terrain_m2": ctx.surface_m2, "pente_pct": ctx.contraintes.pente_pct,
+                # COMPARER-2 §2 — pour l'emprise aménagée de la VRD (empreinte au sol + stationnement)
+                "niveaux_max": fr.get("niveaux_max"),
+                "places_par_logt": (rules.places_par_logement() if rules else None)})
     bp = {k: r["value"] for k, r in bpmod.resolve(session, secteur).items()}
     bp["prix_m2_neuf"] = ps["prix"]
     b = compute_bilan(float(shab), float(ctx.surface_m2 or 0),
@@ -537,8 +547,16 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     declenchee = bool(clause and clause["declenchee"])
     # Pondération du CA = clause déclenchée ET 30 % posé ET prix LLS calibré (jamais de prix fictif).
     pondere = declenchee and p_lls > 0 and prix_lls > 0
-    _px = (lambda x: (1.0 - p_lls) * float(x) + p_lls * prix_lls) if pondere \
-        else (lambda x: float(x))
+    # COMPARER-2 §2 — clause déclenchée MAIS prix LLS non calibré (ni secteur ni saisi) : on n'invente
+    # pas un prix LLS et on ne valorise pas la part aidée au plein prix marché. On l'EXCLUT du CA (LLS
+    # non chiffré) et on le DIT — jamais un 0 silencieux ni un plein prix trompeur.
+    exclure_lls = declenchee and p_lls > 0 and not (prix_lls > 0)
+    if pondere:
+        _px = lambda x: (1.0 - p_lls) * float(x) + p_lls * prix_lls  # noqa: E731
+    elif exclure_lls:
+        _px = lambda x: (1.0 - p_lls) * float(x)                     # noqa: E731 — part LLS retirée du CA
+    else:
+        _px = lambda x: float(x)                                      # noqa: E731
     ca_bas, ca_cen, ca_haut = surf * _px(q1), surf * _px(med), surf * _px(q3)
     if mixite:
         lib_sms = eco.get("mixite_libelle") or "logements aidés"
@@ -554,16 +572,24 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                               clause["detail"], "pas de quota LLS sur ce programme",
                               mixite_src, prov="derive"))
         elif pondere:
+            # COMPARER-2 §2 — le prix LLS AFFICHÉ est celui RÉELLEMENT utilisé (prix_lls résolu par
+            # secteur), plus jamais `hyp.prix_m2_lls` (le placeholder 0 brut, qui faisait lire « ×0 »
+            # alors que le CA était calculé au prix de secteur).
             steps.append(Step("CA pondéré — clause de mixité DÉCLENCHÉE",
                               f"{clause['detail']} · prix mixé = (1−{p_lls:.0%})×prix DVF + "
-                              f"{p_lls:.0%}×{hyp.prix_m2_lls:.0f} €/m² (LLS)",
+                              f"{p_lls:.0%}×{prix_lls:.0f} €/m² (LLS)",
                               f"{_px(med):.0f} €/m² (médiane pondérée)",
                               f"{mixite_src} · pct_lls / prix_m2_lls", prov="estimee"))
-        elif p_lls > 0:  # taux connu mais prix LLS non calibré → on NE chiffre PAS
+        elif exclure_lls:  # COMPARER-2 §2 — prix LLS non calibré → part LLS EXCLUE du CA, dit clairement
+            steps.append(Step("CA — part LLS exclue (non chiffrée)",
+                              f"{clause['detail']} · {p_lls:.0%} de logements aidés imposés, prix LLS "
+                              f"non calibré → CA sur les {1 - p_lls:.0%} au prix marché seulement",
+                              f"{_px(med):.0f} €/m² (LLS retiré)",
+                              f"{mixite_src} · pct_lls", prov="estimee"))
             avert.append(
                 f"Clause de mixité sociale DÉCLENCHÉE ({clause['critere']}) — {p_lls:.0%} de "
-                f"logements aidés imposés ({lib_sms}). Impact non chiffré : prix LLS non calibré "
-                "(PLACEHOLDER) → saisir le prix LLS dans le panneau pour pondérer le CA.")
+                f"logements aidés imposés ({lib_sms}). Prix LLS non calibré : cette part est EXCLUE "
+                "du CA (LLS non chiffré) — saisir le prix LLS dans le panneau pour la valoriser.")
         else:  # M-N P1-13 : taux de logements aidés NON calibré pour cette commune (seuils estimés)
             avert.append(
                 f"Secteur de mixité sociale ({lib_sms}) — programme au-dessus des seuils estimés "
@@ -586,15 +612,32 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     pente_pct = float(eco.get("pente_pct") or 0.0)
     maj_pente_eff = maj_pente if pente_pct >= 15.0 else 0.0
     maj_vrd_terrain = maj_pente_eff + maj_assain
-    cout_vrd = vrd_base * (1.0 + maj_vrd_terrain / 100.0) * (surface_terrain_m2 or 0.0)
+    # COMPARER-2 §2 — emprise réellement AMÉNAGÉE (≠ terrain brut) : empreinte au sol du scénario
+    # chiffré (SDP retenue ÷ niveaux) + stationnement (logements × places/logt × m²/place) + voirie
+    # interne, plafonnée au terrain. Une petite parcelle dense sature déjà son terrain (plafond = terrain,
+    # inchangée) ; une grande parcelle sous-densifiée ne fait plus payer la VRD des m² qu'elle n'aménage pas.
+    niveaux_prog = float(eco.get("niveaux_max") or 1) or 1.0
+    footprint_prog = sdp / niveaux_prog
+    _ppl_raw = eco.get("places_par_logt")
+    ppl = float(_ppl_raw) if isinstance(_ppl_raw, (int, float)) and _ppl_raw > 0 else VRD_PLACES_PAR_LOGT_DEFAUT
+    n_logts = float(eco.get("logements_estimes") or 0.0)
+    parking_m2 = n_logts * ppl * float(getattr(hyp, "place_m2", 25.0))
+    emprise_amenagee = (footprint_prog + parking_m2) * (1.0 + VRD_VOIRIE_INTERNE_PCT / 100.0)
+    if surface_terrain_m2:
+        emprise_amenagee = min(float(surface_terrain_m2), emprise_amenagee)
+    cout_vrd = vrd_base * (1.0 + maj_vrd_terrain / 100.0) * emprise_amenagee
     if vrd_base > 0:
         bits = []
         if maj_pente_eff:
             bits.append(f"pente {pente_pct:.0f} %")
         if maj_assain:
             bits.append("assainissement autonome")
+        _plafonnee = surface_terrain_m2 and emprise_amenagee >= float(surface_terrain_m2) - 0.5
+        _base_lbl = (f"terrain {surface_terrain_m2:.0f} m² (aménagement plafonné)" if _plafonnee
+                     else f"emprise aménagée ~{emprise_amenagee:.0f} m² (bâti + stationnement + voirie, "
+                          f"sur terrain {surface_terrain_m2:.0f} m²)")
         steps.append(Step("VRD / viabilisation",
-                          f"{vrd_base:.0f} €/m² terrain × {surface_terrain_m2:.0f} m²"
+                          f"{vrd_base:.0f} €/m² × {_base_lbl}"
                           + (f" × (1 + {maj_vrd_terrain:g} % : {', '.join(bits)})" if maj_vrd_terrain else ""),
                           f"~{_eur(cout_vrd)}", "param cout_vrd_base", prov="estimee"))
     if pluvial:

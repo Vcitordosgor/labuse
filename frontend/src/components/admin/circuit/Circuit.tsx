@@ -8,26 +8,30 @@ import { useEffect, useRef, useState } from 'react'
 
 import {
   getAdminCircuit, getAdminCircuitTaches, postAdminCircuitAgents, postAdminCircuitVerifier,
-  postAdminCircuitVerrous,
 } from '../../../lib/api'
 
+import { DestinationsDetail } from '../Destinations'
+
+import { AFaire } from './AFaire'
 import { CircuitDiagram } from './CircuitDiagram'
 import { Detail as DetailPage } from './Detail'
 import { ecrireCx, parseCx } from './hash'
 import { Journal } from './Journal'
-import { Resume } from './Resume'
 import { SensInverse } from './SensInverse'
+import { Sources } from './Sources'
 import { CIRCUIT_CSS } from './style'
-import { focusDeCible, type Cible, type CircuitData } from './types'
+import { focusDeCible, type AFaireLigne, type Cible, type CircuitData } from './types'
 
-type Onglet = 'resume' | 'circuit' | 'journal'
-type DetailType = 'reservoir' | 'robinet' | 'pompe' | 'compteur'
+type Onglet = 'todo' | 'sources' | 'circuit' | 'journal'
+// CIRCUIT-P5 — « destinations » : le détail du calibrage PLU par commune (composant Destinations),
+// atteint depuis la page de détail de la source GPU (plus par un lien en bas de la page).
+type DetailType = 'reservoir' | 'robinet' | 'pompe' | 'compteur' | 'destinations'
 type Detail = { type: DetailType; id: number | string } | null
 
 export function CircuitSection() {
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['admin-circuit'], queryFn: getAdminCircuit, refetchInterval: 60_000 })
-  const [onglet, setOnglet] = useState<Onglet>('resume')
+  const [onglet, setOnglet] = useState<Onglet>('todo')
   const [detail, setDetail] = useState<Detail>(null)
   const [groupe, setGroupe] = useState<(number | string)[] | null>(null)
   const [nJour, setNJour] = useState<number | null>(null)
@@ -48,11 +52,6 @@ export function CircuitSection() {
 
   const verifier = useMutation({
     mutationFn: postAdminCircuitVerifier,
-    onSuccess: () => { setMsgLocal(null); setFerme(null); taches.refetch() },
-  })
-  // DASHBOARD-4 (D2) — rejouer les verrous (tâche détachée) depuis le Résumé.
-  const verrous = useMutation({
-    mutationFn: postAdminCircuitVerrous,
     onSuccess: () => { setMsgLocal(null); setFerme(null); taches.refetch() },
   })
   const agents = useMutation({
@@ -87,8 +86,8 @@ export function CircuitSection() {
   }, [])
   // reflète le détail ouvert dans le hash (fusion, sans écraser les autres paramètres).
   useEffect(() => {
-    // le compteur n'est pas deep-linké (page transitoire d'agrégat) : il ne s'écrit pas au hash.
-    const cx = detail && detail.type !== 'compteur'
+    // le compteur et les destinations ne sont pas deep-linkés (pages transitoires) : hors du hash.
+    const cx = detail && detail.type !== 'compteur' && detail.type !== 'destinations'
       ? (detail as { type: 'reservoir' | 'robinet' | 'pompe'; id: number | string }) : null
     const suivant = ecrireCx(window.location.hash, cx)
     if (suivant !== window.location.hash) window.history.replaceState(null, '', suivant || window.location.pathname + window.location.search)
@@ -104,6 +103,17 @@ export function CircuitSection() {
     setDetail({ type, id }); setGroupe(null); setOnglet('circuit')
   }
   const fermerDetail = () => setDetail(null)
+
+  // CIRCUIT-P4 (lot 2) — un geste de l'onglet « À faire » ROUTE vers l'endroit où il se fait :
+  // Injecter/Déposer → détail de la source (vanne / dépôt) ; Calculer/Basculer / « voir »/« lire » →
+  // détail de la Pompe (run servi, candidat, note de version) ; Décider → détail du verrou. L'action
+  // lourde elle-même (injection, calcul résiduel, bascule) vit hors de cette page (hors mandat).
+  const gesteAFaire = (l: AFaireLigne) => {
+    if (l.type === 'calculer' || l.type === 'basculer') { ouvrirDetail('pompe', 'pompe'); return }
+    if (l.ghost && (l.type === 'injecter' || l.type === 'deposer')) { /* voir la source */ }
+    if (l.cible) allerVersCircuit(l.cible)
+    else ouvrirDetail('compteur', 'compteur')
+  }
 
   if (q.isLoading) return <div className="cxp"><style>{CIRCUIT_CSS}</style><div className="muted">Circuit — chargement…</div></div>
   if (!d) return <div className="cxp"><style>{CIRCUIT_CSS}</style><div className="muted">Circuit indisponible.</div></div>
@@ -124,27 +134,29 @@ export function CircuitSection() {
       <style>{CIRCUIT_CSS}</style>
 
       <div className="tabs">
-        <button className={onglet === 'resume' ? 'on' : ''} onClick={() => setOnglet('resume')}>
-          Résumé<span className="n">{d.resume.total || ''}</span>
+        {/* CIRCUIT-P4 (lot 2) — quatre onglets, « À faire » par défaut. Le nombre = les lignes à faire. */}
+        <button className={onglet === 'todo' ? 'on' : ''} onClick={() => setOnglet('todo')}>
+          À faire{d.a_faire?.total ? <span className="n">{d.a_faire.total}</span> : ''}
+        </button>
+        <button className={onglet === 'sources' ? 'on' : ''} onClick={() => setOnglet('sources')}>
+          Sources{d.etats_sources?.total ? <span className="n">{d.etats_sources.total}</span> : ''}
         </button>
         <button className={onglet === 'circuit' ? 'on' : ''} onClick={() => setOnglet('circuit')}>Circuit</button>
         <button className={onglet === 'journal' ? 'on' : ''} onClick={() => setOnglet('journal')}>
           Journal{nJour ? <span className="n">{nJour}</span> : ''}
         </button>
-        {/* DASHBOARD-4 (D5) — « Envoyer les agents » / « Vérifier que tout coule » vivent dans l'onglet
-            Circuit SEULEMENT (jamais sur le Résumé, qui ne fait que dire ce qui cloche). */}
-        {onglet === 'circuit' && (
-          <div className="actions">
-            <button className="btn mauve" disabled={agents.isPending || ta?.etat === 'en_cours'}
-              onClick={() => { agents.mutate() }}>
-              {ta?.etat === 'en_cours' ? `${ta.fait} / ${ta.total} agents…` : 'Envoyer les agents sur tout'}
-            </button>
-            <button className="btn mint" disabled={verifier.isPending || tv?.etat === 'en_cours'}
-              onClick={() => { verifier.mutate() }}>
-              {tv?.etat === 'en_cours' ? 'Contrôle en cours…' : 'Vérifier que tout coule'}
-            </button>
-          </div>
-        )}
+        {/* CIRCUIT-P4 (lot 2) — « Vérifier maintenant » / « Envoyer les agents » restent en haut à
+            droite, quel que soit l'onglet (comme la maquette v9). */}
+        <div className="actions">
+          <button className="btn" disabled={verifier.isPending || tv?.etat === 'en_cours'}
+            onClick={() => { verifier.mutate() }}>
+            {tv?.etat === 'en_cours' ? 'Contrôle en cours…' : 'Vérifier maintenant'}
+          </button>
+          <button className="btn mauve" disabled={agents.isPending || ta?.etat === 'en_cours'}
+            onClick={() => { agents.mutate() }}>
+            {ta?.etat === 'en_cours' ? `${ta.fait} / ${ta.total} agents…` : 'Envoyer les agents'}
+          </button>
+        </div>
       </div>
 
       {barre && (
@@ -155,9 +167,12 @@ export function CircuitSection() {
         </div>
       )}
 
-      <section className={`tab ${onglet === 'resume' ? 'on' : ''}`}>
-        <Resume data={d} onCible={allerVersCircuit}
-          verrousTache={tverr} onRejouerVerrous={() => verrous.mutate()} rejouerEnCours={verrous.isPending} />
+      <section className={`tab ${onglet === 'todo' ? 'on' : ''}`}>
+        <AFaire data={d} onGeste={gesteAFaire} />
+      </section>
+
+      <section className={`tab ${onglet === 'sources' ? 'on' : ''}`}>
+        <Sources data={d} onOpen={(id) => ouvrirDetail('reservoir', id)} />
       </section>
 
       <section className={`tab ${onglet === 'circuit' ? 'on' : ''}`}>
@@ -174,7 +189,9 @@ export function CircuitSection() {
             profond) : un élément → ses sources, cliquables vers leur détail. */}
         {!detail && <SensInverse data={d} onOpenSource={(id) => ouvrirDetail('reservoir', id)} />}
         {detail
-          ? <DetailPage type={detail.type} id={detail.id} data={d} onClose={fermerDetail} onOpen={ouvrirDetail} />
+          ? (detail.type === 'destinations'
+            ? <DestinationsDetail onBack={fermerDetail} />
+            : <DetailPage type={detail.type} id={detail.id} data={d} onClose={fermerDetail} onOpen={ouvrirDetail} />)
           : <CircuitDiagram data={d} groupe={groupe} onOpen={ouvrirDetail} />}
       </section>
 

@@ -406,17 +406,19 @@ def verrou_g5(db: Session) -> ResultatVerrou:
     for r in rows:
         derniers = [d for d in (r["dernier_passage_at"], r["last_sync_at"]) if d is not None]
         dernier_controle = max(derniers) if derniers else None
+        mode = r["mode_remplissage"] or "one_shot"
         veille = ({"statut": r["dernier_statut"],
                    "passage": r["dernier_passage_at"]} if r["methode"] else None)
         couleur, libelle = etat_reservoir({"veille": veille, "dernier_controle": dernier_controle,
-                                           "mode": r["mode_remplissage"] or "one_shot",
-                                           "filtre": {}})
+                                           "mode": mode, "filtre": {}})
         if libelle == "jamais vérifié":
             jamais += 1
             if couleur != "rouge":
                 pbs.append(f"{r['name']} : jamais vérifié affiché en {couleur}, pas en rouge")
-        elif dernier_controle is None and "jamais" not in libelle and libelle != "vide":
-            # un état PARLANT (« vide », « … jamais alimenté ») couvre l'absence de date ;
+        elif (dernier_controle is None and "jamais" not in libelle and libelle != "vide"
+              and mode != "sans_millesime"):
+            # un état PARLANT (« vide », « … jamais alimenté ») couvre l'absence de date ; une source
+            # SANS MILLÉSIME (P6) est « à jour par construction », son absence de date est légitime ;
             # tout le reste sans date est un blanc — la garantie casse.
             pbs.append(f"{r['name']} : aucune date de contrôle ET aucune mention "
                        f"« jamais » (état « {libelle} »)")
@@ -642,6 +644,11 @@ def classer_sans_controle(rows, seuil) -> list[dict]:
     sonde en panne (dernier passage < seuil)."""
     out: list[dict] = []
     for r in rows:
+        # CIRCUIT-P6 (tâche 2) — une source SANS MILLÉSIME est « à jour par construction » : aucun
+        # producteur amont à contrôler (OSM en flux continu, INPI sans version datée, Coût interne).
+        # Personne n'a à la contrôler — elle n'est pas « sans contrôleur », elle n'en a pas besoin.
+        if r.get("mode") == "sans_millesime":
+            continue
         a_sonde = r["methode"] in _METHODES_SONDE and bool(r["actif"])
         p = r["dernier_passage_at"]
         if p is not None and p >= seuil:
@@ -664,7 +671,7 @@ def sources_sans_controle(db: Session, jours: int = 7) -> list[dict]:
     from datetime import datetime, timezone, timedelta
     from .sources_catalog import WHERE_AFFICHEES, masquees_param
     rows = db.execute(text(
-        "SELECT d.name, v.methode, v.actif, v.dernier_passage_at"
+        "SELECT d.name, d.mode_remplissage AS mode, v.methode, v.actif, v.dernier_passage_at"
         " FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id"
         f" WHERE {WHERE_AFFICHEES} ORDER BY d.name"), {"masquees": masquees_param()}).mappings().all()
     return classer_sans_controle(rows, datetime.now(timezone.utc) - timedelta(days=jours))

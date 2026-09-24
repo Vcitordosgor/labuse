@@ -37,8 +37,8 @@ describe('CIRCUIT-P3 lot 2.4 — pastilles ↔ état du bloc', () => {
         expect(av.textContent).toBe('tout va bien')
         expect(alertes.length).toBe(0)
       } else {
-        // bloc « n à regarder » → au moins une pastille d'alerte
-        expect(av.textContent).toMatch(/à regarder/)
+        // bloc « n à voir » → au moins une pastille d'alerte (CIRCUIT-P4 lot 5 : « à regarder » → « à voir »)
+        expect(av.textContent).toMatch(/à voir/)
         expect(alertes.length).toBeGreaterThan(0)
       }
     }

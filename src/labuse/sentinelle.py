@@ -26,13 +26,19 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import ssl
 import time
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from sqlalchemy import text
+
+import logging
+
+log = logging.getLogger("labuse.sentinelle")
 
 #: User-Agent identifiant LABUSE (W3.2) — un serveur public sait qui l'interroge.
 USER_AGENT = "LABUSE-sentinelle/1.0 (+exploitation ; contact via data.gouv)"
@@ -57,11 +63,39 @@ class Sonde:
 # ─────────────────────────────── la couche HTTP (injectable) ───────────────────────────────
 # UN SEUL point de sortie réseau — les tests le monkeypatchent, jamais d'appel réel en CI.
 
+#: CIRCUIT-P4 (lot 0) — LE FAISCEAU DE CA EXPLICITE. Sur macOS avec le Python de Homebrew, le
+#: contexte TLS par défaut d'`urllib` ne connaît AUCUNE autorité de certification (le trousseau
+#: système n'est pas branché sur OpenSSL) : les 84 sondes tombaient toutes en
+#: `CERTIFICATE_VERIFY_FAILED` et la page mentait — « producteur injoignable » partout en local.
+#: On fournit un faisceau explicite : `SSL_CERT_FILE` (posé dans `.env` si Vic veut) sinon le
+#: bundle `certifi` (toujours packagé). En prod Linux, le contexte par défaut marche déjà ; ce
+#: faisceau ne fait que le rendre déterministe. Cf. docs/CIRCUIT/VERROUS.md.
+_SSL_CONTEXT: "ssl.SSLContext | None" = None
+
+
+def _ssl_context() -> "ssl.SSLContext":
+    """Contexte TLS avec un faisceau de CA garanti (SSL_CERT_FILE, sinon certifi)."""
+    global _SSL_CONTEXT  # noqa: PLW0603 — cache module, construit une fois
+    if _SSL_CONTEXT is None:
+        cafile = os.environ.get("SSL_CERT_FILE") or None
+        if not cafile:
+            try:
+                import certifi
+                cafile = certifi.where()
+            except Exception:  # noqa: BLE001 — certifi absent : contexte par défaut, DIT au log
+                log.warning("certifi introuvable et SSL_CERT_FILE non posé — TLS sur le trousseau système")
+                cafile = None
+        _SSL_CONTEXT = ssl.create_default_context(cafile=cafile)
+    return _SSL_CONTEXT
+
+
 def _http(url: str, *, methode_http: str = "GET") -> tuple[int, dict, str]:
     """Requête HTTP one-shot, timeout court, User-Agent LABUSE. Retourne (status, en-têtes, corps).
-    Lève sur échec réseau (capté par l'appelant → `injoignable`). Aucun retry ici (doctrine W3.2)."""
+    Lève sur échec réseau (capté par l'appelant → `injoignable`). Aucun retry ici (doctrine W3.2).
+    Le contexte TLS porte un faisceau de CA explicite (lot 0) ; ignoré pour un URL `http://`."""
     req = urllib.request.Request(url, method=methode_http, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(req, timeout=TIMEOUT_S) as resp:  # noqa: S310 — URL du catalogue, jamais client
+    ctx = _ssl_context() if url.lower().startswith("https:") else None
+    with urllib.request.urlopen(req, timeout=TIMEOUT_S, context=ctx) as resp:  # noqa: S310 — URL du catalogue, jamais client
         entetes = {k.lower(): v for k, v in resp.headers.items()}
         corps = "" if methode_http == "HEAD" else resp.read(1_000_000).decode("utf-8", "replace")
         return resp.status, entetes, corps

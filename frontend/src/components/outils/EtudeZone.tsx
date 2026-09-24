@@ -200,10 +200,11 @@ export function EtudeZone() {
 
   return (
     <div data-etude-zone className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
-      {/* O13.1 — en-tête de la porte choisie + « changer » (revient à l'accueil). */}
+      {/* O13.1 / ETUDE-ZONE-1 A1 — retour à l'accueil de l'outil : bouton « ← » à GAUCHE,
+          comme les autres retours de l'app ; le badge de la porte choisie reste à droite. */}
       <div className="flex items-center justify-between">
+        <button data-etude-changer-porte onClick={nouvelleEtude} className="text-[10.5px] text-mint hover:underline">← Changer la zone</button>
         <span data-etude-porte-active={porteZone} className="text-[10px] uppercase tracking-[.08em] text-mint">{porteZone === 'chalandise' ? 'Zone de chalandise' : 'Zone particulière'}</span>
-        <Bouton niveau="lien" data-etude-changer-porte onClick={nouvelleEtude}>changer</Bouton>
       </div>
       {/* ÉTAPE 1 — DÉFINIR LA ZONE */}
       <StepHead n={1} titre="Définir la zone" sous="autour d’un point (temps + mode) ou zone dessinée" />
@@ -239,6 +240,8 @@ export function EtudeZone() {
           <Bouton niveau="secondaire" ton="vert" onClick={() => setTool('zone')} className="w-full">
             Dessiner la zone
           </Bouton>
+          {/* ETUDE-ZONE-1 A1 — rappel de la règle de dessin (une forme se valide par Entrée). */}
+          <div className="text-[10.5px] text-txt-mut">Une fois la zone définie, appuyez sur Entrée.</div>
           <div className="text-[10.5px] text-txt-mut">
             {geomFromDrawn ? `Polygone dessiné (${drawnZone!.length} sommets)` : 'Aucune zone tracée — cliquez « Dessiner la zone », posez les sommets, Entrée pour valider.'}
           </div>

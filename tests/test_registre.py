@@ -123,7 +123,8 @@ def test_modes_cadences_declares(db_session):
     # chronique mise à jour par TESTS-1 lot 2 (le compte était resté figé à SOURCES-1).
     assert len(MODE_ET_CADENCE) == 121
     modes = {m for m, _, _ in MODE_ET_CADENCE.values()}
-    assert modes <= {"job_sur_clic", "cron_mensuel", "depot_manuel", "one_shot", "en_direct", "absente"}
+    assert modes <= {"job_sur_clic", "cron_mensuel", "depot_manuel", "one_shot", "en_direct",
+                     "absente", "sans_millesime"}
     statuts = {s for _, _, s in MODE_ET_CADENCE.values()}
     assert statuts == {"declaree", "proposee", "sans_objet"}
     # sans_objet ↔ jamais de cadence ; les autres en ont toujours une

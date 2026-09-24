@@ -8,8 +8,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import {
   getAdminLicences, getAdminMailApercu, getAdminMails, getOffres, postAdminLicenceCreer,
-  postAdminLicenceCreerEssai, postAdminLicenceConvertir, postAdminLicenceMail, postAdminRetablir,
-  postAdminSuspendre, postAdminDeconnecter, type AdminLicence, type AdminLicences, type MailLigne,
+  postAdminLicenceCreerEssai, postAdminLicenceConvertir, postAdminLicenceProlonger, postAdminLicenceMail,
+  postAdminRetablir, postAdminSuspendre, postAdminDeconnecter,
+  type AdminLicence, type AdminLicences, type MailLigne,
 } from '../../lib/api'
 import { ActBtn } from './AdminView'
 
@@ -316,7 +317,9 @@ function MailList({ lignes, vide }: { lignes: MailLigne[]; vide: string }) {
         <div key={m.id} className="flex items-center gap-3 border-b border-line px-3 py-2 text-[12.5px] last:border-b-0">
           <span className="font-mono text-[11px] text-txt-dim">{fmtReu(m.parti_at ?? m.cree_at, true)}</span>
           <span className="min-w-0 flex-1 truncate text-txt">{m.template_nom ?? m.mail_key}
-            {m.erreur && <span className="ml-2 text-[11px] text-coral">{m.erreur}</span>}</span>
+            {m.erreur && <span className="ml-2 text-[11px] text-coral">{m.erreur}</span>}
+            {/* COMPTE-3 (Lot 2) — l'entrée a été créée avec une URL de base non cliquable (localhost). */}
+            {m.avert && <span className="ml-2 text-[11px] text-coral" title={m.avert}>⚠ liens non cliquables</span>}</span>
           <span className="shrink-0 font-mono text-[10.5px] text-txt-off">{m.demandeur}</span>
           <EtatChip etat={m.etat} />
         </div>
@@ -325,15 +328,74 @@ function MailList({ lignes, vide }: { lignes: MailLigne[]; vide: string }) {
   )
 }
 
+// ── COMPTE-3 (Lot 1) — modale « Prolonger l'essai » : une DATE DE FIN (plus de 48 h figé). Par
+//    défaut = échéance actuelle (bornée à maintenant) + 48 h ; min = maintenant ; max = +30 j. La
+//    date choisie est convertie en `heures` (1–720) pour l'endpoint. ──
+const toLocalInput = (t: number) => {
+  const d = new Date(t), p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
+}
+function ProlongerModal({ l, onClose, onDone }: {
+  l: AdminLicence; onClose: () => void; onDone: (detail: string) => void
+}) {
+  const qc = useQueryClient()
+  const now = Date.now()
+  const socle = Math.max(now, l.essai_expire_at ? new Date(l.essai_expire_at).getTime() : now)
+  const [fin, setFin] = useState(() => toLocalInput(socle + 48 * 3_600_000))
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const minStr = toLocalInput(now), maxStr = toLocalInput(now + 30 * 86_400_000)
+  const cible = new Date(fin).getTime()
+  const heures = Number.isFinite(cible) ? Math.ceil((cible - Date.now()) / 3_600_000) : 0
+  const valide = heures >= 1 && heures <= 720
+  const lancer = async () => {
+    setBusy(true); setErr(null)
+    try {
+      const r = await postAdminLicenceProlonger(l.id, Math.max(1, Math.min(720, heures)))
+      qc.invalidateQueries({ queryKey: ['admin-licences'] })
+      qc.invalidateQueries({ queryKey: ['admin-mails', l.id] })
+      onDone(r.detail)
+    } catch (e) { setErr(e instanceof Error ? e.message : 'Prolongation impossible.') }
+    finally { setBusy(false) }
+  }
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-6" onClick={onClose}>
+      <div className="w-full max-w-[440px] overflow-hidden rounded-xl border border-line bg-surface-2 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-line px-4 py-3">
+          <b className="text-sm text-txt-hi">Prolonger l'essai</b>
+          <button onClick={onClose} className="text-txt-mut hover:text-txt">✕</button>
+        </div>
+        <div className="px-4 py-4 text-[12.5px] text-txt">
+          <div className="mb-3 text-txt-dim">Échéance actuelle : <b className={l.essai_expire_at && new Date(l.essai_expire_at).getTime() <= now ? 'text-coral' : 'text-txt'}>{fmtReu(l.essai_expire_at, true)}</b></div>
+          <label className="mb-1.5 block text-[12px] text-txt-dim">Nouvelle date de fin</label>
+          <input type="datetime-local" value={fin} min={minStr} max={maxStr} onChange={(e) => setFin(e.target.value)}
+            className="w-full rounded-md border border-line-2 bg-bg px-3 py-2.5 text-[13px] text-txt outline-none focus:border-mint [color-scheme:dark]" />
+          <div className="mt-2 text-[11.5px] text-txt-off">
+            {valide ? <>L'essai sera actif encore <b className="text-txt">≈ {heures} h</b> (jusqu'à la date choisie).</>
+              : <span className="text-coral">Choisir une date entre maintenant et +30 jours (1 à 720 h).</span>}
+          </div>
+          {err && <div className="mt-2 text-[12px] text-coral">{err}</div>}
+          <div className="mt-4 flex items-center justify-end gap-3">
+            <button onClick={onClose} className="text-[13px] text-txt-mut hover:text-txt">Annuler</button>
+            <ActBtn onClick={lancer} disabled={!valide || busy}>Prolonger</ActBtn>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── la fiche = VRAIE PAGE à onglets ──
 type Onglet = 'apercu' | 'activite' | 'facturation' | 'ia'
-function FichePage({ l, libelles, stripeConfigure, onBack }: {
-  l: AdminLicence; libelles: Record<string, string>; stripeConfigure: boolean; onBack: () => void
+function FichePage({ l, libelles, stripeConfigure, mailLiens, onBack }: {
+  l: AdminLicence; libelles: Record<string, string>; stripeConfigure: boolean
+  mailLiens?: AdminLicences['mail_liens']; onBack: () => void
 }) {
   const qc = useQueryClient()
   const [onglet, setOnglet] = useState<Onglet>('apercu')
   const [msg, setMsg] = useState<string | null>(null)
   const [apercu, setApercu] = useState<string | null>(null)
+  const [prolonger, setProlonger] = useState(false)
   const [decoMsg, setDecoMsg] = useState<string | null>(null)
   const refresh = () => qc.invalidateQueries({ queryKey: ['admin-licences'] })
   const mail = useMutation({
@@ -362,6 +424,11 @@ function FichePage({ l, libelles, stripeConfigure, onBack }: {
   return (
     <div>
       {apercu && <ApercuOverlay compteId={l.id} mk={apercu} onClose={() => setApercu(null)} />}
+      {prolonger && <ProlongerModal l={l} onClose={() => setProlonger(false)} onDone={(d) => { setProlonger(false); setMsg(d) }} />}
+      {/* COMPTE-3 (Lot 2) — garde sur l'URL de base des liens de mails (bandeau rouge sur la fiche). */}
+      {mailLiens && !mailLiens.ok && (
+        <div className="mb-3 rounded-lg border border-coral/40 bg-coral/10 px-4 py-2.5 text-[12.5px] text-coral">{mailLiens.avert}</div>
+      )}
       {/* DASHBOARD-4 (K5) — fil d'Ariane + gestes EN HAUT À DROITE (tous les gestes partent d'ici). */}
       <div className="mb-2 text-[12.5px] text-txt-dim"><button onClick={onBack} className="hover:text-txt">Comptes</button> › {l.nom}</div>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -378,6 +445,11 @@ function FichePage({ l, libelles, stripeConfigure, onBack }: {
           {/* Renvoyer l'invitation (souscription) — utile tant que le client n'est pas entré. */}
           {!l.kpi.derniere_connexion && (
             <ActBtn tone="ghost" onClick={() => mail.mutate('souscription')} disabled={mail.isPending}>Renvoyer l'invitation</ActBtn>
+          )}
+          {/* COMPTE-3 (Lot 1) — Prolonger l'essai (au-delà de 48 h) : tout compte d'essai, en cours OU
+              expiré (un essai expiré redevient Actif à la prolongation). */}
+          {l.essai_expire_at != null && l.statut !== 'resilie' && (
+            <ActBtn tone="ghost" onClick={() => setProlonger(true)}>Prolonger l'essai</ActBtn>
           )}
           {/* Transformer en client (K4) — pour un essai en cours. */}
           {l.essai_expire_at != null && l.statut === 'actif' && (
@@ -562,7 +634,7 @@ export function LicencesSection() {
   const selectionne = sel != null ? clientes.find((l) => l.id === sel) : undefined
   if (selectionne) {
     return (
-      <FichePage l={selectionne} libelles={libelles} stripeConfigure={d.stripe_configure} onBack={() => setSel(null)} />
+      <FichePage l={selectionne} libelles={libelles} stripeConfigure={d.stripe_configure} mailLiens={d.mail_liens} onBack={() => setSel(null)} />
     )
   }
 
@@ -594,6 +666,14 @@ export function LicencesSection() {
       {!d.brevo.api && (
         <div className="mb-3.5 rounded-lg border border-amber/30 bg-amber/5 px-4 py-2.5 text-xs text-amber">
           Brevo non configuré (LABUSE_BREVO_API_KEY) — les envois et aperçus restent visibles et le diront : aucun envoi silencieux.
+        </div>
+      )}
+
+      {/* COMPTE-3 (Lot 2) — garde sur l'URL de base des liens de mails : bandeau rouge tant que les
+          liens ne sont pas cliquables par un client distant. L'envoi n'est jamais bloqué. */}
+      {d.mail_liens && !d.mail_liens.ok && (
+        <div className="mb-3.5 rounded-lg border border-coral/40 bg-coral/10 px-4 py-2.5 text-xs text-coral">
+          {d.mail_liens.avert}
         </div>
       )}
 
