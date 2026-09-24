@@ -81,6 +81,11 @@ class _Res:
     def one_or_none(self):
         return _Row()
 
+    def scalar(self):
+        # FAISABILITE-clip — `parcel_faisabilite` clippe par défaut : `_greve_certaine_m2` fait
+        # `.scalar()` (aucune greve dans ce stub prospect) ; le test porte sur la hauteur, pas la greve.
+        return 0.0
+
     def __iter__(self):
         return iter([])          # _ECO / _ER_DETAILS → vides
 
