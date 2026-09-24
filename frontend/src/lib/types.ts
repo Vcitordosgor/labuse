@@ -828,7 +828,17 @@ export interface FicheZoneDestinations {
   lignes?: FicheDestinationLigne[]; referentiel?: string
   phrase?: string   // non calibrée / zone non lue — affichée telle quelle
 }
-export interface ReglementPlu extends Indisponible { zones: ReglementZone[]; disclaimer: string }
+// FICHE-FIX-2 P4 — clause de mixité sociale (LLS) de la zone dominante, servie par _reglement_plu_block.
+export interface MixiteRegle {
+  seuil_logements?: number | null
+  quota_pct?: number | null
+  portee?: string | null
+  article?: string | null
+  page_pdf?: number | null
+  citation?: string | null
+  statut?: string | null   // 'valide' → branchée ; 'propose'/absente → non modélisée
+}
+export interface ReglementPlu extends Indisponible { zones: ReglementZone[]; disclaimer: string; mixite?: MixiteRegle | null }
 
 export interface PotentielTransformation extends Indisponible {
   niveau: 'fort' | 'modere' | 'faible' | 'nul' | 'indetermine'

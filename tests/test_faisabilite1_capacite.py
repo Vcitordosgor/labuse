@@ -67,8 +67,10 @@ def test_interdit_ignore_les_non_calibrees(monkeypatch):
 # ─────────────────────── Lot D — hypothèses modifiables + lignes manquantes ───────────────────────
 
 def test_lignes_manquantes_ajoutees():
-    """Lot D — `extras` ajoute deux LIGNES sans changer le calcul : « Espaces inconstructibles
-    déduits » (ER/EBC/greve) et « Mixité sociale (LLS) » (non modélisée)."""
+    """Lot D + FICHE-FIX-2 P4 — `extras` ajoute « Espaces inconstructibles déduits » (ER/EBC/greve)
+    SANS changer le calcul ; l'étape « Logements sociaux imposés (LLS) » est TOUJOURS présente,
+    branchée sur la règle VALIDÉE de la zone (`rules.mixite`), pas sur `extras`. U1c (Saint-Paul)
+    n'en porte pas → « non modélisée pour cette zone » (jamais un 0 muet, jamais « non renseigné »)."""
     from labuse.faisabilite.engine import estimate_capacity
     from labuse.faisabilite.zonage import resolve_zone
     base = estimate_capacity(resolve_zone("U1c"), 2000, emprise_geo=(1200.0, 3.0))
@@ -76,11 +78,24 @@ def test_lignes_manquantes_ajoutees():
                              extras={"total_deduit_m2": 120, "er_m2": 120, "mixite": True})
     labels = [s.label for s in avec.steps]
     assert "Espaces inconstructibles déduits" in labels
-    assert "Mixité sociale (LLS)" in labels
+    assert "Logements sociaux imposés (LLS)" in labels
     # la fourchette (le calcul) est INCHANGÉE — les lignes sont informatives
     assert avec.fourchette["logements_au_sol"] == base.fourchette["logements_au_sol"]
-    mix = next(s for s in avec.steps if s.label == "Mixité sociale (LLS)")
-    assert mix.valeur == "non modélisée"
+    mix = next(s for s in avec.steps if s.label == "Logements sociaux imposés (LLS)")
+    assert mix.valeur == "non modélisée pour cette zone"
+
+
+def test_mixite_lls_branchee_regle_validee():
+    """FICHE-FIX-2 P4 — quand la zone porte une clause de mixité VALIDÉE (Uh Saint-Denis : 15 % dès
+    30 logts, Art. Uh.2), l'étape LLS est SOURCÉE et cite l'article ; sinon « non modélisée »."""
+    from labuse.faisabilite.engine import estimate_capacity
+    from labuse.faisabilite.zonage import resolve_zone
+    zr = resolve_zone("Uh", "Saint-Denis")
+    assert zr and zr.mixite and zr.mixite.get("statut") == "valide"
+    assert zr.mixite.get("quota_pct") == 15 and zr.mixite.get("seuil_logements") == 30
+    fa = estimate_capacity(zr, 8000, emprise_geo=(5000.0, 3.0))
+    mix = next(s for s in fa.steps if s.label == "Logements sociaux imposés (LLS)")
+    assert mix.prov == "sourcee" and "Uh.2" in mix.source
 
 
 def test_overrides_hypotheses_bornes_et_pct():

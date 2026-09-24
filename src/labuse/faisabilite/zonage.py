@@ -60,6 +60,10 @@ class ZoneRules:
     recul_limites_alignement: bool = False    #  (idem « en limite séparative ») — 0 EXPLICITE, ≠ absent
     pleine_terre_compose: dict | None = None  # PLU-CALIBRAGE-7 forme 2 : {espaces_verts_pct, part_pct}
     #  pleine_terre_pct = espaces_verts_pct × part_pct / 100 (calculé, JAMAIS stocké — les 2 chiffres sourcés)
+    # FICHE-FIX-2 P4 — clause de mixité sociale de la zone (LLS), lue des `regles` calibrées :
+    #  {seuil_logements, quota_pct, portee, article, page_pdf, citation, statut}. None si la zone n'en
+    #  porte pas. `statut` = 'valide' → branchée (11e étape sourcée) ; 'propose'/None → non modélisée.
+    mixite: dict | None = None
     notes: list[str] = field(default_factory=list)
     sources: dict[str, str] = field(default_factory=dict)
     raw: dict = field(default_factory=dict)
@@ -240,13 +244,24 @@ def _stat_from_regles(reg: dict):
     return A_VERIFIER if leaf.get("statut") == "propose" else None
 
 
+def _mixite_leaf(reg: dict) -> dict | None:
+    """FICHE-FIX-2 P4 — clause de mixité sociale (LLS) de la zone, lue TELLE QUELLE des regles
+    calibrées (seuil de logements, quota %, article/page/citation, statut). None si absente."""
+    m = reg.get("mixite") if isinstance(reg, dict) else None
+    if not isinstance(m, dict):
+        return None
+    return {"seuil_logements": m.get("seuil_logements"), "quota_pct": m.get("quota_pct"),
+            "portee": m.get("portee"), "article": m.get("article"), "page_pdf": m.get("page_pdf"),
+            "citation": m.get("citation"), "statut": m.get("statut")}
+
+
 def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> ZoneRules:
     """ZoneRules d'une zone CALIBRÉE : valeurs des regles + métadonnée de zone (plu_zonage)."""
     from ..plu import destinations as D
     reg = D.regles_zone(_insee(commune) or "", code)
     zm = (zmeta.get("zones") or {}).get(code, {})
     return ZoneRules(
-        code=code, bassin=zm.get("bassin"),
+        code=code, bassin=zm.get("bassin"), mixite=_mixite_leaf(reg),
         he_m=_val(reg, "hauteur", "egout", "m"),
         hf_m=_val(reg, "hauteur", "faitage", "m"),
         emprise_sol_pct=_val(reg, "emprise_sol", "ces", "pct"),

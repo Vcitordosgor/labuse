@@ -5225,6 +5225,12 @@ def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
             from ..plu.destinations import zone_resume
             for ref in block["zones"]:
                 ref["destinations"] = zone_resume(commune, ref.get("zone"))
+            # FICHE-FIX-2 P4 — clause de mixité sociale (LLS) de la zone DOMINANTE (part max, servie en
+            # tête de `zones`), lue de resolve_zone (regles calibrées). Le tiroir Urbanisme la rend :
+            # validée → seuil/quota/citation sourcés ; propose/absente → « non modélisée pour cette zone ».
+            from ..faisabilite.zonage import resolve_zone as _resolve_zone_mixite
+            _zr = _resolve_zone_mixite(block["zones"][0].get("zone"), commune) if block["zones"] else None
+            block["mixite"] = (_zr.mixite if _zr else None)
         return block
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
         return _bloc_indisponible("reglement_plu")   # M125 — panne ≠ absence (même classe que les 7)

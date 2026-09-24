@@ -1557,14 +1557,39 @@ export function Fiche({ idu }: { idu: string }) {
                 <RtaaFromBilan idu={idu} />
                 {/* Dispositifs et périmètres (§4) — ER / EBC / doc urba / DPU / PEB / SUP (SOURCES-1 lot 1). */}
                 {f.dispositifs && <DispositifsBody d={f.dispositifs} />}
-                {/* FICHE-RANGEMENT-2 Lot 1 — mixité sociale (SMS) : quota + seuil NON RENSEIGNÉS (non
-                    extraits du règlement de zone GPU à ce jour ; cf. FICHE-RANGEMENT-1 lot 2, data absente). */}
-                <div data-mixite>
-                  <GroupLabel>Mixité sociale (LLS)</GroupLabel>
-                  <FactRow label="Quota de logements sociaux" tone="mute" value="non renseigné" />
-                  <FactRow label="Seuil de déclenchement" tone="mute" value="non renseigné" />
-                  <FactNote>Servitude de mixité sociale — non extraite du règlement de zone GPU à ce jour (en attente).</FactNote>
-                </div>
+                {/* FICHE-FIX-2 P4 — mixité sociale (LLS) branchée sur la règle VALIDÉE de la zone
+                    (reglement_plu.mixite, lue des regles calibrées). Validée → seuil + quota + citation
+                    sourcés ; propose/absente → « non modélisée pour cette zone » (jamais « non
+                    renseigné », jamais un 0 muet). La 11e étape de la capacité porte le nombre résultant. */}
+                {(() => {
+                  const mx = f.reglement_plu?.mixite
+                  const valide = mx?.statut === 'valide' && mx?.quota_pct != null
+                  return (
+                    <div data-mixite>
+                      <GroupLabel right={valide ? <Badge ton="vert">Sourcé</Badge> : <Badge ton="neutre">non modélisée</Badge>}>Mixité sociale (LLS)</GroupLabel>
+                      {valide ? (
+                        <>
+                          <FactRow label="Quota de logements sociaux" value={<>{mx!.quota_pct} <small>%</small></>} />
+                          <FactRow label="Seuil de déclenchement"
+                            value={mx!.seuil_logements != null ? <>{mx!.seuil_logements} <small>logements</small></> : '—'} />
+                          <FactNote>
+                            {mx!.article ? `${mx!.article}${mx!.page_pdf ? ` (p. ${mx!.page_pdf})` : ''} — ` : ''}
+                            {mx!.citation ? `« ${mx!.citation} »` : 'clause de mixité sociale validée au règlement de zone.'}
+                          </FactNote>
+                        </>
+                      ) : (
+                        <>
+                          <FactRow label="Clause de mixité sociale" tone="mute" value="non modélisée pour cette zone" />
+                          <FactNote>
+                            {mx?.statut === 'propose'
+                              ? 'Clause détectée au règlement mais non validée (feuille « propose ») — non modélisée pour cette zone.'
+                              : 'Aucune clause de mixité sociale validée pour cette zone dans le règlement calibré.'}
+                          </FactNote>
+                        </>
+                      )}
+                    </div>
+                  )
+                })()}
                 {/* FICHE-SANS-OBJET-1 — §4 a désormais SON propre repli « N sans objet », calqué EXACT
                     sur §5 Risques (même libellé, même style, replié par défaut). Les lignes PASS de
                     l'onglet `regles` (« Hors forêt publique », « Hors zone humide », « Hors parc
