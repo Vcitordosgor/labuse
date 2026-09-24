@@ -11,15 +11,13 @@ import { EmptyState, ErrorState } from '../States'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { Bouton } from '../ui/Bouton'
+import { DeplacerMenu } from './DeplacerMenu'   // DA-FIX-5c — menu « Déplacer vers… » partagé avec la fiche
 
 /* accents de colonnes = tokens (txt-dim / st-creuser / mint / st-ecartee) en valeur
    hex car servis via style= (pas de classe dynamique). */
 const TONE_ACCENT: Record<string, string> = {
   cold: '#5C7268', warm: '#E8B44C', hot: '#5CE6A1', reject: '#E8695A',
 }
-
-// DA-FIX-5 P7 — sentinelle du menu « Déplacer vers… » : entrée « Retirer du CRM » (ton danger).
-const RETIRER = '__retirer__'
 
 // DA-FIX-5 P7 — note libre par carte : zone repliée « + Note ». Enregistrée sur la parcelle suivie
 // (colonne `pipeline_entries.notes`, déjà existante — PATCH `{notes}`). DA-FIX-5b : la note ne
@@ -167,23 +165,10 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
           </span>
         </div>
       )}
-      {/* DA-FIX-5 P7 — « Déplacer vers… » : les COLONNES du kanban (même source que les colonnes,
-          dans leur ordre) — l'alternative au glisser-déposer. Dernière entrée « Retirer du CRM »
-          (ton danger). Remplace le sélecteur « — retour terrain ? » (doublon des colonnes). */}
+      {/* DA-FIX-5 P7 / 5c — « Déplacer vers… » : le composant PARTAGÉ (mêmes colonnes, même rendu que
+          le bloc CRM de la fiche) — l'alternative au glisser-déposer. Dernière entrée « Retirer du CRM ». */}
       <div className="mt-1.5">
-        <select
-          data-crm-move
-          value=""
-          onChange={(ev) => { const v = ev.target.value; if (v === RETIRER) onArchive(); else if (v) onMove(v) }}
-          aria-label="Déplacer la carte vers une autre colonne"
-          className="w-full cursor-pointer rounded-md border border-line-2 bg-surface-2 px-1.5 py-1 text-[10.5px] text-txt-dim focus:outline-none focus:ring-1 focus:ring-mint/50"
-        >
-          <option value="">Déplacer vers…</option>
-          {columns.map((c) => (
-            <option key={c.key} value={c.key} disabled={c.key === e.status}>{c.label}</option>
-          ))}
-          <option value={RETIRER} style={{ color: '#E8695A' }}>Retirer du CRM</option>
-        </select>
+        <DeplacerMenu columns={columns} currentStatus={e.status} onMove={onMove} onRetirer={onArchive} />
       </div>
       {/* DA-FIX-5 P7 — note libre par carte (repliée), enregistrée sur la parcelle suivie. */}
       <CardNote e={e} onNote={onNote} />

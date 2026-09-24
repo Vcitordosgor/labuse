@@ -47,10 +47,10 @@ describe('DA-FIX-5 P7 — menu « Déplacer vers… » = les colonnes du kanban'
   })
 
   it('AJOUTER une colonne l’ajoute au menu (le menu suit meta.columns)', async () => {
-    mockFetch([{ key: 'cold', label: 'À contacter' }, { key: 'warm', label: 'En discussion' }, { key: 'hot', label: 'Chaud' }, { key: 'terrain', label: 'Retour terrain' }])
+    mockFetch([{ key: 'cold', label: 'À contacter' }, { key: 'warm', label: 'En discussion' }, { key: 'hot', label: 'Chaud' }, { key: 'nego', label: 'En négociation' }])
     const { container } = renderKanban()
     await waitFor(() => expect(container.querySelector('[data-crm-move]')).not.toBeNull())
     const labels = options(container).map((o) => o.label)
-    expect(labels).toContain('Retour terrain')                         // la 4e colonne apparaît
+    expect(labels).toContain('En négociation')                         // la 4e colonne apparaît
   })
 })
