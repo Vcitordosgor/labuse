@@ -109,7 +109,7 @@ function IaRestitution() {
           <span data-ia-count className="font-display text-xl font-bold text-mint">{count.toLocaleString('fr-FR')}</span>{' '}
           {iaRestitution.phrase}
         </p>
-        <button onClick={() => setIaRestitution(null)} className="ml-2 text-txt-dim hover:text-txt" title="Fermer le résultat">✕</button>
+        <button onClick={() => setIaRestitution(null)} className="ml-2 text-txt-dim hover:text-txt" aria-label="Fermer le résultat">✕</button>
       </div>
       {/* Item 2 (UX V1) : la traduction EXACTE du serveur, DANS la restitution. En mode
           mots-clés (stub), le badge + la phrase disent ce qui n'a PAS été traduit — un repli
@@ -216,24 +216,24 @@ function IaRestitution() {
                 {reprisExistant ? '✓ Projet identique repris' : '✓ Projet enregistré'}
               </span>
               <button data-projet-ouvrir-kanban onClick={() => { setOpenProjet({ id: projetId, nom: projet.nom }); setIaRestitution(null) }}
-                className="rounded-lg border border-mint/40 bg-mint/10 px-3 py-1.5 text-[11px] font-medium text-mint hover:bg-mint/20"
-                title="Ouvrir le projet (kanban : à trier / retenues / écartées)">
+                className="rounded-lg border border-mint/40 bg-mint/10 px-3 py-1.5 text-[11px] font-medium text-mint hover:bg-mint/20">
                 Ouvrir le projet →
               </button>
               {/* PROJETS-CRM-FIX-1 (lot 2) — bouton « PDF » retiré (2ᵉ instance, strip post-création) :
                   /projets/{id}/export.pdf est retiré (410). Plus de lien mort. */}
               <button onClick={() => { setOpenProjet(null); setIaRestitution(null) }}
-                className="ml-auto text-[11px] text-txt-mut hover:text-txt-hi" title="Voir mes projets">
+                className="ml-auto text-[11px] text-txt-mut hover:text-txt-hi">
                 Mes projets →
               </button>
             </>
           )}
         </div>
       )}
+      {/* DA-FIX-4 Lot 5 (DA-040) — « Affiner dans M22 » ouvre le FORMULAIRE déterministe M22 (aucun
+          modèle d'IA appelé) → Bouton secondaire VERT, pas mauve. title= natif retiré (DA-041). */}
       {projet?.programme && (
-        <Bouton niveau="secondaire" ton="ia" data-projet-m22 className="mt-2 w-full"
-          onClick={() => { setView('cartes'); setM22Prefill(projet.programme as Record<string, unknown>); setModule('programme') }}
-          title="Ouvrir le formulaire M22 pré-rempli — la vérité reste le formulaire (éditable)">
+        <Bouton niveau="secondaire" ton="vert" data-projet-m22 className="mt-2 w-full"
+          onClick={() => { setView('cartes'); setM22Prefill(projet.programme as Record<string, unknown>); setModule('programme') }}>
           Affiner la capacité dans M22 (formulaire pré-rempli)
         </Bouton>
       )}
