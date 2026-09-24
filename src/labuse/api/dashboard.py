@@ -2990,6 +2990,14 @@ def admin_circuit_reservoir(request: Request, sid: int) -> dict:
                 " AND cible = :nom ORDER BY id DESC LIMIT 1"), {"nom": r["nom"]}).mappings().first()
         except Exception:  # noqa: BLE001
             rap = None
+        # CIRCUIT-P7 (lot 2) — l'HISTORIQUE de la source : le journal filtré sur son nom (cible),
+        # les 8 derniers passages (sonde / agent / vanne …), lus tels quels.
+        try:
+            hist = c.execute(text(
+                "SELECT ts, geste, resultat, details, par FROM circuit_journal WHERE cible = :nom"
+                " ORDER BY id DESC LIMIT 8"), {"nom": r["nom"]}).mappings().all()
+        except Exception:  # noqa: BLE001 — pas de journal : historique vide (jamais un crash)
+            hist = []
     slug = _etats.slug_reservoir(r["nom"])
     r["slug"] = slug
     cids = sorted(set(r2c.get(slug or "", [])))
@@ -3004,9 +3012,25 @@ def admin_circuit_reservoir(request: Request, sid: int) -> dict:
                              "categorie_nom": _etats.categorie_affichage(rb.categorie)})
     chiffres = [{"id": cid, "libelle": (CHIFFRES[cid].libelle if cid in CHIFFRES else cid),
                  "robinets": len(c2r.get(cid, []))} for cid in cids]
+    # CIRCUIT-P7 (lot 2) — « si cette version entre » : les recalculs LUS DU REGISTRE (quels moteurs
+    # cette source nourrit), jamais devinés. Résiduel puis scoring ; « pas de recalcul » est dit aussi.
+    from .. import circuit_dependance as _dep
+    _n = _dep.nourrit(slug)
+    recalculs = [
+        {"quoi": "Recalcul du résiduel" if _n["residuel"] else "Pas de recalcul du résiduel",
+         "pourquoi": ("la variable de la cascade change" if _n["residuel"]
+                      else "le résiduel ne lit pas cette source"), "actif": _n["residuel"]},
+        {"quoi": "Recalcul du scoring" if _n["scoring"] else "Pas de recalcul du scoring",
+         "pourquoi": ("le score lit cette source" if _n["scoring"]
+                      else "le score ne lit pas cette source"), "actif": _n["scoring"]},
+    ]
+    historique = [{"ts": h["ts"].isoformat() if hasattr(h["ts"], "isoformat") else h["ts"],
+                   "geste": h["geste"], "resultat": h["resultat"],
+                   "message": (h["details"] or {}).get("message"),
+                   "par": h.get("par")} for h in hist]
     return {"reservoir": r,
             "alimente": {"robinets": robinets, "n_chiffres": len(cids), "n_robinets": len(taps)},
-            "chiffres": chiffres,
+            "chiffres": chiffres, "recalculs": recalculs, "historique": historique,
             "rapport_agent": ({"ts": rap["ts"].isoformat() if hasattr(rap["ts"], "isoformat")
                                else rap["ts"], "resultat": rap["resultat"],
                                "details": rap["details"]} if rap else None)}

@@ -221,6 +221,22 @@ exports[`CIRCUIT-P2 lot 1 — la page Données EST le Circuit > snapshot 1`] = `
 .cxp .cx-verif{margin-bottom:16px}
 .cxp .cx-verif-res{margin-top:10px;font-size:13px;line-height:1.6} .cxp .cx-verif-res b{color:var(--text);font-weight:600} .cxp .cx-verif-res b.r{color:var(--rouge)}
 .cxp .cx-verif-res .lienc{color:var(--mint);text-decoration:underline;text-underline-offset:2px}
+/* ══ CIRCUIT-P7 (lot 2) — tableau Sources à colonnes fixes (nom jamais tronqué, deux lignes) ══ */
+.cxp .svt{margin-top:16px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}
+.cxp .svt-h,.cxp .svt-r{display:grid;grid-template-columns:minmax(0,1fr) 168px 168px 164px 148px 116px;gap:14px;align-items:center;padding:10px 16px}
+.cxp .svt-h{height:36px;padding-top:0;padding-bottom:0;color:var(--faint);font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.cxp .svt-r{min-height:56px;border-bottom:1px solid var(--line);cursor:pointer}
+.cxp .svt-r:last-of-type{border-bottom:0} .cxp .svt-r:hover{background:var(--panel-2)}
+.cxp .svt-nm{display:flex;gap:10px;align-items:flex-start;min-width:0}
+.cxp .svt-nm .dot{width:9px;height:9px;border-radius:50%;flex:none;margin-top:5px;background:var(--gris)}
+.cxp .svt-nm .dot.mint{background:var(--mint)} .cxp .svt-nm .dot.ambre{background:var(--ambre)} .cxp .svt-nm .dot.rouge{background:var(--rouge)} .cxp .svt-nm .dot.gris{background:var(--gris)}
+.cxp .svt-nm .nm{font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.cxp .svt-nm .fam{color:var(--faint);font-size:11.5px;margin-top:2px;overflow-wrap:anywhere}
+.cxp .svt-nm .clock{color:var(--faint)}
+.cxp .svt-r .cel{display:flex;flex-direction:column;font-size:12.5px;min-width:0;overflow-wrap:anywhere}
+.cxp .svt-r .cel small{color:var(--faint);font-size:11.5px} .cxp .svt-r .cel.vide{color:var(--faint)}
+.cxp .svt-r .act{text-align:right} .cxp .svt-r .act .btn{padding:5px 10px;font-size:12px}
+.cxp .svt-foot{padding:12px 16px;color:var(--faint);font-size:12px;border-top:1px solid var(--line)}
 @media (max-width:1100px){ .cxp .diagram{grid-template-columns:1fr;column-gap:0} .cxp .diagram svg{display:none} .cxp .pump{position:static;margin:12px 0} .cxp .dg{grid-template-columns:1fr} .cxp .kpis{grid-template-columns:1fr 1fr} .cxp .jl{grid-template-columns:1fr 1fr} .cxp .controles{grid-template-columns:1fr} }
 
   </style>

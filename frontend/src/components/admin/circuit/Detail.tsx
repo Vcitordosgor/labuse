@@ -12,7 +12,8 @@ import {
   getAdminCircuitCompteur, getAdminCircuitNoteVersion, getAdminCircuitPompe,
   getAdminCircuitReservoir, getAdminCircuitRobinet, getSourcesCalibrages, getSourcesCouches, getSourcesRattachements,
   postAdminCircuitAgents, postAdminCircuitFiltreRevenir, postAdminCircuitFiltreServir,
-  postAdminCircuitRevenir, postAdminFluxBascule, postAdminFluxLancerRun, postAdminSourceVeilleInjecter,
+  postAdminCircuitRevenir, postAdminFluxBascule, postAdminFluxLancerRun, postAdminSourceVeilleActive,
+  postAdminSourceVeilleInjecter,
   type SourceRattLigne,
 } from '../../../lib/api'
 import { useApp } from '../../../store/useApp'
@@ -28,13 +29,15 @@ const versCouche = (kind: string) => {
 }
 
 type Ouvrir = (type: 'reservoir' | 'robinet' | 'pompe' | 'compteur' | 'destinations', id: number | string) => void
-type Props = { type: 'reservoir' | 'robinet' | 'pompe' | 'compteur'; id: number | string; data: CircuitData; onClose: () => void; onOpen: Ouvrir }
+// CIRCUIT-P7 (lot 2) — `retour` : le libellé du bouton de retour (« ← Sources » depuis la fiche source,
+// « ← Retour au circuit » depuis le dessin). Le geste reste le même (onClose + Échap).
+type Props = { type: 'reservoir' | 'robinet' | 'pompe' | 'compteur'; id: number | string; data: CircuitData; onClose: () => void; onOpen: Ouvrir; retour?: string }
 
 const dateFr = (s: string | null | undefined) =>
   s ? new Date(s).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''
 const cl = (c: Couleur) => (c === 'mint' ? 'mint' : c)
 
-export function Detail({ type, id, data, onClose, onOpen }: Props) {
+export function Detail({ type, id, data, onClose, onOpen, retour }: Props) {
   const qc = useQueryClient()
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -47,7 +50,7 @@ export function Detail({ type, id, data, onClose, onOpen }: Props) {
     qc.invalidateQueries({ queryKey: ['circuit-detail'] })
   }
 
-  const back = <button className="back" onClick={onClose}>← Retour au circuit</button>
+  const back = <button className="back" onClick={onClose}>{retour || '← Retour au circuit'}</button>
 
   if (type === 'reservoir') return <DetailReservoir id={Number(id)} data={data} back={back} onOpen={onOpen} rafraichir={rafraichir} />
   if (type === 'robinet') return <DetailRobinet id={String(id)} data={data} back={back} onOpen={onOpen} rafraichir={rafraichir} />
@@ -143,9 +146,11 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
   const injecter = useMutation({ mutationFn: () => postAdminSourceVeilleInjecter(id), onSuccess: rafraichir })
   const servir = useMutation({ mutationFn: (src: string) => postAdminCircuitFiltreServir(src, 'geste page Circuit'), onSuccess: rafraichir })
   const filtreRevenir = useMutation({ mutationFn: (src: string) => postAdminCircuitFiltreRevenir(src), onSuccess: rafraichir })
+  // CIRCUIT-P7 (lot 2) — « Suspendre la veille » (ou la reprendre) : bascule source_veille.actif.
+  const veille = useMutation({ mutationFn: (actif: boolean) => postAdminSourceVeilleActive(id, actif), onSuccess: rafraichir })
 
   if (q.isLoading || !q.data) return <div className="detail on">{back}<div className="muted">Chargement…</div></div>
-  const { reservoir: r, alimente, chiffres, rapport_agent } = q.data
+  const { reservoir: r, alimente, chiffres, rapport_agent, recalculs, historique } = q.data
   const [c, l] = r.etat as [Couleur, string]
   const f = r.filtre || {}
   const cadence = r.cadence_jours ? `cadence ${r.cadence_jours} j${r.cadence_statut ? ` (${r.cadence_statut})` : ''}` : 'aucune cadence déclarée'
@@ -185,9 +190,22 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
                 {f.live && <button className="btn" disabled={filtreRevenir.isPending}
                   onClick={() => { if (confirm(`Revenir à la version précédente de « ${f.source} » ?`)) filtreRevenir.mutate(f.source) }}>Revenir à la précédente</button>}
               </>}
+              {/* CIRCUIT-P7 (lot 2) — Suspendre / reprendre la veille (source_veille.actif). */}
+              {r.veille && <button className="btn" disabled={veille.isPending}
+                onClick={() => veille.mutate(!(r.veille?.actif !== false))}>
+                {r.veille.actif === false ? 'Reprendre la veille' : 'Suspendre la veille'}</button>}
             </div>
             {msgAgent && <div className="muted" style={{ marginTop: 8 }}>{msgAgent}</div>}
           </div>
+          {/* CIRCUIT-P7 (lot 2) — « Si cette version entre » : les recalculs lus du registre. */}
+          {recalculs && recalculs.length > 0 && (
+            <div className="card"><h3>Si cette version entre</h3>
+              <ul className="list">{recalculs.map((x: any, i: number) => (
+                <li key={i}><span style={x.actif ? undefined : { color: 'var(--muted)' }}>{x.quoi}</span>
+                  <span className="muted">{x.pourquoi}</span></li>
+              ))}</ul>
+            </div>
+          )}
           <div className="card"><h3>Filtre à l'entrée</h3>
             {!f.source || f.verdict === 'non_filtre' ? <div className="muted">Pas encore de filtre pour ce réservoir.</div> : <>
               <div style={{ marginBottom: 8, fontWeight: 600, color: f.verdict === 'quarantaine' ? 'var(--rouge)' : f.verdict === 'avertissements' ? 'var(--ambre)' : 'var(--mint)' }}>
@@ -274,11 +292,40 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
               <Bloc titre="Radar" lignes={rat?.radar ?? []} vide="aucune veille Radar" />
             </>)
           })()}
+          {/* CIRCUIT-P7 (lot 2) — « Comment elle entre » : veille · injection · cadence. */}
+          <div className="card"><h3>Comment elle entre</h3>
+            <ul className="list">
+              <li><span>Veille</span><span className="muted">{
+                r.veille ? (estSondeMethode(r.veille.methode)
+                  ? `sonde ${r.veille.methode}, chaque nuit${r.veille.actif === false ? ' (suspendue)' : ''}`
+                  : r.veille.methode === 'agent' ? 'agent, chaque dimanche'
+                    : r.veille.methode)
+                  : r.mode === 'depot_manuel' ? 'dépôt manuel, aucune sonde'
+                    : r.mode === 'en_direct' ? 'flux continu, interrogée en direct'
+                      : 'aucune veille amont'}</span></li>
+              <li><span>Injection</span><span className="muted">{
+                r.vanne?.type === 'injecter' ? 'sur ton clic, jamais seule'
+                  : r.vanne?.type === 'depot' ? 'dépôt manuel d\'un fichier'
+                    : r.vanne?.motif || 'aucun job d\'ingestion'}</span></li>
+              <li><span>Cadence attendue</span><span className="muted">{
+                r.cadence_jours ? `${r.cadence_jours} jours` : 'non déclarée'}</span></li>
+            </ul>
+          </div>
+          {/* CIRCUIT-P7 (lot 2) — l'HISTORIQUE : le journal filtré sur cette source. */}
+          <div className="card"><h3>Historique</h3>
+            {historique && historique.length ? <ul className="list">{historique.map((h: any, i: number) => (
+              <li key={i}><span>{dateFr(h.ts)} — {h.geste} : {h.resultat}</span>
+                {h.message ? <span className="muted">{h.message}</span> : <span />}</li>
+            ))}</ul> : <div className="muted">aucun passage journalisé pour cette source.</div>}
+          </div>
         </div>
       </div>
     </div>
   )
 }
+
+// CIRCUIT-P7 (lot 2) — une méthode de veille = une vraie SONDE amont (nuit) vs agent / manuel.
+const estSondeMethode = (m?: string) => ['api', 'page', 'entete', 'temoin'].includes(m || '')
 
 // ── ROBINET ──────────────────────────────────────────────────────────────────────────────────
 function DetailRobinet({ id, data, back, onOpen }:

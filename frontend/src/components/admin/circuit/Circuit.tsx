@@ -39,6 +39,7 @@ export function CircuitSection() {
   const q = useQuery({ queryKey: ['admin-circuit'], queryFn: getAdminCircuit, refetchInterval: 60_000 })
   const [onglet, setOnglet] = useState<Onglet>('todo')
   const [detail, setDetail] = useState<Detail>(null)
+  const [srcDetail, setSrcDetail] = useState<number | null>(null)   // CIRCUIT-P7 (lot 2) — la fiche source (page Sources)
   const [groupe, setGroupe] = useState<(number | string)[] | null>(null)
   const [nJour, setNJour] = useState<number | null>(null)
   const [msgLocal, setMsgLocal] = useState<string | null>(null)   // crédit absent / rien à envoyer / rien à sonder
@@ -113,10 +114,13 @@ export function CircuitSection() {
     setOnglet('circuit')
   }
   const ouvrirDetail = (type: DetailType, id: number | string) => {
-    setDetail({ type, id }); setGroupe(null); setOnglet('circuit')
+    setDetail({ type, id }); setGroupe(null); setSrcDetail(null); setOnglet('circuit')
   }
   const fermerDetail = () => setDetail(null)
-  const ouvrirSource = (id: number) => { setOnglet('sources'); setDetail({ type: 'reservoir', id }); setGroupe(null) }
+  // CIRCUIT-P7 (lot 2) — clic sur une ligne de Sources : la FICHE de la source, une vraie page qui
+  // reste dans l'onglet Sources (retour « ← Sources », Échap). Un clic vers un robinet depuis la
+  // fiche bascule sur Circuit (ouvrirDetail, qui referme la fiche source).
+  const ouvrirSource = (sid: number) => { setSrcDetail(sid); setOnglet('sources') }
 
   // CIRCUIT-P4 (lot 2) — un geste de l'onglet « À faire » ROUTE vers l'endroit où il se fait.
   const gesteAFaire = (l: AFaireLigne) => {
@@ -176,10 +180,13 @@ export function CircuitSection() {
       </section>
 
       <section className={`tab ${onglet === 'sources' ? 'on' : ''}`}>
-        {/* CIRCUIT-P7 (lot 1) — les deux cartes (Sonde de nuit + Agents) vivent en tête de Sources. */}
-        <Sources data={d} onOpen={ouvrirSource}
-          tacheSonde={tso} tacheAgents={ta}
-          onSonder={() => sonder.mutate()} onAgents={(portee) => agents.mutate({ portee })} />
+        {/* CIRCUIT-P7 (lot 2) — une ligne de Sources ouvre la FICHE de la source (page, ← Sources). */}
+        {srcDetail != null
+          ? <DetailPage type="reservoir" id={srcDetail} data={d}
+              onClose={() => setSrcDetail(null)} onOpen={ouvrirDetail} retour="← Sources" />
+          : <Sources data={d} onOpen={ouvrirSource}
+              tacheSonde={tso} tacheAgents={ta}
+              onSonder={() => sonder.mutate()} onAgents={(portee) => agents.mutate({ portee })} />}
       </section>
 
       <section className={`tab ${onglet === 'circuit' ? 'on' : ''}`}>
