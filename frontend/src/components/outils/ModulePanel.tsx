@@ -1851,7 +1851,7 @@ export function ModulePanel() {
   if (!def) return null
   const Body = COMPONENTS[def.key]
   return (
-    <aside className="flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
+    <aside className="apparition flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
       <div className="flex shrink-0 flex-col border-b border-mint/20 bg-mint/[0.07] px-4 py-3">
         {/* M6.1 item 3 : retour direct au menu Outils (fil d'Ariane) — plus besoin de
             repasser par le rail pour changer d'outil. */}

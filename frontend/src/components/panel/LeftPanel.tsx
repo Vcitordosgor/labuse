@@ -483,7 +483,7 @@ export function LeftPanel() {
       {mobileOpen && (
         <div data-couches-drawer className="absolute inset-0 z-40 flex sm:hidden">
           <div className="absolute inset-0 bg-black/55" onClick={() => setMobileOpen(false)} />
-          <aside className="relative flex h-full w-[300px] max-w-[86%] flex-col border-r border-line bg-surface-1 shadow-elev-3">
+          <aside className="apparition relative flex h-full w-[300px] max-w-[86%] flex-col border-r border-line bg-surface-1 shadow-elev-3">
             <div className="flex shrink-0 items-center justify-between px-5 pt-4">
               <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
               <CroixEntete dataAttr="data-couches-fermer" onClick={() => setMobileOpen(false)} title="Revenir à la carte" />

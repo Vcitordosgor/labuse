@@ -645,7 +645,7 @@ export function Fiche({ idu }: { idu: string }) {
   // ni les paddings (calés en M56-B3 : panneau 14, .gr 10 vertical, .gr partagée).
   return (
     <FicheAccordionCtx.Provider value={accValueF}>
-    <aside className="fiche-v6 absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line shadow-2xl">
+    <aside className="fiche-v6 apparition absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line shadow-2xl">
       {/* C1 : le bandeau « écartée » séparé est retiré — le motif s'affiche à côté du badge
           (en-tête, plus bas) et « voir pourquoi » ouvre l'onglet « Pourquoi pas ». Les motifs
           sourcés y restent intégralement (R1 : rien n'est supprimé). */}

@@ -324,6 +324,13 @@
   .gr.is-interactive:hover, a.gr:hover, button.gr:hover { background:var(--bg-3); }
 }
 
+/* DA-FIX-4 Lot 1 (DA-032) — L'UNIQUE animation d'apparition : fondu + 4 px de montée, 150 ms, ease-out.
+   Posée sur l'ouverture des panneaux, tiroirs, cartes de fiche et menus flottants (`.apparition` +
+   `.floating`). Aucune autre animation d'entrée (ni slide, ni zoom, ni scale), aucune animation au scroll.
+   Coupée par prefers-reduced-motion (bloc ci-dessous). */
+@keyframes apparition { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.apparition, .floating { animation: apparition 150ms ease-out both; }
+
 /* transitions coupées si l'OS le demande (DA §1 reduced-motion) */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
@@ -519,7 +526,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-val,
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .chev { color:var(--ink) !important; }
 }
-.fiche-v6 .t-open { background:var(--f-card); border:0.5px solid var(--f-linecard); border-top:none; border-bottom-left-radius:12px; border-bottom-right-radius:12px; margin-bottom:9px; padding:2px 13px 13px; }
+.fiche-v6 .t-open { background:var(--f-card); border:0.5px solid var(--f-linecard); border-top:none; border-bottom-left-radius:12px; border-bottom-right-radius:12px; margin-bottom:9px; padding:2px 13px 13px; animation:apparition 150ms ease-out both; }
 .fiche-v6 .t-ico { width:32px; height:32px; border-radius:6px; background:var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--f-icotxt); }
 .fiche-v6 .t-body { flex:1; min-width:0; }
 .fiche-v6 .t-title { font-size:14px; color:var(--txt-hi); }
