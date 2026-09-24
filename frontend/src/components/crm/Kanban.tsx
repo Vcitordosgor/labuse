@@ -22,9 +22,9 @@ const TONE_ACCENT: Record<string, string> = {
 const RETIRER = '__retirer__'
 
 // DA-FIX-5 P7 — note libre par carte : zone repliée « + Note ». Enregistrée sur la parcelle suivie
-// (colonne `pipeline_entries.notes`, déjà existante — PATCH `{notes}`), relue dans le bloc CRM de la
-// fiche parcelle. Les événements sont stoppés (stopPropagation) : cliquer/écrire dans la note n'ouvre
-// PAS l'écran d'édition de la carte.
+// (colonne `pipeline_entries.notes`, déjà existante — PATCH `{notes}`). DA-FIX-5b : la note ne
+// s'affiche PLUS dans la fiche parcelle (bloc CRM revenu à son état de main). Les événements sont
+// stoppés (stopPropagation) : cliquer/écrire dans la note n'ouvre PAS l'écran d'édition de la carte.
 function CardNote({ e, onNote }: { e: PipelineEntry; onNote: (notes: string) => void }) {
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState(e.notes ?? '')
@@ -35,7 +35,9 @@ function CardNote({ e, onNote }: { e: PipelineEntry; onNote: (notes: string) => 
       <div className="mt-1.5" onClick={stop}>
         {note ? (
           <button data-crm-note-edit onClick={() => { setDraft(e.notes ?? ''); setOpen(true) }}
-            className="block w-full whitespace-pre-wrap rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-left text-[10.5px] text-txt-mut transition-colors duration-quick hover:border-mint/40 hover:text-txt">
+            /* DA-FIX-5b — largeur bornée (w-full) + coupure des chaînes sans espace ([overflow-wrap:anywhere])
+               pour qu'une note « AAAA… » ne déborde plus de la carte. */
+            className="block w-full whitespace-pre-wrap [overflow-wrap:anywhere] rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-left text-[10.5px] text-txt-mut transition-colors duration-quick hover:border-mint/40 hover:text-txt">
             {note}
           </button>
         ) : (
@@ -56,7 +58,7 @@ function CardNote({ e, onNote }: { e: PipelineEntry; onNote: (notes: string) => 
         maxLength={4000}
         rows={3}
         onChange={(ev) => setDraft(ev.target.value)}
-        placeholder="Note libre (visible aussi dans la fiche parcelle)…"
+        placeholder="Note libre sur cette parcelle…"
         className="w-full resize-none rounded-md border border-mint/40 bg-surface-2 px-2 py-1.5 text-[10.5px] text-txt focus:border-mint focus:outline-none"
         aria-label="Note libre sur la parcelle suivie"
       />

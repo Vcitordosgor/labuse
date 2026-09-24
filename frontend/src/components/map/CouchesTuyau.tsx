@@ -502,15 +502,17 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
   const actives = useMemo(
     () => (plan || []).filter((c) => tuyauActives[c.kind]).sort((a, b) => (b.rang_carte || 0) - (a.rang_carte || 0)),
     [plan, tuyauActives])
-  // suit la DERNIÈRE couche allumée (elle devient l'accordéon déplié) ; clic pour changer.
-  const [ouvert, setOuvert] = useState<string | null>(null)
+  // DA-FIX-5b — chaque rangée a son PROPRE état déplié/replié (indépendant) : PLUSIEURS rangées
+  // peuvent être ouvertes en même temps (l'exclusivité posée en FIX-5 P2 est annulée). Une couche
+  // fraîchement allumée déplie SA rangée, sans toucher aux autres.
+  const [ouverts, setOuverts] = useState<Record<string, boolean>>({})
   // FINITIONS-1 (P7) — la légende des couches se replie/déplie par une petite flèche (accordéon DA :
   // ouverte = pointe en bas, repliée = pointe à droite). Dépliée par défaut.
   const [replie, setReplie] = useState(false)
   const prev = useRef<Record<string, boolean>>({})
   useEffect(() => {
     const nouv = Object.keys(tuyauActives).find((k) => tuyauActives[k] && !prev.current[k])
-    if (nouv) setOuvert(nouv)
+    if (nouv) setOuverts((o) => ({ ...o, [nouv]: true }))
     prev.current = { ...tuyauActives }
   }, [tuyauActives])
   if (!actives.length) return null
@@ -519,12 +521,13 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
   // d'abord). Chaque entrée montre ses grades (niveaux) OU ses teintes data-driven (par réseau /
   // catégorie via style.couleurs) + une note de couverture (A12).
   const entrees = grouper(actives).reverse()
-  // DA-FIX-5 P2 — UNE SEULE rangée ouverte à la fois, garanti par construction : la clé ouverte est
-  // UNIQUE (`ouvert`). `null` = défaut (couche du dessus) ; `''` = tout replié (l'utilisateur a fermé
-  // la rangée ouverte). Ouvrir une rangée referme donc l'autre ; cliquer la rangée ouverte la referme.
   const defautCle = entrees[0]?.cle ?? null
-  const openKey = ouvert === null ? defautCle : (ouvert || null)
-  const estDeplie = (e: Entree) => !!openKey && (e.cle === openKey || e.membres.some((m) => m.kind === openKey))
+  // état déplié PROPRE à la rangée : sa clé (ou une de ses membres, si l'ouverture vient d'une
+  // activation par kind) ; à défaut, seule la couche du dessus est dépliée.
+  const estDeplie = (e: Entree) => {
+    const k = (e.cle in ouverts) ? e.cle : (e.membres.find((m) => m.kind in ouverts)?.kind ?? null)
+    return k != null ? ouverts[k] : (e.cle === defautCle)
+  }
   return (
     <div data-tuyau-legend
       className="floating absolute bottom-10 right-4 hidden max-h-[52vh] w-[244px] overflow-y-auto rounded-xl bg-surface-2/95 p-3 text-txt shadow-elev-2 sm:block">
@@ -547,7 +550,7 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
             <div key={e.cle} className="rounded-md border border-line">
               {/* COUCHES-RECETTE-2 B4 : PAS de pastille à côté du titre (les pastilles sont DANS
                   l'accordéon, une par niveau) ; le titre passe sur deux lignes, jamais tronqué. */}
-              <button onClick={() => setOuvert(isOpen ? '' : e.cle)} aria-expanded={isOpen}
+              <button onClick={() => setOuverts((o) => ({ ...o, [e.cle]: !isOpen }))} aria-expanded={isOpen}
                 className="flex w-full items-start justify-between gap-2 px-2 py-1.5 text-left text-[11.5px] font-medium">
                 <span className="min-w-0 flex-1 leading-tight">{e.nom}</span>
                 {/* DA-FIX-3 Lot 5 (DA-031) — chevron partagé (fermé ▶ / ouvert ▼) : plus de ▾ figé dans les deux états. */}
