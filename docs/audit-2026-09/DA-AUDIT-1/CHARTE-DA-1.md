@@ -54,7 +54,7 @@ Règle générale : chaque règle vit dans UN composant partagé (`primitives.ts
 ## 6. Scroll, accordéons, apparition
 
 - [A] Aucune barre horizontale, nulle part. Barre verticale verte opaque au survol, style défini une fois.
-- [A] Accordéon : fermé = ▶, ouvert = ▼ ; chevron actif vert opaque.
+- [A] Accordéon : fermé = ◀ (pointe à gauche), ouvert = ▼ ; chevron actif vert opaque.
 - [?] **Une seule animation d'apparition** (fondu + 4 px de montée, 150 ms) pour panneaux, tiroirs, cartes. Rien d'autre : pas de slide, pas de zoom, pas de rebond.
 - [?] Aucune animation au scroll (pas d'éléments qui apparaissent en défilant) — tout est là à l'ouverture.
 - [?] Transitions de survol : 100 ms, une seule courbe.

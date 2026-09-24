@@ -1,7 +1,7 @@
 // DA-FIX-3 Lot 5 (DA-031) — LE chevron d'accordéon unique.
-// Fermé = ▶ (pointe à DROITE) ; ouvert = ▼ (pointe en BAS, rotation 90°). Ouvert = fond vert opaque,
-// glyphe sombre, rayon 4. Un seul dessin partout — remplace les ≥ 6 systèmes (SVG ◂/▾, SVG ›, glyphes
-// texte ▸ ▾ › ▶). La légende carte cesse d'afficher ▾ dans les deux états.
+// DA-FIX-5 P1 — Fermé = ◀ (pointe à GAUCHE) ; ouvert = ▼ (pointe en BAS, rotation -90°). Ouvert = fond
+// vert opaque, glyphe sombre, rayon 4 (inchangé). Un seul dessin partout — remplace les ≥ 6 systèmes
+// (SVG ◂/▾, SVG ›, glyphes texte ▸ ▾ › ▶). La légende carte cesse d'afficher ▾ dans les deux états.
 // DA-FIX-4 Lot 0 (régression [A]) — `boite` : sur une BARRE À FOND PLEIN survolée (`.hover-fill`
 // group), le chevron n'a PAS de fond propre (la règle CSS `.chev-boite` le rend transparent + inverse
 // le glyphe en encre sombre) ; hors survol, son contour bordé reste visible. À utiliser dans les
@@ -13,9 +13,9 @@ export function Chevron({ open, boite = false, className = '' }: { open: boolean
   return (
     <span aria-hidden="true"
       className={`inline-flex shrink-0 items-center justify-center transition-colors duration-quick ${box} ${className}`.trim()}>
-      <svg viewBox="0 0 12 12" className={`h-3 w-3 transition-transform duration-quick ${open ? 'rotate-90' : ''}`}>
-        {/* dessiné vers la DROITE (fermé = ▶) ; ouvert = +90° → pointe en bas (▼). */}
-        <polyline points="4.5,2.75 8,6 4.5,9.25" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <svg viewBox="0 0 12 12" className={`h-3 w-3 transition-transform duration-quick ${open ? '-rotate-90' : ''}`}>
+        {/* dessiné vers la GAUCHE (fermé = ◀) ; ouvert = -90° → pointe en bas (▼). */}
+        <polyline points="7.5,2.75 4,6 7.5,9.25" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </span>
   )
