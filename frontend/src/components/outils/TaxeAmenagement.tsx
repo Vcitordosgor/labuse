@@ -70,6 +70,10 @@ export function TaxeAmenagement() {
   const [surface, setSurface] = useState<number | null>(null)
   const [residencePrincipale, setResidencePrincipale] = useState(false)
   const [logementAide, setLogementAide] = useState(false)
+  // TAXE-FIX-1 point 1 — nature du projet EXONÉRÉE de plein droit (CGI 1635 quater D). Une seule
+  // nature à la fois (une surface est agricole OU PLAI OU reconstruction) : cases à cocher qui se
+  // désélectionnent l'une l'autre. Quand une nature est choisie, la surface saisie devient exonérée.
+  const [motifExo, setMotifExo] = useState<'agricole' | 'plai' | 'reconstruction' | null>(null)
   const [piscine, setPiscine] = useState<number | null>(null)
   const [pvSol, setPvSol] = useState<number | null>(null)
   const [stationnement, setStationnement] = useState<number | null>(null)
@@ -85,7 +89,7 @@ export function TaxeAmenagement() {
   const [prefillIdu, setPrefillIdu] = useState<string | null>(selectedIdu)
   useEffect(() => {
     if (selectedIdu && selectedIdu !== prefillIdu) {
-      setPrefillIdu(selectedIdu); setSurface(null)
+      setPrefillIdu(selectedIdu); setSurface(null); setMotifExo(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIdu])
@@ -108,14 +112,21 @@ export function TaxeAmenagement() {
   const insee = prefill.data?.insee ?? null
   const tauxCommunalPublic = prefill.data?.taux_communal_source === 'public'
     ? (prefill.data.taux_communal_pct ?? null) : null
+  // TAXE-FIX-1 point 1 — zone A (agricole) mais PAS AU (à urbaniser) : on propose la case
+  // « Locaux agricoles » (sans la cocher), car ces locaux y sont exonérés de plein droit.
+  const zoneA = /^A(?!U)/i.test(prefill.data?.zone_plu ?? '')
 
   // Paramètres du calcul — envoyés seulement quand une surface taxable est saisie.
   const params: TaxeParams | null = useMemo(() => {
     if (surface == null || surface <= 0) return null
+    // TAXE-FIX-1 point 1 — nature exonérée : la surface saisie part en `surface_exoneree_m2` (0 €)
+    // et la part surface taxée tombe à 0. Sinon, comportement inchangé (surface taxée au barème).
     return {
-      surface_taxable_m2: surface,
-      residence_principale: residencePrincipale || undefined,
-      logement_aide: logementAide || undefined,
+      surface_taxable_m2: motifExo ? 0 : surface,
+      surface_exoneree_m2: motifExo ? surface : undefined,
+      motif_exoneration: motifExo ?? undefined,
+      residence_principale: (!motifExo && residencePrincipale) || undefined,
+      logement_aide: (!motifExo && logementAide) || undefined,
       piscine_m2: piscine ?? undefined,
       pv_sol_m2: pvSol ?? undefined,
       stationnement_ext_places: stationnement ?? undefined,
@@ -126,7 +137,7 @@ export function TaxeAmenagement() {
       taux_departemental_pct: tauxDepEffectif,
       insee: insee ?? undefined,
     }
-  }, [surface, residencePrincipale, logementAide, piscine, pvSol, stationnement, eoliennes, tauxCommunal, tauxDepEffectif, insee])
+  }, [surface, motifExo, residencePrincipale, logementAide, piscine, pvSol, stationnement, eoliennes, tauxCommunal, tauxDepEffectif, insee])
 
   const calc = useQuery({
     queryKey: ['taxe-calc', params],
@@ -206,7 +217,30 @@ export function TaxeAmenagement() {
             hint={`Abattement ${fmtInt(c.abattement.taux_pct)} % sur les ${fmtInt(c.abattement.plafond_m2_residence_principale)} premiers m².`} />
           <CheckField dataAttr="aide" label="Logement aidé"
             checked={logementAide} onChange={setLogementAide}
-            hint={`Abattement ${fmtInt(c.abattement.taux_pct)} % (logement locatif social / aidé).`} />
+            hint={`Abattement ${fmtInt(c.abattement.taux_pct)} % (logement locatif social / aidé) — PLUS/PLS. Un PLAI est EXONÉRÉ (ci-dessous), pas seulement abattu.`} />
+        </div>
+
+        {/* TAXE-FIX-1 point 1 — NATURE DU PROJET : exonérations de plein droit (CGI 1635 quater D).
+            Cocher une nature EXONÈRE la surface saisie (0 €), à la différence de l'abattement (−50 %).
+            Une seule nature à la fois (cases mutuellement exclusives). En zone A, la case « Locaux
+            agricoles » est proposée (non cochée). */}
+        <div data-taxe-nature className="flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-3/40 p-2">
+          <p className="label-caps text-[9.5px] text-txt-dim">Nature du projet — exonération de plein droit (optionnel)</p>
+          <CheckField dataAttr="exo-agricole" label="Locaux agricoles"
+            checked={motifExo === 'agricole'} onChange={(v) => setMotifExo(v ? 'agricole' : null)}
+            hint={`Serres, bâtiments d'exploitation, stockage de récoltes, abris d'animaux — exonérés (CGI 1635 quater D, 3°).${zoneA ? ' Parcelle en zone A : les locaux agricoles y sont exonérés de plein droit.' : ''}`} />
+          <CheckField dataAttr="exo-plai" label="Logements PLAI / très sociaux"
+            checked={motifExo === 'plai'} onChange={(v) => setMotifExo(v ? 'plai' : null)}
+            hint="Prêt locatif aidé d'intégration — exonérés de plein droit (CGI 1635 quater D, 2°). Pour du PLUS/PLS, cocher plutôt « Logement aidé »." />
+          <CheckField dataAttr="exo-reconstruction" label="Reconstruction à l'identique"
+            checked={motifExo === 'reconstruction'} onChange={(v) => setMotifExo(v ? 'reconstruction' : null)}
+            hint="Reconstruction à l'identique d'un bâtiment détruit ou démoli depuis moins de 10 ans, après sinistre (CGI 1635 quater D, 9°)." />
+          {motifExo && (
+            <p data-taxe-nature-note className="text-[10px] leading-snug text-st-creuser">
+              Surface exonérée : la part surface tombe à 0 € (abattements sans effet). Les exonérations
+              <b> facultatives</b> votées par délibération communale (CGI 1635 quater E) ne sont pas appliquées ici — à vérifier auprès de la commune.
+            </p>
+          )}
         </div>
 
         {/* FORFAITS OPTIONNELS — installations et aménagements taxés au forfait (barème servi). */}

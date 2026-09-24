@@ -102,11 +102,31 @@ def _eur(x: float) -> float:
     return round(float(x), 2)
 
 
+# TAXE-FIX-1 point 1 — exonérations de PLEIN DROIT que l'outil peut rendre SANS deviner (CGI art.
+# 1635 quater D, en vigueur 01/01/2026 — https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000050193341,
+# lu le 24/09/2026). Une surface EXONÉRÉE ne produit AUCUNE part (0 €), à la différence de
+# l'ABATTEMENT (−50 %) qui ne fait que réduire de moitié. Chaque motif porte son numéro dans
+# l'article. Retenus (rendables sans convention ni liste réglementaire) : locaux agricoles (3°),
+# logements PLAI/LLTS (2°), reconstruction à l'identique < 10 ans après sinistre (9°). Laissés
+# (non rendables sans deviner) : service public/utilité publique (1°, engagement + liste par
+# décret), centres équestres (4°), OIN/ZAC à équipements à charge des constructeurs (5°/6°, dépend
+# de la convention), PUP (7°), aménagements prescrits par un PPR (8°). Petites surfaces < 5 m² = 10°
+# (traité plus bas, sur la surface saisie). Cf docs/audit-2026-09/taxe-fix-1/TAXE-FIX-1.md.
+_MOTIFS_EXONERATION = {
+    "agricole": ("Locaux agricoles", "CGI art. 1635 quater D, 3°"),
+    "plai": ("Logements locatifs très sociaux (PLAI)", "CGI art. 1635 quater D, 2°"),
+    "reconstruction": ("Reconstruction à l'identique après sinistre (< 10 ans)",
+                       "CGI art. 1635 quater D, 9°"),
+}
+
+
 def calculer(
     *,
     surface_taxable_m2: float = 0.0,
     residence_principale: bool = False,
     logement_aide: bool = False,
+    surface_exoneree_m2: float = 0.0,
+    motif_exoneration: str | None = None,
     piscine_m2: float = 0.0,
     pv_sol_m2: float = 0.0,
     stationnement_ext_places: int = 0,
@@ -134,11 +154,11 @@ def calculer(
     # 1) surface de construction : valeur forfaitaire, avec abattement 50 % (100 premiers m² RP / aidé).
     surf = max(0.0, float(surface_taxable_m2 or 0))
     if surf > 0 and seuil_exo and surf < seuil_exo:
-        # RV2-V2 — exonération de PLEIN DROIT des petites surfaces (CGI art. 1635 quater D, 1°) :
+        # RV2-V2 — exonération de PLEIN DROIT des petites surfaces (CGI art. 1635 quater D, 10°) :
         # une construction < 5 m² de surface taxable n'est pas soumise à la part surface.
         assiette_surf = 0.0
         lignes.append({"poste": "Surface de construction",
-                       "detail": f"{surf:g} m² < {seuil_exo:g} m² — exonérée (CGI 1635 quater D)",
+                       "detail": f"{surf:g} m² < {seuil_exo:g} m² — exonérée (CGI 1635 quater D, 10°)",
                        "assiette_eur": 0.0})
     elif surf > 0:
         abattue = 0.0
@@ -159,6 +179,16 @@ def calculer(
         lignes.append({"poste": "Surface de construction", "detail": detail, "assiette_eur": _eur(assiette_surf)})
     else:
         assiette_surf = 0.0
+
+    # 1 bis) surface EXONÉRÉE de plein droit (CGI 1635 quater D) — locaux agricoles, PLAI,
+    # reconstruction à l'identique. 0 € d'assiette, mais une ligne qui NOMME le motif et son article
+    # (jamais un simple silence) ; distincte de l'abattement (−50 %), la part surface ne s'ajoute pas.
+    surf_exo = max(0.0, float(surface_exoneree_m2 or 0))
+    if surf_exo > 0 and motif_exoneration in _MOTIFS_EXONERATION:
+        _label, _art = _MOTIFS_EXONERATION[motif_exoneration]
+        lignes.append({"poste": f"Surface exonérée — {_label}",
+                       "detail": f"{surf_exo:g} m² × {vf:g} €/m² — exonérée de plein droit ({_art})",
+                       "assiette_eur": 0.0})
 
     # 2) installations à forfait spécifique (assiette propre, taxée aux mêmes taux).
     def _forfait(poste: str, qte: float, unit: float, unite: str):

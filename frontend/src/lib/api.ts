@@ -514,6 +514,10 @@ export interface TaxeParams {
   surface_taxable_m2: number
   residence_principale?: boolean
   logement_aide?: boolean
+  // TAXE-FIX-1 point 1 — exonération de plein droit (CGI 1635 quater D) : la surface portée ici ne
+  // produit aucune part (0 €), le motif nomme l'article (agricole 3° / plai 2° / reconstruction 9°).
+  surface_exoneree_m2?: number
+  motif_exoneration?: 'agricole' | 'plai' | 'reconstruction' | null
   piscine_m2?: number
   pv_sol_m2?: number
   stationnement_ext_places?: number
@@ -526,6 +530,8 @@ export const getTaxeAmenagement = (p: TaxeParams) => {
   const params = new URLSearchParams({ surface_taxable_m2: String(p.surface_taxable_m2) })
   if (p.residence_principale) params.set('residence_principale', 'true')
   if (p.logement_aide) params.set('logement_aide', 'true')
+  if (p.surface_exoneree_m2) params.set('surface_exoneree_m2', String(p.surface_exoneree_m2))
+  if (p.motif_exoneration) params.set('motif_exoneration', p.motif_exoneration)
   if (p.piscine_m2) params.set('piscine_m2', String(p.piscine_m2))
   if (p.pv_sol_m2) params.set('pv_sol_m2', String(p.pv_sol_m2))
   if (p.stationnement_ext_places) params.set('stationnement_ext_places', String(p.stationnement_ext_places))
