@@ -217,6 +217,9 @@ export const CIRCUIT_CSS = `
 .cxp .menu-liste button:hover:not([disabled]){background:var(--mauve);color:var(--ink)}
 .cxp .menu-liste button:hover:not([disabled]) .muted{color:var(--ink)}
 .cxp .menu-liste button[disabled]{cursor:default} .cxp .menu-liste .sep{border-top:1px solid var(--line);margin:6px 0}
+.cxp .menu-liste.confirm{min-width:320px;padding:12px}
+.cxp .menu-liste.confirm .cf-txt{font-size:12.5px;color:var(--muted);line-height:1.5} .cxp .menu-liste.confirm .cf-txt b{color:var(--text)}
+.cxp .menu-liste.confirm .cf-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 .cxp .cx-verif{margin-bottom:16px}
 .cxp .cx-verif-res{margin-top:10px;font-size:13px;line-height:1.6} .cxp .cx-verif-res b{color:var(--text);font-weight:600} .cxp .cx-verif-res b.r{color:var(--rouge)}
 .cxp .cx-verif-res .lienc{color:var(--mint);text-decoration:underline;text-underline-offset:2px}
