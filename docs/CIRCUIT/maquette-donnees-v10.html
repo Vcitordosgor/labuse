@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LABUSE — Données · maquette v10</title>
+<style>
+  :root{
+    --bg:#0e1210; --carte:#141917; --carte2:#1a201c; --trait:#242c27; --trait2:#2f3a33;
+    --texte:#e6ebe6; --muet:#8e9993; --muet2:#5f6a64;
+    --mint:#4ADE80; --mint-s:#19863f; --mint-f:rgba(74,222,128,.10);
+    --ambre:#E8B84A; --ambre-f:rgba(232,184,74,.12);
+    --rouge:#F0716B; --rouge-f:rgba(240,113,107,.12);
+    --gris:#6b756f; --mauve:#B48CF2; --mauve-f:rgba(180,140,242,.12);
+    --r:6px; --rp:9999px; --h:32px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--texte);font:14px/1.45 Inter,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums}
+  a{color:var(--mint);text-decoration:none}
+  a:hover{text-decoration:underline}
+  button{font:inherit;color:inherit;cursor:pointer}
+  .page{max-width:1240px;margin:0 auto;padding:28px 32px 60px}
+
+  /* ---------- en-tête : titre + onglets, rien d'autre ---------- */
+  .top h1{font-size:26px;font-weight:700;letter-spacing:-.01em;margin:0;display:inline}
+  .top .sous{color:var(--muet);margin-left:14px}
+  .tabs{display:flex;gap:4px;margin:22px 0 0;border-bottom:1px solid var(--trait)}
+  .tab{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px 12px;color:var(--muet);font-size:15px;border-radius:var(--r) var(--r) 0 0}
+  .tab b{font-weight:500;margin-left:6px;color:var(--ambre)}
+  .tab b.neutre{color:var(--muet)}
+  .tab:hover{color:var(--texte);background:var(--carte)}
+  .tab.actif{color:var(--texte);border-bottom-color:var(--mint)}
+  .tab.actif b{color:var(--mint)}
+  section{display:none;padding-top:26px}
+  section.actif{display:block}
+
+  /* ---------- briques ---------- */
+  .btn{height:var(--h);padding:0 14px;border-radius:var(--r);border:1px solid var(--mint);background:transparent;color:var(--mint);font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;transition:background .1s,color .1s}
+  .btn:hover{background:var(--mint);color:#0b1a10}
+  .btn.primaire{background:var(--mint);color:#0b1a10}
+  .btn.primaire:hover{background:#7ce8a3}
+  .btn.ia{border-color:var(--mauve);color:var(--mauve)}
+  .btn.ia:hover{background:var(--mauve);color:#1a1226}
+  .btn.danger{border-color:var(--rouge);color:var(--rouge)}
+  .btn.danger:hover{background:var(--rouge);color:#2a0f0e}
+  .btn[disabled]{opacity:.4;cursor:not-allowed}
+  .btn[disabled]:hover{background:transparent;color:var(--mint)}
+  .lien{background:none;border:0;padding:0;color:var(--mint);height:auto}
+  .lien:hover{text-decoration:underline}
+  .chip{height:var(--h);padding:0 12px;border-radius:var(--rp);border:1px solid var(--trait2);background:transparent;color:var(--texte);display:inline-flex;align-items:center;gap:8px;transition:background .1s,color .1s}
+  .chip:hover{background:var(--mint);color:#0b1a10;border-color:var(--mint)}
+  .chip.actif{background:var(--mint);color:#0b1a10;border-color:var(--mint)}
+  .chip .n{color:var(--muet)}
+  .chip.actif .n,.chip:hover .n{color:#0b1a10}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .champ{height:var(--h);border-radius:var(--r);border:1px solid var(--trait2);background:var(--carte);color:var(--texte);padding:0 12px;width:100%;outline:none}
+  .champ::placeholder{color:var(--muet2)}
+  .champ:focus{border-color:var(--mint)}
+  .pastille{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+  .p-ok{background:var(--mint)} .p-ambre{background:var(--ambre)} .p-rouge{background:var(--rouge)} .p-gris{background:var(--gris)} .p-mauve{background:var(--mauve)}
+  .badge{display:inline-flex;align-items:center;gap:7px;height:22px;padding:0 9px;border-radius:var(--rp);font-size:12.5px;border:1px solid var(--trait2);color:var(--texte)}
+  .badge.ok{border-color:rgba(74,222,128,.4);background:var(--mint-f)}
+  .badge.ambre{border-color:rgba(232,184,74,.45);background:var(--ambre-f)}
+  .badge.rouge{border-color:rgba(240,113,107,.45);background:var(--rouge-f)}
+  .badge.gris{color:var(--muet)}
+  .badge.mauve{border-color:rgba(180,140,242,.45);background:var(--mauve-f)}
+  .carte{background:var(--carte);border:1px solid var(--trait);border-radius:var(--r)}
+  .muet{color:var(--muet)}
+  .petit{font-size:12.5px}
+  h2{font-size:22px;font-weight:700;margin:0}
+  h3{font-size:15px;font-weight:600;margin:0}
+  .ligne-etat{color:var(--muet);margin-top:6px}
+  .ligne-etat span+span::before{content:"·";margin:0 8px;color:var(--muet2)}
+
+  /* ---------- À faire ---------- */
+  .afaire-tete{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .afaire-tete .n{color:var(--ambre)}
+  .taches{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+  .tache{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:14px;align-items:center;padding:16px 18px;border:1px solid var(--trait);border-radius:var(--r);background:var(--carte)}
+  .tache.rouge{border-color:rgba(240,113,107,.5)}
+  .tache .t{font-weight:600}
+  .tache .d{color:var(--muet);margin-top:3px}
+  .tache .d a{color:var(--mint)}
+  .tache .actions{display:flex;gap:14px;align-items:center}
+  .rien{margin-top:16px;padding:14px 18px;border:1px dashed var(--trait2);border-radius:var(--r);color:var(--muet)}
+  .rien b{color:var(--texte);font-weight:600}
+  .regle{margin-top:18px;color:var(--muet2);font-size:12.5px}
+
+  /* ---------- Sources ---------- */
+  .controles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .controle{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+  .controle .titre{font-weight:600;display:flex;align-items:center;gap:8px}
+  .controle .desc{color:var(--muet);margin-top:4px}
+  .controle.agents{border-left:3px solid var(--mauve)}
+  .menu{position:relative}
+  .menu-liste{position:absolute;right:0;top:38px;z-index:5;min-width:280px;background:var(--carte2);border:1px solid var(--trait2);border-radius:var(--r);padding:6px;display:none}
+  .menu-liste.ouvert{display:block}
+  .menu-liste button{display:block;width:100%;text-align:left;background:none;border:0;padding:8px 10px;border-radius:var(--r);color:var(--texte)}
+  .menu-liste button:hover{background:var(--mauve);color:#1a1226}
+  .menu-liste .sep{border-top:1px solid var(--trait);margin:6px 0}
+  .agents-cours{margin-top:10px;display:none;align-items:center;gap:12px;color:var(--mauve)}
+  .agents-cours.actif{display:flex}
+  .barre{flex:1;height:6px;border-radius:var(--rp);background:var(--trait);overflow:hidden}
+  .barre i{display:block;height:100%;width:0;background:var(--mauve);transition:width 2.6s linear}
+  .outils{display:flex;gap:12px;align-items:center;margin-top:18px}
+  .outils .champ{max-width:520px}
+  .segments{margin-left:auto}
+  .filtres{margin-top:12px}
+  .table{margin-top:16px;border:1px solid var(--trait);border-radius:var(--r);overflow:hidden;background:var(--carte)}
+  .th,.tr{display:grid;grid-template-columns:minmax(0,1fr) 170px 170px 160px 150px 130px;gap:14px;align-items:center;padding:0 18px}
+  .th{height:36px;color:var(--muet);font-size:12.5px;border-bottom:1px solid var(--trait);background:var(--carte2)}
+  .tr{min-height:58px;padding-top:10px;padding-bottom:10px;border-bottom:1px solid var(--trait);cursor:pointer}
+  .tr:last-child{border-bottom:0}
+  .tr:hover{background:var(--carte2)}
+  .tr .nom{display:flex;gap:10px;align-items:flex-start}
+  .tr .nom .pastille{margin-top:6px}
+  .tr .nom b{font-weight:600;display:block}
+  .tr .nom span{color:var(--muet);font-size:12.5px;display:block;margin-top:2px}
+  .tr .cel{display:flex;flex-direction:column}
+  .tr .cel span{color:var(--muet);font-size:12.5px}
+  .tr .cel.vide{color:var(--muet2)}
+  .tr .act{text-align:right}
+  .tr .act .btn{height:28px;padding:0 11px}
+  .pied{padding:12px 18px;color:var(--muet);border-top:1px solid var(--trait);background:var(--carte)}
+  .hv .tr{grid-template-columns:minmax(0,1fr) 140px minmax(0,1.2fr) 130px}
+  .hv .th{grid-template-columns:minmax(0,1fr) 140px minmax(0,1.2fr) 130px}
+
+  /* ---------- Détail ---------- */
+  .detail-tete{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .detail-tete h2{margin-right:6px}
+  .detail-grille{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-top:18px}
+  .bloc{padding:16px 18px}
+  .bloc h3{margin-bottom:10px}
+  .faits{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .fait{padding:12px 14px;border:1px solid var(--trait);border-radius:var(--r);background:var(--carte2)}
+  .fait .k{color:var(--muet);font-size:12.5px}
+  .fait .v{font-weight:600;margin-top:4px}
+  .fait .s{color:var(--muet);font-size:12.5px;margin-top:2px}
+  .liste{list-style:none;margin:0;padding:0}
+  .liste li{padding:7px 0;border-top:1px solid var(--trait);display:flex;justify-content:space-between;gap:10px}
+  .liste li:first-child{border-top:0}
+  .liste li span{color:var(--muet)}
+  .detail-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+
+  /* ---------- Circuit ---------- */
+  .circuit-outils{display:flex;gap:12px;align-items:center}
+  .circuit-outils .champ{flex:1}
+  .resultat{margin-top:12px;display:flex;align-items:center;gap:10px;color:var(--muet);flex-wrap:wrap}
+  .resultat b{color:var(--texte);font-weight:600}
+  .resultat .lienrouge{color:var(--rouge)}
+  .legende{display:flex;gap:18px;align-items:center;margin-top:20px;color:var(--muet);font-size:12.5px;flex-wrap:wrap}
+  .legende span{display:inline-flex;align-items:center;gap:6px}
+  .legende .chip{margin-left:auto;height:28px}
+  .diagramme{display:grid;grid-template-columns:1fr 250px 1fr;gap:0 28px;margin-top:16px;align-items:start}
+  .colonne h3{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;padding:0 4px}
+  .colonne h3 small{font-weight:400;color:var(--muet)}
+  .colonne h3 small.a{color:var(--ambre)}
+  .bloc-c{padding:14px 16px;border:1px solid var(--trait);border-radius:var(--r);background:var(--carte);margin-bottom:8px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;cursor:pointer;position:relative}
+  .bloc-c:hover{border-color:var(--mint)}
+  .bloc-c .nom{font-weight:600}
+  .bloc-c .points{margin-top:8px;display:flex;flex-wrap:wrap;gap:4px}
+  .bloc-c .points i{width:8px;height:8px;border-radius:50%;background:var(--mint);display:inline-block}
+  .bloc-c .points i.a{background:var(--ambre)} .bloc-c .points i.r{background:var(--rouge)} .bloc-c .points i.g{background:var(--gris)}
+  .bloc-c .cpt{text-align:right;color:var(--muet);white-space:nowrap}
+  .bloc-c .cpt b{display:block;font-weight:400;color:var(--muet)}
+  .bloc-c .cpt .a{color:var(--ambre)} .bloc-c .cpt .r{color:var(--rouge)}
+  .bloc-c.cache{display:none}
+  .pompe{padding:16px;border:1px solid var(--trait);border-radius:var(--r);background:var(--carte);position:sticky;top:20px}
+  .pompe .nom{font-size:17px;font-weight:700}
+  .pompe .run{display:inline-block;margin-top:10px;padding:4px 9px;border:1px solid rgba(74,222,128,.5);border-radius:var(--r);color:var(--mint);font-size:12.5px}
+  .pompe ul{list-style:none;margin:12px 0 0;padding:0}
+  .pompe li{padding:6px 0;border-top:1px solid var(--trait);display:flex;justify-content:space-between;gap:8px}
+  .pompe li span{color:var(--muet)}
+  .pompe li .a{color:var(--ambre)} .pompe li .r{color:var(--rouge)}
+  .col-g .bloc-c::after,.col-d .bloc-c::before{content:"";position:absolute;top:50%;width:28px;border-top:1px solid var(--trait2)}
+  .col-g .bloc-c::after{right:-29px}
+  .col-d .bloc-c::before{left:-29px}
+
+  /* ---------- Journal ---------- */
+  .passage{border:1px solid var(--trait);border-radius:var(--r);background:var(--carte);margin-bottom:8px}
+  .passage .ent{display:grid;grid-template-columns:120px 110px minmax(0,1fr) 150px 24px;gap:14px;align-items:center;padding:12px 18px;cursor:pointer}
+  .passage .ent:hover{background:var(--carte2)}
+  .passage .geste{display:flex;align-items:center;gap:8px}
+  .passage .res{text-align:right}
+  .passage .res.rouge{color:var(--rouge)}
+  .passage .chev{color:var(--mint);text-align:right;font-size:12px}
+  .passage .lignes{display:none;border-top:1px solid var(--trait)}
+  .passage.ouvert .lignes{display:block}
+  .passage .lignes div{display:grid;grid-template-columns:120px 110px minmax(0,1fr) 150px 24px;gap:14px;padding:9px 18px;color:var(--muet);border-top:1px solid var(--trait)}
+  .passage .lignes div:first-child{border-top:0}
+  .passage .lignes a{color:var(--texte)}
+  .passage .lignes .r{color:var(--rouge)} .passage .lignes .a{color:var(--ambre)}
+  .journal-th{display:grid;grid-template-columns:120px 110px minmax(0,1fr) 150px 24px;gap:14px;padding:8px 18px;color:var(--muet);font-size:12.5px}
+
+  /* ---------- notes de maquette ---------- */
+  .notes{margin-top:60px;padding-top:18px;border-top:1px dashed var(--trait2);color:var(--muet);font-size:12.5px}
+  .notes h4{margin:0 0 8px;color:var(--texte);font-size:13px}
+  .notes ol{margin:0;padding-left:18px}
+  .notes li{margin:3px 0}
+  @media (max-width:900px){
+    .th,.tr{grid-template-columns:minmax(0,1fr) 120px 120px 110px}
+    .th>:nth-child(n+5),.tr>:nth-child(n+5){display:none}
+    .controles,.detail-grille,.diagramme{grid-template-columns:1fr}
+    .col-g .bloc-c::after,.col-d .bloc-c::before{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="top">
+    <h1>Données</h1><span class="sous">le circuit de la donnée : d'où elle vient, où elle va, ce qui cloche</span>
+    <nav class="tabs" id="tabs">
+      <button class="tab actif" data-tab="afaire">À faire <b>9</b></button>
+      <button class="tab" data-tab="sources">Sources <b class="neutre">92</b></button>
+      <button class="tab" data-tab="circuit">Circuit</button>
+      <button class="tab" data-tab="journal">Journal <b class="neutre">25</b></button>
+    </nav>
+  </header>
+
+  <main>
+
+  <!-- ================= À FAIRE ================= -->
+  <section id="afaire" class="actif">
+    <div class="afaire-tete">
+      <h2><span class="n">9</span> choses à faire</h2>
+    </div>
+    <div class="ligne-etat"><span>sonde des sources : cette nuit 03:48</span><span>contrôle du circuit : cette nuit 02:05</span><span>agents : dimanche 21/09</span></div>
+
+    <div class="taches">
+      <div class="tache rouge"><i class="pastille p-rouge"></i>
+        <div><div class="t">Décider — verrou G8 cassé</div>
+          <div class="d">Six sources en vitrine sans contrôle depuis plus de 7 jours (Communes IGN, INPN, NPNRU, PLH, Radar, VRD). Le déploiement refuse tant que ça tient.</div></div>
+        <div class="actions"><button class="btn">Décider</button></div>
+      </div>
+      <div class="tache rouge"><i class="pastille p-rouge"></i>
+        <div><div class="t">Décider — fuite : « Recette des exports » lit hors moteur</div>
+          <div class="d">Ce robinet prend ses chiffres dans une requête propre au lieu du moteur. <a href="#" data-va="circuit">Voir dans le Circuit</a></div></div>
+        <div class="actions"><button class="btn">Décider</button></div>
+      </div>
+      <div class="tache rouge"><i class="pastille p-rouge"></i>
+        <div><div class="t">Décider — écart : « Parcelles à potentiel » diffère entre deux endroits</div>
+          <div class="d">Table Communes : 1 812 · fiche commune de Saint-Paul : 1 790. Même chiffre, deux lectures. <a href="#" data-va="circuit">Voir dans le Circuit</a></div></div>
+        <div class="actions"><button class="btn">Décider</button></div>
+      </div>
+      <div class="tache"><i class="pastille p-ambre"></i>
+        <div><div class="t">Injecter FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)</div>
+          <div class="d">Le producteur a publié l'arrêté du 14 avril 2025 (NOR ATDB2508688A). L'app sert l'arrêté du 01/07/2024. Après injection : recalcul du résiduel.</div></div>
+        <div class="actions"><button class="btn">Injecter</button></div>
+      </div>
+      <div class="tache"><i class="pastille p-ambre"></i>
+        <div><div class="t">Injecter INSEE RP Logement 2023</div>
+          <div class="d">Le producteur a publié RP2023 (géographie au 01/01/2026, correctif du 17/09/2026). L'app sert une version inconnue. Après injection : rien à recalculer.</div></div>
+        <div class="actions"><button class="btn">Injecter</button></div>
+      </div>
+      <div class="tache"><i class="pastille p-ambre"></i>
+        <div><div class="t">Injecter DEAL — cartes de bruit stratégiques (CBS)</div>
+          <div class="d">Le producteur a publié la 4e échéance (arrêté préfectoral n° 2023-610/S). L'app sert CBS 2022, 6 zones de dépassement. Après injection : recalcul du scoring.</div></div>
+        <div class="actions"><button class="btn">Injecter</button></div>
+      </div>
+      <div class="tache"><i class="pastille p-ambre"></i>
+        <div><div class="t">Basculer sur q_v15</div>
+          <div class="d">Candidat prêt. Lis la note de version, puis bascule. Trois injections attendent au-dessus : si tu injectes d'abord, un « Calculer » apparaîtra ici avant la bascule.</div></div>
+        <div class="actions"><button class="lien">Lire la note</button><button class="btn">Basculer</button></div>
+      </div>
+      <div class="tache"><i class="pastille p-ambre"></i>
+        <div><div class="t">Déposer Radar (pige d'annonces)</div>
+          <div class="d">Source manuelle échue, cadence 3 jours, dernier dépôt le 09/09/2026. Ne touche ni le résiduel ni le score.</div></div>
+        <div class="actions"><button class="btn">Déposer un fichier</button></div>
+      </div>
+      <div class="tache"><i class="pastille p-ambre"></i>
+        <div><div class="t">Déposer VRD / assainissement (SPANC)</div>
+          <div class="d">Source manuelle échue, cadence 365 jours, jamais déposée. Ne touche ni le résiduel ni le score.</div></div>
+        <div class="actions"><button class="btn">Déposer un fichier</button></div>
+      </div>
+    </div>
+
+    <div class="rien">Rien d'autre. <b>3 sources jamais vérifiées</b> attendent les agents de dimanche — ou tu les envoies maintenant depuis <a href="#" data-va="sources">Sources</a>. 84 sources à jour, 0 sonde en panne.</div>
+    <div class="regle">Cinq gestes seulement peuvent apparaître ici : Injecter · Déposer · Calculer · Basculer · Décider. Chaque pastille non verte du Circuit et de Sources a sa ligne ici, et ce compteur est celui de la tuile « tâches à effectuer » du Pilotage.</div>
+  </section>
+
+  <!-- ================= SOURCES ================= -->
+  <section id="sources">
+    <div class="controles">
+      <div class="carte controle">
+        <div>
+          <div class="titre"><i class="pastille p-ok"></i>Sonde de nuit</div>
+          <div class="desc">Chaque nuit à 03:00, interroge les 89 sources qui ont un amont. Cette nuit 03:48 : 89 interrogées, 0 en panne, 3 nouvelles versions vues.</div>
+        </div>
+        <button class="btn" onclick="sonde(this)">Sonder maintenant</button>
+      </div>
+      <div class="carte controle agents">
+        <div style="flex:1">
+          <div class="titre"><i class="pastille p-mauve"></i>Agents</div>
+          <div class="desc">Chaque dimanche, vont lire chez les 92 producteurs. Dimanche 21/09 : 92 sources, 3,40 €, 3 nouvelles versions trouvées. Plafond 5 € par passage, prochain passage dimanche 28/09.</div>
+          <div class="agents-cours" id="agentsCours"><span id="agentsTexte">Agents en cours</span><div class="barre"><i id="agentsBarre"></i></div><span id="agentsCout">0,00 €</span></div>
+        </div>
+        <div class="menu">
+          <button class="btn ia" onclick="menuAgents(event)">Envoyer les agents ▾</button>
+          <div class="menu-liste" id="menuAgents">
+            <button onclick="agents(3,'les 3 jamais vérifiées')">Sur les 3 jamais vérifiées</button>
+            <button onclick="agents(6,'les 6 sans contrôle depuis 7 jours')">Sur les 6 du verrou G8</button>
+            <button onclick="agents(92,'les 92 sources')">Sur les 92 sources <span class="muet">(≈ 3,50 €)</span></button>
+            <div class="sep"></div>
+            <button onclick="agents(1,'une source')">Sur une source… <span class="muet">(depuis sa fiche)</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="outils">
+      <input class="champ" id="rech" placeholder="Chercher une source (cadastre, permis, PLU, LiDAR…)" oninput="rendre()">
+      <div class="chips segments">
+        <button class="chip actif" data-seg="vitrine" onclick="segment(this)">Vitrine <span class="n">92</span></button>
+        <button class="chip" data-seg="hors" onclick="segment(this)">Hors vitrine <span class="n">29</span></button>
+      </div>
+    </div>
+    <div class="chips filtres" id="etats">
+      <button class="chip" data-etat="ok" onclick="filtre(this)"><i class="pastille p-ok"></i>À jour <span class="n">84</span></button>
+      <button class="chip" data-etat="nouvelle" onclick="filtre(this)"><i class="pastille p-ambre"></i>Nouvelle version <span class="n">3</span></button>
+      <button class="chip" data-etat="echue" onclick="filtre(this)"><i class="pastille p-ambre"></i>Échue <span class="n">2</span></button>
+      <button class="chip" data-etat="jamais" onclick="filtre(this)"><i class="pastille p-gris"></i>Jamais vérifiée <span class="n">3</span></button>
+      <button class="chip" data-etat="panne" onclick="filtre(this)"><i class="pastille p-rouge"></i>Sonde en panne <span class="n">0</span></button>
+      <button class="chip actif" data-etat="tous" onclick="filtre(this)">Toutes <span class="n">92</span></button>
+    </div>
+
+    <div class="table" id="tableVitrine">
+      <div class="th"><div>Source</div><div>Servi</div><div>Chez le producteur</div><div>Dernier contrôle</div><div>État</div><div></div></div>
+      <div id="lignes"></div>
+      <div class="pied" id="piedVitrine"></div>
+    </div>
+
+    <div class="table hv" id="tableHors" style="display:none">
+      <div class="th"><div>Source</div><div>Statut</div><div>Pourquoi elle n'est pas en vitrine</div><div>Depuis</div></div>
+      <div id="lignesHors"></div>
+      <div class="pied">29 lignes en base, hors vitrine : elles restent connues pour qu'un audit futur ne les réingère pas sous un autre nom.</div>
+    </div>
+  </section>
+
+  <!-- ================= DÉTAIL D'UNE SOURCE ================= -->
+  <section id="detail">
+    <div class="detail-tete">
+      <button class="btn" data-va="sources">← Sources</button>
+      <h2>FRR ex-ZRR — zone spéciale d'action rurale</h2>
+      <span class="badge ambre"><i class="pastille p-ambre"></i>nouvelle version</span>
+      <span class="badge gris">Légifrance</span><span class="badge gris">zonage</span>
+    </div>
+    <div class="detail-grille">
+      <div class="carte bloc">
+        <h3>Ce que l'app sert et ce qui existe</h3>
+        <div class="faits">
+          <div class="fait"><div class="k">Servi</div><div class="v">Arrêté du 19/06/2024</div><div class="s">injecté le 19/08/2026</div></div>
+          <div class="fait"><div class="k">Chez le producteur</div><div class="v">Arrêté du 14/04/2025</div><div class="s">publié le 17/04/2025 · JORFTEXT000051469445</div></div>
+          <div class="fait"><div class="k">Dernier contrôle</div><div class="v">24/09 01:48</div><div class="s">agent (0,17 €) · sonde : page non datée</div></div>
+        </div>
+        <div class="detail-actions">
+          <button class="btn primaire">Injecter cette version</button>
+          <button class="btn ia" onclick="agents(1,'FRR ex-ZRR');document.querySelector('[data-tab=sources]').click()">Envoyer un agent</button>
+          <button class="btn">Suspendre la veille</button>
+        </div>
+        <h3 style="margin-top:22px">Si cette version entre</h3>
+        <ul class="liste">
+          <li>Recalcul du résiduel <span>la variable « FRR » de la cascade change</span></li>
+          <li>Pas de recalcul du scoring <span>le score ne lit pas cette source</span></li>
+          <li>Couche « FRR — zone France ruralités revitalisation » <span>rafraîchie à la bascule</span></li>
+        </ul>
+      </div>
+      <div class="carte bloc">
+        <h3>Ce qu'elle alimente (7 robinets)</h3>
+        <ul class="liste">
+          <li>Couche FRR <span>Carte</span></li>
+          <li>Fiche commune — Dispositifs <span>Fiches</span></li>
+          <li>Fiche parcelle — Règlement et zonage <span>Fiches</span></li>
+          <li>Étude de zone — Contraintes <span>Outils</span></li>
+          <li>Filtre « en FRR » <span>Carte</span></li>
+          <li>Dossier expert, lettre de zonage <span>Exports</span></li>
+          <li>Copilote — outil zonage <span>Copilote</span></li>
+        </ul>
+        <h3 style="margin-top:22px">Comment elle entre</h3>
+        <ul class="liste">
+          <li>Veille <span>agent, chaque dimanche (page rendue en JS, sonde impossible)</span></li>
+          <li>Injection <span>sur ton clic, jamais seule</span></li>
+          <li>Cadence attendue <span>à chaque arrêté modificatif</span></li>
+        </ul>
+        <h3 style="margin-top:22px">Historique</h3>
+        <ul class="liste">
+          <li>24/09 01:48 — agent : nouvelle version <span>0,17 €</span></li>
+          <li>23/09 22:17 — agent : introuvable <span>sortie non lisible</span></li>
+          <li>19/08 — injectée <span>toi</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CIRCUIT ================= -->
+  <section id="circuit">
+    <div class="circuit-outils">
+      <input class="champ" placeholder="Un réservoir, un robinet, un chiffre — ou un élément de l'app (couche, section de fiche, outil) pour remonter à ses sources">
+      <button class="btn" onclick="verifier(this)">Vérifier que tout coule</button>
+    </div>
+    <div class="resultat" id="resultat">
+      <span>Dernier contrôle cette nuit 02:05 —</span>
+      <b>1 fuite</b><span>·</span><b>0 eau ancienne</b><span>·</span><b>1 écart</b><span>·</span><b>verrous 21/22</b>
+      <span>— les trois sont dans</span><a href="#" data-va="afaire">À faire</a>
+    </div>
+
+    <div class="legende">
+      <span><i class="pastille p-ok"></i>ça coule</span>
+      <span><i class="pastille p-ambre"></i>à voir</span>
+      <span><i class="pastille p-rouge"></i>bloqué ou fuite</span>
+      <span><i class="pastille p-gris"></i>vide, manuel, jamais vérifié</span>
+      <span><i class="pastille p-mauve"></i>en cours</span>
+      <button class="chip" id="cloche" onclick="queCloche(this)">Ne montrer que ce qui cloche</button>
+    </div>
+
+    <div class="diagramme">
+      <div class="colonne col-g">
+        <h3>Réservoirs <small>92 · <span class="a">5 à voir</span></small></h3>
+        <div id="familles"></div>
+      </div>
+      <div class="colonne">
+        <h3>La pompe <small><span class="a">2 à voir</span></small></h3>
+        <div class="pompe">
+          <div class="nom">Le moteur</div>
+          <div class="muet">29 moteurs, 272 chiffres, une définition chacun.</div>
+          <div class="run">q_v11_m137 servi</div>
+          <ul>
+            <li>Chiffres cohérents <span class="a">271 / 272 · 1 écart</span></li>
+            <li>Verrous <span class="r">21 / 22 · G8</span></li>
+            <li>Eau ancienne <span>0</span></li>
+            <li>Candidat q_v15 <span class="a">prêt → À faire</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="colonne col-d">
+        <h3>Robinets <small>163 · <span class="a">1 à regarder</span></small></h3>
+        <div id="categories"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= JOURNAL ================= -->
+  <section id="journal">
+    <div class="chips" id="jfiltres">
+      <button class="chip" data-j="vanne" onclick="jfiltre(this)">vanne</button>
+      <button class="chip" data-j="calcul" onclick="jfiltre(this)">calcul</button>
+      <button class="chip" data-j="bascule" onclick="jfiltre(this)">bascule</button>
+      <button class="chip" data-j="agent" onclick="jfiltre(this)">agent</button>
+      <button class="chip" data-j="controle" onclick="jfiltre(this)">contrôle</button>
+      <button class="chip" data-j="filtre" onclick="jfiltre(this)">filtre</button>
+      <button class="chip" data-j="sonde" onclick="jfiltre(this)">sonde</button>
+      <button class="chip" data-j="cron" onclick="jfiltre(this)">cron</button>
+      <button class="chip actif" data-j="tous" onclick="jfiltre(this)">tous</button>
+    </div>
+    <div class="journal-th" style="margin-top:14px"><div>Quand</div><div>Geste</div><div>Cible</div><div>Résultat</div><div></div></div>
+    <div id="passages"></div>
+    <div class="muet petit" style="margin-top:12px">25 passages sur 30 jours. Un passage = un geste sur une ou plusieurs cibles ; la ligne se déplie. Le coût des agents est celui du ledger, hors web_search.</div>
+  </section>
+
+  </main>
+
+  <footer class="notes">
+    <h4>Ce que cette maquette change (v10, 24/09/2026 — données illustratives, chiffres du 24/09)</h4>
+    <ol>
+      <li>Plus aucun bouton ni bandeau dans l'en-tête : titre et quatre onglets. Chaque geste vit sur l'onglet dont il répond à la question.</li>
+      <li>Les agents ont un seul endroit : la carte « Agents » en tête de Sources (dernier passage, coût, plafond, prochain passage) et le bouton qui choisit la portée (3 jamais vérifiées, 6 du verrou, les 92, une source depuis sa fiche).</li>
+      <li>« Vérifier que tout coule » vit dans Circuit ; son résultat s'écrit sous le bouton (plus de bandeau) et chaque problème trouvé devient une ligne « Décider » dans À faire.</li>
+      <li>Sources : tableau à colonnes fixes (nom jamais tronqué, deux lignes), une source = une ligne, tri problèmes d'abord, filtres qui filtrent, « Toutes » en dernier, clic = fiche de la source.</li>
+      <li>Circuit : une seule recherche (le sens inverse est une recherche de robinet), légende sur une ligne, plus de ligne « plafond agents ».</li>
+      <li>À faire = l'union exacte des pastilles non vertes de Sources et du Circuit + les actions en attente (bascule). Invariant testé : ce compteur = tuile « tâches à effectuer » du Pilotage.</li>
+      <li>Journal : « tous » à droite (règle des filtres), passages groupés dépliables, coût par passage d'agents.</li>
+    </ol>
+  </footer>
+</div>
+
+<script>
+/* ---------- navigation ---------- */
+const sections=[...document.querySelectorAll('main > section')];
+function va(id){
+  sections.forEach(s=>s.classList.toggle('actif',s.id===id));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('actif',t.dataset.tab===(id==='detail'?'sources':id)));
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>va(t.dataset.tab)));
+document.addEventListener('click',e=>{const a=e.target.closest('[data-va]');if(a){e.preventDefault();va(a.dataset.va);}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('detail').classList.contains('actif'))va('sources');});
+
+/* ---------- sources ---------- */
+const S=[
+ ['FRR ex-ZRR — zone spéciale d\'action rurale','Légifrance · zonage · veille agent','nouvelle','Arrêté du 19/06/2024','injecté 19/08/2026','Arrêté du 14/04/2025','publié 17/04/2025','24/09 01:48','agent','Injecter'],
+ ['INSEE RP Logement 2023','INSEE · logement · sonde API','nouvelle','version inconnue','injecté 22/08/2026','RP2023 géo 01/01/2026','publié 17/09/2026','24/09 03:48','sonde','Injecter'],
+ ['DEAL — cartes de bruit stratégiques (CBS)','DEAL Réunion · risques · sonde WFS','nouvelle','CBS 2022 · 6 zones','injecté 14/09/2026','4e échéance · arrêté 2023-610/S','publié 12/09/2026','24/09 03:48','sonde','Injecter'],
+ ['Radar — pige d\'annonces','LABUSE · marché · dépôt manuel, cadence 3 j','echue','collecte du 09/09/2026','déposé 09/09/2026','—','pas de producteur','—','échéance','Déposer un fichier'],
+ ['VRD / assainissement (SPANC)','EPCI · réseaux · dépôt manuel, cadence 365 j','echue','jamais déposée','—','page de publication','non datée','—','échéance','Déposer un fichier'],
+ ['Communes La Réunion — contours','IGN Admin Express · référentiel · veille agent','jamais','édition 2026-01','injecté 12/08/2026','—','—','—','2 agents sans réponse lisible',''],
+ ['INPN / patrinat — espaces protégés','INPN · nature · veille agent','jamais','export 2025-11','injecté 07/09/2026','—','—','—','2 agents sans réponse lisible',''],
+ ['NPNRU','DEAL Réunion / ANCT · urbanisme · veille agent','jamais','liste 2024','injecté 19/09/2026','—','—','—','2 agents sans réponse lisible',''],
+ ['Cadastre (Etalab)','Etalab · parcelles · sonde API','ok','millésime 2025-09','injecté 22/09/2026','2025-09','publié 01/09/2026','24/09 03:48','sonde',''],
+ ['DVF — demandes de valeurs foncières','Etalab · marché · sonde page','ok','S1 2026','injecté 22/09/2026','S1 2026','publié 04/07/2026','24/09 03:48','sonde',''],
+ ['Base Adresse Nationale','BAN · référentiel · sonde API · ⟳ cron 35 j','ok','2026-08-19','injecté 19/08/2026','2026-09-22','publié 22/09/2026 (mineure)','24/09 03:48','sonde',''],
+ ['Sitadel — permis de construire','SDES · permis · sonde API · ⟳ cron mensuel','ok','août 2026','injecté 05/09/2026','août 2026','publié 29/08/2026','24/09 03:48','sonde',''],
+ ['DPE — ADEME','ADEME · bâti · sonde API · ⟳ cron mensuel','ok','2026-09','injecté 19/09/2026','2026-09','publié 15/09/2026','24/09 03:48','sonde',''],
+ ['SIRENE','INSEE · entreprises · sonde API · ⟳ cron mensuel','ok','2026-09-01','injecté 02/09/2026','2026-09-01','publié 01/09/2026','24/09 03:48','sonde',''],
+ ['Géoportail de l\'urbanisme — PLU et SUP','GPU · urbanisme · sonde API · ⟳ cron mensuel','ok','24 documents, dernier 97411_PLU_20260805','injecté 05/09/2026','identique','publié 05/08/2026','24/09 03:48','sonde',''],
+ ['Géorisques — PPR et mouvements de terrain','BRGM / Géorisques · risques · sonde API','ok','2026-06','injecté 06/09/2026','2026-06','publié 18/06/2026','24/09 03:48','sonde',''],
+ ['CatNat — arrêtés de catastrophe naturelle','Géorisques · risques · sonde API','ok','426 arrêtés','injecté 14/09/2026','426 arrêtés','publié 11/09/2026','24/09 03:48','sonde',''],
+ ['BODACC','DILA · entreprises · sonde API · ⟳ cron hebdo','ok','semaine 38','injecté 22/09/2026','semaine 38','publié 21/09/2026','24/09 03:48','sonde',''],
+ ['INPI RNE (dirigeants)','INPI · entreprises · API sans millésime','ok','sans millésime — flux','à jour par construction','—','—','23/09 22:17','agent : sans objet',''],
+ ['OpenStreetMap','OSM · équipements, transport · flux continu','ok','sans millésime — flux','à jour par construction','—','—','23/09 22:17','agent : sans objet',''],
+ ['Coût de construction','EPTB SDES + choix LABUSE · donnée interne','ok','sans millésime — interne','à jour par construction','—','—','23/09 22:17','agent : sans objet',''],
+ ['EDF Réunion — lignes moyenne tension HTA','EDF SEI open data · réseaux · sonde API','ok','géométrie ~02/2020','injecté 14/09/2026','publié 16/10/2025','identique','24/09 03:48','sonde',''],
+ ['LiDAR HD — hauteurs de bâti','IGN · imagerie · sonde API','ok','survol 2023-2024','injecté 13/09/2026','identique','publié 02/2025','24/09 03:48','sonde',''],
+ ['BD TOPO','IGN · bâti, réseaux · sonde API','ok','2026-06','injecté 02/09/2026','2026-06','publié 20/06/2026','24/09 03:48','sonde',''],
+ ['RNB — référentiel national des bâtiments','ADEME / IGN · bâti · sonde API','ok','2026-09-15','injecté 15/09/2026','2026-09-15','publié 15/09/2026','24/09 03:48','sonde',''],
+ ['OCS GE — occupation du sol','IGN · sol · sonde API','ok','2023','injecté 13/09/2026','2023','publié 03/2025','24/09 03:48','sonde',''],
+ ['RPLS — parc locatif social','SDES · logement · sonde page','ok','2025','injecté 06/09/2026','2025','publié 12/2025','24/09 03:48','sonde',''],
+ ['ENAF — consommation d\'espaces','Cerema · sol · sonde API','ok','2009-2024','injecté 06/09/2026','2009-2024','publié 05/2025','24/09 03:48','sonde',''],
+ ['Loyers — carte des loyers DHUP','DHUP · marché · sonde page','ok','édition 2025','injecté 14/09/2026','édition 2025','publié 11/2025','24/09 03:48','sonde',''],
+ ['PVGIS — ensoleillement','Commission européenne · énergie · veille agent','ok','v5.3','injecté 09/09/2026','v5.3','identique','23/09 22:17','agent',''],
+ ['RTAA DOM','Légifrance · règles · veille agent','ok','arrêté 2020','injecté 08/09/2026','identique','identique','23/09 22:13','agent',''],
+ ['ZFANG','Légifrance · zonage · veille agent','ok','décret 2024','injecté 07/09/2026','identique','identique','23/09 22:13','agent',''],
+ ['Annuaire de l\'administration (service-public.fr)','DILA · équipements · sonde API · ⟳ cron 35 j','ok','24 mairies','injecté 20/09/2026','identique','publié 20/09/2026','24/09 03:48','sonde',''],
+ ['INSEE BPE — équipements','INSEE · équipements · sonde API','ok','2024','injecté 06/09/2026','2024','publié 06/2025','24/09 03:48','sonde',''],
+ ['Fibre — déploiements Arcep','Arcep · réseaux · sonde API','ok','T2 2026','injecté 13/09/2026','T2 2026','publié 09/2026','24/09 03:48','sonde',''],
+ ['QPV — quartiers prioritaires','ANCT · zonage · sonde API','ok','2024','injecté 13/09/2026','2024','publié 01/2024','24/09 03:48','sonde',''],
+ ['ACV · PVD · ORT','ANCT · dispositifs · sonde API','ok','2026-03','injecté 13/09/2026','2026-03','publié 03/2026','24/09 03:48','sonde',''],
+ ['PEB — plan d\'exposition au bruit','GPU · SUP · sonde API','ok','2 aérodromes','injecté 13/09/2026','identique','identique','24/09 03:48','sonde',''],
+ ['Cinquante pas géométriques','DEAL Réunion · littoral · sonde WFS','ok','2025','injecté 13/09/2026','identique','identique','24/09 03:48','sonde',''],
+ ['PLH — programmes locaux de l\'habitat','EPCI · logement · dépôt manuel, cadence 365 j','ok','5 PLH','déposé 06/09/2026','page de publication','non datée','—','échéance dans 347 j',''],
+];
+const H=[
+ ['Cadastre Etalab (2e entrée)','alias','Alias de « Cadastre (Etalab) » — même URL, entrée en double rattrapée par CIRCUIT-5.','14/09/2026'],
+ ['DVF Réunion — Région','alias','Alias de DVF Etalab, qui fait foi.','14/09/2026'],
+ ['Potentiel foncier — ODS','alias','Alias de « Potentiel foncier Région » (data.regionreunion).','14/09/2026'],
+ ['RGE ALTI 5 m','alias','Alias de RGE ALTI 1 m, retenu pour l\'exposition et l\'altitude.','14/09/2026'],
+ ['GPU assainissement typeinf 19','alias','Alias d\'une prescription déjà servie par la source GPU.','14/09/2026'],
+ ['Cadastre d\'époque (parcelles disparues)','interne','Sert à recaler les permis orphelins ; rien ne l\'affiche au client. Visible ici avec son rôle.','19/09/2026'],
+ ['Recherche d\'entreprises (DINUM)','interne','Nourrit le score jusqu\'à la bascule q_v15 ; SIRENE fait foi pour l\'affichage.','13/09/2026'],
+ ['DEAL — WMS / WFS','hub','Canal proxy sans vanne propre ; ses couches sont rattachées à leurs sources.','19/09/2026'],
+ ['Géoplateforme IGN','hub','Catalogue : surveillé pour ses métadonnées, pas une donnée.','05/09/2026'],
+ ['PEIGEO — AGORAH','hub','Catalogue régional, même règle.','05/09/2026'],
+ ['Office de l\'eau Réunion','retirée','ANC rebranché sur INSEE EGOUL ; données conservées.','14/09/2026'],
+ ['MOBPRO','retirée','Aucun lecteur ; données conservées.','06/09/2026'],
+ ['BDNB','retirée','Ne couvre pas le 974 ; en veille agent.','06/09/2026'],
+ ['ZNIEFF Région','retirée','Doublon de l\'INPN.','11/09/2026'],
+ ['Parkings OSM (loi APER)','retirée','Lecteur coupé dans la fiche Solaire.','14/09/2026'],
+ ['Fichiers fonciers','convention','Réservé aux collectivités : à demander via un partenaire.','06/09/2026'],
+ ['LOVAC','convention','Même règle ; un éditeur privé n\'y a pas accès seul.','06/09/2026'],
+ ['DV3F','convention','Sous convention Cerema.','06/09/2026'],
+ ['SAR','a_faire','Non opposable aux tiers ; à intégrer avec mention.','06/09/2026'],
+ ['Zonages d\'assainissement (SIG EPCI)','a_faire','À demander aux EPCI.','06/09/2026'],
+ ['ZAC','a_faire','À demander aux EPCI.','06/09/2026'],
+ ['OPAH / PIG','a_faire','À demander aux EPCI.','06/09/2026'],
+ ['Inventaires ZAE','a_faire','À demander aux EPCI.','06/09/2026'],
+ ['ORT infra-communaux','a_faire','Périmètres non publiés.','06/09/2026'],
+ ['Micro-données OLL','a_faire','Agrégats seulement pour l\'instant.','06/09/2026'],
+ ['ENS du Département','a_faire','Pas de publication ouverte.','06/09/2026'],
+ ['ZPPA','a_faire','Pas de publication ouverte.','06/09/2026'],
+ ['Réunion Express','a_faire','Débat public en cours (CNDP), pas de tracé.','06/09/2026'],
+ ['Sudocuh (2e entrée)','alias','Alias de la source Sudocuh servie.','19/09/2026'],
+];
+const ETAT={ok:['p-ok','à jour'],nouvelle:['p-ambre','nouvelle version'],echue:['p-ambre','échue'],jamais:['p-gris','jamais vérifiée'],panne:['p-rouge','sonde en panne']};
+const ORDRE={panne:0,nouvelle:1,echue:2,jamais:3,ok:4};
+let etatActif='tous', segActif='vitrine';
+function filtre(b){document.querySelectorAll('#etats .chip').forEach(c=>c.classList.remove('actif'));b.classList.add('actif');etatActif=b.dataset.etat;rendre();}
+function segment(b){document.querySelectorAll('.segments .chip').forEach(c=>c.classList.remove('actif'));b.classList.add('actif');segActif=b.dataset.seg;
+  document.getElementById('tableVitrine').style.display=segActif==='vitrine'?'':'none';
+  document.getElementById('etats').style.display=segActif==='vitrine'?'':'none';
+  document.getElementById('tableHors').style.display=segActif==='hors'?'':'none';rendre();}
+function rendre(){
+  const q=document.getElementById('rech').value.trim().toLowerCase();
+  const l=S.filter(s=>(etatActif==='tous'||s[2]===etatActif)&&(!q||(s[0]+' '+s[1]).toLowerCase().includes(q)))
+           .sort((a,b)=>ORDRE[a[2]]-ORDRE[b[2]]||a[0].localeCompare(b[0],'fr'));
+  document.getElementById('lignes').innerHTML=l.map(s=>`
+    <div class="tr" onclick="va('detail')">
+      <div class="nom"><i class="pastille ${ETAT[s[2]][0]}"></i><div><b>${s[0]}</b><span>${s[1]}</span></div></div>
+      <div class="cel">${s[3]}<span>${s[4]}</span></div>
+      <div class="cel ${s[5]==='—'?'vide':''}">${s[5]}<span>${s[6]}</span></div>
+      <div class="cel ${s[7]==='—'?'vide':''}">${s[7]}<span>${s[8]}</span></div>
+      <div><span class="badge ${s[2]==='ok'?'ok':s[2]==='jamais'?'gris':s[2]==='panne'?'rouge':'ambre'}">${ETAT[s[2]][1]}</span></div>
+      <div class="act">${s[9]?`<button class="btn" onclick="event.stopPropagation()">${s[9]}</button>`:''}</div>
+    </div>`).join('');
+  const total={tous:92,ok:84,nouvelle:3,echue:2,jamais:3,panne:0}[etatActif];
+  document.getElementById('piedVitrine').textContent = l.length<total && !q
+    ? `${l.length} lignes montrées dans la maquette sur ${total} — en vrai tout s'affiche d'un coup sous 200 lignes.`
+    : `${l.length} source${l.length>1?'s':''}${q?` pour « ${q} »`:''}.`;
+  document.getElementById('lignesHors').innerHTML=H.filter(h=>!q||(h[0]+' '+h[2]).toLowerCase().includes(q)).map(h=>`
+    <div class="tr" style="cursor:default"><div class="nom"><i class="pastille p-gris"></i><div><b>${h[0]}</b></div></div>
+      <div><span class="badge gris">${h[1]}</span></div><div class="muet">${h[2]}</div><div class="muet">${h[3]}</div></div>`).join('');
+}
+rendre();
+
+/* ---------- agents & sonde ---------- */
+function menuAgents(e){e.stopPropagation();document.getElementById('menuAgents').classList.toggle('ouvert');}
+document.addEventListener('click',()=>document.getElementById('menuAgents').classList.remove('ouvert'));
+function agents(n,quoi){
+  const c=document.getElementById('agentsCours'),b=document.getElementById('agentsBarre'),t=document.getElementById('agentsTexte'),k=document.getElementById('agentsCout');
+  c.classList.add('actif');t.textContent=`Agents en cours sur ${quoi}`;b.style.width='0';k.textContent='0,00 €';
+  const cout=(n*0.038).toFixed(2).replace('.',',');
+  requestAnimationFrame(()=>b.style.width='100%');
+  let i=0;const it=setInterval(()=>{i++;k.textContent=(n*0.038*i/13).toFixed(2).replace('.',',')+' €';if(i>=13)clearInterval(it);},200);
+  setTimeout(()=>{t.textContent=`Passage terminé sur ${quoi} : 0 nouvelle version, ${n} contrôlée${n>1?'s':''}, ${cout} € — écrit au journal`;},2800);
+}
+function sonde(b){const d=b.textContent;b.disabled=true;b.textContent='Sonde en cours…';setTimeout(()=>{b.disabled=false;b.textContent=d;
+  b.previousElementSibling.querySelector('.desc').textContent='Chaque nuit à 03:00, interroge les 89 sources qui ont un amont. À l\'instant : 89 interrogées, 0 en panne, 3 nouvelles versions vues.';},1800);}
+
+/* ---------- circuit ---------- */
+const F=[['Parcelles et propriété',6,''],['Urbanisme et règles',14,'a g'],['Risques, nature, patrimoine',24,'a g'],['Marché, logement, permis',12,'a a'],['Énergie, réseaux, assainissement',6,'a'],['Économie, équipements, accès',15,''],['Terrain, sol, imagerie',10,''],['Autres',5,'g']];
+const C=[['Fonds de carte',10,''],['Couches',35,''],['Outils',33,''],['Fiches',43,''],['Copilote',10,''],['Veille',1,''],['Projets',2,''],['CRM',2,''],['Exports',27,'r']];
+function points(n,sp){const s=sp?sp.split(' '):[];let h='';for(let i=0;i<n;i++)h+=`<i class="${s[i]||''}"></i>`;return h;}
+function compte(sp){if(!sp)return'<b>tout va bien</b>';const a=sp.split(' ').filter(x=>x==='a').length,r=sp.split(' ').filter(x=>x==='r').length,g=sp.split(' ').filter(x=>x==='g').length;
+  const p=[];if(r)p.push(`<b class="r">${r} fuite</b>`);if(a)p.push(`<b class="a">${a} à voir</b>`);if(g)p.push(`<b>${g} jamais vérifié${g>1?'s':''}</b>`);return p.join('');}
+document.getElementById('familles').innerHTML=F.map(f=>`<div class="bloc-c ${f[2]?'':'ok'}"><div><div class="nom">${f[0]}</div><div class="points">${points(f[1],f[2])}</div></div><div class="cpt">${f[1]} réservoirs${compte(f[2])}</div></div>`).join('');
+document.getElementById('categories').innerHTML=C.map(f=>`<div class="bloc-c ${f[2]?'':'ok'}"><div><div class="nom">${f[0]}</div><div class="points">${points(f[1],f[2])}</div></div><div class="cpt">${f[1]} robinets${compte(f[2])}</div></div>`).join('');
+function queCloche(b){b.classList.toggle('actif');document.querySelectorAll('.bloc-c.ok').forEach(x=>x.classList.toggle('cache',b.classList.contains('actif')));}
+function verifier(b){const d=b.textContent;b.disabled=true;b.textContent='Contrôle en cours…';setTimeout(()=>{b.disabled=false;b.textContent=d;
+  document.getElementById('resultat').innerHTML='<span>Dernier contrôle à l\'instant —</span><b>1 fuite</b><span>·</span><b>0 eau ancienne</b><span>·</span><b>1 écart</b><span>·</span><b>verrous 21/22</b><span>— les trois sont dans</span><a href="#" data-va="afaire">À faire</a>';},2200);}
+
+/* ---------- journal ---------- */
+const J=[
+ ['24/09 02:05','controle','contrôle','p-rouge','verrous — 22 verrous','système','1 cassé : G8','rouge',[['G8 — aucune source vitrine sans contrôle depuis 7 j','6 sources : Communes IGN, INPN, NPNRU, PLH, Radar, VRD','r']]],
+ ['24/09 01:48','agent','agent','p-mauve','4 sources relancées','système','1 nouvelle · 3 sans réponse lisible · 0,66 €','',[['FRR ex-ZRR — zone spéciale d\'action rurale','nouvelle version (arrêté du 14/04/2025)','a'],['Communes La Réunion — contours','sans réponse lisible',''],['NPNRU','sans réponse lisible',''],['INPN / patrinat — espaces protégés','sans réponse lisible','']]],
+ ['23/09 22:17','agent','agent','p-mauve','8 sources','cli-circuit-p5','2 à jour · 1 nouvelle · 5 sans réponse lisible · 1,41 €','',[['PVGIS','à jour',''],['DEAL — cartes de bruit stratégiques','nouvelle version','a'],['ZFANG','à jour',''],['Coût de construction','sans réponse lisible',''],['INPI RNE','sans réponse lisible',''],['NPNRU','sans réponse lisible',''],['Communes La Réunion — contours','sans réponse lisible',''],['INPN / patrinat','sans réponse lisible','']]],
+ ['23/09 22:13','agent','agent','p-mauve','5 sources','cli-circuit-p5','1 nouvelle · 1 à jour · 3 sans réponse lisible · 0,71 €','',[['INSEE RP Logement 2023','nouvelle version','a'],['RTAA DOM','à jour',''],['FRR ex-ZRR','sans réponse lisible',''],['PVGIS','sans réponse lisible',''],['Coût de construction','sans réponse lisible','']]],
+ ['23/09 21:40','sonde','sonde','p-ok','89 sources','système','0 en panne · 3 nouvelles versions vues','',[['INSEE RP Logement 2023','nouvelle version','a'],['DEAL — cartes de bruit stratégiques','nouvelle version','a'],['86 autres','à jour','']]],
+ ['23/09 07:25','controle','contrôle','p-ok','robinets — cohérence','système','1 fuite · 1 écart (déjà ouverts)','',[['Recette des exports','lit hors moteur','r'],['Parcelles à potentiel','1 812 vs 1 790 (Saint-Paul)','r']]],
+ ['22/09 19:04','vanne','vanne','p-ok','Cadastre (Etalab) — 2025-09','toi','injecté · résiduel à recalculer','',[['Cadastre (Etalab)','431 663 parcelles, 0 rejet garde 974','']]],
+ ['22/09 19:02','vanne','vanne','p-ok','DVF — S1 2026','toi','injecté','',[['DVF','12 408 mutations, 0 rejet','']]],
+ ['21/09 06:10','agent','agent','p-mauve','92 sources — passage du dimanche','système','89 à jour · 3 nouvelles · 3,40 €','',[['92 sources','détail par source dans Sources','']]],
+ ['20/09 03:00','cron','cron','p-ok','Annuaire de l\'administration — ⟳ 35 j','système','24 mairies rafraîchies','',[['Annuaire de l\'administration','identique','']]],
+];
+let jActif='tous';
+function jfiltre(b){document.querySelectorAll('#jfiltres .chip').forEach(c=>c.classList.remove('actif'));b.classList.add('actif');jActif=b.dataset.j;jrendre();}
+function jrendre(){
+  document.getElementById('passages').innerHTML=J.filter(j=>jActif==='tous'||j[1]===jActif).map((j,i)=>`
+    <div class="passage" id="p${i}">
+      <div class="ent" onclick="document.getElementById('p${i}').classList.toggle('ouvert')">
+        <div class="muet">${j[0]}</div><div class="geste"><i class="pastille ${j[3]}"></i>${j[2]}</div><div>${j[4]}<span class="muet"> · ${j[5]}</span></div>
+        <div class="res ${j[7]}">${j[6]}</div><div class="chev">${document.getElementById('p'+i)?.classList.contains('ouvert')?'▼':'‹'}</div>
+      </div>
+      <div class="lignes">${j[8].map(l=>`<div><div></div><div></div><div><a href="#" data-va="detail">${l[0]}</a></div><div class="${l[2]}" style="text-align:right">${l[1]}</div><div></div></div>`).join('')}</div>
+    </div>`).join('') + `<div class="muet petit" style="padding:8px 18px">… 15 passages plus anciens</div>`;
+}
+jrendre();
+</script>
+</body>
+</html>
