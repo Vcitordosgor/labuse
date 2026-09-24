@@ -35,14 +35,17 @@ export function MarcheSecteurBlock({ ms }: { ms: MarcheSecteur }) {
       )}
       {r && (
         <>
-          <FactRow label="Parc social" value={<>{r.nb_logements.toLocaleString('fr-FR')} <small>logements</small></>}
-            src={r.millesime} />
+          {/* FICHE-FIX-2 P5 — le RPLS est à maille COMMUNE (rpls_commune, insee=left(idu,5)), pas
+              secteur : la maille est DITE sur la ligne (§1.5), on ne laisse pas un chiffre communal
+              se lire comme du secteur. Le RPLS n'existe pas à l'IRIS/carreau en base (vérifié). */}
+          <FactRow label="Parc social — commune entière" value={<>{r.nb_logements.toLocaleString('fr-FR')} <small>logements</small></>}
+            src={<>{r.millesime} · maille commune</>} />
           {r.pct_qpv != null && (
-            <FactRow label="En QPV" value={<>{r.pct_qpv} <small>%</small></>} />
+            <FactRow label="En QPV — commune" value={<>{r.pct_qpv} <small>%</small></>} />
           )}
         </>
       )}
-      <FactNote>Contexte informatif — hors scoring.</FactNote>
+      <FactNote>Contexte informatif — hors scoring. Niveau de vie/pauvreté au carreau 200 m ; parc social à la commune.</FactNote>
     </div>
   )
 }
