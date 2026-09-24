@@ -55,11 +55,36 @@ const COCHE_DEFAUT = (c: TuyauCouche) => c.famille === 'reperes'
 
 const FALLBACK = '#8892a0'
 
+// RETOURS-13 P5 — COURBES DE NIVEAU : couche RASTER (overlay de lignes transparent) servie par le
+// proxy /map/tiles/contours (IGN Géoplateforme WMTS ELEVATION.CONTOUR.LINE, couverture 974 vérifiée).
+// Déclarée CÔTÉ FRONT (le tuyau back ne sert que du vecteur) et fusionnée au plan : elle apparaît dans
+// le panneau « Couches » (famille Environnement) et la légende comme n'importe quelle couche. Off par
+// défaut (famille ≠ reperes). Le montage (source/calque) est spécialisé pour geometrie === 'raster'.
+export const COURBES_NIVEAU_KIND = 'courbes_niveau'
+const COURBES_NIVEAU_COUCHE: TuyauCouche = {
+  kind: COURBES_NIVEAU_KIND,
+  nom: 'Courbes de niveau',
+  famille: 'environnement',
+  geometrie: 'raster',
+  zoom_min: 11,   // contours denses : gated jusqu'à z11 (« Zoomez pour voir » sinon), lisible en approche
+  rang_carte: 5,
+  style: {},
+  // une pastille de légende (la teinte bistre mesurée des lignes IGN) — pas de gradation.
+  niveaux: [{ id: 'ligne', propriete: 'x', valeur: 'x', couleur: '#CC8066', legende: 'Ligne de niveau', geometrie: 'ligne' }],
+  popup: null,
+  legende: 'Courbes de niveau (équidistance variable selon l’échelle)',
+  statut_juridique: null,
+  tuiles_url: '/map/tiles/contours/{z}/{x}/{y}',
+  i: 'Courbes de niveau — IGN Géoplateforme, couche WMTS ELEVATION.CONTOUR.LINE (dérivée du RGE ALTI, millésime 2025). Équidistance variable selon l’échelle. Overlay raster superposable à tous les fonds.',
+}
+
 async function chargerPlan(): Promise<TuyauCouche[]> {
   const r = await fetch('/map/tuyau/couches')
   if (!r.ok) throw new Error(`plan tuyau: ${r.status}`)
   const j = await r.json()
-  return (j.couches ?? []) as TuyauCouche[]
+  // RETOURS-13 P5 — le contour (raster) rejoint le plan vecteur servi par le back : un seul plan,
+  // un seul panneau, une seule légende.
+  return [...((j.couches ?? []) as TuyauCouche[]), COURBES_NIVEAU_COUCHE]
 }
 
 export function useTuyauPlan() {
@@ -395,6 +420,19 @@ export function CouchesTuyauLayers({ map, ready }: {
     // se posent directement au-dessus du fond, sans calque intermédiaire.
     for (const c of plan) {
       if (HORS_PANNEAU(c)) continue   // A11 : le bâti 3D est géré par le bouton 3D, pas monté ici
+      // RETOURS-13 P5 — une couche RASTER (courbes de niveau) : source + calque `raster`, pas de
+      // vecteur, pas de popup. Overlay de lignes transparent posé au-dessus du fond et des couches.
+      if (c.geometrie === 'raster') {
+        const rsrc = `tuyau-${c.kind}`
+        if (!m.getSource(rsrc)) {
+          m.addSource(rsrc, { type: 'raster', tileSize: 256, minzoom: 6, maxzoom: 18,
+            tiles: [`${window.location.origin}${c.tuiles_url}`] })
+        }
+        const rid = `tuyau-${c.kind}-raster`
+        if (!m.getLayer(rid)) m.addLayer({ id: rid, type: 'raster', source: rsrc,
+          layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.85 } })
+        continue
+      }
       const src = `tuyau-${c.kind}`
       if (!m.getSource(src)) {
         // COUCHES-RECETTE-1 (A7 / lenteur) : la source n'est demandée qu'à partir de son zoom_min —
@@ -448,6 +486,11 @@ export function CouchesTuyauLayers({ map, ready }: {
     if (!m || !ready || !plan) return
     for (const c of plan) {
       const vis = tuyauActives[c.kind] ? 'visible' : 'none'
+      if (c.geometrie === 'raster') {   // RETOURS-13 P5 — le calque raster (courbes de niveau) suit son toggle
+        const rid = `tuyau-${c.kind}-raster`
+        if (m.getLayer(rid)) m.setLayoutProperty(rid, 'visibility', vis)
+        continue
+      }
       for (const spec of calques(c)) if (m.getLayer(spec.id)) m.setLayoutProperty(spec.id, 'visibility', vis)
     }
   }, [tuyauActives, ready, plan, map])

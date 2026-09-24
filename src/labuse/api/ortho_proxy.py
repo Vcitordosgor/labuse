@@ -255,6 +255,37 @@ def ortho_tile(couche: str, z: int, x: int, y: int) -> Response:
     return Response(sortie, media_type="image/png", headers=_HDR)
 
 
+# RETOURS-13 P5 — COURBES DE NIVEAU. Source IGN Géoplateforme WMTS `ELEVATION.CONTOUR.LINE`
+# (PM_6_18, image/png, couverture 974 VÉRIFIÉE — tuile z14 sur La Montagne = 19,5 % de pixels de
+# ligne, teinte bistre). Contrairement aux orthos, ce sont des LIGNES sur fond TRANSPARENT : on ne
+# passe donc PAS par `_traiter` (fondu de côte / masque mer) qui prendrait le transparent pour du
+# no-data. On RELAIE le PNG brut (transparence native préservée) + cache disque, même famille que
+# le proxy ortho. Hors couverture WMTS (tuile absente) → 404 transitoire, non caché.
+_CONTOUR_LAYER = "ELEVATION.CONTOUR.LINE"
+
+
+@router.get("/map/tiles/contours/{z}/{x}/{y}")
+def contour_tile(z: int, x: int, y: int) -> Response:
+    if not (0 <= z <= 18 and 0 <= x < 2 ** z and 0 <= y < 2 ** z):
+        raise HTTPException(404, "Tuile hors grille")
+    base = _cache_base("contours", z, x, y)
+    for ext, mime in _MIME.items():
+        p = base.with_suffix(ext)
+        if p.exists():
+            return Response(p.read_bytes(), media_type=mime, headers=_HDR)
+    import requests as _rq
+    try:
+        r = _rq.get(_WMTS.format(layer=_CONTOUR_LAYER, fmt="image/png", z=z, x=x, y=y),
+                    headers={"User-Agent": "labuse/1.0"}, timeout=15)
+    except Exception as e:  # noqa: BLE001 — WMTS muet : pas de tuile (l'overlay est simplement absent)
+        log.warning("contour-proxy %s/%s/%s : WMTS muet (%s)", z, x, y, e)
+        raise HTTPException(404, "WMTS indisponible") from None
+    if r.status_code != 200 or not r.headers.get("content-type", "").startswith("image/"):
+        raise HTTPException(404, "Tuile absente")   # hors couverture / transitoire : pas de cache
+    _cache_ecrire(base, ".png", r.content)
+    return Response(r.content, media_type="image/png", headers=_HDR)
+
+
 # RETOURS-15 U1 — ancien chemin (front en cache navigateur) : même pipeline, couche express.
 @router.get("/map/tiles/ortho-express/{z}/{x}/{y}")
 def ortho_express_tile(z: int, x: int, y: int) -> Response:
