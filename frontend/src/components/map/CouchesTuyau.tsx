@@ -519,8 +519,12 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
   // d'abord). Chaque entrée montre ses grades (niveaux) OU ses teintes data-driven (par réseau /
   // catégorie via style.couleurs) + une note de couverture (A12).
   const entrees = grouper(actives).reverse()
-  const estDeplie = (e: Entree) => e.cle === ouvert || e.membres.some((m) => m.kind === ouvert)
-  const deplie = entrees.find(estDeplie)?.cle ?? entrees[0].cle
+  // DA-FIX-5 P2 — UNE SEULE rangée ouverte à la fois, garanti par construction : la clé ouverte est
+  // UNIQUE (`ouvert`). `null` = défaut (couche du dessus) ; `''` = tout replié (l'utilisateur a fermé
+  // la rangée ouverte). Ouvrir une rangée referme donc l'autre ; cliquer la rangée ouverte la referme.
+  const defautCle = entrees[0]?.cle ?? null
+  const openKey = ouvert === null ? defautCle : (ouvert || null)
+  const estDeplie = (e: Entree) => !!openKey && (e.cle === openKey || e.membres.some((m) => m.kind === openKey))
   return (
     <div data-tuyau-legend
       className="floating absolute bottom-10 right-4 hidden max-h-[52vh] w-[244px] overflow-y-auto rounded-xl bg-surface-2/95 p-3 text-txt shadow-elev-2 sm:block">
@@ -533,7 +537,7 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
       {!replie && (
       <div className="mt-2 flex flex-col gap-1">
         {entrees.map((e) => {
-          const isOpen = e.cle === deplie
+          const isOpen = estDeplie(e)
           const sw = pastillesLegende(e)
           const note = e.membres.map((m) => m.note).find(Boolean)
           // COUCHES-RECETTE-2 B5 : couche à zoom minimum non atteint → « Zoomez pour voir … ».
