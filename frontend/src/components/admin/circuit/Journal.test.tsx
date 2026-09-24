@@ -1,6 +1,6 @@
-// CIRCUIT-P (lot 5) / CIRCUIT-P2 (lot 4) — le journal : filtres de catégorie (« tous » d'abord,
-// ordre fixe, présents même vides), ligne cliquable vers le détail (par NOM), passage GROUPÉ sur
-// une ligne dépliable, « par » qui dit un nom, compteur du jour remonté.
+// CIRCUIT-P (lot 5) / CIRCUIT-P2 (lot 4) / CIRCUIT-P7 (lot 5) — le journal : filtres de catégorie
+// (« tous » EN DERNIER à droite, ordre fixe, présents même vides), ligne cliquable vers le détail
+// (par NOM), passage GROUPÉ sur une ligne dépliable, « par » qui dit un nom, compteur du jour remonté.
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -49,12 +49,13 @@ describe('Journal', () => {
     return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>)
   }
 
-  it('filtres de catégorie « tous » d\'abord, ordre fixe ; compteur du jour remonté', async () => {
+  it('filtres de catégorie « tous » EN DERNIER à droite (CIRCUIT-P7 lot 5) ; compteur du jour remonté', async () => {
     const onJour = vi.fn()
-    const { getByText, getAllByText } = wrap(<Journal data={data} onOpen={() => {}} onAujourdhui={onJour} />)
+    const { getByText, container } = wrap(<Journal data={data} onOpen={() => {}} onAujourdhui={onJour} />)
     await waitFor(() => expect(getByText('SITADEL')).toBeInTheDocument())
-    const filtres = getAllByText(/^(tous|vanne|calcul|bascule|filtre)$/)
-    expect(filtres[0].textContent).toBe('tous')
+    // on ne regarde QUE les boutons de la barre de filtres (pas les libellés des passages).
+    const boutons = Array.from(container.querySelectorAll('.jf button')).map((b) => b.textContent)
+    expect(boutons).toEqual(['vanne', 'calcul', 'bascule', 'filtre', 'tous'])   // « tous » à droite
     expect(getByText('quand')).toBeInTheDocument()
     expect(onJour).toHaveBeenCalledWith(1)
   })

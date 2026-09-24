@@ -2951,7 +2951,7 @@ def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
             f" GROUP BY gk) x"), params).scalar() or 0
         # la PAGE de groupes (ordonnés par le passage le plus récent)
         groupes_page = [dict(x) for x in c.execute(text(
-            f"SELECT {gk} AS gk, max(ts) AS ts, count(*) AS n, min(geste) AS geste,"
+            f"SELECT {gk} AS gk, max(ts) AS ts, min(ts) AS ts_min, count(*) AS n, min(geste) AS geste,"
             f" min(par) AS par FROM circuit_journal WHERE {where}"
             f" GROUP BY gk ORDER BY max(ts) DESC LIMIT :lim OFFSET :off"), params).mappings()]
         gks = [g["gk"] for g in groupes_page]
@@ -2966,6 +2966,19 @@ def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
         aujourdhui = c.execute(text(
             "SELECT count(*) FROM circuit_journal WHERE (ts AT TIME ZONE 'Indian/Reunion')::date"
             " = (now() AT TIME ZONE 'Indian/Reunion')::date")).scalar() or 0
+        # CIRCUIT-P7 (lot 5) — le COÛT DU LEDGER (ia_log, agent_source, hors web_search) sur chaque
+        # passage d'agents : sommé sur la fenêtre [premier, dernier] du lot. Jamais estimé.
+        couts_agents: dict[str, float] = {}
+        for g in groupes_page:
+            if g["geste"] == "agent":
+                try:
+                    cv = c.execute(text(
+                        "SELECT COALESCE(sum(cout_eur), 0) FROM ia_log WHERE kind = 'agent_source'"
+                        " AND ts BETWEEN :a AND :b"), {"a": g["ts_min"], "b": g["ts"]}).scalar()
+                    if cv:
+                        couts_agents[g["gk"]] = round(float(cv), 2)
+                except Exception:  # noqa: BLE001 — pas de ledger : coût inconnu (pas de crash)
+                    pass
 
     par_gk: dict[str, list] = {}
     for m in membres:
@@ -2995,6 +3008,7 @@ def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
             "cible": membs[0]["cible"] if len(membs) == 1 else None,
             "cible_nom": membs[0]["cible_nom"] if len(membs) == 1 else None,
             "verdicts": verdicts, "resultats": resultats,
+            "cout_eur": couts_agents.get(g["gk"]),   # CIRCUIT-P7 (lot 5) — coût du ledger (agents)
             "membres": membs if int(g["n"]) > 1 else [],
         })
     return {"entrees": entrees, "page": page, "taille": taille, "total": int(total),

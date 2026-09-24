@@ -81,12 +81,13 @@ export function Journal({ data, onOpen, onAujourdhui }:
 
   return (
     <div>
+      {/* CIRCUIT-P7 (lot 5) — « tous » EN DERNIER à droite (règle des filtres, comme Sources). */}
       <div className="jf">
-        <button className={type === '' ? 'on' : ''} onClick={() => { setType(''); setPage(1) }}>tous</button>
         {cats.map((cat) => (
           <button key={cat.slug} className={type === cat.slug ? 'on' : ''}
             onClick={() => { setType(cat.slug); setPage(1) }}>{cat.label}</button>
         ))}
+        <button className={type === '' ? 'on' : ''} onClick={() => { setType(''); setPage(1) }}>tous</button>
       </div>
       <div className="jl h"><span>quand</span><span>geste</span><span>cible</span><span>par</span><span>résultat</span></div>
       {q.isLoading ? <div className="muted" style={{ padding: 12 }}>Chargement…</div>
@@ -101,9 +102,11 @@ export function Journal({ data, onOpen, onAujourdhui }:
                   <button className="jl grp" onClick={() => setOuverts((o) => ({ ...o, [e.gk]: !o[e.gk] }))}>
                     <span className="muted">{quand(e.ts)}</span>
                     <span className="g"><i className={rep.couleur === 'mint' ? '' : rep.couleur} />{e.categorie_label}</span>
-                    <span><b>{`${e.n} cibles`}</b> <span className="chev">{open ? '▾' : '▸'}</span></span>
+                    <span><b>{`${e.n} cibles`}</b> <span className="chev">{open ? '▼' : '‹'}</span></span>
                     <span className="muted">{e.par_nom}</span>
-                    <span className={`r ${rep.couleur === 'mint' ? '' : rep.couleur}`}>{rep.txt}</span>
+                    {/* CIRCUIT-P7 (lot 5) — coût du ledger sur les passages d'agents (hors web_search). */}
+                    <span className={`r ${rep.couleur === 'mint' ? '' : rep.couleur}`}>{rep.txt}
+                      {e.cout_eur != null && <span className="muted"> · {e.cout_eur.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</span>}</span>
                   </button>
                   {open && e.membres.map((m: any, i: number) => {
                     const c = couleurResultat(m.resultat)
@@ -129,7 +132,8 @@ export function Journal({ data, onOpen, onAujourdhui }:
                 <span className="g"><i className={c === 'mint' ? '' : c} />{e.categorie_label}</span>
                 <span><Cible cible={e.cible} nom={e.cible_nom} /></span>
                 <span className="muted">{e.par_nom}</span>
-                <span className={`r ${c === 'mint' ? '' : c}`}>{e.resultat}</span>
+                <span className={`r ${c === 'mint' ? '' : c}`}>{e.resultat}
+                  {e.cout_eur != null && <span className="muted"> · {e.cout_eur.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</span>}</span>
               </div>
             )
           })}
