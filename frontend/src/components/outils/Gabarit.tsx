@@ -128,6 +128,7 @@ export function Gabarit() {
   const terrain3d = useApp((s) => s.terrain3d)
   const [idu, setIdu] = useState<string | null>(selectedIdu)
   const [reglesOuvertes, setReglesOuvertes] = useState(false)   // DA-031 — accordéon « Voir les règles appliquées »
+  const [nonIntOuvertes, setNonIntOuvertes] = useState(true)    // GABARIT-6 P3 — liste des règles non intégrées, ouverte par défaut
 
   useEffect(() => {
     if (selectedIdu && selectedIdu !== idu) setIdu(selectedIdu)
@@ -246,6 +247,32 @@ export function Gabarit() {
                 </li>
               ))}
             </ul>
+            {/* GABARIT-6 P3 — la LISTE des règles connues mais non intégrées (le compte seul vivait
+                ci-dessus). Nom · pourquoi (souvent avec la citation PLU) · source. Rien d'inventé :
+                exactement ce que le moteur renvoie dans nonIntegratedRules. */}
+            {res.nonIntegratedRules.length > 0 && (
+              <details data-gabarit-non-integrees open={nonIntOuvertes}
+                onToggle={(e) => setNonIntOuvertes((e.target as HTMLDetailsElement).open)}
+                className="group mt-2 border-t border-line pt-2">
+                <summary className="hover-fill flex cursor-pointer list-none items-center gap-1.5 rounded px-0.5 py-0.5 text-[10.5px] text-txt-mut">
+                  <Chevron open={nonIntOuvertes} />
+                  <b>Le détail des {res.nonIntegratedRules.length} règle{res.nonIntegratedRules.length > 1 ? 's' : ''} non intégrée{res.nonIntegratedRules.length > 1 ? 's' : ''}</b>
+                </summary>
+                <ul className="mt-1.5 flex flex-col gap-1.5">
+                  {res.nonIntegratedRules.map((n, i) => (
+                    <li key={i} data-gabarit-non-integree className="border-b border-line pb-1.5 last:border-0">
+                      <span className="text-[10.5px] text-txt">{n.label}</span>
+                      {n.detail && <span className="block text-[9.5px] italic leading-snug text-txt-dim">{n.detail}</span>}
+                      {(n.source?.document || n.source?.zone || n.source?.article) && (
+                        <span className="block text-[9px] leading-snug text-txt-ghost">
+                          {[n.source.document, n.source.zone, n.source.article].filter(Boolean).join(' — ')}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
           </div>
 
           {/* RÈGLES APPLIQUÉES — générées depuis le moteur, aucune valeur en dur */}

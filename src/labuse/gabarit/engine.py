@@ -137,7 +137,7 @@ def compute_gabarit(inp: GabaritInput) -> GabaritResult:
             detail=ex.label, source=ex.source))
 
     non_integ = [NonIntegratedRule(id=ar.id, label=ar.label or (ar.id or "règle"),
-                                   source=ar.source)
+                                   detail=ar.detail, source=ar.source)
                  for ar in inp.applicableRules if ar.integrationStatus == "not_integrated"]
 
     def _gj(g: Optional[BaseGeometry]):

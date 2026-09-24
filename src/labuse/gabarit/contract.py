@@ -119,6 +119,7 @@ class AppliedRule(BaseModel):
 class NonIntegratedRule(BaseModel):
     id: Optional[str] = None
     label: str
+    detail: Optional[str] = None    # GABARIT-6 — pourquoi non intégrée (souvent avec la citation PLU)
     source: RegulatorySource
 
 

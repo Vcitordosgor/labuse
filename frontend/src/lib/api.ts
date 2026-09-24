@@ -546,7 +546,7 @@ export interface GabAppliedRule {
   ruleId: string; category: string; label: string
   value?: number | null; unit?: string | null; detail?: string | null; source: GabRegSource
 }
-export interface GabNonIntegratedRule { id?: string | null; label: string; source: GabRegSource }
+export interface GabNonIntegratedRule { id?: string | null; label: string; detail?: string | null; source: GabRegSource }
 export interface GabCoverage { reculs: boolean; hauteur: boolean; emprise: boolean; risques: boolean }
 export type GabGeom = { type: string; coordinates: unknown } | null
 export interface GabaritResult {
