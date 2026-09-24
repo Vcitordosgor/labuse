@@ -783,8 +783,11 @@ export function Fiche({ idu }: { idu: string }) {
       </div>{/* /.tete-collee — RETOURS-13 P7 : bloc identité COLLÉ (les 6 tuiles ne collent pas) */}
 
       {/* RETOURS-13 P7 — les 6 tuiles vivent dans leur PROPRE carte, sous l'en-tête collé : elles
-          DÉFILENT (elles ne collent pas). */}
-      <div className="head" data-fiche-tuiles style={{ marginTop: 6 }}>
+          DÉFILENT (elles ne collent pas). `shrink-0` OBLIGATOIRE : cette carte est un enfant flex
+          DIRECT du conteneur défilant et son `overflow:hidden` ramène sa taille mini flex à 0 → sans
+          shrink-0 elle s'écrase à 1px et clippe les 6 tuiles (l'ancien code l'enveloppait dans un div
+          sans overflow, ce qui l'en protégeait). */}
+      <div className="head shrink-0" data-fiche-tuiles style={{ marginTop: 6 }}>
         {/* RETOURS-11 F1 — les trois accès (Cadastre · Pages Jaunes · Google Maps) ont MONTÉ dans
             l'en-tête à côté de la cloche, en boutons-logos (voir .hbtns ci-dessus). Les anciennes
             pastilles pleines sur deux lignes sont retirées. */}
