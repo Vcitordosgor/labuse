@@ -546,7 +546,7 @@ export interface GabAppliedRule {
   ruleId: string; category: string; label: string
   value?: number | null; unit?: string | null; detail?: string | null; source: GabRegSource
 }
-export interface GabNonIntegratedRule { id?: string | null; label: string; source: GabRegSource }
+export interface GabNonIntegratedRule { id?: string | null; label: string; detail?: string | null; source: GabRegSource }
 export interface GabCoverage { reculs: boolean; hauteur: boolean; emprise: boolean; risques: boolean }
 export type GabGeom = { type: string; coordinates: unknown } | null
 export interface GabaritResult {
@@ -561,6 +561,8 @@ export interface GabaritResult {
   hauteurReglementaireM?: number | null
   hauteurSource?: GabRegSource | null
   hauteurStatus?: string | null          // 'not_integrated' → « Non chiffrée » (prospect)
+  hauteurBase?: string | null            // 'faitage' | 'egout' — ce que porte hauteurReglementaireM
+  hauteurEgoutM?: number | null          // égout en sous-ligne quand la règle distingue faîtage/égout
   coverage?: GabCoverage | null
   appliedRules: GabAppliedRule[]
   nonIntegratedRules: GabNonIntegratedRule[]
@@ -568,6 +570,13 @@ export interface GabaritResult {
   zoneImplantationGeoJSON?: GabGeom
   retraitsGeoJSON?: GabGeom
   exclusionsGeoJSON?: GabGeom
+  // GABARIT-6 P4 — bâti existant (emprise BD TOPO + hauteur LiDAR HD), fait contextuel
+  batiExistantGeoJSON?: GabFeatureCollection | null
+}
+export interface GabBatiProps { hauteur_m?: number | null; h_source?: string | null }
+export interface GabFeatureCollection {
+  type: 'FeatureCollection'
+  features: Array<{ type: 'Feature'; properties: GabBatiProps; geometry: GabGeom }>
 }
 export const getGabarit = (idu: string) =>
   j<GabaritResult>(`/outils/gabarit/${encodeURIComponent(idu)}`)

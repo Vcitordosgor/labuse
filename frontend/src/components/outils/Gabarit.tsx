@@ -21,9 +21,11 @@ const C_ZONE = '#36c99a'      // zone d'implantation — vert franc, distinct du
 const C_RETRAIT = '#e0a44a'   // bandes de recul — ambre
 const C_EXCL = '#e8491d'      // exclusions (PPR rouge) — rouge
 const C_CONTOUR = '#ffffff'   // contour cadastral
+const C_BATI = '#9aa0a6'      // bâti existant — gris neutre (un FAIT contextuel, jamais un signal)
 
 const SRC = 'gabarit-outil'
-const LAYERS = ['gabarit-zone', 'gabarit-contour', 'gabarit-retrait', 'gabarit-excl', 'gabarit-zone-3d']
+const LAYERS = ['gabarit-zone', 'gabarit-contour', 'gabarit-retrait', 'gabarit-excl', 'gabarit-zone-3d',
+                'gabarit-bati', 'gabarit-bati-line', 'gabarit-bati-3d']
 
 type MapLike = {
   getSource: (id: string) => unknown
@@ -74,14 +76,25 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean) {
     // réservées au calcul complet.
     const contourOnly = !ok && res.status === 'incomplete' && !!res.contourGeoJSON
     if (!ok && !contourOnly) return
-    const features = (ok
-      ? [
-          feat(res.retraitsGeoJSON ?? null, 'retrait'),
-          feat(res.exclusionsGeoJSON ?? null, 'excl'),
-          feat(res.zoneImplantationGeoJSON ?? null, 'zone'),
-          feat(res.contourGeoJSON ?? null, 'contour'),
-        ]
-      : [feat(res.contourGeoJSON ?? null, 'contour')]).filter(Boolean)
+    // GABARIT-6 P4 — le bâti EXISTANT (emprise BD TOPO), FAIT contextuel, servi que le calcul soit
+    // complet ou non (l'outil dit où l'on PEUT construire ; ceci dit ce qui est DÉJÀ là). Chaque
+    // Feature porte sa hauteur mesurée (LiDAR HD, à défaut BD TOPO) pour l'extrusion 3D.
+    const batiFeats = (res.batiExistantGeoJSON?.features ?? []).map((f) => ({
+      type: 'Feature' as const,
+      properties: { kind: 'bati', hauteur_m: f.properties?.hauteur_m ?? null },
+      geometry: f.geometry,
+    }))
+    const features = [
+      ...(ok
+        ? [
+            feat(res.retraitsGeoJSON ?? null, 'retrait'),
+            feat(res.exclusionsGeoJSON ?? null, 'excl'),
+            feat(res.zoneImplantationGeoJSON ?? null, 'zone'),
+            feat(res.contourGeoJSON ?? null, 'contour'),
+          ]
+        : [feat(res.contourGeoJSON ?? null, 'contour')]).filter(Boolean),
+      ...batiFeats,
+    ]
     m.addSource(SRC, { type: 'geojson', data: { type: 'FeatureCollection', features } })
     if (ok) {
       m.addLayer({ id: 'gabarit-retrait', type: 'fill', source: SRC, filter: ['==', 'kind', 'retrait'],
@@ -91,14 +104,29 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean) {
       m.addLayer({ id: 'gabarit-zone', type: 'fill', source: SRC, filter: ['==', 'kind', 'zone'],
         paint: { 'fill-color': C_ZONE, 'fill-opacity': 0.5 } })
     }
+    // GABARIT-6 P4 — bâti existant en surimpression 2D (emprise grise + contour), sous le contour cadastral.
+    if (batiFeats.length) {
+      m.addLayer({ id: 'gabarit-bati', type: 'fill', source: SRC, filter: ['==', 'kind', 'bati'],
+        paint: { 'fill-color': C_BATI, 'fill-opacity': 0.35 } })
+      m.addLayer({ id: 'gabarit-bati-line', type: 'line', source: SRC, filter: ['==', 'kind', 'bati'],
+        paint: { 'line-color': C_BATI, 'line-width': 1 } })
+    }
     m.addLayer({ id: 'gabarit-contour', type: 'line', source: SRC, filter: ['==', 'kind', 'contour'],
       paint: { 'line-color': C_CONTOUR, 'line-width': 1.5, 'line-dasharray': [2, 1] } })
-    // 3D : extrusion de la SEULE zone calculée, à la hauteur SOURCÉE (aucun fallback) ; jamais un bâtiment réel.
+    // 3D : extrusion de la zone calculée (enveloppe réglementaire, vert) à la hauteur SOURCÉE. Le bâti
+    // existant (gris) est extrudé À PART, à sa hauteur MESURÉE (LiDAR HD, à défaut BD TOPO) : où l'on
+    // PEUT construire vs ce qui est DÉJÀ là. Deux couches distinctes, jamais confondues.
     if (ok && terrain3d && res.hauteurReglementaireM != null) {
       m.addLayer({ id: 'gabarit-zone-3d', type: 'fill-extrusion', source: SRC,
         filter: ['==', 'kind', 'zone'],
         paint: { 'fill-extrusion-color': C_ZONE, 'fill-extrusion-opacity': 0.6,
                  'fill-extrusion-height': res.hauteurReglementaireM, 'fill-extrusion-base': 0 } })
+    }
+    if (terrain3d && batiFeats.length) {
+      m.addLayer({ id: 'gabarit-bati-3d', type: 'fill-extrusion', source: SRC,
+        filter: ['==', 'kind', 'bati'],
+        paint: { 'fill-extrusion-color': C_BATI, 'fill-extrusion-opacity': 0.55,
+                 'fill-extrusion-height': ['coalesce', ['get', 'hauteur_m'], 3], 'fill-extrusion-base': 0 } })
     }
     const bb = bboxOf(res.contourGeoJSON ?? res.zoneImplantationGeoJSON ?? null)
     if (bb) { try { m.fitBounds(bb, { padding: 80, duration: 600, maxZoom: 19 }) } catch { /* noop */ } }
@@ -128,6 +156,7 @@ export function Gabarit() {
   const terrain3d = useApp((s) => s.terrain3d)
   const [idu, setIdu] = useState<string | null>(selectedIdu)
   const [reglesOuvertes, setReglesOuvertes] = useState(false)   // DA-031 — accordéon « Voir les règles appliquées »
+  const [nonIntOuvertes, setNonIntOuvertes] = useState(true)    // GABARIT-6 P3 — liste des règles non intégrées, ouverte par défaut
 
   useEffect(() => {
     if (selectedIdu && selectedIdu !== idu) setIdu(selectedIdu)
@@ -161,7 +190,14 @@ export function Gabarit() {
   // GABARIT-6 lot B : référence + commune de la parcelle (servies par raccordement.parcelle), affichées
   // même quand le calcul est incomplet, au-dessus du motif.
   const parcelle = (res?.raccordement?.parcelle ?? null) as
-    { idu?: string; commune?: string } | null
+    { idu?: string; commune?: string; surface_m2?: number | null } | null
+  // GABARIT-6 P2 — parcelle à cheval : l'outil sert le gabarit sur la portion de la zone constructible
+  // dominante. On affiche le CADASTRE ENTIER (= la fiche) puis la portion servie en sous-ligne (cf.
+  // GABARIT-AUDIT-1 : « Surface parcelle 7 465 m² » masquait qu'il s'agissait d'un morceau, pas de la parcelle).
+  const raccZone = (res?.raccordement?.zone ?? null) as { code?: string; a_cheval?: boolean } | null
+  const cadastreM2 = parcelle?.surface_m2 ?? null
+  const aCheval = !!raccZone?.a_cheval && cadastreM2 != null && res?.surfaceParcelleM2 != null
+  const pctPortion = aCheval ? Math.round((res!.surfaceParcelleM2! / cadastreM2!) * 100) : null
 
   const reset = () => setIdu(null)
 
@@ -211,7 +247,10 @@ export function Gabarit() {
       {res && res.status === 'ok' && (
         <>
           <div data-gabarit-chiffres className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-            <Num label="Surface parcelle" value={res.surfaceParcelleM2} unit="m²" />
+            {aCheval
+              ? <Num label="Surface parcelle" value={cadastreM2} unit="m²"
+                  sub={`dont ${fmtInt(res.surfaceParcelleM2)} m² en ${raccZone?.code ?? 'zone U'} (${pctPortion} %)`} />
+              : <Num label="Surface parcelle" value={res.surfaceParcelleM2} unit="m²" />}
             <Num label="Zone d'implantation" value={res.zoneImplantationM2} unit="m²" accent />
             <Num label="Plafond d'emprise" value={res.plafondEmpriseM2} unit="m²"
               statusLabel={res.plafondEmpriseStatus === 'absent' ? 'Non réglementé' : null}
@@ -236,6 +275,32 @@ export function Gabarit() {
                 </li>
               ))}
             </ul>
+            {/* GABARIT-6 P3 — la LISTE des règles connues mais non intégrées (le compte seul vivait
+                ci-dessus). Nom · pourquoi (souvent avec la citation PLU) · source. Rien d'inventé :
+                exactement ce que le moteur renvoie dans nonIntegratedRules. */}
+            {res.nonIntegratedRules.length > 0 && (
+              <details data-gabarit-non-integrees open={nonIntOuvertes}
+                onToggle={(e) => setNonIntOuvertes((e.target as HTMLDetailsElement).open)}
+                className="group mt-2 border-t border-line pt-2">
+                <summary className="hover-fill flex cursor-pointer list-none items-center gap-1.5 rounded px-0.5 py-0.5 text-[10.5px] text-txt-mut">
+                  <Chevron open={nonIntOuvertes} />
+                  <b>Le détail des {res.nonIntegratedRules.length} règle{res.nonIntegratedRules.length > 1 ? 's' : ''} non intégrée{res.nonIntegratedRules.length > 1 ? 's' : ''}</b>
+                </summary>
+                <ul className="mt-1.5 flex flex-col gap-1.5">
+                  {res.nonIntegratedRules.map((n, i) => (
+                    <li key={i} data-gabarit-non-integree className="border-b border-line pb-1.5 last:border-0">
+                      <span className="text-[10.5px] text-txt">{n.label}</span>
+                      {n.detail && <span className="block text-[9.5px] italic leading-snug text-txt-dim">{n.detail}</span>}
+                      {(n.source?.document || n.source?.zone || n.source?.article) && (
+                        <span className="block text-[9px] leading-snug text-txt-ghost">
+                          {[n.source.document, n.source.zone, n.source.article].filter(Boolean).join(' — ')}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
           </div>
 
           {/* RÈGLES APPLIQUÉES — générées depuis le moteur, aucune valeur en dur */}
@@ -281,6 +346,9 @@ export function Gabarit() {
               <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_ZONE }} /> Zone d'implantation réglementaire</li>
               <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_RETRAIT }} /> Retrait réglementaire</li>
               {res.exclusionsGeoJSON && <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_EXCL }} /> Exclusion (PPR)</li>}
+              {res.batiExistantGeoJSON?.features?.length ? (
+                <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_BATI }} /> Bâti existant (BD TOPO · LiDAR HD)</li>
+              ) : null}
             </ul>
             {res.hauteurReglementaireM == null
               ? <p className="mt-1.5 text-st-creuser">3D indisponible — hauteur non chiffrée (prospect).</p>

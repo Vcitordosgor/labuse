@@ -60,6 +60,10 @@ class MaxHeight(BaseModel):
     ruleId: Optional[str] = None
     meters: Optional[float] = None
     status: Optional[Literal["integrated", "not_integrated"]] = None   # 'not_integrated' = forme non chiffrée (prospect)
+    # GABARIT-6 — `meters` porte le FAÎTAGE quand la zone en fixe un, sinon l'ÉGOUT. `basis` dit lequel
+    # (jamais un faîtage implicite) ; `egoutMeters` = l'égout quand la règle distingue les deux (sous-ligne).
+    basis: Optional[Literal["faitage", "egout"]] = None
+    egoutMeters: Optional[float] = None
     source: Optional[RegulatorySource] = None
 
 
@@ -115,6 +119,7 @@ class AppliedRule(BaseModel):
 class NonIntegratedRule(BaseModel):
     id: Optional[str] = None
     label: str
+    detail: Optional[str] = None    # GABARIT-6 — pourquoi non intégrée (souvent avec la citation PLU)
     source: RegulatorySource
 
 
@@ -151,6 +156,8 @@ class GabaritResult(BaseModel):
     hauteurReglementaireM: Optional[float] = None
     hauteurSource: Optional[RegulatorySource] = None
     hauteurStatus: Optional[str] = None          # 'not_integrated' → « Non chiffrée » (prospect)
+    hauteurBase: Optional[str] = None            # 'faitage' | 'egout' — ce que porte hauteurReglementaireM
+    hauteurEgoutM: Optional[float] = None        # égout, en sous-ligne, quand la règle distingue faîtage/égout
 
     coverage: Optional[Coverage] = None
     appliedRules: list[AppliedRule] = Field(default_factory=list)
@@ -161,3 +168,7 @@ class GabaritResult(BaseModel):
     zoneImplantationGeoJSON: Optional[GeoJSON] = None
     retraitsGeoJSON: Optional[GeoJSON] = None
     exclusionsGeoJSON: Optional[GeoJSON] = None
+    # GABARIT-6 P4 — bâti EXISTANT (emprise BD TOPO + hauteur LiDAR HD), FAIT contextuel : aucun calcul
+    # réglementaire n'en dépend. FeatureCollection (4326), une Feature par bâtiment, propriétés
+    # { hauteur_m, h_source: 'lidar'|'bdtopo' }. None si la parcelle ne porte aucun bâti.
+    batiExistantGeoJSON: Optional[GeoJSON] = None

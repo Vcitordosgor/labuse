@@ -284,8 +284,11 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 else:
                     blocking.append("emprise (CES) non réglementée / non validée")
                 if haut is not None:
+                    # faîtage servi ; l'égout, s'il est aussi fixé, part en sous-ligne (GABARIT-6)
                     max_height = MaxHeight(ruleId=f"{work_zone}-hauteur", meters=haut,
-                                           status="integrated", source=plu_zone_src)
+                                           status="integrated", basis="faitage",
+                                           egoutMeters=egout if egout is not None else None,
+                                           source=plu_zone_src)
                     applicable.append(ApplicableRule(id=f"{work_zone}-hauteur", label="Hauteur maximale",
                                                      category="maxHeight", integrationStatus="integrated",
                                                      detail=f"{haut:g} m", source=plu_zone_src))
@@ -298,7 +301,7 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                     egout_src = RegulatorySource(document=f"PLU — {commune}", zone=work_zone,
                                                  article=art or None, provider=PLU_PROVIDER)
                     max_height = MaxHeight(ruleId=f"{work_zone}-hauteur", meters=egout,
-                                           status="integrated", source=egout_src)
+                                           status="integrated", basis="egout", source=egout_src)
                     applicable.append(ApplicableRule(
                         id=f"{work_zone}-hauteur", label="Hauteur réglementaire — à l'égout",
                         category="maxHeight", integrationStatus="integrated",
