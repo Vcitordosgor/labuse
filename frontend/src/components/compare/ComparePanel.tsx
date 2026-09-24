@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getCompare, type CompareRow } from '../../lib/api'
 import { fmtEurCompact, fmtInt, iduCourt } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
+import { bandeMeta, signalMeta } from '../../lib/status'   // COMPARER-2 §4 — bande + Signal (comme l'Analyse)
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-FIX-2 D1 — saisie clavier (IDU/adresse/réf courte)
 
@@ -28,21 +29,46 @@ type Row = {
   // OUTILS-FIX-2 D2 — provenance (comme la fiche) : « source » = donnée observée (cadastre, PLU, DVF,
   // DGFiP, aléas) ; « estime » = valeur dérivée/calculée (SDP, charge foncière, logements, sous-densité).
   prov: 'source' | 'estime'
+  // COMPARER-2 §4 — rendu personnalisé (chip coloré) + ligne sans badge de provenance (verdict, pas donnée).
+  render?: (r: CompareRow) => JSX.Element
+  noBadge?: boolean
 }
 const ROWS: Row[] = [
   { label: 'Surface', prov: 'source', val: (r) => r.surface_m2 != null ? `${fmtInt(r.surface_m2)} m²` : '—', num: (r) => r.surface_m2 ?? null, best: 'hi' },
   { label: 'Zone PLU', prov: 'source', val: (r) => r.zone || '—' },
+  // COMPARER-2 §4 — Classement LABUSE (bande du moteur candidat q_v15) + Signal de mutation en badge,
+  // MÊME source et MÊMES couleurs que l'écran Analyse (score_labuse). 2e ligne, sous la zone PLU.
+  { label: 'Classement LABUSE', prov: 'estime', noBadge: true,
+    val: (r) => bandeMeta(r.bande)?.label ?? '—',
+    render: (r) => {
+      const bm = bandeMeta(r.bande)
+      if (!bm) return <span className="text-txt-dim">—</span>
+      const sm = signalMeta(r.signal_niveau)
+      return (
+        <span className="inline-flex flex-wrap items-center gap-1.5">
+          <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: `${bm.color}22`, color: bm.color }}>{bm.label}</span>
+          {sm && <span className="rounded px-1 py-0.5 text-[9px] font-medium" style={{ backgroundColor: `${sm.color}1F`, color: sm.color }}>{sm.label}</span>}
+        </span>
+      )
+    } },
   { label: 'Constructible', prov: 'source', val: (r) => r.constructible == null ? '—' : r.constructible ? 'oui' : 'non' },
   // O2-5 — chaque capacité porte son périmètre (source unique lib/perimetres) : la « max » suppose le
   // terrain libéré, la « résiduelle » suppose le bâti conservé — sinon les deux se contredisent à l'œil.
   { label: `SDP max estimée · ${PERIM_POTENTIEL_COURT}`, prov: 'estime', val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—', num: (r) => r.sdp_max_m2 ?? null, best: 'hi' },
   { label: `SDP résiduelle · ${PERIM_RESIDUEL_COURT}`, prov: 'estime', val: (r) => r.sdp_residuelle_m2 != null ? `${fmtInt(r.sdp_residuelle_m2)} m²` : '—', num: (r) => r.sdp_residuelle_m2 ?? null, best: 'hi' },
-  { label: 'Emprise au sol max', prov: 'source', val: (r) => r.taux_emprise_pct != null ? `${fmtInt(r.taux_emprise_pct)} %` : '—', num: (r) => r.taux_emprise_pct ?? null, best: 'hi', title: 'Part maximale du terrain que le PLU autorise à couvrir au sol.' },
+  // COMPARER-2 §1 — la VRAIE CES du PLU (validée dans plu_destinations), badge Sourcé + citation au survol.
+  // « non réglementée » quand la zone n'en fixe pas (ex. U3c/AU3c Saint-Paul) — jamais un dérivé sous ce titre.
+  { label: 'Emprise au sol max (PLU)', prov: 'source', val: (r) => r.emprise_ces_pct != null ? `${fmtInt(r.emprise_ces_pct)} %` : 'non réglementée', num: (r) => r.emprise_ces_pct ?? null, best: 'hi', title: 'Emprise au sol maximale fixée par le règlement de la zone (CES) — « non réglementée » si le PLU n\'en fixe pas.' },
+  // COMPARER-2 §1 — l'ancienne ligne « Emprise au sol max » servait CE ratio (bâti ÷ emprise constructible),
+  // pas une règle PLU → renommée « Taux d'occupation du gabarit », badge Estimé (un dérivé, pas un fait).
+  { label: 'Taux d\'occupation du gabarit', prov: 'estime', val: (r) => r.taux_emprise_pct != null ? `${fmtInt(r.taux_emprise_pct)} %` : '—', num: (r) => r.taux_emprise_pct ?? null, best: 'lo', title: 'Bâti existant ÷ emprise constructible : part du gabarit déjà occupée (plus bas = plus de marge à bâtir).' },
   { label: 'Sous-densité', prov: 'estime', val: (r) => r.sous_densite == null ? '—' : r.sous_densite ? 'oui' : 'non', title: 'Le bâti existant est nettement en-dessous de ce que le PLU permet : il reste un potentiel à construire.' },
-  { label: 'Charge foncière /m²', prov: 'estime', val: (r) => r.charge_fonciere_m2 != null ? `${fmtEurCompact(r.charge_fonciere_m2)}/m²` : '—', num: (r) => r.charge_fonciere_m2 ?? null, best: 'lo', title: 'Coût du foncier ramené au m² de surface de plancher constructible — plus bas = plus intéressant.' },
-  { label: 'Prix terrain nu zone', prov: 'source', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—', num: (r) => r.terrain_zone_eur_m2 ?? null, best: 'lo', title: 'Prix moyen du terrain nu observé dans la zone — plus bas = plus intéressant.' },
+  // COMPARER-2 §2 — la valeur est par m² de TERRAIN (charge_fonciere.par_m2_terrain), pas de plancher.
+  { label: 'Charge foncière /m² terrain', prov: 'estime', val: (r) => r.charge_fonciere_m2 != null ? `${fmtEurCompact(r.charge_fonciere_m2)}/m²` : '—', num: (r) => r.charge_fonciere_m2 ?? null, best: 'hi', title: 'Charge foncière supportable ramenée au m² de terrain — plus haut = plus intéressant (négatif = l\'opération ne dégage rien pour le foncier).' },
+  // COMPARER-2 §3 — une MÉDIANE DVF est un calcul sur des ventes, pas un fait cadastral → badge Estimé.
+  { label: 'Prix terrain nu zone', prov: 'estime', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—', num: (r) => r.terrain_zone_eur_m2 ?? null, best: 'lo', title: 'Médiane DVF du terrain nu dans la zone (calcul, pas un fait) — plus bas = plus intéressant.' },
   // RETOURS-11F M13 (O9) — lignes utiles ajoutées, toutes de la fiche servie (aucun second moteur).
-  { label: 'Prix bâti secteur', prov: 'source', val: (r) => r.prix_secteur_bati_m2 != null ? `${fmtInt(r.prix_secteur_bati_m2)} €/m²` : '—', num: (r) => r.prix_secteur_bati_m2 ?? null, title: 'Médiane DVF du bâti (maison/appartement) dans le secteur — même source que la fiche Marché.' },
+  { label: 'Prix bâti secteur', prov: 'estime', val: (r) => r.prix_secteur_bati_m2 != null ? `${fmtInt(r.prix_secteur_bati_m2)} €/m²` : '—', num: (r) => r.prix_secteur_bati_m2 ?? null, title: 'Médiane DVF du bâti (maison/appartement) dans le secteur (calcul) — même source que la fiche Marché.' },
   // OUTILS-FIX-2 D3 — la fourchette de logements affiche ses DEUX bornes (avant : borne haute seule).
   { label: 'Logements possibles', prov: 'estime',
     val: (r) => { const hi = r.logements_possibles, lo = r.logements_min
@@ -51,7 +77,9 @@ const ROWS: Row[] = [
   { label: 'Bâti existant', prov: 'source', val: (r) => r.bati_existant_pct != null ? `${fmtInt(r.bati_existant_pct)} % du terrain` : '—', num: (r) => r.bati_existant_pct ?? null, best: 'lo', title: 'Part du terrain déjà couverte par le bâti (emprise au sol / surface) — plus bas = plus de place à bâtir.' },
   { label: 'Gabarit max', prov: 'source', val: (r) => r.gabarit_niveaux_max != null ? `R+${Math.max(0, r.gabarit_niveaux_max - 1)}` : '—', num: (r) => r.gabarit_niveaux_max ?? null, best: 'hi', title: 'Nombre de niveaux maximum autorisé (gabarit PLU).' },
   { label: 'Accès & réseaux', prov: 'source', val: (r) => r.acces_reseaux ?? '—', title: 'Un seul verdict de viabilisation (accès voirie + réseaux) — le même que la fiche Réseaux et accès.' },
-  { label: 'Assainissement', prov: 'source', val: (r) => r.assainissement ?? '—' },
+  // COMPARER-2 §3 — le verdict d'assainissement est souvent une STATISTIQUE de secteur (« 59 % non
+  // raccordés »), pas un raccordement constaté à la parcelle → badge Estimé.
+  { label: 'Assainissement', prov: 'estime', val: (r) => r.assainissement ?? '—', title: 'Desserte d\'assainissement — souvent un constat de secteur (statistique), pas un raccordement vérifié à la parcelle.' },
   { label: 'Propriétaire', prov: 'source', val: (r) => r.proprietaire === 'morale' ? 'personne morale' : r.proprietaire === 'particulier' ? 'particulier' : '—', title: 'Personne morale (société) ou particulier — issu du fichier DGFiP.' },
   { label: 'Contrainte majeure', prov: 'source', val: (r) => r.contrainte_majeure ?? (r.n_contraintes ? `${r.n_contraintes} signalée(s)` : 'aucune') },
 ]
@@ -242,13 +270,13 @@ export function ComparePanel() {
                         {row.title
                           ? <span className="cursor-help border-b border-dotted border-line-2">{row.label}</span>
                           : row.label}
-                        <ProvBadge prov={row.prov} />
+                        {!row.noBadge && <ProvBadge prov={row.prov} />}
                       </td>
                       {parcels.map((r, i) => {
                         const win = winners.has(i)   // vert = meilleure valeur (comme la table Communes)
                         return (
                           <td key={r.idu} className={`border-l border-line p-2 ${win ? 'font-semibold text-mint' : 'text-txt'}`}>
-                            {row.val(r)}
+                            {row.render ? row.render(r) : row.val(r)}
                           </td>
                         )
                       })}

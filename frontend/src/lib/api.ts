@@ -1111,7 +1111,11 @@ export interface CompareRow {
   label?: string | null; fraction?: string | null; raison?: string | null
   zone?: string | null; constructible?: boolean | null
   sdp_max_m2?: number | null; taux_emprise_pct?: number | null; sdp_residuelle_m2?: number | null; sous_densite?: boolean | null
+  // COMPARER-2 §1 — CES PLU réelle (validée dans plu_destinations) ; null = zone sans CES → « non réglementée »
+  emprise_ces_pct?: number | null; emprise_ces_source?: string | null
   charge_fonciere_m2?: number | null
+  // COMPARER-2 §4 — Classement LABUSE du run candidat q_v15 (même source que l'Analyse) : bande + Signal
+  bande?: string | null; signal_niveau?: string | null
   terrain_zone_eur_m2?: number | null; contrainte_majeure?: string | null   // M82
   n_contraintes?: number; contraintes?: string[]
   // RETOURS-11F M13 (O9) — colonnes ajoutées, toutes de la fiche servie / du bilan servi.

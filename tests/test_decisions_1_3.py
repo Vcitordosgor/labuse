@@ -190,13 +190,15 @@ def test_d3b_clause_non_declenchee_pas_de_quota():
 
 
 def test_d3b_clause_declenchee_sans_prix_lls_non_chiffre():
-    """② Clause déclenchée mais prix LLS non calibré → impact NON chiffré (pas de prix fictif)."""
+    """② Clause déclenchée mais prix LLS non calibré → part LLS EXCLUE du CA (COMPARER-2 §2 : plus
+    jamais valorisée au plein prix marché ni à 0 en silence ; le CA ne retient que la part libre)."""
     h = Hypotheses()
     h.pct_lls = 30.0   # prix_m2_lls = 0 (PLACEHOLDER)
     b = compute_bilan(4600, 4500, _prix(2200, 3000, 4300), h, contexte_eco=_ECO_DECL)
-    assert b.ca["central"] == round(4600 * 3000)               # CA NON pondéré
+    assert b.ca["central"] == round(4600 * 0.70 * 3000)        # CA sur les 70 % libres (LLS retiré)
     assert b.calc["clause_declenchee"] is True and b.calc["pondere"] is False
     assert any("non chiffré" in a.lower() and "prix lls" in a.lower() for a in b.avertissements)
+    assert any("part LLS exclue" in s.label for s in b.steps)
 
 
 def test_d3b_clause_declenchee_avec_prix_ca_pondere():
