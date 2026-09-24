@@ -143,8 +143,10 @@
      le menu Outils est ouvert suit cette règle, comme toutes les entrées du rail. Mauve opaque pour l'IA. */
   .rail-item.active { background:var(--fill-mint); color:var(--ink); }
   .rail-item.ia.active { background:var(--fill-mauve); color:var(--mauve-ink); }
+  /* DA-FIX-4 Lot 0 : le focus CLAVIER prend le rendu du SURVOL (aplat vert / mauve IA), plus d'anneau. */
   .rail-item:focus { outline:none; }
-  .rail-item:focus-visible { outline:2px solid rgba(74,222,128,.55); outline-offset:2px; }
+  .rail-item:not(.active):focus-visible { outline:none; background:var(--fill-mint); color:var(--ink); }
+  .rail-item.ia:not(.active):focus-visible { background:var(--fill-mauve); color:var(--mauve-ink); }
   @media (hover:hover) and (pointer:fine) {
     /* RETOURS-4 S8 — même teinte de survol partout : dégradé vert profond (mauve sur l'IA), encre presque noire. */
     .rail-item:not(.active):hover { background:var(--fill-mint); color:var(--ink); }

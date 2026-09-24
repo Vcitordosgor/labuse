@@ -12,6 +12,7 @@ import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
 
 const PAGE = 200   // RECETTE-10 T6 (règle de Vic) — 200 par page (était 50) · page X/Y
 
@@ -311,8 +312,8 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               {' '}— {(analyse.priorite + analyse.a_suivre).toLocaleString('fr-FR')} À suivre.
             </p>
             <button data-kanban-pourquoi aria-expanded={analyseOuvert} onClick={() => setAnalyseOuvert((o) => !o)}
-              className="shrink-0 rounded-md border border-mint/40 px-3 py-1.5 text-[12px] text-mint transition-colors duration-quick hover:bg-mint/15">
-              {analyseOuvert ? 'Voir moins ▴' : 'Voir pourquoi ▾'}</button>
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-mint/40 px-3 py-1.5 text-[12px] text-mint transition-colors duration-quick hover:bg-mint/15">
+              {analyseOuvert ? 'Voir moins' : 'Voir pourquoi'} <Chevron open={analyseOuvert} /></button>
           </div>
           {/* le CONTENU complet déplié : phrase gravée entière + signaux + valeurs/run */}
           {analyseOuvert && (

@@ -13,7 +13,9 @@ const BOITE = 'flex h-7 w-7 shrink-0 items-center justify-center rounded-md bord
 // DA-FIX-3 Lot 5 (DA-031) — ChevronSection rend désormais LE chevron partagé (fermé ▶ / ouvert ▼
 // + fond vert opaque). La signature `{ open }` est conservée pour tous les appelants existants.
 export function ChevronSection({ open }: { open: boolean }) {
-  return <Chevron open={open} />
+  // DA-FIX-4 Lot 0 : `boite` restaure le comportement [A] — sur une barre `.hover-fill` survolée, le
+  // chevron perd son fond propre (glyphe sombre sur le vert) ; hors survol, son contour reste visible.
+  return <Chevron open={open} boite />
 }
 
 // Croix de fermeture — même boîte, même colonne que les chevrons. `dataAttr` : marqueur QA

@@ -284,7 +284,7 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
                 {g.siren && (
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line/60 pt-1.5 text-[10.5px]">
                     <Bouton niveau="lien" data-vp-patrimoine onClick={() => voirPatrimoine(g.siren!)} className="whitespace-nowrap">voir son patrimoine →</Bouton>
-                    <Bouton niveau="lien" data-vp-frise onClick={() => setOpenSiren((s) => (s === g.siren ? null : g.siren))} className="whitespace-nowrap">{openSiren === g.siren ? 'masquer sa frise' : 'sa frise ▾'}</Bouton>
+                    <Bouton niveau="lien" data-vp-frise onClick={() => setOpenSiren((s) => (s === g.siren ? null : g.siren))} className="inline-flex items-center gap-1 whitespace-nowrap">{openSiren === g.siren ? 'masquer sa frise' : 'sa frise'} <Chevron open={openSiren === g.siren} /></Bouton>
                   </div>
                 )}
                 {openSiren === g.siren && g.siren && <Frise siren={g.siren} />}

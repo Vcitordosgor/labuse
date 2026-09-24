@@ -21,6 +21,7 @@ import { ListPaginationFooter } from '../ListPagination'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { Siren } from '../shared/Siren'
+import { Chevron } from '../ui/Chevron'
 import { Tip } from '../Tip'
 import { CommuneScope } from './ModulePanel'
 import { Bouton } from '../ui/Bouton'
@@ -63,6 +64,7 @@ export function Successions() {
   const [commune, setCommune] = useState<string | null>(null)   // Toute l'île par défaut
   const [sdpMin, setSdpMin] = useState(0)
   const [sel, setSel] = useState<Set<string>>(new Set())
+  const [methodeOuverte, setMethodeOuverte] = useState(false)   // DA-FIX-4 Lot 0 — tiroir « Détail et méthode »
 
   const q = useInfiniteQuery({
     queryKey: ['successions', commune, sdpMin],
@@ -168,8 +170,8 @@ export function Successions() {
       {/* pied de panneau : tiroir « Détail et méthode » (gauche) et pont Courrier (droite, même ligne —
           1B pt 6). `items-start` maintient le bouton sur la ligne du résumé quand le tiroir s'ouvre. */}
       <div className="flex shrink-0 items-start justify-between gap-2">
-      <details data-successions-methode className="min-w-0 flex-1 text-xs">
-        <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
+      <details data-successions-methode open={methodeOuverte} onToggle={(e) => setMethodeOuverte(e.currentTarget.open)} className="min-w-0 flex-1 text-xs">
+        <summary className="inline-flex cursor-pointer list-none items-center gap-1 py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode <Chevron open={methodeOuverte} /></summary>
         <div className="flex flex-col gap-1 text-[10.5px] leading-snug text-txt-dim">
           <p><b className="text-txt-mut">Le signal.</b> Le propriétaire est une personne morale à SIREN confirmé (jamais un
             rapprochement par nom) dont le dirigeant le plus âgé a ≥ 70 ans, ou une SCI créée il y a ≥ 20 ans sans mise à
