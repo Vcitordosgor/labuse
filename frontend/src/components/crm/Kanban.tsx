@@ -84,13 +84,9 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
             </span>
           </Tip>
         )}
-        <button
-          onClick={onArchive}
-          className="-m-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-txt-dim opacity-40 transition-opacity duration-quick hover:text-st-ecartee group-hover:opacity-100"
-          aria-label="Archiver la carte"
-        >
-          ✕
-        </button>
+        {/* DA-FIX-4 verif (task 2) — ✕ de carte en Bouton icone danger (dévoilé au survol de la carte). */}
+        <Bouton icone niveau="secondaire" ton="danger" onClick={onArchive}
+          className="shrink-0 opacity-40 group-hover:opacity-100" aria-label="Archiver la carte">✕</Bouton>
       </div>
       <div className="tnum mt-1 truncate text-[11px] text-txt-mut">
         {e.parcel.surface_m2 ? `${fmtM2(e.parcel.surface_m2)} · ` : ''}{e.parcel.commune}
@@ -469,19 +465,18 @@ export function Kanban() {
               n'apparaissent que si toutes les colonnes ne tiennent pas dans la fenêtre. */}
           {paginated && !editMode && (
             <span className="flex shrink-0 items-center gap-1.5">
-              <button
+              {/* DA-FIX-4 verif (task 2) — icônes du kanban en Bouton icone 32. */}
+              <Bouton icone niveau="secondaire" ton="vert"
                 onClick={() => setWinStart((s) => Math.max(0, Math.min(s, maxStart) - 1))}
                 disabled={start === 0}
-                className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-txt-dim hover:border-mint hover:text-mint"
-                aria-label="Colonnes précédentes">‹</button>
+                aria-label="Colonnes précédentes">‹</Bouton>
               <span className="whitespace-nowrap font-mono text-[10.5px] text-txt-mut">
                 {start + 1}–{Math.min(start + COLS_PAR_VUE, cols.length)} / {cols.length}
               </span>
-              <button
+              <Bouton icone niveau="secondaire" ton="vert"
                 onClick={() => setWinStart((s) => Math.min(maxStart, Math.min(s, maxStart) + 1))}
                 disabled={start >= maxStart}
-                className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-txt-dim hover:border-mint hover:text-mint"
-                aria-label="Colonnes suivantes">›</button>
+                aria-label="Colonnes suivantes">›</Bouton>
             </span>
           )}
           {editMode && (
@@ -565,17 +560,14 @@ export function Kanban() {
                 {!editMode && <span className="ml-auto font-mono text-[11px] text-txt-dim">{items.length}</span>}
                 {editMode && (
                   <span className="ml-auto flex shrink-0 items-center gap-0.5">
-                    <button onClick={() => moveCol(idx, -1)} disabled={idx === 0}
-                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-txt"
-                      aria-label="Déplacer la colonne à gauche">←</button>
-                    <button onClick={() => moveCol(idx, 1)} disabled={idx === cols.length - 1}
-                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-txt"
-                      aria-label="Déplacer la colonne à droite">→</button>
-                    <button
+                    <Bouton icone niveau="secondaire" ton="vert" onClick={() => moveCol(idx, -1)} disabled={idx === 0}
+                      aria-label="Déplacer la colonne à gauche">←</Bouton>
+                    <Bouton icone niveau="secondaire" ton="vert" onClick={() => moveCol(idx, 1)} disabled={idx === cols.length - 1}
+                      aria-label="Déplacer la colonne à droite">→</Bouton>
+                    <Bouton icone niveau="secondaire" ton="danger"
                       onClick={() => setPendingDelete(withCounts[idx])}
                       disabled={cols.length <= 1}
-                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-st-ecartee"
-                      aria-label="Supprimer la colonne">✕</button>
+                      aria-label="Supprimer la colonne">✕</Bouton>
                   </span>
                 )}
               </div>

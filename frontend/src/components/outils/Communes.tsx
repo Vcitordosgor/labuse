@@ -8,6 +8,7 @@ import { CommunesLegende, O6Comparateur } from './blocB'
 import { M18 } from './moteurs'
 import { RadarMarche } from './RadarMarche'
 import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
 import { Retour } from '../ui/Retour'
 
 // RETOURS-1 R3/R4 (Vic) — OUTIL « COMMUNES » RESTRUCTURÉ : un écran d'entrée à TROIS portes :
@@ -22,18 +23,7 @@ import { Retour } from '../ui/Retour'
 // droite (setContexteCommune) ; les blocs propres à l'ex-fiche-outil (Marché local, Rareté &
 // ZAN, Vélocité) sont TRANSFÉRÉS dans ContextePanel — aucune donnée perdue, aucun doublon.
 
-// COMMUNE-124 Lot C2 — chevron d'accordéon (même glyphe SVG que ChevronSection, cohérent avec l'app) :
-// FERMÉ pointe à DROITE (▸, rotation −90° du chevron bas), OUVERT pointe en BAS (▾, sans rotation).
-function AcqChevron({ ouvert }: { ouvert: boolean }) {
-  return (
-    <span aria-hidden="true" className="flex h-4 w-4 shrink-0 items-center justify-center text-txt-dim group-hover:text-mint-ink">
-      <svg viewBox="0 0 12 12" className={`h-3 w-3 transition-transform duration-soft ease-cockpit ${ouvert ? '' : '-rotate-90'}`}>
-        <polyline points="2.75,4.25 6,7.75 9.25,4.25" fill="none" stroke="currentColor"
-          strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
-  )
-}
+// DA-FIX-4 verif (task 3) — l'ancien AcqChevron local passe sur le Chevron partagé (fermé ▶ / ouvert ▼).
 
 // ── Vue « Acquisitions récentes » (R3.3) — sélecteur de commune + listing, clic → parcelle ──
 // RETOURS-11 O16 (Vic) : (c) le clic ouvre la fiche parcelle EN SUPERPOSITION (on ne quitte plus
@@ -152,7 +142,7 @@ function AcquisitionsRecentes() {
                 {/* En-tête cliquable = toute la ligne (bascule l'accordéon). */}
                 <button data-acq-groupe-tete onClick={() => toggleGroupe(cle)} aria-expanded={ouvert}
                   className="hover-fill group flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors duration-quick">
-                  <AcqChevron ouvert={ouvert} />
+                  <Chevron open={ouvert} boite />
                   <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-txt-hi group-hover:text-mint-ink">
                     {g.denomination ?? 'Acquéreur non identifié'}
                     <span className="ml-1 text-[10px] font-normal text-txt-dim group-hover:text-mint-ink/70">· {g.items.length} parcelle{g.items.length > 1 ? 's' : ''}</span>

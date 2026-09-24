@@ -12,7 +12,7 @@
 import { useEffect, useState } from 'react'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-16 V5 — barre partagée
+import { ParcelInput } from '../ParcelInput'   // DA-FIX-4 verif — entrée canonique + « Cliquez une parcelle sur la carte »
 import { banAutocomplete, getFiche, modPatrimoine, modPatrimoineSearch, parcelAt } from '../../lib/api'
 import { estIdu, iduComplet } from '../../lib/format'
 import { useApp } from '../../store/useApp'
@@ -121,8 +121,6 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
     } finally { setBusy(false) }
   }
 
-  const inp = 'h-8 w-full rounded-md border border-line-2 bg-surface-1 px-2 text-[12px] text-txt focus:border-mint focus:outline-none'
-
   return (
     <div data-scan-patrimoine className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1 text-[12.5px]">
       <div>
@@ -133,21 +131,13 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
       {!owner ? (
         /* ───────── ÉTAT 1 — aucun propriétaire : la recherche SEULE, pas d'onglets. ───────── */
         <>
-          {/* U1.1 — UN seul champ, celui de l'outil ; aucun renvoi vers une autre barre.
-              RETOURS-16 V5 — la suggestion maison (liste `sug` par nom) est REMPLACÉE par le
-              composant partagé (suggest unifié) : propriétaire + SIREN + parcelle + adresse à la
-              frappe, types affichés. La résolution à l'Entrée (`resoudre`) reste celle de l'outil. */}
-          <div className="flex items-center gap-1.5">
-            <AddressAutocomplete data-scan-search placeholder="Nom, SIREN, IDU ou adresse"
-              grammaires={['proprietaire', 'siren', 'cadastre', 'adresse']}
-              onTextChange={(t) => { setQ(t); if (candidats.length) setCandidats([]) }}
-              onPick={(it) => { if (it.siren) choisir(it.siren, it.type === 'proprietaire' ? it.label : undefined) }}
-              onSelect={(sel) => resoudre(sel.idu ?? sel.label)}
-              onEnterRaw={(t) => resoudre(t)}
-              className={inp} />
-            <button data-scan-chercher onClick={() => resoudre()} disabled={q.trim().length < 2 || busy}
-              className="shrink-0 rounded-md bg-mint px-3 py-1.5 text-[12px] font-medium text-mint-ink disabled:opacity-40">{busy ? '…' : 'Chercher'}</button>
-          </div>
+          {/* DA-FIX-4 verif (task 1) — ENTRÉE CANONIQUE : ParcelInput (omnibox 40 px + séparateur « ou »
+              + Bouton « Cliquez une parcelle sur la carte »). Le clic-carte et l'IDU/adresse résolvent le
+              PROPRIÉTAIRE de la parcelle (onPick → resoudre → ownerDeIdu) ; un nom de société / SIREN passe
+              par onAddress → resoudre (recherche dénomination, liste candidats si plusieurs). */}
+          <ParcelInput dataAttr="scan-search" placeholder="Nom de société, SIREN, adresse ou IDU"
+            onPick={(v) => { setQ(v); void resoudre(v) }}
+            onAddress={(v) => { setQ(v); void resoudre(v) }} />
           {/* U1.3 — ligne d'aide sous le champ. */}
           <p className="text-[11px] leading-snug text-txt-off">Une société, une parcelle, une adresse — LABUSE remonte au propriétaire.</p>
           {msg && <p data-scan-msg className="text-[11px] leading-snug text-st-creuser">{msg}</p>}
