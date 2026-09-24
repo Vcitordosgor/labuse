@@ -15,7 +15,9 @@ Formules (toutes HT sauf mention) :
   VRD          = VRD €/m² × surface de terrain
   stationnement= logements × coût par place
   aléas        = aléas% × construction
-  RAP          = 0,68 €/m² × surface de plancher (redevance d'archéologie préventive)
+  RAP          = redevance d'archéologie préventive (0,40 % de l'assiette TA) — CHIFFRÉE PAR
+                 taxe_amenagement.calculer() en amont (builder) et passée en hypothèse `rap` ;
+                 le bilan ne la recalcule pas (TAXE-FIX-1 point 2 : aucun taux/barème en dur ici)
   portage      = (construction+VRD) × taux × durée/12   [ou forfait 3 % du CA si pas de taux]
   frais d'acq. = frais% × prix demandé                  [coût que l'acquéreur porte]
   marge        = marge% × CA_HT
@@ -26,7 +28,10 @@ Formules (toutes HT sauf mention) :
 from __future__ import annotations
 
 TAUX_TVA_DEFAUT = 0.085                     # La Réunion, logement neuf (mandat 5.1)
-RAP_EUR_M2 = 0.68                           # redevance d'archéologie préventive (RELECTURE §5.2)
+# TAXE-FIX-1 point 2 — la RAP n'est PLUS un forfait au m² ici (0,68 €/m² était le régime des
+# aménagements SANS permis, et un millésime périmé) : pour un programme de CONSTRUCTION (permis),
+# elle vaut 0,40 % de l'assiette de la taxe d'aménagement. Elle est chiffrée par
+# taxe_amenagement.calculer() dans le builder et passée en hypothèse `rap` — aucun barème en dur ici.
 PORTAGE_FORFAIT_PCT = 3.0                   # forfait si le client n'a pas saisi de taux
 PRIX_SORTIE_VAR = 0.05                      # ±5 % pour la sensibilité au prix de sortie
 
@@ -127,7 +132,9 @@ def _postes(prog: dict, h: dict, cout: float | None, ca: float | None) -> dict:
     vrd = (plancher * h["vrd_m2"]) if (h.get("vrd_m2") is not None and plancher) else None
     stat = (logements * h["cout_place"]) if h.get("cout_place") is not None else None
     aleas = (construction * h["aleas_pct"] / 100) if (construction is not None and h.get("aleas_pct") is not None) else None
-    rap = plancher * RAP_EUR_M2 if plancher else None
+    # TAXE-FIX-1 point 2 — RAP = 0,40 % de l'assiette TA, chiffrée en amont (builder → calculer()),
+    # passée telle quelle. Passe-plat, comme la taxe d'aménagement `h["taxe"]`.
+    rap = _f(h.get("rap"))
     # portage : durée × taux sur (construction + VRD) si le taux est saisi, sinon forfait % du CA
     # (mandat 5.2) ; sans durée ni taux, non chiffré.
     portage = None

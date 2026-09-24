@@ -30,7 +30,7 @@ from sqlalchemy.orm import Session
 
 from .. import constants
 from ..config import get_settings
-from ..taxe_amenagement import _TAUX_DDL
+from ..taxe_amenagement import _SECTEUR_DDL, _TAUX_DDL
 
 SOURCE_NAME = "Taxe d'aménagement — taux communaux (DGFiP / DELTA)"
 DATASET = "delta_deliberation_tam_17_01_23"
@@ -42,9 +42,29 @@ _WHERE_COMMUNAL = ('departement="974" and zone_application="Communale" '
 # La part départementale (une seule ligne) : zone départementale, commune null.
 _WHERE_DEPARTEMENTAL = ('departement="974" and zone_application="Départementale" '
                         'and date_fin is null and taux is not null')
+# TAXE-FIX-1 point 3 — les SECTEURS À TAUX MAJORÉ : zone communale, portée à la PARCELLE
+# (prefixe/section/parcelle remplis), en vigueur. Chaque ligne = une parcelle du secteur.
+_WHERE_SECTEUR = ('departement="974" and zone_application="Communale" '
+                  'and parcelle is not null and date_fin is null and taux is not null')
 # Bornes de plausibilité : la part communale légale va de 1 à 5 %, jusqu'à 20 % en
 # secteur à aménager (CGI art. 1635 quater E/F). Un taux hors [0 ; 20] est écarté + listé.
+# (DELTA porte des lignes sentinelles à 99 % au grain parcelle : les bornes les excluent.)
 _BORNE_MIN, _BORNE_MAX = 0.0, 20.0
+
+
+def _idu_from_delta(row: dict) -> str | None:
+    """Reconstruit l'IDU cadastral (14 car.) d'une ligne DELTA au grain parcelle :
+    INSEE(5=974+commune) + prefixe(3) + section(2) + parcelle(4), zéro-complétés. None si
+    incomplet — on ne fabrique jamais un identifiant partiel."""
+    dep = (row.get("departement") or "").strip()
+    com = (row.get("commune") or "").strip()
+    sec = (row.get("section") or "").strip()
+    par = (row.get("parcelle") or "").strip()
+    if dep != "974" or len(com) != 2 or not sec or not par:
+        return None
+    pre = (row.get("prefixe") or "").strip() or "000"
+    idu = f"{dep}{com}{pre.zfill(3)}{sec.zfill(2)}{par.zfill(4)}"
+    return idu if len(idu) == 14 else None
 
 _SOURCE_LABEL = (f"DGFiP — application DELTA, jeu ouvert « {DATASET} » "
                  "(data.economie.gouv.fr), délibération {def_prov}")
@@ -69,15 +89,16 @@ def ingest_taxe_amenagement(
     session: Session, *,
     records_communaux: list[dict] | None = None,
     record_departemental: dict | None = None,
+    records_secteurs: list[dict] | None = None,
     client: httpx.Client | None = None,
     log=print,
 ) -> dict:
-    """Alimente `taxe_amenagement_taux` depuis DELTA (ou depuis des `records_*` fournis, tests).
+    """Alimente `taxe_amenagement_taux` (taux GÉNÉRAUX) et `taxe_amenagement_secteur` (SECTEURS à
+    taux majoré, au grain parcelle) depuis DELTA — ou depuis des `records_*` fournis (tests).
 
-    Rend {"n", "communes", "manquantes", "hors_bornes", "taux_departemental_pct"}.
-    Le taux départemental est REMONTÉ (confirmation) mais N'entre PAS dans la table
-    communale — il reste porté par la config datée (décision Vic : ne pas toucher au
-    total servi au banquier sans son aval)."""
+    Rend {"n", "communes", "manquantes", "hors_bornes", "taux_departemental_pct", "secteurs",
+    "secteurs_communes", "secteurs_hors_bornes"}. Le taux départemental est REMONTÉ (confirmation)
+    mais N'entre PAS dans la table communale — il reste porté par la config datée (décision Vic)."""
     from .run_all import REUNION_COMMUNES
 
     if records_communaux is None:
@@ -90,6 +111,9 @@ def ingest_taxe_amenagement(
             if record_departemental is None:
                 dep = _fetch_records(_WHERE_DEPARTEMENTAL, client=c)
                 record_departemental = dep[0] if dep else None
+            # TAXE-FIX-1 point 3 — les secteurs à taux majoré (grain parcelle) : réingérés ici même.
+            if records_secteurs is None:
+                records_secteurs = _fetch_records(_WHERE_SECTEUR, client=c)
         finally:
             if own:
                 c.close()
@@ -148,6 +172,44 @@ def ingest_taxe_amenagement(
         except (TypeError, ValueError):
             taux_dep = None
 
+    # TAXE-FIX-1 point 3 — SECTEURS À TAUX MAJORÉ (grain parcelle → IDU exact). Purge + upsert,
+    # même doctrine (bornes [0;20] excluent les sentinelles 99 %, dédup sur la date d'effet).
+    session.execute(text(_SECTEUR_DDL))
+    par_idu: dict[str, dict] = {}
+    secteurs_hors_bornes: list[str] = []
+    for row in (records_secteurs or []):
+        idu = _idu_from_delta(row)
+        if not idu:
+            continue
+        try:
+            taux = float(row.get("taux"))
+        except (TypeError, ValueError):
+            continue
+        if not (_BORNE_MIN <= taux <= _BORNE_MAX):
+            secteurs_hors_bornes.append(f"{idu}={taux}")
+            continue
+        effet = (row.get("date_effet") or "").strip() or None
+        prev = par_idu.get(idu)
+        if prev is None or (effet or "") > (prev.get("date_effet") or ""):
+            par_idu[idu] = {"taux": taux, "date_effet": effet,
+                            "def_prov": (row.get("def_prov") or "").strip() or "?"}
+    session.execute(text("DELETE FROM taxe_amenagement_secteur"))
+    for idu, d in sorted(par_idu.items()):
+        session.execute(text(
+            "INSERT INTO taxe_amenagement_secteur (idu, insee, part_communale_pct, source, delib_date, maj_at) "
+            "VALUES (:i, :n, :t, :s, :d, now())"),
+            {"i": idu, "n": idu[:5], "t": d["taux"],
+             "s": _SOURCE_LABEL.format(def_prov=d["def_prov"]), "d": d["date_effet"]})
+    session.flush()
+    secteurs_communes = sorted({idu[:5] for idu in par_idu})
+    if par_idu:
+        log(f"  taxe d'aménagement : {len(par_idu)} parcelles en secteur à taux majoré "
+            f"({len(secteurs_communes)} communes)")
+    if secteurs_hors_bornes:
+        log(f"  ⚠ taxe d'aménagement : secteurs hors bornes écartés : {len(secteurs_hors_bornes)}")
+
     return {"n": len(par_insee), "communes": sorted(vus),
             "manquantes": manquantes, "hors_bornes": hors_bornes,
-            "taux_departemental_pct": taux_dep}
+            "taux_departemental_pct": taux_dep,
+            "secteurs": len(par_idu), "secteurs_communes": secteurs_communes,
+            "secteurs_hors_bornes": secteurs_hors_bornes}

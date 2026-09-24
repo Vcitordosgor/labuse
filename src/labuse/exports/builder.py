@@ -193,6 +193,7 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
         "demolition": rv("bilan_demolition_eur"), "depollution": rv("bilan_depollution_eur"),
         "taxe": rv("taxe_amenagement_saisi_eur"), "duree_portage": rv("duree_portage_saisi_mois"),
         "taux_apport": rv("taux_apport_saisi_pct"), "part_sociale_pct": rv("part_sociale_saisi_pct") or 0,
+        "rap": None,   # TAXE-FIX-1 point 2 — RAP (0,40 % assiette), chiffrée ci-dessous par calculer()
     }
     pot = fiche.get("potentiel_transformation") or {}
     cap = pot.get("capacite_estimee")
@@ -211,24 +212,34 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
     # communal public. On ne la pré-calcule que si le porteur ne l'a NI saisie NI explicitement vidée
     # (règle 2 : un champ vidé reste vide) et que le projet a une SDP. C'est le SEUL endroit où la
     # taxe est chiffrée : sur une SDP de projet, jamais sur un scénario de fiche (W1/W2).
-    if ("taxe_amenagement_saisi_eur" not in etat["reponses"]
-            and hyp["taxe"] is None and program.get("surface_plancher")):
+    if program.get("surface_plancher"):
         from .. import taxe_amenagement as _tax
-        _pub = _tax.taux_communal_public(db, (idu or "")[:5])
+        # TAXE-FIX-1 point 3 — résolution PAR PARCELLE (secteur à taux majoré prioritaire).
+        _pub = _tax.taux_parcelle(db, idu) if idu else None
         _res = _tax.calculer(
             surface_taxable_m2=float(program["surface_plancher"]),
             taux_communal_public_pct=(_pub["part_communale_pct"] if _pub else None),
             taux_communal_public_source=(_pub["source"] if _pub else None),
             taux_communal_public_millesime=(_pub["millesime"] if _pub else None),
             taux_communal_public_delib_date=(_pub["delib_date"] if _pub else None),
-            taux_communal_public_perime=(_pub["perime"] if _pub else None))
-        if _res["total_eur"] is not None:
+            taux_communal_public_perime=(_pub["perime"] if _pub else None),
+            taux_communal_secteur_majore=bool(_pub and _pub.get("secteur_majore")))
+        # TAXE-FIX-1 point 2 — la RAP (0,40 % de l'assiette TA) accompagne la taxe : toujours chiffrée
+        # dès qu'il y a une SDP, MÊME quand le porteur a saisi la taxe d'aménagement à la main.
+        hyp["rap"] = _res["rap_eur"]
+        # La taxe d'aménagement n'est pré-remplie que si le porteur ne l'a NI saisie NI vidée (W2).
+        if ("taxe_amenagement_saisi_eur" not in etat["reponses"]
+                and hyp["taxe"] is None and _res["total_eur"] is not None):
             hyp["taxe"] = _res["total_eur"]
             resolved["taxe_amenagement_saisi_eur"] = {
                 "valeur": round(float(_res["total_eur"])), "origine": "prefill",
-                "source": (f"taxe d'aménagement sur la SDP du projet "
-                           f"({round(float(program['surface_plancher']))} m²) au taux communal — "
-                           "config datée, service-public.gouv.fr")}
+                # TAXE-FIX-1 point 4 — la taxe porte sur la SURFACE TAXABLE (close et couverte,
+                # garages et annexes inclus, CGI 1635 quater H) ; on l'approche ici par la SDP du
+                # projet (garages/annexes non modélisés → estimation plutôt basse).
+                "source": (f"taxe d'aménagement sur la surface taxable "
+                           f"(≈ SDP du projet {round(float(program['surface_plancher']))} m², "
+                           "garages/annexes non modélisés) au taux communal — config datée, "
+                           "service-public.gouv.fr")}
     # RECETTE-4 U1/U2 — la fiscalité locale de la commune (taux TFPB, REI DGFiP) et sa zone A/B/C
     # (DHUP) entrent au Financier : la taxe foncière pèse sur les charges de portage et la zone
     # commande le régime applicable (TVA accession, PTZ, prix bailleur). Passe-plats sourcés + datés ;

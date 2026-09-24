@@ -70,6 +70,10 @@ export function TaxeAmenagement() {
   const [surface, setSurface] = useState<number | null>(null)
   const [residencePrincipale, setResidencePrincipale] = useState(false)
   const [logementAide, setLogementAide] = useState(false)
+  // TAXE-FIX-1 point 1 — nature du projet EXONÉRÉE de plein droit (CGI 1635 quater D). Une seule
+  // nature à la fois (une surface est agricole OU PLAI OU reconstruction) : cases à cocher qui se
+  // désélectionnent l'une l'autre. Quand une nature est choisie, la surface saisie devient exonérée.
+  const [motifExo, setMotifExo] = useState<'agricole' | 'plai' | 'reconstruction' | null>(null)
   const [piscine, setPiscine] = useState<number | null>(null)
   const [pvSol, setPvSol] = useState<number | null>(null)
   const [stationnement, setStationnement] = useState<number | null>(null)
@@ -85,7 +89,7 @@ export function TaxeAmenagement() {
   const [prefillIdu, setPrefillIdu] = useState<string | null>(selectedIdu)
   useEffect(() => {
     if (selectedIdu && selectedIdu !== prefillIdu) {
-      setPrefillIdu(selectedIdu); setSurface(null)
+      setPrefillIdu(selectedIdu); setSurface(null); setMotifExo(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIdu])
@@ -108,14 +112,21 @@ export function TaxeAmenagement() {
   const insee = prefill.data?.insee ?? null
   const tauxCommunalPublic = prefill.data?.taux_communal_source === 'public'
     ? (prefill.data.taux_communal_pct ?? null) : null
+  // TAXE-FIX-1 point 1 — zone A (agricole) mais PAS AU (à urbaniser) : on propose la case
+  // « Locaux agricoles » (sans la cocher), car ces locaux y sont exonérés de plein droit.
+  const zoneA = /^A(?!U)/i.test(prefill.data?.zone_plu ?? '')
 
   // Paramètres du calcul — envoyés seulement quand une surface taxable est saisie.
   const params: TaxeParams | null = useMemo(() => {
     if (surface == null || surface <= 0) return null
+    // TAXE-FIX-1 point 1 — nature exonérée : la surface saisie part en `surface_exoneree_m2` (0 €)
+    // et la part surface taxée tombe à 0. Sinon, comportement inchangé (surface taxée au barème).
     return {
-      surface_taxable_m2: surface,
-      residence_principale: residencePrincipale || undefined,
-      logement_aide: logementAide || undefined,
+      surface_taxable_m2: motifExo ? 0 : surface,
+      surface_exoneree_m2: motifExo ? surface : undefined,
+      motif_exoneration: motifExo ?? undefined,
+      residence_principale: (!motifExo && residencePrincipale) || undefined,
+      logement_aide: (!motifExo && logementAide) || undefined,
       piscine_m2: piscine ?? undefined,
       pv_sol_m2: pvSol ?? undefined,
       stationnement_ext_places: stationnement ?? undefined,
@@ -125,8 +136,10 @@ export function TaxeAmenagement() {
       taux_communal_pct: tauxCommunal,
       taux_departemental_pct: tauxDepEffectif,
       insee: insee ?? undefined,
+      // TAXE-FIX-1 point 3 — l'IDU permet au back de servir le taux du SECTEUR à taux majoré s'il y en a un.
+      idu: prefillIdu ?? undefined,
     }
-  }, [surface, residencePrincipale, logementAide, piscine, pvSol, stationnement, eoliennes, tauxCommunal, tauxDepEffectif, insee])
+  }, [surface, motifExo, residencePrincipale, logementAide, piscine, pvSol, stationnement, eoliennes, tauxCommunal, tauxDepEffectif, insee, prefillIdu])
 
   const calc = useQuery({
     queryKey: ['taxe-calc', params],
@@ -184,19 +197,23 @@ export function TaxeAmenagement() {
       {/* SAISIE — repliée tant qu'aucune parcelle n'est choisie (S4). */}
       {prefillIdu && (
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
+        {/* TAXE-FIX-1 point 4 — la SURFACE TAXABLE n'est PAS la SDP : c'est la somme des surfaces
+            closes et couvertes sous plus de 1,80 m, calculée au nu intérieur des façades, GARAGES
+            ET ANNEXES INCLUS (CGI art. 1635 quater H ; la SDP d'urbanisme, elle, les déduit). */}
         <NumField dataAttr="surface" label="Surface taxable" unit="m²" value={surface}
           onChange={(v) => setSurface(v)}
           hint={`${prefill.data && prefill.data.sdp_gabarit_m2 == null
             ? `Gabarit non calculable${prefill.data.zone_plu ? ` en zone ${prefill.data.zone_plu}` : ''} — saisissez la surface de votre projet. `
-            : ''}Surface de VOTRE projet. Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
+            : ''}Surface close et couverte > 1,80 m, garages et annexes INCLUS (CGI 1635 quater H) — ≠ SDP. Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
             c.exoneration_surface_min_m2 ? ` Surface < ${fmtInt(c.exoneration_surface_min_m2)} m² : exonérée.` : ''}`} />
         {/* OUTILS-FIX-2 B1 — repère « SDP restante au gabarit » À CÔTÉ du champ + geste « reprendre »
-            (copie dans le champ sur demande), jamais d'office. */}
+            (copie dans le champ sur demande), jamais d'office. TAXE-FIX-1 point 4 — le bouton dit
+            que la SDP est un POINT DE DÉPART à compléter (garages/annexes), pas la surface taxable. */}
         {prefill.data?.sdp_gabarit_m2 != null && (
           <div data-taxe-repere className="-mt-0.5 flex items-center gap-2 text-[10.5px] leading-snug text-txt-dim">
             <span>SDP {prefill.data.deja_batie ? 'restante au gabarit (parcelle déjà bâtie)' : 'au gabarit'} : <b className="text-mint">{fmtM2(prefill.data.sdp_gabarit_m2)}</b></span>
             <Bouton niveau="lien" data-taxe-reprendre onClick={() => setSurface(prefill.data!.sdp_gabarit_m2!)}
-              className="shrink-0">reprendre</Bouton>
+              className="shrink-0">Partir de la SDP du projet (à compléter : garages, annexes)</Bouton>
           </div>
         )}
 
@@ -206,7 +223,30 @@ export function TaxeAmenagement() {
             hint={`Abattement ${fmtInt(c.abattement.taux_pct)} % sur les ${fmtInt(c.abattement.plafond_m2_residence_principale)} premiers m².`} />
           <CheckField dataAttr="aide" label="Logement aidé"
             checked={logementAide} onChange={setLogementAide}
-            hint={`Abattement ${fmtInt(c.abattement.taux_pct)} % (logement locatif social / aidé).`} />
+            hint={`Abattement ${fmtInt(c.abattement.taux_pct)} % (logement locatif social / aidé) — PLUS/PLS. Un PLAI est EXONÉRÉ (ci-dessous), pas seulement abattu.`} />
+        </div>
+
+        {/* TAXE-FIX-1 point 1 — NATURE DU PROJET : exonérations de plein droit (CGI 1635 quater D).
+            Cocher une nature EXONÈRE la surface saisie (0 €), à la différence de l'abattement (−50 %).
+            Une seule nature à la fois (cases mutuellement exclusives). En zone A, la case « Locaux
+            agricoles » est proposée (non cochée). */}
+        <div data-taxe-nature className="flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-3/40 p-2">
+          <p className="label-caps text-[9.5px] text-txt-dim">Nature du projet — exonération de plein droit (optionnel)</p>
+          <CheckField dataAttr="exo-agricole" label="Locaux agricoles"
+            checked={motifExo === 'agricole'} onChange={(v) => setMotifExo(v ? 'agricole' : null)}
+            hint={`Serres, bâtiments d'exploitation, stockage de récoltes, abris d'animaux — exonérés (CGI 1635 quater D, 3°).${zoneA ? ' Parcelle en zone A : les locaux agricoles y sont exonérés de plein droit.' : ''}`} />
+          <CheckField dataAttr="exo-plai" label="Logements PLAI / très sociaux"
+            checked={motifExo === 'plai'} onChange={(v) => setMotifExo(v ? 'plai' : null)}
+            hint="Prêt locatif aidé d'intégration — exonérés de plein droit (CGI 1635 quater D, 2°). Pour du PLUS/PLS, cocher plutôt « Logement aidé »." />
+          <CheckField dataAttr="exo-reconstruction" label="Reconstruction à l'identique"
+            checked={motifExo === 'reconstruction'} onChange={(v) => setMotifExo(v ? 'reconstruction' : null)}
+            hint="Reconstruction à l'identique d'un bâtiment détruit ou démoli depuis moins de 10 ans, après sinistre (CGI 1635 quater D, 9°)." />
+          {motifExo && (
+            <p data-taxe-nature-note className="text-[10px] leading-snug text-st-creuser">
+              Surface exonérée : la part surface tombe à 0 € (abattements sans effet). Les exonérations
+              <b> facultatives</b> votées par délibération communale (CGI 1635 quater E) ne sont pas appliquées ici — à vérifier auprès de la commune.
+            </p>
+          )}
         </div>
 
         {/* FORFAITS OPTIONNELS — installations et aménagements taxés au forfait (barème servi). */}
@@ -233,10 +273,15 @@ export function TaxeAmenagement() {
               <span className="label-caps flex min-h-[2.1em] items-start text-[9.5px] leading-tight text-txt-dim">Taux communal</span>
               <span className="flex items-center gap-1.5 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5">
                 <span className="min-w-0 flex-1 font-mono text-xs tabular-nums text-mint">{tauxCommunalPublic} %</span>
-                <span className="shrink-0 text-[9px] uppercase tracking-[.06em] text-txt-dim">public</span>
+                {/* TAXE-FIX-1 point 3 — secteur à taux majoré : on le DIT, le taux n'est pas le taux général. */}
+                <span className={`shrink-0 text-[9px] uppercase tracking-[.06em] ${prefill.data?.secteur_majore ? 'font-semibold text-st-creuser' : 'text-txt-dim'}`}>
+                  {prefill.data?.secteur_majore ? 'secteur majoré' : 'public'}
+                </span>
               </span>
               <span className="text-[10px] leading-snug text-txt-dim">
-                Voté par la commune — {prefill.data?.taux_communal_millesime ?? 'délibération communale'}.
+                {prefill.data?.secteur_majore
+                  ? 'Secteur à taux majoré voté par la commune pour cette parcelle'
+                  : 'Voté par la commune'} — {prefill.data?.taux_communal_millesime ?? 'délibération communale'}.
                 {prefill.data?.taux_communal_perime && (
                   <span data-taxe-taux-perime className="ml-1 font-medium text-st-creuser">⚠ non rafraîchi depuis plus d'un an.</span>
                 )}
@@ -247,9 +292,13 @@ export function TaxeAmenagement() {
               placeholder={`≤ ${fmtInt(c.taux.part_communale_plafond_pct)}`}
               hint={`Obligatoire — voté par la commune (plafond ${fmtInt(c.taux.part_communale_plafond_pct)} %). L’outil ne l’invente pas.`} />
           )}
+          {/* TAXE-FIX-1 point 4 — le taux départemental 974 (2,5 %) est CONFIRMÉ par DELTA (comme la
+              fiche) : on ne dit plus « à confirmer » en dur. On ne le dit que si la config ne l'a pas confirmé. */}
           <NumField dataAttr="taux-departemental" label="Taux départemental" unit="%" value={tauxDepEffectif} onChange={setTauxDepartemental}
             placeholder={depDefaut != null ? String(depDefaut) : undefined}
-            hint={`Plafond légal ${depDefaut != null ? depDefaut : '—'} % — à confirmer auprès du département.`} />
+            hint={`${depDefaut != null ? depDefaut : '—'} %${c.taux.part_departementale_confirmee_974
+              ? ' — confirmé (délibération départementale, source DGFiP/DELTA).'
+              : ` (plafond légal) — à confirmer auprès du département.`}`} />
         </div>
         {/* RV2-V2 — aide pour trouver le taux communal : n'apparaît qu'en REPLI (taux public absent),
             sinon l'outil sert déjà le taux et la question ne se pose plus. */}
@@ -346,6 +395,17 @@ export function TaxeAmenagement() {
                   {r.message_taux_communal}
                 </div>
               )
+            )}
+            {/* TAXE-FIX-1 point 2 — redevance d'archéologie préventive : taxe DISTINCTE de la TA,
+                0,40 % de la même assiette, souvent due au dépôt du permis. Ligne à part, sous le total. */}
+            {r.rap_eur != null && r.assiette_eur > 0 && (
+              <div data-taxe-rap className="mt-1 flex items-start justify-between gap-2 border-t border-line pt-1.5">
+                <span className="min-w-0 text-txt-mut">
+                  Redevance d’archéologie préventive <span className="text-txt-dim">({r.rap_pct} %)</span>
+                  <span className="mt-0.5 block text-[9.5px] leading-snug text-txt-dim">Taxe distincte, souvent due avec le permis — {r.rap_source}.</span>
+                </span>
+                <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(r.rap_eur)}</span>
+              </div>
             )}
           </div>
 

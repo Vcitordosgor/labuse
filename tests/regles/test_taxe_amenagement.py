@@ -39,3 +39,61 @@ def test_sans_taux_communal_pas_de_total():
     out = ta.calculer(surface_taxable_m2=150, residence_principale=True,
                       taux_communal_pct=None, taux_departemental_pct=None)
     assert out["total_eur"] is None       # doctrine : aucun taux inventé
+
+
+# ── TAXE-FIX-1 point 1 — exonérations de plein droit (CGI 1635 quater D) ───────────────────────
+def test_exoneration_agricole_zone_a_zero(  # CO0322 : hangar agricole en zone A → 0 €
+):
+    """Un local agricole (CGI 1635 quater D, 3°) : la surface est EXONÉRÉE, pas abattue → 0 €."""
+    out = ta.calculer(surface_taxable_m2=0, surface_exoneree_m2=400, motif_exoneration="agricole",
+                      taux_communal_pct=5.0, taux_departemental_pct=2.5)
+    assert out["assiette_eur"] == 0.0
+    assert out["total_eur"] == 0.0
+    ligne = next(l for l in out["lignes"] if "exonérée" in l["poste"] or "exonérée" in l["detail"])
+    assert ligne["assiette_eur"] == 0.0 and "3°" in ligne["detail"]
+
+
+def test_plai_exonere_pas_abattu():
+    """PLAI (2°) = EXONÉRATION (0 €), à ne pas confondre avec l'abattement 50 % du logement aidé."""
+    exo = ta.calculer(surface_taxable_m2=0, surface_exoneree_m2=300, motif_exoneration="plai",
+                      taux_communal_pct=5.0, taux_departemental_pct=2.5)
+    abattu = ta.calculer(surface_taxable_m2=300, logement_aide=True,
+                         taux_communal_pct=5.0, taux_departemental_pct=2.5)
+    assert exo["total_eur"] == 0.0                       # exonéré : rien
+    assert abattu["total_eur"] and abattu["total_eur"] > 0   # abattu : moitié, pas zéro
+
+
+def test_programme_mixte_3_plai_sur_10():
+    """« 10 logements dont 3 PLAI » : les 3 (≈180 m²) exonérés, les 7 (≈420 m²) au barème, un seul calcul."""
+    out = ta.calculer(surface_taxable_m2=420, surface_exoneree_m2=180, motif_exoneration="plai",
+                      taux_communal_pct=5.0, taux_departemental_pct=2.5)
+    # assiette = 420 × 892 (les 180 PLAI ne comptent pas) ; la ligne exonérée est présente à 0 €.
+    assert out["assiette_eur"] == round(420 * 892, 2)
+    assert any(l["assiette_eur"] == 0.0 and "PLAI" in l["poste"] for l in out["lignes"])
+    assert out["total_eur"] == round(420 * 892 * 0.075, 2)
+
+
+def test_reconstruction_identique_exoneree():
+    out = ta.calculer(surface_taxable_m2=0, surface_exoneree_m2=120, motif_exoneration="reconstruction",
+                      taux_communal_pct=3.0, taux_departemental_pct=2.5)
+    assert out["total_eur"] == 0.0
+    assert any("9°" in l["detail"] for l in out["lignes"])
+
+
+# ── TAXE-FIX-1 point 2 — redevance d'archéologie préventive (0,40 % de l'assiette) ─────────────
+def test_rap_040pct_de_l_assiette():
+    """CO0322 400 m² RP : assiette 312 200 → RAP = 312 200 × 0,40 % = 1 248,80 € (art. L524-7)."""
+    out = ta.calculer(surface_taxable_m2=400, residence_principale=True,
+                      taux_communal_pct=5.0, taux_departemental_pct=2.5)
+    assert out["assiette_eur"] == 312200.0
+    assert out["rap_pct"] == 0.40
+    assert out["rap_eur"] == 1248.80
+    # la RAP suit l'assiette : indépendante des parts communale/départementale.
+    assert out["rap_eur"] == round(out["assiette_eur"] * 0.004, 2)
+
+
+def test_rap_suit_exoneration():
+    """Surface exonérée → assiette 0 → RAP 0 (la TAP partage l'assiette de la TA)."""
+    out = ta.calculer(surface_taxable_m2=0, surface_exoneree_m2=400, motif_exoneration="agricole",
+                      taux_communal_pct=5.0, taux_departemental_pct=2.5)
+    assert out["assiette_eur"] == 0.0 and out["rap_eur"] == 0.0

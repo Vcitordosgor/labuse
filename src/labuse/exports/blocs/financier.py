@@ -21,7 +21,8 @@ _POSTE_LABEL = {
     "construction": "Coût de construction", "honoraires_techniques": "Honoraires techniques",
     "vrd": "VRD et viabilisation", "stationnement": "Stationnement", "demolition": "Démolition",
     "depollution": "Dépollution et étude de sol", "aleas": "Aléas",
-    "taxe_amenagement": "Taxe d'aménagement", "redevance_archeologie": "Redevance d'archéologie",
+    "taxe_amenagement": "Taxe d'aménagement",
+    "redevance_archeologie": "Redevance d'archéologie préventive (0,40 %)",
     "portage": "Portage financier", "frais_acquisition": "Frais d'acquisition",
 }
 _POSTE_ORDRE = ("construction", "honoraires_techniques", "vrd", "stationnement", "demolition",

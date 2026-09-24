@@ -502,6 +502,10 @@ export interface TaxeResult {
   part_communale_eur: number | null
   part_departementale_eur: number | null
   total_eur: number | null
+  // TAXE-FIX-1 point 2 — redevance d'archéologie préventive (0,40 % de la même assiette, art. L524-7).
+  rap_pct?: number
+  rap_eur?: number
+  rap_source?: string
   taux_communal_manquant: boolean
   message_taux_communal: string | null
   // TAXE-AMÉNAGEMENT-1 lot C — millésime + fraîcheur du taux communal public (null si saisi/absent).
@@ -509,11 +513,17 @@ export interface TaxeResult {
   taux_communal_millesime?: string | null
   taux_communal_delib_date?: string | null
   taux_communal_perime?: boolean | null
+  // TAXE-FIX-1 point 3 — le taux servi vient-il d'un secteur à taux majoré ?
+  taux_communal_secteur_majore?: boolean | null
 }
 export interface TaxeParams {
   surface_taxable_m2: number
   residence_principale?: boolean
   logement_aide?: boolean
+  // TAXE-FIX-1 point 1 — exonération de plein droit (CGI 1635 quater D) : la surface portée ici ne
+  // produit aucune part (0 €), le motif nomme l'article (agricole 3° / plai 2° / reconstruction 9°).
+  surface_exoneree_m2?: number
+  motif_exoneration?: 'agricole' | 'plai' | 'reconstruction' | null
   piscine_m2?: number
   pv_sol_m2?: number
   stationnement_ext_places?: number
@@ -521,11 +531,14 @@ export interface TaxeParams {
   taux_communal_pct?: number | null
   taux_departemental_pct?: number | null
   insee?: string | null   // OUTILS-FIX-5 L2 — clé de la table des taux : le back sert le taux public de la commune
+  idu?: string | null      // TAXE-FIX-1 point 3 — résolution PAR PARCELLE (secteur à taux majoré prioritaire)
 }
 export const getTaxeAmenagement = (p: TaxeParams) => {
   const params = new URLSearchParams({ surface_taxable_m2: String(p.surface_taxable_m2) })
   if (p.residence_principale) params.set('residence_principale', 'true')
   if (p.logement_aide) params.set('logement_aide', 'true')
+  if (p.surface_exoneree_m2) params.set('surface_exoneree_m2', String(p.surface_exoneree_m2))
+  if (p.motif_exoneration) params.set('motif_exoneration', p.motif_exoneration)
   if (p.piscine_m2) params.set('piscine_m2', String(p.piscine_m2))
   if (p.pv_sol_m2) params.set('pv_sol_m2', String(p.pv_sol_m2))
   if (p.stationnement_ext_places) params.set('stationnement_ext_places', String(p.stationnement_ext_places))
@@ -533,6 +546,7 @@ export const getTaxeAmenagement = (p: TaxeParams) => {
   if (p.taux_communal_pct != null) params.set('taux_communal_pct', String(p.taux_communal_pct))
   if (p.taux_departemental_pct != null) params.set('taux_departemental_pct', String(p.taux_departemental_pct))
   if (p.insee) params.set('insee', p.insee)
+  if (p.idu) params.set('idu', p.idu)
   return j<TaxeResult>(`/outils/taxe-amenagement?${params.toString()}`)
 }
 
@@ -667,6 +681,8 @@ export interface TaxePrefill {
   taux_communal_source: 'public' | null
   taux_communal_millesime: string | null
   taux_communal_perime: boolean | null
+  // TAXE-FIX-1 point 3 — la parcelle est-elle dans un secteur à taux majoré voté par la commune ?
+  secteur_majore?: boolean
 }
 export const getTaxePrefill = (idu: string) => j<TaxePrefill>(`/outils/taxe-amenagement/prefill?idu=${encodeURIComponent(idu)}`)
 

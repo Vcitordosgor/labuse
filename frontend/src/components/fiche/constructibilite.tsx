@@ -68,8 +68,12 @@ export function TaxeAmenagementBlock({ t }: { t: NonNullable<Fiche['taxe_amenage
       {t.taux_communal_manquant ? (
         <FactRow label="Taux communal" tone="mute" value="non renseigné — à saisir" />
       ) : (
-        <FactRow label="Taux communal" value={<>{t.taux_communal_pct} <small>%</small></>}
-          src={t.taux_communal_source === 'public' ? 'délibération communale (public)' : undefined} />
+        // TAXE-FIX-1 point 3 — dire quand le taux vient d'un SECTEUR à taux majoré (≠ taux général).
+        <FactRow label={t.taux_communal_secteur_majore ? 'Taux communal (secteur majoré)' : 'Taux communal'}
+          value={<>{t.taux_communal_pct} <small>%</small></>}
+          src={t.taux_communal_source === 'public'
+            ? (t.taux_communal_secteur_majore ? 'secteur à taux majoré (délibération)' : 'délibération communale (public)')
+            : undefined} />
       )}
       {/* TAXE-AMÉNAGEMENT-1 lot C — millésime du taux public + alerte fraîcheur (> 1 an). */}
       {t.taux_communal_source === 'public' && t.taux_communal_millesime && (
@@ -81,7 +85,8 @@ export function TaxeAmenagementBlock({ t }: { t: NonNullable<Fiche['taxe_amenage
       <FactRow label="Taux départemental"
         value={t.taux_departemental_pct != null ? <>{t.taux_departemental_pct} <small>%</small></> : '—'}
         src={t.taux_departemental_confirme ? 'confirmé' : 'plafond légal 2,5 % — à confirmer'} />
-      <FactNote>Se calcule sur la surface de plancher créée par votre projet — chiffrée dans le Dossier financier une fois le projet saisi. Barème {t.annee} — {t.source}.</FactNote>
+      {/* TAXE-FIX-1 point 4 — la taxe porte sur la SURFACE TAXABLE (garages/annexes inclus), pas la SDP. */}
+      <FactNote>Se calcule sur la surface taxable de votre projet (close et couverte &gt; 1,80 m, garages et annexes inclus — ≠ SDP) — chiffrée dans le Dossier financier une fois le projet saisi. Barème {t.annee} — {t.source}.</FactNote>
     </div>
   )
 }

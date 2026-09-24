@@ -28,7 +28,8 @@ def test_taxe_sans_taux_communal_jamais_de_total_invente(monkeypatch):
     JAMAIS de montant (W2 : pas de projet, pas de taxe chiffrée)."""
     from labuse.api import app as _app
 
-    monkeypatch.setattr("labuse.taxe_amenagement.taux_communal_public", lambda db, insee: None)
+    # TAXE-FIX-1 point 3 — le bloc passe par taux_parcelle → taux_communal_public(db, insee, today=…).
+    monkeypatch.setattr("labuse.taxe_amenagement.taux_communal_public", lambda db, insee, today=None: None)
     b = _app._taxe_amenagement_block(object(), "97411000AA0001", 1)
     assert b is not None
     assert b["projet_saisi"] is False
@@ -45,7 +46,7 @@ def test_taxe_ne_porte_jamais_de_montant_sans_projet(monkeypatch):
     from labuse.api import app as _app
 
     monkeypatch.setattr("labuse.taxe_amenagement.taux_communal_public",
-                        lambda db, insee: {"part_communale_pct": 3.0, "source": "DGFiP",
+                        lambda db, insee, today=None: {"part_communale_pct": 3.0, "source": "DGFiP",
                                            "millesime": "Taux communal", "delib_date": None,
                                            "maj_at": None, "perime": False})
     b = _app._taxe_amenagement_block(object(), "97411000AA0001", 1)

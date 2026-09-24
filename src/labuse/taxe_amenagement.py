@@ -58,6 +58,31 @@ def ensure_taux_table(engine) -> None:
         c.execute(text(_TAUX_DDL))
 
 
+# TAXE-FIX-1 point 3 — SECTEURS À TAUX MAJORÉ. La commune peut voter, sur des SECTEURS délimités, un
+# taux supérieur au taux général (jusqu'à 20 % — CGI art. 1635 quater E/F). DELTA porte ces secteurs
+# au grain PARCELLE (colonnes prefixe/section/parcelle) : le « secteur » est une LISTE de parcelles.
+# On les stocke par IDU (la « géométrie » = l'identité cadastrale exacte, jointure sûre, pas une
+# intersection approchée). 6 communes du 974 en ont (Saint-Paul 10 %, Saint-Leu 14 %, Trois-Bassins
+# 20 %, Les Avirons 10 %, Entre-Deux 8,5 %, Le Port 5 % — relevé DELTA 24/09/2026).
+_SECTEUR_DDL = """
+CREATE TABLE IF NOT EXISTS taxe_amenagement_secteur (
+  idu varchar(14) PRIMARY KEY,
+  insee varchar(5) NOT NULL,
+  part_communale_pct double precision NOT NULL,
+  source text,
+  delib_date date,
+  maj_at timestamptz NOT NULL DEFAULT now()
+)
+"""
+
+
+def ensure_secteur_table(engine) -> None:
+    with engine.begin() as c:
+        c.execute(text(_SECTEUR_DDL))
+        c.execute(text("CREATE INDEX IF NOT EXISTS ix_ta_secteur_insee "
+                       "ON taxe_amenagement_secteur(insee)"))
+
+
 def taux_communal_public(db, insee: str | None, *, today: date | None = None) -> dict | None:
     """Le taux communal PUBLIC d'une commune, ou None si inconnu.
 
@@ -90,7 +115,48 @@ def taux_communal_public(db, insee: str | None, *, today: date | None = None) ->
     return {"part_communale_pct": float(row[0]), "source": row[1],
             "delib_date": delib.isoformat() if delib else None,
             "maj_at": maj_d.isoformat() if maj_d else None,
-            "millesime": millesime, "perime": perime}
+            "millesime": millesime, "perime": perime, "secteur_majore": False}
+
+
+def taux_secteur(db, idu: str | None, *, today: date | None = None) -> dict | None:
+    """TAXE-FIX-1 point 3 — le taux du SECTEUR À TAUX MAJORÉ voté pour CETTE parcelle (délibération
+    portée par DELTA au grain parcelle), ou None si la parcelle n'est dans aucun secteur. Même
+    forme que taux_communal_public, avec `secteur_majore=True` et un millésime qui le dit."""
+    if not idu:
+        return None
+    try:
+        row = db.execute(text(
+            "SELECT part_communale_pct, source, delib_date, maj_at FROM taxe_amenagement_secteur "
+            "WHERE idu = :i"), {"i": str(idu)[:14]}).first()
+    except Exception:  # table absente en environnement partiel
+        return None
+    if not row:
+        return None
+    delib, maj = row[2], row[3]
+    maj_d = maj.date() if isinstance(maj, datetime) else maj
+    ref = today or date.today()
+    perime = bool(maj_d is not None and (ref - maj_d).days > _PERIME_JOURS)
+    depuis = _fr_date(delib)
+    millesime = "Secteur à taux majoré"
+    if depuis:
+        millesime += f" en vigueur depuis le {depuis} (délibération communale)"
+    return {"part_communale_pct": float(row[0]), "source": row[1],
+            "delib_date": delib.isoformat() if delib else None,
+            "maj_at": maj_d.isoformat() if maj_d else None,
+            "millesime": millesime, "perime": perime, "secteur_majore": True}
+
+
+def taux_parcelle(db, idu: str | None, *, today: date | None = None) -> dict | None:
+    """TAXE-FIX-1 point 3 — LE taux communal applicable à une PARCELLE : le secteur à taux majoré
+    s'il en existe un pour cette parcelle, SINON le taux communal général. `secteur_majore` dit
+    lequel a servi. C'est le point de résolution unique quand on connaît l'IDU (outil, fiche,
+    Dossier) — `taux_communal_public(insee)` reste le taux GÉNÉRAL de la commune."""
+    if not idu or len(str(idu)) < 5:
+        return None
+    sec = taux_secteur(db, idu, today=today)
+    if sec:
+        return sec
+    return taux_communal_public(db, str(idu)[:5], today=today)
 
 
 def config() -> dict:
@@ -102,11 +168,39 @@ def _eur(x: float) -> float:
     return round(float(x), 2)
 
 
+# TAXE-FIX-1 point 1 — exonérations de PLEIN DROIT que l'outil peut rendre SANS deviner (CGI art.
+# 1635 quater D, en vigueur 01/01/2026 — https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000050193341,
+# lu le 24/09/2026). Une surface EXONÉRÉE ne produit AUCUNE part (0 €), à la différence de
+# l'ABATTEMENT (−50 %) qui ne fait que réduire de moitié. Chaque motif porte son numéro dans
+# l'article. Retenus (rendables sans convention ni liste réglementaire) : locaux agricoles (3°),
+# logements PLAI/LLTS (2°), reconstruction à l'identique < 10 ans après sinistre (9°). Laissés
+# (non rendables sans deviner) : service public/utilité publique (1°, engagement + liste par
+# décret), centres équestres (4°), OIN/ZAC à équipements à charge des constructeurs (5°/6°, dépend
+# de la convention), PUP (7°), aménagements prescrits par un PPR (8°). Petites surfaces < 5 m² = 10°
+# (traité plus bas, sur la surface saisie). Cf docs/audit-2026-09/taxe-fix-1/TAXE-FIX-1.md.
+_MOTIFS_EXONERATION = {
+    "agricole": ("Locaux agricoles", "CGI art. 1635 quater D, 3°"),
+    "plai": ("Logements locatifs très sociaux (PLAI)", "CGI art. 1635 quater D, 2°"),
+    "reconstruction": ("Reconstruction à l'identique après sinistre (< 10 ans)",
+                       "CGI art. 1635 quater D, 9°"),
+}
+
+# TAXE-FIX-1 point 2 — redevance (« taxe ») d'archéologie préventive due pour les travaux soumis à
+# AUTORISATION D'URBANISME (permis) : MÊME assiette que la taxe d'aménagement (surface × valeur
+# forfaitaire, abattements ET exonérations inclus — l'assiette exclut déjà les surfaces exonérées),
+# taux 0,40 %. Code du patrimoine art. L524-7 (fait de droit stable). À NE PAS confondre avec le
+# régime au m² (0,69 €/m² en 2026, arrêté du 23/12/2025), réservé aux aménagements SANS permis.
+_RAP_PCT = 0.40
+_RAP_SOURCE = "code du patrimoine art. L524-7 (0,40 % de l'assiette de la taxe d'aménagement)"
+
+
 def calculer(
     *,
     surface_taxable_m2: float = 0.0,
     residence_principale: bool = False,
     logement_aide: bool = False,
+    surface_exoneree_m2: float = 0.0,
+    motif_exoneration: str | None = None,
     piscine_m2: float = 0.0,
     pv_sol_m2: float = 0.0,
     stationnement_ext_places: int = 0,
@@ -118,6 +212,7 @@ def calculer(
     taux_communal_public_millesime: str | None = None,
     taux_communal_public_delib_date: str | None = None,
     taux_communal_public_perime: bool | None = None,
+    taux_communal_secteur_majore: bool = False,
 ) -> dict:
     """Renvoie le détail LIGNE PAR LIGNE + total (None si le taux communal manque)."""
     cfg = config()
@@ -134,11 +229,11 @@ def calculer(
     # 1) surface de construction : valeur forfaitaire, avec abattement 50 % (100 premiers m² RP / aidé).
     surf = max(0.0, float(surface_taxable_m2 or 0))
     if surf > 0 and seuil_exo and surf < seuil_exo:
-        # RV2-V2 — exonération de PLEIN DROIT des petites surfaces (CGI art. 1635 quater D, 1°) :
+        # RV2-V2 — exonération de PLEIN DROIT des petites surfaces (CGI art. 1635 quater D, 10°) :
         # une construction < 5 m² de surface taxable n'est pas soumise à la part surface.
         assiette_surf = 0.0
         lignes.append({"poste": "Surface de construction",
-                       "detail": f"{surf:g} m² < {seuil_exo:g} m² — exonérée (CGI 1635 quater D)",
+                       "detail": f"{surf:g} m² < {seuil_exo:g} m² — exonérée (CGI 1635 quater D, 10°)",
                        "assiette_eur": 0.0})
     elif surf > 0:
         abattue = 0.0
@@ -159,6 +254,16 @@ def calculer(
         lignes.append({"poste": "Surface de construction", "detail": detail, "assiette_eur": _eur(assiette_surf)})
     else:
         assiette_surf = 0.0
+
+    # 1 bis) surface EXONÉRÉE de plein droit (CGI 1635 quater D) — locaux agricoles, PLAI,
+    # reconstruction à l'identique. 0 € d'assiette, mais une ligne qui NOMME le motif et son article
+    # (jamais un simple silence) ; distincte de l'abattement (−50 %), la part surface ne s'ajoute pas.
+    surf_exo = max(0.0, float(surface_exoneree_m2 or 0))
+    if surf_exo > 0 and motif_exoneration in _MOTIFS_EXONERATION:
+        _label, _art = _MOTIFS_EXONERATION[motif_exoneration]
+        lignes.append({"poste": f"Surface exonérée — {_label}",
+                       "detail": f"{surf_exo:g} m² × {vf:g} €/m² — exonérée de plein droit ({_art})",
+                       "assiette_eur": 0.0})
 
     # 2) installations à forfait spécifique (assiette propre, taxée aux mêmes taux).
     def _forfait(poste: str, qte: float, unit: float, unite: str):
@@ -195,6 +300,10 @@ def calculer(
     part_dep = None if taux_departemental_pct is None else _eur(assiette * float(taux_departemental_pct) / 100.0)
     total = None if (part_com is None or part_dep is None) else _eur((part_com or 0) + (part_dep or 0))
 
+    # 4) TAXE-FIX-1 point 2 — redevance d'archéologie préventive : 0,40 % de la MÊME assiette
+    # (art. L524-7 c. patrimoine). Ligne à part, sous le total TA ; ne dépend pas du taux communal.
+    rap_eur = _eur(assiette * _RAP_PCT / 100.0)
+
     return {
         "annee": cfg["meta"]["annee"],
         "source": cfg["meta"]["source"],
@@ -209,6 +318,10 @@ def calculer(
         "part_communale_eur": part_com,
         "part_departementale_eur": part_dep,
         "total_eur": total,
+        # TAXE-FIX-1 point 2 — redevance d'archéologie préventive (0,40 % de l'assiette).
+        "rap_pct": _RAP_PCT,
+        "rap_eur": rap_eur,
+        "rap_source": _RAP_SOURCE,
         "taux_communal_manquant": taux_manquant,
         "taux_communal_source": taux_source,             # 'public' | 'saisi' | None
         "taux_communal_public_pct": taux_communal_public_pct,
@@ -220,6 +333,9 @@ def calculer(
                                      if taux_source == "public" else None),
         "taux_communal_perime": (bool(taux_communal_public_perime)
                                  if taux_source == "public" else None),
+        # TAXE-FIX-1 point 3 — le taux servi vient-il d'un secteur à taux majoré ? (public seulement)
+        "taux_communal_secteur_majore": (bool(taux_communal_secteur_majore)
+                                         if taux_source == "public" else None),
         "ecart_saisi_public_pct": ecart_saisi_public,    # contrôle de qualité (lot 6.2)
         "message_taux_communal": (None if not taux_manquant else
             "Taux communal non renseigné pour cette commune — saisissez-le "
