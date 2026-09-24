@@ -125,18 +125,22 @@ def test_zone_ecran_egale_faisabilite(zone1_env):
 
 @pytest.mark.db
 def test_t3_dominante_n_zero_logement_et_cause(zone1_env):
-    """Point 2 — T3 : 0 logement, SDP stockée 4 188 servie 0 PAR RÈGLE, cause affichée,
-    run INTACT."""
+    """Point 2 — T3 (à cheval N 54,4 % dominante + Ud 45,6 %).
+
+    FAISABILITE-clip (Vic 24/09/2026) — `parcel_faisabilite` clippe DÉSORMAIS par défaut (comme le
+    run servi) : le moteur LIVE résout la portion Ud → T3 est CONSTRUCTIBLE sur sa portion (même
+    logique que T4), fini le tout-ou-rien qui le rendait « 0 ». La garde de SERVE
+    `garde_sdp_residuelle` (dominante N → 0 par règle) et le run stocké restent, EUX, inchangés :
+    le point unique de lecture servi n'est pas touché par ce mandat (à réconcilier séparément)."""
     from labuse.api.served_cascade import served_cascade_lines
     from labuse.faisabilite.db import parcel_faisabilite
     from labuse.faisabilite.zone_servie import garde_sdp_residuelle
     s = zone1_env
     fz = parcel_faisabilite(s, _pid(s, T3))
-    assert fz is None or not fz[1].constructible, "zone dominante N : jamais constructible"
-    if fz:
-        assert fz[1].fourchette in (None, {}) or \
-            (fz[1].fourchette.get("logements_au_sol") or (0, 0))[1] == 0
-    # garde pure
+    # LIVE : clippé → la portion Ud construit (constructible), plus le tout-ou-rien
+    assert fz is not None and fz[1].constructible, "clippé : la portion Ud de T3 doit construire"
+    assert (fz[1].fourchette or {}).get("shab_vendable_m2", 0) > 0
+    # garde de SERVE (inchangée) : dominante N → 0 par règle
     assert garde_sdp_residuelle(4188, "N", "N") == (0.0, "zone_non_constructible:N")
     assert garde_sdp_residuelle(4188, "U", "Ud") == (4188.0, None)
     assert garde_sdp_residuelle(None, "N", "N") == (None, None)

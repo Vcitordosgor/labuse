@@ -155,13 +155,9 @@ def _label_bati(tier: str, row) -> str | None:
         return None
     if sdp is None:
         return None
-    # ZONE-1 pt2 — garde de lecture : en zone dominante A/N, la SDP servie vaut 0 par règle
-    # (le chiffre du run suivra à la prochaine bascule).
-    try:
-        from .faisabilite.zone_servie import garde_sdp_residuelle
-        sdp, _ = garde_sdp_residuelle(float(sdp), row["zone_fam"], row["zone_lib"])
-    except (KeyError, TypeError):
-        pass
+    # FAISABILITE-clip (Vic 24/09/2026) — garde de lecture « dominante A/N → 0 » RETIRÉE : l'assiette
+    # clippée du run servi porte déjà la portion U/AU (parcel_residuel lu tel quel), l'ancien
+    # tout-ou-rien la contredisait.
     return ("Bâtie — on peut encore construire" if float(sdp) > 0
             else "Bâtie — construite au maximum")
 

@@ -293,12 +293,18 @@ def _pct_constructible(ctx: ParcelContext) -> float | None:
 
 
 def parcel_faisabilite(session: Session, parcel_id: int,
-                       assiette_clippee: bool = False,
+                       assiette_clippee: bool = True,
                        hyp_overrides: dict | None = None) -> tuple[ParcelContext, Faisabilite] | None:
     """Contexte + pré-faisabilité d'une parcelle, EMPRISE SUR GÉOMÉTRIE RÉELLE
     (ST_Buffer du contour cadastral par le recul séparatif, EPSG:2975), clippée à la
     portion U/AU si zonage mixte (Décision 1) et amputée des emplacements réservés
-    (Décision 3.a). None si parcelle/zone introuvable."""
+    (Décision 3.a). None si parcelle/zone introuvable.
+
+    FAISABILITE-clip (Vic 24/09/2026) — `assiette_clippee=True` PAR DÉFAUT : le moteur LIVE
+    (fiche §capacité, outil Faisabilité, bilan, potentiel) calcule sur l'assiette CLIPPÉE, comme
+    le RUN RÉSIDUEL SERVI (run 8, `--assiette-clippee`). Sur une parcelle A/N à cheval, la zone
+    dominante non constructible n'annule plus la portion U/AU : la capacité est celle de la portion.
+    (Le calcul d'un RUN reste piloté par le flag explicite de `compute_residuel_batch` — inchangé.)"""
     from .engine import Hypotheses
 
     ctx = parcel_context(session, parcel_id)
@@ -513,10 +519,13 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
     c = ctx.contraintes
 
     # Potentiel résiduel (Lot B) — réutilise la faisabilité déjà calculée ; isolé/défensif.
+    # FAISABILITE-clip — `res` est clippé (défaut) → le bâti retranché DOIT l'être sur la même
+    # portion U/AU (assiette_clippee=True), sinon on soustrait le bâti de la portion A/N d'un plafond
+    # U/AU (résiduel faussement nul — piège SCORING-6). Cohérent avec le run servi.
     residuel = None
     try:
         from .residuel import compute_residuel
-        residuel = compute_residuel(session, parcel_id, faisa=res)
+        residuel = compute_residuel(session, parcel_id, faisa=res, assiette_clippee=True)
     except Exception:  # noqa: BLE001 - n'empêche jamais la fiche
         residuel = None
 
