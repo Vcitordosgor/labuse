@@ -17,6 +17,9 @@ import { BANDE_META, BANDE_ORDER } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Tip } from '../Tip'
+import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
+import { Chip } from '../ui/Chip'
 import { useFiltre } from './filtreContext'   // M120 — binding partagé (carte OU cadrage projet)
 
 // ANALYSE-1 — le récapitulatif de la Révélation parle le NOUVEAU moteur (bandes de Score) ; l'ancien
@@ -85,19 +88,8 @@ export const SIGNAUX_KEYS = ['pm_privee', 'procedure', 'permis_actif', 'permis_c
 
 const nf = new Intl.NumberFormat('fr-FR')
 
-// M55-D stage 4 : différenciation SÉLECTIONNÉ / disponible plus lisible que le tout-gris —
-// disponible = fond léger + survol menthe (ça s'active) ; sélectionné = rempli menthe, texte franc.
-function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button onClick={onClick} aria-pressed={on}
-      /* RETOURS-9 (Q9) — chip de filtre sélectionnée = pleine de sa couleur, encre sombre (pas un liseré). */
-      className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-colors duration-quick ${
-        on ? 'border-mint bg-mint font-medium text-mint-ink'
-          : 'border-line-2 bg-surface-3 text-txt-mut hover:border-mint/50 hover:text-txt'}`}>
-      {children}
-    </button>
-  )
-}
+// DA-FIX-3 Lot 1 (DA-025) — le Chip LOCAL est remplacé par le Chip partagé (`../ui/Chip`),
+// ton par défaut `vert`. Les usages (ChipGroup, SignalChip) mappent on→on, onClick→onClick.
 
 export function ChipGroup({ field, options }: { field: keyof Filters; options: { k: string; l: string }[] }) {
   const { filters, setFilter } = useFiltre()
@@ -194,11 +186,8 @@ export function ZoneSelector() {
                 {zq.data ? `${nf.format(f.n)} parcelles · ${f.zones.length} zones` : '…'}
                 {zonesSelFam > 0 && <span className="text-mint"> · {zonesSelFam} choisie{zonesSelFam > 1 ? 's' : ''}</span>}
               </span>
-              {/* RECETTE-2 (S17) — fermé → droite (▸, -90°) ; ouvert → bas (▾, sans rotation). */}
-              <svg viewBox="0 0 12 12" aria-hidden="true"
-                className={`h-3 w-3 shrink-0 text-txt-dim transition-transform duration-quick ${ouverte ? '' : '-rotate-90'}`}>
-                <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {/* DA-FIX-3 Lot 5 (DA-031) — chevron d'accordéon partagé (fermé ▶ / ouvert ▼). */}
+              <Chevron open={ouverte} />
             </button>
             {ouverte && (
               <div className="flex max-h-44 flex-col gap-0.5 overflow-y-auto border-t border-line-2 px-2 py-1.5">
@@ -640,10 +629,9 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
             )}
             {phase === 'revealed' && (
               /* ── 4. LE GESTE FINAL — l'analyse s'allume, la section se rétracte ── */
-              <button data-voir-parcelles onClick={voirParcelles}
-                className="mt-3 w-full rounded-lg bg-mint py-2 font-display text-[13px] font-bold text-mint-ink transition-[filter] duration-quick hover:brightness-110">
+              <Bouton data-voir-parcelles niveau="primaire" ton="vert" onClick={voirParcelles} className="mt-3 w-full">
                 {CLIENT.revelation.voir}
-              </button>
+              </Bouton>
             )}
           </div>
         ) : !analyseOn ? (
@@ -656,19 +644,20 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
                 ils sont actionnables quel que soit le compteur en cours de calcul (le débounce 400 ms +
                 l'aller-retour donnaient l'illusion d'un bouton « éteint » qui s'allume après coup). L'état
                 « en cours » n'est plus signalé que sur le NOMBRE (compteur), pas sur les boutons. */}
-            <button data-voir-factuel onClick={voirFactuel}
-              className="w-full rounded-lg border border-line-2 bg-surface-3/60 py-2.5 text-[12.5px] font-medium text-txt transition-colors duration-quick hover:border-txt-dim/50 hover:bg-surface-3 hover:text-txt-hi">
+            {/* DA-FIX-1 Lot 4 (DA-021) — un seul primaire par écran : « Voir les N parcelles » = primaire
+                vert (le geste dominant) ; « Analyser avec LABUSE » = secondaire vert (moteur statistique,
+                pas l'IA → jamais mauve). */}
+            <Bouton data-voir-factuel niveau="primaire" ton="vert" onClick={voirFactuel} className="w-full">
               {CLIENT.revelation.voirN(live ?? 431_663)}
-            </button>
-            <button data-analyser-btn onClick={lancer}
-              className="group flex w-full items-center justify-center gap-2 rounded-lg bg-mint py-3 font-display text-[13.5px] font-bold text-mint-ink transition-[filter,transform] duration-soft hover:brightness-105 active:translate-y-[1px] active:brightness-95">
+            </Bouton>
+            <Bouton data-analyser-btn niveau="secondaire" ton="vert" onClick={lancer} className="group w-full">
               <span>{CLIENT.revelation.boutonFaire.replace(/\s*→\s*$/, '')}</span>
               <svg viewBox="0 0 16 16" aria-hidden="true"
                 className="h-[13px] w-[13px] transition-transform duration-quick group-hover:translate-x-0.5">
                 <path d="M2.5 8 H13 M9.5 3.5 L14 8 L9.5 12.5" fill="none" stroke="currentColor"
                   strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </button>
+            </Bouton>
             {/* FILTRE-NETTOYAGE #5 — « Réinitialiser » remonte DANS le bloc d'actions (avec « Voir » et
                 « Analyser »), plus isolé en bas. Reste secondaire (action de recul) : lien discret centré,
                 teinte danger au survol — lisible, jamais un bouton de poids égal. */}

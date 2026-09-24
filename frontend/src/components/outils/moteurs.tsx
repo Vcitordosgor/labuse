@@ -8,10 +8,13 @@ import { CLIENT } from '../../lib/strings'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { EmptyState, ErrorState } from '../States'
 import { Tip } from '../Tip'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
 import { trierCommunes } from '../../lib/communes'
+import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
 
 const fmt = fmtInt
 
@@ -80,14 +83,14 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
         <div data-m15-loading className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <p className="text-[11px] text-txt-mut">Recalcul à blanc en cours…</p>
-            <button data-m15-annuler onClick={annuler} className="text-[11px] text-txt-mut hover:text-st-ecartee">Annuler</button>
+            <Bouton niveau="lien" data-m15-annuler onClick={annuler}>Annuler</Bouton>
           </div>
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-8 animate-pulse rounded-lg bg-surface-3" style={{ opacity: 1 - i * 0.12 }} />
           ))}
         </div>
       )}
-      {sim.isError && <p className="text-[11px] text-st-ecartee">Recalcul indisponible — réessayez.</p>}
+      {sim.isError && <ErrorState message="Recalcul indisponible — réessayez." retry={() => sim.refetch()} />}
 
       {meta && !sim.isLoading && (
         <>
@@ -185,7 +188,7 @@ export function M16() {
       <Banner>Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charge foncière. Zoomez, cliquez les parcelles (re-cliquez pour retirer) — ou désignez une parcelle de départ : ses voisines contiguës vous sont proposées.</Banner>
       {/* OUTILS-MUSCLER-1 B1 — entrée PAR PARCELLE (omnibox SOCLE : IDU · adresse · référence
           courte), en plus du clic-carte. La parcelle désignée devient la parcelle de DÉPART. */}
-      <ParcelInput dataAttr="asm-depart" placeholder="Adresse, IDU ou référence — la parcelle de départ" onPick={addDepart} />
+      <ParcelInput dataAttr="asm-depart" placeholder="Adresse, IDU ou référence (BW0917)" onPick={addDepart} />
       <div className="flex flex-wrap gap-1">
         {msel.map((i) => (
           <button key={i} onClick={() => setMsel(msel.filter((x) => x !== i))}
@@ -196,12 +199,12 @@ export function M16() {
         {msel.length === 0 && <span className="text-[11px] text-txt-dim">aucune parcelle sélectionnée</span>}
       </div>
       <div className="flex gap-2">
-        <button onClick={() => msel.length >= 2 && run.mutate()} disabled={msel.length < 2 || run.isPending}
-          className="flex-1 rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+        <Bouton niveau="primaire" ton="vert" onClick={() => msel.length >= 2 && run.mutate()} disabled={msel.length < 2 || run.isPending}
+          className="flex-1">
           Analyser l'assiette ({msel.length})
-        </button>
+        </Bouton>
         {msel.length > 0 && (
-          <button onClick={() => setMsel([])} className="rounded-lg border border-line-2 px-2 text-[11px] text-txt-dim hover:text-txt">vider</button>
+          <Bouton niveau="lien" onClick={() => setMsel([])}>vider</Bouton>
         )}
       </div>
       {/* OUTILS-MUSCLER-1 B2/B3/B4/B5 — VOISINES PROPOSÉES, en cartes empilées, même propriétaire
@@ -213,13 +216,11 @@ export function M16() {
         const rd = rq?.data
         return (
           <div key={ring} data-asm-ring={ring} className="flex flex-col gap-1">
-            {rq?.isLoading && <Loading label="Voisines contiguës…" />}
-            {rq?.isError && <p className="text-[11px] text-st-ecartee">Voisines de {ring.slice(8)} indisponibles — parcelle inconnue ?</p>}
+            {rq?.isLoading && <Squelette lignes={3} />}
+            {rq?.isError && <ErrorState message={`Voisines de ${ring.slice(8)} indisponibles — parcelle inconnue ?`} retry={rq ? () => rq.refetch() : undefined} />}
             {rd && rd.n === 0 && (
-              <p data-asm-ring-vide className="rounded-lg bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
-                Aucune voisine contiguë au cadastre pour <span className="font-mono">{ring.slice(8)}</span> —
-                la voirie et le domaine public (non cadastrés) coupent l'anneau.
-              </p>
+              <EmptyState title={`Aucune voisine contiguë au cadastre pour ${ring.slice(8)}`}
+                hint="la voirie et le domaine public (non cadastrés) coupent l'anneau." />
             )}
             {rd && rd.n > 0 && (
               <>
@@ -237,7 +238,7 @@ export function M16() {
                     <div key={v.idu} data-asm-voisine={v.idu} className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5">
                       <div className="flex items-center gap-2">
                         {/* B3 — cocher = entrer dans l'assemblage (recalcul au geste « Analyser », comme aujourd'hui) */}
-                        <input type="checkbox" data-asm-voisine-sel className="h-3 w-3 shrink-0 accent-mint" checked={coche}
+                        <Case data-asm-voisine-sel checked={coche}
                           onChange={() => setMsel(coche ? msel.filter((x) => x !== v.idu) : [...msel, v.idu])} />
                         <span className="font-mono text-[11px] text-txt-hi">{v.idu.slice(8)}</span>
                         {v.meme_proprietaire && (
@@ -257,14 +258,14 @@ export function M16() {
                         </span>
                         {/* B4 — sur une voisine COCHÉE : étendre la proposition d'un anneau depuis elle */}
                         {coche && (
-                          <button data-asm-ses-voisines onClick={() => etendreRing(v.idu)}
-                            className="shrink-0 text-[10px] font-medium text-mint hover:underline">ses voisines →</button>
+                          <Bouton niveau="lien" data-asm-ses-voisines onClick={() => etendreRing(v.idu)}
+                            className="shrink-0">ses voisines →</Bouton>
                         )}
                         {/* B5 — pont Scan patrimoine sur une voisine PM (le retour restaure la sélection) */}
                         {pr.type === 'personne_morale' && pr.siren && (
-                          <button data-asm-voisine-scan
+                          <Bouton niveau="lien" data-asm-voisine-scan
                             onClick={() => { setM02Prefill(pr.siren!); setModule('patrimoine'); pushOutilRetour({ module: 'assemblage', label: 'Assemblage', restore: { mselPrefill: [...msel] } }) }}
-                            className="shrink-0 text-[10px] font-medium text-mint hover:underline">Scan patrimoine →</button>
+                            className="shrink-0">Scan patrimoine →</Bouton>
                         )}
                       </div>
                     </div>
@@ -275,7 +276,7 @@ export function M16() {
           </div>
         )
       })}
-      {run.isError && <p className="text-[11px] text-st-ecartee">Erreur — au moins 2 parcelles valides ?</p>}
+      {run.isError && <ErrorState message="Erreur — au moins 2 parcelles valides ?" retry={() => run.mutate()} />}
       {d && (
         <>
           {d.tronquee && <p className="text-[10.5px] text-st-creuser">Assiette limitée aux {fmt(d.cap)} premières parcelles.</p>}
@@ -307,10 +308,10 @@ export function M16() {
             return (
               <div data-asm-sans-droits className="flex flex-col gap-1.5 rounded-lg border border-st-creuser/50 bg-st-creuser/[0.09] px-3 py-2 text-[11px] leading-snug text-st-creuser">
                 <span><b>{n} parcelle{n > 1 ? 's' : ''} sans droits à bâtir estimés</b> <span className="text-txt-dim">n'apporte{n > 1 ? 'nt' : ''} rien au bilan (aucune surface de plancher estimée — souvent des terrains non constructibles). Les retirer ?</span></span>
-                <button data-asm-retirer-vides onClick={() => { const rm = new Set(vides.map((i) => i.idu as string)); setMsel(msel.filter((x) => !rm.has(x))) }}
-                  className="hover-fill self-start rounded-lg border border-st-creuser/50 px-2 py-0.5 text-[10.5px] text-st-creuser transition-colors duration-quick">
+                <Bouton niveau="secondaire" ton="vert" data-asm-retirer-vides onClick={() => { const rm = new Set(vides.map((i) => i.idu as string)); setMsel(msel.filter((x) => !rm.has(x))) }}
+                  className="self-start">
                   Retirer {n > 1 ? `ces ${n} parcelles` : 'cette parcelle'}
-                </button>
+                </Bouton>
               </div>
             )
           })()}
@@ -407,10 +408,9 @@ export function M16() {
           {/* point 4 — PONT COURRIER : un seul geste ouvre l'outil Courrier prérempli avec TOUTES les
               parcelles de l'assemblage (patron courrierPrefillIdus, comme l'import Assemblage côté Courrier). */}
           {(d.items as Record<string, any>[]).length > 0 && (
-            <button data-asm-courrier onClick={() => { setCourrierPrefillIdus((d.items as Record<string, any>[]).map((i) => i.idu as string)); setModule('courriers') }}
-              className="rounded-lg border border-mint/50 bg-mint/10 py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+            <Bouton niveau="secondaire" ton="vert" data-asm-courrier onClick={() => { setCourrierPrefillIdus((d.items as Record<string, any>[]).map((i) => i.idu as string)); setModule('courriers') }}>
               ✉ Préparer les courriers ({(d.items as Record<string, any>[]).length}) → Courrier propriétaire
-            </button>
+            </Bouton>
           )}
           {/* C — indivision non détectable en base (honnête, pas fabriqué) */}
           <p className="shrink-0 text-[10px] leading-snug text-txt-dim">Indivision : non détectable en open data (aucune structure de propriété physique publiée) — signal non affiché plutôt qu'inventé.</p>
@@ -488,7 +488,7 @@ export function M17() {
   return (
     <>
       <Banner>{d?.bandeau ?? '…'}</Banner>
-      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Analyse en cours…" big /></div>}
+      {q.isLoading && <Squelette bloc className="py-8" />}
 
       {/* SIGNAL PAR PARCELLE (mène — robuste, sourcé, indépendant des quotas) */}
       <p className="label-caps">Signal ZAN par parcelle</p>
@@ -564,7 +564,8 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
     <span className={`font-medium ${pct >= 0 ? 'text-mint' : 'text-st-ecartee'}`}>{pct >= 0 ? '+' : ''}{pct} %/an</span>
   return (
     <div className="flex min-h-0 flex-col">
-      <div className="overflow-x-auto">
+      {/* DA-FIX-4 Lot 4 (DA-030) — plein écran (overlay 1240px) + 4 colonnes : aucune barre horizontale. */}
+      <div>
         <table className="w-full border-collapse text-[11px]">
           <thead>
             <tr className="border-b border-line-2">
@@ -737,7 +738,7 @@ export function MarcheCommune({ communeProp }: { communeProp?: string } = {}) {
         className="self-start rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
         {MU_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>)}
-      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Marché…" big /></div>}
+      {q.isLoading && <Squelette bloc className="py-8" />}
       {d && <>
         {/* M137-Z : le signal est HISSÉ dans l'en-tête sticky de la fiche commune (Communes) — on ne le
             re-rend ici que dans l'usage AUTONOME (sans communeProp) pour ne pas le doublonner. */}
@@ -851,8 +852,7 @@ export function M19() {
           className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
         <input value={smin} onChange={(e) => setSmin(e.target.value)} placeholder="surf. min" type="number"
           className="w-20 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
-        <button onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim()} aria-label="Ajouter le profil"
-          className="rounded bg-mint px-2 text-[11px] font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">+</button>
+        <Bouton niveau="primaire" ton="vert" icone onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim()} aria-label="Ajouter le profil">+</Bouton>
       </div>
 
       {/* ── RÉEL — promoteurs actifs SITADEL (commune du profil actif) ── */}
@@ -869,7 +869,7 @@ export function M19() {
 function PromoteursActifs({ commune }: { commune: string | null }) {
   const actifs = useQuery({ queryKey: ['m19-actifs', commune], queryFn: () => promoteursActifs(commune!), enabled: !!commune })
   if (!commune) return <p className="text-[10.5px] text-txt-dim">Choisissez un profil ciblant une commune pour voir les promoteurs réellement actifs (SITADEL).</p>
-  if (!actifs.data) return <Loading accent="mint" label="Promoteurs actifs…" />
+  if (!actifs.data) return <Squelette lignes={4} />
   const promos = (actifs.data.promoteurs as Record<string, any>[]) ?? []
   return (
     <div data-m19-actifs className="flex max-h-48 flex-col gap-1 overflow-y-auto">
@@ -880,7 +880,7 @@ function PromoteursActifs({ commune }: { commune: string | null }) {
           <div className="text-[10.5px] text-txt-dim">SIREN <Siren value={p.siren} className="font-mono text-txt-dim" /> · <b className="text-txt-mut">{p.n_permis}</b> permis (5 ans){p.logements ? ` · ${p.logements} logements` : ''}</div>
         </div>
       ))}
-      {promos.length === 0 && <p className="text-[10.5px] text-txt-dim">Aucun promoteur (personne morale) avec ≥ 2 permis récents ici.</p>}
+      {promos.length === 0 && <EmptyState title="Aucun promoteur (personne morale) avec ≥ 2 permis récents ici." />}
     </div>
   )
 }

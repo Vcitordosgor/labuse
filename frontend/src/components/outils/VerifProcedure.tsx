@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { verifProcedure, type VerifProcedure as VP } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
+import { ErrorState } from '../States'
 
 // M41 Phase 2.6 — OUTIL « VÉRIF PROCÉDURE » : un IDU → la commune a-t-elle une procédure PLU en
 // cours ? L'outil LIT le radar (point de calcul unique, mêmes libellés que la fiche) — il ne calcule
@@ -26,11 +27,11 @@ export function VerifProcedure() {
         {/* RETOURS-13 R24 — la barre passe sur le MOTEUR UNIQUE (ParcelInput) : IDU 14, référence
             cadastrale courte (« BZ1065 », désambiguïsation par commune), adresse. Le champ maison qui
             n'acceptait que l'IDU brut est retiré (promesse T1 tenue sur TOUTES les barres). */}
-        <ParcelInput dataAttr="verif-idu" withCarte={false} onPick={(i) => lancer(i)}
-          placeholder="IDU, référence (ex. BZ1065) ou adresse" />
+        <ParcelInput dataAttr="verif-idu" onPick={(i) => lancer(i)}
+          placeholder="Adresse, IDU ou référence (BW0917)" />
       </div>
 
-      {m.isError && <div className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">Parcelle inconnue ou erreur.</div>}
+      {m.isError && <ErrorState message="Parcelle inconnue ou erreur." retry={m.variables ? () => m.mutate(m.variables!) : undefined} />}
 
       {d && (
         <div data-verif-result className="flex flex-col gap-2">

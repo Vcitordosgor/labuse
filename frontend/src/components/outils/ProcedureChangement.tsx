@@ -2,10 +2,13 @@ import { useQuery } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { motSimulPluProcedures, motSimulPluZones, type SimulPluProcedure } from '../../lib/api'
 import { useApp } from '../../store/useApp'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { EmptyState, ErrorState } from '../States'
 import { CommuneScope } from './ModulePanel'
 import { M15 } from './moteurs'
 import { VerifProcedure } from './VerifProcedure'
+import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
 
 // M137-Q — VOIE UNIFIÉE « Procédure & changement PLU ». Relie les deux écrans qui s'ignoraient :
 //   1. en tête, les communes RÉELLEMENT en procédure (radar Sudocuh, point de calcul unique) ;
@@ -32,6 +35,7 @@ export function ProcedureChangement() {
   // périmètre explicite de l'outil — amorcé sur le filtre global, puis piloté ICI.
   const [commune, setCommune] = useState<string | null>(globalCommune)
   const [openProc, setOpenProc] = useState(false)   // §5 — bandeau replié par défaut (compact)
+  const [openAttention, setOpenAttention] = useState(false)   // DA-031 — accordéon « Attention »
   // OUTILS-FIX-2 C1 — deux onglets (même patron que Scan patrimoine) : « Par parcelle » (VerifProcedure)
   // et « Simuler l'ouverture » (radar procédures + simulation AU→U). Contenu de chaque onglet inchangé.
   const [tab, setTab] = useState<'parcelle' | 'simuler'>('parcelle')
@@ -72,16 +76,12 @@ export function ProcedureChangement() {
           (type/état, date, source, bouton Simuler). 0 procédure → message factuel, pas de bandeau. */}
       {tab === 'simuler' && (
       <div className="flex flex-col gap-1.5">
-        {proc.isLoading && <div className="py-3"><Loading accent="mint" label="Radar procédures…" /></div>}
+        {proc.isLoading && <div className="py-3"><Squelette lignes={3} /></div>}
         {proc.isError && (
-          <div className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">
-            Radar indisponible.
-          </div>
+          <ErrorState message="Radar indisponible." retry={() => proc.refetch()} />
         )}
         {proc.data && communes.length === 0 && (
-          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
-            Aucune procédure PLU lourde active au radar à ce jour.
-          </div>
+          <EmptyState title="Aucune procédure PLU lourde active au radar à ce jour." />
         )}
         {communes.length > 0 && (
           <>
@@ -93,7 +93,7 @@ export function ProcedureChangement() {
               <span className="truncate whitespace-nowrap text-[12px] font-medium text-txt-hi">
                 {communes.length} commune{communes.length > 1 ? 's' : ''} en procédure PLU
               </span>
-              <span className="ml-auto shrink-0 whitespace-nowrap text-[11px] text-st-creuser">{openProc ? 'Replier ▾' : 'Détail ▸'}</span>
+              <span className="ml-auto flex shrink-0 items-center gap-1 whitespace-nowrap text-[11px] text-st-creuser">{openProc ? 'Replier' : 'Détail'} <Chevron open={openProc} /></span>
             </button>
             {openProc && communes.map((c) => (
               <div key={c.insee} data-procchg-commune={c.commune}
@@ -107,10 +107,10 @@ export function ProcedureChangement() {
                   Prescrite le {c.date_acte} · sourcé {c.source} · constaté le {c.date_constat}
                   {c.source_url && <> · <a href={c.source_url} target="_blank" rel="noreferrer" className="text-mint hover:underline">source ↗</a></>}
                 </div>
-                <button data-procchg-simuler onClick={() => choisir(c.commune)}
-                  className="mt-0.5 self-start rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25">
+                <Bouton niveau="secondaire" ton="vert" data-procchg-simuler onClick={() => choisir(c.commune)}
+                  className="mt-0.5 self-start">
                   Simuler ce que ça changerait →
-                </button>
+                </Bouton>
               </div>
             ))}
           </>
@@ -149,9 +149,11 @@ export function ProcedureChangement() {
             La simulation montre ce que la bascule AU→U y changerait.
           </div>
         )}
-        <details data-procchg-attention className="rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px] text-txt-mut">
-          <summary className="cursor-pointer list-none py-0.5 font-medium text-txt marker:hidden">
-            Attention ({commune && enProcedure ? 1 : 2}) ▾</summary>
+        <details data-procchg-attention open={openAttention}
+          onToggle={(e) => setOpenAttention((e.target as HTMLDetailsElement).open)}
+          className="rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px] text-txt-mut">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 py-0.5 font-medium text-txt marker:hidden">
+            <Chevron open={openAttention} />Attention ({commune && enProcedure ? 1 : 2})</summary>
           {!(commune && enProcedure) && (commune ? (
             <p data-procchg-statut="hypothetique" className="mt-1">
               <b className="text-txt">Aucune procédure PLU en cours</b> à {commune} au radar —

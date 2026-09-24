@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react'
 import { faisabiliteExplain, getCalculetteDefaults, getFaisabilite, getModeB, postChargeFonciere, type CalculetteDefaults } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { AvisIA } from '../AvisIA'
 import { renderRich } from './AskBar'
@@ -18,6 +18,8 @@ import { BlocIndisponible } from './BlocIndisponible'
 import type { Fiche, PotentielTransformation } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroTriple, PorteOutil, StepProv, HypInput, GroupLabel, FactRow, FactNote, RefLink, Vigilance } from './primitives'
+import { Bouton } from '../ui/Bouton'
+import { Badge } from '../ui/Badge'
 
 const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280' }
 export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
@@ -106,9 +108,8 @@ export function Calculette({ idu, hideSource, prixDemandeExterne, onResult, hide
     return (
       <div data-calculette>
         <p className="label-caps mb-1">Calculette de charge foncière</p>
-        <div data-calc-erreur className="card-elev px-3 py-2.5 text-[11px] text-txt">
-          <p className="text-st-creuser">Chargement de la calculette impossible.</p>
-          <button onClick={() => defs.refetch()} className="mt-2 min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Réessayer</button>
+        <div data-calc-erreur className="card-elev px-3 py-2.5">
+          <ErrorState message="Chargement de la calculette impossible." retry={() => defs.refetch()} />
         </div>
       </div>
     )
@@ -117,7 +118,7 @@ export function Calculette({ idu, hideSource, prixDemandeExterne, onResult, hide
     return (
       <div data-calculette>
         <p className="label-caps mb-1">Calculette de charge foncière</p>
-        <div className="card-elev px-3 py-2.5 text-[11px] text-txt"><Loading label="Chargement" /></div>
+        <div className="card-elev px-3 py-2.5"><Squelette lignes={3} /></div>
       </div>
     )
   }
@@ -181,7 +182,7 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
         {q.isFetching && <span data-calc-recalc className="animate-pulse text-[9px] normal-case tracking-normal text-mint">recalcul…</span>}
       </p>
       <div className="card-elev px-3 py-2.5 text-[11px] leading-relaxed text-txt">
-        {q.isLoading && <Loading label="Calcul en cours" />}
+        {q.isLoading && <Squelette lignes={3} />}
         {d && d.calculable === false && (
           <div data-calc-indispo>
             <p className="text-st-creuser">{d.message ?? 'Charge foncière non calculable.'}</p>
@@ -359,7 +360,7 @@ export function FaisabiliteTab({ idu, embedded }: { idu: string; embedded?: bool
   // mis en valeur dans un encadré dédié « Le calcul, étape par étape » plutôt qu'un accordéon discret.
   const [showSteps, setShowSteps] = useState(true)
   const explain = useMutation({ mutationFn: () => faisabiliteExplain(idu) })
-  if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
+  if (isLoading) return <Squelette lignes={4} />
   if (isError || !b) return <ErrorState message="Faisabilité indisponible." retry={() => refetch()} />
 
   const cap = b.capacite
@@ -460,11 +461,10 @@ export function FaisabiliteTab({ idu, embedded }: { idu: string; embedded?: bool
       {!embedded && cap && steps.length > 0 && (
         <div data-faisa-explain>
           {!ex && !explain.isPending && (
-            <button onClick={() => explain.mutate()} data-faisa-explain-btn
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-violet/50 bg-violet/[0.07] py-2 text-[12px] font-medium text-violet hover:bg-violet/10">
+            <Bouton niveau="secondaire" ton="ia" onClick={() => explain.mutate()} data-faisa-explain-btn className="w-full">
               <svg viewBox="0 0 20 20" className="h-3.5 w-3.5"><path d="M10 3.5 L11.6 8.4 L16.5 10 L11.6 11.6 L10 16.5 L8.4 11.6 L3.5 10 L8.4 8.4 Z" fill="currentColor" /></svg>
               Expliquer ce calcul en clair
-            </button>
+            </Bouton>
           )}
           {explain.isPending && <p className="flex items-center gap-2 py-2 text-[11px] text-violet"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-violet" /> L'IA lit les étapes du calcul…</p>}
           {explain.isError && <p className="py-1 text-[11px] text-st-ecartee">Explication indisponible — réessayez.</p>}
@@ -490,7 +490,7 @@ export function FaisabiliteTab({ idu, embedded }: { idu: string; embedded?: bool
 
 export function BilanTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
-  if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
+  if (isLoading) return <Squelette lignes={4} />
   if (isError || !b) return <ErrorState message="Bilan indisponible." retry={() => refetch()} />
   return (
     <div className="flex flex-col gap-3">
@@ -565,7 +565,7 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
   // M59-P1 (Q4) — sous le seuil de SHAB : la section ne montre PAS le calcul, elle DIT pourquoi.
   if (mb.trop_petit) return (
     <div data-mode-b-section>
-      <GroupLabel right={<span className="pill-amber">non pertinent</span>}>Réhabilitation (Mode B)</GroupLabel>
+      <GroupLabel right={<Badge ton="ambre">non pertinent</Badge>}>Réhabilitation (Mode B)</GroupLabel>
       <p data-mode-b-trop-petit style={{ margin: '4px 0 0', fontSize: 11.5, lineHeight: 1.5, color: '#8FA69A' }}>
         {mb.motif ?? `Bâti trop petit (SHAB ~${mb.shab_rehabilitable_m2 ?? '—'} m²) pour une thèse de réhabilitation.`}
       </p>
@@ -578,7 +578,7 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
   return (
     <div data-mode-b-section>
       <GroupLabel right={mb.negatif
-        ? <span className="pill-amber">bilan négatif</span>
+        ? <Badge ton="ambre">bilan négatif</Badge>
         : <span className="text-[10.5px] text-txt-dim">Estimé · ~{mb.achat_max_libelle ?? ''}</span>}>Réhabilitation (Mode B)</GroupLabel>
       <div data-mode-b style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6 }}>
         {/* M101 A2 — la PORTE du mode B en tête : pourquoi cette parcelle est « bâtie »,
@@ -825,8 +825,8 @@ function DispositifsDrawer({ d }: { d: NonNullable<Fiche['dispositifs']> }) {
     <RefDrawer id="dispositifs" icon={IC.faisa} name="Dispositifs et périmètres"
       context="ER · EBC · DPU · PEB · SUP"
       value={nEls > 0
-        ? <span className="pill-amber">{nEls} périmètre{nEls > 1 ? 's' : ''}</span>
-        : <span className="pill-mint">rien à signaler</span>}>
+        ? <Badge ton="ambre">{nEls} périmètre{nEls > 1 ? 's' : ''}</Badge>
+        : <Badge ton="vert">rien à signaler</Badge>}>
       <DispositifsBody d={d} />
     </RefDrawer>
   )

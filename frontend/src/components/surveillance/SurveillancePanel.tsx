@@ -9,7 +9,11 @@ import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { trierCommunes } from '../../lib/communes'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
+import { Squelette } from '../Loading'
+import { EmptyState } from '../States'
 import { iduCourt } from '../../lib/format'
+import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
 
 // RV2-V3 — la carte est montée par la vue Veille (patron Radar) ; lazy comme dans App.
 const MapView = lazy(() => import('../map/MapView').then((m) => ({ default: m.MapView })))
@@ -103,7 +107,7 @@ function VoletParcelles() {
   return (
     <div data-volet-parcelles className="flex flex-col gap-2">
       {/* RV2-V3 — barre IDU + adresse (composant partagé, comme l'outil Étudier un bien). */}
-      <ParcelInput dataAttr="veille-parcelle" placeholder="Adresse ou IDU — la parcelle à surveiller"
+      <ParcelInput dataAttr="veille-parcelle" placeholder="Adresse, IDU ou référence (BW0917)"
         onPick={(idu) => suivre.mutate(idu)}
         onAddress={() => setMsg("Cette adresse n'a pas de parcelle rattachée — précisez un IDU pour la suivre.")} />
       {msg && <p className="text-[10.5px] text-txt-mut">{msg}</p>}
@@ -111,9 +115,9 @@ function VoletParcelles() {
           garde un plafond de sécurité, sans le brandir ici). Simple décompte. */}
       <p className="label-caps mt-1">Parcelles suivies <span className="text-txt-dim">· {suivis.length}</span></p>
       {suivis.length === 0 && (
-        <p className="rounded-lg border border-dashed border-line-2 p-3 text-[11.5px] leading-snug text-txt-dim">
-          Aucune parcelle suivie. Ajoutez-en une ci-dessus, ou ouvrez une fiche et cliquez la <b className="text-txt">cloche « Suivre »</b>.
-        </p>
+        <EmptyState className="rounded-lg border border-dashed border-line-2"
+          title="Aucune parcelle suivie."
+          hint={<>Ajoutez-en une ci-dessus, ou ouvrez une fiche et cliquez la <b className="text-txt">cloche « Suivre »</b>.</>} />
       )}
       {suivis.map((s) => (
         <div key={s.idu} data-suivi className="hover-fill flex items-start gap-2 rounded-lg border border-line-2 px-3 py-2">
@@ -204,10 +208,9 @@ function VeilleExterne() {
       {!creating ? (
         <>
           {/* V2 — en tête, le bouton de création ; en dessous, les critères déjà enregistrés. */}
-          <button data-veille-ext-creer-ouvrir onClick={() => setCreating(true)}
-            className="rounded-md bg-mint py-2 text-[12.5px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110">
+          <Bouton niveau="primaire" ton="vert" data-veille-ext-creer-ouvrir className="w-full" onClick={() => setCreating(true)}>
             + Créer une veille
-          </button>
+          </Bouton>
           <p className="text-[10.5px] leading-snug text-txt-mut">
             Une veille sur les annonces produit une <b className="text-txt">alerte de fin de journée</b> dès qu'un bien
             correspond à vos critères — nouvelle mise en vente, baisse de prix ou retour en ligne. Des faits et un lien,
@@ -215,9 +218,10 @@ function VeilleExterne() {
           </p>
           <div className="flex flex-col gap-1.5">
             <p className="label-caps">Vos critères enregistrés <span className="text-txt-dim">· {veilles.length}</span></p>
-            {q.isLoading && <p className="text-[11px] text-txt-dim">Chargement…</p>}
+            {q.isLoading && <Squelette lignes={2} />}
             {!q.isLoading && veilles.length === 0 && (
-              <p className="rounded-lg border border-dashed border-line-2 p-3 text-[11px] leading-snug text-txt-dim">Aucune veille annonce. Créez-en une avec le bouton ci-dessus.</p>
+              <EmptyState className="rounded-lg border border-dashed border-line-2"
+                title="Aucune veille annonce." hint="Créez-en une avec le bouton ci-dessus." />
             )}
             {veilles.map((v) => (
               // RETOURS-11 A7 — quand on renomme, la ligne PLEINE reste neutre (formulaire) ; sinon
@@ -230,8 +234,7 @@ function VeilleExterne() {
                     placeholder="Nom de la veille" maxLength={120}
                     className="h-8 rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt" />
                   <div className="flex items-center gap-2">
-                    <button data-veille-ext-renom-ok disabled={renommer.isPending} onClick={() => renommer.mutate({ id: v.id, nom: renomVal })}
-                      className="rounded-md bg-mint px-3 py-1 text-[11px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">Renommer</button>
+                    <Bouton niveau="primaire" ton="vert" data-veille-ext-renom-ok disabled={renommer.isPending} onClick={() => renommer.mutate({ id: v.id, nom: renomVal })}>Renommer</Bouton>
                     <button onClick={() => setRenomId(null)} className="text-[11px] text-txt-mut hover:text-txt">annuler</button>
                   </div>
                 </div>
@@ -272,15 +275,11 @@ function VeilleExterne() {
             <input type="number" min={0} placeholder="surface min (m²)" value={surfMin} onChange={(e) => setSurfMin(e.target.value)} className={`min-w-0 ${sel}`} />
             <input type="number" min={0} placeholder="surface max (m²)" value={surfMax} onChange={(e) => setSurfMax(e.target.value)} className={`min-w-0 ${sel}`} />
           </div>
-          <label className="flex items-center gap-2 text-[11.5px] text-txt-mut">
-            <input type="checkbox" checked={particulier} onChange={(e) => setParticulier(e.target.checked)} className="h-3.5 w-3.5 accent-mint" />
-            Particuliers seulement
-          </label>
+          <Case checked={particulier} onChange={(e) => setParticulier(e.target.checked)} label="Particuliers seulement" />
           <p className="text-[10px] leading-snug text-txt-dim">Cette veille vous alertera sur <b className="text-txt-mut">tout événement</b> d'un bien correspondant — le mail dit lequel (nouvelle annonce, baisse, retour).</p>
-          <button data-veille-ext-creer disabled={creer.isPending} onClick={() => creer.mutate()}
-            className="rounded-md bg-mint py-1.5 text-[12px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+          <Bouton niveau="primaire" ton="vert" data-veille-ext-creer className="w-full" disabled={creer.isPending} onClick={() => creer.mutate()}>
             {creer.isPending ? 'Création…' : 'Créer la veille'}
-          </button>
+          </Bouton>
         </div>
       )}
     </div>

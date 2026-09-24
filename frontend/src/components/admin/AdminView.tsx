@@ -6,6 +6,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getAdminCircuit, getAdminLicences, getAdminPilotage, getMoi, postAdminDegeler, type AdminPilotage } from '../../lib/api'
+import { usePagination, ListPaginationFooter } from '../ListPagination'
 import { useApp } from '../../store/useApp'
 import { LicencesSection, estAToucher } from './Licences'
 import { IaSection } from './Ia'
@@ -78,7 +79,7 @@ export function ActBtn({ children, onClick, tone = 'mint', disabled }: {
   }
   return (
     <button onClick={onClick} disabled={disabled}
-      className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors duration-quick disabled:opacity-40 ${tones[tone]}`}>
+      className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors duration-quick ${tones[tone]}`}>
       {children}
     </button>
   )
@@ -154,10 +155,11 @@ function Journal({ items, degel, degeler, go }: {
   items: JournalItem[]; degel: string | null; degeler: (s: string) => void; go: (s: AdminSection) => void
 }) {
   const [famille, setFamille] = useState<string>('Tout')
-  const [limite, setLimite] = useState(200)   // RECETTE-10 T6 — sous 200, tout d'un coup
   const familles = ['Tout', ...Array.from(new Set(items.map((i) => i.famille)))]
   const filtres = famille === 'Tout' ? items : items.filter((i) => i.famille === famille)
-  const visibles = filtres.slice(0, limite)
+  // RECETTE-10 T6 — pagination de liste partagée (paquets de 200, compteur exact).
+  const pg = usePagination(filtres.length)
+  const visibles = filtres.slice(0, pg.shown)
   // en-têtes de jour (« passage » de l'horloge) : un séparateur quand le jour change.
   const jourDe = (iso: string | null) => (iso ? fmtReu(iso, false) : '—')
   let dernierJour = ''
@@ -165,7 +167,7 @@ function Journal({ items, degel, degeler, go }: {
     <>
       <div className="mb-2.5 flex flex-wrap items-center gap-1.5">
         {familles.map((f) => (
-          <Chip key={f} tone={famille === f ? 'ok' : 'off'} onClick={() => { setFamille(f); setLimite(200) }}>{f}</Chip>
+          <Chip key={f} tone={famille === f ? 'ok' : 'off'} onClick={() => { setFamille(f); pg.reset() }}>{f}</Chip>
         ))}
       </div>
       <Panel>
@@ -197,10 +199,9 @@ function Journal({ items, degel, degeler, go }: {
           })}
           {!filtres.length && <li className="px-4 py-6 text-center text-xs text-txt-mut">Aucun événement système récent.</li>}
         </ul>
-        {limite < filtres.length && (
-          <button onClick={() => setLimite((n) => n + 200)} className="w-full border-t border-line px-4 py-2.5 text-xs text-txt-mut hover:text-txt">
-            Voir {Math.min(200, filtres.length - visibles.length)} de plus — {visibles.length} / {filtres.length}
-          </button>
+        {filtres.length > 0 && (
+          <ListPaginationFooter shown={visibles.length} total={filtres.length} onMore={pg.more}
+            className="flex flex-wrap items-center gap-3 border-t border-line px-4 py-2.5 text-xs text-txt-mut" />
         )}
       </Panel>
     </>

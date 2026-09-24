@@ -24,7 +24,11 @@ import { etudeZone, etudeZoneEntreprises, nafFamilles, nafSearch, parcelAt, type
 import type { EtudeZoneDestinations, EtudeZoneResult, NafFamille, NafOption, ZoneEntreprises, ZoneFamille } from '../../lib/types'
 import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
 import { DestinationBadge, DestinationSelect } from './DestinationSelect'
+import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
 
 const TEMPS = [5, 10, 15]
 
@@ -219,7 +223,7 @@ export function EtudeZone() {
 
       {entree === 'point' ? (
         <>
-          <ParcelInput dataAttr="zone-point" placeholder="Adresse ou IDU (ex. 12 rue…, ou 97415…)"
+          <ParcelInput dataAttr="zone-point" placeholder="Adresse, IDU ou référence (BW0917)"
             withCarte onPick={(idu) => setCible({ idu, label: iduCourt(idu) })} />
           {cible && <div className="text-[10.5px] text-txt-mut">Point : {cible.label}</div>}
           {/* TEMPS + MODE (n'ont de sens QUE sur un point) */}
@@ -238,10 +242,9 @@ export function EtudeZone() {
         </>
       ) : (
         <>
-          <button onClick={() => setTool('zone')}
-            className="w-full rounded-lg border border-mint/40 bg-mint/10 px-3 py-2 text-[12px] font-medium text-mint hover:bg-mint/15">
+          <Bouton niveau="secondaire" ton="vert" onClick={() => setTool('zone')} className="w-full">
             Dessiner la zone
-          </button>
+          </Bouton>
           {/* ETUDE-ZONE-1 A1 — rappel de la règle de dessin (une forme se valide par Entrée). */}
           <div className="text-[10.5px] text-txt-mut">Une fois la zone définie, appuyez sur Entrée.</div>
           <div className="text-[10.5px] text-txt-mut">
@@ -260,10 +263,9 @@ export function EtudeZone() {
 
       {/* RETOURS-13 R28 — bouton d'ACTION PRINCIPALE : VERT OPAQUE, texte sombre (comme les autres
           boutons principaux) — plus le fond terne bg-mint/20 qui le faisait passer pour inactif. */}
-      <button onClick={() => mut.mutate()} disabled={!pretA || mut.isPending}
-        className={`rounded-lg px-3 py-2 text-[12px] font-medium transition-[filter] duration-quick ${pretA && !mut.isPending ? 'bg-mint text-bg hover:brightness-110' : 'bg-surface-2 text-txt-dim'}`}>
+      <Bouton niveau="primaire" ton="vert" onClick={() => mut.mutate()} disabled={!pretA || mut.isPending}>
         {mut.isPending ? 'Calcul de la zone…' : 'Lire la zone'}
-      </button>
+      </Bouton>
 
       {/* RÉSULTATS */}
       {res && !res.zone_disponible && (
@@ -599,7 +601,7 @@ export function EtudeZone() {
           </div>}
 
           {/* RECETTE-2 LOT C1 : le bouton « Exporter le PDF » est retiré. */}
-          <button onClick={nouvelleEtude} className="w-full rounded-lg border border-line-2 px-3 py-1.5 text-[11.5px] font-medium text-txt-mut hover:border-mint/40 hover:text-txt">Nouvelle étude</button>
+          <Bouton niveau="secondaire" ton="vert" onClick={nouvelleEtude} className="w-full">Nouvelle étude</Bouton>
           {res.note && <p className="text-[9.5px] leading-snug text-txt-dim">{res.note}</p>}
         </div>
       )}
@@ -717,18 +719,18 @@ function ToutesEntreprises({ total, open, setOpen, data, loading, error }: {
       <button data-zone-entreprises-toggle onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left text-[12px] transition-colors duration-quick hover:border-mint/40">
         <span className="text-txt">Toutes les entreprises de la zone <b className="text-txt-hi">({nb(total)})</b></span>
-        <span className="text-mint">{open ? '▾' : '▸'}</span>
+        <Chevron open={open} />
       </button>
       {open && (
         <div className="mt-1.5 flex flex-col gap-1">
-          {loading && <p className="text-[11px] text-txt-mut">Chargement des entreprises…</p>}
-          {error && <p className="text-[11px] text-st-ecartee">Indisponible — réessayez.</p>}
+          {loading && <Squelette lignes={4} />}
+          {error && <ErrorState message="Indisponible — réessayez." />}
           {data?.familles.map((f) => (
             <div key={f.section} className="overflow-hidden rounded-md border border-line-2 bg-surface-1">
               <button data-zone-famille={f.section} onClick={() => toggleFam(f.section)}
                 className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[11.5px] hover:bg-surface-2">
                 <span className="min-w-0 truncate text-txt">{f.nom}</span>
-                <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(f.n)} <span className="text-txt-dim">{ouvertes.has(f.section) ? '▾' : '▸'}</span></span>
+                <span className="shrink-0 inline-flex items-center gap-1 font-mono text-[11px] text-txt-hi">{nb(f.n)} <Chevron open={ouvertes.has(f.section)} /></span>
               </button>
               {ouvertes.has(f.section) && <FamilleEtabs f={f} ouvrirParcelle={ouvrirParcelle} />}
             </div>
@@ -895,14 +897,13 @@ function ActiviteLens({
           </div>
         )}
       </div>
-      <button onClick={() => setParcourir((v) => !v)}
-        className="mt-1 text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">
+      <Bouton niveau="lien" onClick={() => setParcourir((v) => !v)} className="mt-1">
         {parcourir ? 'masquer les familles' : 'parcourir par famille d’activité'}
-      </button>
+      </Bouton>
       {parcourir && (
         <div className="mt-1 max-h-64 overflow-y-auto rounded-lg border border-line-2 bg-surface-1">
           {familles == null ? (
-            <p className="px-2.5 py-2 text-[11px] text-txt-dim">Chargement…</p>
+            <Squelette lignes={4} className="px-2.5 py-2" />
           ) : familles.map((f) => (
             <div key={f.section} className="border-b border-line-2 last:border-b-0">
               <button onClick={() => setFamOuverte((s) => (s === f.section ? null : f.section))}
@@ -927,10 +928,9 @@ function ActiviteLens({
       {/* APPLIQUER — la lentille s'ajoute à la lecture ; visible seulement quand une activité est choisie. */}
       {naf && (
         <>
-          <button onClick={onAppliquer} disabled={enCours}
-            className={`mt-2 w-full rounded-lg px-3 py-1.5 text-[11.5px] font-medium ${enCours ? 'bg-surface-2 text-txt-dim' : 'bg-mint/20 text-txt-hi hover:bg-mint/30'}`}>
+          <Bouton niveau="secondaire" ton="vert" onClick={onAppliquer} disabled={enCours} className="mt-2 w-full">
             {enCours ? 'Application de l’activité…' : dejaApplique ? 'Mettre à jour l’activité' : 'Ajouter cette activité à la lecture'}
-          </button>
+          </Bouton>
           <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">La lecture de la zone est relue à travers cette activité — les résultats ci-dessus restent, les concurrents s’ajoutent.</p>
         </>
       )}

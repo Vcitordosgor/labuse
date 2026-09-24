@@ -50,6 +50,9 @@ describe('FAISABILITE — pagination + programme épinglé', () => {
 
   it('par critères : « Trouver » → recap épinglé (total) + pagination « voir N de plus »', async () => {
     render(<QueryClientProvider client={qc()}><M22 /></QueryClientProvider>)
+    // DA-FIX-2 Lot 2 (DA-005) : l'outil s'ouvre désormais sur « Par parcelle » ; ce test porte sur
+    // le mode « Par critères », on l'y bascule explicitement.
+    fireEvent.click(screen.getByText('Par critères'))
     fireEvent.click(screen.getByText('Trouver les parcelles'))
     await waitFor(() => expect(document.querySelectorAll('[data-prog-item]').length).toBe(CAP))
     // recap épinglé : le VRAI total (5) + les critères (24 unités)

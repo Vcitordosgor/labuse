@@ -2,6 +2,8 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { createProjet, getPrefsCarte, postPrefsCarte } from './lib/api'
 import { AvisIA } from './components/AvisIA'
+import { Squelette } from './components/Loading'
+import { Bouton } from './components/ui/Bouton'
 import { Fiche } from './components/fiche/Fiche'
 import { SourceDrawer } from './components/fiche/SourceDrawer'
 import { Header } from './components/header/Header'
@@ -38,13 +40,11 @@ const RadarView = lazy(() => import('./components/outils/RadarView').then((m) =>
 const TimeMachine = lazy(() => import('./components/outils/TimeMachine').then((m) => ({ default: m.TimeMachine })))
 
 // État de chargement de la zone carte pendant que le chunk maplibre arrive (pas d'écran blanc).
+// DA — squelette unique (plus de spinner rotatif), on garde le conteneur flex-1.
 function MapLoading() {
   return (
-    <div className="relative flex min-h-0 flex-1 items-center justify-center bg-bg" aria-busy="true">
-      <div className="flex items-center gap-2 text-xs text-txt-mut">
-        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-line border-t-mint" />
-        Chargement de la carte…
-      </div>
+    <div className="relative flex min-h-0 flex-1 bg-bg">
+      <Squelette bloc label="Chargement de la carte" />
     </div>
   )
 }
@@ -109,7 +109,7 @@ function IaRestitution() {
           <span data-ia-count className="font-display text-xl font-bold text-mint">{count.toLocaleString('fr-FR')}</span>{' '}
           {iaRestitution.phrase}
         </p>
-        <button onClick={() => setIaRestitution(null)} className="ml-2 text-txt-dim hover:text-txt" title="Fermer le résultat">✕</button>
+        <button onClick={() => setIaRestitution(null)} className="ml-2 text-txt-dim hover:text-txt" aria-label="Fermer le résultat">✕</button>
       </div>
       {/* Item 2 (UX V1) : la traduction EXACTE du serveur, DANS la restitution. En mode
           mots-clés (stub), le badge + la phrase disent ce qui n'a PAS été traduit — un repli
@@ -206,10 +206,9 @@ function IaRestitution() {
       {projet && (
         <div className="mt-3 flex items-center gap-2 border-t border-line-2 pt-2.5">
           {projetId == null ? (
-            <button data-projet-enregistrer onClick={() => enregistrer.mutate()} disabled={enregistrer.isPending}
-              className="rounded-lg bg-mint px-3 py-1.5 text-[11px] font-semibold text-mint-ink hover:brightness-110 disabled:opacity-50">
+            <Bouton niveau="primaire" ton="vert" data-projet-enregistrer onClick={() => enregistrer.mutate()} disabled={enregistrer.isPending}>
               {enregistrer.isPending ? 'Enregistrement…' : `Enregistrer « ${projet.nom} »`}
-            </button>
+            </Bouton>
           ) : (
             <>
               <span data-projet-enregistre className="rounded-lg bg-[#12241a] px-3 py-1.5 text-[11px] font-medium text-mint"
@@ -217,27 +216,26 @@ function IaRestitution() {
                 {reprisExistant ? '✓ Projet identique repris' : '✓ Projet enregistré'}
               </span>
               <button data-projet-ouvrir-kanban onClick={() => { setOpenProjet({ id: projetId, nom: projet.nom }); setIaRestitution(null) }}
-                className="rounded-lg border border-mint/40 bg-mint/10 px-3 py-1.5 text-[11px] font-medium text-mint hover:bg-mint/20"
-                title="Ouvrir le projet (kanban : à trier / retenues / écartées)">
+                className="rounded-lg border border-mint/40 bg-mint/10 px-3 py-1.5 text-[11px] font-medium text-mint hover:bg-mint/20">
                 Ouvrir le projet →
               </button>
               {/* PROJETS-CRM-FIX-1 (lot 2) — bouton « PDF » retiré (2ᵉ instance, strip post-création) :
                   /projets/{id}/export.pdf est retiré (410). Plus de lien mort. */}
               <button onClick={() => { setOpenProjet(null); setIaRestitution(null) }}
-                className="ml-auto text-[11px] text-txt-mut hover:text-txt-hi" title="Voir mes projets">
+                className="ml-auto text-[11px] text-txt-mut hover:text-txt-hi">
                 Mes projets →
               </button>
             </>
           )}
         </div>
       )}
+      {/* DA-FIX-4 Lot 5 (DA-040) — « Affiner dans M22 » ouvre le FORMULAIRE déterministe M22 (aucun
+          modèle d'IA appelé) → Bouton secondaire VERT, pas mauve. title= natif retiré (DA-041). */}
       {projet?.programme && (
-        <button data-projet-m22
-          onClick={() => { setView('cartes'); setM22Prefill(projet.programme as Record<string, unknown>); setModule('programme') }}
-          className="mt-2 w-full rounded-lg border border-violet/40 py-1.5 text-[11px] text-violet hover:border-violet"
-          title="Ouvrir le formulaire M22 pré-rempli — la vérité reste le formulaire (éditable)">
+        <Bouton niveau="secondaire" ton="vert" data-projet-m22 className="mt-2 w-full"
+          onClick={() => { setView('cartes'); setM22Prefill(projet.programme as Record<string, unknown>); setModule('programme') }}>
           Affiner la capacité dans M22 (formulaire pré-rempli)
-        </button>
+        </Bouton>
       )}
     </div>
   )

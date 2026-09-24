@@ -19,6 +19,7 @@ import { BlocIndisponible } from './BlocIndisponible'
 import { ViabilisationBlock } from './ViabilisationBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
 import { REF, IC, RefDrawer, Line, GroupLabel, FactRow, FactNote } from './primitives'
+import { Badge } from '../ui/Badge'
 
 // RETOURS-23 — les caractéristiques du terrain (piscine / pente) vivent SOUS un kicker « Terrain »
 // comme les autres faits : valeur chiffrée à droite en mono, source sous la ligne (pente en ambre
@@ -55,7 +56,7 @@ export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
   const trans = f.proximites
   return (
     <RefDrawer id="reseaux" icon={IC.viab} name="Réseaux et desserte" context={viabContext}
-      value={viabConfirmee ? <span className="pill-mint">confirmée</span> : viabValue}
+      value={viabConfirmee ? <Badge ton="vert">confirmée</Badge> : viabValue}
       valueColor={viabConfirmee ? undefined : viabColor}>
       <div className="flex flex-col gap-3">
         {/* FICHE-RANGEMENT-2 Lot 1 — les caractéristiques du terrain (piscine, EquipementsBadges) sont
@@ -116,7 +117,7 @@ export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
               <div className="text-[13px]">
                 <span className="font-semibold">Stationnement allégé (TCSP)</span>
                 {trans.tcsp.sous_800m
-                  ? <span className="pill-mint ml-1.5">dans le rayon 800 m</span>
+                  ? <Badge ton="vert" className="ml-1.5">dans le rayon 800 m</Badge>
                   : <span className="ml-1.5 text-[11.5px] text-txt-mut">hors rayon</span>}
                 <span className="text-txt-mut"> · {trans.tcsp.station} · {trans.tcsp.distance_m} m</span>
               </div>

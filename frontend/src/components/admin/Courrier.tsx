@@ -15,6 +15,7 @@ import {
   urlCourrierPdf, ApiError, type AdminDemandeCourrier,
 } from '../../lib/api'
 import { ActBtn, Chip, Panel } from './AdminView'
+import { Chip as ChipUi } from '../ui/Chip'
 
 const fmtReu = (iso?: string | null, avecHeure = true) => {
   if (!iso) return '—'
@@ -94,16 +95,17 @@ export function CourrierSection() {
       )}
       <CoutEditor />
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Chip tone={statut === 'tous' ? 'ok' : 'off'} onClick={() => setStatut('tous')}>Tous {visibles.length}</Chip>
+        {/* DA-028 — « Tous » passe en DERNIER (à droite) ; puces alignées sur le Chip partagé. */}
         {ORDRE.map((s) => (
-          <Chip key={s} tone={statut === s ? (s === 'demande' ? 'warn' : 'ok') : 'off'} onClick={() => setStatut(s)}>
+          <ChipUi key={s} on={statut === s} ton="vert" onClick={() => setStatut(s)}>
             {lib(s)} {compteurs[s]}
-          </Chip>
+          </ChipUi>
         ))}
+        <ChipUi on={statut === 'tous'} ton="vert" onClick={() => setStatut('tous')}>Tous {visibles.length}</ChipUi>
         {nMasques > 0 && (
-          <Chip tone="off" onClick={() => setVoirTests((v) => !v)}>
+          <ChipUi on={voirTests} ton="neutre" onClick={() => setVoirTests((v) => !v)}>
             {voirTests ? 'masquer les tests' : `${nMasques} demande${nMasques > 1 ? 's' : ''} de test masquée${nMasques > 1 ? 's' : ''}`}
-          </Chip>
+          </ChipUi>
         )}
         {nADeposer > 0 && (
           <span className="ml-auto">

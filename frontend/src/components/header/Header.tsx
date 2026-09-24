@@ -69,6 +69,8 @@ import { useApp } from '../../store/useApp'
 import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
+import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
 
 // RETOURS-1 R2 (Vic) — le retrait du CP par M65 P7 est ANNULÉ : le sélecteur de communes
 // ré-affiche le code postal (source unique CP_COMMUNES, table mesurée du panneau).
@@ -186,7 +188,7 @@ export function Omnibox() {
   }
 
   return (
-    <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 transition-colors duration-quick focus-within:border-mint">
+    <div className="flex h-10 w-[360px] items-center gap-2 rounded-md border border-line-2 bg-surface-3 px-3 transition-colors duration-quick focus-within:border-mint">
       {/* DA §10 — LA LOUPE EST DANS LE CHAMP (leading). Elle reste cliquable (lance la recherche
           sur le texte courant) ; pendant la résolution elle devient un spinner sobre (M55-B). */}
       <button
@@ -198,10 +200,8 @@ export function Omnibox() {
         aria-label="Lancer la recherche" aria-busy={searching}
         className="flex h-5 w-5 shrink-0 items-center justify-center text-txt-faint transition-colors duration-quick hover:text-mint disabled:cursor-wait">
         {searching ? (
-          <svg viewBox="0 0 20 20" className="h-[15px] w-[15px] animate-spin" aria-hidden>
-            <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3" />
-            <path d="M10 3.5 a6.5 6.5 0 0 1 6.5 6.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
+          /* DA — plus de spinner rotatif : pastille menthe pulsante sobre pendant la résolution. */
+          <span className="h-2 w-2 animate-pulse rounded-full bg-mint" aria-hidden />
         ) : (
           <svg viewBox="0 0 20 20" className="h-[15px] w-[15px]">
             <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
@@ -480,17 +480,17 @@ function NotifBell() {
                   {(notifPrefs.data?.types ?? []).map((t) => (
                     <Fragment key={t.key}>
                       <span className="text-txt">{t.label}{t.verrou && <span className="text-txt-dim"> · toujours actif</span>}</span>
-                      <input type="checkbox" checked={t.cloche} aria-label={`${t.label} — cloche`} data-pref={`${t.key}-cloche`}
+                      <Case checked={t.cloche} aria-label={`${t.label} — cloche`} data-pref={`${t.key}-cloche`}
                         onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: e.target.checked, email: t.email, brief: t.brief })}
-                        className="mx-auto h-3.5 w-3.5 accent-mint" />
+                        className="mx-auto" />
                       {/* BRIEF — canal du matin, applicable aux chaînes 1+2 seulement (chaîne 3 = immédiat → grisé). */}
-                      <input type="checkbox" checked={t.brief && !t.brief_na} disabled={t.brief_na} aria-label={`${t.label} — brief`} data-pref={`${t.key}-brief`}
+                      <Case checked={t.brief && !t.brief_na} disabled={t.brief_na} aria-label={`${t.label} — brief`} data-pref={`${t.key}-brief`}
                         onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: t.cloche, email: t.email, brief: e.target.checked })}
-                        className="mx-auto h-3.5 w-3.5 accent-mint disabled:opacity-30" />
+                        className="mx-auto" />
                       {/* M85-B — maintenance : e-mail VERROUILLÉ (non désactivable, conséquences réelles). */}
-                      <input type="checkbox" checked={t.email} disabled={t.verrou} aria-label={`${t.label} — e-mail`} data-pref={`${t.key}-email`}
+                      <Case checked={t.email} disabled={t.verrou} aria-label={`${t.label} — e-mail`} data-pref={`${t.key}-email`}
                         onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: t.cloche, email: e.target.checked, brief: t.brief })}
-                        className="mx-auto h-3.5 w-3.5 accent-mint disabled:opacity-40" />
+                        className="mx-auto" />
                     </Fragment>
                   ))}
                 </div>
@@ -596,10 +596,9 @@ function MarqueForm() {
       <input className={field} placeholder="Raison sociale" value={vRs} onChange={(e) => setRs(e.target.value)} />
       <input className={field} placeholder="Coordonnées (tél, email…)" value={vCo} onChange={(e) => setCo(e.target.value)} />
       <input className={field} placeholder="Mention libre (bas de page)" value={vMe} onChange={(e) => setMe(e.target.value)} />
-      <button data-marque-save disabled={save.isPending} onClick={() => save.mutate()}
-        className="mt-0.5 rounded-md bg-mint py-1.5 text-[12px] font-medium text-mint-ink hover:brightness-110 disabled:opacity-50">
+      <Bouton niveau="primaire" ton="vert" data-marque-save className="mt-0.5 w-full" disabled={save.isPending} onClick={() => save.mutate()}>
         {save.isSuccess && rs === null ? '✓ Enregistré' : save.isPending ? 'Enregistrement…' : 'Enregistrer'}
-      </button>
+      </Bouton>
       <p className="text-[10px] leading-snug text-txt-dim">Apparaît sur vos documents brandés (Dossier, briques PDF). Champs vides = rien ne s’imprime.</p>
     </div>
   )
@@ -787,7 +786,7 @@ function SignalerButton() {
             <div className="mt-2 flex items-center justify-between">
               <span className="text-[10px] text-txt-mut">Transmis avec votre licence — jamais anonyme.</span>
               <button data-retour-envoyer onClick={envoyer} disabled={msg.trim().length < 3 || busy}
-                className="rounded-md border border-mint/40 bg-mint/10 px-3 py-1.5 text-xs text-mint transition-colors duration-quick disabled:opacity-40">
+                className="rounded-md border border-mint/40 bg-mint/10 px-3 py-1.5 text-xs text-mint transition-colors duration-quick">
                 {busy ? 'Envoi…' : 'Envoyer'}
               </button>
             </div>

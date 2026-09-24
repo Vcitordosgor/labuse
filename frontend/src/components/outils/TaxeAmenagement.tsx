@@ -8,7 +8,11 @@ import { fmtEur, fmtInt, fmtM2 } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 import { Tip } from '../Tip'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
+import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
+import { Chevron } from '../ui/Chevron'
 
 // K3 (rattrapage KelFoncier) — outil « Taxe d'aménagement » (calculette). 100 % piloté par le backend :
 // le barème (valeur forfaitaire, abattement, forfaits) et les taux (plafonds/défauts) viennent de
@@ -46,15 +50,15 @@ function CheckField({ label, checked, onChange, hint, dataAttr }: {
   label: string; checked: boolean; onChange: (v: boolean) => void; hint?: string; dataAttr?: string
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-line-2 bg-surface-3 px-2.5 py-2">
-      <input type="checkbox" checked={checked} data-taxe-check={dataAttr}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-mint" />
-      <span className="min-w-0">
-        <span className="text-[11.5px] text-txt">{label}</span>
-        {hint && <span className="mt-0.5 block text-[10px] leading-snug text-txt-dim">{hint}</span>}
-      </span>
-    </label>
+    <Case checked={checked} data-taxe-check={dataAttr}
+      onChange={(e) => onChange(e.target.checked)}
+      className="items-start rounded-lg border border-line-2 bg-surface-3 px-2.5 py-2"
+      label={
+        <span className="min-w-0">
+          <span className="text-[11.5px] text-txt">{label}</span>
+          {hint && <span className="mt-0.5 block text-[10px] leading-snug text-txt-dim">{hint}</span>}
+        </span>
+      } />
   )
 }
 
@@ -72,6 +76,7 @@ export function TaxeAmenagement() {
   const [eoliennes, setEoliennes] = useState<number | null>(null)
   const [tauxCommunal, setTauxCommunal] = useState<number | null>(null)   // OBLIGATOIRE — jamais de défaut
   const [tauxDepartemental, setTauxDepartemental] = useState<number | null>(null)
+  const [aideOuverte, setAideOuverte] = useState(false)   // DA-031 — accordéon « Où trouver le taux communal ? »
 
   // RETOURS-14 S4 — l'outil s'ouvre sur la BARRE UNIQUE (adresse / IDU / référence courte,
   // moteur ParcelInput) + « ou cliquez une parcelle sur la carte » ; un clic carte pendant que
@@ -130,9 +135,9 @@ export function TaxeAmenagement() {
   })
   const r: TaxeResult | undefined = calc.data
 
-  if (cfg.isLoading) return <Loading accent="mint" label="Barème…" />
+  if (cfg.isLoading) return <Squelette lignes={4} />
   if (cfg.isError || !cfg.data) return (
-    <p className="text-[11px] text-st-ecartee">Barème indisponible — réessayez plus tard.</p>
+    <ErrorState message="Barème indisponible — réessayez plus tard." retry={() => cfg.refetch()} />
   )
   const c = cfg.data
 
@@ -148,9 +153,8 @@ export function TaxeAmenagement() {
         </Tip>
       </div>
       {/* barre UNIQUE (adresse / IDU / référence courte — moteur ParcelInput, comme Étudier un bien) */}
-      <ParcelInput dataAttr="taxe-parcelle" withCarte={false} onPick={(i: string) => setPrefillIdu(i)}
-        placeholder="Adresse, IDU ou référence (ex. BZ1065)" />
-      <p className="text-[10px] text-txt-dim">… ou cliquez une parcelle sur la carte : l'outil la reprend automatiquement.</p>
+      <ParcelInput dataAttr="taxe-parcelle" onPick={(i: string) => setPrefillIdu(i)}
+        placeholder="Adresse, IDU ou référence (BW0917)" />
       {!prefillIdu && (
         <p data-taxe-attente className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">
           Le formulaire s'ouvrira quand une parcelle sera choisie — LABUSE préremplit alors la
@@ -191,8 +195,8 @@ export function TaxeAmenagement() {
         {prefill.data?.sdp_gabarit_m2 != null && (
           <div data-taxe-repere className="-mt-0.5 flex items-center gap-2 text-[10.5px] leading-snug text-txt-dim">
             <span>SDP {prefill.data.deja_batie ? 'restante au gabarit (parcelle déjà bâtie)' : 'au gabarit'} : <b className="text-mint">{fmtM2(prefill.data.sdp_gabarit_m2)}</b></span>
-            <button data-taxe-reprendre onClick={() => setSurface(prefill.data!.sdp_gabarit_m2!)}
-              className="shrink-0 text-mint hover:underline">reprendre</button>
+            <Bouton niveau="lien" data-taxe-reprendre onClick={() => setSurface(prefill.data!.sdp_gabarit_m2!)}
+              className="shrink-0">reprendre</Bouton>
           </div>
         )}
 
@@ -250,9 +254,11 @@ export function TaxeAmenagement() {
         {/* RV2-V2 — aide pour trouver le taux communal : n'apparaît qu'en REPLI (taux public absent),
             sinon l'outil sert déjà le taux et la question ne se pose plus. */}
         {tauxCommunalPublic == null && (
-        <details data-taux-aide className="group rounded-md border border-line-2 bg-surface-3/50 text-[10.5px] leading-snug text-txt-mut">
+        <details data-taux-aide open={aideOuverte}
+          onToggle={(e) => setAideOuverte((e.target as HTMLDetailsElement).open)}
+          className="group rounded-md border border-line-2 bg-surface-3/50 text-[10.5px] leading-snug text-txt-mut">
           <summary className="hover-fill flex cursor-pointer list-none items-center gap-1.5 rounded-md px-2.5 py-2 text-txt">
-            <span aria-hidden className="text-txt-dim transition-transform duration-quick group-open:rotate-90">›</span>
+            <Chevron open={aideOuverte} />
             <b>Où trouver le taux communal ?</b>
           </summary>
           <div className="px-2.5 pb-2">
@@ -270,8 +276,8 @@ export function TaxeAmenagement() {
       {prefillIdu && !params && (
         <p className="text-[11px] text-txt-dim">Saisissez une surface taxable pour estimer la taxe.</p>
       )}
-      {calc.isLoading && <p className="text-[11px] text-txt-mut">Calcul…</p>}
-      {calc.isError && <p className="text-[11px] text-st-ecartee">Erreur de calcul — vérifiez les valeurs saisies.</p>}
+      {calc.isLoading && <Squelette lignes={3} />}
+      {calc.isError && <ErrorState message="Erreur de calcul — vérifiez les valeurs saisies." retry={() => calc.refetch()} />}
 
       {r && !calc.isLoading && (
         <div data-taxe-resultat className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-1 p-3">

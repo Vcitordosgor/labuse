@@ -2,6 +2,11 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { pluAnnuaireSearch, pluAnnuaireCommunes, pluAnnuairePack, type PluExtrait } from '../../lib/api'
 import { useApp } from '../../store/useApp'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
+import { Bouton } from '../ui/Bouton'
+import { Retour } from '../ui/Retour'
+import { Chevron } from '../ui/Chevron'
 
 // M51 / M82 puis M137-P (fusion outil PLU) — ANNUAIRE PLU en DEUX ÉTAPES : (1) les 24 communes, on
 // clique celle dont on veut le PLU ; (2) deux voies — le PLU INTÉGRAL (pack officiel GPU .zip, à
@@ -106,7 +111,7 @@ export function PluAnnuaire() {
       {/* fil de retour — dans une commune */}
       {insee && (
         <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-txt-mut">
-          <button data-plu-retour onClick={communesVue} className="text-mint hover:underline">‹ Les 24 communes</button>
+          <Retour data-plu-retour label="Les 24 communes" onClick={communesVue} />
           <span>·</span><b className="text-txt">{nomInsee(insee) ?? insee}</b>
           {servable
             ? <span className="font-mono text-[9px] text-mint/70">PLU du {cur?.millesime}</span>
@@ -159,8 +164,7 @@ export function PluAnnuaire() {
                 Cherchez dans le règlement de <b className="text-txt">{nomInsee(insee)}</b> — verbatim
                 sourcé (article, page, lien), jamais un résumé.
               </p>
-              <button onClick={() => { setMode('choix'); setQ(''); m.reset() }}
-                className="shrink-0 text-[10px] text-mint hover:underline">‹ voies</button>
+              <Retour label="Voies" onClick={() => { setMode('choix'); setQ(''); m.reset() }} className="shrink-0" />
             </div>
             <div className="flex gap-2">
               {/* RETOURS-5 T6 — plus d'autoFocus (même correction que « Étudier un bien ») : bord neutre au repos. */}
@@ -168,10 +172,10 @@ export function PluAnnuaire() {
                 onKeyDown={(e) => { if (e.key === 'Enter') run() }}
                 placeholder={`dans ${nomInsee(insee)} — ex. hauteur de clôture`}
                 className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none" />
-              <button onClick={run} disabled={q.trim().length < 2 || m.isPending}
-                className="shrink-0 whitespace-nowrap rounded-md border border-mint/50 bg-mint/15 px-3.5 py-1.5 text-[12px] font-medium text-mint disabled:opacity-40">
+              <Bouton niveau="secondaire" ton="vert" onClick={run} disabled={q.trim().length < 2 || m.isPending}
+                className="shrink-0 whitespace-nowrap">
                 {m.isPending ? '…' : 'Chercher'}
-              </button>
+              </Bouton>
             </div>
             {zone && (
               <div className="flex items-center gap-1.5 text-[10.5px] text-txt-mut">
@@ -182,9 +186,7 @@ export function PluAnnuaire() {
           </div>
 
           {m.isError && (
-            <div className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">
-              Erreur de recherche.
-            </div>
+            <ErrorState message="Erreur de recherche." retry={() => run()} />
           )}
 
           {d?.message && (
@@ -238,10 +240,9 @@ function PluExtraitCard({ r }: { r: PluExtrait }) {
       </div>
       <pre className="mt-1 whitespace-pre-wrap break-words font-sans text-[11px] leading-snug text-txt">{apercu}</pre>
       {long && (
-        <button onClick={() => setOuvert((o) => !o)}
-          className="mt-0.5 text-[10.5px] text-mint hover:underline">
-          {ouvert ? '‹ replier l’article' : 'voir l’article entier →'}
-        </button>
+        <Bouton niveau="lien" onClick={() => setOuvert((o) => !o)} className="mt-0.5 inline-flex items-center gap-1">
+          <Chevron open={ouvert} />{ouvert ? 'replier l’article' : 'voir l’article entier'}
+        </Bouton>
       )}
       <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[10px] text-txt-dim">
         <span>{r.document}{r.millesime ? ` · ${r.millesime}` : ''}</span>
@@ -259,9 +260,9 @@ function PluExtraitCard({ r }: { r: PluExtrait }) {
 // applicable ») · GPU vide (dit, mairie servie — source K2) · GPU injoignable (dit comme tel).
 function PackVigueur({ insee }: { insee: string }) {
   const pack = useQuery({ queryKey: ['plu-pack', insee], queryFn: () => pluAnnuairePack(insee), staleTime: 300_000 })
-  if (pack.isLoading) return <p className="mt-1.5 text-[10px] text-txt-dim">Recherche du PLU en vigueur sur le GPU…</p>
+  if (pack.isLoading) return <Squelette lignes={2} className="mt-1.5" />
   const p = pack.data
-  if (!p) return <p className="mt-1.5 text-[10px] text-st-creuser">Vérification GPU impossible — réessayez.</p>
+  if (!p) return <ErrorState message="Vérification GPU impossible — réessayez." retry={() => pack.refetch()} />
   if (p.disponible && p.url) {
     return (
       <div className="mt-2">

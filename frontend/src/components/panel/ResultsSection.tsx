@@ -8,7 +8,11 @@ import { ALL_TIER_META, BANDE_META, bandeMeta, etatBienMeta, signalMeta, type Ba
 import { raisonDominante } from '../../lib/raison'
 import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
-import { EmptyState } from '../States'
+import { Badge } from '../ui/Badge'
+import { Chevron } from '../ui/Chevron'
+import { Tri } from '../ui/Tri'
+import { EmptyState, ErrorState } from '../States'
+import { Squelette } from '../Loading'
 import { useApp, type Filters } from '../../store/useApp'
 import { usePagination, ListPaginationFooter } from '../ListPagination'
 
@@ -103,9 +107,8 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
           {(p.cluster ?? 0) > 1 && (
             <Tip tip={`Même propriétaire que ${(p.cluster ?? 0) - 1} autre(s) opportunité(s)${p.proprio ? ` — ${p.proprio}` : ''} : 1 dossier, pas ${p.cluster} lignes`}
               className="shrink-0">
-              <span className="rounded-full bg-[#1a2340] px-1.5 py-0.5 text-[9px] font-medium text-[#8FB4F0]">
-                même proprio ×{p.cluster}
-              </span>
+              {/* DA-FIX-4 Lot 3 (DA-039) — plus de bleu dans l'interface : badge neutre. */}
+              <Badge ton="neutre">même proprio ×{p.cluster}</Badge>
             </Tip>
           )}
           {p.veille && (
@@ -292,7 +295,7 @@ export function SegmentList({ segKey, rows, serverTotal, commune, serverHasMore,
         </p>
         {serverTotal > 0 && serverHasMore && (
           <button data-segment-more={segKey} onClick={onServerMore} disabled={serverLoading}
-            className="px-3 py-1.5 text-left text-[10.5px] text-txt-dim hover:text-mint disabled:opacity-60">
+            className="px-3 py-1.5 text-left text-[10.5px] text-txt-dim hover:text-mint">
             0 sur {fmt(serverTotal)} affichées — charger plus de résultats →
           </button>
         )}
@@ -309,7 +312,7 @@ export function SegmentList({ segKey, rows, serverTotal, commune, serverHasMore,
           <span data-pagination-count><b className="text-txt">{fmt(rows.length)} sur {fmt(serverTotal)}</b> affichées</span>
           {serverHasMore && (
             <button data-segment-more={segKey} onClick={onServerMore} disabled={serverLoading}
-              className="text-mint hover:underline disabled:opacity-60">
+              className="text-mint hover:underline">
               {serverLoading ? 'Chargement…' : `Voir ${fmt(Math.min(RESULTS_PAGE, serverTotal - rows.length))} de plus`}
             </button>
           )}
@@ -326,7 +329,7 @@ export function SegmentList({ segKey, rows, serverTotal, commune, serverHasMore,
       {/* mode île : la fenêtre client est épuisée mais le serveur a d'autres pages du segment */}
       {segmentOffreChargerPlus(pg.shown, rows.length, serverTotal, serverHasMore) && (
         <button data-segment-more={segKey} onClick={onServerMore} disabled={serverLoading}
-          className="px-3 py-1.5 text-left text-[10.5px] text-txt-dim hover:text-mint disabled:opacity-60">
+          className="px-3 py-1.5 text-left text-[10.5px] text-txt-dim hover:text-mint">
           {fmt(rows.length)} sur {fmt(serverTotal)} affichées — charger plus de résultats →
         </button>
       )}
@@ -431,8 +434,8 @@ function AnalyseBandeGroup({ groupe, label, color, total, filters, commune, sign
       <button data-bande-groupe={groupe} onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left hover:border-mint/50">
         <span className="flex min-w-0 items-center gap-2">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"
-            className={`shrink-0 text-txt-dim transition-transform ${open ? 'rotate-90' : ''}`}><path d="m9 18 6-6-6-6" /></svg>
+          {/* DA-FIX-3 Lot 5 (DA-031) — chevron d'accordéon partagé (fermé ▶ / ouvert ▼). */}
+          <Chevron open={open} />
           <span className="inline-flex h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
           <span className="truncate text-[12px] font-medium text-txt">{label}</span>
         </span>
@@ -440,12 +443,12 @@ function AnalyseBandeGroup({ groupe, label, color, total, filters, commune, sign
       </button>
       {open && (
         <div className="mt-2 flex flex-col gap-2">
-          {q.isLoading && rows.length === 0 && <p className="px-3 py-1.5 text-[10.5px] text-txt-dim">Chargement…</p>}
+          {q.isLoading && rows.length === 0 && <Squelette lignes={3} className="px-3 py-1.5" />}
           {rows.map((p) => <AnalyseCard key={p.idu} p={p} communeLabel={commune} />)}
           {(q.hasNextPage ?? false) && (
             <div data-pagination className="flex flex-wrap items-center gap-3 border-t border-line pt-2 text-[11px] text-txt-mut">
               <span><b className="text-txt">{fmt(rows.length)} sur {fmt(total)}</b> affichées</span>
-              <button onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage} className="text-mint hover:underline disabled:opacity-60">
+              <button onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage} className="text-mint hover:underline">
                 {q.isFetchingNextPage ? 'Chargement…' : `Voir ${fmt(Math.min(RESULTS_PAGE, total - rows.length))} de plus`}
               </button>
             </div>
@@ -645,22 +648,19 @@ export function ResultsSection() {
                 className="flex h-[15px] w-[15px] items-center justify-center rounded-full border border-line-2 text-[9px] font-bold normal-case leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
             </Tip>
           </span>
-          <div className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-line-2 bg-surface-2 p-0.5">
-            {sorts.map((s) => {
-              // M55-H point 4 : la pill Surface couvre ses DEUX sens — re-clic = inversion
+          {/* DA-FIX-3 Lot 3 (DA-027) — barre de tri extraite vers le Tri partagé. Le sens (inversion
+              Surface ↓/↑, flèche `dir`) reste calculé ici : `suffix` porte la flèche quand la pill est
+              active, `isActive` et `onSelect` gardent EXACTEMENT le comportement d'avant. */}
+          <Tri
+            options={sorts.map((s) => {
               const actif = sort === s.key || (s.key === 'surface' && sort === 'surface_asc')
-              const fleche = s.key === 'surface' && actif ? (sort === 'surface' ? ' ↓' : ' ↑')
+              const suffix = s.key === 'surface' && actif ? (sort === 'surface' ? ' ↓' : ' ↑')
                 : actif && s.dir ? ` ${s.dir}` : ''
-              return (
-                <button key={s.key} data-sort={s.key}
-                  onClick={() => setSort(s.key === 'surface' && sort === 'surface' ? 'surface_asc' : s.key)}
-                  className={`rounded-md px-3 py-1 text-[11px] transition-colors duration-quick ${
-                    actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
-                  {s.label}{fleche}
-                </button>
-              )
+              return { key: s.key, label: s.label, suffix }
             })}
-          </div>
+            isActive={(k) => sort === k || (k === 'surface' && sort === 'surface_asc')}
+            onSelect={(k) => setSort(k === 'surface' && sort === 'surface' ? 'surface_asc' : (k as SortKey))}
+          />
           {/* RECETTE-1 R25 — la ligne « Liste groupée par priorité d'action … · trier par Surface »
               est RETIRÉE (demande Vic). Le groupement reste actif ; on ne l'explique plus par ce texte. */}
         </div>}
@@ -755,18 +755,9 @@ export function ResultsSection() {
           cliquable (barre + ligne brûlantes/chaudes/réserve). A4 : ces compteurs sont cohérents. */}
 
       <div data-results-scroll className="mt-3 flex min-h-[200px] flex-1 flex-col gap-2 overflow-y-auto overflow-x-clip pb-2">
-        {loading && (
-          <>
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-[52px] shrink-0 animate-pulse rounded-[10px] border border-line-2 bg-surface-3" />
-            ))}
-          </>
-        )}
+        {loading && <Squelette lignes={5} className="gap-2" />}
         {error && (
-          <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-3 text-xs">
-            <p className="text-st-ecartee">Erreur de chargement des parcelles.</p>
-            <button onClick={refetch} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer</button>
-          </div>
+          <ErrorState message="Erreur de chargement des parcelles." retry={() => refetch()} />
         )}
         {!loading && !error && (analyse ? bandeTotal === 0 : shown.length === 0) && (
           /* Item 4 (UX V1) : état vide EXPLICITE — dit où on est et comment en sortir
@@ -808,7 +799,7 @@ export function ResultsSection() {
             </Fragment>
           ))}
           {analyseList.isLoading && analyseRows.length === 0 && (
-            <p className="px-3 py-1.5 text-[10.5px] text-txt-dim">Chargement…</p>
+            <Squelette lignes={3} className="px-3 py-1.5" />
           )}
           {/* ANALYSE-2 — vide HONNÊTE : quand le couple (Classement, Signal) ne matche AUCUNE parcelle,
               on le DIT clairement (ce n'est pas une panne), en nommant le filtre — plus jamais un
@@ -852,14 +843,14 @@ export function ResultsSection() {
           {analyse ? (
             (analyseList.hasNextPage ?? false) && (
               <button data-results-more onClick={() => analyseList.fetchNextPage()} disabled={analyseList.isFetchingNextPage}
-                className="text-xs text-mint hover:underline disabled:opacity-50">
+                className="text-xs text-mint hover:underline">
                 {analyseList.isFetchingNextPage ? 'Chargement…' : `Voir ${fmt(RESULTS_PAGE)} de plus →`}
               </button>
             )
           ) : ile ? (
             serverList.hasNextPage && (
               <button data-results-more onClick={() => serverList.fetchNextPage()} disabled={serverList.isFetchingNextPage}
-                className="text-xs text-mint hover:underline disabled:opacity-50">
+                className="text-xs text-mint hover:underline">
                 {serverList.isFetchingNextPage ? 'Chargement…' : `Voir ${fmt(RESULTS_PAGE)} de plus →`}
               </button>
             )

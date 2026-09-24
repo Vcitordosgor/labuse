@@ -4,6 +4,8 @@
 // on explique que le corpus se constitue, pas un tableau de tirets qui fait peur. Couleurs source unique.
 import { useQuery } from '@tanstack/react-query'
 import { getRadarMarche, type RadarMarcheLigne, type RadarMesure } from '../../lib/api'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
 
 const fmt = (v: number) => v.toLocaleString('fr-FR')
 
@@ -34,17 +36,12 @@ function Ligne({ l, fort = false }: { l: RadarMarcheLigne; fort?: boolean }) {
 
 export function RadarMarche() {
   const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['radar-marche'], queryFn: getRadarMarche })
-  if (isLoading) return <div className="p-4 text-[12px] text-txt-dim">Chargement…</div>
+  if (isLoading) return <Squelette lignes={6} className="p-4" />
   // RETOURS-1 R9 (Vic) — CAUSE du « Chargement… » infini : `isError` n'était pas lu — une erreur
   // (ici : '/radar' absent du proxy vite dev → 404 HTML) laissait isLoading=false et data=undefined,
   // et l'écran restait sur « Chargement… » pour toujours. Désormais : erreur DITE + réessayer.
   if (isError || !data) return (
-    <div className="flex flex-col items-start gap-2 p-4 text-[12px] text-txt-mut">
-      <p>Le marché du Radar n’a pas pu être chargé — le serveur n’a pas répondu.</p>
-      <button onClick={() => refetch()} className="rounded-md border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint hover:bg-mint/20">
-        Réessayer
-      </button>
-    </div>
+    <ErrorState message="Le marché du Radar n’a pas pu être chargé — le serveur n’a pas répondu." retry={() => refetch()} />
   )
   const jeune = data.corpus_total < 40
 
@@ -57,7 +54,9 @@ export function RadarMarche() {
           — jamais de fausse précision. Les compteurs, eux, sont exacts dès le premier.
         </div>
       )}
-      <div className="overflow-x-auto">
+      {/* DA-FIX-4 Lot 4 (DA-030) — plein écran (overlay 1240px, cf. Communes) : table conservée mais
+          AUCUNE barre horizontale (overflow-x retiré ; la table tient en pleine largeur). */}
+      <div>
         <table className="w-full border-collapse text-[11px]">
           <thead>
             <tr className="border-b border-line-3 font-mono text-[9px] uppercase tracking-wider text-txt-dim">

@@ -20,7 +20,7 @@ export function Trace({ id, children }: { id: string; children: React.ReactNode 
     <span
       data-chiffre={id}
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setTraceOuvert(id) }}
-      style={{ outline: '1px dashed #facc15', outlineOffset: 1, cursor: 'help', borderRadius: 3 }}
+      style={{ outline: '1px dashed #facc15', outlineOffset: 1, cursor: 'help', borderRadius: 4 }}
       title={`chiffre : ${id} — cliquer pour la trace`}
     >
       {children}
@@ -41,7 +41,7 @@ export function TraceTiroir() {
   return (
     <div style={{
       position: 'fixed', right: 16, bottom: 16, zIndex: 60, maxWidth: 420,
-      background: '#141b17', border: '1px solid #facc15', borderRadius: 8, padding: '12px 14px',
+      background: '#141b17', border: '1px solid #facc15', borderRadius: 6, padding: '12px 14px',
       color: '#e7ece8', fontSize: 12.5,
     }}>
       <button onClick={() => setTraceOuvert(null)}

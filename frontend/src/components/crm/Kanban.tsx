@@ -7,9 +7,10 @@ import {
 import { fmtM2 } from '../../lib/format'
 import type { PipelineColumn, PipelineEntry, PipelineMeta } from '../../lib/types'
 import { Tip } from '../Tip'
-import { ErrorState } from '../States'
+import { EmptyState, ErrorState } from '../States'
 import { useApp } from '../../store/useApp'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { Bouton } from '../ui/Bouton'
 
 /* accents de colonnes = tokens (txt-dim / st-creuser / mint / st-ecartee) en valeur
    hex car servis via style= (pas de classe dynamique). */
@@ -83,13 +84,9 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
             </span>
           </Tip>
         )}
-        <button
-          onClick={onArchive}
-          className="-m-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-txt-dim opacity-40 transition-opacity duration-quick hover:text-st-ecartee group-hover:opacity-100"
-          aria-label="Archiver la carte"
-        >
-          ✕
-        </button>
+        {/* DA-FIX-4 verif (task 2) — ✕ de carte en Bouton icone danger (dévoilé au survol de la carte). */}
+        <Bouton icone niveau="secondaire" ton="danger" onClick={onArchive}
+          className="shrink-0 opacity-40 group-hover:opacity-100" aria-label="Archiver la carte">✕</Bouton>
       </div>
       <div className="tnum mt-1 truncate text-[11px] text-txt-mut">
         {e.parcel.surface_m2 ? `${fmtM2(e.parcel.surface_m2)} · ` : ''}{e.parcel.commune}
@@ -122,10 +119,10 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
             ✉ {e.courrier.libelle}
           </span>
         ) : <span />}
-        <button data-piste-courrier onClick={ouvrirCourrier}
-          className="rounded-md border border-line-2 px-1.5 py-px text-[10px] text-txt-mut opacity-0 transition-opacity duration-quick hover:border-mint hover:text-mint group-hover:opacity-100">
+        <Bouton niveau="secondaire" ton="vert" data-piste-courrier onClick={ouvrirCourrier}
+          className="opacity-0 transition-opacity group-hover:opacity-100">
           {e.courrier ? 'Relancer' : '✉ Courrier'}
-        </button>
+        </Bouton>
       </div>
       {/* SCORING-3 (L5) — RETOUR TERRAIN : après un contact, UN clic pose l'état réel
           (contacté / refus / négo / vendu…). Par compte, horodaté, réversible (« — » efface). */}
@@ -179,13 +176,11 @@ function DeleteColumnDialog({ col, others, onCancel, onConfirm }: {
           <p className="mt-2 text-[12px] text-txt-mut">Cette colonne est vide — suppression immédiate.</p>
         )}
         <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onCancel}
-            className="rounded-md px-3 py-1.5 text-[12px] text-txt-dim hover:text-txt">Annuler</button>
-          <button
+          <Bouton niveau="lien" onClick={onCancel}>Annuler</Bouton>
+          <Bouton niveau="primaire" ton="danger"
             onClick={() => onConfirm(populated > 0 ? (target === '' ? null : target) : null)}
             disabled={populated > 0 && target === ''}
-            className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee disabled:opacity-40"
-          >Supprimer</button>
+          >Supprimer</Bouton>
         </div>
       </div>
     </div>
@@ -269,10 +264,9 @@ function CardEditPanel({ e, meta, onCancel, onSave, onMove, saving }: {
           </p>
         </div>
         <div className="flex justify-end gap-2 border-t border-line-2 px-5 py-3">
-          <button onClick={onCancel} className="rounded-md px-3 py-1.5 text-[12px] text-txt-dim hover:text-txt">Annuler</button>
-          <button onClick={submit} disabled={saving}
-            className="rounded-md bg-mint px-3 py-1.5 text-[12px] font-medium text-mint-ink hover:brightness-110 disabled:opacity-40">
-            {saving ? '…' : 'Enregistrer'}</button>
+          <Bouton niveau="lien" onClick={onCancel}>Annuler</Bouton>
+          <Bouton niveau="primaire" ton="vert" onClick={submit} disabled={saving}>
+            {saving ? '…' : 'Enregistrer'}</Bouton>
         </div>
       </div>
     </div>
@@ -471,19 +465,18 @@ export function Kanban() {
               n'apparaissent que si toutes les colonnes ne tiennent pas dans la fenêtre. */}
           {paginated && !editMode && (
             <span className="flex shrink-0 items-center gap-1.5">
-              <button
+              {/* DA-FIX-4 verif (task 2) — icônes du kanban en Bouton icone 32. */}
+              <Bouton icone niveau="secondaire" ton="vert"
                 onClick={() => setWinStart((s) => Math.max(0, Math.min(s, maxStart) - 1))}
                 disabled={start === 0}
-                className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-txt-dim hover:border-mint hover:text-mint disabled:opacity-25"
-                aria-label="Colonnes précédentes">‹</button>
+                aria-label="Colonnes précédentes">‹</Bouton>
               <span className="whitespace-nowrap font-mono text-[10.5px] text-txt-mut">
                 {start + 1}–{Math.min(start + COLS_PAR_VUE, cols.length)} / {cols.length}
               </span>
-              <button
+              <Bouton icone niveau="secondaire" ton="vert"
                 onClick={() => setWinStart((s) => Math.min(maxStart, Math.min(s, maxStart) + 1))}
                 disabled={start >= maxStart}
-                className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-txt-dim hover:border-mint hover:text-mint disabled:opacity-25"
-                aria-label="Colonnes suivantes">›</button>
+                aria-label="Colonnes suivantes">›</Bouton>
             </span>
           )}
           {editMode && (
@@ -502,35 +495,23 @@ export function Kanban() {
                     className="w-40 rounded-md border border-mint/50 bg-surface-2 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none"
                     aria-label="Nom de la nouvelle colonne"
                   />
-                  <button onClick={commitAdd} disabled={!newColLabel.trim() || addCol.isPending}
-                    className="rounded-md bg-mint px-2 py-1 text-[11px] font-medium text-mint-ink hover:brightness-110 disabled:opacity-40"
-                    >{addCol.isPending ? '…' : 'Ajouter'}</button>
-                  <button onClick={() => { setAdding(false); setNewColLabel('') }}
-                    className="rounded-md px-2 py-1 text-[11px] text-txt-dim hover:text-txt">Annuler</button>
+                  <Bouton niveau="primaire" ton="vert" onClick={commitAdd} disabled={!newColLabel.trim() || addCol.isPending}
+                    >{addCol.isPending ? '…' : 'Ajouter'}</Bouton>
+                  <Bouton niveau="lien" onClick={() => { setAdding(false); setNewColLabel('') }}>Annuler</Bouton>
                 </span>
               ) : (
-                <button onClick={doAdd}
-                  className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:border-mint hover:text-mint"
-                  >+ Colonne</button>
+                <Bouton niveau="secondaire" ton="vert" onClick={doAdd}>+ Colonne</Bouton>
               )}
-              <button
-                onClick={() => setConfirmReset(true)}
-                className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt-dim hover:border-st-ecartee hover:text-st-ecartee"
-                >Réinitialiser</button>
+              <Bouton niveau="secondaire" ton="danger" onClick={() => setConfirmReset(true)}>Réinitialiser</Bouton>
             </>
           )}
           {/* M137 — accès aux cartes archivées (consulter / restaurer). */}
           {!editMode && (
-            <button
-              onClick={() => setShowArchived(true)}
-              className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt-dim hover:border-mint hover:text-mint"
-              >Archivées</button>
+            <Bouton niveau="secondaire" ton="vert" onClick={() => setShowArchived(true)}>Archivées</Bouton>
           )}
-          <button
+          <Bouton niveau="secondaire" ton="vert"
             onClick={() => { setEditMode((v) => !v); setEditingId(null) }}
-            className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors duration-quick ${
-              editMode ? 'bg-mint/15 text-mint' : 'border border-line-2 text-txt-dim hover:text-txt'}`}
-          >{editMode ? 'Terminé' : 'Personnaliser'}</button>
+          >{editMode ? 'Terminé' : 'Personnaliser'}</Bouton>
         </div>
       </div>
       <div className="relative mt-4 min-h-0 flex-1">
@@ -538,7 +519,7 @@ export function Kanban() {
             `flex-1 basis-0 min-w-0` — elles se PARTAGENT la largeur, aucune barre horizontale.
             G6 (M12) : items-start préservé (une colonne vide ne s'étire pas sur toute la hauteur). */}
         <div data-crm-cols className="flex h-full items-start gap-3 overflow-x-clip px-4 pb-5 sm:px-6">
-        {meta.isLoading && <div className="p-2"><Loading label="Chargement du pipeline" className="text-xs" /></div>}
+        {meta.isLoading && <div className="p-2"><Squelette lignes={4} /></div>}
         {visibleCols.map((c) => {
           const idx = cols.indexOf(c)
           const items = byCol(c.key)
@@ -579,17 +560,14 @@ export function Kanban() {
                 {!editMode && <span className="ml-auto font-mono text-[11px] text-txt-dim">{items.length}</span>}
                 {editMode && (
                   <span className="ml-auto flex shrink-0 items-center gap-0.5">
-                    <button onClick={() => moveCol(idx, -1)} disabled={idx === 0}
-                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-txt disabled:opacity-25"
-                      aria-label="Déplacer la colonne à gauche">←</button>
-                    <button onClick={() => moveCol(idx, 1)} disabled={idx === cols.length - 1}
-                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-txt disabled:opacity-25"
-                      aria-label="Déplacer la colonne à droite">→</button>
-                    <button
+                    <Bouton icone niveau="secondaire" ton="vert" onClick={() => moveCol(idx, -1)} disabled={idx === 0}
+                      aria-label="Déplacer la colonne à gauche">←</Bouton>
+                    <Bouton icone niveau="secondaire" ton="vert" onClick={() => moveCol(idx, 1)} disabled={idx === cols.length - 1}
+                      aria-label="Déplacer la colonne à droite">→</Bouton>
+                    <Bouton icone niveau="secondaire" ton="danger"
                       onClick={() => setPendingDelete(withCounts[idx])}
                       disabled={cols.length <= 1}
-                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-st-ecartee disabled:opacity-25"
-                      aria-label="Supprimer la colonne">✕</button>
+                      aria-label="Supprimer la colonne">✕</Bouton>
                   </span>
                 )}
               </div>
@@ -606,7 +584,7 @@ export function Kanban() {
                 ))}
                 {items.length === 0 && (
                   /* DA §8 — colonne vide PARLANTE (dit quoi faire), pas un « vide » muet. */
-                  <div className="empty">Aucune parcelle<div className="mt-1 text-txt-faint">glissez-en une ici</div></div>
+                  <EmptyState className="empty px-2 py-6" title="Aucune parcelle" hint="glissez-en une ici" />
                 )}
               </div>
             </div>
@@ -633,11 +611,9 @@ export function Kanban() {
               première colonne — aucune n'est perdue.
             </p>
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setConfirmReset(false)}
-                className="rounded-md px-3 py-1.5 text-[12px] text-txt-dim hover:text-txt">Annuler</button>
-              <button onClick={() => resetCols.mutate()} disabled={resetCols.isPending}
-                className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee disabled:opacity-40">
-                {resetCols.isPending ? '…' : 'Réinitialiser'}</button>
+              <Bouton niveau="lien" onClick={() => setConfirmReset(false)}>Annuler</Bouton>
+              <Bouton niveau="primaire" ton="danger" onClick={() => resetCols.mutate()} disabled={resetCols.isPending}>
+                {resetCols.isPending ? '…' : 'Réinitialiser'}</Bouton>
             </div>
           </div>
         </div>
@@ -665,11 +641,9 @@ export function Kanban() {
               restaurables depuis « Archivées ».
             </p>
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setPendingArchive(null)}
-                className="rounded-md px-3 py-1.5 text-[12px] text-txt-dim hover:text-txt">Annuler</button>
-              <button onClick={() => archive.mutate(pendingArchive.id)} disabled={archive.isPending}
-                className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee disabled:opacity-40">
-                {archive.isPending ? '…' : 'Archiver'}</button>
+              <Bouton niveau="lien" onClick={() => setPendingArchive(null)}>Annuler</Bouton>
+              <Bouton niveau="primaire" ton="danger" onClick={() => archive.mutate(pendingArchive.id)} disabled={archive.isPending}>
+                {archive.isPending ? '…' : 'Archiver'}</Bouton>
             </div>
           </div>
         </div>
@@ -684,17 +658,17 @@ export function Kanban() {
               <button onClick={() => setShowArchived(false)} className="text-txt-dim hover:text-txt" aria-label="Fermer">✕</button>
             </div>
             <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto">
-              {archived.isLoading && <Loading label="Chargement" className="text-xs" />}
-              {archived.data?.length === 0 && <p className="text-[12px] text-txt-dim">Aucune carte archivée.</p>}
+              {archived.isLoading && <Squelette lignes={3} />}
+              {archived.data?.length === 0 && <EmptyState title="Aucune carte archivée." />}
               {(archived.data ?? []).map((e) => (
                 <div key={e.id} className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-mono text-xs text-txt-hi">{e.idu.slice(8)}</div>
                     <div className="truncate text-[10.5px] text-txt-mut">{e.parcel.commune}</div>
                   </div>
-                  <button onClick={() => restore.mutate(e.id)} disabled={restore.isPending}
-                    className="shrink-0 rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt hover:border-mint hover:text-mint disabled:opacity-40">
-                    Restaurer</button>
+                  <Bouton niveau="secondaire" ton="vert" onClick={() => restore.mutate(e.id)} disabled={restore.isPending}
+                    className="shrink-0">
+                    Restaurer</Bouton>
                 </div>
               ))}
             </div>

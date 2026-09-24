@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
 import { LayerRowUI } from '../panel/LayerRowUI'   // COUCHES-RECETTE-2 B2 : composant de ligne partagé
 import { ChevronSection } from '../panel/ChevronSection'   // FINITIONS-1 (P7) — flèche repli/dépli partagée
+import { Chevron } from '../ui/Chevron'   // DA-FIX-3 Lot 5 (DA-031) — chevron d'accordéon partagé
 
 // ── types du plan servi par /map/tuyau/couches (dérivé de la déclaration) ──
 export interface TuyauNiveau {
@@ -545,7 +546,8 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
               <button onClick={() => setOuvert(isOpen ? '' : e.cle)} aria-expanded={isOpen}
                 className="flex w-full items-start justify-between gap-2 px-2 py-1.5 text-left text-[11.5px] font-medium">
                 <span className="min-w-0 flex-1 leading-tight">{e.nom}</span>
-                <span className={`mt-0.5 shrink-0 text-txt-dim transition-transform ${isOpen ? '' : '-rotate-90'}`}>▾</span>
+                {/* DA-FIX-3 Lot 5 (DA-031) — chevron partagé (fermé ▶ / ouvert ▼) : plus de ▾ figé dans les deux états. */}
+                <Chevron open={isOpen} />
               </button>
               {isOpen && (
                 <div className="flex flex-col gap-0.5 px-2 pb-2">

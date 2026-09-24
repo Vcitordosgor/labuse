@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { estIdu, estSectionNumero, iduComplet, iduCourt, normSectionNumero } from '../lib/format'
 import { fmtM2 } from '../lib/format'
-import { searchParcels } from '../lib/api'
+import { searchParcels, type SuggestItem } from '../lib/api'
 import { useApp } from '../store/useApp'
 import { AddressAutocomplete } from './AddressAutocomplete'
+import { Bouton } from './ui/Bouton'
 
 // PATRON OMNIBOX (M137) — UN SEUL champ pour désigner une parcelle : adresse (autocomplétion BAN)
 // ET IDU cadastral (reconnu par `estIdu` → on n'interroge pas la BAN dessus), comme l'omnibox de la
@@ -23,13 +24,17 @@ import { AddressAutocomplete } from './AddressAutocomplete'
 // jamais un zéro muet.
 type Candidate = { idu: string; commune: string; surface_m2: number | null }
 
-export function ParcelInput({ onPick, onAddress, placeholder, autoFocus, withCarte = true, dataAttr }: {
+export function ParcelInput({ onPick, onAddress, placeholder, autoFocus, withCarte = true, dataAttr, grammaireProprietaire = false }: {
   onPick: (idu: string) => void
   onAddress?: (label: string) => void
   placeholder?: string
   autoFocus?: boolean
   withCarte?: boolean
   dataAttr?: string                 // hook QA : pose data-<dataAttr> sur le champ (ex. « courrier-idu »)
+  // DA-FIX-4 verif — active EN PLUS les suggestions live NOM de société / SIREN dans la MÊME liste
+  // qu'adresse/IDU (grammaires proprietaire+siren). Réservé à Scan patrimoine : une suggestion de
+  // propriétaire/SIREN renvoie son SIREN via `onAddress` (que Scan résout en propriétaire).
+  grammaireProprietaire?: boolean
 }) {
   const selectedIdu = useApp((s) => s.selectedIdu)
   const commune = useApp((s) => s.commune)
@@ -67,8 +72,18 @@ export function ParcelInput({ onPick, onAddress, placeholder, autoFocus, withCar
       <AddressAutocomplete
         {...attr}
         autoFocus={autoFocus}
-        placeholder={placeholder ?? 'Adresse, IDU ou référence cadastrale (BW0917)…'}
+        placeholder={placeholder ?? 'Adresse, IDU ou référence (BW0917)'}
         onClear={() => { setMsg(null); setCandidats(null) }}
+        {...(grammaireProprietaire ? {
+          // Scan patrimoine : les suggestions NOM/SIREN vivent dans la MÊME liste que adresse/IDU.
+          // Une suggestion propriétaire/SIREN (type ≠ adresse/cadastre) → son SIREN part par onAddress.
+          grammaires: ['proprietaire', 'siren', 'cadastre', 'adresse'] as const,
+          onPick: (it: SuggestItem) => {
+            setMsg(null); setCandidats(null)
+            if (it.siren && onAddress) onAddress(it.siren)
+            else if (it.idu) onPick(iduComplet(it.idu))
+          },
+        } : {})}
         onSelect={(sel) => {
           setMsg(null); setCandidats(null)
           if (sel.idu) onPick(iduComplet(sel.idu))
@@ -104,11 +119,19 @@ export function ParcelInput({ onPick, onAddress, placeholder, autoFocus, withCar
           ))}
         </div>
       )}
-      {withCarte && selectedIdu && (
-        <button data-parcelinput-carte onClick={() => { setMsg(null); setCandidats(null); onPick(selectedIdu) }}
-          className="self-start text-[10.5px] text-mint hover:underline">
-          utiliser la parcelle sélectionnée sur la carte ({selectedIdu.slice(8)})
-        </button>
+      {/* DA-FIX-2 Lot 2 (DA-002) — LE clic-carte, un seul rendu partout : séparateur « ou » +
+          Bouton secondaire. Toujours offert (les deux gestes). Une parcelle déjà cliquée sur la
+          carte s'utilise d'un clic ; sinon le libellé invite au geste. Plus de phrase texte. */}
+      {withCarte && (
+        <>
+          <div className="flex items-center gap-2 text-[10px] text-txt-dim" aria-hidden="true">
+            <span className="h-px flex-1 bg-line-2" />ou<span className="h-px flex-1 bg-line-2" />
+          </div>
+          <Bouton data-parcelinput-carte niveau="secondaire" ton="vert" className="w-full"
+            onClick={() => { if (selectedIdu) { setMsg(null); setCandidats(null); onPick(selectedIdu) } }}>
+            {selectedIdu ? `Utiliser la parcelle sélectionnée (${selectedIdu.slice(8)})` : 'Cliquez une parcelle sur la carte'}
+          </Bouton>
+        </>
       )}
     </div>
   )

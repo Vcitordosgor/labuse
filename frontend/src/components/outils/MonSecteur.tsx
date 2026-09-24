@@ -8,7 +8,8 @@ import { useQuery } from '@tanstack/react-query'
 import { getMonSecteur, type LocalMed, type Distribution } from '../../lib/api'
 import { ParcelInput } from '../ParcelInput'
 import { fmtInt } from '../../lib/format'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
 
 function DistribNote({ d }: { d: Distribution | null | undefined }) {
   if (!d || !d.apres?.n) return null
@@ -49,8 +50,8 @@ export function SecteurResultats({ idu, embedded }: { idu: string; embedded?: bo
   const q = useQuery({ queryKey: ['mon-secteur', idu], queryFn: () => getMonSecteur(idu), enabled: !!idu })
   const d = q.data
   const sb = d?.secteur_bati
-  if (q.isLoading) return <Loading label="Analyse du secteur…" className="mx-auto mt-2 text-xs" />
-  if (q.isError) return <p className="text-[12px] text-st-ecartee">Secteur indisponible — réessayez.</p>
+  if (q.isLoading) return <Squelette lignes={4} className="mt-2" />
+  if (q.isError) return <ErrorState message="Secteur indisponible — réessayez." retry={() => q.refetch()} />
   if (!d || !d.idu) return null   // payload vide/partiel → rien à montrer (jamais un crash sur un champ absent)
   return (
     <div className="flex flex-col gap-3 text-[12.5px]">
@@ -139,7 +140,7 @@ export function MonSecteur() {
         <h2 className="font-display text-base font-bold text-txt-hi">Mon secteur</h2>
         <p className="mt-0.5 text-[11.5px] text-txt-mut">Les prix DU SECTEUR autour d'une parcelle — médiane locale DVF par type (5 % extrêmes exclus, rayon adaptatif), tendance 12 mois, annonces Radar dans le rayon. La même méthode que « Marché et secteur » de la fiche.</p>
       </div>
-      <ParcelInput onPick={(i) => setIdu(i)} placeholder="Adresse ou IDU…" dataAttr="mon-secteur-input" />
+      <ParcelInput onPick={(i) => setIdu(i)} placeholder="Adresse, IDU ou référence (BW0917)" dataAttr="mon-secteur-input" />
       {idu && <SecteurResultats idu={idu} />}
     </div>
   )

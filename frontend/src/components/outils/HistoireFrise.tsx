@@ -14,8 +14,10 @@ import { getHistoire, type HistoireFait } from '../../lib/api'
 import { fmtDateNum, fmtEur, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
+import { Squelette } from '../Loading'
 import { Siren } from '../shared/Siren'
 import { TEMPS_MILLESIMES } from '../map/basemaps'
+import { Bouton } from '../ui/Bouton'
 
 // Axe linéaire : 1950 (premier millésime d'ortho) → année des données les plus récentes. Les
 // bornes sont FIXES (l'axe des orthos), un fait antérieur se cale au bord gauche (dit au détail).
@@ -28,7 +30,8 @@ const pct = (annee: number) => Math.min(100, Math.max(0, ((annee - AXE_MIN) / (A
 const FAM = {
   vente: { c: TOKENS.amber, label: 'Vente' },
   permis: { c: TOKENS.mint, label: 'Permis' },
-  proprietaire: { c: TOKENS.blue, label: 'Propriétaire' },
+  // DA-FIX-4 Lot 3 (DA-039) — plus de bleu d'interface : la catégorie « Propriétaire » passe au gris neutre DA.
+  proprietaire: { c: TOKENS.stExclue, label: 'Propriétaire' },
   decoupe: { c: TOKENS.violet, label: 'Découpe' },
 } as const
 
@@ -89,21 +92,18 @@ function FaitDetail({ f, idu, onClose }: { f: HistoireFait; idu: string; onClose
       {/* ponts C4 — mêmes mécanismes que le reste de l'app (permitToOpen / ficheTiroir / m02Prefill) */}
       <div className="flex flex-wrap gap-2">
         {f.famille === 'permis' && f.permit_id && (
-          <button data-histoire-pont-permis
-            onClick={() => { setPermitToOpen(f.permit_id!); setModule('permis'); pushOutilRetour(RETOUR) }}
-            className="text-[10.5px] font-medium text-mint hover:underline">Voir dans Permis →</button>
+          <Bouton niveau="lien" data-histoire-pont-permis
+            onClick={() => { setPermitToOpen(f.permit_id!); setModule('permis'); pushOutilRetour(RETOUR) }}>Voir dans Permis →</Bouton>
         )}
         {f.famille === 'vente' && (
           /* pas de fil de retour ici : la fiche est un OVERLAY au-dessus de l'outil temps resté
              ouvert (la fermer y ramène) — le fil FIX-3 est réservé aux ponts outil→outil. */
-          <button data-histoire-pont-vente
-            onClick={() => { setFicheTiroir(idu, 'marche'); select(idu) }}
-            className="text-[10.5px] font-medium text-mint hover:underline">Voir la fiche — ventes →</button>
+          <Bouton niveau="lien" data-histoire-pont-vente
+            onClick={() => { setFicheTiroir(idu, 'marche'); select(idu) }}>Voir la fiche — ventes →</Bouton>
         )}
         {f.famille === 'proprietaire' && f.apres?.siren && (
-          <button data-histoire-pont-scan
-            onClick={() => { setM02Prefill(f.apres!.siren!.replace(/\D/g, '').slice(0, 9)); setModule('patrimoine'); pushOutilRetour(RETOUR) }}
-            className="text-[10.5px] font-medium text-mint hover:underline">Scan patrimoine →</button>
+          <Bouton niveau="lien" data-histoire-pont-scan
+            onClick={() => { setM02Prefill(f.apres!.siren!.replace(/\D/g, '').slice(0, 9)); setModule('patrimoine'); pushOutilRetour(RETOUR) }}>Scan patrimoine →</Bouton>
         )}
       </div>
     </div>
@@ -139,7 +139,7 @@ export function HistoireFrise({ idu }: { idu: string }) {
           Faits datés — {(q.data?.sources ?? []).filter((s) => s.maj)
             .map((s) => `${s.nom} : ${/^\d{4}-/.test(s.maj!) ? fmtDateNum(s.maj) : s.maj}`).join(' · ') || '…'}
         </p>
-        {q.isLoading && <p className="py-2 text-[10.5px] text-txt-mut">Faits datés…</p>}
+        {q.isLoading && <Squelette lignes={1} className="py-2" />}
         {q.isError && <p className="py-2 text-[10.5px] text-txt-mut">Faits momentanément indisponibles — les orthos restent comparables.</p>}
         {q.data && q.data.n === 0 && (
           /* C5 — état vide honnête : la frise ne bloque rien, les orthos restent comparables */

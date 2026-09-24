@@ -264,7 +264,7 @@ function CreerPage({ mode, onBack, onCree }: {
             {mode === 'client' ? "Créer et envoyer l'invitation" : "Créer l'essai et envoyer l'invitation"}
           </ActBtn>
           <button onClick={() => lancer(false)} disabled={!email.includes('@') || busy}
-            className="text-[13px] text-txt-mut underline underline-offset-2 hover:text-txt disabled:opacity-40">créer sans envoyer</button>
+            className="text-[13px] text-txt-mut underline underline-offset-2 hover:text-txt">créer sans envoyer</button>
         </div>
         {err && <div className="mt-3 text-[12px] text-coral">{err}</div>}
         <div className="mt-4 text-[11px] text-txt-off">
@@ -293,7 +293,7 @@ function Step({ etat, titre, sous, when, mk, onApercu, onSend, sending }: {
       {mk && etat !== 'done' ? (
         <div className="flex shrink-0 items-center gap-1.5">
           {onApercu && <button onClick={() => onApercu(mk)} className="rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt-mut hover:text-txt">aperçu</button>}
-          {onSend && <button onClick={() => onSend(mk)} disabled={sending} className="rounded-md border border-mint/40 bg-mint/10 px-2 py-1 text-[11px] text-mint disabled:opacity-40">Envoyer</button>}
+          {onSend && <button onClick={() => onSend(mk)} disabled={sending} className="rounded-md border border-mint/40 bg-mint/10 px-2 py-1 text-[11px] text-mint">Envoyer</button>}
         </div>
       ) : (
         <span className="shrink-0 whitespace-nowrap text-[11.5px] text-txt-dim">{when ?? ''}</span>
@@ -457,7 +457,7 @@ function FichePage({ l, libelles, stripeConfigure, mailLiens, onBack }: {
           )}
           {suspendu
             ? <ActBtn onClick={() => retab.mutate()} disabled={retab.isPending}>Rétablir</ActBtn>
-            : <button onClick={suspendre} disabled={susp.isPending} className="rounded-lg border border-coral/40 px-3 py-1.5 text-xs font-medium text-coral disabled:opacity-40">Suspendre</button>}
+            : <button onClick={suspendre} disabled={susp.isPending} className="rounded-lg border border-coral/40 px-3 py-1.5 text-xs font-medium text-coral">Suspendre</button>}
         </div>
       </div>
 
@@ -524,7 +524,7 @@ function FichePage({ l, libelles, stripeConfigure, mailLiens, onBack }: {
           </div>
           <div className="mt-2.5 flex items-center justify-between gap-3 rounded-lg border border-line px-3 py-2.5 text-[12px] text-txt-dim">
             <span>Déconnexion à distance — ferme toutes les sessions ouvertes du client (il pourra se reconnecter).{decoMsg && <b className="ml-2 text-mint">{decoMsg}</b>}</span>
-            <button onClick={() => deco.mutate()} disabled={deco.isPending} className="shrink-0 rounded-md border border-line px-2.5 py-1 text-[12px] text-txt-hi disabled:opacity-40">Déconnecter partout</button>
+            <button onClick={() => deco.mutate()} disabled={deco.isPending} className="shrink-0 rounded-md border border-line px-2.5 py-1 text-[12px] text-txt-hi">Déconnecter partout</button>
           </div>
         </div>
       )}

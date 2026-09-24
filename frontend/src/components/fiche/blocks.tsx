@@ -13,6 +13,7 @@ import type { FicheZoneDestinations, ReglementPlu } from '../../lib/types'
 import { BlocIndisponible } from './BlocIndisponible'
 import { DestinationBadge } from '../outils/DestinationSelect'   // DESTINATIONS-1 (X4.2) — pastille contour partagée
 import { GroupLabel, FactRow, RefLink, FactNote } from './primitives'
+import { Chevron } from '../ui/Chevron'
 
 // ── M9 lot 4 — ligne « Destinations » de la zone (résumé + dépliable) ──
 export function ZoneDestinationsLigne({ d }: { d: FicheZoneDestinations }) {
@@ -32,7 +33,7 @@ export function ZoneDestinationsLigne({ d }: { d: FicheZoneDestinations }) {
     <div data-fiche-destinations className="mt-1">
       <button onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left text-[10.5px] text-txt-mut transition-colors duration-quick hover:bg-surface-3 hover:text-txt">
-        <span className="text-mint">{open ? '▾' : '▸'}</span>
+        <Chevron open={open} />
         <span className="min-w-0 flex-1 truncate"><b className="text-txt">Destinations</b>{resume ? ` · ${resume}` : ''}</span>
       </button>
       {open && (

@@ -18,11 +18,14 @@ import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { ListPaginationFooter } from '../ListPagination'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Siren } from '../shared/Siren'
+import { Chevron } from '../ui/Chevron'
 import { Tip } from '../Tip'
 import { CommuneScope } from './ModulePanel'
+import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
 
@@ -61,6 +64,7 @@ export function Successions() {
   const [commune, setCommune] = useState<string | null>(null)   // Toute l'île par défaut
   const [sdpMin, setSdpMin] = useState(0)
   const [sel, setSel] = useState<Set<string>>(new Set())
+  const [methodeOuverte, setMethodeOuverte] = useState(false)   // DA-FIX-4 Lot 0 — tiroir « Détail et méthode »
 
   const q = useInfiniteQuery({
     queryKey: ['successions', commune, sdpMin],
@@ -91,13 +95,13 @@ export function Successions() {
         Résiduel minimum
         <select data-successions-sdp-min value={sdpMin}
           onChange={(e) => { setSdpMin(Number(e.target.value)); setSel(new Set()) }}
-          className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-txt focus:border-mint focus:outline-none">
+          className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
           {SDP_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
         </select>
         <span className="text-[10px] text-txt-dim">m² SDP</span>
       </label>
 
-      {q.isLoading && <Loading label="Parcelles…" />}
+      {q.isLoading && <Squelette lignes={6} />}
       {q.isError && <ErrorState message="Signal momentanément indisponible — réessayez." retry={() => q.refetch()} />}
       {meta && total === 0 && (
         // ÉTAT VIDE HONNÊTE — jamais trois zéros : le périmètre, le signal et son millésime sont dits.
@@ -119,7 +123,7 @@ export function Successions() {
           {/* case « tout sélectionner » — la sélection sert le pont Courrier déplacé en pied (1B pt 6).
               Le tri serveur reste résiduel SDP décroissant ; seule l'étiquette du tri est retirée (1B pt 4). */}
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-txt-dim">
-            <input type="checkbox" aria-label="Tout sélectionner" className="h-3 w-3 accent-mint"
+            <Case aria-label="Tout sélectionner"
               checked={items.length > 0 && items.every((i) => sel.has(i.idu))}
               onChange={(e) => setSel(e.target.checked ? new Set(items.map((i) => i.idu)) : new Set())} />
             <span>Tout sélectionner</span>
@@ -130,7 +134,7 @@ export function Successions() {
                 className="hover-fill cursor-pointer rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5"
                 onClick={() => select(it.idu)}>{/* RECETTE-1 R28 — infobulle « Ouvrir la fiche » retirée */}
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" data-successions-sel className="h-3 w-3 shrink-0 accent-mint"
+                  <Case data-successions-sel className="shrink-0"
                     checked={sel.has(it.idu)} onClick={(e) => e.stopPropagation()}
                     onChange={() => setSel((s) => { const n = new Set(s); n.has(it.idu) ? n.delete(it.idu) : n.add(it.idu); return n })} />
                   <span className="font-mono text-[11px] text-txt-hi">{it.idu}</span>
@@ -166,8 +170,8 @@ export function Successions() {
       {/* pied de panneau : tiroir « Détail et méthode » (gauche) et pont Courrier (droite, même ligne —
           1B pt 6). `items-start` maintient le bouton sur la ligne du résumé quand le tiroir s'ouvre. */}
       <div className="flex shrink-0 items-start justify-between gap-2">
-      <details data-successions-methode className="min-w-0 flex-1 text-xs">
-        <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
+      <details data-successions-methode open={methodeOuverte} onToggle={(e) => setMethodeOuverte(e.currentTarget.open)} className="min-w-0 flex-1 text-xs">
+        <summary className="inline-flex cursor-pointer list-none items-center gap-1 py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode <Chevron open={methodeOuverte} /></summary>
         <div className="flex flex-col gap-1 text-[10.5px] leading-snug text-txt-dim">
           <p><b className="text-txt-mut">Le signal.</b> Le propriétaire est une personne morale à SIREN confirmé (jamais un
             rapprochement par nom) dont le dirigeant le plus âgé a ≥ 70 ans, ou une SCI créée il y a ≥ 20 ans sans mise à
@@ -181,11 +185,11 @@ export function Successions() {
           {meta?.source && <p className="text-[9.5px]">{meta.source}</p>}
         </div>
       </details>
-        <button data-successions-courrier disabled={sel.size === 0}
+        <Bouton niveau="secondaire" ton="vert" data-successions-courrier disabled={sel.size === 0}
           onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers'); pushOutilRetour(RETOUR_SUCCESSIONS) }}
-          className="mt-1.5 shrink-0 rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-40">
+          className="mt-1.5 shrink-0">
           ✉ Préparer les courriers ({sel.size}) →
-        </button>
+        </Bouton>
       </div>
     </div>
   )

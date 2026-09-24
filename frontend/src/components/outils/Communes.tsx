@@ -2,9 +2,14 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getCommuneAcquisitions, getCommunes, getRadarMarche } from '../../lib/api'
 import { useApp } from '../../store/useApp'
+import { Squelette } from '../Loading'
+import { EmptyState, ErrorState } from '../States'
 import { CommunesLegende, O6Comparateur } from './blocB'
 import { M18 } from './moteurs'
 import { RadarMarche } from './RadarMarche'
+import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
+import { Retour } from '../ui/Retour'
 
 // RETOURS-1 R3/R4 (Vic) — OUTIL « COMMUNES » RESTRUCTURÉ : un écran d'entrée à TROIS portes :
 //   1. Comparaison communes — le tableau comparatif (overlay plein écran, patron §4) ;
@@ -18,18 +23,7 @@ import { RadarMarche } from './RadarMarche'
 // droite (setContexteCommune) ; les blocs propres à l'ex-fiche-outil (Marché local, Rareté &
 // ZAN, Vélocité) sont TRANSFÉRÉS dans ContextePanel — aucune donnée perdue, aucun doublon.
 
-// COMMUNE-124 Lot C2 — chevron d'accordéon (même glyphe SVG que ChevronSection, cohérent avec l'app) :
-// FERMÉ pointe à DROITE (▸, rotation −90° du chevron bas), OUVERT pointe en BAS (▾, sans rotation).
-function AcqChevron({ ouvert }: { ouvert: boolean }) {
-  return (
-    <span aria-hidden="true" className="flex h-4 w-4 shrink-0 items-center justify-center text-txt-dim group-hover:text-mint-ink">
-      <svg viewBox="0 0 12 12" className={`h-3 w-3 transition-transform duration-soft ease-cockpit ${ouvert ? '' : '-rotate-90'}`}>
-        <polyline points="2.75,4.25 6,7.75 9.25,4.25" fill="none" stroke="currentColor"
-          strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
-  )
-}
+// DA-FIX-4 verif (task 3) — l'ancien AcqChevron local passe sur le Chevron partagé (fermé ▶ / ouvert ▼).
 
 // ── Vue « Acquisitions récentes » (R3.3) — sélecteur de commune + listing, clic → parcelle ──
 // RETOURS-11 O16 (Vic) : (c) le clic ouvre la fiche parcelle EN SUPERPOSITION (on ne quitte plus
@@ -123,12 +117,12 @@ function AcquisitionsRecentes() {
         <p className="text-[11px] leading-snug text-txt-dim">Choisissez une commune pour lister les
           changements récents de propriétaire moral (constat DGFiP par millésime).</p>
       ) : q.isLoading ? (
-        <p className="text-[11px] text-txt-dim">Chargement…</p>
+        <Squelette lignes={6} />
       ) : q.isError || !d ? (
-        <p className="text-[11px] text-st-ecartee">Constat indisponible — réessayez.</p>
+        <ErrorState message="Constat indisponible — réessayez." retry={() => q.refetch()} />
       ) : d.n_total === 0 ? (
-        <p className="text-[11px] leading-snug text-txt-dim">Aucun changement de propriétaire moral
-          constaté depuis {d.depuis_millesime} à {commune}.</p>
+        <EmptyState title="Aucun changement de propriétaire moral constaté"
+          hint={`depuis ${d.depuis_millesime} à ${commune}.`} />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
           <p className="shrink-0 text-[11px] text-txt-mut">
@@ -148,7 +142,7 @@ function AcquisitionsRecentes() {
                 {/* En-tête cliquable = toute la ligne (bascule l'accordéon). */}
                 <button data-acq-groupe-tete onClick={() => toggleGroupe(cle)} aria-expanded={ouvert}
                   className="hover-fill group flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors duration-quick">
-                  <AcqChevron ouvert={ouvert} />
+                  <Chevron open={ouvert} boite />
                   <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-txt-hi group-hover:text-mint-ink">
                     {g.denomination ?? 'Acquéreur non identifié'}
                     <span className="ml-1 text-[10px] font-normal text-txt-dim group-hover:text-mint-ink/70">· {g.items.length} parcelle{g.items.length > 1 ? 's' : ''}</span>
@@ -181,10 +175,10 @@ function AcquisitionsRecentes() {
           })}
           {/* R14 — « Voir plus — N / M chargés », par 200 (règle des listes longues). */}
           {d.tronquee && (
-            <button data-acq-voir-plus onClick={() => setLimite((l) => l + 200)}
-              className="shrink-0 self-start rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-mint transition-colors duration-quick hover:border-mint">
+            <Bouton niveau="lien" data-acq-voir-plus onClick={() => setLimite((l) => l + 200)}
+              className="shrink-0 self-start">
               Voir plus — {d.n} / {d.n_total} chargés
-            </button>
+            </Bouton>
           )}
           <p className="shrink-0 pb-1 text-[10px] leading-snug text-txt-dim italic">{d.note}</p>
         </div>
@@ -243,8 +237,7 @@ export function Communes() {
   }
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-      <button data-communes-retour onClick={() => setVue('accueil')}
-        className="shrink-0 self-start text-[11px] text-mint hover:underline">‹ Communes</button>
+      <Retour data-communes-retour label="Communes" onClick={() => setVue('accueil')} />
       <AcquisitionsRecentes />
     </div>
   )

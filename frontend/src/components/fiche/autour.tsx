@@ -19,6 +19,7 @@ import { DepotsBlock } from './DepotsBlock'
 import { AutourZoneBlock } from './AutourZoneBlock'
 import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, GroupLabel, FactNote, PorteOutil } from './primitives'
+import { Badge } from '../ui/Badge'
 
 // FICHE-RANGEMENT-2 Lot 1 — §1 Identité : l'historique des permis DE la parcelle (fait d'identité
 // du bien), extrait pour la future section.
@@ -56,7 +57,7 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
   return (
     <RefDrawer id="quartier" icon={IC.contexte} name="Quartier"
       context="Équipements, population et permis du voisinage"
-      value={<span className="pill-mint">isochrone</span>}>
+      value={<Badge ton="vert">isochrone</Badge>}>
       {/* ÉQUIPEMENTS — UN moteur (BPE+OSM dédoublonnés, distance à pied). Absent = omis (jamais « 0 m »).
           Z1·02 — le label-caps « À proximité » devient un kicker ; les tuiles de distance (maquette) restent. */}
       {/* RECETTE-6 (C3) — le TRANSPORT (« Bus ») vit dans « Réseaux » (arrêt nommé + réseau + distance,

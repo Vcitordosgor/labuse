@@ -3,6 +3,7 @@
 // officiels groupés par destination) — rien en dur au front. Optionnel : '' = aucune destination.
 import { useQuery } from '@tanstack/react-query'
 import { etudeZoneDestinationsRef } from '../../lib/api'
+import { Badge, type BadgeTon } from '../ui/Badge'
 
 export function useDestinationsRef() {
   return useQuery({ queryKey: ['destinations-referentiel'], queryFn: etudeZoneDestinationsRef, staleTime: Infinity })
@@ -31,22 +32,20 @@ export function DestinationSelect({ value, onChange, dataAttr }: {
   )
 }
 
-// Badge d'état — PASTILLE CONTOUR (convention récente) : autorisé = vert, sous condition = ambre,
-// interdit = rouge, en cours de calibration = neutre. Accepte les états effectifs backend
-// (autorise/sous_condition/interdit/en_cours_de_calibration/non_lu — non_lu ≡ calibration en cours).
-const ETATS: Record<string, { label: string; cls: string }> = {
-  autorise: { label: 'autorisé', cls: 'border-mint/40 text-mint' },
-  sous_condition: { label: 'sous condition', cls: 'border-amber/40 text-amber' },
-  interdit: { label: 'interdit', cls: 'border-coral/40 text-coral' },
-  en_cours_de_calibration: { label: 'calibration en cours', cls: 'border-line-2 text-txt-dim' },
-  non_lu: { label: 'calibration en cours', cls: 'border-line-2 text-txt-dim' },
+// Badge d'état — DA-034 : trois tons du Badge partagé. autorisé = vert, sous condition = ambre,
+// en cours de calibration = neutre. Le corail « interdit » PASSE EN AMBRE (pas de 4ᵉ ton). Accepte
+// les états effectifs backend (autorise/sous_condition/interdit/en_cours_de_calibration/non_lu —
+// non_lu ≡ calibration en cours).
+const ETATS: Record<string, { label: string; ton: BadgeTon }> = {
+  autorise: { label: 'autorisé', ton: 'vert' },
+  sous_condition: { label: 'sous condition', ton: 'ambre' },
+  interdit: { label: 'interdit', ton: 'ambre' },
+  en_cours_de_calibration: { label: 'calibration en cours', ton: 'neutre' },
+  non_lu: { label: 'calibration en cours', ton: 'neutre' },
 }
 export function DestinationBadge({ etat }: { etat: string | null | undefined }) {
   const e = ETATS[etat ?? ''] ?? ETATS.en_cours_de_calibration
   return (
-    <span data-destination-etat={etat ?? 'inconnu'}
-      className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wide ${e.cls}`}>
-      {e.label}
-    </span>
+    <Badge data-destination-etat={etat ?? 'inconnu'} ton={e.ton}>{e.label}</Badge>
   )
 }

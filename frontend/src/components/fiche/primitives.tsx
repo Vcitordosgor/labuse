@@ -7,6 +7,7 @@
  */
 import { createContext, isValidElement, useContext, useEffect, useRef, type ReactNode } from 'react'
 import { Tip } from '../Tip'
+import { Badge, type BadgeTon } from '../ui/Badge'
 import { ApiError } from '../../lib/api'
 import { fmtDateNum, fmtLibelleBrut } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -191,7 +192,7 @@ const FactNote = ({ children }: { children: ReactNode }) => <p className="f-note
 const MicroJauge = ({ pct, label, tip }: { pct: number; label: string; tip?: string }) => {
   const body = (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <div style={{ flex: 1, height: 4, background: REF.barTrack, borderRadius: 2, overflow: 'hidden' }}>
+      <div style={{ flex: 1, height: 4, background: REF.barTrack, borderRadius: 4, overflow: 'hidden' }}>
         <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: 4, background: REF.barFill }} />
       </div>
       <span style={{ fontSize: 11, color: REF.dim, whiteSpace: 'nowrap', ...(tip ? { cursor: 'help', borderBottom: '1px dotted #5f7568' } : {}) }}>{label}</span>
@@ -203,7 +204,7 @@ const MicroSegments = ({ n, label }: { n: number; label: string }) => (
   <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
     <span style={{ fontSize: 11, color: REF.dim, marginRight: 2, whiteSpace: 'nowrap' }}>{label}</span>
     {Array.from({ length: Math.max(1, Math.min(12, n)) }).map((_, i) => (
-      <span key={i} style={{ flex: 1, height: 4, background: REF.seg, borderRadius: 2 }} />
+      <span key={i} style={{ flex: 1, height: 4, background: REF.seg, borderRadius: 4 }} />
     ))}
   </div>
 )
@@ -217,7 +218,7 @@ const MicroSpark = ({ label }: { label: string }) => (
 // jamais des puces violettes locales.
 const MicroPastilles = ({ items }: { items: string[] }) => (
   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-    {items.map((t, i) => <span key={i} className="pill-amber">{t}</span>)}
+    {items.map((t, i) => <Badge key={i} ton="ambre">{t}</Badge>)}
   </div>
 )
 const MicroTriple = ({ items }: { items: ReactNode[] }) => (
@@ -360,16 +361,16 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
   )
 }
 
-// RETOURS-20 Z1·04 — badge Sourcé/Estimé/Dérivé aligné sur la grammaire unique (.b : mono 10 px,
-// contour, même taille partout). Une seule forme de badge sur toute la fiche.
+// RETOURS-20 Z1·04 — badge Sourcé/Estimé/Dérivé — DA-034 : délègue au Badge partagé (3 tons).
+// sourcé → vert, estimé → ambre, dérivé/absent → neutre. Une seule forme de badge sur toute la fiche.
 function StepProv({ prov }: { prov?: string }) {
-  const map: Record<string, [string, string]> = {
-    sourcee: ['Sourcé', 's'], estimee: ['Estimé', 'e'], derive: ['Dérivé', 'd'],
+  const map: Record<string, [string, BadgeTon]> = {
+    sourcee: ['Sourcé', 'vert'], estimee: ['Estimé', 'ambre'], derive: ['Dérivé', 'neutre'],
     // PLU-CALIBRAGE-2 : silence PROUVÉ du règlement (pas une hypothèse).
-    absent: ['Pas de règle PLU', 'a'],
+    absent: ['Pas de règle PLU', 'neutre'],
   }
-  const [label, cls] = map[prov ?? ''] ?? ['—', 'd']
-  return <span className={`b ${cls}`}>{label}</span>
+  const [label, ton] = map[prov ?? ''] ?? ['—', 'neutre']
+  return <Badge ton={ton}>{label}</Badge>
 }
 
 /** M60 P1c — LA PORTE D'OUTIL (gabarit .porte-outil de docs/DA-FICHE-v6.html, recopié TEL QUEL).

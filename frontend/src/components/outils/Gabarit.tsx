@@ -4,6 +4,10 @@ import { getGabarit, type GabaritResult, type GabGeom } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
+import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
 
 // Outil « Gabarit réglementaire ». Traduit graphiquement et mathématiquement des règles SOURCÉES :
 // SOURCE → VALIDATION → CALCUL → AFFICHAGE. Jamais d'estimation (logements/étages/SDP/coût/valeur/
@@ -123,6 +127,7 @@ export function Gabarit() {
   const selectedIdu = useApp((s) => s.selectedIdu)
   const terrain3d = useApp((s) => s.terrain3d)
   const [idu, setIdu] = useState<string | null>(selectedIdu)
+  const [reglesOuvertes, setReglesOuvertes] = useState(false)   // DA-031 — accordéon « Voir les règles appliquées »
 
   useEffect(() => {
     if (selectedIdu && selectedIdu !== idu) setIdu(selectedIdu)
@@ -167,10 +172,9 @@ export function Gabarit() {
         <b className="text-txt"> intégrées et sourcées</b> dans LABUSE.
       </p>
 
-      <ParcelInput dataAttr="gabarit-parcelle" withCarte={false}
+      <ParcelInput dataAttr="gabarit-parcelle"
         onPick={(i: string) => setIdu(i)}
-        placeholder="Adresse, IDU ou référence (ex. BZ1065)" />
-      <p className="text-[10px] text-txt-dim">… ou cliquez une parcelle sur la carte.</p>
+        placeholder="Adresse, IDU ou référence (BW0917)" />
 
       {!target && (
         <p className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">
@@ -178,8 +182,8 @@ export function Gabarit() {
         </p>
       )}
 
-      {q.isLoading && <p className="text-[11px] text-txt-mut">Calcul…</p>}
-      {q.isError && <p className="text-[11px] text-st-ecartee">Parcelle inconnue ou service indisponible.</p>}
+      {q.isLoading && <Squelette lignes={4} />}
+      {q.isError && <ErrorState message="Parcelle inconnue ou service indisponible." retry={() => q.refetch()} />}
 
       {/* CALCUL INCOMPLET — la parcelle reste VISIBLE (contour tracé, réf + commune au-dessus du motif).
           Aucune zone / métrique / 3D réglementaire (CDC §3). */}
@@ -235,9 +239,11 @@ export function Gabarit() {
           </div>
 
           {/* RÈGLES APPLIQUÉES — générées depuis le moteur, aucune valeur en dur */}
-          <details data-gabarit-regles className="group rounded-lg border border-line-2 bg-surface-2">
+          <details data-gabarit-regles open={reglesOuvertes}
+            onToggle={(e) => setReglesOuvertes((e.target as HTMLDetailsElement).open)}
+            className="group rounded-lg border border-line-2 bg-surface-2">
             <summary className="hover-fill flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-3 py-2 text-[11px] text-txt">
-              <span aria-hidden className="text-txt-dim transition-transform duration-quick group-open:rotate-90">›</span>
+              <Chevron open={reglesOuvertes} />
               <b>Voir les règles appliquées</b>
             </summary>
             <div className="flex flex-col gap-2 px-3 pb-3">
@@ -283,10 +289,9 @@ export function Gabarit() {
                 : <p className="mt-1.5">Bascule 2D / 3D : bouton <b className="text-txt">3D</b> de la carte.</p>}
           </div>
 
-          <button data-gabarit-reset onClick={reset}
-            className="self-start rounded-md border border-line-2 bg-surface-3 px-2.5 py-1 text-[10.5px] text-txt-mut hover:border-mint hover:text-mint">
+          <Bouton niveau="secondaire" ton="vert" data-gabarit-reset onClick={reset} className="self-start">
             Réinitialiser
-          </button>
+          </Bouton>
         </>
       )}
     </div>

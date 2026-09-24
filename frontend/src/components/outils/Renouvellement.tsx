@@ -19,9 +19,12 @@ import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { ListPaginationFooter } from '../ListPagination'
 import { ParcelInput } from '../ParcelInput'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Tip } from '../Tip'
+import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
+import { Tri } from '../ui/Tri'
 
 const SORTS = [
   { key: 'score', label: 'Score' },
@@ -46,7 +49,7 @@ export function RenouvellementModule() {
   const [lookupIdu, setLookupIdu] = useState<string | null>(null)
 
   // note datée + top 5 : page 0, tri score (l'entrée la plus parlante).
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['renouv-top', commune],
     queryFn: () => getRenouvListe('score', commune, 0),
     staleTime: 60_000,
@@ -72,9 +75,9 @@ export function RenouvellementModule() {
 
       {/* BARRE UNIQUE (SOCLE) — « et la mienne ? » sans scroller 67 214 lignes */}
       <div className="rounded-lg border border-line-2 bg-surface-2 p-2.5">
-        <ParcelInput dataAttr="renouv-idu" placeholder="Adresse ou IDU — votre parcelle densifie-t-elle ?" onPick={setLookupIdu} />
-        {lookupIdu && lookup.isLoading && <p className="mt-1.5 text-[11px] text-txt-mut">Recherche…</p>}
-        {lookupIdu && lookup.isError && <p className="mt-1.5 text-[11px] text-st-ecartee">Parcelle introuvable — vérifiez l’IDU.</p>}
+        <ParcelInput dataAttr="renouv-idu" placeholder="Adresse, IDU ou référence (BW0917)" onPick={setLookupIdu} />
+        {lookupIdu && lookup.isLoading && <Squelette lignes={2} className="mt-1.5" />}
+        {lookupIdu && lookup.isError && <ErrorState message="Parcelle introuvable — vérifiez l’IDU." retry={() => lookup.refetch()} />}
         {lookupIdu && lookup.data && (
           r ? (
             <button data-renouv-lookup onClick={() => select(lookupIdu)}
@@ -98,8 +101,8 @@ export function RenouvellementModule() {
         )}
       </div>
 
-      {isLoading && <Loading label="Densifier l'existant…" />}
-      {error && <ErrorState message="Segment momentanément indisponible — réessayez." />}
+      {isLoading && <Squelette lignes={6} />}
+      {error && <ErrorState message="Segment momentanément indisponible — réessayez." retry={() => refetch()} />}
       {data && (
         <>
           {/* note d'analyse DATÉE */}
@@ -123,12 +126,10 @@ export function RenouvellementModule() {
             ))}
           </div>
 
-          {/* OUVRIR LE GRAND TABLEAU (overlay plein écran) */}
-          <button data-renouv-ouvrir onClick={openDensifier}
-            className="mt-1 rounded-lg py-2 text-center text-xs font-medium transition-[filter] duration-quick hover:brightness-110"
-            style={{ background: TOKENS.renouv, color: '#0b0b0d' }}>
+          {/* OUVRIR LE GRAND TABLEAU (overlay plein écran) — DA-FIX-4 verif (task 2) : Bouton primaire vert. */}
+          <Bouton data-renouv-ouvrir niveau="primaire" ton="vert" onClick={openDensifier} className="mt-1 w-full">
             ⛶ Ouvrir le tableau complet ({fmtInt(data.total)})
-          </button>
+          </Bouton>
         </>
       )}
     </div>
@@ -195,20 +196,17 @@ export function DensifierTablePanel() {
           </div>
           <div className="flex items-center gap-1">
             <span className="mr-1 text-[10px] text-txt-dim">Trier :</span>
-            {SORTS.map((s) => (
-              <button key={s.key} data-densifier-tri={s.key} onClick={() => setSort(s.key)}
-                className={`whitespace-nowrap rounded px-2 py-1 text-[11px] transition-colors duration-quick ${sort === s.key ? 'border bg-surface-3 font-medium' : 'text-txt-mut hover:text-txt'}`}
-                style={sort === s.key ? { borderColor: `${TOKENS.renouv}66`, color: TOKENS.renouv } : undefined}>
-                {s.label}{sort === s.key ? ' ↓' : ''}
-              </button>
-            ))}
+            <Tri
+              options={SORTS.map((s) => ({ key: s.key, label: s.label, suffix: sort === s.key ? ' ↓' : '' }))}
+              isActive={(k) => sort === k}
+              onSelect={(k) => setSort(k as (typeof SORTS)[number]['key'])} />
           </div>
           <button onClick={() => setOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
         </div>
 
         {/* corps : le grand tableau — toutes colonnes visibles, zéro scroll horizontal */}
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
-          {q.isLoading && <Loading accent="mint" label="Chargement des parcelles…" />}
+          {q.isLoading && <Squelette lignes={6} />}
           {q.isError && <ErrorState className="py-6" message="Segment momentanément indisponible." retry={() => q.refetch()} />}
           {!q.isLoading && !q.isError && (
             <table className="w-full text-[11px]">
@@ -217,7 +215,7 @@ export function DensifierTablePanel() {
                 <tr>
                   {/* A5 — case de sélection (Comparer) */}
                   <th className="w-6 px-2 py-1.5">
-                    <input type="checkbox" aria-label="Tout sélectionner" className="h-3 w-3 accent-mint"
+                    <Case aria-label="Tout sélectionner"
                       checked={visibles.length > 0 && visibles.every((i) => sel.has(i.idu))}
                       onChange={(e) => setSel(e.target.checked ? new Set(visibles.map((i) => i.idu)) : new Set())} />
                   </th>
@@ -254,7 +252,7 @@ export function DensifierTablePanel() {
                     onClick={() => { select(it.idu); setOpen(false) }}>
                     {/* A5 — sélection (Comparer), n'ouvre pas la fiche */}
                     <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
-                      <input type="checkbox" data-densifier-sel className="h-3 w-3 accent-mint"
+                      <Case data-densifier-sel
                         checked={sel.has(it.idu)}
                         onChange={() => setSel((s) => { const n = new Set(s); n.has(it.idu) ? n.delete(it.idu) : n.add(it.idu); return n })} />
                     </td>
@@ -278,8 +276,8 @@ export function DensifierTablePanel() {
                     <td className="px-2 py-1.5 text-right text-txt-mut">{it.rang_commune}</td>
                     {/* A2 — pont Faisabilité par parcelle (ouvre M22 mode « par parcelle » pré-rempli). */}
                     <td className="px-2 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
-                      <button data-densifier-faisabilite onClick={() => { setParcelPrefill(it.idu); setModule('programme'); setOpen(false); pushOutilRetour(RETOUR_DENSIFIER) }}
-                        className="whitespace-nowrap text-[10px] font-medium text-mint hover:underline">Faisabilité →</button>
+                      <Bouton niveau="lien" data-densifier-faisabilite onClick={() => { setParcelPrefill(it.idu); setModule('programme'); setOpen(false); pushOutilRetour(RETOUR_DENSIFIER) }}
+                        className="whitespace-nowrap">Faisabilité →</Bouton>
                     </td>
                   </tr>
                 ))}
@@ -293,18 +291,17 @@ export function DensifierTablePanel() {
           {/* A5 — pont Comparer sur la sélection (limite 3 côté Comparer). */}
           {sel.size > 0 && (
             <div className="mb-1.5">
-              <button data-densifier-comparer
-                onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour(RETOUR_DENSIFIER) }}
-                className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+              <Bouton niveau="secondaire" ton="vert" data-densifier-comparer
+                onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour(RETOUR_DENSIFIER) }}>
                 Comparer ({Math.min(sel.size, 3)}) →
-              </button>
+              </Bouton>
               {sel.size > 3 && <span className="ml-2 text-[10px] text-txt-dim">Comparer se limite à 3 parcelles.</span>}
             </div>
           )}
           {(nHidden > 0 || inclure) && (
             <div className="mb-1.5 flex items-center gap-2 text-[10px] text-txt-dim">
               <span>{inclure ? 'écartées incluses' : `${fmtInt(nHidden)} écartée${nHidden > 1 ? 's' : ''} masquée${nHidden > 1 ? 's' : ''}`}</span>
-              <button data-densifier-ecartees onClick={() => setInclure((v) => !v)} className="text-mint hover:underline">{inclure ? 'les masquer' : 'les inclure'}</button>
+              <Bouton niveau="lien" data-densifier-ecartees onClick={() => setInclure((v) => !v)}>{inclure ? 'les masquer' : 'les inclure'}</Bouton>
             </div>
           )}
           <ListPaginationFooter

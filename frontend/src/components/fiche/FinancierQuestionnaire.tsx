@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getFinancierQuestionnaire, putFinancierQuestionnaire, validerFinancierQuestionnaire,
          type QChamp, type QHorsMarche } from '../../lib/api'
+import { Bouton } from '../ui/Bouton'
 
 const MINT = '#4ADE80'
 const CARD = '#0C1410'
@@ -205,7 +206,7 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
     display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
   }
   const card: React.CSSProperties = {
-    background: CARD, border: `.5px solid ${MINT}`, borderRadius: 12, padding: 24,
+    background: CARD, border: `.5px solid ${MINT}`, borderRadius: 6, padding: 24,
     width: 'min(720px, 96vw)', maxHeight: '92vh', overflow: 'auto', color: '#ECF5EF',
   }
 
@@ -230,15 +231,14 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
                 « enregistré » sans jamais ouvrir le PDF (route /financier/{idu}.pdf pourtant servie).
                 Action primaire = ouvrir le document ; « Fermer » devient secondaire. */}
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <button data-financier-doc onClick={() => void ouvrirDoc()}
-                 style={{ ...btnMint, display: 'inline-block' }}>
+              <Bouton data-financier-doc niveau="primaire" ton="vert" onClick={() => void ouvrirDoc()}>
                 Ouvrir le Dossier financier
-              </button>
-              <button onClick={onClose} style={btnPlain}>Fermer</button>
+              </Bouton>
+              <Bouton niveau="lien" onClick={onClose}>Fermer</Bouton>
             </div>
             {/* RECETTE-5 (V18b) — le document ne s'est pas généré : on dit lesquels des éléments manquent. */}
             {docErr && (
-              <div data-financier-manques style={{ marginTop: 16, padding: 14, border: '.5px solid #E0B341', borderRadius: 8, background: 'rgba(224,179,65,.06)' }}>
+              <div data-financier-manques style={{ marginTop: 16, padding: 14, border: '.5px solid #E0B341', borderRadius: 6, background: 'rgba(224,179,65,.06)' }}>
                 <p style={{ fontSize: 13, color: '#E0B341', margin: '0 0 8px', fontWeight: 500 }}>
                   Le Dossier financier ne peut pas être établi — il manque :
                 </p>
@@ -251,7 +251,7 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
             )}
             {/* RECETTE-7 (C1) — l'échec TECHNIQUE, dit comme tel (jamais sous « il manque : »). */}
             {docTech && (
-              <div data-financier-tech style={{ marginTop: 16, padding: 14, border: '.5px solid #E0776B', borderRadius: 8, background: 'rgba(224,119,107,.06)' }}>
+              <div data-financier-tech style={{ marginTop: 16, padding: 14, border: '.5px solid #E0776B', borderRadius: 6, background: 'rgba(224,119,107,.06)' }}>
                 <p style={{ fontSize: 13, color: '#E0776B', margin: 0 }}>{docTech}</p>
               </div>
             )}
@@ -272,7 +272,7 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
                   disabled={!u.servi}
                   onClick={() => { if (u.servi) { setUsage(u.key); set('_usage', u.key); setEtape(0) } }}
                   style={{
-                    textAlign: 'left', padding: '14px 16px', borderRadius: 10, cursor: u.servi ? 'pointer' : 'not-allowed',
+                    textAlign: 'left', padding: '14px 16px', borderRadius: 6, cursor: u.servi ? 'pointer' : 'not-allowed',
                     background: u.servi ? 'rgba(74,222,128,.06)' : 'transparent',
                     border: `.5px solid ${u.servi ? MINT : '#26332C'}`, color: u.servi ? '#ECF5EF' : '#5F7267',
                     opacity: u.servi ? 1 : 0.7,
@@ -288,7 +288,7 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
               ))}
             </div>
             <div style={{ paddingTop: 18, marginTop: 18, borderTop: '.5px solid #1E2A23' }}>
-              <button onClick={onClose} style={btnPlain}>Annuler</button>
+              <Bouton niveau="lien" onClick={onClose}>Annuler</Bouton>
             </div>
           </>
         )}
@@ -303,7 +303,7 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
               {ecrans.map((e, i) => (
                 <button key={i} type="button" data-etape={i} aria-current={i === etape}
                   aria-label={`Étape ${i + 1} — ${e.titre}`} onClick={() => { setErreur(null); setEtape(i) }}
-                  style={{ flex: 1, height: 6, padding: 0, border: 0, borderRadius: 3, cursor: 'pointer',
+                  style={{ flex: 1, height: 6, padding: 0, border: 0, borderRadius: 4, cursor: 'pointer',
                     background: i === etape ? MINT : i < etape ? '#2F6B45' : '#1E2A23' }} />
               ))}
             </div>
@@ -319,7 +319,7 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
             {usage === 'construction' && data.programme && !data.programme.auto
               && ecrans[etape]?.champs.some((c) => c.id === 'logements_vises_saisi')
               && (reponses['logements_vises_saisi'] == null || reponses['logements_vises_saisi'] === '') && (
-              <div data-financier-programme style={{ margin: '0 0 18px', padding: 12, borderRadius: 8,
+              <div data-financier-programme style={{ margin: '0 0 18px', padding: 12, borderRadius: 6,
                 border: '.5px solid #E0B341', background: 'rgba(224,179,65,.06)' }}>
                 <p style={{ fontSize: 12.5, color: '#E9C868', margin: 0, lineHeight: 1.5 }}>
                   {data.programme.message}
@@ -391,17 +391,13 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
                   marché ; « Enregistrer » désactivé dès qu'UNE valeur (n'importe quel écran) est hors
                   marché — on ne peut ni atteindre l'écran final ni ouvrir le Financier. */}
               {etape < N - 1
-                ? <button disabled={!!hm && hm.ecran === etape}
-                    onClick={() => void continuer()}
-                    style={{ ...btnMint, opacity: (!!hm && hm.ecran === etape) ? 0.4 : 1,
-                             cursor: (!!hm && hm.ecran === etape) ? 'not-allowed' : 'pointer' }}>
+                ? <Bouton niveau="primaire" ton="vert" disabled={!!hm && hm.ecran === etape}
+                    onClick={() => void continuer()}>
                     Continuer →
-                  </button>
-                : <button disabled={envoi || !!hm} onClick={() => void enregistrer()}
-                    style={{ ...btnMint, opacity: (envoi || !!hm) ? 0.4 : 1,
-                             cursor: (envoi || !!hm) ? 'not-allowed' : 'pointer' }}>
+                  </Bouton>
+                : <Bouton niveau="primaire" ton="vert" disabled={envoi || !!hm} onClick={() => void enregistrer()}>
                     {envoi ? 'Enregistrement…' : 'Enregistrer'}
-                  </button>}
+                  </Bouton>}
             </div>
           </>
         )}
@@ -410,10 +406,6 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
   )
 }
 
-const btnMint: React.CSSProperties = {
-  padding: '9px 18px', background: MINT, color: '#05140B', borderRadius: 8, fontSize: 14,
-  fontWeight: 500, border: 0, cursor: 'pointer',
-}
 const btnPlain: React.CSSProperties = {
   fontSize: 13, color: '#6F8578', background: 'none', border: 0, cursor: 'pointer',
 }
@@ -437,7 +429,7 @@ function ChampRow({ c, valeur, touche, tvaExplication, onChange, onReset, surlig
     width: '100%', height: 42, background: '#060A08',
     // RECETTE-11 B2 — champ hors marché : bord rouge, il faut le corriger pour continuer.
     border: surligne ? '1.5px solid #E0776B' : '.5px solid #2A3A31',
-    borderRadius: 8, padding: '0 14px', fontSize: 15, color: '#ECF5EF', outline: 'none',
+    borderRadius: 6, padding: '0 14px', fontSize: 15, color: '#ECF5EF', outline: 'none',
     boxSizing: 'border-box',
   }
   const onInput = (raw: string) => {
@@ -461,7 +453,7 @@ function ChampRow({ c, valeur, touche, tvaExplication, onChange, onReset, surlig
           <span style={{ position: 'relative', display: 'inline-flex' }}
             onMouseEnter={() => setAideOpen(true)} onMouseLeave={() => setAideOpen(false)}>
             <span data-champ-aide aria-label={c.aide}
-              style={{ display: 'inline-flex', width: 14, height: 14, borderRadius: 999, border: '1px solid #4A5A52',
+              style={{ display: 'inline-flex', width: 14, height: 14, borderRadius: 9999, border: '1px solid #4A5A52',
                 color: '#8FA69A', fontSize: 9, fontWeight: 700, alignItems: 'center', justifyContent: 'center', cursor: 'help', flex: 'none' }}>i</span>
             {aideOpen && (
               <span data-champ-aide-pop role="tooltip"

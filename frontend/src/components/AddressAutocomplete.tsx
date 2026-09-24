@@ -2,6 +2,11 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { rechercheSuggest, type SuggestItem, type SuggestType } from '../lib/api'
 
+// DA-FIX-2 Lot 2 (DA-001) — rendu d'omnibox CANONIQUE (planche) : 40 px de haut, contour, rayon 6.
+// C'est le rendu par défaut de TOUTES les barres parcelle (via ParcelInput). Le header garde son
+// propre className (barre à loupe) mais la même métrique (son wrapper est passé à h-10).
+const OMNIBOX_CLS = 'w-full h-10 rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none'
+
 // M12-D1 — LE composant de barre de recherche PARTAGÉ (mutualisé D2 + D3).
 // RETOURS-16 V5 — il devient la SUGGESTION UNIFIÉE de l'app : un seul endpoint
 // (/api/recherche/suggest, api/recherche.py), six grammaires typées (adresse · cadastre — IDU et
@@ -183,7 +188,7 @@ export function AddressAutocomplete({
         aria-activedescendant={open && active >= 0 ? `${listId}-${active}` : undefined}
         autoComplete="off"
         spellCheck={false}
-        className={className ?? 'w-full rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none'}
+        className={className ?? OMNIBOX_CLS}
       />
       {loading && (
         <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-txt-dim" aria-hidden>…</span>

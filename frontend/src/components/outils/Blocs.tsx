@@ -16,11 +16,14 @@ import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { ListPaginationFooter } from '../ListPagination'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Siren } from '../shared/Siren'
 import { Tip } from '../Tip'
 import { CommuneScope, useModuleMap } from './ModulePanel'
+import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
+import { Chevron } from '../ui/Chevron'
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
 
@@ -53,7 +56,7 @@ function BlocDetail({ blocId }: { blocId: number }) {
   // Emprise = les parcelles du bloc surlignées sur la carte tant que le détail est ouvert.
   useModuleMap(membres.map((m) => m.idu), null, [q.dataUpdatedAt])
 
-  if (q.isLoading) return <div className="px-2 py-1"><Loading label="Parcelles du bloc…" /></div>
+  if (q.isLoading) return <div className="px-2 py-1"><Squelette lignes={3} /></div>
   if (q.isError || !q.data) return null
   return (
     <div className="mt-1 flex flex-col gap-0.5 border-t border-line-2 pt-1">
@@ -70,10 +73,10 @@ function BlocDetail({ blocId }: { blocId: number }) {
         </div>
       ))}
       {/* Assembler → : l'outil Assemblage pré-rempli avec les IDU du bloc (fil de retour). */}
-      <button data-bloc-assembler className="mt-1 self-start rounded-lg border border-mint/40 bg-mint/10 px-2 py-0.5 text-[10.5px] font-medium text-mint hover:bg-mint/20"
+      <Bouton niveau="secondaire" ton="vert" data-bloc-assembler className="mt-1 self-start"
         onClick={() => { setMselPrefill(membres.map((m) => m.idu)); setModule('assemblage'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}>
         ⛶ Assembler ce bloc →
-      </button>
+      </Bouton>
     </div>
   )
 }
@@ -85,7 +88,7 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
   return (
     <div className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5">
       <div data-bloc-row className="flex cursor-pointer items-center gap-2" onClick={onToggle}>
-        <span className="text-[9px] text-txt-dim">{ouvert ? '▾' : '▸'}</span>
+        <Chevron open={ouvert} />
         <span className="min-w-0 flex-1 truncate text-[11px] text-txt">
           {it.denomination ?? '—'}
         </span>
@@ -109,10 +112,10 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
           </span>
         )}
         {/* Scan patrimoine → : tout ce que ce SIREN possède et construit. */}
-        <button data-bloc-scan className="ml-auto shrink-0 rounded border border-line-2 px-1 text-[9.5px] text-txt-mut hover:border-mint hover:text-mint"
+        <Bouton niveau="secondaire" ton="vert" data-bloc-scan className="ml-auto shrink-0"
           onClick={(e) => { e.stopPropagation(); setM02Prefill(it.siren); setModule('patrimoine'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}>
           Scan patrimoine →
-        </button>
+        </Bouton>
       </div>
       {ouvert && <BlocDetail blocId={it.bloc_id} />}
     </div>
@@ -135,6 +138,7 @@ export function Blocs() {
   // le listing s'ouvre et le bloc de filtres se replie en accordéon. `montre` gouverne les deux.
   const [montre, setMontre] = useState(false)
   const [filtresOuverts, setFiltresOuverts] = useState(true)
+  const [methodeOuverte, setMethodeOuverte] = useState(false)   // DA-031 — tiroir « Détail et méthode »
   const voir = () => { setMontre(true); setFiltresOuverts(false) }
 
   const reset = () => { setSel(new Set()); setOpenId(null) }
@@ -169,53 +173,52 @@ export function Blocs() {
       <details data-blocs-filtres open={filtresOuverts}
         onToggle={(e) => setFiltresOuverts((e.target as HTMLDetailsElement).open)}
         className="flex flex-col gap-2">
-      <summary className="cursor-pointer list-none py-0.5 text-[11px] font-medium text-txt-dim marker:hidden hover:text-mint">
-        {filtresOuverts ? 'Filtres ▾' : 'Filtres ▸'}
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 py-0.5 text-[11px] font-medium text-txt-dim marker:hidden hover:text-mint">
+        <Chevron open={filtresOuverts} />Filtres
       </summary>
       <div className="mt-1 flex flex-col gap-2">
       <CommuneScope commune={commune} noteFiltre={false} onChange={(c) => { setCommune(c); reset() }} />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-txt-mut">
         <label className="flex items-center gap-1.5">Surface totale
           <select data-blocs-surf-min value={surfMin} onChange={(e) => { setSurfMin(Number(e.target.value)); reset() }}
-            className="rounded border border-line-2 bg-surface-3 px-1 py-0.5 text-txt focus:border-mint focus:outline-none">
+            className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
             {SURFACE_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
           </select>
         </label>
         <label className="flex items-center gap-1.5">Résiduel
           <select data-blocs-sdp-min value={sdpMin} onChange={(e) => { setSdpMin(Number(e.target.value)); reset() }}
-            className="rounded border border-line-2 bg-surface-3 px-1 py-0.5 text-txt focus:border-mint focus:outline-none">
+            className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
             {SDP_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
           </select>
         </label>
         <label className="flex items-center gap-1.5">Parcelles
           <select data-blocs-n-min value={nMin} onChange={(e) => { setNMin(Number(e.target.value)); reset() }}
-            className="rounded border border-line-2 bg-surface-3 px-1 py-0.5 text-txt focus:border-mint focus:outline-none">
+            className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
             {N_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
           </select>
         </label>
       </div>
       {/* Propriétaires publics (commune, État, collectivité, EP, SEM — catégorie juridique de la
           source) écartés par défaut ; la case les rétablit. */}
-      <label className="flex items-center gap-2 text-[11px] text-txt-mut">
-        <input type="checkbox" data-blocs-inclure-publics className="h-3 w-3 accent-mint"
-          checked={inclurePublics} onChange={(e) => { setInclurePublics(e.target.checked); reset() }} />
-        Inclure les propriétaires publics
+      <div className="flex items-center gap-2 text-[11px] text-txt-mut">
+        <Case data-blocs-inclure-publics
+          checked={inclurePublics} onChange={(e) => { setInclurePublics(e.target.checked); reset() }}
+          label="Inclure les propriétaires publics" />
         <Tip garder tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
           <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>
-      </label>
+      </div>
       </div>
       </details>
 
       {/* RECETTE-1 R21 — le geste explicite : ouvrir le listing (et replier les filtres). */}
       {!montre && (
-        <button data-blocs-voir onClick={voir}
-          className="shrink-0 rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110">
+        <Bouton niveau="primaire" ton="vert" data-blocs-voir onClick={voir} className="shrink-0">
           Voir les parcelles
-        </button>
+        </Bouton>
       )}
 
-      {q.isLoading && <Loading label="Blocs…" />}
+      {q.isLoading && <Squelette lignes={6} />}
       {q.isError && <ErrorState message="Signal momentanément indisponible — réessayez." retry={() => q.refetch()} />}
       {meta && total === 0 && (
         // ÉTAT VIDE HONNÊTE — jamais de zéros : le périmètre est nommé.
@@ -242,7 +245,7 @@ export function Blocs() {
           </div>
 
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-txt-dim">
-            <input type="checkbox" aria-label="Tout sélectionner" className="h-3 w-3 accent-mint"
+            <Case aria-label="Tout sélectionner"
               checked={items.length > 0 && items.every((i) => sel.has(i.bloc_id))}
               onChange={(e) => setSel(e.target.checked ? new Set(items.map((i) => i.bloc_id)) : new Set())} />
             <span>Tout sélectionner</span>
@@ -250,7 +253,7 @@ export function Blocs() {
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
             {items.map((it) => (
               <div key={it.bloc_id} className="flex items-start gap-1.5">
-                <input type="checkbox" data-blocs-sel className="mt-2 h-3 w-3 shrink-0 accent-mint"
+                <Case data-blocs-sel className="mt-2"
                   checked={sel.has(it.bloc_id)}
                   onChange={() => setSel((s) => { const n = new Set(s); n.has(it.bloc_id) ? n.delete(it.bloc_id) : n.add(it.bloc_id); return n })} />
                 <div className="min-w-0 flex-1">
@@ -268,8 +271,10 @@ export function Blocs() {
 
       {/* pied : tiroir « Détail et méthode » (gauche) et pont Courrier (droite) */}
       <div className="flex shrink-0 items-start justify-between gap-2">
-        <details data-blocs-methode className="min-w-0 flex-1 text-xs">
-          <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
+        <details data-blocs-methode open={methodeOuverte}
+          onToggle={(e) => setMethodeOuverte((e.target as HTMLDetailsElement).open)}
+          className="min-w-0 flex-1 text-xs">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint"><Chevron open={methodeOuverte} />Détail et méthode</summary>
           <div className="flex flex-col gap-1 text-[10.5px] leading-snug text-txt-dim">
             <p><b className="text-txt-mut">Le regroupement.</b> Un bloc réunit les parcelles cadastrales en
               contact (à 0,5 m près) appartenant au MÊME propriétaire personne morale (SIREN confirmé, fichiers
@@ -285,11 +290,11 @@ export function Blocs() {
             {meta?.source && <p className="text-[9.5px]">{meta.source}</p>}
           </div>
         </details>
-        <button data-blocs-courrier disabled={idusCourrier.length === 0}
+        <Bouton niveau="secondaire" ton="vert" data-blocs-courrier disabled={idusCourrier.length === 0}
           onClick={() => { setCourrierPrefillIdus(idusCourrier); setModule('courriers'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}
-          className="mt-1.5 shrink-0 rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-40">
+          className="mt-1.5 shrink-0">
           ✉ Préparer les courriers ({idusCourrier.length}) →
-        </button>
+        </Bouton>
       </div>
     </div>
   )

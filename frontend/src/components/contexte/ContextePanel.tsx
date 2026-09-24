@@ -4,8 +4,11 @@ import { deleteCommuneContact, getCommuneContacts, getContexteCommune, getMoi, m
 import { TOKENS } from '../../lib/tokens'
 import { Trace } from '../../lib/trace'
 import { useApp } from '../../store/useApp'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
 import { CONTACT_VIDE, ContactEdit, trimContact, type ContactForm } from '../shared/ContactEdit'  // RETOURS-8 (R6)
+import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
 const fmtV = (v: unknown, s = '') => (v == null ? '—' : `${Number(v).toLocaleString('fr-FR')}${s}`)
@@ -192,7 +195,7 @@ function LigneCarte({ id, ic, titre, sous, val, ton, badge, defaultOpen, chiffre
             : <span className="shrink-0 text-[12.5px] font-semibold" style={col ? { color: col } : undefined}>{val}</span>
           return chiffre ? <Trace id={chiffre}>{rendu}</Trace> : rendu
         })()}
-        <span className="shrink-0 text-[15px] text-txt-dim transition-transform group-open:rotate-90">›</span>
+        <Chevron open={open} className="shrink-0" />
       </summary>
       <div className="mb-1 mt-1.5 rounded-lg border border-line-2 bg-surface-1 px-3 py-2.5">{children}</div>
     </details>
@@ -261,8 +264,8 @@ export function ContextePanel() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {q.isLoading && <div className="p-5"><Loading label="Chargement de la fiche commune" className="text-xs" /></div>}
-        {q.isError && <p className="p-5 text-xs text-st-ecartee">Erreur de chargement — réessayez.</p>}
+        {q.isLoading && <div className="p-5"><Squelette lignes={5} /></div>}
+        {q.isError && <ErrorState className="p-5" message="Erreur de chargement — réessayez." retry={() => q.refetch()} />}
         {d && (
           <>
             {/* ── EN-TÊTE (maquette v1) — bandeau 6 chiffres en 3×3 + 3 raccourcis. Pas de rang comparatif. ── */}
@@ -284,12 +287,12 @@ export function ContextePanel() {
                 ))}
               </div>
               {/* Action principale conservée (DA) : voir les parcelles de la commune. */}
-              <button data-communes-parcelles onClick={() => {
+              <Bouton niveau="primaire" ton="vert" data-communes-parcelles className="mt-3 w-full" onClick={() => {
                 const s = useApp.getState()
                 s.setView('cartes'); s.setCommune(commune); s.setCommunesFilter([commune])
                 s.setFilter('analyseLabuse', true); s.setVerdict(true)
                 s.openListing()
-              }} className="mt-3 w-full rounded-md border border-mint bg-mint px-2.5 py-2 text-[12.5px] font-semibold text-mint-ink transition-[filter] duration-quick hover:brightness-110">Voir ses parcelles →</button>
+              }}>Voir ses parcelles →</Bouton>
               {/* Trois raccourcis : PLU · Communes · Étude de zone — commune déjà en contexte. */}
               <div data-raccourcis className="mt-2 grid grid-cols-3 gap-2">
                 <button data-raccourci-plu onClick={() => ouvrirOutil(commune, insee, 'plu')}

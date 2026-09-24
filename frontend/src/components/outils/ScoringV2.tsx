@@ -13,8 +13,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useApp } from '../../store/useApp'
-import { Loading } from '../Loading'
-import { ErrorState } from '../States'
+import { Squelette } from '../Loading'
+import { EmptyState, ErrorState } from '../States'
+import { Case } from '../ui/Case'
 
 type Item = {
   parcelle_id: string; mult_base: number; fraction?: string | null; percentile: number | null; rang: number | null
@@ -79,13 +80,11 @@ export function ScoringV2Module() {
         </p>
       )}
       {tab === 'top' && (
-        <label className="flex items-center gap-2 text-[11px] text-txt">
-          <input type="checkbox" checked={copro} onChange={(e) => setCopro(e.target.checked)} />
-          inclure les copropriétés (hors classement foncier par défaut)
-        </label>
+        <Case className="text-[11px] text-txt" checked={copro} onChange={(e) => setCopro(e.target.checked)}
+          label="inclure les copropriétés (hors classement foncier par défaut)" />
       )}
 
-      {isLoading && <Loading label="Chargement du scoring" className="text-[11px]" />}
+      {isLoading && <Squelette lignes={6} />}
       {!!error && (
         <ErrorState className="py-6" message="Scoring indisponible."
           hint="Aucun run n'est servi pour l'instant — les listes apparaîtront dès le prochain run de scoring." />
@@ -105,7 +104,7 @@ export function ScoringV2Module() {
             {it.rang != null && <span className="font-mono text-[10px] text-txt-dim">#{it.rang}</span>}
           </button>
         ))}
-        {data && !data.items.length && <p className="text-[11px] text-txt-dim">aucune parcelle.</p>}
+        {data && !data.items.length && <EmptyState title="Aucune parcelle." />}
       </div>
       {data && (
         <p className="shrink-0 text-[9.5px] leading-snug text-txt-dim">{data.avertissement}</p>

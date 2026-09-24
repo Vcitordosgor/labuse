@@ -5,7 +5,9 @@ import { Fragment, useEffect, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { askParcel, type AskResponse, type Provenance } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { ErrorState } from '../States'
+import { Bouton } from '../ui/Bouton'
 
 // Rend le Markdown minimal du modèle et GARANTIT qu'aucun marqueur brut ne reste visible côté client
 // (filet de sécurité : répare aussi les réponses DÉJÀ EN CACHE — cf. incident zonage 15/07 où un
@@ -125,10 +127,9 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
           onKeyDown={(e) => { if (e.key === 'Enter') run(q) }}
           placeholder="Expliquez un point, un acronyme, ou trouvez une donnée…"
           className="min-w-0 flex-1 rounded-lg border border-violet/40 bg-surface-1 px-3 py-1.5 text-[12px] text-txt placeholder:text-txt-dim focus:border-violet focus:outline-none" />
-        <button onClick={() => run(q)} disabled={ask.isPending || !q.trim()}
-          className="shrink-0 rounded-lg bg-violet px-3 py-1.5 text-[12px] font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+        <Bouton niveau="primaire" ton="ia" className="shrink-0" onClick={() => run(q)} disabled={ask.isPending || !q.trim()}>
           {ask.isPending ? '…' : 'Demander'}
-        </button>
+        </Bouton>
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {chips.map((c) => (
@@ -142,11 +143,9 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
       {/* RETOURS-9 (Q10.1) — encart « L'IA ne juge pas le sentiment… » (AvisIA) retiré de ce panneau. */}
 
       {/* état de chargement HONNÊTE (pas de silent-fail) */}
-      {ask.isPending && <Loading accent="violet" className="mt-3 text-[11px]" label="L'IA lit la fiche…" />}
+      {ask.isPending && <Squelette lignes={3} className="mt-3" label="L'IA lit la fiche…" />}
       {ask.isError && (
-        <p className="mt-3 text-[11px] text-st-ecartee">
-          Erreur — <button onClick={() => run(q)} className="underline transition-colors duration-quick hover:text-txt">réessayer</button>
-        </p>
+        <ErrorState className="py-4" message="L'IA n'a pas pu répondre." retry={() => run(q)} />
       )}
 
       {/* R1 (PJ6) — RÈGLE DURE : la réponse est BORNÉE (36vh, scroll interne) → le panneau IA ne

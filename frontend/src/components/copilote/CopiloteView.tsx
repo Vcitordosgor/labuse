@@ -186,7 +186,7 @@ export function CopiloteView() {
                       className="min-w-0 flex-1 rounded-lg border border-violet/30 bg-cp-card px-3.5 py-2 text-[13px] text-cp-txt placeholder:text-cp-faint focus:border-violet focus:outline-none" />
                     <button data-fil-envoyer disabled={!reponseFil.trim()}
                       onClick={() => { void interroger(reponseFil); setReponseFil('') }}
-                      className="rounded-lg border border-violet/40 bg-violet/10 px-3.5 py-2 font-display text-[12px] font-semibold text-violet hover:bg-violet/15 disabled:opacity-40">
+                      className="rounded-lg border border-violet/40 bg-violet/10 px-3.5 py-2 font-display text-[12px] font-semibold text-violet hover:bg-violet/15">
                       Répondre
                     </button>
                   </div>

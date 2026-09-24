@@ -10,7 +10,10 @@ import { FiltreProvider } from '../panel/filtreContext'
 import { fmtDate, fmtEurCompact, fmtInt, fmtM2, iduCourt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
-import { Loading } from '../Loading'
+import { Squelette } from '../Loading'
+import { EmptyState } from '../States'
+import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
 
 const PAGE = 200   // RECETTE-10 T6 (règle de Vic) — 200 par page (était 50) · page X/Y
 
@@ -101,16 +104,13 @@ function LigneParcelle({ it, onDragStart, onRetenir, onEcarter, onFiche, onVoir 
       <div className="flex justify-end gap-1.5">
         {/* RETOURS-12 J1 — ŒIL AMBRE (couleur Projet) : voir la parcelle sur la carte EN ORTHO, délimitée,
             sans quitter le projet ni perdre l'état de la liste (focusParcelle, même geste que O1/O12). */}
-        <button data-tri-voir onClick={onVoir} aria-label="Voir sur la carte (vue aérienne)"
-          className="flex h-6 w-[26px] items-center justify-center rounded-md border border-cp-amber/40 text-cp-amber transition-colors duration-quick hover:bg-cp-amber/10">
+        <Bouton icone niveau="secondaire" ton="vert" data-tri-voir onClick={onVoir} aria-label="Voir sur la carte (vue aérienne)">
           <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.6">
             <path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z" /><circle cx="10" cy="10" r="2.2" />
           </svg>
-        </button>
-        <button data-tri-retenir onClick={onRetenir} aria-label="Retenir"
-          className="flex h-6 w-[26px] items-center justify-center rounded-md border border-mint/40 text-[12px] text-mint transition-colors duration-quick hover:bg-mint/15">✓</button>
-        <button data-tri-ecarter onClick={onEcarter} aria-label="Écarter"
-          className="flex h-6 w-[26px] items-center justify-center rounded-md border border-st-ecartee/40 text-[12px] text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10">✕</button>
+        </Bouton>
+        <Bouton icone niveau="secondaire" ton="vert" data-tri-retenir onClick={onRetenir} aria-label="Retenir">✓</Bouton>
+        <Bouton icone niveau="secondaire" ton="danger" data-tri-ecarter onClick={onEcarter} aria-label="Écarter">✕</Bouton>
       </div>
     </div>
   )
@@ -171,11 +171,10 @@ function FiltreDrawer({ cadrageProjet, initial, onApply, onClear, onClose }: {
       </div>
       <FiltreProvider value={binding}><FiltreFacettes compteurScope={{ communes }} /></FiltreProvider>
       <div className="mt-3 flex gap-2">
-        <button data-drawer-clear onClick={() => { setFacettes({ ...EMPTY_FILTERS, ...cadrageProjet }); onClear() }}
-          className="flex-1 rounded-md border border-line-2 py-1.5 text-center text-[11.5px] text-txt-mut transition-colors duration-quick hover:text-txt">Tout effacer</button>
-        <button data-drawer-apply onClick={() => onApply(sfOut)}
-          className="flex-1 rounded-md border border-mint bg-mint py-1.5 text-center text-[11.5px] font-semibold text-mint-ink transition-[filter] duration-quick hover:brightness-110">
-          Voir {cnt.data ? cnt.data.vivier.toLocaleString('fr-FR') : '…'} parcelles</button>
+        <Bouton niveau="secondaire" ton="vert" data-drawer-clear onClick={() => { setFacettes({ ...EMPTY_FILTERS, ...cadrageProjet }); onClear() }}
+          className="flex-1">Tout effacer</Bouton>
+        <Bouton niveau="primaire" ton="vert" data-drawer-apply onClick={() => onApply(sfOut)} className="flex-1">
+          Voir {cnt.data ? cnt.data.vivier.toLocaleString('fr-FR') : '…'} parcelles</Bouton>
       </div>
     </div>
   )
@@ -269,7 +268,6 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   }
 
   const carte = 'rounded-xl border border-line-2 bg-surface-1'
-  const btn = 'min-h-7 rounded-md border border-line-2 px-2.5 py-1 text-[11.5px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi'
 
   return (
     <div data-projet-kanban className="flex min-w-0 flex-1 flex-col gap-3.5 overflow-hidden bg-bg p-4 sm:p-5">
@@ -293,8 +291,8 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
           <div className="ml-auto flex flex-wrap items-center gap-1.5">
             {/* PROJETS-CRM-FIX-1 (lot 2) — bouton « PDF » retiré : /projets/{id}/export.pdf est un
                 endpoint retiré (410, remplacé par le document « Financier »). Plus de lien mort. */}
-            <button data-kanban-renommer onClick={() => { setNomInput(projet?.nom ?? nom); setEditing(true) }} className={btn}>Renommer</button>
-            <button data-kanban-archiver onClick={() => { patch.mutate({ statut: 'archive' }); setOpenProjet(null) }} className={btn}>Archiver</button>
+            <Bouton niveau="secondaire" ton="vert" data-kanban-renommer onClick={() => { setNomInput(projet?.nom ?? nom); setEditing(true) }}>Renommer</Bouton>
+            <Bouton niveau="secondaire" ton="vert" data-kanban-archiver onClick={() => { patch.mutate({ statut: 'archive' }); setOpenProjet(null) }}>Archiver</Bouton>
             <button data-kanban-ajouter-header onClick={ouvrirCarte}
               className="min-h-7 rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1 text-[11.5px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/25">+ Ajouter des parcelles</button>
           </div>
@@ -315,8 +313,8 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               {' '}— {(analyse.priorite + analyse.a_suivre).toLocaleString('fr-FR')} À suivre.
             </p>
             <button data-kanban-pourquoi aria-expanded={analyseOuvert} onClick={() => setAnalyseOuvert((o) => !o)}
-              className="shrink-0 rounded-md border border-mint/40 px-3 py-1.5 text-[12px] text-mint transition-colors duration-quick hover:bg-mint/15">
-              {analyseOuvert ? 'Voir moins ▴' : 'Voir pourquoi ▾'}</button>
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-mint/40 px-3 py-1.5 text-[12px] text-mint transition-colors duration-quick hover:bg-mint/15">
+              {analyseOuvert ? 'Voir moins' : 'Voir pourquoi'} <Chevron open={analyseOuvert} /></button>
           </div>
           {/* le CONTENU complet déplié : phrase gravée entière + signaux + valeurs/run */}
           {analyseOuvert && (
@@ -337,8 +335,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 {etat?.valeurs_run?.date ? <span>{`valeurs au ${fmtDate(etat.valeurs_run.date)}`}</span> : ''}
                 {(() => { const m = (etat?.proposees ?? []).find((it) => it.marche_eur_m2 != null)?.marche_eur_m2; return m != null && projet && (projet.cadrage.communes?.length === 1) ? ` · marché ancien ${projet.cadrage.communes[0]} ~${fmtInt(m)} €/m²` : '' })()}
               </p>
-              <button data-kanban-scoring onClick={() => setAlgoModale('scoring')}
-                className="mt-1.5 text-[11px] text-mint transition-colors duration-quick hover:underline">Comprendre le classement →</button>
+              <Bouton niveau="lien" data-kanban-scoring onClick={() => setAlgoModale('scoring')} className="mt-1.5">Comprendre le classement →</Bouton>
             </div>
           )}
         </div>
@@ -360,7 +357,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
       {/* ÉTAGE 4 — TRI : 3 colonnes (2,3 / 1 / 1) + tiroir « Filtrer » à droite. */}
       <div className="flex min-h-0 flex-1 gap-3.5">
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-3.5 md:grid-cols-[2.3fr_1fr_1fr]">
-          {etatQ.isLoading && <Loading label="Chargement du projet…" className="col-span-full mx-auto self-center" />}
+          {etatQ.isLoading && <Squelette lignes={5} className="col-span-full self-center" />}
           {COLS.map((col) => {
             const isProp = col.key === 'proposee'
             const list = isProp ? proposeesVues : (col.key === 'retenue' ? etat?.retenues ?? [] : etat?.ecartees ?? [])
@@ -415,7 +412,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                           <button key={String(p.key)} onClick={() => retirerFacette(p.key)}
                             className="rounded border border-mint/35 px-2 py-px text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">{p.label} ×</button>
                         ))}
-                        <button onClick={() => setSousFiltre(null)} className="rounded border border-line-2 px-2 py-px text-[11px] text-txt-dim hover:text-txt">tout effacer</button>
+                        <Bouton niveau="lien" onClick={() => setSousFiltre(null)}>tout effacer</Bouton>
                       </div>
                     )}
                     {/* en-tête de colonnes */}
@@ -430,10 +427,9 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 {/* liste (défile) */}
                 <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
                   {list.length === 0 && (
-                    <div className="m-3 rounded-lg bg-surface-2/60 py-6 text-center text-[11px] text-txt-dim">
-                      {isProp ? (deZero ? 'Projet de zéro — ajoutez des parcelles depuis leurs fiches.' : (puces.length ? 'Aucune parcelle ne correspond à ce filtre.' : 'Rien à trier pour l’instant.'))
-                        : col.key === 'retenue' ? 'Aucune retenue' : 'Aucune écartée'}
-                    </div>
+                    <EmptyState className="m-3 rounded-lg bg-surface-2/60 px-3 py-6"
+                      title={isProp ? (deZero ? 'Projet de zéro — ajoutez des parcelles depuis leurs fiches.' : (puces.length ? 'Aucune parcelle ne correspond à ce filtre.' : 'Rien à trier pour l’instant.'))
+                        : col.key === 'retenue' ? 'Aucune retenue' : 'Aucune écartée'} />
                   )}
                   {list.map((it) => (isProp ? (
                     <LigneParcelle key={it.idu} it={it}
@@ -454,21 +450,21 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 {isProp && totalProp > PAGE && (
                   <div data-kanban-pagination className="flex shrink-0 items-center justify-center gap-3 border-t border-line-2 px-3.5 py-2 text-[11.5px] text-txt-dim">
                     <button disabled={page === 0 || etatQ.isFetching} onClick={() => setPage((p) => Math.max(0, p - 1))}
-                      className="text-txt-mut transition-colors duration-quick hover:text-txt disabled:opacity-30">← précéd.</button>
+                      className="text-txt-mut transition-colors duration-quick hover:text-txt">← précéd.</button>
                     <span>{PAGE} par page · page {page + 1} / {pages.toLocaleString('fr-FR')}</span>
                     <button data-kanban-suivante disabled={page + 1 >= pages || etatQ.isFetching} onClick={() => setPage((p) => p + 1)}
-                      className="text-mint transition-colors duration-quick hover:text-txt-hi disabled:opacity-30">suivante →</button>
+                      className="text-mint transition-colors duration-quick hover:text-txt-hi">suivante →</button>
                   </div>
                 )}
                 {col.key === 'retenue' && (etat?.counts?.retenue ?? 0) > 0 && (
                   <div data-kanban-retenues-actions className="flex shrink-0 gap-2 border-t border-line-2 bg-surface-2 px-3.5 py-2.5">
-                    <button data-kanban-crm onClick={() => { const s = useApp.getState(); s.setOpenProjet(null); s.setView('crm') }}
-                      className="flex-1 rounded-md border border-mint/40 py-1.5 text-center text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/10">→ CRM</button>
-                    <button data-kanban-courrier onClick={() => {
+                    <Bouton niveau="secondaire" ton="vert" data-kanban-crm onClick={() => { const s = useApp.getState(); s.setOpenProjet(null); s.setView('crm') }}
+                      className="flex-1">→ CRM</Bouton>
+                    <Bouton niveau="secondaire" ton="vert" data-kanban-courrier onClick={() => {
                       const idus = (etat?.retenues ?? []).map((r) => r.idu)
                       const s = useApp.getState(); s.setCourrierPrefillIdus(idus); s.setOpenProjet(null); s.setView('cartes'); s.setModule('courriers')
                     }}
-                      className="flex-1 rounded-md border border-mint/40 py-1.5 text-center text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/10">✉ Courrier ({etat?.counts?.retenue ?? 0})</button>
+                      className="flex-1">✉ Courrier ({etat?.counts?.retenue ?? 0})</Bouton>
                   </div>
                 )}
               </div>

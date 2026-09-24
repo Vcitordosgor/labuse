@@ -10,6 +10,10 @@ import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetre
 import { bandeMeta, signalMeta } from '../../lib/status'   // COMPARER-2 §4 — bande + Signal (comme l'Analyse)
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-FIX-2 D1 — saisie clavier (IDU/adresse/réf courte)
+import { Squelette } from '../Loading'
+import { EmptyState } from '../States'
+import { Bouton } from '../ui/Bouton'
+import { Badge } from '../ui/Badge'
 
 // OUTILS-FIX-3 C1 — le verdict de scoring (verdictMeta) n'est plus affiché dans Comparer (badge « Faible »
 // retiré : on n'impose pas l'Analyse LABUSE sur cet écran). Import + helper `verdict` supprimés.
@@ -84,11 +88,9 @@ const ROWS: Row[] = [
   { label: 'Contrainte majeure', prov: 'source', val: (r) => r.contrainte_majeure ?? (r.n_contraintes ? `${r.n_contraintes} signalée(s)` : 'aucune') },
 ]
 
-// OUTILS-FIX-2 D2 — petit badge de provenance (mêmes couleurs que partout : Sourcé = mint, Estimé = ambre).
+// OUTILS-FIX-2 D2 — DA-034 : badge de provenance via le Badge partagé. Sourcé = vert, Estimé = ambre.
 function ProvBadge({ prov }: { prov: 'source' | 'estime' }) {
-  return prov === 'source'
-    ? <span className="ml-1 rounded bg-mint/15 px-1 text-[8.5px] font-medium normal-case text-mint">Sourcé</span>
-    : <span className="ml-1 rounded bg-amber-500/15 px-1 text-[8.5px] font-medium normal-case text-amber-500">Estimé</span>
+  return <Badge className="ml-1" ton={prov === 'source' ? 'vert' : 'ambre'}>{prov === 'source' ? 'Sourcé' : 'Estimé'}</Badge>
 }
 
 // O9(d) — indices des cellules gagnantes d'une ligne (peut être plusieurs en cas d'égalité).
@@ -138,7 +140,7 @@ export function CompareModule() {
             {n < 3 && (
               <div className="mt-1.5">
                 <ParcelInput dataAttr="compare-idu" withCarte={false}
-                  placeholder="… ou tapez un IDU, une adresse, une référence (BZ1065)"
+                  placeholder="Adresse, IDU ou référence (BW0917)"
                   onPick={(idu) => { if (!compareIdus.includes(idu)) addToCompare(idu) }} />
               </div>
             )}
@@ -156,12 +158,12 @@ export function CompareModule() {
             {/* O9(e) — ajouter la parcelle courante (fiche ouverte) sans avoir à la re-cliquer sur la carte.
                 Visible seulement s'il y a une parcelle courante, qu'elle n'est pas déjà dans la liste, et qu'il reste une place. */}
             {selectedIdu && !compareIdus.includes(selectedIdu) && n < 3 && (
-              <button data-compare-ajouter-courante onClick={() => addToCompare(selectedIdu)}
-                className="hover-fill mt-1.5 block rounded-lg border border-mint/50 px-2 py-1 text-[10.5px] text-mint transition-colors duration-quick">
+              <Bouton niveau="secondaire" ton="vert" data-compare-ajouter-courante onClick={() => addToCompare(selectedIdu)}
+                className="mt-1.5 flex w-full">
                 + Ajouter la parcelle courante ({iduCourt(selectedIdu)})
-              </button>
+              </Bouton>
             )}
-            {n > 0 && <button data-compare-vider onClick={clearCompare} className="mt-1.5 text-[10px] text-txt-dim hover:text-txt">tout vider</button>}
+            {n > 0 && <Bouton niveau="lien" data-compare-vider onClick={clearCompare} className="mt-1.5">tout vider</Bouton>}
           </div>
         </div>
       </div>
@@ -172,10 +174,10 @@ export function CompareModule() {
           <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-mint text-[9px] font-medium text-mint">2</span>
           <p className="text-[11px] font-medium text-txt">Ouvrez le tableau</p>
         </div>
-        <button data-compare-ouvrir onClick={() => setCompareOpen(true)} disabled={n < 1}
-          className="mt-1.5 w-full rounded-lg bg-mint py-1.5 text-xs font-medium text-mint-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+        <Bouton niveau="primaire" ton="vert" data-compare-ouvrir onClick={() => setCompareOpen(true)} disabled={n < 1}
+          className="mt-1.5 w-full">
           Comparer ({n}/3)
-        </button>
+        </Bouton>
       </div>
 
       {/* ③ revenez à la carte */}
@@ -217,19 +219,20 @@ export function ComparePanel() {
           <div className="flex items-center gap-3 text-[11px]">
             {/* OUTILS-FIX-3 Lot E — bouton ⬇ CSV retiré (aucun export CSV dans l'app pour l'instant). */}
             {/* retour à la carte pour continuer le picking (le panneau + la sélection restent) */}
-            <button data-compare-carte onClick={() => setCompareOpen(false)} className="text-mint hover:underline">◉ Retour à la carte</button>
-            <button onClick={clearCompare} className="text-txt-mut hover:text-txt">Tout vider</button>
+            <Bouton niveau="lien" data-compare-carte onClick={() => setCompareOpen(false)}>◉ Retour à la carte</Bouton>
+            <Bouton niveau="lien" onClick={clearCompare}>Tout vider</Bouton>
             <button onClick={() => setCompareOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
           </div>
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-3">
           {compareIdus.length === 0 && (
-            <div data-compare-vide className="p-4 text-center text-xs text-txt-dim">
-              Aucune parcelle à comparer.
-              <button onClick={() => setCompareOpen(false)} className="ml-1 text-mint hover:underline">Cliquez-en sur la carte</button> ou ouvrez une fiche → Comparer.
+            <div data-compare-vide>
+              <EmptyState title="Aucune parcelle à comparer."
+                hint={<>Cliquez-en sur la carte ou ouvrez une fiche → Comparer.</>}
+                action={<Bouton niveau="lien" onClick={() => setCompareOpen(false)}>Cliquez-en sur la carte</Bouton>} />
             </div>
           )}
-          {compareIdus.length > 0 && q.isPending && <p className="p-4 text-xs text-txt-dim">Chargement…</p>}
+          {compareIdus.length > 0 && q.isPending && <div className="p-4"><Squelette lignes={4} /></div>}
           {parcels.length > 0 && (
             <table className="w-full border-collapse text-[12px]">
               <thead>
