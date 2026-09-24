@@ -2710,12 +2710,14 @@ def _cibles_agents_portee(c, reservoirs: list[dict], portee: str | None) -> list
     """CIRCUIT-P7 (lot 1) — la PORTÉE choisie dans le menu « Envoyer les agents » :
       · `jamais` → les sources « jamais vérifiée » (l'agent leur pose un premier contrôle) ;
       · `g8`     → les sources vitrine sans contrôle depuis > 7 j (le verrou G8, par NOM) ;
-      · `tous`   → tous les réservoirs de la vitrine (le passage du dimanche, à la demande) ;
-      · défaut   → les réservoirs dont le contrôle manque (`_cibles_agents`, comportement historique)."""
+      · `tous`   → comme `labuse agent source --tous` : les réservoirs affichés dont la donnée a un
+                   amont interrogeable (ni flux en direct, ni sans millésime, ni absente) ;
+      · défaut   → `tous` (le bouton « Envoyer les agents » lance l'agent LLM sur toute la vitrine)."""
     if portee == "jamais":
         return [r for r in reservoirs if (r.get("etat") or ["", ""])[1] == "jamais vérifiée"]
-    if portee == "tous":
-        return list(reservoirs)
+    if portee in (None, "tous"):
+        return [r for r in reservoirs
+                if r.get("mode") not in ("en_direct", "absente", "sans_millesime")]
     if portee == "g8":
         try:
             from .. import circuit_garanties as _g
@@ -2726,39 +2728,42 @@ def _cibles_agents_portee(c, reservoirs: list[dict], portee: str | None) -> list
     return _cibles_agents(reservoirs)
 
 
-def _executer_agents(par: str, ids: list[int], noms: dict) -> None:
-    """CIRCUIT-P2 (lot 3.3) — LES agents, un par réservoir : chacun va lire chez le producteur
-    (sonde amont réelle), journalise son retour (geste « agent »), fait avancer la progression et
-    la liste « en route » (état mauve). Un réservoir sans sonde amont attend l'agent LLM (crédit)."""
-    from .. import circuit_journal, circuit_taches, sentinelle
+def _executer_agents(par: str, ids: list[int], noms: dict, plafond: float = 0.0) -> None:
+    """CIRCUIT-P7 (suite) — « Envoyer les agents » lance l'AGENT LLM RÉEL (comme `labuse agent source
+    --tous`) : UN appel Claude par réservoir (`agent_source.lancer_agent`, web_search, coût au ledger
+    `ia_log`, rapport + veille + journal). Séquentiel pour respecter le PLAFOND PAR PASSAGE : après
+    chaque agent on lit le coût cumulé du passage (ledger) ; dès qu'il atteint le plafond, on s'arrête
+    (l'écran montre le coût qui monte). La sonde sans coût, elle, vit sur « Sonder maintenant »."""
+    from .. import agent_source, circuit_taches
     from ..db import session_scope
     total = len(ids)
-    # CIRCUIT-P2 (lot 4.1) — une volée d'agents = UN lot (une ligne groupée au journal) ; un agent
-    # seul (page de détail) reste une ligne.
-    lot = circuit_journal.nouveau_lot() if total > 1 else None
     try:
-        fait = 0
+        with session_scope() as s:
+            debut = s.execute(text("SELECT now()")).scalar()   # fenêtre de coût du passage
+        fait, cout, arrete = 0, 0.0, False
         for sid in ids:
-            reste = ids[fait:]
-            circuit_taches.avancer("agents", fait=fait, en_route=reste,
-                                   message=f"{fait} / {total} agents revenus")
+            circuit_taches.avancer("agents", fait=fait, en_route=ids[fait:],
+                                   message=f"{fait} / {total} agents · {cout:.2f} €".replace(".", ","))
             with session_scope() as s:
-                surveillee = s.execute(text(
-                    "SELECT 1 FROM source_veille WHERE source_id = :i"
-                    " AND methode IN ('api', 'page', 'entete', 'temoin')"), {"i": sid}).scalar()
-                if surveillee:
-                    recap = sentinelle.passer(s, source_ids=[sid], forcer=True, notifier=True, delai_s=0)
-                    detail = (recap.get("details") or [{}])[0]
-                    resultat, msg = detail.get("statut") or "ok", detail.get("message") or ""
-                else:
-                    resultat, msg = "sans_sonde", "pas de sonde amont — agent LLM requis (crédit)"
-                circuit_journal.journaliser(s, "agent", noms.get(sid, str(sid)), par, resultat,
-                                            {"message": msg}, lot=lot)
+                agent_source.lancer_agent(s, sid, par=par)   # LLM : rapport + veille + journal + ledger
                 s.commit()
             fait += 1
+            with session_scope() as s:
+                cv = s.execute(text(
+                    "SELECT COALESCE(sum(cout_eur), 0) FROM ia_log WHERE kind = 'agent_source'"
+                    " AND ts >= :d"), {"d": debut}).scalar()
+                cout = float(cv or 0)
             circuit_taches.avancer("agents", fait=fait, en_route=ids[fait:],
-                                   message=f"{fait} / {total} agents revenus")
-        circuit_taches.terminer("agents", message=f"{fait} agent(s) revenu(s).", resultat={"n": fait})
+                                   message=f"{fait} / {total} agents · {cout:.2f} €".replace(".", ","))
+            if plafond and cout >= plafond:   # plafond PAR PASSAGE atteint → on arrête là
+                arrete = True
+                break
+        fin = (f"{fait} agent(s) · {cout:.2f} €".replace(".", ",")
+               + (f" — plafond {plafond:.2f} € atteint, arrêt.".replace(".", ",") if arrete
+                  else " — écrit au journal."))
+        circuit_taches.terminer("agents", message=fin,
+                                resultat={"n": fait, "cout_eur": round(cout, 2),
+                                          "plafond_atteint": arrete})
     except Exception as exc:  # noqa: BLE001
         circuit_taches.echouer("agents", message=f"Agents interrompus ({type(exc).__name__}).")
         raise
@@ -2767,10 +2772,12 @@ def _executer_agents(par: str, ids: list[int], noms: dict) -> None:
 @router.post("/admin/circuit/agents")
 def admin_circuit_agents(request: Request, source_id: int | None = None,
                          portee: str | None = None) -> dict:
-    """CIRCUIT-P2 (lot 3.3) / CIRCUIT-P7 (lot 1) — « Envoyer les agents ». JAMAIS grisé sans mot :
-    sans crédit API → un message clair, rien de lancé ; sinon → tâche détachée, progression + état
-    mauve + journal. La PORTÉE (menu de la carte Agents) : `source_id` (une source, depuis sa fiche),
-    ou `portee` ∈ {jamais, g8, tous} ; défaut = les réservoirs dont le contrôle manque."""
+    """CIRCUIT-P2 (lot 3.3) / CIRCUIT-P7 — « Envoyer les agents » lance l'AGENT LLM RÉEL (comme
+    `labuse agent source --tous`), coût au ledger, plafonné PAR PASSAGE. JAMAIS grisé sans mot :
+    sans clé API ou plafond à 0 → message, rien de lancé. La PORTÉE : `source_id` (une source, depuis
+    sa fiche), ou `portee` ∈ {jamais, g8, tous} ; défaut = `tous` (toute la vitrine interrogeable).
+    La confirmation (coût estimé + plafond) est demandée AVANT par le front (carte Agents)."""
+    import os as _os
     import threading
     from .auth import exiger_admin
     exiger_admin(request)
@@ -2778,6 +2785,10 @@ def admin_circuit_agents(request: Request, source_id: int | None = None,
     from ..ai import core as _ai
     from ..db import engine
     qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
+    _plafond = float(_os.environ.get("LABUSE_AGENT_PLAFOND_EUR", "0") or 0)
+    if _plafond <= 0:
+        return {"ok": False, "plafond": 0.0,
+                "message": "Plafond agents à 0 € — fixe LABUSE_AGENT_PLAFOND_EUR pour les activer."}
     if not _ai.has_key():
         return {"ok": False, "credit": False,
                 "message": "Crédit API épuisé — recharge, puis relance."}
@@ -2790,14 +2801,13 @@ def admin_circuit_agents(request: Request, source_id: int | None = None,
         cibles = (reservoirs if source_id is not None
                   else _cibles_agents_portee(c, reservoirs, portee))
     if not cibles:
-        return {"ok": True, "lance": False,
-                "message": "Aucun réservoir sans contrôle récent — rien à envoyer."}
+        return {"ok": True, "lance": False, "message": "Aucun réservoir à envoyer pour cette portée."}
     ids = [r["id"] for r in cibles]
     noms = {r["id"]: r["nom"] for r in cibles}
     circuit_taches.demarrer("agents", total=len(ids), par=str(qui),
-                            message=f"0 / {len(ids)} agents revenus")
-    threading.Thread(target=_executer_agents, args=(str(qui), ids, noms), daemon=True).start()
-    return {"ok": True, "lance": True, "n": len(ids)}
+                            message=f"0 / {len(ids)} agents · 0,00 €")
+    threading.Thread(target=_executer_agents, args=(str(qui), ids, noms, _plafond), daemon=True).start()
+    return {"ok": True, "lance": True, "n": len(ids), "plafond_eur": _plafond}
 
 
 @router.get("/admin/circuit/taches")

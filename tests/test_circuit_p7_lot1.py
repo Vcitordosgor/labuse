@@ -35,13 +35,18 @@ def test_carte_sonde_amont_desactive_exclu():
     assert D.carte_sonde(reservoirs, nouvelles=0)["interrogeables"] == 0
 
 
-def test_portee_agents_jamais_et_tous():
+def test_portee_agents_jamais_tous_et_defaut():
     reservoirs = [
-        {"nom": "A", "etat": ["gris", "jamais vérifiée"]},
-        {"nom": "B", "etat": ["mint", "à jour"]},
-        {"nom": "C", "etat": ["gris", "jamais vérifiée"]},
+        {"nom": "A", "etat": ["gris", "jamais vérifiée"], "mode": "api"},
+        {"nom": "B", "etat": ["mint", "à jour"], "mode": "api"},
+        {"nom": "C", "etat": ["gris", "jamais vérifiée"], "mode": "api"},
+        {"nom": "OSM", "etat": ["mint", "à jour"], "mode": "en_direct"},        # flux → exclu de --tous
+        {"nom": "INPI", "etat": ["mint", "à jour"], "mode": "sans_millesime"},  # sans millésime → exclu
     ]
     # « jamais » ne prend QUE les jamais vérifiées (l'agent leur pose un premier contrôle).
     assert sorted(r["nom"] for r in D._cibles_agents_portee(None, reservoirs, "jamais")) == ["A", "C"]
-    # « tous » = toute la vitrine passée (le passage du dimanche, à la demande).
-    assert len(D._cibles_agents_portee(None, reservoirs, "tous")) == 3
+    # « tous » (et le DÉFAUT, portee None = le bouton « Envoyer les agents ») = comme --tous : les
+    # réservoirs interrogeables, SANS les flux en direct ni les sans-millésime.
+    for portee in ("tous", None):
+        noms = sorted(r["nom"] for r in D._cibles_agents_portee(None, reservoirs, portee))
+        assert noms == ["A", "B", "C"], portee

@@ -62,8 +62,18 @@ function Cartes({ data, tacheSonde, tacheAgents, onSonder, onAgents }: {
   onSonder: () => void; onAgents: (p: Portee) => void
 }) {
   const [menu, setMenu] = useState(false)
+  // CIRCUIT-P7 (suite) — « Envoyer les agents » lance l'agent LLM RÉEL (coût) : on confirme d'abord,
+  // en affichant le coût estimé et le plafond par passage. La sonde sans coût reste sur son bouton.
+  const [pending, setPending] = useState<{ portee: Portee; n: number; cout: number } | null>(null)
   const s: any = data.sonde
   const a: any = data.agents
+  const per = a?.vitrine ? (a.cout_estime_tous || 0) / a.vitrine : 0
+  const estime = (p: Portee): { n: number; cout: number } =>
+    p === 'jamais' ? { n: a?.jamais ?? 0, cout: (a?.jamais ?? 0) * per }
+      : p === 'g8' ? { n: a?.g8 ?? 0, cout: (a?.g8 ?? 0) * per }
+        : { n: a?.vitrine ?? 0, cout: a?.cout_estime_tous ?? 0 }
+  const choisir = (p: Portee) => { setMenu(false); setPending({ portee: p, ...estime(p) }) }
+  const confirmer = () => { if (pending) onAgents(pending.portee); setPending(null) }
   const sondeEnCours = tacheSonde?.etat === 'en_cours'
   const agentsEnCours = tacheAgents?.etat === 'en_cours'
   const finiAgents = tacheAgents && (tacheAgents.etat === 'termine' || tacheAgents.etat === 'echec')
@@ -112,17 +122,29 @@ function Cartes({ data, tacheSonde, tacheAgents, onSonder, onAgents }: {
           )}
         </div>
         <div className="menu">
-          <button className="btn mauve" onClick={() => setMenu((m) => !m)}>Envoyer les agents ▾</button>
-          {menu && (
+          <button className="btn mauve" disabled={agentsEnCours}
+            onClick={() => { setPending(null); setMenu((m) => !m) }}>Envoyer les agents ▾</button>
+          {menu && !pending && (
             <div className="menu-liste">
-              <button onClick={() => { setMenu(false); onAgents('jamais') }}>
-                Sur les {a?.jamais ?? 0} jamais vérifiées</button>
-              <button onClick={() => { setMenu(false); onAgents('g8') }}>
-                Sur les {a?.g8 ?? 0} du verrou G8</button>
-              <button onClick={() => { setMenu(false); onAgents('tous') }}>
+              <button onClick={() => choisir('tous')}>
                 Sur les {a?.vitrine ?? 0} sources <span className="muted">(≈ {eur(a?.cout_estime_tous)})</span></button>
+              <button onClick={() => choisir('jamais')}>
+                Sur les {a?.jamais ?? 0} jamais vérifiées <span className="muted">(≈ {eur(estime('jamais').cout)})</span></button>
+              <button onClick={() => choisir('g8')}>
+                Sur les {a?.g8 ?? 0} du verrou G8 <span className="muted">(≈ {eur(estime('g8').cout)})</span></button>
               <div className="sep" />
               <button disabled><span className="muted">Une source… (depuis sa fiche)</span></button>
+            </div>
+          )}
+          {pending && (
+            <div className="menu-liste confirm">
+              <div className="cf-txt">Agent LLM sur <b>{pending.n}</b> source{pending.n > 1 ? 's' : ''} —
+                coût estimé <b>≈ {eur(pending.cout)}</b>. Plafond <b>{eur(a?.plafond_eur)}</b> par passage :
+                l'envoi s'arrête dès qu'il est atteint.</div>
+              <div className="cf-acts">
+                <button className="btn" onClick={() => setPending(null)}>Annuler</button>
+                <button className="btn mauve" onClick={confirmer}>Envoyer les agents</button>
+              </div>
             </div>
           )}
         </div>

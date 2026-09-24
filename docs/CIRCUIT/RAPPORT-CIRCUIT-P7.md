@@ -89,3 +89,27 @@ L'« avant » est la maquette v10 de Vic (`docs/CIRCUIT/maquette-donnees-v10.htm
 **Reste à Vic** : merge ; injecter les nouvelles versions quand il veut (INSEE RP, DEAL CBS, FRR,
 Annuaire) ; la carte Agents affiche un coût estimé de la vitrine (12,88 €) fondé sur le coût moyen
 du dernier passage — à recalibrer si le passage du dimanche donne une autre moyenne.
+
+---
+
+## Suite (24/09, à la demande) — l'agent LLM sur le bouton « Envoyer les agents »
+
+Le bouton « Envoyer les agents » lance désormais l'**agent LLM réel** (comme `labuse agent source
+--tous`) : un appel Claude par réservoir (`agent_source.lancer_agent`), coût au ledger `ia_log`,
+rapport + veille + journal. Portée par défaut = `--tous` (réservoirs affichés, hors flux en direct /
+sans millésime / absents). La **sentinelle sans coût reste sur « Sonder maintenant »** (la sonde de
+nuit), inchangée.
+
+- **Plafond PAR PASSAGE** respecté : l'envoi est séquentiel, lit le coût cumulé du ledger après
+  chaque agent, et s'**arrête** dès que le plafond `LABUSE_AGENT_PLAFOND_EUR` est atteint (message
+  « plafond X € atteint, arrêt »). Plafond à 0 € → rien de lancé, message clair.
+- **Confirmation avant l'envoi** (carte Agents) : coût **estimé** + **plafond** affichés, boutons
+  *Annuler* / *Envoyer les agents* — capture `08-agents-confirmation.png` (« Agent LLM sur 92
+  sources — coût estimé ≈ 15,64 € · Plafond 5,00 € par passage : l'envoi s'arrête dès qu'il est
+  atteint »).
+- **Preuve live** : `POST /admin/circuit/agents?portee=jamais` → tâche « 2 / 3 agents · 0,23 € » (le
+  coût monte), terminée **« 3 agent(s) · 0,40 € — écrit au journal »** ; journal 3 lignes agent
+  « par Vic » avec coût par source (0,15 / 0,09 / 0,16 €) ; un verdict « nouvelle ».
+
+Portes : `tsc` + `vite build` verts · vitest **184** · pytest p7 (portée + plafond) + endpoints
+agents (`test_circuit_p2_lot3`) verts. Commit dédié, **pas de merge**.
