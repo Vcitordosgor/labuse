@@ -31,7 +31,7 @@ Règle générale : chaque règle vit dans UN composant partagé (`primitives.ts
 
 ## 3. Retour
 
-- [A] Un seul composant `<RetourOutil/>`, en haut à gauche du panneau, toujours au même endroit.
+- [A] Un seul composant `<Retour/>`, en haut à gauche du panneau, toujours au même endroit. Rendu **bouton secondaire** (contour vert, 32 px, rayon 6, survol vert plein) — jamais un lien souligné, jamais un texte gris.
 - [?] Libellé : « ← Outils » depuis l'écran 1 d'un outil, « ← [étape précédente] » depuis une étape, « ← [outil de départ] » après un pont — jamais « Retour » seul, jamais une croix pour revenir en arrière (la croix ferme, elle ne recule pas).
 - [A] Retour après un pont = état d'origine restitué (sélection, filtres).
 - [?] `Échap` = retour d'une étape ; jamais fermeture du panneau entier.

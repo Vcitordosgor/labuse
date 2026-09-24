@@ -11,6 +11,7 @@ import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 import { Squelette } from '../Loading'
 import { EmptyState } from '../States'
+import { Retour } from '../ui/Retour'   // DA-FIX-5 P6 — retour unique (haut gauche)
 import { iduCourt } from '../../lib/format'
 import { Bouton } from '../ui/Bouton'
 import { Case } from '../ui/Case'
@@ -23,19 +24,19 @@ export function SurveillancePanel() {
   return (
     <>
       <aside data-surveillance-panel className="flex w-[434px] shrink-0 flex-col border-r border-line bg-surface-1">
-        <div className="flex items-center justify-between border-b border-line-2 px-5 pb-3 pt-5">
-          <div>
-            <div className="font-mono text-[10.5px] tracking-[0.2em] text-txt-mut">VEILLE</div>
-            {/* V1 — sur l'écran d'entrée, plus de titre « Deux veilles » : le contenu (les deux portes) se
-                suffit. Le titre n'apparaît qu'une fois une porte choisie. */}
-            {surveillancePorte !== 'accueil' && (
-              <h3 className="mt-1.5 text-[18px] font-semibold text-txt-hi">
-                {surveillancePorte === 'externe' ? 'Les annonces' : 'Le foncier'}
-              </h3>
-            )}
-          </div>
+        <div className="border-b border-line-2 px-5 pb-3 pt-5">
+          {/* DA-FIX-5 P6 — retour unifié EN HAUT À GAUCHE (bouton secondaire), au lieu du « ‹ retour »
+              fait main aligné à droite. */}
           {surveillancePorte !== 'accueil' && (
-            <button data-veille-retour onClick={() => setSurveillancePorte('accueil')} className="text-[11px] text-mint hover:underline">‹ retour</button>
+            <Retour label="Veille" data-veille-retour onClick={() => setSurveillancePorte('accueil')} className="mb-2" />
+          )}
+          <div className="font-mono text-[10.5px] tracking-[0.2em] text-txt-mut">VEILLE</div>
+          {/* V1 — sur l'écran d'entrée, plus de titre « Deux veilles » : le contenu (les deux portes) se
+              suffit. Le titre n'apparaît qu'une fois une porte choisie. */}
+          {surveillancePorte !== 'accueil' && (
+            <h3 className="mt-1.5 text-[18px] font-semibold text-txt-hi">
+              {surveillancePorte === 'externe' ? 'Les annonces' : 'Le foncier'}
+            </h3>
           )}
         </div>
         {surveillancePorte === 'accueil' && <DeuxPortes onChoisir={setSurveillancePorte} />}
