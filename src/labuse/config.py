@@ -42,6 +42,22 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://labuse:labuse@localhost:5432/labuse"
 
+    # ── Pool de connexions SQLAlchemy (VITESSE-FIX-1 lot A) ──
+    # Défauts = comportement historique EXPLICITÉ (5 + 10 = 15 connexions/worker) : la pression de
+    # connexions est INCHANGÉE vs l'implicite précédent (garde-fou : 5 workers × 15 = 75 < max_connections).
+    # `pool_recycle` (nouveau) évite les connexions mortes après une longue inactivité (aucun effet vitesse
+    # direct, robustesse). `pool_pre_ping` (déjà en place) reste actif.
+    db_pool_size: int = 5
+    db_max_overflow: int = 10
+    db_pool_recycle_s: int = 1800          # 30 min ; -1 = jamais recyclé
+    db_pool_pre_ping: bool = True
+    # `statement_timeout` appliqué UNIQUEMENT aux requêtes de l'API (SET LOCAL par requête via get_db) —
+    # JAMAIS au moteur partagé, car les batchs CLI (ingestion, scoring, résiduel) tournent légitimement
+    # des minutes/heures. 0 = désactivé. 60 s : plafond « anti-emballement » qui ne coupe AUCUNE requête
+    # de service légitime (la fiche pré-lot-B monte à ~15 s, ~23 s sous charge ; après lot B ~1 s → peut
+    # être resserré). Réglable en prod par LABUSE_API_STATEMENT_TIMEOUT_MS.
+    api_statement_timeout_ms: int = 60000
+
     # ── Mode de déploiement : local (démo dev) | pilot (client encadré) | production ──
     # Pilote/production : cookies Secure, CORS restreint, /docs protégés, auth OBLIGATOIRE
     # (sans LABUSE_AUTH_PASSWORD, les routes métier répondent 503 — fail-closed, jamais ouvert).

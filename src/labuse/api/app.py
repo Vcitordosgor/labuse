@@ -389,6 +389,15 @@ async def _auth_guard(request, call_next):
 
 def get_db() -> Iterator[Session]:
     with session_scope() as s:
+        # VITESSE-FIX-1 lot A — plafond « anti-emballement » posé UNIQUEMENT sur les requêtes de l'API,
+        # par transaction (`SET LOCAL`), jamais sur le moteur partagé : les batchs CLI (ingestion,
+        # scoring, résiduel), qui n'empruntent pas cette dépendance, gardent leurs requêtes longues
+        # légitimes. 0 = désactivé. Réglable par LABUSE_API_STATEMENT_TIMEOUT_MS.
+        _to = config.get_settings().api_statement_timeout_ms
+        if _to and _to > 0:
+            # set_config(…, is_local=true) = SET LOCAL, mais paramétrable proprement (SET n'accepte pas
+            # de placeholder). Valeur en millisecondes (texte) — statement_timeout lit un entier = ms.
+            s.execute(text("SELECT set_config('statement_timeout', :ms, true)"), {"ms": str(int(_to))})
         yield s
 
 
