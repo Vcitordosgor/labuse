@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import { useEffect, useRef, useState } from 'react'
-import { getParcelGeojson, getParcelsGeojson, parcelAt } from '../../lib/api'
+import { getParcelGeojson, getParcelsGeojson, getParcellaireEpoque, parcelAt } from '../../lib/api'
 import { useApp } from '../../store/useApp'
-import { BASEMAP_SOURCES, basemapLabel, type BasemapDef } from '../map/basemaps'
+import { BASEMAP_SOURCES, basemapLabel, TEMPS_MILLESIMES, type BasemapDef } from '../map/basemaps'
+import { Chip } from '../ui/Chip'
 import { HistoireFrise } from './HistoireFrise'
 
 const SP_BOUNDS: [number, number, number, number] = [55.21, -21.14, 55.35, -20.97]
@@ -69,6 +70,21 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   // et rien ne le rejoue. On garde la FC voulue dans un ref, réappliquée À LA FOIS quand la donnée
   // change ET quand une carte (re)charge et (re)crée la source — plus de course possible.
   const cibleFC = useRef<{ type: 'FeatureCollection'; features: unknown[] }>({ type: 'FeatureCollection', features: [] })
+  // REMONTER-TEMPS-2 Lot B — « Parcellaire de l'époque » (off par défaut) : superpose sur la vue AVANT
+  // le contour de la parcelle MÈRE d'origine (cadastre_historique, parcelles disparues). Disponible
+  // seulement quand la période « avant » atteint 2017 (début de l'ingestion cadastre). Cadastre plein
+  // écran NON servi (choix RT-2 : version minimale — l'ancien contour de CETTE parcelle, sinon message).
+  const [cadastreOn, setCadastreOn] = useState(false)
+  const periodAn = leftKey === 'bm-ortho-now'
+    ? 9999
+    : Number(TEMPS_MILLESIMES.find((m) => m.key === leftKey)?.an ?? 0)
+  const cadastreDispo = periodAn >= 2016   // 2016-2020 recouvre déjà 2017 (1er millésime cadastre)
+  const cadEpoque = useQuery({
+    queryKey: ['cad-epoque', pinIdu],
+    queryFn: () => getParcellaireEpoque(pinIdu!),
+    enabled: !!pinIdu && cadastreOn && cadastreDispo, retry: false,
+  })
+  const cadFC = useRef<{ type: 'FeatureCollection'; features: unknown[] }>({ type: 'FeatureCollection', features: [] })
   // mode île : pas de GeoJSON (431k features) — le comparateur reste utilisable sans la
   // surcouche parcelles (l'ortho historique est l'objet de l'outil)
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
@@ -120,6 +136,15 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
       // RECETTE-9 T6 — dès que la source existe (y compris après un remount StrictMode), on lui pose la
       // géométrie DÉJÀ connue (ref) : le contour survit à la course donnée↔carte.
       ;(m.getSource('cible') as maplibregl.GeoJSONSource | undefined)?.setData(cibleFC.current as never)
+      // Lot B — parcellaire d'époque (contour de la mère d'origine) : trait AMBRE fin en tirets, sous
+      // le contour blanc de la parcelle courante. Vide tant que le chip est off ; posé depuis un ref
+      // (même parade à la course donnée↔carte que `cible`). Tracé sur les deux volets ; ne porte de
+      // donnée que sur le volet AVANT (setData ciblé), pour rester « sur la vue avant ».
+      m.addSource('cad-epoque', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } as never })
+      m.addLayer({ id: 'cad-epoque', type: 'line', source: 'cad-epoque',
+        paint: { 'line-color': '#E0A94F', 'line-width': 1.4, 'line-dasharray': [3, 2], 'line-opacity': 0.9 } },
+        m.getLayer('cible-casing') ? 'cible-casing' : undefined)
+      ;(m.getSource('cad-epoque') as maplibregl.GeoJSONSource | undefined)?.setData(cadFC.current as never)
     })
     addParcels(past); addParcels(now)
     if (center) { past.jumpTo({ center, zoom: 17 }) }
@@ -190,6 +215,17 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
     if (feat) for (const m of maps.current ?? []) m.jumpTo({ center: feat.centroid as [number, number], zoom: 17 })
   }, [cible.data, pinIdu])
 
+  // Lot B — pose le parcellaire d'époque (mère d'origine) sur le volet AVANT (carte gauche) uniquement,
+  // et l'efface dès que le chip retombe / la période passe sous 2017 / la parcelle change. Le contour
+  // n'est JAMAIS inventé : si la mère n'est pas captée, la FC reste vide (le message le dit à côté).
+  useEffect(() => {
+    const past = maps.current?.[0]
+    const actif = cadastreOn && cadastreDispo && !!cadEpoque.data && cadEpoque.data.features.length > 0
+    const fc = { type: 'FeatureCollection' as const, features: actif ? cadEpoque.data!.features : [] }
+    cadFC.current = fc
+    ;(past?.getSource('cad-epoque') as maplibregl.GeoJSONSource | undefined)?.setData(fc as never)
+  }, [cadEpoque.data, cadastreOn, cadastreDispo, pinIdu])
+
   useEffect(() => {
     const t = setTimeout(() => maps.current?.forEach((m) => m.resize()), 60)
     return () => clearTimeout(t)
@@ -242,6 +278,30 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
             <b className="text-txt">Zones noires</b> : secteurs non couverts par l'ortho ancienne (mer, limites
             de mission IGN) — ce n'est pas un défaut de chargement.
           </span>
+        </div>
+      )}
+      {/* Lot B — chip « Parcellaire de l'époque » (haut-droite ; la légende des zones noires est à
+          gauche). Off par défaut, grisé quand la période « avant » est < 2017. Millésime et état
+          (contour trouvé / pas de parcellaire) dits sous le chip. Survol = rien (règle DA). */}
+      {pinIdu && (
+        <div className="absolute right-3 top-3 z-10 flex max-w-[17rem] flex-col items-end gap-1">
+          <Chip data-temps-cadastre ton="ambre" on={cadastreOn && cadastreDispo} disabled={!cadastreDispo}
+            onClick={() => setCadastreOn((v) => !v)}>Parcellaire de l'époque</Chip>
+          {!cadastreDispo && (
+            <span className="rounded bg-surface-2/95 px-2 py-0.5 text-right text-[9.5px] leading-snug text-txt-dim">
+              parcellaire d'époque disponible à partir de 2017
+            </span>
+          )}
+          {cadastreOn && cadastreDispo && cadEpoque.data && cadEpoque.data.features.length > 0 && (
+            <span data-temps-cadastre-mil className="rounded bg-surface-2/95 px-2 py-0.5 text-right text-[9.5px] leading-snug text-amber">
+              Cadastre d'époque {cadEpoque.data.millesime} — parcelle d'origine (contour ambre)
+            </span>
+          )}
+          {cadastreOn && cadastreDispo && cadEpoque.data && cadEpoque.data.features.length === 0 && (
+            <span data-temps-cadastre-vide className="rounded bg-surface-2/95 px-2 py-0.5 text-right text-[9.5px] leading-snug text-txt-mut">
+              pas de parcellaire d'époque pour cette parcelle
+            </span>
+          )}
         </div>
       )}
     </div>

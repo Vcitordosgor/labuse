@@ -363,6 +363,15 @@ def histoire_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
         raise HTTPException(404, "Parcelle inconnue")
     faits: list[dict] = []
 
+    # E2 (REMONTER-TEMPS-2) — date de NAISSANCE DFI de la parcelle courante (1re fois qu'elle apparaît
+    # comme fille d'une filiation). Une vente DVF datée AVANT cette naissance a été ré-attribuée à la
+    # parcelle par `id_parcelle` alors qu'elle portait en réalité sur la parcelle MÈRE — on garde la
+    # date vraie mais on le DIT (point « sur la parcelle mère »). None si la table/la ligne manque.
+    naissance_dfi = None
+    if bool(db.execute(text("SELECT to_regclass('dfi_filiation') IS NOT NULL")).scalar()):
+        naissance_dfi = db.execute(text(
+            "SELECT min(date_validation) FROM dfi_filiation WHERE idu_fille = :i"), {"i": idu}).scalar()
+
     # ── 1. VENTES — vivante (2021→) + archives (2014→2020, non-ORM, 0 recouvrement vérifié).
     # UNE ligne par MUTATION (idiome FIX-4/B3, scoreur.py) : DISTINCT ON (id_mutation) garde le
     # local principal (le plus bâti) — sinon une vente Maison+Dépendance s'afficherait deux fois.
@@ -379,9 +388,12 @@ def histoire_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
         ORDER BY id_mutation, surface_reelle_bati DESC NULLS LAST"""),
         {"i": idu}).mappings().all():
         date, maille, annee = _histoire_date(r["date_mutation"])
+        # E2 — mutation antérieure à la naissance DFI de la parcelle = elle portait sur la mère.
+        sur_mere = bool(naissance_dfi and r["date_mutation"] and r["date_mutation"] < naissance_dfi)
         faits.append({
             "famille": "vente", "date": date, "maille": maille, "annee": annee,
             "libelle": f"{r['nature_mutation'] or 'Mutation'}{' — ' + r['type_local'] if r['type_local'] else ''}",
+            "sur_parcelle_mere": sur_mere,
             "chiffres": {
                 # valeur de la MUTATION entière (elle peut couvrir plusieurs parcelles) — dit tel quel.
                 "prix_eur": float(r["valeur_fonciere"]) if r["valeur_fonciere"] is not None else None,
@@ -425,6 +437,23 @@ def histoire_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
     from ..proprietaire_historique import historique
     hist = historique(db, idu)
     for ch in (hist or {}).get("changements", []):
+        # E3 (REMONTER-TEMPS-2) — le changement se détecte par différence de SIREN entre deux
+        # millésimes ; c'est FRAGILE quand l'un des deux SIREN est un pseudo-siren « U… » (attribué
+        # par LABUSE, ~13 % des lignes DGFiP) : une simple re-clé de dénomination ferait apparaître
+        # un « changement » qui n'en est pas un. On N'AFFIRME alors AUCUN changement — un tiret neutre
+        # « propriétaire PM non identifiable », jamais un changement inventé.
+        sa, sp = ch["siren_avant"] or "", ch["siren_apres"] or ""
+        if sa.upper().startswith("U") or sp.upper().startswith("U"):
+            faits.append({
+                "famille": "proprietaire", "date": None, "maille": "millesime",
+                "annee": ch["a_millesime"],
+                "de_millesime": ch["de_millesime"], "a_millesime": ch["a_millesime"],
+                "libelle": "Propriétaire PM non identifiable (DGFiP)",
+                "non_identifiable": True,
+                "chiffres": {"statut": "Sourcé"},
+                "source": _HISTOIRE_SOURCES["proprietaire"],
+            })
+            continue
         faits.append({
             "famille": "proprietaire", "date": None, "maille": "millesime",
             "annee": ch["a_millesime"],
@@ -467,7 +496,14 @@ def histoire_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
     # ── C6 — millésimes des sources servies (lus des données, même honnêteté que l'app).
     maj_dvf = db.execute(text("SELECT max(date_mutation) FROM dvf_mutations_parcelle")).scalar()
     maj_sit = db.execute(text("SELECT max(date::date) FROM sitadel_permits")).scalar()
-    mil_ff = db.execute(text("SELECT max(millesime) FROM pm_proprietaires_millesimes")).scalar()
+    # E1 (REMONTER-TEMPS-2) — le millésime PM COURANT servi (Scan patrimoine, dashboard) vit dans
+    # `parcelle_personne_morale` (snapshot annuel, ici 2025), PAS dans la table timeline
+    # `pm_proprietaires_millesimes` (qui s'arrête à 2024). On lit le vrai snapshot en base, jamais une
+    # constante, et on affiche la borne haute réelle (max des deux tables).
+    mil_time = db.execute(text("SELECT max(millesime) FROM pm_proprietaires_millesimes")).scalar()
+    mil_cur = db.execute(text(
+        "SELECT max(millesime) FROM parcelle_personne_morale WHERE millesime ~ '^[0-9]{4}$'")).scalar()
+    mil_ff = max((int(m) for m in (mil_time, mil_cur) if m and str(m).isdigit()), default=None)
     maj_dfi = (db.execute(text("SELECT max(date_validation) FROM dfi_filiation")).scalar()
                if bool(db.execute(text("SELECT to_regclass('dfi_filiation') IS NOT NULL")).scalar()) else None)
     return {
@@ -481,6 +517,40 @@ def histoire_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
             {"cle": "dfi", "nom": "DFI (DGFiP)", "maj": maj_dfi.isoformat() if maj_dfi else None},
         ],
     }
+
+
+@router.get("/parcellaire-epoque/{idu}")
+def parcellaire_epoque(idu: str, db: Session = Depends(get_db)) -> dict:
+    """REMONTER-TEMPS-2 Lot B — le contour de la/les parcelle(s) MÈRE d'origine de la parcelle
+    courante, quand elle est CAPTÉE dans `cadastre_historique` (RETOURS-14 : cette table ne stocke que
+    les parcelles d'origine DISPARUES du cadastre actuel — les mères de divisions). Sert à faire voir,
+    sous l'ortho ancienne, l'ancienne découpe avant que la parcelle courante n'existe. `features` vide
+    quand la mère n'est pas captée (le front dit alors « pas de parcellaire d'époque pour cette
+    parcelle » — jamais un contour inventé)."""
+    from .app import _check_idu
+    _check_idu(idu)
+    idu = idu.strip().upper()
+    if not db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar():
+        raise HTTPException(404, "Parcelle inconnue")
+    features: list[dict] = []
+    millesimes: set[str] = set()
+    a_cad = bool(db.execute(text("SELECT to_regclass('cadastre_historique') IS NOT NULL")).scalar())
+    a_dfi = bool(db.execute(text("SELECT to_regclass('dfi_filiation') IS NOT NULL")).scalar())
+    if a_cad and a_dfi:
+        for r in db.execute(text("""
+            SELECT DISTINCT ch.idu AS idu_mere, ch.millesime, ST_AsGeoJSON(ch.geom) AS gj
+            FROM cadastre_historique ch
+            JOIN dfi_filiation f ON f.idu_mere = ch.idu
+            WHERE f.idu_fille = :i AND ch.geom IS NOT NULL"""), {"i": idu}).mappings().all():
+            features.append({"type": "Feature",
+                             "properties": {"idu_mere": r["idu_mere"], "millesime": r["millesime"]},
+                             "geometry": json.loads(r["gj"])})
+            if r["millesime"]:
+                millesimes.add(r["millesime"])
+    mils = sorted(millesimes)
+    return {"idu": idu, "type": "FeatureCollection", "features": features,
+            "millesimes": mils, "millesime": mils[-1] if mils else None,
+            "source": "Cadastre d'époque (Etalab/PCI) — parcelle d'origine (DGFiP)"}
 
 
 # ───────────────────────── M17 — SIMULATEUR ZAN ─────────────────────────

@@ -1042,10 +1042,13 @@ export interface HistoireFait {
   source: string
   // famille permis — pont « Permis sur ce permis »
   permit_id?: string; type_permis?: string
+  // famille vente — E2 : la mutation portait sur la parcelle MÈRE (date antérieure à la découpe DFI)
+  sur_parcelle_mere?: boolean
   // famille proprietaire — PM nommées (jamais un particulier), pont Scan patrimoine
   de_millesime?: number; a_millesime?: number
   avant?: { siren: string | null; denomination: string | null }
   apres?: { siren: string | null; denomination: string | null }
+  non_identifiable?: boolean          // E3 : au moins un pseudo-siren « U… » → aucun changement affirmé
   // famille decoupe — liste bornée au cap (total toujours dit)
   parcelles_liees?: string[]; n_parcelles_liees?: number
 }
@@ -1056,6 +1059,16 @@ export interface HistoireResp {
 }
 export const getHistoire = (idu: string) =>
   j<HistoireResp>(`/moteurs/histoire/${encodeURIComponent(idu)}`)
+
+// REMONTER-TEMPS-2 Lot B — contour de la/les parcelle(s) MÈRE d'origine (cadastre d'époque),
+// quand elle est captée dans cadastre_historique. `features` vide = pas de parcellaire d'époque.
+export interface ParcellaireEpoque {
+  idu: string; type: 'FeatureCollection'
+  features: { type: 'Feature'; properties: { idu_mere: string; millesime: string }; geometry: unknown }[]
+  millesimes: string[]; millesime: string | null; source: string
+}
+export const getParcellaireEpoque = (idu: string) =>
+  j<ParcellaireEpoque>(`/moteurs/parcellaire-epoque/${encodeURIComponent(idu)}`)
 
 export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null) => {
   const p = new URLSearchParams({ source: SOURCE })
