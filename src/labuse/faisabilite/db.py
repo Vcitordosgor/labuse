@@ -293,7 +293,8 @@ def _pct_constructible(ctx: ParcelContext) -> float | None:
 
 
 def parcel_faisabilite(session: Session, parcel_id: int,
-                       assiette_clippee: bool = False) -> tuple[ParcelContext, Faisabilite] | None:
+                       assiette_clippee: bool = False,
+                       hyp_overrides: dict | None = None) -> tuple[ParcelContext, Faisabilite] | None:
     """Contexte + pré-faisabilité d'une parcelle, EMPRISE SUR GÉOMÉTRIE RÉELLE
     (ST_Buffer du contour cadastral par le recul séparatif, EPSG:2975), clippée à la
     portion U/AU si zonage mixte (Décision 1) et amputée des emplacements réservés
@@ -327,6 +328,12 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                                f"Hauteur prospect L≥H = {L:.0f} m (largeur chaussée BD TOPO : {src})"])
 
     hyp = Hypotheses.charger(ctx.commune)   # M-N P1-13 : hypothèses de la commune
+    # FAISABILITE-1 (lot D) — surcharges d'hypothèses (édition « et si… » de l'utilisateur, jamais
+    # persistées en base : portées par le projet côté front). Seules les hypothèses Estimé/Dérivé
+    # numériques et bornées sont acceptées ; toute autre clé est ignorée (jamais un calcul détourné).
+    if hyp_overrides:
+        from .engine import appliquer_overrides_hypotheses
+        appliquer_overrides_hypotheses(hyp, hyp_overrides)
     recul = (float(rules.recul_limites_sep_m)
              if isinstance(rules.recul_limites_sep_m, (int, float))
              else hyp.recul_limites_defaut_m)
@@ -377,6 +384,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # (PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) et ramener la surface au sol servant
     # aux plafonds CES/pleine terre à la seule portion U/AU. OPT-IN — servi inchangé sinon.
     surface_assiette = ctx.surface_m2
+    greve_cert = 0.0
     if assiette_clippee:
         greve_cert = _greve_certaine_m2(session, parcel_id, recul, ctx.commune)
         if greve_cert > 0.5:
@@ -407,8 +415,16 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 eco["pluvial"], eco["pluvial_libelle"] = True, r.libelle
     ctx.prescriptions_eco = eco
 
+    # FAISABILITE-1 (lot D) — lignes manquantes : ER/EBC/greve déjà soustraits (dits en étape) +
+    # mixité détectée (dite « non modélisée »). Informatif : aucune de ces valeurs ne change la fourchette.
+    # total_deduit = déduction NETTE réellement retranchée de l'emprise : greve_a = union ER+EBC
+    # (dédupée par _EMPRISE) + greve_cert (contraintes certaines, mode clippé). er_m2/ebc_m2/greve_cert
+    # ne sont que les CONTRIBUTIONS listées (ils peuvent se chevaucher — le total ne les somme pas).
+    extras = {"er_m2": er_a, "ebc_m2": ebc_a, "greve_certaine_m2": greve_cert,
+              "total_deduit_m2": greve_a + greve_cert,
+              "mixite": bool(eco.get("mixite"))}
     return ctx, estimate_capacity(rules, surface_assiette, ctx.contraintes, hyp=hyp,
-                                  emprise_geo=(emprise, recul))
+                                  emprise_geo=(emprise, recul), extras=extras)
 
 
 # 3.D — Empreintes pour le gabarit 3D : parcelle + emprise insetée du recul, RECENTRÉES sur le
@@ -478,6 +494,13 @@ def volume3d_payload(session: Session, parcel_id: int,
         "note": "Gabarit-enveloppe indicatif : emprise constructible insetée du recul, extrudée à "
                 "la hauteur PLU (niveaux × étage). Ni architecture ni implantation réelle.",
     }
+
+
+def _hyp_modifiables_payload(commune: str | None) -> list[dict]:
+    """FAISABILITE-1 (lot D) — hypothèses éditables servies (valeurs de la commune, avant tout
+    override). Le front les rend en champs ; « Revenir aux hypothèses LABUSE » y revient."""
+    from .engine import Hypotheses, hypotheses_modifiables
+    return hypotheses_modifiables(Hypotheses.charger(commune))
 
 
 def fiche_payload(session: Session, parcel_id: int) -> dict | None:
@@ -574,6 +597,9 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
         },
         "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur,
                    "source": s.source, "prov": s.prov} for s in f.steps],
+        # FAISABILITE-1 (lot D) — hypothèses ÉDITABLES (les seules lignes Estimé du calcul) : le front
+        # rend un champ par entrée, les Sourcé restent verrouillés. Valeurs = celles servies (commune).
+        "hypotheses_modifiables": _hyp_modifiables_payload(ctx.commune),
         "hypotheses": f.hypotheses,
         "avertissements": f.avertissements,
         "modulation": f.modulation,

@@ -1767,6 +1767,11 @@ class FiltreCriteres:
     etat_sol: str | None = None
     capacite_min: int | None = None
     zone_plu: str | None = None
+    # FAISABILITE-1 (lot B) — groupe « Capacité » : destination autorisée (sous-destination R151-28,
+    # slug). Écarte les parcelles dont la zone INTERDIT la destination au règlement (plu_destinations
+    # validées) ; « calibration en cours » (non calibrée / non lue) = NON filtrée (dit tel quel).
+    # Traitée à l'endpoint /filtre (accès base pour lever les verdicts), pas dans _q_v2_where (pur).
+    destination: str | None = None
     # M45 (P2d) — tiroirs éco / mutation / propriété / veille
     sous_densite: bool = False
     mult_min: float | None = None
@@ -1838,7 +1843,8 @@ class FiltreCriteres:
                 self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct,
                 self.signaux, self.droits_residuels,
                 self.pm_denom, self.pm_siren, self.pm_forme, self.pm_ape,
-                self.pm_dirig_min, self.pm_dirig_max, self.zfang, self.frr)
+                self.pm_dirig_min, self.pm_dirig_max, self.zfang, self.frr,
+                self.destination)   # FAISABILITE-1 lot B — la destination entre dans le memo (compteur exact)
 
 
 @app.get("/parcels")
@@ -2511,6 +2517,29 @@ def zonage_zones(communes: str | None = Query(None), db: Session = Depends(get_d
     return parcelles_par_zone(db, coms or None)
 
 
+def _destination_interdit_keys(db: Session, sous_destination: str) -> list[str]:
+    """FAISABILITE-1 lot B — clés « Commune||zone_lib » des couples dont le règlement INTERDIT la
+    sous-destination (plu_destinations validées). Les zones NON calibrées / non lues NE sont PAS
+    interdites (« calibration en cours » = laissée passer). Une seule zone par parcelle
+    (parcel_zone_plu, vérifié 1 ligne/idu) → le filtre exclut exactement les parcelles interdites.
+    Verdicts levés une fois par couple RÉEL en base (verdict() est lru_caché) ; le résultat est
+    mémorisé 300 s à l'appelant (compteur SQL stable)."""
+    from ..plu.destinations import verdict
+    rows = db.execute(text(
+        "SELECT DISTINCT p.commune AS commune, z.zone_lib AS zone "
+        "FROM parcel_zone_plu z JOIN parcels p ON p.idu = z.idu "
+        "WHERE z.zone_lib IS NOT NULL")).all()
+    out: list[str] = []
+    for r in rows:
+        v = verdict(r.commune or "", r.zone or "", sous_destination)
+        # non calibrée / non lue → PAS interdite (le mandat : « calibration en cours » n'écarte pas).
+        if v.get("etat_calibration") == "non_calibree":
+            continue
+        if v.get("statut_effectif") == "interdit":
+            out.append(f"{r.commune}||{r.zone}")
+    return out
+
+
 @app.get("/filtre")
 def filtre(c: FiltreCriteres = Depends(),
            limit: int = Query(20, ge=0, le=200), offset: int = Query(0, ge=0),
@@ -2539,6 +2568,20 @@ def filtre(c: FiltreCriteres = Depends(),
         raise HTTPException(status_code=404,
                             detail="source requise : préciser ?source=<run q_v*> (run servi)")
     extra, extra_params = c.where()
+    # FAISABILITE-1 lot B — Destination autorisée : écarte les parcelles dont la zone INTERDIT la
+    # sous-destination (verdicts plu_destinations). Levé et mémorisé 300 s (config + couples réels
+    # en base, stables). Slug inconnu → 400 explicite (jamais un filtre silencieux). Injecté dans
+    # `extra` → compteur, page ET liste d'IDU (carte) partagent la même restriction.
+    if c.destination:
+        from ..plu.destinations import SOUS_DESTINATIONS
+        if c.destination not in SOUS_DESTINATIONS:
+            raise HTTPException(status_code=400, detail=f"sous-destination inconnue : {c.destination}")
+        interdit = _mem_cached(("dest_interdit", c.destination), 300.0,
+                               lambda: _destination_interdit_keys(db, c.destination))
+        if interdit:
+            extra += (" AND NOT EXISTS (SELECT 1 FROM parcel_zone_plu zd WHERE zd.idu = p.idu"
+                      " AND (p.commune || '||' || zd.zone_lib) = ANY(:f_dest_x))")
+            extra_params["f_dest_x"] = interdit
     stats = _mem_cached(c.cache_key(), 30.0, lambda: _q_v2_stats(
         db, c.commune, run_label=c.source, extra_where=extra, extra_params=extra_params,
         exclure_slivers=True))   # FIX-FILTRES F2 : compteur = liste (slivers < 2 m² masqués des deux)

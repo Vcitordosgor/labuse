@@ -7,7 +7,7 @@
  */
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { faisabiliteExplain, getCalculetteDefaults, getFaisabilite, getModeB, postChargeFonciere, type CalculetteDefaults } from '../../lib/api'
+import { faisabiliteExplain, getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, patchPipeline, postChargeFonciere, postFaisabiliteRecalcul, type CalculetteDefaults } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
 import { Squelette } from '../Loading'
@@ -360,10 +360,42 @@ export function FaisabiliteTab({ idu, embedded }: { idu: string; embedded?: bool
   // mis en valeur dans un encadré dédié « Le calcul, étape par étape » plutôt qu'un accordéon discret.
   const [showSteps, setShowSteps] = useState(true)
   const explain = useMutation({ mutationFn: () => faisabiliteExplain(idu) })
+  // FAISABILITE-1 (lot D) — HYPOTHÈSES MODIFIABLES : les lignes Estimé/Dérivé sont éditables → recalcul
+  // immédiat de TOUT ce qui suit par le MOTEUR (endpoint /recalcul, aucune reimplémentation). Les valeurs
+  // se GARDENT DANS LE PROJET (prospection.faisa_overrides de l'entrée pipeline — jamais en base hors
+  // projet, jamais resservies sur une autre parcelle, doctrine 09/09). Bloc partagé fiche + outil (M22).
+  const [overrides, setOverrides] = useState<Record<string, number>>({})
+  const [ovCharges, setOvCharges] = useState(false)
+  const pipeQ = useQuery({ queryKey: ['pipe-faisa', idu], queryFn: () => getPipelineForParcel(idu) })
+  const entryId = pipeQ.data?.entry?.id ?? null
+  useEffect(() => {
+    if (!pipeQ.data || ovCharges) return
+    const ov = (pipeQ.data.entry?.prospection as Record<string, unknown> | undefined)?.faisa_overrides
+    if (ov && typeof ov === 'object') setOverrides(ov as Record<string, number>)
+    setOvCharges(true)
+  }, [pipeQ.data, ovCharges])
+  const recalc = useMutation({ mutationFn: (ov: Record<string, number>) => postFaisabiliteRecalcul(idu, ov) })
+  const recalcMutate = recalc.mutate
+  const nOv = Object.keys(overrides).length
+  useEffect(() => {
+    if (!ovCharges) return
+    const t = window.setTimeout(() => {
+      if (nOv > 0) recalcMutate(overrides)                 // recalcul par le moteur
+      if (entryId != null) patchPipeline(entryId, { prospection: { faisa_overrides: overrides } }).catch(() => { /* projet non bloquant */ })
+    }, 350)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overrides, ovCharges, entryId])
   if (isLoading) return <Squelette lignes={4} />
   if (isError || !b) return <ErrorState message="Faisabilité indisponible." retry={() => refetch()} />
 
-  const cap = b.capacite
+  // capacité EFFECTIVE : le recalcul moteur (si des hypothèses sont modifiées) prime sur le servi.
+  const cap = (nOv > 0 && recalc.data?.capacite) ? recalc.data.capacite : b.capacite
+  const hypModif: { key: string; label: string; valeur: number; unite: string; min: number; max: number }[] =
+    cap?.hypotheses_modifiables ?? b.capacite?.hypotheses_modifiables ?? []
+  const setOv = (key: string, v: number | null) => setOverrides((o) => {
+    const n = { ...o }; if (v == null) delete n[key]; else n[key] = v; return n
+  })
   const fo = cap?.fourchette ?? {}
   const steps: { label: string; valeur: string; source: string; prov: string }[] = cap?.steps ?? []
   // FAISABILITE (mandat) — ÉTAPE MANQUANTE tracée : le saut « SHAB brute ~175 m² » (une étape) →
@@ -451,6 +483,34 @@ export function FaisabiliteTab({ idu, embedded }: { idu: string; embedded?: bool
               ))}
             </ol>
           )}
+        </div>
+      )}
+
+      {/* ── HYPOTHÈSES MODIFIABLES (FAISABILITE-1 lot D) — les lignes Estimé du calcul, éditables ;
+          recalcul immédiat par le moteur ; « Revenir aux hypothèses LABUSE » ; gardées dans le projet. ── */}
+      {cap && hypModif.length > 0 && (
+        <div data-faisa-hypotheses>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-mint">Hypothèses (modifiables)</span>
+            {nOv > 0 && (
+              <button data-faisa-hyp-reset onClick={() => setOverrides({})}
+                className="shrink-0 text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 transition-colors duration-quick hover:text-mint">
+                Revenir aux hypothèses LABUSE
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+            {hypModif.map((h) => (
+              <HypInput key={h.key} label={h.label} suffix={h.unite} hint={overrides[h.key] != null}
+                value={overrides[h.key] ?? null} placeholder={String(h.valeur)}
+                onChange={(v) => setOv(h.key, v)} />
+            ))}
+          </div>
+          <p className="mt-1.5 text-[9.5px] leading-snug text-txt-dim">
+            Les lignes <b className="text-txt-mut">Sourcé</b> (règle PLU) sont verrouillées ; modifier une hypothèse recalcule tout ce qui suit.
+            {entryId != null ? ' Vos valeurs sont gardées dans le projet.' : ' Ajoutez la parcelle à un projet pour garder vos valeurs.'}
+            {recalc.isPending && <span className="text-mint"> · recalcul…</span>}
+          </p>
         </div>
       )}
 

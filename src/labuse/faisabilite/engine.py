@@ -153,6 +153,63 @@ class Hypotheses:
         return out
 
 
+# FAISABILITE-1 (lot D) — HYPOTHÈSES MODIFIABLES par l'utilisateur (« et si… »). Ce sont les seules
+# lignes ESTIMÉES du calcul (jamais un Sourcé). Chaque entrée : clé d'affichage, libellé, champ(s)
+# Hypotheses ciblé(s), unité, bornes de vraisemblance (hors bornes = ignoré, jamais un calcul détourné),
+# et `pct` (valeur stockée en fraction 0-1, affichée/saisie en %). L'override N'EST JAMAIS persisté en
+# base : il vit dans le projet (doctrine 09/09), ne resservira pas sur une autre parcelle.
+HYP_EDITABLES = [
+    {"key": "coef_occupation", "label": "Occupation du gabarit", "champs": ["coef_occupation"],
+     "unite": "%", "pct": True, "min": 10.0, "max": 100.0},
+    {"key": "coef_rendement", "label": "Rendement SDP → habitable", "champs": ["coef_rendement"],
+     "unite": "%", "pct": True, "min": 50.0, "max": 100.0},
+    {"key": "logement_m2", "label": "Surface moyenne / logement", "champs": ["logement_m2_bas", "logement_m2_haut"],
+     "unite": "m²", "pct": False, "min": 20.0, "max": 200.0},
+    {"key": "densite_logts_ha_par_niveau", "label": "Densité (logts/ha/niveau)", "champs": ["densite_logts_ha_par_niveau"],
+     "unite": "logts/ha", "pct": False, "min": 1.0, "max": 200.0},
+    {"key": "place_m2", "label": "Surface d'une place de stationnement", "champs": ["place_m2"],
+     "unite": "m²", "pct": False, "min": 10.0, "max": 60.0},
+    {"key": "etage_m", "label": "Hauteur d'un niveau", "champs": ["etage_m"],
+     "unite": "m", "pct": False, "min": 2.0, "max": 6.0},
+]
+_HYP_EDIT_BY_KEY = {e["key"]: e for e in HYP_EDITABLES}
+
+
+def appliquer_overrides_hypotheses(hyp: "Hypotheses", overrides: dict) -> dict:
+    """Applique les surcharges éditables sur `hyp` (bornées, clés blanches SEULEMENT). Renvoie les
+    surcharges RETENUES (clé → valeur en unité d'affichage), pour tracer ce qui a bougé. Toute clé
+    inconnue ou hors bornes est IGNORÉE (jamais une valeur inventée ni un calcul détourné)."""
+    retenues: dict = {}
+    for key, raw in (overrides or {}).items():
+        spec = _HYP_EDIT_BY_KEY.get(key)
+        if spec is None or not isinstance(raw, (int, float)):
+            continue
+        val = float(raw)
+        if val < spec["min"] or val > spec["max"]:
+            continue
+        interne = val / 100.0 if spec["pct"] else val   # % affiché → fraction stockée
+        for champ in spec["champs"]:
+            setattr(hyp, champ, interne)
+        retenues[key] = val
+    return retenues
+
+
+def hypotheses_modifiables(hyp: "Hypotheses") -> list[dict]:
+    """État courant des hypothèses éditables (valeur en unité d'affichage) — sert le front (champs
+    éditables + bouton « revenir aux hypothèses LABUSE »)."""
+    out = []
+    for e in HYP_EDITABLES:
+        champ0 = e["champs"][0]
+        if e["key"] == "logement_m2":
+            brut = (float(getattr(hyp, "logement_m2_bas")) + float(getattr(hyp, "logement_m2_haut"))) / 2.0
+        else:
+            brut = float(getattr(hyp, champ0))
+        val = round(brut * 100.0, 1) if e["pct"] else round(brut, 1)
+        out.append({"key": e["key"], "label": e["label"], "valeur": val,
+                    "unite": e["unite"], "min": e["min"], "max": e["max"]})
+    return out
+
+
 @dataclass
 class Contraintes:
     pente_pct: float | None = None
@@ -213,9 +270,17 @@ def _rng(lo: float, hi: float) -> tuple[int, int]:
 def estimate_capacity(rules: ZoneRules, surface_m2: float,
                       contraintes: Contraintes | None = None,
                       hyp: Hypotheses | None = None,
-                      emprise_geo: tuple[float, float] | None = None) -> Faisabilite:
+                      emprise_geo: tuple[float, float] | None = None,
+                      extras: dict | None = None) -> Faisabilite:
     """emprise_geo = (aire_insetée_m2, recul_utilisé_m) issue de la géométrie réelle ;
-    None ⇒ modèle parcelle carrée (repli, tests purs)."""
+    None ⇒ modèle parcelle carrée (repli, tests purs).
+
+    FAISABILITE-1 (lot D) — `extras` (renseigné par parcel_faisabilite depuis la base) ajoute
+    deux LIGNES manquantes, sans changer aucun calcul : `{er_m2, ebc_m2, greve_m2}` → une ligne
+    « Espaces inconstructibles déduits » (ER/EBC/boisés déjà soustraits de l'emprise, sourcés) ;
+    `mixite=True` → une ligne « Mixité sociale (LLS) » = « non modélisée » (jamais un 0 muet,
+    calibrage bloqué). Ces lignes sont informatives (aucune modifie la fourchette)."""
+    extras = extras or {}
     hyp = hyp or Hypotheses()
     c = contraintes or Contraintes()
     steps: list[Step] = []
@@ -293,20 +358,37 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         avert.append(f"Recul limites séparatives non calibré pour la zone {rules.code} → "
                      f"hypothèse prudente {recul_l:g} m.")
 
+    # FAISABILITE-1 (lot D) — provenance d'AFFICHAGE des reculs : Sourcé si lu au règlement,
+    # Estimé si repli « hypothèse prudente » (n'altère aucun calcul, guide le badge + l'éditable).
+    _prov_recul = "estimee" if "non calibré" in (rl_src or "") else "sourcee"
+
     # ---- Emprise constructible au sol ----
     if emprise_geo is not None:
         emprise, recul_used = emprise_geo
         if emprise < SEUIL_EXIGU_M2:
             steps.append(Step("Emprise au sol — reculs (géométrie réelle)",
                               f"contour cadastral réel inseté du recul limites séparatives ({recul_used:g} m)",
-                              "≈ 0 m² (contour vidé)", f"{rl_src}"))
+                              "≈ 0 m² (contour vidé)", f"{rl_src}", prov=_prov_recul))
             return fini(False, f"Terrain trop exigu compte tenu des reculs ({recul_used:g} m) — "
                         "non constructible en l'état (le contour inseté se vide).",
                         {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
                         cause="terrain_exigu")
         steps.append(Step("Emprise au sol — reculs (géométrie réelle)",
                           f"contour cadastral réel inseté du recul limites séparatives ({recul_used:g} m)",
-                          f"~{emprise:.0f} m²", f"{rl_src} (séparatif) ; recul voirie en sus"))
+                          f"~{emprise:.0f} m²", f"{rl_src} (séparatif) ; recul voirie en sus", prov=_prov_recul))
+        # FAISABILITE-1 (lot D) — ligne « Espaces inconstructibles déduits » (ER/EBC/greve certaine
+        # déjà soustraits de l'emprise en amont, cf. db.py) : dit CE QUI a été retiré, sourcé PLU.
+        _dedu = round(float(extras.get("total_deduit_m2", 0)))
+        if _dedu > 0:
+            _parts = []
+            if extras.get("er_m2"): _parts.append(f"ER {round(extras['er_m2'])} m²")
+            if extras.get("ebc_m2"): _parts.append(f"EBC {round(extras['ebc_m2'])} m²")
+            if extras.get("greve_certaine_m2"): _parts.append(f"contraintes certaines {round(extras['greve_certaine_m2'])} m²")
+            steps.append(Step("Espaces inconstructibles déduits",
+                              (" · ".join(_parts) + " retirés de l'assiette avant plafonds") if _parts
+                              else "retirés de l'assiette avant plafonds",
+                              f"−{_dedu:.0f} m²",
+                              "Emplacements réservés / EBC (L113-1 CU) / PPR-PEB — sourcés PLU", prov="sourcee"))
         hypotheses.append("Emprise = contour cadastral réel inseté du recul limites séparatives "
                           "(géométrie réelle, projection métrique).")
         if _is_num(rules.recul_voirie_m) and rules.recul_voirie_m > recul_used:
@@ -320,7 +402,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         hypotheses.append(f"Parcelle modélisée carrée ({cote:.0f}×{cote:.0f} m), 1 façade sur voie (modèle simplifié).")
         steps.append(Step("Emprise au sol — reculs (modèle carré)",
                           f"(√{surface_m2:.0f}−{recul_v:g}−{recul_l:g})×(√{surface_m2:.0f}−2×{recul_l:g})",
-                          f"~{emprise:.0f} m²", f"{rv_src} ; {rl_src}"))
+                          f"~{emprise:.0f} m²", f"{rv_src} ; {rl_src}", prov=_prov_recul))
 
     # emprise % réglementée (ex. Usdu)
     if _is_num(rules.emprise_sol_pct):
@@ -328,7 +410,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         emprise = min(emprise, cap)
         steps.append(Step("Emprise au sol — % réglementé",
                           f"min(reculs, {surface_m2:.0f}×{rules.emprise_sol_pct:g}%)",
-                          f"~{emprise:.0f} m²", rules.sources.get("emprise", "Art. 9")))
+                          f"~{emprise:.0f} m²", rules.sources.get("emprise", "Art. 9"), prov="sourcee"))
     elif rules.emprise_plage:
         # PLU-CALIBRAGE-2 lot 2 : l'emprise varie par secteur (base) — on AFFICHE la plage et on
         # reste ESTIMÉ (secteur non déterminé), bornée par les reculs. Jamais simplifié en silence.
@@ -361,7 +443,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         else:
             _formule = f"emprise ≤ {surface_m2:.0f}×(1−{pt:g}%) = {cap_pt:.0f} m²"
         steps.append(Step("Contrainte pleine terre", _formule,
-                          f"~{emprise:.0f} m² retenu", rules.sources.get("pleine_terre", "Art. 13")))
+                          f"~{emprise:.0f} m² retenu", rules.sources.get("pleine_terre", "Art. 13"), prov="sourcee"))
     else:
         avert.append(f"% pleine terre non calibré pour la zone {rules.code} → non appliqué (Art. 13).")
     emprise = max(0.0, emprise)
@@ -374,7 +456,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         niveaux = int(rules.niveaux_max) + 1
         steps.append(Step("Niveaux constructibles",
                           f"R+{int(rules.niveaux_max)} lu au règlement = {niveaux} niveaux",
-                          f"R+{int(rules.niveaux_max)}", he_src))
+                          f"R+{int(rules.niveaux_max)}", he_src, prov="sourcee"))
     elif rules.hauteur_plage:
         # PLU-CALIBRAGE-2 lot 2 : la hauteur varie par secteur (base) — on AFFICHE la plage et on
         # reste ESTIMÉ (secteur non déterminé). Valeur retenue = borne BASSE (prudent).
@@ -391,14 +473,14 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         niveaux = int(float(rules.he_m) // hyp.etage_m)
         steps.append(Step("Niveaux constructibles",
                           f"hauteur d'égout retenue {rules.he_m:g} m ÷ {hyp.etage_m:g} m/niveau = {niveaux} niveaux",
-                          f"R+{max(0, niveaux - 1)}", he_src))
+                          f"R+{max(0, niveaux - 1)}", he_src, prov="sourcee"))
     elif _is_num(rules.hf_m):
         niveaux = max(1, int((float(rules.hf_m) - hyp.etage_m) // hyp.etage_m))
         avert.append(f"Hauteur égout (hé) non précisée pour {rules.code} : niveaux estimés "
                      f"depuis hf {rules.hf_m:g} m (prudent).")
         steps.append(Step("Niveaux constructibles",
                           f"hauteur d'égout non précisée → (hauteur faîtage {rules.hf_m:g}−{hyp.etage_m:g}) ÷ {hyp.etage_m:g} = {niveaux}",
-                          f"R+{max(0, niveaux - 1)}", he_src))
+                          f"R+{max(0, niveaux - 1)}", he_src, prov="estimee"))
     else:
         return fini(False, "Hauteur de zone non calibrée — capacité non calculable.",
                     {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
@@ -409,7 +491,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     footprint = emprise * hyp.coef_occupation
     steps.append(Step("Emprise bâtie (occupation du gabarit)",
                       f"{emprise:.0f} m² × {hyp.coef_occupation:.0%} (espaces entre bâtiments, accès…)",
-                      f"~{footprint:.0f} m²", "hypothèse occupation"))
+                      f"~{footprint:.0f} m²", "hypothèse occupation", prov="estimee"))
     hypotheses.append(f"Coefficient d'occupation du gabarit supposé {hyp.coef_occupation:.0%} "
                       "(on ne bâtit pas 100 % de l'emprise constructible).")
     # M-PLU-REF-B — MARQUAGE ZONE-AWARE et VRAI (mesuré AUDIT_PLU_REF_B : emprise chiffrée 64 %, non
@@ -426,11 +508,11 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     # ---- Surface de plancher BRUTE puis HABITABLE (rendement) ----
     sdp = footprint * niveaux
     steps.append(Step("Surface de plancher brute", f"{footprint:.0f} m² × {niveaux} niveaux",
-                      f"~{sdp:.0f} m²", "dérivé occupation×hauteur"))
+                      f"~{sdp:.0f} m²", "dérivé occupation×hauteur", prov="derive"))
     shab = sdp * hyp.coef_rendement
     steps.append(Step("Surface habitable (rendement)",
                       f"{sdp:.0f} m² × {hyp.coef_rendement:.0%} (murs, communs, circulations, locaux techniques déduits)",
-                      f"~{shab:.0f} m²", "hypothèse rendement"))
+                      f"~{shab:.0f} m²", "hypothèse rendement", prov="estimee"))
     hypotheses.append(f"Coefficient de rendement SDP→habitable supposé {hyp.coef_rendement:.0%}.")
 
     # M128-5-§1 : le VENDABLE suit un chemin CENTRAL unique (habitable ÷ taille MOYENNE de logement),
@@ -458,7 +540,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     steps.append(Step(f"Logements — après plafond de densité (≤ {densite_cap:.0f} logts)",
                       f"{surface_ha:.2f} ha × {cap_logts_ha:.0f} logts/ha "
                       f"({hyp.densite_logts_ha_par_niveau:g}/niveau × {niveaux})",
-                      f"~{capped_lo:.0f} à {capped_hi:.0f}", "hypothèse densité (ex-COS)"))
+                      f"~{capped_lo:.0f} à {capped_hi:.0f}", "hypothèse densité (ex-COS)", prov="estimee"))
     hypotheses.append(f"Plafond de densité {hyp.densite_logts_ha_par_niveau:g} logts/ha par niveau : "
                       "filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune "
                       "commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.")
@@ -485,10 +567,10 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                           f"sol restant = terrain {surface_m2:.0f} − emprise bâtie {footprint:.0f} "
                           f"− pleine terre {pt_area:.0f} = {sol_dispo:.0f} m² ; "
                           f"{ppl:g} pl./logt × {hyp.place_m2:g} m² → ≤ {log_max_park:.0f} logts",
-                          "plafond au sol", rules.sources.get("stationnement", "Art. 12")))
+                          "plafond au sol", rules.sources.get("stationnement", "Art. 12"), prov="sourcee"))
         steps.append(Step("Stationnement — scénario sous-sol/silo",
                           "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
-                          f"~{floor_lo:.0f}–{floor_hi:.0f} logts", rules.sources.get("stationnement", "Art. 12")))
+                          f"~{floor_lo:.0f}–{floor_hi:.0f} logts", rules.sources.get("stationnement", "Art. 12"), prov="derive"))
         sol_lo, sol_hi = min(floor_lo, log_max_park), min(floor_hi, log_max_park)
         sol_central = min(floor_central, log_max_park)   # M144 Lot 1 — le central plafonné au sol
         if hyp.place_m2_source_ref:
@@ -552,7 +634,14 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     _mod_note = " (après modulation réunionnaise)" if facteur < 1.0 else ""
     steps.append(Step("Logements retenus au sol",
                       f"plafond de densité ∩ stationnement au sol{_mod_note}",
-                      f"~{_fin_lo} à {_fin_hi}", "dérivé"))
+                      f"~{_fin_lo} à {_fin_hi}", "dérivé", prov="derive"))
+    # FAISABILITE-1 (lot D) — mixité sociale : DÉTECTÉE mais NON MODÉLISÉE (part LLS non calibrée,
+    # pct_lls=0) → une ligne « non modélisée » plutôt qu'un 0 muet (jamais un droit inventé).
+    if extras.get("mixite"):
+        steps.append(Step("Mixité sociale (LLS)",
+                          "clause détectée au règlement — part de logements aidés non calibrée",
+                          "non modélisée",
+                          "Art. 2 règlement PLU (part LLS non servie — calibrage bloqué)", prov="estimee"))
 
     rp = f"R+{max(0, niveaux - 1)}"     # logt_moyen défini plus haut (chemin central du vendable, §1)
     fourch = {"niveaux": rp, "niveaux_max": niveaux,

@@ -52,7 +52,7 @@ function MapLoading() {
 // R2/V3 : la restitution du copilote — compteur animé + top cliquables. En mode PROJET, chaque
 // parcelle porte son « pourquoi » (moteur) et l'utilisateur peut ENREGISTRER + exporter le PDF.
 function IaRestitution() {
-  const { iaRestitution, setIaRestitution, select, setView, setM22Prefill, setModule, togglePanel, selectedIdu, setVerdict, setOpenProjet } = useApp()
+  const { iaRestitution, setIaRestitution, select, chercherParCapacite, togglePanel, selectedIdu, setVerdict, setOpenProjet } = useApp()
   const apply = useApplySearch()   // ajout C (UX V1) : relance sans le critère le plus serré
   const [count, setCount] = useState(0)
   const [projetId, setProjetId] = useState<number | null>(null)
@@ -229,12 +229,13 @@ function IaRestitution() {
           )}
         </div>
       )}
-      {/* DA-FIX-4 Lot 5 (DA-040) — « Affiner dans M22 » ouvre le FORMULAIRE déterministe M22 (aucun
-          modèle d'IA appelé) → Bouton secondaire VERT, pas mauve. title= natif retiré (DA-041). */}
+      {/* FAISABILITE-1 (lot C) — le programme du projet est TRADUIT en filtre Capacité (SDP restante /
+          logements) puis la carte s'ouvre sur le panneau Filtre → « Par critères » (retiré) devient le
+          groupe Capacité, global. Bouton secondaire VERT (aucun modèle d'IA appelé). */}
       {projet?.programme && (
         <Bouton niveau="secondaire" ton="vert" data-projet-m22 className="mt-2 w-full"
-          onClick={() => { setView('cartes'); setM22Prefill(projet.programme as Record<string, unknown>); setModule('programme') }}>
-          Affiner la capacité dans M22 (formulaire pré-rempli)
+          onClick={() => chercherParCapacite(projet.programme as Record<string, number>)}>
+          Chercher des parcelles pour ce programme (filtre Capacité)
         </Bouton>
       )}
     </div>

@@ -90,6 +90,7 @@ export interface Filters {
   constructibilite: string[]         // constructible / au_conditionnelle / fermee / inconstructible / rnu
   etatSol: string[]                  // nu / bati_marginal / bati_sature / bati_revele
   capaciteMin: number | null         // capacité logements ESTIMÉE >= N (dérivée SDP)
+  destinationAutorisee: string | null  // FAISABILITE-1 lot B — sous-destination R151-28 (slug) admise dans la zone
   zonePlu: string[]                  // zone PLU EXACTE (libellés, ex. UA, UB, 2AU)
   analyseLabuse: boolean             // interrupteur : appliquer le classement LABUSE (tiers). ÉTEINT par défaut (cf. EMPTY_FILTERS ci-dessous, M55-D stage 4 — tri factuel sans opinion).
   // M45 (P2d) — tiroirs éco / mutation / propriété / veille
@@ -135,7 +136,7 @@ export const EMPTY_FILTERS: Filters = {
   evenement: false, veille: false, horsCopro: false,
   flags: [], flagsExclus: [], communes: [],
   personneMorale: false, zonagePlu: [],
-  sdpMax: null, constructibilite: [], etatSol: [], capaciteMin: null, zonePlu: [],
+  sdpMax: null, constructibilite: [], etatSol: [], capaciteMin: null, destinationAutorisee: null, zonePlu: [],
   analyseLabuse: false,   // M55-D stage 4 : interrupteur « regard LABUSE » ÉTEINT par défaut (tri factuel)
   sousDensite: false, multMin: null, rangMax: null, renouvellement: false,
   proprietaireType: [], droitsResiduels: [], etatSociete: [], copro: [], npnru: false, adresseAbsente: false,
@@ -492,8 +493,10 @@ interface AppState {
   // OUTILS-MUSCLER-1 B5 — restauration de la sélection d'assemblage au retour (consommé-puis-reset).
   mselPrefill: string[] | null
   setMselPrefill: (m: string[] | null) => void
-  m22Prefill: Record<string, unknown> | null // copilote → formulaire programme (M22)
-  setM22Prefill: (p: Record<string, unknown> | null) => void
+  // FAISABILITE-1 (lot C) — l'ancien mode « Par critères » de M22 est retiré : « chercher des
+  // parcelles par capacité » passe par le groupe Capacité du panneau Filtre. Un programme (copilote
+  // ou projet) est TRADUIT en filtre (SDP restante / logements) puis la carte s'ouvre sur les Filtres.
+  chercherParCapacite: (prog?: Record<string, number> | null) => void
   m02Prefill: string | null // fiche → scan patrimoine du propriétaire (SIREN)
   setM02Prefill: (s: string | null) => void
   // RETOURS-3 R4 — pont Scan patrimoine → Veille promoteurs (« Voir ses opérations », même SIREN).
@@ -570,7 +573,7 @@ const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTabl
 // SOCLE — la sélection de comparaison est gardée 15 min après le dernier geste (retour sans perte).
 const COMPARE_TTL_MS = 15 * 60 * 1000
 
-export const useApp = create<AppState>((set) => ({
+export const useApp = create<AppState>((set, get) => ({
   tuyauActives: {},
   toggleTuyau: (k) => set((s) => ({ tuyauActives: { ...s.tuyauActives, [k]: !s.tuyauActives[k] } })),
   setTuyauActives: (m) => set({ tuyauActives: m }),
@@ -932,8 +935,21 @@ export const useApp = create<AppState>((set) => ({
   setMsel: (msel) => set({ msel }),
   mselPrefill: null,
   setMselPrefill: (mselPrefill) => set({ mselPrefill }),
-  m22Prefill: null,
-  setM22Prefill: (m22Prefill) => set({ m22Prefill }),
+  // FAISABILITE-1 (lot C) — traduit un programme en filtre Capacité (SDP restante ≥ X, logements ≥ N —
+  // MÊME formule que l'ex-« Par critères » : unités × m²/unité × (1 + circulations %)) puis ouvre la
+  // carte sur le panneau Filtres (section Capacité). Sans programme : simple navigation vers le filtre.
+  chercherParCapacite: (prog) => {
+    if (prog) {
+      const unites = Math.max(0, Math.round((Number(prog.batiments) || 1) * (Number(prog.logements_par_batiment) || 0)))
+      const sdp = Math.round(unites * (Number(prog.surface_unite_m2) || 0) * (1 + (Number(prog.circulation_pct) || 0) / 100))
+      set((s) => ({ filters: { ...s.filters,
+        sdpMin: sdp > 0 ? sdp : s.filters.sdpMin,
+        capaciteMin: unites > 0 ? unites : s.filters.capaciteMin } }))
+    }
+    get().setView('cartes')
+    get().setModule(null)
+    get().openFiltres()
+  },
   m02Prefill: null,
   setM02Prefill: (m02Prefill) => set({ m02Prefill }),
   veilleFocusSiren: null,
