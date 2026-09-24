@@ -1022,6 +1022,32 @@ def build_mvt_cmd(
         typer.echo(f"⚠ ATTENTION : tuiles matérialisées sur « {label} » ≠ run servi « {servi} » "
                    f"— les fiches/listes et la carte raconteront deux mondes.")
     typer.echo(f"✓ mvt_parcels reconstruite : {res['n']} parcelles (label {label}).")
+    # VITESSE-FIX-1 lot B — le geste post-injection rafraîchit AUSSI les intersections matérialisées
+    # (fiche servitudes + Gabarit zone) SI les sources (SUP/servitudes/zone + cadastre) ont bougé.
+    # Hors de la transaction du geste : batch par tranches à commits propres (ne bloque pas la base).
+    from .couche_intersection import build as _inter_build, fraiche as _inter_fraiche
+    with session_scope() as s:
+        if _inter_fraiche(s):
+            typer.echo("✓ parcel_couche_intersection : déjà à jour (version des sources inchangée).")
+        else:
+            typer.echo("… parcel_couche_intersection : sources changées → reconstruction…")
+            _ni = _inter_build(s, log=typer.echo)
+            typer.echo(f"✓ parcel_couche_intersection : {_ni} intersections matérialisées.")
+
+
+@app.command("build-intersections")
+def build_intersections_cmd(
+    force: bool = typer.Option(False, help="Reconstruit même si la version des sources est inchangée."),
+) -> None:
+    """VITESSE-FIX-1 lot B — (re)construit `parcel_couche_intersection` (intersections parcelle × couche
+    précalculées : servitudes de la fiche + zone PLU du Gabarit). Par tranches, ne bloque pas la base."""
+    from .couche_intersection import build as _b, fraiche as _f
+    with session_scope() as s:
+        if _f(s) and not force:
+            typer.echo("✓ déjà à jour (version des sources inchangée). --force pour reconstruire.")
+            return
+        n = _b(s, log=typer.echo)
+    typer.echo(f"✓ parcel_couche_intersection : {n} intersections matérialisées.")
 
 
 @app.command("dryrun-matrice")

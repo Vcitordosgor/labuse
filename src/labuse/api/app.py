@@ -4215,6 +4215,8 @@ _PLU_PROCEDURES: dict[str, dict] = {
 }
 
 
+# AU VOL (repli) — expression historique. VITESSE-FIX-1 lot B : conservée telle quelle comme REPLI
+# quand la table matérialisée est absente/périmée (fraîcheur désalignée) → jamais de surface périmée.
 _DISPOSITIFS_SQL = text("""
 SELECT sl.kind, sl.subtype, coalesce(sl.attrs->>'libelle', sl.name) AS libelle,
        sl.attrs->>'nomsuplitt' AS nomsuplitt, sl.attrs->>'zone' AS peb_zone,
@@ -4227,6 +4229,21 @@ JOIN spatial_layers sl
       OR (sl.kind = 'plu_gpu_prescription' AND sl.subtype IN ('01', '05')))
 WHERE p.idu = :idu
 """)
+# MATÉRIALISÉ (VITESSE-FIX-1 lot B) — mêmes colonnes, mêmes valeurs : `area_m2` rangé =
+# `ST_Area(ST_Intersection(p, sl))` (numérateur EXACT), attrs lus FRAIS par PK sur spatial_layers.
+# `part` = area_m2 / ST_Area(parcelle) (parcelle seule, peu coûteux). Prédicat de kind IDENTIQUE.
+_DISPOSITIFS_SQL_MAT = text("""
+SELECT sl.kind, sl.subtype, coalesce(sl.attrs->>'libelle', sl.name) AS libelle,
+       sl.attrs->>'nomsuplitt' AS nomsuplitt, sl.attrs->>'zone' AS peb_zone,
+       pci.area_m2 / NULLIF(ST_Area(p.geom_2975), 0) AS part
+FROM parcels p
+JOIN parcel_couche_intersection pci
+  ON pci.parcel_id = p.id
+ AND (pci.kind IN ('dpu', 'peb', 'sup')
+      OR (pci.kind = 'plu_gpu_prescription' AND pci.subtype IN ('01', '05')))
+JOIN spatial_layers sl ON sl.id = pci.layer_id
+WHERE p.idu = :idu
+""")
 
 
 def _dispositifs_block(db: Session, idu: str) -> dict | None:
@@ -4237,7 +4254,10 @@ def _dispositifs_block(db: Session, idu: str) -> dict | None:
     commune » si la commune n'a rien au GPU), zone PEB (A/B/C/D — couverture partielle dite),
     SUP par catégorie. Intersections LIVE des couches servies (registre `dispositifs_parcelle`),
     mêmes familles/typepsc que la cascade. None si aucune des couches n'est ingérée."""
-    rows = db.execute(_DISPOSITIFS_SQL, {"idu": idu}).mappings().all()
+    # VITESSE-FIX-1 lot B — table matérialisée si FRAÎCHE (version sources alignée), sinon calcul au vol.
+    from ..couche_intersection import fraiche as _inter_fraiche
+    _sql = _DISPOSITIFS_SQL_MAT if _inter_fraiche(db) else _DISPOSITIFS_SQL
+    rows = db.execute(_sql, {"idu": idu}).mappings().all()
     kinds_presents = {k for (k,) in db.execute(text(
         "SELECT DISTINCT kind FROM spatial_layers "
         "WHERE kind IN ('dpu', 'peb', 'sup', 'plu_gpu_prescription')")).all()}

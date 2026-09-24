@@ -384,6 +384,8 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "parcel_bloc_membres": "blocs fonciers — membres (blocs-build)",
     "parcel_au_statut": "statut AU (builder)",
     "parcel_zone_plu": "zonage parcelle (builder GPU)",
+    "parcel_couche_intersection": "intersections parcelle × couche précalculées (VITESSE-FIX-1 : fiche servitudes + Gabarit zone)",
+    "parcel_couche_intersection_meta": "version des sources de parcel_couche_intersection (fraîcheur)",
     "parcel_terrain": "terrain (pente/ortho builders)",
     "parcel_vue_mer": "vue mer (viewshed RGE ALTI — RECETTE-7 lot D)",
     "parcel_geometrie": "géométrie parcelle (builder)",
