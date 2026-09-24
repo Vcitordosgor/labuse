@@ -570,6 +570,13 @@ export interface GabaritResult {
   zoneImplantationGeoJSON?: GabGeom
   retraitsGeoJSON?: GabGeom
   exclusionsGeoJSON?: GabGeom
+  // GABARIT-6 P4 — bâti existant (emprise BD TOPO + hauteur LiDAR HD), fait contextuel
+  batiExistantGeoJSON?: GabFeatureCollection | null
+}
+export interface GabBatiProps { hauteur_m?: number | null; h_source?: string | null }
+export interface GabFeatureCollection {
+  type: 'FeatureCollection'
+  features: Array<{ type: 'Feature'; properties: GabBatiProps; geometry: GabGeom }>
 }
 export const getGabarit = (idu: string) =>
   j<GabaritResult>(`/outils/gabarit/${encodeURIComponent(idu)}`)

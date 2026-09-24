@@ -168,3 +168,7 @@ class GabaritResult(BaseModel):
     zoneImplantationGeoJSON: Optional[GeoJSON] = None
     retraitsGeoJSON: Optional[GeoJSON] = None
     exclusionsGeoJSON: Optional[GeoJSON] = None
+    # GABARIT-6 P4 — bâti EXISTANT (emprise BD TOPO + hauteur LiDAR HD), FAIT contextuel : aucun calcul
+    # réglementaire n'en dépend. FeatureCollection (4326), une Feature par bâtiment, propriétés
+    # { hauteur_m, h_source: 'lidar'|'bdtopo' }. None si la parcelle ne porte aucun bâti.
+    batiExistantGeoJSON: Optional[GeoJSON] = None

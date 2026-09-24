@@ -21,9 +21,11 @@ const C_ZONE = '#36c99a'      // zone d'implantation — vert franc, distinct du
 const C_RETRAIT = '#e0a44a'   // bandes de recul — ambre
 const C_EXCL = '#e8491d'      // exclusions (PPR rouge) — rouge
 const C_CONTOUR = '#ffffff'   // contour cadastral
+const C_BATI = '#9aa0a6'      // bâti existant — gris neutre (un FAIT contextuel, jamais un signal)
 
 const SRC = 'gabarit-outil'
-const LAYERS = ['gabarit-zone', 'gabarit-contour', 'gabarit-retrait', 'gabarit-excl', 'gabarit-zone-3d']
+const LAYERS = ['gabarit-zone', 'gabarit-contour', 'gabarit-retrait', 'gabarit-excl', 'gabarit-zone-3d',
+                'gabarit-bati', 'gabarit-bati-line', 'gabarit-bati-3d']
 
 type MapLike = {
   getSource: (id: string) => unknown
@@ -74,14 +76,25 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean) {
     // réservées au calcul complet.
     const contourOnly = !ok && res.status === 'incomplete' && !!res.contourGeoJSON
     if (!ok && !contourOnly) return
-    const features = (ok
-      ? [
-          feat(res.retraitsGeoJSON ?? null, 'retrait'),
-          feat(res.exclusionsGeoJSON ?? null, 'excl'),
-          feat(res.zoneImplantationGeoJSON ?? null, 'zone'),
-          feat(res.contourGeoJSON ?? null, 'contour'),
-        ]
-      : [feat(res.contourGeoJSON ?? null, 'contour')]).filter(Boolean)
+    // GABARIT-6 P4 — le bâti EXISTANT (emprise BD TOPO), FAIT contextuel, servi que le calcul soit
+    // complet ou non (l'outil dit où l'on PEUT construire ; ceci dit ce qui est DÉJÀ là). Chaque
+    // Feature porte sa hauteur mesurée (LiDAR HD, à défaut BD TOPO) pour l'extrusion 3D.
+    const batiFeats = (res.batiExistantGeoJSON?.features ?? []).map((f) => ({
+      type: 'Feature' as const,
+      properties: { kind: 'bati', hauteur_m: f.properties?.hauteur_m ?? null },
+      geometry: f.geometry,
+    }))
+    const features = [
+      ...(ok
+        ? [
+            feat(res.retraitsGeoJSON ?? null, 'retrait'),
+            feat(res.exclusionsGeoJSON ?? null, 'excl'),
+            feat(res.zoneImplantationGeoJSON ?? null, 'zone'),
+            feat(res.contourGeoJSON ?? null, 'contour'),
+          ]
+        : [feat(res.contourGeoJSON ?? null, 'contour')]).filter(Boolean),
+      ...batiFeats,
+    ]
     m.addSource(SRC, { type: 'geojson', data: { type: 'FeatureCollection', features } })
     if (ok) {
       m.addLayer({ id: 'gabarit-retrait', type: 'fill', source: SRC, filter: ['==', 'kind', 'retrait'],
@@ -91,14 +104,29 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean) {
       m.addLayer({ id: 'gabarit-zone', type: 'fill', source: SRC, filter: ['==', 'kind', 'zone'],
         paint: { 'fill-color': C_ZONE, 'fill-opacity': 0.5 } })
     }
+    // GABARIT-6 P4 — bâti existant en surimpression 2D (emprise grise + contour), sous le contour cadastral.
+    if (batiFeats.length) {
+      m.addLayer({ id: 'gabarit-bati', type: 'fill', source: SRC, filter: ['==', 'kind', 'bati'],
+        paint: { 'fill-color': C_BATI, 'fill-opacity': 0.35 } })
+      m.addLayer({ id: 'gabarit-bati-line', type: 'line', source: SRC, filter: ['==', 'kind', 'bati'],
+        paint: { 'line-color': C_BATI, 'line-width': 1 } })
+    }
     m.addLayer({ id: 'gabarit-contour', type: 'line', source: SRC, filter: ['==', 'kind', 'contour'],
       paint: { 'line-color': C_CONTOUR, 'line-width': 1.5, 'line-dasharray': [2, 1] } })
-    // 3D : extrusion de la SEULE zone calculée, à la hauteur SOURCÉE (aucun fallback) ; jamais un bâtiment réel.
+    // 3D : extrusion de la zone calculée (enveloppe réglementaire, vert) à la hauteur SOURCÉE. Le bâti
+    // existant (gris) est extrudé À PART, à sa hauteur MESURÉE (LiDAR HD, à défaut BD TOPO) : où l'on
+    // PEUT construire vs ce qui est DÉJÀ là. Deux couches distinctes, jamais confondues.
     if (ok && terrain3d && res.hauteurReglementaireM != null) {
       m.addLayer({ id: 'gabarit-zone-3d', type: 'fill-extrusion', source: SRC,
         filter: ['==', 'kind', 'zone'],
         paint: { 'fill-extrusion-color': C_ZONE, 'fill-extrusion-opacity': 0.6,
                  'fill-extrusion-height': res.hauteurReglementaireM, 'fill-extrusion-base': 0 } })
+    }
+    if (terrain3d && batiFeats.length) {
+      m.addLayer({ id: 'gabarit-bati-3d', type: 'fill-extrusion', source: SRC,
+        filter: ['==', 'kind', 'bati'],
+        paint: { 'fill-extrusion-color': C_BATI, 'fill-extrusion-opacity': 0.55,
+                 'fill-extrusion-height': ['coalesce', ['get', 'hauteur_m'], 3], 'fill-extrusion-base': 0 } })
     }
     const bb = bboxOf(res.contourGeoJSON ?? res.zoneImplantationGeoJSON ?? null)
     if (bb) { try { m.fitBounds(bb, { padding: 80, duration: 600, maxZoom: 19 }) } catch { /* noop */ } }
@@ -318,6 +346,9 @@ export function Gabarit() {
               <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_ZONE }} /> Zone d'implantation réglementaire</li>
               <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_RETRAIT }} /> Retrait réglementaire</li>
               {res.exclusionsGeoJSON && <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_EXCL }} /> Exclusion (PPR)</li>}
+              {res.batiExistantGeoJSON?.features?.length ? (
+                <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_BATI }} /> Bâti existant (BD TOPO · LiDAR HD)</li>
+              ) : null}
             </ul>
             {res.hauteurReglementaireM == null
               ? <p className="mt-1.5 text-st-creuser">3D indisponible — hauteur non chiffrée (prospect).</p>
