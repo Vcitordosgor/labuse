@@ -61,8 +61,18 @@ export type CircuitData = {
   journal: any[]; runs: any[]; residuel: any; compteurs: Record<string, number>
   // DASHBOARD-4 D1 — les compteurs tels que les verrous les comptent (source unique).
   compteurs_coherence?: { sources_vitrine: number | null; couches: number | null; donnees: number | null; verrous: number; garanties: number | null }
-  // DASHBOARD-4 D7 — plafond des agents (0 = aucun agent ne tourne) + crédit API (non exposé → lien).
-  agents?: { plafond_eur: number; actif: boolean; cle_env: string; credit_eur: number | null; credit_url: string }
+  // DASHBOARD-4 D7 / CIRCUIT-P7 (lot 1) — la carte Agents : plafond + dernier passage (coût du ledger,
+  // nouvelles trouvées), prochain dimanche, et les portées du menu (jamais / g8 / vitrine + coût estimé).
+  agents?: {
+    plafond_eur: number; actif: boolean; cle_env: string; credit_eur: number | null; credit_url: string
+    dernier_passage?: string | null; sources?: number; cout_eur?: number | null; nouvelles?: number
+    prochain_dimanche?: string | null; jamais?: number; g8?: number; vitrine?: number; cout_estime_tous?: number | null
+  }
+  // CIRCUIT-P7 (lot 1) — la carte Sonde de nuit (cadence, dernier passage, interrogées / en panne / nouvelles).
+  sonde?: {
+    cadence: string; interrogeables: number; dernier_passage: string | null
+    interrogees: number; en_panne: number; nouvelles: number
+  }
   garanties?: { id: string; phrase: string; verdict: string; preuve: string; details: string[] }[] | null
 }
 

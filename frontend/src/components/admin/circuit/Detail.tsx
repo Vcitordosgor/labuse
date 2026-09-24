@@ -134,7 +134,7 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
   const [msgAgent, setMsgAgent] = useState<string | null>(null)
   // CIRCUIT-P2 (lot 3.3) — « Envoyer un agent » : jamais grisé sans mot (sans crédit → message).
   const agent = useMutation({
-    mutationFn: () => postAdminCircuitAgents(id),
+    mutationFn: () => postAdminCircuitAgents({ sourceId: id as number }),
     onSuccess: (r: any) => {
       if (r && r.ok === false) setMsgAgent(r.message || 'Crédit API indisponible.')
       else { setMsgAgent(r?.message || 'Agent envoyé — le retour arrive au journal.'); rafraichir() }

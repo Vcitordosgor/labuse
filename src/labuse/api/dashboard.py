@@ -2178,6 +2178,61 @@ def _sources_hors_vitrine(c) -> list[dict]:
     return out
 
 
+#: CIRCUIT-P7 (lot 1) — les méthodes de veille qui sont de VRAIES sondes (amont interrogeable la nuit).
+_METHODES_SONDE = ("api", "page", "entete", "temoin")
+
+
+def carte_sonde(reservoirs: list[dict], nouvelles: int) -> dict:
+    """CIRCUIT-P7 (lot 1) — LA CARTE « Sonde de nuit » de l'onglet Sources : cadence, dernier passage,
+    interrogées / en panne / nouvelles versions vues. Lue des réservoirs DÉJÀ assemblés (veille + état) ;
+    le front ne recompte rien. `nouvelles` vient de `compter_etats` (même chiffre que la pastille)."""
+    sondables = [r for r in reservoirs
+                 if (r.get("veille") or {}).get("methode") in _METHODES_SONDE
+                 and (r["veille"].get("actif") is not False)]
+    passages = [r["veille"]["passage"] for r in sondables if r["veille"].get("passage")]
+    dernier = max(passages) if passages else None
+    en_panne = sum(1 for r in sondables
+                   if r["veille"].get("statut") in ("injoignable", "illisible")
+                   and int(r["veille"].get("echecs_consecutifs") or 0) >= 3)
+    return {"cadence": "03:00 chaque nuit", "interrogeables": len(sondables),
+            "dernier_passage": dernier, "interrogees": len(sondables),
+            "en_panne": en_panne, "nouvelles": nouvelles}
+
+
+def carte_agents(c, plafond_eur: float) -> dict:
+    """CIRCUIT-P7 (lot 1) — LA CARTE « Agents » : dernier passage (le lot d'agents le plus récent du
+    journal), coût du LEDGER (`ia_log`, agent_source, hors web_search), nouvelles versions trouvées,
+    plafond, prochain dimanche. Le coût est celui du ledger sur la fenêtre du passage — jamais estimé."""
+    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+    dernier, n, nouvelles, cout = None, 0, 0, None
+    try:
+        row = c.execute(text(
+            "SELECT max(ts) AS fin, min(ts) AS debut, count(*) AS n,"
+            " sum((resultat IN ('nouvelle_version', 'nouvelle'))::int) AS nouvelles"
+            " FROM circuit_journal WHERE geste = 'agent'"
+            " GROUP BY COALESCE(lot, 'row:' || id::text) ORDER BY max(ts) DESC LIMIT 1")).mappings().first()
+        if row:
+            dernier = row["fin"].isoformat() if row["fin"] else None
+            n = int(row["n"] or 0)
+            nouvelles = int(row["nouvelles"] or 0)
+            try:
+                cv = c.execute(text(
+                    "SELECT COALESCE(sum(cout_eur), 0) FROM ia_log WHERE kind = 'agent_source'"
+                    " AND ts BETWEEN :a AND :b"), {"a": row["debut"], "b": row["fin"]}).scalar()
+                cout = round(float(cv), 2) if cv is not None else None
+            except Exception:  # noqa: BLE001 — pas de ledger (base sans ia_log) : coût inconnu
+                cout = None
+    except Exception:  # noqa: BLE001 — pas de journal : carte vide (jamais un crash)
+        pass
+    _now = _dt.now(tz=_tz.utc)
+    _prochain = _now + _td(days=((6 - _now.weekday()) % 7) or 7)   # prochain dimanche (job hebdo)
+    return {"dernier_passage": dernier, "sources": n, "cout_eur": cout, "nouvelles": nouvelles,
+            "prochain_dimanche": _prochain.date().isoformat(),
+            "plafond_eur": plafond_eur, "actif": plafond_eur > 0,
+            "cle_env": "LABUSE_AGENT_PLAFOND_EUR",
+            "credit_eur": None, "credit_url": "https://console.anthropic.com/settings/billing"}
+
+
 @router.get("/admin/circuit")
 def admin_circuit(request: Request) -> dict:
     """CIRCUIT-1 (lot 5.1) — LA structure de la page Circuit, calculée EN DIRECT et en UN appel :
@@ -2414,19 +2469,35 @@ def admin_circuit(request: Request) -> dict:
     #    pas exposé par l'API du fournisseur : il se lit sur la console (lien), on l'annonce ainsi. ──
     import os as _os
     _plafond = float(_os.environ.get("LABUSE_AGENT_PLAFOND_EUR", "0") or 0)
-    agents_info = {
-        "plafond_eur": _plafond,
-        "actif": _plafond > 0,
-        "cle_env": "LABUSE_AGENT_PLAFOND_EUR",
-        "credit_eur": None,   # non exposé par l'API fournisseur — vérifiable sur la console
-        "credit_url": "https://console.anthropic.com/settings/billing",
-    }
+    # CIRCUIT-P7 (lot 1) — les deux cartes de l'onglet Sources : la Sonde de nuit (interrogées / en
+    # panne / nouvelles vues, lues des réservoirs) et les Agents (dernier passage + coût du ledger).
+    carte_sonde_data = carte_sonde(reservoirs, _etats_compte.get("nouvelle version", 0))
+    try:
+        with engine().begin() as _ca:
+            agents_info = carte_agents(_ca, _plafond)
+    except Exception:  # noqa: BLE001 — la carte Agents ne bloque jamais la page (repli minimal)
+        agents_info = {
+            "dernier_passage": None, "sources": 0, "cout_eur": None, "nouvelles": 0,
+            "prochain_dimanche": None, "plafond_eur": _plafond, "actif": _plafond > 0,
+            "cle_env": "LABUSE_AGENT_PLAFOND_EUR", "credit_eur": None,
+            "credit_url": "https://console.anthropic.com/settings/billing"}
+    # CIRCUIT-P7 (lot 1) — les portées du menu « Envoyer les agents » (comptes lus, jamais recomptés
+    # au front) : jamais vérifiées, sources du verrou G8, toute la vitrine (+ un coût estimé de la
+    # vitrine, basé sur le coût moyen par source du dernier passage, sinon un défaut prudent).
+    _n_jamais = _etats_compte.get("jamais vérifiée", 0)
+    _n_g8 = len(_sans_controle)
+    _n_vitrine = len(reservoirs)
+    _par_src = ((agents_info.get("cout_eur") or 0) / agents_info["sources"]
+                if agents_info.get("cout_eur") and agents_info.get("sources") else 0.04)
+    agents_info.update({"jamais": _n_jamais, "g8": _n_g8, "vitrine": _n_vitrine,
+                        "cout_estime_tous": round(_n_vitrine * _par_src, 2)})
     return {
         "run_servi": runs.current(), "candidat": _candidat, "manifeste": m,
         "verrous": _verrous,
         "garanties": _garanties, "catalogue": _catalogue, "doublons": _doublons,
         # DASHBOARD-4 D1 (compteurs = verrous) · D7 (agents : plafond + crédit)
-        "compteurs_coherence": compteurs_coherence, "agents": agents_info,
+        # CIRCUIT-P7 (lot 1) — `sonde` + `agents` enrichis alimentent les deux cartes de l'onglet Sources.
+        "compteurs_coherence": compteurs_coherence, "agents": agents_info, "sonde": carte_sonde_data,
         "reservoirs": reservoirs, "robinets": robinets, "chiffres": chiffres,
         "familles": familles, "categories": categories, "resume": resume,
         "a_faire": a_faire,   # CIRCUIT-P4 lot 2 — l'onglet « À faire » (liste ordonnée des gestes)
@@ -2479,6 +2550,48 @@ def admin_circuit_verifier(request: Request) -> dict:
         return {"ok": True, "lance": False, "deja": True, "tache": circuit_taches.lire("verifier")}
     circuit_taches.demarrer("verifier", total=5, par=str(qui), message="Contrôle en cours…")
     threading.Thread(target=_executer_controle, args=(str(qui),), daemon=True).start()
+    return {"ok": True, "lance": True}
+
+
+def _executer_sonde(par: str, source_id: int | None) -> None:
+    """CIRCUIT-P7 (lot 1) — « Sonder maintenant » : un passage de la SENTINELLE (le code de la sonde
+    de nuit, à l'identique — rien n'y est ajouté), en tâche détachée. Journalise le geste « sonde »
+    (résumé du passage), pose le message final. `source_id` sonde une seule source (recette / fiche)."""
+    from .. import circuit_journal, circuit_taches, sentinelle
+    from ..db import session_scope
+    try:
+        with session_scope() as s:
+            recap = sentinelle.passer(s, source_ids=[source_id] if source_id else None,
+                                      forcer=True, notifier=True, delai_s=0)
+            msg = (f"Sonde terminée : {recap['sondees']} interrogée(s), "
+                   f"{recap['injoignables'] + recap['illisibles']} en panne, "
+                   f"{recap['nouvelles']} nouvelle(s) version(s) vue(s).")
+            cible = "Sonder maintenant" if source_id is None else (
+                (recap.get("details") or [{}])[0].get("source") or str(source_id))
+            circuit_journal.journaliser(s, "sonde", cible, par, "ok",
+                                        {k: v for k, v in recap.items() if isinstance(v, (int, float))})
+            s.commit()
+        circuit_taches.terminer("sonde", message=msg, resultat=recap)
+    except Exception as exc:  # noqa: BLE001 — la tâche note son échec, jamais un crash muet
+        from .. import circuit_taches as _ct
+        _ct.echouer("sonde", message=f"Sonde interrompue ({type(exc).__name__}).")
+        raise
+
+
+@router.post("/admin/circuit/sonder")
+def admin_circuit_sonder(request: Request, source_id: int | None = None) -> dict:
+    """CIRCUIT-P7 (lot 1) — le bouton « Sonder maintenant » de la carte Sonde de nuit : lance un
+    passage de la sentinelle (toutes les sources à amont, ou une seule via `source_id`) en TÂCHE
+    détachée. Rend la main tout de suite ; le résultat + la ligne de journal arrivent à la fin."""
+    import threading
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import circuit_taches
+    qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
+    if circuit_taches.en_cours("sonde"):
+        return {"ok": True, "lance": False, "deja": True, "tache": circuit_taches.lire("sonde")}
+    circuit_taches.demarrer("sonde", total=0, par=str(qui), message="Sonde en cours…")
+    threading.Thread(target=_executer_sonde, args=(str(qui), source_id), daemon=True).start()
     return {"ok": True, "lance": True}
 
 
@@ -2546,6 +2659,26 @@ def _cibles_agents(reservoirs: list[dict]) -> list[dict]:
     return [r for r in reservoirs if (r.get("etat") or ["", ""])[1] in manque]
 
 
+def _cibles_agents_portee(c, reservoirs: list[dict], portee: str | None) -> list[dict]:
+    """CIRCUIT-P7 (lot 1) — la PORTÉE choisie dans le menu « Envoyer les agents » :
+      · `jamais` → les sources « jamais vérifiée » (l'agent leur pose un premier contrôle) ;
+      · `g8`     → les sources vitrine sans contrôle depuis > 7 j (le verrou G8, par NOM) ;
+      · `tous`   → tous les réservoirs de la vitrine (le passage du dimanche, à la demande) ;
+      · défaut   → les réservoirs dont le contrôle manque (`_cibles_agents`, comportement historique)."""
+    if portee == "jamais":
+        return [r for r in reservoirs if (r.get("etat") or ["", ""])[1] == "jamais vérifiée"]
+    if portee == "tous":
+        return list(reservoirs)
+    if portee == "g8":
+        try:
+            from .. import circuit_garanties as _g
+            noms = {x["name"] for x in _g.sources_sans_controle(c, 7)}
+            return [r for r in reservoirs if r["nom"] in noms]
+        except Exception:  # noqa: BLE001 — G8 indisponible : rien à cibler plutôt qu'un envoi large
+            return []
+    return _cibles_agents(reservoirs)
+
+
 def _executer_agents(par: str, ids: list[int], noms: dict) -> None:
     """CIRCUIT-P2 (lot 3.3) — LES agents, un par réservoir : chacun va lire chez le producteur
     (sonde amont réelle), journalise son retour (geste « agent »), fait avancer la progression et
@@ -2585,10 +2718,12 @@ def _executer_agents(par: str, ids: list[int], noms: dict) -> None:
 
 
 @router.post("/admin/circuit/agents")
-def admin_circuit_agents(request: Request, source_id: int | None = None) -> dict:
-    """CIRCUIT-P2 (lot 3.3) — « Envoyer les agents » (ou un agent, `source_id`). JAMAIS grisé sans
-    mot : sans crédit API → un message clair, rien de lancé ; sinon → tâche détachée sur les
-    réservoirs dont le contrôle manque, progression + état mauve + journal."""
+def admin_circuit_agents(request: Request, source_id: int | None = None,
+                         portee: str | None = None) -> dict:
+    """CIRCUIT-P2 (lot 3.3) / CIRCUIT-P7 (lot 1) — « Envoyer les agents ». JAMAIS grisé sans mot :
+    sans crédit API → un message clair, rien de lancé ; sinon → tâche détachée, progression + état
+    mauve + journal. La PORTÉE (menu de la carte Agents) : `source_id` (une source, depuis sa fiche),
+    ou `portee` ∈ {jamais, g8, tous} ; défaut = les réservoirs dont le contrôle manque."""
     import threading
     from .auth import exiger_admin
     exiger_admin(request)
@@ -2605,7 +2740,8 @@ def admin_circuit_agents(request: Request, source_id: int | None = None) -> dict
         reservoirs = _assembler_reservoirs(c, only_id=source_id)
         for r in reservoirs:
             r["etat"] = list(_etats.etat_reservoir(r))
-    cibles = reservoirs if source_id is not None else _cibles_agents(reservoirs)
+        cibles = (reservoirs if source_id is not None
+                  else _cibles_agents_portee(c, reservoirs, portee))
     if not cibles:
         return {"ok": True, "lance": False,
                 "message": "Aucun réservoir sans contrôle récent — rien à envoyer."}
