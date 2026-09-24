@@ -90,6 +90,7 @@ export interface Filters {
   constructibilite: string[]         // constructible / au_conditionnelle / fermee / inconstructible / rnu
   etatSol: string[]                  // nu / bati_marginal / bati_sature / bati_revele
   capaciteMin: number | null         // capacité logements ESTIMÉE >= N (dérivée SDP)
+  destinationAutorisee: string | null  // FAISABILITE-1 lot B — sous-destination R151-28 (slug) admise dans la zone
   zonePlu: string[]                  // zone PLU EXACTE (libellés, ex. UA, UB, 2AU)
   analyseLabuse: boolean             // interrupteur : appliquer le classement LABUSE (tiers). ÉTEINT par défaut (cf. EMPTY_FILTERS ci-dessous, M55-D stage 4 — tri factuel sans opinion).
   // M45 (P2d) — tiroirs éco / mutation / propriété / veille
@@ -135,7 +136,7 @@ export const EMPTY_FILTERS: Filters = {
   evenement: false, veille: false, horsCopro: false,
   flags: [], flagsExclus: [], communes: [],
   personneMorale: false, zonagePlu: [],
-  sdpMax: null, constructibilite: [], etatSol: [], capaciteMin: null, zonePlu: [],
+  sdpMax: null, constructibilite: [], etatSol: [], capaciteMin: null, destinationAutorisee: null, zonePlu: [],
   analyseLabuse: false,   // M55-D stage 4 : interrupteur « regard LABUSE » ÉTEINT par défaut (tri factuel)
   sousDensite: false, multMin: null, rangMax: null, renouvellement: false,
   proprietaireType: [], droitsResiduels: [], etatSociete: [], copro: [], npnru: false, adresseAbsente: false,

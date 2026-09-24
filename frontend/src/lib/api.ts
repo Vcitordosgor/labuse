@@ -84,6 +84,7 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.constructibilite.length ? { constructibilite: f.constructibilite.join(',') } : {}),
   ...(f.etatSol.length ? { etat_sol: f.etatSol.join(',') } : {}),
   ...(f.capaciteMin != null ? { capacite_min: f.capaciteMin } : {}),
+  ...(f.destinationAutorisee ? { destination: f.destinationAutorisee } : {}),   // FAISABILITE-1 lot B
   ...(f.zonePlu.length ? { zone_plu: f.zonePlu.join(',') } : {}),
   // M45 (P2d) — tiroirs éco / mutation / propriété / veille
   ...(f.sousDensite ? { sous_densite: 'true' } : {}),

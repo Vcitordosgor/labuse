@@ -20,6 +20,7 @@ import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
 import { Chip } from '../ui/Chip'
+import { DestinationSelect } from '../outils/DestinationSelect'   // FAISABILITE-1 lot B — sélecteur R151-28 partagé
 import { useFiltre } from './filtreContext'   // M120 — binding partagé (carte OU cadrage projet)
 
 // ANALYSE-1 — le récapitulatif de la Révélation parle le NOUVEAU moteur (bandes de Score) ; l'ancien
@@ -274,6 +275,85 @@ export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: stri
   )
 }
 
+// ═══════ FAISABILITE-1 (lot B) — GROUPE « CAPACITÉ » ═══════════════════════════════════════════
+// Remplace l'ancien mode « Par critères » de l'outil Faisabilité (retiré au lot C) : chercher des
+// parcelles PAR ce qu'on peut y construire. SDP restante ≥ X et logements ≥ N sont lus dans
+// `parcel_residuel` du RUN SERVI (la MÊME donnée que la fiche, jamais le gabarit brut — cf. backend
+// app.py sdp_min/capacite_min). L'aide-calcul « Depuis un programme » reprend la logique de
+// « Par critères » (bâtiments × unités/bât × m²/unité × circulations → SDP nécessaire) et remplit X.
+// « Destination autorisée » écarte les zones qui l'INTERDISENT (plu_destinations validées) ;
+// calibration en cours = non filtrée (dit tel quel). Pas d'« Inclure A/N » : le filtre Zonage suffit.
+function AideProgramme() {
+  const { setFilter } = useFiltre()
+  const [p, setP] = useState({ batiments: 1, logtParBat: 8, m2Unite: 60, circulationPct: 20 })
+  const set = (k: keyof typeof p, v: string) => setP((s) => ({ ...s, [k]: v === '' ? 0 : Number(v) }))
+  const unites = Math.max(0, Math.round(p.batiments * p.logtParBat))
+  // SDP nécessaire = unités × m²/unité × (1 + circulations %) — MÊME formule que « Par critères »
+  // (modules.py:_sdp_min : unites × surface_unite_m2 × coef_circulation).
+  const sdpNec = Math.round(unites * p.m2Unite * (1 + p.circulationPct / 100))
+  const champ = (k: keyof typeof p, label: string) => (
+    <label className="flex flex-col gap-0.5 text-[9.5px] uppercase tracking-wide text-txt-dim">{label}
+      <input type="number" inputMode="numeric" min={0} value={p[k] || ''} onChange={(e) => set(k, e.target.value)}
+        className="w-full rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi focus:border-mint focus:outline-none" />
+    </label>
+  )
+  return (
+    <div data-aide-programme className="mt-1 flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2/60 p-2">
+      <div className="grid grid-cols-2 gap-2">
+        {champ('batiments', 'Bâtiments')}
+        {champ('logtParBat', 'Unités/bât.')}
+        {champ('m2Unite', 'm²/unité')}
+        {champ('circulationPct', 'Circulations %')}
+      </div>
+      <p className="text-[10.5px] leading-snug text-txt-mut">
+        <b className="text-txt">{nf.format(unites)}</b> logement{unites > 1 ? 's' : ''} ·
+        SDP nécessaire <b className="text-txt">~{nf.format(sdpNec)} m²</b>
+        <span className="text-txt-dim"> (Estimé — {p.m2Unite} m²/unité × {p.circulationPct} % circulations)</span>
+      </p>
+      <button data-aide-appliquer onClick={() => { setFilter('sdpMin', sdpNec); setFilter('capaciteMin', unites) }}
+        disabled={sdpNec <= 0}
+        className="self-start rounded-md border border-mint/60 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-txt-hi transition-colors duration-quick hover:bg-mint/20 disabled:opacity-40">
+        Filtrer : SDP restante ≥ {nf.format(sdpNec)} m²
+      </button>
+    </div>
+  )
+}
+
+export function CapaciteSection() {
+  const { filters, setFilter } = useFiltre()
+  const [aide, setAide] = useState(false)
+  return (
+    <div data-capacite-filtre className="gcard mt-2 flex flex-col gap-3 p-3">
+      <div>
+        <p className="label-caps text-txt-dim">SDP restante</p>
+        {/* SDP RÉSIDUELLE du run servi (parcel_residuel) — la même que la fiche. */}
+        <div className="mt-1 flex items-center gap-1.5"><NumField field="sdpMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="sdpMax" ph="max" suffix="m²" /></div>
+      </div>
+      <div>
+        <p className="label-caps text-txt-dim">Logements possibles</p>
+        <div className="mt-1 flex items-center gap-1.5">
+          <span className="text-[10px] text-txt-dim">≥</span><NumField field="capaciteMin" ph="N" suffix="logts" />
+        </div>
+        <p className="mt-1 text-[10px] leading-snug text-txt-dim">Estimé — dérivé de la SDP restante (~70 m² SDP / logement).</p>
+      </div>
+      <div>
+        <DestinationSelect dataAttr="filtre-capacite" value={filters.destinationAutorisee}
+          onChange={(slug) => setFilter('destinationAutorisee', slug)} />
+        <p className="mt-1 text-[10px] leading-snug text-txt-dim">Écarte les zones qui l’interdisent au règlement ; « calibration en cours » = non filtrée.</p>
+      </div>
+      <div>
+        {/* Aide-calcul repliable — « Depuis un programme » (logique de l'ex-« Par critères »). */}
+        <button data-aide-toggle aria-expanded={aide} onClick={() => setAide((v) => !v)}
+          className="flex w-full items-center gap-1.5 text-left text-[11px] text-txt transition-colors duration-quick hover:text-txt-hi">
+          <Chevron open={aide} />
+          <span>Depuis un programme…</span>
+        </button>
+        {aide && <AideProgramme />}
+      </div>
+    </div>
+  )
+}
+
 // M55-G point 7 / suite point 3 : Tiroir, ModeBCurseur, BoolChip, Section retirés avec le
 // contenu de l'état allumé (0-caller ici ; le curseur mode B de SESSION reste porté par le
 // store — la fiche continue de le lire).
@@ -507,12 +587,19 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
           les flags restent visibles en fiche et en couches. Les clés URL legacy (fl=) sont
           ignorées proprement à la lecture (filters.ts). */}
 
-      {/* ═══════ 3 · SIGNAUX DE VIE (M55-D stage 6 · M55-G suite point 4) — ÉVÉNEMENTS
+      {/* ═══════ 3 · CAPACITÉ (FAISABILITE-1 lot B) — ce que le PLU laisse construire : SDP restante,
+          logements, destination. SDP/logements lus dans parcel_residuel du RUN SERVI (= la fiche,
+          jamais le gabarit brut). Compteur SQL exact, ET avec les autres filtres, persisté à l'URL. ═══════ */}
+      <TitreSection cls="mt-4" titre="3 · Capacité"
+        info="Ce que le PLU laisse construire : SDP restante et logements (lus sur le run servi, comme la fiche) et destination admise. Chercher des parcelles par ce qu'on peut y bâtir." />
+      <CapaciteSection />
+
+      {/* ═══════ 4 · SIGNAUX DE VIE (M55-D stage 6 · M55-G suite point 4) — ÉVÉNEMENTS
           SOURCÉS, filtrables SANS analyse (pas des jugements). OU entre signaux du groupe,
           ET avec le reste. UN SEUL niveau, 7 signaux (décision Vic). ═══════ */}
       <div data-signaux-vie className="mt-4">
         <div className="flex items-baseline justify-between gap-2">
-          <TitreSection titre="3 · Signaux de vie"
+          <TitreSection titre="4 · Signaux de vie"
             info="Des événements sourcés, cumulables — une parcelle correspond si au moins un des signaux cochés est présent. Chaque signal porte son propre « i » (source)." />
           {(() => { const n = filters.signaux.filter((s) => SIGNAUX_KEYS.includes(s)).length
             return n > 0 && <span className="shrink-0 text-[10.5px] text-txt-dim">{`${n} actif${n > 1 ? 's' : ''} sur ${SIGNAUX_KEYS.length}`}</span> })()}
