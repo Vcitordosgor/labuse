@@ -561,6 +561,8 @@ export interface GabaritResult {
   hauteurReglementaireM?: number | null
   hauteurSource?: GabRegSource | null
   hauteurStatus?: string | null          // 'not_integrated' → « Non chiffrée » (prospect)
+  hauteurBase?: string | null            // 'faitage' | 'egout' — ce que porte hauteurReglementaireM
+  hauteurEgoutM?: number | null          // égout en sous-ligne quand la règle distingue faîtage/égout
   coverage?: GabCoverage | null
   appliedRules: GabAppliedRule[]
   nonIntegratedRules: GabNonIntegratedRule[]

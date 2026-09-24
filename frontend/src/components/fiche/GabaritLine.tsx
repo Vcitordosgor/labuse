@@ -13,6 +13,9 @@ const C_ZONE = '#36c99a'
 const C_RETRAIT = '#e0a44a'
 const C_EXCL = '#e8491d'
 
+// GABARIT-6 — hauteur décimale sûre (l'égout vaut souvent 4,5 m : fmtInt l'arrondirait à tort).
+const fmtH = (m?: number | null) => (m == null ? '' : m.toLocaleString('fr-FR'))
+
 function* rings(geom: GabGeom): Generator<number[][]> {
   if (!geom) return
   const co = (geom as { coordinates: unknown }).coordinates
@@ -101,7 +104,16 @@ export function GabaritLine({ idu }: { idu: string }) {
                 value={r.plafondEmpriseStatus === 'absent' ? 'Non réglementé' : `${fmtInt(r.plafondEmpriseM2)} m²`}
                 tone={r.plafondEmpriseStatus === 'absent' ? 'mute' : undefined} />
               <FactRow label="Hauteur réglementaire"
-                value={r.hauteurStatus === 'not_integrated' ? 'Non chiffrée (prospect)' : `${fmtInt(r.hauteurReglementaireM)} m`}
+                value={r.hauteurStatus === 'not_integrated'
+                  ? 'Non chiffrée (prospect)'
+                  : r.hauteurBase === 'egout'
+                    ? `${fmtH(r.hauteurReglementaireM)} m à l'égout`
+                    : r.hauteurEgoutM != null
+                      ? <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.15 }}>
+                          <span>{fmtH(r.hauteurReglementaireM)} m max</span>
+                          <span style={{ fontSize: 10, color: 'var(--txt-dim)' }}>égout {fmtH(r.hauteurEgoutM)} m</span>
+                        </span>
+                      : `${fmtH(r.hauteurReglementaireM)} m`}
                 tone={r.hauteurStatus === 'not_integrated' ? 'mute' : undefined} src="§4 Urbanisme" />
             </div>
             <MiniPlan contour={r.contourGeoJSON} zone={r.zoneImplantationGeoJSON}

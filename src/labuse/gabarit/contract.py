@@ -60,6 +60,10 @@ class MaxHeight(BaseModel):
     ruleId: Optional[str] = None
     meters: Optional[float] = None
     status: Optional[Literal["integrated", "not_integrated"]] = None   # 'not_integrated' = forme non chiffrée (prospect)
+    # GABARIT-6 — `meters` porte le FAÎTAGE quand la zone en fixe un, sinon l'ÉGOUT. `basis` dit lequel
+    # (jamais un faîtage implicite) ; `egoutMeters` = l'égout quand la règle distingue les deux (sous-ligne).
+    basis: Optional[Literal["faitage", "egout"]] = None
+    egoutMeters: Optional[float] = None
     source: Optional[RegulatorySource] = None
 
 
@@ -151,6 +155,8 @@ class GabaritResult(BaseModel):
     hauteurReglementaireM: Optional[float] = None
     hauteurSource: Optional[RegulatorySource] = None
     hauteurStatus: Optional[str] = None          # 'not_integrated' → « Non chiffrée » (prospect)
+    hauteurBase: Optional[str] = None            # 'faitage' | 'egout' — ce que porte hauteurReglementaireM
+    hauteurEgoutM: Optional[float] = None        # égout, en sous-ligne, quand la règle distingue faîtage/égout
 
     coverage: Optional[Coverage] = None
     appliedRules: list[AppliedRule] = Field(default_factory=list)

@@ -4,7 +4,7 @@ import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
 import { BANDE_META, SIGNAL_META, verdictMeta } from '../../lib/status'
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -607,6 +607,11 @@ export function Fiche({ idu }: { idu: string }) {
   const faisa = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu), enabled: !!f })
   const cap = faisa.data?.capacite
   const fo = cap?.fourchette
+  // GABARIT-6 (P1) — l'en-tête « Urbanisme » lit la HAUTEUR RÉGLEMENTAIRE SOURCÉE par la MÊME fonction
+  // que le tiroir §10 et l'outil (endpoint /outils/gabarit ; MÊME clé react-query que <GabaritLine>, cache
+  // partagé, zéro requête en plus). Corrige GABARIT-AUDIT-1 : l'en-tête servait niveaux × 3 m (une
+  // estimation d'étages présentée comme un « max »), qui contredisait le règlement cité et le tiroir §10.
+  const gab = useQuery({ queryKey: ['gabarit', idu], queryFn: () => getGabarit(idu), retry: false, enabled: !!f })
   // M56-B3/B4 : zone A (agricole) et N (naturelle) = inconstructibles par principe. ATTENTION :
   // « AU » (à urbaniser) EST constructible → on exclut AU (« A » non suivi de « U »). Les zones
   // numérotées (1AU/2AU) commencent par un chiffre → non captées. U reste constructible.
@@ -627,16 +632,31 @@ export function Fiche({ idu }: { idu: string }) {
   // M57-P1 (Q5) : « non constructible » affirmait plus que ce que le code sait (préfixe de zone
   // seul ; STECAL différé, extensions non traitées). Reformulé « constructibilité très limitée »
   // + « i » citant les exceptions non évaluées. Le CALCUL et la règle de zone sont inchangés.
-  const reglesGabarit: ReactNode = fo?.hauteur_m != null
-    ? `${fo.hauteur_m} m max`
-    : nonConstructible
-      ? <span className="t-val absent" style={{ maxWidth: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          constructibilité très limitée
-          <Tip side="top" tip="Les zones A et N interdisent la construction neuve à usage d'habitation, sauf exceptions non évaluées par LABUSE : STECAL, extension d'un bâtiment existant, construction agricole. À vérifier au règlement.">
-            <span role="button" tabIndex={0} aria-label="Exceptions à la constructibilité" style={{ color: 'var(--txt-ghost)', fontSize: 11, cursor: 'help', flexShrink: 0 }}>ⓘ</span>
-          </Tip>
-        </span>
-      : undefined
+  // faîtage = le « max » réglementaire ; l'égout, si la règle le distingue, part en sous-ligne. Hauteur en
+  // prospect (ex. Saint-Denis Ud) → « Non chiffrée ». Le calcul niveaux × étage reste dans la capacité
+  // (11 étapes) sous « niveaux constructibles », jamais ici sous « max ».
+  const gd = gab.data && gab.data.status === 'ok' ? gab.data : null
+  const fmtH = (m: number) => m.toLocaleString('fr-FR')
+  const reglesGabarit: ReactNode =
+    gd && gd.hauteurStatus !== 'not_integrated' && gd.hauteurReglementaireM != null
+      ? (gd.hauteurBase === 'egout'
+          ? `${fmtH(gd.hauteurReglementaireM)} m à l'égout`
+          : gd.hauteurEgoutM != null
+            ? <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.15 }}>
+                <span>{fmtH(gd.hauteurReglementaireM)} m max</span>
+                <span style={{ fontSize: 10, color: 'var(--txt-dim)' }}>égout {fmtH(gd.hauteurEgoutM)} m</span>
+              </span>
+            : `${fmtH(gd.hauteurReglementaireM)} m max`)
+      : gd && gd.hauteurStatus === 'not_integrated'
+        ? <span className="t-val absent" style={{ maxWidth: 'none' }}>Non chiffrée (prospect)</span>
+        : nonConstructible
+          ? <span className="t-val absent" style={{ maxWidth: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              constructibilité très limitée
+              <Tip side="top" tip="Les zones A et N interdisent la construction neuve à usage d'habitation, sauf exceptions non évaluées par LABUSE : STECAL, extension d'un bâtiment existant, construction agricole. À vérifier au règlement.">
+                <span role="button" tabIndex={0} aria-label="Exceptions à la constructibilité" style={{ color: 'var(--txt-ghost)', fontSize: 11, cursor: 'help', flexShrink: 0 }}>ⓘ</span>
+              </Tip>
+            </span>
+          : undefined
   // FICHE-RANGEMENT-1 Lot 1 (doublon #5) — `presc` (drapeaux EBC/ER) alimentait le bloc Signaux du
   // haut, retiré (doublon du tiroir « Dispositifs et périmètres »). Plus de lecteur → const retirée.
 
