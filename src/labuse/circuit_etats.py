@@ -231,6 +231,25 @@ def slug_reservoir(nom: str | None) -> str | None:
     return NOM_VERS_SLUG.get(nom or "")
 
 
+# ── CIRCUIT-P6 (tâche 2) — LES SOURCES SANS MILLÉSIME PAR NATURE ─────────────────────────────
+# Trois réservoirs n'ont AUCUN millésime amont à comparer : leur fraîcheur est vraie « par
+# construction », pas parce qu'une sonde vient de passer. Les laisser en « jamais vérifiée » (gris)
+# était un contresens — il n'y a rien à vérifier. Le mode `sans_millesime` (posé sur data_sources,
+# cf. seed_sources.MODE_ET_CADENCE) les sort de ce gris et etat_reservoir les rend « à jour ». La
+# RAISON, écrite, est portée par la vanne du réservoir (« à jour par construction — … »).
+RAISON_SANS_MILLESIME: dict[str, str] = {
+    'osm_overpass': "flux continu (planet hebdomadaire + diffs) : aucune version datée à comparer",
+    'inpi_rne': "API RNE v3.0 sans extrait daté chez le producteur : pas de millésime publié "
+                "(règle anti-invention 6.2)",
+    'cout_construction_sdes': "donnée interne (choix LABUSE) : pas de producteur amont ni de millésime",
+}
+DEFAUT_SANS_MILLESIME = "sans millésime par nature : rien à comparer chez le producteur"
+
+def raison_sans_millesime(nom: str | None) -> str:
+    """La raison ÉCRITE du « à jour par construction » d'un réservoir sans millésime, par son nom."""
+    return RAISON_SANS_MILLESIME.get(NOM_VERS_SLUG.get(nom or "", ""), DEFAUT_SANS_MILLESIME)
+
+
 # ── L'ÉTAT D'UN RÉSERVOIR — CIRCUIT-P4 (lot 1) : TROIS états + un signal technique ──────────
 # La maquette v9 (Sources) ne connaît qu'une palette : À jour · Nouvelle version · Échue
 # (manuelle) · Jamais vérifiée · Sonde en panne. « À regarder » DISPARAÎT. Chaque source servie
@@ -254,6 +273,13 @@ def etat_reservoir(r: dict) -> tuple[str, str]:
     passage = veille.get("passage")
     echecs = int(veille.get("echecs_consecutifs") or 0)
     message = veille.get("dernier_message") or ""
+
+    # (0) SANS MILLÉSIME PAR NATURE — CIRCUIT-P6 (tâche 2). Aucun millésime amont à comparer
+    #     (OSM en flux continu, INPI RNE sans extrait daté, Coût de construction interne) : la
+    #     source est « à jour par construction ». Mint, JAMAIS « jamais vérifiée » (il n'y a rien
+    #     à vérifier). La raison écrite est portée par la vanne (raison_sans_millesime).
+    if mode == "sans_millesime":
+        return ("mint", "à jour")
 
     # (1) NOUVELLE VERSION — le producteur a publié plus récent que le servi → action « Injecter ».
     if statut == "nouvelle_version":

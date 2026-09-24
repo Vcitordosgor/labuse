@@ -11,8 +11,8 @@ RECENT = NOW - timedelta(days=1)
 VIEUX = NOW - timedelta(days=30)
 
 
-def _row(name, methode, actif=True, passage=None):
-    return {"name": name, "methode": methode, "actif": actif, "dernier_passage_at": passage}
+def _row(name, methode, actif=True, passage=None, mode=None):
+    return {"name": name, "methode": methode, "actif": actif, "dernier_passage_at": passage, "mode": mode}
 
 
 def test_g8_rouge_agent_a_zero_les_hors_sonde():
@@ -40,6 +40,19 @@ def test_g8_rouge_sonde_en_panne():
     rows = [_row("Sitadel", "api", passage=VIEUX)]
     sans = classer_sans_controle(rows, SEUIL)
     assert len(sans) == 1 and "muette" in sans[0]["motif"]
+
+
+def test_g8_sans_millesime_hors_liste():
+    """CIRCUIT-P6 (tâche 2) — une source SANS MILLÉSIME (OSM/INPI/Coût) est « à jour par
+    construction » : rien à contrôler amont, elle n'est PAS « sans contrôleur » — hors liste G8,
+    même sans sonde ni passage. Les autres hors-sonde restent nommées."""
+    rows = [
+        _row("OpenStreetMap / Overpass", None, passage=None, mode="sans_millesime"),
+        _row("INPI RNE (dirigeants)", None, passage=None, mode="sans_millesime"),
+        _row("VRD / assainissement (SPANC)", "rappel", passage=None, mode="depot_manuel"),
+    ]
+    noms = {s["name"] for s in classer_sans_controle(rows, SEUIL)}
+    assert noms == {"VRD / assainissement (SPANC)"}
 
 
 def test_g8_vert_quand_les_94_ont_un_controle_recent():
