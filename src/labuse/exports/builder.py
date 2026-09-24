@@ -233,9 +233,13 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
             hyp["taxe"] = _res["total_eur"]
             resolved["taxe_amenagement_saisi_eur"] = {
                 "valeur": round(float(_res["total_eur"])), "origine": "prefill",
-                "source": (f"taxe d'aménagement sur la SDP du projet "
-                           f"({round(float(program['surface_plancher']))} m²) au taux communal — "
-                           "config datée, service-public.gouv.fr")}
+                # TAXE-FIX-1 point 4 — la taxe porte sur la SURFACE TAXABLE (close et couverte,
+                # garages et annexes inclus, CGI 1635 quater H) ; on l'approche ici par la SDP du
+                # projet (garages/annexes non modélisés → estimation plutôt basse).
+                "source": (f"taxe d'aménagement sur la surface taxable "
+                           f"(≈ SDP du projet {round(float(program['surface_plancher']))} m², "
+                           "garages/annexes non modélisés) au taux communal — config datée, "
+                           "service-public.gouv.fr")}
     # RECETTE-4 U1/U2 — la fiscalité locale de la commune (taux TFPB, REI DGFiP) et sa zone A/B/C
     # (DHUP) entrent au Financier : la taxe foncière pèse sur les charges de portage et la zone
     # commande le régime applicable (TVA accession, PTZ, prix bailleur). Passe-plats sourcés + datés ;

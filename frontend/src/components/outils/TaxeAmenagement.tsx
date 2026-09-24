@@ -197,19 +197,23 @@ export function TaxeAmenagement() {
       {/* SAISIE — repliée tant qu'aucune parcelle n'est choisie (S4). */}
       {prefillIdu && (
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
+        {/* TAXE-FIX-1 point 4 — la SURFACE TAXABLE n'est PAS la SDP : c'est la somme des surfaces
+            closes et couvertes sous plus de 1,80 m, calculée au nu intérieur des façades, GARAGES
+            ET ANNEXES INCLUS (CGI art. 1635 quater H ; la SDP d'urbanisme, elle, les déduit). */}
         <NumField dataAttr="surface" label="Surface taxable" unit="m²" value={surface}
           onChange={(v) => setSurface(v)}
           hint={`${prefill.data && prefill.data.sdp_gabarit_m2 == null
             ? `Gabarit non calculable${prefill.data.zone_plu ? ` en zone ${prefill.data.zone_plu}` : ''} — saisissez la surface de votre projet. `
-            : ''}Surface de VOTRE projet. Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
+            : ''}Surface close et couverte > 1,80 m, garages et annexes INCLUS (CGI 1635 quater H) — ≠ SDP. Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
             c.exoneration_surface_min_m2 ? ` Surface < ${fmtInt(c.exoneration_surface_min_m2)} m² : exonérée.` : ''}`} />
         {/* OUTILS-FIX-2 B1 — repère « SDP restante au gabarit » À CÔTÉ du champ + geste « reprendre »
-            (copie dans le champ sur demande), jamais d'office. */}
+            (copie dans le champ sur demande), jamais d'office. TAXE-FIX-1 point 4 — le bouton dit
+            que la SDP est un POINT DE DÉPART à compléter (garages/annexes), pas la surface taxable. */}
         {prefill.data?.sdp_gabarit_m2 != null && (
           <div data-taxe-repere className="-mt-0.5 flex items-center gap-2 text-[10.5px] leading-snug text-txt-dim">
             <span>SDP {prefill.data.deja_batie ? 'restante au gabarit (parcelle déjà bâtie)' : 'au gabarit'} : <b className="text-mint">{fmtM2(prefill.data.sdp_gabarit_m2)}</b></span>
             <Bouton niveau="lien" data-taxe-reprendre onClick={() => setSurface(prefill.data!.sdp_gabarit_m2!)}
-              className="shrink-0">reprendre</Bouton>
+              className="shrink-0">Partir de la SDP du projet (à compléter : garages, annexes)</Bouton>
           </div>
         )}
 
@@ -288,9 +292,13 @@ export function TaxeAmenagement() {
               placeholder={`≤ ${fmtInt(c.taux.part_communale_plafond_pct)}`}
               hint={`Obligatoire — voté par la commune (plafond ${fmtInt(c.taux.part_communale_plafond_pct)} %). L’outil ne l’invente pas.`} />
           )}
+          {/* TAXE-FIX-1 point 4 — le taux départemental 974 (2,5 %) est CONFIRMÉ par DELTA (comme la
+              fiche) : on ne dit plus « à confirmer » en dur. On ne le dit que si la config ne l'a pas confirmé. */}
           <NumField dataAttr="taux-departemental" label="Taux départemental" unit="%" value={tauxDepEffectif} onChange={setTauxDepartemental}
             placeholder={depDefaut != null ? String(depDefaut) : undefined}
-            hint={`Plafond légal ${depDefaut != null ? depDefaut : '—'} % — à confirmer auprès du département.`} />
+            hint={`${depDefaut != null ? depDefaut : '—'} %${c.taux.part_departementale_confirmee_974
+              ? ' — confirmé (délibération départementale, source DGFiP/DELTA).'
+              : ` (plafond légal) — à confirmer auprès du département.`}`} />
         </div>
         {/* RV2-V2 — aide pour trouver le taux communal : n'apparaît qu'en REPLI (taux public absent),
             sinon l'outil sert déjà le taux et la question ne se pose plus. */}

@@ -85,7 +85,8 @@ export function TaxeAmenagementBlock({ t }: { t: NonNullable<Fiche['taxe_amenage
       <FactRow label="Taux départemental"
         value={t.taux_departemental_pct != null ? <>{t.taux_departemental_pct} <small>%</small></> : '—'}
         src={t.taux_departemental_confirme ? 'confirmé' : 'plafond légal 2,5 % — à confirmer'} />
-      <FactNote>Se calcule sur la surface de plancher créée par votre projet — chiffrée dans le Dossier financier une fois le projet saisi. Barème {t.annee} — {t.source}.</FactNote>
+      {/* TAXE-FIX-1 point 4 — la taxe porte sur la SURFACE TAXABLE (garages/annexes inclus), pas la SDP. */}
+      <FactNote>Se calcule sur la surface taxable de votre projet (close et couverte &gt; 1,80 m, garages et annexes inclus — ≠ SDP) — chiffrée dans le Dossier financier une fois le projet saisi. Barème {t.annee} — {t.source}.</FactNote>
     </div>
   )
 }
