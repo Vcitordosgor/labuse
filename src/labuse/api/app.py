@@ -5284,6 +5284,7 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
     h_contraintes = None                                     # les deux calculs (égout ET faîtage)
     h_base = sur.get("base")
     from ..faisabilite.hauteur_lidar import hauteur_lidar_servie
+    from ..bati import SEUIL_ECART_FAITAGE_M as _SEUIL_ECART_FAITAGE_M   # FICHE-FIX-2 P3
     _lid = hauteur_lidar_servie(db, idu)
     if _lid and (_lid.get("egout_m") is not None or _lid.get("faitage_m") is not None):
         # RECETTE-10 T1 — le LiDAR HD a MESURÉ égout ET faîtage : on retient les DEUX contraintes de
@@ -5340,6 +5341,15 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
         "hauteur_faitage_lidar_m": (_lid["faitage_m"] if _lid else None),
         "hauteur_egout_lidar_m": (_lid["egout_m"] if _lid else None),
         "hauteur_source_lidar": h_lidar_source,
+        # FICHE-FIX-2 P3 — quand la marge est bornée par le FAÎTAGE et que ce faîtage LiDAR diverge
+        # trop de BD TOPO (écart > seuil), la marge hérite du doute (§1.7) : drapeau « sources
+        # discordantes » + les deux valeurs, sans choix automatique. Si la contrainte qui mord est
+        # l'égout, la marge ne dépend pas du faîtage douteux → pas de drapeau.
+        "hauteur_bdtopo_m": (_lid.get("hauteur_bdtopo_m") if _lid else None),
+        "hauteur_discordante": bool(
+            _lid and h_contrainte == "faîtage"
+            and _lid.get("ecart_faitage_bdtopo_m") is not None
+            and abs(float(_lid["ecart_faitage_bdtopo_m"])) > _SEUIL_ECART_FAITAGE_M),
         # RECETTE-11 A3 — la date de survol LiDAR HD, servie AVEC la mesure (jamais une mesure sans date).
         "hauteur_survol": (_lid.get("survol") if _lid else None),
         # RECETTE-11 A4 — date d'un permis autorisé APRÈS le survol (mesure possiblement dépassée).

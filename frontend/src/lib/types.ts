@@ -561,6 +561,11 @@ export interface LeBien {
   hauteur_nature?: 'sourcé' | 'estimé' | null
   hauteur_survol?: string | null   // RECETTE-11 A3 — date de survol LiDAR HD
   hauteur_source?: string | null
+  // FICHE-FIX-2 P3 — hauteur BD TOPO déclarée + écart avec le faîtage LiDAR (déjà en base) : quand
+  // l'écart dépasse le seuil, `hauteur_discordante` = true → drapeau « sources discordantes ».
+  hauteur_bdtopo_m?: number | null
+  ecart_faitage_bdtopo_m?: number | null
+  hauteur_discordante?: boolean
   surface_libre_m2: number | null
   surface_parcelle_m2: number | null
   source_bati: string
@@ -844,6 +849,10 @@ export interface PotentielTransformation extends Indisponible {
   hauteur_nature?: string | null
   // RECETTE-11 A4 — permis autorisé après le survol : mesure possiblement dépassée.
   hauteur_permis_posterieur?: string | null
+  // FICHE-FIX-2 P3 — la marge bornée par un faîtage LiDAR discordant de BD TOPO hérite du doute.
+  hauteur_faitage_lidar_m?: number | null
+  hauteur_bdtopo_m?: number | null
+  hauteur_discordante?: boolean
   confiance: string | null
   source: string
   note: string

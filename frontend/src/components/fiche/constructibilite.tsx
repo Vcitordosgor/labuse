@@ -39,7 +39,17 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
           ratio consommée/autorisée et la marge en hauteur (le raisonnement), sans répéter le nombre. */}
       {/* RECETTE-11 A6 — plus de verdict (« possible »/« non ») : la marge mesurée sous la règle et
           la contrainte qui mord ; A3 : la date de survol quand c'est une mesure LiDAR HD. */}
-      {pt.hauteur_marge_m != null && <FactRow label="Marge en hauteur" value={<>~{pt.hauteur_marge_m} <small>m sous la règle{pt.hauteur_contrainte ? `, contrainte : ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}` : ''}{pt.hauteur_survol ? ` — mesuré au LiDAR HD, survol de ${pt.hauteur_survol}` : ''}{pt.hauteur_permis_posterieur ? ` ; antérieur au permis du ${pt.hauteur_permis_posterieur}, possiblement dépassé` : ''}</small></>} />}
+      {pt.hauteur_marge_m != null && <FactRow label="Marge en hauteur" tone={pt.hauteur_discordante ? 'warn' : undefined} value={<>~{pt.hauteur_marge_m} <small>m sous la règle{pt.hauteur_contrainte ? `, contrainte : ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}` : ''}{pt.hauteur_survol ? ` — mesuré au LiDAR HD, survol de ${pt.hauteur_survol}` : ''}{pt.hauteur_permis_posterieur ? ` ; antérieur au permis du ${pt.hauteur_permis_posterieur}, possiblement dépassé` : ''}</small></>} />}
+      {/* FICHE-FIX-2 P3 — la marge dépend du faîtage : si ce faîtage LiDAR diverge trop de BD TOPO,
+          la marge hérite du doute (même drapeau qu'au §3 Bâti), sans choix automatique. */}
+      {pt.hauteur_discordante && pt.hauteur_faitage_lidar_m != null && pt.hauteur_bdtopo_m != null && (
+        <div data-marge-discordante className="mt-0.5">
+          <Badge ton="ambre">Sources discordantes</Badge>
+          <p className="mt-0.5 text-[11px] leading-snug text-amber">
+            Marge calculée sur le faîtage LiDAR {pt.hauteur_faitage_lidar_m} m · BD TOPO {pt.hauteur_bdtopo_m} m — à vérifier sur photo aérienne.
+          </p>
+        </div>
+      )}
       <FactNote>{pt.source}</FactNote>
     </div>
   )
