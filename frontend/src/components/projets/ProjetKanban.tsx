@@ -11,6 +11,7 @@ import { fmtDate, fmtEurCompact, fmtInt, fmtM2, iduCourt } from '../../lib/forma
 import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Squelette } from '../Loading'
+import { Retour } from '../ui/Retour'   // DA-FIX-5 P6 — le retour unique de l'app (haut gauche)
 import { EmptyState } from '../States'
 import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
@@ -96,12 +97,14 @@ function LigneParcelle({ it, onDragStart, onRetenir, onEcarter, onFiche, onVoir 
   return (
     <div draggable onDragStart={onDragStart} data-tri-ligne={it.idu}
       onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
-      className="grid cursor-pointer grid-cols-[14px_1fr_170px_76px_96px] items-center gap-3 border-b border-line/50 px-3.5 py-2 transition-colors duration-quick hover:bg-surface-2">
+      className="grid cursor-pointer grid-cols-[14px_1fr_170px_76px_auto] items-center gap-3 border-b border-line/50 px-3.5 py-2 transition-colors duration-quick hover:bg-surface-2">
       <span className="h-[7px] w-[7px] rounded-full" style={{ background: tierDot(it.tier) }} />
       <AdresseLigne it={it} mono={etatLabel(it.etat_bien)} />
       <SignauxLigne signaux={it.signaux} />
       <span className="text-right font-mono text-[11.5px] text-txt-mut">{it.surface_m2 != null ? fmtM2(it.surface_m2) : '—'}</span>
-      <div className="flex justify-end gap-1.5">
+      {/* DA-FIX-5 P5 — la dernière colonne est `auto` (les 3 icônes 32 px + gaps = 108 px ne rentraient
+          pas dans 96 px et débordaient sur la surface) ; `pl-3` garantit ≥ 12 px entre « 300 m² » et l'œil. */}
+      <div className="flex justify-end gap-1.5 pl-3">
         {/* RETOURS-12 J1 — ŒIL AMBRE (couleur Projet) : voir la parcelle sur la carte EN ORTHO, délimitée,
             sans quitter le projet ni perdre l'état de la liste (focusParcelle, même geste que O1/O12). */}
         <Bouton icone niveau="secondaire" ton="vert" data-tri-voir onClick={onVoir} aria-label="Voir sur la carte (vue aérienne)">
@@ -273,7 +276,8 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
     <div data-projet-kanban className="flex min-w-0 flex-1 flex-col gap-3.5 overflow-hidden bg-bg p-4 sm:p-5">
       {/* ÉTAGE 1 — IDENTITÉ */}
       <div className={`shrink-0 ${carte} px-4 py-3`}>
-        <button onClick={() => setOpenProjet(null)} className="min-h-6 text-[11px] text-txt-dim transition-colors duration-quick hover:text-txt-hi">← Mes projets</button>
+        {/* DA-FIX-5 P6 — retour unifié (bouton secondaire, haut gauche) au lieu du texte gris fait main. */}
+        <Retour label="Mes projets" onClick={() => setOpenProjet(null)} />
         <div className="mt-1 flex flex-wrap items-center gap-2.5">
           {editing ? (
             <input data-kanban-nom-input autoFocus value={nomInput} onChange={(e) => setNomInput(e.target.value)}

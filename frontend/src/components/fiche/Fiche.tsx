@@ -4,13 +4,14 @@ import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
 import { BANDE_META, SIGNAL_META, verdictMeta } from '../../lib/status'
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
+import { DeplacerMenu } from '../crm/DeplacerMenu'   // DA-FIX-5c — menu « Déplacer vers… » partagé (kanban CRM)
 import { AskBar, renderRich } from './AskBar'
 import { FinancierQuestionnaire } from './FinancierQuestionnaire'
 import { GabaritLine } from './GabaritLine'
@@ -199,14 +200,20 @@ function PipelineButton({ idu }: { idu: string }) {
       qc.invalidateQueries({ queryKey: ['pipeline'] })
     },
   })
-  // SCORING-3 (L5) — RETOUR TERRAIN depuis la fiche : quand la parcelle est suivie, UN clic
-  // pose l'état réel après contact (même étiquette que la carte Kanban — par compte, réversible).
-  const etiqueter = useMutation({
-    mutationFn: (key: string) => patchPipeline(state.data!.entry!.id, { contact_etiquette: key }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['pipeline-parcel', idu] })
-      qc.invalidateQueries({ queryKey: ['pipeline'] })
-    },
+  // DA-FIX-5c — depuis la fiche, quand la parcelle est suivie, on DÉPLACE la carte vers une autre
+  // colonne (même menu « Déplacer vers… » que le kanban) ou on la RETIRE du CRM (archivage réversible,
+  // restaurable depuis « Archivées »). Les deux invalident le bloc pour refléter l'état à l'instant.
+  const invalider = () => {
+    qc.invalidateQueries({ queryKey: ['pipeline-parcel', idu] })
+    qc.invalidateQueries({ queryKey: ['pipeline'] })
+  }
+  const deplacer = useMutation({
+    mutationFn: (status: string) => patchPipeline(state.data!.entry!.id, { status }),
+    onSuccess: invalider,
+  })
+  const retirer = useMutation({
+    mutationFn: () => archivePipeline(state.data!.entry!.id),
+    onSuccess: invalider,
   })
   const cols = meta.data?.columns ?? []
   // RETOURS-11 T3 (03/09) — le menu se ferme au clic n'importe où ailleurs et à Échap.
@@ -243,20 +250,13 @@ function PipelineButton({ idu }: { idu: string }) {
           {!cols.length && <Squelette lignes={2} className="px-2 py-1.5" />}
         </div>
       )}
-      {/* SCORING-3 (L5) — sélecteur de retour terrain (visible dès que la parcelle est suivie) */}
+      {/* DA-FIX-5c — bloc CRM de la fiche : le MÊME menu « Déplacer vers… » que les cartes du kanban
+          (mêmes colonnes, même composant). « ✓ Dans le CRM » reste au-dessus. */}
       {inPipe && state.data?.entry && (
-        <select
-          data-contact-etiquette
-          value={state.data.entry.contact_etiquette ?? ''}
-          onChange={(ev) => etiqueter.mutate(ev.target.value)}
-          disabled={etiqueter.isPending}
-          className={`mt-1.5 w-full cursor-pointer rounded-md border bg-surface-2 px-1.5 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-mint/50 ${state.data.entry.contact_etiquette ? 'border-mint/40 text-txt' : 'border-line-2 text-txt-dim'}`}
-        >
-          <option value="">— retour terrain ?</option>
-          {(meta.data?.contact_etiquettes ?? []).map((et) => (
-            <option key={et.key} value={et.key}>{et.label}</option>
-          ))}
-        </select>
+        <div className="mt-1.5">
+          <DeplacerMenu columns={cols} currentStatus={state.data.entry.status}
+            onMove={(status) => deplacer.mutate(status)} onRetirer={() => retirer.mutate()} />
+        </div>
       )}
     </div>
   )

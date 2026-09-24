@@ -108,7 +108,8 @@ export interface PipelineMeta {
   priorities: { key: string; label: string }[]
   defaults: { status?: string; priority?: string }
   proprietaire_statuts?: { key: string; label: string }[]   // M137 — pour l'écran d'édition de carte
-  // SCORING-3 (L5) — les 8 étiquettes de retour terrain (sélecteur d'un clic après contact)
+  // SCORING-3 (L5) — les 8 étiquettes de contact (données back conservées ; plus servies en UI :
+  // DA-FIX-5c a remplacé le sélecteur par le menu « Déplacer vers… » côté kanban ET fiche)
   contact_etiquettes?: { key: string; label: string }[]
 }
 
@@ -144,7 +145,7 @@ export interface PipelineEntry {
     | { type: 'particulier' } | null
   // CONNEXIONS-2 Lot 4 (KO-6) — statut du courrier rattaché à cette piste (relu sur la carte Kanban)
   courrier?: { statut: string; libelle: string; demande_id: number; ts: string | null } | null
-  // SCORING-3 (L5) — étiquette de retour terrain (par compte, horodatée, réversible)
+  // SCORING-3 (L5) — étiquette de contact (par compte, horodatée) ; champ back conservé, plus servi en UI
   contact_etiquette?: string | null
   contact_etiquette_label?: string | null
   contact_etiquette_at?: string | null

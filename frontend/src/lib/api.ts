@@ -1467,7 +1467,7 @@ export interface AdminPilotage {
   deploiement?: { marqueur_present: boolean; sha: string | null; depuis: string | null; avance: number | null; branche: string }
   // DASHBOARD-4 P3 — sources vitrine sans contrôle récent (G8) ; la cause vraie = horloges non posées.
   sondes_muettes?: { n: number | null }
-  // SCORING-3 (L5.3) — étiquettes de retour terrain posées (7 j + cumul ; seuil TERRAIN-1 : 200)
+  // SCORING-3 (L5.3) — étiquettes de contact posées (7 j + cumul ; seuil TERRAIN-1 : 200)
   etiquettes_terrain?: { semaine: number; total: number }
   radar?: { compteurs: RadarCompteurs; ecart: FluxRadarEcart[] } | null   // FLUX-1 F3.5 — tuile « la donnée qui s'accumule »
   run: { label: string | null; carte_le: string | null }

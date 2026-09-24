@@ -5,13 +5,15 @@
 import type { ReactNode } from 'react'
 import { Tip } from '../Tip'
 
-// Le « i » : une pastille ronde ; le Tip s'affiche AU SURVOL immédiat (hoverDelayMs défaut 0),
-// curseur normal (aucun « ? »). Clic sur la pastille ne bascule pas la couche (stopPropagation du Tip).
+// Le « i » : une pastille ronde ; curseur normal (aucun « ? »). Clic sur la pastille ne bascule pas la
+// couche (stopPropagation du Tip). DA-FIX-5 P3 — le « i » d'une couche est un CONTRÔLE DE CARTE :
+// l'infobulle au survol y est autorisée (charte §7.1) → on passe `survol` pour que la bulle s'ouvre
+// AUSSI au survol (elle restait click/focus-seul). Clic/tap et focus clavier restent inchangés.
 // COUCHES-REGISTRE-2 lot 2 : `info` peut être un bloc (source/millésime/date + prose), pas juste une string.
 export function LayerInfoPill({ info }: { info: ReactNode }) {
   if (!info) return null
   return (
-    <Tip garder side="top" tip={info} className="shrink-0">
+    <Tip garder survol side="top" tip={info} className="shrink-0">
       <span
         role="button"
         tabIndex={0}

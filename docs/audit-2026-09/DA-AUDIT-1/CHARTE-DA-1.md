@@ -31,7 +31,7 @@ Règle générale : chaque règle vit dans UN composant partagé (`primitives.ts
 
 ## 3. Retour
 
-- [A] Un seul composant `<RetourOutil/>`, en haut à gauche du panneau, toujours au même endroit.
+- [A] Un seul composant `<Retour/>`, en haut à gauche du panneau, toujours au même endroit. Rendu **bouton secondaire** (contour vert, 32 px, rayon 6, survol vert plein) — jamais un lien souligné, jamais un texte gris.
 - [?] Libellé : « ← Outils » depuis l'écran 1 d'un outil, « ← [étape précédente] » depuis une étape, « ← [outil de départ] » après un pont — jamais « Retour » seul, jamais une croix pour revenir en arrière (la croix ferme, elle ne recule pas).
 - [A] Retour après un pont = état d'origine restitué (sélection, filtres).
 - [?] `Échap` = retour d'une étape ; jamais fermeture du panneau entier.
@@ -54,7 +54,7 @@ Règle générale : chaque règle vit dans UN composant partagé (`primitives.ts
 ## 6. Scroll, accordéons, apparition
 
 - [A] Aucune barre horizontale, nulle part. Barre verticale verte opaque au survol, style défini une fois.
-- [A] Accordéon : fermé = ▶, ouvert = ▼ ; chevron actif vert opaque.
+- [A] Accordéon : fermé = ◀ (pointe à gauche), ouvert = ▼ ; chevron actif vert opaque.
 - [?] **Une seule animation d'apparition** (fondu + 4 px de montée, 150 ms) pour panneaux, tiroirs, cartes. Rien d'autre : pas de slide, pas de zoom, pas de rebond.
 - [?] Aucune animation au scroll (pas d'éléments qui apparaissent en défilant) — tout est là à l'ouverture.
 - [?] Transitions de survol : 100 ms, une seule courbe.
