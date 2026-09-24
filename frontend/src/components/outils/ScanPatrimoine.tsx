@@ -136,6 +136,7 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
               PROPRIÉTAIRE de la parcelle (onPick → resoudre → ownerDeIdu) ; un nom de société / SIREN passe
               par onAddress → resoudre (recherche dénomination, liste candidats si plusieurs). */}
           <ParcelInput dataAttr="scan-search" placeholder="Nom de société, SIREN, adresse ou IDU"
+            grammaireProprietaire
             onPick={(v) => { setQ(v); void resoudre(v) }}
             onAddress={(v) => { setQ(v); void resoudre(v) }} />
           {/* U1.3 — ligne d'aide sous le champ. */}

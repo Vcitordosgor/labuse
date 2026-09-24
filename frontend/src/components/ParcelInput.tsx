@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { estIdu, estSectionNumero, iduComplet, iduCourt, normSectionNumero } from '../lib/format'
 import { fmtM2 } from '../lib/format'
-import { searchParcels } from '../lib/api'
+import { searchParcels, type SuggestItem } from '../lib/api'
 import { useApp } from '../store/useApp'
 import { AddressAutocomplete } from './AddressAutocomplete'
 import { Bouton } from './ui/Bouton'
@@ -24,13 +24,17 @@ import { Bouton } from './ui/Bouton'
 // jamais un zéro muet.
 type Candidate = { idu: string; commune: string; surface_m2: number | null }
 
-export function ParcelInput({ onPick, onAddress, placeholder, autoFocus, withCarte = true, dataAttr }: {
+export function ParcelInput({ onPick, onAddress, placeholder, autoFocus, withCarte = true, dataAttr, grammaireProprietaire = false }: {
   onPick: (idu: string) => void
   onAddress?: (label: string) => void
   placeholder?: string
   autoFocus?: boolean
   withCarte?: boolean
   dataAttr?: string                 // hook QA : pose data-<dataAttr> sur le champ (ex. « courrier-idu »)
+  // DA-FIX-4 verif — active EN PLUS les suggestions live NOM de société / SIREN dans la MÊME liste
+  // qu'adresse/IDU (grammaires proprietaire+siren). Réservé à Scan patrimoine : une suggestion de
+  // propriétaire/SIREN renvoie son SIREN via `onAddress` (que Scan résout en propriétaire).
+  grammaireProprietaire?: boolean
 }) {
   const selectedIdu = useApp((s) => s.selectedIdu)
   const commune = useApp((s) => s.commune)
@@ -70,6 +74,16 @@ export function ParcelInput({ onPick, onAddress, placeholder, autoFocus, withCar
         autoFocus={autoFocus}
         placeholder={placeholder ?? 'Adresse, IDU ou référence cadastrale (BW0917)…'}
         onClear={() => { setMsg(null); setCandidats(null) }}
+        {...(grammaireProprietaire ? {
+          // Scan patrimoine : les suggestions NOM/SIREN vivent dans la MÊME liste que adresse/IDU.
+          // Une suggestion propriétaire/SIREN (type ≠ adresse/cadastre) → son SIREN part par onAddress.
+          grammaires: ['proprietaire', 'siren', 'cadastre', 'adresse'] as const,
+          onPick: (it: SuggestItem) => {
+            setMsg(null); setCandidats(null)
+            if (it.siren && onAddress) onAddress(it.siren)
+            else if (it.idu) onPick(iduComplet(it.idu))
+          },
+        } : {})}
         onSelect={(sel) => {
           setMsg(null); setCandidats(null)
           if (sel.idu) onPick(iduComplet(sel.idu))
