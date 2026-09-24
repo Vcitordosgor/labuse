@@ -79,7 +79,14 @@ def make_engine(url: str | None = None, echo: bool = False) -> Engine:
     # REVUE · R2 — fuseau de session forcé à Indian/Reunion : tout CURRENT_DATE/now() du SQL métier
     # est en heure Réunion, indépendamment du fuseau du serveur de prod (bug fuseau consigné). Le
     # pendant Python vit dans labuse.tz (today_reunion / now_reunion).
-    return create_engine(url or settings.database_url, echo=echo, future=True, pool_pre_ping=True,
+    # VITESSE-FIX-1 lot A — pool EXPLICITE et réglable par l'env (défauts = comportement historique :
+    # pool_size=5, max_overflow=10 ⇒ 15 connexions/worker, pression INCHANGÉE). `pool_recycle` ajouté
+    # (robustesse connexions longues). AUCUN `statement_timeout` posé ici : le moteur est PARTAGÉ avec
+    # les batchs CLI (ingestion/scoring/résiduel) qui tournent légitimement des heures — le plafond de
+    # requête est appliqué par requête d'API (SET LOCAL dans get_db), jamais sur le moteur.
+    return create_engine(url or settings.database_url, echo=echo, future=True,
+                         pool_size=settings.db_pool_size, max_overflow=settings.db_max_overflow,
+                         pool_pre_ping=settings.db_pool_pre_ping, pool_recycle=settings.db_pool_recycle_s,
                          connect_args={"options": "-c idle_in_transaction_session_timeout=600000"
                                                   " -c timezone=Indian/Reunion"})
 
