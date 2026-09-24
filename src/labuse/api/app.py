@@ -5321,7 +5321,7 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
         "pct_consomme": pct,                                  # SDP consommée / autorisée (%)
         "pct_residuel": (max(0, 100 - pct) if pct is not None else None),
         "sdp_residuelle_m2": sdp_servie,
-        "cause": _cause_zone,                                 # ZONE-1 : dominante A/N → 0, cause dite
+        "cause": None,                                        # garde A/N→0 retirée (FAISABILITE-clip) — plus de cause-garde
         "sous_densite": row["sous_densite"],
         "capacite_estimee": row["capacite_estimee"],
         # EXPORTS-1 (3.2) : surélévation au MOTEUR COMMUN — hauteur à l'ÉGOUT, base dite
