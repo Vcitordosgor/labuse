@@ -166,6 +166,11 @@ export function EtudeZone() {
 
   const pretA = entree === 'polygone' ? !!geomFromDrawn : !!cible
 
+  // ETUDE-ZONE-2 Lot A — le résultat est organisé en 7 sections repliables (accordéons). Les deux
+  // premières (Population, Économie) sont ouvertes par défaut, les autres repliées. État par id de
+  // section ; le chevron suit l'idiome de l'outil (fermé ▸ pointe à droite, ouvert ▾).
+  const [openSecs, setOpenSecs] = useState<Set<string>>(() => new Set(['population', 'economie']))
+
   const nouvelleEtude = () => {
     setCible(null); setNaf(null); setNafQuery(''); setSousDest(null); setZone(null); setTool(null)
     setModuleMap({ idus: [], extra: null }); mut.reset(); setPorteZone(null)
@@ -269,112 +274,312 @@ export function EtudeZone() {
       )}
 
       {res?.zone_disponible && (
-        <div className="flex flex-col gap-3">
-          {/* ÉTAPE 2 — LIRE LA ZONE */}
-          <StepHead n={2} titre="Lire la zone" sous="habitants, revenus, emplois, marché, permis, trafic, PLU" />
+        <div className="flex flex-col gap-2">
+          {/* ÉTAPE 2 — LIRE LA ZONE, en 7 sections repliables (ETUDE-ZONE-2 Lot A). Chaque section
+              porte sa ligne de source · millésime en bas ; Population + Économie ouvertes par défaut. */}
+          <StepHead n={2} titre="Lire la zone" sous="population · économie · immobilier · foncier · contraintes · équipements · dynamique" />
           <SectionTitle>{enTete}</SectionTitle>
-          {res.population?.inhabitee ? (
-            <p className="text-[11px] text-txt-mut">Zone peu ou pas habitée (aucun carreau INSEE peuplé).</p>
-          ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <Stat v={nb(res.population?.habitants)} k="habitants" />
-              <Stat v={nb(res.population?.menages)} k="ménages" />
-              {/* O19(c) — revenu médian = carreau Filosofi (INSEE), donnée SOURCÉE, pas une estimation.
-                  Le badge « imputé » ne s'affiche que si le backend a comblé la MAJORITÉ des carreaux. */}
-              <Stat v={res.population?.revenu_median_eur != null ? `${nb(res.population.revenu_median_eur)} €` : '—'}
-                k={res.population?.revenu_majorite_imputee
-                  ? `revenu médian / an · valeur approchée (${nb(res.population.revenu_impute_n)}/${nb(res.population.revenu_carreaux_n)} carreaux)`
-                  : 'revenu médian / an · source Filosofi (INSEE)'}
-                variante={res.population?.revenu_majorite_imputee ? 'approche' : 'source'} />
-              <ActifsStat res={res} />
-            </div>
-          )}
 
-          {/* F3 (OUTILS-4) — TOUTES les entreprises de la zone, groupées par famille (à la demande). */}
-          {res.emplois_couverture === 'servie' && (res.emplois?.n_etablissements ?? 0) > 0 && (
-            <ToutesEntreprises total={res.emplois!.n_etablissements} open={entOpen} setOpen={setEntOpen}
-              data={entQ.data} loading={entQ.isFetching} error={entQ.isError} />
-          )}
-
-          {res.generateurs_flux && res.generateurs_flux.length > 0 && (
-            <div>
-              <SectionTitle>Générateurs de flux</SectionTitle>
-              <div className="flex flex-col gap-1">
-                {res.generateurs_flux.map((g, i) => (
-                  <div key={i} className="flex items-center justify-between gap-2 text-[11.5px]">
-                    <span className="truncate text-txt">{g.label}</span><span className="shrink-0 font-mono text-[10px] text-txt-dim">{g.source}</span>
-                  </div>
-                ))}
+          {/* 1 · POPULATION */}
+          <Section id="population" titre="Population" openSecs={openSecs} setOpenSecs={setOpenSecs}
+            source={res.population?.millesime}>
+            {res.population?.inhabitee ? (
+              <p className="text-[11px] text-txt-mut">Zone peu ou pas habitée (aucun carreau INSEE peuplé).</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <Stat v={nb(res.population?.habitants)} k="habitants" />
+                <Stat v={nb(res.population?.menages)} k="ménages" />
+                {/* O19(c) — revenu médian = carreau Filosofi (INSEE), donnée SOURCÉE, pas une estimation.
+                    Le badge « imputé » ne s'affiche que si le backend a comblé la MAJORITÉ des carreaux. */}
+                <Stat v={res.population?.revenu_median_eur != null ? `${nb(res.population.revenu_median_eur)} €` : '—'}
+                  k={res.population?.revenu_majorite_imputee
+                    ? `revenu médian / an · valeur approchée (${nb(res.population.revenu_impute_n)}/${nb(res.population.revenu_carreaux_n)} carreaux)`
+                    : 'revenu médian / an · source Filosofi (INSEE)'}
+                  variante={res.population?.revenu_majorite_imputee ? 'approche' : 'source'} />
               </div>
-            </div>
-          )}
+            )}
+            {/* B1 — structure d'âge (IRIS RP2022, pondérée par la part de surface d'IRIS dans la zone) */}
+            {res.age && res.age.tranches.length > 0 && (
+              <div>
+                <SectionTitle>Structure d’âge</SectionTitle>
+                <div className="mt-1 flex flex-col gap-1">
+                  {res.age.tranches.map((t, i) => (
+                    <div key={i} className="flex items-center gap-2 text-[11px]">
+                      <span className="w-20 shrink-0 text-txt-mut">{t.label}</span>
+                      <span className="h-2 min-w-[2px] rounded-sm bg-mint/45" style={{ width: `${Math.max(2, t.pct)}%` }} />
+                      <span className="shrink-0 font-mono text-[10px] text-txt-dim">{t.pct}%</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.age.millesime}{res.age.evolution_indisponible ? ` — ${res.age.evolution_indisponible}` : ''}</p>
+              </div>
+            )}
+          </Section>
 
-          {res.marche && (
-            <div>
-              <SectionTitle>Marché immobilier de la zone</SectionTitle>
+          {/* 2 · ÉCONOMIE */}
+          <Section id="economie" titre="Économie" openSecs={openSecs} setOpenSecs={setOpenSecs}
+            source="Établissements actifs — SIRENE (INSEE), publication mensuelle">
+            <div className="grid grid-cols-1 gap-2"><ActifsStat res={res} /></div>
+            {/* F3 (OUTILS-4) — TOUTES les entreprises de la zone, groupées par famille (à la demande). */}
+            {res.emplois_couverture === 'servie' && (res.emplois?.n_etablissements ?? 0) > 0 && (
+              <ToutesEntreprises total={res.emplois!.n_etablissements} open={entOpen} setOpen={setEntOpen}
+                data={entQ.data} loading={entQ.isFetching} error={entQ.isError} />
+            )}
+          </Section>
+
+          {/* 3 · IMMOBILIER */}
+          <Section id="immobilier" titre="Immobilier" openSecs={openSecs} setOpenSecs={setOpenSecs}
+            source="DVF (DGFiP/Etalab, ventes 12–36 mois) · Sitadel (SDES) · annonces Radar (pige LABUSE, partielle)">
+            {res.marche && (
               <div className="grid grid-cols-2 gap-2">
                 <Stat v={nb(res.marche.ventes_12m)} k="ventes / 12 mois" />
                 <Stat v={res.marche.prix_m2_median_bati != null ? `${nb(res.marche.prix_m2_median_bati)} €` : '—'} k="médian €/m² bâti" />
                 <Stat v={nb(res.marche.annonces_actives)} k="annonces actives" />
                 <Stat v={nb(res.marche.permis_36m)} k="permis / 36 mois" />
               </div>
-            </div>
-          )}
-
-          {/* LOT 5 — trafic RN traversant/bordant la zone (véhicules/jour, dernier comptage par route) */}
-          {res.trafic?.couverte && (
-            <div>
-              <SectionTitle>Trafic routes nationales</SectionTitle>
-              {res.trafic.axes.length === 0 ? (
-                <p className="text-[11px] text-txt-mut">Aucun axe national dans la zone.</p>
-              ) : (
-                <div className="flex flex-col gap-1">
-                  {res.trafic.axes.slice(0, 5).map((a, i) => (
-                    <div key={i} className="flex items-center justify-between gap-2 text-[11.5px]">
-                      <span className="text-txt">{a.route} <span className="text-txt-dim">· {a.annee}</span></span>
-                      <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(a.tmja)} véh./j</span>
+            )}
+            {/* B3 — prix médian €/m² par type (maison / appartement / terrain nu), 36 mois, via le
+                point de calcul du bloc Marché de la fiche. « — » sous 5 ventes (échantillon insuffisant). */}
+            {res.prix_par_type && res.prix_par_type.types.some((t) => t.n > 0) && (
+              <div>
+                <SectionTitle>Prix par type (36 mois)</SectionTitle>
+                <div className="mt-1 flex flex-col gap-1">
+                  {res.prix_par_type.types.map((t) => (
+                    <div key={t.type} className="flex items-center justify-between gap-2 text-[11.5px]">
+                      <span className="text-txt">{t.label} <span className="text-txt-dim">· {nb(t.n)} vente{t.n > 1 ? 's' : ''}</span></span>
+                      {t.median_eur_m2 != null
+                        ? <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(t.median_eur_m2)} €/m² {t.base}</span>
+                        : <span className="shrink-0 text-[10px] text-txt-dim">— {t.n > 0 ? `sous ${res.prix_par_type!.seuil} ventes` : 'aucune vente'}</span>}
                     </div>
                   ))}
-                  {/* RETOURS-12 O13.3 — le MILLÉSIME est affiché par axe (ci-dessus) et assumé ici : le
-                      dernier comptage routier OUVERT servi au 974 est celui de la Région Réunion (ODS) ;
-                      aucun millésime plus récent n'est publié en open data à ce jour. 2011 assumé vaut
-                      mieux que 2011 caché. */}
-                  <span className="text-[9.5px] leading-snug text-txt-dim">Trafic véhicules/jour sur routes nationales — comptages Région Réunion (ODS), dernier millésime ouvert servi (indiqué par axe). Pas un flux piéton.</span>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+            {/* B3 — permis autorisés par type (Sitadel famille : logements / locaux d'activité), 36 mois */}
+            {res.permis_par_type && res.permis_par_type.types.some((t) => t.n > 0) && (
+              <div>
+                <SectionTitle>Permis par type (36 mois)</SectionTitle>
+                <div className="mt-1 flex flex-col gap-1">
+                  {res.permis_par_type.types.map((t) => (
+                    <div key={t.type} className="flex items-center justify-between gap-2 text-[11.5px]">
+                      <span className="text-txt">{t.label}{t.detail ? <span className="text-txt-dim"> · {t.detail}</span> : null}</span>
+                      <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(t.n)}</span>
+                    </div>
+                  ))}
+                </div>
+                {res.permis_par_type.note && <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.permis_par_type.note}</p>}
+              </div>
+            )}
+            {/* LOT 8 — La zone de demain : signal DATÉ (logements autorisés 36 mois + zones AU), jamais une projection */}
+            {res.zone_demain && ((res.zone_demain.logements_autorises_36m ?? 0) > 0 || (res.zone_demain.au_zones_n ?? 0) > 0) && (
+              <div>
+                <SectionTitle>La zone de demain</SectionTitle>
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  <Stat v={nb(res.zone_demain.logements_autorises_36m)} k="logements autorisés / 36 mois" />
+                  <Stat v={res.zone_demain.au_zones_n ? `${nb(res.zone_demain.au_zones_n)} · ${nb(res.zone_demain.au_zones_ha)} ha` : '—'} k="zones AU (à urbaniser)" />
+                </div>
+                <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">Signal daté (Sitadel · PLU) — une urbanisation programmée, jamais une projection de population.</p>
+              </div>
+            )}
+          </Section>
 
-          {/* LOT 7 — contraintes commerciales : les zones PLU recouvertes (tableau ZONE / PART / DOCUMENT) */}
-          {res.contraintes_plu && res.contraintes_plu.zones.length > 0 && (
-            <div>
-              <SectionTitle>Zones PLU de la zone</SectionTitle>
-              <div className="flex flex-col gap-1">
-                {res.contraintes_plu.zones.slice(0, 6).map((z, i) => (
-                  <div key={i} className="flex items-center justify-between gap-2 text-[11.5px]">
-                    <span className="truncate text-txt">{z.zone} <span className="text-txt-mut">· {z.commune ?? ''}</span></span>
-                    <span className="shrink-0 font-mono text-[11px] text-txt-hi">{z.part_pct}%</span>
+          {/* 4 · FONCIER — B4 : top 5 propriétaires personnes morales par surface (Scan patrimoine). */}
+          {res.proprietaires_pm && res.proprietaires_pm.proprietaires.length > 0 && (
+            <Section id="foncier" titre="Foncier" openSecs={openSecs} setOpenSecs={setOpenSecs}
+              source={res.proprietaires_pm.millesime}>
+              <SectionTitle>Principaux propriétaires (personnes morales)</SectionTitle>
+              <div className="mt-1 flex flex-col gap-1">
+                {res.proprietaires_pm.proprietaires.map((o, i) => (
+                  <div key={o.siren} className="flex items-center justify-between gap-2 text-[11.5px]">
+                    <span className="min-w-0 flex-1 truncate text-txt">{i + 1}. {o.denomination ?? o.siren}
+                      <span className="ml-1 font-mono text-[9px] text-txt-dim">{o.siren}</span></span>
+                    <span className="shrink-0 font-mono text-[11px] text-txt-hi">{(o.surface_m2 / 10000).toFixed(1)} ha
+                      <span className="text-txt-dim"> · {nb(o.n_parcelles)} parc.</span></span>
                   </div>
                 ))}
               </div>
-              {res.contraintes_plu.cdac_vigilance && <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{res.contraintes_plu.cdac_vigilance}</p>}
-            </div>
+              <p className="mt-1 text-[9px] leading-snug text-txt-dim">Surface cumulée des parcelles dont le centroïde est dans la zone. Les particuliers ne sont jamais nommés.</p>
+            </Section>
           )}
 
-          {/* DESTINATIONS-1 (X4.1) — verdict de la sous-destination choisie, zone PLU par zone PLU.
-              La phrase est celle du backend, TELLE QUELLE (jamais reformulée au front). */}
-          {res.destinations && <DestinationsBloc d={res.destinations} />}
+          {/* 5 · CONTRAINTES */}
+          {((res.contraintes_plu && res.contraintes_plu.zones.length > 0) || res.destinations
+            || (res.risques && (res.risques.ppr.length > 0 || res.risques.aleas.length > 0))
+            || res.assainissement?.couvert || (res.espaces_zonages && res.espaces_zonages.items.length > 0)) && (
+            <Section id="contraintes" titre="Contraintes" openSecs={openSecs} setOpenSecs={setOpenSecs}
+              source="PLU/GPU (IGN API Carto) · destinations calibrées · DEAL (PPR/aléas, assainissement) · INPN/ANCT (espaces, QPV)">
+              {/* LOT 7 — les zones PLU recouvertes (ZONE / PART), tri par part de surface */}
+              {res.contraintes_plu && res.contraintes_plu.zones.length > 0 && (
+                <div>
+                  <SectionTitle>Zones PLU de la zone</SectionTitle>
+                  <div className="mt-1 flex flex-col gap-1">
+                    {res.contraintes_plu.zones.slice(0, 6).map((z, i) => (
+                      <div key={i} className="flex items-center justify-between gap-2 text-[11.5px]">
+                        <span className="truncate text-txt">{z.zone} <span className="text-txt-mut">· {z.commune ?? ''}</span></span>
+                        <span className="shrink-0 font-mono text-[11px] text-txt-hi">{z.part_pct}%</span>
+                      </div>
+                    ))}
+                  </div>
+                  {res.contraintes_plu.cdac_vigilance && <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{res.contraintes_plu.cdac_vigilance}</p>}
+                </div>
+              )}
+              {/* DESTINATIONS-1 (X4.1) — verdict par zone PLU, phrase SERVIE telle quelle (jamais reformulée). */}
+              {res.destinations && <DestinationsBloc d={res.destinations} />}
+              {/* B5 — PPR (rouge/bleu) + aléas par niveau, % de la zone (couches DEAL, comme Pièges & risques) */}
+              {res.risques && (res.risques.ppr.length > 0 || res.risques.aleas.length > 0) && (
+                <div>
+                  <SectionTitle>Risques (PPR &amp; aléas)</SectionTitle>
+                  <div className="mt-1 flex flex-col gap-1">
+                    {res.risques.ppr.map((r, i) => (
+                      <div key={`ppr${i}`} className="flex items-center justify-between gap-2 text-[11.5px]">
+                        <span className="text-txt">{r.label}</span>
+                        <span className="shrink-0 font-mono text-[11px] text-txt-hi">{r.pct}% de la zone</span>
+                      </div>
+                    ))}
+                    {res.risques.aleas.map((a, i) => (
+                      <div key={`al${i}`} className="flex items-center justify-between gap-2 text-[11.5px]">
+                        <span className="text-txt">{a.label} <span className="text-txt-dim">· aléa {a.niveau}</span></span>
+                        <span className="shrink-0 font-mono text-[11px] text-txt-hi">{a.pct}% de la zone</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.risques.source}</p>
+                </div>
+              )}
+              {/* B5 — assainissement collectif vs ANC (% de la zone, zonage GPU) */}
+              {res.assainissement?.couvert && (
+                <div>
+                  <SectionTitle>Assainissement</SectionTitle>
+                  <div className="mt-1 flex flex-col gap-1 text-[11.5px]">
+                    <div className="flex items-center justify-between gap-2"><span className="text-txt">Zonage collectif</span>
+                      <span className="shrink-0 font-mono text-[11px] text-txt-hi">{res.assainissement.collectif_pct}% de la zone</span></div>
+                    <div className="flex items-center justify-between gap-2"><span className="text-txt">Assainissement non collectif (ANC)</span>
+                      <span className="shrink-0 font-mono text-[11px] text-txt-hi">{res.assainissement.anc_pct}% de la zone</span></div>
+                  </div>
+                  {res.assainissement.millesime && <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.assainissement.millesime}</p>}
+                </div>
+              )}
+              {/* B5 — espaces protégés (ZNIEFF/ENS/Parc) + zonages fiscaux/prioritaires (ZFANG/FRR/QPV), % recouvrement */}
+              {res.espaces_zonages && res.espaces_zonages.items.length > 0 && (
+                <div>
+                  <SectionTitle>Espaces protégés &amp; zonages</SectionTitle>
+                  <div className="mt-1 flex flex-col gap-1">
+                    {res.espaces_zonages.items.map((e) => (
+                      <div key={e.kind} className="flex items-center justify-between gap-2 text-[11.5px]">
+                        <span className="truncate text-txt">{e.label}</span>
+                        <span className="shrink-0 font-mono text-[11px] text-txt-hi">{e.pct}% de la zone</span>
+                      </div>
+                    ))}
+                  </div>
+                  {res.espaces_zonages.source && <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.espaces_zonages.source}</p>}
+                </div>
+              )}
+            </Section>
+          )}
 
-          {/* LOT 8 — La zone de demain : signal DATÉ (logements autorisés 36 mois + zones AU), jamais une projection */}
-          {res.zone_demain && ((res.zone_demain.logements_autorises_36m ?? 0) > 0 || (res.zone_demain.au_zones_n ?? 0) > 0) && (
-            <div>
-              <SectionTitle>La zone de demain</SectionTitle>
-              <div className="grid grid-cols-2 gap-2">
-                <Stat v={nb(res.zone_demain.logements_autorises_36m)} k="logements autorisés / 36 mois" />
-                <Stat v={res.zone_demain.au_zones_n ? `${nb(res.zone_demain.au_zones_n)} · ${nb(res.zone_demain.au_zones_ha)} ha` : '—'} k="zones AU (à urbaniser)" />
-              </div>
-              <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">Signal daté (Sitadel · PLU) — une urbanisation programmée, jamais une projection de population.</p>
-            </div>
+          {/* 6 · ÉQUIPEMENTS */}
+          {((res.bpe && res.bpe.domaines.length > 0) || (res.generateurs_flux && res.generateurs_flux.length > 0) || res.trafic?.couverte) && (
+            <Section id="equipements" titre="Équipements" openSecs={openSecs} setOpenSecs={setOpenSecs}
+              source="BPE (INSEE) · GTFS/OSM (transports) · Trafic RN (Région Réunion, ODS)">
+              {/* B6 — BPE complet par domaine A→G : compte + les 3 plus proches (avec temps de trajet) */}
+              {res.bpe && res.bpe.domaines.length > 0 && (
+                <div>
+                  <SectionTitle>Équipements par domaine (BPE)</SectionTitle>
+                  <div className="mt-1 flex flex-col gap-1.5">
+                    {res.bpe.domaines.map((d) => (
+                      <div key={d.domaine}>
+                        <div className="flex items-center justify-between gap-2 text-[11.5px]">
+                          <span className="truncate text-txt">{d.label}</span>
+                          <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(d.n)}</span>
+                        </div>
+                        {d.proches.length > 0 && (
+                          <div className="mt-0.5 text-[9.5px] leading-snug text-txt-dim">
+                            {d.proches.map((x) => x.nom).filter(Boolean).slice(0, 3).join(' · ') || '—'}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.bpe.millesime} — compte par domaine dans la zone, 3 plus proches nommés.</p>
+                </div>
+              )}
+              {res.generateurs_flux && res.generateurs_flux.length > 0 && (
+                <div>
+                  <SectionTitle>Générateurs de flux</SectionTitle>
+                  <div className="mt-1 flex flex-col gap-1">
+                    {res.generateurs_flux.map((g, i) => (
+                      <div key={i} className="flex items-center justify-between gap-2 text-[11.5px]">
+                        <span className="truncate text-txt">{g.label}</span><span className="shrink-0 font-mono text-[10px] text-txt-dim">{g.source}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* LOT 5 — trafic RN traversant/bordant la zone (véhicules/jour, dernier comptage par route) */}
+              {res.trafic?.couverte && (
+                <div>
+                  <SectionTitle>Trafic routes nationales</SectionTitle>
+                  {res.trafic.axes.length === 0 ? (
+                    <p className="mt-1 text-[11px] text-txt-mut">Aucun axe national dans la zone.</p>
+                  ) : (
+                    <div className="mt-1 flex flex-col gap-1">
+                      {res.trafic.axes.slice(0, 5).map((a, i) => (
+                        <div key={i} className="flex items-center justify-between gap-2 text-[11.5px]">
+                          <span className="text-txt">{a.route} <span className="text-txt-dim">· {a.annee}</span></span>
+                          <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(a.tmja)} véh./j</span>
+                        </div>
+                      ))}
+                      {/* RETOURS-12 O13.3 — millésime affiché par axe ; le dernier comptage RN OUVERT servi
+                          au 974 est celui de la Région Réunion (ODS). 2011 assumé vaut mieux que 2011 caché. */}
+                      <span className="text-[9.5px] leading-snug text-txt-dim">Trafic véhicules/jour sur routes nationales — dernier millésime ouvert servi (indiqué par axe). Pas un flux piéton.</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Section>
+          )}
+
+          {/* 7 · DYNAMIQUE — B7 : acquisitions PM récentes (signal daté) + loyer (commune) + fibre (zone) */}
+          {((res.acquisitions_pm && res.acquisitions_pm.n_parcelles > 0) || res.commune_contexte?.loyer_median_eur_m2 != null || res.fibre) && (
+            <Section id="dynamique" titre="Dynamique" openSecs={openSecs} setOpenSecs={setOpenSecs}
+              source="DGFiP (acquisitions PM) · OLL 2024 (loyers, commune) · Arcep (fibre, zone)">
+              {res.acquisitions_pm && res.acquisitions_pm.n_parcelles > 0 && (
+                <div>
+                  <SectionTitle>Acquisitions récentes (personnes morales)</SectionTitle>
+                  <p className="mt-0.5 text-[11px] text-txt-mut">{nb(res.acquisitions_pm.n_parcelles)} parcelle{res.acquisitions_pm.n_parcelles > 1 ? 's' : ''} acquise{res.acquisitions_pm.n_parcelles > 1 ? 's' : ''} par des PM entre {res.acquisitions_pm.millesime_precedent} et {res.acquisitions_pm.millesime_courant}.</p>
+                  <div className="mt-1 flex flex-col gap-1">
+                    {res.acquisitions_pm.acquereurs.map((a) => (
+                      <div key={a.siren} className="flex items-center justify-between gap-2 text-[11.5px]">
+                        <span className="min-w-0 flex-1 truncate text-txt">{a.denomination ?? a.siren}
+                          <span className="ml-1 font-mono text-[9px] text-txt-dim">{a.siren}</span></span>
+                        <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(a.n_parcelles)} parc.</span>
+                      </div>
+                    ))}
+                  </div>
+                  {res.acquisitions_pm.source && <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.acquisitions_pm.source}</p>}
+                </div>
+              )}
+              {res.commune_contexte?.loyer_median_eur_m2 != null && (
+                <div>
+                  <SectionTitle>Loyer — à l’échelle de la commune</SectionTitle>
+                  <div className="mt-1 flex items-center justify-between gap-2 text-[11.5px]">
+                    <span className="text-txt">Loyer médian · {res.commune_contexte.commune}</span>
+                    <span className="shrink-0 font-mono text-[11px] text-txt-hi">{res.commune_contexte.loyer_median_eur_m2} €/m²</span>
+                  </div>
+                  {res.commune_contexte.millesime && <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.commune_contexte.millesime}</p>}
+                </div>
+              )}
+              {res.fibre && (
+                <div>
+                  <SectionTitle>Fibre (FttH)</SectionTitle>
+                  <div className="mt-1 flex items-center justify-between gap-2 text-[11.5px]">
+                    <span className="text-txt">Immeubles raccordables FttH</span>
+                    <span className="shrink-0 font-mono text-[11px] text-txt-hi">{res.fibre.pct_ftth}% <span className="text-txt-dim">({nb(res.fibre.ftth)}/{nb(res.fibre.immeubles)})</span></span>
+                  </div>
+                  <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.fibre.source} — sur la zone.</p>
+                </div>
+              )}
+            </Section>
           )}
 
           {/* ÉTAPE 3 — UNE ACTIVITÉ (lentille additive). O13.1 — porte CHALANDISE seulement : la zone
@@ -599,6 +804,33 @@ function DestinationsBloc({ d }: { d: EtudeZoneDestinations }) {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <div className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-txt-dim">{children}</div>
+}
+
+// ETUDE-ZONE-2 Lot A — section repliable du résultat (accordéon). Chevron ▸ fermé / ▾ ouvert
+// (idiome de l'outil : fermé pointe à droite). Une ligne « Source · … » en bas quand `source` est
+// fourni. L'état ouvert/fermé est porté par le parent (Set d'ids), pas de state local par section.
+function Section({ id, titre, source, openSecs, setOpenSecs, children }: {
+  id: string; titre: string; source?: React.ReactNode
+  openSecs: Set<string>; setOpenSecs: React.Dispatch<React.SetStateAction<Set<string>>>
+  children: React.ReactNode
+}) {
+  const open = openSecs.has(id)
+  const toggle = () => setOpenSecs((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n })
+  return (
+    <div data-zone-section={id} className="overflow-hidden rounded-lg border border-line-2 bg-surface-1">
+      <button data-zone-section-toggle={id} onClick={toggle} aria-expanded={open}
+        className="group flex w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors duration-quick hover:bg-surface-2">
+        <span className="text-[12px] font-semibold text-txt-hi">{titre}</span>
+        <span className="shrink-0 font-mono text-[11px] text-mint">{open ? '▾' : '▸'}</span>
+      </button>
+      {open && (
+        <div className="flex flex-col gap-2 border-t border-line-2 px-3 py-2.5">
+          {children}
+          {source && <p className="mt-0.5 text-[9px] leading-snug text-txt-dim">Source · {source}</p>}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // O19(a) — en-tête d'ÉTAPE : donne à l'écran la structure « 1 · 2 · 3 » de l'outil. L'étape 3 porte un

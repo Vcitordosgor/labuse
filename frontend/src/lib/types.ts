@@ -670,6 +670,29 @@ export interface SousDestinationRef { slug: string; destination: string; libelle
 export interface DestinationsReferentiel {
   destinations: DestinationRef[]; sous_destinations: SousDestinationRef[]; source: string
 }
+// ETUDE-ZONE-2 Lot B — enrichissements par section (faits sourcés et datés, jamais une projection).
+export interface ZoneAgeStructure {
+  n_iris: number; pop_iris: number
+  tranches: { label: string; n: number; pct: number }[]
+  millesime: string; evolution_indisponible?: string
+}
+export interface ZonePrixType { type: string; label: string; base: string; n: number; median_eur_m2: number | null; periode: [string, string] | null }
+export interface ZonePermisType { type: string; label: string; n: number; detail: string | null }
+export interface ZoneProprietairePM { siren: string; denomination: string | null; n_parcelles: number; surface_m2: number }
+export interface ZoneRisques {
+  ppr: { niveau: string; label: string; pct: number }[]
+  aleas: { risque: string; label: string; niveau: string; pct: number }[]
+  source: string
+}
+export interface ZoneAssainissement { couvert: boolean; collectif_pct?: number; anc_pct?: number; millesime?: string }
+export interface ZoneEspaces { items: { kind: string; label: string; pct: number }[]; source?: string }
+export interface ZoneBpe { domaines: { domaine: string; label: string; n: number; proches: { nom: string; temps_min: number | null }[] }[]; millesime: string }
+export interface ZoneAcquisitionsPM {
+  acquereurs: { siren: string; denomination: string | null; n_parcelles: number }[]
+  n_parcelles: number; millesime_courant?: number; millesime_precedent?: number; source?: string
+}
+export interface ZoneCommuneContexte { commune: string; insee: string; echelle: string; loyer_median_eur_m2: number | null; millesime?: string }
+export interface ZoneFibre { immeubles: number; ftth: number; pct_ftth: number; source: string }
 export interface EtudeZoneResult {
   statut: string
   zone_disponible: boolean
@@ -696,6 +719,18 @@ export interface EtudeZoneResult {
   // DESTINATIONS-1 (X4.1) — présent quand `sous_destination` a été envoyée : verdict par zone PLU recouverte.
   destinations?: EtudeZoneDestinations | null
   habitants_par_concurrent?: number | null
+  // ETUDE-ZONE-2 Lot B — enrichissements par section
+  age?: ZoneAgeStructure | null
+  prix_par_type?: { types: ZonePrixType[]; seuil: number; millesime: string }
+  permis_par_type?: { types: ZonePermisType[]; note?: string; millesime: string }
+  proprietaires_pm?: { proprietaires: ZoneProprietairePM[]; millesime: string }
+  risques?: ZoneRisques
+  assainissement?: ZoneAssainissement
+  espaces_zonages?: ZoneEspaces
+  bpe?: ZoneBpe
+  acquisitions_pm?: ZoneAcquisitionsPM
+  commune_contexte?: ZoneCommuneContexte | null
+  fibre?: ZoneFibre
   note?: string
 }
 
