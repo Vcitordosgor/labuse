@@ -188,17 +188,10 @@ SOURCES: list[dict] = [
          documentation_url="https://geoservices.ign.fr/services-geoplateforme-altimetrie",
          endpoint_url="https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — RGE ALTI ».",
-         technical_notes="✓ live (elevations:[6.43]). Batch commune : préférer raster RGE ALTI + pente PostGIS aux milliers d'appels."),
-    # OUTILS-S2 Lot C — la couche « Courbes de niveau » (RETOURS-13 P5) était servie SANS source
-    # cataloguée (overlay front). On l'enregistre : toute couche carte a désormais sa source.
-    dict(name="Courbes de niveau (IGN ELEVATION.CONTOUR.LINE)", category="topographie",
-         provider="IGN / Géoplateforme",
-         source_millesime="ELEVATION.CONTOUR.LINE — dérivée RGE ALTI® (IGN), millésime 2025",
-         access_type="WMTS", status=S.CONNECTE, reliability_level=R.VERIFIE,
-         documentation_url="https://geoservices.ign.fr/services-geoplateforme-diffusion",
-         endpoint_url="https://data.geopf.fr/wmts?SERVICE=WMTS&LAYER=ELEVATION.CONTOUR.LINE",
-         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — RGE ALTI ».",
-         technical_notes="✓ overlay raster (RETOURS-13 P5) — lignes bistres sur fond transparent, relayées en direct par le proxy /map/tiles/contours (PNG brut WMTS + cache disque). Couverture 974 vérifiée (z14 La Montagne). Off par défaut (famille Environnement)."),
+         technical_notes="✓ live (elevations:[6.43]). Batch commune : préférer raster RGE ALTI + pente PostGIS aux milliers d'appels. "
+                         "OUTILS-S2 Lot C : la couche « Courbes de niveau » (overlay WMTS ELEVATION.CONTOUR.LINE) ET le profil "
+                         "altimétrique DÉRIVENT de cette source RGE ALTI — pas de source distincte (le WMTS est un canal de diffusion, "
+                         "pas un réservoir : c'est pourquoi le compte reste à 92). Verrou : test_outils_s2_couches_source."),
     # ── Spécificité réunionnaise (premier rang) ──
     dict(name="Parc National de La Réunion (INPN)", category="environnement", provider="INPN/MNHN · API Carto · Région ODS",
          source_millesime="millésime 2021",   # M86 — millésime centralisé (plus de date en dur au front)
@@ -1570,8 +1563,6 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "Géorisques": ("one_shot", 365, "proposee"),
     "DVF / valeurs foncières": ("job_sur_clic", 190, "declaree"),
     "RGE ALTI (altimétrie)": ("one_shot", 365, "proposee"),
-    # OUTILS-S2 Lot C — overlay WMTS servi en direct (proxy tuiles), pas d'ingestion locale.
-    "Courbes de niveau (IGN ELEVATION.CONTOUR.LINE)": ("en_direct", None, "sans_objet"),
     "Parc National de La Réunion (INPN)": ("one_shot", 365, "proposee"),
     "Forêts publiques (ONF)": ("one_shot", 365, "proposee"),
     "Potentiel foncier Région (Région ODS)": ("one_shot", 365, "proposee"),
