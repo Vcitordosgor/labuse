@@ -132,6 +132,28 @@ def test_terrains_reels_biconditionnel(db_session):
 
 
 @pytest.mark.db
+def test_radar_stats_inclut_apparts(db_session):
+    """Lot E — radar_stats INCLUT les appartements dans les statistiques (la règle copro ne vaut que
+    pour carte/digests/veilles). Chaque chiffre porte son registre_id ; le libellé dit « demandés »."""
+    from labuse.pige import marche
+    db = db_session
+    # 5 appartements Saint-Denis à 3000 €/m² (150 000 € / 50 m²), validés, non copro-exclus des stats.
+    for _ in range(5):
+        bid = db.execute(text("INSERT INTO pige_biens (commune, type_bien, est_copro, statut) "
+                              "VALUES ('Saint-Denis','appartement',true,'active') RETURNING bien_id")).scalar()
+        db.execute(text("INSERT INTO pige_faits (bien_id, prix, type_bien, surface_hab, valide_at) "
+                        "VALUES (:b, 150000, 'appartement', 50, now())"), {"b": bid})
+    st = marche.radar_stats(db, commune="Saint-Denis", type_bien="appartement")
+    assert st["actives_n"]["valeur"] >= 5
+    assert st["prix_m2_median_demande"]["valeur"] == 3000, st["prix_m2_median_demande"]
+    assert st["prix_m2_median_demande"]["registre_id"] == "prix_demande_median_eur_m2"
+    assert st["libelle"] == "prix demandés (Radar)"
+    # sans filtre de type, les apparts comptent aussi dans la médiane bâtie.
+    st_all = marche.radar_stats(db, commune="Saint-Denis")
+    assert st_all["actives_n"]["valeur"] >= 5
+
+
+@pytest.mark.db
 def test_confirmation_supprimee_retiree_sans_courrier(db_session):
     """Lot A/C — verdict « supprimee » → statut retiree + retiree_le, JAMAIS retiree_sans_vente
     (celui-ci reste au cycle mensuel, sur preuve DVF)."""

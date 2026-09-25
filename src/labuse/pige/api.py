@@ -786,6 +786,16 @@ def radar_marche(request: Request) -> dict:
         return marche.stats(db)
 
 
+@router.get("/radar/stats")
+def radar_stats_endpoint(request: Request, commune: str | None = None, type_bien: str | None = None) -> dict:
+    """RADAR-AUTO-1 (Lot E) — chiffres Radar « prix DEMANDÉS » d'une commune (ou île) et d'un type (ou
+    tous) : actives, médiane €/m² demandé, baisses/30 j, délai médian de retrait. Appartements INCLUS.
+    Servi à côté du DVF (prix de vente) dans l'outil Communes et la fiche §Marché — jamais confondus."""
+    from . import marche
+    with session_scope() as db:
+        return marche.radar_stats(db, commune=commune, type_bien=type_bien)
+
+
 # ══════════════ RADAR-VEILLE-1 (R3) — DÉPÔT AGENCE « Publier une annonce » (derrière drapeau) ══════════════
 # Tout le parcours est FERMÉ par défaut (config.radar_depot_agence_actif) : question Hoguet en attente chez
 # l'avocat de Vic. Drapeau OFF → 404 partout, rien ne s'ouvre. Admin seulement pour le dépôt.
