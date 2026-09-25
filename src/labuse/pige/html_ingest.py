@@ -52,6 +52,19 @@ def _archiver(html: str, nom_fichier: str | None) -> tuple[str, str]:
     return str(chemin), h
 
 
+def _badge_baisse(db: Session, bien_id: int, rec: dict, commune: str) -> None:
+    """RADAR-AUTO-1 (Lot A) — le badge « Baisse de prix » affiché par le portail (parsé mais jusqu'ici
+    JETÉ, cf. RADAR-AUDIT-1) est conservé comme ÉVÉNEMENT. C'est un INDICE daté (jamais un historique
+    de prix : sur une annonce dégradée on n'a pas l'ancien prix). Dédup par bien + jour : un même badge
+    revu chaque soir ne crée qu'un événement par jour."""
+    if not rec.get("baisse_badge"):
+        return
+    from ..tz import today_reunion
+    journaliser(db, EV_BAISSE_PRIX, f"Baisse de prix (badge portail) — bien #{bien_id} ({commune})",
+                detail="badge « Baisse de prix » affiché sur l'annonce (indice daté, pas d'ancien prix connu)",
+                lien=rec.get("url"), dedup=f"pige:baisse-badge:{bien_id}:{today_reunion().isoformat()}")
+
+
 def _maj_prix(db: Session, bien_id: int, ancien, nouveau) -> None:
     """Historise un CHANGEMENT de prix (pige_prix_historique) ; une baisse journalise EV_BAISSE_PRIX
     (signal le plus actionnable — Lot 5)."""
@@ -163,8 +176,8 @@ def _ingester_annonce(db: Session, rec: dict) -> str:
         motifs = coherence.evaluer(rec, db)
         ratt = _rattacher(db, rec, motifs)
         bien_id = db.execute(text(
-            "INSERT INTO pige_biens (commune, statut, date_publication) VALUES (:c, 'active', "
-            " CAST(:fpd AS timestamptz)::date) RETURNING bien_id"),
+            "INSERT INTO pige_biens (commune, statut, date_publication, last_seen_at) VALUES (:c, 'active', "
+            " CAST(:fpd AS timestamptz)::date, now()) RETURNING bien_id"),
             {"c": commune, "fpd": rec.get("first_publication_date")}).scalar()
         db.execute(text(
             "INSERT INTO pige_annonces (bien_id, portail, url_sortante, list_id, "
@@ -186,6 +199,7 @@ def _ingester_annonce(db: Session, rec: dict) -> str:
             journaliser(db, EV_A_QUALIFIER, f"Annonce à qualifier — {commune}",
                         detail="; ".join(motifs)[:400], lien=rec.get("url"),
                         dedup=f"pige:aq:{list_id}")
+        _badge_baisse(db, bien_id, rec, commune)
         return "nouvelle"
 
     # ── MISE À JOUR ──
@@ -198,9 +212,10 @@ def _ingester_annonce(db: Session, rec: dict) -> str:
         _ecrire_faits(db, bien_id, rec, insert=False, combler=True)
         db.execute(text("UPDATE pige_annonces SET date_saisie = now() WHERE list_id = :l"), {"l": list_id})
         db.execute(text(
-            "UPDATE pige_biens SET date_derniere_confirmation = now(), "
+            "UPDATE pige_biens SET date_derniere_confirmation = now(), last_seen_at = now(), "
             " statut = CASE WHEN statut IN ('a_reverifier','en_vente_longue') THEN 'active' ELSE statut END "
             "WHERE bien_id = :b AND statut NOT IN ('retiree','vendue','retiree_sans_vente')"), {"b": bien_id})
+        _badge_baisse(db, bien_id, rec, commune)
         return "maj"
 
     # riche-sur-tout, ou dégradé-sur-dégradé : mise à jour pleine (Lot 5 : republication = CONFIRMATION).
@@ -222,9 +237,10 @@ def _ingester_annonce(db: Session, rec: dict) -> str:
     # republication = confirmation « toujours en vente » : repousse a_reverifier, statut redevient active
     # (jamais retiree/vendue — celles-ci ne se déduisent pas d'une republication).
     db.execute(text(
-        "UPDATE pige_biens SET date_derniere_confirmation = now(), "
+        "UPDATE pige_biens SET date_derniere_confirmation = now(), last_seen_at = now(), "
         " statut = CASE WHEN statut IN ('a_reverifier','en_vente_longue') THEN 'active' ELSE statut END "
         "WHERE bien_id = :b AND statut NOT IN ('retiree','vendue','retiree_sans_vente')"), {"b": bien_id})
+    _badge_baisse(db, bien_id, rec, commune)
     return "maj"
 
 

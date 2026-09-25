@@ -84,6 +84,11 @@ class Settings(BaseSettings):
     # pas le parcours ; rien ne s'ouvre aux clients. Ne PAS activer sans la réponse de l'avocat.
     # LABUSE_RADAR_DEPOT_AGENCE_ACTIF=1 pour ouvrir (admin uniquement).
     radar_depot_agence_actif: bool = False
+    # RADAR-AUTO-1 (Lot A) — jeton DÉDIÉ de l'extension de capture (en-tête X-Radar-Token). JAMAIS le
+    # mot de passe admin : l'extension tourne sur le Mac de Vic et ne doit porter qu'un secret révocable,
+    # sans pouvoir ouvrir de session. Vide = les endpoints /admin/radar/capture|etat|confirmation
+    # refusent (401) hors session admin. LABUSE_RADAR_TOKEN=… pour l'activer.
+    radar_token: str | None = None
     # Origine publique (https://…) autorisée en CORS hors local ; vide = même origine seulement.
     public_url: str | None = None
 

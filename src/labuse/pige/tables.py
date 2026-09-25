@@ -22,8 +22,11 @@ EV_DIGEST = "pige.digest_envoye"
 EV_INTAKE_VIDE_48H = "pige.intake_vide_48h"
 EV_DEPOT_HTML = "pige.depot_html"            # RADAR-HTML — un fichier de résultats déposé + ingéré
 EV_A_QUALIFIER = "pige.a_qualifier"          # RADAR-HTML — annonce incohérente écartée des stats/veilles
+EV_CAPTURE = "pige.capture"                  # RADAR-AUTO-1 — une passe de l'extension (nouvelles/relecture/confirmation)
+EV_HAUSSE_PRIX = "pige.hausse_prix"          # RADAR-AUTO-1 — hausse de prix constatée (seuil 1 %)
 EVENEMENTS = (EV_NOUVELLE, EV_BAISSE_PRIX, EV_STATUT_CHANGE, EV_VENDUE_DVF,
-              EV_SIGNALEMENT, EV_DIGEST, EV_INTAKE_VIDE_48H, EV_DEPOT_HTML, EV_A_QUALIFIER)
+              EV_SIGNALEMENT, EV_DIGEST, EV_INTAKE_VIDE_48H, EV_DEPOT_HTML, EV_A_QUALIFIER,
+              EV_CAPTURE, EV_HAUSSE_PRIX)
 
 # ── Vocabulaire fermé (jamais deviné) ──
 STATUTS = ("active", "en_vente_longue", "a_reverifier", "retiree", "vendue", "retiree_sans_vente")
@@ -287,6 +290,32 @@ CREATE TABLE IF NOT EXISTS pige_depots (
   date_depot timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS ix_pige_depots_date ON pige_depots (date_depot);
+
+-- ═══ RADAR-AUTO-1 — capture automatique par l'extension (le navigateur de Vic, à rythme humain) ═══
+-- `last_seen_at` = dernière fois qu'une annonce a été VUE dans une page capturée (nouvelle ou re-vue).
+-- Base du cycle de vie automatisé (Lot C) : « non vue depuis 8 jours → à confirmer ». Distinct de
+-- date_derniere_confirmation (qui bouge aussi sur un geste admin léger) : last_seen_at ne bouge QUE
+-- sur une vue réelle dans une capture/dépôt.
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS last_seen_at timestamptz;
+CREATE INDEX IF NOT EXISTS ix_pige_biens_last_seen ON pige_biens (last_seen_at);
+
+-- pige_passes : une PASSE de l'extension (nouvelles | relecture | confirmation) = un lot de pages
+-- portant le même captured_at. On agrège les compteurs au fil des pages ; le journal (event_log) porte
+-- UNE ligne par passe, rafraîchie à chaque page (journaliser_passe). Idempotent sur (passe, captured_at).
+CREATE TABLE IF NOT EXISTS pige_passes (
+  id serial PRIMARY KEY,
+  passe varchar(14) NOT NULL,                    -- nouvelles | relecture | confirmation
+  captured_at timestamptz NOT NULL,              -- horodatage du soir (le même pour toutes les pages)
+  n_pages integer NOT NULL DEFAULT 0,
+  n_nouvelles integer NOT NULL DEFAULT 0,
+  n_maj integer NOT NULL DEFAULT 0,
+  n_prix_modifies integer NOT NULL DEFAULT 0,    -- baisses + hausses constatées dans la passe
+  n_supprimees integer NOT NULL DEFAULT 0,       -- verdicts « supprimee » (passe confirmation)
+  n_hors_perimetre integer NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_pige_passes ON pige_passes (passe, captured_at);
 """
 
 
@@ -311,6 +340,23 @@ def journaliser(db: Session, kind: str, titre: str, *, detail: str | None = None
         "VALUES (:k, :t, :d, :i, :l, :c, 'Radar', :dd) RETURNING id"),
         {"k": kind, "t": titre, "d": detail, "i": idu, "l": lien, "c": compte_id, "dd": dedup}
     ).scalar() or 0
+
+
+def journaliser_passe(db: Session, passe: str, titre: str, detail: str, dedup: str) -> int:
+    """RADAR-AUTO-1 — UNE ligne de journal par PASSE (nouvelles/relecture/confirmation), RAFRAÎCHIE à
+    chaque page reçue plutôt que dupliquée : l'event_log n'a pas de contrainte unique sur `dedup`, donc
+    on UPDATE la ligne existante (même clé) sinon on INSERT. Le titre/detail portent les cumuls courants
+    de la passe. `kind` = EV_CAPTURE."""
+    assert EV_CAPTURE in EVENEMENTS
+    n = db.execute(text(
+        "UPDATE event_log SET titre = :t, detail = :d, ts = now() WHERE dedup = :dd"),
+        {"t": titre, "d": detail, "dd": dedup}).rowcount
+    if n:
+        return 0
+    return db.execute(text(
+        "INSERT INTO event_log (kind, titre, detail, source, dedup) "
+        "VALUES (:k, :t, :d, 'Radar', :dd) RETURNING id"),
+        {"k": EV_CAPTURE, "t": titre, "d": detail, "dd": dedup}).scalar() or 0
 
 
 def enregistrer_fraicheur(db: Session) -> str | None:
