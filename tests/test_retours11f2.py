@@ -21,29 +21,28 @@ def client_piscines(engine):
 
     from labuse.api.app import app
     from labuse.db import session_scope
-    from labuse.ingestion.ortho_equipements import DDL, ensure_corrections
-    wkt = "POLYGON((55.30 -21.00,55.31 -21.00,55.31 -20.99,55.30 -20.99,55.30 -21.00))"
+    from labuse.ingestion.ortho_equipements import ensure_corrections
+    from labuse.ingestion.piscines_fusion import DDL as DDL_PISCINES
+    # PISCINES-2 — source unique `piscines` (statut) : 1 `servie` (comptée par défaut) + 2 `a_confirmer`
+    # (ajoutées par la bascule). Point de géométrie pour la carte.
+    pt = "POINT(55.305 -20.995)"
     ids = ["97999000PA0001", "97999000PA0002", "97999000PA0003"]
     with session_scope() as s:
-        s.execute(text(DDL))
+        s.execute(text(DDL_PISCINES))
         ensure_corrections(s)
-        for i, (idu, conf) in enumerate(zip(ids, (0.95, 0.62, 0.40))):
+        s.execute(text("DELETE FROM piscines WHERE idu = ANY(:ids)"), {"ids": ids})
+        for idu, statut, classe in zip(ids, ("servie", "a_confirmer", "a_confirmer"),
+                                       ("flair_haute", "cosia_probable", "cosia_probable")):
             s.execute(text(
-                "INSERT INTO parcels (idu, commune, section, numero, geom, surface_m2, centroid, bbox) VALUES "
-                "(:idu,'Piscineville','P',:num, ST_GeomFromText(:w,4326), 1000, "
-                "ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326))) "
-                "ON CONFLICT (idu) DO NOTHING"), {"idu": idu, "num": str(i + 1), "w": wkt})
-            s.execute(text(
-                "INSERT INTO parcel_equipements (idu, piscine, piscine_surface_m2, piscine_confiance) "
-                "VALUES (:idu, true, 30, :c) ON CONFLICT (idu) DO UPDATE SET piscine=true, piscine_confiance=:c"),
-                {"idu": idu, "c": conf})
+                "INSERT INTO piscines (idu, commune, surface_m2, source, classe, statut, geom) VALUES "
+                "(:idu, 'Piscineville', 30, 'flair', :cl, :st, ST_GeomFromText(:p, 4326))"),
+                {"idu": idu, "cl": classe, "st": statut, "p": pt})
     try:
         yield TestClient(app), ids
     finally:
         with session_scope() as s:
             s.execute(text("DELETE FROM piscine_corrections WHERE idu = ANY(:ids)"), {"ids": ids})
-            s.execute(text("DELETE FROM parcel_equipements WHERE idu = ANY(:ids)"), {"ids": ids})
-            s.execute(text("DELETE FROM parcels WHERE idu = ANY(:ids)"), {"ids": ids})
+            s.execute(text("DELETE FROM piscines WHERE idu = ANY(:ids)"), {"ids": ids})
 
 
 @pytest.mark.db
@@ -62,7 +61,8 @@ def test_m12_confiance_filtre_et_bascule(client_piscines):
                      params={"commune": "Piscineville", "inclure_incertaines": True}).json()
     assert len(pts["features"]) == 3
     bandes = {f["properties"]["idu"]: f["properties"]["bande"] for f in pts["features"]}
-    assert bandes[ids[0]] == "haute" and bandes[ids[1]] == "moyenne" and bandes[ids[2]] == "basse"
+    # PISCINES-2 — bande = statut : `servie` → haute, `a_confirmer` → moyenne.
+    assert bandes[ids[0]] == "haute" and bandes[ids[1]] == "moyenne" and bandes[ids[2]] == "moyenne"
 
 
 @pytest.mark.db

@@ -1020,6 +1020,19 @@ export const postPasUnePiscine = (idu: string, motif?: string) =>
   j<{ ok: boolean; idu: string; corrigees_total: number }>(`/modules/prospection-piscines/pas-une-piscine`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idu, motif: motif ?? null }),
   })
+// PISCINES-2 (A.3) — LISTE pisciniste : source unique `piscines` (idu · commune · surface bassin ·
+// source · statut · propriétaire PM nommée / particulier). Aucune colonne « potentiel solaire ».
+export interface PiscineItem {
+  idu: string; commune: string; surface_m2: number | null
+  source: 'flair' | 'cosia' | 'flair+cosia'; statut: 'servie' | 'a_confirmer' | 'ecartee'
+  proprio: { type: 'personne_morale'; denomination: string; siren: string | null } | { type: 'particulier' }
+}
+export interface PiscinesListe { total: number; n: number; cap?: number; tronquee?: boolean; items: PiscineItem[]; maj: string; source: string }
+export interface PiscinesFiltres { commune?: string | null; statut?: 'servie' | 'tous'; surfMin?: number; proprio?: 'tous' | 'pm' | 'pp' }
+export const getPiscinesListe = (f: PiscinesFiltres) =>
+  j<PiscinesListe>(`/modules/prospection-piscines/liste?${qf({
+    ...(f.commune ? { commune: f.commune } : {}), ...(f.statut === 'tous' ? { statut: 'tous' } : {}),
+    ...(f.surfMin ? { surf_min: f.surfMin } : {}), ...(f.proprio && f.proprio !== 'tous' ? { proprio: f.proprio } : {}) })}`)
 // ── OUTILS-MUSCLER-1 Lot A — outil « Successions » (radar patrimonial Score V v1.3). Le signal est
 // une succession PROBABLE (dirigeant ≥ 70 ans / SCI dormante), JAMAIS « en succession » (A0) ; le
 // propriétaire est une PM nommée par construction (SIREN confirmé exigé par le critère).
