@@ -123,25 +123,23 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
 }
 
 export function Blocs() {
-  const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
-  const setModule = useApp((s) => s.setModule)
-  const pushOutilRetour = useApp((s) => s.pushOutilRetour)
-
+  // OUTILS-S1 (Lot D) — plus de pont Courrier ici : `setModule`/`pushOutilRetour` restent portés par
+  // les cartes (Scan patrimoine, Assembler), pas par le conteneur.
   const [commune, setCommune] = useState<string | null>(null)   // Toute l'île par défaut
   const [surfMin, setSurfMin] = useState(0)
   const [sdpMin, setSdpMin] = useState(0)
   const [nMin, setNMin] = useState(2)
   const [inclurePublics, setInclurePublics] = useState(false)   // publics écartés par défaut
   const [openId, setOpenId] = useState<number | null>(null)
-  const [sel, setSel] = useState<Set<number>>(new Set())   // blocs cochés (par bloc_id)
   // RECETTE-1 R21 — deux temps : (1) on pose ses filtres ; (2) on clique « Voir les parcelles »,
   // le listing s'ouvre et le bloc de filtres se replie en accordéon. `montre` gouverne les deux.
   const [montre, setMontre] = useState(false)
   const [filtresOuverts, setFiltresOuverts] = useState(true)
-  const [methodeOuverte, setMethodeOuverte] = useState(false)   // DA-031 — tiroir « Détail et méthode »
   const voir = () => { setMontre(true); setFiltresOuverts(false) }
 
-  const reset = () => { setSel(new Set()); setOpenId(null) }
+  // OUTILS-S1 (Lot D) — la sélection multiple ne servait QU'au pont Courrier (retiré) : plus de cases
+  // à cocher par bloc (hors DA des autres outils). Le seul geste par bloc = « Scan patrimoine → ».
+  const reset = () => { setOpenId(null) }
   const q = useInfiniteQuery({
     queryKey: ['blocs', commune, surfMin, sdpMin, nMin, inclurePublics],
     queryFn: ({ pageParam }) => getBlocs(commune, surfMin, sdpMin, nMin, inclurePublics, pageParam),
@@ -152,8 +150,6 @@ export function Blocs() {
   const items = q.data?.pages.flatMap((p) => p.items) ?? []
   const meta = q.data?.pages[0]
   const total = meta?.total ?? 0
-  // Pont Courrier : un IDU représentatif par bloc sélectionné (le Courrier résout le propriétaire).
-  const idusCourrier = items.filter((i) => sel.has(i.bloc_id)).map((i) => i.idu_repr).filter((x): x is string => !!x)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
@@ -163,7 +159,7 @@ export function Blocs() {
         Les parcelles <b className="text-txt">contiguës d'un même propriétaire</b> regroupées en une
         assiette — ce qu'un promoteur ne voit pas parcelle par parcelle. <b className="text-txt">Personnes
         morales seulement</b> (SIREN) : les particuliers n'ont pas d'identité stable d'une parcelle à l'autre.
-        <Tip garder tip="Un bloc = des parcelles cadastrales en contact (≤ 0,5 m) appartenant au même SIREN (fichiers des personnes morales, DGFiP). Les particuliers sont hors périmètre : aucun regroupement par nom approché.">
+        <Tip garder tip="Le regroupement : un bloc = des parcelles cadastrales en contact (≤ 0,5 m) appartenant au MÊME propriétaire personne morale (SIREN confirmé, fichiers des personnes morales DGFiP), à partir de 2 parcelles. Contiguïté purement géométrique (PostGIS), jamais un rapprochement par nom. Ce qu'il ne dit pas : les particuliers sont hors périmètre (identité non stable d'une parcelle à l'autre) ; un bloc n'affirme ni la constructibilité, ni un accord de vente. Les chiffres : surface, communes et zonages Sourcés (cadastre, PLU) ; SDP résiduelle Estimée — somme des résiduels de la fiche (enveloppe PLU moins bâti existant), une parcelle hors PLU n'a pas de résiduel connu (le compteur « résiduel sur n/N » le dit). Tri par SDP résiduelle agrégée décroissante.">
           <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>
       </div>
@@ -244,23 +240,12 @@ export function Blocs() {
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-txt-dim">
-            <Case aria-label="Tout sélectionner"
-              checked={items.length > 0 && items.every((i) => sel.has(i.bloc_id))}
-              onChange={(e) => setSel(e.target.checked ? new Set(items.map((i) => i.bloc_id)) : new Set())} />
-            <span>Tout sélectionner</span>
-          </div>
+          {/* OUTILS-S1 (Lot D) — plus de « Tout sélectionner » ni de case par bloc : la sélection multiple
+              ne servait qu'au Courrier (retiré). Chaque carte porte son seul geste : « Scan patrimoine → ». */}
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
             {items.map((it) => (
-              <div key={it.bloc_id} className="flex items-start gap-1.5">
-                <Case data-blocs-sel className="mt-2"
-                  checked={sel.has(it.bloc_id)}
-                  onChange={() => setSel((s) => { const n = new Set(s); n.has(it.bloc_id) ? n.delete(it.bloc_id) : n.add(it.bloc_id); return n })} />
-                <div className="min-w-0 flex-1">
-                  <Carte it={it} ouvert={openId === it.bloc_id}
-                    onToggle={() => setOpenId((o) => (o === it.bloc_id ? null : it.bloc_id))} />
-                </div>
-              </div>
+              <Carte key={it.bloc_id} it={it} ouvert={openId === it.bloc_id}
+                onToggle={() => setOpenId((o) => (o === it.bloc_id ? null : it.bloc_id))} />
             ))}
           </div>
           <ListPaginationFooter shown={items.length} total={total} step={BLOCS_PAGE} onMore={() => q.fetchNextPage()}>
@@ -268,34 +253,8 @@ export function Blocs() {
           </ListPaginationFooter>
         </>
       )}
-
-      {/* pied : tiroir « Détail et méthode » (gauche) et pont Courrier (droite) */}
-      <div className="flex shrink-0 items-start justify-between gap-2">
-        <details data-blocs-methode open={methodeOuverte}
-          onToggle={(e) => setMethodeOuverte((e.target as HTMLDetailsElement).open)}
-          className="min-w-0 flex-1 text-xs">
-          <summary className="flex cursor-pointer list-none items-center gap-1.5 py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint"><Chevron open={methodeOuverte} />Détail et méthode</summary>
-          <div className="flex flex-col gap-1 text-[10.5px] leading-snug text-txt-dim">
-            <p><b className="text-txt-mut">Le regroupement.</b> Un bloc réunit les parcelles cadastrales en
-              contact (à 0,5 m près) appartenant au MÊME propriétaire personne morale (SIREN confirmé, fichiers
-              des personnes morales DGFiP), à partir de 2 parcelles. La contiguïté est purement géométrique
-              (PostGIS), jamais un rapprochement par nom.</p>
-            <p><b className="text-txt-mut">Ce qu'il ne dit pas.</b> Les <b className="text-txt-mut">particuliers</b>
-              sont hors périmètre : leur identité n'est pas stable d'une parcelle à l'autre, on ne regroupe donc
-              pas leurs parcelles. Un bloc n'affirme ni la constructibilité, ni un accord de vente.</p>
-            <p><b className="text-txt-mut">Les chiffres.</b> Surface, communes et zonages : Sourcés (cadastre,
-              PLU). SDP résiduelle : Estimé — somme des résiduels de la fiche (enveloppe PLU moins bâti existant) ;
-              une parcelle hors PLU n'a pas de résiduel connu (le compteur « résiduel sur n/N » le dit). Le tri
-              suit la SDP résiduelle agrégée décroissante.</p>
-            {meta?.source && <p className="text-[9.5px]">{meta.source}</p>}
-          </div>
-        </details>
-        <Bouton niveau="secondaire" ton="vert" data-blocs-courrier disabled={idusCourrier.length === 0}
-          onClick={() => { setCourrierPrefillIdus(idusCourrier); setModule('courriers'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}
-          className="mt-1.5 shrink-0">
-          ✉ Préparer les courriers ({idusCourrier.length}) →
-        </Bouton>
-      </div>
+      {/* OUTILS-S1 (Lot D) — pied retiré : « Détail et méthode » remonté dans le « i » de l'en-tête ;
+          raccourci « Préparer les courriers » supprimé (pont Courrier + sélection multiple abandonnés). */}
     </div>
   )
 }
