@@ -785,6 +785,12 @@ export function Fiche({ idu }: { idu: string }) {
               </Tip>
             )}
           </div>
+          {/* GEOPF-3 — SECTEUR : lieu-dit BD NYME le plus proche (rayon borné), sous l'adresse. Rien si aucun. */}
+          {f?.secteur && (
+            <div className="addr" data-fiche-secteur style={{ fontSize: 11, color: 'var(--txt-dim)', marginTop: 1 }}>
+              Secteur : <span style={{ color: 'var(--txt-mut)' }}>{f.secteur}</span>
+            </div>
+          )}
       </div>{/* /.tete-collee — RETOURS-13 P7 : bloc identité COLLÉ (les 6 tuiles ne collent pas) */}
 
       {/* RETOURS-13 P7 — les 6 tuiles vivent dans leur PROPRE carte, sous l'en-tête collé : elles

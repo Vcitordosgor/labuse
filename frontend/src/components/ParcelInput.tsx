@@ -36,7 +36,8 @@ import { Bouton } from './ui/Bouton'
 type Candidate = { idu: string; commune: string; surface_m2: number | null }
 
 // Les 4 grammaires du mandat, en CONSTANTE de module (référence stable → pas de relance d'effet).
-const GRAMMAIRES_DEFAUT: SuggestType[] = ['adresse', 'cadastre', 'proprietaire', 'siren']
+// GEOPF-3 — 5ᵉ grammaire « lieu_dit » (BD NYME) active par défaut dans toutes les barres.
+const GRAMMAIRES_DEFAUT: SuggestType[] = ['adresse', 'cadastre', 'proprietaire', 'siren', 'lieu_dit']
 
 export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, autoFocus, withCarte = true, dataAttr, grammaires = GRAMMAIRES_DEFAUT }: {
   onPick: (idu: string) => void

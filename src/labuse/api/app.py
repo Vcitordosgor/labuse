@@ -1326,6 +1326,21 @@ def _ban_adresse(db: Session, idu: str) -> str | None:
     return _fmt_ban(r["voie"], r["cp"], r["com"]) if r else None
 
 
+def _secteur_lieudit(db: Session, idu: str, rayon_m: float = 600.0) -> str | None:
+    """GEOPF-3 — lieu-dit BD NYME le plus proche de la parcelle, dans un rayon BORNÉ (600 m par
+    défaut) ; None au-delà (jamais un secteur « rattaché » à un lieu-dit à des kilomètres). Servi
+    sous l'adresse de la fiche comme « Secteur : … »."""
+    if db.execute(text("SELECT to_regclass('lieux_dits')")).scalar() is None:
+        return None
+    r = db.execute(text(
+        "SELECT ld.toponyme FROM lieux_dits ld, parcels p "
+        "WHERE p.idu = :idu AND ld.geom_2975 IS NOT NULL "
+        "  AND ST_DWithin(ld.geom_2975, p.geom_2975, :ray) "
+        "ORDER BY ld.geom_2975 <-> p.geom_2975 LIMIT 1"),
+        {"idu": idu, "ray": rayon_m}).mappings().first()
+    return r["toponyme"] if r else None
+
+
 # M45 (P1, clôture RGPD) : couches cascade INTERDITES en critère de requête — dérivées d'une
 # personne PHYSIQUE. Le verrou est CODE (refus API), pas une simple absence d'UI : un partenaire
 # API ne doit pas pouvoir les requêter via `flags`/`flags_exclus`. Cf. cadrage M45 (gérant âgé).
@@ -4054,6 +4069,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # M6 2a (§1.8) : la meilleure adresse BAN rattachée — None si aucune (le front
         # affiche « Adresse non disponible », jamais un champ vide)
         "adresse": _ban_adresse(db, idu),
+        # GEOPF-3 — « Secteur » : lieu-dit BD NYME le plus proche (rayon borné), sous l'adresse. None sinon.
+        "secteur": _secteur_lieudit(db, idu),
         # M28 (gaté LABUSE_M28_BADGES=1, servi à la bascule phase B) : badges filtre bâti +
         # géométrie contrainte — signaux de fiche, étiquetés, jamais un déclassement ici.
         **(_m28_badges(db, idu) if os.environ.get("LABUSE_M28_BADGES") == "1" else {}),

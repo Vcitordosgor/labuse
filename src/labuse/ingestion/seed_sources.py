@@ -506,6 +506,16 @@ SOURCES: list[dict] = [
          technical_notes="GEOPF-3 : couche RASTER (overlay) relayée par /map/tiles/enr_habitation "
                          "(WMTS ENR.PERIMETRE.HABITATION, style PERIMETRE.HABITATION, PM_6_18). Couverture 974 "
                          "vérifiée (tuiles z12/z14 non vides). Groupe Énergie + visible dans Prospection solaire."),
+    # GEOPF-3 — lieux-dits (BD NYME / toponymes BD TOPO IGN) : recherche par lieu-dit + « Secteur » fiche.
+    dict(name="BD NYME — lieux-dits (IGN)", category="topographie", provider="IGN / Géoplateforme",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="BD TOPO® V3 (IGN) — toponymes / lieux-dits",
+         documentation_url="https://geoservices.ign.fr/bdtopo",
+         endpoint_url="https://data.geopf.fr/wfs/ows",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — BD TOPO ».",
+         technical_notes="GEOPF-3 : ingéré → table lieux_dits via Géoplateforme WFS "
+                         "(BDTOPO_V3:zone_d_habitation habités + lieu_dit_non_habite). 5ᵉ grammaire de "
+                         "recherche « Lieu-dit » + ligne « Secteur » de la fiche parcelle."),
     # ── Spécifiques / accès restreint ──
     dict(name="ABF / Monuments historiques", category="patrimoine", provider="Base Mérimée (Ministère Culture)",
          access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
@@ -1676,6 +1686,7 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "SCOT (GPU)": ("one_shot", 365, "proposee"),
     "Zones exclues EnR sauf toiture (OFB/APER)": ("one_shot", 365, "proposee"),
     "Contraintes EnR près des habitations (Géoplateforme)": ("one_shot", 365, "proposee"),
+    "BD NYME — lieux-dits (IGN)": ("one_shot", 365, "proposee"),
     "ZNIEFF (INPN / Région)": ("absente", None, "sans_objet"),
     "CoSIA (couverture du sol IA, IGN)": ("one_shot", 800, "declaree"),
     "Radar (pige d'annonces)": ("depot_manuel", 3, "declaree"),

@@ -203,6 +203,38 @@ def _sugg_commune(q: str, n: int) -> list[dict]:
              "lon": c["lon"], "lat": c["lat"]} for c in hits[:n]]
 
 
+def _sugg_lieu_dit(db: Session, q: str, n: int) -> list[dict]:
+    """GEOPF-3 — lieux-dits BD NYME (table lieux_dits) : « Lieu-dit · Le Guillaume, Saint-Paul ».
+    Match par JETONS (chaque mot du toregexp doit figurer dans le toponyme) ; préfixe d'abord, puis
+    lieux-dits HABITÉS avant les non habités. Renvoie label + commune + lon/lat (zoom au secteur)."""
+    if db.execute(text("SELECT to_regclass('lieux_dits')")).scalar() is None:
+        return []
+    plied = _plie(q)
+    tokens = [t for t in plied.split(" ") if t]
+    if not tokens:
+        return []
+    conds = " AND ".join(f"unaccent(lower(toponyme)) LIKE '%' || :t{i} || '%'" for i in range(len(tokens)))
+    params: dict = {f"t{i}": t for i, t in enumerate(tokens)}
+    params["qp"] = plied
+    params["lim"] = n
+    try:
+        rows = db.execute(text(
+            f"""SELECT toponyme, commune, nature, ST_X(geom) AS lon, ST_Y(geom) AS lat
+                FROM lieux_dits WHERE {conds}
+                ORDER BY (unaccent(lower(toponyme)) LIKE :qp || '%') DESC, habite DESC,
+                         length(toponyme), toponyme
+                LIMIT :lim"""), params).mappings().all()
+    except Exception:
+        # repli sans unaccent (extension absente) : lower() simple.
+        conds2 = " AND ".join(f"lower(toponyme) LIKE '%' || :t{i} || '%'" for i in range(len(tokens)))
+        rows = db.execute(text(
+            f"""SELECT toponyme, commune, nature, ST_X(geom) AS lon, ST_Y(geom) AS lat
+                FROM lieux_dits WHERE {conds2}
+                ORDER BY habite DESC, length(toponyme), toponyme LIMIT :lim"""), params).mappings().all()
+    return [{"label": r["toponyme"], "sub": (f"{r['commune']} — lieu-dit" if r["commune"] else "lieu-dit"),
+             "commune": r["commune"], "lon": r["lon"], "lat": r["lat"]} for r in rows]
+
+
 def _sugg_projet(db: Session, request: Request, q: str, n: int) -> list[dict]:
     from .. import models
     from .tenant import current_compte
@@ -214,8 +246,8 @@ def _sugg_projet(db: Session, request: Request, q: str, n: int) -> list[dict]:
             for p in query.order_by(models.Projet.updated_at.desc()).limit(n).all()]
 
 
-TYPES = ("cadastre", "adresse", "commune", "proprietaire", "siren", "projet")
-FORMATS = "adresse, IDU, référence courte (BZ1065), SIREN, nom de propriétaire, commune, projet"
+TYPES = ("cadastre", "adresse", "commune", "proprietaire", "siren", "projet", "lieu_dit")
+FORMATS = "adresse, IDU, référence courte (BZ1065), SIREN, nom de propriétaire, commune, lieu-dit, projet"
 
 
 @router.get("/suggest")
@@ -242,7 +274,7 @@ def suggest(request: Request, q: str = Query(..., min_length=1),
     elif _RE_SECTION_NUMERO.match(q) or _RE_IDU_PARTIEL.match(q.upper().replace(" ", "")):
         ordre = ["cadastre", "proprietaire"]      # « BZ1065 » peut aussi être un début de nom
     else:
-        ordre = ["adresse", "commune", "proprietaire", "projet"]
+        ordre = ["adresse", "commune", "lieu_dit", "proprietaire", "projet"]
     ordre = [t for t in ordre if t in voulus]
 
     groupes: list[dict] = []
@@ -258,6 +290,7 @@ def suggest(request: Request, q: str = Query(..., min_length=1),
                       "proprietaire": lambda: _sugg_proprietaire(db, q, n),
                       "siren": lambda: _sugg_siren(db, q, n),
                       "commune": lambda: _sugg_commune(q, n),
+                      "lieu_dit": lambda: _sugg_lieu_dit(db, q, n),
                       "projet": lambda: _sugg_projet(db, request, q, n)}[t])()
         except Exception as e:  # noqa: BLE001 — une grammaire qui casse ne mange pas les autres
             log.error("recherche/suggest : grammaire « %s » en échec (%s)", t, e)

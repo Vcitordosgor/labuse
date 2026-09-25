@@ -470,6 +470,9 @@ SEED: list[dict] = [
              "&SRSNAME=EPSG:4326&COUNT=1&OUTPUTFORMAT=application/json"
              "&BBOX=55.20,-21.42,55.90,-20.85,EPSG:4326"),
      "selecteur": None},
+    # GEOPF-3 — BD NYME (lieux-dits) : même jeu amont que la BD TOPO (bd-topo-r), sonde data.gouv.
+    {"name": "BD NYME — lieux-dits (IGN)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/bd-topo-r/", "selecteur": "last_update"},
     {"name": "Contours IRIS (IGN/INSEE)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/contours-iris/", "selecteur": "last_update"},
     {"name": "RPG — déclarations agricoles (IGN/ASP)", "methode": "api",

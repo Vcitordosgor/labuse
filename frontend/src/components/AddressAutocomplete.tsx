@@ -48,11 +48,11 @@ interface Props {
 
 const TYPE_LBL: Record<SuggestType, string> = {
   adresse: 'adresse', cadastre: 'parcelle', proprietaire: 'propriétaire',
-  siren: 'SIREN', commune: 'commune', projet: 'projet',
+  siren: 'SIREN', commune: 'commune', projet: 'projet', lieu_dit: 'lieu-dit',
 }
 const TYPE_FORMAT: Record<SuggestType, string> = {
   adresse: 'adresse', cadastre: 'IDU ou référence courte (BZ1065)', proprietaire: 'nom de propriétaire',
-  siren: 'SIREN', commune: 'commune', projet: 'nom de projet',
+  siren: 'SIREN', commune: 'commune', projet: 'nom de projet', lieu_dit: 'lieu-dit',
 }
 const DEFAUT: SuggestType[] = ['adresse', 'cadastre']
 
@@ -139,6 +139,9 @@ export function AddressAutocomplete({
     // raisonnable pour commune (recadrage par coordonnées).
     if (it.type === 'adresse' || it.type === 'cadastre') {
       onSelect({ label: it.label, lon: it.lon ?? 0, lat: it.lat ?? 0, idu: it.idu ?? null })
+    } else if (it.type === 'lieu_dit' && it.lon != null && it.lat != null) {
+      // GEOPF-3 — un lieu-dit n'est pas une parcelle : un clic ZOOME sur le secteur (recadrage lon/lat).
+      onSelect({ label: it.label, lon: it.lon, lat: it.lat, idu: null })
     } else if (onPick) {
       onPick(it)
     } else if (it.type === 'commune' && it.lon != null && it.lat != null) {

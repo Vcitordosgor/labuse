@@ -381,6 +381,21 @@ def enr_exclue_toiture_build_cmd() -> None:
     typer.echo(f"✓ EnR interdites hors toiture (APER) : {counts} (total {sum(counts.values())})")
 
 
+@app.command("bd-nyme-build")
+def bd_nyme_build_cmd() -> None:
+    """GEOPF-3 — ingère les lieux-dits BD NYME (toponymes BD TOPO IGN via Géoplateforme WFS) → table
+    lieux_dits (Licence Ouverte). Île entière ; 5ᵉ grammaire de recherche + « Secteur » de la fiche."""
+    from .db import engine
+    from .ingestion import seed_sources
+    from .ingestion.bd_nyme import build_bd_nyme
+
+    with session_scope() as s:
+        seed_sources.seed(s)
+        counts = build_bd_nyme(s, log=typer.echo)
+    _ = engine  # geom_2975 est posé à l'insertion (ST_Transform), pas de trigger sur lieux_dits
+    typer.echo(f"✓ Lieux-dits (BD NYME) : {counts} (total {sum(counts.values())})")
+
+
 @app.command("bpe-build")
 def bpe_build_cmd() -> None:
     """M137-U — ingère la BPE INSEE (équipements géolocalisés, DEP=974) → spatial_layers

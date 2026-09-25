@@ -741,7 +741,7 @@ export async function banAutocomplete(q: string, signal?: AbortSignal): Promise<
 
 // RETOURS-16 V5 — suggestion UNIFIÉE des barres de recherche (un endpoint, six grammaires,
 // groupées par type, 8 max). `types` = les grammaires que la barre appelante sait consommer.
-export type SuggestType = 'adresse' | 'cadastre' | 'proprietaire' | 'siren' | 'commune' | 'projet'
+export type SuggestType = 'adresse' | 'cadastre' | 'proprietaire' | 'siren' | 'commune' | 'projet' | 'lieu_dit'
 export interface SuggestItem {
   type: SuggestType; label: string; sub?: string
   idu?: string | null; lon?: number; lat?: number
