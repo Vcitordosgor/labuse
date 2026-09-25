@@ -983,6 +983,12 @@ DONNEES: dict[str, Donnee] = {
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/couches_tuyau.py:couche_tuile (pylone)",
     reservoirs=("bd_topo",), portee="live",
     type="couche", table="spatial_layers (kind=pylone)", fabrication="requete"),
+ "poste_transformation_couche": C("Postes de transformation (couche)", "couche", "commune",
+    "postes de transformation électriques (BD TOPO IGN, emprises) — distance au raccordement",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/couches_tuyau.py:couche_tuile (poste_transformation)",
+    reservoirs=("bd_topo",), portee="live",
+    type="couche", table="spatial_layers (kind=poste_transformation)", fabrication="requete"),
  "tcsp_couche": C("Stationnement allégé — TCSP (couche)", "couche", "commune",
     # COUCHES-REGISTRE-2 lot 1 — l'ancienne déclaration BAOBAB (tcsp_axe, réservoir gtfs_pan) était
     # PÉRIMÉE (couche retirée en RETOURS-13). La couche réelle = voies bus en site propre + stations

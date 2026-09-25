@@ -314,6 +314,23 @@ def pylones_build_cmd() -> None:
     typer.echo(f"✓ Pylônes : {counts} (total {sum(counts.values())})")
 
 
+@app.command("postes-transformation-build")
+def postes_transformation_build_cmd() -> None:
+    """GEOPF-3 — ingère les postes de transformation électriques (IGN BD TOPO via Géoplateforme WFS)
+    → spatial_layers kind='poste_transformation' (Licence Ouverte). Île entière, groupe Réseaux ;
+    la distance au poste le plus proche est servie au tiroir Réseaux de la fiche parcelle."""
+    from . import models
+    from .db import engine
+    from .ingestion import seed_sources
+    from .ingestion.postes_transformation import build_postes_transformation
+
+    with session_scope() as s:
+        seed_sources.seed(s)
+        counts = build_postes_transformation(s, log=typer.echo)
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ Postes de transformation : {counts} (total {sum(counts.values())})")
+
+
 @app.command("bpe-build")
 def bpe_build_cmd() -> None:
     """M137-U — ingère la BPE INSEE (équipements géolocalisés, DEP=974) → spatial_layers

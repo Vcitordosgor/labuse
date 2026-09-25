@@ -75,6 +75,8 @@ ROBINETS: dict[str, Robinet] = {
     "/map/tiles/ligne_ht/{z}/{x}/{y}.pbf", "tuiles", chiffres=("lignes_ht_couche",)),
  "couche_pylone": _r("couche", "Pylônes électriques", None,
     "/map/tiles/pylone/{z}/{x}/{y}.pbf", "tuiles", chiffres=("pylone_couche",)),
+ "couche_poste_transformation": _r("couche", "Postes de transformation", None,
+    "/map/tiles/poste_transformation/{z}/{x}/{y}.pbf", "tuiles", chiffres=("poste_transformation_couche",)),
  "couche_tcsp": _r("couche", "Axe de transport structurant", None,
     "/map/tiles/tcsp/{z}/{x}/{y}.pbf", "tuiles", chiffres=("tcsp_couche",)),
  "couche_dispositifs": _r("couche", "Dispositifs et périmètres", None,

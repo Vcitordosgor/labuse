@@ -4727,6 +4727,9 @@ SEUILS_PROXIMITE_M = {
     # étaient déjà croisés ; on étend au kind manquant :
     "ligne_mt": 50,       # HTA (moyenne tension) : nuisance/recul de PROXIMITÉ (aérien), rayon serré
     "transport_ligne": 400,  # desserte par un TRACÉ de transport public : ~5 min à pied
+    # GEOPF-3 — poste de transformation (BD TOPO) : la distance pèse sur le coût de RACCORDEMENT ;
+    # au-delà de 300 m, l'information cesse d'être un signal utile pour la parcelle.
+    "poste_transformation": 300,
 }
 
 
@@ -4746,6 +4749,8 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         # transport public (desserte). Mêmes seuils de pertinence (SEUILS_PROXIMITE_M).
         mt = _sous_seuil(_plus_proche(db, idu, "ligne_mt"), "ligne_mt")
         lgn = _sous_seuil(_plus_proche(db, idu, "transport_ligne"), "transport_ligne")
+        # GEOPF-3 — POSTE DE TRANSFORMATION le plus proche (BD TOPO) : signal de coût de raccordement.
+        poste = _sous_seuil(_plus_proche(db, idu, "poste_transformation"), "poste_transformation")
         # RETOURS-13 R5 — le fait BAOBAB (distance à l'axe, seuil 500 m) est REMPLACÉ : la distance
         # se mesure À LA STATION TCSP EN SERVICE la plus proche (kind tcsp_station — arrêts GTFS sur
         # une voie bus en site propre OSM), À VOL D'OISEAU (Conseil d'État 2022), jamais au tracé ni
@@ -4761,7 +4766,7 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         return _bloc_indisponible("proximites")   # M125 — panne ≠ absence
     tcsp = (dict(tcsp_row) if (tcsp_row and tcsp_row["d"] is not None and tcsp_row["d"] <= 1500)
             else None)
-    if not any((arret, pole, tele, ht, tcsp, mt, lgn)):
+    if not any((arret, pole, tele, ht, tcsp, mt, lgn, poste)):
         return None
     out: dict = {}
     if arret:
@@ -4848,6 +4853,19 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
                            else f"à ~{lgn['distance_m']} m")
                         + " — desserte (le tracé passe à proximité)."),
             "source": "réseaux de transport public — tracés (OSM / GTFS)",
+        }
+    # GEOPF-3 — POSTE DE TRANSFORMATION : distance au poste le plus proche = signal de coût de
+    # raccordement (au contact = raccordement a priori simple ; loin = extension de réseau à chiffrer).
+    # Le coût réel dépend du gestionnaire (EDF SEI) : on donne la distance, jamais un montant.
+    if poste:
+        d = poste["distance_m"]
+        nom = poste["nom"] or "poste de transformation"
+        out["poste_transformation"] = {
+            "nom": nom, "distance_m": d,
+            "libelle": (f"Poste de transformation électrique "
+                        + ("au contact de la parcelle" if d <= 5 else f"à ~{d} m")
+                        + " — signal de coût de raccordement (à confirmer auprès d'EDF SEI)."),
+            "source": "BD TOPO IGN — postes de transformation (emprises)",
         }
     if tcsp:
         d = tcsp["d"]

@@ -134,6 +134,22 @@ donnees:
     absence_type: absente_ici
     pourquoi: "GEOPF-3 : point acier (anneau) — support HTB, distinct des lignes ; zoom_min 11 (dense)."
 ---
+surface:   couche_poste_transformation
+nom:       "Postes de transformation"
+categorie: couche
+parent:    null
+route:     "/map/tiles/poste_transformation/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  poste_transformation_couche
+    ou:    { rang: 10, etat: replie, section: "Réseaux d'énergie" }
+    comment: { libelle: "Postes de transformation", format: liste, i: "Postes de transformation électriques (BD TOPO IGN, emprises). La distance au poste le plus proche pèse sur le coût de raccordement d'un projet ; la fiche parcelle la sert au tiroir Réseaux." }
+    # GEOPF-3 — emprise orange (ambre soutenu), centroïde pour rester visible à l'échelle île. Pas de vert.
+    carte: { kind: poste_transformation, agregat: false, famille: reseaux, geometrie: polygone, centroide: true, zoom_min: 0, rang_carte: 78, style: { couleur: "#E8873A", opacite: 0.55, trait: "#8A4A17", epaisseur: 1.4, zoom_rayon: [9, 3, 13, 5, 16, 7] }, popup: [ { champ: name, libelle: "Poste" }, { champ: importance, libelle: "Importance" } ], legende: "Poste de transformation électrique" }
+    absence: "Postes de transformation : aucun poste dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "GEOPF-3 : emprise ambre #E8873A + centroïde (visible île) — infrastructure électrique."
+---
 surface:   couche_tcsp
 nom:       "TCSP / stationnement allégé"
 categorie: couche
