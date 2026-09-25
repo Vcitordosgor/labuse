@@ -17,7 +17,7 @@ import threading
 import time
 from collections import OrderedDict
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -314,7 +314,9 @@ def rebuild_mvt_servies(db: Session, run_label: str | None = None, log=lambda *_
 
 
 # cache LRU en mémoire (les tuiles sont chères à générer et très re-demandées en navigation)
-_CACHE: OrderedDict[tuple, bytes] = OrderedDict()
+# CARTE-VITESSE-2 lot C : le LRU mémorise (octets, ETag) pour ne pas recalculer le md5 à chaque
+# service d'une tuile chaude (l'ETag alimente la revalidation conditionnelle 304, cf. _tile_response).
+_CACHE: OrderedDict[tuple, tuple[bytes, str]] = OrderedDict()
 _CACHE_MAX = 4096
 # M6.2 perf : cache navigateur des tuiles (le contenu ne change qu'au build-mvt). Appliqué
 # AUSSI au chemin servi depuis le cache LRU serveur — il l'omettait, donc le navigateur
@@ -565,12 +567,31 @@ def mvt_tiles_meta(db: Session = Depends(get_db)) -> dict:
             "tuiles_prechauffees_le": tuiles_le, "tuiles_prechauffees_n": tuiles_n}
 
 
+def _tile_response(request: Request, body: bytes, etag: str) -> Response:
+    """CARTE-VITESSE-2 lot C (R3) — réponse tuile avec ETag FORT (hash du CONTENU, cf. _etag) et
+    revalidation conditionnelle. L'audit CARTE-VITESSE-1 notait l'absence d'ETag sur cette route :
+    le navigateur, une fois max-age écoulé (ou en revalidation SWR), re-téléchargeait la tuile
+    ENTIÈRE même inchangée. Avec l'ETag, un `If-None-Match` correspondant renvoie **304** sans corps
+    (~0 octet réseau) ; l'ETag change au rebuild-mvt (le contenu change) → invalidation propre. Un
+    proxy amont (Caddy) peut de surcroît revalider/mettre en cache sur cette clé forte."""
+    quoted = f'"{etag}"'
+    headers = {**_TILE_HEADERS, "ETag": quoted}
+    inm = request.headers.get("if-none-match", "")
+    if inm:
+        # If-None-Match peut lister plusieurs valeurs, un "*", ou des tags faibles (W/"…").
+        tags = {t.strip().lstrip("W/").strip().strip('"') for t in inm.split(",")}
+        if "*" in tags or etag in tags:
+            return Response(status_code=304, headers=headers)
+    return Response(content=body, media_type="application/x-protobuf", headers=headers)
+
+
 @router.get("/map/tiles/{z}/{x}/{y}.pbf")
-def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
+def mvt_tile(z: int, x: int, y: int, request: Request, db: Session = Depends(get_db)) -> Response:
     """Tuile MVT couche `parcels` — mêmes propriétés que le GeoJSON commune.
     CARTE-VITESSE-2 lot A : z9-z11 servies depuis le cache PERSISTANT `mvt_tile_cache` (pré-générées
     par `warm_parcel_tiles`) ; à défaut (tuile non chauffée / première demande après un rebuild) on
-    génère à la volée ET on met en cache. z≥12 : à la volée (l'index GiST porte)."""
+    génère à la volée ET on met en cache. z≥12 : à la volée (l'index GiST porte).
+    Lot C : chaque réponse porte un ETag fort (304 si le client a déjà la même tuile)."""
     # FIX-CARTE C2 : bornes ALIGNÉES sur la source front (parcels-ile minzoom 9 / maxzoom 15) —
     # au-delà de z15 le client sur-zoome, il ne demande jamais z16+ ; on ne sert donc que z9-15.
     if z < 9 or z > 15:
@@ -579,19 +600,24 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     key = (version, z, x, y)
     if key in _CACHE:                    # 1) LRU en mémoire (par worker) — le plus rapide
         _CACHE.move_to_end(key)
-        return Response(content=_CACHE[key], media_type="application/x-protobuf", headers=_TILE_HEADERS)
+        body, etag = _CACHE[key]
+        return _tile_response(request, body, etag)
     body = None
+    etag = None
     if z in _WARM_ZOOMS:                 # 2) cache persistant (traverse les workers)
         got = _tile_cache_get(db, version, z, x, y)
         if got is not None:
-            body = got[0]
+            body, etag = got[0], got[1]
     if body is None:                     # 3) miss : générer à la volée
         if not db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar():
             return Response(status_code=204)  # table pas encore construite (run en cours)
         body = _parcel_tile_bytes(db, z, x, y)
+        etag = _etag(body)
         if z in _WARM_ZOOMS:             # …et alimenter le cache persistant (best-effort)
-            _tile_cache_put(db, version, z, x, y, body, _etag(body))
-    _CACHE[key] = body
+            _tile_cache_put(db, version, z, x, y, body, etag)
+    if etag is None:                     # cache persistant sans etag (schéma ancien) : recalcul
+        etag = _etag(body)
+    _CACHE[key] = (body, etag)
     if len(_CACHE) > _CACHE_MAX:
         _CACHE.popitem(last=False)
-    return Response(content=body, media_type="application/x-protobuf", headers=_TILE_HEADERS)
+    return _tile_response(request, body, etag)
