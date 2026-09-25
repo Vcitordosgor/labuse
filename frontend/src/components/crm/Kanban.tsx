@@ -33,9 +33,10 @@ function CardNote({ e, onNote }: { e: PipelineEntry; onNote: (notes: string) => 
       <div className="mt-1.5" onClick={stop}>
         {note ? (
           <button data-crm-note-edit onClick={() => { setDraft(e.notes ?? ''); setOpen(true) }}
-            /* DA-FIX-5b — largeur bornée (w-full) + coupure des chaînes sans espace ([overflow-wrap:anywhere])
-               pour qu'une note « AAAA… » ne déborde plus de la carte. */
-            className="block w-full whitespace-pre-wrap [overflow-wrap:anywhere] rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-left text-[10.5px] text-txt-mut transition-colors duration-quick hover:border-mint/40 hover:text-txt">
+            /* DA-FIX-5b — largeur bornée (w-full) + coupure des chaînes sans espace ([overflow-wrap:anywhere]).
+               OUTILS-S2 Lot D (D.1) — HAUTEUR FIXE (~4 lignes) + défilement interne : une note très longue
+               ne peut plus étirer la carte ni casser la colonne ([GB-TEST]). La carte garde sa taille. */
+            className="block max-h-[4.5rem] w-full overflow-y-auto overscroll-contain whitespace-pre-wrap [overflow-wrap:anywhere] rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-left text-[10.5px] text-txt-mut transition-colors duration-quick hover:border-mint/40 hover:text-txt">
             {note}
           </button>
         ) : (

@@ -550,8 +550,14 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
   // fraîchement allumée déplie SA rangée, sans toucher aux autres.
   const [ouverts, setOuverts] = useState<Record<string, boolean>>({})
   // FINITIONS-1 (P7) — la légende des couches se replie/déplie par une petite flèche (accordéon DA :
-  // ouverte = pointe en bas, repliée = pointe à droite). Dépliée par défaut.
-  const [replie, setReplie] = useState(false)
+  // ouverte = pointe en bas, repliée = pointe à droite).
+  // OUTILS-S2 Lot D (D.2) — FERMÉE par défaut tant que seules les couches par défaut (Repères :
+  // limites parcelles/communes) sont actives ; elle s'ouvre d'elle-même dès qu'une 3e couche est
+  // activée. Une fois ouverte/fermée à la main, le choix de l'utilisateur PRIME pour la session
+  // (`ouvertManuel` non nul l'emporte sur l'auto-ouverture). `null` = pas encore touchée.
+  const nonDefautActif = actives.some((c) => !COCHE_DEFAUT(c))
+  const [ouvertManuel, setOuvertManuel] = useState<boolean | null>(null)
+  const ouvert = ouvertManuel ?? nonDefautActif
   const prev = useRef<Record<string, boolean>>({})
   useEffect(() => {
     const nouv = Object.keys(tuyauActives).find((k) => tuyauActives[k] && !prev.current[k])
@@ -575,12 +581,12 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
     <div data-tuyau-legend
       className="floating absolute bottom-10 right-4 hidden max-h-[52vh] w-[244px] overflow-y-auto rounded-xl bg-surface-2/95 p-3 text-txt shadow-elev-2 sm:block">
       {/* FINITIONS-1 (P7) — en-tête cliquable avec la flèche de repli/dépli (ChevronSection, DA). */}
-      <button data-tuyau-legend-toggle onClick={() => setReplie((r) => !r)} aria-expanded={!replie}
+      <button data-tuyau-legend-toggle onClick={() => setOuvertManuel(!ouvert)} aria-expanded={ouvert}
         className="flex w-full items-center gap-2 text-left">
         <span className="label-caps flex-1">Légende</span>
-        <ChevronSection open={!replie} />
+        <ChevronSection open={ouvert} />
       </button>
-      {!replie && (
+      {ouvert && (
       <div className="mt-2 flex flex-col gap-1">
         {entrees.map((e) => {
           const isOpen = estDeplie(e)
