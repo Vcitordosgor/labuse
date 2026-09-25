@@ -51,22 +51,42 @@ export function BatiBlock({ f }: { f: Fiche }) {
           value={nb != null ? nb : 'non déterminé'} tone={nb != null ? undefined : 'mute'} />
         {/* RECETTE-9 T9 — quand le LiDAR HD a mesuré la parcelle : faîtage ET égout MESURÉS
             (sourcé), l'égout étant ce que BD TOPO ne donne pas. Sinon la hauteur BD TOPO (estimé).
-            FICHE-FIX-2 P3 — quand le faîtage LiDAR diverge trop de BD TOPO (écart > seuil, déjà en
-            base), on affiche les DEUX valeurs et un drapeau « Sources discordantes » : la mesure
-            p99 a vraisemblablement capté végétation/structure voisine ; aucun choix automatique. */}
-        <FactRow label="Hauteur du bâti"
-          value={b.hauteur_nature === 'sourcé' && b.hauteur_faitage_m != null
-            ? <>{b.hauteur_faitage_m} <small>m au faîtage</small>{b.hauteur_egout_m != null ? <> · {b.hauteur_egout_m} <small>m à l'égout</small></> : null}</>
-            : b.hauteur_bati_m != null ? <>{b.hauteur_bati_m} <small>m</small></> : 'non déterminée'}
-          tone={b.hauteur_discordante ? 'warn' : (b.hauteur_bati_m != null || b.hauteur_faitage_m != null ? undefined : 'mute')}
-          src={b.hauteur_nature === 'sourcé'
-            ? `LiDAR HD (mesuré${b.hauteur_survol ? `, survol de ${b.hauteur_survol}` : ''})`
-            : b.hauteur_bati_m != null ? 'BD TOPO' : undefined} />
-        {b.hauteur_discordante && b.hauteur_faitage_m != null && b.hauteur_bdtopo_m != null && (
+            DONNEES-FIX-1 lot A — trois lignes libellées SANS ambiguïté de grandeur : le faîtage
+            (haut de toit, LiDAR), l'égout (bord de toit, LiDAR), et la hauteur BD TOPO qui vaut
+            ≈ l'égout — c'est CES DEUX-LÀ qu'on compare pour le badge (même grandeur), jamais le
+            faîtage, toujours plus haut par construction sur un toit en pente ou un R+n. */}
+        {b.hauteur_nature === 'sourcé' && b.hauteur_faitage_m != null ? (
+          <>
+            <FactRow label="Faîtage mesuré (LiDAR)"
+              value={<>{b.hauteur_faitage_m} <small>m — haut de toit</small></>}
+              tone={b.hauteur_discordante && b.hauteur_discordance_motif === 'faîtage aberrant' ? 'warn' : undefined}
+              src={`LiDAR HD (mesuré${b.hauteur_survol ? `, survol de ${b.hauteur_survol}` : ''})`} />
+            {b.hauteur_egout_m != null && (
+              <FactRow label="Égout mesuré (LiDAR)"
+                value={<>{b.hauteur_egout_m} <small>m — bord de toit</small></>}
+                tone={b.hauteur_discordante && b.hauteur_discordance_motif === 'égout ↔ BD TOPO' ? 'warn' : undefined}
+                src="LiDAR HD (mesuré)" />
+            )}
+            {b.hauteur_bdtopo_m != null && (
+              <FactRow label="Hauteur BD TOPO (≈ égout)"
+                value={<>{b.hauteur_bdtopo_m} <small>m</small></>}
+                tone={b.hauteur_discordante && b.hauteur_discordance_motif === 'égout ↔ BD TOPO' ? 'warn' : undefined}
+                src="BD TOPO® (hauteur déclarée)" />
+            )}
+          </>
+        ) : (
+          <FactRow label="Hauteur du bâti"
+            value={b.hauteur_bati_m != null ? <>{b.hauteur_bati_m} <small>m</small></> : 'non déterminée'}
+            tone={b.hauteur_bati_m != null ? undefined : 'mute'}
+            src={b.hauteur_bati_m != null ? 'BD TOPO' : undefined} />
+        )}
+        {b.hauteur_discordante && (
           <div data-hauteur-discordante className="mt-0.5">
             <Badge ton="ambre">Sources discordantes</Badge>
             <p className="mt-0.5 text-[11px] leading-snug text-amber">
-              LiDAR {b.hauteur_faitage_m} m · BD TOPO {b.hauteur_bdtopo_m} m — à vérifier sur photo aérienne.
+              {b.hauteur_discordance_motif === 'faîtage aberrant'
+                ? <>Faîtage mesuré {b.hauteur_faitage_m} m — valeur physiquement impossible, mesure à écarter.</>
+                : <>Égout LiDAR {b.hauteur_egout_m} m · BD TOPO {b.hauteur_bdtopo_m} m — écart{b.ecart_egout_bdtopo_m != null ? ` de ${Math.abs(b.ecart_egout_bdtopo_m)} m` : ''} sur la même grandeur, à vérifier sur photo aérienne.</>}
             </p>
           </div>
         )}

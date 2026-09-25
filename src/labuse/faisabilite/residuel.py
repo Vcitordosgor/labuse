@@ -25,9 +25,36 @@ from .db import parcel_faisabilite
 from .engine import Hypotheses
 
 
-def _niveaux_existants(session: Session, parcel_id: int, defaut: float) -> tuple[float, bool]:
-    """Niveaux du bâti existant. Renvoie (niveaux, reel) — `reel=False` = hypothèse PLACEHOLDER
-    (hauteur/étages BD TOPO non ingérés sur ce lot)."""
+# DONNEES-FIX-1 lot C — hauteur d'étage de référence pour dériver les niveaux depuis l'ÉGOUT mesuré.
+# CALIBRÉE : sur 229 615 bâtiments portant un nb d'étages BD TOPO renseigné, `max(1, round(égout/3,0))`
+# reproduit le nb d'étages à 75,7 % exact et 98,3 % à ±1 niveau (voir DONNEES-FIX-1.md). 3,0 m est la
+# hauteur d'étage standard, déjà utilisée par le repli BD TOPO (hauteur/3).
+ETAGE_REF_M = 3.0
+
+
+def _niveaux_existants(session: Session, parcel_id: int, defaut: float) -> tuple[float, bool, str]:
+    """Niveaux du bâti existant. Renvoie (niveaux, reel, source) — `source` ∈ {'lidar','bdtopo','sans'},
+    `reel=False` uniquement pour le placeholder ('sans').
+
+    DONNEES-FIX-1 lot C — priorité à l'ÉGOUT LiDAR MESURÉ : `niveaux = max(1, round(égout / 3,0 m))`.
+    L'égout (bord de toit), PAS le faîtage : le faîtage inclut le volume de toiture, qui n'est pas un
+    niveau habitable → le compter surestimerait l'existant. À défaut de LiDAR (~8 % micro-bâti), le
+    chemin BD TOPO actuel est inchangé (étages puis hauteur/3), puis le placeholder prudent."""
+    # 1) ÉGOUT LiDAR mesuré (point unique batiment_hauteur_lidar, joint par idu). Table absente
+    #    (base sans ingestion LiDAR) → repli BD TOPO, jamais une erreur.
+    try:
+        egout = session.execute(text(
+            "SELECT l.egout_m FROM batiment_hauteur_lidar l JOIN parcels p ON p.idu = l.idu "
+            "WHERE p.id = :pid"), {"pid": parcel_id}).scalar()
+    except Exception:  # noqa: BLE001 — table/colonnes absentes → repli BD TOPO
+        try:
+            session.rollback()
+        except Exception:  # noqa: BLE001 — session mock/close
+            pass
+        egout = None
+    if egout is not None and float(egout) > 0:
+        return max(1.0, float(round(float(egout) / ETAGE_REF_M))), True, "lidar"
+    # 2) BD TOPO déclaré (chemin actuel) — nombre d'étages, puis hauteur / 3.
     row = session.execute(text(
         """SELECT max((b.attrs->>'nombre_d_etages')::int)            AS etages,
                   max(NULLIF(b.attrs->>'hauteur','')::float)         AS hauteur
@@ -35,10 +62,10 @@ def _niveaux_existants(session: Session, parcel_id: int, defaut: float) -> tuple
            WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975)"""),
         {"pid": parcel_id}).first()
     if row and row.etages:
-        return float(row.etages), True
+        return float(row.etages), True, "bdtopo"
     if row and row.hauteur:
-        return max(1.0, round(float(row.hauteur) / 3.0)), True
-    return float(defaut), False
+        return max(1.0, round(float(row.hauteur) / ETAGE_REF_M)), True, "bdtopo"
+    return float(defaut), False, "sans"
 
 
 def _emprise_revelee(session: Session, parcel_id: int) -> float | None:
@@ -169,8 +196,11 @@ def compute_residuel(session: Session, parcel_id: int,
         if rev and rev > emprise_batie:
             emprise_batie = rev
 
-    niveaux_exist, niveaux_reels = _niveaux_existants(session, parcel_id, hyp.niveaux_bati_existant_defaut)
-    sdp_existante = emprise_batie * niveaux_exist
+    # DONNEES-FIX-1 lot C — niveaux depuis l'ÉGOUT LiDAR mesuré (repli BD TOPO), + coefficient de
+    # plancher (emprise-toit BD TOPO → emprise de plancher, même convention que `surface_plancher_m2`).
+    niveaux_exist, niveaux_reels, hauteur_source = _niveaux_existants(
+        session, parcel_id, hyp.niveaux_bati_existant_defaut)
+    sdp_existante = emprise_batie * niveaux_exist * hyp.coef_sdp_existante
     sdp_residuelle = max(0.0, sdp_max - sdp_existante)
 
     taux_emprise = min(999.0, 100.0 * emprise_batie / emprise_max) if emprise_max else 0.0
@@ -192,6 +222,10 @@ def compute_residuel(session: Session, parcel_id: int,
         "niveaux_max": fr.get("niveaux_max"),
         "niveaux_existants": round(niveaux_exist, 1),
         "niveaux_reels": niveaux_reels,
+        # DONNEES-FIX-1 lot C — d'où viennent les niveaux existants : 'lidar' (égout mesuré),
+        # 'bdtopo' (étages/hauteur déclarés), 'sans' (placeholder prudent). Écrit au run.
+        "hauteur_source": hauteur_source,
+        "coef_sdp_existante": hyp.coef_sdp_existante,
         # Résumé prudent (le taux d'emprise est réel ; la SDP résiduelle est estimée si la
         # hauteur du bâti n'est pas connue → on le dit).
         "libelle": _libelle(taux_emprise, sdp_residuelle, niveaux_reels),
@@ -210,13 +244,14 @@ def compute_residuel(session: Session, parcel_id: int,
 _UPSERT = text(
     """INSERT INTO parcel_residuel_runs
          (run_seq, parcel_id, taux_emprise_pct, pct_potentiel, sous_densite, sdp_residuelle_m2,
-          capacite_estimee, cause, assiette_source, computed_at)
-       VALUES (:rs, :p, :t, :pp, :sd, :sr, :ce, :cz, :asrc, now())
+          capacite_estimee, cause, assiette_source, hauteur_source, computed_at)
+       VALUES (:rs, :p, :t, :pp, :sd, :sr, :ce, :cz, :asrc, :hsrc, now())
        ON CONFLICT (run_seq, parcel_id) DO UPDATE SET
          taux_emprise_pct=EXCLUDED.taux_emprise_pct, pct_potentiel=EXCLUDED.pct_potentiel,
          sous_densite=EXCLUDED.sous_densite, sdp_residuelle_m2=EXCLUDED.sdp_residuelle_m2,
          capacite_estimee=EXCLUDED.capacite_estimee, cause=EXCLUDED.cause,
-         assiette_source=EXCLUDED.assiette_source, computed_at=now()""")
+         assiette_source=EXCLUDED.assiette_source, hauteur_source=EXCLUDED.hauteur_source,
+         computed_at=now()""")
 
 
 def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int,
@@ -253,7 +288,8 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int
             session.execute(_UPSERT, {
                 "rs": run_seq, "p": pid, "t": r["taux_emprise_pct"], "pp": r["pct_potentiel"],
                 "sd": r["sous_densite"], "sr": r["sdp_residuelle_m2"],
-                "ce": r["capacite_estimee"], "cz": None, "asrc": r.get("assiette_source")})
+                "ce": r["capacite_estimee"], "cz": None, "asrc": r.get("assiette_source"),
+                "hsrc": r.get("hauteur_source")})
             res["calcules"] += 1
             continue
         cause = r.get("cause") or "indetermine"
@@ -262,7 +298,7 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int
             continue
         session.execute(_UPSERT, {"rs": run_seq, "p": pid, "t": None, "pp": None, "sd": None,
                                   "sr": r.get("sdp_ecrite"), "ce": None, "cz": cause,
-                                  "asrc": None})
+                                  "asrc": None, "hsrc": None})
         res["causes"][cause] = res["causes"].get(cause, 0) + 1
     session.flush()
     return res

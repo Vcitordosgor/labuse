@@ -1041,7 +1041,7 @@ def compute_mode_b(session: Session, idu: str, *,
     hyp = Hypotheses.charger()
     pid = session.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
     from .residuel import _niveaux_existants   # POINT UNIQUE du calcul de niveaux (M33)
-    niveaux, niveaux_reels = _niveaux_existants(session, pid, hyp.niveaux_bati_existant_defaut)
+    niveaux, niveaux_reels, _hsrc = _niveaux_existants(session, pid, hyp.niveaux_bati_existant_defaut)
 
     travaux_est_defaut = travaux_m2 is None
     travaux = float(travaux_m2) if travaux_m2 is not None else MODE_B_TRAVAUX_M2_DEFAUT

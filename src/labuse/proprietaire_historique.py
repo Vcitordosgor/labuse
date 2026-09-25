@@ -27,6 +27,44 @@ def situation_le(millesime: int) -> str:
     return f"1ᵉʳ janvier {millesime}"
 
 
+def siren_reel(siren: str | None) -> bool:
+    """DONNEES-FIX-1 lot B — un VRAI SIREN DGFiP = 9 chiffres. Le pseudo-siren « U… » (attribué par
+    LABUSE quand la DGFiP n'a pas résolu le SIREN, ~13 % des lignes) et le SIREN absent NE SONT PAS
+    des identités juridiques comparables : on ne les fait jamais entrer dans un changement affirmé."""
+    s = (siren or "").strip().upper()
+    return bool(s) and not s.startswith("U")
+
+
+def changements_millesimes(rows: list[dict]) -> list[dict]:
+    """DONNEES-FIX-1 lot B — RÈGLE UNIQUE des changements de propriétaire PM, lue par la fiche
+    §Identité ET la frise « Remonter le temps » (une seule règle, pas une copie E3).
+
+    Un changement n'est AFFIRMÉ (`non_identifiable=False`) que si les deux SIREN sont réels (9
+    chiffres, ni pseudo « U… » ni absent) ET différents. Toute autre transition apparente (un SIREN
+    pseudo/absent d'un côté, ou dénomination changée sans SIREN réel) est marquée
+    `non_identifiable=True` — « propriétaire PM non identifiable » —, jamais un changement inventé
+    (cf. audit : SCI Laurent Grandpre, ONF). Une re-clé de dénomination à SIREN réel INCHANGÉ n'est
+    pas un changement. `rows` = millésimes triés croissants (clés millesime/siren/denomination)."""
+    out: list[dict] = []
+    for prev, cur in zip(rows, rows[1:]):
+        sa, sb = prev.get("siren"), cur.get("siren")
+        da, db_ = prev.get("denomination"), cur.get("denomination")
+        base = {
+            "de_millesime": prev["millesime"], "a_millesime": cur["millesime"],
+            "siren_avant": sa, "denomination_avant": da,
+            "siren_apres": sb, "denomination_apres": db_,
+        }
+        if siren_reel(sa) and siren_reel(sb):
+            if sa != sb:                       # deux identités réelles distinctes → VRAI changement
+                out.append({**base, "non_identifiable": False})
+            continue                           # même SIREN réel → même personne (re-clé de dénom ≠ chgt)
+        # au moins un SIREN non réel : on ne peut PAS affirmer. Transition APPARENTE (le brut diffère,
+        # côté SIREN OU côté dénomination) → « non identifiable », jamais un changement.
+        if ((sa or "") != (sb or "")) or ((da or "") != (db_ or "")):
+            out.append({**base, "non_identifiable": True})
+    return out
+
+
 _TIMELINE_SQL = text("""
 WITH unifie AS (
     SELECT millesime, idu, siren, denomination, forme_juridique, groupe_label
@@ -61,29 +99,21 @@ def historique(db: Session, idu: str) -> dict | None:
         "groupe": r["groupe_label"],
     } for r in rows]
 
-    # Changements = transitions consécutives où le SIREN diffère. CONSTAT brut (avant → après),
-    # aucune interprétation. On compare le SIREN (identité juridique) ; à défaut la dénomination.
-    changements: list[dict] = []
-    for prev, cur in zip(rows, rows[1:]):
-        a, b = prev.get("siren"), cur.get("siren")
-        change = (a or "") != (b or "") if (a or b) else (
-            (prev.get("denomination") or "") != (cur.get("denomination") or ""))
-        if change:
-            changements.append({
-                "de_millesime": prev["millesime"],
-                "a_millesime": cur["millesime"],
-                "siren_avant": prev.get("siren"),
-                "denomination_avant": prev.get("denomination"),
-                "siren_apres": cur.get("siren"),
-                "denomination_apres": cur.get("denomination"),
-            })
+    # DONNEES-FIX-1 lot B — changements via la RÈGLE UNIQUE partagée avec la frise : un changement
+    # n'est affirmé que si les deux SIREN sont réels et différents ; sinon « non identifiable ». Plus
+    # de faux « changements » dus au pseudo-siren « U… » ou au SIREN absent des premiers millésimes.
+    changements = changements_millesimes(rows)
+    n_reels = sum(1 for c in changements if not c["non_identifiable"])
 
     return {
         "source": SOURCE,
         "millesimes": millesimes,
         "n_millesimes": len(millesimes),
         "changements": changements,
-        "n_changements": len(changements),
+        # n_changements = changements RÉELS (SIREN réels et différents), pas les transitions « non
+        # identifiables ». n_transitions = tout ce qui est listé (réels + non identifiables).
+        "n_changements": n_reels,
+        "n_transitions": len(changements),
         # garde-fou de lecture (KF-102) : un changement n'est PAS une vente prouvée ; les premiers
         # millésimes ont une complétude SIREN croissante côté source.
         "note": "Constat de la source DGFiP (situation au 1ᵉʳ janvier). Un changement de propriétaire "

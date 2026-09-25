@@ -35,22 +35,34 @@ export function ProprietaireHistorique({ h, pm }: { h: Histo | null | undefined;
       {/* RETOURS-23 Z3 — plus de card-elev : kicker + faits à plat. */}
       <GroupLabel>Historique du propriétaire (DGFiP)</GroupLabel>
 
-      {h.n_changements > 0 ? (
+      {h.changements.length > 0 ? (
         <div className="mt-1.5 flex flex-col gap-1.5">
+          {/* DONNEES-FIX-1 lot B — un changement n'est affiché comme tel que si les deux SIREN sont
+              réels et différents ; sinon « propriétaire PM non identifiable (DGFiP) » (même règle que
+              la frise Remonter le temps), jamais un faux « X → X ». */}
           {h.changements.map((c, i) => (
-            <div key={i} className="text-[11px] leading-snug text-txt">
-              <span className="mr-1.5 rounded bg-mint-bg px-1.5 py-0.5 font-mono text-[10px] text-mint">
-                {c.de_millesime} → {c.a_millesime}
-              </span>
-              <span className="text-txt-mut">{c.denomination_avant ?? '—'}</span>
-              <span className="mx-1 text-txt-dim">→</span>
-              <span className="font-medium text-txt-hi">{c.denomination_apres ?? '—'}</span>
-              {(c.siren_avant || c.siren_apres) && (
-                <div className="mt-0.5 font-mono text-[9.5px] text-txt-dim">
-                  SIREN <Siren value={c.siren_avant} className="font-mono text-txt-dim" /> → <Siren value={c.siren_apres} className="font-mono text-txt-dim" />
-                </div>
-              )}
-            </div>
+            c.non_identifiable ? (
+              <div key={i} data-proprietaire-non-identifiable className="text-[11px] leading-snug text-txt-mut">
+                <span className="mr-1.5 rounded bg-line-2/40 px-1.5 py-0.5 font-mono text-[10px] text-txt-dim">
+                  {c.de_millesime} → {c.a_millesime}
+                </span>
+                Propriétaire PM non identifiable (DGFiP)
+              </div>
+            ) : (
+              <div key={i} className="text-[11px] leading-snug text-txt">
+                <span className="mr-1.5 rounded bg-mint-bg px-1.5 py-0.5 font-mono text-[10px] text-mint">
+                  {c.de_millesime} → {c.a_millesime}
+                </span>
+                <span className="text-txt-mut">{c.denomination_avant ?? '—'}</span>
+                <span className="mx-1 text-txt-dim">→</span>
+                <span className="font-medium text-txt-hi">{c.denomination_apres ?? '—'}</span>
+                {(c.siren_avant || c.siren_apres) && (
+                  <div className="mt-0.5 font-mono text-[9.5px] text-txt-dim">
+                    SIREN <Siren value={c.siren_avant} className="font-mono text-txt-dim" /> → <Siren value={c.siren_apres} className="font-mono text-txt-dim" />
+                  </div>
+                )}
+              </div>
+            )
           ))}
         </div>
       ) : (
@@ -62,9 +74,9 @@ export function ProprietaireHistorique({ h, pm }: { h: Histo | null | undefined;
       )}
 
       {/* R6 — un VRAI bouton (l'ex-lien gris 10,5 px souligné pointillé passait inaperçu — cause
-          n° 2 de l'invisibilité). RETOURS-11 F11 : le bouton n'apparaît QUE s'il y a un changement
-          constaté — sinon il laissait croire à d'anciens propriétaires inexistants. */}
-      {h.n_changements > 0 && (
+          n° 2 de l'invisibilité). RETOURS-11 F11 : le bouton n'apparaît QUE s'il y a une transition
+          listée — sinon il laissait croire à d'anciens propriétaires inexistants. */}
+      {h.changements.length > 0 && (
         <button type="button" data-histo-toggle onClick={() => setOuvert((o) => !o)}
           className="mt-2 w-full rounded-md border border-line-2 bg-mint/[0.05] px-2.5 py-1.5 text-left text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15">
           {ouvert
@@ -72,7 +84,7 @@ export function ProprietaireHistorique({ h, pm }: { h: Histo | null | undefined;
             : `Voir les anciens propriétaires — ${h.n_millesimes} millésimes (${premier.millesime}–${dernier.millesime})`}
         </button>
       )}
-      {ouvert && h.n_changements > 0 && (
+      {ouvert && h.changements.length > 0 && (
         <div className="mt-1.5 flex flex-col gap-0.5 border-t border-bd/60 pt-1.5">
           {h.millesimes.map((m) => (
             <div key={m.millesime} className="flex items-baseline gap-2 text-[10.5px] leading-snug">

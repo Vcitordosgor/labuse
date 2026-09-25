@@ -192,6 +192,54 @@ def hauteur_lidar_servie(db, idu: str) -> dict | None:
                       else "LiDAR HD MNS (IGN), mesuré"}
 
 
+# ── DONNEES-FIX-1 lot A — le badge « Sources discordantes » compare la BONNE grandeur ────────────
+# FICHE-FIX-2 comparait le FAÎTAGE LiDAR (p99) à la hauteur BD TOPO. Or BD TOPO ≈ l'ÉGOUT : sur un
+# toit en pente ou un R+n, le faîtage dépasse toujours l'égout ≈ BD TOPO — l'écart n'est PAS une
+# erreur, c'est la définition. Résultat : le badge s'allumait sur 43 404 bâtis (15,9 %) alors que
+# l'audit DONNEES-LIDAR-PROPRIO ne trouve que des cas normaux + une poignée de vraies aberrations.
+#
+# On compare donc désormais la MÊME grandeur (égout LiDAR ↔ hauteur BD TOPO) et on garde à part le
+# seul autre motif réel : un faîtage physiquement impossible (bug de coordonnée/unité).
+#
+# Distribution mesurée de |égout − BD TOPO| sur 273 552 comparables (voir DONNEES-FIX-1.md) :
+#   médiane 1,70 m · p90 4,50 m · p99 8,40 m · max ~30 m.
+# Le bruit normal (arrondi BD TOPO, débords de toiture, pente du terrain sous l'emprise) reste ≤ ~8 m.
+# À 15 m (≈ 1,8 × p99, ~5 niveaux d'écart sur la MÊME grandeur), une des deux sources est
+# nécessairement fausse — jamais du bruit de mesure : 132 parcelles (0,05 %).
+SEUIL_ECART_EGOUT_BDTOPO_M = 15.0
+# Faîtage aberrant = hauteur impossible sur l'île (plus haut immeuble ~15 étages ≈ 45 m). Capte les
+# 2 aberrations de coordonnée de l'audit (53 401 m) + les mesures cassées (faîtage ≤ 0, MNS < MNT) :
+# 58 parcelles au total.
+PLAFOND_FAITAGE_ABERRANT_M = 60.0
+
+
+def discordance_hauteur(lid: dict | None) -> dict:
+    """DONNEES-FIX-1 lot A — RÈGLE UNIQUE du badge « Sources discordantes », lue par la fiche §Bâti
+    ET la marge en hauteur (Potentiel) : une seule règle pour les deux écrans.
+
+    Compare l'ÉGOUT LiDAR à la hauteur BD TOPO (MÊME grandeur, cf. audit) ; l'ancienne comparaison
+    faîtage↔BD TOPO s'allumait à tort sur ~16 % des bâtis. Deux motifs, tous deux réels :
+      - « faîtage aberrant » : faîtage impossible (≤ 0 ou > plafond) → bug de mesure/coordonnée ;
+      - « égout ↔ BD TOPO »  : les deux sources désignent des hauteurs incompatibles (> seuil).
+
+    Renvoie {discordante, motif, ecart_egout_bdtopo_m, ecart_faitage_bdtopo_m} — toujours défini,
+    même sans mesure LiDAR (discordante=False)."""
+    if not lid:
+        return {"discordante": False, "motif": None,
+                "ecart_egout_bdtopo_m": None, "ecart_faitage_bdtopo_m": None}
+    fait = lid.get("faitage_m")
+    egout = lid.get("egout_m")
+    bdtopo = lid.get("hauteur_bdtopo_m")
+    ecart_eg = (round(float(egout) - float(bdtopo), 1)
+                if egout is not None and bdtopo is not None else None)
+    aberrant = fait is not None and (float(fait) <= 0 or float(fait) > PLAFOND_FAITAGE_ABERRANT_M)
+    discord_eg = ecart_eg is not None and abs(ecart_eg) > SEUIL_ECART_EGOUT_BDTOPO_M
+    motif = "faîtage aberrant" if aberrant else ("égout ↔ BD TOPO" if discord_eg else None)
+    return {"discordante": bool(aberrant or discord_eg), "motif": motif,
+            "ecart_egout_bdtopo_m": ecart_eg,
+            "ecart_faitage_bdtopo_m": lid.get("ecart_faitage_bdtopo_m")}
+
+
 def hauteur_batie(db, idu: str) -> dict | None:
     """POINT UNIQUE (T9) de la hauteur du bâti servie aux 4 consommateurs. Préfère la mesure LiDAR
     (faîtage + égout distincts, nature « sourcé ») ; à défaut la hauteur BD TOPO déclarée (« estimé »).

@@ -1,0 +1,56 @@
+idu,egout_m,niv_avant,niv_apres,source,sdp_exist_avant,sdp_exist_apres,sdp_rest_avant,sdp_rest_apres,delta_rest,explication
+97411000AS0840,36.2,,,,,,,,,Parcelle non constructible — pas de potentiel résiduel.
+97411000BP0764,15.3,3,5,lidar,733,1161,0,0,0,égout 15.3 m → 5 niveaux (vs 3) : existant relevé → restant baisse
+97411000HB0005,13.1,4,4,lidar,403,383,0,0,0,"niveaux inchangés (4) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000AM0147,11.5,4,4,lidar,374,356,0,0,0,"niveaux inchangés (4) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000AZ0398,10.3,1,3,lidar,599,1707,0,0,0,égout 10.3 m → 3 niveaux (vs 1) : existant relevé → restant baisse
+97411000AD0134,9.1,2,3,lidar,436,622,0,0,0,égout 9.1 m → 3 niveaux (vs 2) : existant relevé → restant baisse
+97411000AC0090,8.1,2,3,lidar,5823,8298,5710,3235,-2475,égout 8.1 m → 3 niveaux (vs 2) : existant relevé → restant baisse
+97411000HA0007,7.5,2,2,lidar,605,574,0,0,0,"niveaux inchangés (2) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000BC0144,7.0,1,2,lidar,195,370,0,0,0,égout 7.0 m → 2 niveaux (vs 1) : existant relevé → restant baisse
+97411000AE0149,6.6,2,2,lidar,431,409,0,0,0,"niveaux inchangés (2) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000EK0156,6.3,2,2,lidar,958,910,0,0,0,"niveaux inchangés (2) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000EV0097,6.0,1,2,lidar,287,546,0,0,0,égout 6.0 m → 2 niveaux (vs 1) : existant relevé → restant baisse
+97411000HT0002,5.8,1,2,lidar,20,37,641,624,-17,égout 5.8 m → 2 niveaux (vs 1) : existant relevé → restant baisse
+97411000EI0337,5.5,2,2,lidar,295,281,0,0,0,"niveaux inchangés (2) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000HV0079,5.3,1,2,lidar,1253,2381,1877,749,-1128,égout 5.3 m → 2 niveaux (vs 1) : existant relevé → restant baisse
+97411000HK0195,5.1,,,,,,,,,Parcelle non constructible — pas de potentiel résiduel.
+97411000BL0179,4.9,1,2,lidar,841,1598,406,0,-406,égout 4.9 m → 2 niveaux (vs 1) : existant relevé → restant baisse
+97411000HT0203,4.8,2,2,lidar,145,138,188,195,7,"niveaux inchangés (2) ; seul le coef de plancher 0,95 joue (restant +7)"
+97411000AH0109,4.6,3,2,lidar,1345,852,0,0,0,égout 4.6 m → 2 niveaux (vs 3) : existant abaissé → restant monte
+97411000EV0051,4.5,1,2,lidar,227,432,76,0,-76,égout 4.5 m → 2 niveaux (vs 1) : existant relevé → restant baisse
+97411000HB0271,4.4,1,1,lidar,256,243,319,332,13,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +13)"
+97411000IB0068,4.3,1,1,lidar,599,569,0,7,7,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +7)"
+97411000KE0381,4.2,1,1,lidar,215,205,0,0,0,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000BZ0542,4.1,2,1,lidar,598,284,478,792,314,égout 4.1 m → 1 niveaux (vs 2) : existant abaissé → restant monte
+97411000AN0148,4.0,2,1,lidar,373,177,0,44,44,égout 4.0 m → 1 niveaux (vs 2) : existant abaissé → restant monte
+97411000HD0103,3.9,1,1,lidar,310,295,23,38,15,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +15)"
+97411000BZ0313,3.8,2,1,lidar,290,138,61,213,152,égout 3.8 m → 1 niveaux (vs 2) : existant abaissé → restant monte
+97411000EH0133,3.7,2,1,lidar,304,145,0,0,0,égout 3.7 m → 1 niveaux (vs 2) : existant abaissé → restant monte
+97411000CD0402,3.6,1,1,lidar,168,160,334,342,8,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +8)"
+97411000IC0427,3.6,2,1,lidar,541,257,0,0,0,égout 3.6 m → 1 niveaux (vs 2) : existant abaissé → restant monte
+97411000BN0068,3.5,1,1,lidar,481,456,600,625,25,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +25)"
+97411000EI0102,3.4,1,1,lidar,158,150,34,42,8,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +8)"
+97411000HZ0125,3.4,1,1,lidar,229,218,0,0,0,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000AB0643,3.3,,,,,,,,,Parcelle non constructible — pas de potentiel résiduel.
+97411000AN0475,3.3,2,1,lidar,241,114,0,39,39,égout 3.3 m → 1 niveaux (vs 2) : existant abaissé → restant monte
+97411000EP0239,3.2,,,,,,,,,Parcelle non constructible — pas de potentiel résiduel.
+97411000AZ0357,3.1,1,1,lidar,130,123,0,0,0,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000DP0062,3.1,,,,,,,,,Parcelle non constructible — pas de potentiel résiduel.
+97411000CE0403,3.0,,,,,,,,,Parcelle non constructible — pas de potentiel résiduel.
+97411000EK0362,3.0,1,1,lidar,36,35,0,0,0,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000CD0823,2.9,1,1,lidar,154,147,0,0,0,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000DS0849,2.8,,,,,,,,,Parcelle non constructible — pas de potentiel résiduel.
+97411000BM0012,2.8,1,1,lidar,0,0,870,870,0,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000CY0767,2.7,,,,,,,,,Parcelle non constructible — pas de potentiel résiduel.
+97411000DL0731,2.6,,,,,,,,,Parcelle non constructible — pas de potentiel résiduel.
+97411000CY0919,2.6,2,1,lidar,97,46,0,20,20,égout 2.6 m → 1 niveaux (vs 2) : existant abaissé → restant monte
+97411000CY0204,2.5,,,,,,,,,Parcelle non constructible — pas de potentiel résiduel.
+97411000IM0051,2.4,1,1,lidar,312,296,0,0,0,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000CD0959,2.3,2,1,lidar,310,147,0,0,0,égout 2.3 m → 1 niveaux (vs 2) : existant abaissé → restant monte
+97411000CD0898,2.2,,,,,,,,,Parcelle non constructible — pas de potentiel résiduel.
+97411000EH0193,2.0,1,1,lidar,118,112,0,0,0,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000AP0399,1.8,,,,,,,,,Parcelle non constructible — pas de potentiel résiduel.
+97411000CY0202,1.5,,,,,,,,,Parcelle non constructible — pas de potentiel résiduel.
+97411000CV0151,0.9,1,1,lidar,509,483,0,0,0,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +0)"
+97411000BZ1065,3.6,1,1,lidar,193,183,26,36,10,"niveaux inchangés (1) ; seul le coef de plancher 0,95 joue (restant +10)"

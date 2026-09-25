@@ -187,14 +187,6 @@ def _cosia_couverture(session: Session, idu: str, surface: float | None) -> dict
     }
 
 
-# FICHE-FIX-2 P3 — seuil de discordance faîtage LiDAR ↔ hauteur BD TOPO. Au-delà, la mesure LiDAR
-# (p99 du MNS, sensible à la végétation/aux structures voisines captées dans la dalle) est signalée
-# « à vérifier » : 3 m ≈ un niveau bâti entier — en deçà, l'écart LiDAR/BD TOPO relève du bruit de
-# mesure normal (arrondi de la hauteur déclarée BD TOPO, débords de toiture) ; au-delà, il désigne
-# vraisemblablement une captation étrangère (arbre, bâti mitoyen) et non un vrai faîtage.
-SEUIL_ECART_FAITAGE_M = 3.0
-
-
 def le_bien_block(session: Session, idu: str) -> dict | None:
     """FICHE-1 lot 1 — bloc « Le bien » : le bâtiment EXISTANT de la parcelle, une fois pour la
     fiche (le tiroir consomme ce producteur unique, aucun calcul au front).
@@ -249,8 +241,9 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
     # RECETTE-9 T9 — POINT UNIQUE de la hauteur : quand le LiDAR HD a été mesuré sur cette parcelle,
     # la hauteur passe d'`estimé` (BD TOPO déclaré) à `sourcé` (faîtage ET égout MESURÉS). Sinon repli
     # BD TOPO. L'égout (bord de toit) — que BD TOPO ne donne pas — est servi à part (décide la surélévation).
-    from .faisabilite.hauteur_lidar import hauteur_lidar_servie
+    from .faisabilite.hauteur_lidar import hauteur_lidar_servie, discordance_hauteur
     lid = hauteur_lidar_servie(session, idu)
+    _disc = discordance_hauteur(lid)   # DONNEES-FIX-1 lot A — règle unique du badge (égout ↔ BD TOPO)
     hauteur_bati = (lid["faitage_m"] if lid else (round(float(hauteur), 1) if hauteur is not None else None))
     # REPARATIONS-1 lot 4 — L'IDENTITÉ des bâtiments : le RNB ID de chaque bâtiment de la
     # parcelle (RNB actifs dont l'emprise recoupe la parcelle, du plus grand recouvrement au
@@ -326,14 +319,15 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
         # RECETTE-11 A3 — la date de survol servie avec la mesure (jamais une mesure sans date).
         "hauteur_survol": (lid.get("survol") if lid else None),
         "hauteur_source": (lid["source"] if lid else ("BD TOPO® (hauteur déclarée)" if hauteur is not None else None)),
-        # FICHE-FIX-2 P3 — la mesure LiDAR (faîtage p99) peut capter végétation/structure voisine dans
-        # la dalle : la base calcule déjà l'écart avec la hauteur BD TOPO. On le SERT (les deux valeurs
-        # + un drapeau « sources discordantes » au-delà du seuil), sans jamais choisir automatiquement.
+        # DONNEES-FIX-1 lot A — le badge « Sources discordantes » compare la MÊME grandeur (égout
+        # LiDAR ↔ hauteur BD TOPO ≈ égout), plus un plafond sur le faîtage aberrant. Règle UNIQUE
+        # partagée avec la marge en hauteur (Potentiel) : `discordance_hauteur`. On SERT les trois
+        # hauteurs + les deux écarts + le drapeau/motif, sans jamais choisir automatiquement.
         "hauteur_bdtopo_m": (lid.get("hauteur_bdtopo_m") if lid else None),
-        "ecart_faitage_bdtopo_m": (lid.get("ecart_faitage_bdtopo_m") if lid else None),
-        "hauteur_discordante": bool(
-            lid and lid.get("ecart_faitage_bdtopo_m") is not None
-            and abs(float(lid["ecart_faitage_bdtopo_m"])) > SEUIL_ECART_FAITAGE_M),
+        "ecart_faitage_bdtopo_m": _disc["ecart_faitage_bdtopo_m"],
+        "ecart_egout_bdtopo_m": _disc["ecart_egout_bdtopo_m"],
+        "hauteur_discordante": _disc["discordante"],
+        "hauteur_discordance_motif": _disc["motif"],
         "surface_libre_m2": surface_libre,
         "surface_parcelle_m2": round(surface) if surface is not None else None,
         "toit": toit,          # None = toit non encore relevé (LiDAR non chauffé), sinon 3 états U5
