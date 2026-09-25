@@ -10,6 +10,7 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .rattachement_html import niveau_preuve as _niveau_preuve
 from .tables import EV_SIGNALEMENT, journaliser
 
 STATUTS_DEFAUT = ("active", "en_vente_longue")
@@ -117,8 +118,10 @@ def _bien_row(r: dict) -> dict:
         # motifs consultables) ; il n'est jamais rattaché (idu NULL, cf. html_ingest).
         "a_qualifier": bool(r["a_qualifier"]), "a_qualifier_motifs": r["a_qualifier_motifs"] or [],
         "rattachement": ({"niveau": r["rattachement_niveau"], "idu": r["idu"],
-                          "confiance": float(r["rattachement_confiance"]) if r["rattachement_confiance"] is not None else None}
-                         if rattache else {"niveau": "absent", "idu": None, "confiance": None}),
+                          "confiance": float(r["rattachement_confiance"]) if r["rattachement_confiance"] is not None else None,
+                          # RADAR-AUTO-1 (Lot D) — niveau de PREUVE affiché (certain/probable/quartier).
+                          "preuve": _niveau_preuve(r["rattachement_humain"], r["rattachement_etat"], r["rattachement_niveau"])}
+                         if rattache else {"niveau": "absent", "idu": None, "confiance": None, "preuve": "quartier"}),
         "coords": ([round(r["lon"], 6), round(r["lat"], 6)] if rattache and r["lon"] is not None else None),
         "faits": {"prix": r["prix"], "pieces": r["pieces"], "surface_hab": _num(r["surface_hab"]),
                   "surface_terrain": _num(r["surface_terrain"]), "dpe_classe": r["dpe_classe"],

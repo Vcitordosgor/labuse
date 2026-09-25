@@ -84,6 +84,53 @@ def test_maj_prix_seuil_baisse_hausse(db_session):
                            "AND dedup = :d"), {"d": f"pige:hausse:{bid}:110000"}).scalar() == 1
 
 
+def test_niveau_preuve_mapping():
+    """Lot D — le niveau de preuve affiché : humain/≥2 critères = certain ; terrain estimé = probable ;
+    non rattaché = quartier."""
+    from labuse.pige.rattachement_html import niveau_preuve as np
+    assert np(True, "rattachee", "source") == "certain"      # tranché à la main
+    assert np(False, "rattachee", "source") == "certain"     # ≥2 critères bâti
+    assert np(False, "rattachee", "estime") == "probable"    # terrain unique ±1 %
+    assert np(False, "non_rattachee", "absent") == "quartier"
+    assert np(False, "piste", "estime") == "quartier"        # une piste ne s'affiche pas rattachée
+
+
+@pytest.mark.db
+def test_terrain_regle_unique_vs_multiple(db_session, monkeypatch):
+    """Lot D — un TERRAIN dont la surface matche UNE seule parcelle à ±1 % → rattachee/estime (probable) ;
+    deux candidates ou plus → RIEN d'automatique (piste). Déterministe (détecteur surface monkeypatché)."""
+    from labuse.pige import rattachement_html as rh
+    base = {"type": "terrain", "commune": "Saint-Denis", "lng": 55.45, "lat": -20.88,
+            "surface_terrain": 500, "surface_hab": None, "est_copro": False}
+
+    monkeypatch.setattr(rh, "_crit_surface", lambda *a, **k: {"97411000ZZ0001": "terrain 502 m² ≈ 500 (0 %)"})
+    out = rh.rattacher(db_session, dict(base))
+    assert out["etat"] == "rattachee" and out["niveau"] == "estime" and out["idu"] == "97411000ZZ0001"
+    assert out["criteres"][0].get("preuve") == "probable"
+
+    monkeypatch.setattr(rh, "_crit_surface",
+                        lambda *a, **k: {"97411000ZZ0001": "x", "97411000ZZ0002": "y"})
+    out = rh.rattacher(db_session, dict(base))
+    assert out["etat"] != "rattachee", "deux candidates ±1 % → jamais un rattachement automatique"
+
+
+@pytest.mark.db
+@pytest.mark.skipif(not _RICHE.exists(), reason="page riche absente")
+def test_terrains_reels_biconditionnel(db_session):
+    """Lot D (intégration) — sur les type==terrain réels de la page, rattachee/probable SSI une seule
+    parcelle à ±1 %. Sur l'échantillon de Vic aucun pur terrain n'est unique → 0 auto (le bouton manuel
+    reste la voie principale, exactement ce que la mesure 0.3 anticipait ; les 3 uniques de 0.3 étaient
+    des MAISONS, gérées par la cascade bâtie)."""
+    from labuse.pige import rattachement_html as rh
+    recs = html_next.analyser(_RICHE.read_text(encoding="utf-8", errors="replace"))["records"]
+    for rec in (r for r in recs if r["type"] == "terrain"):
+        stricts = rh._crit_surface(db_session, rec["lng"], rec["lat"], rec["commune"],
+                                   float(rec["surface_terrain"]), tol=rh.TOL_SURFACE_TERRAIN_STRICT)
+        out = rh.rattacher(db_session, {**rec, "est_copro": False})
+        est_probable = out["etat"] == "rattachee" and out["niveau"] == "estime"
+        assert est_probable == (len(stricts) == 1), (rec["list_id"], len(stricts), out["etat"])
+
+
 @pytest.mark.db
 def test_confirmation_supprimee_retiree_sans_courrier(db_session):
     """Lot A/C — verdict « supprimee » → statut retiree + retiree_le, JAMAIS retiree_sans_vente
