@@ -37,13 +37,16 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
       {/* RECETTE-11 A6 — plus de verdict (« possible »/« non ») : la marge mesurée sous la règle et
           la contrainte qui mord ; A3 : la date de survol quand c'est une mesure LiDAR HD. */}
       {pt.hauteur_marge_m != null && <FactRow label="Marge en hauteur" tone={pt.hauteur_discordante ? 'warn' : undefined} value={<>~{pt.hauteur_marge_m} <small>m sous la règle{pt.hauteur_contrainte ? `, contrainte : ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}` : ''}{pt.hauteur_survol ? ` — mesuré au LiDAR HD, survol de ${pt.hauteur_survol}` : ''}{pt.hauteur_permis_posterieur ? ` ; antérieur au permis du ${pt.hauteur_permis_posterieur}, possiblement dépassé` : ''}</small></>} />}
-      {/* FICHE-FIX-2 P3 — la marge dépend du faîtage : si ce faîtage LiDAR diverge trop de BD TOPO,
-          la marge hérite du doute (même drapeau qu'au §3 Bâti), sans choix automatique. */}
-      {pt.hauteur_discordante && pt.hauteur_faitage_lidar_m != null && pt.hauteur_bdtopo_m != null && (
+      {/* DONNEES-FIX-1 lot A — même règle que le §3 Bâti (`discordance_hauteur`) : le badge compare
+          l'ÉGOUT LiDAR à BD TOPO (même grandeur) ou signale un faîtage aberrant, jamais le faîtage↔BD
+          TOPO. Sans choix automatique. */}
+      {pt.hauteur_discordante && (
         <div data-marge-discordante className="mt-0.5">
           <Badge ton="ambre">Sources discordantes</Badge>
           <p className="mt-0.5 text-[11px] leading-snug text-amber">
-            Marge calculée sur le faîtage LiDAR {pt.hauteur_faitage_lidar_m} m · BD TOPO {pt.hauteur_bdtopo_m} m — à vérifier sur photo aérienne.
+            {pt.hauteur_discordance_motif === 'faîtage aberrant'
+              ? <>Faîtage LiDAR {pt.hauteur_faitage_lidar_m} m — valeur physiquement impossible, mesure à écarter.</>
+              : <>Égout LiDAR {pt.hauteur_egout_lidar_m} m · BD TOPO {pt.hauteur_bdtopo_m} m — écart{pt.ecart_egout_bdtopo_m != null ? ` de ${Math.abs(pt.ecart_egout_bdtopo_m)} m` : ''} sur la même grandeur, à vérifier sur photo aérienne.</>}
           </p>
         </div>
       )}

@@ -562,11 +562,14 @@ export interface LeBien {
   hauteur_nature?: 'sourcé' | 'estimé' | null
   hauteur_survol?: string | null   // RECETTE-11 A3 — date de survol LiDAR HD
   hauteur_source?: string | null
-  // FICHE-FIX-2 P3 — hauteur BD TOPO déclarée + écart avec le faîtage LiDAR (déjà en base) : quand
-  // l'écart dépasse le seuil, `hauteur_discordante` = true → drapeau « sources discordantes ».
+  // DONNEES-FIX-1 lot A — hauteur BD TOPO déclarée (≈ égout) + les deux écarts. Le badge « sources
+  // discordantes » compare l'ÉGOUT LiDAR à BD TOPO (même grandeur) ou signale un faîtage aberrant ;
+  // `hauteur_discordance_motif` nomme lequel.
   hauteur_bdtopo_m?: number | null
   ecart_faitage_bdtopo_m?: number | null
+  ecart_egout_bdtopo_m?: number | null
   hauteur_discordante?: boolean
+  hauteur_discordance_motif?: string | null
   surface_libre_m2: number | null
   surface_parcelle_m2: number | null
   source_bati: string
@@ -860,10 +863,14 @@ export interface PotentielTransformation extends Indisponible {
   hauteur_nature?: string | null
   // RECETTE-11 A4 — permis autorisé après le survol : mesure possiblement dépassée.
   hauteur_permis_posterieur?: string | null
-  // FICHE-FIX-2 P3 — la marge bornée par un faîtage LiDAR discordant de BD TOPO hérite du doute.
+  // DONNEES-FIX-1 lot A — la marge bornée par une mesure LiDAR discordante de BD TOPO (égout ↔ BD
+  // TOPO, même grandeur, ou faîtage aberrant) hérite du doute. Même règle que la fiche §Bâti.
   hauteur_faitage_lidar_m?: number | null
+  hauteur_egout_lidar_m?: number | null
   hauteur_bdtopo_m?: number | null
+  ecart_egout_bdtopo_m?: number | null
   hauteur_discordante?: boolean
+  hauteur_discordance_motif?: string | null
   confiance: string | null
   source: string
   note: string
