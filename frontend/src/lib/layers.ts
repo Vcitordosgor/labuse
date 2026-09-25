@@ -57,8 +57,8 @@ export const LAYER_LABEL: Record<string, string> = {
   // étage 0 / divers
   bati: 'Bâti',
   osm_faux_positif: 'Faux positif OSM',
-  // SOURCES-4 lot 2 — piscines détectées par CoSIA (IA 20 cm), rattachées parcelle
-  piscine_cosia: 'Piscines (CoSIA)',
+  // PISCINES-2 — l'ancienne couche « Piscines (CoSIA) » (déjà hors panneau général) est remplacée par
+  // la source unique fusionnée `piscines`, servie par l'outil Prospection solaire (mode Piscines).
   // SOURCES-4 lot 2 — cimetières (BD TOPO) : contrainte foncière (emprise + périmètre)
   cimetiere: 'Cimetières (BD TOPO)',
   // SOURCES-4 lot 2 — BD TOPO : constructions (mur de soutènement/barrage), zone d'activité, bassin versant

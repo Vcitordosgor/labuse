@@ -934,7 +934,11 @@ def prospection_solaire_parcelle(idu: str, db: Session = Depends(get_db)):
                round(ps.azimut_bati_deg)::int AS azimut, ps.azimut_confiance,
                round(t.pente_moy_deg::numeric, 1) AS pente,
                round(b.emprise_bati_m2)::int AS toit_m2,
-               (e.piscine IS TRUE) AS piscine, round(e.piscine_surface_m2)::int AS piscine_m2,
+               -- PISCINES-2 — le croisement piscine de la fiche soleil lit la source UNIQUE `piscines`
+               -- (statut servie, corrections exclues), plus `parcel_equipements`.
+               EXISTS (SELECT 1 FROM piscines pi WHERE pi.idu = ps.idu AND pi.statut = 'servie'
+                       AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)) AS piscine,
+               (SELECT round(max(pi.surface_m2))::int FROM piscines pi WHERE pi.idu = ps.idu AND pi.statut = 'servie') AS piscine_m2,
                ps.flag_abf AS abf, ps.flag_topo_ombrage AS ombrage_topo,
                ps.flag_ombrage_vegetal AS ombrage_vegetal,
                ps.proba_proprio_occupant AS proba_occ,
@@ -944,7 +948,6 @@ def prospection_solaire_parcelle(idu: str, db: Session = Depends(get_db)):
         JOIN parcels p ON p.idu = ps.idu
         LEFT JOIN parcel_terrain t ON t.idu = ps.idu
         LEFT JOIN p_model_bati b ON b.idu = ps.idu
-        LEFT JOIN parcel_equipements e ON e.idu = ps.idu
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = ps.idu AND s2.run_id = :v2run
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         WHERE ps.idu = :idu"""),
@@ -1163,36 +1166,32 @@ def prospection_piscines(commune: str | None = None,
     `piscine_surf_min` aligne le compteur sur le même filtre de surface que le listing.
     RETOURS-11F M12 : par défaut seule la CONFIANCE HAUTE (≥ 0,80) est comptée ; `inclure_incertaines`
     ajoute les bandes moyenne/basse. Les parcelles signalées « pas une piscine » sont TOUJOURS exclues."""
-    if not db.execute(text("SELECT to_regclass('parcel_equipements') IS NOT NULL")).scalar():
-        raise HTTPException(503, "détection équipements indisponible (table absente).")
+    if not db.execute(text("SELECT to_regclass('piscines') IS NOT NULL")).scalar():
+        raise HTTPException(503, "source piscines indisponible (lancer `labuse piscines-build`).")
     from ..ingestion.ortho_equipements import ensure_corrections
     ensure_corrections(db)   # idempotent — la table existe avant le NOT EXISTS
-    # CIRCUIT-2 lot 1.6 — total + par-commune calculés par le moteur nommé `commune_compteurs`
-    # (id registre n_piscines) : ce robinet ne calcule plus, il appelle (mêmes filtres).
+    # PISCINES-2 — total + par-commune sur la source UNIQUE `piscines` (moteur nommé n_piscines).
     from ..registre.moteurs.commune import compte_piscines
     agregats = compte_piscines(db, commune, bati, piscine_surf_min, inclure_incertaines)
     total, communes = agregats["total"], agregats["communes"]
-    maj = db.execute(text("SELECT to_char(max(updated_at), 'YYYY-MM-DD') AS maj "
-                          "FROM parcel_equipements WHERE piscine IS TRUE")).scalar()
-    # Bandes de confiance (informatif, hors filtres commune/bâti/surface) : pour DIRE à l'écran combien
-    # de piscines « incertaines » la bascule ajouterait, et combien ont été retirées par un humain.
+    maj = db.execute(text("SELECT to_char(max(built_at), 'YYYY-MM-DD') AS maj FROM piscines")).scalar()
+    # PISCINES-2 — bandes par STATUT (informatif, corrections exclues) : combien de piscines `servie`
+    # (défaut) et combien la bascule « à confirmer » ajouterait. La règle statut vient de la précision
+    # mesurée par classe (cf. docs/audit-2026-09/piscines-2/).
     bandes = db.execute(text(
-        "SELECT count(*) FILTER (WHERE coalesce(piscine_confiance,0) >= :cmin) AS haute, "
-        "count(*) FILTER (WHERE coalesce(piscine_confiance,0) < :cmin) AS incertaines "
-        "FROM parcel_equipements e WHERE e.piscine IS TRUE "
-        "AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = e.idu)"),
-        {"cmin": SEUIL_PISCINE_HAUTE}).mappings().first() or {}
+        "SELECT count(*) FILTER (WHERE statut='servie') AS haute, "
+        "count(*) FILTER (WHERE statut='a_confirmer') AS incertaines "
+        "FROM piscines pi WHERE statut IN ('servie','a_confirmer') "
+        "AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)")).mappings().first() or {}
     n_corrigees = int(db.execute(text("SELECT count(*) FROM piscine_corrections")).scalar() or 0)
-    # LOT8a (OUTILS-FINALE) — le SEUIL de rétention est DIT : parcel_equipements.piscine ne retient que
-    # les détections passant la porte de confiance (juge FLAIR ≥ 0,30 × probe ≥ 0,50, config
-    # detection_ortho.yaml) — des détections plus incertaines sont donc EXCLUES du compte. Écrit à l'écran.
     return {"total": total, "communes": [dict(c) for c in communes],
             "confiance": {"haute": int(bandes.get("haute") or 0),
                           "incertaines": int(bandes.get("incertaines") or 0),
                           "seuil_haute": SEUIL_PISCINE_HAUTE, "inclure_incertaines": inclure_incertaines},
             "corrigees": n_corrigees,   # « pas une piscine » signalées par un humain, exclues du service
-            "source": "Détection FLAIR sur BD ORTHO 20 cm 2025 (IGN) — précision mesurée ~90,7 % ; "
-                      "confiance HAUTE (≥ 0,80) servie par défaut, « incertaines » sur bascule ; à confirmer sur site",
+            "source": "Source unique fusionnée FLAIR ∪ CoSIA (BD ORTHO / CoSIA 20 cm 2025, IGN), "
+                      "dédoublonnée à 5 m ; statut `servie` (précision mesurée ≥ 85 %) par défaut, "
+                      "« à confirmer » (50–85 %) sur bascule ; à vérifier sur site",
             "maj": maj or "—"}
 
 
@@ -1205,36 +1204,69 @@ def prospection_piscines_points(commune: str | None = None, bati: str = "tous",
     Aucun plafond de listing (l'écran cap à 500, la carte doit TOUT montrer). Agrégat lecture seule.
     RETOURS-11F M12 : chaque point porte sa bande de confiance (haute/moyenne/basse) ; défaut = haute
     seule ; corrigées « pas une piscine » toujours exclues."""
-    if not db.execute(text("SELECT to_regclass('parcel_equipements') IS NOT NULL")).scalar():
-        raise HTTPException(503, "détection équipements indisponible (table absente).")
+    if not db.execute(text("SELECT to_regclass('piscines') IS NOT NULL")).scalar():
+        raise HTTPException(503, "source piscines indisponible (lancer `labuse piscines-build`).")
     from ..ingestion.ortho_equipements import ensure_corrections
     ensure_corrections(db)
-    join_bati = "LEFT JOIN p_model_bati b ON b.idu = e.idu"
-    bati_cond = " AND coalesce(b.emprise_bati_m2, 0) > 0" if bati == "oui" \
-        else " AND coalesce(b.emprise_bati_m2, 0) = 0" if bati == "non" else ""
-    surf_cond = " AND e.piscine_surface_m2 >= :psmin" if piscine_surf_min else ""
-    conf_cond = _piscine_conf_filtre(inclure_incertaines)
-    corr_cond = " AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = e.idu)"
-    where = ("WHERE e.piscine IS TRUE" + bati_cond + surf_cond + conf_cond + corr_cond
-             + (" AND p.commune = :c" if commune else ""))
+    # PISCINES-2 — la couche carte = la source unique, statut `servie` (défaut) ou +`a_confirmer`.
+    statuts = "('servie','a_confirmer')" if inclure_incertaines else "('servie')"
+    surf_cond = " AND pi.surface_m2 >= :psmin" if piscine_surf_min else ""
+    corr_cond = " AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)"
+    where = (f"WHERE pi.statut IN {statuts}" + surf_cond + corr_cond
+             + (" AND pi.commune = :c" if commune else ""))
     rows = db.execute(text(
-        f"""SELECT e.idu, p.commune, round(e.piscine_surface_m2::numeric, 0) AS m2, e.piscine_confiance AS conf,
-                   ST_X(ST_Transform(p.centroid, 4326)) AS lon, ST_Y(ST_Transform(p.centroid, 4326)) AS lat
-            FROM parcel_equipements e JOIN parcels p ON p.idu = e.idu {join_bati} {where}
-            AND p.centroid IS NOT NULL"""),
-        {"c": commune, "psmin": piscine_surf_min, "cmin": SEUIL_PISCINE_HAUTE}).mappings().all()
-
-    def _bande(conf):
-        if conf is None:
-            return "moyenne"
-        return "haute" if conf >= SEUIL_PISCINE_HAUTE else ("moyenne" if conf >= 0.5 else "basse")
+        f"""SELECT pi.idu, pi.commune, round(pi.surface_m2::numeric, 0) AS m2, pi.source, pi.statut,
+                   ST_X(pi.geom) AS lon, ST_Y(pi.geom) AS lat
+            FROM piscines pi {where} AND pi.geom IS NOT NULL"""),
+        {"c": commune, "psmin": piscine_surf_min}).mappings().all()
     return {"type": "FeatureCollection", "features": [
         {"type": "Feature", "geometry": {"type": "Point", "coordinates": [float(r["lon"]), float(r["lat"])]},
          "properties": {"kind": "piscine", "idu": r["idu"], "commune": r["commune"],
                         "piscine_m2": float(r["m2"]) if r["m2"] is not None else None,
-                        "confiance": round(float(r["conf"]), 2) if r["conf"] is not None else None,
-                        "bande": _bande(r["conf"])}}
+                        "source": r["source"],
+                        "bande": "haute" if r["statut"] == "servie" else "moyenne"}}
         for r in rows]}
+
+
+@router.get("/prospection-piscines/liste")
+def prospection_piscines_liste(commune: str | None = None,
+                               statut: str = "servie",   # servie | tous (servie + a_confirmer)
+                               surf_min: int = 0,
+                               proprio: str = "tous",   # tous | pm | pp
+                               db: Session = Depends(get_db)):
+    """PISCINES-2 (A.3) — LISTE pisciniste : parcelle · commune · surface bassin · source · statut ·
+    propriétaire (PM nommée + SIREN / particulier non nommé). Source unique `piscines`. Aucune colonne
+    « potentiel solaire » (hors sujet). Corrections « pas une piscine » exclues."""
+    if not db.execute(text("SELECT to_regclass('piscines') IS NOT NULL")).scalar():
+        raise HTTPException(503, "source piscines indisponible (lancer `labuse piscines-build`).")
+    from ..ingestion.ortho_equipements import ensure_corrections
+    ensure_corrections(db)
+    statuts = "('servie','a_confirmer')" if statut == "tous" else "('servie')"
+    surf_cond = " AND pi.surface_m2 >= :smin" if surf_min else ""
+    prop_cond = " AND pm.idu IS NOT NULL" if proprio == "pm" \
+        else " AND pm.idu IS NULL" if proprio == "pp" else ""
+    where = (f"WHERE pi.statut IN {statuts} AND pi.idu IS NOT NULL" + surf_cond + prop_cond
+             + " AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)"
+             + (" AND pi.commune = :c" if commune else ""))
+    base = ("FROM piscines pi LEFT JOIN parcelle_personne_morale pm ON pm.idu = pi.idu " + where)
+    total = int(db.execute(text(f"SELECT count(*) {base}"), {"c": commune, "smin": surf_min}).scalar() or 0)
+    cap = 1000   # plafond de listing (la carte montre TOUTES les piscines) — jamais muet (`tronquee` servi)
+    rows = db.execute(text(
+        f"""SELECT pi.idu, pi.commune, round(pi.surface_m2)::int AS surface_m2, pi.source, pi.statut,
+                   pm.denomination, pm.siren
+            {base}
+            ORDER BY pi.commune, pi.surface_m2 DESC NULLS LAST, pi.idu LIMIT :lim"""),
+        {"c": commune, "smin": surf_min, "lim": cap}).mappings().all()
+    items = []
+    for r in rows:
+        d = dict(r)
+        d["proprio"] = _solaire_proprio(r)   # PM nommée (dénomination + SIREN) / particulier non nommé
+        d.pop("denomination", None); d.pop("siren", None)
+        items.append(d)
+    maj = db.execute(text("SELECT to_char(max(built_at), 'YYYY-MM-DD') FROM piscines")).scalar()
+    return {"total": total, "n": len(items), "cap": cap, "tronquee": total > len(items),
+            "items": items, "maj": maj or "—",
+            "source": "Source unique FLAIR ∪ CoSIA dédoublonnée (IGN 20 cm 2025) · propriétaire DGFiP"}
 
 
 class PasUnePiscineIn(BaseModel):

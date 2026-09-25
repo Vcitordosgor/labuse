@@ -1,0 +1,8 @@
+classe,vraie,fausse,douteuse,precision_douteuse_exclue_pct,precision_stricte_pct,wilson_lo_pct,wilson_hi_pct,statut_regle
+1_FLAIR_haute,30,0,0,100.0,100.0,88.6,100,servie
+2_FLAIR_incertaine,27,1,2,96.4,90.0,82.3,99.4,servie
+3_CoSIA_conf_avecFLAIR,30,0,0,100.0,100.0,88.6,100,servie
+4_CoSIA_conf_sansFLAIR,26,0,4,100.0,86.7,87.1,100,servie
+5_CoSIA_rare_sansFLAIR,4,16,10,20.0,13.3,8.1,41.6,ecartee
+6_CoSIA_prob_ge8_sansFLAIR,9,6,15,60.0,30.0,35.7,80.2,a_confirmer
+7_CoSIA_prob_lt8,1,22,7,4.3,3.3,0.8,21.0,ecartee

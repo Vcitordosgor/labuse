@@ -95,23 +95,20 @@ def test_couverture_nulls_gardes(engine):
 
 @pytest.mark.db
 def test_piscines_corrections_excluses(engine):
+    # PISCINES-2 — le compteur n_piscines lit la source UNIQUE `piscines` (statut) ; les corrections
+    # « pas une piscine » (par idu) en sont exclues.
     from labuse.ingestion.ortho_equipements import DDL_CORRECTIONS
+    from labuse.ingestion.piscines_fusion import DDL as DDL_PISCINES
     from labuse.registre.moteurs.commune import compte_piscines
     with engine.begin() as c:
-        # DDL RÉELLES (leçon d'isolation : jamais une table minimale rivale qui masque la vraie)
-        from labuse.ingestion.ortho_equipements import DDL as DDL_EQUIPEMENTS
-        c.execute(text(DDL_EQUIPEMENTS))
+        c.execute(text(DDL_PISCINES))
         c.execute(text(DDL_CORRECTIONS))
-        c.execute(text("DELETE FROM parcel_equipements WHERE idu LIKE 'C4PIS%'"))
+        c.execute(text("DELETE FROM piscines WHERE idu LIKE 'C4PIS%'"))
         c.execute(text("DELETE FROM piscine_corrections WHERE idu LIKE 'C4PIS%'"))
-        c.execute(text("DELETE FROM parcels WHERE commune = 'TemoinPis-C4'"))
         for i in range(3):
             idu = f"C4PIS000000{i}"
-            c.execute(text("INSERT INTO parcels (idu, commune, surface_m2, geom) VALUES "
-                           "(:i, 'TemoinPis-C4', 10, ST_GeomFromText('POINT(55.5 -21.1)', 4326))"),
-                      {"i": idu})
-            c.execute(text("INSERT INTO parcel_equipements (idu, piscine, piscine_surface_m2,"
-                           " piscine_confiance) VALUES (:i, true, 30, 0.99)"), {"i": idu})
+            c.execute(text("INSERT INTO piscines (idu, commune, surface_m2, source, classe, statut) "
+                           "VALUES (:i, 'TemoinPis-C4', 30, 'flair', 'flair_haute', 'servie')"), {"i": idu})
         c.execute(text("INSERT INTO piscine_corrections (idu) VALUES ('C4PIS0000000')"))
         out = compte_piscines(c, "TemoinPis-C4", bati="tous", piscine_surf_min=0,
                               inclure_incertaines=True)

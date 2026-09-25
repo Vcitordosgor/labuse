@@ -6,10 +6,23 @@ import { useApp } from '../../store/useApp'
 
 // Mandat SOLAIRE — deux modes : Piscines (stat d'abord = agrégat) / Ensoleillement (barre unique →
 // fiche soleil avec profil mensuel). Écartées masquées par défaut. Potentiel avec unité kWh/kWc/an.
+// PISCINES-2 — agrégat de la source unique : `confiance` porte les bandes par STATUT (servie / à confirmer).
 const AGG = {
   total: 12480,
   communes: [{ commune: 'Saint-Paul', n: 2913 }, { commune: 'Saint-Pierre', n: 1842 }],
-  source: 'Détection FLAIR sur BD ORTHO — retenues au seuil de confiance (juge FLAIR ≥ 0,30 × probe ≥ 0,50)', maj: '2026-07-11',
+  confiance: { haute: 12480, incertaines: 500, seuil_haute: 0.8, inclure_incertaines: false },
+  corrigees: 0,
+  source: 'Source unique fusionnée FLAIR ∪ CoSIA, dédoublonnée à 5 m ; statut servie (précision ≥ 85 %) par défaut', maj: '2026-09-25',
+}
+// PISCINES-2 — LISTE pisciniste : idu · commune · surface · source · statut · propriétaire (pas de potentiel).
+const PISC_LIST = {
+  total: 2, n: 2, maj: '2026-09-25', source: 'Source unique FLAIR ∪ CoSIA',
+  items: [
+    { idu: '97411000AP0000', commune: 'Saint-Paul', surface_m2: 42, source: 'flair+cosia', statut: 'servie',
+      proprio: { type: 'personne_morale', denomination: 'SCI SOLEIL', siren: '123456789' } },
+    { idu: '97411000AP0001', commune: 'Saint-Paul', surface_m2: 28, source: 'cosia', statut: 'a_confirmer',
+      proprio: { type: 'particulier' } },
+  ],
 }
 const POINTS = { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [55.3, -21] }, properties: { kind: 'piscine', idu: '97411000AP0000' } }] }
 function mkItem(i: number, ecartee = false) {
@@ -39,6 +52,7 @@ function mockFetch() {
   global.fetch = vi.fn(async (url: string) => {
     const u = String(url)
     if (u.includes('/prospection-piscines/points')) return { ok: true, json: async () => POINTS }
+    if (u.includes('/prospection-piscines/liste')) return { ok: true, json: async () => PISC_LIST }
     if (u.includes('/prospection-piscines')) return { ok: true, json: async () => AGG }
     if (u.includes('/prospection-solaire/parcelle/')) return { ok: true, json: async () => FICHE }
     if (u.includes('/prospection-solaire')) return { ok: true, json: async () => LIST }
@@ -64,31 +78,27 @@ describe('SOLAIRE — deux modes', () => {
     expect(screen.queryByText(/gelées 11\/07\/2026/)).toBeNull()
   })
 
-  it('mode Piscines (V3) : la SYNTHÈSE naît à l’ouverture, « Voir les parcelles » dessous ouvre le listing (qui replie la fiche)', async () => {
+  it('PISCINES-2 : SYNTHÈSE d’emblée (à équiper), « Voir les parcelles » ouvre la liste', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
-    // RECETTE-5 (V3) — la fiche de synthèse (total + par commune) apparaît D'EMBLÉE (plus gardée
-    // derrière le clic) ; le listing, lui, attend « Voir les parcelles ».
+    // la synthèse (total + par commune) apparaît d'emblée ; le listing attend « Voir les parcelles ».
     await waitFor(() => expect(document.querySelector('[data-piscines-total]')?.textContent).toContain('480'))
+    expect(screen.getByText(/à équiper/)).toBeTruthy()          // en-tête métier pisciniste
     expect(screen.getByText('Saint-Pierre')).toBeTruthy()       // ligne par commune
     expect(document.querySelector('[data-piscines-row]')).toBeNull()   // pas encore de listing
-    // clic « Voir les parcelles » → la synthèse SE REPLIE (une ligne, dépliable) et le listing apparaît.
     fireEvent.click(document.querySelector('[data-piscines-voir]')!)
-    await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBeGreaterThan(0))
-    expect(document.querySelector('[data-piscines-comptage-replie]')).toBeTruthy()   // fiche repliée
-    expect(document.querySelector('[data-piscines-voir]')).toBeNull()                // le bouton a disparu
+    await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
+    expect(document.querySelector('[data-piscines-voir]')).toBeNull()  // le bouton a disparu
   })
 
-  it('mode Piscines (LOT8) : TOUTES les piscines listées (classement ignoré, pas de pied « écartées ») + seuil écrit', async () => {
+  it('PISCINES-2 : source fusionnée (statut) + bascule « à confirmer » ; aucun « potentiel »', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
-    // RECETTE-5 (V3) — le seuil de rétention est écrit dans la synthèse (visible d'emblée).
-    await waitFor(() => expect(document.querySelector('[data-piscines-source]')?.textContent).toContain('seuil'))
+    await waitFor(() => expect(document.querySelector('[data-piscines-source]')?.textContent).toContain('fusionnée'))
+    expect(document.querySelector('[data-piscines-toggle-aconfirmer]')).toBeTruthy()   // statut, plus de « incertaines » confiance
     fireEvent.click(document.querySelector('[data-piscines-voir]')!)   // ouvre le listing
-    // les 2 lignes (dont l'« écartée ») s'affichent : le pisciniste veut toutes les piscines.
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
-    expect(document.querySelector('[data-solaire-ecartees]')).toBeNull()          // plus de pied « écartées masquées »
-    expect(screen.queryByText('Classement')).toBeNull()                            // LOT8c — pas de colonne Classement
+    expect((document.body.textContent ?? '').replace(/\s/g, '')).not.toContain('kWh/kWc')  // aucun potentiel solaire
   })
 
   it('mode Ensoleillement : fiche soleil (profil mensuel 12 barres + unité kWh/kWc/an)', async () => {
@@ -121,21 +131,24 @@ describe('SOLAIRE — deux modes', () => {
     expect(document.querySelector('[data-solaire-kwc-hyp]')?.textContent).toContain('0,2 kWc/m²')
   })
 
-  it('A2 (R23) — liste Piscines : potentiel + type propriétaire ; plus de sélection ni de ponts Courrier/Comparer', async () => {
+  it('PISCINES-2 (A.3) — liste : propriétaire PM/PP · sélection → Courrier « aux occupants » · chip « pas une piscine »', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
-    // RECETTE-5 (V3) — attendre la synthèse (donc le bouton) avant de l'ouvrir.
     await waitFor(() => expect(document.querySelector('[data-piscines-voir]')).toBeTruthy())
     fireEvent.click(document.querySelector('[data-piscines-voir]')!)   // ouvre le listing
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
     const body = document.body.textContent ?? ''
-    expect(body).toContain('SCI SOLEIL')                 // A2 — PM nommée
-    expect(body).toContain('particulier — non nommé')    // A2 — particulier jamais nommé
-    expect(body.replace(/\s/g, '')).toContain('1598')    // A2 — potentiel servi (fmtInt insère une espace)
-    expect(document.querySelector('[data-piscines-csv]')).toBeFalsy()        // OUTILS-FIX-3 E — export CSV retiré
-    // RECETTE-1 R23 — « Préparer les courriers » et « Comparer » retirés (avec la sélection).
-    expect(document.querySelector('[data-piscines-sel]')).toBeNull()
-    expect(document.querySelector('[data-piscines-courrier]')).toBeNull()
-    expect(document.querySelector('[data-piscines-comparer]')).toBeNull()
+    expect(body).toContain('SCI SOLEIL')                 // PM nommée + SIREN
+    expect(body).toContain('particulier — non nommé')    // particulier jamais nommé
+    // le SEUL geste de sortie = Courrier « aux occupants » sur la sélection (réserve n°2 de Vic).
+    expect(document.querySelector('[data-piscines-courrier]')).toBeTruthy()
+    expect(document.querySelectorAll('[data-piscines-sel]').length).toBe(2)   // une case par ligne
+    // « pas une piscine » est un CHIP (plus un lien-texte) : un par ligne.
+    expect(document.querySelectorAll('[data-piscines-pas]').length).toBe(2)
+    // le bouton Courrier est désactivé tant que rien n'est sélectionné, puis actif après une coche.
+    const courrier = document.querySelector('[data-piscines-courrier]') as HTMLButtonElement
+    expect(courrier.disabled).toBe(true)
+    fireEvent.click(document.querySelector('[data-piscines-sel]')!)
+    await waitFor(() => expect((document.querySelector('[data-piscines-courrier]') as HTMLButtonElement).disabled).toBe(false))
   })
 })

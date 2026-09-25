@@ -40,7 +40,6 @@ import { MODULES, VIOLET } from './registry'
 import { Plu } from './Plu'
 // M137-K : ScoringV2Module (Radar des ventes) retiré du produit (DORMANT) — plus importé/monté ;
 // le composant reste au dépôt dans ./ScoringV2 (cf. son en-tête).
-import { RenouvellementModule } from './Renouvellement'
 import { ProspectionSolaire } from './ProspectionSolaire'
 import { EtudeZone } from './EtudeZone'
 import { TaxeAmenagement } from './TaxeAmenagement'
@@ -1705,7 +1704,8 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   plu: Plu,
   // M137-K (Vic 20/08/2026) : 'scoring-v2' (Radar des ventes) retiré du produit (DORMANT) —
   // recouvre l'Analyse LABUSE. Composant ScoringV2Module + endpoints /v2/* conservés au dépôt.
-  renouvellement: RenouvellementModule,
+  // DENSIFIER-PLI (PISCINES-2 Lot B) — 'renouvellement' (Densifier l'existant) retiré du menu et plié
+  // dans le filtre Capacité (« Déjà bâti » + « SDP restante »).
   'prospection-solaire': ProspectionSolaire,
   // OUTILS-MUSCLER-1 Lot A — « Successions » (parcel_veille_succession, succession PROBABLE jamais
   // « en succession »). Ponts : Courrier/Comparer sur sélection, « Assembler → » par carte (Lot B).

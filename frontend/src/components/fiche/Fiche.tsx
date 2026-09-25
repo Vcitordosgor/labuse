@@ -25,7 +25,7 @@ import { ProprietaireHistorique } from './ProprietaireHistorique'
 import type { Onglet } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille d'outils partagée
-import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastilles, MicroTriple, RateLimit429, Line, EligibiliteReplie, PorteOutil, FactRow, FactNote, Vigilance } from './primitives'
+import { IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastilles, RateLimit429, Line, EligibiliteReplie, PorteOutil, FactRow, FactNote, Vigilance } from './primitives'
 // FICHE-RANGEMENT-2 Lot 1 — LE BASCULEMENT : la fiche est recomposée en 11 sections PAR NATURE,
 // chacune un RefDrawer inline qui COMPOSE les blocs feuilles (extraits aux étapes 3a-3c). Les
 // sections « fourre-tout » ConstructibiliteSection / LeBienSection sont dissoutes ; les quatre
@@ -1048,46 +1048,10 @@ export function Fiche({ idu }: { idu: string }) {
                 <span style={{ fontSize: 11, background: '#1c1630', color: '#c9b6f2', border: '1px solid #3d3159', borderRadius: 6, padding: '3px 9px' }}>{fmtLibelleBrut(proprioSignal.detail).replace(/\s*—.*$/, '').slice(0, 34)}</span>
               </div>
             )}
-            {/* M-RENOUV : badge segment Renouvellement (CUIVRE) — le verdict reste « Écartée » ;
-                libellé doctrinal sous le badge, jamais « opportunité ». */}
-            {f.renouvellement && (
-              <div data-renouv-badge style={{ margin: '13px 0 0', paddingTop: 12, borderTop: `1px solid ${verdict.color}33` }}>
-                <span style={{ fontSize: 11, fontWeight: 600, background: RENOUV.bg, color: RENOUV.txt, border: `1px solid ${RENOUV.border}`, borderRadius: 6, padding: '3px 9px', alignSelf: 'flex-start' }}>
-                  Densifier l’existant — rang {fmtInt(f.renouvellement.rang_segment)}/{fmtInt(f.renouvellement.total_segment)}
-                </span>
-                <p data-renouv-libelle style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--txt-dim)' }}>{f.renouvellement.libelle}</p>
-                {/* M61 P4 — « Pourquoi ce rang » dépliable JUSTE À CÔTÉ du rang (comme « Pourquoi ce
-                    score » sous le verdict) ; l'ancienne section basse « RENOUVELLEMENT — POURQUOI CE
-                    RANG » est absorbée ici (aucune donnée nouvelle). */}
-                <details data-renouv-pourquoi style={{ marginTop: 8 }}>
-                  <summary style={{ cursor: 'pointer', fontSize: 11.5, color: RENOUV.txt, fontWeight: 600 }}>Pourquoi ce rang</summary>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
-                    <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: 'var(--txt-dim)' }}>
-                      {f.renouvellement.libelle} — écartée du classement principal ({RENOUV_CODE_LABEL[f.renouvellement.code_bati_origine] ?? f.renouvellement.code_bati_origine}),
-                      mais en zone {f.renouvellement.zone_plu ?? '—'} avec une capacité restante réelle.
-                    </p>
-                    {f.renouvellement.composantes.map((c) => (
-                      <div key={c.cle} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ flex: 1, fontSize: 11.5, color: REF.name, minWidth: 0 }}>{c.libelle}</span>
-                      </div>
-                    ))}
-                    {/* RETOURS-11F M9 — capacité NETTE des contraintes : on sert la SDP réellement
-                        mobilisable (contraintes déduites), avec la brute + la part déduite en mots
-                        quand une contrainte s'applique ; jamais un chiffre brut trompeur. */}
-                    <MicroTriple items={[
-                      f.renouvellement.sdp_nette_m2 != null && f.renouvellement.sdp_nette_m2 > 0
-                        ? `SDP nette ${fmtInt(f.renouvellement.sdp_nette_m2)} m²${f.renouvellement.contrainte_pct ? ` (−${f.renouvellement.contrainte_pct} % contraintes)` : ''}`
-                        : (f.renouvellement.sdp_residuelle_m2 != null && f.renouvellement.sdp_residuelle_m2 > 0 ? `SDP résiduelle ${fmtInt(f.renouvellement.sdp_residuelle_m2)} m²` : 'SDP résiduelle —'),
-                      f.renouvellement.surface_m2 != null ? `assiette ${fmtM2(f.renouvellement.surface_m2)}` : 'assiette —',
-                      // OUTILS-FIX-1 C1 — la surélévation n'est plus servie par le segment (batch débranché) ;
-                      // le signal vivant reste dans l'onglet Faisabilité. Ici : rang île.
-                      `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
-                    ]} />
-                    <p style={{ margin: 0, fontSize: 10, color: REF.dim }}>{f.renouvellement.source}</p>
-                  </div>
-                </details>
-              </div>
-            )}
+            {/* DENSIFIER-PLI (PISCINES-2 Lot B) — le badge « Densifier l'existant — rang N/M » lisait le
+                précalcul figé `parcel_renouvellement` (plus aucun écran ne le lit). Le potentiel de
+                densification s'obtient maintenant via le filtre « Déjà bâti » + « SDP restante » (porte
+                ci-dessus), sur le run servi. Badge retiré. */}
 
             {/* ═══ M55-O phase 2.1b — BLOC ANALYSE : TOUT l'avis LABUSE rassemblé (déployé au clic) ═══
                 Aujourd'hui éparpillé (P dans « Les données », motifs dans « Pourquoi pas ? »,
@@ -1719,13 +1683,14 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* RETOURS-20 Z5 — l'alerte « délaissé » = une Vigilance (filet ambre). */}
                 {faisa.data?.delaisse && <div data-delaisse><Vigilance title={faisa.data.delaisse.libelle} /></div>}
                 {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
-                {/* FICHE-PORTES-1 Lot 2 — porte « Densifier l'existant » (MR1) : à la suite de la SDP
-                    consommée (potentiel de densification). Outil à la maille commune → contexte = la
-                    commune de la parcelle. */}
+                {/* DENSIFIER-PLI (PISCINES-2 Lot B) — l'outil « Densifier l'existant » est plié dans les
+                    filtres : la porte ouvre désormais le panneau Filtre (groupe Capacité) avec « Déjà bâti »
+                    coché et « SDP restante ≥ 200 m² » pré-rempli, scopé sur la commune de la parcelle.
+                    Plus de précalcul figé : la SDP lue est celle du run servi (parcel_residuel), == fiche. */}
                 {f.commune && (
-                  <PorteOutil ico="◫" data="renouvellement" titre="Densifier l'existant"
-                    sous={`Le bâti en zone U de ${f.commune} qui peut porter davantage`}
-                    onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setCommunesFilter([f.commune!]); st.setModule('renouvellement') }} />
+                  <PorteOutil ico="◫" data="densifier-filtre" titre="Densifier l'existant"
+                    sous={`Le bâti déjà construit de ${f.commune} qui peut porter davantage`}
+                    onClick={() => { const st = useApp.getState(); st.setCommunesFilter([f.commune!]); st.setFilter('renouvellement', true); st.setFilter('sdpMin', 200); st.openFiltres() }} />
                 )}
                 <FaisabiliteTab idu={idu} />
                 {/* GABARIT-2 — ligne « Gabarit réglementaire » : zone d'implantation / plafond /

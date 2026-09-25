@@ -354,6 +354,10 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "tuyau_subdivise": "tuyau (build_tuyau_subdivise — méga-polygones en morceaux ST_Subdivide, dédup SUP)",
     "mvt_communes": "tuyau (build_mvt_communes — contours IGN des 24 communes)",
     "tuyau_piscines": "tuyau (build_tuyau_piscines — piscines dédoublonnées + niveau de confiance)",
+    # PISCINES-2 — source UNIQUE fusionnée FLAIR ∪ CoSIA (dédoublonnées à 5 m, statut selon la
+    # précision mesurée par classe), fabriquée par `labuse piscines-build`. Lue par l'outil Piscines,
+    # la carte et la fiche (remplace la lecture de parcel_equipements/tuyau_piscines par l'outil).
+    "piscines": "source unique piscines (piscines-build — FLAIR ∪ CoSIA dédoublonnées, statut servie/à confirmer/écartée)",
     "tuyau_telepherique": "tuyau (build_tuyau_telepherique — Papang servi + ligne Payanké projet)",
     "tuyau_sup": "tuyau (build_tuyau_sup — SUP dissoute par famille, opacité uniforme au zoom)",
     "p_model_bati": "modèle P (features bâti)",
