@@ -516,6 +516,23 @@ SOURCES: list[dict] = [
          technical_notes="GEOPF-3 : ingéré → table lieux_dits via Géoplateforme WFS "
                          "(BDTOPO_V3:zone_d_habitation habités + lieu_dit_non_habite). 5ᵉ grammaire de "
                          "recherche « Lieu-dit » + ligne « Secteur » de la fiche parcelle."),
+    # GEOPF-3 — cartes anciennes (Remonter le temps) : SCAN 50 IGN de 1950 + EduGéo Réunion 1980.
+    dict(name="SCAN 50 historique 1950 (IGN)", category="reference", provider="IGN / Géoplateforme",
+         access_type="WMTS", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="SCAN 50® — carte topographique IGN de 1950",
+         documentation_url="https://geoservices.ign.fr/services-geoplateforme-diffusion",
+         endpoint_url="https://data.geopf.fr/wmts",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — SCAN 50 (1950) ».",
+         technical_notes="GEOPF-3 : couche RASTER (Remonter le temps) — WMTS GEOGRAPHICALGRIDSYSTEMS.MAPS."
+                         "SCAN50.1950. Couverture 974 vérifiée (carte IGN 1950 de Saint-Paul). Relais brut."),
+    dict(name="EduGéo Réunion 1980 (IGN)", category="reference", provider="IGN / Géoplateforme (EduGéo)",
+         access_type="WMTS", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="EduGéo — carte de La Réunion, millésime 1980",
+         documentation_url="https://geoservices.ign.fr/services-geoplateforme-diffusion",
+         endpoint_url="https://data.geopf.fr/wmts",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — EduGéo Réunion 1980 ».",
+         technical_notes="GEOPF-3 : couche RASTER (Remonter le temps) — WMTS GEOGRAPHICALGRIDSYSTEMS."
+                         "EDUGEO.LA-REUNION1980. Bbox = l'île entière. Relais brut."),
     # ── Spécifiques / accès restreint ──
     dict(name="ABF / Monuments historiques", category="patrimoine", provider="Base Mérimée (Ministère Culture)",
          access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
@@ -1687,6 +1704,8 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "Zones exclues EnR sauf toiture (OFB/APER)": ("one_shot", 365, "proposee"),
     "Contraintes EnR près des habitations (Géoplateforme)": ("one_shot", 365, "proposee"),
     "BD NYME — lieux-dits (IGN)": ("one_shot", 365, "proposee"),
+    "SCAN 50 historique 1950 (IGN)": ("one_shot", None, "sans_objet"),
+    "EduGéo Réunion 1980 (IGN)": ("one_shot", None, "sans_objet"),
     "ZNIEFF (INPN / Région)": ("absente", None, "sans_objet"),
     "CoSIA (couverture du sol IA, IGN)": ("one_shot", 800, "declaree"),
     "Radar (pige d'annonces)": ("depot_manuel", 3, "declaree"),

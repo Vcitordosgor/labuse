@@ -193,7 +193,8 @@ export type Basemap = 'dark' | 'clair' | 'plan' | 'ortho'   // M63-P1 : + fond c
 const readBasemap = (): Basemap => 'dark'
 // FIX-FONDS B5 — les 7 millésimes d'ortho (Actuelle + les 6 de TEMPS_MILLESIMES) : le sélecteur de
 // fonds et l'outil TEMPS partagent le même jeu (cf. basemaps.ORTHO_YEARS).
-export type OrthoYear = 'now' | '1950' | '2000' | '2006' | '2011' | '2016' | '2021'
+// GEOPF-3 — cartes anciennes (Remonter le temps) : SCAN 50 de 1950 et EduGéo Réunion 1980.
+export type OrthoYear = 'now' | 'scan1950' | '1950' | 'edugeo1980' | '2000' | '2006' | '2011' | '2016' | '2021'
 // RETOURS-13 P6 — 'profil' : tracer une ligne sur la carte → coupe altimétrique (bouton « Tracer un
 // autre profil » du tiroir Terrain). Réutilise la machine à mesurer (points cliqués + Entrée valide).
 export type MapTool = 'distance' | 'surface' | 'alti' | 'zone' | 'profil'

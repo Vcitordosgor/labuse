@@ -319,6 +319,43 @@ def enr_habitation_tile(z: int, x: int, y: int) -> Response:
     return Response(r.content, media_type="image/png", headers=_HDR)
 
 
+# GEOPF-3 — CARTES ANCIENNES (Remonter le temps) : SCAN 50 de 1950 et EduGéo Réunion 1980. Ce sont
+# des CARTES (pas des orthophotos) → on NE passe PAS par `_traiter` (fondu de côte / masque mer, conçu
+# pour la photo : il prendrait le figuré cartographique de la mer pour du no-data). Relais BRUT (le
+# rendu authentique de l'époque, mer comprise) + cache disque. Couverture 974 VÉRIFIÉE (SCAN50 : carte
+# IGN 1950 de Saint-Paul ; EduGéo : bbox exactement Réunion). STYLE=normal, TileMatrixSet=PM.
+_CARTES_ANCIENNES: dict[str, tuple[str, str, str]] = {
+    "scan50-1950": ("GEOGRAPHICALGRIDSYSTEMS.MAPS.SCAN50.1950", "image/jpeg", ".jpg"),
+    "edugeo-1980": ("GEOGRAPHICALGRIDSYSTEMS.EDUGEO.LA-REUNION1980", "image/png", ".png"),
+}
+
+
+@router.get("/map/tiles/carte-ancienne/{couche}/{z}/{x}/{y}")
+def carte_ancienne_tile(couche: str, z: int, x: int, y: int) -> Response:
+    trip = _CARTES_ANCIENNES.get(couche)
+    if trip is None:
+        raise HTTPException(404, "Couche inconnue")
+    if not (0 <= z <= 16 and 0 <= x < 2 ** z and 0 <= y < 2 ** z):
+        raise HTTPException(404, "Tuile hors grille")
+    layer, fmt, ext = trip
+    base = _cache_base(f"carte-{couche}", z, x, y)
+    for e, mime in _MIME.items():
+        p = base.with_suffix(e)
+        if p.exists():
+            return Response(p.read_bytes(), media_type=mime, headers=_HDR)
+    import requests as _rq
+    try:
+        r = _rq.get(_WMTS.format(layer=layer, fmt=fmt, z=z, x=x, y=y),
+                    headers={"User-Agent": "labuse/1.0"}, timeout=15)
+    except Exception as e:  # noqa: BLE001 — WMTS muet : pas de tuile (millésime simplement absent ici)
+        log.warning("carte-ancienne %s %s/%s/%s : WMTS muet (%s)", couche, z, x, y, e)
+        raise HTTPException(404, "WMTS indisponible") from None
+    if r.status_code != 200 or not r.headers.get("content-type", "").startswith("image/"):
+        raise HTTPException(404, "Tuile absente")   # hors couverture / transitoire : pas de cache
+    _cache_ecrire(base, ext, r.content)
+    return Response(r.content, media_type=_MIME[ext], headers=_HDR)
+
+
 # RETOURS-15 U1 — ancien chemin (front en cache navigateur) : même pipeline, couche express.
 @router.get("/map/tiles/ortho-express/{z}/{x}/{y}")
 def ortho_express_tile(z: int, x: int, y: int) -> Response:
