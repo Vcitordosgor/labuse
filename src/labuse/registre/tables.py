@@ -185,6 +185,8 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                                 millesime="INPN/patrinat espaces protégés — passe 05/07/2026"),
     "znieff_inpn": Rt(("spatial_layers",), couches=("znieff",), millesime="INPN, mise à jour 29/08/2025"),
     "znieff_region_ods": Rt((), note="canal Région non branché (0 donnée) — canonique : znieff_inpn"),
+    "geomce": Rt(("spatial_layers",), couches=("mesures_compensatoires",),
+                 millesime="GéoMCE (MTE/OFB) — mesures compensatoires"),
     # ── marché / valeurs ────────────────────────────────────────────────────────────
     "dvf": Rt(("dvf_mutations", "dvf_mutations_parcelle", "dvf_mutations_histo",
                "dvf_secteur_medianes", "dvf_prix_sortie_neuf", "spatial_layers",

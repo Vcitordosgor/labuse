@@ -331,6 +331,23 @@ def postes_transformation_build_cmd() -> None:
     typer.echo(f"✓ Postes de transformation : {counts} (total {sum(counts.values())})")
 
 
+@app.command("mesures-compensatoires-build")
+def mesures_compensatoires_build_cmd() -> None:
+    """GEOPF-3 — ingère les mesures compensatoires ERC (GéoMCE via Géoplateforme WFS) → spatial_layers
+    kind='mesures_compensatoires' (Licence Ouverte). Île entière ; contrainte du point unique
+    (servitudes.contraintes_parcelle → Pièges et risques + fiche) ; couche famille environnement."""
+    from . import models
+    from .db import engine
+    from .ingestion import seed_sources
+    from .ingestion.mesures_compensatoires import build_mesures_compensatoires
+
+    with session_scope() as s:
+        seed_sources.seed(s)
+        counts = build_mesures_compensatoires(s, log=typer.echo)
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ Mesures compensatoires : {counts} (total {sum(counts.values())})")
+
+
 @app.command("bpe-build")
 def bpe_build_cmd() -> None:
     """M137-U — ingère la BPE INSEE (équipements géolocalisés, DEP=974) → spatial_layers

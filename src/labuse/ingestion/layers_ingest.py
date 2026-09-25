@@ -95,6 +95,8 @@ KIND_SOURCE = {
     # M137-U — couches écrites hors layers_ingest (znieff.py, bpe.py) — déclarées pour la garde.
     "znieff": "ZNIEFF (INPN/MNHN)",
     "amenite_bpe": "BPE INSEE",
+    # GEOPF-3 — mesures compensatoires ERC (mesures_compensatoires.py), contrainte environnementale.
+    "mesures_compensatoires": "GéoMCE — mesures compensatoires",
     # FIX-COUCHES P4 — dispositifs fiscaux (écrits par dispositifs.build_zfang_frr). Les sources
     # existaient au catalogue (seed_sources) avec leur millésime légal, mais les couches n'étaient PAS
     # rattachées (data_source_id NULL) → registre complété ici pour la garde + le backfill. tva_primo

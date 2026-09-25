@@ -61,6 +61,8 @@ ROBINETS: dict[str, Robinet] = {
     "/map/tiles/cinquante_pas/{z}/{x}/{y}.pbf", "tuiles", chiffres=("cinquante_pas_couche",)),
  "couche_znieff": _r("couche", "ZNIEFF — type I & II", None,
     "/map/tiles/znieff/{z}/{x}/{y}.pbf", "tuiles", chiffres=("znieff_couche",)),
+ "couche_mesures_compensatoires": _r("couche", "Mesures compensatoires (ERC)", None,
+    "/map/tiles/mesures_compensatoires/{z}/{x}/{y}.pbf", "tuiles", chiffres=("mesures_compensatoires_couche",)),
  "couche_bpe": _r("couche", "Équipements (INSEE BPE)", None,
     "/map/tiles/amenite_bpe/{z}/{x}/{y}.pbf", "tuiles", chiffres=("bpe_couche",)),
  "couche_alea_inondation": _r("couche", "Aléa inondation", None,

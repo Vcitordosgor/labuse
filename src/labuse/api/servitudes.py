@@ -49,6 +49,8 @@ _KINDS = {
     # qui TOUCHENT LA CONSTRUCTIBILITÉ (filtre au rendu ; PIEGES-RISQUES-2 Lot B en a élargi la liste).
     "plu_gpu_prescription": "Prescription du PLU (constructibilité)",
     "peb": "Plan d'exposition au bruit (PEB, aérodrome)",
+    # GEOPF-3 — mesures compensatoires ERC (GéoMCE) : obligation écologique dormante sur la parcelle.
+    "mesures_compensatoires": "Mesure compensatoire biodiversité (ERC)",
 }
 
 # typepsc CNIG surfacés = ceux qui GRÈVENT LA CONSTRUCTIBILITÉ. PIEGES-RISQUES-2 (Lot B, É3) élargit
@@ -161,6 +163,14 @@ def _detail(kind: str, subtype: str | None, name: str | None, attrs: dict | None
             base = _PRESCRIPTION_LABEL[st]
             return f"{base} — « {lib} »" if lib and lib.lower() not in base.lower() else base
         return lib or "Prescription PLU"
+    if kind == "mesures_compensatoires":
+        a = attrs or {}
+        projet = a.get("projet") or name
+        mesure = a.get("type_mesure") or a.get("classe")
+        base = ("Mesure compensatoire biodiversité (séquence ERC) — gestion écologique imposée à un "
+                "maître d'ouvrage ; encadre fortement l'usage du sol")
+        det = " · ".join([x for x in (projet, mesure) if x])
+        return f"{base} — {det}" if det else base
     if kind == "peb":
         z = ((attrs or {}).get("zone") or subtype or "").upper()
         return (f"Zone {z} du plan d'exposition au bruit (aéroport) — isolation acoustique obligatoire, "

@@ -51,6 +51,7 @@ _RESERVOIR_NAME_ILIKE: dict[str, str] = {
     "lidar_hd_mnh": "LiDAR HD — MNH%", "dgfip_parcelles_pm": "DGFiP — parcelles des personnes%",
     "zfang": "ZFANG%", "frr_ex_zrr": "FRR ex-ZRR%", "gtfs_pan": "Transport public — GTFS%",
     "osm_transport": "OSM — transport%", "znieff_inpn": "ZNIEFF (INPN/MNHN)%",
+    "geomce": "GéoMCE — mesures compensatoires%",
     "cosia": "CoSIA%", "radar_pige": "Radar (pige%", "sirene_etablissements": "SIRENE établissements%",
     "mobpro": "MOBPRO%", "trafic_rn": "Trafic RN%", "bdnb": "BDNB%",
     "edf_hta": "EDF Réunion — lignes moyenne%", "tcsp_osm": "TCSP — voies bus%",

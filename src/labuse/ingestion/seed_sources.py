@@ -458,6 +458,19 @@ SOURCES: list[dict] = [
                          "MARINES EXCLUES (znieff*_mer) : en mer, aucune intersection avec des parcelles "
                          "constructibles. CONTRAINTE hors cascade (études d'impact, risque de recours). Le jeu "
                          "Région Réunion ODS est un doublon amputé (28 = type II seul, sans champ type) → écarté."),
+    # GEOPF-3 — mesures compensatoires (GéoMCE, MTE/OFB/DREAL) : emprises des mesures de compensation
+    # écologique (séquence ERC). Contrainte dormante sur la parcelle. Maître d'ouvrage non diffusable.
+    dict(name="GéoMCE — mesures compensatoires", category="environnement",
+         provider="MTE / OFB / DREAL (GéoMCE)",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="GéoMCE — géoportail des mesures compensatoires (national)",
+         documentation_url="https://www.geoportail-mesures-compensatoires.developpement-durable.gouv.fr/",
+         endpoint_url="https://data.geopf.fr/wfs/ows",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : GéoMCE (MTE/OFB) ». "
+                     "Maître d'ouvrage « non diffusable » à la source (jamais inventé).",
+         technical_notes="GEOPF-3 : ingéré → spatial_layers kind='mesures_compensatoires' via Géoplateforme WFS "
+                         "(MESURES_COMPENSATOIRES:emprises_polygones/lineaires/ponctuelles). Contrainte ERC "
+                         "(point unique servitudes.contraintes_parcelle → Pièges et risques + fiche)."),
     # ── Spécifiques / accès restreint ──
     dict(name="ABF / Monuments historiques", category="patrimoine", provider="Base Mérimée (Ministère Culture)",
          access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
@@ -1624,6 +1637,7 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "Transport public — GTFS (PAN, 7 réseaux)": ("one_shot", 365, "proposee"),
     "OSM — transport (pôles d'échange & téléphérique)": ("one_shot", 365, "proposee"),
     "ZNIEFF (INPN/MNHN)": ("one_shot", 365, "proposee"),
+    "GéoMCE — mesures compensatoires": ("one_shot", 365, "proposee"),
     "ZNIEFF (INPN / Région)": ("absente", None, "sans_objet"),
     "CoSIA (couverture du sol IA, IGN)": ("one_shot", 800, "declaree"),
     "Radar (pige d'annonces)": ("depot_manuel", 3, "declaree"),

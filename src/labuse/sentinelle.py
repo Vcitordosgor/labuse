@@ -446,6 +446,14 @@ SEED: list[dict] = [
      "url": "https://rnb-api.beta.gouv.fr/api/alpha/buildings/B74TG4FPXST4/",
      "url2": "https://rnb-api.beta.gouv.fr/api/alpha/buildings/1126R7BCDWR1/",
      "selecteur": None},
+    # GEOPF-3 — GéoMCE (mesures compensatoires) : WFS sans millésime nommé. Témoin = la mesure 974
+    # la plus récente (tri date_decision) — une nouvelle mesure change l'empreinte (date la plus récente).
+    {"name": "GéoMCE — mesures compensatoires", "methode": "temoin",
+     "url": ("https://data.geopf.fr/wfs/ows?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0"
+             "&TYPENAMES=MESURES_COMPENSATOIRES:emprises_polygones&SRSNAME=EPSG:4326&COUNT=1"
+             "&OUTPUTFORMAT=application/json&SORTBY=date_decision%20D"
+             "&BBOX=55.20,-21.42,55.90,-20.85,EPSG:4326"),
+     "selecteur": "features.0.properties.date_decision"},
     {"name": "Contours IRIS (IGN/INSEE)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/contours-iris/", "selecteur": "last_update"},
     {"name": "RPG — déclarations agricoles (IGN/ASP)", "methode": "api",
