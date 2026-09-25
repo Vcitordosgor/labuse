@@ -118,6 +118,9 @@ Le nombre **60 690 est le compte vivant du run servi**, aligné sur la fiche.
 | `labuse piscines-build` LIVE | 50 516 piscines en 3 s |
 | filtre « Déjà bâti + SDP ≥ 200 » LIVE | 60 690 (== recompte SQL) |
 | menu outils LIVE | **16** (renouvellement absent) |
+| verrou CIRCUIT `test_lot1_tables` | **V1a levé** ; `piscines` inscrite à la carte (fabrications, `registre/tables.py`) → retirée des orphelines |
+
+**Verrous/garanties — triage honnête.** Le balayage large (12 min, 417 passed) a laissé 5 échecs, tous **triés** : `test_lot1_tables` V1a/V1c signalait `piscines` orpheline lue hors carte → **corrigé** (inscription CIRCUIT). Restent, **pré-existants et hors mandat** : `test_garanties` g2/g5/g6 (`etat_reservoir({})` rend `("gris","jamais vérifiée")` vs attendu `("rouge","jamais vérifié")` — dérive de libellé du module santé-source, jamais touché) ; V1c orphelines `mvt_tile_cache` + `taxe_amenagement_secteur` (table de la session taxe non mergée). Aucun de ces échecs ne provient de ce mandat (tous les tests couvrant les changements — filtres, copilote, verrou 16 outils, piscines, compteurs, fiche — sont verts).
 
 ## Captures (`docs/audit-2026-09/piscines-2/`)
 - `echantillon/grid_*.jpg` (7 classes × 2), `echantillon/precision_par_classe.csv`, `echantillon/sample_*.{csv,sql}`.
