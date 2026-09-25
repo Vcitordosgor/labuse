@@ -162,6 +162,20 @@ export function SourcesPage() {
             </div>
           </div>
         )}
+        {/* RETOURS-14 P6 — RÉCONCILIATION des deux comptes de parcelles. « parcelles couvertes » = total
+            ingéré (431 663) ; le bouton « Voir les N parcelles » du panneau Filtre affiche 430 813 =
+            parcelles explorables (le filtre masque les micro-parcelles « sliver » < 2 m²). L'écart est
+            légitime et volontaire : on l'ÉCRIT ici, là où le grand nombre apparaît, plutôt que de laisser
+            deux totaux muets se contredire. */}
+        {couverture?.parcelles != null && couverture?.parcelles_filtrables != null
+          && couverture.parcelles !== couverture.parcelles_filtrables && (
+          <p data-sources-parcelles-note className="mb-3.5 -mt-1.5 text-[11.5px] leading-snug text-txt-dim">
+            {couverture.parcelles.toLocaleString('fr-FR')} parcelles couvertes, dont{' '}
+            <b className="text-txt-mut">{couverture.parcelles_filtrables.toLocaleString('fr-FR')}</b> d’au moins 2 m²
+            explorables au filtre — les {(couverture.parcelles - couverture.parcelles_filtrables).toLocaleString('fr-FR')} micro-parcelles
+            (moins de 2 m²) sont écartées de l’exploration.
+          </p>
+        )}
 
         {/* PAGE-SOURCES-1 (lot 2) — la réserve « Densifier l'existant » est retirée ; reste la seule
             réserve sur les ventes (retard de publication DVF). Une limite → « Une limite ». */}

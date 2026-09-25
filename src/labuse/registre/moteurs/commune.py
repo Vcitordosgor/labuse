@@ -160,6 +160,17 @@ def couverture_sources(db) -> dict:
         except Exception:  # noqa: BLE001 — base partielle : la tuile dira « — », jamais un crash
             return None
     parcelles = _scal("SELECT count(*) FROM parcels")
+    # RETOURS-14 P6 — parcelles EXPLORABLES au filtre : le compteur du panneau Filtre (/filtre) masque
+    # les micro-parcelles « sliver » < MIN_DISPLAY_SURFACE_M2 (2 m²) ; d'où l'écart (légitime) entre le
+    # bouton « Voir les N parcelles » (430 813) et « parcelles couvertes » (431 663 = total ingéré). On
+    # sert AUSSI ce sous-total pour que la page Sources réconcilie les deux nombres. Import local (comme
+    # projets.py) pour éviter l'import circulaire avec api.app.
+    try:
+        from ...api.app import MIN_DISPLAY_SURFACE_M2 as _minsurf
+    except Exception:  # noqa: BLE001 — hors contexte API : repli sur le seuil connu (2 m²)
+        _minsurf = 2.0
+    parcelles_filtrables = _scal(
+        f"SELECT count(*) FROM parcels WHERE surface_m2 IS NULL OR surface_m2 >= {float(_minsurf)}")
     communes = _scal("SELECT count(DISTINCT commune) FROM parcels")
     dvf = _scal("SELECT count(*) FROM dvf_mutations")
     radar = _scal("SELECT count(*) FROM pige_biens")
@@ -175,6 +186,7 @@ def couverture_sources(db) -> dict:
         pass
     return {
         "parcelles": int(parcelles) if parcelles is not None else None,
+        "parcelles_filtrables": int(parcelles_filtrables) if parcelles_filtrables is not None else None,
         "communes": int(communes) if communes is not None else None,
         "communes_total": 24,   # les 24 communes de La Réunion (constante du référentiel radar)
         "dvf_transactions": int(dvf) if dvf is not None else None,

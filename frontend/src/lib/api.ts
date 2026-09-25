@@ -1271,6 +1271,10 @@ export const getSources = () => j<SourceInfo[]>('/sources')
 // RETOURS-9 (Q11.5) — les chiffres de couverture client (parcelles · communes · DVF · Radar · dernière analyse).
 export interface SourcesCouverture {
   parcelles: number | null; communes: number | null; communes_total: number
+  // RETOURS-14 P6 — parcelles EXPLORABLES au filtre (surface ≥ 2 m², MIN_DISPLAY_SURFACE_M2) : le
+  // filtre masque les micro-parcelles « sliver » < 2 m², d'où l'écart (légitime) avec `parcelles`
+  // (total ingéré). La page Sources réconcilie les deux nombres.
+  parcelles_filtrables: number | null
   dvf_transactions: number | null; radar_annonces: number | null
   analyse_label: string | null; analyse_date: string | null
 }

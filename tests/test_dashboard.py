@@ -230,8 +230,10 @@ def test_q11_sources_couverture(client):
     Radar · dernière analyse), tous LUS des données réelles. Forme stable ; communes_total = 24 (les 24
     communes de La Réunion) ; base partielle → valeurs null, jamais un 500."""
     d = client.get("/sources/couverture").json()
-    assert set(d) == {"parcelles", "communes", "communes_total", "dvf_transactions",
-                      "radar_annonces", "analyse_label", "analyse_date"}
+    # RETOURS-14 P6 — `parcelles_filtrables` (parcelles ≥ 2 m² explorables au filtre) rejoint la forme :
+    # elle réconcilie « parcelles couvertes » (total) et le bouton « Voir les N parcelles » du filtre.
+    assert set(d) == {"parcelles", "parcelles_filtrables", "communes", "communes_total",
+                      "dvf_transactions", "radar_annonces", "analyse_label", "analyse_date"}
     assert d["communes_total"] == 24
 
 
