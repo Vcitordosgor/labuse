@@ -739,6 +739,26 @@ def flux_run_cmd(
                f"({time.time() - t0:.0f}s total). NON servi — bascule manuelle.")
 
 
+@app.command("piscines-build")
+def piscines_build_cmd() -> None:
+    """PISCINES-2 — reconstruit la source unique `piscines` (FLAIR ∪ CoSIA dédoublonnées à 5 m,
+    statut servie/a_confirmer/ecartee selon la précision mesurée par classe). Idempotent
+    (DELETE + rebuild). NE S'EXÉCUTE PAS tout seul — injection humaine (Vic). Les corrections
+    « pas une piscine » (piscine_corrections) s'appliquent à cette table."""
+    import time
+
+    from .ingestion import piscines_fusion
+
+    t0 = time.time()
+    with session_scope() as s:
+        stats = piscines_fusion.build(s, log=typer.echo)
+        s.commit()
+    typer.echo(
+        f"✓ PISCINES-BUILD : {stats['total']} piscines "
+        f"(FLAIR {stats['flair']}, CoSIA {stats['cosia']} ; {stats['par_statut']}) "
+        f"en {time.time() - t0:.0f}s.")
+
+
 @app.command("blocs-build")
 def blocs_build_cmd() -> None:
     """OUTILS-MUSCLER-3 — reconstruit `parcel_blocs` : les assiettes contiguës d'un même
