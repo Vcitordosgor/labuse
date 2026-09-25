@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 
 from . import coherence, html_next, portails, rattachement_html
 from .intake import resoudre_commune
-from .tables import (EV_A_QUALIFIER, EV_BAISSE_PRIX, EV_DEPOT_HTML, EV_NOUVELLE, depots_dir,
+from .tables import (EV_A_QUALIFIER, EV_BAISSE_PRIX, EV_DEPOT_HTML, EV_HAUSSE_PRIX, EV_NOUVELLE, depots_dir,
                      depots_dir_writable, enregistrer_fraicheur, journaliser)
 
 
@@ -52,16 +52,39 @@ def _archiver(html: str, nom_fichier: str | None) -> tuple[str, str]:
     return str(chemin), h
 
 
+def _badge_baisse(db: Session, bien_id: int, rec: dict, commune: str) -> None:
+    """RADAR-AUTO-1 (Lot A) — le badge « Baisse de prix » affiché par le portail (parsé mais jusqu'ici
+    JETÉ, cf. RADAR-AUDIT-1) est conservé comme ÉVÉNEMENT. C'est un INDICE daté (jamais un historique
+    de prix : sur une annonce dégradée on n'a pas l'ancien prix). Dédup par bien + jour : un même badge
+    revu chaque soir ne crée qu'un événement par jour."""
+    if not rec.get("baisse_badge"):
+        return
+    from ..tz import today_reunion
+    journaliser(db, EV_BAISSE_PRIX, f"Baisse de prix (badge portail) — bien #{bien_id} ({commune})",
+                detail="badge « Baisse de prix » affiché sur l'annonce (indice daté, pas d'ancien prix connu)",
+                lien=rec.get("url"), dedup=f"pige:baisse-badge:{bien_id}:{today_reunion().isoformat()}")
+
+
+SEUIL_VARIATION_PRIX = 0.01   # RADAR-AUTO-1 (Lot C) — variation < 1 % = bruit d'arrondi, pas un signal
+
+
 def _maj_prix(db: Session, bien_id: int, ancien, nouveau) -> None:
-    """Historise un CHANGEMENT de prix (pige_prix_historique) ; une baisse journalise EV_BAISSE_PRIX
-    (signal le plus actionnable — Lot 5)."""
+    """Historise un CHANGEMENT de prix (pige_prix_historique) ; au-delà de ±1 % (SEUIL_VARIATION_PRIX),
+    journalise EV_BAISSE_PRIX (le plus actionnable) OU EV_HAUSSE_PRIX. RADAR-AUTO-1 (Lot C) : la hausse
+    est désormais un événement à part entière, et une micro-variation sous le seuil reste historisée
+    (traçabilité) mais NE déclenche PAS d'événement (anti-bruit)."""
     if ancien is None or nouveau is None or nouveau == ancien:
         return
     db.execute(text("INSERT INTO pige_prix_historique (bien_id, ancien_prix, nouveau_prix) "
                     "VALUES (:b, :a, :n)"), {"b": bien_id, "a": ancien, "n": nouveau})
+    if ancien <= 0 or abs(nouveau - ancien) / ancien < SEUIL_VARIATION_PRIX:
+        return
     if nouveau < ancien:
         journaliser(db, EV_BAISSE_PRIX, f"Baisse de prix — bien #{bien_id}",
                     detail=f"{ancien} € → {nouveau} €", dedup=f"pige:baisse:{bien_id}:{nouveau}")
+    else:
+        journaliser(db, EV_HAUSSE_PRIX, f"Hausse de prix — bien #{bien_id}",
+                    detail=f"{ancien} € → {nouveau} €", dedup=f"pige:hausse:{bien_id}:{nouveau}")
 
 
 def _ecrire_faits(db: Session, bien_id: int, rec: dict, *, insert: bool, combler: bool = False) -> None:
@@ -163,8 +186,8 @@ def _ingester_annonce(db: Session, rec: dict) -> str:
         motifs = coherence.evaluer(rec, db)
         ratt = _rattacher(db, rec, motifs)
         bien_id = db.execute(text(
-            "INSERT INTO pige_biens (commune, statut, date_publication) VALUES (:c, 'active', "
-            " CAST(:fpd AS timestamptz)::date) RETURNING bien_id"),
+            "INSERT INTO pige_biens (commune, statut, date_publication, last_seen_at) VALUES (:c, 'active', "
+            " CAST(:fpd AS timestamptz)::date, now()) RETURNING bien_id"),
             {"c": commune, "fpd": rec.get("first_publication_date")}).scalar()
         db.execute(text(
             "INSERT INTO pige_annonces (bien_id, portail, url_sortante, list_id, "
@@ -186,6 +209,7 @@ def _ingester_annonce(db: Session, rec: dict) -> str:
             journaliser(db, EV_A_QUALIFIER, f"Annonce à qualifier — {commune}",
                         detail="; ".join(motifs)[:400], lien=rec.get("url"),
                         dedup=f"pige:aq:{list_id}")
+        _badge_baisse(db, bien_id, rec, commune)
         return "nouvelle"
 
     # ── MISE À JOUR ──
@@ -198,9 +222,10 @@ def _ingester_annonce(db: Session, rec: dict) -> str:
         _ecrire_faits(db, bien_id, rec, insert=False, combler=True)
         db.execute(text("UPDATE pige_annonces SET date_saisie = now() WHERE list_id = :l"), {"l": list_id})
         db.execute(text(
-            "UPDATE pige_biens SET date_derniere_confirmation = now(), "
+            "UPDATE pige_biens SET date_derniere_confirmation = now(), last_seen_at = now(), "
             " statut = CASE WHEN statut IN ('a_reverifier','en_vente_longue') THEN 'active' ELSE statut END "
             "WHERE bien_id = :b AND statut NOT IN ('retiree','vendue','retiree_sans_vente')"), {"b": bien_id})
+        _badge_baisse(db, bien_id, rec, commune)
         return "maj"
 
     # riche-sur-tout, ou dégradé-sur-dégradé : mise à jour pleine (Lot 5 : republication = CONFIRMATION).
@@ -222,9 +247,10 @@ def _ingester_annonce(db: Session, rec: dict) -> str:
     # republication = confirmation « toujours en vente » : repousse a_reverifier, statut redevient active
     # (jamais retiree/vendue — celles-ci ne se déduisent pas d'une republication).
     db.execute(text(
-        "UPDATE pige_biens SET date_derniere_confirmation = now(), "
+        "UPDATE pige_biens SET date_derniere_confirmation = now(), last_seen_at = now(), "
         " statut = CASE WHEN statut IN ('a_reverifier','en_vente_longue') THEN 'active' ELSE statut END "
         "WHERE bien_id = :b AND statut NOT IN ('retiree','vendue','retiree_sans_vente')"), {"b": bien_id})
+    _badge_baisse(db, bien_id, rec, commune)
     return "maj"
 
 

@@ -68,6 +68,69 @@ def _ligne(commune: str, r: dict | None) -> dict:
     }
 
 
+# ─────────────────── RADAR-AUTO-1 (Lot E) — cœur radar_stats(commune, type) réutilisable ───────────────────
+# UN seul calcul des chiffres Radar « prix DEMANDÉS » (jamais confondus avec l'acté DVF), servi à l'outil
+# Communes ET à la fiche §Marché à côté du DVF. Les APPARTEMENTS sont INCLUS (la règle copro ne vaut que
+# pour la carte / les digests / les veilles, cf. RADAR-AUDIT-1 §0.4). Un id de registre par chiffre.
+_REG = {  # chiffre → id de registre (traçabilité, robinets)
+    "actives_n": "annonces_actives_n",
+    "prix_m2_median_demande": "prix_demande_median_eur_m2",
+    "baisses_30j_pct": "radar_baisses_30j_pct",
+    "delai_median_retrait_j": "delai_vente_median_j",
+}
+
+
+def radar_stats(db: Session, commune: str | None = None, type_bien: str | None = None) -> dict:
+    """Chiffres Radar (prix DEMANDÉS) d'une commune (ou toute l'île si None) et d'un type (ou tous) :
+    annonces actives, médiane €/m² demandé, part de baisses sur 30 j, délai médian de retrait. Mesures
+    masquées sous SEUIL_N. Appartements INCLUS. Chaque chiffre porte son `n` et son `registre_id`."""
+    where = ["f.valide_at IS NOT NULL", "b.a_qualifier = false"]
+    params: dict = {}
+    if commune:
+        where.append("b.commune = :commune"); params["commune"] = commune
+    if type_bien:
+        where.append("b.type_bien = :type_bien"); params["type_bien"] = type_bien
+    from .. import reglages
+    excl = reglages.exclusion_depot_agence_sql("b")  # dépôt agence hors stats (comme marche.stats)
+    w = " AND ".join(where) + excl
+    row = db.execute(text(f"""
+        SELECT count(*) FILTER (WHERE b.statut IN ('active','en_vente_longue'))                 AS actives,
+               percentile_cont(0.5) WITHIN GROUP (ORDER BY
+                 CASE WHEN b.type_bien = 'terrain' THEN f.prix / NULLIF(f.surface_terrain,0)
+                      ELSE f.prix / NULLIF(f.surface_hab,0) END)
+                 FILTER (WHERE f.prix IS NOT NULL
+                         AND ((b.type_bien='terrain' AND f.surface_terrain>0)
+                           OR (b.type_bien IN ('maison','appartement','immeuble') AND f.surface_hab>0))) AS med_m2,
+               count(*) FILTER (WHERE f.prix IS NOT NULL
+                         AND ((b.type_bien='terrain' AND f.surface_terrain>0)
+                           OR (b.type_bien IN ('maison','appartement','immeuble') AND f.surface_hab>0)))   AS n_m2,
+               count(DISTINCT b.bien_id) FILTER (WHERE b.statut IN ('active','en_vente_longue'))          AS n_ouvertes,
+               count(DISTINCT ph.bien_id) FILTER (WHERE ph.nouveau_prix < ph.ancien_prix
+                         AND ph.date_constat >= (now() AT TIME ZONE 'Indian/Reunion')::date - 30)         AS baisses_30j,
+               percentile_cont(0.5) WITHIN GROUP (ORDER BY
+                 COALESCE(b.vendue_delai_j, (b.retiree_le::date - b.date_publication)))
+                 FILTER (WHERE b.date_publication IS NOT NULL
+                         AND (b.vendue_delai_j IS NOT NULL OR b.retiree_le IS NOT NULL))                  AS delai,
+               count(*) FILTER (WHERE b.date_publication IS NOT NULL
+                         AND (b.vendue_delai_j IS NOT NULL OR b.retiree_le IS NOT NULL))                  AS n_delai
+        FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
+        LEFT JOIN pige_prix_historique ph ON ph.bien_id = b.bien_id
+        WHERE {w}"""), params).mappings().first() or {}
+    g = lambda k: int(row.get(k) or 0)
+    ouvertes = g("n_ouvertes")
+    def tag(cle, m):
+        return {**m, "registre_id": _REG[cle]}
+    return {
+        "commune": commune, "type_bien": type_bien,
+        "actives_n": tag("actives_n", {"valeur": g("actives"), "n": g("actives"), "insuffisant": False}),
+        "prix_m2_median_demande": tag("prix_m2_median_demande", _mesure(row.get("med_m2"), g("n_m2"))),
+        "baisses_30j_pct": tag("baisses_30j_pct",
+            _mesure((100.0 * g("baisses_30j") / ouvertes) if ouvertes else None, ouvertes)),
+        "delai_median_retrait_j": tag("delai_median_retrait_j", _mesure(row.get("delai"), g("n_delai"))),
+        "libelle": "prix demandés (Radar)", "seuil_n": SEUIL_N,
+    }
+
+
 def stats(db: Session) -> dict:
     """Les 24 communes (même vides) + le total ÎLE. Chaque mesure porte son n ; < 5 = insuffisant."""
     # CONNEXIONS-2 Lot 7 (#12/H5) — drapeau dépôt agence fermé ⇒ les dépôts agence sortent des STATS

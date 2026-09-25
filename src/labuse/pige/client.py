@@ -10,6 +10,7 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .rattachement_html import niveau_preuve as _niveau_preuve
 from .tables import EV_SIGNALEMENT, journaliser
 
 STATUTS_DEFAUT = ("active", "en_vente_longue")
@@ -98,7 +99,10 @@ SELECT b.bien_id, b.commune, b.type_bien, b.est_copro, b.statut, b.idu,
        a.portail, a.url_sortante, a.annonce_id,
        EXISTS (SELECT 1 FROM pige_prix_historique h
                WHERE h.bien_id = b.bien_id AND h.nouveau_prix < h.ancien_prix) AS baisse,
-       ST_X(p.centroid) AS lon, ST_Y(p.centroid) AS lat
+       ST_X(p.centroid) AS lon, ST_Y(p.centroid) AS lat,
+       -- RADAR-AUTO-1 (recette) — position de QUARTIER portée par le bien lui-même (portail, floutée),
+       -- servie quand le bien n'est pas rattaché à une parcelle : la carte l'affiche en marqueur distinct.
+       b.lat AS b_lat, b.lng AS b_lng, b.district, b.source_position
 FROM pige_biens b
 JOIN pige_faits f ON f.bien_id = b.bien_id
 LEFT JOIN LATERAL (SELECT portail, url_sortante, annonce_id FROM pige_annonces
@@ -117,9 +121,14 @@ def _bien_row(r: dict) -> dict:
         # motifs consultables) ; il n'est jamais rattaché (idu NULL, cf. html_ingest).
         "a_qualifier": bool(r["a_qualifier"]), "a_qualifier_motifs": r["a_qualifier_motifs"] or [],
         "rattachement": ({"niveau": r["rattachement_niveau"], "idu": r["idu"],
-                          "confiance": float(r["rattachement_confiance"]) if r["rattachement_confiance"] is not None else None}
-                         if rattache else {"niveau": "absent", "idu": None, "confiance": None}),
-        "coords": ([round(r["lon"], 6), round(r["lat"], 6)] if rattache and r["lon"] is not None else None),
+                          "confiance": float(r["rattachement_confiance"]) if r["rattachement_confiance"] is not None else None,
+                          # RADAR-AUTO-1 (Lot D) — niveau de PREUVE affiché (certain/probable/quartier).
+                          "preuve": _niveau_preuve(r["rattachement_humain"], r["rattachement_etat"], r["rattachement_niveau"])}
+                         if rattache else {"niveau": "absent", "idu": None, "confiance": None, "preuve": "quartier"}),
+        # RADAR-AUTO-1 (recette) — position servie : la PARCELLE (centroïde) si rattaché ; sinon le
+        # QUARTIER (position floutée du portail) si le bien en porte une ; sinon rien. La carte pinne
+        # les deux, avec un marqueur DISTINCT pour le quartier (position approximative).
+        **_position(r, rattache),
         "faits": {"prix": r["prix"], "pieces": r["pieces"], "surface_hab": _num(r["surface_hab"]),
                   "surface_terrain": _num(r["surface_terrain"]), "dpe_classe": r["dpe_classe"],
                   "dpe_conso": r["dpe_conso"], "dpe_ges": r["dpe_ges"], "particulier_pro": r["particulier_pro"]},
@@ -148,6 +157,21 @@ def _bien_row(r: dict) -> dict:
 
 def _num(v):
     return float(v) if v is not None else None
+
+
+def _position(r: dict, rattache: bool) -> dict:
+    """RADAR-AUTO-1 (recette) — les champs de position servis :
+      · `coords` : [lon, lat] pinné par la carte — parcelle (centroïde) si rattaché, sinon quartier ;
+      · `position_type` : 'parcelle' | 'quartier' | 'absente' ;
+      · `quartier` : le nom du quartier (district) quand la position est approximative.
+    Une position de quartier n'est JAMAIS confondue avec une parcelle (marqueur distinct côté carte)."""
+    if rattache and r["lon"] is not None:
+        return {"coords": [round(r["lon"], 6), round(r["lat"], 6)],
+                "position_type": "parcelle", "quartier": None}
+    if r.get("b_lng") is not None and r.get("b_lat") is not None:
+        return {"coords": [round(float(r["b_lng"]), 6), round(float(r["b_lat"]), 6)],
+                "position_type": "quartier", "quartier": r.get("district")}
+    return {"coords": None, "position_type": "absente", "quartier": r.get("district")}
 
 
 def _attacher_badges(db: Session, rows: list[dict]) -> dict:
@@ -187,19 +211,24 @@ def lister(db: Session, *, filtres: dict, tri: str = "recentes", page: int = 1, 
         gardes = [r for r in allrows if (badges.get(r["bien_id"]) or {}).get("sous_le_marche")]
         n_total = len(gardes)
         n_rattaches = sum(1 for r in gardes if r["idu"] is not None)
+        n_carte = sum(1 for r in gardes if r["idu"] is not None or r.get("b_lat") is not None)
         page_rows = gardes[offset:offset + taille]
         biens = [_bien_avec_badge(r, badges.get(r["bien_id"])) for r in page_rows]
         return {"biens": biens, "n_total": n_total, "n_servi": len(biens), "n_rattaches": n_rattaches,
-                "page": page, "taille": taille, "plafond": PLAFOND_PAGE,
+                "n_carte": n_carte, "page": page, "taille": taille, "plafond": PLAFOND_PAGE,
                 "tronquee": (offset + len(biens)) < n_total, "tri": tri}
 
     n_total = db.execute(text(
         f"SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id=b.bien_id WHERE {where}"),
         p).scalar() or 0
-    # « carte = rattachés seulement » : compteur explicite pour l'UI (pins).
+    # « carte » : pins = biens rattachés (parcelle) ET biens à position de QUARTIER (RADAR-AUTO-1). Deux
+    # compteurs — n_rattaches (parcelle) conservé, n_carte = tout ce que la carte pinne (le « sur la carte »).
     n_rattaches = db.execute(text(
         f"SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id=b.bien_id "
         f"WHERE {where} AND b.idu IS NOT NULL"), p).scalar() or 0
+    n_carte = db.execute(text(
+        f"SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id=b.bien_id "
+        f"WHERE {where} AND (b.idu IS NOT NULL OR b.lat IS NOT NULL)"), p).scalar() or 0
     # RADAR-RECETTE-1 D2 — le plafond par page est EXPLICITE (jamais un « 50 » muet) : `taille` demandée
     # est bornée à PLAFOND_PAGE, et la réponse dit combien de biens existent (n_total) vs combien sont
     # servis (n_servi), plus un drapeau `tronquee` pour qu'un appelant SACHE qu'il n'a pas tout.
@@ -209,7 +238,7 @@ def lister(db: Session, *, filtres: dict, tri: str = "recentes", page: int = 1, 
     badges = _attacher_badges(db, rows)
     biens = [_bien_avec_badge(r, badges.get(r["bien_id"])) for r in rows]
     return {"biens": biens, "n_total": n_total,
-            "n_servi": len(biens), "n_rattaches": n_rattaches, "page": page, "taille": taille,
+            "n_servi": len(biens), "n_rattaches": n_rattaches, "n_carte": n_carte, "page": page, "taille": taille,
             "plafond": PLAFOND_PAGE, "tronquee": (offset + len(biens)) < n_total, "tri": tri}
 
 

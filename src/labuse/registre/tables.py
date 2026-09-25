@@ -195,8 +195,9 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
               millesime="géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020"),
     "dpe_ademe": Rt(("dpe_records",)),
     "radar_pige": Rt(("pige_annonces", "pige_biens", "pige_faits", "pige_depots", "pige_captures",
-                      "pige_clics", "pige_prix_historique", "pige_interets_agence", "radar_releves"),
-                     millesime="collecte manuelle — biens en vente (faits + lien)"),
+                      "pige_clics", "pige_prix_historique", "pige_interets_agence", "radar_releves",
+                      "pige_passes"),   # RADAR-AUTO-1 — agrégat des passes de capture (extension)
+                     millesime="collecte manuelle + capture assistée — biens en vente (faits + lien)"),
     # ── entreprises / propriétaires ────────────────────────────────────────────────
     "sirene_recherche_entreprises": Rt((), note="API INSEE interrogée à la requête (aucune table)"),
     "sirene_etablissements": Rt(("sirene_etablissements",),

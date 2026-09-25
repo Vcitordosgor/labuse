@@ -157,11 +157,27 @@ def fiche_commune_cache(ctx: JobContext) -> None:
 
 
 def radar_cycle(ctx: JobContext) -> None:
-    """Traite les dépôts de la veille DÉJÀ ingérés (la collecte reste manuelle — ce job ne fetch RIEN) :
-    cycle de vie des annonces (en_vente_longue / a_reverifier), et prépare les événements de veille. Les
-    badges sous-le-marché sont recalculés à la lecture (signaux.badges_pour_biens) — pas de dénormalisation."""
+    """RADAR-AUTO-1 (Lot C) — cycle de vie QUOTIDIEN des annonces, désormais PLANIFIÉ (la collecte
+    automatique par l'extension le rend utile chaque nuit) : expirées (expiration_date portail) →
+    retiree ; > 90 j → en_vente_longue ; > 60 j sans confirmation → a_reverifier. Ne fetch RIEN."""
     from .pige import cycle
     r = cycle.run_quotidien(ctx.db)
+    ctx.compte(**(r if isinstance(r, dict) else {"resultat": str(r)}))
+
+
+def radar_cycle_dvf(ctx: JobContext) -> None:
+    """RADAR-AUTO-1 (Lot C) — rapprochement DVF : un bien RATTACHÉ Sourcé + mutation DVF « Vente » dans
+    [3;18] mois après publication → `vendue` (+ délai, écart affiché/acté). Après l'ingestion DVF."""
+    from .pige import cycle
+    r = cycle.run_dvf(ctx.db)
+    ctx.compte(**(r if isinstance(r, dict) else {"resultat": str(r)}))
+
+
+def radar_cycle_mensuel(ctx: JobContext) -> None:
+    """RADAR-AUTO-1 (Lot C) — mensuel : la CIBLE Courrier. `retiree` rattaché > 12 mois SANS vente DVF
+    → `retiree_sans_vente`. Jamais depuis un lien mort : seule l'absence de mutation DVF qualifie."""
+    from .pige import cycle
+    r = cycle.run_mensuel(ctx.db)
     ctx.compte(**(r if isinstance(r, dict) else {"resultat": str(r)}))
 
 

@@ -82,6 +82,173 @@ def radar_deposer_html(body: DeposerHtmlIn, request: Request) -> dict:
                              "(ou définir LABUSE_PIGE_DEPOTS_DIR). Rien n'a été enregistré."}
 
 
+# ══════════════ RADAR-AUTO-1 (Lot A) — capture AUTOMATIQUE par l'extension (Mac de Vic) ══════════════
+# Le navigateur de Vic fait ce que Vic fait, à rythme humain. Ces trois endpoints portent un jeton DÉDIÉ
+# (en-tête X-Radar-Token = LABUSE_RADAR_TOKEN), JAMAIS le mot de passe admin — un secret révocable qui
+# n'ouvre aucune session. Une session admin valide passe aussi (pour tester depuis le dashboard).
+
+import hmac as _hmac
+
+
+def _radar_token_ok(request: Request) -> bool:
+    """Vrai si l'appel porte le jeton Radar (X-Radar-Token) OU une session admin. Fail-closed : sans
+    jeton configuré (LABUSE_RADAR_TOKEN vide) et sans session admin, on refuse."""
+    from ..config import get_settings
+    attendu = (get_settings().radar_token or "").strip()
+    fourni = (request.headers.get("x-radar-token") or "").strip()
+    if attendu and fourni and _hmac.compare_digest(fourni, attendu):
+        return True
+    return _est_admin(request)   # session admin (pilote/admin) autorisée pour les tests
+
+
+def _exiger_radar(request: Request) -> None:
+    if not _radar_token_ok(request):
+        from fastapi import HTTPException
+        raise HTTPException(401, "jeton Radar requis (en-tête X-Radar-Token) ou session administrateur")
+
+
+_PASSES = ("nouvelles", "relecture", "confirmation")
+
+
+class CaptureIn(BaseModel):
+    passe: str
+    url: str = ""
+    page: int = 1
+    html: str
+    captured_at: str
+
+
+class ConfirmationIn(BaseModel):
+    list_id: int
+    verdict: str
+    url: str = ""
+    http_status: int | None = None
+
+
+def _upsert_passe(db, passe: str, captured_at: str, **inc) -> None:
+    """Agrège une passe (nouvelles|relecture|confirmation) au fil des pages, idempotent sur
+    (passe, captured_at) : +1 page et cumul des compteurs fournis."""
+    cols = ("n_pages", "n_nouvelles", "n_maj", "n_prix_modifies", "n_supprimees", "n_hors_perimetre")
+    vals = {c: int(inc.get(c, 0)) for c in cols}
+    set_sql = ", ".join(f"{c} = pige_passes.{c} + EXCLUDED.{c}" for c in cols)
+    db.execute(text(
+        f"INSERT INTO pige_passes (passe, captured_at, {', '.join(cols)}) "
+        f"VALUES (:p, CAST(:ca AS timestamptz), {', '.join(':'+c for c in cols)}) "
+        f"ON CONFLICT (passe, captured_at) DO UPDATE SET {set_sql}, updated_at = now()"),
+        {"p": passe, "ca": captured_at, **vals})
+
+
+@router.post("/admin/radar/capture")
+def radar_capture(body: CaptureIn, request: Request) -> dict:
+    """Une PAGE de résultats capturée par l'extension. Même tuyau que /deposer-html (html_ingest), plus
+    l'agrégation de la PASSE (une ligne de journal par passe, rafraîchie) et — passe « nouvelles » — la
+    fraîcheur de la source + son mode `auto_quotidien`. Repli dégradé accepté et DIT (provenance)."""
+    from . import html_ingest, html_next
+    from .tables import journaliser_passe
+    _exiger_radar(request)
+    passe = body.passe if body.passe in _PASSES else None
+    if passe not in ("nouvelles", "relecture"):
+        return {"ok": False, "motif": f"passe « {body.passe} » invalide pour /capture (nouvelles|relecture)"}
+    with session_scope() as db:
+        try:
+            r = html_ingest.ingester(db, body.html, nom_fichier=f"{passe} · page {body.page}")
+        except html_next.NextDataError as exc:
+            return {"ok": False, "erreur": "next_data", "motif": str(exc)}
+        except html_ingest.DepotStockageError as exc:
+            return {"ok": False, "erreur": "stockage", "motif": str(exc)}
+        prix_mod = int(db.execute(text(
+            "SELECT count(*) FROM event_log WHERE kind IN ('pige.baisse_prix','pige.hausse_prix') "
+            "AND ts >= CAST(:ca AS timestamptz)"), {"ca": body.captured_at}).scalar() or 0)
+        _upsert_passe(db, passe, body.captured_at, n_pages=1, n_nouvelles=r["nb_nouvelles"],
+                      n_maj=r["nb_maj"], n_hors_perimetre=r["nb_hors_perimetre"])
+        p = db.execute(text(
+            "SELECT n_pages, n_nouvelles, n_maj, n_hors_perimetre FROM pige_passes "
+            "WHERE passe = :p AND captured_at = CAST(:ca AS timestamptz)"),
+            {"p": passe, "ca": body.captured_at}).mappings().first() or {}
+        if passe == "nouvelles":
+            titre = f"Radar — nouvelles · {p.get('n_pages',1)} page(s)"
+            detail = (f"{p.get('n_nouvelles',0)} annonce(s) nouvelle(s), {p.get('n_maj',0)} remontée(s)"
+                      + (f", {p.get('n_hors_perimetre',0)} hors périmètre" if p.get('n_hors_perimetre') else ""))
+            # source en mode auto_quotidien + fraîcheur (enregistrer_fraicheur l'a déjà posée à l'ingestion).
+            db.execute(text("UPDATE data_sources SET mode_remplissage = 'auto_quotidien', "
+                            "cadence_attendue_jours = 1 WHERE name = 'Radar (pige d''annonces)'"))
+        else:
+            titre = f"Radar — relecture · {p.get('n_pages',1)} page(s)"
+            detail = f"{p.get('n_maj',0)} annonce(s) revue(s), {prix_mod} prix modifié(s) aujourd'hui"
+        journaliser_passe(db, passe, titre, detail, dedup=f"pige:passe:{passe}:{body.captured_at}")
+        db.commit()
+    return {"ok": True, "passe": passe, "page": body.page, **{k: r[k] for k in
+            ("nb_annonces", "nb_nouvelles", "nb_maj", "nb_hors_perimetre", "nb_a_qualifier",
+             "provenance", "mode")}}
+
+
+@router.get("/admin/radar/etat")
+def radar_etat(request: Request) -> dict:
+    """État servi à l'extension : dernière capture, les annonces ACTIVES (list_id, prix, last_seen_at)
+    pour comparer, et les annonces À CONFIRMER (actives non vues depuis 8 j) avec leur lien."""
+    _exiger_radar(request)
+    with engine().begin() as c:
+        derniere = c.execute(text("SELECT max(captured_at) FROM pige_passes")).scalar()
+        if derniere is None:
+            derniere = c.execute(text("SELECT max(last_seen_at) FROM pige_biens")).scalar()
+        actives = [dict(r) for r in c.execute(text(
+            "SELECT b.bien_id, a.list_id, f.prix, b.last_seen_at "
+            "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
+            "LEFT JOIN pige_annonces a ON a.bien_id = b.bien_id "
+            "WHERE b.statut IN ('active','en_vente_longue') AND f.valide_at IS NOT NULL "
+            "ORDER BY b.last_seen_at ASC NULLS FIRST LIMIT 5000")).mappings()]
+        a_confirmer = [dict(r) for r in c.execute(text(
+            "SELECT a.list_id, a.url_sortante AS url FROM pige_biens b "
+            "JOIN pige_annonces a ON a.bien_id = b.bien_id "
+            "WHERE b.statut IN ('active','en_vente_longue') "
+            "  AND (b.last_seen_at IS NULL OR b.last_seen_at < now() - interval '8 days') "
+            "ORDER BY b.last_seen_at ASC NULLS FIRST LIMIT 200")).mappings()]
+    for r in actives:
+        r["last_seen_at"] = r["last_seen_at"].isoformat() if r["last_seen_at"] else None
+    return {"derniere_capture_at": derniere.isoformat() if derniere else None,
+            "actives": actives, "a_confirmer": a_confirmer}
+
+
+@router.post("/admin/radar/confirmation")
+def radar_confirmation(body: ConfirmationIn, request: Request) -> dict:
+    """Verdict de liveness d'une annonce (l'extension a ouvert son lien). `presente` → re-vue (last_seen
+    + statut active) ; `supprimee` → `retiree` + retiree_le (JAMAIS retiree_sans_vente : ça reste au
+    cycle mensuel, sur preuve DVF) ; `inconnue` → rien. Une ligne de journal par jour de confirmation."""
+    from .tables import EV_STATUT_CHANGE, journaliser, journaliser_passe
+    from ..tz import today_reunion
+    _exiger_radar(request)
+    verdict = body.verdict if body.verdict in ("presente", "supprimee", "inconnue") else "inconnue"
+    jour = today_reunion().isoformat()
+    with session_scope() as db:
+        bien = db.execute(text(
+            "SELECT b.bien_id, b.commune, b.statut FROM pige_biens b JOIN pige_annonces a ON a.bien_id = b.bien_id "
+            "WHERE a.list_id = :l LIMIT 1"), {"l": body.list_id}).mappings().first()
+        if not bien:
+            return {"ok": False, "motif": "list_id inconnu"}
+        bid = bien["bien_id"]
+        supprimee = 0
+        if verdict == "presente":
+            db.execute(text("UPDATE pige_biens SET last_seen_at = now(), date_derniere_confirmation = now(), "
+                            "statut = CASE WHEN statut IN ('a_reverifier','en_vente_longue') THEN 'active' ELSE statut END "
+                            "WHERE bien_id = :b AND statut NOT IN ('retiree','vendue','retiree_sans_vente')"), {"b": bid})
+        elif verdict == "supprimee":
+            db.execute(text("UPDATE pige_biens SET statut = 'retiree', retiree_le = COALESCE(retiree_le, now()) "
+                            "WHERE bien_id = :b AND statut NOT IN ('vendue','retiree_sans_vente')"), {"b": bid})
+            journaliser(db, EV_STATUT_CHANGE, f"Bien retiré (lien vérifié) — #{bid} ({bien['commune']})",
+                        detail=f"annonce {body.list_id} absente (HTTP {body.http_status}) — confirmée par le lien",
+                        dedup=f"pige:retiree:{bid}")
+            supprimee = 1
+        _upsert_passe(db, "confirmation", jour, n_pages=1, n_supprimees=supprimee)
+        p = db.execute(text("SELECT n_pages, n_supprimees FROM pige_passes "
+                            "WHERE passe = 'confirmation' AND captured_at = CAST(:ca AS timestamptz)"),
+                       {"ca": jour}).mappings().first() or {}
+        journaliser_passe(db, "confirmation",
+                          f"Radar — confirmation · {p.get('n_pages',1)} lien(s) vérifié(s)",
+                          f"{p.get('n_supprimees',0)} supprimée(s)", dedup=f"pige:passe:confirmation:{jour}")
+        db.commit()
+    return {"ok": True, "list_id": body.list_id, "verdict": verdict}
+
+
 @router.post("/admin/radar/valider")
 def radar_valider(body: ValiderIn, request: Request) -> dict:
     from ..api.auth import exiger_admin
@@ -617,6 +784,16 @@ def radar_marche(request: Request) -> dict:
     from . import marche
     with session_scope() as db:
         return marche.stats(db)
+
+
+@router.get("/radar/stats")
+def radar_stats_endpoint(request: Request, commune: str | None = None, type_bien: str | None = None) -> dict:
+    """RADAR-AUTO-1 (Lot E) — chiffres Radar « prix DEMANDÉS » d'une commune (ou île) et d'un type (ou
+    tous) : actives, médiane €/m² demandé, baisses/30 j, délai médian de retrait. Appartements INCLUS.
+    Servi à côté du DVF (prix de vente) dans l'outil Communes et la fiche §Marché — jamais confondus."""
+    from . import marche
+    with session_scope() as db:
+        return marche.radar_stats(db, commune=commune, type_bien=type_bien)
 
 
 # ══════════════ RADAR-VEILLE-1 (R3) — DÉPÔT AGENCE « Publier une annonce » (derrière drapeau) ══════════════

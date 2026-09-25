@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "LABUSE Radar",
+  "version": "0.1.0",
+  "description": "Pige immobilière LABUSE — capture des annonces Leboncoin (île entière), à rythme humain.",
+  "permissions": [
+    "alarms",
+    "storage",
+    "notifications",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://*.leboncoin.fr/*",
+    "http://localhost/*"
+  ],
+  "optional_host_permissions": [
+    "*://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "LABUSE Radar",
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html",
+  "icons": {}
+}

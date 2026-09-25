@@ -37,6 +37,10 @@ EMPRISE_LO_FACTEUR = 0.30
 EMPRISE_HI_FACTEUR = 1.80  # borne haute large : varangues, garages, annexes gonflent l'emprise au-delà
 #                            de la surface habitable (Lot 0 : 5070, bâti 225 pour 135 m² habitables).
 MAX_PISTES = 12          # au-delà, trop ambigu même comme piste → NON RATTACHÉE
+TOL_SURFACE_TERRAIN_STRICT = 0.01   # RADAR-AUTO-1 (Lot D) — rattachement terrain PROBABLE : ±1 % pour
+#                                     garantir l'unicité (mesure 0.3 : 3 uniques à ±1 %, l'ambiguïté
+#                                     explose au-delà). Un seul critère (surface), donc « probable », pas
+#                                     « certain » (qui exige ≥2 critères bâti, ou un clic humain).
 
 _TYPES_RATTACHABLES = ("maison", "terrain", "immeuble")
 _TYPES_BATIS = ("maison", "immeuble")
@@ -56,11 +60,15 @@ def _f(x) -> float | None:
 
 # ── DÉTECTEURS DE CRITÈRE ─── chacun renvoie {idu: "valeur lisible"} pour les parcelles candidates ──
 
-def _crit_surface(db: Session, lon, lat, commune, terrain) -> dict[str, str]:
-    """C1 — surface cadastrale ≈ surface terrain annoncée (±5 %), dans le rayon du point flouté."""
+def _crit_surface(db: Session, lon, lat, commune, terrain, tol: float | None = None) -> dict[str, str]:
+    """C1 — surface cadastrale ≈ surface terrain annoncée (±`tol` ; défaut = TOL_SURFACE, ±10 %, LU AU
+    MOMENT DE L'APPEL pour rester monkeypatchable), dans le rayon du point flouté. RADAR-AUTO-1 (Lot D) :
+    `tol` explicite — un terrain se rattache en `probable` seulement si UNE seule parcelle matche à ±1 %
+    (mesure 0.3 : à ±3 % l'ambiguïté explose)."""
     if terrain is None:
         return {}
-    lo, hi = terrain * (1 - TOL_SURFACE), terrain * (1 + TOL_SURFACE)
+    t = TOL_SURFACE if tol is None else tol
+    lo, hi = terrain * (1 - t), terrain * (1 + t)
     rows = db.execute(text(
         """SELECT p.idu, p.surface_m2 FROM parcels p WHERE p.commune = :c
            AND p.surface_m2 BETWEEN :lo AND :hi
@@ -201,6 +209,21 @@ def rattacher(db: Session, rec: dict) -> dict:
     if len(convergentes) > 1:
         # plusieurs parcelles à ≥2 critères : ambiguïté → PISTE (jamais un pin faussement sûr).
         return _piste(pistes, motif=f"{len(convergentes)} parcelles à ≥2 critères — à instruire")
+
+    # RADAR-AUTO-1 (Lot D) — TERRAIN : un terrain nu n'a qu'un critère (la surface), donc il n'atteint
+    # jamais la convergence ≥2. Règle dédiée : si UNE SEULE parcelle matche la surface à ±1 % dans le
+    # rayon, on rattache en PROBABLE (niveau `estime`, confiance 0.70). Deux candidates ou plus à ±1 % →
+    # RIEN d'automatique (jamais une liste à trier). L'humain tranche via « C'est cette parcelle ».
+    if typ == "terrain" and terrain is not None:
+        stricts = _crit_surface(db, lon, lat, commune, terrain, tol=TOL_SURFACE_TERRAIN_STRICT)
+        if len(stricts) == 1:
+            idu, val = next(iter(stricts.items()))
+            return {"etat": "rattachee", "niveau": "estime", "idu": idu, "confiance": 0.70,
+                    "criteres": [{"critere": "surface_terrain", "valeur": val, "precision": "±1 %",
+                                  "preuve": "probable"}],
+                    "pistes": pistes[:MAX_PISTES], "etage": "surface_terrain",
+                    "motif": "terrain — parcelle unique à ±1 % de la surface (probable)"}
+
     # aucune convergence : des candidates d'un seul critère → PISTE ; sinon rien d'exploitable.
     if len(pistes) <= MAX_PISTES:
         return _piste(pistes, motif="candidates d'un seul critère — à instruire")
@@ -244,6 +267,19 @@ def criteres_pour_idu(db: Session, rec: dict, idu: str) -> list[dict]:
         add("piscine", bool(p["piscine"]),
             "piscine détectée (ortho)" if p["piscine"] else "aucune piscine détectée")
     return out
+
+
+def niveau_preuve(rattachement_humain, rattachement_etat, rattachement_niveau) -> str:
+    """RADAR-AUTO-1 (Lot D) — le niveau de PREUVE affiché partout où l'annonce apparaît :
+      · `certain`  = tranché à la main (humain) OU ≥2 critères convergents (niveau `source`) ;
+      · `probable` = terrain rattaché par la surface seule à ±1 % (niveau `estime`) ;
+      · `quartier` = non rattaché (position = quartier flouté).
+    Dérivé des colonnes existantes — aucune dénormalisation."""
+    if rattachement_humain:
+        return "certain"
+    if rattachement_etat == "rattachee":
+        return "certain" if rattachement_niveau == "source" else "probable"
+    return "quartier"
 
 
 def _non(motif: str) -> dict:

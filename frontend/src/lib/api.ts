@@ -2192,8 +2192,11 @@ export interface RadarBienClient {
   bien_id: number; commune: string; type_bien: string | null; est_copro: boolean; statut: string
   // RADAR-RECETTE-1 D1c — bien incohérent : visible mais marqué, motifs consultables, jamais rattaché.
   a_qualifier: boolean; a_qualifier_motifs: string[]
-  rattachement: { niveau: 'source' | 'estime' | 'absent'; idu: string | null; confiance: number | null }
+  rattachement: { niveau: 'source' | 'estime' | 'absent'; idu: string | null; confiance: number | null; preuve?: 'certain' | 'probable' | 'quartier' }
   coords: [number, number] | null
+  // RADAR-AUTO-1 (recette) — position servie : parcelle (rattaché) ou QUARTIER (position floutée du
+  // portail, marqueur distinct sur la carte) ou absente. `quartier` = nom du quartier si approximatif.
+  position_type: 'parcelle' | 'quartier' | 'absente'; quartier: string | null
   faits: { prix: number | null; pieces: number | null; surface_hab: number | null; surface_terrain: number | null; dpe_classe: string | null; dpe_conso: number | null; dpe_ges: number | null; particulier_pro: string | null }
   etiquettes: Record<string, string>; fraicheur_source: string | null
   date_publication: string | null; date_saisie: string | null; date_derniere_confirmation: string | null
@@ -2230,7 +2233,7 @@ export interface RadarBienDetail extends RadarBienClient {
   rattachement_criteres?: RadarCritere[]
   rattachement_humain?: boolean
 }
-export interface RadarBiensRep { biens: RadarBienClient[]; n_total: number; n_servi: number; n_rattaches: number; page: number; taille: number; plafond: number; tronquee: boolean; tri: string }
+export interface RadarBiensRep { biens: RadarBienClient[]; n_total: number; n_servi: number; n_rattaches: number; n_carte: number; page: number; taille: number; plafond: number; tronquee: boolean; tri: string }
 export interface RadarFiltres {
   commune?: string; type_bien?: string; prix_min?: number; prix_max?: number
   surface_hab_min?: number; surface_hab_max?: number; surface_terrain_min?: number; surface_terrain_max?: number

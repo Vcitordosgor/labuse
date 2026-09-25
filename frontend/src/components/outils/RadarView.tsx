@@ -60,7 +60,7 @@ function joursDepuis(iso: string | null): number | null {
 // specs d'un bien selon son type — le corps de la carte de la maquette (« 620 m² de terrain », etc.)
 function specsBien(b: RadarBienClient): string {
   const p: string[] = []
-  if (b.faits.pieces) p.push(`${b.faits.pieces} pièces`)
+  if (b.faits.pieces) p.push(`${b.faits.pieces} pièce${b.faits.pieces > 1 ? 's' : ''}`)
   if (b.faits.surface_hab) p.push(`${b.faits.surface_hab} m² hab`)
   if (b.faits.surface_terrain) p.push(`${b.faits.surface_terrain} m² de terrain`)
   if (!b.faits.surface_hab && !b.faits.surface_terrain && b.faits.dpe_classe) p.push(`DPE ${b.faits.dpe_classe}`)
@@ -89,6 +89,12 @@ function CarteBien({ b, sel, onClick }: { b: RadarBienClient; sel: boolean; onCl
         {ratt ? (
           <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-mint/12 px-2.5 py-1 text-[11px] text-mint">
             <span className="h-1.5 w-1.5 rounded-full bg-mint" />Sur la carte
+          </span>
+        ) : b.position_type === 'quartier' ? (
+          // RADAR-AUTO-1 (recette) — position approximative de QUARTIER : marqueur creux côté carte, ici
+          // un cercle creux dans la puce. « Non localisé » ne s'affiche plus quand le quartier est connu.
+          <span title="position approximative — quartier" className="flex shrink-0 items-center gap-1.5 rounded-full border border-mint/40 px-2.5 py-1 text-[11px] text-mint/90">
+            <span className="h-1.5 w-1.5 rounded-full border border-mint" />Quartier : {b.quartier || b.commune}
           </span>
         ) : (
           <span className="shrink-0 rounded-full border border-dashed border-line-3 px-2.5 py-1 text-[11px] text-txt-mut">Non localisé — voir l'annonce ↗</span>
@@ -323,7 +329,17 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
           </div>
         )}
         {!ratt && b.rattachement_etat !== 'piste' && (
-          <p className="text-[11px] leading-snug text-txt-dim">Bien non rattaché à une parcelle — la position servie est le quartier ; seul le lien vers la source est disponible.</p>
+          b.position_type === 'quartier' ? (
+            <div className="rounded-xl border border-line-2 bg-surface-2 px-3 py-2.5">
+              <div className="mb-1 font-mono text-[10px] tracking-[0.2em] text-txt-mut">POSITION APPROXIMATIVE — QUARTIER</div>
+              <p className="text-[11px] leading-snug text-txt-mut">
+                Quartier : <span className="text-txt">{b.quartier || b.commune}</span>. Bien non rattaché à une
+                parcelle — la position affichée est celle du quartier (approximative) ; le lien vers la source fait foi.
+              </p>
+            </div>
+          ) : (
+            <p className="text-[11px] leading-snug text-txt-dim">Bien non localisé — seul le lien vers la source est disponible.</p>
+          )
         )}
         {/* 7. Signaler + note de doctrine */}
         <div className="flex flex-col gap-2 pt-0.5">
@@ -387,11 +403,13 @@ export function RadarView() {
   // elle, reçoit tous les rattachés (pins) : c'est la LISTE seule qu'on pagine.
   const pg = usePagination(biens.length)
 
-  // carte = rattachés SEULEMENT → pins (kind='radar', couleur par statut) poussés sur la carte existante
+  // carte → pins (kind='radar', couleur par statut) : les RATTACHÉS (parcelle) ET les biens à position
+  // de QUARTIER (RADAR-AUTO-1), ces derniers en marqueur DISTINCT (cercle creux) via `position_type`.
   useEffect(() => {
     const feats = biens.filter((b) => b.coords).map((b) => ({
       type: 'Feature', geometry: { type: 'Point', coordinates: b.coords },
-      properties: { kind: 'radar', bien_id: b.bien_id, idu: b.rattachement.idu, statut: b.statut },
+      properties: { kind: 'radar', bien_id: b.bien_id, idu: b.rattachement.idu, statut: b.statut,
+        position_type: b.position_type },
     }))
     setModuleMap({ idus: biens.filter((b) => b.rattachement.idu).map((b) => b.rattachement.idu as string),
       extra: { type: 'FeatureCollection', features: feats } })
@@ -424,7 +442,8 @@ export function RadarView() {
   const setNum = (k: keyof RadarFiltres, v: string) => setF((p) => ({ ...p, [k]: v === '' ? undefined : Number(v) }))
 
   const nTotal = data?.n_total ?? 0
-  const nRatt = data?.n_rattaches ?? 0
+  // « sur la carte » = tout ce que la carte pinne : rattachés (parcelle) + positions de quartier.
+  const nCarte = data?.n_carte ?? data?.n_rattaches ?? 0
   const aucunFiltre = !f.commune && !f.type_bien && f.prix_min == null && f.prix_max == null && f.surface_terrain_min == null && !f.rattache && !f.particulier_pro && !f.sous_marche
 
   const selInput = 'h-[35px] rounded-lg border border-line-2 bg-surface-1 px-2.5 text-[12.5px] text-txt focus:border-mint focus:outline-none'
@@ -556,7 +575,7 @@ export function RadarView() {
 
         {/* compteur + tri */}
         <div className="flex shrink-0 items-center justify-between border-b border-line-2 px-5 py-3">
-          <div className="text-[12.5px] text-txt-mut"><b className="text-[14px] font-semibold text-txt-hi">{nTotal}</b> bien{nTotal > 1 ? 's' : ''} · <span className="text-mint">{nRatt} sur la carte</span></div>
+          <div className="text-[12.5px] text-txt-mut"><b className="text-[14px] font-semibold text-txt-hi">{nTotal}</b> bien{nTotal > 1 ? 's' : ''} · <span className="text-mint">{nCarte} sur la carte</span></div>
           {/* RV2-V4 — le sélecteur de tri avait un fond BLANC (hors DA, pas de bg-surface) : aligné sur
               les autres contrôles de l'écran (fond sombre, bordure, texte). */}
           <select value={tri} onChange={(e) => setTri(e.target.value)}
