@@ -1120,9 +1120,30 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_parcel_flags(engine)             # M45 (P2)
 
 
+# ZONES-FAMILLE-1 — SOURCE SQL UNIQUE de la famille de zone (U/AU/A/N) à partir du typezone GPU
+# (spatial_layers.subtype = attrs->>'typezone'). Plus AUCUNE requête ne devine la famille depuis
+# `name` (tantôt code « Ub », tantôt libellé « Secteur de centralité », tantôt phasé « 1AUb »).
+# Même logique que faisabilite.zone_servie._FAM et que faisabilite.zone_norm.est_famille (code-side).
+# IMMUTABLE → utilisable en WHERE ; `CREATE OR REPLACE` ne prend pas de verrou de table.
+ZONE_FAMILLE_FN = (
+    "CREATE OR REPLACE FUNCTION labuse_zone_famille(subtype text) RETURNS text "
+    "LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$ "
+    "SELECT CASE WHEN $1 ILIKE 'AU%' THEN 'AU' WHEN $1 ILIKE 'U%' THEN 'U' "
+    "WHEN $1 = 'A' THEN 'A' WHEN $1 = 'N' THEN 'N' ELSE 'autre' END $$"
+)
+
+
+def ensure_zone_famille_fn(engine) -> None:
+    """Crée/actualise la fonction SQL unique `labuse_zone_famille`. Idempotent, sans verrou lourd."""
+    from sqlalchemy import text as _t
+    with engine.begin() as c:
+        c.execute(_t(ZONE_FAMILLE_FN))
+
+
 def create_all(engine) -> None:
     Base.metadata.create_all(engine)
     _ensure_schema_steps(engine, geom_backfill=True)
+    ensure_zone_famille_fn(engine)
 
 
 def ensure_icd_columns(engine) -> None:
@@ -1815,6 +1836,7 @@ def ensure_residuel_cache(engine) -> None:
 
     with engine.begin() as c:
         ensure_runs_schema(c)
+        c.execute(_t(ZONE_FAMILLE_FN))   # ZONES-FAMILLE-1 : source SQL unique de la famille de zone
         if c.execute(_t("SELECT relkind FROM pg_class WHERE relname='parcel_residuel'")).scalar() == "v":
             return  # M135 : déjà migré en vue — rien à faire sur la vue
         c.execute(_t(
