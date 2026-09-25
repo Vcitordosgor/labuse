@@ -332,10 +332,22 @@ function ModeEnsoleillement({ onBack, prefillIdu }: { onBack: () => void; prefil
   )
 }
 
-function KPI({ k, v, u }: { k: string; v: string; u?: string }) {
+// OUTILS-S1 (Lot A) — chaque fait porte sa provenance, MÊME vocabulaire que la fiche : « Sourcé »
+// (mesuré/relevé : emprise BD TOPO, pente RGE ALTI/LiDAR) vs « Estimé » (modélisé : potentiel PVGIS,
+// dimensionnement, azimut d'enveloppe, nature de toit interprétée).
+function ProvTag({ t }: { t: 'Sourcé' | 'Estimé' }) {
+  const src = t === 'Sourcé'
+  return (
+    <span className={`rounded px-1 text-[8px] font-medium ${src ? 'bg-mint/15 text-mint' : 'bg-amber-500/15 text-amber-500'}`}>{t}</span>
+  )
+}
+function KPI({ k, v, u, prov }: { k: string; v: string; u?: string; prov?: 'Sourcé' | 'Estimé' }) {
   return (
     <div className="rounded bg-surface-2 px-2 py-1">
-      <div className="text-[9px] text-txt-dim">{k}</div>
+      <div className="flex items-center justify-between gap-1">
+        <span className="text-[9px] text-txt-dim">{k}</span>
+        {prov && <ProvTag t={prov} />}
+      </div>
       <div className="text-[13px] font-semibold text-txt">{v}{u && <span className="ml-1 text-[9px] font-normal text-txt-dim">{u}</span>}</div>
     </div>
   )
@@ -387,19 +399,19 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
         <span className="text-[10px] text-txt-dim">{f.commune}{f.classement ? ` · ${f.classement}` : ''}</span>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-1.5">
-        <KPI k="Potentiel" v={num(f.productible)} u="kWh/kWc/an" />
-        <KPI k="Toiture (emprise)" v={num(f.toit_m2, ' m²')} />
+        <KPI k="Potentiel" v={num(f.productible)} u="kWh/kWc/an" prov="Estimé" />
+        <KPI k="Toiture (emprise)" v={num(f.toit_m2, ' m²')} prov="Sourcé" />
         {/* A6 — puissance installable + production annuelle SERVIES par le back ; ratio kWc/m² écrit ci-dessous. */}
-        <KPI k="Puissance installable" v={kwc == null ? '—' : String(kwc).replace('.', ',')} u="kWc" />
-        <KPI k="Production annuelle" v={num(prodAn)} u="kWh/an" />
+        <KPI k="Puissance installable" v={kwc == null ? '—' : String(kwc).replace('.', ',')} u="kWc" prov="Estimé" />
+        <KPI k="Production annuelle" v={num(prodAn)} u="kWh/an" prov="Estimé" />
         {/* orientation = azimut DU BÂTI (Estimé), pas une orientation « optimale » (non calculée) ;
             l'inclinaison optimale n'est pas servie par la V1 → non affichée (jamais inventée). */}
-        <KPI k="Orientation du bâti" v={f.azimut == null ? '—' : `${f.azimut}°`} />
+        <KPI k="Orientation du bâti" v={f.azimut == null ? '—' : `${f.azimut}°`} prov="Estimé" />
         {/* RETOURS-14 S11 — nature du toit DANS la grille des faits (visible sans clic), servie
             seulement au-dessus du seuil de confiance (LiDAR) ; « non déterminée (LiDAR) » sinon. */}
-        <KPI k="Nature du toit" v={f.toiture ? f.toiture.libelle_court : '—'} />
-        <KPI k="Pente du terrain" v={f.pente == null ? '—' : `${f.pente}°`} />
-        <KPI k="Pente du toit (médiane)" v={f.toiture?.pente_mediane_deg == null ? '—' : `${String(f.toiture.pente_mediane_deg).replace('.', ',')}°`} />
+        <KPI k="Nature du toit" v={f.toiture ? f.toiture.libelle_court : '—'} prov="Estimé" />
+        <KPI k="Pente du terrain" v={f.pente == null ? '—' : `${f.pente}°`} prov="Sourcé" />
+        <KPI k="Pente du toit (médiane)" v={f.toiture?.pente_mediane_deg == null ? '—' : `${String(f.toiture.pente_mediane_deg).replace('.', ',')}°`} prov="Sourcé" />
       </div>
       {/* A6 — l'hypothèse de dimensionnement (ratio kWc/m²) est ÉCRITE à côté du résultat, servie de la config. */}
       {kwcParM2 != null && kwc != null && (
