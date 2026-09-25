@@ -1134,7 +1134,9 @@ export interface DossierStatut { disponible: boolean; raison: string | null; pla
 export const getDossierStatut = () => j<DossierStatut>('/dossier/statut')
 export interface CourrierStatut { disponible: boolean; provider: string; tarif: unknown; raison: string | null
   // OUTILS-FIX-4 D2 — plafond d'envoi quotidien (celui qui déclenche le 422) + ce qui reste.
-  plafond_jour?: number; envoyes_jour?: number; reste_jour?: number }
+  plafond_jour?: number; envoyes_jour?: number; reste_jour?: number
+  // OUTILS-S2 Lot B — tarif unitaire TTC (prix client, impression+affranchissement+suivi), affiché à l'étape 3.
+  tarif_unitaire_eur?: number }
 // OUTILS-FIX-4 D1/D2 — état du service + plafond du jour, lus à l'ouverture de l'outil Courrier.
 export const getCourrierStatut = () => j<CourrierStatut>('/courrier/statut')
 export interface CourrierEnvoi { id: number; ts: string; idu: string | null; adresse: string | null; statut: string; provider: string; prix_eur: number | null; modele: string | null }
@@ -1367,6 +1369,9 @@ export interface CourrierResolution {
   mention: string | null
   bloque: boolean
   motif: string | null
+  // OUTILS-S2 Lot B — code machine du blocage : 'nu'|'sans_adresse'|'sans_canal'|'inconnue' (aucun
+  // occupant joignable → l'ajout est refusé, on renvoie au Courrier SPF) ; 'opposition' (traité au dépôt).
+  code: 'nu' | 'sans_adresse' | 'sans_canal' | 'inconnue' | 'opposition' | null
   bien: { reference: string; adresse: string | null; commune: string | null }
 }
 export const postCourrierAdressage = (idus: string[]) =>

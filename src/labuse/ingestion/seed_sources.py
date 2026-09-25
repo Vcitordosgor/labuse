@@ -188,7 +188,10 @@ SOURCES: list[dict] = [
          documentation_url="https://geoservices.ign.fr/services-geoplateforme-altimetrie",
          endpoint_url="https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — RGE ALTI ».",
-         technical_notes="✓ live (elevations:[6.43]). Batch commune : préférer raster RGE ALTI + pente PostGIS aux milliers d'appels."),
+         technical_notes="✓ live (elevations:[6.43]). Batch commune : préférer raster RGE ALTI + pente PostGIS aux milliers d'appels. "
+                         "OUTILS-S2 Lot C : la couche « Courbes de niveau » (overlay WMTS ELEVATION.CONTOUR.LINE) ET le profil "
+                         "altimétrique DÉRIVENT de cette source RGE ALTI — pas de source distincte (le WMTS est un canal de diffusion, "
+                         "pas un réservoir : c'est pourquoi le compte reste à 92). Verrou : test_outils_s2_couches_source."),
     # ── Spécificité réunionnaise (premier rang) ──
     dict(name="Parc National de La Réunion (INPN)", category="environnement", provider="INPN/MNHN · API Carto · Région ODS",
          source_millesime="millésime 2021",   # M86 — millésime centralisé (plus de date en dur au front)

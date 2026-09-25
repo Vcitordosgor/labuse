@@ -51,12 +51,16 @@ def courrier_statut(request: Request, db: Session = Depends(get_db)) -> dict:
         envoyes = courrier.envois_du_jour(db, sujet_de(request))
     except Exception:  # noqa: BLE001 — le plafond est informatif, jamais un 500
         envoyes = 0
-    # COURRIER-2 Lot 5 — AUCUN prix servi au client : le tarif est donné au rappel (modèle service).
-    # `tarif` retiré du payload (il fuitait le prix). Ne reste que l'état du service + le plafond.
+    # OUTILS-S2 Lot B (décision Vic) — REVIENT sur COURRIER-2 Lot 5 : le tarif unitaire est désormais
+    # affiché au client AVANT dépôt (étape 3) et repris dans la confirmation. Il vient de `tarif(db)`
+    # (coût prestataire admin/config × marge) — jamais codé dans le composant front. Sert le prix
+    # unitaire TTC (impression, mise sous pli, affranchissement, suivi) ; le total = N × ce prix.
+    tarif_unitaire = round(float(courrier.tarif(db)["prix_client_eur"]), 2)
     return {"disponible": prov != "stub", "provider": prov,
             "raison": None if prov != "stub" else
             "L'envoi postal n'est pas encore disponible — la demande est enregistrée.",
-            "plafond_jour": plafond, "envoyes_jour": envoyes, "reste_jour": max(0, plafond - envoyes)}
+            "plafond_jour": plafond, "envoyes_jour": envoyes, "reste_jour": max(0, plafond - envoyes),
+            "tarif_unitaire_eur": tarif_unitaire}
 
 
 class EnvoiIn(BaseModel):

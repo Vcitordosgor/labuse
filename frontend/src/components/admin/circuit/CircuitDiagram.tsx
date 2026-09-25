@@ -28,7 +28,7 @@ export function CircuitDiagram({ data, groupe, onOpen, elements = [] }:
   const [openFam, setOpenFam] = useState<string | null>(null)
   const [openCat, setOpenCat] = useState<string | null>(null)
   const [query, setQuery] = useState('')
-  const [cloche, setCloche] = useState(false)   // CIRCUIT-P7 (lot 3) — « ne montrer que ce qui cloche »
+  // OUTILS-S2 Lot C (C.4) — l'interrupteur « ne montrer que ce qui cloche » est RETIRÉ (décision Vic).
   const [hover, setHover] = useState<Hover>(null)
   const [tick, setTick] = useState(0)
 
@@ -48,19 +48,15 @@ export function CircuitDiagram({ data, groupe, onOpen, elements = [] }:
 
   const lit = useMemo(() => cheminsAllumes(hover, maps), [hover, maps])
 
-  // ── visibilité d'une ligne : recherche > groupe > « que ce qui cloche » ──
-  // CIRCUIT-P7 (lot 3) — l'interrupteur « ne montrer que ce qui cloche » revient : hors recherche /
-  // groupe, il ne garde que les éléments à regarder (ko) et masque les blocs entièrement verts.
+  // ── visibilité d'une ligne : recherche > groupe (OUTILS-S2 C.4 : plus de filtre « que ce qui cloche ») ──
   const tankVisible = (t: Reservoir) => {
     if (q) return (t.nom + ' ' + (t.producteur || '')).toLowerCase().includes(q)
     if (enGroupe) return idsGroupe.has(String(t.id))
-    if (cloche) return t.ko
     return true
   }
   const tapVisible = (t: Robinet) => {
     if (q) return (t.nom + ' ' + t.id + ' ' + (t.chiffres || []).join(' ')).toLowerCase().includes(q)
     if (enGroupe) return idsGroupe.has(String(t.id))
-    if (cloche) return t.ko
     return true
   }
 
@@ -133,8 +129,8 @@ export function CircuitDiagram({ data, groupe, onOpen, elements = [] }:
   const dateFr = (s: string | null) => s ? new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : ''
   const parentNom = (rid: string | null) => rid ? (maps.robinetById.get(rid)?.nom || rid) : ''
 
-  const famOuverte = (nom: string, aMatch: boolean) => openFam === nom || ((!!q || enGroupe || cloche) && aMatch)
-  const catOuverte = (slug: string, aMatch: boolean) => openCat === slug || ((!!q || enGroupe || cloche) && aMatch)
+  const famOuverte = (nom: string, aMatch: boolean) => openFam === nom || ((!!q || enGroupe) && aMatch)
+  const catOuverte = (slug: string, aMatch: boolean) => openCat === slug || ((!!q || enGroupe) && aMatch)
 
   // CIRCUIT-P7 (lot 3) — les éléments de l'app qui matchent la recherche (sens inverse fondu ici) :
   // chaque source de l'élément ouvre sa fiche réservoir. Le dessin, lui, filtre en parallèle.
@@ -155,16 +151,14 @@ export function CircuitDiagram({ data, groupe, onOpen, elements = [] }:
         <input placeholder="Un réservoir, un robinet, un chiffre — ou un élément de l'app (couche, section, outil) pour remonter à ses sources"
           value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
-      {/* CIRCUIT-P7 (lot 3) — légende sur UNE ligne + l'interrupteur « ne montrer que ce qui cloche ». */}
+      {/* CIRCUIT-P7 (lot 3) — légende sur UNE ligne. OUTILS-S2 Lot C (C.4) — l'interrupteur
+          « ne montrer que ce qui cloche » est retiré (décision Vic). */}
       <div className="clegend">
         <span><i style={{ background: 'var(--mint)' }} />ça coule</span>
         <span><i style={{ background: 'var(--ambre)' }} />à voir</span>
         <span><i style={{ background: 'var(--rouge)' }} />bloqué ou fuite</span>
         <span><i style={{ background: 'var(--gris)' }} />vide, manuel, jamais vérifié</span>
         <span><i style={{ background: 'var(--mauve)' }} />en cours</span>
-        <button className={`sw ${cloche ? 'on' : ''}`} onClick={() => setCloche((v) => !v)}>
-          <span className="tr"><i /></span>ne montrer que ce qui cloche
-        </button>
       </div>
 
       {elementsMatch.length > 0 && (
@@ -202,7 +196,7 @@ export function CircuitDiagram({ data, groupe, onOpen, elements = [] }:
               const open = famOuverte(f.nom, visibles.length > 0)
               const dim = hover ? !lit.familles.has(f.nom) : false
               return (
-                <div key={f.nom} className={`node ${open ? 'open' : ''} ${dim ? 'dim' : ''} ${hover && lit.familles.has(f.nom) ? 'lit' : ''} ${cloche && ko === 0 ? 'masque' : ''}`} data-fam={f.nom}>
+                <div key={f.nom} className={`node ${open ? 'open' : ''} ${dim ? 'dim' : ''} ${hover && lit.familles.has(f.nom) ? 'lit' : ''}`} data-fam={f.nom}>
                   <button className="hd" onClick={() => setOpenFam((v) => v === f.nom ? null : f.nom)}>
                     <span><span className="t">{f.nom}</span>
                       <span className="dots">{tanks.map((t) => <i key={t.id} className={t.etat[0] === 'mint' ? '' : t.etat[0]} />)}</span></span>
@@ -252,7 +246,7 @@ export function CircuitDiagram({ data, groupe, onOpen, elements = [] }:
               const open = catOuverte(c.slug, visibles.length > 0)
               const dim = hover ? !lit.categories.has(c.slug) : false
               return (
-                <div key={c.slug} className={`node ${open ? 'open' : ''} ${dim ? 'dim' : ''} ${hover && lit.categories.has(c.slug) ? 'lit' : ''} ${cloche && ko === 0 ? 'masque' : ''}`} data-cat={c.slug}>
+                <div key={c.slug} className={`node ${open ? 'open' : ''} ${dim ? 'dim' : ''} ${hover && lit.categories.has(c.slug) ? 'lit' : ''}`} data-cat={c.slug}>
                   <button className="hd" onClick={() => setOpenCat((v) => v === c.slug ? null : c.slug)}>
                     <span><span className="t">{c.nom}</span>
                       <span className="dots">{taps.map((t) => <i key={t.id} className={t.etat[0] === 'mint' ? '' : t.etat[0]} />)}</span></span>
