@@ -308,6 +308,12 @@ function ModeEnsoleillement({ onBack, prefillIdu }: { onBack: () => void; prefil
       {ficheIdu && fiche.isError && <ErrorState message="Parcelle introuvable — vérifiez l’IDU." retry={() => fiche.refetch()} />}
       {ficheIdu && fiche.data && <FicheSoleil f={fiche.data} onOpen={() => select(ficheIdu)} />}
       {!ficheIdu && <p className="text-[11px] text-txt-mut">Saisissez une parcelle pour sa fiche soleil (potentiel, toiture, profil mensuel).</p>}
+      {/* GEOPF-3 — la couche « Contraintes EnR près des habitations » (loi APER) est superposable sur
+          la carte (groupe Énergie) : périmètres réglementaires liés aux habitations. */}
+      <p data-solaire-enr-habitation className="text-[9.5px] leading-snug text-txt-dim">
+        💡 Couche carte « Contraintes EnR près des habitations » (loi APER) disponible dans le groupe
+        <b className="text-txt-mut"> Énergie</b> du panneau Couches.
+      </p>
       <p className="mt-auto text-[9.5px] leading-snug text-txt-dim">{SOURCES_PIED}</p>
     </div>
   )

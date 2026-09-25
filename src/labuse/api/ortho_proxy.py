@@ -286,6 +286,39 @@ def contour_tile(z: int, x: int, y: int) -> Response:
     return Response(r.content, media_type="image/png", headers=_HDR)
 
 
+# GEOPF-3 — CONTRAINTES EnR PRÈS DES HABITATIONS. Source IGN Géoplateforme WMTS
+# `ENR.PERIMETRE.HABITATION` (style dédié PERIMETRE.HABITATION, TileMatrixSet PM_6_18, image/png,
+# couverture 974 VÉRIFIÉE — tuiles z12/z14 sur Saint-Paul/Saint-Denis/Saint-Pierre non vides).
+# Périmètres de contraintes réglementaires liées aux habitations pour les EnR (loi APER). LIGNES/
+# aplats sur fond transparent → relais PNG brut (comme les courbes), + cache disque. Hors couverture → 404.
+_ENR_HABITATION_WMTS = (
+    "https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0"
+    "&STYLE=PERIMETRE.HABITATION&TILEMATRIXSET=PM_6_18&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}"
+    "&LAYER=ENR.PERIMETRE.HABITATION&FORMAT=image/png")
+
+
+@router.get("/map/tiles/enr_habitation/{z}/{x}/{y}")
+def enr_habitation_tile(z: int, x: int, y: int) -> Response:
+    if not (6 <= z <= 18 and 0 <= x < 2 ** z and 0 <= y < 2 ** z):
+        raise HTTPException(404, "Tuile hors grille")
+    base = _cache_base("enr_habitation", z, x, y)
+    for ext, mime in _MIME.items():
+        p = base.with_suffix(ext)
+        if p.exists():
+            return Response(p.read_bytes(), media_type=mime, headers=_HDR)
+    import requests as _rq
+    try:
+        r = _rq.get(_ENR_HABITATION_WMTS.format(z=z, x=x, y=y),
+                    headers={"User-Agent": "labuse/1.0"}, timeout=15)
+    except Exception as e:  # noqa: BLE001 — WMTS muet : overlay simplement absent
+        log.warning("enr-habitation-proxy %s/%s/%s : WMTS muet (%s)", z, x, y, e)
+        raise HTTPException(404, "WMTS indisponible") from None
+    if r.status_code != 200 or not r.headers.get("content-type", "").startswith("image/"):
+        raise HTTPException(404, "Tuile absente")
+    _cache_ecrire(base, ".png", r.content)
+    return Response(r.content, media_type="image/png", headers=_HDR)
+
+
 # RETOURS-15 U1 — ancien chemin (front en cache navigateur) : même pipeline, couche express.
 @router.get("/map/tiles/ortho-express/{z}/{x}/{y}")
 def ortho_express_tile(z: int, x: int, y: int) -> Response:
