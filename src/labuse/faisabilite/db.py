@@ -76,10 +76,18 @@ def _layer_params(name: str) -> dict:
 _EMPRISE = text("""
 WITH p AS (SELECT commune, geom_2975 AS g, ST_Buffer(geom_2975, -:d) AS b
            FROM parcels WHERE id = :pid),
+-- EXIGU-GRANDES : les zones AU NUMÉROTÉES (name '1AUb'/'2AUc'/'3AU5st'…) portent leur code GPU
+-- normalisé dans `subtype` ('AUc'…) et commencent par un chiffre dans `name` — elles n'ont JAMAIS
+-- matché `name ILIKE 'AU%'`, ce qui vidait leur assiette constructible (terrain_exigu à tort sur
+-- de grandes parcelles à urbaniser). On les rattrape via `subtype` UNIQUEMENT quand `name` est
+-- numérique (périmètre borné : les zones à `name` littéral — 8 communes — gardent leur
+-- comportement, bug distinct plus large, hors de ce correctif).
 uau AS (SELECT ST_Union(z.geom_2975) AS u
         FROM spatial_layers z, p
         WHERE z.kind = :zkind AND z.commune = p.commune
-          AND z.name ILIKE ANY(:uau_pats) AND ST_Intersects(z.geom_2975, p.g)),
+          AND (z.name ILIKE ANY(:uau_pats)
+               OR (z.name ~ '^[0-9]' AND z.subtype ILIKE ANY(:uau_pats)))
+          AND ST_Intersects(z.geom_2975, p.g)),
 er AS (SELECT ST_Union(e.geom_2975) AS u
        FROM spatial_layers e, p
        WHERE e.kind = :pkind AND e.commune = p.commune
@@ -237,7 +245,9 @@ WITH p AS (SELECT commune, ST_Buffer(geom_2975, -:d) AS b FROM parcels WHERE id 
 uau AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(z.geom_2975, p.b))) AS u
         FROM spatial_layers z, p
         WHERE z.kind = :zkind AND z.commune = p.commune
-          AND z.name ILIKE ANY(:uau_pats) AND ST_Intersects(z.geom_2975, p.b)),
+          AND (z.name ILIKE ANY(:uau_pats)
+               OR (z.name ~ '^[0-9]' AND z.subtype ILIKE ANY(:uau_pats)))
+          AND ST_Intersects(z.geom_2975, p.b)),
 assiette AS (SELECT CASE WHEN uau.u IS NULL THEN p.b
                          ELSE ST_Intersection(p.b, uau.u) END AS a
              FROM p LEFT JOIN uau ON TRUE),
