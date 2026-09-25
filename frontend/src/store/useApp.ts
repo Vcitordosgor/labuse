@@ -446,6 +446,7 @@ interface AppState {
   setOrthoYear: (y: OrthoYear) => void
   terrain3d: boolean
   toggleTerrain: () => void
+  setTerrain3d: (v: boolean) => void   // RETOURS-14 P4 — le relief 3D se choisit dans un menu (voir MapToolbar)
   // RETOURS-13 P4 — le bâti extrudé est OPTIONNEL en 3D (chip « Bâtiments »). État de SESSION
   // (pas en base). On par défaut : passer en 3D montre relief + bâti comme avant. Off → relief seul
   // (le bâti reste à plat : l'empreinte 2D grise du Gabarit demeure ; carte principale = pas d'extrusion).
@@ -886,7 +887,9 @@ export const useApp = create<AppState>((set, get) => ({
   setOrthoYear: (orthoYear) => set({ orthoYear, basemap: 'ortho' }),
   terrain3d: false,
   toggleTerrain: () => set((s) => ({ terrain3d: !s.terrain3d })),
+  setTerrain3d: (v) => set({ terrain3d: v }),   // RETOURS-14 P4 — menu Relief (2D / relief / relief+bâti)
   batiVisible: true,   // RETOURS-13 P4 — bâti extrudé visible par défaut en 3D
+
   setBatiVisible: (v) => set({ batiVisible: v }),
   tool: null,
   setTool: (tool) => set({ tool }),

@@ -707,36 +707,41 @@ export function ResultsSection() {
             })()}
           </div>
 
-          {/* ANALYSE-3 (révision) — les DEUX filtres, deux lignes. La puce ne porte QUE le MOT ENTIER, sur
-              UNE ligne, JAMAIS tronqué, JAMAIS d'info réservée au survol. « Tous » en dernier. Actif = vert
-              opaque. Le compteur est revenu dans l'encart. Les libellés « Classement »/« Signal » inline
-              ont été retirés : à la largeur de colonne, 5 mots entiers + libellé ne tiennent pas sur une
-              ligne — les deux rangées restent distinctes par leur contenu (bandes de qualité vs Fort/
-              Moyen/Faible). Rangée 1 = le classement (bande), rangée 2 = le signal de mutation. */}
-          <div data-filtres className="mt-2 flex shrink-0 flex-col gap-1 rounded-lg border border-line-2 bg-surface-2/50 px-2 py-1.5">
-            <div data-classement-filtre className="flex min-w-0 flex-nowrap items-center gap-0.5">
-              {CLASSEMENT_FILTRE.map((c) => {
-                const actif = classementFiltre === c.key
-                return (
-                  <button key={c.key} data-classement-pill={c.key} onClick={() => setClassementFiltre(c.key)}
-                    className={`whitespace-nowrap rounded-md px-1 py-1 text-[10px] leading-none transition-colors duration-quick ${
-                      actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
-                    {c.label}
-                  </button>
-                )
-              })}
+          {/* ANALYSE-3 / RETOURS-14 P7 — les DEUX filtres, deux rangées, CHACUNE TITRÉE de son vrai nom
+              (libellés SCORING-5) EN TÊTE DE RANGÉE, au style des autres titres de section (label-caps).
+              Le titre était jadis inline et ne tenait pas à côté des 5 mots entiers → il passe sur sa
+              PROPRE ligne. La puce garde le MOT ENTIER, sur une ligne, jamais tronqué. « Tous » en dernier.
+              Actif = vert opaque. Rangée 1 = Score LABUSE (bandes), rangée 2 = Signal de mutation. */}
+          <div data-filtres className="mt-2 flex shrink-0 flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-2/50 px-2 py-1.5">
+            <div>
+              <p className="label-caps text-txt-dim">Score LABUSE</p>
+              <div data-classement-filtre className="mt-0.5 flex min-w-0 flex-nowrap items-center gap-0.5">
+                {CLASSEMENT_FILTRE.map((c) => {
+                  const actif = classementFiltre === c.key
+                  return (
+                    <button key={c.key} data-classement-pill={c.key} onClick={() => setClassementFiltre(c.key)}
+                      className={`whitespace-nowrap rounded-md px-1 py-1 text-[10px] leading-none transition-colors duration-quick ${
+                        actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
+                      {c.label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-            <div data-signal-filtre className="flex min-w-0 flex-nowrap items-center gap-0.5">
-              {SIGNALS_FILTRE.map((s) => {
-                const actif = signalFiltre === s.key
-                return (
-                  <button key={s.key} data-signal-pill={s.key} onClick={() => setSignalFiltre(s.key)}
-                    className={`whitespace-nowrap rounded-md px-1 py-1 text-[10px] leading-none transition-colors duration-quick ${
-                      actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
-                    {s.label}
-                  </button>
-                )
-              })}
+            <div>
+              <p className="label-caps text-txt-dim">Signal de mutation</p>
+              <div data-signal-filtre className="mt-0.5 flex min-w-0 flex-nowrap items-center gap-0.5">
+                {SIGNALS_FILTRE.map((s) => {
+                  const actif = signalFiltre === s.key
+                  return (
+                    <button key={s.key} data-signal-pill={s.key} onClick={() => setSignalFiltre(s.key)}
+                      className={`whitespace-nowrap rounded-md px-1 py-1 text-[10px] leading-none transition-colors duration-quick ${
+                        actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
+                      {s.label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
 

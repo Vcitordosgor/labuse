@@ -90,7 +90,31 @@ def test_couverture_nulls_gardes(engine):
     with engine.begin() as c:
         out = couverture_sources(c)
     assert out["communes_total"] == 24
-    assert set(out) >= {"parcelles", "communes", "dvf_transactions", "radar_annonces"}
+    assert set(out) >= {"parcelles", "parcelles_filtrables", "communes", "dvf_transactions", "radar_annonces"}
+
+
+@pytest.mark.db
+def test_couverture_reconcilie_slivers(engine):
+    """RETOURS-14 P6 — l'écart entre « parcelles couvertes » (total ingéré, 431 663) et le bouton
+    « Voir les N parcelles » du filtre (430 813) est LÉGITIME : le filtre masque les micro-parcelles
+    « sliver » < 2 m² (MIN_DISPLAY_SURFACE_M2). Garde : `parcelles - parcelles_filtrables` vaut
+    EXACTEMENT le nombre de parcelles < 2 m² — la règle du filtre, recomptée à la main."""
+    from labuse.registre.moteurs.commune import couverture_sources
+    with engine.begin() as c:
+        c.execute(text("DELETE FROM parcels WHERE commune = 'TemoinSliver-14'"))
+        # deux slivers (< 2 m²), trois retenues (2 m², 5 m², surface inconnue = NULL)
+        for i, s in enumerate(("1.0", "1.99", "2.0", "5.0", "NULL")):
+            c.execute(text("INSERT INTO parcels (idu, commune, surface_m2, geom) VALUES "
+                           f"(:i, 'TemoinSliver-14', {s}, ST_GeomFromText('POINT(55.5 -21.1)', 4326))"),
+                      {"i": f"S14000000{i}"})
+        out = couverture_sources(c)
+        micro = c.execute(text("SELECT count(*) FROM parcels WHERE surface_m2 IS NOT NULL AND surface_m2 < 2")).scalar()
+        c.execute(text("DELETE FROM parcels WHERE commune = 'TemoinSliver-14'"))
+    assert out["parcelles"] is not None and out["parcelles_filtrables"] is not None
+    assert out["parcelles_filtrables"] <= out["parcelles"]
+    # l'écart global = exactement les micro-parcelles < 2 m² (nos 2 seedées y comprises)
+    assert out["parcelles"] - out["parcelles_filtrables"] == micro
+    assert micro >= 2
 
 
 @pytest.mark.db

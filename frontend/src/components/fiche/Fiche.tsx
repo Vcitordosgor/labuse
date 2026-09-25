@@ -4,8 +4,9 @@ import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
-import { BANDE_META, SIGNAL_META, verdictMeta } from '../../lib/status'
+import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, SOURCE, toggleWatch } from '../../lib/api'
+import { verdictMeta } from '../../lib/status'
+import { AnalyseLabuseCard } from './AnalyseLabuseCard'   // RETOURS-14 P1 — carte « Analyse LABUSE » extraite (testable), affiche la version servie
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
@@ -702,7 +703,11 @@ export function Fiche({ idu }: { idu: string }) {
           plus au défilement (elle était flex-shrink:0, fixe, et recouvrait le contenu qui passait
           dessous). Elle défile désormais AVEC le reste — un seul corps qui défile du haut au pied.
           M56-B6 · DA-FICHE-v6 — EN-TÊTE en CARTE .head (identité + chiffres). */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
+      {/* RETOURS-14 P3 — PLUS de pt-1 : le padding-haut du conteneur défilant décalait l'en-tête collé
+          (sticky top:0 se cale au bord du padding), laissant un liseré de 4px au-dessus par lequel le
+          contenu défilait. Sans padding-haut, l'en-tête colle au BORD du panneau (voir .tete-collee, coins
+          hauts carrés = fond plein jusqu'au bord). L'espacement des tuiles reste porté par gap-3. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4">
       {/* RETOURS-13 P7 — EN-TÊTE COLLÉ. SEUL le bloc identité (PARCELLE·commune, IDU, adresse, icônes,
           croix de fermeture) reste collé en haut au défilement — un client ferme la fiche sans remonter.
           Les 6 tuiles NE collent PAS (carte séparée dessous). Le bloc est un ENFANT DIRECT du conteneur
@@ -897,7 +902,7 @@ export function Fiche({ idu }: { idu: string }) {
               <div className="ia">
                 {verdict && !verdictRevele && (
                   <Bouton data-demander-analyse niveau="primaire" ton="vert" className="flex-1" onClick={() => revelerVerdict(idu)}>
-                    {CLIENT.fiche.demanderAnalyse} →
+                    {CLIENT.fiche.demanderAnalyse}
                   </Bouton>
                 )}
                 <Bouton onClick={() => setIaOuvert('question')} data-askbar-open niveau="secondaire" ton="ia" className="flex-1">
@@ -914,42 +919,12 @@ export function Fiche({ idu }: { idu: string }) {
             le Signal de mutation en BADGE SECONDAIRE, et les contributions FR EN ENTIER (ce qui monte /
             ce qui baisse). Aucun chiffre brut de score ni de probabilité. « Analyse incomplète » montre
             sa cause. Le score ne s'affiche QUE sur la fiche et dans l'Analyse (mandat §4). */}
-        {f?.analyse_labuse?.bande && verdictRevele && (() => {
-          const a = f.analyse_labuse!
-          const bm = BANDE_META[a.bande as keyof typeof BANDE_META]
-          const sm = a.signal_niveau ? SIGNAL_META[a.signal_niveau as keyof typeof SIGNAL_META] : null
-          const nc = a.bande === 'NC'
-          if (!bm) return null
-          return (
-            <div data-analyse-labuse-card style={{ marginTop: 8, background: `${bm.color}12`, border: `1px solid ${bm.color}59`, borderRadius: 6, padding: '13px 16px' }}>
-              <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.4, color: 'var(--lab)', textTransform: 'uppercase' }}>Analyse LABUSE</p>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
-                <span data-fiche-bande={a.bande} style={{ fontSize: 22, fontWeight: 600, color: bm.color, lineHeight: 1 }}>{bm.label}</span>
-                {sm && !nc && (
-                  <span data-fiche-signal={a.signal_niveau}
-                    style={{ fontSize: 11, fontWeight: 500, color: sm.color, border: `1px solid ${sm.color}66`, borderRadius: 9999, padding: '2px 8px' }}>{sm.label}</span>
-                )}
-              </div>
-              {nc && a.cause && (
-                <p data-fiche-cause style={{ margin: '9px 0 0', fontSize: 12, color: BANDE_META.NC.color }}>Analyse incomplète — {a.cause}.</p>
-              )}
-              {!nc && a.contributions && a.contributions.length > 0 && (
-                <div data-fiche-contributions style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <p style={{ margin: 0, fontSize: 10, letterSpacing: 1, color: 'var(--txt-off)', textTransform: 'uppercase' }}>Ce qui compte</p>
-                  {a.contributions.map((c, i) => {
-                    const up = c.sens === 'hausse'
-                    return (
-                      <span key={i} style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 6, fontSize: 12, color: up ? '#5CE6A1' : '#C08A6E' }}>
-                        <span aria-hidden style={{ fontSize: 9, fontWeight: 700, marginTop: 2 }}>{up ? '▲' : '▼'}</span>
-                        <span style={{ color: 'var(--txt-dim)' }}>{c.libelle}</span>
-                      </span>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )
-        })()}
+        {f?.analyse_labuse?.bande && verdictRevele && (
+          // RETOURS-14 P1 — carte extraite. `version={SOURCE}` = le run servi (config/served_run.txt,
+          // injecté au build), JAMAIS une version codée en dur ; la fiche a lu ce même run via
+          // getFiche(idu) = `/parcels/{idu}?source=${SOURCE}` (cf. commentaire en-tête à deux boutons).
+          <AnalyseLabuseCard analyse={f.analyse_labuse!} version={SOURCE} />
+        )}
         {/* CARTE VERDICT (ancien moteur, run servi) — teintée selon le tier. ANALYSE-1 : MASQUÉE dès que
             le nouveau moteur porte un verdict (`analyse_labuse`), pour qu'aucun ancien mot (Priorité / À
             suivre / Sans signal / Écartée) n'apparaisse sur la fiche. La réglette « ×N vs moyenne » et la
