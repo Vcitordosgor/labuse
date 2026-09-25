@@ -4,30 +4,18 @@ import { createProjet, getPrefsCarte, postPrefsCarte } from './lib/api'
 import { AvisIA } from './components/AvisIA'
 import { Squelette } from './components/Loading'
 import { Bouton } from './components/ui/Bouton'
-import { Fiche } from './components/fiche/Fiche'
 import { SourceDrawer } from './components/fiche/SourceDrawer'
 import { Header } from './components/header/Header'
-import { Kanban } from './components/crm/Kanban'
 import { LeftPanel } from './components/panel/LeftPanel'
 import { Rail } from './components/Rail'
-import { SourcesPage } from './components/sources/SourcesPage'
-import { ProjetsPanel } from './components/projets/ProjetsPanel'
-import { ParcoursTinder } from './components/projets/ParcoursTinder'
-import { ContextePanel } from './components/contexte/ContextePanel'
-import { SurveillancePanel } from './components/surveillance/SurveillancePanel'
-import { ComparePanel } from './components/compare/ComparePanel'
-import { CommunesTablePanel, EvolutionTablePanel, RadarTablePanel } from './components/outils/Communes'
 import { filtersFromHash, filtersToHash, hasOpinion, resumeCriteres } from './lib/filters'
 import { CLIENT } from './lib/strings'
 import { SCORE_TIP } from './lib/status'
 import { useApplySearch } from './lib/useApplySearch'
-import { CopiloteView } from './components/copilote/CopiloteView'
-import { ModulePanel } from './components/outils/ModulePanel'
 import { MODULES } from './components/outils/registry'   // GB-059 : valider #m= contre le registre
 import { TraceTiroir } from './lib/trace'
 import { EMPTY_FILTERS, useApp } from './store/useApp'
 import { signalOutil, startHeartbeat } from './lib/usage'   // DASHBOARD-V1 · D1 — capteurs
-import { AdminView } from './components/admin/AdminView'    // DASHBOARD-V1 — Tour de contrôle
 
 // M-V V3 — code-splitting maplibre : MapView et TimeMachine chargent maplibre-gl (~800 kB), inutile
 // au premier écran (login, fiche directe, outils). On les charge à la DEMANDE (import dynamique),
@@ -38,12 +26,45 @@ const MapView = lazy(() => import('./components/map/MapView').then((m) => ({ def
 const RadarView = lazy(() => import('./components/outils/RadarView').then((m) => ({ default: m.RadarView })))
 const TimeMachine = lazy(() => import('./components/outils/TimeMachine').then((m) => ({ default: m.TimeMachine })))
 
+// CARTE-VITESSE-2 lot B (R2) — TOUT ce qui n'est pas sur le chemin du PREMIER écran (le shell +
+// la carte) sort du chunk `index` initial et se charge à la DEMANDE. Avant : ModulePanel importait
+// statiquement l'arbre des 16 outils (moteurs, EtudeZone, blocB, TaxeAmenagement, Gabarit,
+// Communes, Successions, Blocs, Plu, ProspectionSolaire…) + Fiche/ContextePanel/les vues plein
+// écran → 1,04 Mo dans `index`, ~4 s de long-tasks avant que les tuiles ne partent. Chaque panneau
+// ci-dessous est monté SOUS CONDITION (view/module/état) → son chunk n'arrive que quand on l'ouvre,
+// derrière un <Suspense>. Le rendu est identique ; seul le moment du téléchargement change.
+const Fiche = lazy(() => import('./components/fiche/Fiche').then((m) => ({ default: m.Fiche })))
+const Kanban = lazy(() => import('./components/crm/Kanban').then((m) => ({ default: m.Kanban })))
+const SourcesPage = lazy(() => import('./components/sources/SourcesPage').then((m) => ({ default: m.SourcesPage })))
+const ProjetsPanel = lazy(() => import('./components/projets/ProjetsPanel').then((m) => ({ default: m.ProjetsPanel })))
+const ParcoursTinder = lazy(() => import('./components/projets/ParcoursTinder').then((m) => ({ default: m.ParcoursTinder })))
+const ContextePanel = lazy(() => import('./components/contexte/ContextePanel').then((m) => ({ default: m.ContextePanel })))
+const SurveillancePanel = lazy(() => import('./components/surveillance/SurveillancePanel').then((m) => ({ default: m.SurveillancePanel })))
+const ComparePanel = lazy(() => import('./components/compare/ComparePanel').then((m) => ({ default: m.ComparePanel })))
+const CommunesTablePanel = lazy(() => import('./components/outils/Communes').then((m) => ({ default: m.CommunesTablePanel })))
+const EvolutionTablePanel = lazy(() => import('./components/outils/Communes').then((m) => ({ default: m.EvolutionTablePanel })))
+const RadarTablePanel = lazy(() => import('./components/outils/Communes').then((m) => ({ default: m.RadarTablePanel })))
+const CopiloteView = lazy(() => import('./components/copilote/CopiloteView').then((m) => ({ default: m.CopiloteView })))
+const ModulePanel = lazy(() => import('./components/outils/ModulePanel').then((m) => ({ default: m.ModulePanel })))
+const AdminView = lazy(() => import('./components/admin/AdminView').then((m) => ({ default: m.AdminView })))
+
 // État de chargement de la zone carte pendant que le chunk maplibre arrive (pas d'écran blanc).
 // DA — squelette unique (plus de spinner rotatif), on garde le conteneur flex-1.
 function MapLoading() {
   return (
     <div className="relative flex min-h-0 flex-1 bg-bg">
       <Squelette bloc label="Chargement de la carte" />
+    </div>
+  )
+}
+
+// CARTE-VITESSE-2 lot B — fallback d'un panneau/vue chargé à la demande (chunk en vol). Squelette
+// sobre, jamais d'écran blanc, cf. MapLoading. Pour les overlays furtifs (drawers/modales) on passe
+// plutôt `fallback={null}` (rien à montrer tant que le chunk n'est pas là).
+function PanelLoading() {
+  return (
+    <div className="flex min-h-0 flex-1 bg-bg">
+      <Squelette bloc label="Chargement…" />
     </div>
   )
 }
@@ -258,7 +279,7 @@ function Toast() {
 }
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen, setContexteCommune, togglePanel, setTuyauActives, toggleTuyau } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen, contexteCommune, setContexteCommune, togglePanel, setTuyauActives, toggleTuyau } = useApp()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   // RECETTE-10 — + setContexteCommune / togglePanel / setFilters exposés pour piloter les captures
@@ -374,7 +395,7 @@ export default function App() {
   if (view === 'admin') {
     return (
       <div className="flex h-screen w-screen overflow-hidden bg-bg font-sans text-txt">
-        <AdminView />
+        <Suspense fallback={<PanelLoading />}><AdminView /></Suspense>
         <Toast />
         <TraceTiroir />
       </div>
@@ -393,27 +414,35 @@ export default function App() {
           {view === 'cartes' && (
             <>
               {/* P1 : quand le tiroir Outils est ouvert, il REMPLACE le panneau Cartes (COUCHES/
-                  résultats) — la carte reste derrière. Un seul panneau gauche à la fois. */}
-              {outilsOpen ? null : module ? <ModulePanel /> : parcours ? null : <LeftPanel />}
+                  résultats) — la carte reste derrière. Un seul panneau gauche à la fois.
+                  CARTE-VITESSE-2 lot B : ModulePanel est chargé à la demande (chunk des 16 outils
+                  hors du graphe initial) → Suspense avec squelette de panneau. */}
+              {outilsOpen ? null : module ? <Suspense fallback={<PanelLoading />}><ModulePanel /></Suspense> : parcours ? null : <LeftPanel />}
               <Suspense fallback={<MapLoading />}>
                 {/* M70 décision 11 (bug 10) — TimeMachine centrée sur LA parcelle : le bouton
                     « 1950 » de la fiche pose flyTo{center: coords} avant setModule('temps') ; on le
                     transmet (MapView n'est pas monté ici, flyTo persiste). Sans parcelle → vue large. */}
                 {module === 'temps' ? <TimeMachine center={flyTo?.center ?? null} /> : <MapView />}
               </Suspense>
-              {parcours && <ParcoursTinder />}
+              {parcours && <Suspense fallback={null}><ParcoursTinder /></Suspense>}
               {/* RV2-V3 — la Veille a QUITTÉ l'overlay de droite : c'est désormais une catégorie plein
                   écran (view === 'veille', montée plus bas), au patron Radar. */}
               {/* M55-L point 9 : le comparateur s'ouvre aussi depuis l'outil « Comparer » (Outils),
                   donc SANS parcelle pré-sélectionnée → on rend le panneau dès `compareOpen`
                   (ComparePanel gère l'état vide). */}
-              {compareOpen && <ComparePanel />}
-              {/* §4 — la table des 24 communes de l'outil « Communes » s'ouvre en grand (patron
-                  ex-Comparateur) ; le composant se rend lui-même selon `communesTableOpen`. */}
-              <CommunesTablePanel />
-              {/* RETOURS-13 R13 / RETOURS-14 S1 — deux tableaux, deux modales, deux noms. */}
-              <EvolutionTablePanel />
-              <RadarTablePanel />
+              {compareOpen && <Suspense fallback={null}><ComparePanel /></Suspense>}
+              {/* §4 — les modales de l'outil « Communes » (table des 24, Évolution, Radar) ne se
+                  rendent que si module==='communes' ET leur drapeau est ouvert. CARTE-VITESSE-2 lot
+                  B : on GATE le montage sur module==='communes' pour que le chunk Communes n'arrive
+                  qu'à l'ouverture de l'outil (le composant garde son propre `return null` interne). */}
+              {module === 'communes' && (
+                <Suspense fallback={null}>
+                  <CommunesTablePanel />
+                  {/* RETOURS-13 R13 / RETOURS-14 S1 — deux tableaux, deux modales, deux noms. */}
+                  <EvolutionTablePanel />
+                  <RadarTablePanel />
+                </Suspense>
+              )}
               {/* DENSIFIER-PLI (PISCINES-2 Lot B) — le grand tableau « Densifier l'existant » est retiré :
                   l'outil est plié dans le filtre Capacité (« Déjà bâti » + « SDP restante »). */}
             </>
@@ -432,15 +461,19 @@ export default function App() {
               <SurveillancePanel />
             </Suspense>
           )}
-          {view === 'crm' && <Kanban />}
-          {view === 'sources' && <SourcesPage />}
-          {view === 'projets' && <ProjetsPanel />}
-          {view === 'copilote' && <CopiloteView />}
+          {view === 'crm' && <Suspense fallback={<PanelLoading />}><Kanban /></Suspense>}
+          {view === 'sources' && <Suspense fallback={<PanelLoading />}><SourcesPage /></Suspense>}
+          {view === 'projets' && <Suspense fallback={<PanelLoading />}><ProjetsPanel /></Suspense>}
+          {view === 'copilote' && <Suspense fallback={<PanelLoading />}><CopiloteView /></Suspense>}
           {/* RADAR-CATÉGORIE (T3) — en vue Radar, la fiche du BIEN (overlay RadarView) est maître ;
               le clic-pin surligne la parcelle mais n'ouvre PAS la fiche parcelle. « Ouvrir la fiche
-              parcelle → » bascule d'abord sur 'cartes', où la fiche s'affiche normalement. */}
-          {selectedIdu && view !== 'sources' && view !== 'radar' && <Fiche idu={selectedIdu} />}
-          <ContextePanel />
+              parcelle → » bascule d'abord sur 'cartes', où la fiche s'affiche normalement.
+              CARTE-VITESSE-2 lot B : Fiche (tout son arbre constructibilité/faisabilité) chargée à
+              la demande — overlay, fallback null (la fiche a ses propres squelettes internes). */}
+          {selectedIdu && view !== 'sources' && view !== 'radar' && (
+            <Suspense fallback={null}><Fiche idu={selectedIdu} /></Suspense>
+          )}
+          {contexteCommune && <Suspense fallback={null}><ContextePanel /></Suspense>}
           <SourceDrawer />
           <Toast />
           <IaRestitution />

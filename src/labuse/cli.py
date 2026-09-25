@@ -1056,6 +1056,21 @@ def build_mvt_cmd(
             typer.echo(f"✓ parcel_couche_intersection : {_ni} intersections (servitudes).")
 
 
+@app.command("tiles-warm")
+def tiles_warm_cmd() -> None:
+    """CARTE-VITESSE-2 lot A — pré-génère les tuiles `parcels` z9-z11 de l'île dans `mvt_tile_cache`
+    (26 tuiles, figées entre deux build-mvt). Idempotente et chronométrée. `build-mvt` l'appelle déjà
+    en fin de geste ; cette commande sert à (re)chauffer sans tout reconstruire, ou après une
+    ingestion cadastre. Le premier affichage de la carte sert alors les z9-z11 depuis le cache (~5 ms)
+    au lieu d'un Seq Scan de mvt_parcels (0,4-2,3 s)."""
+    from .api.tiles import warm_parcel_tiles
+    with session_scope() as s:
+        s.execute(text("SET lock_timeout = '30s'"))
+        res = warm_parcel_tiles(s, log=typer.echo)
+    typer.echo(f"✓ tiles-warm : {res['tuiles']} tuiles z9-z11 (version {res.get('version', '')}) "
+               f"en {res.get('seconds', 0)} s.")
+
+
 @app.command("build-intersections")
 def build_intersections_cmd(
     force: bool = typer.Option(False, help="Reconstruit même si la version des sources est inchangée."),

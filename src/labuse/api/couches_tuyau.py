@@ -22,6 +22,7 @@ ni aucune couche existante ; il sert les 52 couches déclarées sur un chemin di
 """
 from __future__ import annotations
 
+import functools
 import re
 import threading
 import time
@@ -128,10 +129,13 @@ def _props_referencees(carte: dict) -> list[str]:
     return vus
 
 
+@functools.lru_cache(maxsize=1)
 def _charger_hors_registre() -> list[dict]:
     """retour §2 : les couches déclarées HORS spatial_layers (leur propre source), lues du YAML
     `declarations/couches/tuyau_hors_registre.yaml`. Une couche n'a pas besoin d'être dans
-    spatial_layers pour être au panneau."""
+    spatial_layers pour être au panneau.
+    CARTE-VITESSE-2 lot D (R4) — MÉMOÏSÉ : YAML statique relu à chaque `/map/tuyau/couches` avant
+    ce cache ; appelé en lecture seule (registre() + tuyau_couches construisent des dicts neufs)."""
     import pathlib
     import yaml as _yaml
     p = pathlib.Path(__file__).resolve().parents[3] / "declarations" / "couches" / "tuyau_hors_registre.yaml"

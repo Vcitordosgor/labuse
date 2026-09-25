@@ -17,6 +17,7 @@ Le format est FIGÉ au lot 0 (cf. declarations/FORMAT.md).
 """
 from __future__ import annotations
 
+import functools
 import pathlib
 from dataclasses import dataclass, field
 from typing import Any
@@ -128,9 +129,17 @@ def _fichiers(inclure_exemples: bool = False) -> list[pathlib.Path]:
     return sorted(out)
 
 
+@functools.lru_cache(maxsize=None)
 def charger(inclure_exemples: bool = False) -> tuple[list[Surface], list[Generique]]:
     """Surfaces spécifiques (production) + génériques. `inclure_exemples` ajoute les échantillons
-    de `_exemples/` (utilisé par les tests de format ; l'assembleur/Câblage lisent la production)."""
+    de `_exemples/` (utilisé par les tests de format ; l'assembleur/Câblage lisent la production).
+
+    CARTE-VITESSE-2 lot D (R4) — MÉMOÏSÉ (même idiome que `labuse.plu.destinations._load_yaml`) :
+    les déclarations sont des fichiers statiques (ne changent qu'au déploiement). Sans cache, CHAQUE
+    appel relisait+parsait tout l'arbre YAML (`declarations/**/*.yaml`) ; `couches_carte()` étant
+    appelé à chaque `/map/tuyau/couches` (chemin des overlays de la carte), l'audit CARTE-VITESSE-1
+    y mesurait ~3,4 s de Python sous contention. Tous les appelants itèrent le résultat en LECTURE
+    SEULE (aucune mutation de la liste). `charger.cache_clear()` reste disponible pour les tests."""
     surfaces: list[Surface] = []
     for p in _fichiers(inclure_exemples):
         # RACCORDEMENT-1 lot 2 — un fichier peut grouper plusieurs surfaces (docs YAML séparés par
@@ -242,11 +251,15 @@ def verifier(inclure_exemples: bool = True) -> tuple[list[str], list[str]]:
     return violations, orphelins
 
 
+@functools.lru_cache(maxsize=1)
 def couches_carte() -> list[dict]:
     """RACCORDEMENT-1 lot 3 — LE PLAN DES COUCHES, dérivé des déclarations `couche` (jamais un
     switch dans MapView). Chaque entrée porte tout ce qu'il faut pour rendre la couche GÉNÉRIQUEMENT :
     kind (fetch), géométrie, zoom d'apparition, rang de dessin, style, légende, et `niveaux` pour un
-    rendu multi (piscines : 3 rendus). Une couche nouvelle = un fichier de plus → elle apparaît ici."""
+    rendu multi (piscines : 3 rendus). Une couche nouvelle = un fichier de plus → elle apparaît ici.
+
+    CARTE-VITESSE-2 lot D (R4) — MÉMOÏSÉ : dérivé pur de `charger()` (statique). Servi tel quel à
+    chaque `/map/tuyau/couches` ; les appelants (endpoint, registre()) itèrent sans muter la liste."""
     surfaces, _ = charger()
     out = []
     for s in surfaces:

@@ -12,11 +12,12 @@ fonctionne à l'identique sur chaîne et tableau.
 """
 from __future__ import annotations
 
+import hashlib
 import threading
 import time
 from collections import OrderedDict
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -297,14 +298,25 @@ def rebuild_mvt_servies(db: Session, run_label: str | None = None, log=lambda *_
     # M-A : garde d'unicité du lien PM ↔ parcelle (sinon le build V sert un propriétaire arbitraire
     # pour un idu multi-lié) — même séquence, bruyante, non bloquante.
     upm = check_unicite_pm(session=db)
+    # CARTE-VITESSE-2 lot A : pré-génère les tuiles z9-z11 de l'île À LA FIN du geste unique (après
+    # mvt_meta) → jamais un rebuild sans tuiles île pré-chauffées. La couverture cadastre passe par
+    # `build-mvt` → ce hook la couvre aussi. Non bloquant : un échec de warm ne casse pas le rebuild.
+    try:
+        warm = warm_parcel_tiles(db, log=log)
+    except Exception as e:  # noqa: BLE001
+        db.rollback()
+        log(f"⚠ tiles-warm a échoué (non bloquant) : {e}")
+        warm = {"tuiles": 0}
     return {"n": n, "parcel_flags": pf["n"], "renouvellement": rr["n"],
             "score_e": se["total"], "renouv_coherence": cr["statut"], "peremption_ok": per["ok"],
             "tables_coherence": coh, "run_fiche": coh_fiche.get("statut"), "sources_declarees": srcs,
-            "unicite_pm": upm, "run_label": run_label}
+            "unicite_pm": upm, "run_label": run_label, "tuiles_prechauffees": warm.get("tuiles", 0)}
 
 
 # cache LRU en mémoire (les tuiles sont chères à générer et très re-demandées en navigation)
-_CACHE: OrderedDict[tuple, bytes] = OrderedDict()
+# CARTE-VITESSE-2 lot C : le LRU mémorise (octets, ETag) pour ne pas recalculer le md5 à chaque
+# service d'une tuile chaude (l'ETag alimente la revalidation conditionnelle 304, cf. _tile_response).
+_CACHE: OrderedDict[tuple, tuple[bytes, str]] = OrderedDict()
 _CACHE_MAX = 4096
 # M6.2 perf : cache navigateur des tuiles (le contenu ne change qu'au build-mvt). Appliqué
 # AUSSI au chemin servi depuis le cache LRU serveur — il l'omettait, donc le navigateur
@@ -350,50 +362,14 @@ def _mvt_has_zone(db: Session) -> bool:
         "WHERE table_name = 'mvt_parcels' AND column_name = 'zone_fam'")).scalar())
 
 
-@router.get("/map/tiles/meta")
-def mvt_tiles_meta(db: Session = Depends(get_db)) -> dict:
-    """Capacités ET FRAÎCHEUR des tuiles servies. Le front grise « Zonage PLU (parcelles) » si
-    zone_fam absent, ET affiche la DATE de ce que la carte montre (`carte_le`) + un drapeau
-    `perime` (FIX-CARTE T1). La péremption = tuiles bâties AVANT le dernier re-score/résiduel du
-    run servi (la même règle que la garde de build check_peremption_tuiles) → visible au RUNTIME,
-    pas seulement au build. Doctrine : la carte annonce la date de la donnée qu'elle peint."""
-    run = carte_le = amont_le = None
-    perime = False
-    if db.execute(text("SELECT to_regclass('mvt_meta')")).scalar():
-        row = db.execute(text(
-            "SELECT value, updated_at FROM mvt_meta WHERE key = 'run_label'")).mappings().first()
-        if row:
-            run, carte_le = row["value"], row["updated_at"]
-    if run and carte_le is not None:
-        sc = db.execute(text(
-            "SELECT max(computed_at) FROM parcel_p_score_v2 WHERE run_id = :r"), {"r": run}).scalar()
-        rs = db.execute(text("SELECT max(computed_at) FROM parcel_residuel")).scalar()
-        amont = max([d for d in (sc, rs) if d is not None], default=None)
-        if amont is not None:
-            amont_le = amont
-            perime = amont > carte_le
-    return {"run_label": run,
-            "zonage_parcelle": _mvt_has_zone(db)
-            if db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar() else False,
-            "carte_le": carte_le.isoformat() if carte_le else None,
-            "amont_le": amont_le.isoformat() if amont_le else None,
-            "perime": perime}
-
-
-@router.get("/map/tiles/{z}/{x}/{y}.pbf")
-def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
-    """Tuile MVT couche `parcels` — mêmes propriétés que le GeoJSON commune."""
-    # FIX-CARTE C2 : bornes ALIGNÉES sur la source front (parcels-ile minzoom 9 / maxzoom 15) —
-    # au-delà de z15 le client sur-zoome, il ne demande jamais z16+ ; on ne sert donc que z9-15.
-    if z < 9 or z > 15:
-        return Response(status_code=204)
-    key = (_mvt_version(db), z, x, y)   # FIX-CARTE T3 : clé versionnée → invalidation au rebuild
-    if key in _CACHE:
-        _CACHE.move_to_end(key)
-        return Response(content=_CACHE[key], media_type="application/x-protobuf", headers=_TILE_HEADERS)
+def _parcel_tile_bytes(db: Session, z: int, x: int, y: int) -> bytes:
+    """CARTE-VITESSE-2 lot A — SEUL point qui construit les octets d'une tuile `parcels`.
+    Utilisé PAR LA ROUTE (à la volée, z≥12) ET par `warm_parcel_tiles` (pré-génération z9-z11) :
+    même SQL, mêmes paliers de simplification, mêmes propriétés → octets STRICTEMENT identiques,
+    quel que soit le chemin. Ne touche NI le LRU NI la table de cache (le décide l'appelant)."""
     exists = db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar()
     if not exists:
-        return Response(status_code=204)  # table pas encore construite (run en cours)
+        return b""  # table pas encore construite (run en cours)
     # table d'avant le correctif M5 (sans tier_v2) : repli legacy jusqu'au `labuse build-mvt`
     has_v2 = db.execute(text(
         "SELECT 1 FROM information_schema.columns "
@@ -433,6 +409,12 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
              f"{v2_props_full}{zone_props_full}"
              "m.completeness_score, m.sdp_residuelle_m2, "
              "m.sous_densite, m.evenement")
+    # CARTE-VITESSE-2 lot A : `ORDER BY mvt.geom` dans l'agrégat → octets DÉTERMINISTES (le Parallel
+    # Seq Scan renvoyait les lignes dans un ordre variable, donc l'encodage MVT différait à chaque
+    # calcul — vérifié : deux calculs consécutifs de la MÊME tuile donnaient des md5 différents). L'ordre
+    # des entités n'a AUCUN effet sur le rendu (mêmes pixels) ; il rend les tuiles reproductibles et donc
+    # comparables (pré-génération == calcul à la volée == entre workers). `geom` est la colonne
+    # géométrie consommée par ST_AsMVT → ordonner dessus n'ajoute aucune propriété à la tuile.
     data = db.execute(text(f"""
         WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env),
         mvt AS (
@@ -441,10 +423,201 @@ SELECT ST_AsMVTGeom({geom_expr}, b.env, {extent}, {buffer}, true) AS geom,
           FROM mvt_parcels m, b
           WHERE m.geom_3857 && b.env
         )
-        SELECT ST_AsMVT(mvt.*, 'parcels', {extent}, 'geom') FROM mvt
+        SELECT ST_AsMVT(mvt.* ORDER BY mvt.geom, 'parcels', {extent}, 'geom') FROM mvt
     """), {"z": z, "x": x, "y": y}).scalar()
-    body = bytes(data) if data else b""
-    _CACHE[key] = body
+    return bytes(data) if data else b""
+
+
+# ————————————— CARTE-VITESSE-2 lot A : cache PERSISTANT des tuiles z9-z11 —————————————
+# Pourquoi une table et pas des fichiers : (1) le cache traverse les 5 workers uvicorn sans disque
+# partagé ni chemin à configurer ; (2) même sauvegarde/réplication que le reste ; (3) invalidation
+# transactionnelle avec le rebuild (`rebuild_mvt_servies`). Les z9-z11 de l'île = 26 tuiles (z9=4,
+# z10=6, z11=16), figées entre deux `build-mvt` → un `ST_AsMVT` sur 40 166 parcelles (Seq Scan de
+# `mvt_parcels`, l'index GiST ne sert pas à z9) devient un SELECT bytea indexé (~5 ms). z≥12 reste à
+# la volée (l'index GiST porte, 43 ms). La colonne `version` = `mvt_meta.updated_at` (même horloge que
+# le LRU) : après un rebuild, les lignes d'avant ne sont JAMAIS servies (WHERE version = courante).
+_TILE_CACHE_DDL = """
+CREATE TABLE IF NOT EXISTS mvt_tile_cache (
+    version    varchar(64) NOT NULL,
+    z          int NOT NULL,
+    x          int NOT NULL,
+    y          int NOT NULL,
+    layer      varchar(32) NOT NULL DEFAULT 'parcels',
+    data       bytea NOT NULL,
+    etag       varchar(40) NOT NULL,
+    built_at   timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (version, z, x, y, layer)
+)"""
+
+_WARM_ZOOMS = (9, 10, 11)
+
+
+def _etag(body: bytes) -> str:
+    return hashlib.md5(body).hexdigest()  # noqa: S324 — hash de CONTENU (ETag), pas de sécurité
+
+
+def _tile_cache_get(db: Session, version: str, z: int, x: int, y: int):
+    """Lit la tuile pré-générée (version courante). Retourne (data, etag) ou None. Tolère l'absence
+    de table (pré-lot A / run en cours) sans bruit."""
+    try:
+        row = db.execute(text(
+            "SELECT data, etag FROM mvt_tile_cache "
+            "WHERE version = :v AND z = :z AND x = :x AND y = :y AND layer = 'parcels'"),
+            {"v": version, "z": z, "x": x, "y": y}).first()
+    except Exception:
+        db.rollback()
+        return None
+    if row is None:
+        return None
+    return bytes(row[0]), row[1]
+
+
+def _tile_cache_put(db: Session, version: str, z: int, x: int, y: int, body: bytes, etag: str) -> None:
+    """Écrit (best-effort) une tuile dans le cache persistant. Sur le chemin GET c'est un bonus :
+    un échec (course, table absente) ne doit jamais faire échouer la réponse."""
+    try:
+        db.execute(text("""
+            INSERT INTO mvt_tile_cache (version, z, x, y, layer, data, etag)
+            VALUES (:v, :z, :x, :y, 'parcels', :d, :e)
+            ON CONFLICT (version, z, x, y, layer) DO NOTHING"""),
+            {"v": version, "z": z, "x": x, "y": y, "d": body, "e": etag})
+        db.commit()
+    except Exception:
+        db.rollback()
+
+
+def warm_parcel_tiles(db: Session, log=lambda *_: None) -> dict:
+    """CARTE-VITESSE-2 lot A — pré-génère les tuiles `parcels` z9-z11 couvrant l'île et les stocke
+    dans `mvt_tile_cache` à la VERSION courante. Idempotente (ON CONFLICT DO NOTHING) et chronométrée.
+    Appelée par `rebuild_mvt_servies` (après chaque build-mvt / bascule) et par `labuse tiles-warm`.
+    Purge les versions périmées. Octets STRICTEMENT identiques à la route (même `_parcel_tile_bytes`)."""
+    t0 = time.perf_counter()
+    db.execute(text(_TILE_CACHE_DDL))
+    db.commit()
+    # Version LUE FRAÎCHE de mvt_meta (pas via _mvt_version, mémoïsé 60 s : après un rebuild dans le
+    # même process il renverrait l'ancienne → on stockerait sous une version morte).
+    version = db.execute(text(
+        "SELECT to_char(updated_at, 'YYYYMMDDHH24MISSMS') FROM mvt_meta WHERE key = 'run_label'")).scalar() or ""
+    if not version:
+        log("⚠ pas de mvt_meta (build-mvt non joué) — rien à pré-chauffer.")
+        return {"tuiles": 0, "version": "", "seconds": 0.0}
+    # emprise réelle des parcelles → plages de tuiles XYZ par zoom (Web-Mercator, origine haut-gauche)
+    ext = db.execute(text("SELECT ST_XMin(e), ST_XMax(e), ST_YMin(e), ST_YMax(e) "
+                          "FROM (SELECT ST_Extent(geom_3857) e FROM mvt_parcels) t")).first()
+    if not ext or ext[0] is None:
+        log("⚠ mvt_parcels vide — rien à pré-chauffer.")
+        return {"tuiles": 0, "version": version, "seconds": 0.0}
+    xmin, xmax, ymin, ymax = ext
+    W = 20037508.342789244
+    n = 0
+    for z in _WARM_ZOOMS:
+        span = (2 * W) / (2 ** z)
+        x0 = int((xmin + W) // span); x1 = int((xmax + W) // span)
+        y0 = int((W - ymax) // span); y1 = int((W - ymin) // span)
+        for x in range(x0, x1 + 1):
+            for y in range(y0, y1 + 1):
+                body = _parcel_tile_bytes(db, z, x, y)  # même octets que la route
+                _tile_cache_put(db, version, z, x, y, body, _etag(body))
+                n += 1
+    # purge des versions périmées (garde uniquement la version servie)
+    db.execute(text("DELETE FROM mvt_tile_cache WHERE version <> :v"), {"v": version})
+    db.commit()
+    secs = round(time.perf_counter() - t0, 2)
+    log(f"✓ tiles-warm : {n} tuiles z9-z11 pré-générées (version {version}) · {secs} s.")
+    return {"tuiles": n, "version": version, "seconds": secs}
+
+
+@router.get("/map/tiles/meta")
+def mvt_tiles_meta(db: Session = Depends(get_db)) -> dict:
+    """Capacités ET FRAÎCHEUR des tuiles servies. Le front grise « Zonage PLU (parcelles) » si
+    zone_fam absent, ET affiche la DATE de ce que la carte montre (`carte_le`) + un drapeau
+    `perime` (FIX-CARTE T1). La péremption = tuiles bâties AVANT le dernier re-score/résiduel du
+    run servi (la même règle que la garde de build check_peremption_tuiles) → visible au RUNTIME,
+    pas seulement au build. Doctrine : la carte annonce la date de la donnée qu'elle peint."""
+    run = carte_le = amont_le = None
+    perime = False
+    if db.execute(text("SELECT to_regclass('mvt_meta')")).scalar():
+        row = db.execute(text(
+            "SELECT value, updated_at FROM mvt_meta WHERE key = 'run_label'")).mappings().first()
+        if row:
+            run, carte_le = row["value"], row["updated_at"]
+    if run and carte_le is not None:
+        sc = db.execute(text(
+            "SELECT max(computed_at) FROM parcel_p_score_v2 WHERE run_id = :r"), {"r": run}).scalar()
+        rs = db.execute(text("SELECT max(computed_at) FROM parcel_residuel")).scalar()
+        amont = max([d for d in (sc, rs) if d is not None], default=None)
+        if amont is not None:
+            amont_le = amont
+            perime = amont > carte_le
+    # CARTE-VITESSE-2 lot A : fraîcheur du cache de tuiles pré-générées (built_at + nombre servi).
+    tuiles_le = tuiles_n = None
+    if db.execute(text("SELECT to_regclass('mvt_tile_cache')")).scalar() and run is not None:
+        v = db.execute(text("SELECT to_char(updated_at, 'YYYYMMDDHH24MISSMS') FROM mvt_meta "
+                            "WHERE key = 'run_label'")).scalar()
+        tr = db.execute(text("SELECT max(built_at), count(*) FROM mvt_tile_cache WHERE version = :v"),
+                        {"v": v}).first()
+        if tr and tr[0] is not None:
+            tuiles_le, tuiles_n = tr[0].isoformat(), tr[1]
+    return {"run_label": run,
+            "zonage_parcelle": _mvt_has_zone(db)
+            if db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar() else False,
+            "carte_le": carte_le.isoformat() if carte_le else None,
+            "amont_le": amont_le.isoformat() if amont_le else None,
+            "perime": perime,
+            "tuiles_prechauffees_le": tuiles_le, "tuiles_prechauffees_n": tuiles_n}
+
+
+def _tile_response(request: Request, body: bytes, etag: str) -> Response:
+    """CARTE-VITESSE-2 lot C (R3) — réponse tuile avec ETag FORT (hash du CONTENU, cf. _etag) et
+    revalidation conditionnelle. L'audit CARTE-VITESSE-1 notait l'absence d'ETag sur cette route :
+    le navigateur, une fois max-age écoulé (ou en revalidation SWR), re-téléchargeait la tuile
+    ENTIÈRE même inchangée. Avec l'ETag, un `If-None-Match` correspondant renvoie **304** sans corps
+    (~0 octet réseau) ; l'ETag change au rebuild-mvt (le contenu change) → invalidation propre. Un
+    proxy amont (Caddy) peut de surcroît revalider/mettre en cache sur cette clé forte."""
+    quoted = f'"{etag}"'
+    headers = {**_TILE_HEADERS, "ETag": quoted}
+    inm = request.headers.get("if-none-match", "")
+    if inm:
+        # If-None-Match peut lister plusieurs valeurs, un "*", ou des tags faibles (W/"…").
+        tags = {t.strip().lstrip("W/").strip().strip('"') for t in inm.split(",")}
+        if "*" in tags or etag in tags:
+            return Response(status_code=304, headers=headers)
+    return Response(content=body, media_type="application/x-protobuf", headers=headers)
+
+
+@router.get("/map/tiles/{z}/{x}/{y}.pbf")
+def mvt_tile(z: int, x: int, y: int, request: Request, db: Session = Depends(get_db)) -> Response:
+    """Tuile MVT couche `parcels` — mêmes propriétés que le GeoJSON commune.
+    CARTE-VITESSE-2 lot A : z9-z11 servies depuis le cache PERSISTANT `mvt_tile_cache` (pré-générées
+    par `warm_parcel_tiles`) ; à défaut (tuile non chauffée / première demande après un rebuild) on
+    génère à la volée ET on met en cache. z≥12 : à la volée (l'index GiST porte).
+    Lot C : chaque réponse porte un ETag fort (304 si le client a déjà la même tuile)."""
+    # FIX-CARTE C2 : bornes ALIGNÉES sur la source front (parcels-ile minzoom 9 / maxzoom 15) —
+    # au-delà de z15 le client sur-zoome, il ne demande jamais z16+ ; on ne sert donc que z9-15.
+    if z < 9 or z > 15:
+        return Response(status_code=204)
+    version = _mvt_version(db)          # FIX-CARTE T3 : clé versionnée → invalidation au rebuild
+    key = (version, z, x, y)
+    if key in _CACHE:                    # 1) LRU en mémoire (par worker) — le plus rapide
+        _CACHE.move_to_end(key)
+        body, etag = _CACHE[key]
+        return _tile_response(request, body, etag)
+    body = None
+    etag = None
+    if z in _WARM_ZOOMS:                 # 2) cache persistant (traverse les workers)
+        got = _tile_cache_get(db, version, z, x, y)
+        if got is not None:
+            body, etag = got[0], got[1]
+    if body is None:                     # 3) miss : générer à la volée
+        if not db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar():
+            return Response(status_code=204)  # table pas encore construite (run en cours)
+        body = _parcel_tile_bytes(db, z, x, y)
+        etag = _etag(body)
+        if z in _WARM_ZOOMS:             # …et alimenter le cache persistant (best-effort)
+            _tile_cache_put(db, version, z, x, y, body, etag)
+    if etag is None:                     # cache persistant sans etag (schéma ancien) : recalcul
+        etag = _etag(body)
+    _CACHE[key] = (body, etag)
     if len(_CACHE) > _CACHE_MAX:
         _CACHE.popitem(last=False)
-    return Response(content=body, media_type="application/x-protobuf", headers=_TILE_HEADERS)
+    return _tile_response(request, body, etag)
