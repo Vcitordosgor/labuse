@@ -382,6 +382,29 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "radar → l'annonce), pour que le digest du matin l'e-maile avec les parcelles suivies et les "
               "nouveautés. Idempotent (dédup compte+bien+jour). N'envoie aucun mail (le digest s'en charge).",
        test="tests/test_veille2_lot5.py::test_un_seul_mail_par_jour_trois_comptes"),
+    # ── RADAR-AUTO-1 (Lot C) — le cycle de vie, DÉSORMAIS PLANIFIÉ. La capture automatique (extension,
+    # rythme humain) rend ces jobs utiles chaque nuit : sans eux, une annonce expirée reste « active »,
+    # aucune vente DVF ne se rapproche, la cible Courrier ne se qualifie jamais (cf. RADAR-AUDIT-1 §6c).
+    # Ils étaient codés+idempotents mais non branchés ; le mandat RADAR-AUTO-1 renverse ce choix.
+    _j("radar-cycle", "Radar — cycle de vie quotidien (expirées / en-vente-longue / à-revérifier)",
+       "quotidien", "0 0 * * *", "04:00", touche="exploitation", timeout_s=600,
+       raison="Après la capture du soir : une annonce expirée côté portail passe `retiree`, > 90 j en "
+              "ligne → `en_vente_longue`, > 60 j sans confirmation → `a_reverifier`. Sans ce job, le "
+              "cycle fige et une annonce expirée reste « active » indéfiniment (RADAR-AUDIT-1 §6c). "
+              "Idempotent, zéro réseau.",
+       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies"),
+    _j("radar-cycle-dvf", "Radar — rapprochement DVF (bien rattaché Sourcé + vente → vendue)",
+       "quotidien", "30 0 * * *", "04:30", touche="exploitation", timeout_s=900,
+       raison="Un bien RATTACHÉ Sourcé dont la parcelle a une mutation DVF « Vente » dans [3;18] mois "
+              "après publication passe `vendue` (+ délai, écart affiché/acté). Alimente l'entonnoir "
+              "vendue → Courrier et le digest. Après l'ingestion DVF. Jamais sur une PISTE.",
+       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies"),
+    _j("radar-cycle-mensuel", "Radar — qualification mensuelle retiree_sans_vente (cible Courrier)",
+       "mensuel (1er)", "30 1 1 * *", "05:30 le 1er", touche="exploitation", timeout_s=600,
+       raison="La CIBLE Courrier : un bien `retiree` rattaché, retiré depuis > 12 mois et SANS mutation "
+              "DVF « Vente » depuis la publication → `retiree_sans_vente`. JAMAIS depuis un lien mort — "
+              "seule l'absence de vente DVF prouvée qualifie. Sans ce job, l'entonnoir Courrier dort.",
+       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies"),
 
     # ── VEILLE-FIX-1 (lot 1) — les quatre fonctions du LEGACY du matin que le registre ne portait pas.
     # Sans elles, retirer les crons legacy éteignait la veille (suivis/secteurs/recherches) et le digest.

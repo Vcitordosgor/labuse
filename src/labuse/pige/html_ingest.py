@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 
 from . import coherence, html_next, portails, rattachement_html
 from .intake import resoudre_commune
-from .tables import (EV_A_QUALIFIER, EV_BAISSE_PRIX, EV_DEPOT_HTML, EV_NOUVELLE, depots_dir,
+from .tables import (EV_A_QUALIFIER, EV_BAISSE_PRIX, EV_DEPOT_HTML, EV_HAUSSE_PRIX, EV_NOUVELLE, depots_dir,
                      depots_dir_writable, enregistrer_fraicheur, journaliser)
 
 
@@ -65,16 +65,26 @@ def _badge_baisse(db: Session, bien_id: int, rec: dict, commune: str) -> None:
                 lien=rec.get("url"), dedup=f"pige:baisse-badge:{bien_id}:{today_reunion().isoformat()}")
 
 
+SEUIL_VARIATION_PRIX = 0.01   # RADAR-AUTO-1 (Lot C) — variation < 1 % = bruit d'arrondi, pas un signal
+
+
 def _maj_prix(db: Session, bien_id: int, ancien, nouveau) -> None:
-    """Historise un CHANGEMENT de prix (pige_prix_historique) ; une baisse journalise EV_BAISSE_PRIX
-    (signal le plus actionnable — Lot 5)."""
+    """Historise un CHANGEMENT de prix (pige_prix_historique) ; au-delà de ±1 % (SEUIL_VARIATION_PRIX),
+    journalise EV_BAISSE_PRIX (le plus actionnable) OU EV_HAUSSE_PRIX. RADAR-AUTO-1 (Lot C) : la hausse
+    est désormais un événement à part entière, et une micro-variation sous le seuil reste historisée
+    (traçabilité) mais NE déclenche PAS d'événement (anti-bruit)."""
     if ancien is None or nouveau is None or nouveau == ancien:
         return
     db.execute(text("INSERT INTO pige_prix_historique (bien_id, ancien_prix, nouveau_prix) "
                     "VALUES (:b, :a, :n)"), {"b": bien_id, "a": ancien, "n": nouveau})
+    if ancien <= 0 or abs(nouveau - ancien) / ancien < SEUIL_VARIATION_PRIX:
+        return
     if nouveau < ancien:
         journaliser(db, EV_BAISSE_PRIX, f"Baisse de prix — bien #{bien_id}",
                     detail=f"{ancien} € → {nouveau} €", dedup=f"pige:baisse:{bien_id}:{nouveau}")
+    else:
+        journaliser(db, EV_HAUSSE_PRIX, f"Hausse de prix — bien #{bien_id}",
+                    detail=f"{ancien} € → {nouveau} €", dedup=f"pige:hausse:{bien_id}:{nouveau}")
 
 
 def _ecrire_faits(db: Session, bien_id: int, rec: dict, *, insert: bool, combler: bool = False) -> None:

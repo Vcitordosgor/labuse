@@ -71,6 +71,10 @@ def test_coherence_robinets_repris():
     assert j.touche == "eau" and j.cron_utc == "25 3 * * *"  # 07:25
 
 
-def test_radar_na_pas_de_job():
-    """Radar : PAS de job (échéance en base → G8 au lot 2). Aucun radar-cycle/radar-releves au registre."""
-    assert "radar-cycle" not in JOBS and "radar-releves" not in JOBS
+def test_radar_cycle_planifie():
+    """RADAR-AUTO-1 (Lot C) — renverse l'ancien choix « Radar : PAS de job » : la capture automatique
+    (extension) rend le cycle utile chaque nuit. radar-cycle / -dvf / -mensuel sont désormais au
+    registre ; radar-releves reste retiré (les relevés se lisent, cf. commentaire du registre)."""
+    assert "radar-cycle" in JOBS and "radar-cycle-dvf" in JOBS and "radar-cycle-mensuel" in JOBS
+    assert "radar-releves" not in JOBS
+    assert JOBS["radar-cycle"].touche == "exploitation"
