@@ -437,13 +437,11 @@ def histoire_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
     from ..proprietaire_historique import historique
     hist = historique(db, idu)
     for ch in (hist or {}).get("changements", []):
-        # E3 (REMONTER-TEMPS-2) — le changement se détecte par différence de SIREN entre deux
-        # millésimes ; c'est FRAGILE quand l'un des deux SIREN est un pseudo-siren « U… » (attribué
-        # par LABUSE, ~13 % des lignes DGFiP) : une simple re-clé de dénomination ferait apparaître
-        # un « changement » qui n'en est pas un. On N'AFFIRME alors AUCUN changement — un tiret neutre
-        # « propriétaire PM non identifiable », jamais un changement inventé.
-        sa, sp = ch["siren_avant"] or "", ch["siren_apres"] or ""
-        if sa.upper().startswith("U") or sp.upper().startswith("U"):
+        # DONNEES-FIX-1 lot B — la classification (SIREN réels ↔ pseudo « U… »/absent) vit désormais
+        # dans proprietaire_historique.changements_millesimes : UNE seule règle pour la fiche §Identité
+        # ET cette frise. On lit le drapeau `non_identifiable` ; on n'affirme AUCUN changement quand la
+        # source ne le permet pas — un tiret neutre « propriétaire PM non identifiable », jamais inventé.
+        if ch.get("non_identifiable"):
             faits.append({
                 "famille": "proprietaire", "date": None, "maille": "millesime",
                 "annee": ch["a_millesime"],
