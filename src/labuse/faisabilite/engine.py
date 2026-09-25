@@ -89,8 +89,14 @@ class Hypotheses:
     dvf_radius_m: float = 1500.0                # rayon de recherche des ventes DVF comparables
     dvf_min_ventes: int = 8                     # en deçà, prix DVF jugé non fiable
     # --- Potentiel résiduel (Lot B) — PLACEHOLDERS ---
-    niveaux_bati_existant_defaut: float = 1.0   # niveaux supposés du bâti existant (hauteur BD TOPO non ingérée)
+    niveaux_bati_existant_defaut: float = 1.0   # niveaux supposés du bâti existant (aucune hauteur — ni LiDAR ni BD TOPO)
     sous_densite_seuil_pct: float = 40.0        # seuil du taux d'emprise sous lequel = « sous-densité »
+    # DONNEES-FIX-1 lot C — l'emprise BD TOPO est l'emprise du TOIT (débords ~5 %) ; on la ramène à
+    # l'emprise de PLANCHER pour rester sur la MÊME convention de surface de plancher que le plafond
+    # `surface_plancher_m2` (= emprise de plancher × niveaux, sans coefficient par niveau). Volontairement
+    # proche de 1 : un coefficient plus agressif sur l'existant SEUL surestimerait le résiduel (asymétrie
+    # avec le plafond) — le biais même que ce lot corrige.
+    coef_sdp_existante: float = 0.95
     he_defaut_generique_m: float = HE_DEFAUT_GENERIQUE_M   # hé prudent des zones U/AU NON outillées (≈ R+2)
     # --- Prescriptions GPU (Décisions 3.b / 3.c) ---
     pct_lls: float = 0.0              # % de logements aidés (validé Vic : 30 % — Art. 2 règlement PLU)

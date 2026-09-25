@@ -27,7 +27,7 @@ def _stub(monkeypatch):
     # Couche bâtiment "présente", niveaux existants = défaut (pas de hauteur ingérée).
     monkeypatch.setattr("labuse.bati.layer_available", lambda s: True)
     monkeypatch.setattr("labuse.faisabilite.residuel._niveaux_existants",
-                        lambda s, pid, defaut: (float(defaut), False))
+                        lambda s, pid, defaut: (float(defaut), False, "sans"))
     # M32 (BASCULE PHASE C) — compute_residuel lit désormais le bâti RÉVÉLÉ CoSIA (parcel_bati_revele) :
     # point unique isolé en `_emprise_revelee`, qu'on stubbe (pas de bâti révélé par défaut) pour garder
     # ces tests PURS. Avant M32 le calcul n'accédait pas à la base — d'où l'ancien `session=None`.
@@ -51,9 +51,9 @@ def test_bati_revele_cosia_prime_sur_bd_topo(monkeypatch):
     _ratio(monkeypatch, 0.0)                      # BD TOPO : 0 m² bâti
     monkeypatch.setattr("labuse.faisabilite.residuel._emprise_revelee", lambda s, pid: 300.0)
     r = residuel.compute_residuel(None, 1, faisa=_faisa(emprise=500, sdp_max=1000))
-    # révélée 300 > BD TOPO 0 → retenue ; taux 300/500 = 60 % ; SDP existante 300×1 → résiduelle 700.
+    # révélée 300 > BD TOPO 0 → retenue ; taux 300/500 = 60 % ; SDP existante 300×1×0,95=285 → résiduelle 715.
     assert r["emprise_batie_m2"] == 300 and r["taux_emprise_pct"] == 60
-    assert r["sdp_residuelle_m2"] == 700 and r["sous_densite"] is False
+    assert r["sdp_residuelle_m2"] == 715 and r["sous_densite"] is False
 
 
 def test_parcelle_dense_pas_sous_densite(monkeypatch):
@@ -61,8 +61,8 @@ def test_parcelle_dense_pas_sous_densite(monkeypatch):
     _ratio(monkeypatch, 0.45)
     r = residuel.compute_residuel(None, 1, faisa=_faisa(emprise=500, sdp_max=1000))
     assert r["taux_emprise_pct"] == 90 and r["sous_densite"] is False
-    # SDP existante = 450 × 1 niveau (défaut) ; résiduelle = 1000 − 450 = 550.
-    assert r["sdp_residuelle_m2"] == 550
+    # SDP existante = 450 × 1 niveau (défaut) × 0,95 = 427,5 ; résiduelle = 1000 − 427,5 = 572.
+    assert r["sdp_residuelle_m2"] == 572
 
 
 def test_sdp_estimee_flaggee_quand_hauteur_absente(monkeypatch):
@@ -101,10 +101,10 @@ def test_assiette_clippee_bati_mesure_sur_la_portion_uau(monkeypatch):
     faisa = _faisa(emprise=90, sdp_max=81, niveaux_max=1)
     faisa = (ctx, faisa[1])
     r = residuel.compute_residuel(None, 1, faisa=faisa, assiette_clippee=True)
-    # bâti retenu = 20 m² (portion U/AU), niveaux 1 → SDP existante 20 → résiduelle 81 − 20 = 61.
+    # bâti retenu = 20 m² (portion U/AU), niveaux 1 × 0,95 → SDP existante 19 → résiduelle 81 − 19 = 62.
     # (avec le bâti du contour entier : 81 − 600 = 0 → faux tout-ou-rien.)
     assert r["disponible"] and r["emprise_batie_m2"] == 20
-    assert r["sdp_residuelle_m2"] == 61
+    assert r["sdp_residuelle_m2"] == 62
 
 
 def test_assiette_clippee_ignoree_hors_a_cheval(monkeypatch):
@@ -119,8 +119,20 @@ def test_assiette_clippee_ignoree_hors_a_cheval(monkeypatch):
     ctx = ParcelContext(1, "x", "Bras-Panon", 1000.0, "U", Contraintes(), zone_parts=[])
     r = residuel.compute_residuel(None, 1, faisa=(ctx, _faisa(emprise=500, sdp_max=1000)[1]),
                                   assiette_clippee=True)
-    # parts vides → _pct_constructible None → clip ignoré → bâti = 0.20×1000 = 200, résiduelle 800.
-    assert called["n"] == 0 and r["emprise_batie_m2"] == 200 and r["sdp_residuelle_m2"] == 800
+    # parts vides → _pct_constructible None → clip ignoré → bâti = 0.20×1000 = 200 ×1×0,95 = 190 → résiduelle 810.
+    assert called["n"] == 0 and r["emprise_batie_m2"] == 200 and r["sdp_residuelle_m2"] == 810
+
+
+def test_niveaux_lidar_reduisent_le_residuel(monkeypatch):
+    """DONNEES-FIX-1 lot C — l'égout LiDAR mesuré (ici R+2 = 3 niveaux) remplace le placeholder R+0 :
+    SDP existante = 200 × 3 × 0,95 = 570 → résiduelle 1000 − 570 = 430 (au lieu de 810 en R+0). La
+    provenance est tracée ('lidar')."""
+    _ratio(monkeypatch, 0.20)   # 200 m² bâtis
+    monkeypatch.setattr("labuse.faisabilite.residuel._niveaux_existants",
+                        lambda s, pid, defaut: (3.0, True, "lidar"))
+    r = residuel.compute_residuel(None, 1, faisa=_faisa(emprise=500, sdp_max=1000))
+    assert r["niveaux_existants"] == 3.0 and r["hauteur_source"] == "lidar"
+    assert r["sdp_residuelle_m2"] == 430 and r["niveaux_reels"] is True
 
 
 def test_seuil_sous_densite_borne(monkeypatch):
