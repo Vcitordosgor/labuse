@@ -6279,10 +6279,24 @@ def renouvellement_liste(commune: str | None = None,
         FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu {where}"""),
         {"c": commune, "run": runs.current()}).mappings().first()
     total = int(meta["n"] or 0)
+    # OUTILS-S1 (Lot C) — « pas un instantané figé ». `parcel_renouvellement` est un précalcul
+    # ÉPINGLÉ à un run (`run_label`, relancé à la main par `labuse renouv`). L'écran ne montrait que
+    # `maj` (date de matérialisation) : rien ne disait QUEL run, ni que la table pouvait dater d'AVANT
+    # le run servi. Si la bascule fait avancer le run servi sans relancer le précalcul, le WHERE
+    # `run_label = :run` ne renvoie plus RIEN → l'outil se vide EN SILENCE. On expose donc le run
+    # réellement disponible et un drapeau `perime` pour le DIRE (jamais un zéro muet).
+    precalc = db.execute(text(
+        "SELECT run_label, to_char(max(computed_at), 'YYYY-MM-DD') AS maj "
+        "FROM parcel_renouvellement GROUP BY run_label ORDER BY max(computed_at) DESC LIMIT 1")
+    ).mappings().first()
+    run_precalc = precalc["run_label"] if precalc else None
+    perime = bool(run_precalc and run_precalc != runs.current())
+    maj = meta["maj"] or (precalc["maj"] if precalc else None)
     # M47 (P2) : millésime/source de la couche servie (run servi + date de matérialisation).
     return {"total": total, "n": len(rows), "cap": cap, "tronquee": total > len(rows),
             "items": [dict(r) for r in rows],
-            "source": "Analyse LABUSE", "run_label": runs.current(), "maj": meta["maj"],
+            "source": "Analyse LABUSE", "run_label": runs.current(), "maj": maj,
+            "run_precalc": run_precalc, "run_servi": runs.current(), "perime": perime,
             "libelle": LIBELLE_SEGMENT, "composantes_libelles": LIBELLES_COMPOSANTES,
             "avertissement": ("Parcelles occupées : potentiel physique et réglementaire de "
                               "densification — ni une mise en vente prévisible, ni une "

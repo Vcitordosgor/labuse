@@ -105,12 +105,21 @@ export function RenouvellementModule() {
       {error && <ErrorState message="Segment momentanément indisponible — réessayez." retry={() => refetch()} />}
       {data && (
         <>
-          {/* note d'analyse DATÉE */}
+          {/* note d'analyse DATÉE — OUTILS-S1 (Lot C) : on nomme le RUN lu (précalcul épinglé, relancé
+              par `labuse renouv`), pas seulement la date de matérialisation. */}
           <div className="rounded-lg bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
-            <b className="text-txt">Analyse LABUSE</b>{data.maj ? ` · maj ${data.maj}` : ''} ·{' '}
+            <b className="text-txt">Analyse LABUSE</b>{data.run_label ? ` · run ${data.run_label}` : ''}{data.maj ? ` · maj ${data.maj}` : ''} ·{' '}
             <b className="tnum text-txt">{fmtInt(data.total)}</b> parcelles occupées en zone constructible à capacité résiduelle réelle{commune ? ` — ${commune}` : ' — toute l’île'}.
             <span className="mt-0.5 block text-[9.5px] text-txt-dim">{data.source}</span>
           </div>
+          {/* OUTILS-S1 (Lot C) — « pas un instantané figé » : si le précalcul date d'AVANT le run servi
+              (bascule sans relance), on le DIT au lieu d'un tableau vide muet. */}
+          {data.perime && (
+            <div data-renouv-perime className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[10px] leading-snug text-amber-600">
+              Précalcul du <b>{data.maj}</b> (run <b>{data.run_precalc}</b>) — le run servi est désormais{' '}
+              <b>{data.run_servi}</b>. Relancez <code>labuse renouv</code> pour réaligner le segment sur le run courant.
+            </div>
+          )}
 
           {/* TOP 5 — repères, pas la liste (elle vit en grand) */}
           <div className="flex flex-col gap-1">

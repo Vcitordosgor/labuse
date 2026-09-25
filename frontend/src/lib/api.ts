@@ -934,6 +934,8 @@ export interface RenouvItem {
 export interface RenouvListe {
   total: number; n: number; cap: number; tronquee: boolean; items: RenouvItem[]
   source: string; run_label: string; maj: string | null
+  // OUTILS-S1 (Lot C) — transparence du run lu : run du précalcul vs run servi, + drapeau périmé.
+  run_precalc?: string | null; run_servi?: string; perime?: boolean
   libelle: string; composantes_libelles: Record<string, string>; avertissement: string
 }
 // RETOURS-11 (T4) — pagination par 200 (doctrine SOCLE) : on envoie `limit=200` (le serveur borne à
