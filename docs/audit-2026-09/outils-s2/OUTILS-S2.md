@@ -287,7 +287,7 @@ l'auto-ouverture). Logique dérivée pure, typée (tsc vert).
   Aucun ne touche `circuit_resume` / `dashboard` (mes seules modifications de ce périmètre = la
   constante `VERROUS_AVERTISSEMENT`, même valeur `{"G8"}`).
 
-## Captures — `captures/outils-s2/`
+## Captures — `docs/audit-2026-09/outils-s2/captures/`
 
 | Fichier | Contenu |
 |---|---|
