@@ -1,0 +1,8 @@
+label,mode,phase,run,fcp_ms,load_ms,derniere_tuile_ms,depart_tuile_ms,idle_ms,lt_n,lt_ms,n_req,octets,n_tuiles
+avant,cold,froid,0,440,819,4313,3258,6901,24,2975,33,3377777,3
+avant,cold,froid,0,588,1041,4240,2939,6369,22,3235,32,3249862,2
+avant,cold,froid,0,304,633,3357,2298,4970,11,1616,31,3071091,2
+avant,warm,echauffement,0,356,740,3841,2957,6330,24,3039,33,3377755,3
+avant,warm,chaud,1,756,760,1180,1096,3555,5,981,33,3377755,3
+avant,warm,chaud,2,452,458,1026,749,4531,8,2583,39,14037056,4
+avant,warm,chaud,3,128,132,468,357,2404,9,2733,39,14037056,4
