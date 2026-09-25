@@ -1,0 +1,272 @@
+ts,path,sql_ms,rows,stmt
+1790342557.842,/moi,0.4,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342653.084,/moi,9.2,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342653.096,/usage/event,5.3,1,"INSERT INTO usage_events (compte_id, kind, outil) VALUES (%(c)s, %(k)s, %(o)s)"
+1790342653.103,/sources/couverture,16.5,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342653.103,/sources/couverture,198.7,1,SELECT count(*) FROM parcels
+1790342653.103,/sources/couverture,97.6,1,SELECT count(DISTINCT commune) FROM parcels
+1790342653.103,/sources/couverture,19.4,1,SELECT count(*) FROM dvf_mutations
+1790342653.103,/sources/couverture,3.0,1,SELECT count(*) FROM pige_biens
+1790342653.103,/sources/couverture,1.8,1,SELECT computed_at FROM p_score_v2_runs WHERE run_id = %(r)s
+1790342653.153,/usage/event,1.8,1,"INSERT INTO usage_events (compte_id, kind, outil) VALUES (%(c)s, %(k)s, %(o)s)"
+1790342653.302,/moi/prefs-carte,2.2,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342653.467,/events,2.1,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342653.467,/events,146.3,200,"SELECT e.id, e.ts::date::text AS date, e.ts::text AS ts, e.kind, e.idu, e.titre, e.detail, e.demo, e.source, e.lien, p.commune AS commune, (CASE WHEN e.compte_id IS NOT DISTINCT FROM %(cid)s THEN e.lu ELSE (EXISTS (SELECT 1 FROM event_seen s WHERE s.event_id = e.id AND s.compte_id = %(cid)s) OR e.ts < COALESCE((SELECT c.created_at FROM comptes c WHERE c.id = %(cid)s), '-infinity'::timestamptz)) END) AS lu, d.matrice_statut AS statut FROM event_log e LEFT JOIN parcels p ON p.idu = e.idu LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = %(run)s WHERE (e.compte_id IS NOT DISTINCT FROM %(cid)s OR (e.compte_id IS NULL AND e.kind = ANY(%(market)s))) ORDER BY (CASE WHEN e.compte_id IS NOT DISTINCT FROM %(cid)s THEN e.lu ELSE (EXISTS (SELECT 1 FROM event_seen s WHERE s.event_id = e.id AND s.compte_id = %(cid)s) OR e.ts < COALESCE((SELECT c.created_at FROM comptes c WHERE c.id = %(cid)s), '-infinity'::timestamptz)) END) ASC, e.ts DESC, e.id DESC LIMIT %(lim)s OFFSET %(off)s"
+1790342653.467,/events,8.8,1,"SELECT count(*) FROM event_log e WHERE (e.compte_id IS NOT DISTINCT FROM %(cid)s OR (e.compte_id IS NULL AND e.kind = ANY(%(market)s))) AND NOT (CASE WHEN e.compte_id IS NOT DISTINCT FROM %(cid)s THEN e.lu ELSE (EXISTS (SELECT 1 FROM event_seen s WHERE s.event_id = e.id AND s.compte_id = %(cid)s) OR e.ts < COALESCE((SELECT c.created_at FROM comptes c WHERE c.id = %(cid)s), '-infinity'::timestamptz)) END)"
+1790342653.468,/v2/modele,4.6,0,"SELECT sujet, motif FROM acces_gels WHERE actif"
+1790342653.468,/v2/modele,3.9,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342653.468,/v2/modele,41.1,1,"SELECT run_id, model_version, model_sha256, params, computed_at, snapshot_label FROM p_score_v2_runs WHERE run_id = %(r)s"
+1790342654.570,/map/tiles/meta,41.9,1,SELECT n FROM usage_compteurs WHERE jour = %(j)s AND sujet = %(s)s AND kind = 'tuile'
+1790342654.570,/map/tiles/meta,29.9,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342654.570,/map/tiles/meta,2.8,1,SELECT to_regclass('mvt_meta')
+1790342654.570,/map/tiles/meta,6.1,1,"SELECT value, updated_at FROM mvt_meta WHERE key = 'run_label'"
+1790342654.570,/map/tiles/meta,18.3,1,SELECT max(computed_at) FROM parcel_p_score_v2 WHERE run_id = %(r)s
+1790342654.570,/map/tiles/meta,916.7,1,SELECT max(computed_at) FROM parcel_residuel
+1790342654.570,/map/tiles/meta,5.1,1,SELECT to_regclass('mvt_parcels')
+1790342654.570,/map/tiles/meta,20.7,1,SELECT 1 FROM information_schema.columns WHERE table_name = 'mvt_parcels' AND column_name = 'zone_fam'
+1790342656.458,/map/tiles/9/334/287.pbf,0.6,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342656.458,/map/tiles/9/334/287.pbf,1.5,1,SELECT to_regclass('mvt_parcels')
+1790342656.458,/map/tiles/9/334/287.pbf,1.8,1,SELECT 1 FROM information_schema.columns WHERE table_name = 'mvt_parcels' AND column_name = 'tier_v2'
+1790342656.458,/map/tiles/9/334/287.pbf,3.4,1,SELECT 1 FROM information_schema.columns WHERE table_name = 'mvt_parcels' AND column_name = 'zone_fam'
+1790342656.458,/map/tiles/9/334/287.pbf,1767.9,1,"WITH b AS (SELECT ST_TileEnvelope(%(z)s, %(x)s, %(y)s) AS env), mvt AS ( SELECT ST_AsMVTGeom(ST_SimplifyPreserveTopology(m.geom_3857, 60), b.env, 1024, 16, true) AS geom, m.tier_v2, m.etage0, m.zone_fam, m.commune FROM mvt_parcels m, b WHERE m.geom_3857 && b.env ) SELECT ST_AsMVT(mvt.*, 'parcels', 1024, 'geom') FROM mvt"
+1790342657.173,/map/tuyau/couches,0.6,1,SELECT to_regclass('tuyau_subdivise')
+1790342657.173,/map/tuyau/couches,612.4,65,SELECT DISTINCT kind FROM tuyau_subdivise
+1790342657.173,/map/tuyau/couches,1.2,1,SELECT to_regclass('tuyau_piscines')
+1790342657.173,/map/tuyau/couches,0.9,1,SELECT to_regclass('tuyau_telepherique')
+1790342657.173,/map/tuyau/couches,0.2,1,SELECT to_regclass('tuyau_sup')
+1790342657.457,/map/tiles/limites_communes/9/334/286.pbf,4.8,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342657.457,/map/tiles/limites_communes/9/334/286.pbf,10.8,1,"SELECT to_char(max(created_at), 'YYYYMMDDHH24MISS') FROM spatial_layers"
+1790342657.457,/map/tiles/limites_communes/9/334/286.pbf,1.3,1,SELECT to_regclass(%(t)s)
+1790342657.457,/map/tiles/limites_communes/9/334/286.pbf,8.6,1,"WITH b AS ( SELECT ST_TileEnvelope(%(z)s, %(x)s, %(y)s) AS env, ST_TileEnvelope(%(z)s, %(x)s, %(y)s, margin => 0.125) AS env_marge ), mvt AS ( SELECT ST_AsMVTGeom(ST_SetSRID(m.geom_3857, 3857), b.env, 4096, 64, true) AS geom, m.commune AS ""commune"" FROM mvt_communes m, b WHERE TRUE AND ST_SetSRID(m.geom_3857, 3857) && b.env_marge ) SELECT ST_AsMVT(mvt.*, %(layer)s, 4096, 'geom') FROM mvt WHERE geom IS NOT NULL"
+1790342657.471,/map/tiles/limites_communes/9/335/286.pbf,0.6,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342657.471,/map/tiles/limites_communes/9/335/286.pbf,0.7,1,"WITH b AS ( SELECT ST_TileEnvelope(%(z)s, %(x)s, %(y)s) AS env, ST_TileEnvelope(%(z)s, %(x)s, %(y)s, margin => 0.125) AS env_marge ), mvt AS ( SELECT ST_AsMVTGeom(ST_SetSRID(m.geom_3857, 3857), b.env, 4096, 64, true) AS geom, m.commune AS ""commune"" FROM mvt_communes m, b WHERE TRUE AND ST_SetSRID(m.geom_3857, 3857) && b.env_marge ) SELECT ST_AsMVT(mvt.*, %(layer)s, 4096, 'geom') FROM mvt WHERE geom IS NOT NULL"
+1790342657.480,/map/tiles/limites_communes/9/334/287.pbf,0.6,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342657.480,/map/tiles/limites_communes/9/334/287.pbf,0.5,1,"WITH b AS ( SELECT ST_TileEnvelope(%(z)s, %(x)s, %(y)s) AS env, ST_TileEnvelope(%(z)s, %(x)s, %(y)s, margin => 0.125) AS env_marge ), mvt AS ( SELECT ST_AsMVTGeom(ST_SetSRID(m.geom_3857, 3857), b.env, 4096, 64, true) AS geom, m.commune AS ""commune"" FROM mvt_communes m, b WHERE TRUE AND ST_SetSRID(m.geom_3857, 3857) && b.env_marge ) SELECT ST_AsMVT(mvt.*, %(layer)s, 4096, 'geom') FROM mvt WHERE geom IS NOT NULL"
+1790342657.496,/map/tiles/limites_communes/9/335/287.pbf,1.1,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342657.496,/map/tiles/limites_communes/9/335/287.pbf,2.0,1,"WITH b AS ( SELECT ST_TileEnvelope(%(z)s, %(x)s, %(y)s) AS env, ST_TileEnvelope(%(z)s, %(x)s, %(y)s, margin => 0.125) AS env_marge ), mvt AS ( SELECT ST_AsMVTGeom(ST_SetSRID(m.geom_3857, 3857), b.env, 4096, 64, true) AS geom, m.commune AS ""commune"" FROM mvt_communes m, b WHERE TRUE AND ST_SetSRID(m.geom_3857, 3857) && b.env_marge ) SELECT ST_AsMVT(mvt.*, %(layer)s, 4096, 'geom') FROM mvt WHERE geom IS NOT NULL"
+1790342658.985,/map/tiles/9/335/287.pbf,9.3,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342658.985,/map/tiles/9/335/287.pbf,0.6,1,SELECT to_regclass('mvt_parcels')
+1790342658.985,/map/tiles/9/335/287.pbf,34.8,1,SELECT 1 FROM information_schema.columns WHERE table_name = 'mvt_parcels' AND column_name = 'tier_v2'
+1790342658.985,/map/tiles/9/335/287.pbf,4.0,1,SELECT 1 FROM information_schema.columns WHERE table_name = 'mvt_parcels' AND column_name = 'zone_fam'
+1790342658.985,/map/tiles/9/335/287.pbf,2306.8,1,"WITH b AS (SELECT ST_TileEnvelope(%(z)s, %(x)s, %(y)s) AS env), mvt AS ( SELECT ST_AsMVTGeom(ST_SimplifyPreserveTopology(m.geom_3857, 60), b.env, 1024, 16, true) AS geom, m.tier_v2, m.etage0, m.zone_fam, m.commune FROM mvt_parcels m, b WHERE m.geom_3857 && b.env ) SELECT ST_AsMVT(mvt.*, 'parcels', 1024, 'geom') FROM mvt"
+1790342661.039,/communes,3.5,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342661.039,/communes,8067.9,24,"SELECT p.commune, substring(min(p.idu) from 1 for 5) AS insee, count(*) AS parcelles, count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')) AS chaudes, count(DISTINCT pm.siren) FILTER (WHERE s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre') AND pm.siren IS NOT NULL) AS dossiers, count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre') AND pm.siren IS NULL) AS chaudes_sans_identite, count(s.parcelle_id) AS evaluees, ST_XMin(ST_Extent(p.geom)) AS x1, ST_YMin(ST_Extent(p.geom)) AS y1, ST_XMax(ST_Extent(p.geom)) AS x2, ST_YMax(ST_Extent(p.geom)) AS y2 FROM parcels p LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = %(run)s LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu GROUP BY p.commune ORDER BY 4 DESC, 3 DESC"
+1790342661.313,/map/tiles/9/335/286.pbf,7.3,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342661.313,/map/tiles/9/335/286.pbf,0.4,1,SELECT to_regclass('mvt_parcels')
+1790342661.313,/map/tiles/9/335/286.pbf,9.2,1,SELECT 1 FROM information_schema.columns WHERE table_name = 'mvt_parcels' AND column_name = 'tier_v2'
+1790342661.313,/map/tiles/9/335/286.pbf,12.1,1,SELECT 1 FROM information_schema.columns WHERE table_name = 'mvt_parcels' AND column_name = 'zone_fam'
+1790342661.313,/map/tiles/9/335/286.pbf,7095.1,1,"WITH b AS (SELECT ST_TileEnvelope(%(z)s, %(x)s, %(y)s) AS env), mvt AS ( SELECT ST_AsMVTGeom(ST_SimplifyPreserveTopology(m.geom_3857, 60), b.env, 1024, 16, true) AS geom, m.tier_v2, m.etage0, m.zone_fam, m.commune FROM mvt_parcels m, b WHERE m.geom_3857 && b.env ) SELECT ST_AsMVT(mvt.*, 'parcels', 1024, 'geom') FROM mvt"
+1790342666.312,/map/tiles/limites_parcelles/9/335/286.pbf,8.4,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342666.312,/map/tiles/limites_parcelles/9/335/286.pbf,2487.0,1,"WITH b AS ( SELECT ST_TileEnvelope(%(z)s, %(x)s, %(y)s) AS env, ST_TileEnvelope(%(z)s, %(x)s, %(y)s, margin => 0.125) AS env_marge ), mvt AS ( SELECT ST_AsMVTGeom(ST_SetSRID(m.geom_3857, 3857), b.env, 4096, 64, true) AS geom, m.commune AS ""commune"" FROM mvt_parcels m, b WHERE TRUE AND ST_SetSRID(m.geom_3857, 3857) && b.env_marge ) SELECT ST_AsMVT(mvt.*, %(layer)s, 4096, 'geom') FROM mvt WHERE geom IS NOT NULL"
+1790342666.319,/map/tiles/limites_parcelles/9/334/286.pbf,0.9,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342666.319,/map/tiles/limites_parcelles/9/334/286.pbf,0.4,1,SELECT to_regclass(%(t)s)
+1790342666.319,/map/tiles/limites_parcelles/9/334/286.pbf,6201.0,1,"WITH b AS ( SELECT ST_TileEnvelope(%(z)s, %(x)s, %(y)s) AS env, ST_TileEnvelope(%(z)s, %(x)s, %(y)s, margin => 0.125) AS env_marge ), mvt AS ( SELECT ST_AsMVTGeom(ST_SetSRID(m.geom_3857, 3857), b.env, 4096, 64, true) AS geom, m.commune AS ""commune"" FROM mvt_parcels m, b WHERE TRUE AND ST_SetSRID(m.geom_3857, 3857) && b.env_marge ) SELECT ST_AsMVT(mvt.*, %(layer)s, 4096, 'geom') FROM mvt WHERE geom IS NOT NULL"
+1790342666.324,/sources,16.4,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342666.324,/sources,16.6,91,"SELECT data_sources.id, data_sources.name, data_sources.category, data_sources.provider, data_sources.access_type, data_sources.status, data_sources.documentation_url, data_sources.endpoint_url, data_sources.last_sync_at, data_sources.source_millesime, data_sources.source_horizon_at, data_sources.source_cadence, data_sources.prochain_millesime_at, data_sources.reliability_level, data_sources.rate_limit, data_sources.legal_notes, data_sources.technical_notes, data_sources.affichage_desactive, data_sources.couverture_note, data_sources.created_at, data_sources.updated_at FROM data_sources WHERE lower(status) IN ('connecte', 'manuel') AND COALESCE(technical_notes, '') NOT LIKE 'DOUBLON%%' AND COALESCE(technical_notes, '') NOT LIKE 'RETIRÉ%%' AND COALESCE(technical_notes, '') NOT LIKE 'DORMANT%%' AND COALESCE(affichage_desactive, false) = false AND name <> ALL(%(masquees)s) ORDER BY data_sources.category, data_sources.name"
+1790342666.324,/sources,77.4,30,"SELECT commune, max(coalesce(finished_at, started_at)) AS fin, count(*) AS n FROM ingestion_runs WHERE status IN ('ok', 'success') GROUP BY commune"
+1790342666.324,/sources,57.9,0,"SELECT data_source_id, max(verified_at) AS verified_at FROM source_checks GROUP BY data_source_id"
+1790342666.324,/sources,0.3,-1,SAVEPOINT sa_savepoint_1
+1790342666.324,/sources,193.2,1,SELECT max(date)::date FROM sitadel_permits WHERE date <= now()
+1790342666.324,/sources,14.7,-1,RELEASE SAVEPOINT sa_savepoint_1
+1790342666.324,/sources,7.2,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.324,/sources,7.3,-1,SAVEPOINT sa_savepoint_2
+1790342666.324,/sources,190.0,1,SELECT max(date_annonce)::date FROM bodacc_procedures
+1790342666.324,/sources,6.2,-1,RELEASE SAVEPOINT sa_savepoint_2
+1790342666.324,/sources,26.0,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.324,/sources,0.4,-1,SAVEPOINT sa_savepoint_3
+1790342666.324,/sources,7.2,1,SELECT max(date_mutation)::date FROM dvf_mutations_parcelle
+1790342666.324,/sources,14.1,-1,RELEASE SAVEPOINT sa_savepoint_3
+1790342666.324,/sources,2.8,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.324,/sources,0.3,-1,SAVEPOINT sa_savepoint_4
+1790342666.324,/sources,52.9,1,SELECT max(date_etablissement)::date FROM dpe_records
+1790342666.324,/sources,12.1,-1,RELEASE SAVEPOINT sa_savepoint_4
+1790342666.324,/sources,8.0,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.324,/sources,0.4,-1,SAVEPOINT sa_savepoint_5
+1790342666.324,/sources,1167.6,1,SELECT max(refreshed_at)::date FROM adresses
+1790342666.324,/sources,0.7,-1,RELEASE SAVEPOINT sa_savepoint_5
+1790342666.324,/sources,1.4,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.324,/sources,0.2,-1,SAVEPOINT sa_savepoint_6
+1790342666.324,/sources,11.4,1,SELECT max(date_arrete) FROM catnat_arretes
+1790342666.324,/sources,1.8,-1,RELEASE SAVEPOINT sa_savepoint_6
+1790342666.324,/sources,4.0,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.324,/sources,2.1,-1,SAVEPOINT sa_savepoint_7
+1790342666.324,/sources,1201.3,1,SELECT max(created_at)::date FROM spatial_layers WHERE kind LIKE 'plu_gpu%%'
+1790342666.324,/sources,0.4,-1,RELEASE SAVEPOINT sa_savepoint_7
+1790342666.324,/sources,15.1,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.324,/sources,0.7,-1,SAVEPOINT sa_savepoint_8
+1790342666.324,/sources,1560.2,1,"SELECT max(created_at)::date FROM spatial_layers WHERE kind IN ('georisque_alea','cavite','mvt','sol_pollue')"
+1790342666.324,/sources,3.7,-1,RELEASE SAVEPOINT sa_savepoint_8
+1790342666.324,/sources,11.4,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.324,/sources,0.5,-1,SAVEPOINT sa_savepoint_9
+1790342666.324,/sources,7.6,1,SELECT max(millesime_date)::date FROM sudocuh_procedures
+1790342666.324,/sources,0.2,-1,RELEASE SAVEPOINT sa_savepoint_9
+1790342666.324,/sources,1.1,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.324,/sources,0.8,-1,SAVEPOINT sa_savepoint_10
+1790342666.324,/sources,56.3,1,"SELECT to_date(max(millesime),'YYYY')::date FROM ortho_tiles WHERE millesime ~ '^[0-9]{4}$'"
+1790342666.324,/sources,3.8,-1,RELEASE SAVEPOINT sa_savepoint_10
+1790342666.324,/sources,7.8,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.324,/sources,0.4,-1,SAVEPOINT sa_savepoint_11
+1790342666.324,/sources,0.5,1,"SELECT source_horizon_at FROM data_sources WHERE name = 'CoSIA (couverture du sol IA, IGN)'"
+1790342666.324,/sources,0.2,-1,RELEASE SAVEPOINT sa_savepoint_11
+1790342666.324,/sources,0.5,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.324,/sources,0.7,1,SELECT to_regclass('source_radar')
+1790342666.324,/sources,6.3,67,"SELECT source_name, mode, cadence, sonde, valeur, derniere_verif, dernier_changement, statut, detail FROM source_radar"
+1790342666.324,/sources,10.2,1,SELECT 1 FROM information_schema.columns WHERE table_name='data_sources' AND column_name='fraicheur_statut'
+1790342666.324,/sources,4.2,101,"SELECT name, fraicheur_statut FROM data_sources WHERE fraicheur_statut IS NOT NULL"
+1790342666.324,/sources,2.9,1,SELECT 1 FROM information_schema.columns WHERE table_name='data_sources' AND column_name='fraicheur_erreur_at'
+1790342666.324,/sources,0.9,0,"SELECT name, fraicheur_erreur_at AS at, fraicheur_erreur_message AS message FROM data_sources WHERE fraicheur_erreur_at IS NOT NULL"
+1790342666.324,/sources,4.0,91,"SELECT d.id, d.name, d.last_sync_at, d.source_cadence, d.source_horizon_at, v.methode AS veille_methode, v.dernier_statut AS veille_statut, v.actif AS veille_actif, v.cadence_attendue_jours AS veille_cadence_attendue FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id WHERE lower(status) IN ('connecte', 'manuel') AND COALESCE(technical_notes, '') NOT LIKE 'DOUBLON%%' AND COALESCE(technical_notes, '') NOT LIKE 'RETIRÉ%%' AND COALESCE(technical_notes, '') NOT LIKE 'DORMANT%%' AND COALESCE(affichage_desactive, false) = false AND name <> ALL(%(masquees)s)"
+1790342666.324,/sources,1236.0,14,"SELECT idu, commune FROM parcels WHERE md5(idu || %(jour)s) < '0002' AND geom IS NOT NULL LIMIT 200"
+1790342666.324,/sources,8.8,91,"SELECT name FROM data_sources WHERE lower(status) IN ('connecte', 'manuel') AND COALESCE(technical_notes, '') NOT LIKE 'DOUBLON%%' AND COALESCE(technical_notes, '') NOT LIKE 'RETIRÉ%%' AND COALESCE(technical_notes, '') NOT LIKE 'DORMANT%%' AND COALESCE(affichage_desactive, false) = false AND name <> ALL(%(masquees)s)"
+1790342666.324,/sources,71.6,2519,"SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public'"
+1790342666.324,/sources,2.3,1,SELECT count(DISTINCT parcelle_idu) FROM dpe_records WHERE parcelle_idu = ANY(%(v)s)
+1790342666.324,/sources,3.5,1,SELECT count(*) FROM (SELECT 1 FROM dpe_records LIMIT 100) _q
+1790342666.324,/sources,945.9,1,"SELECT count(DISTINCT left(idu, 14)) FROM ban_plus_liens WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,4.4,1,SELECT count(*) FROM (SELECT 1 FROM ban_plus_liens LIMIT 100) _q
+1790342666.324,/sources,79.1,1,SELECT count(DISTINCT insee) FROM rnb_batiments WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,499.3,1,"SELECT count(DISTINCT left(idu, 14)) FROM parcel_ocsge WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,14.5,1,SELECT count(*) FROM (SELECT 1 FROM parcel_ocsge LIMIT 100) _q
+1790342666.324,/sources,453.1,1,"SELECT count(DISTINCT left(idu, 14)) FROM parcels WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,1.2,1,SELECT count(*) FROM (SELECT 1 FROM parcels LIMIT 100) _q
+1790342666.324,/sources,59.3,1,"SELECT count(DISTINCT left(idu, 14)) FROM ortho_detections WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,2.1,1,SELECT count(*) FROM (SELECT 1 FROM ortho_detections LIMIT 100) _q
+1790342666.324,/sources,11.8,1,"SELECT count(DISTINCT left(idu, 14)) FROM parcel_equipements WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,0.4,1,SELECT count(*) FROM (SELECT 1 FROM parcel_equipements LIMIT 100) _q
+1790342666.324,/sources,1.3,1,SELECT count(DISTINCT insee) FROM taxe_amenagement_taux WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,3.5,1,SELECT count(DISTINCT insee) FROM commune_conso_enaf WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,3.3,1,SELECT count(DISTINCT insee) FROM azi_communes WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,61.9,1,SELECT count(DISTINCT upper(commune)) FROM sitadel_permits WHERE upper(commune) = ANY(%(v)s)
+1790342666.324,/sources,2.9,1,SELECT count(DISTINCT insee) FROM anru_quartiers WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,1.0,1,SELECT count(DISTINCT insee) FROM commune_rei WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,2.0,1,SELECT count(DISTINCT insee) FROM anc_maille_taux WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,2.4,1,SELECT count(DISTINCT insee) FROM rp_logement_commune WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,23.7,1,SELECT count(DISTINCT upper(commune)) FROM dvf_mutations WHERE upper(commune) = ANY(%(v)s)
+1790342666.324,/sources,2.3,1,SELECT count(DISTINCT insee) FROM commune_ort WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,6.0,1,SELECT count(DISTINCT insee) FROM plu_reglement_extrait WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,2.1,1,SELECT count(DISTINCT insee) FROM oll_zonage WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,191.6,1,"SELECT count(DISTINCT left(idu, 14)) FROM adresses WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,4.3,1,SELECT count(*) FROM (SELECT 1 FROM adresses LIMIT 100) _q
+1790342666.324,/sources,257.7,1,"SELECT count(DISTINCT left(idu, 14)) FROM adresse_parcelles WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,4.0,1,SELECT count(*) FROM (SELECT 1 FROM adresse_parcelles LIMIT 100) _q
+1790342666.324,/sources,0.8,1,SELECT count(DISTINCT insee) FROM commune_insee_logement WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,1.9,1,"SELECT count(DISTINCT left(idu, 14)) FROM toiture_lidar WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,0.2,1,SELECT count(*) FROM (SELECT 1 FROM toiture_lidar LIMIT 100) _q
+1790342666.324,/sources,161.0,1,"SELECT count(DISTINCT left(idu, 14)) FROM batiment_hauteur_lidar WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,4.4,1,SELECT count(*) FROM (SELECT 1 FROM batiment_hauteur_lidar LIMIT 100) _q
+1790342666.324,/sources,99.3,1,"SELECT count(DISTINCT left(idu, 14)) FROM parcelle_personne_morale WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,2.4,1,SELECT count(*) FROM (SELECT 1 FROM parcelle_personne_morale LIMIT 100) _q
+1790342666.324,/sources,210.1,1,"SELECT count(DISTINCT left(idu, 14)) FROM pm_proprietaires_millesimes WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,4.3,1,SELECT count(*) FROM (SELECT 1 FROM pm_proprietaires_millesimes LIMIT 100) _q
+1790342666.324,/sources,5.0,1,SELECT count(DISTINCT insee) FROM sudocuh_procedures WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,31.8,1,SELECT count(DISTINCT insee) FROM sirene_etablissements WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,112.8,1,"SELECT count(DISTINCT left(idu, 14)) FROM p_model_filo WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,0.4,1,SELECT count(*) FROM (SELECT 1 FROM p_model_filo LIMIT 100) _q
+1790342666.324,/sources,339.0,1,"SELECT count(DISTINCT left(idu, 14)) FROM parcel_anc WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,12.6,1,SELECT count(*) FROM (SELECT 1 FROM parcel_anc LIMIT 100) _q
+1790342666.324,/sources,89.6,1,SELECT count(DISTINCT insee) FROM dfi_filiation WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,3.6,1,SELECT count(DISTINCT insee) FROM iris_rp WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,5.9,1,SELECT count(DISTINCT insee) FROM catnat_arretes WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,30.2,1,SELECT count(DISTINCT insee) FROM territoire_fiscal_commune WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,816.8,1,"SELECT count(DISTINCT left(idu, 14)) FROM parcel_solar WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,1.2,1,SELECT count(*) FROM (SELECT 1 FROM parcel_solar LIMIT 100) _q
+1790342666.324,/sources,5.4,1,SELECT count(DISTINCT insee) FROM mairies WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,5.1,1,SELECT count(DISTINCT insee) FROM annuaire_services WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,11.6,1,"SELECT count(DISTINCT left(idu, 14)) FROM ortho_detections WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,1.0,1,SELECT count(*) FROM (SELECT 1 FROM ortho_detections LIMIT 100) _q
+1790342666.324,/sources,79.0,1,"SELECT count(DISTINCT left(idu, 14)) FROM parcel_vegetation WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,0.7,1,SELECT count(*) FROM (SELECT 1 FROM parcel_vegetation LIMIT 100) _q
+1790342666.324,/sources,413.2,1,"SELECT count(DISTINCT left(idu, 14)) FROM vegetation_zonal_acc WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,4.9,1,SELECT count(*) FROM (SELECT 1 FROM vegetation_zonal_acc LIMIT 100) _q
+1790342666.324,/sources,2.0,1,SELECT count(DISTINCT insee) FROM rpls_commune WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,3.5,1,SELECT count(DISTINCT parcelle_idu) FROM rnic_coproprietes WHERE parcelle_idu = ANY(%(v)s)
+1790342666.324,/sources,1.5,1,SELECT count(*) FROM (SELECT 1 FROM rnic_coproprietes LIMIT 100) _q
+1790342666.324,/sources,50.5,1,SELECT count(DISTINCT insee) FROM arcep_immeubles WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,0.9,1,SELECT count(DISTINCT insee) FROM commune_zonage_abc WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,3.6,1,SELECT count(DISTINCT insee) FROM commune_contexte_sru WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,0.4,1,SELECT count(DISTINCT insee) FROM territoire_fiscal_commune WHERE insee = ANY(%(v)s)
+1790342666.324,/sources,145.5,1,"SELECT count(DISTINCT left(idu, 14)) FROM p_model_bati_cosia WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,3.2,1,SELECT count(*) FROM (SELECT 1 FROM p_model_bati_cosia LIMIT 100) _q
+1790342666.324,/sources,1142.2,1,"SELECT count(DISTINCT left(idu, 14)) FROM parcel_cosia_couverture WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,0.9,1,SELECT count(*) FROM (SELECT 1 FROM parcel_cosia_couverture LIMIT 100) _q
+1790342666.324,/sources,3.5,1,"SELECT count(DISTINCT left(idu, 14)) FROM pige_biens WHERE left(idu, 14) = ANY(%(v)s)"
+1790342666.324,/sources,1.2,1,SELECT count(*) FROM (SELECT 1 FROM pige_biens LIMIT 100) _q
+1790342666.328,/moi,4.3,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342666.331,/communes,1.4,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342666.356,/events,1.3,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342666.356,/events,26.9,200,"SELECT e.id, e.ts::date::text AS date, e.ts::text AS ts, e.kind, e.idu, e.titre, e.detail, e.demo, e.source, e.lien, p.commune AS commune, (CASE WHEN e.compte_id IS NOT DISTINCT FROM %(cid)s THEN e.lu ELSE (EXISTS (SELECT 1 FROM event_seen s WHERE s.event_id = e.id AND s.compte_id = %(cid)s) OR e.ts < COALESCE((SELECT c.created_at FROM comptes c WHERE c.id = %(cid)s), '-infinity'::timestamptz)) END) AS lu, d.matrice_statut AS statut FROM event_log e LEFT JOIN parcels p ON p.idu = e.idu LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = %(run)s WHERE (e.compte_id IS NOT DISTINCT FROM %(cid)s OR (e.compte_id IS NULL AND e.kind = ANY(%(market)s))) ORDER BY (CASE WHEN e.compte_id IS NOT DISTINCT FROM %(cid)s THEN e.lu ELSE (EXISTS (SELECT 1 FROM event_seen s WHERE s.event_id = e.id AND s.compte_id = %(cid)s) OR e.ts < COALESCE((SELECT c.created_at FROM comptes c WHERE c.id = %(cid)s), '-infinity'::timestamptz)) END) ASC, e.ts DESC, e.id DESC LIMIT %(lim)s OFFSET %(off)s"
+1790342666.356,/events,0.5,1,"SELECT count(*) FROM event_log e WHERE (e.compte_id IS NOT DISTINCT FROM %(cid)s OR (e.compte_id IS NULL AND e.kind = ANY(%(market)s))) AND NOT (CASE WHEN e.compte_id IS NOT DISTINCT FROM %(cid)s THEN e.lu ELSE (EXISTS (SELECT 1 FROM event_seen s WHERE s.event_id = e.id AND s.compte_id = %(cid)s) OR e.ts < COALESCE((SELECT c.created_at FROM comptes c WHERE c.id = %(cid)s), '-infinity'::timestamptz)) END)"
+1790342666.360,/sources/couverture,4.1,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342666.360,/sources/couverture,15.4,1,SELECT count(*) FROM parcels
+1790342666.360,/sources/couverture,28.4,1,SELECT count(DISTINCT commune) FROM parcels
+1790342666.360,/sources/couverture,4.1,1,SELECT count(*) FROM dvf_mutations
+1790342666.360,/sources/couverture,0.4,1,SELECT count(*) FROM pige_biens
+1790342666.360,/sources/couverture,0.2,1,SELECT computed_at FROM p_score_v2_runs WHERE run_id = %(r)s
+1790342666.845,/sources,0.6,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342666.845,/sources,3.5,91,"SELECT data_sources.id, data_sources.name, data_sources.category, data_sources.provider, data_sources.access_type, data_sources.status, data_sources.documentation_url, data_sources.endpoint_url, data_sources.last_sync_at, data_sources.source_millesime, data_sources.source_horizon_at, data_sources.source_cadence, data_sources.prochain_millesime_at, data_sources.reliability_level, data_sources.rate_limit, data_sources.legal_notes, data_sources.technical_notes, data_sources.affichage_desactive, data_sources.couverture_note, data_sources.created_at, data_sources.updated_at FROM data_sources WHERE lower(status) IN ('connecte', 'manuel') AND COALESCE(technical_notes, '') NOT LIKE 'DOUBLON%%' AND COALESCE(technical_notes, '') NOT LIKE 'RETIRÉ%%' AND COALESCE(technical_notes, '') NOT LIKE 'DORMANT%%' AND COALESCE(affichage_desactive, false) = false AND name <> ALL(%(masquees)s) ORDER BY data_sources.category, data_sources.name"
+1790342666.845,/sources,4.4,30,"SELECT commune, max(coalesce(finished_at, started_at)) AS fin, count(*) AS n FROM ingestion_runs WHERE status IN ('ok', 'success') GROUP BY commune"
+1790342666.845,/sources,2.6,0,"SELECT data_source_id, max(verified_at) AS verified_at FROM source_checks GROUP BY data_source_id"
+1790342666.845,/sources,1.0,-1,SAVEPOINT sa_savepoint_1
+1790342666.845,/sources,26.3,1,SELECT max(date)::date FROM sitadel_permits WHERE date <= now()
+1790342666.845,/sources,0.2,-1,RELEASE SAVEPOINT sa_savepoint_1
+1790342666.845,/sources,0.8,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.845,/sources,0.1,-1,SAVEPOINT sa_savepoint_2
+1790342666.845,/sources,11.9,1,SELECT max(date_annonce)::date FROM bodacc_procedures
+1790342666.845,/sources,0.1,-1,RELEASE SAVEPOINT sa_savepoint_2
+1790342666.845,/sources,0.3,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.845,/sources,0.1,-1,SAVEPOINT sa_savepoint_3
+1790342666.845,/sources,0.7,1,SELECT max(date_mutation)::date FROM dvf_mutations_parcelle
+1790342666.845,/sources,0.1,-1,RELEASE SAVEPOINT sa_savepoint_3
+1790342666.845,/sources,0.2,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.845,/sources,0.1,-1,SAVEPOINT sa_savepoint_4
+1790342666.845,/sources,3.9,1,SELECT max(date_etablissement)::date FROM dpe_records
+1790342666.845,/sources,0.1,-1,RELEASE SAVEPOINT sa_savepoint_4
+1790342666.845,/sources,0.2,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.845,/sources,0.1,-1,SAVEPOINT sa_savepoint_5
+1790342666.845,/sources,40.5,1,SELECT max(refreshed_at)::date FROM adresses
+1790342666.845,/sources,0.1,-1,RELEASE SAVEPOINT sa_savepoint_5
+1790342666.845,/sources,0.5,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.845,/sources,0.1,-1,SAVEPOINT sa_savepoint_6
+1790342666.845,/sources,3.2,1,SELECT max(date_arrete) FROM catnat_arretes
+1790342666.845,/sources,0.4,-1,RELEASE SAVEPOINT sa_savepoint_6
+1790342666.845,/sources,1.6,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.845,/sources,0.4,-1,SAVEPOINT sa_savepoint_7
+1790342666.845,/sources,70.8,1,SELECT max(created_at)::date FROM spatial_layers WHERE kind LIKE 'plu_gpu%%'
+1790342666.845,/sources,0.1,-1,RELEASE SAVEPOINT sa_savepoint_7
+1790342666.845,/sources,0.4,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.845,/sources,0.2,-1,SAVEPOINT sa_savepoint_8
+1790342666.845,/sources,328.0,1,"SELECT max(created_at)::date FROM spatial_layers WHERE kind IN ('georisque_alea','cavite','mvt','sol_pollue')"
+1790342666.845,/sources,0.1,-1,RELEASE SAVEPOINT sa_savepoint_8
+1790342666.845,/sources,0.3,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.845,/sources,0.1,-1,SAVEPOINT sa_savepoint_9
+1790342666.845,/sources,0.3,1,SELECT max(millesime_date)::date FROM sudocuh_procedures
+1790342666.845,/sources,0.1,-1,RELEASE SAVEPOINT sa_savepoint_9
+1790342666.845,/sources,0.3,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.845,/sources,0.2,-1,SAVEPOINT sa_savepoint_10
+1790342666.845,/sources,5.9,1,"SELECT to_date(max(millesime),'YYYY')::date FROM ortho_tiles WHERE millesime ~ '^[0-9]{4}$'"
+1790342666.845,/sources,0.1,-1,RELEASE SAVEPOINT sa_savepoint_10
+1790342666.845,/sources,0.3,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.845,/sources,0.1,-1,SAVEPOINT sa_savepoint_11
+1790342666.845,/sources,0.1,1,"SELECT source_horizon_at FROM data_sources WHERE name = 'CoSIA (couverture du sol IA, IGN)'"
+1790342666.845,/sources,0.1,-1,RELEASE SAVEPOINT sa_savepoint_11
+1790342666.845,/sources,0.2,1,SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE %(n)s
+1790342666.845,/sources,0.3,1,SELECT to_regclass('source_radar')
+1790342666.845,/sources,0.4,67,"SELECT source_name, mode, cadence, sonde, valeur, derniere_verif, dernier_changement, statut, detail FROM source_radar"
+1790342666.845,/sources,3.9,1,SELECT 1 FROM information_schema.columns WHERE table_name='data_sources' AND column_name='fraicheur_statut'
+1790342666.845,/sources,0.2,101,"SELECT name, fraicheur_statut FROM data_sources WHERE fraicheur_statut IS NOT NULL"
+1790342666.845,/sources,0.9,1,SELECT 1 FROM information_schema.columns WHERE table_name='data_sources' AND column_name='fraicheur_erreur_at'
+1790342666.845,/sources,0.1,0,"SELECT name, fraicheur_erreur_at AS at, fraicheur_erreur_message AS message FROM data_sources WHERE fraicheur_erreur_at IS NOT NULL"
+1790342666.845,/sources,0.7,91,"SELECT d.id, d.name, d.last_sync_at, d.source_cadence, d.source_horizon_at, v.methode AS veille_methode, v.dernier_statut AS veille_statut, v.actif AS veille_actif, v.cadence_attendue_jours AS veille_cadence_attendue FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id WHERE lower(status) IN ('connecte', 'manuel') AND COALESCE(technical_notes, '') NOT LIKE 'DOUBLON%%' AND COALESCE(technical_notes, '') NOT LIKE 'RETIRÉ%%' AND COALESCE(technical_notes, '') NOT LIKE 'DORMANT%%' AND COALESCE(affichage_desactive, false) = false AND name <> ALL(%(masquees)s)"
+1790342669.701,/map/tiles/9/334/286.pbf,23.5,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342669.701,/map/tiles/9/334/286.pbf,15.8,1,"SELECT to_char(updated_at, 'YYYYMMDDHH24MISSMS') FROM mvt_meta WHERE key = 'run_label'"
+1790342669.701,/map/tiles/9/334/286.pbf,0.7,1,SELECT to_regclass('mvt_parcels')
+1790342669.701,/map/tiles/9/334/286.pbf,17.1,1,SELECT 1 FROM information_schema.columns WHERE table_name = 'mvt_parcels' AND column_name = 'tier_v2'
+1790342669.701,/map/tiles/9/334/286.pbf,1.2,1,SELECT 1 FROM information_schema.columns WHERE table_name = 'mvt_parcels' AND column_name = 'zone_fam'
+1790342669.701,/map/tiles/9/334/286.pbf,15483.1,1,"WITH b AS (SELECT ST_TileEnvelope(%(z)s, %(x)s, %(y)s) AS env), mvt AS ( SELECT ST_AsMVTGeom(ST_SimplifyPreserveTopology(m.geom_3857, 60), b.env, 1024, 16, true) AS geom, m.tier_v2, m.etage0, m.zone_fam, m.commune FROM mvt_parcels m, b WHERE m.geom_3857 && b.env ) SELECT ST_AsMVT(mvt.*, 'parcels', 1024, 'geom') FROM mvt"
+1790342945.170,/map/tiles/9/334/287.pbf,5.9,0,"SELECT sujet, motif FROM acces_gels WHERE actif"
+1790342945.170,/map/tiles/9/334/287.pbf,1.6,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342945.170,/map/tiles/9/334/287.pbf,3.2,1,"SELECT to_char(updated_at, 'YYYYMMDDHH24MISSMS') FROM mvt_meta WHERE key = 'run_label'"
+1790342994.438,/map/tiles/9/334/287.pbf,6.3,0,"SELECT sujet, motif FROM acces_gels WHERE actif"
+1790342994.438,/map/tiles/9/334/287.pbf,1.8,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342994.457,/map/tiles/9/334/287.pbf,2.4,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342994.480,/map/tiles/9/334/287.pbf,1.3,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
+1790342994.491,/map/tiles/9/334/287.pbf,1.0,1,"SELECT set_config('statement_timeout', %(ms)s, true)"
