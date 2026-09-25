@@ -1,0 +1,20 @@
+# GEOPF-3 — FAMILLE ÉNERGIE (nouveau groupe). Couches liées aux énergies renouvelables (loi APER) :
+# zones où les EnR au sol sont exclues (sauf toiture) et périmètres de contraintes près des habitations.
+# Palette : rouge/orange (interdiction / contrainte), JAMAIS de vert (règle GEOPF-3).
+surface:   couche_enr_exclue_hors_toiture
+nom:       "EnR interdites hors toiture (APER)"
+categorie: couche
+parent:    null
+route:     "/map/tiles/enr_exclue_hors_toiture/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  enr_exclue_hors_toiture_couche
+    ou:    { rang: 10, etat: replie, section: "Énergie" }
+    comment: { libelle: "EnR interdites hors toiture (APER)", format: liste, i: "Zones exclues des aires d'accélération des énergies renouvelables terrestres AU SOL (loi APER, OFB/INPN) : Parc national, réserves naturelles. Un projet solaire AU SOL y est exclu ; le solaire EN TOITURE y reste possible." }
+    # GEOPF-3 — rouge exclusion #D64550, faible opacité (couvre ~40 % de l'île avec le Parc national) ;
+    # pas de vert. Distinct du PPR (#D0342A) par la teinte plus rosée + le hachuré implicite (opacité basse).
+    carte: { kind: enr_exclue_hors_toiture, agregat: false, famille: energie, geometrie: polygone, zoom_min: 0, rang_carte: 6, style: { couleur: "#D64550", opacite: 0.16, trait: "#8A2530", epaisseur: 1.2, tirets: [4, 2] }, popup: [ { champ: name, libelle: "Zone" }, { champ: type_zone, libelle: "Type" } ], legende: "Zone d'exclusion EnR au sol (toiture possible)" }
+    absence: "EnR hors toiture : parcelle hors d'une zone d'exclusion EnR au sol dans l'emprise visible."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "GEOPF-3 : rouge #D64550 faible opacité (large emprise) ; interdiction EnR au sol (toiture OK)."

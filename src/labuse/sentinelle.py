@@ -462,6 +462,14 @@ SEED: list[dict] = [
              "&OUTPUTFORMAT=application/json&SORTBY=gpu_timestamp%20D"
              "&BBOX=55.20,-21.42,55.90,-20.85,EPSG:4326"),
      "selecteur": "features.0.properties.gpu_timestamp"},
+    # GEOPF-3 — zones exclues EnR sauf toiture (OFB/APER) : WFS sans millésime nommé. Témoin = empreinte
+    # de la 1re zone 974 (une révision du zonage APER change la réponse).
+    {"name": "Zones exclues EnR sauf toiture (OFB/APER)", "methode": "temoin",
+     "url": ("https://data.geopf.fr/wfs/ows?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0"
+             "&TYPENAMES=OFB_ZONES.EXCLUES.SAUF.TOITURE:zones_exclues_aires_acceleration_sauf_toiture"
+             "&SRSNAME=EPSG:4326&COUNT=1&OUTPUTFORMAT=application/json"
+             "&BBOX=55.20,-21.42,55.90,-20.85,EPSG:4326"),
+     "selecteur": None},
     {"name": "Contours IRIS (IGN/INSEE)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/contours-iris/", "selecteur": "last_update"},
     {"name": "RPG — déclarations agricoles (IGN/ASP)", "methode": "api",

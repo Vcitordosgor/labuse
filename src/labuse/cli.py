@@ -364,6 +364,23 @@ def scot_build_cmd() -> None:
     typer.echo(f"✓ SCOT : {counts} (total {sum(counts.values())})")
 
 
+@app.command("enr-exclue-toiture-build")
+def enr_exclue_toiture_build_cmd() -> None:
+    """GEOPF-3 — ingère les zones interdites aux EnR hors toiture (loi APER, OFB via Géoplateforme WFS)
+    → spatial_layers kind='enr_exclue_hors_toiture' (Licence Ouverte). Île entière ; couche groupe
+    Énergie + filtre d'exclusion dans l'outil Prospection solaire (projet au sol)."""
+    from . import models
+    from .db import engine
+    from .ingestion import seed_sources
+    from .ingestion.enr_exclue_toiture import build_enr_exclue_toiture
+
+    with session_scope() as s:
+        seed_sources.seed(s)
+        counts = build_enr_exclue_toiture(s, log=typer.echo)
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ EnR interdites hors toiture (APER) : {counts} (total {sum(counts.values())})")
+
+
 @app.command("bpe-build")
 def bpe_build_cmd() -> None:
     """M137-U — ingère la BPE INSEE (équipements géolocalisés, DEP=974) → spatial_layers

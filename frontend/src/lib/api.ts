@@ -973,6 +973,9 @@ export interface SolaireFiche {
   toiture?: { verdict: string; libelle: string; libelle_court: string
               pente_mediane_deg: number | null; pans_orientation_deg: number[]
               confiance: number; seuil: number; statut: string; methode: string } | null
+  // GEOPF-3 — filtre d'exclusion EnR au sol (loi APER) : parcelle dans une zone exclue (Parc national,
+  // réserve naturelle) → projet AU SOL exclu, TOITURE possible. Zone nommée si exclue.
+  enr_au_sol_exclu?: boolean; enr_sol_exclu_zone?: string | null
 }
 export const getSolaireFiche = (idu: string) =>
   j<SolaireFiche>(`/modules/prospection-solaire/parcelle/${idu}`)

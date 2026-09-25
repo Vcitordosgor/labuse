@@ -420,6 +420,15 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
           </p>
         </div>
       )}
+      {/* GEOPF-3 — FILTRE D'EXCLUSION EnR AU SOL (loi APER) : la parcelle est dans une zone exclue
+          (Parc national, réserve naturelle) → un projet solaire AU SOL y est exclu ; la TOITURE reste possible. */}
+      {f.enr_au_sol_exclu && (
+        <div data-solaire-enr-exclu className="mt-1.5 rounded px-2 py-1 text-[10px] leading-snug"
+          style={{ background: 'rgba(214,69,80,.12)', color: '#D64550' }}>
+          ⛔ Zone d'exclusion EnR au sol{f.enr_sol_exclu_zone ? ` — ${f.enr_sol_exclu_zone}` : ''} (loi APER) :
+          <b> projet solaire au sol exclu</b> ici. Le solaire <b>en toiture</b> reste possible.
+        </div>
+      )}
       {/* O13b — croisement piscine sur la parcelle (champ déjà servi par la fiche) : signal métier
           (climatisation / bassin à chauffer). Surface piscine NON affichée (mesure aérienne fausse, O12a). */}
       {f.piscine && (

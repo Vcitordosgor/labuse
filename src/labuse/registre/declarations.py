@@ -46,7 +46,7 @@ STATUTS_JURIDIQUES = ("opposable", "en_projet", "informatif")
 # « equipements » (BPE + OSM, sortis de « fond_de_plan »). « fond_de_plan » reste déclarée (le bâti 3D
 # la garde en YAML) mais disparaît du panneau — il part dans le bouton 3D (exclu côté front).
 FAMILLES = ("reperes", "fond_de_plan", "urbanisme", "risques", "environnement", "foncier",
-            "reseaux", "transport", "dispositifs", "patrimoine", "marche", "equipements")
+            "energie", "reseaux", "transport", "dispositifs", "patrimoine", "marche", "equipements")
 #:   · absente_ici  — la source publie, mais la parcelle/le bien n'a pas la donnée (pas de bâti…) ;
 #:   · non_publiee  — le producteur ne publie pas (commune/périmètre/échelle non couverts) ;
 #:   · non_ingeree  — la source publie, LABUSE ne l'a pas encore ingérée ici (dette interne ;

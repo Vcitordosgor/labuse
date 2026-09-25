@@ -482,6 +482,18 @@ SOURCES: list[dict] = [
          technical_notes="GEOPF-3 : ingéré → spatial_layers kind='mesures_compensatoires' via Géoplateforme WFS "
                          "(MESURES_COMPENSATOIRES:emprises_polygones/lineaires/ponctuelles). Contrainte ERC "
                          "(point unique servitudes.contraintes_parcelle → Pièges et risques + fiche)."),
+    # GEOPF-3 — zones exclues des aires d'accélération EnR (loi APER) SAUF toiture (OFB/INPN). Filtre
+    # d'exclusion pour un projet solaire AU SOL (le solaire en toiture y reste possible).
+    dict(name="Zones exclues EnR sauf toiture (OFB/APER)", category="energie",
+         provider="OFB / INPN (loi APER)",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="OFB — zonages exclus des aires d'accélération EnR (loi APER)",
+         documentation_url="https://www.data.gouv.fr/datasets/zones-daccelaration-des-energies-renouvelables",
+         endpoint_url="https://data.geopf.fr/wfs/ows",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : OFB / INPN (loi APER) ».",
+         technical_notes="GEOPF-3 : ingéré → spatial_layers kind='enr_exclue_hors_toiture' via Géoplateforme "
+                         "WFS (OFB_ZONES.EXCLUES.SAUF.TOITURE). 974 : Parc national (cœur+adhésion), RN "
+                         "Étang de Saint-Paul. Filtre d'exclusion dans l'outil Prospection solaire (au sol)."),
     # ── Spécifiques / accès restreint ──
     dict(name="ABF / Monuments historiques", category="patrimoine", provider="Base Mérimée (Ministère Culture)",
          access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
@@ -1650,6 +1662,7 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "ZNIEFF (INPN/MNHN)": ("one_shot", 365, "proposee"),
     "GéoMCE — mesures compensatoires": ("one_shot", 365, "proposee"),
     "SCOT (GPU)": ("one_shot", 365, "proposee"),
+    "Zones exclues EnR sauf toiture (OFB/APER)": ("one_shot", 365, "proposee"),
     "ZNIEFF (INPN / Région)": ("absente", None, "sans_objet"),
     "CoSIA (couverture du sol IA, IGN)": ("one_shot", 800, "declaree"),
     "Radar (pige d'annonces)": ("depot_manuel", 3, "declaree"),

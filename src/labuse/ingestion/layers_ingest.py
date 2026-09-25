@@ -99,6 +99,8 @@ KIND_SOURCE = {
     "mesures_compensatoires": "GéoMCE — mesures compensatoires",
     # GEOPF-3 — SCOT (scot.py), planification supra-communale (GPU).
     "scot": "SCOT (GPU)",
+    # GEOPF-3 — zones interdites EnR hors toiture, loi APER (enr_exclue_toiture.py), groupe Énergie.
+    "enr_exclue_hors_toiture": "Zones exclues EnR sauf toiture (OFB/APER)",
     # FIX-COUCHES P4 — dispositifs fiscaux (écrits par dispositifs.build_zfang_frr). Les sources
     # existaient au catalogue (seed_sources) avec leur millésime légal, mais les couches n'étaient PAS
     # rattachées (data_source_id NULL) → registre complété ici pour la garde + le backfill. tva_primo

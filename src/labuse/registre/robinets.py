@@ -67,6 +67,8 @@ ROBINETS: dict[str, Robinet] = {
     "/map/tiles/amenite_bpe/{z}/{x}/{y}.pbf", "tuiles", chiffres=("bpe_couche",)),
  "couche_scot": _r("couche", "SCOT — périmètre", None,
     "/map/tiles/scot/{z}/{x}/{y}.pbf", "tuiles", chiffres=("scot_couche",)),
+ "couche_enr_exclue_hors_toiture": _r("couche", "EnR interdites hors toiture (APER)", None,
+    "/map/tiles/enr_exclue_hors_toiture/{z}/{x}/{y}.pbf", "tuiles", chiffres=("enr_exclue_hors_toiture_couche",)),
  "couche_alea_inondation": _r("couche", "Aléa inondation", None,
     "/map/tiles/georisque_alea/{z}/{x}/{y}.pbf", "tuiles", chiffres=("alea_inondation_couche",)),
  "couche_alea_mvt": _r("couche", "Aléa mouvement de terrain", None,

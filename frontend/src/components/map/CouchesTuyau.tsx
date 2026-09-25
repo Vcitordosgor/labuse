@@ -47,7 +47,7 @@ export interface TuyauCouche {
 // COUCHES-RECETTE-1 A11 : ordre des catégories du panneau (Repères en tête ; « Fond de plan » n'y
 // figure plus — le bâti 3D part dans le bouton 3D). Une famille hors liste tombe à la fin.
 const ORDRE_FAMILLES = ['reperes', 'urbanisme', 'risques', 'environnement', 'foncier',
-  'reseaux', 'transport', 'dispositifs', 'patrimoine', 'equipements', 'marche']
+  'energie', 'reseaux', 'transport', 'dispositifs', 'patrimoine', 'equipements', 'marche']
 // COUCHES-RECETTE-1 A11 : le bâti 3D (extrusion) est retiré du panneau — activé par le bouton 3D.
 const HORS_PANNEAU = (c: TuyauCouche) => c.geometrie === 'extrusion'
 // COUCHES-RECETTE-1 A5 : seuls les Repères (limites communes/parcelles) sont cochés par défaut.
@@ -651,7 +651,7 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
 // ── la SECTION « Nouvelles couches » du panneau « Cartes » (montée dans LeftPanel), par famille ──
 const FAMILLE_LABEL: Record<string, string> = {
   reperes: 'Repères', fond_de_plan: 'Fond de plan', urbanisme: 'Urbanisme', risques: 'Risques',
-  environnement: 'Environnement', foncier: 'Foncier', reseaux: 'Réseaux',
+  environnement: 'Environnement', foncier: 'Foncier', energie: 'Énergie', reseaux: 'Réseaux',
   transport: 'Transport', dispositifs: 'Dispositifs', patrimoine: 'Patrimoine',
   equipements: 'Équipements', marche: 'Marché',
 }

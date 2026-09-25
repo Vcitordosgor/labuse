@@ -53,6 +53,7 @@ _RESERVOIR_NAME_ILIKE: dict[str, str] = {
     "osm_transport": "OSM — transport%", "znieff_inpn": "ZNIEFF (INPN/MNHN)%",
     "geomce": "GéoMCE — mesures compensatoires%",
     "scot_gpu": "SCOT (GPU)%",
+    "enr_aper_ofb": "Zones exclues EnR sauf toiture%",
     "cosia": "CoSIA%", "radar_pige": "Radar (pige%", "sirene_etablissements": "SIRENE établissements%",
     "mobpro": "MOBPRO%", "trafic_rn": "Trafic RN%", "bdnb": "BDNB%",
     "edf_hta": "EDF Réunion — lignes moyenne%", "tcsp_osm": "TCSP — voies bus%",

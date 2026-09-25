@@ -188,6 +188,8 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "geomce": Rt(("spatial_layers",), couches=("mesures_compensatoires",),
                  millesime="GéoMCE (MTE/OFB) — mesures compensatoires"),
     "scot_gpu": Rt(("spatial_layers",), couches=("scot",), millesime="GPU — périmètres SCOT (idurba CNIG)"),
+    "enr_aper_ofb": Rt(("spatial_layers",), couches=("enr_exclue_hors_toiture",),
+                       millesime="OFB — zones exclues aires d'accélération EnR (loi APER)"),
     # ── marché / valeurs ────────────────────────────────────────────────────────────
     "dvf": Rt(("dvf_mutations", "dvf_mutations_parcelle", "dvf_mutations_histo",
                "dvf_secteur_medianes", "dvf_prix_sortie_neuf", "spatial_layers",
