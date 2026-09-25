@@ -40,7 +40,6 @@ import { MODULES, VIOLET } from './registry'
 import { Plu } from './Plu'
 // M137-K : ScoringV2Module (Radar des ventes) retiré du produit (DORMANT) — plus importé/monté ;
 // le composant reste au dépôt dans ./ScoringV2 (cf. son en-tête).
-import { RenouvellementModule } from './Renouvellement'
 import { ProspectionSolaire } from './ProspectionSolaire'
 import { EtudeZone } from './EtudeZone'
 import { TaxeAmenagement } from './TaxeAmenagement'
@@ -1236,6 +1235,9 @@ export function M08() {
 // pour ses tests, mais n'est plus branchée dans le flux M09.
 type Dest = { idu: string; commune: string; surface: number | null }
 
+// OUTILS-S2 Lot B — montant TTC avec les centimes (tarif courrier 4,04 € l'unité), virgule décimale FR.
+const fmtEur2 = (n: number) => `${n.toFixed(2).replace('.', ',')} €`
+
 // RECETTE-2 (S8) — substitution PURE d'un gabarit de courrier, exportée pour être verrouillée par test.
 // RÈGLE : un champ vide ne s'imprime JAMAIS (ni « — », ni « (—) », ni « à — ») dans une lettre qui part
 // dans une boîte aux lettres. Commune/surface absente → le SEGMENT entier disparaît, la phrase se
@@ -1285,15 +1287,35 @@ export function M09() {
   const [demande, setDemande] = useState<{ id: number; rang_compte?: number; statut: string; n: number; communes: string | null } | null>(null)
   const [pdfBusy, setPdfBusy] = useState(false)
   const [pdfErr, setPdfErr] = useState<string | null>(null)
+  // OUTILS-S2 Lot B — un pli « à l'occupant » n'atteint personne sur un terrain nu ou sans adresse :
+  // l'ajout est REFUSÉ et l'on renvoie au Courrier SPF (identification du propriétaire via la fiche).
+  const [ajoutBloque, setAjoutBloque] = useState<{ idu: string; code: string; motif: string } | null>(null)
+  const select = useApp((s) => s.select)
 
-  // Ajoute un destinataire (dédupliqué), puis enrichit commune + surface depuis la fiche (cache partagé).
-  const ajouter = (raw: string) => {
-    const id = iduComplet(raw).toUpperCase()
-    if (id.length < 10) return
+  // Enrichit commune + surface depuis la fiche (cache partagé) une fois le destinataire retenu.
+  const _enrichir = (id: string) => {
     setDest((prev) => prev.some((d) => d.idu === id) ? prev : [...prev, { idu: id, commune: '', surface: null }])
     qc.fetchQuery({ queryKey: ['fiche', id], queryFn: () => getFiche(id) })
       .then((f) => setDest((prev) => prev.map((d) => d.idu === id ? { ...d, commune: f.commune, surface: f.surface_m2 } : d)))
       .catch(() => { /* parcelle introuvable : la chip reste, commune inconnue (jamais inventée) */ })
+  }
+  // Ajoute un destinataire (dédupliqué). OUTILS-S2 Lot B : on résout d'abord l'adressabilité ; un
+  // terrain nu / sans adresse (aucun occupant joignable) bloque l'ajout avec un message + renvoi SPF.
+  // L'opposition n'est PAS bloquée ici (traitée au dépôt, étape 3). Adressage indisponible → repli : on
+  // ajoute sans blocage (jamais un faux blocage sur une panne réseau).
+  const AJOUT_REFUSE = new Set(['nu', 'sans_adresse', 'sans_canal', 'inconnue'])
+  const ajouter = (raw: string) => {
+    const id = iduComplet(raw).toUpperCase()
+    if (id.length < 10 || dest.some((d) => d.idu === id)) return
+    setAjoutBloque(null)
+    postCourrierAdressage([id])
+      .then((r) => {
+        const res = r.resolutions[0]
+        if (res?.bloque && res.code && AJOUT_REFUSE.has(res.code)) {
+          setAjoutBloque({ idu: id, code: res.code, motif: res.motif ?? '' })
+        } else _enrichir(id)
+      })
+      .catch(() => _enrichir(id))
   }
   const retirer = (id: string) => setDest((prev) => prev.filter((d) => d.idu !== id))
 
@@ -1406,6 +1428,22 @@ export function M09() {
               ))}
             </div>
           )}
+          {/* OUTILS-S2 Lot B — terrain nu / sans adresse : aucun occupant à qui écrire → ajout refusé,
+              renvoi vers le Courrier SPF (ouvre la fiche, qui porte le pli SPF d'identification). */}
+          {ajoutBloque && (
+            <div data-courrier-ajout-bloque className="rounded-lg border border-st-ecartee/50 bg-st-ecartee/[0.06] px-3 py-2 text-[11px] leading-snug text-txt-mut">
+              <span className="text-st-ecartee">⛔ {iduCourt(ajoutBloque.idu)} — </span>
+              {ajoutBloque.code === 'nu'
+                ? 'Terrain nu, aucun occupant à qui écrire'
+                : ajoutBloque.code === 'inconnue' ? 'Parcelle inconnue'
+                : 'Aucune adresse d’envoi (aucun occupant joignable)'}
+              {ajoutBloque.code !== 'inconnue' && <> — passez par le <b className="text-txt-mut">Courrier SPF</b> pour identifier le propriétaire.</>}
+              {ajoutBloque.code !== 'inconnue' && (
+                <button data-courrier-spf-lien onClick={() => select(ajoutBloque.idu)}
+                  className="mt-1 block text-mint hover:underline">Ouvrir la fiche (Courrier SPF) →</button>
+              )}
+            </div>
+          )}
           <p className="text-[10px] text-txt-dim">{dest.length} destinataire{dest.length > 1 ? 's' : ''} — un courrier par parcelle.</p>
           <Bouton niveau="primaire" ton="vert" data-courrier-next onClick={() => dest.length && setStep(2)} disabled={dest.length === 0}
             className="mt-auto">Rédiger ›</Bouton>
@@ -1477,6 +1515,15 @@ export function M09() {
             )}
           </div>
 
+          {/* OUTILS-S2 Lot B (décision Vic) — ligne de prix DISCRÈTE avant le bouton : N × tarif unitaire
+              = total TTC. Tarif lu du back (config/param admin), jamais codé ici. Repli honnête si absent. */}
+          {!demande && (
+            <p data-courrier-tarif className="text-[10.5px] leading-snug text-txt-dim">
+              {statut.data?.tarif_unitaire_eur != null ? (
+                <>{dest.length} courrier{dest.length > 1 ? 's' : ''} × {fmtEur2(statut.data.tarif_unitaire_eur)} = <b className="text-txt-mut">{fmtEur2(statut.data.tarif_unitaire_eur * dest.length)} TTC</b> — impression, mise sous pli, affranchissement, suivi.</>
+              ) : 'Tarif communiqué sous 24 h ouvrées.'}
+            </p>
+          )}
           {!demande ? (
             <Bouton niveau="primaire" ton="vert" data-courrier-demander onClick={() => envoyer.mutate()} disabled={envoyer.isPending || depotBloque || adressage.isLoading}>
               {envoyer.isPending ? 'Envoi de la demande…' : depotBloque ? 'Dépôt bloqué — voir les motifs' : "Demander l'envoi à LABUSE"}</Bouton>
@@ -1486,8 +1533,11 @@ export function M09() {
             // RECETTE-1 R13 — le numéro montré est le rang PROPRE AU COMPTE (1, 2, 3…), plus le `id`
             // PK global (qui fuitait le volume plateforme : « n° 44 » au 1ᵉʳ courrier). Repli sur id.
             <div data-courrier-confirm className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[11px] leading-snug text-txt-mut">
-              <b className="text-mint">✓ Demande n° {demande.rang_compte ?? demande.id} transmise.</b> LABUSE vous rappelle sous 24 h ouvrées avec le tarif —
-              impression, mise sous pli, affranchissement et suivi compris.
+              <b className="text-mint">✓ Demande n° {demande.rang_compte ?? demande.id} transmise.</b>
+              {/* OUTILS-S2 Lot B — le MÊME montant qu'à l'étape 3 est repris ici. */}
+              {statut.data?.tarif_unitaire_eur != null
+                ? <> {demande.n} courrier{demande.n > 1 ? 's' : ''} × {fmtEur2(statut.data.tarif_unitaire_eur)} = <b className="text-txt-mut">{fmtEur2(statut.data.tarif_unitaire_eur * demande.n)} TTC</b> — impression, mise sous pli, affranchissement et suivi compris.</>
+                : ' LABUSE vous rappelle sous 24 h ouvrées avec le tarif — impression, mise sous pli, affranchissement et suivi compris.'}
               <span className="mt-1.5 block text-[10.5px] text-txt-dim">Retrouvez vos demandes dans <b className="text-txt-mut">Projets → Mes courriers</b>.</span>
             </div>
           )}
@@ -1705,7 +1755,8 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   plu: Plu,
   // M137-K (Vic 20/08/2026) : 'scoring-v2' (Radar des ventes) retiré du produit (DORMANT) —
   // recouvre l'Analyse LABUSE. Composant ScoringV2Module + endpoints /v2/* conservés au dépôt.
-  renouvellement: RenouvellementModule,
+  // DENSIFIER-PLI (PISCINES-2 Lot B) — 'renouvellement' (Densifier l'existant) retiré du menu et plié
+  // dans le filtre Capacité (« Déjà bâti » + « SDP restante »).
   'prospection-solaire': ProspectionSolaire,
   // OUTILS-MUSCLER-1 Lot A — « Successions » (parcel_veille_succession, succession PROBABLE jamais
   // « en succession »). Ponts : Courrier/Comparer sur sélection, « Assembler → » par carte (Lot B).

@@ -125,11 +125,11 @@ export const MODULES: ModuleDef[] = [
     /* RECETTE-2 (S27) — accroche SANS point final (décision Vic). */
     label: 'Prospection solaire', desc: 'Les toits bien exposés, les piscines à équiper' },
 
-  // 14. Densifier l'existant — §5 : clé interne `renouvellement` inchangée (URL/QA/tests/endpoint/table).
-  { key: 'renouvellement', num: 'MR1', group: 'marche',
-    label: 'Densifier l’existant', desc: 'Le bâti en zone U qui peut porter davantage.' },
+  // DENSIFIER-PLI (PISCINES-2 Lot B) — l'outil « Densifier l'existant » (ex-clé `renouvellement`) est
+  // RETIRÉ du menu : plié dans le filtre Capacité (case « Déjà bâti » + « SDP restante ≥ X », run servi).
+  // Le précalcul figé `parcel_renouvellement` n'est plus lu par aucun écran (table conservée en base).
 
-  // 15. Blocs fonciers — OUTILS-MUSCLER-3 : assiettes contiguës d'un même propriétaire PM (parcel_blocs).
+  // Blocs fonciers — OUTILS-MUSCLER-3 : assiettes contiguës d'un même propriétaire PM (parcel_blocs).
   { key: 'blocs-fonciers', num: 'M29', group: 'agir', descSmall: true,
     label: 'Blocs fonciers', desc: 'Les assiettes d’un même propriétaire, sur toute l’île.' },
 

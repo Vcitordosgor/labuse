@@ -20,6 +20,13 @@ compte-rendu comme accroche) : « écarts à la règle » et « choix LABUSE » 
 """
 from __future__ import annotations
 
+# OUTILS-S2 Lot C (C.4) — verrous NON BLOQUANTS (avertissements) : cassés, ils N'empêchent PAS le
+# déploiement (deploy -w) et sont EXCLUS du bandeau « À corriger » (bloquants). MÊME ensemble que
+# `AVERTISSEMENT` de l'endpoint /verifier (api/dashboard.py). G8 = fraîcheur de veille / sources sans
+# contrôle. Une source unique évite que « À corriger » et « À faire » se contredisent sur G8.
+VERROUS_AVERTISSEMENT = {"G8"}
+
+
 def _noms(items: list[dict], limite: int = 4) -> str:
     noms = [i.get("nom") or str(i.get("id")) for i in items]
     if len(noms) <= limite:
@@ -126,10 +133,14 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
                "Voir", "robinet", [rb["id"] for rb in hm_rob]),
         # CIRCUIT-5 (lot 6.2) — les VERROUS cassés remontent en rouge : la même vérité que
         # `labuse circuit verrous` (dernier passage journalisé), jamais recalculée ici.
-        _ligne(len((verrous or {}).get("casses", [])), "rouge", "verrous cassés",
+        # OUTILS-S2 Lot C (C.4) — « À corriger » ne compte que les BLOQUANTS : les avertissements
+        # (G8, fraîcheur de veille) n'y figurent pas (deploy -w) — ils vivent dans « sources sans
+        # contrôle » (ci-dessous) et en « À faire » (ambre). Plus de contradiction G8.
+        _ligne(len([c for c in (verrous or {}).get("casses", []) if c not in VERROUS_AVERTISSEMENT]),
+               "rouge", "verrous cassés",
                "Le dernier passage de « labuse circuit verrous » a cassé : "
-               + ", ".join((verrous or {}).get("casses", [])) + ". Le déploiement refuse tant "
-               "que ça tient. Chaque verrou a sa phrase dans VERROUS.md.",
+               + ", ".join(c for c in (verrous or {}).get("casses", []) if c not in VERROUS_AVERTISSEMENT)
+               + ". Le déploiement refuse tant que ça tient. Chaque verrou a sa phrase dans VERROUS.md.",
                "Voir", "compteur", []),
         # CRON-1 lot 2 (G8) — les sources que PERSONNE ne contrôle, NOMMÉES : avec l'agent à 0 €, une
         # source hors sonde n'a plus aucun contrôleur. Ligne ROUGE tant qu'il y en a.
@@ -258,8 +269,14 @@ def composer_a_faire(reservoirs: list[dict], *, residuel: dict | None, candidat:
     lignes: list[dict] = []
 
     # ── ROUGE d'abord ────────────────────────────────────────────────────────────────────────
-    # (R1) verrous cassés — une ligne par verrou (le déploiement refuse tant que ça tient).
-    for verrou in (verrous or {}).get("casses", []):
+    # (R1) verrous cassés BLOQUANTS — une ligne rouge par verrou (le déploiement refuse tant que ça
+    # tient). OUTILS-S2 Lot C (C.4) : G8 (VERROUS_AVERTISSEMENT) est un AVERTISSEMENT non bloquant
+    # (fraîcheur de veille) — exclu du bandeau « À corriger » (bloquants), il NE remonte PAS en rouge
+    # ici mais en AMBRE plus bas (même vérité partout). On sépare les deux listes maintenant.
+    casses = (verrous or {}).get("casses", [])
+    verrous_bloquants = [v for v in casses if v not in VERROUS_AVERTISSEMENT]
+    verrous_avert = [v for v in casses if v in VERROUS_AVERTISSEMENT]
+    for verrou in verrous_bloquants:
         lignes.append(_ligne_af(
             "decider", "rouge", f"Décider — verrou {verrou} cassé",
             f"Le dernier passage de « labuse circuit verrous » a cassé sur {verrou}. Le déploiement "
@@ -300,7 +317,18 @@ def composer_a_faire(reservoirs: list[dict], *, residuel: dict | None, candidat:
                 {"label": "Décider", "action": "decider", "source": r["id"]},
                 cible={"type": "reservoir", "ids": [r["id"]]}))
 
-    # ── AMBRE ensuite : injecter → calculer → basculer → déposer ──────────────────────────────
+    # ── AMBRE ensuite : verrou d'avertissement → injecter → calculer → basculer → déposer ─────
+    # (A0) VERROU D'AVERTISSEMENT (G8) — cassé mais NON bloquant : le déploiement passe (deploy -w).
+    # Présenté en ambre, sans « le déploiement refuse » — cohérent avec son exclusion de « À corriger ».
+    for verrou in verrous_avert:
+        lignes.append(_ligne_af(
+            "decider", "ambre", f"Décider — verrou {verrou} (avertissement, non bloquant)",
+            f"Le verrou {verrou} est un avertissement de fraîcheur de veille : le déploiement PASSE "
+            "(deploy -w). Il pointe des sources sans contrôle récent — cf. « sources sans contrôle ». "
+            "À décider quand tu veux, sans urgence.",
+            {"label": "Décider", "action": "decider", "verrou": verrou},
+            cible={"type": "compteur", "ids": []}))
+
     # (1) INJECTER — une ligne par source en nouvelle version (chacune a sa vanne).
     for r in reservoirs:
         if lib(r) == "nouvelle version":

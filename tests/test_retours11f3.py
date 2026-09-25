@@ -265,14 +265,14 @@ def test_avenant_r11_listing_piscines_aligne_sur_le_compteur():
 
 
 def test_avenant_r11_alignement_mesure():
-    """AVENANT — vérification sur base réelle : agg.total == liste.total (haute ET incertaines)."""
+    """PISCINES-2 — la LISTE et le COMPTEUR lisent la MÊME source unique `piscines` : leurs totaux
+    (statut servie) coïncident, île entière."""
     from fastapi.testclient import TestClient
     from labuse.api.app import app as _app
     c = TestClient(_app)
     a = c.get("/modules/prospection-piscines")
     if a.status_code != 200 or not (a.json() or {}).get("total"):
         import pytest as _p
-        _p.skip("détection piscines absente en base de test")
-    lst = c.get("/modules/prospection-solaire?piscine=oui")
-    assert lst.json()["total"] == a.json()["total"], "listing ≠ compteur (confiance haute)"
-    assert lst.json()["tronquee"] is False, "la limite de 500 doit être levée (pagination sur le total)"
+        _p.skip("source piscines absente en base de test")
+    lst = c.get("/modules/prospection-piscines/liste")
+    assert lst.json()["total"] == a.json()["total"], "liste ≠ compteur (statut servie)"

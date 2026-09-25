@@ -1588,8 +1588,13 @@ def _q_v2_where(run_label: str,
     if rang_max is not None:   # mutation : têtes de liste (rang P ≤ N, cohérent Q3-M36)
         conds.append("s2.rang IS NOT NULL AND s2.rang <= :f_rang")
         params["f_rang"] = rang_max
-    if renouvellement:   # mutation : segment Renouvellement (run-scopé, vérifié live sur le run servi)
-        conds.append("EXISTS (SELECT 1 FROM parcel_renouvellement rn WHERE rn.idu = p.idu AND rn.run_label = :runf)")
+    if renouvellement:
+        # DENSIFIER-PLI (PISCINES-2 Lot B) — l'outil « Densifier l'existant » est plié dans les filtres :
+        # cette case « Déjà bâti » (clé interne legacy `renouvellement`, hash `rnv`, conservée pour les
+        # vues enregistrées) ne lit PLUS le précalcul figé `parcel_renouvellement` mais le BÂTI EXISTANT
+        # BD TOPO (`p_model_bati.emprise_bati_m2 > 0`), à combiner avec « SDP restante ≥ X » (sdpMin, qui
+        # lit `parcel_residuel` du run servi 10 — la même SDP que la fiche). Plus d'instantané figé.
+        conds.append("EXISTS (SELECT 1 FROM p_model_bati pb WHERE pb.idu = p.idu AND pb.emprise_bati_m2 > 0)")
     if division_or:   # mutation : segment Division en or (O12) — CIRCUIT-1 2.3 : run servi SEUL
         conds.append("EXISTS (SELECT 1 FROM division_or_candidates dor WHERE dor.idu = p.idu "
                      "AND dor.run_label = :runf)")
@@ -4601,20 +4606,23 @@ def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
         "SELECT sl.name FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
         "WHERE sl.kind = 'anru' AND ST_Intersects(p.geom_2975, sl.geom_2975) LIMIT 1"),
         {"idu": idu}).scalar()
-    # FICHE-COUCHES-4 lot 2 — PISCINE détectée (CoSIA) SUR la parcelle : élément bâti IMPOSABLE
-    # (taxe foncière ; à déclarer aux impôts, art. 1406 CGI). Recensement IA, à confirmer sur place.
-    piscine = db.execute(text(
-        "SELECT count(*) FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
-        "WHERE sl.kind = 'piscine_cosia' AND ST_Intersects(p.geom_2975, sl.geom_2975)"),
-        {"idu": idu}).scalar()
+    # PISCINES-2 — PISCINE détectée SUR la parcelle depuis la source UNIQUE `piscines` (FLAIR ∪ CoSIA
+    # dédoublonnées, statut `servie`), la MÊME que l'outil Piscines et la carte. Élément bâti IMPOSABLE
+    # (taxe foncière ; à déclarer, art. 1406 CGI). Corrections « pas une piscine » exclues.
+    piscine = 0
+    if db.execute(text("SELECT to_regclass('piscines') IS NOT NULL")).scalar():
+        piscine = db.execute(text(
+            "SELECT count(*) FROM piscines pi WHERE pi.idu = :idu AND pi.statut = 'servie' "
+            "AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)"),
+            {"idu": idu}).scalar() or 0
     perimetres = []
     if piscine:
         perimetres.append({
-            "libelle": f"Piscine détectée — {piscine} bassin{'s' if piscine > 1 else ''} (CoSIA)",
+            "libelle": f"Piscine détectée — {piscine} bassin{'s' if piscine > 1 else ''}",
             "detail": "Une piscine est un élément bâti IMPOSABLE : elle majore la taxe foncière et "
                       "doit être déclarée aux impôts dans les 90 jours de l'achèvement (art. 1406 CGI). "
-                      "Détection automatique par IA (orthophoto 20 cm) — à confirmer sur place.",
-            "source": "CoSIA (IGN, PVA juil.–août 2025, 20 cm)", "derive": True})
+                      "Source fusionnée FLAIR ∪ CoSIA (orthophoto 20 cm 2025) — à confirmer sur place.",
+            "source": "Détection FLAIR ∪ CoSIA (IGN, 20 cm 2025)", "derive": True})
     if anru:
         perimetres.append({
             "libelle": "Renouvellement urbain — NPNRU / ANRU",

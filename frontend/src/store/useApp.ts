@@ -446,6 +446,7 @@ interface AppState {
   setOrthoYear: (y: OrthoYear) => void
   terrain3d: boolean
   toggleTerrain: () => void
+  setTerrain3d: (v: boolean) => void   // RETOURS-14 P4 — le relief 3D se choisit dans un menu (voir MapToolbar)
   // RETOURS-13 P4 — le bâti extrudé est OPTIONNEL en 3D (chip « Bâtiments »). État de SESSION
   // (pas en base). On par défaut : passer en 3D montre relief + bâti comme avant. Off → relief seul
   // (le bâti reste à plat : l'empreinte 2D grise du Gabarit demeure ; carte principale = pas d'extrusion).
@@ -886,7 +887,9 @@ export const useApp = create<AppState>((set, get) => ({
   setOrthoYear: (orthoYear) => set({ orthoYear, basemap: 'ortho' }),
   terrain3d: false,
   toggleTerrain: () => set((s) => ({ terrain3d: !s.terrain3d })),
+  setTerrain3d: (v) => set({ terrain3d: v }),   // RETOURS-14 P4 — menu Relief (2D / relief / relief+bâti)
   batiVisible: true,   // RETOURS-13 P4 — bâti extrudé visible par défaut en 3D
+
   setBatiVisible: (v) => set({ batiVisible: v }),
   tool: null,
   setTool: (tool) => set({ tool }),
@@ -910,7 +913,17 @@ export const useApp = create<AppState>((set, get) => ({
   // suivants (six outils enchaînés, toujours bloquée). Comme `zone` (emprise éphémère) et les overlays,
   // le focus est une cible éphémère de l'outil : on le remet à null ici. Les ponts appellent
   // focusParcelle APRÈS setModule (tool déjà ouvert), donc l'effacement ne touche que l'outil quitté.
-  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, zone: null, tool: null, focusIdu: null, ...CLOSE_OVERLAYS }),
+  setModule: (module) => {
+    // DENSIFIER-PLI (PISCINES-2 Lot B) — l'outil « Densifier l'existant » (clé `renouvellement`) est
+    // plié dans le filtre Capacité : tout lien vers ce module (Copilote « densifier », deep-link) ouvre
+    // le panneau Filtre avec « Déjà bâti » coché et « SDP restante ≥ 200 m² » pré-rempli (run servi).
+    if (module === 'renouvellement') {
+      set((s) => ({ panelOpen: true, panneauSection: 'filtres', mobilePanelOpen: true, accueilVu: true,
+        ...CLOSE_OVERLAYS, filters: { ...s.filters, renouvellement: true, sdpMin: s.filters.sdpMin ?? 200 } }))
+      return
+    }
+    set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, zone: null, tool: null, focusIdu: null, ...CLOSE_OVERLAYS })
+  },
   // OUTILS-FIX-3 Lot D — fil de retour entre outils. `pushOutilRetour` est appelé par un pont APRÈS sa
   // navigation (la nav a déjà vidé la pile via CLOSE_OVERLAYS) → il ne reste que l'entrée de départ.
   outilRetour: [],

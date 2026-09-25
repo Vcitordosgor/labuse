@@ -60,8 +60,25 @@ def test_sci_dormante_zero_dans_v_et_taggee():
 
 
 def test_veille_succession_dirigeant_70():
-    assert veille_succession_eligible("pm", C.CONF_SIREN_DIRECT, 70, False)
-    assert not veille_succession_eligible("pm", C.CONF_SIREN_DIRECT, 69, False)
+    # OUTILS-S2 Lot A — le signal « dirigeant âgé » exige désormais une forme retenue (civile/
+    # familiale/agricole). Sans forme, le seul âge ne suffit plus.
+    assert veille_succession_eligible("pm", C.CONF_SIREN_DIRECT, 70, False, "SCI")
+    assert not veille_succession_eligible("pm", C.CONF_SIREN_DIRECT, 69, False, "SCI")
+    assert not veille_succession_eligible("pm", C.CONF_SIREN_DIRECT, 70, False)
+
+
+def test_veille_succession_forme_restreinte():
+    """OUTILS-S2 Lot A — l'âge du dirigeant ne compte QUE pour les formes civiles/familiales/
+    agricoles. Une SA/SAS/SEM/société d'HLM est écartée ; la SCI dormante reste éligible quelle
+    que soit la forme lue (elle EST une SCI)."""
+    for forme in ("SCI", "SC", "SARL", "SNC", "GFA", "SCEA", "EARL", "SCM"):
+        assert veille_succession_eligible("pm", C.CONF_SIREN_DIRECT, 84, False, forme), forme
+    for forme in ("SA", "SAS", "SEM", "SCA", "GIE", "ASS", "AUPM", ""):
+        assert not veille_succession_eligible("pm", C.CONF_SIREN_DIRECT, 84, False, forme), forme
+    # SCI dormante : toujours éligible, même si la forme lue n'est pas dans la liste.
+    assert veille_succession_eligible("pm", C.CONF_SIREN_DIRECT, None, True, "SA")
+    # comparaison EXACTE : « SC » ne doit pas être capté par une sous-chaîne de « SCA » (exclue).
+    assert not veille_succession_eligible("pm", C.CONF_SIREN_DIRECT, 84, False, "SCA")
 
 
 def test_pp_jamais_taggees():

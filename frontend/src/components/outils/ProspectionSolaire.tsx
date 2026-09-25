@@ -15,9 +15,8 @@
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { getPiscinesAgregat, getPiscinesPoints, getProspectionSolaire, getSolaireFiche,
-  postPasUnePiscine, type SolaireFiche, type SolaireFiltres,
-  type SolaireItem } from '../../lib/api'
+import { getPiscinesAgregat, getPiscinesListe, getPiscinesPoints, getSolaireFiche,
+  postPasUnePiscine, type PiscineItem, type SolaireFiche } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
@@ -27,6 +26,8 @@ import { ErrorState } from '../States'
 import { ListPaginationFooter, usePagination } from '../ListPagination'
 import { Siren } from '../shared/Siren'
 import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
+import { Chip } from '../ui/Chip'
 import { Retour } from '../ui/Retour'
 
 // A1 — plus de date « gelée » en dur : le millésime affiché à l'écran est celui SERVI par l'endpoint
@@ -87,7 +88,7 @@ function BackBar({ onBack, titre }: { onBack: () => void; titre: string }) {
 
 // A2 — cellule propriétaire : PM = dénomination (+ SIREN public, cliquable Pappers) ; particulier
 // JAMAIS nommé (même règle privacy que l'Assemblage).
-function ProprioCell({ p }: { p: SolaireItem['proprio'] }) {
+function ProprioCell({ p }: { p: PiscineItem['proprio'] }) {
   if (p.type === 'personne_morale')
     return (
       <span className="text-txt">
@@ -97,122 +98,100 @@ function ProprioCell({ p }: { p: SolaireItem['proprio'] }) {
   return <span className="italic text-txt-dim">particulier — non nommé</span>
 }
 
-// ── MODE PISCINES — la stat d'abord, puis carte + listing ──
-// LOT8 (OUTILS-FINALE) : le mode Piscines IGNORE le classement (toutes les piscines listées, pas de
-// pied « écartées ») ; PAS de sélecteur Périmètre (toute l'île d'office, la ventilation par commune
-// reste dans le bloc stats, cliquable pour drill) ; tableau 2 colonnes (Parcelle · Commune ;
-// surface retirée O12a), paginé par 200 (O12c).
+// ── MODE PISCINES (pisciniste) — PISCINES-2 : la stat d'abord, puis carte + LISTE actionnable ──
+// Source UNIQUE fusionnée `piscines` (FLAIR ∪ CoSIA dédoublonnées, statut servie/à confirmer/écartée
+// selon la précision MESURÉE par classe). L'outil sert à repérer les bassins À ÉQUIPER (chauffage
+// solaire, couverture, PAC, entretien) et à écrire à leurs occupants. Aucune notion de « potentiel
+// solaire » (hors sujet). Le seul geste de sortie = « Écrire aux occupants → » (Courrier).
+const PISC_SURF_MIN = [
+  { v: 0, label: 'toutes' }, { v: 15, label: '≥ 15 m²' }, { v: 25, label: '≥ 25 m²' }, { v: 40, label: '≥ 40 m²' },
+]
 function ModePiscines({ onBack }: { onBack: () => void }) {
   const select = useApp((s) => s.select)
   const setModuleMap = useApp((s) => s.setModuleMap)
-  // RECETTE-1 R23 — les ponts Courrier / Comparer (et leur sélection) sont retirés de l'outil Piscine.
+  const setModule = useApp((s) => s.setModule)
+  const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
+  const pushOutilRetour = useApp((s) => s.pushOutilRetour)
   const qc = useQueryClient()
   const [commune, setCommune] = useState<string | null>(null)
-  // RECETTE-1 R22 — rien n'apparaît tant que « Voir les parcelles » n'est pas cliqué : les textes et
-  // informations de résultat NAISSENT au clic (compteur, carte, listing). `montre` gouverne tout.
   const [montre, setMontre] = useState(false)
-  // RETOURS-11F M12 — bascule « inclure les incertaines » : par défaut seule la confiance HAUTE (≥ 0,80)
-  // est comptée/cartographiée ; la bascule ajoute les bandes moyenne/basse (Vic a vu ~1 faux sur 4).
-  const [inclureIncertaines, setInclureIncertaines] = useState(false)
-  // A2 — tri de la liste : commune (défaut) puis potentiel, en-têtes cliquables (tri SERVEUR).
-  const [sortPisc, setSortPisc] = useState<'commune' | 'potentiel'>('commune')
-
-  // RECETTE-5 (V3, décision Vic) — la fiche de SYNTHÈSE (total + par commune) revient D'EMBLÉE :
-  // le comptage se charge dès l'ouverture (plus gardé derrière « Voir les parcelles »). Seul le
-  // LISTING (`list`, plus bas) attend le clic. `montre` ne gouverne donc plus que le listing.
-  const agg = useQuery({ queryKey: ['piscines-agg', commune, inclureIncertaines], queryFn: () => getPiscinesAgregat(commune, 0, inclureIncertaines), staleTime: 60_000 })
-  // O12a (RETOURS-11) — la surface piscine (mesure vue du ciel) est FAUSSE : ni filtre ni colonne
-  // surface (décision maintenue en OUTILS-FIX-1). A2 : la liste porte parcelle · commune · potentiel
-  // solaire · type de propriétaire (PM nommée / particulier non nommé).
-  // RETOURS-11F3 avenant (note liée) — le LISTING suit le MÊME filtre de confiance que le compteur.
-  const filtres: SolaireFiltres = { commune, piscine: 'oui', inclureIncertaines, sort: sortPisc }
-  const list = useQuery({ queryKey: ['piscines-list', commune, inclureIncertaines, sortPisc], queryFn: () => getProspectionSolaire(filtres), staleTime: 60_000, enabled: montre })
-  // « pas une piscine » — retire la parcelle du service et rafraîchit compteur/carte/listing.
+  // statut : « servie » par défaut (précision mesurée ≥ 85 %) ; la bascule ajoute « à confirmer ».
+  const [inclureAConfirmer, setInclureAConfirmer] = useState(false)
+  const [surfMin, setSurfMin] = useState(0)
+  const [proprio, setProprio] = useState<'tous' | 'pm' | 'pp'>('tous')
+  const [sel, setSel] = useState<Set<string>>(new Set())   // sélection → Courrier « à l'occupant »
   const [pasPiscine, setPasPiscine] = useState<Set<string>>(new Set())
+
+  const agg = useQuery({ queryKey: ['piscines-agg', commune, inclureAConfirmer], queryFn: () => getPiscinesAgregat(commune, 0, inclureAConfirmer), staleTime: 60_000 })
+  const list = useQuery({
+    queryKey: ['piscines-liste', commune, inclureAConfirmer, surfMin, proprio],
+    queryFn: () => getPiscinesListe({ commune, statut: inclureAConfirmer ? 'tous' : 'servie', surfMin, proprio }),
+    staleTime: 60_000, enabled: montre,
+  })
   const signalerPasPiscine = async (idu: string) => {
     setPasPiscine((s) => new Set(s).add(idu))
+    setSel((s) => { const n = new Set(s); n.delete(idu); return n })
     try { await postPasUnePiscine(idu) } finally {
-      qc.invalidateQueries({ queryKey: ['piscines-agg'] })
+      qc.invalidateQueries({ queryKey: ['piscines-agg'] }); qc.invalidateQueries({ queryKey: ['piscines-liste'] })
     }
   }
+  const annulerPasPiscine = (idu: string) => setPasPiscine((s) => { const n = new Set(s); n.delete(idu); return n })
 
-  const items = list.data?.items ?? []   // aucune exclusion « écartée » : le pisciniste veut TOUTES les piscines
-  // O12c (RETOURS-11) — le listing (jusqu'à 8 299) se pagine par 200 via le pied partagé.
+  const items = (list.data?.items ?? []).filter((it) => !pasPiscine.has(it.idu))
   const page = usePagination(items.length)
   const [carteBusy, setCarteBusy] = useState(false)
-  // R8(a) — la carte se BASCULE : une fois posée, le bouton dit « Masquer sur la carte » et un
-  // second clic retire les marqueurs (l'utilisateur voit que l'action a eu lieu, et peut la défaire).
   const [carteAffichee, setCarteAffichee] = useState(false)
-  // RETOURS-11F3 avenant R11 — une fois la carte affichée, le gros encadré « Piscines détectées »
-  // (nombre + méthode + 8 communes) SE REPLIE en une ligne de résumé pour laisser voir le listing.
-  // Réversible (déplier). Reposé à faux quand on masque la carte ou change de commune.
-  const [comptageReplie, setComptageReplie] = useState(false)
   useEffect(() => () => setModuleMap({ idus: [], extra: null }), [setModuleMap])
-  // Changer de commune (ou revenir à l'île) invalide les points posés : on repart « Voir sur la carte ».
-  useEffect(() => { setCarteAffichee(false); setComptageReplie(false); setModuleMap({ idus: [], extra: null }) }, [commune, setModuleMap])
-  // LOT8b — « Voir sur la carte » = TOUTES les piscines en marqueurs (pas le listing capé à 500) :
-  // on charge les points GeoJSON et on les pose dans module-extra (couche module-pts, kind='piscine').
+  useEffect(() => { setCarteAffichee(false); setModuleMap({ idus: [], extra: null }) }, [commune, setModuleMap])
   const voirCarte = async () => {
-    if (carteAffichee) { setModuleMap({ idus: [], extra: null }); setCarteAffichee(false); setComptageReplie(false); return }
+    if (carteAffichee) { setModuleMap({ idus: [], extra: null }); setCarteAffichee(false); return }
     setCarteBusy(true)
-    try {
-      setModuleMap({ idus: [], extra: await getPiscinesPoints(commune, 0, inclureIncertaines) })
-      setCarteAffichee(true); setComptageReplie(true)   // R11 — replie le comptage pour dévoiler le listing
-    }
+    try { setModuleMap({ idus: [], extra: await getPiscinesPoints(commune, 0, inclureAConfirmer) }); setCarteAffichee(true) }
     finally { setCarteBusy(false) }
   }
+  const idusCourrier = [...sel].filter((idu) => !pasPiscine.has(idu))
+  const ecrireOccupants = () => {
+    setCourrierPrefillIdus(idusCourrier); setModule('courriers')
+    pushOutilRetour({ module: 'prospection-solaire', label: 'Prospection solaire' })
+  }
+  const SOURCE_LBL: Record<string, string> = { flair: 'FLAIR', cosia: 'CoSIA', 'flair+cosia': 'FLAIR+CoSIA' }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <BackBar onBack={onBack} titre="💧 Piscines" />
+      <BackBar onBack={onBack} titre="💧 Piscines — à équiper" />
+      <p className="text-[10.5px] leading-snug text-txt-mut">
+        Les bassins détectés, à <b className="text-txt">équiper</b> : chauffage solaire, couverture / volet,
+        pompe à chaleur, entretien. Repérez-les par commune, puis <b className="text-txt">écrivez à leurs occupants</b>.
+      </p>
       {commune && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <Retour data-piscines-reset label="Toute l’île" onClick={() => setCommune(null)} />
         </div>
       )}
 
-      {/* RECETTE-5 (V3) — LA FICHE DE SYNTHÈSE D'ABORD (total + par commune), affichée d'emblée ;
-          le bouton « Voir les parcelles » vient DESSOUS (cf. plus bas). */}
+      {/* SYNTHÈSE — total (servie) + par commune */}
       {agg.isLoading && <Squelette bloc />}
       {agg.isError && <ErrorState message="Détection piscines momentanément indisponible." retry={() => agg.refetch()} />}
-      {/* R11 — quand la carte est affichée, le comptage se replie en UNE ligne (déplier) pour dévoiler le listing. */}
-      {agg.data && comptageReplie && (
-        <button data-piscines-comptage-replie onClick={() => setComptageReplie(false)}
-          className="flex w-full items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:brightness-110"
-          style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
-          <b className="tnum" style={{ color: TOKENS.mint }}>{fmtInt(agg.data.total)}</b>
-          <span className="text-txt-mut">piscines · confiance {inclureIncertaines ? 'haute + incertaines' : 'haute'}</span>
-          <span className="ml-auto text-mint">déplier ▾</span>
-        </button>
-      )}
-      {agg.data && !comptageReplie && (
+      {agg.data && (
         <div className="rounded-lg border px-3 py-2.5" style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
-          {/* RECETTE-5 (V3) — dès que le listing est ouvert (`montre`), on peut re-replier la synthèse. */}
-          {montre && (
-            <div className="mb-1 text-right">
-              <button data-piscines-comptage-replier onClick={() => setComptageReplie(true)} className="text-[10px] text-txt-dim hover:text-mint">replier ▴</button>
-            </div>
-          )}
           <div className="text-[10px] text-txt-dim">Piscines détectées — {commune ?? 'toute l’île'}</div>
           <div className="mt-0.5"><b data-piscines-total className="tnum text-2xl font-semibold" style={{ color: TOKENS.mint }}>{fmtInt(agg.data.total)}</b>
-            <span className="ml-2 text-[9.5px] text-txt-dim">détection ortho/IA · à confirmer sur site</span></div>
-          {/* RETOURS-11F M12 — bascule CONFIANCE : par défaut « haute » ; le nombre d'incertaines est DIT. */}
+            <span className="ml-2 text-[9.5px] text-txt-dim">source fusionnée · à confirmer sur site</span></div>
           {agg.data.confiance && (
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
-              <span className="text-txt-dim">Confiance <b className="text-txt-mut">haute (≥ {agg.data.confiance.seuil_haute.toLocaleString('fr-FR')})</b> par défaut.</span>
-              <button data-piscines-toggle-incertaines onClick={() => setInclureIncertaines((v) => !v)}
+              <span className="text-txt-dim">Statut <b className="text-txt-mut">servie</b> (précision ≥ 85 %) par défaut.</span>
+              <button data-piscines-toggle-aconfirmer onClick={() => setInclureAConfirmer((v) => !v)}
                 className="rounded border px-1.5 py-0.5 font-medium transition-colors duration-quick hover:brightness-110"
-                style={inclureIncertaines
+                style={inclureAConfirmer
                   ? { borderColor: `${TOKENS.mint}66`, color: TOKENS.mint, background: `${TOKENS.mint}12` }
                   : { borderColor: 'var(--line-2)', color: 'var(--txt-mut)' }}>
-                {inclureIncertaines ? '✓ incertaines incluses' : `inclure les incertaines (+${fmtInt(agg.data.confiance.incertaines)})`}
+                {inclureAConfirmer ? '✓ à confirmer incluses' : `inclure à confirmer (+${fmtInt(agg.data.confiance.incertaines)})`}
               </button>
               {(agg.data.corrigees ?? 0) > 0 && (
                 <span className="text-txt-dim">· {fmtInt(agg.data.corrigees ?? 0)} retirée(s) « pas une piscine »</span>
               )}
             </div>
           )}
-          {/* LOT8a — le SEUIL de rétention est écrit à l'écran (des détections plus incertaines sont exclues) */}
           <div data-piscines-source className="mt-1 text-[9px] leading-snug text-txt-dim">{agg.data.source}</div>
           {!commune && agg.data.communes.length > 0 && (
             <div className="mt-2 flex flex-col gap-0.5">
@@ -227,84 +206,86 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
         </div>
       )}
 
-      {/* RECETTE-5 (V3) — le bouton « Voir les parcelles » SOUS la fiche de synthèse. Au clic, la
-          synthèse SE REPLIE (une ligne, dépliable) et le listing prend la place. */}
+      {/* FILTRES pisciniste : surface min · propriétaire PM/PP */}
+      {agg.data && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-txt-mut">
+          <label className="flex items-center gap-1.5">Surface
+            <select data-piscines-surf-min value={surfMin} onChange={(e) => setSurfMin(Number(e.target.value))}
+              className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
+              {PISC_SURF_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+            </select>
+          </label>
+          <label className="flex items-center gap-1.5">Propriétaire
+            <select data-piscines-proprio value={proprio} onChange={(e) => setProprio(e.target.value as 'tous' | 'pm' | 'pp')}
+              className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
+              <option value="tous">tous</option><option value="pm">personne morale</option><option value="pp">particulier</option>
+            </select>
+          </label>
+        </div>
+      )}
+
       {agg.data && !montre && (
-        <Bouton niveau="primaire" ton="vert" data-piscines-voir onClick={() => { setMontre(true); setComptageReplie(true) }}
-          className="shrink-0">
+        <Bouton niveau="primaire" ton="vert" data-piscines-voir onClick={() => setMontre(true)} className="shrink-0">
           Voir les parcelles
         </Bouton>
       )}
-
-      {/* R22 — la carte n'apparaît qu'avec les résultats (après « Voir les parcelles »). */}
       {agg.data && montre && (
         <button data-solaire-carte data-carte-affichee={carteAffichee ? '1' : '0'} onClick={voirCarte} disabled={carteBusy}
           className="rounded-lg border py-1.5 text-center text-[11px] font-medium transition-colors duration-quick hover:brightness-110"
           style={carteAffichee
             ? { borderColor: `${TOKENS.mint}66`, color: 'var(--txt-mut)', background: 'transparent' }
             : { borderColor: `${TOKENS.mint}66`, color: TOKENS.mint, background: `${TOKENS.mint}12` }}>
-          {carteBusy ? '💧 Chargement…'
-            : carteAffichee ? 'Masquer sur la carte'
-              : `💧 Voir sur la carte${agg.data ? ` (${fmtInt(agg.data.total)})` : ''}`}
+          {carteBusy ? '💧 Chargement…' : carteAffichee ? 'Masquer sur la carte' : `💧 Voir sur la carte (${fmtInt(agg.data.total)})`}
         </button>
       )}
 
-      {/* A2 — liste actionnable : Parcelle · Commune · Potentiel solaire · Type de propriétaire
-          (PM nommée / particulier non nommé). Surface piscine volontairement absente (mesure
-          aérienne fausse, O12a). A3 export CSV · A5 pont Courrier sur la sélection. */}
+      {/* LISTE : parcelle · commune · surface bassin · source · statut · propriétaire · sélection + chip */}
       {list.isLoading && <Squelette lignes={6} />}
       {list.data && (
         <>
-          {/* RECETTE-1 R23 — « Préparer les courriers » et « Comparer » RETIRÉS de l'outil Piscine
-              (avec la sélection de lignes qui ne servait qu'à eux). Cliquer une ligne ouvre la fiche. */}
-          {/* A2 — cartes empilées (320 px), barre de tri CLIQUABLE (commune | potentiel), tri SERVEUR. */}
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-txt-dim">
-            <span>Trier</span>
-            {([['commune', 'Commune'], ['potentiel', 'Potentiel']] as const).map(([k, lbl]) => (
-              <button key={k} data-piscines-sort={k} onClick={() => setSortPisc(k)}
-                className={`inline-flex items-center gap-0.5 uppercase tracking-wide hover:text-mint ${sortPisc === k ? 'text-mint' : 'text-txt-dim'}`}>
-                {lbl}{sortPisc === k && <span aria-hidden>▾</span>}
-              </button>
-            ))}
-          </div>
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-            {items.slice(0, page.shown).map((it) => {
-              const retiree = pasPiscine.has(it.idu)
-              return (
-              <div key={it.idu} data-piscines-row
-                className={`rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5 ${retiree ? 'opacity-40' : 'hover-fill cursor-pointer'}`}
-                onClick={() => !retiree && select(it.idu)}>
+            {items.slice(0, page.shown).map((it, i) => (
+              <div key={`${it.idu}-${i}`} data-piscines-row
+                className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[11px] text-txt-hi">{it.idu.slice(8)}</span>
-                  <span className="ml-auto tnum text-[11px] text-txt">{it.productible == null ? '—' : fmtInt(it.productible)}<span className="ml-1 text-[9px] text-txt-dim">kWh/kWc/an</span></span>
+                  <Case data-piscines-sel aria-label="Sélectionner"
+                    checked={sel.has(it.idu)}
+                    onChange={() => setSel((s) => { const n = new Set(s); n.has(it.idu) ? n.delete(it.idu) : n.add(it.idu); return n })} />
+                  <span className="cursor-pointer font-mono text-[11px] text-txt-hi hover:text-mint" onClick={() => select(it.idu)}>{it.idu.slice(8)}</span>
+                  <span className="ml-auto tnum text-[11px] text-txt">{it.surface_m2 == null ? '—' : `${fmtInt(it.surface_m2)} m²`}</span>
                 </div>
-                <div className="mt-0.5 flex items-center gap-1.5 text-[10.5px]">
+                <div className="mt-0.5 flex flex-wrap items-center gap-1.5 pl-6 text-[10.5px]">
                   <span className="shrink-0 text-txt-mut">{it.commune}</span>
                   <span className="text-txt-dim">·</span>
                   <span className="min-w-0 flex-1 truncate"><ProprioCell p={it.proprio} /></span>
-                  {/* RETOURS-11F M12 — « pas une piscine » : signal humain, retire du service (compteur/carte). */}
-                  {retiree ? <span className="shrink-0 text-[9.5px] text-txt-dim">retirée</span> : (
-                    <Bouton niveau="lien" data-piscines-pas onClick={(e) => { e.stopPropagation(); void signalerPasPiscine(it.idu) }}
-                      className="shrink-0">pas une piscine</Bouton>
-                  )}
+                  <span className="shrink-0 rounded bg-surface-2 px-1 text-[8.5px] text-txt-dim">{SOURCE_LBL[it.source] ?? it.source}</span>
+                  {it.statut === 'a_confirmer' && <span className="shrink-0 rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">à confirmer</span>}
+                  <Chip data-piscines-pas ton="neutre" className="shrink-0"
+                    onClick={(e) => { e.stopPropagation(); void signalerPasPiscine(it.idu) }}>pas une piscine</Chip>
                 </div>
               </div>
-            )})}
+            ))}
+            {pasPiscine.size > 0 && (
+              <div className="px-1 text-[9.5px] text-txt-dim">
+                {fmtInt(pasPiscine.size)} retirée(s) cette session · <button className="text-mint hover:underline" onClick={() => [...pasPiscine].forEach(annulerPasPiscine)}>Annuler tout</button>
+              </div>
+            )}
           </div>
-          {/* R8(b) — COMPTEUR HONNÊTE. Le listing est plafonné par le serveur (`cap`, ex. 500) alors que
-              la détection compte ~8 299 piscines (`total`). On paginait 200 par 200 SUR les lignes chargées,
-              d'où le trompeur « 200 / 500 ». Ici : « N affichées · P listées sur T détectées » — la borne de
-              pagination reste le nombre de lignes réellement chargées (items.length), on annonce la vérité. */}
           <ListPaginationFooter shown={Math.min(page.shown, items.length)} total={items.length} onMore={page.more}>
-            {list.data && list.data.total > items.length && (
+            {list.data.total > items.length && (
               <span data-piscines-cap className="text-[10.5px] text-txt-dim">
-                {fmtInt(items.length)} listées{list.data.tronquee ? ` (limite ${fmtInt(list.data.cap)})` : ''} sur <b className="text-txt-mut">{fmtInt(list.data.total)}</b> détectées — la carte les montre toutes.
+                {fmtInt(items.length)} sur <b className="text-txt-mut">{fmtInt(list.data.total)}</b> — la carte les montre toutes.
               </span>
             )}
           </ListPaginationFooter>
+          {/* SEUL geste de sortie : Courrier « à l'occupant » (81 % des propriétaires sont des particuliers non nommés). */}
+          <Bouton niveau="secondaire" ton="vert" data-piscines-courrier disabled={idusCourrier.length === 0}
+            onClick={ecrireOccupants} className="shrink-0">
+            ✉ Écrire aux occupants ({idusCourrier.length}) →
+          </Bouton>
         </>
       )}
-      <p className="text-[9.5px] leading-snug text-txt-dim">{SOURCES_PIED}</p>
+      <p className="text-[9.5px] leading-snug text-txt-dim">Source unique fusionnée FLAIR ∪ CoSIA (IGN 20 cm 2025) · propriétaire DGFiP</p>
     </div>
   )
 }

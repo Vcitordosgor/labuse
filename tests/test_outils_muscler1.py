@@ -21,10 +21,11 @@ def _p(db, idu, wkt, surf, commune="Succville"):
         {"i": idu, "c": commune, "w": wkt, "s": surf}).scalar()
 
 
-def _pm(db, idu, denomination, siren):
-    db.execute(text("INSERT INTO parcelle_personne_morale (idu, denomination, siren) "
-                    "VALUES (:i, :d, :s) ON CONFLICT (idu) DO UPDATE SET denomination = :d, siren = :s"),
-                {"i": idu, "d": denomination, "s": siren})
+def _pm(db, idu, denomination, siren, forme="SCI"):
+    db.execute(text("INSERT INTO parcelle_personne_morale (idu, denomination, siren, forme_juridique) "
+                    "VALUES (:i, :d, :s, :f) ON CONFLICT (idu) DO UPDATE "
+                    "SET denomination = :d, siren = :s, forme_juridique = :f"),
+                {"i": idu, "d": denomination, "s": siren, "f": forme})
 
 
 def _veille(db, idu, siren, age=None, sci=False):
@@ -43,12 +44,19 @@ def test_successions_liste(db_session):
     _p(db_session, "SUCC0001", _SQ, 600)
     _p(db_session, "SUCC0002",
        "POLYGON((55.81 -21.41,55.8103 -21.41,55.8103 -21.4097,55.81 -21.4097,55.81 -21.41))", 900)
-    _pm(db_session, "SUCC0001", "SCI DU TEST", "111222333")
-    _pm(db_session, "SUCC0002", "FONCIERE TEST", "444555666")
+    # SUCC0003 — dirigeant âgé mais forme de capitaux (SA) : OUTILS-S2 Lot A l'écarte du signal.
+    _p(db_session, "SUCC0003",
+       "POLYGON((55.82 -21.42,55.8203 -21.42,55.8203 -21.4197,55.82 -21.4197,55.82 -21.42))", 700)
+    _pm(db_session, "SUCC0001", "SCI DU TEST", "111222333", forme="SCI")
+    _pm(db_session, "SUCC0002", "FONCIERE TEST", "444555666", forme="SARL")
+    _pm(db_session, "SUCC0003", "SA CAPITAUX TEST", "777888999", forme="SA")
     _veille(db_session, "SUCC0001", "111222333", sci=True)
     _veille(db_session, "SUCC0002", "444555666", age=82)
+    _veille(db_session, "SUCC0003", "777888999", age=88)
     out = successions_liste(commune="Succville", sdp_min=0, limit=200, offset=0, db=db_session)
+    # 3 tags posés, mais la SA (SUCC0003) est écartée par le filtre de forme → 2 servis.
     assert out["total"] == 2 and out["n"] == 2
+    assert "SUCC0003" not in {i["idu"] for i in out["items"]}
     assert out["maj"] is not None                     # millésime du signal — toujours servi
     par_idu = {i["idu"]: i for i in out["items"]}
     assert par_idu["SUCC0001"]["sci_dormante"] is True

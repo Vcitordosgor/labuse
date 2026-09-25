@@ -149,12 +149,9 @@ export function CircuitSection() {
     <div className="cxp">
       <style>{CIRCUIT_CSS}</style>
 
-      {/* CIRCUIT-P7 (lot 1) — en-tête : titre + sous-titre, PUIS les quatre onglets. Aucun bouton ici. */}
-      <div className="cx-tete">
-        <h1>Données</h1>
-        <span className="cx-sous">le circuit de la donnée : d'où elle vient, où elle va, ce qui cloche</span>
-      </div>
-
+      {/* OUTILS-S2 Lot C (C.2) — le titre « Données » + sous-titre était rendu DEUX FOIS : ici et dans
+          l'en-tête générique d'AdminView (commun à toutes les sections admin). Doublon retiré : seul
+          l'en-tête d'AdminView porte désormais le titre. On garde directement les quatre onglets. */}
       <div className="tabs">
         <button className={onglet === 'todo' ? 'on' : ''} onClick={() => setOnglet('todo')}>
           À faire{d.a_faire?.total ? <span className="n">{d.a_faire.total}</span> : ''}

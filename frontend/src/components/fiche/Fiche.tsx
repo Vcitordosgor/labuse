@@ -4,8 +4,9 @@ import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
-import { BANDE_META, SIGNAL_META, verdictMeta } from '../../lib/status'
+import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, SOURCE, toggleWatch } from '../../lib/api'
+import { verdictMeta } from '../../lib/status'
+import { AnalyseLabuseCard } from './AnalyseLabuseCard'   // RETOURS-14 P1 — carte « Analyse LABUSE » extraite (testable), affiche la version servie
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
@@ -25,7 +26,7 @@ import { ProprietaireHistorique } from './ProprietaireHistorique'
 import type { Onglet } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille d'outils partagée
-import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastilles, MicroTriple, RateLimit429, Line, EligibiliteReplie, PorteOutil, FactRow, FactNote, Vigilance } from './primitives'
+import { IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastilles, RateLimit429, Line, EligibiliteReplie, PorteOutil, FactRow, FactNote, Vigilance } from './primitives'
 // FICHE-RANGEMENT-2 Lot 1 — LE BASCULEMENT : la fiche est recomposée en 11 sections PAR NATURE,
 // chacune un RefDrawer inline qui COMPOSE les blocs feuilles (extraits aux étapes 3a-3c). Les
 // sections « fourre-tout » ConstructibiliteSection / LeBienSection sont dissoutes ; les quatre
@@ -702,7 +703,11 @@ export function Fiche({ idu }: { idu: string }) {
           plus au défilement (elle était flex-shrink:0, fixe, et recouvrait le contenu qui passait
           dessous). Elle défile désormais AVEC le reste — un seul corps qui défile du haut au pied.
           M56-B6 · DA-FICHE-v6 — EN-TÊTE en CARTE .head (identité + chiffres). */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
+      {/* RETOURS-14 P3 — PLUS de pt-1 : le padding-haut du conteneur défilant décalait l'en-tête collé
+          (sticky top:0 se cale au bord du padding), laissant un liseré de 4px au-dessus par lequel le
+          contenu défilait. Sans padding-haut, l'en-tête colle au BORD du panneau (voir .tete-collee, coins
+          hauts carrés = fond plein jusqu'au bord). L'espacement des tuiles reste porté par gap-3. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4">
       {/* RETOURS-13 P7 — EN-TÊTE COLLÉ. SEUL le bloc identité (PARCELLE·commune, IDU, adresse, icônes,
           croix de fermeture) reste collé en haut au défilement — un client ferme la fiche sans remonter.
           Les 6 tuiles NE collent PAS (carte séparée dessous). Le bloc est un ENFANT DIRECT du conteneur
@@ -897,7 +902,7 @@ export function Fiche({ idu }: { idu: string }) {
               <div className="ia">
                 {verdict && !verdictRevele && (
                   <Bouton data-demander-analyse niveau="primaire" ton="vert" className="flex-1" onClick={() => revelerVerdict(idu)}>
-                    {CLIENT.fiche.demanderAnalyse} →
+                    {CLIENT.fiche.demanderAnalyse}
                   </Bouton>
                 )}
                 <Bouton onClick={() => setIaOuvert('question')} data-askbar-open niveau="secondaire" ton="ia" className="flex-1">
@@ -914,42 +919,12 @@ export function Fiche({ idu }: { idu: string }) {
             le Signal de mutation en BADGE SECONDAIRE, et les contributions FR EN ENTIER (ce qui monte /
             ce qui baisse). Aucun chiffre brut de score ni de probabilité. « Analyse incomplète » montre
             sa cause. Le score ne s'affiche QUE sur la fiche et dans l'Analyse (mandat §4). */}
-        {f?.analyse_labuse?.bande && verdictRevele && (() => {
-          const a = f.analyse_labuse!
-          const bm = BANDE_META[a.bande as keyof typeof BANDE_META]
-          const sm = a.signal_niveau ? SIGNAL_META[a.signal_niveau as keyof typeof SIGNAL_META] : null
-          const nc = a.bande === 'NC'
-          if (!bm) return null
-          return (
-            <div data-analyse-labuse-card style={{ marginTop: 8, background: `${bm.color}12`, border: `1px solid ${bm.color}59`, borderRadius: 6, padding: '13px 16px' }}>
-              <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.4, color: 'var(--lab)', textTransform: 'uppercase' }}>Analyse LABUSE</p>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
-                <span data-fiche-bande={a.bande} style={{ fontSize: 22, fontWeight: 600, color: bm.color, lineHeight: 1 }}>{bm.label}</span>
-                {sm && !nc && (
-                  <span data-fiche-signal={a.signal_niveau}
-                    style={{ fontSize: 11, fontWeight: 500, color: sm.color, border: `1px solid ${sm.color}66`, borderRadius: 9999, padding: '2px 8px' }}>{sm.label}</span>
-                )}
-              </div>
-              {nc && a.cause && (
-                <p data-fiche-cause style={{ margin: '9px 0 0', fontSize: 12, color: BANDE_META.NC.color }}>Analyse incomplète — {a.cause}.</p>
-              )}
-              {!nc && a.contributions && a.contributions.length > 0 && (
-                <div data-fiche-contributions style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <p style={{ margin: 0, fontSize: 10, letterSpacing: 1, color: 'var(--txt-off)', textTransform: 'uppercase' }}>Ce qui compte</p>
-                  {a.contributions.map((c, i) => {
-                    const up = c.sens === 'hausse'
-                    return (
-                      <span key={i} style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 6, fontSize: 12, color: up ? '#5CE6A1' : '#C08A6E' }}>
-                        <span aria-hidden style={{ fontSize: 9, fontWeight: 700, marginTop: 2 }}>{up ? '▲' : '▼'}</span>
-                        <span style={{ color: 'var(--txt-dim)' }}>{c.libelle}</span>
-                      </span>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )
-        })()}
+        {f?.analyse_labuse?.bande && verdictRevele && (
+          // RETOURS-14 P1 — carte extraite. `version={SOURCE}` = le run servi (config/served_run.txt,
+          // injecté au build), JAMAIS une version codée en dur ; la fiche a lu ce même run via
+          // getFiche(idu) = `/parcels/{idu}?source=${SOURCE}` (cf. commentaire en-tête à deux boutons).
+          <AnalyseLabuseCard analyse={f.analyse_labuse!} version={SOURCE} />
+        )}
         {/* CARTE VERDICT (ancien moteur, run servi) — teintée selon le tier. ANALYSE-1 : MASQUÉE dès que
             le nouveau moteur porte un verdict (`analyse_labuse`), pour qu'aucun ancien mot (Priorité / À
             suivre / Sans signal / Écartée) n'apparaisse sur la fiche. La réglette « ×N vs moyenne » et la
@@ -1048,46 +1023,10 @@ export function Fiche({ idu }: { idu: string }) {
                 <span style={{ fontSize: 11, background: '#1c1630', color: '#c9b6f2', border: '1px solid #3d3159', borderRadius: 6, padding: '3px 9px' }}>{fmtLibelleBrut(proprioSignal.detail).replace(/\s*—.*$/, '').slice(0, 34)}</span>
               </div>
             )}
-            {/* M-RENOUV : badge segment Renouvellement (CUIVRE) — le verdict reste « Écartée » ;
-                libellé doctrinal sous le badge, jamais « opportunité ». */}
-            {f.renouvellement && (
-              <div data-renouv-badge style={{ margin: '13px 0 0', paddingTop: 12, borderTop: `1px solid ${verdict.color}33` }}>
-                <span style={{ fontSize: 11, fontWeight: 600, background: RENOUV.bg, color: RENOUV.txt, border: `1px solid ${RENOUV.border}`, borderRadius: 6, padding: '3px 9px', alignSelf: 'flex-start' }}>
-                  Densifier l’existant — rang {fmtInt(f.renouvellement.rang_segment)}/{fmtInt(f.renouvellement.total_segment)}
-                </span>
-                <p data-renouv-libelle style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--txt-dim)' }}>{f.renouvellement.libelle}</p>
-                {/* M61 P4 — « Pourquoi ce rang » dépliable JUSTE À CÔTÉ du rang (comme « Pourquoi ce
-                    score » sous le verdict) ; l'ancienne section basse « RENOUVELLEMENT — POURQUOI CE
-                    RANG » est absorbée ici (aucune donnée nouvelle). */}
-                <details data-renouv-pourquoi style={{ marginTop: 8 }}>
-                  <summary style={{ cursor: 'pointer', fontSize: 11.5, color: RENOUV.txt, fontWeight: 600 }}>Pourquoi ce rang</summary>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
-                    <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: 'var(--txt-dim)' }}>
-                      {f.renouvellement.libelle} — écartée du classement principal ({RENOUV_CODE_LABEL[f.renouvellement.code_bati_origine] ?? f.renouvellement.code_bati_origine}),
-                      mais en zone {f.renouvellement.zone_plu ?? '—'} avec une capacité restante réelle.
-                    </p>
-                    {f.renouvellement.composantes.map((c) => (
-                      <div key={c.cle} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ flex: 1, fontSize: 11.5, color: REF.name, minWidth: 0 }}>{c.libelle}</span>
-                      </div>
-                    ))}
-                    {/* RETOURS-11F M9 — capacité NETTE des contraintes : on sert la SDP réellement
-                        mobilisable (contraintes déduites), avec la brute + la part déduite en mots
-                        quand une contrainte s'applique ; jamais un chiffre brut trompeur. */}
-                    <MicroTriple items={[
-                      f.renouvellement.sdp_nette_m2 != null && f.renouvellement.sdp_nette_m2 > 0
-                        ? `SDP nette ${fmtInt(f.renouvellement.sdp_nette_m2)} m²${f.renouvellement.contrainte_pct ? ` (−${f.renouvellement.contrainte_pct} % contraintes)` : ''}`
-                        : (f.renouvellement.sdp_residuelle_m2 != null && f.renouvellement.sdp_residuelle_m2 > 0 ? `SDP résiduelle ${fmtInt(f.renouvellement.sdp_residuelle_m2)} m²` : 'SDP résiduelle —'),
-                      f.renouvellement.surface_m2 != null ? `assiette ${fmtM2(f.renouvellement.surface_m2)}` : 'assiette —',
-                      // OUTILS-FIX-1 C1 — la surélévation n'est plus servie par le segment (batch débranché) ;
-                      // le signal vivant reste dans l'onglet Faisabilité. Ici : rang île.
-                      `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
-                    ]} />
-                    <p style={{ margin: 0, fontSize: 10, color: REF.dim }}>{f.renouvellement.source}</p>
-                  </div>
-                </details>
-              </div>
-            )}
+            {/* DENSIFIER-PLI (PISCINES-2 Lot B) — le badge « Densifier l'existant — rang N/M » lisait le
+                précalcul figé `parcel_renouvellement` (plus aucun écran ne le lit). Le potentiel de
+                densification s'obtient maintenant via le filtre « Déjà bâti » + « SDP restante » (porte
+                ci-dessus), sur le run servi. Badge retiré. */}
 
             {/* ═══ M55-O phase 2.1b — BLOC ANALYSE : TOUT l'avis LABUSE rassemblé (déployé au clic) ═══
                 Aujourd'hui éparpillé (P dans « Les données », motifs dans « Pourquoi pas ? »,
@@ -1719,13 +1658,14 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* RETOURS-20 Z5 — l'alerte « délaissé » = une Vigilance (filet ambre). */}
                 {faisa.data?.delaisse && <div data-delaisse><Vigilance title={faisa.data.delaisse.libelle} /></div>}
                 {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
-                {/* FICHE-PORTES-1 Lot 2 — porte « Densifier l'existant » (MR1) : à la suite de la SDP
-                    consommée (potentiel de densification). Outil à la maille commune → contexte = la
-                    commune de la parcelle. */}
+                {/* DENSIFIER-PLI (PISCINES-2 Lot B) — l'outil « Densifier l'existant » est plié dans les
+                    filtres : la porte ouvre désormais le panneau Filtre (groupe Capacité) avec « Déjà bâti »
+                    coché et « SDP restante ≥ 200 m² » pré-rempli, scopé sur la commune de la parcelle.
+                    Plus de précalcul figé : la SDP lue est celle du run servi (parcel_residuel), == fiche. */}
                 {f.commune && (
-                  <PorteOutil ico="◫" data="renouvellement" titre="Densifier l'existant"
-                    sous={`Le bâti en zone U de ${f.commune} qui peut porter davantage`}
-                    onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setCommunesFilter([f.commune!]); st.setModule('renouvellement') }} />
+                  <PorteOutil ico="◫" data="densifier-filtre" titre="Densifier l'existant"
+                    sous={`Le bâti déjà construit de ${f.commune} qui peut porter davantage`}
+                    onClick={() => { const st = useApp.getState(); st.setCommunesFilter([f.commune!]); st.setFilter('renouvellement', true); st.setFilter('sdpMin', 200); st.openFiltres() }} />
                 )}
                 <FaisabiliteTab idu={idu} />
                 {/* GABARIT-2 — ligne « Gabarit réglementaire » : zone d'implantation / plafond /

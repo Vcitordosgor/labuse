@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useApp, type Basemap, type MapTool } from '../../store/useApp'
 import { ORTHO_YEARS } from './basemaps'   // FIX-FONDS B5 — millésimes partagés avec l'outil TEMPS
 import { Tip } from '../Tip'   // M62-P1 (c) : infobulles à 150 ms (survol) / immédiat (focus/clic)
-import { Chip } from '../ui/Chip'   // RETOURS-13 P4 — chip « Bâtiments » (bâti 3D optionnel)
 
 // M105 P4.2 — SOMBRE EN PREMIER (défaut au boot : readBasemap = 'dark', vérifié).
 // COUCHES-STYLE-6 : le fond « Clair » est RETIRÉ du sélecteur (bouton + option). Restent Sombre,
@@ -34,7 +33,7 @@ const TOOLS: { key: MapTool; label: string; icon: JSX.Element; tip: string }[] =
 ]
 
 export function MapToolbar() {
-  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, batiVisible, setBatiVisible, tool, setTool, zone, setZone, selectedIdu, view, contexteCommune } = useApp()
+  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, setTerrain3d, batiVisible, setBatiVisible, tool, setTool, zone, setZone, selectedIdu, view, contexteCommune } = useApp()
   // M58-P1 (point carte) : quand la fiche (aside 400px, à droite) est ouverte, elle recouvrait ces
   // contrôles. On les décale vers la gauche de la largeur de la fiche (+16px de marge), transition
   // 180ms, retour à la fermeture. Aucun contrôle inaccessible.
@@ -45,6 +44,17 @@ export function MapToolbar() {
   const ficheCommune = contexteCommune != null
   const decalage = ficheParcelle ? 416 : ficheCommune ? 436 : 16
   const [bmOpen, setBmOpen] = useState(false)
+  // RETOURS-14 P4 — « 3D » devient un MENU (même composant que « Sombre »). Le chip « Bâtiments »
+  // disparaît : le bâti extrudé est désormais une entrée du menu Relief. Trois modes exclusifs, un
+  // seul actif à la fois (comme un fond de carte). AUCUNE mention de LiDAR — relief = RGE ALTI,
+  // bâtiments = BD TOPO. « Relief + bâtiments » est le défaut à l'activation (batiVisible=true).
+  const [terrainOpen, setTerrainOpen] = useState(false)
+  const modeRelief = !terrain3d ? 'flat' : batiVisible ? 'bati' : 'relief'
+  const RELIEFS: { key: string; label: string; actif: boolean; apply: () => void }[] = [
+    { key: 'flat', label: 'Aucun (2D)', actif: modeRelief === 'flat', apply: () => { setTerrain3d(false); setTerrainOpen(false) } },
+    { key: 'relief', label: 'Relief seul', actif: modeRelief === 'relief', apply: () => { setTerrain3d(true); setBatiVisible(false); setTerrainOpen(false) } },
+    { key: 'bati', label: 'Relief + bâtiments', actif: modeRelief === 'bati', apply: () => { setTerrain3d(true); setBatiVisible(true); setTerrainOpen(false) } },
+  ]
 
   return (
     <div className="absolute top-4 flex flex-col items-end gap-2"
@@ -104,26 +114,38 @@ export function MapToolbar() {
         )}
       </div>
 
-      {/* relief 3D — DA §11 : PAS d'icône sur « 3D » (aligné avec « Sombre »). */}
-      <button
-        onClick={toggleTerrain}
-        /* RETOURS-9 (Q9) — contour 3D actif = plein vert, encre sombre (pas un liseré). */
-        className={`flex h-9 items-center rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
-          terrain3d ? 'border-mint bg-mint text-mint-ink font-medium' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}
-        /* FINITIONS-1 (P1) — infobulle au survol retirée (le libellé « 3D » du bouton porte le sens). */
-        aria-label="Relief 3D"
-      >
-        3D
-      </button>
-      {/* RETOURS-13 P4 — chip « Bâtiments » (bâti extrudé) VISIBLE UNIQUEMENT en 3D. On par défaut :
-          off → relief seul (bâti à plat). État de session (store), pas en base. S'applique à la carte
-          principale ET à l'outil Gabarit (bâti existant GABARIT-6, même chip). */}
-      {terrain3d && (
-        <Chip data-chip-batiments on={batiVisible} ton="vert" onClick={() => setBatiVisible(!batiVisible)}
-          className="shadow-elev-1" aria-label="Afficher les bâtiments en 3D">
-          Bâtiments
-        </Chip>
-      )}
+      {/* relief 3D — RETOURS-14 P4 : MENU (même composant que « Sombre »). Trigger identique (fond
+          plein vert quand ouvert, hover-fill sinon) ; le mode courant apparaît en suffixe, comme le
+          millésime ortho sur le bouton Sombre. Le chip « Bâtiments » a disparu (fondu dans le menu). */}
+      <div className="relative">
+        <button
+          onClick={() => setTerrainOpen((o) => !o)}
+          className={`flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
+            terrainOpen ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-2 text-txt hover-fill'}`}
+          aria-label="Relief 3D"
+        >
+          3D
+          {terrain3d && <span className={terrainOpen ? 'text-mint-ink/80' : 'text-mint'}>· {batiVisible ? 'bâtiments' : 'relief'}</span>}
+        </button>
+        {terrainOpen && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setTerrainOpen(false)} />
+            <div className="floating absolute right-0 top-11 z-20 w-64 p-3">
+              <p className="label-caps">Relief</p>
+              {/* transparence des sources (culture LABUSE) — jamais « LiDAR » : relief = RGE ALTI, bâtiments = BD TOPO */}
+              <p className="mt-0.5 text-[10.5px] text-txt-dim">Relief RGE ALTI · bâtiments BD TOPO</p>
+              <div className="mt-2 flex flex-col gap-1">
+                {RELIEFS.map((r) => (
+                  <button key={r.key} data-relief={r.key} onClick={r.apply}
+                    className={`rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-quick ${r.actif ? 'bg-mint font-medium text-mint-ink' : 'text-txt hover-fill'}`}>
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
       </div>
 
       {/* outils de mesure */}

@@ -160,6 +160,17 @@ def couverture_sources(db) -> dict:
         except Exception:  # noqa: BLE001 — base partielle : la tuile dira « — », jamais un crash
             return None
     parcelles = _scal("SELECT count(*) FROM parcels")
+    # RETOURS-14 P6 — parcelles EXPLORABLES au filtre : le compteur du panneau Filtre (/filtre) masque
+    # les micro-parcelles « sliver » < MIN_DISPLAY_SURFACE_M2 (2 m²) ; d'où l'écart (légitime) entre le
+    # bouton « Voir les N parcelles » (430 813) et « parcelles couvertes » (431 663 = total ingéré). On
+    # sert AUSSI ce sous-total pour que la page Sources réconcilie les deux nombres. Import local (comme
+    # projets.py) pour éviter l'import circulaire avec api.app.
+    try:
+        from ...api.app import MIN_DISPLAY_SURFACE_M2 as _minsurf
+    except Exception:  # noqa: BLE001 — hors contexte API : repli sur le seuil connu (2 m²)
+        _minsurf = 2.0
+    parcelles_filtrables = _scal(
+        f"SELECT count(*) FROM parcels WHERE surface_m2 IS NULL OR surface_m2 >= {float(_minsurf)}")
     communes = _scal("SELECT count(DISTINCT commune) FROM parcels")
     dvf = _scal("SELECT count(*) FROM dvf_mutations")
     radar = _scal("SELECT count(*) FROM pige_biens")
@@ -175,6 +186,7 @@ def couverture_sources(db) -> dict:
         pass
     return {
         "parcelles": int(parcelles) if parcelles is not None else None,
+        "parcelles_filtrables": int(parcelles_filtrables) if parcelles_filtrables is not None else None,
         "communes": int(communes) if communes is not None else None,
         "communes_total": 24,   # les 24 communes de La Réunion (constante du référentiel radar)
         "dvf_transactions": int(dvf) if dvf is not None else None,
@@ -290,26 +302,26 @@ def permis_point_mort(db, commune: str | None, months: int, run: str | None) -> 
 
 def compte_piscines(db, commune: str | None, bati: str, piscine_surf_min: int,
                     inclure_incertaines: bool) -> dict:
-    """n_piscines — agrégats de la détection piscines gelée (parcel_equipements) : total + par
-    commune (décroissant), mêmes filtres que le listing (bâti, surface, confiance, corrections
-    humaines exclues). Rend {"total", "communes"}."""
-    from ...api.modules import SEUIL_PISCINE_HAUTE, _piscine_conf_filtre
-    join_bati = "LEFT JOIN p_model_bati b ON b.idu = e.idu"
+    """n_piscines — agrégats de la source UNIQUE fusionnée `piscines` (PISCINES-2 : FLAIR ∪ CoSIA
+    dédoublonnées, statut servie/a_confirmer/ecartee selon la précision mesurée) : total + par
+    commune (décroissant). Par défaut seul le statut `servie` compte ; `inclure_incertaines` ajoute
+    `a_confirmer` (jamais `ecartee`). Corrections « pas une piscine » exclues. `bati` conservé pour
+    compat (filtre emprise bâtie via idu) ; l'outil pisciniste ne l'utilise plus."""
+    statuts = "('servie','a_confirmer')" if inclure_incertaines else "('servie')"
+    join_bati = "LEFT JOIN p_model_bati b ON b.idu = pi.idu" if bati in ("oui", "non") else ""
     bati_cond = " AND coalesce(b.emprise_bati_m2, 0) > 0" if bati == "oui" \
         else " AND coalesce(b.emprise_bati_m2, 0) = 0" if bati == "non" else ""
-    surf_cond = " AND e.piscine_surface_m2 >= :psmin" if piscine_surf_min else ""
-    conf_cond = _piscine_conf_filtre(inclure_incertaines)
-    corr_cond = " AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = e.idu)"
-    where = ("WHERE e.piscine IS TRUE" + bati_cond + surf_cond + conf_cond + corr_cond
-             + (" AND p.commune = :c" if commune else ""))
-    params = {"c": commune, "psmin": piscine_surf_min, "cmin": SEUIL_PISCINE_HAUTE}
+    surf_cond = " AND pi.surface_m2 >= :psmin" if piscine_surf_min else ""
+    corr_cond = " AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)"
+    where = (f"WHERE pi.statut IN {statuts}" + bati_cond + surf_cond + corr_cond
+             + (" AND pi.commune = :c" if commune else ""))
+    params = {"c": commune, "psmin": piscine_surf_min}
     total = int(db.execute(text(
-        f"SELECT count(*) FROM parcel_equipements e JOIN parcels p ON p.idu = e.idu {join_bati} {where}"),
-        params).scalar() or 0)
+        f"SELECT count(*) FROM piscines pi {join_bati} {where}"), params).scalar() or 0)
     communes = db.execute(text(f"""
-        SELECT p.commune AS commune, count(*)::int AS n
-        FROM parcel_equipements e JOIN parcels p ON p.idu = e.idu {join_bati} {where}
-        GROUP BY p.commune ORDER BY n DESC"""), params).mappings().all()
+        SELECT pi.commune AS commune, count(*)::int AS n
+        FROM piscines pi {join_bati} {where} AND pi.commune IS NOT NULL
+        GROUP BY pi.commune ORDER BY n DESC"""), params).mappings().all()
     return {"total": total, "communes": [dict(c) for c in communes]}
 
 

@@ -90,28 +90,49 @@ def test_couverture_nulls_gardes(engine):
     with engine.begin() as c:
         out = couverture_sources(c)
     assert out["communes_total"] == 24
-    assert set(out) >= {"parcelles", "communes", "dvf_transactions", "radar_annonces"}
+    assert set(out) >= {"parcelles", "parcelles_filtrables", "communes", "dvf_transactions", "radar_annonces"}
+
+
+@pytest.mark.db
+def test_couverture_reconcilie_slivers(engine):
+    """RETOURS-14 P6 — l'écart entre « parcelles couvertes » (total ingéré, 431 663) et le bouton
+    « Voir les N parcelles » du filtre (430 813) est LÉGITIME : le filtre masque les micro-parcelles
+    « sliver » < 2 m² (MIN_DISPLAY_SURFACE_M2). Garde : `parcelles - parcelles_filtrables` vaut
+    EXACTEMENT le nombre de parcelles < 2 m² — la règle du filtre, recomptée à la main."""
+    from labuse.registre.moteurs.commune import couverture_sources
+    with engine.begin() as c:
+        c.execute(text("DELETE FROM parcels WHERE commune = 'TemoinSliver-14'"))
+        # deux slivers (< 2 m²), trois retenues (2 m², 5 m², surface inconnue = NULL)
+        for i, s in enumerate(("1.0", "1.99", "2.0", "5.0", "NULL")):
+            c.execute(text("INSERT INTO parcels (idu, commune, surface_m2, geom) VALUES "
+                           f"(:i, 'TemoinSliver-14', {s}, ST_GeomFromText('POINT(55.5 -21.1)', 4326))"),
+                      {"i": f"S14000000{i}"})
+        out = couverture_sources(c)
+        micro = c.execute(text("SELECT count(*) FROM parcels WHERE surface_m2 IS NOT NULL AND surface_m2 < 2")).scalar()
+        c.execute(text("DELETE FROM parcels WHERE commune = 'TemoinSliver-14'"))
+    assert out["parcelles"] is not None and out["parcelles_filtrables"] is not None
+    assert out["parcelles_filtrables"] <= out["parcelles"]
+    # l'écart global = exactement les micro-parcelles < 2 m² (nos 2 seedées y comprises)
+    assert out["parcelles"] - out["parcelles_filtrables"] == micro
+    assert micro >= 2
 
 
 @pytest.mark.db
 def test_piscines_corrections_excluses(engine):
+    # PISCINES-2 — le compteur n_piscines lit la source UNIQUE `piscines` (statut) ; les corrections
+    # « pas une piscine » (par idu) en sont exclues.
     from labuse.ingestion.ortho_equipements import DDL_CORRECTIONS
+    from labuse.ingestion.piscines_fusion import DDL as DDL_PISCINES
     from labuse.registre.moteurs.commune import compte_piscines
     with engine.begin() as c:
-        # DDL RÉELLES (leçon d'isolation : jamais une table minimale rivale qui masque la vraie)
-        from labuse.ingestion.ortho_equipements import DDL as DDL_EQUIPEMENTS
-        c.execute(text(DDL_EQUIPEMENTS))
+        c.execute(text(DDL_PISCINES))
         c.execute(text(DDL_CORRECTIONS))
-        c.execute(text("DELETE FROM parcel_equipements WHERE idu LIKE 'C4PIS%'"))
+        c.execute(text("DELETE FROM piscines WHERE idu LIKE 'C4PIS%'"))
         c.execute(text("DELETE FROM piscine_corrections WHERE idu LIKE 'C4PIS%'"))
-        c.execute(text("DELETE FROM parcels WHERE commune = 'TemoinPis-C4'"))
         for i in range(3):
             idu = f"C4PIS000000{i}"
-            c.execute(text("INSERT INTO parcels (idu, commune, surface_m2, geom) VALUES "
-                           "(:i, 'TemoinPis-C4', 10, ST_GeomFromText('POINT(55.5 -21.1)', 4326))"),
-                      {"i": idu})
-            c.execute(text("INSERT INTO parcel_equipements (idu, piscine, piscine_surface_m2,"
-                           " piscine_confiance) VALUES (:i, true, 30, 0.99)"), {"i": idu})
+            c.execute(text("INSERT INTO piscines (idu, commune, surface_m2, source, classe, statut) "
+                           "VALUES (:i, 'TemoinPis-C4', 30, 'flair', 'flair_haute', 'servie')"), {"i": idu})
         c.execute(text("INSERT INTO piscine_corrections (idu) VALUES ('C4PIS0000000')"))
         out = compte_piscines(c, "TemoinPis-C4", bati="tous", piscine_surf_min=0,
                               inclure_incertaines=True)

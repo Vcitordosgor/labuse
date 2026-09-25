@@ -172,6 +172,25 @@ V13_ANTI_SIGNAL_NOTE = "détecté, non compté — anti-signal Phase 0 (v1.3)"
 VEILLE_SUCCESSION_AGE_MIN = 70
 VEILLE_SUCCESSION_HORIZON = "3-7 ans"
 
+# OUTILS-S2 Lot A — le signal « dirigeant âgé » ne vaut QUE pour les formes juridiques où une
+# personne physique vieillissante porte réellement le patrimoine : structures civiles, familiales
+# et agricoles. Une société de capitaux ou institutionnelle (SA, SAS, SEM, société d'HLM, SCA)
+# ne « succède » pas quand son président vieillit — leur direction se renouvelle statutairement.
+# Formes RETENUES (décision Vic, 2026-09-25) — libellés DGFiP `parcelle_personne_morale.forme_juridique`
+# (= `forme_dgfip` du scoring). La SCI dormante reste toujours éligible (elle EST une SCI).
+# EXCLUES : SA, SAS, SEM, SCA, GIE, ASS (association), AUPM (autre PM). Comparaison EXACTE (jamais
+# une sous-chaîne : « SC » ne doit pas capter « SCI »/« SCM »/« SCEA »/« SCA »).
+VEILLE_SUCCESSION_FORMES = frozenset({
+    "SCI",    # société civile immobilière
+    "SC",     # société civile (holding familial)
+    "SCEA",   # société civile d'exploitation agricole (familiale)
+    "EARL",   # exploitation agricole à responsabilité limitée (familiale)
+    "GFA",    # groupement foncier agricole (patrimoine familial)
+    "SCM",    # société civile de moyens (professions, patrimoine porté par des personnes physiques)
+    "SARL",   # SARL/EURL — souvent familiale
+    "SNC",    # société en nom collectif (responsabilité personnelle)
+})
+
 # Signaux du barème D1 NON calculables (fenêtre DVF) — flaggés au rapport, jamais émis.
 SIGNALS_NO_GO = {
     "DVF_TENURE_12": "millésimes DVF 2014-2020 retirés de la distribution officielle",

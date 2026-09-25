@@ -17,7 +17,6 @@ import { ContextePanel } from './components/contexte/ContextePanel'
 import { SurveillancePanel } from './components/surveillance/SurveillancePanel'
 import { ComparePanel } from './components/compare/ComparePanel'
 import { CommunesTablePanel, EvolutionTablePanel, RadarTablePanel } from './components/outils/Communes'
-import { DensifierTablePanel } from './components/outils/Renouvellement'
 import { filtersFromHash, filtersToHash, hasOpinion, resumeCriteres } from './lib/filters'
 import { CLIENT } from './lib/strings'
 import { SCORE_TIP } from './lib/status'
@@ -415,9 +414,8 @@ export default function App() {
               {/* RETOURS-13 R13 / RETOURS-14 S1 — deux tableaux, deux modales, deux noms. */}
               <EvolutionTablePanel />
               <RadarTablePanel />
-              {/* DENSIFIER — le grand tableau (67 214 parcelles) de l'outil « Densifier l'existant » ;
-                  se rend lui-même selon `densifierTableOpen` (cycle de vie SOCLE). */}
-              <DensifierTablePanel />
+              {/* DENSIFIER-PLI (PISCINES-2 Lot B) — le grand tableau « Densifier l'existant » est retiré :
+                  l'outil est plié dans le filtre Capacité (« Déjà bâti » + « SDP restante »). */}
             </>
           )}
           {/* RADAR-CATÉGORIE (T1/T6) — plein écran : RadarView monte lui-même la carte (MapView

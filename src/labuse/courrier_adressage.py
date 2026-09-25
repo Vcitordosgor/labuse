@@ -25,6 +25,16 @@ MOTIF_INCONNUE = "Parcelle inconnue"
 MENTION_OCCUPANT = "pli à l'occupant, non nominatif"
 MENTION_SIEGE = "au siège social déclaré"
 
+# OUTILS-S2 Lot B — code machine du blocage (le front bloque l'AJOUT sur un terrain sans occupant
+# joignable — nu / sans adresse / sans canal / inconnue — et renvoie au Courrier SPF ; l'opposition
+# reste traitée au dépôt, motif à part). None = pli résolu, adressable.
+CODE_PAR_MOTIF = {
+    MOTIF_NU: "nu",
+    MOTIF_SANS_ADRESSE: "sans_adresse",
+    MOTIF_PM_SANS_CANAL: "sans_canal",
+    MOTIF_INCONNUE: "inconnue",
+}
+
 
 def _siege_adresse(payload) -> str | None:
     """Adresse du siège social depuis le payload SIRENE (owner_enrichment). None si absente.
@@ -57,13 +67,13 @@ def resoudre_destinataire(db, idu: str) -> dict:
         WHERE p.idu = :i"""), {"i": idu}).mappings().first()
     ban = courrier.adresse_ban_parcelle(db, idu)
     if not row:
-        return {"idu": idu, "bien": {"reference": idu, "adresse": ban, "commune": None},
-                "type": None, "destinataire": None, "adresse_envoi": None,
-                "mention": None, "bloque": True, "motif": MOTIF_INCONNUE}
+        return _bloque({"idu": idu, "bien": {"reference": idu, "adresse": ban, "commune": None},
+                        "type": None, "destinataire": None, "adresse_envoi": None,
+                        "mention": None}, MOTIF_INCONNUE)
     ref = " ".join(x for x in (row["section"], row["numero"]) if x) or idu
     bien = {"reference": ref, "adresse": ban, "commune": row["commune"]}
     base = {"idu": idu, "bien": bien, "type": None, "destinataire": None,
-            "adresse_envoi": None, "mention": None, "bloque": True, "motif": None}
+            "adresse_envoi": None, "mention": None, "bloque": True, "motif": None, "code": None}
 
     est_pm = bool(row["denomination"])
     if est_pm:
@@ -80,12 +90,12 @@ def resoudre_destinataire(db, idu: str) -> dict:
             res = {**base, "type": "occupant", "destinataire": "À l'occupant",
                    "adresse_envoi": ban, "mention": MENTION_OCCUPANT, "bloque": False}
         else:
-            return {**base, "motif": MOTIF_PM_SANS_CANAL}
+            return _bloque(base, MOTIF_PM_SANS_CANAL)
     else:
         if not row["batie"]:
-            return {**base, "motif": MOTIF_NU}
+            return _bloque(base, MOTIF_NU)
         if not ban:
-            return {**base, "motif": MOTIF_SANS_ADRESSE}
+            return _bloque(base, MOTIF_SANS_ADRESSE)
         res = {**base, "type": "occupant", "destinataire": "À l'occupant",
                "adresse_envoi": ban, "mention": MENTION_OCCUPANT, "bloque": False}
 
@@ -93,8 +103,13 @@ def resoudre_destinataire(db, idu: str) -> dict:
     motif_opp = courrier.opposition_motif(
         db, idu=idu, adresse_norm=courrier.normaliser_adresse(res["adresse_envoi"]))
     if motif_opp:
-        return {**res, "bloque": True, "motif": motif_opp}
+        return {**res, "bloque": True, "motif": motif_opp, "code": "opposition"}
     return res
+
+
+def _bloque(base: dict, motif: str) -> dict:
+    """Marque un blocage avec son motif ET son code machine (CODE_PAR_MOTIF) — OUTILS-S2 Lot B."""
+    return {**base, "bloque": True, "motif": motif, "code": CODE_PAR_MOTIF.get(motif)}
 
 
 def resoudre_plusieurs(db, idus: list[str]) -> list[dict]:

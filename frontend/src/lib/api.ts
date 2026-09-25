@@ -911,39 +911,10 @@ export const copiloteV2Heros = (parcelle: Record<string, unknown>, budget_max_eu
 // §4 — veilles : l'écran minimal (liste + suppression). M85 : les notifications produites vivent
 // dans le centre unifié (cloche /events), plus dans un store parallèle.
 export interface CopiloteVeille { id: number; type: string; commune: string | null }
-// M-RENOUV : calque du segment Renouvellement (occupées, potentiel). `total`/`servis`
-// voyagent — la légende dit la troncature, jamais un « tout » silencieux.
-export type RenouvFC = ParcelFeatureCollection & {
-  total: number; servis: number; source: string; run_label: string; maj: string | null
-}
-export const getRenouvGeojson = () => {
-  const c = commune()
-  return j<RenouvFC>(`/map/renouvellement.geojson${c ? `?commune=${encodeURIComponent(c)}` : ''}`)
-}
-export interface RenouvItem {
-  idu: string; commune_nom: string; commune_insee: string; renouv_score: number
-  comp_potentiel: number; comp_assiette: number; comp_marche: number
-  code_bati_origine: string; sdp_residuelle_m2: number | null; surface_m2: number | null
-  // RETOURS-11F M9 — capacité NETTE des contraintes (PPR rouge, pente > 30 %, ravine).
-  // OUTILS-FIX-1 C1 — surélévation retirée (batch débranché) : le signal vivant vit dans la Faisabilité.
-  sdp_nette_m2: number | null; contrainte_pct: number | null
-  zone_plu: string | null; rang_segment: number; rang_commune: number
-  // puce d'action (verdictMeta) : tier v2 servi + étage 0 du run servi — jamais « Classement historique »
-  tier_v2: string | null; etage0: boolean
-}
-export interface RenouvListe {
-  total: number; n: number; cap: number; tronquee: boolean; items: RenouvItem[]
-  source: string; run_label: string; maj: string | null
-  // OUTILS-S1 (Lot C) — transparence du run lu : run du précalcul vs run servi, + drapeau périmé.
-  run_precalc?: string | null; run_servi?: string; perime?: boolean
-  libelle: string; composantes_libelles: Record<string, string>; avertissement: string
-}
-// RETOURS-11 (T4) — pagination par 200 (doctrine SOCLE) : on envoie `limit=200` (le serveur borne à
-// min(limit, cap), donc 200 par page) et on pagine par `offset` pour atteindre les 67 214 sans jamais
-// tirer un bloc massif. Le plafond serveur (config renouvellement.yaml) reste une borne dure de sécurité.
-export const RENOUV_PAGE = 200
-export const getRenouvListe = (sort: string, communeNom?: string | null, offset = 0) =>
-  j<RenouvListe>(`/renouvellement/liste?sort=${sort}&limit=${RENOUV_PAGE}${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}${offset ? `&offset=${offset}` : ''}`)
+// DENSIFIER-PLI (PISCINES-2 Lot B) — l'outil « Densifier l'existant » est plié dans le filtre Capacité
+// (« Déjà bâti » + « SDP restante », run servi). Le calque `getRenouvGeojson` et la liste `getRenouvListe`
+// (précalcul figé `parcel_renouvellement`) sont retirés : plus aucun écran ne les lit. Endpoints backend
+// et table conservés en base (non servis à un écran).
 
 // ── Prospection solaire (V1 restitution) — données PVGIS/SARAH3 servies, masque solaire non calculé ──
 // A2 — type de propriétaire (PM nommée / particulier non nommé), même règle privacy que l'Assemblage.
@@ -1020,6 +991,19 @@ export const postPasUnePiscine = (idu: string, motif?: string) =>
   j<{ ok: boolean; idu: string; corrigees_total: number }>(`/modules/prospection-piscines/pas-une-piscine`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idu, motif: motif ?? null }),
   })
+// PISCINES-2 (A.3) — LISTE pisciniste : source unique `piscines` (idu · commune · surface bassin ·
+// source · statut · propriétaire PM nommée / particulier). Aucune colonne « potentiel solaire ».
+export interface PiscineItem {
+  idu: string; commune: string; surface_m2: number | null
+  source: 'flair' | 'cosia' | 'flair+cosia'; statut: 'servie' | 'a_confirmer' | 'ecartee'
+  proprio: { type: 'personne_morale'; denomination: string; siren: string | null } | { type: 'particulier' }
+}
+export interface PiscinesListe { total: number; n: number; cap?: number; tronquee?: boolean; items: PiscineItem[]; maj: string; source: string }
+export interface PiscinesFiltres { commune?: string | null; statut?: 'servie' | 'tous'; surfMin?: number; proprio?: 'tous' | 'pm' | 'pp' }
+export const getPiscinesListe = (f: PiscinesFiltres) =>
+  j<PiscinesListe>(`/modules/prospection-piscines/liste?${qf({
+    ...(f.commune ? { commune: f.commune } : {}), ...(f.statut === 'tous' ? { statut: 'tous' } : {}),
+    ...(f.surfMin ? { surf_min: f.surfMin } : {}), ...(f.proprio && f.proprio !== 'tous' ? { proprio: f.proprio } : {}) })}`)
 // ── OUTILS-MUSCLER-1 Lot A — outil « Successions » (radar patrimonial Score V v1.3). Le signal est
 // une succession PROBABLE (dirigeant ≥ 70 ans / SCI dormante), JAMAIS « en succession » (A0) ; le
 // propriétaire est une PM nommée par construction (SIREN confirmé exigé par le critère).
@@ -1150,7 +1134,9 @@ export interface DossierStatut { disponible: boolean; raison: string | null; pla
 export const getDossierStatut = () => j<DossierStatut>('/dossier/statut')
 export interface CourrierStatut { disponible: boolean; provider: string; tarif: unknown; raison: string | null
   // OUTILS-FIX-4 D2 — plafond d'envoi quotidien (celui qui déclenche le 422) + ce qui reste.
-  plafond_jour?: number; envoyes_jour?: number; reste_jour?: number }
+  plafond_jour?: number; envoyes_jour?: number; reste_jour?: number
+  // OUTILS-S2 Lot B — tarif unitaire TTC (prix client, impression+affranchissement+suivi), affiché à l'étape 3.
+  tarif_unitaire_eur?: number }
 // OUTILS-FIX-4 D1/D2 — état du service + plafond du jour, lus à l'ouverture de l'outil Courrier.
 export const getCourrierStatut = () => j<CourrierStatut>('/courrier/statut')
 export interface CourrierEnvoi { id: number; ts: string; idu: string | null; adresse: string | null; statut: string; provider: string; prix_eur: number | null; modele: string | null }
@@ -1271,6 +1257,10 @@ export const getSources = () => j<SourceInfo[]>('/sources')
 // RETOURS-9 (Q11.5) — les chiffres de couverture client (parcelles · communes · DVF · Radar · dernière analyse).
 export interface SourcesCouverture {
   parcelles: number | null; communes: number | null; communes_total: number
+  // RETOURS-14 P6 — parcelles EXPLORABLES au filtre (surface ≥ 2 m², MIN_DISPLAY_SURFACE_M2) : le
+  // filtre masque les micro-parcelles « sliver » < 2 m², d'où l'écart (légitime) avec `parcelles`
+  // (total ingéré). La page Sources réconcilie les deux nombres.
+  parcelles_filtrables: number | null
   dvf_transactions: number | null; radar_annonces: number | null
   analyse_label: string | null; analyse_date: string | null
 }
@@ -1383,6 +1373,9 @@ export interface CourrierResolution {
   mention: string | null
   bloque: boolean
   motif: string | null
+  // OUTILS-S2 Lot B — code machine du blocage : 'nu'|'sans_adresse'|'sans_canal'|'inconnue' (aucun
+  // occupant joignable → l'ajout est refusé, on renvoie au Courrier SPF) ; 'opposition' (traité au dépôt).
+  code: 'nu' | 'sans_adresse' | 'sans_canal' | 'inconnue' | 'opposition' | null
   bien: { reference: string; adresse: string | null; commune: string | null }
 }
 export const postCourrierAdressage = (idus: string[]) =>
