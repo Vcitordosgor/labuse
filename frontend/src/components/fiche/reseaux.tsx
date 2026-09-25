@@ -153,6 +153,15 @@ export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
             <FactNote>{f.proximites.axe.source}</FactNote>
           </div>
         )}
+
+        {/* GEOPF-3 — POSTE DE TRANSFORMATION le plus proche : signal de coût de raccordement. */}
+        {f.proximites?.poste_transformation && (
+          <div data-proximite-poste>
+            <GroupLabel>Raccordement électrique</GroupLabel>
+            <p className="text-[11.5px] leading-snug text-txt">{f.proximites.poste_transformation.libelle}</p>
+            <FactNote>{f.proximites.poste_transformation.source}</FactNote>
+          </div>
+        )}
       </div>
     </RefDrawer>
   )

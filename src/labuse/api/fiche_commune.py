@@ -249,6 +249,24 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
     }
 
 
+def scot_commune(db: Session, commune: str) -> dict | None:
+    """GEOPF-3 — nom du SCOT et date d'approbation de la commune (spatial_layers kind='scot', GPU).
+    Passe-plat : le SCOT dont le PÉRIMÈTRE CONTIENT le centroïde de la commune (le simple « une
+    parcelle intersecte » attrapait les débordements de bord — Saint-Denis rattaché à tort au SCOT
+    voisin). None si le centroïde n'est dans aucun périmètre (ex. Est/CIREST, SCOT non publié au GPU)."""
+    row = db.execute(text(
+        "WITH c AS (SELECT ST_Centroid(ST_Collect(geom_2975)) g FROM parcels WHERE commune = :c) "
+        "SELECT s.name AS nom, s.attrs->>'date_approbation' AS date_appro, "
+        "       s.attrs->>'statut' AS statut, ds.name AS source "
+        "FROM spatial_layers s LEFT JOIN data_sources ds ON ds.id = s.data_source_id, c "
+        "WHERE s.kind = 'scot' AND s.geom_2975 IS NOT NULL AND c.g IS NOT NULL "
+        "  AND ST_Contains(s.geom_2975, c.g) LIMIT 1"), {"c": commune}).mappings().first()
+    if not row:
+        return None
+    return {"nom": row["nom"], "date_approbation": row["date_appro"], "statut": row["statut"],
+            "source": row["source"] or "Géoportail de l'urbanisme (GPU)"}
+
+
 # ───────────────────────────── C5 — construire ici (permis + point mort) ─────────────────────────────
 def permis_bloc(db: Session, commune: str) -> dict:
     """Le bloc « Construire ici » : permis autorisés (12 mois / 5 ans) et délai d'instruction viennent des
@@ -466,7 +484,7 @@ log = logging.getLogger("labuse.fiche_commune")
 _FALLBACK = {
     "comparable": None, "marche_annonces": None, "densifiables": None, "loyer": None,
     "zonage_abc": None, "fiscalite": None, "taxe_amenagement": None, "ort": None, "zfang_frr": None,
-    "parc_social": None, "prix_neuf_observe": None,
+    "parc_social": None, "prix_neuf_observe": None, "scot": None,
     "risques": {"ppr_pct": None, "mouvement_terrain_pct": None, "catnat_arretes": 0,
                 "catnat_detail": [], "parc_national": False, "azi_tri": None,
                 "source": "Géorisques · GASPAR · BD TOPO"},
@@ -506,6 +524,7 @@ def build(db: Session, commune: str, insee: str | None) -> dict:
         "risques": _safe(db, "risques", lambda: risques(db, commune, insee)),
         "population": _safe(db, "population", lambda: population(db, commune, insee)),
         "plu_statut": _safe(db, "plu_statut", lambda: plu_statut(db, insee, commune)),
+        "scot": _safe(db, "scot", lambda: scot_commune(db, commune)),
         "permis": _safe(db, "permis", lambda: permis_bloc(db, commune)),
         "densifiables": _safe(db, "densifiables", lambda: densifiables(db, commune)),
         "loyer": _safe(db, "loyer", lambda: loyer(db, commune)),

@@ -298,6 +298,104 @@ def znieff_build_cmd() -> None:
     typer.echo(f"✓ ZNIEFF : {counts} (total {sum(counts.values())})")
 
 
+@app.command("pylones-build")
+def pylones_build_cmd() -> None:
+    """GEOPF-3 — ingère les pylônes électriques (IGN BD TOPO via Géoplateforme WFS) → spatial_layers
+    kind='pylone' (Licence Ouverte). Île entière, groupe Réseaux (à côté des lignes HT/MT)."""
+    from . import models
+    from .db import engine
+    from .ingestion import seed_sources
+    from .ingestion.pylones import build_pylones
+
+    with session_scope() as s:
+        seed_sources.seed(s)
+        counts = build_pylones(s, log=typer.echo)
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ Pylônes : {counts} (total {sum(counts.values())})")
+
+
+@app.command("postes-transformation-build")
+def postes_transformation_build_cmd() -> None:
+    """GEOPF-3 — ingère les postes de transformation électriques (IGN BD TOPO via Géoplateforme WFS)
+    → spatial_layers kind='poste_transformation' (Licence Ouverte). Île entière, groupe Réseaux ;
+    la distance au poste le plus proche est servie au tiroir Réseaux de la fiche parcelle."""
+    from . import models
+    from .db import engine
+    from .ingestion import seed_sources
+    from .ingestion.postes_transformation import build_postes_transformation
+
+    with session_scope() as s:
+        seed_sources.seed(s)
+        counts = build_postes_transformation(s, log=typer.echo)
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ Postes de transformation : {counts} (total {sum(counts.values())})")
+
+
+@app.command("mesures-compensatoires-build")
+def mesures_compensatoires_build_cmd() -> None:
+    """GEOPF-3 — ingère les mesures compensatoires ERC (GéoMCE via Géoplateforme WFS) → spatial_layers
+    kind='mesures_compensatoires' (Licence Ouverte). Île entière ; contrainte du point unique
+    (servitudes.contraintes_parcelle → Pièges et risques + fiche) ; couche famille environnement."""
+    from . import models
+    from .db import engine
+    from .ingestion import seed_sources
+    from .ingestion.mesures_compensatoires import build_mesures_compensatoires
+
+    with session_scope() as s:
+        seed_sources.seed(s)
+        counts = build_mesures_compensatoires(s, log=typer.echo)
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ Mesures compensatoires : {counts} (total {sum(counts.values())})")
+
+
+@app.command("scot-build")
+def scot_build_cmd() -> None:
+    """GEOPF-3 — ingère les périmètres SCOT (GPU via Géoplateforme WFS) → spatial_layers kind='scot'
+    (Licence Ouverte). Île entière ; couche famille urbanisme + fiche commune (nom + date d'approbation)."""
+    from . import models
+    from .db import engine
+    from .ingestion import seed_sources
+    from .ingestion.scot import build_scot
+
+    with session_scope() as s:
+        seed_sources.seed(s)
+        counts = build_scot(s, log=typer.echo)
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ SCOT : {counts} (total {sum(counts.values())})")
+
+
+@app.command("enr-exclue-toiture-build")
+def enr_exclue_toiture_build_cmd() -> None:
+    """GEOPF-3 — ingère les zones interdites aux EnR hors toiture (loi APER, OFB via Géoplateforme WFS)
+    → spatial_layers kind='enr_exclue_hors_toiture' (Licence Ouverte). Île entière ; couche groupe
+    Énergie + filtre d'exclusion dans l'outil Prospection solaire (projet au sol)."""
+    from . import models
+    from .db import engine
+    from .ingestion import seed_sources
+    from .ingestion.enr_exclue_toiture import build_enr_exclue_toiture
+
+    with session_scope() as s:
+        seed_sources.seed(s)
+        counts = build_enr_exclue_toiture(s, log=typer.echo)
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ EnR interdites hors toiture (APER) : {counts} (total {sum(counts.values())})")
+
+
+@app.command("bd-nyme-build")
+def bd_nyme_build_cmd() -> None:
+    """GEOPF-3 — ingère les lieux-dits BD NYME (toponymes BD TOPO IGN via Géoplateforme WFS) → table
+    lieux_dits (Licence Ouverte). Île entière ; 5ᵉ grammaire de recherche + « Secteur » de la fiche."""
+    from .db import engine
+    from .ingestion import seed_sources
+    from .ingestion.bd_nyme import build_bd_nyme
+
+    with session_scope() as s:
+        seed_sources.seed(s)
+        counts = build_bd_nyme(s, log=typer.echo)
+    _ = engine  # geom_2975 est posé à l'insertion (ST_Transform), pas de trigger sur lieux_dits
+    typer.echo(f"✓ Lieux-dits (BD NYME) : {counts} (total {sum(counts.values())})")
+
+
 @app.command("bpe-build")
 def bpe_build_cmd() -> None:
     """M137-U — ingère la BPE INSEE (équipements géolocalisés, DEP=974) → spatial_layers

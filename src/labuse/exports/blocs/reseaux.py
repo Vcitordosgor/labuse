@@ -33,6 +33,14 @@ def rendu(valeurs) -> str:
                           esc(f"{axe.get('nom', '')} à {axe['distance_m']} m — desserte rapide et "
                               "nuisances ; recul le long des axes classés à vérifier (L.111-6)"),
                           chip_span("s", "sourcé")))
+        # GEOPF-3 — poste de transformation le plus proche (signal de coût de raccordement).
+        poste = prox.get("poste_transformation")
+        if isinstance(poste, dict) and poste.get("distance_m") is not None:
+            d = poste["distance_m"]
+            lignes.append(ligne_kv("Poste de transformation",
+                          esc(("Au contact de la parcelle" if d <= 5 else f"À {d} m")
+                              + " — coût de raccordement à confirmer (EDF SEI)"),
+                          chip_span("s", "sourcé")))
     anc = val(valeurs, "part_logements_egout_pct")
     if isinstance(anc, dict) and anc.get("libelle"):
         # RECETTE-12 D2 — quand la donnée vient de l'INSEE à la maille IRIS, c'est un fait de QUARTIER

@@ -446,6 +446,33 @@ SEED: list[dict] = [
      "url": "https://rnb-api.beta.gouv.fr/api/alpha/buildings/B74TG4FPXST4/",
      "url2": "https://rnb-api.beta.gouv.fr/api/alpha/buildings/1126R7BCDWR1/",
      "selecteur": None},
+    # GEOPF-3 — GéoMCE (mesures compensatoires) : WFS sans millésime nommé. Témoin = la mesure 974
+    # la plus récente (tri date_decision) — une nouvelle mesure change l'empreinte (date la plus récente).
+    {"name": "GéoMCE — mesures compensatoires", "methode": "temoin",
+     "url": ("https://data.geopf.fr/wfs/ows?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0"
+             "&TYPENAMES=MESURES_COMPENSATOIRES:emprises_polygones&SRSNAME=EPSG:4326&COUNT=1"
+             "&OUTPUTFORMAT=application/json&SORTBY=date_decision%20D"
+             "&BBOX=55.20,-21.42,55.90,-20.85,EPSG:4326"),
+     "selecteur": "features.0.properties.date_decision"},
+    # GEOPF-3 — SCOT (GPU) : WFS sans millésime nommé. Témoin = le gpu_timestamp du SCOT le plus
+    # récent — une nouvelle publication GPU change l'empreinte.
+    {"name": "SCOT (GPU)", "methode": "temoin",
+     "url": ("https://data.geopf.fr/wfs/ows?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0"
+             "&TYPENAMES=wfs_scot:scot&SRSNAME=EPSG:4326&COUNT=1"
+             "&OUTPUTFORMAT=application/json&SORTBY=gpu_timestamp%20D"
+             "&BBOX=55.20,-21.42,55.90,-20.85,EPSG:4326"),
+     "selecteur": "features.0.properties.gpu_timestamp"},
+    # GEOPF-3 — zones exclues EnR sauf toiture (OFB/APER) : WFS sans millésime nommé. Témoin = empreinte
+    # de la 1re zone 974 (une révision du zonage APER change la réponse).
+    {"name": "Zones exclues EnR sauf toiture (OFB/APER)", "methode": "temoin",
+     "url": ("https://data.geopf.fr/wfs/ows?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0"
+             "&TYPENAMES=OFB_ZONES.EXCLUES.SAUF.TOITURE:zones_exclues_aires_acceleration_sauf_toiture"
+             "&SRSNAME=EPSG:4326&COUNT=1&OUTPUTFORMAT=application/json"
+             "&BBOX=55.20,-21.42,55.90,-20.85,EPSG:4326"),
+     "selecteur": None},
+    # GEOPF-3 — BD NYME (lieux-dits) : même jeu amont que la BD TOPO (bd-topo-r), sonde data.gouv.
+    {"name": "BD NYME — lieux-dits (IGN)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/bd-topo-r/", "selecteur": "last_update"},
     {"name": "Contours IRIS (IGN/INSEE)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/contours-iris/", "selecteur": "last_update"},
     {"name": "RPG — déclarations agricoles (IGN/ASP)", "methode": "api",
@@ -728,6 +755,11 @@ SEED: list[dict] = [
 #: réels). Les 6 sources récupérées (DEAL PPR/WMS, Région ODS, Géorisques cavités/mvt/ssp) sont passées
 #: au SEED et retirées d'ici.
 RAISONS_NON_SURVEILLEES: dict[str, str] = {
+    # GEOPF-3 — couches RASTER servies en WMTS (overlay/fond) : millésime figé (carte 1950/1980) ou
+    # zonage réglementaire sans en-tête de version machine amont ; aucun flux vecteur ni date à sonder.
+    "Contraintes EnR près des habitations (Géoplateforme)": "Couche RASTER WMTS (ENR.PERIMETRE.HABITATION) — zonage réglementaire APER servi en tuiles image, sans millésime machine amont à sonder ; re-contrôlé à la demande.",
+    "SCAN 50 historique 1950 (IGN)": "Carte historique FIGÉE (SCAN 50 de 1950) servie en WMTS image — millésime immuable (document d'archive), aucun flux amont à surveiller.",
+    "EduGéo Réunion 1980 (IGN)": "Carte historique FIGÉE (EduGéo Réunion 1980) servie en WMTS image — millésime immuable, aucun flux amont à surveiller.",
     # COUCHES-REGISTRE-2 lot 1 — le seed des contours communaux est un référentiel STATIQUE embarqué
     # (fichier communes974.geojson d'IGN ADMIN EXPRESS, matérialisé en mvt_communes) : aucun flux ni
     # millésime machine amont à sonder. Contours administratifs quasi immuables (fusions rarissimes).

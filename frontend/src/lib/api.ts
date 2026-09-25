@@ -287,6 +287,8 @@ export interface ContexteCommune {
     // COMMUNE-FIX-1 (D12) — procédure PLU en cours au dernier relevé Sudocuh
     procedure_sudocuh?: { document: string | null; etat: string | null; prescription: string | null; millesime: string | null } | null
   }
+  // GEOPF-3 — SCOT (planification supra-communale, GPU) : nom + date d'approbation. null = hors périmètre.
+  scot?: { nom: string; date_approbation: string | null; statut: string | null; source: string } | null
   permis_bloc: {
     permis_12m: number; permis_5a: number | null; logements_12m: number | null
     delai_median_mois: number | null; point_mort: number; source: string
@@ -739,7 +741,7 @@ export async function banAutocomplete(q: string, signal?: AbortSignal): Promise<
 
 // RETOURS-16 V5 — suggestion UNIFIÉE des barres de recherche (un endpoint, six grammaires,
 // groupées par type, 8 max). `types` = les grammaires que la barre appelante sait consommer.
-export type SuggestType = 'adresse' | 'cadastre' | 'proprietaire' | 'siren' | 'commune' | 'projet'
+export type SuggestType = 'adresse' | 'cadastre' | 'proprietaire' | 'siren' | 'commune' | 'projet' | 'lieu_dit'
 export interface SuggestItem {
   type: SuggestType; label: string; sub?: string
   idu?: string | null; lon?: number; lat?: number
@@ -971,6 +973,9 @@ export interface SolaireFiche {
   toiture?: { verdict: string; libelle: string; libelle_court: string
               pente_mediane_deg: number | null; pans_orientation_deg: number[]
               confiance: number; seuil: number; statut: string; methode: string } | null
+  // GEOPF-3 — filtre d'exclusion EnR au sol (loi APER) : parcelle dans une zone exclue (Parc national,
+  // réserve naturelle) → projet AU SOL exclu, TOITURE possible. Zone nommée si exclue.
+  enr_au_sol_exclu?: boolean; enr_sol_exclu_zone?: string | null
 }
 export const getSolaireFiche = (idu: string) =>
   j<SolaireFiche>(`/modules/prospection-solaire/parcelle/${idu}`)

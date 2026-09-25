@@ -216,7 +216,8 @@ export function Omnibox() {
         // RECETTE-2 S5 (décision Vic) — l'omnibox propose les grammaires QUI ATTERRISSENT :
         // adresse, référence cadastrale, propriétaire (PM) et SIREN. « commune » et « projet »
         // sont retirés des formats acceptés (le cadrage commune passe par le sélecteur du bandeau).
-        grammaires={['adresse', 'cadastre', 'proprietaire', 'siren']}
+        // GEOPF-3 — + lieu_dit (BD NYME) : un lieu-dit ATTERRIT (un clic zoome sur le secteur).
+        grammaires={['adresse', 'cadastre', 'proprietaire', 'siren', 'lieu_dit']}
         onPick={(it) => {
           if ((it.type === 'siren' || it.type === 'proprietaire') && it.siren) ouvrirScan(it.siren)
         }}

@@ -282,6 +282,7 @@ export interface Fiche {
     cause: string | null; non_calculable: boolean | null; sdp_residuelle_m2: number | null
   } | null
   adresse?: string | null   // M6 2a (§1.8) : meilleure adresse postale BAN — null si aucune
+  secteur?: string | null   // GEOPF-3 : lieu-dit BD NYME le plus proche (rayon borné) — null si aucun
   proprietaire_moral: {
     denomination: string | null; siren: string | null; groupe_label: string | null
     etat_societe?: {
@@ -408,6 +409,8 @@ export interface Fiche {
     // FICHE-COUCHES-2 lot 1 — moyenne tension (HTA, contrainte de proximité) et tracé de transport (desserte)
     ligne_mt?: { distance_m: number; tension: string; libelle: string; source: string }
     transport_ligne?: { nom: string; reseau: string | null; distance_m: number; libelle: string; source: string }
+    // GEOPF-3 — poste de transformation le plus proche (BD TOPO) : signal de coût de raccordement.
+    poste_transformation?: { nom: string; distance_m: number; libelle: string; source: string }
     // RETOURS-13 R5 — station TCSP en service la plus proche (drapeau 800 m, art. L151-36) : distance
     // + drapeau < 500 m (modulation possible du stationnement, à vérifier au PLU — jamais promis).
     tcsp?: { station: string; distance_m: number; sous_800m: boolean; libelle: string; source: string }

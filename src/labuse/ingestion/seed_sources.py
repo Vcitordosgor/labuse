@@ -55,6 +55,17 @@ SOURCES: list[dict] = [
          endpoint_url="https://apicarto.ign.fr/api/gpu/municipality/document/info-surf",
          legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN), annexes d'assainissement des collectivités ».",
          technical_notes="✓ couches d'information surfaciques typeinf=19 (« zonage d'assainissement » CNIG). Couverture SIG partielle (4/24 communes au 11/07/2026) ; ailleurs, taux de non-raccordement du secteur (INSEE RP2022), jamais une proba parcellaire (M88)."),
+    # GEOPF-3 — SCOT (Schéma de Cohérence Territoriale) : périmètres supra-communaux du GPU. Distinct
+    # du SAR (régional) et du PLU (communal). Nom + date d'approbation (idurba) + statut approuvé/projet.
+    dict(name="SCOT (GPU)", category="urbanisme", provider="IGN / Géoportail de l'urbanisme",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="GPU — périmètres SCOT (idurba CNIG par document)",
+         documentation_url="https://www.geoportail-urbanisme.gouv.fr/",
+         endpoint_url="https://data.geopf.fr/wfs/ows",
+         legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN) ».",
+         technical_notes="GEOPF-3 : ingéré → spatial_layers kind='scot' via Géoplateforme WFS "
+                         "(wfs_scot:scot + wfs_scot:perimetre_scot). 974 : SCOT TCO (approuvé), CINOR "
+                         "(approuvé), Grand Sud (en projet). Nom + date d'approbation servis à la fiche commune."),
     # SOURCES-3b lot 2 — Sudocuh était en base (id 62, curation, veille_plu) mais ABSENT du catalogue
     # SOURCES (legacy) : rattrapé ici pour que la sentinelle (SEED, data.gouv last_update) puisse s'y
     # rattacher par nom exact (invariant test_sentinelle : SEED ⊆ SOURCES).
@@ -458,6 +469,70 @@ SOURCES: list[dict] = [
                          "MARINES EXCLUES (znieff*_mer) : en mer, aucune intersection avec des parcelles "
                          "constructibles. CONTRAINTE hors cascade (études d'impact, risque de recours). Le jeu "
                          "Région Réunion ODS est un doublon amputé (28 = type II seul, sans champ type) → écarté."),
+    # GEOPF-3 — mesures compensatoires (GéoMCE, MTE/OFB/DREAL) : emprises des mesures de compensation
+    # écologique (séquence ERC). Contrainte dormante sur la parcelle. Maître d'ouvrage non diffusable.
+    dict(name="GéoMCE — mesures compensatoires", category="environnement",
+         provider="MTE / OFB / DREAL (GéoMCE)",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="GéoMCE — géoportail des mesures compensatoires (national)",
+         documentation_url="https://www.geoportail-mesures-compensatoires.developpement-durable.gouv.fr/",
+         endpoint_url="https://data.geopf.fr/wfs/ows",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : GéoMCE (MTE/OFB) ». "
+                     "Maître d'ouvrage « non diffusable » à la source (jamais inventé).",
+         technical_notes="GEOPF-3 : ingéré → spatial_layers kind='mesures_compensatoires' via Géoplateforme WFS "
+                         "(MESURES_COMPENSATOIRES:emprises_polygones/lineaires/ponctuelles). Contrainte ERC "
+                         "(point unique servitudes.contraintes_parcelle → Pièges et risques + fiche)."),
+    # GEOPF-3 — zones exclues des aires d'accélération EnR (loi APER) SAUF toiture (OFB/INPN). Filtre
+    # d'exclusion pour un projet solaire AU SOL (le solaire en toiture y reste possible).
+    dict(name="Zones exclues EnR sauf toiture (OFB/APER)", category="energie",
+         provider="OFB / INPN (loi APER)",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="OFB — zonages exclus des aires d'accélération EnR (loi APER)",
+         documentation_url="https://www.data.gouv.fr/datasets/zones-daccelaration-des-energies-renouvelables",
+         endpoint_url="https://data.geopf.fr/wfs/ows",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : OFB / INPN (loi APER) ».",
+         technical_notes="GEOPF-3 : ingéré → spatial_layers kind='enr_exclue_hors_toiture' via Géoplateforme "
+                         "WFS (OFB_ZONES.EXCLUES.SAUF.TOITURE). 974 : Parc national (cœur+adhésion), RN "
+                         "Étang de Saint-Paul. Filtre d'exclusion dans l'outil Prospection solaire (au sol)."),
+    # GEOPF-3 — contraintes EnR près des habitations (Géoplateforme WMTS ENR.PERIMETRE.HABITATION).
+    # Couche RASTER (overlay, non ingérée en base — cataloguée comme les courbes de niveau).
+    dict(name="Contraintes EnR près des habitations (Géoplateforme)", category="energie",
+         provider="IGN / Géoplateforme (loi APER)",
+         access_type="WMTS", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="Géoplateforme — ENR.PERIMETRE.HABITATION (APER)",
+         documentation_url="https://geoservices.ign.fr/services-geoplateforme-diffusion",
+         endpoint_url="https://data.geopf.fr/wmts",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : IGN / Géoplateforme (loi APER) ».",
+         technical_notes="GEOPF-3 : couche RASTER (overlay) relayée par /map/tiles/enr_habitation "
+                         "(WMTS ENR.PERIMETRE.HABITATION, style PERIMETRE.HABITATION, PM_6_18). Couverture 974 "
+                         "vérifiée (tuiles z12/z14 non vides). Groupe Énergie + visible dans Prospection solaire."),
+    # GEOPF-3 — lieux-dits (BD NYME / toponymes BD TOPO IGN) : recherche par lieu-dit + « Secteur » fiche.
+    dict(name="BD NYME — lieux-dits (IGN)", category="topographie", provider="IGN / Géoplateforme",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="BD TOPO® V3 (IGN) — toponymes / lieux-dits",
+         documentation_url="https://geoservices.ign.fr/bdtopo",
+         endpoint_url="https://data.geopf.fr/wfs/ows",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — BD TOPO ».",
+         technical_notes="GEOPF-3 : ingéré → table lieux_dits via Géoplateforme WFS "
+                         "(BDTOPO_V3:zone_d_habitation habités + lieu_dit_non_habite). 5ᵉ grammaire de "
+                         "recherche « Lieu-dit » + ligne « Secteur » de la fiche parcelle."),
+    # GEOPF-3 — cartes anciennes (Remonter le temps) : SCAN 50 IGN de 1950 + EduGéo Réunion 1980.
+    dict(name="SCAN 50 historique 1950 (IGN)", category="reference", provider="IGN / Géoplateforme",
+         access_type="WMTS", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="SCAN 50® — carte topographique IGN de 1950",
+         documentation_url="https://geoservices.ign.fr/services-geoplateforme-diffusion",
+         endpoint_url="https://data.geopf.fr/wmts",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — SCAN 50 (1950) ».",
+         technical_notes="GEOPF-3 : couche RASTER (Remonter le temps) — WMTS GEOGRAPHICALGRIDSYSTEMS.MAPS."
+                         "SCAN50.1950. Couverture 974 vérifiée (carte IGN 1950 de Saint-Paul). Relais brut."),
+    dict(name="EduGéo Réunion 1980 (IGN)", category="reference", provider="IGN / Géoplateforme (EduGéo)",
+         access_type="WMTS", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="EduGéo — carte de La Réunion, millésime 1980",
+         documentation_url="https://geoservices.ign.fr/services-geoplateforme-diffusion",
+         endpoint_url="https://data.geopf.fr/wmts",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « © IGN — EduGéo Réunion 1980 ».",
+         technical_notes="GEOPF-3 : couche RASTER (Remonter le temps) — WMTS GEOGRAPHICALGRIDSYSTEMS."
+                         "EDUGEO.LA-REUNION1980. Bbox = l'île entière. Relais brut."),
     # ── Spécifiques / accès restreint ──
     dict(name="ABF / Monuments historiques", category="patrimoine", provider="Base Mérimée (Ministère Culture)",
          access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
@@ -1624,6 +1699,13 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "Transport public — GTFS (PAN, 7 réseaux)": ("one_shot", 365, "proposee"),
     "OSM — transport (pôles d'échange & téléphérique)": ("one_shot", 365, "proposee"),
     "ZNIEFF (INPN/MNHN)": ("one_shot", 365, "proposee"),
+    "GéoMCE — mesures compensatoires": ("one_shot", 365, "proposee"),
+    "SCOT (GPU)": ("one_shot", 365, "proposee"),
+    "Zones exclues EnR sauf toiture (OFB/APER)": ("one_shot", 365, "proposee"),
+    "Contraintes EnR près des habitations (Géoplateforme)": ("one_shot", 365, "proposee"),
+    "BD NYME — lieux-dits (IGN)": ("one_shot", 365, "proposee"),
+    "SCAN 50 historique 1950 (IGN)": ("one_shot", None, "sans_objet"),
+    "EduGéo Réunion 1980 (IGN)": ("one_shot", None, "sans_objet"),
     "ZNIEFF (INPN / Région)": ("absente", None, "sans_objet"),
     "CoSIA (couverture du sol IA, IGN)": ("one_shot", 800, "declaree"),
     "Radar (pige d'annonces)": ("depot_manuel", 3, "declaree"),

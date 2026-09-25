@@ -308,6 +308,12 @@ function ModeEnsoleillement({ onBack, prefillIdu }: { onBack: () => void; prefil
       {ficheIdu && fiche.isError && <ErrorState message="Parcelle introuvable — vérifiez l’IDU." retry={() => fiche.refetch()} />}
       {ficheIdu && fiche.data && <FicheSoleil f={fiche.data} onOpen={() => select(ficheIdu)} />}
       {!ficheIdu && <p className="text-[11px] text-txt-mut">Saisissez une parcelle pour sa fiche soleil (potentiel, toiture, profil mensuel).</p>}
+      {/* GEOPF-3 — la couche « Contraintes EnR près des habitations » (loi APER) est superposable sur
+          la carte (groupe Énergie) : périmètres réglementaires liés aux habitations. */}
+      <p data-solaire-enr-habitation className="text-[9.5px] leading-snug text-txt-dim">
+        💡 Couche carte « Contraintes EnR près des habitations » (loi APER) disponible dans le groupe
+        <b className="text-txt-mut"> Énergie</b> du panneau Couches.
+      </p>
       <p className="mt-auto text-[9.5px] leading-snug text-txt-dim">{SOURCES_PIED}</p>
     </div>
   )
@@ -418,6 +424,15 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
             La lecture LiDAR de la toiture (ci-dessus) se vérifie sur cette photo.
             « Pente du terrain » ci-dessus = pente moyenne du sol (RGE ALTI), pas la pente du toit.
           </p>
+        </div>
+      )}
+      {/* GEOPF-3 — FILTRE D'EXCLUSION EnR AU SOL (loi APER) : la parcelle est dans une zone exclue
+          (Parc national, réserve naturelle) → un projet solaire AU SOL y est exclu ; la TOITURE reste possible. */}
+      {f.enr_au_sol_exclu && (
+        <div data-solaire-enr-exclu className="mt-1.5 rounded px-2 py-1 text-[10px] leading-snug"
+          style={{ background: 'rgba(214,69,80,.12)', color: '#D64550' }}>
+          ⛔ Zone d'exclusion EnR au sol{f.enr_sol_exclu_zone ? ` — ${f.enr_sol_exclu_zone}` : ''} (loi APER) :
+          <b> projet solaire au sol exclu</b> ici. Le solaire <b>en toiture</b> reste possible.
         </div>
       )}
       {/* O13b — croisement piscine sur la parcelle (champ déjà servi par la fiche) : signal métier

@@ -121,7 +121,9 @@ def test_modes_cadences_declares(db_session):
     # 107 → 116 : SOURCES-1 lot 7 (7 chantiers + FF/LOVAC/DV3F en convention).
     # 116 → 121 : SOURCES-2 lot 3 (endiguement, carte hypsométrique, BAN PLUS, RNB, OCS GE) —
     # chronique mise à jour par TESTS-1 lot 2 (le compte était resté figé à SOURCES-1).
-    assert len(MODE_ET_CADENCE) == 121
+    # 121 → 128 : GEOPF-3 (+7) — GéoMCE, SCOT (GPU), EnR sauf toiture (OFB/APER), EnR près habitations,
+    # BD NYME lieux-dits, SCAN 50 1950, EduGéo Réunion 1980.
+    assert len(MODE_ET_CADENCE) == 128
     modes = {m for m, _, _ in MODE_ET_CADENCE.values()}
     assert modes <= {"job_sur_clic", "cron_mensuel", "depot_manuel", "one_shot", "en_direct",
                      "absente", "sans_millesime"}

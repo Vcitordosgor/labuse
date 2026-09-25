@@ -47,7 +47,7 @@ export interface TuyauCouche {
 // COUCHES-RECETTE-1 A11 : ordre des catégories du panneau (Repères en tête ; « Fond de plan » n'y
 // figure plus — le bâti 3D part dans le bouton 3D). Une famille hors liste tombe à la fin.
 const ORDRE_FAMILLES = ['reperes', 'urbanisme', 'risques', 'environnement', 'foncier',
-  'reseaux', 'transport', 'dispositifs', 'patrimoine', 'equipements', 'marche']
+  'energie', 'reseaux', 'transport', 'dispositifs', 'patrimoine', 'equipements', 'marche']
 // COUCHES-RECETTE-1 A11 : le bâti 3D (extrusion) est retiré du panneau — activé par le bouton 3D.
 const HORS_PANNEAU = (c: TuyauCouche) => c.geometrie === 'extrusion'
 // COUCHES-RECETTE-1 A5 : seuls les Repères (limites communes/parcelles) sont cochés par défaut.
@@ -78,13 +78,34 @@ const COURBES_NIVEAU_COUCHE: TuyauCouche = {
   i: 'Courbes de niveau — IGN Géoplateforme, couche WMTS ELEVATION.CONTOUR.LINE (dérivée du RGE ALTI, millésime 2025). Équidistance variable selon l’échelle. Overlay raster superposable à tous les fonds.',
 }
 
+// GEOPF-3 — CONTRAINTES EnR PRÈS DES HABITATIONS : couche RASTER servie par le proxy
+// /map/tiles/enr_habitation (IGN Géoplateforme WMTS ENR.PERIMETRE.HABITATION, style dédié, couverture
+// 974 vérifiée). Comme les courbes : déclarée côté front (le tuyau back ne sert que du vecteur),
+// fusionnée au plan, groupe Énergie. Off par défaut.
+export const ENR_HABITATION_KIND = 'enr_habitation'
+const ENR_HABITATION_COUCHE: TuyauCouche = {
+  kind: ENR_HABITATION_KIND,
+  nom: 'Contraintes EnR près des habitations',
+  famille: 'energie',
+  geometrie: 'raster',
+  zoom_min: 10,
+  rang_carte: 7,
+  style: {},
+  niveaux: [{ id: 'perimetre', propriete: 'x', valeur: 'x', couleur: '#E8873A', legende: 'Périmètre de contrainte (habitations)', geometrie: 'polygone' }],
+  popup: null,
+  legende: 'Contraintes réglementaires EnR liées aux habitations (loi APER)',
+  statut_juridique: 'opposable',
+  tuiles_url: '/map/tiles/enr_habitation/{z}/{x}/{y}',
+  i: 'Contraintes réglementaires liées aux habitations pour l’implantation d’EnR (loi APER) — IGN Géoplateforme, couche WMTS ENR.PERIMETRE.HABITATION. Overlay raster superposable. Visible aussi dans l’outil Prospection solaire.',
+}
+
 async function chargerPlan(): Promise<TuyauCouche[]> {
   const r = await fetch('/map/tuyau/couches')
   if (!r.ok) throw new Error(`plan tuyau: ${r.status}`)
   const j = await r.json()
   // RETOURS-13 P5 — le contour (raster) rejoint le plan vecteur servi par le back : un seul plan,
-  // un seul panneau, une seule légende.
-  return [...((j.couches ?? []) as TuyauCouche[]), COURBES_NIVEAU_COUCHE]
+  // un seul panneau, une seule légende. GEOPF-3 — idem pour la couche raster EnR près des habitations.
+  return [...((j.couches ?? []) as TuyauCouche[]), COURBES_NIVEAU_COUCHE, ENR_HABITATION_COUCHE]
 }
 
 export function useTuyauPlan() {
@@ -651,7 +672,7 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
 // ── la SECTION « Nouvelles couches » du panneau « Cartes » (montée dans LeftPanel), par famille ──
 const FAMILLE_LABEL: Record<string, string> = {
   reperes: 'Repères', fond_de_plan: 'Fond de plan', urbanisme: 'Urbanisme', risques: 'Risques',
-  environnement: 'Environnement', foncier: 'Foncier', reseaux: 'Réseaux',
+  environnement: 'Environnement', foncier: 'Foncier', energie: 'Énergie', reseaux: 'Réseaux',
   transport: 'Transport', dispositifs: 'Dispositifs', patrimoine: 'Patrimoine',
   equipements: 'Équipements', marche: 'Marché',
 }

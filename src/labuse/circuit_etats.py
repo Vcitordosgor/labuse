@@ -93,6 +93,14 @@ def categorie_affichage(slug: str | None) -> str:
 #    data_sources (id numérique + nom) au slug du registre, pour allumer réservoir → catégories.
 #    Un réservoir absent de ce pont s'allume seul (comportement d'avant CIRCUIT-P), sans erreur. ──
 NOM_VERS_SLUG = {
+    # GEOPF-3 — les 7 nouvelles sources (couches ingérées) → leur réservoir (RESERVOIR_TABLES).
+    'GéoMCE — mesures compensatoires': 'geomce',
+    'SCOT (GPU)': 'scot_gpu',
+    'Zones exclues EnR sauf toiture (OFB/APER)': 'enr_aper_ofb',
+    'Contraintes EnR près des habitations (Géoplateforme)': 'enr_habitation_wmts',
+    'BD NYME — lieux-dits (IGN)': 'bd_nyme',
+    'SCAN 50 historique 1950 (IGN)': 'scan50_1950',
+    'EduGéo Réunion 1980 (IGN)': 'edugeo_1980',
     # COUCHES-REGISTRE-2 lot 1 — seed des contours communaux (réservoir communes_ign, repère limites_communes).
     'Communes La Réunion — contours (IGN ADMIN EXPRESS via geo.api.gouv, seed)': 'communes_ign',
     'RNB — Référentiel National des Bâtiments': 'rnb',

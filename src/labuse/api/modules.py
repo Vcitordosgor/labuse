@@ -944,7 +944,11 @@ def prospection_solaire_parcelle(idu: str, db: Session = Depends(get_db)):
                ps.flag_ombrage_vegetal AS ombrage_vegetal,
                ps.proba_proprio_occupant AS proba_occ,
                s2.tier AS tier_v2,
-               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
+               -- GEOPF-3 — zone d'exclusion EnR AU SOL (loi APER) : projet au sol exclu, toiture OK.
+               (SELECT sl.name FROM spatial_layers sl
+                WHERE sl.kind = 'enr_exclue_hors_toiture' AND sl.geom_2975 IS NOT NULL
+                  AND ST_Intersects(sl.geom_2975, p.geom_2975) LIMIT 1) AS enr_sol_exclu_zone
         FROM parcel_solar ps
         JOIN parcels p ON p.idu = ps.idu
         LEFT JOIN parcel_terrain t ON t.idu = ps.idu
@@ -964,6 +968,10 @@ def prospection_solaire_parcelle(idu: str, db: Session = Depends(get_db)):
     pm = r["prod_mensuel"]
     d["prod_mensuel"] = [round(float(x)) for x in pm] if isinstance(pm, (list, tuple)) else None
     d["ombrage"] = bool(r["ombrage_topo"]) or bool(r["ombrage_vegetal"])
+    # GEOPF-3 — filtre d'exclusion EnR AU SOL (loi APER) : si la parcelle est dans une zone exclue
+    # (Parc national, réserve naturelle), un projet solaire AU SOL y est exclu ; la TOITURE reste possible.
+    d["enr_sol_exclu_zone"] = r["enr_sol_exclu_zone"]
+    d["enr_au_sol_exclu"] = r["enr_sol_exclu_zone"] is not None
     mil = db.execute(text("SELECT max(source_millesime) AS mil FROM parcel_solar "
                           "WHERE prod_spec_kwh_kwc IS NOT NULL")).scalar()
     d["millesime"] = mil or "PVGIS SARAH3"

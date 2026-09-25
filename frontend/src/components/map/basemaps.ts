@@ -16,6 +16,11 @@ export type BasemapDef = { tiles: string[]; attribution: string; maxzoom?: numbe
 export const ORTHO_PROXY = (couche: string) =>
   `${window.location.origin}/map/tiles/ortho/${couche}/{z}/{x}/{y}`
 
+// GEOPF-3 — CARTES ANCIENNES (Remonter le temps) : SCAN 50 de 1950 + EduGéo Réunion 1980. Relais BRUT
+// (pas de masque mer : ce sont des CARTES, pas des photos). Route dédiée /map/tiles/carte-ancienne.
+export const CARTE_ANCIENNE_PROXY = (couche: string) =>
+  `${window.location.origin}/map/tiles/carte-ancienne/${couche}/{z}/{x}/{y}`
+
 export const ORTHO_MONDE: BasemapDef = {
   // sous-couche des fonds ortho : la TERRE aux petits zooms (mer fondue vers l'aplat par le
   // proxy) ; maxzoom 12 = au-delà, MapLibre ÉTIRE les tuiles z12 sous l'Express (jamais de
@@ -50,6 +55,10 @@ export const BASEMAP_SOURCES: Record<string, BasemapDef> = {
   'bm-ortho-2000': { tiles: [ORTHO_PROXY('2000')], attribution: '© IGN ortho 2000-2005', maxzoom: 17 },
   // le millésime 1950 s'arrête ~z15 : overzoom (maxzoom) plutôt que des tuiles NOIRES au-delà.
   'bm-ortho-1950': { tiles: [ORTHO_PROXY('1950')], attribution: '© IGN ortho 1950-1965', maxzoom: 15 },
+  // GEOPF-3 — CARTES ANCIENNES : SCAN 50 IGN de 1950 (carte topo, couverture 974 vérifiée, ~z15) et
+  // EduGéo Réunion 1980 (carte, bbox = l'île, ~z16). Relais brut (route carte-ancienne, pas de masque mer).
+  'bm-scan50-1950': { tiles: [CARTE_ANCIENNE_PROXY('scan50-1950')], attribution: '© IGN SCAN 50 — carte de 1950', maxzoom: 15 },
+  'bm-edugeo-1980': { tiles: [CARTE_ANCIENNE_PROXY('edugeo-1980')], attribution: '© IGN EduGéo — Réunion 1980', maxzoom: 16 },
   // TEMPS (refonte) — frise des millésimes : mosaïques-période IGN VÉRIFIÉES sur le 974 (GetTile réel,
   // 3 points de contrôle St-Denis/St-Paul/St-Pierre → dalles servies ; 1965-80 et 1980-95 s'arrêtent en
   // métropole → EXCLUES). maxzoom = un cran sous le dernier zoom servi (convention 2000-2005), pour de
@@ -64,7 +73,10 @@ export const BASEMAP_SOURCES: Record<string, BasemapDef> = {
 // L'« après » du comparateur reste toujours aujourd'hui (bm-ortho-now, verrouillé). SOURCE DE VÉRITÉ
 // du sélecteur M08 et des libellés du comparateur.
 export const TEMPS_MILLESIMES: { key: keyof typeof BASEMAP_SOURCES; an: string; label: string }[] = [
+  // GEOPF-3 — les deux cartes anciennes encadrent chronologiquement les orthos historiques.
+  { key: 'bm-scan50-1950', an: 'scan1950', label: 'Carte SCAN 50 (1950)' },
   { key: 'bm-ortho-1950', an: '1950', label: '1950-1965' },
+  { key: 'bm-edugeo-1980', an: 'edugeo1980', label: 'Carte EduGéo (1980)' },
   { key: 'bm-ortho-2000', an: '2000', label: '2000-2005' },
   { key: 'bm-ortho-2006', an: '2006', label: '2006-2010' },
   { key: 'bm-ortho-2011', an: '2011', label: '2011-2015' },
