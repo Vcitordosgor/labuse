@@ -2667,8 +2667,9 @@ def _executer_verrous(par: str) -> dict:
     chaque ligne = {id, phrase, verdict, preuve, details}. Un verrou cassé (hors avertissement G8)
     est une ligne « à corriger » du Résumé. Le résultat survit au changement d'onglet (fichier tâche)."""
     from .. import circuit_garanties, circuit_journal, circuit_taches, circuit_verrous
+    from ..circuit_resume import VERROUS_AVERTISSEMENT as AVERTISSEMENT  # OUTILS-S2 C.4 — source unique
     from ..db import session_scope
-    AVERTISSEMENT = {"G8"}   # non bloquant (fraîcheur de veille), comme deploy.sh -w G8
+    # AVERTISSEMENT = verrous non bloquants (G8 : fraîcheur de veille), comme deploy.sh -w G8
     try:
         with session_scope() as s:
             lignes: list[dict] = []

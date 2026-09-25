@@ -220,6 +220,16 @@ export const CIRCUIT_CSS = `
 .cxp .menu-liste.confirm{min-width:320px;padding:12px}
 .cxp .menu-liste.confirm .cf-txt{font-size:12.5px;color:var(--muted);line-height:1.5} .cxp .menu-liste.confirm .cf-txt b{color:var(--text)}
 .cxp .menu-liste.confirm .cf-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+/* OUTILS-S2 Lot C (C.3) — les deux cartouches Sonde/Agents deviennent deux boutons compacts sur une
+   ligne ; leur explication (l'ancien texte des cartes) se replie derrière un « i » qui l'ouvre. */
+.cxp .ctl-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:2px 0 18px}
+.cxp .ctl-item{position:relative;display:flex;align-items:center;gap:6px}
+.cxp .ctl-i{width:19px;height:19px;flex:none;border-radius:50%;border:1px solid var(--line-2);color:var(--muted);font-size:11px;font-weight:700;font-style:italic;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.cxp .ctl-i:hover,.cxp .ctl-i[aria-expanded=true]{border-color:var(--mint);color:var(--mint)}
+.cxp .ctl-pop{position:absolute;left:0;top:32px;z-index:6;width:min(360px,80vw);background:var(--panel-2);border:1px solid var(--line-2);border-radius:8px;padding:12px;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.cxp .ctl-pop .titre{font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.cxp .ctl-pop b{color:var(--text)}
+.cxp .ctl-cours{flex-basis:100%}
 .cxp .cx-verif{margin-bottom:16px}
 .cxp .cx-verif-res{margin-top:10px;font-size:13px;line-height:1.6} .cxp .cx-verif-res b{color:var(--text);font-weight:600} .cxp .cx-verif-res b.r{color:var(--rouge)}
 .cxp .cx-verif-res .lienc{color:var(--mint);text-decoration:underline;text-underline-offset:2px}

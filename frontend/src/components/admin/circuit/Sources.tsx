@@ -52,16 +52,18 @@ const controleLabel = (r: Reservoir): string => {
   return '—'
 }
 
-// CIRCUIT-P7 (lot 1) — LES DEUX CARTES en tête de Sources : la Sonde de nuit (cadence, dernier
-// passage, interrogées / en panne / nouvelles vues, bouton « Sonder maintenant ») et les Agents
-// (dernier passage, coût du ledger, plafond, prochain dimanche, menu de portée). Tous les chiffres
-// viennent du backend (`data.sonde` / `data.agents`) — le front ne recompte rien.
+// CIRCUIT-P7 (lot 1) — la Sonde de nuit et les Agents en tête de Sources.
+// OUTILS-S2 Lot C (C.3) — les deux GROS cartouches deviennent deux BOUTONS COMPACTS sur une ligne
+// (« Sonder maintenant », « Envoyer les agents ▾ »). L'explication (cadence, dernier passage, coût,
+// plafond, prochain dimanche) NE DISPARAÎT PAS : elle se replie derrière un « i » qui l'ouvre. Tous
+// les chiffres viennent du backend (`data.sonde` / `data.agents`) — le front ne recompte rien.
 function Cartes({ data, tacheSonde, tacheAgents, onSonder, onAgents }: {
   data: CircuitData
   tacheSonde?: any; tacheAgents?: any
   onSonder: () => void; onAgents: (p: Portee) => void
 }) {
   const [menu, setMenu] = useState(false)
+  const [info, setInfo] = useState<null | 'sonde' | 'agents'>(null)   // « i » ouvert (sonde / agents)
   // CIRCUIT-P7 (suite) — « Envoyer les agents » lance l'agent LLM RÉEL (coût) : on confirme d'abord,
   // en affichant le coût estimé et le plafond par passage. La sonde sans coût reste sur son bouton.
   const [pending, setPending] = useState<{ portee: Portee; n: number; cout: number } | null>(null)
@@ -78,75 +80,85 @@ function Cartes({ data, tacheSonde, tacheAgents, onSonder, onAgents }: {
   const finiAgents = tacheAgents && (tacheAgents.etat === 'termine' || tacheAgents.etat === 'echec')
   const pct = agentsEnCours && tacheAgents.total ? Math.round((tacheAgents.fait / tacheAgents.total) * 100) : 0
   return (
-    <div className="controles">
-      <div className="carte controle">
-        <div>
-          <div className="titre"><i className="past ok" />Sonde de nuit</div>
-          <div className="desc">
-            {s ? <>À {s.cadence}, interroge les {s.interrogeables} sources qui ont un amont.{' '}
-              {s.dernier_passage
-                ? <>Dernier passage {quandCourt(s.dernier_passage)} : {s.interrogees} interrogées,{' '}
-                  {s.en_panne} en panne, {s.nouvelles} nouvelle{s.nouvelles > 1 ? 's' : ''} version{s.nouvelles > 1 ? 's' : ''} vue{s.nouvelles > 1 ? 's' : ''}.</>
-                : <>Jamais passée encore.</>}</>
-              : 'Sonde indisponible.'}
-          </div>
-        </div>
+    <div className="ctl-bar">
+      {/* SONDE — bouton compact + « i » qui replie/déplie l'explication (l'ancien texte de la carte). */}
+      <div className="ctl-item">
         <button className="btn" disabled={sondeEnCours} onClick={onSonder}>
           {sondeEnCours ? 'Sonde en cours…' : 'Sonder maintenant'}
         </button>
+        <button className="ctl-i" aria-expanded={info === 'sonde'} aria-label="À propos de la sonde de nuit"
+          onClick={() => setInfo((v) => (v === 'sonde' ? null : 'sonde'))}>i</button>
+        {info === 'sonde' && (
+          <div className="ctl-pop">
+            <div className="titre"><i className="past ok" />Sonde de nuit</div>
+            <div>
+              {s ? <>À {s.cadence}, interroge les {s.interrogeables} sources qui ont un amont.{' '}
+                {s.dernier_passage
+                  ? <>Dernier passage {quandCourt(s.dernier_passage)} : {s.interrogees} interrogées,{' '}
+                    {s.en_panne} en panne, {s.nouvelles} nouvelle{s.nouvelles > 1 ? 's' : ''} version{s.nouvelles > 1 ? 's' : ''} vue{s.nouvelles > 1 ? 's' : ''}.</>
+                  : <>Jamais passée encore.</>}</>
+                : 'Sonde indisponible.'}
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="carte controle agents">
-        <div style={{ flex: 1 }}>
-          <div className="titre"><i className="past mauve" />Agents</div>
-          <div className="desc">
-            {a ? <><b>{a.cadence || 'tous les 15 jours'}</b>, lisent les <b>{a.sans_amont ?? 0}</b> source{(a.sans_amont ?? 0) > 1 ? 's' : ''} sans amont lisible (celles que la sonde ne peut pas lire) — coût estimé ≈ {eur(a.cout_estime_sans_amont)}.{' '}
-              {a.dernier_passage
-                ? <>Dernier passage {quandCourt(a.dernier_passage)} : {a.sources} source{(a.sources ?? 0) > 1 ? 's' : ''}, {eur(a.cout_eur)}, {a.nouvelles} nouvelle{a.nouvelles > 1 ? 's' : ''} version{a.nouvelles > 1 ? 's' : ''} trouvée{a.nouvelles > 1 ? 's' : ''}.</>
-                : <>Aucun passage encore.</>}{' '}
-              {a.actif
-                ? <>Plafond {eur(a.plafond_eur)} par passage{a.prochain_dimanche ? `, prochain passage dimanche ${jour(a.prochain_dimanche)}` : ''}.</>
-                : <>Plafond à <b>0 €</b> — aucun agent ne tourne (fixer {a.cle_env} pour les activer).</>}</>
-              : 'Agents indisponibles.'}
+      {/* AGENTS — bouton compact (avec son menu de portée + confirmation) + « i » explicatif. */}
+      <div className="ctl-item menu">
+        <button className="btn mauve" disabled={agentsEnCours}
+          onClick={() => { setPending(null); setInfo(null); setMenu((m) => !m) }}>Envoyer les agents ▾</button>
+        <button className="ctl-i" aria-expanded={info === 'agents'} aria-label="À propos des agents"
+          onClick={() => { setMenu(false); setInfo((v) => (v === 'agents' ? null : 'agents')) }}>i</button>
+        {info === 'agents' && (
+          <div className="ctl-pop">
+            <div className="titre"><i className="past mauve" />Agents</div>
+            <div>
+              {a ? <><b>{a.cadence || 'tous les 15 jours'}</b>, lisent les <b>{a.sans_amont ?? 0}</b> source{(a.sans_amont ?? 0) > 1 ? 's' : ''} sans amont lisible (celles que la sonde ne peut pas lire) — coût estimé ≈ {eur(a.cout_estime_sans_amont)}.{' '}
+                {a.dernier_passage
+                  ? <>Dernier passage {quandCourt(a.dernier_passage)} : {a.sources} source{(a.sources ?? 0) > 1 ? 's' : ''}, {eur(a.cout_eur)}, {a.nouvelles} nouvelle{a.nouvelles > 1 ? 's' : ''} version{a.nouvelles > 1 ? 's' : ''} trouvée{a.nouvelles > 1 ? 's' : ''}.</>
+                  : <>Aucun passage encore.</>}{' '}
+                {a.actif
+                  ? <>Plafond {eur(a.plafond_eur)} par passage{a.prochain_dimanche ? `, prochain passage dimanche ${jour(a.prochain_dimanche)}` : ''}.</>
+                  : <>Plafond à <b>0 €</b> — aucun agent ne tourne (fixer {a.cle_env} pour les activer).</>}</>
+                : 'Agents indisponibles.'}
+            </div>
           </div>
-          {agentsEnCours && (
-            <div className="agents-cours">
-              <span>{tacheAgents.message || 'Agents en cours…'}</span>
-              <div className="barre"><i style={{ width: `${pct}%` }} /></div>
+        )}
+        {menu && !pending && (
+          <div className="menu-liste">
+            <button onClick={() => choisir('sans_amont')}>
+              Sur les {a?.sans_amont ?? 0} sans amont lisible <span className="muted">(≈ {eur(estime('sans_amont').cout)})</span></button>
+            <button onClick={() => choisir('g8')}>
+              Sur les {a?.g8 ?? 0} du verrou G8 <span className="muted">(≈ {eur(estime('g8').cout)})</span></button>
+            <button onClick={() => choisir('tous')}>
+              Sur les {a?.vitrine ?? 0} sources <span className="muted">(≈ {eur(a?.cout_estime_tous)})</span></button>
+            <div className="sep" />
+            <button disabled><span className="muted">Une source… (depuis sa fiche)</span></button>
+          </div>
+        )}
+        {pending && (
+          <div className="menu-liste confirm">
+            <div className="cf-txt">Agent LLM sur <b>{pending.n}</b> source{pending.n > 1 ? 's' : ''} —
+              coût estimé <b>≈ {eur(pending.cout)}</b>. Plafond <b>{eur(a?.plafond_eur)}</b> par passage :
+              l'envoi s'arrête dès qu'il est atteint.</div>
+            <div className="cf-acts">
+              <button className="btn" onClick={() => setPending(null)}>Annuler</button>
+              <button className="btn mauve" onClick={confirmer}>Envoyer les agents</button>
             </div>
-          )}
-          {!agentsEnCours && finiAgents && (
-            <div className="agents-cours"><span>{tacheAgents.message} — écrit au journal</span></div>
-          )}
-        </div>
-        <div className="menu">
-          <button className="btn mauve" disabled={agentsEnCours}
-            onClick={() => { setPending(null); setMenu((m) => !m) }}>Envoyer les agents ▾</button>
-          {menu && !pending && (
-            <div className="menu-liste">
-              <button onClick={() => choisir('sans_amont')}>
-                Sur les {a?.sans_amont ?? 0} sans amont lisible <span className="muted">(≈ {eur(estime('sans_amont').cout)})</span></button>
-              <button onClick={() => choisir('g8')}>
-                Sur les {a?.g8 ?? 0} du verrou G8 <span className="muted">(≈ {eur(estime('g8').cout)})</span></button>
-              <button onClick={() => choisir('tous')}>
-                Sur les {a?.vitrine ?? 0} sources <span className="muted">(≈ {eur(a?.cout_estime_tous)})</span></button>
-              <div className="sep" />
-              <button disabled><span className="muted">Une source… (depuis sa fiche)</span></button>
-            </div>
-          )}
-          {pending && (
-            <div className="menu-liste confirm">
-              <div className="cf-txt">Agent LLM sur <b>{pending.n}</b> source{pending.n > 1 ? 's' : ''} —
-                coût estimé <b>≈ {eur(pending.cout)}</b>. Plafond <b>{eur(a?.plafond_eur)}</b> par passage :
-                l'envoi s'arrête dès qu'il est atteint.</div>
-              <div className="cf-acts">
-                <button className="btn" onClick={() => setPending(null)}>Annuler</button>
-                <button className="btn mauve" onClick={confirmer}>Envoyer les agents</button>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
+
+      {/* la progression des agents reste visible, pleine largeur sous les boutons. */}
+      {agentsEnCours && (
+        <div className="agents-cours ctl-cours">
+          <span>{tacheAgents.message || 'Agents en cours…'}</span>
+          <div className="barre"><i style={{ width: `${pct}%` }} /></div>
+        </div>
+      )}
+      {!agentsEnCours && finiAgents && (
+        <div className="agents-cours ctl-cours"><span>{tacheAgents.message} — écrit au journal</span></div>
+      )}
     </div>
   )
 }
