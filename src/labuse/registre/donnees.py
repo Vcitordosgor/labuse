@@ -495,11 +495,12 @@ DONNEES: dict[str, Donnee] = {
     domaine=("RNU", "à jour", "en révision", "en élaboration", "en modification", "document local"),
     domaine_source="_PLU_STATUT (api/fiche_commune.py) + registre RNU (config/rnu_communes.yaml)"),
  # GEOPF-3 — SCOT couvrant la commune (nom + date d'approbation), par intersection avec kind='scot'.
- "scot_nom_date": C("SCOT (nom + approbation)", "classe", "commune",
+ # type=texte (nom de SCOT + date = texte libre, pas une classe à domaine fermé).
+ "scot_nom_date": C("SCOT (nom + approbation)", "texte", "commune",
     "Schéma de Cohérence Territoriale couvrant la commune (GPU) — nom + date d'approbation",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py:scot_commune",
     reservoirs=("scot_gpu",), portee="live",
-    type="classe", table="spatial_layers (kind=scot)", fabrication="requete"),
+    type="texte", table="spatial_layers (kind=scot)", fabrication="requete"),
  # COMMUNE-FIX-1 (D12) — la PROCÉDURE PLU EN COURS au dernier relevé Sudocuh (état détaillé + date de
  # prescription + millésime Sudocuh), servie sur la carte Urbanisme. Passe-plat du fichier Sudocuh.
  "plu_procedure_en_cours": C("Procédure PLU en cours (Sudocuh)", "texte", "commune",

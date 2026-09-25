@@ -190,6 +190,11 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "scot_gpu": Rt(("spatial_layers",), couches=("scot",), millesime="GPU — périmètres SCOT (idurba CNIG)"),
     "enr_aper_ofb": Rt(("spatial_layers",), couches=("enr_exclue_hors_toiture",),
                        millesime="OFB — zones exclues aires d'accélération EnR (loi APER)"),
+    # GEOPF-3 — BD NYME (lieux-dits, table dédiée) + couches RASTER WMTS (pas de table : overlay/fond).
+    "bd_nyme": Rt(("lieux_dits",), millesime="BD TOPO® V3 (IGN) — toponymes / lieux-dits"),
+    "enr_habitation_wmts": Rt((), note="couche RASTER WMTS (ENR.PERIMETRE.HABITATION) — pas de table locale"),
+    "scan50_1950": Rt((), note="couche RASTER WMTS (SCAN 50 de 1950) — carte historique, pas de table locale"),
+    "edugeo_1980": Rt((), note="couche RASTER WMTS (EduGéo Réunion 1980) — carte historique, pas de table locale"),
     # ── marché / valeurs ────────────────────────────────────────────────────────────
     "dvf": Rt(("dvf_mutations", "dvf_mutations_parcelle", "dvf_mutations_histo",
                "dvf_secteur_medianes", "dvf_prix_sortie_neuf", "spatial_layers",

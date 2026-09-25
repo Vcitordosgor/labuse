@@ -290,7 +290,9 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     # doublons purgés au merge) — +6 : le catalogue CODE rejoint la base (Sudocuh, Inventaire SRU,
     # NPNRU, INSEE RP Logement 2023, PLH des 5 EPCI, RTAA DOM) → 118. Restent hors liste :
     # EDF SEI · ODRÉ · ZNIEFF, signalées au rapport TESTS-1.
-    assert len(noms) == 118
+    # GEOPF-3 — +7 : GéoMCE, SCOT (GPU), EnR sauf toiture (OFB/APER), BD NYME (SEED) + EnR près
+    # habitations, SCAN 50 1950, EduGéo Réunion 1980 (RAISONS_NON_SURVEILLEES, rasters figés) → 125.
+    assert len(noms) == 125
 
 
 def test_raison_non_surveillee_ne_rend_jamais_un_blanc():

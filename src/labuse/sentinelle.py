@@ -755,6 +755,11 @@ SEED: list[dict] = [
 #: réels). Les 6 sources récupérées (DEAL PPR/WMS, Région ODS, Géorisques cavités/mvt/ssp) sont passées
 #: au SEED et retirées d'ici.
 RAISONS_NON_SURVEILLEES: dict[str, str] = {
+    # GEOPF-3 — couches RASTER servies en WMTS (overlay/fond) : millésime figé (carte 1950/1980) ou
+    # zonage réglementaire sans en-tête de version machine amont ; aucun flux vecteur ni date à sonder.
+    "Contraintes EnR près des habitations (Géoplateforme)": "Couche RASTER WMTS (ENR.PERIMETRE.HABITATION) — zonage réglementaire APER servi en tuiles image, sans millésime machine amont à sonder ; re-contrôlé à la demande.",
+    "SCAN 50 historique 1950 (IGN)": "Carte historique FIGÉE (SCAN 50 de 1950) servie en WMTS image — millésime immuable (document d'archive), aucun flux amont à surveiller.",
+    "EduGéo Réunion 1980 (IGN)": "Carte historique FIGÉE (EduGéo Réunion 1980) servie en WMTS image — millésime immuable, aucun flux amont à surveiller.",
     # COUCHES-REGISTRE-2 lot 1 — le seed des contours communaux est un référentiel STATIQUE embarqué
     # (fichier communes974.geojson d'IGN ADMIN EXPRESS, matérialisé en mvt_communes) : aucun flux ni
     # millésime machine amont à sonder. Contours administratifs quasi immuables (fusions rarissimes).
