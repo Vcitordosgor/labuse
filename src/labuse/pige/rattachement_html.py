@@ -60,13 +60,15 @@ def _f(x) -> float | None:
 
 # ── DÉTECTEURS DE CRITÈRE ─── chacun renvoie {idu: "valeur lisible"} pour les parcelles candidates ──
 
-def _crit_surface(db: Session, lon, lat, commune, terrain, tol: float = TOL_SURFACE) -> dict[str, str]:
-    """C1 — surface cadastrale ≈ surface terrain annoncée (±`tol`, défaut ±10 %), dans le rayon du point
-    flouté. RADAR-AUTO-1 (Lot D) : `tol` paramétrable — un terrain se rattache en `probable` seulement
-    si UNE seule parcelle matche à ±1 % (mesure 0.3 : à ±3 % l'ambiguïté explose)."""
+def _crit_surface(db: Session, lon, lat, commune, terrain, tol: float | None = None) -> dict[str, str]:
+    """C1 — surface cadastrale ≈ surface terrain annoncée (±`tol` ; défaut = TOL_SURFACE, ±10 %, LU AU
+    MOMENT DE L'APPEL pour rester monkeypatchable), dans le rayon du point flouté. RADAR-AUTO-1 (Lot D) :
+    `tol` explicite — un terrain se rattache en `probable` seulement si UNE seule parcelle matche à ±1 %
+    (mesure 0.3 : à ±3 % l'ambiguïté explose)."""
     if terrain is None:
         return {}
-    lo, hi = terrain * (1 - tol), terrain * (1 + tol)
+    t = TOL_SURFACE if tol is None else tol
+    lo, hi = terrain * (1 - t), terrain * (1 + t)
     rows = db.execute(text(
         """SELECT p.idu, p.surface_m2 FROM parcels p WHERE p.commune = :c
            AND p.surface_m2 BETWEEN :lo AND :hi
