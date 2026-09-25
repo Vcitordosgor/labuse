@@ -81,6 +81,10 @@ KIND_SOURCE = {
     "pole_echange": "OSM — transport (pôles d'échange & téléphérique)",
     "telepherique": "OSM — transport (pôles d'échange & téléphérique)",
     "ligne_ht": "BD TOPO IGN",
+    # GEOPF-3 — supports (pylône) et postes de transformation électriques (BD TOPO, groupe Réseaux).
+    # Ingérés hors layers_ingest (pylones.py / postes_transformation.py) — déclarés ici pour la garde.
+    "pylone": "BD TOPO IGN",
+    "poste_transformation": "BD TOPO IGN",
     "axe_structurant": "BD TOPO IGN",   # M106-B P3 — importance IGN 1-2, jamais une hiérarchie inventée
     # RETOURS-13 R4/R5 — moyenne tension EDF (HTA, open data retrouvé le 05/09/2026) et TCSP
     # (voies bus en site propre OSM + stations dérivées des arrêts GTFS).

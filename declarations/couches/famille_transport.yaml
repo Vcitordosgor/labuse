@@ -118,6 +118,22 @@ donnees:
     absence_type: absente_ici
     pourquoi: "Rendu identique (ardoise-bleu #6E86C4, tireté court 2/1,6 — la forme le sépare de la HTB)."
 ---
+surface:   couche_pylone
+nom:       "Pylônes électriques"
+categorie: couche
+parent:    null
+route:     "/map/tiles/pylone/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  pylone_couche
+    ou:    { rang: 10, etat: replie, section: "Réseaux d'énergie" }
+    comment: { libelle: "Pylônes électriques", format: liste, i: "Supports du réseau de transport électrique (BD TOPO IGN, points). Un pylône sur ou au ras d'une parcelle = servitude de voisinage et gêne à l'implantation. Distinct des lignes HTB (qu'il porte)." }
+    # GEOPF-3 — point acier (anneau) distinct des lignes HT (#B9C4C0) / MT (#6E86C4). Pas de vert.
+    carte: { kind: pylone, agregat: false, famille: reseaux, geometrie: point, zoom_min: 11, rang_carte: 76, style: { couleur: "#7E8A94", anneau: true, zoom_rayon: [11, 3, 14, 5, 17, 7], epaisseur: 1.8, opacite: 0.95, trait: "#3E4B55" }, popup: [ { champ: name, libelle: "Objet" }, { champ: etat, libelle: "État" } ], legende: "Pylône électrique (support HTB)" }
+    absence: "Pylônes : aucun pylône électrique dans l'emprise visible."
+    absence_type: absente_ici
+    pourquoi: "GEOPF-3 : point acier (anneau) — support HTB, distinct des lignes ; zoom_min 11 (dense)."
+---
 surface:   couche_tcsp
 nom:       "TCSP / stationnement allégé"
 categorie: couche
