@@ -1,0 +1,3 @@
+passe,fcp_ms,dom_ms,load_ms,ready_ms,derniere_tuile_parcelle_ms,idle_ms,n_req,n_tuiles_parcelles,octets_total,octets_tuiles_parcelles,lt_n,lt_ms
+cache_vide,516,373,1478,0,6723,8463,31,2,3072445,197091,16,3951
+cache_chaud,300,134,292,0,1289,2924,18,2,2947399,197091,6,1819
