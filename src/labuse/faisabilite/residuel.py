@@ -61,7 +61,7 @@ WITH p AS (SELECT commune, geom_2975 AS g FROM parcels WHERE id = :pid),
 uau AS (SELECT ST_Union(ST_MakeValid(z.geom_2975)) AS u
         FROM spatial_layers z, p
         WHERE z.kind = :zkind AND z.commune = p.commune
-          AND z.name ILIKE ANY(:uau_pats) AND ST_Intersects(z.geom_2975, p.g)),
+          AND labuse_zone_famille(z.subtype) = ANY(:uau_fams) AND ST_Intersects(z.geom_2975, p.g)),
 assiette AS (SELECT CASE WHEN uau.u IS NULL THEN p.g
                          ELSE ST_Intersection(p.g, uau.u) END AS a
              FROM p LEFT JOIN uau ON TRUE)
@@ -80,7 +80,7 @@ def _emprise_batie_assiette(session: Session, parcel_id: int) -> float:
     v = session.execute(_BATI_ASSIETTE, {
         "pid": parcel_id,
         "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
-        "uau_pats": [f"{p}%" for p in zonage.get("positive_prefixes", ["U", "AU"])],
+        "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"])),
     }).scalar()
     return float(v or 0.0)
 

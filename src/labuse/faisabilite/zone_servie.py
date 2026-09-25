@@ -39,8 +39,9 @@ class ZoneServie:
 # (api/tiles.py, z0/z CTE) : 1er token de attrs->>'libelle' (source fiable), repli name.
 _TOK = ("COALESCE(NULLIF(rtrim(split_part(btrim(z.attrs->>'libelle'), ' ', 1), ':'), ''), "
         "rtrim(split_part(btrim(z.name), ' ', 1), ':'))")
-_FAM = ("CASE WHEN z.subtype ILIKE 'AU%' THEN 'AU' WHEN z.subtype ILIKE 'U%' THEN 'U' "
-        "WHEN z.subtype = 'A' THEN 'A' WHEN z.subtype = 'N' THEN 'N' ELSE 'autre' END")
+# ZONES-FAMILLE-1 : famille via la SOURCE SQL UNIQUE (models.labuse_zone_famille sur le typezone
+# GPU `subtype`) — plus jamais devinée depuis `name`. Le CASE historique vivait ici en double.
+_FAM = "labuse_zone_famille(z.subtype)"
 
 # Sonde bon marché (index gist, pas d'aire) : combien de codes de zone distincts touchent
 # la parcelle ? 1 seul → pas d'aire à calculer, la dominante est entière.

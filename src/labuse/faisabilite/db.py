@@ -76,17 +76,14 @@ def _layer_params(name: str) -> dict:
 _EMPRISE = text("""
 WITH p AS (SELECT commune, geom_2975 AS g, ST_Buffer(geom_2975, -:d) AS b
            FROM parcels WHERE id = :pid),
--- EXIGU-GRANDES : les zones AU NUMÉROTÉES (name '1AUb'/'2AUc'/'3AU5st'…) portent leur code GPU
--- normalisé dans `subtype` ('AUc'…) et commencent par un chiffre dans `name` — elles n'ont JAMAIS
--- matché `name ILIKE 'AU%'`, ce qui vidait leur assiette constructible (terrain_exigu à tort sur
--- de grandes parcelles à urbaniser). On les rattrape via `subtype` UNIQUEMENT quand `name` est
--- numérique (périmètre borné : les zones à `name` littéral — 8 communes — gardent leur
--- comportement, bug distinct plus large, hors de ce correctif).
+-- ZONES-FAMILLE-1 : portion constructible via la SOURCE SQL UNIQUE `labuse_zone_famille(subtype)`
+-- (typezone GPU) — jamais devinée depuis `name` (code « Ub », libellé « Secteur de centralité »
+-- ou forme phasée « 1AUb » selon la commune). Couvre d'un coup les zones AU numérotées ET les
+-- 8 communes à name littéral (bug EXIGU-GRANDES + son extension).
 uau AS (SELECT ST_Union(z.geom_2975) AS u
         FROM spatial_layers z, p
         WHERE z.kind = :zkind AND z.commune = p.commune
-          AND (z.name ILIKE ANY(:uau_pats)
-               OR (z.name ~ '^[0-9]' AND z.subtype ILIKE ANY(:uau_pats)))
+          AND labuse_zone_famille(z.subtype) = ANY(:uau_fams)
           AND ST_Intersects(z.geom_2975, p.g)),
 er AS (SELECT ST_Union(e.geom_2975) AS u
        FROM spatial_layers e, p
@@ -245,8 +242,7 @@ WITH p AS (SELECT commune, ST_Buffer(geom_2975, -:d) AS b FROM parcels WHERE id 
 uau AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(z.geom_2975, p.b))) AS u
         FROM spatial_layers z, p
         WHERE z.kind = :zkind AND z.commune = p.commune
-          AND (z.name ILIKE ANY(:uau_pats)
-               OR (z.name ~ '^[0-9]' AND z.subtype ILIKE ANY(:uau_pats)))
+          AND labuse_zone_famille(z.subtype) = ANY(:uau_fams)
           AND ST_Intersects(z.geom_2975, p.b)),
 assiette AS (SELECT CASE WHEN uau.u IS NULL THEN p.b
                          ELSE ST_Intersection(p.b, uau.u) END AS a
@@ -285,7 +281,7 @@ def _greve_certaine_m2(session: Session, parcel_id: int, recul: float, commune: 
     row = session.execute(_GREVE_CERTAINE, {
         "pid": parcel_id, "d": recul,
         "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
-        "uau_pats": [f"{p}%" for p in zonage.get("positive_prefixes", ["U", "AU"])],
+        "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"])),
         "ppr_red": [str(s) for s in risq.get("ppr_red_subtypes", ["INTERDICTION"])],
         "peb_ab": [str(z).lower() for z in pebp.get("hard_zones", ["a", "b"])],
         "dpf_m": float(dpfp.get("marchepied_m", 3.25)),
@@ -434,7 +430,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     ebc_types = [str(t) for t in presc.get("boise_classe_typepsc", ["01"])]
     args = {"pid": parcel_id, "d": recul,
             "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
-            "uau_pats": [f"{p}%" for p in zonage.get("positive_prefixes", ["U", "AU"])],
+            "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"])),
             "pkind": pkind, "er_types": er_types, "ebc_types": ebc_types}
     # GEOMETRIE-1 lot B — UN SEUL moteur de géométrie (décision Vic 24/09) : l'assiette est la
     # ZONE D'IMPLANTATION du gabarit (reculs par côté, PPR rouge découpé, morceau constructible
