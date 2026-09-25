@@ -27,8 +27,10 @@ def test_statut_stub_sans_compte(client):
     # M82 #fuite : la raison est SERVIE au client — jamais le prestataire ni les variables d'env.
     assert r["raison"] and "Merci Facteur" not in r["raison"] and "MERCIFACTEUR" not in r["raison"]
     assert "envoi postal" in r["raison"].lower()
-    # COURRIER-2 Lot 5 — AUCUN prix servi au client : `tarif` retiré du payload /courrier/statut.
-    assert "tarif" not in r
+    # OUTILS-S2 Lot B (décision Vic) — REVIENT sur COURRIER-2 Lot 5 : le tarif UNITAIRE TTC est de
+    # nouveau servi (affiché à l'étape 3 + repris dans la confirmation). Prix client = coût
+    # prestataire (param admin / config) × marge ; jamais le nom du prestataire ni le coût brut.
+    assert isinstance(r["tarif_unitaire_eur"], (int, float)) and r["tarif_unitaire_eur"] > 0
 
 
 def test_envoi_exige_responsabilite(client):
@@ -289,8 +291,9 @@ def test_adressage_occupant_nu_siege_et_opposition(client, engine):
         assert "non nominatif" in r1["mention"]
         r2 = ca.resoudre_destinataire(db, pp_nue)
         assert r2["bloque"] and r2["motif"] == ca.MOTIF_NU
+        assert r2["code"] == "nu"          # OUTILS-S2 Lot B — code machine (front bloque l'ajout, renvoi SPF)
         r3 = ca.resoudre_destinataire(db, pm_siege)
-        assert r3["type"] == "siege" and not r3["bloque"]
+        assert r3["type"] == "siege" and not r3["bloque"] and r3["code"] is None
         assert r3["destinataire"] == "SCCV TEST — au siège social déclaré"
         assert r3["adresse_envoi"] == "1 Rue Siege 97400 Saint-Denis"
         # bien concerné ≠ adresse d'envoi : preuve d'absence de substitution silencieuse
@@ -300,6 +303,7 @@ def test_adressage_occupant_nu_siege_et_opposition(client, engine):
     with engine.begin() as db:
         r4 = ca.resoudre_destinataire(db, pp_batie)
         assert r4["bloque"] and r4["motif"] == courrier.MOTIF_OPPOSITION
+        assert r4["code"] == "opposition"   # opposition ≠ terrain nu : pas de blocage d'ajout, traité au dépôt
     # l'endpoint sert bien les résolutions au front (écran avant dépôt)
     res = client.post("/courrier/adressage", json={"idus": [pp_nue, pm_siege]}).json()["resolutions"]
     assert res[0]["motif"] == ca.MOTIF_NU and res[1]["type"] == "siege"
