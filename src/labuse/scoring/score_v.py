@@ -369,12 +369,22 @@ def _tenure_qualifiee(cands: list[dict]) -> bool:
 
 
 def veille_succession_eligible(owner_type: str, confiance: float | None,
-                               age: int | None, sci_dormante: bool) -> bool:
+                               age: int | None, sci_dormante: bool,
+                               forme: str | None = None) -> bool:
     """v1.3 lot 2 — tag radar patrimonial (3-7 ans), HORS V : PM à identité SIREN CONFIRMÉE
-    (jamais un match par dénomination) ∧ (dirigeant ≥ 70 ans OU SCI dormante). Pur, testé."""
+    (jamais un match par dénomination) ∧ (dirigeant ≥ 70 ans OU SCI dormante). Pur, testé.
+
+    OUTILS-S2 Lot A — le signal « dirigeant âgé » est restreint aux formes juridiques où l'âge
+    d'une personne physique porte le patrimoine (`VEILLE_SUCCESSION_FORMES` : civiles, familiales,
+    agricoles). Une SA/SAS/SEM/société d'HLM ne succède pas quand son président vieillit. La SCI
+    dormante reste toujours éligible (elle EST une SCI, forme retenue)."""
     if owner_type != "pm" or confiance != C.CONF_SIREN_DIRECT:
         return False
-    return (age is not None and age >= C.VEILLE_SUCCESSION_AGE_MIN) or sci_dormante
+    if sci_dormante:
+        return True
+    if age is not None and age >= C.VEILLE_SUCCESSION_AGE_MIN:
+        return (forme or "").strip().upper() in C.VEILLE_SUCCESSION_FORMES
+    return False
 
 
 def _retain(cands: list[dict], factor_families: set[str] | None) -> tuple[list[dict], int]:
@@ -513,7 +523,7 @@ def compute_all(session: Session, limit: int | None = None, log=print) -> dict:
                         s_["ref"] = f"{s_['ref']} — {C.V13_ANTI_SIGNAL_NOTE}"
                         cands.append(s_)
                 sci_dormante = any(s_["code"] == "RNE_SCI_DORMANTE" for s_ in b_cands)
-                if veille_succession_eligible(otype, conf, age, sci_dormante):
+                if veille_succession_eligible(otype, conf, age, sci_dormante, ow["forme"]):
                     veille_rows.append((idu, siren,
                                         age if (age is not None and age >= C.VEILLE_SUCCESSION_AGE_MIN) else None,
                                         sci_dormante))

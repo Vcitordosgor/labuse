@@ -40,6 +40,7 @@ from ..faisabilite.bilan import (  # défauts calculette dérivés de la source 
     CALCULETTE_VRD_DEFAUT_M2,
 )
 from .. import runs  # S3 : run servi relu à la requête (bascule à chaud)
+from ..scoring import score_v_constants  # OUTILS-S2 Lot A : formes retenues du signal succession
 
 
 def get_db():  # branché sur la session app au moment de l'inclusion (cf. app.py)
@@ -1016,9 +1017,15 @@ def successions_liste(commune: str | None = None,
                 if has_ext else "")
     sdp_expr = "round(d.sdp_residuelle_m2)::int" if has_ext else "NULL::int"
     ordre = "d.sdp_residuelle_m2 DESC NULLS LAST, v.parcelle_id" if has_ext else "v.parcelle_id"
+    # OUTILS-S2 Lot A — restreint le signal « dirigeant âgé » aux formes où l'âge d'une personne
+    # physique porte le patrimoine (VEILLE_SUCCESSION_FORMES : civiles, familiales, agricoles). Une
+    # SA/SAS/SEM/société d'HLM/SCA ne « succède » pas quand son président vieillit → écartée ici. La
+    # SCI dormante reste toujours servie. Filtre au SERVICE : corrige le snapshot courant sans re-run
+    # Score V ; une fois `veille_succession_eligible` rejouée, la table ne portera plus ces formes.
+    filtre_forme = " AND (v.sci_dormante OR upper(coalesce(pm.forme_juridique,'')) = ANY(:formes))"
     # Filtre « résiduel minimum » : sans seuil, les SDP inconnues (NULL — hors PLU) restent listées
     # (triées en queue) ; avec un seuil, une SDP inconnue ne peut pas le prouver → exclue.
-    where = ("WHERE 1=1" + (" AND p.commune = :c" if commune else "")
+    where = ("WHERE 1=1" + filtre_forme + (" AND p.commune = :c" if commune else "")
              + ((" AND d.sdp_residuelle_m2 >= :smin" if has_ext else " AND false") if sdp_min else ""))
     base = f"""
         FROM parcel_veille_succession v
@@ -1026,7 +1033,8 @@ def successions_liste(commune: str | None = None,
         {join_ext}
         LEFT JOIN parcel_zone_plu z ON z.idu = v.parcelle_id
         LEFT JOIN parcelle_personne_morale pm ON pm.idu = v.parcelle_id"""
-    params = {"c": commune, "smin": sdp_min, "annee": annee}
+    params = {"c": commune, "smin": sdp_min, "annee": annee,
+              "formes": sorted(score_v_constants.VEILLE_SUCCESSION_FORMES)}
     total = int(db.execute(text(f"SELECT count(*) {base} {where}"), params).scalar() or 0)
     rows = db.execute(text(f"""
         SELECT v.parcelle_id AS idu, p.commune AS commune,
