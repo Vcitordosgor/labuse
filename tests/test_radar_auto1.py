@@ -154,6 +154,33 @@ def test_radar_stats_inclut_apparts(db_session):
 
 
 @pytest.mark.db
+def test_position_quartier_servie_et_comptee(db_session):
+    """Recette — un bien NON rattaché mais à position de quartier (b.lat/b.lng) est servi avec
+    position_type='quartier', son quartier, ses coords ; il compte dans n_carte (« sur la carte »),
+    distinct de n_rattaches (parcelle). Un bien sans aucune position reste 'absente' (coords None)."""
+    from labuse.pige import client
+    db = db_session
+    q = db.execute(text(
+        "INSERT INTO pige_biens (commune, type_bien, statut, lat, lng, district) "
+        "VALUES ('Saint-Denis','maison','active', -20.88, 55.45, 'Le Chaudron') RETURNING bien_id")).scalar()
+    db.execute(text("INSERT INTO pige_faits (bien_id, prix, valide_at) VALUES (:b, 250000, now())"), {"b": q})
+    n = db.execute(text(
+        "INSERT INTO pige_biens (commune, type_bien, statut) VALUES ('Saint-Denis','maison','active') "
+        "RETURNING bien_id")).scalar()
+    db.execute(text("INSERT INTO pige_faits (bien_id, prix, valide_at) VALUES (:b, 250000, now())"), {"b": n})
+
+    dq = client.detail(db, q)
+    assert dq["position_type"] == "quartier" and dq["quartier"] == "Le Chaudron"
+    assert dq["coords"] == [55.45, -20.88] and dq["rattachement"]["idu"] is None
+    dn = client.detail(db, n)
+    assert dn["position_type"] == "absente" and dn["coords"] is None
+
+    rep = client.lister(db, filtres={"commune": "Saint-Denis"})
+    # le bien quartier compte dans n_carte mais pas dans n_rattaches (aucun idu ici).
+    assert rep["n_carte"] >= 1 and rep["n_carte"] > rep["n_rattaches"] or rep["n_rattaches"] == 0
+
+
+@pytest.mark.db
 def test_confirmation_supprimee_retiree_sans_courrier(db_session):
     """Lot A/C — verdict « supprimee » → statut retiree + retiree_le, JAMAIS retiree_sans_vente
     (celui-ci reste au cycle mensuel, sur preuve DVF)."""

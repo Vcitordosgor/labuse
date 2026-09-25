@@ -710,8 +710,15 @@ export function MapView() {
                      'active', '#4ADE80', 'en_vente_longue', '#E0A94F', 'a_reverifier', '#E0A94F',
                      'vendue', '#E2726A', '#8A968F'],
                    '#4ADE80'],
-                 'circle-opacity': 0.8,
-                 'circle-stroke-color': '#0b0f14', 'circle-stroke-width': 1.5 } })
+                 // RADAR-AUTO-1 (recette) — un pin Radar à position de QUARTIER (approximative) est CREUX :
+                 // fond transparent + anneau coloré au statut, distinct du pin PLEIN d'une parcelle rattachée.
+                 'circle-opacity': ['case', ['==', ['get', 'position_type'], 'quartier'], 0, 0.8],
+                 'circle-stroke-color': ['case', ['==', ['get', 'position_type'], 'quartier'],
+                   ['match', ['get', 'statut'],
+                     'active', '#4ADE80', 'en_vente_longue', '#E0A94F', 'a_reverifier', '#E0A94F',
+                     'vendue', '#E2726A', '#8A968F'],
+                   '#0b0f14'],
+                 'circle-stroke-width': ['case', ['==', ['get', 'position_type'], 'quartier'], 2.5, 1.5] } })
       // RETOURS-11 R8 — PISCINES : marqueur GOUTTE D'EAU (emoji 💧) au lieu du rond vert. Même source
       // (module-extra) et même visibilité que module-pts ; le clic route par idu (cf. handler partagé).
       m.addLayer({ id: 'module-piscine', type: 'symbol', source: 'module-extra',
