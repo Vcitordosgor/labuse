@@ -910,7 +910,17 @@ export const useApp = create<AppState>((set, get) => ({
   // suivants (six outils enchaînés, toujours bloquée). Comme `zone` (emprise éphémère) et les overlays,
   // le focus est une cible éphémère de l'outil : on le remet à null ici. Les ponts appellent
   // focusParcelle APRÈS setModule (tool déjà ouvert), donc l'effacement ne touche que l'outil quitté.
-  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, zone: null, tool: null, focusIdu: null, ...CLOSE_OVERLAYS }),
+  setModule: (module) => {
+    // DENSIFIER-PLI (PISCINES-2 Lot B) — l'outil « Densifier l'existant » (clé `renouvellement`) est
+    // plié dans le filtre Capacité : tout lien vers ce module (Copilote « densifier », deep-link) ouvre
+    // le panneau Filtre avec « Déjà bâti » coché et « SDP restante ≥ 200 m² » pré-rempli (run servi).
+    if (module === 'renouvellement') {
+      set((s) => ({ panelOpen: true, panneauSection: 'filtres', mobilePanelOpen: true, accueilVu: true,
+        ...CLOSE_OVERLAYS, filters: { ...s.filters, renouvellement: true, sdpMin: s.filters.sdpMin ?? 200 } }))
+      return
+    }
+    set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, zone: null, tool: null, focusIdu: null, ...CLOSE_OVERLAYS })
+  },
   // OUTILS-FIX-3 Lot D — fil de retour entre outils. `pushOutilRetour` est appelé par un pont APRÈS sa
   // navigation (la nav a déjà vidé la pile via CLOSE_OVERLAYS) → il ne reste que l'entrée de départ.
   outilRetour: [],

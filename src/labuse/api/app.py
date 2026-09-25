@@ -1588,8 +1588,13 @@ def _q_v2_where(run_label: str,
     if rang_max is not None:   # mutation : têtes de liste (rang P ≤ N, cohérent Q3-M36)
         conds.append("s2.rang IS NOT NULL AND s2.rang <= :f_rang")
         params["f_rang"] = rang_max
-    if renouvellement:   # mutation : segment Renouvellement (run-scopé, vérifié live sur le run servi)
-        conds.append("EXISTS (SELECT 1 FROM parcel_renouvellement rn WHERE rn.idu = p.idu AND rn.run_label = :runf)")
+    if renouvellement:
+        # DENSIFIER-PLI (PISCINES-2 Lot B) — l'outil « Densifier l'existant » est plié dans les filtres :
+        # cette case « Déjà bâti » (clé interne legacy `renouvellement`, hash `rnv`, conservée pour les
+        # vues enregistrées) ne lit PLUS le précalcul figé `parcel_renouvellement` mais le BÂTI EXISTANT
+        # BD TOPO (`p_model_bati.emprise_bati_m2 > 0`), à combiner avec « SDP restante ≥ X » (sdpMin, qui
+        # lit `parcel_residuel` du run servi 10 — la même SDP que la fiche). Plus d'instantané figé.
+        conds.append("EXISTS (SELECT 1 FROM p_model_bati pb WHERE pb.idu = p.idu AND pb.emprise_bati_m2 > 0)")
     if division_or:   # mutation : segment Division en or (O12) — CIRCUIT-1 2.3 : run servi SEUL
         conds.append("EXISTS (SELECT 1 FROM division_or_candidates dor WHERE dor.idu = p.idu "
                      "AND dor.run_label = :runf)")

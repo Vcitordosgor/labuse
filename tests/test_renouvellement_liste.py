@@ -44,13 +44,11 @@ def test_liste_ne_leve_pas_puce_action_et_sans_vestige(db_session):
         assert k not in it
 
 
-def test_renommage_densifier_servi_grep_zero():
-    """§5 — « Renouvellement » servi = 0 : le libellé produit (backend) + la carte du registre + la
-    puce fiche portent « Densifier l'existant » ; la clé interne `renouvellement` est conservée."""
-    from labuse.renouvellement import LIBELLE_SEGMENT
-    assert "renouvellement" not in LIBELLE_SEGMENT.lower() and "densification" in LIBELLE_SEGMENT.lower()
+def test_densifier_retire_du_menu_plie_dans_filtre():
+    """DENSIFIER-PLI (PISCINES-2 Lot B) — l'outil « Densifier l'existant » (clé `renouvellement`) est
+    RETIRÉ du menu registry.ts et plié dans le filtre Capacité (« Déjà bâti » + « SDP restante »). La
+    table `parcel_renouvellement` reste en base mais n'est plus servie à un écran."""
     registry = (_ROOT / "frontend/src/components/outils/registry.ts").read_text(encoding="utf-8")
-    # la clé interne reste 'renouvellement' ; le LABEL client est « Densifier l'existant »
-    assert "key: 'renouvellement'" in registry
-    bloc = registry.split("key: 'renouvellement'", 1)[1][:260]
-    assert "Densifier l" in bloc and "label: 'Renouvellement'" not in registry
+    assert "key: 'renouvellement'" not in registry, "l'outil Densifier doit être retiré du menu"
+    filtre = (_ROOT / "frontend/src/components/panel/FiltreLabuse.tsx").read_text(encoding="utf-8")
+    assert "data-filtre-deja-bati" in filtre and "Déjà bâti" in filtre

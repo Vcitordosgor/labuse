@@ -2,7 +2,7 @@ import { useQuery, useIsFetching } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
-import { getBatiments, getCommunes, getFiche, getFiltreIdus, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
+import { getBatiments, getCommunes, getFiche, getFiltreIdus, getParcelsGeojson, getTilesMeta, parcelAt } from '../../lib/api'
 import { ALL_TIER_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { MAP_THEME } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
@@ -395,8 +395,8 @@ export function MapView() {
   }, [mapReady])
 
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
-  // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut, top rangs servis
-  const renouv = useQuery({ queryKey: ['layer', 'renouv', commune], queryFn: getRenouvGeojson, enabled: layers.renouv })
+  // DENSIFIER-PLI (PISCINES-2 Lot B) — le calque « Densifier l'existant » (getRenouvGeojson →
+  // parcel_renouvellement) est retiré : plus aucun écran ne lit le précalcul figé.
   // M6.1 item 1 : les tuiles île portent-elles zone_fam ? (sinon repli honnête au prochain build)
   const tilesMeta = useQuery({ queryKey: ['tiles-meta'], queryFn: getTilesMeta, staleTime: 60_000, retry: false })
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
@@ -901,19 +901,6 @@ export function MapView() {
     if (m && ready.current && geo.data) (m.getSource('parcels') as maplibregl.GeoJSONSource | undefined)?.setData(geo.data as never)
   }, [geo.data, geo.dataUpdatedAt, mapReady])
 
-  useEffect(() => {
-    const m = map.current
-    if (!m || !ready.current) return
-    // M-RENOUV : calque Renouvellement — si le serveur tronque (top rangs), le DIRE (toast).
-    if (renouv.data) {
-      ;(m.getSource('ov-renouv') as maplibregl.GeoJSONSource | undefined)?.setData(renouv.data as never)
-      if (layers.renouv && renouv.data.total > renouv.data.servis) {
-        useApp.getState().setToast(
-          `Densifier l'existant : ${renouv.data.servis.toLocaleString('fr-FR')} parcelles affichées sur ` +
-          `${renouv.data.total.toLocaleString('fr-FR')} (meilleurs rangs)${commune ? ` — ${commune}` : ' — île entière'}.`)
-      }
-    }
-  }, [renouv.data, layers.renouv, commune, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).

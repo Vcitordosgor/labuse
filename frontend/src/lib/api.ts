@@ -911,39 +911,10 @@ export const copiloteV2Heros = (parcelle: Record<string, unknown>, budget_max_eu
 // §4 — veilles : l'écran minimal (liste + suppression). M85 : les notifications produites vivent
 // dans le centre unifié (cloche /events), plus dans un store parallèle.
 export interface CopiloteVeille { id: number; type: string; commune: string | null }
-// M-RENOUV : calque du segment Renouvellement (occupées, potentiel). `total`/`servis`
-// voyagent — la légende dit la troncature, jamais un « tout » silencieux.
-export type RenouvFC = ParcelFeatureCollection & {
-  total: number; servis: number; source: string; run_label: string; maj: string | null
-}
-export const getRenouvGeojson = () => {
-  const c = commune()
-  return j<RenouvFC>(`/map/renouvellement.geojson${c ? `?commune=${encodeURIComponent(c)}` : ''}`)
-}
-export interface RenouvItem {
-  idu: string; commune_nom: string; commune_insee: string; renouv_score: number
-  comp_potentiel: number; comp_assiette: number; comp_marche: number
-  code_bati_origine: string; sdp_residuelle_m2: number | null; surface_m2: number | null
-  // RETOURS-11F M9 — capacité NETTE des contraintes (PPR rouge, pente > 30 %, ravine).
-  // OUTILS-FIX-1 C1 — surélévation retirée (batch débranché) : le signal vivant vit dans la Faisabilité.
-  sdp_nette_m2: number | null; contrainte_pct: number | null
-  zone_plu: string | null; rang_segment: number; rang_commune: number
-  // puce d'action (verdictMeta) : tier v2 servi + étage 0 du run servi — jamais « Classement historique »
-  tier_v2: string | null; etage0: boolean
-}
-export interface RenouvListe {
-  total: number; n: number; cap: number; tronquee: boolean; items: RenouvItem[]
-  source: string; run_label: string; maj: string | null
-  // OUTILS-S1 (Lot C) — transparence du run lu : run du précalcul vs run servi, + drapeau périmé.
-  run_precalc?: string | null; run_servi?: string; perime?: boolean
-  libelle: string; composantes_libelles: Record<string, string>; avertissement: string
-}
-// RETOURS-11 (T4) — pagination par 200 (doctrine SOCLE) : on envoie `limit=200` (le serveur borne à
-// min(limit, cap), donc 200 par page) et on pagine par `offset` pour atteindre les 67 214 sans jamais
-// tirer un bloc massif. Le plafond serveur (config renouvellement.yaml) reste une borne dure de sécurité.
-export const RENOUV_PAGE = 200
-export const getRenouvListe = (sort: string, communeNom?: string | null, offset = 0) =>
-  j<RenouvListe>(`/renouvellement/liste?sort=${sort}&limit=${RENOUV_PAGE}${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}${offset ? `&offset=${offset}` : ''}`)
+// DENSIFIER-PLI (PISCINES-2 Lot B) — l'outil « Densifier l'existant » est plié dans le filtre Capacité
+// (« Déjà bâti » + « SDP restante », run servi). Le calque `getRenouvGeojson` et la liste `getRenouvListe`
+// (précalcul figé `parcel_renouvellement`) sont retirés : plus aucun écran ne les lit. Endpoints backend
+// et table conservés en base (non servis à un écran).
 
 // ── Prospection solaire (V1 restitution) — données PVGIS/SARAH3 servies, masque solaire non calculé ──
 // A2 — type de propriétaire (PM nommée / particulier non nommé), même règle privacy que l'Assemblage.

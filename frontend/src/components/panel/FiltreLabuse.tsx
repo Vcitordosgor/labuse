@@ -18,6 +18,7 @@ import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
+import { Case } from '../ui/Case'
 import { Chevron } from '../ui/Chevron'
 import { Chip } from '../ui/Chip'
 import { DestinationSelect } from '../outils/DestinationSelect'   // FAISABILITE-1 lot B — sélecteur R151-28 partagé
@@ -328,6 +329,13 @@ export function CapaciteSection() {
         <p className="label-caps text-txt-dim">SDP restante</p>
         {/* SDP RÉSIDUELLE du run servi (parcel_residuel) — la même que la fiche. */}
         <div className="mt-1 flex items-center gap-1.5"><NumField field="sdpMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="sdpMax" ph="max" suffix="m²" /></div>
+        {/* DENSIFIER-PLI (Lot B) — l'outil « Densifier l'existant » est plié ici : « Déjà bâti » (bâti
+            existant BD TOPO) + « SDP restante ≥ X » = les parcelles occupées qui peuvent porter davantage.
+            Clé interne legacy `renouvellement` (hash rnv), conservée pour les vues enregistrées. */}
+        <Case data-filtre-deja-bati className="mt-2"
+          checked={filters.renouvellement}
+          onChange={(e) => setFilter('renouvellement', e.target.checked as never)}
+          label="Déjà bâti (extension · surélévation)" />
       </div>
       <div>
         <p className="label-caps text-txt-dim">Logements possibles</p>
