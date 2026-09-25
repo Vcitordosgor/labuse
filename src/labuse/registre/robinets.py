@@ -65,6 +65,8 @@ ROBINETS: dict[str, Robinet] = {
     "/map/tiles/mesures_compensatoires/{z}/{x}/{y}.pbf", "tuiles", chiffres=("mesures_compensatoires_couche",)),
  "couche_bpe": _r("couche", "Équipements (INSEE BPE)", None,
     "/map/tiles/amenite_bpe/{z}/{x}/{y}.pbf", "tuiles", chiffres=("bpe_couche",)),
+ "couche_scot": _r("couche", "SCOT — périmètre", None,
+    "/map/tiles/scot/{z}/{x}/{y}.pbf", "tuiles", chiffres=("scot_couche",)),
  "couche_alea_inondation": _r("couche", "Aléa inondation", None,
     "/map/tiles/georisque_alea/{z}/{x}/{y}.pbf", "tuiles", chiffres=("alea_inondation_couche",)),
  "couche_alea_mvt": _r("couche", "Aléa mouvement de terrain", None,
@@ -283,7 +285,7 @@ ROBINETS: dict[str, Robinet] = {
     "/parcels/{idu}", "json_puis_js", chiffres=("verdict_icd",)),
  "fiche_commune_regles_urbanisme": _r("fiche", "Règles d'urbanisme", "fiche_commune",
     # COMMUNE-FIX-1 (D12) — + procédure PLU en cours (Sudocuh) sur la carte Urbanisme.
-    "/communes/{c}/contexte", "json_puis_js", chiffres=("statut_plu", "plu_procedure_en_cours",)),
+    "/communes/{c}/contexte", "json_puis_js", chiffres=("statut_plu", "plu_procedure_en_cours", "scot_nom_date",)),
  "fiche_commune_zan": _r("fiche", "Enveloppe ZAN", "fiche_commune",
     "/communes/{c}/contexte", "json_puis_js", chiffres=("zan_reste_ha", "zan_evolution_commune",)),
  "fiche_commune_sru": _r("fiche", "Logement social — SRU", "fiche_commune",

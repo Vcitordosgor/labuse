@@ -85,7 +85,7 @@ COUCHE_PAR_CLE_FRONT: dict[str, str] = {
     "ppr": "ppr_couche", "alea_inondation": "alea_inondation_couche",
     "alea_mvt": "alea_mvt_couche", "parc": "parc_national_couche",
     "znieff": "znieff_couche", "cinquante_pas": "cinquante_pas_couche",
-    "mesures_compensatoires": "mesures_compensatoires_couche",
+    "mesures_compensatoires": "mesures_compensatoires_couche", "scot": "scot_couche",
     "equipements": "equip_osm_couche", "equipements_bpe": "bpe_couche",
     "transport": "transport_couche", "tcsp": "tcsp_couche", "axes": "axes_couche",
     "lignes_ht": "lignes_ht_couche", "pylone": "pylone_couche",

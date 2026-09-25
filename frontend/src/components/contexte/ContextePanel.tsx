@@ -599,6 +599,14 @@ export function ContextePanel() {
                     <b className="text-txt">Procédure (Sudocuh{d.plu_statut.procedure_sudocuh.millesime ? ` ${d.plu_statut.procedure_sudocuh.millesime}` : ''})</b> : {d.plu_statut.procedure_sudocuh.etat}{d.plu_statut.procedure_sudocuh.prescription ? ` · prescrite le ${d.plu_statut.procedure_sudocuh.prescription}` : ''}.
                   </p>
                 )}
+                {/* GEOPF-3 — SCOT (planification supra-communale, GPU) : nom + date d'approbation. */}
+                {d.scot?.nom && (
+                  <p data-scot className="mt-1 text-[11px] leading-relaxed text-txt-mut">
+                    <b className="text-txt">SCOT</b> : {d.scot.nom}
+                    {d.scot.date_approbation ? ` — approuvé le ${d.scot.date_approbation}`
+                      : d.scot.statut ? ` — ${d.scot.statut}` : ''}.
+                  </p>
+                )}
                 {d.foncier?.repartition_zonage && (() => {
                   const f = d.foncier.repartition_zonage.familles
                   return (

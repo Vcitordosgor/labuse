@@ -287,6 +287,8 @@ export interface ContexteCommune {
     // COMMUNE-FIX-1 (D12) — procédure PLU en cours au dernier relevé Sudocuh
     procedure_sudocuh?: { document: string | null; etat: string | null; prescription: string | null; millesime: string | null } | null
   }
+  // GEOPF-3 — SCOT (planification supra-communale, GPU) : nom + date d'approbation. null = hors périmètre.
+  scot?: { nom: string; date_approbation: string | null; statut: string | null; source: string } | null
   permis_bloc: {
     permis_12m: number; permis_5a: number | null; logements_12m: number | null
     delai_median_mois: number | null; point_mort: number; source: string

@@ -348,6 +348,22 @@ def mesures_compensatoires_build_cmd() -> None:
     typer.echo(f"✓ Mesures compensatoires : {counts} (total {sum(counts.values())})")
 
 
+@app.command("scot-build")
+def scot_build_cmd() -> None:
+    """GEOPF-3 — ingère les périmètres SCOT (GPU via Géoplateforme WFS) → spatial_layers kind='scot'
+    (Licence Ouverte). Île entière ; couche famille urbanisme + fiche commune (nom + date d'approbation)."""
+    from . import models
+    from .db import engine
+    from .ingestion import seed_sources
+    from .ingestion.scot import build_scot
+
+    with session_scope() as s:
+        seed_sources.seed(s)
+        counts = build_scot(s, log=typer.echo)
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ SCOT : {counts} (total {sum(counts.values())})")
+
+
 @app.command("bpe-build")
 def bpe_build_cmd() -> None:
     """M137-U — ingère la BPE INSEE (équipements géolocalisés, DEP=974) → spatial_layers

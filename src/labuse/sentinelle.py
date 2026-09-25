@@ -454,6 +454,14 @@ SEED: list[dict] = [
              "&OUTPUTFORMAT=application/json&SORTBY=date_decision%20D"
              "&BBOX=55.20,-21.42,55.90,-20.85,EPSG:4326"),
      "selecteur": "features.0.properties.date_decision"},
+    # GEOPF-3 — SCOT (GPU) : WFS sans millésime nommé. Témoin = le gpu_timestamp du SCOT le plus
+    # récent — une nouvelle publication GPU change l'empreinte.
+    {"name": "SCOT (GPU)", "methode": "temoin",
+     "url": ("https://data.geopf.fr/wfs/ows?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0"
+             "&TYPENAMES=wfs_scot:scot&SRSNAME=EPSG:4326&COUNT=1"
+             "&OUTPUTFORMAT=application/json&SORTBY=gpu_timestamp%20D"
+             "&BBOX=55.20,-21.42,55.90,-20.85,EPSG:4326"),
+     "selecteur": "features.0.properties.gpu_timestamp"},
     {"name": "Contours IRIS (IGN/INSEE)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/contours-iris/", "selecteur": "last_update"},
     {"name": "RPG — déclarations agricoles (IGN/ASP)", "methode": "api",

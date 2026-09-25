@@ -494,6 +494,12 @@ DONNEES: dict[str, Donnee] = {
     reservoirs=("gpu_plu_api_carto", "sudocuh",), portee="live",
     domaine=("RNU", "à jour", "en révision", "en élaboration", "en modification", "document local"),
     domaine_source="_PLU_STATUT (api/fiche_commune.py) + registre RNU (config/rnu_communes.yaml)"),
+ # GEOPF-3 — SCOT couvrant la commune (nom + date d'approbation), par intersection avec kind='scot'.
+ "scot_nom_date": C("SCOT (nom + approbation)", "classe", "commune",
+    "Schéma de Cohérence Territoriale couvrant la commune (GPU) — nom + date d'approbation",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py:scot_commune",
+    reservoirs=("scot_gpu",), portee="live",
+    type="classe", table="spatial_layers (kind=scot)", fabrication="requete"),
  # COMMUNE-FIX-1 (D12) — la PROCÉDURE PLU EN COURS au dernier relevé Sudocuh (état détaillé + date de
  # prescription + millésime Sudocuh), servie sur la carte Urbanisme. Passe-plat du fichier Sudocuh.
  "plu_procedure_en_cours": C("Procédure PLU en cours (Sudocuh)", "texte", "commune",
@@ -941,6 +947,11 @@ DONNEES: dict[str, Donnee] = {
     reservoirs=("geomce",), portee="live",
     type="couche", table="spatial_layers (kind=mesures_compensatoires, subtype=surface/ligne/point)",
     fabrication="requete"),
+ "scot_couche": C("SCOT — périmètre (couche)", "couche", "commune",
+    "périmètre du Schéma de Cohérence Territoriale (GPU) — planification supra-communale",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/couches_tuyau.py:couche_tuile (scot)",
+    reservoirs=("scot_gpu",), portee="live",
+    type="couche", table="spatial_layers (kind=scot)", fabrication="requete"),
  "bpe_couche": C("Équipements INSEE BPE (couche)", "couche", "commune",
     "équipements géolocalisés BPE (source statistique, distincte d'OSM — jamais fusionnées)",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/couches_tuyau.py:couche_tuile (amenite_bpe)",

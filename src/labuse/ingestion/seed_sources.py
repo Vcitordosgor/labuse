@@ -55,6 +55,17 @@ SOURCES: list[dict] = [
          endpoint_url="https://apicarto.ign.fr/api/gpu/municipality/document/info-surf",
          legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN), annexes d'assainissement des collectivités ».",
          technical_notes="✓ couches d'information surfaciques typeinf=19 (« zonage d'assainissement » CNIG). Couverture SIG partielle (4/24 communes au 11/07/2026) ; ailleurs, taux de non-raccordement du secteur (INSEE RP2022), jamais une proba parcellaire (M88)."),
+    # GEOPF-3 — SCOT (Schéma de Cohérence Territoriale) : périmètres supra-communaux du GPU. Distinct
+    # du SAR (régional) et du PLU (communal). Nom + date d'approbation (idurba) + statut approuvé/projet.
+    dict(name="SCOT (GPU)", category="urbanisme", provider="IGN / Géoportail de l'urbanisme",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="GPU — périmètres SCOT (idurba CNIG par document)",
+         documentation_url="https://www.geoportail-urbanisme.gouv.fr/",
+         endpoint_url="https://data.geopf.fr/wfs/ows",
+         legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN) ».",
+         technical_notes="GEOPF-3 : ingéré → spatial_layers kind='scot' via Géoplateforme WFS "
+                         "(wfs_scot:scot + wfs_scot:perimetre_scot). 974 : SCOT TCO (approuvé), CINOR "
+                         "(approuvé), Grand Sud (en projet). Nom + date d'approbation servis à la fiche commune."),
     # SOURCES-3b lot 2 — Sudocuh était en base (id 62, curation, veille_plu) mais ABSENT du catalogue
     # SOURCES (legacy) : rattrapé ici pour que la sentinelle (SEED, data.gouv last_update) puisse s'y
     # rattacher par nom exact (invariant test_sentinelle : SEED ⊆ SOURCES).
@@ -1638,6 +1649,7 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "OSM — transport (pôles d'échange & téléphérique)": ("one_shot", 365, "proposee"),
     "ZNIEFF (INPN/MNHN)": ("one_shot", 365, "proposee"),
     "GéoMCE — mesures compensatoires": ("one_shot", 365, "proposee"),
+    "SCOT (GPU)": ("one_shot", 365, "proposee"),
     "ZNIEFF (INPN / Région)": ("absente", None, "sans_objet"),
     "CoSIA (couverture du sol IA, IGN)": ("one_shot", 800, "declaree"),
     "Radar (pige d'annonces)": ("depot_manuel", 3, "declaree"),

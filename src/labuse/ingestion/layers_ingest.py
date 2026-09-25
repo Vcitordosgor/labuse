@@ -97,6 +97,8 @@ KIND_SOURCE = {
     "amenite_bpe": "BPE INSEE",
     # GEOPF-3 — mesures compensatoires ERC (mesures_compensatoires.py), contrainte environnementale.
     "mesures_compensatoires": "GéoMCE — mesures compensatoires",
+    # GEOPF-3 — SCOT (scot.py), planification supra-communale (GPU).
+    "scot": "SCOT (GPU)",
     # FIX-COUCHES P4 — dispositifs fiscaux (écrits par dispositifs.build_zfang_frr). Les sources
     # existaient au catalogue (seed_sources) avec leur millésime légal, mais les couches n'étaient PAS
     # rattachées (data_source_id NULL) → registre complété ici pour la garde + le backfill. tva_primo

@@ -123,3 +123,21 @@ donnees:
     absence_type: absente_ici
     statut_juridique: opposable
     pourquoi: "Rendu identique (#1B7A4A vert forêt) ; kind virtuel ebc→plu_gpu_prescription/01."
+---
+surface:   couche_scot
+nom:       "SCOT (périmètre)"
+categorie: couche
+parent:    null
+route:     "/map/tiles/scot/{z}/{x}/{y}.pbf"
+rendu:     carte
+donnees:
+  - quoi:  scot_couche
+    ou:    { rang: 10, etat: replie, section: "Planification supra-communale" }
+    comment: { libelle: "SCOT (périmètre)", format: liste, i: "Schéma de Cohérence Territoriale (GPU) : le document de planification au-dessus du PLU (échelle intercommunale). 974 : SCOT TCO (Ouest), CINOR (Nord), Grand Sud (en projet). Distinct du SAR (régional). La fiche commune donne le nom + la date d'approbation." }
+    # GEOPF-3 — contour SEUL (le périmètre couvre plusieurs communes : un aplat noierait la carte).
+    # Bleu #3B6FB0 tireté, distinct des couches urbanisme (vert/brun). Pas de vert.
+    carte: { kind: scot, agregat: false, famille: urbanisme, geometrie: polygone, contour_seul: true, zoom_min: 0, rang_carte: 2, style: { couleur: "#3B6FB0", opacite: 0.06, trait: "#2A5488", epaisseur: 2, tirets: [6, 3] }, popup: [ { champ: name, libelle: "SCOT" }, { champ: statut, libelle: "Statut" }, { champ: date_approbation, libelle: "Approbation" } ], legende: "Périmètre SCOT (contour bleu)" }
+    absence: "SCOT : commune hors d'un périmètre de SCOT publié au GPU."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "GEOPF-3 : contour seul bleu #3B6FB0 tireté (périmètre large) ; distinct du SAR et du zonage PLU."

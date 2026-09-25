@@ -49,6 +49,12 @@ donnees:
     absence: "Objectif logements/an : donnée non disponible sur cette commune."
     absence_type: absente_ici
     pourquoi: "L'objectif de production du PLH intercommunal."
+  - quoi:  scot_nom_date
+    ou:    { rang: 65, etat: replie, section: "Urbanisme" }
+    comment: { libelle: "SCOT (nom + approbation)", format: classe, i: "Schéma de Cohérence Territoriale couvrant la commune (GPU) : nom + date d'approbation. Passe-plat, jamais recalculé." }
+    absence: "SCOT (nom + approbation) : commune hors d'un périmètre de SCOT publié au GPU."
+    absence_type: absente_ici
+    pourquoi: "Le cadre supra-communal (au-dessus du PLU) qui s'impose à la commune."
   - quoi:  tfpb_taux_pct
     ou:    { rang: 70, etat: replie, section: "Fiscalité et dispositifs" }
     comment: { libelle: "Taxe foncière (taux TFPB)", format: pourcent, i: "taux de TFPB appliqué sur la commune (E12 du REI) + part EPCI (E32) + TEOM (F22) — impositions primitives, passe-plat du fichier DGFiP" }

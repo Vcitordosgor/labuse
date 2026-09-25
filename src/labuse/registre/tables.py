@@ -187,6 +187,7 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "znieff_region_ods": Rt((), note="canal Région non branché (0 donnée) — canonique : znieff_inpn"),
     "geomce": Rt(("spatial_layers",), couches=("mesures_compensatoires",),
                  millesime="GéoMCE (MTE/OFB) — mesures compensatoires"),
+    "scot_gpu": Rt(("spatial_layers",), couches=("scot",), millesime="GPU — périmètres SCOT (idurba CNIG)"),
     # ── marché / valeurs ────────────────────────────────────────────────────────────
     "dvf": Rt(("dvf_mutations", "dvf_mutations_parcelle", "dvf_mutations_histo",
                "dvf_secteur_medianes", "dvf_prix_sortie_neuf", "spatial_layers",
