@@ -703,7 +703,11 @@ export function Fiche({ idu }: { idu: string }) {
           plus au défilement (elle était flex-shrink:0, fixe, et recouvrait le contenu qui passait
           dessous). Elle défile désormais AVEC le reste — un seul corps qui défile du haut au pied.
           M56-B6 · DA-FICHE-v6 — EN-TÊTE en CARTE .head (identité + chiffres). */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
+      {/* RETOURS-14 P3 — PLUS de pt-1 : le padding-haut du conteneur défilant décalait l'en-tête collé
+          (sticky top:0 se cale au bord du padding), laissant un liseré de 4px au-dessus par lequel le
+          contenu défilait. Sans padding-haut, l'en-tête colle au BORD du panneau (voir .tete-collee, coins
+          hauts carrés = fond plein jusqu'au bord). L'espacement des tuiles reste porté par gap-3. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4">
       {/* RETOURS-13 P7 — EN-TÊTE COLLÉ. SEUL le bloc identité (PARCELLE·commune, IDU, adresse, icônes,
           croix de fermeture) reste collé en haut au défilement — un client ferme la fiche sans remonter.
           Les 6 tuiles NE collent PAS (carte séparée dessous). Le bloc est un ENFANT DIRECT du conteneur

@@ -417,9 +417,13 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .fiche-v6 .head { background:var(--bg-2); border:0.5px solid var(--f-linehead); border-radius:6px; overflow:hidden; }
 /* RETOURS-13 P7 — le bloc identité (head-top + adresse) COLLÉ en haut de la fiche défilante. Même
    habillage que la carte .head mais SANS overflow:hidden (qui clipperait le sticky et son ombre) ;
-   fond opaque + ombre pour couvrir le contenu qui passe dessous. z au-dessus des tiroirs. */
+   fond opaque + ombre pour couvrir le contenu qui passe dessous. z au-dessus des tiroirs.
+   RETOURS-14 P3 — l'en-tête est OPAQUE JUSQU'AU BORD HAUT du panneau : coins hauts CARRÉS (les coins
+   arrondis laissaient voir le contenu défiler dans les arcs au ras du bord) + le conteneur défilant n'a
+   plus de padding-haut (Fiche.tsx) qui décalait le sticky. Coins bas arrondis conservés (séparation). */
 .fiche-v6 .tete-collee { position:sticky; top:0; z-index:20; background:var(--bg-2);
-  border:0.5px solid var(--f-linehead); border-radius:6px; box-shadow:0 3px 10px -6px rgba(0,0,0,.55); }
+  border:0.5px solid var(--f-linehead); border-top:0; border-radius:0 0 6px 6px;
+  box-shadow:0 3px 10px -6px rgba(0,0,0,.55); }
 .fiche-v6 .head-top { padding:13px 14px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
 .fiche-v6 .eyebrow { font-size:9.5px; letter-spacing:.11em; color:var(--txt-off); }
 .fiche-v6 .ref { font-size:17px; font-weight:500; font-family:var(--mono); letter-spacing:-.02em; margin-top:5px; display:flex; align-items:center; gap:6px; }
