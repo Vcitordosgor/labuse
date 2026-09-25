@@ -1,0 +1,11 @@
+GEOPF-3 couche 7 — 5e grammaire « Lieu-dit » dans l'omnibox du header (vérifié en navigateur, DOM).
+Saisie « Guillaume » dans la barre de recherche → le menu propose (entre autres) :
+  • lieu-dit · le Guillaume · Saint-Paul — lieu-dit
+  • lieu-dit · Îlet à Guillaume · Saint-Denis — lieu-dit
+  • lieu-dit · le Guillaume Jardin · Saint-Paul — lieu-dit
+(La carte WebGL ne se rasterise pas en headless — la preuve est le contenu DOM du menu, extrait via page.evaluate.)
+
+GEOPF-3 couche 7 — ligne « Secteur » de la fiche parcelle (vérifié en navigateur, DOM) :
+Parcelle 97415000AB0001 (sans adresse BAN) → sous « adresse non rattachée » s'affiche :
+  Secteur : le Cabestan
+(élément [data-fiche-secteur], rendu confirmé ; API /parcels/{idu}?source=q_v11_m137 sert bien secteur="le Cabestan".)
