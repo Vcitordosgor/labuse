@@ -13,6 +13,12 @@ donnees:
     absence: "Règles d'urbanisme (statut) : donnée non disponible sur cette commune."
     absence_type: absente_ici
     pourquoi: "Le document opposable et son état : la règle qui s'applique."
+  - quoi:  plu_procedure_en_cours
+    ou:    { rang: 15, etat: replie, section: "Urbanisme" }
+    comment: { libelle: "Procédure PLU en cours (Sudocuh)", format: classe, i: "état détaillé de la procédure d'urbanisme au dernier relevé Sudocuh (révision, modification, élaboration…), date de prescription et millésime Sudocuh — passe-plat, jamais recalculé" }
+    absence: "Procédure PLU en cours (Sudocuh) : aucune procédure recensée au dernier relevé."
+    absence_type: absente_ici
+    pourquoi: "Une révision/modification en cours change les règles à venir : la connaître oriente le calendrier du projet."
   - quoi:  part_zone_U_pct
     ou:    { rang: 20, etat: replie, section: "Urbanisme" }
     comment: { libelle: "Zonage — U", format: pourcent, i: "surface cadastrée U / surface zonée totale (somme=100 %)" }
@@ -55,6 +61,12 @@ donnees:
     absence: "Taxe foncière non bâti (taux TFPNB) : donnée non disponible sur cette commune."
     absence_type: absente_ici
     pourquoi: "La taxe foncière sur le non bâti (TFPNB) : la charge du terrain."
+  - quoi:  taxe_amenagement_communale_pct
+    ou:    { rang: 85, etat: replie, section: "Fiscalité et dispositifs" }
+    comment: { libelle: "Taxe d'aménagement (part communale)", format: pourcent, i: "taux de la part communale de la taxe d'aménagement (délibération communale) — même source que l'outil Taxe (taxe_amenagement_taux, DGFiP/DELTA) ; pas de taux sectoriel à La Réunion dans la source" }
+    absence: "Taxe d'aménagement (part communale) : donnée non disponible sur cette commune."
+    absence_type: absente_ici
+    pourquoi: "La part communale de la taxe d'aménagement : le coût fiscal du projet à la construction."
   - quoi:  zonage_abc_logement
     ou:    { rang: 90, etat: replie, section: "Fiscalité et dispositifs" }
     comment: { libelle: "Zonage A/B/C (logement)", format: classe, i: "zone A/B/C du dispositif d'investissement locatif pour la commune (arrêté du 23/06/2026, en vigueur 26/06/2026 — passe-plat, jamais recalculé)" }

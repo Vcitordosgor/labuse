@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { deleteCommuneContact, getCommuneContacts, getContexteCommune, getMoi, motMarcheCommune, motRarete, postCommuneContact } from '../../lib/api'
+import { deleteCommuneContact, getCommuneAcquisitions, getCommuneContacts, getContexteCommune, getMoi, motMarcheCommune, motRarete, postCommuneContact } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
 import { Trace } from '../../lib/trace'
 import { useApp } from '../../store/useApp'
@@ -9,6 +9,7 @@ import { ErrorState } from '../States'
 import { CONTACT_VIDE, ContactEdit, trimContact, type ContactForm } from '../shared/ContactEdit'  // RETOURS-8 (R6)
 import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
+import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // COMMUNE-FIX-1 (C9) — grille d'outils PARTAGÉE (même rendu que la fiche parcelle)
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
 const fmtV = (v: unknown, s = '') => (v == null ? '—' : `${Number(v).toLocaleString('fr-FR')}${s}`)
@@ -141,6 +142,49 @@ function ContactsMairie({ insee, commune }: { insee: string | null; commune: str
   )
 }
 
+// COMMUNE-FIX-1 (D13) — LES ACQUÉREURS RÉCENTS (PM) de la commune, servis par l'endpoint dédié
+// /communes/{c}/acquisitions-pm (même point de calcul que l'outil Communes) — l'endpoint existait mais
+// n'avait plus de carte sur la fiche. On montre les 5 premiers acquéreurs (par volume), chacun ouvre
+// Scan patrimoine (m02Prefill + module 'patrimoine'). Constat sourcé (changement de millésime PM,
+// n'affirme pas une vente), hors scoring.
+function AcquereursPmCommune({ commune }: { commune: string }) {
+  const q = useQuery({ queryKey: ['commune-acq', commune], queryFn: () => getCommuneAcquisitions(commune, 200), enabled: !!commune })
+  const d = q.data
+  if (!d || !d.acquisitions?.length) return null
+  const parAcq = new Map<string, { siren: string | null; nom: string | null; n: number; dernier: number }>()
+  for (const a of d.acquisitions) {
+    const cle = a.siren_apres ?? '∅'
+    const g = parAcq.get(cle)
+    if (g) { g.n += 1; g.dernier = Math.max(g.dernier, a.a_millesime) }
+    else parAcq.set(cle, { siren: a.siren_apres, nom: a.denomination_apres, n: 1, dernier: a.a_millesime })
+  }
+  const top = [...parAcq.values()].sort((x, y) => y.n - x.n || y.dernier - x.dernier).slice(0, 5)
+  const ouvrirScan = (siren: string) => { const s = useApp.getState(); s.setM02Prefill(siren); s.setModule('patrimoine'); s.setContexteCommune(null) }
+  return (
+    <div className="mt-2 border-t border-line pt-2">
+      <p className="mb-1 text-[11px] text-txt-dim">Acquéreurs récents (personnes morales) <span className="text-txt-mut">depuis {d.depuis_millesime}</span></p>
+      <div className="flex flex-col gap-0.5 text-[12px]">
+        {top.map((g) => (
+          g.siren
+            ? <button key={g.siren} data-acquereur-pm onClick={() => ouvrirScan(g.siren!)}
+                className="flex items-baseline justify-between gap-2 py-0.5 text-left hover:text-mint">
+                <span className="min-w-0 truncate">{g.nom ?? g.siren}</span>
+                <span className="tnum shrink-0 text-txt-mut">{g.n} parc. · {g.dernier}</span>
+              </button>
+            : <div key="anon" className="flex items-baseline justify-between gap-2 py-0.5 text-txt-mut">
+                <span className="min-w-0 truncate">Acquéreur non identifié</span><span className="tnum shrink-0">{g.n} parc.</span>
+              </div>
+        ))}
+      </div>
+      {d.n_total > top.length && (
+        <button data-acquereurs-scan onClick={() => { const s = useApp.getState(); s.setCommune(commune); s.setModule('communes'); s.setCommunesTableOpen(true); s.setContexteCommune(null) }}
+          className="mt-1 text-[11px] text-mint hover:underline">Tous les acquéreurs ({d.n_total}) dans l'outil Communes</button>
+      )}
+      <p className="mt-1 text-[10px] leading-snug text-txt-dim">{d.source ?? 'Fichiers fonciers (changement de propriétaire PM entre millésimes) — un constat, pas une vente affirmée.'}</p>
+    </div>
+  )
+}
+
 // OUTILS-6 C6 — ouvrir un outil AVEC LA COMMUNE DÉJÀ SÉLECTIONNÉE (jamais un formulaire vide). On pose la
 // commune (filtre global lu par la plupart des outils) puis on ouvre le module et on ferme la fiche.
 function ouvrirOutil(commune: string, insee: string | null, quoi: string) {
@@ -152,15 +196,6 @@ function ouvrirOutil(commune: string, insee: string | null, quoi: string) {
   else if (quoi === 'communes') { s.setModule('communes'); s.setCommunesTableOpen(true) }
   else { s.setModule(quoi) }
   s.setContexteCommune(null)
-}
-
-function Shortcut({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button data-passerelle onClick={onClick}
-      className="mt-3 inline-block rounded-lg border border-mint/30 px-2.5 py-1 text-[11.5px] text-mint hover:bg-mint/10">
-      {label} →
-    </button>
-  )
 }
 
 // FICHE-COMMUNE-2 (C2) — la MÊME grammaire que la fiche parcelle : une LIGNE-CARTE (fond carte, bordure,
@@ -286,21 +321,29 @@ export function ContextePanel() {
                   </div>
                 ))}
               </div>
-              {/* Action principale conservée (DA) : voir les parcelles de la commune. */}
+              {/* COMMUNE-FIX-1 (B5) — « Voir ses parcelles » : filtre commune + verdict + listing, ET
+                  recadre la carte sur l'emprise de la commune. Avant, le zoom reposait sur l'effet « fit
+                  au changement de commune » — inopérant ici puisque la commune est DÉJÀ la courante (fiche
+                  ouverte via le clic-commune) → le bouton semblait mort. `refitCommune()` force le recadrage. */}
               <Bouton niveau="primaire" ton="vert" data-communes-parcelles className="mt-3 w-full" onClick={() => {
                 const s = useApp.getState()
                 s.setView('cartes'); s.setCommune(commune); s.setCommunesFilter([commune])
                 s.setFilter('analyseLabuse', true); s.setVerdict(true)
-                s.openListing()
+                s.openListing(); s.refitCommune()
               }}>Voir ses parcelles →</Bouton>
-              {/* Trois raccourcis : PLU · Communes · Étude de zone — commune déjà en contexte. */}
-              <div data-raccourcis className="mt-2 grid grid-cols-3 gap-2">
-                <button data-raccourci-plu onClick={() => ouvrirOutil(commune, insee, 'plu')}
-                  className="rounded-lg border border-line-2 border-l-2 border-l-mint px-2.5 py-1.5 text-left text-[12px] font-medium text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">PLU<span className="block text-[10px] font-normal text-txt-dim">règlement</span></button>
-                <button data-communes-comparer onClick={() => ouvrirOutil(commune, insee, 'communes')}
-                  className="rounded-lg border border-line-2 border-l-2 border-l-mint px-2.5 py-1.5 text-left text-[12px] font-medium text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">Communes<span className="block text-[10px] font-normal text-txt-dim">les 24</span></button>
-                <button data-communes-etude-zone onClick={() => ouvrirOutil(commune, insee, 'etude-zone')}
-                  className="rounded-lg border border-line-2 border-l-2 border-l-mint px-2.5 py-1.5 text-left text-[12px] font-medium text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">Étude de zone<span className="block text-[10px] font-normal text-txt-dim">autour d'un point</span></button>
+              {/* COMMUNE-FIX-1 (C9) — « Étudier cette commune » : le MÊME composant partagé que la section
+                  « Étudier ce bien » de la fiche parcelle (GrilleOutils/OutilCase, tuiles icône+nom, survol
+                  vert plein). Remplace les anciens raccourcis et TOUS les liens texte « → » des cartes.
+                  Tuiles pré-remplies sur la commune (ouvrirOutil pose commune + module). Aucune nouvelle DA. */}
+              <div data-etudier-commune className="mt-3">
+                <p className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.13em] text-txt-dim">Étudier cette commune</p>
+                <GrilleOutils>
+                  <OutilCase ic="§" nom="PLU" data-tuile-plu onClick={() => ouvrirOutil(commune, insee, 'plu')} />
+                  <OutilCase ic="▤" nom="Permis" data-tuile-permis onClick={() => ouvrirOutil(commune, insee, 'permis')} />
+                  <OutilCase ic="◫" nom="Densifier" data-tuile-densifier onClick={() => ouvrirOutil(commune, insee, 'renouvellement')} />
+                  <OutilCase ic="◎" nom="Étude de zone" data-tuile-etude-zone onClick={() => ouvrirOutil(commune, insee, 'etude-zone')} />
+                  <OutilCase ic="▦" nom="Communes" data-tuile-communes onClick={() => ouvrirOutil(commune, insee, 'communes')} />
+                </GrilleOutils>
               </div>
               {signauxNommes.length > 0 && (
                 <div data-fiche-signaux className="mt-3">
@@ -366,8 +409,13 @@ export function ContextePanel() {
                 sous={`${d.population.logements != null ? `${fmt(d.population.logements)} logts` : ''}${d.population.vacance_pct != null ? ` · ${fmtDec(d.population.vacance_pct)} % vacants` : ''} · INSEE`}
                 val={d.population.habitants != null ? `${fmt(d.population.habitants)} hab.` : null}>
                 <div className="mb-2 flex flex-col gap-0.5 text-[12px]">
-                  {d.population.habitants != null && <RowT lbl="Habitants · ménages" val={`${fmt(d.population.habitants)} · ${fmt(d.population.menages)}`} />}
-                  {d.population.niveau_vie_moyen_eur != null && <RowT lbl="Niveau de vie moyen" val={`${fmt(d.population.niveau_vie_moyen_eur)} €/an`} />}
+                  {/* COMMUNE-FIX-1 (A1) — habitants = population LÉGALE (municipale) INSEE, plus l'agrégat
+                      Filosofi qui sous-estimait ; ménages = résidences principales (RP). Filosofi ne sert
+                      plus QUE le niveau de vie. */}
+                  {d.population.habitants != null && <RowT lbl="Habitants (population municipale)" val={fmt(d.population.habitants)} strong />}
+                  {d.population.habitants_millesime && <p className="-mt-0.5 mb-0.5 text-[10.5px] text-txt-dim">Population municipale légale INSEE · millésime {d.population.habitants_millesime}{d.population.habitants_pop_totale != null ? ` · population totale ${fmt(d.population.habitants_pop_totale)}` : ''}</p>}
+                  {d.population.menages != null && <RowT lbl="Ménages (résidences principales)" val={fmt(d.population.menages)} />}
+                  {d.population.niveau_vie_moyen_eur != null && <RowT lbl="Niveau de vie moyen (Filosofi)" val={`${fmt(d.population.niveau_vie_moyen_eur)} €/an`} />}
                   {d.population.logements != null && <RowT lbl="Logements" val={`${fmt(d.population.logements)}${d.population.vacants != null ? ` · ${fmt(d.population.vacants)} vacants (${fmtDec(d.population.vacance_pct)} %)` : ''}`} />}
                   {/* DONNEES-1 lot 2.4 — âge du parc (RP2022) : part construit avant 1991 = stock ancien. */}
                   {d.population.parc_ancien_pct != null && <RowT lbl="Parc construit avant 1991" val={`${fmtDec(d.population.parc_ancien_pct)} %`} />}
@@ -395,10 +443,22 @@ export function ContextePanel() {
                 {/* Parc social / SRU — taux et objectif (maquette : « Parc social RPLS, taux SRU, objectif »). */}
                 {d.sru && (() => {
                   const m = SRU_META[d.sru.statut] ?? SRU_META.conforme
+                  const nbLls = d.sru.detail?.nb_lls
+                  const taux = Number(d.sru.taux_lls)
+                  // COMMUNE-FIX-1 (A3) — la base du taux SRU est le nombre de RÉSIDENCES PRINCIPALES
+                  // (base légale SRU), pas les ménages Filosofi ni le parc de logements : on la reconstitue
+                  // (nb_lls / taux) et on l'écrit, pour que 7 499 LLS et 18,33 % soient lus cohéremment.
+                  const baseSru = (nbLls != null && taux > 0) ? Math.round(nbLls / (taux / 100)) : null
                   return (
                     <div className="rounded-lg border px-3 py-2" style={{ borderColor: `${m.color}55`, background: `${m.color}14` }}>
-                      <span className="font-display text-[13px] font-bold" style={{ color: m.color }}>SRU {Number(d.sru.taux_lls).toLocaleString('fr-FR')} %</span>
-                      <span className="ml-2 text-[11px] text-txt-mut">objectif {Number(d.sru.objectif_pct).toLocaleString('fr-FR')} %{d.sru.detail?.nb_lls != null ? ` · ${fmt(d.sru.detail.nb_lls)} LLS` : ''}</span>
+                      <span className="font-display text-[13px] font-bold" style={{ color: m.color }}>SRU {taux.toLocaleString('fr-FR')} %</span>
+                      <span className="ml-2 text-[11px] text-txt-mut">objectif {Number(d.sru.objectif_pct).toLocaleString('fr-FR')} %</span>
+                      {nbLls != null && (
+                        <p className="mt-1 text-[11px] text-txt"><b>{fmt(nbLls)} logements sociaux (LLS)</b> — stock au dernier inventaire SRU{d.sru.millesime ? ` · ${d.sru.millesime}` : ''}.</p>
+                      )}
+                      {baseSru != null && (
+                        <p className="mt-0.5 text-[10.5px] text-txt-dim">Le taux de {taux.toLocaleString('fr-FR')} % rapporte ces LLS aux résidences principales retenues pour la SRU (≈ {fmt(baseSru)}) — base différente des ménages ci-dessus.</p>
+                      )}
                       <p className="mt-1 text-[11px] leading-relaxed text-txt">{m.lecture}</p>
                     </div>
                   )
@@ -453,16 +513,26 @@ export function ContextePanel() {
                     <p data-annonces-sans-objet className="mt-1 text-[12px] text-txt-mut">Pas d'annonce repérée sur cette commune{ma ? ` (${ma.biens} bien(s), seuil ${ma.seuil_n})` : ''}. Le Radar affine la couverture au fil des relevés.</p>
                   ) : (
                     <>
-                      <div className="flex flex-col gap-0.5 text-[12px]">
-                        <RowT lbl="Biens en vente" val={fmt(ma!.biens)} />
-                        <RowT lbl="Prix demandé médian" val={`${fmt(ma!.prix_demande_median_eur_m2)} €/m²`} />
-                        {ma!.ecart_demande_acte_pct != null && (
-                          <RowT lbl="Écart demandé / acté" strong val={`${ma!.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(ma!.ecart_demande_acte_pct)} %`} />
-                        )}
-                      </div>
-                      <Shortcut label="Voir les annonces dans le Radar" onClick={() => ouvrirOutil(commune, insee, 'radar')} />
+                      {(() => {
+                        // COMMUNE-FIX-1 (A2) — sous le seuil Radar (30 biens), on n'affiche NI médian NI
+                        // pourcentage : « sous le seuil (N biens) », jamais un −31 % tiré de 5 annonces.
+                        const n = ma!.prix_demande_n ?? 0
+                        const sous = ma!.demande_sous_seuil
+                        const libSeuil = `sous le seuil (${fmt(n)} bien${n > 1 ? 's' : ''})`
+                        return (
+                          <div className="flex flex-col gap-0.5 text-[12px]">
+                            <RowT lbl="Biens en vente" val={fmt(ma!.biens)} />
+                            <RowT lbl="Prix demandé médian" val={sous ? libSeuil : (ma!.prix_demande_median_eur_m2 != null ? `${fmt(ma!.prix_demande_median_eur_m2)} €/m²` : '—')} />
+                            <RowT lbl="Écart demandé / acté" strong={!sous && ma!.ecart_demande_acte_pct != null}
+                              val={sous ? libSeuil : (ma!.ecart_demande_acte_pct != null ? `${ma!.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(ma!.ecart_demande_acte_pct)} %` : '—')} />
+                            {sous && <p className="text-[10.5px] text-txt-dim">Prix demandé et écart servis à partir de {ma!.demande_seuil_n} biens relevés (robustesse Radar).</p>}
+                          </div>
+                        )
+                      })()}
                     </>
                   )}
+                  {/* COMMUNE-FIX-1 (D13) — acquéreurs récents (PM) : endpoint dédié, 5 premiers + Scan patrimoine. */}
+                  <AcquereursPmCommune commune={commune} />
                   <Source nom={`DVF (mutations)${ma ? ` · ${ma.source}` : ' · Radar LABUSE'}`} />
                 </LigneCarte>
                 )
@@ -483,7 +553,6 @@ export function ContextePanel() {
                       fiche_commune.permis_bloc) — un seul mot, un seul chiffre, fiche commune == outil. */}
                   <RowT lbl="Permis dormants" val={fmt(d.permis_bloc.point_mort)} />
                 </div>
-                <Shortcut label="Ouvrir Permis — cette commune" onClick={() => ouvrirOutil(commune, insee, 'permis')} />
                 <Source nom={d.permis_bloc.source} />
               </LigneCarte>
 
@@ -510,7 +579,6 @@ export function ContextePanel() {
                   <RowT lbl="Rythme de consommation" val={fmtV(r?.['rythme_conso_ha_an'], ' ha/an')} />
                   <RowT lbl="Horizon d'épuisement" val={r?.['horizon_epuisement_ans'] != null ? `${fmtDec(r['horizon_epuisement_ans'])} ans` : '—'} strong />
                 </div>
-                <Shortcut label="Densifier l'existant — cette commune" onClick={() => ouvrirOutil(commune, insee, 'renouvellement')} />
                 <Source nom={`Cadastre DGFiP · ${d.densifiables?.source ?? 'analyse LABUSE'} · Consommation ENAF Cerema (estimé)`} />
               </LigneCarte>
 
@@ -525,6 +593,12 @@ export function ContextePanel() {
                     : d.plu_statut.statut === 'à jour' ? `Le PLU est opposable${d.plu_statut.date_reglement ? ` (approuvé le ${d.plu_statut.date_reglement})` : ''}.`
                       : `Document local — ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${d.plu_statut.date_reglement}` : ''}.`}
                 </p>
+                {/* COMMUNE-FIX-1 (D12) — procédure PLU en cours au dernier relevé Sudocuh (révision, modification…). */}
+                {d.plu_statut.procedure_sudocuh?.etat && (
+                  <p className="mt-1 text-[11px] leading-relaxed text-txt-mut">
+                    <b className="text-txt">Procédure (Sudocuh{d.plu_statut.procedure_sudocuh.millesime ? ` ${d.plu_statut.procedure_sudocuh.millesime}` : ''})</b> : {d.plu_statut.procedure_sudocuh.etat}{d.plu_statut.procedure_sudocuh.prescription ? ` · prescrite le ${d.plu_statut.procedure_sudocuh.prescription}` : ''}.
+                  </p>
+                )}
                 {d.foncier?.repartition_zonage && (() => {
                   const f = d.foncier.repartition_zonage.familles
                   return (
@@ -550,7 +624,6 @@ export function ContextePanel() {
                     <p data-plh-sans-objet className="text-[12px] text-txt-mut">Aucun programme local de l'habitat recensé pour l'intercommunalité {d.epci ?? ''}.</p>
                   )}
                 </div>
-                <button data-voir-plu onClick={() => ouvrirOutil(commune, insee, 'plu')} className="mt-2 text-[11.5px] text-mint hover:underline">Voir le PLU →</button>
                 <Source nom={`${d.plu_statut.source ?? 'GPU'} · Zonage PLU (GPU) · PLH (EPCI)`} />
               </LigneCarte>
 
@@ -572,6 +645,10 @@ export function ContextePanel() {
                       <RowT lbl="TEOM (taux plein)" val={d.fiscalite.teom_pct != null ? `${fmtDec(d.fiscalite.teom_pct)} %` : '—'} />
                     </div>
                   )}
+                  {/* COMMUNE-FIX-1 (D10) — taux communal de la taxe d'aménagement (même source que l'outil Taxe). */}
+                  <div className="flex flex-col gap-0.5 text-[12px]">
+                    <RowT lbl="Taxe d'aménagement (part communale)" val={d.taxe_amenagement?.part_communale_pct != null ? `${fmtDec(d.taxe_amenagement.part_communale_pct)} %` : 'non déterminée'} />
+                  </div>
                   {d.fiscalite?.perime && (
                     <p data-fiscalite-perime className="mt-1 text-[11px] text-st-creuser">Donnée ingérée il y a plus d'un an — à rafraîchir (fichier REI annuel).</p>
                   )}
@@ -579,7 +656,16 @@ export function ContextePanel() {
                     <RowT lbl="Classe de la commune" val={d.zonage_abc ? `zone ${d.zonage_abc.zone}` : 'non déterminée'} />
                     {d.zfang_frr && <RowT lbl="ZFANG" val={d.zfang_frr.zfang.regime === 'renforce' ? 'Régime renforcé' : 'Régime standard'} />}
                     {d.zfang_frr && <RowT lbl="FRR" val={d.zfang_frr.frr.classement === 'totalite' ? 'Classée en totalité' : d.zfang_frr.frr.classement === 'partie' ? 'Classée en partie (les Hauts)' : 'Hors dispositif'} />}
-                    <RowT lbl="Dispositif" val={horsOrt ? 'hors ORT' : (o!.statut === 'acv' ? 'Action Cœur de Ville' : o!.statut === 'pvd' ? 'Petites Villes de Demain' : 'ORT (autre commune signataire)')} />
+                    {/* COMMUNE-FIX-1 (B8) — le libellé distingue les 3 états réels : la commune SIGNATAIRE
+                        d'une ORT (ort_signee), une commune de l'EPCI où existe une ORT mais NON signataire,
+                        ou aucune. Avant : « ORT (autre commune signataire) » — faux pour Saint-Paul, qui
+                        signe l'ORT du TCO. */}
+                    <RowT lbl="Dispositif" val={
+                      horsOrt ? 'Aucune ORT'
+                        : o!.statut === 'acv' ? 'Action Cœur de Ville (signataire)'
+                          : o!.statut === 'pvd' ? 'Petites Villes de Demain (signataire)'
+                            : o!.ort_signee ? 'ORT — commune signataire'
+                              : "ORT dans l'EPCI — commune non signataire"} />
                     <RowT lbl="QPV" val={aucunQpv ? 'aucun' : `${d.qpv.length} quartier(s)`} />
                     <RowT lbl="NPNRU" val={d.anru.length > 0 ? `${d.anru.length} périmètre(s)` : 'aucun'} />
                   </div>
@@ -630,21 +716,20 @@ export function ContextePanel() {
                 sous="services, transport, réseaux"
                 val={undefined}>
                 <p className="text-[12px] leading-relaxed text-txt-mut">Équipements (écoles, santé, commerces), transport public, trafic, fibre, assainissement et productible
-                  solaire de la commune se lisent au plus près dans l'Étude de zone (autour d'un point).</p>
-                <Shortcut label="Étude de zone — habitants, emplois, concurrents" onClick={() => ouvrirOutil(commune, insee, 'etude-zone')} />
+                  solaire de la commune se lisent au plus près dans l'Étude de zone (autour d'un point) — tuile « Étude de zone » en tête de fiche.</p>
                 <Source nom="BPE INSEE · GTFS PAN · OSM · Arcep · INSEE RP · PVGIS (via Étude de zone)" />
               </LigneCarte>
-
-              <button data-voir-plus-outils onClick={() => { const s = useApp.getState(); s.setContexteCommune(null); s.toggleOutils() }}
-                className="mt-2 text-[11.5px] text-mint transition-colors duration-quick hover:underline">Voir tous les outils →</button>
             </div>
 
             {/* FICHE-COMMUNE-2 (C1) — pied : les compteurs sont PRÉCALCULÉS chaque nuit et servis tels quels
                 (ouverture < 500 ms). La date du calcul est dite. `cache_calcule_le === null` = calcul en direct. */}
+            {/* COMMUNE-FIX-1 (A4) — le job nocturne fiche-commune-cache est RÉINSCRIT au registre CRON
+                (précalcul quotidien réel, wrapper run-job.sh) : le pied affiche la VRAIE date du dernier
+                précalcul et peut de nouveau dire « rafraîchis chaque nuit » sans mentir. */}
             <p data-fiche-pied className="px-5 py-3 text-[10.5px] leading-relaxed text-txt-dim">
               {d.cache_calcule_le
                 ? `Compteurs précalculés le ${fmtDateFr(d.cache_calcule_le)} (rafraîchis chaque nuit).`
-                : 'Compteurs calculés en direct (précalcul nocturne à venir).'}
+                : 'Compteurs calculés en direct.'}
               {' '}Données de contexte — aucune n'entre dans le scoring.
             </p>
           </>

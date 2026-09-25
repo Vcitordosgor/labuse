@@ -351,7 +351,7 @@ export function MapView() {
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
-  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, batiVisible, tool, setTool, setProfilLigne, zone, setZone, moduleMap, flyTo, setFlyTo, setPermitToOpen, commune, verdict, iaRestitution, module, comparePicking, view, focusIdu, focusNonce } = useApp()
+  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, batiVisible, tool, setTool, setProfilLigne, zone, setZone, moduleMap, flyTo, setFlyTo, setPermitToOpen, commune, verdict, iaRestitution, module, comparePicking, view, focusIdu, focusNonce, fitCommuneNonce } = useApp()
   const bpeDomains = useApp((s) => s.bpeDomains)   // M137-V — filtre par domaine de la couche BPE
   const ile = commune == null
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
@@ -1220,8 +1220,10 @@ export function MapView() {
     if (ile) { m.fitBounds(ileBounds(communes.data), { padding: pad, duration: 900 }); return }
     const info = communes.data?.find((c) => c.commune === commune)
     if (info?.bbox) m.fitBounds(info.bbox as [number, number, number, number], { padding: pad, duration: 900 })
+    // COMMUNE-FIX-1 (B5) — `fitCommuneNonce` déclenche un refit même si `commune` n'a pas changé (bouton
+    // « Voir ses parcelles » de la fiche, où la commune est déjà la courante).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commune, communes.data, mapReady])
+  }, [commune, communes.data, mapReady, fitCommuneNonce])
 
   useEffect(() => {
     const m = map.current

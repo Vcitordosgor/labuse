@@ -494,6 +494,14 @@ DONNEES: dict[str, Donnee] = {
     reservoirs=("gpu_plu_api_carto", "sudocuh",), portee="live",
     domaine=("RNU", "à jour", "en révision", "en élaboration", "en modification", "document local"),
     domaine_source="_PLU_STATUT (api/fiche_commune.py) + registre RNU (config/rnu_communes.yaml)"),
+ # COMMUNE-FIX-1 (D12) — la PROCÉDURE PLU EN COURS au dernier relevé Sudocuh (état détaillé + date de
+ # prescription + millésime Sudocuh), servie sur la carte Urbanisme. Passe-plat du fichier Sudocuh.
+ "plu_procedure_en_cours": C("Procédure PLU en cours (Sudocuh)", "texte", "commune",
+    "état détaillé de la procédure d'urbanisme au dernier relevé Sudocuh (révision, modification, "
+    "élaboration…), date de prescription et millésime Sudocuh — passe-plat, jamais recalculé",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py:plu_statut",
+    reservoirs=("sudocuh",), portee="live", type="texte",
+    table="sudocuh_procedures (du_en_cours, etat_detaille, prescription_proc)"),
  "zan_reste_ha": C("Enveloppe ZAN (reste)", "nombre", "commune",
     "enveloppe restante estimée depuis conso ENAF",
     moteur="commune_compteurs", calcul="moteur",
@@ -578,10 +586,12 @@ DONNEES: dict[str, Donnee] = {
     reservoirs=("catnat_gaspar",), portee="live", type="liste",
     table="catnat_arretes (détail par insee) + raw (code_national_catnat, date_publication_jo)"),
  "habitants_n": C("Habitants", "nombre", "commune",
-    "population INSEE/Filosofi commune",
-    moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py:123 (population)",
-    reservoirs=("filosofi_carreaux", "insee_rp_logement",), portee="live",
-    table="filosofi_carreaux_200m (Σ ind des carreaux de la commune)"),
+    "population municipale LÉGALE INSEE (recensement), servie via Sudocuh (pop_mun) — COMMUNE-FIX-1 (A1) : "
+    "l'agrégat Filosofi (carreaux fiscaux) sous-estimait la population et n'est plus servi ici (il ne "
+    "sert plus que le niveau de vie)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py (population)",
+    reservoirs=("sudocuh", "insee_rp_logement",), portee="live",
+    table="sudocuh_procedures.pop_mun (population municipale légale INSEE)"),
  "vacance_pct": C("Vacance", "%", "commune",
     "100 × vacants / logements (RP)",
     moteur="commune_compteurs", calcul="moteur",
@@ -1653,6 +1663,14 @@ DONNEES: dict[str, Donnee] = {
     moteur=None, calcul="passe_plat",
     fonction="src/labuse/ingestion/rei.py:rei_commune",
     reservoirs=("dgfip_rei",), portee="live", table="commune_rei (tfpnb_commune_pct, tfpnb_epci_pct)"),
+ # COMMUNE-FIX-1 (D10) — le TAUX communal de taxe d'aménagement (part communale) servi sur la carte
+ # Fiscalité de la fiche commune. MÊME source que l'outil Taxe (taxe_amenagement_taux, DGFiP/DELTA).
+ "taxe_amenagement_communale_pct": C("Taxe d'aménagement (part communale)", "%", "commune",
+    "taux de la part communale de la taxe d'aménagement (délibération communale), même source "
+    "que l'outil Taxe — passe-plat de taxe_amenagement_taux (DGFiP, application DELTA)",
+    moteur="taxe_amenagement", calcul="passe_plat",
+    fonction="src/labuse/api/fiche_commune.py:taxe_amenagement",
+    reservoirs=("taxe_amenagement",), portee="live", table="taxe_amenagement_taux.part_communale_pct"),
  "ort_statut": C("ACV / PVD / ORT", "classe", "commune",
     "statut du dispositif de revitalisation de la commune (table DGALN) + convention ORT "
     "signée (date) + condition communale Denormandie DITE (le périmètre conventionné "

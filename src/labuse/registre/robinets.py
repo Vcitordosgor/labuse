@@ -153,7 +153,9 @@ ROBINETS: dict[str, Robinet] = {
  "fiche_parcelle_fibre": _r("fiche", "Fibre (Réseaux et accès)", "fiche_parcelle",
     "/parcels/{idu} (clé fibre)", "json_puis_js", chiffres=("fibre_parcelle",)),
  "fiche_commune_fiscalite": _r("fiche", "Taxe foncière (REI)", "fiche_commune",
-    "/communes/{commune} (clé fiscalite)", "json_puis_js", chiffres=("tfpb_taux_pct", "tfpnb_taux_pct",)),
+    "/communes/{commune} (clé fiscalite)", "json_puis_js",
+    # COMMUNE-FIX-1 (D10) — + taux communal de taxe d'aménagement (même source que l'outil Taxe).
+    chiffres=("tfpb_taux_pct", "tfpnb_taux_pct", "taxe_amenagement_communale_pct",)),
  "fiche_commune_ort": _r("fiche", "ACV / PVD / ORT — Denormandie", "fiche_commune",
     "/communes/{commune} (clé ort)", "json_puis_js", chiffres=("ort_statut",)),
  # COMMUNE-RANGEMENT-1 lot 4 — la carte ZFANG/FRR de la fiche commune était la seule rendue SANS robinet.
@@ -274,7 +276,8 @@ ROBINETS: dict[str, Robinet] = {
  "fiche_parcelle_confiance": _r("fiche", "Confiance données", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("verdict_icd",)),
  "fiche_commune_regles_urbanisme": _r("fiche", "Règles d'urbanisme", "fiche_commune",
-    "/communes/{c}/contexte", "json_puis_js", chiffres=("statut_plu",)),
+    # COMMUNE-FIX-1 (D12) — + procédure PLU en cours (Sudocuh) sur la carte Urbanisme.
+    "/communes/{c}/contexte", "json_puis_js", chiffres=("statut_plu", "plu_procedure_en_cours",)),
  "fiche_commune_zan": _r("fiche", "Enveloppe ZAN", "fiche_commune",
     "/communes/{c}/contexte", "json_puis_js", chiffres=("zan_reste_ha", "zan_evolution_commune",)),
  "fiche_commune_sru": _r("fiche", "Logement social — SRU", "fiche_commune",

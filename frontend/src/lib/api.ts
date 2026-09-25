@@ -264,12 +264,16 @@ export interface ContexteCommune {
   // OUTILS-6 C5 — les blocs ajoutés, chacun depuis le moteur de son outil d'origine
   marche_annonces: {
     biens: number; seuil_n: number; sous_seuil: boolean
+    // COMMUNE-FIX-1 (A2) — seuil Radar (30) : sous ce seuil, ni médian ni écart (demande_sous_seuil)
+    demande_seuil_n?: number; demande_sous_seuil?: boolean
     prix_demande_median_eur_m2: number | null; prix_demande_n: number | null
     ecart_demande_acte_pct: number | null; prix_acte_eur_m2: number | null; source: string
   } | null
   risques: { ppr_pct: number | null; mouvement_terrain_pct: number | null; catnat_arretes: number; catnat_detail?: { type_peril: string; date_debut: string | null; date_fin: string | null; date_arrete: string | null; code_national: string | null; date_publication_jo: string | null }[]; parc_national: boolean; azi_tri?: { azi: { libelle?: string }[]; tri: { libelle?: string }[]; detail?: string } | null; source: string }
   population: {
     habitants: number | null; menages: number | null; niveau_vie_moyen_eur: number | null
+    // COMMUNE-FIX-1 (A1) — population LÉGALE INSEE (municipale) : millésime + population totale
+    habitants_millesime?: string | null; habitants_pop_totale?: number | null; menages_millesime?: string | null
     logements: number | null; vacants: number | null; vacance_pct: number | null; source: string
     // DONNEES-1 lot 2.4 — part du parc construit avant 1991 (RP2022 ACHL). null = non ingéré.
     parc_ancien_pct?: number | null
@@ -280,6 +284,8 @@ export interface ContexteCommune {
   plu_statut: {
     statut: string; libelle: string | null; procedure?: string | null; date_reglement: string | null
     confiance?: string | null; recherche_verbatim: boolean; source: string | null
+    // COMMUNE-FIX-1 (D12) — procédure PLU en cours au dernier relevé Sudocuh
+    procedure_sudocuh?: { document: string | null; etat: string | null; prescription: string | null; millesime: string | null } | null
   }
   permis_bloc: {
     permis_12m: number; permis_5a: number | null; logements_12m: number | null
@@ -298,6 +304,9 @@ export interface ContexteCommune {
     tfpnb_commune_pct?: number | null; tfpnb_epci_pct?: number | null
     teom_pct: number | null; millesime: string; source: string
     maj_at?: string | null; perime?: boolean } | null
+  // COMMUNE-FIX-1 (D10) — taux communal de la taxe d'aménagement (même source que l'outil Taxe)
+  taxe_amenagement: { part_communale_pct: number | null; millesime?: string | null
+    delib_date?: string | null; perime?: boolean; source: string } | null
   ort: { statut: 'acv' | 'pvd' | 'autre' | 'hors'; commune?: string
     ort_signee: boolean; date_signature?: string | null
     denormandie: string; millesime?: string; source?: string } | null
