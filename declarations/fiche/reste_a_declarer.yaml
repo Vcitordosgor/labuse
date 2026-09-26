@@ -23,6 +23,17 @@ donnees:
     absence: "Adresse non disponible — parcelle non rattachée à une voie (BAN)."
     absence_type: absente_ici
     pourquoi: "L'adresse identifie le bien ; en tête de la fiche."
+  # RETOUCHES-1 (lot A) — le lieu-dit BD NYME (GEOPF-3) servi sous l'adresse (« Secteur : … ») :
+  # déclaré ici pour que V5d tienne (le chiffre secteur_lieu_dit rend le réservoir bd_nyme non-muet, G6).
+  - quoi:  secteur_lieu_dit
+    ou:    { rang: 12, etat: en_tete, section: "Identité" }
+    comment:
+      libelle: "Secteur (lieu-dit)"
+      format:  texte
+      i:       "Toponyme du lieu-dit BD NYME le plus proche (rayon borné 600 m), servi sous l'adresse."
+    absence: "Aucun lieu-dit BD NYME dans le rayon — secteur non nommé."
+    absence_type: absente_ici
+    pourquoi: "Le secteur situe le bien au langage local ; sous l'adresse."
   # EXPORTS-REBRANCHEMENT-1 lot 1 — l'écran (① Identité) montre la dernière vente DVF de la
   # parcelle ; elle était servie au PDF hors déclaration (id des blocs). Déclarée ici.
   - quoi:  prix_achat_historique_eur
