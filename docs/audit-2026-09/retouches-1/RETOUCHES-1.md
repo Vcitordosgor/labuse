@@ -17,7 +17,7 @@ d'entrée OK. Venv `~/Desktop/labuse/.venv`, `PYTHONPATH=src` (l'éditable point
 | B | B.5 — médianes DVF unifiées | ✅ fait — fiche == Étude de zone (voir §B.5) |
 | B | B.8 — badge Estimé au bilan | ✅ fait — badge + source/fenêtre (voir §B.8) |
 | C | C.9–14 — 6 blocs fiche (FICHE-3) | ✅ fait — 6 blocs sourcés (voir §C) |
-| D | D.15 — Gabarit ER/EBC/SUP | ⏳ à faire — plan détaillé §D.15 |
+| D | D.15 — Gabarit : SUP déduit | ✅ fait — SUP dans le moteur (voir §D.15) |
 | D | D.16 — sources `live` | ⏳ à faire — plan détaillé §D.16 |
 | D | D.17 — RGE ALTI VPS (note prod) | note, pas d'action |
 
@@ -209,17 +209,19 @@ RefDrawer + `FactRow`/`Line`, cf. `Fiche.tsx`).
 
 ## Lot D — petits ajouts — ⏳ à faire (plan)
 
-### D.15 — Gabarit ER/EBC/SUP dans le moteur
+### D.15 — Gabarit : SUP déduit du moteur (✅ fait)
 
-Constat : le **résiduel** (`faisabilite/db.py:429-488`, `_GREVE_SUR_ASSIETTE`/`_EMPRISE`) déduit DÉJÀ
-ER + EBC (+ PEB/DPF/ravine/50 pas) de l'assiette. C'est le **moteur gabarit** (`gabarit/engine.py`
-`compute_gabarit`, exclusions construites en `gabarit/builder.py:346-364`) qui n'exclut que le PPR
-rouge — l'outil Gabarit n'affiche donc pas ER/EBC/SUP. **Plan** : ajouter ER (`plu_gpu_prescription`
-subtype 05), EBC (subtype 01) et **SUP** (`kind='sup'`, le seul vraiment absent partout) comme
-`Exclusion` dans `build_gabarit_input` (après le bloc PPR) → le TOUL les montre ; attention à ne pas
-double-compter dans le résiduel (le `_GREVE` sur la zone déjà réduite trouvera ~0 pour ER/EBC).
-**Ne pas relancer de run** (le run suivant les prendra) ; golden avant/après. SUP fait baisser la SDP
-résiduelle là où il intersecte (nouveau).
+ER et EBC sont DÉJÀ retranchés par le résiduel (`faisabilite/db.py` `_GREVE`/`_EMPRISE`). Le **moteur
+unique GEOMETRIE-1** (`compute_gabarit`, exclusions en `gabarit/builder.py`) n'excluait que le PPR
+rouge → le SUP (servitudes d'utilité publique) était ignoré partout. **Correctif** : `build_gabarit_input`
+ajoute une `Exclusion` **type='sup'** (`kind='sup'`, assiette ∩ parcelle, même optimisation
+ST_ClipByBox2D que le PPR) + une règle applicable « Servitudes d'utilité publique » (integrated si
+présente, sinon not_integrated « dit, jamais tue »). Le moteur retranche cette exclusion comme le PPR
+(`engine.py` : `zone = after_setbacks.difference(exclusions)`), donc **le gabarit-outil ET le résiduel**
+(qui lit l'assiette gabarit) en tiennent compte. **Aucun run relancé** — le prochain run résiduel le
+prendra (mandat). Témoin réel : `97415000BH0283` (Saint-Paul) → `exclusions=['sup']` dans l'entrée du
+moteur. Tests `test_builder` : SUP présent → exclusion + règle integrated ; SUP absent → not_integrated
+(82 gabarit verts ; le chemin de soustraction est celui, déjà prouvé, du PPR rouge).
 
 ### D.16 — sources servies en direct (`live`)
 
