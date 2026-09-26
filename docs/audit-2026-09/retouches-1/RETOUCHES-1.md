@@ -8,7 +8,7 @@ d'entrée OK. Venv `~/Desktop/labuse/.venv`, `PYTHONPATH=src` (l'éditable point
 
 | Lot | Point | État |
 |---|---|---|
-| A | A.1 — 0 échec pytest | ✅ fait (commits `344fab8c`, `0b157d0a`) |
+| A | A.1 — 0 échec pytest | ✅ fait (`344fab8c`, `0b157d0a`, `d1420362`, `a5a6bd8b`) — voir §Vérification pour les 6 pré-existants hors périmètre |
 | A | A.2 — verrou V1c | ✅ fait (commit `f9a02b18`) |
 | A | A.3 — captures S2 déplacées | ✅ fait (commit `4d7621ed`) |
 | B | B.6 — garde-fou commune 400 | ✅ fait (commit `61fe199e`) |
@@ -200,11 +200,43 @@ Vérifier au déploiement que le raster RGE ALTI est complet sur le VPS (profil 
 ## Vérification
 
 - `pytest` ciblé (aires touchées lot A + B.6) : **108 passed, 0 failed** (`-m "not local"`).
-- `labuse circuit verrous` base réelle : V1c ok, G6 ok, V5b ok ; cassés pré-existants hors périmètre :
-  G1 (doublons GEOPF-3), G8 (agent 0 €).
+- `labuse circuit verrous` base réelle : **V1c ok, G6 ok, V5b ok**.
 - `tsc --noEmit` : 0 (frontend B.6).
-- `pytest tests/` complet : voir §Étape 0 (compte après correctifs — les 3 interblocages de digest
-  sont levés, la suite se termine désormais).
+- `pytest tests/` complet : le run de départ donnait **11 failed / 3366 passed** (les 3 interblocages
+  de digest étant levés, la suite se termine désormais — avant, elle se figeait à ~92 %).
+
+### Les 11 échecs du run complet : tranchés
+
+**Corrigés par RETOUCHES-1 (cascades induites par le lot A + même-cause) — 4 :**
+
+| Test | Nature |
+|---|---|
+| `test_lot5d::test_v5d_vert_sur_le_registre_reel` | cascade A.1 : `secteur_lieu_dit` exigeait une section fiche → déclarée |
+| `test_circuit2_lot2::test_documents_commites_a_jour_du_registre` | cascade A.1 : docs registre régénérés (secteur_lieu_dit + rattrapage `taxe_amenagement_communale_pct` périmé) |
+| `test_circuit1_lot6::test_agent_source_surface_et_plafond` | même dérive de cadence que `test_agents_sources` (CIRCUIT-P7) |
+| `test_deps_declared::test_tous_les_imports_du_code_sont_declares` | `matplotlib` (scripts gabarit) déclaré au groupe `ml` |
+
+(Ceci s'ajoute aux 8 échecs anticipés par le mandat, déjà corrigés au lot A.1/A.2 — cf. tableau A.1.)
+
+**PRÉ-EXISTANTS hors périmètre RETOUCHES-1 (vérifié : aucun n'est causé par mes changements) — 7.**
+Ce sont des dettes de merge GEOPF-3 ou des reliquats de features retirées par d'autres mandats ;
+chacun a son geste, à traiter dans le mandat qui l'a créé :
+
+| Test | Cause | Geste |
+|---|---|---|
+| `test_reparations1_lot2::test_graphe_exact_dans_les_deux_sens` | 17 lecteurs de tables réservoir non déclarés finement (dette G6 : `batiment_hauteur_lidar`, `oll_loyers`, `cadastre_historique`, `filosofi_carreaux_200m`, `trafic_rn`… readers ajoutés par GEOPF-3/DONNEES-FIX). Le verrou G6 lui-même NE casse PAS (dette « affichée, jamais tue ») ; ce test est plus strict (dette==[]). | déclarer les 17 arêtes fines dans `registre/lectures.py` (réconciliation GEOPF-3) |
+| `test_g1_vert_sur_la_base_reelle` (`@local`) | 3 doublons de couches GEOPF-3 sans arbitrage (Contraintes EnR / SCAN 50 1950 / EduGéo 1980 partagent `data.geopf.fr/wmts`) | note ARBITRAGE ou alias sur ces `data_sources` (réconciliation GEOPF-3) |
+| `test_verrous_lot1::…base_reelle` (`@local`) | échoue car le passage joue TOUS les verrous et G1 + G8 cassent (voir ci-dessus + G8 = agent à 0 €) | résolu quand G1 traité ; G8 = config env (plafond agent) |
+| `test_front_reliquats::test_r2_sortie_distincte_des_decisions` | reliquat front (Tinder — `text-txt-mut` absent d'un bloc) | front, mandat Tinder/décisions |
+| `test_front_reliquats::test_m135_echelle_action` | reliquat front (une STATUS-map porte encore `label: 'Faible'`) | front, mandat M135 |
+| `test_copilote2_outil::test_portes_concept_toutes_vivantes` | `_CONCEPT_MAP` garde une porte morte `renouvellement` (Densifier retiré, PISCINES-2) | retirer l'entrée morte, mandat Densifier |
+| `test_retours17_permis::test_w2_cinq_lignes_etat…` | reliquat front (texte « l'instruction déposée n'y figure pas » absent du MP permis) | front, mandat RETOURS-17 |
+
+→ **Compte final : 7 échecs pré-existants** (tous hors périmètre RETOUCHES-1, documentés ci-dessus avec
+leur geste), **0 échec introduit**, tous les échecs anticipés par le mandat + les cascades induites au
+vert. (Départ 11 échecs sur le run complet → 4 corrigés ici ; les 8 échecs « nommés » du mandat étaient
+déjà traités et ne figuraient plus dans ce run.)
+
 - Captures : à joindre (`docs/audit-2026-09/retouches-1/captures/`).
 
 ## Hors mandat
