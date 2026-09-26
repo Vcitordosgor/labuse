@@ -1330,6 +1330,15 @@ export function Fiche({ idu }: { idu: string }) {
                     scoring). R6 : `pm` dit au composant si la parcelle a un propriétaire moral —
                     absence de timeline = ligne honnête (PM) ou silence justifié (PP). */}
                 <ProprietaireHistorique h={f.proprietaire_historique} pm={!!f.proprietaire_moral} />
+                {/* RETOUCHES-1 lot C.14 — ancienneté de détention : PM = millésimes DGFiP (1ʳᵉ apparition
+                    du SIREN) ; PP = dernière mutation DVF (jamais nommée). « sans objet » si inconnue. */}
+                {f.anciennete_detention?.disponible && (
+                  <div data-anciennete className="text-[11.5px] text-txt-mut">
+                    Propriétaire actuel depuis <b className="text-txt">≥ {f.anciennete_detention.depuis_ans} an{(f.anciennete_detention.depuis_ans ?? 0) > 1 ? 's' : ''}</b>
+                    {f.anciennete_detention.depuis_annee ? <span> (depuis {f.anciennete_detention.depuis_annee})</span> : null}
+                    <span className="text-txt-dim"> — {f.anciennete_detention.source}{f.anciennete_detention.millesime ? ` · ${f.anciennete_detention.millesime}` : ''}</span>
+                  </div>
+                )}
                 {/* M125-2 — copropriété(s) RNIC rattachées (donnée réelle, cible bailleur/copro) */}
                 {f.coproprietes && f.coproprietes.length > 0 && <CoproprietesBlock copros={f.coproprietes} />}
                 {/* M60 P1c — PORTE en pied : Scan patrimoine PRÉ-REMPLI (SIREN du propriétaire). */}

@@ -549,6 +549,13 @@ export interface Fiche {
     tfpb_commune_pct: number | null; tfpb_epci_pct: number | null; teom_pct: number | null
     millesime: string; maj_at?: string | null; perime?: boolean; source: string
   } | null
+  // RETOUCHES-1 lot C (FICHE-3) — six blocs sourcés/millésimés, `disponible=false` = « sans objet ».
+  cartofriches?: { disponible: boolean; friches: { nom: string | null; statut: string | null; type: string | null; etat: string | null; surface_m2: number | null }[]; source: string; millesime: string } | null
+  loyers_oll?: { disponible: boolean; zone?: number; loyer_median_eur_m2?: number; par_type?: Record<string, number> | null; n_obs?: number | null; source: string; millesime: string } | null
+  trafic_rn?: { disponible: boolean; route?: string; tmja?: number; poids_lourds?: number | null; distance_m?: number | null; rayon_m?: number; source: string; millesime: string | null } | null
+  catnat?: { disponible: boolean; total: number; arretes: { peril: string | null; date_arrete: string | null; debut: string | null; fin: string | null }[]; source: string; millesime: string } | null
+  pm_voisines?: { disponible: boolean; rayon_m: number; mois: number; acquereurs: { denomination: string | null; siren: string | null; date: string | null }[]; source: string; millesime: string } | null
+  anciennete_detention?: { disponible: boolean; type?: string; denomination?: string | null; siren?: string | null; depuis_annee?: number; depuis_ans?: number; source: string; millesime: string | null } | null
 }
 
 // FICHE-1 lot 1 — bloc « Le bien » (producteur bati.le_bien_block).

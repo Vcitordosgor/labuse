@@ -106,6 +106,49 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
             </div>
           </div>
         )}
+        {/* RETOUCHES-1 lot C.9 — CARTOFRICHES : la parcelle recoupe-t-elle une friche recensée ? */}
+        {f.cartofriches && (
+          <div data-cartofriches>
+            <GroupLabel>Friche recensée (Cartofriches)</GroupLabel>
+            {f.cartofriches.disponible ? (
+              <div className="flex flex-col gap-1 text-[12.5px]">
+                {f.cartofriches.friches.map((fr, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span aria-hidden className="mt-1.5 shrink-0 text-st-creuser">▲</span>
+                    <div className="min-w-0 flex-1">
+                      <span className="font-semibold">{fr.nom ?? 'Friche'}</span>
+                      {fr.statut && <span className="text-txt-mut"> — {fr.statut}</span>}
+                      {fr.surface_m2 != null && <span className="text-txt-mut"> · {fr.surface_m2.toLocaleString('fr-FR')} m²</span>}
+                      {fr.etat && <div className="text-[11.5px] text-txt-mut">{fr.etat}</div>}
+                    </div>
+                  </div>
+                ))}
+                <div className="text-[11px] text-txt-dim">{f.cartofriches.source} · {f.cartofriches.millesime}</div>
+              </div>
+            ) : (
+              <div className="text-[12px] text-txt-dim"><span className="text-mint">✓</span> Sans objet — parcelle non recensée comme friche. <span className="text-txt-dim">({f.cartofriches.millesime})</span></div>
+            )}
+          </div>
+        )}
+        {/* RETOUCHES-1 lot C.12 — CatNat : les 5 arrêtés de catastrophe naturelle les plus récents. */}
+        {f.catnat && (
+          <div data-catnat>
+            <GroupLabel>Catastrophes naturelles (arrêtés)</GroupLabel>
+            {f.catnat.disponible ? (
+              <div className="flex flex-col gap-1 text-[12.5px]">
+                {f.catnat.arretes.map((a, i) => (
+                  <div key={i}>
+                    <span className="font-semibold">{a.peril}</span>
+                    {a.date_arrete && <span className="text-txt-mut"> — arrêté du {a.date_arrete.split('-').reverse().join('/')}</span>}
+                  </div>
+                ))}
+                <div className="text-[11px] text-txt-dim">{f.catnat.total} arrêté{f.catnat.total > 1 ? 's' : ''} au total (commune) · {f.catnat.source}</div>
+              </div>
+            ) : (
+              <div className="text-[12px] text-txt-dim"><span className="text-mint">✓</span> Sans objet — aucun arrêté CatNat pour la commune. <span className="text-txt-dim">({f.catnat.source})</span></div>
+            )}
+          </div>
+        )}
         {/* AUTRES VIGILANCES (hors aléas structurés) — chaque ligne marquée d'une puce ambre.
             RETOURS-20 Z1·02 — le titre encadré (font-mono caps) devient un KICKER partagé (GroupLabel). */}
         {autresVig.length > 0 && (

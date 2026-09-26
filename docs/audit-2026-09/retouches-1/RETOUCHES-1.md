@@ -16,7 +16,7 @@ d'entrée OK. Venv `~/Desktop/labuse/.venv`, `PYTHONPATH=src` (l'éditable point
 | B | B.4 — Assemblage sur l'union | ✅ fait — SDP union 1017→1394 m², une VRD (voir §B.4) |
 | B | B.5 — médianes DVF unifiées | ✅ fait — fiche == Étude de zone (voir §B.5) |
 | B | B.8 — badge Estimé au bilan | ✅ fait — badge + source/fenêtre (voir §B.8) |
-| C | C.9–14 — 6 blocs fiche (FICHE-3) | ⏳ à faire — plan détaillé §C |
+| C | C.9–14 — 6 blocs fiche (FICHE-3) | ✅ fait — 6 blocs sourcés (voir §C) |
 | D | D.15 — Gabarit ER/EBC/SUP | ⏳ à faire — plan détaillé §D.15 |
 | D | D.16 — sources `live` | ⏳ à faire — plan détaillé §D.16 |
 | D | D.17 — RGE ALTI VPS (note prod) | note, pas d'action |
@@ -182,9 +182,16 @@ Témoin CV1498 : « 4 246 €/m² [Estimé] — DVF (ventes actées, appartement
 
 ---
 
-## Lot C — ce qui manque à la fiche (FICHE-3) — ⏳ à faire (plan)
+## Lot C — ce qui manque à la fiche (FICHE-3) — ✅ fait
 
-Tables déjà en base (FICHE-AUDIT-2 §3) et fonctions de lecture repérées :
+Six blocs ajoutés à la fiche : back `api/fiche_blocs3.py` (une fonction par bloc, sourcée/millésimée,
+`disponible=False` = « sans objet », **garde `_has` sur les tables** — une source non ingérée ne lance
+jamais une requête qui échoue), branchés dans le payload `_q_v2_fiche` ; front dans LA section choisie
+(source + millésime + « sans objet » quand vide). Témoin BZ1065 (Saint-Denis) : CatNat **21 arrêtés**
+(5 servis) et **acquéreurs PM voisins** (GERER IMMOBILIER RÉUNION, LMA…) présents ; Cartofriches / OLL /
+trafic RN / ancienneté « sans objet » sur ce témoin (données absentes pour cette parcelle).
+
+Tables déjà en base (FICHE-AUDIT-2 §3) et fonctions de lecture :
 
 | # | Bloc | Section choisie (pourquoi) | Table / fonction |
 |---|---|---|---|
