@@ -793,6 +793,15 @@ def _barometre_data(db: Session, insee: str | None = None) -> dict:
     if insee:
         nom = db.execute(text("SELECT commune FROM parcels WHERE left(idu, 5) = :i LIMIT 1"),
                          {"i": insee}).scalar()
+        # COMMUNE-124 (garde-fou RETOUCHES-1 lot B) — un `insee` fourni qui ne résout AUCUNE commune
+        # (code POSTAL passé à la place de l'INSEE cadastral, ou code hors des 24 communes) rendrait le
+        # filtre `commune = :nom` INERTE → les séries ancien/permis/écartées deviendraient ÎLE ENTIÈRE,
+        # servies en silence (CP 97440 → 2 738 €/m² île au lieu de 1 600 pour Saint-André réel). On
+        # refuse explicitement plutôt que de mentir : le front affiche « commune inconnue ».
+        if nom is None:
+            raise HTTPException(
+                400, f"Commune inconnue : « {insee} » n'est pas l'INSEE cadastral d'une des 24 communes "
+                     "de La Réunion (un code postal n'est pas un code INSEE).")
     par = {"nom": nom, "insee": insee}
     dvf = db.execute(text(f"""
         SELECT to_char(date_trunc('quarter', date_mutation), 'YYYY"T"Q') AS trimestre,

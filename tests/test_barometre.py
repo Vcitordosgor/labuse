@@ -76,3 +76,29 @@ def test_prix_ancien_source_unique_pdf_vs_comparateur(db_session):
                                             "deficit_sru": 0.15, "pression_zan": 0.10, "prix_neuf": 0.15})
     tv = next((r for r in out["communes"] if r["commune"] == "Testville"), None)
     assert tv is not None and tv["prix_ancien"] == 3000
+
+
+# ── COMMUNE-124 (RETOUCHES-1 lot B) — garde-fou : un code qui ne résout aucune commune (code postal
+#    passé pour l'INSEE, ou code hors des 24) doit lever 400, JAMAIS retomber sur l'île en silence. ──
+
+@pytest.mark.db
+def test_barometre_commune_inconnue_leve_400(db_session):
+    from fastapi import HTTPException
+
+    from labuse.api import moteurs
+    _wkt = "POLYGON((55.4 -21.0,55.4003 -21.0,55.4003 -20.9997,55.4 -20.9997,55.4 -21.0))"
+    db_session.execute(text(
+        "INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2, centroid, bbox) VALUES "
+        "('97499000CI0001','Testville','S','1', ST_GeomFromText(:w,4326),"
+        " ST_Transform(ST_GeomFromText(:w,4326),2975), 500,"
+        " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326))) ON CONFLICT (idu) DO NOTHING"),
+        {"w": _wkt})
+    # (1) code introuvable (aucune parcelle left(idu,5)=ce code — ex. un code postal) → 400 explicite
+    with pytest.raises(HTTPException) as ei:
+        moteurs._barometre_data(db_session, insee="00000")
+    assert ei.value.status_code == 400 and "inconnue" in (ei.value.detail or "").lower()
+    # (2) île entière (insee None) reste servie — le défaut n'est pas cassé
+    assert "île entière" in moteurs._barometre_data(db_session)["perimetre"]
+    # (3) un INSEE qui RÉSOUT sert SES chiffres (périmètre = nom de commune, jamais l'île)
+    d = moteurs._barometre_data(db_session, insee="97499")
+    assert d["insee"] == "97499" and d["commune"] == "Testville" and "île entière" not in d["perimetre"]

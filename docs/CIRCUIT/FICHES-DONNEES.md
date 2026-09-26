@@ -1,6 +1,6 @@
 # FICHES — donnée par donnée (commune · annonce · propriétaire · soleil)
 
-*Généré du registre le 2026-09-20 par `labuse registre fiche autres` (même format que FICHE-PARCELLE-DONNEES.md, plus court).*
+*Généré du registre le 2026-09-26 par `labuse registre fiche autres` (même format que FICHE-PARCELLE-DONNEES.md, plus court).*
 
 # Fiche commune
 
@@ -41,6 +41,8 @@
 | | | *taux de TFPB appliqué sur la commune (E12 du REI) + part EPCI (E32) + TEOM (F22) — impositions primitives, passe-plat du fichier DGFiP* | | | | | |
 | `tfpnb_taux_pct` | nombre | Taxe foncière non bâti (taux TFPNB) | dgfip_rei (REI 2025 (impositions primitives) — 24/24 communes) | passe-plat · src/labuse/ingestion/rei.py:rei_commune — table lue : commune_rei (tfpnb_commune_pct, tfpnb_epci_pct) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *taux de TFPNB appliqué sur la commune (B12 du REI) + part EPCI (B32) — impositions primitives, passe-plat du fichier DGFiP (foncier non bâti = terrain)* | | | | | |
+| `taxe_amenagement_communale_pct` | nombre | Taxe d'aménagement (part communale) | taxe_amenagement | moteur `taxe_amenagement` · src/labuse/api/fiche_commune.py:taxe_amenagement — table lue : taxe_amenagement_taux.part_communale_pct | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *taux de la part communale de la taxe d'aménagement (délibération communale), même source que l'outil Taxe — passe-plat de taxe_amenagement_taux (DGFiP, application DELTA)* | | | | | |
 
 ## ACV / PVD / ORT — Denormandie
 
@@ -70,6 +72,10 @@
 |---|---|---|---|---|---|---|---|
 | `statut_plu` | classe — domaine : RNU, à jour, en révision, en élaboration, en modification, document local | Règles d'urbanisme (statut) | gpu_plu_api_carto (GPU/PLU par commune (révisions — détail en fiche)), sudocuh (Sudocuh — état au 31/12/2024 (Licence Ouverte 2.0)) | moteur `plu_destinations` · src/labuse/api/fiche_commune.py:137-144 | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
 | | | *RNU (registre) l'emporte ; sinon statut du registre veille_plu* | | | | | |
+| `plu_procedure_en_cours` | texte | Procédure PLU en cours (Sudocuh) | sudocuh (Sudocuh — état au 31/12/2024 (Licence Ouverte 2.0)) | passe-plat · src/labuse/api/fiche_commune.py:plu_statut — table lue : sudocuh_procedures (du_en_cours, etat_detaille, prescription_proc) | live | servie · non déterminée · non calculée | nulle part ailleurs |
+| | | *état détaillé de la procédure d'urbanisme au dernier relevé Sudocuh (révision, modification, élaboration…), date de prescription et millésime Sudocuh — passe-plat, jamais recalculé* | | | | | |
+| `scot_nom_date` | texte | SCOT (nom + approbation) | scot_gpu (GPU — périmètres SCOT (idurba CNIG par document)) | passe-plat · src/labuse/api/fiche_commune.py:scot_commune — table lue : spatial_layers (kind=scot) — fabrication : requete | live | servie · non déterminée · non calculée | nulle part ailleurs |
+| | | *Schéma de Cohérence Territoriale couvrant la commune (GPU) — nom + date d'approbation* | | | | | |
 
 ## Enveloppe ZAN
 
@@ -210,16 +216,16 @@
 
 | id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
 |---|---|---|---|---|---|---|---|
-| `habitants_n` | nombre | Habitants | filosofi_carreaux (millésime 2021), insee_rp_logement | passe-plat · src/labuse/api/fiche_commune.py:123 (population) — table lue : filosofi_carreaux_200m (Σ ind des carreaux de la commune) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
-| | | *population INSEE/Filosofi commune* | | | | | |
+| `habitants_n` | nombre | Habitants | sudocuh (Sudocuh — état au 31/12/2024 (Licence Ouverte 2.0)), insee_rp_logement | passe-plat · src/labuse/api/fiche_commune.py (population) — table lue : sudocuh_procedures.pop_mun (population municipale légale INSEE) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *population municipale LÉGALE INSEE (recensement), servie via Sudocuh (pop_mun) — COMMUNE-FIX-1 (A1) : l'agrégat Filosofi (carreaux fiscaux) sous-estimait la population et n'est plus servi ici (il ne sert plus que le niveau de vie)* | | | | | |
 | `vacance_pct` | nombre | Vacance | insee_rp_logement | moteur `commune_compteurs` · src/labuse/registre/moteurs/commune.py:vacance_pct | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *100 × vacants / logements (RP)* | | | | | |
 | `autres_loges_pct` | nombre | logés gratuitement | insee_rp_logement | moteur `commune_compteurs` · src/labuse/registre/moteurs/commune.py:autres_loges_pct | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *100 − locataires_pct − proprietaires_pct (INSEE RP), arrondi 0,1, plancher 0 — calculé au SERVEUR (lot 2.4, avant : ContextePanel.tsx:526)* | | | | | |
 | `parc_social_rpls_logements` | nombre | Parc social (logements RPLS) | rpls_sdes | passe-plat · src/labuse/api/app.py (marche_secteur — rpls_commune) — table lue : rpls_commune (nb_logements, construct_median) | live | servie · non couverte (n sous seuil, dit) · non calculée | fiche « Marché et secteur » |
 | | | *nombre de logements locatifs sociaux de la commune (RPLS SDES, millésime 01/01/2025) — contexte marché de la fiche commune, du Flash et du PDF, jamais un signal scoring* | | | | | |
-| `parc_ancien_pct` | nombre | Parc construit avant 1991 | insee_rp2022_egoul | passe-plat · src/labuse/api/fiche_commune.py:_parc_ancien_pct — table lue : rp_logement_commune | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
-| | | *part (%) du parc de logements achevé avant 1991 (RP2022, distribution ACHL : A/B = ancien) — DONNEES-1 lot 2.4* | | | | | |
+| `parc_ancien_pct` | nombre | Parc construit avant 1991 | insee_rp2022_egoul (RP2022 — fichier détail Logements, publié le 16/10/2025 (INSEE)) | passe-plat · src/labuse/api/fiche_commune.py:_parc_ancien_pct — table lue : rp_logement_commune | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *part (%) du parc de logements achevé avant 1991 (RP2022, distribution ACHL : A/B = ancien) — stock ancien, indicatif du potentiel de rénovation ; le reste des variables logement RP2022 est déjà servi via commune_insee_logement / IRIS / RPLS (doublon)* | | | | | |
 
 ## Quartiers prioritaires
 

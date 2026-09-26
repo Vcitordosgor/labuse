@@ -138,4 +138,5 @@ def test_agent_source_surface_et_plafond():
     # par défaut » n'est plus porté par une cadence « désactivé » mais par le PLAFOND
     # LABUSE_AGENT_PLAFOND_EUR (défaut 0 € = ne dépense rien), annoncé par le titre « plafonné ».
     j = JOBS["agents-sources"]
-    assert j.cadence == "hebdo (dim)" and "plafonné" in j.titre.lower()
+    # CIRCUIT-P7 (reporté RETOUCHES-1 lot A) — cadence « 1 semaine sur 2 » = « tous les 15 j (dim) ».
+    assert j.cadence == "tous les 15 j (dim)" and "plafonné" in j.titre.lower()

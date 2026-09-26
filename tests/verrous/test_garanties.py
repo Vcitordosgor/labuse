@@ -82,15 +82,17 @@ def test_g1_vert_sur_la_base_reelle():
 
 
 # ── G2 — visible ou pas, je le sais ────────────────────────────────────────────────────
-def test_g2_etat_invisible_sort_rouge():
-    """La branche INVISIBLE de etat_reservoir : avec le drapeau → rouge ; sans → « à jour »
-    (mint) — c'était l'état AVANT le branchement : le mensonge DPE, prouvé ici."""
+def test_g2_invisible_hors_pastille():
+    """CIRCUIT-P4/P6 (RETOUCHES-1 lot A) — refonte du vocabulaire de fraîcheur à CINQ mots :
+    « INVISIBLE » (branchée mais vide) n'est PLUS un état de FRAÎCHEUR et ne colore plus la
+    pastille de la page Sources — la mesure de remplissage reste portée par la page de détail du
+    réservoir (cf. commentaire de `etat_reservoir`). Le drapeau `invisible` n'est donc plus lu :
+    l'état rendu est le même avec ou sans lui. La garantie G2 « visible ou pas, je le sais » est
+    tenue par `verrou_g2` sur la base réelle (test @local ci-dessous)."""
     from labuse.circuit_etats import etat_reservoir
-    avec = etat_reservoir({"invisible": True, "mode": "cron_mensuel",
-                           "veille": {"statut": "ok"}, "filtre": {}})
-    sans = etat_reservoir({"mode": "cron_mensuel", "veille": {"statut": "ok"}, "filtre": {}})
-    assert avec == ("rouge", "INVISIBLE — branchée mais vide")
-    assert sans == ("mint", "à jour"), "sans le drapeau, la page disait « à jour » sur une vide"
+    base = {"mode": "cron_mensuel", "veille": {"statut": "ok", "passage": "2026-09-20"}}
+    assert etat_reservoir(base) == ("mint", "à jour")
+    assert etat_reservoir({**base, "invisible": True}) == ("mint", "à jour")
 
 
 @pytest.mark.local
@@ -219,13 +221,18 @@ def test_g4_vert_et_vide_jamais_a_jour():
 
 
 # ── G5 — date du dernier contrôle ──────────────────────────────────────────────────────
-def test_g5_jamais_verifie_est_rouge():
+def test_g5_jamais_verifie_est_gris():
+    """CIRCUIT-P4/P6 (RETOUCHES-1 lot A) — dérive de libellé reconciliée sur la valeur SERVIE :
+    « jamais vérifiée » est GRIS (un trou de vérification, pas une action rouge) ; un dépôt manuel
+    jamais alimenté est lui aussi GRIS « jamais vérifiée ». Ce sont les cinq mots de la page Sources
+    (`etat_reservoir`, `ETATS_SOURCE`). La garantie G5 (date du dernier contrôle, ROUGE dans la
+    PREUVE du verrou) est tenue par `verrou_g5` sur la base réelle (test @local ci-dessous)."""
     from labuse.circuit_etats import etat_reservoir
-    assert etat_reservoir({}) == ("rouge", "jamais vérifié")           # sans sonde
+    assert etat_reservoir({}) == ("gris", "jamais vérifiée")           # sans sonde
     assert etat_reservoir({"veille": {"statut": None, "passage": None}}) == \
-        ("rouge", "jamais vérifié")                                     # sonde jamais passée
+        ("gris", "jamais vérifiée")                                     # sonde jamais passée
     depot = etat_reservoir({"veille": {"statut": "ok"}, "mode": "depot_manuel"})
-    assert depot == ("gris", "dépôt manuel — jamais alimenté")          # dépôt sans date : DIT
+    assert depot == ("gris", "jamais vérifiée")                         # dépôt sans date : DIT (gris)
 
 
 @pytest.mark.local

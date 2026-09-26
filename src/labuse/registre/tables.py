@@ -158,9 +158,11 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                 millesime="Décret n° 2026-421 du 29 mai 2026 (LF 2026, art. 18)"),
     "frr_ex_zrr": Rt(("spatial_layers", "territoire_fiscal_commune"), couches=("frr",),
                      millesime="ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017"),
-    "taxe_amenagement": Rt(("taxe_amenagement_taux",),
+    "taxe_amenagement": Rt(("taxe_amenagement_taux", "taxe_amenagement_secteur"),
                            millesime="taux communaux DGFiP DELTA — 24/24 communes (part communale "
-                                     "1→5 %, part départementale 2,5 %), ingérés le 08/09/2026",
+                                     "1→5 %, part départementale 2,5 %), ingérés le 08/09/2026 ; "
+                                     "secteurs à taux majoré par parcelle (taxe_amenagement_secteur, "
+                                     "TAXE-FIX-1 : Saint-Leu 14 %, Trois-Bassins 20 %…)",
                            note="SOURCES-CORRECTION-1 lot 3 : note « a_faire — taux à saisir » PÉRIMÉE "
                                 "— la table taxe_amenagement_taux est remplie (24/24, jeu ouvert "
                                 "delta_deliberation_tam, `labuse ingest-taxe-amenagement`)."),
@@ -359,6 +361,9 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "residuel_runs": "résiduel (manifeste)",
     "mvt_parcels": "build-mvt (tuiles parcelles)",
     "mvt_meta": "build-mvt (pointeurs)",
+    # CARTE-VITESSE-2 lot A (réconcilié RETOUCHES-1 lot A) — cache persistant des tuiles MVT z9-z11 de
+    # l'île, pré-généré par `labuse tiles-warm` et servi par /map/tiles (perf carte). Artefact de build.
+    "mvt_tile_cache": "cache tuiles MVT pré-générées z9-z11 (labuse tiles-warm, CARTE-VITESSE-2)",
     # COUCHES-TUYAU-1 / COUCHES-RECETTE-1 : tables dérivées du TUYAU vectoriel (fabriquées par les
     # build_* de api/couches_tuyau.py, reconstruites au run — pas des réservoirs). Enregistrées ici
     # pour qu'elles appartiennent à la carte (V1c) et ne soient plus des orphelines.

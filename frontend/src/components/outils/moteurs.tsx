@@ -631,6 +631,15 @@ export function M18() {
         </select>
         <span className="text-[10px] text-txt-dim">{d?.perimetre ?? ''} — 8 derniers trimestres.</span>
       </div>
+      {/* COMMUNE-124 (RETOUCHES-1 lot B) — le back refuse désormais un code qui ne résout aucune commune
+          (code postal, code hors 24) par un 400 explicite au lieu de servir l'île entière en silence.
+          Le sélecteur ci-dessus n'émet que des INSEE valides ; ce message est le filet (partenaires API,
+          régression) : on AFFICHE « commune inconnue » plutôt qu'un tableau vide muet. */}
+      {q.isError && (
+        <p className="text-[10.5px] text-st-ecartee">
+          {(q.error as { detail?: string } | null)?.detail ?? 'Commune inconnue.'}
+        </p>
+      )}
       {nr && (nr.prix_m2_neuf != null ? (
         <p className="text-[10.5px] text-txt-dim">Neuf : <b className="text-txt">~{fmt(nr.prix_m2_neuf)} €/m²</b> (référence actuelle, sur {fmt(nr.n)} ventes)
           <Tip garder tip="La VEFA (neuf) est trop rare dans DVF (0-4 ventes/trimestre) pour une série trimestrielle honnête : on sert le prix de sortie neuf ACTUEL (référence île), pas une fausse courbe."><span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span></Tip>
