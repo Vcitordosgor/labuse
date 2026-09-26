@@ -250,7 +250,9 @@ ROBINETS: dict[str, Robinet] = {
  # FICHE-RANGEMENT-1 Lot 3 — + exposition_versant : la tuile « Exposition » de l'en-tête sert cette
  # donnée (RGE ALTI) ; elle entre au graphe (orpheline du registre déclarée).
  "fiche_parcelle_entete": _r("fiche", "En-tête (adresse, géométrie)", "fiche_parcelle",
-    "/parcels/{idu}", "json_puis_js", chiffres=("adresse_ban", "parcelle_geometrie", "exposition_versant",)),
+    "/parcels/{idu}", "json_puis_js",
+    # RETOUCHES-1 (lot A) — `secteur_lieu_dit` (BD NYME) servi sous l'adresse (« Secteur : … »).
+    chiffres=("adresse_ban", "parcelle_geometrie", "exposition_versant", "secteur_lieu_dit",)),
  "fiche_parcelle_urbanisme": _r("fiche", "Règlement d'urbanisme (zones + extraits)", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("reglement_plu_bloc", "zone_plu_famille",)),
  "fiche_parcelle_dispositifs": _r("fiche", "Dispositifs et périmètres (QPV, ANRU, ZFANG, FRR)", "fiche_parcelle",
