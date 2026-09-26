@@ -214,9 +214,23 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
                 secteur avec repli) : à distinguer du « marché ancien commune » affiché sur le Kanban. */}
             {!hideSource && (
               <p className="text-[11px] text-txt-dim">
-                LABUSE (sourcé) : SHAB vendable <b className="tnum text-txt">{fmtInt(Number(d.shab_vendable_m2))} m²</b> <span className="text-txt-dim">({PERIM_POTENTIEL_COURT})</span> ·
-                <span> prix de sortie neuf</span> <b className="tnum text-txt">{fmtInt(Number(d.prix_sortie_median))} €/m²</b> ·
+                LABUSE : SHAB vendable <b className="tnum text-txt">{fmtInt(Number(d.shab_vendable_m2))} m²</b> <span className="text-txt-dim">({PERIM_POTENTIEL_COURT})</span> ·
+                <span> prix de sortie</span> <b className="tnum text-txt">{fmtInt(Number(d.prix_sortie_median))} €/m²</b>
+                {/* RETOUCHES-1 (lot B.8) — le prix DVF est une MÉDIANE (estimé), pas une valeur sourcée
+                    par bien : badge « Estimé » (comme Comparer) + source/fenêtre en sous-ligne. */}
+                <span className="ml-1 rounded bg-st-creuser/10 px-1 py-0.5 align-middle text-[8.5px] font-medium text-st-creuser">Estimé</span> ·
                 terrain <b className="tnum text-txt">{fmtInt(Number(d.terrain_m2))} m²</b>
+              </p>
+            )}
+            {/* RETOUCHES-1 (lot B.8) — la SOURCE et la FENÊTRE du prix de sortie DVF, sous la ligne. */}
+            {!hideSource && d.marche?.median != null && (
+              <p data-prix-sortie-source className="text-[10px] text-txt-dim">
+                Prix de sortie <span className="text-st-creuser">Estimé</span> — DVF (ventes actées{d.marche.type_prix ? `, ${d.marche.type_prix}` : ''})
+                {d.marche.n != null ? ` · ${fmtInt(Number(d.marche.n))} vente${Number(d.marche.n) > 1 ? 's' : ''}` : ''}
+                {d.marche.rayon_m ? ` · rayon ${fmtInt(Number(d.marche.rayon_m))} m` : ''}
+                {Array.isArray(d.marche.periode) && d.marche.periode.length === 2
+                  ? ` · ${d.marche.periode[0]}–${d.marche.periode[1]}`
+                  : (d.marche.periode ? ` · ${String(d.marche.periode)}` : '')}.
               </p>
             )}
             {/* DIRE LE COÛT-PLANCHER : le coût de construction porte sur la SDP de PLANCHER (vendable

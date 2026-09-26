@@ -241,9 +241,10 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         "gain_ratio": gain_ratio, "gain_pct": gain_pct,
         "logements_combine": agg["logements"], "n_chiffrables": agg["n_chiffrables"],
         "ca": agg["ca"], "charge_fonciere": agg["charge_fonciere"],
-        "note_sdp": "Capacité et bilan CUMULÉS par agrégation des parcelles. À la fusion, les reculs "
-                    "INTERNES disparaissent — l'assiette réelle porte GÉNÉRALEMENT PLUS que cette "
-                    "estimation ; les seuils d'ensemble (mixité, pleine terre) restent à instruire.",
+        "note_sdp": "Capacité et bilan calculés sur l'UNION des géométries (ASSEMBLAGE-2) : une seule "
+                    "assiette (reculs INTERNES supprimés à la fusion), un seul moteur de capacité, une "
+                    "seule VRD sur l'emprise réellement aménagée de l'ensemble. Accords, propriétaires "
+                    "et faisabilité restent à vérifier.",
         # #2 — valorisation (référentiel unique prix terrain nu de zone)
         "terrain_zone_eur_m2": (terrain_zone or {}).get("eur_m2"),
         "terrain_zone_fiabilite": (terrain_zone or {}).get("fiabilite"),

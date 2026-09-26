@@ -41,6 +41,7 @@ from .limites import classify_parcel_limits
 CADASTRE_PROVIDER = "DGFiP — cadastre (PCI)"
 PLU_PROVIDER = "LABUSE — règlement PLU validé (config/plu_destinations)"
 PPR_PROVIDER = "DEAL Réunion — PPR (zonage réglementaire)"
+SUP_PROVIDER = "GPU / API Carto — servitudes d'utilité publique (assiettes)"
 
 
 @dataclass
@@ -362,6 +363,30 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             if geo.get("coordinates"):
                 exclusions.append(Exclusion(id="ppr-rouge", ruleId="PPR", type="ppr_rouge",
                                             label="PPR zone rouge exclue", geometry=geo, source=ppr_src))
+
+    # --- SUP : servitudes d'utilité publique déduites de la zone d'implantation ----------------
+    # RETOUCHES-1 lot D.15 — ER et EBC sont DÉJÀ retranchés par le résiduel (_GREVE) ; le MOTEUR
+    # unique GEOMETRIE-1 (compute_gabarit) ignorait encore le SUP. On l'ajoute ICI (kind='sup') :
+    # le gabarit-outil ET le résiduel (qui lit l'assiette gabarit) en tiennent désormais compte.
+    # Même optimisation que le PPR (ST_ClipByBox2D avant l'intersection fine). Pas de re-run : le
+    # prochain run résiduel le prendra (mandat).
+    sup_src = RegulatorySource(document="SUP — servitudes d'utilité publique", provider=SUP_PROVIDER)
+    sup_gj = session.execute(text(
+        "SELECT ST_AsGeoJSON(ST_CollectionExtract(ST_Transform(ST_Intersection("
+        "  ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))), p.geom_2975), 4326), 3)) "
+        "FROM spatial_layers sl, parcels p WHERE p.id = :pid AND sl.kind = 'sup' "
+        "AND ST_Intersects(sl.geom_2975, p.geom_2975) GROUP BY p.geom_2975"
+    ), {"pid": pid}).first()
+    _sup_present = bool(sup_gj and sup_gj[0] and json.loads(sup_gj[0]).get("coordinates"))
+    if _sup_present:
+        exclusions.append(Exclusion(id="sup", ruleId="SUP", type="sup",
+                                    label="Servitude d'utilité publique déduite",
+                                    geometry=json.loads(sup_gj[0]), source=sup_src))
+    applicable.append(ApplicableRule(
+        id="SUP", label="Servitudes d'utilité publique", category="exclusion",
+        integrationStatus="integrated" if _sup_present else "not_integrated",
+        detail=("assiette SUP déduite de la zone d'implantation" if _sup_present
+                else "Aucune SUP sur la parcelle"), source=sup_src))
 
     # --- citation PLU retraits.voie : couvre-t-elle « voies ET emprises publiques » / voies privées ?
     emprises_publiques = voies_privees = False

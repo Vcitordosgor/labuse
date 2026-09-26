@@ -159,6 +159,17 @@ def test_calculette_arithmetique_independante():
     assert res["charge_fonciere"]["par_m2_terrain"] == round(attendu / 9723)
 
 
+def test_calculette_marche_porte_source_et_fenetre():
+    """RETOUCHES-1 (lot B.8) — le bloc `marche` du bilan porte la SOURCE et la FENÊTRE du prix DVF
+    (n ventes, rayon effectif, période, type) : l'écran affiche « Estimé » + sous-ligne sourcée,
+    jamais un €/m² nu."""
+    prix = _prix(5000, 5000, 5000, n=12)   # contrat sector_price : radius_m/periode/type_prix inclus
+    res = compute_calculette(300, 500, prix, cout_construction_m2=2300, marge_frais_pct=20)
+    m = res["marche"]
+    assert m["n"] == 12 and m["rayon_m"] == prix["radius_m"]
+    assert m["periode"] == prix["periode"] and m["type_prix"] == prix["type_prix"]
+
+
 def test_calculette_hypotheses_utilisateur_pilotent():
     """Les saisies du promoteur CHANGENT le résultat (jamais figées) : coût ↑ → charge ↓."""
     prix = _prix(5000, 5000, 5000)

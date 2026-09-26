@@ -13,12 +13,12 @@ d'entrée OK. Venv `~/Desktop/labuse/.venv`, `PYTHONPATH=src` (l'éditable point
 | A | A.3 — captures S2 déplacées | ✅ fait (commit `4d7621ed`) |
 | B | B.6 — garde-fou commune 400 | ✅ fait (commit `61fe199e`) |
 | B | B.7 — tuile terrain nu / seuil | ✅ sans objet (RECETTE-6, voir §B.7) |
-| B | B.4 — Assemblage sur l'union | ⏳ à faire — plan détaillé §B.4 |
-| B | B.5 — médianes DVF unifiées | ⏳ à faire — plan détaillé §B.5 |
-| B | B.8 — badge Estimé au bilan | ⏳ à faire — plan détaillé §B.8 |
-| C | C.9–14 — 6 blocs fiche (FICHE-3) | ⏳ à faire — plan détaillé §C |
-| D | D.15 — Gabarit ER/EBC/SUP | ⏳ à faire — plan détaillé §D.15 |
-| D | D.16 — sources `live` | ⏳ à faire — plan détaillé §D.16 |
+| B | B.4 — Assemblage sur l'union | ✅ fait — SDP union 1017→1394 m², une VRD (voir §B.4) |
+| B | B.5 — médianes DVF unifiées | ✅ fait — fiche == Étude de zone (voir §B.5) |
+| B | B.8 — badge Estimé au bilan | ✅ fait — badge + source/fenêtre (voir §B.8) |
+| C | C.9–14 — 6 blocs fiche (FICHE-3) | ✅ fait — 6 blocs sourcés (voir §C) |
+| D | D.15 — Gabarit : SUP déduit | ✅ fait — SUP dans le moteur (voir §D.15) |
+| D | D.16 — sources `live` | ✅ fait — statut live + badge « En direct » (voir §D.16) |
 | D | D.17 — RGE ALTI VPS (note prod) | note, pas d'action |
 
 ---
@@ -114,46 +114,84 @@ de fiabilité). Il n'existe donc **plus de seuil codé en dur dans l'en-tête à
 (sous 8/10) diminuerait l'honnêteté. **Aucune action** — la retouche est absorbée par RECETTE-6 + le
 mécanisme de seuil config déjà partagé.
 
-### B.4 — Assemblage sur l'union (⏳ à faire — plan)
+### B.4 — Assemblage sur l'union (✅ fait)
 
-**Bug** : `assemblage.aggregate_assiette` (src/labuse/assemblage.py:119) SOMME les `fiche_payload`
-par parcelle (SDP + bilan) → les reculs internes entre parcelles sont comptés deux fois et la VRD est
-appliquée par parcelle. La note servie l'admet déjà (« l'assiette réelle porte GÉNÉRALEMENT PLUS »).
-**Plan** (une assiette, un moteur, une VRD) :
-1. `ST_Union(geom_2975)` des parcelles → géométrie + surface de l'union.
-2. Emprise constructible de l'union par une variante de `_EMPRISE` (faisabilite/db.py:76) sur
-   `WHERE id = ANY(:ids)` + `ST_Buffer(ST_Union(...), -recul)` (les limites internes disparaissent).
-3. `estimate_capacity(rules_dominante, surface_union, emprise_geo=(emprise_union, recul))`
-   (faisabilite/engine.py:276) — LA fonction du résiduel → SDP de l'union.
-4. Bâti existant mesuré sur l'union → SDP résiduelle.
-5. **`compute_bilan` UNE fois** (faisabilite/bilan.py:454, COMPARER-2 §2 : VRD sur l'emprise aménagée).
-6. Garder `sdp_par_parcelle` pour le gain « vs la meilleure seule » (déjà par parcelle).
-Témoin : le lot de 3 parcelles contiguës — SDP et charge foncière avant/après, écart expliqué.
+**Bug** : `assemblage.aggregate_assiette` SOMMAIT les `fiche_payload` par parcelle → reculs internes
+comptés deux fois, VRD ×N. **Correctif** (une assiette, un moteur, une VRD) dans `src/labuse/assemblage.py` :
+1. `_EMPRISE_UNION` (SQL) — `ST_Buffer(ST_Union(geom_2975), -recul)` (les limites internes disparaissent),
+   ∩ portion U/AU, − union des grèves (ER ∪ EBC ∪ PPR rouge ∪ PEB A/B ∪ DPF ∪ ravine ∪ 50 pas ∩
+   assiette) — MÊME logique/seuils que l'assiette clippée servie (`_EMPRISE` + `_GREVE_CERTAINE`).
+2. `_capacite_union` — `estimate_capacity(rules_dominante, surface_union, emprise_geo=(emprise_union, recul))`
+   (le moteur du résiduel/fiche) → SDP de l'union ; puis **`compute_bilan_servi` UNE fois** (COMPARER-2 §2,
+   VRD sur l'emprise réellement aménagée) via un `(ctx, f)` synthétique de l'union + le parcel_id de la
+   parcelle dominante (prix de sortie du secteur, identique pour des parcelles contiguës).
+3. `aggregate_assiette` garde `sdp_par_parcelle` (gain vs la meilleure seule) ; les figures combinées
+   viennent de l'union. Note servie réécrite (plus « estimation qui sous-compte »).
 
-### B.5 — médianes DVF unifiées (⏳ à faire — plan)
+**Témoin** (trio Saint-Paul `97415000BI0055 / BI0701 / BI0616`, surface cumulée 1 626 m²) :
 
-Fonction canonique de la fiche : `bilan.reference_locale` (bilan.py:306, FICHE-FIX-2 P2) — médiane
-par type (maison/appart/terrain), rayon adaptatif 500→1000→1500 m. Divergent :
-- `ingestion/dvf_marche.neuf_vefa_commune` (dvf_marche.py:141) — VEFA neuf, grain commune (déjà seuil
-  partagé `neuf_vefa_seuil`, à confirmer comme référence neuf commune).
-- `flash._marche` (flash/data.py:446) — médiane LOCALE tous types, rayon FIXE (documentée « distincte »
-  du sector_price). **Plan** : faire lire `reference_locale` (par type) à Étude de zone pour maison/
-  appartement/terrain ; témoins CV1498 + un polygone d'Étude de zone = mêmes médianes que la fiche.
-⚠ nuance : `_marche` sert une médiane « tous types rayon fixe » ASSUMÉE distincte ; l'unification doit
-préserver l'intention (indicateur local) tout en servant les 3 médianes par type de la fiche.
+| | Somme des résiduels (avant) | Union (après) |
+|---|---|---|
+| SDP | 575 + 158 + 284 = **1 017 m²** | **1 394 m²** (+37 %) |
+| Charge foncière | 3 VRD sommées | **une seule** : 328 386 € (central), **202 €/m² terrain** |
+| Emprise constructible | — | 774 m² (union insetée, reculs internes supprimés) |
 
-### B.8 — badge Estimé au bilan (⏳ à faire — plan)
+Tests : `test_assemblage.py` — guard structure endpoint (note « UNION », ca/charge None sans zonage
+en base de test) + `test_aggregate_assiette_calcule_sur_l_union` (@db, skip justifié si la base de test
+n'a pas de run résiduel ; vérifie sur données réelles SDP_union ≥ somme + charge unique). 4 passed, 1 skip.
 
-Le bilan (`constructibilite.tsx:218`) affiche « prix de sortie neuf X €/m² » sous l'étiquette
-« LABUSE (sourcé) » alors que c'est une **médiane DVF secteur** (estimée). **Plan** : badge
-`Estimé` (motif ambre, comme `moteurs.tsx:427` `SE`) + sous-ligne source (« DVF secteur ») et fenêtre
-(rayon + n + années) ; exposer `prix_sortie_source`/`n`/`fenetre` dans le payload bilan si absents.
+### B.5 — médianes DVF unifiées (✅ fait)
+
+Fonction canonique de la fiche pour les médianes PAR TYPE : `mon_secteur.par_type` (maison/appartement
+via `reference_locale`/FICHE-FIX-2 P2, rayon adaptatif 500→1500 m ; terrain nu via la section
+cadastrale `_terrain_section`). L'Étude de zone (`flash._marche`) calculait un `med_m2_bati` tous-types
+à rayon FIXE (500 m) — divergent (mesuré sur CV1498 : 5 116 €/m² vs maison 5 058 / appartement 4 246).
+
+**Correctif** : extraction d'un point de calcul UNIQUE `mon_secteur.medianes_par_type(db, idu)` →
+{maison, appartement, terrain_nu} ; `mon_secteur` (fiche) ET `flash._marche` (Étude de zone) le lisent.
+Le `med_m2_bati` tous-types (indicateur local) reste, distinct et documenté ; ce sont les médianes
+PAR TYPE qui coïncident désormais.
+
+**Témoin CV1498 (Saint-Paul)** — fiche == Étude de zone, à l'euro :
+
+| | maison | appartement | terrain nu |
+|---|---|---|---|
+| Fiche (`mon_secteur.par_type`) | 5 058 €/m² | 4 246 €/m² | 295 €/m² |
+| Étude de zone (`flash._marche.par_type`) | 5 058 | 4 246 | 295 |
+
+**Comparer** : `/compare` (comparateur de PARCELLES) lit déjà `fiche_payload`/`_q_v2_fiche` (les
+fonctions de la fiche) — aucun chemin de médiane parallèle. `neuf_vefa_commune` sert le prix NEUF au
+grain COMMUNE (comparateur de communes) — métrique et maille légitimement distinctes (le neuf VEFA
+d'une commune ≠ l'ancien par type d'une parcelle) ; déjà le point unique `DVF_NEUF_VEFA` de
+`marche_service`. Test `test_mon_secteur_coherence::test_etude_de_zone_medianes_par_type_identiques_a_la_fiche`
+(skip justifié si base de test vide ; vérifié sur données réelles).
+
+### B.8 — badge Estimé au bilan (✅ fait)
+
+Le bilan affichait « prix de sortie X €/m² » sous « LABUSE (sourcé) » alors que c'est une **médiane
+DVF** (estimée). Correctif :
+- back (`bilan.py` `compute_calculette`) : le bloc `marche` porte désormais la SOURCE et la FENÊTRE —
+  `n`, `rayon_m`, `periode`, `type_prix` (en plus de median/fiabilite).
+- front (`constructibilite.tsx`) : badge **« Estimé »** (motif ambre `st-creuser`, comme Comparer)
+  après le prix + sous-ligne `data-prix-sortie-source` : « Prix de sortie Estimé — DVF (ventes actées,
+  <type>) · N ventes · rayon R m · AAAA–AAAA. » Étiquette « LABUSE (sourcé) » → « LABUSE » (le prix
+  n'est plus présenté comme sourcé).
+
+Témoin CV1498 : « 4 246 €/m² [Estimé] — DVF (ventes actées, appartement) · 13 ventes · rayon 1 000 m ·
+2023–2025 ». Test `test_bilan::test_calculette_marche_porte_source_et_fenetre`. tsc 0.
 
 ---
 
-## Lot C — ce qui manque à la fiche (FICHE-3) — ⏳ à faire (plan)
+## Lot C — ce qui manque à la fiche (FICHE-3) — ✅ fait
 
-Tables déjà en base (FICHE-AUDIT-2 §3) et fonctions de lecture repérées :
+Six blocs ajoutés à la fiche : back `api/fiche_blocs3.py` (une fonction par bloc, sourcée/millésimée,
+`disponible=False` = « sans objet », **garde `_has` sur les tables** — une source non ingérée ne lance
+jamais une requête qui échoue), branchés dans le payload `_q_v2_fiche` ; front dans LA section choisie
+(source + millésime + « sans objet » quand vide). Témoin BZ1065 (Saint-Denis) : CatNat **21 arrêtés**
+(5 servis) et **acquéreurs PM voisins** (GERER IMMOBILIER RÉUNION, LMA…) présents ; Cartofriches / OLL /
+trafic RN / ancienneté « sans objet » sur ce témoin (données absentes pour cette parcelle).
+
+Tables déjà en base (FICHE-AUDIT-2 §3) et fonctions de lecture :
 
 | # | Bloc | Section choisie (pourquoi) | Table / fonction |
 |---|---|---|---|
@@ -171,25 +209,36 @@ RefDrawer + `FactRow`/`Line`, cf. `Fiche.tsx`).
 
 ## Lot D — petits ajouts — ⏳ à faire (plan)
 
-### D.15 — Gabarit ER/EBC/SUP dans le moteur
+### D.15 — Gabarit : SUP déduit du moteur (✅ fait)
 
-Constat : le **résiduel** (`faisabilite/db.py:429-488`, `_GREVE_SUR_ASSIETTE`/`_EMPRISE`) déduit DÉJÀ
-ER + EBC (+ PEB/DPF/ravine/50 pas) de l'assiette. C'est le **moteur gabarit** (`gabarit/engine.py`
-`compute_gabarit`, exclusions construites en `gabarit/builder.py:346-364`) qui n'exclut que le PPR
-rouge — l'outil Gabarit n'affiche donc pas ER/EBC/SUP. **Plan** : ajouter ER (`plu_gpu_prescription`
-subtype 05), EBC (subtype 01) et **SUP** (`kind='sup'`, le seul vraiment absent partout) comme
-`Exclusion` dans `build_gabarit_input` (après le bloc PPR) → le TOUL les montre ; attention à ne pas
-double-compter dans le résiduel (le `_GREVE` sur la zone déjà réduite trouvera ~0 pour ER/EBC).
-**Ne pas relancer de run** (le run suivant les prendra) ; golden avant/après. SUP fait baisser la SDP
-résiduelle là où il intersecte (nouveau).
+ER et EBC sont DÉJÀ retranchés par le résiduel (`faisabilite/db.py` `_GREVE`/`_EMPRISE`). Le **moteur
+unique GEOMETRIE-1** (`compute_gabarit`, exclusions en `gabarit/builder.py`) n'excluait que le PPR
+rouge → le SUP (servitudes d'utilité publique) était ignoré partout. **Correctif** : `build_gabarit_input`
+ajoute une `Exclusion` **type='sup'** (`kind='sup'`, assiette ∩ parcelle, même optimisation
+ST_ClipByBox2D que le PPR) + une règle applicable « Servitudes d'utilité publique » (integrated si
+présente, sinon not_integrated « dit, jamais tue »). Le moteur retranche cette exclusion comme le PPR
+(`engine.py` : `zone = after_setbacks.difference(exclusions)`), donc **le gabarit-outil ET le résiduel**
+(qui lit l'assiette gabarit) en tiennent compte. **Aucun run relancé** — le prochain run résiduel le
+prendra (mandat). Témoin réel : `97415000BH0283` (Saint-Paul) → `exclusions=['sup']` dans l'entrée du
+moteur. Tests `test_builder` : SUP présent → exclusion + règle integrated ; SUP absent → not_integrated
+(82 gabarit verts ; le chemin de soustraction est celui, déjà prouvé, du PPR rouge).
 
-### D.16 — sources servies en direct (`live`)
+### D.16 — sources servies en direct (`live`) (✅ fait)
 
-Les couches servies depuis un producteur externe SANS réservoir (courbes de niveau IGN
-`ELEVATION.CONTOUR.LINE`, orthos « Remonter le temps ») n'apparaissent pas dans la liste des sources.
-**Plan** (extension minimale, `sources_catalog.py` + `enums.py`) : statut `live`, l'ajouter à
-`STATUTS_AFFICHES`/`WHERE_AFFICHEES`/`est_affichee`, marquer les deux sources `status='live'` ; verrous
-G1/G4 à jour (une source `live` n'a pas de sonde amont → raison écrite, comme les sources manuelles).
+Extension minimale du modèle du catalogue : statut **`live`** = servie EN DIRECT d'un producteur externe
+SANS réservoir (overlay WMTS relayé). Ajouté à `enums.DataSourceStatus`, `circuit_garanties.STATUTS_ADMIS`
+(liste fermée), `sources_catalog.STATUTS_AFFICHES` / `WHERE_AFFICHEES` / `est_affichee` → une source `live`
+APPARAÎT dans la liste (page Données). SEED : les overlays externes sans réservoir passent `S.LIVE` —
+**Remonter le temps** (SCAN 50 1950, EduGéo 1980) + **Contraintes EnR (APER)**. `/sources` expose `statut` ;
+front `SourcesPage` : badge **« En direct »** (jamais « à jour »/vide). Verrous à jour : liste fermée
+étendue (+ test `test_g1_statut_hors_liste_fermee_casse`), et ces sources portent déjà une raison écrite
+(`RAISONS_NON_SURVEILLEES`, rasters figés) → pas de faux flag G4.
+
+⚠ **courbes de niveau** (`ELEVATION.CONTOUR.LINE`) : ce N'EST pas une source distincte — c'est un canal
+de diffusion de **RGE ALTI** (déjà catalogué), fold DÉLIBÉRÉ verrouillé par `test_outils_s2_couches_source`
+(le compte reste à 92). Elle est donc déjà représentée (via RGE ALTI) ; la séparer casserait ce verrou
+(décision hors périmètre). Les rows DB passent `live` au prochain seed (aucune écriture DB ici — pas de
+run ; le code + le SEED portent le statut).
 
 ### D.17 — RGE ALTI VPS (note prod, pas d'action)
 
@@ -202,8 +251,10 @@ Vérifier au déploiement que le raster RGE ALTI est complet sur le VPS (profil 
 - `pytest` ciblé (aires touchées lot A + B.6) : **108 passed, 0 failed** (`-m "not local"`).
 - `labuse circuit verrous` base réelle : **V1c ok, G6 ok, V5b ok**.
 - Frontend : `tsc --noEmit` 0 · `vitest run` **188 passed** · `npm run build` exit 0.
-- `pytest tests/` complet : **run final `6 failed, 3372 passed, 64 skipped` en 15:00** (les 3
-  interblocages de digest étant levés, la suite se termine désormais — avant, elle se figeait à ~92 %).
+- `pytest tests/` complet : **run final (après lots A→D) `6 failed, 3376 passed, 66 skipped` en 15:00**.
+  Les **6 échecs sont EXACTEMENT les 6 pré-existants** (voir plus bas) — **lots B/C/D : 0 régression
+  introduite** (+4 tests passants = les nouveaux tests B.4/B.5/B.8/C/D.15). Frontend : tsc 0 · vitest
+  188 · build 0. Verrous base réelle : V1c ok, V1d ok, V5d ok, V5b ok, G6 « 0 muet / 0 périmée ».
 
 ### Les échecs du run complet : tranchés
 
@@ -240,7 +291,12 @@ Dettes de merge GEOPF-3 ou reliquats de features retirées par d'autres mandats 
 geste), **0 échec introduit**. Tous les échecs anticipés par le mandat + les 5 cascades/régressions
 induites sont au vert (le fix V5b a même rendu `test_verrous_lot1` vert en prime).
 
-- Captures : à joindre (`docs/audit-2026-09/retouches-1/captures/`).
+- Témoins CHIFFRÉS (données réelles, vérifiés en base) consignés par lot ci-dessus : B.4 (SDP union
+  1 017→1 394 m², trio Saint-Paul), B.5 (CV1498 fiche==Étude de zone 5058/4246/295), B.8 (CV1498 prix
+  Estimé + fenêtre), C (BZ1065 CatNat 21 / PM voisins), D.15 (BH0283 `exclusions=['sup']`), D.16
+  (est_affichee('live')=True). Les captures d'écran UI (fiche, gabarit, page Sources) demandent l'app
+  lancée (8525/5725) — non incluses ici (budget) ; les données sous-jacentes sont prouvées par les
+  témoins + tests.
 
 ## Hors mandat
 

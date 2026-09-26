@@ -45,6 +45,7 @@ export function DerniereVenteBlock({ f }: { f: Fiche }) {
 export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
   const setModule = useApp((s) => s.setModule)
   const setParcelPrefill = useApp((s) => s.setParcelPrefill)
+  const setM02Prefill = useApp((s) => s.setM02Prefill)   // RETOUCHES-1 C.13 — Scan patrimoine (SIREN voisin)
   const setFlyTo = useApp((s) => s.setFlyTo)
   const select = useApp((s) => s.select)
   const setRadarToOpen = useApp((s) => s.setRadarToOpen)
@@ -262,6 +263,44 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           </span>
           <span className="po-arrow">→</span>
         </button>
+      )}
+      {/* RETOUCHES-1 lot C.10 — Loyers OLL (observatoire local des loyers) de la zone de la parcelle. */}
+      {f.loyers_oll && (
+        <div data-loyers-oll>
+          <GroupLabel>Loyers (OLL)</GroupLabel>
+          {f.loyers_oll.disponible ? (
+            <div className="text-[12px] text-txt">
+              Loyer médian <b className="text-txt-hi">{f.loyers_oll.loyer_median_eur_m2} €/m²/mois</b> (zone {f.loyers_oll.zone})
+              {f.loyers_oll.par_type && (f.loyers_oll.par_type.maison != null || f.loyers_oll.par_type.appartement != null) && (
+                <span className="text-txt-mut"> — maison {f.loyers_oll.par_type.maison ?? '—'} · appart. {f.loyers_oll.par_type.appartement ?? '—'} €/m²</span>
+              )}
+              <div className="text-[11px] text-txt-dim">{f.loyers_oll.source} · {f.loyers_oll.millesime}</div>
+            </div>
+          ) : (
+            <div className="text-[12px] text-txt-dim"><span className="text-mint">✓</span> Sans objet — zone OLL non couverte. <span className="text-txt-dim">({f.loyers_oll.millesime})</span></div>
+          )}
+        </div>
+      )}
+      {/* RETOUCHES-1 lot C.13 — Acquisitions de PERSONNES MORALES voisines (300 m / 36 mois, DVF×DGFiP). */}
+      {f.pm_voisines?.disponible && f.pm_voisines.acquereurs.length > 0 && (
+        <div data-pm-voisines>
+          <GroupLabel>Acquéreurs PM voisins ({f.pm_voisines.acquereurs.length})</GroupLabel>
+          <div className="flex flex-col gap-0.5 text-[12px]">
+            {f.pm_voisines.acquereurs.slice(0, 8).map((a, i) => (
+              <div key={i}>
+                <span className="font-medium text-txt">{a.denomination}</span>
+                {a.siren && <span className="font-mono text-txt-dim"> · SIREN {a.siren}</span>}
+                {a.date && <span className="text-txt-mut"> · {a.date.split('-').reverse().join('/')}</span>}
+              </div>
+            ))}
+            <div className="text-[11px] text-txt-dim">PM ayant acquis dans {f.pm_voisines.rayon_m} m sur {f.pm_voisines.mois} mois · {f.pm_voisines.source}</div>
+          </div>
+          {f.pm_voisines.acquereurs[0]?.siren && (
+            <PorteOutil ico="⌂" data="patrimoine-voisin" titre="Scan patrimoine d'un acquéreur voisin"
+              sous={`Ouvrir le Scan sur ${f.pm_voisines.acquereurs[0].denomination ?? 'ce SIREN'}`}
+              onClick={() => { const s0 = f.pm_voisines!.acquereurs[0]; if (s0?.siren) { setM02Prefill(s0.siren); setModule('patrimoine') } }} />
+          )}
+        </div>
       )}
       <PorteOutil ico="⇄" data="comparer" titre="Comparer des parcelles"
         sous="Cette parcelle chargée — ajoutez-en d'autres à comparer"

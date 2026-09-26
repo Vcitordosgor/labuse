@@ -38,6 +38,8 @@ class FakeSession:
             return _Res(("BD TOPO test v3",))          # _bdtopo_millesime
         if "INTERDICTION" in sql:
             return _Res((None,))                         # géométrie d'exclusion PPR : aucune → ignorée
+        if "kind = 'sup'" in sql:
+            return _Res((None,))                         # RETOUCHES-1 D.15 — assiette SUP : aucune → ignorée
         if "ravine" in sql or "trait_de_cote" in sql:
             return _Res((False,))                        # _touche_ravine
         return _Res(self._parcel)
@@ -275,3 +277,40 @@ def test_hauteur_faitage_prioritaire_sur_egout(monkeypatch):
     assert b.input.maxHeight.meters == 10.0
     mh = [r for r in b.input.applicableRules if r.category == "maxHeight"][0]
     assert "égout" not in (mh.label or "")
+
+
+# ── RETOUCHES-1 lot D.15 — SUP déduit de la zone d'implantation (ER/EBC déjà par le résiduel) ──
+
+def _sup_geojson() -> str:
+    return ('{"type":"Polygon","coordinates":[[[55.290,-21.030],[55.2906,-21.030],'
+            '[55.2906,-21.0306],[55.290,-21.0306],[55.290,-21.030]]]}')
+
+
+def test_sup_intersectante_deduite_du_gabarit(monkeypatch):
+    """Une SUP (kind='sup') intersectant la parcelle → Exclusion type='sup' dans la zone d'implantation
+    (le moteur la retranche comme le PPR) + règle SUP « integrated »."""
+    monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
+    monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
+    monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid, **kw: _fake_limites())
+
+    class _SupSession(FakeSession):
+        def execute(self, stmt, params=None):
+            if "kind = 'sup'" in str(stmt):
+                return _Res((_sup_geojson(),))
+            return super().execute(stmt, params)
+
+    b = B.build_gabarit_input(_SupSession(_PARCEL, _PPR_NONE), "x")
+    assert any(x.type == "sup" for x in b.input.exclusions)
+    sup_rule = [a for a in b.input.applicableRules if a.id == "SUP"]
+    assert sup_rule and sup_rule[0].integrationStatus == "integrated"
+
+
+def test_sans_sup_regle_non_integree(monkeypatch):
+    """Aucune SUP → aucune Exclusion 'sup', règle SUP présente mais « not_integrated » (dit, jamais tue)."""
+    monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
+    monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
+    monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid, **kw: _fake_limites())
+    b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")   # FakeSession → SUP absente
+    assert not any(x.type == "sup" for x in b.input.exclusions)
+    sup_rule = [a for a in b.input.applicableRules if a.id == "SUP"]
+    assert sup_rule and sup_rule[0].integrationStatus == "not_integrated"

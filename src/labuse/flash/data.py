@@ -480,9 +480,14 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
              AND dm.valeur_fonciere > 0
              AND ST_DWithin(ST_Transform(dm.geom, 2975), p.geom_2975, :r)"""),
         {"idu": idu, "annees": FENETRE_MARCHE_ANNEES, "r": RAYON_MARCHE_M}).mappings().first()
+    # RETOUCHES-1 (lot B.5) — médianes DVF par type (maison/appartement/terrain) : MÊME fonction que
+    # la fiche (Mon secteur) → l'Étude de zone sert EXACTEMENT les mêmes chiffres que la fiche pour la
+    # même parcelle (reference_locale + section cadastrale), plus jamais un chemin parallèle.
+    from ..api.mon_secteur import medianes_par_type
+    par_type = medianes_par_type(db, idu)
     if not stats or not stats["n"]:
         return {"n": 0, "rien": True, "rayon_m": RAYON_MARCHE_M, "annees": FENETRE_MARCHE_ANNEES,
-                "commune_marche": commune_marche, "reserve": _reserve_dvf()}
+                "commune_marche": commune_marche, "par_type": par_type, "reserve": _reserve_dvf()}
     # Comparables ANONYMISÉS : type, surface, prix, €/m² bâti, mois — JAMAIS d'adresse exacte (mandat).
     # M127-D7 : colonne €/m² bâti (valeur / surface bâtie ≥ 20 m²). M127-D6 : exclusion des ventes au
     # prix/m² ABERRANT, MÊME DOCTRINE que la fiche (z-score modifié médiane/MAD > 3,5) — écarte les
@@ -526,6 +531,10 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
                     "mois": c["mois"]} for c in gardees[:_n_affiche_flash()]]
     out = {"n": int(stats["n"]), "rayon_m": RAYON_MARCHE_M, "annees": FENETRE_MARCHE_ANNEES,
            "med_m2_bati": _i(stats["med_m2_bati"]), "med_m2_terrain": _i(stats["med_m2_terrain"]),
+           # RETOUCHES-1 (lot B.5) — médianes PAR TYPE unifiées avec la fiche (même fonction) : ce sont
+           # ces chiffres (maison/appartement/terrain) qui doivent coïncider avec la fiche pour une
+           # même parcelle ; `med_m2_bati` reste l'indicateur local tous-types (rayon fixe), distinct.
+           "par_type": par_type,
            "comparables": comparables, "n_ecartees": n_ecartees,
            "derniere_mutation": None, "secteur": [],
            # M-P (P2-66) : étiquette de MÉTHODE — ce bloc est un indicateur de marché LOCAL (tous

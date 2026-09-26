@@ -92,6 +92,23 @@ export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
           </div>
         )}
 
+        {/* RETOUCHES-1 lot C.11 — AXES ET NUISANCES : TMJA de l'axe RN le plus proche (≤ 300 m). */}
+        {f.trafic_rn && (
+          <div data-trafic-rn className="flex flex-col gap-0.5">
+            <GroupLabel>Axes et nuisances (trafic RN)</GroupLabel>
+            {f.trafic_rn.disponible ? (
+              <p className="text-[11.5px] leading-snug text-txt">
+                <b className="text-txt-hi">{f.trafic_rn.route}</b> à ~{f.trafic_rn.distance_m} m —{' '}
+                <b className="text-txt-hi">{f.trafic_rn.tmja?.toLocaleString('fr-FR')}</b> véh./j (TMJA)
+                {f.trafic_rn.poids_lourds != null ? `, dont ${f.trafic_rn.poids_lourds.toLocaleString('fr-FR')} PL` : ''}.
+                <span className="text-txt-dim"> {f.trafic_rn.source}{f.trafic_rn.millesime ? ` · ${f.trafic_rn.millesime}` : ''}.</span>
+              </p>
+            ) : (
+              <p className="text-[11px] text-txt-dim"><span className="text-mint">✓</span> Sans objet — aucune route nationale à moins de {f.trafic_rn.rayon_m} m. <span className="text-txt-dim">({f.trafic_rn.source})</span></p>
+            )}
+          </div>
+        )}
+
         {/* ① ACCÈS — un verdict + transport le plus proche. RETOURS-20 Z1·02 : sous-titre → kicker. */}
         <div data-bloc-acces>
           <GroupLabel>Accès</GroupLabel>

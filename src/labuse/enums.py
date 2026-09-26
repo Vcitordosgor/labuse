@@ -57,6 +57,11 @@ class DataSourceStatus(StrEnum):
     """Statut d'un connecteur de source de données (brief §5/§6)."""
 
     CONNECTE = "connecte"     # branché auto (REST/WFS live)
+    # RETOUCHES-1 lot D.16 — servie EN DIRECT depuis un producteur externe, SANS réservoir en base
+    # (overlay WMTS/WMS relayé tel quel : Remonter le temps, contraintes APER…). Affichée dans la
+    # vitrine, mais pas de sonde amont NI de remplissage à mesurer : « à jour par construction » (le
+    # flux EST le producteur). Sa raison de non-vérifiabilité est écrite.
+    LIVE = "live"
     PARTIEL = "partiel"       # branché par import / couverture incomplète
     MOCK = "mock"             # fixture / réponse simulée
     MANUEL = "manuel"         # fallback champ manuel

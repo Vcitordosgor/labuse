@@ -1025,6 +1025,9 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
     return [
         {
             "id": s.id, "name": s.name, "category": s.category, "provider": s.provider,
+            # RETOUCHES-1 lot D.16 — statut exposé : `live` = servie en direct d'un producteur externe
+            # SANS réservoir (overlay WMTS relayé) → le front affiche « En direct », jamais « à jour »/vide.
+            "statut": (s.status.value if hasattr(s.status, "value") else s.status),
             "access_type": s.access_type,
             "status": s.status.value if s.status else None,
             "reliability_level": s.reliability_level.value if s.reliability_level else None,
@@ -4061,6 +4064,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     from ..faisabilite.zone_servie import prescriptions_verifiables as _presc_verif
     _presc_ok, _presc_motif = _presc_verif(head["commune"])
     from . import fiche_commune as _fiche_commune   # RECETTE-5 (V4) — TFPB part communale sur l'en-tête
+    from . import fiche_blocs3 as _blocs3           # RETOUCHES-1 lot C (FICHE-3) — 6 blocs sourcés
     return {
         "idu": head["idu"], "commune": head["commune"],
         "prix_ancien": _prix_ancien, "marche_synthese": _marche_synthese,
@@ -4175,6 +4179,15 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # SOURCES-1 lot 5 — fibre Arcep : immeuble le plus proche (≤ 100 m), raccordable FttH +
         # opérateurs, DISTANCE DITE. None si la source n'est pas ingérée (le front omet la ligne).
         "fibre": _fibre_block(db, idu),
+        # RETOUCHES-1 lot C (FICHE-3) — six blocs de données DÉJÀ en base, chacun sourcé/millésimé,
+        # « sans objet » (disponible=False) quand vide. §Risques : Cartofriches + CatNat ; §Marché :
+        # loyers OLL + acquisitions PM voisines ; §Réseaux : trafic RN ; §Identité : ancienneté.
+        "cartofriches": _blocs3.cartofriches(db, idu),
+        "loyers_oll": _blocs3.loyers_oll(db, idu),
+        "trafic_rn": _blocs3.trafic_rn(db, idu),
+        "catnat": _blocs3.catnat(db, idu),
+        "pm_voisines": _blocs3.pm_voisines(db, idu),
+        "anciennete_detention": _blocs3.anciennete_detention(db, idu),
     }
 
 
