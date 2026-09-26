@@ -158,6 +158,7 @@ export interface SourceInfo {
   provider: string | null
   access_type: string | null
   status: string | null
+  statut?: string | null   // RETOUCHES-1 D.16 — statut servi ('live' = producteur externe sans réservoir)
   reliability_level: string | null
   last_sync_at: string | null
   documentation_url: string | null

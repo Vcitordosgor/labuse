@@ -1025,6 +1025,9 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
     return [
         {
             "id": s.id, "name": s.name, "category": s.category, "provider": s.provider,
+            # RETOUCHES-1 lot D.16 — statut exposé : `live` = servie en direct d'un producteur externe
+            # SANS réservoir (overlay WMTS relayé) → le front affiche « En direct », jamais « à jour »/vide.
+            "statut": (s.status.value if hasattr(s.status, "value") else s.status),
             "access_type": s.access_type,
             "status": s.status.value if s.status else None,
             "reliability_level": s.reliability_level.value if s.reliability_level else None,

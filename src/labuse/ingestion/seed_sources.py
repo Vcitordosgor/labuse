@@ -498,7 +498,7 @@ SOURCES: list[dict] = [
     # Couche RASTER (overlay, non ingérée en base — cataloguée comme les courbes de niveau).
     dict(name="Contraintes EnR près des habitations (Géoplateforme)", category="energie",
          provider="IGN / Géoplateforme (loi APER)",
-         access_type="WMTS", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         access_type="WMTS", status=S.LIVE, reliability_level=R.VERIFIE,
          source_millesime="Géoplateforme — ENR.PERIMETRE.HABITATION (APER)",
          documentation_url="https://geoservices.ign.fr/services-geoplateforme-diffusion",
          endpoint_url="https://data.geopf.fr/wmts",
@@ -518,7 +518,7 @@ SOURCES: list[dict] = [
                          "recherche « Lieu-dit » + ligne « Secteur » de la fiche parcelle."),
     # GEOPF-3 — cartes anciennes (Remonter le temps) : SCAN 50 IGN de 1950 + EduGéo Réunion 1980.
     dict(name="SCAN 50 historique 1950 (IGN)", category="reference", provider="IGN / Géoplateforme",
-         access_type="WMTS", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         access_type="WMTS", status=S.LIVE, reliability_level=R.VERIFIE,
          source_millesime="SCAN 50® — carte topographique IGN de 1950",
          documentation_url="https://geoservices.ign.fr/services-geoplateforme-diffusion",
          endpoint_url="https://data.geopf.fr/wmts",
@@ -526,7 +526,7 @@ SOURCES: list[dict] = [
          technical_notes="GEOPF-3 : couche RASTER (Remonter le temps) — WMTS GEOGRAPHICALGRIDSYSTEMS.MAPS."
                          "SCAN50.1950. Couverture 974 vérifiée (carte IGN 1950 de Saint-Paul). Relais brut."),
     dict(name="EduGéo Réunion 1980 (IGN)", category="reference", provider="IGN / Géoplateforme (EduGéo)",
-         access_type="WMTS", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         access_type="WMTS", status=S.LIVE, reliability_level=R.VERIFIE,
          source_millesime="EduGéo — carte de La Réunion, millésime 1980",
          documentation_url="https://geoservices.ign.fr/services-geoplateforme-diffusion",
          endpoint_url="https://data.geopf.fr/wmts",

@@ -46,6 +46,11 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
             {s.nature?.dashed && (
               <Badge kind="dashed" title={s.nature.detail}><span data-source-nature>{s.nature.label}</span></Badge>
             )}
+            {/* RETOUCHES-1 D.16 — servie en direct d'un producteur externe (overlay WMTS), sans réservoir
+                ni sonde amont : « En direct », jamais « à jour »/vide (le flux EST le producteur). */}
+            {s.statut === 'live' && (
+              <Badge kind="auto" title="Servie en direct depuis le producteur externe (overlay), sans réservoir en base."><span data-source-live>En direct</span></Badge>
+            )}
           </span>
           {s.provider && <span data-source-provider className="shrink-0 text-[12px] text-txt-dim">{s.provider}</span>}
         </div>

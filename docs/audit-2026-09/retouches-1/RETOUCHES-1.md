@@ -18,7 +18,7 @@ d'entrée OK. Venv `~/Desktop/labuse/.venv`, `PYTHONPATH=src` (l'éditable point
 | B | B.8 — badge Estimé au bilan | ✅ fait — badge + source/fenêtre (voir §B.8) |
 | C | C.9–14 — 6 blocs fiche (FICHE-3) | ✅ fait — 6 blocs sourcés (voir §C) |
 | D | D.15 — Gabarit : SUP déduit | ✅ fait — SUP dans le moteur (voir §D.15) |
-| D | D.16 — sources `live` | ⏳ à faire — plan détaillé §D.16 |
+| D | D.16 — sources `live` | ✅ fait — statut live + badge « En direct » (voir §D.16) |
 | D | D.17 — RGE ALTI VPS (note prod) | note, pas d'action |
 
 ---
@@ -223,13 +223,22 @@ prendra (mandat). Témoin réel : `97415000BH0283` (Saint-Paul) → `exclusions=
 moteur. Tests `test_builder` : SUP présent → exclusion + règle integrated ; SUP absent → not_integrated
 (82 gabarit verts ; le chemin de soustraction est celui, déjà prouvé, du PPR rouge).
 
-### D.16 — sources servies en direct (`live`)
+### D.16 — sources servies en direct (`live`) (✅ fait)
 
-Les couches servies depuis un producteur externe SANS réservoir (courbes de niveau IGN
-`ELEVATION.CONTOUR.LINE`, orthos « Remonter le temps ») n'apparaissent pas dans la liste des sources.
-**Plan** (extension minimale, `sources_catalog.py` + `enums.py`) : statut `live`, l'ajouter à
-`STATUTS_AFFICHES`/`WHERE_AFFICHEES`/`est_affichee`, marquer les deux sources `status='live'` ; verrous
-G1/G4 à jour (une source `live` n'a pas de sonde amont → raison écrite, comme les sources manuelles).
+Extension minimale du modèle du catalogue : statut **`live`** = servie EN DIRECT d'un producteur externe
+SANS réservoir (overlay WMTS relayé). Ajouté à `enums.DataSourceStatus`, `circuit_garanties.STATUTS_ADMIS`
+(liste fermée), `sources_catalog.STATUTS_AFFICHES` / `WHERE_AFFICHEES` / `est_affichee` → une source `live`
+APPARAÎT dans la liste (page Données). SEED : les overlays externes sans réservoir passent `S.LIVE` —
+**Remonter le temps** (SCAN 50 1950, EduGéo 1980) + **Contraintes EnR (APER)**. `/sources` expose `statut` ;
+front `SourcesPage` : badge **« En direct »** (jamais « à jour »/vide). Verrous à jour : liste fermée
+étendue (+ test `test_g1_statut_hors_liste_fermee_casse`), et ces sources portent déjà une raison écrite
+(`RAISONS_NON_SURVEILLEES`, rasters figés) → pas de faux flag G4.
+
+⚠ **courbes de niveau** (`ELEVATION.CONTOUR.LINE`) : ce N'EST pas une source distincte — c'est un canal
+de diffusion de **RGE ALTI** (déjà catalogué), fold DÉLIBÉRÉ verrouillé par `test_outils_s2_couches_source`
+(le compte reste à 92). Elle est donc déjà représentée (via RGE ALTI) ; la séparer casserait ce verrou
+(décision hors périmètre). Les rows DB passent `live` au prochain seed (aucune écriture DB ici — pas de
+run ; le code + le SEED portent le statut).
 
 ### D.17 — RGE ALTI VPS (note prod, pas d'action)
 

@@ -13,7 +13,7 @@ from __future__ import annotations
 #: lu par le SQL (WHERE_AFFICHEES) ET par le prédicat Python (est_affichee) — pour qu'ils ne
 #: puissent jamais diverger (FIX-SOURCES S1). Comparaison INSENSIBLE À LA CASSE (`lower(status)`) :
 #: une casse aberrante (ex. 'CONNECTE' au lieu de 'connecte') ne peut plus effacer une source.
-STATUTS_AFFICHES: frozenset[str] = frozenset({"connecte", "manuel"})
+STATUTS_AFFICHES: frozenset[str] = frozenset({"connecte", "manuel", "live"})   # RETOUCHES-1 D.16 : + live
 
 #: VESTIGIAL (CONNEXIONS-2 Lot 6.3) — le masquage n'est plus un ensemble EN DUR mais un FLAG EN BASE
 #: `data_sources.affichage_desactive`, éditable au dashboard (admin) et propagé aux consommateurs.
@@ -33,7 +33,7 @@ SOURCES_MASQUEES: frozenset[str] = frozenset()
 #: d'accueil), plus via `status=='connecte'` en dur : page rendue == chiffre annoncé, par construction.
 #: CONNEXIONS-2 Lot 6.3 — `AND COALESCE(affichage_desactive, false) = false` : une source désactivée
 #: au dashboard sort de la vitrine (et de tout compteur qui lit ce fragment), par construction.
-WHERE_AFFICHEES = ("lower(status) IN ('connecte', 'manuel') "
+WHERE_AFFICHEES = ("lower(status) IN ('connecte', 'manuel', 'live') "   # RETOUCHES-1 D.16 : + live
                    "AND COALESCE(technical_notes, '') NOT LIKE 'DOUBLON%' "
                    "AND COALESCE(technical_notes, '') NOT LIKE 'RETIRÉ%' "
                    "AND COALESCE(technical_notes, '') NOT LIKE 'DORMANT%' "

@@ -65,7 +65,7 @@ def test_g1_statut_hors_liste_fermee_casse(monkeypatch):
     # la liste fermée elle-même (REPARATIONS-1 lot 3 : + partenariat_requis ; SOURCES-CORRECTION-2
     # lot 1 : + interne = référentiel technique lu par la pompe, hors vitrine client mais visible admin)
     assert CG.STATUTS_ADMIS == {"connecte", "manuel", "a_faire", "retiree", "alias", "hub",
-                                "partenariat_requis", "interne"}
+                                "partenariat_requis", "interne", "live"}   # RETOUCHES-1 D.16
 
 
 @pytest.mark.local
