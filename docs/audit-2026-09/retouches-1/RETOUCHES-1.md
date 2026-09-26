@@ -13,7 +13,7 @@ d'entrée OK. Venv `~/Desktop/labuse/.venv`, `PYTHONPATH=src` (l'éditable point
 | A | A.3 — captures S2 déplacées | ✅ fait (commit `4d7621ed`) |
 | B | B.6 — garde-fou commune 400 | ✅ fait (commit `61fe199e`) |
 | B | B.7 — tuile terrain nu / seuil | ✅ sans objet (RECETTE-6, voir §B.7) |
-| B | B.4 — Assemblage sur l'union | ⏳ à faire — plan détaillé §B.4 |
+| B | B.4 — Assemblage sur l'union | ✅ fait — SDP union 1017→1394 m², une VRD (voir §B.4) |
 | B | B.5 — médianes DVF unifiées | ⏳ à faire — plan détaillé §B.5 |
 | B | B.8 — badge Estimé au bilan | ⏳ à faire — plan détaillé §B.8 |
 | C | C.9–14 — 6 blocs fiche (FICHE-3) | ⏳ à faire — plan détaillé §C |
@@ -114,21 +114,31 @@ de fiabilité). Il n'existe donc **plus de seuil codé en dur dans l'en-tête à
 (sous 8/10) diminuerait l'honnêteté. **Aucune action** — la retouche est absorbée par RECETTE-6 + le
 mécanisme de seuil config déjà partagé.
 
-### B.4 — Assemblage sur l'union (⏳ à faire — plan)
+### B.4 — Assemblage sur l'union (✅ fait)
 
-**Bug** : `assemblage.aggregate_assiette` (src/labuse/assemblage.py:119) SOMME les `fiche_payload`
-par parcelle (SDP + bilan) → les reculs internes entre parcelles sont comptés deux fois et la VRD est
-appliquée par parcelle. La note servie l'admet déjà (« l'assiette réelle porte GÉNÉRALEMENT PLUS »).
-**Plan** (une assiette, un moteur, une VRD) :
-1. `ST_Union(geom_2975)` des parcelles → géométrie + surface de l'union.
-2. Emprise constructible de l'union par une variante de `_EMPRISE` (faisabilite/db.py:76) sur
-   `WHERE id = ANY(:ids)` + `ST_Buffer(ST_Union(...), -recul)` (les limites internes disparaissent).
-3. `estimate_capacity(rules_dominante, surface_union, emprise_geo=(emprise_union, recul))`
-   (faisabilite/engine.py:276) — LA fonction du résiduel → SDP de l'union.
-4. Bâti existant mesuré sur l'union → SDP résiduelle.
-5. **`compute_bilan` UNE fois** (faisabilite/bilan.py:454, COMPARER-2 §2 : VRD sur l'emprise aménagée).
-6. Garder `sdp_par_parcelle` pour le gain « vs la meilleure seule » (déjà par parcelle).
-Témoin : le lot de 3 parcelles contiguës — SDP et charge foncière avant/après, écart expliqué.
+**Bug** : `assemblage.aggregate_assiette` SOMMAIT les `fiche_payload` par parcelle → reculs internes
+comptés deux fois, VRD ×N. **Correctif** (une assiette, un moteur, une VRD) dans `src/labuse/assemblage.py` :
+1. `_EMPRISE_UNION` (SQL) — `ST_Buffer(ST_Union(geom_2975), -recul)` (les limites internes disparaissent),
+   ∩ portion U/AU, − union des grèves (ER ∪ EBC ∪ PPR rouge ∪ PEB A/B ∪ DPF ∪ ravine ∪ 50 pas ∩
+   assiette) — MÊME logique/seuils que l'assiette clippée servie (`_EMPRISE` + `_GREVE_CERTAINE`).
+2. `_capacite_union` — `estimate_capacity(rules_dominante, surface_union, emprise_geo=(emprise_union, recul))`
+   (le moteur du résiduel/fiche) → SDP de l'union ; puis **`compute_bilan_servi` UNE fois** (COMPARER-2 §2,
+   VRD sur l'emprise réellement aménagée) via un `(ctx, f)` synthétique de l'union + le parcel_id de la
+   parcelle dominante (prix de sortie du secteur, identique pour des parcelles contiguës).
+3. `aggregate_assiette` garde `sdp_par_parcelle` (gain vs la meilleure seule) ; les figures combinées
+   viennent de l'union. Note servie réécrite (plus « estimation qui sous-compte »).
+
+**Témoin** (trio Saint-Paul `97415000BI0055 / BI0701 / BI0616`, surface cumulée 1 626 m²) :
+
+| | Somme des résiduels (avant) | Union (après) |
+|---|---|---|
+| SDP | 575 + 158 + 284 = **1 017 m²** | **1 394 m²** (+37 %) |
+| Charge foncière | 3 VRD sommées | **une seule** : 328 386 € (central), **202 €/m² terrain** |
+| Emprise constructible | — | 774 m² (union insetée, reculs internes supprimés) |
+
+Tests : `test_assemblage.py` — guard structure endpoint (note « UNION », ca/charge None sans zonage
+en base de test) + `test_aggregate_assiette_calcule_sur_l_union` (@db, skip justifié si la base de test
+n'a pas de run résiduel ; vérifie sur données réelles SDP_union ≥ somme + charge unique). 4 passed, 1 skip.
 
 ### B.5 — médianes DVF unifiées (⏳ à faire — plan)
 
