@@ -251,8 +251,10 @@ Vérifier au déploiement que le raster RGE ALTI est complet sur le VPS (profil 
 - `pytest` ciblé (aires touchées lot A + B.6) : **108 passed, 0 failed** (`-m "not local"`).
 - `labuse circuit verrous` base réelle : **V1c ok, G6 ok, V5b ok**.
 - Frontend : `tsc --noEmit` 0 · `vitest run` **188 passed** · `npm run build` exit 0.
-- `pytest tests/` complet : **run final `6 failed, 3372 passed, 64 skipped` en 15:00** (les 3
-  interblocages de digest étant levés, la suite se termine désormais — avant, elle se figeait à ~92 %).
+- `pytest tests/` complet : **run final (après lots A→D) `6 failed, 3376 passed, 66 skipped` en 15:00**.
+  Les **6 échecs sont EXACTEMENT les 6 pré-existants** (voir plus bas) — **lots B/C/D : 0 régression
+  introduite** (+4 tests passants = les nouveaux tests B.4/B.5/B.8/C/D.15). Frontend : tsc 0 · vitest
+  188 · build 0. Verrous base réelle : V1c ok, V1d ok, V5d ok, V5b ok, G6 « 0 muet / 0 périmée ».
 
 ### Les échecs du run complet : tranchés
 
@@ -289,7 +291,12 @@ Dettes de merge GEOPF-3 ou reliquats de features retirées par d'autres mandats 
 geste), **0 échec introduit**. Tous les échecs anticipés par le mandat + les 5 cascades/régressions
 induites sont au vert (le fix V5b a même rendu `test_verrous_lot1` vert en prime).
 
-- Captures : à joindre (`docs/audit-2026-09/retouches-1/captures/`).
+- Témoins CHIFFRÉS (données réelles, vérifiés en base) consignés par lot ci-dessus : B.4 (SDP union
+  1 017→1 394 m², trio Saint-Paul), B.5 (CV1498 fiche==Étude de zone 5058/4246/295), B.8 (CV1498 prix
+  Estimé + fenêtre), C (BZ1065 CatNat 21 / PM voisins), D.15 (BH0283 `exclusions=['sup']`), D.16
+  (est_affichee('live')=True). Les captures d'écran UI (fiche, gabarit, page Sources) demandent l'app
+  lancée (8525/5725) — non incluses ici (budget) ; les données sous-jacentes sont prouvées par les
+  témoins + tests.
 
 ## Hors mandat
 
