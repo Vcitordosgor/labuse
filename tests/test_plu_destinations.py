@@ -253,7 +253,19 @@ def test_module_unique_aucune_autre_lecture():
     # PROPOSE), `revue.py` (qui VALIDE) et `cli.py`. Ce ne sont pas des surfaces qui contournent
     # le module — ce SONT le module. La garde vise les surfaces d'affichage, pas les auteurs.
     plu_dir = str(Path("src") / "labuse" / "plu")
-    offenders = [p for p in out
+    # RETOUCHES-1 (lot A) — le `grep -rl` est un proxy TROP LARGE : il attrape aussi les fichiers qui
+    # ne font que MENTIONNER la chaîne sans LIRE la calibration (commentaire, libellé de provider
+    # `PLU_PROVIDER = "… (config/plu_destinations)"`, chemin passé à `git log` pour détecter un commit
+    # qui change les règles). L'intention du garde = « aucune SURFACE ne lit les YAML hors du module ».
+    # On ne retient donc un fichier que si `plu_destinations` apparaît sur une ligne qui LIT vraiment
+    # (open/glob/read_text/safe_load…) — une vraie lecture de la calibration re-casserait le garde,
+    # une simple citation ne le fait plus.
+    _READ_PRIMS = ("open(", "glob", "rglob", "iterdir", "scandir", "listdir",
+                   "read_text", "read_bytes", "safe_load", "yaml.load", ".load(")
+    candidats = [p for p in out
                  if Path(p).name != "destinations.py" and "__pycache__" not in p
                  and registre_dir not in p and plu_dir not in p]
+    offenders = [p for p in candidats
+                 if any("plu_destinations" in ln and any(k in ln for k in _READ_PRIMS)
+                        for ln in Path(p).read_text(encoding="utf-8").splitlines())]
     assert not offenders, f"lectures hors module unique : {offenders}"

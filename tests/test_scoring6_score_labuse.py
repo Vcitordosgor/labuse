@@ -133,7 +133,7 @@ def test_vocabulaire_client_gravé():
     assert libelle_client_bande("B", BAREME) == "Bonne"
     assert libelle_client_bande("C", BAREME) == "À étudier"
     assert libelle_client_bande("D", BAREME) == "Faible"
-    assert libelle_client_bande("0", BAREME) == "Sans potentiel constructible"
+    assert libelle_client_bande("0", BAREME) == "Non retenue"   # ANALYSE-2 (décision Vic) : ex « Sans potentiel constructible »
     assert libelle_client_bande("NC", BAREME) == "Analyse incomplète"
     assert libelle_client_bande("NC", BAREME, cause="zone non résolue") == \
         "Analyse incomplète — zone non résolue"

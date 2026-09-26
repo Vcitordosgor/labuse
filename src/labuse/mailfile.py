@@ -69,7 +69,16 @@ def ensure_tables(engine) -> None:
             )"""))
         # COMPTE-3 (Lot 2) — avertissement figé à l'enfilage si l'URL de base des liens n'est pas
         # cliquable par un client distant (localhost). Colonne ajoutée en place (table existante).
-        c.execute(text("ALTER TABLE mail_queue ADD COLUMN IF NOT EXISTS avert text"))
+        # RETOUCHES-1 (lot A) — GARDE d'existence AVANT l'ALTER : `ADD COLUMN IF NOT EXISTS` prend un
+        # verrou ACCESS EXCLUSIVE sur mail_queue MÊME en no-op (colonne déjà là) ; sur une connexion
+        # séparée (ensure_tables reçoit l'engine, pas la session), il s'interbloque contre une session
+        # qui tient des écritures mail_queue non committées (2ᵉ appel envoyer_digests). On ne verrouille
+        # donc que si la colonne manque VRAIMENT — idempotent et sans verrou en régime établi.
+        _has_avert = c.execute(text(
+            "SELECT 1 FROM information_schema.columns "
+            "WHERE table_name = 'mail_queue' AND column_name = 'avert'")).first()
+        if not _has_avert:
+            c.execute(text("ALTER TABLE mail_queue ADD COLUMN avert text"))
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_mail_queue_etat_cree ON mail_queue(etat, cree_at DESC)"))
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_mail_queue_compte ON mail_queue(compte_id, cree_at DESC)"))
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_mail_queue_dedup ON mail_queue(dedup, cree_at DESC)"))

@@ -89,6 +89,14 @@ DONNEES: dict[str, Donnee] = {
     "surface cadastrale parcels.surface_m2",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/scoreur.py:scoreur_adresse",
     reservoirs=("cadastre_api_carto",), portee="live", table="parcels.surface_m2"),
+ # GEOPF-3 couche 7 (réconcilié RETOUCHES-1 lot A) — le lieu-dit BD NYME servi sous l'adresse de la
+ # fiche (« Secteur : … ») : c'est le chiffre qui rend le réservoir `bd_nyme` non-muet (G6/V1d).
+ "secteur_lieu_dit": C("Secteur (lieu-dit)", "texte", "parcelle",
+    "toponyme du lieu-dit BD NYME le plus proche du centre de la parcelle (rayon borné 600 m ; None "
+    "au-delà) — servi sous l'adresse de la fiche comme « Secteur : … »",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:_secteur_lieudit",
+    reservoirs=("bd_nyme",), portee="live", type="texte",
+    table="lieux_dits (toponyme le plus proche par idu)"),
  # GABARIT-1 — outil « Gabarit réglementaire » (moteur pur, sourcé). Servi sur fixtures
  # (démo CDC §9) ; réel per-parcelle dès que la classification des limites arrive (GABARIT-2).
  "gabarit_implantation_m2": C("Zone d'implantation réglementaire", "m²", "parcelle",

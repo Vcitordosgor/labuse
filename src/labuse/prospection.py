@@ -69,7 +69,9 @@ def merge_prospection(current: dict | None, patch: dict | None) -> dict:
                 out[k] = {}
             elif isinstance(v, dict):
                 from .faisabilite.engine import Hypotheses, appliquer_overrides_hypotheses
-                out[k] = appliquer_overrides_hypotheses(Hypotheses(), v)   # ne retient que valides/bornés
+                # RETOUCHES-1 (lot A) — source unique : `Hypotheses.charger()` (YAML audité), jamais
+                # d'instanciation directe hors engine.py (doctrine hypothèses bilan, double-chemin fermé).
+                out[k] = appliquer_overrides_hypotheses(Hypotheses.charger(), v)   # ne retient que valides/bornés
             # non-dict → ignoré
         # toute autre clé est ignorée (anti-injection)
     return out

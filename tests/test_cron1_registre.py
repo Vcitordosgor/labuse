@@ -57,7 +57,9 @@ def test_agents_sources_dimanche():
     a = JOBS["agents-sources"]
     m, h, dom, mon, dow = a.cron_utc.split()
     assert dow == "0", f"doit tourner le dimanche (dow=0), pas {dow}"
-    assert a.touche == "eau" and a.cadence == "hebdo (dim)"
+    # CIRCUIT-P7 (reporté RETOUCHES-1 lot A) — l'agent est passé à « 1 semaine sur 2 » (semaines ISO
+    # paires) : cadence « tous les 15 j (dim) », plus « hebdo (dim) ».
+    assert a.touche == "eau" and a.cadence == "tous les 15 j (dim)"
     assert "plafond" in a.raison.lower()
 
 

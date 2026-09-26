@@ -140,13 +140,20 @@ def test_duediligence_ne_lit_plus_la_cascade():
     # PIEGES-RISQUES-2 (Lot A) — l'outil « un lot » ne dépend PLUS de l'ancien scoring : sa fonction ne
     # lit ni dryrun_cascade_results ni parcel_p_score_v2, et délègue à la MÊME source que « une parcelle ».
     # CASSE si on re-branche la cascade sur cet outil (garde-fou du mandat, « grep prouvé »).
+    import ast
     import inspect
     from labuse.api import modules
     src = inspect.getsource(modules.duediligence)
-    assert "dryrun_cascade_results" not in src
-    assert "parcel_p_score_v2" not in src
-    assert "_diligence_dossier" not in src
-    assert "contraintes_parcelle" in src                                # même source que « une parcelle »
+    # RETOUCHES-1 (lot A) — le garde vise le CODE, pas la docstring : celle-ci EXPLIQUE justement que
+    # l'outil « ne lit PLUS la cascade (`dryrun_cascade_results`) ni le scoring », ce qui piégeait le
+    # simple `not in src`. On retire la docstring (contenu brut) avant le contrôle (le corps exécutable
+    # reste strict : re-brancher la cascade dans le code re-casse le garde).
+    doc = ast.get_docstring(ast.parse(src.strip()).body[0], clean=False) or ""
+    code = src.replace(doc, "")
+    assert "dryrun_cascade_results" not in code
+    assert "parcel_p_score_v2" not in code
+    assert "_diligence_dossier" not in code
+    assert "contraintes_parcelle" in code                               # même source que « une parcelle »
 
 
 @pytest.mark.db
