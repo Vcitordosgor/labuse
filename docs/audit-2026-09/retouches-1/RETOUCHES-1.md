@@ -15,7 +15,7 @@ d'entrée OK. Venv `~/Desktop/labuse/.venv`, `PYTHONPATH=src` (l'éditable point
 | B | B.7 — tuile terrain nu / seuil | ✅ sans objet (RECETTE-6, voir §B.7) |
 | B | B.4 — Assemblage sur l'union | ✅ fait — SDP union 1017→1394 m², une VRD (voir §B.4) |
 | B | B.5 — médianes DVF unifiées | ✅ fait — fiche == Étude de zone (voir §B.5) |
-| B | B.8 — badge Estimé au bilan | ⏳ à faire — plan détaillé §B.8 |
+| B | B.8 — badge Estimé au bilan | ✅ fait — badge + source/fenêtre (voir §B.8) |
 | C | C.9–14 — 6 blocs fiche (FICHE-3) | ⏳ à faire — plan détaillé §C |
 | D | D.15 — Gabarit ER/EBC/SUP | ⏳ à faire — plan détaillé §D.15 |
 | D | D.16 — sources `live` | ⏳ à faire — plan détaillé §D.16 |
@@ -166,12 +166,19 @@ d'une commune ≠ l'ancien par type d'une parcelle) ; déjà le point unique `DV
 `marche_service`. Test `test_mon_secteur_coherence::test_etude_de_zone_medianes_par_type_identiques_a_la_fiche`
 (skip justifié si base de test vide ; vérifié sur données réelles).
 
-### B.8 — badge Estimé au bilan (⏳ à faire — plan)
+### B.8 — badge Estimé au bilan (✅ fait)
 
-Le bilan (`constructibilite.tsx:218`) affiche « prix de sortie neuf X €/m² » sous l'étiquette
-« LABUSE (sourcé) » alors que c'est une **médiane DVF secteur** (estimée). **Plan** : badge
-`Estimé` (motif ambre, comme `moteurs.tsx:427` `SE`) + sous-ligne source (« DVF secteur ») et fenêtre
-(rayon + n + années) ; exposer `prix_sortie_source`/`n`/`fenetre` dans le payload bilan si absents.
+Le bilan affichait « prix de sortie X €/m² » sous « LABUSE (sourcé) » alors que c'est une **médiane
+DVF** (estimée). Correctif :
+- back (`bilan.py` `compute_calculette`) : le bloc `marche` porte désormais la SOURCE et la FENÊTRE —
+  `n`, `rayon_m`, `periode`, `type_prix` (en plus de median/fiabilite).
+- front (`constructibilite.tsx`) : badge **« Estimé »** (motif ambre `st-creuser`, comme Comparer)
+  après le prix + sous-ligne `data-prix-sortie-source` : « Prix de sortie Estimé — DVF (ventes actées,
+  <type>) · N ventes · rayon R m · AAAA–AAAA. » Étiquette « LABUSE (sourcé) » → « LABUSE » (le prix
+  n'est plus présenté comme sourcé).
+
+Témoin CV1498 : « 4 246 €/m² [Estimé] — DVF (ventes actées, appartement) · 13 ventes · rayon 1 000 m ·
+2023–2025 ». Test `test_bilan::test_calculette_marche_porte_source_et_fenetre`. tsc 0.
 
 ---
 

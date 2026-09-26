@@ -831,7 +831,11 @@ def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix:
           "cout_vrd_base": vrd}
     b = compute_bilan(float(shab_vendable_m2), float(surface_terrain_m2 or 0), prix,
                       Hypotheses.charger(), bilan_params=bp)
-    marche = {"median": prix.get("median"), "fiabilite": prix.get("fiabilite"), "n": prix.get("n")}
+    # RETOUCHES-1 (lot B.8) — la source ET la fenêtre du prix DVF (n ventes, rayon effectif, période,
+    # type) accompagnent la médiane : le bilan affiche « Estimé » + sous-ligne sourcée, jamais un €/m² nu.
+    marche = {"median": prix.get("median"), "fiabilite": prix.get("fiabilite"), "n": prix.get("n"),
+              "rayon_m": prix.get("radius_m"), "periode": prix.get("periode"),
+              "type_prix": prix.get("type_prix")}
     if not b.charge_fonciere:
         # prix insuffisant / surface nulle → on ne fabrique pas de chiffre creux (doctrine)
         return {"calculable": False, "fiabilite": b.fiabilite, "raison": b.verdict, "marche": marche}
