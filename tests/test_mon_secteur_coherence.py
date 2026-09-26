@@ -82,3 +82,29 @@ def test_distribution_secteur_repere_vide():
     """Un échantillon vide rend des repères None (jamais un zéro trompeur)."""
     d = distribution_secteur([])
     assert d["n"] == 0 and d["median"] is None and d["max"] is None
+
+
+# ── RETOUCHES-1 (lot B.5) — l'Étude de zone (flash) sert LES MÊMES médianes par type que la fiche ──
+
+def test_etude_de_zone_medianes_par_type_identiques_a_la_fiche():
+    """Les médianes maison/appartement/terrain de l'Étude de zone (flash `_marche.par_type`) sont
+    EXACTEMENT celles de la fiche (`mon_secteur.medianes_par_type`) — même fonction, même parcelle,
+    mêmes chiffres. Plus de chemin parallèle (l'ancien `med_m2_bati` tous-types reste, distinct)."""
+    from labuse.api.mon_secteur import medianes_par_type
+    from labuse.flash.data import _existing_tables, _marche, _NEEDED_TABLES
+    with session_scope() as db:
+        idus = _quelques_parcelles(db, 6)
+        if not idus:
+            pytest.skip("base de test sans parcelles réelles")
+        avail = _existing_tables(db, _NEEDED_TABLES)
+        vus = 0
+        for idu in idus:
+            fiche = medianes_par_type(db, idu)
+            ez = (_marche(db, idu, avail) or {}).get("par_type")
+            assert ez is not None, f"{idu} : l'Étude de zone ne sert pas par_type"
+            for t in ("maison", "appartement", "terrain_nu"):
+                a = (fiche.get(t) or {}).get("eur_m2")
+                b = (ez.get(t) or {}).get("eur_m2")
+                assert a == b, f"{idu} {t} : fiche {a} ≠ Étude de zone {b}"
+            vus += 1
+        assert vus >= 1

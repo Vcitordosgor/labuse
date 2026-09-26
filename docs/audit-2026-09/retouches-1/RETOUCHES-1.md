@@ -14,7 +14,7 @@ d'entrée OK. Venv `~/Desktop/labuse/.venv`, `PYTHONPATH=src` (l'éditable point
 | B | B.6 — garde-fou commune 400 | ✅ fait (commit `61fe199e`) |
 | B | B.7 — tuile terrain nu / seuil | ✅ sans objet (RECETTE-6, voir §B.7) |
 | B | B.4 — Assemblage sur l'union | ✅ fait — SDP union 1017→1394 m², une VRD (voir §B.4) |
-| B | B.5 — médianes DVF unifiées | ⏳ à faire — plan détaillé §B.5 |
+| B | B.5 — médianes DVF unifiées | ✅ fait — fiche == Étude de zone (voir §B.5) |
 | B | B.8 — badge Estimé au bilan | ⏳ à faire — plan détaillé §B.8 |
 | C | C.9–14 — 6 blocs fiche (FICHE-3) | ⏳ à faire — plan détaillé §C |
 | D | D.15 — Gabarit ER/EBC/SUP | ⏳ à faire — plan détaillé §D.15 |
@@ -140,17 +140,31 @@ Tests : `test_assemblage.py` — guard structure endpoint (note « UNION », ca/
 en base de test) + `test_aggregate_assiette_calcule_sur_l_union` (@db, skip justifié si la base de test
 n'a pas de run résiduel ; vérifie sur données réelles SDP_union ≥ somme + charge unique). 4 passed, 1 skip.
 
-### B.5 — médianes DVF unifiées (⏳ à faire — plan)
+### B.5 — médianes DVF unifiées (✅ fait)
 
-Fonction canonique de la fiche : `bilan.reference_locale` (bilan.py:306, FICHE-FIX-2 P2) — médiane
-par type (maison/appart/terrain), rayon adaptatif 500→1000→1500 m. Divergent :
-- `ingestion/dvf_marche.neuf_vefa_commune` (dvf_marche.py:141) — VEFA neuf, grain commune (déjà seuil
-  partagé `neuf_vefa_seuil`, à confirmer comme référence neuf commune).
-- `flash._marche` (flash/data.py:446) — médiane LOCALE tous types, rayon FIXE (documentée « distincte »
-  du sector_price). **Plan** : faire lire `reference_locale` (par type) à Étude de zone pour maison/
-  appartement/terrain ; témoins CV1498 + un polygone d'Étude de zone = mêmes médianes que la fiche.
-⚠ nuance : `_marche` sert une médiane « tous types rayon fixe » ASSUMÉE distincte ; l'unification doit
-préserver l'intention (indicateur local) tout en servant les 3 médianes par type de la fiche.
+Fonction canonique de la fiche pour les médianes PAR TYPE : `mon_secteur.par_type` (maison/appartement
+via `reference_locale`/FICHE-FIX-2 P2, rayon adaptatif 500→1500 m ; terrain nu via la section
+cadastrale `_terrain_section`). L'Étude de zone (`flash._marche`) calculait un `med_m2_bati` tous-types
+à rayon FIXE (500 m) — divergent (mesuré sur CV1498 : 5 116 €/m² vs maison 5 058 / appartement 4 246).
+
+**Correctif** : extraction d'un point de calcul UNIQUE `mon_secteur.medianes_par_type(db, idu)` →
+{maison, appartement, terrain_nu} ; `mon_secteur` (fiche) ET `flash._marche` (Étude de zone) le lisent.
+Le `med_m2_bati` tous-types (indicateur local) reste, distinct et documenté ; ce sont les médianes
+PAR TYPE qui coïncident désormais.
+
+**Témoin CV1498 (Saint-Paul)** — fiche == Étude de zone, à l'euro :
+
+| | maison | appartement | terrain nu |
+|---|---|---|---|
+| Fiche (`mon_secteur.par_type`) | 5 058 €/m² | 4 246 €/m² | 295 €/m² |
+| Étude de zone (`flash._marche.par_type`) | 5 058 | 4 246 | 295 |
+
+**Comparer** : `/compare` (comparateur de PARCELLES) lit déjà `fiche_payload`/`_q_v2_fiche` (les
+fonctions de la fiche) — aucun chemin de médiane parallèle. `neuf_vefa_commune` sert le prix NEUF au
+grain COMMUNE (comparateur de communes) — métrique et maille légitimement distinctes (le neuf VEFA
+d'une commune ≠ l'ancien par type d'une parcelle) ; déjà le point unique `DVF_NEUF_VEFA` de
+`marche_service`. Test `test_mon_secteur_coherence::test_etude_de_zone_medianes_par_type_identiques_a_la_fiche`
+(skip justifié si base de test vide ; vérifié sur données réelles).
 
 ### B.8 — badge Estimé au bilan (⏳ à faire — plan)
 

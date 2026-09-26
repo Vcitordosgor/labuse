@@ -49,6 +49,20 @@ def _clean_local(r: dict | None) -> dict | None:
             "distribution": r.get("distribution")}
 
 
+def medianes_par_type(db: Session, idu: str) -> dict:
+    """RETOUCHES-1 lot B.5 — LES médianes DVF par type autour d'une parcelle : maison / appartement
+    (`reference_locale`, FICHE-FIX-2 P2 : rayon adaptatif 500→1500 m, aberrants exclus, dédoublonnage
+    par mutation) + terrain nu (section cadastrale, `_terrain_section`). POINT DE CALCUL UNIQUE partagé
+    par la fiche (Mon secteur), l'Étude de zone (flash) et le comparateur : pour une même parcelle,
+    tous servent EXACTEMENT les mêmes chiffres maison/appartement/terrain. None par type sous le seuil."""
+    from ..pige.signaux import _ref_local
+    return {
+        "maison": _clean_local(_ref_local(db, idu, "maison")),
+        "appartement": _clean_local(_ref_local(db, idu, "appartement")),
+        "terrain_nu": _terrain_section(db, idu),
+    }
+
+
 @router.get("/mon-secteur")
 def mon_secteur(idu: str = Query(..., description="IDU de la parcelle (résolu depuis l'adresse côté front)"),
                 db: Session = Depends(get_db)) -> dict:
@@ -93,13 +107,9 @@ def mon_secteur(idu: str = Query(..., description="IDU de la parcelle (résolu d
             "distribution": sp.get("distribution"), "ecart_commune": ecart_commune,
         }
 
-    # PAR TYPE — la médiane locale du même type (FICHE-COMMUNE-2 C5), rayon adaptatif, seuil interne.
-    from ..pige.signaux import _ref_local
-    par_type = {
-        "maison": _clean_local(_ref_local(db, idu, "maison")),
-        "appartement": _clean_local(_ref_local(db, idu, "appartement")),
-        "terrain_nu": _terrain_section(db, idu),
-    }
+    # PAR TYPE — point de calcul UNIQUE (RETOUCHES-1 lot B.5) partagé avec l'Étude de zone : médiane
+    # locale du même type (reference_locale, rayon adaptatif) + terrain nu (section cadastrale).
+    par_type = medianes_par_type(db, idu)
 
     # RADAR — les annonces actives RATTACHÉES dans le rayon 1500 m, avec l'écart demandé/acté du même
     # moteur `badges_pour_biens` (médiane locale FICHE-COMMUNE-2 C5). L'outil s'enrichit au fil des dépôts.
