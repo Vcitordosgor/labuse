@@ -5,6 +5,8 @@ import { useApp } from '../../store/useApp'
 import { M02 } from './ModulePanel'
 
 // Mandat SCAN — deux retraits : plus aucun bouton d'envoi de courrier ; l'outil observe, il ne démarche pas.
+// KELFONCIER-FIX-2 (Lot B) — les deux actions « Préparer les courriers » et « Comparer » (barre de
+// sélection multiple) sont retirées, avec les cases de sélection qui ne servaient qu'à elles.
 // RECETTE-1 R8 — le scoring (pastille de palier) ne s'affiche QUE dans « Demander à LABUSE » et la fiche :
 // le Scan patrimoine n'affiche PLUS aucun classement (ni « Sans signal », ni « Priorité »…).
 const PAT = {
@@ -33,7 +35,16 @@ describe('SCAN — deux retraits', () => {
     const { container } = renderM02()
     await screen.findByText('SCI TEST')
     expect(container.querySelector('[data-m02-courrier]')).toBeNull()
+    expect(container.querySelector('[data-scan-courrier]')).toBeNull()
     expect(container.textContent).not.toContain('✉')
+  })
+
+  it('KELFONCIER-FIX-2 Lot B — plus d\'action « Comparer » ni de sélection multiple', async () => {
+    const { container } = renderM02()
+    await screen.findByText('SCI TEST')                 // la liste (1 parcelle) est rendue…
+    expect(container.querySelector('[data-scan-comparer]')).toBeNull()   // …sans bouton Comparer
+    expect(container.querySelector('[data-scan-parc-sel]')).toBeNull()   // …sans case de sélection
+    expect((container.textContent ?? '').toLowerCase()).not.toContain('comparer')
   })
 
   it('RECETTE-1 R8 — aucune pastille de palier (le scoring ne sort pas de « Demander à LABUSE »/fiche)', async () => {
