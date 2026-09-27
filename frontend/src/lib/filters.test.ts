@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { filtersFromHash, filtersToHash, hasOpinion } from './filters'
+import { countActiveFilters, filtersFromHash, filtersToHash, hasOpinion } from './filters'
 import { EMPTY_FILTERS, type Filters } from '../store/useApp'
 
 // M55-D : la persistance couvre TOUS les champs, reste rétro-compatible, et l'interrupteur
@@ -61,5 +61,15 @@ describe('filters URL persistence (M55-D)', () => {
     expect('scoreMin' in back).toBe(false)   // la clé q n'alimente plus aucun champ
     expect(back.horsCopro).toBe(true)
     expect(back.flags ?? []).toEqual([])   // la clé contraintes est ignorée, le lien s'ouvre
+  })
+
+  // KELFONCIER-FIX-1 (Lot E) — « sans copropriété » entre dans le hash (URL/Mes vues/veille) et le
+  // compteur de critères actifs (badge « Filtres (N) »).
+  it('Lot E — « sans copropriété » (hc) persiste dans le hash et compte comme critère', () => {
+    const hash = filtersToHash({ ...EMPTY_FILTERS, horsCopro: true }, null)
+    expect(hash).toContain('hc=1')
+    const back = filtersFromHash(hash)!.filters
+    expect(back.horsCopro).toBe(true)
+    expect(countActiveFilters({ ...EMPTY_FILTERS, horsCopro: true })).toBe(1)   // badge « Filtres (N) »
   })
 })

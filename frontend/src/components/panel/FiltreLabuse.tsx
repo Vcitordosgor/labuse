@@ -578,6 +578,17 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
               emprise inconnue en base). La clause SQL ne bouge pas (partition complète et défendable). */}
           <p className="mt-1 text-[10px] leading-snug text-txt-dim">« Terrain nu » = aucune emprise bâtie ≥ 5 % détectée (bâti non mesuré compris) ; la fiabilité est précisée en fiche.</p>
         </div>
+        {/* KELFONCIER-FIX-1 (Lot E) — case « Sans copropriété » : ré-exposée dans le groupe terrain.
+            Écarte les parcelles en copropriété (RNIC/DVF, s2.copro). Backend `hors_copro` (hash hc),
+            compteur/veille/Mes vues/badge déjà câblés — même prédicat que la fiche §propriété. */}
+        <div>
+          <p className="label-caps text-txt-dim">Copropriété</p>
+          <Case data-filtre-hors-copro className="mt-1"
+            checked={filters.horsCopro}
+            onChange={(e) => setFilter('horsCopro', e.target.checked)}
+            label="Sans copropriété" />
+          <p className="mt-1 text-[10px] leading-snug text-txt-dim">Écarte les parcelles en copropriété (immatriculation RNIC ou copro DVF).</p>
+        </div>
         {/* RETOURS-14 P5 — ZFANG (zone franche) et FRR (ruralités) ont quitté « Le terrain » : ils vivent
             désormais dans la section repliée « Affiner la recherche » (bas du panneau). */}
       </div>
