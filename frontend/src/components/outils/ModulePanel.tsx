@@ -289,6 +289,28 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               </div>
             </>
           )}
+          {/* RETOURS-15 C9 — pont Blocs fonciers : les GROUPES de parcelles contiguës du propriétaire
+              (même moteur que l'outil Blocs, table parcel_blocs). Ligne « Blocs contigus : N » + les
+              groupes cliquables (→ fiche de leur parcelle représentative). */}
+          {(() => {
+            const bc = d['blocs_contigus'] as { n: number; items: { bloc_id: number; n_parcelles: number; surface_m2: number; communes: string[]; sdp_residuelle_m2: number; idu_repr: string | null }[] } | undefined
+            if (!bc || bc.n === 0) return null
+            return (
+              <div data-m02-blocs className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5">
+                <div className="text-[11px] font-medium text-txt-mut">Blocs contigus : <b className="text-txt">{fmt(bc.n)}</b></div>
+                <div className="mt-1 flex flex-col gap-0.5">
+                  {bc.items.map((bl) => (
+                    <button key={bl.bloc_id} data-m02-bloc
+                      onClick={() => bl.idu_repr && useApp.getState().focusParcelle(bl.idu_repr, { fiche: true })}
+                      className="hover-fill flex items-baseline justify-between gap-2 rounded px-1.5 py-0.5 text-left text-[10.5px] text-txt-mut transition-colors duration-quick">
+                      <span><b className="text-txt">{fmt(bl.n_parcelles)}</b> parcelles · {(bl.communes ?? []).join(', ')}</span>
+                      <span className="tnum shrink-0 text-txt-dim">{fmt(bl.surface_m2)} m²</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
           {/* RETOURS-12 O5 — en fusion (ScanPatrimoine), « Voir ses parcelles → » REPLIE le bandeau pour
               ouvrir la liste (les opérations restent dans l'onglet « Construction »). Hors fusion (M02
               seul), le pont historique « Voir ses opérations → » vers Veille promoteurs est conservé. */}

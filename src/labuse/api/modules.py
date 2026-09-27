@@ -415,6 +415,20 @@ def patrimoine(siren: str, fmt: str = "json",
                     best = list(comp)
             id2idu = {r["id"]: r["idu"] for r in rows}
             assiette_contigue = [id2idu[i] for i in best] if len(best) >= 2 else []
+    # RETOURS-15 C9 (pont Blocs → Scan) — les BLOCS CONTIGUS du propriétaire, MÊME MOTEUR que l'outil
+    # Blocs fonciers (table `parcel_blocs`, bâtie par `labuse blocs-build`). Un bloc = ≥ 2 parcelles
+    # contiguës du même SIREN. On sert le compte + les groupes (repr, n, surface, communes, SDP).
+    blocs_contigus: dict = {"n": 0, "items": []}
+    if db.execute(text("SELECT to_regclass('parcel_blocs') IS NOT NULL")).scalar():
+        brs = db.execute(text("""
+            SELECT b.id AS bloc_id, b.n_parcelles, b.surface_totale_m2, b.communes, b.sdp_residuelle_m2,
+                   (SELECT min(m.idu) FROM parcel_bloc_membres m WHERE m.bloc_id = b.id) AS idu_repr
+            FROM parcel_blocs b WHERE b.siren = :s
+            ORDER BY b.n_parcelles DESC, b.surface_totale_m2 DESC"""), {"s": siren}).mappings().all()
+        blocs_contigus = {"n": len(brs), "items": [
+            {"bloc_id": r["bloc_id"], "n_parcelles": r["n_parcelles"], "surface_m2": r["surface_totale_m2"],
+             "communes": r["communes"], "sdp_residuelle_m2": r["sdp_residuelle_m2"], "idu_repr": r["idu_repr"]}
+            for r in brs[:12]]}
     # GB-017/018 — EXPORT CSV du portefeuille (raison sociale ENTIÈRE ; notice GB-016 si plafond).
     if fmt == "csv":
         import csv as _csv
@@ -460,6 +474,7 @@ def patrimoine(siren: str, fmt: str = "json",
         "depot_comptes": depot,          # DONNEES-1 lot 2.3 — {annee, depuis_ans} ou None (aucun dépôt)
         "inpi_sans_dirigeant": inpi_sans_dirigeant,
         "assiette_contigue": assiette_contigue,
+        "blocs_contigus": blocs_contigus,   # RETOURS-15 C9 — pont Blocs fonciers (compte + groupes)
         "total": len(rows), "affiches": len(page), "offset": offset, "limit": limit,
         "tronquee": offset + limit < len(rows),
         "items": [{"idu": r["idu"], "commune": r["commune"],
