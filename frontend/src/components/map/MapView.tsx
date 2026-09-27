@@ -2,7 +2,7 @@ import { useQuery, useIsFetching } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
-import { getBatiments, getCommunes, getFiche, getFiltreIdus, getParcelsGeojson, getTilesMeta, parcelAt } from '../../lib/api'
+import { getBatiments, getCommunes, getFiche, getFiltreIdus, getParcelGeojson, getParcelsGeojson, getTilesMeta, parcelAt } from '../../lib/api'
 import { ALL_TIER_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { MAP_THEME } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
@@ -566,6 +566,15 @@ export function MapView() {
       m.addLayer({ id: 'parcels-muet', type: 'line', source: 'parcels', minzoom: 15, filter: NON_PROMUES_FILTER,
         layout: { visibility: 'none' }, paint: { 'line-color': '#5F7267', 'line-width': 0.3, 'line-opacity': 0.5 } })
       m.addLayer({ id: 'parcels-sel', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
+      // FICHE-FIX-5 (Lot A) — SOURCE DE SÉLECTION dédiée : la géométrie de la parcelle sélectionnée
+      // (getParcelGeojson) y est posée → le LISERÉ BLANC s'affiche TOUJOURS, que la parcelle soit
+      // dans le GeoJSON commune, dans les tuiles île, ou nulle part (lien profond). `selection-line`
+      // est remontée au-dessus de toutes les couches à chaque sélection (m.moveLayer).
+      m.addSource('selection', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
+      m.addLayer({ id: 'selection-halo', type: 'line', source: 'selection',
+        paint: { 'line-color': '#0b0f0d', 'line-width': 4, 'line-opacity': 0.55 } })
+      m.addLayer({ id: 'selection-line', type: 'line', source: 'selection',
+        paint: { 'line-color': '#ffffff', 'line-width': 2.2 } })
       // RECETTE-6 (A3) — BÂTI 3D : extrusion de l'empreinte au sol à sa hauteur BD TOPO (la même que
       // l'Apporteur). Posée sur le relief (setTerrain → l'extrusion part du sol du MNT, jamais d'un
       // plan). Masquée par défaut ; allumée avec le bouton 3D (effet plus bas). Hauteur absente = pas
@@ -1226,8 +1235,10 @@ export function MapView() {
     const cible = selectedIdu ?? focusIdu
     m.setFilter('parcels-sel', ['==', ['get', 'idu'], cible ?? ''])
     m.setFilter('ile-sel', ['==', ['get', 'idu'], cible ?? ''])
+    // FICHE-FIX-5 (Lot A) — désélection : on VIDE la source de sélection (plus de liseré fantôme).
+    const selSrc = () => m.getSource('selection') as (maplibregl.GeoJSONSource | undefined)
     // PING SYSTÉMATIQUE : toute sélection/focus (liste, module, CRM, notification, outil) recentre + pulse
-    if (!cible) return
+    if (!cible) { selSrc()?.setData({ type: 'FeatureCollection', features: [] }); return }
     const feat = geo.data?.features.find((f) => (f.properties as { idu?: string }).idu === cible)
     let cancelled = false
     // RETOURS-13 R27/R32 — ZOOM FRANC (Vic : « le zoom est un peu timide ») : la parcelle doit se
@@ -1245,17 +1256,24 @@ export function MapView() {
       if (!c || cancelled) return
       m.flyTo({ center: c, zoom: Math.max(m.getZoom(), zoomCible(surface)), offset: panelOffset, duration: 800 })
     }
-    if (feat) centroidReady(roughCentroid(feat.geometry), (feat.properties as { surface_m2?: number }).surface_m2)
-    else {
-      // mode île (ou parcelle hors du GeoJSON chargé) : le centroïde vient de la fiche API.
-      // CONTRAT (Vic, 07/07) : un clic dans la liste = je VOIS la parcelle pulser, où qu'elle
-      // soit — le champ est `coords` [lon, lat] (le fallback lat/lon muet était le bug).
+    // FICHE-FIX-5 (Lot A) — on charge la GÉOMÉTRIE de la parcelle (une seule requête, cache react-
+    // query côté outils) : elle alimente la source `selection` (liseré garanti) ET donne le centroïde
+    // exact pour le vol. Le liseré ne dépend plus de la présence de la parcelle dans une autre source.
+    const surfaceHint = feat ? (feat.properties as { surface_m2?: number }).surface_m2 : undefined
+    getParcelGeojson(cible).then((fc) => {
+      if (cancelled) return
+      selSrc()?.setData({ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: fc.geometry as GeoJSON.Geometry, properties: {} }] })
+      if (m.getLayer('selection-halo')) m.moveLayer('selection-halo')   // au-dessus de tout (tuyau inclus)
+      if (m.getLayer('selection-line')) m.moveLayer('selection-line')
+      centroidReady(fc.centroid, surfaceHint)
+    }).catch(() => {
+      // repli : au moins recentrer via le centroïde de la fiche si la géométrie échoue.
+      if (feat) { centroidReady(roughCentroid(feat.geometry), surfaceHint); return }
       getFiche(cible).then((f) => {
         const c = (f as unknown as { coords?: [number, number] }).coords
-        const s = (f as unknown as { surface_m2?: number }).surface_m2
-        if (Array.isArray(c) && c.length === 2) centroidReady([c[0], c[1]], s)
+        if (Array.isArray(c) && c.length === 2) centroidReady([c[0], c[1]], (f as unknown as { surface_m2?: number }).surface_m2)
       }).catch(() => undefined)
-    }
+    })
     const pingId = geo.data && feat ? 'parcels-ping' : 'ile-ping'
     if (!m.getLayer(pingId)) {
       m.addLayer(pingId === 'parcels-ping'
