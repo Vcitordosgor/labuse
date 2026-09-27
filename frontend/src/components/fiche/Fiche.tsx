@@ -34,7 +34,7 @@ import { IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastille
 import { TransformationBlock, FaisabiliteTab, BilanTab, TaxeAmenagementBlock, FiscalLeviersBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
 import { BatiBlock, FiliationBlock } from './leBien'
 // KELFONCIER-FIX-2 (Partie B) — les formes de la maquette v3 (Verdict · Tuiles · BarreEmpilée…).
-import { Verdict, Tuiles, type Tuile, BarreEmpilee, type Part, Lignes, Ligne } from './formes'
+import { Verdict, Tuiles, type Tuile, BarreEmpilee, type Part, Lignes, Ligne, Pastilles, type Pastille } from './formes'
 import { RisquesSection } from './risques'
 import { MarcheSection, DerniereVenteBlock } from './marche'
 import { ReseauxSection, EquipementsBadges } from './reseaux'
@@ -1236,10 +1236,8 @@ export function Fiche({ idu }: { idu: string }) {
               : !expoOrient ? 'relief non disponible' : 'versant (RGE ALTI, fenêtre 200 m)',
             vide: !expoOrient,
             i: 'Orientation du versant de la parcelle (Nord, Sud-Est…), calculée sur le modèle d’altitude RGE ALTI (IGN) dans une fenêtre de 200 m autour du centroïde. La pente affichée est celle de l’emprise (tuile « Pente ») ; l’exposition n’en affiche pas une seconde. « — » : relief non disponible sur la parcelle.' }
-          // Taxe foncière → §7 Fiscalité (TFPB part communale, REI DGFiP).
+          // Taxe foncière → §7 Fiscalité (TFPB part communale, REI DGFiP) — désormais en Tuile (Lot I).
           const tfpb = f.fiscalite?.tfpb_commune_pct
-          const tuileTaxe = { v: tfpb != null ? `${nf(tfpb)} %` : '—', s: tfpb != null ? 'part communale' : 'taux non ingéré', vide: tfpb == null,
-            i: 'Taux de taxe foncière (TFPB) voté par la commune — fichier REI (DGFiP). C’est la charge annuelle, que le bien soit gardé, loué ou porté. « — » : taux non ingéré pour cette commune.' }
           // SDP restante → §10 Potentiel (potentiel résiduel autorisé par le PLU).
           const tuileSdp = { v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
             s: reglesSdp != null && reglesSdp > 0 ? undefined : (reglesZone && /^(A|N)/i.test(reglesZone) ? 'zone non constructible' : 'pas de potentiel résiduel'),
@@ -1695,7 +1693,33 @@ export function Fiche({ idu }: { idu: string }) {
                 ? <Badge ton="vert">ZFANG renforcé</Badge>
                 : tfpb != null ? `${nf(tfpb)} %` : undefined}>
               <div className="flex flex-col gap-3">
-                <ChiffreDissous l="Taxe foncière" t={tuileTaxe} />
+                {/* KELFONCIER-FIX-2 (Lot I) — maquette v3 : Verdict + Tuiles (taxe foncière · taxe
+                    d'aménagement) + Pastilles des dispositifs de la commune. Taux et dispositifs sont
+                    servis (REI DGFiP · CGI · DHUP) ; aucun taux recalculé. Détail conservé en dessous. */}
+                {(() => {
+                  const terf = f.territoire_fiscal
+                  const ta = f.taxe_amenagement
+                  const zonageLib = terf?.dispositifs_dom?.find((d) => /zonage/i.test(d.libelle))?.libelle
+                  const disp: Pastille[] = []
+                  if (terf?.zfang) disp.push({ label: 'ZFANG', on: true })
+                  if (terf?.frr) disp.push({ label: 'FRR', on: true })
+                  ;(terf?.perimetres ?? []).forEach((p) => disp.push({ label: p.libelle, on: true }))
+                  const tuiles: Tuile[] = []
+                  if (tfpb != null) tuiles.push({ label: 'Taxe foncière', valeur: <>{nf(tfpb)} <small>%</small></>, sous: 'part communale' })
+                  if (ta && (ta.taux_communal_pct != null || ta.taux_departemental_pct != null))
+                    tuiles.push({ label: "Taxe d'aménagement", valeur: <>{ta.taux_communal_pct ?? '—'} + {ta.taux_departemental_pct ?? '—'} <small>%</small></>, sous: 'commune · département' })
+                  return (
+                    <>
+                      {(terf?.zfang || terf?.frr || zonageLib) && (
+                        <Verdict ton="vert"
+                          reponse={[terf?.zfang ? 'Zone franche (ZFANG)' : null, terf?.frr ? 'France Ruralités (FRR)' : null].filter(Boolean).join(', ') || 'Dispositifs fiscaux'}
+                          contexte={zonageLib || undefined} />
+                      )}
+                      {tuiles.length > 0 && <Tuiles items={tuiles} />}
+                      {disp.length > 0 && (<><GroupLabel>Dispositifs de la commune</GroupLabel><Pastilles items={disp} /></>)}
+                    </>
+                  )
+                })()}
                 {/* Fiscal & leviers (QPV / TVA / note taxe) — levier fiscal du bilan (§7). */}
                 <FiscalLeviersBlock idu={idu} />
                 {/* FICHE-1 lot 5 — taxe d'aménagement estimée + porte pour changer les hypothèses (§7). */}

@@ -18,8 +18,10 @@ import { PermitsProximityBlock } from './PermitsProximityBlock'
 import { DepotsBlock } from './DepotsBlock'
 import { AutourZoneBlock } from './AutourZoneBlock'
 import { useApp } from '../../store/useApp'
-import { IC, RefDrawer, GroupLabel, FactNote, PorteOutil } from './primitives'
+import { IC, RefDrawer, GroupLabel, FactNote } from './primitives'
 import { Badge } from '../ui/Badge'
+// KELFONCIER-FIX-2 (Lot I) — maquette v3 : Verdict + OutilsSection (Permis commune · Fiche commune).
+import { Verdict, OutilsSection, type OutilSection } from './formes'
 
 // FICHE-RANGEMENT-2 Lot 1 — §1 Identité : l'historique des permis DE la parcelle (fait d'identité
 // du bien), extrait pour la future section.
@@ -58,10 +60,24 @@ export function HistoriqueSiteBlock({ f }: { f: Fiche }) {
 
 export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
   const eq = f.proximites_equipements
+  // KELFONCIER-FIX-2 (Lot I) — Verdict léger (fait de voisinage servi) + OutilsSection en pied.
+  const eqItems0 = (eq?.items ?? []).filter((e) => !/^bus$|transport/i.test(e.cat))
+  const nearest = eqItems0[0]
+  const nearestTxt = nearest ? `${nearest.cat} à ${nearest.distance_m >= 1000 ? `${(nearest.distance_m / 1000).toFixed(1).replace('.', ',')} km` : `${fmtInt(nearest.distance_m)} m`}` : null
+  const outils: OutilSection[] = []
+  if (f.commune) {
+    outils.push({ label: 'Permis de la commune', data: 'permis', principal: true,
+      onClick: () => { const st = useApp.getState(); st.setCommune(f.commune!); st.setCommunesFilter([f.commune!]); st.setModule('permis') } })
+    outils.push({ label: 'Fiche commune', data: 'fiche-commune',
+      onClick: () => { const st = useApp.getState(); st.setCommune(f.commune!); st.setContexteCommune(f.commune!) } })
+  }
   return (
     <RefDrawer id="quartier" icon={IC.contexte} name="Quartier"
       context="Équipements, population et permis du voisinage"
       value={<Badge ton="vert">isochrone</Badge>}>
+      {/* KELFONCIER-FIX-2 (Lot I) — Verdict en tête (équipement le plus proche + quartier INSEE, servis). */}
+      <Verdict ton="vert" reponse={f.iris_quartier?.nom ? `Quartier ${f.iris_quartier.nom}` : 'Voisinage'}
+        contexte={nearestTxt ? `le plus proche : ${nearestTxt}` : undefined} />
       {/* ÉQUIPEMENTS — UN moteur (BPE+OSM dédoublonnés, distance à pied). Absent = omis (jamais « 0 m »).
           Z1·02 — le label-caps « À proximité » devient un kicker ; les tuiles de distance (maquette) restent. */}
       {/* RECETTE-6 (C3) — le TRANSPORT (« Bus ») vit dans « Réseaux » (arrêt nommé + réseau + distance,
@@ -116,19 +132,15 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
 
       {/* PERMIS À PROXIMITÉ — UN tableau cliquable (rapatrié de Réseaux, F0). */}
       <PermitsProximityBlock idu={idu} />
-      {/* FICHE-PORTES-1 Lot 2 — porte « Permis » (M03) : prolonge la liste des permis à proximité
-          ci-dessus (l'outil est à la maille commune → contexte = la commune de la parcelle). */}
-      {f.commune && (
-        <PorteOutil ico="▤" data="permis" titre="Permis de la commune"
-          sous={`Qui construit quoi à ${f.commune} — et les permis dormants`}
-          onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setCommunesFilter([f.commune!]); st.setModule('permis') }} />
-      )}
 
       {/* FICHE-RANGEMENT-2 Lot 1 — l'historique permis DE la parcelle (fait d'identité) est relocalisé
           en §1 Identité (HistoriqueSiteBlock composé là) ; §9 Quartier ne garde que le voisinage. */}
 
       {/* Activité de dépôt du secteur (Sitadel) — rapatrié de Réseaux. */}
       {f.depots && <DepotsBlock d={f.depots} />}
+      {/* KELFONCIER-FIX-2 (Lot I) — outils de section en pied (maquette v3) : Permis de la commune
+          (M03, principal) + Fiche commune (contexte commune). */}
+      {outils.length > 0 && <OutilsSection outils={outils} />}
     </RefDrawer>
   )
 }

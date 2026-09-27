@@ -15,6 +15,8 @@ import { fmtInt } from '../../lib/format'
 import type { Fiche } from '../../lib/types'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroSpark, Line, PorteOutil, GroupLabel, FactRow, FactNote } from './primitives'
+// KELFONCIER-FIX-2 (Lot I) — maquette v3 : Verdict + Tuiles c3 (prix par type) + Réglette (secteur↔commune).
+import { Verdict, Tuiles, type Tuile, Reglette } from './formes'
 
 // FICHE-RANGEMENT-2 Lot 1 — §1 Identité : la DERNIÈRE VENTE / mutation DVF de la parcelle (fait
 // d'identité du bien), extraite pour la future section. C4 : une mutation multi-parcelles porte le
@@ -80,6 +82,34 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
       context={contexte}
       value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
       micro={<MicroSpark label={contexte} />}>
+      {/* KELFONCIER-FIX-2 (Lot I) — Verdict + Tuiles c3 (médiane par type, servie) + Réglette
+          (écart secteur ↔ commune, servi). Aucun prix recalculé. */}
+      {(() => {
+        const bati = mb?.median != null ? `bâti ${fmtInt(Number(mb.median))} €/m²` : null
+        const typeTuiles: Tuile[] = []
+        if (parTypeTerrain) typeTuiles.push({ label: 'Terrain nu', valeur: fmtInt(parTypeTerrain.mediane_prix_m2!), sous: `€/m² · ${parTypeTerrain.n_ventes} ventes` })
+        if (parTypeMaison) typeTuiles.push({ label: 'Maison', valeur: fmtInt(parTypeMaison.eur_m2), sous: `€/m² · ${parTypeMaison.n} ventes` })
+        if (parTypeAppart) typeTuiles.push({ label: 'Appartement', valeur: fmtInt(parTypeAppart.eur_m2), sous: `€/m² · ${parTypeAppart.n} ventes` })
+        return (
+          <>
+            <Verdict ton="vert"
+              reponse={dvfSecteur?.mediane_prix_m2 != null
+                ? `Terrain nu ${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²${bati ? `, ${bati}` : ''}`
+                : (bati ? bati.charAt(0).toUpperCase() + bati.slice(1) : 'Marché de secteur')}
+              contexte={ec?.ecart_pct != null
+                ? `secteur ${ec.ecart_pct > 0 ? '+' : ''}${ec.ecart_pct} % vs commune${mb?.tendance ? `, tendance ${mb.tendance}` : ''}`
+                : (mb?.tendance ? `tendance ${mb.tendance}` : undefined)} />
+            {typeTuiles.length > 0 && <Tuiles cols={typeTuiles.length >= 3 ? 3 : 2} items={typeTuiles} />}
+            {ec?.ecart_pct != null && (
+              <div data-secteur-ecart-commune>
+                <Reglette secteurPct={Math.max(4, Math.min(96, 50 + ec.ecart_pct))}
+                  gauche="commune" droite={`secteur ${ec.ecart_pct > 0 ? '+' : ''}${ec.ecart_pct} %`} />
+                <FactNote>{ec.phrase}{ec.ecart_pct != null ? ` — le secteur est ${ec.ecart_pct < 0 ? 'sous' : 'au-dessus de'} la commune` : ''}.</FactNote>
+              </div>
+            )}
+          </>
+        )
+      })()}
       {marcheLines.length
         ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
         : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
@@ -95,17 +125,8 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           <FactNote>{mb.type_prix}, {mb.n} ventes ≤ {Math.round(mb.radius_m)} m (rayon adaptatif) · fiabilité {mb.fiabilite}{mb.tendance ? ` · tendance ${mb.tendance}` : ''}{horizon ? ` · DVF — ${horizon}` : ''}</FactNote>
         </div>
       )}
-      {/* ETUDIER-BIEN-2 Lot A (1/3) — ÉCART secteur ↔ commune entière : le secteur (rayon serré)
-          n'est pas la commune. Fait unique de l'ex-outil, servi par /outils/mon-secteur (même moteur
-          `sector_price`). Absent si l'échantillon secteur ne tient pas le seuil. */}
-      {ec && (
-        <div data-secteur-ecart-commune>
-          <FactRow label="Secteur vs commune entière"
-            value={ec.ecart_pct != null ? <>{ec.ecart_pct > 0 ? '+' : ''}{ec.ecart_pct} <small>%</small></> : '—'}
-            tone={ec.ecart_pct != null ? undefined : 'mute'} />
-          <FactNote>{ec.phrase}{ec.ecart_pct != null ? ` — le secteur est ${ec.ecart_pct < 0 ? 'sous' : 'au-dessus de'} la commune` : ''}.</FactNote>
-        </div>
-      )}
+      {/* ETUDIER-BIEN-2 Lot A (1/3) — l'ÉCART secteur ↔ commune entière est désormais porté par la
+          Réglette en tête de section (KELFONCIER-FIX-2 Lot I), plus haut. */}
       {/* RECETTE-6 (C2) — « Valeur au prix du secteur » RAPATRIÉE ici depuis « Le reste des faits »
           (supprimé) : c'est le SEUL fait de cet accordéon sans autre foyer dans la fiche. Contenance ×
           prix médian du terrain nu au m² du secteur — ESTIMÉ, jamais une valeur vénale. */}
@@ -132,23 +153,10 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           adaptatif (médiane locale mono-type, fait unique de l'ex-outil, via /outils/mon-secteur) ;
           terrain nu = médiane de la SECTION cadastrale (`dvfSecteur`, la valeur foi de la fiche —
           jamais le rayon, cf. Lot B). Sous 5 ventes → « — ». */}
+      {/* ETUDIER-BIEN-2 Lot A (2/3) — la MÉDIANE PAR TYPE (secteur) est portée par les Tuiles c3 en
+          tête de section (KELFONCIER-FIX-2 Lot I). Note de méthode conservée ici. */}
       {(parTypeMaison || parTypeAppart || parTypeTerrain) && (
-        <div data-secteur-par-type>
-          <GroupLabel>Médiane par type — secteur</GroupLabel>
-          <FactRow label="Maison"
-            value={parTypeMaison ? <>{fmtInt(parTypeMaison.eur_m2)} <small>€/m²</small></> : '—'}
-            tone={parTypeMaison ? undefined : 'mute'}
-            src={parTypeMaison ? <>{parTypeMaison.n} ventes{parTypeMaison.rayon_m != null ? ` · ${fmtInt(parTypeMaison.rayon_m)} m` : ''}{parTypeMaison.millesime ? ` · ${parTypeMaison.millesime}` : ''}</> : 'échantillon < 5'} />
-          <FactRow label="Appartement"
-            value={parTypeAppart ? <>{fmtInt(parTypeAppart.eur_m2)} <small>€/m²</small></> : '—'}
-            tone={parTypeAppart ? undefined : 'mute'}
-            src={parTypeAppart ? <>{parTypeAppart.n} ventes{parTypeAppart.rayon_m != null ? ` · ${fmtInt(parTypeAppart.rayon_m)} m` : ''}{parTypeAppart.millesime ? ` · ${parTypeAppart.millesime}` : ''}</> : 'échantillon < 5'} />
-          <FactRow label="Terrain nu"
-            value={parTypeTerrain ? <>{fmtInt(parTypeTerrain.mediane_prix_m2!)} <small>€/m²</small></> : '—'}
-            tone={parTypeTerrain ? undefined : 'mute'}
-            src={parTypeTerrain ? <>{parTypeTerrain.n_ventes} ventes{parTypeTerrain.fenetre ? ` · ${parTypeTerrain.fenetre}` : ''} · section</> : 'échantillon < 5'} />
-          <FactNote>Maison / appartement : médiane locale par type au rayon adaptatif (DVF). Terrain nu : médiane de la section cadastrale — même source que la valeur du secteur ci-dessus.</FactNote>
-        </div>
+        <FactNote>Prix par type : maison / appartement = médiane locale par type au rayon adaptatif (DVF) ; terrain nu = médiane de la section cadastrale (même source que la valeur du secteur).</FactNote>
       )}
       {/* signal de marché condensé (DVF actes + Sitadel) — jamais un mot nu. */}
       {(() => { const sig = (f as unknown as { market_signal?: Record<string, any> }).market_signal
