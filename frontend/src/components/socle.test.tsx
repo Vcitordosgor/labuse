@@ -4,8 +4,10 @@
 //        DISPARAÎT (pas grisé), et réapparaît si le champ est vidé ; plus aucun bouton « Utiliser… ».
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { act } from 'react'
 import { AddressAutocomplete } from './AddressAutocomplete'
 import { ParcelInput } from './ParcelInput'
+import { useApp } from '../store/useApp'
 
 // Suggest mock paramétrable : on renvoie un groupe unique du type demandé, libellé complet.
 function mockSuggest(groupes: unknown) {
@@ -78,5 +80,34 @@ describe('RETOURS-15 S2 — l’invite carte disparaît quand une parcelle est r
     mockSuggest([])
     const { container } = render(<ParcelInput onPick={() => {}} />)
     expect(container.textContent).not.toContain('Utiliser la parcelle')
+  })
+})
+
+describe('RETOURS-15 S4 — le clic carte agit directement (auto-consommation de selectedIdu)', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('une nouvelle sélection carte est remontée via onPick, sans bouton', async () => {
+    mockSuggest([])
+    act(() => useApp.setState({ selectedIdu: null }))
+    const picked: string[] = []
+    render(<ParcelInput onPick={(idu) => picked.push(idu)} />)
+    // simulate un clic carte : le handler MapView pose selectedIdu (branche par défaut = select)
+    act(() => useApp.setState({ selectedIdu: '97411000BZ1065' }))
+    await waitFor(() => expect(picked).toEqual(['97411000BZ1065']))
+    // …et l'invite carte a disparu (parcelle résolue)
+    expect(document.querySelector('[data-parcelinput-carte]')).toBeFalsy()
+    act(() => useApp.setState({ selectedIdu: null }))
+  })
+
+  it('withCarte=false (Comparer) : n’auto-consomme pas selectedIdu (clic géré par comparePicking)', async () => {
+    mockSuggest([])
+    act(() => useApp.setState({ selectedIdu: null }))
+    const picked: string[] = []
+    render(<ParcelInput onPick={(idu) => picked.push(idu)} withCarte={false} />)
+    act(() => useApp.setState({ selectedIdu: '97411000BZ1065' }))
+    // laisse les effets tourner
+    await new Promise((r) => setTimeout(r, 20))
+    expect(picked).toEqual([])
+    act(() => useApp.setState({ selectedIdu: null }))
   })
 })
