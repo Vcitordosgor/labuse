@@ -1303,7 +1303,7 @@ export function Fiche({ idu }: { idu: string }) {
                 l'en-tête « PARCELLE · <COMMUNE> ») : le sous-titre ne porte que le signal propriétaire. */}
             <RefDrawer id="identite" icon={IC.proprio} name="Identité" accent={proprioAccent}
               context={proprioSignal ? (f.proprietaire_moral ? proprioType : 'personne physique') : undefined}
-              value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : (f.surface_m2 != null ? fmtM2(f.surface_m2) : 'privé'))}
+              value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : 'Particulier')}
               micro={proprioPastilles.length ? <MicroPastilles items={proprioPastilles} /> : undefined}>
               <div className="flex flex-col gap-3">
                 {/* KELFONCIER-FIX-2 (Lot G) — maquette v3 : Verdict + Tuiles×4 (SIREN · Créée·état ·
@@ -1350,12 +1350,11 @@ export function Fiche({ idu }: { idu: string }) {
                     </div>
                   )
                 })() : (
-                  <FactNote>
-                    Propriétaire : personne physique ou non recensé au fichier des personnes morales
-                    (identité nominative : workflow SPF/CERFA, jamais automatisée).
-                    {/* M70 point 7a — le lien texte SPF devient une PORTE-OUTIL en pied de tiroir
-                        (voir plus bas). L'outil courrier (M09, pré-rempli sur la parcelle) est inchangé. */}
-                  </FactNote>
+                  /* FICHE-FIX-5 (Lot C) — personne physique : Verdict clair, le paragraphe SPF/CERFA
+                     derrière le « i » (plus de paragraphe gris dans le flux). Le bouton « Courrier SPF »
+                     reste en pied (OutilsSection, plus bas). */
+                  <Verdict ton="gris" reponse="Propriétaire non identifié"
+                    contexte={<>personne physique ou hors fichier des personnes morales<InfoI aria="Comment identifier le propriétaire" tip="L'identité nominative d'une personne physique n'est pas automatisée : elle passe par une demande au Service de la publicité foncière (SPF), courrier CERFA. Le bouton « Courrier SPF » ci-dessous le pré-remplit sur la parcelle." /></>} />
                 )}
                 {/* FICHE-FIX-4 (Lot C) — la liste brute des lignes « proprio » (BODACC, « personne
                     morale »…) FAISAIT DOUBLON avec les Tuiles/Verdict ci-dessus (maquette : aucune
