@@ -1,0 +1,108 @@
+{
+  "compte_test": {
+    "id": 78,
+    "email": "kampusreunion+va2@gmail.com",
+    "statut": "actif",
+    "digest_freq": "hebdo"
+  },
+  "T1_evaluer_suivis_compteurs": {
+    "mutation": 1,
+    "permis": 0,
+    "bodacc": 0,
+    "proprietaire": 0
+  },
+  "T1_events": [
+    {
+      "id": 9754,
+      "kind": "parcelle_suivie",
+      "idu": "97415000CY0018",
+      "titre": "Vente : votre parcelle CY0018 a changé de mains",
+      "detail": "Mutation du 2025-12-31 — 2 300 000 € (Vente terrain à bâtir).",
+      "lien": "/socle/#parcelle=97415000CY0018",
+      "lu": false,
+      "source": "Mutation"
+    }
+  ],
+  "T1_BZ1065_a_un_evenement": false,
+  "T2_biens_du_jour_count": 1,
+  "T2_biens_du_jour_dont_test": true,
+  "T2_biens_reels_hier_26": 98,
+  "T2_matche_veille_match": true,
+  "T2_matche_veille_nomatch": false,
+  "T2_radar_cloche_compteur": {
+    "radar": 1
+  },
+  "T2_radar_events": [
+    {
+      "id": 9755,
+      "kind": "radar",
+      "titre": "Nouvelle annonce pour votre veille — Maison à Saint-Pierre",
+      "detail": "350 000 € · Maison · Saint-Pierre · moins de 400 000 €",
+      "lien": "https://test.va2/212"
+    }
+  ],
+  "T3_pige_baisse_events_compte_null": 0,
+  "T3_kinds_pige_visibles_client": [
+    "pige.nouvelle",
+    "pige.baisse_prix",
+    "pige.depot_html",
+    "pige.capture",
+    "pige.a_qualifier",
+    "pige.statut_change"
+  ],
+  "T3_retiree_dans_biens_du_jour": "non (statut IN active/en_vente_longue seulement, digests.py:75)",
+  "T4_bascule_compte_id": [
+    null
+  ],
+  "T4_systeme_compte_id": [
+    31,
+    null
+  ],
+  "CLOCHE_compte_test": [
+    {
+      "id": 9754,
+      "kind": "parcelle_suivie",
+      "titre": "Vente : votre parcelle CY0018 a changé de mains",
+      "detail": "Mutation du 2025-12-31 — 2 300 000 € (Vente terrain à bâtir).",
+      "lien": "/socle/#parcelle=97415000CY0018",
+      "lu": false
+    },
+    {
+      "id": 9755,
+      "kind": "radar",
+      "titre": "Nouvelle annonce pour votre veille — Maison à Saint-Pierre",
+      "detail": "350 000 € · Maison · Saint-Pierre · moins de 400 000 €",
+      "lien": "https://test.va2/212",
+      "lu": false
+    }
+  ],
+  "T4b_digest_rapport_global": {
+    "envoyes": 0,
+    "ignores": 8,
+    "echecs": 0,
+    "simules": 1
+  },
+  "DIGEST_compte_test": [
+    {
+      "compte": 78,
+      "email": "kampusreunion+va2@gmail.com",
+      "statut": "simulé",
+      "motif": "2 événement(s) — sujet « LABUSE — 2 changements sur vos suivis » — mail_queue #15",
+      "corps": "Bonjour,\n\nVoici le point sur vos parcelles suivies, vos secteurs et vos critères pour hier (2 événements) :\n\n• Vente : votre parcelle CY0018 a changé de mains\n  Mutation du 2025-12-31 — 2 300 000 € (Vente terrain à bâtir).\n  https://app.labuse.immo/socle/#parcelle=97415000CY0018\n\n• Nouvelle annonce pour votre veille — Maison à Saint-Pierre\n  350 000 € · Maison · Saint-Pierre · moins de 400 000 €\n\n— — —\nVous recevez cet e-mail parce que vous suivez des parcelles, surveillez des secteurs ou des critères, ou êtes abonné au résumé de marché LABUSE.\nRégler vos préférences (par type, cloche ou e-mai"
+    }
+  ],
+  "MAIL_QUEUE_compte_test": [
+    {
+      "id": 15,
+      "mail_key": "digest_quotidien",
+      "template_id": null,
+      "template_nom": "Digest quotidien",
+      "destinataire": "kampusreunion+va2@gmail.com",
+      "etat": "en_attente",
+      "prevu_at": null,
+      "dedup": "digest:78:2026-09-27"
+    }
+  ],
+  "DIGEST_sujet": "LABUSE — 2 changements sur vos suivis",
+  "PURGE": "ok"
+}
