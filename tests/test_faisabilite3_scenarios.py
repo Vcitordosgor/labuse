@@ -167,6 +167,32 @@ def test_tester_tient_et_ne_tient_pas():
     assert ntp["test"]["statut"] == "ne_tient_pas" and ntp["test"]["manque_m2"] == 180 - 26
 
 
+# ── LOT D : ce qui n'est pas modélisé SE DIT (jamais 0 ni valeur par défaut) ──
+def test_lot_d_mixite_non_modelisee():
+    """Zone sans clause de mixité validée → ligne PLU « non modélisée », jamais 0."""
+    r = scenarios.faisabilite_scenario(None, 1, "terrain_libere")
+    rv = r["plu"]["regles_valeurs"]
+    mx = next((x for x in rv if x["cle"] == "mixite"), None)
+    assert mx is not None and mx["etat"] == "non_modelisee"
+    assert "non modélisée" in mx["valeur"]
+
+
+def test_lot_d_hauteur_prospect_non_chiffree(monkeypatch):
+    """Hauteur au prospect → « calculée par parcelle », jamais une valeur de zone trompeuse."""
+    rules = ZoneRules(code="Ud", hauteur_mode="prospect", calibree=True,
+                      sources={"hauteur": "Art. Ud.10 · p.40"})
+    monkeypatch.setattr("labuse.faisabilite.zonage.resolve_zone", lambda code, commune=None: rules)
+    monkeypatch.setattr("labuse.plu_reglement.resolve_reglement",
+                        lambda commune, zone, idurba=None: {
+                            "zone": zone, "url": "plu.pdf", "url_document": "plu.pdf",
+                            "regles_valeurs": [{"cle": "hauteur", "libelle": "Hauteur max",
+                                                "valeur": "non réglementé", "etat": "absent",
+                                                "reference": "Art. Ud.10 · p.40", "url": "plu.pdf#page=40"}]})
+    r = scenarios.faisabilite_scenario(None, 1, "terrain_libere")
+    h = next(x for x in r["plu"]["regles_valeurs"] if x["cle"] == "hauteur")
+    assert h["etat"] == "prospect" and "parcelle" in h["valeur"]
+
+
 # ── GARDE « défaut ≠ PLU » : l'occupation par défaut ≤ 100 %, jamais 100 % ──
 def test_garde_occupation_defaut_pas_100pct():
     h = Hypotheses()
