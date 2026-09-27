@@ -22,8 +22,9 @@ import { signalOutil, startHeartbeat } from './lib/usage'   // DASHBOARD-V1 · D
 // derrière un <Suspense> avec un état de chargement propre (jamais d'écran blanc). Le chunk
 // maplibre sort ainsi du graphe initial (cf. manualChunks conservé dans vite.config).
 const MapView = lazy(() => import('./components/map/MapView').then((m) => ({ default: m.MapView })))
-// RADAR-CATÉGORIE (T1) — la catégorie Radar plein écran (panneau listing 434px + carte).
-const RadarView = lazy(() => import('./components/outils/RadarView').then((m) => ({ default: m.RadarView })))
+// RADAR-2 (Lot 1) — le hub Radar plein écran SANS carte : deux portes (Radar / Veille), l'écran Radar
+// (liste 560 px + marché) et les trois écrans Veille. Remplace l'ancien RadarView (carte) et SurveillancePanel.
+const RadarHub = lazy(() => import('./components/radar/RadarHub').then((m) => ({ default: m.RadarHub })))
 const TimeMachine = lazy(() => import('./components/outils/TimeMachine').then((m) => ({ default: m.TimeMachine })))
 
 // CARTE-VITESSE-2 lot B (R2) — TOUT ce qui n'est pas sur le chemin du PREMIER écran (le shell +
@@ -39,7 +40,6 @@ const SourcesPage = lazy(() => import('./components/sources/SourcesPage').then((
 const ProjetsPanel = lazy(() => import('./components/projets/ProjetsPanel').then((m) => ({ default: m.ProjetsPanel })))
 const ParcoursTinder = lazy(() => import('./components/projets/ParcoursTinder').then((m) => ({ default: m.ParcoursTinder })))
 const ContextePanel = lazy(() => import('./components/contexte/ContextePanel').then((m) => ({ default: m.ContextePanel })))
-const SurveillancePanel = lazy(() => import('./components/surveillance/SurveillancePanel').then((m) => ({ default: m.SurveillancePanel })))
 const ComparePanel = lazy(() => import('./components/compare/ComparePanel').then((m) => ({ default: m.ComparePanel })))
 const CommunesTablePanel = lazy(() => import('./components/outils/Communes').then((m) => ({ default: m.CommunesTablePanel })))
 const EvolutionTablePanel = lazy(() => import('./components/outils/Communes').then((m) => ({ default: m.EvolutionTablePanel })))
@@ -447,18 +447,12 @@ export default function App() {
                   l'outil est plié dans le filtre Capacité (« Déjà bâti » + « SDP restante »). */}
             </>
           )}
-          {/* RADAR-CATÉGORIE (T1/T6) — plein écran : RadarView monte lui-même la carte (MapView
-              réutilisé, pins radar via moduleMap) pour piloter le layout responsive (mobile : une
-              vue à la fois — listing OU carte OU fiche, plein écran). */}
+          {/* RADAR-2 (Lot 1) — le hub Radar plein écran (SANS carte) : deux portes (Radar / Veille),
+              l'écran Radar (liste + marché) et les trois écrans Veille. La Veille n'a plus d'entrée de
+              rail ni de carte : elle vit derrière la porte « Veille » du hub. */}
           {view === 'radar' && (
-            <Suspense fallback={<MapLoading />}>
-              <RadarView />
-            </Suspense>
-          )}
-          {/* RV2-V3 — la Veille, catégorie plein écran (panneau gauche + carte, patron Radar). */}
-          {view === 'veille' && (
-            <Suspense fallback={<MapLoading />}>
-              <SurveillancePanel />
+            <Suspense fallback={<PanelLoading />}>
+              <RadarHub />
             </Suspense>
           )}
           {view === 'crm' && <Suspense fallback={<PanelLoading />}><Kanban /></Suspense>}

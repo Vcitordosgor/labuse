@@ -712,7 +712,13 @@ def radar_rattacher_humain(body: RattacherHumainIn, request: Request) -> dict:
             {"i": body.idu, "b": body.bien_id,
              "cr": __import__("json").dumps([{"critere": "humain", "valeur": "tranché par le client via l'ortho"}])})
         db.commit()
-    return {"ok": True, "bien_id": body.bien_id, "idu": body.idu, "etat": "rattachee", "humain": True}
+        # RADAR-2 (Lot 2) — le rattachement manuel vers une parcelle SUIVIE déclenche le mail immédiat
+        # « parcelle suivie mise en vente » (même chemin/dédup que le digest — jamais un doublon).
+        from . import digests
+        notifies = digests.mise_en_vente_immediate(db, body.bien_id)
+        db.commit()
+    return {"ok": True, "bien_id": body.bien_id, "idu": body.idu, "etat": "rattachee", "humain": True,
+            "mises_en_vente_notifiees": notifies}
 
 
 @router.get("/radar/signaux/{commune}")
@@ -739,9 +745,12 @@ def radar_signaler(body: SignalerIn, request: Request) -> dict:
 
 class VeilleIn(BaseModel):
     commune: str | None = None
+    communes: list[str] | None = None    # RADAR-2 — « M'alerter » depuis Radar peut porter plusieurs communes
     type_bien: str | None = None
     prix_min: int | None = None          # RADAR-CATÉGORIE (T4) — le prix rejoint les critères de veille
     prix_max: int | None = None
+    surface_min: float | None = None     # RADAR-2 — surface pertinente (terrain/habitable), modèle VEILLE-2
+    surface_max: float | None = None
     surface_terrain_min: float | None = None
     surface_hab_min: float | None = None
     particulier_only: bool = False
@@ -794,6 +803,56 @@ def radar_veille_renommer(veille_id: int, body: VeilleRenommerIn, request: Reque
     return {"ok": ok}
 
 
+class PauseIn(BaseModel):
+    en_pause: bool = True
+
+
+@router.post("/radar/veille/{veille_id}/pause")
+def radar_veille_pause(veille_id: int, body: PauseIn, request: Request) -> dict:
+    """RADAR-2 (Lot 4) — met une alerte EN PAUSE (ou la reprend). Compte-scopé (même garde IDOR)."""
+    from ..api.tenant import current_compte
+    from . import veille
+    with session_scope() as db:
+        ok = veille.basculer_pause(db, current_compte(request), veille_id, body.en_pause)
+        db.commit()
+    return {"ok": ok, "en_pause": body.en_pause}
+
+
+@router.get("/radar/alertes")
+def radar_alertes(request: Request) -> dict:
+    """RADAR-2 (Lot 4) — les alertes du compte, chacune avec ses critères et son nombre de « nouveaux
+    depuis hier » (0 si en pause). Réutilise `_biens_du_jour` + `matche` (contrat partagé avec le digest)."""
+    from ..api.tenant import current_compte
+    from . import veille
+    with session_scope() as db:
+        return veille.apercu(db, current_compte(request))
+
+
+@router.get("/radar/apercu")
+def radar_apercu(request: Request) -> dict:
+    """RADAR-2 (Lot 1) — le résumé chiffré RÉEL des deux portes du hub Radar : biens en vente + date de la
+    dernière capture (porte Radar) ; parcelles suivies + alertes + nouveaux (porte Veille). Aucun calcul
+    neuf : biens = même filtre que le flux client, capture = pige_passes, suivis = watched_parcels,
+    alertes = `veille.apercu`."""
+    from ..api.tenant import current_compte
+    from . import veille
+    cid = current_compte(request)
+    with session_scope() as db:
+        biens = db.execute(text(
+            "SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
+            "WHERE f.valide_at IS NOT NULL AND b.est_copro = false AND b.a_qualifier = false "
+            "AND b.statut IN ('active','en_vente_longue')")).scalar() or 0
+        capture = db.execute(text("SELECT max(captured_at) FROM pige_passes")).scalar()
+        if capture is None:
+            capture = db.execute(text("SELECT max(last_seen_at) FROM pige_biens")).scalar()
+        suivis = db.execute(text(
+            "SELECT count(*) FROM watched_parcels WHERE compte_id IS NOT DISTINCT FROM :c"),
+            {"c": cid}).scalar() or 0
+        ap = veille.apercu(db, cid)
+    return {"biens_en_vente": int(biens), "derniere_capture_at": capture.isoformat() if capture else None,
+            "suivis_n": int(suivis), "alertes_n": len(ap["alertes"]), "nouveaux_total": ap["nouveaux_total"]}
+
+
 # ══════════════ RADAR P6 · D3 — onglet Marché (stats par commune, honnêteté statistique) ══════════════
 
 @router.get("/radar/marche")
@@ -802,6 +861,16 @@ def radar_marche(request: Request) -> dict:
     from . import marche
     with session_scope() as db:
         return marche.stats(db)
+
+
+@router.get("/radar/marche-tableau")
+def radar_marche_tableau(request: Request, commune: str | None = None) -> dict:
+    """RADAR-2 (Lot 3) — LE MARCHÉ (colonne de droite du Radar) : 4 chiffres maisons (demandé Radar vs acté
+    DVF, écart), table par type, mouvements 30 j, écart par commune. Prix acté = moteur fiche commune,
+    jamais recalculé à part ; écart servi au-delà de 30 annonces sinon « sous le seuil »."""
+    from . import marche
+    with session_scope() as db:
+        return marche.tableau(db, commune=commune or None)
 
 
 @router.get("/radar/stats")
