@@ -1568,6 +1568,7 @@ export interface AdminLicence {
   est_test?: boolean   // COMPTE-2 (Lot 3) — compte de test/interne : masqué des chiffres client
   stripe: NonNullable<StripeApercu['abonnements']>[number] | null | undefined
   mails: Record<string, { statut: string; sent_at: string | null }>
+  mail_echecs?: number   // VEILLE-FIX-2 (Lot D) — nb de mails en échec définitif → ligne rouge Comptes
   rappels: string[]
   partage: { sessions: number; ips: number; probable: boolean } | null   // A5 — sessions simultanées (informatif)
   kpi: { usage_7j_min: number; derniere_connexion: string | null; copilote_jour: number; copilote_quota: number

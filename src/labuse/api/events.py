@@ -1379,10 +1379,11 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str | None = None,
         # RFC 8058 — désinscription EN UN CLIC (mieux traitée par Gmail qu'un simple lien) : l'URL
         # accepte le POST `List-Unsubscribe=One-Click`. AUCUN en-tête de campagne (X-Campaign, List-ID
         # marketing…) : ce mail est TRANSACTIONNEL, pas une newsletter.
-        # VEILLE-FIX-1 (lot 5) — le digest passe par mail_queue COMME LES AUTRES mails : une ligne
-        # écrite (trace), départ SMTP par la file. Mail BRUT (`__raw`) : pas de template Brevo (le
-        # digest est un HTML construit côté code). Dédup par (compte, jour) → un seul par jour. Dry-run :
-        # la ligne est écrite `en_attente`, RIEN n'est envoyé (garde `dry_run` de la file).
+        # VEILLE-FIX-1/FIX-2 — le digest passe par mail_queue. Mail BRUT (`__raw`) : pas de template
+        # Brevo (HTML construit côté code). Dédup par (compte, jour) → un seul par jour.
+        # VEILLE-FIX-2 (Lot D) — `differe=True` : la ligne est enfilée `en_attente`, le WORKER
+        # `mail-queue-consommer` (5 min) l'envoie → le digest bénéficie du REJEU (backoff 5 min/1 h/24 h).
+        # Dry-run : ligne écrite, RIEN n'est envoyé (recette VPS).
         from ..db import engine as _engine
         from ..mailfile import envoyer_mail as _q_envoyer
         raw = {"sujet": sujet, "texte": corps, "html": html, "nom": "Digest quotidien",
@@ -1391,27 +1392,23 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str | None = None,
         ligne = _q_envoyer(_engine(), key="digest_quotidien", to=email, params={"__raw": raw},
                            compte_id=cid, demandeur="job:digest",
                            dedup=f"digest:{cid}:{now.date().isoformat()}",
-                           fenetre_doublon_s=20 * 3600, dry_run=dry_run)
+                           fenetre_doublon_s=20 * 3600, dry_run=dry_run, differe=not dry_run)
         if dry_run:
-            # #2 — DRY-RUN : la ligne mail_queue est écrite (trace), RIEN n'est envoyé, last_digest_at
-            # inchangé. C'est la brique de recette VPS (tester ≠ envoyer).
             simules += 1
             _note(cid, email, "simulé",
                   f"{len(evs)} événement(s) — sujet « {sujet} » — mail_queue #{ligne.get('id')}", corps=corps)
             continue
-        if ligne.get("etat") in ("recu", "parti"):
-            envoyes += 1
-            _note(cid, email, "envoyé", f"{len(evs)} événement(s) — mail_queue #{ligne.get('id')}"
-                  + (f" + {marche['total']} marché" if marche.get("total") else ""))
-            # #5 — last_digest_at n'avance QUE si l'envoi a RÉUSSI : un échec ne se déguise plus en
-            # « déjà envoyé » (l'anti-double-envoi laisse donc le prochain cron réessayer).
-            db.execute(text("INSERT INTO notif_prefs (compte_id, last_digest_at) VALUES (:c,:n) "
-                            "ON CONFLICT (compte_id) DO UPDATE SET last_digest_at=:n"), {"c": cid, "n": now})
-        else:                                                  # #5 — échec VISIBLE : loggé en clair + compté, jamais avalé
-            echecs += 1
-            _note(cid, email, "échec", f"envoi refusé : {ligne.get('erreur') or ligne.get('etat')}")
-            log.error("DIGEST ÉCHEC ENVOI — compte=%s email=%s cause=%s (last_digest_at NON avancé → réessai)",
-                      cid, email, ligne.get("erreur"))
+        if ligne.get("doublon"):
+            ignores += 1
+            _note(cid, email, "ignoré", f"déjà en file aujourd'hui (mail_queue #{ligne.get('id')})")
+            continue
+        # ENFILÉ pour le worker (départ + rejeu par mail-queue-consommer). Le digest du jour est pris en
+        # charge → last_digest_at avance (anti-double-envoi) ; la dédup mail_queue (compte, jour) garde le
+        # « un par jour ». Un échec définitif restera VISIBLE (ligne rouge Comptes) et rejouable.
+        envoyes += 1
+        _note(cid, email, "en file", f"{len(evs)} événement(s) — mail_queue #{ligne.get('id')} (worker 5 min)")
+        db.execute(text("INSERT INTO notif_prefs (compte_id, last_digest_at) VALUES (:c,:n) "
+                        "ON CONFLICT (compte_id) DO UPDATE SET last_digest_at=:n"), {"c": cid, "n": now})
     db.commit()
     return {"envoyes": envoyes, "ignores": ignores, "echecs": echecs, "simules": simules,
             "dry_run": dry_run, "details": details}

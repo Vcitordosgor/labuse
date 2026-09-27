@@ -705,7 +705,16 @@ export function LicencesSection() {
               className="grid w-full grid-cols-[38px_1.7fr_1fr_0.9fr_0.9fr_1fr_auto] items-center gap-3 border-b border-line px-4 py-2.5 text-left text-[13.5px] transition-colors duration-quick last:border-b-0 hover:bg-surface-1">
               <span className={`grid h-[30px] w-[30px] place-items-center rounded-full text-[11.5px] font-semibold ${AV_CLS[p]}`}>{initiales(l)}</span>
               <span className="min-w-0">
-                <span className="block truncate font-medium text-txt-hi">{l.nom}</span>
+                <span className="flex items-center gap-1.5 truncate font-medium text-txt-hi">
+                  <span className="truncate">{l.nom}</span>
+                  {/* VEILLE-FIX-2 (Lot D) — LIGNE ROUGE : un ou plusieurs mails ont épuisé leurs rejeux. */}
+                  {(l.mail_echecs ?? 0) > 0 && (
+                    <span data-mail-echec title={`${l.mail_echecs} mail(s) en échec — rejeux épuisés`}
+                      className="shrink-0 rounded-md border border-coral/50 bg-coral/10 px-1.5 py-0.5 text-[10.5px] font-semibold text-coral">
+                      ✉ {l.mail_echecs} échec{(l.mail_echecs ?? 0) > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </span>
                 <span className="block truncate text-[12px] text-txt-mut">{l.email}</span>
               </span>
               <span><StatutChip l={l} /></span>
