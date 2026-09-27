@@ -40,6 +40,22 @@ describe('RETOURS-15 S1 — la suggestion cliquée remplit le champ de son libel
     expect(input.value).toBe(LABEL_ADRESSE)
   })
 
+  // RETOURS-15 D5 — l'adresse BAN arrive SCINDÉE (label = numéro + voie ; sub = CP + commune). Le
+  // champ doit afficher l'adresse ENTIÈRE, code postal et commune compris — jamais la seule voie.
+  it('AddressAutocomplete : label + sub recollés → adresse entière avec code postal', async () => {
+    mockSuggest([{ type: 'adresse', items: [{ label: '3 Chemin de la Citerne', sub: '97490 Saint-Denis', lon: 55.4, lat: -20.9, idu: '97411000AB0001' }] }])
+    render(<AddressAutocomplete onSelect={() => {}} grammaires={['adresse', 'cadastre']} />)
+    const input = document.querySelector<HTMLInputElement>('[data-suggest-input]')!
+    fireEvent.change(input, { target: { value: '3 chemin' } })
+    const opt = await waitFor(() => {
+      const el = document.querySelector('[data-suggest-item="adresse"]')
+      expect(el).toBeTruthy()
+      return el as HTMLElement
+    })
+    fireEvent.mouseDown(opt)
+    expect(input.value).toBe('3 Chemin de la Citerne, 97490 Saint-Denis')
+  })
+
   it('ParcelInput : un clic IDU (cadastre) recopie le libellé complet', async () => {
     mockSuggest([{ type: 'cadastre', items: [{ label: '97411000BZ1065', sub: 'Saint-Denis', idu: '97411000BZ1065' }] }])
     render(<ParcelInput onPick={() => {}} withCarte={false} />)
@@ -80,6 +96,14 @@ describe('RETOURS-15 S2 — l’invite carte disparaît quand une parcelle est r
     mockSuggest([])
     const { container } = render(<ParcelInput onPick={() => {}} />)
     expect(container.textContent).not.toContain('Utiliser la parcelle')
+  })
+
+  // RETOURS-15 D2 — un outil qui consomme le clic carte lui-même (Pièges) passe withCarte={false}
+  // inviteCarte : l'invite « ou cliquez une parcelle » se voit quand même (le second geste existe).
+  it('inviteCarte réaffiche l’invite même avec withCarte={false}', () => {
+    mockSuggest([])
+    render(<ParcelInput onPick={() => {}} withCarte={false} inviteCarte />)
+    expect(document.querySelector('[data-parcelinput-carte]')).toBeTruthy()
   })
 })
 
