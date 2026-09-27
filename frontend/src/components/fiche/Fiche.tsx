@@ -806,7 +806,7 @@ export function Fiche({ idu }: { idu: string }) {
           {/* RETOURS-15 U7 — ADRESSE en rangée PLEINE LARGEUR (moins l'icône copier) : une ligne
               tant que ça tient, ellipse avec l'adresse complète au survol (title) sinon. Elle ne
               partage plus sa largeur avec les logos/cloche. M61 P5 — copiable (user-select). */}
-          <div className="addr addr-row" data-fiche-adresse>
+          <div className={`addr addr-row${f?.secteur ? ' has-sect' : ''}`} data-fiche-adresse>
             <span style={{ userSelect: 'text', minWidth: 0 }}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</span>
             {f?.adresse && <CopyIdu value={f.adresse} aria="Copier l’adresse" titre="Copier l’adresse" okTitre="Adresse copiée" dataAttr="adresse" />}
             {!f?.adresse && (
@@ -817,10 +817,13 @@ export function Fiche({ idu }: { idu: string }) {
               </Tip>
             )}
           </div>
-          {/* GEOPF-3 — SECTEUR : lieu-dit BD NYME le plus proche (rayon borné), sous l'adresse. Rien si aucun. */}
+          {/* GEOPF-3 — SECTEUR : lieu-dit BD NYME le plus proche (rayon borné), sous l'adresse. Rien si aucun.
+              KELFONCIER-FIX-2 (Lot A) — RENTRÉ DANS LA CARTE : même padding horizontal (14px) que l'adresse
+              via `.sect-line` (avant : `.addr` nu, sans padding → la ligne débordait à gauche, hors carte).
+              Libellé gris (--txt-dim = maquette --mut), nom en clair (--txt-hi = maquette --txt), comme .sect. */}
           {f?.secteur && (
-            <div className="addr" data-fiche-secteur style={{ fontSize: 11, color: 'var(--txt-dim)', marginTop: 1 }}>
-              Secteur : <span style={{ color: 'var(--txt-mut)' }}>{f.secteur}</span>
+            <div className="sect-line" data-fiche-secteur>
+              Secteur : <b>{f.secteur}</b>
             </div>
           )}
       </div>{/* /.tete-collee — RETOURS-13 P7 : bloc identité COLLÉ (les 6 tuiles ne collent pas) */}
