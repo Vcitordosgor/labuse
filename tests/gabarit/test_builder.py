@@ -303,6 +303,13 @@ def test_sup_intersectante_deduite_du_gabarit(monkeypatch):
     assert any(x.type == "sup" for x in b.input.exclusions)
     sup_rule = [a for a in b.input.applicableRules if a.id == "SUP"]
     assert sup_rule and sup_rule[0].integrationStatus == "integrated"
+    # RETOURS-15 C4 (P19) — la source SUP DOIT être au CATALOGUE (sources.append(sup_src)) : sans elle,
+    # validate levait « exclusion[sup] : source absente du catalogue » → gabarit incomplet → repli legacy
+    # sur toute parcelle intersectée par un SUP (dont 97411000BZ1065). Le gabarit se calcule désormais.
+    from labuse.gabarit.validate import validate_input
+    assert any("SUP" in s.document for s in b.input.sources), "source SUP absente du catalogue"
+    assert not any("source absente du catalogue" in e for e in validate_input(b.input)), \
+        "validate lève encore « source absente » sur le SUP"
 
 
 def test_sans_sup_regle_non_integree(monkeypatch):

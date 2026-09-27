@@ -371,6 +371,11 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     # Même optimisation que le PPR (ST_ClipByBox2D avant l'intersection fine). Pas de re-run : le
     # prochain run résiduel le prendra (mandat).
     sup_src = RegulatorySource(document="SUP — servitudes d'utilité publique", provider=SUP_PROVIDER)
+    # RETOURS-15 C4 (P19) — CORRECTIF : `sources.append(sup_src)` manquait (régression RETOUCHES-1 D.15).
+    # La source SUP était référencée par l'exclusion ET la règle applicable mais ABSENTE du catalogue →
+    # validate levait « exclusion[sup] : source absente du catalogue » → gabarit=incomplete → repli legacy
+    # sur toute parcelle intersectée par un SUP (dont 97411000BZ1065). Une ligne rétablit le calcul.
+    sources.append(sup_src)
     sup_gj = session.execute(text(
         "SELECT ST_AsGeoJSON(ST_CollectionExtract(ST_Transform(ST_Intersection("
         "  ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))), p.geom_2975), 4326), 3)) "
