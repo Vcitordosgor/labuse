@@ -12,7 +12,7 @@
  * (transition non-breaking ; le tiroir « Le bien » sera dissous à l'étape 4).
  */
 import type { Fiche } from '../../lib/types'
-import { fmtInt, fmtDateNum } from '../../lib/format'
+import { fmtInt, fmtDec, fmtDateNum } from '../../lib/format'
 import { IC, RefDrawer, FactRow, FactNote, GroupLabel } from './primitives'
 import { Badge } from '../ui/Badge'
 // KELFONCIER-FIX-2 (Partie B, Lot F) — les blocs Bâti/Terrain composent désormais les FORMES de la
@@ -60,22 +60,23 @@ export function BatiBlock({ f }: { f: Fiche }) {
   const etab = f.etablissements
   const etabList = etab?.liste ?? []
 
-  // ── Tuiles d'en-tête (bâti présent) : emprise · hauteur · nb · toit. ──
+  // ── Tuiles d'en-tête (bâti présent) : emprise · hauteur. Le NB et la NATURE DU TOIT quittent les
+  // tuiles (Lot E) : le nb passe dans la ligne de comptes, le toit dans le repli « détail du bâti ».
   const tuiles: Tuile[] = []
   if (bati) {
     tuiles.push({ label: 'Emprise bâtie au sol',
       valeur: emprise > 0 ? <>{fmtInt(emprise)} <small>m²</small></> : '—',
       ton: emprise > 0 ? undefined : 'gris', sous: b.emprise_source })
     tuiles.push(faitageSourced
-      ? { label: 'Faîtage (LiDAR)', valeur: <>{b.hauteur_faitage_m} <small>m</small></>, sous: 'haut de toit',
+      ? { label: 'Faîtage (LiDAR)', valeur: <>{fmtDec(b.hauteur_faitage_m)} <small>m</small></>, sous: 'haut de toit',
           ton: b.hauteur_discordante && b.hauteur_discordance_motif === 'faîtage aberrant' ? 'ambre' : undefined }
       : { label: 'Hauteur du bâti',
-          valeur: b.hauteur_bati_m != null ? <>{b.hauteur_bati_m} <small>m</small></> : 'non déterminée',
+          valeur: b.hauteur_bati_m != null ? <>{fmtDec(b.hauteur_bati_m)} <small>m</small></> : 'non déterminée',
           ton: b.hauteur_bati_m != null ? undefined : 'gris', sous: b.hauteur_bati_m != null ? 'BD TOPO' : undefined })
-    tuiles.push({ label: 'Nombre de bâtiments', valeur: nb != null ? String(nb) : 'non déterminé', ton: nb != null ? undefined : 'gris' })
-    tuiles.push({ label: 'Nature du toit', valeur: toit ? toit.libelle : 'non disponible',
-      ton: toitServi ? undefined : 'gris', sous: toit?.pente_mediane_deg != null ? `${Math.round(toit.pente_mediane_deg)}° de pente` : undefined })
   }
+  const nbRnb = b.rnb?.length ?? 0
+  const nbBan = b.adresses_bati?.adresses ?? 0
+  const egoutTon = b.hauteur_discordante && b.hauteur_discordance_motif === 'égout ↔ BD TOPO' ? ('ambre' as const) : undefined
 
   return (
     <div className="flex flex-col gap-3" data-le-bien>
@@ -83,7 +84,7 @@ export function BatiBlock({ f }: { f: Fiche }) {
       {bati ? (
         <Verdict ton="vert" reponse={b.occupation_label || `${nb ?? ''} bâtiment${(nb ?? 0) > 1 ? 's' : ''}`}
           contexte={[emprise > 0 ? `emprise ${fmtInt(emprise)} m²` : null,
-            faitageSourced ? `faîtage ${b.hauteur_faitage_m} m mesuré (LiDAR)` : null].filter(Boolean).join(' · ') || undefined} />
+            faitageSourced ? `faîtage ${fmtDec(b.hauteur_faitage_m)} m mesuré (LiDAR)` : null].filter(Boolean).join(' · ') || undefined} />
       ) : (
         <Verdict ton="vert" reponse="Terrain nu"
           contexte={`aucun bâtiment BD TOPO, aucune hauteur LiDAR${etabList.length ? '' : ', aucun établissement rattaché'}`} />
@@ -91,18 +92,12 @@ export function BatiBlock({ f }: { f: Fiche }) {
 
       {bati && <Tuiles items={tuiles} />}
 
-      {/* DONNEES-FIX-1 lot A — égout LiDAR + hauteur BD TOPO : la même grandeur que le badge de
-          discordance (jamais le faîtage, plus haut par construction sur un toit en pente / R+n). */}
-      {faitageSourced && (b.hauteur_egout_m != null || b.hauteur_bdtopo_m != null) && (
+      {/* FICHE-FIX-4 (Lot E) — UNE ligne de comptes cohérente : bâtiments BD TOPO · RNB · adresses BAN
+          (les identifiants RNB liés vivent dans le repli « détail du bâti » ci-dessous). */}
+      {bati && (
         <Lignes>
-          {b.hauteur_egout_m != null && (
-            <Ligne label="Égout mesuré (LiDAR)" valeur={<>{b.hauteur_egout_m} <small>m — bord de toit</small></>}
-              ton={b.hauteur_discordante && b.hauteur_discordance_motif === 'égout ↔ BD TOPO' ? 'ambre' : undefined} />
-          )}
-          {b.hauteur_bdtopo_m != null && (
-            <Ligne label="Hauteur BD TOPO (≈ égout)" valeur={<>{b.hauteur_bdtopo_m} <small>m</small></>}
-              ton={b.hauteur_discordante && b.hauteur_discordance_motif === 'égout ↔ BD TOPO' ? 'ambre' : undefined} />
-          )}
+          <Ligne label="Bâtiments"
+            valeur={<>{nb ?? '—'} <small>BD&nbsp;TOPO</small> · {nbRnb} <small>RNB</small> · {nbBan} <small>adr.&nbsp;BAN</small></>} />
         </Lignes>
       )}
 
@@ -111,49 +106,46 @@ export function BatiBlock({ f }: { f: Fiche }) {
           <Badge ton="ambre">Sources discordantes</Badge>
           <p className="mt-0.5 text-[11px] leading-snug text-amber">
             {b.hauteur_discordance_motif === 'faîtage aberrant'
-              ? <>Faîtage mesuré {b.hauteur_faitage_m} m — valeur physiquement impossible, mesure à écarter.</>
-              : <>Égout LiDAR {b.hauteur_egout_m} m · BD TOPO {b.hauteur_bdtopo_m} m — écart{b.ecart_egout_bdtopo_m != null ? ` de ${Math.abs(b.ecart_egout_bdtopo_m)} m` : ''} sur la même grandeur, à vérifier sur photo aérienne.</>}
+              ? <>Faîtage mesuré {fmtDec(b.hauteur_faitage_m)} m — valeur physiquement impossible, mesure à écarter.</>
+              : <>Égout LiDAR {fmtDec(b.hauteur_egout_m)} m · BD TOPO {fmtDec(b.hauteur_bdtopo_m)} m — écart{b.ecart_egout_bdtopo_m != null ? ` de ${fmtDec(Math.abs(b.ecart_egout_bdtopo_m))} m` : ''} sur la même grandeur, à vérifier sur photo aérienne.</>}
           </p>
         </div>
       )}
 
-      {/* Faits complémentaires (aucune donnée perdue) : CoSIA détecté · DPE · pente toit · BAN PLUS. */}
-      {(b.cosia_detecte_m2 != null || dpe || (toitServi && toit?.pente_mediane_deg != null)
-        || (b.adresses_bati && (b.adresses_bati.adresses > 0 || b.adresses_bati.batiments > 0))) && (
-        <Lignes>
-          {b.cosia_detecte_m2 != null && (
-            <Ligne label="Bâti détecté (CoSIA)" ton="gris"
-              valeur={<>~{fmtInt(b.cosia_detecte_m2)} <small>m² — non cartographié BD TOPO, à vérifier</small></>} />
-          )}
-          {dpe && (
-            <Ligne label="DPE du bâtiment"
-              valeur={<>{dpe.etiquette}{dpe.etiquette_ges ? <> / GES {dpe.etiquette_ges}</> : null}
-                {dpe.annee ? <> <small>({dpe.annee})</small></> : null}</>} />
-          )}
-          {toitServi && toit?.pente_mediane_deg != null && (
-            <Ligne label="Pente du toit" valeur={<>{Math.round(toit.pente_mediane_deg)}<small>°</small></>} />
-          )}
-          {b.adresses_bati && (b.adresses_bati.adresses > 0 || b.adresses_bati.batiments > 0) && (
-            <Ligne label="Adresses BAN PLUS"
-              valeur={<>{b.adresses_bati.adresses} <small>adresse{b.adresses_bati.adresses > 1 ? 's' : ''} · {b.adresses_bati.batiments} bâtiment{b.adresses_bati.batiments > 1 ? 's' : ''}</small></>} />
-          )}
-        </Lignes>
-      )}
-
-      {toitServi && toit?.methode && <FactNote>{toit.methode}</FactNote>}
-
-      {/* REPARATIONS-1 lot 4 — RNB ID (Référentiel National des Bâtiments) de chaque bâtiment. */}
-      {(b.rnb?.length ?? 0) > 0 && (
-        <div data-le-bien-rnb>
-          <GroupLabel>Identifiant national du bâtiment (RNB)</GroupLabel>
+      {/* FICHE-FIX-4 (Lot E) — le DÉTAIL du bâti dans un Repli : égout LiDAR, hauteur BD TOPO, nature
+          du toit (grise « non disponible » quand non relevée), pente, CoSIA détecté, DPE, BAN PLUS,
+          et les RNB liés (plus de tuile « nature du toit — non disponible » dans le flux). */}
+      {bati && (
+        <Repli label="détail du bâti">
           <Lignes>
-            {b.rnb!.map((r) => (
+            {faitageSourced && b.hauteur_egout_m != null && (
+              <Ligne label="Égout mesuré (LiDAR)" valeur={<>{fmtDec(b.hauteur_egout_m)} <small>m — bord de toit</small></>} ton={egoutTon} />
+            )}
+            {faitageSourced && b.hauteur_bdtopo_m != null && (
+              <Ligne label="Hauteur BD TOPO (≈ égout)" valeur={<>{fmtDec(b.hauteur_bdtopo_m)} <small>m</small></>} ton={egoutTon} />
+            )}
+            <Ligne label="Nature du toit" valeur={toit ? toit.libelle : 'non disponible'} ton={toitServi ? undefined : 'gris'} />
+            {toitServi && toit?.pente_mediane_deg != null && (
+              <Ligne label="Pente du toit" valeur={<>{Math.round(toit.pente_mediane_deg)}<small>°</small></>} />
+            )}
+            {b.cosia_detecte_m2 != null && (
+              <Ligne label="Bâti détecté (CoSIA)" ton="gris" valeur={<>~{fmtInt(b.cosia_detecte_m2)} <small>m² — non cartographié BD TOPO</small></>} />
+            )}
+            {dpe && (
+              <Ligne label="DPE du bâtiment"
+                valeur={<>{dpe.etiquette}{dpe.etiquette_ges ? <> / GES {dpe.etiquette_ges}</> : null}{dpe.annee ? <> <small>({dpe.annee})</small></> : null}</>} />
+            )}
+            {b.adresses_bati && nbBan > 0 && (
+              <Ligne label="Adresses BAN PLUS"
+                valeur={<>{b.adresses_bati.adresses} <small>adr. · {b.adresses_bati.batiments} bât.</small></>} />
+            )}
+            {(b.rnb ?? []).map((r) => (
               <Ligne key={r.rnb_id} label="RNB"
-                valeur={<a href={r.lien} target="_blank" rel="noreferrer"
-                  className="font-mono text-[12px] hover:underline">{r.rnb_id} ↗</a>} />
+                valeur={<a href={r.lien} target="_blank" rel="noreferrer" className="font-mono text-[12px] text-mint hover:underline">{r.rnb_id} ↗</a>} />
             ))}
           </Lignes>
-        </div>
+          {toitServi && toit?.methode && <FactNote>{toit.methode}</FactNote>}
+        </Repli>
       )}
 
       {/* KELFONCIER-FIX-1 (Lot H) — ÉTABLISSEMENTS (SIRENE, rattachés par l'adresse BAN). Les 3
