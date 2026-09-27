@@ -1547,11 +1547,15 @@ _CONCEPT_MAP = [
       "zan de la commune", "objectif zan"), ("communes", "Communes")),
     (("rarete du foncier", "rarete foncier", "le foncier se rarefie", "ou le foncier se rarefie",
       "combien de constructible reste"), ("communes", "Communes")),
-    # §5 — outil renommé « Densifier l'existant » (libellé client) ; clé interne `renouvellement`
-    # INCHANGÉE. Anciens mots-clés CONSERVÉS + nouveaux (« densifier »…) ajoutés.
+    # KELFONCIER-FIX-2 Lot E — l'outil autonome « Densifier l'existant » (ex-clé `renouvellement`) a été
+    # PLIÉ (DENSIFIER-PLI, PISCINES-2 Lot B) : la clé `renouvellement` N'EST PLUS un module LIVE du
+    # registre front → router vers elle = PORTE MORTE (test test_portes_concept_toutes_vivantes). La
+    # densification (surélévation, extension, construire plus sur du déjà-bâti) est une question de
+    # CAPACITÉ CONSTRUCTIBLE : elle vit désormais dans le POTENTIEL de la parcelle, dont l'outil est la
+    # Faisabilité (`programme` — « ce que le PLU laisse construire »). On y route (LIVE), mots-clés CONSERVÉS.
     (("potentiel de renouvellement", "renouvellement du territoire", "outil renouvellement",
       "vue renouvellement du", "densifier", "densification de l'existant", "densification de l existant",
-      "construire plus", "surelever", "surélever"), ("renouvellement", "Densifier l'existant")),
+      "construire plus", "surelever", "surélever"), ("programme", "Faisabilité")),
     # COPILOTE-2 lot 2 — « simulplu » (Changement PLU) fondu dans le hub `plu` (M137) : route LIVE, plus
     # un lien mort. Le hub PLU porte la prospective de zonage.
     (("changement de plu", "si cette zone passait", "zone passait constructible",

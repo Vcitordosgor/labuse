@@ -29,10 +29,12 @@ from labuse.copilote_v2.answering import (
     ("les promesses mortes", "promesses"),
     ("le simulateur zan", "communes"),   # 21/08 : Simulateur ZAN retiré → enveloppe ZAN dans Communes
     ("la rarete du foncier", "communes"),
-    # §5 — « Densifier l'existant » : anciens mots-clés conservés + nouveaux ; clé interne inchangée.
-    ("potentiel de renouvellement", "renouvellement"),
-    ("densifier", "renouvellement"),
-    ("construire plus", "renouvellement"),
+    # KELFONCIER-FIX-2 Lot E — « Densifier l'existant » (ex-clé `renouvellement`) plié (DENSIFIER-PLI) :
+    # la clé n'est plus un module LIVE → la densification (question de capacité constructible) route
+    # vers la Faisabilité (`programme`), le potentiel de la parcelle. Mots-clés conservés.
+    ("potentiel de renouvellement", "programme"),
+    ("densifier", "programme"),
+    ("construire plus", "programme"),
     ("si cette zone passait constructible", "plu"),   # COPILOTE-2 lot 2 : simulplu fondu dans le hub plu (lien mort réparé)
     ("scorer une adresse", "calculette-fonciere"),   # ETUDIER-BIEN-2 Lot C : « Étudier un bien » supprimé
     # M137-N : « fantome » et « bailleur » retirés du produit → plus de concept-route (cf. ci-dessous).
